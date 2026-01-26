@@ -17,7 +17,7 @@ from pynetappfoundry.cli.commands.utils import utils
 @click.option(
     "--config-dir",
     "-c",
-    type=click.Path(exists=True),
+    type=click.Path(),
     default="config",
     help="Configuration directory path.",
 )
