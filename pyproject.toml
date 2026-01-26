@@ -1,10 +1,31 @@
+[build-system]
+requires = ["hatchling>=1.24", "hatch-vcs>=0.4"]
+build-backend = "hatchling.build"
+
 [project]
-name = "NetAppScripts"
-version = "0.1.0"
-description = "NetApp scripts and Libraries for various tasks"
-readme = "README.md"
-requires-python = ">=3.11"
+name = "pynetappfoundry"
+description = "ONTAP administration library and CLI tools"
+readme = { file = "README.md", content-type = "text/markdown" }
+requires-python = ">=3.12"
+dynamic = ["version"]
+authors = [
+    { name = "Eric Davis", email = "eric@codingwithalex.com" },
+]
+license = { file = "LICENSE" }
+keywords = ["netapp", "ontap", "storage", "cli", "administration"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "License :: OSI Approved :: MIT License",
+    "Intended Audience :: System Administrators",
+    "Topic :: System :: Systems Administration",
+    "Topic :: System :: Networking :: Monitoring",
+]
 dependencies = [
+    "click>=8.1",
+    "rich>=13.0",
     "jsonschema>=4.25.1",
     "netapp-ontap>=9.17.1.0",
     "openpyxl>=3.1.5",
@@ -12,26 +33,184 @@ dependencies = [
     "paramiko>=4.0.0",
     "psutil>=7.1.2",
     "xlsxwriter>=3.2.9",
+    "requests>=2.31",
+    "yattag>=1.15",
 ]
 
-[tool.black]
-line-length = 88
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "pytest-xdist>=3.5",
+    "ruff>=0.5",
+    "mypy>=1.0",
+    "pre-commit>=3.7.0",
+    "mkdocs-material>=9.5",
+    "mkdocstrings[python]>=0.24",
+    "codespell>=2.2",
+    "pyproject-fmt>=2.0",
+    "commitizen>=3.0",
+    "pyright>=1.1.0",
+    "types-requests>=2.31",
+    "types-paramiko>=3.0",
+]
+security = [
+    "pip-audit>=2.6",
+    "bandit>=1.7",
+    "pip-licenses>=4.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/endavis/pynetappfoundry"
+Repository = "https://github.com/endavis/pynetappfoundry"
+Documentation = "https://github.com/endavis/pynetappfoundry/tree/main/docs"
+Issues = "https://github.com/endavis/pynetappfoundry/issues"
+
+[project.scripts]
+nf = "pynetappfoundry.cli:nf"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pynetappfoundry"]
+
+[tool.hatch.version]
+source = "vcs"
+tag-pattern = "^(?:v|d)(?P<version>.+)$"
+fallback-version = "0.0.0"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "src/pynetappfoundry/_version.py"
 
 [tool.ruff]
-line-length = 88
-extend-select = ["D", "E"]  # Enable PEP 257 docstring checks
+line-length = 100
+target-version = "py312"
+extend-exclude = ["**/_version.py"]
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "F",      # pyflakes
+    "I",      # isort
+    "N",      # pep8-naming
+    "W",      # pycodestyle warnings
+    "UP",     # pyupgrade
+    "ANN",    # flake8-annotations (type hints)
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "RUF",    # Ruff-specific rules
+    "SIM",    # flake8-simplify
+    "ASYNC",  # flake8-async
+]
+ignore = [
+    "ANN101",  # Missing type annotation for self
+    "ANN102",  # Missing type annotation for cls
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["ANN"]
 
 [tool.ruff.format]
-# Enable auto-formatting of code examples in docstrings. Markdown,
-# reStructuredText code/literal blocks and doctests are all supported.
-#
-# This is currently disabled by default, but it is planned for this
-# to be opt-out in the future.
-docstring-code-format = true
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
 
-# Set the line length limit used when formatting code snippets in
-# docstrings.
-#
-# This only has an effect when the `docstring-code-format` setting is
-# enabled.
-docstring-code-line-length = 88
+[tool.mypy]
+python_version = "3.12"
+disallow_untyped_defs = true
+warn_return_any = true
+warn_unused_configs = true
+warn_unused_ignores = true
+check_untyped_defs = true
+disallow_any_generics = false
+disallow_incomplete_defs = true
+disallow_subclassing_any = true
+no_implicit_optional = true
+strict_equality = true
+warn_redundant_casts = true
+warn_unreachable = true
+exclude = [".claude/", ".gemini/", ".codex/"]
+
+[[tool.mypy.overrides]]
+module = ["netapp_ontap.*", "paramiko.*", "yattag.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "--strict-config --strict-markers"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+[tool.coverage.run]
+branch = true
+source = ["pynetappfoundry"]
+
+[tool.coverage.report]
+skip_covered = false
+show_missing = true
+precision = 2
+fail_under = 60
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+]
+
+[tool.coverage.html]
+directory = "tmp/htmlcov"
+
+[tool.coverage.xml]
+output = "tmp/coverage.xml"
+
+[tool.bandit]
+exclude_dirs = [
+    "tests",
+    "tmp",
+    ".venv",
+    "docs",
+    ".git",
+    ".github",
+    ".pytest_cache",
+    ".mypy_cache",
+    ".ruff_cache",
+    "site",
+    ".claude",
+    ".gemini",
+    ".codex",
+    ".devcontainer",
+    ".vscode",
+]
+skips = [
+    "B101",
+    "B603",
+    "B607",
+]
+
+[tool.codespell]
+skip = "tmp,.venv,.git,*.lock,*.pyc,__pycache__"
+ignore-words-list = "crate"
+
+[tool.pyright]
+include = [
+    "src",
+    "tests",
+    "*.py",
+]
+exclude = [
+    "**/__pycache__",
+    "**/.venv",
+    "**/tmp",
+    "**/.pytest_cache",
+    "**/.mypy_cache",
+    "**/.ruff_cache",
+    "**/site",
+    "**/.git",
+]
+venvPath = "."
+venv = ".venv"
+pythonVersion = "3.12"
+typeCheckingMode = "basic"
+useLibraryCodeForTypes = true
+reportMissingImports = true
+reportMissingTypeStubs = false
