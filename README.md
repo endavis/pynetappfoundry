@@ -1,105 +1,179 @@
-# Python Environment Setup with UV
+# pynetappfoundry
 
-This guide explains how to install **UV**, set up **Python 3.11**, and manage dependencies for your project.
+ONTAP administration library and CLI tools.
 
----
-
-## 1. Install UV
-
-UV is a fast, modern Python package and environment manager.
-To install it, run the following command in your terminal:
+## Installation
 
 ```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
+pip install pynetappfoundry
 ```
 
-After installation, restart your terminal or run the command displayed at the end of the installer (usually something like `source ~/.profile` or `source ~/.bashrc`) so the `uv` command becomes available.
-
-You can verify the installation with:
+For development:
 
 ```bash
-uv --version
+pip install -e ".[dev]"
 ```
 
----
+## CLI Usage
 
-## 2. Install Python 3.11 through UV
-
-UV can manage multiple Python versions for you.
-To install **Python 3.11**, run:
+pynetappfoundry provides a single CLI entry point `nf` with subcommand groups:
 
 ```bash
-uv python install 3.11
+# License management
+nf licenses check --filter '{"bu":"Business"}'
+nf licenses get --config-dir /path/to/config
+nf licenses savings --output-dir ./output
+
+# Reports
+nf reports space-usage --filter '{"env":"Prod"}'
+nf reports locks
+nf reports html
+
+# Events
+nf events get --filter '{"name":"cluster1"}'
+nf events save-azure
+
+# Metrics
+nf metrics dump-dii
+
+# Utilities
+nf utils validate
+nf utils run-cmd "vol show"
+nf utils sqlite-to-excel metrics.db
 ```
 
-Then confirm the version is available:
+### Common Options
+
+All commands support these global options:
+
+- `--config-dir, -c`: Configuration directory path (default: `config`)
+- `--output-dir, -o`: Output directory path
+- `--debug/--no-debug`: Enable debug logging
+- `--filter, -f`: JSON filter for cluster selection
+
+### Filter Syntax
+
+The filter option accepts JSON with AND/OR logic:
 
 ```bash
-uv python list
+# Match all criteria
+-f '{"bu":"Business", "env":"Prod", "tags":"active"}'
+
+# AND operator for tags
+-f '{"tags":"active && workload"}'
+
+# OR operator
+-f '{"app": "app1 || app2"}'
+
+# Multiple clusters by name
+-f '{"name":"cluster1 || cluster2"}'
 ```
 
-If you want to make Python 3.11 the default for this project:
+## Library Usage
+
+pynetappfoundry can also be used as a library in your own scripts:
+
+```python
+from pynetappfoundry import Config, ONTAPAPIClient, ONTAPCLI
+from pynetappfoundry.db import MetricDB
+from pynetappfoundry.utils import approximate_size
+
+# Load configuration
+config = Config("/path/to/config")
+clusters = config.get_clusters({"env": "Prod", "bu": "Business"})
+
+# Query clusters
+for name, details in clusters.items():
+    # Using the ONTAP Python SDK (via HostConnection)
+    user, password = config.get_user("clusters", name)
+
+    # Or use the CLI wrapper for SSH commands
+    cli = ONTAPCLI(name, details["ip"], user, password)
+    output = cli.run_command("vol show")
+    cli.disconnect()
+
+# Work with metrics database
+db = MetricDB(config)
+db.create_table("cluster_metrics")
+db.upsert_data("cluster_metrics", {"timestamp": "2024-01-01", "read_ops": 100})
+```
+
+## Configuration
+
+Create a `config` directory with TOML files:
+
+### settings.toml
+
+```toml
+[settings]
+[settings.clusters]
+searchable_keys = ["name", "bu", "env", "app", "tags"]
+
+[settings.SMTP]
+server = "smtp.example.com"
+port = 25
+user = ""
+password = ""
+auth = "False"
+
+[settings.licensing]
+mailfrom = "netapp-alerts@example.com"
+mailto = "admin@example.com"
+```
+
+### users.toml
+
+```toml
+[users.clusters]
+user = "admin"
+enc = "password"
+```
+
+### clusters.toml
+
+```toml
+[settings]
+type = "data"
+
+[clusters.cluster1]
+name = "cluster1"
+ip = "10.0.0.1"
+bu = "Business"
+env = "Prod"
+tags = ["active", "production"]
+
+[clusters.cluster2]
+name = "cluster2"
+ip = "10.0.0.2"
+bu = "Business"
+env = "Dev"
+tags = ["active", "development"]
+```
+
+## Development
 
 ```bash
-uv python pin 3.11
+# Clone the repository
+git clone https://github.com/endavis/pynetappfoundry.git
+cd pynetappfoundry
+
+# Create virtual environment
+python -m venv .venv
+source .venv/bin/activate  # or .venv\Scripts\activate on Windows
+
+# Install in development mode
+pip install -e ".[dev]"
+
+# Run tests
+pytest
+
+# Run linting
+ruff check src/
+
+# Run type checking
+mypy src/
 ```
 
----
+## License
 
-## 3. Install Project Dependencies
-
-```bash
-uv pip install .
-```
-
-If you need to add a new dependency:
-
-```bash
-uv add <package-name>
-```
-
----
-
-## 4. Running Scripts
-
-You have two options when working in your project environment:
-
-### Option A — Activate the Environment
-
-```bash
-source .venv/bin/activate
-```
-
-Then you can run your scripts normally:
-
-```bash
-python script.py
-```
-
-### Option B — Use `uv run` (Recommended)
-
-Run scripts directly using UV without manually activating the environment:
-
-```bash
-uv run python script.py
-```
-
-You can also use it for other Python commands, like:
-
-```bash
-uv run pytest
-uv run jupyter notebook
-```
-
----
-
-## ✅ Summary
-
-| Step | Description |
-|------|--------------|
-| 1 | Install UV package manager |
-| 2 | Install Python 3.11 |
-| 3 | Install your dependencies |
-| 4 | Run scripts via `uv run` or activate the environment |
-
----
+MIT License - see LICENSE file for details.
