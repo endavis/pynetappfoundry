@@ -105,9 +105,7 @@ class APIWrapper:
             return [self._resolve_refs(item) for item in schema]
         return schema
 
-    def _format_path(
-        self, path_template: str, path_params: dict[str, Any] | None
-    ) -> str:
+    def _format_path(self, path_template: str, path_params: dict[str, Any] | None) -> str:
         """Replace placeholders like {id} in the path template with provided values.
 
         Also tolerates {{id}} just in case.
@@ -129,23 +127,17 @@ class APIWrapper:
         query_params = [p for p in params if p.get("in") == "query"]
         return path_params, query_params
 
-    def _get_request_schema(
-        self, path_template: str, method: str
-    ) -> dict[str, Any] | None:
+    def _get_request_schema(self, path_template: str, method: str) -> dict[str, Any] | None:
         """Return the resolved JSON Schema dict for the request body if present.
 
         Only supports application/json for simplicity.
         """
         op = self._get_operation(path_template, method)
 
-        content = (
-            op.get("requestBody", {}).get("content", {}).get("application/json", {})
-        )
+        content = op.get("requestBody", {}).get("content", {}).get("application/json", {})
 
         if not content:
-            logging.error(
-                f"_get_request_schema: no content for {path_template}:{method}"
-            )
+            logging.error(f"_get_request_schema: no content for {path_template}:{method}")
 
         schema = content.get("schema")
 
@@ -247,9 +239,7 @@ class APIWrapper:
             for name, sub in props.items():
                 sub = self._resolve_refs(sub)
                 fields[name] = {
-                    "type": sub.get(
-                        "type", "object" if "properties" in sub else "unknown"
-                    ),
+                    "type": sub.get("type", "object" if "properties" in sub else "unknown"),
                     "required": name in required,
                     "description": sub.get("description"),
                 }
@@ -283,9 +273,7 @@ class APIWrapper:
             logging.error(f"Request body validation error: {e.message}")
             return False
 
-    def suggest_parameters(
-        self, path_template: str, method: str = "GET"
-    ) -> dict[str, Any]:
+    def suggest_parameters(self, path_template: str, method: str = "GET") -> dict[str, Any]:
         """Return a human-readable structure with parameter info.
 
         Returns dict with:

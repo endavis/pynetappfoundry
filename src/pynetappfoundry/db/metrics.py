@@ -27,9 +27,7 @@ class MetricDB:
             db_name: Name of the database file.
         """
         self.db_location = config.db_dir / db_name
-        self.conn = sqlite3.connect(
-            self.db_location, detect_types=sqlite3.PARSE_DECLTYPES
-        )
+        self.conn = sqlite3.connect(self.db_location, detect_types=sqlite3.PARSE_DECLTYPES)
         self.conn.row_factory = sqlite3.Row  # Enables dictionary-like access
 
     def create_table(self, table_name: str) -> None:
@@ -92,7 +90,7 @@ class MetricDB:
         updates = ", ".join(f"{key}=excluded.{key}" for key in columns)
 
         sql = f'''
-            INSERT INTO "{table_name}" ({', '.join(columns)})
+            INSERT INTO "{table_name}" ({", ".join(columns)})
             VALUES ({placeholders})
             ON CONFLICT(timestamp) DO UPDATE SET
             {updates}

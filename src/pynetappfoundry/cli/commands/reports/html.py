@@ -57,10 +57,12 @@ def html(
         cluster_html = _gather_cluster_html(name, details, config)
         html_content.extend(cluster_html)
 
-    html_content.extend([
-        "</body>",
-        "</html>",
-    ])
+    html_content.extend(
+        [
+            "</body>",
+            "</html>",
+        ]
+    )
 
     with open(filename, "w") as f:
         f.write("\n".join(html_content))
@@ -109,7 +111,9 @@ def _gather_cluster_html(
             # Nodes
             html_parts.append("    <h3>Nodes</h3>")
             html_parts.append("    <table>")
-            html_parts.append("        <tr><th>Name</th><th>Model</th><th>Serial</th><th>Uptime</th></tr>")
+            html_parts.append(
+                "        <tr><th>Name</th><th>Model</th><th>Serial</th><th>Uptime</th></tr>"
+            )
             for node in Node.get_collection(fields="*"):
                 node_dict = node.to_dict()
                 html_parts.append(
@@ -133,7 +137,9 @@ def _gather_cluster_html(
                     f"<td>{vol_dict.get('space', {}).get('size', 'Unknown')}</td></tr>"
                 )
             if len(volumes) > 20:
-                html_parts.append(f"        <tr><td colspan='3'>... and {len(volumes) - 20} more</td></tr>")
+                html_parts.append(
+                    f"        <tr><td colspan='3'>... and {len(volumes) - 20} more</td></tr>"
+                )
             html_parts.append("    </table>")
 
     except Exception as e:

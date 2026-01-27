@@ -53,9 +53,7 @@ def with_config(action: str) -> Callable[[F], F]:
                     filter_dict = json.loads(filter_str)
 
                 # Create config
-                config = Config(
-                    config_dir, output_dir, script_name=script_name
-                )
+                config = Config(config_dir, output_dir, script_name=script_name)
                 clusters = config.get_clusters(filter_dict)
 
                 return func(config=config, clusters=clusters, *args, **kwargs)

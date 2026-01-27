@@ -26,9 +26,7 @@ class DIIAPIClient(APIWrapper):
             api_json_file=str(config.get_schema_location("dii") / "all.json"),
             base_url=config.settings["diiapi"]["general"]["base_url"],
             auth_header={
-                "X-CloudInsights-ApiKey": self.config.settings["diiapi"]["general"][
-                    "api_ro_token"
-                ]
+                "X-CloudInsights-ApiKey": self.config.settings["diiapi"]["general"]["api_ro_token"]
             },
             base_api_path=self.config.settings["diiapi"]["general"]["base_api_path"],
             **kwargs,

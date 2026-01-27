@@ -101,9 +101,7 @@ class AzEventsDB:
             The event row or None if not found.
         """
         cur = self.conn.cursor()
-        cur.execute(
-            "SELECT * FROM maintenance_events WHERE event_id = ?", (event_id,)
-        )
+        cur.execute("SELECT * FROM maintenance_events WHERE event_id = ?", (event_id,))
         return cur.fetchone()
 
     def get_events_by_cluster(self, cluster: str) -> list[sqlite3.Row]:

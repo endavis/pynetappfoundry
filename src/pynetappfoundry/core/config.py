@@ -220,9 +220,7 @@ class Config:
             if data_type not in self.data:
                 self.data[data_type] = {}
             if data_type in data:
-                logging.debug(
-                    f"{_file_name} : adding {len(data[data_type])} {data_type} items"
-                )
+                logging.debug(f"{_file_name} : adding {len(data[data_type])} {data_type} items")
                 self.data[data_type].update(data[data_type])
 
     def chk_and(self, search_term: str, values: list[str] | str) -> bool:
@@ -277,9 +275,7 @@ class Config:
             else:
                 return term == value
 
-    def search(
-        self, data_type: str, search_dict: dict[str, str]
-    ) -> dict[str, dict[str, Any]]:
+    def search(self, data_type: str, search_dict: dict[str, str]) -> dict[str, dict[str, Any]]:
         """Search for items that match the given fields.
 
         Each param should be a dictionary with field and value.
@@ -310,8 +306,7 @@ class Config:
                 if key not in item_details:
                     result_check.append(False)
                     logging.debug(
-                        f"{_file_name} :      search: {key} not"
-                        " in item details, did not match"
+                        f"{_file_name} :      search: {key} not in item details, did not match"
                     )
                     break
                 logging.debug(
@@ -319,19 +314,14 @@ class Config:
                     f"{item_details[key]} returned "
                     f"{self.check_term(search_dict[key], item_details[key])}"
                 )
-                result_check.append(
-                    self.check_term(search_dict[key], item_details[key])
-                )
+                result_check.append(self.check_term(search_dict[key], item_details[key]))
 
             if all(result_check):
-                logging.debug(
-                    f"{_file_name} :      search: item - {item_details['name']} matched"
-                )
+                logging.debug(f"{_file_name} :      search: item - {item_details['name']} matched")
                 results[item] = item_details
             else:
                 logging.debug(
-                    f"{_file_name} :      search: item - {item_details['name']} "
-                    "did not match"
+                    f"{_file_name} :      search: item - {item_details['name']} did not match"
                 )
 
         logging.debug(f"{_file_name} : search returned - {list(results.keys())}")
@@ -348,9 +338,7 @@ class Config:
         """
         return self.search("clusters", search_terms)
 
-    def find_closest(
-        self, data_type: str, tree: dict[str, str]
-    ) -> dict[str, Any] | None:
+    def find_closest(self, data_type: str, tree: dict[str, str]) -> dict[str, Any] | None:
         """Find the closest matching item by progressively relaxing search criteria.
 
         Args:
@@ -383,9 +371,7 @@ class Config:
             # go through the key_order and delete keys until something is found
             for key in key_order:
                 if key in tree:
-                    logging.debug(
-                        f"{_file_name} :  removing {key} and searching {tree = }"
-                    )
+                    logging.debug(f"{_file_name} :  removing {key} and searching {tree = }")
                     del tree[key]
                 else:
                     continue

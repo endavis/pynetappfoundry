@@ -84,15 +84,17 @@ def _check_cluster_licenses(
                 nodes_data[node["name"]]["has_license"] = False
 
             if not licenses_data:
-                issues.append({
-                    "cluster": name,
-                    "owner": "",
-                    "error": "Could not get licenses",
-                    "days_checked": -1,
-                    "serial_number": -1,
-                    "expires": -1,
-                    "license_type": -1,
-                })
+                issues.append(
+                    {
+                        "cluster": name,
+                        "owner": "",
+                        "error": "Could not get licenses",
+                        "days_checked": -1,
+                        "serial_number": -1,
+                        "expires": -1,
+                        "license_type": -1,
+                    }
+                )
                 return issues
 
             for lic in licenses_data:
@@ -122,35 +124,41 @@ def _check_cluster_licenses(
                         days_difference = delta.days
 
                         if days_difference < days_check:
-                            issues.append({
-                                "cluster": name,
-                                "owner": owner,
-                                "error": "Expiring license",
-                                "days_checked": days_difference,
-                                "serial_number": serial_number,
-                                "expires": expiry_time,
-                                "license_type": license_type,
-                            })
+                            issues.append(
+                                {
+                                    "cluster": name,
+                                    "owner": owner,
+                                    "error": "Expiring license",
+                                    "days_checked": days_difference,
+                                    "serial_number": serial_number,
+                                    "expires": expiry_time,
+                                    "license_type": license_type,
+                                }
+                            )
 
             # Check for nodes without licenses
             for node_name, node_data in nodes_data.items():
                 if not node_data.get("has_license", False):
-                    issues.append({
-                        "cluster": name,
-                        "node": node_name,
-                        "error": "No License",
-                        "days_checked": -1,
-                        "serial_number": node_data.get("serial_number", "Unknown"),
-                        "expires": -1,
-                        "license_type": "None",
-                    })
+                    issues.append(
+                        {
+                            "cluster": name,
+                            "node": node_name,
+                            "error": "No License",
+                            "days_checked": -1,
+                            "serial_number": node_data.get("serial_number", "Unknown"),
+                            "expires": -1,
+                            "license_type": "None",
+                        }
+                    )
 
     except Exception as e:
         logging.error(f"Could not retrieve licenses for {name}: {e}")
-        issues.append({
-            "cluster": name,
-            "error": str(e),
-        })
+        issues.append(
+            {
+                "cluster": name,
+                "error": str(e),
+            }
+        )
 
     return issues
 
@@ -165,8 +173,7 @@ def _print_issue(issue: dict[str, Any]) -> None:
         )
     else:
         print_warning(
-            f"  {issue['cluster']} - {issue.get('owner', 'Unknown')} - "
-            f"expires in {days} days"
+            f"  {issue['cluster']} - {issue.get('owner', 'Unknown')} - expires in {days} days"
         )
 
 

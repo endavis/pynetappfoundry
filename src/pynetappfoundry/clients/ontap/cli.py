@@ -78,9 +78,7 @@ class ONTAPCLI:
             if self.pkey:
                 self.ssh.connect(self.host, username=self.username, pkey=self.pkey)
             else:
-                self.ssh.connect(
-                    self.host, username=self.username, password=self.password
-                )
+                self.ssh.connect(self.host, username=self.username, password=self.password)
             transport = self.ssh.get_transport()
             if transport:
                 transport.set_keepalive(5)
@@ -129,10 +127,7 @@ class ONTAPCLI:
         Returns:
             Tuple of (data list, descriptions dict).
         """
-        cmd = (
-            f"set d -confirmations off;set -showallfields true"
-            f';set -showseparator ",";{cmd}'
-        )
+        cmd = f'set d -confirmations off;set -showallfields true;set -showseparator ",";{cmd}'
 
         output = self.run_command(cmd, arguments, respondto, response)
 
