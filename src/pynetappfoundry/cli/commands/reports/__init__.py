@@ -2,9 +2,9 @@
 
 import click
 
-from pynetappfoundry.cli.commands.reports.space_usage import space_usage
-from pynetappfoundry.cli.commands.reports.locks import locks
 from pynetappfoundry.cli.commands.reports.html import html
+from pynetappfoundry.cli.commands.reports.locks import locks
+from pynetappfoundry.cli.commands.reports.space_usage import space_usage
 
 
 @click.group()

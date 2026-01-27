@@ -7,7 +7,6 @@ import inspect
 import sys
 from pathlib import Path
 from types import ModuleType
-from typing import Any
 
 
 def import_all_files(package_name: str, package_path: Path) -> None:

@@ -56,7 +56,7 @@ def _gather_space_data(
 ) -> None:
     """Gather space usage data from a single cluster."""
     from netapp_ontap import HostConnection
-    from netapp_ontap.resources import Volume, Aggregate
+    from netapp_ontap.resources import Aggregate, Volume
 
     user, enc = config.get_user("clusters", name)
 
@@ -68,38 +68,49 @@ def _gather_space_data(
             verify=False,
         ):
             ws = wb.create_sheet(name)
-            ws.append([
-                "Type", "Name", "Total Size", "Used Size",
-                "Available Size", "Percent Used", "State"
-            ])
+            ws.append(
+                [
+                    "Type",
+                    "Name",
+                    "Total Size",
+                    "Used Size",
+                    "Available Size",
+                    "Percent Used",
+                    "State",
+                ]
+            )
 
             # Get aggregates
             for aggr in Aggregate.get_collection(fields="*"):
                 aggr_dict = aggr.to_dict()
                 space = aggr_dict.get("space", {})
-                ws.append([
-                    "Aggregate",
-                    aggr_dict.get("name", "Unknown"),
-                    space.get("block_storage", {}).get("size", 0),
-                    space.get("block_storage", {}).get("used", 0),
-                    space.get("block_storage", {}).get("available", 0),
-                    space.get("block_storage", {}).get("full_threshold_percent", 0),
-                    aggr_dict.get("state", "Unknown"),
-                ])
+                ws.append(
+                    [
+                        "Aggregate",
+                        aggr_dict.get("name", "Unknown"),
+                        space.get("block_storage", {}).get("size", 0),
+                        space.get("block_storage", {}).get("used", 0),
+                        space.get("block_storage", {}).get("available", 0),
+                        space.get("block_storage", {}).get("full_threshold_percent", 0),
+                        aggr_dict.get("state", "Unknown"),
+                    ]
+                )
 
             # Get volumes
             for vol in Volume.get_collection(fields="*"):
                 vol_dict = vol.to_dict()
                 space = vol_dict.get("space", {})
-                ws.append([
-                    "Volume",
-                    vol_dict.get("name", "Unknown"),
-                    space.get("size", 0),
-                    space.get("used", 0),
-                    space.get("available", 0),
-                    space.get("percent_used", 0),
-                    vol_dict.get("state", "Unknown"),
-                ])
+                ws.append(
+                    [
+                        "Volume",
+                        vol_dict.get("name", "Unknown"),
+                        space.get("size", 0),
+                        space.get("used", 0),
+                        space.get("available", 0),
+                        space.get("percent_used", 0),
+                        vol_dict.get("state", "Unknown"),
+                    ]
+                )
 
     except Exception as e:
         logging.error(f"Could not gather space data for {name}: {e}")

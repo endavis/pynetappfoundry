@@ -1,0 +1,120 @@
+site_name: pynetappfoundry
+site_description: ONTAP administration library and CLI tools
+site_author: Eric Davis
+site_url: https://endavis.github.io/pynetappfoundry
+
+repo_name: endavis/pynetappfoundry
+repo_url: https://github.com/endavis/pynetappfoundry
+edit_uri: edit/main/docs/
+
+# Theme configuration
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+
+plugins:
+  - search
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          options:
+            docstring_style: google
+            show_source: true
+            show_signature_annotations: true
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            members_order: source
+            merge_init_into_class: true
+            show_root_heading: true
+            show_root_full_path: false
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - attr_list
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: getting-started/installation.md
+  - Usage:
+      - Basics: usage/basics.md
+  - Reference:
+      - CLI Reference: reference/cli.md
+      - API Reference: reference/api.md
+  - Examples:
+      - Overview: examples/README.md
+      - API Examples: examples/api.md
+  - Development:
+      - Coding Standards: development/coding-standards.md
+      - doit Tasks: development/doit-tasks-reference.md
+      - CI/CD & Testing: development/ci-cd-testing.md
+      - Release Process: development/release-and-automation.md
+      - AI Setup: development/AI_SETUP.md
+      - AI Command Blocking: development/ai/command-blocking.md
+      - AI Enforcement Principles: development/ai/enforcement-principles.md
+      - AI Statusline: development/ai/statusline.md
+      - Extensions: development/extensions.md
+  - Deployment:
+      - Development: deployment/development.md
+      - Production: deployment/production.md
+  - Decisions:
+      - Overview: decisions/README.md
+      - ADR-0001 uv Package Management: decisions/0001-use-uv-for-package-management.md
+      - ADR-0002 doit Task Automation: decisions/0002-use-doit-for-task-automation.md
+      - ADR-0003 ruff Linting: decisions/0003-use-ruff-for-linting-and-formatting.md
+      - ADR-0004 doit Auto-Discovery: decisions/0004-auto-discover-doit-tasks.md
+      - ADR-0005 AI Command Restrictions: decisions/0005-ai-agent-command-restrictions.md
+      - ADR-0006 Merge Gate: decisions/0006-merge-gate-workflow.md
+      - ADR-0007 mypy Type Checking: decisions/0007-use-mypy-for-type-checking.md
+      - ADR-0008 PR-Based Workflow: decisions/0008-pr-based-development-workflow.md
+      - ADR-0009 Pre-commit Hooks: decisions/0009-use-pre-commit-hooks-for-quality-gates.md
+      - ADR-0010 Conventional Commits: decisions/0010-use-conventional-commits-format.md
+      - ADR-0011 pytest Testing: decisions/0011-use-pytest-for-testing.md
+      - ADR-0012 MkDocs Documentation: decisions/0012-use-mkdocs-with-material-theme-for-documentation.md
+      - ADR-0013 Python Version Policy: decisions/0013-python-version-support-policy.md
+      - ADR Template: decisions/adr-template.md
+  - Template:
+      - Overview: template/index.md
+      - New Project: template/new-project.md
+      - Migrating Projects: template/migration.md
+      - Managing Updates: template/manage.md
+      - Keeping Up to Date: template/updates.md
+      - AI Sync Checklist: template/ai-sync-checklist.md
+      - Tools Reference: template/tools-reference.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/endavis
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/pynetappfoundry

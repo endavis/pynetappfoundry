@@ -78,9 +78,7 @@ class ONTAPCLI:
             if self.pkey:
                 self.ssh.connect(self.host, username=self.username, pkey=self.pkey)
             else:
-                self.ssh.connect(
-                    self.host, username=self.username, password=self.password
-                )
+                self.ssh.connect(self.host, username=self.username, password=self.password)
             transport = self.ssh.get_transport()
             if transport:
                 transport.set_keepalive(5)
@@ -107,7 +105,7 @@ class ONTAPCLI:
 
         primary_key: str | None = None
         if cmd in CMD_KEYS:
-            primary_key = cmd_keys[cmd]
+            primary_key = CMD_KEYS[cmd]
 
         return self.parse_generic_output(output, primary_key=primary_key)
 
@@ -129,10 +127,7 @@ class ONTAPCLI:
         Returns:
             Tuple of (data list, descriptions dict).
         """
-        cmd = (
-            f"set d -confirmations off;set -showallfields true"
-            f';set -showseparator ",";{cmd}'
-        )
+        cmd = f'set d -confirmations off;set -showallfields true;set -showseparator ",";{cmd}'
 
         output = self.run_command(cmd, arguments, respondto, response)
 
@@ -148,15 +143,14 @@ class ONTAPCLI:
         descriptions = output[0].split(",")
         if "" in descriptions:
             descriptions.remove("")
-        descriptions_dict = dict(zip(headers, descriptions))
+        descriptions_dict = dict(zip(headers, descriptions, strict=False))
         del output[0]
 
         data: list[dict[str, str]] = []
         for line in output:
             tdata = line.split(",")
-            datadict = dict(zip(headers, tdata))
-            if "" in datadict:
-                del datadict[""]
+            datadict = dict(zip(headers, tdata, strict=False))
+            datadict.pop("", None)
 
             data.append(datadict)
 
@@ -188,7 +182,7 @@ class ONTAPCLI:
         self.connect()
         logging.info(f"host {self.name}:{self.host} - running '{cmd}'")
 
-        stdin, stdout, stderr = self.cli.exec_command(f"{cmd} {arguments}")
+        stdin, stdout, _stderr = self.cli.exec_command(f"{cmd} {arguments}")
 
         for line in stdout:
             line = line.rstrip()

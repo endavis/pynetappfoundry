@@ -78,7 +78,7 @@ class EmsEventsDB:
             event: Dictionary with event fields.
         """
         columns = ", ".join(event.keys())
-        placeholders = ", ".join(f":{key}" for key in event.keys())
+        placeholders = ", ".join(f":{key}" for key in event)
 
         sql = f"""
             INSERT INTO ems_events ({columns})
