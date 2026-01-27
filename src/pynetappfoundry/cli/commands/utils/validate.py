@@ -77,7 +77,7 @@ def _validate_cluster(
             if cluster_name != name:
                 print_warning(f"    Config name {name} does not match cluster name {cluster_name}")
 
-    except Exception as e:
+    except Exception:
         print_error(f"  Could not connect to config {name}")
         logging.debug(traceback.format_exc())
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 from typing import Any
@@ -39,10 +40,8 @@ class APIWrapper:
 
         self.base_api_path = base_api_path
         if not base_api_path:
-            try:
+            with contextlib.suppress(KeyError):
                 self.base_api_path = self.api_spec["basePath"]
-            except KeyError:
-                pass
 
         if not base_api_path:
             logging.warning(f"No base api path found for base_url: {base_url}")
@@ -203,7 +202,7 @@ class APIWrapper:
         for path in self.api_spec["paths"]:
             methods = self.api_spec["paths"].get(path, {})
 
-            for m in methods.keys():
+            for m in methods:
                 if "summary" in methods[m]:
                     summary = methods[m].get("summary")
                     items.append((path, m.upper(), summary))

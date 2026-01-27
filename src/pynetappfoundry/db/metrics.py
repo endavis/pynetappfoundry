@@ -65,8 +65,8 @@ class MetricDB:
             data: Dictionary of column/value pairs.
         """
         columns = ", ".join(data.keys())
-        placeholders = ", ".join(f":{key}" for key in data.keys())
-        updates = ", ".join(f"{key}=excluded.{key}" for key in data.keys())
+        placeholders = ", ".join(f":{key}" for key in data)
+        updates = ", ".join(f"{key}=excluded.{key}" for key in data)
 
         sql = f'''
             INSERT INTO "{table_name}" ({columns})

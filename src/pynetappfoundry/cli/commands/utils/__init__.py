@@ -2,9 +2,9 @@
 
 import click
 
-from pynetappfoundry.cli.commands.utils.validate import validate
 from pynetappfoundry.cli.commands.utils.run_cmd import run_cmd
 from pynetappfoundry.cli.commands.utils.sqlite_to_excel import sqlite_to_excel
+from pynetappfoundry.cli.commands.utils.validate import validate
 
 
 @click.group()

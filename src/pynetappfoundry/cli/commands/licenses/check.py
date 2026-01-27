@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import click
@@ -64,7 +64,7 @@ def _check_cluster_licenses(
     """Check a single cluster for license issues."""
     issues: list[dict[str, Any]] = []
     days_to_check = 30
-    current_time = datetime.now(timezone.utc)
+    current_time = datetime.now(UTC)
 
     user, enc = config.get_user("clusters", name)
     try:

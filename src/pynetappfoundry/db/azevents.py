@@ -78,8 +78,8 @@ class AzEventsDB:
             event: Dictionary with event fields.
         """
         columns = ", ".join(event.keys())
-        placeholders = ", ".join(f":{key}" for key in event.keys())
-        updates = ", ".join(f"{key}=excluded.{key}" for key in event.keys())
+        placeholders = ", ".join(f":{key}" for key in event)
+        updates = ", ".join(f"{key}=excluded.{key}" for key in event)
 
         sql = f"""
             INSERT INTO maintenance_events ({columns})

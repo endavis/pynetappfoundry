@@ -2,8 +2,8 @@
 
 import click
 
-from pynetappfoundry.cli.commands.events.get import get
 from pynetappfoundry.cli.commands.events.azevents import save_azure
+from pynetappfoundry.cli.commands.events.get import get
 
 
 @click.group()

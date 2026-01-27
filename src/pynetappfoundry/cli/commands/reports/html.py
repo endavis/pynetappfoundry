@@ -103,8 +103,9 @@ def _gather_cluster_html(
             html_parts.append(
                 f"        <tr><td>Name</td><td>{cluster_dict.get('name', 'Unknown')}</td></tr>"
             )
+            version = cluster_dict.get("version", {}).get("full", "Unknown")
             html_parts.append(
-                f"        <tr><td>Version</td><td>{cluster_dict.get('version', {}).get('full', 'Unknown')}</td></tr>"
+                f"        <tr><td>Version</td><td>{version}</td></tr>"
             )
             html_parts.append("    </table>")
 

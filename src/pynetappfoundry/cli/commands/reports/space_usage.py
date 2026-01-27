@@ -56,7 +56,7 @@ def _gather_space_data(
 ) -> None:
     """Gather space usage data from a single cluster."""
     from netapp_ontap import HostConnection
-    from netapp_ontap.resources import Volume, Aggregate
+    from netapp_ontap.resources import Aggregate, Volume
 
     user, enc = config.get_user("clusters", name)
 
