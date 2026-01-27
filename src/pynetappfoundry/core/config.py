@@ -42,12 +42,17 @@ from __future__ import annotations
 
 import logging
 import os
-import sys
 import tomllib
 from pathlib import Path
 from typing import Any
 
 _file_name = Path(__file__).name
+
+
+class ConfigurationError(Exception):
+    """Raised when configuration is missing or invalid."""
+
+    pass
 
 
 class Config:
@@ -151,7 +156,7 @@ class Config:
             Tuple of (username, encoded_password).
 
         Raises:
-            SystemExit: If credentials cannot be found.
+            ConfigurationError: If credentials cannot be found.
         """
         user: str | None = None
         enc: str | None = None
@@ -170,10 +175,16 @@ class Config:
 
         if not user:
             logging.error(f"Could not find user for {utype} and {uobject}")
-            sys.exit(1)
+            raise ConfigurationError(
+                f"Could not find user for type={utype!r}, object={uobject!r}. "
+                "Ensure credentials are configured in users.toml or the object's data file."
+            )
         if not enc:
             logging.error(f"Could not find password for {utype} and {uobject}")
-            sys.exit(1)
+            raise ConfigurationError(
+                f"Could not find password for type={utype!r}, object={uobject!r}. "
+                "Ensure 'enc' (encoded password) is configured."
+            )
 
         return user, enc
 
