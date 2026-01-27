@@ -1,0 +1,3 @@
+[clusters]
+user="netappuser"
+enc = "netappuser_password"

@@ -1,0 +1,22 @@
+Auth header:
+    if self.auth_token:
+        default_headers["X-CloudInsights-ApiKey"] = self.auth_token
+
+    'X-CloudInsights-ApiKey:<API_Access_Token>'
+
+get the json for the api at:
+https://<dii_cloud_host>/rest/documentation/category/all
+save it as all.json
+
+remove:
+    "servers": [
+        {
+            "url": "https://your-client.cloudinsights.netapp.com/rest/v1"
+        }
+    ],
+    "security": [
+        {
+            "Customer ApiKey": [],
+            "Authorization Bearer": []
+        }
+    ],
