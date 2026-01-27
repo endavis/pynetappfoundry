@@ -107,3 +107,6 @@ Thumbs.db
 site/
 docs/_build/
 .doit.db.db
+
+# Auto-generated version file
+src/pynetappfoundry/_version.py
