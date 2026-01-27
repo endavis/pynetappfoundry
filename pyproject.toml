@@ -33,6 +33,7 @@ dependencies = [
     "pandas>=2.3.3",
     "paramiko>=4.0.0",
     "psutil>=7.1.2",
+    "pydantic>=2.0",
     "xlsxwriter>=3.2.9",
     "requests>=2.31",
     "yattag>=1.15",
