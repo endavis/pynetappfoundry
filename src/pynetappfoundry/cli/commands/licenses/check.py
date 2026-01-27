@@ -75,8 +75,8 @@ def _check_cluster_licenses(
             verify=False,
         ):
             licenses_data: list[dict[str, Any]] = []
-            for lic in LicensePackage.get_collection(fields="*"):
-                licenses_data.append(lic.to_dict())
+            for license_pkg in LicensePackage.get_collection(fields="*"):
+                licenses_data.append(license_pkg.to_dict())
 
             nodes_data: dict[str, dict[str, Any]] = {}
             for node in Node.get_collection(fields="*"):

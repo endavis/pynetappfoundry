@@ -71,17 +71,17 @@ def approximate_size_specific(
     Returns:
         Converted size as string with suffix, float without, or -1 if suffix not found.
     """
-    for multiple in SUFFIXES:
-        for suffix in SUFFIXES[multiple]:
+    for multiple, suffixes in SUFFIXES.items():
+        for suffix in suffixes:
             if suffix.lower() == newsuffix.lower():
-                power = SUFFIXES[multiple].index(suffix)
-                newsizeint = float(size) / (multiple ** float(power + 1))
+                power: int = suffixes.index(suffix)
+                newsizeint: float = float(size) / (multiple ** (power + 1))
                 if withsuffix:
                     return f"{newsizeint:.2f} {suffix}"
                 else:
                     return newsizeint
 
-    return -1
+    return -1.0
 
 
 def convert_size(dsize: str, newsuffix: str, withsuffix: bool = True) -> str | float:

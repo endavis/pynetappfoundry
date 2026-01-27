@@ -72,10 +72,10 @@ class APIWrapper:
             Operation specification from the API spec.
         """
         method = method.lower()
-        path = self.api_spec["paths"].get(api_path, {})
+        path: dict[str, Any] = self.api_spec["paths"].get(api_path, {})
         if not path:
             logging.error(f"_get_operation: did not find {api_path}")
-        operation = path.get(method, {})
+        operation: dict[str, Any] = path.get(method, {})
         if not operation:
             logging.error(f"_get_operation: could not find {operation} for {api_path}")
         return operation
@@ -142,7 +142,8 @@ class APIWrapper:
 
         if not schema:
             return None
-        return self._resolve_refs(schema)
+        resolved: dict[str, Any] = self._resolve_refs(schema)
+        return resolved
 
     def _build_sample_from_schema(self, schema: dict[str, Any]) -> Any:
         """Heuristic sample generator for a JSON Schema object.

@@ -102,7 +102,8 @@ class AzEventsDB:
         """
         cur = self.conn.cursor()
         cur.execute("SELECT * FROM maintenance_events WHERE event_id = ?", (event_id,))
-        return cur.fetchone()
+        result: sqlite3.Row | None = cur.fetchone()
+        return result
 
     def get_events_by_cluster(self, cluster: str) -> list[sqlite3.Row]:
         """Get all events for a cluster.
