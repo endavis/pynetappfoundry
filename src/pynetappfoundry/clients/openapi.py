@@ -23,6 +23,7 @@ class APIWrapper:
         timeout: float = 30.0,
         session: requests.Session | None = None,
         base_api_path: str = "",
+        verify_ssl: bool = True,
     ) -> None:
         """Initialize the API wrapper.
 
@@ -33,7 +34,9 @@ class APIWrapper:
             timeout: Request timeout in seconds.
             session: Existing requests session to use.
             base_api_path: Base path prefix for all API paths.
+            verify_ssl: Whether to verify SSL certificates. Default True for security.
         """
+        self.verify_ssl = verify_ssl
         # Load the API spec
         with open(api_json_file, encoding="utf-8") as f:
             self.api_spec: dict[str, Any] = json.load(f)
@@ -366,7 +369,7 @@ class APIWrapper:
 
         logging.debug(f"Calling {method} {url} {headers}")
         resp = self.session.request(
-            method, url, json=body, headers=headers, timeout=self.timeout, verify=False
+            method, url, json=body, headers=headers, timeout=self.timeout, verify=self.verify_ssl
         )
         logging.debug(f"Response Status Code: {resp.status_code}")
         resp.raise_for_status()
