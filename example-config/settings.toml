@@ -1,0 +1,22 @@
+[aiqums]
+searchable_keys = [ 'div', 'bu', 'cloud', 'app', 'env', 'subapp', 'region']
+
+[cloudinsights]
+searchable_keys = [ 'div', 'bu', 'cloud', 'app', 'env', 'subapp', 'region']
+
+[clusters]
+searchable_keys = [ 'div', 'bu', 'cloud', 'app', 'env', 'subapp', 'region']
+
+[connectors]
+searchable_keys = [ 'div', 'bu', 'cloud', 'app', 'env', 'subapp', 'region']
+
+[SMTP]
+server = "smtp.example.com"
+user = "some_user"
+password = "some_password"
+auth = "False"
+port = 25
+
+[licensing]
+mailfrom = "netapp-licensing@example.com"
+mailto = "netapp-team@example.com"

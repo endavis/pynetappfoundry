@@ -1,0 +1,28 @@
+Get the yaml from https://<aiqum>/docs/api/v2.yaml 
+
+Convert from yaml to json at https://openapi-yaml-json-converter.com/
+save it as all.json
+remove:
+  "security": [
+    {
+      "simple": []
+    }
+  ],
+
+HTTP basic authentication
+    When using basic authentication, the user credentials must be included with each HTTP request. There are two options for sending the credentials.
+
+    Construct the HTTP request header
+    You can manually construct the Authorization header and include it with the HTTP requests. This can be done when using a curl command in the CLI or a programming language with your automation code. The high-level steps include:
+
+    Concatenate the user and password values with a colon:
+
+    admin:password123
+
+    Convert the entire string to base64:
+
+    YWRtaW46cGFzc3dvcmQxMjM=
+
+    Construct the request header:
+
+    Authorization: Basic YWRtaW46cGFzc3dvcmQxMjM=
