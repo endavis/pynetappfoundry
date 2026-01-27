@@ -5,7 +5,7 @@ from pynetappfoundry.clients.dii.api import DIIAPIClient
 from pynetappfoundry.clients.ontap.api import ONTAPAPIClient
 from pynetappfoundry.clients.ontap.cli import ONTAPCLI, CLICommandError
 from pynetappfoundry.clients.openapi import APIWrapper
-from pynetappfoundry.core.config import Config
+from pynetappfoundry.core.config import Config, ConfigurationError
 from pynetappfoundry.core.logging import setup_logger
 from pynetappfoundry.db.azevents import AzEventsDB
 from pynetappfoundry.db.ems import EmsEventsDB
@@ -17,6 +17,7 @@ __all__ = [
     "AzEventsDB",
     "CLICommandError",
     "Config",
+    "ConfigurationError",
     "DIIAPIClient",
     "EmsEventsDB",
     "MetricDB",

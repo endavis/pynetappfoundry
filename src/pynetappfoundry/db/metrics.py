@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import sqlite3
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
@@ -14,6 +15,28 @@ if TYPE_CHECKING:
 # Register converters for this module
 sqlite3.register_adapter(datetime, adapt_datetime)
 sqlite3.register_converter("timestamp", convert_datetime)
+
+# Pattern for valid table names: alphanumeric, underscores, hyphens, dots
+# Must start with a letter or underscore, max 128 characters
+_TABLE_NAME_PATTERN = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_.\-]{0,127}$")
+
+
+def _validate_table_name(table_name: str) -> None:
+    """Validate a table name to prevent SQL injection.
+
+    Args:
+        table_name: The table name to validate.
+
+    Raises:
+        ValueError: If the table name is invalid.
+    """
+    if not _TABLE_NAME_PATTERN.match(table_name):
+        raise ValueError(
+            f"Invalid table name: {table_name!r}. "
+            "Table names must start with a letter or underscore, "
+            "contain only alphanumeric characters, underscores, hyphens, or dots, "
+            "and be at most 128 characters."
+        )
 
 
 class MetricDB:
@@ -35,12 +58,15 @@ class MetricDB:
 
         Args:
             table_name: Name of the table to create.
+
+        Raises:
+            ValueError: If the table name is invalid.
         """
+        _validate_table_name(table_name)
         cur = self.conn.cursor()
         cur.execute(
-            f'''
-            SELECT name FROM sqlite_master WHERE type="table" AND name="{table_name}"
-        '''
+            "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+            (table_name,),
         )
         if cur.fetchone() is None:
             sql = f'''
@@ -63,7 +89,11 @@ class MetricDB:
         Args:
             table_name: Target table name.
             data: Dictionary of column/value pairs.
+
+        Raises:
+            ValueError: If the table name is invalid.
         """
+        _validate_table_name(table_name)
         columns = ", ".join(data.keys())
         placeholders = ", ".join(f":{key}" for key in data)
         updates = ", ".join(f"{key}=excluded.{key}" for key in data)
@@ -84,7 +114,11 @@ class MetricDB:
         Args:
             table_name: Target table name.
             all_data: List of dictionaries with column/value pairs.
+
+        Raises:
+            ValueError: If the table name is invalid.
         """
+        _validate_table_name(table_name)
         columns = list(all_data[0].keys())
         placeholders = ", ".join(f":{key}" for key in columns)
         updates = ", ".join(f"{key}=excluded.{key}" for key in columns)
