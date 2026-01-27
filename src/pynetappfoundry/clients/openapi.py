@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 from typing import Any
@@ -39,10 +40,8 @@ class APIWrapper:
 
         self.base_api_path = base_api_path
         if not base_api_path:
-            try:
+            with contextlib.suppress(KeyError):
                 self.base_api_path = self.api_spec["basePath"]
-            except KeyError:
-                pass
 
         if not base_api_path:
             logging.warning(f"No base api path found for base_url: {base_url}")
@@ -73,10 +72,10 @@ class APIWrapper:
             Operation specification from the API spec.
         """
         method = method.lower()
-        path = self.api_spec["paths"].get(api_path, {})
+        path: dict[str, Any] = self.api_spec["paths"].get(api_path, {})
         if not path:
             logging.error(f"_get_operation: did not find {api_path}")
-        operation = path.get(method, {})
+        operation: dict[str, Any] = path.get(method, {})
         if not operation:
             logging.error(f"_get_operation: could not find {operation} for {api_path}")
         return operation
@@ -105,9 +104,7 @@ class APIWrapper:
             return [self._resolve_refs(item) for item in schema]
         return schema
 
-    def _format_path(
-        self, path_template: str, path_params: dict[str, Any] | None
-    ) -> str:
+    def _format_path(self, path_template: str, path_params: dict[str, Any] | None) -> str:
         """Replace placeholders like {id} in the path template with provided values.
 
         Also tolerates {{id}} just in case.
@@ -129,29 +126,24 @@ class APIWrapper:
         query_params = [p for p in params if p.get("in") == "query"]
         return path_params, query_params
 
-    def _get_request_schema(
-        self, path_template: str, method: str
-    ) -> dict[str, Any] | None:
+    def _get_request_schema(self, path_template: str, method: str) -> dict[str, Any] | None:
         """Return the resolved JSON Schema dict for the request body if present.
 
         Only supports application/json for simplicity.
         """
         op = self._get_operation(path_template, method)
 
-        content = (
-            op.get("requestBody", {}).get("content", {}).get("application/json", {})
-        )
+        content = op.get("requestBody", {}).get("content", {}).get("application/json", {})
 
         if not content:
-            logging.error(
-                f"_get_request_schema: no content for {path_template}:{method}"
-            )
+            logging.error(f"_get_request_schema: no content for {path_template}:{method}")
 
         schema = content.get("schema")
 
         if not schema:
             return None
-        return self._resolve_refs(schema)
+        resolved: dict[str, Any] = self._resolve_refs(schema)
+        return resolved
 
     def _build_sample_from_schema(self, schema: dict[str, Any]) -> Any:
         """Heuristic sample generator for a JSON Schema object.
@@ -211,7 +203,7 @@ class APIWrapper:
         for path in self.api_spec["paths"]:
             methods = self.api_spec["paths"].get(path, {})
 
-            for m in methods.keys():
+            for m in methods:
                 if "summary" in methods[m]:
                     summary = methods[m].get("summary")
                     items.append((path, m.upper(), summary))
@@ -247,9 +239,7 @@ class APIWrapper:
             for name, sub in props.items():
                 sub = self._resolve_refs(sub)
                 fields[name] = {
-                    "type": sub.get(
-                        "type", "object" if "properties" in sub else "unknown"
-                    ),
+                    "type": sub.get("type", "object" if "properties" in sub else "unknown"),
                     "required": name in required,
                     "description": sub.get("description"),
                 }
@@ -283,9 +273,7 @@ class APIWrapper:
             logging.error(f"Request body validation error: {e.message}")
             return False
 
-    def suggest_parameters(
-        self, path_template: str, method: str = "GET"
-    ) -> dict[str, Any]:
+    def suggest_parameters(self, path_template: str, method: str = "GET") -> dict[str, Any]:
         """Return a human-readable structure with parameter info.
 
         Returns dict with:

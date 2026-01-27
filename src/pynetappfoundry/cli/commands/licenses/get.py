@@ -8,11 +8,11 @@ from typing import Any
 import click
 from netapp_ontap import HostConnection
 from netapp_ontap.resources import LicensePackage
+from rich.table import Table
 
 from pynetappfoundry.cli.decorators import with_config
 from pynetappfoundry.cli.utils import console, print_error, print_info
 from pynetappfoundry.core.config import Config
-from rich.table import Table
 
 
 @click.command()

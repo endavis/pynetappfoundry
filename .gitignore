@@ -106,3 +106,4 @@ Thumbs.db
 # Documentation build
 site/
 docs/_build/
+.doit.db.db

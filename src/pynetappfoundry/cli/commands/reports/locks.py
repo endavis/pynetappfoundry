@@ -68,10 +68,7 @@ def _gather_lock_data(
             verify=False,
         ):
             ws = wb.create_sheet(name)
-            ws.append([
-                "Volume", "Protocol", "Type", "Path",
-                "Lock", "State", "IP Address"
-            ])
+            ws.append(["Volume", "Protocol", "Type", "Path", "Lock", "State", "IP Address"])
 
             locks_data: list[dict[str, Any]] = []
             for lock in ClientLock.get_collection(fields="*"):
@@ -83,25 +80,29 @@ def _gather_lock_data(
                 try:
                     lock_type = item.get("type", "unknown")
                     if lock_type == "share_level":
-                        ws.append([
-                            item.get("volume", {}).get("name", "Unknown"),
-                            item.get("protocol", "Unknown"),
-                            lock_type,
-                            item.get("path", "Unknown"),
-                            str(item.get("share_lock", "")),
-                            item.get("state", "Unknown"),
-                            item.get("client_address", "Unknown"),
-                        ])
+                        ws.append(
+                            [
+                                item.get("volume", {}).get("name", "Unknown"),
+                                item.get("protocol", "Unknown"),
+                                lock_type,
+                                item.get("path", "Unknown"),
+                                str(item.get("share_lock", "")),
+                                item.get("state", "Unknown"),
+                                item.get("client_address", "Unknown"),
+                            ]
+                        )
                     elif lock_type == "op_lock":
-                        ws.append([
-                            item.get("volume", {}).get("name", "Unknown"),
-                            item.get("protocol", "Unknown"),
-                            lock_type,
-                            item.get("path", "Unknown"),
-                            str(item.get("oplock_level", "")),
-                            item.get("state", "Unknown"),
-                            item.get("client_address", "Unknown"),
-                        ])
+                        ws.append(
+                            [
+                                item.get("volume", {}).get("name", "Unknown"),
+                                item.get("protocol", "Unknown"),
+                                lock_type,
+                                item.get("path", "Unknown"),
+                                str(item.get("oplock_level", "")),
+                                item.get("state", "Unknown"),
+                                item.get("client_address", "Unknown"),
+                            ]
+                        )
                     else:
                         logging.info(f"Unknown lock type: {lock_type}")
                 except Exception as e:

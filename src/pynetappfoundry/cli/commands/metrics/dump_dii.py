@@ -8,9 +8,9 @@ from typing import Any
 import click
 
 from pynetappfoundry.cli.decorators import with_config
-from pynetappfoundry.cli.utils import print_info, print_success, print_error
-from pynetappfoundry.core.config import Config
+from pynetappfoundry.cli.utils import print_error, print_info, print_success
 from pynetappfoundry.clients.dii.api import DIIAPIClient
+from pynetappfoundry.core.config import Config
 from pynetappfoundry.db.metrics import MetricDB
 
 

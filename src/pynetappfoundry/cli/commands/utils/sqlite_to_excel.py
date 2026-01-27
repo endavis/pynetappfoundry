@@ -28,10 +28,7 @@ def sqlite_to_excel(db_path: str, output: str | None) -> None:
     Example: nf utils sqlite-to-excel metrics.db
     """
     db_file = Path(db_path)
-    if not output:
-        output_file = db_file.with_suffix(".xlsx")
-    else:
-        output_file = Path(output)
+    output_file = db_file.with_suffix(".xlsx") if not output else Path(output)
 
     print_info(f"Converting {db_file} to Excel...")
 
