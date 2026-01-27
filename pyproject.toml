@@ -25,6 +25,7 @@ classifiers = [
 ]
 dependencies = [
     "click>=8.1",
+    "doit>=0.36.0",
     "rich>=13.0",
     "jsonschema>=4.25.1",
     "netapp-ontap>=9.17.1.0",
@@ -51,6 +52,8 @@ dev = [
     "pyproject-fmt>=2.0",
     "commitizen>=3.0",
     "pyright>=1.1.0",
+    "pyyaml>=6.0",
+    "types-pyyaml>=6.0",
     "types-requests>=2.31",
     "types-paramiko>=3.0",
 ]
@@ -130,7 +133,7 @@ warn_unreachable = true
 exclude = [".claude/", ".gemini/", ".codex/"]
 
 [[tool.mypy.overrides]]
-module = ["netapp_ontap.*", "paramiko.*", "yattag.*"]
+module = ["netapp_ontap.*", "paramiko.*", "yattag.*", "doit.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
@@ -195,6 +198,7 @@ ignore-words-list = "crate"
 include = [
     "src",
     "tests",
+    "tools",
     "*.py",
 ]
 exclude = [
@@ -214,3 +218,15 @@ typeCheckingMode = "basic"
 useLibraryCodeForTypes = true
 reportMissingImports = true
 reportMissingTypeStubs = false
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+version = "0.0.0"
+tag_format = "v$version"
+version_provider = "scm"
+update_changelog_on_bump = true
+major_version_zero = true
+merge_prerelease = true
+bump_pattern = "^(feat|fix|refactor|perf)"
+bump_map = { "feat" = "MINOR", "fix" = "PATCH", "refactor" = "PATCH", "perf" = "PATCH" }
+change_type_order = ["BREAKING CHANGE", "feat", "fix", "refactor", "perf"]
