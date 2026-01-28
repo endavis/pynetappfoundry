@@ -68,12 +68,14 @@ class Config:
     """Configuration manager for TOML-based config files.
 
     Environment Variables:
-        NF_CONFIG_DIR: Override the default config directory path.
         NF_<CLUSTER>_USER: Override username for a specific cluster.
         NF_<CLUSTER>_PASSWORD: Override password (base64 encoded) for a specific cluster.
 
     The cluster name in environment variables should be uppercase with hyphens
     replaced by underscores (e.g., cluster-prod -> NF_CLUSTER_PROD_USER).
+
+    Note: The NF_CONFIG_DIR environment variable is handled by the CLI layer,
+    not this class. Use `nf --config-dir` or set NF_CONFIG_DIR before running.
     """
 
     def __init__(
@@ -94,11 +96,6 @@ class Config:
         """
         self.data: dict[str, dict[str, dict[str, Any]]] = {}
         self.args = args
-        # Check for environment variable override
-        env_config_dir = os.environ.get("NF_CONFIG_DIR")
-        if env_config_dir:
-            logging.debug(f"Using config dir from NF_CONFIG_DIR: {env_config_dir}")
-            config_dir = env_config_dir
         self.config_dir = Path.cwd() / config_dir
         self.data_types = ["aiqums", "connectors", "cloudinsights", "clusters", "azure"]
         self.settings: dict[str, Any] = {}
