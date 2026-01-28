@@ -12,187 +12,384 @@ tags:
 
 Detailed examples for using the pynetappfoundry Python API.
 
-## Configuration Examples
+## Configuration
 
-### Custom Configuration Directory
+### Basic Configuration
 
 ```python
 from pynetappfoundry import Config
 
-# Use custom config directory
-config = Config(config_dir="/path/to/config")
+# Load from default location
+config = Config()
+
+# Load from custom directory
+config = Config(
+    config_dir="/path/to/config",
+    output_dir="/path/to/output",
+    script_name="my_script",
+)
 ```
 
-### Multiple Clusters
+### Searching Data
 
 ```python
+from pynetappfoundry import Config
+
+config = Config()
+
+# Simple search
+clusters = config.search("clusters", {"env": "Prod"})
+
+# Multiple conditions (AND)
+clusters = config.search("clusters", {"bu": "Engineering", "env": "Prod"})
+
+# OR conditions
+clusters = config.search("clusters", {"env": "Prod || Dev"})
+
+# AND conditions on list fields (tags)
+clusters = config.search("clusters", {"tags": "active && critical"})
+
+# Get all clusters
+all_clusters = config.get_clusters({})
+
+# Find closest match (relaxes criteria progressively)
+closest = config.find_closest("clusters", {
+    "bu": "Engineering",
+    "env": "Prod",
+    "region": "us-east-1",
+})
+```
+
+### Getting Settings
+
+```python
+# Get ONTAP API settings
+ontap_settings = config.get_ontap_api_settings()
+print(f"Base path: {ontap_settings.base_api_path}")
+print(f"Timeout: {ontap_settings.timeout}")
+
+# Get DII API settings
+dii_settings = config.get_dii_api_settings()
+print(f"Base URL: {dii_settings.base_url}")
+
+# Get arbitrary settings
+value = config.get_setting("SMTP", "server")
+```
+
+## ONTAP API Client
+
+### Creating a Client
+
+```python
+from types import SimpleNamespace
 from pynetappfoundry import Config, ONTAPAPIClient
 
 config = Config()
 
-# Create clients for multiple clusters
-clusters = ["cluster1", "cluster2", "cluster3"]
-clients = {name: ONTAPAPIClient(config, name) for name in clusters}
+# Get cluster details from config
+clusters = config.search("clusters", {"name": "my-cluster"})
+cluster_data = list(clusters.values())[0]
 
-# Query all clusters
-for name, client in clients.items():
-    info = client.get_cluster_info()
-    print(f"{name}: {info['version']}")
+# Create cluster object (needs name and ip attributes)
+cluster = SimpleNamespace(**cluster_data)
+
+# Create the client
+client = ONTAPAPIClient(cluster, config)
 ```
 
-## ONTAP API Examples
-
-### Get Volume Information
+### Discovering Endpoints
 
 ```python
-from pynetappfoundry import Config, ONTAPAPIClient
+# List all available endpoints
+endpoints = client.list_endpoints()
+for path, method, summary in endpoints:
+    print(f"{method:6} {path}")
+    if summary:
+        print(f"       {summary}")
 
-config = Config()
-client = ONTAPAPIClient(config, "cluster1")
-
-# Get all volumes
-volumes = client.get_volumes()
-for vol in volumes:
-    print(f"Volume: {vol['name']}, Size: {vol['size']}, Used: {vol['used']}")
-
-# Get volumes for specific SVM
-svm_volumes = client.get_volumes(svm="svm1")
+# Get detailed parameter info for an endpoint
+params = client.suggest_parameters("/storage/volumes", "GET")
+print(f"Path: {params['path']}")
+print(f"Method: {params['method']}")
+print(f"Summary: {params['summary']}")
+print(f"Path params: {params['path_params']}")
+print(f"Query params: {params['query_params']}")
 ```
 
-### Get Aggregate Information
+### Calling Endpoints
 
 ```python
-# Get all aggregates
-aggregates = client.get_aggregates()
-for aggr in aggregates:
-    pct_used = (aggr['used'] / aggr['size']) * 100
-    print(f"Aggregate: {aggr['name']}, Used: {pct_used:.1f}%")
+# GET request with query parameters
+volumes = client.call_endpoint(
+    "/storage/volumes",
+    "GET",
+    query_params={
+        "fields": "name,size,space.used,space.available",
+        "max_records": 100,
+    },
+)
+
+for vol in volumes.get("records", []):
+    name = vol["name"]
+    size = vol.get("size", 0)
+    used = vol.get("space", {}).get("used", 0)
+    print(f"{name}: {used / size * 100:.1f}% used")
+
+# GET with path parameters
+volume = client.call_endpoint(
+    "/storage/volumes/{uuid}",
+    "GET",
+    path_params={"uuid": "abc123-def456"},
+)
+
+# POST request with body
+result = client.call_endpoint(
+    "/storage/volumes",
+    "POST",
+    body={
+        "name": "new_volume",
+        "svm": {"name": "svm1"},
+        "size": 107374182400,  # 100GB
+    },
+)
+
+# PATCH request
+result = client.call_endpoint(
+    "/storage/volumes/{uuid}",
+    "PATCH",
+    path_params={"uuid": "abc123-def456"},
+    body={"size": 214748364800},  # 200GB
+)
+
+# DELETE request
+client.call_endpoint(
+    "/storage/volumes/{uuid}",
+    "DELETE",
+    path_params={"uuid": "abc123-def456"},
+)
 ```
 
-### Get LIF Information
+### Retry Configuration
 
 ```python
-# Get all network interfaces
-lifs = client.get_lifs()
-for lif in lifs:
-    print(f"LIF: {lif['name']}, IP: {lif['ip']}, Status: {lif['status']}")
+from pynetappfoundry.core.models import RetryConfig
+
+# Custom retry configuration
+retry_config = RetryConfig(
+    enabled=True,
+    max_attempts=5,
+    initial_wait=1.0,
+    max_wait=60.0,
+    exponential_base=2,
+    retryable_status_codes=[429, 500, 502, 503, 504],
+    retry_on_connection_error=True,
+)
+
+# Apply at client creation
+client = ONTAPAPIClient(
+    cluster, config,
+    retry_config=retry_config,
+)
+
+# Or override per-call
+result = client.call_endpoint(
+    "/storage/volumes",
+    "GET",
+    retry_config=RetryConfig(max_attempts=10),
+)
 ```
 
-## CLI Examples
+### Response Validation
 
-### Run ONTAP CLI Commands
+```python
+from pynetappfoundry.core.models import ValidationConfig
+
+# Enable response validation
+validation_config = ValidationConfig(
+    enabled=True,
+    strict=False,  # Log warnings instead of raising exceptions
+    validate_success_only=True,  # Only validate 2xx responses
+)
+
+client = ONTAPAPIClient(
+    cluster, config,
+    validation_config=validation_config,
+)
+
+# Strict validation (raises ResponseValidationError on mismatch)
+strict_config = ValidationConfig(enabled=True, strict=True)
+result = client.call_endpoint(
+    "/cluster",
+    "GET",
+    validation_config=strict_config,
+)
+```
+
+## ONTAP CLI (SSH)
+
+### Basic Usage
+
+```python
+from pynetappfoundry import ONTAPCLI
+
+# Create CLI connection
+cli = ONTAPCLI(
+    name="my-cluster",
+    host_or_ip="192.168.1.100",
+    username="admin",
+    password="password",
+)
+
+try:
+    # Run a command
+    output = cli.run_command("volume show")
+    for line in output:
+        print(line)
+
+    # Run and parse output
+    data = cli.run_command_and_parse("volume show")
+    for vol_name, vol_data in data.items():
+        print(f"{vol_name}: {vol_data}")
+
+    # Parse show commands with separators
+    records, descriptions = cli.run_a_show_command_and_parse_seperator(
+        "volume show"
+    )
+    for record in records:
+        print(record)
+
+finally:
+    cli.disconnect()
+```
+
+### Using with Config Credentials
 
 ```python
 from pynetappfoundry import Config, ONTAPCLI
 
 config = Config()
-cli = ONTAPCLI(config, "cluster1")
 
-# Run system commands
-output = cli.run_command("system node show")
-print(output)
+# Get cluster info
+clusters = config.search("clusters", {"name": "my-cluster"})
+cluster = list(clusters.values())[0]
 
-# Run volume commands
-output = cli.run_command("volume show -fields size,used,available")
-print(output)
-```
+# Get credentials from config
+username, password = config.get_user("clusters", cluster["name"])
 
-### Parse CLI Output
-
-```python
-# Run command and parse output
-output = cli.run_command("df -h")
-lines = output.strip().split('\n')
-for line in lines[1:]:  # Skip header
-    parts = line.split()
-    if len(parts) >= 4:
-        print(f"Filesystem: {parts[0]}, Used: {parts[2]}")
-```
-
-## Database Examples
-
-### Metrics Collection and Querying
-
-```python
-from pynetappfoundry import MetricDB
-from datetime import datetime, timedelta
-
-db = MetricDB("metrics.db")
-
-# Store metrics
-db.store_metric("cluster1", "volume_count", 150)
-db.store_metric("cluster1", "aggregate_used_pct", 75.5)
-
-# Query recent metrics
-metrics = db.get_metrics(
-    cluster="cluster1",
-    start_time=datetime.now() - timedelta(hours=24)
+cli = ONTAPCLI(
+    name=cluster["name"],
+    host_or_ip=cluster["ip"],
+    username=username,
+    password=password,
 )
-
-for metric in metrics:
-    print(f"{metric['name']}: {metric['value']} at {metric['timestamp']}")
 ```
 
-### Event Storage and Querying
+## DII API Client
+
+### Basic Usage
 
 ```python
-from pynetappfoundry import EmsEventsDB
+from pynetappfoundry import Config, DIIAPIClient
 
-db = EmsEventsDB("events.db")
+config = Config()
 
-# Store events (usually from API fetch)
-event = {
-    "cluster": "cluster1",
-    "time": "2024-01-15T10:30:00Z",
-    "severity": "error",
-    "message": "Disk failed in aggregate aggr1"
-}
-db.store_event(event)
+# Create DII client (uses settings from diiapi.toml)
+client = DIIAPIClient(config)
 
-# Query events
-errors = db.get_events(severity="error", limit=100)
-for error in errors:
-    print(f"[{error['time']}] {error['message']}")
+# List endpoints
+endpoints = client.list_endpoints()
+
+# Call an endpoint
+result = client.call_endpoint(
+    "/assets/storages",
+    "GET",
+    query_params={"limit": 100},
+)
 ```
 
 ## Error Handling
 
-### Handle Connection Errors
+### Connection Errors
 
 ```python
+import requests
 from pynetappfoundry import Config, ONTAPAPIClient
-from pynetappfoundry.clients.ontap.cli import CLICommandError
+from pynetappfoundry.clients.openapi import ResponseValidationError
 
 config = Config()
+cluster = ...  # Get cluster object
 
 try:
-    client = ONTAPAPIClient(config, "cluster1")
-    volumes = client.get_volumes()
-except ConnectionError as e:
-    print(f"Failed to connect: {e}")
-except CLICommandError as e:
-    print(f"CLI command failed: {e}")
+    client = ONTAPAPIClient(cluster, config)
+    result = client.call_endpoint("/cluster", "GET")
+except requests.ConnectionError as e:
+    print(f"Connection failed: {e}")
+except requests.HTTPError as e:
+    print(f"HTTP error: {e}")
+except ResponseValidationError as e:
+    print(f"Response validation failed: {e}")
+    print(f"Path: {e.path_template}, Status: {e.status_code}")
 ```
 
-### Retry Logic
+### CLI Errors
 
 ```python
-import time
+from pynetappfoundry import ONTAPCLI
+from pynetappfoundry.clients.ontap.cli import CLICommandError
+
+cli = ONTAPCLI(...)
+
+try:
+    output = cli.run_command("invalid command")
+except CLICommandError as e:
+    print(f"CLI error: {e.message}")
+finally:
+    cli.disconnect()
+```
+
+## Complete Script Example
+
+```python
+#!/usr/bin/env python3
+"""Example script: List volumes over 80% used."""
+
+from types import SimpleNamespace
 from pynetappfoundry import Config, ONTAPAPIClient
 
-config = Config()
+def main():
+    config = Config()
 
-def get_volumes_with_retry(cluster, max_retries=3):
-    for attempt in range(max_retries):
+    # Get all production clusters
+    clusters = config.search("clusters", {"env": "Prod"})
+
+    for name, data in clusters.items():
+        print(f"\n=== {name} ===")
+
+        # Create client
+        cluster = SimpleNamespace(**data)
+        client = ONTAPAPIClient(cluster, config)
+
+        # Get volumes
         try:
-            client = ONTAPAPIClient(config, cluster)
-            return client.get_volumes()
-        except ConnectionError:
-            if attempt < max_retries - 1:
-                time.sleep(5 * (attempt + 1))
-            else:
-                raise
-    return []
+            result = client.call_endpoint(
+                "/storage/volumes",
+                "GET",
+                query_params={"fields": "name,space.used,space.size"},
+            )
+        except Exception as e:
+            print(f"  Error: {e}")
+            continue
 
-volumes = get_volumes_with_retry("cluster1")
+        # Check each volume
+        for vol in result.get("records", []):
+            space = vol.get("space", {})
+            used = space.get("used", 0)
+            size = space.get("size", 1)
+            pct = (used / size) * 100
+
+            if pct > 80:
+                print(f"  WARNING: {vol['name']} is {pct:.1f}% used")
+
+if __name__ == "__main__":
+    main()
 ```

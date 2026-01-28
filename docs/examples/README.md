@@ -12,102 +12,131 @@ tags:
 
 This section contains example code demonstrating common use cases for pynetappfoundry.
 
-## Quick Examples
+## Quick Start
 
-### Connect to a Cluster
+### Initialize Configuration
+
+```python
+from pynetappfoundry import Config
+
+# Load configuration from default location (~/.config/pynetappfoundry)
+config = Config()
+
+# Or specify a custom config directory
+config = Config(config_dir="/path/to/config")
+```
+
+### Search for Clusters
+
+```python
+from pynetappfoundry import Config
+
+config = Config()
+
+# Search by environment
+prod_clusters = config.search("clusters", {"env": "Prod"})
+for name, details in prod_clusters.items():
+    print(f"{name}: {details['ip']}")
+
+# Search by multiple criteria
+filtered = config.search("clusters", {"bu": "Engineering", "env": "Dev"})
+
+# Search with OR conditions
+clusters = config.search("clusters", {"env": "Prod || Dev"})
+
+# Search with AND conditions on tags
+clusters = config.search("clusters", {"tags": "active && critical"})
+```
+
+### Create an ONTAP API Client
 
 ```python
 from pynetappfoundry import Config, ONTAPAPIClient
 
-# Load configuration
 config = Config()
 
-# Create client
-client = ONTAPAPIClient(config, "cluster1")
+# Get a cluster from search results
+clusters = config.search("clusters", {"name": "my-cluster"})
+cluster = list(clusters.values())[0]
 
-# Get cluster info
-info = client.get_cluster_info()
-print(f"Cluster: {info['name']}")
+# Create the API client
+# Note: cluster must have 'name' and 'ip' attributes
+from types import SimpleNamespace
+cluster_obj = SimpleNamespace(**cluster)
+
+client = ONTAPAPIClient(cluster_obj, config)
 ```
 
-### Run CLI Commands
+### Call ONTAP REST API Endpoints
+
+```python
+# List available endpoints
+endpoints = client.list_endpoints()
+for path, method, summary in endpoints[:5]:
+    print(f"{method} {path}: {summary}")
+
+# Get parameter hints for an endpoint
+params = client.suggest_parameters("/storage/volumes", "GET")
+print(f"Query params: {params['query_params']}")
+
+# Call an endpoint
+volumes = client.call_endpoint(
+    "/storage/volumes",
+    "GET",
+    query_params={"fields": "name,size,space.used"},
+)
+for vol in volumes.get("records", []):
+    print(f"Volume: {vol['name']}, Size: {vol.get('size', 'N/A')}")
+```
+
+### Run CLI Commands via SSH
 
 ```python
 from pynetappfoundry import Config, ONTAPCLI
 
 config = Config()
-cli = ONTAPCLI(config, "cluster1")
+clusters = config.search("clusters", {"name": "my-cluster"})
+cluster = list(clusters.values())[0]
+
+# Create CLI client
+cli = ONTAPCLI(
+    name=cluster["name"],
+    host_or_ip=cluster["ip"],
+    username="admin",
+    password="password",
+)
 
 # Run a command
 output = cli.run_command("volume show -fields size,used")
-print(output)
-```
+for line in output:
+    print(line)
 
-### Collect Metrics
-
-```python
-from pynetappfoundry import MetricDB, ONTAPAPIClient, Config
-
-config = Config()
-client = ONTAPAPIClient(config, "cluster1")
-db = MetricDB("metrics.db")
-
-# Collect volume metrics
-volumes = client.get_volumes()
-for vol in volumes:
-    db.store_metric("cluster1", f"volume_{vol['name']}_used", vol['used'])
-```
-
-### Monitor Events
-
-```python
-from pynetappfoundry import EmsEventsDB, ONTAPAPIClient, Config
-
-config = Config()
-client = ONTAPAPIClient(config, "cluster1")
-db = EmsEventsDB("events.db")
-
-# Fetch and store events
-events = client.get_ems_events(hours=24)
-for event in events:
-    db.store_event(event)
-
-# Query errors
-errors = db.get_events(severity="error")
+# Don't forget to disconnect
+cli.disconnect()
 ```
 
 ## CLI Examples
 
-### License Management
+### Utility Commands
 
 ```bash
-# List all licenses
-nf licenses list
+# Run CLI command on clusters matching filter
+nf utils run-cmd "vol show" --filter '{"bu":"Engineering"}'
 
-# Export to Excel
-nf licenses export --format xlsx -o licenses.xlsx
+# Validate configuration
+nf config validate
+
+# Show loaded configuration
+nf config show
 ```
 
 ### Report Generation
 
 ```bash
-# Generate space report
-nf reports space --all-clusters
-
-# Generate volume report for specific SVM
-nf reports volume --cluster cluster1 --svm svm1 -o volumes.html
-```
-
-### Event Monitoring
-
-```bash
-# Fetch recent events
-nf events fetch --hours 24 --all-clusters
-
-# Export error events
-nf events export --severity error --format csv -o errors.csv
+# Generate reports (if implemented)
+nf reports --help
 ```
 
 ## More Examples
 
-- [API Examples](api.md) - Detailed API usage examples
+- [API Examples](api.md) - Detailed API usage examples including retry and validation
