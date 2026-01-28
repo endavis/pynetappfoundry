@@ -158,6 +158,26 @@ class ValidationConfig(BaseModel):
     validate_success_only: bool = True
 
 
+class CacheConfig(BaseModel):
+    """Configuration for cluster metadata caching.
+
+    Attributes:
+        cache_dir: Override cache directory location. If empty, uses default
+                   ({data_dir}/cache).
+        cache_ttl_days: Number of days before cache is considered stale.
+                        Used for warnings, not automatic refresh.
+        auto_warn_stale: Warn when cached data is stale. Default True.
+        auto_warn_empty: Warn when cache is empty for a cluster. Default True.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    cache_dir: str = ""
+    cache_ttl_days: int = Field(default=30, ge=1)
+    auto_warn_stale: bool = True
+    auto_warn_empty: bool = True
+
+
 # Type aliases for collections
 ClusterCollection = dict[str, ClusterConfig]
 AIQUMCollection = dict[str, AIQUMConfig]

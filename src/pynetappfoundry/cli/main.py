@@ -5,6 +5,7 @@ from __future__ import annotations
 import click
 
 from pynetappfoundry._version import __version__
+from pynetappfoundry.cli.commands.cache import cache
 from pynetappfoundry.cli.commands.config import config
 from pynetappfoundry.cli.commands.events import events
 from pynetappfoundry.cli.commands.licenses import licenses
@@ -48,6 +49,7 @@ def nf(ctx: click.Context, config_dir: str, output_dir: str, debug: bool) -> Non
 
 
 # Explicit registration (infrafoundry pattern)
+nf.add_command(cache)
 nf.add_command(config)
 nf.add_command(events)
 nf.add_command(licenses)
