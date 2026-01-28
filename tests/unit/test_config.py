@@ -696,3 +696,115 @@ key = "value"
             assert result is None
         finally:
             os.chdir(original_cwd)
+
+
+class TestGetRelaxationOrder:
+    """Tests for get_relaxation_order method."""
+
+    def test_explicit_relaxation_order(self, temp_config_dir: Path, tmp_path: Path) -> None:
+        """Test that explicit relaxation_order in settings is used."""
+        settings_file = temp_config_dir / "settings.toml"
+        settings_file.write_text("""
+[clusters]
+searchable_keys = ['div', 'bu', 'env']
+relaxation_order = ['env', 'bu', 'div']
+""")
+        import os
+
+        original_cwd = os.getcwd()
+        os.chdir(tmp_path)
+        try:
+            output_dir = tmp_path / "output"
+            output_dir.mkdir(exist_ok=True)
+            config = Config(
+                config_dir=str(temp_config_dir),
+                output_dir=str(output_dir),
+                script_name="test_script",
+            )
+            result = config.get_relaxation_order("clusters")
+            assert result == ["env", "bu", "div"]
+        finally:
+            os.chdir(original_cwd)
+
+    def test_falls_back_to_reversed_searchable_keys(
+        self, temp_config_dir: Path, tmp_path: Path
+    ) -> None:
+        """Test that reversed searchable_keys is used when relaxation_order not set."""
+        settings_file = temp_config_dir / "settings.toml"
+        settings_file.write_text("""
+[clusters]
+searchable_keys = ['div', 'bu', 'env', 'app']
+""")
+        import os
+
+        original_cwd = os.getcwd()
+        os.chdir(tmp_path)
+        try:
+            output_dir = tmp_path / "output"
+            output_dir.mkdir(exist_ok=True)
+            config = Config(
+                config_dir=str(temp_config_dir),
+                output_dir=str(output_dir),
+                script_name="test_script",
+            )
+            result = config.get_relaxation_order("clusters")
+            # Should be reversed searchable_keys
+            assert result == ["app", "env", "bu", "div"]
+        finally:
+            os.chdir(original_cwd)
+
+    def test_falls_back_to_default_order(self, temp_config_dir: Path, tmp_path: Path) -> None:
+        """Test that default order is used when no settings exist."""
+        settings_file = temp_config_dir / "settings.toml"
+        settings_file.write_text("""
+[other]
+key = "value"
+""")
+        import os
+
+        original_cwd = os.getcwd()
+        os.chdir(tmp_path)
+        try:
+            output_dir = tmp_path / "output"
+            output_dir.mkdir(exist_ok=True)
+            config = Config(
+                config_dir=str(temp_config_dir),
+                output_dir=str(output_dir),
+                script_name="test_script",
+            )
+            result = config.get_relaxation_order("clusters")
+            # Should be the default fallback order
+            assert result == ["region", "subapp", "cloud", "env", "app", "bu", "div"]
+        finally:
+            os.chdir(original_cwd)
+
+    def test_different_data_types_can_have_different_orders(
+        self, temp_config_dir: Path, tmp_path: Path
+    ) -> None:
+        """Test that different data types can have different relaxation orders."""
+        settings_file = temp_config_dir / "settings.toml"
+        settings_file.write_text("""
+[clusters]
+relaxation_order = ['region', 'env', 'bu']
+
+[connectors]
+relaxation_order = ['cloud', 'app', 'div']
+""")
+        import os
+
+        original_cwd = os.getcwd()
+        os.chdir(tmp_path)
+        try:
+            output_dir = tmp_path / "output"
+            output_dir.mkdir(exist_ok=True)
+            config = Config(
+                config_dir=str(temp_config_dir),
+                output_dir=str(output_dir),
+                script_name="test_script",
+            )
+            clusters_order = config.get_relaxation_order("clusters")
+            connectors_order = config.get_relaxation_order("connectors")
+            assert clusters_order == ["region", "env", "bu"]
+            assert connectors_order == ["cloud", "app", "div"]
+        finally:
+            os.chdir(original_cwd)
