@@ -229,24 +229,19 @@ class TestConfigValidateCommand:
 class TestEnvironmentVariableSupport:
     """Tests for environment variable configuration overrides."""
 
-    def test_env_var_config_dir(
-        self, temp_config_dir: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_env_var_config_dir(self, temp_config_dir: Path, tmp_path: Path) -> None:
         """Test that NF_CONFIG_DIR environment variable overrides config directory."""
-        output_dir = tmp_path / "output"
-        output_dir.mkdir()
+        runner = CliRunner()
         original_cwd = os.getcwd()
         os.chdir(tmp_path)
         try:
-            monkeypatch.setenv("NF_CONFIG_DIR", str(temp_config_dir))
-            # Use a non-existent default path - env var should override
-            config = Config(
-                config_dir="nonexistent",
-                output_dir=str(output_dir),
-                script_name="test",
+            # Set env var to point to valid config, don't pass --config-dir
+            # CLI should use env var as default
+            result = runner.invoke(
+                nf, ["config", "validate"], env={"NF_CONFIG_DIR": str(temp_config_dir)}
             )
-            assert "clusters" in config.data
-            assert "test-cluster-1" in config.data["clusters"]
+            assert result.exit_code == 0, f"Output: {result.output}"
+            assert "test-cluster-1" in result.output
         finally:
             os.chdir(original_cwd)
 
