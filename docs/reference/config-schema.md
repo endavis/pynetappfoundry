@@ -446,6 +446,139 @@ user, enc_password = config.get_user("clusters", "CLUSTER-PROD-01")
 
 ---
 
+## Environment Variables
+
+pynetappfoundry supports environment variables for overriding configuration values, particularly useful for CI/CD pipelines, containers, and secure credential management.
+
+### Available Environment Variables
+
+| Variable | Purpose | Example |
+|----------|---------|---------|
+| `NF_CONFIG_DIR` | Override the config directory path | `NF_CONFIG_DIR=/etc/pynetappfoundry` |
+| `NF_<CLUSTER>_USER` | Override username for a specific cluster | `NF_CLUSTER_PROD_01_USER=admin` |
+| `NF_<CLUSTER>_PASSWORD` | Override password for a specific cluster | `NF_CLUSTER_PROD_01_PASSWORD=base64encoded` |
+
+### Cluster Name Conversion
+
+Cluster names are converted to environment variable format by:
+1. Replacing hyphens (`-`) with underscores (`_`)
+2. Converting to uppercase
+3. Prefixing with `NF_`
+
+| Cluster Name | User Env Var | Password Env Var |
+|--------------|--------------|------------------|
+| `cluster-prod-01` | `NF_CLUSTER_PROD_01_USER` | `NF_CLUSTER_PROD_01_PASSWORD` |
+| `my-cluster` | `NF_MY_CLUSTER_USER` | `NF_MY_CLUSTER_PASSWORD` |
+| `simple` | `NF_SIMPLE_USER` | `NF_SIMPLE_PASSWORD` |
+
+### Credential Resolution Order
+
+Credentials are resolved in the following order (first found wins):
+
+1. **Environment variables** - `NF_<CLUSTER>_USER` and `NF_<CLUSTER>_PASSWORD`
+2. **Object-specific config** - `user` and `enc` fields in the cluster's data file entry
+3. **Default credentials** - `users.toml` defaults for the resource type
+
+### Example Usage
+
+```bash
+# Set credentials via environment variables
+export NF_CLUSTER_PROD_01_USER=admin
+export NF_CLUSTER_PROD_01_PASSWORD=$(echo -n 'mypassword' | base64)
+
+# Override config directory
+export NF_CONFIG_DIR=/path/to/custom/config
+
+# Run command - credentials will be used automatically
+nf licenses get -f '{"name": "cluster-prod-01"}'
+```
+
+### Docker/Container Usage
+
+```dockerfile
+ENV NF_CONFIG_DIR=/app/config
+ENV NF_CLUSTER_PROD_01_USER=admin
+ENV NF_CLUSTER_PROD_01_PASSWORD=YWRtaW5fcGFzc3dvcmQ=
+```
+
+### Security Notes
+
+- Environment variables take precedence over config files, allowing secure injection of credentials
+- Passwords must be base64 encoded (same format as the `enc` field in config files)
+- Use container secrets or CI/CD secret management for production deployments
+
+---
+
+## Configuration CLI Commands
+
+pynetappfoundry provides commands to inspect and validate your configuration.
+
+### nf config show
+
+Display the current loaded configuration.
+
+```bash
+# Show all configuration
+nf config show
+
+# Show only a specific section
+nf config show -s clusters
+nf config show -s settings
+nf config show -s users
+
+# Show with passwords unmasked (use with caution)
+nf config show --unmask
+```
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `-s, --section` | Show only a specific section (clusters, settings, users, etc.) |
+| `--unmask` | Show passwords and tokens unmasked (default: masked with `********`) |
+
+### nf config validate
+
+Validate configuration files and check for common issues.
+
+```bash
+nf config validate
+```
+
+**Checks performed:**
+
+- Configuration directory exists and is readable
+- Cluster definitions are valid against Pydantic models
+- User credentials are properly formatted
+- ONTAP API settings are configured
+- All clusters have valid credentials configured
+- Optional settings (DII API, SMTP, Licensing) are valid if present
+
+**Example output:**
+
+```
+Validating configuration in: /path/to/config
+
+Configuration Validation
+├── Clusters
+│   ├── cluster-prod-01
+│   └── cluster-dev-01
+├── Users
+│   └── clusters
+├── Settings
+│   ├── ONTAP API
+│   ├── DII API: Not configured (optional)
+│   ├── SMTP: Not configured (optional)
+│   └── Licensing: Not configured (optional)
+└── Cluster Credentials
+    ├── cluster-prod-01: admin
+    └── cluster-dev-01: admin
+
+Configuration is valid
+```
+
+---
+
 ## Complete Example
 
 ### Minimal Configuration
