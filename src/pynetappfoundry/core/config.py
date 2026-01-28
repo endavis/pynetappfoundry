@@ -413,6 +413,36 @@ class Config:
                         if key not in self.data[data_type][item]:
                             self.data[data_type][item][key] = ""
 
+    def get_relaxation_order(self, data_type: str) -> list[str]:
+        """Get the key relaxation order for find_closest searches.
+
+        The relaxation order determines which keys to remove first when
+        progressively relaxing search criteria in find_closest().
+
+        Priority:
+        1. Explicit 'relaxation_order' in settings for the data type
+        2. Reverse of 'searchable_keys' for the data type
+        3. Default fallback order
+
+        Args:
+            data_type: The data type to get relaxation order for.
+
+        Returns:
+            List of keys in order of relaxation (first key removed first).
+        """
+        default_order = ["region", "subapp", "cloud", "env", "app", "bu", "div"]
+        settings = self.settings.get("settings", {}).get(data_type, {})
+
+        # Check for explicit relaxation_order
+        if "relaxation_order" in settings:
+            return list(settings["relaxation_order"])
+
+        # Fall back to reverse of searchable_keys
+        if "searchable_keys" in settings:
+            return list(reversed(settings["searchable_keys"]))
+
+        return default_order
+
     def load_data(self, data: dict[str, Any]) -> None:
         """Load data sections from a parsed TOML.
 
@@ -544,6 +574,11 @@ class Config:
     def find_closest(self, data_type: str, tree: dict[str, str]) -> dict[str, Any] | None:
         """Find the closest matching item by progressively relaxing search criteria.
 
+        The order in which keys are relaxed (removed) is determined by:
+        1. Explicit 'relaxation_order' in settings for the data type
+        2. Reverse of 'searchable_keys' for the data type
+        3. Default fallback order
+
         Args:
             data_type: Type of data to search.
             tree: Dictionary of hierarchical search criteria.
@@ -555,8 +590,7 @@ class Config:
         logging.debug(f"{_file_name} :  {data_type = }")
         logging.debug(f"{_file_name} :  {tree = }")
         tree = tree.copy()
-        key_order = ["div", "bu", "app", "env", "subapp", "cloud", "region"]
-        key_order.reverse()
+        key_order = self.get_relaxation_order(data_type)
         found: dict[str, Any] | None = None
 
         # remove empty keys
