@@ -116,6 +116,46 @@ class SearchableKeysConfig(BaseModel):
     searchable_keys: list[str] = Field(default_factory=list)
 
 
+class RetryConfig(BaseModel):
+    """Configuration for HTTP retry behavior.
+
+    Attributes:
+        enabled: Whether retry is enabled. Default True.
+        max_attempts: Maximum number of retry attempts (1-10). Default 3.
+        initial_wait: Initial wait time in seconds before first retry. Default 1.0.
+        max_wait: Maximum wait time in seconds between retries. Default 60.0.
+        exponential_base: Base for exponential backoff calculation. Default 2.
+        retryable_status_codes: HTTP status codes that trigger a retry.
+        retry_on_connection_error: Whether to retry on connection errors. Default True.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    enabled: bool = True
+    max_attempts: int = Field(default=3, ge=1, le=10)
+    initial_wait: float = Field(default=1.0, ge=0.1)
+    max_wait: float = Field(default=60.0, ge=1.0)
+    exponential_base: int = Field(default=2, ge=2)
+    retryable_status_codes: list[int] = Field(default_factory=lambda: [429, 500, 502, 503, 504])
+    retry_on_connection_error: bool = True
+
+
+class ValidationConfig(BaseModel):
+    """Configuration for response validation behavior.
+
+    Attributes:
+        enabled: Whether validation is enabled. Default False (opt-in).
+        strict: If True, raise exception on validation failure. If False, log warning.
+        validate_success_only: Only validate 2xx responses. Default True.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    enabled: bool = False
+    strict: bool = False
+    validate_success_only: bool = True
+
+
 # Type aliases for collections
 ClusterCollection = dict[str, ClusterConfig]
 AIQUMCollection = dict[str, AIQUMConfig]
