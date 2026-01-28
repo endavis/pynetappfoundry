@@ -5,7 +5,13 @@ from __future__ import annotations
 import base64
 from typing import TYPE_CHECKING, Any
 
+import urllib3
+
 from pynetappfoundry.clients.openapi import APIWrapper
+
+# Suppress InsecureRequestWarning since we intentionally disable SSL verification
+# for ONTAP clusters with self-signed certificates
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 if TYPE_CHECKING:
     from pynetappfoundry.core.config import Config
