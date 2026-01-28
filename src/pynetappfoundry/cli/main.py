@@ -21,7 +21,8 @@ from pynetappfoundry.cli.commands.utils import utils
     "-c",
     type=click.Path(),
     default="config",
-    help="Configuration directory path.",
+    envvar="NF_CONFIG_DIR",
+    help="Configuration directory path. Can also be set via NF_CONFIG_DIR env var.",
 )
 @click.option(
     "--output-dir",

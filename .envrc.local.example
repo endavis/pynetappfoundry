@@ -2,6 +2,9 @@
 # Copy this file to .envrc.local and customize as needed
 # .envrc.local is git-ignored and will not be committed
 
+# Example: Use a different config directory for nf CLI
+# export NF_CONFIG_DIR="/path/to/my/config"
+
 # Example: Enable debug mode
 # export DEBUG=true
 
