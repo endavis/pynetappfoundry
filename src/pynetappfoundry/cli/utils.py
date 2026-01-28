@@ -2,10 +2,25 @@
 
 from __future__ import annotations
 
+import traceback
+
+import click
 from rich.console import Console
 from rich.table import Table
 
 console = Console()
+
+
+def is_debug_mode() -> bool:
+    """Check if debug mode is enabled.
+
+    Returns:
+        True if debug mode is enabled in the current Click context.
+    """
+    ctx = click.get_current_context(silent=True)
+    if ctx and ctx.obj:
+        return bool(ctx.obj.get("debug", False))
+    return False
 
 
 def print_table(
@@ -64,3 +79,16 @@ def print_info(message: str) -> None:
         message: Message to print.
     """
     console.print(f"[blue]{message}[/blue]")
+
+
+def print_exception(message: str, exc: BaseException | None = None) -> None:
+    """Print an error message with optional traceback in debug mode.
+
+    Args:
+        message: Error message to print.
+        exc: Exception to include. If provided and debug mode is enabled,
+             the full traceback will be printed.
+    """
+    console.print(f"[red]{message}[/red]")
+    if exc and is_debug_mode():
+        console.print("[dim]" + "".join(traceback.format_exception(exc)) + "[/dim]")

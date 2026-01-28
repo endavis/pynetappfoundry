@@ -9,7 +9,7 @@ from rich.console import Console
 from rich.table import Table
 
 from pynetappfoundry.cache import ClusterMetadataDB
-from pynetappfoundry.cli.utils import print_error, print_warning
+from pynetappfoundry.cli.utils import print_error, print_exception, print_warning
 from pynetappfoundry.core.config import Config
 
 console = Console()
@@ -46,7 +46,7 @@ def status(ctx: click.Context, ttl: int) -> None:
     try:
         config = Config(config_dir=config_dir, script_name="cache-status")
     except Exception as e:
-        print_error(f"Failed to load configuration: {e}")
+        print_exception(f"Failed to load configuration: {e}", e)
         ctx.exit(1)
 
     db = ClusterMetadataDB(config=config)
