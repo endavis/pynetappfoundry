@@ -21,6 +21,7 @@ pynetappfoundry provides a comprehensive Python library and command-line interfa
 
 - [Installation Guide](getting-started/installation.md)
 - [Usage Guide](usage/basics.md)
+- [Configuration Schema](reference/config-schema.md)
 - [CLI Reference](reference/cli.md)
 - [API Reference](reference/api.md)
 - [Contributing](https://github.com/endavis/pynetappfoundry/blob/main/.github/CONTRIBUTING.md)
@@ -64,6 +65,7 @@ client = ONTAPAPIClient(config, "cluster1")
 
 - **[Installation](getting-started/installation.md)** - How to install the package
 - **[Usage Guide](usage/basics.md)** - How to use the package
+- **[Configuration Schema](reference/config-schema.md)** - Complete TOML configuration reference
 - **[CLI Reference](reference/cli.md)** - Command-line interface documentation
 - **[API Reference](reference/api.md)** - Python API documentation
 
