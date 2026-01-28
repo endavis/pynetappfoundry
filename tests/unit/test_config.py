@@ -7,6 +7,12 @@ from pathlib import Path
 import pytest
 
 from pynetappfoundry.core.config import Config, ConfigurationError
+from pynetappfoundry.core.models import (
+    DIIAPISettings,
+    LicensingSettings,
+    ONTAPAPISettings,
+    SMTPSettings,
+)
 
 
 @pytest.fixture
@@ -382,3 +388,311 @@ class TestCount:
         count = config_instance.count("clusters", "bu")
         # Engineering and Finance = 2 unique values
         assert count == 2
+
+
+class TestGetSetting:
+    """Tests for get_setting accessor method."""
+
+    def test_get_setting_single_key(self, config_instance: Config) -> None:
+        """Test get_setting with a single key."""
+        result = config_instance.get_setting("settings")
+        assert isinstance(result, dict)
+        assert "ontapapi" in result
+
+    def test_get_setting_nested_keys(self, config_instance: Config) -> None:
+        """Test get_setting with nested keys."""
+        result = config_instance.get_setting("settings", "ontapapi", "general", "base_api_path")
+        assert result == "/api"
+
+    def test_get_setting_with_default(self, config_instance: Config) -> None:
+        """Test get_setting returns default for missing key."""
+        result = config_instance.get_setting("nonexistent", default="default_value")
+        assert result == "default_value"
+
+    def test_get_setting_missing_key_raises(self, config_instance: Config) -> None:
+        """Test get_setting raises ConfigurationError for missing key."""
+        with pytest.raises(ConfigurationError) as exc_info:
+            config_instance.get_setting("nonexistent", "key")
+        assert "Missing configuration key" in str(exc_info.value)
+        assert "nonexistent" in str(exc_info.value)
+
+    def test_get_setting_nested_missing_key_raises(self, config_instance: Config) -> None:
+        """Test get_setting raises ConfigurationError for missing nested key."""
+        with pytest.raises(ConfigurationError) as exc_info:
+            config_instance.get_setting("settings", "nonexistent")
+        assert "Missing configuration key" in str(exc_info.value)
+        assert "settings.nonexistent" in str(exc_info.value)
+
+    def test_get_setting_non_dict_access_raises(
+        self, temp_config_dir: Path, tmp_path: Path
+    ) -> None:
+        """Test get_setting raises ConfigurationError when accessing non-dict."""
+        # Create a settings file with a scalar value
+        settings_toml = temp_config_dir / "scalar.toml"
+        settings_toml.write_text("""
+value = "scalar_string"
+""")
+        import os
+
+        original_cwd = os.getcwd()
+        os.chdir(tmp_path)
+        try:
+            output_dir = tmp_path / "output"
+            output_dir.mkdir(exist_ok=True)
+            config = Config(
+                config_dir=str(temp_config_dir),
+                output_dir=str(output_dir),
+                script_name="test_script",
+            )
+            with pytest.raises(ConfigurationError) as exc_info:
+                config.get_setting("scalar", "value", "nested")
+            assert "Cannot access" in str(exc_info.value)
+        finally:
+            os.chdir(original_cwd)
+
+
+class TestGetSmtpSettings:
+    """Tests for get_smtp_settings accessor method."""
+
+    def test_get_smtp_settings_success(self, temp_config_dir: Path, tmp_path: Path) -> None:
+        """Test get_smtp_settings returns SMTPSettings object."""
+        # SMTP settings go in settings.toml under [SMTP] section
+        # which becomes config.settings["settings"]["SMTP"]
+        smtp_toml = temp_config_dir / "settings.toml"
+        smtp_toml.write_text("""
+[SMTP]
+server = "smtp.example.com"
+port = 587
+user = "smtp_user"
+password = "smtp_pass"
+auth = "True"
+""")
+        import os
+
+        original_cwd = os.getcwd()
+        os.chdir(tmp_path)
+        try:
+            output_dir = tmp_path / "output"
+            output_dir.mkdir(exist_ok=True)
+            config = Config(
+                config_dir=str(temp_config_dir),
+                output_dir=str(output_dir),
+                script_name="test_script",
+            )
+            result = config.get_smtp_settings()
+            assert isinstance(result, SMTPSettings)
+            assert result.server == "smtp.example.com"
+            assert result.port == 587
+            assert result.user == "smtp_user"
+            assert result.password == "smtp_pass"
+            assert result.auth == "True"
+        finally:
+            os.chdir(original_cwd)
+
+    def test_get_smtp_settings_missing_raises(self, temp_config_dir: Path, tmp_path: Path) -> None:
+        """Test get_smtp_settings raises ConfigurationError when not configured."""
+        # Remove settings.toml to ensure no SMTP config exists
+        settings_file = temp_config_dir / "settings.toml"
+        settings_file.write_text("""
+[other]
+key = "value"
+""")
+        import os
+
+        original_cwd = os.getcwd()
+        os.chdir(tmp_path)
+        try:
+            output_dir = tmp_path / "output"
+            output_dir.mkdir(exist_ok=True)
+            config = Config(
+                config_dir=str(temp_config_dir),
+                output_dir=str(output_dir),
+                script_name="test_script",
+            )
+            with pytest.raises(ConfigurationError) as exc_info:
+                config.get_smtp_settings()
+            assert "SMTP" in str(exc_info.value) or "Missing configuration" in str(exc_info.value)
+        finally:
+            os.chdir(original_cwd)
+
+
+class TestGetOntapApiSettings:
+    """Tests for get_ontap_api_settings accessor method."""
+
+    def test_get_ontap_api_settings_success(self, temp_config_dir: Path, tmp_path: Path) -> None:
+        """Test get_ontap_api_settings returns ONTAPAPISettings object."""
+        # ONTAP API settings go in ontapapi.toml under [general] section
+        # which becomes config.settings["ontapapi"]["general"]
+        ontapapi_toml = temp_config_dir / "ontapapi.toml"
+        ontapapi_toml.write_text("""
+[general]
+base_api_path = "/api"
+""")
+        import os
+
+        original_cwd = os.getcwd()
+        os.chdir(tmp_path)
+        try:
+            output_dir = tmp_path / "output"
+            output_dir.mkdir(exist_ok=True)
+            config = Config(
+                config_dir=str(temp_config_dir),
+                output_dir=str(output_dir),
+                script_name="test_script",
+            )
+            result = config.get_ontap_api_settings()
+            assert isinstance(result, ONTAPAPISettings)
+            assert result.base_api_path == "/api"
+        finally:
+            os.chdir(original_cwd)
+
+    def test_get_ontap_api_settings_missing_raises(
+        self, temp_config_dir: Path, tmp_path: Path
+    ) -> None:
+        """Test get_ontap_api_settings raises ConfigurationError when not configured."""
+        # Create config without ontapapi settings
+        settings_file = temp_config_dir / "settings.toml"
+        settings_file.write_text("""
+[other]
+key = "value"
+""")
+        import os
+
+        original_cwd = os.getcwd()
+        os.chdir(tmp_path)
+        try:
+            output_dir = tmp_path / "output"
+            output_dir.mkdir(exist_ok=True)
+            config = Config(
+                config_dir=str(temp_config_dir),
+                output_dir=str(output_dir),
+                script_name="test_script",
+            )
+            with pytest.raises(ConfigurationError) as exc_info:
+                config.get_ontap_api_settings()
+            assert "ontapapi" in str(exc_info.value) or "Missing configuration" in str(
+                exc_info.value
+            )
+        finally:
+            os.chdir(original_cwd)
+
+
+class TestGetDiiApiSettings:
+    """Tests for get_dii_api_settings accessor method."""
+
+    def test_get_dii_api_settings_success(self, temp_config_dir: Path, tmp_path: Path) -> None:
+        """Test get_dii_api_settings returns DIIAPISettings object."""
+        # DII API settings go in diiapi.toml under [general] section
+        # which becomes config.settings["diiapi"]["general"]
+        diiapi_toml = temp_config_dir / "diiapi.toml"
+        diiapi_toml.write_text("""
+[general]
+api_ro_token = "test_token"
+base_url = "https://dii.example.com"
+base_api_path = "/rest/v1"
+""")
+        import os
+
+        original_cwd = os.getcwd()
+        os.chdir(tmp_path)
+        try:
+            output_dir = tmp_path / "output"
+            output_dir.mkdir(exist_ok=True)
+            config = Config(
+                config_dir=str(temp_config_dir),
+                output_dir=str(output_dir),
+                script_name="test_script",
+            )
+            result = config.get_dii_api_settings()
+            assert isinstance(result, DIIAPISettings)
+            assert result.api_ro_token == "test_token"
+            assert result.base_url == "https://dii.example.com"
+            assert result.base_api_path == "/rest/v1"
+        finally:
+            os.chdir(original_cwd)
+
+    def test_get_dii_api_settings_missing_raises(
+        self, temp_config_dir: Path, tmp_path: Path
+    ) -> None:
+        """Test get_dii_api_settings raises ConfigurationError when not configured."""
+        settings_file = temp_config_dir / "settings.toml"
+        settings_file.write_text("""
+[other]
+key = "value"
+""")
+        import os
+
+        original_cwd = os.getcwd()
+        os.chdir(tmp_path)
+        try:
+            output_dir = tmp_path / "output"
+            output_dir.mkdir(exist_ok=True)
+            config = Config(
+                config_dir=str(temp_config_dir),
+                output_dir=str(output_dir),
+                script_name="test_script",
+            )
+            with pytest.raises(ConfigurationError) as exc_info:
+                config.get_dii_api_settings()
+            assert "diiapi" in str(exc_info.value) or "Missing configuration" in str(exc_info.value)
+        finally:
+            os.chdir(original_cwd)
+
+
+class TestGetLicensingSettings:
+    """Tests for get_licensing_settings accessor method."""
+
+    def test_get_licensing_settings_success(self, temp_config_dir: Path, tmp_path: Path) -> None:
+        """Test get_licensing_settings returns LicensingSettings object."""
+        # Licensing settings go in settings.toml under [licensing] section
+        # which becomes config.settings["settings"]["licensing"]
+        settings_toml = temp_config_dir / "settings.toml"
+        settings_toml.write_text("""
+[licensing]
+mailfrom = "from@example.com"
+mailto = "to@example.com"
+""")
+        import os
+
+        original_cwd = os.getcwd()
+        os.chdir(tmp_path)
+        try:
+            output_dir = tmp_path / "output"
+            output_dir.mkdir(exist_ok=True)
+            config = Config(
+                config_dir=str(temp_config_dir),
+                output_dir=str(output_dir),
+                script_name="test_script",
+            )
+            result = config.get_licensing_settings()
+            assert isinstance(result, LicensingSettings)
+            assert result.mailfrom == "from@example.com"
+            assert result.mailto == "to@example.com"
+        finally:
+            os.chdir(original_cwd)
+
+    def test_get_licensing_settings_missing_returns_none(
+        self, temp_config_dir: Path, tmp_path: Path
+    ) -> None:
+        """Test get_licensing_settings returns None when not configured."""
+        settings_file = temp_config_dir / "settings.toml"
+        settings_file.write_text("""
+[other]
+key = "value"
+""")
+        import os
+
+        original_cwd = os.getcwd()
+        os.chdir(tmp_path)
+        try:
+            output_dir = tmp_path / "output"
+            output_dir.mkdir(exist_ok=True)
+            config = Config(
+                config_dir=str(temp_config_dir),
+                output_dir=str(output_dir),
+                script_name="test_script",
+            )
+            result = config.get_licensing_settings()
+            assert result is None
+        finally:
+            os.chdir(original_cwd)

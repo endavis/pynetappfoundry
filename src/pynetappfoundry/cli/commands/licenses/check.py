@@ -182,10 +182,9 @@ def _send_license_email(
     issues: list[dict[str, Any]],
 ) -> None:
     """Send email about license issues."""
-    mailfrom = config.settings.get("settings", {}).get("licensing", {}).get("mailfrom")
-    mailto = config.settings.get("settings", {}).get("licensing", {}).get("mailto")
+    licensing_settings = config.get_licensing_settings()
 
-    if not mailfrom or not mailto:
+    if not licensing_settings:
         logging.warning("Email settings not configured, skipping notification")
         return
 
@@ -205,7 +204,7 @@ def _send_license_email(
         subject=f"{datetime.now().date()} : Licensing issues found",
         body="\n".join(html_body),
         body_type="html",
-        mailfrom=mailfrom,
-        mailto=mailto,
+        mailfrom=licensing_settings.mailfrom,
+        mailto=licensing_settings.mailto,
         high_priority=True,
     )
