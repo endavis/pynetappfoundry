@@ -36,11 +36,12 @@ def send_email(
         high_priority: If True, mark email as high priority.
     """
     # Email configuration
-    smtp_server = config.settings["settings"]["SMTP"]["server"]
-    smtp_port = int(config.settings["settings"]["SMTP"]["port"])
-    smtp_user = config.settings["settings"]["SMTP"]["user"]
-    smtp_password = config.settings["settings"]["SMTP"]["password"]
-    auth = config.settings["settings"]["SMTP"]["auth"]
+    smtp_settings = config.get_smtp_settings()
+    smtp_server = smtp_settings.server
+    smtp_port = smtp_settings.port
+    smtp_user = smtp_settings.user
+    smtp_password = smtp_settings.password
+    auth = smtp_settings.auth
 
     if not mailto:
         logging.error(f"{_file_name} : No To Email address specified")

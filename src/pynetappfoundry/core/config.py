@@ -44,9 +44,18 @@ import logging
 import os
 import tomllib
 from pathlib import Path
-from typing import Any
+from typing import Any, TypeVar
+
+from pynetappfoundry.core.models import (
+    DIIAPISettings,
+    LicensingSettings,
+    ONTAPAPISettings,
+    SMTPSettings,
+)
 
 _file_name = Path(__file__).name
+
+T = TypeVar("T")
 
 
 class ConfigurationError(Exception):
@@ -107,6 +116,133 @@ class Config:
             Path to the API schema directory.
         """
         return Path(self.config_dir / "apis" / api_name)
+
+    def get_setting(self, *keys: str, default: T | None = None) -> Any | T | None:
+        """Get a nested setting value with a clear error message if not found.
+
+        This method provides safe access to nested configuration values,
+        avoiding KeyError exceptions with unhelpful messages.
+
+        Args:
+            *keys: Sequence of keys to traverse (e.g., 'ontapapi', 'general', 'base_api_path').
+            default: Value to return if the key path doesn't exist. If None and key is missing,
+                     raises ConfigurationError.
+
+        Returns:
+            The value at the specified key path, or the default value.
+
+        Raises:
+            ConfigurationError: If the key path doesn't exist and no default is provided.
+
+        Example:
+            >>> config.get_setting('ontapapi', 'general', 'base_api_path')
+            '/api'
+            >>> config.get_setting('missing', 'key', default='/default')
+            '/default'
+        """
+        current: Any = self.settings
+        path_so_far: list[str] = []
+
+        for key in keys:
+            path_so_far.append(key)
+            if not isinstance(current, dict):
+                if default is not None:
+                    return default
+                raise ConfigurationError(
+                    f"Cannot access '{key}' in non-dict value at "
+                    f"'{'.'.join(path_so_far[:-1])}'. "
+                    "Check your configuration files."
+                )
+            if key not in current:
+                if default is not None:
+                    return default
+                raise ConfigurationError(
+                    f"Missing configuration key '{'.'.join(path_so_far)}'. "
+                    f"Available keys at '{'.'.join(path_so_far[:-1]) or 'root'}': "
+                    f"{list(current.keys())}. "
+                    "Check your configuration files."
+                )
+            current = current[key]
+
+        return current
+
+    def get_smtp_settings(self) -> SMTPSettings:
+        """Get SMTP settings for sending emails.
+
+        Returns:
+            SMTPSettings object with server configuration.
+
+        Raises:
+            ConfigurationError: If SMTP settings are not configured.
+        """
+        try:
+            smtp_data = self.get_setting("settings", "SMTP")
+            return SMTPSettings.model_validate(smtp_data)
+        except ConfigurationError:
+            raise
+        except Exception as e:
+            raise ConfigurationError(
+                f"Invalid SMTP configuration: {e}. "
+                "Ensure settings.toml has a valid [settings.SMTP] section with "
+                "'server', 'port', 'user', 'password', and 'auth' fields."
+            ) from e
+
+    def get_ontap_api_settings(self) -> ONTAPAPISettings:
+        """Get ONTAP REST API settings.
+
+        Returns:
+            ONTAPAPISettings object with API configuration.
+
+        Raises:
+            ConfigurationError: If ONTAP API settings are not configured.
+        """
+        try:
+            ontap_data = self.get_setting("ontapapi", "general")
+            return ONTAPAPISettings.model_validate(ontap_data)
+        except ConfigurationError:
+            raise
+        except Exception as e:
+            raise ConfigurationError(
+                f"Invalid ONTAP API configuration: {e}. "
+                "Ensure settings.toml has a valid [ontapapi.general] section "
+                "with 'base_api_path' field."
+            ) from e
+
+    def get_dii_api_settings(self) -> DIIAPISettings:
+        """Get Data Infrastructure Insights API settings.
+
+        Returns:
+            DIIAPISettings object with API configuration.
+
+        Raises:
+            ConfigurationError: If DII API settings are not configured.
+        """
+        try:
+            dii_data = self.get_setting("diiapi", "general")
+            return DIIAPISettings.model_validate(dii_data)
+        except ConfigurationError:
+            raise
+        except Exception as e:
+            raise ConfigurationError(
+                f"Invalid DII API configuration: {e}. "
+                "Ensure settings.toml has a valid [diiapi.general] section with "
+                "'api_ro_token', 'base_url', and 'base_api_path' fields."
+            ) from e
+
+    def get_licensing_settings(self) -> LicensingSettings | None:
+        """Get licensing notification settings.
+
+        Returns:
+            LicensingSettings object if configured, None otherwise.
+        """
+        try:
+            licensing_data = self.get_setting("settings", "licensing")
+            return LicensingSettings.model_validate(licensing_data)
+        except ConfigurationError:
+            return None
+        except Exception as e:
+            logging.warning(f"Invalid licensing configuration: {e}")
+            return None
 
     def parse_data(self) -> None:
         """Parse all TOML files in the config directory."""

@@ -34,10 +34,11 @@ class ONTAPAPIClient(APIWrapper):
         b64string = base64.b64encode(f"{user}:{enc}".encode("ascii"))
         auth_header = {"authorization": f"Basic {b64string.decode()}"}
 
+        ontap_settings = config.get_ontap_api_settings()
         super().__init__(
             api_json_file=str(config.get_schema_location("ontap") / "all.json"),
             base_url=f"https://{cluster.ip}",
             auth_header=auth_header,
-            base_api_path=self.config.settings["ontapapi"]["general"]["base_api_path"],
+            base_api_path=ontap_settings.base_api_path,
             **kwargs,
         )
