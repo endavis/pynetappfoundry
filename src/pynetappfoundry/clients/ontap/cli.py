@@ -184,7 +184,11 @@ class ONTAPCLI:
 
         stdin, stdout, _stderr = self.cli.exec_command(f"{cmd} {arguments}")
 
-        for line in stdout:
+        # Read raw bytes and decode with error handling for non-UTF-8 characters
+        raw_output = stdout.read()
+        decoded_output = raw_output.decode("utf-8", errors="replace")
+
+        for line in decoded_output.splitlines():
             line = line.rstrip()
             logging.info(line)
             if not line or line == "\x07":
