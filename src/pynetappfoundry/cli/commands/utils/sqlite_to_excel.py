@@ -8,7 +8,7 @@ from pathlib import Path
 import click
 from openpyxl import Workbook
 
-from pynetappfoundry.cli.utils import print_error, print_info, print_success
+from pynetappfoundry.cli.utils import print_error, print_exception, print_info, print_success
 
 
 @click.command("sqlite-to-excel")
@@ -73,4 +73,4 @@ def sqlite_to_excel(db_path: str, output: str | None) -> None:
         print_success(f"Saved to {output_file}")
 
     except Exception as e:
-        print_error(f"Conversion failed: {e}")
+        print_exception(f"Conversion failed: {e}", e)

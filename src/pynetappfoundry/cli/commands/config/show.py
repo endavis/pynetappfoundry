@@ -10,7 +10,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.tree import Tree
 
-from pynetappfoundry.cli.utils import print_error
+from pynetappfoundry.cli.utils import print_error, print_exception
 from pynetappfoundry.core.config import Config
 
 console = Console()
@@ -146,7 +146,7 @@ def show(ctx: click.Context, section: str | None, unmask: bool) -> None:
     try:
         config = Config(config_dir=config_dir, script_name="config-show")
     except Exception as e:
-        print_error(f"Failed to load configuration: {e}")
+        print_exception(f"Failed to load configuration: {e}", e)
         ctx.exit(1)
 
     console.print(f"\nConfiguration from: [cyan]{config_path}[/cyan]\n")

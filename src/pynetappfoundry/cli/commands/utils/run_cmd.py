@@ -8,7 +8,7 @@ from typing import Any
 import click
 
 from pynetappfoundry.cli.decorators import with_config
-from pynetappfoundry.cli.utils import console, print_error, print_info
+from pynetappfoundry.cli.utils import console, print_exception, print_info
 from pynetappfoundry.clients.ontap.cli import ONTAPCLI
 from pynetappfoundry.core.config import Config
 
@@ -64,5 +64,5 @@ def _run_cluster_command(
             console.print(f"  {line}")
 
     except Exception as e:
-        logging.error(f"Could not run command on {name}: {e}")
-        print_error(f"  Error: {e}")
+        logging.exception(f"Could not run command on {name}: {e}")
+        print_exception(f"  Error: {e}", e)
