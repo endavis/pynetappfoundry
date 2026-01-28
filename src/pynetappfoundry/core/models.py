@@ -163,7 +163,7 @@ class CacheConfig(BaseModel):
 
     Attributes:
         cache_dir: Override cache directory location. If empty, uses default
-                   ({data_dir}/cache).
+                   ({config_dir}/.cache).
         cache_ttl_days: Number of days before cache is considered stale.
                         Used for warnings, not automatic refresh.
         auto_warn_stale: Warn when cached data is stale. Default True.

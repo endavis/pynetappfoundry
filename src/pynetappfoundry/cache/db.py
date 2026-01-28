@@ -65,7 +65,7 @@ class ClusterMetadataDB:
         if db_path:
             self.db_path = db_path
         elif config:
-            cache_dir = config.data_dir / "cache"
+            cache_dir = config.config_dir / ".cache"
             cache_dir.mkdir(parents=True, exist_ok=True)
             self.db_path = cache_dir / "cluster_metadata.db"
         else:
