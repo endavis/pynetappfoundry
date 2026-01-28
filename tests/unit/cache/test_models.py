@@ -1,0 +1,512 @@
+"""Tests for cache Pydantic models."""
+
+from __future__ import annotations
+
+from datetime import UTC, datetime, timedelta
+
+from pynetappfoundry.cache.models import (
+    AggregateInfo,
+    BroadcastDomain,
+    CachedClusterMetadata,
+    CapacityLicense,
+    CloudMetadata,
+    ClusterInfo,
+    ClusterPeer,
+    HAInfo,
+    LicenseFeature,
+    LicenseInfo,
+    NetworkInfo,
+    NetworkLIF,
+    NodeInfo,
+    RelationshipsInfo,
+    SnapMirrorRelationship,
+    StorageInfo,
+    SVMInfo,
+)
+
+
+class TestCloudMetadata:
+    """Tests for CloudMetadata model."""
+
+    def test_default_values(self) -> None:
+        """Test that all fields have empty string defaults."""
+        cloud = CloudMetadata()
+        assert cloud.instance_id == ""
+        assert cloud.provider == ""
+        assert cloud.region == ""
+        assert cloud.availability_zone == ""
+
+    def test_aws_metadata(self) -> None:
+        """Test AWS-specific fields."""
+        cloud = CloudMetadata(
+            instance_id="i-0abc123def456",
+            account_id="123456789012",
+            instance_type="m5.2xlarge",
+            region="us-east-1",
+            provider="AWS",
+            availability_zone="us-east-1a",
+            availability_zone_id="use1-az1",
+        )
+        assert cloud.provider == "AWS"
+        assert cloud.instance_id == "i-0abc123def456"
+        assert cloud.availability_zone == "us-east-1a"
+
+    def test_azure_metadata(self) -> None:
+        """Test Azure-specific fields."""
+        cloud = CloudMetadata(
+            instance_id="azure-vm-123",
+            provider="Azure",
+            region="eastus",
+            fault_domain="0",
+            update_domain="1",
+            resource_group_name="rg-storage",
+            offer="netapp-ontap-cloud",
+            sku="standard",
+        )
+        assert cloud.provider == "Azure"
+        assert cloud.fault_domain == "0"
+        assert cloud.resource_group_name == "rg-storage"
+
+    def test_extra_fields_allowed(self) -> None:
+        """Test that extra fields are allowed."""
+        cloud = CloudMetadata(
+            provider="GCP",
+            custom_field="custom_value",
+        )
+        assert cloud.custom_field == "custom_value"  # type: ignore[attr-defined]
+
+
+class TestClusterInfo:
+    """Tests for ClusterInfo model."""
+
+    def test_default_values(self) -> None:
+        """Test default empty values."""
+        cluster = ClusterInfo()
+        assert cluster.cluster_name == ""
+        assert cluster.cluster_uuid == ""
+        assert cluster.ontap_version == ""
+
+    def test_with_values(self) -> None:
+        """Test with cluster data."""
+        cluster = ClusterInfo(
+            cluster_name="mycluster",
+            cluster_uuid="abc-123-def-456",
+            ontap_version="NetApp Release 9.14.1",
+            model="SIMULATED",
+        )
+        assert cluster.cluster_name == "mycluster"
+        assert cluster.cluster_uuid == "abc-123-def-456"
+        assert "9.14.1" in cluster.ontap_version
+
+
+class TestNodeInfo:
+    """Tests for NodeInfo model."""
+
+    def test_default_values(self) -> None:
+        """Test default values."""
+        node = NodeInfo()
+        assert node.name == ""
+        assert node.serial_number == ""
+        assert node.uptime == 0
+        assert node.is_epsilon is False
+
+    def test_with_values(self) -> None:
+        """Test with node data."""
+        node = NodeInfo(
+            name="node1",
+            serial_number="123456789",
+            system_id="0123456789",
+            model="SIMULATED",
+            uptime=86400,
+            is_epsilon=True,
+        )
+        assert node.name == "node1"
+        assert node.serial_number == "123456789"
+        assert node.uptime == 86400
+        assert node.is_epsilon is True
+
+
+class TestNetworkLIF:
+    """Tests for NetworkLIF model."""
+
+    def test_default_values(self) -> None:
+        """Test default values."""
+        lif = NetworkLIF()
+        assert lif.name == ""
+        assert lif.ip_address == ""
+
+    def test_with_values(self) -> None:
+        """Test with LIF data."""
+        lif = NetworkLIF(
+            name="data_lif1",
+            ip_address="10.0.0.10",
+            netmask="255.255.255.0",
+            home_node="node1",
+            home_port="e0d",
+            operational_status="up",
+            role="data",
+            svm="svm1",
+        )
+        assert lif.name == "data_lif1"
+        assert lif.ip_address == "10.0.0.10"
+        assert lif.role == "data"
+
+
+class TestBroadcastDomain:
+    """Tests for BroadcastDomain model."""
+
+    def test_default_values(self) -> None:
+        """Test default values."""
+        bd = BroadcastDomain()
+        assert bd.name == ""
+        assert bd.ports == []
+
+    def test_with_values(self) -> None:
+        """Test with broadcast domain data."""
+        bd = BroadcastDomain(
+            name="Default",
+            ipspace="Default",
+            mtu=1500,
+            ports=["node1:e0c", "node1:e0d"],
+        )
+        assert bd.name == "Default"
+        assert len(bd.ports) == 2
+
+
+class TestNetworkInfo:
+    """Tests for NetworkInfo model."""
+
+    def test_default_values(self) -> None:
+        """Test default values."""
+        network = NetworkInfo()
+        assert network.intercluster_lifs == []
+        assert network.data_lifs == []
+        assert network.ipspaces == []
+
+    def test_with_lifs(self) -> None:
+        """Test with LIF data."""
+        lif = NetworkLIF(name="ic_lif1", ip_address="10.0.1.1")
+        network = NetworkInfo(
+            intercluster_lifs=[lif],
+            ipspaces=["Default", "Cluster"],
+        )
+        assert len(network.intercluster_lifs) == 1
+        assert network.intercluster_lifs[0].name == "ic_lif1"
+
+
+class TestAggregateInfo:
+    """Tests for AggregateInfo model."""
+
+    def test_default_values(self) -> None:
+        """Test default values."""
+        aggr = AggregateInfo()
+        assert aggr.name == ""
+        assert aggr.total_size == 0
+
+    def test_with_values(self) -> None:
+        """Test with aggregate data."""
+        aggr = AggregateInfo(
+            name="aggr1",
+            node="node1",
+            state="online",
+            type="ssd",
+            total_size=1099511627776,  # 1TB
+            used_size=549755813888,  # 500GB
+        )
+        assert aggr.name == "aggr1"
+        assert aggr.total_size == 1099511627776
+
+
+class TestSVMInfo:
+    """Tests for SVMInfo model."""
+
+    def test_default_values(self) -> None:
+        """Test default values."""
+        svm = SVMInfo()
+        assert svm.name == ""
+        assert svm.state == ""
+
+    def test_with_values(self) -> None:
+        """Test with SVM data."""
+        svm = SVMInfo(
+            name="svm1",
+            state="running",
+            subtype="default",
+            root_volume="svm1_root",
+            root_volume_aggregate="aggr1",
+        )
+        assert svm.name == "svm1"
+        assert svm.state == "running"
+
+
+class TestStorageInfo:
+    """Tests for StorageInfo model."""
+
+    def test_default_values(self) -> None:
+        """Test default values."""
+        storage = StorageInfo()
+        assert storage.aggregates == []
+        assert storage.svms == []
+
+    def test_with_data(self) -> None:
+        """Test with storage data."""
+        aggr = AggregateInfo(name="aggr1")
+        svm = SVMInfo(name="svm1")
+        storage = StorageInfo(aggregates=[aggr], svms=[svm])
+        assert len(storage.aggregates) == 1
+        assert len(storage.svms) == 1
+
+
+class TestLicenseFeature:
+    """Tests for LicenseFeature model."""
+
+    def test_with_values(self) -> None:
+        """Test with license data."""
+        license = LicenseFeature(
+            name="NFS",
+            state="compliant",
+            scope="cluster",
+        )
+        assert license.name == "NFS"
+        assert license.state == "compliant"
+
+
+class TestCapacityLicense:
+    """Tests for CapacityLicense model."""
+
+    def test_with_values(self) -> None:
+        """Test with capacity license data."""
+        cap = CapacityLicense(
+            name="Cloud Volumes ONTAP",
+            licensed_capacity=109951162777600,  # 100TB
+            used_capacity=54975581388800,  # 50TB
+        )
+        assert cap.licensed_capacity == 109951162777600
+        assert cap.used_capacity == 54975581388800
+
+
+class TestLicenseInfo:
+    """Tests for LicenseInfo model."""
+
+    def test_default_values(self) -> None:
+        """Test default values."""
+        licenses = LicenseInfo()
+        assert licenses.feature_licenses == []
+        assert licenses.capacity_licenses == []
+
+    def test_with_data(self) -> None:
+        """Test with license data."""
+        feature = LicenseFeature(name="NFS", state="compliant", scope="cluster")
+        capacity = CapacityLicense(name="CVO", licensed_capacity=100)
+        licenses = LicenseInfo(
+            feature_licenses=[feature],
+            capacity_licenses=[capacity],
+        )
+        assert len(licenses.feature_licenses) == 1
+        assert len(licenses.capacity_licenses) == 1
+
+
+class TestHAInfo:
+    """Tests for HAInfo model."""
+
+    def test_default_values(self) -> None:
+        """Test default values."""
+        ha = HAInfo()
+        assert ha.is_ha is False
+        assert ha.partner_node == ""
+
+    def test_ha_enabled(self) -> None:
+        """Test HA enabled configuration."""
+        ha = HAInfo(
+            is_ha=True,
+            partner_node="node2",
+            ha_state="connected",
+            takeover_state="none",
+            mediator_address="10.0.0.100",
+            mediator_status="connected",
+        )
+        assert ha.is_ha is True
+        assert ha.partner_node == "node2"
+        assert ha.mediator_address == "10.0.0.100"
+
+
+class TestSnapMirrorRelationship:
+    """Tests for SnapMirrorRelationship model."""
+
+    def test_default_values(self) -> None:
+        """Test default values."""
+        sm = SnapMirrorRelationship()
+        assert sm.source_path == ""
+        assert sm.healthy is True
+
+    def test_with_values(self) -> None:
+        """Test with relationship data."""
+        sm = SnapMirrorRelationship(
+            source_path="svm1:vol1",
+            destination_path="svm2:vol1_dp",
+            relationship_type="extended_data_protection",
+            state="snapmirrored",
+            healthy=True,
+            lag_time="PT0H5M30S",
+        )
+        assert sm.source_path == "svm1:vol1"
+        assert sm.state == "snapmirrored"
+
+
+class TestClusterPeer:
+    """Tests for ClusterPeer model."""
+
+    def test_default_values(self) -> None:
+        """Test default values."""
+        peer = ClusterPeer()
+        assert peer.name == ""
+        assert peer.peer_addresses == []
+
+    def test_with_values(self) -> None:
+        """Test with peer data."""
+        peer = ClusterPeer(
+            name="peer1",
+            uuid="abc-123",
+            remote_cluster_name="remote-cluster",
+            peer_addresses=["10.0.1.1", "10.0.1.2"],
+            authentication_state="ok",
+            availability="available",
+        )
+        assert peer.remote_cluster_name == "remote-cluster"
+        assert len(peer.peer_addresses) == 2
+
+
+class TestRelationshipsInfo:
+    """Tests for RelationshipsInfo model."""
+
+    def test_default_values(self) -> None:
+        """Test default values."""
+        rel = RelationshipsInfo()
+        assert rel.snapmirror_destinations == []
+        assert rel.cluster_peers == []
+
+
+class TestCachedClusterMetadata:
+    """Tests for CachedClusterMetadata model."""
+
+    def test_minimal_creation(self) -> None:
+        """Test creating with minimal required fields."""
+        metadata = CachedClusterMetadata(cluster_name="test-cluster")
+        assert metadata.cluster_name == "test-cluster"
+        assert metadata.cache_version == "1.0"
+        assert metadata.cached_at is not None
+
+    def test_cached_at_default(self) -> None:
+        """Test cached_at defaults to current time."""
+        before = datetime.now(UTC)
+        metadata = CachedClusterMetadata(cluster_name="test")
+        after = datetime.now(UTC)
+        assert before <= metadata.cached_at <= after
+
+    def test_full_metadata(self) -> None:
+        """Test with full metadata."""
+        metadata = CachedClusterMetadata(
+            cluster_name="production-cluster",
+            cloud=CloudMetadata(provider="AWS", region="us-east-1"),
+            cluster=ClusterInfo(
+                cluster_name="production-cluster",
+                ontap_version="9.14.1",
+            ),
+            nodes=[
+                NodeInfo(name="node1", serial_number="123"),
+                NodeInfo(name="node2", serial_number="456"),
+            ],
+        )
+        assert metadata.cloud.provider == "AWS"
+        assert len(metadata.nodes) == 2
+        assert metadata.cluster.ontap_version == "9.14.1"
+
+    def test_is_stale_fresh(self) -> None:
+        """Test is_stale returns False for fresh cache."""
+        metadata = CachedClusterMetadata(cluster_name="test")
+        assert metadata.is_stale(ttl_days=30) is False
+
+    def test_is_stale_old(self) -> None:
+        """Test is_stale returns True for old cache."""
+        old_time = datetime.now(UTC) - timedelta(days=35)
+        metadata = CachedClusterMetadata(
+            cluster_name="test",
+            cached_at=old_time,
+        )
+        assert metadata.is_stale(ttl_days=30) is True
+
+    def test_is_stale_boundary(self) -> None:
+        """Test is_stale at boundary."""
+        # Exactly 30 days old - should not be stale (> not >=)
+        boundary_time = datetime.now(UTC) - timedelta(days=30)
+        metadata = CachedClusterMetadata(
+            cluster_name="test",
+            cached_at=boundary_time,
+        )
+        assert metadata.is_stale(ttl_days=30) is False
+
+        # 31 days old - should be stale
+        old_time = datetime.now(UTC) - timedelta(days=31)
+        metadata_old = CachedClusterMetadata(
+            cluster_name="test",
+            cached_at=old_time,
+        )
+        assert metadata_old.is_stale(ttl_days=30) is True
+
+    def test_to_flat_dict(self) -> None:
+        """Test converting to flat dictionary."""
+        metadata = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            cloud=CloudMetadata(
+                instance_id="i-123",
+                provider="AWS",
+                region="us-east-1",
+                instance_type="m5.xlarge",
+            ),
+            cluster=ClusterInfo(
+                cluster_uuid="abc-123",
+                ontap_version="9.14.1",
+                model="SIMULATED",
+            ),
+        )
+        flat = metadata.to_flat_dict()
+
+        assert flat["instance_id"] == "i-123"
+        assert flat["provider"] == "AWS"
+        assert flat["region"] == "us-east-1"
+        assert flat["instance_type"] == "m5.xlarge"
+        assert flat["cluster_uuid"] == "abc-123"
+        assert flat["ontap_version"] == "9.14.1"
+        assert flat["model"] == "SIMULATED"
+        assert "_cached_at" in flat
+        assert "_cache_version" in flat
+
+    def test_model_serialization(self) -> None:
+        """Test JSON serialization."""
+        metadata = CachedClusterMetadata(
+            cluster_name="test",
+            cloud=CloudMetadata(provider="AWS"),
+        )
+        json_str = metadata.model_dump_json()
+        assert "test" in json_str
+        assert "AWS" in json_str
+
+    def test_model_deserialization(self) -> None:
+        """Test creating from dict."""
+        data = {
+            "cluster_name": "test",
+            "cached_at": "2024-01-15T10:30:00+00:00",
+            "cache_version": "1.0",
+            "cloud": {"provider": "Azure", "region": "eastus"},
+            "cluster": {"ontap_version": "9.13.1"},
+            "nodes": [],
+            "network": {},
+            "storage": {},
+            "licenses": {},
+            "ha": {},
+            "relationships": {},
+        }
+        metadata = CachedClusterMetadata.model_validate(data)
+        assert metadata.cluster_name == "test"
+        assert metadata.cloud.provider == "Azure"
+        assert metadata.cluster.ontap_version == "9.13.1"
