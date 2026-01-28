@@ -6,7 +6,7 @@ Accepted
 
 ## Decision
 
-Use **SQLite** as the storage backend for caching ONTAP cluster metadata that doesn't change frequently. The cache is stored at `{data_dir}/cache/cluster_metadata.db` and is manually refreshed via CLI commands (`nf cache refresh`).
+Use **SQLite** as the storage backend for caching ONTAP cluster metadata that doesn't change frequently. The cache is stored at `{config_dir}/.cache/cluster_metadata.db` and is manually refreshed via CLI commands (`nf cache refresh`).
 
 ## Rationale
 
@@ -29,6 +29,7 @@ Use **SQLite** as the storage backend for caching ONTAP cluster metadata that do
 ## Related Issues
 
 - Issue #32: feat: add cluster metadata cache for ONTAP clusters
+- Issue #38: refactor: move cluster metadata cache to config directory
 
 ## Related Documentation
 
