@@ -65,7 +65,16 @@ class ConfigurationError(Exception):
 
 
 class Config:
-    """Configuration manager for TOML-based config files."""
+    """Configuration manager for TOML-based config files.
+
+    Environment Variables:
+        NF_CONFIG_DIR: Override the default config directory path.
+        NF_<CLUSTER>_USER: Override username for a specific cluster.
+        NF_<CLUSTER>_PASSWORD: Override password (base64 encoded) for a specific cluster.
+
+    The cluster name in environment variables should be uppercase with hyphens
+    replaced by underscores (e.g., cluster-prod -> NF_CLUSTER_PROD_USER).
+    """
 
     def __init__(
         self,
@@ -78,12 +87,18 @@ class Config:
 
         Args:
             config_dir: Directory containing config files (relative to cwd or absolute).
+                        Can be overridden by NF_CONFIG_DIR environment variable.
             output_dir: Directory for output files. If empty, uses data/{script_name}/output.
             script_name: Name of the calling script (used for directory naming).
             args: Optional parsed arguments object.
         """
         self.data: dict[str, dict[str, dict[str, Any]]] = {}
         self.args = args
+        # Check for environment variable override
+        env_config_dir = os.environ.get("NF_CONFIG_DIR")
+        if env_config_dir:
+            logging.debug(f"Using config dir from NF_CONFIG_DIR: {env_config_dir}")
+            config_dir = env_config_dir
         self.config_dir = Path.cwd() / config_dir
         self.data_types = ["aiqums", "connectors", "cloudinsights", "clusters", "azure"]
         self.settings: dict[str, Any] = {}
@@ -281,8 +296,25 @@ class Config:
                 else:
                     self.settings[file.stem].update(data)
 
+    def _get_env_var_name(self, object_name: str) -> str:
+        """Convert object name to environment variable format.
+
+        Args:
+            object_name: Name of the object (e.g., 'cluster-prod').
+
+        Returns:
+            Environment variable prefix (e.g., 'NF_CLUSTER_PROD').
+        """
+        # Replace hyphens with underscores and convert to uppercase
+        return "NF_" + object_name.replace("-", "_").upper()
+
     def get_user(self, utype: str = "clusters", uobject: str = "") -> tuple[str, str]:
         """Get user credentials for a given type and object.
+
+        Credentials are resolved in the following order (first found wins):
+        1. Environment variables: NF_<OBJECT>_USER and NF_<OBJECT>_PASSWORD
+        2. Object-specific config in data files (e.g., clusters.toml)
+        3. Default credentials in users.toml for the type
 
         Args:
             utype: Type of object (e.g., 'clusters').
@@ -297,29 +329,53 @@ class Config:
         user: str | None = None
         enc: str | None = None
 
-        try:
-            user = self.settings["users"][utype]["user"]
-            enc = self.settings["users"][utype]["enc"]
-        except KeyError:
-            pass
+        # 1. Check environment variables first (highest priority)
+        if uobject:
+            env_prefix = self._get_env_var_name(uobject)
+            env_user = os.environ.get(f"{env_prefix}_USER")
+            env_password = os.environ.get(f"{env_prefix}_PASSWORD")
+            if env_user:
+                logging.debug(f"Using user from {env_prefix}_USER")
+                user = env_user
+            if env_password:
+                logging.debug(f"Using password from {env_prefix}_PASSWORD")
+                enc = env_password
 
-        try:
-            user = self.data[utype][uobject]["user"]
-            enc = self.data[utype][uobject]["enc"]
-        except KeyError:
-            pass
+        # 2. Check object-specific config (if not already set by env vars)
+        if not user or not enc:
+            try:
+                if not user:
+                    user = self.data[utype][uobject]["user"]
+                if not enc:
+                    enc = self.data[utype][uobject]["enc"]
+            except KeyError:
+                pass
+
+        # 3. Fall back to default credentials for the type
+        if not user or not enc:
+            try:
+                if not user:
+                    user = self.settings["users"][utype]["user"]
+                if not enc:
+                    enc = self.settings["users"][utype]["enc"]
+            except KeyError:
+                pass
 
         if not user:
             logging.error(f"Could not find user for {utype} and {uobject}")
+            env_prefix = self._get_env_var_name(uobject) if uobject else "NF_<OBJECT>"
             raise ConfigurationError(
                 f"Could not find user for type={utype!r}, object={uobject!r}. "
-                "Ensure credentials are configured in users.toml or the object's data file."
+                f"Set {env_prefix}_USER environment variable, or configure in "
+                "users.toml or the object's data file."
             )
         if not enc:
             logging.error(f"Could not find password for {utype} and {uobject}")
+            env_prefix = self._get_env_var_name(uobject) if uobject else "NF_<OBJECT>"
             raise ConfigurationError(
                 f"Could not find password for type={utype!r}, object={uobject!r}. "
-                "Ensure 'enc' (encoded password) is configured."
+                f"Set {env_prefix}_PASSWORD environment variable (base64 encoded), "
+                "or configure 'enc' in config files."
             )
 
         return user, enc
