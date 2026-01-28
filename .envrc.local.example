@@ -1,0 +1,15 @@
+# Personal direnv overrides for pynetappfoundry
+# Copy this file to .envrc.local and customize as needed
+# .envrc.local is git-ignored and will not be committed
+
+# Example: Enable debug mode
+# export DEBUG=true
+
+# Example: Set log level
+# export LOG_LEVEL=DEBUG
+
+# Example: Custom API endpoint for testing
+# export ONTAP_API_URL=https://your-test-cluster.local
+
+# Example: Override cache directories
+# export UV_CACHE_DIR="$HOME/.cache/uv"
