@@ -156,7 +156,7 @@ class TestClusterInfoCollection:
         assert result.cluster_name == "mycluster"
         assert result.cluster_uuid == "abc-123-def-456"
         assert "9.14.1" in result.ontap_version
-        api_client.call_endpoint.assert_called_with("/cluster", method="GET")
+        api_client.call_endpoint.assert_called_with("/cluster?fields=*", method="GET")
 
     def test_collect_cluster_info_fallback_to_cli(
         self, mock_cluster_cli_output: dict[str, dict[str, str]]
@@ -241,7 +241,7 @@ class TestNetworkCollection:
     def mock_network_api_responses(self) -> dict[str, dict[str, Any]]:
         """Mock API responses for network endpoints."""
         return {
-            "/network/ip/interfaces": {
+            "/network/ip/interfaces?fields=*": {
                 "records": [
                     {
                         "name": "data_lif1",
@@ -258,7 +258,7 @@ class TestNetworkCollection:
                     }
                 ]
             },
-            "/network/ethernet/broadcast-domains": {
+            "/network/ethernet/broadcast-domains?fields=*": {
                 "records": [
                     {
                         "name": "Default",
@@ -268,7 +268,7 @@ class TestNetworkCollection:
                     }
                 ]
             },
-            "/network/ipspaces": {"records": [{"name": "Default"}, {"name": "Cluster"}]},
+            "/network/ipspaces?fields=*": {"records": [{"name": "Default"}, {"name": "Cluster"}]},
         }
 
     def test_collect_network_via_api(
@@ -305,7 +305,7 @@ class TestStorageCollection:
     def mock_storage_api_responses(self) -> dict[str, dict[str, Any]]:
         """Mock API responses for storage endpoints."""
         return {
-            "/storage/aggregates": {
+            "/storage/aggregates?fields=*": {
                 "records": [
                     {
                         "name": "aggr1",
@@ -321,7 +321,9 @@ class TestStorageCollection:
                     }
                 ]
             },
-            "/svm/svms": {"records": [{"name": "svm1", "state": "running", "subtype": "default"}]},
+            "/svm/svms?fields=*": {
+                "records": [{"name": "svm1", "state": "running", "subtype": "default"}]
+            },
         }
 
     def test_collect_storage_via_api(
@@ -441,7 +443,7 @@ class TestRelationshipsCollection:
     def mock_relationships_api_responses(self) -> dict[str, dict[str, Any]]:
         """Mock API responses for relationship endpoints."""
         return {
-            "/snapmirror/relationships": {
+            "/snapmirror/relationships?fields=*": {
                 "records": [
                     {
                         "source": {"svm": {"name": "svm1"}, "path": "vol1"},
@@ -453,7 +455,7 @@ class TestRelationshipsCollection:
                     }
                 ]
             },
-            "/cluster/peers": {
+            "/cluster/peers?fields=*": {
                 "records": [
                     {
                         "name": "peer1",
