@@ -211,7 +211,7 @@ class MetadataCollector:
         if not self.api_client:
             return ClusterInfo()
 
-        response = self.api_client.call_endpoint("/cluster", method="GET")
+        response = self.api_client.call_endpoint("/cluster?fields=*", method="GET")
         return ClusterInfo(
             cluster_name=response.get("name", ""),
             cluster_uuid=response.get("uuid", ""),
@@ -272,7 +272,7 @@ class MetadataCollector:
         if not self.api_client:
             return []
 
-        response = self.api_client.call_endpoint("/cluster/nodes", method="GET")
+        response = self.api_client.call_endpoint("/cluster/nodes?fields=*", method="GET")
         nodes = []
         for record in response.get("records", []):
             nodes.append(
@@ -343,7 +343,9 @@ class MetadataCollector:
             return NetworkInfo()
 
         # Collect LIFs
-        lifs_response = self.api_client.call_endpoint("/network/ip/interfaces", method="GET")
+        lifs_response = self.api_client.call_endpoint(
+            "/network/ip/interfaces?fields=*", method="GET"
+        )
         intercluster_lifs = []
         data_lifs = []
         management_lifs = []
@@ -374,7 +376,7 @@ class MetadataCollector:
 
         # Collect broadcast domains
         bd_response = self.api_client.call_endpoint(
-            "/network/ethernet/broadcast-domains", method="GET"
+            "/network/ethernet/broadcast-domains?fields=*", method="GET"
         )
         broadcast_domains = []
         for record in bd_response.get("records", []):
@@ -387,7 +389,7 @@ class MetadataCollector:
             broadcast_domains.append(bd)
 
         # Collect IPspaces
-        ipspace_response = self.api_client.call_endpoint("/network/ipspaces", method="GET")
+        ipspace_response = self.api_client.call_endpoint("/network/ipspaces?fields=*", method="GET")
         ipspaces = [r.get("name", "") for r in ipspace_response.get("records", [])]
 
         return NetworkInfo(
@@ -475,7 +477,7 @@ class MetadataCollector:
             return StorageInfo()
 
         # Collect aggregates
-        aggr_response = self.api_client.call_endpoint("/storage/aggregates", method="GET")
+        aggr_response = self.api_client.call_endpoint("/storage/aggregates?fields=*", method="GET")
         aggregates = []
         for record in aggr_response.get("records", []):
             aggr = AggregateInfo(
@@ -489,7 +491,7 @@ class MetadataCollector:
             aggregates.append(aggr)
 
         # Collect SVMs
-        svm_response = self.api_client.call_endpoint("/svm/svms", method="GET")
+        svm_response = self.api_client.call_endpoint("/svm/svms?fields=*", method="GET")
         svms = []
         for record in svm_response.get("records", []):
             svm = SVMInfo(
@@ -569,7 +571,9 @@ class MetadataCollector:
         if not self.api_client:
             return LicenseInfo()
 
-        response = self.api_client.call_endpoint("/cluster/licensing/licenses", method="GET")
+        response = self.api_client.call_endpoint(
+            "/cluster/licensing/licenses?fields=*", method="GET"
+        )
         feature_licenses = []
         capacity_licenses = []
 
@@ -648,7 +652,7 @@ class MetadataCollector:
         if not self.api_client:
             return HAInfo()
 
-        nodes_response = self.api_client.call_endpoint("/cluster/nodes", method="GET")
+        nodes_response = self.api_client.call_endpoint("/cluster/nodes?fields=*", method="GET")
 
         # Check if HA is configured
         ha_configured = len(nodes_response.get("records", [])) > 1
@@ -658,7 +662,9 @@ class MetadataCollector:
         mediator_status = ""
         # Mediator endpoint may not exist on all clusters
         with contextlib.suppress(Exception):
-            mediator_response = self.api_client.call_endpoint("/cluster/mediators", method="GET")
+            mediator_response = self.api_client.call_endpoint(
+                "/cluster/mediators?fields=*", method="GET"
+            )
             mediators = mediator_response.get("records", [])
             if mediators:
                 mediator_address = mediators[0].get("ip_address", "")
@@ -726,7 +732,9 @@ class MetadataCollector:
             return RelationshipsInfo()
 
         # Collect SnapMirror relationships
-        sm_response = self.api_client.call_endpoint("/snapmirror/relationships", method="GET")
+        sm_response = self.api_client.call_endpoint(
+            "/snapmirror/relationships?fields=*", method="GET"
+        )
         snapmirror_destinations = []
         for record in sm_response.get("records", []):
             sm = SnapMirrorRelationship(
@@ -740,7 +748,7 @@ class MetadataCollector:
             snapmirror_destinations.append(sm)
 
         # Collect cluster peers
-        peer_response = self.api_client.call_endpoint("/cluster/peers", method="GET")
+        peer_response = self.api_client.call_endpoint("/cluster/peers?fields=*", method="GET")
         cluster_peers = []
         for record in peer_response.get("records", []):
             peer = ClusterPeer(
