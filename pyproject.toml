@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "pynetappfoundry"
 description = "ONTAP administration library and CLI tools"
 readme = { file = "README.md", content-type = "text/markdown" }
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 dynamic = ["version"]
 authors = [
     { name = "Eric Davis", email = "eric@codingwithalex.com" },
@@ -120,7 +120,7 @@ indent-style = "space"
 line-ending = "lf"
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.13"
 disallow_untyped_defs = true
 warn_return_any = true
 warn_unused_configs = true
