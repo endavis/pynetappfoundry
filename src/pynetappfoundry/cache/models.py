@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 def _utcnow() -> datetime:
@@ -54,6 +54,12 @@ class ClusterInfo(BaseModel):
     cluster_uuid: str = ""
     ontap_version: str = ""
     model: str = ""
+
+    @field_validator("model", mode="before")
+    @classmethod
+    def coerce_model_to_str(cls, v: object) -> str:
+        """Coerce model field to string (API sometimes returns int)."""
+        return str(v) if v is not None else ""
 
 
 class NodeInfo(BaseModel):
