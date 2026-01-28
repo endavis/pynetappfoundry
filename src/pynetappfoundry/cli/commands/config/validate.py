@@ -10,7 +10,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.tree import Tree
 
-from pynetappfoundry.cli.utils import print_error, print_success
+from pynetappfoundry.cli.utils import print_error, print_exception, print_success
 from pynetappfoundry.core.config import Config, ConfigurationError
 from pynetappfoundry.core.models import (
     ClusterConfig,
@@ -188,7 +188,7 @@ def validate(ctx: click.Context) -> None:
     try:
         config = Config(config_dir=config_dir, script_name="config-validate")
     except Exception as e:
-        print_error(f"Failed to load configuration: {e}")
+        print_exception(f"Failed to load configuration: {e}", e)
         ctx.exit(1)
 
     # Build validation tree

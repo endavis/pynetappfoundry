@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 import click
 
 from pynetappfoundry._version import __version__
@@ -43,6 +45,15 @@ def nf(ctx: click.Context, config_dir: str, output_dir: str, debug: bool) -> Non
     A CLI for managing NetApp ONTAP clusters, including license management,
     space reporting, event tracking, and more.
     """
+    # Configure logging based on debug flag
+    if debug:
+        logging.basicConfig(
+            level=logging.DEBUG,
+            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        )
+    else:
+        logging.basicConfig(level=logging.WARNING)
+
     ctx.ensure_object(dict)
     ctx.obj["config_dir"] = config_dir
     ctx.obj["output_dir"] = output_dir

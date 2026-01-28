@@ -8,7 +8,7 @@ import click
 from rich.console import Console
 
 from pynetappfoundry.cache import ClusterMetadataDB
-from pynetappfoundry.cli.utils import print_error, print_success, print_warning
+from pynetappfoundry.cli.utils import print_error, print_exception, print_success, print_warning
 from pynetappfoundry.core.config import Config
 
 console = Console()
@@ -53,7 +53,7 @@ def clear(ctx: click.Context, cluster: str | None, clear_all: bool, force: bool)
     try:
         config = Config(config_dir=config_dir, script_name="cache-clear")
     except Exception as e:
-        print_error(f"Failed to load configuration: {e}")
+        print_exception(f"Failed to load configuration: {e}", e)
         ctx.exit(1)
 
     if not cluster and not clear_all:

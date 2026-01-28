@@ -11,7 +11,7 @@ from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
 from pynetappfoundry.cache import ClusterMetadataDB, MetadataCollector
-from pynetappfoundry.cli.utils import print_error, print_success, print_warning
+from pynetappfoundry.cli.utils import print_error, print_exception, print_success, print_warning
 from pynetappfoundry.clients.ontap import ONTAPCLI, ONTAPAPIClient
 from pynetappfoundry.core.config import Config
 
@@ -50,7 +50,7 @@ def refresh(ctx: click.Context, cluster: str | None, refresh_all: bool) -> None:
     try:
         config = Config(config_dir=config_dir, script_name="cache-refresh")
     except Exception as e:
-        print_error(f"Failed to load configuration: {e}")
+        print_exception(f"Failed to load configuration: {e}", e)
         ctx.exit(1)
 
     # Determine clusters to refresh
@@ -143,7 +143,7 @@ def refresh(ctx: click.Context, cluster: str | None, refresh_all: bool) -> None:
                 success_count += 1
 
             except Exception as e:
-                print_error(f"  {cluster_name}: Failed - {e}")
+                print_exception(f"  {cluster_name}: Failed - {e}", e)
                 error_count += 1
 
             progress.update(task, completed=1)

@@ -8,7 +8,7 @@ from typing import Any
 import click
 
 from pynetappfoundry.cli.decorators import with_config
-from pynetappfoundry.cli.utils import print_error, print_info, print_success
+from pynetappfoundry.cli.utils import print_exception, print_info, print_success
 from pynetappfoundry.clients.dii.api import DIIAPIClient
 from pynetappfoundry.core.config import Config
 from pynetappfoundry.db.metrics import MetricDB
@@ -41,7 +41,7 @@ def dump_dii(
     try:
         dii_client = DIIAPIClient(config)
     except Exception as e:
-        print_error(f"Could not initialize DII client: {e}")
+        print_exception(f"Could not initialize DII client: {e}", e)
         return
 
     db = MetricDB(config)
