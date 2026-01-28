@@ -28,5 +28,6 @@ class DIIAPIClient(APIWrapper):
             base_url=dii_settings.base_url,
             auth_header={"X-CloudInsights-ApiKey": dii_settings.api_ro_token},
             base_api_path=dii_settings.base_api_path,
+            timeout=dii_settings.timeout,
             **kwargs,
         )

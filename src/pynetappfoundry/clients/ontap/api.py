@@ -40,5 +40,6 @@ class ONTAPAPIClient(APIWrapper):
             base_url=f"https://{cluster.ip}",
             auth_header=auth_header,
             base_api_path=ontap_settings.base_api_path,
+            timeout=ontap_settings.timeout,
             **kwargs,
         )
