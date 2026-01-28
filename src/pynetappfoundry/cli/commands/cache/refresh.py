@@ -92,7 +92,7 @@ def refresh(ctx: click.Context, cluster: str | None, refresh_all: bool) -> None:
 
                 # Get credentials
                 user, enc = config.get_user("clusters", cluster_name)
-                password = base64.b64decode(enc).decode("utf-8")
+                password = base64.b64decode(enc).decode("latin-1")
 
                 # Create cluster object for API client
                 class ClusterObj:

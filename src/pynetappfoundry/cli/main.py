@@ -46,13 +46,14 @@ def nf(ctx: click.Context, config_dir: str, output_dir: str, debug: bool) -> Non
     space reporting, event tracking, and more.
     """
     # Configure logging based on debug flag
+    # Only enable DEBUG for our code - some libraries crash with DEBUG level
+    logging.basicConfig(
+        level=logging.WARNING,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
     if debug:
-        logging.basicConfig(
-            level=logging.DEBUG,
-            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        )
-    else:
-        logging.basicConfig(level=logging.WARNING)
+        # Enable DEBUG only for pynetappfoundry loggers
+        logging.getLogger("pynetappfoundry").setLevel(logging.DEBUG)
 
     ctx.ensure_object(dict)
     ctx.obj["config_dir"] = config_dir
