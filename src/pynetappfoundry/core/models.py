@@ -96,6 +96,7 @@ class ONTAPAPISettings(BaseModel):
     model_config = ConfigDict(extra="allow")
 
     base_api_path: str = "/api"
+    timeout: float = 30.0
 
 
 class DIIAPISettings(BaseModel):
@@ -106,6 +107,7 @@ class DIIAPISettings(BaseModel):
     api_ro_token: str
     base_url: str
     base_api_path: str = "/rest/v1"
+    timeout: float = 30.0
 
 
 class SearchableKeysConfig(BaseModel):
