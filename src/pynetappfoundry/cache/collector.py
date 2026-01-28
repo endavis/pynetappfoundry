@@ -275,14 +275,17 @@ class MetadataCollector:
         response = self.api_client.call_endpoint("/cluster/nodes?fields=*", method="GET")
         nodes = []
         for record in response.get("records", []):
+            # membership may be a dict or other type depending on API version
+            membership = record.get("membership")
+            is_epsilon = membership.get("epsilon", False) if isinstance(membership, dict) else False
             nodes.append(
                 NodeInfo(
                     name=record.get("name", ""),
                     serial_number=record.get("serial_number", ""),
-                    system_id=record.get("system_id", ""),
-                    model=record.get("model", ""),
+                    system_id=str(record.get("system_id", "")),
+                    model=str(record.get("model", "")),
                     uptime=record.get("uptime", 0),
-                    is_epsilon=record.get("membership", {}).get("epsilon", False),
+                    is_epsilon=is_epsilon,
                 )
             )
         return nodes
