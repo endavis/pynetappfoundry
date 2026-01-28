@@ -5,6 +5,7 @@ Collects cluster metadata using REST API (primary) with CLI fallback.
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import re
 from datetime import UTC, datetime
@@ -655,14 +656,13 @@ class MetadataCollector:
         # Try to get mediator info for cloud HA
         mediator_address = ""
         mediator_status = ""
-        try:
+        # Mediator endpoint may not exist on all clusters
+        with contextlib.suppress(Exception):
             mediator_response = self.api_client.call_endpoint("/cluster/mediators", method="GET")
             mediators = mediator_response.get("records", [])
             if mediators:
                 mediator_address = mediators[0].get("ip_address", "")
                 mediator_status = mediators[0].get("reachable", "")
-        except Exception:
-            pass  # Mediator endpoint may not exist
 
         return HAInfo(
             is_ha=ha_configured,
