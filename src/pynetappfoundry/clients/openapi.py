@@ -10,6 +10,43 @@ from urllib.parse import urlencode
 
 import requests
 from jsonschema import ValidationError, validate
+from tenacity import (
+    RetryCallState,
+    retry,
+    retry_if_exception_type,
+    retry_if_result,
+    stop_after_attempt,
+    wait_exponential,
+)
+
+from pynetappfoundry.core.models import RetryConfig, ValidationConfig
+
+
+class ResponseValidationError(Exception):
+    """Raised when API response fails schema validation in strict mode."""
+
+    def __init__(
+        self,
+        message: str,
+        path_template: str,
+        method: str,
+        status_code: int,
+        validation_error: str,
+    ) -> None:
+        """Initialize the exception.
+
+        Args:
+            message: Error message.
+            path_template: The API path template.
+            method: HTTP method.
+            status_code: Response status code.
+            validation_error: The underlying validation error message.
+        """
+        super().__init__(message)
+        self.path_template = path_template
+        self.method = method
+        self.status_code = status_code
+        self.validation_error = validation_error
 
 
 class APIWrapper:
@@ -24,6 +61,8 @@ class APIWrapper:
         session: requests.Session | None = None,
         base_api_path: str = "",
         verify_ssl: bool = True,
+        retry_config: RetryConfig | None = None,
+        validation_config: ValidationConfig | None = None,
     ) -> None:
         """Initialize the API wrapper.
 
@@ -35,6 +74,8 @@ class APIWrapper:
             session: Existing requests session to use.
             base_api_path: Base path prefix for all API paths.
             verify_ssl: Whether to verify SSL certificates. Default True for security.
+            retry_config: Configuration for retry behavior. Defaults to enabled.
+            validation_config: Configuration for response validation. Defaults to disabled.
         """
         self.verify_ssl = verify_ssl
         # Load the API spec
@@ -63,6 +104,12 @@ class APIWrapper:
 
         self.session.headers.update(default_headers)
         self.session.headers.update(auth_header)
+
+        # Retry and validation configuration
+        self.retry_config = retry_config if retry_config is not None else RetryConfig()
+        self.validation_config = (
+            validation_config if validation_config is not None else ValidationConfig()
+        )
 
     def _get_operation(self, api_path: str, method: str) -> dict[str, Any]:
         """Get the operation for an API path.
@@ -318,6 +365,218 @@ class APIWrapper:
             "body_sample": body_sample,
         }
 
+    def _get_response_schema(
+        self, path_template: str, method: str, status_code: int
+    ) -> dict[str, Any] | None:
+        """Extract response schema from the OpenAPI spec for a given status code.
+
+        Args:
+            path_template: The API path template.
+            method: HTTP method.
+            status_code: The response status code to get schema for.
+
+        Returns:
+            Resolved JSON Schema dict for the response, or None if not found.
+        """
+        op = self._get_operation(path_template, method)
+        responses = op.get("responses", {})
+
+        # Try exact status code first, then wildcard (e.g., "2XX"), then "default"
+        status_str = str(status_code)
+        response_spec = responses.get(status_str)
+
+        if not response_spec:
+            # Try wildcard like "2XX"
+            wildcard = f"{status_str[0]}XX"
+            response_spec = responses.get(wildcard)
+
+        if not response_spec:
+            response_spec = responses.get("default")
+
+        if not response_spec:
+            return None
+
+        # OpenAPI 3.x style
+        content = response_spec.get("content", {}).get("application/json", {})
+        schema = content.get("schema")
+
+        if schema:
+            resolved: dict[str, Any] = self._resolve_refs(schema)
+            return resolved
+
+        return None
+
+    def validate_response(
+        self,
+        path_template: str,
+        method: str,
+        status_code: int,
+        response_data: Any,
+        validation_config: ValidationConfig | None = None,
+    ) -> bool:
+        """Validate response data against the OpenAPI schema.
+
+        Args:
+            path_template: The API path template.
+            method: HTTP method.
+            status_code: The response status code.
+            response_data: The response data to validate.
+            validation_config: Optional override for validation config.
+
+        Returns:
+            True if validation passes or is disabled, False otherwise.
+
+        Raises:
+            ResponseValidationError: If strict mode is enabled and validation fails.
+        """
+        config = validation_config if validation_config is not None else self.validation_config
+
+        if not config.enabled:
+            return True
+
+        # Only validate success responses if configured
+        if config.validate_success_only and not (200 <= status_code < 300):
+            return True
+
+        schema = self._get_response_schema(path_template, method, status_code)
+        if not schema:
+            logging.debug(
+                f"No response schema found for {method} {path_template} status {status_code}"
+            )
+            return True
+
+        try:
+            validate(instance=response_data, schema=schema)
+            return True
+        except ValidationError as e:
+            error_msg = (
+                f"Response validation failed for {method} {path_template} "
+                f"status {status_code}: {e.message}"
+            )
+            if config.strict:
+                raise ResponseValidationError(
+                    message=error_msg,
+                    path_template=path_template,
+                    method=method,
+                    status_code=status_code,
+                    validation_error=e.message,
+                ) from e
+            logging.warning(error_msg)
+            return False
+
+    def _should_retry_response(
+        self, response: requests.Response, retry_config: RetryConfig
+    ) -> bool:
+        """Determine if a response should trigger a retry.
+
+        Args:
+            response: The HTTP response.
+            retry_config: Retry configuration.
+
+        Returns:
+            True if the response status code is in the retryable list.
+        """
+        return response.status_code in retry_config.retryable_status_codes
+
+    def _create_retry_callback(self, retry_config: RetryConfig) -> Any:
+        """Create a callback for logging retry attempts.
+
+        Args:
+            retry_config: Retry configuration.
+
+        Returns:
+            A callback function for tenacity.
+        """
+
+        def log_retry(retry_state: RetryCallState) -> None:
+            if retry_state.attempt_number > 1:
+                outcome = retry_state.outcome
+                if outcome is not None:
+                    exception = outcome.exception()
+                    result = outcome.result() if exception is None else None
+                    if exception:
+                        logging.warning(
+                            f"Retry attempt {retry_state.attempt_number} "
+                            f"after exception: {exception}"
+                        )
+                    elif result is not None and hasattr(result, "status_code"):
+                        logging.warning(
+                            f"Retry attempt {retry_state.attempt_number} "
+                            f"after status code: {result.status_code}"
+                        )
+
+        return log_retry
+
+    def _execute_request_with_retry(
+        self,
+        method: str,
+        url: str,
+        body: dict[str, Any] | None,
+        headers: dict[str, str | bytes],
+        retry_config: RetryConfig | None = None,
+    ) -> requests.Response:
+        """Execute an HTTP request with retry logic.
+
+        Args:
+            method: HTTP method.
+            url: Full URL to request.
+            body: Request body (JSON).
+            headers: Request headers.
+            retry_config: Optional override for retry config.
+
+        Returns:
+            The HTTP response.
+
+        Raises:
+            requests.RequestException: If all retries are exhausted.
+        """
+        config = retry_config if retry_config is not None else self.retry_config
+
+        if not config.enabled:
+            return self.session.request(
+                method,
+                url,
+                json=body,
+                headers=headers,
+                timeout=self.timeout,
+                verify=self.verify_ssl,
+            )
+
+        # Build retry conditions
+        def should_retry_result(response: requests.Response) -> bool:
+            return self._should_retry_response(response, config)
+
+        retry_conditions: Any = retry_if_result(should_retry_result)
+
+        if config.retry_on_connection_error:
+            retry_conditions = retry_conditions | retry_if_exception_type(
+                (requests.ConnectionError, requests.Timeout)
+            )
+
+        # Create the retry decorator dynamically
+        @retry(
+            stop=stop_after_attempt(config.max_attempts),
+            wait=wait_exponential(
+                multiplier=config.initial_wait,
+                max=config.max_wait,
+                exp_base=config.exponential_base,
+            ),
+            retry=retry_conditions,
+            before_sleep=self._create_retry_callback(config),
+            reraise=True,
+        )
+        def make_request() -> requests.Response:
+            return self.session.request(
+                method,
+                url,
+                json=body,
+                headers=headers,
+                timeout=self.timeout,
+                verify=self.verify_ssl,
+            )
+
+        return make_request()
+
     def call_endpoint(
         self,
         path_template: str,
@@ -326,10 +585,13 @@ class APIWrapper:
         query_params: dict[str, Any] | None = None,
         body: dict[str, Any] | None = None,
         additional_headers: dict[str, str] | None = None,
+        retry_config: RetryConfig | None = None,
+        validation_config: ValidationConfig | None = None,
     ) -> Any:
         """Make the HTTP call.
 
-        Validates body (if schema exists) and raises for HTTP errors.
+        Validates body (if schema exists), applies retry logic, validates response,
+        and raises for HTTP errors.
 
         Args:
             path_template: API path template.
@@ -338,6 +600,8 @@ class APIWrapper:
             query_params: Query string parameters.
             body: Request body (JSON).
             additional_headers: Extra headers to include.
+            retry_config: Optional per-call retry configuration override.
+            validation_config: Optional per-call validation configuration override.
 
         Returns:
             Response JSON or text.
@@ -345,6 +609,7 @@ class APIWrapper:
         Raises:
             ValueError: If request body validation fails.
             requests.HTTPError: If the request fails.
+            ResponseValidationError: If response validation fails in strict mode.
         """
         method = method.upper()
 
@@ -368,15 +633,33 @@ class APIWrapper:
             headers.update(additional_headers)
 
         logging.debug(f"Calling {method} {url} {headers}")
-        resp = self.session.request(
-            method, url, json=body, headers=headers, timeout=self.timeout, verify=self.verify_ssl
+
+        # Execute request with retry logic
+        resp = self._execute_request_with_retry(
+            method=method,
+            url=url,
+            body=body,
+            headers=headers,
+            retry_config=retry_config,
         )
+
         logging.debug(f"Response Status Code: {resp.status_code}")
         resp.raise_for_status()
 
         # Try JSON, else return text
         try:
             logging.debug(f"Response Text: {resp.text}")
-            return resp.json()
+            response_data = resp.json()
         except ValueError:
-            return resp.text
+            response_data = resp.text
+
+        # Validate response if enabled
+        self.validate_response(
+            path_template=path_template,
+            method=method,
+            status_code=resp.status_code,
+            response_data=response_data,
+            validation_config=validation_config,
+        )
+
+        return response_data
