@@ -18,7 +18,9 @@ def setup_logger(script_name: str) -> logging.Logger:
         The configured root logger.
     """
     root_logger = logging.getLogger()
-    root_logger.setLevel(logging.DEBUG)
+    # Don't set root logger to DEBUG - some libraries (netapp_ontap) crash
+    # The file handler will capture DEBUG messages for pynetappfoundry
+    root_logger.setLevel(logging.INFO)
 
     log_dir = Path(os.getcwd()) / "data" / script_name / "logs"
     os.makedirs(log_dir, exist_ok=True)
