@@ -155,6 +155,11 @@ def init_sops(ctx: click.Context, key_path: Path | None, force: bool) -> None:
             print_error(f"Could not read existing key: {e}")
         ctx.exit(0)
 
+    # Delete existing key file if force is used
+    if force and key_path.exists():
+        key_path.unlink()
+        console.print(f"Removed existing key at {key_path}")
+
     # Generate keypair
     try:
         console.print(f"Generating age keypair at {key_path}...")
