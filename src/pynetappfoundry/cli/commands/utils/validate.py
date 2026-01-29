@@ -2,18 +2,17 @@
 
 from __future__ import annotations
 
-import contextlib
 import logging
 import traceback
 from typing import Any
 
 import click
-import paramiko
 from netapp_ontap import HostConnection
 from netapp_ontap.resources import Cluster, Node, Volume
 
 from pynetappfoundry.cli.decorators import with_config
 from pynetappfoundry.cli.utils import print_error, print_info, print_success, print_warning
+from pynetappfoundry.clients.ontap.cli import ONTAPCLI
 from pynetappfoundry.core.config import Config
 
 
@@ -131,48 +130,21 @@ def _validate_ssh(
     Returns:
         True if SSH connection succeeded, False if failed, None if skipped.
     """
-    user, password = config.get_user("clusters", name)
-
     # Skip if no IP configured
     if "ip" not in details:
         print_warning("  SSH: Skipped (no IP configured)")
         return None
 
-    ssh = paramiko.SSHClient()
-    ssh.load_system_host_keys()
-    # AutoAddPolicy is acceptable here: this is a validation tool for internal
-    # clusters on trusted networks, not a production data transfer mechanism
-    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy)
+    user, password = config.get_user("clusters", name)
+    cli = ONTAPCLI(name, details["ip"], user, password)
 
     try:
-        ssh.connect(
-            details["ip"],
-            username=user,
-            password=password,
-            timeout=10,
-        )
-        # Run a simple command to verify the connection works
-        _stdin, stdout, _stderr = ssh.exec_command("version")
-        stdout.read()  # Consume output
-        ssh.close()
+        cli.connect()
+        cli.run_command("node show")
+        cli.disconnect()
         print_success("  SSH: Connected successfully")
         return True
-    except paramiko.AuthenticationException:
-        print_error("  SSH: Authentication failed (check username/password)")
-        logging.debug(traceback.format_exc())
-        return False
-    except paramiko.SSHException as e:
-        print_error(f"  SSH: Connection failed ({e})")
-        logging.debug(traceback.format_exc())
-        return False
-    except TimeoutError:
-        print_error("  SSH: Connection timed out")
-        logging.debug(traceback.format_exc())
-        return False
     except Exception as e:
         print_error(f"  SSH: Failed ({e})")
         logging.debug(traceback.format_exc())
         return False
-    finally:
-        with contextlib.suppress(Exception):
-            ssh.close()
