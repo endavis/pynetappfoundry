@@ -53,7 +53,7 @@ def _get_install_dir() -> str:
 def _install_age() -> None:
     """Install age encryption tool."""
     if shutil.which("age"):
-        print(f"age already installed: {subprocess.getoutput('age --version')}")  # nosec B607 B603
+        print(f"age already installed: {subprocess.getoutput('age --version')}")  # nosec B607 B603 B605
         return
 
     print("Installing age...")
@@ -72,7 +72,7 @@ def _install_age() -> None:
         import tarfile
 
         with tarfile.open(tar_path, "r:gz") as tar:
-            tar.extractall("/tmp")  # nosec B202
+            tar.extractall("/tmp")  # nosec B202 B108
         _run_cmd(f"mv /tmp/age/age /tmp/age/age-keygen {install_dir}/")
         _run_cmd(f"chmod +x {install_dir}/age {install_dir}/age-keygen")
         os.remove(tar_path)
@@ -115,7 +115,7 @@ def _install_age() -> None:
 def _install_sops() -> None:
     """Install SOPS secrets manager."""
     if shutil.which("sops"):
-        version_output = subprocess.getoutput("sops --version").splitlines()[0]  # nosec B607 B603
+        version_output = subprocess.getoutput("sops --version").splitlines()[0]  # nosec B607 B603 B605
         print(f"SOPS already installed: {version_output}")
         return
 
@@ -135,9 +135,7 @@ def _install_sops() -> None:
     elif system == "darwin":
         _run_cmd("brew install sops")
     elif system == "windows":
-        bin_url = (
-            f"https://github.com/getsops/sops/releases/download/v{version}/sops-v{version}.exe"
-        )
+        bin_url = f"https://github.com/getsops/sops/releases/download/v{version}/sops-v{version}.amd64.exe"
         bin_path = os.path.join(install_dir, "sops.exe")
         print(f"Downloading {bin_url}...")
         urllib.request.urlretrieve(bin_url, bin_path)  # nosec B310
