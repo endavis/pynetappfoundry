@@ -180,6 +180,7 @@ def encrypt_value(value: str, public_key: str | None = None) -> str:
     """
     import base64
     import json
+    import tempfile
 
     if not is_sops_installed():
         raise SOPSNotInstalledError(
@@ -187,27 +188,38 @@ def encrypt_value(value: str, public_key: str | None = None) -> str:
             "or see https://github.com/getsops/sops#installation"
         )
 
-    # Build command
-    cmd = ["sops", "--encrypt", "--input-type", "json", "--output-type", "json"]
-
-    if public_key:
-        cmd.extend(["--age", public_key])
-
-    cmd.append("/dev/stdin")
-
     # SOPS expects JSON input, we'll use a simple structure
     input_data = json.dumps({"value": value})
 
+    # Use a temp file for cross-platform compatibility (no /dev/stdin on Windows)
+    # Explicitly use UTF-8 encoding for Windows compatibility with unicode
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".json", delete=False, encoding="utf-8"
+    ) as tmp_file:
+        tmp_file.write(input_data)
+        tmp_path = tmp_file.name
+
     try:
+        # Build command
+        cmd = ["sops", "--encrypt", "--input-type", "json", "--output-type", "json"]
+
+        if public_key:
+            cmd.extend(["--age", public_key])
+
+        cmd.append(tmp_path)
+
+        # Use UTF-8 encoding for subprocess output
         result = subprocess.run(
             cmd,
-            input=input_data,
             capture_output=True,
             text=True,
             check=True,
+            encoding="utf-8",
         )
     except subprocess.CalledProcessError as e:
         raise SOPSError(f"SOPS encryption failed: {e.stderr}") from e
+    finally:
+        Path(tmp_path).unlink(missing_ok=True)
 
     # Validate JSON output
     try:
@@ -255,20 +267,33 @@ def decrypt_value(encrypted_value: str) -> str:
     except Exception as e:
         raise SOPSError(f"Failed to decode SOPS value: {e}") from e
 
-    # Build command
-    cmd = ["sops", "--decrypt", "--input-type", "json", "--output-type", "json"]
-    cmd.append("/dev/stdin")
+    # Use a temp file for cross-platform compatibility (no /dev/stdin on Windows)
+    # Explicitly use UTF-8 encoding for Windows compatibility with unicode
+    import tempfile
+
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".json", delete=False, encoding="utf-8"
+    ) as tmp_file:
+        tmp_file.write(input_data)
+        tmp_path = tmp_file.name
 
     try:
+        # Build command
+        cmd = ["sops", "--decrypt", "--input-type", "json", "--output-type", "json"]
+        cmd.append(tmp_path)
+
+        # Use UTF-8 encoding for subprocess output
         result = subprocess.run(
             cmd,
-            input=input_data,
             capture_output=True,
             text=True,
             check=True,
+            encoding="utf-8",
         )
     except subprocess.CalledProcessError as e:
         raise SOPSError(f"SOPS decryption failed: {e.stderr}") from e
+    finally:
+        Path(tmp_path).unlink(missing_ok=True)
 
     # Parse the decrypted JSON and extract the value
     try:

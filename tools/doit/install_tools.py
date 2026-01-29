@@ -38,10 +38,22 @@ def _get_latest_github_release(repo: str) -> str:
         return str(data["tag_name"]).lstrip("v")
 
 
+def _get_install_dir() -> str:
+    """Get the installation directory for tools."""
+    system = platform.system().lower()
+    if system == "windows":
+        # Use a tools directory in user profile on Windows
+        install_dir = os.path.join(os.environ.get("USERPROFILE", ""), ".local", "bin")
+    else:
+        install_dir = os.path.expanduser("~/.local/bin")
+    os.makedirs(install_dir, exist_ok=True)
+    return install_dir
+
+
 def _install_age() -> None:
     """Install age encryption tool."""
     if shutil.which("age"):
-        print(f"age already installed: {subprocess.getoutput('age --version')}")  # nosec B607 B603
+        print(f"age already installed: {subprocess.getoutput('age --version')}")  # nosec B607 B603 B605
         return
 
     print("Installing age...")
@@ -49,8 +61,7 @@ def _install_age() -> None:
     print(f"Latest version: {version}")
 
     system = platform.system().lower()
-    install_dir = os.path.expanduser("~/.local/bin")
-    os.makedirs(install_dir, exist_ok=True)
+    install_dir = _get_install_dir()
 
     if system == "linux":
         tar_url = f"https://github.com/FiloSottile/age/releases/download/v{version}/age-v{version}-linux-amd64.tar.gz"
@@ -61,7 +72,7 @@ def _install_age() -> None:
         import tarfile
 
         with tarfile.open(tar_path, "r:gz") as tar:
-            tar.extractall("/tmp")  # nosec B202
+            tar.extractall("/tmp")  # nosec B202 B108
         _run_cmd(f"mv /tmp/age/age /tmp/age/age-keygen {install_dir}/")
         _run_cmd(f"chmod +x {install_dir}/age {install_dir}/age-keygen")
         os.remove(tar_path)
@@ -69,9 +80,32 @@ def _install_age() -> None:
     elif system == "darwin":
         _run_cmd("brew install age")
     elif system == "windows":
-        print("On Windows, install age using: winget install age")
-        print("Or download from: https://github.com/FiloSottile/age/releases")
-        sys.exit(1)
+        import glob
+        import zipfile
+
+        zip_url = f"https://github.com/FiloSottile/age/releases/download/v{version}/age-v{version}-windows-amd64.zip"
+        zip_path = os.path.join(os.environ.get("TEMP", "."), "age.zip")
+        extract_dir = os.path.join(os.environ.get("TEMP", "."), "age_extract")
+        print(f"Downloading {zip_url}...")
+        urllib.request.urlretrieve(zip_url, zip_path)  # nosec B310
+
+        with zipfile.ZipFile(zip_path, "r") as zf:
+            zf.extractall(extract_dir)  # nosec B202
+
+        # Find and move executables (search recursively as zip structure may vary)
+        for exe in ["age.exe", "age-keygen.exe"]:
+            matches = glob.glob(os.path.join(extract_dir, "**", exe), recursive=True)
+            if matches:
+                src = matches[0]
+                dst = os.path.join(install_dir, exe)
+                shutil.move(src, dst)
+            else:
+                print(f"Warning: {exe} not found in archive")
+
+        os.remove(zip_path)
+        shutil.rmtree(extract_dir)
+        print(f"age installed to {install_dir}")
+        print(f"Ensure {install_dir} is in your PATH")
     else:
         print(f"Unsupported OS: {system}")
         sys.exit(1)
@@ -81,7 +115,7 @@ def _install_age() -> None:
 def _install_sops() -> None:
     """Install SOPS secrets manager."""
     if shutil.which("sops"):
-        version_output = subprocess.getoutput("sops --version").splitlines()[0]  # nosec B607 B603
+        version_output = subprocess.getoutput("sops --version").splitlines()[0]  # nosec B607 B603 B605
         print(f"SOPS already installed: {version_output}")
         return
 
@@ -90,8 +124,7 @@ def _install_sops() -> None:
     print(f"Latest version: {version}")
 
     system = platform.system().lower()
-    install_dir = os.path.expanduser("~/.local/bin")
-    os.makedirs(install_dir, exist_ok=True)
+    install_dir = _get_install_dir()
 
     if system == "linux":
         bin_url = f"https://github.com/getsops/sops/releases/download/v{version}/sops-v{version}.linux.amd64"
@@ -102,9 +135,12 @@ def _install_sops() -> None:
     elif system == "darwin":
         _run_cmd("brew install sops")
     elif system == "windows":
-        print("On Windows, install sops using: winget install Mozilla.sops")
-        print("Or download from: https://github.com/getsops/sops/releases")
-        sys.exit(1)
+        bin_url = f"https://github.com/getsops/sops/releases/download/v{version}/sops-v{version}.amd64.exe"
+        bin_path = os.path.join(install_dir, "sops.exe")
+        print(f"Downloading {bin_url}...")
+        urllib.request.urlretrieve(bin_url, bin_path)  # nosec B310
+        print(f"SOPS installed to {install_dir}")
+        print(f"Ensure {install_dir} is in your PATH")
     else:
         print(f"Unsupported OS: {system}")
         sys.exit(1)
