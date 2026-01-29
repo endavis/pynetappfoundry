@@ -371,11 +371,35 @@ class Config:
             env_prefix = self._get_env_var_name(uobject) if uobject else "NF_<OBJECT>"
             raise ConfigurationError(
                 f"Could not find password for type={utype!r}, object={uobject!r}. "
-                f"Set {env_prefix}_PASSWORD environment variable (base64 encoded), "
+                f"Set {env_prefix}_PASSWORD environment variable, "
                 "or configure 'enc' in config files."
             )
 
-        return user, enc
+        # Decrypt SOPS-encrypted passwords
+        password = self._decrypt_if_encrypted(enc)
+
+        return user, password
+
+    def _decrypt_if_encrypted(self, value: str) -> str:
+        """Decrypt a value if it is SOPS-encrypted.
+
+        Args:
+            value: The value to potentially decrypt.
+
+        Returns:
+            Decrypted value if encrypted, otherwise the original value.
+        """
+        from pynetappfoundry.utils.sops import SOPSError, decrypt_value, is_encrypted
+
+        if not is_encrypted(value):
+            return value
+
+        try:
+            return decrypt_value(value)
+        except SOPSError as e:
+            logging.warning(f"Failed to decrypt SOPS value: {e}")
+            # Return original value if decryption fails
+            return value
 
     def count(self, section: str, id_field: str = "name") -> int:
         """Count unique items in a section.

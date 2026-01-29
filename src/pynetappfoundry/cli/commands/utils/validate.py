@@ -51,7 +51,7 @@ def _validate_cluster(
     config: Config,
 ) -> tuple[int, int]:
     """Validate a single cluster."""
-    user, enc = config.get_user("clusters", name)
+    user, password = config.get_user("clusters", name)
     node_count = 0
     vol_count = 0
 
@@ -59,7 +59,7 @@ def _validate_cluster(
         with HostConnection(
             details["ip"],
             username=user,
-            password=enc,
+            password=password,
             verify=False,
         ):
             cluster = Cluster()

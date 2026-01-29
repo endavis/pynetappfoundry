@@ -46,14 +46,14 @@ def _run_cluster_command(
     command: str,
 ) -> None:
     """Run command on a single cluster."""
-    user, enc = config.get_user("clusters", name)
+    user, password = config.get_user("clusters", name)
 
     try:
         cli = ONTAPCLI(
             name=name,
             host_or_ip=details["ip"],
             username=user,
-            password=enc,
+            password=password,
         )
 
         output = cli.run_command(command)

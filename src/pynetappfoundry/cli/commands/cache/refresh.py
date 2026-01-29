@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import base64
 import contextlib
 from pathlib import Path
 
@@ -91,8 +90,7 @@ def refresh(ctx: click.Context, cluster: str | None, refresh_all: bool) -> None:
                 cluster_data = config.data["clusters"][cluster_name]
 
                 # Get credentials
-                user, enc = config.get_user("clusters", cluster_name)
-                password = base64.b64decode(enc).decode("latin-1")
+                user, password = config.get_user("clusters", cluster_name)
 
                 # Create cluster object for API client
                 class ClusterObj:
