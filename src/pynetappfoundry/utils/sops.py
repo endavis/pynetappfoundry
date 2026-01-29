@@ -15,7 +15,8 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 # SOPS encrypted value prefix pattern
-SOPS_PREFIX = "ENC["
+# Format: base64-encoded full SOPS JSON with metadata
+SOPS_PREFIX = "SOPS["
 SOPS_SUFFIX = "]"
 
 
@@ -170,12 +171,16 @@ def encrypt_value(value: str, public_key: str | None = None) -> str:
         public_key: The age public key. If None, uses key from SOPS_AGE_KEY_FILE.
 
     Returns:
-        The encrypted value with ENC[...] wrapper.
+        The encrypted value with SOPS[...] wrapper containing base64-encoded
+        full SOPS JSON (including metadata needed for decryption).
 
     Raises:
         SOPSNotInstalledError: If SOPS is not installed.
         SOPSError: If encryption fails.
     """
+    import base64
+    import json
+
     if not is_sops_installed():
         raise SOPSNotInstalledError(
             "sops is not installed. Install it with: brew install sops (macOS) "
@@ -191,8 +196,6 @@ def encrypt_value(value: str, public_key: str | None = None) -> str:
     cmd.append("/dev/stdin")
 
     # SOPS expects JSON input, we'll use a simple structure
-    import json
-
     input_data = json.dumps({"value": value})
 
     try:
@@ -206,21 +209,23 @@ def encrypt_value(value: str, public_key: str | None = None) -> str:
     except subprocess.CalledProcessError as e:
         raise SOPSError(f"SOPS encryption failed: {e.stderr}") from e
 
-    # Parse the encrypted JSON and extract the value
+    # Validate JSON output
     try:
-        encrypted_data = json.loads(result.stdout)
-        encrypted_value: str = str(encrypted_data.get("value", ""))
+        json.loads(result.stdout)
     except json.JSONDecodeError as e:
         raise SOPSError(f"Failed to parse SOPS output: {e}") from e
 
-    return encrypted_value
+    # Store the full SOPS JSON (base64 encoded) to preserve metadata for decryption
+    encoded = base64.b64encode(result.stdout.encode()).decode()
+    return f"{SOPS_PREFIX}{encoded}{SOPS_SUFFIX}"
 
 
 def decrypt_value(encrypted_value: str) -> str:
     """Decrypt a SOPS-encrypted value.
 
     Args:
-        encrypted_value: The encrypted value (with or without ENC[] wrapper).
+        encrypted_value: The encrypted value in SOPS[base64...] format,
+            or legacy ENC[...] format (which will fail without metadata).
 
     Returns:
         The decrypted plaintext value.
@@ -229,20 +234,30 @@ def decrypt_value(encrypted_value: str) -> str:
         SOPSNotInstalledError: If SOPS is not installed.
         SOPSError: If decryption fails.
     """
+    import base64
+    import json
+
     if not is_sops_installed():
         raise SOPSNotInstalledError(
             "sops is not installed. Install it with: brew install sops (macOS) "
             "or see https://github.com/getsops/sops#installation"
         )
 
+    # Extract base64 content and decode to get full SOPS JSON
+    if not (encrypted_value.startswith(SOPS_PREFIX) and encrypted_value.endswith(SOPS_SUFFIX)):
+        raise SOPSError(
+            f"Unknown encrypted value format. Expected SOPS[...], got: {encrypted_value[:20]}..."
+        )
+
+    b64_content = encrypted_value[len(SOPS_PREFIX) : -len(SOPS_SUFFIX)]
+    try:
+        input_data = base64.b64decode(b64_content).decode()
+    except Exception as e:
+        raise SOPSError(f"Failed to decode SOPS value: {e}") from e
+
     # Build command
     cmd = ["sops", "--decrypt", "--input-type", "json", "--output-type", "json"]
     cmd.append("/dev/stdin")
-
-    # SOPS expects the full encrypted JSON structure
-    import json
-
-    input_data = json.dumps({"value": encrypted_value})
 
     try:
         result = subprocess.run(

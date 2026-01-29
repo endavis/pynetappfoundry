@@ -87,7 +87,7 @@ class TestIsEncrypted:
 
     def test_encrypted_value(self) -> None:
         """Test detects encrypted value."""
-        encrypted = f"{SOPS_PREFIX}AES256_GCM,data:abc123{SOPS_SUFFIX}"
+        encrypted = f"{SOPS_PREFIX}base64encodeddata{SOPS_SUFFIX}"
         assert is_encrypted(encrypted) is True
 
     def test_plain_value(self) -> None:
@@ -96,7 +96,7 @@ class TestIsEncrypted:
 
     def test_partial_prefix(self) -> None:
         """Test partial prefix not detected."""
-        assert is_encrypted("ENC[abc") is False
+        assert is_encrypted("SOPS[abc") is False
 
     def test_empty_string(self) -> None:
         """Test empty string not detected."""
@@ -152,4 +152,4 @@ class TestDecryptValue:
             from pynetappfoundry.utils.sops import decrypt_value
 
             with pytest.raises(SOPSNotInstalledError):
-                decrypt_value("ENC[data]")
+                decrypt_value("SOPS[base64data]")
