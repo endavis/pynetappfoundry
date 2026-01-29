@@ -140,6 +140,8 @@ def _validate_ssh(
 
     ssh = paramiko.SSHClient()
     ssh.load_system_host_keys()
+    # AutoAddPolicy is acceptable here: this is a validation tool for internal
+    # clusters on trusted networks, not a production data transfer mechanism
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy)
 
     try:
