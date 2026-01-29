@@ -808,3 +808,182 @@ relaxation_order = ['cloud', 'app', 'div']
             assert connectors_order == ["cloud", "app", "div"]
         finally:
             os.chdir(original_cwd)
+
+
+class TestCacheEnrichment:
+    """Tests for cache metadata enrichment."""
+
+    def test_clusters_have_cloud_fields_with_defaults(
+        self, temp_config_dir: Path, tmp_path: Path
+    ) -> None:
+        """Test that clusters get cloud fields with default values when no cache."""
+        import os
+
+        original_cwd = os.getcwd()
+        os.chdir(tmp_path)
+        try:
+            output_dir = tmp_path / "output"
+            output_dir.mkdir(exist_ok=True)
+            config = Config(
+                config_dir=str(temp_config_dir),
+                output_dir=str(output_dir),
+                script_name="test_script",
+            )
+
+            # All clusters should have cloud fields with default empty values
+            for cluster_name in config.data.get("clusters", {}):
+                cluster = config.data["clusters"][cluster_name]
+                assert "cloud_provider" in cluster
+                assert "cloud_region" in cluster
+                assert "cloud_instance_id" in cluster
+                assert "cloud_account_id" in cluster
+                assert "cloud_resource_group_name" in cluster
+                # Default should be empty string
+                assert cluster["cloud_provider"] == ""
+                assert cluster["cloud_region"] == ""
+        finally:
+            os.chdir(original_cwd)
+
+    def test_cloud_fields_are_searchable(self, temp_config_dir: Path, tmp_path: Path) -> None:
+        """Test that cloud fields can be used in search queries."""
+        import os
+
+        original_cwd = os.getcwd()
+        os.chdir(tmp_path)
+        try:
+            output_dir = tmp_path / "output"
+            output_dir.mkdir(exist_ok=True)
+            config = Config(
+                config_dir=str(temp_config_dir),
+                output_dir=str(output_dir),
+                script_name="test_script",
+            )
+
+            # Search for clusters by cloud_provider (all have default "")
+            results = config.get_clusters({"cloud_provider": ""})
+            assert len(results) == 3  # All clusters have empty cloud_provider
+
+            # Search for non-existent provider should return nothing
+            results = config.get_clusters({"cloud_provider": "Azure"})
+            assert len(results) == 0
+        finally:
+            os.chdir(original_cwd)
+
+    def test_cached_data_enriches_cluster(self, temp_config_dir: Path, tmp_path: Path) -> None:
+        """Test that cached cloud data is merged into cluster."""
+        import os
+
+        from pynetappfoundry.cache.db import ClusterMetadataDB
+        from pynetappfoundry.cache.models import CachedClusterMetadata, CloudMetadata
+
+        original_cwd = os.getcwd()
+        os.chdir(tmp_path)
+        try:
+            output_dir = tmp_path / "output"
+            output_dir.mkdir(exist_ok=True)
+
+            # First create a config to set up the cache directory
+            config1 = Config(
+                config_dir=str(temp_config_dir),
+                output_dir=str(output_dir),
+                script_name="test_script",
+            )
+
+            # Now populate cache for one cluster
+            db = ClusterMetadataDB(config=config1)
+            cached_metadata = CachedClusterMetadata(
+                cluster_name="test-cluster-1",
+                cloud=CloudMetadata(
+                    provider="Azure",
+                    region="eastus",
+                    account_id="sub-12345",
+                    resource_group_name="rg-test",
+                    instance_type="Standard_E20ds_v5",
+                ),
+            )
+            db.set("test-cluster-1", cached_metadata)
+            db.close()
+
+            # Now create a new config - it should enrich from cache
+            config2 = Config(
+                config_dir=str(temp_config_dir),
+                output_dir=str(output_dir),
+                script_name="test_script",
+            )
+
+            # Check enriched cluster
+            cluster1 = config2.data["clusters"]["test-cluster-1"]
+            assert cluster1["cloud_provider"] == "Azure"
+            assert cluster1["cloud_region"] == "eastus"
+            assert cluster1["cloud_account_id"] == "sub-12345"
+            assert cluster1["cloud_resource_group_name"] == "rg-test"
+            assert cluster1["cloud_instance_type"] == "Standard_E20ds_v5"
+
+            # Check non-cached cluster still has defaults
+            cluster2 = config2.data["clusters"]["test-cluster-2"]
+            assert cluster2["cloud_provider"] == ""
+            assert cluster2["cloud_region"] == ""
+        finally:
+            os.chdir(original_cwd)
+
+    def test_cached_data_is_searchable(self, temp_config_dir: Path, tmp_path: Path) -> None:
+        """Test that cached cloud data can be used for searching."""
+        import os
+
+        from pynetappfoundry.cache.db import ClusterMetadataDB
+        from pynetappfoundry.cache.models import CachedClusterMetadata, CloudMetadata
+
+        original_cwd = os.getcwd()
+        os.chdir(tmp_path)
+        try:
+            output_dir = tmp_path / "output"
+            output_dir.mkdir(exist_ok=True)
+
+            # Create config and populate cache
+            config1 = Config(
+                config_dir=str(temp_config_dir),
+                output_dir=str(output_dir),
+                script_name="test_script",
+            )
+
+            db = ClusterMetadataDB(config=config1)
+            # Add Azure cluster
+            db.set(
+                "test-cluster-1",
+                CachedClusterMetadata(
+                    cluster_name="test-cluster-1",
+                    cloud=CloudMetadata(provider="Azure", region="eastus"),
+                ),
+            )
+            # Add AWS cluster
+            db.set(
+                "test-cluster-2",
+                CachedClusterMetadata(
+                    cluster_name="test-cluster-2",
+                    cloud=CloudMetadata(provider="AWS", region="us-east-1"),
+                ),
+            )
+            db.close()
+
+            # New config should have enriched data
+            config2 = Config(
+                config_dir=str(temp_config_dir),
+                output_dir=str(output_dir),
+                script_name="test_script",
+            )
+
+            # Search by cloud provider
+            azure_clusters = config2.get_clusters({"cloud_provider": "Azure"})
+            assert len(azure_clusters) == 1
+            assert "test-cluster-1" in azure_clusters
+
+            aws_clusters = config2.get_clusters({"cloud_provider": "AWS"})
+            assert len(aws_clusters) == 1
+            assert "test-cluster-2" in aws_clusters
+
+            # Search by cloud region
+            eastus_clusters = config2.get_clusters({"cloud_region": "eastus"})
+            assert len(eastus_clusters) == 1
+            assert "test-cluster-1" in eastus_clusters
+        finally:
+            os.chdir(original_cwd)
