@@ -66,12 +66,12 @@ def _check_cluster_licenses(
     days_to_check = 30
     current_time = datetime.now(UTC)
 
-    user, enc = config.get_user("clusters", name)
+    user, password = config.get_user("clusters", name)
     try:
         with HostConnection(
             details["ip"],
             username=user,
-            password=enc,
+            password=password,
             verify=False,
         ):
             licenses_data: list[dict[str, Any]] = []

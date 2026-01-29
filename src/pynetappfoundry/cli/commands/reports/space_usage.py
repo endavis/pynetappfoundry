@@ -58,13 +58,13 @@ def _gather_space_data(
     from netapp_ontap import HostConnection
     from netapp_ontap.resources import Aggregate, Volume
 
-    user, enc = config.get_user("clusters", name)
+    user, password = config.get_user("clusters", name)
 
     try:
         with HostConnection(
             details["ip"],
             username=user,
-            password=enc,
+            password=password,
             verify=False,
         ):
             ws = wb.create_sheet(name)
