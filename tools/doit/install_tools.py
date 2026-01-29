@@ -80,6 +80,7 @@ def _install_age() -> None:
     elif system == "darwin":
         _run_cmd("brew install age")
     elif system == "windows":
+        import glob
         import zipfile
 
         zip_url = f"https://github.com/FiloSottile/age/releases/download/v{version}/age-v{version}-windows-amd64.zip"
@@ -91,11 +92,15 @@ def _install_age() -> None:
         with zipfile.ZipFile(zip_path, "r") as zf:
             zf.extractall(extract_dir)  # nosec B202
 
-        # Find and move executables
+        # Find and move executables (search recursively as zip structure may vary)
         for exe in ["age.exe", "age-keygen.exe"]:
-            src = os.path.join(extract_dir, f"age-v{version}-windows-amd64", exe)
-            dst = os.path.join(install_dir, exe)
-            shutil.move(src, dst)
+            matches = glob.glob(os.path.join(extract_dir, "**", exe), recursive=True)
+            if matches:
+                src = matches[0]
+                dst = os.path.join(install_dir, exe)
+                shutil.move(src, dst)
+            else:
+                print(f"Warning: {exe} not found in archive")
 
         os.remove(zip_path)
         shutil.rmtree(extract_dir)

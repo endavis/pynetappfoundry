@@ -211,9 +211,7 @@ class TestSOPSIntegration:
             elif "SOPS_AGE_KEY_FILE" in os.environ:
                 del os.environ["SOPS_AGE_KEY_FILE"]
 
-    def test_encrypt_decrypt_special_characters(
-        self, age_keypair: tuple[str, Path]
-    ) -> None:
+    def test_encrypt_decrypt_special_characters(self, age_keypair: tuple[str, Path]) -> None:
         """Test encryption/decryption with special characters."""
         import os
 
@@ -265,9 +263,7 @@ class TestSOPSIntegration:
             if "SOPS_AGE_KEY_FILE" in os.environ:
                 del os.environ["SOPS_AGE_KEY_FILE"]
 
-    def test_is_encrypted_with_real_encrypted_value(
-        self, age_keypair: tuple[str, Path]
-    ) -> None:
+    def test_is_encrypted_with_real_encrypted_value(self, age_keypair: tuple[str, Path]) -> None:
         """Test is_encrypted with a real encrypted value."""
         from pynetappfoundry.utils.sops import (
             encrypt_value,
