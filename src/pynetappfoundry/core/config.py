@@ -44,7 +44,7 @@ import logging
 import os
 import tomllib
 from pathlib import Path
-from typing import Any, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from pynetappfoundry.core.models import (
     DIIAPISettings,
@@ -52,6 +52,9 @@ from pynetappfoundry.core.models import (
     ONTAPAPISettings,
     SMTPSettings,
 )
+
+if TYPE_CHECKING:
+    from pynetappfoundry.cache.db import ClusterMetadataDB
 
 _file_name = Path(__file__).name
 
@@ -282,7 +285,71 @@ class Config:
             f"{_file_name} :loaded the"
             f" following files: {', '.join([str(path) for path in loaded_tomls])}"
         )
+        self._enrich_with_cache()
         self.add_searchable_keys()
+
+    def _enrich_with_cache(self) -> None:
+        """Enrich cluster data with cached cloud metadata.
+
+        Adds cloud metadata fields to all clusters in self.data["clusters"].
+        Clusters with cached data get actual values; clusters without cache
+        get default values (empty strings for all cloud fields).
+
+        This method runs BEFORE add_searchable_keys() so cloud fields
+        can be included in searchable keys.
+        """
+        from pynetappfoundry.cache.db import ClusterMetadataDB
+        from pynetappfoundry.cache.models import CloudMetadata
+
+        # Define which cloud fields to add (with cloud_ prefix)
+        cloud_fields = [
+            "instance_id",
+            "account_id",
+            "instance_type",
+            "region",
+            "provider",
+            "primary_ip",
+            "availability_zone",
+            "resource_group_name",
+        ]
+
+        # Get default values from CloudMetadata model
+        default_cloud = CloudMetadata()
+        defaults = {f"cloud_{field}": getattr(default_cloud, field) for field in cloud_fields}
+
+        clusters = self.data.get("clusters", {})
+        if not clusters:
+            logging.debug(f"{_file_name} : no clusters to enrich with cache")
+            return
+
+        # Try to open the cache database
+        cache_db: ClusterMetadataDB | None = None
+        try:
+            cache_db = ClusterMetadataDB(config=self)
+        except Exception as e:
+            logging.debug(f"{_file_name} : could not open cache database: {e}")
+
+        for cluster_name, cluster_data in clusters.items():
+            # Add default values for all cloud fields
+            for field, default_value in defaults.items():
+                if field not in cluster_data:
+                    cluster_data[field] = default_value
+
+            # Try to get cached data and override defaults
+            if cache_db:
+                try:
+                    cached = cache_db.get(cluster_name)
+                    if cached and cached.cloud:
+                        for field in cloud_fields:
+                            cache_value = getattr(cached.cloud, field, "")
+                            if cache_value:  # Only override if cache has a value
+                                cluster_data[f"cloud_{field}"] = cache_value
+                        logging.debug(f"{_file_name} : enriched {cluster_name} with cache data")
+                except Exception as e:
+                    logging.debug(f"{_file_name} : could not get cache for {cluster_name}: {e}")
+
+        if cache_db:
+            cache_db.close()
 
     def parse_toml(self, file: Path) -> None:
         """Parse a single TOML file.
