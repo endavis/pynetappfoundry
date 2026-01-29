@@ -115,6 +115,8 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["ANN"]
+# SIM117: yattag uses nested with statements for HTML structure, not fixable
+"src/pynetappfoundry/cli/commands/reports/html.py" = ["SIM117"]
 
 [tool.ruff.format]
 quote-style = "double"
