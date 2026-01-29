@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from typing import Any
 
 import click
@@ -94,5 +93,4 @@ def _get_cluster_events(
             print_info(f"Retrieved {count} events")
 
     except Exception as e:
-        logging.error(f"Could not retrieve events for {name}: {e}")
-        print_error(f"  Error: {e}")
+        print_error(f"Could not retrieve events for {name}: {e}")

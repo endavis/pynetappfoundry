@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from typing import Any
 
 import click
@@ -70,5 +69,4 @@ def _get_cluster_licenses(
             console.print(table)
 
     except Exception as e:
-        logging.error(f"Could not retrieve licenses for {name}: {e}")
-        print_error(f"  Error: {e}")
+        print_error(f"Could not retrieve licenses for {name}: {e}")

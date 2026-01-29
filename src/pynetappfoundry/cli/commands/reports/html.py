@@ -11,7 +11,6 @@ This module generates an interactive HTML report with:
 
 from __future__ import annotations
 
-import logging
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
@@ -19,7 +18,7 @@ import click
 from yattag import Doc, indent
 
 from pynetappfoundry.cli.decorators import with_config
-from pynetappfoundry.cli.utils import print_info, print_success
+from pynetappfoundry.cli.utils import print_debug, print_error, print_info, print_success
 from pynetappfoundry.utils.cloud import (
     build_azure_id,
     build_azure_portal_link,
@@ -461,9 +460,9 @@ class HTMLReportBuilder:
                     self.doc.asis(JS_SCRIPT)
 
         result: str = indent(self.doc.getvalue())
-        logging.info(f"Processed {self.counts['ha'] + self.counts['sn']} clusters")
-        logging.info(f"   Single Node : {self.counts['sn']}")
-        logging.info(f"   HA          : {self.counts['ha']}")
+        print_debug(f"Processed {self.counts['ha'] + self.counts['sn']} clusters")
+        print_debug(f"   Single Node : {self.counts['sn']}")
+        print_debug(f"   HA          : {self.counts['ha']}")
         return result
 
     def _format_divisions(self) -> None:
@@ -753,18 +752,18 @@ class ClusterData:
         from netapp_ontap import HostConnection
         from netapp_ontap.resources import CifsService, Cluster, IpInterface, Node, Svm
 
-        logging.info(f"Gathering data for {self.name}")
+        print_debug(f"Gathering data for {self.name}")
         self._build_cloud_info()
 
         ip = getattr(self, "ip", None)
         if not ip:
-            logging.error(f"No IP address for cluster {self.name}")
+            print_error(f"No IP address for cluster {self.name}")
             return
 
         try:
             user, password = self.app_instance.config.get_user("clusters", self.name)
         except Exception as e:
-            logging.error(f"Could not get credentials for {self.name}: {e}")
+            print_error(f"Could not get credentials for {self.name}: {e}")
             return
 
         try:
@@ -793,11 +792,11 @@ class ClusterData:
                 for cifserver in cifsservices:
                     self.fetched_data["cifs"][cifserver["name"]] = cifserver.to_dict()
         except Exception as e:
-            logging.error(f"Could not gather data from {self.name}: {e}")
+            print_error(f"Could not gather data from {self.name}: {e}")
 
     def format(self) -> None:
         """Format the cluster data as HTML."""
-        logging.info(f"Formatting cluster: {self.name}")
+        print_debug(f"Formatting cluster: {self.name}")
         is_active = hasattr(self, "tags") and "active" in getattr(self, "tags", [])
 
         tag = self.app_instance.tag
@@ -958,7 +957,7 @@ class ClusterData:
 
         for svm_name in sorted(self.fetched_data["svms"].keys()):
             svm_data = self.fetched_data["svms"][svm_name]
-            logging.info(f"  SVM: {svm_data.get('name', svm_name)}")
+            print_debug(f"  SVM: {svm_data.get('name', svm_name)}")
 
             state = svm_data.get("state", "")
             state_text = " - State: Stopped" if state == "stopped" else ""

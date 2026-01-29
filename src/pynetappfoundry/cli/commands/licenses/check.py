@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from datetime import UTC, datetime
 from typing import Any
 
@@ -152,7 +151,7 @@ def _check_cluster_licenses(
                     )
 
     except Exception as e:
-        logging.error(f"Could not retrieve licenses for {name}: {e}")
+        print_error(f"Could not retrieve licenses for {name}: {e}")
         issues.append(
             {
                 "cluster": name,
@@ -185,7 +184,7 @@ def _send_license_email(
     licensing_settings = config.get_licensing_settings()
 
     if not licensing_settings:
-        logging.warning("Email settings not configured, skipping notification")
+        print_warning("Email settings not configured, skipping notification")
         return
 
     html_body = ["<html><body>"]

@@ -2,13 +2,19 @@
 
 from __future__ import annotations
 
-import logging
 from typing import Any
 
 import click
 
 from pynetappfoundry.cli.decorators import with_config
-from pynetappfoundry.cli.utils import print_exception, print_info, print_success
+from pynetappfoundry.cli.utils import (
+    print_debug,
+    print_error,
+    print_exception,
+    print_info,
+    print_success,
+    print_warning,
+)
 from pynetappfoundry.clients.dii.api import DIIAPIClient
 from pynetappfoundry.core.config import Config
 from pynetappfoundry.db.metrics import MetricDB
@@ -78,7 +84,7 @@ def _dump_cluster_metrics(
         )
 
         if not assets:
-            logging.warning(f"No assets found for {name} in DII")
+            print_warning(f"No assets found for {name} in DII")
             return
 
         # Get metrics for each asset
@@ -109,7 +115,7 @@ def _dump_cluster_metrics(
                 }
                 db.upsert_data(table_name, metric_record)
 
-        logging.info(f"Saved metrics for {name}")
+        print_debug(f"Saved metrics for {name}")
 
     except Exception as e:
-        logging.error(f"Could not dump metrics for {name}: {e}")
+        print_error(f"Could not dump metrics for {name}: {e}")
