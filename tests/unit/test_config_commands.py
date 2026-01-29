@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 from click.testing import CliRunner
@@ -402,3 +403,83 @@ base_api_path = "/api"
             assert "NF_ORPHAN_CLUSTER_USER" in str(exc_info.value)
         finally:
             os.chdir(original_cwd)
+
+
+class TestInitSopsCommand:
+    """Tests for nf config init-sops command."""
+
+    def test_init_sops_force_removes_existing_key(self, tmp_path: Path) -> None:
+        """Test that --force removes existing key file before generating new one."""
+        runner = CliRunner()
+
+        # Create a fake existing key file
+        key_dir = tmp_path / ".sops" / "age"
+        key_dir.mkdir(parents=True)
+        key_file = key_dir / "keys.txt"
+        key_file.write_text(
+            "# created: 2024-01-01T00:00:00Z\n# public key: age1oldkey123\nAGE-SECRET-KEY-OLD\n"
+        )
+
+        # Mock the tools as installed and the keypair generation
+        with (
+            runner.isolated_filesystem(temp_dir=tmp_path),
+            patch(
+                "pynetappfoundry.cli.commands.config.init_sops.is_sops_installed",
+                return_value=True,
+            ),
+            patch(
+                "pynetappfoundry.cli.commands.config.init_sops.is_age_installed",
+                return_value=True,
+            ),
+            patch(
+                "pynetappfoundry.cli.commands.config.init_sops.generate_age_keypair",
+                return_value=("age1newkey456", str(key_file)),
+            ) as mock_generate,
+        ):
+            result = runner.invoke(
+                nf,
+                ["config", "init-sops", "--key-path", str(key_file), "--force"],
+            )
+
+            # The command should succeed
+            assert result.exit_code == 0, f"Output: {result.output}"
+            # The existing file should have been removed before generation
+            assert "Removed existing key" in result.output
+            # generate_age_keypair should have been called
+            mock_generate.assert_called_once()
+
+    def test_init_sops_without_force_shows_existing_key(self, tmp_path: Path) -> None:
+        """Test that without --force, existing key is shown and not overwritten."""
+        runner = CliRunner()
+
+        # Create a fake existing key file
+        key_dir = tmp_path / ".sops" / "age"
+        key_dir.mkdir(parents=True)
+        key_file = key_dir / "keys.txt"
+        key_file.write_text(
+            "# created: 2024-01-01T00:00:00Z\n"
+            "# public key: age1existingkey789\n"
+            "AGE-SECRET-KEY-EXISTING\n"
+        )
+
+        with (
+            runner.isolated_filesystem(temp_dir=tmp_path),
+            patch(
+                "pynetappfoundry.cli.commands.config.init_sops.is_sops_installed",
+                return_value=True,
+            ),
+            patch(
+                "pynetappfoundry.cli.commands.config.init_sops.is_age_installed",
+                return_value=True,
+            ),
+        ):
+            result = runner.invoke(
+                nf,
+                ["config", "init-sops", "--key-path", str(key_file)],
+            )
+
+            # Exit code 0 (key exists, info displayed)
+            assert result.exit_code == 0, f"Output: {result.output}"
+            assert "already exists" in result.output
+            assert "age1existingkey789" in result.output
+            assert "--force" in result.output
