@@ -625,6 +625,8 @@ class Config:
         Returns:
             Dictionary of matching items.
         """
+        if data_type not in self.data:
+            return {}
         if not search_dict:
             return self.data[data_type].copy()
         logging.debug(f"{_file_name} :    search:")

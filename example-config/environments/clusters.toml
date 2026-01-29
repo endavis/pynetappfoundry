@@ -1,0 +1,223 @@
+# Example Clusters Configuration
+# This file demonstrates various cluster configurations for different cloud providers
+# and on-premises deployments.
+#
+# Copy this file to your config/environments/ directory and modify as needed.
+
+[settings]
+type = "data"
+
+# =============================================================================
+# AZURE CLUSTERS - Cloud Volumes ONTAP in Azure
+# =============================================================================
+
+[clusters.AZURE-PROD-01]
+# Azure CVO with full cloud metadata (populated from cache after discovery)
+name = "AZURE-PROD-01"
+ip = "10.0.1.100"
+div = "Engineering"
+bu = "Platform"
+app = "DataServices"
+env = "Prod"
+subapp = ""
+cloud = "azure"
+region = "eastus"
+tags = ["active", "cvo", "ha"]
+
+[clusters.AZURE-PROD-02]
+# Azure CVO single-node
+name = "AZURE-PROD-02"
+ip = "10.0.1.101"
+div = "Engineering"
+bu = "Platform"
+app = "DataServices"
+env = "Prod"
+subapp = "Analytics"
+cloud = "azure"
+region = "eastus2"
+tags = ["active", "cvo", "single-node"]
+
+[clusters.AZURE-DEV-01]
+# Azure development cluster
+name = "AZURE-DEV-01"
+ip = "10.0.2.100"
+div = "Engineering"
+bu = "Platform"
+app = "DataServices"
+env = "Dev"
+subapp = ""
+cloud = "azure"
+region = "westus"
+tags = ["active", "cvo"]
+
+# =============================================================================
+# AWS CLUSTERS - Cloud Volumes ONTAP in AWS
+# =============================================================================
+
+[clusters.AWS-PROD-01]
+# AWS CVO HA pair in us-east-1
+name = "AWS-PROD-01"
+ip = "10.1.1.100"
+div = "Finance"
+bu = "Treasury"
+app = "FinanceData"
+env = "Prod"
+subapp = ""
+cloud = "aws"
+region = "us-east-1"
+tags = ["active", "cvo", "ha"]
+
+[clusters.AWS-PROD-02]
+# AWS CVO in us-west-2
+name = "AWS-PROD-02"
+ip = "10.1.2.100"
+div = "Finance"
+bu = "Accounting"
+app = "Reports"
+env = "Prod"
+subapp = ""
+cloud = "aws"
+region = "us-west-2"
+tags = ["active", "cvo", "single-node"]
+
+[clusters.AWS-DR-01]
+# AWS DR cluster
+name = "AWS-DR-01"
+ip = "10.1.3.100"
+div = "Finance"
+bu = "Treasury"
+app = "FinanceData"
+env = "DR"
+subapp = ""
+cloud = "aws"
+region = "us-east-2"
+tags = ["standby", "cvo", "dr"]
+
+# =============================================================================
+# GCP CLUSTERS - Cloud Volumes ONTAP in Google Cloud
+# =============================================================================
+
+[clusters.GCP-PROD-01]
+# GCP CVO in us-central1
+name = "GCP-PROD-01"
+ip = "10.2.1.100"
+div = "Research"
+bu = "DataScience"
+app = "MLPipeline"
+env = "Prod"
+subapp = ""
+cloud = "gcp"
+region = "us-central1"
+tags = ["active", "cvo", "ha"]
+
+[clusters.GCP-DEV-01]
+# GCP development cluster
+name = "GCP-DEV-01"
+ip = "10.2.2.100"
+div = "Research"
+bu = "DataScience"
+app = "MLPipeline"
+env = "Dev"
+subapp = ""
+cloud = "gcp"
+region = "us-west1"
+tags = ["active", "cvo", "single-node"]
+
+# =============================================================================
+# ON-PREMISES CLUSTERS - Physical/Virtual ONTAP systems
+# =============================================================================
+
+[clusters.ONPREM-PROD-01]
+# On-premises FAS system
+name = "ONPREM-PROD-01"
+ip = "192.168.1.100"
+div = "Corporate"
+bu = "Infrastructure"
+app = "FileServices"
+env = "Prod"
+subapp = ""
+cloud = "onprem"
+region = "DATACENTER-EAST"
+tags = ["active", "fas", "nfs", "cifs"]
+
+[clusters.ONPREM-PROD-02]
+# On-premises AFF system
+name = "ONPREM-PROD-02"
+ip = "192.168.1.101"
+div = "Corporate"
+bu = "Infrastructure"
+app = "BlockServices"
+env = "Prod"
+subapp = ""
+cloud = "onprem"
+region = "DATACENTER-EAST"
+tags = ["active", "aff", "iscsi", "nvme"]
+
+[clusters.ONPREM-PROD-03]
+# On-premises AFF system - West datacenter
+name = "ONPREM-PROD-03"
+ip = "192.168.2.100"
+div = "Corporate"
+bu = "Infrastructure"
+app = "FileServices"
+env = "Prod"
+subapp = ""
+cloud = "onprem"
+region = "DATACENTER-WEST"
+tags = ["active", "aff", "nfs"]
+
+[clusters.ONPREM-DEV-01]
+# On-premises development cluster
+name = "ONPREM-DEV-01"
+ip = "192.168.10.100"
+div = "Corporate"
+bu = "DevOps"
+app = "Testing"
+env = "Dev"
+subapp = ""
+cloud = "onprem"
+region = "DATACENTER-EAST"
+tags = ["active", "fas", "lab"]
+
+[clusters.ONPREM-DR-01]
+# On-premises DR cluster (standby)
+name = "ONPREM-DR-01"
+ip = "192.168.3.100"
+div = "Corporate"
+bu = "Infrastructure"
+app = "FileServices"
+env = "DR"
+subapp = ""
+cloud = "onprem"
+region = "DATACENTER-DR"
+tags = ["standby", "fas", "dr", "snapmirror"]
+
+# =============================================================================
+# HYBRID SCENARIOS - Mixed cloud/on-prem environments
+# =============================================================================
+
+[clusters.HYBRID-EDGE-01]
+# Edge deployment syncing to cloud
+name = "HYBRID-EDGE-01"
+ip = "172.16.1.100"
+div = "Operations"
+bu = "EdgeComputing"
+app = "EdgeStorage"
+env = "Prod"
+subapp = ""
+cloud = "onprem"
+region = "EDGE-SITE-NYC"
+tags = ["active", "edge", "sync-to-azure"]
+
+[clusters.HYBRID-EDGE-02]
+# Edge deployment syncing to AWS
+name = "HYBRID-EDGE-02"
+ip = "172.16.2.100"
+div = "Operations"
+bu = "EdgeComputing"
+app = "EdgeStorage"
+env = "Prod"
+subapp = ""
+cloud = "onprem"
+region = "EDGE-SITE-LA"
+tags = ["active", "edge", "sync-to-aws"]
