@@ -975,7 +975,9 @@ class TestHTMLFileGeneration:
             output_file.write_text(html_content)
 
             # Also write to a known location for easy access during development
-            dev_output = Path("/tmp/test_html_report.html")
+            import tempfile
+
+            dev_output = Path(tempfile.gettempdir()) / "test_html_report.html"
             dev_output.write_text(html_content)
 
             # Verify the HTML contains expected elements
