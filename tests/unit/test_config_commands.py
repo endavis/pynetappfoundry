@@ -114,7 +114,7 @@ class TestConfigShowCommand:
 
             shutil.copytree(temp_config_dir, Path.cwd() / "config")
 
-            result = runner.invoke(nf, ["config", "show"])
+            result = runner.invoke(nf, ["config", "show"], env={"NF_CONFIG_DIR": ""})
             assert result.exit_code == 0
             assert "Configuration from:" in result.output
             assert "clusters" in result.output.lower()
@@ -127,7 +127,9 @@ class TestConfigShowCommand:
 
             shutil.copytree(temp_config_dir, Path.cwd() / "config")
 
-            result = runner.invoke(nf, ["config", "show", "-s", "clusters"])
+            result = runner.invoke(
+                nf, ["config", "show", "-s", "clusters"], env={"NF_CONFIG_DIR": ""}
+            )
             assert result.exit_code == 0
             assert "test-cluster-1" in result.output
 
@@ -139,7 +141,9 @@ class TestConfigShowCommand:
 
             shutil.copytree(temp_config_dir, Path.cwd() / "config")
 
-            result = runner.invoke(nf, ["config", "show", "-s", "nonexistent"])
+            result = runner.invoke(
+                nf, ["config", "show", "-s", "nonexistent"], env={"NF_CONFIG_DIR": ""}
+            )
             assert result.exit_code == 1
             assert "not found" in result.output.lower()
 
@@ -151,7 +155,7 @@ class TestConfigShowCommand:
 
             shutil.copytree(temp_config_dir, Path.cwd() / "config")
 
-            result = runner.invoke(nf, ["config", "show"])
+            result = runner.invoke(nf, ["config", "show"], env={"NF_CONFIG_DIR": ""})
             assert result.exit_code == 0
             # The encoded password should be masked
             assert "encoded_password_123" not in result.output
@@ -165,7 +169,7 @@ class TestConfigShowCommand:
 
             shutil.copytree(temp_config_dir, Path.cwd() / "config")
 
-            result = runner.invoke(nf, ["config", "show", "--unmask"])
+            result = runner.invoke(nf, ["config", "show", "--unmask"], env={"NF_CONFIG_DIR": ""})
             assert result.exit_code == 0
             assert "encoded_password_123" in result.output
 
@@ -173,7 +177,7 @@ class TestConfigShowCommand:
         """Test error when config directory doesn't exist."""
         runner = CliRunner()
         with runner.isolated_filesystem(temp_dir=tmp_path):
-            result = runner.invoke(nf, ["config", "show"])
+            result = runner.invoke(nf, ["config", "show"], env={"NF_CONFIG_DIR": ""})
             assert result.exit_code == 1
             assert "not found" in result.output.lower()
 
@@ -192,7 +196,7 @@ class TestConfigValidateCommand:
         original_cwd = os.getcwd()
         os.chdir(tmp_path)
         try:
-            result = runner.invoke(nf, ["config", "validate"])
+            result = runner.invoke(nf, ["config", "validate"], env={"NF_CONFIG_DIR": ""})
             assert result.exit_code == 0, f"Output: {result.output}"
             assert "valid" in result.output.lower()
         finally:
@@ -204,7 +208,7 @@ class TestConfigValidateCommand:
         original_cwd = os.getcwd()
         os.chdir(tmp_path)
         try:
-            result = runner.invoke(nf, ["config", "validate"])
+            result = runner.invoke(nf, ["config", "validate"], env={"NF_CONFIG_DIR": ""})
             assert result.exit_code == 1
             assert "not found" in result.output.lower()
         finally:
@@ -220,7 +224,7 @@ class TestConfigValidateCommand:
         original_cwd = os.getcwd()
         os.chdir(tmp_path)
         try:
-            result = runner.invoke(nf, ["config", "validate"])
+            result = runner.invoke(nf, ["config", "validate"], env={"NF_CONFIG_DIR": ""})
             assert result.exit_code == 0, f"Output: {result.output}"
             assert "test-cluster-1" in result.output
         finally:
