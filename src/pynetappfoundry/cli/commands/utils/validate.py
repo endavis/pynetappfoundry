@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import logging
-import traceback
 from typing import Any
 
 import click
@@ -11,7 +9,13 @@ from netapp_ontap import HostConnection
 from netapp_ontap.resources import Cluster, Node, Volume
 
 from pynetappfoundry.cli.decorators import with_config
-from pynetappfoundry.cli.utils import print_error, print_info, print_success, print_warning
+from pynetappfoundry.cli.utils import (
+    print_debug,
+    print_error,
+    print_info,
+    print_success,
+    print_warning,
+)
 from pynetappfoundry.clients.ontap.cli import ONTAPCLI
 from pynetappfoundry.core.config import Config
 
@@ -113,9 +117,9 @@ def _validate_cluster(
             if cluster_name != name:
                 print_warning(f"    Config name {name} does not match cluster name {cluster_name}")
 
-    except Exception:
+    except Exception as e:
         print_error(f"  API: Could not connect to config {name}")
-        logging.debug(traceback.format_exc())
+        print_debug(f"Exception details: {e}")
 
     return node_count, vol_count, success
 
@@ -146,5 +150,5 @@ def _validate_ssh(
         return True
     except Exception as e:
         print_error(f"  SSH: Failed ({e})")
-        logging.debug(traceback.format_exc())
+        print_debug(f"Exception details: {e}")
         return False

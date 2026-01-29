@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from typing import Any
 
 import click
@@ -80,5 +79,4 @@ def _analyze_cluster_savings(
             console.print(table)
 
     except Exception as e:
-        logging.error(f"Could not analyze savings for {name}: {e}")
-        print_error(f"  Error: {e}")
+        print_error(f"Could not analyze savings for {name}: {e}")

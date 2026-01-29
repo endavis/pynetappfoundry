@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from typing import Any
 
 import click
@@ -64,5 +63,4 @@ def _run_cluster_command(
             console.print(f"  {line}")
 
     except Exception as e:
-        logging.exception(f"Could not run command on {name}: {e}")
-        print_exception(f"  Error: {e}", e)
+        print_exception(f"Could not run command on {name}: {e}", e)
