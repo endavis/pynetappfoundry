@@ -192,7 +192,10 @@ def encrypt_value(value: str, public_key: str | None = None) -> str:
     input_data = json.dumps({"value": value})
 
     # Use a temp file for cross-platform compatibility (no /dev/stdin on Windows)
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as tmp_file:
+    # Explicitly use UTF-8 encoding for Windows compatibility with unicode
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".json", delete=False, encoding="utf-8"
+    ) as tmp_file:
         tmp_file.write(input_data)
         tmp_path = tmp_file.name
 
@@ -205,11 +208,13 @@ def encrypt_value(value: str, public_key: str | None = None) -> str:
 
         cmd.append(tmp_path)
 
+        # Use UTF-8 encoding for subprocess output
         result = subprocess.run(
             cmd,
             capture_output=True,
             text=True,
             check=True,
+            encoding="utf-8",
         )
     except subprocess.CalledProcessError as e:
         raise SOPSError(f"SOPS encryption failed: {e.stderr}") from e
@@ -263,9 +268,12 @@ def decrypt_value(encrypted_value: str) -> str:
         raise SOPSError(f"Failed to decode SOPS value: {e}") from e
 
     # Use a temp file for cross-platform compatibility (no /dev/stdin on Windows)
+    # Explicitly use UTF-8 encoding for Windows compatibility with unicode
     import tempfile
 
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as tmp_file:
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".json", delete=False, encoding="utf-8"
+    ) as tmp_file:
         tmp_file.write(input_data)
         tmp_path = tmp_file.name
 
@@ -274,11 +282,13 @@ def decrypt_value(encrypted_value: str) -> str:
         cmd = ["sops", "--decrypt", "--input-type", "json", "--output-type", "json"]
         cmd.append(tmp_path)
 
+        # Use UTF-8 encoding for subprocess output
         result = subprocess.run(
             cmd,
             capture_output=True,
             text=True,
             check=True,
+            encoding="utf-8",
         )
     except subprocess.CalledProcessError as e:
         raise SOPSError(f"SOPS decryption failed: {e.stderr}") from e
