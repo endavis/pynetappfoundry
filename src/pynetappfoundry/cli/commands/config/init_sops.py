@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import shutil
 from pathlib import Path
 
 import click
@@ -19,6 +20,80 @@ from pynetappfoundry.utils.sops import (
 )
 
 console = Console()
+
+
+def _update_envrc_local(key_path: str) -> bool:
+    """Update .envrc.local with SOPS_AGE_KEY_FILE export.
+
+    Args:
+        key_path: Path to the age key file.
+
+    Returns:
+        True if .envrc.local was updated, False otherwise.
+    """
+    envrc_local = Path.cwd() / ".envrc.local"
+    envrc_example = Path.cwd() / ".envrc.local.example"
+    export_line = f'export SOPS_AGE_KEY_FILE="{key_path}"'
+
+    # Copy from example if .envrc.local doesn't exist
+    if not envrc_local.exists():
+        if envrc_example.exists():
+            shutil.copy(envrc_example, envrc_local)
+            console.print(f"Created {envrc_local} from {envrc_example}")
+        else:
+            # Create minimal .envrc.local
+            envrc_local.write_text("# Personal direnv overrides\n# This file is git-ignored\n\n")
+            console.print(f"Created {envrc_local}")
+
+    # Read current content
+    content = envrc_local.read_text()
+
+    # Check if SOPS_AGE_KEY_FILE is already set
+    if "SOPS_AGE_KEY_FILE" in content:
+        # Update existing line
+        lines = content.splitlines()
+        new_lines = []
+        for line in lines:
+            if "SOPS_AGE_KEY_FILE" in line and not line.strip().startswith("#"):
+                new_lines.append(export_line)
+            else:
+                new_lines.append(line)
+        envrc_local.write_text("\n".join(new_lines) + "\n")
+        console.print(f"Updated SOPS_AGE_KEY_FILE in {envrc_local}")
+    else:
+        # Append new line
+        with open(envrc_local, "a") as f:
+            f.write("\n# SOPS age key for credential encryption\n")
+            f.write(f"{export_line}\n")
+        console.print(f"Added SOPS_AGE_KEY_FILE to {envrc_local}")
+
+    return True
+
+
+def _save_public_key(public_key: str) -> None:
+    """Save public key to a file and ensure it's in .gitignore.
+
+    Args:
+        public_key: The age public key string.
+    """
+    public_key_file = Path.cwd() / ".sops-public-key.txt"
+    gitignore_file = Path.cwd() / ".gitignore"
+    gitignore_entry = ".sops-public-key.txt"
+
+    # Write public key to file
+    public_key_file.write_text(f"# Age public key for SOPS encryption\n{public_key}\n")
+    console.print(f"Saved public key to {public_key_file}")
+
+    # Ensure it's in .gitignore
+    if gitignore_file.exists():
+        content = gitignore_file.read_text()
+        if gitignore_entry not in content:
+            with open(gitignore_file, "a") as f:
+                f.write(f"\n# SOPS public key file\n{gitignore_entry}\n")
+            console.print(f"Added {gitignore_entry} to .gitignore")
+    else:
+        gitignore_file.write_text(f"# SOPS public key file\n{gitignore_entry}\n")
+        console.print(f"Created .gitignore with {gitignore_entry}")
 
 
 @click.command("init-sops")
@@ -96,11 +171,19 @@ def init_sops(ctx: click.Context, key_path: Path | None, force: bool) -> None:
     console.print(f"Private key: [dim]{private_key_path}[/dim]")
     console.print(f"Public key:  [bold]{public_key}[/bold]")
     console.print()
+
+    # Update .envrc.local with SOPS_AGE_KEY_FILE
+    _update_envrc_local(private_key_path)
+
+    # Save public key to file
+    _save_public_key(public_key)
+    console.print()
+
     console.print("[yellow]Important:[/yellow]")
     console.print("  1. Keep your private key secure - never share it")
     console.print("  2. Share your public key with team members who need access")
-    console.print("  3. Set SOPS_AGE_KEY_FILE environment variable:")
-    console.print(f"     export SOPS_AGE_KEY_FILE={private_key_path}")
+    console.print("  3. Run 'direnv allow' to load the environment variable")
     console.print()
     console.print("Next steps:")
-    console.print("  nf config set-credential --cluster <name>  # Encrypt a password")
+    console.print("  direnv allow                                # Load env vars")
+    console.print("  nf config set-credential --cluster <name>   # Encrypt a password")
