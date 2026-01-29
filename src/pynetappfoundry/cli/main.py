@@ -45,14 +45,14 @@ def nf(ctx: click.Context, config_dir: str, output_dir: str, debug: bool) -> Non
     A CLI for managing NetApp ONTAP clusters, including license management,
     space reporting, event tracking, and more.
     """
-    # Configure logging based on debug flag
-    # Only enable DEBUG for our code - some libraries crash with DEBUG level
-    logging.basicConfig(
-        level=logging.WARNING,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    )
+    # Configure logging - CLI uses Rich for console output, so logging goes to file only
+    # Set root logger to WARNING to suppress library noise
+    # Add NullHandler to prevent "no handler found" warnings
+    logging.getLogger().setLevel(logging.WARNING)
+    logging.getLogger().addHandler(logging.NullHandler())
+
+    # Enable DEBUG for pynetappfoundry loggers when debug mode is on
     if debug:
-        # Enable DEBUG only for pynetappfoundry loggers
         logging.getLogger("pynetappfoundry").setLevel(logging.DEBUG)
 
     ctx.ensure_object(dict)
