@@ -58,13 +58,13 @@ def _gather_lock_data(
     from netapp_ontap import HostConnection
     from netapp_ontap.resources import ClientLock
 
-    user, enc = config.get_user("clusters", name)
+    user, password = config.get_user("clusters", name)
 
     try:
         with HostConnection(
             details["ip"],
             username=user,
-            password=enc,
+            password=password,
             verify=False,
         ):
             ws = wb.create_sheet(name)

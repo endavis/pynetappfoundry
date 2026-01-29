@@ -42,13 +42,13 @@ def _get_cluster_licenses(
     config: Config,
 ) -> None:
     """Get licenses from a single cluster."""
-    user, enc = config.get_user("clusters", name)
+    user, password = config.get_user("clusters", name)
 
     try:
         with HostConnection(
             details["ip"],
             username=user,
-            password=enc,
+            password=password,
             verify=False,
         ):
             table = Table(title=f"Licenses for {name}")

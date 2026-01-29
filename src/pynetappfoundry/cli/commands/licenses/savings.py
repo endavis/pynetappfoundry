@@ -42,13 +42,13 @@ def _analyze_cluster_savings(
     config: Config,
 ) -> None:
     """Analyze savings for a single cluster."""
-    user, enc = config.get_user("clusters", name)
+    user, password = config.get_user("clusters", name)
 
     try:
         with HostConnection(
             details["ip"],
             username=user,
-            password=enc,
+            password=password,
             verify=False,
         ):
             table = Table(title=f"License Usage for {name}")

@@ -52,13 +52,13 @@ def _save_cluster_azure_events(
     from netapp_ontap import HostConnection
     from netapp_ontap.resources import Node
 
-    user, enc = config.get_user("clusters", name)
+    user, password = config.get_user("clusters", name)
 
     try:
         with HostConnection(
             details["ip"],
             username=user,
-            password=enc,
+            password=password,
             verify=False,
         ):
             for node in Node.get_collection(fields="*"):

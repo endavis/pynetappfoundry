@@ -83,13 +83,13 @@ def _gather_cluster_html(
         f"    <h2>{name}</h2>",
     ]
 
-    user, enc = config.get_user("clusters", name)
+    user, password = config.get_user("clusters", name)
 
     try:
         with HostConnection(
             details["ip"],
             username=user,
-            password=enc,
+            password=password,
             verify=False,
         ):
             # Cluster info
