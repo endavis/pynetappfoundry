@@ -208,7 +208,7 @@ def _set_type_credential(
 
 def _print_password_status(encrypted_password: str) -> None:
     """Print password encryption status."""
-    if encrypted_password.startswith("ENC["):
+    if encrypted_password.startswith("SOPS["):
         console.print("  Password: [dim](encrypted)[/dim]")
     else:
         console.print("  Password: [yellow](plain text)[/yellow]")
