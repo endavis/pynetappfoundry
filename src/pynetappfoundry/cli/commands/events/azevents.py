@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
-import logging
 from typing import Any
 
 import click
 
 from pynetappfoundry.cli.decorators import with_config
-from pynetappfoundry.cli.utils import print_info, print_success
+from pynetappfoundry.cli.utils import print_debug, print_error, print_info, print_success
 from pynetappfoundry.core.config import Config
 from pynetappfoundry.db.azevents import AzEventsDB
 
@@ -81,7 +80,7 @@ def _save_cluster_azure_events(
                             "az_maint_scheduled": event.get("scheduled_time"),
                         }
                         db.upsert_event(db_event)
-                        logging.info(f"Saved event {event_id} for {node_name}")
+                        print_debug(f"Saved event {event_id} for {node_name}")
 
     except Exception as e:
-        logging.error(f"Could not get Azure events for {name}: {e}")
+        print_error(f"Could not get Azure events for {name}: {e}")

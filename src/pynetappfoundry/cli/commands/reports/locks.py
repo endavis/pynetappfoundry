@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from datetime import datetime
 from typing import Any
 
@@ -10,7 +9,7 @@ import click
 from openpyxl import Workbook
 
 from pynetappfoundry.cli.decorators import with_config
-from pynetappfoundry.cli.utils import print_info, print_success
+from pynetappfoundry.cli.utils import print_debug, print_error, print_info, print_success
 from pynetappfoundry.core.config import Config
 
 
@@ -74,7 +73,7 @@ def _gather_lock_data(
             for lock in ClientLock.get_collection(fields="*"):
                 locks_data.append(lock.to_dict())
 
-            logging.info(f"Locks found: {len(locks_data)}")
+            print_debug(f"Locks found: {len(locks_data)}")
 
             for item in locks_data:
                 try:
@@ -104,11 +103,11 @@ def _gather_lock_data(
                             ]
                         )
                     else:
-                        logging.info(f"Unknown lock type: {lock_type}")
+                        print_debug(f"Unknown lock type: {lock_type}")
                 except Exception as e:
-                    logging.error(f"Lock error: {e}")
+                    print_error(f"Lock error: {e}")
 
     except Exception as e:
-        logging.error(f"Could not gather lock data for {name}: {e}")
+        print_error(f"Could not gather lock data for {name}: {e}")
         ws = wb.create_sheet(name)
         ws.append(["Error", str(e)])

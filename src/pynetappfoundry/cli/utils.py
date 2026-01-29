@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import logging
 import traceback
 
 import click
 from rich.console import Console
 from rich.table import Table
 
+logger = logging.getLogger(__name__)
 console = Console()
 
 
@@ -46,49 +48,71 @@ def print_table(
 
 
 def print_success(message: str) -> None:
-    """Print a success message.
+    """Print a success message to console and log to file.
 
     Args:
         message: Message to print.
     """
     console.print(f"[green]{message}[/green]")
+    logger.info(message)
 
 
 def print_error(message: str) -> None:
-    """Print an error message.
+    """Print an error message to console and log to file.
 
     Args:
         message: Message to print.
     """
     console.print(f"[red]{message}[/red]")
+    logger.error(message)
 
 
 def print_warning(message: str) -> None:
-    """Print a warning message.
+    """Print a warning message to console and log to file.
 
     Args:
         message: Message to print.
     """
     console.print(f"[yellow]{message}[/yellow]")
+    logger.warning(message)
 
 
 def print_info(message: str) -> None:
-    """Print an info message.
+    """Print an info message to console and log to file.
 
     Args:
         message: Message to print.
     """
     console.print(f"[blue]{message}[/blue]")
+    logger.info(message)
 
 
 def print_exception(message: str, exc: BaseException | None = None) -> None:
     """Print an error message with optional traceback in debug mode.
 
+    Also logs to file - uses exception logging if exc is provided, otherwise error.
+
     Args:
         message: Error message to print.
         exc: Exception to include. If provided and debug mode is enabled,
-             the full traceback will be printed.
+             the full traceback will be printed to console. If provided,
+             logger.exception is used for full traceback in log file.
     """
     console.print(f"[red]{message}[/red]")
+    if exc:
+        logger.exception(message)
+    else:
+        logger.error(message)
     if exc and is_debug_mode():
         console.print("[dim]" + "".join(traceback.format_exception(exc)) + "[/dim]")
+
+
+def print_debug(message: str) -> None:
+    """Print debug message to console (if debug mode) and always log to file.
+
+    Args:
+        message: Debug message to print.
+    """
+    logger.debug(message)
+    if is_debug_mode():
+        console.print(f"[dim]{message}[/dim]")

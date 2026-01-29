@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from datetime import datetime
 from typing import Any
 
@@ -10,7 +9,7 @@ import click
 from openpyxl import Workbook
 
 from pynetappfoundry.cli.decorators import with_config
-from pynetappfoundry.cli.utils import print_info, print_success
+from pynetappfoundry.cli.utils import print_error, print_info, print_success
 from pynetappfoundry.core.config import Config
 
 
@@ -113,6 +112,6 @@ def _gather_space_data(
                 )
 
     except Exception as e:
-        logging.error(f"Could not gather space data for {name}: {e}")
+        print_error(f"Could not gather space data for {name}: {e}")
         ws = wb.create_sheet(name)
         ws.append(["Error", str(e)])
