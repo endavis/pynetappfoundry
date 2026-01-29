@@ -58,6 +58,19 @@ _file_name = Path(__file__).name
 T = TypeVar("T")
 
 
+# Valid data types for config sections (used in data/*.toml files)
+VALID_DATA_TYPES = frozenset(
+    {
+        "aiquims",
+        "connectors",
+        "clusters",
+        "cloudinsights",
+        "azure",
+        "ibm",
+    }
+)
+
+
 class ConfigurationError(Exception):
     """Raised when configuration is missing or invalid."""
 
