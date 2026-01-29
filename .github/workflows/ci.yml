@@ -92,6 +92,30 @@ jobs:
       - name: Install dependencies
         run: uv sync --all-extras --dev
 
+      - name: Install SOPS tools (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          uv run doit install_tools
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Install SOPS tools (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install age sops
+
+      - name: Install SOPS tools (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          uv run doit install_tools
+          $installDir = "$env:USERPROFILE\.local\bin"
+          echo $installDir | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Verify SOPS tools installation
+        run: |
+          age --version
+          sops --version
+
       - name: Check code formatting
         run: uv run ruff format --check src/ tests/
 
