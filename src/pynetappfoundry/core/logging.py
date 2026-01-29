@@ -9,7 +9,10 @@ from pathlib import Path
 
 
 def setup_logger(script_name: str) -> logging.Logger:
-    """Set up logging for a script with both console and file handlers.
+    """Set up logging for a script with file handler only.
+
+    Console output is handled by Rich via cli/utils.py print functions.
+    This logger only writes to file for debugging and audit purposes.
 
     Args:
         script_name: Name of the script (used for log directory and file naming).
@@ -20,7 +23,7 @@ def setup_logger(script_name: str) -> logging.Logger:
     root_logger = logging.getLogger()
     # Don't set root logger to DEBUG - some libraries (netapp_ontap) crash
     # The file handler will capture DEBUG messages for pynetappfoundry
-    root_logger.setLevel(logging.INFO)
+    root_logger.setLevel(logging.DEBUG)
 
     log_dir = Path(os.getcwd()) / "data" / script_name / "logs"
     os.makedirs(log_dir, exist_ok=True)
@@ -28,13 +31,7 @@ def setup_logger(script_name: str) -> logging.Logger:
     # create a formatter
     formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
 
-    # add a console handler, default INFO
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.INFO)
-    console_handler.setFormatter(formatter)
-    root_logger.addHandler(console_handler)
-
-    # add a file handler, default DEBUG
+    # add a file handler only - console output is handled by Rich
     log_filename = datetime.now().strftime(
         f"data/{script_name}/logs/{script_name}_%Y-%m-%d_%H-%M-%S.log"
     )
