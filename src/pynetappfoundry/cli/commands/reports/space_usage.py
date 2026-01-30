@@ -1,385 +1,652 @@
 """Generate space usage reports.
 
 Creates Excel workbooks with 3 worksheets:
-- Totals: Summary by cloud x cluster type x data type
-- Usage Breakdown: Hierarchical breakdown with SUMIFS formulas
-- Volumes: Per-volume data with conditional formatting
+- Totals: Summary with SUMIFS formulas for licensing by cloud/cluster type/data type
+- Usage Breakdown: Hierarchical breakdown with SUMIFS formulas referencing Volumes
+- Volumes: Per-volume data with all metadata
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+import logging
 from datetime import datetime
 from typing import Any
 
 import click
 import xlsxwriter
+import xlsxwriter.utility
 
 from pynetappfoundry.cli.decorators import with_config
 from pynetappfoundry.cli.utils import print_error, print_info, print_success
 from pynetappfoundry.core.config import Config
-
-# Constants for TiB conversion
-BYTES_PER_TIB = 1024**4
+from pynetappfoundry.utils.size import approximate_size_specific
 
 
-@dataclass
-class VolumeData:
-    """Data for a single volume."""
+class SpaceUsageReport:
+    """Builds space usage Excel report matching sysadmin script layout."""
 
-    cluster_name: str
-    volume_name: str
-    div: str
-    bu: str
-    app: str
-    env: str
-    subapp: str
-    cloud: str
-    region: str
-    cluster_type: str  # "CVO" or "CVO HA"
-    data_type: str  # "RW" or "DP"
-    size_tib: float
-    used_tib: float
-    available_tib: float
-    percent_used: float
+    def __init__(self, config: Config, clusters: dict[str, dict[str, Any]]) -> None:
+        """Initialize the report builder."""
+        self.config = config
+        self.cluster_details = clusters
+        self.volume_data: list[list[Any]] = []
+        self.divisions: dict[str, Any] = {}
 
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        self.filename = config.output_dir / f"space_usage_{timestamp}.xlsx"
 
-@dataclass
-class SpaceUsageCollector:
-    """Collects and organizes space usage data from clusters."""
+        self.workbook = xlsxwriter.Workbook(str(self.filename))
+        self.totals_ws = self.workbook.add_worksheet("Totals")
+        self.usage_ws = self.workbook.add_worksheet("Usage Breakdown")
+        self.volumes_ws = self.workbook.add_worksheet("Volumes")
 
-    volumes: list[VolumeData] = field(default_factory=list)
-    # Track unique combinations for Usage Breakdown
-    hierarchy_keys: set[tuple[str, ...]] = field(default_factory=set)
-
-    def add_volume(self, volume: VolumeData) -> None:
-        """Add a volume and track its hierarchy."""
-        self.volumes.append(volume)
-        # Track hierarchy for Usage Breakdown
-        self.hierarchy_keys.add(
-            (
-                volume.div,
-                volume.bu,
-                volume.app,
-                volume.env,
-                volume.subapp,
-                volume.cloud,
-                volume.region,
-                volume.cluster_type,
-                volume.data_type,
-            )
-        )
-
-
-def bytes_to_tib(size_bytes: int) -> float:
-    """Convert bytes to TiB with 7 decimal places precision."""
-    return round(size_bytes / BYTES_PER_TIB, 7)
-
-
-def detect_cluster_type(nodes: list[dict[str, Any]]) -> str:
-    """Detect if cluster is HA or single-node CVO.
-
-    Args:
-        nodes: List of node dictionaries from Node.get_collection
-
-    Returns:
-        "CVO HA" if HA cluster, "CVO" otherwise
-    """
-    if len(nodes) > 1:
-        # Check HA enabled on first node
-        first_node = nodes[0]
-        ha_info = first_node.get("ha", {})
-        if ha_info.get("enabled", False):
-            return "CVO HA"
-    return "CVO"
-
-
-class ExcelReportBuilder:
-    """Builds Excel report with xlsxwriter."""
-
-    def __init__(self, filename: str) -> None:
-        """Initialize workbook and formats."""
-        self.workbook = xlsxwriter.Workbook(filename)
         self._setup_formats()
+        self._build_hierarchy()
 
     def _setup_formats(self) -> None:
-        """Set up cell formats for the workbook."""
-        # Header format
-        self.header_format = self.workbook.add_format(
-            {
-                "bold": True,
-                "bg_color": "#4472C4",
-                "font_color": "white",
-                "border": 1,
-            }
+        """Set up cell formats."""
+        self.cell_format = self.workbook.add_format({"font_name": "Cascadia Mono", "font_size": 10})
+        self.cell_format_number = self.workbook.add_format(
+            {"font_name": "Cascadia Mono", "font_size": 10}
         )
-
-        # TiB number format (7 decimal places)
-        self.tib_format = self.workbook.add_format({"num_format": "0.0000000"})
-
-        # Percentage format
-        self.percent_format = self.workbook.add_format({"num_format": "0.00%"})
-
-        # Red background for high usage (>=90%)
-        self.high_usage_format = self.workbook.add_format(
-            {"bg_color": "#FF6B6B", "num_format": "0.00%"}
+        self.cell_format_number.set_num_format("0.00000")
+        self.cell_format_red = self.workbook.add_format(
+            {"font_name": "Cascadia Mono", "font_size": 10}
         )
-
-        # Total row format
-        self.total_format = self.workbook.add_format(
-            {
-                "bold": True,
-                "top": 2,
-                "num_format": "0.0000000",
-            }
+        self.cell_format_red.set_bg_color("red")
+        self.cell_format_red.set_font_color("white")
+        self.cell_format_percentage = self.workbook.add_format(
+            {"font_name": "Cascadia Mono", "font_size": 10}
         )
+        self.cell_format_percentage.set_num_format("0.00%")
 
-    def create_totals_sheet(self, collector: SpaceUsageCollector) -> None:
-        """Create the Totals worksheet with summary by cloud/type/datatype."""
-        sheet = self.workbook.add_worksheet("Totals")
+    def _build_hierarchy(self) -> None:
+        """Build the divisions hierarchy from cluster details."""
+        for item in self.cluster_details:
+            details = self.cluster_details[item]
+            div = details.get("div", "")
+            bu = details.get("bu", "")
+            app = details.get("app", "")
+            env = details.get("env", "")
+            subapp = details.get("subapp", "")
+            cloud = details.get("cloud", "")
+            region = details.get("region", "")
 
-        # Headers
-        headers = [
-            "Cloud",
-            "Cluster Type",
-            "Data Type",
-            "Total Size (TiB)",
-            "Used (TiB)",
-            "Available (TiB)",
-            "Volume Count",
-        ]
-        for col, header in enumerate(headers):
-            sheet.write(0, col, header, self.header_format)
-
-        # Aggregate data by cloud/cluster_type/data_type
-        aggregates: dict[tuple[str, str, str], dict[str, float]] = {}
-        for vol in collector.volumes:
-            key = (vol.cloud.upper(), vol.cluster_type, vol.data_type)
-            if key not in aggregates:
-                aggregates[key] = {
-                    "size": 0.0,
-                    "used": 0.0,
-                    "available": 0.0,
-                    "count": 0,
+            if div not in self.divisions:
+                self.divisions[div] = {}
+            if bu not in self.divisions[div]:
+                self.divisions[div][bu] = {}
+            if app not in self.divisions[div][bu]:
+                self.divisions[div][bu][app] = {}
+            if env not in self.divisions[div][bu][app]:
+                self.divisions[div][bu][app][env] = {}
+            if subapp not in self.divisions[div][bu][app][env]:
+                self.divisions[div][bu][app][env][subapp] = {}
+            if cloud not in self.divisions[div][bu][app][env][subapp]:
+                self.divisions[div][bu][app][env][subapp][cloud] = {}
+            if region not in self.divisions[div][bu][app][env][subapp][cloud]:
+                self.divisions[div][bu][app][env][subapp][cloud][region] = {
+                    "CVO HA": {"RW": False, "DP": False},
+                    "CVO": {"RW": False, "DP": False},
                 }
-            aggregates[key]["size"] += vol.size_tib
-            aggregates[key]["used"] += vol.used_tib
-            aggregates[key]["available"] += vol.available_tib
-            aggregates[key]["count"] += 1
 
-        # Write data rows
-        row = 1
-        for (cloud, cluster_type, data_type), values in sorted(aggregates.items()):
-            sheet.write(row, 0, cloud)
-            sheet.write(row, 1, cluster_type)
-            sheet.write(row, 2, data_type)
-            sheet.write(row, 3, values["size"], self.tib_format)
-            sheet.write(row, 4, values["used"], self.tib_format)
-            sheet.write(row, 5, values["available"], self.tib_format)
-            sheet.write(row, 6, int(values["count"]))
-            row += 1
+    def gather_data(self) -> None:
+        """Gather data from all clusters."""
+        from netapp_ontap.host_connection import HostConnection
+        from netapp_ontap.resources import Node, Volume
 
-        # Add table formatting
-        if row > 1:
-            sheet.add_table(
-                0,
-                0,
-                row - 1,
-                len(headers) - 1,
-                {
-                    "name": "TotalsTable",
-                    "style": "Table Style Medium 9",
-                    "columns": [{"header": h} for h in headers],
-                },
-            )
+        for name, details in self.cluster_details.items():
+            print_info(f"Gathering data for {name}...")
+            user, password = self.config.get_user("clusters", name)
 
-        # Auto-fit columns
-        sheet.set_column(0, 2, 15)
-        sheet.set_column(3, 5, 18)
-        sheet.set_column(6, 6, 12)
+            try:
+                with HostConnection(
+                    details["ip"],
+                    username=user,
+                    password=password,
+                    verify=False,
+                ):
+                    # Detect cluster type
+                    nodes = list(Node.get_collection(fields="ha"))
+                    if len(nodes) > 1 and nodes[0]["ha"]["enabled"]:
+                        cluster_type = "CVO HA"
+                    else:
+                        cluster_type = "CVO"
 
-    def create_usage_breakdown_sheet(self, collector: SpaceUsageCollector) -> None:
-        """Create the Usage Breakdown worksheet with hierarchical view."""
-        sheet = self.workbook.add_worksheet("Usage Breakdown")
+                    # Get volumes (exclude SVM root volumes)
+                    volumes = list(Volume.get_collection(is_svm_root=False, fields="*"))
 
-        # Headers
-        headers = [
-            "Division",
-            "BU",
-            "App",
-            "Environment",
-            "SubApp",
-            "Cloud",
-            "Region",
-            "Cluster Type",
-            "Data Type",
-            "Total Size (TiB)",
-            "Used (TiB)",
-            "Available (TiB)",
-            "Volume Count",
+                    div = details.get("div", "")
+                    bu = details.get("bu", "")
+                    app = details.get("app", "")
+                    env = details.get("env", "")
+                    subapp = details.get("subapp", "")
+                    cloud = details.get("cloud", "")
+                    region = details.get("region", "")
+                    tags = details.get("tags", [])
+
+                    for volume in volumes:
+                        vol_size = volume["size"]
+                        size_tib = float(
+                            f"{approximate_size_specific(vol_size, 'TiB', withsuffix=False):.7f}"
+                        )
+
+                        if volume["state"] == "offline":
+                            used_tib = 0.0
+                        else:
+                            used_bytes = volume["space"]["used"]
+                            size_val = approximate_size_specific(
+                                used_bytes, "TiB", withsuffix=False
+                            )
+                            used_tib = float(f"{size_val:.7f}")
+
+                        data_type = volume["type"].upper()
+
+                        # Mark this combination as having data
+                        self.divisions[div][bu][app][env][subapp][cloud][region][cluster_type][
+                            data_type
+                        ] = True
+
+                        # Calculate percent used
+                        if size_tib > 0:
+                            percent_used = float(f"{(used_tib / size_tib) * 100:.3f}")
+                        else:
+                            percent_used = 0.0
+
+                        self.volume_data.append(
+                            [
+                                div,
+                                bu,
+                                name,
+                                app,
+                                env,
+                                subapp,
+                                cloud,
+                                region,
+                                cluster_type,
+                                data_type,
+                                volume["name"],
+                                volume["state"],
+                                ",".join(tags) if tags else "",
+                                size_tib,
+                                used_tib,
+                                percent_used,
+                            ]
+                        )
+
+            except Exception as e:
+                print_error(f"Could not retrieve data for {name}: {e}")
+                logging.error(f"Could not retrieve data for {name}: {e}", exc_info=e)
+
+    def build_volumes_sheet(self) -> None:
+        """Build the Volumes worksheet."""
+        provision_col_header = "Provisioned (Licensing) TiB"
+        used_col_header = "Used TiB"
+        percentused_header = "%% Used"
+        percentused_formula = f"=[@[{used_col_header}]]/[@[{provision_col_header}]] * 100"
+
+        columns: list[dict[str, Any]] = [
+            {"header": "Division", "total_string": ""},
+            {"header": "BU", "total_string": ""},
+            {"header": "Cluster", "total_string": ""},
+            {"header": "App", "total_string": ""},
+            {"header": "Environment", "total_string": ""},
+            {"header": "SubApp", "total_string": ""},
+            {"header": "Cloud", "total_string": ""},
+            {"header": "Region", "total_string": ""},
+            {"header": "Cluster Type", "total_string": ""},
+            {"header": "Data Type", "total_string": ""},
+            {"header": "Volume", "total_string": ""},
+            {"header": "State", "total_string": ""},
+            {"header": "Tags", "total_string": ""},
+            {"header": provision_col_header, "total_function": "sum"},
+            {"header": used_col_header, "total_function": "sum"},
+            {
+                "header": percentused_header,
+                "formula": percentused_formula,
+                "total_function": "average",
+                "format": self.cell_format_number,
+            },
         ]
-        for col, header in enumerate(headers):
-            sheet.write(0, col, header, self.header_format)
 
-        # Build aggregated data by hierarchy
-        # Key: (div, bu, app, env, subapp, cloud, region, cluster_type, data_type)
-        aggregates: dict[tuple[str, str, str, str, str, str, str, str, str], dict[str, float]] = {}
-        for vol in collector.volumes:
-            key = (
-                vol.div,
-                vol.bu,
-                vol.app,
-                vol.env,
-                vol.subapp,
-                vol.cloud.upper(),
-                vol.region,
-                vol.cluster_type,
-                vol.data_type,
-            )
-            if key not in aggregates:
-                aggregates[key] = {
-                    "size": 0.0,
-                    "used": 0.0,
-                    "available": 0.0,
-                    "count": 0,
-                }
-            aggregates[key]["size"] += vol.size_tib
-            aggregates[key]["used"] += vol.used_tib
-            aggregates[key]["available"] += vol.available_tib
-            aggregates[key]["count"] += 1
+        number_format = [provision_col_header, used_col_header, percentused_header]
 
-        # Write data rows, sorted by hierarchy
-        row = 1
-        for key, values in sorted(aggregates.items()):
-            for col, val in enumerate(key):
-                sheet.write(row, col, val)
-            sheet.write(row, 9, values["size"], self.tib_format)
-            sheet.write(row, 10, values["used"], self.tib_format)
-            sheet.write(row, 11, values["available"], self.tib_format)
-            sheet.write(row, 12, int(values["count"]))
-            row += 1
+        # Write headers
+        for col_num, header in enumerate(columns):
+            self.volumes_ws.write(0, col_num, header["header"], self.cell_format)
 
-        # Add table with totals row
-        if row > 1:
-            # Define columns with total functions for numeric columns
-            columns = [
-                {"header": "Division"},
-                {"header": "BU"},
-                {"header": "App"},
-                {"header": "Environment"},
-                {"header": "SubApp"},
-                {"header": "Cloud"},
-                {"header": "Region"},
-                {"header": "Cluster Type"},
-                {"header": "Data Type"},
-                {"header": "Total Size (TiB)", "total_function": "sum"},
-                {"header": "Used (TiB)", "total_function": "sum"},
-                {"header": "Available (TiB)", "total_function": "sum"},
-                {"header": "Volume Count", "total_function": "sum"},
-            ]
-            sheet.add_table(
-                0,
-                0,
-                row,  # Include total row in table range
-                len(headers) - 1,
-                {
-                    "name": "UsageBreakdownTable",
-                    "style": "Table Style Medium 9",
-                    "columns": columns,
-                    "total_row": True,
-                },
-            )
+        # Write data and track max column width
+        volumes_col_widths = [len(header["header"]) + 1 for header in columns]
+        for row_num, row_data in enumerate(self.volume_data, start=1):
+            for col_num, cell in enumerate(row_data):
+                cell_format = self.cell_format
+                if columns[col_num]["header"] in number_format:
+                    cell_format = self.cell_format_number
+                self.volumes_ws.write(row_num, col_num, cell, cell_format)
+                cell_length = len(str(cell))
+                if cell_length > volumes_col_widths[col_num]:
+                    volumes_col_widths[col_num] = cell_length
 
-        # Auto-fit columns
-        sheet.set_column(0, 4, 12)  # Hierarchy columns
-        sheet.set_column(5, 8, 12)  # Cloud/region/type columns
-        sheet.set_column(9, 11, 18)  # TiB columns
-        sheet.set_column(12, 12, 12)  # Count column
+        # Add table
+        last_column = xlsxwriter.utility.xl_col_to_name(len(columns) - 1)
+        table_range = f"A1:{last_column}{len(self.volume_data) + 2}"
+        self.volumes_ws.add_table(
+            table_range,
+            {
+                "columns": columns,
+                "style": "Table Style Medium 9",
+                "autofilter": True,
+                "total_row": True,
+                "name": "volume_table",
+            },
+        )  # pyright: ignore[reportCallIssue]
 
-    def create_volumes_sheet(self, collector: SpaceUsageCollector) -> None:
-        """Create the Volumes worksheet with per-volume data."""
-        sheet = self.workbook.add_worksheet("Volumes")
+        # Auto-size columns
+        for col_num, width in enumerate(volumes_col_widths):
+            self.volumes_ws.set_column(col_num, col_num, width + 4)
 
-        # Headers
-        headers = [
-            "Cluster",
-            "Volume",
-            "Division",
-            "BU",
-            "App",
-            "Environment",
-            "SubApp",
-            "Cloud",
-            "Region",
-            "Cluster Type",
-            "Data Type",
-            "Size (TiB)",
-            "Used (TiB)",
-            "Available (TiB)",
-            "% Used",
+        # Conditional formatting for high usage
+        self.volumes_ws.conditional_format(
+            f"{last_column}2:{last_column}{len(self.volume_data) + 1}",
+            {
+                "type": "cell",
+                "criteria": ">=",
+                "value": 90,
+                "format": self.cell_format_red,
+            },
+        )  # pyright: ignore[reportCallIssue]
+
+    def build_usage_sheet(self) -> None:
+        """Build the Usage Breakdown worksheet with SUMIFS formulas."""
+        provision_col_header = "Provisioned (Licensing) TiB"
+        used_col_header = "Used TiB"
+        numbers_format = [provision_col_header, used_col_header, "% Used"]
+
+        percentused_formula = f"=[@[{used_col_header}]]/[@[{provision_col_header}]] * 100"
+        columns: list[dict[str, Any]] = [
+            {"header": "Division", "total_string": ""},
+            {"header": "BU", "total_string": ""},
+            {"header": "App", "total_string": ""},
+            {"header": "Environment", "total_string": ""},
+            {"header": "SubApp", "total_string": ""},
+            {"header": "Cloud", "total_string": ""},
+            {"header": "Region", "total_string": ""},
+            {"header": "Cluster Type", "total_string": ""},
+            {"header": "Data Type", "total_string": ""},
+            {"header": provision_col_header, "total_function": "sum"},
+            {"header": used_col_header, "total_function": "sum"},
+            {
+                "header": "% Used",
+                "formula": percentused_formula,
+                "total_function": "average",
+                "format": self.cell_format_number,
+            },
         ]
-        for col, header in enumerate(headers):
-            sheet.write(0, col, header, self.header_format)
 
-        # Write volume data
-        row = 1
-        for vol in sorted(collector.volumes, key=lambda v: (v.cluster_name, v.volume_name)):
-            sheet.write(row, 0, vol.cluster_name)
-            sheet.write(row, 1, vol.volume_name)
-            sheet.write(row, 2, vol.div)
-            sheet.write(row, 3, vol.bu)
-            sheet.write(row, 4, vol.app)
-            sheet.write(row, 5, vol.env)
-            sheet.write(row, 6, vol.subapp)
-            sheet.write(row, 7, vol.cloud.upper())
-            sheet.write(row, 8, vol.region)
-            sheet.write(row, 9, vol.cluster_type)
-            sheet.write(row, 10, vol.data_type)
-            sheet.write(row, 11, vol.size_tib, self.tib_format)
-            sheet.write(row, 12, vol.used_tib, self.tib_format)
-            sheet.write(row, 13, vol.available_tib, self.tib_format)
-            # Percent as decimal for Excel (0.9 = 90%)
-            sheet.write(row, 14, vol.percent_used / 100, self.percent_format)
-            row += 1
+        volume_last_row = len(self.volume_data) + 1
+        usage_data: list[list[Any]] = []
 
-        # Add conditional formatting for high usage (>=90%)
-        if row > 1:
-            sheet.conditional_format(
-                1,
-                14,
-                row - 1,
-                14,
-                {
-                    "type": "cell",
-                    "criteria": ">=",
-                    "value": 0.9,
-                    "format": self.high_usage_format,
-                },
-            )
+        # Write headers
+        for col_num, header in enumerate(columns):
+            self.usage_ws.write(0, col_num, header["header"], self.cell_format)
 
-            # Add table formatting
-            sheet.add_table(
-                0,
-                0,
-                row - 1,
-                len(headers) - 1,
-                {
-                    "name": "VolumesTable",
-                    "style": "Table Style Medium 9",
-                    "columns": [{"header": h} for h in headers],
-                },
-            )
+        # Build usage data with SUMIFS formulas
+        for div in self.divisions:
+            for bu in self.divisions[div]:
+                for app in self.divisions[div][bu]:
+                    for env in self.divisions[div][bu][app]:
+                        for subapp in self.divisions[div][bu][app][env]:
+                            for cloud in self.divisions[div][bu][app][env][subapp]:
+                                for region in self.divisions[div][bu][app][env][subapp][cloud]:
+                                    for cluster_type in self.divisions[div][bu][app][env][subapp][
+                                        cloud
+                                    ][region]:
+                                        for data_type in self.divisions[div][bu][app][env][subapp][
+                                            cloud
+                                        ][region][cluster_type]:
+                                            if self.divisions[div][bu][app][env][subapp][cloud][
+                                                region
+                                            ][cluster_type][data_type]:
+                                                func_filter = (
+                                                    f'Volumes!$A$2:$A${volume_last_row},"{div}",'
+                                                    f'Volumes!$B$2:$B${volume_last_row},"{bu}",'
+                                                    f'Volumes!$D$2:$D${volume_last_row},"{app}",'
+                                                    f'Volumes!$E$2:$E${volume_last_row},"{env}",'
+                                                    f'Volumes!$F$2:$F${volume_last_row},"{subapp}",'
+                                                    f'Volumes!$G$2:$G${volume_last_row},"{cloud}",'
+                                                    f'Volumes!$H$2:$H${volume_last_row},"{region}",'
+                                                    f'Volumes!$I$2:$I${volume_last_row},"{cluster_type}",'
+                                                    f'Volumes!$J$2:$J${volume_last_row},"{data_type}")'
+                                                )
+                                                usage_data.append(
+                                                    [
+                                                        div,
+                                                        bu,
+                                                        app,
+                                                        env,
+                                                        subapp,
+                                                        cloud,
+                                                        region,
+                                                        cluster_type,
+                                                        data_type,
+                                                        f"=SUMIFS(Volumes!$N$2:$N${volume_last_row},{func_filter}",
+                                                        f"=SUMIFS(Volumes!$O$2:$O${volume_last_row},{func_filter}",
+                                                        "",
+                                                    ]
+                                                )
 
-        # Auto-fit columns
-        sheet.set_column(0, 1, 25)  # Cluster/volume
-        sheet.set_column(2, 6, 12)  # Hierarchy
-        sheet.set_column(7, 10, 12)  # Cloud/type
-        sheet.set_column(11, 13, 18)  # TiB columns
-        sheet.set_column(14, 14, 10)  # Percent
+        # Write data and track max column width
+        usage_col_widths = [len(header["header"]) + 1 for header in columns]
+        for row_num, row_data in enumerate(usage_data, start=1):
+            for col_num, cell in enumerate(row_data):
+                cell_format = self.cell_format
+                if columns[col_num]["header"] in numbers_format:
+                    cell_format = self.cell_format_number
+                self.usage_ws.write(row_num, col_num, cell, cell_format)
+                cell_length = len(str(cell))
+                if (not str(cell).startswith("=")) and cell_length > usage_col_widths[col_num]:
+                    usage_col_widths[col_num] = cell_length
 
-    def close(self) -> None:
-        """Close the workbook."""
+        # Add table
+        last_column = xlsxwriter.utility.xl_col_to_name(len(columns) - 1)
+        table_range = f"A1:{last_column}{len(usage_data) + 2}"
+        self.usage_ws.add_table(
+            table_range,
+            {
+                "columns": columns,
+                "style": "Table Style Medium 9",
+                "autofilter": True,
+                "total_row": True,
+                "name": "usage_table",
+            },
+        )  # pyright: ignore[reportCallIssue]
+
+        # Auto-size columns and find % Used column
+        percentused_column = ""
+        for col_num, width in enumerate(usage_col_widths):
+            self.usage_ws.set_column(col_num, col_num, width + 2)
+            if columns[col_num]["header"] == "% Used":
+                percentused_column = xlsxwriter.utility.xl_col_to_name(col_num)
+
+        # Conditional formatting for high usage
+        self.usage_ws.conditional_format(
+            f"{percentused_column}2:{percentused_column}{len(usage_data) + 2}",
+            {
+                "type": "cell",
+                "criteria": ">=",
+                "value": 90,
+                "format": self.cell_format_red,
+            },
+        )  # pyright: ignore[reportCallIssue]
+
+    def build_totals_sheet(self) -> None:
+        """Build the Totals worksheet with SUMIFS formulas."""
+        # Headers
+        self.totals_ws.write("A1", "Type")  # pyright: ignore[reportArgumentType]
+        self.totals_ws.set_column(0, 0, 17)
+        self.totals_ws.write(  # pyright: ignore[reportArgumentType]
+            "B1", "Total Provisioned (Licensing) (TiB)"
+        )
+        self.totals_ws.set_column(1, 1, 31.5)
+        self.totals_ws.write("C1", "Used (TiB)")  # pyright: ignore[reportArgumentType]
+        self.totals_ws.set_column(2, 2, 14)
+        self.totals_ws.write("D1", "Percent Used")  # pyright: ignore[reportArgumentType]
+        self.totals_ws.set_column(3, 3, 13)
+
+        # Azure CVO RW
+        self.totals_ws.write("A2", "Azure CVO RW")  # pyright: ignore[reportArgumentType]
+        self.totals_ws.write_formula(  # pyright: ignore[reportCallIssue]
+            "B2",
+            formula=(
+                "=SUMIFS(usage_table[Provisioned (Licensing) TiB],"
+                'usage_table[Cloud],"azure",usage_table[Cluster Type],'
+                '"CVO",usage_table[Data Type],"RW")'
+            ),
+            cell_format=self.cell_format_number,
+        )
+        self.totals_ws.write_formula(  # pyright: ignore[reportCallIssue]
+            "C2",
+            formula=(
+                '=SUMIFS(usage_table[Used TiB],usage_table[Cloud],"azure",'
+                'usage_table[Cluster Type],"CVO",usage_table[Data Type],"RW")'
+            ),
+            cell_format=self.cell_format_number,
+        )
+        self.totals_ws.write_formula(  # pyright: ignore[reportCallIssue]
+            "D2",
+            formula="=IFERROR($C$2/$B$2, 0)",
+            cell_format=self.cell_format_percentage,
+        )
+
+        # Azure CVO DP
+        self.totals_ws.write("A3", "Azure CVO DP")  # pyright: ignore[reportArgumentType]
+        self.totals_ws.write_formula(  # pyright: ignore[reportCallIssue]
+            "B3",
+            formula=(
+                "=SUMIFS(usage_table[Provisioned (Licensing) TiB],"
+                'usage_table[Cloud],"azure",usage_table[Cluster Type],'
+                '"CVO",usage_table[Data Type],"DP")'
+            ),
+            cell_format=self.cell_format_number,
+        )
+        self.totals_ws.write_formula(  # pyright: ignore[reportCallIssue]
+            "C3",
+            formula=(
+                "=SUMIFS(usage_table[Used TiB],usage_table[Cloud],"
+                '"azure",usage_table[Cluster Type],"CVO",'
+                'usage_table[Data Type],"DP")'
+            ),
+            cell_format=self.cell_format_number,
+        )
+        self.totals_ws.write_formula(  # pyright: ignore[reportCallIssue]
+            "D3",
+            formula="=IFERROR($C$3/$B$3, 0)",
+            cell_format=self.cell_format_percentage,
+        )
+
+        # Azure CVO HA RW
+        self.totals_ws.write(  # pyright: ignore[reportArgumentType]
+            "A4", "Azure CVO HA RW"
+        )
+        self.totals_ws.write_formula(  # pyright: ignore[reportCallIssue]
+            "B4",
+            formula=(
+                "=SUMIFS(usage_table[Provisioned (Licensing) TiB],"
+                'usage_table[Cloud],"azure",usage_table[Cluster Type],"CVO HA",'
+                'usage_table[Data Type],"RW")'
+            ),
+            cell_format=self.cell_format_number,
+        )
+        self.totals_ws.write_formula(  # pyright: ignore[reportCallIssue]
+            "C4",
+            formula=(
+                "=SUMIFS(usage_table[Used TiB],usage_table[Cloud],"
+                '"azure",usage_table[Cluster Type],"CVO HA",'
+                'usage_table[Data Type],"RW")'
+            ),
+            cell_format=self.cell_format_number,
+        )
+        self.totals_ws.write_formula(  # pyright: ignore[reportCallIssue]
+            "D4",
+            formula="=IFERROR($C$4/$B$4, 0)",
+            cell_format=self.cell_format_percentage,
+        )
+
+        # Azure CVO HA DP
+        self.totals_ws.write(  # pyright: ignore[reportArgumentType]
+            "A5", "Azure CVO HA DP"
+        )
+        self.totals_ws.write_formula(  # pyright: ignore[reportCallIssue]
+            "B5",
+            formula=(
+                "=SUMIFS(usage_table[Provisioned (Licensing) TiB],"
+                'usage_table[Cloud],"azure",usage_table[Cluster Type],'
+                '"CVO HA",usage_table[Data Type],"DP")'
+            ),
+            cell_format=self.cell_format_number,
+        )
+        self.totals_ws.write_formula(  # pyright: ignore[reportCallIssue]
+            "C5",
+            formula=(
+                "=SUMIFS(usage_table[Used TiB],usage_table[Cloud],"
+                '"azure",usage_table[Cluster Type],"CVO HA",'
+                'usage_table[Data Type],"DP")'
+            ),
+            cell_format=self.cell_format_number,
+        )
+        self.totals_ws.write_formula(  # pyright: ignore[reportCallIssue]
+            "D5",
+            formula="=IFERROR($C$5/$B$5, 0)",
+            cell_format=self.cell_format_percentage,
+        )
+
+        # Azure Totals
+        self.totals_ws.write("A6", "Azure Totals")  # pyright: ignore[reportArgumentType]
+        self.totals_ws.write_formula(  # pyright: ignore[reportCallIssue]
+            "B6", formula="=SUM($B2:$B5)", cell_format=self.cell_format_number
+        )
+        self.totals_ws.write_formula(  # pyright: ignore[reportCallIssue]
+            "C6", formula="=SUM($C2:$C5)", cell_format=self.cell_format_number
+        )
+        self.totals_ws.write_formula(  # pyright: ignore[reportCallIssue]
+            "D6",
+            formula="=IFERROR($C$6/$B$6, 0)",
+            cell_format=self.cell_format_percentage,
+        )
+
+        # AWS CVO RW
+        self.totals_ws.write("A8", "AWS CVO RW")  # pyright: ignore[reportArgumentType]
+        self.totals_ws.write_formula(  # pyright: ignore[reportCallIssue]
+            "B8",
+            formula=(
+                "=SUMIFS(usage_table[Provisioned (Licensing) TiB],"
+                'usage_table[Cloud],"aws",usage_table[Cluster Type],"CVO",'
+                'usage_table[Data Type],"RW")'
+            ),
+            cell_format=self.cell_format_number,
+        )
+        self.totals_ws.write_formula(  # pyright: ignore[reportCallIssue]
+            "C8",
+            formula=(
+                '=SUMIFS(usage_table[Used TiB],usage_table[Cloud],"aws",'
+                'usage_table[Cluster Type],"CVO",usage_table[Data Type],"RW")'
+            ),
+            cell_format=self.cell_format_number,
+        )
+        self.totals_ws.write_formula(  # pyright: ignore[reportCallIssue]
+            "D8",
+            formula="=IFERROR($C$8/$B$8, 0)",
+            cell_format=self.cell_format_percentage,
+        )
+
+        # AWS CVO DP
+        self.totals_ws.write("A9", "AWS CVO DP")  # pyright: ignore[reportArgumentType]
+        self.totals_ws.write_formula(  # pyright: ignore[reportCallIssue]
+            "B9",
+            formula=(
+                "=SUMIFS(usage_table[Provisioned (Licensing) TiB],"
+                'usage_table[Cloud],"aws",usage_table[Cluster Type],"CVO",'
+                'usage_table[Data Type],"DP")'
+            ),
+            cell_format=self.cell_format_number,
+        )
+        self.totals_ws.write_formula(  # pyright: ignore[reportCallIssue]
+            "C9",
+            formula=(
+                "=SUMIFS(usage_table[Used TiB],usage_table[Cloud],"
+                '"aws",usage_table[Cluster Type],"CVO",usage_table[Data Type],"DP")'
+            ),
+            cell_format=self.cell_format_number,
+        )
+        self.totals_ws.write_formula(  # pyright: ignore[reportCallIssue]
+            "D9",
+            formula="=IFERROR($C$9/$B$9, 0)",
+            cell_format=self.cell_format_percentage,
+        )
+
+        # AWS CVO HA RW
+        self.totals_ws.write(  # pyright: ignore[reportArgumentType, reportCallIssue]
+            "A10", "AWS CVO HA RW"
+        )
+        self.totals_ws.write_formula(  # pyright: ignore[reportCallIssue]
+            "B10",
+            formula=(
+                "=SUMIFS(usage_table[Provisioned (Licensing) TiB],"
+                'usage_table[Cloud],"aws",usage_table[Cluster Type],'
+                '"CVO HA",usage_table[Data Type],"RW")'
+            ),
+            cell_format=self.cell_format_number,
+        )
+        self.totals_ws.write_formula(  # pyright: ignore[reportCallIssue]
+            "C10",
+            formula=(
+                "=SUMIFS(usage_table[Used TiB],usage_table[Cloud],"
+                '"aws",usage_table[Cluster Type],"CVO HA",usage_table[Data Type],"RW")'
+            ),
+            cell_format=self.cell_format_number,
+        )
+        self.totals_ws.write_formula(  # pyright: ignore[reportCallIssue]
+            "D10",
+            formula="=IFERROR($C$10/$B$10, 0)",
+            cell_format=self.cell_format_percentage,
+        )
+
+        # AWS CVO HA DP
+        self.totals_ws.write(  # pyright: ignore[reportArgumentType, reportCallIssue]
+            "A11", "AWS CVO HA DP"
+        )
+        self.totals_ws.write_formula(  # pyright: ignore[reportCallIssue]
+            "B11",
+            formula=(
+                "=SUMIFS(usage_table[Provisioned (Licensing) TiB],"
+                'usage_table[Cloud],"aws",usage_table[Cluster Type],'
+                '"CVO HA",usage_table[Data Type],"DP")'
+            ),
+            cell_format=self.cell_format_number,
+        )
+        self.totals_ws.write_formula(  # pyright: ignore[reportCallIssue]
+            "C11",
+            formula=(
+                "=SUMIFS(usage_table[Used TiB],usage_table[Cloud],"
+                '"aws",usage_table[Cluster Type],"CVO HA",usage_table[Data Type],"DP")'
+            ),
+            cell_format=self.cell_format_number,
+        )
+        self.totals_ws.write_formula(  # pyright: ignore[reportCallIssue]
+            "D11",
+            formula="=IFERROR($C$11/$B$11, 0)",
+            cell_format=self.cell_format_percentage,
+        )
+
+        # AWS Totals
+        self.totals_ws.write("A12", "AWS Totals")  # pyright: ignore[reportArgumentType]
+        self.totals_ws.write_formula(  # pyright: ignore[reportCallIssue]
+            "B12", formula="=SUM($B8:$B11)", cell_format=self.cell_format_number
+        )
+        self.totals_ws.write_formula(  # pyright: ignore[reportCallIssue]
+            "C12", formula="=SUM($C8:$C11)", cell_format=self.cell_format_number
+        )
+        self.totals_ws.write_formula(  # pyright: ignore[reportCallIssue]
+            "D12",
+            formula="=IFERROR($C$12/$B$12, 0)",
+            cell_format=self.cell_format_percentage,
+        )
+
+    def generate(self) -> None:
+        """Generate the complete report."""
+        self.gather_data()
+
+        if not self.volume_data:
+            print_error("No volume data collected. Check cluster connectivity.")
+            self.workbook.close()
+            return
+
+        self.build_volumes_sheet()
+        self.build_usage_sheet()
+        self.build_totals_sheet()
+
         self.workbook.close()
+        print_success(f"Report saved to {self.filename}")
 
 
 @click.command("space-usage")
@@ -398,108 +665,8 @@ def space_usage(
 
     Creates an Excel workbook with 3 worksheets:
     - Totals: Summary by cloud provider, cluster type, and data type
-    - Usage Breakdown: Hierarchical breakdown by div/BU/app/env/subapp
-    - Volumes: Per-volume data with conditional formatting for high usage
+    - Usage Breakdown: Hierarchical breakdown with SUMIFS formulas
+    - Volumes: Per-volume data with state, tags, and conditional formatting
     """
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    filename = config.output_dir / f"space_usage_{timestamp}.xlsx"
-
-    collector = SpaceUsageCollector()
-
-    for name, details in clusters.items():
-        print_info(f"Gathering space data for {name}...")
-        _gather_cluster_data(name, details, config, collector)
-
-    if not collector.volumes:
-        print_error("No volume data collected. Check cluster connectivity.")
-        return
-
-    # Build Excel report
-    builder = ExcelReportBuilder(str(filename))
-    builder.create_totals_sheet(collector)
-    builder.create_usage_breakdown_sheet(collector)
-    builder.create_volumes_sheet(collector)
-    builder.close()
-
-    print_success(f"Report saved to {filename}")
-    print_info(f"Total volumes: {len(collector.volumes)}")
-
-
-def _gather_cluster_data(
-    name: str,
-    details: dict[str, Any],
-    config: Config,
-    collector: SpaceUsageCollector,
-) -> None:
-    """Gather space usage data from a single cluster."""
-    from netapp_ontap.host_connection import HostConnection
-    from netapp_ontap.resources import Node, Volume
-
-    user, password = config.get_user("clusters", name)
-
-    try:
-        with HostConnection(
-            details["ip"],
-            username=user,
-            password=password,
-            verify=False,
-        ):
-            # Detect cluster type (HA vs single node)
-            nodes = list(Node.get_collection(fields="ha"))
-            node_dicts = [n.to_dict() for n in nodes]
-            cluster_type = detect_cluster_type(node_dicts)
-
-            # Get metadata from cluster details
-            div = details.get("div", "")
-            bu = details.get("bu", "")
-            app = details.get("app", "")
-            env = details.get("env", "")
-            subapp = details.get("subapp", "")
-            cloud = details.get("cloud", "")
-            region = details.get("region", "")
-
-            # Get volumes
-            for vol in Volume.get_collection(fields="name,type,space"):
-                vol_dict = vol.to_dict()
-
-                # Skip system volumes
-                vol_name = vol_dict.get("name", "")
-                if vol_name.startswith("vol0") or vol_name.endswith("_root"):
-                    continue
-
-                space = vol_dict.get("space", {})
-                size_bytes = space.get("size", 0)
-                used_bytes = space.get("used", 0)
-                available_bytes = space.get("available", 0)
-
-                # Skip volumes with no size
-                if size_bytes == 0:
-                    continue
-
-                # Calculate percent used
-                percent_used = (used_bytes / size_bytes * 100) if size_bytes > 0 else 0.0
-
-                # Volume type is "rw" or "dp"
-                data_type = vol_dict.get("type", "rw").upper()
-
-                volume_data = VolumeData(
-                    cluster_name=name,
-                    volume_name=vol_name,
-                    div=div,
-                    bu=bu,
-                    app=app,
-                    env=env,
-                    subapp=subapp,
-                    cloud=cloud,
-                    region=region,
-                    cluster_type=cluster_type,
-                    data_type=data_type,
-                    size_tib=bytes_to_tib(size_bytes),
-                    used_tib=bytes_to_tib(used_bytes),
-                    available_tib=bytes_to_tib(available_bytes),
-                    percent_used=percent_used,
-                )
-                collector.add_volume(volume_data)
-
-    except Exception as e:
-        print_error(f"Could not gather space data for {name}: {e}")
+    report = SpaceUsageReport(config, clusters)
+    report.generate()
