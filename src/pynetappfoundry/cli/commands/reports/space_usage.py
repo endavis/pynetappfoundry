@@ -261,24 +261,34 @@ class ExcelReportBuilder:
 
         # Add table with totals row
         if row > 1:
+            # Define columns with total functions for numeric columns
+            columns = [
+                {"header": "Division"},
+                {"header": "BU"},
+                {"header": "App"},
+                {"header": "Environment"},
+                {"header": "SubApp"},
+                {"header": "Cloud"},
+                {"header": "Region"},
+                {"header": "Cluster Type"},
+                {"header": "Data Type"},
+                {"header": "Total Size (TiB)", "total_function": "sum"},
+                {"header": "Used (TiB)", "total_function": "sum"},
+                {"header": "Available (TiB)", "total_function": "sum"},
+                {"header": "Volume Count", "total_function": "sum"},
+            ]
             sheet.add_table(
                 0,
                 0,
-                row - 1,
+                row,  # Include total row in table range
                 len(headers) - 1,
                 {
                     "name": "UsageBreakdownTable",
                     "style": "Table Style Medium 9",
-                    "columns": [{"header": h} for h in headers],
+                    "columns": columns,
                     "total_row": True,
                 },
             )
-            # SUMIFS-style totals are built into the table's total_row feature
-            # Write SUBTOTAL formulas for numeric columns
-            sheet.write_formula(row, 9, f"=SUBTOTAL(109,J2:J{row})", self.total_format)
-            sheet.write_formula(row, 10, f"=SUBTOTAL(109,K2:K{row})", self.total_format)
-            sheet.write_formula(row, 11, f"=SUBTOTAL(109,L2:L{row})", self.total_format)
-            sheet.write_formula(row, 12, f"=SUBTOTAL(109,M2:M{row})", self.total_format)
 
         # Auto-fit columns
         sheet.set_column(0, 4, 12)  # Hierarchy columns
