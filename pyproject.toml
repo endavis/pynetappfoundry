@@ -140,7 +140,7 @@ warn_unreachable = true
 exclude = [".claude/", ".gemini/", ".codex/"]
 
 [[tool.mypy.overrides]]
-module = ["netapp_ontap.*", "paramiko.*", "yattag.*", "doit.*", "openpyxl.*", "jsonschema.*"]
+module = ["netapp_ontap.*", "paramiko.*", "yattag.*", "doit.*", "openpyxl.*", "jsonschema.*", "xlsxwriter.*"]
 ignore_missing_imports = true
 follow_untyped_imports = true
 
