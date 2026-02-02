@@ -276,13 +276,15 @@ class ClusterData:
                             print_debug(f"Found vsa.scheduledEvent.update: {emsevent_dict}")
                             # Handle out-of-order events
                             if azevent_id != azevent_dict["event_id"]:
-                                print_warning("Found an out of order az event")
-                                print_debug(f"Current Event: {azevent_dict['event_id']}")
+                                print_warning(
+                                    f"{self.name}: Out of order az event - "
+                                    f"tracking {azevent_dict['event_id']}, "
+                                    f"received update for {azevent_id}"
+                                )
                                 print_debug(f"Current Event details: {azevent_dict}")
                                 print_debug(f"Full current EMS details: {emsevent_dict}")
                                 self._add_azmaint(azevent_dict)
                                 self._empty_azevent()
-                                print_debug(f"New Event ID: {azevent_id}")
                                 if azevent_dict["event_id"] == "Unknown":
                                     azevent_dict["event_id"] = azevent_id
                                     azevent_dict["node"] = node
@@ -331,8 +333,11 @@ class ClusterData:
 
                 # Check for incomplete event left on stack
                 if azevent_dict["event_id"] != "Unknown":
-                    print_warning("AZ event was left on stack")
-                    print_debug(f"{azevent_dict}")
+                    print_warning(
+                        f"{self.name}: Incomplete az event {azevent_dict['event_id']} "
+                        f"for node {azevent_dict.get('node', 'Unknown')} left on stack"
+                    )
+                    print_debug(f"Event details: {azevent_dict}")
                     self._add_azmaint(azevent_dict)
 
         except netapp_ontap.error.NetAppRestError:
