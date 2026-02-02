@@ -770,3 +770,439 @@ class TestOutOfOrderEvents:
 
         # Both events should be tracked
         assert "event-1" in cluster.azmaints
+
+
+class TestParseCifsTransitionMs:
+    """Tests for _parse_cifs_transition_ms method."""
+
+    @pytest.fixture
+    def cluster_data(self, tmp_path: Path) -> ClusterData:
+        """Create a ClusterData instance for testing."""
+        config = MagicMock()
+        config.db_dir = tmp_path
+        return ClusterData(
+            "test-cluster",
+            {"ip": "10.0.0.1"},
+            config,
+            MagicMock(),
+            datetime.now(),
+        )
+
+    def test_extracts_cifs_ms_from_transition_info(self, cluster_data: ClusterData) -> None:
+        """Test that CIFS ms is extracted from cf.transition.info log message."""
+        log_message = (
+            "Takeover Protocol Transition Time(msec): "
+            "NFS=14450[210|14240]; CIFS=14450[210|14240]; FCP=14430[210|14220]"
+        )
+        result = cluster_data._parse_cifs_transition_ms(log_message)
+        assert result == 14450
+
+    def test_returns_none_when_cifs_not_found(self, cluster_data: ClusterData) -> None:
+        """Test that None is returned when CIFS is not in message."""
+        log_message = "Takeover Protocol Transition Time(msec): NFS=14450"
+        result = cluster_data._parse_cifs_transition_ms(log_message)
+        assert result is None
+
+    def test_handles_zero_ms(self, cluster_data: ClusterData) -> None:
+        """Test that zero milliseconds is correctly parsed."""
+        log_message = "CIFS=0[0|0]"
+        result = cluster_data._parse_cifs_transition_ms(log_message)
+        assert result == 0
+
+
+class TestParseCifsWitnessInfo:
+    """Tests for _parse_cifs_witness_info method."""
+
+    @pytest.fixture
+    def cluster_data(self, tmp_path: Path) -> ClusterData:
+        """Create a ClusterData instance for testing."""
+        config = MagicMock()
+        config.db_dir = tmp_path
+        return ClusterData(
+            "test-cluster",
+            {"ip": "10.0.0.1"},
+            config,
+            MagicMock(),
+            datetime.now(),
+        )
+
+    def test_extracts_client_count_and_ms(self, cluster_data: ClusterData) -> None:
+        """Test that client count and ms are extracted from witness notification."""
+        log_message = (
+            "The Witness service received a failure notification for the partner node. "
+            "Notification of 5 CIFS clients to move their Continuously Available "
+            "connections to this node took 100 milliseconds to complete."
+        )
+        client_count, notification_ms = cluster_data._parse_cifs_witness_info(log_message)
+        assert client_count == 5
+        assert notification_ms == 100
+
+    def test_handles_zero_clients(self, cluster_data: ClusterData) -> None:
+        """Test that zero clients is correctly parsed."""
+        log_message = (
+            "Notification of 0 CIFS clients to move their Continuously Available "
+            "connections to this node took 0 milliseconds to complete."
+        )
+        client_count, notification_ms = cluster_data._parse_cifs_witness_info(log_message)
+        assert client_count == 0
+        assert notification_ms == 0
+
+    def test_returns_none_when_pattern_not_found(self, cluster_data: ClusterData) -> None:
+        """Test that None is returned when pattern not found."""
+        log_message = "Some other log message without the expected pattern"
+        client_count, notification_ms = cluster_data._parse_cifs_witness_info(log_message)
+        assert client_count is None
+        assert notification_ms is None
+
+
+class TestSmbImpactEventHandling:
+    """Tests for SMB client impact event handling in gather_data."""
+
+    @pytest.fixture
+    def mock_config(self, tmp_path: Path) -> MagicMock:
+        """Create a mock Config object."""
+        config = MagicMock()
+        config.get_user.return_value = ("admin", "password123")
+        config.db_dir = tmp_path
+        return config
+
+    @pytest.fixture
+    def mock_db(self) -> MagicMock:
+        """Create a mock AzEventsDB."""
+        return MagicMock()
+
+    def test_tracks_lif_failover_first_and_last(
+        self, mock_config: MagicMock, mock_db: MagicMock
+    ) -> None:
+        """Test that LIF failover tracks first removal and last success."""
+        cluster = ClusterData(
+            "test-cluster",
+            {"ip": "10.0.0.1"},
+            mock_config,
+            mock_db,
+            datetime.now(),
+        )
+
+        mock_node = MagicMock()
+        mock_node.to_dict.return_value = {"ha": {"enabled": True}}
+
+        def create_event(
+            name: str, time: str, parameters: list[dict[str, str]] | None = None
+        ) -> MagicMock:
+            return create_mock_emsevent(
+                {
+                    "message": {"name": name, "severity": "notice"},
+                    "log_message": f"{name}: test",
+                    "node": {"name": "node-01"},
+                    "time": time,
+                    "parameters": parameters or [],
+                }
+            )
+
+        scheduled_event = create_event(
+            "vsa.scheduledEvent.scheduled",
+            "2024-01-15T10:00:00Z",
+            [
+                {"name": "event_id", "value": "event-123"},
+                {"name": "event_type", "value": "Freeze"},
+                {"name": "node", "value": "node-01"},
+                {"name": "status", "value": "scheduled"},
+                {"name": "not_before_time", "value": "01/15/2024 12:00:00"},
+            ],
+        )
+
+        # Multiple LIF events - should track first removal, last success
+        lif_removed_1 = create_event("vifmgr.lifBeingRemoved", "2024-01-15T12:01:00Z")
+        lif_removed_2 = create_event("vifmgr.lifBeingRemoved", "2024-01-15T12:02:00Z")
+        lif_moved_1 = create_event("vifmgr.lifsuccessfullymoved", "2024-01-15T12:03:00Z")
+        lif_moved_2 = create_event("vifmgr.lifsuccessfullymoved", "2024-01-15T12:04:00Z")
+
+        giveback_event = create_event("callhome.reboot.giveback", "2024-01-15T12:10:00Z")
+
+        all_events = [
+            scheduled_event,
+            lif_removed_1,
+            lif_removed_2,
+            lif_moved_1,
+            lif_moved_2,
+            giveback_event,
+        ]
+
+        with patch("netapp_ontap.HostConnection") as mock_conn:
+            mock_conn.return_value.__enter__ = MagicMock(return_value=None)
+            mock_conn.return_value.__exit__ = MagicMock(return_value=None)
+
+            with patch("netapp_ontap.resources.Node") as mock_node_class:
+                mock_node_class.get_collection.return_value = [mock_node, mock_node]
+
+                with patch("netapp_ontap.resources.EmsEvent") as mock_ems:
+                    mock_ems.get_collection.side_effect = [
+                        [scheduled_event],
+                        all_events,
+                    ]
+
+                    cluster.gather_data()
+
+        assert "event-123" in cluster.azmaints
+        event = cluster.azmaints["event-123"]
+
+        # First LIF removal
+        assert event.get("lif_failover_start") == "2024-01-15T12:01:00Z"
+        # Last LIF success
+        assert event.get("lif_failover_complete") == "2024-01-15T12:04:00Z"
+
+    def test_tracks_aggregate_giveback_first_and_last(
+        self, mock_config: MagicMock, mock_db: MagicMock
+    ) -> None:
+        """Test that aggregate giveback tracks first start and last done."""
+        cluster = ClusterData(
+            "test-cluster",
+            {"ip": "10.0.0.1"},
+            mock_config,
+            mock_db,
+            datetime.now(),
+        )
+
+        mock_node = MagicMock()
+        mock_node.to_dict.return_value = {"ha": {"enabled": True}}
+
+        def create_event(
+            name: str, time: str, parameters: list[dict[str, str]] | None = None
+        ) -> MagicMock:
+            return create_mock_emsevent(
+                {
+                    "message": {"name": name, "severity": "notice"},
+                    "log_message": f"{name}: test",
+                    "node": {"name": "node-01"},
+                    "time": time,
+                    "parameters": parameters or [],
+                }
+            )
+
+        scheduled_event = create_event(
+            "vsa.scheduledEvent.scheduled",
+            "2024-01-15T10:00:00Z",
+            [
+                {"name": "event_id", "value": "event-123"},
+                {"name": "event_type", "value": "Freeze"},
+                {"name": "node", "value": "node-01"},
+                {"name": "status", "value": "scheduled"},
+                {"name": "not_before_time", "value": "01/15/2024 12:00:00"},
+            ],
+        )
+
+        # Multiple aggregate events - should track first start, last done
+        aggr_start_1 = create_event("ha.sfo.giveback.aggrStart", "2024-01-15T12:05:00Z")
+        aggr_done_1 = create_event("ha.sfo.giveback.aggrDone", "2024-01-15T12:06:00Z")
+        aggr_start_2 = create_event("ha.sfo.giveback.aggrStart", "2024-01-15T12:07:00Z")
+        aggr_done_2 = create_event("ha.sfo.giveback.aggrDone", "2024-01-15T12:08:00Z")
+
+        giveback_event = create_event("callhome.reboot.giveback", "2024-01-15T12:10:00Z")
+
+        all_events = [
+            scheduled_event,
+            aggr_start_1,
+            aggr_done_1,
+            aggr_start_2,
+            aggr_done_2,
+            giveback_event,
+        ]
+
+        with patch("netapp_ontap.HostConnection") as mock_conn:
+            mock_conn.return_value.__enter__ = MagicMock(return_value=None)
+            mock_conn.return_value.__exit__ = MagicMock(return_value=None)
+
+            with patch("netapp_ontap.resources.Node") as mock_node_class:
+                mock_node_class.get_collection.return_value = [mock_node, mock_node]
+
+                with patch("netapp_ontap.resources.EmsEvent") as mock_ems:
+                    mock_ems.get_collection.side_effect = [
+                        [scheduled_event],
+                        all_events,
+                    ]
+
+                    cluster.gather_data()
+
+        assert "event-123" in cluster.azmaints
+        event = cluster.azmaints["event-123"]
+
+        # First aggregate start
+        assert event.get("aggr_giveback_start") == "2024-01-15T12:05:00Z"
+        # Last aggregate done
+        assert event.get("aggr_giveback_complete") == "2024-01-15T12:08:00Z"
+
+    def test_tracks_cifs_transition_ms(self, mock_config: MagicMock, mock_db: MagicMock) -> None:
+        """Test that CIFS transition ms is extracted from cf.transition.info."""
+        cluster = ClusterData(
+            "test-cluster",
+            {"ip": "10.0.0.1"},
+            mock_config,
+            mock_db,
+            datetime.now(),
+        )
+
+        mock_node = MagicMock()
+        mock_node.to_dict.return_value = {"ha": {"enabled": True}}
+
+        def create_event(
+            name: str, time: str, log_msg: str, parameters: list[dict[str, str]] | None = None
+        ) -> MagicMock:
+            return create_mock_emsevent(
+                {
+                    "message": {"name": name, "severity": "notice"},
+                    "log_message": log_msg,
+                    "node": {"name": "node-01"},
+                    "time": time,
+                    "parameters": parameters or [],
+                }
+            )
+
+        scheduled_event = create_event(
+            "vsa.scheduledEvent.scheduled",
+            "2024-01-15T10:00:00Z",
+            "vsa.scheduledEvent.scheduled: test",
+            [
+                {"name": "event_id", "value": "event-123"},
+                {"name": "event_type", "value": "Freeze"},
+                {"name": "node", "value": "node-01"},
+                {"name": "status", "value": "scheduled"},
+                {"name": "not_before_time", "value": "01/15/2024 12:00:00"},
+            ],
+        )
+
+        transition_event = create_event(
+            "cf.transition.info",
+            "2024-01-15T12:05:00Z",
+            "cf.transition.info: Takeover Protocol Transition Time(msec): "
+            "NFS=14450[210|14240]; CIFS=14450[210|14240]; FCP=14430[210|14220]",
+        )
+
+        giveback_event = create_event(
+            "callhome.reboot.giveback",
+            "2024-01-15T12:10:00Z",
+            "callhome.reboot.giveback: test",
+        )
+
+        all_events = [scheduled_event, transition_event, giveback_event]
+
+        with patch("netapp_ontap.HostConnection") as mock_conn:
+            mock_conn.return_value.__enter__ = MagicMock(return_value=None)
+            mock_conn.return_value.__exit__ = MagicMock(return_value=None)
+
+            with patch("netapp_ontap.resources.Node") as mock_node_class:
+                mock_node_class.get_collection.return_value = [mock_node, mock_node]
+
+                with patch("netapp_ontap.resources.EmsEvent") as mock_ems:
+                    mock_ems.get_collection.side_effect = [
+                        [scheduled_event],
+                        all_events,
+                    ]
+
+                    cluster.gather_data()
+
+        assert "event-123" in cluster.azmaints
+        event = cluster.azmaints["event-123"]
+        assert event.get("cifs_transition_ms") == 14450
+
+    def test_tracks_cifs_witness_notification(
+        self, mock_config: MagicMock, mock_db: MagicMock
+    ) -> None:
+        """Test that CIFS Witness notification is tracked."""
+        cluster = ClusterData(
+            "test-cluster",
+            {"ip": "10.0.0.1"},
+            mock_config,
+            mock_db,
+            datetime.now(),
+        )
+
+        mock_node = MagicMock()
+        mock_node.to_dict.return_value = {"ha": {"enabled": True}}
+
+        def create_event(
+            name: str, time: str, log_msg: str, parameters: list[dict[str, str]] | None = None
+        ) -> MagicMock:
+            return create_mock_emsevent(
+                {
+                    "message": {"name": name, "severity": "notice"},
+                    "log_message": log_msg,
+                    "node": {"name": "node-01"},
+                    "time": time,
+                    "parameters": parameters or [],
+                }
+            )
+
+        scheduled_event = create_event(
+            "vsa.scheduledEvent.scheduled",
+            "2024-01-15T10:00:00Z",
+            "vsa.scheduledEvent.scheduled: test",
+            [
+                {"name": "event_id", "value": "event-123"},
+                {"name": "event_type", "value": "Freeze"},
+                {"name": "node", "value": "node-01"},
+                {"name": "status", "value": "scheduled"},
+                {"name": "not_before_time", "value": "01/15/2024 12:00:00"},
+            ],
+        )
+
+        witness_event = create_event(
+            "Nblade.cifsWitnessFONotify",
+            "2024-01-15T12:05:00Z",
+            "Nblade.cifsWitnessFONotify: The Witness service received a failure "
+            "notification for the partner node. Notification of 5 CIFS clients to "
+            "move their Continuously Available connections to this node took 100 "
+            "milliseconds to complete.",
+        )
+
+        giveback_event = create_event(
+            "callhome.reboot.giveback",
+            "2024-01-15T12:10:00Z",
+            "callhome.reboot.giveback: test",
+        )
+
+        all_events = [scheduled_event, witness_event, giveback_event]
+
+        with patch("netapp_ontap.HostConnection") as mock_conn:
+            mock_conn.return_value.__enter__ = MagicMock(return_value=None)
+            mock_conn.return_value.__exit__ = MagicMock(return_value=None)
+
+            with patch("netapp_ontap.resources.Node") as mock_node_class:
+                mock_node_class.get_collection.return_value = [mock_node, mock_node]
+
+                with patch("netapp_ontap.resources.EmsEvent") as mock_ems:
+                    mock_ems.get_collection.side_effect = [
+                        [scheduled_event],
+                        all_events,
+                    ]
+
+                    cluster.gather_data()
+
+        assert "event-123" in cluster.azmaints
+        event = cluster.azmaints["event-123"]
+        assert event.get("cifs_witness_time") == "2024-01-15T12:05:00Z"
+        assert event.get("cifs_witness_clients") == 5
+
+
+class TestSmbFieldsListConstant:
+    """Tests for SMB_IMPACT_EVENTS and CVO_HA_SMB_FIELDS constants."""
+
+    def test_smb_impact_events_defined(self) -> None:
+        """Test that SMB_IMPACT_EVENTS constant is defined."""
+        assert hasattr(ClusterData, "SMB_IMPACT_EVENTS")
+        assert "vifmgr.lifBeingRemoved" in ClusterData.SMB_IMPACT_EVENTS
+        assert "vifmgr.lifsuccessfullymoved" in ClusterData.SMB_IMPACT_EVENTS
+        assert "Nblade.cifsWitnessFONotify" in ClusterData.SMB_IMPACT_EVENTS
+        assert "cf.transition.info" in ClusterData.SMB_IMPACT_EVENTS
+        assert "ha.sfo.giveback.aggrStart" in ClusterData.SMB_IMPACT_EVENTS
+        assert "ha.sfo.giveback.aggrDone" in ClusterData.SMB_IMPACT_EVENTS
+
+    def test_cvo_ha_smb_fields_defined(self) -> None:
+        """Test that CVO_HA_SMB_FIELDS constant is defined."""
+        assert hasattr(ClusterData, "CVO_HA_SMB_FIELDS")
+        assert "lif_failover_start" in ClusterData.CVO_HA_SMB_FIELDS
+        assert "lif_failover_complete" in ClusterData.CVO_HA_SMB_FIELDS
+        assert "cifs_transition_ms" in ClusterData.CVO_HA_SMB_FIELDS
+        assert "cifs_witness_time" in ClusterData.CVO_HA_SMB_FIELDS
+        assert "cifs_witness_clients" in ClusterData.CVO_HA_SMB_FIELDS
+        assert "aggr_giveback_start" in ClusterData.CVO_HA_SMB_FIELDS
+        assert "aggr_giveback_complete" in ClusterData.CVO_HA_SMB_FIELDS
