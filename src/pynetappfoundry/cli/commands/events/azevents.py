@@ -363,7 +363,7 @@ class ClusterData:
 
                         case "vsa.scheduledEvent.update":
                             print_debug(f"Found vsa.scheduledEvent.update: {emsevent.to_dict()}")
-                            # Handle out-of-order events
+                            # Handle out-of-order events (update before scheduled)
                             if azevent_id != azevent_dict["event_id"]:
                                 print_warning(
                                     f"{self.name}: Out of order az event - "
@@ -372,21 +372,32 @@ class ClusterData:
                                 )
                                 print_debug(f"Current Event details: {azevent_dict}")
                                 print_debug(f"Full current EMS details: {emsevent.to_dict()}")
-                                self._add_azmaint(azevent_dict)
-                                self._empty_azevent()
-                                # Check if this event already exists (e.g., callhome.reboot.giveback
-                                # came before vsa.scheduledEvent.update complete)
+
+                                # Only save current event if it has a real event_id
+                                if azevent_dict["event_id"] != "Unknown":
+                                    self._add_azmaint(azevent_dict)
+
+                                # Check if this event already exists in azmaints
                                 if azevent_id and azevent_id in self.azmaints:
                                     # Update existing event with status
                                     status_field = f"az_maint_{status}"
                                     self.azmaints[azevent_id][status_field] = emsevent["time"]
                                     print_debug(f"Updated event {azevent_id} with {status_field}")
-                                elif azevent_dict["event_id"] == "Unknown":
-                                    azevent_dict["event_id"] = azevent_id
-                                    azevent_dict["node"] = node
-                                    azevent_dict["type"] = event_type
+                                    # Reset to empty - this event is already tracked
+                                    azevent_dict = self._empty_azevent()
+                                else:
+                                    # Create new event dict with proper ID
+                                    # (scheduled event was missing from EMS)
+                                    azevent_dict = {
+                                        "event_id": azevent_id,
+                                        "node": node,
+                                        "type": event_type,
+                                        "cluster": self.name,
+                                        f"az_maint_{status}": emsevent["time"],
+                                    }
+                                    self.current_azevent = azevent_id or ""
                             else:
-                                # Record started/complete status
+                                # Normal case - IDs match
                                 azevent_dict[f"az_maint_{status}"] = emsevent["time"]
 
                             # For non-HA CVO, complete on az_maint_complete
