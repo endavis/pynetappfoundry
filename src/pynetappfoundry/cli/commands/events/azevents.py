@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, ClassVar
 
@@ -81,6 +82,27 @@ class ClusterData:
         "node_ready_for_giveback",
         "node_giveback_starts",
         "node_giveback_complete",
+    ]
+
+    # SMB client impact events for CVO HA clusters
+    SMB_IMPACT_EVENTS: ClassVar[list[str]] = [
+        "vifmgr.lifBeingRemoved",
+        "vifmgr.lifsuccessfullymoved",
+        "Nblade.cifsWitnessFONotify",
+        "cf.transition.info",
+        "ha.sfo.giveback.aggrStart",
+        "ha.sfo.giveback.aggrDone",
+    ]
+
+    # SMB client impact fields for CVO HA clusters (optional - may not always be present)
+    CVO_HA_SMB_FIELDS: ClassVar[list[str]] = [
+        "lif_failover_start",
+        "lif_failover_complete",
+        "cifs_transition_ms",
+        "cifs_witness_time",
+        "cifs_witness_clients",
+        "aggr_giveback_start",
+        "aggr_giveback_complete",
     ]
 
     def __init__(
@@ -191,6 +213,47 @@ class ClusterData:
             (item["value"] for item in parameters if item["name"] == param_name),
             None,
         )
+
+    def _parse_cifs_transition_ms(self, log_message: str) -> int | None:
+        """Extract CIFS transition time in milliseconds from cf.transition.info.
+
+        Args:
+            log_message: Log message containing protocol transition times.
+                         Format: "CIFS=14450[210|14240]"
+
+        Returns:
+            CIFS transition time in milliseconds, or None if not found.
+        """
+        # Match CIFS=<number> pattern
+        match = re.search(r"CIFS=(\d+)", log_message)
+        if match:
+            return int(match.group(1))
+        return None
+
+    def _parse_cifs_witness_info(self, log_message: str) -> tuple[int | None, int | None]:
+        """Extract CIFS Witness notification info from Nblade.cifsWitnessFONotify.
+
+        Args:
+            log_message: Log message containing witness notification details.
+                         Format: "Notification of X CIFS clients...took Y milliseconds"
+
+        Returns:
+            Tuple of (client_count, notification_ms), or (None, None) if not parsed.
+        """
+        client_count = None
+        notification_ms = None
+
+        # Match "Notification of X CIFS clients"
+        client_match = re.search(r"Notification of (\d+) CIFS clients", log_message)
+        if client_match:
+            client_count = int(client_match.group(1))
+
+        # Match "took X milliseconds"
+        ms_match = re.search(r"took (\d+) milliseconds", log_message)
+        if ms_match:
+            notification_ms = int(ms_match.group(1))
+
+        return client_count, notification_ms
 
     def gather_data(self) -> None:
         """Gather and parse EMS events from the cluster."""
@@ -350,6 +413,38 @@ class ClusterData:
                         case "clam.valid.config":
                             # Giveback starts
                             azevent_dict["node_giveback_starts"] = emsevent["time"]
+
+                        # SMB client impact events
+                        case "vifmgr.lifBeingRemoved":
+                            # LIF failover starts - track first occurrence only
+                            if "lif_failover_start" not in azevent_dict:
+                                azevent_dict["lif_failover_start"] = emsevent["time"]
+
+                        case "vifmgr.lifsuccessfullymoved":
+                            # LIF successfully moved - track last occurrence
+                            azevent_dict["lif_failover_complete"] = emsevent["time"]
+
+                        case "Nblade.cifsWitnessFONotify":
+                            # CIFS Witness failover notification
+                            azevent_dict["cifs_witness_time"] = emsevent["time"]
+                            client_count, _ = self._parse_cifs_witness_info(emsevent["log_message"])
+                            if client_count is not None:
+                                azevent_dict["cifs_witness_clients"] = client_count
+
+                        case "cf.transition.info":
+                            # Protocol transition times - extract CIFS ms
+                            cifs_ms = self._parse_cifs_transition_ms(emsevent["log_message"])
+                            if cifs_ms is not None:
+                                azevent_dict["cifs_transition_ms"] = cifs_ms
+
+                        case "ha.sfo.giveback.aggrStart":
+                            # Aggregate giveback started - track first occurrence only
+                            if "aggr_giveback_start" not in azevent_dict:
+                                azevent_dict["aggr_giveback_start"] = emsevent["time"]
+
+                        case "ha.sfo.giveback.aggrDone":
+                            # Aggregate giveback completed - track last occurrence
+                            azevent_dict["aggr_giveback_complete"] = emsevent["time"]
 
                         case "callhome.reboot.giveback":
                             # Event complete - giveback finished (HA completion marker)
