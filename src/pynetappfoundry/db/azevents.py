@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import sqlite3
 from datetime import datetime
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from pynetappfoundry.db.base import adapt_datetime, convert_datetime
 
@@ -34,6 +34,33 @@ sqlite3.register_converter("aggr_giveback_complete", convert_datetime)
 class AzEventsDB:
     """SQLite database for storing Azure maintenance events."""
 
+    # Schema definition: (column_name, column_type)
+    # Order matters for table creation
+    SCHEMA: ClassVar[list[tuple[str, str]]] = [
+        ("event_id", "TEXT PRIMARY KEY"),
+        ("cluster", "TEXT DEFAULT 'Unknown'"),
+        ("node", "TEXT DEFAULT 'Unknown'"),
+        ("type", "TEXT DEFAULT 'Unknown'"),
+        ("az_maint_not_before", "TEXT"),
+        ("az_maint_scheduled", "TEXT"),
+        ("az_maint_started", "TEXT"),
+        ("az_maint_complete", "TEXT"),
+        ("node_takeover_complete", "TEXT"),
+        ("node_reboot_starts", "TEXT"),
+        ("node_reboot_complete", "TEXT"),
+        ("node_ready_for_giveback", "TEXT"),
+        ("node_giveback_starts", "TEXT"),
+        ("node_giveback_complete", "TEXT"),
+        # SMB client impact tracking fields (added in v2)
+        ("lif_failover_start", "TEXT"),
+        ("lif_failover_complete", "TEXT"),
+        ("cifs_transition_ms", "INTEGER"),
+        ("cifs_witness_time", "TEXT"),
+        ("cifs_witness_clients", "INTEGER"),
+        ("aggr_giveback_start", "TEXT"),
+        ("aggr_giveback_complete", "TEXT"),
+    ]
+
     def __init__(self, config: Config, db_name: str = "azevents.db") -> None:
         """Initialize the Azure events database.
 
@@ -44,45 +71,39 @@ class AzEventsDB:
         db_location = config.db_dir / db_name
         self.conn = sqlite3.connect(db_location, detect_types=sqlite3.PARSE_DECLTYPES)
         self.conn.row_factory = sqlite3.Row  # Enables dictionary-like access
-        self.create_table()
+        self._init_schema()
 
-    def create_table(self) -> None:
-        """Create the maintenance_events table if it doesn't exist."""
+    def _init_schema(self) -> None:
+        """Initialize database schema, creating table or migrating as needed."""
         cur = self.conn.cursor()
         cur.execute(
-            """
-            SELECT name FROM sqlite_master WHERE type='table' AND name='maintenance_events'
-        """
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='maintenance_events'"
         )
         if cur.fetchone() is None:
-            with self.conn:
-                self.conn.execute(
-                    """
-                    CREATE TABLE IF NOT EXISTS maintenance_events (
-                        event_id TEXT PRIMARY KEY,
-                        cluster TEXT DEFAULT 'Unknown',
-                        node TEXT DEFAULT 'Unknown',
-                        type TEXT DEFAULT 'Unknown',
-                        az_maint_not_before TEXT,
-                        az_maint_scheduled TEXT,
-                        az_maint_started TEXT,
-                        az_maint_complete TEXT,
-                        node_takeover_complete TEXT,
-                        node_reboot_starts TEXT,
-                        node_reboot_complete TEXT,
-                        node_ready_for_giveback TEXT,
-                        node_giveback_starts TEXT,
-                        node_giveback_complete TEXT,
-                        lif_failover_start TEXT,
-                        lif_failover_complete TEXT,
-                        cifs_transition_ms INTEGER,
-                        cifs_witness_time TEXT,
-                        cifs_witness_clients INTEGER,
-                        aggr_giveback_start TEXT,
-                        aggr_giveback_complete TEXT
+            self._create_table()
+        else:
+            self._migrate_schema()
+
+    def _create_table(self) -> None:
+        """Create the maintenance_events table."""
+        columns = ", ".join(f"{name} {col_type}" for name, col_type in self.SCHEMA)
+        with self.conn:
+            self.conn.execute(f"CREATE TABLE maintenance_events ({columns})")
+
+    def _migrate_schema(self) -> None:
+        """Add any missing columns to existing table."""
+        cur = self.conn.cursor()
+        cur.execute("PRAGMA table_info(maintenance_events)")
+        existing_columns = {row[1] for row in cur.fetchall()}
+
+        with self.conn:
+            for col_name, col_type in self.SCHEMA:
+                if col_name not in existing_columns:
+                    # For ALTER TABLE, we need simpler type (no PRIMARY KEY, no DEFAULT)
+                    simple_type = col_type.split()[0]  # Gets TEXT, INTEGER, etc.
+                    self.conn.execute(
+                        f"ALTER TABLE maintenance_events ADD COLUMN {col_name} {simple_type}"
                     )
-                """
-                )
 
     def upsert_event(self, event: dict[str, Any]) -> None:
         """Insert or update a maintenance event.

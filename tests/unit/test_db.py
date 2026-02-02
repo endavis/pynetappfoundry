@@ -8,6 +8,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from pynetappfoundry.db.azevents import AzEventsDB
 from pynetappfoundry.db.base import adapt_datetime, convert_datetime
 from pynetappfoundry.db.metrics import MetricDB, _validate_table_name
 
@@ -327,3 +328,162 @@ class TestMetricDB:
         assert "timestamp" in keys_list
         assert "read_ops" in keys_list
         db.conn.close()
+
+
+class TestAzEventsDB:
+    """Tests for AzEventsDB class."""
+
+    def test_creates_table_on_init(self, mock_config: MagicMock) -> None:
+        """Test that AzEventsDB creates table on initialization."""
+        db = AzEventsDB(mock_config)
+
+        cur = db.conn.cursor()
+        cur.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='maintenance_events'"
+        )
+        result = cur.fetchone()
+        assert result is not None
+        db.conn.close()
+
+    def test_creates_all_schema_columns(self, mock_config: MagicMock) -> None:
+        """Test that all schema columns are created."""
+        db = AzEventsDB(mock_config)
+
+        cur = db.conn.cursor()
+        cur.execute("PRAGMA table_info(maintenance_events)")
+        columns = {row[1] for row in cur.fetchall()}
+
+        expected_columns = {col_name for col_name, _ in AzEventsDB.SCHEMA}
+        assert columns == expected_columns
+        db.conn.close()
+
+    def test_migrates_missing_columns(self, mock_config: MagicMock) -> None:
+        """Test that missing columns are added to existing table."""
+        import sqlite3
+
+        # Create an old-style table without SMB columns
+        db_location = mock_config.db_dir / "azevents.db"
+        conn = sqlite3.connect(db_location)
+        conn.execute(
+            """
+            CREATE TABLE maintenance_events (
+                event_id TEXT PRIMARY KEY,
+                cluster TEXT DEFAULT 'Unknown',
+                node TEXT DEFAULT 'Unknown',
+                type TEXT DEFAULT 'Unknown',
+                az_maint_not_before TEXT,
+                az_maint_scheduled TEXT,
+                az_maint_started TEXT,
+                az_maint_complete TEXT,
+                node_takeover_complete TEXT,
+                node_reboot_starts TEXT,
+                node_reboot_complete TEXT,
+                node_ready_for_giveback TEXT,
+                node_giveback_starts TEXT,
+                node_giveback_complete TEXT
+            )
+        """
+        )
+        conn.commit()
+        conn.close()
+
+        # Now open with AzEventsDB which should migrate
+        db = AzEventsDB(mock_config)
+
+        cur = db.conn.cursor()
+        cur.execute("PRAGMA table_info(maintenance_events)")
+        columns = {row[1] for row in cur.fetchall()}
+
+        # Verify SMB columns were added
+        assert "lif_failover_start" in columns
+        assert "lif_failover_complete" in columns
+        assert "cifs_transition_ms" in columns
+        assert "cifs_witness_time" in columns
+        assert "cifs_witness_clients" in columns
+        assert "aggr_giveback_start" in columns
+        assert "aggr_giveback_complete" in columns
+        db.conn.close()
+
+    def test_preserves_existing_data_on_migration(self, mock_config: MagicMock) -> None:
+        """Test that existing data is preserved during migration."""
+        import sqlite3
+
+        # Create an old-style table with data
+        db_location = mock_config.db_dir / "azevents.db"
+        conn = sqlite3.connect(db_location)
+        conn.execute(
+            """
+            CREATE TABLE maintenance_events (
+                event_id TEXT PRIMARY KEY,
+                cluster TEXT DEFAULT 'Unknown',
+                node TEXT DEFAULT 'Unknown',
+                type TEXT DEFAULT 'Unknown',
+                az_maint_not_before TEXT,
+                az_maint_scheduled TEXT,
+                az_maint_started TEXT,
+                az_maint_complete TEXT,
+                node_takeover_complete TEXT,
+                node_reboot_starts TEXT,
+                node_reboot_complete TEXT,
+                node_ready_for_giveback TEXT,
+                node_giveback_starts TEXT,
+                node_giveback_complete TEXT
+            )
+        """
+        )
+        conn.execute(
+            """
+            INSERT INTO maintenance_events (event_id, cluster, node)
+            VALUES ('test-event-123', 'test-cluster', 'test-node')
+        """
+        )
+        conn.commit()
+        conn.close()
+
+        # Now open with AzEventsDB which should migrate
+        db = AzEventsDB(mock_config)
+
+        # Verify data is preserved
+        event = db.get_event_by_id("test-event-123")
+        assert event is not None
+        assert event["cluster"] == "test-cluster"
+        assert event["node"] == "test-node"
+        db.conn.close()
+
+    def test_upsert_with_new_columns(self, mock_config: MagicMock) -> None:
+        """Test that upsert works with new SMB columns."""
+        db = AzEventsDB(mock_config)
+
+        event = {
+            "event_id": "test-event-456",
+            "cluster": "test-cluster",
+            "node": "test-node",
+            "lif_failover_start": "2024-01-15T12:01:00Z",
+            "lif_failover_complete": "2024-01-15T12:04:00Z",
+            "cifs_transition_ms": 14450,
+            "cifs_witness_clients": 5,
+        }
+        db.upsert_event(event)
+
+        result = db.get_event_by_id("test-event-456")
+        assert result is not None
+        assert result["lif_failover_start"] == "2024-01-15T12:01:00Z"
+        assert result["cifs_transition_ms"] == 14450
+        assert result["cifs_witness_clients"] == 5
+        db.conn.close()
+
+    def test_no_duplicate_columns_on_reopen(self, mock_config: MagicMock) -> None:
+        """Test that reopening database doesn't create duplicate columns."""
+        db1 = AzEventsDB(mock_config)
+        db1.conn.close()
+
+        # Reopen
+        db2 = AzEventsDB(mock_config)
+
+        cur = db2.conn.cursor()
+        cur.execute("PRAGMA table_info(maintenance_events)")
+        columns = [row[1] for row in cur.fetchall()]
+
+        # Check no duplicates
+        assert len(columns) == len(set(columns))
+        db2.conn.close()
