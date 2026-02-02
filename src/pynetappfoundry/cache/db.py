@@ -7,9 +7,10 @@ import re
 import sqlite3
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from pynetappfoundry.cache.models import CachedClusterMetadata
+from pynetappfoundry.db.base import SQLiteDB
 
 if TYPE_CHECKING:
     from pynetappfoundry.core.config import Config
@@ -37,15 +38,15 @@ def _validate_cluster_name(cluster_name: str) -> None:
         )
 
 
-class ClusterMetadataDB:
+class ClusterMetadataDB(SQLiteDB):
     """SQLite database for caching cluster metadata.
 
     Stores serialized CachedClusterMetadata objects in a single table
     with cluster_name as the primary key.
     """
 
-    SCHEMA_VERSION = 1
-    TABLE_NAME = "cluster_metadata"
+    SCHEMA_VERSION: ClassVar[int] = 1
+    TABLE_NAME: ClassVar[str] = "cluster_metadata"
 
     def __init__(
         self,
@@ -73,33 +74,28 @@ class ClusterMetadataDB:
 
         self.conn = sqlite3.connect(self.db_path, detect_types=sqlite3.PARSE_DECLTYPES)
         self.conn.row_factory = sqlite3.Row
-        self._init_schema()
+        self._migrate_old_schema_info()
+        self._init_db()
 
-    def _init_schema(self) -> None:
-        """Initialize the database schema."""
-        with self.conn:
-            self.conn.execute(f"""
-                CREATE TABLE IF NOT EXISTS {self.TABLE_NAME} (
-                    cluster_name TEXT PRIMARY KEY,
-                    cached_at TEXT NOT NULL,
-                    cache_version TEXT NOT NULL,
-                    metadata_json TEXT NOT NULL
-                )
-            """)
-            # Create schema version table
-            self.conn.execute("""
-                CREATE TABLE IF NOT EXISTS schema_info (
-                    key TEXT PRIMARY KEY,
-                    value TEXT NOT NULL
-                )
-            """)
-            self.conn.execute(
-                """
-                INSERT OR REPLACE INTO schema_info (key, value)
-                VALUES ('version', ?)
-            """,
-                (str(self.SCHEMA_VERSION),),
+    def _migrate_old_schema_info(self) -> None:
+        """Migrate from old schema_info table to _schema_version if needed."""
+        cursor = self.conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='schema_info'"
+        )
+        if cursor.fetchone() is not None:
+            # Old schema_info exists - drop it (we'll use _schema_version now)
+            self.conn.execute("DROP TABLE schema_info")
+
+    def _create_schema(self) -> None:
+        """Create the cluster_metadata table."""
+        self.conn.execute(f"""
+            CREATE TABLE {self.TABLE_NAME} (
+                cluster_name TEXT PRIMARY KEY,
+                cached_at TEXT NOT NULL,
+                cache_version TEXT NOT NULL,
+                metadata_json TEXT NOT NULL
             )
+        """)
 
     def get(self, cluster_name: str) -> CachedClusterMetadata | None:
         """Retrieve cached metadata for a cluster.
@@ -236,15 +232,3 @@ class ClusterMetadataDB:
                 }
             )
         return result
-
-    def close(self) -> None:
-        """Close the database connection."""
-        self.conn.close()
-
-    def __enter__(self) -> ClusterMetadataDB:
-        """Context manager entry."""
-        return self
-
-    def __exit__(self, exc_type: object, exc_val: object, exc_tb: object) -> None:
-        """Context manager exit."""
-        self.close()

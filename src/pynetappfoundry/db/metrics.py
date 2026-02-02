@@ -5,9 +5,9 @@ from __future__ import annotations
 import re
 import sqlite3
 from datetime import datetime
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
-from pynetappfoundry.db.base import adapt_datetime, convert_datetime
+from pynetappfoundry.db.base import SQLiteDB, adapt_datetime, convert_datetime
 
 if TYPE_CHECKING:
     from pynetappfoundry.core.config import Config
@@ -39,8 +39,15 @@ def _validate_table_name(table_name: str) -> None:
         )
 
 
-class MetricDB:
-    """SQLite database for storing metrics data."""
+class MetricDB(SQLiteDB):
+    """SQLite database for storing metrics data.
+
+    Note: MetricDB creates tables dynamically per cluster/metric, so there's
+    no fixed schema at initialization. The _create_schema method is empty
+    but required by the base class contract.
+    """
+
+    SCHEMA_VERSION: ClassVar[int] = 1
 
     def __init__(self, config: Config, db_name: str = "metrics.db") -> None:
         """Initialize the metrics database.
@@ -52,6 +59,15 @@ class MetricDB:
         self.db_location = config.db_dir / db_name
         self.conn = sqlite3.connect(self.db_location, detect_types=sqlite3.PARSE_DECLTYPES)
         self.conn.row_factory = sqlite3.Row  # Enables dictionary-like access
+        self._init_db()
+
+    def _create_schema(self) -> None:
+        """Create the database schema.
+
+        MetricDB creates tables dynamically per cluster/metric via create_table(),
+        so there's no fixed schema to create at initialization.
+        """
+        # No fixed tables - tables are created dynamically via create_table()
 
     def create_table(self, table_name: str) -> None:
         """Create a metrics table if it doesn't exist.
