@@ -120,24 +120,24 @@ class ClusterData:
         self.current_azevent = ""
         return {"event_id": "Unknown"}
 
-    def _add_emsevent(self, emsevent: dict[str, Any]) -> None:
+    def _add_emsevent(self, emsevent: Any) -> None:
         """Add an EMS event to the tracking list.
 
         Args:
-            emsevent: EMS event dictionary from API.
+            emsevent: EMS event resource object from API (not converted to dict).
         """
-        message = emsevent.get("log_message", "")
-        event_name = emsevent.get("message", {}).get("name", "")
+        event_name = emsevent["message"]["name"]
+        message = emsevent["log_message"]
         # Clean up message
         message = message.replace(f"{event_name}: ", "").replace(",", ";").replace("\n", "").strip()
 
         event_dict = {
             "event_id": self.current_azevent,
             "cluster": self.name,
-            "node": emsevent.get("node", {}).get("name", "Unknown"),
-            "time": emsevent.get("time"),
+            "node": emsevent["node"]["name"],
+            "time": emsevent["time"],
             "event": event_name,
-            "severity": emsevent.get("message", {}).get("severity", "Unknown"),
+            "severity": emsevent["message"]["severity"],
             "message": message,
         }
         self.ems_events.append(event_dict)
@@ -242,15 +242,14 @@ class ClusterData:
                     "fields": "*",
                 }
                 for emsevent in EmsEvent.get_collection(**all_events_query):
-                    emsevent_dict = emsevent.to_dict()
-                    self._add_emsevent(emsevent_dict)
+                    self._add_emsevent(emsevent)
 
-                    message_name = emsevent_dict.get("message", {}).get("name", "")
-                    parameters = emsevent_dict.get("parameters", [])
+                    message_name = emsevent["message"]["name"]
+                    parameters = emsevent["parameters"]
 
                     # Extract common parameters for vsa.scheduled events
                     if "vsa.scheduled" in message_name:
-                        print_debug(f"Found vsa.scheduled: {emsevent_dict}")
+                        print_debug(f"Found vsa.scheduled: {emsevent.to_dict()}")
                         azevent_id = self._get_param_value(parameters, "event_id")
                         event_type = self._get_param_value(parameters, "event_type")
                         node = self._get_param_value(parameters, "node")
@@ -260,7 +259,7 @@ class ClusterData:
                     # Process events based on message name
                     match message_name:
                         case "vsa.scheduledEvent.scheduled":
-                            print_debug(f"Found vsa.scheduledEvent.scheduled: {emsevent_dict}")
+                            print_debug(f"Found vsa.scheduledEvent.scheduled: {emsevent.to_dict()}")
                             # Found a new event - check if previous wasn't completed
                             if azevent_dict["event_id"] != "Unknown":
                                 print_warning(
@@ -281,15 +280,17 @@ class ClusterData:
                                 azevent_dict["node"] = node
                                 azevent_dict["type"] = event_type
                                 azevent_dict["cluster"] = self.name
-                                azevent_dict["az_maint_scheduled"] = emsevent_dict.get("time")
+                                azevent_dict["az_maint_scheduled"] = emsevent["time"]
                                 self.current_azevent = azevent_id or ""
                             except Exception:
                                 self.current_azevent = "Unknown"
-                                print_error(f"Got an invalid maintenance event: {emsevent_dict}")
+                                print_error(
+                                    f"Got an invalid maintenance event: {emsevent.to_dict()}"
+                                )
                                 self.invalid_maintenance = True
 
                         case "vsa.scheduledEvent.update":
-                            print_debug(f"Found vsa.scheduledEvent.update: {emsevent_dict}")
+                            print_debug(f"Found vsa.scheduledEvent.update: {emsevent.to_dict()}")
                             # Handle out-of-order events
                             if azevent_id != azevent_dict["event_id"]:
                                 print_warning(
@@ -298,7 +299,7 @@ class ClusterData:
                                     f"received update for {azevent_id}"
                                 )
                                 print_debug(f"Current Event details: {azevent_dict}")
-                                print_debug(f"Full current EMS details: {emsevent_dict}")
+                                print_debug(f"Full current EMS details: {emsevent.to_dict()}")
                                 self._add_azmaint(azevent_dict)
                                 self._empty_azevent()
                                 if azevent_dict["event_id"] == "Unknown":
@@ -307,7 +308,7 @@ class ClusterData:
                                     azevent_dict["type"] = event_type
                             else:
                                 # Record started/complete status
-                                azevent_dict[f"az_maint_{status}"] = emsevent_dict.get("time")
+                                azevent_dict[f"az_maint_{status}"] = emsevent["time"]
 
                             # For non-HA CVO, complete on az_maint_complete
                             if status == "complete" and self.cluster_type == "CVO":
@@ -316,33 +317,33 @@ class ClusterData:
 
                         case "cf.fsm.nfo.startingGracefulShutdown":
                             # Takeover complete
-                            azevent_dict["node_takeover_complete"] = emsevent_dict.get("time")
+                            azevent_dict["node_takeover_complete"] = emsevent["time"]
 
                         case "kern.shutdown":
                             # Node starts rebooting
-                            azevent_dict["node_reboot_starts"] = emsevent_dict.get("time")
+                            azevent_dict["node_reboot_starts"] = emsevent["time"]
 
                         case "mgr.boot.disk_done":
                             # Node finished rebooting
-                            azevent_dict["node_reboot_complete"] = emsevent_dict.get("time")
+                            azevent_dict["node_reboot_complete"] = emsevent["time"]
 
                         case "cf.fsm.takeoverOfPartnerEnabled":
                             # Node ready for giveback
-                            azevent_dict["node_ready_for_giveback"] = emsevent_dict.get("time")
+                            azevent_dict["node_ready_for_giveback"] = emsevent["time"]
 
                         case "clam.valid.config":
                             # Giveback starts
-                            azevent_dict["node_giveback_starts"] = emsevent_dict.get("time")
+                            azevent_dict["node_giveback_starts"] = emsevent["time"]
 
                         case "callhome.reboot.giveback":
                             # Event complete - giveback finished (HA completion marker)
-                            azevent_dict["node_giveback_complete"] = emsevent_dict.get("time")
+                            azevent_dict["node_giveback_complete"] = emsevent["time"]
                             azevent_id = azevent_dict["event_id"]
                             if azevent_id == "Unknown":
                                 print_error(f"{self.name}: No Event Id for {azevent_dict}")
                             else:
                                 # Add EMS event before resetting current_azevent
-                                self._add_emsevent(emsevent_dict)
+                                self._add_emsevent(emsevent)
                                 self._add_azmaint(azevent_dict)
                             self.current_azevent = ""
                             azevent_dict = self._empty_azevent()
