@@ -473,13 +473,14 @@ class TestClusterDataProcessData:
             with patch("pynetappfoundry.cli.commands.events.azevents.print_error") as mock_print:
                 cluster.process_data()
                 # Should print error about event without id
-                assert any("without an id" in str(call) for call in mock_print.call_args_list)
+                assert any("Event without id" in str(call) for call in mock_print.call_args_list)
 
     def test_creates_error_db_for_missing_maint_fields(self, mock_config: MagicMock) -> None:
         """Test that error database is created for events missing maintenance fields."""
         mock_db = MagicMock()
         mock_db.get_event_by_id.return_value = {
             "event_id": "event-123",
+            "node": "node-01",
             "az_maint_not_before": "",  # Missing
             "az_maint_scheduled": "",
             "az_maint_started": "",
@@ -502,10 +503,9 @@ class TestClusterDataProcessData:
 
             with patch("pynetappfoundry.cli.commands.events.azevents.print_error") as mock_print:
                 cluster.process_data()
-                # Should print error about missing maintenance fields
-                assert any(
-                    "without maintenance fields" in str(call) for call in mock_print.call_args_list
-                )
+                # Should print error about missing fields with field names
+                assert any("missing fields:" in str(call) for call in mock_print.call_args_list)
+                assert any("az_maint_not_before" in str(call) for call in mock_print.call_args_list)
 
     def test_creates_error_db_for_cvo_ha_missing_failover_fields(
         self, mock_config: MagicMock
@@ -514,6 +514,7 @@ class TestClusterDataProcessData:
         mock_db = MagicMock()
         mock_db.get_event_by_id.return_value = {
             "event_id": "event-123",
+            "node": "node-01",
             "az_maint_not_before": "2024-01-15T12:00:00",
             "az_maint_scheduled": "2024-01-15T10:00:00",
             "az_maint_started": "2024-01-15T12:00:00",
@@ -542,9 +543,10 @@ class TestClusterDataProcessData:
 
             with patch("pynetappfoundry.cli.commands.events.azevents.print_error") as mock_print:
                 cluster.process_data()
-                # Should print error about missing failover fields
+                # Should print error about missing fields with field names
+                assert any("missing fields:" in str(call) for call in mock_print.call_args_list)
                 assert any(
-                    "failover/failback fields" in str(call) for call in mock_print.call_args_list
+                    "node_takeover_complete" in str(call) for call in mock_print.call_args_list
                 )
 
 

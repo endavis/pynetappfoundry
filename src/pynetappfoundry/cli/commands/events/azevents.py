@@ -65,6 +65,24 @@ class ClusterData:
         "vsa.scheduledEvent.update",
     ]
 
+    # Required fields for CVO (non-HA) clusters
+    CVO_REQUIRED_FIELDS: ClassVar[list[str]] = [
+        "az_maint_not_before",
+        "az_maint_scheduled",
+        "az_maint_started",
+        "az_maint_complete",
+    ]
+
+    # Additional fields required for CVO HA clusters
+    CVO_HA_ADDITIONAL_FIELDS: ClassVar[list[str]] = [
+        "node_takeover_complete",
+        "node_reboot_starts",
+        "node_reboot_complete",
+        "node_ready_for_giveback",
+        "node_giveback_starts",
+        "node_giveback_complete",
+    ]
+
     def __init__(
         self,
         name: str,
@@ -138,26 +156,24 @@ class ClusterData:
         self.current_azevent = ""
 
     def _save_emsevents(self, db_name: str) -> None:
-        """Save EMS events to a separate database for debugging.
+        """Save all collected EMS events to a separate database for debugging.
+
+        When a maintenance event has missing fields or other problems, this saves
+        ALL EMS events from the cluster to a debug database so you can manually
+        trace through the event sequence to understand what went wrong.
 
         Args:
             db_name: Name for the error database file.
         """
-        import os
-
-        db_path = self.config.db_dir / "emsevents" / db_name
-        if os.path.exists(db_path):
-            print_info(f"{db_name} already exists")
+        emsdb = EmsEventsDB(config=self.config, db_name=db_name, overwrite=False)
+        if emsdb.exists:
+            print_info(f"Debug database {db_name} already exists, skipping")
             return
 
-        emsdb = EmsEventsDB(config=self.config, db_name=db_name, overwrite=False)
-        if not emsdb.exists:
-            for emsevent in self.ems_events:
-                emsdb.insert_event(emsevent)
-            emsdb.conn.close()
-            print_error(f"All events saved to {db_name}")
-        else:
-            print_info(f"Events already saved to {db_name}")
+        for emsevent in self.ems_events:
+            emsdb.insert_event(emsevent)
+        emsdb.conn.close()
+        print_info(f"Saved {len(self.ems_events)} EMS events to {db_name} for debugging")
 
     def _get_param_value(self, parameters: list[dict[str, Any]], param_name: str) -> str | None:
         """Extract a parameter value from EMS event parameters.
@@ -347,6 +363,30 @@ class ClusterData:
             if emsevent:
                 print_debug(f"Last EMS event was: {emsevent}")
 
+    def _get_missing_fields(self, event_row: dict[str, Any]) -> list[str]:
+        """Get list of missing required fields for an event.
+
+        Args:
+            event_row: Event dictionary from database.
+
+        Returns:
+            List of field names that are empty/missing.
+        """
+        missing: list[str] = []
+
+        # Check CVO required fields (always required)
+        for field in self.CVO_REQUIRED_FIELDS:
+            if event_row.get(field) in ("", None):
+                missing.append(field)
+
+        # Check CVO HA additional fields (only for HA clusters)
+        if self.cluster_type == "CVO HA":
+            for field in self.CVO_HA_ADDITIONAL_FIELDS:
+                if event_row.get(field) in ("", None):
+                    missing.append(field)
+
+        return missing
+
     def process_data(self) -> None:
         """Process collected maintenance events and save to database."""
         for azevent in self.azmaints.values():
@@ -358,7 +398,7 @@ class ClusterData:
 
             if azevent["event_id"] == "Unknown":
                 db_name = f"{self.name}_Unknown_{self.dt_now:%d-%m-%Y-%H-%M-%S}.db"
-                print_error(f"Found an event without an id: {azevent}")
+                print_error(f"{self.name}: Event without id: {azevent}")
                 self._save_emsevents(db_name)
             else:
                 azevent_from_db = self.db.get_event_by_id(azevent["event_id"])
@@ -366,31 +406,16 @@ class ClusterData:
                     continue
 
                 azevent_row = dict(azevent_from_db)
+                missing_fields = self._get_missing_fields(azevent_row)
 
-                # Check for missing maintenance fields
-                if (
-                    azevent_row.get("az_maint_not_before") == ""
-                    or azevent_row.get("az_maint_scheduled") == ""
-                    or azevent_row.get("az_maint_started") == ""
-                    or azevent_row.get("az_maint_complete") == ""
-                ):
+                if missing_fields:
                     db_name = (
                         f"{self.name}_{azevent_row['event_id']}"
-                        f"_nomaint_{self.dt_now:%d-%m-%Y-%H-%M-%S}.db"
-                    )
-                    print_error(f"Found an event without maintenance fields: {azevent_row}")
-                    self._save_emsevents(db_name)
-
-                # For CVO HA, check for missing failover fields
-                elif self.cluster_type == "CVO HA" and any(
-                    value == "" for value in azevent_row.values()
-                ):
-                    db_name = (
-                        f"{self.name}_{azevent_row['event_id']}_missing_fields"
-                        f"_{self.dt_now:%d-%m-%Y-%H-%M-%S}.db"
+                        f"_missing_{self.dt_now:%d-%m-%Y-%H-%M-%S}.db"
                     )
                     print_error(
-                        f"Found a CVO HA maintenance event without "
-                        f"failover/failback fields: {azevent_row}"
+                        f"{self.name}: Event {azevent_row['event_id']} "
+                        f"for node {azevent_row.get('node', 'Unknown')} "
+                        f"missing fields: {', '.join(missing_fields)}"
                     )
                     self._save_emsevents(db_name)
