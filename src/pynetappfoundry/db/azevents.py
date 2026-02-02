@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import sqlite3
 from datetime import datetime
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
-from pynetappfoundry.db.base import adapt_datetime, convert_datetime
+from pynetappfoundry.db.base import SQLiteDB, adapt_datetime, convert_datetime
 
 if TYPE_CHECKING:
     from pynetappfoundry.core.config import Config
@@ -31,8 +31,39 @@ sqlite3.register_converter("aggr_giveback_start", convert_datetime)
 sqlite3.register_converter("aggr_giveback_complete", convert_datetime)
 
 
-class AzEventsDB:
+class AzEventsDB(SQLiteDB):
     """SQLite database for storing Azure maintenance events."""
+
+    SCHEMA_VERSION: ClassVar[int] = 2
+
+    # V1 columns (original schema)
+    V1_COLUMNS: ClassVar[list[tuple[str, str]]] = [
+        ("event_id", "TEXT PRIMARY KEY"),
+        ("cluster", "TEXT DEFAULT 'Unknown'"),
+        ("node", "TEXT DEFAULT 'Unknown'"),
+        ("type", "TEXT DEFAULT 'Unknown'"),
+        ("az_maint_not_before", "TEXT"),
+        ("az_maint_scheduled", "TEXT"),
+        ("az_maint_started", "TEXT"),
+        ("az_maint_complete", "TEXT"),
+        ("node_takeover_complete", "TEXT"),
+        ("node_reboot_starts", "TEXT"),
+        ("node_reboot_complete", "TEXT"),
+        ("node_ready_for_giveback", "TEXT"),
+        ("node_giveback_starts", "TEXT"),
+        ("node_giveback_complete", "TEXT"),
+    ]
+
+    # V2 columns (SMB client impact tracking)
+    V2_COLUMNS: ClassVar[list[tuple[str, str]]] = [
+        ("lif_failover_start", "TEXT"),
+        ("lif_failover_complete", "TEXT"),
+        ("cifs_transition_ms", "INTEGER"),
+        ("cifs_witness_time", "TEXT"),
+        ("cifs_witness_clients", "INTEGER"),
+        ("aggr_giveback_start", "TEXT"),
+        ("aggr_giveback_complete", "TEXT"),
+    ]
 
     def __init__(self, config: Config, db_name: str = "azevents.db") -> None:
         """Initialize the Azure events database.
@@ -44,45 +75,20 @@ class AzEventsDB:
         db_location = config.db_dir / db_name
         self.conn = sqlite3.connect(db_location, detect_types=sqlite3.PARSE_DECLTYPES)
         self.conn.row_factory = sqlite3.Row  # Enables dictionary-like access
-        self.create_table()
+        self._init_db()
 
-    def create_table(self) -> None:
-        """Create the maintenance_events table if it doesn't exist."""
-        cur = self.conn.cursor()
-        cur.execute(
-            """
-            SELECT name FROM sqlite_master WHERE type='table' AND name='maintenance_events'
-        """
-        )
-        if cur.fetchone() is None:
-            with self.conn:
-                self.conn.execute(
-                    """
-                    CREATE TABLE IF NOT EXISTS maintenance_events (
-                        event_id TEXT PRIMARY KEY,
-                        cluster TEXT DEFAULT 'Unknown',
-                        node TEXT DEFAULT 'Unknown',
-                        type TEXT DEFAULT 'Unknown',
-                        az_maint_not_before TEXT,
-                        az_maint_scheduled TEXT,
-                        az_maint_started TEXT,
-                        az_maint_complete TEXT,
-                        node_takeover_complete TEXT,
-                        node_reboot_starts TEXT,
-                        node_reboot_complete TEXT,
-                        node_ready_for_giveback TEXT,
-                        node_giveback_starts TEXT,
-                        node_giveback_complete TEXT,
-                        lif_failover_start TEXT,
-                        lif_failover_complete TEXT,
-                        cifs_transition_ms INTEGER,
-                        cifs_witness_time TEXT,
-                        cifs_witness_clients INTEGER,
-                        aggr_giveback_start TEXT,
-                        aggr_giveback_complete TEXT
-                    )
-                """
-                )
+    def _create_schema(self) -> None:
+        """Create the maintenance_events table with current schema."""
+        all_columns = self.V1_COLUMNS + self.V2_COLUMNS
+        columns = ", ".join(f"{name} {col_type}" for name, col_type in all_columns)
+        self.conn.execute(f"CREATE TABLE maintenance_events ({columns})")
+
+    def _upgrade_to_v2(self) -> None:
+        """Add SMB client impact tracking columns."""
+        for col_name, col_type in self.V2_COLUMNS:
+            # For ALTER TABLE, use simple type (no DEFAULT, no constraints)
+            simple_type = col_type.split()[0]  # Gets TEXT, INTEGER, etc.
+            self.conn.execute(f"ALTER TABLE maintenance_events ADD COLUMN {col_name} {simple_type}")
 
     def upsert_event(self, event: dict[str, Any]) -> None:
         """Insert or update a maintenance event.

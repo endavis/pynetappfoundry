@@ -78,7 +78,7 @@ class TestClusterMetadataDB:
         cursor = db.conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
         tables = {row["name"] for row in cursor.fetchall()}
         assert "cluster_metadata" in tables
-        assert "schema_info" in tables
+        assert "_schema_version" in tables
 
     def test_set_and_get(
         self, db: ClusterMetadataDB, sample_metadata: CachedClusterMetadata

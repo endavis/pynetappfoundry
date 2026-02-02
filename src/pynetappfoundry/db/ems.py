@@ -5,9 +5,9 @@ from __future__ import annotations
 import os
 import sqlite3
 from datetime import datetime
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
-from pynetappfoundry.db.base import adapt_datetime, convert_datetime
+from pynetappfoundry.db.base import SQLiteDB, adapt_datetime, convert_datetime
 
 if TYPE_CHECKING:
     from pynetappfoundry.core.config import Config
@@ -17,8 +17,10 @@ sqlite3.register_adapter(datetime, adapt_datetime)
 sqlite3.register_converter("time", convert_datetime)
 
 
-class EmsEventsDB:
+class EmsEventsDB(SQLiteDB):
     """SQLite database for storing EMS events."""
+
+    SCHEMA_VERSION: ClassVar[int] = 1
 
     def __init__(
         self,
@@ -45,31 +47,23 @@ class EmsEventsDB:
                 os.remove(db_location)
 
         self.conn = sqlite3.connect(db_location, detect_types=sqlite3.PARSE_DECLTYPES)
-        self.create_table()
+        self._init_db()
 
-    def create_table(self) -> None:
-        """Create the ems_events table if it doesn't exist."""
-        cur = self.conn.cursor()
-        cur.execute(
+    def _create_schema(self) -> None:
+        """Create the ems_events table."""
+        self.conn.execute(
             """
-            SELECT name FROM sqlite_master WHERE type='table' AND name='ems_events'
+            CREATE TABLE ems_events (
+                event_id TEXT,
+                cluster TEXT DEFAULT 'Unknown',
+                node TEXT DEFAULT 'Unknown',
+                time TEXT,
+                event TEXT DEFAULT 'Unknown',
+                severity TEXT DEFAULT 'Unknown',
+                message TEXT DEFAULT 'Unknown'
+            )
         """
         )
-        if cur.fetchone() is None:
-            with self.conn:
-                self.conn.execute(
-                    """
-                    CREATE TABLE IF NOT EXISTS ems_events (
-                        event_id TEXT,
-                        cluster TEXT DEFAULT 'Unknown',
-                        node TEXT DEFAULT 'Unknown',
-                        time TEXT,
-                        event TEXT DEFAULT 'Unknown',
-                        severity TEXT DEFAULT 'Unknown',
-                        message TEXT DEFAULT 'Unknown'
-                    )
-                """
-                )
 
     def insert_event(self, event: dict[str, Any]) -> None:
         """Insert an EMS event.
