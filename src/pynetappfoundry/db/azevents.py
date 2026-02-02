@@ -23,6 +23,12 @@ sqlite3.register_converter("node_reboot_complete", convert_datetime)
 sqlite3.register_converter("node_ready_for_giveback", convert_datetime)
 sqlite3.register_converter("node_giveback_starts", convert_datetime)
 sqlite3.register_converter("node_giveback_complete", convert_datetime)
+# SMB client impact tracking fields
+sqlite3.register_converter("lif_failover_start", convert_datetime)
+sqlite3.register_converter("lif_failover_complete", convert_datetime)
+sqlite3.register_converter("cifs_witness_time", convert_datetime)
+sqlite3.register_converter("aggr_giveback_start", convert_datetime)
+sqlite3.register_converter("aggr_giveback_complete", convert_datetime)
 
 
 class AzEventsDB:
@@ -66,7 +72,14 @@ class AzEventsDB:
                         node_reboot_complete TEXT,
                         node_ready_for_giveback TEXT,
                         node_giveback_starts TEXT,
-                        node_giveback_complete TEXT
+                        node_giveback_complete TEXT,
+                        lif_failover_start TEXT,
+                        lif_failover_complete TEXT,
+                        cifs_transition_ms INTEGER,
+                        cifs_witness_time TEXT,
+                        cifs_witness_clients INTEGER,
+                        aggr_giveback_start TEXT,
+                        aggr_giveback_complete TEXT
                     )
                 """
                 )
