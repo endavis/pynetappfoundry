@@ -132,6 +132,9 @@ class ClusterData:
         self.invalid_maintenance = False
         self.azmaints: dict[str, dict[str, Any]] = {}
         self.ems_events: list[dict[str, Any]] = []
+        # Timing data from "Unknown" events, keyed by node name
+        # Used when scheduled event aged out before callhome.reboot.giveback
+        self.pending_timing: dict[str, dict[str, Any]] = {}
 
     def _empty_azevent(self) -> dict[str, Any]:
         """Create an empty Azure event dict and reset current event tracking.
@@ -384,6 +387,19 @@ class ClusterData:
                                     # Save current event with real ID
                                     self._add_azmaint(azevent_dict)
 
+                                # Also merge any pending timing data for this node
+                                # (from callhome.reboot.giveback with Unknown event_id)
+                                if node in self.pending_timing:
+                                    print_debug(
+                                        f"{self.name}: Merging pending timing data "
+                                        f"for node {node}: {self.pending_timing[node]}"
+                                    )
+                                    for k, v in self.pending_timing[node].items():
+                                        if k not in timing_data:
+                                            timing_data[k] = v
+                                    # Clear pending data for this node
+                                    del self.pending_timing[node]
+
                                 # Check if this event already exists in azmaints
                                 if azevent_id and azevent_id in self.azmaints:
                                     # Update existing event with status and any timing data
@@ -475,7 +491,24 @@ class ClusterData:
                             azevent_dict["node_giveback_complete"] = emsevent["time"]
                             azevent_id = azevent_dict["event_id"]
                             if azevent_id == "Unknown":
-                                print_error(f"{self.name}: No Event Id for {azevent_dict}")
+                                # Scheduled event aged out - save timing data for later
+                                # when vsa.scheduledEvent.update arrives
+                                event_node = emsevent["node"]["name"]
+                                timing_data = {
+                                    k: v for k, v in azevent_dict.items() if k != "event_id"
+                                }
+                                if timing_data:
+                                    print_debug(
+                                        f"{self.name}: Saving pending timing data "
+                                        f"for node {event_node}: {timing_data}"
+                                    )
+                                    # Merge with existing pending data for this node
+                                    if event_node in self.pending_timing:
+                                        for k, v in timing_data.items():
+                                            if k not in self.pending_timing[event_node]:
+                                                self.pending_timing[event_node][k] = v
+                                    else:
+                                        self.pending_timing[event_node] = timing_data
                             else:
                                 # Add EMS event before resetting current_azevent
                                 self._add_emsevent(emsevent)
