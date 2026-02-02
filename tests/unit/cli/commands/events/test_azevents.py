@@ -94,6 +94,21 @@ class TestClusterDataEmptyAzevent:
         assert cluster_data.current_azevent == ""
 
 
+def create_mock_emsevent(data: dict[str, Any]) -> MagicMock:
+    """Create a mock EMS event that supports both dict access and to_dict().
+
+    Args:
+        data: Dictionary with event data.
+
+    Returns:
+        MagicMock configured to behave like an EmsEvent resource.
+    """
+    mock = MagicMock()
+    mock.to_dict.return_value = data
+    mock.__getitem__ = lambda self, key: data[key]
+    return mock
+
+
 class TestClusterDataAddEmsevent:
     """Tests for _add_emsevent method."""
 
@@ -113,12 +128,14 @@ class TestClusterDataAddEmsevent:
     def test_adds_event_to_list(self, cluster_data: ClusterData) -> None:
         """Test that _add_emsevent adds event to ems_events list."""
         cluster_data.current_azevent = "event-123"
-        emsevent = {
-            "log_message": "vsa.scheduledEvent.scheduled: Maintenance scheduled",
-            "message": {"name": "vsa.scheduledEvent.scheduled", "severity": "notice"},
-            "node": {"name": "node-01"},
-            "time": "2024-01-15T10:00:00Z",
-        }
+        emsevent = create_mock_emsevent(
+            {
+                "log_message": "vsa.scheduledEvent.scheduled: Maintenance scheduled",
+                "message": {"name": "vsa.scheduledEvent.scheduled", "severity": "notice"},
+                "node": {"name": "node-01"},
+                "time": "2024-01-15T10:00:00Z",
+            }
+        )
         cluster_data._add_emsevent(emsevent)
         assert len(cluster_data.ems_events) == 1
         assert cluster_data.ems_events[0]["event_id"] == "event-123"
@@ -127,12 +144,15 @@ class TestClusterDataAddEmsevent:
     def test_cleans_message(self, cluster_data: ClusterData) -> None:
         """Test that message is cleaned properly."""
         cluster_data.current_azevent = "event-123"
-        emsevent = {
-            "log_message": "vsa.scheduledEvent.scheduled: Maintenance, with commas\nand newlines",
-            "message": {"name": "vsa.scheduledEvent.scheduled", "severity": "notice"},
-            "node": {"name": "node-01"},
-            "time": "2024-01-15T10:00:00Z",
-        }
+        log_msg = "vsa.scheduledEvent.scheduled: Maintenance, with commas\nand newlines"
+        emsevent = create_mock_emsevent(
+            {
+                "log_message": log_msg,
+                "message": {"name": "vsa.scheduledEvent.scheduled", "severity": "notice"},
+                "node": {"name": "node-01"},
+                "time": "2024-01-15T10:00:00Z",
+            }
+        )
         cluster_data._add_emsevent(emsevent)
         message = cluster_data.ems_events[0]["message"]
         # Event name prefix removed
@@ -323,35 +343,37 @@ class TestClusterDataGatherData:
         mock_node = MagicMock()
         mock_node.to_dict.return_value = {"ha": {"enabled": False}}
 
-        mock_scheduled_event = MagicMock()
-        mock_scheduled_event.to_dict.return_value = {
-            "message": {"name": "vsa.scheduledEvent.scheduled", "severity": "notice"},
-            "log_message": "vsa.scheduledEvent.scheduled: Maintenance scheduled",
-            "node": {"name": "node-01"},
-            "time": "2024-01-15T10:00:00Z",
-            "parameters": [
-                {"name": "event_id", "value": "event-123"},
-                {"name": "event_type", "value": "Freeze"},
-                {"name": "node", "value": "node-01"},
-                {"name": "status", "value": "scheduled"},
-                {"name": "not_before_time", "value": "01/15/2024 12:00:00"},
-            ],
-        }
+        mock_scheduled_event = create_mock_emsevent(
+            {
+                "message": {"name": "vsa.scheduledEvent.scheduled", "severity": "notice"},
+                "log_message": "vsa.scheduledEvent.scheduled: Maintenance scheduled",
+                "node": {"name": "node-01"},
+                "time": "2024-01-15T10:00:00Z",
+                "parameters": [
+                    {"name": "event_id", "value": "event-123"},
+                    {"name": "event_type", "value": "Freeze"},
+                    {"name": "node", "value": "node-01"},
+                    {"name": "status", "value": "scheduled"},
+                    {"name": "not_before_time", "value": "01/15/2024 12:00:00"},
+                ],
+            }
+        )
 
-        mock_update_event = MagicMock()
-        mock_update_event.to_dict.return_value = {
-            "message": {"name": "vsa.scheduledEvent.update", "severity": "notice"},
-            "log_message": "vsa.scheduledEvent.update: Maintenance complete",
-            "node": {"name": "node-01"},
-            "time": "2024-01-15T14:00:00Z",
-            "parameters": [
-                {"name": "event_id", "value": "event-123"},
-                {"name": "event_type", "value": "Freeze"},
-                {"name": "node", "value": "node-01"},
-                {"name": "status", "value": "complete"},
-                {"name": "not_before_time", "value": "01/15/2024 12:00:00"},
-            ],
-        }
+        mock_update_event = create_mock_emsevent(
+            {
+                "message": {"name": "vsa.scheduledEvent.update", "severity": "notice"},
+                "log_message": "vsa.scheduledEvent.update: Maintenance complete",
+                "node": {"name": "node-01"},
+                "time": "2024-01-15T14:00:00Z",
+                "parameters": [
+                    {"name": "event_id", "value": "event-123"},
+                    {"name": "event_type", "value": "Freeze"},
+                    {"name": "node", "value": "node-01"},
+                    {"name": "status", "value": "complete"},
+                    {"name": "not_before_time", "value": "01/15/2024 12:00:00"},
+                ],
+            }
+        )
 
         with patch("netapp_ontap.HostConnection") as mock_conn:
             mock_conn.return_value.__enter__ = MagicMock(return_value=None)
@@ -585,15 +607,15 @@ class TestTimingFieldExtraction:
         def create_event(
             name: str, time: str, parameters: list[dict[str, str]] | None = None
         ) -> MagicMock:
-            event = MagicMock()
-            event.to_dict.return_value = {
-                "message": {"name": name, "severity": "notice"},
-                "log_message": f"{name}: test",
-                "node": {"name": "node-01"},
-                "time": time,
-                "parameters": parameters or [],
-            }
-            return event
+            return create_mock_emsevent(
+                {
+                    "message": {"name": name, "severity": "notice"},
+                    "log_message": f"{name}: test",
+                    "node": {"name": "node-01"},
+                    "time": time,
+                    "parameters": parameters or [],
+                }
+            )
 
         scheduled_event = create_event(
             "vsa.scheduledEvent.scheduled",
@@ -701,21 +723,21 @@ class TestOutOfOrderEvents:
         mock_node.to_dict.return_value = {"ha": {"enabled": False}}
 
         def create_event(name: str, event_id: str, status: str, time: str) -> MagicMock:
-            event = MagicMock()
-            event.to_dict.return_value = {
-                "message": {"name": name, "severity": "notice"},
-                "log_message": f"{name}: test",
-                "node": {"name": "node-01"},
-                "time": time,
-                "parameters": [
-                    {"name": "event_id", "value": event_id},
-                    {"name": "event_type", "value": "Freeze"},
-                    {"name": "node", "value": "node-01"},
-                    {"name": "status", "value": status},
-                    {"name": "not_before_time", "value": "01/15/2024 12:00:00"},
-                ],
-            }
-            return event
+            return create_mock_emsevent(
+                {
+                    "message": {"name": name, "severity": "notice"},
+                    "log_message": f"{name}: test",
+                    "node": {"name": "node-01"},
+                    "time": time,
+                    "parameters": [
+                        {"name": "event_id", "value": event_id},
+                        {"name": "event_type", "value": "Freeze"},
+                        {"name": "node", "value": "node-01"},
+                        {"name": "status", "value": status},
+                        {"name": "not_before_time", "value": "01/15/2024 12:00:00"},
+                    ],
+                }
+            )
 
         # Event 1 scheduled
         event1_scheduled = create_event(
