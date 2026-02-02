@@ -156,26 +156,24 @@ class ClusterData:
         self.current_azevent = ""
 
     def _save_emsevents(self, db_name: str) -> None:
-        """Save EMS events to a separate database for debugging.
+        """Save all collected EMS events to a separate database for debugging.
+
+        When a maintenance event has missing fields or other problems, this saves
+        ALL EMS events from the cluster to a debug database so you can manually
+        trace through the event sequence to understand what went wrong.
 
         Args:
             db_name: Name for the error database file.
         """
-        import os
-
-        db_path = self.config.db_dir / "emsevents" / db_name
-        if os.path.exists(db_path):
-            print_info(f"{db_name} already exists")
+        emsdb = EmsEventsDB(config=self.config, db_name=db_name, overwrite=False)
+        if emsdb.exists:
+            print_info(f"Debug database {db_name} already exists, skipping")
             return
 
-        emsdb = EmsEventsDB(config=self.config, db_name=db_name, overwrite=False)
-        if not emsdb.exists:
-            for emsevent in self.ems_events:
-                emsdb.insert_event(emsevent)
-            emsdb.conn.close()
-            print_error(f"All events saved to {db_name}")
-        else:
-            print_info(f"Events already saved to {db_name}")
+        for emsevent in self.ems_events:
+            emsdb.insert_event(emsevent)
+        emsdb.conn.close()
+        print_info(f"Saved {len(self.ems_events)} EMS events to {db_name} for debugging")
 
     def _get_param_value(self, parameters: list[dict[str, Any]], param_name: str) -> str | None:
         """Extract a parameter value from EMS event parameters.
