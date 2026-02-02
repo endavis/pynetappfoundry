@@ -373,15 +373,26 @@ class ClusterData:
                                 print_debug(f"Current Event details: {azevent_dict}")
                                 print_debug(f"Full current EMS details: {emsevent.to_dict()}")
 
-                                # Only save current event if it has a real event_id
-                                if azevent_dict["event_id"] != "Unknown":
+                                # Preserve timing data from "Unknown" event before resetting
+                                timing_data: dict[str, Any] = {}
+                                if azevent_dict["event_id"] == "Unknown":
+                                    # Copy all timing fields (exclude event_id)
+                                    timing_data = {
+                                        k: v for k, v in azevent_dict.items() if k != "event_id"
+                                    }
+                                else:
+                                    # Save current event with real ID
                                     self._add_azmaint(azevent_dict)
 
                                 # Check if this event already exists in azmaints
                                 if azevent_id and azevent_id in self.azmaints:
-                                    # Update existing event with status
+                                    # Update existing event with status and any timing data
                                     status_field = f"az_maint_{status}"
                                     self.azmaints[azevent_id][status_field] = emsevent["time"]
+                                    # Merge preserved timing data (don't overwrite existing)
+                                    for k, v in timing_data.items():
+                                        if k not in self.azmaints[azevent_id]:
+                                            self.azmaints[azevent_id][k] = v
                                     print_debug(f"Updated event {azevent_id} with {status_field}")
                                     # Reset to empty - this event is already tracked
                                     azevent_dict = self._empty_azevent()
@@ -395,6 +406,8 @@ class ClusterData:
                                         "cluster": self.name,
                                         f"az_maint_{status}": emsevent["time"],
                                     }
+                                    # Merge preserved timing data
+                                    azevent_dict.update(timing_data)
                                     self.current_azevent = azevent_id or ""
                             else:
                                 # Normal case - IDs match
