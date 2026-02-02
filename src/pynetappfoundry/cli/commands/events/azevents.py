@@ -175,18 +175,20 @@ class ClusterData:
         emsdb.conn.close()
         print_info(f"Saved {len(self.ems_events)} EMS events to {db_name} for debugging")
 
-    def _get_param_value(self, parameters: list[dict[str, Any]], param_name: str) -> str | None:
+    def _get_param_value(self, parameters: list[Any], param_name: str) -> str | None:
         """Extract a parameter value from EMS event parameters.
 
         Args:
-            parameters: List of parameter dicts with 'name' and 'value'.
+            parameters: List of parameter objects with 'name' and 'value'.
             param_name: Parameter name to find.
 
         Returns:
             Parameter value or None if not found.
         """
+        # Use item["name"] instead of item.get("name") because EmsEventParameter
+        # objects support [] access but not .get()
         return next(
-            (item["value"] for item in parameters if item.get("name") == param_name),
+            (item["value"] for item in parameters if item["name"] == param_name),
             None,
         )
 
@@ -245,10 +247,17 @@ class ClusterData:
                     self._add_emsevent(emsevent)
 
                     message_name = emsevent["message"]["name"]
-                    parameters = emsevent["parameters"]
 
                     # Extract common parameters for vsa.scheduled events
                     if "vsa.scheduled" in message_name:
+                        # Only access parameters for events that need them
+                        try:
+                            parameters = emsevent["parameters"]
+                        except KeyError:
+                            print_warning(
+                                f"{self.name}: Event {message_name} missing parameters field"
+                            )
+                            parameters = []
                         print_debug(f"Found vsa.scheduled: {emsevent.to_dict()}")
                         azevent_id = self._get_param_value(parameters, "event_id")
                         event_type = self._get_param_value(parameters, "event_type")
