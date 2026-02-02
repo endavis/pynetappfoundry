@@ -311,7 +311,14 @@ class ClusterData:
                                 print_debug(f"Full current EMS details: {emsevent.to_dict()}")
                                 self._add_azmaint(azevent_dict)
                                 self._empty_azevent()
-                                if azevent_dict["event_id"] == "Unknown":
+                                # Check if this event already exists (e.g., callhome.reboot.giveback
+                                # came before vsa.scheduledEvent.update complete)
+                                if azevent_id and azevent_id in self.azmaints:
+                                    # Update existing event with status
+                                    status_field = f"az_maint_{status}"
+                                    self.azmaints[azevent_id][status_field] = emsevent["time"]
+                                    print_debug(f"Updated event {azevent_id} with {status_field}")
+                                elif azevent_dict["event_id"] == "Unknown":
                                     azevent_dict["event_id"] = azevent_id
                                     azevent_dict["node"] = node
                                     azevent_dict["type"] = event_type
