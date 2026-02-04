@@ -77,7 +77,10 @@ class TestONTAPCLITimeout:
 
     def test_run_command_uses_instance_timeout(self) -> None:
         """run_command should use the instance timeout by default."""
-        with patch("paramiko.SSHClient") as mock_ssh_class:
+        with (
+            patch("paramiko.SSHClient") as mock_ssh_class,
+            patch("pynetappfoundry.clients.ontap.cli.select.select") as mock_select,
+        ):
             mock_ssh = MagicMock()
             mock_ssh_class.return_value = mock_ssh
             mock_transport = MagicMock()
@@ -85,7 +88,10 @@ class TestONTAPCLITimeout:
             mock_ssh.get_transport.return_value = mock_transport
             mock_transport.open_session.return_value = mock_channel
             mock_transport.is_active.return_value = True
-            mock_channel.recv.return_value = b""
+            # First select returns channel ready, recv returns data
+            # Second select returns channel ready, recv returns empty (EOF)
+            mock_select.side_effect = [([mock_channel], [], []), ([mock_channel], [], [])]
+            mock_channel.recv.side_effect = [b"output\n", b""]
 
             cli = ONTAPCLI(
                 name="test",
@@ -101,7 +107,10 @@ class TestONTAPCLITimeout:
 
     def test_run_command_timeout_override(self) -> None:
         """run_command should allow timeout override per-call."""
-        with patch("paramiko.SSHClient") as mock_ssh_class:
+        with (
+            patch("paramiko.SSHClient") as mock_ssh_class,
+            patch("pynetappfoundry.clients.ontap.cli.select.select") as mock_select,
+        ):
             mock_ssh = MagicMock()
             mock_ssh_class.return_value = mock_ssh
             mock_transport = MagicMock()
@@ -109,7 +118,8 @@ class TestONTAPCLITimeout:
             mock_ssh.get_transport.return_value = mock_transport
             mock_transport.open_session.return_value = mock_channel
             mock_transport.is_active.return_value = True
-            mock_channel.recv.return_value = b""
+            mock_select.side_effect = [([mock_channel], [], []), ([mock_channel], [], [])]
+            mock_channel.recv.side_effect = [b"output\n", b""]
 
             cli = ONTAPCLI(
                 name="test",
@@ -124,8 +134,12 @@ class TestONTAPCLITimeout:
             mock_channel.settimeout.assert_called_once_with(30.0)
 
     def test_timeout_raises_cli_timeout_error(self) -> None:
-        """run_command should raise CLITimeoutError on socket.timeout."""
-        with patch("paramiko.SSHClient") as mock_ssh_class:
+        """run_command should raise CLITimeoutError when elapsed time exceeds timeout."""
+        with (
+            patch("paramiko.SSHClient") as mock_ssh_class,
+            patch("pynetappfoundry.clients.ontap.cli.select.select") as mock_select,
+            patch("pynetappfoundry.clients.ontap.cli.time.monotonic") as mock_time,
+        ):
             mock_ssh = MagicMock()
             mock_ssh_class.return_value = mock_ssh
             mock_transport = MagicMock()
@@ -133,7 +147,11 @@ class TestONTAPCLITimeout:
             mock_ssh.get_transport.return_value = mock_transport
             mock_transport.open_session.return_value = mock_channel
             mock_transport.is_active.return_value = True
-            mock_channel.recv.side_effect = TimeoutError("timed out")
+            # select returns empty (no data ready)
+            mock_select.return_value = ([], [], [])
+            mock_channel.exit_status_ready.return_value = False
+            # Simulate time passing: start at 0, then jump past timeout
+            mock_time.side_effect = [0.0, 6.0]
 
             cli = ONTAPCLI(
                 name="test",
@@ -153,7 +171,11 @@ class TestONTAPCLITimeout:
 
     def test_timeout_error_includes_command_name(self) -> None:
         """CLITimeoutError message should include the command name."""
-        with patch("paramiko.SSHClient") as mock_ssh_class:
+        with (
+            patch("paramiko.SSHClient") as mock_ssh_class,
+            patch("pynetappfoundry.clients.ontap.cli.select.select") as mock_select,
+            patch("pynetappfoundry.clients.ontap.cli.time.monotonic") as mock_time,
+        ):
             mock_ssh = MagicMock()
             mock_ssh_class.return_value = mock_ssh
             mock_transport = MagicMock()
@@ -161,7 +183,10 @@ class TestONTAPCLITimeout:
             mock_ssh.get_transport.return_value = mock_transport
             mock_transport.open_session.return_value = mock_channel
             mock_transport.is_active.return_value = True
-            mock_channel.recv.side_effect = TimeoutError("timed out")
+            mock_select.return_value = ([], [], [])
+            mock_channel.exit_status_ready.return_value = False
+            # Simulate time passing past timeout
+            mock_time.side_effect = [0.0, 11.0]
 
             cli = ONTAPCLI(
                 name="test-cluster",
@@ -178,7 +203,11 @@ class TestONTAPCLITimeout:
 
     def test_channel_closed_on_timeout(self) -> None:
         """Channel should be closed when timeout occurs."""
-        with patch("paramiko.SSHClient") as mock_ssh_class:
+        with (
+            patch("paramiko.SSHClient") as mock_ssh_class,
+            patch("pynetappfoundry.clients.ontap.cli.select.select") as mock_select,
+            patch("pynetappfoundry.clients.ontap.cli.time.monotonic") as mock_time,
+        ):
             mock_ssh = MagicMock()
             mock_ssh_class.return_value = mock_ssh
             mock_transport = MagicMock()
@@ -186,7 +215,10 @@ class TestONTAPCLITimeout:
             mock_ssh.get_transport.return_value = mock_transport
             mock_transport.open_session.return_value = mock_channel
             mock_transport.is_active.return_value = True
-            mock_channel.recv.side_effect = TimeoutError("timed out")
+            mock_select.return_value = ([], [], [])
+            mock_channel.exit_status_ready.return_value = False
+            # Simulate time passing past timeout (default is 10s)
+            mock_time.side_effect = [0.0, 11.0]
 
             cli = ONTAPCLI(
                 name="test",
@@ -198,7 +230,7 @@ class TestONTAPCLITimeout:
             with pytest.raises(CLITimeoutError):
                 cli.run_command("test")
 
-            # Channel should be closed (called in except block and finally)
+            # Channel should be closed (called in finally block)
             assert mock_channel.close.call_count >= 1
 
 
@@ -207,7 +239,10 @@ class TestONTAPCLIRunCommand:
 
     def test_successful_command_returns_output(self) -> None:
         """run_command should return parsed output lines."""
-        with patch("paramiko.SSHClient") as mock_ssh_class:
+        with (
+            patch("paramiko.SSHClient") as mock_ssh_class,
+            patch("pynetappfoundry.clients.ontap.cli.select.select") as mock_select,
+        ):
             mock_ssh = MagicMock()
             mock_ssh_class.return_value = mock_ssh
             mock_transport = MagicMock()
@@ -215,6 +250,8 @@ class TestONTAPCLIRunCommand:
             mock_ssh.get_transport.return_value = mock_transport
             mock_transport.open_session.return_value = mock_channel
             mock_transport.is_active.return_value = True
+            # select returns channel ready for both reads
+            mock_select.side_effect = [([mock_channel], [], []), ([mock_channel], [], [])]
             # Return output then empty to signal end
             mock_channel.recv.side_effect = [b"Node: node1\nStatus: up\n", b""]
 
@@ -232,7 +269,10 @@ class TestONTAPCLIRunCommand:
 
     def test_error_in_output_raises_cli_command_error(self) -> None:
         """run_command should raise CLICommandError if output contains Error:."""
-        with patch("paramiko.SSHClient") as mock_ssh_class:
+        with (
+            patch("paramiko.SSHClient") as mock_ssh_class,
+            patch("pynetappfoundry.clients.ontap.cli.select.select") as mock_select,
+        ):
             mock_ssh = MagicMock()
             mock_ssh_class.return_value = mock_ssh
             mock_transport = MagicMock()
@@ -240,6 +280,7 @@ class TestONTAPCLIRunCommand:
             mock_ssh.get_transport.return_value = mock_transport
             mock_transport.open_session.return_value = mock_channel
             mock_transport.is_active.return_value = True
+            mock_select.side_effect = [([mock_channel], [], []), ([mock_channel], [], [])]
             mock_channel.recv.side_effect = [b"Error: command not found\n", b""]
 
             cli = ONTAPCLI(
@@ -275,7 +316,10 @@ class TestONTAPCLIRunCommand:
 
     def test_skips_login_messages(self) -> None:
         """run_command should skip login-related messages."""
-        with patch("paramiko.SSHClient") as mock_ssh_class:
+        with (
+            patch("paramiko.SSHClient") as mock_ssh_class,
+            patch("pynetappfoundry.clients.ontap.cli.select.select") as mock_select,
+        ):
             mock_ssh = MagicMock()
             mock_ssh_class.return_value = mock_ssh
             mock_transport = MagicMock()
@@ -283,6 +327,7 @@ class TestONTAPCLIRunCommand:
             mock_ssh.get_transport.return_value = mock_transport
             mock_transport.open_session.return_value = mock_channel
             mock_transport.is_active.return_value = True
+            mock_select.side_effect = [([mock_channel], [], []), ([mock_channel], [], [])]
             mock_channel.recv.side_effect = [
                 b"Last login time: 2024-01-01\nNode: node1\nStatus: up\n",
                 b"",

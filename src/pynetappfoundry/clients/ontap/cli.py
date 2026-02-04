@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 import logging
+import select
+import time
 from typing import Any
 
 import paramiko
@@ -224,20 +226,39 @@ class ONTAPCLI:
         try:
             channel.exec_command(full_command)
 
-            # Read output with timeout
+            # Read output with application-level timeout tracking
+            # (socket-level timeout doesn't work reliably with keepalives)
             raw_output = b""
+            start_time = time.monotonic()
+
             while True:
-                try:
-                    chunk = channel.recv(4096)
-                    if not chunk:
-                        break
-                    raw_output += chunk
-                except TimeoutError:
+                # Check total elapsed time
+                elapsed = time.monotonic() - start_time
+                remaining = effective_timeout - elapsed
+                if remaining <= 0:
                     channel.close()
                     raise CLITimeoutError(
                         f"Command '{cmd}' timed out after {effective_timeout} seconds",
                         timeout=effective_timeout,
-                    ) from None
+                    )
+
+                # Use select to wait for data with remaining timeout
+                ready, _, _ = select.select([channel], [], [], min(remaining, 1.0))
+
+                if ready:
+                    chunk = channel.recv(4096)
+                    if not chunk:
+                        break
+                    raw_output += chunk
+                elif channel.exit_status_ready():
+                    # Command completed, drain any remaining output
+                    while channel.recv_ready():
+                        chunk = channel.recv(4096)
+                        if chunk:
+                            raw_output += chunk
+                        else:
+                            break
+                    break
 
             decoded_output = raw_output.decode("utf-8", errors="replace")
 
@@ -259,12 +280,6 @@ class ONTAPCLI:
                 else:
                     output.append(line)
 
-        except TimeoutError:
-            channel.close()
-            raise CLITimeoutError(
-                f"Command '{cmd}' timed out after {effective_timeout} seconds",
-                timeout=effective_timeout,
-            ) from None
         finally:
             channel.close()
 
