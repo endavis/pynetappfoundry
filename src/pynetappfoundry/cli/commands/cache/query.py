@@ -91,6 +91,7 @@ def query(
 
     Use dot notation to access nested fields (e.g., cloud.instance_type).
     Use bracket notation for array access (e.g., nodes[0].name).
+    Use wildcard [*] to access all items in an array (e.g., nodes[*].name).
 
     \b
     Examples:
@@ -114,6 +115,12 @@ def query(
 
         # Array access
         nf cache query cluster1 nodes[0].name
+
+        # Wildcard array access (get field from all items)
+        nf cache query cluster1 nodes[*].name
+
+        # Wildcard with --raw (one value per line, for scripting)
+        nf cache query cluster1 nodes[*].name --raw
     """
     config_dir = ctx.obj.get("config_dir", "config")
 
@@ -229,10 +236,17 @@ def query(
     elif raw:
         # Raw output: only values, one per line
         # Only valid for single cluster (already validated above)
+        # For wildcard results (lists), print each item on its own line
         cluster_result = next(iter(results.values()))
         for field in effective_fields:
             if field in cluster_result:
-                console.print(_format_value(cluster_result[field]))
+                value = cluster_result[field]
+                if isinstance(value, list):
+                    # Wildcard results: one value per line
+                    for item in value:
+                        console.print(_format_value(item))
+                else:
+                    console.print(_format_value(value))
     else:
         # Default output: grouped by cluster
         for name, cluster_result in results.items():

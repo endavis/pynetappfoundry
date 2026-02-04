@@ -232,6 +232,12 @@ nf cache query cluster1 cluster.ontap_version --raw
 # Query array elements
 nf cache query cluster1 nodes[0].name
 
+# Query all array items with wildcard [*]
+nf cache query cluster1 nodes[*].name
+
+# Wildcard with raw output (one value per line, for scripting)
+nf cache query cluster1 nodes[*].name --raw
+
 # View cache schema as tree
 nf cache schema
 
