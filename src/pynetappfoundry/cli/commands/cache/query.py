@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import csv
+import io
 import json
 from pathlib import Path
 from typing import Any
@@ -51,6 +53,78 @@ def _format_value(value: Any) -> str:
     return str(value)
 
 
+def _format_csv_value(value: Any) -> str:
+    """Format a value for CSV output.
+
+    Args:
+        value: Value to format.
+
+    Returns:
+        String representation suitable for CSV.
+    """
+    if value is None:
+        return ""
+    if isinstance(value, bool):
+        return str(value).lower()
+    if isinstance(value, dict):
+        return json.dumps(value)
+    return str(value)
+
+
+def _output_csv(
+    results: dict[str, dict[str, Any]],
+    fields: tuple[str, ...],
+) -> str:
+    """Format results as CSV.
+
+    For wildcard results (lists), expands to multiple rows.
+    All list values in a cluster result are assumed to have the same length.
+
+    Args:
+        results: Query results keyed by cluster name.
+        fields: Field names in order.
+
+    Returns:
+        CSV formatted string.
+    """
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    # Write header
+    writer.writerow(["cluster", *fields])
+
+    # Write data rows
+    for cluster_name, cluster_result in results.items():
+        # Check if any field has a list value (wildcard result)
+        list_length = 0
+        for field in fields:
+            value = cluster_result.get(field)
+            if isinstance(value, list) and list_length == 0:
+                list_length = len(value)
+                # If lists have different lengths, use the first one found
+
+        if list_length > 0:
+            # Expand wildcard results to multiple rows
+            for i in range(list_length):
+                row = [cluster_name]
+                for field in fields:
+                    value = cluster_result.get(field)
+                    if isinstance(value, list):
+                        row.append(_format_csv_value(value[i] if i < len(value) else None))
+                    else:
+                        row.append(_format_csv_value(value))
+                writer.writerow(row)
+        else:
+            # Single row for this cluster
+            row = [cluster_name]
+            for field in fields:
+                value = cluster_result.get(field)
+                row.append(_format_csv_value(value))
+            writer.writerow(row)
+
+    return output.getvalue().rstrip("\r\n")
+
+
 @click.command()
 @click.argument("cluster", required=False)
 @click.argument("fields", nargs=-1)
@@ -77,6 +151,12 @@ def _format_value(value: Any) -> str:
     is_flag=True,
     help="Output values only, no field names (single cluster only).",
 )
+@click.option(
+    "--csv",
+    "output_csv",
+    is_flag=True,
+    help="Output as CSV with header row.",
+)
 @click.pass_context
 def query(
     ctx: click.Context,
@@ -86,6 +166,7 @@ def query(
     query_all: bool,
     output_json: bool,
     raw: bool,
+    output_csv: bool,
 ) -> None:
     """Query specific fields from cached cluster metadata.
 
@@ -121,6 +202,12 @@ def query(
 
         # Wildcard with --raw (one value per line, for scripting)
         nf cache query cluster1 nodes[*].name --raw
+
+        # CSV output
+        nf cache query --all cloud.provider cloud.region --csv
+
+        # CSV with wildcards (expands to multiple rows)
+        nf cache query cluster1 nodes[*].name nodes[*].serial_number --csv
     """
     config_dir = ctx.obj.get("config_dir", "config")
 
@@ -233,6 +320,8 @@ def query(
     # Output results
     if output_json:
         console.print(json.dumps(results, default=str))
+    elif output_csv:
+        console.print(_output_csv(results, effective_fields))
     elif raw:
         # Raw output: only values, one per line
         # Only valid for single cluster (already validated above)

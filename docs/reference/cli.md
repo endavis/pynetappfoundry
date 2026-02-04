@@ -238,6 +238,12 @@ nf cache query cluster1 nodes[*].name
 # Wildcard with raw output (one value per line, for scripting)
 nf cache query cluster1 nodes[*].name --raw
 
+# CSV output
+nf cache query --all cloud.provider cloud.region --csv
+
+# CSV with wildcards (expands to multiple rows)
+nf cache query cluster1 nodes[*].name nodes[*].serial_number --csv
+
 # View cache schema as tree
 nf cache schema
 

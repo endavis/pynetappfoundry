@@ -728,3 +728,182 @@ base_api_path = "/api"
         assert result.exit_code == 0
         lines = result.output.strip().split("\n")
         assert lines == ["SN001", "SN002"]
+
+    @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
+    def test_csv_output_single_cluster(
+        self,
+        mock_db_class: MagicMock,
+        runner: CliRunner,
+        mock_config_dir: Path,
+        sample_metadata: CachedClusterMetadata,
+    ) -> None:
+        """Test CSV output format with single cluster."""
+        mock_db = MagicMock()
+        mock_db.get.return_value = sample_metadata
+        mock_db_class.return_value = mock_db
+
+        result = runner.invoke(
+            nf,
+            [
+                "-c",
+                str(mock_config_dir),
+                "cache",
+                "query",
+                "test-cluster",
+                "cloud.provider",
+                "cloud.region",
+                "--csv",
+            ],
+        )
+
+        assert result.exit_code == 0
+        lines = result.output.strip().split("\n")
+        assert lines[0] == "cluster,cloud.provider,cloud.region"
+        assert lines[1] == "test-cluster,AWS,us-east-1"
+
+    @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
+    def test_csv_output_multiple_clusters(
+        self,
+        mock_db_class: MagicMock,
+        runner: CliRunner,
+        mock_config_dir: Path,
+    ) -> None:
+        """Test CSV output format with multiple clusters."""
+        mock_db = MagicMock()
+        mock_db.list_clusters.return_value = [
+            {"cluster_name": "cluster1"},
+            {"cluster_name": "cluster2"},
+        ]
+
+        metadata1 = CachedClusterMetadata(
+            cluster_name="cluster1",
+            cached_at=datetime(2024, 1, 15, tzinfo=UTC),
+            cloud=CloudMetadata(provider="AWS", region="us-east-1"),
+        )
+        metadata2 = CachedClusterMetadata(
+            cluster_name="cluster2",
+            cached_at=datetime(2024, 1, 15, tzinfo=UTC),
+            cloud=CloudMetadata(provider="Azure", region="eastus"),
+        )
+        mock_db.get.side_effect = lambda name: metadata1 if name == "cluster1" else metadata2
+        mock_db_class.return_value = mock_db
+
+        result = runner.invoke(
+            nf,
+            [
+                "-c",
+                str(mock_config_dir),
+                "cache",
+                "query",
+                "--all",
+                "cloud.provider",
+                "cloud.region",
+                "--csv",
+            ],
+        )
+
+        assert result.exit_code == 0
+        lines = result.output.strip().split("\n")
+        assert lines[0] == "cluster,cloud.provider,cloud.region"
+        assert "cluster1,AWS,us-east-1" in lines
+        assert "cluster2,Azure,eastus" in lines
+
+    @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
+    def test_csv_output_with_wildcard(
+        self,
+        mock_db_class: MagicMock,
+        runner: CliRunner,
+        mock_config_dir: Path,
+        sample_metadata: CachedClusterMetadata,
+    ) -> None:
+        """Test CSV output with wildcard expands to multiple rows."""
+        mock_db = MagicMock()
+        mock_db.get.return_value = sample_metadata
+        mock_db_class.return_value = mock_db
+
+        result = runner.invoke(
+            nf,
+            [
+                "-c",
+                str(mock_config_dir),
+                "cache",
+                "query",
+                "test-cluster",
+                "nodes[*].name",
+                "nodes[*].serial_number",
+                "--csv",
+            ],
+        )
+
+        assert result.exit_code == 0
+        lines = result.output.strip().split("\n")
+        assert lines[0] == "cluster,nodes[*].name,nodes[*].serial_number"
+        assert lines[1] == "test-cluster,node-01,SN001"
+        assert lines[2] == "test-cluster,node-02,SN002"
+
+    @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
+    def test_csv_output_with_boolean(
+        self,
+        mock_db_class: MagicMock,
+        runner: CliRunner,
+        mock_config_dir: Path,
+        sample_metadata: CachedClusterMetadata,
+    ) -> None:
+        """Test CSV output formats boolean values correctly."""
+        mock_db = MagicMock()
+        mock_db.get.return_value = sample_metadata
+        mock_db_class.return_value = mock_db
+
+        result = runner.invoke(
+            nf,
+            [
+                "-c",
+                str(mock_config_dir),
+                "cache",
+                "query",
+                "test-cluster",
+                "ha.is_ha",
+                "--csv",
+            ],
+        )
+
+        assert result.exit_code == 0
+        lines = result.output.strip().split("\n")
+        assert lines[0] == "cluster,ha.is_ha"
+        assert lines[1] == "test-cluster,false"
+
+    @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
+    def test_csv_output_with_empty_value(
+        self,
+        mock_db_class: MagicMock,
+        runner: CliRunner,
+        mock_config_dir: Path,
+    ) -> None:
+        """Test CSV output handles empty string values correctly."""
+        mock_db = MagicMock()
+        metadata = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            cached_at=datetime(2024, 1, 15, tzinfo=UTC),
+            cloud=CloudMetadata(provider="AWS", region=""),
+        )
+        mock_db.get.return_value = metadata
+        mock_db_class.return_value = mock_db
+
+        result = runner.invoke(
+            nf,
+            [
+                "-c",
+                str(mock_config_dir),
+                "cache",
+                "query",
+                "test-cluster",
+                "cloud.provider",
+                "cloud.region",
+                "--csv",
+            ],
+        )
+
+        assert result.exit_code == 0
+        lines = result.output.strip().split("\n")
+        assert lines[0] == "cluster,cloud.provider,cloud.region"
+        assert lines[1] == "test-cluster,AWS,"
