@@ -10,12 +10,83 @@ from pynetappfoundry.utils.cloud import (
     build_aws_sso_link,
     build_azure_id,
     build_azure_portal_link,
+    build_azure_vm_name,
     build_cloud_instance_link,
     build_cloud_instance_sso_link,
     build_cloud_resource_group_link,
     get_cloud_account_name,
     get_cloud_types,
+    get_node_number,
 )
+
+
+class TestGetNodeNumber:
+    """Tests for get_node_number."""
+
+    def test_extracts_number_with_dash(self) -> None:
+        """Test extracts node number from name with dash separator."""
+        assert get_node_number("mycluster-01") == 1
+        assert get_node_number("mycluster-02") == 2
+        assert get_node_number("cluster-1") == 1
+        assert get_node_number("cluster-12") == 12
+
+    def test_extracts_number_with_underscore(self) -> None:
+        """Test extracts node number from name with underscore separator."""
+        assert get_node_number("mycluster_01") == 1
+        assert get_node_number("mycluster_02") == 2
+
+    def test_extracts_number_without_separator(self) -> None:
+        """Test extracts trailing number without separator."""
+        assert get_node_number("cluster01") == 1
+        assert get_node_number("cluster02") == 2
+
+    def test_returns_none_for_no_number(self) -> None:
+        """Test returns None when no trailing number found."""
+        assert get_node_number("mycluster") is None
+        assert get_node_number("cluster-abc") is None
+
+    def test_returns_none_for_empty_string(self) -> None:
+        """Test returns None for empty string."""
+        assert get_node_number("") is None
+
+
+class TestBuildAzureVmName:
+    """Tests for build_azure_vm_name."""
+
+    def test_ha_cluster_node_01(self) -> None:
+        """Test HA cluster VM name for node 01."""
+        result = build_azure_vm_name("mycluster", "mycluster-01", is_ha=True)
+        assert result == "mycluster-vm1"
+
+    def test_ha_cluster_node_02(self) -> None:
+        """Test HA cluster VM name for node 02."""
+        result = build_azure_vm_name("mycluster", "mycluster-02", is_ha=True)
+        assert result == "mycluster-vm2"
+
+    def test_single_node_cluster(self) -> None:
+        """Test single node cluster VM name."""
+        result = build_azure_vm_name("mycluster", "mycluster-01", is_ha=False)
+        assert result == "mycluster"
+
+    def test_single_node_empty_node_name(self) -> None:
+        """Test single node cluster with empty node name."""
+        result = build_azure_vm_name("mycluster", "", is_ha=False)
+        assert result == "mycluster"
+
+    def test_ha_cluster_no_node_number(self) -> None:
+        """Test HA cluster fallback when node number can't be determined."""
+        result = build_azure_vm_name("mycluster", "mycluster", is_ha=True)
+        assert result == "mycluster"
+
+    def test_returns_empty_for_empty_cluster_name(self) -> None:
+        """Test returns empty string when cluster name is empty."""
+        result = build_azure_vm_name("", "node-01", is_ha=True)
+        assert result == ""
+
+    def test_default_is_ha(self) -> None:
+        """Test default is_ha is True."""
+        result = build_azure_vm_name("mycluster", "mycluster-01")
+        assert result == "mycluster-vm1"
 
 
 class TestBuildAzureId:
@@ -121,6 +192,47 @@ class TestBuildCloudInstanceLink:
             # missing account_id and resource_group
         )
         assert result == ""
+
+    def test_azure_derives_vm_name_from_cluster_ha(self) -> None:
+        """Test Azure VM name is derived from cluster/node info for HA."""
+        result = build_cloud_instance_link(
+            provider="Azure",
+            instance_id="some-instance-id",  # This should be ignored
+            account_id="sub-123",
+            resource_group="my-rg",
+            cluster_name="mycluster",
+            node_name="mycluster-01",
+            is_ha=True,
+        )
+        assert AZURE_BASE_URL in result
+        assert "mycluster-vm1" in result
+        assert "some-instance-id" not in result
+
+    def test_azure_derives_vm_name_from_cluster_single_node(self) -> None:
+        """Test Azure VM name is derived from cluster for single node."""
+        result = build_cloud_instance_link(
+            provider="Azure",
+            instance_id="some-instance-id",  # This should be ignored
+            account_id="sub-123",
+            resource_group="my-rg",
+            cluster_name="mycluster",
+            node_name="mycluster-01",
+            is_ha=False,
+        )
+        assert AZURE_BASE_URL in result
+        assert "mycluster" in result
+        # For single node, it should just be cluster name, not cluster-vm1
+        assert "mycluster-vm1" not in result
+
+    def test_azure_uses_instance_id_when_no_cluster_name(self) -> None:
+        """Test Azure uses instance_id when cluster_name is not provided."""
+        result = build_cloud_instance_link(
+            provider="Azure",
+            instance_id="my-vm-instance",
+            account_id="sub-123",
+            resource_group="my-rg",
+        )
+        assert "my-vm-instance" in result
 
 
 class TestBuildCloudResourceGroupLink:
