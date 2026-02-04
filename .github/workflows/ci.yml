@@ -131,6 +131,9 @@ jobs:
       - name: Run spell check
         run: uv run codespell src/ tests/ docs/ README.md
 
+      - name: Upgrade pip (CVE-2026-1703)
+        run: uv pip install --upgrade pip
+
       - name: Run dependency audit
         run: uv run pip-audit
 
