@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import contextlib
+import json
 import logging
 import time
 from pathlib import Path
@@ -106,23 +107,37 @@ class VerboseProgressDisplay:
     help="Refresh cache for all configured clusters.",
 )
 @click.option(
+    "--filter",
+    "-f",
+    "filter_str",
+    help='JSON filter for --all: \'{"env": "Prod", "bu": "Finance"}\'',
+)
+@click.option(
     "--verbose",
     "-v",
     is_flag=True,
     help="Show detailed progress for each collection phase.",
 )
 @click.pass_context
-def refresh(ctx: click.Context, cluster: str | None, refresh_all: bool, verbose: bool) -> None:
+def refresh(
+    ctx: click.Context,
+    cluster: str | None,
+    refresh_all: bool,
+    filter_str: str | None,
+    verbose: bool,
+) -> None:
     """Refresh the metadata cache for cluster(s).
 
     If CLUSTER is specified, refresh only that cluster.
     Use --all to refresh all configured clusters.
+    Use --filter with --all to refresh only matching clusters.
 
     Examples:
 
         nf cache refresh cluster1      # Refresh single cluster
         nf cache refresh --all         # Refresh all clusters
         nf cache refresh --all -v      # Refresh all with detailed progress
+        nf cache refresh --all -f '{"env": "Prod"}'  # Refresh only Prod clusters
     """
     # Always set up file logging
     _, log_file = setup_logger("cache-refresh")
@@ -144,6 +159,19 @@ def refresh(ctx: click.Context, cluster: str | None, refresh_all: bool, verbose:
         logger.exception("Failed to load configuration")
         ctx.exit(1)
 
+    # Parse filter if provided
+    filter_dict: dict[str, str] = {}
+    if filter_str:
+        if not refresh_all:
+            print_error("--filter can only be used with --all")
+            ctx.exit(1)
+        try:
+            filter_dict = json.loads(filter_str)
+        except json.JSONDecodeError as e:
+            print_error(f"Invalid filter JSON: {e}")
+            logger.error("Invalid filter JSON: %s", e)
+            ctx.exit(1)
+
     # Determine clusters to refresh
     if cluster:
         if cluster not in config.data.get("clusters", {}):
@@ -155,10 +183,16 @@ def refresh(ctx: click.Context, cluster: str | None, refresh_all: bool, verbose:
             ctx.exit(1)
         clusters_to_refresh = [cluster]
     elif refresh_all:
-        clusters_to_refresh = list(config.data.get("clusters", {}).keys())
+        # Apply filter if provided, otherwise get all clusters
+        matching_clusters = config.get_clusters(filter_dict)
+        clusters_to_refresh = list(matching_clusters.keys())
         if not clusters_to_refresh:
-            print_warning("No clusters configured.")
-            logger.warning("No clusters configured")
+            if filter_dict:
+                print_warning(f"No clusters match filter: {filter_str}")
+                logger.warning("No clusters match filter: %s", filter_str)
+            else:
+                print_warning("No clusters configured.")
+                logger.warning("No clusters configured")
             ctx.exit(0)
     else:
         print_error("Specify a cluster name or use --all to refresh all clusters.")
@@ -168,8 +202,16 @@ def refresh(ctx: click.Context, cluster: str | None, refresh_all: bool, verbose:
     db = ClusterMetadataDB(config=config)
 
     console.print(f"\nRefreshing cache for {len(clusters_to_refresh)} cluster(s)...")
+    if filter_dict:
+        console.print(f"[dim]Filter: {filter_str}[/dim]")
+        logger.info(
+            "Refreshing cache for %d cluster(s) with filter: %s",
+            len(clusters_to_refresh),
+            filter_str,
+        )
+    else:
+        logger.info("Refreshing cache for %d cluster(s)", len(clusters_to_refresh))
     console.print(f"[dim]Log file: {log_file}[/dim]\n")
-    logger.info("Refreshing cache for %d cluster(s)", len(clusters_to_refresh))
 
     if verbose:
         # Verbose mode: detailed phase-by-phase progress
