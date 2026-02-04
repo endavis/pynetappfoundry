@@ -33,6 +33,10 @@ from pynetappfoundry.cache.models import (
     StorageInfo,
     SVMInfo,
 )
+from pynetappfoundry.utils.cloud import (
+    build_cloud_instance_link,
+    build_cloud_resource_group_link,
+)
 
 if TYPE_CHECKING:
     from pynetappfoundry.clients.ontap.api import ONTAPAPIClient
@@ -331,15 +335,35 @@ class MetadataCollector:
         Returns:
             CloudMetadata object.
         """
+        provider = data.get("provider", "")
+        instance_id = data.get("instance_id", "")
+        account_id = data.get("account_id", "")
+        resource_group = data.get("resource_group_name", "")
+        region = data.get("region", "") or data.get("availability_zone", "")
+
+        # Build cloud console links
+        instance_link = build_cloud_instance_link(
+            provider=provider,
+            instance_id=instance_id,
+            region=region,
+            account_id=account_id,
+            resource_group=resource_group,
+        )
+        resource_group_link = build_cloud_resource_group_link(
+            provider=provider,
+            account_id=account_id,
+            resource_group=resource_group,
+        )
+
         return CloudMetadata(
             node=node,
-            instance_id=data.get("instance_id", ""),
-            account_id=data.get("account_id", ""),
+            instance_id=instance_id,
+            account_id=account_id,
             image_id=data.get("image_id", ""),
             instance_type=data.get("instance_type", ""),
             cpu_platform=data.get("cpu_platform", ""),
             region=data.get("region", ""),
-            provider=data.get("provider", ""),
+            provider=provider,
             consumer=data.get("consumer", ""),
             primary_ip=data.get("primary_ip", ""),
             metadata_version=data.get("metadata_version", ""),
@@ -347,10 +371,12 @@ class MetadataCollector:
             availability_zone_id=data.get("availability_zone_id", ""),
             fault_domain=data.get("fault_domain", ""),
             update_domain=data.get("update_domain", ""),
-            resource_group_name=data.get("resource_group_name", ""),
+            resource_group_name=resource_group,
             offer=data.get("offer", ""),
             sku=data.get("sku", ""),
             sku_version=data.get("sku_version", ""),
+            instance_link=instance_link,
+            resource_group_link=resource_group_link,
         )
 
     @staticmethod

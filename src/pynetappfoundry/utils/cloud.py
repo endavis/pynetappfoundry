@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 AZURE_BASE_URL = "https://portal.azure.com/#resource"
+AWS_CONSOLE_BASE_URL = "console.aws.amazon.com"
 
 AZURE_PROVIDER_TYPES: dict[str, str] = {
     "vm": "Microsoft.Compute/virtualMachines",
@@ -73,3 +74,76 @@ def get_cloud_types() -> list[str]:
         List of cloud provider names.
     """
     return CLOUD_TYPES.copy()
+
+
+def build_aws_instance_link(region: str, instance_id: str) -> str:
+    """Build an AWS EC2 console URL for an instance.
+
+    Args:
+        region: AWS region (e.g., 'us-east-1').
+        instance_id: EC2 instance ID (e.g., 'i-0123456789abcdef0').
+
+    Returns:
+        Full AWS console URL for the instance.
+    """
+    if not region or not instance_id:
+        return ""
+    return (
+        f"https://{region}.{AWS_CONSOLE_BASE_URL}/ec2/home"
+        f"?region={region}#InstanceDetails:instanceId={instance_id}"
+    )
+
+
+def build_cloud_instance_link(
+    provider: str,
+    instance_id: str,
+    region: str = "",
+    account_id: str = "",
+    resource_group: str = "",
+) -> str:
+    """Build a cloud console URL for an instance based on provider.
+
+    Args:
+        provider: Cloud provider name (AWS, Azure).
+        instance_id: Instance ID or name.
+        region: Region (required for AWS).
+        account_id: Account/subscription ID (required for Azure).
+        resource_group: Resource group name (required for Azure).
+
+    Returns:
+        Cloud console URL for the instance, or empty string if not supported.
+    """
+    provider_lower = provider.lower()
+    if provider_lower == "aws":
+        return build_aws_instance_link(region, instance_id)
+    elif provider_lower == "azure":
+        if not account_id or not resource_group or not instance_id:
+            return ""
+        resource_id = build_azure_id(account_id, resource_group, "vm", instance_id)
+        return build_azure_portal_link(resource_id)
+    return ""
+
+
+def build_cloud_resource_group_link(
+    provider: str,
+    account_id: str = "",
+    resource_group: str = "",
+) -> str:
+    """Build a cloud console URL for a resource group based on provider.
+
+    Args:
+        provider: Cloud provider name (AWS, Azure).
+        account_id: Account/subscription ID.
+        resource_group: Resource group name (required for Azure).
+
+    Returns:
+        Cloud console URL for the resource group, or empty string if not supported.
+    """
+    provider_lower = provider.lower()
+    if provider_lower == "azure":
+        if not account_id or not resource_group:
+            return ""
+        resource_id = build_azure_id(account_id, resource_group)
+        return build_azure_portal_link(resource_id)
+    # AWS doesn't have resource groups in the same way
+    return ""

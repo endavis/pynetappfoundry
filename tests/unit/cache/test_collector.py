@@ -70,6 +70,7 @@ class TestCloudMetadataCollection:
         return [
             "Node: cvo-node1",
             "    Instance ID: azure-vm-123",
+            "    Account ID: sub-12345",
             "    Provider: Azure",
             "    Region: eastus",
             "    Fault Domain: 0",
@@ -106,6 +107,40 @@ class TestCloudMetadataCollection:
         assert result[0].provider == "Azure"
         assert result[0].fault_domain == "0"
         assert result[0].resource_group_name == "rg-storage"
+
+    def test_aws_instance_link_populated(self, mock_vm_instance_output_aws: list[str]) -> None:
+        """Test that AWS instance_link is populated correctly."""
+        cli_client = MagicMock()
+        cli_client.run_command.return_value = mock_vm_instance_output_aws
+
+        collector = MetadataCollector(cli_client=cli_client)
+        result = collector.collect_cloud_metadata()
+
+        assert len(result) == 1
+        assert "console.aws.amazon.com" in result[0].instance_link
+        assert "us-east-1" in result[0].instance_link
+        assert "i-0abc123def456" in result[0].instance_link
+        # AWS doesn't have resource groups
+        assert result[0].resource_group_link == ""
+
+    def test_azure_links_populated(self, mock_vm_instance_output_azure: list[str]) -> None:
+        """Test that Azure instance_link and resource_group_link are populated."""
+        cli_client = MagicMock()
+        cli_client.run_command.return_value = mock_vm_instance_output_azure
+
+        collector = MetadataCollector(cli_client=cli_client)
+        result = collector.collect_cloud_metadata()
+
+        assert len(result) == 1
+        # Instance link should contain portal URL and resource details
+        assert "portal.azure.com" in result[0].instance_link
+        assert "sub-12345" in result[0].instance_link
+        assert "rg-storage" in result[0].instance_link
+        assert "azure-vm-123" in result[0].instance_link
+        # Resource group link should contain portal URL and resource group
+        assert "portal.azure.com" in result[0].resource_group_link
+        assert "sub-12345" in result[0].resource_group_link
+        assert "rg-storage" in result[0].resource_group_link
 
     def test_collect_cloud_metadata_ha_cluster(self) -> None:
         """Test collecting cloud metadata from HA cluster with two nodes."""

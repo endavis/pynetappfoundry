@@ -42,6 +42,9 @@ class CloudMetadata(BaseModel):
     offer: str = ""
     sku: str = ""
     sku_version: str = ""
+    # Resource links (computed from other fields)
+    instance_link: str = ""  # URL to cloud console for this instance
+    resource_group_link: str = ""  # URL to cloud console for resource group (Azure)
 
 
 class ClusterInfo(BaseModel):
