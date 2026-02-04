@@ -41,7 +41,7 @@ base_api_path = "/api"
         return CachedClusterMetadata(
             cluster_name="test-cluster",
             cached_at=datetime(2024, 1, 15, 10, 30, 0, tzinfo=UTC),
-            cloud=CloudMetadata(provider="AWS", region="us-east-1"),
+            cloud=[CloudMetadata(provider="AWS", region="us-east-1")],
         )
 
     @patch("pynetappfoundry.cli.commands.cache.show.ClusterMetadataDB")

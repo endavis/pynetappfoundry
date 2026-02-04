@@ -236,58 +236,103 @@ class MetadataCollector:
     # Cloud Metadata Collection
     # -------------------------------------------------------------------------
 
-    def collect_cloud_metadata(self) -> CloudMetadata:
+    def collect_cloud_metadata(self) -> list[CloudMetadata]:
         """Collect cloud provider metadata.
 
         Cloud metadata is only available via CLI (virtual-machine instance show).
+        Returns one CloudMetadata per node in the cluster.
 
         Returns:
-            CloudMetadata object.
+            List of CloudMetadata objects, one per node.
         """
         if self.cli_client:
             try:
                 return self._collect_cloud_metadata_via_cli()
             except Exception as e:
                 logger.warning(f"Failed to collect cloud metadata via CLI: {e}")
-        return CloudMetadata()
+        return []
 
-    def _collect_cloud_metadata_via_cli(self) -> CloudMetadata:
+    def _collect_cloud_metadata_via_cli(self) -> list[CloudMetadata]:
         """Collect cloud metadata using CLI.
 
         Returns:
-            CloudMetadata from virtual-machine instance show.
+            List of CloudMetadata from virtual-machine instance show.
         """
         if not self.cli_client:
             logger.debug("No CLI client available for cloud metadata collection")
-            return CloudMetadata()
+            return []
 
         logger.debug("CLI command: virtual-machine instance show")
         output = self.cli_client.run_command("virtual-machine instance show")
         logger.debug("CLI response: %d lines", len(output))
         return self._parse_vm_instance_output(output)
 
-    def _parse_vm_instance_output(self, output: list[str]) -> CloudMetadata:
+    def _parse_vm_instance_output(self, output: list[str]) -> list[CloudMetadata]:
         """Parse virtual-machine instance show output.
+
+        The CLI output contains entries for each node, separated by blank lines
+        or new "Node:" entries. Each node has its own cloud metadata.
 
         Args:
             output: Lines of CLI output.
 
         Returns:
-            CloudMetadata object.
+            List of CloudMetadata objects, one per node.
         """
-        data: dict[str, str] = {}
+        results: list[CloudMetadata] = []
+        current_data: dict[str, str] = {}
+        current_node: str = ""
+
         for line in output:
+            line = line.strip()
+            if not line:
+                # Empty line may indicate end of a node's data
+                continue
+
             if ":" not in line:
                 continue
-            parts = line.split(":", 1)
-            if len(parts) == 2:
-                key = parts[0].strip()
-                value = parts[1].strip()
-                # Normalize key names
-                key_normalized = self._normalize_cli_key(key)
-                data[key_normalized] = value
 
+            parts = line.split(":", 1)
+            if len(parts) != 2:
+                continue
+
+            key = parts[0].strip()
+            value = parts[1].strip()
+            key_normalized = self._normalize_cli_key(key)
+
+            # Check if this is a new node entry
+            if key_normalized == "node":
+                # Save previous node's data if we have any
+                if current_node and current_data:
+                    results.append(self._create_cloud_metadata(current_node, current_data))
+                # Start new node
+                current_node = value
+                current_data = {}
+            else:
+                current_data[key_normalized] = value
+
+        # Don't forget the last node
+        if current_node and current_data:
+            results.append(self._create_cloud_metadata(current_node, current_data))
+
+        # If no node field was found but we have data, create single entry
+        if not results and current_data:
+            results.append(self._create_cloud_metadata("", current_data))
+
+        return results
+
+    def _create_cloud_metadata(self, node: str, data: dict[str, str]) -> CloudMetadata:
+        """Create a CloudMetadata object from parsed data.
+
+        Args:
+            node: Node name.
+            data: Parsed key-value data.
+
+        Returns:
+            CloudMetadata object.
+        """
         return CloudMetadata(
+            node=node,
             instance_id=data.get("instance_id", ""),
             account_id=data.get("account_id", ""),
             image_id=data.get("image_id", ""),
