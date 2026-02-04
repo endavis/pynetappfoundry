@@ -13,7 +13,6 @@ from pynetappfoundry.cache.collector import (
     ProgressInfo,
 )
 from pynetappfoundry.cache.models import (
-    CloudMetadata,
     HAInfo,
     LicenseInfo,
     NetworkInfo,
@@ -86,11 +85,13 @@ class TestCloudMetadataCollection:
         collector = MetadataCollector(cli_client=cli_client)
         result = collector.collect_cloud_metadata()
 
-        assert result.provider == "AWS"
-        assert result.instance_id == "i-0abc123def456"
-        assert result.region == "us-east-1"
-        assert result.availability_zone == "us-east-1a"
-        assert result.instance_type == "m5.2xlarge"
+        assert len(result) == 1
+        assert result[0].node == "cvo-node1"
+        assert result[0].provider == "AWS"
+        assert result[0].instance_id == "i-0abc123def456"
+        assert result[0].region == "us-east-1"
+        assert result[0].availability_zone == "us-east-1a"
+        assert result[0].instance_type == "m5.2xlarge"
 
     def test_collect_cloud_metadata_azure(self, mock_vm_instance_output_azure: list[str]) -> None:
         """Test collecting Azure cloud metadata."""
@@ -100,17 +101,47 @@ class TestCloudMetadataCollection:
         collector = MetadataCollector(cli_client=cli_client)
         result = collector.collect_cloud_metadata()
 
-        assert result.provider == "Azure"
-        assert result.fault_domain == "0"
-        assert result.resource_group_name == "rg-storage"
+        assert len(result) == 1
+        assert result[0].node == "cvo-node1"
+        assert result[0].provider == "Azure"
+        assert result[0].fault_domain == "0"
+        assert result[0].resource_group_name == "rg-storage"
+
+    def test_collect_cloud_metadata_ha_cluster(self) -> None:
+        """Test collecting cloud metadata from HA cluster with two nodes."""
+        cli_client = MagicMock()
+        cli_client.run_command.return_value = [
+            "Node: cvo-node1",
+            "    Instance ID: i-0abc123",
+            "    Provider: AWS",
+            "    Primary IP: 10.0.0.1",
+            "    Availability Zone: us-east-1a",
+            "Node: cvo-node2",
+            "    Instance ID: i-0def456",
+            "    Provider: AWS",
+            "    Primary IP: 10.0.0.2",
+            "    Availability Zone: us-east-1b",
+        ]
+
+        collector = MetadataCollector(cli_client=cli_client)
+        result = collector.collect_cloud_metadata()
+
+        assert len(result) == 2
+        assert result[0].node == "cvo-node1"
+        assert result[0].instance_id == "i-0abc123"
+        assert result[0].primary_ip == "10.0.0.1"
+        assert result[0].availability_zone == "us-east-1a"
+        assert result[1].node == "cvo-node2"
+        assert result[1].instance_id == "i-0def456"
+        assert result[1].primary_ip == "10.0.0.2"
+        assert result[1].availability_zone == "us-east-1b"
 
     def test_collect_cloud_metadata_no_cli(self) -> None:
-        """Test cloud metadata returns empty when no CLI client."""
+        """Test cloud metadata returns empty list when no CLI client."""
         collector = MetadataCollector()
         result = collector.collect_cloud_metadata()
 
-        assert result.provider == ""
-        assert result.instance_id == ""
+        assert result == []
 
     def test_collect_cloud_metadata_cli_error(self) -> None:
         """Test cloud metadata handles CLI errors gracefully."""
@@ -120,8 +151,8 @@ class TestCloudMetadataCollection:
         collector = MetadataCollector(cli_client=cli_client)
         result = collector.collect_cloud_metadata()
 
-        assert isinstance(result, CloudMetadata)
-        assert result.provider == ""
+        assert isinstance(result, list)
+        assert result == []
 
 
 class TestClusterInfoCollection:
@@ -516,7 +547,7 @@ class TestCollectAll:
 
         assert result.cluster_name == "test-cluster"
         assert result.cached_at is not None
-        assert result.cache_version == "1.0"
+        assert result.cache_version == "1.1"
 
 
 class TestNormalizeCliKey:

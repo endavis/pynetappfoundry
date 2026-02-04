@@ -393,7 +393,7 @@ class TestCachedClusterMetadata:
         """Test creating with minimal required fields."""
         metadata = CachedClusterMetadata(cluster_name="test-cluster")
         assert metadata.cluster_name == "test-cluster"
-        assert metadata.cache_version == "1.0"
+        assert metadata.cache_version == "1.1"
         assert metadata.cached_at is not None
 
     def test_cached_at_default(self) -> None:
@@ -407,7 +407,7 @@ class TestCachedClusterMetadata:
         """Test with full metadata."""
         metadata = CachedClusterMetadata(
             cluster_name="production-cluster",
-            cloud=CloudMetadata(provider="AWS", region="us-east-1"),
+            cloud=[CloudMetadata(provider="AWS", region="us-east-1")],
             cluster=ClusterInfo(
                 cluster_name="production-cluster",
                 ontap_version="9.14.1",
@@ -417,7 +417,7 @@ class TestCachedClusterMetadata:
                 NodeInfo(name="node2", serial_number="456"),
             ],
         )
-        assert metadata.cloud.provider == "AWS"
+        assert metadata.cloud[0].provider == "AWS"
         assert len(metadata.nodes) == 2
         assert metadata.cluster.ontap_version == "9.14.1"
 
@@ -457,12 +457,14 @@ class TestCachedClusterMetadata:
         """Test converting to flat dictionary."""
         metadata = CachedClusterMetadata(
             cluster_name="test-cluster",
-            cloud=CloudMetadata(
-                instance_id="i-123",
-                provider="AWS",
-                region="us-east-1",
-                instance_type="m5.xlarge",
-            ),
+            cloud=[
+                CloudMetadata(
+                    instance_id="i-123",
+                    provider="AWS",
+                    region="us-east-1",
+                    instance_type="m5.xlarge",
+                )
+            ],
             cluster=ClusterInfo(
                 cluster_uuid="abc-123",
                 ontap_version="9.14.1",
@@ -485,7 +487,7 @@ class TestCachedClusterMetadata:
         """Test JSON serialization."""
         metadata = CachedClusterMetadata(
             cluster_name="test",
-            cloud=CloudMetadata(provider="AWS"),
+            cloud=[CloudMetadata(provider="AWS")],
         )
         json_str = metadata.model_dump_json()
         assert "test" in json_str
@@ -496,8 +498,8 @@ class TestCachedClusterMetadata:
         data = {
             "cluster_name": "test",
             "cached_at": "2024-01-15T10:30:00+00:00",
-            "cache_version": "1.0",
-            "cloud": {"provider": "Azure", "region": "eastus"},
+            "cache_version": "1.1",
+            "cloud": [{"provider": "Azure", "region": "eastus"}],
             "cluster": {"ontap_version": "9.13.1"},
             "nodes": [],
             "network": {},
@@ -508,5 +510,5 @@ class TestCachedClusterMetadata:
         }
         metadata = CachedClusterMetadata.model_validate(data)
         assert metadata.cluster_name == "test"
-        assert metadata.cloud.provider == "Azure"
+        assert metadata.cloud[0].provider == "Azure"
         assert metadata.cluster.ontap_version == "9.13.1"

@@ -47,11 +47,13 @@ base_api_path = "/api"
         return CachedClusterMetadata(
             cluster_name="test-cluster",
             cached_at=datetime(2024, 1, 15, 10, 30, 0, tzinfo=UTC),
-            cloud=CloudMetadata(
-                provider="AWS",
-                region="us-east-1",
-                instance_type="m5.xlarge",
-            ),
+            cloud=[
+                CloudMetadata(
+                    provider="AWS",
+                    region="us-east-1",
+                    instance_type="m5.xlarge",
+                )
+            ],
             cluster=ClusterInfo(
                 cluster_name="test-cluster",
                 cluster_uuid="abc-123",
@@ -78,12 +80,12 @@ base_api_path = "/api"
 
         result = runner.invoke(
             nf,
-            ["-c", str(mock_config_dir), "cache", "query", "test-cluster", "cloud.provider"],
+            ["-c", str(mock_config_dir), "cache", "query", "test-cluster", "cloud[0].provider"],
         )
 
         assert result.exit_code == 0
         assert "test-cluster:" in result.output
-        assert "cloud.provider: AWS" in result.output
+        assert "cloud[0].provider: AWS" in result.output
 
     @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
     def test_single_cluster_multiple_fields(
@@ -106,13 +108,13 @@ base_api_path = "/api"
                 "cache",
                 "query",
                 "test-cluster",
-                "cloud.provider",
+                "cloud[0].provider",
                 "cluster.ontap_version",
             ],
         )
 
         assert result.exit_code == 0
-        assert "cloud.provider: AWS" in result.output
+        assert "cloud[0].provider: AWS" in result.output
         assert "cluster.ontap_version: 9.14.1" in result.output
 
     @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
@@ -132,26 +134,26 @@ base_api_path = "/api"
         metadata1 = CachedClusterMetadata(
             cluster_name="cluster1",
             cached_at=datetime(2024, 1, 15, tzinfo=UTC),
-            cloud=CloudMetadata(provider="AWS", instance_type="m5.xlarge"),
+            cloud=[CloudMetadata(provider="AWS", instance_type="m5.xlarge")],
         )
         metadata2 = CachedClusterMetadata(
             cluster_name="cluster2",
             cached_at=datetime(2024, 1, 15, tzinfo=UTC),
-            cloud=CloudMetadata(provider="Azure", instance_type="Standard_D4s_v3"),
+            cloud=[CloudMetadata(provider="Azure", instance_type="Standard_D4s_v3")],
         )
         mock_db.get.side_effect = lambda name: metadata1 if name == "cluster1" else metadata2
         mock_db_class.return_value = mock_db
 
         result = runner.invoke(
             nf,
-            ["-c", str(mock_config_dir), "cache", "query", "--all", "cloud.instance_type"],
+            ["-c", str(mock_config_dir), "cache", "query", "--all", "cloud[0].instance_type"],
         )
 
         assert result.exit_code == 0
         assert "cluster1:" in result.output
-        assert "cloud.instance_type: m5.xlarge" in result.output
+        assert "cloud[0].instance_type: m5.xlarge" in result.output
         assert "cluster2:" in result.output
-        assert "cloud.instance_type: Standard_D4s_v3" in result.output
+        assert "cloud[0].instance_type: Standard_D4s_v3" in result.output
 
     @patch("pynetappfoundry.cli.commands.cache.query.Config")
     @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
@@ -171,7 +173,7 @@ base_api_path = "/api"
         metadata = CachedClusterMetadata(
             cluster_name="prod-cluster",
             cached_at=datetime(2024, 1, 15, tzinfo=UTC),
-            cloud=CloudMetadata(provider="AWS", region="us-east-1"),
+            cloud=[CloudMetadata(provider="AWS", region="us-east-1")],
         )
         mock_db.get.return_value = metadata
         mock_db_class.return_value = mock_db
@@ -185,15 +187,15 @@ base_api_path = "/api"
                 "query",
                 "-f",
                 '{"env":"prod"}',
-                "cloud.provider",
-                "cloud.region",
+                "cloud[0].provider",
+                "cloud[0].region",
             ],
         )
 
         assert result.exit_code == 0
         assert "prod-cluster:" in result.output
-        assert "cloud.provider: AWS" in result.output
-        assert "cloud.region: us-east-1" in result.output
+        assert "cloud[0].provider: AWS" in result.output
+        assert "cloud[0].region: us-east-1" in result.output
 
     @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
     def test_json_output(
@@ -216,14 +218,14 @@ base_api_path = "/api"
                 "cache",
                 "query",
                 "test-cluster",
-                "cloud.instance_type",
+                "cloud[0].instance_type",
                 "--json",
             ],
         )
 
         assert result.exit_code == 0
         output = json.loads(result.output)
-        assert output == {"test-cluster": {"cloud.instance_type": "m5.xlarge"}}
+        assert output == {"test-cluster": {"cloud[0].instance_type": "m5.xlarge"}}
 
     @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
     def test_raw_output(
@@ -268,7 +270,7 @@ base_api_path = "/api"
                 "cache",
                 "query",
                 "--all",
-                "cloud.provider",
+                "cloud[0].provider",
                 "--raw",
             ],
         )
@@ -332,7 +334,7 @@ base_api_path = "/api"
 
         result = runner.invoke(
             nf,
-            ["-c", str(mock_config_dir), "cache", "query", "nonexistent", "cloud.provider"],
+            ["-c", str(mock_config_dir), "cache", "query", "nonexistent", "cloud[0].provider"],
         )
 
         assert result.exit_code != 0
@@ -346,10 +348,10 @@ base_api_path = "/api"
         """Test error when no cluster selection method specified."""
         result = runner.invoke(
             nf,
-            ["-c", str(mock_config_dir), "cache", "query", "cloud.provider"],
+            ["-c", str(mock_config_dir), "cache", "query", "cloud[0].provider"],
         )
 
-        # Click will parse "cloud.provider" as the CLUSTER argument but no fields
+        # Click will parse "cloud[0].provider" as the CLUSTER argument but no fields
         # So we expect an error about missing fields
         assert result.exit_code != 0
 
@@ -381,7 +383,7 @@ base_api_path = "/api"
                 "cache",
                 "query",
                 "cluster1",
-                "cloud.provider",
+                "cloud[0].provider",
             ],
         )
 
@@ -401,7 +403,7 @@ base_api_path = "/api"
         metadata = CachedClusterMetadata(
             cluster_name="cluster1",
             cached_at=datetime(2024, 1, 15, tzinfo=UTC),
-            cloud=CloudMetadata(provider="AWS", region="us-east-1"),
+            cloud=[CloudMetadata(provider="AWS", region="us-east-1")],
         )
         mock_db.get.return_value = metadata
         mock_db_class.return_value = mock_db
@@ -415,14 +417,14 @@ base_api_path = "/api"
                 "cache",
                 "query",
                 "--all",
-                "cloud.provider",
-                "cloud.region",
+                "cloud[0].provider",
+                "cloud[0].region",
             ],
         )
 
         assert result.exit_code == 0
-        assert "cloud.provider: AWS" in result.output
-        assert "cloud.region: us-east-1" in result.output
+        assert "cloud[0].provider: AWS" in result.output
+        assert "cloud[0].region: us-east-1" in result.output
 
     @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
     def test_empty_cache_with_all(
@@ -438,7 +440,7 @@ base_api_path = "/api"
 
         result = runner.invoke(
             nf,
-            ["-c", str(mock_config_dir), "cache", "query", "--all", "cloud.provider"],
+            ["-c", str(mock_config_dir), "cache", "query", "--all", "cloud[0].provider"],
         )
 
         assert result.exit_code == 0
@@ -470,7 +472,7 @@ base_api_path = "/api"
                 "query",
                 "-f",
                 '{"env":"nonexistent"}',
-                "cloud.provider",
+                "cloud[0].provider",
             ],
         )
 
@@ -492,7 +494,7 @@ base_api_path = "/api"
                 "query",
                 "-f",
                 "not valid json",
-                "cloud.provider",
+                "cloud[0].provider",
             ],
         )
 
@@ -520,8 +522,8 @@ base_api_path = "/api"
                 "cache",
                 "query",
                 "test-cluster",
-                "cloud.provider",
-                "cloud.region",
+                "cloud[0].provider",
+                "cloud[0].region",
                 "cluster.ontap_version",
                 "--json",
             ],
@@ -531,8 +533,8 @@ base_api_path = "/api"
         output = json.loads(result.output)
         assert output == {
             "test-cluster": {
-                "cloud.provider": "AWS",
-                "cloud.region": "us-east-1",
+                "cloud[0].provider": "AWS",
+                "cloud[0].region": "us-east-1",
                 "cluster.ontap_version": "9.14.1",
             }
         }
@@ -558,7 +560,7 @@ base_api_path = "/api"
                 "cache",
                 "query",
                 "test-cluster",
-                "cloud.provider",
+                "cloud[0].provider",
                 "cluster.ontap_version",
                 "--raw",
             ],
@@ -750,15 +752,15 @@ base_api_path = "/api"
                 "cache",
                 "query",
                 "test-cluster",
-                "cloud.provider",
-                "cloud.region",
+                "cloud[0].provider",
+                "cloud[0].region",
                 "--csv",
             ],
         )
 
         assert result.exit_code == 0
         lines = result.output.strip().split("\n")
-        assert lines[0] == "cluster,cloud.provider,cloud.region"
+        assert lines[0] == "cluster,cloud[0].provider,cloud[0].region"
         assert lines[1] == "test-cluster,AWS,us-east-1"
 
     @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
@@ -778,12 +780,12 @@ base_api_path = "/api"
         metadata1 = CachedClusterMetadata(
             cluster_name="cluster1",
             cached_at=datetime(2024, 1, 15, tzinfo=UTC),
-            cloud=CloudMetadata(provider="AWS", region="us-east-1"),
+            cloud=[CloudMetadata(provider="AWS", region="us-east-1")],
         )
         metadata2 = CachedClusterMetadata(
             cluster_name="cluster2",
             cached_at=datetime(2024, 1, 15, tzinfo=UTC),
-            cloud=CloudMetadata(provider="Azure", region="eastus"),
+            cloud=[CloudMetadata(provider="Azure", region="eastus")],
         )
         mock_db.get.side_effect = lambda name: metadata1 if name == "cluster1" else metadata2
         mock_db_class.return_value = mock_db
@@ -796,15 +798,15 @@ base_api_path = "/api"
                 "cache",
                 "query",
                 "--all",
-                "cloud.provider",
-                "cloud.region",
+                "cloud[0].provider",
+                "cloud[0].region",
                 "--csv",
             ],
         )
 
         assert result.exit_code == 0
         lines = result.output.strip().split("\n")
-        assert lines[0] == "cluster,cloud.provider,cloud.region"
+        assert lines[0] == "cluster,cloud[0].provider,cloud[0].region"
         assert "cluster1,AWS,us-east-1" in lines
         assert "cluster2,Azure,eastus" in lines
 
@@ -884,7 +886,7 @@ base_api_path = "/api"
         metadata = CachedClusterMetadata(
             cluster_name="test-cluster",
             cached_at=datetime(2024, 1, 15, tzinfo=UTC),
-            cloud=CloudMetadata(provider="AWS", region=""),
+            cloud=[CloudMetadata(provider="AWS", region="")],
         )
         mock_db.get.return_value = metadata
         mock_db_class.return_value = mock_db
@@ -897,13 +899,13 @@ base_api_path = "/api"
                 "cache",
                 "query",
                 "test-cluster",
-                "cloud.provider",
-                "cloud.region",
+                "cloud[0].provider",
+                "cloud[0].region",
                 "--csv",
             ],
         )
 
         assert result.exit_code == 0
         lines = result.output.strip().split("\n")
-        assert lines[0] == "cluster,cloud.provider,cloud.region"
+        assert lines[0] == "cluster,cloud[0].provider,cloud[0].region"
         assert lines[1] == "test-cluster,AWS,"

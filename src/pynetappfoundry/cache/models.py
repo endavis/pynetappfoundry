@@ -16,10 +16,12 @@ class CloudMetadata(BaseModel):
     """Cloud provider metadata from virtual-machine instance show.
 
     Contains instance-level information from the cloud provider.
+    Each node in a cluster has its own cloud metadata.
     """
 
     model_config = ConfigDict(extra="allow")
 
+    node: str = ""  # Node name this metadata belongs to
     instance_id: str = ""
     account_id: str = ""
     image_id: str = ""
@@ -252,10 +254,10 @@ class CachedClusterMetadata(BaseModel):
     # Cache metadata
     cluster_name: str
     cached_at: datetime = Field(default_factory=_utcnow)
-    cache_version: str = "1.0"
+    cache_version: str = "1.1"  # Bumped for cloud list change
 
     # Data categories
-    cloud: CloudMetadata = Field(default_factory=CloudMetadata)
+    cloud: list[CloudMetadata] = Field(default_factory=list)
     cluster: ClusterInfo = Field(default_factory=ClusterInfo)
     nodes: list[NodeInfo] = Field(default_factory=list)
     network: NetworkInfo = Field(default_factory=NetworkInfo)
@@ -279,16 +281,20 @@ class CachedClusterMetadata(BaseModel):
     def to_flat_dict(self) -> dict[str, str | int | bool | None]:
         """Convert to flat dictionary for merging with cluster config.
 
+        For cloud metadata, uses the first node's data if available.
+
         Returns:
             Flat dictionary with selected commonly-used fields.
         """
+        # Use first node's cloud data if available
+        first_cloud = self.cloud[0] if self.cloud else CloudMetadata()
         return {
-            # Cloud metadata
-            "instance_id": self.cloud.instance_id,
-            "provider": self.cloud.provider,
-            "region": self.cloud.region or self.cloud.availability_zone,
-            "instance_type": self.cloud.instance_type,
-            "availability_zone": self.cloud.availability_zone,
+            # Cloud metadata (from first node)
+            "instance_id": first_cloud.instance_id,
+            "provider": first_cloud.provider,
+            "region": first_cloud.region or first_cloud.availability_zone,
+            "instance_type": first_cloud.instance_type,
+            "availability_zone": first_cloud.availability_zone,
             # Cluster info
             "cluster_uuid": self.cluster.cluster_uuid,
             "ontap_version": self.cluster.ontap_version,
