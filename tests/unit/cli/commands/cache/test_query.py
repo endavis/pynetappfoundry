@@ -616,3 +616,115 @@ base_api_path = "/api"
 
         assert result.exit_code == 0
         assert "SN002" in result.output
+
+    @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
+    def test_wildcard_array_access(
+        self,
+        mock_db_class: MagicMock,
+        runner: CliRunner,
+        mock_config_dir: Path,
+        sample_metadata: CachedClusterMetadata,
+    ) -> None:
+        """Test querying all array elements with wildcard [*] syntax."""
+        mock_db = MagicMock()
+        mock_db.get.return_value = sample_metadata
+        mock_db_class.return_value = mock_db
+
+        result = runner.invoke(
+            nf,
+            ["-c", str(mock_config_dir), "cache", "query", "test-cluster", "nodes[*].name"],
+        )
+
+        assert result.exit_code == 0
+        assert "test-cluster:" in result.output
+        assert '["node-01", "node-02"]' in result.output
+
+    @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
+    def test_wildcard_json_output(
+        self,
+        mock_db_class: MagicMock,
+        runner: CliRunner,
+        mock_config_dir: Path,
+        sample_metadata: CachedClusterMetadata,
+    ) -> None:
+        """Test wildcard query with JSON output."""
+        mock_db = MagicMock()
+        mock_db.get.return_value = sample_metadata
+        mock_db_class.return_value = mock_db
+
+        result = runner.invoke(
+            nf,
+            [
+                "-c",
+                str(mock_config_dir),
+                "cache",
+                "query",
+                "test-cluster",
+                "nodes[*].name",
+                "--json",
+            ],
+        )
+
+        assert result.exit_code == 0
+        output = json.loads(result.output)
+        assert output == {"test-cluster": {"nodes[*].name": ["node-01", "node-02"]}}
+
+    @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
+    def test_wildcard_raw_output(
+        self,
+        mock_db_class: MagicMock,
+        runner: CliRunner,
+        mock_config_dir: Path,
+        sample_metadata: CachedClusterMetadata,
+    ) -> None:
+        """Test wildcard query with raw output (one value per line)."""
+        mock_db = MagicMock()
+        mock_db.get.return_value = sample_metadata
+        mock_db_class.return_value = mock_db
+
+        result = runner.invoke(
+            nf,
+            [
+                "-c",
+                str(mock_config_dir),
+                "cache",
+                "query",
+                "test-cluster",
+                "nodes[*].name",
+                "--raw",
+            ],
+        )
+
+        assert result.exit_code == 0
+        lines = result.output.strip().split("\n")
+        assert lines == ["node-01", "node-02"]
+
+    @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
+    def test_wildcard_serial_numbers(
+        self,
+        mock_db_class: MagicMock,
+        runner: CliRunner,
+        mock_config_dir: Path,
+        sample_metadata: CachedClusterMetadata,
+    ) -> None:
+        """Test wildcard query for serial numbers."""
+        mock_db = MagicMock()
+        mock_db.get.return_value = sample_metadata
+        mock_db_class.return_value = mock_db
+
+        result = runner.invoke(
+            nf,
+            [
+                "-c",
+                str(mock_config_dir),
+                "cache",
+                "query",
+                "test-cluster",
+                "nodes[*].serial_number",
+                "--raw",
+            ],
+        )
+
+        assert result.exit_code == 0
+        lines = result.output.strip().split("\n")
+        assert lines == ["SN001", "SN002"]

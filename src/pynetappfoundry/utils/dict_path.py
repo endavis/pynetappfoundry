@@ -19,6 +19,9 @@ from typing import Any
 # Pattern to match array index access like "nodes[0]"
 _ARRAY_INDEX_PATTERN = re.compile(r"^([a-zA-Z_][a-zA-Z0-9_]*)\[(\d+)\]$")
 
+# Pattern to match wildcard array access like "nodes[*]"
+_ARRAY_WILDCARD_PATTERN = re.compile(r"^([a-zA-Z_][a-zA-Z0-9_]*)\[\*\]$")
+
 
 class PathNotFoundError(Exception):
     """Raised when a path cannot be resolved in a nested structure.
@@ -47,14 +50,17 @@ def get_nested_value(data: dict[str, Any], path: str) -> Any:
     """Retrieve a value from a nested dictionary using dot notation.
 
     Supports accessing nested dictionaries and lists. Array indices can be
-    specified using bracket notation (e.g., "nodes[0].name").
+    specified using bracket notation (e.g., "nodes[0].name"). Wildcard syntax
+    [*] can be used to access all items in an array.
 
     Args:
         data: The dictionary to traverse.
-        path: Dot-notation path (e.g., "cloud.instance_type", "nodes[0].name").
+        path: Dot-notation path (e.g., "cloud.instance_type", "nodes[0].name",
+              "nodes[*].name" for wildcard access).
 
     Returns:
-        The value at the specified path.
+        The value at the specified path. For wildcard paths, returns a list
+        of values from all array items.
 
     Raises:
         PathNotFoundError: If the path cannot be resolved.
@@ -67,6 +73,10 @@ def get_nested_value(data: dict[str, Any], path: str) -> Any:
         >>> data = {"nodes": [{"name": "node-01"}, {"name": "node-02"}]}
         >>> get_nested_value(data, "nodes[0].name")
         'node-01'
+
+        >>> data = {"nodes": [{"name": "node-01"}, {"name": "node-02"}]}
+        >>> get_nested_value(data, "nodes[*].name")
+        ['node-01', 'node-02']
     """
     if not path:
         raise PathNotFoundError(path, "", "empty path")
@@ -75,9 +85,58 @@ def get_nested_value(data: dict[str, Any], path: str) -> Any:
     current: Any = data
     traversed: list[str] = []
 
-    for part in parts:
+    for i, part in enumerate(parts):
         if not part:
             raise PathNotFoundError(path, ".".join(traversed) or "(root)", "empty path segment")
+
+        # Check for wildcard pattern like "nodes[*]"
+        wildcard_match = _ARRAY_WILDCARD_PATTERN.match(part)
+        if wildcard_match:
+            key = wildcard_match.group(1)
+
+            # First access the key
+            if not isinstance(current, dict):
+                raise PathNotFoundError(
+                    path,
+                    ".".join(traversed) or "(root)",
+                    f"expected dict, got {type(current).__name__}",
+                )
+            if key not in current:
+                raise PathNotFoundError(
+                    path,
+                    ".".join([*traversed, key]) if traversed else key,
+                    "key not found",
+                )
+
+            array = current[key]
+            if not isinstance(array, list):
+                raise PathNotFoundError(
+                    path,
+                    ".".join([*traversed, key]) if traversed else key,
+                    f"expected list for wildcard access, got {type(array).__name__}",
+                )
+
+            # Get remaining path after the wildcard
+            remaining_parts = parts[i + 1 :]
+            if remaining_parts:
+                # Recursively resolve remaining path for each item
+                remaining_path = ".".join(remaining_parts)
+                results = []
+                for idx, item in enumerate(array):
+                    if not isinstance(item, dict):
+                        raise PathNotFoundError(
+                            path,
+                            f"{'.'.join([*traversed, key])}[{idx}]"
+                            if traversed
+                            else f"{key}[{idx}]",
+                            f"expected dict for nested access, got {type(item).__name__}",
+                        )
+                    # Recursively get value using a wrapper dict
+                    results.append(get_nested_value({"_": item}, f"_.{remaining_path}"))
+                return results
+            else:
+                # No remaining path, return all items
+                return list(array)
 
         # Check for array index pattern like "nodes[0]"
         match = _ARRAY_INDEX_PATTERN.match(part)
