@@ -2,18 +2,13 @@
 
 from __future__ import annotations
 
-import logging
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 from click.testing import CliRunner
 
-from pynetappfoundry.cli.commands.cache.refresh import (
-    VerboseProgressDisplay,
-    cleanup_old_logs,
-    setup_file_logging,
-)
+from pynetappfoundry.cli.commands.cache.refresh import VerboseProgressDisplay
 from pynetappfoundry.cli.main import nf
 
 
@@ -163,10 +158,10 @@ enc = "cGFzc3dvcmQ="
     @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPCLI")
     @patch("pynetappfoundry.cli.commands.cache.refresh.MetadataCollector")
     @patch("pynetappfoundry.cli.commands.cache.refresh.ClusterMetadataDB")
-    @patch("pynetappfoundry.cli.commands.cache.refresh.setup_file_logging")
+    @patch("pynetappfoundry.cli.commands.cache.refresh.setup_logger")
     def test_refresh_verbose_flag(
         self,
-        mock_setup_logging: MagicMock,
+        mock_setup_logger: MagicMock,
         mock_db_class: MagicMock,
         mock_collector_class: MagicMock,
         mock_cli_class: MagicMock,
@@ -176,7 +171,7 @@ enc = "cGFzc3dvcmQ="
     ) -> None:
         """Test refreshing with verbose flag."""
         # Setup mocks
-        mock_setup_logging.return_value = Path("/tmp/test.log")
+        mock_setup_logger.return_value = (MagicMock(), Path("/tmp/test.log"))
         mock_db = MagicMock()
         mock_db_class.return_value = mock_db
 
@@ -203,10 +198,10 @@ enc = "cGFzc3dvcmQ="
     @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPCLI")
     @patch("pynetappfoundry.cli.commands.cache.refresh.MetadataCollector")
     @patch("pynetappfoundry.cli.commands.cache.refresh.ClusterMetadataDB")
-    @patch("pynetappfoundry.cli.commands.cache.refresh.setup_file_logging")
+    @patch("pynetappfoundry.cli.commands.cache.refresh.setup_logger")
     def test_refresh_always_logs_to_file(
         self,
-        mock_setup_logging: MagicMock,
+        mock_setup_logger: MagicMock,
         mock_db_class: MagicMock,
         mock_collector_class: MagicMock,
         mock_cli_class: MagicMock,
@@ -215,7 +210,7 @@ enc = "cGFzc3dvcmQ="
         mock_config_dir: Path,
     ) -> None:
         """Test that file logging is always configured (with or without -v)."""
-        mock_setup_logging.return_value = Path("/tmp/test.log")
+        mock_setup_logger.return_value = (MagicMock(), Path("/tmp/test.log"))
         mock_db = MagicMock()
         mock_db_class.return_value = mock_db
 
@@ -236,17 +231,17 @@ enc = "cGFzc3dvcmQ="
         )
 
         assert result.exit_code == 0
-        # setup_file_logging should always be called
-        mock_setup_logging.assert_called_once()
+        # setup_logger should always be called
+        mock_setup_logger.assert_called_once_with("cache-refresh")
 
     @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPAPIClient")
     @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPCLI")
     @patch("pynetappfoundry.cli.commands.cache.refresh.MetadataCollector")
     @patch("pynetappfoundry.cli.commands.cache.refresh.ClusterMetadataDB")
-    @patch("pynetappfoundry.cli.commands.cache.refresh.setup_file_logging")
+    @patch("pynetappfoundry.cli.commands.cache.refresh.setup_logger")
     def test_refresh_displays_log_path(
         self,
-        mock_setup_logging: MagicMock,
+        mock_setup_logger: MagicMock,
         mock_db_class: MagicMock,
         mock_collector_class: MagicMock,
         mock_cli_class: MagicMock,
@@ -255,7 +250,10 @@ enc = "cGFzc3dvcmQ="
         mock_config_dir: Path,
     ) -> None:
         """Test that log file path is displayed to user."""
-        mock_setup_logging.return_value = Path("/tmp/cache-refresh-test.log")
+        mock_setup_logger.return_value = (
+            MagicMock(),
+            Path("/tmp/data/cache-refresh/logs/cache-refresh_2024-01-15_10-23-45.log"),
+        )
         mock_db = MagicMock()
         mock_db_class.return_value = mock_db
 
@@ -270,102 +268,6 @@ enc = "cGFzc3dvcmQ="
 
         # Log file path should be shown in output
         assert "Log file:" in result.output or "cache-refresh" in result.output
-
-
-class TestSetupFileLogging:
-    """Tests for file logging setup."""
-
-    @patch("pynetappfoundry.cli.commands.cache.refresh.LOG_DIR", None)
-    def test_setup_file_logging_creates_directory(self, tmp_path: Path) -> None:
-        """Test that setup creates log directory if it doesn't exist."""
-        with (
-            patch("pynetappfoundry.cli.commands.cache.refresh.LOG_DIR", tmp_path / "logs"),
-            patch("pynetappfoundry.cli.commands.cache.refresh.cleanup_old_logs"),
-        ):
-            log_file = setup_file_logging()
-            assert log_file.parent.exists()
-            assert "cache-refresh" in log_file.name
-
-    def test_setup_file_logging_creates_timestamped_file(self, tmp_path: Path) -> None:
-        """Test that log files have timestamps in names."""
-        with (
-            patch("pynetappfoundry.cli.commands.cache.refresh.LOG_DIR", tmp_path / "logs"),
-            patch("pynetappfoundry.cli.commands.cache.refresh.cleanup_old_logs"),
-        ):
-            log_file = setup_file_logging()
-            # Should match pattern: cache-refresh-YYYYMMDD-HHMMSS.log
-            assert log_file.name.startswith("cache-refresh-")
-            assert log_file.suffix == ".log"
-
-    def test_setup_file_logging_configures_handlers(self, tmp_path: Path) -> None:
-        """Test that logging handlers are configured."""
-        with (
-            patch("pynetappfoundry.cli.commands.cache.refresh.LOG_DIR", tmp_path / "logs"),
-            patch("pynetappfoundry.cli.commands.cache.refresh.cleanup_old_logs"),
-        ):
-            log_file = setup_file_logging()
-            assert log_file.exists()
-
-            # Cache logger should have a file handler
-            cache_logger = logging.getLogger("pynetappfoundry.cache")
-            file_handlers = [h for h in cache_logger.handlers if isinstance(h, logging.FileHandler)]
-            assert len(file_handlers) > 0
-
-            # Clean up handlers
-            for handler in file_handlers:
-                cache_logger.removeHandler(handler)
-                handler.close()
-
-
-class TestCleanupOldLogs:
-    """Tests for log file cleanup."""
-
-    def test_cleanup_old_logs_keeps_recent_files(self, tmp_path: Path) -> None:
-        """Test that recent log files are kept."""
-        log_dir = tmp_path / "logs"
-        log_dir.mkdir()
-
-        # Create some log files
-        for i in range(5):
-            (log_dir / f"cache-refresh-2024010{i}-120000.log").write_text("test")
-
-        with (
-            patch("pynetappfoundry.cli.commands.cache.refresh.LOG_DIR", log_dir),
-            patch("pynetappfoundry.cli.commands.cache.refresh.MAX_LOG_FILES", 10),
-        ):
-            cleanup_old_logs()
-
-        # All 5 files should still exist (under MAX_LOG_FILES)
-        remaining = list(log_dir.glob("cache-refresh-*.log"))
-        assert len(remaining) == 5
-
-    def test_cleanup_old_logs_removes_old_files(self, tmp_path: Path) -> None:
-        """Test that old log files are removed."""
-        log_dir = tmp_path / "logs"
-        log_dir.mkdir()
-
-        # Create 15 log files
-        for i in range(15):
-            (log_dir / f"cache-refresh-2024010{i:02d}-120000.log").write_text("test")
-
-        with (
-            patch("pynetappfoundry.cli.commands.cache.refresh.LOG_DIR", log_dir),
-            patch("pynetappfoundry.cli.commands.cache.refresh.MAX_LOG_FILES", 10),
-        ):
-            cleanup_old_logs()
-
-        # Only MAX_LOG_FILES should remain
-        remaining = list(log_dir.glob("cache-refresh-*.log"))
-        assert len(remaining) == 10
-
-    def test_cleanup_old_logs_nonexistent_directory(self, tmp_path: Path) -> None:
-        """Test cleanup handles nonexistent directory gracefully."""
-        with patch(
-            "pynetappfoundry.cli.commands.cache.refresh.LOG_DIR",
-            tmp_path / "nonexistent",
-        ):
-            # Should not raise any errors
-            cleanup_old_logs()
 
 
 class TestVerboseProgressDisplay:

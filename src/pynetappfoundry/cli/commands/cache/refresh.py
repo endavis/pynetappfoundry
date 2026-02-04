@@ -5,7 +5,6 @@ from __future__ import annotations
 import contextlib
 import logging
 import time
-from datetime import UTC, datetime
 from pathlib import Path
 
 import click
@@ -27,70 +26,12 @@ from pynetappfoundry.cli.utils import (
 )
 from pynetappfoundry.clients.ontap import ONTAPCLI, ONTAPAPIClient
 from pynetappfoundry.core.config import Config
+from pynetappfoundry.core.logging import setup_logger
 
 console = Console()
 
 # Module logger
 logger = logging.getLogger(__name__)
-
-# Log directory for cache refresh operations
-LOG_DIR = Path.home() / ".cache" / "pynetappfoundry" / "logs"
-MAX_LOG_FILES = 10  # Keep last N log files
-
-
-def setup_file_logging() -> Path:
-    """Configure file logging for the cache refresh operation.
-
-    Returns:
-        Path to the log file.
-    """
-    # Ensure log directory exists
-    LOG_DIR.mkdir(parents=True, exist_ok=True)
-
-    # Create timestamped log file
-    timestamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
-    log_file = LOG_DIR / f"cache-refresh-{timestamp}.log"
-
-    # Configure file handler for the cache module
-    file_handler = logging.FileHandler(log_file)
-    file_handler.setLevel(logging.DEBUG)
-    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-    file_handler.setFormatter(formatter)
-
-    # Add handler to cache module loggers
-    cache_logger = logging.getLogger("pynetappfoundry.cache")
-    cache_logger.setLevel(logging.DEBUG)
-    cache_logger.addHandler(file_handler)
-
-    # Also add to this module's logger
-    refresh_logger = logging.getLogger(__name__)
-    refresh_logger.setLevel(logging.DEBUG)
-    refresh_logger.addHandler(file_handler)
-
-    # Clean up old log files
-    cleanup_old_logs()
-
-    return log_file
-
-
-def cleanup_old_logs() -> None:
-    """Remove old log files, keeping only the most recent ones."""
-    if not LOG_DIR.exists():
-        return
-
-    log_files = sorted(
-        LOG_DIR.glob("cache-refresh-*.log"),
-        key=lambda p: p.stat().st_mtime,
-        reverse=True,
-    )
-
-    # Remove files beyond MAX_LOG_FILES
-    for old_file in log_files[MAX_LOG_FILES:]:
-        try:
-            old_file.unlink()
-            logger.debug("Removed old log file: %s", old_file)
-        except OSError as e:
-            logger.warning("Failed to remove old log file %s: %s", old_file, e)
 
 
 class VerboseProgressDisplay:
@@ -184,7 +125,7 @@ def refresh(ctx: click.Context, cluster: str | None, refresh_all: bool, verbose:
         nf cache refresh --all -v      # Refresh all with detailed progress
     """
     # Always set up file logging
-    log_file = setup_file_logging()
+    _, log_file = setup_logger("cache-refresh")
     logger.info("Starting cache refresh operation")
 
     config_dir = ctx.obj.get("config_dir", "config")
