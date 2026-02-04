@@ -63,6 +63,7 @@ class APIWrapper:
         verify_ssl: bool = True,
         retry_config: RetryConfig | None = None,
         validation_config: ValidationConfig | None = None,
+        name: str = "",
     ) -> None:
         """Initialize the API wrapper.
 
@@ -76,7 +77,10 @@ class APIWrapper:
             verify_ssl: Whether to verify SSL certificates. Default True for security.
             retry_config: Configuration for retry behavior. Defaults to enabled.
             validation_config: Configuration for response validation. Defaults to disabled.
+            name: Name for log prefix (e.g., cluster name). Used in [name:api] format.
         """
+        self.name = name
+        self.log_prefix = f"[{name}:api]" if name else "[api]"
         self.verify_ssl = verify_ssl
         # Load the API spec
         with open(api_json_file, encoding="utf-8") as f:
@@ -88,7 +92,7 @@ class APIWrapper:
                 self.base_api_path = self.api_spec["basePath"]
 
         if not base_api_path:
-            logging.warning(f"No base api path found for base_url: {base_url}")
+            logging.warning(f"{self.log_prefix} No base api path found for base_url: {base_url}")
 
         if not auth_header:
             auth_header = {}
@@ -124,10 +128,12 @@ class APIWrapper:
         method = method.lower()
         path: dict[str, Any] = self.api_spec["paths"].get(api_path, {})
         if not path:
-            logging.error(f"_get_operation: did not find {api_path}")
+            logging.error(f"{self.log_prefix} _get_operation: did not find {api_path}")
         operation: dict[str, Any] = path.get(method, {})
         if not operation:
-            logging.error(f"_get_operation: could not find {operation} for {api_path}")
+            logging.error(
+                f"{self.log_prefix} _get_operation: could not find {operation} for {api_path}"
+            )
         return operation
 
     def _resolve_ref(self, ref: str) -> Any:
@@ -186,7 +192,9 @@ class APIWrapper:
         content = op.get("requestBody", {}).get("content", {}).get("application/json", {})
 
         if not content:
-            logging.error(f"_get_request_schema: no content for {path_template}:{method}")
+            logging.error(
+                f"{self.log_prefix} _get_request_schema: no content for {path_template}:{method}"
+            )
 
         schema = content.get("schema")
 
@@ -320,7 +328,7 @@ class APIWrapper:
             validate(instance=body, schema=schema)
             return True
         except ValidationError as e:
-            logging.error(f"Request body validation error: {e.message}")
+            logging.error(f"{self.log_prefix} Request body validation error: {e.message}")
             return False
 
     def suggest_parameters(self, path_template: str, method: str = "GET") -> dict[str, Any]:
@@ -441,7 +449,8 @@ class APIWrapper:
         schema = self._get_response_schema(path_template, method, status_code)
         if not schema:
             logging.debug(
-                f"No response schema found for {method} {path_template} status {status_code}"
+                f"{self.log_prefix} No response schema found for "
+                f"{method} {path_template} status {status_code}"
             )
             return True
 
@@ -450,7 +459,7 @@ class APIWrapper:
             return True
         except ValidationError as e:
             error_msg = (
-                f"Response validation failed for {method} {path_template} "
+                f"{self.log_prefix} Response validation failed for {method} {path_template} "
                 f"status {status_code}: {e.message}"
             )
             if config.strict:
@@ -496,12 +505,12 @@ class APIWrapper:
                     result = outcome.result() if exception is None else None
                     if exception:
                         logging.warning(
-                            f"Retry attempt {retry_state.attempt_number} "
+                            f"{self.log_prefix} Retry attempt {retry_state.attempt_number} "
                             f"after exception: {exception}"
                         )
                     elif result is not None and hasattr(result, "status_code"):
                         logging.warning(
-                            f"Retry attempt {retry_state.attempt_number} "
+                            f"{self.log_prefix} Retry attempt {retry_state.attempt_number} "
                             f"after status code: {result.status_code}"
                         )
 
@@ -619,9 +628,9 @@ class APIWrapper:
 
         # Build URL (formatting path placeholders)
         path = self._format_path(path_template, path_params)
-        logging.debug(f"API Path: {path}")
+        logging.debug(f"{self.log_prefix} API Path: {path}")
         url = f"{self.base_url}{path}"
-        logging.debug(f"API URL: {url}")
+        logging.debug(f"{self.log_prefix} API URL: {url}")
 
         # Encode query params
         if query_params:
@@ -632,7 +641,7 @@ class APIWrapper:
         if additional_headers:
             headers.update(additional_headers)
 
-        logging.debug(f"Calling {method} {url} {headers}")
+        logging.debug(f"{self.log_prefix} Calling {method} {url} {headers}")
 
         # Execute request with retry logic
         resp = self._execute_request_with_retry(
@@ -643,12 +652,12 @@ class APIWrapper:
             retry_config=retry_config,
         )
 
-        logging.debug(f"Response Status Code: {resp.status_code}")
+        logging.debug(f"{self.log_prefix} Response Status Code: {resp.status_code}")
         resp.raise_for_status()
 
         # Try JSON, else return text
         try:
-            logging.debug(f"Response Text: {resp.text}")
+            logging.debug(f"{self.log_prefix} Response Text: {resp.text}")
             response_data = resp.json()
         except ValueError:
             response_data = resp.text

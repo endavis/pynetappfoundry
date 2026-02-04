@@ -127,6 +127,30 @@ class TestAPIWrapperInit:
         assert "paths" in api_wrapper.api_spec
         assert "/users" in api_wrapper.api_spec["paths"]
 
+    def test_log_prefix_with_name(self, spec_file: Path) -> None:
+        """Test log_prefix format when name is provided."""
+        wrapper = APIWrapper(
+            api_json_file=str(spec_file),
+            base_url="https://api.example.com",
+            name="cluster1",
+        )
+        assert wrapper.log_prefix == "[cluster1:api]"
+        assert wrapper.name == "cluster1"
+
+    def test_log_prefix_without_name(self, api_wrapper: APIWrapper) -> None:
+        """Test log_prefix format when name is not provided."""
+        assert api_wrapper.log_prefix == "[api]"
+        assert api_wrapper.name == ""
+
+    def test_log_prefix_with_special_characters(self, spec_file: Path) -> None:
+        """Test log_prefix with special characters in name."""
+        wrapper = APIWrapper(
+            api_json_file=str(spec_file),
+            base_url="https://api.example.com",
+            name="cluster-prod-01",
+        )
+        assert wrapper.log_prefix == "[cluster-prod-01:api]"
+
     def test_uses_base_path_from_spec(self, api_wrapper: APIWrapper) -> None:
         """Test that basePath is extracted from spec."""
         assert api_wrapper.base_api_path == "/api/v1"
