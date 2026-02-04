@@ -1,14 +1,17 @@
 """Metadata collector for ONTAP clusters.
 
 Collects cluster metadata using REST API (primary) with CLI fallback.
+Optimized for performance with parallel API calls and response caching.
 """
 
 from __future__ import annotations
 
 import logging
 import re
+import threading
 import time
 from collections.abc import Callable
+from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import Enum
@@ -107,6 +110,8 @@ class MetadataCollector:
         cli_client: ONTAPCLI | None = None,
         progress_callback: ProgressCallback | None = None,
         aws_sso_config: dict[str, str | dict[str, str]] | None = None,
+        parallel: bool = True,
+        max_workers: int = 8,
     ) -> None:
         """Initialize the metadata collector.
 
@@ -117,11 +122,19 @@ class MetadataCollector:
             aws_sso_config: Optional AWS SSO configuration with:
                 - 'subdomain': SSO portal subdomain (e.g., 'mycompany')
                 - 'account_roles': dict mapping account_id to role_name
+            parallel: Whether to run API calls in parallel. Default True.
+            max_workers: Maximum number of parallel workers. Default 8.
         """
         self.api_client = api_client
         self.cli_client = cli_client
         self.progress_callback = progress_callback
         self.aws_sso_config = aws_sso_config
+        self.parallel = parallel
+        self.max_workers = max_workers
+
+        # API response cache to avoid duplicate calls within a collection run
+        self._api_cache: dict[str, Any] = {}
+        self._cache_lock = threading.Lock()
 
     def _report_progress(
         self,
@@ -151,8 +164,45 @@ class MetadataCollector:
             )
             self.progress_callback(info)
 
+    def _cached_api_call(self, endpoint: str, method: str = "GET") -> Any:
+        """Make an API call with caching to avoid duplicate requests.
+
+        Args:
+            endpoint: The API endpoint to call.
+            method: HTTP method (default GET).
+
+        Returns:
+            API response data (from cache if available).
+        """
+        if not self.api_client:
+            return None
+
+        cache_key = f"{method}:{endpoint}"
+
+        with self._cache_lock:
+            if cache_key in self._api_cache:
+                logger.debug("API cache hit: %s", cache_key)
+                return self._api_cache[cache_key]
+
+        # Make the actual API call (outside the lock to allow parallel calls)
+        logger.debug("API call: %s %s", method, endpoint)
+        response = self.api_client.call_endpoint(endpoint, method=method)
+
+        with self._cache_lock:
+            self._api_cache[cache_key] = response
+
+        return response
+
+    def _clear_cache(self) -> None:
+        """Clear the API response cache."""
+        with self._cache_lock:
+            self._api_cache.clear()
+
     def collect_all(self, cluster_name: str) -> CachedClusterMetadata:
         """Collect all metadata categories for a cluster.
+
+        Uses parallel execution for API calls to improve performance.
+        SSH connection for cloud metadata is started early in background.
 
         Args:
             cluster_name: Name of the cluster being collected.
@@ -163,7 +213,39 @@ class MetadataCollector:
         logger.info("Starting metadata collection for cluster: %s", cluster_name)
         total_start = time.monotonic()
 
-        # Define collection phases with their methods
+        # Clear cache from any previous run
+        self._clear_cache()
+
+        if self.parallel:
+            results = self._collect_all_parallel(cluster_name)
+        else:
+            results = self._collect_all_sequential(cluster_name)
+
+        total_elapsed = time.monotonic() - total_start
+        logger.info("Completed metadata collection for %s in %.2fs", cluster_name, total_elapsed)
+
+        return CachedClusterMetadata(
+            cluster_name=cluster_name,
+            cached_at=datetime.now(UTC),
+            cloud=results["cloud"],
+            cluster=results["cluster"],
+            nodes=results["nodes"],
+            network=results["network"],
+            storage=results["storage"],
+            licenses=results["licenses"],
+            ha=results["ha"],
+            relationships=results["relationships"],
+        )
+
+    def _collect_all_sequential(self, cluster_name: str) -> dict[str, Any]:
+        """Collect all metadata sequentially (original behavior).
+
+        Args:
+            cluster_name: Name of the cluster being collected.
+
+        Returns:
+            Dictionary of collection results keyed by phase name.
+        """
         phases: list[tuple[CollectionPhase, Callable[[], Any]]] = [
             (CollectionPhase.CLOUD, self.collect_cloud_metadata),
             (CollectionPhase.CLUSTER, self.collect_cluster_info),
@@ -184,7 +266,6 @@ class MetadataCollector:
             try:
                 result = collect_method()
                 elapsed = time.monotonic() - phase_start
-                # Determine source used (check if result came from API or CLI)
                 source = self._determine_source(phase)
                 self._report_progress(phase, "completed", elapsed, source=source)
                 logger.debug(
@@ -208,21 +289,144 @@ class MetadataCollector:
                 )
                 raise
 
-        total_elapsed = time.monotonic() - total_start
-        logger.info("Completed metadata collection for %s in %.2fs", cluster_name, total_elapsed)
+        return results
 
-        return CachedClusterMetadata(
-            cluster_name=cluster_name,
-            cached_at=datetime.now(UTC),
-            cloud=results["cloud"],
-            cluster=results["cluster"],
-            nodes=results["nodes"],
-            network=results["network"],
-            storage=results["storage"],
-            licenses=results["licenses"],
-            ha=results["ha"],
-            relationships=results["relationships"],
-        )
+    def _collect_all_parallel(self, cluster_name: str) -> dict[str, Any]:
+        """Collect all metadata in parallel for improved performance.
+
+        Starts SSH connection early, then runs all API phases concurrently.
+
+        Args:
+            cluster_name: Name of the cluster being collected.
+
+        Returns:
+            Dictionary of collection results keyed by phase name.
+        """
+        results: dict[str, Any] = {}
+        phase_timings: dict[CollectionPhase, tuple[float, str | None]] = {}
+
+        # Define all phases
+        phases: list[tuple[CollectionPhase, Callable[[], Any]]] = [
+            (CollectionPhase.CLOUD, self.collect_cloud_metadata),
+            (CollectionPhase.CLUSTER, self.collect_cluster_info),
+            (CollectionPhase.NODES, self.collect_nodes),
+            (CollectionPhase.NETWORK, self.collect_network),
+            (CollectionPhase.STORAGE, self.collect_storage),
+            (CollectionPhase.LICENSES, self.collect_licenses),
+            (CollectionPhase.HA, self.collect_ha_info),
+            (CollectionPhase.RELATIONSHIPS, self.collect_relationships),
+        ]
+
+        # Report all phases as starting
+        for phase, _ in phases:
+            self._report_progress(phase, "starting")
+
+        # Start SSH connection early in background if CLI client available
+        ssh_connect_thread: threading.Thread | None = None
+        if self.cli_client:
+            logger.debug("Starting SSH connection in background for %s", cluster_name)
+            ssh_connect_thread = threading.Thread(
+                target=self._connect_ssh_early,
+                name=f"ssh-connect-{cluster_name}",
+                daemon=True,
+            )
+            ssh_connect_thread.start()
+
+        # Run all phases in parallel using ThreadPoolExecutor
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            # Submit all phases
+            future_to_phase: dict[Future[Any], tuple[CollectionPhase, float]] = {}
+            for phase, collect_method in phases:
+                phase_start = time.monotonic()
+                future = executor.submit(self._run_phase_safe, phase, collect_method)
+                future_to_phase[future] = (phase, phase_start)
+
+            # Collect results as they complete
+            errors: list[tuple[CollectionPhase, Exception]] = []
+            for future in as_completed(future_to_phase):
+                phase, phase_start = future_to_phase[future]
+                elapsed = time.monotonic() - phase_start
+                source = self._determine_source(phase)
+
+                try:
+                    result, error = future.result()
+                    if error:
+                        phase_timings[phase] = (elapsed, source)
+                        self._report_progress(phase, "failed", elapsed, error=str(error))
+                        logger.error(
+                            "Failed to collect %s for %s: %s",
+                            phase.value,
+                            cluster_name,
+                            error,
+                        )
+                        errors.append((phase, error))
+                    else:
+                        results[phase.value] = result
+                        phase_timings[phase] = (elapsed, source)
+                        self._report_progress(phase, "completed", elapsed, source=source)
+                        logger.debug(
+                            "Collected %s for %s in %.2fs via %s",
+                            phase.value,
+                            cluster_name,
+                            elapsed,
+                            source or "unknown",
+                        )
+                except Exception as e:
+                    phase_timings[phase] = (elapsed, source)
+                    self._report_progress(phase, "failed", elapsed, error=str(e))
+                    logger.error(
+                        "Failed to collect %s for %s: %s",
+                        phase.value,
+                        cluster_name,
+                        e,
+                        exc_info=True,
+                    )
+                    errors.append((phase, e))
+
+        # Wait for SSH connection thread if it was started
+        if ssh_connect_thread and ssh_connect_thread.is_alive():
+            ssh_connect_thread.join(timeout=1.0)
+
+        # If any phase failed, raise the first error
+        if errors:
+            first_phase, first_error = errors[0]
+            raise CollectionError(
+                f"Collection failed for phase {first_phase.value}: {first_error}"
+            ) from first_error
+
+        return results
+
+    def _run_phase_safe(
+        self, phase: CollectionPhase, collect_method: Callable[[], Any]
+    ) -> tuple[Any, Exception | None]:
+        """Run a collection phase safely, catching exceptions.
+
+        Args:
+            phase: The collection phase.
+            collect_method: The method to call for collection.
+
+        Returns:
+            Tuple of (result, error) - error is None on success.
+        """
+        try:
+            result = collect_method()
+            return result, None
+        except Exception as e:
+            logger.debug("Phase %s failed: %s", phase.value, e)
+            return None, e
+
+    def _connect_ssh_early(self) -> None:
+        """Establish SSH connection early to reduce latency.
+
+        Called in a background thread to overlap with API calls.
+        """
+        if self.cli_client:
+            try:
+                logger.debug("Establishing early SSH connection")
+                self.cli_client.connect()
+                logger.debug("Early SSH connection established")
+            except Exception as e:
+                logger.debug("Early SSH connection failed (will retry later): %s", e)
 
     def _determine_source(self, phase: CollectionPhase) -> str | None:
         """Determine which data source is available for a phase.
@@ -445,8 +649,10 @@ class MetadataCollector:
             logger.debug("No API client available for cluster info collection")
             return ClusterInfo()
 
-        logger.debug("API call: GET /cluster?fields=*")
-        response = self.api_client.call_endpoint("/cluster?fields=*", method="GET")
+        response = self._cached_api_call("/cluster?fields=*")
+        if not response:
+            return ClusterInfo()
+
         logger.debug("API response: cluster=%s", response.get("name", "unknown"))
         return ClusterInfo(
             cluster_name=response.get("name", ""),
@@ -512,8 +718,11 @@ class MetadataCollector:
             logger.debug("No API client available for nodes collection")
             return []
 
-        logger.debug("API call: GET /cluster/nodes?fields=*")
-        response = self.api_client.call_endpoint("/cluster/nodes?fields=*", method="GET")
+        # Use cached API call to avoid duplicate requests (also used by HA collection)
+        response = self._cached_api_call("/cluster/nodes?fields=*")
+        if not response:
+            return []
+
         logger.debug("API response: %d nodes", len(response.get("records", [])))
         nodes = []
         for record in response.get("records", []):
@@ -584,6 +793,8 @@ class MetadataCollector:
     def _collect_network_via_api(self) -> NetworkInfo:
         """Collect network info using REST API.
 
+        Makes parallel API calls for improved performance.
+
         Returns:
             NetworkInfo from various network endpoints.
         """
@@ -591,11 +802,25 @@ class MetadataCollector:
             logger.debug("No API client available for network collection")
             return NetworkInfo()
 
-        # Collect LIFs
-        logger.debug("API call: GET /network/ip/interfaces?fields=*")
-        lifs_response = self.api_client.call_endpoint(
-            "/network/ip/interfaces?fields=*", method="GET"
-        )
+        # Make all 3 API calls in parallel using cached calls
+        endpoints = [
+            "/network/ip/interfaces?fields=*",
+            "/network/ethernet/broadcast-domains?fields=*",
+            "/network/ipspaces?fields=*",
+        ]
+
+        if self.parallel:
+            with ThreadPoolExecutor(max_workers=3) as executor:
+                futures = {executor.submit(self._cached_api_call, ep): ep for ep in endpoints}
+                responses: dict[str, Any] = {}
+                for future in as_completed(futures):
+                    ep = futures[future]
+                    responses[ep] = future.result()
+        else:
+            responses = {ep: self._cached_api_call(ep) for ep in endpoints}
+
+        # Process LIFs response
+        lifs_response = responses.get(endpoints[0]) or {}
         logger.debug("API response: %d LIFs", len(lifs_response.get("records", [])))
         intercluster_lifs = []
         data_lifs = []
@@ -625,11 +850,8 @@ class MetadataCollector:
             else:
                 management_lifs.append(lif)
 
-        # Collect broadcast domains
-        logger.debug("API call: GET /network/ethernet/broadcast-domains?fields=*")
-        bd_response = self.api_client.call_endpoint(
-            "/network/ethernet/broadcast-domains?fields=*", method="GET"
-        )
+        # Process broadcast domains response
+        bd_response = responses.get(endpoints[1]) or {}
         logger.debug("API response: %d broadcast domains", len(bd_response.get("records", [])))
         broadcast_domains = []
         for record in bd_response.get("records", []):
@@ -641,9 +863,8 @@ class MetadataCollector:
             )
             broadcast_domains.append(bd)
 
-        # Collect IPspaces
-        logger.debug("API call: GET /network/ipspaces?fields=*")
-        ipspace_response = self.api_client.call_endpoint("/network/ipspaces?fields=*", method="GET")
+        # Process IPspaces response
+        ipspace_response = responses.get(endpoints[2]) or {}
         logger.debug("API response: %d IPspaces", len(ipspace_response.get("records", [])))
         ipspaces = [r.get("name", "") for r in ipspace_response.get("records", [])]
 
@@ -728,6 +949,8 @@ class MetadataCollector:
     def _collect_storage_via_api(self) -> StorageInfo:
         """Collect storage info using REST API.
 
+        Makes parallel API calls for improved performance.
+
         Returns:
             StorageInfo from aggregate, SVM, and cloud target endpoints.
         """
@@ -735,9 +958,36 @@ class MetadataCollector:
             logger.debug("No API client available for storage collection")
             return StorageInfo()
 
-        # Collect aggregates
-        logger.debug("API call: GET /storage/aggregates?fields=*")
-        aggr_response = self.api_client.call_endpoint("/storage/aggregates?fields=*", method="GET")
+        # Make all 3 API calls in parallel using cached calls
+        endpoints = [
+            "/storage/aggregates?fields=*",
+            "/svm/svms?fields=*",
+            "/cloud/targets?fields=*",
+        ]
+
+        def safe_api_call(endpoint: str) -> Any:
+            """Make API call, returning None on failure for optional endpoints."""
+            try:
+                return self._cached_api_call(endpoint)
+            except Exception as e:
+                # Cloud targets may not exist on older ONTAP versions
+                if "cloud/targets" in endpoint:
+                    logger.debug("Cloud targets endpoint not available: %s", e)
+                    return None
+                raise
+
+        if self.parallel:
+            with ThreadPoolExecutor(max_workers=3) as executor:
+                futures = {executor.submit(safe_api_call, ep): ep for ep in endpoints}
+                responses: dict[str, Any] = {}
+                for future in as_completed(futures):
+                    ep = futures[future]
+                    responses[ep] = future.result()
+        else:
+            responses = {ep: safe_api_call(ep) for ep in endpoints}
+
+        # Process aggregates response
+        aggr_response = responses.get(endpoints[0]) or {}
         logger.debug("API response: %d aggregates", len(aggr_response.get("records", [])))
         aggregates = []
         for record in aggr_response.get("records", []):
@@ -751,9 +1001,8 @@ class MetadataCollector:
             )
             aggregates.append(aggr)
 
-        # Collect SVMs
-        logger.debug("API call: GET /svm/svms?fields=*")
-        svm_response = self.api_client.call_endpoint("/svm/svms?fields=*", method="GET")
+        # Process SVMs response
+        svm_response = responses.get(endpoints[1]) or {}
         logger.debug("API response: %d SVMs", len(svm_response.get("records", [])))
         svms = []
         for record in svm_response.get("records", []):
@@ -764,30 +1013,24 @@ class MetadataCollector:
             )
             svms.append(svm)
 
-        # Collect cloud targets
-        cloud_targets = self._collect_cloud_targets_via_api()
+        # Process cloud targets response
+        cloud_targets = self._parse_cloud_targets_response(responses.get(endpoints[2]))
 
         return StorageInfo(aggregates=aggregates, svms=svms, cloud_targets=cloud_targets)
 
-    def _collect_cloud_targets_via_api(self) -> list[CloudTargetInfo]:
-        """Collect cloud object store targets using REST API.
+    def _parse_cloud_targets_response(self, response: Any) -> list[CloudTargetInfo]:
+        """Parse cloud targets API response.
+
+        Args:
+            response: API response dict or None.
 
         Returns:
-            List of CloudTargetInfo from /cloud/targets endpoint (ONTAP 9.6+).
+            List of CloudTargetInfo objects.
         """
-        if not self.api_client:
-            logger.debug("No API client available for cloud targets collection")
+        if not response:
             return []
 
-        try:
-            logger.debug("API call: GET /cloud/targets?fields=*")
-            response = self.api_client.call_endpoint("/cloud/targets?fields=*", method="GET")
-            logger.debug("API response: %d cloud targets", len(response.get("records", [])))
-        except Exception as e:
-            # Endpoint may not exist on older ONTAP versions or non-cloud systems
-            logger.debug("Cloud targets endpoint not available: %s", e)
-            return []
-
+        logger.debug("API response: %d cloud targets", len(response.get("records", [])))
         cloud_targets = []
         for record in response.get("records", []):
             target = CloudTargetInfo(
@@ -921,10 +1164,10 @@ class MetadataCollector:
             logger.debug("No API client available for license collection")
             return LicenseInfo()
 
-        logger.debug("API call: GET /cluster/licensing/licenses?fields=*")
-        response = self.api_client.call_endpoint(
-            "/cluster/licensing/licenses?fields=*", method="GET"
-        )
+        response = self._cached_api_call("/cluster/licensing/licenses?fields=*")
+        if not response:
+            return LicenseInfo()
+
         logger.debug("API response: %d licenses", len(response.get("records", [])))
         feature_licenses = []
         capacity_licenses = []
@@ -1008,27 +1251,27 @@ class MetadataCollector:
             logger.debug("No API client available for HA info collection")
             return HAInfo()
 
-        logger.debug("API call: GET /cluster/nodes?fields=*")
-        nodes_response = self.api_client.call_endpoint("/cluster/nodes?fields=*", method="GET")
-        logger.debug("API response: %d nodes", len(nodes_response.get("records", [])))
+        # Use cached API call (same endpoint as nodes collection)
+        nodes_response = self._cached_api_call("/cluster/nodes?fields=*")
+        if not nodes_response:
+            return HAInfo()
+
+        logger.debug("API response: %d nodes (from cache)", len(nodes_response.get("records", [])))
 
         # Check if HA is configured
         ha_configured = len(nodes_response.get("records", [])) > 1
 
-        # Try to get mediator info for cloud HA
+        # Try to get mediator info for cloud HA (use cached call)
         mediator_address = ""
         mediator_status = ""
-        # Mediator endpoint may not exist on all clusters
-        logger.debug("API call: GET /cluster/mediators?fields=*")
         try:
-            mediator_response = self.api_client.call_endpoint(
-                "/cluster/mediators?fields=*", method="GET"
-            )
-            mediators = mediator_response.get("records", [])
-            logger.debug("API response: %d mediators", len(mediators))
-            if mediators:
-                mediator_address = mediators[0].get("ip_address", "")
-                mediator_status = mediators[0].get("reachable", "")
+            mediator_response = self._cached_api_call("/cluster/mediators?fields=*")
+            if mediator_response:
+                mediators = mediator_response.get("records", [])
+                logger.debug("API response: %d mediators", len(mediators))
+                if mediators:
+                    mediator_address = mediators[0].get("ip_address", "")
+                    mediator_status = mediators[0].get("reachable", "")
         except Exception as e:
             logger.debug("Mediator endpoint not available: %s", e)
 
@@ -1090,6 +1333,8 @@ class MetadataCollector:
     def _collect_relationships_via_api(self) -> RelationshipsInfo:
         """Collect relationships using REST API.
 
+        Makes parallel API calls for improved performance.
+
         Returns:
             RelationshipsInfo from snapmirror and cluster peer endpoints.
         """
@@ -1097,11 +1342,24 @@ class MetadataCollector:
             logger.debug("No API client available for relationships collection")
             return RelationshipsInfo()
 
-        # Collect SnapMirror relationships
-        logger.debug("API call: GET /snapmirror/relationships?fields=*")
-        sm_response = self.api_client.call_endpoint(
-            "/snapmirror/relationships?fields=*", method="GET"
-        )
+        # Make both API calls in parallel using cached calls
+        endpoints = [
+            "/snapmirror/relationships?fields=*",
+            "/cluster/peers?fields=*",
+        ]
+
+        if self.parallel:
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                futures = {executor.submit(self._cached_api_call, ep): ep for ep in endpoints}
+                responses: dict[str, Any] = {}
+                for future in as_completed(futures):
+                    ep = futures[future]
+                    responses[ep] = future.result()
+        else:
+            responses = {ep: self._cached_api_call(ep) for ep in endpoints}
+
+        # Process SnapMirror relationships
+        sm_response = responses.get(endpoints[0]) or {}
         logger.debug(
             "API response: %d SnapMirror relationships",
             len(sm_response.get("records", [])),
@@ -1118,9 +1376,8 @@ class MetadataCollector:
             )
             snapmirror_destinations.append(sm)
 
-        # Collect cluster peers
-        logger.debug("API call: GET /cluster/peers?fields=*")
-        peer_response = self.api_client.call_endpoint("/cluster/peers?fields=*", method="GET")
+        # Process cluster peers
+        peer_response = responses.get(endpoints[1]) or {}
         logger.debug("API response: %d cluster peers", len(peer_response.get("records", [])))
         cluster_peers = []
         for record in peer_response.get("records", []):
