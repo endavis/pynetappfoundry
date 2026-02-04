@@ -117,8 +117,7 @@ class TestCloudMetadataCollection:
         result = collector.collect_cloud_metadata()
 
         assert len(result) == 1
-        assert "console.aws.amazon.com" in result[0].instance_link
-        assert "us-east-1" in result[0].instance_link
+        assert result[0].instance_link.startswith("https://us-east-1.console.aws.amazon.com/")
         assert "i-0abc123def456" in result[0].instance_link
         # AWS doesn't have resource groups
         assert result[0].resource_group_link == ""
@@ -132,13 +131,13 @@ class TestCloudMetadataCollection:
         result = collector.collect_cloud_metadata()
 
         assert len(result) == 1
-        # Instance link should contain portal URL and resource details
-        assert "portal.azure.com" in result[0].instance_link
+        # Instance link should start with portal URL and contain resource details
+        assert result[0].instance_link.startswith("https://portal.azure.com/")
         assert "sub-12345" in result[0].instance_link
         assert "rg-storage" in result[0].instance_link
         assert "azure-vm-123" in result[0].instance_link
-        # Resource group link should contain portal URL and resource group
-        assert "portal.azure.com" in result[0].resource_group_link
+        # Resource group link should start with portal URL and contain resource group
+        assert result[0].resource_group_link.startswith("https://portal.azure.com/")
         assert "sub-12345" in result[0].resource_group_link
         assert "rg-storage" in result[0].resource_group_link
 
