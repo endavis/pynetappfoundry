@@ -267,7 +267,51 @@ nf cache clear --all
 
 # Clear without confirmation
 nf cache clear --all -f
+
+# Query cloud console links
+nf cache query cluster1 cloud[0].instance_link
+
+# Query AWS SSO link (requires aws.toml config)
+nf cache query cluster1 cloud[0].instance_sso_link
+
+# Query Azure resource group link
+nf cache query cluster1 cloud[0].resource_group_link
 ```
+
+### Cloud Resource Links
+
+The cache includes computed URL fields for quick access to cloud provider consoles:
+
+| Field | Description |
+|-------|-------------|
+| `cloud[*].instance_link` | Direct URL to the instance in AWS EC2 or Azure portal |
+| `cloud[*].instance_sso_link` | AWS SSO shortcut URL with account context (AWS only) |
+| `cloud[*].resource_group_link` | URL to the Azure resource group (Azure only) |
+
+#### AWS SSO Configuration
+
+To enable SSO shortcut links that include account context, create `config/aws.toml`:
+
+```toml
+[sso]
+subdomain = "mycompany"  # -> mycompany.awsapps.com
+
+[sso.account_roles]
+"123456789012" = "ProdAdminAccess"
+"234567890123" = "DevReadOnly"
+```
+
+The `account_roles` mapping associates AWS account IDs with SSO role names. Account IDs are discovered automatically during cache refresh.
+
+### Cache Schema Changes
+
+When the cache schema is updated (e.g., new fields added):
+
+- **Existing cache data remains valid** - Pydantic fills in default values for new fields
+- **No clear required** - Old entries continue to work
+- **Refresh required for new data** - Run `nf cache refresh <cluster>` to populate new fields
+
+New fields will have empty/default values until the cluster is refreshed.
 
 ## Environment Variables
 

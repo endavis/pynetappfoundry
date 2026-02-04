@@ -70,6 +70,7 @@ class TestCloudMetadataCollection:
         return [
             "Node: cvo-node1",
             "    Instance ID: azure-vm-123",
+            "    Account ID: sub-12345",
             "    Provider: Azure",
             "    Region: eastus",
             "    Fault Domain: 0",
@@ -106,6 +107,102 @@ class TestCloudMetadataCollection:
         assert result[0].provider == "Azure"
         assert result[0].fault_domain == "0"
         assert result[0].resource_group_name == "rg-storage"
+
+    def test_aws_instance_link_populated(self, mock_vm_instance_output_aws: list[str]) -> None:
+        """Test that AWS instance_link is populated correctly."""
+        cli_client = MagicMock()
+        cli_client.run_command.return_value = mock_vm_instance_output_aws
+
+        collector = MetadataCollector(cli_client=cli_client)
+        result = collector.collect_cloud_metadata()
+
+        assert len(result) == 1
+        assert result[0].instance_link.startswith("https://us-east-1.console.aws.amazon.com/")
+        assert "i-0abc123def456" in result[0].instance_link
+        # AWS doesn't have resource groups
+        assert result[0].resource_group_link == ""
+
+    def test_azure_links_populated(self, mock_vm_instance_output_azure: list[str]) -> None:
+        """Test that Azure instance_link and resource_group_link are populated."""
+        cli_client = MagicMock()
+        cli_client.run_command.return_value = mock_vm_instance_output_azure
+
+        collector = MetadataCollector(cli_client=cli_client)
+        result = collector.collect_cloud_metadata()
+
+        assert len(result) == 1
+        # Instance link should start with portal URL and contain resource details
+        assert result[0].instance_link.startswith("https://portal.azure.com/")
+        assert "sub-12345" in result[0].instance_link
+        assert "rg-storage" in result[0].instance_link
+        assert "azure-vm-123" in result[0].instance_link
+        # Resource group link should start with portal URL and contain resource group
+        assert result[0].resource_group_link.startswith("https://portal.azure.com/")
+        assert "sub-12345" in result[0].resource_group_link
+        assert "rg-storage" in result[0].resource_group_link
+
+    def test_aws_sso_link_populated_with_config(self) -> None:
+        """Test that AWS instance_sso_link is populated when SSO config provided."""
+        cli_client = MagicMock()
+        cli_client.run_command.return_value = [
+            "Node: cvo-node1",
+            "    Instance ID: i-0abc123def456",
+            "    Account ID: 123456789012",
+            "    Instance Type: m5.2xlarge",
+            "    Region: us-east-1",
+            "    Provider: AWS",
+        ]
+        sso_config = {
+            "subdomain": "mycompany",
+            "account_roles": {"123456789012": "AdminAccess"},
+        }
+
+        collector = MetadataCollector(cli_client=cli_client, aws_sso_config=sso_config)
+        result = collector.collect_cloud_metadata()
+
+        assert len(result) == 1
+        assert result[0].instance_sso_link.startswith("https://mycompany.awsapps.com/start/")
+        assert "account_id=123456789012" in result[0].instance_sso_link
+        assert "role_name=AdminAccess" in result[0].instance_sso_link
+
+    def test_aws_sso_link_empty_without_config(self) -> None:
+        """Test that AWS instance_sso_link is empty when no SSO config."""
+        cli_client = MagicMock()
+        cli_client.run_command.return_value = [
+            "Node: cvo-node1",
+            "    Instance ID: i-0abc123def456",
+            "    Account ID: 123456789012",
+            "    Provider: AWS",
+            "    Region: us-east-1",
+        ]
+
+        collector = MetadataCollector(cli_client=cli_client)  # No SSO config
+        result = collector.collect_cloud_metadata()
+
+        assert len(result) == 1
+        assert result[0].instance_sso_link == ""
+
+    def test_azure_sso_link_always_empty(self) -> None:
+        """Test that Azure instance_sso_link is always empty (SSO not applicable)."""
+        cli_client = MagicMock()
+        cli_client.run_command.return_value = [
+            "Node: cvo-node1",
+            "    Instance ID: azure-vm-123",
+            "    Account ID: sub-12345",
+            "    Provider: Azure",
+            "    Region: eastus",
+            "    Resource Group Name: rg-storage",
+        ]
+        sso_config = {
+            "subdomain": "mycompany",
+            "account_roles": {"sub-12345": "SomeRole"},
+        }
+
+        collector = MetadataCollector(cli_client=cli_client, aws_sso_config=sso_config)
+        result = collector.collect_cloud_metadata()
+
+        assert len(result) == 1
+        assert result[0].instance_sso_link == ""
 
     def test_collect_cloud_metadata_ha_cluster(self) -> None:
         """Test collecting cloud metadata from HA cluster with two nodes."""
