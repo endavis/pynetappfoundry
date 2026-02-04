@@ -3,6 +3,7 @@
 import click
 
 from pynetappfoundry.cli.commands.cache.clear import clear
+from pynetappfoundry.cli.commands.cache.query import query
 from pynetappfoundry.cli.commands.cache.refresh import refresh
 from pynetappfoundry.cli.commands.cache.show import show
 from pynetappfoundry.cli.commands.cache.status import status
@@ -22,6 +23,7 @@ def cache() -> None:
 
 
 cache.add_command(clear)
+cache.add_command(query)
 cache.add_command(refresh)
 cache.add_command(show)
 cache.add_command(status)
