@@ -171,6 +171,8 @@ class CloudTargetInfo(BaseModel):
     authentication_type: str = ""  # key, cap, etc.
     ipspace: str = ""
     snapmirror_use: str = ""
+    access_key: str = ""  # AWS/S3 access key ID
+    azure_account: str = ""  # Azure account name
 
 
 class StorageInfo(BaseModel):
