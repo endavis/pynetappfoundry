@@ -1,0 +1,30 @@
+# AWS Configuration
+# This file contains AWS-specific settings for cloud console links and SSO integration.
+
+# =============================================================================
+# AWS IAM Identity Center (SSO) Configuration
+# =============================================================================
+# These settings enable SSO shortcut links that include account context.
+# When configured, the cache will include instance_sso_link fields that
+# sign you into the correct AWS account before navigating to the resource.
+#
+# See: https://docs.aws.amazon.com/singlesignon/latest/userguide/createshortcutlink.html
+
+[sso]
+# Your AWS SSO portal subdomain (e.g., 'mycompany' for mycompany.awsapps.com)
+subdomain = "mycompany"
+
+# Mapping of AWS account IDs to SSO role/permission set names.
+# Each account can have a different role based on your access permissions.
+# The account_id is discovered automatically during cache refresh.
+[sso.account_roles]
+# Production accounts
+"123456789012" = "ProdAdminAccess"
+"234567890123" = "ProdReadOnly"
+
+# Development accounts
+"345678901234" = "DevFullAccess"
+"456789012345" = "DevReadOnly"
+
+# DR/Standby accounts
+"567890123456" = "DRAccess"

@@ -33,6 +33,11 @@ from pynetappfoundry.cache.models import (
     StorageInfo,
     SVMInfo,
 )
+from pynetappfoundry.utils.cloud import (
+    build_cloud_instance_link,
+    build_cloud_instance_sso_link,
+    build_cloud_resource_group_link,
+)
 
 if TYPE_CHECKING:
     from pynetappfoundry.clients.ontap.api import ONTAPAPIClient
@@ -100,6 +105,7 @@ class MetadataCollector:
         api_client: ONTAPAPIClient | None = None,
         cli_client: ONTAPCLI | None = None,
         progress_callback: ProgressCallback | None = None,
+        aws_sso_config: dict[str, str | dict[str, str]] | None = None,
     ) -> None:
         """Initialize the metadata collector.
 
@@ -107,10 +113,14 @@ class MetadataCollector:
             api_client: ONTAP REST API client.
             cli_client: ONTAP CLI (SSH) client.
             progress_callback: Optional callback for progress updates.
+            aws_sso_config: Optional AWS SSO configuration with:
+                - 'subdomain': SSO portal subdomain (e.g., 'mycompany')
+                - 'account_roles': dict mapping account_id to role_name
         """
         self.api_client = api_client
         self.cli_client = cli_client
         self.progress_callback = progress_callback
+        self.aws_sso_config = aws_sso_config
 
     def _report_progress(
         self,
@@ -331,15 +341,41 @@ class MetadataCollector:
         Returns:
             CloudMetadata object.
         """
+        provider = data.get("provider", "")
+        instance_id = data.get("instance_id", "")
+        account_id = data.get("account_id", "")
+        resource_group = data.get("resource_group_name", "")
+        region = data.get("region", "") or data.get("availability_zone", "")
+
+        # Build cloud console links
+        instance_link = build_cloud_instance_link(
+            provider=provider,
+            instance_id=instance_id,
+            region=region,
+            account_id=account_id,
+            resource_group=resource_group,
+        )
+        instance_sso_link = build_cloud_instance_sso_link(
+            provider=provider,
+            instance_link=instance_link,
+            account_id=account_id,
+            sso_config=self.aws_sso_config,
+        )
+        resource_group_link = build_cloud_resource_group_link(
+            provider=provider,
+            account_id=account_id,
+            resource_group=resource_group,
+        )
+
         return CloudMetadata(
             node=node,
-            instance_id=data.get("instance_id", ""),
-            account_id=data.get("account_id", ""),
+            instance_id=instance_id,
+            account_id=account_id,
             image_id=data.get("image_id", ""),
             instance_type=data.get("instance_type", ""),
             cpu_platform=data.get("cpu_platform", ""),
             region=data.get("region", ""),
-            provider=data.get("provider", ""),
+            provider=provider,
             consumer=data.get("consumer", ""),
             primary_ip=data.get("primary_ip", ""),
             metadata_version=data.get("metadata_version", ""),
@@ -347,10 +383,13 @@ class MetadataCollector:
             availability_zone_id=data.get("availability_zone_id", ""),
             fault_domain=data.get("fault_domain", ""),
             update_domain=data.get("update_domain", ""),
-            resource_group_name=data.get("resource_group_name", ""),
+            resource_group_name=resource_group,
             offer=data.get("offer", ""),
             sku=data.get("sku", ""),
             sku_version=data.get("sku_version", ""),
+            instance_link=instance_link,
+            instance_sso_link=instance_sso_link,
+            resource_group_link=resource_group_link,
         )
 
     @staticmethod
