@@ -4,11 +4,14 @@ from __future__ import annotations
 
 from pynetappfoundry.utils.cloud import (
     AWS_CONSOLE_BASE_URL,
+    AWS_SSO_BASE_URL,
     AZURE_BASE_URL,
     build_aws_instance_link,
+    build_aws_sso_link,
     build_azure_id,
     build_azure_portal_link,
     build_cloud_instance_link,
+    build_cloud_instance_sso_link,
     build_cloud_resource_group_link,
     get_cloud_account_name,
     get_cloud_types,
@@ -181,3 +184,172 @@ class TestGetCloudTypes:
         result1.append("test")
         result2 = get_cloud_types()
         assert "test" not in result2
+
+
+class TestBuildAwsSsoLink:
+    """Tests for build_aws_sso_link."""
+
+    def test_builds_sso_shortcut_link(self) -> None:
+        """Test building AWS SSO shortcut link."""
+        destination = "https://us-east-1.console.aws.amazon.com/ec2/home?region=us-east-1"
+        result = build_aws_sso_link(
+            sso_subdomain="mycompany",
+            account_id="123456789012",
+            role_name="AdminAccess",
+            destination_url=destination,
+        )
+        assert result.startswith("https://mycompany.awsapps.com/start/#/console")
+        assert "account_id=123456789012" in result
+        assert "role_name=AdminAccess" in result
+        # Destination should be URL-encoded
+        assert "destination=" in result
+        assert "us-east-1" not in result.split("destination=")[0]  # encoded in destination
+
+    def test_url_encodes_destination(self) -> None:
+        """Test that destination URL is properly URL-encoded."""
+        destination = "https://console.aws.amazon.com/ec2?param=value&other=test"
+        result = build_aws_sso_link(
+            sso_subdomain="mycompany",
+            account_id="123456789012",
+            role_name="Admin",
+            destination_url=destination,
+        )
+        # The & and = should be encoded in the destination
+        assert "%3A" in result  # encoded colon
+        assert "%2F" in result  # encoded slash
+
+    def test_url_encodes_role_name_with_spaces(self) -> None:
+        """Test that role name with spaces is URL-encoded."""
+        result = build_aws_sso_link(
+            sso_subdomain="mycompany",
+            account_id="123456789012",
+            role_name="Admin Access Role",
+            destination_url="https://console.aws.amazon.com/",
+        )
+        assert "Admin%20Access%20Role" in result
+
+    def test_returns_empty_for_missing_subdomain(self) -> None:
+        """Test returns empty string when subdomain is missing."""
+        result = build_aws_sso_link(
+            sso_subdomain="",
+            account_id="123456789012",
+            role_name="Admin",
+            destination_url="https://console.aws.amazon.com/",
+        )
+        assert result == ""
+
+    def test_returns_empty_for_missing_account_id(self) -> None:
+        """Test returns empty string when account_id is missing."""
+        result = build_aws_sso_link(
+            sso_subdomain="mycompany",
+            account_id="",
+            role_name="Admin",
+            destination_url="https://console.aws.amazon.com/",
+        )
+        assert result == ""
+
+    def test_returns_empty_for_missing_role_name(self) -> None:
+        """Test returns empty string when role_name is missing."""
+        result = build_aws_sso_link(
+            sso_subdomain="mycompany",
+            account_id="123456789012",
+            role_name="",
+            destination_url="https://console.aws.amazon.com/",
+        )
+        assert result == ""
+
+    def test_returns_empty_for_missing_destination(self) -> None:
+        """Test returns empty string when destination_url is missing."""
+        result = build_aws_sso_link(
+            sso_subdomain="mycompany",
+            account_id="123456789012",
+            role_name="Admin",
+            destination_url="",
+        )
+        assert result == ""
+
+
+class TestBuildCloudInstanceSsoLink:
+    """Tests for build_cloud_instance_sso_link."""
+
+    def test_builds_aws_sso_link_with_config(self) -> None:
+        """Test building AWS SSO link when config is provided."""
+        sso_config = {
+            "subdomain": "mycompany",
+            "account_roles": {"123456789012": "AdminAccess"},
+        }
+        instance_link = "https://us-east-1.console.aws.amazon.com/ec2/home"
+        result = build_cloud_instance_sso_link(
+            provider="AWS",
+            instance_link=instance_link,
+            account_id="123456789012",
+            sso_config=sso_config,
+        )
+        assert result.startswith("https://mycompany.awsapps.com/start/#/console")
+        assert "account_id=123456789012" in result
+        assert "role_name=AdminAccess" in result
+
+    def test_returns_empty_for_aws_without_config(self) -> None:
+        """Test returns empty string for AWS when no SSO config."""
+        result = build_cloud_instance_sso_link(
+            provider="AWS",
+            instance_link="https://console.aws.amazon.com/",
+            account_id="123456789012",
+            sso_config=None,
+        )
+        assert result == ""
+
+    def test_returns_empty_for_azure(self) -> None:
+        """Test returns empty string for Azure (SSO not applicable)."""
+        sso_config = {
+            "subdomain": "mycompany",
+            "account_roles": {"123456789012": "Admin"},
+        }
+        result = build_cloud_instance_sso_link(
+            provider="Azure",
+            instance_link="https://portal.azure.com/",
+            account_id="sub-123",
+            sso_config=sso_config,
+        )
+        assert result == ""
+
+    def test_returns_empty_for_missing_account_role(self) -> None:
+        """Test returns empty string when account has no role mapping."""
+        sso_config = {
+            "subdomain": "mycompany",
+            "account_roles": {"999999999999": "OtherRole"},  # Different account
+        }
+        result = build_cloud_instance_sso_link(
+            provider="AWS",
+            instance_link="https://console.aws.amazon.com/",
+            account_id="123456789012",
+            sso_config=sso_config,
+        )
+        assert result == ""
+
+    def test_returns_empty_for_missing_subdomain(self) -> None:
+        """Test returns empty string when subdomain is missing from config."""
+        sso_config = {
+            "account_roles": {"123456789012": "Admin"},
+        }
+        result = build_cloud_instance_sso_link(
+            provider="AWS",
+            instance_link="https://console.aws.amazon.com/",
+            account_id="123456789012",
+            sso_config=sso_config,
+        )
+        assert result == ""
+
+    def test_handles_lowercase_provider(self) -> None:
+        """Test handles lowercase provider name."""
+        sso_config = {
+            "subdomain": "mycompany",
+            "account_roles": {"123456789012": "Admin"},
+        }
+        result = build_cloud_instance_sso_link(
+            provider="aws",
+            instance_link="https://console.aws.amazon.com/",
+            account_id="123456789012",
+            sso_config=sso_config,
+        )
+        assert AWS_SSO_BASE_URL in result

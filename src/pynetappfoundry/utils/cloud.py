@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+from urllib.parse import quote
+
 AZURE_BASE_URL = "https://portal.azure.com/#resource"
 AWS_CONSOLE_BASE_URL = "console.aws.amazon.com"
+AWS_SSO_BASE_URL = "awsapps.com/start"
 
 AZURE_PROVIDER_TYPES: dict[str, str] = {
     "vm": "Microsoft.Compute/virtualMachines",
@@ -147,3 +150,77 @@ def build_cloud_resource_group_link(
         return build_azure_portal_link(resource_id)
     # AWS doesn't have resource groups in the same way
     return ""
+
+
+def build_aws_sso_link(
+    sso_subdomain: str,
+    account_id: str,
+    role_name: str,
+    destination_url: str,
+) -> str:
+    """Build an AWS IAM Identity Center (SSO) shortcut link.
+
+    Creates a URL that signs the user into the specified AWS account with
+    the given role and redirects to the destination URL.
+
+    See: https://docs.aws.amazon.com/singlesignon/latest/userguide/createshortcutlink.html
+
+    Args:
+        sso_subdomain: SSO portal subdomain (e.g., 'mycompany' for mycompany.awsapps.com).
+        account_id: AWS account ID.
+        role_name: SSO permission set / role name.
+        destination_url: The destination URL to redirect to after sign-in.
+
+    Returns:
+        Full AWS SSO shortcut URL, or empty string if required params are missing.
+    """
+    if not sso_subdomain or not account_id or not role_name or not destination_url:
+        return ""
+
+    encoded_destination = quote(destination_url, safe="")
+    return (
+        f"https://{sso_subdomain}.{AWS_SSO_BASE_URL}/#/console"
+        f"?account_id={account_id}"
+        f"&role_name={quote(role_name, safe='')}"
+        f"&destination={encoded_destination}"
+    )
+
+
+def build_cloud_instance_sso_link(
+    provider: str,
+    instance_link: str,
+    account_id: str,
+    sso_config: dict[str, str | dict[str, str]] | None = None,
+) -> str:
+    """Build an SSO-enabled cloud console URL for an instance.
+
+    For AWS, wraps the instance_link in an SSO shortcut URL if SSO config
+    is provided. For other providers, returns empty string (SSO not applicable).
+
+    Args:
+        provider: Cloud provider name (AWS, Azure, etc.).
+        instance_link: The basic console URL for the instance.
+        account_id: AWS account ID.
+        sso_config: Optional SSO configuration dict with:
+            - 'subdomain': SSO portal subdomain
+            - 'account_roles': dict mapping account_id to role_name
+
+    Returns:
+        SSO shortcut URL for AWS, or empty string if not applicable/configured.
+    """
+    if not sso_config or provider.lower() != "aws":
+        return ""
+
+    subdomain = sso_config.get("subdomain", "")
+    if not subdomain or not isinstance(subdomain, str):
+        return ""
+
+    account_roles = sso_config.get("account_roles", {})
+    if not isinstance(account_roles, dict):
+        return ""
+
+    role_name = account_roles.get(account_id, "")
+    if not role_name:
+        return ""
+
+    return build_aws_sso_link(subdomain, account_id, role_name, instance_link)

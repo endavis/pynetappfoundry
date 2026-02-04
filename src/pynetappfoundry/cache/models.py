@@ -44,6 +44,7 @@ class CloudMetadata(BaseModel):
     sku_version: str = ""
     # Resource links (computed from other fields)
     instance_link: str = ""  # URL to cloud console for this instance
+    instance_sso_link: str = ""  # URL to cloud console via AWS SSO (AWS only)
     resource_group_link: str = ""  # URL to cloud console for resource group (Azure)
 
 

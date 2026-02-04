@@ -35,6 +35,7 @@ from pynetappfoundry.cache.models import (
 )
 from pynetappfoundry.utils.cloud import (
     build_cloud_instance_link,
+    build_cloud_instance_sso_link,
     build_cloud_resource_group_link,
 )
 
@@ -104,6 +105,7 @@ class MetadataCollector:
         api_client: ONTAPAPIClient | None = None,
         cli_client: ONTAPCLI | None = None,
         progress_callback: ProgressCallback | None = None,
+        aws_sso_config: dict[str, str | dict[str, str]] | None = None,
     ) -> None:
         """Initialize the metadata collector.
 
@@ -111,10 +113,14 @@ class MetadataCollector:
             api_client: ONTAP REST API client.
             cli_client: ONTAP CLI (SSH) client.
             progress_callback: Optional callback for progress updates.
+            aws_sso_config: Optional AWS SSO configuration with:
+                - 'subdomain': SSO portal subdomain (e.g., 'mycompany')
+                - 'account_roles': dict mapping account_id to role_name
         """
         self.api_client = api_client
         self.cli_client = cli_client
         self.progress_callback = progress_callback
+        self.aws_sso_config = aws_sso_config
 
     def _report_progress(
         self,
@@ -349,6 +355,12 @@ class MetadataCollector:
             account_id=account_id,
             resource_group=resource_group,
         )
+        instance_sso_link = build_cloud_instance_sso_link(
+            provider=provider,
+            instance_link=instance_link,
+            account_id=account_id,
+            sso_config=self.aws_sso_config,
+        )
         resource_group_link = build_cloud_resource_group_link(
             provider=provider,
             account_id=account_id,
@@ -376,6 +388,7 @@ class MetadataCollector:
             sku=data.get("sku", ""),
             sku_version=data.get("sku_version", ""),
             instance_link=instance_link,
+            instance_sso_link=instance_sso_link,
             resource_group_link=resource_group_link,
         )
 
