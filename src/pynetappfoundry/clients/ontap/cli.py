@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import threading
 import time
 from typing import Any
 
@@ -96,19 +97,25 @@ class ONTAPCLI:
 
         self.pkey: paramiko.RSAKey | None = None
         self.log_prefix = f"[{name}:ssh]"
+        self._connect_lock = threading.Lock()
 
     def connect(self) -> None:
-        """Connect to the server via SSH."""
-        transport = self.ssh.get_transport()
-        if not transport or not transport.is_active():
-            logging.debug(f"{self.log_prefix} Connect: creating connection")
-            if self.pkey:
-                self.ssh.connect(self.host, username=self.username, pkey=self.pkey)
-            else:
-                self.ssh.connect(self.host, username=self.username, password=self.password)
+        """Connect to the server via SSH.
+
+        Thread-safe: uses a lock to prevent race conditions when multiple
+        threads attempt to connect simultaneously.
+        """
+        with self._connect_lock:
             transport = self.ssh.get_transport()
-            if transport:
-                transport.set_keepalive(5)
+            if not transport or not transport.is_active():
+                logging.debug(f"{self.log_prefix} Connect: creating connection")
+                if self.pkey:
+                    self.ssh.connect(self.host, username=self.username, pkey=self.pkey)
+                else:
+                    self.ssh.connect(self.host, username=self.username, password=self.password)
+                transport = self.ssh.get_transport()
+                if transport:
+                    transport.set_keepalive(5)
 
     def run_command_and_parse(
         self,
