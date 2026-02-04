@@ -18,7 +18,13 @@ Usage:
     cached = db.get("mycluster")
 """
 
-from pynetappfoundry.cache.collector import CollectionError, MetadataCollector
+from pynetappfoundry.cache.collector import (
+    CollectionError,
+    CollectionPhase,
+    MetadataCollector,
+    ProgressCallback,
+    ProgressInfo,
+)
 from pynetappfoundry.cache.db import ClusterMetadataDB
 from pynetappfoundry.cache.models import (
     AggregateInfo,
@@ -50,6 +56,7 @@ __all__ = [
     "ClusterMetadataDB",
     "ClusterPeer",
     "CollectionError",
+    "CollectionPhase",
     "HAInfo",
     "LicenseFeature",
     "LicenseInfo",
@@ -57,6 +64,8 @@ __all__ = [
     "NetworkInfo",
     "NetworkLIF",
     "NodeInfo",
+    "ProgressCallback",
+    "ProgressInfo",
     "RelationshipsInfo",
     "SVMInfo",
     "SnapMirrorRelationship",
