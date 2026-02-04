@@ -7,7 +7,11 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from pynetappfoundry.cache.collector import MetadataCollector
+from pynetappfoundry.cache.collector import (
+    CollectionPhase,
+    MetadataCollector,
+    ProgressInfo,
+)
 from pynetappfoundry.cache.models import (
     CloudMetadata,
     HAInfo,
@@ -530,3 +534,165 @@ class TestNormalizeCliKey:
     def test_normalize_special_chars(self) -> None:
         """Test normalizing keys with special characters."""
         assert MetadataCollector._normalize_cli_key("Region (AWS)") == "region_aws"
+
+
+class TestProgressCallback:
+    """Tests for progress callback functionality."""
+
+    def test_init_with_progress_callback(self) -> None:
+        """Test initialization with progress callback."""
+        callback = MagicMock()
+        collector = MetadataCollector(progress_callback=callback)
+        assert collector.progress_callback is callback
+
+    def test_progress_callback_called_for_each_phase(self) -> None:
+        """Test that progress callback is called for each collection phase."""
+        api_client = MagicMock()
+        api_client.call_endpoint.return_value = {"records": []}
+
+        cli_client = MagicMock()
+        cli_client.run_command.return_value = []
+        cli_client.run_command_and_parse.return_value = {}
+
+        callback = MagicMock()
+        collector = MetadataCollector(
+            api_client=api_client, cli_client=cli_client, progress_callback=callback
+        )
+        collector.collect_all("test-cluster")
+
+        # Should have 8 phases * 2 calls (starting + completed) = 16 calls
+        assert callback.call_count == 16
+
+        # Verify callback was called with ProgressInfo objects
+        for call in callback.call_args_list:
+            info = call[0][0]
+            assert isinstance(info, ProgressInfo)
+            assert isinstance(info.phase, CollectionPhase)
+            assert info.status in ("starting", "completed", "failed")
+
+    def test_progress_callback_receives_correct_phases(self) -> None:
+        """Test that progress callback receives all expected phases."""
+        api_client = MagicMock()
+        api_client.call_endpoint.return_value = {"records": []}
+
+        cli_client = MagicMock()
+        cli_client.run_command.return_value = []
+        cli_client.run_command_and_parse.return_value = {}
+
+        received_phases: list[CollectionPhase] = []
+
+        def track_phases(info: ProgressInfo) -> None:
+            if info.status == "starting":
+                received_phases.append(info.phase)
+
+        collector = MetadataCollector(
+            api_client=api_client, cli_client=cli_client, progress_callback=track_phases
+        )
+        collector.collect_all("test-cluster")
+
+        expected_phases = [
+            CollectionPhase.CLOUD,
+            CollectionPhase.CLUSTER,
+            CollectionPhase.NODES,
+            CollectionPhase.NETWORK,
+            CollectionPhase.STORAGE,
+            CollectionPhase.LICENSES,
+            CollectionPhase.HA,
+            CollectionPhase.RELATIONSHIPS,
+        ]
+        assert received_phases == expected_phases
+
+    def test_progress_callback_elapsed_time(self) -> None:
+        """Test that progress callback receives elapsed time on completion."""
+        api_client = MagicMock()
+        api_client.call_endpoint.return_value = {"records": []}
+
+        cli_client = MagicMock()
+        cli_client.run_command.return_value = []
+        cli_client.run_command_and_parse.return_value = {}
+
+        elapsed_times: list[float] = []
+
+        def track_elapsed(info: ProgressInfo) -> None:
+            if info.status == "completed":
+                elapsed_times.append(info.elapsed_seconds)
+
+        collector = MetadataCollector(
+            api_client=api_client, cli_client=cli_client, progress_callback=track_elapsed
+        )
+        collector.collect_all("test-cluster")
+
+        # Should have 8 elapsed times (one per completed phase)
+        assert len(elapsed_times) == 8
+        # All should be non-negative
+        for elapsed in elapsed_times:
+            assert elapsed >= 0
+
+    def test_progress_callback_source_tracking(self) -> None:
+        """Test that progress callback receives correct source information."""
+        api_client = MagicMock()
+        api_client.call_endpoint.return_value = {"records": []}
+
+        cli_client = MagicMock()
+        cli_client.run_command.return_value = []
+        cli_client.run_command_and_parse.return_value = {}
+
+        sources: dict[CollectionPhase, str | None] = {}
+
+        def track_sources(info: ProgressInfo) -> None:
+            if info.status == "completed":
+                sources[info.phase] = info.source
+
+        collector = MetadataCollector(
+            api_client=api_client, cli_client=cli_client, progress_callback=track_sources
+        )
+        collector.collect_all("test-cluster")
+
+        # Cloud metadata should be from CLI
+        assert sources[CollectionPhase.CLOUD] == "cli"
+        # Other phases should be from API (since API client is provided)
+        assert sources[CollectionPhase.CLUSTER] == "api"
+        assert sources[CollectionPhase.NODES] == "api"
+
+    def test_progress_callback_none_no_error(self) -> None:
+        """Test that no callback (None) doesn't cause errors."""
+        api_client = MagicMock()
+        api_client.call_endpoint.return_value = {"records": []}
+
+        cli_client = MagicMock()
+        cli_client.run_command.return_value = []
+        cli_client.run_command_and_parse.return_value = {}
+
+        collector = MetadataCollector(
+            api_client=api_client, cli_client=cli_client, progress_callback=None
+        )
+        # Should not raise any errors
+        result = collector.collect_all("test-cluster")
+        assert result.cluster_name == "test-cluster"
+
+    def test_report_progress_with_no_callback(self) -> None:
+        """Test _report_progress does nothing when callback is None."""
+        collector = MetadataCollector()
+        # Should not raise any errors
+        collector._report_progress(CollectionPhase.CLOUD, "starting")
+
+
+class TestCollectionPhase:
+    """Tests for CollectionPhase enum."""
+
+    def test_all_phases_have_names(self) -> None:
+        """Test that all phases have human-readable names."""
+        for phase in CollectionPhase:
+            assert phase in MetadataCollector.PHASE_NAMES
+            assert len(MetadataCollector.PHASE_NAMES[phase]) > 0
+
+    def test_phase_values(self) -> None:
+        """Test CollectionPhase enum values."""
+        assert CollectionPhase.CLOUD.value == "cloud"
+        assert CollectionPhase.CLUSTER.value == "cluster"
+        assert CollectionPhase.NODES.value == "nodes"
+        assert CollectionPhase.NETWORK.value == "network"
+        assert CollectionPhase.STORAGE.value == "storage"
+        assert CollectionPhase.LICENSES.value == "licenses"
+        assert CollectionPhase.HA.value == "ha"
+        assert CollectionPhase.RELATIONSHIPS.value == "relationships"
