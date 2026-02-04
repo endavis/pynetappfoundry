@@ -528,3 +528,176 @@ enc = "cGFzc3dvcmQ="
         call_kwargs = mock_collector_class.call_args.kwargs
         assert "aws_sso_config" in call_kwargs
         assert call_kwargs["aws_sso_config"] is None
+
+
+class TestFilterOption:
+    """Tests for --filter option on cache refresh command."""
+
+    @pytest.fixture
+    def runner(self) -> CliRunner:
+        """Create a CLI runner."""
+        return CliRunner()
+
+    @pytest.fixture
+    def mock_config_dir_with_envs(self, tmp_path: Path) -> Path:
+        """Create a mock config directory with clusters in different environments."""
+        config_dir = tmp_path / "config"
+        config_dir.mkdir()
+        (config_dir / "settings.toml").write_text(
+            """
+[ontapapi]
+[ontapapi.general]
+base_api_path = "/api"
+timeout = 30.0
+
+[clusters]
+searchable_keys = ["env", "bu"]
+"""
+        )
+        # Create clusters in different environments
+        (config_dir / "clusters.toml").write_text(
+            """
+[settings]
+type = "data"
+
+[clusters.prod-cluster-1]
+ip = "10.0.0.1"
+env = "Prod"
+bu = "Finance"
+
+[clusters.prod-cluster-2]
+ip = "10.0.0.2"
+env = "Prod"
+bu = "IT"
+
+[clusters.dev-cluster-1]
+ip = "10.0.0.3"
+env = "Dev"
+bu = "Finance"
+"""
+        )
+        (config_dir / "users.toml").write_text(
+            """
+[clusters]
+user = "admin"
+enc = "cGFzc3dvcmQ="
+"""
+        )
+        return config_dir
+
+    def test_filter_without_all_shows_error(
+        self, runner: CliRunner, mock_config_dir_with_envs: Path
+    ) -> None:
+        """Test that --filter without --all shows an error."""
+        result = runner.invoke(
+            nf,
+            ["-c", str(mock_config_dir_with_envs), "cache", "refresh", "-f", '{"env": "Prod"}'],
+        )
+        assert result.exit_code != 0
+        assert "--filter can only be used with --all" in result.output
+
+    def test_filter_invalid_json_shows_error(
+        self, runner: CliRunner, mock_config_dir_with_envs: Path
+    ) -> None:
+        """Test that invalid JSON filter shows an error."""
+        result = runner.invoke(
+            nf,
+            ["-c", str(mock_config_dir_with_envs), "cache", "refresh", "--all", "-f", "not json"],
+        )
+        assert result.exit_code != 0
+        assert "Invalid filter JSON" in result.output
+
+    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPAPIClient")
+    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPCLI")
+    @patch("pynetappfoundry.cli.commands.cache.refresh.MetadataCollector")
+    @patch("pynetappfoundry.cli.commands.cache.refresh.ClusterMetadataDB")
+    def test_filter_by_env(
+        self,
+        mock_db_class: MagicMock,
+        mock_collector_class: MagicMock,
+        mock_cli_class: MagicMock,
+        mock_api_class: MagicMock,
+        runner: CliRunner,
+        mock_config_dir_with_envs: Path,
+    ) -> None:
+        """Test filtering clusters by environment."""
+        mock_db = MagicMock()
+        mock_db_class.return_value = mock_db
+
+        mock_collector = MagicMock()
+        mock_collector.collect_all.return_value = MagicMock()
+        mock_collector_class.return_value = mock_collector
+
+        result = runner.invoke(
+            nf,
+            [
+                "-c",
+                str(mock_config_dir_with_envs),
+                "cache",
+                "refresh",
+                "--all",
+                "-f",
+                '{"env": "Prod"}',
+            ],
+        )
+
+        assert result.exit_code == 0
+        # Should refresh 2 Prod clusters, not all 3
+        assert "2 cluster(s)" in result.output
+        assert mock_collector.collect_all.call_count == 2
+
+    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPAPIClient")
+    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPCLI")
+    @patch("pynetappfoundry.cli.commands.cache.refresh.MetadataCollector")
+    @patch("pynetappfoundry.cli.commands.cache.refresh.ClusterMetadataDB")
+    def test_filter_by_multiple_fields(
+        self,
+        mock_db_class: MagicMock,
+        mock_collector_class: MagicMock,
+        mock_cli_class: MagicMock,
+        mock_api_class: MagicMock,
+        runner: CliRunner,
+        mock_config_dir_with_envs: Path,
+    ) -> None:
+        """Test filtering clusters by multiple fields."""
+        mock_db = MagicMock()
+        mock_db_class.return_value = mock_db
+
+        mock_collector = MagicMock()
+        mock_collector.collect_all.return_value = MagicMock()
+        mock_collector_class.return_value = mock_collector
+
+        result = runner.invoke(
+            nf,
+            [
+                "-c",
+                str(mock_config_dir_with_envs),
+                "cache",
+                "refresh",
+                "--all",
+                "-f",
+                '{"env": "Prod", "bu": "Finance"}',
+            ],
+        )
+
+        assert result.exit_code == 0
+        # Should refresh only prod-cluster-1 (Prod + Finance)
+        assert "1 cluster(s)" in result.output
+        assert mock_collector.collect_all.call_count == 1
+
+    def test_filter_no_matches(self, runner: CliRunner, mock_config_dir_with_envs: Path) -> None:
+        """Test that filter with no matches shows warning."""
+        result = runner.invoke(
+            nf,
+            [
+                "-c",
+                str(mock_config_dir_with_envs),
+                "cache",
+                "refresh",
+                "--all",
+                "-f",
+                '{"env": "Staging"}',
+            ],
+        )
+        assert result.exit_code == 0
+        assert "No clusters match filter" in result.output
