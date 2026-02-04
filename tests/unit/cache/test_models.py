@@ -10,6 +10,7 @@ from pynetappfoundry.cache.models import (
     CachedClusterMetadata,
     CapacityLicense,
     CloudMetadata,
+    CloudTargetInfo,
     ClusterInfo,
     ClusterPeer,
     HAInfo,
@@ -239,6 +240,65 @@ class TestSVMInfo:
         assert svm.state == "running"
 
 
+class TestCloudTargetInfo:
+    """Tests for CloudTargetInfo model."""
+
+    def test_default_values(self) -> None:
+        """Test default values."""
+        target = CloudTargetInfo()
+        assert target.name == ""
+        assert target.uuid == ""
+        assert target.provider_type == ""
+        assert target.ssl_enabled is True
+        assert target.used == 0
+
+    def test_with_aws_values(self) -> None:
+        """Test with AWS S3 cloud target data."""
+        target = CloudTargetInfo(
+            name="s3-target-1",
+            uuid="abc-123-def-456",
+            provider_type="AWS_S3",
+            server="s3.us-east-1.amazonaws.com",
+            container="my-bucket",
+            owner="fabricpool",
+            scope="cluster",
+            used=1099511627776,  # 1TB
+            ssl_enabled=True,
+            authentication_type="key",
+            ipspace="Default",
+        )
+        assert target.name == "s3-target-1"
+        assert target.provider_type == "AWS_S3"
+        assert target.container == "my-bucket"
+        assert target.owner == "fabricpool"
+        assert target.used == 1099511627776
+
+    def test_with_azure_values(self) -> None:
+        """Test with Azure cloud target data."""
+        target = CloudTargetInfo(
+            name="azure-target-1",
+            provider_type="Azure_Cloud",
+            server="mystorageaccount.blob.core.windows.net",
+            container="mycontainer",
+            owner="snapmirror",
+            scope="svm",
+            svm="svm1",
+            snapmirror_use="data_protection",
+        )
+        assert target.provider_type == "Azure_Cloud"
+        assert target.owner == "snapmirror"
+        assert target.svm == "svm1"
+        assert target.snapmirror_use == "data_protection"
+
+    def test_extra_fields_allowed(self) -> None:
+        """Test that extra fields are allowed."""
+        target = CloudTargetInfo(
+            name="test-target",
+            custom_field="custom_value",
+        )
+        assert target.custom_field == "custom_value"  # type: ignore[attr-defined]
+
+
 class TestStorageInfo:
     """Tests for StorageInfo model."""
 
@@ -247,6 +307,7 @@ class TestStorageInfo:
         storage = StorageInfo()
         assert storage.aggregates == []
         assert storage.svms == []
+        assert storage.cloud_targets == []
 
     def test_with_data(self) -> None:
         """Test with storage data."""
@@ -255,6 +316,13 @@ class TestStorageInfo:
         storage = StorageInfo(aggregates=[aggr], svms=[svm])
         assert len(storage.aggregates) == 1
         assert len(storage.svms) == 1
+
+    def test_with_cloud_targets(self) -> None:
+        """Test with cloud targets."""
+        target = CloudTargetInfo(name="s3-target", provider_type="AWS_S3")
+        storage = StorageInfo(cloud_targets=[target])
+        assert len(storage.cloud_targets) == 1
+        assert storage.cloud_targets[0].name == "s3-target"
 
 
 class TestLicenseFeature:
