@@ -62,7 +62,7 @@ class TestClusterMetadataDB:
         """Create sample metadata for testing."""
         return CachedClusterMetadata(
             cluster_name="test-cluster",
-            cloud=CloudMetadata(provider="AWS", region="us-east-1"),
+            cloud=[CloudMetadata(provider="AWS", region="us-east-1")],
             cluster=ClusterInfo(
                 cluster_name="test-cluster",
                 ontap_version="9.14.1",
@@ -89,7 +89,7 @@ class TestClusterMetadataDB:
 
         assert retrieved is not None
         assert retrieved.cluster_name == "test-cluster"
-        assert retrieved.cloud.provider == "AWS"
+        assert retrieved.cloud[0].provider == "AWS"
         assert retrieved.cluster.ontap_version == "9.14.1"
         assert len(retrieved.nodes) == 2
 
@@ -107,14 +107,14 @@ class TestClusterMetadataDB:
         # Update with new metadata
         updated_metadata = CachedClusterMetadata(
             cluster_name="test-cluster",
-            cloud=CloudMetadata(provider="Azure", region="eastus"),
+            cloud=[CloudMetadata(provider="Azure", region="eastus")],
         )
         db.set("test-cluster", updated_metadata)
 
         retrieved = db.get("test-cluster")
         assert retrieved is not None
-        assert retrieved.cloud.provider == "Azure"
-        assert retrieved.cloud.region == "eastus"
+        assert retrieved.cloud[0].provider == "Azure"
+        assert retrieved.cloud[0].region == "eastus"
 
     def test_clear_specific_cluster(
         self, db: ClusterMetadataDB, sample_metadata: CachedClusterMetadata

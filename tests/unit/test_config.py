@@ -893,13 +893,15 @@ class TestCacheEnrichment:
             db = ClusterMetadataDB(config=config1)
             cached_metadata = CachedClusterMetadata(
                 cluster_name="test-cluster-1",
-                cloud=CloudMetadata(
-                    provider="Azure",
-                    region="eastus",
-                    account_id="sub-12345",
-                    resource_group_name="rg-test",
-                    instance_type="Standard_E20ds_v5",
-                ),
+                cloud=[
+                    CloudMetadata(
+                        provider="Azure",
+                        region="eastus",
+                        account_id="sub-12345",
+                        resource_group_name="rg-test",
+                        instance_type="Standard_E20ds_v5",
+                    )
+                ],
             )
             db.set("test-cluster-1", cached_metadata)
             db.close()
@@ -952,7 +954,7 @@ class TestCacheEnrichment:
                 "test-cluster-1",
                 CachedClusterMetadata(
                     cluster_name="test-cluster-1",
-                    cloud=CloudMetadata(provider="Azure", region="eastus"),
+                    cloud=[CloudMetadata(provider="Azure", region="eastus")],
                 ),
             )
             # Add AWS cluster
@@ -960,7 +962,7 @@ class TestCacheEnrichment:
                 "test-cluster-2",
                 CachedClusterMetadata(
                     cluster_name="test-cluster-2",
-                    cloud=CloudMetadata(provider="AWS", region="us-east-1"),
+                    cloud=[CloudMetadata(provider="AWS", region="us-east-1")],
                 ),
             )
             db.close()

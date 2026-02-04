@@ -35,9 +35,9 @@ class TestCacheSchemaCommand:
 
         assert result.exit_code == 0
         assert "Queryable Field Paths" in result.output
-        # Check for dotted paths
-        assert "cloud.provider" in result.output
-        assert "cloud.instance_type" in result.output
+        # Check for dotted paths - cloud is now a list
+        assert "cloud[N].provider" in result.output
+        assert "cloud[N].instance_type" in result.output
         assert "cluster.ontap_version" in result.output
         # Check for array notation
         assert "nodes[N]" in result.output
@@ -60,7 +60,7 @@ class TestCacheSchemaCommand:
 
         assert result.exit_code == 0
         # All top-level sections should be present
-        assert "cloud." in result.output
+        assert "cloud[N]." in result.output  # cloud is now a list
         assert "cluster." in result.output
         assert "nodes[N]." in result.output
         assert "network." in result.output

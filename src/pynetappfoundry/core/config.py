@@ -339,9 +339,11 @@ class Config:
             if cache_db:
                 try:
                     cached = cache_db.get(cluster_name)
+                    # cloud is now a list of CloudMetadata, use first node's data
                     if cached and cached.cloud:
+                        first_cloud = cached.cloud[0]
                         for field in cloud_fields:
-                            cache_value = getattr(cached.cloud, field, "")
+                            cache_value = getattr(first_cloud, field, "")
                             if cache_value:  # Only override if cache has a value
                                 cluster_data[f"cloud_{field}"] = cache_value
                         logging.debug(f"{_file_name} : enriched {cluster_name} with cache data")
