@@ -153,6 +153,105 @@ class TestPathNotFoundError:
         assert error.reason == "key not found"
 
 
+class TestWildcardArrayAccess:
+    """Tests for wildcard array access [*] syntax."""
+
+    def test_wildcard_simple_field(self) -> None:
+        """Test wildcard access to get field from all array items."""
+        data = {"nodes": [{"name": "node-01"}, {"name": "node-02"}, {"name": "node-03"}]}
+        assert get_nested_value(data, "nodes[*].name") == ["node-01", "node-02", "node-03"]
+
+    def test_wildcard_nested_path(self) -> None:
+        """Test wildcard access with nested paths after the wildcard."""
+        data = {
+            "clusters": [
+                {"info": {"name": "cluster-1", "status": "healthy"}},
+                {"info": {"name": "cluster-2", "status": "warning"}},
+            ]
+        }
+        assert get_nested_value(data, "clusters[*].info.name") == ["cluster-1", "cluster-2"]
+        assert get_nested_value(data, "clusters[*].info.status") == ["healthy", "warning"]
+
+    def test_wildcard_no_remaining_path(self) -> None:
+        """Test wildcard without remaining path returns all items."""
+        data = {"items": ["a", "b", "c"]}
+        assert get_nested_value(data, "items[*]") == ["a", "b", "c"]
+
+    def test_wildcard_with_nested_prefix(self) -> None:
+        """Test wildcard with nested path before the array."""
+        data = {
+            "cluster": {
+                "nodes": [
+                    {"name": "node-01", "cpus": 4},
+                    {"name": "node-02", "cpus": 8},
+                ]
+            }
+        }
+        assert get_nested_value(data, "cluster.nodes[*].name") == ["node-01", "node-02"]
+        assert get_nested_value(data, "cluster.nodes[*].cpus") == [4, 8]
+
+    def test_wildcard_empty_array(self) -> None:
+        """Test wildcard on empty array returns empty list."""
+        data = {"nodes": []}
+        assert get_nested_value(data, "nodes[*].name") == []
+        assert get_nested_value(data, "nodes[*]") == []
+
+    def test_wildcard_single_item(self) -> None:
+        """Test wildcard on single-item array."""
+        data = {"nodes": [{"name": "only-node"}]}
+        assert get_nested_value(data, "nodes[*].name") == ["only-node"]
+
+    def test_wildcard_on_non_list_error(self) -> None:
+        """Test error when using wildcard on non-list value."""
+        data = {"config": {"name": "test"}}
+        with pytest.raises(PathNotFoundError) as exc_info:
+            get_nested_value(data, "config[*].name")
+        assert "expected list for wildcard access" in exc_info.value.reason
+
+    def test_wildcard_missing_key_error(self) -> None:
+        """Test error when wildcard key doesn't exist."""
+        data = {"nodes": [{"name": "node-01"}]}
+        with pytest.raises(PathNotFoundError) as exc_info:
+            get_nested_value(data, "missing[*].name")
+        assert "key not found" in exc_info.value.reason
+
+    def test_wildcard_nested_field_missing_error(self) -> None:
+        """Test error when nested field after wildcard doesn't exist."""
+        data = {"nodes": [{"name": "node-01"}, {"name": "node-02"}]}
+        with pytest.raises(PathNotFoundError) as exc_info:
+            get_nested_value(data, "nodes[*].missing")
+        assert "key not found" in exc_info.value.reason
+
+    def test_wildcard_on_primitive_array_with_path_error(self) -> None:
+        """Test error when using path after wildcard on primitive array."""
+        data = {"items": ["a", "b", "c"]}
+        with pytest.raises(PathNotFoundError) as exc_info:
+            get_nested_value(data, "items[*].name")
+        assert "expected dict for nested access" in exc_info.value.reason
+
+    def test_wildcard_complex_nested_objects(self) -> None:
+        """Test wildcard with complex nested structures."""
+        data = {
+            "relationships": {
+                "cluster_peers": [
+                    {"name": "peer-1", "state": "available"},
+                    {"name": "peer-2", "state": "unavailable"},
+                    {"name": "peer-3", "state": "available"},
+                ]
+            }
+        }
+        assert get_nested_value(data, "relationships.cluster_peers[*].name") == [
+            "peer-1",
+            "peer-2",
+            "peer-3",
+        ]
+        assert get_nested_value(data, "relationships.cluster_peers[*].state") == [
+            "available",
+            "unavailable",
+            "available",
+        ]
+
+
 class TestEdgeCases:
     """Tests for edge cases."""
 
