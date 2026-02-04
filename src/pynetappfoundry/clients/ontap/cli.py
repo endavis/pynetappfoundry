@@ -33,8 +33,30 @@ class CLICommandError(Exception):
         super().__init__(self.message)
 
 
+class CLITimeoutError(CLICommandError):
+    """Exception raised when a CLI command times out.
+
+    Attributes:
+        message: The error message.
+        timeout: The timeout value that was exceeded.
+    """
+
+    def __init__(self, message: str, timeout: float) -> None:
+        """Initialize the exception.
+
+        Args:
+            message: The error message.
+            timeout: The timeout value in seconds.
+        """
+        self.timeout = timeout
+        super().__init__(message)
+
+
 class ONTAPCLI:
     """Class to run commands through the ONTAP CLI."""
+
+    # Default timeout for CLI commands in seconds
+    DEFAULT_TIMEOUT: float = 10.0
 
     def __init__(
         self,
@@ -42,6 +64,7 @@ class ONTAPCLI:
         host_or_ip: str,
         username: str,
         password: str,
+        timeout: float | None = None,
     ) -> None:
         """Initialize the ONTAP CLI client.
 
@@ -50,11 +73,13 @@ class ONTAPCLI:
             host_or_ip: IP address or hostname to connect to.
             username: SSH username.
             password: SSH password.
+            timeout: Default timeout for commands in seconds. Defaults to 10s.
         """
         self.name = name
         self.host = host_or_ip
         self.username = username
         self.password = password
+        self.timeout = timeout if timeout is not None else self.DEFAULT_TIMEOUT
 
         self.ssh: paramiko.SSHClient = paramiko.SSHClient()
         self.ssh.load_system_host_keys()
@@ -162,6 +187,7 @@ class ONTAPCLI:
         arguments: str = "",
         respondto: str = " {y|n}:",
         response: str = "y\n",
+        timeout: float | None = None,
     ) -> list[str]:
         """Run a command through the CLI and return the output.
 
@@ -170,42 +196,77 @@ class ONTAPCLI:
             arguments: Arguments to the command.
             respondto: Prompt pattern to respond to.
             response: Response string to send.
+            timeout: Command timeout in seconds. Uses instance default if not specified.
 
         Returns:
             List of output lines.
 
         Raises:
             CLICommandError: If the command returns an error.
+            CLITimeoutError: If the command times out.
         """
         output: list[str] = []
+        effective_timeout = timeout if timeout is not None else self.timeout
 
         self.connect()
         logging.info(f"host {self.name}:{self.host} - running '{cmd}'")
 
-        stdin, stdout, _stderr = self.cli.exec_command(f"{cmd} {arguments}")
+        full_command = f"{cmd} {arguments}"
 
-        # Read raw bytes and decode with error handling for non-UTF-8 characters
-        raw_output = stdout.read()
-        decoded_output = raw_output.decode("utf-8", errors="replace")
+        # Get transport and open a channel with timeout
+        transport = self.ssh.get_transport()
+        if not transport:
+            raise CLICommandError("SSH transport not available")
 
-        for line in decoded_output.splitlines():
-            line = line.rstrip()
-            logging.info(line)
-            if not line or line == "\x07":
-                continue
+        channel = transport.open_session()
+        channel.settimeout(effective_timeout)
 
-            if any(line_to_skip in line for line_to_skip in self.lines_to_skip):
-                continue
+        try:
+            channel.exec_command(full_command)
 
-            if "Error:" in line:
-                raise CLICommandError(line)
+            # Read output with timeout
+            raw_output = b""
+            while True:
+                try:
+                    chunk = channel.recv(4096)
+                    if not chunk:
+                        break
+                    raw_output += chunk
+                except TimeoutError:
+                    channel.close()
+                    raise CLITimeoutError(
+                        f"Command '{cmd}' timed out after {effective_timeout} seconds",
+                        timeout=effective_timeout,
+                    ) from None
 
-            if respondto in line:
-                logging.info(f"found {respondto} and sending {response}")
-                stdin.write(response)
-                stdin.flush()
-            else:
-                output.append(line)
+            decoded_output = raw_output.decode("utf-8", errors="replace")
+
+            for line in decoded_output.splitlines():
+                line = line.rstrip()
+                logging.info(line)
+                if not line or line == "\x07":
+                    continue
+
+                if any(line_to_skip in line for line_to_skip in self.lines_to_skip):
+                    continue
+
+                if "Error:" in line:
+                    raise CLICommandError(line)
+
+                if respondto in line:
+                    logging.info(f"found {respondto} and sending {response}")
+                    channel.send(response.encode())
+                else:
+                    output.append(line)
+
+        except TimeoutError:
+            channel.close()
+            raise CLITimeoutError(
+                f"Command '{cmd}' timed out after {effective_timeout} seconds",
+                timeout=effective_timeout,
+            ) from None
+        finally:
+            channel.close()
 
         return output
 

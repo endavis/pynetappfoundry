@@ -2,13 +2,14 @@
 
 from pynetappfoundry.clients.dii.api import DIIAPIClient
 from pynetappfoundry.clients.ontap.api import ONTAPAPIClient
-from pynetappfoundry.clients.ontap.cli import ONTAPCLI, CLICommandError
+from pynetappfoundry.clients.ontap.cli import ONTAPCLI, CLICommandError, CLITimeoutError
 from pynetappfoundry.clients.openapi import APIWrapper
 
 __all__ = [
     "ONTAPCLI",
     "APIWrapper",
     "CLICommandError",
+    "CLITimeoutError",
     "DIIAPIClient",
     "ONTAPAPIClient",
 ]
