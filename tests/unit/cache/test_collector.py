@@ -13,6 +13,7 @@ from pynetappfoundry.cache.collector import (
     ProgressInfo,
 )
 from pynetappfoundry.cache.models import (
+    CloudMetadata,
     HAInfo,
     LicenseInfo,
     NetworkInfo,
@@ -1006,3 +1007,129 @@ class TestCollectionPhase:
         assert CollectionPhase.LICENSES.value == "licenses"
         assert CollectionPhase.HA.value == "ha"
         assert CollectionPhase.RELATIONSHIPS.value == "relationships"
+
+
+class TestUpdateAzureCloudLinks:
+    """Tests for Azure cloud link post-processing."""
+
+    def test_updates_azure_ha_cluster_links(self) -> None:
+        """Test Azure instance links are updated with cluster-based VM names for HA."""
+        collector = MetadataCollector()
+        cloud_metadata = [
+            CloudMetadata(
+                node="mycluster-01",
+                instance_id="old-instance-id",
+                account_id="sub-123",
+                resource_group_name="my-rg",
+                provider="Azure",
+                instance_link="https://old-link.com",
+            ),
+            CloudMetadata(
+                node="mycluster-02",
+                instance_id="old-instance-id-2",
+                account_id="sub-123",
+                resource_group_name="my-rg",
+                provider="Azure",
+                instance_link="https://old-link-2.com",
+            ),
+        ]
+
+        result = collector._update_azure_cloud_links(
+            cloud_metadata,
+            cluster_name="mycluster",
+            is_ha=True,
+        )
+
+        assert len(result) == 2
+        # Node 01 should get -vm1
+        assert "mycluster-vm1" in result[0].instance_link
+        assert "old-instance-id" not in result[0].instance_link
+        # Node 02 should get -vm2
+        assert "mycluster-vm2" in result[1].instance_link
+        assert "old-instance-id-2" not in result[1].instance_link
+
+    def test_updates_azure_single_node_links(self) -> None:
+        """Test Azure instance links are updated for single node cluster."""
+        collector = MetadataCollector()
+        cloud_metadata = [
+            CloudMetadata(
+                node="mycluster-01",
+                instance_id="old-instance-id",
+                account_id="sub-123",
+                resource_group_name="my-rg",
+                provider="Azure",
+                instance_link="https://old-link.com",
+            ),
+        ]
+
+        result = collector._update_azure_cloud_links(
+            cloud_metadata,
+            cluster_name="mycluster",
+            is_ha=False,
+        )
+
+        assert len(result) == 1
+        # Single node should just use cluster name
+        assert "mycluster" in result[0].instance_link
+        assert "mycluster-vm1" not in result[0].instance_link
+
+    def test_preserves_aws_cloud_metadata(self) -> None:
+        """Test AWS cloud metadata is preserved without modification."""
+        collector = MetadataCollector()
+        cloud_metadata = [
+            CloudMetadata(
+                node="aws-node",
+                instance_id="i-0abc123",
+                account_id="123456789012",
+                provider="AWS",
+                region="us-east-1",
+                instance_link="https://aws-link.com",
+            ),
+        ]
+
+        result = collector._update_azure_cloud_links(
+            cloud_metadata,
+            cluster_name="mycluster",
+            is_ha=True,
+        )
+
+        assert len(result) == 1
+        # AWS should be unchanged
+        assert result[0] is cloud_metadata[0]
+        assert result[0].instance_link == "https://aws-link.com"
+
+    def test_preserves_other_azure_fields(self) -> None:
+        """Test that other Azure cloud metadata fields are preserved."""
+        collector = MetadataCollector()
+        cloud_metadata = [
+            CloudMetadata(
+                node="mycluster-01",
+                instance_id="old-instance-id",
+                account_id="sub-123",
+                image_id="image-123",
+                instance_type="Standard_D4s_v3",
+                region="eastus",
+                provider="Azure",
+                fault_domain="0",
+                update_domain="1",
+                resource_group_name="my-rg",
+                offer="netapp-ontap-cloud",
+                sku="ontap_cloud",
+                resource_group_link="https://rg-link.com",
+            ),
+        ]
+
+        result = collector._update_azure_cloud_links(
+            cloud_metadata,
+            cluster_name="mycluster",
+            is_ha=True,
+        )
+
+        assert len(result) == 1
+        assert result[0].image_id == "image-123"
+        assert result[0].instance_type == "Standard_D4s_v3"
+        assert result[0].region == "eastus"
+        assert result[0].fault_domain == "0"
+        assert result[0].update_domain == "1"
+        assert result[0].offer == "netapp-ontap-cloud"
+        assert result[0].resource_group_link == "https://rg-link.com"
