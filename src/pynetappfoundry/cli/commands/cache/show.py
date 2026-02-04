@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 import click
@@ -13,6 +14,7 @@ from pynetappfoundry.cache import ClusterMetadataDB
 from pynetappfoundry.cli.utils import print_error, print_exception, print_warning
 from pynetappfoundry.core.config import Config
 
+logger = logging.getLogger(__name__)
 console = Console()
 
 
@@ -136,7 +138,17 @@ def show(ctx: click.Context, cluster: str | None, section: str | None, output_js
         return
 
     # Show specific cluster
-    metadata = db.get(cluster)
+    try:
+        metadata = db.get(cluster)
+    except ValueError as e:
+        logger.debug("Invalid cluster name: %s", e)
+        db.close()
+        print_error(f"Invalid cluster name: '{cluster}'")
+        # Check if it looks like a query path
+        if "." in cluster or "[" in cluster:
+            console.print("Did you mean to use [cyan]nf cache query[/cyan] instead?")
+            console.print(f"  Example: nf cache query --all {cluster}")
+        ctx.exit(1)
     db.close()
 
     if not metadata:

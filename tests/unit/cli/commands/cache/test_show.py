@@ -177,3 +177,47 @@ base_api_path = "/api"
         )
         assert result.exit_code != 0
         assert "not found" in result.output
+
+    @patch("pynetappfoundry.cli.commands.cache.show.ClusterMetadataDB")
+    def test_show_invalid_cluster_name(
+        self,
+        mock_db_class: MagicMock,
+        runner: CliRunner,
+        mock_config_dir: Path,
+    ) -> None:
+        """Test showing invalid cluster name gives user-friendly error."""
+        mock_db = MagicMock()
+        mock_db.get.side_effect = ValueError("Invalid cluster name")
+        mock_db_class.return_value = mock_db
+
+        result = runner.invoke(
+            nf,
+            ["-c", str(mock_config_dir), "cache", "show", "cloud[*].account_id"],
+        )
+
+        assert result.exit_code != 0
+        assert "Invalid cluster name" in result.output
+        # Should suggest using cache query instead
+        assert "nf cache query" in result.output
+
+    @patch("pynetappfoundry.cli.commands.cache.show.ClusterMetadataDB")
+    def test_show_invalid_cluster_name_no_query_suggestion(
+        self,
+        mock_db_class: MagicMock,
+        runner: CliRunner,
+        mock_config_dir: Path,
+    ) -> None:
+        """Test invalid cluster name without dots doesn't suggest query."""
+        mock_db = MagicMock()
+        mock_db.get.side_effect = ValueError("Invalid cluster name")
+        mock_db_class.return_value = mock_db
+
+        result = runner.invoke(
+            nf,
+            ["-c", str(mock_config_dir), "cache", "show", "invalid@name!"],
+        )
+
+        assert result.exit_code != 0
+        assert "Invalid cluster name" in result.output
+        # Should NOT suggest cache query for names without dots/brackets
+        assert "nf cache query" not in result.output
