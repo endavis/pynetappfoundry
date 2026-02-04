@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import logging
-import select
 import time
 from typing import Any
 
@@ -227,25 +226,23 @@ class ONTAPCLI:
             channel.exec_command(full_command)
 
             # Read output with application-level timeout tracking
-            # (socket-level timeout doesn't work reliably with keepalives)
+            # Use recv_ready() instead of select() because select doesn't work
+            # reliably with paramiko channels (may return ready when no data available)
             raw_output = b""
             start_time = time.monotonic()
 
             while True:
                 # Check total elapsed time
                 elapsed = time.monotonic() - start_time
-                remaining = effective_timeout - elapsed
-                if remaining <= 0:
+                if elapsed >= effective_timeout:
                     channel.close()
                     raise CLITimeoutError(
                         f"Command '{cmd}' timed out after {effective_timeout} seconds",
                         timeout=effective_timeout,
                     )
 
-                # Use select to wait for data with remaining timeout
-                ready, _, _ = select.select([channel], [], [], min(remaining, 1.0))
-
-                if ready:
+                # Check if data is available to read (non-blocking)
+                if channel.recv_ready():
                     chunk = channel.recv(4096)
                     if not chunk:
                         break
@@ -259,6 +256,9 @@ class ONTAPCLI:
                         else:
                             break
                     break
+                else:
+                    # No data ready and command not finished, wait briefly
+                    time.sleep(0.1)
 
             decoded_output = raw_output.decode("utf-8", errors="replace")
 
