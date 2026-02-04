@@ -30,8 +30,11 @@ Use **SQLite** as the storage backend for caching ONTAP cluster metadata that do
 
 - Issue #32: feat: add cluster metadata cache for ONTAP clusters
 - Issue #38: refactor: move cluster metadata cache to config directory
+- Issue #130: feat: add nf cache query command
 
 ## Related Documentation
 
 - Cache module: `src/pynetappfoundry/cache/`
-- CLI commands: `nf cache refresh`, `nf cache show`, `nf cache status`, `nf cache clear`
+- CLI commands: `nf cache refresh`, `nf cache show`, `nf cache query`, `nf cache schema`, `nf cache status`, `nf cache clear`
+- CLI Reference: [docs/reference/cli.md](../reference/cli.md#cache)
+- Usage Guide: [docs/usage/basics.md](../usage/basics.md#cluster-metadata-caching)

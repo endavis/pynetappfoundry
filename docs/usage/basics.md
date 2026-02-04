@@ -102,6 +102,7 @@ nf --debug                   # Enable debug logging
 ### Available Commands
 
 ```bash
+nf cache                     # Cluster metadata cache management
 nf licenses                  # License management
 nf reports                   # Report generation
 nf events                    # Event management
@@ -219,6 +220,34 @@ db.upsert_data("cluster_metrics", {
 ```
 
 ## Common Workflows
+
+### Cluster Metadata Caching
+
+The cache stores ONTAP cluster metadata that doesn't change frequently (instance IDs, node serials, ONTAP versions, etc.). This reduces API calls and enables quick lookups.
+
+```bash
+# Populate the cache for all clusters
+nf cache refresh --all
+
+# Check cache status
+nf cache status
+
+# View cached data for a cluster
+nf cache show cluster1
+
+# View the cache schema to see available fields
+nf cache schema --flat
+
+# Query specific fields (useful for scripting)
+nf cache query cluster1 cloud.provider cloud.region
+nf cache query cluster1 cluster.ontap_version --raw
+
+# Query all clusters at once
+nf cache query --all cloud.instance_type
+
+# Query with filtering
+nf cache query -f '{"env":"Prod"}' cluster.ontap_version
+```
 
 ### License Reporting
 
