@@ -359,3 +359,172 @@ class TestVerboseProgressDisplay:
         )
         display.on_progress(info)
         assert display.phase_times[CollectionPhase.NETWORK] == 0.5
+
+
+class TestAwsSsoConfig:
+    """Tests for AWS SSO config being passed to MetadataCollector."""
+
+    @pytest.fixture
+    def runner(self) -> CliRunner:
+        """Create a CLI runner."""
+        return CliRunner()
+
+    @pytest.fixture
+    def mock_config_dir_with_aws_sso(self, tmp_path: Path) -> Path:
+        """Create a mock config directory with AWS SSO config."""
+        config_dir = tmp_path / "config"
+        config_dir.mkdir()
+        # Create a minimal settings file
+        (config_dir / "settings.toml").write_text(
+            """
+[ontapapi]
+[ontapapi.general]
+base_api_path = "/api"
+timeout = 30.0
+"""
+        )
+        # Create AWS config with SSO settings
+        (config_dir / "aws.toml").write_text(
+            """
+[sso]
+subdomain = "mycompany"
+
+[sso.account_roles]
+"123456789012" = "AdminRole"
+"987654321098" = "ReadOnlyRole"
+"""
+        )
+        # Create a data file with clusters
+        (config_dir / "clusters.toml").write_text(
+            """
+[settings]
+type = "data"
+
+[clusters.test-cluster]
+ip = "10.0.0.1"
+bu = "Test"
+env = "Dev"
+"""
+        )
+        # Create users file
+        (config_dir / "users.toml").write_text(
+            """
+[clusters]
+user = "admin"
+enc = "cGFzc3dvcmQ="
+"""
+        )
+        return config_dir
+
+    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPAPIClient")
+    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPCLI")
+    @patch("pynetappfoundry.cli.commands.cache.refresh.MetadataCollector")
+    @patch("pynetappfoundry.cli.commands.cache.refresh.ClusterMetadataDB")
+    def test_aws_sso_config_passed_to_collector(
+        self,
+        mock_db_class: MagicMock,
+        mock_collector_class: MagicMock,
+        mock_cli_class: MagicMock,
+        mock_api_class: MagicMock,
+        runner: CliRunner,
+        mock_config_dir_with_aws_sso: Path,
+    ) -> None:
+        """Test that AWS SSO config from aws.toml is passed to MetadataCollector."""
+        # Setup mocks
+        mock_db = MagicMock()
+        mock_db_class.return_value = mock_db
+
+        mock_collector = MagicMock()
+        mock_collector.collect_all.return_value = MagicMock(cluster_name="test-cluster")
+        mock_collector_class.return_value = mock_collector
+
+        mock_cli = MagicMock()
+        mock_cli_class.return_value = mock_cli
+
+        mock_api = MagicMock()
+        mock_api_class.return_value = mock_api
+
+        result = runner.invoke(
+            nf,
+            ["-c", str(mock_config_dir_with_aws_sso), "cache", "refresh", "test-cluster"],
+        )
+
+        assert result.exit_code == 0
+
+        # Verify MetadataCollector was called with aws_sso_config
+        mock_collector_class.assert_called_once()
+        call_kwargs = mock_collector_class.call_args.kwargs
+        assert "aws_sso_config" in call_kwargs
+        assert call_kwargs["aws_sso_config"] is not None
+        assert call_kwargs["aws_sso_config"]["subdomain"] == "mycompany"
+        assert "123456789012" in call_kwargs["aws_sso_config"]["account_roles"]
+        assert call_kwargs["aws_sso_config"]["account_roles"]["123456789012"] == "AdminRole"
+
+    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPAPIClient")
+    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPCLI")
+    @patch("pynetappfoundry.cli.commands.cache.refresh.MetadataCollector")
+    @patch("pynetappfoundry.cli.commands.cache.refresh.ClusterMetadataDB")
+    def test_aws_sso_config_none_when_not_configured(
+        self,
+        mock_db_class: MagicMock,
+        mock_collector_class: MagicMock,
+        mock_cli_class: MagicMock,
+        mock_api_class: MagicMock,
+        runner: CliRunner,
+        tmp_path: Path,
+    ) -> None:
+        """Test that aws_sso_config is None when aws.toml is not configured."""
+        # Create config dir WITHOUT aws.toml
+        config_dir = tmp_path / "config"
+        config_dir.mkdir()
+        (config_dir / "settings.toml").write_text(
+            """
+[ontapapi]
+[ontapapi.general]
+base_api_path = "/api"
+timeout = 30.0
+"""
+        )
+        (config_dir / "clusters.toml").write_text(
+            """
+[settings]
+type = "data"
+
+[clusters.test-cluster]
+ip = "10.0.0.1"
+"""
+        )
+        (config_dir / "users.toml").write_text(
+            """
+[clusters]
+user = "admin"
+enc = "cGFzc3dvcmQ="
+"""
+        )
+
+        # Setup mocks
+        mock_db = MagicMock()
+        mock_db_class.return_value = mock_db
+
+        mock_collector = MagicMock()
+        mock_collector.collect_all.return_value = MagicMock(cluster_name="test-cluster")
+        mock_collector_class.return_value = mock_collector
+
+        mock_cli = MagicMock()
+        mock_cli_class.return_value = mock_cli
+
+        mock_api = MagicMock()
+        mock_api_class.return_value = mock_api
+
+        result = runner.invoke(
+            nf,
+            ["-c", str(config_dir), "cache", "refresh", "test-cluster"],
+        )
+
+        assert result.exit_code == 0
+
+        # Verify MetadataCollector was called with aws_sso_config=None
+        mock_collector_class.assert_called_once()
+        call_kwargs = mock_collector_class.call_args.kwargs
+        assert "aws_sso_config" in call_kwargs
+        assert call_kwargs["aws_sso_config"] is None
