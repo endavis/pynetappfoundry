@@ -74,6 +74,74 @@ class TestONTAPCLILogPrefix:
             assert cli.log_prefix == "[:ssh]"
 
 
+class TestONTAPCLIConnect:
+    """Tests for ONTAPCLI connect functionality."""
+
+    def test_connect_lock_exists(self) -> None:
+        """ONTAPCLI should have a connect lock for thread safety."""
+        with patch("paramiko.SSHClient"):
+            cli = ONTAPCLI(
+                name="test",
+                host_or_ip="192.168.1.1",
+                username="admin",
+                password="password",
+            )
+            assert hasattr(cli, "_connect_lock")
+            import threading
+
+            assert isinstance(cli._connect_lock, type(threading.Lock()))
+
+    def test_connect_is_thread_safe(self) -> None:
+        """Multiple threads calling connect should only create one connection."""
+        import threading
+        import time
+        from typing import Any
+
+        with patch("paramiko.SSHClient") as mock_ssh_class:
+            mock_ssh = MagicMock()
+            mock_ssh_class.return_value = mock_ssh
+            # First call: no transport, second+ calls: active transport
+            mock_transport = MagicMock()
+            mock_transport.is_active.return_value = True
+            # Start with no transport, then return the mock after connect
+            transport_state: dict[str, Any] = {"transport": None}
+
+            def get_transport_side_effect() -> MagicMock | None:
+                if transport_state["transport"] is None:
+                    # Simulate connection delay
+                    time.sleep(0.05)
+                    transport_state["transport"] = mock_transport
+                    return None
+                return transport_state["transport"]
+
+            mock_ssh.get_transport.side_effect = get_transport_side_effect
+
+            cli = ONTAPCLI(
+                name="test",
+                host_or_ip="192.168.1.1",
+                username="admin",
+                password="password",
+            )
+
+            # Reset to track actual connect calls
+            mock_ssh.connect.reset_mock()
+            transport_state["transport"] = None
+
+            # Launch multiple threads that all try to connect
+            threads = []
+            for _ in range(5):
+                t = threading.Thread(target=cli.connect)
+                threads.append(t)
+
+            for t in threads:
+                t.start()
+            for t in threads:
+                t.join()
+
+            # Only one connect call should have been made due to locking
+            assert mock_ssh.connect.call_count == 1
+
+
 class TestONTAPCLITimeout:
     """Tests for ONTAPCLI timeout functionality."""
 
