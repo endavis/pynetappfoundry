@@ -8,7 +8,7 @@ from datetime import datetime
 from pathlib import Path
 
 
-def setup_logger(script_name: str) -> logging.Logger:
+def setup_logger(script_name: str) -> tuple[logging.Logger, Path]:
     """Set up logging for a script with file handler only.
 
     Console output is handled by Rich via cli/utils.py print functions.
@@ -18,7 +18,7 @@ def setup_logger(script_name: str) -> logging.Logger:
         script_name: Name of the script (used for log directory and file naming).
 
     Returns:
-        The configured root logger.
+        Tuple of (configured root logger, path to log file).
     """
     root_logger = logging.getLogger()
     # Don't set root logger to DEBUG - some libraries (netapp_ontap) crash
@@ -32,12 +32,10 @@ def setup_logger(script_name: str) -> logging.Logger:
     formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
 
     # add a file handler only - console output is handled by Rich
-    log_filename = datetime.now().strftime(
-        f"data/{script_name}/logs/{script_name}_%Y-%m-%d_%H-%M-%S.log"
-    )
-    file_handler = logging.FileHandler(log_filename)
+    log_file = log_dir / datetime.now().strftime(f"{script_name}_%Y-%m-%d_%H-%M-%S.log")
+    file_handler = logging.FileHandler(log_file)
     file_handler.setFormatter(formatter)
     file_handler.setLevel(logging.DEBUG)
     root_logger.addHandler(file_handler)
 
-    return root_logger
+    return root_logger, log_file
