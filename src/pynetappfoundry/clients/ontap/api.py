@@ -48,5 +48,6 @@ class ONTAPAPIClient(APIWrapper):
             base_api_path=ontap_settings.base_api_path,
             timeout=ontap_settings.timeout,
             verify_ssl=False,  # ONTAP clusters typically use self-signed certs
+            name=cluster.name,
             **kwargs,
         )

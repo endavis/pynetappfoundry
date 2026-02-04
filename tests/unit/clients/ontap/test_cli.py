@@ -37,6 +37,43 @@ class TestCLITimeoutError:
             raise CLITimeoutError("Timeout occurred", timeout=60.0)
 
 
+class TestONTAPCLILogPrefix:
+    """Tests for ONTAPCLI log prefix functionality."""
+
+    def test_log_prefix_format(self) -> None:
+        """ONTAPCLI should have log_prefix in [name:ssh] format."""
+        with patch("paramiko.SSHClient"):
+            cli = ONTAPCLI(
+                name="cluster1",
+                host_or_ip="192.168.1.1",
+                username="admin",
+                password="password",
+            )
+            assert cli.log_prefix == "[cluster1:ssh]"
+
+    def test_log_prefix_with_special_characters(self) -> None:
+        """ONTAPCLI should handle cluster names with special characters."""
+        with patch("paramiko.SSHClient"):
+            cli = ONTAPCLI(
+                name="cluster-prod-01",
+                host_or_ip="192.168.1.1",
+                username="admin",
+                password="password",
+            )
+            assert cli.log_prefix == "[cluster-prod-01:ssh]"
+
+    def test_log_prefix_empty_name(self) -> None:
+        """ONTAPCLI should handle empty cluster name."""
+        with patch("paramiko.SSHClient"):
+            cli = ONTAPCLI(
+                name="",
+                host_or_ip="192.168.1.1",
+                username="admin",
+                password="password",
+            )
+            assert cli.log_prefix == "[:ssh]"
+
+
 class TestONTAPCLITimeout:
     """Tests for ONTAPCLI timeout functionality."""
 

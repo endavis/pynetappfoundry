@@ -95,12 +95,13 @@ class ONTAPCLI:
         ]
 
         self.pkey: paramiko.RSAKey | None = None
+        self.log_prefix = f"[{name}:ssh]"
 
     def connect(self) -> None:
         """Connect to the server via SSH."""
         transport = self.ssh.get_transport()
         if not transport or not transport.is_active():
-            logging.debug("Connect: creating connection")
+            logging.debug(f"{self.log_prefix} Connect: creating connection")
             if self.pkey:
                 self.ssh.connect(self.host, username=self.username, pkey=self.pkey)
             else:
@@ -158,7 +159,7 @@ class ONTAPCLI:
         output = self.run_command(cmd, arguments, respondto, response)
 
         if not output:
-            logging.info(f"{cmd} returned no output")
+            logging.info(f"{self.log_prefix} {cmd} returned no output")
             return [], {}
 
         headers = output[0].split(",")
@@ -210,7 +211,7 @@ class ONTAPCLI:
         effective_timeout = timeout if timeout is not None else self.timeout
 
         self.connect()
-        logging.info(f"host {self.name}:{self.host} - running '{cmd}'")
+        logging.info(f"{self.log_prefix} running '{cmd}'")
 
         full_command = f"{cmd} {arguments}"
 
@@ -264,7 +265,7 @@ class ONTAPCLI:
 
             for line in decoded_output.splitlines():
                 line = line.rstrip()
-                logging.info(line)
+                logging.info(f"{self.log_prefix} {line}")
                 if not line or line == "\x07":
                     continue
 
@@ -275,7 +276,7 @@ class ONTAPCLI:
                     raise CLICommandError(line)
 
                 if respondto in line:
-                    logging.info(f"found {respondto} and sending {response}")
+                    logging.info(f"{self.log_prefix} found {respondto} and sending {response}")
                     channel.send(response.encode())
                 else:
                     output.append(line)
@@ -323,21 +324,23 @@ class ONTAPCLI:
                 key = slist[0]
                 value = ":".join(slist[1:])
             except ValueError:
-                logging.error(f"bad line: {line}")
+                logging.error(f"{self.log_prefix} bad line: {line}")
                 continue
 
             key = key.strip()
             value = value.strip()
 
             if not primary_key:
-                logging.info(f"setting primary_key to {key}")
+                logging.info(f"{self.log_prefix} setting primary_key to {key}")
                 primary_key = key
             if not first_key:
-                logging.info(f"setting first_key to {key}")
+                logging.info(f"{self.log_prefix} setting first_key to {key}")
                 first_key = key
 
             if primary_key == first_key and key == primary_key:
-                logging.info(f"primary == first, setting current object to {value}")
+                logging.info(
+                    f"{self.log_prefix} primary == first, setting current object to {value}"
+                )
                 current_object = value
                 if current_object not in data:
                     data[current_object] = {}
@@ -345,18 +348,18 @@ class ONTAPCLI:
 
             if key == primary_key:
                 logging.info(
-                    f"primary_key != first_key, found primary key,"
+                    f"{self.log_prefix} primary_key != first_key, found primary key,"
                     f" setting current object to {value}"
                 )
                 current_object = value
                 if temp_data:
-                    logging.info("have temp_data")
+                    logging.info(f"{self.log_prefix} have temp_data")
                     data[current_object] = temp_data
                     temp_data = {}
 
             if key == first_key:
                 logging.info(
-                    "primary_key != first_key, found first key, "
+                    f"{self.log_prefix} primary_key != first_key, found first key, "
                     "setting current_object to None, updating temp_data"
                 )
                 current_object = None
@@ -386,7 +389,7 @@ class ONTAPCLI:
             **kwargs: Additional arguments for the CLI execute call.
         """
         logging.info(
-            f'{self.name} - running "{command}" with arguments'
+            f'{self.log_prefix} running "{command}" with arguments'
             f" {kwargs} and privilege: {privilege_level}"
         )
         with HostConnection(
