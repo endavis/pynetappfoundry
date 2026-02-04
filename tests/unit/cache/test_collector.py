@@ -456,6 +456,7 @@ class TestStorageCollection:
             "/svm/svms?fields=*": {
                 "records": [{"name": "svm1", "state": "running", "subtype": "default"}]
             },
+            "/cloud/targets?fields=*": {"records": []},
         }
 
     def test_collect_storage_via_api(
@@ -483,6 +484,187 @@ class TestStorageCollection:
 
         assert isinstance(result, StorageInfo)
         assert result.aggregates == []
+
+
+class TestCloudTargetsCollection:
+    """Tests for cloud targets collection."""
+
+    @pytest.fixture
+    def mock_cloud_targets_api_response(self) -> dict[str, Any]:
+        """Mock API response for /cloud/targets endpoint."""
+        return {
+            "records": [
+                {
+                    "name": "s3-target-1",
+                    "uuid": "abc-123-def-456",
+                    "provider_type": "AWS_S3",
+                    "server": "s3.us-east-1.amazonaws.com",
+                    "container": "my-bucket",
+                    "owner": "fabricpool",
+                    "scope": "cluster",
+                    "used": 1099511627776,
+                    "ssl_enabled": True,
+                    "authentication_type": "key",
+                    "ipspace": {"name": "Default"},
+                },
+                {
+                    "name": "azure-target-1",
+                    "uuid": "xyz-789",
+                    "provider_type": "Azure_Cloud",
+                    "server": "mystorageaccount.blob.core.windows.net",
+                    "container": "mycontainer",
+                    "owner": "snapmirror",
+                    "scope": "svm",
+                    "svm": {"name": "svm1"},
+                    "used": 549755813888,
+                    "ssl_enabled": True,
+                    "authentication_type": "cap",
+                    "snapmirror_use": "data_protection",
+                },
+            ]
+        }
+
+    @pytest.fixture
+    def mock_storage_with_cloud_targets_api_responses(
+        self, mock_cloud_targets_api_response: dict[str, Any]
+    ) -> dict[str, dict[str, Any]]:
+        """Mock API responses for storage endpoints including cloud targets."""
+        return {
+            "/storage/aggregates?fields=*": {
+                "records": [
+                    {
+                        "name": "aggr1",
+                        "node": {"name": "node1"},
+                        "state": "online",
+                        "block_storage": {"primary": {"disk_type": "ssd"}},
+                        "space": {"block_storage": {"size": 1099511627776, "used": 549755813888}},
+                    }
+                ]
+            },
+            "/svm/svms?fields=*": {
+                "records": [{"name": "svm1", "state": "running", "subtype": "default"}]
+            },
+            "/cloud/targets?fields=*": mock_cloud_targets_api_response,
+        }
+
+    def test_collect_cloud_targets_via_api(
+        self, mock_storage_with_cloud_targets_api_responses: dict[str, dict[str, Any]]
+    ) -> None:
+        """Test collecting cloud targets via API."""
+        api_client = MagicMock()
+        api_client.call_endpoint.side_effect = (
+            lambda endpoint, **_: mock_storage_with_cloud_targets_api_responses.get(endpoint, {})
+        )
+
+        collector = MetadataCollector(api_client=api_client)
+        result = collector.collect_storage()
+
+        assert len(result.cloud_targets) == 2
+        # Check AWS S3 target
+        s3_target = result.cloud_targets[0]
+        assert s3_target.name == "s3-target-1"
+        assert s3_target.provider_type == "AWS_S3"
+        assert s3_target.container == "my-bucket"
+        assert s3_target.owner == "fabricpool"
+        assert s3_target.used == 1099511627776
+        assert s3_target.ipspace == "Default"
+        # Check Azure target
+        azure_target = result.cloud_targets[1]
+        assert azure_target.name == "azure-target-1"
+        assert azure_target.provider_type == "Azure_Cloud"
+        assert azure_target.svm == "svm1"
+        assert azure_target.snapmirror_use == "data_protection"
+
+    def test_collect_cloud_targets_api_not_available(self) -> None:
+        """Test that cloud targets collection handles API errors gracefully."""
+        api_client = MagicMock()
+
+        def side_effect(endpoint: str, **_: Any) -> dict[str, Any]:
+            if endpoint == "/cloud/targets?fields=*":
+                raise Exception("Endpoint not available")
+            if endpoint == "/storage/aggregates?fields=*":
+                return {
+                    "records": [{"name": "aggr1", "node": {"name": "node1"}, "state": "online"}]
+                }
+            if endpoint == "/svm/svms?fields=*":
+                return {"records": [{"name": "svm1", "state": "running"}]}
+            return {}
+
+        api_client.call_endpoint.side_effect = side_effect
+
+        collector = MetadataCollector(api_client=api_client)
+        result = collector.collect_storage()
+
+        # Should still return storage info, just with empty cloud_targets
+        assert len(result.aggregates) == 1
+        assert result.cloud_targets == []
+
+    def test_collect_cloud_targets_via_cli(self) -> None:
+        """Test collecting cloud targets via CLI fallback."""
+        cli_client = MagicMock()
+        cli_client.run_command_and_parse.side_effect = [
+            # aggr show
+            {"aggr1": {"Node": "node1", "State": "online", "Type": "ssd"}},
+            # vserver show
+            {"svm1": {"Admin State": "running", "Vserver Type": "default"}},
+            # storage aggregate object-store config show
+            {
+                "s3-target-1": {
+                    "Provider Type": "AWS_S3",
+                    "Server": "s3.us-east-1.amazonaws.com",
+                    "Container": "my-bucket",
+                    "Owner": "fabricpool",
+                    "SSL Enabled": "true",
+                    "Authentication Type": "key",
+                    "IPspace": "Default",
+                }
+            },
+        ]
+
+        collector = MetadataCollector(cli_client=cli_client)
+        result = collector.collect_storage()
+
+        assert len(result.cloud_targets) == 1
+        target = result.cloud_targets[0]
+        assert target.name == "s3-target-1"
+        assert target.provider_type == "AWS_S3"
+        assert target.container == "my-bucket"
+        assert target.ssl_enabled is True
+
+    def test_collect_cloud_targets_cli_not_available(self) -> None:
+        """Test that CLI fallback handles command not available."""
+        cli_client = MagicMock()
+
+        def side_effect(cmd: str) -> dict[str, Any]:
+            if "object-store" in cmd:
+                raise Exception("Command not available")
+            if "aggr" in cmd:
+                return {"aggr1": {"Node": "node1", "State": "online"}}
+            if "vserver" in cmd:
+                return {"svm1": {"Admin State": "running"}}
+            return {}
+
+        cli_client.run_command_and_parse.side_effect = side_effect
+
+        collector = MetadataCollector(cli_client=cli_client)
+        result = collector.collect_storage()
+
+        assert len(result.aggregates) == 1
+        assert result.cloud_targets == []
+
+    def test_collect_cloud_targets_empty(self) -> None:
+        """Test collecting when no cloud targets exist."""
+        api_client = MagicMock()
+        api_client.call_endpoint.side_effect = lambda endpoint, **_: {
+            "/storage/aggregates?fields=*": {"records": []},
+            "/svm/svms?fields=*": {"records": []},
+            "/cloud/targets?fields=*": {"records": []},
+        }.get(endpoint, {})
+
+        collector = MetadataCollector(api_client=api_client)
+        result = collector.collect_storage()
+
+        assert result.cloud_targets == []
 
 
 class TestLicenseCollection:
