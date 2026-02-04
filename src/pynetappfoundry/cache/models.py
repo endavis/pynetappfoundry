@@ -149,16 +149,41 @@ class SVMInfo(BaseModel):
     root_volume_aggregate: str = ""
 
 
+class CloudTargetInfo(BaseModel):
+    """Cloud object store target configuration.
+
+    Represents a cloud target used for FabricPool tiering or SnapMirror-to-cloud.
+    Available via /cloud/targets REST API (ONTAP 9.6+).
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    name: str = ""
+    uuid: str = ""
+    provider_type: str = ""  # AWS_S3, Azure_Cloud, SGWS, etc.
+    server: str = ""
+    container: str = ""  # Bucket/container name
+    owner: str = ""  # fabricpool, snapmirror
+    scope: str = ""  # cluster, svm (9.12+)
+    svm: str = ""
+    used: int = 0  # Space used in bytes
+    ssl_enabled: bool = True
+    authentication_type: str = ""  # key, cap, etc.
+    ipspace: str = ""
+    snapmirror_use: str = ""
+
+
 class StorageInfo(BaseModel):
     """Storage topology information.
 
-    Contains aggregates and SVMs.
+    Contains aggregates, SVMs, and cloud targets.
     """
 
     model_config = ConfigDict(extra="allow")
 
     aggregates: list[AggregateInfo] = Field(default_factory=list)
     svms: list[SVMInfo] = Field(default_factory=list)
+    cloud_targets: list[CloudTargetInfo] = Field(default_factory=list)
 
 
 class LicenseFeature(BaseModel):

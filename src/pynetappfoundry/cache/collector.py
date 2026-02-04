@@ -20,6 +20,7 @@ from pynetappfoundry.cache.models import (
     CachedClusterMetadata,
     CapacityLicense,
     CloudMetadata,
+    CloudTargetInfo,
     ClusterInfo,
     ClusterPeer,
     HAInfo,
@@ -728,7 +729,7 @@ class MetadataCollector:
         """Collect storage info using REST API.
 
         Returns:
-            StorageInfo from aggregate and SVM endpoints.
+            StorageInfo from aggregate, SVM, and cloud target endpoints.
         """
         if not self.api_client:
             logger.debug("No API client available for storage collection")
@@ -763,13 +764,55 @@ class MetadataCollector:
             )
             svms.append(svm)
 
-        return StorageInfo(aggregates=aggregates, svms=svms)
+        # Collect cloud targets
+        cloud_targets = self._collect_cloud_targets_via_api()
+
+        return StorageInfo(aggregates=aggregates, svms=svms, cloud_targets=cloud_targets)
+
+    def _collect_cloud_targets_via_api(self) -> list[CloudTargetInfo]:
+        """Collect cloud object store targets using REST API.
+
+        Returns:
+            List of CloudTargetInfo from /cloud/targets endpoint (ONTAP 9.6+).
+        """
+        if not self.api_client:
+            logger.debug("No API client available for cloud targets collection")
+            return []
+
+        try:
+            logger.debug("API call: GET /cloud/targets?fields=*")
+            response = self.api_client.call_endpoint("/cloud/targets?fields=*", method="GET")
+            logger.debug("API response: %d cloud targets", len(response.get("records", [])))
+        except Exception as e:
+            # Endpoint may not exist on older ONTAP versions or non-cloud systems
+            logger.debug("Cloud targets endpoint not available: %s", e)
+            return []
+
+        cloud_targets = []
+        for record in response.get("records", []):
+            target = CloudTargetInfo(
+                name=record.get("name", ""),
+                uuid=record.get("uuid", ""),
+                provider_type=record.get("provider_type", ""),
+                server=record.get("server", ""),
+                container=record.get("container", ""),
+                owner=record.get("owner", ""),
+                scope=record.get("scope", ""),
+                svm=record.get("svm", {}).get("name", "") if record.get("svm") else "",
+                used=record.get("used", 0),
+                ssl_enabled=record.get("ssl_enabled", True),
+                authentication_type=record.get("authentication_type", ""),
+                ipspace=record.get("ipspace", {}).get("name", "") if record.get("ipspace") else "",
+                snapmirror_use=record.get("snapmirror_use", ""),
+            )
+            cloud_targets.append(target)
+        return cloud_targets
 
     def _collect_storage_via_cli(self) -> StorageInfo:
         """Collect storage info using CLI.
 
         Returns:
-            StorageInfo from aggr show and vserver show.
+            StorageInfo from aggr show, vserver show, and object-store config show.
         """
         if not self.cli_client:
             logger.debug("No CLI client available for storage collection")
@@ -803,7 +846,46 @@ class MetadataCollector:
             )
             svms.append(svm)
 
-        return StorageInfo(aggregates=aggregates, svms=svms)
+        # Collect cloud targets
+        cloud_targets = self._collect_cloud_targets_via_cli()
+
+        return StorageInfo(aggregates=aggregates, svms=svms, cloud_targets=cloud_targets)
+
+    def _collect_cloud_targets_via_cli(self) -> list[CloudTargetInfo]:
+        """Collect cloud object store targets using CLI.
+
+        Returns:
+            List of CloudTargetInfo from storage aggregate object-store config show.
+        """
+        if not self.cli_client:
+            logger.debug("No CLI client available for cloud targets collection")
+            return []
+
+        try:
+            logger.debug("CLI command: storage aggregate object-store config show")
+            output = self.cli_client.run_command_and_parse(
+                "storage aggregate object-store config show"
+            )
+            logger.debug("CLI response: %d cloud targets", len(output))
+        except Exception as e:
+            # Command may not be available on systems without FabricPool
+            logger.debug("Cloud targets CLI command not available: %s", e)
+            return []
+
+        cloud_targets = []
+        for target_name, data in output.items():
+            target = CloudTargetInfo(
+                name=target_name,
+                provider_type=data.get("Provider Type", ""),
+                server=data.get("Server", ""),
+                container=data.get("Container", "") or data.get("Bucket", ""),
+                owner=data.get("Owner", ""),
+                ssl_enabled=data.get("SSL Enabled", "").lower() == "true",
+                authentication_type=data.get("Authentication Type", ""),
+                ipspace=data.get("IPspace", ""),
+            )
+            cloud_targets.append(target)
+        return cloud_targets
 
     # -------------------------------------------------------------------------
     # License Collection
