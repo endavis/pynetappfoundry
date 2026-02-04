@@ -353,11 +353,15 @@ def _process_cluster(
         logger.error("No clients available for %s", cluster_name)
         return False
 
+    # Get AWS SSO config if configured
+    aws_sso_config = config.settings.get("aws", {}).get("sso")
+
     # Collect metadata
     collector = MetadataCollector(
         api_client=api_client,
         cli_client=cli_client,
         progress_callback=progress_callback,
+        aws_sso_config=aws_sso_config,
     )
     metadata = collector.collect_all(cluster_name)
 
