@@ -6,6 +6,7 @@ from pynetappfoundry.utils.cloud import (
     get_cloud_account_name,
     get_cloud_types,
 )
+from pynetappfoundry.utils.dict_path import PathNotFoundError, get_nested_value
 from pynetappfoundry.utils.email import send_email
 from pynetappfoundry.utils.size import (
     SUFFIXES,
@@ -17,6 +18,7 @@ from pynetappfoundry.utils.time import to_epoch_ms
 
 __all__ = [
     "SUFFIXES",
+    "PathNotFoundError",
     "approximate_size",
     "approximate_size_specific",
     "build_azure_id",
@@ -24,6 +26,7 @@ __all__ = [
     "convert_size",
     "get_cloud_account_name",
     "get_cloud_types",
+    "get_nested_value",
     "send_email",
     "to_epoch_ms",
 ]
