@@ -79,6 +79,64 @@ def get_cloud_types() -> list[str]:
     return CLOUD_TYPES.copy()
 
 
+def get_node_number(node_name: str) -> int | None:
+    """Extract the node number from a node name.
+
+    ONTAP node names typically end with a numeric suffix like -01, -02.
+    This function extracts that number.
+
+    Args:
+        node_name: The node name (e.g., 'mycluster-01', 'cluster-02').
+
+    Returns:
+        The node number as an integer, or None if not found.
+    """
+    if not node_name:
+        return None
+
+    # Match trailing digits, optionally preceded by a dash or underscore
+    import re
+
+    match = re.search(r"[-_]?(\d+)$", node_name)
+    if match:
+        return int(match.group(1))
+    return None
+
+
+def build_azure_vm_name(
+    cluster_name: str,
+    node_name: str = "",
+    is_ha: bool = True,
+) -> str:
+    """Build the Azure VM name for an ONTAP instance.
+
+    Azure VMs for ONTAP follow a naming convention based on cluster name:
+    - HA clusters: <cluster>-vm1 for node 01, <cluster>-vm2 for node 02
+    - Single node: <cluster>
+
+    Args:
+        cluster_name: The ONTAP cluster name.
+        node_name: The node name (used to determine node number for HA).
+        is_ha: Whether the cluster is HA (default True).
+
+    Returns:
+        The Azure VM name, or empty string if cluster_name is missing.
+    """
+    if not cluster_name:
+        return ""
+
+    if not is_ha:
+        return cluster_name
+
+    # For HA, derive VM name from node number
+    node_num = get_node_number(node_name)
+    if node_num is not None:
+        return f"{cluster_name}-vm{node_num}"
+
+    # Fallback: if we can't determine node number, return cluster name
+    return cluster_name
+
+
 def build_aws_instance_link(region: str, instance_id: str) -> str:
     """Build an AWS EC2 console URL for an instance.
 
@@ -103,6 +161,9 @@ def build_cloud_instance_link(
     region: str = "",
     account_id: str = "",
     resource_group: str = "",
+    cluster_name: str = "",
+    node_name: str = "",
+    is_ha: bool = True,
 ) -> str:
     """Build a cloud console URL for an instance based on provider.
 
@@ -112,6 +173,9 @@ def build_cloud_instance_link(
         region: Region (required for AWS).
         account_id: Account/subscription ID (required for Azure).
         resource_group: Resource group name (required for Azure).
+        cluster_name: Cluster name (used for Azure VM name derivation).
+        node_name: Node name (used for Azure VM name derivation in HA).
+        is_ha: Whether cluster is HA (default True, used for Azure).
 
     Returns:
         Cloud console URL for the instance, or empty string if not supported.
@@ -120,9 +184,16 @@ def build_cloud_instance_link(
     if provider_lower == "aws":
         return build_aws_instance_link(region, instance_id)
     elif provider_lower == "azure":
-        if not account_id or not resource_group or not instance_id:
+        if not account_id or not resource_group:
             return ""
-        resource_id = build_azure_id(account_id, resource_group, "vm", instance_id)
+        # For Azure, derive VM name from cluster/node info if available
+        if cluster_name:
+            vm_name = build_azure_vm_name(cluster_name, node_name, is_ha)
+        else:
+            vm_name = instance_id
+        if not vm_name:
+            return ""
+        resource_id = build_azure_id(account_id, resource_group, "vm", vm_name)
         return build_azure_portal_link(resource_id)
     return ""
 

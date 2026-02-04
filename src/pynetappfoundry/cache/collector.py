@@ -224,10 +224,18 @@ class MetadataCollector:
         total_elapsed = time.monotonic() - total_start
         logger.info("Completed metadata collection for %s in %.2fs", cluster_name, total_elapsed)
 
+        # Post-process Azure cloud metadata to fix instance links
+        ha_info: HAInfo = results["ha"]
+        cloud_metadata = self._update_azure_cloud_links(
+            results["cloud"],
+            cluster_name,
+            ha_info.is_ha,
+        )
+
         return CachedClusterMetadata(
             cluster_name=cluster_name,
             cached_at=datetime.now(UTC),
-            cloud=results["cloud"],
+            cloud=cloud_metadata,
             cluster=results["cluster"],
             nodes=results["nodes"],
             network=results["network"],
@@ -596,6 +604,79 @@ class MetadataCollector:
             instance_sso_link=instance_sso_link,
             resource_group_link=resource_group_link,
         )
+
+    def _update_azure_cloud_links(
+        self,
+        cloud_metadata: list[CloudMetadata],
+        cluster_name: str,
+        is_ha: bool,
+    ) -> list[CloudMetadata]:
+        """Update Azure cloud metadata with correct instance links.
+
+        Azure VM portal links require the VM name derived from cluster name
+        and node information, not the instance_id from cloud metadata.
+
+        Args:
+            cloud_metadata: List of CloudMetadata objects to update.
+            cluster_name: The cluster name.
+            is_ha: Whether the cluster is HA.
+
+        Returns:
+            Updated list of CloudMetadata with correct Azure instance links.
+        """
+        updated = []
+        for meta in cloud_metadata:
+            if meta.provider.lower() != "azure":
+                updated.append(meta)
+                continue
+
+            # Rebuild the instance link with cluster/node info
+            instance_link = build_cloud_instance_link(
+                provider=meta.provider,
+                instance_id=meta.instance_id,
+                account_id=meta.account_id,
+                resource_group=meta.resource_group_name,
+                cluster_name=cluster_name,
+                node_name=meta.node,
+                is_ha=is_ha,
+            )
+
+            # Rebuild SSO link (not applicable for Azure, but keep for consistency)
+            instance_sso_link = build_cloud_instance_sso_link(
+                provider=meta.provider,
+                instance_link=instance_link,
+                account_id=meta.account_id,
+                sso_config=self.aws_sso_config,
+            )
+
+            # Create updated CloudMetadata with new links
+            updated.append(
+                CloudMetadata(
+                    node=meta.node,
+                    instance_id=meta.instance_id,
+                    account_id=meta.account_id,
+                    image_id=meta.image_id,
+                    instance_type=meta.instance_type,
+                    cpu_platform=meta.cpu_platform,
+                    region=meta.region,
+                    provider=meta.provider,
+                    consumer=meta.consumer,
+                    primary_ip=meta.primary_ip,
+                    metadata_version=meta.metadata_version,
+                    availability_zone=meta.availability_zone,
+                    availability_zone_id=meta.availability_zone_id,
+                    fault_domain=meta.fault_domain,
+                    update_domain=meta.update_domain,
+                    resource_group_name=meta.resource_group_name,
+                    offer=meta.offer,
+                    sku=meta.sku,
+                    sku_version=meta.sku_version,
+                    instance_link=instance_link,
+                    instance_sso_link=instance_sso_link,
+                    resource_group_link=meta.resource_group_link,
+                )
+            )
+        return updated
 
     @staticmethod
     def _normalize_cli_key(key: str) -> str:
