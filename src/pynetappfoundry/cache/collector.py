@@ -1047,6 +1047,8 @@ class MetadataCollector:
                 authentication_type=record.get("authentication_type", ""),
                 ipspace=record.get("ipspace", {}).get("name", "") if record.get("ipspace") else "",
                 snapmirror_use=record.get("snapmirror_use", ""),
+                access_key=record.get("access_key", ""),
+                azure_account=record.get("azure_account", ""),
             )
             cloud_targets.append(target)
         return cloud_targets
