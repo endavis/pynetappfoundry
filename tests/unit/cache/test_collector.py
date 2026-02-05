@@ -757,8 +757,11 @@ class TestRelationshipsCollection:
     @pytest.fixture
     def mock_relationships_api_responses(self) -> dict[str, dict[str, Any]]:
         """Mock API responses for relationship endpoints."""
+        sm_endpoint = (
+            "/snapmirror/relationships?fields=source,destination,policy.type,state,healthy,lag_time"
+        )
         return {
-            "/snapmirror/relationships?fields=*": {
+            sm_endpoint: {
                 "records": [
                     {
                         "source": {"svm": {"name": "svm1"}, "path": "vol1"},

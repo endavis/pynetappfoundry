@@ -1426,8 +1426,9 @@ class MetadataCollector:
             return RelationshipsInfo()
 
         # Make both API calls in parallel using cached calls
+        # Request only needed fields for snapmirror to avoid timeout on large clusters
         endpoints = [
-            "/snapmirror/relationships?fields=*",
+            "/snapmirror/relationships?fields=source,destination,policy.type,state,healthy,lag_time",
             "/cluster/peers?fields=*",
         ]
 
