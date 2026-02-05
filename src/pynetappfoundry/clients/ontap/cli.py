@@ -110,9 +110,19 @@ class ONTAPCLI:
             if not transport or not transport.is_active():
                 logging.debug(f"{self.log_prefix} Connect: creating connection")
                 if self.pkey:
-                    self.ssh.connect(self.host, username=self.username, pkey=self.pkey)
+                    self.ssh.connect(
+                        self.host,
+                        username=self.username,
+                        pkey=self.pkey,
+                        timeout=self.timeout,
+                    )
                 else:
-                    self.ssh.connect(self.host, username=self.username, password=self.password)
+                    self.ssh.connect(
+                        self.host,
+                        username=self.username,
+                        password=self.password,
+                        timeout=self.timeout,
+                    )
                 transport = self.ssh.get_transport()
                 if transport:
                     transport.set_keepalive(5)
