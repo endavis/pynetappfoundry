@@ -74,10 +74,12 @@ enc = "cGFzc3dvcmQ="
     @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPAPIClient")
     @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPCLI")
     @patch("pynetappfoundry.cli.commands.cache.refresh.MetadataCollector")
+    @patch("pynetappfoundry.cli.commands.cache.refresh.CacheHistoryDB")
     @patch("pynetappfoundry.cli.commands.cache.refresh.ClusterMetadataDB")
     def test_refresh_single_cluster(
         self,
         mock_db_class: MagicMock,
+        mock_history_db_class: MagicMock,
         mock_collector_class: MagicMock,
         mock_cli_class: MagicMock,
         mock_api_class: MagicMock,
@@ -88,6 +90,10 @@ enc = "cGFzc3dvcmQ="
         # Setup mocks
         mock_db = MagicMock()
         mock_db_class.return_value = mock_db
+
+        mock_history_db = MagicMock()
+        mock_history_db.get_latest_snapshot.return_value = None
+        mock_history_db_class.return_value = mock_history_db
 
         mock_collector = MagicMock()
         mock_collector.collect_all.return_value = MagicMock(cluster_name="test-cluster")
@@ -112,10 +118,12 @@ enc = "cGFzc3dvcmQ="
     @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPAPIClient")
     @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPCLI")
     @patch("pynetappfoundry.cli.commands.cache.refresh.MetadataCollector")
+    @patch("pynetappfoundry.cli.commands.cache.refresh.CacheHistoryDB")
     @patch("pynetappfoundry.cli.commands.cache.refresh.ClusterMetadataDB")
     def test_refresh_all_clusters(
         self,
         mock_db_class: MagicMock,
+        mock_history_db_class: MagicMock,
         mock_collector_class: MagicMock,
         mock_cli_class: MagicMock,
         mock_api_class: MagicMock,
@@ -126,6 +134,10 @@ enc = "cGFzc3dvcmQ="
         # Setup mocks
         mock_db = MagicMock()
         mock_db_class.return_value = mock_db
+
+        mock_history_db = MagicMock()
+        mock_history_db.get_latest_snapshot.return_value = None
+        mock_history_db_class.return_value = mock_history_db
 
         mock_collector = MagicMock()
         mock_collector.collect_all.return_value = MagicMock()
@@ -157,12 +169,14 @@ enc = "cGFzc3dvcmQ="
     @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPAPIClient")
     @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPCLI")
     @patch("pynetappfoundry.cli.commands.cache.refresh.MetadataCollector")
+    @patch("pynetappfoundry.cli.commands.cache.refresh.CacheHistoryDB")
     @patch("pynetappfoundry.cli.commands.cache.refresh.ClusterMetadataDB")
     @patch("pynetappfoundry.cli.commands.cache.refresh.setup_logger")
     def test_refresh_verbose_flag(
         self,
         mock_setup_logger: MagicMock,
         mock_db_class: MagicMock,
+        mock_history_db_class: MagicMock,
         mock_collector_class: MagicMock,
         mock_cli_class: MagicMock,
         mock_api_class: MagicMock,
@@ -174,6 +188,10 @@ enc = "cGFzc3dvcmQ="
         mock_setup_logger.return_value = (MagicMock(), Path("/tmp/test.log"))
         mock_db = MagicMock()
         mock_db_class.return_value = mock_db
+
+        mock_history_db = MagicMock()
+        mock_history_db.get_latest_snapshot.return_value = None
+        mock_history_db_class.return_value = mock_history_db
 
         mock_collector = MagicMock()
         mock_collector.collect_all.return_value = MagicMock(cluster_name="test-cluster")
@@ -197,12 +215,14 @@ enc = "cGFzc3dvcmQ="
     @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPAPIClient")
     @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPCLI")
     @patch("pynetappfoundry.cli.commands.cache.refresh.MetadataCollector")
+    @patch("pynetappfoundry.cli.commands.cache.refresh.CacheHistoryDB")
     @patch("pynetappfoundry.cli.commands.cache.refresh.ClusterMetadataDB")
     @patch("pynetappfoundry.cli.commands.cache.refresh.setup_logger")
     def test_refresh_always_logs_to_file(
         self,
         mock_setup_logger: MagicMock,
         mock_db_class: MagicMock,
+        mock_history_db_class: MagicMock,
         mock_collector_class: MagicMock,
         mock_cli_class: MagicMock,
         mock_api_class: MagicMock,
@@ -213,6 +233,10 @@ enc = "cGFzc3dvcmQ="
         mock_setup_logger.return_value = (MagicMock(), Path("/tmp/test.log"))
         mock_db = MagicMock()
         mock_db_class.return_value = mock_db
+
+        mock_history_db = MagicMock()
+        mock_history_db.get_latest_snapshot.return_value = None
+        mock_history_db_class.return_value = mock_history_db
 
         mock_collector = MagicMock()
         mock_collector.collect_all.return_value = MagicMock()
@@ -419,10 +443,12 @@ enc = "cGFzc3dvcmQ="
     @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPAPIClient")
     @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPCLI")
     @patch("pynetappfoundry.cli.commands.cache.refresh.MetadataCollector")
+    @patch("pynetappfoundry.cli.commands.cache.refresh.CacheHistoryDB")
     @patch("pynetappfoundry.cli.commands.cache.refresh.ClusterMetadataDB")
     def test_aws_sso_config_passed_to_collector(
         self,
         mock_db_class: MagicMock,
+        mock_history_db_class: MagicMock,
         mock_collector_class: MagicMock,
         mock_cli_class: MagicMock,
         mock_api_class: MagicMock,
@@ -433,6 +459,10 @@ enc = "cGFzc3dvcmQ="
         # Setup mocks
         mock_db = MagicMock()
         mock_db_class.return_value = mock_db
+
+        mock_history_db = MagicMock()
+        mock_history_db.get_latest_snapshot.return_value = None
+        mock_history_db_class.return_value = mock_history_db
 
         mock_collector = MagicMock()
         mock_collector.collect_all.return_value = MagicMock(cluster_name="test-cluster")
@@ -463,10 +493,12 @@ enc = "cGFzc3dvcmQ="
     @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPAPIClient")
     @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPCLI")
     @patch("pynetappfoundry.cli.commands.cache.refresh.MetadataCollector")
+    @patch("pynetappfoundry.cli.commands.cache.refresh.CacheHistoryDB")
     @patch("pynetappfoundry.cli.commands.cache.refresh.ClusterMetadataDB")
     def test_aws_sso_config_none_when_not_configured(
         self,
         mock_db_class: MagicMock,
+        mock_history_db_class: MagicMock,
         mock_collector_class: MagicMock,
         mock_cli_class: MagicMock,
         mock_api_class: MagicMock,
@@ -505,6 +537,10 @@ enc = "cGFzc3dvcmQ="
         # Setup mocks
         mock_db = MagicMock()
         mock_db_class.return_value = mock_db
+
+        mock_history_db = MagicMock()
+        mock_history_db.get_latest_snapshot.return_value = None
+        mock_history_db_class.return_value = mock_history_db
 
         mock_collector = MagicMock()
         mock_collector.collect_all.return_value = MagicMock(cluster_name="test-cluster")
@@ -610,10 +646,12 @@ enc = "cGFzc3dvcmQ="
     @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPAPIClient")
     @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPCLI")
     @patch("pynetappfoundry.cli.commands.cache.refresh.MetadataCollector")
+    @patch("pynetappfoundry.cli.commands.cache.refresh.CacheHistoryDB")
     @patch("pynetappfoundry.cli.commands.cache.refresh.ClusterMetadataDB")
     def test_filter_by_env(
         self,
         mock_db_class: MagicMock,
+        mock_history_db_class: MagicMock,
         mock_collector_class: MagicMock,
         mock_cli_class: MagicMock,
         mock_api_class: MagicMock,
@@ -623,6 +661,10 @@ enc = "cGFzc3dvcmQ="
         """Test filtering clusters by environment."""
         mock_db = MagicMock()
         mock_db_class.return_value = mock_db
+
+        mock_history_db = MagicMock()
+        mock_history_db.get_latest_snapshot.return_value = None
+        mock_history_db_class.return_value = mock_history_db
 
         mock_collector = MagicMock()
         mock_collector.collect_all.return_value = MagicMock()
@@ -649,10 +691,12 @@ enc = "cGFzc3dvcmQ="
     @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPAPIClient")
     @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPCLI")
     @patch("pynetappfoundry.cli.commands.cache.refresh.MetadataCollector")
+    @patch("pynetappfoundry.cli.commands.cache.refresh.CacheHistoryDB")
     @patch("pynetappfoundry.cli.commands.cache.refresh.ClusterMetadataDB")
     def test_filter_by_multiple_fields(
         self,
         mock_db_class: MagicMock,
+        mock_history_db_class: MagicMock,
         mock_collector_class: MagicMock,
         mock_cli_class: MagicMock,
         mock_api_class: MagicMock,
@@ -662,6 +706,10 @@ enc = "cGFzc3dvcmQ="
         """Test filtering clusters by multiple fields."""
         mock_db = MagicMock()
         mock_db_class.return_value = mock_db
+
+        mock_history_db = MagicMock()
+        mock_history_db.get_latest_snapshot.return_value = None
+        mock_history_db_class.return_value = mock_history_db
 
         mock_collector = MagicMock()
         mock_collector.collect_all.return_value = MagicMock()

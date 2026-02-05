@@ -69,6 +69,7 @@ client = ONTAPAPIClient(config, "cluster1")
 - **[Configuration Schema](reference/config-schema.md)** - Complete TOML configuration reference
 - **[CLI Reference](reference/cli.md)** - Command-line interface documentation
 - **[API Reference](reference/api.md)** - Python API documentation
+- **[Cache System](reference/cache.md)** - Cluster metadata caching and history tracking
 
 ### For Contributors
 
