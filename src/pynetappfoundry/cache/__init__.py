@@ -26,7 +26,11 @@ from pynetappfoundry.cache.collector import (
     ProgressInfo,
 )
 from pynetappfoundry.cache.db import ClusterMetadataDB
+from pynetappfoundry.cache.diff import ChangeEntry, compute_diff, format_diff_summary
+from pynetappfoundry.cache.history_db import CacheHistoryDB
 from pynetappfoundry.cache.models import (
+    METADATA_SCHEMA_MIN_COMPATIBLE,
+    METADATA_SCHEMA_VERSION,
     AggregateInfo,
     BroadcastDomain,
     CachedClusterMetadata,
@@ -44,13 +48,19 @@ from pynetappfoundry.cache.models import (
     SnapMirrorRelationship,
     StorageInfo,
     SVMInfo,
+    is_schema_compatible,
+    parse_schema_version,
 )
 
 __all__ = [
+    "METADATA_SCHEMA_MIN_COMPATIBLE",
+    "METADATA_SCHEMA_VERSION",
     "AggregateInfo",
     "BroadcastDomain",
+    "CacheHistoryDB",
     "CachedClusterMetadata",
     "CapacityLicense",
+    "ChangeEntry",
     "CloudMetadata",
     "ClusterInfo",
     "ClusterMetadataDB",
@@ -70,4 +80,8 @@ __all__ = [
     "SVMInfo",
     "SnapMirrorRelationship",
     "StorageInfo",
+    "compute_diff",
+    "format_diff_summary",
+    "is_schema_compatible",
+    "parse_schema_version",
 ]
