@@ -814,6 +814,102 @@ class TestRelationshipsCollection:
         assert isinstance(result, RelationshipsInfo)
         assert result.snapmirror_destinations == []
 
+    def test_collect_relationships_with_string_paths(self) -> None:
+        """Test relationships handles string paths from API (instead of dicts)."""
+        sm_endpoint = (
+            "/snapmirror/relationships?fields=source,destination,policy.type,state,healthy,lag_time"
+        )
+        api_responses = {
+            sm_endpoint: {
+                "records": [
+                    {
+                        # API returns path as string directly instead of dict
+                        "source": "svm1:vol1",
+                        "destination": "svm2:vol1_dp",
+                        "policy": {"type": "async"},
+                        "state": "snapmirrored",
+                        "healthy": True,
+                        "lag_time": "PT5M",
+                    }
+                ]
+            },
+            "/cluster/peers?fields=*": {"records": []},
+        }
+
+        api_client = MagicMock()
+        api_client.call_endpoint.side_effect = lambda endpoint, **_: api_responses.get(endpoint, {})
+
+        collector = MetadataCollector(api_client=api_client)
+        result = collector.collect_relationships()
+
+        assert len(result.snapmirror_destinations) == 1
+        assert result.snapmirror_destinations[0].source_path == "svm1:vol1"
+        assert result.snapmirror_destinations[0].destination_path == "svm2:vol1_dp"
+
+    def test_collect_relationships_with_string_peer_fields(self) -> None:
+        """Test relationships handles string fields in cluster peers (instead of dicts)."""
+        sm_endpoint = (
+            "/snapmirror/relationships?fields=source,destination,policy.type,state,healthy,lag_time"
+        )
+        api_responses = {
+            sm_endpoint: {"records": []},
+            "/cluster/peers?fields=*": {
+                "records": [
+                    {
+                        "name": "peer1",
+                        "uuid": "abc-123",
+                        # API returns these as strings instead of dicts
+                        "remote": "remote-cluster",
+                        "peer_applications": [],
+                        "authentication": "ok",
+                        "status": "available",
+                    }
+                ]
+            },
+        }
+
+        api_client = MagicMock()
+        api_client.call_endpoint.side_effect = lambda endpoint, **_: api_responses.get(endpoint, {})
+
+        collector = MetadataCollector(api_client=api_client)
+        result = collector.collect_relationships()
+
+        assert len(result.cluster_peers) == 1
+        assert result.cluster_peers[0].name == "peer1"
+        assert result.cluster_peers[0].remote_cluster_name == "remote-cluster"
+        assert result.cluster_peers[0].authentication_state == "ok"
+        assert result.cluster_peers[0].availability == "available"
+
+    def test_collect_relationships_with_none_path(self) -> None:
+        """Test relationships handles None path values."""
+        sm_endpoint = (
+            "/snapmirror/relationships?fields=source,destination,policy.type,state,healthy,lag_time"
+        )
+        api_responses = {
+            sm_endpoint: {
+                "records": [
+                    {
+                        "source": None,
+                        "destination": None,
+                        "policy": {"type": "async"},
+                        "state": "snapmirrored",
+                        "healthy": True,
+                    }
+                ]
+            },
+            "/cluster/peers?fields=*": {"records": []},
+        }
+
+        api_client = MagicMock()
+        api_client.call_endpoint.side_effect = lambda endpoint, **_: api_responses.get(endpoint, {})
+
+        collector = MetadataCollector(api_client=api_client)
+        result = collector.collect_relationships()
+
+        assert len(result.snapmirror_destinations) == 1
+        assert result.snapmirror_destinations[0].source_path == ""
+        assert result.snapmirror_destinations[0].destination_path == ""
+
 
 class TestCollectAll:
     """Tests for collect_all method."""
@@ -833,6 +929,43 @@ class TestCollectAll:
         assert result.cluster_name == "test-cluster"
         assert result.cached_at is not None
         assert result.cache_version == "1.1"
+
+
+class TestFormatPath:
+    """Tests for _format_path static method."""
+
+    def test_format_path_with_dict(self) -> None:
+        """Test formatting path from dict with svm and path keys."""
+        path_info = {"svm": {"name": "svm1"}, "path": "vol1"}
+        assert MetadataCollector._format_path(path_info) == "svm1:vol1"
+
+    def test_format_path_with_string(self) -> None:
+        """Test formatting path when API returns string directly."""
+        assert MetadataCollector._format_path("svm1:vol1") == "svm1:vol1"
+
+    def test_format_path_with_none(self) -> None:
+        """Test formatting path with None input."""
+        assert MetadataCollector._format_path(None) == ""
+
+    def test_format_path_with_empty_dict(self) -> None:
+        """Test formatting path with empty dict."""
+        assert MetadataCollector._format_path({}) == ""
+
+    def test_format_path_with_path_only(self) -> None:
+        """Test formatting path when only path is present (no svm)."""
+        path_info: dict[str, Any] = {"path": "vol1"}
+        assert MetadataCollector._format_path(path_info) == "vol1"
+
+    def test_format_path_with_svm_only(self) -> None:
+        """Test formatting path when only svm is present (no path)."""
+        path_info = {"svm": {"name": "svm1"}}
+        assert MetadataCollector._format_path(path_info) == "svm1"
+
+    def test_format_path_with_svm_as_string(self) -> None:
+        """Test formatting path when svm is string instead of dict."""
+        path_info: dict[str, Any] = {"svm": "svm1", "path": "vol1"}
+        # When svm is string (not dict), we can't extract name, so only path is used
+        assert MetadataCollector._format_path(path_info) == "vol1"
 
 
 class TestNormalizeCliKey:

@@ -1493,7 +1493,8 @@ class MetadataCollector:
         # Process SnapMirror relationships
         sm_response = responses.get(endpoints[0]) or {}
         logger.debug(
-            "API response: %d SnapMirror relationships",
+            "%s API response: %d SnapMirror relationships",
+            self._log_prefix,
             len(sm_response.get("records", [])),
         )
         snapmirror_destinations = []
@@ -1517,17 +1518,26 @@ class MetadataCollector:
         )
         cluster_peers = []
         for record in peer_response.get("records", []):
+            # Handle fields that may be dicts or strings depending on API version
+            remote = record.get("remote")
+            remote_name = remote.get("name", "") if isinstance(remote, dict) else str(remote or "")
+            auth = record.get("authentication")
+            auth_state = auth.get("state", "") if isinstance(auth, dict) else str(auth or "")
+            status = record.get("status")
+            availability = (
+                status.get("state", "") if isinstance(status, dict) else str(status or "")
+            )
             peer = ClusterPeer(
                 name=record.get("name", ""),
                 uuid=record.get("uuid", ""),
-                remote_cluster_name=record.get("remote", {}).get("name", ""),
+                remote_cluster_name=remote_name,
                 peer_addresses=[
                     addr.get("address", "")
                     for addr in record.get("peer_applications", [])
-                    if addr.get("address")
+                    if isinstance(addr, dict) and addr.get("address")
                 ],
-                authentication_state=record.get("authentication", {}).get("state", ""),
-                availability=record.get("status", {}).get("state", ""),
+                authentication_state=auth_state,
+                availability=availability,
             )
             cluster_peers.append(peer)
 
@@ -1588,15 +1598,21 @@ class MetadataCollector:
         )
 
     @staticmethod
-    def _format_path(path_info: dict[str, Any]) -> str:
+    def _format_path(path_info: dict[str, Any] | str | None) -> str:
         """Format SVM:volume path from API response.
 
         Args:
-            path_info: Path info dict with svm and path keys.
+            path_info: Path info dict with svm and path keys, or a string path,
+                or None.
 
         Returns:
             Formatted path string.
         """
+        # Handle string paths (API may return path directly as string)
+        if isinstance(path_info, str):
+            return path_info
+        if not path_info:
+            return ""
         svm_dict = path_info.get("svm")
         svm: str = svm_dict.get("name", "") if isinstance(svm_dict, dict) else ""
         path_val = path_info.get("path")
