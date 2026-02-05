@@ -780,8 +780,8 @@ class TestRelationshipsCollection:
                     {
                         "name": "peer1",
                         "uuid": "abc-123",
-                        "remote": {"name": "remote-cluster"},
-                        "peer_applications": [{"address": "10.0.1.1"}],
+                        "remote": {"name": "remote-cluster", "ip_addresses": ["10.0.1.1"]},
+                        "peer_applications": ["snapmirror"],
                         "authentication": {"state": "ok"},
                         "status": {"state": "available"},
                     }
@@ -805,6 +805,7 @@ class TestRelationshipsCollection:
         assert result.snapmirror_destinations[0].source_path == "svm1:vol1"
         assert len(result.cluster_peers) == 1
         assert result.cluster_peers[0].remote_cluster_name == "remote-cluster"
+        assert result.cluster_peers[0].peer_addresses == ["10.0.1.1"]
 
     def test_collect_relationships_no_clients(self) -> None:
         """Test relationships returns empty when no clients."""
@@ -879,6 +880,8 @@ class TestRelationshipsCollection:
         assert result.cluster_peers[0].remote_cluster_name == "remote-cluster"
         assert result.cluster_peers[0].authentication_state == "ok"
         assert result.cluster_peers[0].availability == "available"
+        # When remote is a string, peer_addresses will be empty
+        assert result.cluster_peers[0].peer_addresses == []
 
     def test_collect_relationships_with_none_path(self) -> None:
         """Test relationships handles None path values."""

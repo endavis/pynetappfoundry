@@ -1527,15 +1527,13 @@ class MetadataCollector:
             availability = (
                 status.get("state", "") if isinstance(status, dict) else str(status or "")
             )
+            # Get peer addresses from remote.ip_addresses (not peer_applications)
+            peer_addresses = remote.get("ip_addresses", []) if isinstance(remote, dict) else []
             peer = ClusterPeer(
                 name=record.get("name", ""),
                 uuid=record.get("uuid", ""),
                 remote_cluster_name=remote_name,
-                peer_addresses=[
-                    addr.get("address", "")
-                    for addr in record.get("peer_applications", [])
-                    if isinstance(addr, dict) and addr.get("address")
-                ],
+                peer_addresses=[addr for addr in peer_addresses if addr],
                 authentication_state=auth_state,
                 availability=availability,
             )
