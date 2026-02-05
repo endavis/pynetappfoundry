@@ -660,12 +660,12 @@ class APIWrapper:
             retry_config=retry_config,
         )
 
-        logging.debug(f"{self.log_prefix} Response Status Code: {resp.status_code}")
+        logging.debug(f"{self.log_prefix} {path} Response Status Code: {resp.status_code}")
         resp.raise_for_status()
 
         # Try JSON, else return text
         try:
-            logging.debug(f"{self.log_prefix} Response Text: {resp.text}")
+            logging.debug(f"{self.log_prefix} {path} Response Text: {resp.text}")
             response_data = resp.json()
         except ValueError:
             response_data = resp.text
