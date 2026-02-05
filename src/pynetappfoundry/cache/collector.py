@@ -281,7 +281,7 @@ class MetadataCollector:
         for phase, collect_method in phases:
             phase_start = time.monotonic()
             self._report_progress(phase, "starting")
-            logger.debug("Collecting %s for %s", phase.value, cluster_name)
+            logger.debug("%s Collecting %s", self._log_prefix, phase.value)
 
             try:
                 result = collect_method()
@@ -289,9 +289,9 @@ class MetadataCollector:
                 source = self._determine_source(phase)
                 self._report_progress(phase, "completed", elapsed, source=source)
                 logger.debug(
-                    "Collected %s for %s in %.2fs via %s",
+                    "%s Collected %s in %.2fs via %s",
+                    self._log_prefix,
                     phase.value,
-                    cluster_name,
                     elapsed,
                     source or "unknown",
                 )
@@ -301,9 +301,9 @@ class MetadataCollector:
                 error_msg = str(e)
                 self._report_progress(phase, "failed", elapsed, error=error_msg)
                 logger.error(
-                    "Failed to collect %s for %s: %s",
+                    "%s Failed to collect %s: %s",
+                    self._log_prefix,
                     phase.value,
-                    cluster_name,
                     error_msg,
                     exc_info=True,
                 )
@@ -344,7 +344,7 @@ class MetadataCollector:
         # Start SSH connection early in background if CLI client available
         ssh_connect_thread: threading.Thread | None = None
         if self.cli_client:
-            logger.debug("Starting SSH connection in background for %s", cluster_name)
+            logger.debug("%s Starting SSH connection in background", self._log_prefix)
             ssh_connect_thread = threading.Thread(
                 target=self._connect_ssh_early,
                 name=f"ssh-connect-{cluster_name}",
@@ -374,9 +374,9 @@ class MetadataCollector:
                         phase_timings[phase] = (elapsed, source)
                         self._report_progress(phase, "failed", elapsed, error=str(error))
                         logger.error(
-                            "Failed to collect %s for %s: %s",
+                            "%s Failed to collect %s: %s",
+                            self._log_prefix,
                             phase.value,
-                            cluster_name,
                             error,
                         )
                         errors.append((phase, error))
@@ -385,9 +385,9 @@ class MetadataCollector:
                         phase_timings[phase] = (elapsed, source)
                         self._report_progress(phase, "completed", elapsed, source=source)
                         logger.debug(
-                            "Collected %s for %s in %.2fs via %s",
+                            "%s Collected %s in %.2fs via %s",
+                            self._log_prefix,
                             phase.value,
-                            cluster_name,
                             elapsed,
                             source or "unknown",
                         )
@@ -395,9 +395,9 @@ class MetadataCollector:
                     phase_timings[phase] = (elapsed, source)
                     self._report_progress(phase, "failed", elapsed, error=str(e))
                     logger.error(
-                        "Failed to collect %s for %s: %s",
+                        "%s Failed to collect %s: %s",
+                        self._log_prefix,
                         phase.value,
-                        cluster_name,
                         e,
                         exc_info=True,
                     )
@@ -432,7 +432,7 @@ class MetadataCollector:
             result = collect_method()
             return result, None
         except Exception as e:
-            logger.debug("Phase %s failed: %s", phase.value, e)
+            logger.debug("%s Phase %s failed: %s", self._log_prefix, phase.value, e)
             return None, e
 
     def _connect_ssh_early(self) -> None:
@@ -442,11 +442,13 @@ class MetadataCollector:
         """
         if self.cli_client:
             try:
-                logger.debug("Establishing early SSH connection")
+                logger.debug("%s Establishing early SSH connection", self._log_prefix)
                 self.cli_client.connect()
-                logger.debug("Early SSH connection established")
+                logger.debug("%s Early SSH connection established", self._log_prefix)
             except Exception as e:
-                logger.debug("Early SSH connection failed (will retry later): %s", e)
+                logger.debug(
+                    "%s Early SSH connection failed (will retry later): %s", self._log_prefix, e
+                )
 
     def _determine_source(self, phase: CollectionPhase) -> str | None:
         """Determine which data source is available for a phase.
@@ -484,7 +486,7 @@ class MetadataCollector:
             try:
                 return self._collect_cloud_metadata_via_cli()
             except Exception as e:
-                logger.warning(f"Failed to collect cloud metadata via CLI: {e}")
+                logger.warning(f"{self._log_prefix} Failed to collect cloud metadata via CLI: {e}")
         return []
 
     def _collect_cloud_metadata_via_cli(self) -> list[CloudMetadata]:
@@ -723,14 +725,14 @@ class MetadataCollector:
             try:
                 return self._collect_cluster_info_via_api()
             except Exception as e:
-                logger.warning(f"Failed to collect cluster info via API: {e}")
+                logger.warning(f"{self._log_prefix} Failed to collect cluster info via API: {e}")
 
         # Fall back to CLI
         if self.cli_client:
             try:
                 return self._collect_cluster_info_via_cli()
             except Exception as e:
-                logger.warning(f"Failed to collect cluster info via CLI: {e}")
+                logger.warning(f"{self._log_prefix} Failed to collect cluster info via CLI: {e}")
 
         return ClusterInfo()
 
@@ -793,13 +795,13 @@ class MetadataCollector:
             try:
                 return self._collect_nodes_via_api()
             except Exception as e:
-                logger.warning(f"Failed to collect nodes via API: {e}")
+                logger.warning(f"{self._log_prefix} Failed to collect nodes via API: {e}")
 
         if self.cli_client:
             try:
                 return self._collect_nodes_via_cli()
             except Exception as e:
-                logger.warning(f"Failed to collect nodes via CLI: {e}")
+                logger.warning(f"{self._log_prefix} Failed to collect nodes via CLI: {e}")
 
         return []
 
@@ -877,13 +879,13 @@ class MetadataCollector:
             try:
                 return self._collect_network_via_api()
             except Exception as e:
-                logger.warning(f"Failed to collect network via API: {e}")
+                logger.warning(f"{self._log_prefix} Failed to collect network via API: {e}")
 
         if self.cli_client:
             try:
                 return self._collect_network_via_cli()
             except Exception as e:
-                logger.warning(f"Failed to collect network via CLI: {e}")
+                logger.warning(f"{self._log_prefix} Failed to collect network via CLI: {e}")
 
         return NetworkInfo()
 
@@ -1043,13 +1045,13 @@ class MetadataCollector:
             try:
                 return self._collect_storage_via_api()
             except Exception as e:
-                logger.warning(f"Failed to collect storage via API: {e}")
+                logger.warning(f"{self._log_prefix} Failed to collect storage via API: {e}")
 
         if self.cli_client:
             try:
                 return self._collect_storage_via_cli()
             except Exception as e:
-                logger.warning(f"Failed to collect storage via CLI: {e}")
+                logger.warning(f"{self._log_prefix} Failed to collect storage via CLI: {e}")
 
         return StorageInfo()
 
@@ -1079,7 +1081,7 @@ class MetadataCollector:
             except Exception as e:
                 # Cloud targets may not exist on older ONTAP versions
                 if "cloud/targets" in endpoint:
-                    logger.debug("Cloud targets endpoint not available: %s", e)
+                    logger.debug("%s Cloud targets endpoint not available: %s", self._log_prefix, e)
                     return None
                 raise
 
@@ -1233,7 +1235,7 @@ class MetadataCollector:
             logger.debug("%s CLI response: %d cloud targets", self._log_prefix, len(output))
         except Exception as e:
             # Command may not be available on systems without FabricPool
-            logger.debug("Cloud targets CLI command not available: %s", e)
+            logger.debug("%s Cloud targets CLI command not available: %s", self._log_prefix, e)
             return []
 
         cloud_targets = []
@@ -1265,13 +1267,13 @@ class MetadataCollector:
             try:
                 return self._collect_licenses_via_api()
             except Exception as e:
-                logger.warning(f"Failed to collect licenses via API: {e}")
+                logger.warning(f"{self._log_prefix} Failed to collect licenses via API: {e}")
 
         if self.cli_client:
             try:
                 return self._collect_licenses_via_cli()
             except Exception as e:
-                logger.warning(f"Failed to collect licenses via CLI: {e}")
+                logger.warning(f"{self._log_prefix} Failed to collect licenses via CLI: {e}")
 
         return LicenseInfo()
 
@@ -1354,13 +1356,13 @@ class MetadataCollector:
             try:
                 return self._collect_ha_info_via_api()
             except Exception as e:
-                logger.warning(f"Failed to collect HA info via API: {e}")
+                logger.warning(f"{self._log_prefix} Failed to collect HA info via API: {e}")
 
         if self.cli_client:
             try:
                 return self._collect_ha_info_via_cli()
             except Exception as e:
-                logger.warning(f"Failed to collect HA info via CLI: {e}")
+                logger.warning(f"{self._log_prefix} Failed to collect HA info via CLI: {e}")
 
         return HAInfo()
 
@@ -1400,7 +1402,7 @@ class MetadataCollector:
                     mediator_address = mediators[0].get("ip_address", "")
                     mediator_status = mediators[0].get("reachable", "")
         except Exception as e:
-            logger.debug("Mediator endpoint not available: %s", e)
+            logger.debug("%s Mediator endpoint not available: %s", self._log_prefix, e)
 
         return HAInfo(
             is_ha=ha_configured,
@@ -1447,13 +1449,13 @@ class MetadataCollector:
             try:
                 return self._collect_relationships_via_api()
             except Exception as e:
-                logger.warning(f"Failed to collect relationships via API: {e}")
+                logger.warning(f"{self._log_prefix} Failed to collect relationships via API: {e}")
 
         if self.cli_client:
             try:
                 return self._collect_relationships_via_cli()
             except Exception as e:
-                logger.warning(f"Failed to collect relationships via CLI: {e}")
+                logger.warning(f"{self._log_prefix} Failed to collect relationships via CLI: {e}")
 
         return RelationshipsInfo()
 
