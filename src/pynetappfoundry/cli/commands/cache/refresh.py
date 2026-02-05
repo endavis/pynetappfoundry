@@ -13,11 +13,14 @@ from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
 from pynetappfoundry.cache import (
+    CachedClusterMetadata,
+    CacheHistoryDB,
     ClusterMetadataDB,
     CollectionPhase,
     MetadataCollector,
     ProgressCallback,
     ProgressInfo,
+    compute_diff,
 )
 from pynetappfoundry.cli.utils import (
     print_error,
@@ -198,8 +201,9 @@ def refresh(
         print_error("Specify a cluster name or use --all to refresh all clusters.")
         ctx.exit(1)
 
-    # Initialize cache database
+    # Initialize cache and history databases
     db = ClusterMetadataDB(config=config)
+    history_db = CacheHistoryDB(config=config)
 
     console.print(f"\nRefreshing cache for {len(clusters_to_refresh)} cluster(s)...")
     if filter_dict:
@@ -215,18 +219,20 @@ def refresh(
 
     if verbose:
         # Verbose mode: detailed phase-by-phase progress
-        _refresh_verbose(ctx, config, db, clusters_to_refresh)
+        _refresh_verbose(ctx, config, db, history_db, clusters_to_refresh)
     else:
         # Normal mode: spinner per cluster
-        _refresh_normal(ctx, config, db, clusters_to_refresh)
+        _refresh_normal(ctx, config, db, history_db, clusters_to_refresh)
 
     db.close()
+    history_db.close()
 
 
 def _refresh_normal(
     ctx: click.Context,
     config: Config,
     db: ClusterMetadataDB,
+    history_db: CacheHistoryDB,
     clusters_to_refresh: list[str],
 ) -> None:
     """Refresh clusters with spinner progress (normal mode).
@@ -235,6 +241,7 @@ def _refresh_normal(
         ctx: Click context.
         config: Configuration object.
         db: Cache database.
+        history_db: History database.
         clusters_to_refresh: List of cluster names.
     """
     success_count = 0
@@ -250,7 +257,7 @@ def _refresh_normal(
             logger.info("Processing cluster: %s", cluster_name)
 
             try:
-                success = _process_cluster(config, db, cluster_name, verbose=False)
+                success = _process_cluster(config, db, history_db, cluster_name, verbose=False)
                 if success:
                     print_success(f"  {cluster_name}: Cache refreshed")
                     success_count += 1
@@ -280,6 +287,7 @@ def _refresh_verbose(
     ctx: click.Context,
     config: Config,
     db: ClusterMetadataDB,
+    history_db: CacheHistoryDB,
     clusters_to_refresh: list[str],
 ) -> None:
     """Refresh clusters with detailed progress (verbose mode).
@@ -288,6 +296,7 @@ def _refresh_verbose(
         ctx: Click context.
         config: Configuration object.
         db: Cache database.
+        history_db: History database.
         clusters_to_refresh: List of cluster names.
     """
     success_count = 0
@@ -307,7 +316,12 @@ def _refresh_verbose(
 
         try:
             success = _process_cluster(
-                config, db, cluster_name, verbose=True, progress_callback=display.on_progress
+                config,
+                db,
+                history_db,
+                cluster_name,
+                verbose=True,
+                progress_callback=display.on_progress,
             )
             display.print_summary(success)
             if success:
@@ -336,6 +350,7 @@ def _refresh_verbose(
 def _process_cluster(
     config: Config,
     db: ClusterMetadataDB,
+    history_db: CacheHistoryDB,
     cluster_name: str,
     verbose: bool = False,
     progress_callback: ProgressCallback | None = None,
@@ -345,6 +360,7 @@ def _process_cluster(
     Args:
         config: Configuration object.
         db: Cache database.
+        history_db: History database.
         cluster_name: Name of the cluster.
         verbose: Whether verbose mode is enabled.
         progress_callback: Optional callback for progress updates.
@@ -398,6 +414,21 @@ def _process_cluster(
     # Get AWS SSO config if configured
     aws_sso_config = config.settings.get("aws", {}).get("sso")
 
+    # Get previous snapshot from history for diff computation
+    previous_metadata: CachedClusterMetadata | None = None
+    latest_snapshot = history_db.get_latest_snapshot(cluster_name)
+    if latest_snapshot:
+        after_json = latest_snapshot.get("after_json")
+        if after_json and isinstance(after_json, str):
+            import json as json_module
+
+            try:
+                previous_data = json_module.loads(after_json)
+                previous_metadata = CachedClusterMetadata.model_validate(previous_data)
+                logger.debug("Found previous snapshot for %s", cluster_name)
+            except Exception as e:
+                logger.warning("Failed to parse previous snapshot for %s: %s", cluster_name, e)
+
     # Collect metadata
     collector = MetadataCollector(
         api_client=api_client,
@@ -406,6 +437,31 @@ def _process_cluster(
         aws_sso_config=aws_sso_config,
     )
     metadata = collector.collect_all(cluster_name)
+
+    # Compute diff and record history
+    changes = compute_diff(previous_metadata, metadata)
+
+    # Record change if this is initial capture or there are changes
+    if previous_metadata is None or changes:
+        before_json = previous_metadata.model_dump_json() if previous_metadata else None
+        after_json = metadata.model_dump_json()
+        change_id = history_db.record_change(
+            cluster_name=cluster_name,
+            before_json=before_json,
+            after_json=after_json,
+            summary=changes,
+        )
+        if previous_metadata is None:
+            logger.info("Initial snapshot recorded for %s (change_id=%d)", cluster_name, change_id)
+        else:
+            logger.info(
+                "Change recorded for %s: %d changes (change_id=%d)",
+                cluster_name,
+                len(changes),
+                change_id,
+            )
+    else:
+        logger.info("No changes detected for %s, history not updated", cluster_name)
 
     # Store in cache
     db.set(cluster_name, metadata)

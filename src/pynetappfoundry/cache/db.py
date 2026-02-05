@@ -43,6 +43,9 @@ class ClusterMetadataDB(SQLiteDB):
 
     Stores serialized CachedClusterMetadata objects in a single table
     with cluster_name as the primary key.
+
+    Note: Change history is stored in a separate database (CacheHistoryDB)
+    for data safety and isolation.
     """
 
     SCHEMA_VERSION: ClassVar[int] = 1

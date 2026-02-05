@@ -26,6 +26,8 @@ from pynetappfoundry.cache.collector import (
     ProgressInfo,
 )
 from pynetappfoundry.cache.db import ClusterMetadataDB
+from pynetappfoundry.cache.diff import ChangeEntry, compute_diff, format_diff_summary
+from pynetappfoundry.cache.history_db import CacheHistoryDB
 from pynetappfoundry.cache.models import (
     AggregateInfo,
     BroadcastDomain,
@@ -49,8 +51,10 @@ from pynetappfoundry.cache.models import (
 __all__ = [
     "AggregateInfo",
     "BroadcastDomain",
+    "CacheHistoryDB",
     "CachedClusterMetadata",
     "CapacityLicense",
+    "ChangeEntry",
     "CloudMetadata",
     "ClusterInfo",
     "ClusterMetadataDB",
@@ -70,4 +74,6 @@ __all__ = [
     "SVMInfo",
     "SnapMirrorRelationship",
     "StorageInfo",
+    "compute_diff",
+    "format_diff_summary",
 ]
