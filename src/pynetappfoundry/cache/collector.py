@@ -753,15 +753,13 @@ class MetadataCollector:
             return ClusterInfo()
 
         logger.debug("CLI command: cluster identity show")
-        output = self.cli_client.run_command_and_parse("cluster identity show")
+        output, _ = self.cli_client.run_a_show_command_and_parse_seperator("cluster identity show")
         logger.debug("CLI response: %d entries", len(output))
-        # Output is keyed by cluster name
         if output:
-            first_key = next(iter(output))
-            data = output[first_key]
+            data = output[0]
             return ClusterInfo(
-                cluster_name=data.get("Cluster", ""),
-                cluster_uuid=data.get("Cluster UUID", ""),
+                cluster_name=data.get("cluster", ""),
+                cluster_uuid=data.get("cluster-uuid", ""),
             )
         return ClusterInfo()
 
@@ -833,16 +831,16 @@ class MetadataCollector:
             return []
 
         logger.debug("CLI command: system node show")
-        output = self.cli_client.run_command_and_parse("system node show")
+        output, _ = self.cli_client.run_a_show_command_and_parse_seperator("system node show")
         logger.debug("CLI response: %d nodes", len(output))
         nodes = []
-        for node_name, data in output.items():
+        for data in output:
             nodes.append(
                 NodeInfo(
-                    name=node_name,
-                    serial_number=data.get("Serial Number", ""),
-                    system_id=data.get("System ID", ""),
-                    model=data.get("Model", ""),
+                    name=data.get("node", ""),
+                    serial_number=data.get("serial-number", ""),
+                    system_id=data.get("system-id", ""),
+                    model=data.get("model", ""),
                 )
             )
         return nodes
@@ -968,26 +966,26 @@ class MetadataCollector:
             return NetworkInfo()
 
         logger.debug("CLI command: network interface show")
-        output = self.cli_client.run_command_and_parse("network interface show")
+        output, _ = self.cli_client.run_a_show_command_and_parse_seperator("network interface show")
         logger.debug("CLI response: %d interfaces", len(output))
         intercluster_lifs = []
         data_lifs = []
         management_lifs = []
 
-        for lif_name, data in output.items():
+        for data in output:
             lif = NetworkLIF(
-                name=lif_name,
-                ip_address=data.get("Network Address", ""),
-                netmask=data.get("Netmask", ""),
-                home_node=data.get("Home Node", ""),
-                home_port=data.get("Home Port", ""),
-                current_node=data.get("Current Node", ""),
-                current_port=data.get("Current Port", ""),
-                operational_status=data.get("Operational Status", ""),
-                role=data.get("Role", ""),
-                svm=data.get("Vserver", ""),
+                name=data.get("lif", ""),
+                ip_address=data.get("address", ""),
+                netmask=data.get("netmask", ""),
+                home_node=data.get("home-node", ""),
+                home_port=data.get("home-port", ""),
+                current_node=data.get("curr-node", ""),
+                current_port=data.get("curr-port", ""),
+                operational_status=data.get("status-oper", ""),
+                role=data.get("role", ""),
+                svm=data.get("vserver", ""),
             )
-            role = data.get("Role", "").lower()
+            role = data.get("role", "").lower()
             if "intercluster" in role:
                 intercluster_lifs.append(lif)
             elif role in ("data", ""):
@@ -1146,29 +1144,29 @@ class MetadataCollector:
 
         # Collect aggregates
         logger.debug("CLI command: aggr show")
-        aggr_output = self.cli_client.run_command_and_parse("aggr show")
+        aggr_output, _ = self.cli_client.run_a_show_command_and_parse_seperator("aggr show")
         logger.debug("CLI response: %d aggregates", len(aggr_output))
         aggregates = []
-        for aggr_name, data in aggr_output.items():
+        for data in aggr_output:
             aggr = AggregateInfo(
-                name=aggr_name,
-                node=data.get("Node", ""),
-                state=data.get("State", ""),
-                type=data.get("Type", ""),
+                name=data.get("aggregate", ""),
+                node=data.get("node", ""),
+                state=data.get("state", ""),
+                type=data.get("type", ""),
             )
             aggregates.append(aggr)
 
         # Collect SVMs
         logger.debug("CLI command: vserver show")
-        svm_output = self.cli_client.run_command_and_parse("vserver show")
+        svm_output, _ = self.cli_client.run_a_show_command_and_parse_seperator("vserver show")
         logger.debug("CLI response: %d SVMs", len(svm_output))
         svms = []
-        for svm_name, data in svm_output.items():
+        for data in svm_output:
             svm = SVMInfo(
-                name=svm_name,
-                state=data.get("Admin State", ""),
-                subtype=data.get("Vserver Type", ""),
-                root_volume=data.get("Root Volume", ""),
+                name=data.get("vserver", ""),
+                state=data.get("admin-state", ""),
+                subtype=data.get("type", ""),
+                root_volume=data.get("root-volume", ""),
             )
             svms.append(svm)
 
@@ -1189,7 +1187,7 @@ class MetadataCollector:
 
         try:
             logger.debug("CLI command: storage aggregate object-store config show")
-            output = self.cli_client.run_command_and_parse(
+            output, _ = self.cli_client.run_a_show_command_and_parse_seperator(
                 "storage aggregate object-store config show"
             )
             logger.debug("CLI response: %d cloud targets", len(output))
@@ -1199,16 +1197,16 @@ class MetadataCollector:
             return []
 
         cloud_targets = []
-        for target_name, data in output.items():
+        for data in output:
             target = CloudTargetInfo(
-                name=target_name,
-                provider_type=data.get("Provider Type", ""),
-                server=data.get("Server", ""),
-                container=data.get("Container", "") or data.get("Bucket", ""),
-                owner=data.get("Owner", ""),
-                ssl_enabled=data.get("SSL Enabled", "").lower() == "true",
-                authentication_type=data.get("Authentication Type", ""),
-                ipspace=data.get("IPspace", ""),
+                name=data.get("object-store-name", ""),
+                provider_type=data.get("provider-type", ""),
+                server=data.get("server", ""),
+                container=data.get("container", "") or data.get("bucket", ""),
+                owner=data.get("owner", ""),
+                ssl_enabled=data.get("ssl-enabled", "").lower() == "true",
+                authentication_type=data.get("auth-type", ""),
+                ipspace=data.get("ipspace", ""),
             )
             cloud_targets.append(target)
         return cloud_targets
@@ -1286,15 +1284,15 @@ class MetadataCollector:
             return LicenseInfo()
 
         logger.debug("CLI command: license show")
-        output = self.cli_client.run_command_and_parse("license show")
+        output, _ = self.cli_client.run_a_show_command_and_parse_seperator("license show")
         logger.debug("CLI response: %d licenses", len(output))
         feature_licenses = []
 
-        for license_name, data in output.items():
+        for data in output:
             feature = LicenseFeature(
-                name=license_name,
-                state=data.get("License State", ""),
-                scope=data.get("Scope", ""),
+                name=data.get("package", ""),
+                state=data.get("state", ""),
+                scope=data.get("scope", ""),
             )
             feature_licenses.append(feature)
 
@@ -1375,18 +1373,18 @@ class MetadataCollector:
             return HAInfo()
 
         logger.debug("CLI command: storage failover show")
-        output = self.cli_client.run_command_and_parse("storage failover show")
+        output, _ = self.cli_client.run_a_show_command_and_parse_seperator("storage failover show")
         logger.debug("CLI response: %d entries", len(output))
         if not output:
             return HAInfo(is_ha=False)
 
         # Parse first node's HA info
-        first_node = next(iter(output.values()), {})
+        first_node = output[0]
         return HAInfo(
             is_ha=True,
-            partner_node=first_node.get("Partner Name", ""),
-            ha_state=first_node.get("Node State", ""),
-            takeover_state=first_node.get("Takeover State", ""),
+            partner_node=first_node.get("partner-name", ""),
+            ha_state=first_node.get("node-state", ""),
+            takeover_state=first_node.get("takeover-state", ""),
         )
 
     # -------------------------------------------------------------------------
@@ -1496,31 +1494,33 @@ class MetadataCollector:
 
         # Collect SnapMirror relationships
         logger.debug("CLI command: snapmirror show")
-        sm_output = self.cli_client.run_command_and_parse("snapmirror show")
+        sm_output, _ = self.cli_client.run_a_show_command_and_parse_seperator("snapmirror show")
         logger.debug("CLI response: %d SnapMirror relationships", len(sm_output))
         snapmirror_destinations = []
-        for dest_path, data in sm_output.items():
+        for data in sm_output:
+            # healthy field from CLI is a string "true"/"false"
+            healthy_str = data.get("healthy", "true").lower()
             sm = SnapMirrorRelationship(
-                source_path=data.get("Source Path", ""),
-                destination_path=dest_path,
-                relationship_type=data.get("Relationship Type", ""),
-                state=data.get("Mirror State", ""),
-                healthy=data.get("Relationship Status", "").lower() == "idle",
-                lag_time=data.get("Lag Time", ""),
+                source_path=data.get("source-path", ""),
+                destination_path=data.get("destination-path", ""),
+                relationship_type=data.get("type", ""),
+                state=data.get("state", ""),
+                healthy=healthy_str == "true",
+                lag_time=data.get("lag-time", ""),
             )
             snapmirror_destinations.append(sm)
 
         # Collect cluster peers
         logger.debug("CLI command: cluster peer show")
-        peer_output = self.cli_client.run_command_and_parse("cluster peer show")
+        peer_output, _ = self.cli_client.run_a_show_command_and_parse_seperator("cluster peer show")
         logger.debug("CLI response: %d cluster peers", len(peer_output))
         cluster_peers = []
-        for peer_name, data in peer_output.items():
+        for data in peer_output:
             peer = ClusterPeer(
-                name=peer_name,
-                remote_cluster_name=data.get("Remote Cluster Name", ""),
-                availability=data.get("Availability", ""),
-                authentication_state=data.get("Authentication Status", ""),
+                name=data.get("peer-cluster", ""),
+                remote_cluster_name=data.get("remote-cluster-name", ""),
+                availability=data.get("availability", ""),
+                authentication_state=data.get("auth-status-admin", ""),
             )
             cluster_peers.append(peer)
 
