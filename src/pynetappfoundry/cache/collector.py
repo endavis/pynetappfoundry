@@ -132,9 +132,19 @@ class MetadataCollector:
         self.parallel = parallel
         self.max_workers = max_workers
 
+        # Cluster name for logging context (set during collect_all)
+        self._cluster_name: str = ""
+
         # API response cache to avoid duplicate calls within a collection run
         self._api_cache: dict[str, Any] = {}
         self._cache_lock = threading.Lock()
+
+    @property
+    def _log_prefix(self) -> str:
+        """Return log prefix with cluster name for consistent logging."""
+        if self._cluster_name:
+            return f"[{self._cluster_name}:collector]"
+        return "[collector]"
 
     def _report_progress(
         self,
@@ -181,11 +191,11 @@ class MetadataCollector:
 
         with self._cache_lock:
             if cache_key in self._api_cache:
-                logger.debug("API cache hit: %s", cache_key)
+                logger.debug("%s API cache hit: %s", self._log_prefix, cache_key)
                 return self._api_cache[cache_key]
 
         # Make the actual API call (outside the lock to allow parallel calls)
-        logger.debug("API call: %s %s", method, endpoint)
+        logger.debug("%s API call: %s %s", self._log_prefix, method, endpoint)
         response = self.api_client.call_endpoint(endpoint, method=method)
 
         with self._cache_lock:
@@ -210,7 +220,9 @@ class MetadataCollector:
         Returns:
             Complete CachedClusterMetadata object.
         """
-        logger.info("Starting metadata collection for cluster: %s", cluster_name)
+        # Set cluster name for logging context
+        self._cluster_name = cluster_name
+        logger.info("%s Starting metadata collection", self._log_prefix)
         total_start = time.monotonic()
 
         # Clear cache from any previous run
@@ -222,7 +234,7 @@ class MetadataCollector:
             results = self._collect_all_sequential(cluster_name)
 
         total_elapsed = time.monotonic() - total_start
-        logger.info("Completed metadata collection for %s in %.2fs", cluster_name, total_elapsed)
+        logger.info("%s Completed metadata collection in %.2fs", self._log_prefix, total_elapsed)
 
         # Post-process Azure cloud metadata to fix instance links
         ha_info: HAInfo = results["ha"]
@@ -482,12 +494,14 @@ class MetadataCollector:
             List of CloudMetadata from virtual-machine instance show.
         """
         if not self.cli_client:
-            logger.debug("No CLI client available for cloud metadata collection")
+            logger.debug(
+                "%s No CLI client available for cloud metadata collection", self._log_prefix
+            )
             return []
 
-        logger.debug("CLI command: virtual-machine instance show")
+        logger.debug("%s CLI command: virtual-machine instance show", self._log_prefix)
         output = self.cli_client.run_command("virtual-machine instance show")
-        logger.debug("CLI response: %d lines", len(output))
+        logger.debug("%s CLI response: %d lines", self._log_prefix, len(output))
         return self._parse_vm_instance_output(output)
 
     def _parse_vm_instance_output(self, output: list[str]) -> list[CloudMetadata]:
@@ -727,14 +741,16 @@ class MetadataCollector:
             ClusterInfo from /cluster endpoint.
         """
         if not self.api_client:
-            logger.debug("No API client available for cluster info collection")
+            logger.debug("%s No API client available for cluster info collection", self._log_prefix)
             return ClusterInfo()
 
         response = self._cached_api_call("/cluster?fields=*")
         if not response:
             return ClusterInfo()
 
-        logger.debug("API response: cluster=%s", response.get("name", "unknown"))
+        logger.debug(
+            "%s API response: cluster=%s", self._log_prefix, response.get("name", "unknown")
+        )
         return ClusterInfo(
             cluster_name=response.get("name", ""),
             cluster_uuid=response.get("uuid", ""),
@@ -749,12 +765,12 @@ class MetadataCollector:
             ClusterInfo from cluster identity show.
         """
         if not self.cli_client:
-            logger.debug("No CLI client available for cluster info collection")
+            logger.debug("%s No CLI client available for cluster info collection", self._log_prefix)
             return ClusterInfo()
 
-        logger.debug("CLI command: cluster identity show")
+        logger.debug("%s CLI command: cluster identity show", self._log_prefix)
         output, _ = self.cli_client.run_a_show_command_and_parse_seperator("cluster identity show")
-        logger.debug("CLI response: %d entries", len(output))
+        logger.debug("%s CLI response: %d entries", self._log_prefix, len(output))
         if output:
             data = output[0]
             return ClusterInfo(
@@ -794,7 +810,7 @@ class MetadataCollector:
             List of NodeInfo from /cluster/nodes endpoint.
         """
         if not self.api_client:
-            logger.debug("No API client available for nodes collection")
+            logger.debug("%s No API client available for nodes collection", self._log_prefix)
             return []
 
         # Use cached API call to avoid duplicate requests (also used by HA collection)
@@ -802,7 +818,9 @@ class MetadataCollector:
         if not response:
             return []
 
-        logger.debug("API response: %d nodes", len(response.get("records", [])))
+        logger.debug(
+            "%s API response: %d nodes", self._log_prefix, len(response.get("records", []))
+        )
         nodes = []
         for record in response.get("records", []):
             # membership may be a dict or other type depending on API version
@@ -827,12 +845,12 @@ class MetadataCollector:
             List of NodeInfo from system node show.
         """
         if not self.cli_client:
-            logger.debug("No CLI client available for nodes collection")
+            logger.debug("%s No CLI client available for nodes collection", self._log_prefix)
             return []
 
-        logger.debug("CLI command: system node show")
+        logger.debug("%s CLI command: system node show", self._log_prefix)
         output, _ = self.cli_client.run_a_show_command_and_parse_seperator("system node show")
-        logger.debug("CLI response: %d nodes", len(output))
+        logger.debug("%s CLI response: %d nodes", self._log_prefix, len(output))
         nodes = []
         for data in output:
             nodes.append(
@@ -878,7 +896,7 @@ class MetadataCollector:
             NetworkInfo from various network endpoints.
         """
         if not self.api_client:
-            logger.debug("No API client available for network collection")
+            logger.debug("%s No API client available for network collection", self._log_prefix)
             return NetworkInfo()
 
         # Make all 3 API calls in parallel using cached calls
@@ -900,7 +918,9 @@ class MetadataCollector:
 
         # Process LIFs response
         lifs_response = responses.get(endpoints[0]) or {}
-        logger.debug("API response: %d LIFs", len(lifs_response.get("records", [])))
+        logger.debug(
+            "%s API response: %d LIFs", self._log_prefix, len(lifs_response.get("records", []))
+        )
         intercluster_lifs = []
         data_lifs = []
         management_lifs = []
@@ -931,7 +951,11 @@ class MetadataCollector:
 
         # Process broadcast domains response
         bd_response = responses.get(endpoints[1]) or {}
-        logger.debug("API response: %d broadcast domains", len(bd_response.get("records", [])))
+        logger.debug(
+            "%s API response: %d broadcast domains",
+            self._log_prefix,
+            len(bd_response.get("records", [])),
+        )
         broadcast_domains = []
         for record in bd_response.get("records", []):
             bd = BroadcastDomain(
@@ -944,7 +968,11 @@ class MetadataCollector:
 
         # Process IPspaces response
         ipspace_response = responses.get(endpoints[2]) or {}
-        logger.debug("API response: %d IPspaces", len(ipspace_response.get("records", [])))
+        logger.debug(
+            "%s API response: %d IPspaces",
+            self._log_prefix,
+            len(ipspace_response.get("records", [])),
+        )
         ipspaces = [r.get("name", "") for r in ipspace_response.get("records", [])]
 
         return NetworkInfo(
@@ -962,12 +990,12 @@ class MetadataCollector:
             NetworkInfo from network interface show.
         """
         if not self.cli_client:
-            logger.debug("No CLI client available for network collection")
+            logger.debug("%s No CLI client available for network collection", self._log_prefix)
             return NetworkInfo()
 
-        logger.debug("CLI command: network interface show")
+        logger.debug("%s CLI command: network interface show", self._log_prefix)
         output, _ = self.cli_client.run_a_show_command_and_parse_seperator("network interface show")
-        logger.debug("CLI response: %d interfaces", len(output))
+        logger.debug("%s CLI response: %d interfaces", self._log_prefix, len(output))
         intercluster_lifs = []
         data_lifs = []
         management_lifs = []
@@ -1034,7 +1062,7 @@ class MetadataCollector:
             StorageInfo from aggregate, SVM, and cloud target endpoints.
         """
         if not self.api_client:
-            logger.debug("No API client available for storage collection")
+            logger.debug("%s No API client available for storage collection", self._log_prefix)
             return StorageInfo()
 
         # Make all 3 API calls in parallel using cached calls
@@ -1067,7 +1095,11 @@ class MetadataCollector:
 
         # Process aggregates response
         aggr_response = responses.get(endpoints[0]) or {}
-        logger.debug("API response: %d aggregates", len(aggr_response.get("records", [])))
+        logger.debug(
+            "%s API response: %d aggregates",
+            self._log_prefix,
+            len(aggr_response.get("records", [])),
+        )
         aggregates = []
         for record in aggr_response.get("records", []):
             aggr = AggregateInfo(
@@ -1082,7 +1114,9 @@ class MetadataCollector:
 
         # Process SVMs response
         svm_response = responses.get(endpoints[1]) or {}
-        logger.debug("API response: %d SVMs", len(svm_response.get("records", [])))
+        logger.debug(
+            "%s API response: %d SVMs", self._log_prefix, len(svm_response.get("records", []))
+        )
         svms = []
         for record in svm_response.get("records", []):
             svm = SVMInfo(
@@ -1109,7 +1143,9 @@ class MetadataCollector:
         if not response:
             return []
 
-        logger.debug("API response: %d cloud targets", len(response.get("records", [])))
+        logger.debug(
+            "%s API response: %d cloud targets", self._log_prefix, len(response.get("records", []))
+        )
         cloud_targets = []
         for record in response.get("records", []):
             target = CloudTargetInfo(
@@ -1139,13 +1175,13 @@ class MetadataCollector:
             StorageInfo from aggr show, vserver show, and object-store config show.
         """
         if not self.cli_client:
-            logger.debug("No CLI client available for storage collection")
+            logger.debug("%s No CLI client available for storage collection", self._log_prefix)
             return StorageInfo()
 
         # Collect aggregates
-        logger.debug("CLI command: aggr show")
+        logger.debug("%s CLI command: aggr show", self._log_prefix)
         aggr_output, _ = self.cli_client.run_a_show_command_and_parse_seperator("aggr show")
-        logger.debug("CLI response: %d aggregates", len(aggr_output))
+        logger.debug("%s CLI response: %d aggregates", self._log_prefix, len(aggr_output))
         aggregates = []
         for data in aggr_output:
             aggr = AggregateInfo(
@@ -1157,9 +1193,9 @@ class MetadataCollector:
             aggregates.append(aggr)
 
         # Collect SVMs
-        logger.debug("CLI command: vserver show")
+        logger.debug("%s CLI command: vserver show", self._log_prefix)
         svm_output, _ = self.cli_client.run_a_show_command_and_parse_seperator("vserver show")
-        logger.debug("CLI response: %d SVMs", len(svm_output))
+        logger.debug("%s CLI response: %d SVMs", self._log_prefix, len(svm_output))
         svms = []
         for data in svm_output:
             svm = SVMInfo(
@@ -1182,15 +1218,19 @@ class MetadataCollector:
             List of CloudTargetInfo from storage aggregate object-store config show.
         """
         if not self.cli_client:
-            logger.debug("No CLI client available for cloud targets collection")
+            logger.debug(
+                "%s No CLI client available for cloud targets collection", self._log_prefix
+            )
             return []
 
         try:
-            logger.debug("CLI command: storage aggregate object-store config show")
+            logger.debug(
+                "%s CLI command: storage aggregate object-store config show", self._log_prefix
+            )
             output, _ = self.cli_client.run_a_show_command_and_parse_seperator(
                 "storage aggregate object-store config show"
             )
-            logger.debug("CLI response: %d cloud targets", len(output))
+            logger.debug("%s CLI response: %d cloud targets", self._log_prefix, len(output))
         except Exception as e:
             # Command may not be available on systems without FabricPool
             logger.debug("Cloud targets CLI command not available: %s", e)
@@ -1242,14 +1282,16 @@ class MetadataCollector:
             LicenseInfo from /cluster/licensing/licenses endpoint.
         """
         if not self.api_client:
-            logger.debug("No API client available for license collection")
+            logger.debug("%s No API client available for license collection", self._log_prefix)
             return LicenseInfo()
 
         response = self._cached_api_call("/cluster/licensing/licenses?fields=*")
         if not response:
             return LicenseInfo()
 
-        logger.debug("API response: %d licenses", len(response.get("records", [])))
+        logger.debug(
+            "%s API response: %d licenses", self._log_prefix, len(response.get("records", []))
+        )
         feature_licenses = []
         capacity_licenses = []
 
@@ -1280,12 +1322,12 @@ class MetadataCollector:
             LicenseInfo from license show.
         """
         if not self.cli_client:
-            logger.debug("No CLI client available for license collection")
+            logger.debug("%s No CLI client available for license collection", self._log_prefix)
             return LicenseInfo()
 
-        logger.debug("CLI command: license show")
+        logger.debug("%s CLI command: license show", self._log_prefix)
         output, _ = self.cli_client.run_a_show_command_and_parse_seperator("license show")
-        logger.debug("CLI response: %d licenses", len(output))
+        logger.debug("%s CLI response: %d licenses", self._log_prefix, len(output))
         feature_licenses = []
 
         for data in output:
@@ -1329,7 +1371,7 @@ class MetadataCollector:
             HAInfo from /cluster endpoint.
         """
         if not self.api_client:
-            logger.debug("No API client available for HA info collection")
+            logger.debug("%s No API client available for HA info collection", self._log_prefix)
             return HAInfo()
 
         # Use cached API call (same endpoint as nodes collection)
@@ -1337,7 +1379,11 @@ class MetadataCollector:
         if not nodes_response:
             return HAInfo()
 
-        logger.debug("API response: %d nodes (from cache)", len(nodes_response.get("records", [])))
+        logger.debug(
+            "%s API response: %d nodes (from cache)",
+            self._log_prefix,
+            len(nodes_response.get("records", [])),
+        )
 
         # Check if HA is configured
         ha_configured = len(nodes_response.get("records", [])) > 1
@@ -1349,7 +1395,7 @@ class MetadataCollector:
             mediator_response = self._cached_api_call("/cluster/mediators?fields=*")
             if mediator_response:
                 mediators = mediator_response.get("records", [])
-                logger.debug("API response: %d mediators", len(mediators))
+                logger.debug("%s API response: %d mediators", self._log_prefix, len(mediators))
                 if mediators:
                     mediator_address = mediators[0].get("ip_address", "")
                     mediator_status = mediators[0].get("reachable", "")
@@ -1369,12 +1415,12 @@ class MetadataCollector:
             HAInfo from storage failover show.
         """
         if not self.cli_client:
-            logger.debug("No CLI client available for HA info collection")
+            logger.debug("%s No CLI client available for HA info collection", self._log_prefix)
             return HAInfo()
 
-        logger.debug("CLI command: storage failover show")
+        logger.debug("%s CLI command: storage failover show", self._log_prefix)
         output, _ = self.cli_client.run_a_show_command_and_parse_seperator("storage failover show")
-        logger.debug("CLI response: %d entries", len(output))
+        logger.debug("%s CLI response: %d entries", self._log_prefix, len(output))
         if not output:
             return HAInfo(is_ha=False)
 
@@ -1420,7 +1466,9 @@ class MetadataCollector:
             RelationshipsInfo from snapmirror and cluster peer endpoints.
         """
         if not self.api_client:
-            logger.debug("No API client available for relationships collection")
+            logger.debug(
+                "%s No API client available for relationships collection", self._log_prefix
+            )
             return RelationshipsInfo()
 
         # Make both API calls in parallel using cached calls
@@ -1460,7 +1508,11 @@ class MetadataCollector:
 
         # Process cluster peers
         peer_response = responses.get(endpoints[1]) or {}
-        logger.debug("API response: %d cluster peers", len(peer_response.get("records", [])))
+        logger.debug(
+            "%s API response: %d cluster peers",
+            self._log_prefix,
+            len(peer_response.get("records", [])),
+        )
         cluster_peers = []
         for record in peer_response.get("records", []):
             peer = ClusterPeer(
@@ -1489,13 +1541,17 @@ class MetadataCollector:
             RelationshipsInfo from snapmirror show and cluster peer show.
         """
         if not self.cli_client:
-            logger.debug("No CLI client available for relationships collection")
+            logger.debug(
+                "%s No CLI client available for relationships collection", self._log_prefix
+            )
             return RelationshipsInfo()
 
         # Collect SnapMirror relationships
-        logger.debug("CLI command: snapmirror show")
+        logger.debug("%s CLI command: snapmirror show", self._log_prefix)
         sm_output, _ = self.cli_client.run_a_show_command_and_parse_seperator("snapmirror show")
-        logger.debug("CLI response: %d SnapMirror relationships", len(sm_output))
+        logger.debug(
+            "%s CLI response: %d SnapMirror relationships", self._log_prefix, len(sm_output)
+        )
         snapmirror_destinations = []
         for data in sm_output:
             # healthy field from CLI is a string "true"/"false"
@@ -1511,9 +1567,9 @@ class MetadataCollector:
             snapmirror_destinations.append(sm)
 
         # Collect cluster peers
-        logger.debug("CLI command: cluster peer show")
+        logger.debug("%s CLI command: cluster peer show", self._log_prefix)
         peer_output, _ = self.cli_client.run_a_show_command_and_parse_seperator("cluster peer show")
-        logger.debug("CLI response: %d cluster peers", len(peer_output))
+        logger.debug("%s CLI response: %d cluster peers", self._log_prefix, len(peer_output))
         cluster_peers = []
         for data in peer_output:
             peer = ClusterPeer(
