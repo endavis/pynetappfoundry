@@ -177,6 +177,14 @@ class TestAPIWrapperInit:
         )
         assert wrapper.session.headers["Authorization"] == "Bearer token123"
 
+    def test_connection_pool_configured(self, api_wrapper: APIWrapper) -> None:
+        """Test that connection pool is configured for parallel requests."""
+        # Get the adapter mounted for https://
+        adapter = api_wrapper.session.get_adapter("https://example.com")
+        # Verify pool is configured with increased size (stored as private attrs)
+        assert adapter._pool_connections == 20  # type: ignore[union-attr]
+        assert adapter._pool_maxsize == 20  # type: ignore[union-attr]
+
 
 class TestReferenceResolution:
     """Tests for $ref resolution."""
