@@ -269,14 +269,12 @@ class TestClusterInfoCollection:
         }
 
     @pytest.fixture
-    def mock_cluster_cli_output(self) -> dict[str, dict[str, str]]:
+    def mock_cluster_cli_output(self) -> tuple[list[dict[str, str]], dict[str, str]]:
         """Mock CLI output for cluster identity show."""
-        return {
-            "mycluster": {
-                "Cluster": "mycluster",
-                "Cluster UUID": "abc-123-def-456",
-            }
-        }
+        return (
+            [{"cluster": "mycluster", "cluster-uuid": "abc-123-def-456"}],
+            {},
+        )
 
     def test_collect_cluster_info_via_api(self, mock_cluster_api_response: dict[str, Any]) -> None:
         """Test collecting cluster info via API."""
@@ -292,21 +290,21 @@ class TestClusterInfoCollection:
         api_client.call_endpoint.assert_called_with("/cluster?fields=*", method="GET")
 
     def test_collect_cluster_info_fallback_to_cli(
-        self, mock_cluster_cli_output: dict[str, dict[str, str]]
+        self, mock_cluster_cli_output: tuple[list[dict[str, str]], dict[str, str]]
     ) -> None:
         """Test cluster info falls back to CLI when API fails."""
         api_client = MagicMock()
         api_client.call_endpoint.side_effect = Exception("API unavailable")
 
         cli_client = MagicMock()
-        cli_client.run_command_and_parse.return_value = mock_cluster_cli_output
+        cli_client.run_a_show_command_and_parse_seperator.return_value = mock_cluster_cli_output
 
         collector = MetadataCollector(api_client=api_client, cli_client=cli_client)
         result = collector.collect_cluster_info()
 
         assert result.cluster_name == "mycluster"
         assert result.cluster_uuid == "abc-123-def-456"
-        cli_client.run_command_and_parse.assert_called()
+        cli_client.run_a_show_command_and_parse_seperator.assert_called()
 
     def test_collect_cluster_info_no_clients(self) -> None:
         """Test cluster info returns empty when no clients."""
@@ -603,23 +601,27 @@ class TestCloudTargetsCollection:
     def test_collect_cloud_targets_via_cli(self) -> None:
         """Test collecting cloud targets via CLI fallback."""
         cli_client = MagicMock()
-        cli_client.run_command_and_parse.side_effect = [
+        cli_client.run_a_show_command_and_parse_seperator.side_effect = [
             # aggr show
-            {"aggr1": {"Node": "node1", "State": "online", "Type": "ssd"}},
+            ([{"aggregate": "aggr1", "node": "node1", "state": "online", "type": "ssd"}], {}),
             # vserver show
-            {"svm1": {"Admin State": "running", "Vserver Type": "default"}},
+            ([{"vserver": "svm1", "admin-state": "running", "type": "default"}], {}),
             # storage aggregate object-store config show
-            {
-                "s3-target-1": {
-                    "Provider Type": "AWS_S3",
-                    "Server": "s3.us-east-1.amazonaws.com",
-                    "Container": "my-bucket",
-                    "Owner": "fabricpool",
-                    "SSL Enabled": "true",
-                    "Authentication Type": "key",
-                    "IPspace": "Default",
-                }
-            },
+            (
+                [
+                    {
+                        "object-store-name": "s3-target-1",
+                        "provider-type": "AWS_S3",
+                        "server": "s3.us-east-1.amazonaws.com",
+                        "container": "my-bucket",
+                        "owner": "fabricpool",
+                        "ssl-enabled": "true",
+                        "auth-type": "key",
+                        "ipspace": "Default",
+                    }
+                ],
+                {},
+            ),
         ]
 
         collector = MetadataCollector(cli_client=cli_client)
@@ -636,16 +638,16 @@ class TestCloudTargetsCollection:
         """Test that CLI fallback handles command not available."""
         cli_client = MagicMock()
 
-        def side_effect(cmd: str) -> dict[str, Any]:
+        def side_effect(cmd: str) -> tuple[list[dict[str, Any]], dict[str, str]]:
             if "object-store" in cmd:
                 raise Exception("Command not available")
             if "aggr" in cmd:
-                return {"aggr1": {"Node": "node1", "State": "online"}}
+                return ([{"aggregate": "aggr1", "node": "node1", "state": "online"}], {})
             if "vserver" in cmd:
-                return {"svm1": {"Admin State": "running"}}
-            return {}
+                return ([{"vserver": "svm1", "admin-state": "running"}], {})
+            return ([], {})
 
-        cli_client.run_command_and_parse.side_effect = side_effect
+        cli_client.run_a_show_command_and_parse_seperator.side_effect = side_effect
 
         collector = MetadataCollector(cli_client=cli_client)
         result = collector.collect_storage()
