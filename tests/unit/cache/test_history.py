@@ -9,7 +9,13 @@ from click.testing import CliRunner
 
 from pynetappfoundry.cache import CachedClusterMetadata, compute_diff
 from pynetappfoundry.cache.history_db import CacheHistoryDB
-from pynetappfoundry.cache.models import NodeInfo
+from pynetappfoundry.cache.models import (
+    METADATA_SCHEMA_MIN_COMPATIBLE,
+    METADATA_SCHEMA_VERSION,
+    NodeInfo,
+    is_schema_compatible,
+    parse_schema_version,
+)
 from pynetappfoundry.cli.commands.cache.history import history
 
 
@@ -502,3 +508,66 @@ class TestHistoryPreservation:
         assert len(history_records) == 1
         assert history_records[0]["summary"] == [{"type": "added", "entity": "test"}]
         db2.close()
+
+
+class TestSchemaVersioning:
+    """Tests for schema version compatibility checking."""
+
+    def test_parse_schema_version_valid(self) -> None:
+        """Test parsing valid schema versions."""
+        assert parse_schema_version("1.0") == (1, 0)
+        assert parse_schema_version("1.1") == (1, 1)
+        assert parse_schema_version("2.5") == (2, 5)
+        assert parse_schema_version("10.20") == (10, 20)
+
+    def test_parse_schema_version_single_number(self) -> None:
+        """Test parsing version with only major number."""
+        assert parse_schema_version("1") == (1, 0)
+        assert parse_schema_version("2") == (2, 0)
+
+    def test_parse_schema_version_invalid(self) -> None:
+        """Test parsing invalid schema versions raises error."""
+        with pytest.raises(ValueError, match="Invalid schema version"):
+            parse_schema_version("invalid")
+        with pytest.raises(ValueError, match="Invalid schema version"):
+            parse_schema_version("")
+        with pytest.raises(ValueError, match="Invalid schema version"):
+            parse_schema_version("a.b")
+
+    def test_is_schema_compatible_current_version(self) -> None:
+        """Test that current version is compatible."""
+        assert is_schema_compatible(METADATA_SCHEMA_VERSION) is True
+
+    def test_is_schema_compatible_minimum_version(self) -> None:
+        """Test that minimum compatible version is compatible."""
+        assert is_schema_compatible(METADATA_SCHEMA_MIN_COMPATIBLE) is True
+
+    def test_is_schema_compatible_none(self) -> None:
+        """Test that None version is incompatible."""
+        assert is_schema_compatible(None) is False
+
+    def test_is_schema_compatible_old_version(self) -> None:
+        """Test that very old versions are incompatible."""
+        assert is_schema_compatible("0.1") is False
+        assert is_schema_compatible("0.9") is False
+
+    def test_is_schema_compatible_newer_version(self) -> None:
+        """Test that newer versions are compatible (forward compatibility)."""
+        # Assuming current is 1.x, version 2.0 should be compatible
+        assert is_schema_compatible("2.0") is True
+        assert is_schema_compatible("1.99") is True
+
+    def test_cached_metadata_has_version(self) -> None:
+        """Test that CachedClusterMetadata includes cache_version."""
+        metadata = CachedClusterMetadata(cluster_name="test")
+        assert metadata.cache_version == METADATA_SCHEMA_VERSION
+        assert metadata.CURRENT_SCHEMA_VERSION == METADATA_SCHEMA_VERSION
+
+    def test_cached_metadata_serializes_version(self) -> None:
+        """Test that cache_version is included in JSON serialization."""
+        import json
+
+        metadata = CachedClusterMetadata(cluster_name="test")
+        data = json.loads(metadata.model_dump_json())
+        assert "cache_version" in data
+        assert data["cache_version"] == METADATA_SCHEMA_VERSION

@@ -21,6 +21,7 @@ from pynetappfoundry.cache import (
     ProgressCallback,
     ProgressInfo,
     compute_diff,
+    is_schema_compatible,
 )
 from pynetappfoundry.cli.utils import (
     print_error,
@@ -424,8 +425,20 @@ def _process_cluster(
 
             try:
                 previous_data = json_module.loads(after_json)
-                previous_metadata = CachedClusterMetadata.model_validate(previous_data)
-                logger.debug("Found previous snapshot for %s", cluster_name)
+                snapshot_version = previous_data.get("cache_version")
+
+                if not is_schema_compatible(snapshot_version):
+                    logger.warning(
+                        "Previous snapshot for %s has incompatible schema version %s, "
+                        "treating as initial capture",
+                        cluster_name,
+                        snapshot_version,
+                    )
+                else:
+                    previous_metadata = CachedClusterMetadata.model_validate(previous_data)
+                    logger.debug(
+                        "Found previous snapshot for %s (v%s)", cluster_name, snapshot_version
+                    )
             except Exception as e:
                 logger.warning("Failed to parse previous snapshot for %s: %s", cluster_name, e)
 

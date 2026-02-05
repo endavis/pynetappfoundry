@@ -11,7 +11,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from pynetappfoundry.cache import CacheHistoryDB, format_diff_summary
+from pynetappfoundry.cache import CacheHistoryDB, format_diff_summary, is_schema_compatible
 from pynetappfoundry.cli.utils import print_error, print_exception, print_warning
 from pynetappfoundry.core.config import Config
 
@@ -428,7 +428,17 @@ def snapshot_at_date(
             ctx.exit(1)
 
         try:
-            metadata = CachedClusterMetadata.model_validate(json.loads(str(after_json)))
+            snapshot_data = json.loads(str(after_json))
+            snapshot_version = snapshot_data.get("cache_version")
+
+            if not is_schema_compatible(snapshot_version):
+                print_error(
+                    f"Snapshot has incompatible schema version: {snapshot_version}. "
+                    "Cannot restore to current cache format."
+                )
+                ctx.exit(1)
+
+            metadata = CachedClusterMetadata.model_validate(snapshot_data)
             cache_db = ClusterMetadataDB(config=config)
             cache_db.set(cluster, metadata)
             cache_db.close()

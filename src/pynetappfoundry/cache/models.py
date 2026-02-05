@@ -3,8 +3,61 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from typing import ClassVar
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+# Schema version for CachedClusterMetadata model.
+# Increment MINOR for backward-compatible changes (new optional fields).
+# Increment MAJOR for breaking changes (removed/renamed fields, type changes).
+# Format: "MAJOR.MINOR"
+METADATA_SCHEMA_VERSION = "1.1"
+
+# Minimum schema version that can be loaded without migration.
+# Snapshots older than this may fail to deserialize or have missing data.
+METADATA_SCHEMA_MIN_COMPATIBLE = "1.0"
+
+
+def parse_schema_version(version: str) -> tuple[int, int]:
+    """Parse a schema version string into (major, minor) tuple.
+
+    Args:
+        version: Version string in "MAJOR.MINOR" format.
+
+    Returns:
+        Tuple of (major, minor) integers.
+
+    Raises:
+        ValueError: If version string is invalid.
+    """
+    try:
+        parts = version.split(".")
+        return (int(parts[0]), int(parts[1]) if len(parts) > 1 else 0)
+    except (ValueError, IndexError) as e:
+        raise ValueError(f"Invalid schema version: {version!r}") from e
+
+
+def is_schema_compatible(snapshot_version: str | None) -> bool:
+    """Check if a snapshot schema version is compatible with current code.
+
+    Args:
+        snapshot_version: The cache_version from a stored snapshot, or None.
+
+    Returns:
+        True if the snapshot can be safely loaded, False otherwise.
+    """
+    if snapshot_version is None:
+        # Very old snapshots without version - assume incompatible
+        return False
+
+    try:
+        snap_major, snap_minor = parse_schema_version(snapshot_version)
+        min_major, min_minor = parse_schema_version(METADATA_SCHEMA_MIN_COMPATIBLE)
+
+        # Compatible if snapshot version >= minimum compatible version
+        return (snap_major, snap_minor) >= (min_major, min_minor)
+    except ValueError:
+        return False
 
 
 def _utcnow() -> datetime:
@@ -278,14 +331,26 @@ class CachedClusterMetadata(BaseModel):
     """Complete cached metadata for a cluster.
 
     This is the top-level model containing all cached data categories.
+
+    Schema Version History:
+        1.0 - Initial schema
+        1.1 - Changed cloud from single CloudMetadata to list[CloudMetadata]
+              for multi-node support
+
+    Note: The cache_version field tracks the schema version of the stored data.
+    When loading historical snapshots, use is_schema_compatible() to verify
+    the snapshot can be safely deserialized with the current model.
     """
 
     model_config = ConfigDict(extra="allow")
 
+    # Current schema version constant for reference
+    CURRENT_SCHEMA_VERSION: ClassVar[str] = METADATA_SCHEMA_VERSION
+
     # Cache metadata
     cluster_name: str
     cached_at: datetime = Field(default_factory=_utcnow)
-    cache_version: str = "1.1"  # Bumped for cloud list change
+    cache_version: str = METADATA_SCHEMA_VERSION
 
     # Data categories
     cloud: list[CloudMetadata] = Field(default_factory=list)
