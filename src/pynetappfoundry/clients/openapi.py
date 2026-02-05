@@ -10,6 +10,7 @@ from urllib.parse import urlencode
 
 import requests
 from jsonschema import ValidationError, validate
+from requests.adapters import HTTPAdapter
 from tenacity import (
     RetryCallState,
     retry,
@@ -101,6 +102,13 @@ class APIWrapper:
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
         self.session = session or requests.Session()
+
+        # Configure connection pool to handle parallel API calls
+        # Default pool size (10) is insufficient when using ThreadPoolExecutor
+        adapter = HTTPAdapter(pool_connections=20, pool_maxsize=20)
+        self.session.mount("https://", adapter)
+        self.session.mount("http://", adapter)
+
         # Default headers (can be extended per request)
         default_headers = {
             "Content-Type": "application/json",
