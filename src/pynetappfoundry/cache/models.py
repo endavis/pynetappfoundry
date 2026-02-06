@@ -11,7 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 # Increment MINOR for backward-compatible changes (new optional fields).
 # Increment MAJOR for breaking changes (removed/renamed fields, type changes).
 # Format: "MAJOR.MINOR"
-METADATA_SCHEMA_VERSION = "1.1"
+METADATA_SCHEMA_VERSION = "1.0"
 
 # Minimum schema version that can be loaded without migration.
 # Snapshots older than this may fail to deserialize or have missing data.
@@ -113,6 +113,8 @@ class ClusterInfo(BaseModel):
     cluster_uuid: str = ""
     ontap_version: str = ""
     model: str = ""
+    contact: str = ""
+    location: str = ""
 
     @field_validator("model", mode="before")
     @classmethod
@@ -126,12 +128,13 @@ class NodeInfo(BaseModel):
 
     model_config = ConfigDict(extra="allow")
 
+    uuid: str = ""
     name: str = ""
     serial_number: str = ""
     system_id: str = ""
     model: str = ""
-    uptime: int = 0  # seconds
     is_epsilon: bool = False
+    location: str = ""
 
 
 class NetworkLIF(BaseModel):
@@ -144,9 +147,6 @@ class NetworkLIF(BaseModel):
     netmask: str = ""
     home_node: str = ""
     home_port: str = ""
-    current_node: str = ""
-    current_port: str = ""
-    operational_status: str = ""
     role: str = ""  # data, cluster, intercluster, management
     svm: str = ""
 
@@ -156,6 +156,7 @@ class BroadcastDomain(BaseModel):
 
     model_config = ConfigDict(extra="allow")
 
+    uuid: str = ""
     name: str = ""
     ipspace: str = ""
     mtu: int = 0
@@ -182,12 +183,15 @@ class AggregateInfo(BaseModel):
 
     model_config = ConfigDict(extra="allow")
 
+    uuid: str = ""
     name: str = ""
     node: str = ""
     state: str = ""
     type: str = ""  # hdd, ssd, hybrid
     total_size: int = 0  # bytes
-    used_size: int = 0  # bytes
+    disk_count: int = 0
+    disk_type: str = ""
+    raid_type: str = ""
 
 
 class SVMInfo(BaseModel):
@@ -195,11 +199,14 @@ class SVMInfo(BaseModel):
 
     model_config = ConfigDict(extra="allow")
 
+    uuid: str = ""
     name: str = ""
     state: str = ""
     subtype: str = ""  # default, dp_destination, sync_source
     root_volume: str = ""
     root_volume_aggregate: str = ""
+    allowed_protocols: list[str] = Field(default_factory=list)
+    language: str = ""
 
 
 class CloudTargetInfo(BaseModel):
@@ -219,7 +226,6 @@ class CloudTargetInfo(BaseModel):
     owner: str = ""  # fabricpool, snapmirror
     scope: str = ""  # cluster, svm (9.12+)
     svm: str = ""
-    used: int = 0  # Space used in bytes
     ssl_enabled: bool = True
     authentication_type: str = ""  # key, cap, etc.
     ipspace: str = ""
@@ -284,9 +290,7 @@ class HAInfo(BaseModel):
     is_ha: bool = False
     partner_node: str = ""
     ha_state: str = ""
-    takeover_state: str = ""
     mediator_address: str = ""
-    mediator_status: str = ""
 
 
 class SnapMirrorRelationship(BaseModel):
@@ -294,12 +298,11 @@ class SnapMirrorRelationship(BaseModel):
 
     model_config = ConfigDict(extra="allow")
 
+    uuid: str = ""
     source_path: str = ""
     destination_path: str = ""
     relationship_type: str = ""  # extended_data_protection, data_protection
     state: str = ""  # snapmirrored, uninitialized, broken-off
-    healthy: bool = True
-    lag_time: str = ""
 
 
 class ClusterPeer(BaseModel):
@@ -312,7 +315,6 @@ class ClusterPeer(BaseModel):
     remote_cluster_name: str = ""
     peer_addresses: list[str] = Field(default_factory=list)
     authentication_state: str = ""
-    availability: str = ""
 
 
 class RelationshipsInfo(BaseModel):
@@ -333,9 +335,7 @@ class CachedClusterMetadata(BaseModel):
     This is the top-level model containing all cached data categories.
 
     Schema Version History:
-        1.0 - Initial schema
-        1.1 - Changed cloud from single CloudMetadata to list[CloudMetadata]
-              for multi-node support
+        1.0 - Initial schema with comprehensive model coverage
 
     Note: The cache_version field tracks the schema version of the stored data.
     When loading historical snapshots, use is_schema_compatible() to verify

@@ -758,6 +758,8 @@ class MetadataCollector:
             cluster_uuid=response.get("uuid", ""),
             ontap_version=response.get("version", {}).get("full", ""),
             model=response.get("version", {}).get("generation", ""),
+            contact=response.get("contact", ""),
+            location=response.get("location", ""),
         )
 
     def _collect_cluster_info_via_cli(self) -> ClusterInfo:
@@ -830,12 +832,13 @@ class MetadataCollector:
             is_epsilon = membership.get("epsilon", False) if isinstance(membership, dict) else False
             nodes.append(
                 NodeInfo(
+                    uuid=record.get("uuid", ""),
                     name=record.get("name", ""),
                     serial_number=record.get("serial_number", ""),
                     system_id=str(record.get("system_id", "")),
                     model=str(record.get("model", "")),
-                    uptime=record.get("uptime", 0),
                     is_epsilon=is_epsilon,
+                    location=record.get("location", ""),
                 )
             )
         return nodes
@@ -934,9 +937,6 @@ class MetadataCollector:
                 netmask=record.get("ip", {}).get("netmask", ""),
                 home_node=record.get("location", {}).get("home_node", {}).get("name", ""),
                 home_port=record.get("location", {}).get("home_port", {}).get("name", ""),
-                current_node=record.get("location", {}).get("node", {}).get("name", ""),
-                current_port=record.get("location", {}).get("port", {}).get("name", ""),
-                operational_status=record.get("state", ""),
                 svm=record.get("svm", {}).get("name", ""),
             )
             # Determine role from service_policy or scope
@@ -961,6 +961,7 @@ class MetadataCollector:
         broadcast_domains = []
         for record in bd_response.get("records", []):
             bd = BroadcastDomain(
+                uuid=record.get("uuid", ""),
                 name=record.get("name", ""),
                 ipspace=record.get("ipspace", {}).get("name", ""),
                 mtu=record.get("mtu", 0),
@@ -1009,9 +1010,6 @@ class MetadataCollector:
                 netmask=data.get("netmask", ""),
                 home_node=data.get("home-node", ""),
                 home_port=data.get("home-port", ""),
-                current_node=data.get("curr-node", ""),
-                current_port=data.get("curr-port", ""),
-                operational_status=data.get("status-oper", ""),
                 role=data.get("role", ""),
                 svm=data.get("vserver", ""),
             )
@@ -1104,13 +1102,18 @@ class MetadataCollector:
         )
         aggregates = []
         for record in aggr_response.get("records", []):
+            block_storage = record.get("block_storage", {})
+            primary = block_storage.get("primary", {})
             aggr = AggregateInfo(
+                uuid=record.get("uuid", ""),
                 name=record.get("name", ""),
                 node=record.get("node", {}).get("name", ""),
                 state=record.get("state", ""),
-                type=record.get("block_storage", {}).get("primary", {}).get("disk_type", ""),
+                type=primary.get("disk_type", ""),
                 total_size=record.get("space", {}).get("block_storage", {}).get("size", 0),
-                used_size=record.get("space", {}).get("block_storage", {}).get("used", 0),
+                disk_count=primary.get("disk_count", 0),
+                disk_type=primary.get("disk_type", ""),
+                raid_type=primary.get("raid_type", ""),
             )
             aggregates.append(aggr)
 
@@ -1122,9 +1125,12 @@ class MetadataCollector:
         svms = []
         for record in svm_response.get("records", []):
             svm = SVMInfo(
+                uuid=record.get("uuid", ""),
                 name=record.get("name", ""),
                 state=record.get("state", ""),
                 subtype=record.get("subtype", ""),
+                allowed_protocols=record.get("allowed_protocols", []) or [],
+                language=record.get("language", ""),
             )
             svms.append(svm)
 
@@ -1159,7 +1165,6 @@ class MetadataCollector:
                 owner=record.get("owner", ""),
                 scope=record.get("scope", ""),
                 svm=record.get("svm", {}).get("name", "") if record.get("svm") else "",
-                used=record.get("used", 0),
                 ssl_enabled=record.get("ssl_enabled", True),
                 authentication_type=record.get("authentication_type", ""),
                 ipspace=record.get("ipspace", {}).get("name", "") if record.get("ipspace") else "",
@@ -1392,7 +1397,6 @@ class MetadataCollector:
 
         # Try to get mediator info for cloud HA (use cached call)
         mediator_address = ""
-        mediator_status = ""
         try:
             mediator_response = self._cached_api_call("/cluster/mediators?fields=*")
             if mediator_response:
@@ -1400,14 +1404,12 @@ class MetadataCollector:
                 logger.debug("%s API response: %d mediators", self._log_prefix, len(mediators))
                 if mediators:
                     mediator_address = mediators[0].get("ip_address", "")
-                    mediator_status = mediators[0].get("reachable", "")
         except Exception as e:
             logger.debug("%s Mediator endpoint not available: %s", self._log_prefix, e)
 
         return HAInfo(
             is_ha=ha_configured,
             mediator_address=mediator_address,
-            mediator_status=str(mediator_status) if mediator_status else "",
         )
 
     def _collect_ha_info_via_cli(self) -> HAInfo:
@@ -1432,7 +1434,6 @@ class MetadataCollector:
             is_ha=True,
             partner_node=first_node.get("partner-name", ""),
             ha_state=first_node.get("node-state", ""),
-            takeover_state=first_node.get("takeover-state", ""),
         )
 
     # -------------------------------------------------------------------------
@@ -1476,7 +1477,7 @@ class MetadataCollector:
         # Make both API calls in parallel using cached calls
         # Request only needed fields for snapmirror to avoid timeout on large clusters
         endpoints = [
-            "/snapmirror/relationships?fields=source,destination,policy.type,state,healthy,lag_time",
+            "/snapmirror/relationships?fields=uuid,source,destination,policy.type,state",
             "/cluster/peers?fields=*",
         ]
 
@@ -1500,12 +1501,11 @@ class MetadataCollector:
         snapmirror_destinations = []
         for record in sm_response.get("records", []):
             sm = SnapMirrorRelationship(
+                uuid=record.get("uuid", ""),
                 source_path=self._format_path(record.get("source", {})),
                 destination_path=self._format_path(record.get("destination", {})),
                 relationship_type=record.get("policy", {}).get("type", ""),
                 state=record.get("state", ""),
-                healthy=record.get("healthy", True),
-                lag_time=record.get("lag_time", ""),
             )
             snapmirror_destinations.append(sm)
 
@@ -1523,10 +1523,6 @@ class MetadataCollector:
             remote_name = remote.get("name", "") if isinstance(remote, dict) else str(remote or "")
             auth = record.get("authentication")
             auth_state = auth.get("state", "") if isinstance(auth, dict) else str(auth or "")
-            status = record.get("status")
-            availability = (
-                status.get("state", "") if isinstance(status, dict) else str(status or "")
-            )
             # Get peer addresses from remote.ip_addresses (not peer_applications)
             peer_addresses = remote.get("ip_addresses", []) if isinstance(remote, dict) else []
             peer = ClusterPeer(
@@ -1535,7 +1531,6 @@ class MetadataCollector:
                 remote_cluster_name=remote_name,
                 peer_addresses=[addr for addr in peer_addresses if addr],
                 authentication_state=auth_state,
-                availability=availability,
             )
             cluster_peers.append(peer)
 
@@ -1564,15 +1559,11 @@ class MetadataCollector:
         )
         snapmirror_destinations = []
         for data in sm_output:
-            # healthy field from CLI is a string "true"/"false"
-            healthy_str = data.get("healthy", "true").lower()
             sm = SnapMirrorRelationship(
                 source_path=data.get("source-path", ""),
                 destination_path=data.get("destination-path", ""),
                 relationship_type=data.get("type", ""),
                 state=data.get("state", ""),
-                healthy=healthy_str == "true",
-                lag_time=data.get("lag-time", ""),
             )
             snapmirror_destinations.append(sm)
 
@@ -1585,7 +1576,6 @@ class MetadataCollector:
             peer = ClusterPeer(
                 name=data.get("peer-cluster", ""),
                 remote_cluster_name=data.get("remote-cluster-name", ""),
-                availability=data.get("availability", ""),
                 authentication_state=data.get("auth-status-admin", ""),
             )
             cluster_peers.append(peer)

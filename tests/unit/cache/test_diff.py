@@ -238,18 +238,18 @@ class TestComputeDiffModifiedEntities:
         assert node_changes[0]["old"] == "OLD123"
         assert node_changes[0]["new"] == "NEW456"
 
-    def test_modified_aggregate_size(self) -> None:
-        """Test detecting aggregate size change."""
+    def test_modified_aggregate_disk_count(self) -> None:
+        """Test detecting aggregate disk count change."""
         before = CachedClusterMetadata(
             cluster_name="test-cluster",
             storage=StorageInfo(
-                aggregates=[AggregateInfo(name="aggr1", used_size=100)],
+                aggregates=[AggregateInfo(name="aggr1", disk_count=12)],
             ),
         )
         after = CachedClusterMetadata(
             cluster_name="test-cluster",
             storage=StorageInfo(
-                aggregates=[AggregateInfo(name="aggr1", used_size=200)],
+                aggregates=[AggregateInfo(name="aggr1", disk_count=24)],
             ),
         )
         changes = compute_diff(before, after)
@@ -257,17 +257,17 @@ class TestComputeDiffModifiedEntities:
         aggr_changes = [c for c in changes if c["category"] == "storage.aggregates"]
         assert len(aggr_changes) == 1
         assert aggr_changes[0]["type"] == "modified"
-        assert aggr_changes[0]["field"] == "used_size"
-        assert aggr_changes[0]["old"] == 100
-        assert aggr_changes[0]["new"] == 200
+        assert aggr_changes[0]["field"] == "disk_count"
+        assert aggr_changes[0]["old"] == 12
+        assert aggr_changes[0]["new"] == 24
 
-    def test_modified_lif_status(self) -> None:
-        """Test detecting LIF operational status change."""
+    def test_modified_lif_ip_address(self) -> None:
+        """Test detecting LIF IP address change."""
         before = CachedClusterMetadata(
             cluster_name="test-cluster",
             network=NetworkInfo(
                 intercluster_lifs=[
-                    NetworkLIF(name="lif1", operational_status="up"),
+                    NetworkLIF(name="lif1", ip_address="10.0.0.1"),
                 ],
             ),
         )
@@ -275,7 +275,7 @@ class TestComputeDiffModifiedEntities:
             cluster_name="test-cluster",
             network=NetworkInfo(
                 intercluster_lifs=[
-                    NetworkLIF(name="lif1", operational_status="down"),
+                    NetworkLIF(name="lif1", ip_address="10.0.0.2"),
                 ],
             ),
         )
@@ -284,9 +284,9 @@ class TestComputeDiffModifiedEntities:
         lif_changes = [c for c in changes if c["category"] == "network.intercluster_lifs"]
         assert len(lif_changes) == 1
         assert lif_changes[0]["type"] == "modified"
-        assert lif_changes[0]["field"] == "operational_status"
-        assert lif_changes[0]["old"] == "up"
-        assert lif_changes[0]["new"] == "down"
+        assert lif_changes[0]["field"] == "ip_address"
+        assert lif_changes[0]["old"] == "10.0.0.1"
+        assert lif_changes[0]["new"] == "10.0.0.2"
 
     def test_modified_ontap_version(self) -> None:
         """Test detecting ONTAP version change."""
@@ -426,7 +426,6 @@ class TestComputeDiffAllCategories:
                     SnapMirrorRelationship(
                         destination_path="svm1:vol1",
                         state="snapmirrored",
-                        healthy=True,
                     ),
                 ],
             ),
@@ -438,7 +437,6 @@ class TestComputeDiffAllCategories:
                     SnapMirrorRelationship(
                         destination_path="svm1:vol1",
                         state="broken-off",
-                        healthy=False,
                     ),
                 ],
             ),
@@ -448,17 +446,12 @@ class TestComputeDiffAllCategories:
         sm_changes = [
             c for c in changes if c["category"] == "relationships.snapmirror_destinations"
         ]
-        assert len(sm_changes) == 2  # state and healthy both changed
+        assert len(sm_changes) == 1
 
         state_change = [c for c in sm_changes if c["field"] == "state"]
         assert len(state_change) == 1
         assert state_change[0]["old"] == "snapmirrored"
         assert state_change[0]["new"] == "broken-off"
-
-        healthy_change = [c for c in sm_changes if c["field"] == "healthy"]
-        assert len(healthy_change) == 1
-        assert healthy_change[0]["old"] is True
-        assert healthy_change[0]["new"] is False
 
 
 class TestFormatDiffSummary:

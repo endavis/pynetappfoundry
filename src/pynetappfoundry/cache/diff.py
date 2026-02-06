@@ -41,31 +41,35 @@ _ENTITY_CONFIGS: dict[str, tuple[str, list[str]]] = {
     "cloud": ("node", ["instance_id", "instance_type", "region", "provider"]),
     "nodes": (
         "name",
-        ["serial_number", "model", "uptime", "is_epsilon"],
+        ["uuid", "serial_number", "model", "is_epsilon", "location"],
     ),
     "network.intercluster_lifs": (
         "name",
-        ["ip_address", "operational_status", "home_node"],
+        ["ip_address", "home_node"],
     ),
     "network.data_lifs": (
         "name",
-        ["ip_address", "operational_status", "home_node"],
+        ["ip_address", "home_node"],
     ),
     "network.management_lifs": (
         "name",
-        ["ip_address", "operational_status", "home_node"],
+        ["ip_address", "home_node"],
+    ),
+    "network.broadcast_domains": (
+        "name",
+        ["uuid", "ipspace", "mtu"],
     ),
     "storage.aggregates": (
         "name",
-        ["state", "type", "total_size", "used_size"],
+        ["uuid", "state", "type", "total_size", "disk_count", "disk_type", "raid_type"],
     ),
     "storage.svms": (
         "name",
-        ["state", "subtype"],
+        ["uuid", "state", "subtype", "allowed_protocols", "language"],
     ),
     "storage.cloud_targets": (
         "name",
-        ["provider_type", "container", "used"],
+        ["uuid", "provider_type", "container"],
     ),
     "licenses.feature_licenses": (
         "name",
@@ -77,11 +81,11 @@ _ENTITY_CONFIGS: dict[str, tuple[str, list[str]]] = {
     ),
     "relationships.snapmirror_destinations": (
         "destination_path",
-        ["state", "healthy", "lag_time"],
+        ["uuid", "state"],
     ),
     "relationships.cluster_peers": (
         "name",
-        ["availability", "authentication_state"],
+        ["authentication_state"],
     ),
 }
 
@@ -268,7 +272,14 @@ def _diff_cluster_info(
     """
     changes: list[dict[str, Any]] = []
     category = "cluster"
-    tracked_fields = ["cluster_name", "cluster_uuid", "ontap_version", "model"]
+    tracked_fields = [
+        "cluster_name",
+        "cluster_uuid",
+        "ontap_version",
+        "model",
+        "contact",
+        "location",
+    ]
 
     if before is None:
         # Initial capture - just record existence
@@ -323,9 +334,7 @@ def _diff_ha_info(
         "is_ha",
         "partner_node",
         "ha_state",
-        "takeover_state",
         "mediator_address",
-        "mediator_status",
     ]
 
     if before is None:

@@ -324,20 +324,22 @@ class TestNodesCollection:
         return {
             "records": [
                 {
+                    "uuid": "node-uuid-1",
                     "name": "node1",
                     "serial_number": "123456",
                     "system_id": "0123456789",
                     "model": "SIMULATED",
-                    "uptime": 86400,
                     "membership": {"epsilon": True},
+                    "location": "rack-1",
                 },
                 {
+                    "uuid": "node-uuid-2",
                     "name": "node2",
                     "serial_number": "789012",
                     "system_id": "9876543210",
                     "model": "SIMULATED",
-                    "uptime": 86400,
                     "membership": {"epsilon": False},
+                    "location": "rack-2",
                 },
             ]
         }
@@ -565,7 +567,6 @@ class TestCloudTargetsCollection:
         assert s3_target.provider_type == "AWS_S3"
         assert s3_target.container == "my-bucket"
         assert s3_target.owner == "fabricpool"
-        assert s3_target.used == 1099511627776
         assert s3_target.ipspace == "Default"
         # Check Azure target
         azure_target = result.cloud_targets[1]
@@ -759,19 +760,16 @@ class TestRelationshipsCollection:
     @pytest.fixture
     def mock_relationships_api_responses(self) -> dict[str, dict[str, Any]]:
         """Mock API responses for relationship endpoints."""
-        sm_endpoint = (
-            "/snapmirror/relationships?fields=source,destination,policy.type,state,healthy,lag_time"
-        )
+        sm_endpoint = "/snapmirror/relationships?fields=uuid,source,destination,policy.type,state"
         return {
             sm_endpoint: {
                 "records": [
                     {
+                        "uuid": "sm-uuid-1",
                         "source": {"svm": {"name": "svm1"}, "path": "vol1"},
                         "destination": {"svm": {"name": "svm2"}, "path": "vol1_dp"},
                         "policy": {"type": "async"},
                         "state": "snapmirrored",
-                        "healthy": True,
-                        "lag_time": "PT5M",
                     }
                 ]
             },
@@ -783,7 +781,6 @@ class TestRelationshipsCollection:
                         "remote": {"name": "remote-cluster", "ip_addresses": ["10.0.1.1"]},
                         "peer_applications": ["snapmirror"],
                         "authentication": {"state": "ok"},
-                        "status": {"state": "available"},
                     }
                 ]
             },
@@ -817,20 +814,17 @@ class TestRelationshipsCollection:
 
     def test_collect_relationships_with_string_paths(self) -> None:
         """Test relationships handles string paths from API (instead of dicts)."""
-        sm_endpoint = (
-            "/snapmirror/relationships?fields=source,destination,policy.type,state,healthy,lag_time"
-        )
+        sm_endpoint = "/snapmirror/relationships?fields=uuid,source,destination,policy.type,state"
         api_responses = {
             sm_endpoint: {
                 "records": [
                     {
+                        "uuid": "sm-uuid-1",
                         # API returns path as string directly instead of dict
                         "source": "svm1:vol1",
                         "destination": "svm2:vol1_dp",
                         "policy": {"type": "async"},
                         "state": "snapmirrored",
-                        "healthy": True,
-                        "lag_time": "PT5M",
                     }
                 ]
             },
@@ -849,9 +843,7 @@ class TestRelationshipsCollection:
 
     def test_collect_relationships_with_string_peer_fields(self) -> None:
         """Test relationships handles string fields in cluster peers (instead of dicts)."""
-        sm_endpoint = (
-            "/snapmirror/relationships?fields=source,destination,policy.type,state,healthy,lag_time"
-        )
+        sm_endpoint = "/snapmirror/relationships?fields=uuid,source,destination,policy.type,state"
         api_responses = {
             sm_endpoint: {"records": []},
             "/cluster/peers?fields=*": {
@@ -863,7 +855,6 @@ class TestRelationshipsCollection:
                         "remote": "remote-cluster",
                         "peer_applications": [],
                         "authentication": "ok",
-                        "status": "available",
                     }
                 ]
             },
@@ -879,24 +870,21 @@ class TestRelationshipsCollection:
         assert result.cluster_peers[0].name == "peer1"
         assert result.cluster_peers[0].remote_cluster_name == "remote-cluster"
         assert result.cluster_peers[0].authentication_state == "ok"
-        assert result.cluster_peers[0].availability == "available"
         # When remote is a string, peer_addresses will be empty
         assert result.cluster_peers[0].peer_addresses == []
 
     def test_collect_relationships_with_none_path(self) -> None:
         """Test relationships handles None path values."""
-        sm_endpoint = (
-            "/snapmirror/relationships?fields=source,destination,policy.type,state,healthy,lag_time"
-        )
+        sm_endpoint = "/snapmirror/relationships?fields=uuid,source,destination,policy.type,state"
         api_responses = {
             sm_endpoint: {
                 "records": [
                     {
+                        "uuid": "sm-uuid-1",
                         "source": None,
                         "destination": None,
                         "policy": {"type": "async"},
                         "state": "snapmirrored",
-                        "healthy": True,
                     }
                 ]
             },
@@ -931,7 +919,7 @@ class TestCollectAll:
 
         assert result.cluster_name == "test-cluster"
         assert result.cached_at is not None
-        assert result.cache_version == "1.1"
+        assert result.cache_version == "1.0"
 
 
 class TestFormatPath:
@@ -1012,8 +1000,8 @@ class TestProgressCallback:
         )
         collector.collect_all("test-cluster")
 
-        # Should have 8 phases * 2 calls (starting + completed) = 16 calls
-        assert callback.call_count == 16
+        # Should have phases * 2 calls (starting + completed)
+        assert callback.call_count == len(CollectionPhase) * 2
 
         # Verify callback was called with ProgressInfo objects
         for call in callback.call_args_list:
@@ -1074,8 +1062,8 @@ class TestProgressCallback:
         )
         collector.collect_all("test-cluster")
 
-        # Should have 8 elapsed times (one per completed phase)
-        assert len(elapsed_times) == 8
+        # Should have elapsed times (one per completed phase)
+        assert len(elapsed_times) == len(CollectionPhase)
         # All should be non-negative
         for elapsed in elapsed_times:
             assert elapsed >= 0

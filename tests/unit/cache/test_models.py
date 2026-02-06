@@ -106,25 +106,28 @@ class TestNodeInfo:
     def test_default_values(self) -> None:
         """Test default values."""
         node = NodeInfo()
+        assert node.uuid == ""
         assert node.name == ""
         assert node.serial_number == ""
-        assert node.uptime == 0
         assert node.is_epsilon is False
+        assert node.location == ""
 
     def test_with_values(self) -> None:
         """Test with node data."""
         node = NodeInfo(
+            uuid="node-uuid-1",
             name="node1",
             serial_number="123456789",
             system_id="0123456789",
             model="SIMULATED",
-            uptime=86400,
             is_epsilon=True,
+            location="rack-1",
         )
+        assert node.uuid == "node-uuid-1"
         assert node.name == "node1"
         assert node.serial_number == "123456789"
-        assert node.uptime == 86400
         assert node.is_epsilon is True
+        assert node.location == "rack-1"
 
 
 class TestNetworkLIF:
@@ -144,7 +147,6 @@ class TestNetworkLIF:
             netmask="255.255.255.0",
             home_node="node1",
             home_port="e0d",
-            operational_status="up",
             role="data",
             svm="svm1",
         )
@@ -201,21 +203,31 @@ class TestAggregateInfo:
     def test_default_values(self) -> None:
         """Test default values."""
         aggr = AggregateInfo()
+        assert aggr.uuid == ""
         assert aggr.name == ""
         assert aggr.total_size == 0
+        assert aggr.disk_count == 0
+        assert aggr.disk_type == ""
+        assert aggr.raid_type == ""
 
     def test_with_values(self) -> None:
         """Test with aggregate data."""
         aggr = AggregateInfo(
+            uuid="aggr-uuid-1",
             name="aggr1",
             node="node1",
             state="online",
             type="ssd",
             total_size=1099511627776,  # 1TB
-            used_size=549755813888,  # 500GB
+            disk_count=24,
+            disk_type="ssd",
+            raid_type="raid_dp",
         )
+        assert aggr.uuid == "aggr-uuid-1"
         assert aggr.name == "aggr1"
         assert aggr.total_size == 1099511627776
+        assert aggr.disk_count == 24
+        assert aggr.raid_type == "raid_dp"
 
 
 class TestSVMInfo:
@@ -224,20 +236,29 @@ class TestSVMInfo:
     def test_default_values(self) -> None:
         """Test default values."""
         svm = SVMInfo()
+        assert svm.uuid == ""
         assert svm.name == ""
         assert svm.state == ""
+        assert svm.allowed_protocols == []
+        assert svm.language == ""
 
     def test_with_values(self) -> None:
         """Test with SVM data."""
         svm = SVMInfo(
+            uuid="svm-uuid-1",
             name="svm1",
             state="running",
             subtype="default",
             root_volume="svm1_root",
             root_volume_aggregate="aggr1",
+            allowed_protocols=["nfs", "cifs"],
+            language="c.utf_8",
         )
+        assert svm.uuid == "svm-uuid-1"
         assert svm.name == "svm1"
         assert svm.state == "running"
+        assert svm.allowed_protocols == ["nfs", "cifs"]
+        assert svm.language == "c.utf_8"
 
 
 class TestCloudTargetInfo:
@@ -250,7 +271,6 @@ class TestCloudTargetInfo:
         assert target.uuid == ""
         assert target.provider_type == ""
         assert target.ssl_enabled is True
-        assert target.used == 0
 
     def test_with_aws_values(self) -> None:
         """Test with AWS S3 cloud target data."""
@@ -262,7 +282,6 @@ class TestCloudTargetInfo:
             container="my-bucket",
             owner="fabricpool",
             scope="cluster",
-            used=1099511627776,  # 1TB
             ssl_enabled=True,
             authentication_type="key",
             ipspace="Default",
@@ -271,7 +290,6 @@ class TestCloudTargetInfo:
         assert target.provider_type == "AWS_S3"
         assert target.container == "my-bucket"
         assert target.owner == "fabricpool"
-        assert target.used == 1099511627776
 
     def test_with_azure_values(self) -> None:
         """Test with Azure cloud target data."""
@@ -389,9 +407,7 @@ class TestHAInfo:
             is_ha=True,
             partner_node="node2",
             ha_state="connected",
-            takeover_state="none",
             mediator_address="10.0.0.100",
-            mediator_status="connected",
         )
         assert ha.is_ha is True
         assert ha.partner_node == "node2"
@@ -404,19 +420,19 @@ class TestSnapMirrorRelationship:
     def test_default_values(self) -> None:
         """Test default values."""
         sm = SnapMirrorRelationship()
+        assert sm.uuid == ""
         assert sm.source_path == ""
-        assert sm.healthy is True
 
     def test_with_values(self) -> None:
         """Test with relationship data."""
         sm = SnapMirrorRelationship(
+            uuid="sm-uuid-1",
             source_path="svm1:vol1",
             destination_path="svm2:vol1_dp",
             relationship_type="extended_data_protection",
             state="snapmirrored",
-            healthy=True,
-            lag_time="PT0H5M30S",
         )
+        assert sm.uuid == "sm-uuid-1"
         assert sm.source_path == "svm1:vol1"
         assert sm.state == "snapmirrored"
 
@@ -438,7 +454,6 @@ class TestClusterPeer:
             remote_cluster_name="remote-cluster",
             peer_addresses=["10.0.1.1", "10.0.1.2"],
             authentication_state="ok",
-            availability="available",
         )
         assert peer.remote_cluster_name == "remote-cluster"
         assert len(peer.peer_addresses) == 2
@@ -461,7 +476,7 @@ class TestCachedClusterMetadata:
         """Test creating with minimal required fields."""
         metadata = CachedClusterMetadata(cluster_name="test-cluster")
         assert metadata.cluster_name == "test-cluster"
-        assert metadata.cache_version == "1.1"
+        assert metadata.cache_version == "1.0"
         assert metadata.cached_at is not None
 
     def test_cached_at_default(self) -> None:
@@ -566,7 +581,7 @@ class TestCachedClusterMetadata:
         data = {
             "cluster_name": "test",
             "cached_at": "2024-01-15T10:30:00+00:00",
-            "cache_version": "1.1",
+            "cache_version": "1.0",
             "cloud": [{"provider": "Azure", "region": "eastus"}],
             "cluster": {"ontap_version": "9.13.1"},
             "nodes": [],
