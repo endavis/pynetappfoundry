@@ -17,6 +17,7 @@ from pynetappfoundry.cache.models import (
     HAInfo,
     LicenseInfo,
     NetworkInfo,
+    ProtocolsInfo,
     RelationshipsInfo,
     StorageInfo,
 )
@@ -324,20 +325,22 @@ class TestNodesCollection:
         return {
             "records": [
                 {
+                    "uuid": "node-uuid-1",
                     "name": "node1",
                     "serial_number": "123456",
                     "system_id": "0123456789",
                     "model": "SIMULATED",
-                    "uptime": 86400,
                     "membership": {"epsilon": True},
+                    "location": "rack-1",
                 },
                 {
+                    "uuid": "node-uuid-2",
                     "name": "node2",
                     "serial_number": "789012",
                     "system_id": "9876543210",
                     "model": "SIMULATED",
-                    "uptime": 86400,
                     "membership": {"epsilon": False},
+                    "location": "rack-2",
                 },
             ]
         }
@@ -400,6 +403,32 @@ class TestNetworkCollection:
                 ]
             },
             "/network/ipspaces?fields=*": {"records": [{"name": "Default"}, {"name": "Cluster"}]},
+            "/name-services/dns?fields=*": {
+                "records": [
+                    {
+                        "uuid": "dns-uuid-1",
+                        "svm": {"name": "svm1"},
+                        "scope": "svm",
+                        "domains": ["example.com"],
+                        "servers": ["10.0.0.1", "10.0.0.2"],
+                        "timeout": 2,
+                        "attempts": 1,
+                    }
+                ]
+            },
+            "/network/ip/subnets?fields=*": {
+                "records": [
+                    {
+                        "uuid": "subnet-uuid-1",
+                        "name": "data-subnet",
+                        "ipspace": {"name": "Default"},
+                        "broadcast_domain": {"name": "Default"},
+                        "subnet": {"address": "10.0.0.0", "netmask": "24"},
+                        "gateway": "10.0.0.1",
+                        "ip_ranges": [{"start": "10.0.0.10", "end": "10.0.0.50"}],
+                    }
+                ]
+            },
         }
 
     def test_collect_network_via_api(
@@ -419,6 +448,15 @@ class TestNetworkCollection:
         assert len(result.broadcast_domains) == 1
         assert result.broadcast_domains[0].name == "Default"
         assert "Default" in result.ipspaces
+        assert len(result.dns) == 1
+        assert result.dns[0].svm == "svm1"
+        assert result.dns[0].domains == ["example.com"]
+        assert result.dns[0].servers == ["10.0.0.1", "10.0.0.2"]
+        assert len(result.subnets) == 1
+        assert result.subnets[0].name == "data-subnet"
+        assert result.subnets[0].subnet == "10.0.0.0/24"
+        assert result.subnets[0].gateway == "10.0.0.1"
+        assert result.subnets[0].ip_ranges == ["10.0.0.10-10.0.0.50"]
 
     def test_collect_network_no_clients(self) -> None:
         """Test network returns empty when no clients."""
@@ -456,6 +494,134 @@ class TestStorageCollection:
                 "records": [{"name": "svm1", "state": "running", "subtype": "default"}]
             },
             "/cloud/targets?fields=*": {"records": []},
+            "/storage/volumes?fields=*": {
+                "records": [
+                    {
+                        "uuid": "vol-uuid-1",
+                        "name": "vol1",
+                        "svm": {"name": "svm1"},
+                        "state": "online",
+                        "type": "rw",
+                        "style": "flexvol",
+                        "size": 1099511627776,
+                        "autosize": {"mode": "grow", "grow_threshold": 85},
+                        "tiering": {"policy": "auto", "min_cooling_days": 31},
+                        "aggregates": [{"name": "aggr1"}],
+                        "snapshot_policy": {"name": "default"},
+                        "nas": {
+                            "export_policy": {"name": "default"},
+                            "path": "/vol1",
+                            "security_style": "unix",
+                        },
+                    }
+                ]
+            },
+            "/storage/qtrees?fields=*": {
+                "records": [
+                    {
+                        "id": 1,
+                        "name": "qt1",
+                        "svm": {"name": "svm1"},
+                        "volume": {"name": "vol1"},
+                        "path": "/vol1/qt1",
+                        "security_style": "unix",
+                        "unix_permissions": 755,
+                        "export_policy": {"name": "default"},
+                    }
+                ]
+            },
+            "/storage/snapshot-policies?fields=*,copies": {
+                "records": [
+                    {
+                        "uuid": "sp-uuid-1",
+                        "name": "default",
+                        "svm": {"name": "svm1"},
+                        "enabled": True,
+                        "scope": "svm",
+                        "copies": [
+                            {
+                                "schedule": {"name": "hourly"},
+                                "count": 6,
+                                "prefix": "hourly",
+                                "snapmirror_label": "",
+                            }
+                        ],
+                    }
+                ]
+            },
+            "/cluster/schedules?fields=*": {
+                "records": [
+                    {
+                        "uuid": "sched-uuid-1",
+                        "name": "hourly",
+                        "type": "cron",
+                        "scope": "cluster",
+                        "cron": {"minutes": [0]},
+                    }
+                ]
+            },
+            "/storage/luns?fields=*": {
+                "records": [
+                    {
+                        "uuid": "lun-uuid-1",
+                        "name": "/vol/vol1/lun1",
+                        "svm": {"name": "svm1"},
+                        "location": {"volume": {"name": "vol1"}},
+                        "space": {"size": 10737418240},
+                        "os_type": "linux",
+                        "serial_number": "ABC123",
+                        "enabled": True,
+                        "comment": "Test LUN",
+                    }
+                ]
+            },
+            "/protocols/san/igroups?fields=*": {
+                "records": [
+                    {
+                        "uuid": "ig-uuid-1",
+                        "name": "igroup1",
+                        "svm": {"name": "svm1"},
+                        "protocol": "iscsi",
+                        "os_type": "linux",
+                        "initiators": [{"name": "iqn.1991-05.com.example:host1"}],
+                        "comment": "Test igroup",
+                    }
+                ]
+            },
+            "/storage/qos/policies?fields=*": {
+                "records": [
+                    {
+                        "uuid": "qos-uuid-1",
+                        "name": "qos-fixed",
+                        "svm": {"name": "svm1"},
+                        "scope": "svm",
+                        "object_type": "user_defined",
+                        "fixed": {
+                            "max_throughput_iops": 5000,
+                            "max_throughput_mbps": 200,
+                        },
+                    }
+                ]
+            },
+            "/storage/flexcache/flexcaches?fields=*": {
+                "records": [
+                    {
+                        "uuid": "fc-uuid-1",
+                        "name": "fc_vol1",
+                        "svm": {"name": "svm1"},
+                        "path": "/fc_vol1",
+                        "size": 1073741824,
+                        "origins": [
+                            {
+                                "volume": {"name": "origin_vol1"},
+                                "svm": {"name": "svm1"},
+                            }
+                        ],
+                        "global_file_locking_enabled": True,
+                        "dr_cache": False,
+                    }
+                ]
+            },
         }
 
     def test_collect_storage_via_api(
@@ -475,6 +641,41 @@ class TestStorageCollection:
         assert result.aggregates[0].type == "ssd"
         assert len(result.svms) == 1
         assert result.svms[0].name == "svm1"
+        assert len(result.volumes) == 1
+        assert result.volumes[0].name == "vol1"
+        assert result.volumes[0].uuid == "vol-uuid-1"
+        assert result.volumes[0].junction_path == "/vol1"
+        assert result.volumes[0].autosize_mode == "grow"
+        assert result.volumes[0].tiering_policy == "auto"
+        assert len(result.qtrees) == 1
+        assert result.qtrees[0].name == "qt1"
+        assert result.qtrees[0].security_style == "unix"
+        assert len(result.snapshot_policies) == 1
+        assert result.snapshot_policies[0].name == "default"
+        assert len(result.snapshot_policies[0].schedules) == 1
+        assert result.snapshot_policies[0].schedules[0].schedule == "hourly"
+        assert result.snapshot_policies[0].schedules[0].count == 6
+        assert len(result.schedules) == 1
+        assert result.schedules[0].name == "hourly"
+        assert result.schedules[0].type == "cron"
+        assert len(result.luns) == 1
+        assert result.luns[0].name == "/vol/vol1/lun1"
+        assert result.luns[0].os_type == "linux"
+        assert result.luns[0].size == 10737418240
+        assert result.luns[0].volume == "vol1"
+        assert len(result.igroups) == 1
+        assert result.igroups[0].name == "igroup1"
+        assert result.igroups[0].protocol == "iscsi"
+        assert result.igroups[0].initiators == ["iqn.1991-05.com.example:host1"]
+        assert len(result.qos_policies) == 1
+        assert result.qos_policies[0].name == "qos-fixed"
+        assert result.qos_policies[0].fixed_max_throughput_iops == 5000
+        assert result.qos_policies[0].policy_class == "user_defined"
+        assert len(result.flexcaches) == 1
+        assert result.flexcaches[0].name == "fc_vol1"
+        assert result.flexcaches[0].uuid == "fc-uuid-1"
+        assert result.flexcaches[0].origins == ["svm1:origin_vol1"]
+        assert result.flexcaches[0].global_file_locking_enabled is True
 
     def test_collect_storage_no_clients(self) -> None:
         """Test storage returns empty when no clients."""
@@ -544,6 +745,14 @@ class TestCloudTargetsCollection:
                 "records": [{"name": "svm1", "state": "running", "subtype": "default"}]
             },
             "/cloud/targets?fields=*": mock_cloud_targets_api_response,
+            "/storage/volumes?fields=*": {"records": []},
+            "/storage/qtrees?fields=*": {"records": []},
+            "/storage/snapshot-policies?fields=*,copies": {"records": []},
+            "/cluster/schedules?fields=*": {"records": []},
+            "/storage/luns?fields=*": {"records": []},
+            "/protocols/san/igroups?fields=*": {"records": []},
+            "/storage/qos/policies?fields=*": {"records": []},
+            "/storage/flexcache/flexcaches?fields=*": {"records": []},
         }
 
     def test_collect_cloud_targets_via_api(
@@ -565,7 +774,6 @@ class TestCloudTargetsCollection:
         assert s3_target.provider_type == "AWS_S3"
         assert s3_target.container == "my-bucket"
         assert s3_target.owner == "fabricpool"
-        assert s3_target.used == 1099511627776
         assert s3_target.ipspace == "Default"
         # Check Azure target
         azure_target = result.cloud_targets[1]
@@ -759,19 +967,16 @@ class TestRelationshipsCollection:
     @pytest.fixture
     def mock_relationships_api_responses(self) -> dict[str, dict[str, Any]]:
         """Mock API responses for relationship endpoints."""
-        sm_endpoint = (
-            "/snapmirror/relationships?fields=source,destination,policy.type,state,healthy,lag_time"
-        )
+        sm_endpoint = "/snapmirror/relationships?fields=uuid,source,destination,policy.type,state"
         return {
             sm_endpoint: {
                 "records": [
                     {
+                        "uuid": "sm-uuid-1",
                         "source": {"svm": {"name": "svm1"}, "path": "vol1"},
                         "destination": {"svm": {"name": "svm2"}, "path": "vol1_dp"},
                         "policy": {"type": "async"},
                         "state": "snapmirrored",
-                        "healthy": True,
-                        "lag_time": "PT5M",
                     }
                 ]
             },
@@ -783,7 +988,21 @@ class TestRelationshipsCollection:
                         "remote": {"name": "remote-cluster", "ip_addresses": ["10.0.1.1"]},
                         "peer_applications": ["snapmirror"],
                         "authentication": {"state": "ok"},
-                        "status": {"state": "available"},
+                    }
+                ]
+            },
+            "/svm/peers?fields=*": {
+                "records": [
+                    {
+                        "uuid": "svmpeer-uuid-1",
+                        "name": "svm1_to_svm2",
+                        "svm": {"name": "svm1"},
+                        "peer": {
+                            "svm": {"name": "svm2"},
+                            "cluster": {"name": "remote-cluster"},
+                        },
+                        "state": "peered",
+                        "applications": ["snapmirror"],
                     }
                 ]
             },
@@ -806,6 +1025,13 @@ class TestRelationshipsCollection:
         assert len(result.cluster_peers) == 1
         assert result.cluster_peers[0].remote_cluster_name == "remote-cluster"
         assert result.cluster_peers[0].peer_addresses == ["10.0.1.1"]
+        assert len(result.svm_peers) == 1
+        assert result.svm_peers[0].name == "svm1_to_svm2"
+        assert result.svm_peers[0].svm == "svm1"
+        assert result.svm_peers[0].peer_svm == "svm2"
+        assert result.svm_peers[0].peer_cluster == "remote-cluster"
+        assert result.svm_peers[0].state == "peered"
+        assert result.svm_peers[0].applications == ["snapmirror"]
 
     def test_collect_relationships_no_clients(self) -> None:
         """Test relationships returns empty when no clients."""
@@ -817,24 +1043,22 @@ class TestRelationshipsCollection:
 
     def test_collect_relationships_with_string_paths(self) -> None:
         """Test relationships handles string paths from API (instead of dicts)."""
-        sm_endpoint = (
-            "/snapmirror/relationships?fields=source,destination,policy.type,state,healthy,lag_time"
-        )
+        sm_endpoint = "/snapmirror/relationships?fields=uuid,source,destination,policy.type,state"
         api_responses = {
             sm_endpoint: {
                 "records": [
                     {
+                        "uuid": "sm-uuid-1",
                         # API returns path as string directly instead of dict
                         "source": "svm1:vol1",
                         "destination": "svm2:vol1_dp",
                         "policy": {"type": "async"},
                         "state": "snapmirrored",
-                        "healthy": True,
-                        "lag_time": "PT5M",
                     }
                 ]
             },
             "/cluster/peers?fields=*": {"records": []},
+            "/svm/peers?fields=*": {"records": []},
         }
 
         api_client = MagicMock()
@@ -849,9 +1073,7 @@ class TestRelationshipsCollection:
 
     def test_collect_relationships_with_string_peer_fields(self) -> None:
         """Test relationships handles string fields in cluster peers (instead of dicts)."""
-        sm_endpoint = (
-            "/snapmirror/relationships?fields=source,destination,policy.type,state,healthy,lag_time"
-        )
+        sm_endpoint = "/snapmirror/relationships?fields=uuid,source,destination,policy.type,state"
         api_responses = {
             sm_endpoint: {"records": []},
             "/cluster/peers?fields=*": {
@@ -863,10 +1085,10 @@ class TestRelationshipsCollection:
                         "remote": "remote-cluster",
                         "peer_applications": [],
                         "authentication": "ok",
-                        "status": "available",
                     }
                 ]
             },
+            "/svm/peers?fields=*": {"records": []},
         }
 
         api_client = MagicMock()
@@ -879,28 +1101,26 @@ class TestRelationshipsCollection:
         assert result.cluster_peers[0].name == "peer1"
         assert result.cluster_peers[0].remote_cluster_name == "remote-cluster"
         assert result.cluster_peers[0].authentication_state == "ok"
-        assert result.cluster_peers[0].availability == "available"
         # When remote is a string, peer_addresses will be empty
         assert result.cluster_peers[0].peer_addresses == []
 
     def test_collect_relationships_with_none_path(self) -> None:
         """Test relationships handles None path values."""
-        sm_endpoint = (
-            "/snapmirror/relationships?fields=source,destination,policy.type,state,healthy,lag_time"
-        )
+        sm_endpoint = "/snapmirror/relationships?fields=uuid,source,destination,policy.type,state"
         api_responses = {
             sm_endpoint: {
                 "records": [
                     {
+                        "uuid": "sm-uuid-1",
                         "source": None,
                         "destination": None,
                         "policy": {"type": "async"},
                         "state": "snapmirrored",
-                        "healthy": True,
                     }
                 ]
             },
             "/cluster/peers?fields=*": {"records": []},
+            "/svm/peers?fields=*": {"records": []},
         }
 
         api_client = MagicMock()
@@ -912,6 +1132,264 @@ class TestRelationshipsCollection:
         assert len(result.snapmirror_destinations) == 1
         assert result.snapmirror_destinations[0].source_path == ""
         assert result.snapmirror_destinations[0].destination_path == ""
+
+
+class TestProtocolsCollection:
+    """Tests for protocols collection."""
+
+    @pytest.fixture
+    def mock_protocols_api_responses(self) -> dict[str, dict[str, Any]]:
+        """Mock API responses for protocol endpoints."""
+        return {
+            "/protocols/nfs/export-policies?fields=*,rules": {
+                "records": [
+                    {
+                        "id": 1,
+                        "name": "default",
+                        "svm": {"name": "svm1"},
+                        "rules": [
+                            {
+                                "index": 1,
+                                "clients": [{"match": "0.0.0.0/0"}],
+                                "protocols": ["nfs3", "nfs4"],
+                                "ro_rule": ["sys"],
+                                "rw_rule": ["sys"],
+                                "superuser": ["none"],
+                                "anonymous_user": "65534",
+                            },
+                        ],
+                    },
+                    {
+                        "id": 2,
+                        "name": "data_export",
+                        "svm": {"name": "svm1"},
+                        "rules": [
+                            {
+                                "index": 1,
+                                "clients": [
+                                    {"match": "10.0.0.0/8"},
+                                    {"match": "172.16.0.0/12"},
+                                ],
+                                "protocols": ["nfs3"],
+                                "ro_rule": ["sys"],
+                                "rw_rule": ["sys"],
+                                "superuser": ["sys"],
+                                "anonymous_user": "65534",
+                            },
+                            {
+                                "index": 2,
+                                "clients": [{"match": "192.168.1.0/24"}],
+                                "protocols": ["nfs4"],
+                                "ro_rule": ["krb5"],
+                                "rw_rule": ["krb5"],
+                                "superuser": ["krb5"],
+                                "anonymous_user": "nobody",
+                            },
+                        ],
+                    },
+                ]
+            },
+            "/protocols/cifs/shares?fields=*": {
+                "records": [
+                    {
+                        "name": "share1",
+                        "path": "/vol1",
+                        "svm": {"name": "svm1"},
+                        "comment": "Test share",
+                        "home_directory": False,
+                        "oplocks": True,
+                        "access_based_enumeration": True,
+                        "change_notify": True,
+                        "encryption": False,
+                        "unix_symlink": "local",
+                    }
+                ]
+            },
+            "/protocols/nfs/services?fields=*": {
+                "records": [
+                    {
+                        "svm": {"name": "svm1"},
+                        "enabled": True,
+                        "protocol": {
+                            "v3_enabled": True,
+                            "v40_enabled": True,
+                            "v41_enabled": False,
+                        },
+                        "showmount_enabled": True,
+                        "vstorage_enabled": False,
+                    }
+                ]
+            },
+            "/protocols/cifs/services?fields=*": {
+                "records": [
+                    {
+                        "svm": {"name": "svm1"},
+                        "name": "CIFSSERVER",
+                        "enabled": True,
+                        "ad_domain": {"fqdn": "example.com"},
+                        "comment": "Production CIFS",
+                        "default_unix_user": "pcuser",
+                        "netbios": {"aliases": ["ALIAS1"]},
+                    }
+                ]
+            },
+            "/protocols/s3/buckets?fields=*": {
+                "records": [
+                    {
+                        "uuid": "bucket-uuid-1",
+                        "name": "mybucket",
+                        "svm": {"name": "svm1"},
+                        "type": "s3",
+                        "size": 1073741824,
+                        "versioning_state": "enabled",
+                        "comment": "Test bucket",
+                        "nas_path": "",
+                    }
+                ]
+            },
+        }
+
+    def test_collect_protocols_via_api(
+        self, mock_protocols_api_responses: dict[str, dict[str, Any]]
+    ) -> None:
+        """Test collecting protocols via API."""
+        api_client = MagicMock()
+        api_client.call_endpoint.side_effect = (
+            lambda endpoint, **_: mock_protocols_api_responses.get(endpoint, {"records": []})
+        )
+
+        collector = MetadataCollector(api_client=api_client)
+        result = collector.collect_protocols()
+
+        assert isinstance(result, ProtocolsInfo)
+        assert len(result.export_policies) == 2
+
+        # Check first policy
+        policy1 = result.export_policies[0]
+        assert policy1.id == 1
+        assert policy1.name == "default"
+        assert policy1.svm == "svm1"
+        assert len(policy1.rules) == 1
+        assert policy1.rules[0].index == 1
+        assert policy1.rules[0].clients == ["0.0.0.0/0"]
+        assert policy1.rules[0].protocols == ["nfs3", "nfs4"]
+        assert policy1.rules[0].ro_rule == ["sys"]
+        assert policy1.rules[0].rw_rule == ["sys"]
+        assert policy1.rules[0].superuser == ["none"]
+        assert policy1.rules[0].anonymous_user == "65534"
+
+        # Check second policy with multiple rules
+        policy2 = result.export_policies[1]
+        assert policy2.name == "data_export"
+        assert len(policy2.rules) == 2
+        assert policy2.rules[0].clients == ["10.0.0.0/8", "172.16.0.0/12"]
+        assert policy2.rules[1].protocols == ["nfs4"]
+        assert policy2.rules[1].superuser == ["krb5"]
+
+        # Check CIFS shares
+        assert len(result.cifs_shares) == 1
+        assert result.cifs_shares[0].name == "share1"
+        assert result.cifs_shares[0].path == "/vol1"
+        assert result.cifs_shares[0].access_based_enumeration is True
+        assert result.cifs_shares[0].unix_symlink == "local"
+
+        # Check NFS services
+        assert len(result.nfs_services) == 1
+        assert result.nfs_services[0].svm == "svm1"
+        assert result.nfs_services[0].enabled is True
+        assert result.nfs_services[0].protocol_v3_enabled is True
+        assert result.nfs_services[0].protocol_v4_enabled is True
+        assert result.nfs_services[0].protocol_v41_enabled is False
+        assert result.nfs_services[0].showmount_enabled is True
+
+        # Check CIFS services
+        assert len(result.cifs_services) == 1
+        assert result.cifs_services[0].svm == "svm1"
+        assert result.cifs_services[0].name == "CIFSSERVER"
+        assert result.cifs_services[0].enabled is True
+        assert result.cifs_services[0].ad_domain == "example.com"
+        assert result.cifs_services[0].default_unix_user == "pcuser"
+        assert result.cifs_services[0].netbios_aliases == ["ALIAS1"]
+
+        # Check S3 buckets
+        assert len(result.s3_buckets) == 1
+        assert result.s3_buckets[0].uuid == "bucket-uuid-1"
+        assert result.s3_buckets[0].name == "mybucket"
+        assert result.s3_buckets[0].svm == "svm1"
+        assert result.s3_buckets[0].type == "s3"
+        assert result.s3_buckets[0].size == 1073741824
+        assert result.s3_buckets[0].versioning_state == "enabled"
+
+    def test_collect_protocols_empty_response(self) -> None:
+        """Test protocols handles empty API response."""
+        api_client = MagicMock()
+        api_client.call_endpoint.return_value = {"records": []}
+
+        collector = MetadataCollector(api_client=api_client)
+        result = collector.collect_protocols()
+
+        assert isinstance(result, ProtocolsInfo)
+        assert result.export_policies == []
+        assert result.cifs_shares == []
+        assert result.nfs_services == []
+        assert result.cifs_services == []
+        assert result.s3_buckets == []
+
+    def test_collect_protocols_no_clients(self) -> None:
+        """Test protocols returns empty when no clients."""
+        collector = MetadataCollector()
+        result = collector.collect_protocols()
+
+        assert isinstance(result, ProtocolsInfo)
+        assert result.export_policies == []
+        assert result.cifs_shares == []
+        assert result.nfs_services == []
+        assert result.cifs_services == []
+        assert result.s3_buckets == []
+
+    def test_collect_protocols_api_failure_fallback(self) -> None:
+        """Test protocols returns empty on API failure."""
+        api_client = MagicMock()
+        api_client.call_endpoint.side_effect = Exception("API error")
+
+        collector = MetadataCollector(api_client=api_client)
+        result = collector.collect_protocols()
+
+        assert isinstance(result, ProtocolsInfo)
+        assert result.export_policies == []
+        assert result.cifs_shares == []
+        assert result.nfs_services == []
+        assert result.cifs_services == []
+        assert result.s3_buckets == []
+
+    def test_collect_protocols_policy_without_rules(self) -> None:
+        """Test protocols handles policy records with no rules."""
+        responses: dict[str, dict[str, Any]] = {
+            "/protocols/nfs/export-policies?fields=*,rules": {
+                "records": [
+                    {
+                        "id": 1,
+                        "name": "empty_policy",
+                        "svm": {"name": "svm1"},
+                    },
+                ]
+            },
+            "/protocols/cifs/shares?fields=*": {"records": []},
+            "/protocols/nfs/services?fields=*": {"records": []},
+            "/protocols/cifs/services?fields=*": {"records": []},
+            "/protocols/s3/buckets?fields=*": {"records": []},
+        }
+        api_client = MagicMock()
+        api_client.call_endpoint.side_effect = lambda endpoint, **_: responses.get(
+            endpoint, {"records": []}
+        )
+
+        collector = MetadataCollector(api_client=api_client)
+        result = collector.collect_protocols()
+
+        assert len(result.export_policies) == 1
+        assert result.export_policies[0].name == "empty_policy"
+        assert result.export_policies[0].rules == []
 
 
 class TestCollectAll:
@@ -931,7 +1409,7 @@ class TestCollectAll:
 
         assert result.cluster_name == "test-cluster"
         assert result.cached_at is not None
-        assert result.cache_version == "1.1"
+        assert result.cache_version == "1.0"
 
 
 class TestFormatPath:
@@ -1012,8 +1490,8 @@ class TestProgressCallback:
         )
         collector.collect_all("test-cluster")
 
-        # Should have 8 phases * 2 calls (starting + completed) = 16 calls
-        assert callback.call_count == 16
+        # Should have phases * 2 calls (starting + completed)
+        assert callback.call_count == len(CollectionPhase) * 2
 
         # Verify callback was called with ProgressInfo objects
         for call in callback.call_args_list:
@@ -1051,6 +1529,7 @@ class TestProgressCallback:
             CollectionPhase.LICENSES,
             CollectionPhase.HA,
             CollectionPhase.RELATIONSHIPS,
+            CollectionPhase.PROTOCOLS,
         ]
         assert received_phases == expected_phases
 
@@ -1074,8 +1553,8 @@ class TestProgressCallback:
         )
         collector.collect_all("test-cluster")
 
-        # Should have 8 elapsed times (one per completed phase)
-        assert len(elapsed_times) == 8
+        # Should have elapsed times (one per completed phase)
+        assert len(elapsed_times) == len(CollectionPhase)
         # All should be non-negative
         for elapsed in elapsed_times:
             assert elapsed >= 0

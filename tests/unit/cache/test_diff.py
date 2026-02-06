@@ -12,18 +12,35 @@ from pynetappfoundry.cache.diff import (
 from pynetappfoundry.cache.models import (
     AggregateInfo,
     CachedClusterMetadata,
+    CIFSServiceInfo,
+    CIFSShareInfo,
     CloudMetadata,
     ClusterInfo,
+    DNSInfo,
+    ExportPolicyInfo,
+    FlexCacheInfo,
     HAInfo,
+    IgroupInfo,
+    IPSubnetInfo,
     LicenseFeature,
     LicenseInfo,
+    LunInfo,
     NetworkInfo,
     NetworkLIF,
+    NFSServiceInfo,
     NodeInfo,
+    ProtocolsInfo,
+    QosPolicyInfo,
+    QtreeInfo,
     RelationshipsInfo,
+    S3BucketInfo,
+    ScheduleInfo,
     SnapMirrorRelationship,
+    SnapshotPolicyInfo,
     StorageInfo,
     SVMInfo,
+    SVMPeerInfo,
+    VolumeInfo,
 )
 
 
@@ -238,18 +255,18 @@ class TestComputeDiffModifiedEntities:
         assert node_changes[0]["old"] == "OLD123"
         assert node_changes[0]["new"] == "NEW456"
 
-    def test_modified_aggregate_size(self) -> None:
-        """Test detecting aggregate size change."""
+    def test_modified_aggregate_disk_count(self) -> None:
+        """Test detecting aggregate disk count change."""
         before = CachedClusterMetadata(
             cluster_name="test-cluster",
             storage=StorageInfo(
-                aggregates=[AggregateInfo(name="aggr1", used_size=100)],
+                aggregates=[AggregateInfo(name="aggr1", disk_count=12)],
             ),
         )
         after = CachedClusterMetadata(
             cluster_name="test-cluster",
             storage=StorageInfo(
-                aggregates=[AggregateInfo(name="aggr1", used_size=200)],
+                aggregates=[AggregateInfo(name="aggr1", disk_count=24)],
             ),
         )
         changes = compute_diff(before, after)
@@ -257,17 +274,17 @@ class TestComputeDiffModifiedEntities:
         aggr_changes = [c for c in changes if c["category"] == "storage.aggregates"]
         assert len(aggr_changes) == 1
         assert aggr_changes[0]["type"] == "modified"
-        assert aggr_changes[0]["field"] == "used_size"
-        assert aggr_changes[0]["old"] == 100
-        assert aggr_changes[0]["new"] == 200
+        assert aggr_changes[0]["field"] == "disk_count"
+        assert aggr_changes[0]["old"] == 12
+        assert aggr_changes[0]["new"] == 24
 
-    def test_modified_lif_status(self) -> None:
-        """Test detecting LIF operational status change."""
+    def test_modified_lif_ip_address(self) -> None:
+        """Test detecting LIF IP address change."""
         before = CachedClusterMetadata(
             cluster_name="test-cluster",
             network=NetworkInfo(
                 intercluster_lifs=[
-                    NetworkLIF(name="lif1", operational_status="up"),
+                    NetworkLIF(name="lif1", ip_address="10.0.0.1"),
                 ],
             ),
         )
@@ -275,7 +292,7 @@ class TestComputeDiffModifiedEntities:
             cluster_name="test-cluster",
             network=NetworkInfo(
                 intercluster_lifs=[
-                    NetworkLIF(name="lif1", operational_status="down"),
+                    NetworkLIF(name="lif1", ip_address="10.0.0.2"),
                 ],
             ),
         )
@@ -284,9 +301,9 @@ class TestComputeDiffModifiedEntities:
         lif_changes = [c for c in changes if c["category"] == "network.intercluster_lifs"]
         assert len(lif_changes) == 1
         assert lif_changes[0]["type"] == "modified"
-        assert lif_changes[0]["field"] == "operational_status"
-        assert lif_changes[0]["old"] == "up"
-        assert lif_changes[0]["new"] == "down"
+        assert lif_changes[0]["field"] == "ip_address"
+        assert lif_changes[0]["old"] == "10.0.0.1"
+        assert lif_changes[0]["new"] == "10.0.0.2"
 
     def test_modified_ontap_version(self) -> None:
         """Test detecting ONTAP version change."""
@@ -426,7 +443,6 @@ class TestComputeDiffAllCategories:
                     SnapMirrorRelationship(
                         destination_path="svm1:vol1",
                         state="snapmirrored",
-                        healthy=True,
                     ),
                 ],
             ),
@@ -438,7 +454,6 @@ class TestComputeDiffAllCategories:
                     SnapMirrorRelationship(
                         destination_path="svm1:vol1",
                         state="broken-off",
-                        healthy=False,
                     ),
                 ],
             ),
@@ -448,17 +463,587 @@ class TestComputeDiffAllCategories:
         sm_changes = [
             c for c in changes if c["category"] == "relationships.snapmirror_destinations"
         ]
-        assert len(sm_changes) == 2  # state and healthy both changed
+        assert len(sm_changes) == 1
 
         state_change = [c for c in sm_changes if c["field"] == "state"]
         assert len(state_change) == 1
         assert state_change[0]["old"] == "snapmirrored"
         assert state_change[0]["new"] == "broken-off"
 
-        healthy_change = [c for c in sm_changes if c["field"] == "healthy"]
-        assert len(healthy_change) == 1
-        assert healthy_change[0]["old"] is True
-        assert healthy_change[0]["new"] is False
+    def test_volume_changes(self) -> None:
+        """Test volume change detection."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            storage=StorageInfo(
+                volumes=[
+                    VolumeInfo(name="vol1", svm="svm1", state="online", size=1073741824),
+                ],
+            ),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            storage=StorageInfo(
+                volumes=[
+                    VolumeInfo(name="vol1", svm="svm1", state="online", size=2147483648),
+                ],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        vol_changes = [c for c in changes if c["category"] == "storage.volumes"]
+        assert len(vol_changes) == 1
+        assert vol_changes[0]["type"] == "modified"
+        assert vol_changes[0]["field"] == "size"
+        assert vol_changes[0]["old"] == 1073741824
+        assert vol_changes[0]["new"] == 2147483648
+
+    def test_volume_added_removed(self) -> None:
+        """Test volume addition and removal detection."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            storage=StorageInfo(
+                volumes=[VolumeInfo(name="vol1", svm="svm1")],
+            ),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            storage=StorageInfo(
+                volumes=[
+                    VolumeInfo(name="vol1", svm="svm1"),
+                    VolumeInfo(name="vol2", svm="svm1"),
+                ],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        vol_changes = [c for c in changes if c["category"] == "storage.volumes"]
+        assert len(vol_changes) == 1
+        assert vol_changes[0]["type"] == "added"
+        assert vol_changes[0]["entity"] == "vol2"
+
+    def test_export_policy_changes(self) -> None:
+        """Test export policy change detection."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            protocols=ProtocolsInfo(
+                export_policies=[
+                    ExportPolicyInfo(name="default", id=1, svm="svm1"),
+                ],
+            ),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            protocols=ProtocolsInfo(
+                export_policies=[
+                    ExportPolicyInfo(name="default", id=1, svm="svm2"),
+                ],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        policy_changes = [c for c in changes if c["category"] == "protocols.export_policies"]
+        assert len(policy_changes) == 1
+        assert policy_changes[0]["type"] == "modified"
+        assert policy_changes[0]["field"] == "svm"
+        assert policy_changes[0]["old"] == "svm1"
+        assert policy_changes[0]["new"] == "svm2"
+
+    def test_export_policy_added(self) -> None:
+        """Test export policy addition detection."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            protocols=ProtocolsInfo(
+                export_policies=[ExportPolicyInfo(name="default", id=1, svm="svm1")],
+            ),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            protocols=ProtocolsInfo(
+                export_policies=[
+                    ExportPolicyInfo(name="default", id=1, svm="svm1"),
+                    ExportPolicyInfo(name="data_export", id=2, svm="svm1"),
+                ],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        policy_changes = [c for c in changes if c["category"] == "protocols.export_policies"]
+        assert len(policy_changes) == 1
+        assert policy_changes[0]["type"] == "added"
+        assert policy_changes[0]["entity"] == "data_export"
+
+    def test_qtree_changes(self) -> None:
+        """Test qtree change detection."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            storage=StorageInfo(
+                qtrees=[QtreeInfo(name="qt1", svm="svm1", security_style="unix")],
+            ),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            storage=StorageInfo(
+                qtrees=[QtreeInfo(name="qt1", svm="svm1", security_style="ntfs")],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        qt_changes = [c for c in changes if c["category"] == "storage.qtrees"]
+        assert len(qt_changes) == 1
+        assert qt_changes[0]["type"] == "modified"
+        assert qt_changes[0]["field"] == "security_style"
+        assert qt_changes[0]["old"] == "unix"
+        assert qt_changes[0]["new"] == "ntfs"
+
+    def test_snapshot_policy_added(self) -> None:
+        """Test snapshot policy addition detection."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            storage=StorageInfo(snapshot_policies=[]),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            storage=StorageInfo(
+                snapshot_policies=[SnapshotPolicyInfo(name="default", uuid="sp-uuid-1")],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        sp_changes = [c for c in changes if c["category"] == "storage.snapshot_policies"]
+        assert len(sp_changes) == 1
+        assert sp_changes[0]["type"] == "added"
+        assert sp_changes[0]["entity"] == "default"
+
+    def test_schedule_changes(self) -> None:
+        """Test schedule change detection."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            storage=StorageInfo(
+                schedules=[ScheduleInfo(name="hourly", type="cron", scope="cluster")],
+            ),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            storage=StorageInfo(
+                schedules=[ScheduleInfo(name="hourly", type="interval", scope="cluster")],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        sched_changes = [c for c in changes if c["category"] == "storage.schedules"]
+        assert len(sched_changes) == 1
+        assert sched_changes[0]["type"] == "modified"
+        assert sched_changes[0]["field"] == "type"
+
+    def test_cifs_share_changes(self) -> None:
+        """Test CIFS share change detection."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            protocols=ProtocolsInfo(
+                cifs_shares=[CIFSShareInfo(name="share1", path="/vol1", svm="svm1")],
+            ),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            protocols=ProtocolsInfo(
+                cifs_shares=[CIFSShareInfo(name="share1", path="/vol2", svm="svm1")],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        share_changes = [c for c in changes if c["category"] == "protocols.cifs_shares"]
+        assert len(share_changes) == 1
+        assert share_changes[0]["type"] == "modified"
+        assert share_changes[0]["field"] == "path"
+        assert share_changes[0]["old"] == "/vol1"
+        assert share_changes[0]["new"] == "/vol2"
+
+    def test_cifs_share_added(self) -> None:
+        """Test CIFS share addition detection."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            protocols=ProtocolsInfo(cifs_shares=[]),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            protocols=ProtocolsInfo(
+                cifs_shares=[CIFSShareInfo(name="share1", svm="svm1")],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        share_changes = [c for c in changes if c["category"] == "protocols.cifs_shares"]
+        assert len(share_changes) == 1
+        assert share_changes[0]["type"] == "added"
+        assert share_changes[0]["entity"] == "share1"
+
+    def test_lun_changes(self) -> None:
+        """Test LUN change detection."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            storage=StorageInfo(
+                luns=[LunInfo(name="/vol/vol1/lun1", svm="svm1", size=10737418240)],
+            ),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            storage=StorageInfo(
+                luns=[LunInfo(name="/vol/vol1/lun1", svm="svm1", size=21474836480)],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        lun_changes = [c for c in changes if c["category"] == "storage.luns"]
+        assert len(lun_changes) == 1
+        assert lun_changes[0]["type"] == "modified"
+        assert lun_changes[0]["field"] == "size"
+
+    def test_igroup_added(self) -> None:
+        """Test igroup addition detection."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            storage=StorageInfo(igroups=[]),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            storage=StorageInfo(
+                igroups=[IgroupInfo(name="igroup1", svm="svm1", protocol="iscsi")],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        ig_changes = [c for c in changes if c["category"] == "storage.igroups"]
+        assert len(ig_changes) == 1
+        assert ig_changes[0]["type"] == "added"
+        assert ig_changes[0]["entity"] == "igroup1"
+
+    def test_qos_policy_changes(self) -> None:
+        """Test QoS policy change detection."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            storage=StorageInfo(
+                qos_policies=[
+                    QosPolicyInfo(name="qos1", svm="svm1", scope="svm"),
+                ],
+            ),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            storage=StorageInfo(
+                qos_policies=[
+                    QosPolicyInfo(name="qos1", svm="svm1", scope="cluster"),
+                ],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        qos_changes = [c for c in changes if c["category"] == "storage.qos_policies"]
+        assert len(qos_changes) == 1
+        assert qos_changes[0]["type"] == "modified"
+        assert qos_changes[0]["field"] == "scope"
+        assert qos_changes[0]["old"] == "svm"
+        assert qos_changes[0]["new"] == "cluster"
+
+    def test_nfs_service_changes(self) -> None:
+        """Test NFS service change detection."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            protocols=ProtocolsInfo(
+                nfs_services=[
+                    NFSServiceInfo(svm="svm1", enabled=True, protocol_v3_enabled=True),
+                ],
+            ),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            protocols=ProtocolsInfo(
+                nfs_services=[
+                    NFSServiceInfo(svm="svm1", enabled=True, protocol_v3_enabled=False),
+                ],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        nfs_changes = [c for c in changes if c["category"] == "protocols.nfs_services"]
+        assert len(nfs_changes) == 1
+        assert nfs_changes[0]["type"] == "modified"
+        assert nfs_changes[0]["field"] == "protocol_v3_enabled"
+        assert nfs_changes[0]["old"] is True
+        assert nfs_changes[0]["new"] is False
+
+    def test_nfs_service_added(self) -> None:
+        """Test NFS service addition detection."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            protocols=ProtocolsInfo(nfs_services=[]),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            protocols=ProtocolsInfo(
+                nfs_services=[NFSServiceInfo(svm="svm1", enabled=True)],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        nfs_changes = [c for c in changes if c["category"] == "protocols.nfs_services"]
+        assert len(nfs_changes) == 1
+        assert nfs_changes[0]["type"] == "added"
+        assert nfs_changes[0]["entity"] == "svm1"
+
+    def test_cifs_service_changes(self) -> None:
+        """Test CIFS service change detection."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            protocols=ProtocolsInfo(
+                cifs_services=[
+                    CIFSServiceInfo(svm="svm1", name="OLDNAME", enabled=True),
+                ],
+            ),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            protocols=ProtocolsInfo(
+                cifs_services=[
+                    CIFSServiceInfo(svm="svm1", name="NEWNAME", enabled=True),
+                ],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        cifs_changes = [c for c in changes if c["category"] == "protocols.cifs_services"]
+        assert len(cifs_changes) == 1
+        assert cifs_changes[0]["type"] == "modified"
+        assert cifs_changes[0]["field"] == "name"
+        assert cifs_changes[0]["old"] == "OLDNAME"
+        assert cifs_changes[0]["new"] == "NEWNAME"
+
+    def test_dns_changes(self) -> None:
+        """Test DNS change detection."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            network=NetworkInfo(
+                dns=[
+                    DNSInfo(svm="svm1", scope="svm", servers=["10.0.0.1"]),
+                ],
+            ),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            network=NetworkInfo(
+                dns=[
+                    DNSInfo(svm="svm1", scope="svm", servers=["10.0.0.1", "10.0.0.2"]),
+                ],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        dns_changes = [c for c in changes if c["category"] == "network.dns"]
+        assert len(dns_changes) == 1
+        assert dns_changes[0]["type"] == "modified"
+        assert dns_changes[0]["field"] == "servers"
+        assert dns_changes[0]["old"] == ["10.0.0.1"]
+        assert dns_changes[0]["new"] == ["10.0.0.1", "10.0.0.2"]
+
+    def test_dns_added(self) -> None:
+        """Test DNS addition detection."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            network=NetworkInfo(dns=[]),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            network=NetworkInfo(
+                dns=[DNSInfo(svm="svm1", scope="svm", domains=["example.com"])],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        dns_changes = [c for c in changes if c["category"] == "network.dns"]
+        assert len(dns_changes) == 1
+        assert dns_changes[0]["type"] == "added"
+        assert dns_changes[0]["entity"] == "svm1"
+
+    def test_flexcache_changes(self) -> None:
+        """Test FlexCache change detection."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            storage=StorageInfo(
+                flexcaches=[
+                    FlexCacheInfo(name="fc1", svm="svm1", size=1073741824),
+                ],
+            ),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            storage=StorageInfo(
+                flexcaches=[
+                    FlexCacheInfo(name="fc1", svm="svm1", size=2147483648),
+                ],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        fc_changes = [c for c in changes if c["category"] == "storage.flexcaches"]
+        assert len(fc_changes) == 1
+        assert fc_changes[0]["type"] == "modified"
+        assert fc_changes[0]["field"] == "size"
+        assert fc_changes[0]["old"] == 1073741824
+        assert fc_changes[0]["new"] == 2147483648
+
+    def test_flexcache_added(self) -> None:
+        """Test FlexCache addition detection."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            storage=StorageInfo(flexcaches=[]),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            storage=StorageInfo(
+                flexcaches=[FlexCacheInfo(name="fc1", svm="svm1")],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        fc_changes = [c for c in changes if c["category"] == "storage.flexcaches"]
+        assert len(fc_changes) == 1
+        assert fc_changes[0]["type"] == "added"
+        assert fc_changes[0]["entity"] == "fc1"
+
+    def test_svm_peer_changes(self) -> None:
+        """Test SVM peer change detection."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            relationships=RelationshipsInfo(
+                svm_peers=[
+                    SVMPeerInfo(name="svm1_to_svm2", state="peered"),
+                ],
+            ),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            relationships=RelationshipsInfo(
+                svm_peers=[
+                    SVMPeerInfo(name="svm1_to_svm2", state="initiated"),
+                ],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        peer_changes = [c for c in changes if c["category"] == "relationships.svm_peers"]
+        assert len(peer_changes) == 1
+        assert peer_changes[0]["type"] == "modified"
+        assert peer_changes[0]["field"] == "state"
+        assert peer_changes[0]["old"] == "peered"
+        assert peer_changes[0]["new"] == "initiated"
+
+    def test_svm_peer_added(self) -> None:
+        """Test SVM peer addition detection."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            relationships=RelationshipsInfo(svm_peers=[]),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            relationships=RelationshipsInfo(
+                svm_peers=[SVMPeerInfo(name="svm1_to_svm2", svm="svm1", state="peered")],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        peer_changes = [c for c in changes if c["category"] == "relationships.svm_peers"]
+        assert len(peer_changes) == 1
+        assert peer_changes[0]["type"] == "added"
+        assert peer_changes[0]["entity"] == "svm1_to_svm2"
+
+    def test_s3_bucket_changes(self) -> None:
+        """Test S3 bucket change detection."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            protocols=ProtocolsInfo(
+                s3_buckets=[
+                    S3BucketInfo(name="mybucket", svm="svm1", size=1073741824),
+                ],
+            ),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            protocols=ProtocolsInfo(
+                s3_buckets=[
+                    S3BucketInfo(name="mybucket", svm="svm1", size=2147483648),
+                ],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        bucket_changes = [c for c in changes if c["category"] == "protocols.s3_buckets"]
+        assert len(bucket_changes) == 1
+        assert bucket_changes[0]["type"] == "modified"
+        assert bucket_changes[0]["field"] == "size"
+
+    def test_s3_bucket_added(self) -> None:
+        """Test S3 bucket addition detection."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            protocols=ProtocolsInfo(s3_buckets=[]),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            protocols=ProtocolsInfo(
+                s3_buckets=[S3BucketInfo(name="mybucket", svm="svm1")],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        bucket_changes = [c for c in changes if c["category"] == "protocols.s3_buckets"]
+        assert len(bucket_changes) == 1
+        assert bucket_changes[0]["type"] == "added"
+        assert bucket_changes[0]["entity"] == "mybucket"
+
+    def test_subnet_changes(self) -> None:
+        """Test IP subnet change detection."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            network=NetworkInfo(
+                subnets=[
+                    IPSubnetInfo(name="data-subnet", subnet="10.0.0.0/24", gateway="10.0.0.1"),
+                ],
+            ),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            network=NetworkInfo(
+                subnets=[
+                    IPSubnetInfo(name="data-subnet", subnet="10.0.0.0/24", gateway="10.0.0.254"),
+                ],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        subnet_changes = [c for c in changes if c["category"] == "network.subnets"]
+        assert len(subnet_changes) == 1
+        assert subnet_changes[0]["type"] == "modified"
+        assert subnet_changes[0]["field"] == "gateway"
+        assert subnet_changes[0]["old"] == "10.0.0.1"
+        assert subnet_changes[0]["new"] == "10.0.0.254"
+
+    def test_subnet_added(self) -> None:
+        """Test IP subnet addition detection."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            network=NetworkInfo(subnets=[]),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            network=NetworkInfo(
+                subnets=[IPSubnetInfo(name="data-subnet", subnet="10.0.0.0/24")],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        subnet_changes = [c for c in changes if c["category"] == "network.subnets"]
+        assert len(subnet_changes) == 1
+        assert subnet_changes[0]["type"] == "added"
+        assert subnet_changes[0]["entity"] == "data-subnet"
 
 
 class TestFormatDiffSummary:

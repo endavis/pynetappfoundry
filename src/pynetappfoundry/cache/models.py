@@ -11,7 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 # Increment MINOR for backward-compatible changes (new optional fields).
 # Increment MAJOR for breaking changes (removed/renamed fields, type changes).
 # Format: "MAJOR.MINOR"
-METADATA_SCHEMA_VERSION = "1.1"
+METADATA_SCHEMA_VERSION = "1.0"
 
 # Minimum schema version that can be loaded without migration.
 # Snapshots older than this may fail to deserialize or have missing data.
@@ -113,6 +113,8 @@ class ClusterInfo(BaseModel):
     cluster_uuid: str = ""
     ontap_version: str = ""
     model: str = ""
+    contact: str = ""
+    location: str = ""
 
     @field_validator("model", mode="before")
     @classmethod
@@ -126,12 +128,13 @@ class NodeInfo(BaseModel):
 
     model_config = ConfigDict(extra="allow")
 
+    uuid: str = ""
     name: str = ""
     serial_number: str = ""
     system_id: str = ""
     model: str = ""
-    uptime: int = 0  # seconds
     is_epsilon: bool = False
+    location: str = ""
 
 
 class NetworkLIF(BaseModel):
@@ -144,9 +147,6 @@ class NetworkLIF(BaseModel):
     netmask: str = ""
     home_node: str = ""
     home_port: str = ""
-    current_node: str = ""
-    current_port: str = ""
-    operational_status: str = ""
     role: str = ""  # data, cluster, intercluster, management
     svm: str = ""
 
@@ -156,16 +156,31 @@ class BroadcastDomain(BaseModel):
 
     model_config = ConfigDict(extra="allow")
 
+    uuid: str = ""
     name: str = ""
     ipspace: str = ""
     mtu: int = 0
     ports: list[str] = Field(default_factory=list)
 
 
+class IPSubnetInfo(BaseModel):
+    """IP subnet information."""
+
+    model_config = ConfigDict(extra="allow")
+
+    uuid: str = ""
+    name: str = ""
+    ipspace: str = ""
+    broadcast_domain: str = ""
+    subnet: str = ""  # CIDR notation, e.g., "10.0.0.0/24"
+    gateway: str = ""
+    ip_ranges: list[str] = Field(default_factory=list)
+
+
 class NetworkInfo(BaseModel):
     """Network configuration information.
 
-    Contains LIFs, broadcast domains, and IPspaces.
+    Contains LIFs, broadcast domains, IPspaces, DNS, and subnets.
     """
 
     model_config = ConfigDict(extra="allow")
@@ -175,6 +190,8 @@ class NetworkInfo(BaseModel):
     management_lifs: list[NetworkLIF] = Field(default_factory=list)
     broadcast_domains: list[BroadcastDomain] = Field(default_factory=list)
     ipspaces: list[str] = Field(default_factory=list)
+    dns: list[DNSInfo] = Field(default_factory=list)
+    subnets: list[IPSubnetInfo] = Field(default_factory=list)
 
 
 class AggregateInfo(BaseModel):
@@ -182,12 +199,15 @@ class AggregateInfo(BaseModel):
 
     model_config = ConfigDict(extra="allow")
 
+    uuid: str = ""
     name: str = ""
     node: str = ""
     state: str = ""
     type: str = ""  # hdd, ssd, hybrid
     total_size: int = 0  # bytes
-    used_size: int = 0  # bytes
+    disk_count: int = 0
+    disk_type: str = ""
+    raid_type: str = ""
 
 
 class SVMInfo(BaseModel):
@@ -195,11 +215,14 @@ class SVMInfo(BaseModel):
 
     model_config = ConfigDict(extra="allow")
 
+    uuid: str = ""
     name: str = ""
     state: str = ""
     subtype: str = ""  # default, dp_destination, sync_source
     root_volume: str = ""
     root_volume_aggregate: str = ""
+    allowed_protocols: list[str] = Field(default_factory=list)
+    language: str = ""
 
 
 class CloudTargetInfo(BaseModel):
@@ -219,7 +242,6 @@ class CloudTargetInfo(BaseModel):
     owner: str = ""  # fabricpool, snapmirror
     scope: str = ""  # cluster, svm (9.12+)
     svm: str = ""
-    used: int = 0  # Space used in bytes
     ssl_enabled: bool = True
     authentication_type: str = ""  # key, cap, etc.
     ipspace: str = ""
@@ -228,10 +250,182 @@ class CloudTargetInfo(BaseModel):
     azure_account: str = ""  # Azure account name
 
 
+class VolumeInfo(BaseModel):
+    """Volume information."""
+
+    model_config = ConfigDict(extra="allow")
+
+    uuid: str = ""
+    name: str = ""
+    svm: str = ""
+    state: str = ""  # online, offline, restricted
+    type: str = ""  # rw, dp, ls
+    style: str = ""  # flexvol, flexgroup
+    size: int = 0  # bytes
+    autosize_mode: str = ""  # off, grow, grow_shrink
+    autosize_grow_threshold: int = 0  # percentage
+    autosize_shrink_threshold: int = 0  # percentage
+    autosize_maximum: int = 0  # bytes
+    autosize_minimum: int = 0  # bytes
+    files_maximum: int = 0
+    tiering_policy: str = ""  # none, snapshot-only, auto, all
+    tiering_minimum_cooling_days: int = 0
+    aggregate: str = ""  # FlexVol aggregate name
+    aggregates: list[str] = Field(default_factory=list)  # FlexGroup aggregates
+    snapshot_policy: str = ""
+    export_policy: str = ""
+    junction_path: str = ""
+    nas_security_style: str = ""  # unix, ntfs, mixed
+
+
+class ExportRuleInfo(BaseModel):
+    """Export rule within an export policy."""
+
+    model_config = ConfigDict(extra="allow")
+
+    index: int = 0
+    clients: list[str] = Field(default_factory=list)
+    protocols: list[str] = Field(default_factory=list)
+    ro_rule: list[str] = Field(default_factory=list)
+    rw_rule: list[str] = Field(default_factory=list)
+    superuser: list[str] = Field(default_factory=list)
+    anonymous_user: str = ""
+
+
+class ExportPolicyInfo(BaseModel):
+    """NFS export policy information."""
+
+    model_config = ConfigDict(extra="allow")
+
+    id: int = 0
+    name: str = ""
+    svm: str = ""
+    rules: list[ExportRuleInfo] = Field(default_factory=list)
+
+
+class QtreeInfo(BaseModel):
+    """Qtree information."""
+
+    model_config = ConfigDict(extra="allow")
+
+    id: int = 0
+    name: str = ""
+    svm: str = ""
+    volume: str = ""
+    path: str = ""
+    security_style: str = ""  # unix, ntfs, mixed
+    unix_permissions: str = ""
+    export_policy: str = ""
+
+
+class SnapshotScheduleInfo(BaseModel):
+    """Schedule entry within a snapshot policy."""
+
+    model_config = ConfigDict(extra="allow")
+
+    schedule: str = ""
+    count: int = 0
+    prefix: str = ""
+    snapmirror_label: str = ""
+
+
+class SnapshotPolicyInfo(BaseModel):
+    """Snapshot policy information."""
+
+    model_config = ConfigDict(extra="allow")
+
+    uuid: str = ""
+    name: str = ""
+    svm: str = ""
+    enabled: bool = True
+    scope: str = ""  # cluster, svm
+    schedules: list[SnapshotScheduleInfo] = Field(default_factory=list)
+
+
+class ScheduleInfo(BaseModel):
+    """Job schedule information."""
+
+    model_config = ConfigDict(extra="allow")
+
+    uuid: str = ""
+    name: str = ""
+    type: str = ""  # cron, interval
+    scope: str = ""  # cluster, svm
+    svm: str = ""
+    cron: dict[str, list[int]] = Field(default_factory=dict)
+    interval: str = ""
+
+
+class LunInfo(BaseModel):
+    """LUN (Logical Unit Number) information."""
+
+    model_config = ConfigDict(extra="allow")
+
+    uuid: str = ""
+    name: str = ""
+    svm: str = ""
+    volume: str = ""
+    size: int = 0  # bytes
+    os_type: str = ""  # linux, windows, vmware, etc.
+    serial_number: str = ""
+    enabled: bool = True
+    comment: str = ""
+    qos_policy: str = ""
+    create_time: str = ""
+
+
+class IgroupInfo(BaseModel):
+    """Initiator group information."""
+
+    model_config = ConfigDict(extra="allow")
+
+    uuid: str = ""
+    name: str = ""
+    svm: str = ""
+    protocol: str = ""  # fcp, iscsi, mixed
+    os_type: str = ""  # linux, windows, vmware, etc.
+    initiators: list[str] = Field(default_factory=list)
+    comment: str = ""
+
+
+class QosPolicyInfo(BaseModel):
+    """QoS policy information."""
+
+    model_config = ConfigDict(extra="allow")
+
+    uuid: str = ""
+    name: str = ""
+    svm: str = ""
+    scope: str = ""  # cluster, svm
+    policy_class: str = ""  # preset, user_defined, system_defined
+    fixed_max_throughput_iops: int = 0
+    fixed_max_throughput_mbps: int = 0
+    adaptive_expected_iops: int = 0
+    adaptive_peak_iops: int = 0
+    adaptive_block_size: str = ""  # any, 4k, 8k, etc.
+
+
+class FlexCacheInfo(BaseModel):
+    """FlexCache volume information."""
+
+    model_config = ConfigDict(extra="allow")
+
+    uuid: str = ""
+    name: str = ""
+    svm: str = ""
+    path: str = ""
+    size: int = 0  # bytes
+    origins: list[str] = Field(default_factory=list)  # origin volume paths
+    global_file_locking_enabled: bool = False
+    dr_cache: bool = False
+
+
 class StorageInfo(BaseModel):
     """Storage topology information.
 
-    Contains aggregates, SVMs, and cloud targets.
+    Contains aggregates, SVMs, cloud targets, volumes, qtrees,
+    snapshot policies, schedules, LUNs, igroups, QoS policies,
+    and FlexCache volumes.
     """
 
     model_config = ConfigDict(extra="allow")
@@ -239,6 +433,14 @@ class StorageInfo(BaseModel):
     aggregates: list[AggregateInfo] = Field(default_factory=list)
     svms: list[SVMInfo] = Field(default_factory=list)
     cloud_targets: list[CloudTargetInfo] = Field(default_factory=list)
+    volumes: list[VolumeInfo] = Field(default_factory=list)
+    qtrees: list[QtreeInfo] = Field(default_factory=list)
+    snapshot_policies: list[SnapshotPolicyInfo] = Field(default_factory=list)
+    schedules: list[ScheduleInfo] = Field(default_factory=list)
+    luns: list[LunInfo] = Field(default_factory=list)
+    igroups: list[IgroupInfo] = Field(default_factory=list)
+    qos_policies: list[QosPolicyInfo] = Field(default_factory=list)
+    flexcaches: list[FlexCacheInfo] = Field(default_factory=list)
 
 
 class LicenseFeature(BaseModel):
@@ -284,9 +486,7 @@ class HAInfo(BaseModel):
     is_ha: bool = False
     partner_node: str = ""
     ha_state: str = ""
-    takeover_state: str = ""
     mediator_address: str = ""
-    mediator_status: str = ""
 
 
 class SnapMirrorRelationship(BaseModel):
@@ -294,12 +494,11 @@ class SnapMirrorRelationship(BaseModel):
 
     model_config = ConfigDict(extra="allow")
 
+    uuid: str = ""
     source_path: str = ""
     destination_path: str = ""
     relationship_type: str = ""  # extended_data_protection, data_protection
     state: str = ""  # snapmirrored, uninitialized, broken-off
-    healthy: bool = True
-    lag_time: str = ""
 
 
 class ClusterPeer(BaseModel):
@@ -312,19 +511,123 @@ class ClusterPeer(BaseModel):
     remote_cluster_name: str = ""
     peer_addresses: list[str] = Field(default_factory=list)
     authentication_state: str = ""
-    availability: str = ""
+
+
+class SVMPeerInfo(BaseModel):
+    """SVM peering information."""
+
+    model_config = ConfigDict(extra="allow")
+
+    uuid: str = ""
+    name: str = ""
+    svm: str = ""
+    peer_svm: str = ""
+    peer_cluster: str = ""
+    state: str = ""  # peered, initiated, pending, etc.
+    applications: list[str] = Field(default_factory=list)
 
 
 class RelationshipsInfo(BaseModel):
     """Cluster relationships information.
 
-    Contains SnapMirror and peering info.
+    Contains SnapMirror, cluster peering, and SVM peering info.
     """
 
     model_config = ConfigDict(extra="allow")
 
     snapmirror_destinations: list[SnapMirrorRelationship] = Field(default_factory=list)
     cluster_peers: list[ClusterPeer] = Field(default_factory=list)
+    svm_peers: list[SVMPeerInfo] = Field(default_factory=list)
+
+
+class NFSServiceInfo(BaseModel):
+    """NFS service configuration per SVM."""
+
+    model_config = ConfigDict(extra="allow")
+
+    svm: str = ""
+    enabled: bool = False
+    protocol_v3_enabled: bool = False
+    protocol_v4_enabled: bool = False
+    protocol_v41_enabled: bool = False
+    showmount_enabled: bool = False
+    vstorage_enabled: bool = False
+
+
+class CIFSServiceInfo(BaseModel):
+    """CIFS/SMB service configuration per SVM."""
+
+    model_config = ConfigDict(extra="allow")
+
+    svm: str = ""
+    name: str = ""  # CIFS server name
+    enabled: bool = False
+    ad_domain: str = ""
+    comment: str = ""
+    default_unix_user: str = ""
+    netbios_aliases: list[str] = Field(default_factory=list)
+
+
+class DNSInfo(BaseModel):
+    """DNS configuration per SVM or cluster."""
+
+    model_config = ConfigDict(extra="allow")
+
+    uuid: str = ""
+    svm: str = ""
+    scope: str = ""  # cluster, svm
+    domains: list[str] = Field(default_factory=list)
+    servers: list[str] = Field(default_factory=list)
+    timeout: int = 0
+    attempts: int = 0
+
+
+class CIFSShareInfo(BaseModel):
+    """CIFS/SMB share information."""
+
+    model_config = ConfigDict(extra="allow")
+
+    name: str = ""
+    path: str = ""
+    svm: str = ""
+    comment: str = ""
+    home_directory: bool = False
+    oplocks: bool = True
+    access_based_enumeration: bool = False
+    change_notify: bool = True
+    encryption: bool = False
+    unix_symlink: str = ""  # local, widelink, disable
+
+
+class S3BucketInfo(BaseModel):
+    """S3 bucket information."""
+
+    model_config = ConfigDict(extra="allow")
+
+    uuid: str = ""
+    name: str = ""
+    svm: str = ""
+    type: str = ""  # s3, nas-s3
+    size: int = 0  # bytes
+    versioning_state: str = ""  # enabled, disabled, suspended
+    comment: str = ""
+    nas_path: str = ""
+
+
+class ProtocolsInfo(BaseModel):
+    """Protocol configuration information.
+
+    Contains export policies, CIFS shares, NFS/CIFS services,
+    S3 buckets, and protocol-related data.
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    export_policies: list[ExportPolicyInfo] = Field(default_factory=list)
+    cifs_shares: list[CIFSShareInfo] = Field(default_factory=list)
+    nfs_services: list[NFSServiceInfo] = Field(default_factory=list)
+    cifs_services: list[CIFSServiceInfo] = Field(default_factory=list)
+    s3_buckets: list[S3BucketInfo] = Field(default_factory=list)
 
 
 class CachedClusterMetadata(BaseModel):
@@ -333,9 +636,7 @@ class CachedClusterMetadata(BaseModel):
     This is the top-level model containing all cached data categories.
 
     Schema Version History:
-        1.0 - Initial schema
-        1.1 - Changed cloud from single CloudMetadata to list[CloudMetadata]
-              for multi-node support
+        1.0 - Initial schema with comprehensive model coverage
 
     Note: The cache_version field tracks the schema version of the stored data.
     When loading historical snapshots, use is_schema_compatible() to verify
@@ -361,6 +662,7 @@ class CachedClusterMetadata(BaseModel):
     licenses: LicenseInfo = Field(default_factory=LicenseInfo)
     ha: HAInfo = Field(default_factory=HAInfo)
     relationships: RelationshipsInfo = Field(default_factory=RelationshipsInfo)
+    protocols: ProtocolsInfo = Field(default_factory=ProtocolsInfo)
 
     def is_stale(self, ttl_days: int = 30) -> bool:
         """Check if the cache is stale based on TTL.

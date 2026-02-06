@@ -41,31 +41,107 @@ _ENTITY_CONFIGS: dict[str, tuple[str, list[str]]] = {
     "cloud": ("node", ["instance_id", "instance_type", "region", "provider"]),
     "nodes": (
         "name",
-        ["serial_number", "model", "uptime", "is_epsilon"],
+        ["uuid", "serial_number", "model", "is_epsilon", "location"],
     ),
     "network.intercluster_lifs": (
         "name",
-        ["ip_address", "operational_status", "home_node"],
+        ["ip_address", "home_node"],
     ),
     "network.data_lifs": (
         "name",
-        ["ip_address", "operational_status", "home_node"],
+        ["ip_address", "home_node"],
     ),
     "network.management_lifs": (
         "name",
-        ["ip_address", "operational_status", "home_node"],
+        ["ip_address", "home_node"],
+    ),
+    "network.broadcast_domains": (
+        "name",
+        ["uuid", "ipspace", "mtu"],
     ),
     "storage.aggregates": (
         "name",
-        ["state", "type", "total_size", "used_size"],
+        ["uuid", "state", "type", "total_size", "disk_count", "disk_type", "raid_type"],
     ),
     "storage.svms": (
         "name",
-        ["state", "subtype"],
+        ["uuid", "state", "subtype", "allowed_protocols", "language"],
     ),
     "storage.cloud_targets": (
         "name",
-        ["provider_type", "container", "used"],
+        ["uuid", "provider_type", "container"],
+    ),
+    "storage.volumes": (
+        "name",
+        [
+            "uuid",
+            "svm",
+            "state",
+            "type",
+            "style",
+            "size",
+            "aggregate",
+            "snapshot_policy",
+            "export_policy",
+            "junction_path",
+            "nas_security_style",
+        ],
+    ),
+    "storage.qtrees": (
+        "name",
+        ["id", "svm", "volume", "security_style", "export_policy"],
+    ),
+    "storage.snapshot_policies": (
+        "name",
+        ["uuid", "svm", "enabled", "scope"],
+    ),
+    "storage.schedules": (
+        "name",
+        ["uuid", "type", "scope", "svm"],
+    ),
+    "storage.luns": (
+        "name",
+        ["uuid", "svm", "volume", "size", "os_type", "enabled"],
+    ),
+    "storage.igroups": (
+        "name",
+        ["uuid", "svm", "protocol", "os_type"],
+    ),
+    "storage.qos_policies": (
+        "name",
+        ["uuid", "svm", "scope", "policy_class"],
+    ),
+    "storage.flexcaches": (
+        "name",
+        ["uuid", "svm", "size", "origins", "global_file_locking_enabled"],
+    ),
+    "protocols.export_policies": (
+        "name",
+        ["id", "svm"],
+    ),
+    "protocols.cifs_shares": (
+        "name",
+        ["path", "svm", "home_directory", "oplocks", "encryption"],
+    ),
+    "protocols.nfs_services": (
+        "svm",
+        ["enabled", "protocol_v3_enabled", "protocol_v4_enabled", "protocol_v41_enabled"],
+    ),
+    "protocols.cifs_services": (
+        "svm",
+        ["name", "enabled", "ad_domain"],
+    ),
+    "protocols.s3_buckets": (
+        "name",
+        ["uuid", "svm", "type", "size", "versioning_state"],
+    ),
+    "network.dns": (
+        "svm",
+        ["uuid", "scope", "domains", "servers"],
+    ),
+    "network.subnets": (
+        "name",
+        ["uuid", "ipspace", "broadcast_domain", "subnet", "gateway"],
     ),
     "licenses.feature_licenses": (
         "name",
@@ -77,11 +153,15 @@ _ENTITY_CONFIGS: dict[str, tuple[str, list[str]]] = {
     ),
     "relationships.snapmirror_destinations": (
         "destination_path",
-        ["state", "healthy", "lag_time"],
+        ["uuid", "state"],
     ),
     "relationships.cluster_peers": (
         "name",
-        ["availability", "authentication_state"],
+        ["authentication_state"],
+    ),
+    "relationships.svm_peers": (
+        "name",
+        ["uuid", "svm", "peer_svm", "peer_cluster", "state"],
     ),
 }
 
@@ -268,7 +348,14 @@ def _diff_cluster_info(
     """
     changes: list[dict[str, Any]] = []
     category = "cluster"
-    tracked_fields = ["cluster_name", "cluster_uuid", "ontap_version", "model"]
+    tracked_fields = [
+        "cluster_name",
+        "cluster_uuid",
+        "ontap_version",
+        "model",
+        "contact",
+        "location",
+    ]
 
     if before is None:
         # Initial capture - just record existence
@@ -323,9 +410,7 @@ def _diff_ha_info(
         "is_ha",
         "partner_node",
         "ha_state",
-        "takeover_state",
         "mediator_address",
-        "mediator_status",
     ]
 
     if before is None:
