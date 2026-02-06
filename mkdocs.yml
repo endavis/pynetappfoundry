@@ -83,6 +83,7 @@ nav:
       - AI Command Blocking: development/ai/command-blocking.md
       - AI Enforcement Principles: development/ai/enforcement-principles.md
       - AI Statusline: development/ai/statusline.md
+      - Field Mapping Framework: development/field-mapping.md
       - Extensions: development/extensions.md
   - Deployment:
       - Development: deployment/development.md
@@ -102,6 +103,7 @@ nav:
       - ADR-0011 pytest Testing: decisions/0011-use-pytest-for-testing.md
       - ADR-0012 MkDocs Documentation: decisions/0012-use-mkdocs-with-material-theme-for-documentation.md
       - ADR-0013 Python Version Policy: decisions/0013-python-version-support-policy.md
+      - ADR-0017 Declarative Field Mapping: decisions/0017-declarative-field-mapping-framework.md
       - ADR Template: decisions/adr-template.md
   - Template:
       - Overview: template/index.md
