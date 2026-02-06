@@ -18,6 +18,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from pynetappfoundry.cache.field_mapping import parse_api_response, parse_cli_records
+from pynetappfoundry.cache.mappings.aggregate import AGGREGATE_MAPPING
 from pynetappfoundry.cache.mappings.volume import VOLUME_MAPPING
 from pynetappfoundry.cache.models import (
     AggregateInfo,
@@ -1221,34 +1222,15 @@ class MetadataCollector:
             responses = {ep: safe_api_call(ep) for ep in endpoints}
 
         # Process aggregates response
-        aggr_response = responses.get(endpoints[0]) or {}
-        logger.debug(
-            "%s API response: %d aggregates",
-            self._log_prefix,
-            len(aggr_response.get("records", [])),
+        aggregates = cast(
+            list[AggregateInfo],
+            parse_api_response(
+                AGGREGATE_MAPPING,
+                responses.get(endpoints[0]),
+                self._log_prefix,
+                self._log_missing_fields,
+            ),
         )
-        aggregates = []
-        for record in aggr_response.get("records", []):
-            self._log_missing_fields(
-                record,
-                ["uuid", "name", "node", "state", "block_storage", "space"],
-                "Aggregate",
-                record.get("name", record.get("uuid", "unknown")),
-            )
-            block_storage = record.get("block_storage", {})
-            primary = block_storage.get("primary", {})
-            aggr = AggregateInfo(
-                uuid=record.get("uuid", ""),
-                name=record.get("name", ""),
-                node=record.get("node", {}).get("name", ""),
-                state=record.get("state", ""),
-                type=primary.get("disk_type", ""),
-                total_size=record.get("space", {}).get("block_storage", {}).get("size", 0),
-                disk_count=primary.get("disk_count", 0),
-                disk_type=primary.get("disk_type", ""),
-                raid_type=primary.get("raid_type", ""),
-            )
-            aggregates.append(aggr)
 
         # Process SVMs response
         svm_response = responses.get(endpoints[1]) or {}
@@ -1380,24 +1362,13 @@ class MetadataCollector:
             return StorageInfo()
 
         # Collect aggregates
-        logger.debug("%s CLI command: aggr show", self._log_prefix)
         aggr_output, _ = self.cli_client.run_a_show_command_and_parse_seperator("aggr show")
-        logger.debug("%s CLI response: %d aggregates", self._log_prefix, len(aggr_output))
-        aggregates = []
-        for data in aggr_output:
-            self._log_missing_fields(
-                data,
-                ["aggregate", "node", "state", "type"],
-                "Aggregate(CLI)",
-                data.get("aggregate", "unknown"),
-            )
-            aggr = AggregateInfo(
-                name=data.get("aggregate", ""),
-                node=data.get("node", ""),
-                state=data.get("state", ""),
-                type=data.get("type", ""),
-            )
-            aggregates.append(aggr)
+        aggregates = cast(
+            list[AggregateInfo],
+            parse_cli_records(
+                AGGREGATE_MAPPING, aggr_output, self._log_prefix, self._log_missing_fields
+            ),
+        )
 
         # Collect SVMs
         logger.debug("%s CLI command: vserver show", self._log_prefix)

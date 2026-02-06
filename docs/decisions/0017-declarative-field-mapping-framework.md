@@ -55,6 +55,7 @@ The pilot migration (VolumeInfo) was completed in PR #189.
 
 - Issue #188: feat: add declarative field mapping framework
 - PR #189: feat: add declarative field mapping framework (pilot: VolumeInfo)
+- Issue #191: refactor: migrate AggregateInfo to field mapping framework
 
 ## Related Documentation
 
