@@ -44,17 +44,18 @@ class CachedClusterMetadata(BaseModel):
     # Cache metadata
     cluster_name: str
     cached_at: datetime
-    cache_version: str = "1.1"  # Schema version
+    cache_version: str = "1.0"  # Schema version
 
     # Data categories
-    cloud: list[CloudMetadata]      # Cloud provider info per node
-    cluster: ClusterInfo            # Cluster identity
-    nodes: list[NodeInfo]           # Node information
-    network: NetworkInfo            # LIFs, broadcast domains
-    storage: StorageInfo            # Aggregates, SVMs, cloud targets
-    licenses: LicenseInfo           # License information
-    ha: HAInfo                      # HA configuration
-    relationships: RelationshipsInfo # SnapMirror, peering
+    cloud: list[CloudMetadata]       # Cloud provider info per node
+    cluster: ClusterInfo             # Cluster identity
+    nodes: list[NodeInfo]            # Node information
+    network: NetworkInfo             # LIFs, broadcast domains, DNS, subnets
+    storage: StorageInfo             # Aggregates, SVMs, volumes, LUNs, etc.
+    licenses: LicenseInfo            # License information
+    ha: HAInfo                       # HA configuration
+    relationships: RelationshipsInfo # SnapMirror, cluster/SVM peering
+    protocols: ProtocolsInfo         # Export policies, CIFS, NFS, S3
 ```
 
 ### Schema Version Tracking
@@ -63,7 +64,7 @@ The cache uses semantic versioning to track schema compatibility:
 
 ```python
 # Current schema version
-METADATA_SCHEMA_VERSION = "1.1"
+METADATA_SCHEMA_VERSION = "1.0"
 
 # Minimum version that can be loaded without migration
 METADATA_SCHEMA_MIN_COMPATIBLE = "1.0"
@@ -78,8 +79,7 @@ METADATA_SCHEMA_MIN_COMPATIBLE = "1.0"
 
 | Version | Changes |
 |---------|---------|
-| 1.0 | Initial schema |
-| 1.1 | Changed `cloud` from single `CloudMetadata` to `list[CloudMetadata]` for multi-node support |
+| 1.0 | Initial schema with comprehensive model coverage |
 
 ## History Tracking
 
@@ -122,9 +122,9 @@ Changes are tracked as a list of change entries:
     "category": "storage.aggregates",
     "type": "modified",
     "entity": "aggr1",
-    "field": "used_size",
-    "old": 1000000000,
-    "new": 1500000000
+    "field": "disk_count",
+    "old": 12,
+    "new": 24
   },
   {
     "category": "network.data_lifs",
@@ -247,12 +247,12 @@ When modifying the cache schema:
 
 2. **Update version constant**:
    ```python
-   METADATA_SCHEMA_VERSION = "1.2"  # or "2.0" for breaking changes
+   METADATA_SCHEMA_VERSION = "1.1"  # or "2.0" for breaking changes
    ```
 
 3. **Update minimum compatible version** (if breaking):
    ```python
-   METADATA_SCHEMA_MIN_COMPATIBLE = "1.2"
+   METADATA_SCHEMA_MIN_COMPATIBLE = "1.1"
    ```
 
 4. **Document the change** in the Schema Version History table (in models.py docstring and this document)
@@ -274,7 +274,7 @@ When modifying the cache schema:
 
 ### Migration Strategies
 
-For breaking schema changes, consider these strategies:
+For future breaking schema changes, consider these strategies:
 
 #### Option 1: Clean Break (Recommended for Major Changes)
 
@@ -294,29 +294,8 @@ Add migration logic when loading old snapshots:
 def migrate_snapshot(data: dict, from_version: str) -> dict:
     """Migrate snapshot data to current schema."""
     major, minor = parse_schema_version(from_version)
-
-    if major == 1 and minor < 1:
-        # Migrate 1.0 → 1.1: wrap single cloud in list
-        if "cloud" in data and not isinstance(data["cloud"], list):
-            data["cloud"] = [data["cloud"]] if data["cloud"] else []
-
+    # Add migration steps as needed
     data["cache_version"] = METADATA_SCHEMA_VERSION
-    return data
-```
-
-#### Option 3: Dual Schema Support
-
-Maintain compatibility with multiple versions using Pydantic's
-`model_validator`:
-
-```python
-@model_validator(mode="before")
-@classmethod
-def handle_legacy_schema(cls, data: dict) -> dict:
-    version = data.get("cache_version", "1.0")
-    if version == "1.0":
-        # Transform 1.0 format to current format
-        pass
     return data
 ```
 
@@ -363,6 +342,96 @@ nf cache refresh cluster1 -v
 # Log path is shown at start of refresh
 ```
 
+## Model Reference
+
+All models use `ConfigDict(extra="allow")` for forward compatibility with new API fields.
+
+### Cloud & Cluster
+
+| Model | Key Fields | Description |
+|-------|------------|-------------|
+| `CloudMetadata` | node, instance_id, provider, region, instance_type | Cloud provider metadata per node |
+| `ClusterInfo` | cluster_name, cluster_uuid, ontap_version, model, contact, location | Core cluster identity |
+| `NodeInfo` | uuid, name, serial_number, system_id, model, is_epsilon, location | Cluster node information |
+
+### Network
+
+| Model | Key Fields | Description |
+|-------|------------|-------------|
+| `NetworkLIF` | name, ip_address, netmask, home_node, home_port, role, svm | Logical interface |
+| `BroadcastDomain` | uuid, name, ipspace, mtu, ports | Broadcast domain configuration |
+| `IPSubnetInfo` | uuid, name, ipspace, broadcast_domain, subnet, gateway, ip_ranges | IP subnet |
+| `DNSInfo` | uuid, svm, scope, domains, servers, timeout, attempts | DNS configuration |
+
+**Container:** `NetworkInfo` holds `intercluster_lifs`, `data_lifs`, `management_lifs`, `broadcast_domains`, `ipspaces`, `dns`, `subnets`.
+
+### Storage
+
+| Model | Key Fields | Description |
+|-------|------------|-------------|
+| `AggregateInfo` | uuid, name, node, state, type, total_size, disk_count, disk_type, raid_type | Storage aggregate |
+| `SVMInfo` | uuid, name, state, subtype, root_volume, allowed_protocols, language | Storage VM |
+| `VolumeInfo` | uuid, name, svm, state, type, style, size, junction_path, export_policy, snapshot_policy | Volume |
+| `QtreeInfo` | id, name, svm, volume, path, security_style, export_policy | Qtree |
+| `CloudTargetInfo` | uuid, name, provider_type, server, container, owner, scope | Cloud object store target |
+| `FlexCacheInfo` | uuid, name, svm, path, size, origins, global_file_locking_enabled | FlexCache volume |
+| `SnapshotPolicyInfo` | uuid, name, svm, enabled, scope, schedules | Snapshot policy |
+| `ScheduleInfo` | uuid, name, type, scope, svm, cron, interval | Job schedule |
+| `LunInfo` | uuid, name, svm, volume, size, os_type, serial_number, enabled | LUN |
+| `IgroupInfo` | uuid, name, svm, protocol, os_type, initiators | Initiator group |
+| `QosPolicyInfo` | uuid, name, svm, scope, policy_class | QoS policy |
+
+**Container:** `StorageInfo` holds `aggregates`, `svms`, `cloud_targets`, `volumes`, `qtrees`, `snapshot_policies`, `schedules`, `luns`, `igroups`, `qos_policies`, `flexcaches`.
+
+### Protocols
+
+| Model | Key Fields | Description |
+|-------|------------|-------------|
+| `ExportPolicyInfo` | id, name, svm, rules | NFS export policy |
+| `ExportRuleInfo` | index, clients, protocols, ro_rule, rw_rule, superuser | Export rule |
+| `CIFSShareInfo` | name, path, svm, comment, oplocks, encryption | CIFS/SMB share |
+| `CIFSServiceInfo` | svm, name, enabled, ad_domain, netbios_aliases | CIFS service config |
+| `NFSServiceInfo` | svm, enabled, protocol_v3/v4/v41_enabled | NFS service config |
+| `S3BucketInfo` | uuid, name, svm, type, size, versioning_state | S3 bucket |
+
+**Container:** `ProtocolsInfo` holds `export_policies`, `cifs_shares`, `nfs_services`, `cifs_services`, `s3_buckets`.
+
+### Licensing & HA
+
+| Model | Key Fields | Description |
+|-------|------------|-------------|
+| `LicenseFeature` | name, state, scope | Feature license |
+| `CapacityLicense` | name, licensed_capacity, used_capacity | Capacity license |
+| `HAInfo` | is_ha, partner_node, ha_state, mediator_address | HA configuration |
+
+**Container:** `LicenseInfo` holds `feature_licenses`, `capacity_licenses`.
+
+### Relationships
+
+| Model | Key Fields | Description |
+|-------|------------|-------------|
+| `SnapMirrorRelationship` | uuid, source_path, destination_path, relationship_type, state | SnapMirror relationship |
+| `ClusterPeer` | uuid, name, remote_cluster_name, peer_addresses, authentication_state | Cluster peer |
+| `SVMPeerInfo` | uuid, name, svm, peer_svm, peer_cluster, state, applications | SVM peer |
+
+**Container:** `RelationshipsInfo` holds `snapmirror_destinations`, `cluster_peers`, `svm_peers`.
+
+### Collection Phases
+
+The `MetadataCollector` collects data in these phases (each runs API calls in parallel):
+
+| Phase | REST API Endpoints |
+|-------|-------------------|
+| `CLOUD` | Cloud provider metadata (CLI-based) |
+| `CLUSTER` | `/cluster` |
+| `NODES` | `/cluster/nodes` |
+| `NETWORK` | `/network/ip/interfaces`, `/network/ethernet/broadcast-domains`, `/cluster/peers` (for ipspaces), `/name-services/dns`, `/network/ip/subnets` |
+| `STORAGE` | `/storage/aggregates`, `/svm/svms`, `/cloud/targets`, `/storage/volumes`, `/storage/qtrees`, `/storage/snapshot-policies`, `/cluster/schedules`, `/storage/luns`, `/protocols/san/igroups`, `/storage/qos/policies`, `/storage/flexcache/flexcaches` |
+| `LICENSES` | `/cluster/licensing/licenses`, `/cluster/licensing/capacity-pools` |
+| `HA` | `/cluster/nodes` (HA fields) |
+| `RELATIONSHIPS` | `/snapmirror/relationships`, `/cluster/peers`, `/svm/peers` |
+| `PROTOCOLS` | `/protocols/nfs/export-policies`, `/protocols/cifs/shares`, `/protocols/nfs/services`, `/protocols/cifs/services`, `/protocols/s3/buckets` |
+
 ## API Reference
 
 ### Core Classes
@@ -376,12 +445,32 @@ from pynetappfoundry.cache import (
     # Collector
     MetadataCollector,
 
-    # Models
+    # Top-level model
     CachedClusterMetadata,
-    CloudMetadata,
-    ClusterInfo,
-    NodeInfo,
-    # ... other models
+
+    # Cloud & Cluster
+    CloudMetadata, ClusterInfo, NodeInfo,
+
+    # Network
+    NetworkInfo, NetworkLIF, BroadcastDomain, IPSubnetInfo, DNSInfo,
+
+    # Storage
+    StorageInfo, AggregateInfo, SVMInfo, VolumeInfo, QtreeInfo,
+    CloudTargetInfo, FlexCacheInfo, SnapshotPolicyInfo,
+    SnapshotScheduleInfo, ScheduleInfo,
+
+    # SAN
+    LunInfo, IgroupInfo, QosPolicyInfo,
+
+    # Protocols
+    ProtocolsInfo, ExportPolicyInfo, ExportRuleInfo,
+    CIFSShareInfo, CIFSServiceInfo, NFSServiceInfo, S3BucketInfo,
+
+    # Licensing & HA
+    LicenseInfo, LicenseFeature, CapacityLicense, HAInfo,
+
+    # Relationships
+    RelationshipsInfo, SnapMirrorRelationship, ClusterPeer, SVMPeerInfo,
 
     # Schema versioning
     METADATA_SCHEMA_VERSION,
