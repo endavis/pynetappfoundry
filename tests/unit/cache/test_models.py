@@ -9,6 +9,7 @@ from pynetappfoundry.cache.models import (
     BroadcastDomain,
     CachedClusterMetadata,
     CapacityLicense,
+    CIFSShareInfo,
     CloudMetadata,
     CloudTargetInfo,
     ClusterInfo,
@@ -22,8 +23,12 @@ from pynetappfoundry.cache.models import (
     NetworkLIF,
     NodeInfo,
     ProtocolsInfo,
+    QtreeInfo,
     RelationshipsInfo,
+    ScheduleInfo,
     SnapMirrorRelationship,
+    SnapshotPolicyInfo,
+    SnapshotScheduleInfo,
     StorageInfo,
     SVMInfo,
     VolumeInfo,
@@ -331,6 +336,9 @@ class TestStorageInfo:
         assert storage.svms == []
         assert storage.cloud_targets == []
         assert storage.volumes == []
+        assert storage.qtrees == []
+        assert storage.snapshot_policies == []
+        assert storage.schedules == []
 
     def test_with_data(self) -> None:
         """Test with storage data."""
@@ -450,6 +458,157 @@ class TestExportPolicyInfo:
         assert policy.rules[0].index == 1
 
 
+class TestQtreeInfo:
+    """Tests for QtreeInfo model."""
+
+    def test_default_values(self) -> None:
+        """Test default values."""
+        qtree = QtreeInfo()
+        assert qtree.id == 0
+        assert qtree.name == ""
+        assert qtree.svm == ""
+        assert qtree.volume == ""
+        assert qtree.security_style == ""
+        assert qtree.export_policy == ""
+
+    def test_with_values(self) -> None:
+        """Test with qtree data."""
+        qtree = QtreeInfo(
+            id=1,
+            name="qt1",
+            svm="svm1",
+            volume="vol1",
+            path="/vol1/qt1",
+            security_style="unix",
+            unix_permissions="0755",
+            export_policy="default",
+        )
+        assert qtree.name == "qt1"
+        assert qtree.security_style == "unix"
+        assert qtree.unix_permissions == "0755"
+
+
+class TestSnapshotScheduleInfo:
+    """Tests for SnapshotScheduleInfo model."""
+
+    def test_default_values(self) -> None:
+        """Test default values."""
+        sched = SnapshotScheduleInfo()
+        assert sched.schedule == ""
+        assert sched.count == 0
+        assert sched.prefix == ""
+        assert sched.snapmirror_label == ""
+
+    def test_with_values(self) -> None:
+        """Test with schedule data."""
+        sched = SnapshotScheduleInfo(
+            schedule="hourly",
+            count=6,
+            prefix="hourly",
+            snapmirror_label="hourly",
+        )
+        assert sched.schedule == "hourly"
+        assert sched.count == 6
+
+
+class TestSnapshotPolicyInfo:
+    """Tests for SnapshotPolicyInfo model."""
+
+    def test_default_values(self) -> None:
+        """Test default values."""
+        policy = SnapshotPolicyInfo()
+        assert policy.uuid == ""
+        assert policy.name == ""
+        assert policy.enabled is True
+        assert policy.schedules == []
+
+    def test_with_schedules(self) -> None:
+        """Test with snapshot policy schedules."""
+        sched = SnapshotScheduleInfo(schedule="hourly", count=6)
+        policy = SnapshotPolicyInfo(
+            uuid="sp-uuid-1",
+            name="default",
+            svm="svm1",
+            enabled=True,
+            scope="svm",
+            schedules=[sched],
+        )
+        assert policy.name == "default"
+        assert len(policy.schedules) == 1
+        assert policy.schedules[0].schedule == "hourly"
+
+
+class TestScheduleInfo:
+    """Tests for ScheduleInfo model."""
+
+    def test_default_values(self) -> None:
+        """Test default values."""
+        sched = ScheduleInfo()
+        assert sched.uuid == ""
+        assert sched.name == ""
+        assert sched.type == ""
+        assert sched.cron == {}
+        assert sched.interval == ""
+
+    def test_with_cron(self) -> None:
+        """Test with cron schedule data."""
+        sched = ScheduleInfo(
+            uuid="sched-uuid-1",
+            name="hourly",
+            type="cron",
+            scope="cluster",
+            cron={"minutes": [0], "hours": [0, 1, 2, 3]},
+        )
+        assert sched.name == "hourly"
+        assert sched.type == "cron"
+        assert sched.cron["minutes"] == [0]
+
+    def test_with_interval(self) -> None:
+        """Test with interval schedule data."""
+        sched = ScheduleInfo(
+            uuid="sched-uuid-2",
+            name="5min",
+            type="interval",
+            interval="PT5M",
+        )
+        assert sched.type == "interval"
+        assert sched.interval == "PT5M"
+
+
+class TestCIFSShareInfo:
+    """Tests for CIFSShareInfo model."""
+
+    def test_default_values(self) -> None:
+        """Test default values."""
+        share = CIFSShareInfo()
+        assert share.name == ""
+        assert share.path == ""
+        assert share.svm == ""
+        assert share.home_directory is False
+        assert share.oplocks is True
+        assert share.access_based_enumeration is False
+        assert share.change_notify is True
+        assert share.encryption is False
+
+    def test_with_values(self) -> None:
+        """Test with CIFS share data."""
+        share = CIFSShareInfo(
+            name="share1",
+            path="/vol1",
+            svm="svm1",
+            comment="Test share",
+            home_directory=False,
+            oplocks=True,
+            access_based_enumeration=True,
+            encryption=True,
+            unix_symlink="local",
+        )
+        assert share.name == "share1"
+        assert share.access_based_enumeration is True
+        assert share.encryption is True
+        assert share.unix_symlink == "local"
+
+
 class TestProtocolsInfo:
     """Tests for ProtocolsInfo model."""
 
@@ -457,6 +616,7 @@ class TestProtocolsInfo:
         """Test default values."""
         protocols = ProtocolsInfo()
         assert protocols.export_policies == []
+        assert protocols.cifs_shares == []
 
     def test_with_export_policies(self) -> None:
         """Test with export policy data."""
@@ -464,6 +624,13 @@ class TestProtocolsInfo:
         protocols = ProtocolsInfo(export_policies=[policy])
         assert len(protocols.export_policies) == 1
         assert protocols.export_policies[0].name == "default"
+
+    def test_with_cifs_shares(self) -> None:
+        """Test with CIFS share data."""
+        share = CIFSShareInfo(name="share1", svm="svm1")
+        protocols = ProtocolsInfo(cifs_shares=[share])
+        assert len(protocols.cifs_shares) == 1
+        assert protocols.cifs_shares[0].name == "share1"
 
 
 class TestLicenseFeature:

@@ -12,6 +12,7 @@ from pynetappfoundry.cache.diff import (
 from pynetappfoundry.cache.models import (
     AggregateInfo,
     CachedClusterMetadata,
+    CIFSShareInfo,
     CloudMetadata,
     ClusterInfo,
     ExportPolicyInfo,
@@ -22,8 +23,11 @@ from pynetappfoundry.cache.models import (
     NetworkLIF,
     NodeInfo,
     ProtocolsInfo,
+    QtreeInfo,
     RelationshipsInfo,
+    ScheduleInfo,
     SnapMirrorRelationship,
+    SnapshotPolicyInfo,
     StorageInfo,
     SVMInfo,
     VolumeInfo,
@@ -557,6 +561,111 @@ class TestComputeDiffAllCategories:
         assert len(policy_changes) == 1
         assert policy_changes[0]["type"] == "added"
         assert policy_changes[0]["entity"] == "data_export"
+
+    def test_qtree_changes(self) -> None:
+        """Test qtree change detection."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            storage=StorageInfo(
+                qtrees=[QtreeInfo(name="qt1", svm="svm1", security_style="unix")],
+            ),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            storage=StorageInfo(
+                qtrees=[QtreeInfo(name="qt1", svm="svm1", security_style="ntfs")],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        qt_changes = [c for c in changes if c["category"] == "storage.qtrees"]
+        assert len(qt_changes) == 1
+        assert qt_changes[0]["type"] == "modified"
+        assert qt_changes[0]["field"] == "security_style"
+        assert qt_changes[0]["old"] == "unix"
+        assert qt_changes[0]["new"] == "ntfs"
+
+    def test_snapshot_policy_added(self) -> None:
+        """Test snapshot policy addition detection."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            storage=StorageInfo(snapshot_policies=[]),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            storage=StorageInfo(
+                snapshot_policies=[SnapshotPolicyInfo(name="default", uuid="sp-uuid-1")],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        sp_changes = [c for c in changes if c["category"] == "storage.snapshot_policies"]
+        assert len(sp_changes) == 1
+        assert sp_changes[0]["type"] == "added"
+        assert sp_changes[0]["entity"] == "default"
+
+    def test_schedule_changes(self) -> None:
+        """Test schedule change detection."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            storage=StorageInfo(
+                schedules=[ScheduleInfo(name="hourly", type="cron", scope="cluster")],
+            ),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            storage=StorageInfo(
+                schedules=[ScheduleInfo(name="hourly", type="interval", scope="cluster")],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        sched_changes = [c for c in changes if c["category"] == "storage.schedules"]
+        assert len(sched_changes) == 1
+        assert sched_changes[0]["type"] == "modified"
+        assert sched_changes[0]["field"] == "type"
+
+    def test_cifs_share_changes(self) -> None:
+        """Test CIFS share change detection."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            protocols=ProtocolsInfo(
+                cifs_shares=[CIFSShareInfo(name="share1", path="/vol1", svm="svm1")],
+            ),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            protocols=ProtocolsInfo(
+                cifs_shares=[CIFSShareInfo(name="share1", path="/vol2", svm="svm1")],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        share_changes = [c for c in changes if c["category"] == "protocols.cifs_shares"]
+        assert len(share_changes) == 1
+        assert share_changes[0]["type"] == "modified"
+        assert share_changes[0]["field"] == "path"
+        assert share_changes[0]["old"] == "/vol1"
+        assert share_changes[0]["new"] == "/vol2"
+
+    def test_cifs_share_added(self) -> None:
+        """Test CIFS share addition detection."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            protocols=ProtocolsInfo(cifs_shares=[]),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            protocols=ProtocolsInfo(
+                cifs_shares=[CIFSShareInfo(name="share1", svm="svm1")],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        share_changes = [c for c in changes if c["category"] == "protocols.cifs_shares"]
+        assert len(share_changes) == 1
+        assert share_changes[0]["type"] == "added"
+        assert share_changes[0]["entity"] == "share1"
 
 
 class TestFormatDiffSummary:

@@ -87,9 +87,25 @@ _ENTITY_CONFIGS: dict[str, tuple[str, list[str]]] = {
             "nas_security_style",
         ],
     ),
+    "storage.qtrees": (
+        "name",
+        ["id", "svm", "volume", "security_style", "export_policy"],
+    ),
+    "storage.snapshot_policies": (
+        "name",
+        ["uuid", "svm", "enabled", "scope"],
+    ),
+    "storage.schedules": (
+        "name",
+        ["uuid", "type", "scope", "svm"],
+    ),
     "protocols.export_policies": (
         "name",
         ["id", "svm"],
+    ),
+    "protocols.cifs_shares": (
+        "name",
+        ["path", "svm", "home_directory", "oplocks", "encryption"],
     ),
     "licenses.feature_licenses": (
         "name",

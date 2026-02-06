@@ -22,6 +22,7 @@ from pynetappfoundry.cache.models import (
     BroadcastDomain,
     CachedClusterMetadata,
     CapacityLicense,
+    CIFSShareInfo,
     CloudMetadata,
     CloudTargetInfo,
     ClusterInfo,
@@ -35,8 +36,12 @@ from pynetappfoundry.cache.models import (
     NetworkLIF,
     NodeInfo,
     ProtocolsInfo,
+    QtreeInfo,
     RelationshipsInfo,
+    ScheduleInfo,
     SnapMirrorRelationship,
+    SnapshotPolicyInfo,
+    SnapshotScheduleInfo,
     StorageInfo,
     SVMInfo,
     VolumeInfo,
@@ -1080,6 +1085,9 @@ class MetadataCollector:
             "/svm/svms?fields=*",
             "/cloud/targets?fields=*",
             "/storage/volumes?fields=*",
+            "/storage/qtrees?fields=*",
+            "/storage/snapshot-policies?fields=*,copies",
+            "/cluster/schedules?fields=*",
         ]
 
         def safe_api_call(endpoint: str) -> Any:
@@ -1094,7 +1102,7 @@ class MetadataCollector:
                 raise
 
         if self.parallel:
-            with ThreadPoolExecutor(max_workers=4) as executor:
+            with ThreadPoolExecutor(max_workers=7) as executor:
                 futures = {executor.submit(safe_api_call, ep): ep for ep in endpoints}
                 responses: dict[str, Any] = {}
                 for future in as_completed(futures):
@@ -1150,8 +1158,23 @@ class MetadataCollector:
         # Process volumes response
         volumes = self._parse_volumes_response(responses.get(endpoints[3]))
 
+        # Process qtrees response
+        qtrees = self._parse_qtrees_response(responses.get(endpoints[4]))
+
+        # Process snapshot policies response
+        snapshot_policies = self._parse_snapshot_policies_response(responses.get(endpoints[5]))
+
+        # Process schedules response
+        schedules = self._parse_schedules_response(responses.get(endpoints[6]))
+
         return StorageInfo(
-            aggregates=aggregates, svms=svms, cloud_targets=cloud_targets, volumes=volumes
+            aggregates=aggregates,
+            svms=svms,
+            cloud_targets=cloud_targets,
+            volumes=volumes,
+            qtrees=qtrees,
+            snapshot_policies=snapshot_policies,
+            schedules=schedules,
         )
 
     def _parse_cloud_targets_response(self, response: Any) -> list[CloudTargetInfo]:
@@ -1651,6 +1674,114 @@ class MetadataCollector:
             volumes.append(vol)
         return volumes
 
+    def _parse_qtrees_response(self, response: Any) -> list[QtreeInfo]:
+        """Parse qtrees API response.
+
+        Args:
+            response: API response dict or None.
+
+        Returns:
+            List of QtreeInfo objects.
+        """
+        if not response:
+            return []
+
+        logger.debug(
+            "%s API response: %d qtrees", self._log_prefix, len(response.get("records", []))
+        )
+        qtrees = []
+        for record in response.get("records", []):
+            qtree = QtreeInfo(
+                id=record.get("id", 0),
+                name=record.get("name", ""),
+                svm=record.get("svm", {}).get("name", "") if record.get("svm") else "",
+                volume=record.get("volume", {}).get("name", "") if record.get("volume") else "",
+                path=record.get("path", ""),
+                security_style=record.get("security_style", ""),
+                unix_permissions=str(record.get("unix_permissions", "")),
+                export_policy=(
+                    record.get("export_policy", {}).get("name", "")
+                    if record.get("export_policy")
+                    else ""
+                ),
+            )
+            qtrees.append(qtree)
+        return qtrees
+
+    def _parse_snapshot_policies_response(self, response: Any) -> list[SnapshotPolicyInfo]:
+        """Parse snapshot policies API response.
+
+        Args:
+            response: API response dict or None.
+
+        Returns:
+            List of SnapshotPolicyInfo objects.
+        """
+        if not response:
+            return []
+
+        logger.debug(
+            "%s API response: %d snapshot policies",
+            self._log_prefix,
+            len(response.get("records", [])),
+        )
+        policies = []
+        for record in response.get("records", []):
+            schedules = []
+            for copy in record.get("copies", []):
+                sched = SnapshotScheduleInfo(
+                    schedule=(
+                        copy.get("schedule", {}).get("name", "")
+                        if isinstance(copy.get("schedule"), dict)
+                        else str(copy.get("schedule", ""))
+                    ),
+                    count=copy.get("count", 0),
+                    prefix=copy.get("prefix", ""),
+                    snapmirror_label=copy.get("snapmirror_label", ""),
+                )
+                schedules.append(sched)
+
+            policy = SnapshotPolicyInfo(
+                uuid=record.get("uuid", ""),
+                name=record.get("name", ""),
+                svm=record.get("svm", {}).get("name", "") if record.get("svm") else "",
+                enabled=record.get("enabled", True),
+                scope=record.get("scope", ""),
+                schedules=schedules,
+            )
+            policies.append(policy)
+        return policies
+
+    def _parse_schedules_response(self, response: Any) -> list[ScheduleInfo]:
+        """Parse cluster schedules API response.
+
+        Args:
+            response: API response dict or None.
+
+        Returns:
+            List of ScheduleInfo objects.
+        """
+        if not response:
+            return []
+
+        logger.debug(
+            "%s API response: %d schedules", self._log_prefix, len(response.get("records", []))
+        )
+        schedules = []
+        for record in response.get("records", []):
+            cron = record.get("cron", {}) or {}
+            schedule = ScheduleInfo(
+                uuid=record.get("uuid", ""),
+                name=record.get("name", ""),
+                type=record.get("type", ""),
+                scope=record.get("scope", ""),
+                svm=record.get("svm", {}).get("name", "") if record.get("svm") else "",
+                cron=cron,
+                interval=record.get("interval", ""),
+            )
+            schedules.append(schedule)
+        return schedules
+
     # -------------------------------------------------------------------------
     # Protocols Collection
     # -------------------------------------------------------------------------
@@ -1672,6 +1803,8 @@ class MetadataCollector:
     def _collect_protocols_via_api(self) -> ProtocolsInfo:
         """Collect protocol info using REST API.
 
+        Makes parallel API calls for improved performance.
+
         Returns:
             ProtocolsInfo from various protocol endpoints.
         """
@@ -1679,10 +1812,25 @@ class MetadataCollector:
             logger.debug("%s No API client available for protocols collection", self._log_prefix)
             return ProtocolsInfo()
 
-        response = self._cached_api_call("/protocols/nfs/export-policies?fields=*,rules")
-        export_policies = self._parse_export_policies_response(response)
+        endpoints = [
+            "/protocols/nfs/export-policies?fields=*,rules",
+            "/protocols/cifs/shares?fields=*",
+        ]
 
-        return ProtocolsInfo(export_policies=export_policies)
+        if self.parallel:
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                futures = {executor.submit(self._cached_api_call, ep): ep for ep in endpoints}
+                responses: dict[str, Any] = {}
+                for future in as_completed(futures):
+                    ep = futures[future]
+                    responses[ep] = future.result()
+        else:
+            responses = {ep: self._cached_api_call(ep) for ep in endpoints}
+
+        export_policies = self._parse_export_policies_response(responses.get(endpoints[0]))
+        cifs_shares = self._parse_cifs_shares_response(responses.get(endpoints[1]))
+
+        return ProtocolsInfo(export_policies=export_policies, cifs_shares=cifs_shares)
 
     def _parse_export_policies_response(self, response: Any) -> list[ExportPolicyInfo]:
         """Parse export policies API response.
@@ -1726,6 +1874,40 @@ class MetadataCollector:
             )
             policies.append(policy)
         return policies
+
+    def _parse_cifs_shares_response(self, response: Any) -> list[CIFSShareInfo]:
+        """Parse CIFS shares API response.
+
+        Args:
+            response: API response dict or None.
+
+        Returns:
+            List of CIFSShareInfo objects.
+        """
+        if not response:
+            return []
+
+        logger.debug(
+            "%s API response: %d CIFS shares",
+            self._log_prefix,
+            len(response.get("records", [])),
+        )
+        shares = []
+        for record in response.get("records", []):
+            share = CIFSShareInfo(
+                name=record.get("name", ""),
+                path=record.get("path", ""),
+                svm=record.get("svm", {}).get("name", "") if record.get("svm") else "",
+                comment=record.get("comment", "") or "",
+                home_directory=record.get("home_directory", False),
+                oplocks=record.get("oplocks", True),
+                access_based_enumeration=record.get("access_based_enumeration", False),
+                change_notify=record.get("change_notify", True),
+                encryption=record.get("encryption", False),
+                unix_symlink=record.get("unix_symlink", ""),
+            )
+            shares.append(share)
+        return shares
 
     @staticmethod
     def _format_path(path_info: dict[str, Any] | str | None) -> str:

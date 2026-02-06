@@ -287,10 +287,64 @@ class ExportPolicyInfo(BaseModel):
     rules: list[ExportRuleInfo] = Field(default_factory=list)
 
 
+class QtreeInfo(BaseModel):
+    """Qtree information."""
+
+    model_config = ConfigDict(extra="allow")
+
+    id: int = 0
+    name: str = ""
+    svm: str = ""
+    volume: str = ""
+    path: str = ""
+    security_style: str = ""  # unix, ntfs, mixed
+    unix_permissions: str = ""
+    export_policy: str = ""
+
+
+class SnapshotScheduleInfo(BaseModel):
+    """Schedule entry within a snapshot policy."""
+
+    model_config = ConfigDict(extra="allow")
+
+    schedule: str = ""
+    count: int = 0
+    prefix: str = ""
+    snapmirror_label: str = ""
+
+
+class SnapshotPolicyInfo(BaseModel):
+    """Snapshot policy information."""
+
+    model_config = ConfigDict(extra="allow")
+
+    uuid: str = ""
+    name: str = ""
+    svm: str = ""
+    enabled: bool = True
+    scope: str = ""  # cluster, svm
+    schedules: list[SnapshotScheduleInfo] = Field(default_factory=list)
+
+
+class ScheduleInfo(BaseModel):
+    """Job schedule information."""
+
+    model_config = ConfigDict(extra="allow")
+
+    uuid: str = ""
+    name: str = ""
+    type: str = ""  # cron, interval
+    scope: str = ""  # cluster, svm
+    svm: str = ""
+    cron: dict[str, list[int]] = Field(default_factory=dict)
+    interval: str = ""
+
+
 class StorageInfo(BaseModel):
     """Storage topology information.
 
-    Contains aggregates, SVMs, cloud targets, and volumes.
+    Contains aggregates, SVMs, cloud targets, volumes, qtrees,
+    snapshot policies, and schedules.
     """
 
     model_config = ConfigDict(extra="allow")
@@ -299,6 +353,9 @@ class StorageInfo(BaseModel):
     svms: list[SVMInfo] = Field(default_factory=list)
     cloud_targets: list[CloudTargetInfo] = Field(default_factory=list)
     volumes: list[VolumeInfo] = Field(default_factory=list)
+    qtrees: list[QtreeInfo] = Field(default_factory=list)
+    snapshot_policies: list[SnapshotPolicyInfo] = Field(default_factory=list)
+    schedules: list[ScheduleInfo] = Field(default_factory=list)
 
 
 class LicenseFeature(BaseModel):
@@ -383,15 +440,33 @@ class RelationshipsInfo(BaseModel):
     cluster_peers: list[ClusterPeer] = Field(default_factory=list)
 
 
+class CIFSShareInfo(BaseModel):
+    """CIFS/SMB share information."""
+
+    model_config = ConfigDict(extra="allow")
+
+    name: str = ""
+    path: str = ""
+    svm: str = ""
+    comment: str = ""
+    home_directory: bool = False
+    oplocks: bool = True
+    access_based_enumeration: bool = False
+    change_notify: bool = True
+    encryption: bool = False
+    unix_symlink: str = ""  # local, widelink, disable
+
+
 class ProtocolsInfo(BaseModel):
     """Protocol configuration information.
 
-    Contains export policies and protocol-related data.
+    Contains export policies, CIFS shares, and protocol-related data.
     """
 
     model_config = ConfigDict(extra="allow")
 
     export_policies: list[ExportPolicyInfo] = Field(default_factory=list)
+    cifs_shares: list[CIFSShareInfo] = Field(default_factory=list)
 
 
 class CachedClusterMetadata(BaseModel):

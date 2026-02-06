@@ -481,6 +481,50 @@ class TestStorageCollection:
                     }
                 ]
             },
+            "/storage/qtrees?fields=*": {
+                "records": [
+                    {
+                        "id": 1,
+                        "name": "qt1",
+                        "svm": {"name": "svm1"},
+                        "volume": {"name": "vol1"},
+                        "path": "/vol1/qt1",
+                        "security_style": "unix",
+                        "unix_permissions": 755,
+                        "export_policy": {"name": "default"},
+                    }
+                ]
+            },
+            "/storage/snapshot-policies?fields=*,copies": {
+                "records": [
+                    {
+                        "uuid": "sp-uuid-1",
+                        "name": "default",
+                        "svm": {"name": "svm1"},
+                        "enabled": True,
+                        "scope": "svm",
+                        "copies": [
+                            {
+                                "schedule": {"name": "hourly"},
+                                "count": 6,
+                                "prefix": "hourly",
+                                "snapmirror_label": "",
+                            }
+                        ],
+                    }
+                ]
+            },
+            "/cluster/schedules?fields=*": {
+                "records": [
+                    {
+                        "uuid": "sched-uuid-1",
+                        "name": "hourly",
+                        "type": "cron",
+                        "scope": "cluster",
+                        "cron": {"minutes": [0]},
+                    }
+                ]
+            },
         }
 
     def test_collect_storage_via_api(
@@ -506,6 +550,17 @@ class TestStorageCollection:
         assert result.volumes[0].junction_path == "/vol1"
         assert result.volumes[0].autosize_mode == "grow"
         assert result.volumes[0].tiering_policy == "auto"
+        assert len(result.qtrees) == 1
+        assert result.qtrees[0].name == "qt1"
+        assert result.qtrees[0].security_style == "unix"
+        assert len(result.snapshot_policies) == 1
+        assert result.snapshot_policies[0].name == "default"
+        assert len(result.snapshot_policies[0].schedules) == 1
+        assert result.snapshot_policies[0].schedules[0].schedule == "hourly"
+        assert result.snapshot_policies[0].schedules[0].count == 6
+        assert len(result.schedules) == 1
+        assert result.schedules[0].name == "hourly"
+        assert result.schedules[0].type == "cron"
 
     def test_collect_storage_no_clients(self) -> None:
         """Test storage returns empty when no clients."""
@@ -576,6 +631,9 @@ class TestCloudTargetsCollection:
             },
             "/cloud/targets?fields=*": mock_cloud_targets_api_response,
             "/storage/volumes?fields=*": {"records": []},
+            "/storage/qtrees?fields=*": {"records": []},
+            "/storage/snapshot-policies?fields=*,copies": {"records": []},
+            "/cluster/schedules?fields=*": {"records": []},
         }
 
     def test_collect_cloud_targets_via_api(
@@ -936,60 +994,83 @@ class TestProtocolsCollection:
     """Tests for protocols collection."""
 
     @pytest.fixture
-    def mock_export_policies_api_response(self) -> dict[str, Any]:
-        """Mock API response for /protocols/nfs/export-policies endpoint."""
+    def mock_protocols_api_responses(self) -> dict[str, dict[str, Any]]:
+        """Mock API responses for protocol endpoints."""
         return {
-            "records": [
-                {
-                    "id": 1,
-                    "name": "default",
-                    "svm": {"name": "svm1"},
-                    "rules": [
-                        {
-                            "index": 1,
-                            "clients": [{"match": "0.0.0.0/0"}],
-                            "protocols": ["nfs3", "nfs4"],
-                            "ro_rule": ["sys"],
-                            "rw_rule": ["sys"],
-                            "superuser": ["none"],
-                            "anonymous_user": "65534",
-                        },
-                    ],
-                },
-                {
-                    "id": 2,
-                    "name": "data_export",
-                    "svm": {"name": "svm1"},
-                    "rules": [
-                        {
-                            "index": 1,
-                            "clients": [{"match": "10.0.0.0/8"}, {"match": "172.16.0.0/12"}],
-                            "protocols": ["nfs3"],
-                            "ro_rule": ["sys"],
-                            "rw_rule": ["sys"],
-                            "superuser": ["sys"],
-                            "anonymous_user": "65534",
-                        },
-                        {
-                            "index": 2,
-                            "clients": [{"match": "192.168.1.0/24"}],
-                            "protocols": ["nfs4"],
-                            "ro_rule": ["krb5"],
-                            "rw_rule": ["krb5"],
-                            "superuser": ["krb5"],
-                            "anonymous_user": "nobody",
-                        },
-                    ],
-                },
-            ]
+            "/protocols/nfs/export-policies?fields=*,rules": {
+                "records": [
+                    {
+                        "id": 1,
+                        "name": "default",
+                        "svm": {"name": "svm1"},
+                        "rules": [
+                            {
+                                "index": 1,
+                                "clients": [{"match": "0.0.0.0/0"}],
+                                "protocols": ["nfs3", "nfs4"],
+                                "ro_rule": ["sys"],
+                                "rw_rule": ["sys"],
+                                "superuser": ["none"],
+                                "anonymous_user": "65534",
+                            },
+                        ],
+                    },
+                    {
+                        "id": 2,
+                        "name": "data_export",
+                        "svm": {"name": "svm1"},
+                        "rules": [
+                            {
+                                "index": 1,
+                                "clients": [
+                                    {"match": "10.0.0.0/8"},
+                                    {"match": "172.16.0.0/12"},
+                                ],
+                                "protocols": ["nfs3"],
+                                "ro_rule": ["sys"],
+                                "rw_rule": ["sys"],
+                                "superuser": ["sys"],
+                                "anonymous_user": "65534",
+                            },
+                            {
+                                "index": 2,
+                                "clients": [{"match": "192.168.1.0/24"}],
+                                "protocols": ["nfs4"],
+                                "ro_rule": ["krb5"],
+                                "rw_rule": ["krb5"],
+                                "superuser": ["krb5"],
+                                "anonymous_user": "nobody",
+                            },
+                        ],
+                    },
+                ]
+            },
+            "/protocols/cifs/shares?fields=*": {
+                "records": [
+                    {
+                        "name": "share1",
+                        "path": "/vol1",
+                        "svm": {"name": "svm1"},
+                        "comment": "Test share",
+                        "home_directory": False,
+                        "oplocks": True,
+                        "access_based_enumeration": True,
+                        "change_notify": True,
+                        "encryption": False,
+                        "unix_symlink": "local",
+                    }
+                ]
+            },
         }
 
     def test_collect_protocols_via_api(
-        self, mock_export_policies_api_response: dict[str, Any]
+        self, mock_protocols_api_responses: dict[str, dict[str, Any]]
     ) -> None:
         """Test collecting protocols via API."""
         api_client = MagicMock()
-        api_client.call_endpoint.return_value = mock_export_policies_api_response
+        api_client.call_endpoint.side_effect = (
+            lambda endpoint, **_: mock_protocols_api_responses.get(endpoint, {"records": []})
+        )
 
         collector = MetadataCollector(api_client=api_client)
         result = collector.collect_protocols()
@@ -1019,6 +1100,13 @@ class TestProtocolsCollection:
         assert policy2.rules[1].protocols == ["nfs4"]
         assert policy2.rules[1].superuser == ["krb5"]
 
+        # Check CIFS shares
+        assert len(result.cifs_shares) == 1
+        assert result.cifs_shares[0].name == "share1"
+        assert result.cifs_shares[0].path == "/vol1"
+        assert result.cifs_shares[0].access_based_enumeration is True
+        assert result.cifs_shares[0].unix_symlink == "local"
+
     def test_collect_protocols_empty_response(self) -> None:
         """Test protocols handles empty API response."""
         api_client = MagicMock()
@@ -1029,6 +1117,7 @@ class TestProtocolsCollection:
 
         assert isinstance(result, ProtocolsInfo)
         assert result.export_policies == []
+        assert result.cifs_shares == []
 
     def test_collect_protocols_no_clients(self) -> None:
         """Test protocols returns empty when no clients."""
@@ -1037,6 +1126,7 @@ class TestProtocolsCollection:
 
         assert isinstance(result, ProtocolsInfo)
         assert result.export_policies == []
+        assert result.cifs_shares == []
 
     def test_collect_protocols_api_failure_fallback(self) -> None:
         """Test protocols returns empty on API failure."""
@@ -1048,19 +1138,26 @@ class TestProtocolsCollection:
 
         assert isinstance(result, ProtocolsInfo)
         assert result.export_policies == []
+        assert result.cifs_shares == []
 
     def test_collect_protocols_policy_without_rules(self) -> None:
         """Test protocols handles policy records with no rules."""
-        api_client = MagicMock()
-        api_client.call_endpoint.return_value = {
-            "records": [
-                {
-                    "id": 1,
-                    "name": "empty_policy",
-                    "svm": {"name": "svm1"},
-                },
-            ]
+        responses: dict[str, dict[str, Any]] = {
+            "/protocols/nfs/export-policies?fields=*,rules": {
+                "records": [
+                    {
+                        "id": 1,
+                        "name": "empty_policy",
+                        "svm": {"name": "svm1"},
+                    },
+                ]
+            },
+            "/protocols/cifs/shares?fields=*": {"records": []},
         }
+        api_client = MagicMock()
+        api_client.call_endpoint.side_effect = lambda endpoint, **_: responses.get(
+            endpoint, {"records": []}
+        )
 
         collector = MetadataCollector(api_client=api_client)
         result = collector.collect_protocols()
