@@ -166,7 +166,7 @@ class BroadcastDomain(BaseModel):
 class NetworkInfo(BaseModel):
     """Network configuration information.
 
-    Contains LIFs, broadcast domains, and IPspaces.
+    Contains LIFs, broadcast domains, IPspaces, and DNS.
     """
 
     model_config = ConfigDict(extra="allow")
@@ -176,6 +176,7 @@ class NetworkInfo(BaseModel):
     management_lifs: list[NetworkLIF] = Field(default_factory=list)
     broadcast_domains: list[BroadcastDomain] = Field(default_factory=list)
     ipspaces: list[str] = Field(default_factory=list)
+    dns: list[DNSInfo] = Field(default_factory=list)
 
 
 class AggregateInfo(BaseModel):
@@ -492,6 +493,48 @@ class RelationshipsInfo(BaseModel):
     cluster_peers: list[ClusterPeer] = Field(default_factory=list)
 
 
+class NFSServiceInfo(BaseModel):
+    """NFS service configuration per SVM."""
+
+    model_config = ConfigDict(extra="allow")
+
+    svm: str = ""
+    enabled: bool = False
+    protocol_v3_enabled: bool = False
+    protocol_v4_enabled: bool = False
+    protocol_v41_enabled: bool = False
+    showmount_enabled: bool = False
+    vstorage_enabled: bool = False
+
+
+class CIFSServiceInfo(BaseModel):
+    """CIFS/SMB service configuration per SVM."""
+
+    model_config = ConfigDict(extra="allow")
+
+    svm: str = ""
+    name: str = ""  # CIFS server name
+    enabled: bool = False
+    ad_domain: str = ""
+    comment: str = ""
+    default_unix_user: str = ""
+    netbios_aliases: list[str] = Field(default_factory=list)
+
+
+class DNSInfo(BaseModel):
+    """DNS configuration per SVM or cluster."""
+
+    model_config = ConfigDict(extra="allow")
+
+    uuid: str = ""
+    svm: str = ""
+    scope: str = ""  # cluster, svm
+    domains: list[str] = Field(default_factory=list)
+    servers: list[str] = Field(default_factory=list)
+    timeout: int = 0
+    attempts: int = 0
+
+
 class CIFSShareInfo(BaseModel):
     """CIFS/SMB share information."""
 
@@ -512,13 +555,16 @@ class CIFSShareInfo(BaseModel):
 class ProtocolsInfo(BaseModel):
     """Protocol configuration information.
 
-    Contains export policies, CIFS shares, and protocol-related data.
+    Contains export policies, CIFS shares, NFS/CIFS services,
+    and protocol-related data.
     """
 
     model_config = ConfigDict(extra="allow")
 
     export_policies: list[ExportPolicyInfo] = Field(default_factory=list)
     cifs_shares: list[CIFSShareInfo] = Field(default_factory=list)
+    nfs_services: list[NFSServiceInfo] = Field(default_factory=list)
+    cifs_services: list[CIFSServiceInfo] = Field(default_factory=list)
 
 
 class CachedClusterMetadata(BaseModel):

@@ -22,11 +22,13 @@ from pynetappfoundry.cache.models import (
     BroadcastDomain,
     CachedClusterMetadata,
     CapacityLicense,
+    CIFSServiceInfo,
     CIFSShareInfo,
     CloudMetadata,
     CloudTargetInfo,
     ClusterInfo,
     ClusterPeer,
+    DNSInfo,
     ExportPolicyInfo,
     ExportRuleInfo,
     HAInfo,
@@ -36,6 +38,7 @@ from pynetappfoundry.cache.models import (
     LunInfo,
     NetworkInfo,
     NetworkLIF,
+    NFSServiceInfo,
     NodeInfo,
     ProtocolsInfo,
     QosPolicyInfo,
@@ -921,15 +924,16 @@ class MetadataCollector:
             logger.debug("%s No API client available for network collection", self._log_prefix)
             return NetworkInfo()
 
-        # Make all 3 API calls in parallel using cached calls
+        # Make all 4 API calls in parallel using cached calls
         endpoints = [
             "/network/ip/interfaces?fields=*",
             "/network/ethernet/broadcast-domains?fields=*",
             "/network/ipspaces?fields=*",
+            "/name-services/dns?fields=*",
         ]
 
         if self.parallel:
-            with ThreadPoolExecutor(max_workers=3) as executor:
+            with ThreadPoolExecutor(max_workers=4) as executor:
                 futures = {executor.submit(self._cached_api_call, ep): ep for ep in endpoints}
                 responses: dict[str, Any] = {}
                 for future in as_completed(futures):
@@ -995,12 +999,16 @@ class MetadataCollector:
         )
         ipspaces = [r.get("name", "") for r in ipspace_response.get("records", [])]
 
+        # Process DNS response
+        dns = self._parse_dns_response(responses.get(endpoints[3]))
+
         return NetworkInfo(
             intercluster_lifs=intercluster_lifs,
             data_lifs=data_lifs,
             management_lifs=management_lifs,
             broadcast_domains=broadcast_domains,
             ipspaces=ipspaces,
+            dns=dns,
         )
 
     def _collect_network_via_cli(self) -> NetworkInfo:
@@ -1937,10 +1945,12 @@ class MetadataCollector:
         endpoints = [
             "/protocols/nfs/export-policies?fields=*,rules",
             "/protocols/cifs/shares?fields=*",
+            "/protocols/nfs/services?fields=*",
+            "/protocols/cifs/services?fields=*",
         ]
 
         if self.parallel:
-            with ThreadPoolExecutor(max_workers=2) as executor:
+            with ThreadPoolExecutor(max_workers=4) as executor:
                 futures = {executor.submit(self._cached_api_call, ep): ep for ep in endpoints}
                 responses: dict[str, Any] = {}
                 for future in as_completed(futures):
@@ -1951,8 +1961,15 @@ class MetadataCollector:
 
         export_policies = self._parse_export_policies_response(responses.get(endpoints[0]))
         cifs_shares = self._parse_cifs_shares_response(responses.get(endpoints[1]))
+        nfs_services = self._parse_nfs_services_response(responses.get(endpoints[2]))
+        cifs_services = self._parse_cifs_services_response(responses.get(endpoints[3]))
 
-        return ProtocolsInfo(export_policies=export_policies, cifs_shares=cifs_shares)
+        return ProtocolsInfo(
+            export_policies=export_policies,
+            cifs_shares=cifs_shares,
+            nfs_services=nfs_services,
+            cifs_services=cifs_services,
+        )
 
     def _parse_export_policies_response(self, response: Any) -> list[ExportPolicyInfo]:
         """Parse export policies API response.
@@ -2030,6 +2047,105 @@ class MetadataCollector:
             )
             shares.append(share)
         return shares
+
+    def _parse_nfs_services_response(self, response: Any) -> list[NFSServiceInfo]:
+        """Parse NFS services API response.
+
+        Args:
+            response: API response dict or None.
+
+        Returns:
+            List of NFSServiceInfo objects.
+        """
+        if not response:
+            return []
+
+        logger.debug(
+            "%s API response: %d NFS services",
+            self._log_prefix,
+            len(response.get("records", [])),
+        )
+        services = []
+        for record in response.get("records", []):
+            protocol = record.get("protocol", {})
+            service = NFSServiceInfo(
+                svm=record.get("svm", {}).get("name", "") if record.get("svm") else "",
+                enabled=record.get("enabled", False),
+                protocol_v3_enabled=protocol.get("v3_enabled", False),
+                protocol_v4_enabled=protocol.get("v40_enabled", False),
+                protocol_v41_enabled=protocol.get("v41_enabled", False),
+                showmount_enabled=record.get("showmount_enabled", False),
+                vstorage_enabled=record.get("vstorage_enabled", False),
+            )
+            services.append(service)
+        return services
+
+    def _parse_cifs_services_response(self, response: Any) -> list[CIFSServiceInfo]:
+        """Parse CIFS services API response.
+
+        Args:
+            response: API response dict or None.
+
+        Returns:
+            List of CIFSServiceInfo objects.
+        """
+        if not response:
+            return []
+
+        logger.debug(
+            "%s API response: %d CIFS services",
+            self._log_prefix,
+            len(response.get("records", [])),
+        )
+        services = []
+        for record in response.get("records", []):
+            ad_domain = record.get("ad_domain", {})
+            service = CIFSServiceInfo(
+                svm=record.get("svm", {}).get("name", "") if record.get("svm") else "",
+                name=record.get("name", ""),
+                enabled=record.get("enabled", False),
+                ad_domain=ad_domain.get("fqdn", "")
+                if isinstance(ad_domain, dict)
+                else str(ad_domain or ""),
+                comment=record.get("comment", "") or "",
+                default_unix_user=record.get("default_unix_user", ""),
+                netbios_aliases=record.get("netbios", {}).get("aliases", []) or []
+                if record.get("netbios")
+                else [],
+            )
+            services.append(service)
+        return services
+
+    def _parse_dns_response(self, response: Any) -> list[DNSInfo]:
+        """Parse DNS API response.
+
+        Args:
+            response: API response dict or None.
+
+        Returns:
+            List of DNSInfo objects.
+        """
+        if not response:
+            return []
+
+        logger.debug(
+            "%s API response: %d DNS configs",
+            self._log_prefix,
+            len(response.get("records", [])),
+        )
+        dns_configs = []
+        for record in response.get("records", []):
+            dns = DNSInfo(
+                uuid=record.get("uuid", ""),
+                svm=record.get("svm", {}).get("name", "") if record.get("svm") else "",
+                scope=record.get("scope", ""),
+                domains=record.get("domains", []) or [],
+                servers=record.get("servers", []) or [],
+                timeout=record.get("timeout", 0),
+                attempts=record.get("attempts", 0),
+            )
+            dns_configs.append(dns)
+        return dns_configs
 
     @staticmethod
     def _format_path(path_info: dict[str, Any] | str | None) -> str:

@@ -9,11 +9,13 @@ from pynetappfoundry.cache.models import (
     BroadcastDomain,
     CachedClusterMetadata,
     CapacityLicense,
+    CIFSServiceInfo,
     CIFSShareInfo,
     CloudMetadata,
     CloudTargetInfo,
     ClusterInfo,
     ClusterPeer,
+    DNSInfo,
     ExportPolicyInfo,
     ExportRuleInfo,
     HAInfo,
@@ -23,6 +25,7 @@ from pynetappfoundry.cache.models import (
     LunInfo,
     NetworkInfo,
     NetworkLIF,
+    NFSServiceInfo,
     NodeInfo,
     ProtocolsInfo,
     QosPolicyInfo,
@@ -197,6 +200,7 @@ class TestNetworkInfo:
         assert network.intercluster_lifs == []
         assert network.data_lifs == []
         assert network.ipspaces == []
+        assert network.dns == []
 
     def test_with_lifs(self) -> None:
         """Test with LIF data."""
@@ -687,6 +691,99 @@ class TestQosPolicyInfo:
         assert qos.adaptive_block_size == "any"
 
 
+class TestNFSServiceInfo:
+    """Tests for NFSServiceInfo model."""
+
+    def test_default_values(self) -> None:
+        """Test default values."""
+        nfs = NFSServiceInfo()
+        assert nfs.svm == ""
+        assert nfs.enabled is False
+        assert nfs.protocol_v3_enabled is False
+        assert nfs.protocol_v4_enabled is False
+        assert nfs.protocol_v41_enabled is False
+        assert nfs.showmount_enabled is False
+        assert nfs.vstorage_enabled is False
+
+    def test_with_values(self) -> None:
+        """Test with NFS service data."""
+        nfs = NFSServiceInfo(
+            svm="svm1",
+            enabled=True,
+            protocol_v3_enabled=True,
+            protocol_v4_enabled=True,
+            protocol_v41_enabled=False,
+            showmount_enabled=True,
+            vstorage_enabled=False,
+        )
+        assert nfs.svm == "svm1"
+        assert nfs.enabled is True
+        assert nfs.protocol_v3_enabled is True
+        assert nfs.protocol_v41_enabled is False
+
+
+class TestCIFSServiceInfo:
+    """Tests for CIFSServiceInfo model."""
+
+    def test_default_values(self) -> None:
+        """Test default values."""
+        cifs = CIFSServiceInfo()
+        assert cifs.svm == ""
+        assert cifs.name == ""
+        assert cifs.enabled is False
+        assert cifs.ad_domain == ""
+        assert cifs.netbios_aliases == []
+
+    def test_with_values(self) -> None:
+        """Test with CIFS service data."""
+        cifs = CIFSServiceInfo(
+            svm="svm1",
+            name="CIFSSERVER",
+            enabled=True,
+            ad_domain="example.com",
+            comment="Production CIFS",
+            default_unix_user="pcuser",
+            netbios_aliases=["ALIAS1", "ALIAS2"],
+        )
+        assert cifs.svm == "svm1"
+        assert cifs.name == "CIFSSERVER"
+        assert cifs.enabled is True
+        assert cifs.ad_domain == "example.com"
+        assert len(cifs.netbios_aliases) == 2
+
+
+class TestDNSInfo:
+    """Tests for DNSInfo model."""
+
+    def test_default_values(self) -> None:
+        """Test default values."""
+        dns = DNSInfo()
+        assert dns.uuid == ""
+        assert dns.svm == ""
+        assert dns.scope == ""
+        assert dns.domains == []
+        assert dns.servers == []
+        assert dns.timeout == 0
+        assert dns.attempts == 0
+
+    def test_with_values(self) -> None:
+        """Test with DNS data."""
+        dns = DNSInfo(
+            uuid="dns-uuid-1",
+            svm="svm1",
+            scope="svm",
+            domains=["example.com", "corp.example.com"],
+            servers=["10.0.0.1", "10.0.0.2"],
+            timeout=2,
+            attempts=1,
+        )
+        assert dns.svm == "svm1"
+        assert dns.scope == "svm"
+        assert len(dns.domains) == 2
+        assert len(dns.servers) == 2
+        assert dns.timeout == 2
+
+
 class TestCIFSShareInfo:
     """Tests for CIFSShareInfo model."""
 
@@ -729,6 +826,8 @@ class TestProtocolsInfo:
         protocols = ProtocolsInfo()
         assert protocols.export_policies == []
         assert protocols.cifs_shares == []
+        assert protocols.nfs_services == []
+        assert protocols.cifs_services == []
 
     def test_with_export_policies(self) -> None:
         """Test with export policy data."""
@@ -743,6 +842,20 @@ class TestProtocolsInfo:
         protocols = ProtocolsInfo(cifs_shares=[share])
         assert len(protocols.cifs_shares) == 1
         assert protocols.cifs_shares[0].name == "share1"
+
+    def test_with_nfs_services(self) -> None:
+        """Test with NFS service data."""
+        nfs = NFSServiceInfo(svm="svm1", enabled=True)
+        protocols = ProtocolsInfo(nfs_services=[nfs])
+        assert len(protocols.nfs_services) == 1
+        assert protocols.nfs_services[0].svm == "svm1"
+
+    def test_with_cifs_services(self) -> None:
+        """Test with CIFS service data."""
+        cifs = CIFSServiceInfo(svm="svm1", name="CIFSSERVER", enabled=True)
+        protocols = ProtocolsInfo(cifs_services=[cifs])
+        assert len(protocols.cifs_services) == 1
+        assert protocols.cifs_services[0].name == "CIFSSERVER"
 
 
 class TestLicenseFeature:

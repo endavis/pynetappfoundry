@@ -403,6 +403,19 @@ class TestNetworkCollection:
                 ]
             },
             "/network/ipspaces?fields=*": {"records": [{"name": "Default"}, {"name": "Cluster"}]},
+            "/name-services/dns?fields=*": {
+                "records": [
+                    {
+                        "uuid": "dns-uuid-1",
+                        "svm": {"name": "svm1"},
+                        "scope": "svm",
+                        "domains": ["example.com"],
+                        "servers": ["10.0.0.1", "10.0.0.2"],
+                        "timeout": 2,
+                        "attempts": 1,
+                    }
+                ]
+            },
         }
 
     def test_collect_network_via_api(
@@ -422,6 +435,10 @@ class TestNetworkCollection:
         assert len(result.broadcast_domains) == 1
         assert result.broadcast_domains[0].name == "Default"
         assert "Default" in result.ipspaces
+        assert len(result.dns) == 1
+        assert result.dns[0].svm == "svm1"
+        assert result.dns[0].domains == ["example.com"]
+        assert result.dns[0].servers == ["10.0.0.1", "10.0.0.2"]
 
     def test_collect_network_no_clients(self) -> None:
         """Test network returns empty when no clients."""
@@ -1120,6 +1137,34 @@ class TestProtocolsCollection:
                     }
                 ]
             },
+            "/protocols/nfs/services?fields=*": {
+                "records": [
+                    {
+                        "svm": {"name": "svm1"},
+                        "enabled": True,
+                        "protocol": {
+                            "v3_enabled": True,
+                            "v40_enabled": True,
+                            "v41_enabled": False,
+                        },
+                        "showmount_enabled": True,
+                        "vstorage_enabled": False,
+                    }
+                ]
+            },
+            "/protocols/cifs/services?fields=*": {
+                "records": [
+                    {
+                        "svm": {"name": "svm1"},
+                        "name": "CIFSSERVER",
+                        "enabled": True,
+                        "ad_domain": {"fqdn": "example.com"},
+                        "comment": "Production CIFS",
+                        "default_unix_user": "pcuser",
+                        "netbios": {"aliases": ["ALIAS1"]},
+                    }
+                ]
+            },
         }
 
     def test_collect_protocols_via_api(
@@ -1166,6 +1211,24 @@ class TestProtocolsCollection:
         assert result.cifs_shares[0].access_based_enumeration is True
         assert result.cifs_shares[0].unix_symlink == "local"
 
+        # Check NFS services
+        assert len(result.nfs_services) == 1
+        assert result.nfs_services[0].svm == "svm1"
+        assert result.nfs_services[0].enabled is True
+        assert result.nfs_services[0].protocol_v3_enabled is True
+        assert result.nfs_services[0].protocol_v4_enabled is True
+        assert result.nfs_services[0].protocol_v41_enabled is False
+        assert result.nfs_services[0].showmount_enabled is True
+
+        # Check CIFS services
+        assert len(result.cifs_services) == 1
+        assert result.cifs_services[0].svm == "svm1"
+        assert result.cifs_services[0].name == "CIFSSERVER"
+        assert result.cifs_services[0].enabled is True
+        assert result.cifs_services[0].ad_domain == "example.com"
+        assert result.cifs_services[0].default_unix_user == "pcuser"
+        assert result.cifs_services[0].netbios_aliases == ["ALIAS1"]
+
     def test_collect_protocols_empty_response(self) -> None:
         """Test protocols handles empty API response."""
         api_client = MagicMock()
@@ -1177,6 +1240,8 @@ class TestProtocolsCollection:
         assert isinstance(result, ProtocolsInfo)
         assert result.export_policies == []
         assert result.cifs_shares == []
+        assert result.nfs_services == []
+        assert result.cifs_services == []
 
     def test_collect_protocols_no_clients(self) -> None:
         """Test protocols returns empty when no clients."""
@@ -1186,6 +1251,8 @@ class TestProtocolsCollection:
         assert isinstance(result, ProtocolsInfo)
         assert result.export_policies == []
         assert result.cifs_shares == []
+        assert result.nfs_services == []
+        assert result.cifs_services == []
 
     def test_collect_protocols_api_failure_fallback(self) -> None:
         """Test protocols returns empty on API failure."""
@@ -1198,6 +1265,8 @@ class TestProtocolsCollection:
         assert isinstance(result, ProtocolsInfo)
         assert result.export_policies == []
         assert result.cifs_shares == []
+        assert result.nfs_services == []
+        assert result.cifs_services == []
 
     def test_collect_protocols_policy_without_rules(self) -> None:
         """Test protocols handles policy records with no rules."""
@@ -1212,6 +1281,8 @@ class TestProtocolsCollection:
                 ]
             },
             "/protocols/cifs/shares?fields=*": {"records": []},
+            "/protocols/nfs/services?fields=*": {"records": []},
+            "/protocols/cifs/services?fields=*": {"records": []},
         }
         api_client = MagicMock()
         api_client.call_endpoint.side_effect = lambda endpoint, **_: responses.get(

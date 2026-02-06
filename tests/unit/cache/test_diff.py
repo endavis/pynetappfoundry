@@ -12,9 +12,11 @@ from pynetappfoundry.cache.diff import (
 from pynetappfoundry.cache.models import (
     AggregateInfo,
     CachedClusterMetadata,
+    CIFSServiceInfo,
     CIFSShareInfo,
     CloudMetadata,
     ClusterInfo,
+    DNSInfo,
     ExportPolicyInfo,
     HAInfo,
     IgroupInfo,
@@ -23,6 +25,7 @@ from pynetappfoundry.cache.models import (
     LunInfo,
     NetworkInfo,
     NetworkLIF,
+    NFSServiceInfo,
     NodeInfo,
     ProtocolsInfo,
     QosPolicyInfo,
@@ -736,6 +739,125 @@ class TestComputeDiffAllCategories:
         assert qos_changes[0]["field"] == "scope"
         assert qos_changes[0]["old"] == "svm"
         assert qos_changes[0]["new"] == "cluster"
+
+    def test_nfs_service_changes(self) -> None:
+        """Test NFS service change detection."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            protocols=ProtocolsInfo(
+                nfs_services=[
+                    NFSServiceInfo(svm="svm1", enabled=True, protocol_v3_enabled=True),
+                ],
+            ),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            protocols=ProtocolsInfo(
+                nfs_services=[
+                    NFSServiceInfo(svm="svm1", enabled=True, protocol_v3_enabled=False),
+                ],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        nfs_changes = [c for c in changes if c["category"] == "protocols.nfs_services"]
+        assert len(nfs_changes) == 1
+        assert nfs_changes[0]["type"] == "modified"
+        assert nfs_changes[0]["field"] == "protocol_v3_enabled"
+        assert nfs_changes[0]["old"] is True
+        assert nfs_changes[0]["new"] is False
+
+    def test_nfs_service_added(self) -> None:
+        """Test NFS service addition detection."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            protocols=ProtocolsInfo(nfs_services=[]),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            protocols=ProtocolsInfo(
+                nfs_services=[NFSServiceInfo(svm="svm1", enabled=True)],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        nfs_changes = [c for c in changes if c["category"] == "protocols.nfs_services"]
+        assert len(nfs_changes) == 1
+        assert nfs_changes[0]["type"] == "added"
+        assert nfs_changes[0]["entity"] == "svm1"
+
+    def test_cifs_service_changes(self) -> None:
+        """Test CIFS service change detection."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            protocols=ProtocolsInfo(
+                cifs_services=[
+                    CIFSServiceInfo(svm="svm1", name="OLDNAME", enabled=True),
+                ],
+            ),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            protocols=ProtocolsInfo(
+                cifs_services=[
+                    CIFSServiceInfo(svm="svm1", name="NEWNAME", enabled=True),
+                ],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        cifs_changes = [c for c in changes if c["category"] == "protocols.cifs_services"]
+        assert len(cifs_changes) == 1
+        assert cifs_changes[0]["type"] == "modified"
+        assert cifs_changes[0]["field"] == "name"
+        assert cifs_changes[0]["old"] == "OLDNAME"
+        assert cifs_changes[0]["new"] == "NEWNAME"
+
+    def test_dns_changes(self) -> None:
+        """Test DNS change detection."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            network=NetworkInfo(
+                dns=[
+                    DNSInfo(svm="svm1", scope="svm", servers=["10.0.0.1"]),
+                ],
+            ),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            network=NetworkInfo(
+                dns=[
+                    DNSInfo(svm="svm1", scope="svm", servers=["10.0.0.1", "10.0.0.2"]),
+                ],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        dns_changes = [c for c in changes if c["category"] == "network.dns"]
+        assert len(dns_changes) == 1
+        assert dns_changes[0]["type"] == "modified"
+        assert dns_changes[0]["field"] == "servers"
+        assert dns_changes[0]["old"] == ["10.0.0.1"]
+        assert dns_changes[0]["new"] == ["10.0.0.1", "10.0.0.2"]
+
+    def test_dns_added(self) -> None:
+        """Test DNS addition detection."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            network=NetworkInfo(dns=[]),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            network=NetworkInfo(
+                dns=[DNSInfo(svm="svm1", scope="svm", domains=["example.com"])],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        dns_changes = [c for c in changes if c["category"] == "network.dns"]
+        assert len(dns_changes) == 1
+        assert dns_changes[0]["type"] == "added"
+        assert dns_changes[0]["entity"] == "svm1"
 
 
 class TestFormatDiffSummary:

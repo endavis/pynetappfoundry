@@ -119,6 +119,18 @@ _ENTITY_CONFIGS: dict[str, tuple[str, list[str]]] = {
         "name",
         ["path", "svm", "home_directory", "oplocks", "encryption"],
     ),
+    "protocols.nfs_services": (
+        "svm",
+        ["enabled", "protocol_v3_enabled", "protocol_v4_enabled", "protocol_v41_enabled"],
+    ),
+    "protocols.cifs_services": (
+        "svm",
+        ["name", "enabled", "ad_domain"],
+    ),
+    "network.dns": (
+        "svm",
+        ["uuid", "scope", "domains", "servers"],
+    ),
     "licenses.feature_licenses": (
         "name",
         ["state"],
