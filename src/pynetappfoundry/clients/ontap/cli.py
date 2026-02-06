@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import csv
 import json
 import logging
 import threading
@@ -16,6 +17,49 @@ CMD_KEYS: dict[str, str] = {
     "volume show": "Volume Name",
     "vol show": "Volume Name",
 }
+
+
+def _parse_separator_output(
+    lines: list[str],
+) -> tuple[list[dict[str, str]], dict[str, str]]:
+    """Parse comma-separated CLI output using CSV reader.
+
+    Uses ``csv.reader`` to correctly handle quoted values that contain
+    commas or span multiple lines (RFC 4180).
+
+    Args:
+        lines: Raw output lines from ``run_command``.
+
+    Returns:
+        Tuple of (data rows as list of dicts, descriptions dict).
+    """
+    if not lines:
+        return [], {}
+
+    reader = csv.reader(iter(lines))
+
+    try:
+        raw_headers = next(reader)
+    except StopIteration:
+        return [], {}
+
+    headers = [h for h in raw_headers if h]
+
+    try:
+        raw_descriptions = next(reader)
+    except StopIteration:
+        return [], {}
+
+    descriptions = [d for d in raw_descriptions if d]
+    descriptions_dict = dict(zip(headers, descriptions, strict=False))
+
+    data: list[dict[str, str]] = []
+    for row in reader:
+        datadict = dict(zip(headers, row, strict=False))
+        datadict.pop("", None)
+        data.append(datadict)
+
+    return data, descriptions_dict
 
 
 class CLICommandError(Exception):
@@ -179,26 +223,7 @@ class ONTAPCLI:
             logging.info(f"{self.log_prefix} {cmd} returned no output")
             return [], {}
 
-        headers = output[0].split(",")
-        if "" in headers:
-            headers.remove("")
-        del output[0]
-
-        descriptions = output[0].split(",")
-        if "" in descriptions:
-            descriptions.remove("")
-        descriptions_dict = dict(zip(headers, descriptions, strict=False))
-        del output[0]
-
-        data: list[dict[str, str]] = []
-        for line in output:
-            tdata = line.split(",")
-            datadict = dict(zip(headers, tdata, strict=False))
-            datadict.pop("", None)
-
-            data.append(datadict)
-
-        return data, descriptions_dict
+        return _parse_separator_output(output)
 
     def run_command(
         self,
