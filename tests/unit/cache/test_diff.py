@@ -17,12 +17,15 @@ from pynetappfoundry.cache.models import (
     ClusterInfo,
     ExportPolicyInfo,
     HAInfo,
+    IgroupInfo,
     LicenseFeature,
     LicenseInfo,
+    LunInfo,
     NetworkInfo,
     NetworkLIF,
     NodeInfo,
     ProtocolsInfo,
+    QosPolicyInfo,
     QtreeInfo,
     RelationshipsInfo,
     ScheduleInfo,
@@ -666,6 +669,73 @@ class TestComputeDiffAllCategories:
         assert len(share_changes) == 1
         assert share_changes[0]["type"] == "added"
         assert share_changes[0]["entity"] == "share1"
+
+    def test_lun_changes(self) -> None:
+        """Test LUN change detection."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            storage=StorageInfo(
+                luns=[LunInfo(name="/vol/vol1/lun1", svm="svm1", size=10737418240)],
+            ),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            storage=StorageInfo(
+                luns=[LunInfo(name="/vol/vol1/lun1", svm="svm1", size=21474836480)],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        lun_changes = [c for c in changes if c["category"] == "storage.luns"]
+        assert len(lun_changes) == 1
+        assert lun_changes[0]["type"] == "modified"
+        assert lun_changes[0]["field"] == "size"
+
+    def test_igroup_added(self) -> None:
+        """Test igroup addition detection."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            storage=StorageInfo(igroups=[]),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            storage=StorageInfo(
+                igroups=[IgroupInfo(name="igroup1", svm="svm1", protocol="iscsi")],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        ig_changes = [c for c in changes if c["category"] == "storage.igroups"]
+        assert len(ig_changes) == 1
+        assert ig_changes[0]["type"] == "added"
+        assert ig_changes[0]["entity"] == "igroup1"
+
+    def test_qos_policy_changes(self) -> None:
+        """Test QoS policy change detection."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            storage=StorageInfo(
+                qos_policies=[
+                    QosPolicyInfo(name="qos1", svm="svm1", scope="svm"),
+                ],
+            ),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            storage=StorageInfo(
+                qos_policies=[
+                    QosPolicyInfo(name="qos1", svm="svm1", scope="cluster"),
+                ],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        qos_changes = [c for c in changes if c["category"] == "storage.qos_policies"]
+        assert len(qos_changes) == 1
+        assert qos_changes[0]["type"] == "modified"
+        assert qos_changes[0]["field"] == "scope"
+        assert qos_changes[0]["old"] == "svm"
+        assert qos_changes[0]["new"] == "cluster"
 
 
 class TestFormatDiffSummary:

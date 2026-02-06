@@ -525,6 +525,49 @@ class TestStorageCollection:
                     }
                 ]
             },
+            "/storage/luns?fields=*": {
+                "records": [
+                    {
+                        "uuid": "lun-uuid-1",
+                        "name": "/vol/vol1/lun1",
+                        "svm": {"name": "svm1"},
+                        "location": {"volume": {"name": "vol1"}},
+                        "space": {"size": 10737418240},
+                        "os_type": "linux",
+                        "serial_number": "ABC123",
+                        "enabled": True,
+                        "comment": "Test LUN",
+                    }
+                ]
+            },
+            "/protocols/san/igroups?fields=*": {
+                "records": [
+                    {
+                        "uuid": "ig-uuid-1",
+                        "name": "igroup1",
+                        "svm": {"name": "svm1"},
+                        "protocol": "iscsi",
+                        "os_type": "linux",
+                        "initiators": [{"name": "iqn.1991-05.com.example:host1"}],
+                        "comment": "Test igroup",
+                    }
+                ]
+            },
+            "/storage/qos/policies?fields=*": {
+                "records": [
+                    {
+                        "uuid": "qos-uuid-1",
+                        "name": "qos-fixed",
+                        "svm": {"name": "svm1"},
+                        "scope": "svm",
+                        "object_type": "user_defined",
+                        "fixed": {
+                            "max_throughput_iops": 5000,
+                            "max_throughput_mbps": 200,
+                        },
+                    }
+                ]
+            },
         }
 
     def test_collect_storage_via_api(
@@ -561,6 +604,19 @@ class TestStorageCollection:
         assert len(result.schedules) == 1
         assert result.schedules[0].name == "hourly"
         assert result.schedules[0].type == "cron"
+        assert len(result.luns) == 1
+        assert result.luns[0].name == "/vol/vol1/lun1"
+        assert result.luns[0].os_type == "linux"
+        assert result.luns[0].size == 10737418240
+        assert result.luns[0].volume == "vol1"
+        assert len(result.igroups) == 1
+        assert result.igroups[0].name == "igroup1"
+        assert result.igroups[0].protocol == "iscsi"
+        assert result.igroups[0].initiators == ["iqn.1991-05.com.example:host1"]
+        assert len(result.qos_policies) == 1
+        assert result.qos_policies[0].name == "qos-fixed"
+        assert result.qos_policies[0].fixed_max_throughput_iops == 5000
+        assert result.qos_policies[0].policy_class == "user_defined"
 
     def test_collect_storage_no_clients(self) -> None:
         """Test storage returns empty when no clients."""
@@ -634,6 +690,9 @@ class TestCloudTargetsCollection:
             "/storage/qtrees?fields=*": {"records": []},
             "/storage/snapshot-policies?fields=*,copies": {"records": []},
             "/cluster/schedules?fields=*": {"records": []},
+            "/storage/luns?fields=*": {"records": []},
+            "/protocols/san/igroups?fields=*": {"records": []},
+            "/storage/qos/policies?fields=*": {"records": []},
         }
 
     def test_collect_cloud_targets_via_api(

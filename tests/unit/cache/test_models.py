@@ -17,12 +17,15 @@ from pynetappfoundry.cache.models import (
     ExportPolicyInfo,
     ExportRuleInfo,
     HAInfo,
+    IgroupInfo,
     LicenseFeature,
     LicenseInfo,
+    LunInfo,
     NetworkInfo,
     NetworkLIF,
     NodeInfo,
     ProtocolsInfo,
+    QosPolicyInfo,
     QtreeInfo,
     RelationshipsInfo,
     ScheduleInfo,
@@ -339,6 +342,9 @@ class TestStorageInfo:
         assert storage.qtrees == []
         assert storage.snapshot_policies == []
         assert storage.schedules == []
+        assert storage.luns == []
+        assert storage.igroups == []
+        assert storage.qos_policies == []
 
     def test_with_data(self) -> None:
         """Test with storage data."""
@@ -573,6 +579,112 @@ class TestScheduleInfo:
         )
         assert sched.type == "interval"
         assert sched.interval == "PT5M"
+
+
+class TestLunInfo:
+    """Tests for LunInfo model."""
+
+    def test_default_values(self) -> None:
+        """Test default values."""
+        lun = LunInfo()
+        assert lun.uuid == ""
+        assert lun.name == ""
+        assert lun.svm == ""
+        assert lun.volume == ""
+        assert lun.size == 0
+        assert lun.os_type == ""
+        assert lun.enabled is True
+        assert lun.qos_policy == ""
+
+    def test_with_values(self) -> None:
+        """Test with LUN data."""
+        lun = LunInfo(
+            uuid="lun-uuid-1",
+            name="/vol/vol1/lun1",
+            svm="svm1",
+            volume="vol1",
+            size=10737418240,
+            os_type="linux",
+            serial_number="ABC123",
+            enabled=True,
+            comment="Test LUN",
+            qos_policy="qos1",
+        )
+        assert lun.name == "/vol/vol1/lun1"
+        assert lun.os_type == "linux"
+        assert lun.size == 10737418240
+
+
+class TestIgroupInfo:
+    """Tests for IgroupInfo model."""
+
+    def test_default_values(self) -> None:
+        """Test default values."""
+        igroup = IgroupInfo()
+        assert igroup.uuid == ""
+        assert igroup.name == ""
+        assert igroup.svm == ""
+        assert igroup.protocol == ""
+        assert igroup.os_type == ""
+        assert igroup.initiators == []
+
+    def test_with_values(self) -> None:
+        """Test with igroup data."""
+        igroup = IgroupInfo(
+            uuid="ig-uuid-1",
+            name="igroup1",
+            svm="svm1",
+            protocol="iscsi",
+            os_type="linux",
+            initiators=["iqn.1991-05.com.example:host1", "iqn.1991-05.com.example:host2"],
+            comment="Test igroup",
+        )
+        assert igroup.name == "igroup1"
+        assert igroup.protocol == "iscsi"
+        assert len(igroup.initiators) == 2
+
+
+class TestQosPolicyInfo:
+    """Tests for QosPolicyInfo model."""
+
+    def test_default_values(self) -> None:
+        """Test default values."""
+        qos = QosPolicyInfo()
+        assert qos.uuid == ""
+        assert qos.name == ""
+        assert qos.scope == ""
+        assert qos.fixed_max_throughput_iops == 0
+        assert qos.adaptive_expected_iops == 0
+
+    def test_with_fixed_values(self) -> None:
+        """Test with fixed QoS policy data."""
+        qos = QosPolicyInfo(
+            uuid="qos-uuid-1",
+            name="qos-fixed",
+            svm="svm1",
+            scope="svm",
+            policy_class="user_defined",
+            fixed_max_throughput_iops=5000,
+            fixed_max_throughput_mbps=200,
+        )
+        assert qos.name == "qos-fixed"
+        assert qos.fixed_max_throughput_iops == 5000
+
+    def test_with_adaptive_values(self) -> None:
+        """Test with adaptive QoS policy data."""
+        qos = QosPolicyInfo(
+            uuid="qos-uuid-2",
+            name="qos-adaptive",
+            svm="svm1",
+            scope="svm",
+            policy_class="user_defined",
+            adaptive_expected_iops=3000,
+            adaptive_peak_iops=6000,
+            adaptive_block_size="any",
+        )
+        assert qos.adaptive_expected_iops == 3000
+        assert qos.adaptive_peak_iops == 6000
+        assert qos.adaptive_block_size == "any"
 
 
 class TestCIFSShareInfo:

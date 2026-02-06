@@ -30,12 +30,15 @@ from pynetappfoundry.cache.models import (
     ExportPolicyInfo,
     ExportRuleInfo,
     HAInfo,
+    IgroupInfo,
     LicenseFeature,
     LicenseInfo,
+    LunInfo,
     NetworkInfo,
     NetworkLIF,
     NodeInfo,
     ProtocolsInfo,
+    QosPolicyInfo,
     QtreeInfo,
     RelationshipsInfo,
     ScheduleInfo,
@@ -1088,6 +1091,9 @@ class MetadataCollector:
             "/storage/qtrees?fields=*",
             "/storage/snapshot-policies?fields=*,copies",
             "/cluster/schedules?fields=*",
+            "/storage/luns?fields=*",
+            "/protocols/san/igroups?fields=*",
+            "/storage/qos/policies?fields=*",
         ]
 
         def safe_api_call(endpoint: str) -> Any:
@@ -1102,7 +1108,7 @@ class MetadataCollector:
                 raise
 
         if self.parallel:
-            with ThreadPoolExecutor(max_workers=7) as executor:
+            with ThreadPoolExecutor(max_workers=10) as executor:
                 futures = {executor.submit(safe_api_call, ep): ep for ep in endpoints}
                 responses: dict[str, Any] = {}
                 for future in as_completed(futures):
@@ -1167,6 +1173,15 @@ class MetadataCollector:
         # Process schedules response
         schedules = self._parse_schedules_response(responses.get(endpoints[6]))
 
+        # Process LUNs response
+        luns = self._parse_luns_response(responses.get(endpoints[7]))
+
+        # Process igroups response
+        igroups = self._parse_igroups_response(responses.get(endpoints[8]))
+
+        # Process QoS policies response
+        qos_policies = self._parse_qos_policies_response(responses.get(endpoints[9]))
+
         return StorageInfo(
             aggregates=aggregates,
             svms=svms,
@@ -1175,6 +1190,9 @@ class MetadataCollector:
             qtrees=qtrees,
             snapshot_policies=snapshot_policies,
             schedules=schedules,
+            luns=luns,
+            igroups=igroups,
+            qos_policies=qos_policies,
         )
 
     def _parse_cloud_targets_response(self, response: Any) -> list[CloudTargetInfo]:
@@ -1781,6 +1799,110 @@ class MetadataCollector:
             )
             schedules.append(schedule)
         return schedules
+
+    def _parse_luns_response(self, response: Any) -> list[LunInfo]:
+        """Parse LUNs API response.
+
+        Args:
+            response: API response dict or None.
+
+        Returns:
+            List of LunInfo objects.
+        """
+        if not response:
+            return []
+
+        logger.debug("%s API response: %d LUNs", self._log_prefix, len(response.get("records", [])))
+        luns = []
+        for record in response.get("records", []):
+            location = record.get("location", {})
+            lun = LunInfo(
+                uuid=record.get("uuid", ""),
+                name=record.get("name", ""),
+                svm=record.get("svm", {}).get("name", "") if record.get("svm") else "",
+                volume=(
+                    location.get("volume", {}).get("name", "") if location.get("volume") else ""
+                ),
+                size=record.get("space", {}).get("size", 0),
+                os_type=record.get("os_type", ""),
+                serial_number=record.get("serial_number", ""),
+                enabled=record.get("enabled", True),
+                comment=record.get("comment", "") or "",
+                qos_policy=(
+                    record.get("qos_policy", {}).get("name", "") if record.get("qos_policy") else ""
+                ),
+                create_time=record.get("create_time", ""),
+            )
+            luns.append(lun)
+        return luns
+
+    def _parse_igroups_response(self, response: Any) -> list[IgroupInfo]:
+        """Parse igroups API response.
+
+        Args:
+            response: API response dict or None.
+
+        Returns:
+            List of IgroupInfo objects.
+        """
+        if not response:
+            return []
+
+        logger.debug(
+            "%s API response: %d igroups", self._log_prefix, len(response.get("records", []))
+        )
+        igroups = []
+        for record in response.get("records", []):
+            initiators = [i.get("name", "") for i in record.get("initiators", []) if i.get("name")]
+            igroup = IgroupInfo(
+                uuid=record.get("uuid", ""),
+                name=record.get("name", ""),
+                svm=record.get("svm", {}).get("name", "") if record.get("svm") else "",
+                protocol=record.get("protocol", ""),
+                os_type=record.get("os_type", ""),
+                initiators=initiators,
+                comment=record.get("comment", "") or "",
+            )
+            igroups.append(igroup)
+        return igroups
+
+    def _parse_qos_policies_response(self, response: Any) -> list[QosPolicyInfo]:
+        """Parse QoS policies API response.
+
+        Args:
+            response: API response dict or None.
+
+        Returns:
+            List of QosPolicyInfo objects.
+        """
+        if not response:
+            return []
+
+        logger.debug(
+            "%s API response: %d QoS policies",
+            self._log_prefix,
+            len(response.get("records", [])),
+        )
+        policies = []
+        for record in response.get("records", []):
+            fixed = record.get("fixed", {}) or {}
+            adaptive = record.get("adaptive", {}) or {}
+            max_throughput_iops = fixed.get("max_throughput_iops", 0)
+            max_throughput_mbps = fixed.get("max_throughput_mbps", 0)
+            policy = QosPolicyInfo(
+                uuid=record.get("uuid", ""),
+                name=record.get("name", ""),
+                svm=record.get("svm", {}).get("name", "") if record.get("svm") else "",
+                scope=record.get("scope", ""),
+                policy_class=record.get("object_type", ""),
+                fixed_max_throughput_iops=max_throughput_iops if max_throughput_iops else 0,
+                fixed_max_throughput_mbps=max_throughput_mbps if max_throughput_mbps else 0,
+                adaptive_expected_iops=adaptive.get("expected_iops", 0) or 0,
+                adaptive_peak_iops=adaptive.get("peak_iops", 0) or 0,
+                adaptive_block_size=adaptive.get("block_size", ""),
+            )
+            policies.append(policy)
+        return policies
 
     # -------------------------------------------------------------------------
     # Protocols Collection

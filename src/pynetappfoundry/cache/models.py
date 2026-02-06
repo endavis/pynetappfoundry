@@ -340,11 +340,60 @@ class ScheduleInfo(BaseModel):
     interval: str = ""
 
 
+class LunInfo(BaseModel):
+    """LUN (Logical Unit Number) information."""
+
+    model_config = ConfigDict(extra="allow")
+
+    uuid: str = ""
+    name: str = ""
+    svm: str = ""
+    volume: str = ""
+    size: int = 0  # bytes
+    os_type: str = ""  # linux, windows, vmware, etc.
+    serial_number: str = ""
+    enabled: bool = True
+    comment: str = ""
+    qos_policy: str = ""
+    create_time: str = ""
+
+
+class IgroupInfo(BaseModel):
+    """Initiator group information."""
+
+    model_config = ConfigDict(extra="allow")
+
+    uuid: str = ""
+    name: str = ""
+    svm: str = ""
+    protocol: str = ""  # fcp, iscsi, mixed
+    os_type: str = ""  # linux, windows, vmware, etc.
+    initiators: list[str] = Field(default_factory=list)
+    comment: str = ""
+
+
+class QosPolicyInfo(BaseModel):
+    """QoS policy information."""
+
+    model_config = ConfigDict(extra="allow")
+
+    uuid: str = ""
+    name: str = ""
+    svm: str = ""
+    scope: str = ""  # cluster, svm
+    policy_class: str = ""  # preset, user_defined, system_defined
+    fixed_max_throughput_iops: int = 0
+    fixed_max_throughput_mbps: int = 0
+    adaptive_expected_iops: int = 0
+    adaptive_peak_iops: int = 0
+    adaptive_block_size: str = ""  # any, 4k, 8k, etc.
+
+
 class StorageInfo(BaseModel):
     """Storage topology information.
 
     Contains aggregates, SVMs, cloud targets, volumes, qtrees,
-    snapshot policies, and schedules.
+    snapshot policies, schedules, LUNs, igroups, and QoS policies.
     """
 
     model_config = ConfigDict(extra="allow")
@@ -356,6 +405,9 @@ class StorageInfo(BaseModel):
     qtrees: list[QtreeInfo] = Field(default_factory=list)
     snapshot_policies: list[SnapshotPolicyInfo] = Field(default_factory=list)
     schedules: list[ScheduleInfo] = Field(default_factory=list)
+    luns: list[LunInfo] = Field(default_factory=list)
+    igroups: list[IgroupInfo] = Field(default_factory=list)
+    qos_policies: list[QosPolicyInfo] = Field(default_factory=list)
 
 
 class LicenseFeature(BaseModel):

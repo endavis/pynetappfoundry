@@ -99,6 +99,18 @@ _ENTITY_CONFIGS: dict[str, tuple[str, list[str]]] = {
         "name",
         ["uuid", "type", "scope", "svm"],
     ),
+    "storage.luns": (
+        "name",
+        ["uuid", "svm", "volume", "size", "os_type", "enabled"],
+    ),
+    "storage.igroups": (
+        "name",
+        ["uuid", "svm", "protocol", "os_type"],
+    ),
+    "storage.qos_policies": (
+        "name",
+        ["uuid", "svm", "scope", "policy_class"],
+    ),
     "protocols.export_policies": (
         "name",
         ["id", "svm"],
