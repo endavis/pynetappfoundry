@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 from unittest.mock import MagicMock
 
@@ -1753,3 +1754,195 @@ class TestUpdateAzureCloudLinks:
         assert result[0].update_domain == "1"
         assert result[0].offer == "netapp-ontap-cloud"
         assert result[0].resource_group_link == "https://rg-link.com"
+
+
+class TestLogMissingFields:
+    """Tests for MISSING_FIELD debug logging."""
+
+    @pytest.fixture
+    def collector(self) -> MetadataCollector:
+        """Create a collector with cluster name set for log prefix."""
+        c = MetadataCollector()
+        c._cluster_name = "testcluster"
+        return c
+
+    def test_logs_missing_field(
+        self, collector: MetadataCollector, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """Test that absent keys produce MISSING_FIELD log entries."""
+        record: dict[str, Any] = {"name": "vol1", "uuid": "abc-123"}
+        with caplog.at_level(logging.DEBUG):
+            collector._log_missing_fields(
+                record, ["name", "uuid", "autosize", "tiering"], "Volume", "vol1"
+            )
+        missing_messages = [r.message for r in caplog.records if "MISSING_FIELD" in r.message]
+        assert len(missing_messages) == 2
+        assert any("'autosize'" in m for m in missing_messages)
+        assert any("'tiering'" in m for m in missing_messages)
+
+    def test_no_log_for_present_fields(
+        self, collector: MetadataCollector, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """Test that present keys do NOT produce log entries, even if values are empty/null."""
+        record: dict[str, Any] = {
+            "name": "",
+            "uuid": None,
+            "autosize": {},
+            "size": 0,
+            "enabled": False,
+        }
+        with caplog.at_level(logging.DEBUG):
+            collector._log_missing_fields(
+                record,
+                ["name", "uuid", "autosize", "size", "enabled"],
+                "Volume",
+                "testvol",
+            )
+        missing_messages = [r.message for r in caplog.records if "MISSING_FIELD" in r.message]
+        assert len(missing_messages) == 0
+
+    def test_log_includes_cluster_context(
+        self, collector: MetadataCollector, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """Test that log messages include cluster name in prefix."""
+        record: dict[str, Any] = {"name": "vol1"}
+        with caplog.at_level(logging.DEBUG):
+            collector._log_missing_fields(record, ["autosize"], "Volume", "vol1")
+        missing_messages = [r.message for r in caplog.records if "MISSING_FIELD" in r.message]
+        assert len(missing_messages) == 1
+        assert "[testcluster:collector]" in missing_messages[0]
+
+    def test_log_includes_record_type_and_id(
+        self, collector: MetadataCollector, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """Test that log messages include record type and identifier."""
+        record: dict[str, Any] = {}
+        with caplog.at_level(logging.DEBUG):
+            collector._log_missing_fields(record, ["uuid"], "Aggregate", "aggr1")
+        missing_messages = [r.message for r in caplog.records if "MISSING_FIELD" in r.message]
+        assert len(missing_messages) == 1
+        assert "Aggregate" in missing_messages[0]
+        assert "'aggr1'" in missing_messages[0]
+        assert "'uuid'" in missing_messages[0]
+
+    def test_log_missing_field_in_volume_parsing(self, caplog: pytest.LogCaptureFixture) -> None:
+        """Test that volume parsing logs missing fields from real API responses."""
+        api_client = MagicMock()
+        collector = MetadataCollector(api_client=api_client)
+        collector._cluster_name = "testcluster"
+
+        # Simulate a response missing autosize, nas, files, tiering
+        response: dict[str, Any] = {
+            "records": [
+                {
+                    "uuid": "vol-uuid-1",
+                    "name": "vol1",
+                    "svm": {"name": "svm1"},
+                    "state": "online",
+                    "type": "rw",
+                    "style": "flexvol",
+                    "size": 1099511627776,
+                    "aggregates": [{"name": "aggr1"}],
+                    "snapshot_policy": {"name": "default"},
+                }
+            ]
+        }
+        with caplog.at_level(logging.DEBUG):
+            collector._parse_volumes_response(response)
+        missing_messages = [r.message for r in caplog.records if "MISSING_FIELD" in r.message]
+        missing_fields = {m.split("'")[-2] for m in missing_messages}
+        assert "autosize" in missing_fields
+        assert "nas" in missing_fields
+        assert "files" in missing_fields
+        assert "tiering" in missing_fields
+
+    def test_no_missing_field_log_for_complete_volume(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """Test that a complete volume record produces no MISSING_FIELD logs."""
+        api_client = MagicMock()
+        collector = MetadataCollector(api_client=api_client)
+        collector._cluster_name = "testcluster"
+
+        response: dict[str, Any] = {
+            "records": [
+                {
+                    "uuid": "vol-uuid-1",
+                    "name": "vol1",
+                    "svm": {"name": "svm1"},
+                    "state": "online",
+                    "type": "rw",
+                    "style": "flexvol",
+                    "size": 1099511627776,
+                    "autosize": {"mode": "grow", "grow_threshold": 85},
+                    "tiering": {"policy": "auto"},
+                    "nas": {
+                        "export_policy": {"name": "default"},
+                        "path": "/vol1",
+                        "security_style": "unix",
+                    },
+                    "files": {"maximum": 100000},
+                    "snapshot_policy": {"name": "default"},
+                    "aggregates": [{"name": "aggr1"}],
+                }
+            ]
+        }
+        with caplog.at_level(logging.DEBUG):
+            collector._parse_volumes_response(response)
+        missing_messages = [r.message for r in caplog.records if "MISSING_FIELD" in r.message]
+        assert len(missing_messages) == 0
+
+    def test_missing_field_grepable_tag(
+        self, collector: MetadataCollector, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """Test that the MISSING_FIELD tag is consistently present for grepping."""
+        record: dict[str, Any] = {}
+        with caplog.at_level(logging.DEBUG):
+            collector._log_missing_fields(record, ["field_a", "field_b"], "TestType", "test-id")
+        for rec in caplog.records:
+            if "MISSING_FIELD" in rec.message:
+                assert "MISSING_FIELD:" in rec.message
+
+    def test_cli_collection_logs_missing_fields(self, caplog: pytest.LogCaptureFixture) -> None:
+        """Test that CLI collection methods log missing fields."""
+        cli_client = MagicMock()
+        cli_client.run_a_show_command_and_parse_seperator.return_value = (
+            [{"node": "node1"}],  # missing serial-number, system-id, model
+            None,
+        )
+        collector = MetadataCollector(cli_client=cli_client)
+        collector._cluster_name = "testcluster"
+
+        with caplog.at_level(logging.DEBUG):
+            collector._collect_nodes_via_cli()
+        missing_messages = [r.message for r in caplog.records if "MISSING_FIELD" in r.message]
+        missing_fields = {m.split("'")[-2] for m in missing_messages}
+        assert "serial-number" in missing_fields
+        assert "system-id" in missing_fields
+        assert "model" in missing_fields
+        # "node" should NOT be missing
+        assert "node" not in missing_fields
+
+    def test_cli_collection_no_log_for_complete_record(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """Test that complete CLI records produce no MISSING_FIELD logs."""
+        cli_client = MagicMock()
+        cli_client.run_a_show_command_and_parse_seperator.return_value = (
+            [
+                {
+                    "node": "node1",
+                    "serial-number": "ABC123",
+                    "system-id": "12345",
+                    "model": "FAS8200",
+                }
+            ],
+            None,
+        )
+        collector = MetadataCollector(cli_client=cli_client)
+        collector._cluster_name = "testcluster"
+
+        with caplog.at_level(logging.DEBUG):
+            collector._collect_nodes_via_cli()
+        missing_messages = [r.message for r in caplog.records if "MISSING_FIELD" in r.message]
+        assert len(missing_messages) == 0
