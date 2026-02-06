@@ -619,13 +619,58 @@ base_api_path = "/api"
         )
 
         assert result.exit_code == 0
-        # Should show the API endpoint used
-        assert "Endpoint:" in result.output
-        assert "/storage/volumes" in result.output
+        # Should show both API sections
+        assert "API (filtered)" in result.output
+        assert "API (all)" in result.output
         assert "name=vol1" in result.output
         # Should show the CLI command used
         assert "Command:" in result.output
         assert "volume show vol1" in result.output
+
+    @patch("pynetappfoundry.cli.commands.cache.inspect.ONTAPAPIClient")
+    @patch("pynetappfoundry.cli.commands.cache.inspect.ONTAPCLI")
+    @patch("pynetappfoundry.cli.commands.cache.inspect.ClusterMetadataDB")
+    @patch("pynetappfoundry.cli.commands.cache.inspect.Config")
+    def test_inspect_api_all_finds_by_name(
+        self,
+        mock_config_class: MagicMock,
+        mock_db_class: MagicMock,
+        mock_cli_class: MagicMock,
+        mock_api_class: MagicMock,
+        runner: CliRunner,
+        mock_config_dir: Path,
+    ) -> None:
+        """Test that API (all) fetches all records and finds the match."""
+        mock_config = MagicMock()
+        mock_config.data = {"clusters": {"test-cluster": {"ip": "10.0.0.1"}}}
+        mock_config.get_user.return_value = ("admin", "pass")
+        mock_config_class.return_value = mock_config
+
+        mock_db = MagicMock()
+        mock_db.get.return_value = None
+        mock_db_class.return_value = mock_db
+
+        mock_cli = MagicMock()
+        mock_cli.run_a_show_command_and_parse_seperator.return_value = ([], {})
+        mock_cli_class.return_value = mock_cli
+
+        # API returns multiple records; the "all" section searches client-side
+        records = [
+            {"name": "other_vol", "uuid": "other-uuid"},
+            {"name": "vol1", "uuid": "target-uuid", "extra_field": "present"},
+        ]
+        mock_api = MagicMock()
+        mock_api.call_endpoint.return_value = {"records": records}
+        mock_api_class.return_value = mock_api
+
+        result = runner.invoke(
+            nf,
+            ["-c", str(mock_config_dir), "cache", "inspect", "test-cluster", "vol1"],
+        )
+
+        assert result.exit_code == 0
+        assert "target-uuid" in result.output
+        assert "extra_field" in result.output
 
     def test_inspect_invalid_type(self, runner: CliRunner, mock_config_dir: Path) -> None:
         """Test inspect with invalid object type."""
