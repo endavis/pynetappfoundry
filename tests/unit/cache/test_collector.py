@@ -495,7 +495,7 @@ class TestStorageCollection:
                 "records": [{"name": "svm1", "state": "running", "subtype": "default"}]
             },
             "/cloud/targets?fields=*": {"records": []},
-            "/storage/volumes?fields=*": {
+            "/storage/volumes?fields=*,autosize,files,nas.path,nas.security_style": {
                 "records": [
                     {
                         "uuid": "vol-uuid-1",
@@ -746,7 +746,7 @@ class TestCloudTargetsCollection:
                 "records": [{"name": "svm1", "state": "running", "subtype": "default"}]
             },
             "/cloud/targets?fields=*": mock_cloud_targets_api_response,
-            "/storage/volumes?fields=*": {"records": []},
+            "/storage/volumes?fields=*,autosize,files,nas.path,nas.security_style": {"records": []},
             "/storage/qtrees?fields=*": {"records": []},
             "/storage/snapshot-policies?fields=*,copies": {"records": []},
             "/cluster/schedules?fields=*": {"records": []},
@@ -831,6 +831,8 @@ class TestCloudTargetsCollection:
                 ],
                 {},
             ),
+            # volume show
+            ([], {}),
         ]
 
         collector = MetadataCollector(cli_client=cli_client)

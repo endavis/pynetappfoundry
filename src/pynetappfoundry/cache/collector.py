@@ -15,8 +15,10 @@ from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import Enum
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
+from pynetappfoundry.cache.field_mapping import parse_api_response, parse_cli_records
+from pynetappfoundry.cache.mappings.volume import VOLUME_MAPPING
 from pynetappfoundry.cache.models import (
     AggregateInfo,
     BroadcastDomain,
@@ -1187,7 +1189,7 @@ class MetadataCollector:
             "/storage/aggregates?fields=*",
             "/svm/svms?fields=*",
             "/cloud/targets?fields=*",
-            "/storage/volumes?fields=*",
+            "/storage/volumes?fields=*,autosize,files,nas.path,nas.security_style",
             "/storage/qtrees?fields=*",
             "/storage/snapshot-policies?fields=*,copies",
             "/cluster/schedules?fields=*",
@@ -1420,7 +1422,22 @@ class MetadataCollector:
         # Collect cloud targets
         cloud_targets = self._collect_cloud_targets_via_cli()
 
-        return StorageInfo(aggregates=aggregates, svms=svms, cloud_targets=cloud_targets)
+        # Collect volumes
+        logger.debug("%s CLI command: volume show", self._log_prefix)
+        vol_output, _ = self.cli_client.run_a_show_command_and_parse_seperator("volume show")
+        volumes = cast(
+            list[VolumeInfo],
+            parse_cli_records(
+                VOLUME_MAPPING, vol_output, self._log_prefix, self._log_missing_fields
+            ),
+        )
+
+        return StorageInfo(
+            aggregates=aggregates,
+            svms=svms,
+            cloud_targets=cloud_targets,
+            volumes=volumes,
+        )
 
     def _collect_cloud_targets_via_cli(self) -> list[CloudTargetInfo]:
         """Collect cloud object store targets using CLI.
@@ -1876,69 +1893,18 @@ class MetadataCollector:
     def _parse_volumes_response(self, response: Any) -> list[VolumeInfo]:
         """Parse volumes API response.
 
+        Delegates to the declarative field mapping framework.
+
         Args:
             response: API response dict or None.
 
         Returns:
             List of VolumeInfo objects.
         """
-        if not response:
-            return []
-
-        logger.debug(
-            "%s API response: %d volumes", self._log_prefix, len(response.get("records", []))
+        results = parse_api_response(
+            VOLUME_MAPPING, response, self._log_prefix, self._log_missing_fields
         )
-        volumes = []
-        for record in response.get("records", []):
-            self._log_missing_fields(
-                record,
-                [
-                    "uuid",
-                    "name",
-                    "svm",
-                    "state",
-                    "type",
-                    "style",
-                    "size",
-                    "autosize",
-                    "tiering",
-                    "nas",
-                    "files",
-                    "snapshot_policy",
-                    "aggregates",
-                ],
-                "Volume",
-                record.get("name", record.get("uuid", "unknown")),
-            )
-            autosize = record.get("autosize", {})
-            tiering = record.get("tiering", {})
-            nas = record.get("nas", {})
-            aggr = record.get("aggregates", [])
-            vol = VolumeInfo(
-                uuid=record.get("uuid", ""),
-                name=record.get("name", ""),
-                svm=record.get("svm", {}).get("name", "") if record.get("svm") else "",
-                state=record.get("state", ""),
-                type=record.get("type", ""),
-                style=record.get("style", ""),
-                size=record.get("size", 0),
-                autosize_mode=autosize.get("mode", ""),
-                autosize_grow_threshold=autosize.get("grow_threshold", 0),
-                autosize_shrink_threshold=autosize.get("shrink_threshold", 0),
-                autosize_maximum=autosize.get("maximum", 0),
-                autosize_minimum=autosize.get("minimum", 0),
-                files_maximum=record.get("files", {}).get("maximum", 0),
-                tiering_policy=tiering.get("policy", ""),
-                tiering_minimum_cooling_days=tiering.get("min_cooling_days", 0),
-                aggregate=record.get("aggregates", [{}])[0].get("name", "") if aggr else "",
-                aggregates=[a.get("name", "") for a in aggr if a.get("name")],
-                snapshot_policy=record.get("snapshot_policy", {}).get("name", ""),
-                export_policy=nas.get("export_policy", {}).get("name", ""),
-                junction_path=nas.get("path", ""),
-                nas_security_style=nas.get("security_style", ""),
-            )
-            volumes.append(vol)
-        return volumes
+        return cast(list[VolumeInfo], results)
 
     def _parse_qtrees_response(self, response: Any) -> list[QtreeInfo]:
         """Parse qtrees API response.

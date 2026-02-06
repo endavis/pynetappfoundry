@@ -27,6 +27,7 @@ from pynetappfoundry.cache.collector import (
 )
 from pynetappfoundry.cache.db import ClusterMetadataDB
 from pynetappfoundry.cache.diff import ChangeEntry, compute_diff, format_diff_summary
+from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.cache.history_db import CacheHistoryDB
 from pynetappfoundry.cache.models import (
     METADATA_SCHEMA_MIN_COMPATIBLE,
@@ -91,6 +92,7 @@ __all__ = [
     "DNSInfo",
     "ExportPolicyInfo",
     "ExportRuleInfo",
+    "FieldMapping",
     "FlexCacheInfo",
     "HAInfo",
     "IPSubnetInfo",
@@ -117,6 +119,7 @@ __all__ = [
     "SnapshotPolicyInfo",
     "SnapshotScheduleInfo",
     "StorageInfo",
+    "TypeMapping",
     "VolumeInfo",
     "compute_diff",
     "format_diff_summary",
