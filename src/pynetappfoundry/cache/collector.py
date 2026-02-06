@@ -17,7 +17,7 @@ from datetime import UTC, datetime
 from enum import Enum
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
-from pynetappfoundry.cache.field_mapping import parse_api_response
+from pynetappfoundry.cache.field_mapping import parse_api_response, parse_cli_records
 from pynetappfoundry.cache.mappings.volume import VOLUME_MAPPING
 from pynetappfoundry.cache.models import (
     AggregateInfo,
@@ -1422,7 +1422,22 @@ class MetadataCollector:
         # Collect cloud targets
         cloud_targets = self._collect_cloud_targets_via_cli()
 
-        return StorageInfo(aggregates=aggregates, svms=svms, cloud_targets=cloud_targets)
+        # Collect volumes
+        logger.debug("%s CLI command: volume show", self._log_prefix)
+        vol_output, _ = self.cli_client.run_a_show_command_and_parse_seperator("volume show")
+        volumes = cast(
+            list[VolumeInfo],
+            parse_cli_records(
+                VOLUME_MAPPING, vol_output, self._log_prefix, self._log_missing_fields
+            ),
+        )
+
+        return StorageInfo(
+            aggregates=aggregates,
+            svms=svms,
+            cloud_targets=cloud_targets,
+            volumes=volumes,
+        )
 
     def _collect_cloud_targets_via_cli(self) -> list[CloudTargetInfo]:
         """Collect cloud object store targets using CLI.

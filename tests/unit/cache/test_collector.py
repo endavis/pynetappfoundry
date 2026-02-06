@@ -831,6 +831,8 @@ class TestCloudTargetsCollection:
                 ],
                 {},
             ),
+            # volume show
+            ([], {}),
         ]
 
         collector = MetadataCollector(cli_client=cli_client)
