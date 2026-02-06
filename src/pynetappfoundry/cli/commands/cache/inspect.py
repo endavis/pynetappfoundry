@@ -96,26 +96,50 @@ def _build_cache_tree(obj: Any) -> Tree:
     return tree
 
 
-def _fetch_api_data(
-    api_client: ONTAPAPIClient,
-    mapping: TypeMapping,
-    object_name: str,
-) -> dict[str, Any] | None:
-    """Fetch a single object from the REST API by name.
+def _build_api_endpoint(mapping: TypeMapping, object_name: str) -> str:
+    """Build the full API endpoint with name filter.
 
     Args:
-        api_client: Initialised ONTAP API client.
         mapping: TypeMapping for the object type.
         object_name: Name of the object to look up.
 
     Returns:
-        The first matching record dict, or None.
+        Full endpoint string.
     """
-    # Build endpoint with name filter.
     base_endpoint = mapping.api_endpoint
     separator = "&" if "?" in base_endpoint else "?"
-    endpoint = f"{base_endpoint}{separator}name={object_name}"
+    return f"{base_endpoint}{separator}name={object_name}"
 
+
+def _build_cli_command(mapping: TypeMapping, object_name: str) -> str:
+    """Build the full CLI command string.
+
+    The CLI client wraps the command with ``set d -confirmations off;
+    set -showallfields true;set -showseparator ",";`` before execution.
+
+    Args:
+        mapping: TypeMapping for the object type.
+        object_name: Name of the object to look up.
+
+    Returns:
+        CLI command string as sent to the cluster.
+    """
+    return f"{mapping.cli_command} {object_name}"
+
+
+def _fetch_api_data(
+    api_client: ONTAPAPIClient,
+    endpoint: str,
+) -> dict[str, Any] | None:
+    """Fetch a single object from the REST API.
+
+    Args:
+        api_client: Initialised ONTAP API client.
+        endpoint: Full API endpoint to call.
+
+    Returns:
+        The first matching record dict, or None.
+    """
     response = api_client.call_endpoint(endpoint)
     records: list[dict[str, Any]] = response.get("records", []) if response else []
     if records:
@@ -213,9 +237,14 @@ def inspect(ctx: click.Context, cluster: str, object_name: str, object_type: str
     else:
         print_warning(f"No cached data for cluster '{cluster}'. Run 'nf cache refresh' first.")
 
+    # Build the exact commands that will be executed.
+    cli_command = _build_cli_command(mapping, object_name)
+    api_endpoint = _build_api_endpoint(mapping, object_name)
+
     # ── CLI section ────────────────────────────────────────────────
     console.print()
     console.rule("[bold] CLI [/bold]")
+    console.print(f"[dim]Command: {cli_command}[/dim]")
 
     cluster_data = config.data["clusters"][cluster]
     user, password = config.get_user("clusters", cluster)
@@ -248,6 +277,7 @@ def inspect(ctx: click.Context, cluster: str, object_name: str, object_type: str
     # ── API section ────────────────────────────────────────────────
     console.print()
     console.rule("[bold] API [/bold]")
+    console.print(f"[dim]Endpoint: {api_endpoint}[/dim]")
 
     class _ClusterObj:
         def __init__(self, name: str, ip: str) -> None:
@@ -259,7 +289,7 @@ def inspect(ctx: click.Context, cluster: str, object_name: str, object_type: str
             cluster=_ClusterObj(cluster, cluster_data.get("ip", "")),
             config=config,
         )
-        api_record = _fetch_api_data(api_client, mapping, object_name)
+        api_record = _fetch_api_data(api_client, api_endpoint)
         if api_record:
             console.print_json(json.dumps(api_record, default=str))
         else:

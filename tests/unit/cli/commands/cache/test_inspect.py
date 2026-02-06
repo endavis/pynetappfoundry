@@ -9,6 +9,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from click.testing import CliRunner
 
+from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.cache.models import (
     CachedClusterMetadata,
     StorageInfo,
@@ -16,7 +17,9 @@ from pynetappfoundry.cache.models import (
 )
 from pynetappfoundry.cli.commands.cache.inspect import (
     INSPECT_TYPES,
+    _build_api_endpoint,
     _build_cache_tree,
+    _build_cli_command,
     _format_value,
     _resolve_cache_list,
 )
@@ -102,6 +105,50 @@ class TestInspectTypes:
         """Test volume cache path is correct."""
         _, cache_path = INSPECT_TYPES["volume"]
         assert cache_path == "storage.volumes"
+
+
+class TestBuildApiEndpoint:
+    """Tests for _build_api_endpoint helper."""
+
+    def test_appends_name_filter_with_ampersand(self) -> None:
+        """Test name filter appended with & when endpoint has query params."""
+        mapping = TypeMapping(
+            name="Volume",
+            model_class=VolumeInfo,
+            api_endpoint="/storage/volumes?fields=*,autosize",
+            cli_command="volume show",
+            fields=(FieldMapping(cache_attr="name", api_path="name"),),
+        )
+        result = _build_api_endpoint(mapping, "vol1")
+        assert result == "/storage/volumes?fields=*,autosize&name=vol1"
+
+    def test_appends_name_filter_with_question_mark(self) -> None:
+        """Test name filter appended with ? when endpoint has no query params."""
+        mapping = TypeMapping(
+            name="Test",
+            model_class=VolumeInfo,
+            api_endpoint="/storage/volumes",
+            cli_command="volume show",
+            fields=(FieldMapping(cache_attr="name", api_path="name"),),
+        )
+        result = _build_api_endpoint(mapping, "vol1")
+        assert result == "/storage/volumes?name=vol1"
+
+
+class TestBuildCliCommand:
+    """Tests for _build_cli_command helper."""
+
+    def test_builds_cli_command(self) -> None:
+        """Test CLI command is built with object name."""
+        mapping = TypeMapping(
+            name="Volume",
+            model_class=VolumeInfo,
+            api_endpoint="/storage/volumes",
+            cli_command="volume show",
+            fields=(FieldMapping(cache_attr="name", api_path="name"),),
+        )
+        result = _build_cli_command(mapping, "PRODVOL1")
+        assert result == "volume show PRODVOL1"
 
 
 class TestInspectCommand:
@@ -534,6 +581,51 @@ base_api_path = "/api"
 
         assert result.exit_code == 0
         assert "API returned no data" in result.output
+
+    @patch("pynetappfoundry.cli.commands.cache.inspect.ONTAPAPIClient")
+    @patch("pynetappfoundry.cli.commands.cache.inspect.ONTAPCLI")
+    @patch("pynetappfoundry.cli.commands.cache.inspect.ClusterMetadataDB")
+    @patch("pynetappfoundry.cli.commands.cache.inspect.Config")
+    def test_inspect_shows_endpoint_and_command(
+        self,
+        mock_config_class: MagicMock,
+        mock_db_class: MagicMock,
+        mock_cli_class: MagicMock,
+        mock_api_class: MagicMock,
+        runner: CliRunner,
+        mock_config_dir: Path,
+    ) -> None:
+        """Test that inspect displays the API endpoint and CLI command used."""
+        mock_config = MagicMock()
+        mock_config.data = {"clusters": {"test-cluster": {"ip": "10.0.0.1"}}}
+        mock_config.get_user.return_value = ("admin", "pass")
+        mock_config_class.return_value = mock_config
+
+        mock_db = MagicMock()
+        mock_db.get.return_value = None
+        mock_db_class.return_value = mock_db
+
+        mock_cli = MagicMock()
+        mock_cli.run_a_show_command_and_parse_seperator.return_value = ([], {})
+        mock_cli_class.return_value = mock_cli
+
+        mock_api = MagicMock()
+        mock_api.call_endpoint.return_value = {"records": []}
+        mock_api_class.return_value = mock_api
+
+        result = runner.invoke(
+            nf,
+            ["-c", str(mock_config_dir), "cache", "inspect", "test-cluster", "vol1"],
+        )
+
+        assert result.exit_code == 0
+        # Should show the API endpoint used
+        assert "Endpoint:" in result.output
+        assert "/storage/volumes" in result.output
+        assert "name=vol1" in result.output
+        # Should show the CLI command used
+        assert "Command:" in result.output
+        assert "volume show vol1" in result.output
 
     def test_inspect_invalid_type(self, runner: CliRunner, mock_config_dir: Path) -> None:
         """Test inspect with invalid object type."""
