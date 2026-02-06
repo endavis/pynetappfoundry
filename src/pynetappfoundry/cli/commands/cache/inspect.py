@@ -127,15 +127,15 @@ def _build_cli_command(mapping: TypeMapping, object_name: str) -> str:
     return f"{mapping.cli_command} {object_name}"
 
 
-def _fetch_api_data(
+def _fetch_api_filtered(
     api_client: ONTAPAPIClient,
     endpoint: str,
 ) -> dict[str, Any] | None:
-    """Fetch a single object from the REST API.
+    """Fetch a single object from the REST API using a name filter.
 
     Args:
         api_client: Initialised ONTAP API client.
-        endpoint: Full API endpoint to call.
+        endpoint: Full API endpoint with name= filter.
 
     Returns:
         The first matching record dict, or None.
@@ -144,6 +144,29 @@ def _fetch_api_data(
     records: list[dict[str, Any]] = response.get("records", []) if response else []
     if records:
         return records[0]
+    return None
+
+
+def _fetch_api_all(
+    api_client: ONTAPAPIClient,
+    endpoint: str,
+    object_name: str,
+) -> dict[str, Any] | None:
+    """Fetch all objects then search client-side (same as cache refresh).
+
+    Args:
+        api_client: Initialised ONTAP API client.
+        endpoint: Base API endpoint without name filter.
+        object_name: Name of the object to find in results.
+
+    Returns:
+        The matching record dict, or None.
+    """
+    response = api_client.call_endpoint(endpoint)
+    records: list[dict[str, Any]] = response.get("records", []) if response else []
+    for record in records:
+        if record.get("name") == object_name:
+            return record
     return None
 
 
@@ -274,9 +297,9 @@ def inspect(ctx: click.Context, cluster: str, object_name: str, object_type: str
             with contextlib.suppress(Exception):
                 cli_client.disconnect()
 
-    # ── API section ────────────────────────────────────────────────
+    # ── API (filtered) section ────────────────────────────────────
     console.print()
-    console.rule("[bold] API [/bold]")
+    console.rule("[bold] API (filtered) [/bold]")
     console.print(f"[dim]Endpoint: {api_endpoint}[/dim]")
 
     class _ClusterObj:
@@ -284,14 +307,35 @@ def inspect(ctx: click.Context, cluster: str, object_name: str, object_type: str
             self.name = name
             self.ip = ip
 
+    api_client: ONTAPAPIClient | None = None
     try:
         api_client = ONTAPAPIClient(
             cluster=_ClusterObj(cluster, cluster_data.get("ip", "")),
             config=config,
         )
-        api_record = _fetch_api_data(api_client, api_endpoint)
+        api_record = _fetch_api_filtered(api_client, api_endpoint)
         if api_record:
             console.print_json(json.dumps(api_record, default=str))
+        else:
+            print_warning(f"API returned no data for '{object_name}'.")
+    except Exception as e:
+        print_exception(f"API query failed: {e}", e)
+
+    # ── API (all) section ──────────────────────────────────────
+    base_endpoint = mapping.api_endpoint
+    console.print()
+    console.rule("[bold] API (all) [/bold]")
+    console.print(f"[dim]Endpoint: {base_endpoint}[/dim]")
+
+    try:
+        if not api_client:
+            api_client = ONTAPAPIClient(
+                cluster=_ClusterObj(cluster, cluster_data.get("ip", "")),
+                config=config,
+            )
+        api_record_all = _fetch_api_all(api_client, base_endpoint, object_name)
+        if api_record_all:
+            console.print_json(json.dumps(api_record_all, default=str))
         else:
             print_warning(f"API returned no data for '{object_name}'.")
     except Exception as e:
