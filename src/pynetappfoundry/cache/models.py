@@ -163,10 +163,24 @@ class BroadcastDomain(BaseModel):
     ports: list[str] = Field(default_factory=list)
 
 
+class IPSubnetInfo(BaseModel):
+    """IP subnet information."""
+
+    model_config = ConfigDict(extra="allow")
+
+    uuid: str = ""
+    name: str = ""
+    ipspace: str = ""
+    broadcast_domain: str = ""
+    subnet: str = ""  # CIDR notation, e.g., "10.0.0.0/24"
+    gateway: str = ""
+    ip_ranges: list[str] = Field(default_factory=list)
+
+
 class NetworkInfo(BaseModel):
     """Network configuration information.
 
-    Contains LIFs, broadcast domains, IPspaces, and DNS.
+    Contains LIFs, broadcast domains, IPspaces, DNS, and subnets.
     """
 
     model_config = ConfigDict(extra="allow")
@@ -177,6 +191,7 @@ class NetworkInfo(BaseModel):
     broadcast_domains: list[BroadcastDomain] = Field(default_factory=list)
     ipspaces: list[str] = Field(default_factory=list)
     dns: list[DNSInfo] = Field(default_factory=list)
+    subnets: list[IPSubnetInfo] = Field(default_factory=list)
 
 
 class AggregateInfo(BaseModel):
@@ -390,11 +405,27 @@ class QosPolicyInfo(BaseModel):
     adaptive_block_size: str = ""  # any, 4k, 8k, etc.
 
 
+class FlexCacheInfo(BaseModel):
+    """FlexCache volume information."""
+
+    model_config = ConfigDict(extra="allow")
+
+    uuid: str = ""
+    name: str = ""
+    svm: str = ""
+    path: str = ""
+    size: int = 0  # bytes
+    origins: list[str] = Field(default_factory=list)  # origin volume paths
+    global_file_locking_enabled: bool = False
+    dr_cache: bool = False
+
+
 class StorageInfo(BaseModel):
     """Storage topology information.
 
     Contains aggregates, SVMs, cloud targets, volumes, qtrees,
-    snapshot policies, schedules, LUNs, igroups, and QoS policies.
+    snapshot policies, schedules, LUNs, igroups, QoS policies,
+    and FlexCache volumes.
     """
 
     model_config = ConfigDict(extra="allow")
@@ -409,6 +440,7 @@ class StorageInfo(BaseModel):
     luns: list[LunInfo] = Field(default_factory=list)
     igroups: list[IgroupInfo] = Field(default_factory=list)
     qos_policies: list[QosPolicyInfo] = Field(default_factory=list)
+    flexcaches: list[FlexCacheInfo] = Field(default_factory=list)
 
 
 class LicenseFeature(BaseModel):
@@ -481,16 +513,31 @@ class ClusterPeer(BaseModel):
     authentication_state: str = ""
 
 
+class SVMPeerInfo(BaseModel):
+    """SVM peering information."""
+
+    model_config = ConfigDict(extra="allow")
+
+    uuid: str = ""
+    name: str = ""
+    svm: str = ""
+    peer_svm: str = ""
+    peer_cluster: str = ""
+    state: str = ""  # peered, initiated, pending, etc.
+    applications: list[str] = Field(default_factory=list)
+
+
 class RelationshipsInfo(BaseModel):
     """Cluster relationships information.
 
-    Contains SnapMirror and peering info.
+    Contains SnapMirror, cluster peering, and SVM peering info.
     """
 
     model_config = ConfigDict(extra="allow")
 
     snapmirror_destinations: list[SnapMirrorRelationship] = Field(default_factory=list)
     cluster_peers: list[ClusterPeer] = Field(default_factory=list)
+    svm_peers: list[SVMPeerInfo] = Field(default_factory=list)
 
 
 class NFSServiceInfo(BaseModel):
@@ -552,11 +599,26 @@ class CIFSShareInfo(BaseModel):
     unix_symlink: str = ""  # local, widelink, disable
 
 
+class S3BucketInfo(BaseModel):
+    """S3 bucket information."""
+
+    model_config = ConfigDict(extra="allow")
+
+    uuid: str = ""
+    name: str = ""
+    svm: str = ""
+    type: str = ""  # s3, nas-s3
+    size: int = 0  # bytes
+    versioning_state: str = ""  # enabled, disabled, suspended
+    comment: str = ""
+    nas_path: str = ""
+
+
 class ProtocolsInfo(BaseModel):
     """Protocol configuration information.
 
     Contains export policies, CIFS shares, NFS/CIFS services,
-    and protocol-related data.
+    S3 buckets, and protocol-related data.
     """
 
     model_config = ConfigDict(extra="allow")
@@ -565,6 +627,7 @@ class ProtocolsInfo(BaseModel):
     cifs_shares: list[CIFSShareInfo] = Field(default_factory=list)
     nfs_services: list[NFSServiceInfo] = Field(default_factory=list)
     cifs_services: list[CIFSServiceInfo] = Field(default_factory=list)
+    s3_buckets: list[S3BucketInfo] = Field(default_factory=list)
 
 
 class CachedClusterMetadata(BaseModel):

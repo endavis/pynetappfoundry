@@ -18,8 +18,10 @@ from pynetappfoundry.cache.models import (
     DNSInfo,
     ExportPolicyInfo,
     ExportRuleInfo,
+    FlexCacheInfo,
     HAInfo,
     IgroupInfo,
+    IPSubnetInfo,
     LicenseFeature,
     LicenseInfo,
     LunInfo,
@@ -31,12 +33,14 @@ from pynetappfoundry.cache.models import (
     QosPolicyInfo,
     QtreeInfo,
     RelationshipsInfo,
+    S3BucketInfo,
     ScheduleInfo,
     SnapMirrorRelationship,
     SnapshotPolicyInfo,
     SnapshotScheduleInfo,
     StorageInfo,
     SVMInfo,
+    SVMPeerInfo,
     VolumeInfo,
 )
 
@@ -201,6 +205,7 @@ class TestNetworkInfo:
         assert network.data_lifs == []
         assert network.ipspaces == []
         assert network.dns == []
+        assert network.subnets == []
 
     def test_with_lifs(self) -> None:
         """Test with LIF data."""
@@ -349,6 +354,7 @@ class TestStorageInfo:
         assert storage.luns == []
         assert storage.igroups == []
         assert storage.qos_policies == []
+        assert storage.flexcaches == []
 
     def test_with_data(self) -> None:
         """Test with storage data."""
@@ -828,6 +834,7 @@ class TestProtocolsInfo:
         assert protocols.cifs_shares == []
         assert protocols.nfs_services == []
         assert protocols.cifs_services == []
+        assert protocols.s3_buckets == []
 
     def test_with_export_policies(self) -> None:
         """Test with export policy data."""
@@ -856,6 +863,152 @@ class TestProtocolsInfo:
         protocols = ProtocolsInfo(cifs_services=[cifs])
         assert len(protocols.cifs_services) == 1
         assert protocols.cifs_services[0].name == "CIFSSERVER"
+
+    def test_with_s3_buckets(self) -> None:
+        """Test with S3 bucket data."""
+        bucket = S3BucketInfo(name="mybucket", svm="svm1")
+        protocols = ProtocolsInfo(s3_buckets=[bucket])
+        assert len(protocols.s3_buckets) == 1
+        assert protocols.s3_buckets[0].name == "mybucket"
+
+
+class TestFlexCacheInfo:
+    """Tests for FlexCacheInfo model."""
+
+    def test_default_values(self) -> None:
+        """Test default values."""
+        fc = FlexCacheInfo()
+        assert fc.uuid == ""
+        assert fc.name == ""
+        assert fc.svm == ""
+        assert fc.path == ""
+        assert fc.size == 0
+        assert fc.origins == []
+        assert fc.global_file_locking_enabled is False
+        assert fc.dr_cache is False
+
+    def test_with_values(self) -> None:
+        """Test with FlexCache data."""
+        fc = FlexCacheInfo(
+            uuid="fc-uuid-1",
+            name="fc_vol1",
+            svm="svm1",
+            path="/fc_vol1",
+            size=1073741824,
+            origins=["svm1:origin_vol1"],
+            global_file_locking_enabled=True,
+            dr_cache=False,
+        )
+        assert fc.uuid == "fc-uuid-1"
+        assert fc.name == "fc_vol1"
+        assert fc.svm == "svm1"
+        assert fc.size == 1073741824
+        assert fc.origins == ["svm1:origin_vol1"]
+        assert fc.global_file_locking_enabled is True
+
+
+class TestSVMPeerInfo:
+    """Tests for SVMPeerInfo model."""
+
+    def test_default_values(self) -> None:
+        """Test default values."""
+        peer = SVMPeerInfo()
+        assert peer.uuid == ""
+        assert peer.name == ""
+        assert peer.svm == ""
+        assert peer.peer_svm == ""
+        assert peer.peer_cluster == ""
+        assert peer.state == ""
+        assert peer.applications == []
+
+    def test_with_values(self) -> None:
+        """Test with SVM peer data."""
+        peer = SVMPeerInfo(
+            uuid="svmpeer-uuid-1",
+            name="svm1_to_svm2",
+            svm="svm1",
+            peer_svm="svm2",
+            peer_cluster="remote-cluster",
+            state="peered",
+            applications=["snapmirror"],
+        )
+        assert peer.uuid == "svmpeer-uuid-1"
+        assert peer.name == "svm1_to_svm2"
+        assert peer.svm == "svm1"
+        assert peer.peer_svm == "svm2"
+        assert peer.peer_cluster == "remote-cluster"
+        assert peer.state == "peered"
+        assert peer.applications == ["snapmirror"]
+
+
+class TestS3BucketInfo:
+    """Tests for S3BucketInfo model."""
+
+    def test_default_values(self) -> None:
+        """Test default values."""
+        bucket = S3BucketInfo()
+        assert bucket.uuid == ""
+        assert bucket.name == ""
+        assert bucket.svm == ""
+        assert bucket.type == ""
+        assert bucket.size == 0
+        assert bucket.versioning_state == ""
+        assert bucket.comment == ""
+        assert bucket.nas_path == ""
+
+    def test_with_values(self) -> None:
+        """Test with S3 bucket data."""
+        bucket = S3BucketInfo(
+            uuid="bucket-uuid-1",
+            name="mybucket",
+            svm="svm1",
+            type="s3",
+            size=1073741824,
+            versioning_state="enabled",
+            comment="Test bucket",
+            nas_path="/vol1",
+        )
+        assert bucket.uuid == "bucket-uuid-1"
+        assert bucket.name == "mybucket"
+        assert bucket.svm == "svm1"
+        assert bucket.type == "s3"
+        assert bucket.size == 1073741824
+        assert bucket.versioning_state == "enabled"
+        assert bucket.nas_path == "/vol1"
+
+
+class TestIPSubnetInfo:
+    """Tests for IPSubnetInfo model."""
+
+    def test_default_values(self) -> None:
+        """Test default values."""
+        subnet = IPSubnetInfo()
+        assert subnet.uuid == ""
+        assert subnet.name == ""
+        assert subnet.ipspace == ""
+        assert subnet.broadcast_domain == ""
+        assert subnet.subnet == ""
+        assert subnet.gateway == ""
+        assert subnet.ip_ranges == []
+
+    def test_with_values(self) -> None:
+        """Test with IP subnet data."""
+        subnet = IPSubnetInfo(
+            uuid="subnet-uuid-1",
+            name="data-subnet",
+            ipspace="Default",
+            broadcast_domain="Default",
+            subnet="10.0.0.0/24",
+            gateway="10.0.0.1",
+            ip_ranges=["10.0.0.10-10.0.0.50"],
+        )
+        assert subnet.uuid == "subnet-uuid-1"
+        assert subnet.name == "data-subnet"
+        assert subnet.ipspace == "Default"
+        assert subnet.broadcast_domain == "Default"
+        assert subnet.subnet == "10.0.0.0/24"
+        assert subnet.gateway == "10.0.0.1"
+        assert subnet.ip_ranges == ["10.0.0.10-10.0.0.50"]
 
 
 class TestLicenseFeature:
@@ -982,6 +1135,7 @@ class TestRelationshipsInfo:
         rel = RelationshipsInfo()
         assert rel.snapmirror_destinations == []
         assert rel.cluster_peers == []
+        assert rel.svm_peers == []
 
 
 class TestCachedClusterMetadata:

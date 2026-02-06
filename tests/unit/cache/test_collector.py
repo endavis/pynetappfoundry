@@ -416,6 +416,19 @@ class TestNetworkCollection:
                     }
                 ]
             },
+            "/network/ip/subnets?fields=*": {
+                "records": [
+                    {
+                        "uuid": "subnet-uuid-1",
+                        "name": "data-subnet",
+                        "ipspace": {"name": "Default"},
+                        "broadcast_domain": {"name": "Default"},
+                        "subnet": {"address": "10.0.0.0", "netmask": "24"},
+                        "gateway": "10.0.0.1",
+                        "ip_ranges": [{"start": "10.0.0.10", "end": "10.0.0.50"}],
+                    }
+                ]
+            },
         }
 
     def test_collect_network_via_api(
@@ -439,6 +452,11 @@ class TestNetworkCollection:
         assert result.dns[0].svm == "svm1"
         assert result.dns[0].domains == ["example.com"]
         assert result.dns[0].servers == ["10.0.0.1", "10.0.0.2"]
+        assert len(result.subnets) == 1
+        assert result.subnets[0].name == "data-subnet"
+        assert result.subnets[0].subnet == "10.0.0.0/24"
+        assert result.subnets[0].gateway == "10.0.0.1"
+        assert result.subnets[0].ip_ranges == ["10.0.0.10-10.0.0.50"]
 
     def test_collect_network_no_clients(self) -> None:
         """Test network returns empty when no clients."""
@@ -585,6 +603,25 @@ class TestStorageCollection:
                     }
                 ]
             },
+            "/storage/flexcache/flexcaches?fields=*": {
+                "records": [
+                    {
+                        "uuid": "fc-uuid-1",
+                        "name": "fc_vol1",
+                        "svm": {"name": "svm1"},
+                        "path": "/fc_vol1",
+                        "size": 1073741824,
+                        "origins": [
+                            {
+                                "volume": {"name": "origin_vol1"},
+                                "svm": {"name": "svm1"},
+                            }
+                        ],
+                        "global_file_locking_enabled": True,
+                        "dr_cache": False,
+                    }
+                ]
+            },
         }
 
     def test_collect_storage_via_api(
@@ -634,6 +671,11 @@ class TestStorageCollection:
         assert result.qos_policies[0].name == "qos-fixed"
         assert result.qos_policies[0].fixed_max_throughput_iops == 5000
         assert result.qos_policies[0].policy_class == "user_defined"
+        assert len(result.flexcaches) == 1
+        assert result.flexcaches[0].name == "fc_vol1"
+        assert result.flexcaches[0].uuid == "fc-uuid-1"
+        assert result.flexcaches[0].origins == ["svm1:origin_vol1"]
+        assert result.flexcaches[0].global_file_locking_enabled is True
 
     def test_collect_storage_no_clients(self) -> None:
         """Test storage returns empty when no clients."""
@@ -710,6 +752,7 @@ class TestCloudTargetsCollection:
             "/storage/luns?fields=*": {"records": []},
             "/protocols/san/igroups?fields=*": {"records": []},
             "/storage/qos/policies?fields=*": {"records": []},
+            "/storage/flexcache/flexcaches?fields=*": {"records": []},
         }
 
     def test_collect_cloud_targets_via_api(
@@ -948,6 +991,21 @@ class TestRelationshipsCollection:
                     }
                 ]
             },
+            "/svm/peers?fields=*": {
+                "records": [
+                    {
+                        "uuid": "svmpeer-uuid-1",
+                        "name": "svm1_to_svm2",
+                        "svm": {"name": "svm1"},
+                        "peer": {
+                            "svm": {"name": "svm2"},
+                            "cluster": {"name": "remote-cluster"},
+                        },
+                        "state": "peered",
+                        "applications": ["snapmirror"],
+                    }
+                ]
+            },
         }
 
     def test_collect_relationships_via_api(
@@ -967,6 +1025,13 @@ class TestRelationshipsCollection:
         assert len(result.cluster_peers) == 1
         assert result.cluster_peers[0].remote_cluster_name == "remote-cluster"
         assert result.cluster_peers[0].peer_addresses == ["10.0.1.1"]
+        assert len(result.svm_peers) == 1
+        assert result.svm_peers[0].name == "svm1_to_svm2"
+        assert result.svm_peers[0].svm == "svm1"
+        assert result.svm_peers[0].peer_svm == "svm2"
+        assert result.svm_peers[0].peer_cluster == "remote-cluster"
+        assert result.svm_peers[0].state == "peered"
+        assert result.svm_peers[0].applications == ["snapmirror"]
 
     def test_collect_relationships_no_clients(self) -> None:
         """Test relationships returns empty when no clients."""
@@ -993,6 +1058,7 @@ class TestRelationshipsCollection:
                 ]
             },
             "/cluster/peers?fields=*": {"records": []},
+            "/svm/peers?fields=*": {"records": []},
         }
 
         api_client = MagicMock()
@@ -1022,6 +1088,7 @@ class TestRelationshipsCollection:
                     }
                 ]
             },
+            "/svm/peers?fields=*": {"records": []},
         }
 
         api_client = MagicMock()
@@ -1053,6 +1120,7 @@ class TestRelationshipsCollection:
                 ]
             },
             "/cluster/peers?fields=*": {"records": []},
+            "/svm/peers?fields=*": {"records": []},
         }
 
         api_client = MagicMock()
@@ -1165,6 +1233,20 @@ class TestProtocolsCollection:
                     }
                 ]
             },
+            "/protocols/s3/buckets?fields=*": {
+                "records": [
+                    {
+                        "uuid": "bucket-uuid-1",
+                        "name": "mybucket",
+                        "svm": {"name": "svm1"},
+                        "type": "s3",
+                        "size": 1073741824,
+                        "versioning_state": "enabled",
+                        "comment": "Test bucket",
+                        "nas_path": "",
+                    }
+                ]
+            },
         }
 
     def test_collect_protocols_via_api(
@@ -1229,6 +1311,15 @@ class TestProtocolsCollection:
         assert result.cifs_services[0].default_unix_user == "pcuser"
         assert result.cifs_services[0].netbios_aliases == ["ALIAS1"]
 
+        # Check S3 buckets
+        assert len(result.s3_buckets) == 1
+        assert result.s3_buckets[0].uuid == "bucket-uuid-1"
+        assert result.s3_buckets[0].name == "mybucket"
+        assert result.s3_buckets[0].svm == "svm1"
+        assert result.s3_buckets[0].type == "s3"
+        assert result.s3_buckets[0].size == 1073741824
+        assert result.s3_buckets[0].versioning_state == "enabled"
+
     def test_collect_protocols_empty_response(self) -> None:
         """Test protocols handles empty API response."""
         api_client = MagicMock()
@@ -1242,6 +1333,7 @@ class TestProtocolsCollection:
         assert result.cifs_shares == []
         assert result.nfs_services == []
         assert result.cifs_services == []
+        assert result.s3_buckets == []
 
     def test_collect_protocols_no_clients(self) -> None:
         """Test protocols returns empty when no clients."""
@@ -1253,6 +1345,7 @@ class TestProtocolsCollection:
         assert result.cifs_shares == []
         assert result.nfs_services == []
         assert result.cifs_services == []
+        assert result.s3_buckets == []
 
     def test_collect_protocols_api_failure_fallback(self) -> None:
         """Test protocols returns empty on API failure."""
@@ -1267,6 +1360,7 @@ class TestProtocolsCollection:
         assert result.cifs_shares == []
         assert result.nfs_services == []
         assert result.cifs_services == []
+        assert result.s3_buckets == []
 
     def test_collect_protocols_policy_without_rules(self) -> None:
         """Test protocols handles policy records with no rules."""
@@ -1283,6 +1377,7 @@ class TestProtocolsCollection:
             "/protocols/cifs/shares?fields=*": {"records": []},
             "/protocols/nfs/services?fields=*": {"records": []},
             "/protocols/cifs/services?fields=*": {"records": []},
+            "/protocols/s3/buckets?fields=*": {"records": []},
         }
         api_client = MagicMock()
         api_client.call_endpoint.side_effect = lambda endpoint, **_: responses.get(

@@ -31,8 +31,10 @@ from pynetappfoundry.cache.models import (
     DNSInfo,
     ExportPolicyInfo,
     ExportRuleInfo,
+    FlexCacheInfo,
     HAInfo,
     IgroupInfo,
+    IPSubnetInfo,
     LicenseFeature,
     LicenseInfo,
     LunInfo,
@@ -44,12 +46,14 @@ from pynetappfoundry.cache.models import (
     QosPolicyInfo,
     QtreeInfo,
     RelationshipsInfo,
+    S3BucketInfo,
     ScheduleInfo,
     SnapMirrorRelationship,
     SnapshotPolicyInfo,
     SnapshotScheduleInfo,
     StorageInfo,
     SVMInfo,
+    SVMPeerInfo,
     VolumeInfo,
 )
 from pynetappfoundry.utils.cloud import (
@@ -924,16 +928,17 @@ class MetadataCollector:
             logger.debug("%s No API client available for network collection", self._log_prefix)
             return NetworkInfo()
 
-        # Make all 4 API calls in parallel using cached calls
+        # Make all 5 API calls in parallel using cached calls
         endpoints = [
             "/network/ip/interfaces?fields=*",
             "/network/ethernet/broadcast-domains?fields=*",
             "/network/ipspaces?fields=*",
             "/name-services/dns?fields=*",
+            "/network/ip/subnets?fields=*",
         ]
 
         if self.parallel:
-            with ThreadPoolExecutor(max_workers=4) as executor:
+            with ThreadPoolExecutor(max_workers=5) as executor:
                 futures = {executor.submit(self._cached_api_call, ep): ep for ep in endpoints}
                 responses: dict[str, Any] = {}
                 for future in as_completed(futures):
@@ -1002,6 +1007,9 @@ class MetadataCollector:
         # Process DNS response
         dns = self._parse_dns_response(responses.get(endpoints[3]))
 
+        # Process subnets response
+        subnets = self._parse_subnets_response(responses.get(endpoints[4]))
+
         return NetworkInfo(
             intercluster_lifs=intercluster_lifs,
             data_lifs=data_lifs,
@@ -1009,6 +1017,7 @@ class MetadataCollector:
             broadcast_domains=broadcast_domains,
             ipspaces=ipspaces,
             dns=dns,
+            subnets=subnets,
         )
 
     def _collect_network_via_cli(self) -> NetworkInfo:
@@ -1102,6 +1111,7 @@ class MetadataCollector:
             "/storage/luns?fields=*",
             "/protocols/san/igroups?fields=*",
             "/storage/qos/policies?fields=*",
+            "/storage/flexcache/flexcaches?fields=*",
         ]
 
         def safe_api_call(endpoint: str) -> Any:
@@ -1116,7 +1126,7 @@ class MetadataCollector:
                 raise
 
         if self.parallel:
-            with ThreadPoolExecutor(max_workers=10) as executor:
+            with ThreadPoolExecutor(max_workers=11) as executor:
                 futures = {executor.submit(safe_api_call, ep): ep for ep in endpoints}
                 responses: dict[str, Any] = {}
                 for future in as_completed(futures):
@@ -1190,6 +1200,9 @@ class MetadataCollector:
         # Process QoS policies response
         qos_policies = self._parse_qos_policies_response(responses.get(endpoints[9]))
 
+        # Process FlexCache response
+        flexcaches = self._parse_flexcaches_response(responses.get(endpoints[10]))
+
         return StorageInfo(
             aggregates=aggregates,
             svms=svms,
@@ -1201,6 +1214,7 @@ class MetadataCollector:
             luns=luns,
             igroups=igroups,
             qos_policies=qos_policies,
+            flexcaches=flexcaches,
         )
 
     def _parse_cloud_targets_response(self, response: Any) -> list[CloudTargetInfo]:
@@ -1538,15 +1552,16 @@ class MetadataCollector:
             )
             return RelationshipsInfo()
 
-        # Make both API calls in parallel using cached calls
+        # Make all 3 API calls in parallel using cached calls
         # Request only needed fields for snapmirror to avoid timeout on large clusters
         endpoints = [
             "/snapmirror/relationships?fields=uuid,source,destination,policy.type,state",
             "/cluster/peers?fields=*",
+            "/svm/peers?fields=*",
         ]
 
         if self.parallel:
-            with ThreadPoolExecutor(max_workers=2) as executor:
+            with ThreadPoolExecutor(max_workers=3) as executor:
                 futures = {executor.submit(self._cached_api_call, ep): ep for ep in endpoints}
                 responses: dict[str, Any] = {}
                 for future in as_completed(futures):
@@ -1598,9 +1613,13 @@ class MetadataCollector:
             )
             cluster_peers.append(peer)
 
+        # Process SVM peers
+        svm_peers = self._parse_svm_peers_response(responses.get(endpoints[2]))
+
         return RelationshipsInfo(
             snapmirror_destinations=snapmirror_destinations,
             cluster_peers=cluster_peers,
+            svm_peers=svm_peers,
         )
 
     def _collect_relationships_via_cli(self) -> RelationshipsInfo:
@@ -1947,10 +1966,11 @@ class MetadataCollector:
             "/protocols/cifs/shares?fields=*",
             "/protocols/nfs/services?fields=*",
             "/protocols/cifs/services?fields=*",
+            "/protocols/s3/buckets?fields=*",
         ]
 
         if self.parallel:
-            with ThreadPoolExecutor(max_workers=4) as executor:
+            with ThreadPoolExecutor(max_workers=5) as executor:
                 futures = {executor.submit(self._cached_api_call, ep): ep for ep in endpoints}
                 responses: dict[str, Any] = {}
                 for future in as_completed(futures):
@@ -1963,12 +1983,14 @@ class MetadataCollector:
         cifs_shares = self._parse_cifs_shares_response(responses.get(endpoints[1]))
         nfs_services = self._parse_nfs_services_response(responses.get(endpoints[2]))
         cifs_services = self._parse_cifs_services_response(responses.get(endpoints[3]))
+        s3_buckets = self._parse_s3_buckets_response(responses.get(endpoints[4]))
 
         return ProtocolsInfo(
             export_policies=export_policies,
             cifs_shares=cifs_shares,
             nfs_services=nfs_services,
             cifs_services=cifs_services,
+            s3_buckets=s3_buckets,
         )
 
     def _parse_export_policies_response(self, response: Any) -> list[ExportPolicyInfo]:
@@ -2146,6 +2168,173 @@ class MetadataCollector:
             )
             dns_configs.append(dns)
         return dns_configs
+
+    def _parse_subnets_response(self, response: Any) -> list[IPSubnetInfo]:
+        """Parse IP subnets API response.
+
+        Args:
+            response: API response dict or None.
+
+        Returns:
+            List of IPSubnetInfo objects.
+        """
+        if not response:
+            return []
+
+        logger.debug(
+            "%s API response: %d subnets", self._log_prefix, len(response.get("records", []))
+        )
+        subnets = []
+        for record in response.get("records", []):
+            ip_ranges = []
+            for r in record.get("ip_ranges", []):
+                if isinstance(r, dict):
+                    start = r.get("start", "")
+                    end = r.get("end", "")
+                    if start and end:
+                        ip_ranges.append(f"{start}-{end}")
+                    elif start:
+                        ip_ranges.append(start)
+                elif isinstance(r, str):
+                    ip_ranges.append(r)
+
+            subnet_obj = record.get("subnet", {})
+            if subnet_obj:
+                subnet_str = (
+                    subnet_obj.get("address", "") + "/" + str(subnet_obj.get("netmask", ""))
+                )
+            else:
+                subnet_str = ""
+
+            subnet = IPSubnetInfo(
+                uuid=record.get("uuid", ""),
+                name=record.get("name", ""),
+                ipspace=(
+                    record.get("ipspace", {}).get("name", "") if record.get("ipspace") else ""
+                ),
+                broadcast_domain=(
+                    record.get("broadcast_domain", {}).get("name", "")
+                    if record.get("broadcast_domain")
+                    else ""
+                ),
+                subnet=subnet_str,
+                gateway=record.get("gateway", ""),
+                ip_ranges=ip_ranges,
+            )
+            subnets.append(subnet)
+        return subnets
+
+    def _parse_flexcaches_response(self, response: Any) -> list[FlexCacheInfo]:
+        """Parse FlexCache volumes API response.
+
+        Args:
+            response: API response dict or None.
+
+        Returns:
+            List of FlexCacheInfo objects.
+        """
+        if not response:
+            return []
+
+        logger.debug(
+            "%s API response: %d FlexCache volumes",
+            self._log_prefix,
+            len(response.get("records", [])),
+        )
+        flexcaches = []
+        for record in response.get("records", []):
+            origins = []
+            for origin in record.get("origins", []):
+                vol = origin.get("volume", {})
+                svm = origin.get("svm", {})
+                vol_name = vol.get("name", "") if isinstance(vol, dict) else str(vol or "")
+                svm_name = svm.get("name", "") if isinstance(svm, dict) else str(svm or "")
+                if svm_name and vol_name:
+                    origins.append(f"{svm_name}:{vol_name}")
+                elif vol_name:
+                    origins.append(vol_name)
+
+            fc = FlexCacheInfo(
+                uuid=record.get("uuid", ""),
+                name=record.get("name", ""),
+                svm=record.get("svm", {}).get("name", "") if record.get("svm") else "",
+                path=record.get("path", ""),
+                size=record.get("size", 0),
+                origins=origins,
+                global_file_locking_enabled=record.get("global_file_locking_enabled", False),
+                dr_cache=record.get("dr_cache", False),
+            )
+            flexcaches.append(fc)
+        return flexcaches
+
+    def _parse_svm_peers_response(self, response: Any) -> list[SVMPeerInfo]:
+        """Parse SVM peers API response.
+
+        Args:
+            response: API response dict or None.
+
+        Returns:
+            List of SVMPeerInfo objects.
+        """
+        if not response:
+            return []
+
+        logger.debug(
+            "%s API response: %d SVM peers", self._log_prefix, len(response.get("records", []))
+        )
+        peers = []
+        for record in response.get("records", []):
+            svm = record.get("svm", {})
+            peer_obj = record.get("peer", {})
+            peer = SVMPeerInfo(
+                uuid=record.get("uuid", ""),
+                name=record.get("name", ""),
+                svm=svm.get("name", "") if isinstance(svm, dict) else str(svm or ""),
+                peer_svm=(
+                    peer_obj.get("svm", {}).get("name", "")
+                    if isinstance(peer_obj, dict) and isinstance(peer_obj.get("svm"), dict)
+                    else ""
+                ),
+                peer_cluster=(
+                    peer_obj.get("cluster", {}).get("name", "")
+                    if isinstance(peer_obj, dict) and isinstance(peer_obj.get("cluster"), dict)
+                    else ""
+                ),
+                state=record.get("state", ""),
+                applications=record.get("applications", []) or [],
+            )
+            peers.append(peer)
+        return peers
+
+    def _parse_s3_buckets_response(self, response: Any) -> list[S3BucketInfo]:
+        """Parse S3 buckets API response.
+
+        Args:
+            response: API response dict or None.
+
+        Returns:
+            List of S3BucketInfo objects.
+        """
+        if not response:
+            return []
+
+        logger.debug(
+            "%s API response: %d S3 buckets", self._log_prefix, len(response.get("records", []))
+        )
+        buckets = []
+        for record in response.get("records", []):
+            bucket = S3BucketInfo(
+                uuid=record.get("uuid", ""),
+                name=record.get("name", ""),
+                svm=record.get("svm", {}).get("name", "") if record.get("svm") else "",
+                type=record.get("type", ""),
+                size=record.get("size", 0),
+                versioning_state=record.get("versioning_state", ""),
+                comment=record.get("comment", "") or "",
+                nas_path=record.get("nas_path", ""),
+            )
+            buckets.append(bucket)
+        return buckets
 
     @staticmethod
     def _format_path(path_info: dict[str, Any] | str | None) -> str:

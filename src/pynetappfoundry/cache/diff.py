@@ -111,6 +111,10 @@ _ENTITY_CONFIGS: dict[str, tuple[str, list[str]]] = {
         "name",
         ["uuid", "svm", "scope", "policy_class"],
     ),
+    "storage.flexcaches": (
+        "name",
+        ["uuid", "svm", "size", "origins", "global_file_locking_enabled"],
+    ),
     "protocols.export_policies": (
         "name",
         ["id", "svm"],
@@ -127,9 +131,17 @@ _ENTITY_CONFIGS: dict[str, tuple[str, list[str]]] = {
         "svm",
         ["name", "enabled", "ad_domain"],
     ),
+    "protocols.s3_buckets": (
+        "name",
+        ["uuid", "svm", "type", "size", "versioning_state"],
+    ),
     "network.dns": (
         "svm",
         ["uuid", "scope", "domains", "servers"],
+    ),
+    "network.subnets": (
+        "name",
+        ["uuid", "ipspace", "broadcast_domain", "subnet", "gateway"],
     ),
     "licenses.feature_licenses": (
         "name",
@@ -146,6 +158,10 @@ _ENTITY_CONFIGS: dict[str, tuple[str, list[str]]] = {
     "relationships.cluster_peers": (
         "name",
         ["authentication_state"],
+    ),
+    "relationships.svm_peers": (
+        "name",
+        ["uuid", "svm", "peer_svm", "peer_cluster", "state"],
     ),
 }
 
