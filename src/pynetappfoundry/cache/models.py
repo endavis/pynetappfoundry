@@ -234,10 +234,63 @@ class CloudTargetInfo(BaseModel):
     azure_account: str = ""  # Azure account name
 
 
+class VolumeInfo(BaseModel):
+    """Volume information."""
+
+    model_config = ConfigDict(extra="allow")
+
+    uuid: str = ""
+    name: str = ""
+    svm: str = ""
+    state: str = ""  # online, offline, restricted
+    type: str = ""  # rw, dp, ls
+    style: str = ""  # flexvol, flexgroup
+    size: int = 0  # bytes
+    autosize_mode: str = ""  # off, grow, grow_shrink
+    autosize_grow_threshold: int = 0  # percentage
+    autosize_shrink_threshold: int = 0  # percentage
+    autosize_maximum: int = 0  # bytes
+    autosize_minimum: int = 0  # bytes
+    files_maximum: int = 0
+    tiering_policy: str = ""  # none, snapshot-only, auto, all
+    tiering_minimum_cooling_days: int = 0
+    aggregate: str = ""  # FlexVol aggregate name
+    aggregates: list[str] = Field(default_factory=list)  # FlexGroup aggregates
+    snapshot_policy: str = ""
+    export_policy: str = ""
+    junction_path: str = ""
+    nas_security_style: str = ""  # unix, ntfs, mixed
+
+
+class ExportRuleInfo(BaseModel):
+    """Export rule within an export policy."""
+
+    model_config = ConfigDict(extra="allow")
+
+    index: int = 0
+    clients: list[str] = Field(default_factory=list)
+    protocols: list[str] = Field(default_factory=list)
+    ro_rule: list[str] = Field(default_factory=list)
+    rw_rule: list[str] = Field(default_factory=list)
+    superuser: list[str] = Field(default_factory=list)
+    anonymous_user: str = ""
+
+
+class ExportPolicyInfo(BaseModel):
+    """NFS export policy information."""
+
+    model_config = ConfigDict(extra="allow")
+
+    id: int = 0
+    name: str = ""
+    svm: str = ""
+    rules: list[ExportRuleInfo] = Field(default_factory=list)
+
+
 class StorageInfo(BaseModel):
     """Storage topology information.
 
-    Contains aggregates, SVMs, and cloud targets.
+    Contains aggregates, SVMs, cloud targets, and volumes.
     """
 
     model_config = ConfigDict(extra="allow")
@@ -245,6 +298,7 @@ class StorageInfo(BaseModel):
     aggregates: list[AggregateInfo] = Field(default_factory=list)
     svms: list[SVMInfo] = Field(default_factory=list)
     cloud_targets: list[CloudTargetInfo] = Field(default_factory=list)
+    volumes: list[VolumeInfo] = Field(default_factory=list)
 
 
 class LicenseFeature(BaseModel):
@@ -329,6 +383,17 @@ class RelationshipsInfo(BaseModel):
     cluster_peers: list[ClusterPeer] = Field(default_factory=list)
 
 
+class ProtocolsInfo(BaseModel):
+    """Protocol configuration information.
+
+    Contains export policies and protocol-related data.
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    export_policies: list[ExportPolicyInfo] = Field(default_factory=list)
+
+
 class CachedClusterMetadata(BaseModel):
     """Complete cached metadata for a cluster.
 
@@ -361,6 +426,7 @@ class CachedClusterMetadata(BaseModel):
     licenses: LicenseInfo = Field(default_factory=LicenseInfo)
     ha: HAInfo = Field(default_factory=HAInfo)
     relationships: RelationshipsInfo = Field(default_factory=RelationshipsInfo)
+    protocols: ProtocolsInfo = Field(default_factory=ProtocolsInfo)
 
     def is_stale(self, ttl_days: int = 30) -> bool:
         """Check if the cache is stale based on TTL.

@@ -13,16 +13,20 @@ from pynetappfoundry.cache.models import (
     CloudTargetInfo,
     ClusterInfo,
     ClusterPeer,
+    ExportPolicyInfo,
+    ExportRuleInfo,
     HAInfo,
     LicenseFeature,
     LicenseInfo,
     NetworkInfo,
     NetworkLIF,
     NodeInfo,
+    ProtocolsInfo,
     RelationshipsInfo,
     SnapMirrorRelationship,
     StorageInfo,
     SVMInfo,
+    VolumeInfo,
 )
 
 
@@ -326,6 +330,7 @@ class TestStorageInfo:
         assert storage.aggregates == []
         assert storage.svms == []
         assert storage.cloud_targets == []
+        assert storage.volumes == []
 
     def test_with_data(self) -> None:
         """Test with storage data."""
@@ -341,6 +346,124 @@ class TestStorageInfo:
         storage = StorageInfo(cloud_targets=[target])
         assert len(storage.cloud_targets) == 1
         assert storage.cloud_targets[0].name == "s3-target"
+
+
+class TestVolumeInfo:
+    """Tests for VolumeInfo model."""
+
+    def test_default_values(self) -> None:
+        """Test default values."""
+        vol = VolumeInfo()
+        assert vol.uuid == ""
+        assert vol.name == ""
+        assert vol.svm == ""
+        assert vol.size == 0
+        assert vol.aggregates == []
+        assert vol.autosize_mode == ""
+        assert vol.tiering_policy == ""
+
+    def test_with_values(self) -> None:
+        """Test with volume data."""
+        vol = VolumeInfo(
+            uuid="vol-uuid-1",
+            name="vol1",
+            svm="svm1",
+            state="online",
+            type="rw",
+            style="flexvol",
+            size=1099511627776,
+            autosize_mode="grow",
+            autosize_grow_threshold=85,
+            autosize_maximum=2199023255552,
+            aggregate="aggr1",
+            snapshot_policy="default",
+            export_policy="default",
+            junction_path="/vol1",
+            nas_security_style="unix",
+        )
+        assert vol.uuid == "vol-uuid-1"
+        assert vol.name == "vol1"
+        assert vol.size == 1099511627776
+        assert vol.junction_path == "/vol1"
+        assert vol.autosize_mode == "grow"
+
+    def test_flexgroup_aggregates(self) -> None:
+        """Test FlexGroup volume with multiple aggregates."""
+        vol = VolumeInfo(
+            name="fg_vol1",
+            style="flexgroup",
+            aggregates=["aggr1", "aggr2", "aggr3"],
+        )
+        assert vol.style == "flexgroup"
+        assert len(vol.aggregates) == 3
+
+
+class TestExportRuleInfo:
+    """Tests for ExportRuleInfo model."""
+
+    def test_default_values(self) -> None:
+        """Test default values."""
+        rule = ExportRuleInfo()
+        assert rule.index == 0
+        assert rule.clients == []
+        assert rule.protocols == []
+        assert rule.anonymous_user == ""
+
+    def test_with_values(self) -> None:
+        """Test with rule data."""
+        rule = ExportRuleInfo(
+            index=1,
+            clients=["0.0.0.0/0"],
+            protocols=["nfs"],
+            ro_rule=["sys"],
+            rw_rule=["sys"],
+            superuser=["sys"],
+            anonymous_user="65534",
+        )
+        assert rule.index == 1
+        assert rule.clients == ["0.0.0.0/0"]
+        assert rule.ro_rule == ["sys"]
+
+
+class TestExportPolicyInfo:
+    """Tests for ExportPolicyInfo model."""
+
+    def test_default_values(self) -> None:
+        """Test default values."""
+        policy = ExportPolicyInfo()
+        assert policy.id == 0
+        assert policy.name == ""
+        assert policy.svm == ""
+        assert policy.rules == []
+
+    def test_with_rules(self) -> None:
+        """Test with rules."""
+        rule = ExportRuleInfo(index=1, clients=["0.0.0.0/0"], protocols=["nfs"])
+        policy = ExportPolicyInfo(
+            id=1,
+            name="default",
+            svm="svm1",
+            rules=[rule],
+        )
+        assert policy.name == "default"
+        assert len(policy.rules) == 1
+        assert policy.rules[0].index == 1
+
+
+class TestProtocolsInfo:
+    """Tests for ProtocolsInfo model."""
+
+    def test_default_values(self) -> None:
+        """Test default values."""
+        protocols = ProtocolsInfo()
+        assert protocols.export_policies == []
+
+    def test_with_export_policies(self) -> None:
+        """Test with export policy data."""
+        policy = ExportPolicyInfo(name="default", svm="svm1")
+        protocols = ProtocolsInfo(export_policies=[policy])
+        assert len(protocols.export_policies) == 1
+        assert protocols.export_policies[0].name == "default"
 
 
 class TestLicenseFeature:

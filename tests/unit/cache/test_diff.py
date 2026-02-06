@@ -14,16 +14,19 @@ from pynetappfoundry.cache.models import (
     CachedClusterMetadata,
     CloudMetadata,
     ClusterInfo,
+    ExportPolicyInfo,
     HAInfo,
     LicenseFeature,
     LicenseInfo,
     NetworkInfo,
     NetworkLIF,
     NodeInfo,
+    ProtocolsInfo,
     RelationshipsInfo,
     SnapMirrorRelationship,
     StorageInfo,
     SVMInfo,
+    VolumeInfo,
 )
 
 
@@ -452,6 +455,108 @@ class TestComputeDiffAllCategories:
         assert len(state_change) == 1
         assert state_change[0]["old"] == "snapmirrored"
         assert state_change[0]["new"] == "broken-off"
+
+    def test_volume_changes(self) -> None:
+        """Test volume change detection."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            storage=StorageInfo(
+                volumes=[
+                    VolumeInfo(name="vol1", svm="svm1", state="online", size=1073741824),
+                ],
+            ),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            storage=StorageInfo(
+                volumes=[
+                    VolumeInfo(name="vol1", svm="svm1", state="online", size=2147483648),
+                ],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        vol_changes = [c for c in changes if c["category"] == "storage.volumes"]
+        assert len(vol_changes) == 1
+        assert vol_changes[0]["type"] == "modified"
+        assert vol_changes[0]["field"] == "size"
+        assert vol_changes[0]["old"] == 1073741824
+        assert vol_changes[0]["new"] == 2147483648
+
+    def test_volume_added_removed(self) -> None:
+        """Test volume addition and removal detection."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            storage=StorageInfo(
+                volumes=[VolumeInfo(name="vol1", svm="svm1")],
+            ),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            storage=StorageInfo(
+                volumes=[
+                    VolumeInfo(name="vol1", svm="svm1"),
+                    VolumeInfo(name="vol2", svm="svm1"),
+                ],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        vol_changes = [c for c in changes if c["category"] == "storage.volumes"]
+        assert len(vol_changes) == 1
+        assert vol_changes[0]["type"] == "added"
+        assert vol_changes[0]["entity"] == "vol2"
+
+    def test_export_policy_changes(self) -> None:
+        """Test export policy change detection."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            protocols=ProtocolsInfo(
+                export_policies=[
+                    ExportPolicyInfo(name="default", id=1, svm="svm1"),
+                ],
+            ),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            protocols=ProtocolsInfo(
+                export_policies=[
+                    ExportPolicyInfo(name="default", id=1, svm="svm2"),
+                ],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        policy_changes = [c for c in changes if c["category"] == "protocols.export_policies"]
+        assert len(policy_changes) == 1
+        assert policy_changes[0]["type"] == "modified"
+        assert policy_changes[0]["field"] == "svm"
+        assert policy_changes[0]["old"] == "svm1"
+        assert policy_changes[0]["new"] == "svm2"
+
+    def test_export_policy_added(self) -> None:
+        """Test export policy addition detection."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            protocols=ProtocolsInfo(
+                export_policies=[ExportPolicyInfo(name="default", id=1, svm="svm1")],
+            ),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            protocols=ProtocolsInfo(
+                export_policies=[
+                    ExportPolicyInfo(name="default", id=1, svm="svm1"),
+                    ExportPolicyInfo(name="data_export", id=2, svm="svm1"),
+                ],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        policy_changes = [c for c in changes if c["category"] == "protocols.export_policies"]
+        assert len(policy_changes) == 1
+        assert policy_changes[0]["type"] == "added"
+        assert policy_changes[0]["entity"] == "data_export"
 
 
 class TestFormatDiffSummary:

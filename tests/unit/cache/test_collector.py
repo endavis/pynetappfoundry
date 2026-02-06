@@ -17,6 +17,7 @@ from pynetappfoundry.cache.models import (
     HAInfo,
     LicenseInfo,
     NetworkInfo,
+    ProtocolsInfo,
     RelationshipsInfo,
     StorageInfo,
 )
@@ -458,6 +459,28 @@ class TestStorageCollection:
                 "records": [{"name": "svm1", "state": "running", "subtype": "default"}]
             },
             "/cloud/targets?fields=*": {"records": []},
+            "/storage/volumes?fields=*": {
+                "records": [
+                    {
+                        "uuid": "vol-uuid-1",
+                        "name": "vol1",
+                        "svm": {"name": "svm1"},
+                        "state": "online",
+                        "type": "rw",
+                        "style": "flexvol",
+                        "size": 1099511627776,
+                        "autosize": {"mode": "grow", "grow_threshold": 85},
+                        "tiering": {"policy": "auto", "min_cooling_days": 31},
+                        "aggregates": [{"name": "aggr1"}],
+                        "snapshot_policy": {"name": "default"},
+                        "nas": {
+                            "export_policy": {"name": "default"},
+                            "path": "/vol1",
+                            "security_style": "unix",
+                        },
+                    }
+                ]
+            },
         }
 
     def test_collect_storage_via_api(
@@ -477,6 +500,12 @@ class TestStorageCollection:
         assert result.aggregates[0].type == "ssd"
         assert len(result.svms) == 1
         assert result.svms[0].name == "svm1"
+        assert len(result.volumes) == 1
+        assert result.volumes[0].name == "vol1"
+        assert result.volumes[0].uuid == "vol-uuid-1"
+        assert result.volumes[0].junction_path == "/vol1"
+        assert result.volumes[0].autosize_mode == "grow"
+        assert result.volumes[0].tiering_policy == "auto"
 
     def test_collect_storage_no_clients(self) -> None:
         """Test storage returns empty when no clients."""
@@ -546,6 +575,7 @@ class TestCloudTargetsCollection:
                 "records": [{"name": "svm1", "state": "running", "subtype": "default"}]
             },
             "/cloud/targets?fields=*": mock_cloud_targets_api_response,
+            "/storage/volumes?fields=*": {"records": []},
         }
 
     def test_collect_cloud_targets_via_api(
@@ -902,6 +932,144 @@ class TestRelationshipsCollection:
         assert result.snapmirror_destinations[0].destination_path == ""
 
 
+class TestProtocolsCollection:
+    """Tests for protocols collection."""
+
+    @pytest.fixture
+    def mock_export_policies_api_response(self) -> dict[str, Any]:
+        """Mock API response for /protocols/nfs/export-policies endpoint."""
+        return {
+            "records": [
+                {
+                    "id": 1,
+                    "name": "default",
+                    "svm": {"name": "svm1"},
+                    "rules": [
+                        {
+                            "index": 1,
+                            "clients": [{"match": "0.0.0.0/0"}],
+                            "protocols": ["nfs3", "nfs4"],
+                            "ro_rule": ["sys"],
+                            "rw_rule": ["sys"],
+                            "superuser": ["none"],
+                            "anonymous_user": "65534",
+                        },
+                    ],
+                },
+                {
+                    "id": 2,
+                    "name": "data_export",
+                    "svm": {"name": "svm1"},
+                    "rules": [
+                        {
+                            "index": 1,
+                            "clients": [{"match": "10.0.0.0/8"}, {"match": "172.16.0.0/12"}],
+                            "protocols": ["nfs3"],
+                            "ro_rule": ["sys"],
+                            "rw_rule": ["sys"],
+                            "superuser": ["sys"],
+                            "anonymous_user": "65534",
+                        },
+                        {
+                            "index": 2,
+                            "clients": [{"match": "192.168.1.0/24"}],
+                            "protocols": ["nfs4"],
+                            "ro_rule": ["krb5"],
+                            "rw_rule": ["krb5"],
+                            "superuser": ["krb5"],
+                            "anonymous_user": "nobody",
+                        },
+                    ],
+                },
+            ]
+        }
+
+    def test_collect_protocols_via_api(
+        self, mock_export_policies_api_response: dict[str, Any]
+    ) -> None:
+        """Test collecting protocols via API."""
+        api_client = MagicMock()
+        api_client.call_endpoint.return_value = mock_export_policies_api_response
+
+        collector = MetadataCollector(api_client=api_client)
+        result = collector.collect_protocols()
+
+        assert isinstance(result, ProtocolsInfo)
+        assert len(result.export_policies) == 2
+
+        # Check first policy
+        policy1 = result.export_policies[0]
+        assert policy1.id == 1
+        assert policy1.name == "default"
+        assert policy1.svm == "svm1"
+        assert len(policy1.rules) == 1
+        assert policy1.rules[0].index == 1
+        assert policy1.rules[0].clients == ["0.0.0.0/0"]
+        assert policy1.rules[0].protocols == ["nfs3", "nfs4"]
+        assert policy1.rules[0].ro_rule == ["sys"]
+        assert policy1.rules[0].rw_rule == ["sys"]
+        assert policy1.rules[0].superuser == ["none"]
+        assert policy1.rules[0].anonymous_user == "65534"
+
+        # Check second policy with multiple rules
+        policy2 = result.export_policies[1]
+        assert policy2.name == "data_export"
+        assert len(policy2.rules) == 2
+        assert policy2.rules[0].clients == ["10.0.0.0/8", "172.16.0.0/12"]
+        assert policy2.rules[1].protocols == ["nfs4"]
+        assert policy2.rules[1].superuser == ["krb5"]
+
+    def test_collect_protocols_empty_response(self) -> None:
+        """Test protocols handles empty API response."""
+        api_client = MagicMock()
+        api_client.call_endpoint.return_value = {"records": []}
+
+        collector = MetadataCollector(api_client=api_client)
+        result = collector.collect_protocols()
+
+        assert isinstance(result, ProtocolsInfo)
+        assert result.export_policies == []
+
+    def test_collect_protocols_no_clients(self) -> None:
+        """Test protocols returns empty when no clients."""
+        collector = MetadataCollector()
+        result = collector.collect_protocols()
+
+        assert isinstance(result, ProtocolsInfo)
+        assert result.export_policies == []
+
+    def test_collect_protocols_api_failure_fallback(self) -> None:
+        """Test protocols returns empty on API failure."""
+        api_client = MagicMock()
+        api_client.call_endpoint.side_effect = Exception("API error")
+
+        collector = MetadataCollector(api_client=api_client)
+        result = collector.collect_protocols()
+
+        assert isinstance(result, ProtocolsInfo)
+        assert result.export_policies == []
+
+    def test_collect_protocols_policy_without_rules(self) -> None:
+        """Test protocols handles policy records with no rules."""
+        api_client = MagicMock()
+        api_client.call_endpoint.return_value = {
+            "records": [
+                {
+                    "id": 1,
+                    "name": "empty_policy",
+                    "svm": {"name": "svm1"},
+                },
+            ]
+        }
+
+        collector = MetadataCollector(api_client=api_client)
+        result = collector.collect_protocols()
+
+        assert len(result.export_policies) == 1
+        assert result.export_policies[0].name == "empty_policy"
+        assert result.export_policies[0].rules == []
+
+
 class TestCollectAll:
     """Tests for collect_all method."""
 
@@ -1039,6 +1207,7 @@ class TestProgressCallback:
             CollectionPhase.LICENSES,
             CollectionPhase.HA,
             CollectionPhase.RELATIONSHIPS,
+            CollectionPhase.PROTOCOLS,
         ]
         assert received_phases == expected_phases
 

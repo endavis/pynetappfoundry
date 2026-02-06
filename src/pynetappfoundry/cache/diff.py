@@ -71,6 +71,26 @@ _ENTITY_CONFIGS: dict[str, tuple[str, list[str]]] = {
         "name",
         ["uuid", "provider_type", "container"],
     ),
+    "storage.volumes": (
+        "name",
+        [
+            "uuid",
+            "svm",
+            "state",
+            "type",
+            "style",
+            "size",
+            "aggregate",
+            "snapshot_policy",
+            "export_policy",
+            "junction_path",
+            "nas_security_style",
+        ],
+    ),
+    "protocols.export_policies": (
+        "name",
+        ["id", "svm"],
+    ),
     "licenses.feature_licenses": (
         "name",
         ["state"],

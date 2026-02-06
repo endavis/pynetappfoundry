@@ -26,16 +26,20 @@ from pynetappfoundry.cache.models import (
     CloudTargetInfo,
     ClusterInfo,
     ClusterPeer,
+    ExportPolicyInfo,
+    ExportRuleInfo,
     HAInfo,
     LicenseFeature,
     LicenseInfo,
     NetworkInfo,
     NetworkLIF,
     NodeInfo,
+    ProtocolsInfo,
     RelationshipsInfo,
     SnapMirrorRelationship,
     StorageInfo,
     SVMInfo,
+    VolumeInfo,
 )
 from pynetappfoundry.utils.cloud import (
     build_cloud_instance_link,
@@ -61,6 +65,7 @@ class CollectionPhase(Enum):
     LICENSES = "licenses"
     HA = "ha"
     RELATIONSHIPS = "relationships"
+    PROTOCOLS = "protocols"
 
 
 @dataclass
@@ -102,6 +107,7 @@ class MetadataCollector:
         CollectionPhase.LICENSES: "Licenses",
         CollectionPhase.HA: "HA info",
         CollectionPhase.RELATIONSHIPS: "Relationships",
+        CollectionPhase.PROTOCOLS: "Protocols",
     }
 
     def __init__(
@@ -255,6 +261,7 @@ class MetadataCollector:
             licenses=results["licenses"],
             ha=results["ha"],
             relationships=results["relationships"],
+            protocols=results["protocols"],
         )
 
     def _collect_all_sequential(self, cluster_name: str) -> dict[str, Any]:
@@ -275,6 +282,7 @@ class MetadataCollector:
             (CollectionPhase.LICENSES, self.collect_licenses),
             (CollectionPhase.HA, self.collect_ha_info),
             (CollectionPhase.RELATIONSHIPS, self.collect_relationships),
+            (CollectionPhase.PROTOCOLS, self.collect_protocols),
         ]
 
         results: dict[str, Any] = {}
@@ -335,6 +343,7 @@ class MetadataCollector:
             (CollectionPhase.LICENSES, self.collect_licenses),
             (CollectionPhase.HA, self.collect_ha_info),
             (CollectionPhase.RELATIONSHIPS, self.collect_relationships),
+            (CollectionPhase.PROTOCOLS, self.collect_protocols),
         ]
 
         # Report all phases as starting
@@ -1065,11 +1074,12 @@ class MetadataCollector:
             logger.debug("%s No API client available for storage collection", self._log_prefix)
             return StorageInfo()
 
-        # Make all 3 API calls in parallel using cached calls
+        # Make all API calls in parallel using cached calls
         endpoints = [
             "/storage/aggregates?fields=*",
             "/svm/svms?fields=*",
             "/cloud/targets?fields=*",
+            "/storage/volumes?fields=*",
         ]
 
         def safe_api_call(endpoint: str) -> Any:
@@ -1084,7 +1094,7 @@ class MetadataCollector:
                 raise
 
         if self.parallel:
-            with ThreadPoolExecutor(max_workers=3) as executor:
+            with ThreadPoolExecutor(max_workers=4) as executor:
                 futures = {executor.submit(safe_api_call, ep): ep for ep in endpoints}
                 responses: dict[str, Any] = {}
                 for future in as_completed(futures):
@@ -1137,7 +1147,12 @@ class MetadataCollector:
         # Process cloud targets response
         cloud_targets = self._parse_cloud_targets_response(responses.get(endpoints[2]))
 
-        return StorageInfo(aggregates=aggregates, svms=svms, cloud_targets=cloud_targets)
+        # Process volumes response
+        volumes = self._parse_volumes_response(responses.get(endpoints[3]))
+
+        return StorageInfo(
+            aggregates=aggregates, svms=svms, cloud_targets=cloud_targets, volumes=volumes
+        )
 
     def _parse_cloud_targets_response(self, response: Any) -> list[CloudTargetInfo]:
         """Parse cloud targets API response.
@@ -1584,6 +1599,133 @@ class MetadataCollector:
             snapmirror_destinations=snapmirror_destinations,
             cluster_peers=cluster_peers,
         )
+
+    # -------------------------------------------------------------------------
+    # Volume Parsing
+    # -------------------------------------------------------------------------
+
+    def _parse_volumes_response(self, response: Any) -> list[VolumeInfo]:
+        """Parse volumes API response.
+
+        Args:
+            response: API response dict or None.
+
+        Returns:
+            List of VolumeInfo objects.
+        """
+        if not response:
+            return []
+
+        logger.debug(
+            "%s API response: %d volumes", self._log_prefix, len(response.get("records", []))
+        )
+        volumes = []
+        for record in response.get("records", []):
+            autosize = record.get("autosize", {})
+            tiering = record.get("tiering", {})
+            nas = record.get("nas", {})
+            aggr = record.get("aggregates", [])
+            vol = VolumeInfo(
+                uuid=record.get("uuid", ""),
+                name=record.get("name", ""),
+                svm=record.get("svm", {}).get("name", "") if record.get("svm") else "",
+                state=record.get("state", ""),
+                type=record.get("type", ""),
+                style=record.get("style", ""),
+                size=record.get("size", 0),
+                autosize_mode=autosize.get("mode", ""),
+                autosize_grow_threshold=autosize.get("grow_threshold", 0),
+                autosize_shrink_threshold=autosize.get("shrink_threshold", 0),
+                autosize_maximum=autosize.get("maximum", 0),
+                autosize_minimum=autosize.get("minimum", 0),
+                files_maximum=record.get("files", {}).get("maximum", 0),
+                tiering_policy=tiering.get("policy", ""),
+                tiering_minimum_cooling_days=tiering.get("min_cooling_days", 0),
+                aggregate=record.get("aggregates", [{}])[0].get("name", "") if aggr else "",
+                aggregates=[a.get("name", "") for a in aggr if a.get("name")],
+                snapshot_policy=record.get("snapshot_policy", {}).get("name", ""),
+                export_policy=nas.get("export_policy", {}).get("name", ""),
+                junction_path=nas.get("path", ""),
+                nas_security_style=nas.get("security_style", ""),
+            )
+            volumes.append(vol)
+        return volumes
+
+    # -------------------------------------------------------------------------
+    # Protocols Collection
+    # -------------------------------------------------------------------------
+
+    def collect_protocols(self) -> ProtocolsInfo:
+        """Collect protocol configuration information.
+
+        Returns:
+            ProtocolsInfo object.
+        """
+        if self.api_client:
+            try:
+                return self._collect_protocols_via_api()
+            except Exception as e:
+                logger.warning(f"{self._log_prefix} Failed to collect protocols via API: {e}")
+
+        return ProtocolsInfo()
+
+    def _collect_protocols_via_api(self) -> ProtocolsInfo:
+        """Collect protocol info using REST API.
+
+        Returns:
+            ProtocolsInfo from various protocol endpoints.
+        """
+        if not self.api_client:
+            logger.debug("%s No API client available for protocols collection", self._log_prefix)
+            return ProtocolsInfo()
+
+        response = self._cached_api_call("/protocols/nfs/export-policies?fields=*,rules")
+        export_policies = self._parse_export_policies_response(response)
+
+        return ProtocolsInfo(export_policies=export_policies)
+
+    def _parse_export_policies_response(self, response: Any) -> list[ExportPolicyInfo]:
+        """Parse export policies API response.
+
+        Args:
+            response: API response dict or None.
+
+        Returns:
+            List of ExportPolicyInfo objects.
+        """
+        if not response:
+            return []
+
+        logger.debug(
+            "%s API response: %d export policies",
+            self._log_prefix,
+            len(response.get("records", [])),
+        )
+        policies = []
+        for record in response.get("records", []):
+            rules = []
+            for rule_record in record.get("rules", []):
+                rule = ExportRuleInfo(
+                    index=rule_record.get("index", 0),
+                    clients=[
+                        c.get("match", "") for c in rule_record.get("clients", []) if c.get("match")
+                    ],
+                    protocols=rule_record.get("protocols", []) or [],
+                    ro_rule=rule_record.get("ro_rule", []) or [],
+                    rw_rule=rule_record.get("rw_rule", []) or [],
+                    superuser=rule_record.get("superuser", []) or [],
+                    anonymous_user=rule_record.get("anonymous_user", ""),
+                )
+                rules.append(rule)
+
+            policy = ExportPolicyInfo(
+                id=record.get("id", 0),
+                name=record.get("name", ""),
+                svm=record.get("svm", {}).get("name", "") if record.get("svm") else "",
+                rules=rules,
+            )
+            policies.append(policy)
+        return policies
 
     @staticmethod
     def _format_path(path_info: dict[str, Any] | str | None) -> str:
