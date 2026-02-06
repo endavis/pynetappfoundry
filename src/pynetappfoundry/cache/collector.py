@@ -493,6 +493,34 @@ class MetadataCollector:
             return "cli"
         return None
 
+    def _log_missing_fields(
+        self,
+        record: dict[str, Any],
+        expected_fields: list[str],
+        record_type: str,
+        record_id: str,
+    ) -> None:
+        """Log debug messages for expected API fields missing from a record.
+
+        Only logs when a key is absent from the dict — not when present
+        with a null, empty, or zero value.
+
+        Args:
+            record: The API response record dict.
+            expected_fields: Top-level keys expected in the record.
+            record_type: Human-readable type (e.g., "Volume", "Aggregate").
+            record_id: Identifier for the record (name or uuid).
+        """
+        for field in expected_fields:
+            if field not in record:
+                logger.debug(
+                    "%s MISSING_FIELD: %s '%s' - '%s' not in API response",
+                    self._log_prefix,
+                    record_type,
+                    record_id,
+                    field,
+                )
+
     # -------------------------------------------------------------------------
     # Cloud Metadata Collection
     # -------------------------------------------------------------------------
@@ -594,6 +622,19 @@ class MetadataCollector:
         Returns:
             CloudMetadata object.
         """
+        self._log_missing_fields(
+            data,
+            [
+                "instance_id",
+                "account_id",
+                "instance_type",
+                "region",
+                "provider",
+                "primary_ip",
+            ],
+            "CloudMetadata",
+            node or "unknown",
+        )
         provider = data.get("provider", "")
         instance_id = data.get("instance_id", "")
         account_id = data.get("account_id", "")
@@ -777,6 +818,12 @@ class MetadataCollector:
         logger.debug(
             "%s API response: cluster=%s", self._log_prefix, response.get("name", "unknown")
         )
+        self._log_missing_fields(
+            response,
+            ["name", "uuid", "version", "contact", "location"],
+            "Cluster",
+            response.get("name", "unknown"),
+        )
         return ClusterInfo(
             cluster_name=response.get("name", ""),
             cluster_uuid=response.get("uuid", ""),
@@ -801,6 +848,12 @@ class MetadataCollector:
         logger.debug("%s CLI response: %d entries", self._log_prefix, len(output))
         if output:
             data = output[0]
+            self._log_missing_fields(
+                data,
+                ["cluster", "cluster-uuid"],
+                "Cluster(CLI)",
+                data.get("cluster", "unknown"),
+            )
             return ClusterInfo(
                 cluster_name=data.get("cluster", ""),
                 cluster_uuid=data.get("cluster-uuid", ""),
@@ -851,6 +904,12 @@ class MetadataCollector:
         )
         nodes = []
         for record in response.get("records", []):
+            self._log_missing_fields(
+                record,
+                ["uuid", "name", "serial_number", "system_id", "model", "membership", "location"],
+                "Node",
+                record.get("name", record.get("uuid", "unknown")),
+            )
             # membership may be a dict or other type depending on API version
             membership = record.get("membership")
             is_epsilon = membership.get("epsilon", False) if isinstance(membership, dict) else False
@@ -882,6 +941,12 @@ class MetadataCollector:
         logger.debug("%s CLI response: %d nodes", self._log_prefix, len(output))
         nodes = []
         for data in output:
+            self._log_missing_fields(
+                data,
+                ["node", "serial-number", "system-id", "model"],
+                "Node(CLI)",
+                data.get("node", "unknown"),
+            )
             nodes.append(
                 NodeInfo(
                     name=data.get("node", ""),
@@ -957,6 +1022,12 @@ class MetadataCollector:
         management_lifs = []
 
         for record in lifs_response.get("records", []):
+            self._log_missing_fields(
+                record,
+                ["name", "ip", "location", "svm", "scope", "services"],
+                "LIF",
+                record.get("name", record.get("uuid", "unknown")),
+            )
             lif = NetworkLIF(
                 name=record.get("name", ""),
                 ip_address=record.get("ip", {}).get("address", ""),
@@ -986,6 +1057,12 @@ class MetadataCollector:
         )
         broadcast_domains = []
         for record in bd_response.get("records", []):
+            self._log_missing_fields(
+                record,
+                ["uuid", "name", "ipspace", "mtu", "ports"],
+                "BroadcastDomain",
+                record.get("name", record.get("uuid", "unknown")),
+            )
             bd = BroadcastDomain(
                 uuid=record.get("uuid", ""),
                 name=record.get("name", ""),
@@ -1038,6 +1115,12 @@ class MetadataCollector:
         management_lifs = []
 
         for data in output:
+            self._log_missing_fields(
+                data,
+                ["lif", "address", "netmask", "home-node", "home-port", "role", "vserver"],
+                "LIF(CLI)",
+                data.get("lif", "unknown"),
+            )
             lif = NetworkLIF(
                 name=data.get("lif", ""),
                 ip_address=data.get("address", ""),
@@ -1144,6 +1227,12 @@ class MetadataCollector:
         )
         aggregates = []
         for record in aggr_response.get("records", []):
+            self._log_missing_fields(
+                record,
+                ["uuid", "name", "node", "state", "block_storage", "space"],
+                "Aggregate",
+                record.get("name", record.get("uuid", "unknown")),
+            )
             block_storage = record.get("block_storage", {})
             primary = block_storage.get("primary", {})
             aggr = AggregateInfo(
@@ -1166,6 +1255,12 @@ class MetadataCollector:
         )
         svms = []
         for record in svm_response.get("records", []):
+            self._log_missing_fields(
+                record,
+                ["uuid", "name", "state", "subtype", "allowed_protocols", "language"],
+                "SVM",
+                record.get("name", record.get("uuid", "unknown")),
+            )
             svm = SVMInfo(
                 uuid=record.get("uuid", ""),
                 name=record.get("name", ""),
@@ -1234,6 +1329,25 @@ class MetadataCollector:
         )
         cloud_targets = []
         for record in response.get("records", []):
+            self._log_missing_fields(
+                record,
+                [
+                    "name",
+                    "uuid",
+                    "provider_type",
+                    "server",
+                    "container",
+                    "owner",
+                    "scope",
+                    "svm",
+                    "ssl_enabled",
+                    "authentication_type",
+                    "ipspace",
+                    "snapmirror_use",
+                ],
+                "CloudTarget",
+                record.get("name", record.get("uuid", "unknown")),
+            )
             target = CloudTargetInfo(
                 name=record.get("name", ""),
                 uuid=record.get("uuid", ""),
@@ -1269,6 +1383,12 @@ class MetadataCollector:
         logger.debug("%s CLI response: %d aggregates", self._log_prefix, len(aggr_output))
         aggregates = []
         for data in aggr_output:
+            self._log_missing_fields(
+                data,
+                ["aggregate", "node", "state", "type"],
+                "Aggregate(CLI)",
+                data.get("aggregate", "unknown"),
+            )
             aggr = AggregateInfo(
                 name=data.get("aggregate", ""),
                 node=data.get("node", ""),
@@ -1283,6 +1403,12 @@ class MetadataCollector:
         logger.debug("%s CLI response: %d SVMs", self._log_prefix, len(svm_output))
         svms = []
         for data in svm_output:
+            self._log_missing_fields(
+                data,
+                ["vserver", "admin-state", "type", "root-volume"],
+                "SVM(CLI)",
+                data.get("vserver", "unknown"),
+            )
             svm = SVMInfo(
                 name=data.get("vserver", ""),
                 state=data.get("admin-state", ""),
@@ -1323,6 +1449,21 @@ class MetadataCollector:
 
         cloud_targets = []
         for data in output:
+            self._log_missing_fields(
+                data,
+                [
+                    "object-store-name",
+                    "provider-type",
+                    "server",
+                    "container",
+                    "owner",
+                    "ssl-enabled",
+                    "auth-type",
+                    "ipspace",
+                ],
+                "CloudTarget(CLI)",
+                data.get("object-store-name", "unknown"),
+            )
             target = CloudTargetInfo(
                 name=data.get("object-store-name", ""),
                 provider_type=data.get("provider-type", ""),
@@ -1381,6 +1522,12 @@ class MetadataCollector:
         capacity_licenses = []
 
         for record in response.get("records", []):
+            self._log_missing_fields(
+                record,
+                ["name", "state", "scope", "capacity"],
+                "License",
+                record.get("name", "unknown"),
+            )
             name = record.get("name", "")
             state = record.get("state", "")
             scope = record.get("scope", "")
@@ -1416,6 +1563,12 @@ class MetadataCollector:
         feature_licenses = []
 
         for data in output:
+            self._log_missing_fields(
+                data,
+                ["package", "state", "scope"],
+                "License(CLI)",
+                data.get("package", "unknown"),
+            )
             feature = LicenseFeature(
                 name=data.get("package", ""),
                 state=data.get("state", ""),
@@ -1470,8 +1623,26 @@ class MetadataCollector:
             len(nodes_response.get("records", [])),
         )
 
+        # Check HA fields on first node
+        records = nodes_response.get("records", [])
+        if records:
+            self._log_missing_fields(
+                records[0],
+                ["ha"],
+                "Node(HA)",
+                records[0].get("name", records[0].get("uuid", "unknown")),
+            )
+            ha_obj = records[0].get("ha", {})
+            if isinstance(ha_obj, dict):
+                self._log_missing_fields(
+                    ha_obj,
+                    ["enabled", "partners", "takeover"],
+                    "Node(HA).ha",
+                    records[0].get("name", records[0].get("uuid", "unknown")),
+                )
+
         # Check if HA is configured
-        ha_configured = len(nodes_response.get("records", [])) > 1
+        ha_configured = len(records) > 1
 
         # Try to get mediator info for cloud HA (use cached call)
         mediator_address = ""
@@ -1508,6 +1679,12 @@ class MetadataCollector:
 
         # Parse first node's HA info
         first_node = output[0]
+        self._log_missing_fields(
+            first_node,
+            ["partner-name", "node-state"],
+            "HA(CLI)",
+            first_node.get("node", "unknown"),
+        )
         return HAInfo(
             is_ha=True,
             partner_node=first_node.get("partner-name", ""),
@@ -1579,6 +1756,12 @@ class MetadataCollector:
         )
         snapmirror_destinations = []
         for record in sm_response.get("records", []):
+            self._log_missing_fields(
+                record,
+                ["uuid", "source", "destination", "policy", "state"],
+                "SnapMirror",
+                record.get("uuid", "unknown"),
+            )
             sm = SnapMirrorRelationship(
                 uuid=record.get("uuid", ""),
                 source_path=self._format_path(record.get("source", {})),
@@ -1597,6 +1780,12 @@ class MetadataCollector:
         )
         cluster_peers = []
         for record in peer_response.get("records", []):
+            self._log_missing_fields(
+                record,
+                ["name", "uuid", "remote", "authentication"],
+                "ClusterPeer",
+                record.get("name", record.get("uuid", "unknown")),
+            )
             # Handle fields that may be dicts or strings depending on API version
             remote = record.get("remote")
             remote_name = remote.get("name", "") if isinstance(remote, dict) else str(remote or "")
@@ -1642,6 +1831,12 @@ class MetadataCollector:
         )
         snapmirror_destinations = []
         for data in sm_output:
+            self._log_missing_fields(
+                data,
+                ["source-path", "destination-path", "type", "state"],
+                "SnapMirror(CLI)",
+                data.get("source-path", "unknown"),
+            )
             sm = SnapMirrorRelationship(
                 source_path=data.get("source-path", ""),
                 destination_path=data.get("destination-path", ""),
@@ -1656,6 +1851,12 @@ class MetadataCollector:
         logger.debug("%s CLI response: %d cluster peers", self._log_prefix, len(peer_output))
         cluster_peers = []
         for data in peer_output:
+            self._log_missing_fields(
+                data,
+                ["peer-cluster", "remote-cluster-name", "auth-status-admin"],
+                "ClusterPeer(CLI)",
+                data.get("peer-cluster", "unknown"),
+            )
             peer = ClusterPeer(
                 name=data.get("peer-cluster", ""),
                 remote_cluster_name=data.get("remote-cluster-name", ""),
@@ -1689,6 +1890,26 @@ class MetadataCollector:
         )
         volumes = []
         for record in response.get("records", []):
+            self._log_missing_fields(
+                record,
+                [
+                    "uuid",
+                    "name",
+                    "svm",
+                    "state",
+                    "type",
+                    "style",
+                    "size",
+                    "autosize",
+                    "tiering",
+                    "nas",
+                    "files",
+                    "snapshot_policy",
+                    "aggregates",
+                ],
+                "Volume",
+                record.get("name", record.get("uuid", "unknown")),
+            )
             autosize = record.get("autosize", {})
             tiering = record.get("tiering", {})
             nas = record.get("nas", {})
@@ -1736,6 +1957,21 @@ class MetadataCollector:
         )
         qtrees = []
         for record in response.get("records", []):
+            self._log_missing_fields(
+                record,
+                [
+                    "id",
+                    "name",
+                    "svm",
+                    "volume",
+                    "path",
+                    "security_style",
+                    "unix_permissions",
+                    "export_policy",
+                ],
+                "Qtree",
+                record.get("name", str(record.get("id", "unknown"))),
+            )
             qtree = QtreeInfo(
                 id=record.get("id", 0),
                 name=record.get("name", ""),
@@ -1772,6 +2008,12 @@ class MetadataCollector:
         )
         policies = []
         for record in response.get("records", []):
+            self._log_missing_fields(
+                record,
+                ["uuid", "name", "svm", "enabled", "scope", "copies"],
+                "SnapshotPolicy",
+                record.get("name", record.get("uuid", "unknown")),
+            )
             schedules = []
             for copy in record.get("copies", []):
                 sched = SnapshotScheduleInfo(
@@ -1814,6 +2056,12 @@ class MetadataCollector:
         )
         schedules = []
         for record in response.get("records", []):
+            self._log_missing_fields(
+                record,
+                ["uuid", "name", "type", "scope", "svm", "cron", "interval"],
+                "Schedule",
+                record.get("name", record.get("uuid", "unknown")),
+            )
             cron = record.get("cron", {}) or {}
             schedule = ScheduleInfo(
                 uuid=record.get("uuid", ""),
@@ -1842,6 +2090,24 @@ class MetadataCollector:
         logger.debug("%s API response: %d LUNs", self._log_prefix, len(response.get("records", [])))
         luns = []
         for record in response.get("records", []):
+            self._log_missing_fields(
+                record,
+                [
+                    "uuid",
+                    "name",
+                    "svm",
+                    "location",
+                    "space",
+                    "os_type",
+                    "serial_number",
+                    "enabled",
+                    "comment",
+                    "qos_policy",
+                    "create_time",
+                ],
+                "LUN",
+                record.get("name", record.get("uuid", "unknown")),
+            )
             location = record.get("location", {})
             lun = LunInfo(
                 uuid=record.get("uuid", ""),
@@ -1880,6 +2146,12 @@ class MetadataCollector:
         )
         igroups = []
         for record in response.get("records", []):
+            self._log_missing_fields(
+                record,
+                ["uuid", "name", "svm", "protocol", "os_type", "initiators", "comment"],
+                "Igroup",
+                record.get("name", record.get("uuid", "unknown")),
+            )
             initiators = [i.get("name", "") for i in record.get("initiators", []) if i.get("name")]
             igroup = IgroupInfo(
                 uuid=record.get("uuid", ""),
@@ -1912,6 +2184,12 @@ class MetadataCollector:
         )
         policies = []
         for record in response.get("records", []):
+            self._log_missing_fields(
+                record,
+                ["uuid", "name", "svm", "scope", "object_type", "fixed", "adaptive"],
+                "QoSPolicy",
+                record.get("name", record.get("uuid", "unknown")),
+            )
             fixed = record.get("fixed", {}) or {}
             adaptive = record.get("adaptive", {}) or {}
             max_throughput_iops = fixed.get("max_throughput_iops", 0)
@@ -2012,6 +2290,12 @@ class MetadataCollector:
         )
         policies = []
         for record in response.get("records", []):
+            self._log_missing_fields(
+                record,
+                ["id", "name", "svm", "rules"],
+                "ExportPolicy",
+                record.get("name", str(record.get("id", "unknown"))),
+            )
             rules = []
             for rule_record in record.get("rules", []):
                 rule = ExportRuleInfo(
@@ -2055,6 +2339,23 @@ class MetadataCollector:
         )
         shares = []
         for record in response.get("records", []):
+            self._log_missing_fields(
+                record,
+                [
+                    "name",
+                    "path",
+                    "svm",
+                    "comment",
+                    "home_directory",
+                    "oplocks",
+                    "access_based_enumeration",
+                    "change_notify",
+                    "encryption",
+                    "unix_symlink",
+                ],
+                "CIFSShare",
+                record.get("name", "unknown"),
+            )
             share = CIFSShareInfo(
                 name=record.get("name", ""),
                 path=record.get("path", ""),
@@ -2089,6 +2390,14 @@ class MetadataCollector:
         )
         services = []
         for record in response.get("records", []):
+            self._log_missing_fields(
+                record,
+                ["svm", "enabled", "protocol", "showmount_enabled", "vstorage_enabled"],
+                "NFSService",
+                record.get("svm", {}).get("name", "unknown")
+                if isinstance(record.get("svm"), dict)
+                else "unknown",
+            )
             protocol = record.get("protocol", {})
             service = NFSServiceInfo(
                 svm=record.get("svm", {}).get("name", "") if record.get("svm") else "",
@@ -2121,6 +2430,12 @@ class MetadataCollector:
         )
         services = []
         for record in response.get("records", []):
+            self._log_missing_fields(
+                record,
+                ["svm", "name", "enabled", "ad_domain", "comment", "default_unix_user", "netbios"],
+                "CIFSService",
+                record.get("name", "unknown"),
+            )
             ad_domain = record.get("ad_domain", {})
             service = CIFSServiceInfo(
                 svm=record.get("svm", {}).get("name", "") if record.get("svm") else "",
@@ -2157,6 +2472,14 @@ class MetadataCollector:
         )
         dns_configs = []
         for record in response.get("records", []):
+            self._log_missing_fields(
+                record,
+                ["uuid", "svm", "scope", "domains", "servers", "timeout", "attempts"],
+                "DNS",
+                record.get("svm", {}).get("name", record.get("uuid", "unknown"))
+                if isinstance(record.get("svm"), dict)
+                else record.get("uuid", "unknown"),
+            )
             dns = DNSInfo(
                 uuid=record.get("uuid", ""),
                 svm=record.get("svm", {}).get("name", "") if record.get("svm") else "",
@@ -2186,6 +2509,12 @@ class MetadataCollector:
         )
         subnets = []
         for record in response.get("records", []):
+            self._log_missing_fields(
+                record,
+                ["uuid", "name", "ipspace", "broadcast_domain", "subnet", "gateway", "ip_ranges"],
+                "IPSubnet",
+                record.get("name", record.get("uuid", "unknown")),
+            )
             ip_ranges = []
             for r in record.get("ip_ranges", []):
                 if isinstance(r, dict):
@@ -2243,6 +2572,21 @@ class MetadataCollector:
         )
         flexcaches = []
         for record in response.get("records", []):
+            self._log_missing_fields(
+                record,
+                [
+                    "uuid",
+                    "name",
+                    "svm",
+                    "path",
+                    "size",
+                    "origins",
+                    "global_file_locking_enabled",
+                    "dr_cache",
+                ],
+                "FlexCache",
+                record.get("name", record.get("uuid", "unknown")),
+            )
             origins = []
             for origin in record.get("origins", []):
                 vol = origin.get("volume", {})
@@ -2284,6 +2628,12 @@ class MetadataCollector:
         )
         peers = []
         for record in response.get("records", []):
+            self._log_missing_fields(
+                record,
+                ["uuid", "name", "svm", "peer", "state", "applications"],
+                "SVMPeer",
+                record.get("name", record.get("uuid", "unknown")),
+            )
             svm = record.get("svm", {})
             peer_obj = record.get("peer", {})
             peer = SVMPeerInfo(
@@ -2323,6 +2673,12 @@ class MetadataCollector:
         )
         buckets = []
         for record in response.get("records", []):
+            self._log_missing_fields(
+                record,
+                ["uuid", "name", "svm", "type", "size", "versioning_state", "comment", "nas_path"],
+                "S3Bucket",
+                record.get("name", record.get("uuid", "unknown")),
+            )
             bucket = S3BucketInfo(
                 uuid=record.get("uuid", ""),
                 name=record.get("name", ""),
