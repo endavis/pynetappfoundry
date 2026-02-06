@@ -73,3 +73,4 @@ The Issue contains the full discussion; the ADR summarizes the outcome.
 | [0010](0010-use-conventional-commits-format.md) | Use conventional commits format | Accepted |
 | [0011](0011-use-pytest-for-testing.md) | Use pytest for testing | Accepted |
 | [0012](0012-use-mkdocs-with-material-theme-for-documentation.md) | Use mkdocs with Material theme for documentation | Accepted |
+| [0017](0017-declarative-field-mapping-framework.md) | Declarative field mapping framework for ONTAP collection | Accepted |
