@@ -228,6 +228,7 @@ class AggregateInfo(BaseModel):
     encryption_drive: bool = False  # SED enabled
     sidl_enabled: bool = False  # single-instance data logging
     inactive_data_reporting_enabled: bool = False  # inactive data reporting
+    volume_count: int = 0  # number of volumes on the aggregate
     # expensive field (needs explicit API request)
     is_spare_low: bool = False  # disk pool health flag
 

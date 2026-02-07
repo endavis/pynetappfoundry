@@ -137,6 +137,12 @@ AGGREGATE_MAPPING = TypeMapping(
             api_path="inactive_data_reporting.enabled",
             default=False,
         ),
+        FieldMapping(
+            cache_attr="volume_count",
+            api_path="volume_count",
+            cli_field="volcount",
+            default=0,
+        ),
         # expensive field (needs explicit API request)
         FieldMapping(
             cache_attr="is_spare_low",
