@@ -41,7 +41,6 @@ These events are consistently available across clusters when CIFS is in use.
 ## Related Issues
 
 - Issue #92: Azure maintenance event tracking improvements
-- PR #106: Fix az_maint_complete when callhome.reboot.giveback comes first
 
 ## Related Documentation
 
