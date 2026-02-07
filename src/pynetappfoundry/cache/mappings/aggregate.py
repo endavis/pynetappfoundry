@@ -12,7 +12,7 @@ from pynetappfoundry.cache.models import AggregateInfo
 AGGREGATE_MAPPING = TypeMapping(
     name="Aggregate",
     model_class=AggregateInfo,
-    api_endpoint="/storage/aggregates?fields=*",
+    api_endpoint="/storage/aggregates?fields=*,is_spare_low",
     cli_command="aggr show",
     fields=(
         FieldMapping(
@@ -56,6 +56,92 @@ AGGREGATE_MAPPING = TypeMapping(
         FieldMapping(
             cache_attr="raid_type",
             api_path="block_storage.primary.raid_type",
+        ),
+        # block_storage structural fields
+        FieldMapping(
+            cache_attr="storage_type",
+            api_path="block_storage.storage_type",
+        ),
+        FieldMapping(
+            cache_attr="disk_class",
+            api_path="block_storage.primary.disk_class",
+        ),
+        FieldMapping(
+            cache_attr="raid_size",
+            api_path="block_storage.primary.raid_size",
+            default=0,
+        ),
+        FieldMapping(
+            cache_attr="checksum_style",
+            api_path="block_storage.primary.checksum_style",
+        ),
+        FieldMapping(
+            cache_attr="uses_partitions",
+            api_path="block_storage.uses_partitions",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="mirror_enabled",
+            api_path="block_storage.mirror.enabled",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="mirror_state",
+            api_path="block_storage.mirror.state",
+        ),
+        FieldMapping(
+            cache_attr="hybrid_cache_enabled",
+            api_path="block_storage.hybrid_cache.enabled",
+            default=False,
+        ),
+        # other structural fields
+        FieldMapping(
+            cache_attr="snaplock_type",
+            api_path="snaplock_type",
+        ),
+        FieldMapping(
+            cache_attr="home_node",
+            api_path="home_node.name",
+        ),
+        FieldMapping(
+            cache_attr="dr_home_node",
+            api_path="dr_home_node.name",
+        ),
+        FieldMapping(
+            cache_attr="create_time",
+            api_path="create_time",
+        ),
+        # config flags
+        FieldMapping(
+            cache_attr="cloud_attach_eligible",
+            api_path="cloud_storage.attach_eligible",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="encryption_software",
+            api_path="data_encryption.software_encryption_enabled",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="encryption_drive",
+            api_path="data_encryption.drive_protection_enabled",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="sidl_enabled",
+            api_path="sidl_enabled",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="inactive_data_reporting_enabled",
+            api_path="inactive_data_reporting.enabled",
+            default=False,
+        ),
+        # expensive field (needs explicit API request)
+        FieldMapping(
+            cache_attr="is_spare_low",
+            api_path="is_spare_low",
+            default=False,
         ),
     ),
 )

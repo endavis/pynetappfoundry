@@ -1187,7 +1187,7 @@ class MetadataCollector:
 
         # Make all API calls in parallel using cached calls
         endpoints = [
-            "/storage/aggregates?fields=*",
+            AGGREGATE_MAPPING.api_endpoint,
             "/svm/svms?fields=*",
             "/cloud/targets?fields=*",
             "/storage/volumes?fields=*,autosize,files,nas.path,nas.security_style",

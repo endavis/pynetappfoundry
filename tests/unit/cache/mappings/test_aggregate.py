@@ -34,6 +34,18 @@ def full_api_record() -> dict[str, Any]:
                 "disk_type": "ssd",
                 "disk_count": 24,
                 "raid_type": "raid_dp",
+                "disk_class": "solid_state",
+                "raid_size": 23,
+                "checksum_style": "block",
+            },
+            "storage_type": "ssd",
+            "uses_partitions": True,
+            "mirror": {
+                "enabled": False,
+                "state": "unmirrored",
+            },
+            "hybrid_cache": {
+                "enabled": False,
             },
         },
         "space": {
@@ -41,6 +53,22 @@ def full_api_record() -> dict[str, Any]:
                 "size": 10995116277760,
             },
         },
+        "snaplock_type": "non_snaplock",
+        "home_node": {"name": "PRODCL1-01"},
+        "dr_home_node": {"name": "PRODCL1-DR-01"},
+        "create_time": "2024-01-15T10:30:00Z",
+        "cloud_storage": {
+            "attach_eligible": True,
+        },
+        "data_encryption": {
+            "software_encryption_enabled": True,
+            "drive_protection_enabled": False,
+        },
+        "sidl_enabled": True,
+        "inactive_data_reporting": {
+            "enabled": True,
+        },
+        "is_spare_low": False,
     }
 
 
@@ -77,8 +105,8 @@ class TestAggregateMappingDefinition:
         assert len(attrs) == len(set(attrs))
 
     def test_endpoint(self) -> None:
-        """API endpoint is storage aggregates with all fields."""
-        assert AGGREGATE_MAPPING.api_endpoint == "/storage/aggregates?fields=*"
+        """API endpoint is storage aggregates with all fields plus is_spare_low."""
+        assert AGGREGATE_MAPPING.api_endpoint == "/storage/aggregates?fields=*,is_spare_low"
 
     def test_cli_command(self) -> None:
         """CLI command is aggr show."""
@@ -93,12 +121,25 @@ class TestAggregateMappingDefinition:
         expected = AGGREGATE_MAPPING.api_expected_fields()
         assert expected == [
             "block_storage",
+            "cloud_storage",
+            "create_time",
+            "data_encryption",
+            "dr_home_node",
+            "home_node",
+            "inactive_data_reporting",
+            "is_spare_low",
             "name",
             "node",
+            "sidl_enabled",
+            "snaplock_type",
             "space",
             "state",
             "uuid",
         ]
+
+    def test_field_count(self) -> None:
+        """Mapping has expected number of fields (9 original + 18 new)."""
+        assert len(AGGREGATE_MAPPING.fields) == 27
 
 
 # ---------------------------------------------------------------------------
@@ -113,6 +154,7 @@ class TestAggregateApiParsing:
         """Full API record parses to complete AggregateInfo."""
         aggr = parse_api_record(AGGREGATE_MAPPING, full_api_record, "[test]")
         assert isinstance(aggr, AggregateInfo)
+        # Original fields
         assert aggr.uuid == "a1b2c3d4-5678-9abc-def0-123456789abc"
         assert aggr.name == "PRODAGGR1"
         assert aggr.node == "PRODCL1-01"
@@ -122,6 +164,28 @@ class TestAggregateApiParsing:
         assert aggr.disk_count == 24
         assert aggr.disk_type == "ssd"
         assert aggr.raid_type == "raid_dp"
+        # New block_storage structural fields
+        assert aggr.storage_type == "ssd"
+        assert aggr.disk_class == "solid_state"
+        assert aggr.raid_size == 23
+        assert aggr.checksum_style == "block"
+        assert aggr.uses_partitions is True
+        assert aggr.mirror_enabled is False
+        assert aggr.mirror_state == "unmirrored"
+        assert aggr.hybrid_cache_enabled is False
+        # New structural fields
+        assert aggr.snaplock_type == "non_snaplock"
+        assert aggr.home_node == "PRODCL1-01"
+        assert aggr.dr_home_node == "PRODCL1-DR-01"
+        assert aggr.create_time == "2024-01-15T10:30:00Z"
+        # Config flags
+        assert aggr.cloud_attach_eligible is True
+        assert aggr.encryption_software is True
+        assert aggr.encryption_drive is False
+        assert aggr.sidl_enabled is True
+        assert aggr.inactive_data_reporting_enabled is True
+        # Expensive field
+        assert aggr.is_spare_low is False
 
     def test_minimal_record(self) -> None:
         """Minimal record uses defaults for missing fields."""
@@ -137,6 +201,25 @@ class TestAggregateApiParsing:
         assert aggr.disk_count == 0
         assert aggr.disk_type == ""
         assert aggr.raid_type == ""
+        # New fields default correctly
+        assert aggr.storage_type == ""
+        assert aggr.disk_class == ""
+        assert aggr.raid_size == 0
+        assert aggr.checksum_style == ""
+        assert aggr.uses_partitions is False
+        assert aggr.mirror_enabled is False
+        assert aggr.mirror_state == ""
+        assert aggr.hybrid_cache_enabled is False
+        assert aggr.snaplock_type == ""
+        assert aggr.home_node == ""
+        assert aggr.dr_home_node == ""
+        assert aggr.create_time == ""
+        assert aggr.cloud_attach_eligible is False
+        assert aggr.encryption_software is False
+        assert aggr.encryption_drive is False
+        assert aggr.sidl_enabled is False
+        assert aggr.inactive_data_reporting_enabled is False
+        assert aggr.is_spare_low is False
 
     def test_nested_node_extraction(self) -> None:
         """node.name dot-path works."""
@@ -152,6 +235,18 @@ class TestAggregateApiParsing:
                     "disk_type": "hdd",
                     "disk_count": 12,
                     "raid_type": "raid4",
+                    "disk_class": "capacity",
+                    "raid_size": 14,
+                    "checksum_style": "advanced_zoned",
+                },
+                "storage_type": "hdd",
+                "uses_partitions": False,
+                "mirror": {
+                    "enabled": True,
+                    "state": "normal",
+                },
+                "hybrid_cache": {
+                    "enabled": True,
                 },
             },
         }
@@ -160,6 +255,14 @@ class TestAggregateApiParsing:
         assert aggr.disk_count == 12
         assert aggr.disk_type == "hdd"
         assert aggr.raid_type == "raid4"
+        assert aggr.storage_type == "hdd"
+        assert aggr.disk_class == "capacity"
+        assert aggr.raid_size == 14
+        assert aggr.checksum_style == "advanced_zoned"
+        assert aggr.uses_partitions is False
+        assert aggr.mirror_enabled is True
+        assert aggr.mirror_state == "normal"
+        assert aggr.hybrid_cache_enabled is True
 
     def test_deep_nested_space(self) -> None:
         """space.block_storage.size extracted correctly."""
@@ -172,6 +275,48 @@ class TestAggregateApiParsing:
         }
         aggr = parse_api_record(AGGREGATE_MAPPING, record, "[test]")
         assert aggr.total_size == 5000000000
+
+    def test_home_node_and_dr_home_node(self) -> None:
+        """home_node.name and dr_home_node.name extracted correctly."""
+        record: dict[str, Any] = {
+            "home_node": {"name": "cluster1-01"},
+            "dr_home_node": {"name": "cluster1-dr-01"},
+        }
+        aggr = parse_api_record(AGGREGATE_MAPPING, record, "[test]")
+        assert aggr.home_node == "cluster1-01"
+        assert aggr.dr_home_node == "cluster1-dr-01"
+
+    def test_data_encryption_fields(self) -> None:
+        """data_encryption nested booleans extracted correctly."""
+        record: dict[str, Any] = {
+            "data_encryption": {
+                "software_encryption_enabled": True,
+                "drive_protection_enabled": True,
+            },
+        }
+        aggr = parse_api_record(AGGREGATE_MAPPING, record, "[test]")
+        assert aggr.encryption_software is True
+        assert aggr.encryption_drive is True
+
+    def test_cloud_storage_and_inactive_reporting(self) -> None:
+        """cloud_storage and inactive_data_reporting nested extraction."""
+        record: dict[str, Any] = {
+            "cloud_storage": {"attach_eligible": True},
+            "inactive_data_reporting": {"enabled": True},
+        }
+        aggr = parse_api_record(AGGREGATE_MAPPING, record, "[test]")
+        assert aggr.cloud_attach_eligible is True
+        assert aggr.inactive_data_reporting_enabled is True
+
+    def test_top_level_booleans(self) -> None:
+        """Top-level boolean fields extracted correctly."""
+        record: dict[str, Any] = {
+            "sidl_enabled": True,
+            "is_spare_low": True,
+        }
+        aggr = parse_api_record(AGGREGATE_MAPPING, record, "[test]")
+        assert aggr.sidl_enabled is True
+        assert aggr.is_spare_low is True
 
     def test_parse_api_response_multiple(self) -> None:
         """parse_api_response handles multiple records."""
@@ -209,6 +354,25 @@ class TestAggregateCliParsing:
         assert aggr.disk_count == 0
         assert aggr.disk_type == ""
         assert aggr.raid_type == ""
+        # New fields without cli_field should use defaults
+        assert aggr.storage_type == ""
+        assert aggr.disk_class == ""
+        assert aggr.raid_size == 0
+        assert aggr.checksum_style == ""
+        assert aggr.uses_partitions is False
+        assert aggr.mirror_enabled is False
+        assert aggr.mirror_state == ""
+        assert aggr.hybrid_cache_enabled is False
+        assert aggr.snaplock_type == ""
+        assert aggr.home_node == ""
+        assert aggr.dr_home_node == ""
+        assert aggr.create_time == ""
+        assert aggr.cloud_attach_eligible is False
+        assert aggr.encryption_software is False
+        assert aggr.encryption_drive is False
+        assert aggr.sidl_enabled is False
+        assert aggr.inactive_data_reporting_enabled is False
+        assert aggr.is_spare_low is False
 
     def test_dash_values_use_defaults(self) -> None:
         """CLI dash values coerce to default."""
@@ -242,7 +406,11 @@ class TestAggregateCliParsing:
 
 
 class TestParityWithOldParser:
-    """Verify framework produces same output as old hand-written parser."""
+    """Verify framework produces same output as old hand-written parser.
+
+    Note: parity tests only cover the original 9 fields that existed in the
+    old parser. New fields have no old-parser equivalent.
+    """
 
     @staticmethod
     def _old_parse_aggregate_api(record: dict[str, Any]) -> AggregateInfo:
@@ -271,12 +439,24 @@ class TestParityWithOldParser:
             type=data.get("type", ""),
         )
 
+    _ORIGINAL_FIELDS = (
+        "uuid",
+        "name",
+        "node",
+        "state",
+        "type",
+        "total_size",
+        "disk_count",
+        "disk_type",
+        "raid_type",
+    )
+
     def test_parity_api_full_record(self, full_api_record: dict[str, Any]) -> None:
-        """Framework and old parser produce identical AggregateInfo for API."""
+        """Framework and old parser produce identical AggregateInfo for original fields."""
         old = self._old_parse_aggregate_api(full_api_record)
         new = parse_api_record(AGGREGATE_MAPPING, full_api_record, "[test]")
         assert isinstance(new, AggregateInfo)
-        for field_name in AggregateInfo.model_fields:
+        for field_name in self._ORIGINAL_FIELDS:
             old_val = getattr(old, field_name)
             new_val = getattr(new, field_name)
             assert old_val == new_val, (
@@ -289,7 +469,7 @@ class TestParityWithOldParser:
         old = self._old_parse_aggregate_api(record)
         new = parse_api_record(AGGREGATE_MAPPING, record, "[test]")
         assert isinstance(new, AggregateInfo)
-        for field_name in AggregateInfo.model_fields:
+        for field_name in self._ORIGINAL_FIELDS:
             old_val = getattr(old, field_name)
             new_val = getattr(new, field_name)
             assert old_val == new_val, (
@@ -307,7 +487,7 @@ class TestParityWithOldParser:
         old = self._old_parse_aggregate_api(record)
         new = parse_api_record(AGGREGATE_MAPPING, record, "[test]")
         assert isinstance(new, AggregateInfo)
-        for field_name in AggregateInfo.model_fields:
+        for field_name in self._ORIGINAL_FIELDS:
             old_val = getattr(old, field_name)
             new_val = getattr(new, field_name)
             assert old_val == new_val, (
@@ -319,7 +499,7 @@ class TestParityWithOldParser:
         old = self._old_parse_aggregate_cli(full_cli_record)
         new = parse_cli_record(AGGREGATE_MAPPING, full_cli_record, "[test]")
         assert isinstance(new, AggregateInfo)
-        for field_name in AggregateInfo.model_fields:
+        for field_name in self._ORIGINAL_FIELDS:
             old_val = getattr(old, field_name)
             new_val = getattr(new, field_name)
             assert old_val == new_val, (
