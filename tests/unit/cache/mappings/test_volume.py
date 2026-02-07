@@ -10,13 +10,10 @@ import pytest
 from pynetappfoundry.cache.field_mapping import (
     parse_api_record,
     parse_api_response,
-    parse_cli_record,
-    parse_cli_records,
 )
 from pynetappfoundry.cache.mappings.volume import (
     VOLUME_MAPPING,
     _api_aggregates_list,
-    _cli_aggregates_list,
 )
 from pynetappfoundry.cache.models import VolumeInfo
 
@@ -55,34 +52,6 @@ def full_api_record() -> dict[str, Any]:
             "path": "/PRODVOL1",
             "security_style": "ntfs",
         },
-    }
-
-
-@pytest.fixture
-def full_cli_record() -> dict[str, Any]:
-    """Full CLI volume record with all fields."""
-    return {
-        "instance-uuid": "09d308eb-1234-5678-9abc-def012345678",
-        "volume": "PRODVOL1",
-        "vserver": "svm_PRODCL1",
-        "state": "online",
-        "type": "RW",
-        "volume-style-extended": "flexvol",
-        "size": "9064378368",
-        "autosize-mode": "grow_shrink",
-        "autosize-grow-threshold-percent": "90%",
-        "autosize-shrink-threshold-percent": "50%",
-        "max-autosize": "18128756736",
-        "min-autosize": "4532189184",
-        "files": "31122",
-        "tiering-policy": "none",
-        "tiering-minimum-cooling-days": "2",
-        "aggregate": "PRODAGGR1",
-        "aggr-list": "PRODAGGR1,PRODAGGR2",
-        "snapshot-policy": "none",
-        "policy": "default",
-        "junction-path": "/PRODVOL1",
-        "security-style": "ntfs",
     }
 
 
@@ -248,84 +217,6 @@ class TestVolumeApiParsing:
 
 
 # ---------------------------------------------------------------------------
-# CLI parsing tests
-# ---------------------------------------------------------------------------
-
-
-class TestVolumeCliParsing:
-    """Tests for parsing CLI volume records."""
-
-    def test_full_record(self, full_cli_record: dict[str, Any]) -> None:
-        """Full CLI record parses to complete VolumeInfo."""
-        vol = parse_cli_record(VOLUME_MAPPING, full_cli_record, "[test]")
-        assert isinstance(vol, VolumeInfo)
-        assert vol.uuid == "09d308eb-1234-5678-9abc-def012345678"
-        assert vol.name == "PRODVOL1"
-        assert vol.svm == "svm_PRODCL1"
-        assert vol.state == "online"
-        assert vol.type == "RW"
-        assert vol.style == "flexvol"
-        assert vol.size == 9064378368
-        assert vol.autosize_mode == "grow_shrink"
-        assert vol.autosize_grow_threshold == 90
-        assert vol.autosize_shrink_threshold == 50
-        assert vol.autosize_maximum == 18128756736
-        assert vol.autosize_minimum == 4532189184
-        assert vol.files_maximum == 31122
-        assert vol.tiering_policy == "none"
-        assert vol.tiering_minimum_cooling_days == 2
-        assert vol.aggregate == "PRODAGGR1"
-        assert vol.aggregates == ["PRODAGGR1", "PRODAGGR2"]
-        assert vol.snapshot_policy == "none"
-        assert vol.export_policy == "default"
-        assert vol.junction_path == "/PRODVOL1"
-        assert vol.nas_security_style == "ntfs"
-
-    def test_int_coercion_with_percent(self) -> None:
-        """CLI percentage values have % stripped before int conversion."""
-        record = {
-            "autosize-grow-threshold-percent": "85%",
-            "autosize-shrink-threshold-percent": "45%",
-        }
-        vol = parse_cli_record(VOLUME_MAPPING, record, "[test]")
-        assert vol.autosize_grow_threshold == 85
-        assert vol.autosize_shrink_threshold == 45
-
-    def test_dash_values_use_defaults(self) -> None:
-        """CLI dash values coerce to default."""
-        record = {
-            "tiering-minimum-cooling-days": "-",
-            "junction-path": "-",
-        }
-        vol = parse_cli_record(VOLUME_MAPPING, record, "[test]")
-        assert vol.tiering_minimum_cooling_days == 0
-        assert vol.junction_path == ""
-
-    def test_cli_aggregates_transform(self) -> None:
-        """CLI aggr-list parsed into list."""
-        record = {"aggr-list": "aggr1, aggr2, aggr3"}
-        vol = parse_cli_record(VOLUME_MAPPING, record, "[test]")
-        assert vol.aggregates == ["aggr1", "aggr2", "aggr3"]
-
-    def test_cli_aggregates_empty(self) -> None:
-        """Empty aggr-list returns empty list."""
-        record: dict[str, Any] = {"aggr-list": "-"}
-        vol = parse_cli_record(VOLUME_MAPPING, record, "[test]")
-        assert vol.aggregates == []
-
-    def test_parse_cli_records_multiple(self) -> None:
-        """parse_cli_records handles multiple records."""
-        records = [
-            {"volume": "vol1", "instance-uuid": "a"},
-            {"volume": "vol2", "instance-uuid": "b"},
-        ]
-        results = parse_cli_records(VOLUME_MAPPING, records, "[test]", MagicMock())
-        assert len(results) == 2
-        assert results[0].name == "vol1"
-        assert results[1].name == "vol2"
-
-
-# ---------------------------------------------------------------------------
 # Transform unit tests
 # ---------------------------------------------------------------------------
 
@@ -357,25 +248,6 @@ class TestTransformFunctions:
         """Aggregates with empty/missing names are filtered."""
         record = {"aggregates": [{"name": ""}, {"name": "a"}, {"uuid": "b"}]}
         assert _api_aggregates_list(record) == ["a"]
-
-    def test_cli_aggregates_list_comma_separated(self) -> None:
-        """Comma-separated aggr-list."""
-        record = {"aggr-list": "aggr1,aggr2,aggr3"}
-        assert _cli_aggregates_list(record) == ["aggr1", "aggr2", "aggr3"]
-
-    def test_cli_aggregates_list_space_separated(self) -> None:
-        """Space-separated aggr-list."""
-        record = {"aggr-list": "aggr1 aggr2"}
-        assert _cli_aggregates_list(record) == ["aggr1", "aggr2"]
-
-    def test_cli_aggregates_list_dash(self) -> None:
-        """Dash means no aggregates."""
-        assert _cli_aggregates_list({"aggr-list": "-"}) == []
-
-    def test_cli_aggregates_list_empty(self) -> None:
-        """Empty string means no aggregates."""
-        assert _cli_aggregates_list({"aggr-list": ""}) == []
-        assert _cli_aggregates_list({}) == []
 
 
 # ---------------------------------------------------------------------------

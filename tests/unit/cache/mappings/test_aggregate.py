@@ -10,8 +10,6 @@ import pytest
 from pynetappfoundry.cache.field_mapping import (
     parse_api_record,
     parse_api_response,
-    parse_cli_record,
-    parse_cli_records,
 )
 from pynetappfoundry.cache.mappings.aggregate import AGGREGATE_MAPPING
 from pynetappfoundry.cache.models import AggregateInfo
@@ -70,18 +68,6 @@ def full_api_record() -> dict[str, Any]:
         },
         "is_spare_low": False,
         "volume_count": 40,
-    }
-
-
-@pytest.fixture
-def full_cli_record() -> dict[str, Any]:
-    """Full CLI aggregate record with all fields."""
-    return {
-        "aggregate": "PRODAGGR1",
-        "node": "PRODCL1-01",
-        "state": "online",
-        "type": "ssd",
-        "volcount": "40",
     }
 
 
@@ -341,75 +327,6 @@ class TestAggregateApiParsing:
 
 
 # ---------------------------------------------------------------------------
-# CLI parsing tests
-# ---------------------------------------------------------------------------
-
-
-class TestAggregateCliParsing:
-    """Tests for parsing CLI aggregate records."""
-
-    def test_full_record(self, full_cli_record: dict[str, Any]) -> None:
-        """Full CLI record parses to complete AggregateInfo."""
-        aggr = parse_cli_record(AGGREGATE_MAPPING, full_cli_record, "[test]")
-        assert isinstance(aggr, AggregateInfo)
-        assert aggr.name == "PRODAGGR1"
-        assert aggr.node == "PRODCL1-01"
-        assert aggr.state == "online"
-        assert aggr.type == "ssd"
-        assert aggr.volume_count == 40
-        # Fields without cli_field should use defaults
-        assert aggr.uuid == ""
-        assert aggr.total_size == 0
-        assert aggr.disk_count == 0
-        assert aggr.disk_type == ""
-        assert aggr.raid_type == ""
-        # New fields without cli_field should use defaults
-        assert aggr.storage_type == ""
-        assert aggr.disk_class == ""
-        assert aggr.raid_size == 0
-        assert aggr.checksum_style == ""
-        assert aggr.uses_partitions is False
-        assert aggr.mirror_enabled is False
-        assert aggr.mirror_state == ""
-        assert aggr.hybrid_cache_enabled is False
-        assert aggr.snaplock_type == ""
-        assert aggr.home_node == ""
-        assert aggr.dr_home_node == ""
-        assert aggr.create_time == ""
-        assert aggr.cloud_attach_eligible is False
-        assert aggr.encryption_software is False
-        assert aggr.encryption_drive is False
-        assert aggr.sidl_enabled is False
-        assert aggr.inactive_data_reporting_enabled is False
-        assert aggr.is_spare_low is False
-
-    def test_dash_values_use_defaults(self) -> None:
-        """CLI dash values coerce to default."""
-        record = {
-            "aggregate": "-",
-            "node": "-",
-            "state": "-",
-            "type": "-",
-        }
-        aggr = parse_cli_record(AGGREGATE_MAPPING, record, "[test]")
-        assert aggr.name == ""
-        assert aggr.node == ""
-        assert aggr.state == ""
-        assert aggr.type == ""
-
-    def test_parse_cli_records_multiple(self) -> None:
-        """parse_cli_records handles multiple records."""
-        records = [
-            {"aggregate": "aggr1", "node": "node1"},
-            {"aggregate": "aggr2", "node": "node2"},
-        ]
-        results = parse_cli_records(AGGREGATE_MAPPING, records, "[test]", MagicMock())
-        assert len(results) == 2
-        assert results[0].name == "aggr1"
-        assert results[1].name == "aggr2"
-
-
-# ---------------------------------------------------------------------------
 # Parity test: old parser vs new framework
 # ---------------------------------------------------------------------------
 
@@ -436,16 +353,6 @@ class TestParityWithOldParser:
             disk_count=primary.get("disk_count", 0),
             disk_type=primary.get("disk_type", ""),
             raid_type=primary.get("raid_type", ""),
-        )
-
-    @staticmethod
-    def _old_parse_aggregate_cli(data: dict[str, Any]) -> AggregateInfo:
-        """Reproduce old inline aggregate parsing logic for CLI records."""
-        return AggregateInfo(
-            name=data.get("aggregate", ""),
-            node=data.get("node", ""),
-            state=data.get("state", ""),
-            type=data.get("type", ""),
         )
 
     _ORIGINAL_FIELDS = (
@@ -495,18 +402,6 @@ class TestParityWithOldParser:
         }
         old = self._old_parse_aggregate_api(record)
         new = parse_api_record(AGGREGATE_MAPPING, record, "[test]")
-        assert isinstance(new, AggregateInfo)
-        for field_name in self._ORIGINAL_FIELDS:
-            old_val = getattr(old, field_name)
-            new_val = getattr(new, field_name)
-            assert old_val == new_val, (
-                f"Field '{field_name}' differs: old={old_val!r}, new={new_val!r}"
-            )
-
-    def test_parity_cli_full_record(self, full_cli_record: dict[str, Any]) -> None:
-        """Framework and old parser produce identical AggregateInfo for CLI."""
-        old = self._old_parse_aggregate_cli(full_cli_record)
-        new = parse_cli_record(AGGREGATE_MAPPING, full_cli_record, "[test]")
         assert isinstance(new, AggregateInfo)
         for field_name in self._ORIGINAL_FIELDS:
             old_val = getattr(old, field_name)

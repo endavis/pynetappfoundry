@@ -1,7 +1,9 @@
 """Metadata collector for ONTAP clusters.
 
-Collects cluster metadata using REST API (primary) with CLI fallback.
-Optimized for performance with parallel API calls and response caching.
+Collects cluster metadata using REST API with all-or-nothing semantics.
+Collection either succeeds completely or fails entirely — no partial
+cache updates. Cloud metadata (CLI-only) is optional; all other phases
+are API-only and must succeed.
 """
 
 from __future__ import annotations
@@ -17,7 +19,7 @@ from datetime import UTC, datetime
 from enum import Enum
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
-from pynetappfoundry.cache.field_mapping import parse_api_response, parse_cli_records
+from pynetappfoundry.cache.field_mapping import parse_api_response
 from pynetappfoundry.cache.mappings.aggregate import AGGREGATE_MAPPING
 from pynetappfoundry.cache.mappings.node import NODE_MAPPING
 from pynetappfoundry.cache.mappings.volume import VOLUME_MAPPING
@@ -112,8 +114,8 @@ class CollectionError(Exception):
 class MetadataCollector:
     """Collects cluster metadata from ONTAP via API and CLI.
 
-    Uses REST API as primary data source with CLI fallback for
-    endpoints not available in REST (e.g., virtual-machine instance show).
+    Uses REST API for all collection phases (all-or-nothing). Cloud
+    metadata is CLI-only and optional — failure warns but doesn't abort.
     """
 
     # Human-readable names for collection phases
@@ -328,11 +330,11 @@ class MetadataCollector:
                 error_msg = str(e)
                 self._report_progress(phase, "failed", elapsed, error=error_msg)
                 logger.error(
-                    "%s Failed to collect %s: %s",
+                    "%s COLLECTION_ABORTED: Failed phase: %s - %s: %s",
                     self._log_prefix,
                     phase.value,
+                    type(e).__name__,
                     error_msg,
-                    exc_info=True,
                 )
                 raise
 
@@ -438,6 +440,13 @@ class MetadataCollector:
         # If any phase failed, raise the first error
         if errors:
             first_phase, first_error = errors[0]
+            logger.error(
+                "%s COLLECTION_ABORTED: Failed phase: %s - %s: %s",
+                self._log_prefix,
+                first_phase.value,
+                type(first_error).__name__,
+                first_error,
+            )
             raise CollectionError(
                 f"Collection failed for phase {first_phase.value}: {first_error}"
             ) from first_error
@@ -490,12 +499,8 @@ class MetadataCollector:
         # Cloud metadata is CLI-only
         if phase == CollectionPhase.CLOUD:
             return "cli" if self.cli_client else None
-        # All others prefer API
-        if self.api_client:
-            return "api"
-        if self.cli_client:
-            return "cli"
-        return None
+        # All other phases are API-only
+        return "api" if self.api_client else None
 
     def _log_missing_fields(
         self,
@@ -504,7 +509,7 @@ class MetadataCollector:
         record_type: str,
         record_id: str,
     ) -> None:
-        """Log debug messages for expected API fields missing from a record.
+        """Log error messages for expected API fields missing from a record.
 
         Only logs when a key is absent from the dict — not when present
         with a null, empty, or zero value.
@@ -517,7 +522,7 @@ class MetadataCollector:
         """
         for field in expected_fields:
             if field not in record:
-                logger.debug(
+                logger.error(
                     "%s MISSING_FIELD: %s '%s' - '%s' not in API response",
                     self._log_prefix,
                     record_type,
@@ -533,7 +538,8 @@ class MetadataCollector:
         """Collect cloud provider metadata.
 
         Cloud metadata is only available via CLI (virtual-machine instance show).
-        Returns one CloudMetadata per node in the cluster.
+        Returns one CloudMetadata per node in the cluster. This is the only
+        CLI-only phase — failure warns but does not abort collection.
 
         Returns:
             List of CloudMetadata objects, one per node.
@@ -542,7 +548,12 @@ class MetadataCollector:
             try:
                 return self._collect_cloud_metadata_via_cli()
             except Exception as e:
-                logger.warning(f"{self._log_prefix} Failed to collect cloud metadata via CLI: {e}")
+                logger.error(
+                    "%s CLI_FAILURE: Cloud metadata - %s: %s",
+                    self._log_prefix,
+                    type(e).__name__,
+                    e,
+                )
         return []
 
     def _collect_cloud_metadata_via_cli(self) -> list[CloudMetadata]:
@@ -784,26 +795,29 @@ class MetadataCollector:
     # -------------------------------------------------------------------------
 
     def collect_cluster_info(self) -> ClusterInfo:
-        """Collect cluster identity information.
+        """Collect cluster identity information (API-only).
 
         Returns:
             ClusterInfo object.
+
+        Raises:
+            CollectionError: If no API client is available.
+            Exception: If the API call fails.
         """
-        # Try API first
-        if self.api_client:
-            try:
-                return self._collect_cluster_info_via_api()
-            except Exception as e:
-                logger.warning(f"{self._log_prefix} Failed to collect cluster info via API: {e}")
-
-        # Fall back to CLI
-        if self.cli_client:
-            try:
-                return self._collect_cluster_info_via_cli()
-            except Exception as e:
-                logger.warning(f"{self._log_prefix} Failed to collect cluster info via CLI: {e}")
-
-        return ClusterInfo()
+        if not self.api_client:
+            raise CollectionError(
+                f"{self._log_prefix} API_FAILURE: Cluster info - no API client available"
+            )
+        try:
+            return self._collect_cluster_info_via_api()
+        except Exception as e:
+            logger.error(
+                "%s API_FAILURE: Cluster info - %s: %s",
+                self._log_prefix,
+                type(e).__name__,
+                e,
+            )
+            raise
 
     def _collect_cluster_info_via_api(self) -> ClusterInfo:
         """Collect cluster info using REST API.
@@ -837,56 +851,34 @@ class MetadataCollector:
             location=response.get("location", ""),
         )
 
-    def _collect_cluster_info_via_cli(self) -> ClusterInfo:
-        """Collect cluster info using CLI.
-
-        Returns:
-            ClusterInfo from cluster identity show.
-        """
-        if not self.cli_client:
-            logger.debug("%s No CLI client available for cluster info collection", self._log_prefix)
-            return ClusterInfo()
-
-        logger.debug("%s CLI command: cluster identity show", self._log_prefix)
-        output, _ = self.cli_client.run_a_show_command_and_parse_seperator("cluster identity show")
-        logger.debug("%s CLI response: %d entries", self._log_prefix, len(output))
-        if output:
-            data = output[0]
-            self._log_missing_fields(
-                data,
-                ["cluster", "cluster-uuid"],
-                "Cluster(CLI)",
-                data.get("cluster", "unknown"),
-            )
-            return ClusterInfo(
-                cluster_name=data.get("cluster", ""),
-                cluster_uuid=data.get("cluster-uuid", ""),
-            )
-        return ClusterInfo()
-
     # -------------------------------------------------------------------------
     # Node Collection
     # -------------------------------------------------------------------------
 
     def collect_nodes(self) -> list[NodeInfo]:
-        """Collect node information.
+        """Collect node information (API-only).
 
         Returns:
             List of NodeInfo objects.
+
+        Raises:
+            CollectionError: If no API client is available.
+            Exception: If the API call fails.
         """
-        if self.api_client:
-            try:
-                return self._collect_nodes_via_api()
-            except Exception as e:
-                logger.warning(f"{self._log_prefix} Failed to collect nodes via API: {e}")
-
-        if self.cli_client:
-            try:
-                return self._collect_nodes_via_cli()
-            except Exception as e:
-                logger.warning(f"{self._log_prefix} Failed to collect nodes via CLI: {e}")
-
-        return []
+        if not self.api_client:
+            raise CollectionError(
+                f"{self._log_prefix} API_FAILURE: Nodes - no API client available"
+            )
+        try:
+            return self._collect_nodes_via_api()
+        except Exception as e:
+            logger.error(
+                "%s API_FAILURE: Nodes - %s: %s",
+                self._log_prefix,
+                type(e).__name__,
+                e,
+            )
+            raise
 
     def _collect_nodes_via_api(self) -> list[NodeInfo]:
         """Collect nodes using REST API.
@@ -908,45 +900,34 @@ class MetadataCollector:
             parse_api_response(NODE_MAPPING, response, self._log_prefix, self._log_missing_fields),
         )
 
-    def _collect_nodes_via_cli(self) -> list[NodeInfo]:
-        """Collect nodes using CLI.
-
-        Returns:
-            List of NodeInfo from system node show.
-        """
-        if not self.cli_client:
-            logger.debug("%s No CLI client available for nodes collection", self._log_prefix)
-            return []
-
-        output, _ = self.cli_client.run_a_show_command_and_parse_seperator(NODE_MAPPING.cli_command)
-        return cast(
-            list[NodeInfo],
-            parse_cli_records(NODE_MAPPING, output, self._log_prefix, self._log_missing_fields),
-        )
-
     # -------------------------------------------------------------------------
     # Network Collection
     # -------------------------------------------------------------------------
 
     def collect_network(self) -> NetworkInfo:
-        """Collect network configuration.
+        """Collect network configuration (API-only).
 
         Returns:
             NetworkInfo object.
+
+        Raises:
+            CollectionError: If no API client is available.
+            Exception: If the API call fails.
         """
-        if self.api_client:
-            try:
-                return self._collect_network_via_api()
-            except Exception as e:
-                logger.warning(f"{self._log_prefix} Failed to collect network via API: {e}")
-
-        if self.cli_client:
-            try:
-                return self._collect_network_via_cli()
-            except Exception as e:
-                logger.warning(f"{self._log_prefix} Failed to collect network via CLI: {e}")
-
-        return NetworkInfo()
+        if not self.api_client:
+            raise CollectionError(
+                f"{self._log_prefix} API_FAILURE: Network - no API client available"
+            )
+        try:
+            return self._collect_network_via_api()
+        except Exception as e:
+            logger.error(
+                "%s API_FAILURE: Network - %s: %s",
+                self._log_prefix,
+                type(e).__name__,
+                e,
+            )
+            raise
 
     def _collect_network_via_api(self) -> NetworkInfo:
         """Collect network info using REST API.
@@ -1064,78 +1045,34 @@ class MetadataCollector:
             subnets=subnets,
         )
 
-    def _collect_network_via_cli(self) -> NetworkInfo:
-        """Collect network info using CLI.
-
-        Returns:
-            NetworkInfo from network interface show.
-        """
-        if not self.cli_client:
-            logger.debug("%s No CLI client available for network collection", self._log_prefix)
-            return NetworkInfo()
-
-        logger.debug("%s CLI command: network interface show", self._log_prefix)
-        output, _ = self.cli_client.run_a_show_command_and_parse_seperator("network interface show")
-        logger.debug("%s CLI response: %d interfaces", self._log_prefix, len(output))
-        intercluster_lifs = []
-        data_lifs = []
-        management_lifs = []
-
-        for data in output:
-            self._log_missing_fields(
-                data,
-                ["lif", "address", "netmask", "home-node", "home-port", "role", "vserver"],
-                "LIF(CLI)",
-                data.get("lif", "unknown"),
-            )
-            lif = NetworkLIF(
-                name=data.get("lif", ""),
-                ip_address=data.get("address", ""),
-                netmask=data.get("netmask", ""),
-                home_node=data.get("home-node", ""),
-                home_port=data.get("home-port", ""),
-                role=data.get("role", ""),
-                svm=data.get("vserver", ""),
-            )
-            role = data.get("role", "").lower()
-            if "intercluster" in role:
-                intercluster_lifs.append(lif)
-            elif role in ("data", ""):
-                data_lifs.append(lif)
-            elif "mgmt" in role or "management" in role:
-                management_lifs.append(lif)
-            else:
-                data_lifs.append(lif)
-
-        return NetworkInfo(
-            intercluster_lifs=intercluster_lifs,
-            data_lifs=data_lifs,
-            management_lifs=management_lifs,
-        )
-
     # -------------------------------------------------------------------------
     # Storage Collection
     # -------------------------------------------------------------------------
 
     def collect_storage(self) -> StorageInfo:
-        """Collect storage topology information.
+        """Collect storage topology information (API-only).
 
         Returns:
             StorageInfo object.
+
+        Raises:
+            CollectionError: If no API client is available.
+            Exception: If the API call fails.
         """
-        if self.api_client:
-            try:
-                return self._collect_storage_via_api()
-            except Exception as e:
-                logger.warning(f"{self._log_prefix} Failed to collect storage via API: {e}")
-
-        if self.cli_client:
-            try:
-                return self._collect_storage_via_cli()
-            except Exception as e:
-                logger.warning(f"{self._log_prefix} Failed to collect storage via CLI: {e}")
-
-        return StorageInfo()
+        if not self.api_client:
+            raise CollectionError(
+                f"{self._log_prefix} API_FAILURE: Storage - no API client available"
+            )
+        try:
+            return self._collect_storage_via_api()
+        except Exception as e:
+            logger.error(
+                "%s API_FAILURE: Storage - %s: %s",
+                self._log_prefix,
+                type(e).__name__,
+                e,
+            )
+            raise
 
     def _collect_storage_via_api(self) -> StorageInfo:
         """Collect storage info using REST API.
@@ -1315,143 +1252,34 @@ class MetadataCollector:
             cloud_targets.append(target)
         return cloud_targets
 
-    def _collect_storage_via_cli(self) -> StorageInfo:
-        """Collect storage info using CLI.
-
-        Returns:
-            StorageInfo from aggr show, vserver show, and object-store config show.
-        """
-        if not self.cli_client:
-            logger.debug("%s No CLI client available for storage collection", self._log_prefix)
-            return StorageInfo()
-
-        # Collect aggregates
-        aggr_output, _ = self.cli_client.run_a_show_command_and_parse_seperator("aggr show")
-        aggregates = cast(
-            list[AggregateInfo],
-            parse_cli_records(
-                AGGREGATE_MAPPING, aggr_output, self._log_prefix, self._log_missing_fields
-            ),
-        )
-
-        # Collect SVMs
-        logger.debug("%s CLI command: vserver show", self._log_prefix)
-        svm_output, _ = self.cli_client.run_a_show_command_and_parse_seperator("vserver show")
-        logger.debug("%s CLI response: %d SVMs", self._log_prefix, len(svm_output))
-        svms = []
-        for data in svm_output:
-            self._log_missing_fields(
-                data,
-                ["vserver", "admin-state", "type", "root-volume"],
-                "SVM(CLI)",
-                data.get("vserver", "unknown"),
-            )
-            svm = SVMInfo(
-                name=data.get("vserver", ""),
-                state=data.get("admin-state", ""),
-                subtype=data.get("type", ""),
-                root_volume=data.get("root-volume", ""),
-            )
-            svms.append(svm)
-
-        # Collect cloud targets
-        cloud_targets = self._collect_cloud_targets_via_cli()
-
-        # Collect volumes
-        logger.debug("%s CLI command: volume show", self._log_prefix)
-        vol_output, _ = self.cli_client.run_a_show_command_and_parse_seperator("volume show")
-        volumes = cast(
-            list[VolumeInfo],
-            parse_cli_records(
-                VOLUME_MAPPING, vol_output, self._log_prefix, self._log_missing_fields
-            ),
-        )
-
-        return StorageInfo(
-            aggregates=aggregates,
-            svms=svms,
-            cloud_targets=cloud_targets,
-            volumes=volumes,
-        )
-
-    def _collect_cloud_targets_via_cli(self) -> list[CloudTargetInfo]:
-        """Collect cloud object store targets using CLI.
-
-        Returns:
-            List of CloudTargetInfo from storage aggregate object-store config show.
-        """
-        if not self.cli_client:
-            logger.debug(
-                "%s No CLI client available for cloud targets collection", self._log_prefix
-            )
-            return []
-
-        try:
-            logger.debug(
-                "%s CLI command: storage aggregate object-store config show", self._log_prefix
-            )
-            output, _ = self.cli_client.run_a_show_command_and_parse_seperator(
-                "storage aggregate object-store config show"
-            )
-            logger.debug("%s CLI response: %d cloud targets", self._log_prefix, len(output))
-        except Exception as e:
-            # Command may not be available on systems without FabricPool
-            logger.debug("%s Cloud targets CLI command not available: %s", self._log_prefix, e)
-            return []
-
-        cloud_targets = []
-        for data in output:
-            self._log_missing_fields(
-                data,
-                [
-                    "object-store-name",
-                    "provider-type",
-                    "server",
-                    "container",
-                    "owner",
-                    "ssl-enabled",
-                    "auth-type",
-                    "ipspace",
-                ],
-                "CloudTarget(CLI)",
-                data.get("object-store-name", "unknown"),
-            )
-            target = CloudTargetInfo(
-                name=data.get("object-store-name", ""),
-                provider_type=data.get("provider-type", ""),
-                server=data.get("server", ""),
-                container=data.get("container", "") or data.get("bucket", ""),
-                owner=data.get("owner", ""),
-                ssl_enabled=data.get("ssl-enabled", "").lower() == "true",
-                authentication_type=data.get("auth-type", ""),
-                ipspace=data.get("ipspace", ""),
-            )
-            cloud_targets.append(target)
-        return cloud_targets
-
     # -------------------------------------------------------------------------
     # License Collection
     # -------------------------------------------------------------------------
 
     def collect_licenses(self) -> LicenseInfo:
-        """Collect licensing information.
+        """Collect licensing information (API-only).
 
         Returns:
             LicenseInfo object.
+
+        Raises:
+            CollectionError: If no API client is available.
+            Exception: If the API call fails.
         """
-        if self.api_client:
-            try:
-                return self._collect_licenses_via_api()
-            except Exception as e:
-                logger.warning(f"{self._log_prefix} Failed to collect licenses via API: {e}")
-
-        if self.cli_client:
-            try:
-                return self._collect_licenses_via_cli()
-            except Exception as e:
-                logger.warning(f"{self._log_prefix} Failed to collect licenses via CLI: {e}")
-
-        return LicenseInfo()
+        if not self.api_client:
+            raise CollectionError(
+                f"{self._log_prefix} API_FAILURE: Licenses - no API client available"
+            )
+        try:
+            return self._collect_licenses_via_api()
+        except Exception as e:
+            logger.error(
+                "%s API_FAILURE: Licenses - %s: %s",
+                self._log_prefix,
+                type(e).__name__,
+                e,
+            )
+            raise
 
     def _collect_licenses_via_api(self) -> LicenseInfo:
         """Collect licenses using REST API.
@@ -1499,60 +1327,34 @@ class MetadataCollector:
 
         return LicenseInfo(feature_licenses=feature_licenses, capacity_licenses=capacity_licenses)
 
-    def _collect_licenses_via_cli(self) -> LicenseInfo:
-        """Collect licenses using CLI.
-
-        Returns:
-            LicenseInfo from license show.
-        """
-        if not self.cli_client:
-            logger.debug("%s No CLI client available for license collection", self._log_prefix)
-            return LicenseInfo()
-
-        logger.debug("%s CLI command: license show", self._log_prefix)
-        output, _ = self.cli_client.run_a_show_command_and_parse_seperator("license show")
-        logger.debug("%s CLI response: %d licenses", self._log_prefix, len(output))
-        feature_licenses = []
-
-        for data in output:
-            self._log_missing_fields(
-                data,
-                ["package", "state", "scope"],
-                "License(CLI)",
-                data.get("package", "unknown"),
-            )
-            feature = LicenseFeature(
-                name=data.get("package", ""),
-                state=data.get("state", ""),
-                scope=data.get("scope", ""),
-            )
-            feature_licenses.append(feature)
-
-        return LicenseInfo(feature_licenses=feature_licenses)
-
     # -------------------------------------------------------------------------
     # HA Info Collection
     # -------------------------------------------------------------------------
 
     def collect_ha_info(self) -> HAInfo:
-        """Collect HA configuration information.
+        """Collect HA configuration information (API-only).
 
         Returns:
             HAInfo object.
+
+        Raises:
+            CollectionError: If no API client is available.
+            Exception: If the API call fails.
         """
-        if self.api_client:
-            try:
-                return self._collect_ha_info_via_api()
-            except Exception as e:
-                logger.warning(f"{self._log_prefix} Failed to collect HA info via API: {e}")
-
-        if self.cli_client:
-            try:
-                return self._collect_ha_info_via_cli()
-            except Exception as e:
-                logger.warning(f"{self._log_prefix} Failed to collect HA info via CLI: {e}")
-
-        return HAInfo()
+        if not self.api_client:
+            raise CollectionError(
+                f"{self._log_prefix} API_FAILURE: HA info - no API client available"
+            )
+        try:
+            return self._collect_ha_info_via_api()
+        except Exception as e:
+            logger.error(
+                "%s API_FAILURE: HA info - %s: %s",
+                self._log_prefix,
+                type(e).__name__,
+                e,
+            )
+            raise
 
     def _collect_ha_info_via_api(self) -> HAInfo:
         """Collect HA info using REST API.
@@ -1613,59 +1415,34 @@ class MetadataCollector:
             mediator_address=mediator_address,
         )
 
-    def _collect_ha_info_via_cli(self) -> HAInfo:
-        """Collect HA info using CLI.
-
-        Returns:
-            HAInfo from storage failover show.
-        """
-        if not self.cli_client:
-            logger.debug("%s No CLI client available for HA info collection", self._log_prefix)
-            return HAInfo()
-
-        logger.debug("%s CLI command: storage failover show", self._log_prefix)
-        output, _ = self.cli_client.run_a_show_command_and_parse_seperator("storage failover show")
-        logger.debug("%s CLI response: %d entries", self._log_prefix, len(output))
-        if not output:
-            return HAInfo(is_ha=False)
-
-        # Parse first node's HA info
-        first_node = output[0]
-        self._log_missing_fields(
-            first_node,
-            ["partner-name", "node-state"],
-            "HA(CLI)",
-            first_node.get("node", "unknown"),
-        )
-        return HAInfo(
-            is_ha=True,
-            partner_node=first_node.get("partner-name", ""),
-            ha_state=first_node.get("node-state", ""),
-        )
-
     # -------------------------------------------------------------------------
     # Relationships Collection
     # -------------------------------------------------------------------------
 
     def collect_relationships(self) -> RelationshipsInfo:
-        """Collect cluster relationships information.
+        """Collect cluster relationships information (API-only).
 
         Returns:
             RelationshipsInfo object.
+
+        Raises:
+            CollectionError: If no API client is available.
+            Exception: If the API call fails.
         """
-        if self.api_client:
-            try:
-                return self._collect_relationships_via_api()
-            except Exception as e:
-                logger.warning(f"{self._log_prefix} Failed to collect relationships via API: {e}")
-
-        if self.cli_client:
-            try:
-                return self._collect_relationships_via_cli()
-            except Exception as e:
-                logger.warning(f"{self._log_prefix} Failed to collect relationships via CLI: {e}")
-
-        return RelationshipsInfo()
+        if not self.api_client:
+            raise CollectionError(
+                f"{self._log_prefix} API_FAILURE: Relationships - no API client available"
+            )
+        try:
+            return self._collect_relationships_via_api()
+        except Exception as e:
+            logger.error(
+                "%s API_FAILURE: Relationships - %s: %s",
+                self._log_prefix,
+                type(e).__name__,
+                e,
+            )
+            raise
 
     def _collect_relationships_via_api(self) -> RelationshipsInfo:
         """Collect relationships using REST API.
@@ -1761,64 +1538,6 @@ class MetadataCollector:
             snapmirror_destinations=snapmirror_destinations,
             cluster_peers=cluster_peers,
             svm_peers=svm_peers,
-        )
-
-    def _collect_relationships_via_cli(self) -> RelationshipsInfo:
-        """Collect relationships using CLI.
-
-        Returns:
-            RelationshipsInfo from snapmirror show and cluster peer show.
-        """
-        if not self.cli_client:
-            logger.debug(
-                "%s No CLI client available for relationships collection", self._log_prefix
-            )
-            return RelationshipsInfo()
-
-        # Collect SnapMirror relationships
-        logger.debug("%s CLI command: snapmirror show", self._log_prefix)
-        sm_output, _ = self.cli_client.run_a_show_command_and_parse_seperator("snapmirror show")
-        logger.debug(
-            "%s CLI response: %d SnapMirror relationships", self._log_prefix, len(sm_output)
-        )
-        snapmirror_destinations = []
-        for data in sm_output:
-            self._log_missing_fields(
-                data,
-                ["source-path", "destination-path", "type", "state"],
-                "SnapMirror(CLI)",
-                data.get("source-path", "unknown"),
-            )
-            sm = SnapMirrorRelationship(
-                source_path=data.get("source-path", ""),
-                destination_path=data.get("destination-path", ""),
-                relationship_type=data.get("type", ""),
-                state=data.get("state", ""),
-            )
-            snapmirror_destinations.append(sm)
-
-        # Collect cluster peers
-        logger.debug("%s CLI command: cluster peer show", self._log_prefix)
-        peer_output, _ = self.cli_client.run_a_show_command_and_parse_seperator("cluster peer show")
-        logger.debug("%s CLI response: %d cluster peers", self._log_prefix, len(peer_output))
-        cluster_peers = []
-        for data in peer_output:
-            self._log_missing_fields(
-                data,
-                ["peer-cluster", "remote-cluster-name", "auth-status-admin"],
-                "ClusterPeer(CLI)",
-                data.get("peer-cluster", "unknown"),
-            )
-            peer = ClusterPeer(
-                name=data.get("peer-cluster", ""),
-                remote_cluster_name=data.get("remote-cluster-name", ""),
-                authentication_state=data.get("auth-status-admin", ""),
-            )
-            cluster_peers.append(peer)
-
-        return RelationshipsInfo(
-            snapmirror_destinations=snapmirror_destinations,
-            cluster_peers=cluster_peers,
         )
 
     # -------------------------------------------------------------------------
@@ -2115,18 +1834,29 @@ class MetadataCollector:
     # -------------------------------------------------------------------------
 
     def collect_protocols(self) -> ProtocolsInfo:
-        """Collect protocol configuration information.
+        """Collect protocol configuration information (API-only).
 
         Returns:
             ProtocolsInfo object.
-        """
-        if self.api_client:
-            try:
-                return self._collect_protocols_via_api()
-            except Exception as e:
-                logger.warning(f"{self._log_prefix} Failed to collect protocols via API: {e}")
 
-        return ProtocolsInfo()
+        Raises:
+            CollectionError: If no API client is available.
+            Exception: If the API call fails.
+        """
+        if not self.api_client:
+            raise CollectionError(
+                f"{self._log_prefix} API_FAILURE: Protocols - no API client available"
+            )
+        try:
+            return self._collect_protocols_via_api()
+        except Exception as e:
+            logger.error(
+                "%s API_FAILURE: Protocols - %s: %s",
+                self._log_prefix,
+                type(e).__name__,
+                e,
+            )
+            raise
 
     def _collect_protocols_via_api(self) -> ProtocolsInfo:
         """Collect protocol info using REST API.

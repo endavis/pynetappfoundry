@@ -256,8 +256,8 @@ class TestParseApiRecord:
         result = parse_api_record(tm, {"wrong": "original"}, "[test]")
         assert result.name == "custom"
 
-    def test_transform_exception_uses_default(self) -> None:
-        """Transform exception falls back to default."""
+    def test_transform_exception_propagates(self) -> None:
+        """Transform exception propagates (not caught) with TRANSFORM_FAILURE log."""
 
         def bad_transform(_: dict[str, Any]) -> str:
             raise ValueError("boom")
@@ -269,8 +269,8 @@ class TestParseApiRecord:
             cli_command="t",
             fields=(FieldMapping(cache_attr="name", default="fallback", transform=bad_transform),),
         )
-        result = parse_api_record(tm, {}, "[test]")
-        assert result.name == "fallback"
+        with pytest.raises(ValueError, match="boom"):
+            parse_api_record(tm, {}, "[test]")
 
     def test_no_api_path_no_transform_uses_default(self) -> None:
         """Field with neither api_path nor transform uses default."""
@@ -351,8 +351,8 @@ class TestParseCliRecord:
         result = parse_cli_record(tm, {"raw": "a,b,c"}, "[test]")
         assert result.items == ["a", "b", "c"]
 
-    def test_cli_transform_exception_uses_default(self) -> None:
-        """cli_transform exception falls back to default."""
+    def test_cli_transform_exception_propagates(self) -> None:
+        """cli_transform exception propagates (not caught) with TRANSFORM_FAILURE log."""
 
         def bad_cli_transform(_: dict[str, Any]) -> list[str]:
             raise ValueError("boom")
@@ -364,8 +364,8 @@ class TestParseCliRecord:
             cli_command="t",
             fields=(FieldMapping(cache_attr="items", default=[], cli_transform=bad_cli_transform),),
         )
-        result = parse_cli_record(tm, {}, "[test]")
-        assert result.items == []
+        with pytest.raises(ValueError, match="boom"):
+            parse_cli_record(tm, {}, "[test]")
 
     def test_non_string_value_passthrough(self) -> None:
         """Non-string CLI values are passed through without coercion."""
@@ -482,3 +482,54 @@ class TestParseCliRecords:
         call_args = mock_log.call_args_list[0]
         assert call_args[0][1] == ["name", "val"]  # cli_expected_fields()
         assert call_args[0][2] == "Test(CLI)"
+
+
+# ---------------------------------------------------------------------------
+# TRANSFORM_FAILURE log tag tests
+# ---------------------------------------------------------------------------
+
+
+class TestTransformFailureLogTag:
+    """Tests for TRANSFORM_FAILURE error log tag."""
+
+    def test_api_transform_logs_transform_failure(self, caplog: pytest.LogCaptureFixture) -> None:
+        """Transform exception logs TRANSFORM_FAILURE at error level before propagating."""
+        import logging
+
+        def bad_transform(_: dict[str, Any]) -> str:
+            raise ValueError("data error")
+
+        tm = TypeMapping(
+            name="Volume",
+            model_class=_SampleModel,
+            api_endpoint="/t",
+            cli_command="t",
+            fields=(FieldMapping(cache_attr="name", default="", transform=bad_transform),),
+        )
+        with caplog.at_level(logging.ERROR), pytest.raises(ValueError, match="data error"):
+            parse_api_record(tm, {"name": "vol1"}, "[testcluster:collector]")
+        tf_msgs = [r for r in caplog.records if "TRANSFORM_FAILURE" in r.message]
+        assert len(tf_msgs) == 1
+        assert tf_msgs[0].levelno == logging.ERROR
+        assert "Volume" in tf_msgs[0].message
+        assert "name" in tf_msgs[0].message
+
+    def test_cli_transform_logs_transform_failure(self, caplog: pytest.LogCaptureFixture) -> None:
+        """CLI transform exception logs TRANSFORM_FAILURE at error level before propagating."""
+        import logging
+
+        def bad_cli_transform(_: dict[str, Any]) -> list[str]:
+            raise KeyError("aggregates")
+
+        tm = TypeMapping(
+            name="Volume",
+            model_class=_SampleModel,
+            api_endpoint="/t",
+            cli_command="t",
+            fields=(FieldMapping(cache_attr="items", default=[], cli_transform=bad_cli_transform),),
+        )
+        with caplog.at_level(logging.ERROR), pytest.raises(KeyError, match="aggregates"):
+            parse_cli_record(tm, {}, "[testcluster:collector]")
+        tf_msgs = [r for r in caplog.records if "TRANSFORM_FAILURE" in r.message]
+        assert len(tf_msgs) == 1
+        assert tf_msgs[0].levelno == logging.ERROR

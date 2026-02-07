@@ -10,8 +10,6 @@ import pytest
 from pynetappfoundry.cache.field_mapping import (
     parse_api_record,
     parse_api_response,
-    parse_cli_record,
-    parse_cli_records,
 )
 from pynetappfoundry.cache.mappings.node import NODE_MAPPING
 from pynetappfoundry.cache.models import NodeInfo
@@ -57,17 +55,6 @@ def full_api_record() -> dict[str, Any]:
         "management_interfaces": [
             {"uuid": "mgmt-uuid-1"},
         ],
-    }
-
-
-@pytest.fixture
-def full_cli_record() -> dict[str, Any]:
-    """Full CLI node record with all mapped CLI fields."""
-    return {
-        "node": "PRODCL1-01",
-        "serial-number": "123456789",
-        "system-id": "0123456789",
-        "model": "AFF-A400",
     }
 
 
@@ -284,66 +271,6 @@ class TestNodeApiParsing:
 
 
 # ---------------------------------------------------------------------------
-# CLI parsing tests
-# ---------------------------------------------------------------------------
-
-
-class TestNodeCliParsing:
-    """Tests for parsing CLI node records."""
-
-    def test_full_record(self, full_cli_record: dict[str, Any]) -> None:
-        """Full CLI record parses to NodeInfo with CLI fields populated."""
-        node = parse_cli_record(NODE_MAPPING, full_cli_record, "[test]")
-        assert isinstance(node, NodeInfo)
-        assert node.name == "PRODCL1-01"
-        assert node.serial_number == "123456789"
-        assert node.system_id == "0123456789"
-        assert node.model == "AFF-A400"
-        # Fields without cli_field should use defaults
-        assert node.uuid == ""
-        assert node.location == ""
-        assert node.membership == ""
-        assert node.version_full == ""
-        assert node.storage_configuration == ""
-        assert node.system_machine_type == ""
-        assert node.controller_board == ""
-        assert node.controller_memory_size == 0
-        assert node.controller_cpu_count == 0
-        assert node.vm_provider_type == ""
-        assert node.ha_enabled is False
-        assert node.ha_auto_giveback is False
-        assert node.ha_partner_uuids == []
-        assert node.system_aggregate_uuid == ""
-        assert node.cluster_interface_uuids == []
-        assert node.management_interface_uuids == []
-
-    def test_dash_values_use_defaults(self) -> None:
-        """CLI dash values coerce to default."""
-        record = {
-            "node": "-",
-            "serial-number": "-",
-            "system-id": "-",
-            "model": "-",
-        }
-        node = parse_cli_record(NODE_MAPPING, record, "[test]")
-        assert node.name == ""
-        assert node.serial_number == ""
-        assert node.system_id == ""
-        assert node.model == ""
-
-    def test_parse_cli_records_multiple(self) -> None:
-        """parse_cli_records handles multiple records."""
-        records = [
-            {"node": "node1", "serial-number": "111"},
-            {"node": "node2", "serial-number": "222"},
-        ]
-        results = parse_cli_records(NODE_MAPPING, records, "[test]", MagicMock())
-        assert len(results) == 2
-        assert results[0].name == "node1"
-        assert results[1].name == "node2"
-
-
-# ---------------------------------------------------------------------------
 # Parity test: old parser vs new framework
 # ---------------------------------------------------------------------------
 
@@ -366,16 +293,6 @@ class TestParityWithOldParser:
             system_id=str(record.get("system_id", "")),
             model=str(record.get("model", "")),
             location=record.get("location", ""),
-        )
-
-    @staticmethod
-    def _old_parse_node_cli(data: dict[str, Any]) -> NodeInfo:
-        """Reproduce old inline node parsing logic for CLI records."""
-        return NodeInfo(
-            name=data.get("node", ""),
-            serial_number=data.get("serial-number", ""),
-            system_id=data.get("system-id", ""),
-            model=data.get("model", ""),
         )
 
     _ORIGINAL_FIELDS = (
@@ -432,18 +349,6 @@ class TestParityWithOldParser:
         record: dict[str, Any] = {"name": "node1"}
         old = self._old_parse_node_api(record)
         new = parse_api_record(NODE_MAPPING, record, "[test]")
-        assert isinstance(new, NodeInfo)
-        for field_name in self._ORIGINAL_FIELDS:
-            old_val = getattr(old, field_name)
-            new_val = getattr(new, field_name)
-            assert old_val == new_val, (
-                f"Field '{field_name}' differs: old={old_val!r}, new={new_val!r}"
-            )
-
-    def test_parity_cli_full_record(self, full_cli_record: dict[str, Any]) -> None:
-        """Framework and old parser produce identical NodeInfo for CLI."""
-        old = self._old_parse_node_cli(full_cli_record)
-        new = parse_cli_record(NODE_MAPPING, full_cli_record, "[test]")
         assert isinstance(new, NodeInfo)
         for field_name in self._ORIGINAL_FIELDS:
             old_val = getattr(old, field_name)

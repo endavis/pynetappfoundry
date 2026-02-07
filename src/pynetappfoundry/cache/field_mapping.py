@@ -134,7 +134,8 @@ def parse_api_record(
 
     For each field: uses ``transform(record)`` if set, otherwise extracts
     via ``get_nested_value(record, api_path)``. Falls back to default on
-    ``PathNotFoundError`` or transform exception.
+    ``PathNotFoundError``. Transform exceptions propagate (logged as
+    ``TRANSFORM_FAILURE``).
 
     Args:
         mapping: Type mapping definition.
@@ -150,13 +151,14 @@ def parse_api_record(
             try:
                 kwargs[field.cache_attr] = field.transform(record)
             except Exception:
-                logger.debug(
-                    "%s transform error for %s.%s, using default",
+                logger.error(
+                    "%s TRANSFORM_FAILURE: %s '%s' - transform error for field '%s'",
                     log_prefix,
                     mapping.name,
+                    record.get(mapping.id_field, record.get("uuid", "unknown")),
                     field.cache_attr,
                 )
-                kwargs[field.cache_attr] = field.default
+                raise
         elif field.api_path is not None:
             try:
                 kwargs[field.cache_attr] = get_nested_value(record, field.api_path)
@@ -191,13 +193,13 @@ def parse_cli_record(
             try:
                 kwargs[field.cache_attr] = field.cli_transform(record)
             except Exception:
-                logger.debug(
-                    "%s cli_transform error for %s.%s, using default",
+                logger.error(
+                    "%s TRANSFORM_FAILURE: %s - cli_transform error for field '%s'",
                     log_prefix,
                     mapping.name,
                     field.cache_attr,
                 )
-                kwargs[field.cache_attr] = field.default
+                raise
         elif field.cli_field is not None:
             raw = record.get(field.cli_field)
             if raw is None:
