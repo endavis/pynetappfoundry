@@ -56,6 +56,7 @@ The pilot migration (VolumeInfo) was completed in PR #189.
 - Issue #188: feat: add declarative field mapping framework
 - Issue #191: refactor: migrate AggregateInfo to field mapping framework
 - Issue #210: refactor: migrate NodeInfo to field mapping framework
+- Issue #237: refactor: all-or-nothing collection with no CLI fallback
 
 ## Related Documentation
 

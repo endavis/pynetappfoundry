@@ -418,19 +418,19 @@ All models use `ConfigDict(extra="allow")` for forward compatibility with new AP
 
 ### Collection Phases
 
-The `MetadataCollector` collects data in these phases (each runs API calls in parallel):
+The `MetadataCollector` uses all-or-nothing collection semantics: every API phase must succeed completely or the entire collection is aborted — no partial cache updates. Cloud metadata is the only CLI-based phase and is optional (failure logs a warning but does not abort collection).
 
-| Phase | REST API Endpoints |
-|-------|-------------------|
-| `CLOUD` | Cloud provider metadata (CLI-based) |
-| `CLUSTER` | `/cluster` |
-| `NODES` | `/cluster/nodes` |
-| `NETWORK` | `/network/ip/interfaces`, `/network/ethernet/broadcast-domains`, `/cluster/peers` (for ipspaces), `/name-services/dns`, `/network/ip/subnets` |
-| `STORAGE` | `/storage/aggregates`, `/svm/svms`, `/cloud/targets`, `/storage/volumes`, `/storage/qtrees`, `/storage/snapshot-policies`, `/cluster/schedules`, `/storage/luns`, `/protocols/san/igroups`, `/storage/qos/policies`, `/storage/flexcache/flexcaches` |
-| `LICENSES` | `/cluster/licensing/licenses`, `/cluster/licensing/capacity-pools` |
-| `HA` | `/cluster/nodes` (HA fields) |
-| `RELATIONSHIPS` | `/snapmirror/relationships`, `/cluster/peers`, `/svm/peers` |
-| `PROTOCOLS` | `/protocols/nfs/export-policies`, `/protocols/cifs/shares`, `/protocols/nfs/services`, `/protocols/cifs/services`, `/protocols/s3/buckets` |
+| Phase | Source | Required | Endpoints |
+|-------|--------|----------|-----------|
+| `CLOUD` | CLI | No | Cloud provider metadata (`virtual-machine instance show`) |
+| `CLUSTER` | API | Yes | `/cluster` |
+| `NODES` | API | Yes | `/cluster/nodes` |
+| `NETWORK` | API | Yes | `/network/ip/interfaces`, `/network/ethernet/broadcast-domains`, `/cluster/peers` (for ipspaces), `/name-services/dns`, `/network/ip/subnets` |
+| `STORAGE` | API | Yes | `/storage/aggregates`, `/svm/svms`, `/cloud/targets`, `/storage/volumes`, `/storage/qtrees`, `/storage/snapshot-policies`, `/cluster/schedules`, `/storage/luns`, `/protocols/san/igroups`, `/storage/qos/policies`, `/storage/flexcache/flexcaches` |
+| `LICENSES` | API | Yes | `/cluster/licensing/licenses`, `/cluster/licensing/capacity-pools` |
+| `HA` | API | Yes | `/cluster/nodes` (HA fields) |
+| `RELATIONSHIPS` | API | Yes | `/snapmirror/relationships`, `/cluster/peers`, `/svm/peers` |
+| `PROTOCOLS` | API | Yes | `/protocols/nfs/export-policies`, `/protocols/cifs/shares`, `/protocols/nfs/services`, `/protocols/cifs/services`, `/protocols/s3/buckets` |
 
 ## API Reference
 
