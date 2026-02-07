@@ -22,22 +22,18 @@ AGGREGATE_MAPPING = TypeMapping(
         FieldMapping(
             cache_attr="name",
             api_path="name",
-            cli_field="aggregate",
         ),
         FieldMapping(
             cache_attr="node",
             api_path="node.name",
-            cli_field="node",
         ),
         FieldMapping(
             cache_attr="state",
             api_path="state",
-            cli_field="state",
         ),
         FieldMapping(
             cache_attr="type",
             api_path="block_storage.primary.disk_type",
-            cli_field="type",
         ),
         FieldMapping(
             cache_attr="total_size",
@@ -140,7 +136,6 @@ AGGREGATE_MAPPING = TypeMapping(
         FieldMapping(
             cache_attr="volume_count",
             api_path="volume_count",
-            cli_field="volcount",
             default=0,
         ),
         # expensive field (needs explicit API request)

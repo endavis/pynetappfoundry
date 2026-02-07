@@ -22,22 +22,18 @@ NODE_MAPPING = TypeMapping(
         FieldMapping(
             cache_attr="name",
             api_path="name",
-            cli_field="node",
         ),
         FieldMapping(
             cache_attr="serial_number",
             api_path="serial_number",
-            cli_field="serial-number",
         ),
         FieldMapping(
             cache_attr="system_id",
             api_path="system_id",
-            cli_field="system-id",
         ),
         FieldMapping(
             cache_attr="model",
             api_path="model",
-            cli_field="model",
         ),
         FieldMapping(
             cache_attr="location",

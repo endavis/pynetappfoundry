@@ -15,12 +15,7 @@ from pynetappfoundry.cache.collector import (
 )
 from pynetappfoundry.cache.models import (
     CloudMetadata,
-    HAInfo,
-    LicenseInfo,
-    NetworkInfo,
     ProtocolsInfo,
-    RelationshipsInfo,
-    StorageInfo,
 )
 
 
@@ -291,30 +286,22 @@ class TestClusterInfoCollection:
         assert "9.14.1" in result.ontap_version
         api_client.call_endpoint.assert_called_with("/cluster?fields=*", method="GET")
 
-    def test_collect_cluster_info_fallback_to_cli(
-        self, mock_cluster_cli_output: tuple[list[dict[str, str]], dict[str, str]]
-    ) -> None:
-        """Test cluster info falls back to CLI when API fails."""
+    def test_collect_cluster_info_api_failure_propagates(self) -> None:
+        """Test cluster info raises when API call fails (no CLI fallback)."""
         api_client = MagicMock()
         api_client.call_endpoint.side_effect = Exception("API unavailable")
 
-        cli_client = MagicMock()
-        cli_client.run_a_show_command_and_parse_seperator.return_value = mock_cluster_cli_output
-
-        collector = MetadataCollector(api_client=api_client, cli_client=cli_client)
-        result = collector.collect_cluster_info()
-
-        assert result.cluster_name == "mycluster"
-        assert result.cluster_uuid == "abc-123-def-456"
-        cli_client.run_a_show_command_and_parse_seperator.assert_called()
+        collector = MetadataCollector(api_client=api_client)
+        with pytest.raises(Exception, match="API unavailable"):
+            collector.collect_cluster_info()
 
     def test_collect_cluster_info_no_clients(self) -> None:
-        """Test cluster info returns empty when no clients."""
-        collector = MetadataCollector()
-        result = collector.collect_cluster_info()
+        """Test cluster info raises CollectionError when no API client."""
+        from pynetappfoundry.cache.collector import CollectionError
 
-        assert result.cluster_name == ""
-        assert result.cluster_uuid == ""
+        collector = MetadataCollector()
+        with pytest.raises(CollectionError, match="API_FAILURE"):
+            collector.collect_cluster_info()
 
 
 class TestNodesCollection:
@@ -362,11 +349,12 @@ class TestNodesCollection:
         assert result[1].membership == "available"
 
     def test_collect_nodes_no_clients(self) -> None:
-        """Test nodes returns empty list when no clients."""
-        collector = MetadataCollector()
-        result = collector.collect_nodes()
+        """Test nodes raises CollectionError when no API client."""
+        from pynetappfoundry.cache.collector import CollectionError
 
-        assert result == []
+        collector = MetadataCollector()
+        with pytest.raises(CollectionError, match="API_FAILURE"):
+            collector.collect_nodes()
 
 
 class TestNetworkCollection:
@@ -460,12 +448,12 @@ class TestNetworkCollection:
         assert result.subnets[0].ip_ranges == ["10.0.0.10-10.0.0.50"]
 
     def test_collect_network_no_clients(self) -> None:
-        """Test network returns empty when no clients."""
-        collector = MetadataCollector()
-        result = collector.collect_network()
+        """Test network raises CollectionError when no API client."""
+        from pynetappfoundry.cache.collector import CollectionError
 
-        assert isinstance(result, NetworkInfo)
-        assert result.data_lifs == []
+        collector = MetadataCollector()
+        with pytest.raises(CollectionError, match="API_FAILURE"):
+            collector.collect_network()
 
 
 class TestStorageCollection:
@@ -679,12 +667,12 @@ class TestStorageCollection:
         assert result.flexcaches[0].global_file_locking_enabled is True
 
     def test_collect_storage_no_clients(self) -> None:
-        """Test storage returns empty when no clients."""
-        collector = MetadataCollector()
-        result = collector.collect_storage()
+        """Test storage raises CollectionError when no API client."""
+        from pynetappfoundry.cache.collector import CollectionError
 
-        assert isinstance(result, StorageInfo)
-        assert result.aggregates == []
+        collector = MetadataCollector()
+        with pytest.raises(CollectionError, match="API_FAILURE"):
+            collector.collect_storage()
 
 
 class TestCloudTargetsCollection:
@@ -807,65 +795,6 @@ class TestCloudTargetsCollection:
         assert len(result.aggregates) == 1
         assert result.cloud_targets == []
 
-    def test_collect_cloud_targets_via_cli(self) -> None:
-        """Test collecting cloud targets via CLI fallback."""
-        cli_client = MagicMock()
-        cli_client.run_a_show_command_and_parse_seperator.side_effect = [
-            # aggr show
-            ([{"aggregate": "aggr1", "node": "node1", "state": "online", "type": "ssd"}], {}),
-            # vserver show
-            ([{"vserver": "svm1", "admin-state": "running", "type": "default"}], {}),
-            # storage aggregate object-store config show
-            (
-                [
-                    {
-                        "object-store-name": "s3-target-1",
-                        "provider-type": "AWS_S3",
-                        "server": "s3.us-east-1.amazonaws.com",
-                        "container": "my-bucket",
-                        "owner": "fabricpool",
-                        "ssl-enabled": "true",
-                        "auth-type": "key",
-                        "ipspace": "Default",
-                    }
-                ],
-                {},
-            ),
-            # volume show
-            ([], {}),
-        ]
-
-        collector = MetadataCollector(cli_client=cli_client)
-        result = collector.collect_storage()
-
-        assert len(result.cloud_targets) == 1
-        target = result.cloud_targets[0]
-        assert target.name == "s3-target-1"
-        assert target.provider_type == "AWS_S3"
-        assert target.container == "my-bucket"
-        assert target.ssl_enabled is True
-
-    def test_collect_cloud_targets_cli_not_available(self) -> None:
-        """Test that CLI fallback handles command not available."""
-        cli_client = MagicMock()
-
-        def side_effect(cmd: str) -> tuple[list[dict[str, Any]], dict[str, str]]:
-            if "object-store" in cmd:
-                raise Exception("Command not available")
-            if "aggr" in cmd:
-                return ([{"aggregate": "aggr1", "node": "node1", "state": "online"}], {})
-            if "vserver" in cmd:
-                return ([{"vserver": "svm1", "admin-state": "running"}], {})
-            return ([], {})
-
-        cli_client.run_a_show_command_and_parse_seperator.side_effect = side_effect
-
-        collector = MetadataCollector(cli_client=cli_client)
-        result = collector.collect_storage()
-
-        assert len(result.aggregates) == 1
-        assert result.cloud_targets == []
-
     def test_collect_cloud_targets_empty(self) -> None:
         """Test collecting when no cloud targets exist."""
         api_client = MagicMock()
@@ -917,12 +846,12 @@ class TestLicenseCollection:
         assert result.capacity_licenses[0].name == "Cloud Volumes ONTAP"
 
     def test_collect_licenses_no_clients(self) -> None:
-        """Test licenses returns empty when no clients."""
-        collector = MetadataCollector()
-        result = collector.collect_licenses()
+        """Test licenses raises CollectionError when no API client."""
+        from pynetappfoundry.cache.collector import CollectionError
 
-        assert isinstance(result, LicenseInfo)
-        assert result.feature_licenses == []
+        collector = MetadataCollector()
+        with pytest.raises(CollectionError, match="API_FAILURE"):
+            collector.collect_licenses()
 
 
 class TestHAInfoCollection:
@@ -956,12 +885,12 @@ class TestHAInfoCollection:
         assert result.mediator_address == "10.0.0.100"
 
     def test_collect_ha_info_no_clients(self) -> None:
-        """Test HA info returns defaults when no clients."""
-        collector = MetadataCollector()
-        result = collector.collect_ha_info()
+        """Test HA info raises CollectionError when no API client."""
+        from pynetappfoundry.cache.collector import CollectionError
 
-        assert isinstance(result, HAInfo)
-        assert result.is_ha is False
+        collector = MetadataCollector()
+        with pytest.raises(CollectionError, match="API_FAILURE"):
+            collector.collect_ha_info()
 
 
 class TestRelationshipsCollection:
@@ -1037,12 +966,12 @@ class TestRelationshipsCollection:
         assert result.svm_peers[0].applications == ["snapmirror"]
 
     def test_collect_relationships_no_clients(self) -> None:
-        """Test relationships returns empty when no clients."""
-        collector = MetadataCollector()
-        result = collector.collect_relationships()
+        """Test relationships raises CollectionError when no API client."""
+        from pynetappfoundry.cache.collector import CollectionError
 
-        assert isinstance(result, RelationshipsInfo)
-        assert result.snapmirror_destinations == []
+        collector = MetadataCollector()
+        with pytest.raises(CollectionError, match="API_FAILURE"):
+            collector.collect_relationships()
 
     def test_collect_relationships_with_string_paths(self) -> None:
         """Test relationships handles string paths from API (instead of dicts)."""
@@ -1339,31 +1268,21 @@ class TestProtocolsCollection:
         assert result.s3_buckets == []
 
     def test_collect_protocols_no_clients(self) -> None:
-        """Test protocols returns empty when no clients."""
+        """Test protocols raises CollectionError when no API client."""
+        from pynetappfoundry.cache.collector import CollectionError
+
         collector = MetadataCollector()
-        result = collector.collect_protocols()
+        with pytest.raises(CollectionError, match="API_FAILURE"):
+            collector.collect_protocols()
 
-        assert isinstance(result, ProtocolsInfo)
-        assert result.export_policies == []
-        assert result.cifs_shares == []
-        assert result.nfs_services == []
-        assert result.cifs_services == []
-        assert result.s3_buckets == []
-
-    def test_collect_protocols_api_failure_fallback(self) -> None:
-        """Test protocols returns empty on API failure."""
+    def test_collect_protocols_api_failure_propagates(self) -> None:
+        """Test protocols raises when API call fails (no silent fallback)."""
         api_client = MagicMock()
         api_client.call_endpoint.side_effect = Exception("API error")
 
         collector = MetadataCollector(api_client=api_client)
-        result = collector.collect_protocols()
-
-        assert isinstance(result, ProtocolsInfo)
-        assert result.export_policies == []
-        assert result.cifs_shares == []
-        assert result.nfs_services == []
-        assert result.cifs_services == []
-        assert result.s3_buckets == []
+        with pytest.raises(Exception, match="API error"):
+            collector.collect_protocols()
 
     def test_collect_protocols_policy_without_rules(self) -> None:
         """Test protocols handles policy records with no rules."""
@@ -1759,7 +1678,7 @@ class TestUpdateAzureCloudLinks:
 
 
 class TestLogMissingFields:
-    """Tests for MISSING_FIELD debug logging."""
+    """Tests for MISSING_FIELD error logging."""
 
     @pytest.fixture
     def collector(self) -> MetadataCollector:
@@ -1771,9 +1690,9 @@ class TestLogMissingFields:
     def test_logs_missing_field(
         self, collector: MetadataCollector, caplog: pytest.LogCaptureFixture
     ) -> None:
-        """Test that absent keys produce MISSING_FIELD log entries."""
+        """Test that absent keys produce MISSING_FIELD log entries at error level."""
         record: dict[str, Any] = {"name": "vol1", "uuid": "abc-123"}
-        with caplog.at_level(logging.DEBUG):
+        with caplog.at_level(logging.ERROR):
             collector._log_missing_fields(
                 record, ["name", "uuid", "autosize", "tiering"], "Volume", "vol1"
             )
@@ -1781,6 +1700,10 @@ class TestLogMissingFields:
         assert len(missing_messages) == 2
         assert any("'autosize'" in m for m in missing_messages)
         assert any("'tiering'" in m for m in missing_messages)
+        # Verify error level
+        for rec in caplog.records:
+            if "MISSING_FIELD" in rec.message:
+                assert rec.levelno == logging.ERROR
 
     def test_no_log_for_present_fields(
         self, collector: MetadataCollector, caplog: pytest.LogCaptureFixture
@@ -1793,7 +1716,7 @@ class TestLogMissingFields:
             "size": 0,
             "enabled": False,
         }
-        with caplog.at_level(logging.DEBUG):
+        with caplog.at_level(logging.ERROR):
             collector._log_missing_fields(
                 record,
                 ["name", "uuid", "autosize", "size", "enabled"],
@@ -1808,7 +1731,7 @@ class TestLogMissingFields:
     ) -> None:
         """Test that log messages include cluster name in prefix."""
         record: dict[str, Any] = {"name": "vol1"}
-        with caplog.at_level(logging.DEBUG):
+        with caplog.at_level(logging.ERROR):
             collector._log_missing_fields(record, ["autosize"], "Volume", "vol1")
         missing_messages = [r.message for r in caplog.records if "MISSING_FIELD" in r.message]
         assert len(missing_messages) == 1
@@ -1819,7 +1742,7 @@ class TestLogMissingFields:
     ) -> None:
         """Test that log messages include record type and identifier."""
         record: dict[str, Any] = {}
-        with caplog.at_level(logging.DEBUG):
+        with caplog.at_level(logging.ERROR):
             collector._log_missing_fields(record, ["uuid"], "Aggregate", "aggr1")
         missing_messages = [r.message for r in caplog.records if "MISSING_FIELD" in r.message]
         assert len(missing_messages) == 1
@@ -1849,7 +1772,7 @@ class TestLogMissingFields:
                 }
             ]
         }
-        with caplog.at_level(logging.DEBUG):
+        with caplog.at_level(logging.ERROR):
             collector._parse_volumes_response(response)
         missing_messages = [r.message for r in caplog.records if "MISSING_FIELD" in r.message]
         missing_fields = {m.split("'")[-2] for m in missing_messages}
@@ -1889,7 +1812,7 @@ class TestLogMissingFields:
                 }
             ]
         }
-        with caplog.at_level(logging.DEBUG):
+        with caplog.at_level(logging.ERROR):
             collector._parse_volumes_response(response)
         missing_messages = [r.message for r in caplog.records if "MISSING_FIELD" in r.message]
         assert len(missing_messages) == 0
@@ -1899,52 +1822,77 @@ class TestLogMissingFields:
     ) -> None:
         """Test that the MISSING_FIELD tag is consistently present for grepping."""
         record: dict[str, Any] = {}
-        with caplog.at_level(logging.DEBUG):
+        with caplog.at_level(logging.ERROR):
             collector._log_missing_fields(record, ["field_a", "field_b"], "TestType", "test-id")
         for rec in caplog.records:
             if "MISSING_FIELD" in rec.message:
                 assert "MISSING_FIELD:" in rec.message
+                assert rec.levelno == logging.ERROR
 
-    def test_cli_collection_logs_missing_fields(self, caplog: pytest.LogCaptureFixture) -> None:
-        """Test that CLI collection methods log missing fields."""
-        cli_client = MagicMock()
-        cli_client.run_a_show_command_and_parse_seperator.return_value = (
-            [{"node": "node1"}],  # missing serial-number, system-id, model
-            None,
-        )
-        collector = MetadataCollector(cli_client=cli_client)
+
+class TestGrepableLogTags:
+    """Tests for grepable error log tags (API_FAILURE, CLI_FAILURE, COLLECTION_ABORTED)."""
+
+    def test_api_failure_tag_on_no_client(self, caplog: pytest.LogCaptureFixture) -> None:
+        """Test that API_FAILURE tag is emitted when no API client."""
+        from pynetappfoundry.cache.collector import CollectionError
+
+        collector = MetadataCollector()
+        with pytest.raises(CollectionError, match="API_FAILURE"):
+            collector.collect_nodes()
+
+    def test_api_failure_tag_on_api_error(self, caplog: pytest.LogCaptureFixture) -> None:
+        """Test that API_FAILURE tag is logged at error level on API call failure."""
+        api_client = MagicMock()
+        api_client.call_endpoint.side_effect = ConnectionError("Connection refused")
+
+        collector = MetadataCollector(api_client=api_client)
         collector._cluster_name = "testcluster"
+        with caplog.at_level(logging.ERROR), pytest.raises(ConnectionError):
+            collector.collect_nodes()
+        api_failure_msgs = [r for r in caplog.records if "API_FAILURE" in r.message]
+        assert len(api_failure_msgs) >= 1
+        assert api_failure_msgs[0].levelno == logging.ERROR
+        assert "Nodes" in api_failure_msgs[0].message
+        assert "ConnectionError" in api_failure_msgs[0].message
 
-        with caplog.at_level(logging.DEBUG):
-            collector._collect_nodes_via_cli()
-        missing_messages = [r.message for r in caplog.records if "MISSING_FIELD" in r.message]
-        missing_fields = {m.split("'")[-2] for m in missing_messages}
-        assert "serial-number" in missing_fields
-        assert "system-id" in missing_fields
-        assert "model" in missing_fields
-        # "node" should NOT be missing
-        assert "node" not in missing_fields
-
-    def test_cli_collection_no_log_for_complete_record(
+    def test_cli_failure_tag_on_cloud_metadata_error(
         self, caplog: pytest.LogCaptureFixture
     ) -> None:
-        """Test that complete CLI records produce no MISSING_FIELD logs."""
+        """Test that CLI_FAILURE tag is logged at error level on cloud metadata failure."""
         cli_client = MagicMock()
-        cli_client.run_a_show_command_and_parse_seperator.return_value = (
-            [
-                {
-                    "node": "node1",
-                    "serial-number": "ABC123",
-                    "system-id": "12345",
-                    "model": "FAS8200",
-                }
-            ],
-            None,
-        )
+        cli_client.run_command.side_effect = Exception("SSH timeout")
+
         collector = MetadataCollector(cli_client=cli_client)
         collector._cluster_name = "testcluster"
+        with caplog.at_level(logging.ERROR):
+            result = collector.collect_cloud_metadata()
+        assert result == []
+        cli_failure_msgs = [r for r in caplog.records if "CLI_FAILURE" in r.message]
+        assert len(cli_failure_msgs) == 1
+        assert cli_failure_msgs[0].levelno == logging.ERROR
+        assert "Cloud metadata" in cli_failure_msgs[0].message
 
-        with caplog.at_level(logging.DEBUG):
-            collector._collect_nodes_via_cli()
-        missing_messages = [r.message for r in caplog.records if "MISSING_FIELD" in r.message]
-        assert len(missing_messages) == 0
+    def test_collection_aborted_tag_sequential(self, caplog: pytest.LogCaptureFixture) -> None:
+        """Test that COLLECTION_ABORTED is logged when sequential collection fails."""
+        from pynetappfoundry.cache.collector import CollectionError
+
+        collector = MetadataCollector(parallel=False)
+        collector._cluster_name = "testcluster"
+        with caplog.at_level(logging.ERROR), pytest.raises((CollectionError, Exception)):
+            collector.collect_all("testcluster")
+        aborted_msgs = [r for r in caplog.records if "COLLECTION_ABORTED" in r.message]
+        assert len(aborted_msgs) >= 1
+        assert aborted_msgs[0].levelno == logging.ERROR
+
+    def test_collection_aborted_tag_parallel(self, caplog: pytest.LogCaptureFixture) -> None:
+        """Test that COLLECTION_ABORTED is logged when parallel collection fails."""
+        from pynetappfoundry.cache.collector import CollectionError
+
+        collector = MetadataCollector(parallel=True)
+        collector._cluster_name = "testcluster"
+        with caplog.at_level(logging.ERROR), pytest.raises(CollectionError):
+            collector.collect_all("testcluster")
+        aborted_msgs = [r for r in caplog.records if "COLLECTION_ABORTED" in r.message]
+        assert len(aborted_msgs) >= 1
+        assert aborted_msgs[0].levelno == logging.ERROR

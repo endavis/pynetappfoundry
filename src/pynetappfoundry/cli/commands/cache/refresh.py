@@ -229,6 +229,47 @@ def refresh(
     history_db.close()
 
 
+def _categorize_failure(error: Exception) -> tuple[str, str]:
+    """Categorize a collection failure for the failure summary.
+
+    Args:
+        error: The exception that caused the failure.
+
+    Returns:
+        Tuple of (category, detail) for display.
+    """
+    error_str = str(error)
+    error_type = type(error).__name__
+
+    if "CLI_FAILURE" in error_str:
+        return "CLI", error_str.split("CLI_FAILURE: ", 1)[
+            -1
+        ] if "CLI_FAILURE: " in error_str else f"{error_type}: {error}"
+    if "API_FAILURE" in error_str or "Collection failed for phase" in error_str:
+        return "API", error_str.split("API_FAILURE: ", 1)[
+            -1
+        ] if "API_FAILURE: " in error_str else f"{error_type}: {error}"
+    return "API", f"{error_type}: {error}"
+
+
+def _print_failure_summary(
+    failures: dict[str, list[str]],
+) -> None:
+    """Print a per-cluster failure summary.
+
+    Args:
+        failures: Dict mapping cluster name to list of failure descriptions.
+    """
+    if not failures:
+        return
+
+    console.print("\n[bold red]Failure Summary:[/bold red]")
+    for cluster_name, messages in failures.items():
+        console.print(f"  {cluster_name}:")
+        for msg in messages:
+            console.print(f"    {msg}")
+
+
 def _refresh_normal(
     ctx: click.Context,
     config: Config,
@@ -247,6 +288,7 @@ def _refresh_normal(
     """
     success_count = 0
     error_count = 0
+    failures: dict[str, list[str]] = {}
 
     with Progress(
         SpinnerColumn(),
@@ -264,11 +306,14 @@ def _refresh_normal(
                     success_count += 1
                 else:
                     error_count += 1
+                    failures.setdefault(cluster_name, []).append("No clients available")
 
             except Exception as e:
                 print_exception(f"  {cluster_name}: Failed - {e}", e)
                 logger.exception("Failed to process cluster %s", cluster_name)
                 error_count += 1
+                category, detail = _categorize_failure(e)
+                failures.setdefault(cluster_name, []).append(f"{category}: {detail}")
 
             progress.update(task, completed=1)
 
@@ -278,6 +323,7 @@ def _refresh_normal(
         print_success(f"Successfully refreshed {success_count} cluster(s)")
     if error_count > 0:
         print_error(f"Failed to refresh {error_count} cluster(s)")
+        _print_failure_summary(failures)
         logger.error("Failed to refresh %d cluster(s)", error_count)
         ctx.exit(1)
 
@@ -303,6 +349,7 @@ def _refresh_verbose(
     success_count = 0
     error_count = 0
     total_clusters = len(clusters_to_refresh)
+    failures: dict[str, list[str]] = {}
 
     for idx, cluster_name in enumerate(clusters_to_refresh, 1):
         logger.info("Processing cluster: %s (%d/%d)", cluster_name, idx, total_clusters)
@@ -329,12 +376,15 @@ def _refresh_verbose(
                 success_count += 1
             else:
                 error_count += 1
+                failures.setdefault(cluster_name, []).append("No clients available")
 
         except Exception as e:
             display.print_summary(success=False)
             print_exception(f"  Error: {e}", e)
             logger.exception("Failed to process cluster %s", cluster_name)
             error_count += 1
+            category, detail = _categorize_failure(e)
+            failures.setdefault(cluster_name, []).append(f"{category}: {detail}")
 
     # Summary
     console.print()
@@ -342,6 +392,7 @@ def _refresh_verbose(
         print_success(f"Successfully refreshed {success_count} cluster(s)")
     if error_count > 0:
         print_error(f"Failed to refresh {error_count} cluster(s)")
+        _print_failure_summary(failures)
         logger.error("Failed to refresh %d cluster(s)", error_count)
         ctx.exit(1)
 
