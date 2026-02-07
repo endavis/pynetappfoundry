@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from pynetappfoundry.cache.field_mapping import parse_api_response, parse_cli_records
 from pynetappfoundry.cache.mappings.aggregate import AGGREGATE_MAPPING
+from pynetappfoundry.cache.mappings.node import NODE_MAPPING
 from pynetappfoundry.cache.mappings.volume import VOLUME_MAPPING
 from pynetappfoundry.cache.models import (
     AggregateInfo,
@@ -898,36 +899,14 @@ class MetadataCollector:
             return []
 
         # Use cached API call to avoid duplicate requests (also used by HA collection)
-        response = self._cached_api_call("/cluster/nodes?fields=*")
+        response = self._cached_api_call(NODE_MAPPING.api_endpoint)
         if not response:
             return []
 
-        logger.debug(
-            "%s API response: %d nodes", self._log_prefix, len(response.get("records", []))
+        return cast(
+            list[NodeInfo],
+            parse_api_response(NODE_MAPPING, response, self._log_prefix, self._log_missing_fields),
         )
-        nodes = []
-        for record in response.get("records", []):
-            self._log_missing_fields(
-                record,
-                ["uuid", "name", "serial_number", "system_id", "model", "membership", "location"],
-                "Node",
-                record.get("name", record.get("uuid", "unknown")),
-            )
-            # membership may be a dict or other type depending on API version
-            membership = record.get("membership")
-            is_epsilon = membership.get("epsilon", False) if isinstance(membership, dict) else False
-            nodes.append(
-                NodeInfo(
-                    uuid=record.get("uuid", ""),
-                    name=record.get("name", ""),
-                    serial_number=record.get("serial_number", ""),
-                    system_id=str(record.get("system_id", "")),
-                    model=str(record.get("model", "")),
-                    is_epsilon=is_epsilon,
-                    location=record.get("location", ""),
-                )
-            )
-        return nodes
 
     def _collect_nodes_via_cli(self) -> list[NodeInfo]:
         """Collect nodes using CLI.
@@ -939,26 +918,11 @@ class MetadataCollector:
             logger.debug("%s No CLI client available for nodes collection", self._log_prefix)
             return []
 
-        logger.debug("%s CLI command: system node show", self._log_prefix)
-        output, _ = self.cli_client.run_a_show_command_and_parse_seperator("system node show")
-        logger.debug("%s CLI response: %d nodes", self._log_prefix, len(output))
-        nodes = []
-        for data in output:
-            self._log_missing_fields(
-                data,
-                ["node", "serial-number", "system-id", "model"],
-                "Node(CLI)",
-                data.get("node", "unknown"),
-            )
-            nodes.append(
-                NodeInfo(
-                    name=data.get("node", ""),
-                    serial_number=data.get("serial-number", ""),
-                    system_id=data.get("system-id", ""),
-                    model=data.get("model", ""),
-                )
-            )
-        return nodes
+        output, _ = self.cli_client.run_a_show_command_and_parse_seperator(NODE_MAPPING.cli_command)
+        return cast(
+            list[NodeInfo],
+            parse_cli_records(NODE_MAPPING, output, self._log_prefix, self._log_missing_fields),
+        )
 
     # -------------------------------------------------------------------------
     # Network Collection

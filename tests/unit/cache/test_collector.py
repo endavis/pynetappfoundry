@@ -331,7 +331,7 @@ class TestNodesCollection:
                     "serial_number": "123456",
                     "system_id": "0123456789",
                     "model": "SIMULATED",
-                    "membership": {"epsilon": True},
+                    "membership": "available",
                     "location": "rack-1",
                 },
                 {
@@ -340,7 +340,7 @@ class TestNodesCollection:
                     "serial_number": "789012",
                     "system_id": "9876543210",
                     "model": "SIMULATED",
-                    "membership": {"epsilon": False},
+                    "membership": "available",
                     "location": "rack-2",
                 },
             ]
@@ -357,9 +357,9 @@ class TestNodesCollection:
         assert len(result) == 2
         assert result[0].name == "node1"
         assert result[0].serial_number == "123456"
-        assert result[0].is_epsilon is True
+        assert result[0].membership == "available"
         assert result[1].name == "node2"
-        assert result[1].is_epsilon is False
+        assert result[1].membership == "available"
 
     def test_collect_nodes_no_clients(self) -> None:
         """Test nodes returns empty list when no clients."""

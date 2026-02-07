@@ -128,7 +128,7 @@ class TestNodeInfo:
         assert node.uuid == ""
         assert node.name == ""
         assert node.serial_number == ""
-        assert node.is_epsilon is False
+        assert node.membership == ""
         assert node.location == ""
 
     def test_with_values(self) -> None:
@@ -139,13 +139,13 @@ class TestNodeInfo:
             serial_number="123456789",
             system_id="0123456789",
             model="SIMULATED",
-            is_epsilon=True,
+            membership="available",
             location="rack-1",
         )
         assert node.uuid == "node-uuid-1"
         assert node.name == "node1"
         assert node.serial_number == "123456789"
-        assert node.is_epsilon is True
+        assert node.membership == "available"
         assert node.location == "rack-1"
 
 
