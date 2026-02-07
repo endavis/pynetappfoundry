@@ -69,6 +69,7 @@ def full_api_record() -> dict[str, Any]:
             "enabled": True,
         },
         "is_spare_low": False,
+        "volume_count": 40,
     }
 
 
@@ -80,6 +81,7 @@ def full_cli_record() -> dict[str, Any]:
         "node": "PRODCL1-01",
         "state": "online",
         "type": "ssd",
+        "volcount": "40",
     }
 
 
@@ -138,11 +140,12 @@ class TestAggregateMappingDefinition:
             "space",
             "state",
             "uuid",
+            "volume_count",
         ]
 
     def test_field_count(self) -> None:
-        """Mapping has expected number of fields (9 original + 18 new)."""
-        assert len(AGGREGATE_MAPPING.fields) == 27
+        """Mapping has expected number of fields (9 original + 19 new)."""
+        assert len(AGGREGATE_MAPPING.fields) == 28
 
 
 # ---------------------------------------------------------------------------
@@ -187,6 +190,7 @@ class TestAggregateApiParsing:
         assert aggr.encryption_drive is False
         assert aggr.sidl_enabled is True
         assert aggr.inactive_data_reporting_enabled is True
+        assert aggr.volume_count == 40
         # Expensive field
         assert aggr.is_spare_low is False
 
@@ -222,6 +226,7 @@ class TestAggregateApiParsing:
         assert aggr.encryption_drive is False
         assert aggr.sidl_enabled is False
         assert aggr.inactive_data_reporting_enabled is False
+        assert aggr.volume_count == 0
         assert aggr.is_spare_low is False
 
     def test_nested_node_extraction(self) -> None:
@@ -351,6 +356,7 @@ class TestAggregateCliParsing:
         assert aggr.node == "PRODCL1-01"
         assert aggr.state == "online"
         assert aggr.type == "ssd"
+        assert aggr.volume_count == 40
         # Fields without cli_field should use defaults
         assert aggr.uuid == ""
         assert aggr.total_size == 0
