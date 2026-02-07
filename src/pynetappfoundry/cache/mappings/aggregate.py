@@ -12,7 +12,7 @@ from pynetappfoundry.cache.models import AggregateInfo
 AGGREGATE_MAPPING = TypeMapping(
     name="Aggregate",
     model_class=AggregateInfo,
-    api_endpoint="/storage/aggregates?fields=*,is_spare_low",
+    api_endpoint="/storage/aggregates?fields=*,is_spare_low,sidl_enabled",
     cli_command="aggr show",
     fields=(
         FieldMapping(

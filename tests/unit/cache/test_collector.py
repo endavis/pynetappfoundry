@@ -475,7 +475,7 @@ class TestStorageCollection:
     def mock_storage_api_responses(self) -> dict[str, dict[str, Any]]:
         """Mock API responses for storage endpoints."""
         return {
-            "/storage/aggregates?fields=*,is_spare_low": {
+            "/storage/aggregates?fields=*,is_spare_low,sidl_enabled": {
                 "records": [
                     {
                         "name": "aggr1",
@@ -731,7 +731,7 @@ class TestCloudTargetsCollection:
     ) -> dict[str, dict[str, Any]]:
         """Mock API responses for storage endpoints including cloud targets."""
         return {
-            "/storage/aggregates?fields=*,is_spare_low": {
+            "/storage/aggregates?fields=*,is_spare_low,sidl_enabled": {
                 "records": [
                     {
                         "name": "aggr1",
@@ -790,7 +790,7 @@ class TestCloudTargetsCollection:
         def side_effect(endpoint: str, **_: Any) -> dict[str, Any]:
             if endpoint == "/cloud/targets?fields=*":
                 raise Exception("Endpoint not available")
-            if endpoint == "/storage/aggregates?fields=*,is_spare_low":
+            if endpoint == "/storage/aggregates?fields=*,is_spare_low,sidl_enabled":
                 return {
                     "records": [{"name": "aggr1", "node": {"name": "node1"}, "state": "online"}]
                 }
@@ -870,7 +870,7 @@ class TestCloudTargetsCollection:
         """Test collecting when no cloud targets exist."""
         api_client = MagicMock()
         api_client.call_endpoint.side_effect = lambda endpoint, **_: {
-            "/storage/aggregates?fields=*,is_spare_low": {"records": []},
+            "/storage/aggregates?fields=*,is_spare_low,sidl_enabled": {"records": []},
             "/svm/svms?fields=*": {"records": []},
             "/cloud/targets?fields=*": {"records": []},
         }.get(endpoint, {})
