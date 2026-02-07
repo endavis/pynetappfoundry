@@ -168,7 +168,15 @@ Create `tests/unit/cache/mappings/test_<type>.py` with tests covering:
 - Transform functions (if any)
 - Expected field lists (`api_expected_fields()`, `cli_expected_fields()`)
 
-## Reference: VolumeInfo Pilot
+## Migrated Types
+
+| Type | Mapping | Model | Fields | Notes |
+|------|---------|-------|--------|-------|
+| Volume | `VOLUME_MAPPING` | `VolumeInfo` | 21 | Pilot migration. Uses transforms for aggregate list extraction. |
+| Aggregate | `AGGREGATE_MAPPING` | `AggregateInfo` | 28 | Deeply nested API paths (`block_storage.primary.*`). Explicit `?fields=*,is_spare_low,sidl_enabled`. |
+| Node | `NODE_MAPPING` | `NodeInfo` | 20 | Wildcard `[*]` syntax for list fields. `field_validator` for int→str coercion. 14 API-only fields. |
+
+## Reference: Field Mapping Patterns
 
 The `VOLUME_MAPPING` in `src/pynetappfoundry/cache/mappings/volume.py` is the canonical example. It demonstrates all field mapping patterns:
 
@@ -207,6 +215,18 @@ FieldMapping(
 ```
 
 The API response has `{"aggregates": [{"name": "aggr1"}]}`. The bracket notation `"aggregates[0].name"` extracts the first aggregate's name.
+
+### Wildcard array access
+
+```python
+FieldMapping(
+    cache_attr="ha_partner_uuids",
+    api_path="ha.partners[*].uuid",
+    default=[],
+)
+```
+
+The API response has `{"ha": {"partners": [{"uuid": "a"}, {"uuid": "b"}]}}`. The wildcard `[*]` syntax extracts a value from every item in the array, returning a list. This is handled by `get_nested_value()` from `utils/dict_path.py`. Use `default=[]` for wildcard fields since the result is always a list.
 
 ### Custom transform (API)
 
