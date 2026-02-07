@@ -54,15 +54,8 @@ The pilot migration (VolumeInfo) was completed in PR #189.
 ## Related Issues
 
 - Issue #188: feat: add declarative field mapping framework
-- PR #189: feat: add declarative field mapping framework (pilot: VolumeInfo)
 - Issue #191: refactor: migrate AggregateInfo to field mapping framework
-- PR #224: refactor: migrate AggregateInfo to declarative field mapping framework
-- PR #227: refactor: add new structural fields to AggregateInfo
-- PR #229: fix: explicitly request sidl_enabled in aggregate API endpoint
-- PR #230: refactor: add volume_count field to AggregateInfo
 - Issue #210: refactor: migrate NodeInfo to field mapping framework
-- PR #232: refactor: migrate NodeInfo to declarative field mapping framework
-- PR #233: docs: update ADR-0017 and field mapping guide for NodeInfo migration
 
 ## Related Documentation
 

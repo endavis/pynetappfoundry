@@ -17,6 +17,7 @@ Why this decision was made.
 
 ## Related Issues
 
+<!-- List issues only, not PRs. PRs are discoverable from issue timelines. -->
 - Issue #XX: Description
 
 ## Related Documentation
