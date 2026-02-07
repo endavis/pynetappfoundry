@@ -41,7 +41,7 @@ _ENTITY_CONFIGS: dict[str, tuple[str, list[str]]] = {
     "cloud": ("node", ["instance_id", "instance_type", "region", "provider"]),
     "nodes": (
         "name",
-        ["uuid", "serial_number", "model", "is_epsilon", "location"],
+        ["uuid", "serial_number", "model", "membership", "location"],
     ),
     "network.intercluster_lifs": (
         "name",

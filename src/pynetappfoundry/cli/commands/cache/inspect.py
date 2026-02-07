@@ -14,7 +14,7 @@ from rich.tree import Tree
 
 from pynetappfoundry.cache import ClusterMetadataDB
 from pynetappfoundry.cache.field_mapping import TypeMapping
-from pynetappfoundry.cache.mappings import AGGREGATE_MAPPING, VOLUME_MAPPING
+from pynetappfoundry.cache.mappings import AGGREGATE_MAPPING, NODE_MAPPING, VOLUME_MAPPING
 from pynetappfoundry.cli.utils import print_error, print_exception, print_warning
 from pynetappfoundry.clients.ontap import ONTAPCLI, ONTAPAPIClient
 from pynetappfoundry.core.config import Config
@@ -27,6 +27,7 @@ console = Console()
 # dot-path to the list of objects in CachedClusterMetadata.
 INSPECT_TYPES: dict[str, tuple[TypeMapping, str]] = {
     "aggregate": (AGGREGATE_MAPPING, "storage.aggregates"),
+    "node": (NODE_MAPPING, "nodes"),
     "volume": (VOLUME_MAPPING, "storage.volumes"),
 }
 
