@@ -23,14 +23,20 @@ TypeMapping (one per ONTAP object type)
 ├── cli_command     → CLI show command name
 ├── model_class     → Pydantic model (e.g., VolumeInfo)
 └── fields          → tuple of FieldMapping entries
-    ├── FieldMapping(cache_attr, api_path, cli_field, ...)
-    ├── FieldMapping(cache_attr, api_path, cli_field, ...)
+    ├── FieldMapping(cache_attr, api_path, ...)
+    ├── FieldMapping(cache_attr, api_path, ...)
     └── ...
 
 Generic parsers read these definitions at runtime:
   parse_api_response()  → list[model_class]
-  parse_cli_records()   → list[model_class]
+  parse_cli_records()   → list[model_class]  (for CLI-only types)
 ```
+
+> **Note:** All API-collected types (volumes, aggregates, nodes) use API-only
+> field mappings — no `cli_field` entries. CLI parsing is reserved for types
+> that genuinely require it (e.g., cloud metadata). Collection uses
+> all-or-nothing semantics: every API phase must succeed or the entire
+> collection is aborted.
 
 ## Key Components
 
@@ -111,17 +117,19 @@ from pynetappfoundry.cache.models import <TypeModel>
         FieldMapping(
             cache_attr="uuid",
             api_path="uuid",
-            cli_field="instance-uuid",
         ),
         FieldMapping(
             cache_attr="name",
             api_path="name",
-            cli_field="<type>",
         ),
         # ... more fields
     ),
 )
 ```
+
+> **Note:** For API-collected types, use `api_path` only — do not add
+> `cli_field`. The `cli_field` and `cli_transform` attributes are reserved
+> for types that require CLI parsing (see [CLI Fields](#cli-fields) below).
 
 ### Step 2: Export from the mappings package
 
@@ -138,13 +146,18 @@ __all__ = ["VOLUME_MAPPING", "<TYPE>_MAPPING"]
 Replace hand-written parsing in the collector with the generic parsers:
 
 ```python
-from pynetappfoundry.cache.field_mapping import parse_api_response, parse_cli_records
+from pynetappfoundry.cache.field_mapping import parse_api_response
 from pynetappfoundry.cache.mappings import <TYPE>_MAPPING
 
 # API parsing
 items = parse_api_response(<TYPE>_MAPPING, response, log_prefix, log_missing_fn)
+```
 
-# CLI parsing
+For CLI-only types, use `parse_cli_records` instead:
+
+```python
+from pynetappfoundry.cache.field_mapping import parse_cli_records
+
 items = parse_cli_records(<TYPE>_MAPPING, records, log_prefix, log_missing_fn)
 ```
 
@@ -164,21 +177,25 @@ INSPECT_TYPES: dict[str, tuple[TypeMapping, str]] = {
 Create `tests/unit/cache/mappings/test_<type>.py` with tests covering:
 
 - API record parsing (including nested and missing fields)
-- CLI record parsing (including coercion edge cases)
 - Transform functions (if any)
-- Expected field lists (`api_expected_fields()`, `cli_expected_fields()`)
+- Expected field lists (`api_expected_fields()`)
+
+For CLI-only types, also test:
+
+- CLI record parsing (including coercion edge cases)
+- `cli_expected_fields()`
 
 ## Migrated Types
 
 | Type | Mapping | Model | Fields | Notes |
 |------|---------|-------|--------|-------|
-| Volume | `VOLUME_MAPPING` | `VolumeInfo` | 21 | Pilot migration. Uses transforms for aggregate list extraction. |
-| Aggregate | `AGGREGATE_MAPPING` | `AggregateInfo` | 28 | Deeply nested API paths (`block_storage.primary.*`). Explicit `?fields=*,is_spare_low,sidl_enabled`. |
-| Node | `NODE_MAPPING` | `NodeInfo` | 20 | Wildcard `[*]` syntax for list fields. `field_validator` for int→str coercion. 14 API-only fields. |
+| Volume | `VOLUME_MAPPING` | `VolumeInfo` | 21 | API-only. Uses transform for aggregate list extraction. |
+| Aggregate | `AGGREGATE_MAPPING` | `AggregateInfo` | 28 | API-only. Deeply nested API paths (`block_storage.primary.*`). Explicit `?fields=*,is_spare_low,sidl_enabled`. |
+| Node | `NODE_MAPPING` | `NodeInfo` | 20 | API-only. Wildcard `[*]` syntax for list fields. `field_validator` for int→str coercion. |
 
 ## Reference: Field Mapping Patterns
 
-The `VOLUME_MAPPING` in `src/pynetappfoundry/cache/mappings/volume.py` is the canonical example. It demonstrates all field mapping patterns:
+The `VOLUME_MAPPING` in `src/pynetappfoundry/cache/mappings/volume.py` is the canonical example. It demonstrates all API field mapping patterns:
 
 ### Simple field (direct path)
 
@@ -186,11 +203,10 @@ The `VOLUME_MAPPING` in `src/pynetappfoundry/cache/mappings/volume.py` is the ca
 FieldMapping(
     cache_attr="name",
     api_path="name",
-    cli_field="volume",
 )
 ```
 
-Both API and CLI have a straightforward top-level field.
+A straightforward top-level API field.
 
 ### Nested API field (dot-path)
 
@@ -198,7 +214,6 @@ Both API and CLI have a straightforward top-level field.
 FieldMapping(
     cache_attr="svm",
     api_path="svm.name",
-    cli_field="vserver",
 )
 ```
 
@@ -210,7 +225,6 @@ The API response has `{"svm": {"name": "vs1"}}`. The dot-path `"svm.name"` is re
 FieldMapping(
     cache_attr="aggregate",
     api_path="aggregates[0].name",
-    cli_field="aggregate",
 )
 ```
 
@@ -235,24 +249,22 @@ FieldMapping(
     cache_attr="aggregates",
     default=[],
     transform=_api_aggregates_list,
-    cli_transform=_cli_aggregates_list,
 )
 ```
 
-When a field needs logic beyond simple path extraction, provide a `transform` function. The function receives the full record dict and returns the extracted value. Note that `api_path` and `cli_field` are omitted since the transforms handle all extraction.
+When a field needs logic beyond simple path extraction, provide a `transform` function. The function receives the full record dict and returns the extracted value. Note that `api_path` is omitted since the transform handles all extraction.
 
-### Field with default and coercion
+### Field with default
 
 ```python
 FieldMapping(
     cache_attr="autosize_grow_threshold",
     api_path="autosize.grow_threshold",
-    cli_field="autosize-grow-threshold-percent",
     default=0,
 )
 ```
 
-The `default=0` serves two purposes: it's the fallback when the field is missing, and it tells `_coerce_cli_value()` to treat the CLI value as an integer (stripping any `%` suffix).
+The `default=0` is the fallback when the field is missing from the API response.
 
 ## Transform Functions
 
@@ -263,14 +275,6 @@ Use `api_path` when the value can be extracted with a simple dot-path (including
 - Custom logic (filtering, aggregation, conditional extraction)
 - Access to multiple fields in the same record
 - Type conversions beyond what dot-path extraction provides
-
-### When to use `cli_transform` vs `cli_field`
-
-Use `cli_field` when the CLI output has a direct field name and `_coerce_cli_value()` handles the type conversion. Use `cli_transform` when:
-
-- The CLI field needs splitting (e.g., comma-separated lists)
-- Multiple CLI fields contribute to one model attribute
-- Custom parsing beyond coercion is needed
 
 ### Writing a transform function
 
@@ -286,4 +290,20 @@ def _api_aggregates_list(record: dict[str, Any]) -> list[str]:
     ]
 ```
 
-If a transform raises an exception, the framework catches it, logs a debug message, and uses the field's `default` value.
+If a transform raises an exception, the framework logs a `TRANSFORM_FAILURE` at error level and **re-raises the exception**. Transform failures are treated as code bugs — they are not silently replaced with defaults.
+
+## CLI Fields
+
+The `cli_field` and `cli_transform` attributes on `FieldMapping` are available for types that require CLI parsing. Currently, all API-collected types (volumes, aggregates, nodes) are API-only and do not use CLI fields.
+
+### When to use `cli_field`
+
+Use `cli_field` when the type is collected via CLI (not API) and the CLI output has a direct field name. The `_coerce_cli_value()` function handles ONTAP CLI conventions (see [CLI Value Coercion](#cli-value-coercion)).
+
+### When to use `cli_transform`
+
+Use `cli_transform` when CLI parsing needs custom logic:
+
+- The CLI field needs splitting (e.g., comma-separated lists)
+- Multiple CLI fields contribute to one model attribute
+- Custom parsing beyond coercion is needed
