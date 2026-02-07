@@ -105,8 +105,11 @@ class TestAggregateMappingDefinition:
         assert len(attrs) == len(set(attrs))
 
     def test_endpoint(self) -> None:
-        """API endpoint is storage aggregates with all fields plus is_spare_low."""
-        assert AGGREGATE_MAPPING.api_endpoint == "/storage/aggregates?fields=*,is_spare_low"
+        """API endpoint includes explicit fields not returned by fields=*."""
+        assert (
+            AGGREGATE_MAPPING.api_endpoint
+            == "/storage/aggregates?fields=*,is_spare_low,sidl_enabled"
+        )
 
     def test_cli_command(self) -> None:
         """CLI command is aggr show."""
