@@ -19,8 +19,9 @@ from datetime import UTC, datetime
 from enum import Enum
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
-from pynetappfoundry.cache.field_mapping import parse_api_response
+from pynetappfoundry.cache.field_mapping import parse_api_response, parse_cli_records
 from pynetappfoundry.cache.mappings.aggregate import AGGREGATE_MAPPING
+from pynetappfoundry.cache.mappings.cloud_metadata import CLOUD_METADATA_MAPPING
 from pynetappfoundry.cache.mappings.node import NODE_MAPPING
 from pynetappfoundry.cache.mappings.volume import VOLUME_MAPPING
 from pynetappfoundry.cache.models import (
@@ -559,6 +560,11 @@ class MetadataCollector:
     def _collect_cloud_metadata_via_cli(self) -> list[CloudMetadata]:
         """Collect cloud metadata using CLI.
 
+        Parses the raw CLI text into dict records, feeds them through
+        ``parse_cli_records`` via the ``CLOUD_METADATA_MAPPING``, and
+        then post-processes the results to build computed link fields
+        that depend on collector state (``aws_sso_config``).
+
         Returns:
             List of CloudMetadata from virtual-machine instance show.
         """
@@ -571,10 +577,42 @@ class MetadataCollector:
         logger.debug("%s CLI command: virtual-machine instance show", self._log_prefix)
         output = self.cli_client.run_command("virtual-machine instance show")
         logger.debug("%s CLI response: %d lines", self._log_prefix, len(output))
-        return self._parse_vm_instance_output(output)
 
-    def _parse_vm_instance_output(self, output: list[str]) -> list[CloudMetadata]:
-        """Parse virtual-machine instance show output.
+        records = self._parse_vm_instance_output(output)
+        items = parse_cli_records(
+            CLOUD_METADATA_MAPPING,
+            records,
+            self._log_prefix,
+            self._log_missing_fields,
+        )
+        results = cast(list[CloudMetadata], items)
+
+        # Post-process: build computed link fields
+        for cm in results:
+            region = cm.region or cm.availability_zone
+            cm.instance_link = build_cloud_instance_link(
+                provider=cm.provider,
+                instance_id=cm.instance_id,
+                region=region,
+                account_id=cm.account_id,
+                resource_group=cm.resource_group_name,
+            )
+            cm.instance_sso_link = build_cloud_instance_sso_link(
+                provider=cm.provider,
+                instance_link=cm.instance_link,
+                account_id=cm.account_id,
+                sso_config=self.aws_sso_config,
+            )
+            cm.resource_group_link = build_cloud_resource_group_link(
+                provider=cm.provider,
+                account_id=cm.account_id,
+                resource_group=cm.resource_group_name,
+            )
+
+        return results
+
+    def _parse_vm_instance_output(self, output: list[str]) -> list[dict[str, str]]:
+        """Parse virtual-machine instance show output into raw records.
 
         The CLI output contains entries for each node, separated by blank lines
         or new "Node:" entries. Each node has its own cloud metadata.
@@ -583,9 +621,9 @@ class MetadataCollector:
             output: Lines of CLI output.
 
         Returns:
-            List of CloudMetadata objects, one per node.
+            List of raw record dicts (one per node) with normalized keys.
         """
-        results: list[CloudMetadata] = []
+        results: list[dict[str, str]] = []
         current_data: dict[str, str] = {}
         current_node: str = ""
 
@@ -610,7 +648,8 @@ class MetadataCollector:
             if key_normalized == "node":
                 # Save previous node's data if we have any
                 if current_node and current_data:
-                    results.append(self._create_cloud_metadata(current_node, current_data))
+                    current_data["node"] = current_node
+                    results.append(current_data)
                 # Start new node
                 current_node = value
                 current_data = {}
@@ -619,87 +658,15 @@ class MetadataCollector:
 
         # Don't forget the last node
         if current_node and current_data:
-            results.append(self._create_cloud_metadata(current_node, current_data))
+            current_data["node"] = current_node
+            results.append(current_data)
 
         # If no node field was found but we have data, create single entry
         if not results and current_data:
-            results.append(self._create_cloud_metadata("", current_data))
+            current_data["node"] = ""
+            results.append(current_data)
 
         return results
-
-    def _create_cloud_metadata(self, node: str, data: dict[str, str]) -> CloudMetadata:
-        """Create a CloudMetadata object from parsed data.
-
-        Args:
-            node: Node name.
-            data: Parsed key-value data.
-
-        Returns:
-            CloudMetadata object.
-        """
-        self._log_missing_fields(
-            data,
-            [
-                "instance_id",
-                "account_id",
-                "instance_type",
-                "region",
-                "provider",
-                "primary_ip",
-            ],
-            "CloudMetadata",
-            node or "unknown",
-        )
-        provider = data.get("provider", "")
-        instance_id = data.get("instance_id", "")
-        account_id = data.get("account_id", "")
-        resource_group = data.get("resource_group_name", "")
-        region = data.get("region", "") or data.get("availability_zone", "")
-
-        # Build cloud console links
-        instance_link = build_cloud_instance_link(
-            provider=provider,
-            instance_id=instance_id,
-            region=region,
-            account_id=account_id,
-            resource_group=resource_group,
-        )
-        instance_sso_link = build_cloud_instance_sso_link(
-            provider=provider,
-            instance_link=instance_link,
-            account_id=account_id,
-            sso_config=self.aws_sso_config,
-        )
-        resource_group_link = build_cloud_resource_group_link(
-            provider=provider,
-            account_id=account_id,
-            resource_group=resource_group,
-        )
-
-        return CloudMetadata(
-            node=node,
-            instance_id=instance_id,
-            account_id=account_id,
-            image_id=data.get("image_id", ""),
-            instance_type=data.get("instance_type", ""),
-            cpu_platform=data.get("cpu_platform", ""),
-            region=data.get("region", ""),
-            provider=provider,
-            consumer=data.get("consumer", ""),
-            primary_ip=data.get("primary_ip", ""),
-            metadata_version=data.get("metadata_version", ""),
-            availability_zone=data.get("availability_zone", ""),
-            availability_zone_id=data.get("availability_zone_id", ""),
-            fault_domain=data.get("fault_domain", ""),
-            update_domain=data.get("update_domain", ""),
-            resource_group_name=resource_group,
-            offer=data.get("offer", ""),
-            sku=data.get("sku", ""),
-            sku_version=data.get("sku_version", ""),
-            instance_link=instance_link,
-            instance_sso_link=instance_sso_link,
-            resource_group_link=resource_group_link,
-        )
 
     def _update_azure_cloud_links(
         self,
