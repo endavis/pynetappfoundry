@@ -152,7 +152,13 @@ warn_unreachable = true
 exclude = ["tools/pyproject_template/", ".claude/", ".gemini/", ".codex/"]
 
 [[tool.mypy.overrides]]
-module = ["netapp_ontap.*", "paramiko.*", "yattag.*", "doit.*", "openpyxl.*", "jsonschema.*", "xlsxwriter.*"]
+# netapp-ontap 9.18.1+ uses apipkg lazy loading; mypy cannot resolve dynamic attributes
+module = "netapp_ontap.*"
+ignore_missing_imports = true
+follow_imports = "skip"
+
+[[tool.mypy.overrides]]
+module = ["paramiko.*", "yattag.*", "doit.*", "openpyxl.*", "jsonschema.*", "xlsxwriter.*"]
 ignore_missing_imports = true
 follow_untyped_imports = true
 
