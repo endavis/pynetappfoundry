@@ -9,7 +9,7 @@ readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.13"
 dynamic = ["version"]
 authors = [
-    { name = "Eric Davis", email = "eric@codingwithalex.com" },
+    { name = "Eric Davis", email = "endavis@gmail.com" },
 ]
 license = { file = "LICENSE" }
 keywords = ["netapp", "ontap", "storage", "cli", "administration"]
@@ -47,6 +47,7 @@ dev = [
     "pytest>=8.0",
     "pytest-cov>=5.0",
     "pytest-xdist>=3.5",
+    "pytest-benchmark>=4.0",
     "ruff>=0.5",
     "mypy>=1.0",
     "pre-commit>=3.7.0",
@@ -60,10 +61,13 @@ dev = [
     "types-pyyaml>=6.0",
     "types-requests>=2.31",
     "types-paramiko>=3.0",
+    "vulture>=2.11",
+    "radon>=6.0",
 ]
 security = [
     "pip-audit>=2.6",
     "bandit>=1.7",
+    "pip>=26.0",
     "pip-licenses>=4.0",
 ]
 
@@ -117,6 +121,13 @@ ignore = [
 "tests/*" = ["ANN"]
 # SIM117: yattag uses nested with statements for HTML structure, not fixable
 "src/pynetappfoundry/cli/commands/reports/html.py" = ["SIM117"]
+"tools/pyproject_template/*.py" = [
+    "ANN401",  # Any return type for dynamic GitHub API responses
+    "RUF022",  # __all__ intentionally grouped by category, not sorted
+]
+"tests/benchmarks/*.py" = [
+    "ANN401",  # benchmark fixture has no py.typed
+]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -137,20 +148,35 @@ no_implicit_optional = true
 strict_equality = true
 warn_redundant_casts = true
 warn_unreachable = true
-exclude = [".claude/", ".gemini/", ".codex/"]
+# tools/pyproject_template/ uses sys.path manipulation for standalone execution
+exclude = ["tools/pyproject_template/", ".claude/", ".gemini/", ".codex/"]
 
 [[tool.mypy.overrides]]
 module = ["netapp_ontap.*", "paramiko.*", "yattag.*", "doit.*", "openpyxl.*", "jsonschema.*", "xlsxwriter.*"]
 ignore_missing_imports = true
 follow_untyped_imports = true
 
+[[tool.mypy.overrides]]
+# Standalone scripts using sys.path manipulation; excluded from discovery
+# but still followed via imports from bootstrap.py
+module = "tools.pyproject_template.*"
+follow_imports = "skip"
+
 [tool.pytest.ini_options]
 minversion = "8.0"
-addopts = "--strict-config --strict-markers"
+addopts = "--strict-config --strict-markers --benchmark-disable"
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+markers = [
+    "benchmark: marks tests as performance benchmarks (deselect with '--benchmark-disable')",
+]
+
+[tool.pytest-benchmark]
+disable_gc = true
+min_rounds = 5
+warmup = true
 
 [tool.coverage.run]
 branch = true
@@ -180,6 +206,7 @@ exclude_dirs = [
     "tmp",
     ".venv",
     "docs",
+    "examples",
     ".git",
     ".github",
     ".pytest_cache",
@@ -206,11 +233,13 @@ skip = "tmp,.venv,.git,*.lock,*.pyc,__pycache__"
 ignore-words-list = "crate,bu"
 
 [tool.pyright]
+# LSP support for Claude Code - provides fast code navigation and type checking
 include = [
     "src",
     "tests",
-    "tools",
-    "*.py",
+    "*.py",           # Root level Python files (dodo.py, setup-repo.py, configure.py)
+    "tools",          # Tools directory (migrate_existing_project.py)
+    ".github",        # Any Python in GitHub workflows/scripts
 ]
 exclude = [
     "**/__pycache__",
@@ -219,7 +248,7 @@ exclude = [
     "**/.pytest_cache",
     "**/.mypy_cache",
     "**/.ruff_cache",
-    "**/site",
+    "**/site",        # mkdocs build output
     "**/.git",
 ]
 venvPath = "."
@@ -229,6 +258,32 @@ typeCheckingMode = "basic"
 useLibraryCodeForTypes = true
 reportMissingImports = true
 reportMissingTypeStubs = false
+
+[tool.vulture]
+min_confidence = 80
+paths = ["src", "tests"]
+exclude = [
+    "*/tests/*",      # Test fixtures often appear unused
+    "*/__pycache__/*",
+]
+# Common false positives in Python projects
+ignore_names = [
+    "test_*",         # Pytest test functions
+    "fixture_*",      # Pytest fixtures
+    "*_fixture",      # Pytest fixtures
+    "setUp",          # unittest methods
+    "tearDown",       # unittest methods
+    "setUpClass",     # unittest methods
+    "tearDownClass",  # unittest methods
+]
+ignore_decorators = [
+    "@pytest.fixture",
+    "@pytest.mark.*",
+    "@click.command",
+    "@click.option",
+    "@click.group",
+    "@abstractmethod",
+]
 
 [tool.commitizen]
 name = "cz_conventional_commits"

@@ -749,8 +749,8 @@ class TestCloudTargetsCollection:
     ) -> None:
         """Test collecting cloud targets via API."""
         api_client = MagicMock()
-        api_client.call_endpoint.side_effect = (
-            lambda endpoint, **_: mock_storage_with_cloud_targets_api_responses.get(endpoint, {})
+        api_client.call_endpoint.side_effect = lambda endpoint, **_: (
+            mock_storage_with_cloud_targets_api_responses.get(endpoint, {})
         )
 
         collector = MetadataCollector(api_client=api_client)
@@ -945,8 +945,8 @@ class TestRelationshipsCollection:
     ) -> None:
         """Test collecting relationships via API."""
         api_client = MagicMock()
-        api_client.call_endpoint.side_effect = (
-            lambda endpoint, **_: mock_relationships_api_responses.get(endpoint, {})
+        api_client.call_endpoint.side_effect = lambda endpoint, **_: (
+            mock_relationships_api_responses.get(endpoint, {})
         )
 
         collector = MetadataCollector(api_client=api_client)
@@ -1186,8 +1186,8 @@ class TestProtocolsCollection:
     ) -> None:
         """Test collecting protocols via API."""
         api_client = MagicMock()
-        api_client.call_endpoint.side_effect = (
-            lambda endpoint, **_: mock_protocols_api_responses.get(endpoint, {"records": []})
+        api_client.call_endpoint.side_effect = lambda endpoint, **_: (
+            mock_protocols_api_responses.get(endpoint, {"records": []})
         )
 
         collector = MetadataCollector(api_client=api_client)
