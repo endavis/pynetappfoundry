@@ -1,4 +1,4 @@
-# ADR-0017: Declarative field mapping framework for ONTAP collection
+# ADR-0004: Declarative field mapping framework for ONTAP collection
 
 ## Status
 
