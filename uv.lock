@@ -20,6 +20,15 @@ wheels = [
 ]
 
 [[package]]
+name = "apipkg"
+version = "3.0.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/2e/2c/717870bddbb588428093de4bfbce59c58d29b56bff76ecd422fd1724ae72/apipkg-3.0.2.tar.gz", hash = "sha256:c7aa61a4f82697fdaa667e70af1505acf1f7428b1c27b891d204ba7a8a3c5e0d", size = 6594, upload-time = "2023-09-19T13:52:13.975Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/71/6b/11ee9d7d046d7012822986e42619eee7fe1522147cd3c6beab1ebcec9f33/apipkg-3.0.2-py3-none-any.whl", hash = "sha256:a16984c39de280701f3f6406ed3af658f2a1965011fe7bb5be34fbb48423b411", size = 8311, upload-time = "2023-09-19T13:52:12.789Z" },
+]
+
+[[package]]
 name = "argcomplete"
 version = "3.6.3"
 source = { registry = "https://pypi.org/simple" }
@@ -991,18 +1000,19 @@ wheels = [
 
 [[package]]
 name = "netapp-ontap"
-version = "9.17.1.0"
+version = "9.18.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
+    { name = "apipkg" },
     { name = "certifi" },
     { name = "marshmallow" },
     { name = "requests" },
     { name = "requests-toolbelt" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/fb/f3/409b586fa2edd5fd0a974834a765ebe7a00c2d5b83a0b0b4c4289fc3d0ba/netapp_ontap-9.17.1.0.tar.gz", hash = "sha256:6f30c6b0a0841f7a2cceecf838a9ce83b5933104e72401a1ecf3a61a1442cb37", size = 9757148, upload-time = "2025-07-25T06:38:53.947Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/56/c1/35f30c2a8b6b0c7097f2df06754aaded1ee5bb6fdda2881403337f8b719e/netapp_ontap-9.18.1.0.tar.gz", hash = "sha256:8750eae4f72a8b1f8e8783ad3a9da46d96318600407426d4f51825d6cbe3e1db", size = 10810876, upload-time = "2026-02-02T10:31:03.624Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/06/e4/3c75a6ce6732861413f99183c43a6a2c4ac296f41cc2dd888b1dd763f7ba/netapp_ontap-9.17.1.0-py3-none-any.whl", hash = "sha256:d80ace80f2e54f68e2fafffae580a9923393bac4a472ff50da6c84ca4c78d9cd", size = 29145671, upload-time = "2025-07-25T06:38:50.596Z" },
+    { url = "https://files.pythonhosted.org/packages/94/23/6eb924d20a73eb4889d37492ae7079e91bd345f3e2545a74778dc1f5eceb/netapp_ontap-9.18.1.0-py3-none-any.whl", hash = "sha256:d6917ecea70a530da6f786f329a970706bd8ba534d92cd4834cbd2c1c752bf25", size = 32163789, upload-time = "2026-02-02T10:31:00.651Z" },
 ]
 
 [[package]]
