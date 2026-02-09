@@ -57,20 +57,15 @@ The Issue contains the full discussion; the ADR summarizes the outcome.
 - **Deprecated**: No longer relevant (kept for history)
 - **Superseded**: Replaced by a newer ADR
 
+## Template ADRs
+
+Template-inherited ADRs (9XXX range) are maintained in [docs/template/decisions/](../template/decisions/README.md).
+
 ## Index
 
 | ADR | Title | Status |
 |-----|-------|--------|
-| [0001](0001-use-uv-for-package-management.md) | Use uv for package management | Accepted |
-| [0002](0002-use-doit-for-task-automation.md) | Use doit for task automation | Accepted |
-| [0003](0003-use-ruff-for-linting-and-formatting.md) | Use ruff for linting and formatting | Accepted |
-| [0004](0004-auto-discover-doit-tasks.md) | Auto-discover doit tasks from modules | Accepted |
-| [0005](0005-ai-agent-command-restrictions.md) | AI agent command restrictions via hooks | Accepted |
-| [0006](0006-merge-gate-workflow.md) | Merge-gate workflow requiring ready-to-merge label | Accepted |
-| [0007](0007-use-mypy-for-type-checking.md) | Use mypy for static type checking | Accepted |
-| [0008](0008-pr-based-development-workflow.md) | PR-based development workflow | Accepted |
-| [0009](0009-use-pre-commit-hooks-for-quality-gates.md) | Use pre-commit hooks for quality gates | Accepted |
-| [0010](0010-use-conventional-commits-format.md) | Use conventional commits format | Accepted |
-| [0011](0011-use-pytest-for-testing.md) | Use pytest for testing | Accepted |
-| [0012](0012-use-mkdocs-with-material-theme-for-documentation.md) | Use mkdocs with Material theme for documentation | Accepted |
-| [0017](0017-declarative-field-mapping-framework.md) | Declarative field mapping framework for ONTAP collection | Accepted |
+| [0001](0001-use-sqlite-for-cluster-metadata-caching.md) | Use SQLite for cluster metadata caching | Accepted |
+| [0002](0002-track-smb-client-impact-azure-maintenance.md) | Track SMB client impact during Azure maintenance | Accepted |
+| [0003](0003-use-base-sqlitedb-class-with-version-based-migrations.md) | Use base SQLiteDB class with version-based migrations | Accepted |
+| [0004](0004-declarative-field-mapping-framework.md) | Declarative field mapping framework for ONTAP collection | Accepted |
