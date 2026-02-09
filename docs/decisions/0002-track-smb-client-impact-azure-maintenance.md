@@ -1,4 +1,4 @@
-# ADR-0015: Track SMB Client Impact During Azure Maintenance Events
+# ADR-0002: Track SMB Client Impact During Azure Maintenance Events
 
 ## Status
 
