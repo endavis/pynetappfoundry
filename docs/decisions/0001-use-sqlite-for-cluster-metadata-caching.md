@@ -1,4 +1,4 @@
-# ADR-0014: Use SQLite for cluster metadata caching
+# ADR-0001: Use SQLite for cluster metadata caching
 
 ## Status
 
