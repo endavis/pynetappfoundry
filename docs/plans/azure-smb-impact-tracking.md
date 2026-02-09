@@ -197,6 +197,6 @@ aggr_giveback_complete TEXT
 
 ## Related
 
-- ADR: [0015-track-smb-client-impact-azure-maintenance](../decisions/0015-track-smb-client-impact-azure-maintenance.md)
+- ADR: [0002-track-smb-client-impact-azure-maintenance](../decisions/0002-track-smb-client-impact-azure-maintenance.md)
 - Issue: #92 (Azure maintenance event tracking improvements)
 - PR: #106 (Fix az_maint_complete timing race condition)

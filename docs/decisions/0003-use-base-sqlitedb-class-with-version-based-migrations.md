@@ -1,4 +1,4 @@
-# ADR-0016: Use base SQLiteDB class with version-based migrations
+# ADR-0003: Use base SQLiteDB class with version-based migrations
 
 ## Status
 

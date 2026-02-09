@@ -90,21 +90,26 @@ nav:
       - Production: deployment/production.md
   - Decisions:
       - Overview: decisions/README.md
-      - ADR-0001 uv Package Management: decisions/0001-use-uv-for-package-management.md
-      - ADR-0002 doit Task Automation: decisions/0002-use-doit-for-task-automation.md
-      - ADR-0003 ruff Linting: decisions/0003-use-ruff-for-linting-and-formatting.md
-      - ADR-0004 doit Auto-Discovery: decisions/0004-auto-discover-doit-tasks.md
-      - ADR-0005 AI Command Restrictions: decisions/0005-ai-agent-command-restrictions.md
-      - ADR-0006 Merge Gate: decisions/0006-merge-gate-workflow.md
-      - ADR-0007 mypy Type Checking: decisions/0007-use-mypy-for-type-checking.md
-      - ADR-0008 PR-Based Workflow: decisions/0008-pr-based-development-workflow.md
-      - ADR-0009 Pre-commit Hooks: decisions/0009-use-pre-commit-hooks-for-quality-gates.md
-      - ADR-0010 Conventional Commits: decisions/0010-use-conventional-commits-format.md
-      - ADR-0011 pytest Testing: decisions/0011-use-pytest-for-testing.md
-      - ADR-0012 MkDocs Documentation: decisions/0012-use-mkdocs-with-material-theme-for-documentation.md
-      - ADR-0013 Python Version Policy: decisions/0013-python-version-support-policy.md
-      - ADR-0017 Declarative Field Mapping: decisions/0017-declarative-field-mapping-framework.md
+      - ADR-0001 SQLite Metadata Cache: decisions/0001-use-sqlite-for-cluster-metadata-caching.md
+      - ADR-0002 SMB Client Impact Tracking: decisions/0002-track-smb-client-impact-azure-maintenance.md
+      - ADR-0003 Base SQLiteDB Migrations: decisions/0003-use-base-sqlitedb-class-with-version-based-migrations.md
+      - ADR-0004 Declarative Field Mapping: decisions/0004-declarative-field-mapping-framework.md
       - ADR Template: decisions/adr-template.md
+      - Template Decisions:
+          - Overview: template/decisions/README.md
+          - ADR-9001 uv Package Management: template/decisions/9001-use-uv-for-package-management.md
+          - ADR-9002 doit Task Automation: template/decisions/9002-use-doit-for-task-automation.md
+          - ADR-9003 ruff Linting: template/decisions/9003-use-ruff-for-linting-and-formatting.md
+          - ADR-9004 doit Auto-Discovery: template/decisions/9004-auto-discover-doit-tasks.md
+          - ADR-9005 AI Command Restrictions: template/decisions/9005-ai-agent-command-restrictions.md
+          - ADR-9006 Merge Gate: template/decisions/9006-merge-gate-workflow.md
+          - ADR-9007 mypy Type Checking: template/decisions/9007-use-mypy-for-type-checking.md
+          - ADR-9008 PR-Based Workflow: template/decisions/9008-pr-based-development-workflow.md
+          - ADR-9009 Pre-commit Hooks: template/decisions/9009-use-pre-commit-hooks-for-quality-gates.md
+          - ADR-9010 Conventional Commits: template/decisions/9010-use-conventional-commits-format.md
+          - ADR-9011 pytest Testing: template/decisions/9011-use-pytest-for-testing.md
+          - ADR-9012 MkDocs Documentation: template/decisions/9012-use-mkdocs-with-material-theme-for-documentation.md
+          - ADR-9013 Python Version Policy: template/decisions/9013-python-version-support-policy.md
   - Template:
       - Overview: template/index.md
       - New Project: template/new-project.md
