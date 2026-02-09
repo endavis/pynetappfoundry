@@ -22,6 +22,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, cast
 from pynetappfoundry.cache.field_mapping import parse_api_response, parse_cli_records
 from pynetappfoundry.cache.mappings.aggregate import AGGREGATE_MAPPING
 from pynetappfoundry.cache.mappings.cloud_metadata import CLOUD_METADATA_MAPPING
+from pynetappfoundry.cache.mappings.cluster_peer import CLUSTER_PEER_MAPPING
 from pynetappfoundry.cache.mappings.node import NODE_MAPPING
 from pynetappfoundry.cache.mappings.volume import VOLUME_MAPPING
 from pynetappfoundry.cache.models import (
@@ -1468,35 +1469,7 @@ class MetadataCollector:
             snapmirror_destinations.append(sm)
 
         # Process cluster peers
-        peer_response = responses.get(endpoints[1]) or {}
-        logger.debug(
-            "%s API response: %d cluster peers",
-            self._log_prefix,
-            len(peer_response.get("records", [])),
-        )
-        cluster_peers = []
-        for record in peer_response.get("records", []):
-            self._log_missing_fields(
-                record,
-                ["name", "uuid", "remote", "authentication"],
-                "ClusterPeer",
-                record.get("name", record.get("uuid", "unknown")),
-            )
-            # Handle fields that may be dicts or strings depending on API version
-            remote = record.get("remote")
-            remote_name = remote.get("name", "") if isinstance(remote, dict) else str(remote or "")
-            auth = record.get("authentication")
-            auth_state = auth.get("state", "") if isinstance(auth, dict) else str(auth or "")
-            # Get peer addresses from remote.ip_addresses (not peer_applications)
-            peer_addresses = remote.get("ip_addresses", []) if isinstance(remote, dict) else []
-            peer = ClusterPeer(
-                name=record.get("name", ""),
-                uuid=record.get("uuid", ""),
-                remote_cluster_name=remote_name,
-                peer_addresses=[addr for addr in peer_addresses if addr],
-                authentication_state=auth_state,
-            )
-            cluster_peers.append(peer)
+        cluster_peers = self._parse_cluster_peers_response(responses.get(endpoints[1]))
 
         # Process SVM peers
         svm_peers = self._parse_svm_peers_response(responses.get(endpoints[2]))
@@ -1526,6 +1499,26 @@ class MetadataCollector:
             VOLUME_MAPPING, response, self._log_prefix, self._log_missing_fields
         )
         return cast(list[VolumeInfo], results)
+
+    # -------------------------------------------------------------------------
+    # Cluster Peer Parsing
+    # -------------------------------------------------------------------------
+
+    def _parse_cluster_peers_response(self, response: Any) -> list[ClusterPeer]:
+        """Parse cluster peers API response.
+
+        Delegates to the declarative field mapping framework.
+
+        Args:
+            response: API response dict or None.
+
+        Returns:
+            List of ClusterPeer objects.
+        """
+        results = parse_api_response(
+            CLUSTER_PEER_MAPPING, response, self._log_prefix, self._log_missing_fields
+        )
+        return cast(list[ClusterPeer], results)
 
     def _parse_qtrees_response(self, response: Any) -> list[QtreeInfo]:
         """Parse qtrees API response.

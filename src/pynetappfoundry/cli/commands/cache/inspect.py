@@ -17,6 +17,7 @@ from pynetappfoundry.cache.field_mapping import TypeMapping
 from pynetappfoundry.cache.mappings import (
     AGGREGATE_MAPPING,
     CLOUD_METADATA_MAPPING,
+    CLUSTER_PEER_MAPPING,
     NODE_MAPPING,
     VOLUME_MAPPING,
 )
@@ -33,6 +34,7 @@ console = Console()
 INSPECT_TYPES: dict[str, tuple[TypeMapping, str]] = {
     "aggregate": (AGGREGATE_MAPPING, "storage.aggregates"),
     "cloud_metadata": (CLOUD_METADATA_MAPPING, "cloud"),
+    "cluster_peer": (CLUSTER_PEER_MAPPING, "relationships.cluster_peers"),
     "node": (NODE_MAPPING, "nodes"),
     "volume": (VOLUME_MAPPING, "storage.volumes"),
 }
