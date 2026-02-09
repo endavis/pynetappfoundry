@@ -160,4 +160,4 @@ cache.add_command(query)
 
 - [CLI Reference - Cache Commands](../reference/cli.md#cache)
 - [Usage Guide - Cluster Metadata Caching](../usage/basics.md#cluster-metadata-caching)
-- [ADR-0014: Use SQLite for cluster metadata caching](../decisions/0014-use-sqlite-for-cluster-metadata-caching.md)
+- [ADR-0001: Use SQLite for cluster metadata caching](../decisions/0001-use-sqlite-for-cluster-metadata-caching.md)

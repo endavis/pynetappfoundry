@@ -13,7 +13,7 @@ tags:
 
 The declarative field mapping framework maps ONTAP REST API and CLI responses to cache model objects using data-driven definitions instead of hand-written parsing methods.
 
-**ADR:** [ADR-0017](../decisions/0017-declarative-field-mapping-framework.md)
+**ADR:** [ADR-0004](../decisions/0004-declarative-field-mapping-framework.md)
 
 ## Architecture
 
