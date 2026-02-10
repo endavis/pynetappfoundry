@@ -204,12 +204,16 @@ class MetadataCollector:
             )
             self.progress_callback(info)
 
-    def _cached_api_call(self, endpoint: str, method: str = "GET") -> Any:
+    def _cached_api_call(self, endpoint: str, method: str = "GET", *, paginate: bool = True) -> Any:
         """Make an API call with caching to avoid duplicate requests.
 
         Args:
             endpoint: The API endpoint to call.
             method: HTTP method (default GET).
+            paginate: When True (default), use ``get_all_records()`` to
+                follow pagination and merge all pages.  When False, use
+                ``call_endpoint()`` which returns only the first page
+                (suitable for single-object endpoints like ``/cluster``).
 
         Returns:
             API response data (from cache if available).
@@ -226,7 +230,10 @@ class MetadataCollector:
 
         # Make the actual API call (outside the lock to allow parallel calls)
         logger.debug("%s API call: %s %s", self._log_prefix, method, endpoint)
-        response = self.api_client.call_endpoint(endpoint, method=method)
+        if paginate:
+            response = self.api_client.get_all_records(endpoint, method=method)
+        else:
+            response = self.api_client.call_endpoint(endpoint, method=method)
 
         with self._cache_lock:
             self._api_cache[cache_key] = response
@@ -798,7 +805,7 @@ class MetadataCollector:
             logger.debug("%s No API client available for cluster info collection", self._log_prefix)
             return ClusterInfo()
 
-        response = self._cached_api_call("/cluster?fields=*")
+        response = self._cached_api_call("/cluster?fields=*", paginate=False)
         if not response:
             return ClusterInfo()
 

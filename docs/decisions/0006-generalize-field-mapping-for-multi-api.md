@@ -24,8 +24,11 @@ The changes are non-breaking — all existing ONTAP mappings work without modifi
 
 Issue #260 added `get_all_records()` to `APIWrapper`, enabling automatic pagination across all API types. The method uses a configurable `PaginationConfig` and pluggable `NextPageExtractor` callable, defaulting to ONTAP's `_links.next.href` HAL convention. This complements the field mapping framework by ensuring all records are collected before mapping is applied.
 
+Issue #263 integrated `get_all_records()` into `MetadataCollector._cached_api_call()`, making pagination the default for all collection endpoints. A `paginate` keyword argument allows single-object endpoints (e.g., `/cluster`) to opt out.
+
 ## Related Issues
 
+- Issue #263: feat: integrate get_all_records() into MetadataCollector._cached_api_call()
 - Issue #260: feat: add configurable pagination support to APIWrapper
 - Issue #259: feat: generalize field mapping framework for multi-API data collection
 - Issue #258: feat: multi-API data collection strategy (superseded by #259)
