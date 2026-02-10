@@ -12,7 +12,7 @@ https://docs.netapp.com/us-en/ontap-restapi/
 
 from __future__ import annotations
 
-from pynetappfoundry.units.dimensions import BYTES, DAYS, PERCENT
+from pynetappfoundry.units.dimensions import BYTES, DAYS, KB_PER_SEC, PERCENT
 from pynetappfoundry.units.registry import UnitEntry, UnitRegistry
 
 _SRC_ONTAP_REST = "ONTAP REST API: field value is in {unit}"
@@ -76,6 +76,13 @@ def _populate(registry: UnitRegistry) -> None:
                 api_field_path="controller.memory_size",
                 unit=BYTES,
                 source=("ONTAP REST API: 'Memory available on the node, in bytes'"),
+            ),
+            # --- /snapmirror/relationships ---
+            UnitEntry(
+                endpoint="/snapmirror/relationships",
+                api_field_path="throttle",
+                unit=KB_PER_SEC,
+                source="ONTAP REST API: 'Throttle in KB/s. Default to unlimited.'",
             ),
         )
     )

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from pynetappfoundry.units.dimensions import BYTES, DAYS, PERCENT
+from pynetappfoundry.units.dimensions import BYTES, DAYS, KB_PER_SEC, PERCENT
 from pynetappfoundry.units.ontap_units import ontap_registry
 
 
@@ -15,7 +15,7 @@ class TestOntapRegistryPopulation:
         assert len(ontap_registry) > 0
 
     def test_exact_entry_count(self) -> None:
-        assert len(ontap_registry) == 8
+        assert len(ontap_registry) == 9
 
     # --- Volume fields ---
 
@@ -63,6 +63,13 @@ class TestOntapRegistryPopulation:
         assert entry is not None
         assert entry.unit is BYTES
 
+    # --- SnapMirror fields ---
+
+    def test_snapmirror_throttle_is_kb_per_sec(self) -> None:
+        entry = ontap_registry.get("/snapmirror/relationships", "throttle")
+        assert entry is not None
+        assert entry.unit is KB_PER_SEC
+
     # --- Endpoint grouping ---
 
     def test_volume_entries_count(self) -> None:
@@ -94,7 +101,12 @@ class TestOntapRegistryPopulation:
             ("/storage/volumes", "tiering.min_cooling_days"),
             ("/storage/aggregates", "space.block_storage.size"),
             ("/cluster/nodes", "controller.memory_size"),
+            ("/snapmirror/relationships", "throttle"),
         ],
     )
     def test_all_expected_fields_registered(self, endpoint: str, field_path: str) -> None:
         assert (endpoint, field_path) in ontap_registry
+
+    def test_snapmirror_entries_count(self) -> None:
+        entries = ontap_registry.get_by_endpoint("/snapmirror/relationships")
+        assert len(entries) == 1

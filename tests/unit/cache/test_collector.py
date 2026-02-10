@@ -899,16 +899,20 @@ class TestRelationshipsCollection:
     @pytest.fixture
     def mock_relationships_api_responses(self) -> dict[str, dict[str, Any]]:
         """Mock API responses for relationship endpoints."""
-        sm_endpoint = "/snapmirror/relationships?fields=uuid,source,destination,policy.type,state"
+        from pynetappfoundry.cache.mappings.snapmirror import SNAPMIRROR_MAPPING
+
+        sm_endpoint = SNAPMIRROR_MAPPING.api_endpoint
         return {
             sm_endpoint: {
                 "records": [
                     {
                         "uuid": "sm-uuid-1",
-                        "source": {"svm": {"name": "svm1"}, "path": "vol1"},
-                        "destination": {"svm": {"name": "svm2"}, "path": "vol1_dp"},
-                        "policy": {"type": "async"},
-                        "state": "snapmirrored",
+                        "source": {"path": "svm1:vol1"},
+                        "destination": {"path": "svm2:vol1_dp"},
+                        "policy": {"type": "async", "uuid": "pol-uuid-1"},
+                        "throttle": 1024,
+                        "group_type": "none",
+                        "transfer_schedule": {"uuid": "sched-uuid-1"},
                     }
                 ]
             },
@@ -973,19 +977,17 @@ class TestRelationshipsCollection:
         with pytest.raises(CollectionError, match="API_FAILURE"):
             collector.collect_relationships()
 
-    def test_collect_relationships_with_string_paths(self) -> None:
-        """Test relationships handles string paths from API (instead of dicts)."""
-        sm_endpoint = "/snapmirror/relationships?fields=uuid,source,destination,policy.type,state"
+    def test_collect_relationships_with_missing_source_dest(self) -> None:
+        """Test relationships handles missing source/destination fields."""
+        from pynetappfoundry.cache.mappings.snapmirror import SNAPMIRROR_MAPPING
+
+        sm_endpoint = SNAPMIRROR_MAPPING.api_endpoint
         api_responses = {
             sm_endpoint: {
                 "records": [
                     {
                         "uuid": "sm-uuid-1",
-                        # API returns path as string directly instead of dict
-                        "source": "svm1:vol1",
-                        "destination": "svm2:vol1_dp",
-                        "policy": {"type": "async"},
-                        "state": "snapmirrored",
+                        "policy": {"type": "async", "uuid": "pol-uuid-1"},
                     }
                 ]
             },
@@ -1000,12 +1002,14 @@ class TestRelationshipsCollection:
         result = collector.collect_relationships()
 
         assert len(result.snapmirror_destinations) == 1
-        assert result.snapmirror_destinations[0].source_path == "svm1:vol1"
-        assert result.snapmirror_destinations[0].destination_path == "svm2:vol1_dp"
+        assert result.snapmirror_destinations[0].source_path == ""
+        assert result.snapmirror_destinations[0].destination_path == ""
 
     def test_collect_relationships_with_string_peer_fields(self) -> None:
         """Test relationships handles string fields in cluster peers (instead of dicts)."""
-        sm_endpoint = "/snapmirror/relationships?fields=uuid,source,destination,policy.type,state"
+        from pynetappfoundry.cache.mappings.snapmirror import SNAPMIRROR_MAPPING
+
+        sm_endpoint = SNAPMIRROR_MAPPING.api_endpoint
         api_responses = {
             sm_endpoint: {"records": []},
             "/cluster/peers?fields=*": {
@@ -1038,7 +1042,9 @@ class TestRelationshipsCollection:
 
     def test_collect_relationships_with_none_path(self) -> None:
         """Test relationships handles None path values."""
-        sm_endpoint = "/snapmirror/relationships?fields=uuid,source,destination,policy.type,state"
+        from pynetappfoundry.cache.mappings.snapmirror import SNAPMIRROR_MAPPING
+
+        sm_endpoint = SNAPMIRROR_MAPPING.api_endpoint
         api_responses = {
             sm_endpoint: {
                 "records": [
@@ -1046,8 +1052,7 @@ class TestRelationshipsCollection:
                         "uuid": "sm-uuid-1",
                         "source": None,
                         "destination": None,
-                        "policy": {"type": "async"},
-                        "state": "snapmirrored",
+                        "policy": {"type": "async", "uuid": "pol-uuid-1"},
                     }
                 ]
             },
@@ -1332,43 +1337,6 @@ class TestCollectAll:
         assert result.cluster_name == "test-cluster"
         assert result.cached_at is not None
         assert result.cache_version == "1.0"
-
-
-class TestFormatPath:
-    """Tests for _format_path static method."""
-
-    def test_format_path_with_dict(self) -> None:
-        """Test formatting path from dict with svm and path keys."""
-        path_info = {"svm": {"name": "svm1"}, "path": "vol1"}
-        assert MetadataCollector._format_path(path_info) == "svm1:vol1"
-
-    def test_format_path_with_string(self) -> None:
-        """Test formatting path when API returns string directly."""
-        assert MetadataCollector._format_path("svm1:vol1") == "svm1:vol1"
-
-    def test_format_path_with_none(self) -> None:
-        """Test formatting path with None input."""
-        assert MetadataCollector._format_path(None) == ""
-
-    def test_format_path_with_empty_dict(self) -> None:
-        """Test formatting path with empty dict."""
-        assert MetadataCollector._format_path({}) == ""
-
-    def test_format_path_with_path_only(self) -> None:
-        """Test formatting path when only path is present (no svm)."""
-        path_info: dict[str, Any] = {"path": "vol1"}
-        assert MetadataCollector._format_path(path_info) == "vol1"
-
-    def test_format_path_with_svm_only(self) -> None:
-        """Test formatting path when only svm is present (no path)."""
-        path_info = {"svm": {"name": "svm1"}}
-        assert MetadataCollector._format_path(path_info) == "svm1"
-
-    def test_format_path_with_svm_as_string(self) -> None:
-        """Test formatting path when svm is string instead of dict."""
-        path_info: dict[str, Any] = {"svm": "svm1", "path": "vol1"}
-        # When svm is string (not dict), we can't extract name, so only path is used
-        assert MetadataCollector._format_path(path_info) == "vol1"
 
 
 class TestNormalizeCliKey:
