@@ -20,6 +20,7 @@ from pynetappfoundry.cache.models import (
     ExportRuleInfo,
     FlexCacheInfo,
     HAInfo,
+    HasUUID,
     IgroupInfo,
     IPSubnetInfo,
     LicenseFeature,
@@ -1264,3 +1265,192 @@ class TestCachedClusterMetadata:
         assert metadata.cluster_name == "test"
         assert metadata.cloud[0].provider == "Azure"
         assert metadata.cluster.ontap_version == "9.13.1"
+
+
+class TestUuidIndex:
+    """Tests for CachedClusterMetadata.uuid_index cached property."""
+
+    def test_empty_cache(self) -> None:
+        """Test uuid_index is empty when all lists are defaults."""
+        metadata = CachedClusterMetadata(cluster_name="test")
+        assert metadata.uuid_index == {}
+
+    def test_single_type(self) -> None:
+        """Test uuid_index with two NodeInfo objects."""
+        metadata = CachedClusterMetadata(
+            cluster_name="test",
+            nodes=[
+                NodeInfo(uuid="node-1", name="node1"),
+                NodeInfo(uuid="node-2", name="node2"),
+            ],
+        )
+        assert len(metadata.uuid_index) == 2
+        assert metadata.uuid_index["node-1"].uuid == "node-1"
+        assert metadata.uuid_index["node-2"].uuid == "node-2"
+
+    def test_multiple_types(self) -> None:
+        """Test uuid_index spans multiple categories."""
+        metadata = CachedClusterMetadata(
+            cluster_name="test",
+            nodes=[NodeInfo(uuid="uuid-node", name="node1")],
+            storage=StorageInfo(
+                volumes=[VolumeInfo(uuid="uuid-vol", name="vol1")],
+            ),
+            relationships=RelationshipsInfo(
+                cluster_peers=[ClusterPeer(uuid="uuid-peer", name="peer1")],
+            ),
+            protocols=ProtocolsInfo(
+                s3_buckets=[S3BucketInfo(uuid="uuid-bucket", name="bucket1")],
+            ),
+        )
+        index = metadata.uuid_index
+        assert len(index) == 4
+        assert isinstance(index["uuid-node"], NodeInfo)
+        assert isinstance(index["uuid-vol"], VolumeInfo)
+        assert isinstance(index["uuid-peer"], ClusterPeer)
+        assert isinstance(index["uuid-bucket"], S3BucketInfo)
+
+    def test_skips_empty_uuid(self) -> None:
+        """Test that objects with empty uuid are excluded from the index."""
+        metadata = CachedClusterMetadata(
+            cluster_name="test",
+            nodes=[
+                NodeInfo(uuid="", name="no-uuid-node"),
+                NodeInfo(uuid="real-uuid", name="has-uuid-node"),
+            ],
+        )
+        assert len(metadata.uuid_index) == 1
+        assert "real-uuid" in metadata.uuid_index
+        assert "" not in metadata.uuid_index
+
+    def test_missing_uuid_returns_none(self) -> None:
+        """Test that looking up a nonexistent UUID returns None via .get()."""
+        metadata = CachedClusterMetadata(
+            cluster_name="test",
+            nodes=[NodeInfo(uuid="exists", name="node1")],
+        )
+        assert metadata.uuid_index.get("nonexistent") is None
+
+    def test_is_cached(self) -> None:
+        """Test that uuid_index is the same object on repeated access."""
+        metadata = CachedClusterMetadata(
+            cluster_name="test",
+            nodes=[NodeInfo(uuid="node-1", name="node1")],
+        )
+        first = metadata.uuid_index
+        second = metadata.uuid_index
+        assert first is second
+
+    def test_all_18_types(self) -> None:
+        """Test that all 18 UUID-bearing types are included in the index."""
+        metadata = CachedClusterMetadata(
+            cluster_name="test",
+            nodes=[NodeInfo(uuid="uuid-01")],
+            network=NetworkInfo(
+                broadcast_domains=[BroadcastDomain(uuid="uuid-02")],
+                subnets=[IPSubnetInfo(uuid="uuid-03")],
+                dns=[DNSInfo(uuid="uuid-04")],
+            ),
+            storage=StorageInfo(
+                aggregates=[AggregateInfo(uuid="uuid-05")],
+                svms=[SVMInfo(uuid="uuid-06")],
+                cloud_targets=[CloudTargetInfo(uuid="uuid-07")],
+                volumes=[VolumeInfo(uuid="uuid-08")],
+                snapshot_policies=[SnapshotPolicyInfo(uuid="uuid-09")],
+                schedules=[ScheduleInfo(uuid="uuid-10")],
+                luns=[LunInfo(uuid="uuid-11")],
+                igroups=[IgroupInfo(uuid="uuid-12")],
+                qos_policies=[QosPolicyInfo(uuid="uuid-13")],
+                flexcaches=[FlexCacheInfo(uuid="uuid-14")],
+            ),
+            relationships=RelationshipsInfo(
+                snapmirror_destinations=[SnapMirrorRelationship(uuid="uuid-15")],
+                cluster_peers=[ClusterPeer(uuid="uuid-16")],
+                svm_peers=[SVMPeerInfo(uuid="uuid-17")],
+            ),
+            protocols=ProtocolsInfo(
+                s3_buckets=[S3BucketInfo(uuid="uuid-18")],
+            ),
+        )
+        index = metadata.uuid_index
+        assert len(index) == 18
+        assert isinstance(index["uuid-01"], NodeInfo)
+        assert isinstance(index["uuid-02"], BroadcastDomain)
+        assert isinstance(index["uuid-03"], IPSubnetInfo)
+        assert isinstance(index["uuid-04"], DNSInfo)
+        assert isinstance(index["uuid-05"], AggregateInfo)
+        assert isinstance(index["uuid-06"], SVMInfo)
+        assert isinstance(index["uuid-07"], CloudTargetInfo)
+        assert isinstance(index["uuid-08"], VolumeInfo)
+        assert isinstance(index["uuid-09"], SnapshotPolicyInfo)
+        assert isinstance(index["uuid-10"], ScheduleInfo)
+        assert isinstance(index["uuid-11"], LunInfo)
+        assert isinstance(index["uuid-12"], IgroupInfo)
+        assert isinstance(index["uuid-13"], QosPolicyInfo)
+        assert isinstance(index["uuid-14"], FlexCacheInfo)
+        assert isinstance(index["uuid-15"], SnapMirrorRelationship)
+        assert isinstance(index["uuid-16"], ClusterPeer)
+        assert isinstance(index["uuid-17"], SVMPeerInfo)
+        assert isinstance(index["uuid-18"], S3BucketInfo)
+
+    def test_excludes_non_uuid_models(self) -> None:
+        """Test that models without uuid fields don't appear in the index."""
+        metadata = CachedClusterMetadata(
+            cluster_name="test",
+            cloud=[CloudMetadata(instance_id="i-123", provider="AWS")],
+            cluster=ClusterInfo(cluster_uuid="cluster-uuid-1"),
+            protocols=ProtocolsInfo(
+                export_policies=[ExportPolicyInfo(id=1, name="default")],
+            ),
+            storage=StorageInfo(
+                qtrees=[QtreeInfo(id=1, name="qt1")],
+            ),
+        )
+        assert metadata.uuid_index == {}
+
+    def test_cross_reference_use_case(self) -> None:
+        """Test resolving a SnapMirror transfer_schedule_uuid to its ScheduleInfo."""
+        schedule_uuid = "sched-uuid-abc"
+        metadata = CachedClusterMetadata(
+            cluster_name="test",
+            storage=StorageInfo(
+                schedules=[
+                    ScheduleInfo(uuid=schedule_uuid, name="hourly"),
+                ],
+            ),
+            relationships=RelationshipsInfo(
+                snapmirror_destinations=[
+                    SnapMirrorRelationship(
+                        uuid="sm-uuid-1",
+                        source_path="svm1:vol1",
+                        destination_path="svm2:vol1_dp",
+                        transfer_schedule_uuid=schedule_uuid,
+                    ),
+                ],
+            ),
+        )
+        rel = metadata.relationships.snapmirror_destinations[0]
+        schedule = metadata.uuid_index.get(rel.transfer_schedule_uuid)
+        assert schedule is not None
+        assert isinstance(schedule, ScheduleInfo)
+        assert schedule.name == "hourly"
+
+    def test_not_in_model_dump(self) -> None:
+        """Test that uuid_index does not appear in model_dump() output."""
+        metadata = CachedClusterMetadata(
+            cluster_name="test",
+            nodes=[NodeInfo(uuid="node-1", name="node1")],
+        )
+        # Access uuid_index to ensure it's been computed
+        _ = metadata.uuid_index
+        dump = metadata.model_dump()
+        assert "uuid_index" not in dump
+
+    def test_has_uuid_protocol(self) -> None:
+        """Test that HasUUID protocol works as runtime checkable."""
+        node = NodeInfo(uuid="test-uuid")
+        assert isinstance(node, HasUUID)
+
+        # Models without uuid field should not satisfy the protocol
+        lif = NetworkLIF(name="lif1")
+        assert not isinstance(lif, HasUUID)

@@ -58,6 +58,32 @@ class CachedClusterMetadata(BaseModel):
     protocols: ProtocolsInfo         # Export policies, CIFS, NFS, S3
 ```
 
+### UUID Cross-Reference Index
+
+`CachedClusterMetadata` exposes a `uuid_index` cached property that builds a flat
+`dict[str, HasUUID]` mapping UUID strings to their corresponding model objects across
+all 18 UUID-bearing types. This enables O(1) resolution of foreign-key UUID references
+stored in cache objects.
+
+```python
+cached = cache_db.get("cluster-name")
+
+# Resolve any UUID to its object regardless of type
+obj = cached.uuid_index.get("53a08885-1d82-11ea-a91e-000d3aa4b171")
+
+# Cross-reference example: resolve a SnapMirror relationship's schedule
+for rel in cached.relationships.snapmirror_destinations:
+    schedule = cached.uuid_index.get(rel.transfer_schedule_uuid)
+    if schedule:
+        print(f"{rel.destination_path} uses schedule: {schedule.name}")
+```
+
+The index is built lazily on first access and cached for the lifetime of the object.
+UUID-bearing types are discovered automatically via introspection — new types with a
+`uuid: str` field are picked up with no manual registration. Objects with empty UUID
+strings are excluded. The index does not appear in `model_dump()` or `model_dump_json()`
+output.
+
 ### Schema Version Tracking
 
 The cache uses semantic versioning to track schema compatibility:
@@ -447,6 +473,7 @@ from pynetappfoundry.cache import (
 
     # Top-level model
     CachedClusterMetadata,
+    HasUUID,  # Protocol for models with a uuid field
 
     # Cloud & Cluster
     CloudMetadata, ClusterInfo, NodeInfo,
