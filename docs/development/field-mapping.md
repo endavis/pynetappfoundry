@@ -192,7 +192,7 @@ For CLI-only types, also test:
 | Volume | `VOLUME_MAPPING` | `VolumeInfo` | 21 | API-only. Uses transform for aggregate list extraction. |
 | Aggregate | `AGGREGATE_MAPPING` | `AggregateInfo` | 28 | API-only. Deeply nested API paths (`block_storage.primary.*`). Explicit `?fields=*,is_spare_low,sidl_enabled`. |
 | Node | `NODE_MAPPING` | `NodeInfo` | 20 | API-only. Wildcard `[*]` syntax for list fields. `field_validator` for int→str coercion. |
-| ClusterPeer | `CLUSTER_PEER_MAPPING` | `ClusterPeer` | 5 | API-only. Uses transform for dict-vs-string fallback on `remote` and `authentication`. |
+| ClusterPeer | `CLUSTER_PEER_MAPPING` | `ClusterPeer` | 7 | API-only. Uses transform for dict-vs-string fallback on `remote`, `authentication`, and `encryption`. |
 | CloudMetadata | `CLOUD_METADATA_MAPPING` | `CloudMetadata` | 19 | CLI-only (no API endpoint). Computed link fields built as post-processing in collector. |
 
 ## Reference: Field Mapping Patterns

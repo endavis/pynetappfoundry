@@ -71,6 +71,36 @@ def _api_authentication_state(record: dict[str, Any]) -> str:
     return str(auth or "")
 
 
+def _api_authentication_in_use(record: dict[str, Any]) -> str:
+    """Extract authentication method in use from API response.
+
+    Args:
+        record: Full API cluster peer record.
+
+    Returns:
+        Authentication method in use string.
+    """
+    auth = record.get("authentication")
+    if isinstance(auth, dict):
+        return str(auth.get("in_use", ""))
+    return ""
+
+
+def _api_encryption_state(record: dict[str, Any]) -> str:
+    """Extract encryption state from API response.
+
+    Args:
+        record: Full API cluster peer record.
+
+    Returns:
+        Encryption state string.
+    """
+    encryption = record.get("encryption")
+    if isinstance(encryption, dict):
+        return str(encryption.get("state", ""))
+    return str(encryption or "")
+
+
 CLUSTER_PEER_MAPPING = TypeMapping(
     name="ClusterPeer",
     model_class=ClusterPeer,
@@ -97,6 +127,14 @@ CLUSTER_PEER_MAPPING = TypeMapping(
         FieldMapping(
             cache_attr="authentication_state",
             transform=_api_authentication_state,
+        ),
+        FieldMapping(
+            cache_attr="authentication_in_use",
+            transform=_api_authentication_in_use,
+        ),
+        FieldMapping(
+            cache_attr="encryption_state",
+            transform=_api_encryption_state,
         ),
     ),
 )

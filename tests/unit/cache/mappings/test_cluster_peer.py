@@ -13,7 +13,9 @@ from pynetappfoundry.cache.field_mapping import (
 )
 from pynetappfoundry.cache.mappings.cluster_peer import (
     CLUSTER_PEER_MAPPING,
+    _api_authentication_in_use,
     _api_authentication_state,
+    _api_encryption_state,
     _api_peer_addresses,
     _api_remote_cluster_name,
 )
@@ -36,7 +38,10 @@ def full_api_record() -> dict[str, Any]:
         },
         "authentication": {
             "state": "ok",
-            "in_use": "ok",
+            "in_use": "pre_shared_key",
+        },
+        "encryption": {
+            "state": "tls_psk",
         },
     }
 
@@ -63,8 +68,8 @@ class TestClusterPeerMappingDefinition:
         assert len(attrs) == len(set(attrs))
 
     def test_field_count(self) -> None:
-        """Mapping has expected number of fields (5)."""
-        assert len(CLUSTER_PEER_MAPPING.fields) == 5
+        """Mapping has expected number of fields (7)."""
+        assert len(CLUSTER_PEER_MAPPING.fields) == 7
 
     def test_model_class(self) -> None:
         """Model class is ClusterPeer."""
@@ -105,6 +110,8 @@ class TestClusterPeerApiParsing:
         assert result.remote_cluster_name == "DRCL1"
         assert result.peer_addresses == ["10.0.1.10", "10.0.1.11"]
         assert result.authentication_state == "ok"
+        assert result.authentication_in_use == "pre_shared_key"
+        assert result.encryption_state == "tls_psk"
 
     def test_minimal_record(self) -> None:
         """Minimal record uses defaults for missing fields."""
@@ -116,6 +123,8 @@ class TestClusterPeerApiParsing:
         assert result.remote_cluster_name == ""
         assert result.peer_addresses == []
         assert result.authentication_state == ""
+        assert result.authentication_in_use == ""
+        assert result.encryption_state == ""
 
     def test_remote_as_string(self) -> None:
         """When remote is a string, remote_cluster_name gets the string value."""
@@ -152,6 +161,8 @@ class TestClusterPeerApiParsing:
         assert result.remote_cluster_name == ""
         assert result.peer_addresses == []
         assert result.authentication_state == ""
+        assert result.authentication_in_use == ""
+        assert result.encryption_state == ""
 
     def test_address_filtering(self) -> None:
         """Empty/falsy addresses are filtered out."""
@@ -280,6 +291,53 @@ class TestTransformFunctions:
         """Missing authentication key returns empty string."""
         assert _api_authentication_state({}) == ""
 
+    # -- _api_authentication_in_use --
+
+    def test_authentication_in_use_dict(self) -> None:
+        """Dict authentication returns in_use."""
+        assert (
+            _api_authentication_in_use({"authentication": {"in_use": "pre_shared_key"}})
+            == "pre_shared_key"
+        )
+
+    def test_authentication_in_use_dict_missing_key(self) -> None:
+        """Dict authentication without in_use key returns empty string."""
+        assert _api_authentication_in_use({"authentication": {"state": "ok"}}) == ""
+
+    def test_authentication_in_use_string(self) -> None:
+        """String authentication returns empty string."""
+        assert _api_authentication_in_use({"authentication": "pending"}) == ""
+
+    def test_authentication_in_use_none(self) -> None:
+        """None authentication returns empty string."""
+        assert _api_authentication_in_use({"authentication": None}) == ""
+
+    def test_authentication_in_use_missing(self) -> None:
+        """Missing authentication key returns empty string."""
+        assert _api_authentication_in_use({}) == ""
+
+    # -- _api_encryption_state --
+
+    def test_encryption_state_dict(self) -> None:
+        """Dict encryption returns state."""
+        assert _api_encryption_state({"encryption": {"state": "tls_psk"}}) == "tls_psk"
+
+    def test_encryption_state_dict_missing_key(self) -> None:
+        """Dict encryption without state key returns empty string."""
+        assert _api_encryption_state({"encryption": {"protocol": "tls"}}) == ""
+
+    def test_encryption_state_string(self) -> None:
+        """String encryption returns the string."""
+        assert _api_encryption_state({"encryption": "none"}) == "none"
+
+    def test_encryption_state_none(self) -> None:
+        """None encryption returns empty string."""
+        assert _api_encryption_state({"encryption": None}) == ""
+
+    def test_encryption_state_missing(self) -> None:
+        """Missing encryption key returns empty string."""
+        assert _api_encryption_state({}) == ""
+
 
 # ---------------------------------------------------------------------------
 # Parity test: old parser vs new framework
@@ -287,7 +345,19 @@ class TestTransformFunctions:
 
 
 class TestParityWithOldParser:
-    """Verify framework produces same output as old hand-written inline parser."""
+    """Verify framework produces same output as old hand-written inline parser.
+
+    Parity is checked for the original 5 fields only. The new fields
+    (authentication_in_use, encryption_state) were not in the old parser.
+    """
+
+    _ORIGINAL_FIELDS = (
+        "name",
+        "uuid",
+        "remote_cluster_name",
+        "peer_addresses",
+        "authentication_state",
+    )
 
     @staticmethod
     def _old_parse_cluster_peer(record: dict[str, Any]) -> ClusterPeer:
@@ -314,7 +384,7 @@ class TestParityWithOldParser:
         old = self._old_parse_cluster_peer(full_api_record)
         new = parse_api_record(CLUSTER_PEER_MAPPING, full_api_record, "[test]")
         assert isinstance(new, ClusterPeer)
-        for field_name in ClusterPeer.model_fields:
+        for field_name in self._ORIGINAL_FIELDS:
             old_val = getattr(old, field_name)
             new_val = getattr(new, field_name)
             assert old_val == new_val, (
@@ -327,7 +397,7 @@ class TestParityWithOldParser:
         old = self._old_parse_cluster_peer(record)
         new = parse_api_record(CLUSTER_PEER_MAPPING, record, "[test]")
         assert isinstance(new, ClusterPeer)
-        for field_name in ClusterPeer.model_fields:
+        for field_name in self._ORIGINAL_FIELDS:
             old_val = getattr(old, field_name)
             new_val = getattr(new, field_name)
             assert old_val == new_val, (
@@ -345,7 +415,7 @@ class TestParityWithOldParser:
         old = self._old_parse_cluster_peer(record)
         new = parse_api_record(CLUSTER_PEER_MAPPING, record, "[test]")
         assert isinstance(new, ClusterPeer)
-        for field_name in ClusterPeer.model_fields:
+        for field_name in self._ORIGINAL_FIELDS:
             old_val = getattr(old, field_name)
             new_val = getattr(new, field_name)
             assert old_val == new_val, (
@@ -363,7 +433,7 @@ class TestParityWithOldParser:
         old = self._old_parse_cluster_peer(record)
         new = parse_api_record(CLUSTER_PEER_MAPPING, record, "[test]")
         assert isinstance(new, ClusterPeer)
-        for field_name in ClusterPeer.model_fields:
+        for field_name in self._ORIGINAL_FIELDS:
             old_val = getattr(old, field_name)
             new_val = getattr(new, field_name)
             assert old_val == new_val, (
@@ -384,7 +454,7 @@ class TestParityWithOldParser:
         old = self._old_parse_cluster_peer(record)
         new = parse_api_record(CLUSTER_PEER_MAPPING, record, "[test]")
         assert isinstance(new, ClusterPeer)
-        for field_name in ClusterPeer.model_fields:
+        for field_name in self._ORIGINAL_FIELDS:
             old_val = getattr(old, field_name)
             new_val = getattr(new, field_name)
             assert old_val == new_val, (
