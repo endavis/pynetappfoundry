@@ -20,8 +20,13 @@ With DII, AIQUM, BlueXP, and StorageGrid planned as future data sources, the map
 
 The changes are non-breaking — all existing ONTAP mappings work without modification because the new fields have defaults that preserve current behavior.
 
+## Pagination Support
+
+Issue #260 added `get_all_records()` to `APIWrapper`, enabling automatic pagination across all API types. The method uses a configurable `PaginationConfig` and pluggable `NextPageExtractor` callable, defaulting to ONTAP's `_links.next.href` HAL convention. This complements the field mapping framework by ensuring all records are collected before mapping is applied.
+
 ## Related Issues
 
+- Issue #260: feat: add configurable pagination support to APIWrapper
 - Issue #259: feat: generalize field mapping framework for multi-API data collection
 - Issue #258: feat: multi-API data collection strategy (superseded by #259)
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 import contextlib
 import json
 import logging
+from collections.abc import Callable
 from typing import Any
 from urllib.parse import urlencode
 
@@ -20,7 +21,26 @@ from tenacity import (
     wait_exponential,
 )
 
-from pynetappfoundry.core.models import RetryConfig, ValidationConfig
+from pynetappfoundry.core.models import PaginationConfig, RetryConfig, ValidationConfig
+
+NextPageExtractor = Callable[[dict[str, Any]], str | None]
+"""Callable that receives a JSON response dict and returns the next page URL or None."""
+
+
+def ontap_next_page_extractor(response: dict[str, Any]) -> str | None:
+    """Extract next page URL from ONTAP/AIQUM HAL _links.next.href.
+
+    Args:
+        response: The JSON response dictionary.
+
+    Returns:
+        The next page URL string, or None if no next page.
+    """
+    try:
+        href: str = response["_links"]["next"]["href"]
+    except (KeyError, TypeError):
+        return None
+    return href
 
 
 class ResponseValidationError(Exception):
@@ -680,3 +700,162 @@ class APIWrapper:
         )
 
         return response_data
+
+    def get_all_records(
+        self,
+        path_template: str,
+        method: str = "GET",
+        path_params: dict[str, Any] | None = None,
+        query_params: dict[str, Any] | None = None,
+        body: dict[str, Any] | None = None,
+        additional_headers: dict[str, str] | None = None,
+        retry_config: RetryConfig | None = None,
+        validation_config: ValidationConfig | None = None,
+        pagination_config: PaginationConfig | None = None,
+        next_page_extractor: NextPageExtractor | None = None,
+    ) -> dict[str, Any]:
+        """Fetch all pages of a paginated API response and merge records.
+
+        Makes the initial request via call_endpoint(), then follows pagination
+        links using the next_page_extractor to collect all records across pages.
+
+        Args:
+            path_template: API path template.
+            method: HTTP method.
+            path_params: Values for path placeholders.
+            query_params: Query string parameters.
+            body: Request body (JSON).
+            additional_headers: Extra headers to include.
+            retry_config: Optional per-call retry configuration override.
+            validation_config: Optional per-call validation configuration override.
+            pagination_config: Configuration for pagination behavior.
+            next_page_extractor: Callable to extract next page URL from response.
+                Defaults to ontap_next_page_extractor.
+
+        Returns:
+            Merged response dict with all records combined, _links removed,
+            and num_records updated if present in original response.
+
+        Raises:
+            TypeError: If the response is not a dict.
+            ValueError: If request body validation fails.
+            requests.HTTPError: If any request fails.
+            ResponseValidationError: If response validation fails in strict mode.
+        """
+        config = pagination_config if pagination_config is not None else PaginationConfig()
+        extractor = (
+            next_page_extractor if next_page_extractor is not None else ontap_next_page_extractor
+        )
+
+        # Fetch first page via call_endpoint (full validation, URL building, retry)
+        first_response = self.call_endpoint(
+            path_template=path_template,
+            method=method,
+            path_params=path_params,
+            query_params=query_params,
+            body=body,
+            additional_headers=additional_headers,
+            retry_config=retry_config,
+            validation_config=validation_config,
+        )
+
+        if not isinstance(first_response, dict):
+            msg = f"Expected dict response for pagination, got {type(first_response).__name__}"
+            raise TypeError(msg)
+
+        if not config.enabled:
+            logging.debug(f"{self.log_prefix} Pagination disabled, returning first page")
+            return first_response
+
+        # Collect records from first page
+        all_records: list[Any] = list(first_response.get(config.records_key, []))
+        page_count = 1
+
+        logging.debug(
+            f"{self.log_prefix} Page {page_count}: {len(all_records)} records "
+            f"(total: {len(all_records)})"
+        )
+
+        # Pre-compute headers for subsequent pages
+        headers: dict[str, str | bytes] = dict(self.session.headers)
+        if additional_headers:
+            headers.update(additional_headers)
+
+        # Effective configs for subsequent pages
+        effective_retry = retry_config if retry_config is not None else self.retry_config
+        effective_validation = (
+            validation_config if validation_config is not None else self.validation_config
+        )
+
+        # Follow pagination links
+        current_response = first_response
+        while page_count < config.max_pages:
+            next_url = extractor(current_response)
+            if next_url is None:
+                break
+
+            page_count += 1
+
+            # Build full URL
+            if next_url.startswith(("http://", "https://")):
+                full_url = next_url
+            else:
+                full_url = f"{self.base_url}{next_url}"
+
+            logging.debug(f"{self.log_prefix} Fetching page {page_count}: {full_url}")
+
+            resp = self._execute_request_with_retry(
+                method=method.upper(),
+                url=full_url,
+                body=None,
+                headers=headers,
+                retry_config=effective_retry,
+            )
+
+            resp.raise_for_status()
+
+            try:
+                page_data = resp.json()
+            except ValueError as e:
+                logging.error(f"{self.log_prefix} Page {page_count}: failed to parse JSON response")
+                msg = f"Page {page_count}: failed to parse JSON response"
+                raise TypeError(msg) from e
+
+            # Validate subsequent page if enabled
+            if effective_validation.enabled:
+                self.validate_response(
+                    path_template=path_template,
+                    method=method,
+                    status_code=resp.status_code,
+                    response_data=page_data,
+                    validation_config=effective_validation,
+                )
+
+            page_records = page_data.get(config.records_key, [])
+            all_records.extend(page_records)
+            current_response = page_data
+
+            logging.debug(
+                f"{self.log_prefix} Page {page_count}: {len(page_records)} records "
+                f"(total: {len(all_records)})"
+            )
+        else:
+            if extractor(current_response) is not None:
+                logging.warning(
+                    f"{self.log_prefix} Pagination stopped at max_pages limit "
+                    f"({config.max_pages}). Some records may not have been fetched."
+                )
+
+        logging.info(
+            f"{self.log_prefix} Fetched {len(all_records)} total records across {page_count} pages"
+        )
+
+        # Build merged response
+        merged = dict(first_response)
+        merged[config.records_key] = all_records
+        merged.pop("_links", None)
+
+        if "num_records" in first_response:
+            merged["num_records"] = len(all_records)
+
+        return merged

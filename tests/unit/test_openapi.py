@@ -11,8 +11,12 @@ import pytest
 import requests
 from tenacity import RetryError
 
-from pynetappfoundry.clients.openapi import APIWrapper, ResponseValidationError
-from pynetappfoundry.core.models import RetryConfig, ValidationConfig
+from pynetappfoundry.clients.openapi import (
+    APIWrapper,
+    ResponseValidationError,
+    ontap_next_page_extractor,
+)
+from pynetappfoundry.core.models import PaginationConfig, RetryConfig, ValidationConfig
 
 
 @pytest.fixture
@@ -1042,3 +1046,572 @@ class TestAPIWrapperWithConfigs:
         )
         assert wrapper.validation_config.enabled is True
         assert wrapper.validation_config.strict is True
+
+
+class TestPaginationConfig:
+    """Tests for PaginationConfig model."""
+
+    def test_default_values(self) -> None:
+        """Test default configuration values."""
+        config = PaginationConfig()
+        assert config.enabled is True
+        assert config.max_pages == 100
+        assert config.records_key == "records"
+
+    def test_custom_values(self) -> None:
+        """Test custom configuration values."""
+        config = PaginationConfig(
+            enabled=False,
+            max_pages=50,
+            records_key="items",
+        )
+        assert config.enabled is False
+        assert config.max_pages == 50
+        assert config.records_key == "items"
+
+    def test_max_pages_minimum(self) -> None:
+        """Test max_pages validation rejects 0."""
+        with pytest.raises(ValueError):
+            PaginationConfig(max_pages=0)
+
+    def test_max_pages_maximum(self) -> None:
+        """Test max_pages validation rejects values above 10000."""
+        with pytest.raises(ValueError):
+            PaginationConfig(max_pages=10001)
+
+    def test_extra_fields_forbidden(self) -> None:
+        """Test that extra fields are rejected."""
+        with pytest.raises(ValueError):
+            PaginationConfig(unknown_field="value")  # type: ignore[call-arg]
+
+
+class TestOntapNextPageExtractor:
+    """Tests for ontap_next_page_extractor function."""
+
+    def test_extracts_next_href(self) -> None:
+        """Test extraction of next href from _links.next.href."""
+        response = {
+            "records": [],
+            "_links": {
+                "self": {"href": "/api/storage/aggregates"},
+                "next": {"href": "/api/storage/aggregates?start.name=aggr5&max_records=25"},
+            },
+        }
+        result = ontap_next_page_extractor(response)
+        assert result == "/api/storage/aggregates?start.name=aggr5&max_records=25"
+
+    def test_returns_none_when_no_links(self) -> None:
+        """Test returns None when _links key is missing."""
+        response: dict[str, Any] = {"records": []}
+        assert ontap_next_page_extractor(response) is None
+
+    def test_returns_none_when_no_next(self) -> None:
+        """Test returns None when _links has self but no next."""
+        response: dict[str, Any] = {
+            "records": [],
+            "_links": {"self": {"href": "/api/storage/aggregates"}},
+        }
+        assert ontap_next_page_extractor(response) is None
+
+    def test_returns_none_when_links_is_none(self) -> None:
+        """Test returns None when _links value is None."""
+        response: dict[str, Any] = {"records": [], "_links": None}
+        assert ontap_next_page_extractor(response) is None
+
+    def test_returns_none_for_empty_dict(self) -> None:
+        """Test returns None for empty response dict."""
+        assert ontap_next_page_extractor({}) is None
+
+    def test_returns_none_when_next_has_no_href(self) -> None:
+        """Test returns None when _links.next exists but has no href."""
+        response: dict[str, Any] = {
+            "records": [],
+            "_links": {"next": {"self": "/api/storage/aggregates"}},
+        }
+        assert ontap_next_page_extractor(response) is None
+
+
+class TestGetAllRecords:
+    """Tests for APIWrapper.get_all_records method."""
+
+    def _make_response(
+        self,
+        data: dict[str, Any],
+        status_code: int = 200,
+    ) -> MagicMock:
+        """Helper to create a mock HTTP response."""
+        mock_resp = MagicMock()
+        mock_resp.status_code = status_code
+        mock_resp.json.return_value = data
+        mock_resp.raise_for_status.return_value = None
+        return mock_resp
+
+    def test_single_page_no_pagination_links(self, api_wrapper: APIWrapper) -> None:
+        """Test single page response without pagination links returns as-is."""
+        page_data = {
+            "records": [{"name": "vol1"}, {"name": "vol2"}],
+            "num_records": 2,
+        }
+        with patch.object(api_wrapper.session, "request") as mock_request:
+            mock_request.return_value = self._make_response(page_data)
+
+            result = api_wrapper.get_all_records("/users", "GET")
+
+            assert result["records"] == [{"name": "vol1"}, {"name": "vol2"}]
+            assert result["num_records"] == 2
+            assert mock_request.call_count == 1
+
+    def test_two_pages(self, api_wrapper: APIWrapper) -> None:
+        """Test following one next link and merging records."""
+        page1 = {
+            "records": [{"name": "vol1"}],
+            "num_records": 1,
+            "_links": {"next": {"href": "/api/v1/users?start=2&max_records=1"}},
+        }
+        page2 = {
+            "records": [{"name": "vol2"}],
+            "num_records": 1,
+        }
+        with patch.object(api_wrapper.session, "request") as mock_request:
+            mock_request.side_effect = [
+                self._make_response(page1),
+                self._make_response(page2),
+            ]
+
+            result = api_wrapper.get_all_records("/users", "GET")
+
+            assert result["records"] == [{"name": "vol1"}, {"name": "vol2"}]
+            assert result["num_records"] == 2
+            assert "_links" not in result
+            assert mock_request.call_count == 2
+
+    def test_three_pages(self, api_wrapper: APIWrapper) -> None:
+        """Test following two next links with correct total."""
+        page1 = {
+            "records": [{"name": "a"}],
+            "num_records": 1,
+            "_links": {"next": {"href": "/api/v1/users?start=2"}},
+        }
+        page2 = {
+            "records": [{"name": "b"}],
+            "num_records": 1,
+            "_links": {"next": {"href": "/api/v1/users?start=3"}},
+        }
+        page3 = {
+            "records": [{"name": "c"}],
+            "num_records": 1,
+        }
+        with patch.object(api_wrapper.session, "request") as mock_request:
+            mock_request.side_effect = [
+                self._make_response(page1),
+                self._make_response(page2),
+                self._make_response(page3),
+            ]
+
+            result = api_wrapper.get_all_records("/users", "GET")
+
+            assert len(result["records"]) == 3
+            assert result["num_records"] == 3
+            assert mock_request.call_count == 3
+
+    def test_subsequent_page_url_construction(self, api_wrapper: APIWrapper) -> None:
+        """Test that subsequent page URLs use base_url + href (no duplicate /api)."""
+        page1 = {
+            "records": [{"name": "vol1"}],
+            "_links": {"next": {"href": "/api/v1/users?start=2"}},
+        }
+        page2 = {"records": [{"name": "vol2"}]}
+
+        with patch.object(api_wrapper.session, "request") as mock_request:
+            mock_request.side_effect = [
+                self._make_response(page1),
+                self._make_response(page2),
+            ]
+
+            api_wrapper.get_all_records("/users", "GET")
+
+            # Second call should use base_url + href directly
+            second_call = mock_request.call_args_list[1]
+            assert second_call[0][1] == "https://api.example.com/api/v1/users?start=2"
+
+    def test_absolute_url_in_next_link(self, api_wrapper: APIWrapper) -> None:
+        """Test that absolute URLs in next links are used as-is."""
+        page1 = {
+            "records": [{"name": "vol1"}],
+            "_links": {"next": {"href": "https://other.example.com/api/v1/users?start=2"}},
+        }
+        page2 = {"records": [{"name": "vol2"}]}
+
+        with patch.object(api_wrapper.session, "request") as mock_request:
+            mock_request.side_effect = [
+                self._make_response(page1),
+                self._make_response(page2),
+            ]
+
+            api_wrapper.get_all_records("/users", "GET")
+
+            second_call = mock_request.call_args_list[1]
+            assert second_call[0][1] == "https://other.example.com/api/v1/users?start=2"
+
+    def test_pagination_disabled(self, api_wrapper: APIWrapper) -> None:
+        """Test that disabled pagination returns first page as-is with _links preserved."""
+        page_data = {
+            "records": [{"name": "vol1"}],
+            "_links": {"next": {"href": "/api/v1/users?start=2"}},
+        }
+        with patch.object(api_wrapper.session, "request") as mock_request:
+            mock_request.return_value = self._make_response(page_data)
+
+            result = api_wrapper.get_all_records(
+                "/users",
+                "GET",
+                pagination_config=PaginationConfig(enabled=False),
+            )
+
+            assert "_links" in result
+            assert mock_request.call_count == 1
+
+    def test_max_pages_limit(self, api_wrapper: APIWrapper) -> None:
+        """Test that pagination stops at max_pages and returns collected records."""
+
+        def make_page(n: int) -> dict[str, Any]:
+            return {
+                "records": [{"name": f"vol{n}"}],
+                "_links": {"next": {"href": f"/api/v1/users?start={n + 1}"}},
+            }
+
+        with patch.object(api_wrapper.session, "request") as mock_request:
+            mock_request.side_effect = [self._make_response(make_page(i)) for i in range(1, 5)]
+
+            result = api_wrapper.get_all_records(
+                "/users",
+                "GET",
+                pagination_config=PaginationConfig(max_pages=3),
+            )
+
+            assert len(result["records"]) == 3
+            assert mock_request.call_count == 3
+
+    def test_custom_records_key(self, api_wrapper: APIWrapper) -> None:
+        """Test pagination with custom records_key."""
+        page1 = {
+            "items": [{"name": "vol1"}],
+            "_links": {"next": {"href": "/api/v1/users?start=2"}},
+        }
+        page2 = {"items": [{"name": "vol2"}]}
+
+        with patch.object(api_wrapper.session, "request") as mock_request:
+            mock_request.side_effect = [
+                self._make_response(page1),
+                self._make_response(page2),
+            ]
+
+            result = api_wrapper.get_all_records(
+                "/users",
+                "GET",
+                pagination_config=PaginationConfig(records_key="items"),
+            )
+
+            assert result["items"] == [{"name": "vol1"}, {"name": "vol2"}]
+
+    def test_non_dict_response_raises_type_error(self, api_wrapper: APIWrapper) -> None:
+        """Test that non-dict response raises TypeError."""
+        with patch.object(api_wrapper.session, "request") as mock_request:
+            mock_resp = MagicMock()
+            mock_resp.status_code = 200
+            mock_resp.text = "plain text"
+            mock_resp.json.side_effect = ValueError("No JSON")
+            mock_resp.raise_for_status.return_value = None
+            mock_request.return_value = mock_resp
+
+            with pytest.raises(TypeError, match="Expected dict response"):
+                api_wrapper.get_all_records("/users", "GET")
+
+    def test_page2_json_parse_failure(self, api_wrapper: APIWrapper) -> None:
+        """Test that page 2 JSON parse failure raises TypeError."""
+        page1 = {
+            "records": [{"name": "vol1"}],
+            "_links": {"next": {"href": "/api/v1/users?start=2"}},
+        }
+        mock_page2 = MagicMock()
+        mock_page2.status_code = 200
+        mock_page2.json.side_effect = ValueError("No JSON")
+        mock_page2.raise_for_status.return_value = None
+
+        with patch.object(api_wrapper.session, "request") as mock_request:
+            mock_request.side_effect = [
+                self._make_response(page1),
+                mock_page2,
+            ]
+
+            with pytest.raises(TypeError, match="failed to parse JSON"):
+                api_wrapper.get_all_records("/users", "GET")
+
+    def test_page2_http_error(self, api_wrapper: APIWrapper) -> None:
+        """Test that page 2 HTTP 500 raises HTTPError immediately."""
+        page1 = {
+            "records": [{"name": "vol1"}],
+            "_links": {"next": {"href": "/api/v1/users?start=2"}},
+        }
+        mock_page2 = MagicMock()
+        mock_page2.status_code = 500
+        mock_page2.raise_for_status.side_effect = requests.HTTPError("Server Error")
+
+        with patch.object(api_wrapper.session, "request") as mock_request:
+            mock_request.side_effect = [
+                self._make_response(page1),
+                mock_page2,
+            ]
+
+            with pytest.raises(requests.HTTPError, match="Server Error"):
+                api_wrapper.get_all_records(
+                    "/users",
+                    "GET",
+                    retry_config=RetryConfig(enabled=False),
+                )
+
+    def test_custom_next_page_extractor(self, api_wrapper: APIWrapper) -> None:
+        """Test pagination with a custom next_page_extractor."""
+
+        def custom_extractor(response: dict[str, Any]) -> str | None:
+            return response.get("next_url")
+
+        page1 = {
+            "records": [{"name": "vol1"}],
+            "next_url": "/api/v1/users?page=2",
+        }
+        page2 = {"records": [{"name": "vol2"}]}
+
+        with patch.object(api_wrapper.session, "request") as mock_request:
+            mock_request.side_effect = [
+                self._make_response(page1),
+                self._make_response(page2),
+            ]
+
+            result = api_wrapper.get_all_records(
+                "/users",
+                "GET",
+                next_page_extractor=custom_extractor,
+            )
+
+            assert result["records"] == [{"name": "vol1"}, {"name": "vol2"}]
+
+    def test_headers_include_additional_headers(self, api_wrapper: APIWrapper) -> None:
+        """Test that page 2 requests include additional_headers."""
+        page1 = {
+            "records": [{"name": "vol1"}],
+            "_links": {"next": {"href": "/api/v1/users?start=2"}},
+        }
+        page2 = {"records": [{"name": "vol2"}]}
+
+        with patch.object(api_wrapper.session, "request") as mock_request:
+            mock_request.side_effect = [
+                self._make_response(page1),
+                self._make_response(page2),
+            ]
+
+            api_wrapper.get_all_records(
+                "/users",
+                "GET",
+                additional_headers={"X-Custom": "test-value"},
+            )
+
+            # Check page 2 headers include the custom header
+            second_call = mock_request.call_args_list[1]
+            assert second_call[1]["headers"]["X-Custom"] == "test-value"
+
+    def test_retry_config_applies_to_subsequent_pages(self, spec_file: Path) -> None:
+        """Test that per-call retry config is used for page 2."""
+        wrapper = APIWrapper(
+            api_json_file=str(spec_file),
+            base_url="https://api.example.com",
+            retry_config=RetryConfig(enabled=False),
+        )
+        page1 = {
+            "records": [{"name": "vol1"}],
+            "_links": {"next": {"href": "/api/v1/users?start=2"}},
+        }
+        # Page 2: first attempt 503, second attempt succeeds
+        mock_503 = MagicMock()
+        mock_503.status_code = 503
+
+        page2_data = {"records": [{"name": "vol2"}]}
+
+        with patch.object(wrapper.session, "request") as mock_request:
+            mock_request.side_effect = [
+                self._make_response(page1),
+                mock_503,
+                self._make_response(page2_data),
+            ]
+
+            result = wrapper.get_all_records(
+                "/users",
+                "GET",
+                retry_config=RetryConfig(
+                    enabled=True,
+                    max_attempts=3,
+                    initial_wait=0.1,
+                    max_wait=1.0,
+                ),
+            )
+
+            assert result["records"] == [{"name": "vol1"}, {"name": "vol2"}]
+            assert mock_request.call_count == 3
+
+    def test_validation_applies_to_subsequent_pages(self, tmp_path: Path) -> None:
+        """Test that validation is applied to subsequent pages in strict mode."""
+        spec = {
+            "swagger": "2.0",
+            "basePath": "/api/v1",
+            "paths": {
+                "/users": {
+                    "get": {
+                        "summary": "List users",
+                        "responses": {
+                            "200": {
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "type": "object",
+                                            "required": ["records"],
+                                            "properties": {
+                                                "records": {"type": "array"},
+                                            },
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                    }
+                }
+            },
+        }
+        spec_path = tmp_path / "spec.json"
+        spec_path.write_text(json.dumps(spec))
+
+        wrapper = APIWrapper(
+            api_json_file=str(spec_path),
+            base_url="https://api.example.com",
+            retry_config=RetryConfig(enabled=False),
+        )
+
+        page1 = {
+            "records": [{"name": "vol1"}],
+            "_links": {"next": {"href": "/api/v1/users?start=2"}},
+        }
+        # Page 2 has invalid data (missing required 'records')
+        page2_invalid = {"invalid": "data"}
+
+        with patch.object(wrapper.session, "request") as mock_request:
+            mock_request.side_effect = [
+                self._make_response(page1),
+                self._make_response(page2_invalid),
+            ]
+
+            with pytest.raises(ResponseValidationError):
+                wrapper.get_all_records(
+                    "/users",
+                    "GET",
+                    validation_config=ValidationConfig(enabled=True, strict=True),
+                )
+
+    def test_validation_skipped_when_disabled(self, api_wrapper: APIWrapper) -> None:
+        """Test that disabled validation does not raise on invalid data."""
+        page1 = {
+            "records": [{"name": "vol1"}],
+            "_links": {"next": {"href": "/api/v1/users?start=2"}},
+        }
+        page2 = {"records": [{"name": "vol2"}]}
+
+        with patch.object(api_wrapper.session, "request") as mock_request:
+            mock_request.side_effect = [
+                self._make_response(page1),
+                self._make_response(page2),
+            ]
+
+            # Default validation is disabled, should not raise
+            result = api_wrapper.get_all_records("/users", "GET")
+
+            assert len(result["records"]) == 2
+
+    def test_empty_records_on_pages(self, api_wrapper: APIWrapper) -> None:
+        """Test that empty pages with next links are handled correctly."""
+        page1 = {
+            "records": [],
+            "_links": {"next": {"href": "/api/v1/users?start=2"}},
+        }
+        page2 = {
+            "records": [],
+            "_links": {"next": {"href": "/api/v1/users?start=3"}},
+        }
+        page3 = {"records": [{"name": "vol1"}]}
+
+        with patch.object(api_wrapper.session, "request") as mock_request:
+            mock_request.side_effect = [
+                self._make_response(page1),
+                self._make_response(page2),
+                self._make_response(page3),
+            ]
+
+            result = api_wrapper.get_all_records("/users", "GET")
+
+            assert result["records"] == [{"name": "vol1"}]
+            assert mock_request.call_count == 3
+
+    def test_merged_response_preserves_other_keys(self, api_wrapper: APIWrapper) -> None:
+        """Test that extra top-level keys from first page are preserved."""
+        page1 = {
+            "records": [{"name": "vol1"}],
+            "extra_key": "preserved_value",
+            "another_key": 42,
+            "_links": {"next": {"href": "/api/v1/users?start=2"}},
+        }
+        page2 = {"records": [{"name": "vol2"}]}
+
+        with patch.object(api_wrapper.session, "request") as mock_request:
+            mock_request.side_effect = [
+                self._make_response(page1),
+                self._make_response(page2),
+            ]
+
+            result = api_wrapper.get_all_records("/users", "GET")
+
+            assert result["extra_key"] == "preserved_value"
+            assert result["another_key"] == 42
+
+    def test_num_records_not_present_in_source(self, api_wrapper: APIWrapper) -> None:
+        """Test that num_records is not added if not in original response."""
+        page1 = {
+            "records": [{"name": "vol1"}],
+            "_links": {"next": {"href": "/api/v1/users?start=2"}},
+        }
+        page2 = {"records": [{"name": "vol2"}]}
+
+        with patch.object(api_wrapper.session, "request") as mock_request:
+            mock_request.side_effect = [
+                self._make_response(page1),
+                self._make_response(page2),
+            ]
+
+            result = api_wrapper.get_all_records("/users", "GET")
+
+            assert "num_records" not in result
+
+    def test_call_endpoint_params_forwarded(self, api_wrapper: APIWrapper) -> None:
+        """Test that path_params and query_params reach page 1."""
+        page_data = {"records": [{"name": "vol1"}]}
+
+        with patch.object(api_wrapper.session, "request") as mock_request:
+            mock_request.return_value = self._make_response(page_data)
+
+            api_wrapper.get_all_records(
+                "/users/{id}",
+                "GET",
+                path_params={"id": "123"},
+                query_params={"limit": 25},
+            )
+
+            call_args = mock_request.call_args
+            url = call_args[0][1]
+            assert "/users/123" in url
+            assert "limit=25" in url
