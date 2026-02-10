@@ -540,8 +540,11 @@ class SnapMirrorRelationship(BaseModel):
     uuid: str = ""
     source_path: str = ""
     destination_path: str = ""
-    relationship_type: str = ""  # extended_data_protection, data_protection
-    state: str = ""  # snapmirrored, uninitialized, broken-off
+    relationship_type: str = ""  # async, sync, etc.
+    policy_uuid: str = ""
+    throttle: int = 0  # KB/s, 0 = unlimited
+    group_type: str = ""  # none, svm_dr, consistency_group
+    transfer_schedule_uuid: str = ""
 
 
 class ClusterPeer(BaseModel):

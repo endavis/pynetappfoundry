@@ -24,6 +24,7 @@ from pynetappfoundry.cache.mappings.aggregate import AGGREGATE_MAPPING
 from pynetappfoundry.cache.mappings.cloud_metadata import CLOUD_METADATA_MAPPING
 from pynetappfoundry.cache.mappings.cluster_peer import CLUSTER_PEER_MAPPING
 from pynetappfoundry.cache.mappings.node import NODE_MAPPING
+from pynetappfoundry.cache.mappings.snapmirror import SNAPMIRROR_MAPPING
 from pynetappfoundry.cache.mappings.volume import VOLUME_MAPPING
 from pynetappfoundry.cache.models import (
     AggregateInfo,
@@ -1429,7 +1430,7 @@ class MetadataCollector:
         # Make all 3 API calls in parallel using cached calls
         # Request only needed fields for snapmirror to avoid timeout on large clusters
         endpoints = [
-            "/snapmirror/relationships?fields=uuid,source,destination,policy.type,state",
+            SNAPMIRROR_MAPPING.api_endpoint,
             "/cluster/peers?fields=*",
             "/svm/peers?fields=*",
         ]
@@ -1445,28 +1446,15 @@ class MetadataCollector:
             responses = {ep: self._cached_api_call(ep) for ep in endpoints}
 
         # Process SnapMirror relationships
-        sm_response = responses.get(endpoints[0]) or {}
-        logger.debug(
-            "%s API response: %d SnapMirror relationships",
-            self._log_prefix,
-            len(sm_response.get("records", [])),
+        snapmirror_destinations = cast(
+            list[SnapMirrorRelationship],
+            parse_api_response(
+                SNAPMIRROR_MAPPING,
+                responses.get(endpoints[0]),
+                self._log_prefix,
+                self._log_missing_fields,
+            ),
         )
-        snapmirror_destinations = []
-        for record in sm_response.get("records", []):
-            self._log_missing_fields(
-                record,
-                ["uuid", "source", "destination", "policy", "state"],
-                "SnapMirror",
-                record.get("uuid", "unknown"),
-            )
-            sm = SnapMirrorRelationship(
-                uuid=record.get("uuid", ""),
-                source_path=self._format_path(record.get("source", {})),
-                destination_path=self._format_path(record.get("destination", {})),
-                relationship_type=record.get("policy", {}).get("type", ""),
-                state=record.get("state", ""),
-            )
-            snapmirror_destinations.append(sm)
 
         # Process cluster peers
         cluster_peers = self._parse_cluster_peers_response(responses.get(endpoints[1]))
@@ -2282,27 +2270,3 @@ class MetadataCollector:
             )
             buckets.append(bucket)
         return buckets
-
-    @staticmethod
-    def _format_path(path_info: dict[str, Any] | str | None) -> str:
-        """Format SVM:volume path from API response.
-
-        Args:
-            path_info: Path info dict with svm and path keys, or a string path,
-                or None.
-
-        Returns:
-            Formatted path string.
-        """
-        # Handle string paths (API may return path directly as string)
-        if isinstance(path_info, str):
-            return path_info
-        if not path_info:
-            return ""
-        svm_dict = path_info.get("svm")
-        svm: str = svm_dict.get("name", "") if isinstance(svm_dict, dict) else ""
-        path_val = path_info.get("path")
-        path: str = str(path_val) if path_val else ""
-        if svm and path:
-            return f"{svm}:{path}"
-        return path or svm
