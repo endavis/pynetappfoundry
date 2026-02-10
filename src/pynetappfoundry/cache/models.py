@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import ClassVar
+from functools import cached_property
+from typing import ClassVar, Protocol, runtime_checkable
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -678,6 +679,13 @@ class ProtocolsInfo(BaseModel):
     s3_buckets: list[S3BucketInfo] = Field(default_factory=list)
 
 
+@runtime_checkable
+class HasUUID(Protocol):
+    """Protocol for models that have a uuid field."""
+
+    uuid: str
+
+
 class CachedClusterMetadata(BaseModel):
     """Complete cached metadata for a cluster.
 
@@ -749,3 +757,36 @@ class CachedClusterMetadata(BaseModel):
             "_cached_at": self.cached_at.isoformat(),
             "_cache_version": self.cache_version,
         }
+
+    @cached_property
+    def uuid_index(self) -> dict[str, HasUUID]:
+        """Build a flat UUID → object index across all cached object types.
+
+        Discovers UUID-bearing objects via introspection: walks all model fields
+        on this instance and nested BaseModel containers, indexing any list item
+        that satisfies the HasUUID protocol.
+
+        Built lazily on first access and cached for the lifetime of this object.
+        Objects with empty uuid strings are excluded.
+
+        Returns:
+            Dictionary mapping UUID strings to their corresponding model objects.
+        """
+        index: dict[str, HasUUID] = {}
+        for field_name in type(self).model_fields:
+            value = getattr(self, field_name)
+            if isinstance(value, list):
+                self._index_list(value, index)
+            elif isinstance(value, BaseModel):
+                for nested_name in type(value).model_fields:
+                    nested_value = getattr(value, nested_name)
+                    if isinstance(nested_value, list):
+                        self._index_list(nested_value, index)
+        return index
+
+    @staticmethod
+    def _index_list(items: list[object], index: dict[str, HasUUID]) -> None:
+        """Add HasUUID items from a list to the index."""
+        for item in items:
+            if isinstance(item, HasUUID) and item.uuid:
+                index[item.uuid] = item
