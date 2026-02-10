@@ -1,4 +1,4 @@
-"""Declarative field mapping framework for ONTAP data collection.
+"""Declarative field mapping framework for API data collection.
 
 Provides dataclasses and generic parsers that map API and CLI responses
 to cache model objects using declarative field definitions.
@@ -49,23 +49,30 @@ class FieldMapping:
 
 @dataclass(frozen=True)
 class TypeMapping:
-    """Declarative mapping definition for an ONTAP object type.
+    """Declarative mapping definition for an API object type.
 
     Attributes:
         name: Human-readable type name (e.g. ``"Volume"``).
         model_class: Pydantic model class for the cache object.
         api_endpoint: REST API endpoint including query params.
-        cli_command: CLI show command name.
+        cli_command: CLI show command name. Empty string if not applicable.
         fields: Tuple of field mapping definitions.
         id_field: Field used for log identification.
+        records_path: Dot-notation path to the records list in the API response
+            envelope (e.g. ``"records"`` for ONTAP, ``"_embedded.items"`` for
+            other APIs). Default: ``"records"``.
+        api_type: Tag identifying which API client/unit registry to use
+            (e.g. ``"ontap"``, ``"aiqum"``). Default: ``"ontap"``.
     """
 
     name: str
     model_class: type[BaseModel]
     api_endpoint: str
-    cli_command: str
-    fields: tuple[FieldMapping, ...]
+    cli_command: str = ""
+    fields: tuple[FieldMapping, ...] = ()
     id_field: str = "name"
+    records_path: str = "records"
+    api_type: str = "ontap"
 
     def api_expected_fields(self) -> list[str]:
         """Derive top-level API keys expected in a response record.
@@ -224,12 +231,13 @@ def parse_api_response(
 ) -> list[BaseModel]:
     """Parse a full API response into a list of model instances.
 
-    Iterates ``response["records"]``, logs missing fields via the provided
-    callback, and delegates each record to ``parse_api_record``.
+    Extracts the records list from the response using ``mapping.records_path``
+    (supports dot-notation for nested envelopes), logs missing fields via the
+    provided callback, and delegates each record to ``parse_api_record``.
 
     Args:
         mapping: Type mapping definition.
-        response: Full API response dict (with ``"records"`` key) or None.
+        response: Full API response dict or None.
         log_prefix: Prefix for log messages.
         log_missing_fn: Callback for logging missing fields.
 
@@ -239,7 +247,10 @@ def parse_api_response(
     if not response:
         return []
 
-    records = response.get("records", [])
+    try:
+        records = get_nested_value(response, mapping.records_path)
+    except PathNotFoundError:
+        records = []
     logger.debug("%s API response: %d %ss", log_prefix, len(records), mapping.name.lower())
 
     expected = mapping.api_expected_fields()

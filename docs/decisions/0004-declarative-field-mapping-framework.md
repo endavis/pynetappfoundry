@@ -60,6 +60,7 @@ The pilot migration (VolumeInfo) was completed in PR #189.
 - Issue #217: refactor: migrate CloudMetadata to field mapping framework
 - Issue #216: refactor: migrate ClusterPeer to field mapping framework
 - Issue #237: refactor: all-or-nothing collection with no CLI fallback
+- Issue #259: feat: generalize field mapping framework for multi-API data collection
 
 ## Related Documentation
 

@@ -139,6 +139,57 @@ class TestTypeMapping:
         with pytest.raises(AttributeError):
             sample_mapping.name = "other"  # type: ignore[misc]
 
+    def test_records_path_default(self, sample_mapping: TypeMapping) -> None:
+        """Default records_path is 'records'."""
+        assert sample_mapping.records_path == "records"
+
+    def test_records_path_custom(self) -> None:
+        """records_path can be set to a custom value."""
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/t",
+            fields=(FieldMapping(cache_attr="name", api_path="name"),),
+            records_path="_embedded.items",
+        )
+        assert tm.records_path == "_embedded.items"
+
+    def test_api_type_default(self, sample_mapping: TypeMapping) -> None:
+        """Default api_type is 'ontap'."""
+        assert sample_mapping.api_type == "ontap"
+
+    def test_api_type_custom(self) -> None:
+        """api_type can be set to other values."""
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/t",
+            fields=(FieldMapping(cache_attr="name", api_path="name"),),
+            api_type="aiqum",
+        )
+        assert tm.api_type == "aiqum"
+
+    def test_cli_command_default(self) -> None:
+        """Default cli_command is empty string."""
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/t",
+            fields=(FieldMapping(cache_attr="name", api_path="name"),),
+        )
+        assert tm.cli_command == ""
+
+    def test_cli_command_optional(self) -> None:
+        """TypeMapping can be constructed without cli_command."""
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/t",
+            fields=(FieldMapping(cache_attr="name", api_path="name"),),
+        )
+        assert isinstance(tm, TypeMapping)
+        assert tm.cli_command == ""
+
 
 # ---------------------------------------------------------------------------
 # _coerce_cli_value tests
@@ -434,6 +485,52 @@ class TestParseApiResponse:
         call_args = mock_log.call_args_list[0]
         assert call_args[0][1] == ["name", "value"]  # api_expected_fields()
         assert call_args[0][2] == "Test"  # mapping.name
+
+    def test_custom_records_path(self) -> None:
+        """Response with non-'records' key is parsed correctly."""
+        tm = TypeMapping(
+            name="Test",
+            model_class=_SampleModel,
+            api_endpoint="/test",
+            fields=(
+                FieldMapping(cache_attr="name", api_path="name"),
+                FieldMapping(cache_attr="value", api_path="value", default=0),
+            ),
+            records_path="hits",
+        )
+        response = {"hits": [{"name": "x", "value": 10}]}
+        results = parse_api_response(tm, response, "[t]", MagicMock())
+        assert len(results) == 1
+        assert results[0].name == "x"
+        assert results[0].value == 10
+
+    def test_nested_records_path(self) -> None:
+        """Dot-notation path like 'data.items' works."""
+        tm = TypeMapping(
+            name="Test",
+            model_class=_SampleModel,
+            api_endpoint="/test",
+            fields=(FieldMapping(cache_attr="name", api_path="name"),),
+            records_path="data.items",
+        )
+        response = {"data": {"items": [{"name": "nested1"}, {"name": "nested2"}]}}
+        results = parse_api_response(tm, response, "[t]", MagicMock())
+        assert len(results) == 2
+        assert results[0].name == "nested1"
+        assert results[1].name == "nested2"
+
+    def test_invalid_records_path_returns_empty(self) -> None:
+        """Bad records_path returns empty list (not crash)."""
+        tm = TypeMapping(
+            name="Test",
+            model_class=_SampleModel,
+            api_endpoint="/test",
+            fields=(FieldMapping(cache_attr="name", api_path="name"),),
+            records_path="nonexistent.path",
+        )
+        response = {"records": [{"name": "a"}]}
+        results = parse_api_response(tm, response, "[t]", MagicMock())
+        assert results == []
 
 
 # ---------------------------------------------------------------------------
