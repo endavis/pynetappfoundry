@@ -84,6 +84,7 @@ nav:
       - AI Enforcement Principles: development/ai/enforcement-principles.md
       - AI Statusline: development/ai/statusline.md
       - Field Mapping Framework: development/field-mapping.md
+      - Unit Registry: development/unit-registry.md
       - Extensions: development/extensions.md
   - Deployment:
       - Development: deployment/development.md
