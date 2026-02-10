@@ -269,7 +269,7 @@ Update `METADATA_SCHEMA_VERSION` when modifying `CachedClusterMetadata`:
 
 When modifying the cache schema:
 
-1. **Update the model** in `src/pynetappfoundry/cache/models.py`
+1. **Update the model** in the appropriate module under `src/pynetappfoundry/cache/models/` (organized by ONTAP REST API category; see [ADR-0007](../decisions/0007-split-cache-models-into-ontap-rest-api-category-modules.md))
 
 2. **Update version constant**:
    ```python
@@ -281,7 +281,7 @@ When modifying the cache schema:
    METADATA_SCHEMA_MIN_COMPATIBLE = "1.1"
    ```
 
-4. **Document the change** in the Schema Version History table (in models.py docstring and this document)
+4. **Document the change** in the Schema Version History table (in `base.py` docstring and this document)
 
 5. **Update collector** if new fields need to be populated:
    - `src/pynetappfoundry/cache/collector.py`
