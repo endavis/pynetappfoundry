@@ -1,6 +1,6 @@
 ---
 title: Field Mapping Framework
-description: Declarative framework for mapping ONTAP API/CLI data to cache models
+description: Declarative framework for mapping API/CLI data to cache models
 audience:
   - contributors
 tags:
@@ -11,17 +11,19 @@ tags:
 
 # Field Mapping Framework
 
-The declarative field mapping framework maps ONTAP REST API and CLI responses to cache model objects using data-driven definitions instead of hand-written parsing methods.
+The declarative field mapping framework maps API and CLI responses to cache model objects using data-driven definitions instead of hand-written parsing methods. While originally built for ONTAP, the framework is API-agnostic and supports any REST API through configurable response envelopes and API type tags.
 
-**ADR:** [ADR-0004](../decisions/0004-declarative-field-mapping-framework.md)
+**ADRs:** [ADR-0004](../decisions/0004-declarative-field-mapping-framework.md), [ADR-0006](../decisions/0006-generalize-field-mapping-for-multi-api.md)
 
 ## Architecture
 
 ```
-TypeMapping (one per ONTAP object type)
+TypeMapping (one per API object type)
 ├── api_endpoint    → REST API URL with ?fields= params
-├── cli_command     → CLI show command name
+├── cli_command     → CLI show command name (optional, default "")
 ├── model_class     → Pydantic model (e.g., VolumeInfo)
+├── records_path    → Dot-path to records in response envelope (default "records")
+├── api_type        → API client/registry tag (default "ontap")
 └── fields          → tuple of FieldMapping entries
     ├── FieldMapping(cache_attr, api_path, ...)
     ├── FieldMapping(cache_attr, api_path, ...)
@@ -57,16 +59,18 @@ Maps a single field across three domains: API response, CLI output, and cache mo
 
 ### TypeMapping
 
-Defines a complete ONTAP object type mapping.
+Defines a complete API object type mapping.
 
 | Attribute | Type | Description |
 |-----------|------|-------------|
 | `name` | `str` | Human-readable type name (e.g., `"Volume"`). |
 | `model_class` | `type[BaseModel]` | Pydantic model class for the cache object. |
 | `api_endpoint` | `str` | REST API endpoint including query params. |
-| `cli_command` | `str` | CLI show command name. |
+| `cli_command` | `str` | CLI show command name. Default: `""` (empty, optional). |
 | `fields` | `tuple[FieldMapping, ...]` | Tuple of field mapping definitions. |
 | `id_field` | `str` | Field used for log identification. Default: `"name"`. |
+| `records_path` | `str` | Dot-notation path to records list in the API response envelope. Default: `"records"`. Supports nested paths like `"_embedded.items"`. |
+| `api_type` | `str` | Tag identifying which API client/unit registry to use. Default: `"ontap"`. |
 
 Helper methods:
 
@@ -77,7 +81,7 @@ Helper methods:
 
 | Function | Input | Output |
 |----------|-------|--------|
-| `parse_api_response()` | Full API response dict (with `"records"` key) | `list[BaseModel]` |
+| `parse_api_response()` | Full API response dict (records extracted via `records_path`) | `list[BaseModel]` |
 | `parse_cli_records()` | List of CLI record dicts | `list[BaseModel]` |
 | `parse_api_record()` | Single API record dict | `BaseModel` |
 | `parse_cli_record()` | Single CLI record dict | `BaseModel` |
@@ -130,6 +134,32 @@ from pynetappfoundry.cache.models import <TypeModel>
 > **Note:** For API-collected types, use `api_path` only — do not add
 > `cli_field`. The `cli_field` and `cli_transform` attributes are reserved
 > for types that require CLI parsing (see [CLI Fields](#cli-fields) below).
+
+#### Non-ONTAP API example
+
+For APIs with different response envelopes, set `records_path` and `api_type`:
+
+```python
+"""AIQUM datacenter cluster mapping."""
+
+from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
+from mypackage.models import AiqumCluster
+
+AIQUM_CLUSTER_MAPPING = TypeMapping(
+    name="AiqumCluster",
+    model_class=AiqumCluster,
+    api_endpoint="/datacenter/cluster/clusters",
+    records_path="_embedded.items",  # AIQUM uses HAL-style envelopes
+    api_type="aiqum",
+    fields=(
+        FieldMapping(cache_attr="name", api_path="name"),
+        FieldMapping(cache_attr="uuid", api_path="uuid"),
+        FieldMapping(cache_attr="version", api_path="version.full"),
+    ),
+)
+```
+
+The `cli_command` defaults to `""` (empty) since non-ONTAP APIs typically have no CLI equivalent.
 
 ### Step 2: Export from the mappings package
 

@@ -1,0 +1,30 @@
+# ADR-0006: Generalize field mapping framework for multi-API data collection
+
+## Status
+
+Accepted
+
+## Decision
+
+Extend the declarative field mapping framework (ADR-0004) from ONTAP-only to multi-API by adding three changes to `TypeMapping`:
+
+1. **`records_path: str = "records"`** — configurable dot-notation path to the records list in the API response envelope. Defaults to `"records"` (preserving ONTAP behavior). Supports nested paths like `"_embedded.items"` for APIs with deeper envelopes.
+2. **`api_type: str = "ontap"`** — tag for routing to the correct API client and unit registry. Defaults to `"ontap"` (preserving existing behavior).
+3. **`cli_command` made optional** — changed from required positional to `cli_command: str = ""`. Non-ONTAP APIs typically have no CLI equivalent.
+
+The `parse_api_response()` function now uses `get_nested_value(response, mapping.records_path)` instead of `response.get("records", [])`, enabling it to extract records from any response envelope structure.
+
+## Rationale
+
+With DII, AIQUM, BlueXP, and StorageGrid planned as future data sources, the mapping framework needed to become API-agnostic so all APIs share the same declarative collection pattern. This avoids per-API SDK fragmentation and keeps a unified collection layer.
+
+The changes are non-breaking — all existing ONTAP mappings work without modification because the new fields have defaults that preserve current behavior.
+
+## Related Issues
+
+- Issue #259: feat: generalize field mapping framework for multi-API data collection
+- Issue #258: feat: multi-API data collection strategy (superseded by #259)
+
+## Related Documentation
+
+- [Field Mapping Framework Developer Guide](../development/field-mapping.md)
