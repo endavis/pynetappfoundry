@@ -336,7 +336,7 @@ class TestNodesCollection:
     def test_collect_nodes_via_api(self, mock_nodes_api_response: dict[str, Any]) -> None:
         """Test collecting nodes via API."""
         api_client = MagicMock()
-        api_client.call_endpoint.return_value = mock_nodes_api_response
+        api_client.get_all_records.return_value = mock_nodes_api_response
 
         collector = MetadataCollector(api_client=api_client)
         result = collector.collect_nodes()
@@ -425,8 +425,8 @@ class TestNetworkCollection:
     ) -> None:
         """Test collecting network info via API."""
         api_client = MagicMock()
-        api_client.call_endpoint.side_effect = lambda endpoint, **_: mock_network_api_responses.get(
-            endpoint, {}
+        api_client.get_all_records.side_effect = lambda endpoint, **_: (
+            mock_network_api_responses.get(endpoint, {})
         )
 
         collector = MetadataCollector(api_client=api_client)
@@ -618,8 +618,8 @@ class TestStorageCollection:
     ) -> None:
         """Test collecting storage info via API."""
         api_client = MagicMock()
-        api_client.call_endpoint.side_effect = lambda endpoint, **_: mock_storage_api_responses.get(
-            endpoint, {}
+        api_client.get_all_records.side_effect = lambda endpoint, **_: (
+            mock_storage_api_responses.get(endpoint, {})
         )
 
         collector = MetadataCollector(api_client=api_client)
@@ -749,7 +749,7 @@ class TestCloudTargetsCollection:
     ) -> None:
         """Test collecting cloud targets via API."""
         api_client = MagicMock()
-        api_client.call_endpoint.side_effect = lambda endpoint, **_: (
+        api_client.get_all_records.side_effect = lambda endpoint, **_: (
             mock_storage_with_cloud_targets_api_responses.get(endpoint, {})
         )
 
@@ -786,7 +786,7 @@ class TestCloudTargetsCollection:
                 return {"records": [{"name": "svm1", "state": "running"}]}
             return {}
 
-        api_client.call_endpoint.side_effect = side_effect
+        api_client.get_all_records.side_effect = side_effect
 
         collector = MetadataCollector(api_client=api_client)
         result = collector.collect_storage()
@@ -798,7 +798,7 @@ class TestCloudTargetsCollection:
     def test_collect_cloud_targets_empty(self) -> None:
         """Test collecting when no cloud targets exist."""
         api_client = MagicMock()
-        api_client.call_endpoint.side_effect = lambda endpoint, **_: {
+        api_client.get_all_records.side_effect = lambda endpoint, **_: {
             "/storage/aggregates?fields=*,is_spare_low,sidl_enabled": {"records": []},
             "/svm/svms?fields=*": {"records": []},
             "/cloud/targets?fields=*": {"records": []},
@@ -835,7 +835,7 @@ class TestLicenseCollection:
     def test_collect_licenses_via_api(self, mock_licenses_api_response: dict[str, Any]) -> None:
         """Test collecting licenses via API."""
         api_client = MagicMock()
-        api_client.call_endpoint.return_value = mock_licenses_api_response
+        api_client.get_all_records.return_value = mock_licenses_api_response
 
         collector = MetadataCollector(api_client=api_client)
         result = collector.collect_licenses()
@@ -860,7 +860,7 @@ class TestHAInfoCollection:
     def test_collect_ha_info_single_node(self) -> None:
         """Test HA info for single-node cluster."""
         api_client = MagicMock()
-        api_client.call_endpoint.side_effect = [
+        api_client.get_all_records.side_effect = [
             {"records": [{"name": "node1"}]},  # /cluster/nodes
             {"records": []},  # /cluster/mediators
         ]
@@ -873,7 +873,7 @@ class TestHAInfoCollection:
     def test_collect_ha_info_ha_pair(self) -> None:
         """Test HA info for HA pair."""
         api_client = MagicMock()
-        api_client.call_endpoint.side_effect = [
+        api_client.get_all_records.side_effect = [
             {"records": [{"name": "node1"}, {"name": "node2"}]},  # /cluster/nodes
             {"records": [{"ip_address": "10.0.0.100", "reachable": True}]},  # /cluster/mediators
         ]
@@ -949,7 +949,7 @@ class TestRelationshipsCollection:
     ) -> None:
         """Test collecting relationships via API."""
         api_client = MagicMock()
-        api_client.call_endpoint.side_effect = lambda endpoint, **_: (
+        api_client.get_all_records.side_effect = lambda endpoint, **_: (
             mock_relationships_api_responses.get(endpoint, {})
         )
 
@@ -996,7 +996,9 @@ class TestRelationshipsCollection:
         }
 
         api_client = MagicMock()
-        api_client.call_endpoint.side_effect = lambda endpoint, **_: api_responses.get(endpoint, {})
+        api_client.get_all_records.side_effect = lambda endpoint, **_: api_responses.get(
+            endpoint, {}
+        )
 
         collector = MetadataCollector(api_client=api_client)
         result = collector.collect_relationships()
@@ -1028,7 +1030,9 @@ class TestRelationshipsCollection:
         }
 
         api_client = MagicMock()
-        api_client.call_endpoint.side_effect = lambda endpoint, **_: api_responses.get(endpoint, {})
+        api_client.get_all_records.side_effect = lambda endpoint, **_: api_responses.get(
+            endpoint, {}
+        )
 
         collector = MetadataCollector(api_client=api_client)
         result = collector.collect_relationships()
@@ -1061,7 +1065,9 @@ class TestRelationshipsCollection:
         }
 
         api_client = MagicMock()
-        api_client.call_endpoint.side_effect = lambda endpoint, **_: api_responses.get(endpoint, {})
+        api_client.get_all_records.side_effect = lambda endpoint, **_: api_responses.get(
+            endpoint, {}
+        )
 
         collector = MetadataCollector(api_client=api_client)
         result = collector.collect_relationships()
@@ -1191,7 +1197,7 @@ class TestProtocolsCollection:
     ) -> None:
         """Test collecting protocols via API."""
         api_client = MagicMock()
-        api_client.call_endpoint.side_effect = lambda endpoint, **_: (
+        api_client.get_all_records.side_effect = lambda endpoint, **_: (
             mock_protocols_api_responses.get(endpoint, {"records": []})
         )
 
@@ -1260,7 +1266,7 @@ class TestProtocolsCollection:
     def test_collect_protocols_empty_response(self) -> None:
         """Test protocols handles empty API response."""
         api_client = MagicMock()
-        api_client.call_endpoint.return_value = {"records": []}
+        api_client.get_all_records.return_value = {"records": []}
 
         collector = MetadataCollector(api_client=api_client)
         result = collector.collect_protocols()
@@ -1283,7 +1289,7 @@ class TestProtocolsCollection:
     def test_collect_protocols_api_failure_propagates(self) -> None:
         """Test protocols raises when API call fails (no silent fallback)."""
         api_client = MagicMock()
-        api_client.call_endpoint.side_effect = Exception("API error")
+        api_client.get_all_records.side_effect = Exception("API error")
 
         collector = MetadataCollector(api_client=api_client)
         with pytest.raises(Exception, match="API error"):
@@ -1307,7 +1313,7 @@ class TestProtocolsCollection:
             "/protocols/s3/buckets?fields=*": {"records": []},
         }
         api_client = MagicMock()
-        api_client.call_endpoint.side_effect = lambda endpoint, **_: responses.get(
+        api_client.get_all_records.side_effect = lambda endpoint, **_: responses.get(
             endpoint, {"records": []}
         )
 
@@ -1325,6 +1331,7 @@ class TestCollectAll:
     def test_collect_all_returns_complete_metadata(self) -> None:
         """Test collect_all returns CachedClusterMetadata."""
         api_client = MagicMock()
+        api_client.get_all_records.return_value = {"records": []}
         api_client.call_endpoint.return_value = {"records": []}
 
         cli_client = MagicMock()
@@ -1337,6 +1344,36 @@ class TestCollectAll:
         assert result.cluster_name == "test-cluster"
         assert result.cached_at is not None
         assert result.cache_version == "1.0"
+
+
+class TestCachedApiCallPagination:
+    """Tests for _cached_api_call pagination dispatch."""
+
+    def test_cached_api_call_uses_get_all_records_by_default(self) -> None:
+        """Verify get_all_records is called when paginate=True (default)."""
+        api_client = MagicMock()
+        api_client.get_all_records.return_value = {"records": [{"name": "vol1"}]}
+
+        collector = MetadataCollector(api_client=api_client)
+        result = collector._cached_api_call("/storage/volumes?fields=*")
+
+        api_client.get_all_records.assert_called_once_with(
+            "/storage/volumes?fields=*", method="GET"
+        )
+        api_client.call_endpoint.assert_not_called()
+        assert result == {"records": [{"name": "vol1"}]}
+
+    def test_cached_api_call_uses_call_endpoint_when_paginate_false(self) -> None:
+        """Verify call_endpoint is called when paginate=False."""
+        api_client = MagicMock()
+        api_client.call_endpoint.return_value = {"name": "mycluster", "uuid": "abc-123"}
+
+        collector = MetadataCollector(api_client=api_client)
+        result = collector._cached_api_call("/cluster?fields=*", paginate=False)
+
+        api_client.call_endpoint.assert_called_once_with("/cluster?fields=*", method="GET")
+        api_client.get_all_records.assert_not_called()
+        assert result == {"name": "mycluster", "uuid": "abc-123"}
 
 
 class TestNormalizeCliKey:
@@ -1368,6 +1405,7 @@ class TestProgressCallback:
     def test_progress_callback_called_for_each_phase(self) -> None:
         """Test that progress callback is called for each collection phase."""
         api_client = MagicMock()
+        api_client.get_all_records.return_value = {"records": []}
         api_client.call_endpoint.return_value = {"records": []}
 
         cli_client = MagicMock()
@@ -1393,6 +1431,7 @@ class TestProgressCallback:
     def test_progress_callback_receives_correct_phases(self) -> None:
         """Test that progress callback receives all expected phases."""
         api_client = MagicMock()
+        api_client.get_all_records.return_value = {"records": []}
         api_client.call_endpoint.return_value = {"records": []}
 
         cli_client = MagicMock()
@@ -1426,6 +1465,7 @@ class TestProgressCallback:
     def test_progress_callback_elapsed_time(self) -> None:
         """Test that progress callback receives elapsed time on completion."""
         api_client = MagicMock()
+        api_client.get_all_records.return_value = {"records": []}
         api_client.call_endpoint.return_value = {"records": []}
 
         cli_client = MagicMock()
@@ -1452,6 +1492,7 @@ class TestProgressCallback:
     def test_progress_callback_source_tracking(self) -> None:
         """Test that progress callback receives correct source information."""
         api_client = MagicMock()
+        api_client.get_all_records.return_value = {"records": []}
         api_client.call_endpoint.return_value = {"records": []}
 
         cli_client = MagicMock()
@@ -1478,6 +1519,7 @@ class TestProgressCallback:
     def test_progress_callback_none_no_error(self) -> None:
         """Test that no callback (None) doesn't cause errors."""
         api_client = MagicMock()
+        api_client.get_all_records.return_value = {"records": []}
         api_client.call_endpoint.return_value = {"records": []}
 
         cli_client = MagicMock()
@@ -1812,7 +1854,7 @@ class TestGrepableLogTags:
     def test_api_failure_tag_on_api_error(self, caplog: pytest.LogCaptureFixture) -> None:
         """Test that API_FAILURE tag is logged at error level on API call failure."""
         api_client = MagicMock()
-        api_client.call_endpoint.side_effect = ConnectionError("Connection refused")
+        api_client.get_all_records.side_effect = ConnectionError("Connection refused")
 
         collector = MetadataCollector(api_client=api_client)
         collector._cluster_name = "testcluster"
