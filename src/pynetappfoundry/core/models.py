@@ -158,6 +158,22 @@ class ValidationConfig(BaseModel):
     validate_success_only: bool = True
 
 
+class PaginationConfig(BaseModel):
+    """Configuration for API response pagination.
+
+    Attributes:
+        enabled: Whether pagination is enabled. Default True.
+        max_pages: Maximum number of pages to fetch (1-10000). Default 100.
+        records_key: Key in response dict containing the records list. Default "records".
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    enabled: bool = True
+    max_pages: int = Field(default=100, ge=1, le=10000)
+    records_key: str = "records"
+
+
 class CacheConfig(BaseModel):
     """Configuration for cluster metadata caching.
 
