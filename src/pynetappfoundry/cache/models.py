@@ -554,6 +554,8 @@ class ClusterPeer(BaseModel):
     remote_cluster_name: str = ""
     peer_addresses: list[str] = Field(default_factory=list)
     authentication_state: str = ""
+    authentication_in_use: str = ""
+    encryption_state: str = ""
 
 
 class SVMPeerInfo(BaseModel):
