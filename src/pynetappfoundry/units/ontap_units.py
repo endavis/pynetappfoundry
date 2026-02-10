@@ -5,6 +5,9 @@ that have measurement units in the existing mapping definitions.
 
 Each API type (ONTAP, DII, AIQUM) maintains its own ``UnitRegistry``
 instance.  This module owns the ONTAP instance.
+
+Unit information is derived from the ONTAP REST API reference:
+https://docs.netapp.com/us-en/ontap-restapi/
 """
 
 from __future__ import annotations
