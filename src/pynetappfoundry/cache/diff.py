@@ -2,13 +2,47 @@
 
 Computes differences between two CachedClusterMetadata snapshots
 for change history tracking.
+
+Tracked fields are derived dynamically from each model's ``model_fields``,
+so new fields added to cache models are automatically tracked without
+manual updates to this module.
 """
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel
+
+from pynetappfoundry.cache._base import CacheModel
+from pynetappfoundry.cache.cloud.metadata.model import CloudMetadata
+from pynetappfoundry.cache.cloud.targets.model import CloudTargetInfo
+from pynetappfoundry.cache.cluster.licensing.model import CapacityLicense, LicenseFeature
+from pynetappfoundry.cache.cluster.model import ClusterInfo
+from pynetappfoundry.cache.cluster.nodes.model import NodeInfo
+from pynetappfoundry.cache.cluster.peers.model import ClusterPeer
+from pynetappfoundry.cache.cluster.schedules.model import ScheduleInfo
+from pynetappfoundry.cache.name_services.dns.model import DNSInfo
+from pynetappfoundry.cache.network.ethernet.broadcast_domains.model import BroadcastDomain
+from pynetappfoundry.cache.network.ip.interfaces.model import NetworkLIF
+from pynetappfoundry.cache.network.ip.subnets.model import IPSubnetInfo
+from pynetappfoundry.cache.protocols.cifs.services.model import CIFSServiceInfo
+from pynetappfoundry.cache.protocols.cifs.shares.model import CIFSShareInfo
+from pynetappfoundry.cache.protocols.nfs.export_policies.model import ExportPolicyInfo
+from pynetappfoundry.cache.protocols.nfs.services.model import NFSServiceInfo
+from pynetappfoundry.cache.protocols.s3.buckets.model import S3BucketInfo
+from pynetappfoundry.cache.protocols.san.igroups.model import IgroupInfo
+from pynetappfoundry.cache.snapmirror.relationships.model import SnapMirrorRelationship
+from pynetappfoundry.cache.storage.aggregates.model import AggregateInfo
+from pynetappfoundry.cache.storage.flexcache.model import FlexCacheInfo
+from pynetappfoundry.cache.storage.luns.model import LunInfo
+from pynetappfoundry.cache.storage.qos.model import QosPolicyInfo
+from pynetappfoundry.cache.storage.qtrees.model import QtreeInfo
+from pynetappfoundry.cache.storage.snapshot_policies.model import SnapshotPolicyInfo
+from pynetappfoundry.cache.storage.volumes.model import VolumeInfo
+from pynetappfoundry.cache.svm.model import SVMInfo
+from pynetappfoundry.cache.svm.peers.model import SVMPeerInfo
 
 if TYPE_CHECKING:
     from pynetappfoundry.cache._metadata import CachedClusterMetadata
@@ -34,134 +68,212 @@ class ChangeEntry(BaseModel):
     new_value: Any = None
 
 
-# Entity configurations: (key_field, tracked_fields)
-# key_field is the attribute used to identify unique entities
-# tracked_fields are the fields we compare for modifications
-_ENTITY_CONFIGS: dict[str, tuple[str, list[str]]] = {
-    "cloud": ("node", ["instance_id", "instance_type", "region", "provider"]),
-    "nodes": (
-        "name",
-        ["uuid", "serial_number", "model", "membership", "location"],
+@dataclass(frozen=True, slots=True)
+class EntityConfig:
+    """Configuration for diffing a category of entities.
+
+    Attributes:
+        key_field: Field used to uniquely identify entities (usually 'uuid' or 'name').
+        model_class: The Pydantic model class. Tracked fields are derived from
+            model_class.model_fields at runtime, excluding key_field.
+        display_field: Field or format string for human-readable entity names
+            in change output. If it contains '{', it is treated as a format
+            template (e.g., '{source_path}->{destination_path}'); otherwise
+            it is a plain attribute name.
+    """
+
+    key_field: str
+    model_class: type[CacheModel]
+    display_field: str
+
+
+def _get_tracked_fields(config: EntityConfig) -> list[str]:
+    """Derive tracked fields from model_class.model_fields, excluding key_field.
+
+    Args:
+        config: Entity configuration.
+
+    Returns:
+        List of field names to compare for modifications.
+    """
+    return [f for f in config.model_class.model_fields if f != config.key_field]
+
+
+def _get_display_name(entity: Any, display_field: str) -> str:
+    """Get a human-readable display name for an entity.
+
+    If *display_field* contains ``{``, it is treated as a format template
+    where placeholders are resolved from entity attributes.  Otherwise it
+    is a simple attribute name lookup.
+
+    Args:
+        entity: The model instance.
+        display_field: Attribute name or format string.
+
+    Returns:
+        Display name string, or ``str(entity)`` as fallback.
+    """
+    if "{" in display_field:
+        try:
+            fmt_dict = {field: getattr(entity, field, "") for field in type(entity).model_fields}
+            return display_field.format(**fmt_dict)
+        except (KeyError, AttributeError):
+            return str(entity)
+    value = getattr(entity, display_field, "") or ""
+    return value or str(entity)
+
+
+# Entity configurations: maps category path -> EntityConfig.
+# key_field is used for identity matching between snapshots.
+# display_field is the human-readable label shown in change output.
+# Tracked fields are derived automatically from model_class.model_fields.
+_ENTITY_CONFIGS: dict[str, EntityConfig] = {
+    # --- Models WITH uuid (use uuid as stable identity key) ---
+    "nodes": EntityConfig(
+        key_field="uuid",
+        model_class=NodeInfo,
+        display_field="name",
     ),
-    "network.intercluster_lifs": (
-        "name",
-        ["ip_address", "home_node"],
+    "network.broadcast_domains": EntityConfig(
+        key_field="uuid",
+        model_class=BroadcastDomain,
+        display_field="name",
     ),
-    "network.data_lifs": (
-        "name",
-        ["ip_address", "home_node"],
+    "network.subnets": EntityConfig(
+        key_field="uuid",
+        model_class=IPSubnetInfo,
+        display_field="name",
     ),
-    "network.management_lifs": (
-        "name",
-        ["ip_address", "home_node"],
+    "network.dns": EntityConfig(
+        key_field="uuid",
+        model_class=DNSInfo,
+        display_field="svm",
     ),
-    "network.broadcast_domains": (
-        "name",
-        ["uuid", "ipspace", "mtu"],
+    "storage.aggregates": EntityConfig(
+        key_field="uuid",
+        model_class=AggregateInfo,
+        display_field="name",
     ),
-    "storage.aggregates": (
-        "name",
-        ["uuid", "state", "type", "total_size", "disk_count", "disk_type", "raid_type"],
+    "storage.svms": EntityConfig(
+        key_field="uuid",
+        model_class=SVMInfo,
+        display_field="name",
     ),
-    "storage.svms": (
-        "name",
-        ["uuid", "state", "subtype", "allowed_protocols", "language"],
+    "storage.cloud_targets": EntityConfig(
+        key_field="uuid",
+        model_class=CloudTargetInfo,
+        display_field="name",
     ),
-    "storage.cloud_targets": (
-        "name",
-        ["uuid", "provider_type", "container"],
+    "storage.volumes": EntityConfig(
+        key_field="uuid",
+        model_class=VolumeInfo,
+        display_field="name",
     ),
-    "storage.volumes": (
-        "name",
-        [
-            "uuid",
-            "svm",
-            "state",
-            "type",
-            "style",
-            "size",
-            "aggregate",
-            "snapshot_policy",
-            "export_policy",
-            "junction_path",
-            "nas_security_style",
-        ],
+    "storage.snapshot_policies": EntityConfig(
+        key_field="uuid",
+        model_class=SnapshotPolicyInfo,
+        display_field="name",
     ),
-    "storage.qtrees": (
-        "name",
-        ["id", "svm", "volume", "security_style", "export_policy"],
+    "storage.schedules": EntityConfig(
+        key_field="uuid",
+        model_class=ScheduleInfo,
+        display_field="name",
     ),
-    "storage.snapshot_policies": (
-        "name",
-        ["uuid", "svm", "enabled", "scope"],
+    "storage.luns": EntityConfig(
+        key_field="uuid",
+        model_class=LunInfo,
+        display_field="name",
     ),
-    "storage.schedules": (
-        "name",
-        ["uuid", "type", "scope", "svm"],
+    "storage.igroups": EntityConfig(
+        key_field="uuid",
+        model_class=IgroupInfo,
+        display_field="name",
     ),
-    "storage.luns": (
-        "name",
-        ["uuid", "svm", "volume", "size", "os_type", "enabled"],
+    "storage.qos_policies": EntityConfig(
+        key_field="uuid",
+        model_class=QosPolicyInfo,
+        display_field="name",
     ),
-    "storage.igroups": (
-        "name",
-        ["uuid", "svm", "protocol", "os_type"],
+    "storage.flexcaches": EntityConfig(
+        key_field="uuid",
+        model_class=FlexCacheInfo,
+        display_field="name",
     ),
-    "storage.qos_policies": (
-        "name",
-        ["uuid", "svm", "scope", "policy_class"],
+    "protocols.s3_buckets": EntityConfig(
+        key_field="uuid",
+        model_class=S3BucketInfo,
+        display_field="name",
     ),
-    "storage.flexcaches": (
-        "name",
-        ["uuid", "svm", "size", "origins", "global_file_locking_enabled"],
+    "relationships.snapmirror_destinations": EntityConfig(
+        key_field="uuid",
+        model_class=SnapMirrorRelationship,
+        display_field="{source_path}->{destination_path}",
     ),
-    "protocols.export_policies": (
-        "name",
-        ["id", "svm"],
+    "relationships.cluster_peers": EntityConfig(
+        key_field="uuid",
+        model_class=ClusterPeer,
+        display_field="name",
     ),
-    "protocols.cifs_shares": (
-        "name",
-        ["path", "svm", "home_directory", "oplocks", "encryption"],
+    "relationships.svm_peers": EntityConfig(
+        key_field="uuid",
+        model_class=SVMPeerInfo,
+        display_field="name",
     ),
-    "protocols.nfs_services": (
-        "svm",
-        ["enabled", "protocol_v3_enabled", "protocol_v4_enabled", "protocol_v41_enabled"],
+    # --- Models WITHOUT uuid (keep current key) ---
+    "cloud": EntityConfig(
+        key_field="node",
+        model_class=CloudMetadata,
+        display_field="node",
     ),
-    "protocols.cifs_services": (
-        "svm",
-        ["name", "enabled", "ad_domain"],
+    "network.intercluster_lifs": EntityConfig(
+        key_field="name",
+        model_class=NetworkLIF,
+        display_field="name",
     ),
-    "protocols.s3_buckets": (
-        "name",
-        ["uuid", "svm", "type", "size", "versioning_state"],
+    "network.data_lifs": EntityConfig(
+        key_field="name",
+        model_class=NetworkLIF,
+        display_field="name",
     ),
-    "network.dns": (
-        "svm",
-        ["uuid", "scope", "domains", "servers"],
+    "network.management_lifs": EntityConfig(
+        key_field="name",
+        model_class=NetworkLIF,
+        display_field="name",
     ),
-    "network.subnets": (
-        "name",
-        ["uuid", "ipspace", "broadcast_domain", "subnet", "gateway"],
+    "storage.qtrees": EntityConfig(
+        key_field="name",
+        model_class=QtreeInfo,
+        display_field="name",
     ),
-    "licenses.feature_licenses": (
-        "name",
-        ["state"],
+    "protocols.export_policies": EntityConfig(
+        key_field="name",
+        model_class=ExportPolicyInfo,
+        display_field="name",
     ),
-    "licenses.capacity_licenses": (
-        "name",
-        ["licensed_capacity", "used_capacity"],
+    "protocols.cifs_shares": EntityConfig(
+        key_field="name",
+        model_class=CIFSShareInfo,
+        display_field="name",
     ),
-    "relationships.snapmirror_destinations": (
-        "destination_path",
-        ["uuid", "state"],
+    "protocols.nfs_services": EntityConfig(
+        key_field="svm",
+        model_class=NFSServiceInfo,
+        display_field="svm",
     ),
-    "relationships.cluster_peers": (
-        "name",
-        ["authentication_state"],
+    "protocols.cifs_services": EntityConfig(
+        key_field="svm",
+        model_class=CIFSServiceInfo,
+        display_field="svm",
     ),
-    "relationships.svm_peers": (
-        "name",
-        ["uuid", "svm", "peer_svm", "peer_cluster", "state"],
+    "licenses.feature_licenses": EntityConfig(
+        key_field="name",
+        model_class=LicenseFeature,
+        display_field="name",
+    ),
+    "licenses.capacity_licenses": EntityConfig(
+        key_field="name",
+        model_class=CapacityLicense,
+        display_field="name",
     ),
 }
 
@@ -180,7 +292,7 @@ def compute_diff(
         List of change dictionaries with keys:
         - category: The category path (e.g., 'nodes', 'storage.aggregates')
         - type: 'added', 'removed', or 'modified'
-        - entity: The entity identifier
+        - entity: The entity display name
         - field: (for modified) Which field changed
         - old: (for modified) The old value
         - new: (for modified) The new value
@@ -190,15 +302,15 @@ def compute_diff(
     # Handle initial capture (no before)
     if before is None:
         # Record all entities as "added"
-        for category, (key_field, _) in _ENTITY_CONFIGS.items():
+        for category, config in _ENTITY_CONFIGS.items():
             entities = _get_entities(after, category)
             for entity in entities:
-                entity_key = getattr(entity, key_field, "") or str(entity)
+                display = _get_display_name(entity, config.display_field)
                 changes.append(
                     {
                         "category": category,
                         "type": "added",
-                        "entity": entity_key,
+                        "entity": display,
                     }
                 )
         # Also check singleton categories
@@ -207,7 +319,7 @@ def compute_diff(
         return changes
 
     # Compare each category
-    for category, (key_field, tracked_fields) in _ENTITY_CONFIGS.items():
+    for category, config in _ENTITY_CONFIGS.items():
         before_entities = _get_entities(before, category)
         after_entities = _get_entities(after, category)
         changes.extend(
@@ -215,8 +327,7 @@ def compute_diff(
                 category=category,
                 before_list=before_entities,
                 after_list=after_entities,
-                key_field=key_field,
-                tracked_fields=tracked_fields,
+                config=config,
             )
         )
 
@@ -256,8 +367,7 @@ def _diff_entity_list(
     category: str,
     before_list: list[Any],
     after_list: list[Any],
-    key_field: str,
-    tracked_fields: list[str],
+    config: EntityConfig,
 ) -> list[dict[str, Any]]:
     """Diff two lists of entities.
 
@@ -265,13 +375,14 @@ def _diff_entity_list(
         category: Category name for the change entries.
         before_list: Entities from before snapshot.
         after_list: Entities from after snapshot.
-        key_field: Field to use as entity identifier.
-        tracked_fields: Fields to compare for modifications.
+        config: EntityConfig with key_field, model_class, and display_field.
 
     Returns:
         List of change dictionaries.
     """
     changes: list[dict[str, Any]] = []
+    key_field = config.key_field
+    tracked_fields = _get_tracked_fields(config)
 
     # Build lookup maps by key
     before_map: dict[str, Any] = {}
@@ -293,7 +404,7 @@ def _diff_entity_list(
                 {
                     "category": category,
                     "type": "removed",
-                    "entity": key,
+                    "entity": _get_display_name(before_map[key], config.display_field),
                 }
             )
 
@@ -304,7 +415,7 @@ def _diff_entity_list(
                 {
                     "category": category,
                     "type": "added",
-                    "entity": key,
+                    "entity": _get_display_name(after_map[key], config.display_field),
                 }
             )
 
@@ -323,7 +434,7 @@ def _diff_entity_list(
                         {
                             "category": category,
                             "type": "modified",
-                            "entity": key,
+                            "entity": _get_display_name(after_entity, config.display_field),
                             "field": field,
                             "old": old_val,
                             "new": new_val,
@@ -339,6 +450,8 @@ def _diff_cluster_info(
 ) -> list[dict[str, Any]]:
     """Diff cluster info (singleton).
 
+    Tracked fields are derived dynamically from ClusterInfo.model_fields.
+
     Args:
         before: Previous snapshot (None for initial).
         after: New snapshot.
@@ -348,14 +461,7 @@ def _diff_cluster_info(
     """
     changes: list[dict[str, Any]] = []
     category = "cluster"
-    tracked_fields = [
-        "cluster_name",
-        "cluster_uuid",
-        "ontap_version",
-        "model",
-        "contact",
-        "location",
-    ]
+    tracked_fields = list(ClusterInfo.model_fields)
 
     if before is None:
         # Initial capture - just record existence
@@ -397,6 +503,8 @@ def _diff_ha_info(
 ) -> list[dict[str, Any]]:
     """Diff HA info (singleton).
 
+    Tracked fields are derived dynamically from HAInfo.model_fields.
+
     Args:
         before: Previous snapshot (None for initial).
         after: New snapshot.
@@ -404,14 +512,11 @@ def _diff_ha_info(
     Returns:
         List of change dictionaries.
     """
+    from pynetappfoundry.cache._metadata import HAInfo
+
     changes: list[dict[str, Any]] = []
     category = "ha"
-    tracked_fields = [
-        "is_ha",
-        "partner_node",
-        "ha_state",
-        "mediator_address",
-    ]
+    tracked_fields = list(HAInfo.model_fields)
 
     if before is None:
         # Initial capture - just record existence if HA is configured

@@ -2,16 +2,18 @@
 
 from __future__ import annotations
 
-import pytest
-
 from pynetappfoundry.cache import CachedClusterMetadata, HAInfo, RelationshipsInfo
 from pynetappfoundry.cache.cloud.metadata.model import CloudMetadata
 from pynetappfoundry.cache.cluster.licensing.model import LicenseFeature, LicenseInfo
 from pynetappfoundry.cache.cluster.model import ClusterInfo
 from pynetappfoundry.cache.cluster.nodes.model import NodeInfo
+from pynetappfoundry.cache.cluster.peers.model import ClusterPeer
 from pynetappfoundry.cache.cluster.schedules.model import ScheduleInfo
 from pynetappfoundry.cache.diff import (
     ChangeEntry,
+    EntityConfig,
+    _get_display_name,
+    _get_tracked_fields,
     compute_diff,
     format_diff_summary,
 )
@@ -41,6 +43,47 @@ from pynetappfoundry.cache.svm.model import SVMInfo
 from pynetappfoundry.cache.svm.peers.model import SVMPeerInfo
 
 
+class TestEntityConfig:
+    """Tests for EntityConfig and helpers."""
+
+    def test_get_tracked_fields_excludes_key(self) -> None:
+        """Tracked fields include all model fields except the key."""
+        config = EntityConfig(key_field="uuid", model_class=NodeInfo, display_field="name")
+        tracked = _get_tracked_fields(config)
+        assert "uuid" not in tracked
+        assert "name" in tracked
+        assert "serial_number" in tracked
+
+    def test_get_tracked_fields_includes_all_non_key(self) -> None:
+        """All model fields except key are tracked."""
+        config = EntityConfig(key_field="uuid", model_class=NodeInfo, display_field="name")
+        tracked = _get_tracked_fields(config)
+        expected = [f for f in NodeInfo.model_fields if f != "uuid"]
+        assert tracked == expected
+
+    def test_get_display_name_simple(self) -> None:
+        """Simple display field returns attribute value."""
+        node = NodeInfo(uuid="u1", name="node1")
+        assert _get_display_name(node, "name") == "node1"
+
+    def test_get_display_name_format_string(self) -> None:
+        """Format string display field resolves placeholders."""
+        sm = SnapMirrorRelationship(
+            uuid="u1",
+            source_path="svm1:vol1",
+            destination_path="svm2:vol2",
+        )
+        result = _get_display_name(sm, "{source_path}->{destination_path}")
+        assert result == "svm1:vol1->svm2:vol2"
+
+    def test_get_display_name_fallback(self) -> None:
+        """Empty display field falls back to str(entity)."""
+        node = NodeInfo(uuid="u1", name="")
+        result = _get_display_name(node, "name")
+        # Falls back to str(entity) when name is empty
+        assert result != ""
+
+
 class TestComputeDiffInitialCapture:
     """Tests for initial capture (no before snapshot)."""
 
@@ -56,8 +99,8 @@ class TestComputeDiffInitialCapture:
         after = CachedClusterMetadata(
             cluster_name="test-cluster",
             nodes=[
-                NodeInfo(name="node1", serial_number="123"),
-                NodeInfo(name="node2", serial_number="456"),
+                NodeInfo(uuid="uuid-1", name="node1", serial_number="123"),
+                NodeInfo(uuid="uuid-2", name="node2", serial_number="456"),
             ],
         )
         changes = compute_diff(None, after)
@@ -118,7 +161,7 @@ class TestComputeDiffNoChanges:
         metadata = CachedClusterMetadata(
             cluster_name="test-cluster",
             nodes=[
-                NodeInfo(name="node1", serial_number="123"),
+                NodeInfo(uuid="uuid-1", name="node1", serial_number="123"),
             ],
             cluster=ClusterInfo(
                 cluster_name="test-cluster",
@@ -140,13 +183,13 @@ class TestComputeDiffAddedEntities:
         """Test detecting a new node."""
         before = CachedClusterMetadata(
             cluster_name="test-cluster",
-            nodes=[NodeInfo(name="node1")],
+            nodes=[NodeInfo(uuid="uuid-1", name="node1")],
         )
         after = CachedClusterMetadata(
             cluster_name="test-cluster",
             nodes=[
-                NodeInfo(name="node1"),
-                NodeInfo(name="node2"),
+                NodeInfo(uuid="uuid-1", name="node1"),
+                NodeInfo(uuid="uuid-2", name="node2"),
             ],
         )
         changes = compute_diff(before, after)
@@ -161,15 +204,15 @@ class TestComputeDiffAddedEntities:
         before = CachedClusterMetadata(
             cluster_name="test-cluster",
             storage=StorageInfo(
-                aggregates=[AggregateInfo(name="aggr1", state="online")],
+                aggregates=[AggregateInfo(uuid="aggr-uuid-1", name="aggr1", state="online")],
             ),
         )
         after = CachedClusterMetadata(
             cluster_name="test-cluster",
             storage=StorageInfo(
                 aggregates=[
-                    AggregateInfo(name="aggr1", state="online"),
-                    AggregateInfo(name="aggr2", state="online"),
+                    AggregateInfo(uuid="aggr-uuid-1", name="aggr1", state="online"),
+                    AggregateInfo(uuid="aggr-uuid-2", name="aggr2", state="online"),
                 ],
             ),
         )
@@ -189,13 +232,13 @@ class TestComputeDiffRemovedEntities:
         before = CachedClusterMetadata(
             cluster_name="test-cluster",
             nodes=[
-                NodeInfo(name="node1"),
-                NodeInfo(name="node2"),
+                NodeInfo(uuid="uuid-1", name="node1"),
+                NodeInfo(uuid="uuid-2", name="node2"),
             ],
         )
         after = CachedClusterMetadata(
             cluster_name="test-cluster",
-            nodes=[NodeInfo(name="node1")],
+            nodes=[NodeInfo(uuid="uuid-1", name="node1")],
         )
         changes = compute_diff(before, after)
 
@@ -210,15 +253,15 @@ class TestComputeDiffRemovedEntities:
             cluster_name="test-cluster",
             storage=StorageInfo(
                 svms=[
-                    SVMInfo(name="svm1", state="running"),
-                    SVMInfo(name="svm2", state="running"),
+                    SVMInfo(uuid="svm-uuid-1", name="svm1", state="running"),
+                    SVMInfo(uuid="svm-uuid-2", name="svm2", state="running"),
                 ],
             ),
         )
         after = CachedClusterMetadata(
             cluster_name="test-cluster",
             storage=StorageInfo(
-                svms=[SVMInfo(name="svm1", state="running")],
+                svms=[SVMInfo(uuid="svm-uuid-1", name="svm1", state="running")],
             ),
         )
         changes = compute_diff(before, after)
@@ -236,11 +279,11 @@ class TestComputeDiffModifiedEntities:
         """Test detecting node serial number change."""
         before = CachedClusterMetadata(
             cluster_name="test-cluster",
-            nodes=[NodeInfo(name="node1", serial_number="OLD123")],
+            nodes=[NodeInfo(uuid="uuid-1", name="node1", serial_number="OLD123")],
         )
         after = CachedClusterMetadata(
             cluster_name="test-cluster",
-            nodes=[NodeInfo(name="node1", serial_number="NEW456")],
+            nodes=[NodeInfo(uuid="uuid-1", name="node1", serial_number="NEW456")],
         )
         changes = compute_diff(before, after)
 
@@ -257,13 +300,13 @@ class TestComputeDiffModifiedEntities:
         before = CachedClusterMetadata(
             cluster_name="test-cluster",
             storage=StorageInfo(
-                aggregates=[AggregateInfo(name="aggr1", disk_count=12)],
+                aggregates=[AggregateInfo(uuid="aggr-uuid-1", name="aggr1", disk_count=12)],
             ),
         )
         after = CachedClusterMetadata(
             cluster_name="test-cluster",
             storage=StorageInfo(
-                aggregates=[AggregateInfo(name="aggr1", disk_count=24)],
+                aggregates=[AggregateInfo(uuid="aggr-uuid-1", name="aggr1", disk_count=24)],
             ),
         )
         changes = compute_diff(before, after)
@@ -355,15 +398,17 @@ class TestComputeDiffMultipleChanges:
         before = CachedClusterMetadata(
             cluster_name="test-cluster",
             nodes=[
-                NodeInfo(name="node1", serial_number="123"),
-                NodeInfo(name="node2", serial_number="456"),
+                NodeInfo(uuid="uuid-1", name="node1", serial_number="123"),
+                NodeInfo(uuid="uuid-2", name="node2", serial_number="456"),
             ],
         )
         after = CachedClusterMetadata(
             cluster_name="test-cluster",
             nodes=[
-                NodeInfo(name="node1", serial_number="999"),  # Modified
-                NodeInfo(name="node3", serial_number="789"),  # Added (node2 removed)
+                NodeInfo(uuid="uuid-1", name="node1", serial_number="999"),  # Modified
+                NodeInfo(
+                    uuid="uuid-3", name="node3", serial_number="789"
+                ),  # Added (uuid-2 removed)
             ],
         )
         changes = compute_diff(before, after)
@@ -438,8 +483,10 @@ class TestComputeDiffAllCategories:
             relationships=RelationshipsInfo(
                 snapmirror_destinations=[
                     SnapMirrorRelationship(
-                        destination_path="svm1:vol1",
-                        state="snapmirrored",
+                        uuid="sm-uuid-1",
+                        source_path="svm1:vol1",
+                        destination_path="svm2:vol2",
+                        relationship_type="async",
                     ),
                 ],
             ),
@@ -449,8 +496,10 @@ class TestComputeDiffAllCategories:
             relationships=RelationshipsInfo(
                 snapmirror_destinations=[
                     SnapMirrorRelationship(
-                        destination_path="svm1:vol1",
-                        state="broken-off",
+                        uuid="sm-uuid-1",
+                        source_path="svm1:vol1",
+                        destination_path="svm2:vol2",
+                        relationship_type="sync",
                     ),
                 ],
             ),
@@ -461,11 +510,50 @@ class TestComputeDiffAllCategories:
             c for c in changes if c["category"] == "relationships.snapmirror_destinations"
         ]
         assert len(sm_changes) == 1
+        assert sm_changes[0]["type"] == "modified"
+        assert sm_changes[0]["field"] == "relationship_type"
+        assert sm_changes[0]["old"] == "async"
+        assert sm_changes[0]["new"] == "sync"
+        # Display name uses composite format
+        assert sm_changes[0]["entity"] == "svm1:vol1->svm2:vol2"
 
-        state_change = [c for c in sm_changes if c["field"] == "state"]
-        assert len(state_change) == 1
-        assert state_change[0]["old"] == "snapmirrored"
-        assert state_change[0]["new"] == "broken-off"
+    def test_snapmirror_transfer_schedule_change(self) -> None:
+        """Test SnapMirror transfer_schedule_uuid change is detected (original bug)."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            relationships=RelationshipsInfo(
+                snapmirror_destinations=[
+                    SnapMirrorRelationship(
+                        uuid="sm-uuid-1",
+                        source_path="svm1:vol1",
+                        destination_path="svm2:vol2",
+                        transfer_schedule_uuid="schedule-old",
+                    ),
+                ],
+            ),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            relationships=RelationshipsInfo(
+                snapmirror_destinations=[
+                    SnapMirrorRelationship(
+                        uuid="sm-uuid-1",
+                        source_path="svm1:vol1",
+                        destination_path="svm2:vol2",
+                        transfer_schedule_uuid="schedule-new",
+                    ),
+                ],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        sm_changes = [
+            c for c in changes if c["category"] == "relationships.snapmirror_destinations"
+        ]
+        assert len(sm_changes) == 1
+        assert sm_changes[0]["field"] == "transfer_schedule_uuid"
+        assert sm_changes[0]["old"] == "schedule-old"
+        assert sm_changes[0]["new"] == "schedule-new"
 
     def test_volume_changes(self) -> None:
         """Test volume change detection."""
@@ -473,7 +561,13 @@ class TestComputeDiffAllCategories:
             cluster_name="test-cluster",
             storage=StorageInfo(
                 volumes=[
-                    VolumeInfo(name="vol1", svm="svm1", state="online", size=1073741824),
+                    VolumeInfo(
+                        uuid="vol-uuid-1",
+                        name="vol1",
+                        svm="svm1",
+                        state="online",
+                        size=1073741824,
+                    ),
                 ],
             ),
         )
@@ -481,7 +575,13 @@ class TestComputeDiffAllCategories:
             cluster_name="test-cluster",
             storage=StorageInfo(
                 volumes=[
-                    VolumeInfo(name="vol1", svm="svm1", state="online", size=2147483648),
+                    VolumeInfo(
+                        uuid="vol-uuid-1",
+                        name="vol1",
+                        svm="svm1",
+                        state="online",
+                        size=2147483648,
+                    ),
                 ],
             ),
         )
@@ -499,15 +599,15 @@ class TestComputeDiffAllCategories:
         before = CachedClusterMetadata(
             cluster_name="test-cluster",
             storage=StorageInfo(
-                volumes=[VolumeInfo(name="vol1", svm="svm1")],
+                volumes=[VolumeInfo(uuid="vol-uuid-1", name="vol1", svm="svm1")],
             ),
         )
         after = CachedClusterMetadata(
             cluster_name="test-cluster",
             storage=StorageInfo(
                 volumes=[
-                    VolumeInfo(name="vol1", svm="svm1"),
-                    VolumeInfo(name="vol2", svm="svm1"),
+                    VolumeInfo(uuid="vol-uuid-1", name="vol1", svm="svm1"),
+                    VolumeInfo(uuid="vol-uuid-2", name="vol2", svm="svm1"),
                 ],
             ),
         )
@@ -601,7 +701,9 @@ class TestComputeDiffAllCategories:
         after = CachedClusterMetadata(
             cluster_name="test-cluster",
             storage=StorageInfo(
-                snapshot_policies=[SnapshotPolicyInfo(name="default", uuid="sp-uuid-1")],
+                snapshot_policies=[
+                    SnapshotPolicyInfo(uuid="sp-uuid-1", name="default"),
+                ],
             ),
         )
         changes = compute_diff(before, after)
@@ -616,13 +718,22 @@ class TestComputeDiffAllCategories:
         before = CachedClusterMetadata(
             cluster_name="test-cluster",
             storage=StorageInfo(
-                schedules=[ScheduleInfo(name="hourly", type="cron", scope="cluster")],
+                schedules=[
+                    ScheduleInfo(uuid="sched-uuid-1", name="hourly", type="cron", scope="cluster"),
+                ],
             ),
         )
         after = CachedClusterMetadata(
             cluster_name="test-cluster",
             storage=StorageInfo(
-                schedules=[ScheduleInfo(name="hourly", type="interval", scope="cluster")],
+                schedules=[
+                    ScheduleInfo(
+                        uuid="sched-uuid-1",
+                        name="hourly",
+                        type="interval",
+                        scope="cluster",
+                    ),
+                ],
             ),
         )
         changes = compute_diff(before, after)
@@ -679,13 +790,27 @@ class TestComputeDiffAllCategories:
         before = CachedClusterMetadata(
             cluster_name="test-cluster",
             storage=StorageInfo(
-                luns=[LunInfo(name="/vol/vol1/lun1", svm="svm1", size=10737418240)],
+                luns=[
+                    LunInfo(
+                        uuid="lun-uuid-1",
+                        name="/vol/vol1/lun1",
+                        svm="svm1",
+                        size=10737418240,
+                    ),
+                ],
             ),
         )
         after = CachedClusterMetadata(
             cluster_name="test-cluster",
             storage=StorageInfo(
-                luns=[LunInfo(name="/vol/vol1/lun1", svm="svm1", size=21474836480)],
+                luns=[
+                    LunInfo(
+                        uuid="lun-uuid-1",
+                        name="/vol/vol1/lun1",
+                        svm="svm1",
+                        size=21474836480,
+                    ),
+                ],
             ),
         )
         changes = compute_diff(before, after)
@@ -704,7 +829,9 @@ class TestComputeDiffAllCategories:
         after = CachedClusterMetadata(
             cluster_name="test-cluster",
             storage=StorageInfo(
-                igroups=[IgroupInfo(name="igroup1", svm="svm1", protocol="iscsi")],
+                igroups=[
+                    IgroupInfo(uuid="ig-uuid-1", name="igroup1", svm="svm1", protocol="iscsi"),
+                ],
             ),
         )
         changes = compute_diff(before, after)
@@ -720,7 +847,7 @@ class TestComputeDiffAllCategories:
             cluster_name="test-cluster",
             storage=StorageInfo(
                 qos_policies=[
-                    QosPolicyInfo(name="qos1", svm="svm1", scope="svm"),
+                    QosPolicyInfo(uuid="qos-uuid-1", name="qos1", svm="svm1", scope="svm"),
                 ],
             ),
         )
@@ -728,7 +855,7 @@ class TestComputeDiffAllCategories:
             cluster_name="test-cluster",
             storage=StorageInfo(
                 qos_policies=[
-                    QosPolicyInfo(name="qos1", svm="svm1", scope="cluster"),
+                    QosPolicyInfo(uuid="qos-uuid-1", name="qos1", svm="svm1", scope="cluster"),
                 ],
             ),
         )
@@ -820,7 +947,7 @@ class TestComputeDiffAllCategories:
             cluster_name="test-cluster",
             network=NetworkInfo(
                 dns=[
-                    DNSInfo(svm="svm1", scope="svm", servers=["10.0.0.1"]),
+                    DNSInfo(uuid="dns-uuid-1", svm="svm1", scope="svm", servers=["10.0.0.1"]),
                 ],
             ),
         )
@@ -828,7 +955,12 @@ class TestComputeDiffAllCategories:
             cluster_name="test-cluster",
             network=NetworkInfo(
                 dns=[
-                    DNSInfo(svm="svm1", scope="svm", servers=["10.0.0.1", "10.0.0.2"]),
+                    DNSInfo(
+                        uuid="dns-uuid-1",
+                        svm="svm1",
+                        scope="svm",
+                        servers=["10.0.0.1", "10.0.0.2"],
+                    ),
                 ],
             ),
         )
@@ -850,7 +982,9 @@ class TestComputeDiffAllCategories:
         after = CachedClusterMetadata(
             cluster_name="test-cluster",
             network=NetworkInfo(
-                dns=[DNSInfo(svm="svm1", scope="svm", domains=["example.com"])],
+                dns=[
+                    DNSInfo(uuid="dns-uuid-1", svm="svm1", scope="svm", domains=["example.com"]),
+                ],
             ),
         )
         changes = compute_diff(before, after)
@@ -866,7 +1000,7 @@ class TestComputeDiffAllCategories:
             cluster_name="test-cluster",
             storage=StorageInfo(
                 flexcaches=[
-                    FlexCacheInfo(name="fc1", svm="svm1", size=1073741824),
+                    FlexCacheInfo(uuid="fc-uuid-1", name="fc1", svm="svm1", size=1073741824),
                 ],
             ),
         )
@@ -874,7 +1008,7 @@ class TestComputeDiffAllCategories:
             cluster_name="test-cluster",
             storage=StorageInfo(
                 flexcaches=[
-                    FlexCacheInfo(name="fc1", svm="svm1", size=2147483648),
+                    FlexCacheInfo(uuid="fc-uuid-1", name="fc1", svm="svm1", size=2147483648),
                 ],
             ),
         )
@@ -896,7 +1030,7 @@ class TestComputeDiffAllCategories:
         after = CachedClusterMetadata(
             cluster_name="test-cluster",
             storage=StorageInfo(
-                flexcaches=[FlexCacheInfo(name="fc1", svm="svm1")],
+                flexcaches=[FlexCacheInfo(uuid="fc-uuid-1", name="fc1", svm="svm1")],
             ),
         )
         changes = compute_diff(before, after)
@@ -912,7 +1046,7 @@ class TestComputeDiffAllCategories:
             cluster_name="test-cluster",
             relationships=RelationshipsInfo(
                 svm_peers=[
-                    SVMPeerInfo(name="svm1_to_svm2", state="peered"),
+                    SVMPeerInfo(uuid="peer-uuid-1", name="svm1_to_svm2", state="peered"),
                 ],
             ),
         )
@@ -920,7 +1054,7 @@ class TestComputeDiffAllCategories:
             cluster_name="test-cluster",
             relationships=RelationshipsInfo(
                 svm_peers=[
-                    SVMPeerInfo(name="svm1_to_svm2", state="initiated"),
+                    SVMPeerInfo(uuid="peer-uuid-1", name="svm1_to_svm2", state="initiated"),
                 ],
             ),
         )
@@ -942,7 +1076,14 @@ class TestComputeDiffAllCategories:
         after = CachedClusterMetadata(
             cluster_name="test-cluster",
             relationships=RelationshipsInfo(
-                svm_peers=[SVMPeerInfo(name="svm1_to_svm2", svm="svm1", state="peered")],
+                svm_peers=[
+                    SVMPeerInfo(
+                        uuid="peer-uuid-1",
+                        name="svm1_to_svm2",
+                        svm="svm1",
+                        state="peered",
+                    ),
+                ],
             ),
         )
         changes = compute_diff(before, after)
@@ -958,7 +1099,7 @@ class TestComputeDiffAllCategories:
             cluster_name="test-cluster",
             protocols=ProtocolsInfo(
                 s3_buckets=[
-                    S3BucketInfo(name="mybucket", svm="svm1", size=1073741824),
+                    S3BucketInfo(uuid="s3-uuid-1", name="mybucket", svm="svm1", size=1073741824),
                 ],
             ),
         )
@@ -966,7 +1107,7 @@ class TestComputeDiffAllCategories:
             cluster_name="test-cluster",
             protocols=ProtocolsInfo(
                 s3_buckets=[
-                    S3BucketInfo(name="mybucket", svm="svm1", size=2147483648),
+                    S3BucketInfo(uuid="s3-uuid-1", name="mybucket", svm="svm1", size=2147483648),
                 ],
             ),
         )
@@ -986,7 +1127,7 @@ class TestComputeDiffAllCategories:
         after = CachedClusterMetadata(
             cluster_name="test-cluster",
             protocols=ProtocolsInfo(
-                s3_buckets=[S3BucketInfo(name="mybucket", svm="svm1")],
+                s3_buckets=[S3BucketInfo(uuid="s3-uuid-1", name="mybucket", svm="svm1")],
             ),
         )
         changes = compute_diff(before, after)
@@ -1002,7 +1143,12 @@ class TestComputeDiffAllCategories:
             cluster_name="test-cluster",
             network=NetworkInfo(
                 subnets=[
-                    IPSubnetInfo(name="data-subnet", subnet="10.0.0.0/24", gateway="10.0.0.1"),
+                    IPSubnetInfo(
+                        uuid="sub-uuid-1",
+                        name="data-subnet",
+                        subnet="10.0.0.0/24",
+                        gateway="10.0.0.1",
+                    ),
                 ],
             ),
         )
@@ -1010,7 +1156,12 @@ class TestComputeDiffAllCategories:
             cluster_name="test-cluster",
             network=NetworkInfo(
                 subnets=[
-                    IPSubnetInfo(name="data-subnet", subnet="10.0.0.0/24", gateway="10.0.0.254"),
+                    IPSubnetInfo(
+                        uuid="sub-uuid-1",
+                        name="data-subnet",
+                        subnet="10.0.0.0/24",
+                        gateway="10.0.0.254",
+                    ),
                 ],
             ),
         )
@@ -1032,7 +1183,9 @@ class TestComputeDiffAllCategories:
         after = CachedClusterMetadata(
             cluster_name="test-cluster",
             network=NetworkInfo(
-                subnets=[IPSubnetInfo(name="data-subnet", subnet="10.0.0.0/24")],
+                subnets=[
+                    IPSubnetInfo(uuid="sub-uuid-1", name="data-subnet", subnet="10.0.0.0/24"),
+                ],
             ),
         )
         changes = compute_diff(before, after)
@@ -1041,6 +1194,184 @@ class TestComputeDiffAllCategories:
         assert len(subnet_changes) == 1
         assert subnet_changes[0]["type"] == "added"
         assert subnet_changes[0]["entity"] == "data-subnet"
+
+    def test_cluster_peer_changes(self) -> None:
+        """Test cluster peer change detection."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            relationships=RelationshipsInfo(
+                cluster_peers=[
+                    ClusterPeer(
+                        uuid="cp-uuid-1",
+                        name="peer1",
+                        authentication_state="ok",
+                    ),
+                ],
+            ),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            relationships=RelationshipsInfo(
+                cluster_peers=[
+                    ClusterPeer(
+                        uuid="cp-uuid-1",
+                        name="peer1",
+                        authentication_state="expired",
+                    ),
+                ],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        peer_changes = [c for c in changes if c["category"] == "relationships.cluster_peers"]
+        assert len(peer_changes) == 1
+        assert peer_changes[0]["type"] == "modified"
+        assert peer_changes[0]["field"] == "authentication_state"
+
+
+class TestDynamicFieldTracking:
+    """Tests for dynamic field tracking (all model fields tracked automatically)."""
+
+    def test_previously_untracked_node_field_detected(self) -> None:
+        """Node version_full was previously untracked — now it is detected."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            nodes=[
+                NodeInfo(uuid="uuid-1", name="node1", version_full="9.14.1P1"),
+            ],
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            nodes=[
+                NodeInfo(uuid="uuid-1", name="node1", version_full="9.15.0"),
+            ],
+        )
+        changes = compute_diff(before, after)
+
+        node_changes = [c for c in changes if c["category"] == "nodes"]
+        assert len(node_changes) == 1
+        assert node_changes[0]["field"] == "version_full"
+
+    def test_uuid_keyed_rename_detected_as_modification(self) -> None:
+        """Renaming a uuid-keyed entity is a modification, not remove+add."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            nodes=[NodeInfo(uuid="uuid-1", name="old-name")],
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            nodes=[NodeInfo(uuid="uuid-1", name="new-name")],
+        )
+        changes = compute_diff(before, after)
+
+        node_changes = [c for c in changes if c["category"] == "nodes"]
+        assert len(node_changes) == 1
+        assert node_changes[0]["type"] == "modified"
+        assert node_changes[0]["field"] == "name"
+        assert node_changes[0]["old"] == "old-name"
+        assert node_changes[0]["new"] == "new-name"
+        # Display shows the new name
+        assert node_changes[0]["entity"] == "new-name"
+
+    def test_display_name_shows_name_not_uuid(self) -> None:
+        """Change entries for uuid-keyed models show name, not uuid."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            storage=StorageInfo(
+                aggregates=[
+                    AggregateInfo(uuid="aggr-uuid-1", name="aggr1", state="online"),
+                ],
+            ),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            storage=StorageInfo(
+                aggregates=[
+                    AggregateInfo(uuid="aggr-uuid-1", name="aggr1", state="offline"),
+                ],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        aggr_changes = [c for c in changes if c["category"] == "storage.aggregates"]
+        assert len(aggr_changes) >= 1
+        # Entity should be the human-readable name, not the uuid
+        assert aggr_changes[0]["entity"] == "aggr1"
+        assert aggr_changes[0]["entity"] != "aggr-uuid-1"
+
+    def test_snapmirror_composite_display(self) -> None:
+        """SnapMirror entity display uses composite format."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            relationships=RelationshipsInfo(
+                snapmirror_destinations=[
+                    SnapMirrorRelationship(
+                        uuid="sm-uuid-1",
+                        source_path="src_svm:vol1",
+                        destination_path="dst_svm:vol1_dp",
+                        throttle=0,
+                    ),
+                ],
+            ),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            relationships=RelationshipsInfo(
+                snapmirror_destinations=[
+                    SnapMirrorRelationship(
+                        uuid="sm-uuid-1",
+                        source_path="src_svm:vol1",
+                        destination_path="dst_svm:vol1_dp",
+                        throttle=1000,
+                    ),
+                ],
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        sm_changes = [
+            c for c in changes if c["category"] == "relationships.snapmirror_destinations"
+        ]
+        assert len(sm_changes) == 1
+        assert sm_changes[0]["entity"] == "src_svm:vol1->dst_svm:vol1_dp"
+
+    def test_singleton_cluster_tracks_all_fields(self) -> None:
+        """Cluster info singleton tracks all ClusterInfo model fields."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            cluster=ClusterInfo(
+                cluster_name="test-cluster",
+                contact="old-contact",
+            ),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            cluster=ClusterInfo(
+                cluster_name="test-cluster",
+                contact="new-contact",
+            ),
+        )
+        changes = compute_diff(before, after)
+
+        cluster_changes = [c for c in changes if c["category"] == "cluster"]
+        assert len(cluster_changes) == 1
+        assert cluster_changes[0]["field"] == "contact"
+
+    def test_singleton_ha_tracks_all_fields(self) -> None:
+        """HA info singleton tracks all HAInfo model fields."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            ha=HAInfo(is_ha=True, mediator_address="10.0.0.1"),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            ha=HAInfo(is_ha=True, mediator_address="10.0.0.2"),
+        )
+        changes = compute_diff(before, after)
+
+        ha_changes = [c for c in changes if c["category"] == "ha"]
+        assert len(ha_changes) == 1
+        assert ha_changes[0]["field"] == "mediator_address"
 
 
 class TestFormatDiffSummary:
@@ -1142,22 +1473,39 @@ class TestChangeEntry:
 class TestComputeDiffEdgeCases:
     """Tests for edge cases in diff computation."""
 
-    @pytest.mark.parametrize(
-        "entity_key",
-        ["", None],
-    )
-    def test_entities_without_key_are_skipped(self, entity_key: str | None) -> None:
-        """Test that entities with empty/None keys don't cause errors."""
-        # Nodes without names should be handled gracefully
+    def test_entities_without_uuid_key_are_skipped(self) -> None:
+        """Entities with empty uuid keys don't cause errors."""
         before = CachedClusterMetadata(
             cluster_name="test-cluster",
-            nodes=[NodeInfo(name="node1")],
+            nodes=[NodeInfo(uuid="uuid-1", name="node1")],
         )
-        # The after has same structure, no changes expected
+        # After has the same node plus one with empty uuid (should be skipped)
         after = CachedClusterMetadata(
             cluster_name="test-cluster",
-            nodes=[NodeInfo(name="node1")],
+            nodes=[
+                NodeInfo(uuid="uuid-1", name="node1"),
+                NodeInfo(uuid="", name="phantom"),
+            ],
         )
-        # Should not raise
         changes = compute_diff(before, after)
-        assert len(changes) == 0
+        node_changes = [c for c in changes if c["category"] == "nodes"]
+        # The empty-uuid node should not appear as added
+        assert len(node_changes) == 0
+
+    def test_entities_without_name_key_are_skipped(self) -> None:
+        """Entities with empty name keys (for name-keyed models) are skipped."""
+        before = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            network=NetworkInfo(
+                intercluster_lifs=[NetworkLIF(name="lif1", ip_address="10.0.0.1")],
+            ),
+        )
+        after = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            network=NetworkInfo(
+                intercluster_lifs=[NetworkLIF(name="lif1", ip_address="10.0.0.1")],
+            ),
+        )
+        changes = compute_diff(before, after)
+        lif_changes = [c for c in changes if c["category"] == "network.intercluster_lifs"]
+        assert len(lif_changes) == 0
