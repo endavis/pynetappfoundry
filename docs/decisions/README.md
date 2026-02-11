@@ -71,3 +71,4 @@ Template-inherited ADRs (9XXX range) are maintained in [docs/template/decisions/
 | [0004](0004-declarative-field-mapping-framework.md) | Declarative field mapping framework for ONTAP collection | Accepted |
 | [0005](0005-uuid-index-for-cache-cross-references.md) | UUID index for cache cross-references | Accepted |
 | [0006](0006-generalize-field-mapping-for-multi-api.md) | Generalize field mapping framework for multi-API data collection | Accepted |
+| [0007](0007-url-tree-model-registry.md) | Deep URL-tree structure with automatic model and mapping discovery | Accepted |

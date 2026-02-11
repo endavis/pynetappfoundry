@@ -281,7 +281,7 @@ When modifying the cache schema:
    METADATA_SCHEMA_MIN_COMPATIBLE = "1.1"
    ```
 
-4. **Document the change** in the Schema Version History table (in models.py docstring and this document)
+4. **Document the change** in the Schema Version History table (in `base.py` docstring and this document)
 
 5. **Update collector** if new fields need to be populated:
    - `src/pynetappfoundry/cache/collector.py`
