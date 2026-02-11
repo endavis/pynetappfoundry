@@ -1,4 +1,4 @@
-"""Cross-cutting metadata models — top-level container and HA/relationships.
+"""Cross-cutting metadata models — top-level container and relationships.
 
 These models don't map to a single ONTAP REST API URL path.
 CachedClusterMetadata is the root container (register=False).
@@ -20,6 +20,7 @@ from pynetappfoundry.cache._base import (
 )
 from pynetappfoundry.cache.cloud.metadata.model import CloudMetadata
 from pynetappfoundry.cache.cluster.licensing.model import LicenseInfo
+from pynetappfoundry.cache.cluster.mediators.model import MediatorInfo
 from pynetappfoundry.cache.cluster.model import ClusterInfo
 from pynetappfoundry.cache.cluster.nodes.model import NodeInfo
 from pynetappfoundry.cache.network.model import NetworkInfo
@@ -29,18 +30,6 @@ from pynetappfoundry.cache.snapmirror.relationships.model import (
 )
 from pynetappfoundry.cache.storage.model import StorageInfo
 from pynetappfoundry.cache.svm.peers.model import SVMPeerInfo
-
-
-class HAInfo(CacheModel):
-    """High Availability configuration information.
-
-    For CVO HA configurations.
-    """
-
-    is_ha: bool = False
-    partner_node: str = ""
-    ha_state: str = ""
-    mediator_address: str = ""
 
 
 class RelationshipsInfo(CacheModel):
@@ -89,7 +78,7 @@ class CachedClusterMetadata(CacheModel, register=False):
     network: NetworkInfo = Field(default_factory=NetworkInfo)
     storage: StorageInfo = Field(default_factory=StorageInfo)
     licenses: LicenseInfo = Field(default_factory=LicenseInfo)
-    ha: HAInfo = Field(default_factory=HAInfo)
+    mediator: MediatorInfo = Field(default_factory=MediatorInfo)
     relationships: RelationshipsInfo = Field(default_factory=RelationshipsInfo)
     protocols: ProtocolsInfo = Field(default_factory=ProtocolsInfo)
 

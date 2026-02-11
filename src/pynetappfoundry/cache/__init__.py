@@ -20,6 +20,7 @@ Infrastructure (DB, collector, diff, registry) is imported from here::
 # Models are already registered via CacheModel.__init_subclass__ when
 # _metadata.py transitively imports all leaf model.py files above.
 import pynetappfoundry.cache.cloud.metadata
+import pynetappfoundry.cache.cluster.mediators
 import pynetappfoundry.cache.cluster.nodes
 import pynetappfoundry.cache.cluster.peers
 import pynetappfoundry.cache.snapmirror.relationships
@@ -38,12 +39,12 @@ from pynetappfoundry.cache._base import (
 # model registration chain via transitive leaf-model imports)
 from pynetappfoundry.cache._metadata import (
     CachedClusterMetadata,
-    HAInfo,
     RelationshipsInfo,
 )
 
 # Layer 1: Registry
 from pynetappfoundry.cache._registry import model_registry
+from pynetappfoundry.cache.cluster.mediators.model import MediatorInfo
 
 # Infrastructure (collector, db, diff, etc.)
 from pynetappfoundry.cache.collector import (
@@ -69,8 +70,8 @@ __all__ = [
     "CollectionError",
     "CollectionPhase",
     "FieldMapping",
-    "HAInfo",
     "HasUUID",
+    "MediatorInfo",
     "MetadataCollector",
     "ProgressCallback",
     "ProgressInfo",

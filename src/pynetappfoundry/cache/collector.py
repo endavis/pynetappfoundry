@@ -21,7 +21,6 @@ from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from pynetappfoundry.cache._metadata import (
     CachedClusterMetadata,
-    HAInfo,
     RelationshipsInfo,
 )
 from pynetappfoundry.cache.cloud.metadata.mapping import CLOUD_METADATA_MAPPING
@@ -32,6 +31,8 @@ from pynetappfoundry.cache.cluster.licensing.model import (
     LicenseFeature,
     LicenseInfo,
 )
+from pynetappfoundry.cache.cluster.mediators.mapping import MEDIATOR_MAPPING
+from pynetappfoundry.cache.cluster.mediators.model import MediatorInfo
 from pynetappfoundry.cache.cluster.model import ClusterInfo
 from pynetappfoundry.cache.cluster.nodes.mapping import NODE_MAPPING
 from pynetappfoundry.cache.cluster.nodes.model import NodeInfo
@@ -95,7 +96,7 @@ class CollectionPhase(Enum):
     NETWORK = "network"
     STORAGE = "storage"
     LICENSES = "licenses"
-    HA = "ha"
+    MEDIATOR = "mediator"
     RELATIONSHIPS = "relationships"
     PROTOCOLS = "protocols"
 
@@ -137,7 +138,7 @@ class MetadataCollector:
         CollectionPhase.NETWORK: "Network",
         CollectionPhase.STORAGE: "Storage",
         CollectionPhase.LICENSES: "Licenses",
-        CollectionPhase.HA: "HA info",
+        CollectionPhase.MEDIATOR: "Mediator",
         CollectionPhase.RELATIONSHIPS: "Relationships",
         CollectionPhase.PROTOCOLS: "Protocols",
     }
@@ -281,24 +282,29 @@ class MetadataCollector:
         total_elapsed = time.monotonic() - total_start
         logger.info("%s Completed metadata collection in %.2fs", self._log_prefix, total_elapsed)
 
+        # Enrich cluster info with is_ha (derived from node count)
+        cluster_info: ClusterInfo = results["cluster"]
+        cluster_info = cluster_info.model_copy(
+            update={"is_ha": len(results["nodes"]) > 1},
+        )
+
         # Post-process Azure cloud metadata to fix instance links
-        ha_info: HAInfo = results["ha"]
         cloud_metadata = self._update_azure_cloud_links(
             results["cloud"],
             cluster_name,
-            ha_info.is_ha,
+            cluster_info.is_ha,
         )
 
         return CachedClusterMetadata(
             cluster_name=cluster_name,
             cached_at=datetime.now(UTC),
             cloud=cloud_metadata,
-            cluster=results["cluster"],
+            cluster=cluster_info,
             nodes=results["nodes"],
             network=results["network"],
             storage=results["storage"],
             licenses=results["licenses"],
-            ha=results["ha"],
+            mediator=results["mediator"],
             relationships=results["relationships"],
             protocols=results["protocols"],
         )
@@ -319,7 +325,7 @@ class MetadataCollector:
             (CollectionPhase.NETWORK, self.collect_network),
             (CollectionPhase.STORAGE, self.collect_storage),
             (CollectionPhase.LICENSES, self.collect_licenses),
-            (CollectionPhase.HA, self.collect_ha_info),
+            (CollectionPhase.MEDIATOR, self.collect_mediator),
             (CollectionPhase.RELATIONSHIPS, self.collect_relationships),
             (CollectionPhase.PROTOCOLS, self.collect_protocols),
         ]
@@ -380,7 +386,7 @@ class MetadataCollector:
             (CollectionPhase.NETWORK, self.collect_network),
             (CollectionPhase.STORAGE, self.collect_storage),
             (CollectionPhase.LICENSES, self.collect_licenses),
-            (CollectionPhase.HA, self.collect_ha_info),
+            (CollectionPhase.MEDIATOR, self.collect_mediator),
             (CollectionPhase.RELATIONSHIPS, self.collect_relationships),
             (CollectionPhase.PROTOCOLS, self.collect_protocols),
         ]
@@ -1312,92 +1318,50 @@ class MetadataCollector:
         return LicenseInfo(feature_licenses=feature_licenses, capacity_licenses=capacity_licenses)
 
     # -------------------------------------------------------------------------
-    # HA Info Collection
+    # Mediator Collection
     # -------------------------------------------------------------------------
 
-    def collect_ha_info(self) -> HAInfo:
-        """Collect HA configuration information (API-only).
+    def collect_mediator(self) -> MediatorInfo:
+        """Collect ONTAP Mediator information (API-only).
 
         Returns:
-            HAInfo object.
+            MediatorInfo object.
 
         Raises:
             CollectionError: If no API client is available.
-            Exception: If the API call fails.
         """
         if not self.api_client:
             raise CollectionError(
-                f"{self._log_prefix} API_FAILURE: HA info - no API client available"
+                f"{self._log_prefix} API_FAILURE: Mediator - no API client available"
             )
         try:
-            return self._collect_ha_info_via_api()
+            return self._collect_mediator_via_api()
         except Exception as e:
             logger.error(
-                "%s API_FAILURE: HA info - %s: %s",
+                "%s API_FAILURE: Mediator - %s: %s",
                 self._log_prefix,
                 type(e).__name__,
                 e,
             )
             raise
 
-    def _collect_ha_info_via_api(self) -> HAInfo:
-        """Collect HA info using REST API.
+    def _collect_mediator_via_api(self) -> MediatorInfo:
+        """Collect mediator info using REST API.
 
         Returns:
-            HAInfo from /cluster endpoint.
+            MediatorInfo from /cluster/mediators endpoint.
         """
-        if not self.api_client:
-            logger.debug("%s No API client available for HA info collection", self._log_prefix)
-            return HAInfo()
-
-        # Use cached API call (same endpoint as nodes collection)
-        nodes_response = self._cached_api_call("/cluster/nodes?fields=*")
-        if not nodes_response:
-            return HAInfo()
-
-        logger.debug(
-            "%s API response: %d nodes (from cache)",
-            self._log_prefix,
-            len(nodes_response.get("records", [])),
-        )
-
-        # Check HA fields on first node
-        records = nodes_response.get("records", [])
-        if records:
-            self._log_missing_fields(
-                records[0],
-                ["ha"],
-                "Node(HA)",
-                records[0].get("name", records[0].get("uuid", "unknown")),
-            )
-            ha_obj = records[0].get("ha", {})
-            if isinstance(ha_obj, dict):
-                self._log_missing_fields(
-                    ha_obj,
-                    ["enabled", "partners", "takeover"],
-                    "Node(HA).ha",
-                    records[0].get("name", records[0].get("uuid", "unknown")),
-                )
-
-        # Check if HA is configured
-        ha_configured = len(records) > 1
-
-        # Try to get mediator info for cloud HA (use cached call)
-        mediator_address = ""
         try:
-            mediator_response = self._cached_api_call("/cluster/mediators?fields=*")
-            if mediator_response:
-                mediators = mediator_response.get("records", [])
-                logger.debug("%s API response: %d mediators", self._log_prefix, len(mediators))
-                if mediators:
-                    mediator_address = mediators[0].get("ip_address", "")
+            mediator_response = self._cached_api_call(MEDIATOR_MAPPING.api_endpoint)
+            parsed = parse_api_response(
+                MEDIATOR_MAPPING, mediator_response, self._log_prefix, self._log_missing_fields
+            )
+            if parsed:
+                return cast(MediatorInfo, parsed[0])
         except Exception as e:
             logger.debug("%s Mediator endpoint not available: %s", self._log_prefix, e)
 
-        return HAInfo(
-            is_ha=ha_configured,
-            mediator_address=mediator_address,
-        )
+        return MediatorInfo()
 
     # -------------------------------------------------------------------------
     # Relationships Collection

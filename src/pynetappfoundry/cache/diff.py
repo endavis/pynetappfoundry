@@ -315,7 +315,7 @@ def compute_diff(
                 )
         # Also check singleton categories
         changes.extend(_diff_cluster_info(None, after))
-        changes.extend(_diff_ha_info(None, after))
+        changes.extend(_diff_mediator_info(None, after))
         return changes
 
     # Compare each category
@@ -333,7 +333,7 @@ def compute_diff(
 
     # Compare singleton categories
     changes.extend(_diff_cluster_info(before, after))
-    changes.extend(_diff_ha_info(before, after))
+    changes.extend(_diff_mediator_info(before, after))
 
     return changes
 
@@ -497,13 +497,13 @@ def _diff_cluster_info(
     return changes
 
 
-def _diff_ha_info(
+def _diff_mediator_info(
     before: CachedClusterMetadata | None,
     after: CachedClusterMetadata,
 ) -> list[dict[str, Any]]:
-    """Diff HA info (singleton).
+    """Diff mediator info (singleton).
 
-    Tracked fields are derived dynamically from HAInfo.model_fields.
+    Tracked fields are derived dynamically from MediatorInfo.model_fields.
 
     Args:
         before: Previous snapshot (None for initial).
@@ -512,37 +512,38 @@ def _diff_ha_info(
     Returns:
         List of change dictionaries.
     """
-    from pynetappfoundry.cache._metadata import HAInfo
+    from pynetappfoundry.cache.cluster.mediators.model import MediatorInfo
 
     changes: list[dict[str, Any]] = []
-    category = "ha"
-    tracked_fields = list(HAInfo.model_fields)
+    category = "mediator"
+    tracked_fields = list(MediatorInfo.model_fields)
 
     if before is None:
-        # Initial capture - just record existence if HA is configured
-        if after.ha.is_ha:
+        # Initial capture - record mediator if any field is populated
+        mediator = after.mediator
+        if any(getattr(mediator, f) for f in tracked_fields):
             changes.append(
                 {
                     "category": category,
                     "type": "added",
-                    "entity": "ha_config",
+                    "entity": "mediator_config",
                 }
             )
         return changes
 
-    before_ha = before.ha
-    after_ha = after.ha
+    before_mediator = before.mediator
+    after_mediator = after.mediator
 
     for field in tracked_fields:
-        old_val = getattr(before_ha, field, None)
-        new_val = getattr(after_ha, field, None)
+        old_val = getattr(before_mediator, field, None)
+        new_val = getattr(after_mediator, field, None)
 
         if old_val != new_val:
             changes.append(
                 {
                     "category": category,
                     "type": "modified",
-                    "entity": "ha_config",
+                    "entity": "mediator_config",
                     "field": field,
                     "old": old_val,
                     "new": new_val,

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pynetappfoundry.cache import CachedClusterMetadata, HAInfo, RelationshipsInfo
+from pynetappfoundry.cache import CachedClusterMetadata, MediatorInfo, RelationshipsInfo
 from pynetappfoundry.cache.cloud.metadata.model import CloudMetadata
 from pynetappfoundry.cache.cluster.licensing.model import LicenseFeature, LicenseInfo
 from pynetappfoundry.cache.cluster.model import ClusterInfo
@@ -128,29 +128,29 @@ class TestComputeDiffInitialCapture:
         assert cluster_changes[0]["type"] == "added"
         assert cluster_changes[0]["entity"] == "test-cluster"
 
-    def test_initial_capture_with_ha_info(self) -> None:
-        """Test initial capture records HA info as added when configured."""
+    def test_initial_capture_with_mediator_info(self) -> None:
+        """Test initial capture records mediator as added when configured."""
         after = CachedClusterMetadata(
             cluster_name="test-cluster",
-            ha=HAInfo(is_ha=True, partner_node="node2"),
+            mediator=MediatorInfo(mediator_uuid="med-uuid-1"),
         )
         changes = compute_diff(None, after)
 
-        ha_changes = [c for c in changes if c["category"] == "ha"]
-        assert len(ha_changes) == 1
-        assert ha_changes[0]["type"] == "added"
-        assert ha_changes[0]["entity"] == "ha_config"
+        mediator_changes = [c for c in changes if c["category"] == "mediator"]
+        assert len(mediator_changes) == 1
+        assert mediator_changes[0]["type"] == "added"
+        assert mediator_changes[0]["entity"] == "mediator_config"
 
-    def test_initial_capture_no_ha_when_disabled(self) -> None:
-        """Test initial capture doesn't record HA when not configured."""
+    def test_initial_capture_no_mediator_when_empty(self) -> None:
+        """Test initial capture doesn't record mediator when not configured."""
         after = CachedClusterMetadata(
             cluster_name="test-cluster",
-            ha=HAInfo(is_ha=False),
+            mediator=MediatorInfo(),
         )
         changes = compute_diff(None, after)
 
-        ha_changes = [c for c in changes if c["category"] == "ha"]
-        assert len(ha_changes) == 0
+        mediator_changes = [c for c in changes if c["category"] == "mediator"]
+        assert len(mediator_changes) == 0
 
 
 class TestComputeDiffNoChanges:
@@ -370,24 +370,24 @@ class TestComputeDiffModifiedEntities:
         assert cluster_changes[0]["old"] == "9.14.1"
         assert cluster_changes[0]["new"] == "9.15.0"
 
-    def test_modified_ha_state(self) -> None:
-        """Test detecting HA state change."""
+    def test_modified_mediator_port(self) -> None:
+        """Test detecting mediator port change."""
         before = CachedClusterMetadata(
             cluster_name="test-cluster",
-            ha=HAInfo(is_ha=True, ha_state="connected"),
+            mediator=MediatorInfo(mediator_port=31784),
         )
         after = CachedClusterMetadata(
             cluster_name="test-cluster",
-            ha=HAInfo(is_ha=True, ha_state="takeover"),
+            mediator=MediatorInfo(mediator_port=31785),
         )
         changes = compute_diff(before, after)
 
-        ha_changes = [c for c in changes if c["category"] == "ha"]
-        assert len(ha_changes) == 1
-        assert ha_changes[0]["type"] == "modified"
-        assert ha_changes[0]["field"] == "ha_state"
-        assert ha_changes[0]["old"] == "connected"
-        assert ha_changes[0]["new"] == "takeover"
+        mediator_changes = [c for c in changes if c["category"] == "mediator"]
+        assert len(mediator_changes) == 1
+        assert mediator_changes[0]["type"] == "modified"
+        assert mediator_changes[0]["field"] == "mediator_port"
+        assert mediator_changes[0]["old"] == 31784
+        assert mediator_changes[0]["new"] == 31785
 
 
 class TestComputeDiffMultipleChanges:
@@ -1357,21 +1357,21 @@ class TestDynamicFieldTracking:
         assert len(cluster_changes) == 1
         assert cluster_changes[0]["field"] == "contact"
 
-    def test_singleton_ha_tracks_all_fields(self) -> None:
-        """HA info singleton tracks all HAInfo model fields."""
+    def test_singleton_mediator_tracks_all_fields(self) -> None:
+        """Mediator singleton tracks all MediatorInfo model fields."""
         before = CachedClusterMetadata(
             cluster_name="test-cluster",
-            ha=HAInfo(is_ha=True, mediator_address="10.0.0.1"),
+            mediator=MediatorInfo(mediator_address="10.0.0.1"),
         )
         after = CachedClusterMetadata(
             cluster_name="test-cluster",
-            ha=HAInfo(is_ha=True, mediator_address="10.0.0.2"),
+            mediator=MediatorInfo(mediator_address="10.0.0.2"),
         )
         changes = compute_diff(before, after)
 
-        ha_changes = [c for c in changes if c["category"] == "ha"]
-        assert len(ha_changes) == 1
-        assert ha_changes[0]["field"] == "mediator_address"
+        mediator_changes = [c for c in changes if c["category"] == "mediator"]
+        assert len(mediator_changes) == 1
+        assert mediator_changes[0]["field"] == "mediator_address"
 
 
 class TestFormatDiffSummary:

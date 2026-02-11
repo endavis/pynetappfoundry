@@ -66,7 +66,7 @@ class TestCacheSchemaCommand:
         assert "network." in result.output
         assert "storage." in result.output
         assert "licenses." in result.output
-        assert "ha." in result.output
+        assert "mediator." in result.output
         assert "relationships." in result.output
 
     def test_schema_contains_nested_fields(self, runner: CliRunner) -> None:
