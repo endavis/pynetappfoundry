@@ -4,46 +4,51 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 
-from pynetappfoundry.cache import (
-    AggregateInfo,
-    BroadcastDomain,
-    CachedClusterMetadata,
+from pynetappfoundry.cache import CachedClusterMetadata, HAInfo, HasUUID, RelationshipsInfo
+from pynetappfoundry.cache.cloud.metadata.model import CloudMetadata
+from pynetappfoundry.cache.cloud.targets.model import CloudTargetInfo
+from pynetappfoundry.cache.cluster.licensing.model import (
     CapacityLicense,
-    CIFSServiceInfo,
-    CIFSShareInfo,
-    CloudMetadata,
-    CloudTargetInfo,
-    ClusterInfo,
-    ClusterPeer,
-    DNSInfo,
-    ExportPolicyInfo,
-    ExportRuleInfo,
-    FlexCacheInfo,
-    HAInfo,
-    HasUUID,
-    IgroupInfo,
-    IPSubnetInfo,
     LicenseFeature,
     LicenseInfo,
-    LunInfo,
-    NetworkInfo,
-    NetworkLIF,
-    NFSServiceInfo,
-    NodeInfo,
-    ProtocolsInfo,
-    QosPolicyInfo,
-    QtreeInfo,
-    RelationshipsInfo,
-    S3BucketInfo,
-    ScheduleInfo,
+)
+from pynetappfoundry.cache.cluster.model import ClusterInfo
+from pynetappfoundry.cache.cluster.nodes.model import NodeInfo
+from pynetappfoundry.cache.cluster.peers.model import ClusterPeer
+from pynetappfoundry.cache.cluster.schedules.model import ScheduleInfo
+from pynetappfoundry.cache.name_services.dns.model import DNSInfo
+from pynetappfoundry.cache.network.ethernet.broadcast_domains.model import (
+    BroadcastDomain,
+)
+from pynetappfoundry.cache.network.ip.interfaces.model import NetworkLIF
+from pynetappfoundry.cache.network.ip.subnets.model import IPSubnetInfo
+from pynetappfoundry.cache.network.model import NetworkInfo
+from pynetappfoundry.cache.protocols.cifs.services.model import CIFSServiceInfo
+from pynetappfoundry.cache.protocols.cifs.shares.model import CIFSShareInfo
+from pynetappfoundry.cache.protocols.model import ProtocolsInfo
+from pynetappfoundry.cache.protocols.nfs.export_policies.model import (
+    ExportPolicyInfo,
+    ExportRuleInfo,
+)
+from pynetappfoundry.cache.protocols.nfs.services.model import NFSServiceInfo
+from pynetappfoundry.cache.protocols.s3.buckets.model import S3BucketInfo
+from pynetappfoundry.cache.protocols.san.igroups.model import IgroupInfo
+from pynetappfoundry.cache.snapmirror.relationships.model import (
     SnapMirrorRelationship,
+)
+from pynetappfoundry.cache.storage.aggregates.model import AggregateInfo
+from pynetappfoundry.cache.storage.flexcache.model import FlexCacheInfo
+from pynetappfoundry.cache.storage.luns.model import LunInfo
+from pynetappfoundry.cache.storage.model import StorageInfo
+from pynetappfoundry.cache.storage.qos.model import QosPolicyInfo
+from pynetappfoundry.cache.storage.qtrees.model import QtreeInfo
+from pynetappfoundry.cache.storage.snapshot_policies.model import (
     SnapshotPolicyInfo,
     SnapshotScheduleInfo,
-    StorageInfo,
-    SVMInfo,
-    SVMPeerInfo,
-    VolumeInfo,
 )
+from pynetappfoundry.cache.storage.volumes.model import VolumeInfo
+from pynetappfoundry.cache.svm.model import SVMInfo
+from pynetappfoundry.cache.svm.peers.model import SVMPeerInfo
 
 
 class TestCloudMetadata:

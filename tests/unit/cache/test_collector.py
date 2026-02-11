@@ -8,15 +8,13 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from pynetappfoundry.cache import (
-    CloudMetadata,
-    ProtocolsInfo,
-)
+from pynetappfoundry.cache.cloud.metadata.model import CloudMetadata
 from pynetappfoundry.cache.collector import (
     CollectionPhase,
     MetadataCollector,
     ProgressInfo,
 )
+from pynetappfoundry.cache.protocols.model import ProtocolsInfo
 
 
 class TestMetadataCollectorInit:

@@ -11,11 +11,11 @@ from pynetappfoundry.cache import (
     METADATA_SCHEMA_MIN_COMPATIBLE,
     METADATA_SCHEMA_VERSION,
     CachedClusterMetadata,
-    NodeInfo,
     compute_diff,
     is_schema_compatible,
     parse_schema_version,
 )
+from pynetappfoundry.cache.cluster.nodes.model import NodeInfo
 from pynetappfoundry.cache.history_db import CacheHistoryDB
 from pynetappfoundry.cli.commands.cache.history import history
 

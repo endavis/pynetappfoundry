@@ -40,7 +40,7 @@ Imports flow upward only (DAG guaranteed, no circular deps):
 
 3. **Automatic registration** - The `ModelRegistry` singleton enables tooling to discover all models and mappings without hardcoded lists, supporting future features like dynamic inspection and plugin systems.
 
-4. **Import stability** - Consumer code uses `from pynetappfoundry.cache import VolumeInfo` (unchanged), while internal imports use direct paths to leaf modules, avoiding circular deps.
+4. **Explicit imports** - Consumer code imports models from their URL-tree path (e.g., `from pynetappfoundry.cache.storage.volumes import VolumeInfo`), making the origin of each model immediately clear. Infrastructure (DB, collector, diff, registry) is imported from `pynetappfoundry.cache`.
 
 5. **Scalability** - The three-layer hierarchy prevents circular imports by construction. New models slot in at Layer 2 with no risk of breaking the import DAG.
 

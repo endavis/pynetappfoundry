@@ -6,8 +6,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from pynetappfoundry.cache import CloudMetadata
 from pynetappfoundry.cache.cloud.metadata.mapping import CLOUD_METADATA_MAPPING
+from pynetappfoundry.cache.cloud.metadata.model import CloudMetadata
 from pynetappfoundry.cache.field_mapping import (
     parse_cli_record,
     parse_cli_records,
