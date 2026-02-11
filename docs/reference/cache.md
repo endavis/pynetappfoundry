@@ -286,8 +286,9 @@ When modifying the cache schema:
 5. **Update collector** if new fields need to be populated:
    - `src/pynetappfoundry/cache/collector.py`
 
-6. **Update diff logic** if new fields should be tracked:
-   - `src/pynetappfoundry/cache/diff.py`
+6. **Diff logic updates automatically** — tracked fields are derived at runtime from
+   each model's `model_fields`, so new fields on cache models are picked up without
+   manual changes to `src/pynetappfoundry/cache/diff.py`.
 
 7. **Add tests** for new fields:
    - `tests/unit/cache/test_models.py`

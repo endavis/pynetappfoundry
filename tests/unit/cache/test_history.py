@@ -330,7 +330,7 @@ class TestHistoryIntegration:
         # Initial state
         metadata_v1 = CachedClusterMetadata(
             cluster_name="test-cluster",
-            nodes=[NodeInfo(name="node1", serial_number="123")],
+            nodes=[NodeInfo(uuid="uuid-1", name="node1", serial_number="123")],
         )
         history_db.record_change(
             cluster_name="test-cluster",
@@ -342,7 +342,7 @@ class TestHistoryIntegration:
         # Updated state with changed serial
         metadata_v2 = CachedClusterMetadata(
             cluster_name="test-cluster",
-            nodes=[NodeInfo(name="node1", serial_number="456")],
+            nodes=[NodeInfo(uuid="uuid-1", name="node1", serial_number="456")],
         )
 
         # Get previous snapshot
