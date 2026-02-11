@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from rich.console import Console
 from rich.tree import Tree
 
-from pynetappfoundry.cache.models import CachedClusterMetadata
+from pynetappfoundry.cache import CachedClusterMetadata
 
 console = Console()
 

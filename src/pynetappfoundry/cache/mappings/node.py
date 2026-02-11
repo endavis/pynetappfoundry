@@ -6,8 +6,8 @@ NodeInfo cache model attributes.
 
 from __future__ import annotations
 
+from pynetappfoundry.cache.cluster.nodes.model import NodeInfo
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.models import NodeInfo
 
 NODE_MAPPING = TypeMapping(
     name="Node",

@@ -7,15 +7,16 @@ from pathlib import Path
 import pytest
 from click.testing import CliRunner
 
-from pynetappfoundry.cache import CachedClusterMetadata, compute_diff
-from pynetappfoundry.cache.history_db import CacheHistoryDB
-from pynetappfoundry.cache.models import (
+from pynetappfoundry.cache import (
     METADATA_SCHEMA_MIN_COMPATIBLE,
     METADATA_SCHEMA_VERSION,
+    CachedClusterMetadata,
     NodeInfo,
+    compute_diff,
     is_schema_compatible,
     parse_schema_version,
 )
+from pynetappfoundry.cache.history_db import CacheHistoryDB
 from pynetappfoundry.cli.commands.cache.history import history
 
 

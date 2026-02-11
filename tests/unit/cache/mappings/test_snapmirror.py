@@ -7,12 +7,12 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from pynetappfoundry.cache import SnapMirrorRelationship
 from pynetappfoundry.cache.field_mapping import (
     parse_api_record,
     parse_api_response,
 )
 from pynetappfoundry.cache.mappings.snapmirror import SNAPMIRROR_MAPPING
-from pynetappfoundry.cache.models import SnapMirrorRelationship
 
 # ---------------------------------------------------------------------------
 # Fixtures

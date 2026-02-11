@@ -9,7 +9,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar
 
-from pynetappfoundry.cache.models import CachedClusterMetadata
+from pynetappfoundry.cache._metadata import CachedClusterMetadata
 from pynetappfoundry.db.base import SQLiteDB
 
 if TYPE_CHECKING:

@@ -12,8 +12,8 @@ and cross-field logic.
 
 from __future__ import annotations
 
+from pynetappfoundry.cache.cloud.metadata.model import CloudMetadata
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.models import CloudMetadata
 
 CLOUD_METADATA_MAPPING = TypeMapping(
     name="CloudMetadata",

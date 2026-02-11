@@ -873,8 +873,8 @@ class TestCacheEnrichment:
         """Test that cached cloud data is merged into cluster."""
         import os
 
+        from pynetappfoundry.cache import CachedClusterMetadata, CloudMetadata
         from pynetappfoundry.cache.db import ClusterMetadataDB
-        from pynetappfoundry.cache.models import CachedClusterMetadata, CloudMetadata
 
         original_cwd = os.getcwd()
         os.chdir(tmp_path)
@@ -932,8 +932,8 @@ class TestCacheEnrichment:
         """Test that cached cloud data can be used for searching."""
         import os
 
+        from pynetappfoundry.cache import CachedClusterMetadata, CloudMetadata
         from pynetappfoundry.cache.db import ClusterMetadataDB
-        from pynetappfoundry.cache.models import CachedClusterMetadata, CloudMetadata
 
         original_cwd = os.getcwd()
         os.chdir(tmp_path)

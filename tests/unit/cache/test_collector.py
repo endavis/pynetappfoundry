@@ -8,14 +8,14 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from pynetappfoundry.cache import (
+    CloudMetadata,
+    ProtocolsInfo,
+)
 from pynetappfoundry.cache.collector import (
     CollectionPhase,
     MetadataCollector,
     ProgressInfo,
-)
-from pynetappfoundry.cache.models import (
-    CloudMetadata,
-    ProtocolsInfo,
 )
 
 

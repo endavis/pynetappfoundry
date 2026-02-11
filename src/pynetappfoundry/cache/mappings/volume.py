@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import Any
 
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.models import VolumeInfo
+from pynetappfoundry.cache.storage.volumes.model import VolumeInfo
 
 
 def _api_aggregates_list(record: dict[str, Any]) -> list[str]:

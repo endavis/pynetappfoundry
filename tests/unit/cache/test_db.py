@@ -7,13 +7,13 @@ from pathlib import Path
 
 import pytest
 
-from pynetappfoundry.cache.db import ClusterMetadataDB, _validate_cluster_name
-from pynetappfoundry.cache.models import (
+from pynetappfoundry.cache import (
     CachedClusterMetadata,
     CloudMetadata,
     ClusterInfo,
     NodeInfo,
 )
+from pynetappfoundry.cache.db import ClusterMetadataDB, _validate_cluster_name
 
 
 class TestValidateClusterName:

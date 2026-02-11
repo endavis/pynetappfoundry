@@ -4,12 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from pynetappfoundry.cache.diff import (
-    ChangeEntry,
-    compute_diff,
-    format_diff_summary,
-)
-from pynetappfoundry.cache.models import (
+from pynetappfoundry.cache import (
     AggregateInfo,
     CachedClusterMetadata,
     CIFSServiceInfo,
@@ -41,6 +36,11 @@ from pynetappfoundry.cache.models import (
     SVMInfo,
     SVMPeerInfo,
     VolumeInfo,
+)
+from pynetappfoundry.cache.diff import (
+    ChangeEntry,
+    compute_diff,
+    format_diff_summary,
 )
 
 

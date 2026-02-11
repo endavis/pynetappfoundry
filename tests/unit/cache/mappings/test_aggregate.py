@@ -7,12 +7,12 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from pynetappfoundry.cache import AggregateInfo
 from pynetappfoundry.cache.field_mapping import (
     parse_api_record,
     parse_api_response,
 )
 from pynetappfoundry.cache.mappings.aggregate import AGGREGATE_MAPPING
-from pynetappfoundry.cache.models import AggregateInfo
 
 # ---------------------------------------------------------------------------
 # Fixtures

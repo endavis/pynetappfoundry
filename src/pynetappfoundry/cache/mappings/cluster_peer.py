@@ -13,8 +13,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from pynetappfoundry.cache.cluster.peers.model import ClusterPeer
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.models import ClusterPeer
 
 
 def _api_remote_cluster_name(record: dict[str, Any]) -> str:

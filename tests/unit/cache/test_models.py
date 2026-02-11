@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 
-from pynetappfoundry.cache.models import (
+from pynetappfoundry.cache import (
     AggregateInfo,
     BroadcastDomain,
     CachedClusterMetadata,

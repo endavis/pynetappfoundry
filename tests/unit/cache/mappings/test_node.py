@@ -7,12 +7,12 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from pynetappfoundry.cache import NodeInfo
 from pynetappfoundry.cache.field_mapping import (
     parse_api_record,
     parse_api_response,
 )
 from pynetappfoundry.cache.mappings.node import NODE_MAPPING
-from pynetappfoundry.cache.models import NodeInfo
 
 # ---------------------------------------------------------------------------
 # Fixtures
