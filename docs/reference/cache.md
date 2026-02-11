@@ -269,7 +269,7 @@ Update `METADATA_SCHEMA_VERSION` when modifying `CachedClusterMetadata`:
 
 When modifying the cache schema:
 
-1. **Update the model** in `src/pynetappfoundry/cache/models.py`
+1. **Update the model** in the appropriate `src/pynetappfoundry/cache/<api-path>/model.py` file
 
 2. **Update version constant**:
    ```python

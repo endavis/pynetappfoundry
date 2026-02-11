@@ -102,15 +102,16 @@ Helper methods:
 
 ### Step 1: Create the mapping module
 
-Create `src/pynetappfoundry/cache/mappings/<type>.py`:
+Create `src/pynetappfoundry/cache/<api-path>/mapping.py` co-located with the model:
 
 ```python
 """<Type> type mapping definition."""
 
 from __future__ import annotations
 
+from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.models import <TypeModel>
+from pynetappfoundry.cache.<api_path>.model import <TypeModel>
 
 <TYPE>_MAPPING = TypeMapping(
     name="<Type>",
@@ -129,6 +130,8 @@ from pynetappfoundry.cache.models import <TypeModel>
         # ... more fields
     ),
 )
+
+model_registry.register_mapping("<Type>", <TYPE>_MAPPING)
 ```
 
 > **Note:** For API-collected types, use `api_path` only — do not add
@@ -161,14 +164,15 @@ AIQUM_CLUSTER_MAPPING = TypeMapping(
 
 The `cli_command` defaults to `""` (empty) since non-ONTAP APIs typically have no CLI equivalent.
 
-### Step 2: Export from the mappings package
+### Step 2: Export from the package's `__init__.py`
 
-Add the import and `__all__` entry in `src/pynetappfoundry/cache/mappings/__init__.py`:
+Add the import and `__all__` entry in `src/pynetappfoundry/cache/<api-path>/__init__.py`:
 
 ```python
-from pynetappfoundry.cache.mappings.<type> import <TYPE>_MAPPING
+from pynetappfoundry.cache.<api_path>.mapping import <TYPE>_MAPPING
+from pynetappfoundry.cache.<api_path>.model import <TypeModel>
 
-__all__ = ["VOLUME_MAPPING", "<TYPE>_MAPPING"]
+__all__ = ["<TYPE>_MAPPING", "<TypeModel>"]
 ```
 
 ### Step 3: Update the collector
@@ -177,7 +181,7 @@ Replace hand-written parsing in the collector with the generic parsers:
 
 ```python
 from pynetappfoundry.cache.field_mapping import parse_api_response
-from pynetappfoundry.cache.mappings import <TYPE>_MAPPING
+from pynetappfoundry.cache.<api_path>.mapping import <TYPE>_MAPPING
 
 # API parsing
 items = parse_api_response(<TYPE>_MAPPING, response, log_prefix, log_missing_fn)

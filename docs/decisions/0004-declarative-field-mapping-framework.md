@@ -17,7 +17,7 @@ The collector module contained hand-written parsing methods for each ONTAP objec
 
 Use a declarative field mapping framework based on two frozen dataclasses — `FieldMapping` and `TypeMapping` — to map ONTAP REST API and CLI responses to cache model objects. Generic parser functions (`parse_api_response`, `parse_cli_records`, `parse_api_record`, `parse_cli_record`) replace hand-written parsing methods.
 
-Each ONTAP object type is defined as a `TypeMapping` constant in `src/pynetappfoundry/cache/mappings/<type>.py`, declaring:
+Each ONTAP object type is defined as a `TypeMapping` constant co-located with its model in `src/pynetappfoundry/cache/<api-path>/mapping.py` (restructured from `cache/mappings/<type>.py` in issue #257), declaring:
 
 - The REST API endpoint (including required `?fields=` params)
 - The CLI show command
@@ -61,6 +61,7 @@ The pilot migration (VolumeInfo) was completed in PR #189.
 - Issue #216: refactor: migrate ClusterPeer to field mapping framework
 - Issue #237: refactor: all-or-nothing collection with no CLI fallback
 - Issue #259: feat: generalize field mapping framework for multi-API data collection
+- Issue #257: refactor: deep URL-tree structure with automatic model and mapping discovery
 
 ## Related Documentation
 
