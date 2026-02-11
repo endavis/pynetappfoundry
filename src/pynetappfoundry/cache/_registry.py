@@ -31,7 +31,11 @@ class ModelRegistry:
         self._mappings: dict[str, TypeMapping] = {}
 
     def register_model(self, cls: type[BaseModel]) -> None:
-        """Register a model class by its name.
+        """Register a model class by its ``__name__``.
+
+        Model names must be unique across the entire ``cache/`` tree.
+        If two classes share the same ``__name__``, the second registration
+        silently overwrites the first.
 
         Args:
             cls: The model class to register.
