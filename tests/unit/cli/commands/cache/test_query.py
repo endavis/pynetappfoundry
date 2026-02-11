@@ -583,7 +583,15 @@ base_api_path = "/api"
 
         result = runner.invoke(
             nf,
-            ["-c", str(mock_config_dir), "cache", "query", "test-cluster", "ha.is_ha", "--raw"],
+            [
+                "-c",
+                str(mock_config_dir),
+                "cache",
+                "query",
+                "test-cluster",
+                "cluster.is_ha",
+                "--raw",
+            ],
         )
 
         assert result.exit_code == 0
@@ -862,14 +870,14 @@ base_api_path = "/api"
                 "cache",
                 "query",
                 "test-cluster",
-                "ha.is_ha",
+                "cluster.is_ha",
                 "--csv",
             ],
         )
 
         assert result.exit_code == 0
         lines = result.output.strip().split("\n")
-        assert lines[0] == "cluster,ha.is_ha"
+        assert lines[0] == "cluster,cluster.is_ha"
         assert lines[1] == "test-cluster,false"
 
     @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")

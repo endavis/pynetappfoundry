@@ -59,6 +59,7 @@ The pilot migration (VolumeInfo) was completed in PR #189.
 - Issue #215: refactor: migrate SnapMirrorRelationship to field mapping framework
 - Issue #217: refactor: migrate CloudMetadata to field mapping framework
 - Issue #216: refactor: migrate ClusterPeer to field mapping framework
+- Issue #214: refactor: migrate HAInfo to field mapping framework
 - Issue #237: refactor: all-or-nothing collection with no CLI fallback
 - Issue #259: feat: generalize field mapping framework for multi-API data collection
 - Issue #257: refactor: deep URL-tree structure with automatic model and mapping discovery

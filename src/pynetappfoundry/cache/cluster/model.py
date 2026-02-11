@@ -19,6 +19,7 @@ class ClusterInfo(CacheModel):
     model: str = ""
     contact: str = ""
     location: str = ""
+    is_ha: bool = False
 
     @field_validator("model", mode="before")
     @classmethod

@@ -852,43 +852,61 @@ class TestLicenseCollection:
             collector.collect_licenses()
 
 
-class TestHAInfoCollection:
-    """Tests for HA info collection."""
+class TestMediatorCollection:
+    """Tests for mediator info collection."""
 
-    def test_collect_ha_info_single_node(self) -> None:
-        """Test HA info for single-node cluster."""
+    def test_collect_mediator_with_data(self) -> None:
+        """Test mediator collection with mediator present."""
         api_client = MagicMock()
-        api_client.get_all_records.side_effect = [
-            {"records": [{"name": "node1"}]},  # /cluster/nodes
-            {"records": []},  # /cluster/mediators
-        ]
+        api_client.get_all_records.return_value = {
+            "records": [
+                {
+                    "ip_address": "10.0.0.100",
+                    "uuid": "med-uuid-1",
+                    "port": 31784,
+                    "reachable": True,
+                }
+            ]
+        }
 
         collector = MetadataCollector(api_client=api_client)
-        result = collector.collect_ha_info()
+        result = collector.collect_mediator()
 
-        assert result.is_ha is False
-
-    def test_collect_ha_info_ha_pair(self) -> None:
-        """Test HA info for HA pair."""
-        api_client = MagicMock()
-        api_client.get_all_records.side_effect = [
-            {"records": [{"name": "node1"}, {"name": "node2"}]},  # /cluster/nodes
-            {"records": [{"ip_address": "10.0.0.100", "reachable": True}]},  # /cluster/mediators
-        ]
-
-        collector = MetadataCollector(api_client=api_client)
-        result = collector.collect_ha_info()
-
-        assert result.is_ha is True
         assert result.mediator_address == "10.0.0.100"
+        assert result.mediator_uuid == "med-uuid-1"
+        assert result.mediator_port == 31784
 
-    def test_collect_ha_info_no_clients(self) -> None:
-        """Test HA info raises CollectionError when no API client."""
+    def test_collect_mediator_empty(self) -> None:
+        """Test mediator collection with no mediator."""
+        api_client = MagicMock()
+        api_client.get_all_records.return_value = {"records": []}
+
+        collector = MetadataCollector(api_client=api_client)
+        result = collector.collect_mediator()
+
+        assert result.mediator_address == ""
+        assert result.mediator_uuid == ""
+        assert result.mediator_port == 0
+
+    def test_collect_mediator_endpoint_unavailable(self) -> None:
+        """Test mediator collection when endpoint raises an exception."""
+        api_client = MagicMock()
+        api_client.get_all_records.side_effect = Exception("404 Not Found")
+
+        collector = MetadataCollector(api_client=api_client)
+        result = collector.collect_mediator()
+
+        assert result.mediator_address == ""
+        assert result.mediator_uuid == ""
+        assert result.mediator_port == 0
+
+    def test_collect_mediator_no_clients(self) -> None:
+        """Test mediator raises CollectionError when no API client."""
         from pynetappfoundry.cache.collector import CollectionError
 
         collector = MetadataCollector()
         with pytest.raises(CollectionError, match="API_FAILURE"):
-            collector.collect_ha_info()
+            collector.collect_mediator()
 
 
 class TestRelationshipsCollection:
@@ -1454,7 +1472,7 @@ class TestProgressCallback:
             CollectionPhase.NETWORK,
             CollectionPhase.STORAGE,
             CollectionPhase.LICENSES,
-            CollectionPhase.HA,
+            CollectionPhase.MEDIATOR,
             CollectionPhase.RELATIONSHIPS,
             CollectionPhase.PROTOCOLS,
         ]
@@ -1555,7 +1573,7 @@ class TestCollectionPhase:
         assert CollectionPhase.NETWORK.value == "network"
         assert CollectionPhase.STORAGE.value == "storage"
         assert CollectionPhase.LICENSES.value == "licenses"
-        assert CollectionPhase.HA.value == "ha"
+        assert CollectionPhase.MEDIATOR.value == "mediator"
         assert CollectionPhase.RELATIONSHIPS.value == "relationships"
 
 

@@ -53,7 +53,7 @@ class CachedClusterMetadata(BaseModel):
     network: NetworkInfo             # LIFs, broadcast domains, DNS, subnets
     storage: StorageInfo             # Aggregates, SVMs, volumes, LUNs, etc.
     licenses: LicenseInfo            # License information
-    ha: HAInfo                       # HA configuration
+    mediator: MediatorInfo           # ONTAP Mediator configuration
     relationships: RelationshipsInfo # SnapMirror, cluster/SVM peering
     protocols: ProtocolsInfo         # Export policies, CIFS, NFS, S3
 ```
@@ -378,7 +378,7 @@ All models use `ConfigDict(extra="allow")` for forward compatibility with new AP
 | Model | Key Fields | Description |
 |-------|------------|-------------|
 | `CloudMetadata` | node, instance_id, provider, region, instance_type | Cloud provider metadata per node |
-| `ClusterInfo` | cluster_name, cluster_uuid, ontap_version, model, contact, location | Core cluster identity |
+| `ClusterInfo` | cluster_name, cluster_uuid, ontap_version, model, contact, location, is_ha | Core cluster identity |
 | `NodeInfo` | uuid, name, serial_number, system_id, model, location, membership, version_full, storage_configuration, system_machine_type, controller_board, controller_memory_size, controller_cpu_count, vm_provider_type, ha_enabled, ha_auto_giveback, ha_partner_uuids, system_aggregate_uuid, cluster_interface_uuids, management_interface_uuids | Cluster node information |
 
 ### Network
@@ -423,13 +423,13 @@ All models use `ConfigDict(extra="allow")` for forward compatibility with new AP
 
 **Container:** `ProtocolsInfo` holds `export_policies`, `cifs_shares`, `nfs_services`, `cifs_services`, `s3_buckets`.
 
-### Licensing & HA
+### Licensing & Mediator
 
 | Model | Key Fields | Description |
 |-------|------------|-------------|
 | `LicenseFeature` | name, state, scope | Feature license |
 | `CapacityLicense` | name, licensed_capacity, used_capacity | Capacity license |
-| `HAInfo` | is_ha, partner_node, ha_state, mediator_address | HA configuration |
+| `MediatorInfo` | mediator_address, mediator_uuid, mediator_port | ONTAP Mediator configuration |
 
 **Container:** `LicenseInfo` holds `feature_licenses`, `capacity_licenses`.
 
@@ -455,7 +455,7 @@ The `MetadataCollector` uses all-or-nothing collection semantics: every API phas
 | `NETWORK` | API | Yes | `/network/ip/interfaces`, `/network/ethernet/broadcast-domains`, `/cluster/peers` (for ipspaces), `/name-services/dns`, `/network/ip/subnets` |
 | `STORAGE` | API | Yes | `/storage/aggregates`, `/svm/svms`, `/cloud/targets`, `/storage/volumes`, `/storage/qtrees`, `/storage/snapshot-policies`, `/cluster/schedules`, `/storage/luns`, `/protocols/san/igroups`, `/storage/qos/policies`, `/storage/flexcache/flexcaches` |
 | `LICENSES` | API | Yes | `/cluster/licensing/licenses`, `/cluster/licensing/capacity-pools` |
-| `HA` | API | Yes | `/cluster/nodes` (HA fields) |
+| `MEDIATOR` | API | Yes | `/cluster/mediators` |
 | `RELATIONSHIPS` | API | Yes | `/snapmirror/relationships`, `/cluster/peers`, `/svm/peers` |
 | `PROTOCOLS` | API | Yes | `/protocols/nfs/export-policies`, `/protocols/cifs/shares`, `/protocols/nfs/services`, `/protocols/cifs/services`, `/protocols/s3/buckets` |
 
@@ -479,6 +479,7 @@ from pynetappfoundry.cache import (
 # Models (import from their URL-tree sub-package)
 from pynetappfoundry.cache.cloud.metadata import CloudMetadata
 from pynetappfoundry.cache.cluster import ClusterInfo
+from pynetappfoundry.cache.cluster.mediators import MediatorInfo
 from pynetappfoundry.cache.cluster.nodes import NodeInfo
 from pynetappfoundry.cache.cluster.peers import ClusterPeer
 from pynetappfoundry.cache.network import NetworkInfo

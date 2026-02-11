@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 
-from pynetappfoundry.cache import CachedClusterMetadata, HAInfo, HasUUID, RelationshipsInfo
+from pynetappfoundry.cache import CachedClusterMetadata, HasUUID, MediatorInfo, RelationshipsInfo
 from pynetappfoundry.cache.cloud.metadata.model import CloudMetadata
 from pynetappfoundry.cache.cloud.targets.model import CloudTargetInfo
 from pynetappfoundry.cache.cluster.licensing.model import (
@@ -1066,26 +1066,26 @@ class TestLicenseInfo:
         assert len(licenses.capacity_licenses) == 1
 
 
-class TestHAInfo:
-    """Tests for HAInfo model."""
+class TestMediatorInfo:
+    """Tests for MediatorInfo model."""
 
     def test_default_values(self) -> None:
         """Test default values."""
-        ha = HAInfo()
-        assert ha.is_ha is False
-        assert ha.partner_node == ""
+        mediator = MediatorInfo()
+        assert mediator.mediator_address == ""
+        assert mediator.mediator_uuid == ""
+        assert mediator.mediator_port == 0
 
-    def test_ha_enabled(self) -> None:
-        """Test HA enabled configuration."""
-        ha = HAInfo(
-            is_ha=True,
-            partner_node="node2",
-            ha_state="connected",
+    def test_populated(self) -> None:
+        """Test populated mediator configuration."""
+        mediator = MediatorInfo(
             mediator_address="10.0.0.100",
+            mediator_uuid="med-uuid-1",
+            mediator_port=31784,
         )
-        assert ha.is_ha is True
-        assert ha.partner_node == "node2"
-        assert ha.mediator_address == "10.0.0.100"
+        assert mediator.mediator_address == "10.0.0.100"
+        assert mediator.mediator_uuid == "med-uuid-1"
+        assert mediator.mediator_port == 31784
 
 
 class TestSnapMirrorRelationship:
