@@ -19,52 +19,60 @@ from datetime import UTC, datetime
 from enum import Enum
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
-from pynetappfoundry.cache.field_mapping import parse_api_response, parse_cli_records
-from pynetappfoundry.cache.mappings.aggregate import AGGREGATE_MAPPING
-from pynetappfoundry.cache.mappings.cloud_metadata import CLOUD_METADATA_MAPPING
-from pynetappfoundry.cache.mappings.cluster_peer import CLUSTER_PEER_MAPPING
-from pynetappfoundry.cache.mappings.node import NODE_MAPPING
-from pynetappfoundry.cache.mappings.snapmirror import SNAPMIRROR_MAPPING
-from pynetappfoundry.cache.mappings.volume import VOLUME_MAPPING
-from pynetappfoundry.cache.models import (
-    AggregateInfo,
-    BroadcastDomain,
+from pynetappfoundry.cache._metadata import (
     CachedClusterMetadata,
-    CapacityLicense,
-    CIFSServiceInfo,
-    CIFSShareInfo,
-    CloudMetadata,
-    CloudTargetInfo,
-    ClusterInfo,
-    ClusterPeer,
-    DNSInfo,
-    ExportPolicyInfo,
-    ExportRuleInfo,
-    FlexCacheInfo,
     HAInfo,
-    IgroupInfo,
-    IPSubnetInfo,
+    RelationshipsInfo,
+)
+from pynetappfoundry.cache.cloud.metadata.mapping import CLOUD_METADATA_MAPPING
+from pynetappfoundry.cache.cloud.metadata.model import CloudMetadata
+from pynetappfoundry.cache.cloud.targets.model import CloudTargetInfo
+from pynetappfoundry.cache.cluster.licensing.model import (
+    CapacityLicense,
     LicenseFeature,
     LicenseInfo,
-    LunInfo,
-    NetworkInfo,
-    NetworkLIF,
-    NFSServiceInfo,
-    NodeInfo,
-    ProtocolsInfo,
-    QosPolicyInfo,
-    QtreeInfo,
-    RelationshipsInfo,
-    S3BucketInfo,
-    ScheduleInfo,
-    SnapMirrorRelationship,
+)
+from pynetappfoundry.cache.cluster.model import ClusterInfo
+from pynetappfoundry.cache.cluster.nodes.mapping import NODE_MAPPING
+from pynetappfoundry.cache.cluster.nodes.model import NodeInfo
+from pynetappfoundry.cache.cluster.peers.mapping import CLUSTER_PEER_MAPPING
+from pynetappfoundry.cache.cluster.peers.model import ClusterPeer
+from pynetappfoundry.cache.cluster.schedules.model import ScheduleInfo
+from pynetappfoundry.cache.field_mapping import parse_api_response, parse_cli_records
+from pynetappfoundry.cache.name_services.dns.model import DNSInfo
+from pynetappfoundry.cache.network.ethernet.broadcast_domains.model import (
+    BroadcastDomain,
+)
+from pynetappfoundry.cache.network.ip.interfaces.model import NetworkLIF
+from pynetappfoundry.cache.network.ip.subnets.model import IPSubnetInfo
+from pynetappfoundry.cache.network.model import NetworkInfo
+from pynetappfoundry.cache.protocols.cifs.services.model import CIFSServiceInfo
+from pynetappfoundry.cache.protocols.cifs.shares.model import CIFSShareInfo
+from pynetappfoundry.cache.protocols.model import ProtocolsInfo
+from pynetappfoundry.cache.protocols.nfs.export_policies.model import (
+    ExportPolicyInfo,
+    ExportRuleInfo,
+)
+from pynetappfoundry.cache.protocols.nfs.services.model import NFSServiceInfo
+from pynetappfoundry.cache.protocols.s3.buckets.model import S3BucketInfo
+from pynetappfoundry.cache.protocols.san.igroups.model import IgroupInfo
+from pynetappfoundry.cache.snapmirror.relationships.mapping import SNAPMIRROR_MAPPING
+from pynetappfoundry.cache.snapmirror.relationships.model import SnapMirrorRelationship
+from pynetappfoundry.cache.storage.aggregates.mapping import AGGREGATE_MAPPING
+from pynetappfoundry.cache.storage.aggregates.model import AggregateInfo
+from pynetappfoundry.cache.storage.flexcache.model import FlexCacheInfo
+from pynetappfoundry.cache.storage.luns.model import LunInfo
+from pynetappfoundry.cache.storage.model import StorageInfo
+from pynetappfoundry.cache.storage.qos.model import QosPolicyInfo
+from pynetappfoundry.cache.storage.qtrees.model import QtreeInfo
+from pynetappfoundry.cache.storage.snapshot_policies.model import (
     SnapshotPolicyInfo,
     SnapshotScheduleInfo,
-    StorageInfo,
-    SVMInfo,
-    SVMPeerInfo,
-    VolumeInfo,
 )
+from pynetappfoundry.cache.storage.volumes.mapping import VOLUME_MAPPING
+from pynetappfoundry.cache.storage.volumes.model import VolumeInfo
+from pynetappfoundry.cache.svm.model import SVMInfo
+from pynetappfoundry.cache.svm.peers.model import SVMPeerInfo
 from pynetappfoundry.utils.cloud import (
     build_cloud_instance_link,
     build_cloud_instance_sso_link,

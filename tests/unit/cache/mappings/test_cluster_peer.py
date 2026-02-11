@@ -7,11 +7,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from pynetappfoundry.cache.field_mapping import (
-    parse_api_record,
-    parse_api_response,
-)
-from pynetappfoundry.cache.mappings.cluster_peer import (
+from pynetappfoundry.cache.cluster.peers.mapping import (
     CLUSTER_PEER_MAPPING,
     _api_authentication_in_use,
     _api_authentication_state,
@@ -19,7 +15,11 @@ from pynetappfoundry.cache.mappings.cluster_peer import (
     _api_peer_addresses,
     _api_remote_cluster_name,
 )
-from pynetappfoundry.cache.models import ClusterPeer
+from pynetappfoundry.cache.cluster.peers.model import ClusterPeer
+from pynetappfoundry.cache.field_mapping import (
+    parse_api_record,
+    parse_api_response,
+)
 
 # ---------------------------------------------------------------------------
 # Fixtures

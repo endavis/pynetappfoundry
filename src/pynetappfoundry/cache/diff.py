@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Any
 from pydantic import BaseModel
 
 if TYPE_CHECKING:
-    from pynetappfoundry.cache.models import CachedClusterMetadata
+    from pynetappfoundry.cache._metadata import CachedClusterMetadata
 
 
 class ChangeEntry(BaseModel):

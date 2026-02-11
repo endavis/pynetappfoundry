@@ -11,8 +11,8 @@ from pynetappfoundry.cache.field_mapping import (
     parse_api_record,
     parse_api_response,
 )
-from pynetappfoundry.cache.mappings.aggregate import AGGREGATE_MAPPING
-from pynetappfoundry.cache.models import AggregateInfo
+from pynetappfoundry.cache.storage.aggregates.mapping import AGGREGATE_MAPPING
+from pynetappfoundry.cache.storage.aggregates.model import AggregateInfo
 
 # ---------------------------------------------------------------------------
 # Fixtures

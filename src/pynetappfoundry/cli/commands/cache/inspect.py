@@ -13,14 +13,12 @@ from rich.console import Console
 from rich.tree import Tree
 
 from pynetappfoundry.cache import ClusterMetadataDB
+from pynetappfoundry.cache.cloud.metadata.mapping import CLOUD_METADATA_MAPPING
+from pynetappfoundry.cache.cluster.nodes.mapping import NODE_MAPPING
+from pynetappfoundry.cache.cluster.peers.mapping import CLUSTER_PEER_MAPPING
 from pynetappfoundry.cache.field_mapping import TypeMapping
-from pynetappfoundry.cache.mappings import (
-    AGGREGATE_MAPPING,
-    CLOUD_METADATA_MAPPING,
-    CLUSTER_PEER_MAPPING,
-    NODE_MAPPING,
-    VOLUME_MAPPING,
-)
+from pynetappfoundry.cache.storage.aggregates.mapping import AGGREGATE_MAPPING
+from pynetappfoundry.cache.storage.volumes.mapping import VOLUME_MAPPING
 from pynetappfoundry.cli.utils import print_error, print_exception, print_warning
 from pynetappfoundry.clients.ontap import ONTAPCLI, ONTAPAPIClient
 from pynetappfoundry.core.config import Config

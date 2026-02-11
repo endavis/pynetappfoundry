@@ -3,21 +3,49 @@
 Provides caching infrastructure for ONTAP cluster metadata that
 doesn't change frequently. Cache is manually refreshed via CLI.
 
-Usage:
+Models live at ``cache/<api-path>/model.py`` and should be imported
+from their sub-package, e.g.::
+
+    from pynetappfoundry.cache.storage.volumes import VolumeInfo
+    from pynetappfoundry.cache.cluster.nodes import NodeInfo
+
+Infrastructure (DB, collector, diff, registry) is imported from here::
+
     from pynetappfoundry.cache import ClusterMetadataDB, MetadataCollector
-
-    # Initialize database
-    db = ClusterMetadataDB(config=config)
-
-    # Collect and cache metadata
-    collector = MetadataCollector(api_client=api, cli_client=cli)
-    metadata = collector.collect_all("mycluster")
-    db.set("mycluster", metadata)
-
-    # Retrieve cached data
-    cached = db.get("mycluster")
 """
 
+# Layer 1: Base class, protocol, schema utilities
+# Trigger mapping registration — each sub-package __init__.py imports
+# its mapping.py which calls model_registry.register_mapping().
+# Models are already registered via CacheModel.__init_subclass__ when
+# _metadata.py transitively imports all leaf model.py files above.
+import pynetappfoundry.cache.cloud.metadata
+import pynetappfoundry.cache.cluster.nodes
+import pynetappfoundry.cache.cluster.peers
+import pynetappfoundry.cache.snapmirror.relationships
+import pynetappfoundry.cache.storage.aggregates
+import pynetappfoundry.cache.storage.volumes  # noqa: F401
+from pynetappfoundry.cache._base import (
+    METADATA_SCHEMA_MIN_COMPATIBLE,
+    METADATA_SCHEMA_VERSION,
+    CacheModel,
+    HasUUID,
+    is_schema_compatible,
+    parse_schema_version,
+)
+
+# Layer 3: Container models (importing _metadata triggers the full
+# model registration chain via transitive leaf-model imports)
+from pynetappfoundry.cache._metadata import (
+    CachedClusterMetadata,
+    HAInfo,
+    RelationshipsInfo,
+)
+
+# Layer 1: Registry
+from pynetappfoundry.cache._registry import model_registry
+
+# Infrastructure (collector, db, diff, etc.)
 from pynetappfoundry.cache.collector import (
     CollectionError,
     CollectionPhase,
@@ -29,102 +57,28 @@ from pynetappfoundry.cache.db import ClusterMetadataDB
 from pynetappfoundry.cache.diff import ChangeEntry, compute_diff, format_diff_summary
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.cache.history_db import CacheHistoryDB
-from pynetappfoundry.cache.models import (
-    METADATA_SCHEMA_MIN_COMPATIBLE,
-    METADATA_SCHEMA_VERSION,
-    AggregateInfo,
-    BroadcastDomain,
-    CachedClusterMetadata,
-    CapacityLicense,
-    CIFSServiceInfo,
-    CIFSShareInfo,
-    CloudMetadata,
-    ClusterInfo,
-    ClusterPeer,
-    DNSInfo,
-    ExportPolicyInfo,
-    ExportRuleInfo,
-    FlexCacheInfo,
-    HAInfo,
-    HasUUID,
-    IgroupInfo,
-    IPSubnetInfo,
-    LicenseFeature,
-    LicenseInfo,
-    LunInfo,
-    NetworkInfo,
-    NetworkLIF,
-    NFSServiceInfo,
-    NodeInfo,
-    ProtocolsInfo,
-    QosPolicyInfo,
-    QtreeInfo,
-    RelationshipsInfo,
-    S3BucketInfo,
-    ScheduleInfo,
-    SnapMirrorRelationship,
-    SnapshotPolicyInfo,
-    SnapshotScheduleInfo,
-    StorageInfo,
-    SVMInfo,
-    SVMPeerInfo,
-    VolumeInfo,
-    is_schema_compatible,
-    parse_schema_version,
-)
 
 __all__ = [
     "METADATA_SCHEMA_MIN_COMPATIBLE",
     "METADATA_SCHEMA_VERSION",
-    "AggregateInfo",
-    "BroadcastDomain",
-    "CIFSServiceInfo",
-    "CIFSShareInfo",
     "CacheHistoryDB",
+    "CacheModel",
     "CachedClusterMetadata",
-    "CapacityLicense",
     "ChangeEntry",
-    "CloudMetadata",
-    "ClusterInfo",
     "ClusterMetadataDB",
-    "ClusterPeer",
     "CollectionError",
     "CollectionPhase",
-    "DNSInfo",
-    "ExportPolicyInfo",
-    "ExportRuleInfo",
     "FieldMapping",
-    "FlexCacheInfo",
     "HAInfo",
     "HasUUID",
-    "IPSubnetInfo",
-    "IgroupInfo",
-    "LicenseFeature",
-    "LicenseInfo",
-    "LunInfo",
     "MetadataCollector",
-    "NFSServiceInfo",
-    "NetworkInfo",
-    "NetworkLIF",
-    "NodeInfo",
     "ProgressCallback",
     "ProgressInfo",
-    "ProtocolsInfo",
-    "QosPolicyInfo",
-    "QtreeInfo",
     "RelationshipsInfo",
-    "S3BucketInfo",
-    "SVMInfo",
-    "SVMPeerInfo",
-    "ScheduleInfo",
-    "SnapMirrorRelationship",
-    "SnapshotPolicyInfo",
-    "SnapshotScheduleInfo",
-    "StorageInfo",
     "TypeMapping",
-    "VolumeInfo",
     "compute_diff",
     "format_diff_summary",
     "is_schema_compatible",
+    "model_registry",
     "parse_schema_version",
 ]

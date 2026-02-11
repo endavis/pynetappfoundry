@@ -9,7 +9,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 from click.testing import CliRunner
 
-from pynetappfoundry.cache.models import CachedClusterMetadata, CloudMetadata
+from pynetappfoundry.cache import CachedClusterMetadata
+from pynetappfoundry.cache.cloud.metadata.model import CloudMetadata
 from pynetappfoundry.cli.main import nf
 
 

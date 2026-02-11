@@ -269,7 +269,7 @@ Update `METADATA_SCHEMA_VERSION` when modifying `CachedClusterMetadata`:
 
 When modifying the cache schema:
 
-1. **Update the model** in the appropriate module under `src/pynetappfoundry/cache/models/` (organized by ONTAP REST API category; see [ADR-0007](../decisions/0007-split-cache-models-into-ontap-rest-api-category-modules.md))
+1. **Update the model** in the appropriate `src/pynetappfoundry/cache/<api-path>/model.py` file
 
 2. **Update version constant**:
    ```python
@@ -463,52 +463,29 @@ The `MetadataCollector` uses all-or-nothing collection semantics: every API phas
 ### Core Classes
 
 ```python
+# Infrastructure (from pynetappfoundry.cache)
 from pynetappfoundry.cache import (
-    # Database classes
-    ClusterMetadataDB,
-    CacheHistoryDB,
-
-    # Collector
-    MetadataCollector,
-
-    # Top-level model
     CachedClusterMetadata,
-    HasUUID,  # Protocol for models with a uuid field
-
-    # Cloud & Cluster
-    CloudMetadata, ClusterInfo, NodeInfo,
-
-    # Network
-    NetworkInfo, NetworkLIF, BroadcastDomain, IPSubnetInfo, DNSInfo,
-
-    # Storage
-    StorageInfo, AggregateInfo, SVMInfo, VolumeInfo, QtreeInfo,
-    CloudTargetInfo, FlexCacheInfo, SnapshotPolicyInfo,
-    SnapshotScheduleInfo, ScheduleInfo,
-
-    # SAN
-    LunInfo, IgroupInfo, QosPolicyInfo,
-
-    # Protocols
-    ProtocolsInfo, ExportPolicyInfo, ExportRuleInfo,
-    CIFSShareInfo, CIFSServiceInfo, NFSServiceInfo, S3BucketInfo,
-
-    # Licensing & HA
-    LicenseInfo, LicenseFeature, CapacityLicense, HAInfo,
-
-    # Relationships
-    RelationshipsInfo, SnapMirrorRelationship, ClusterPeer, SVMPeerInfo,
-
-    # Schema versioning
-    METADATA_SCHEMA_VERSION,
-    METADATA_SCHEMA_MIN_COMPATIBLE,
-    is_schema_compatible,
-    parse_schema_version,
-
-    # Diff utilities
+    CacheHistoryDB,
+    ClusterMetadataDB,
+    HasUUID,
+    MetadataCollector,
     compute_diff,
     format_diff_summary,
+    is_schema_compatible,
 )
+
+# Models (import from their URL-tree sub-package)
+from pynetappfoundry.cache.cloud.metadata import CloudMetadata
+from pynetappfoundry.cache.cluster import ClusterInfo
+from pynetappfoundry.cache.cluster.nodes import NodeInfo
+from pynetappfoundry.cache.cluster.peers import ClusterPeer
+from pynetappfoundry.cache.network import NetworkInfo
+from pynetappfoundry.cache.network.ip.interfaces import NetworkLIF
+from pynetappfoundry.cache.storage import StorageInfo
+from pynetappfoundry.cache.storage.aggregates import AggregateInfo
+from pynetappfoundry.cache.storage.volumes import VolumeInfo
+# ... etc. — see URL-tree structure for all model paths
 ```
 
 ### ClusterMetadataDB

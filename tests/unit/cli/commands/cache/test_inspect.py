@@ -9,12 +9,10 @@ from unittest.mock import MagicMock, patch
 import pytest
 from click.testing import CliRunner
 
+from pynetappfoundry.cache import CachedClusterMetadata
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.models import (
-    CachedClusterMetadata,
-    StorageInfo,
-    VolumeInfo,
-)
+from pynetappfoundry.cache.storage.model import StorageInfo
+from pynetappfoundry.cache.storage.volumes.model import VolumeInfo
 from pynetappfoundry.cli.commands.cache.inspect import (
     INSPECT_TYPES,
     _build_api_endpoint,
