@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.cache.storage.volumes.model import VolumeInfo
 
@@ -128,3 +129,5 @@ VOLUME_MAPPING = TypeMapping(
         ),
     ),
 )
+
+model_registry.register_mapping("Volume", VOLUME_MAPPING)

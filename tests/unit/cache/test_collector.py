@@ -899,7 +899,7 @@ class TestRelationshipsCollection:
     @pytest.fixture
     def mock_relationships_api_responses(self) -> dict[str, dict[str, Any]]:
         """Mock API responses for relationship endpoints."""
-        from pynetappfoundry.cache.mappings.snapmirror import SNAPMIRROR_MAPPING
+        from pynetappfoundry.cache.snapmirror.relationships.mapping import SNAPMIRROR_MAPPING
 
         sm_endpoint = SNAPMIRROR_MAPPING.api_endpoint
         return {
@@ -979,7 +979,7 @@ class TestRelationshipsCollection:
 
     def test_collect_relationships_with_missing_source_dest(self) -> None:
         """Test relationships handles missing source/destination fields."""
-        from pynetappfoundry.cache.mappings.snapmirror import SNAPMIRROR_MAPPING
+        from pynetappfoundry.cache.snapmirror.relationships.mapping import SNAPMIRROR_MAPPING
 
         sm_endpoint = SNAPMIRROR_MAPPING.api_endpoint
         api_responses = {
@@ -1009,7 +1009,7 @@ class TestRelationshipsCollection:
 
     def test_collect_relationships_with_string_peer_fields(self) -> None:
         """Test relationships handles string fields in cluster peers (instead of dicts)."""
-        from pynetappfoundry.cache.mappings.snapmirror import SNAPMIRROR_MAPPING
+        from pynetappfoundry.cache.snapmirror.relationships.mapping import SNAPMIRROR_MAPPING
 
         sm_endpoint = SNAPMIRROR_MAPPING.api_endpoint
         api_responses = {
@@ -1046,7 +1046,7 @@ class TestRelationshipsCollection:
 
     def test_collect_relationships_with_none_path(self) -> None:
         """Test relationships handles None path values."""
-        from pynetappfoundry.cache.mappings.snapmirror import SNAPMIRROR_MAPPING
+        from pynetappfoundry.cache.snapmirror.relationships.mapping import SNAPMIRROR_MAPPING
 
         sm_endpoint = SNAPMIRROR_MAPPING.api_endpoint
         api_responses = {

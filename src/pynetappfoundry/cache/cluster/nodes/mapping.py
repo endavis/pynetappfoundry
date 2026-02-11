@@ -6,6 +6,7 @@ NodeInfo cache model attributes.
 
 from __future__ import annotations
 
+from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.cluster.nodes.model import NodeInfo
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 
@@ -104,3 +105,5 @@ NODE_MAPPING = TypeMapping(
         ),
     ),
 )
+
+model_registry.register_mapping("Node", NODE_MAPPING)

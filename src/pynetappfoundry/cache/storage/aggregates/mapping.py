@@ -6,6 +6,7 @@ AggregateInfo cache model attributes.
 
 from __future__ import annotations
 
+from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.cache.storage.aggregates.model import AggregateInfo
 
@@ -146,3 +147,5 @@ AGGREGATE_MAPPING = TypeMapping(
         ),
     ),
 )
+
+model_registry.register_mapping("Aggregate", AGGREGATE_MAPPING)

@@ -12,6 +12,7 @@ and cross-field logic.
 
 from __future__ import annotations
 
+from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.cloud.metadata.model import CloudMetadata
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 
@@ -102,3 +103,5 @@ CLOUD_METADATA_MAPPING = TypeMapping(
         ),
     ),
 )
+
+model_registry.register_mapping("CloudMetadata", CLOUD_METADATA_MAPPING)

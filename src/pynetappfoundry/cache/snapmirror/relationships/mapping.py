@@ -11,6 +11,7 @@ The ``source.path`` and ``destination.path`` fields already contain the full
 
 from __future__ import annotations
 
+from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.cache.snapmirror.relationships.model import SnapMirrorRelationship
 
@@ -60,3 +61,5 @@ SNAPMIRROR_MAPPING = TypeMapping(
         ),
     ),
 )
+
+model_registry.register_mapping("SnapMirror", SNAPMIRROR_MAPPING)

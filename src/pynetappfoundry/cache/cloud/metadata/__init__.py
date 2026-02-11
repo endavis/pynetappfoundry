@@ -1,9 +1,11 @@
-"""Re-export cloud metadata cache models."""
+"""Re-export cloud metadata cache models and mappings."""
 
 from __future__ import annotations
 
+from pynetappfoundry.cache.cloud.metadata.mapping import CLOUD_METADATA_MAPPING
 from pynetappfoundry.cache.cloud.metadata.model import CloudMetadata
 
 __all__ = [
+    "CLOUD_METADATA_MAPPING",
     "CloudMetadata",
 ]

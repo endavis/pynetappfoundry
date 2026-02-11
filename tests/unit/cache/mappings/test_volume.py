@@ -12,7 +12,7 @@ from pynetappfoundry.cache.field_mapping import (
     parse_api_record,
     parse_api_response,
 )
-from pynetappfoundry.cache.mappings.volume import (
+from pynetappfoundry.cache.storage.volumes.mapping import (
     VOLUME_MAPPING,
     _api_aggregates_list,
 )

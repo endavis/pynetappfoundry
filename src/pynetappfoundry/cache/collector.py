@@ -24,6 +24,7 @@ from pynetappfoundry.cache._metadata import (
     HAInfo,
     RelationshipsInfo,
 )
+from pynetappfoundry.cache.cloud.metadata.mapping import CLOUD_METADATA_MAPPING
 from pynetappfoundry.cache.cloud.metadata.model import CloudMetadata
 from pynetappfoundry.cache.cloud.targets.model import CloudTargetInfo
 from pynetappfoundry.cache.cluster.licensing.model import (
@@ -32,16 +33,12 @@ from pynetappfoundry.cache.cluster.licensing.model import (
     LicenseInfo,
 )
 from pynetappfoundry.cache.cluster.model import ClusterInfo
+from pynetappfoundry.cache.cluster.nodes.mapping import NODE_MAPPING
 from pynetappfoundry.cache.cluster.nodes.model import NodeInfo
+from pynetappfoundry.cache.cluster.peers.mapping import CLUSTER_PEER_MAPPING
 from pynetappfoundry.cache.cluster.peers.model import ClusterPeer
 from pynetappfoundry.cache.cluster.schedules.model import ScheduleInfo
 from pynetappfoundry.cache.field_mapping import parse_api_response, parse_cli_records
-from pynetappfoundry.cache.mappings.aggregate import AGGREGATE_MAPPING
-from pynetappfoundry.cache.mappings.cloud_metadata import CLOUD_METADATA_MAPPING
-from pynetappfoundry.cache.mappings.cluster_peer import CLUSTER_PEER_MAPPING
-from pynetappfoundry.cache.mappings.node import NODE_MAPPING
-from pynetappfoundry.cache.mappings.snapmirror import SNAPMIRROR_MAPPING
-from pynetappfoundry.cache.mappings.volume import VOLUME_MAPPING
 from pynetappfoundry.cache.name_services.dns.model import DNSInfo
 from pynetappfoundry.cache.network.ethernet.broadcast_domains.model import (
     BroadcastDomain,
@@ -59,7 +56,9 @@ from pynetappfoundry.cache.protocols.nfs.export_policies.model import (
 from pynetappfoundry.cache.protocols.nfs.services.model import NFSServiceInfo
 from pynetappfoundry.cache.protocols.s3.buckets.model import S3BucketInfo
 from pynetappfoundry.cache.protocols.san.igroups.model import IgroupInfo
+from pynetappfoundry.cache.snapmirror.relationships.mapping import SNAPMIRROR_MAPPING
 from pynetappfoundry.cache.snapmirror.relationships.model import SnapMirrorRelationship
+from pynetappfoundry.cache.storage.aggregates.mapping import AGGREGATE_MAPPING
 from pynetappfoundry.cache.storage.aggregates.model import AggregateInfo
 from pynetappfoundry.cache.storage.flexcache.model import FlexCacheInfo
 from pynetappfoundry.cache.storage.luns.model import LunInfo
@@ -70,6 +69,7 @@ from pynetappfoundry.cache.storage.snapshot_policies.model import (
     SnapshotPolicyInfo,
     SnapshotScheduleInfo,
 )
+from pynetappfoundry.cache.storage.volumes.mapping import VOLUME_MAPPING
 from pynetappfoundry.cache.storage.volumes.model import VolumeInfo
 from pynetappfoundry.cache.svm.model import SVMInfo
 from pynetappfoundry.cache.svm.peers.model import SVMPeerInfo

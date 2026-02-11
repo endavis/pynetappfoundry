@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.cluster.peers.model import ClusterPeer
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 
@@ -138,3 +139,5 @@ CLUSTER_PEER_MAPPING = TypeMapping(
         ),
     ),
 )
+
+model_registry.register_mapping("ClusterPeer", CLUSTER_PEER_MAPPING)
