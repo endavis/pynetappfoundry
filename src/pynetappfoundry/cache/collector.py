@@ -31,6 +31,7 @@ from pynetappfoundry.cache.cluster.licensing.model import (
     LicenseFeature,
     LicenseInfo,
 )
+from pynetappfoundry.cache.cluster.mapping import CLUSTER_MAPPING
 from pynetappfoundry.cache.cluster.mediators.mapping import MEDIATOR_MAPPING
 from pynetappfoundry.cache.cluster.mediators.model import MediatorInfo
 from pynetappfoundry.cache.cluster.model import ClusterInfo
@@ -39,7 +40,11 @@ from pynetappfoundry.cache.cluster.nodes.model import NodeInfo
 from pynetappfoundry.cache.cluster.peers.mapping import CLUSTER_PEER_MAPPING
 from pynetappfoundry.cache.cluster.peers.model import ClusterPeer
 from pynetappfoundry.cache.cluster.schedules.model import ScheduleInfo
-from pynetappfoundry.cache.field_mapping import parse_api_response, parse_cli_records
+from pynetappfoundry.cache.field_mapping import (
+    parse_api_record,
+    parse_api_response,
+    parse_cli_records,
+)
 from pynetappfoundry.cache.name_services.dns.model import DNSInfo
 from pynetappfoundry.cache.network.ethernet.broadcast_domains.model import (
     BroadcastDomain,
@@ -819,7 +824,7 @@ class MetadataCollector:
             logger.debug("%s No API client available for cluster info collection", self._log_prefix)
             return ClusterInfo()
 
-        response = self._cached_api_call("/cluster?fields=*", paginate=False)
+        response = self._cached_api_call(CLUSTER_MAPPING.api_endpoint, paginate=False)
         if not response:
             return ClusterInfo()
 
@@ -828,17 +833,13 @@ class MetadataCollector:
         )
         self._log_missing_fields(
             response,
-            ["name", "uuid", "version", "contact", "location"],
+            CLUSTER_MAPPING.api_expected_fields(),
             "Cluster",
             response.get("name", "unknown"),
         )
-        return ClusterInfo(
-            cluster_name=response.get("name", ""),
-            cluster_uuid=response.get("uuid", ""),
-            ontap_version=response.get("version", {}).get("full", ""),
-            model=response.get("version", {}).get("generation", ""),
-            contact=response.get("contact", ""),
-            location=response.get("location", ""),
+        return cast(
+            ClusterInfo,
+            parse_api_record(CLUSTER_MAPPING, response, self._log_prefix),
         )
 
     # -------------------------------------------------------------------------

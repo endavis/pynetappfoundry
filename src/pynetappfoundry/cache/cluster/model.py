@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pydantic import field_validator
+from pydantic import Field, field_validator
 
 from pynetappfoundry.cache._base import CacheModel
 
@@ -20,6 +20,18 @@ class ClusterInfo(CacheModel):
     contact: str = ""
     location: str = ""
     is_ha: bool = False
+    san_optimized: bool = False
+    timezone: str = ""
+    dns_domains: list[str] = Field(default_factory=list)
+    name_servers: list[str] = Field(default_factory=list)
+    ntp_servers: list[str] = Field(default_factory=list)
+    peering_policy_authentication_required: bool = False
+    peering_policy_encryption_required: bool = False
+    peering_policy_minimum_passphrase_length: int = 0
+    management_interface_uuids: list[str] = Field(default_factory=list)
+    disaggregated: bool = False
+    auto_enable_activity_tracking: bool = False
+    auto_enable_analytics: bool = False
 
     @field_validator("model", mode="before")
     @classmethod
