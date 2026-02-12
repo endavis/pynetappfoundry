@@ -26,7 +26,8 @@ import pynetappfoundry.cache.cluster.peers
 import pynetappfoundry.cache.name_services.dns
 import pynetappfoundry.cache.snapmirror.relationships
 import pynetappfoundry.cache.storage.aggregates
-import pynetappfoundry.cache.storage.volumes  # noqa: F401
+import pynetappfoundry.cache.storage.volumes
+import pynetappfoundry.cache.svm  # noqa: F401
 from pynetappfoundry.cache._base import (
     METADATA_SCHEMA_MIN_COMPATIBLE,
     METADATA_SCHEMA_VERSION,

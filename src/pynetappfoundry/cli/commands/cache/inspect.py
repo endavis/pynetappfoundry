@@ -19,6 +19,7 @@ from pynetappfoundry.cache.cluster.peers.mapping import CLUSTER_PEER_MAPPING
 from pynetappfoundry.cache.field_mapping import TypeMapping
 from pynetappfoundry.cache.storage.aggregates.mapping import AGGREGATE_MAPPING
 from pynetappfoundry.cache.storage.volumes.mapping import VOLUME_MAPPING
+from pynetappfoundry.cache.svm.mapping import SVM_MAPPING
 from pynetappfoundry.cli.utils import print_error, print_exception, print_warning
 from pynetappfoundry.clients.ontap import ONTAPCLI, ONTAPAPIClient
 from pynetappfoundry.core.config import Config
@@ -34,6 +35,7 @@ INSPECT_TYPES: dict[str, tuple[TypeMapping, str]] = {
     "cloud_metadata": (CLOUD_METADATA_MAPPING, "cloud"),
     "cluster_peer": (CLUSTER_PEER_MAPPING, "relationships.cluster_peers"),
     "node": (NODE_MAPPING, "nodes"),
+    "svm": (SVM_MAPPING, "storage.svms"),
     "volume": (VOLUME_MAPPING, "storage.volumes"),
 }
 
