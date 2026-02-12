@@ -118,7 +118,7 @@ class TestClusterInfo:
             cluster_name="mycluster",
             cluster_uuid="abc-123-def-456",
             ontap_version="NetApp Release 9.14.1",
-            model="SIMULATED",
+            version_generation="SIMULATED",
         )
         assert cluster.cluster_name == "mycluster"
         assert cluster.cluster_uuid == "abc-123-def-456"
@@ -1226,7 +1226,7 @@ class TestCachedClusterMetadata:
             cluster=ClusterInfo(
                 cluster_uuid="abc-123",
                 ontap_version="9.14.1",
-                model="SIMULATED",
+                version_generation="SIMULATED",
             ),
         )
         flat = metadata.to_flat_dict()
@@ -1237,7 +1237,7 @@ class TestCachedClusterMetadata:
         assert flat["instance_type"] == "m5.xlarge"
         assert flat["cluster_uuid"] == "abc-123"
         assert flat["ontap_version"] == "9.14.1"
-        assert flat["model"] == "SIMULATED"
+        assert flat["version_generation"] == "SIMULATED"
         assert "_cached_at" in flat
         assert "_cache_version" in flat
 

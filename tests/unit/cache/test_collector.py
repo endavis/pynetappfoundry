@@ -260,6 +260,8 @@ class TestClusterInfoCollection:
             "version": {
                 "full": "NetApp Release 9.14.1",
                 "generation": "SIMULATED",
+                "major": 9,
+                "minor": 14,
             },
             "contact": "admin@example.com",
             "location": "datacenter-1",
@@ -300,6 +302,9 @@ class TestClusterInfoCollection:
         assert result.cluster_name == "mycluster"
         assert result.cluster_uuid == "abc-123-def-456"
         assert "9.14.1" in result.ontap_version
+        assert result.version_generation == "SIMULATED"
+        assert result.version_major == 9
+        assert result.version_minor == 14
         assert result.contact == "admin@example.com"
         assert result.location == "datacenter-1"
         assert result.san_optimized is True

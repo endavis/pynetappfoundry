@@ -378,7 +378,7 @@ All models use `ConfigDict(extra="allow")` for forward compatibility with new AP
 | Model | Key Fields | Description |
 |-------|------------|-------------|
 | `CloudMetadata` | node, instance_id, provider, region, instance_type | Cloud provider metadata per node |
-| `ClusterInfo` | cluster_name, cluster_uuid, ontap_version, model, contact, location, is_ha | Core cluster identity |
+| `ClusterInfo` | cluster_name, cluster_uuid, ontap_version, version_generation, version_major, version_minor, contact, location, is_ha | Core cluster identity |
 | `NodeInfo` | uuid, name, serial_number, system_id, model, location, membership, version_full, storage_configuration, system_machine_type, controller_board, controller_memory_size, controller_cpu_count, vm_provider_type, ha_enabled, ha_auto_giveback, ha_partner_uuids, system_aggregate_uuid, cluster_interface_uuids, management_interface_uuids | Cluster node information |
 
 ### Network

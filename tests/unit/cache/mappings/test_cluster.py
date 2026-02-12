@@ -26,6 +26,8 @@ def full_api_record() -> dict[str, Any]:
         "version": {
             "full": "NetApp Release 9.14.1",
             "generation": "SIMULATED",
+            "major": 14,
+            "minor": 1,
         },
         "contact": "admin@example.com",
         "location": "datacenter-1",
@@ -71,8 +73,8 @@ class TestClusterMappingDefinition:
         assert len(attrs) == len(set(attrs))
 
     def test_field_count(self) -> None:
-        """Mapping has expected number of fields (18)."""
-        assert len(CLUSTER_MAPPING.fields) == 18
+        """Mapping has expected number of fields (20)."""
+        assert len(CLUSTER_MAPPING.fields) == 20
 
     def test_model_class(self) -> None:
         """Model class is ClusterInfo."""
@@ -129,7 +131,9 @@ class TestClusterApiParsing:
         assert result.cluster_name == "mycluster"
         assert result.cluster_uuid == "abc-123-def-456"
         assert result.ontap_version == "NetApp Release 9.14.1"
-        assert result.model == "SIMULATED"
+        assert result.version_generation == "SIMULATED"
+        assert result.version_major == 14
+        assert result.version_minor == 1
         assert result.contact == "admin@example.com"
         assert result.location == "datacenter-1"
         assert result.san_optimized is True
@@ -153,7 +157,9 @@ class TestClusterApiParsing:
         assert result.cluster_name == "minimal"
         assert result.cluster_uuid == "xyz"
         assert result.ontap_version == ""
-        assert result.model == ""
+        assert result.version_generation == ""
+        assert result.version_major == 0
+        assert result.version_minor == 0
         assert result.contact == ""
         assert result.location == ""
         assert result.san_optimized is False
@@ -177,19 +183,22 @@ class TestClusterApiParsing:
         assert result.cluster_name == ""
         assert result.cluster_uuid == ""
         assert result.ontap_version == ""
-        assert result.model == ""
+        assert result.version_generation == ""
+        assert result.version_major == 0
+        assert result.version_minor == 0
 
     def test_nested_version_fields(self) -> None:
-        """Nested version.full and version.generation parse correctly."""
+        """Nested version.full, version.generation, version.major, version.minor parse correctly."""
         record: dict[str, Any] = {
             "name": "test",
-            "version": {"full": "9.15.0", "generation": 9},
+            "version": {"full": "9.15.0", "generation": 9, "major": 15, "minor": 0},
         }
         result = parse_api_record(CLUSTER_MAPPING, record, "[test]")
         assert isinstance(result, ClusterInfo)
         assert result.ontap_version == "9.15.0"
-        # model field_validator coerces int to str
-        assert result.model == "9"
+        assert result.version_generation == "9"
+        assert result.version_major == 15
+        assert result.version_minor == 0
 
     def test_nested_timezone_field(self) -> None:
         """Nested timezone.name parses correctly."""
@@ -289,7 +298,7 @@ class TestParityWithOldParser:
             cluster_name=record.get("name", ""),
             cluster_uuid=record.get("uuid", ""),
             ontap_version=record.get("version", {}).get("full", ""),
-            model=record.get("version", {}).get("generation", ""),
+            version_generation=record.get("version", {}).get("generation", ""),
             contact=record.get("contact", ""),
             location=record.get("location", ""),
         )
@@ -298,7 +307,7 @@ class TestParityWithOldParser:
         "cluster_name",
         "cluster_uuid",
         "ontap_version",
-        "model",
+        "version_generation",
         "contact",
         "location",
     )
