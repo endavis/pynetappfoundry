@@ -64,6 +64,7 @@ The pilot migration (VolumeInfo) was completed in PR #189.
 - Issue #259: feat: generalize field mapping framework for multi-API data collection
 - Issue #209: refactor: migrate ClusterInfo to field mapping framework
 - Issue #257: refactor: deep URL-tree structure with automatic model and mapping discovery
+- Issue #205: refactor: migrate DNSInfo to field mapping framework
 
 ## Related Documentation
 

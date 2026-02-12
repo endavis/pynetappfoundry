@@ -947,7 +947,9 @@ class TestComputeDiffAllCategories:
             cluster_name="test-cluster",
             network=NetworkInfo(
                 dns=[
-                    DNSInfo(uuid="dns-uuid-1", svm="svm1", scope="svm", servers=["10.0.0.1"]),
+                    DNSInfo(
+                        uuid="dns-uuid-1", svm_uuid="svm-uuid-1", scope="svm", servers=["10.0.0.1"]
+                    ),
                 ],
             ),
         )
@@ -957,7 +959,7 @@ class TestComputeDiffAllCategories:
                 dns=[
                     DNSInfo(
                         uuid="dns-uuid-1",
-                        svm="svm1",
+                        svm_uuid="svm-uuid-1",
                         scope="svm",
                         servers=["10.0.0.1", "10.0.0.2"],
                     ),
@@ -983,7 +985,12 @@ class TestComputeDiffAllCategories:
             cluster_name="test-cluster",
             network=NetworkInfo(
                 dns=[
-                    DNSInfo(uuid="dns-uuid-1", svm="svm1", scope="svm", domains=["example.com"]),
+                    DNSInfo(
+                        uuid="dns-uuid-1",
+                        svm_uuid="svm-uuid-1",
+                        scope="svm",
+                        domains=["example.com"],
+                    ),
                 ],
             ),
         )
@@ -992,7 +999,7 @@ class TestComputeDiffAllCategories:
         dns_changes = [c for c in changes if c["category"] == "network.dns"]
         assert len(dns_changes) == 1
         assert dns_changes[0]["type"] == "added"
-        assert dns_changes[0]["entity"] == "svm1"
+        assert dns_changes[0]["entity"] == "svm-uuid-1"
 
     def test_flexcache_changes(self) -> None:
         """Test FlexCache change detection."""

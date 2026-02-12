@@ -147,7 +147,7 @@ _ENTITY_CONFIGS: dict[str, EntityConfig] = {
     "network.dns": EntityConfig(
         key_field="uuid",
         model_class=DNSInfo,
-        display_field="svm",
+        display_field="svm_uuid",
     ),
     "storage.aggregates": EntityConfig(
         key_field="uuid",

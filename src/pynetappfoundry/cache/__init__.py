@@ -23,6 +23,7 @@ import pynetappfoundry.cache.cloud.metadata
 import pynetappfoundry.cache.cluster.mediators
 import pynetappfoundry.cache.cluster.nodes
 import pynetappfoundry.cache.cluster.peers
+import pynetappfoundry.cache.name_services.dns
 import pynetappfoundry.cache.snapmirror.relationships
 import pynetappfoundry.cache.storage.aggregates
 import pynetappfoundry.cache.storage.volumes  # noqa: F401

@@ -771,25 +771,33 @@ class TestDNSInfo:
         """Test default values."""
         dns = DNSInfo()
         assert dns.uuid == ""
-        assert dns.svm == ""
+        assert dns.svm_uuid == ""
         assert dns.scope == ""
         assert dns.domains == []
         assert dns.servers == []
         assert dns.timeout == 0
         assert dns.attempts == 0
+        assert dns.dynamic_dns_enabled is False
+        assert dns.dynamic_dns_fqdn == ""
+        assert dns.dynamic_dns_time_to_live == ""
+        assert dns.dynamic_dns_use_secure is False
+        assert dns.packet_query_match is True
+        assert dns.source_address_match is True
+        assert dns.tld_query_enabled is True
+        assert dns.service_ips == []
 
     def test_with_values(self) -> None:
         """Test with DNS data."""
         dns = DNSInfo(
             uuid="dns-uuid-1",
-            svm="svm1",
+            svm_uuid="svm-uuid-1",
             scope="svm",
             domains=["example.com", "corp.example.com"],
             servers=["10.0.0.1", "10.0.0.2"],
             timeout=2,
             attempts=1,
         )
-        assert dns.svm == "svm1"
+        assert dns.svm_uuid == "svm-uuid-1"
         assert dns.scope == "svm"
         assert len(dns.domains) == 2
         assert len(dns.servers) == 2
