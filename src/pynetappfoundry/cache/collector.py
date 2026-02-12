@@ -78,6 +78,7 @@ from pynetappfoundry.cache.storage.snapshot_policies.model import (
 )
 from pynetappfoundry.cache.storage.volumes.mapping import VOLUME_MAPPING
 from pynetappfoundry.cache.storage.volumes.model import VolumeInfo
+from pynetappfoundry.cache.svm.mapping import SVM_MAPPING
 from pynetappfoundry.cache.svm.model import SVMInfo
 from pynetappfoundry.cache.svm.peers.model import SVMPeerInfo
 from pynetappfoundry.utils.cloud import (
@@ -1089,7 +1090,7 @@ class MetadataCollector:
         # Make all API calls in parallel using cached calls
         endpoints = [
             AGGREGATE_MAPPING.api_endpoint,
-            "/svm/svms?fields=*",
+            SVM_MAPPING.api_endpoint,
             "/cloud/targets?fields=*",
             "/storage/volumes?fields=*,autosize,files,nas.path,nas.security_style",
             "/storage/qtrees?fields=*",
@@ -1134,27 +1135,15 @@ class MetadataCollector:
         )
 
         # Process SVMs response
-        svm_response = responses.get(endpoints[1]) or {}
-        logger.debug(
-            "%s API response: %d SVMs", self._log_prefix, len(svm_response.get("records", []))
+        svms = cast(
+            list[SVMInfo],
+            parse_api_response(
+                SVM_MAPPING,
+                responses.get(endpoints[1]),
+                self._log_prefix,
+                self._log_missing_fields,
+            ),
         )
-        svms = []
-        for record in svm_response.get("records", []):
-            self._log_missing_fields(
-                record,
-                ["uuid", "name", "state", "subtype", "allowed_protocols", "language"],
-                "SVM",
-                record.get("name", record.get("uuid", "unknown")),
-            )
-            svm = SVMInfo(
-                uuid=record.get("uuid", ""),
-                name=record.get("name", ""),
-                state=record.get("state", ""),
-                subtype=record.get("subtype", ""),
-                allowed_protocols=record.get("allowed_protocols", []) or [],
-                language=record.get("language", ""),
-            )
-            svms.append(svm)
 
         # Process cloud targets response
         cloud_targets = self._parse_cloud_targets_response(responses.get(endpoints[2]))

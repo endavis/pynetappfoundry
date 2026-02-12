@@ -524,7 +524,7 @@ class TestStorageCollection:
                     }
                 ]
             },
-            "/svm/svms?fields=*": {
+            "/svm/svms?fields=*,snapmirror": {
                 "records": [{"name": "svm1", "state": "running", "subtype": "default"}]
             },
             "/cloud/targets?fields=*": {"records": []},
@@ -775,7 +775,7 @@ class TestCloudTargetsCollection:
                     }
                 ]
             },
-            "/svm/svms?fields=*": {
+            "/svm/svms?fields=*,snapmirror": {
                 "records": [{"name": "svm1", "state": "running", "subtype": "default"}]
             },
             "/cloud/targets?fields=*": mock_cloud_targets_api_response,
@@ -827,7 +827,7 @@ class TestCloudTargetsCollection:
                 return {
                     "records": [{"name": "aggr1", "node": {"name": "node1"}, "state": "online"}]
                 }
-            if endpoint == "/svm/svms?fields=*":
+            if endpoint == "/svm/svms?fields=*,snapmirror":
                 return {"records": [{"name": "svm1", "state": "running"}]}
             return {}
 
@@ -845,7 +845,7 @@ class TestCloudTargetsCollection:
         api_client = MagicMock()
         api_client.get_all_records.side_effect = lambda endpoint, **_: {
             "/storage/aggregates?fields=*,is_spare_low,sidl_enabled": {"records": []},
-            "/svm/svms?fields=*": {"records": []},
+            "/svm/svms?fields=*,snapmirror": {"records": []},
             "/cloud/targets?fields=*": {"records": []},
         }.get(endpoint, {})
 

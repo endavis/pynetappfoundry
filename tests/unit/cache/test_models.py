@@ -265,27 +265,30 @@ class TestSVMInfo:
         svm = SVMInfo()
         assert svm.uuid == ""
         assert svm.name == ""
-        assert svm.state == ""
-        assert svm.allowed_protocols == []
         assert svm.language == ""
+        assert svm.subtype == ""
+        assert svm.aggregate_uuids == []
+        assert svm.nfs_enabled is False
+        assert svm.nfs_allowed is True
 
     def test_with_values(self) -> None:
         """Test with SVM data."""
         svm = SVMInfo(
             uuid="svm-uuid-1",
             name="svm1",
-            state="running",
             subtype="default",
-            root_volume="svm1_root",
-            root_volume_aggregate="aggr1",
-            allowed_protocols=["nfs", "cifs"],
             language="c.utf_8",
+            nfs_enabled=True,
+            cifs_enabled=True,
+            aggregate_uuids=["aggr-uuid-1", "aggr-uuid-2"],
         )
         assert svm.uuid == "svm-uuid-1"
         assert svm.name == "svm1"
-        assert svm.state == "running"
-        assert svm.allowed_protocols == ["nfs", "cifs"]
+        assert svm.subtype == "default"
         assert svm.language == "c.utf_8"
+        assert svm.nfs_enabled is True
+        assert svm.cifs_enabled is True
+        assert svm.aggregate_uuids == ["aggr-uuid-1", "aggr-uuid-2"]
 
 
 class TestCloudTargetInfo:
