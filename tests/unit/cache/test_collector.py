@@ -261,6 +261,24 @@ class TestClusterInfoCollection:
                 "full": "NetApp Release 9.14.1",
                 "generation": "SIMULATED",
             },
+            "contact": "admin@example.com",
+            "location": "datacenter-1",
+            "san_optimized": True,
+            "timezone": {"name": "America/New_York"},
+            "dns_domains": ["example.com"],
+            "name_servers": ["10.0.0.1"],
+            "ntp_servers": ["time.nist.gov"],
+            "peering_policy": {
+                "authentication_required": True,
+                "encryption_required": False,
+                "minimum_passphrase_length": 8,
+            },
+            "management_interfaces": [
+                {"uuid": "mgmt-uuid-1"},
+            ],
+            "disaggregated": False,
+            "auto_enable_activity_tracking": True,
+            "auto_enable_analytics": False,
         }
 
     @pytest.fixture
@@ -282,6 +300,20 @@ class TestClusterInfoCollection:
         assert result.cluster_name == "mycluster"
         assert result.cluster_uuid == "abc-123-def-456"
         assert "9.14.1" in result.ontap_version
+        assert result.contact == "admin@example.com"
+        assert result.location == "datacenter-1"
+        assert result.san_optimized is True
+        assert result.timezone == "America/New_York"
+        assert result.dns_domains == ["example.com"]
+        assert result.name_servers == ["10.0.0.1"]
+        assert result.ntp_servers == ["time.nist.gov"]
+        assert result.peering_policy_authentication_required is True
+        assert result.peering_policy_encryption_required is False
+        assert result.peering_policy_minimum_passphrase_length == 8
+        assert result.management_interface_uuids == ["mgmt-uuid-1"]
+        assert result.disaggregated is False
+        assert result.auto_enable_activity_tracking is True
+        assert result.auto_enable_analytics is False
         api_client.call_endpoint.assert_called_with("/cluster?fields=*", method="GET")
 
     def test_collect_cluster_info_api_failure_propagates(self) -> None:

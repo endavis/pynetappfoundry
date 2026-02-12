@@ -227,6 +227,7 @@ For CLI-only types, also test:
 | Aggregate | `AGGREGATE_MAPPING` | `AggregateInfo` | 28 | API-only. Deeply nested API paths (`block_storage.primary.*`). Explicit `?fields=*,is_spare_low,sidl_enabled`. |
 | Node | `NODE_MAPPING` | `NodeInfo` | 20 | API-only. Wildcard `[*]` syntax for list fields. `field_validator` for int→str coercion. |
 | ClusterPeer | `CLUSTER_PEER_MAPPING` | `ClusterPeer` | 7 | API-only. Uses transform for dict-vs-string fallback on `remote`, `authentication`, and `encryption`. |
+| Cluster | `CLUSTER_MAPPING` | `ClusterInfo` | 18 | API-only. Single-object endpoint (no `records` list), uses `parse_api_record()` directly. `is_ha` derived post-collection. |
 | CloudMetadata | `CLOUD_METADATA_MAPPING` | `CloudMetadata` | 19 | CLI-only (no API endpoint). Computed link fields built as post-processing in collector. |
 
 ## Reference: Field Mapping Patterns
