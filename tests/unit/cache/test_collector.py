@@ -427,16 +427,26 @@ class TestNetworkCollection:
                 ]
             },
             "/network/ipspaces?fields=*": {"records": [{"name": "Default"}, {"name": "Cluster"}]},
-            "/name-services/dns?fields=*": {
+            "/name-services/dns?fields=*,"
+            "tld_query_enabled,source_address_match,packet_query_match": {
                 "records": [
                     {
                         "uuid": "dns-uuid-1",
-                        "svm": {"name": "svm1"},
+                        "svm": {"name": "svm1", "uuid": "svm-uuid-1"},
                         "scope": "svm",
                         "domains": ["example.com"],
                         "servers": ["10.0.0.1", "10.0.0.2"],
                         "timeout": 2,
                         "attempts": 1,
+                        "dynamic_dns": {
+                            "enabled": False,
+                            "fqdn": "",
+                            "time_to_live": "",
+                            "use_secure": False,
+                        },
+                        "packet_query_match": True,
+                        "source_address_match": True,
+                        "tld_query_enabled": True,
                     }
                 ]
             },
@@ -473,7 +483,7 @@ class TestNetworkCollection:
         assert result.broadcast_domains[0].name == "Default"
         assert "Default" in result.ipspaces
         assert len(result.dns) == 1
-        assert result.dns[0].svm == "svm1"
+        assert result.dns[0].svm_uuid == "svm-uuid-1"
         assert result.dns[0].domains == ["example.com"]
         assert result.dns[0].servers == ["10.0.0.1", "10.0.0.2"]
         assert len(result.subnets) == 1

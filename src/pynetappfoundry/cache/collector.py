@@ -45,6 +45,7 @@ from pynetappfoundry.cache.field_mapping import (
     parse_api_response,
     parse_cli_records,
 )
+from pynetappfoundry.cache.name_services.dns.mapping import DNS_MAPPING
 from pynetappfoundry.cache.name_services.dns.model import DNSInfo
 from pynetappfoundry.cache.network.ethernet.broadcast_domains.model import (
     BroadcastDomain,
@@ -937,7 +938,7 @@ class MetadataCollector:
             "/network/ip/interfaces?fields=*",
             "/network/ethernet/broadcast-domains?fields=*",
             "/network/ipspaces?fields=*",
-            "/name-services/dns?fields=*",
+            DNS_MAPPING.api_endpoint,
             "/network/ip/subnets?fields=*",
         ]
 
@@ -1021,7 +1022,15 @@ class MetadataCollector:
         ipspaces = [r.get("name", "") for r in ipspace_response.get("records", [])]
 
         # Process DNS response
-        dns = self._parse_dns_response(responses.get(endpoints[3]))
+        dns = cast(
+            list[DNSInfo],
+            parse_api_response(
+                DNS_MAPPING,
+                responses.get(endpoints[3]),
+                self._log_prefix,
+                self._log_missing_fields,
+            ),
+        )
 
         # Process subnets response
         subnets = self._parse_subnets_response(responses.get(endpoints[4]))
@@ -2011,45 +2020,6 @@ class MetadataCollector:
             )
             services.append(service)
         return services
-
-    def _parse_dns_response(self, response: Any) -> list[DNSInfo]:
-        """Parse DNS API response.
-
-        Args:
-            response: API response dict or None.
-
-        Returns:
-            List of DNSInfo objects.
-        """
-        if not response:
-            return []
-
-        logger.debug(
-            "%s API response: %d DNS configs",
-            self._log_prefix,
-            len(response.get("records", [])),
-        )
-        dns_configs = []
-        for record in response.get("records", []):
-            self._log_missing_fields(
-                record,
-                ["uuid", "svm", "scope", "domains", "servers", "timeout", "attempts"],
-                "DNS",
-                record.get("svm", {}).get("name", record.get("uuid", "unknown"))
-                if isinstance(record.get("svm"), dict)
-                else record.get("uuid", "unknown"),
-            )
-            dns = DNSInfo(
-                uuid=record.get("uuid", ""),
-                svm=record.get("svm", {}).get("name", "") if record.get("svm") else "",
-                scope=record.get("scope", ""),
-                domains=record.get("domains", []) or [],
-                servers=record.get("servers", []) or [],
-                timeout=record.get("timeout", 0),
-                attempts=record.get("attempts", 0),
-            )
-            dns_configs.append(dns)
-        return dns_configs
 
     def _parse_subnets_response(self, response: Any) -> list[IPSubnetInfo]:
         """Parse IP subnets API response.

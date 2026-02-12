@@ -82,12 +82,13 @@ class TestMappingRegistration:
     """Tests that all mappings are registered via register_mapping()."""
 
     def test_registry_contains_all_mappings(self) -> None:
-        """All 8 type mappings should be registered."""
+        """All 9 type mappings should be registered."""
         expected_mappings = {
             "Aggregate",
             "CloudMetadata",
             "Cluster",
             "ClusterPeer",
+            "DNS",
             "Mediator",
             "Node",
             "SnapMirror",
@@ -98,8 +99,8 @@ class TestMappingRegistration:
         assert not missing, f"Mappings not registered: {missing}"
 
     def test_mapping_count(self) -> None:
-        """Registry should contain exactly 8 mappings."""
-        assert len(model_registry.mappings) == 8
+        """Registry should contain exactly 9 mappings."""
+        assert len(model_registry.mappings) == 9
 
     def test_mapping_lookup_by_name(self) -> None:
         """get_mapping() should return the correct TypeMapping for known names."""
