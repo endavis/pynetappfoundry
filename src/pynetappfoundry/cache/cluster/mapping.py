@@ -33,8 +33,18 @@ CLUSTER_MAPPING = TypeMapping(
             api_path="version.full",
         ),
         FieldMapping(
-            cache_attr="model",
+            cache_attr="version_generation",
             api_path="version.generation",
+        ),
+        FieldMapping(
+            cache_attr="version_major",
+            api_path="version.major",
+            default=0,
+        ),
+        FieldMapping(
+            cache_attr="version_minor",
+            api_path="version.minor",
+            default=0,
         ),
         FieldMapping(
             cache_attr="contact",

@@ -114,7 +114,7 @@ class CachedClusterMetadata(CacheModel, register=False):
             # Cluster info
             "cluster_uuid": self.cluster.cluster_uuid,
             "ontap_version": self.cluster.ontap_version,
-            "model": self.cluster.model,
+            "version_generation": self.cluster.version_generation,
             # Cache metadata
             "_cached_at": self.cached_at.isoformat(),
             "_cache_version": self.cache_version,

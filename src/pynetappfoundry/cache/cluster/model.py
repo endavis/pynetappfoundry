@@ -16,7 +16,9 @@ class ClusterInfo(CacheModel):
     cluster_name: str = ""
     cluster_uuid: str = ""
     ontap_version: str = ""
-    model: str = ""
+    version_generation: str = ""
+    version_major: int = 0
+    version_minor: int = 0
     contact: str = ""
     location: str = ""
     is_ha: bool = False
@@ -33,8 +35,8 @@ class ClusterInfo(CacheModel):
     auto_enable_activity_tracking: bool = False
     auto_enable_analytics: bool = False
 
-    @field_validator("model", mode="before")
+    @field_validator("version_generation", mode="before")
     @classmethod
-    def coerce_model_to_str(cls, v: object) -> str:
-        """Coerce model field to string (API sometimes returns int)."""
+    def coerce_version_generation_to_str(cls, v: object) -> str:
+        """Coerce version_generation to string (API sometimes returns int)."""
         return str(v) if v is not None else ""
