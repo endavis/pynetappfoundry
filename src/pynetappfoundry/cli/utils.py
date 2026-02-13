@@ -107,6 +107,38 @@ def print_exception(message: str, exc: BaseException | None = None) -> None:
         console.print("[dim]" + "".join(traceback.format_exception(exc)) + "[/dim]")
 
 
+def format_value_markup(value: object) -> str | None:
+    """Format a scalar value with Rich markup for display.
+
+    Provides consistent color-coding across CLI commands:
+    - ``None`` → ``[yellow]null[/yellow]``
+    - ``bool`` → ``[yellow]true/false[/yellow]``
+    - ``int/float`` → ``[magenta]value[/magenta]``
+    - ``str`` → ``[green]value[/green]`` (empty → ``[dim](empty)[/dim]``)
+
+    Returns ``None`` for non-scalar types (dict, list, etc.) so callers can
+    apply context-specific formatting.
+
+    Args:
+        value: Value to format.
+
+    Returns:
+        Rich-formatted string for scalars, or None if the value is not a
+        supported scalar type.
+    """
+    if value is None:
+        return "[yellow]null[/yellow]"
+    if isinstance(value, bool):
+        return f"[yellow]{str(value).lower()}[/yellow]"
+    if isinstance(value, (int, float)):
+        return f"[magenta]{value}[/magenta]"
+    if isinstance(value, str):
+        if not value:
+            return "[dim](empty)[/dim]"
+        return f"[green]{value}[/green]"
+    return None
+
+
 def print_debug(message: str) -> None:
     """Print debug message to console (if debug mode) and always log to file.
 

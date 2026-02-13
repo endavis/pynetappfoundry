@@ -12,7 +12,12 @@ import click
 from rich.console import Console
 
 from pynetappfoundry.cache import ClusterMetadataDB
-from pynetappfoundry.cli.utils import print_error, print_exception, print_warning
+from pynetappfoundry.cli.utils import (
+    format_value_markup,
+    print_error,
+    print_exception,
+    print_warning,
+)
 from pynetappfoundry.core.config import Config
 from pynetappfoundry.utils.dict_path import PathNotFoundError, get_nested_value
 
@@ -50,6 +55,26 @@ def _format_value(value: Any) -> str:
         return str(value).lower()
     if isinstance(value, (dict, list)):
         return json.dumps(value)
+    return str(value)
+
+
+def _format_display_value(value: Any) -> str:
+    """Format a value for default display output with Rich markup.
+
+    Uses shared ``format_value_markup`` for scalar types and adds
+    indented JSON formatting for dicts/lists.
+
+    Args:
+        value: Value to format.
+
+    Returns:
+        String with Rich markup for colored display.
+    """
+    result = format_value_markup(value)
+    if result is not None:
+        return result
+    if isinstance(value, (dict, list)):
+        return json.dumps(value, indent=2, default=str)
     return str(value)
 
 
@@ -342,4 +367,10 @@ def query(
             console.print(f"[bold]{name}:[/bold]")
             for field in effective_fields:
                 if field in cluster_result:
-                    console.print(f"  {field}: {_format_value(cluster_result[field])}")
+                    formatted = _format_display_value(cluster_result[field])
+                    if "\n" in formatted:
+                        console.print(f"  [cyan]{field}[/cyan]:")
+                        for line in formatted.split("\n"):
+                            console.print(f"    {line}")
+                    else:
+                        console.print(f"  [cyan]{field}[/cyan]: {formatted}")
