@@ -16,6 +16,23 @@ Models live at `cache/<api-path>/model.py` and mappings at `cache/<api-path>/map
 - `cache/cluster/nodes/model.py` + `mapping.py` (maps to `/cluster/nodes`)
 - `cache/protocols/nfs/services/model.py` (maps to `/protocols/nfs/services`)
 
+### Cache Field and Container Naming
+
+The URL-tree convention extends beyond directory layout to cache field names and container groupings on `CachedClusterMetadata`. Every list field on a container model must use the API resource name from the endpoint path, and every container must correspond to a real ONTAP API top-level namespace.
+
+**Field naming rule:** Convert the API endpoint path to a dotted cache path by replacing `/` with `.` and `-` with `_`. The final segment becomes the field name on the parent container.
+
+| API Endpoint | Cache Path | Container Field |
+|---|---|---|
+| `/network/ip/interfaces` | `network.ip_interfaces` | `NetworkInfo.ip_interfaces` |
+| `/network/ethernet/broadcast-domains` | `network.ethernet_broadcast_domains` | `NetworkInfo.ethernet_broadcast_domains` |
+| `/storage/volumes` | `storage.volumes` | `StorageInfo.volumes` |
+| `/protocols/nfs/export-policies` | `protocols.nfs_export_policies` | `ProtocolsInfo.nfs_export_policies` |
+
+**Container rule:** Container models (`NetworkInfo`, `StorageInfo`, etc.) group fields that share the same API top-level namespace. A model must not hold fields from a different namespace (e.g., `/name-services/dns` must not live under `NetworkInfo`).
+
+**Model class naming rule:** Model class names should reflect the API resource. For example, `NetworkIpInterface` (not `NetworkLIF`), `NetworkEthernetBroadcastDomain` (not `BroadcastDomain`).
+
 ### Three-Layer Import Hierarchy
 
 Imports flow upward only (DAG guaranteed, no circular deps):
@@ -36,7 +53,7 @@ Imports flow upward only (DAG guaranteed, no circular deps):
 
 1. **Locality** - Adding a new ONTAP type requires touching only one directory (model + mapping + `__init__.py`), not 4+ scattered files (models.py, mappings/, `__init__.py` re-exports, collector imports).
 
-2. **Discoverability** - The directory tree mirrors ONTAP REST API paths, making it obvious where to find or add a model.
+2. **Discoverability** - The directory tree, cache field names, and container groupings all mirror ONTAP REST API paths, making it obvious where to find or add a model and how it maps to the API.
 
 3. **Automatic registration** - The `ModelRegistry` singleton enables tooling to discover all models and mappings without hardcoded lists, supporting future features like dynamic inspection and plugin systems.
 
@@ -47,6 +64,7 @@ Imports flow upward only (DAG guaranteed, no circular deps):
 ## Related Issues
 
 - Issue #257: refactor: deep URL-tree structure with automatic model and mapping discovery
+- Issue #295: refactor: align cache field names and containers with ONTAP API endpoint hierarchy
 
 ## Related Documentation
 
