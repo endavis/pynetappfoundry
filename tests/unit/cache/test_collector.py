@@ -496,16 +496,16 @@ class TestNetworkCollection:
         collector = MetadataCollector(api_client=api_client)
         result = collector.collect_network()
 
-        assert len(result.data_lifs) == 1
-        assert result.data_lifs[0].uuid == "lif-uuid-1"
-        assert result.data_lifs[0].name == "data_lif1"
-        assert result.data_lifs[0].ip_address == "10.0.0.10"
-        assert result.data_lifs[0].netmask == "255.255.255.0"
-        assert result.data_lifs[0].scope == "svm"
-        assert result.data_lifs[0].svm_uuid == "svm-uuid-1"
-        assert result.data_lifs[0].home_node_uuid == "node-uuid-1"
-        assert result.data_lifs[0].home_port_uuid == "port-uuid-e0d"
-        assert result.data_lifs[0].services == ["data_core", "data_nfs"]
+        assert len(result.lifs) == 1
+        assert result.lifs[0].uuid == "lif-uuid-1"
+        assert result.lifs[0].name == "data_lif1"
+        assert result.lifs[0].ip_address == "10.0.0.10"
+        assert result.lifs[0].netmask == "255.255.255.0"
+        assert result.lifs[0].scope == "svm"
+        assert result.lifs[0].svm_uuid == "svm-uuid-1"
+        assert result.lifs[0].home_node_uuid == "node-uuid-1"
+        assert result.lifs[0].home_port_uuid == "port-uuid-e0d"
+        assert result.lifs[0].services == ["data_core", "data_nfs"]
         assert len(result.broadcast_domains) == 1
         assert result.broadcast_domains[0].name == "Default"
         assert result.broadcast_domains[0].uuid == "bd-uuid-1"

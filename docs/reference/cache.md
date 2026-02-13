@@ -153,7 +153,7 @@ Changes are tracked as a list of change entries:
     "new": 24
   },
   {
-    "category": "network.data_lifs",
+    "category": "network.lifs",
     "type": "removed",
     "entity": "lif1"
   }
@@ -385,12 +385,12 @@ All models use `ConfigDict(extra="allow")` for forward compatibility with new AP
 
 | Model | Key Fields | Description |
 |-------|------------|-------------|
-| `NetworkLIF` | name, ip_address, netmask, home_node, home_port, role, svm | Logical interface |
+| `NetworkLIF` | uuid, name, ip_address, netmask, ip_family, enabled, state, scope, vip, svm_uuid, ipspace_uuid, service_policy_uuid, services, auto_revert, failover, is_home, home_node_uuid, home_port_uuid, current_node_uuid, current_port_uuid, dns_zone, ddns_enabled, subnet_uuid, probe_port, rdma_protocols | Logical interface |
 | `BroadcastDomain` | uuid, name, ipspace, mtu, ports | Broadcast domain configuration |
 | `IPSubnetInfo` | uuid, name, ipspace, broadcast_domain, subnet, gateway, ip_ranges | IP subnet |
 | `DNSInfo` | uuid, svm, scope, domains, servers, timeout, attempts | DNS configuration |
 
-**Container:** `NetworkInfo` holds `intercluster_lifs`, `data_lifs`, `management_lifs`, `broadcast_domains`, `ipspaces`, `dns`, `subnets`.
+**Container:** `NetworkInfo` holds `lifs`, `broadcast_domains`, `ipspaces`, `dns`, `subnets`.
 
 ### Storage
 

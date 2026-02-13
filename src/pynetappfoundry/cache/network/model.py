@@ -19,9 +19,7 @@ class NetworkInfo(CacheModel):
     Contains LIFs, broadcast domains, IPspaces, DNS, and subnets.
     """
 
-    intercluster_lifs: list[NetworkLIF] = Field(default_factory=list)
-    data_lifs: list[NetworkLIF] = Field(default_factory=list)
-    management_lifs: list[NetworkLIF] = Field(default_factory=list)
+    lifs: list[NetworkLIF] = Field(default_factory=list)
     broadcast_domains: list[BroadcastDomain] = Field(default_factory=list)
     ipspaces: list[str] = Field(default_factory=list)
     dns: list[DNSInfo] = Field(default_factory=list)
