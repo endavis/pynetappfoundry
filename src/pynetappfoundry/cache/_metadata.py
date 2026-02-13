@@ -19,7 +19,7 @@ from pynetappfoundry.cache._base import (
     _utcnow,
 )
 from pynetappfoundry.cache.cloud.metadata.model import CloudMetadata
-from pynetappfoundry.cache.cluster.licensing.model import LicenseInfo
+from pynetappfoundry.cache.cluster.licensing.model import LicensePackage
 from pynetappfoundry.cache.cluster.mediators.model import MediatorInfo
 from pynetappfoundry.cache.cluster.model import ClusterInfo
 from pynetappfoundry.cache.cluster.nodes.model import NodeInfo
@@ -77,7 +77,7 @@ class CachedClusterMetadata(CacheModel, register=False):
     nodes: list[NodeInfo] = Field(default_factory=list)
     network: NetworkInfo = Field(default_factory=NetworkInfo)
     storage: StorageInfo = Field(default_factory=StorageInfo)
-    licenses: LicenseInfo = Field(default_factory=LicenseInfo)
+    license_packages: list[LicensePackage] = Field(default_factory=list)
     mediator: MediatorInfo = Field(default_factory=MediatorInfo)
     relationships: RelationshipsInfo = Field(default_factory=RelationshipsInfo)
     protocols: ProtocolsInfo = Field(default_factory=ProtocolsInfo)

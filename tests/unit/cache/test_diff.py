@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache import CachedClusterMetadata, MediatorInfo, RelationshipsInfo
 from pynetappfoundry.cache.cloud.metadata.model import CloudMetadata
-from pynetappfoundry.cache.cluster.licensing.model import LicenseFeature, LicenseInfo
+from pynetappfoundry.cache.cluster.licensing.model import LicensePackage
 from pynetappfoundry.cache.cluster.model import ClusterInfo
 from pynetappfoundry.cache.cluster.nodes.model import NodeInfo
 from pynetappfoundry.cache.cluster.peers.model import ClusterPeer
@@ -455,23 +455,19 @@ class TestComputeDiffAllCategories:
         """Test license change detection."""
         before = CachedClusterMetadata(
             cluster_name="test-cluster",
-            licenses=LicenseInfo(
-                feature_licenses=[
-                    LicenseFeature(name="NFS", state="compliant"),
-                ],
-            ),
+            license_packages=[
+                LicensePackage(name="NFS", state="compliant", scope="cluster"),
+            ],
         )
         after = CachedClusterMetadata(
             cluster_name="test-cluster",
-            licenses=LicenseInfo(
-                feature_licenses=[
-                    LicenseFeature(name="NFS", state="noncompliant"),
-                ],
-            ),
+            license_packages=[
+                LicensePackage(name="NFS", state="noncompliant", scope="cluster"),
+            ],
         )
         changes = compute_diff(before, after)
 
-        license_changes = [c for c in changes if c["category"] == "licenses.feature_licenses"]
+        license_changes = [c for c in changes if c["category"] == "license_packages"]
         assert len(license_changes) == 1
         assert license_changes[0]["type"] == "modified"
         assert license_changes[0]["field"] == "state"

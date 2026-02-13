@@ -65,7 +65,7 @@ class TestCacheSchemaCommand:
         assert "nodes[N]." in result.output
         assert "network." in result.output
         assert "storage." in result.output
-        assert "licenses." in result.output
+        assert "license_packages[N]." in result.output
         assert "mediator." in result.output
         assert "relationships." in result.output
 
@@ -77,7 +77,7 @@ class TestCacheSchemaCommand:
         # Check deeply nested paths
         assert "network.intercluster_lifs[N].ip_address" in result.output
         assert "storage.aggregates[N].name" in result.output
-        assert "licenses.feature_licenses[N].name" in result.output
+        assert "license_packages[N].name" in result.output
 
     def test_schema_shows_types(self, runner: CliRunner) -> None:
         """Test that schema shows field types."""
