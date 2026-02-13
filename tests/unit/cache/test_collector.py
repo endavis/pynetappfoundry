@@ -402,17 +402,32 @@ class TestNetworkCollection:
             "/network/ip/interfaces?fields=*": {
                 "records": [
                     {
+                        "uuid": "lif-uuid-1",
                         "name": "data_lif1",
-                        "ip": {"address": "10.0.0.10", "netmask": "255.255.255.0"},
-                        "location": {
-                            "home_node": {"name": "node1"},
-                            "home_port": {"name": "e0d"},
-                            "node": {"name": "node1"},
-                            "port": {"name": "e0d"},
+                        "ip": {
+                            "address": "10.0.0.10",
+                            "netmask": "255.255.255.0",
+                            "family": "ipv4",
                         },
+                        "enabled": True,
                         "state": "up",
                         "scope": "svm",
-                        "svm": {"name": "svm1"},
+                        "vip": False,
+                        "svm": {"name": "svm1", "uuid": "svm-uuid-1"},
+                        "ipspace": {"uuid": "ipspace-uuid-1"},
+                        "service_policy": {"uuid": "sp-uuid-1"},
+                        "services": ["data_core", "data_nfs"],
+                        "location": {
+                            "auto_revert": True,
+                            "failover": "sfo-partner-only",
+                            "is_home": True,
+                            "home_node": {"name": "node1", "uuid": "node-uuid-1"},
+                            "home_port": {"name": "e0d", "uuid": "port-uuid-e0d"},
+                            "node": {"name": "node1", "uuid": "node-uuid-1"},
+                            "port": {"name": "e0d", "uuid": "port-uuid-e0d"},
+                        },
+                        "dns_zone": "example.com",
+                        "ddns_enabled": False,
                     }
                 ]
             },
@@ -482,7 +497,15 @@ class TestNetworkCollection:
         result = collector.collect_network()
 
         assert len(result.data_lifs) == 1
+        assert result.data_lifs[0].uuid == "lif-uuid-1"
         assert result.data_lifs[0].name == "data_lif1"
+        assert result.data_lifs[0].ip_address == "10.0.0.10"
+        assert result.data_lifs[0].netmask == "255.255.255.0"
+        assert result.data_lifs[0].scope == "svm"
+        assert result.data_lifs[0].svm_uuid == "svm-uuid-1"
+        assert result.data_lifs[0].home_node_uuid == "node-uuid-1"
+        assert result.data_lifs[0].home_port_uuid == "port-uuid-e0d"
+        assert result.data_lifs[0].services == ["data_core", "data_nfs"]
         assert len(result.broadcast_domains) == 1
         assert result.broadcast_domains[0].name == "Default"
         assert result.broadcast_domains[0].uuid == "bd-uuid-1"
@@ -1446,7 +1469,7 @@ class TestCollectAll:
 
         assert result.cluster_name == "test-cluster"
         assert result.cached_at is not None
-        assert result.cache_version == "1.0"
+        assert result.cache_version == "1.1"
 
 
 class TestCachedApiCallPagination:

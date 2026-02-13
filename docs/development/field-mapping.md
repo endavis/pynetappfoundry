@@ -230,6 +230,7 @@ For CLI-only types, also test:
 | Cluster | `CLUSTER_MAPPING` | `ClusterInfo` | 18 | API-only. Single-object endpoint (no `records` list), uses `parse_api_record()` directly. `is_ha` derived post-collection. |
 | CloudMetadata | `CLOUD_METADATA_MAPPING` | `CloudMetadata` | 19 | CLI-only (no API endpoint). Computed link fields built as post-processing in collector. |
 | BroadcastDomain | `BROADCAST_DOMAIN_MAPPING` | `BroadcastDomain` | 5 | API-only. Wildcard `[*]` syntax for `port_uuids`. Nested dot-path for `ipspace_uuid`. |
+| NetworkLIF | `NETWORK_LIF_MAPPING` | `NetworkLIF` | 25 | API-only. UUID-only nested refs for svm, ipspace, service_policy, subnet, and location nodes/ports. Scope-based sorting in collector. |
 
 ## Reference: Field Mapping Patterns
 

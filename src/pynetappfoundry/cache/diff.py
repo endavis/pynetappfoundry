@@ -226,17 +226,17 @@ _ENTITY_CONFIGS: dict[str, EntityConfig] = {
         display_field="node",
     ),
     "network.intercluster_lifs": EntityConfig(
-        key_field="name",
+        key_field="uuid",
         model_class=NetworkLIF,
         display_field="name",
     ),
     "network.data_lifs": EntityConfig(
-        key_field="name",
+        key_field="uuid",
         model_class=NetworkLIF,
         display_field="name",
     ),
     "network.management_lifs": EntityConfig(
-        key_field="name",
+        key_field="uuid",
         model_class=NetworkLIF,
         display_field="name",
     ),

@@ -324,7 +324,7 @@ class TestComputeDiffModifiedEntities:
             cluster_name="test-cluster",
             network=NetworkInfo(
                 intercluster_lifs=[
-                    NetworkLIF(name="lif1", ip_address="10.0.0.1"),
+                    NetworkLIF(uuid="lif-uuid-1", name="lif1", ip_address="10.0.0.1"),
                 ],
             ),
         )
@@ -332,7 +332,7 @@ class TestComputeDiffModifiedEntities:
             cluster_name="test-cluster",
             network=NetworkInfo(
                 intercluster_lifs=[
-                    NetworkLIF(name="lif1", ip_address="10.0.0.2"),
+                    NetworkLIF(uuid="lif-uuid-1", name="lif1", ip_address="10.0.0.2"),
                 ],
             ),
         )
@@ -1500,13 +1500,17 @@ class TestComputeDiffEdgeCases:
         before = CachedClusterMetadata(
             cluster_name="test-cluster",
             network=NetworkInfo(
-                intercluster_lifs=[NetworkLIF(name="lif1", ip_address="10.0.0.1")],
+                intercluster_lifs=[
+                    NetworkLIF(uuid="lif-uuid-1", name="lif1", ip_address="10.0.0.1")
+                ],
             ),
         )
         after = CachedClusterMetadata(
             cluster_name="test-cluster",
             network=NetworkInfo(
-                intercluster_lifs=[NetworkLIF(name="lif1", ip_address="10.0.0.1")],
+                intercluster_lifs=[
+                    NetworkLIF(uuid="lif-uuid-1", name="lif1", ip_address="10.0.0.1")
+                ],
             ),
         )
         changes = compute_diff(before, after)

@@ -67,6 +67,7 @@ The pilot migration (VolumeInfo) was completed in PR #189.
 - Issue #192: refactor: migrate SVMInfo to field mapping framework
 - Issue #205: refactor: migrate DNSInfo to field mapping framework
 - Issue #213: refactor: migrate LicenseInfo/LicenseFeature to field mapping framework
+- Issue #211: refactor: migrate NetworkLIF to field mapping framework
 - Issue #212: refactor: migrate BroadcastDomain to field mapping framework
 
 ## Related Documentation
