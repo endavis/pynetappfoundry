@@ -16,11 +16,12 @@ from pynetappfoundry.cache.network.ip.subnets.model import IPSubnetInfo
 class NetworkInfo(CacheModel):
     """Network configuration information.
 
-    Contains LIFs, broadcast domains, IPspaces, DNS, and subnets.
+    Contains IP interfaces, ethernet broadcast domains, IPspaces, DNS,
+    and IP subnets.
     """
 
-    lifs: list[NetworkLIF] = Field(default_factory=list)
-    broadcast_domains: list[BroadcastDomain] = Field(default_factory=list)
+    ip_interfaces: list[NetworkLIF] = Field(default_factory=list)
+    ethernet_broadcast_domains: list[BroadcastDomain] = Field(default_factory=list)
     ipspaces: list[str] = Field(default_factory=list)
     dns: list[DNSInfo] = Field(default_factory=list)
-    subnets: list[IPSubnetInfo] = Field(default_factory=list)
+    ip_subnets: list[IPSubnetInfo] = Field(default_factory=list)

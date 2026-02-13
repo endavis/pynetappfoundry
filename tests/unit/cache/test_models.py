@@ -233,20 +233,20 @@ class TestNetworkInfo:
     def test_default_values(self) -> None:
         """Test default values."""
         network = NetworkInfo()
-        assert network.lifs == []
+        assert network.ip_interfaces == []
         assert network.ipspaces == []
         assert network.dns == []
-        assert network.subnets == []
+        assert network.ip_subnets == []
 
-    def test_with_lifs(self) -> None:
-        """Test with LIF data."""
+    def test_with_ip_interfaces(self) -> None:
+        """Test with IP interface data."""
         lif = NetworkLIF(name="ic_lif1", ip_address="10.0.1.1")
         network = NetworkInfo(
-            lifs=[lif],
+            ip_interfaces=[lif],
             ipspaces=["Default", "Cluster"],
         )
-        assert len(network.lifs) == 1
-        assert network.lifs[0].name == "ic_lif1"
+        assert len(network.ip_interfaces) == 1
+        assert network.ip_interfaces[0].name == "ic_lif1"
 
 
 class TestAggregateInfo:
@@ -872,18 +872,18 @@ class TestProtocolsInfo:
     def test_default_values(self) -> None:
         """Test default values."""
         protocols = ProtocolsInfo()
-        assert protocols.export_policies == []
+        assert protocols.nfs_export_policies == []
         assert protocols.cifs_shares == []
         assert protocols.nfs_services == []
         assert protocols.cifs_services == []
         assert protocols.s3_buckets == []
 
-    def test_with_export_policies(self) -> None:
-        """Test with export policy data."""
+    def test_with_nfs_export_policies(self) -> None:
+        """Test with NFS export policy data."""
         policy = ExportPolicyInfo(name="default", svm="svm1")
-        protocols = ProtocolsInfo(export_policies=[policy])
-        assert len(protocols.export_policies) == 1
-        assert protocols.export_policies[0].name == "default"
+        protocols = ProtocolsInfo(nfs_export_policies=[policy])
+        assert len(protocols.nfs_export_policies) == 1
+        assert protocols.nfs_export_policies[0].name == "default"
 
     def test_with_cifs_shares(self) -> None:
         """Test with CIFS share data."""
@@ -1214,7 +1214,7 @@ class TestCachedClusterMetadata:
         """Test creating with minimal required fields."""
         metadata = CachedClusterMetadata(cluster_name="test-cluster")
         assert metadata.cluster_name == "test-cluster"
-        assert metadata.cache_version == "1.1"
+        assert metadata.cache_version == "2.0"
         assert metadata.cached_at is not None
 
     def test_cached_at_default(self) -> None:
@@ -1415,8 +1415,8 @@ class TestUuidIndex:
             cluster_name="test",
             nodes=[NodeInfo(uuid="uuid-01")],
             network=NetworkInfo(
-                broadcast_domains=[BroadcastDomain(uuid="uuid-02")],
-                subnets=[IPSubnetInfo(uuid="uuid-03")],
+                ethernet_broadcast_domains=[BroadcastDomain(uuid="uuid-02")],
+                ip_subnets=[IPSubnetInfo(uuid="uuid-03")],
                 dns=[DNSInfo(uuid="uuid-04")],
             ),
             storage=StorageInfo(
@@ -1468,7 +1468,7 @@ class TestUuidIndex:
             cloud=[CloudMetadata(instance_id="i-123", provider="AWS")],
             cluster=ClusterInfo(cluster_uuid="cluster-uuid-1"),
             protocols=ProtocolsInfo(
-                export_policies=[ExportPolicyInfo(id=1, name="default")],
+                nfs_export_policies=[ExportPolicyInfo(id=1, name="default")],
             ),
             storage=StorageInfo(
                 qtrees=[QtreeInfo(id=1, name="qt1")],

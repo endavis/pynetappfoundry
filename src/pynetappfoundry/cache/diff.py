@@ -134,12 +134,12 @@ _ENTITY_CONFIGS: dict[str, EntityConfig] = {
         model_class=NodeInfo,
         display_field="name",
     ),
-    "network.broadcast_domains": EntityConfig(
+    "network.ethernet_broadcast_domains": EntityConfig(
         key_field="uuid",
         model_class=BroadcastDomain,
         display_field="name",
     ),
-    "network.subnets": EntityConfig(
+    "network.ip_subnets": EntityConfig(
         key_field="uuid",
         model_class=IPSubnetInfo,
         display_field="name",
@@ -225,7 +225,7 @@ _ENTITY_CONFIGS: dict[str, EntityConfig] = {
         model_class=CloudMetadata,
         display_field="node",
     ),
-    "network.lifs": EntityConfig(
+    "network.ip_interfaces": EntityConfig(
         key_field="uuid",
         model_class=NetworkLIF,
         display_field="name",
@@ -235,7 +235,7 @@ _ENTITY_CONFIGS: dict[str, EntityConfig] = {
         model_class=QtreeInfo,
         display_field="name",
     ),
-    "protocols.export_policies": EntityConfig(
+    "protocols.nfs_export_policies": EntityConfig(
         key_field="name",
         model_class=ExportPolicyInfo,
         display_field="name",

@@ -50,7 +50,7 @@ class CachedClusterMetadata(BaseModel):
     cloud: list[CloudMetadata]       # Cloud provider info per node
     cluster: ClusterInfo             # Cluster identity
     nodes: list[NodeInfo]            # Node information
-    network: NetworkInfo             # LIFs, broadcast domains, DNS, subnets
+    network: NetworkInfo             # IP interfaces, broadcast domains, DNS, subnets
     storage: StorageInfo             # Aggregates, SVMs, volumes, LUNs, etc.
     licenses: LicenseInfo            # License information
     mediator: MediatorInfo           # ONTAP Mediator configuration
@@ -105,6 +105,7 @@ METADATA_SCHEMA_MIN_COMPATIBLE = "1.0"
 
 | Version | Changes |
 |---------|---------|
+| 2.0 | Rename cache fields to match ONTAP API endpoint hierarchy: `network.lifs` -> `network.ip_interfaces`, `network.broadcast_domains` -> `network.ethernet_broadcast_domains`, `network.subnets` -> `network.ip_subnets`, `protocols.export_policies` -> `protocols.nfs_export_policies` |
 | 1.0 | Initial schema with comprehensive model coverage |
 
 ## History Tracking
@@ -153,7 +154,7 @@ Changes are tracked as a list of change entries:
     "new": 24
   },
   {
-    "category": "network.lifs",
+    "category": "network.ip_interfaces",
     "type": "removed",
     "entity": "lif1"
   }
@@ -390,7 +391,7 @@ All models use `ConfigDict(extra="allow")` for forward compatibility with new AP
 | `IPSubnetInfo` | uuid, name, ipspace, broadcast_domain, subnet, gateway, ip_ranges | IP subnet |
 | `DNSInfo` | uuid, svm, scope, domains, servers, timeout, attempts | DNS configuration |
 
-**Container:** `NetworkInfo` holds `lifs`, `broadcast_domains`, `ipspaces`, `dns`, `subnets`.
+**Container:** `NetworkInfo` holds `ip_interfaces`, `ethernet_broadcast_domains`, `ipspaces`, `dns`, `ip_subnets`.
 
 ### Storage
 
@@ -421,7 +422,7 @@ All models use `ConfigDict(extra="allow")` for forward compatibility with new AP
 | `NFSServiceInfo` | svm, enabled, protocol_v3/v4/v41_enabled | NFS service config |
 | `S3BucketInfo` | uuid, name, svm, type, size, versioning_state | S3 bucket |
 
-**Container:** `ProtocolsInfo` holds `export_policies`, `cifs_shares`, `nfs_services`, `cifs_services`, `s3_buckets`.
+**Container:** `ProtocolsInfo` holds `nfs_export_policies`, `cifs_shares`, `nfs_services`, `cifs_services`, `s3_buckets`.
 
 ### Licensing & Mediator
 

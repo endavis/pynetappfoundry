@@ -17,11 +17,11 @@ from pynetappfoundry.cache.protocols.s3.buckets.model import S3BucketInfo
 class ProtocolsInfo(CacheModel):
     """Protocol configuration information.
 
-    Contains export policies, CIFS shares, NFS/CIFS services,
+    Contains NFS export policies, CIFS shares, NFS/CIFS services,
     S3 buckets, and protocol-related data.
     """
 
-    export_policies: list[ExportPolicyInfo] = Field(default_factory=list)
+    nfs_export_policies: list[ExportPolicyInfo] = Field(default_factory=list)
     cifs_shares: list[CIFSShareInfo] = Field(default_factory=list)
     nfs_services: list[NFSServiceInfo] = Field(default_factory=list)
     cifs_services: list[CIFSServiceInfo] = Field(default_factory=list)
