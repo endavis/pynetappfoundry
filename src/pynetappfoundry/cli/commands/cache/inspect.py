@@ -21,7 +21,12 @@ from pynetappfoundry.cache.field_mapping import TypeMapping
 from pynetappfoundry.cache.storage.aggregates.mapping import AGGREGATE_MAPPING
 from pynetappfoundry.cache.storage.volumes.mapping import VOLUME_MAPPING
 from pynetappfoundry.cache.svm.mapping import SVM_MAPPING
-from pynetappfoundry.cli.utils import print_error, print_exception, print_warning
+from pynetappfoundry.cli.utils import (
+    format_value_markup,
+    print_error,
+    print_exception,
+    print_warning,
+)
 from pynetappfoundry.clients.ontap import ONTAPCLI, ONTAPAPIClient
 from pynetappfoundry.core.config import Config
 
@@ -72,14 +77,9 @@ def _format_value(value: object) -> str:
     Returns:
         Rich-formatted string.
     """
-    if isinstance(value, bool):
-        return f"[yellow]{value}[/yellow]"
-    if isinstance(value, (int, float)):
-        return f"[magenta]{value}[/magenta]"
-    if isinstance(value, str):
-        if not value:
-            return "[dim](empty)[/dim]"
-        return f"[green]{value}[/green]"
+    result = format_value_markup(value)
+    if result is not None:
+        return result
     if isinstance(value, list):
         if not value:
             return "[dim](empty list)[/dim]"

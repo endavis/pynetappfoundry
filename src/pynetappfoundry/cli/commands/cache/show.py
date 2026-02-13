@@ -11,7 +11,12 @@ from rich.panel import Panel
 from rich.tree import Tree
 
 from pynetappfoundry.cache import ClusterMetadataDB
-from pynetappfoundry.cli.utils import print_error, print_exception, print_warning
+from pynetappfoundry.cli.utils import (
+    format_value_markup,
+    print_error,
+    print_exception,
+    print_warning,
+)
 from pynetappfoundry.core.config import Config
 
 logger = logging.getLogger(__name__)
@@ -27,15 +32,10 @@ def _format_value(value: object) -> str:
     Returns:
         Formatted string.
     """
-    if isinstance(value, bool):
-        return f"[yellow]{value}[/yellow]"
-    elif isinstance(value, (int, float)):
-        return f"[magenta]{value}[/magenta]"
-    elif isinstance(value, str):
-        if not value:
-            return "[dim](empty)[/dim]"
-        return f"[green]{value}[/green]"
-    elif isinstance(value, list):
+    result = format_value_markup(value)
+    if result is not None:
+        return result
+    if isinstance(value, list):
         if not value:
             return "[dim](empty list)[/dim]"
         return f"[cyan]{len(value)} items[/cyan]"

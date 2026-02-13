@@ -54,7 +54,7 @@ class TestFormatValue:
 
     def test_format_bool(self) -> None:
         """Test boolean formatting."""
-        assert "True" in _format_value(True)
+        assert "true" in _format_value(True)
 
     def test_format_int(self) -> None:
         """Test integer formatting."""

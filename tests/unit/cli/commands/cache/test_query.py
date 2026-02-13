@@ -645,7 +645,9 @@ base_api_path = "/api"
 
         assert result.exit_code == 0
         assert "test-cluster:" in result.output
-        assert '["node-01", "node-02"]' in result.output
+        assert "nodes[*].name:" in result.output
+        assert '"node-01"' in result.output
+        assert '"node-02"' in result.output
 
     @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
     def test_wildcard_json_output(
@@ -915,3 +917,93 @@ base_api_path = "/api"
         lines = result.output.strip().split("\n")
         assert lines[0] == "cluster,cloud[0].provider,cloud[0].region"
         assert lines[1] == "test-cluster,AWS,"
+
+    @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
+    def test_default_output_nested_dict_formatting(
+        self,
+        mock_db_class: MagicMock,
+        runner: CliRunner,
+        mock_config_dir: Path,
+        sample_metadata: CachedClusterMetadata,
+    ) -> None:
+        """Test that nested dicts display as indented JSON in default output."""
+        mock_db = MagicMock()
+        mock_db.get.return_value = sample_metadata
+        mock_db_class.return_value = mock_db
+
+        result = runner.invoke(
+            nf,
+            ["-c", str(mock_config_dir), "cache", "query", "test-cluster", "cloud[0]"],
+        )
+
+        assert result.exit_code == 0
+        assert "cloud[0]:" in result.output
+        # Indented JSON should have the key on separate lines
+        assert '"provider"' in result.output
+        assert '"region"' in result.output
+        # Should NOT be compact single-line JSON
+        assert '{"provider"' not in result.output
+
+    @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
+    def test_default_output_scalar_values(
+        self,
+        mock_db_class: MagicMock,
+        runner: CliRunner,
+        mock_config_dir: Path,
+        sample_metadata: CachedClusterMetadata,
+    ) -> None:
+        """Test that scalar values display inline in default output."""
+        mock_db = MagicMock()
+        mock_db.get.return_value = sample_metadata
+        mock_db_class.return_value = mock_db
+
+        result = runner.invoke(
+            nf,
+            [
+                "-c",
+                str(mock_config_dir),
+                "cache",
+                "query",
+                "test-cluster",
+                "cloud[0].provider",
+                "cluster.ontap_version",
+            ],
+        )
+
+        assert result.exit_code == 0
+        # Scalars should be inline (field: value on same line)
+        assert "cloud[0].provider: AWS" in result.output
+        assert "cluster.ontap_version: 9.14.1" in result.output
+
+    @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
+    def test_raw_output_unchanged_with_dict(
+        self,
+        mock_db_class: MagicMock,
+        runner: CliRunner,
+        mock_config_dir: Path,
+        sample_metadata: CachedClusterMetadata,
+    ) -> None:
+        """Test that --raw output still uses compact JSON for dicts."""
+        mock_db = MagicMock()
+        mock_db.get.return_value = sample_metadata
+        mock_db_class.return_value = mock_db
+
+        result = runner.invoke(
+            nf,
+            [
+                "-c",
+                str(mock_config_dir),
+                "cache",
+                "query",
+                "test-cluster",
+                "cloud[0]",
+                "--raw",
+            ],
+        )
+
+        assert result.exit_code == 0
+        # Raw output should be compact single-line JSON
+        output = result.output.strip()
+        parsed = json.loads(output)
+        assert parsed["provider"] == "AWS"
+        assert parsed["region"] == "us-east-1"
