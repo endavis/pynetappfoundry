@@ -16,7 +16,7 @@ from pydantic import BaseModel, ConfigDict
 # Increment MINOR for backward-compatible changes (new optional fields).
 # Increment MAJOR for breaking changes (removed/renamed fields, type changes).
 # Format: "MAJOR.MINOR"
-METADATA_SCHEMA_VERSION = "1.0"
+METADATA_SCHEMA_VERSION = "1.1"
 
 # Minimum schema version that can be loaded without migration.
 # Snapshots older than this may fail to deserialize or have missing data.

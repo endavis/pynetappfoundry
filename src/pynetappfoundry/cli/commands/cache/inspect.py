@@ -21,6 +21,7 @@ from pynetappfoundry.cache.field_mapping import TypeMapping
 from pynetappfoundry.cache.network.ethernet.broadcast_domains.mapping import (
     BROADCAST_DOMAIN_MAPPING,
 )
+from pynetappfoundry.cache.network.ip.interfaces.mapping import NETWORK_LIF_MAPPING
 from pynetappfoundry.cache.storage.aggregates.mapping import AGGREGATE_MAPPING
 from pynetappfoundry.cache.storage.volumes.mapping import VOLUME_MAPPING
 from pynetappfoundry.cache.svm.mapping import SVM_MAPPING
@@ -47,6 +48,7 @@ INSPECT_TYPES: dict[str, tuple[TypeMapping, str]] = {
     "license": (LICENSE_PACKAGE_MAPPING, "license_packages"),
     "node": (NODE_MAPPING, "nodes"),
     "svm": (SVM_MAPPING, "storage.svms"),
+    "network_lif": (NETWORK_LIF_MAPPING, "network.data_lifs"),
     "volume": (VOLUME_MAPPING, "storage.volumes"),
 }
 

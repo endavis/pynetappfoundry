@@ -160,23 +160,48 @@ class TestNetworkLIF:
     def test_default_values(self) -> None:
         """Test default values."""
         lif = NetworkLIF()
+        assert lif.uuid == ""
         assert lif.name == ""
         assert lif.ip_address == ""
+        assert lif.netmask == ""
+        assert lif.ip_family == ""
+        assert lif.enabled is True
+        assert lif.state == ""
+        assert lif.scope == ""
+        assert lif.vip is False
+        assert lif.svm_uuid == ""
+        assert lif.ipspace_uuid == ""
+        assert lif.service_policy_uuid == ""
+        assert lif.services == []
+        assert lif.auto_revert is False
+        assert lif.failover == ""
+        assert lif.is_home is True
+        assert lif.home_node_uuid == ""
+        assert lif.home_port_uuid == ""
+        assert lif.current_node_uuid == ""
+        assert lif.current_port_uuid == ""
+        assert lif.dns_zone == ""
+        assert lif.ddns_enabled is False
+        assert lif.subnet_uuid == ""
+        assert lif.probe_port == 0
+        assert lif.rdma_protocols == []
 
     def test_with_values(self) -> None:
         """Test with LIF data."""
         lif = NetworkLIF(
+            uuid="lif-uuid-1",
             name="data_lif1",
             ip_address="10.0.0.10",
             netmask="255.255.255.0",
-            home_node="node1",
-            home_port="e0d",
-            role="data",
-            svm="svm1",
+            scope="svm",
+            svm_uuid="svm-uuid-1",
+            home_node_uuid="node-uuid-1",
+            home_port_uuid="port-uuid-1",
         )
         assert lif.name == "data_lif1"
         assert lif.ip_address == "10.0.0.10"
-        assert lif.role == "data"
+        assert lif.scope == "svm"
+        assert lif.svm_uuid == "svm-uuid-1"
 
 
 class TestBroadcastDomain:
@@ -1190,7 +1215,7 @@ class TestCachedClusterMetadata:
         """Test creating with minimal required fields."""
         metadata = CachedClusterMetadata(cluster_name="test-cluster")
         assert metadata.cluster_name == "test-cluster"
-        assert metadata.cache_version == "1.0"
+        assert metadata.cache_version == "1.1"
         assert metadata.cached_at is not None
 
     def test_cached_at_default(self) -> None:
@@ -1495,6 +1520,6 @@ class TestUuidIndex:
         node = NodeInfo(uuid="test-uuid")
         assert isinstance(node, HasUUID)
 
-        # Models without uuid field should not satisfy the protocol
-        lif = NetworkLIF(name="lif1")
-        assert not isinstance(lif, HasUUID)
+        # NetworkLIF now has uuid field and satisfies the protocol
+        lif = NetworkLIF(uuid="lif-uuid-1", name="lif1")
+        assert isinstance(lif, HasUUID)

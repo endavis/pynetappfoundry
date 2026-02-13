@@ -50,6 +50,7 @@ from pynetappfoundry.cache.network.ethernet.broadcast_domains.mapping import (
 from pynetappfoundry.cache.network.ethernet.broadcast_domains.model import (
     BroadcastDomain,
 )
+from pynetappfoundry.cache.network.ip.interfaces.mapping import NETWORK_LIF_MAPPING
 from pynetappfoundry.cache.network.ip.interfaces.model import NetworkLIF
 from pynetappfoundry.cache.network.ip.subnets.model import IPSubnetInfo
 from pynetappfoundry.cache.network.model import NetworkInfo
@@ -936,7 +937,7 @@ class MetadataCollector:
 
         # Make all 5 API calls in parallel using cached calls
         endpoints = [
-            "/network/ip/interfaces?fields=*",
+            NETWORK_LIF_MAPPING.api_endpoint,
             BROADCAST_DOMAIN_MAPPING.api_endpoint,
             "/network/ipspaces?fields=*",
             DNS_MAPPING.api_endpoint,
@@ -954,38 +955,24 @@ class MetadataCollector:
             responses = {ep: self._cached_api_call(ep) for ep in endpoints}
 
         # Process LIFs response
-        lifs_response = responses.get(endpoints[0]) or {}
-        logger.debug(
-            "%s API response: %d LIFs", self._log_prefix, len(lifs_response.get("records", []))
+        all_lifs = cast(
+            list[NetworkLIF],
+            parse_api_response(
+                NETWORK_LIF_MAPPING,
+                responses.get(endpoints[0]),
+                self._log_prefix,
+                self._log_missing_fields,
+            ),
         )
-        intercluster_lifs = []
-        data_lifs = []
-        management_lifs = []
+        intercluster_lifs: list[NetworkLIF] = []
+        data_lifs: list[NetworkLIF] = []
+        management_lifs: list[NetworkLIF] = []
 
-        for record in lifs_response.get("records", []):
-            self._log_missing_fields(
-                record,
-                ["name", "ip", "location", "svm", "scope", "services"],
-                "LIF",
-                record.get("name", record.get("uuid", "unknown")),
-            )
-            lif = NetworkLIF(
-                name=record.get("name", ""),
-                ip_address=record.get("ip", {}).get("address", ""),
-                netmask=record.get("ip", {}).get("netmask", ""),
-                home_node=record.get("location", {}).get("home_node", {}).get("name", ""),
-                home_port=record.get("location", {}).get("home_port", {}).get("name", ""),
-                svm=record.get("svm", {}).get("name", ""),
-            )
-            # Determine role from service_policy or scope
-            scope = record.get("scope", "")
-            if scope == "cluster":
+        for lif in all_lifs:
+            if lif.scope == "cluster":
                 intercluster_lifs.append(lif)
-            elif scope == "svm":
-                if "data" in record.get("services", []):
-                    data_lifs.append(lif)
-                else:
-                    data_lifs.append(lif)  # Default to data
+            elif lif.scope == "svm":
+                data_lifs.append(lif)
             else:
                 management_lifs.append(lif)
 

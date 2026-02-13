@@ -81,7 +81,7 @@ class TestMappingRegistration:
     """Tests that all mappings are registered via register_mapping()."""
 
     def test_registry_contains_all_mappings(self) -> None:
-        """All 11 type mappings should be registered."""
+        """All 13 type mappings should be registered."""
         expected_mappings = {
             "Aggregate",
             "BroadcastDomain",
@@ -91,6 +91,7 @@ class TestMappingRegistration:
             "DNS",
             "LicensePackage",
             "Mediator",
+            "NetworkLIF",
             "Node",
             "SnapMirror",
             "SVM",
@@ -101,8 +102,8 @@ class TestMappingRegistration:
         assert not missing, f"Mappings not registered: {missing}"
 
     def test_mapping_count(self) -> None:
-        """Registry should contain exactly 12 mappings."""
-        assert len(model_registry.mappings) == 12
+        """Registry should contain exactly 13 mappings."""
+        assert len(model_registry.mappings) == 13
 
     def test_mapping_lookup_by_name(self) -> None:
         """get_mapping() should return the correct TypeMapping for known names."""
