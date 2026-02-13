@@ -186,18 +186,20 @@ class TestBroadcastDomain:
         """Test default values."""
         bd = BroadcastDomain()
         assert bd.name == ""
-        assert bd.ports == []
+        assert bd.ipspace_uuid == ""
+        assert bd.port_uuids == []
 
     def test_with_values(self) -> None:
         """Test with broadcast domain data."""
         bd = BroadcastDomain(
             name="Default",
-            ipspace="Default",
+            ipspace_uuid="ipspace-uuid-1",
             mtu=1500,
-            ports=["node1:e0c", "node1:e0d"],
+            port_uuids=["port-uuid-1", "port-uuid-2"],
         )
         assert bd.name == "Default"
-        assert len(bd.ports) == 2
+        assert bd.ipspace_uuid == "ipspace-uuid-1"
+        assert len(bd.port_uuids) == 2
 
 
 class TestNetworkInfo:

@@ -419,10 +419,14 @@ class TestNetworkCollection:
             "/network/ethernet/broadcast-domains?fields=*": {
                 "records": [
                     {
+                        "uuid": "bd-uuid-1",
                         "name": "Default",
-                        "ipspace": {"name": "Default"},
+                        "ipspace": {"name": "Default", "uuid": "ipspace-uuid-1"},
                         "mtu": 1500,
-                        "ports": [{"name": "node1:e0c"}, {"name": "node1:e0d"}],
+                        "ports": [
+                            {"name": "node1:e0c", "uuid": "port-uuid-1"},
+                            {"name": "node1:e0d", "uuid": "port-uuid-2"},
+                        ],
                     }
                 ]
             },
@@ -481,6 +485,10 @@ class TestNetworkCollection:
         assert result.data_lifs[0].name == "data_lif1"
         assert len(result.broadcast_domains) == 1
         assert result.broadcast_domains[0].name == "Default"
+        assert result.broadcast_domains[0].uuid == "bd-uuid-1"
+        assert result.broadcast_domains[0].ipspace_uuid == "ipspace-uuid-1"
+        assert result.broadcast_domains[0].mtu == 1500
+        assert result.broadcast_domains[0].port_uuids == ["port-uuid-1", "port-uuid-2"]
         assert "Default" in result.ipspaces
         assert len(result.dns) == 1
         assert result.dns[0].svm_uuid == "svm-uuid-1"
