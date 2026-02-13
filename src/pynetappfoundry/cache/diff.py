@@ -225,17 +225,7 @@ _ENTITY_CONFIGS: dict[str, EntityConfig] = {
         model_class=CloudMetadata,
         display_field="node",
     ),
-    "network.intercluster_lifs": EntityConfig(
-        key_field="uuid",
-        model_class=NetworkLIF,
-        display_field="name",
-    ),
-    "network.data_lifs": EntityConfig(
-        key_field="uuid",
-        model_class=NetworkLIF,
-        display_field="name",
-    ),
-    "network.management_lifs": EntityConfig(
+    "network.lifs": EntityConfig(
         key_field="uuid",
         model_class=NetworkLIF,
         display_field="name",

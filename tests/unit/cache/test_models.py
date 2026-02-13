@@ -233,8 +233,7 @@ class TestNetworkInfo:
     def test_default_values(self) -> None:
         """Test default values."""
         network = NetworkInfo()
-        assert network.intercluster_lifs == []
-        assert network.data_lifs == []
+        assert network.lifs == []
         assert network.ipspaces == []
         assert network.dns == []
         assert network.subnets == []
@@ -243,11 +242,11 @@ class TestNetworkInfo:
         """Test with LIF data."""
         lif = NetworkLIF(name="ic_lif1", ip_address="10.0.1.1")
         network = NetworkInfo(
-            intercluster_lifs=[lif],
+            lifs=[lif],
             ipspaces=["Default", "Cluster"],
         )
-        assert len(network.intercluster_lifs) == 1
-        assert network.intercluster_lifs[0].name == "ic_lif1"
+        assert len(network.lifs) == 1
+        assert network.lifs[0].name == "ic_lif1"
 
 
 class TestAggregateInfo:

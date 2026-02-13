@@ -964,18 +964,6 @@ class MetadataCollector:
                 self._log_missing_fields,
             ),
         )
-        intercluster_lifs: list[NetworkLIF] = []
-        data_lifs: list[NetworkLIF] = []
-        management_lifs: list[NetworkLIF] = []
-
-        for lif in all_lifs:
-            if lif.scope == "cluster":
-                intercluster_lifs.append(lif)
-            elif lif.scope == "svm":
-                data_lifs.append(lif)
-            else:
-                management_lifs.append(lif)
-
         # Process broadcast domains response
         broadcast_domains = cast(
             list[BroadcastDomain],
@@ -1011,9 +999,7 @@ class MetadataCollector:
         subnets = self._parse_subnets_response(responses.get(endpoints[4]))
 
         return NetworkInfo(
-            intercluster_lifs=intercluster_lifs,
-            data_lifs=data_lifs,
-            management_lifs=management_lifs,
+            lifs=all_lifs,
             broadcast_domains=broadcast_domains,
             ipspaces=ipspaces,
             dns=dns,

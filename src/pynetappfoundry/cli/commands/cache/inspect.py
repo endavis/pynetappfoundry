@@ -48,7 +48,7 @@ INSPECT_TYPES: dict[str, tuple[TypeMapping, str]] = {
     "license": (LICENSE_PACKAGE_MAPPING, "license_packages"),
     "node": (NODE_MAPPING, "nodes"),
     "svm": (SVM_MAPPING, "storage.svms"),
-    "network_lif": (NETWORK_LIF_MAPPING, "network.data_lifs"),
+    "network_lif": (NETWORK_LIF_MAPPING, "network.lifs"),
     "volume": (VOLUME_MAPPING, "storage.volumes"),
 }
 

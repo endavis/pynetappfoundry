@@ -323,7 +323,7 @@ class TestComputeDiffModifiedEntities:
         before = CachedClusterMetadata(
             cluster_name="test-cluster",
             network=NetworkInfo(
-                intercluster_lifs=[
+                lifs=[
                     NetworkLIF(uuid="lif-uuid-1", name="lif1", ip_address="10.0.0.1"),
                 ],
             ),
@@ -331,14 +331,14 @@ class TestComputeDiffModifiedEntities:
         after = CachedClusterMetadata(
             cluster_name="test-cluster",
             network=NetworkInfo(
-                intercluster_lifs=[
+                lifs=[
                     NetworkLIF(uuid="lif-uuid-1", name="lif1", ip_address="10.0.0.2"),
                 ],
             ),
         )
         changes = compute_diff(before, after)
 
-        lif_changes = [c for c in changes if c["category"] == "network.intercluster_lifs"]
+        lif_changes = [c for c in changes if c["category"] == "network.lifs"]
         assert len(lif_changes) == 1
         assert lif_changes[0]["type"] == "modified"
         assert lif_changes[0]["field"] == "ip_address"
@@ -1500,19 +1500,15 @@ class TestComputeDiffEdgeCases:
         before = CachedClusterMetadata(
             cluster_name="test-cluster",
             network=NetworkInfo(
-                intercluster_lifs=[
-                    NetworkLIF(uuid="lif-uuid-1", name="lif1", ip_address="10.0.0.1")
-                ],
+                lifs=[NetworkLIF(uuid="lif-uuid-1", name="lif1", ip_address="10.0.0.1")],
             ),
         )
         after = CachedClusterMetadata(
             cluster_name="test-cluster",
             network=NetworkInfo(
-                intercluster_lifs=[
-                    NetworkLIF(uuid="lif-uuid-1", name="lif1", ip_address="10.0.0.1")
-                ],
+                lifs=[NetworkLIF(uuid="lif-uuid-1", name="lif1", ip_address="10.0.0.1")],
             ),
         )
         changes = compute_diff(before, after)
-        lif_changes = [c for c in changes if c["category"] == "network.intercluster_lifs"]
+        lif_changes = [c for c in changes if c["category"] == "network.lifs"]
         assert len(lif_changes) == 0
