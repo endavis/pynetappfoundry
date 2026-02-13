@@ -18,7 +18,7 @@ from pydantic import BaseModel
 from pynetappfoundry.cache._base import CacheModel
 from pynetappfoundry.cache.cloud.metadata.model import CloudMetadata
 from pynetappfoundry.cache.cloud.targets.model import CloudTargetInfo
-from pynetappfoundry.cache.cluster.licensing.model import CapacityLicense, LicenseFeature
+from pynetappfoundry.cache.cluster.licensing.model import LicensePackage
 from pynetappfoundry.cache.cluster.model import ClusterInfo
 from pynetappfoundry.cache.cluster.nodes.model import NodeInfo
 from pynetappfoundry.cache.cluster.peers.model import ClusterPeer
@@ -265,14 +265,9 @@ _ENTITY_CONFIGS: dict[str, EntityConfig] = {
         model_class=CIFSServiceInfo,
         display_field="svm",
     ),
-    "licenses.feature_licenses": EntityConfig(
+    "license_packages": EntityConfig(
         key_field="name",
-        model_class=LicenseFeature,
-        display_field="name",
-    ),
-    "licenses.capacity_licenses": EntityConfig(
-        key_field="name",
-        model_class=CapacityLicense,
+        model_class=LicensePackage,
         display_field="name",
     ),
 }

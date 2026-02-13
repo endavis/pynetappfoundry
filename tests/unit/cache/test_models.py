@@ -8,9 +8,8 @@ from pynetappfoundry.cache import CachedClusterMetadata, HasUUID, MediatorInfo, 
 from pynetappfoundry.cache.cloud.metadata.model import CloudMetadata
 from pynetappfoundry.cache.cloud.targets.model import CloudTargetInfo
 from pynetappfoundry.cache.cluster.licensing.model import (
-    CapacityLicense,
-    LicenseFeature,
-    LicenseInfo,
+    LicenseInstance,
+    LicensePackage,
 )
 from pynetappfoundry.cache.cluster.model import ClusterInfo
 from pynetappfoundry.cache.cluster.nodes.model import NodeInfo
@@ -1028,53 +1027,80 @@ class TestIPSubnetInfo:
         assert subnet.ip_ranges == ["10.0.0.10-10.0.0.50"]
 
 
-class TestLicenseFeature:
-    """Tests for LicenseFeature model."""
-
-    def test_with_values(self) -> None:
-        """Test with license data."""
-        license = LicenseFeature(
-            name="NFS",
-            state="compliant",
-            scope="cluster",
-        )
-        assert license.name == "NFS"
-        assert license.state == "compliant"
-
-
-class TestCapacityLicense:
-    """Tests for CapacityLicense model."""
-
-    def test_with_values(self) -> None:
-        """Test with capacity license data."""
-        cap = CapacityLicense(
-            name="Cloud Volumes ONTAP",
-            licensed_capacity=109951162777600,  # 100TB
-            used_capacity=54975581388800,  # 50TB
-        )
-        assert cap.licensed_capacity == 109951162777600
-        assert cap.used_capacity == 54975581388800
-
-
-class TestLicenseInfo:
-    """Tests for LicenseInfo model."""
+class TestLicenseInstance:
+    """Tests for LicenseInstance model."""
 
     def test_default_values(self) -> None:
         """Test default values."""
-        licenses = LicenseInfo()
-        assert licenses.feature_licenses == []
-        assert licenses.capacity_licenses == []
+        inst = LicenseInstance()
+        assert inst.active is False
+        assert inst.capacity_max == 0
+        assert inst.compliance_state == ""
+        assert inst.evaluation is False
+        assert inst.expiry_time == ""
+        assert inst.host_id == ""
+        assert inst.installed_license == ""
+        assert inst.owner == ""
+        assert inst.serial_number == ""
+        assert inst.shutdown_imminent is False
+        assert inst.start_time == ""
 
-    def test_with_data(self) -> None:
-        """Test with license data."""
-        feature = LicenseFeature(name="NFS", state="compliant", scope="cluster")
-        capacity = CapacityLicense(name="CVO", licensed_capacity=100)
-        licenses = LicenseInfo(
-            feature_licenses=[feature],
-            capacity_licenses=[capacity],
+    def test_with_values(self) -> None:
+        """Test with license instance data."""
+        inst = LicenseInstance(
+            active=True,
+            capacity_max=109951162777600,
+            compliance_state="compliant",
+            evaluation=False,
+            host_id="4082368507",
+            installed_license="Enterprise",
+            owner="node1",
+            serial_number="123456789",
+            shutdown_imminent=False,
         )
-        assert len(licenses.feature_licenses) == 1
-        assert len(licenses.capacity_licenses) == 1
+        assert inst.active is True
+        assert inst.capacity_max == 109951162777600
+        assert inst.compliance_state == "compliant"
+        assert inst.host_id == "4082368507"
+        assert inst.serial_number == "123456789"
+
+
+class TestLicensePackage:
+    """Tests for LicensePackage model."""
+
+    def test_default_values(self) -> None:
+        """Test default values."""
+        pkg = LicensePackage()
+        assert pkg.name == ""
+        assert pkg.scope == ""
+        assert pkg.state == ""
+        assert pkg.description == ""
+        assert pkg.entitlement_action == ""
+        assert pkg.entitlement_risk == ""
+        assert pkg.instances == []
+
+    def test_with_nested_instances(self) -> None:
+        """Test with nested license instances."""
+        inst = LicenseInstance(
+            active=True,
+            compliance_state="compliant",
+            owner="node1",
+            serial_number="123456789",
+        )
+        pkg = LicensePackage(
+            name="NFS",
+            scope="cluster",
+            state="compliant",
+            description="NFS License",
+            entitlement_action="none",
+            entitlement_risk="low",
+            instances=[inst],
+        )
+        assert pkg.name == "NFS"
+        assert pkg.scope == "cluster"
+        assert pkg.state == "compliant"
+        assert len(pkg.instances) == 1
+        assert pkg.instances[0].owner == "node1"
 
 
 class TestMediatorInfo:
@@ -1273,7 +1299,7 @@ class TestCachedClusterMetadata:
             "nodes": [],
             "network": {},
             "storage": {},
-            "licenses": {},
+            "license_packages": [],
             "ha": {},
             "relationships": {},
         }

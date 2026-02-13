@@ -14,6 +14,7 @@ from rich.tree import Tree
 
 from pynetappfoundry.cache import ClusterMetadataDB
 from pynetappfoundry.cache.cloud.metadata.mapping import CLOUD_METADATA_MAPPING
+from pynetappfoundry.cache.cluster.licensing.mapping import LICENSE_PACKAGE_MAPPING
 from pynetappfoundry.cache.cluster.nodes.mapping import NODE_MAPPING
 from pynetappfoundry.cache.cluster.peers.mapping import CLUSTER_PEER_MAPPING
 from pynetappfoundry.cache.field_mapping import TypeMapping
@@ -34,6 +35,7 @@ INSPECT_TYPES: dict[str, tuple[TypeMapping, str]] = {
     "aggregate": (AGGREGATE_MAPPING, "storage.aggregates"),
     "cloud_metadata": (CLOUD_METADATA_MAPPING, "cloud"),
     "cluster_peer": (CLUSTER_PEER_MAPPING, "relationships.cluster_peers"),
+    "license": (LICENSE_PACKAGE_MAPPING, "license_packages"),
     "node": (NODE_MAPPING, "nodes"),
     "svm": (SVM_MAPPING, "storage.svms"),
     "volume": (VOLUME_MAPPING, "storage.volumes"),

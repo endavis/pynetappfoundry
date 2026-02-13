@@ -26,11 +26,8 @@ from pynetappfoundry.cache._metadata import (
 from pynetappfoundry.cache.cloud.metadata.mapping import CLOUD_METADATA_MAPPING
 from pynetappfoundry.cache.cloud.metadata.model import CloudMetadata
 from pynetappfoundry.cache.cloud.targets.model import CloudTargetInfo
-from pynetappfoundry.cache.cluster.licensing.model import (
-    CapacityLicense,
-    LicenseFeature,
-    LicenseInfo,
-)
+from pynetappfoundry.cache.cluster.licensing.mapping import LICENSE_PACKAGE_MAPPING
+from pynetappfoundry.cache.cluster.licensing.model import LicensePackage
 from pynetappfoundry.cache.cluster.mapping import CLUSTER_MAPPING
 from pynetappfoundry.cache.cluster.mediators.mapping import MEDIATOR_MAPPING
 from pynetappfoundry.cache.cluster.mediators.model import MediatorInfo
@@ -310,7 +307,7 @@ class MetadataCollector:
             nodes=results["nodes"],
             network=results["network"],
             storage=results["storage"],
-            licenses=results["licenses"],
+            license_packages=results["licenses"],
             mediator=results["mediator"],
             relationships=results["relationships"],
             protocols=results["protocols"],
@@ -1245,11 +1242,11 @@ class MetadataCollector:
     # License Collection
     # -------------------------------------------------------------------------
 
-    def collect_licenses(self) -> LicenseInfo:
+    def collect_licenses(self) -> list[LicensePackage]:
         """Collect licensing information (API-only).
 
         Returns:
-            LicenseInfo object.
+            List of LicensePackage objects.
 
         Raises:
             CollectionError: If no API client is available.
@@ -1270,51 +1267,23 @@ class MetadataCollector:
             )
             raise
 
-    def _collect_licenses_via_api(self) -> LicenseInfo:
+    def _collect_licenses_via_api(self) -> list[LicensePackage]:
         """Collect licenses using REST API.
 
         Returns:
-            LicenseInfo from /cluster/licensing/licenses endpoint.
+            List of LicensePackage from /cluster/licensing/licenses endpoint.
         """
         if not self.api_client:
             logger.debug("%s No API client available for license collection", self._log_prefix)
-            return LicenseInfo()
+            return []
 
-        response = self._cached_api_call("/cluster/licensing/licenses?fields=*")
-        if not response:
-            return LicenseInfo()
-
-        logger.debug(
-            "%s API response: %d licenses", self._log_prefix, len(response.get("records", []))
+        response = self._cached_api_call(LICENSE_PACKAGE_MAPPING.api_endpoint)
+        return cast(
+            list[LicensePackage],
+            parse_api_response(
+                LICENSE_PACKAGE_MAPPING, response, self._log_prefix, self._log_missing_fields
+            ),
         )
-        feature_licenses = []
-        capacity_licenses = []
-
-        for record in response.get("records", []):
-            self._log_missing_fields(
-                record,
-                ["name", "state", "scope", "capacity"],
-                "License",
-                record.get("name", "unknown"),
-            )
-            name = record.get("name", "")
-            state = record.get("state", "")
-            scope = record.get("scope", "")
-
-            # Check if it's a capacity license
-            capacity = record.get("capacity", {})
-            if capacity.get("maximum_size"):
-                cap_license = CapacityLicense(
-                    name=name,
-                    licensed_capacity=capacity.get("maximum_size", 0),
-                    used_capacity=capacity.get("used_size", 0),
-                )
-                capacity_licenses.append(cap_license)
-            else:
-                feature = LicenseFeature(name=name, state=state, scope=scope)
-                feature_licenses.append(feature)
-
-        return LicenseInfo(feature_licenses=feature_licenses, capacity_licenses=capacity_licenses)
 
     # -------------------------------------------------------------------------
     # Mediator Collection

@@ -66,6 +66,7 @@ The pilot migration (VolumeInfo) was completed in PR #189.
 - Issue #257: refactor: deep URL-tree structure with automatic model and mapping discovery
 - Issue #192: refactor: migrate SVMInfo to field mapping framework
 - Issue #205: refactor: migrate DNSInfo to field mapping framework
+- Issue #213: refactor: migrate LicenseInfo/LicenseFeature to field mapping framework
 
 ## Related Documentation
 

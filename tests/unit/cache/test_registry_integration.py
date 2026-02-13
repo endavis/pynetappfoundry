@@ -21,7 +21,6 @@ class TestModelRegistration:
             "BroadcastDomain",
             "CIFSServiceInfo",
             "CIFSShareInfo",
-            "CapacityLicense",
             "CloudMetadata",
             "CloudTargetInfo",
             "ClusterInfo",
@@ -33,8 +32,8 @@ class TestModelRegistration:
             "MediatorInfo",
             "IgroupInfo",
             "IPSubnetInfo",
-            "LicenseFeature",
-            "LicenseInfo",
+            "LicenseInstance",
+            "LicensePackage",
             "LunInfo",
             "NFSServiceInfo",
             "NetworkInfo",
@@ -82,13 +81,14 @@ class TestMappingRegistration:
     """Tests that all mappings are registered via register_mapping()."""
 
     def test_registry_contains_all_mappings(self) -> None:
-        """All 10 type mappings should be registered."""
+        """All 11 type mappings should be registered."""
         expected_mappings = {
             "Aggregate",
             "CloudMetadata",
             "Cluster",
             "ClusterPeer",
             "DNS",
+            "LicensePackage",
             "Mediator",
             "Node",
             "SnapMirror",
@@ -100,8 +100,8 @@ class TestMappingRegistration:
         assert not missing, f"Mappings not registered: {missing}"
 
     def test_mapping_count(self) -> None:
-        """Registry should contain exactly 10 mappings."""
-        assert len(model_registry.mappings) == 10
+        """Registry should contain exactly 11 mappings."""
+        assert len(model_registry.mappings) == 11
 
     def test_mapping_lookup_by_name(self) -> None:
         """get_mapping() should return the correct TypeMapping for known names."""

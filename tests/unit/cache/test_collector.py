@@ -863,16 +863,41 @@ class TestLicenseCollection:
         """Mock API response for /cluster/licensing/licenses endpoint."""
         return {
             "records": [
-                {"name": "NFS", "state": "compliant", "scope": "cluster"},
-                {"name": "CIFS", "state": "compliant", "scope": "cluster"},
                 {
-                    "name": "Cloud Volumes ONTAP",
+                    "name": "NFS",
                     "state": "compliant",
                     "scope": "cluster",
-                    "capacity": {
-                        "maximum_size": 109951162777600,
-                        "used_size": 54975581388800,
-                    },
+                    "description": "NFS License",
+                    "entitlement": {"action": "none", "risk": "low"},
+                    "licenses": [
+                        {
+                            "active": True,
+                            "compliance": {"state": "compliant"},
+                            "evaluation": False,
+                            "host_id": "4082368507",
+                            "installed_license": "Enterprise",
+                            "owner": "node1",
+                            "serial_number": "1-23-456789",
+                        },
+                    ],
+                },
+                {
+                    "name": "CIFS",
+                    "state": "compliant",
+                    "scope": "cluster",
+                    "description": "CIFS License",
+                    "entitlement": {"action": "none", "risk": "low"},
+                    "licenses": [
+                        {
+                            "active": True,
+                            "compliance": {"state": "compliant"},
+                            "owner": "node1",
+                            "serial_number": "1-23-456789",
+                            "capacity": {
+                                "maximum_size": 109951162777600,
+                            },
+                        },
+                    ],
                 },
             ]
         }
@@ -885,10 +910,17 @@ class TestLicenseCollection:
         collector = MetadataCollector(api_client=api_client)
         result = collector.collect_licenses()
 
-        assert len(result.feature_licenses) == 2
-        assert result.feature_licenses[0].name == "NFS"
-        assert len(result.capacity_licenses) == 1
-        assert result.capacity_licenses[0].name == "Cloud Volumes ONTAP"
+        assert isinstance(result, list)
+        assert len(result) == 2
+        assert result[0].name == "NFS"
+        assert result[0].state == "compliant"
+        assert result[0].scope == "cluster"
+        assert result[0].entitlement_action == "none"
+        assert len(result[0].instances) == 1
+        assert result[0].instances[0].owner == "node1"
+        assert result[0].instances[0].compliance_state == "compliant"
+        assert result[1].name == "CIFS"
+        assert result[1].instances[0].capacity_max == 109951162777600
 
     def test_collect_licenses_no_clients(self) -> None:
         """Test licenses raises CollectionError when no API client."""

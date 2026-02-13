@@ -7,27 +7,37 @@ from pydantic import Field
 from pynetappfoundry.cache._base import CacheModel
 
 
-class LicenseFeature(CacheModel):
-    """License feature information."""
+class LicenseInstance(CacheModel):
+    """Per-node license instance within a license package.
 
-    name: str = ""
-    state: str = ""  # compliant, noncompliant
-    scope: str = ""  # cluster, node
-
-
-class CapacityLicense(CacheModel):
-    """Capacity-based license information."""
-
-    name: str = ""
-    licensed_capacity: int = 0  # bytes
-    used_capacity: int = 0  # bytes
-
-
-class LicenseInfo(CacheModel):
-    """Licensing information.
-
-    Contains feature and capacity licenses.
+    Each entry in the API ``licenses[]`` array represents a license
+    installed on a specific node.
     """
 
-    feature_licenses: list[LicenseFeature] = Field(default_factory=list)
-    capacity_licenses: list[CapacityLicense] = Field(default_factory=list)
+    active: bool = False
+    capacity_max: int = 0
+    compliance_state: str = ""
+    evaluation: bool = False
+    expiry_time: str = ""
+    host_id: str = ""
+    installed_license: str = ""
+    owner: str = ""
+    serial_number: str = ""
+    shutdown_imminent: bool = False
+    start_time: str = ""
+
+
+class LicensePackage(CacheModel):
+    """License package from /cluster/licensing/licenses.
+
+    Represents a top-level license package (e.g. NFS, CIFS) with
+    nested per-node license instances.
+    """
+
+    name: str = ""
+    scope: str = ""
+    state: str = ""
+    description: str = ""
+    entitlement_action: str = ""
+    entitlement_risk: str = ""
+    instances: list[LicenseInstance] = Field(default_factory=list)

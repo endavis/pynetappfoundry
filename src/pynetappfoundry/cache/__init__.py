@@ -20,6 +20,7 @@ Infrastructure (DB, collector, diff, registry) is imported from here::
 # Models are already registered via CacheModel.__init_subclass__ when
 # _metadata.py transitively imports all leaf model.py files above.
 import pynetappfoundry.cache.cloud.metadata
+import pynetappfoundry.cache.cluster.licensing
 import pynetappfoundry.cache.cluster.mediators
 import pynetappfoundry.cache.cluster.nodes
 import pynetappfoundry.cache.cluster.peers
