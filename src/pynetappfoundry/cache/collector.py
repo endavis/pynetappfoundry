@@ -999,11 +999,11 @@ class MetadataCollector:
         subnets = self._parse_subnets_response(responses.get(endpoints[4]))
 
         return NetworkInfo(
-            lifs=all_lifs,
-            broadcast_domains=broadcast_domains,
+            ip_interfaces=all_lifs,
+            ethernet_broadcast_domains=broadcast_domains,
             ipspaces=ipspaces,
             dns=dns,
-            subnets=subnets,
+            ip_subnets=subnets,
         )
 
     # -------------------------------------------------------------------------
@@ -1753,7 +1753,7 @@ class MetadataCollector:
         s3_buckets = self._parse_s3_buckets_response(responses.get(endpoints[4]))
 
         return ProtocolsInfo(
-            export_policies=export_policies,
+            nfs_export_policies=export_policies,
             cifs_shares=cifs_shares,
             nfs_services=nfs_services,
             cifs_services=cifs_services,

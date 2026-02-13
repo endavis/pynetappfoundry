@@ -496,32 +496,32 @@ class TestNetworkCollection:
         collector = MetadataCollector(api_client=api_client)
         result = collector.collect_network()
 
-        assert len(result.lifs) == 1
-        assert result.lifs[0].uuid == "lif-uuid-1"
-        assert result.lifs[0].name == "data_lif1"
-        assert result.lifs[0].ip_address == "10.0.0.10"
-        assert result.lifs[0].netmask == "255.255.255.0"
-        assert result.lifs[0].scope == "svm"
-        assert result.lifs[0].svm_uuid == "svm-uuid-1"
-        assert result.lifs[0].home_node_uuid == "node-uuid-1"
-        assert result.lifs[0].home_port_uuid == "port-uuid-e0d"
-        assert result.lifs[0].services == ["data_core", "data_nfs"]
-        assert len(result.broadcast_domains) == 1
-        assert result.broadcast_domains[0].name == "Default"
-        assert result.broadcast_domains[0].uuid == "bd-uuid-1"
-        assert result.broadcast_domains[0].ipspace_uuid == "ipspace-uuid-1"
-        assert result.broadcast_domains[0].mtu == 1500
-        assert result.broadcast_domains[0].port_uuids == ["port-uuid-1", "port-uuid-2"]
+        assert len(result.ip_interfaces) == 1
+        assert result.ip_interfaces[0].uuid == "lif-uuid-1"
+        assert result.ip_interfaces[0].name == "data_lif1"
+        assert result.ip_interfaces[0].ip_address == "10.0.0.10"
+        assert result.ip_interfaces[0].netmask == "255.255.255.0"
+        assert result.ip_interfaces[0].scope == "svm"
+        assert result.ip_interfaces[0].svm_uuid == "svm-uuid-1"
+        assert result.ip_interfaces[0].home_node_uuid == "node-uuid-1"
+        assert result.ip_interfaces[0].home_port_uuid == "port-uuid-e0d"
+        assert result.ip_interfaces[0].services == ["data_core", "data_nfs"]
+        assert len(result.ethernet_broadcast_domains) == 1
+        assert result.ethernet_broadcast_domains[0].name == "Default"
+        assert result.ethernet_broadcast_domains[0].uuid == "bd-uuid-1"
+        assert result.ethernet_broadcast_domains[0].ipspace_uuid == "ipspace-uuid-1"
+        assert result.ethernet_broadcast_domains[0].mtu == 1500
+        assert result.ethernet_broadcast_domains[0].port_uuids == ["port-uuid-1", "port-uuid-2"]
         assert "Default" in result.ipspaces
         assert len(result.dns) == 1
         assert result.dns[0].svm_uuid == "svm-uuid-1"
         assert result.dns[0].domains == ["example.com"]
         assert result.dns[0].servers == ["10.0.0.1", "10.0.0.2"]
-        assert len(result.subnets) == 1
-        assert result.subnets[0].name == "data-subnet"
-        assert result.subnets[0].subnet == "10.0.0.0/24"
-        assert result.subnets[0].gateway == "10.0.0.1"
-        assert result.subnets[0].ip_ranges == ["10.0.0.10-10.0.0.50"]
+        assert len(result.ip_subnets) == 1
+        assert result.ip_subnets[0].name == "data-subnet"
+        assert result.ip_subnets[0].subnet == "10.0.0.0/24"
+        assert result.ip_subnets[0].gateway == "10.0.0.1"
+        assert result.ip_subnets[0].ip_ranges == ["10.0.0.10-10.0.0.50"]
 
     def test_collect_network_no_clients(self) -> None:
         """Test network raises CollectionError when no API client."""
@@ -1331,10 +1331,10 @@ class TestProtocolsCollection:
         result = collector.collect_protocols()
 
         assert isinstance(result, ProtocolsInfo)
-        assert len(result.export_policies) == 2
+        assert len(result.nfs_export_policies) == 2
 
         # Check first policy
-        policy1 = result.export_policies[0]
+        policy1 = result.nfs_export_policies[0]
         assert policy1.id == 1
         assert policy1.name == "default"
         assert policy1.svm == "svm1"
@@ -1348,7 +1348,7 @@ class TestProtocolsCollection:
         assert policy1.rules[0].anonymous_user == "65534"
 
         # Check second policy with multiple rules
-        policy2 = result.export_policies[1]
+        policy2 = result.nfs_export_policies[1]
         assert policy2.name == "data_export"
         assert len(policy2.rules) == 2
         assert policy2.rules[0].clients == ["10.0.0.0/8", "172.16.0.0/12"]
@@ -1398,7 +1398,7 @@ class TestProtocolsCollection:
         result = collector.collect_protocols()
 
         assert isinstance(result, ProtocolsInfo)
-        assert result.export_policies == []
+        assert result.nfs_export_policies == []
         assert result.cifs_shares == []
         assert result.nfs_services == []
         assert result.cifs_services == []
@@ -1446,9 +1446,9 @@ class TestProtocolsCollection:
         collector = MetadataCollector(api_client=api_client)
         result = collector.collect_protocols()
 
-        assert len(result.export_policies) == 1
-        assert result.export_policies[0].name == "empty_policy"
-        assert result.export_policies[0].rules == []
+        assert len(result.nfs_export_policies) == 1
+        assert result.nfs_export_policies[0].name == "empty_policy"
+        assert result.nfs_export_policies[0].rules == []
 
 
 class TestCollectAll:
@@ -1469,7 +1469,7 @@ class TestCollectAll:
 
         assert result.cluster_name == "test-cluster"
         assert result.cached_at is not None
-        assert result.cache_version == "1.1"
+        assert result.cache_version == "2.0"
 
 
 class TestCachedApiCallPagination:

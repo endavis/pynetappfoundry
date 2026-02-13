@@ -42,13 +42,13 @@ console = Console()
 # dot-path to the list of objects in CachedClusterMetadata.
 INSPECT_TYPES: dict[str, tuple[TypeMapping, str]] = {
     "aggregate": (AGGREGATE_MAPPING, "storage.aggregates"),
-    "broadcast_domain": (BROADCAST_DOMAIN_MAPPING, "network.broadcast_domains"),
+    "broadcast_domain": (BROADCAST_DOMAIN_MAPPING, "network.ethernet_broadcast_domains"),
     "cloud_metadata": (CLOUD_METADATA_MAPPING, "cloud"),
     "cluster_peer": (CLUSTER_PEER_MAPPING, "relationships.cluster_peers"),
     "license": (LICENSE_PACKAGE_MAPPING, "license_packages"),
     "node": (NODE_MAPPING, "nodes"),
     "svm": (SVM_MAPPING, "storage.svms"),
-    "network_lif": (NETWORK_LIF_MAPPING, "network.lifs"),
+    "network_lif": (NETWORK_LIF_MAPPING, "network.ip_interfaces"),
     "volume": (VOLUME_MAPPING, "storage.volumes"),
 }
 

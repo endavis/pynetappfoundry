@@ -323,7 +323,7 @@ class TestComputeDiffModifiedEntities:
         before = CachedClusterMetadata(
             cluster_name="test-cluster",
             network=NetworkInfo(
-                lifs=[
+                ip_interfaces=[
                     NetworkLIF(uuid="lif-uuid-1", name="lif1", ip_address="10.0.0.1"),
                 ],
             ),
@@ -331,14 +331,14 @@ class TestComputeDiffModifiedEntities:
         after = CachedClusterMetadata(
             cluster_name="test-cluster",
             network=NetworkInfo(
-                lifs=[
+                ip_interfaces=[
                     NetworkLIF(uuid="lif-uuid-1", name="lif1", ip_address="10.0.0.2"),
                 ],
             ),
         )
         changes = compute_diff(before, after)
 
-        lif_changes = [c for c in changes if c["category"] == "network.lifs"]
+        lif_changes = [c for c in changes if c["category"] == "network.ip_interfaces"]
         assert len(lif_changes) == 1
         assert lif_changes[0]["type"] == "modified"
         assert lif_changes[0]["field"] == "ip_address"
@@ -619,7 +619,7 @@ class TestComputeDiffAllCategories:
         before = CachedClusterMetadata(
             cluster_name="test-cluster",
             protocols=ProtocolsInfo(
-                export_policies=[
+                nfs_export_policies=[
                     ExportPolicyInfo(name="default", id=1, svm="svm1"),
                 ],
             ),
@@ -627,14 +627,14 @@ class TestComputeDiffAllCategories:
         after = CachedClusterMetadata(
             cluster_name="test-cluster",
             protocols=ProtocolsInfo(
-                export_policies=[
+                nfs_export_policies=[
                     ExportPolicyInfo(name="default", id=1, svm="svm2"),
                 ],
             ),
         )
         changes = compute_diff(before, after)
 
-        policy_changes = [c for c in changes if c["category"] == "protocols.export_policies"]
+        policy_changes = [c for c in changes if c["category"] == "protocols.nfs_export_policies"]
         assert len(policy_changes) == 1
         assert policy_changes[0]["type"] == "modified"
         assert policy_changes[0]["field"] == "svm"
@@ -646,13 +646,13 @@ class TestComputeDiffAllCategories:
         before = CachedClusterMetadata(
             cluster_name="test-cluster",
             protocols=ProtocolsInfo(
-                export_policies=[ExportPolicyInfo(name="default", id=1, svm="svm1")],
+                nfs_export_policies=[ExportPolicyInfo(name="default", id=1, svm="svm1")],
             ),
         )
         after = CachedClusterMetadata(
             cluster_name="test-cluster",
             protocols=ProtocolsInfo(
-                export_policies=[
+                nfs_export_policies=[
                     ExportPolicyInfo(name="default", id=1, svm="svm1"),
                     ExportPolicyInfo(name="data_export", id=2, svm="svm1"),
                 ],
@@ -660,7 +660,7 @@ class TestComputeDiffAllCategories:
         )
         changes = compute_diff(before, after)
 
-        policy_changes = [c for c in changes if c["category"] == "protocols.export_policies"]
+        policy_changes = [c for c in changes if c["category"] == "protocols.nfs_export_policies"]
         assert len(policy_changes) == 1
         assert policy_changes[0]["type"] == "added"
         assert policy_changes[0]["entity"] == "data_export"
@@ -1145,7 +1145,7 @@ class TestComputeDiffAllCategories:
         before = CachedClusterMetadata(
             cluster_name="test-cluster",
             network=NetworkInfo(
-                subnets=[
+                ip_subnets=[
                     IPSubnetInfo(
                         uuid="sub-uuid-1",
                         name="data-subnet",
@@ -1158,7 +1158,7 @@ class TestComputeDiffAllCategories:
         after = CachedClusterMetadata(
             cluster_name="test-cluster",
             network=NetworkInfo(
-                subnets=[
+                ip_subnets=[
                     IPSubnetInfo(
                         uuid="sub-uuid-1",
                         name="data-subnet",
@@ -1170,7 +1170,7 @@ class TestComputeDiffAllCategories:
         )
         changes = compute_diff(before, after)
 
-        subnet_changes = [c for c in changes if c["category"] == "network.subnets"]
+        subnet_changes = [c for c in changes if c["category"] == "network.ip_subnets"]
         assert len(subnet_changes) == 1
         assert subnet_changes[0]["type"] == "modified"
         assert subnet_changes[0]["field"] == "gateway"
@@ -1181,19 +1181,19 @@ class TestComputeDiffAllCategories:
         """Test IP subnet addition detection."""
         before = CachedClusterMetadata(
             cluster_name="test-cluster",
-            network=NetworkInfo(subnets=[]),
+            network=NetworkInfo(ip_subnets=[]),
         )
         after = CachedClusterMetadata(
             cluster_name="test-cluster",
             network=NetworkInfo(
-                subnets=[
+                ip_subnets=[
                     IPSubnetInfo(uuid="sub-uuid-1", name="data-subnet", subnet="10.0.0.0/24"),
                 ],
             ),
         )
         changes = compute_diff(before, after)
 
-        subnet_changes = [c for c in changes if c["category"] == "network.subnets"]
+        subnet_changes = [c for c in changes if c["category"] == "network.ip_subnets"]
         assert len(subnet_changes) == 1
         assert subnet_changes[0]["type"] == "added"
         assert subnet_changes[0]["entity"] == "data-subnet"
@@ -1500,15 +1500,15 @@ class TestComputeDiffEdgeCases:
         before = CachedClusterMetadata(
             cluster_name="test-cluster",
             network=NetworkInfo(
-                lifs=[NetworkLIF(uuid="lif-uuid-1", name="lif1", ip_address="10.0.0.1")],
+                ip_interfaces=[NetworkLIF(uuid="lif-uuid-1", name="lif1", ip_address="10.0.0.1")],
             ),
         )
         after = CachedClusterMetadata(
             cluster_name="test-cluster",
             network=NetworkInfo(
-                lifs=[NetworkLIF(uuid="lif-uuid-1", name="lif1", ip_address="10.0.0.1")],
+                ip_interfaces=[NetworkLIF(uuid="lif-uuid-1", name="lif1", ip_address="10.0.0.1")],
             ),
         )
         changes = compute_diff(before, after)
-        lif_changes = [c for c in changes if c["category"] == "network.lifs"]
+        lif_changes = [c for c in changes if c["category"] == "network.ip_interfaces"]
         assert len(lif_changes) == 0
