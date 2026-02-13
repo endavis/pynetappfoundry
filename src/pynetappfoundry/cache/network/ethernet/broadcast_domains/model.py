@@ -12,6 +12,6 @@ class BroadcastDomain(CacheModel):
 
     uuid: str = ""
     name: str = ""
-    ipspace: str = ""
     mtu: int = 0
-    ports: list[str] = Field(default_factory=list)
+    ipspace_uuid: str = ""
+    port_uuids: list[str] = Field(default_factory=list)

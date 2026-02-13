@@ -44,6 +44,9 @@ from pynetappfoundry.cache.field_mapping import (
 )
 from pynetappfoundry.cache.name_services.dns.mapping import DNS_MAPPING
 from pynetappfoundry.cache.name_services.dns.model import DNSInfo
+from pynetappfoundry.cache.network.ethernet.broadcast_domains.mapping import (
+    BROADCAST_DOMAIN_MAPPING,
+)
 from pynetappfoundry.cache.network.ethernet.broadcast_domains.model import (
     BroadcastDomain,
 )
@@ -934,7 +937,7 @@ class MetadataCollector:
         # Make all 5 API calls in parallel using cached calls
         endpoints = [
             "/network/ip/interfaces?fields=*",
-            "/network/ethernet/broadcast-domains?fields=*",
+            BROADCAST_DOMAIN_MAPPING.api_endpoint,
             "/network/ipspaces?fields=*",
             DNS_MAPPING.api_endpoint,
             "/network/ip/subnets?fields=*",
@@ -987,28 +990,15 @@ class MetadataCollector:
                 management_lifs.append(lif)
 
         # Process broadcast domains response
-        bd_response = responses.get(endpoints[1]) or {}
-        logger.debug(
-            "%s API response: %d broadcast domains",
-            self._log_prefix,
-            len(bd_response.get("records", [])),
+        broadcast_domains = cast(
+            list[BroadcastDomain],
+            parse_api_response(
+                BROADCAST_DOMAIN_MAPPING,
+                responses.get(endpoints[1]),
+                self._log_prefix,
+                self._log_missing_fields,
+            ),
         )
-        broadcast_domains = []
-        for record in bd_response.get("records", []):
-            self._log_missing_fields(
-                record,
-                ["uuid", "name", "ipspace", "mtu", "ports"],
-                "BroadcastDomain",
-                record.get("name", record.get("uuid", "unknown")),
-            )
-            bd = BroadcastDomain(
-                uuid=record.get("uuid", ""),
-                name=record.get("name", ""),
-                ipspace=record.get("ipspace", {}).get("name", ""),
-                mtu=record.get("mtu", 0),
-                ports=[p.get("name", "") for p in record.get("ports", []) if p.get("name")],
-            )
-            broadcast_domains.append(bd)
 
         # Process IPspaces response
         ipspace_response = responses.get(endpoints[2]) or {}

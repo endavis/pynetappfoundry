@@ -18,6 +18,9 @@ from pynetappfoundry.cache.cluster.licensing.mapping import LICENSE_PACKAGE_MAPP
 from pynetappfoundry.cache.cluster.nodes.mapping import NODE_MAPPING
 from pynetappfoundry.cache.cluster.peers.mapping import CLUSTER_PEER_MAPPING
 from pynetappfoundry.cache.field_mapping import TypeMapping
+from pynetappfoundry.cache.network.ethernet.broadcast_domains.mapping import (
+    BROADCAST_DOMAIN_MAPPING,
+)
 from pynetappfoundry.cache.storage.aggregates.mapping import AGGREGATE_MAPPING
 from pynetappfoundry.cache.storage.volumes.mapping import VOLUME_MAPPING
 from pynetappfoundry.cache.svm.mapping import SVM_MAPPING
@@ -38,6 +41,7 @@ console = Console()
 # dot-path to the list of objects in CachedClusterMetadata.
 INSPECT_TYPES: dict[str, tuple[TypeMapping, str]] = {
     "aggregate": (AGGREGATE_MAPPING, "storage.aggregates"),
+    "broadcast_domain": (BROADCAST_DOMAIN_MAPPING, "network.broadcast_domains"),
     "cloud_metadata": (CLOUD_METADATA_MAPPING, "cloud"),
     "cluster_peer": (CLUSTER_PEER_MAPPING, "relationships.cluster_peers"),
     "license": (LICENSE_PACKAGE_MAPPING, "license_packages"),
