@@ -7,9 +7,11 @@ repos:
       - id: end-of-file-fixer
       - id: check-yaml
       - id: check-added-large-files
+        exclude: ^example-config/apis/
       - id: check-toml
       - id: check-merge-conflict
       - id: detect-private-key
+        exclude: ^example-config/apis/
 
   # Conventional commits enforcement
   - repo: https://github.com/compilerla/conventional-pre-commit
@@ -59,7 +61,7 @@ repos:
         entry: uv run codespell
         language: system
         types: [text]
-        exclude: ^(\.git/|\.venv/|uv\.lock)
+        exclude: ^(\.git/|\.venv/|uv\.lock|example-config/apis/)
 
       # Branch naming enforcement
       - id: check-branch-name
