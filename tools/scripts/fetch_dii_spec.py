@@ -34,10 +34,12 @@ def _build_opener(no_verify: bool) -> urllib.request.OpenerDirector:
 
 
 def _sanitize_spec(spec: dict[str, Any]) -> dict[str, Any]:
-    """Remove instance-specific blocks from the spec.
+    """Remove instance-specific blocks and fix spec quirks.
 
     DII specs include servers (with the tenant URL) and security
-    definitions that are instance-specific.
+    definitions that are instance-specific.  They also contain
+    dangling ``$ref`` values pointing to schemas that don't exist
+    (e.g. ``CSV file``, ``List``).
     """
     spec.pop("servers", None)
     spec.pop("security", None)
@@ -46,15 +48,55 @@ def _sanitize_spec(spec: dict[str, Any]) -> dict[str, Any]:
     components = spec.get("components", {})
     components.pop("securitySchemes", None)
 
-    # Remove per-operation security
+    # Build set of defined schema names for dangling ref detection
+    defined_schemas = set(components.get("schemas", {}).keys())
+
+    # Remove per-operation security and fix dangling $refs in responses
     for _path, methods in spec.get("paths", {}).items():
         if not isinstance(methods, dict):
             continue
         for _method, operation in methods.items():
-            if isinstance(operation, dict):
-                operation.pop("security", None)
+            if not isinstance(operation, dict):
+                continue
+            operation.pop("security", None)
+            _remove_dangling_response_refs(operation, defined_schemas)
 
     return spec
+
+
+def _remove_dangling_response_refs(
+    operation: dict[str, Any],
+    defined_schemas: set[str],
+) -> None:
+    """Remove response content entries that reference undefined schemas.
+
+    The DII spec contains ``$ref`` values like ``#/components/schemas/CSV file``
+    and ``#/components/schemas/List`` that point to schemas not defined in
+    the spec.  These cause resolution failures in downstream tools.
+
+    Args:
+        operation: A single OpenAPI operation dict.
+        defined_schemas: Set of schema names that exist in
+            ``components.schemas``.
+    """
+    responses = operation.get("responses", {})
+    for _status, response in responses.items():
+        if not isinstance(response, dict):
+            continue
+        content = response.get("content", {})
+        bad_content_types: list[str] = []
+        for content_type, content_val in content.items():
+            if not isinstance(content_val, dict):
+                continue
+            schema = content_val.get("schema", {})
+            ref = schema.get("$ref", "")
+            if ref:
+                # Extract schema name from $ref
+                schema_name = ref.rsplit("/", 1)[-1]
+                if schema_name not in defined_schemas:
+                    bad_content_types.append(content_type)
+        for ct in bad_content_types:
+            del content[ct]
 
 
 def fetch_spec(
