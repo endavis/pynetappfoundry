@@ -1,4 +1,4 @@
-"""Tests for cache._base module — CacheModel, HasUUID, schema utilities."""
+"""Tests for cache._base module — CacheModel, HasUUID, OntapUUID, schema utilities."""
 
 from __future__ import annotations
 
@@ -10,7 +10,9 @@ from pynetappfoundry.cache._base import (
     METADATA_SCHEMA_VERSION,
     CacheModel,
     HasUUID,
+    OntapUUID,
     _utcnow,
+    _validate_ontap_uuid,
     is_schema_compatible,
     parse_schema_version,
 )
@@ -163,3 +165,60 @@ class TestHasUUID:
 
         obj = NoUUID(name="test")
         assert not isinstance(obj, HasUUID)
+
+
+# ---------------------------------------------------------------------------
+# OntapUUID type
+# ---------------------------------------------------------------------------
+
+
+class TestOntapUUID:
+    """Tests for OntapUUID validated type."""
+
+    def test_valid_uuid(self) -> None:
+        """Valid UUID format passes validation."""
+        assert _validate_ontap_uuid("550e8400-e29b-41d4-a716-446655440000") == (
+            "550e8400-e29b-41d4-a716-446655440000"
+        )
+
+    def test_empty_string_allowed(self) -> None:
+        """Empty string is allowed (ONTAP returns '' for optional UUID fields)."""
+        assert _validate_ontap_uuid("") == ""
+
+    def test_invalid_uuid_raises(self) -> None:
+        """Malformed UUID raises ValueError."""
+        with pytest.raises(ValueError, match="Invalid UUID"):
+            _validate_ontap_uuid("not-a-uuid")
+
+    def test_uppercase_uuid(self) -> None:
+        """Uppercase UUIDs are accepted."""
+        assert _validate_ontap_uuid("550E8400-E29B-41D4-A716-446655440000") == (
+            "550E8400-E29B-41D4-A716-446655440000"
+        )
+
+    def test_pydantic_model_with_ontap_uuid(self) -> None:
+        """OntapUUID works as a Pydantic field type."""
+
+        class TestModel(CacheModel):
+            uuid: OntapUUID = ""
+
+        obj = TestModel(uuid="550e8400-e29b-41d4-a716-446655440000")
+        assert obj.uuid == "550e8400-e29b-41d4-a716-446655440000"
+
+    def test_pydantic_model_rejects_invalid(self) -> None:
+        """Pydantic model construction rejects invalid UUID."""
+
+        class TestModel(CacheModel):
+            uuid: OntapUUID = ""
+
+        with pytest.raises(ValidationError):
+            TestModel(uuid="garbage")
+
+    def test_pydantic_model_empty_default(self) -> None:
+        """Default empty string is accepted."""
+
+        class TestModel(CacheModel):
+            uuid: OntapUUID = ""
+
+        obj = TestModel()
+        assert obj.uuid == ""

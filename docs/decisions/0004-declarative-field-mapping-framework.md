@@ -44,12 +44,55 @@ The pilot migration (VolumeInfo) was completed in PR #189.
 - **Code generation from a schema**: More automated, but ONTAP's CLI/API asymmetry makes a pure schema approach fragile.
 - **Third-party ORM/mapping library**: Adds external dependency for a domain-specific problem that's well-served by two small dataclasses.
 
+## Evolution: Field Annotations for Cache Strategy (Issue #301)
+
+In issue #301, the framework was extended with field-level annotations to support
+different data collection and storage strategies:
+
+### FieldMapping Extensions
+
+```python
+cache_strategy: Literal["cache", "realtime", "derived"] = "cache"
+requires_explicit_fetch: bool = False
+post_collection: Callable[[Any], Any] | None = None
+```
+
+| Strategy | Collected? | Persisted? | How accessed |
+|----------|-----------|-----------|--------------|
+| `cache` | Yes, during bulk collection | Yes, in DB | Read from cache |
+| `realtime` | No | No | Fetched on-demand per object |
+| `derived` | No | Yes | Computed from other fields post-collection |
+
+### TypeMapping Extensions
+
+```python
+parent_mapping: str | None = None    # For parameterized endpoints
+parent_id_field: str | None = None   # Placeholder value field on parent
+
+# Computed methods
+def explicit_fetch_fields(self) -> list[str]: ...
+def cached_fields(self) -> tuple[FieldMapping, ...]: ...
+def realtime_fields(self) -> tuple[FieldMapping, ...]: ...
+def derived_fields(self) -> tuple[FieldMapping, ...]: ...
+```
+
+### OntapUUID Dedicated Type
+
+A validated `Annotated[str, AfterValidator(...)]` type for all UUID fields,
+defined in `_base.py`.  Validates format at model construction, allows empty
+strings (ONTAP returns `""` for optional UUID fields), remains a plain `str`
+at runtime.
+
+These extensions enable the OpenAPI codegen tool (ADR-0008) to generate
+annotated mappings from API specs, with per-field customization via TOML overlays.
+
 ## Consequences
 
 - All new ONTAP object types should use the mapping framework instead of hand-written parsers.
 - Existing hand-written parsers can be migrated incrementally (one type at a time).
 - The `cache inspect` command automatically works with any registered mapping.
 - Adding a new type follows a documented, repeatable process.
+- Field annotations enable the codegen tool to auto-generate mappings with appropriate strategies.
 
 ## Related Issues
 
@@ -69,6 +112,7 @@ The pilot migration (VolumeInfo) was completed in PR #189.
 - Issue #213: refactor: migrate LicenseInfo/LicenseFeature to field mapping framework
 - Issue #211: refactor: migrate NetworkLIF to field mapping framework
 - Issue #212: refactor: migrate BroadcastDomain to field mapping framework
+- Issue #301: feat: field annotations, OpenAPI codegen, and SQL cache storage
 
 ## Related Documentation
 
