@@ -1,4 +1,4 @@
-"""Codegen doit tasks for converting API specs to OpenAPI 3.x."""
+"""Codegen doit tasks for fetching and converting API specs to OpenAPI 3.x."""
 
 import json
 import shutil
@@ -11,6 +11,14 @@ from doit.tools import title_with_actions
 
 # Spec directory relative to project root
 _SPEC_DIR = Path("example-config/apis")
+
+# APIs that support fetching, with their auth type
+_FETCH_APIS = {
+    "ontap": "basic",
+    "aiqum": "basic",
+    "dii": "apikey",
+    "occm": "session",
+}
 
 # Specs and their formats
 _SPECS: dict[str, dict[str, str]] = {
@@ -159,6 +167,164 @@ def task_convert_specs() -> dict[str, Any]:
                 "type": str,
                 "default": "",
                 "help": "Convert a single API (ontap, aiqum, dii, occm). Omit to convert all.",
+            },
+        ],
+    }
+
+
+def _fetch_spec(
+    api: str,
+    host: str,
+    username: str,
+    password: str,
+    api_key: str,
+    no_verify: bool,
+) -> None:
+    """Fetch a single API spec."""
+    if api not in _FETCH_APIS:
+        available = ", ".join(sorted(_FETCH_APIS))
+        raise ValueError(f"Unknown API: {api}. Available: {available}")
+
+    auth_type = _FETCH_APIS[api]
+
+    if auth_type == "basic" and (not username or not password):
+        raise ValueError(f"{api} requires --username and --password")
+    if auth_type == "apikey" and not api_key:
+        raise ValueError(f"{api} requires --api-key")
+    if auth_type == "session" and (not username or not password):
+        raise ValueError(f"{api} requires --username (email) and --password")
+    if not host:
+        raise ValueError("--host is required")
+
+    if api == "ontap":
+        from tools.scripts.fetch_ontap_spec import _sanitize_spec as sanitize_ontap
+        from tools.scripts.fetch_ontap_spec import fetch_spec as fetch_ontap
+
+        spec = fetch_ontap(host, username, password, no_verify)
+        spec = sanitize_ontap(spec)
+    elif api == "aiqum":
+        from tools.scripts.fetch_aiqum_spec import _sanitize_spec as sanitize_aiqum
+        from tools.scripts.fetch_aiqum_spec import fetch_spec as fetch_aiqum
+
+        spec = fetch_aiqum(host, username, password, no_verify)
+        spec = sanitize_aiqum(spec)
+    elif api == "dii":
+        from tools.scripts.fetch_dii_spec import _sanitize_spec as sanitize_dii
+        from tools.scripts.fetch_dii_spec import fetch_spec as fetch_dii
+
+        spec = fetch_dii(host, api_key, no_verify)
+        spec = sanitize_dii(spec)
+    elif api == "occm":
+        from tools.scripts.fetch_occm_spec import (
+            assemble_spec,
+            authenticate,
+            build_opener,
+            fetch_index,
+            fetch_resource,
+        )
+
+        protocol = "https" if no_verify else "http"
+        base_url = f"{protocol}://{host}"
+        opener = build_opener(no_verify)
+        authenticate(opener, base_url, username, password)
+        index_apis = fetch_index(opener, base_url)
+
+        print("\nFetching resource declarations:")
+        resources: dict[str, dict[str, Any]] = {}
+        api_version = "unknown"
+        for api_entry in index_apis:
+            path = api_entry.get("path", "")
+            if not path:
+                continue
+            resource = fetch_resource(opener, base_url, path)
+            if resource:
+                resources[path] = resource
+                if api_version == "unknown":
+                    api_version = resource.get("apiVersion", "unknown")
+
+        print(f"\nFetched {len(resources)}/{len(index_apis)} resources")
+        spec = assemble_spec(resources, api_version)
+
+    output = _SPEC_DIR / api / "all.json"
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(spec, indent=2) + "\n")
+    print(f"\nSpec written to {output}")
+
+
+def task_fetch_spec() -> dict[str, Any]:
+    """Fetch an API spec from a live endpoint.
+
+    Usage:
+        doit fetch_spec --api=ontap --host=10.0.0.1 --username=admin --password=secret
+        doit fetch_spec --api=aiqum --host=aiqum.local --username=admin --password=secret
+        doit fetch_spec --api=dii --host=tenant.cloudinsights.netapp.com --api-key=TOKEN
+        doit fetch_spec --api=occm --host=connector.local --username=user@co.com --password=secret
+    """
+
+    def run_fetch(
+        api: str,
+        host: str,
+        username: str,
+        password: str,
+        api_key: str,
+        no_verify: bool,
+    ) -> None:
+        if not api:
+            available = ", ".join(sorted(_FETCH_APIS))
+            raise ValueError(f"--api is required. Available: {available}")
+        _fetch_spec(api, host, username, password, api_key, no_verify)
+
+    return {
+        "actions": [run_fetch],
+        "title": title_with_actions,
+        "verbosity": 2,
+        "params": [
+            {
+                "name": "api",
+                "short": "a",
+                "long": "api",
+                "type": str,
+                "default": "",
+                "help": "API to fetch (ontap, aiqum, dii, occm).",
+            },
+            {
+                "name": "host",
+                "short": "H",
+                "long": "host",
+                "type": str,
+                "default": "",
+                "help": "Hostname or IP of the API endpoint.",
+            },
+            {
+                "name": "username",
+                "short": "u",
+                "long": "username",
+                "type": str,
+                "default": "",
+                "help": "Username for basic/session auth (email for OCCM).",
+            },
+            {
+                "name": "password",
+                "short": "p",
+                "long": "password",
+                "type": str,
+                "default": "",
+                "help": "Password for basic/session auth.",
+            },
+            {
+                "name": "api_key",
+                "short": "k",
+                "long": "api-key",
+                "type": str,
+                "default": "",
+                "help": "API key for DII auth.",
+            },
+            {
+                "name": "no_verify",
+                "long": "no-verify",
+                "type": bool,
+                "default": False,
+                "help": "Skip TLS certificate verification.",
             },
         ],
     }
