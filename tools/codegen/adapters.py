@@ -383,7 +383,7 @@ def parse_openapi_spec(
         List of :class:`ParsedEndpoint` for all GET endpoints with
         response schemas.
     """
-    with open(spec_path) as f:
+    with open(spec_path, encoding="utf-8") as f:
         spec = json.load(f)
 
     # Run datamodel-code-generator parser for $ref resolution and type cross-reference.
