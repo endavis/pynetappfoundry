@@ -11302,29 +11302,8 @@
                     "storage-provider"
                 ]
             }
-        },
-        "HTTP status codes": {
-            "x-ntap-long-description": {
-                "description": "## Overview\n\nThe following  supported HTTP error codes are returned by Active IQ Unified Manager.\n* 200 OK : Returned for success when not creating a new object\n* 201 Created : Returned for success after the creation of an object\n* 202 Accepted: Returned when a job has been successfully started, but the operation is not complete\n* 400 Bad Request: Returned if the input could not be parsed\n* 401 Unauthorized: Returned if user authentication failed\n* 403 Forbidden: Returned for authorization (RBAC) errors\n* 404 Not Found: Returned when the specified resource does not exist\n* 405 Method Not Allowed: Returned when the specified resource does not support the method (for example, POST or DELETE calls)\n* 409 Conflict: Returned when there is a conflict with a different object that must be created, modified, or deleted before this operation can succeed\n* 500 Internal Error: Returned for all other internal error codes\n",
-                "tags": [
-                    "doc"
-                ]
-            }
-        },
-        "Query And Path Parameters": {
-            "x-ntap-long-description": {
-                "description": "## Overview\n\nThe following is a list of all the globally-supported query parameters. This list is intended as a quick reference for syntax purposes. The query parameters are described in more detail in other sections of this documentation. Note that multiple queries can be combined using an \"&\".\n<br/>\n```\n# Query fields by value. If the value contains query characters (*|,!<>..), it must be placed inside quotation marks to avoid any misinterpretation of the query.\n<field>=<query value>\n# The number of records to collect before returning. The maximun number of records returned is limited to 1000 records. Default limit is 100 for Datacenter APIs.\nmax_records=<number of records>\n# Request a customized sort ordering.\norder_by=<field [asc|desc]>[,...]\n# Offset is the starting index for the entries to be returned.\noffset=<start index of records>\n# During the API automation, the escape character (\\) is required before the double quotation marks for the response field values of API. Escape character should be removed when using such values in the swagger text field. This behavior is seen in the Datacenter section > FC interface and FC ports.",
-                "tags": [
-                    "doc"
-                ]
-            }
         }
     },
-    "security": [
-        {
-            "simple": []
-        }
-    ],
     "tags": [
         {
             "desciption": "Documentation about the AIQUM REST APIs\n",
@@ -11563,12 +11542,6 @@
                     }
                 },
                 "description": "Info specification"
-            }
-        },
-        "securitySchemes": {
-            "simple": {
-                "type": "http",
-                "scheme": "basic"
             }
         },
         "schemas": {

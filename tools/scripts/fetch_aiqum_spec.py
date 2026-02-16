@@ -57,16 +57,27 @@ def _basic_auth_header(username: str, password: str) -> str:
 
 
 def _sanitize_spec(spec: dict[str, Any]) -> dict[str, Any]:
-    """Remove security blocks from the spec.
+    """Remove security blocks and non-path documentation entries from the spec.
 
     AIQUM specs include a security definition that references
     basic auth. This is instance-specific and should not be
     stored in the spec file.
+
+    They also include fake path entries that are actually documentation
+    (e.g. ``HTTP status codes``, ``Query And Path Parameters``) which
+    have spaces in their names and no HTTP methods.
     """
     spec.pop("security", None)
     spec.pop("securityDefinitions", None)
 
-    for _path, methods in spec.get("paths", {}).items():
+    # Remove fake documentation entries from paths (keys with spaces
+    # or keys that don't start with /)
+    paths = spec.get("paths", {})
+    bad_paths = [p for p in paths if " " in p or not p.startswith("/")]
+    for p in bad_paths:
+        del paths[p]
+
+    for _path, methods in paths.items():
         if not isinstance(methods, dict):
             continue
         for _method, operation in methods.items():
