@@ -1,4 +1,4 @@
-"""Codegen doit tasks for fetching and converting API specs to OpenAPI 3.x."""
+"""Codegen doit tasks for fetching, converting, and generating from API specs."""
 
 import json
 import shutil
@@ -325,6 +325,70 @@ def task_fetch_spec() -> dict[str, Any]:
                 "type": bool,
                 "default": False,
                 "help": "Skip TLS certificate verification.",
+            },
+        ],
+    }
+
+
+# Default output directory for generated cache models
+_CACHE_OUTPUT_DIR = Path("src/pynetappfoundry/cache")
+
+
+def task_generate_models() -> dict[str, Any]:
+    """Generate cache models and mappings from OpenAPI specs.
+
+    Usage:
+        doit generate_models --api=ontap   # Generate from ONTAP spec
+        doit generate_models               # Generate from all specs
+        doit generate_models --dry-run     # Preview without writing
+    """
+
+    def run_generate(api: str, dry_run: bool, endpoints: str) -> None:
+        from tools.codegen.openapi_codegen import run
+
+        api_list = [api] if api else sorted(_SPECS)
+
+        for api_name in api_list:
+            spec_path = _SPEC_DIR / api_name / _OUTPUT_FILENAME
+            if not spec_path.exists():
+                print(f"SKIP: {spec_path} does not exist (run 'doit convert_specs' first)")
+                continue
+
+            endpoint_filter = endpoints.split(",") if endpoints else None
+            run(
+                spec=spec_path,
+                output=_CACHE_OUTPUT_DIR,
+                api_type=api_name,
+                endpoint_filter=endpoint_filter,
+                dry_run=dry_run,
+            )
+
+    return {
+        "actions": [run_generate],
+        "title": title_with_actions,
+        "verbosity": 2,
+        "params": [
+            {
+                "name": "api",
+                "short": "a",
+                "long": "api",
+                "type": str,
+                "default": "",
+                "help": "Generate for a single API (ontap, aiqum, dii, occm). Omit for all.",
+            },
+            {
+                "name": "dry_run",
+                "long": "dry-run",
+                "type": bool,
+                "default": False,
+                "help": "Preview what would be generated without writing files.",
+            },
+            {
+                "name": "endpoints",
+                "long": "endpoints",
+                "type": str,
+                "default": "",
+                "help": "Comma-separated endpoint paths to generate (e.g. /storage/volumes).",
             },
         ],
     }

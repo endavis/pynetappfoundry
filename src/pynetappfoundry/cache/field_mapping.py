@@ -15,7 +15,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel
 
@@ -37,6 +37,14 @@ class FieldMapping:
             Overrides ``api_path`` when set.
         cli_transform: Custom CLI extraction function receiving the full record dict.
             Overrides ``cli_field`` when set.
+        cache_strategy: How this field is collected and stored.
+            ``"cache"`` — collected during bulk collection, persisted in DB.
+            ``"realtime"`` — fetched on-demand per object, not persisted.
+            ``"derived"`` — computed from other fields post-collection, persisted.
+        requires_explicit_fetch: Whether this field requires explicit ``?fields=``
+            in the API request (ONTAP expensive fields).
+        post_collection: Optional callable to compute derived field values
+            after all records have been collected.
     """
 
     cache_attr: str
@@ -45,6 +53,9 @@ class FieldMapping:
     default: Any = ""
     transform: Callable[[dict[str, Any]], Any] | None = None
     cli_transform: Callable[[dict[str, Any]], Any] | None = None
+    cache_strategy: Literal["cache", "realtime", "derived"] = "cache"
+    requires_explicit_fetch: bool = False
+    post_collection: Callable[[Any], Any] | None = None
 
 
 @dataclass(frozen=True)
@@ -63,6 +74,11 @@ class TypeMapping:
             other APIs). Default: ``"records"``.
         api_type: Tag identifying which API client/unit registry to use
             (e.g. ``"ontap"``, ``"aiqum"``). Default: ``"ontap"``.
+        parent_mapping: Name of the parent TypeMapping for parameterized
+            endpoints (e.g. ``"Svm"`` for endpoints like
+            ``/svm/svms/{svm.uuid}/...``).
+        parent_id_field: Field on the parent model that provides the
+            placeholder value (e.g. ``"uuid"``).
     """
 
     name: str
@@ -73,6 +89,8 @@ class TypeMapping:
     id_field: str = "name"
     records_path: str = "records"
     api_type: str = "ontap"
+    parent_mapping: str | None = None
+    parent_id_field: str | None = None
 
     def api_expected_fields(self) -> list[str]:
         """Derive top-level API keys expected in a response record.
@@ -101,6 +119,39 @@ class TypeMapping:
             if field.cli_field is not None:
                 keys.add(field.cli_field)
         return sorted(keys)
+
+    def explicit_fetch_fields(self) -> list[str]:
+        """Return field names that require explicit ``?fields=`` in the API request.
+
+        Returns:
+            List of ``cache_attr`` values for fields with
+            ``requires_explicit_fetch=True``.
+        """
+        return [f.cache_attr for f in self.fields if f.requires_explicit_fetch]
+
+    def cached_fields(self) -> tuple[FieldMapping, ...]:
+        """Return fields with ``cache_strategy="cache"``.
+
+        Returns:
+            Tuple of FieldMapping instances that are collected and persisted.
+        """
+        return tuple(f for f in self.fields if f.cache_strategy == "cache")
+
+    def realtime_fields(self) -> tuple[FieldMapping, ...]:
+        """Return fields with ``cache_strategy="realtime"``.
+
+        Returns:
+            Tuple of FieldMapping instances fetched on-demand.
+        """
+        return tuple(f for f in self.fields if f.cache_strategy == "realtime")
+
+    def derived_fields(self) -> tuple[FieldMapping, ...]:
+        """Return fields with ``cache_strategy="derived"``.
+
+        Returns:
+            Tuple of FieldMapping instances computed post-collection.
+        """
+        return tuple(f for f in self.fields if f.cache_strategy == "derived")
 
 
 def _coerce_cli_value(value: str, default: Any) -> Any:

@@ -35,6 +35,7 @@ from pynetappfoundry.cache._base import (
     METADATA_SCHEMA_VERSION,
     CacheModel,
     HasUUID,
+    OntapUUID,
     is_schema_compatible,
     parse_schema_version,
 )
@@ -77,6 +78,7 @@ __all__ = [
     "HasUUID",
     "MediatorInfo",
     "MetadataCollector",
+    "OntapUUID",
     "ProgressCallback",
     "ProgressInfo",
     "RelationshipsInfo",

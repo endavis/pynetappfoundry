@@ -302,3 +302,8 @@ merge_prerelease = true
 bump_pattern = "^(feat|fix|refactor|perf)"
 bump_map = { "feat" = "MINOR", "fix" = "PATCH", "refactor" = "PATCH", "perf" = "PATCH" }
 change_type_order = ["BREAKING CHANGE", "feat", "fix", "refactor", "perf"]
+
+[dependency-groups]
+dev = [
+    "datamodel-code-generator>=0.54.0",
+]

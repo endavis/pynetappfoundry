@@ -1,16 +1,51 @@
 """Base class and utilities for cache models.
 
 Provides CacheModel (auto-registering Pydantic base), HasUUID protocol,
-and schema versioning functions. This module is Layer 1 of the import
-hierarchy and MUST NOT import from any cache sub-module.
+OntapUUID validated type, and schema versioning functions. This module is
+Layer 1 of the import hierarchy and MUST NOT import from any cache sub-module.
 """
 
 from __future__ import annotations
 
+import re
 from datetime import UTC, datetime
-from typing import Any, Protocol, runtime_checkable
+from typing import Annotated, Any, Protocol, runtime_checkable
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import AfterValidator, BaseModel, ConfigDict
+
+_UUID_PATTERN = re.compile(
+    r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+    re.IGNORECASE,
+)
+
+
+def _validate_ontap_uuid(v: str) -> str:
+    """Validate an ONTAP UUID string.
+
+    Allows empty strings (ONTAP returns ``""`` for optional UUID fields).
+
+    Args:
+        v: The string value to validate.
+
+    Returns:
+        The validated string.
+
+    Raises:
+        ValueError: If the string is non-empty and not a valid UUID format.
+    """
+    if v and not _UUID_PATTERN.match(v):
+        raise ValueError(f"Invalid UUID: {v}")
+    return v
+
+
+OntapUUID = Annotated[str, AfterValidator(_validate_ontap_uuid)]
+"""Dedicated type for ONTAP UUID fields.
+
+A plain ``str`` at runtime with Pydantic validation that rejects malformed
+UUIDs on model construction.  Empty strings are allowed because ONTAP
+returns ``""`` for optional UUID fields.
+"""
+
 
 # Schema version for CachedClusterMetadata model.
 # Increment MINOR for backward-compatible changes (new optional fields).

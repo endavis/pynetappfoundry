@@ -54,6 +54,9 @@ class TestFieldMapping:
         assert fm.default == ""
         assert fm.transform is None
         assert fm.cli_transform is None
+        assert fm.cache_strategy == "cache"
+        assert fm.requires_explicit_fetch is False
+        assert fm.post_collection is None
 
     def test_with_all_fields(self) -> None:
         """All fields can be set."""
@@ -73,6 +76,27 @@ class TestFieldMapping:
         assert fm.default == 42
         assert fm.transform is tx
         assert fm.cli_transform is ctx
+
+
+class TestFieldMappingNewFields:
+    """Tests for new FieldMapping fields (strategy, fetch, post_collection)."""
+
+    def test_cache_strategy_values(self) -> None:
+        """cache_strategy accepts all valid values."""
+        for strategy in ("cache", "realtime", "derived"):
+            fm = FieldMapping(cache_attr="x", cache_strategy=strategy)
+            assert fm.cache_strategy == strategy
+
+    def test_requires_explicit_fetch(self) -> None:
+        """requires_explicit_fetch can be set to True."""
+        fm = FieldMapping(cache_attr="x", requires_explicit_fetch=True)
+        assert fm.requires_explicit_fetch is True
+
+    def test_post_collection_callable(self) -> None:
+        """post_collection accepts a callable."""
+        fn = lambda x: x  # noqa: E731
+        fm = FieldMapping(cache_attr="x", cache_strategy="derived", post_collection=fn)
+        assert fm.post_collection is fn
 
 
 # ---------------------------------------------------------------------------
@@ -189,6 +213,91 @@ class TestTypeMapping:
         )
         assert isinstance(tm, TypeMapping)
         assert tm.cli_command == ""
+
+    def test_parent_mapping_defaults(self) -> None:
+        """parent_mapping and parent_id_field default to None."""
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/t",
+            fields=(FieldMapping(cache_attr="name", api_path="name"),),
+        )
+        assert tm.parent_mapping is None
+        assert tm.parent_id_field is None
+
+    def test_parent_mapping_set(self) -> None:
+        """parent_mapping and parent_id_field can be set."""
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/t",
+            parent_mapping="Svm",
+            parent_id_field="uuid",
+        )
+        assert tm.parent_mapping == "Svm"
+        assert tm.parent_id_field == "uuid"
+
+    def test_explicit_fetch_fields(self) -> None:
+        """explicit_fetch_fields returns only requires_explicit_fetch=True fields."""
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/t",
+            fields=(
+                FieldMapping(cache_attr="name", api_path="name"),
+                FieldMapping(cache_attr="stats", api_path="stats", requires_explicit_fetch=True),
+                FieldMapping(cache_attr="metric", api_path="metric", requires_explicit_fetch=True),
+            ),
+        )
+        assert tm.explicit_fetch_fields() == ["stats", "metric"]
+
+    def test_cached_fields(self) -> None:
+        """cached_fields returns only cache_strategy='cache' fields."""
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/t",
+            fields=(
+                FieldMapping(cache_attr="name", cache_strategy="cache"),
+                FieldMapping(cache_attr="stats", cache_strategy="realtime"),
+                FieldMapping(cache_attr="computed", cache_strategy="derived"),
+            ),
+        )
+        cached = tm.cached_fields()
+        assert len(cached) == 1
+        assert cached[0].cache_attr == "name"
+
+    def test_realtime_fields(self) -> None:
+        """realtime_fields returns only cache_strategy='realtime' fields."""
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/t",
+            fields=(
+                FieldMapping(cache_attr="name", cache_strategy="cache"),
+                FieldMapping(cache_attr="stats", cache_strategy="realtime"),
+            ),
+        )
+        rt = tm.realtime_fields()
+        assert len(rt) == 1
+        assert rt[0].cache_attr == "stats"
+
+    def test_derived_fields(self) -> None:
+        """derived_fields returns only cache_strategy='derived' fields."""
+        fn = lambda x: x  # noqa: E731
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/t",
+            fields=(
+                FieldMapping(cache_attr="name", cache_strategy="cache"),
+                FieldMapping(cache_attr="computed", cache_strategy="derived", post_collection=fn),
+            ),
+        )
+        derived = tm.derived_fields()
+        assert len(derived) == 1
+        assert derived[0].cache_attr == "computed"
+        assert derived[0].post_collection is fn
 
 
 # ---------------------------------------------------------------------------
