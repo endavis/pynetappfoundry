@@ -1,0 +1,16 @@
+[endpoint]
+path = "/cluster/metrocluster"
+schema = "metrocluster"
+class_name = "OntapMetrocluster"
+
+[fields.node_name]
+cache_strategy = "cache"
+
+[fields.node_uuid]
+cache_strategy = "cache"
+
+[fields.partner_name]
+cache_strategy = "cache"
+
+[fields.partner_uuid]
+cache_strategy = "cache"

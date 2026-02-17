@@ -1,0 +1,40 @@
+[endpoint]
+path = "/protocols/cifs/shadow-copies"
+schema = "shadowcopy"
+class_name = "OntapShadowcopy"
+
+[fields.client_uuid]
+cache_strategy = "cache"
+
+[fields.destination_dir]
+cache_strategy = "cache"
+
+[fields.files]
+cache_strategy = "cache"
+
+[fields.shadowcopy_set_uuid]
+cache_strategy = "cache"
+
+[fields.share_name]
+cache_strategy = "cache"
+
+[fields.source_dir]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"
+
+[fields.volume_name]
+cache_strategy = "cache"
+
+[fields.volume_uuid]
+cache_strategy = "cache"
+
+[fields.with_content]
+cache_strategy = "cache"

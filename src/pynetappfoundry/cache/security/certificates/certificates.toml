@@ -1,0 +1,106 @@
+[endpoint]
+path = "/security/certificates"
+schema = "security_certificate"
+class_name = "OntapSecurityCertificate"
+
+[fields.authority_key_identifier]
+cache_strategy = "cache"
+
+[fields.azure_client_certificate]
+cache_strategy = "cache"
+
+[fields.azure_client_id]
+cache_strategy = "cache"
+
+[fields.azure_client_secret]
+cache_strategy = "cache"
+
+[fields.azure_key_vault]
+cache_strategy = "cache"
+
+[fields.azure_oauth_host]
+cache_strategy = "cache"
+
+[fields.azure_proxy_host]
+cache_strategy = "cache"
+
+[fields.azure_proxy_password]
+cache_strategy = "cache"
+
+[fields.azure_proxy_port]
+cache_strategy = "cache"
+
+[fields.azure_proxy_type]
+cache_strategy = "cache"
+
+[fields.azure_proxy_username]
+cache_strategy = "cache"
+
+[fields.azure_tenant_id]
+cache_strategy = "cache"
+
+[fields.azure_timeout]
+cache_strategy = "cache"
+
+[fields.azure_verify_host]
+cache_strategy = "cache"
+
+[fields.ca]
+cache_strategy = "cache"
+
+[fields.common_name]
+cache_strategy = "cache"
+
+[fields.expiry_time]
+cache_strategy = "cache"
+
+[fields.hash_function]
+cache_strategy = "cache"
+
+[fields.intermediate_certificates]
+cache_strategy = "cache"
+
+[fields.key_size]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.private_key]
+cache_strategy = "cache"
+
+[fields.public_certificate]
+cache_strategy = "cache"
+
+[fields.scope]
+cache_strategy = "cache"
+
+[fields.serial_number]
+cache_strategy = "cache"
+
+[fields.subject_alternatives_dns]
+cache_strategy = "cache"
+
+[fields.subject_alternatives_email]
+cache_strategy = "cache"
+
+[fields.subject_alternatives_ip]
+cache_strategy = "cache"
+
+[fields.subject_alternatives_uri]
+cache_strategy = "cache"
+
+[fields.subject_key_identifier]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

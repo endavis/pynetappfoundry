@@ -1,0 +1,37 @@
+[endpoint]
+path = "/svm/peers"
+schema = "svm_peer"
+class_name = "OntapSvmPeer"
+
+[fields.applications]
+cache_strategy = "cache"
+
+[fields.force]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.peer_cluster_name]
+cache_strategy = "cache"
+
+[fields.peer_cluster_uuid]
+cache_strategy = "cache"
+
+[fields.peer_svm_name]
+cache_strategy = "cache"
+
+[fields.peer_svm_uuid]
+cache_strategy = "cache"
+
+[fields.state]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

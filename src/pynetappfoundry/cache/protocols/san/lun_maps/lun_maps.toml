@@ -1,0 +1,49 @@
+[endpoint]
+path = "/protocols/san/lun-maps"
+schema = "lun_map"
+class_name = "OntapLunMap"
+
+[fields.igroup_initiators]
+cache_strategy = "cache"
+
+[fields.igroup_name]
+cache_strategy = "cache"
+
+[fields.igroup_os_type]
+cache_strategy = "cache"
+
+[fields.igroup_protocol]
+cache_strategy = "cache"
+
+[fields.igroup_replicated]
+cache_strategy = "cache"
+
+[fields.igroup_uuid]
+cache_strategy = "cache"
+
+[fields.logical_unit_number]
+cache_strategy = "cache"
+
+[fields.lun_name]
+cache_strategy = "cache"
+
+[fields.lun_node_name]
+cache_strategy = "cache"
+
+[fields.lun_node_uuid]
+cache_strategy = "cache"
+
+[fields.lun_smbc_replicated]
+cache_strategy = "cache"
+
+[fields.lun_uuid]
+cache_strategy = "cache"
+
+[fields.reporting_nodes]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"

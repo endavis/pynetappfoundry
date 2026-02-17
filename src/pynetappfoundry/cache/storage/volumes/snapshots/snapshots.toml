@@ -1,0 +1,80 @@
+[endpoint]
+path = "/storage/volumes/{volume.uuid}/snapshots"
+schema = "snapshot"
+class_name = "OntapSnapshot"
+
+[fields.comment]
+cache_strategy = "cache"
+
+[fields.compress_savings]
+cache_strategy = "cache"
+
+[fields.create_time]
+cache_strategy = "cache"
+
+[fields.dedup_savings]
+cache_strategy = "cache"
+
+[fields.delta_size_consumed]
+cache_strategy = "cache"
+
+[fields.delta_time_elapsed]
+cache_strategy = "cache"
+
+[fields.expiry_time]
+cache_strategy = "cache"
+
+[fields.logical_size]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.owners]
+cache_strategy = "cache"
+
+[fields.provenance_volume_uuid]
+cache_strategy = "cache"
+
+[fields.reclaimable_space]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.size]
+cache_strategy = "cache"
+
+[fields.snaplock_expired]
+cache_strategy = "cache"
+
+[fields.snaplock_expiry_time]
+cache_strategy = "cache"
+
+[fields.snaplock_time_until_expiry]
+cache_strategy = "cache"
+
+[fields.snapmirror_label]
+cache_strategy = "cache"
+
+[fields.state]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"
+
+[fields.vbn0_savings]
+cache_strategy = "cache"
+
+[fields.version_uuid]
+cache_strategy = "cache"
+
+[fields.volume_name]
+cache_strategy = "cache"
+
+[fields.volume_uuid]
+cache_strategy = "cache"

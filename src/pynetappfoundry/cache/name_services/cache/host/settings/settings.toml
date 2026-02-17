@@ -1,0 +1,28 @@
+[endpoint]
+path = "/name-services/cache/host/settings"
+schema = "hosts_settings"
+class_name = "OntapHostsSettings"
+
+[fields.dns_ttl_enabled]
+cache_strategy = "cache"
+
+[fields.enabled]
+cache_strategy = "cache"
+
+[fields.negative_cache_enabled]
+cache_strategy = "cache"
+
+[fields.negative_ttl]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.ttl]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

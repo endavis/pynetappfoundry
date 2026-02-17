@@ -1,0 +1,61 @@
+[endpoint]
+path = "/storage/qos/policies"
+schema = "qos_policy"
+class_name = "OntapQosPolicy"
+
+[fields.adaptive_absolute_min_iops]
+cache_strategy = "cache"
+
+[fields.adaptive_block_size]
+cache_strategy = "cache"
+
+[fields.adaptive_expected_iops]
+cache_strategy = "cache"
+
+[fields.adaptive_expected_iops_allocation]
+cache_strategy = "cache"
+
+[fields.adaptive_peak_iops]
+cache_strategy = "cache"
+
+[fields.adaptive_peak_iops_allocation]
+cache_strategy = "cache"
+
+[fields.fixed_capacity_shared]
+cache_strategy = "cache"
+
+[fields.fixed_max_throughput_iops]
+cache_strategy = "cache"
+
+[fields.fixed_max_throughput_mbps]
+cache_strategy = "cache"
+
+[fields.fixed_min_throughput_iops]
+cache_strategy = "cache"
+
+[fields.fixed_min_throughput_mbps]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.object_count]
+cache_strategy = "cache"
+
+[fields.pgid]
+cache_strategy = "cache"
+
+[fields.policy_class]
+cache_strategy = "cache"
+
+[fields.scope]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

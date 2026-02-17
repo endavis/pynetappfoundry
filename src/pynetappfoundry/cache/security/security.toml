@@ -1,0 +1,40 @@
+[endpoint]
+path = "/security"
+schema = "security_config"
+class_name = "OntapSecurityConfig"
+
+[fields.fips_enabled]
+cache_strategy = "cache"
+
+[fields.management_protocols_rsh_enabled]
+cache_strategy = "cache"
+
+[fields.management_protocols_telnet_enabled]
+cache_strategy = "cache"
+
+[fields.onboard_key_manager_configurable_status_code]
+cache_strategy = "cache"
+
+[fields.onboard_key_manager_configurable_status_message]
+cache_strategy = "cache"
+
+[fields.onboard_key_manager_configurable_status_supported]
+cache_strategy = "cache"
+
+[fields.software_data_encryption_conversion_enabled]
+cache_strategy = "cache"
+
+[fields.software_data_encryption_disabled_by_default]
+cache_strategy = "cache"
+
+[fields.software_data_encryption_encryption_state]
+cache_strategy = "cache"
+
+[fields.software_data_encryption_rekey]
+cache_strategy = "cache"
+
+[fields.tls_cipher_suites]
+cache_strategy = "cache"
+
+[fields.tls_protocol_versions]
+cache_strategy = "cache"

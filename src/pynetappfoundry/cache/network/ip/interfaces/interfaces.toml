@@ -1,0 +1,151 @@
+[endpoint]
+path = "/network/ip/interfaces"
+schema = "ip_interface"
+class_name = "OntapIpInterface"
+
+[fields.ddns_enabled]
+cache_strategy = "cache"
+
+[fields.dns_zone]
+cache_strategy = "cache"
+
+[fields.enabled]
+cache_strategy = "cache"
+
+[fields.fail_if_subnet_conflicts]
+cache_strategy = "cache"
+
+[fields.ip_address]
+cache_strategy = "cache"
+
+[fields.ip_family]
+cache_strategy = "cache"
+
+[fields.ip_netmask]
+cache_strategy = "cache"
+
+[fields.ipspace_name]
+cache_strategy = "cache"
+
+[fields.ipspace_uuid]
+cache_strategy = "cache"
+
+[fields.location_auto_revert]
+cache_strategy = "cache"
+
+[fields.location_broadcast_domain_name]
+cache_strategy = "cache"
+
+[fields.location_broadcast_domain_uuid]
+cache_strategy = "cache"
+
+[fields.location_failover]
+cache_strategy = "cache"
+
+[fields.location_home_node_name]
+cache_strategy = "cache"
+
+[fields.location_home_node_uuid]
+cache_strategy = "cache"
+
+[fields.location_home_port_name]
+cache_strategy = "cache"
+
+[fields.location_home_port_node_name]
+cache_strategy = "cache"
+
+[fields.location_home_port_uuid]
+cache_strategy = "cache"
+
+[fields.location_is_home]
+cache_strategy = "cache"
+
+[fields.location_node_name]
+cache_strategy = "cache"
+
+[fields.location_node_uuid]
+cache_strategy = "cache"
+
+[fields.location_port_name]
+cache_strategy = "cache"
+
+[fields.location_port_node_name]
+cache_strategy = "cache"
+
+[fields.location_port_uuid]
+cache_strategy = "cache"
+
+[fields.metric_duration]
+cache_strategy = "cache"
+
+[fields.metric_status]
+cache_strategy = "cache"
+
+[fields.metric_throughput_read]
+cache_strategy = "cache"
+
+[fields.metric_throughput_total]
+cache_strategy = "cache"
+
+[fields.metric_throughput_write]
+cache_strategy = "cache"
+
+[fields.metric_timestamp]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.probe_port]
+cache_strategy = "cache"
+
+[fields.rdma_protocols]
+cache_strategy = "cache"
+
+[fields.scope]
+cache_strategy = "cache"
+
+[fields.service_policy_name]
+cache_strategy = "cache"
+
+[fields.service_policy_uuid]
+cache_strategy = "cache"
+
+[fields.services]
+cache_strategy = "cache"
+
+[fields.state]
+cache_strategy = "cache"
+
+[fields.statistics_status]
+cache_strategy = "cache"
+
+[fields.statistics_throughput_raw_read]
+cache_strategy = "cache"
+
+[fields.statistics_throughput_raw_total]
+cache_strategy = "cache"
+
+[fields.statistics_throughput_raw_write]
+cache_strategy = "cache"
+
+[fields.statistics_timestamp]
+cache_strategy = "cache"
+
+[fields.subnet_name]
+cache_strategy = "cache"
+
+[fields.subnet_uuid]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"
+
+[fields.vip]
+cache_strategy = "cache"

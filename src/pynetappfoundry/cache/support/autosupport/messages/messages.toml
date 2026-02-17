@@ -1,0 +1,40 @@
+[endpoint]
+path = "/support/autosupport/messages"
+schema = "autosupport_message"
+class_name = "OntapAutosupportMessage"
+
+[fields.destination]
+cache_strategy = "cache"
+
+[fields.error_code]
+cache_strategy = "cache"
+
+[fields.error_message]
+cache_strategy = "cache"
+
+[fields.generated_on]
+cache_strategy = "cache"
+
+[fields.index]
+cache_strategy = "cache"
+
+[fields.message]
+cache_strategy = "cache"
+
+[fields.node_name]
+cache_strategy = "cache"
+
+[fields.node_uuid]
+cache_strategy = "cache"
+
+[fields.state]
+cache_strategy = "cache"
+
+[fields.subject]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.uri]
+cache_strategy = "cache"

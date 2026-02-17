@@ -1,0 +1,31 @@
+[endpoint]
+path = "/support/coredump/coredumps"
+schema = "coredump"
+class_name = "OntapCoredump"
+
+[fields.is_partial]
+cache_strategy = "cache"
+
+[fields.is_saved]
+cache_strategy = "cache"
+
+[fields.md5_data_checksum]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.node_name]
+cache_strategy = "cache"
+
+[fields.node_uuid]
+cache_strategy = "cache"
+
+[fields.panic_time]
+cache_strategy = "cache"
+
+[fields.size]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"

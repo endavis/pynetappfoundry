@@ -1,0 +1,130 @@
+[endpoint]
+path = "/protocols/nfs/services/{svm.uuid}/metrics"
+schema = "performance_svm_nfs_response"
+class_name = "OntapPerformanceSvmNfsResponse"
+
+[fields.v3_duration]
+cache_strategy = "cache"
+
+[fields.v3_iops_other]
+cache_strategy = "cache"
+
+[fields.v3_iops_read]
+cache_strategy = "cache"
+
+[fields.v3_iops_total]
+cache_strategy = "cache"
+
+[fields.v3_iops_write]
+cache_strategy = "cache"
+
+[fields.v3_latency_other]
+cache_strategy = "cache"
+
+[fields.v3_latency_read]
+cache_strategy = "cache"
+
+[fields.v3_latency_total]
+cache_strategy = "cache"
+
+[fields.v3_latency_write]
+cache_strategy = "cache"
+
+[fields.v3_status]
+cache_strategy = "cache"
+
+[fields.v3_throughput_read]
+cache_strategy = "cache"
+
+[fields.v3_throughput_total]
+cache_strategy = "cache"
+
+[fields.v3_throughput_write]
+cache_strategy = "cache"
+
+[fields.v3_timestamp]
+cache_strategy = "cache"
+
+[fields.v4_duration]
+cache_strategy = "cache"
+
+[fields.v4_iops_other]
+cache_strategy = "cache"
+
+[fields.v4_iops_read]
+cache_strategy = "cache"
+
+[fields.v4_iops_total]
+cache_strategy = "cache"
+
+[fields.v4_iops_write]
+cache_strategy = "cache"
+
+[fields.v4_latency_other]
+cache_strategy = "cache"
+
+[fields.v4_latency_read]
+cache_strategy = "cache"
+
+[fields.v4_latency_total]
+cache_strategy = "cache"
+
+[fields.v4_latency_write]
+cache_strategy = "cache"
+
+[fields.v4_status]
+cache_strategy = "cache"
+
+[fields.v4_throughput_read]
+cache_strategy = "cache"
+
+[fields.v4_throughput_total]
+cache_strategy = "cache"
+
+[fields.v4_throughput_write]
+cache_strategy = "cache"
+
+[fields.v4_timestamp]
+cache_strategy = "cache"
+
+[fields.v41_duration]
+cache_strategy = "cache"
+
+[fields.v41_iops_other]
+cache_strategy = "cache"
+
+[fields.v41_iops_read]
+cache_strategy = "cache"
+
+[fields.v41_iops_total]
+cache_strategy = "cache"
+
+[fields.v41_iops_write]
+cache_strategy = "cache"
+
+[fields.v41_latency_other]
+cache_strategy = "cache"
+
+[fields.v41_latency_read]
+cache_strategy = "cache"
+
+[fields.v41_latency_total]
+cache_strategy = "cache"
+
+[fields.v41_latency_write]
+cache_strategy = "cache"
+
+[fields.v41_status]
+cache_strategy = "cache"
+
+[fields.v41_throughput_read]
+cache_strategy = "cache"
+
+[fields.v41_throughput_total]
+cache_strategy = "cache"
+
+[fields.v41_throughput_write]
+cache_strategy = "cache"
+
+[fields.v41_timestamp]
+cache_strategy = "cache"

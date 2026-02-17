@@ -1,0 +1,88 @@
+[endpoint]
+path = "/storage/bridges"
+schema = "storage_bridge"
+class_name = "OntapStorageBridge"
+
+[fields.chassis_throughput_state]
+cache_strategy = "cache"
+
+[fields.dram_single_bit_error_count]
+cache_strategy = "cache"
+
+[fields.errors]
+cache_strategy = "cache"
+
+[fields.fc_ports]
+cache_strategy = "cache"
+
+[fields.firmware_version]
+cache_strategy = "cache"
+
+[fields.ip_address]
+cache_strategy = "cache"
+
+[fields.last_reboot_reason_arguments]
+cache_strategy = "cache"
+
+[fields.last_reboot_reason_code]
+cache_strategy = "cache"
+
+[fields.last_reboot_reason_message]
+cache_strategy = "cache"
+
+[fields.last_reboot_time]
+cache_strategy = "cache"
+
+[fields.managed_by]
+cache_strategy = "cache"
+
+[fields.model_]
+cache_strategy = "cache"
+
+[fields.monitoring_enabled]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.paths]
+cache_strategy = "cache"
+
+[fields.power_supply_units]
+cache_strategy = "cache"
+
+[fields.sas_ports]
+cache_strategy = "cache"
+
+[fields.security_enabled]
+cache_strategy = "cache"
+
+[fields.serial_number]
+cache_strategy = "cache"
+
+[fields.state]
+cache_strategy = "cache"
+
+[fields.symbolic_name]
+cache_strategy = "cache"
+
+[fields.temperature_sensor_maximum]
+cache_strategy = "cache"
+
+[fields.temperature_sensor_minimum]
+cache_strategy = "cache"
+
+[fields.temperature_sensor_name]
+cache_strategy = "cache"
+
+[fields.temperature_sensor_reading]
+cache_strategy = "cache"
+
+[fields.temperature_sensor_state]
+cache_strategy = "cache"
+
+[fields.vendor]
+cache_strategy = "cache"
+
+[fields.wwn]
+cache_strategy = "cache"

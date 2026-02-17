@@ -1,0 +1,10 @@
+[endpoint]
+path = "/security/anti-ransomware"
+schema = "anti_ransomware"
+class_name = "OntapAntiRansomware"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.version]
+cache_strategy = "cache"

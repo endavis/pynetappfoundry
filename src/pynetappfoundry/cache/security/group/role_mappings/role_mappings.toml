@@ -1,0 +1,16 @@
+[endpoint]
+path = "/security/group/role-mappings"
+schema = "group_role_mappings"
+class_name = "OntapGroupRoleMappings"
+
+[fields.comment]
+cache_strategy = "cache"
+
+[fields.group_id]
+cache_strategy = "cache"
+
+[fields.ontap_role_name]
+cache_strategy = "cache"
+
+[fields.scope]
+cache_strategy = "cache"

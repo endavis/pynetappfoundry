@@ -1,0 +1,34 @@
+[endpoint]
+path = "/security/accounts"
+schema = "account"
+class_name = "OntapAccount"
+
+[fields.applications]
+cache_strategy = "cache"
+
+[fields.comment]
+cache_strategy = "cache"
+
+[fields.locked]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.owner_name]
+cache_strategy = "cache"
+
+[fields.owner_uuid]
+cache_strategy = "cache"
+
+[fields.password]
+cache_strategy = "cache"
+
+[fields.password_hash_algorithm]
+cache_strategy = "cache"
+
+[fields.role_name]
+cache_strategy = "cache"
+
+[fields.scope]
+cache_strategy = "cache"

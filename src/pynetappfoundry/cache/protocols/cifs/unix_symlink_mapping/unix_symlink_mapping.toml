@@ -1,0 +1,28 @@
+[endpoint]
+path = "/protocols/cifs/unix-symlink-mapping"
+schema = "cifs_symlink_mapping"
+class_name = "OntapCifsSymlinkMapping"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.target_home_directory]
+cache_strategy = "cache"
+
+[fields.target_locality]
+cache_strategy = "cache"
+
+[fields.target_path]
+cache_strategy = "cache"
+
+[fields.target_server]
+cache_strategy = "cache"
+
+[fields.target_share]
+cache_strategy = "cache"
+
+[fields.unix_path]
+cache_strategy = "cache"

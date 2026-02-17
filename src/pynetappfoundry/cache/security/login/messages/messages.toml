@@ -1,0 +1,25 @@
+[endpoint]
+path = "/security/login/messages"
+schema = "login_messages"
+class_name = "OntapLoginMessages"
+
+[fields.banner]
+cache_strategy = "cache"
+
+[fields.message]
+cache_strategy = "cache"
+
+[fields.scope]
+cache_strategy = "cache"
+
+[fields.show_cluster_message]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

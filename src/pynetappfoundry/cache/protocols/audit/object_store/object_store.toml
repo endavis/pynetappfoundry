@@ -1,0 +1,52 @@
+[endpoint]
+path = "/protocols/audit/{svm.uuid}/object-store"
+schema = "s3_audit"
+class_name = "OntapS3Audit"
+
+[fields.enabled]
+cache_strategy = "cache"
+
+[fields.events_data]
+cache_strategy = "cache"
+
+[fields.events_management]
+cache_strategy = "cache"
+
+[fields.log_format]
+cache_strategy = "cache"
+
+[fields.log_retention_count]
+cache_strategy = "cache"
+
+[fields.log_retention_duration]
+cache_strategy = "cache"
+
+[fields.log_rotation_now]
+cache_strategy = "cache"
+
+[fields.log_rotation_schedule_days]
+cache_strategy = "cache"
+
+[fields.log_rotation_schedule_hours]
+cache_strategy = "cache"
+
+[fields.log_rotation_schedule_minutes]
+cache_strategy = "cache"
+
+[fields.log_rotation_schedule_months]
+cache_strategy = "cache"
+
+[fields.log_rotation_schedule_weekdays]
+cache_strategy = "cache"
+
+[fields.log_rotation_size]
+cache_strategy = "cache"
+
+[fields.log_path]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"

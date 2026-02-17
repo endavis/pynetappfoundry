@@ -1,0 +1,34 @@
+[endpoint]
+path = "/protocols/active-directory"
+schema = "active_directory"
+class_name = "OntapActiveDirectory"
+
+[fields.discovered_servers]
+cache_strategy = "cache"
+
+[fields.force_account_overwrite]
+cache_strategy = "cache"
+
+[fields.fqdn]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.organizational_unit]
+cache_strategy = "cache"
+
+[fields.password]
+cache_strategy = "cache"
+
+[fields.preferred_dcs]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.username]
+cache_strategy = "cache"

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from pynetappfoundry.cache.storage.flexcache.model import FlexCacheInfo
+from pynetappfoundry.cache.storage.flexcache.flexcaches.model import OntapFlexcache
 
 __all__ = [
-    "FlexCacheInfo",
+    "OntapFlexcache",
 ]

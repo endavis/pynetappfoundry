@@ -1,0 +1,31 @@
+[endpoint]
+path = "/protocols/cifs/local-users"
+schema = "local_cifs_user"
+class_name = "OntapLocalCifsUser"
+
+[fields.account_disabled]
+cache_strategy = "cache"
+
+[fields.description]
+cache_strategy = "cache"
+
+[fields.full_name]
+cache_strategy = "cache"
+
+[fields.membership]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.password]
+cache_strategy = "cache"
+
+[fields.sid]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"

@@ -1,0 +1,127 @@
+[endpoint]
+path = "/protocols/nvme/services/{svm.uuid}/metrics"
+schema = "performance_nvme_metric_response"
+class_name = "OntapPerformanceNvmeMetricResponse"
+
+[fields.duration]
+cache_strategy = "cache"
+
+[fields.fc_duration]
+cache_strategy = "cache"
+
+[fields.fc_iops_other]
+cache_strategy = "cache"
+
+[fields.fc_iops_read]
+cache_strategy = "cache"
+
+[fields.fc_iops_total]
+cache_strategy = "cache"
+
+[fields.fc_iops_write]
+cache_strategy = "cache"
+
+[fields.fc_latency_other]
+cache_strategy = "cache"
+
+[fields.fc_latency_read]
+cache_strategy = "cache"
+
+[fields.fc_latency_total]
+cache_strategy = "cache"
+
+[fields.fc_latency_write]
+cache_strategy = "cache"
+
+[fields.fc_status]
+cache_strategy = "cache"
+
+[fields.fc_throughput_read]
+cache_strategy = "cache"
+
+[fields.fc_throughput_total]
+cache_strategy = "cache"
+
+[fields.fc_throughput_write]
+cache_strategy = "cache"
+
+[fields.iops_other]
+cache_strategy = "cache"
+
+[fields.iops_read]
+cache_strategy = "cache"
+
+[fields.iops_total]
+cache_strategy = "cache"
+
+[fields.iops_write]
+cache_strategy = "cache"
+
+[fields.latency_other]
+cache_strategy = "cache"
+
+[fields.latency_read]
+cache_strategy = "cache"
+
+[fields.latency_total]
+cache_strategy = "cache"
+
+[fields.latency_write]
+cache_strategy = "cache"
+
+[fields.status]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.tcp_duration]
+cache_strategy = "cache"
+
+[fields.tcp_iops_other]
+cache_strategy = "cache"
+
+[fields.tcp_iops_read]
+cache_strategy = "cache"
+
+[fields.tcp_iops_total]
+cache_strategy = "cache"
+
+[fields.tcp_iops_write]
+cache_strategy = "cache"
+
+[fields.tcp_latency_other]
+cache_strategy = "cache"
+
+[fields.tcp_latency_read]
+cache_strategy = "cache"
+
+[fields.tcp_latency_total]
+cache_strategy = "cache"
+
+[fields.tcp_latency_write]
+cache_strategy = "cache"
+
+[fields.tcp_status]
+cache_strategy = "cache"
+
+[fields.tcp_throughput_read]
+cache_strategy = "cache"
+
+[fields.tcp_throughput_total]
+cache_strategy = "cache"
+
+[fields.tcp_throughput_write]
+cache_strategy = "cache"
+
+[fields.throughput_read]
+cache_strategy = "cache"
+
+[fields.throughput_total]
+cache_strategy = "cache"
+
+[fields.throughput_write]
+cache_strategy = "cache"
+
+[fields.timestamp]
+cache_strategy = "cache"

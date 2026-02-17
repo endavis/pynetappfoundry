@@ -1,0 +1,55 @@
+[endpoint]
+path = "/protocols/cifs/session/files"
+schema = "cifs_open_file"
+class_name = "OntapCifsOpenFile"
+
+[fields.connection_count]
+cache_strategy = "cache"
+
+[fields.connection_identifier]
+cache_strategy = "cache"
+
+[fields.continuously_available]
+cache_strategy = "cache"
+
+[fields.identifier]
+cache_strategy = "cache"
+
+[fields.node_name]
+cache_strategy = "cache"
+
+[fields.node_uuid]
+cache_strategy = "cache"
+
+[fields.open_mode]
+cache_strategy = "cache"
+
+[fields.path]
+cache_strategy = "cache"
+
+[fields.range_locks_count]
+cache_strategy = "cache"
+
+[fields.session_identifier]
+cache_strategy = "cache"
+
+[fields.share_mode]
+cache_strategy = "cache"
+
+[fields.share_name]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.volume_name]
+cache_strategy = "cache"
+
+[fields.volume_uuid]
+cache_strategy = "cache"

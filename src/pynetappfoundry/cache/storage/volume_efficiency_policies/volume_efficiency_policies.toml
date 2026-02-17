@@ -1,0 +1,37 @@
+[endpoint]
+path = "/storage/volume-efficiency-policies"
+schema = "volume_efficiency_policy"
+class_name = "OntapVolumeEfficiencyPolicy"
+
+[fields.comment]
+cache_strategy = "cache"
+
+[fields.duration]
+cache_strategy = "cache"
+
+[fields.enabled]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.qos_policy]
+cache_strategy = "cache"
+
+[fields.schedule_name]
+cache_strategy = "cache"
+
+[fields.start_threshold_percent]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

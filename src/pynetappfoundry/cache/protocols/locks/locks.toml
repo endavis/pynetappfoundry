@@ -1,0 +1,94 @@
+[endpoint]
+path = "/protocols/locks"
+schema = "client_lock"
+class_name = "OntapClientLock"
+
+[fields.byte_lock_exclusive]
+cache_strategy = "cache"
+
+[fields.byte_lock_length]
+cache_strategy = "cache"
+
+[fields.byte_lock_mandatory]
+cache_strategy = "cache"
+
+[fields.byte_lock_offset]
+cache_strategy = "cache"
+
+[fields.byte_lock_soft]
+cache_strategy = "cache"
+
+[fields.byte_lock_super]
+cache_strategy = "cache"
+
+[fields.client_address]
+cache_strategy = "cache"
+
+[fields.constituent]
+cache_strategy = "cache"
+
+[fields.delegation]
+cache_strategy = "cache"
+
+[fields.interface_ip_address]
+cache_strategy = "cache"
+
+[fields.interface_name]
+cache_strategy = "cache"
+
+[fields.interface_uuid]
+cache_strategy = "cache"
+
+[fields.node_name]
+cache_strategy = "cache"
+
+[fields.node_uuid]
+cache_strategy = "cache"
+
+[fields.oplock_level]
+cache_strategy = "cache"
+
+[fields.owner_id]
+cache_strategy = "cache"
+
+[fields.path]
+cache_strategy = "cache"
+
+[fields.protocol]
+cache_strategy = "cache"
+
+[fields.share_lock_mode]
+cache_strategy = "cache"
+
+[fields.share_lock_soft]
+cache_strategy = "cache"
+
+[fields.smb_connect_state]
+cache_strategy = "cache"
+
+[fields.smb_open_group_id]
+cache_strategy = "cache"
+
+[fields.smb_open_type]
+cache_strategy = "cache"
+
+[fields.state]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"
+
+[fields.volume_name]
+cache_strategy = "cache"
+
+[fields.volume_uuid]
+cache_strategy = "cache"

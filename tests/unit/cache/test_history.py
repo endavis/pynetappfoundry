@@ -15,7 +15,7 @@ from pynetappfoundry.cache import (
     is_schema_compatible,
     parse_schema_version,
 )
-from pynetappfoundry.cache.cluster.nodes.model import NodeInfo
+from pynetappfoundry.cache.cluster.nodes.model import OntapNodeResponse
 from pynetappfoundry.cache.history_db import CacheHistoryDB
 from pynetappfoundry.cli.commands.cache.history import history
 
@@ -302,7 +302,7 @@ class TestHistoryIntegration:
         """Test that first cache refresh records initial snapshot."""
         metadata = CachedClusterMetadata(
             cluster_name="test-cluster",
-            nodes=[NodeInfo(name="node1", serial_number="123")],
+            nodes=[OntapNodeResponse(name="node1", serial_number="123")],
         )
 
         # Simulate what refresh command does
@@ -330,7 +330,11 @@ class TestHistoryIntegration:
         # Initial state
         metadata_v1 = CachedClusterMetadata(
             cluster_name="test-cluster",
-            nodes=[NodeInfo(uuid="uuid-1", name="node1", serial_number="123")],
+            nodes=[
+                OntapNodeResponse(
+                    uuid="00000000-0000-0000-0000-000000000001", name="node1", serial_number="123"
+                )
+            ],
         )
         history_db.record_change(
             cluster_name="test-cluster",
@@ -342,7 +346,11 @@ class TestHistoryIntegration:
         # Updated state with changed serial
         metadata_v2 = CachedClusterMetadata(
             cluster_name="test-cluster",
-            nodes=[NodeInfo(uuid="uuid-1", name="node1", serial_number="456")],
+            nodes=[
+                OntapNodeResponse(
+                    uuid="00000000-0000-0000-0000-000000000001", name="node1", serial_number="456"
+                )
+            ],
         )
 
         # Get previous snapshot
@@ -379,7 +387,7 @@ class TestHistoryIntegration:
         """Test that refresh with no changes doesn't add history entry."""
         metadata = CachedClusterMetadata(
             cluster_name="test-cluster",
-            nodes=[NodeInfo(name="node1", serial_number="123")],
+            nodes=[OntapNodeResponse(name="node1", serial_number="123")],
         )
 
         # Initial record

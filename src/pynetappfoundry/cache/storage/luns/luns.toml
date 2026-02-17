@@ -1,0 +1,378 @@
+[endpoint]
+path = "/storage/luns"
+schema = "lun"
+class_name = "OntapLun"
+
+[fields.attributes]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.auto_delete]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.class_]
+cache_strategy = "cache"
+
+[fields.clone_source_name]
+cache_strategy = "cache"
+
+[fields.clone_source_uuid]
+cache_strategy = "cache"
+
+[fields.comment]
+cache_strategy = "cache"
+
+[fields.consistency_group_name]
+cache_strategy = "cache"
+
+[fields.consistency_group_uuid]
+cache_strategy = "cache"
+
+[fields.convert_namespace_name]
+cache_strategy = "cache"
+
+[fields.convert_namespace_uuid]
+cache_strategy = "cache"
+
+[fields.copy_destinations]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.copy_source_max_throughput]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.copy_source_name]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.copy_source_peer_name]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.copy_source_peer_uuid]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.copy_source_progress_elapsed]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.copy_source_progress_failure_arguments]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.copy_source_progress_failure_code]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.copy_source_progress_failure_message]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.copy_source_progress_percent_complete]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.copy_source_progress_state]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.copy_source_progress_volume_snapshot_blocked]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.copy_source_uuid]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.create_time]
+cache_strategy = "cache"
+
+[fields.enabled]
+cache_strategy = "cache"
+
+[fields.location_logical_unit]
+cache_strategy = "cache"
+
+[fields.location_node_name]
+cache_strategy = "cache"
+
+[fields.location_node_uuid]
+cache_strategy = "cache"
+
+[fields.location_qtree_id]
+cache_strategy = "cache"
+
+[fields.location_qtree_name]
+cache_strategy = "cache"
+
+[fields.location_volume_name]
+cache_strategy = "cache"
+
+[fields.location_volume_uuid]
+cache_strategy = "cache"
+
+[fields.lun_maps]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_duration]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_iops_other]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_iops_read]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_iops_total]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_iops_write]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_latency_other]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_latency_read]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_latency_total]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_latency_write]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_status]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_throughput_other]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_throughput_read]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_throughput_total]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_throughput_write]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_timestamp]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.movement_max_throughput]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.movement_paths_destination]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.movement_paths_source]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.movement_progress_elapsed]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.movement_progress_failure_arguments]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.movement_progress_failure_code]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.movement_progress_failure_message]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.movement_progress_percent_complete]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.movement_progress_state]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.movement_progress_volume_snapshot_blocked]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.os_type]
+cache_strategy = "cache"
+
+[fields.provisioning_options_auto]
+cache_strategy = "cache"
+
+[fields.provisioning_options_count]
+cache_strategy = "cache"
+
+[fields.provisioning_options_qos_policy_name]
+cache_strategy = "cache"
+
+[fields.provisioning_options_qos_policy_uuid]
+cache_strategy = "cache"
+
+[fields.provisioning_options_snapshot_policy_name]
+cache_strategy = "cache"
+
+[fields.provisioning_options_snapshot_policy_uuid]
+cache_strategy = "cache"
+
+[fields.provisioning_options_storage_service_name]
+cache_strategy = "cache"
+
+[fields.provisioning_options_tiering_control]
+cache_strategy = "cache"
+
+[fields.provisioning_options_tiering_object_stores]
+cache_strategy = "cache"
+
+[fields.provisioning_options_tiering_policy]
+cache_strategy = "cache"
+
+[fields.provisioning_options_use_mirrored_aggregates]
+cache_strategy = "cache"
+
+[fields.qos_policy_name]
+cache_strategy = "cache"
+
+[fields.qos_policy_uuid]
+cache_strategy = "cache"
+
+[fields.serial_number]
+cache_strategy = "cache"
+
+[fields.space_efficiency_ratio]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.space_guarantee_requested]
+cache_strategy = "cache"
+
+[fields.space_guarantee_reserved]
+cache_strategy = "cache"
+
+[fields.space_physical_used]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.space_physical_used_by_snapshots]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.space_scsi_thin_provisioning_support_enabled]
+cache_strategy = "cache"
+
+[fields.space_size]
+cache_strategy = "cache"
+
+[fields.space_used]
+cache_strategy = "cache"
+
+[fields.statistics_iops_raw_other]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_iops_raw_read]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_iops_raw_total]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_iops_raw_write]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_latency_raw_other]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_latency_raw_read]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_latency_raw_total]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_latency_raw_write]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_status]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_throughput_raw_other]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_throughput_raw_read]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_throughput_raw_total]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_throughput_raw_write]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_timestamp]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.status_container_state]
+cache_strategy = "cache"
+
+[fields.status_mapped]
+cache_strategy = "cache"
+
+[fields.status_read_only]
+cache_strategy = "cache"
+
+[fields.status_state]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"
+
+[fields.vvol_bindings]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.vvol_is_bound]
+cache_strategy = "cache"

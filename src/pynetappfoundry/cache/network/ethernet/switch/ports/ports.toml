@@ -1,0 +1,85 @@
+[endpoint]
+path = "/network/ethernet/switch/ports"
+schema = "switch_port"
+class_name = "OntapSwitchPort"
+
+[fields.configured]
+cache_strategy = "cache"
+
+[fields.duplex_type]
+cache_strategy = "cache"
+
+[fields.identity_index]
+cache_strategy = "cache"
+
+[fields.identity_name]
+cache_strategy = "cache"
+
+[fields.identity_number]
+cache_strategy = "cache"
+
+[fields.isl]
+cache_strategy = "cache"
+
+[fields.mac_address]
+cache_strategy = "cache"
+
+[fields.mtu]
+cache_strategy = "cache"
+
+[fields.remote_port_device_node_name]
+cache_strategy = "cache"
+
+[fields.remote_port_device_node_uuid]
+cache_strategy = "cache"
+
+[fields.remote_port_device_shelf_module]
+cache_strategy = "cache"
+
+[fields.remote_port_device_shelf_name]
+cache_strategy = "cache"
+
+[fields.remote_port_device_shelf_uid]
+cache_strategy = "cache"
+
+[fields.remote_port_mtu]
+cache_strategy = "cache"
+
+[fields.remote_port_name]
+cache_strategy = "cache"
+
+[fields.speed]
+cache_strategy = "cache"
+
+[fields.state]
+cache_strategy = "cache"
+
+[fields.statistics_receive_raw_discards]
+cache_strategy = "cache"
+
+[fields.statistics_receive_raw_errors]
+cache_strategy = "cache"
+
+[fields.statistics_receive_raw_packets]
+cache_strategy = "cache"
+
+[fields.statistics_transmit_raw_discards]
+cache_strategy = "cache"
+
+[fields.statistics_transmit_raw_errors]
+cache_strategy = "cache"
+
+[fields.statistics_transmit_raw_packets]
+cache_strategy = "cache"
+
+[fields.switch_name]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.vlan_id]
+cache_strategy = "cache"
+
+[fields.vpc_peer_link]
+cache_strategy = "cache"

@@ -1,0 +1,88 @@
+[endpoint]
+path = "/protocols/cifs/shares"
+schema = "cifs_share"
+class_name = "OntapCifsShare"
+
+[fields.access_based_enumeration]
+cache_strategy = "cache"
+
+[fields.acls]
+cache_strategy = "cache"
+
+[fields.allow_unencrypted_access]
+cache_strategy = "cache"
+
+[fields.attribute_cache]
+cache_strategy = "cache"
+
+[fields.browsable]
+cache_strategy = "cache"
+
+[fields.change_notify]
+cache_strategy = "cache"
+
+[fields.comment]
+cache_strategy = "cache"
+
+[fields.continuously_available]
+cache_strategy = "cache"
+
+[fields.dir_umask]
+cache_strategy = "cache"
+
+[fields.encryption]
+cache_strategy = "cache"
+
+[fields.file_umask]
+cache_strategy = "cache"
+
+[fields.force_group_for_create]
+cache_strategy = "cache"
+
+[fields.home_directory]
+cache_strategy = "cache"
+
+[fields.max_connections_per_share]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.namespace_caching]
+cache_strategy = "cache"
+
+[fields.no_strict_security]
+cache_strategy = "cache"
+
+[fields.offline_files]
+cache_strategy = "cache"
+
+[fields.oplocks]
+cache_strategy = "cache"
+
+[fields.path]
+cache_strategy = "cache"
+
+[fields.show_previous_versions]
+cache_strategy = "cache"
+
+[fields.show_snapshot]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.unix_symlink]
+cache_strategy = "cache"
+
+[fields.volume_name]
+cache_strategy = "cache"
+
+[fields.volume_uuid]
+cache_strategy = "cache"
+
+[fields.vscan_profile]
+cache_strategy = "cache"

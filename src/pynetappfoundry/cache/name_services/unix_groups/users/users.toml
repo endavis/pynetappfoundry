@@ -1,0 +1,22 @@
+[endpoint]
+path = "/name-services/unix-groups/{svm.uuid}/{unix_group.name}/users"
+schema = "unix_group_users"
+class_name = "OntapUnixGroupUsers"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.records]
+cache_strategy = "cache"
+
+[fields.skip_name_validation]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.unix_group_name]
+cache_strategy = "cache"

@@ -1,0 +1,10 @@
+[endpoint]
+path = "/protocols/active-directory/{svm.uuid}/preferred-domain-controllers"
+schema = "active_directory_preferred_dc"
+class_name = "OntapActiveDirectoryPreferredDc"
+
+[fields.fqdn]
+cache_strategy = "cache"
+
+[fields.server_ip]
+cache_strategy = "cache"

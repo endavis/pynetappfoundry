@@ -1,9 +1,5 @@
-"""Re-export cluster schedule cache models."""
+"""OntapSchedule cache model."""
 
-from __future__ import annotations
+from pynetappfoundry.cache.cluster.schedules.model import OntapSchedule
 
-from pynetappfoundry.cache.cluster.schedules.model import ScheduleInfo
-
-__all__ = [
-    "ScheduleInfo",
-]
+__all__ = ["OntapSchedule"]

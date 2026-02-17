@@ -1,0 +1,32 @@
+[endpoint]
+path = "/security/key-managers/{uuid}/key-servers"
+schema = "key_server"
+class_name = "OntapKeyServer"
+
+[fields.connectivity_cluster_availability]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.connectivity_node_states]
+cache_strategy = "cache"
+
+[fields.create_remove_timeout]
+cache_strategy = "cache"
+
+[fields.password]
+cache_strategy = "cache"
+
+[fields.records]
+cache_strategy = "cache"
+
+[fields.secondary_key_servers]
+cache_strategy = "cache"
+
+[fields.server]
+cache_strategy = "cache"
+
+[fields.timeout]
+cache_strategy = "cache"
+
+[fields.username]
+cache_strategy = "cache"

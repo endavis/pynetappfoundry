@@ -1,0 +1,63 @@
+"""OntapLicensePackageResponse type mapping."""
+
+from __future__ import annotations
+
+from typing import Any
+
+from pynetappfoundry.cache._registry import model_registry
+from pynetappfoundry.cache.cluster.licensing.licenses.model import (
+    OntapLicensePackageResponse,
+    OntapLicensePackageResponseLicense,
+)
+from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
+
+
+def _transform_licenses(record: dict[str, Any]) -> list[OntapLicensePackageResponseLicense]:
+    """Transform licenses into OntapLicensePackageResponseLicense list."""
+    return [OntapLicensePackageResponseLicense(**item) for item in record.get("licenses", [])]
+
+
+ONTAPLICENSEPACKAGERESPONSE_MAPPING = TypeMapping(
+    name="OntapLicensePackageResponse",
+    model_class=OntapLicensePackageResponse,
+    api_endpoint="/cluster/licensing/licenses?fields=*",
+    api_type="ontap",
+    fields=(
+        FieldMapping(
+            cache_attr="description",
+            api_path="description",
+        ),
+        FieldMapping(
+            cache_attr="entitlement_action",
+            api_path="entitlement.action",
+        ),
+        FieldMapping(
+            cache_attr="entitlement_risk",
+            api_path="entitlement.risk",
+        ),
+        FieldMapping(
+            cache_attr="keys",
+            api_path="keys",
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="licenses",
+            transform=_transform_licenses,
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="name",
+            api_path="name",
+        ),
+        FieldMapping(
+            cache_attr="scope",
+            api_path="scope",
+        ),
+        FieldMapping(
+            cache_attr="state",
+            api_path="state",
+        ),
+    ),
+)
+
+model_registry.register_mapping("OntapLicensePackageResponse", ONTAPLICENSEPACKAGERESPONSE_MAPPING)

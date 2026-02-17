@@ -1,0 +1,211 @@
+[endpoint]
+path = "/snapmirror/relationships"
+schema = "snapmirror_relationship"
+class_name = "OntapSnapmirrorRelationship"
+
+[fields.backoff_level]
+cache_strategy = "cache"
+
+[fields.consistency_group_failover_error_arguments]
+cache_strategy = "cache"
+
+[fields.consistency_group_failover_error_code]
+cache_strategy = "cache"
+
+[fields.consistency_group_failover_error_message]
+cache_strategy = "cache"
+
+[fields.consistency_group_failover_state]
+cache_strategy = "cache"
+
+[fields.consistency_group_failover_status_code]
+cache_strategy = "cache"
+
+[fields.consistency_group_failover_status_message]
+cache_strategy = "cache"
+
+[fields.consistency_group_failover_type]
+cache_strategy = "cache"
+
+[fields.create_destination_bucket_retention_default_period]
+cache_strategy = "cache"
+
+[fields.create_destination_bucket_retention_mode]
+cache_strategy = "cache"
+
+[fields.create_destination_enabled]
+cache_strategy = "cache"
+
+[fields.create_destination_size]
+cache_strategy = "cache"
+
+[fields.create_destination_snapshot_locking_enabled]
+cache_strategy = "cache"
+
+[fields.create_destination_storage_service_enabled]
+cache_strategy = "cache"
+
+[fields.create_destination_storage_service_enforce_performance]
+cache_strategy = "cache"
+
+[fields.create_destination_storage_service_name]
+cache_strategy = "cache"
+
+[fields.create_destination_tiering_policy]
+cache_strategy = "cache"
+
+[fields.create_destination_tiering_supported]
+cache_strategy = "cache"
+
+[fields.destination_cluster_name]
+cache_strategy = "cache"
+
+[fields.destination_cluster_uuid]
+cache_strategy = "cache"
+
+[fields.destination_consistency_group_volumes]
+cache_strategy = "cache"
+
+[fields.destination_ipspace]
+cache_strategy = "cache"
+
+[fields.destination_luns_name]
+cache_strategy = "cache"
+
+[fields.destination_luns_uuid]
+cache_strategy = "cache"
+
+[fields.destination_path]
+cache_strategy = "cache"
+
+[fields.destination_svm_name]
+cache_strategy = "cache"
+
+[fields.destination_svm_uuid]
+cache_strategy = "cache"
+
+[fields.exported_snapshot]
+cache_strategy = "cache"
+
+[fields.group_type]
+cache_strategy = "cache"
+
+[fields.healthy]
+cache_strategy = "cache"
+
+[fields.identity_preservation]
+cache_strategy = "cache"
+
+[fields.io_serving_copy]
+cache_strategy = "cache"
+
+[fields.lag_time]
+cache_strategy = "cache"
+
+[fields.last_transfer_network_compression_ratio]
+cache_strategy = "cache"
+
+[fields.last_transfer_type]
+cache_strategy = "cache"
+
+[fields.master_bias_activated_site]
+cache_strategy = "cache"
+
+[fields.policy_name]
+cache_strategy = "cache"
+
+[fields.policy_type]
+cache_strategy = "cache"
+
+[fields.policy_uuid]
+cache_strategy = "cache"
+
+[fields.preferred_site]
+cache_strategy = "cache"
+
+[fields.preserve]
+cache_strategy = "cache"
+
+[fields.quick_resync]
+cache_strategy = "cache"
+
+[fields.recover_after_break]
+cache_strategy = "cache"
+
+[fields.restore]
+cache_strategy = "cache"
+
+[fields.restore_to_snapshot]
+cache_strategy = "cache"
+
+[fields.source_cluster_name]
+cache_strategy = "cache"
+
+[fields.source_cluster_uuid]
+cache_strategy = "cache"
+
+[fields.source_consistency_group_volumes]
+cache_strategy = "cache"
+
+[fields.source_luns_name]
+cache_strategy = "cache"
+
+[fields.source_luns_uuid]
+cache_strategy = "cache"
+
+[fields.source_path]
+cache_strategy = "cache"
+
+[fields.source_svm_name]
+cache_strategy = "cache"
+
+[fields.source_svm_uuid]
+cache_strategy = "cache"
+
+[fields.state]
+cache_strategy = "cache"
+
+[fields.svmdr_volumes]
+cache_strategy = "cache"
+
+[fields.throttle]
+cache_strategy = "cache"
+
+[fields.total_transfer_bytes]
+cache_strategy = "cache"
+
+[fields.total_transfer_duration]
+cache_strategy = "cache"
+
+[fields.transfer_bytes_transferred]
+cache_strategy = "cache"
+
+[fields.transfer_end_time]
+cache_strategy = "cache"
+
+[fields.transfer_last_updated_time]
+cache_strategy = "cache"
+
+[fields.transfer_state]
+cache_strategy = "cache"
+
+[fields.transfer_total_duration]
+cache_strategy = "cache"
+
+[fields.transfer_type]
+cache_strategy = "cache"
+
+[fields.transfer_uuid]
+cache_strategy = "cache"
+
+[fields.transfer_schedule_name]
+cache_strategy = "cache"
+
+[fields.transfer_schedule_uuid]
+cache_strategy = "cache"
+
+[fields.unhealthy_reason]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

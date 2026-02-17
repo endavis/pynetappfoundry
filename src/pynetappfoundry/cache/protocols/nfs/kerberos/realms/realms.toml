@@ -1,0 +1,49 @@
+[endpoint]
+path = "/protocols/nfs/kerberos/realms"
+schema = "kerberos_realm"
+class_name = "OntapKerberosRealm"
+
+[fields.ad_server_address]
+cache_strategy = "cache"
+
+[fields.ad_server_name]
+cache_strategy = "cache"
+
+[fields.admin_server_address]
+cache_strategy = "cache"
+
+[fields.admin_server_port]
+cache_strategy = "cache"
+
+[fields.clock_skew]
+cache_strategy = "cache"
+
+[fields.comment]
+cache_strategy = "cache"
+
+[fields.encryption_types]
+cache_strategy = "cache"
+
+[fields.kdc_ip]
+cache_strategy = "cache"
+
+[fields.kdc_port]
+cache_strategy = "cache"
+
+[fields.kdc_vendor]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.password_server_address]
+cache_strategy = "cache"
+
+[fields.password_server_port]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"

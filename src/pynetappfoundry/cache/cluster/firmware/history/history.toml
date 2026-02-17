@@ -1,0 +1,28 @@
+[endpoint]
+path = "/cluster/firmware/history"
+schema = "firmware_history"
+class_name = "OntapFirmwareHistory"
+
+[fields.end_time]
+cache_strategy = "cache"
+
+[fields.fw_file_name]
+cache_strategy = "cache"
+
+[fields.fw_update_state]
+cache_strategy = "cache"
+
+[fields.job_uuid]
+cache_strategy = "cache"
+
+[fields.node_name]
+cache_strategy = "cache"
+
+[fields.node_uuid]
+cache_strategy = "cache"
+
+[fields.start_time]
+cache_strategy = "cache"
+
+[fields.update_status]
+cache_strategy = "cache"

@@ -1,0 +1,25 @@
+[endpoint]
+path = "/name-services/cache/unix-user/settings"
+schema = "unix_user_settings"
+class_name = "OntapUnixUserSettings"
+
+[fields.enabled]
+cache_strategy = "cache"
+
+[fields.negative_cache_enabled]
+cache_strategy = "cache"
+
+[fields.negative_ttl]
+cache_strategy = "cache"
+
+[fields.propagation_enabled]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.ttl]
+cache_strategy = "cache"

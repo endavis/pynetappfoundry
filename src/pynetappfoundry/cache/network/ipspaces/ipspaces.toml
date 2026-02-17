@@ -1,0 +1,10 @@
+[endpoint]
+path = "/network/ipspaces"
+schema = "ipspace"
+class_name = "OntapIpspace"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

@@ -5,12 +5,12 @@ from __future__ import annotations
 from pydantic import Field
 
 from pynetappfoundry.cache._base import CacheModel
-from pynetappfoundry.cache.name_services.dns.model import DNSInfo
+from pynetappfoundry.cache.name_services.dns.model import OntapDns
 from pynetappfoundry.cache.network.ethernet.broadcast_domains.model import (
-    BroadcastDomain,
+    OntapBroadcastDomain,
 )
-from pynetappfoundry.cache.network.ip.interfaces.model import NetworkLIF
-from pynetappfoundry.cache.network.ip.subnets.model import IPSubnetInfo
+from pynetappfoundry.cache.network.ip.interfaces.model import OntapIpInterface
+from pynetappfoundry.cache.network.ip.subnets.model import OntapIpSubnet
 
 
 class NetworkInfo(CacheModel):
@@ -20,8 +20,8 @@ class NetworkInfo(CacheModel):
     and IP subnets.
     """
 
-    ip_interfaces: list[NetworkLIF] = Field(default_factory=list)
-    ethernet_broadcast_domains: list[BroadcastDomain] = Field(default_factory=list)
+    ip_interfaces: list[OntapIpInterface] = Field(default_factory=list)
+    ethernet_broadcast_domains: list[OntapBroadcastDomain] = Field(default_factory=list)
     ipspaces: list[str] = Field(default_factory=list)
-    dns: list[DNSInfo] = Field(default_factory=list)
-    ip_subnets: list[IPSubnetInfo] = Field(default_factory=list)
+    dns: list[OntapDns] = Field(default_factory=list)
+    ip_subnets: list[OntapIpSubnet] = Field(default_factory=list)

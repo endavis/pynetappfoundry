@@ -1,4 +1,4 @@
-"""Snapshot policy information — /storage/snapshot-policies."""
+"""OntapSnapshotPolicy information."""
 
 from __future__ import annotations
 
@@ -7,21 +7,25 @@ from pydantic import Field
 from pynetappfoundry.cache._base import CacheModel
 
 
-class SnapshotScheduleInfo(CacheModel):
-    """Schedule entry within a snapshot policy."""
+class OntapSnapshotPolicyCopy(CacheModel):
+    """OntapSnapshotPolicyCopy sub-model for copies."""
 
-    schedule: str = ""
-    count: int = 0
-    prefix: str = ""
-    snapmirror_label: str = ""
+    copies_count: int = 0
+    copies_prefix: str = ""
+    copies_retention_period: str = ""
+    copies_schedule_name: str = ""
+    copies_schedule_uuid: str = ""
+    copies_snapmirror_label: str = ""
 
 
-class SnapshotPolicyInfo(CacheModel):
-    """Snapshot policy information."""
+class OntapSnapshotPolicy(CacheModel):
+    """OntapSnapshotPolicy information."""
 
-    uuid: str = ""
+    comment: str = ""
+    copies: list[OntapSnapshotPolicyCopy] = Field(default_factory=list)
+    enabled: bool = False
     name: str = ""
-    svm: str = ""
-    enabled: bool = True
-    scope: str = ""  # cluster, svm
-    schedules: list[SnapshotScheduleInfo] = Field(default_factory=list)
+    scope: str = ""
+    svm_name: str = ""
+    svm_uuid: str = ""
+    uuid: str = ""

@@ -1,0 +1,76 @@
+[endpoint]
+path = "/storage/tape-devices"
+schema = "tape_device"
+class_name = "OntapTapeDevice"
+
+[fields.alias_mapping]
+cache_strategy = "cache"
+
+[fields.alias_name]
+cache_strategy = "cache"
+
+[fields.aliases]
+cache_strategy = "cache"
+
+[fields.block_number]
+cache_strategy = "cache"
+
+[fields.density]
+cache_strategy = "cache"
+
+[fields.description]
+cache_strategy = "cache"
+
+[fields.device_id]
+cache_strategy = "cache"
+
+[fields.device_names]
+cache_strategy = "cache"
+
+[fields.device_state]
+cache_strategy = "cache"
+
+[fields.file_number]
+cache_strategy = "cache"
+
+[fields.formats]
+cache_strategy = "cache"
+
+[fields.interface]
+cache_strategy = "cache"
+
+[fields.node_name]
+cache_strategy = "cache"
+
+[fields.node_uuid]
+cache_strategy = "cache"
+
+[fields.online]
+cache_strategy = "cache"
+
+[fields.position_count]
+cache_strategy = "cache"
+
+[fields.position_operation]
+cache_strategy = "cache"
+
+[fields.reservation_type]
+cache_strategy = "cache"
+
+[fields.residual_count]
+cache_strategy = "cache"
+
+[fields.serial_number]
+cache_strategy = "cache"
+
+[fields.storage_port_name]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.wwnn]
+cache_strategy = "cache"
+
+[fields.wwpn]
+cache_strategy = "cache"

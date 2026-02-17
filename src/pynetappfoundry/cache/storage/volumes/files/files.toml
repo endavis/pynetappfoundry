@@ -1,0 +1,129 @@
+[endpoint]
+path = "/storage/volumes/{volume.uuid}/files/{path}"
+schema = "file_info"
+class_name = "OntapFileInfo"
+
+[fields.accessed_time]
+cache_strategy = "cache"
+
+[fields.analytics_by_accessed_time_bytes_used_labels]
+cache_strategy = "cache"
+
+[fields.analytics_by_accessed_time_bytes_used_newest_label]
+cache_strategy = "cache"
+
+[fields.analytics_by_accessed_time_bytes_used_percentages]
+cache_strategy = "cache"
+
+[fields.analytics_by_accessed_time_bytes_used_values]
+cache_strategy = "cache"
+
+[fields.analytics_by_modified_time_bytes_used_labels]
+cache_strategy = "cache"
+
+[fields.analytics_by_modified_time_bytes_used_newest_label]
+cache_strategy = "cache"
+
+[fields.analytics_by_modified_time_bytes_used_percentages]
+cache_strategy = "cache"
+
+[fields.analytics_by_modified_time_bytes_used_values]
+cache_strategy = "cache"
+
+[fields.analytics_bytes_used]
+cache_strategy = "cache"
+
+[fields.analytics_file_count]
+cache_strategy = "cache"
+
+[fields.analytics_incomplete_data]
+cache_strategy = "cache"
+
+[fields.analytics_subdir_count]
+cache_strategy = "cache"
+
+[fields.bytes_used]
+cache_strategy = "cache"
+
+[fields.changed_time]
+cache_strategy = "cache"
+
+[fields.constituent_name]
+cache_strategy = "cache"
+
+[fields.constituent_uuid]
+cache_strategy = "cache"
+
+[fields.creation_time]
+cache_strategy = "cache"
+
+[fields.fill_enabled]
+cache_strategy = "cache"
+
+[fields.group_id]
+cache_strategy = "cache"
+
+[fields.hard_links_count]
+cache_strategy = "cache"
+
+[fields.inode_generation]
+cache_strategy = "cache"
+
+[fields.inode_number]
+cache_strategy = "cache"
+
+[fields.is_empty]
+cache_strategy = "cache"
+
+[fields.is_junction]
+cache_strategy = "cache"
+
+[fields.is_snapshot]
+cache_strategy = "cache"
+
+[fields.is_vm_aligned]
+cache_strategy = "cache"
+
+[fields.modified_time]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.overwrite_enabled]
+cache_strategy = "cache"
+
+[fields.owner_id]
+cache_strategy = "cache"
+
+[fields.path]
+cache_strategy = "cache"
+
+[fields.qos_policy_name]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.qos_policy_uuid]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.size]
+cache_strategy = "cache"
+
+[fields.target]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.unique_bytes]
+cache_strategy = "cache"
+
+[fields.unix_permissions]
+cache_strategy = "cache"
+
+[fields.volume_name]
+cache_strategy = "cache"
+
+[fields.volume_uuid]
+cache_strategy = "cache"

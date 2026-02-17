@@ -1,17 +1,171 @@
-"""NFS service information — /protocols/nfs/services."""
+# ruff: noqa: N815
+"""OntapNfsService information."""
 
 from __future__ import annotations
+
+from pydantic import Field
 
 from pynetappfoundry.cache._base import CacheModel
 
 
-class NFSServiceInfo(CacheModel):
-    """NFS service configuration per SVM."""
+class OntapNfsService(CacheModel):
+    """OntapNfsService information."""
 
-    svm: str = ""
+    access_cache_config_harvest_timeout: int = 0
+    access_cache_config_isDnsTTLEnabled: bool = False
+    access_cache_config_ttl_failure: int = 0
+    access_cache_config_ttl_negative: int = 0
+    access_cache_config_ttl_positive: int = 0
+    auth_sys_extended_groups_enabled: bool = False
+    credential_cache_negative_ttl: int = 0
+    credential_cache_positive_ttl: int = 0
+    credential_cache_transient_error_ttl: int = 0
     enabled: bool = False
+    exports_name_service_lookup_protocol: str = ""
+    exports_netgroup_trust_any_nsswitch_no_match: bool = False
+    extended_groups_limit: int = 0
+    file_session_io_grouping_count: int = 0
+    file_session_io_grouping_duration: int = 0
+    metric_v3_duration: str = ""
+    metric_v3_iops_other: int = 0
+    metric_v3_iops_read: int = 0
+    metric_v3_iops_total: int = 0
+    metric_v3_iops_write: int = 0
+    metric_v3_latency_other: int = 0
+    metric_v3_latency_read: int = 0
+    metric_v3_latency_total: int = 0
+    metric_v3_latency_write: int = 0
+    metric_v3_status: str = ""
+    metric_v3_throughput_read: int = 0
+    metric_v3_throughput_total: int = 0
+    metric_v3_throughput_write: int = 0
+    metric_v3_timestamp: str = ""
+    metric_v4_duration: str = ""
+    metric_v4_iops_other: int = 0
+    metric_v4_iops_read: int = 0
+    metric_v4_iops_total: int = 0
+    metric_v4_iops_write: int = 0
+    metric_v4_latency_other: int = 0
+    metric_v4_latency_read: int = 0
+    metric_v4_latency_total: int = 0
+    metric_v4_latency_write: int = 0
+    metric_v4_status: str = ""
+    metric_v4_throughput_read: int = 0
+    metric_v4_throughput_total: int = 0
+    metric_v4_throughput_write: int = 0
+    metric_v4_timestamp: str = ""
+    metric_v41_duration: str = ""
+    metric_v41_iops_other: int = 0
+    metric_v41_iops_read: int = 0
+    metric_v41_iops_total: int = 0
+    metric_v41_iops_write: int = 0
+    metric_v41_latency_other: int = 0
+    metric_v41_latency_read: int = 0
+    metric_v41_latency_total: int = 0
+    metric_v41_latency_write: int = 0
+    metric_v41_status: str = ""
+    metric_v41_throughput_read: int = 0
+    metric_v41_throughput_total: int = 0
+    metric_v41_throughput_write: int = 0
+    metric_v41_timestamp: str = ""
+    protocol_v3_64bit_identifiers_enabled: bool = False
     protocol_v3_enabled: bool = False
-    protocol_v4_enabled: bool = False
+    protocol_v3_features_connection_drop: bool = False
+    protocol_v3_features_ejukebox_enabled: bool = False
+    protocol_v3_features_fsid_change: bool = False
+    protocol_v3_features_hide_snapshot_enabled: bool = False
+    protocol_v3_features_mount_daemon_port: int = 0
+    protocol_v3_features_mount_root_only: bool = False
+    protocol_v3_features_network_lock_manager_port: int = 0
+    protocol_v3_features_network_status_monitor_port: int = 0
+    protocol_v3_features_rquota_daemon_port: int = 0
+    protocol_v40_enabled: bool = False
+    protocol_v40_features_acl_enabled: bool = False
+    protocol_v40_features_acl_max_aces: int = 0
+    protocol_v40_features_acl_preserve: bool = False
+    protocol_v40_features_read_delegation_enabled: bool = False
+    protocol_v40_features_referrals_enabled: bool = False
+    protocol_v40_features_write_delegation_enabled: bool = False
     protocol_v41_enabled: bool = False
+    protocol_v41_features_acl_enabled: bool = False
+    protocol_v41_features_implementation_domain: str = ""
+    protocol_v41_features_implementation_name: str = ""
+    protocol_v41_features_pnfs_enabled: bool = False
+    protocol_v41_features_read_delegation_enabled: bool = False
+    protocol_v41_features_referrals_enabled: bool = False
+    protocol_v41_features_trunking_enabled: bool = False
+    protocol_v41_features_write_delegation_enabled: bool = False
+    protocol_v42_features_seclabel_enabled: bool = False
+    protocol_v42_features_sparsefile_ops_enabled: bool = False
+    protocol_v42_features_xattrs_enabled: bool = False
+    protocol_v4_64bit_identifiers_enabled: bool = False
+    protocol_v4_fsid_change: bool = False
+    protocol_v4_grace_seconds: int = 0
+    protocol_v4_id_domain: str = ""
+    protocol_v4_lease_seconds: int = 0
+    protocol_v4_session_slot_reply_cache_size: int = 0
+    protocol_v4_session_slots: int = 0
+    protocol_access_rules_cifs_access_type: str = ""
+    protocol_access_rules_nfs3_access_type: str = ""
+    protocol_access_rules_nfs4_access_type: str = ""
+    qtree_export_enabled: bool = False
+    qtree_validate_export: bool = False
+    root_ignore_nt_acl: bool = False
+    root_skip_write_permission_check: bool = False
+    rquota_enabled: bool = False
+    security_chown_mode: str = ""
+    security_nt_acl_display_permission: bool = False
+    security_ntfs_unix_security: str = ""
+    security_permitted_encryption_types: list[str] = Field(default_factory=list)
+    security_rpcsec_context_idle: int = 0
     showmount_enabled: bool = False
+    state: str = ""
+    statistics_v3_iops_raw_other: int = 0
+    statistics_v3_iops_raw_read: int = 0
+    statistics_v3_iops_raw_total: int = 0
+    statistics_v3_iops_raw_write: int = 0
+    statistics_v3_latency_raw_other: int = 0
+    statistics_v3_latency_raw_read: int = 0
+    statistics_v3_latency_raw_total: int = 0
+    statistics_v3_latency_raw_write: int = 0
+    statistics_v3_status: str = ""
+    statistics_v3_throughput_raw_read: int = 0
+    statistics_v3_throughput_raw_total: int = 0
+    statistics_v3_throughput_raw_write: int = 0
+    statistics_v3_timestamp: str = ""
+    statistics_v4_iops_raw_other: int = 0
+    statistics_v4_iops_raw_read: int = 0
+    statistics_v4_iops_raw_total: int = 0
+    statistics_v4_iops_raw_write: int = 0
+    statistics_v4_latency_raw_other: int = 0
+    statistics_v4_latency_raw_read: int = 0
+    statistics_v4_latency_raw_total: int = 0
+    statistics_v4_latency_raw_write: int = 0
+    statistics_v4_status: str = ""
+    statistics_v4_throughput_raw_read: int = 0
+    statistics_v4_throughput_raw_total: int = 0
+    statistics_v4_throughput_raw_write: int = 0
+    statistics_v4_timestamp: str = ""
+    statistics_v41_iops_raw_other: int = 0
+    statistics_v41_iops_raw_read: int = 0
+    statistics_v41_iops_raw_total: int = 0
+    statistics_v41_iops_raw_write: int = 0
+    statistics_v41_latency_raw_other: int = 0
+    statistics_v41_latency_raw_read: int = 0
+    statistics_v41_latency_raw_total: int = 0
+    statistics_v41_latency_raw_write: int = 0
+    statistics_v41_status: str = ""
+    statistics_v41_throughput_raw_read: int = 0
+    statistics_v41_throughput_raw_total: int = 0
+    statistics_v41_throughput_raw_write: int = 0
+    statistics_v41_timestamp: str = ""
+    svm_name: str = ""
+    svm_uuid: str = ""
+    transport_rdma_enabled: bool = False
+    transport_tcp_enabled: bool = False
+    transport_tcp_max_transfer_size: int = 0
+    transport_udp_enabled: bool = False
     vstorage_enabled: bool = False
+    windows_default_user: str = ""
+    windows_map_unknown_uid_to_default_user: bool = False
+    windows_v3_ms_dos_client_enabled: bool = False

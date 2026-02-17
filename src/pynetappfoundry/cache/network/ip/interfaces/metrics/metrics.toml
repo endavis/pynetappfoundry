@@ -1,0 +1,25 @@
+[endpoint]
+path = "/network/ip/interfaces/{uuid}/metrics"
+schema = "interface_metrics_response"
+class_name = "OntapInterfaceMetricsResponse"
+
+[fields.duration]
+cache_strategy = "cache"
+
+[fields.status]
+cache_strategy = "cache"
+
+[fields.throughput_read]
+cache_strategy = "cache"
+
+[fields.throughput_total]
+cache_strategy = "cache"
+
+[fields.throughput_write]
+cache_strategy = "cache"
+
+[fields.timestamp]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

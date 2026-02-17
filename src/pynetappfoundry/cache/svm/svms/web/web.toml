@@ -1,0 +1,22 @@
+[endpoint]
+path = "/svm/svms/{svm.uuid}/web"
+schema = "web_svm"
+class_name = "OntapWebSvm"
+
+[fields.certificate_name]
+cache_strategy = "cache"
+
+[fields.certificate_uuid]
+cache_strategy = "cache"
+
+[fields.client_enabled]
+cache_strategy = "cache"
+
+[fields.ocsp_enabled]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"

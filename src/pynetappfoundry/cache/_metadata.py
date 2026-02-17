@@ -19,17 +19,19 @@ from pynetappfoundry.cache._base import (
     _utcnow,
 )
 from pynetappfoundry.cache.cloud.metadata.model import CloudMetadata
-from pynetappfoundry.cache.cluster.licensing.model import LicensePackage
-from pynetappfoundry.cache.cluster.mediators.model import MediatorInfo
+from pynetappfoundry.cache.cluster.licensing.licenses.model import (
+    OntapLicensePackageResponse,
+)
+from pynetappfoundry.cache.cluster.mediators.model import OntapMediatorResponse
 from pynetappfoundry.cache.cluster.model import ClusterInfo
-from pynetappfoundry.cache.cluster.nodes.model import NodeInfo
+from pynetappfoundry.cache.cluster.nodes.model import OntapNodeResponse
 from pynetappfoundry.cache.network.model import NetworkInfo
 from pynetappfoundry.cache.protocols.model import ProtocolsInfo
 from pynetappfoundry.cache.snapmirror.relationships.model import (
-    SnapMirrorRelationship,
+    OntapSnapmirrorRelationship,
 )
 from pynetappfoundry.cache.storage.model import StorageInfo
-from pynetappfoundry.cache.svm.peers.model import SVMPeerInfo
+from pynetappfoundry.cache.svm.peers.model import OntapSvmPeer
 
 
 class RelationshipsInfo(CacheModel):
@@ -38,14 +40,14 @@ class RelationshipsInfo(CacheModel):
     Contains SnapMirror, cluster peering, and SVM peering info.
     """
 
-    snapmirror_destinations: list[SnapMirrorRelationship] = Field(default_factory=list)
-    cluster_peers: list[ClusterPeer] = Field(default_factory=list)
-    svm_peers: list[SVMPeerInfo] = Field(default_factory=list)
+    snapmirror_destinations: list[OntapSnapmirrorRelationship] = Field(default_factory=list)
+    cluster_peers: list[OntapClusterPeer] = Field(default_factory=list)
+    svm_peers: list[OntapSvmPeer] = Field(default_factory=list)
 
 
-# Deferred import to avoid circular reference — ClusterPeer used above in a
+# Deferred import to avoid circular reference — OntapClusterPeer used above in a
 # forward-reference string annotation, resolved here after the class body.
-from pynetappfoundry.cache.cluster.peers.model import ClusterPeer  # noqa: E402
+from pynetappfoundry.cache.cluster.peers.model import OntapClusterPeer  # noqa: E402
 
 RelationshipsInfo.model_rebuild()
 
@@ -74,11 +76,11 @@ class CachedClusterMetadata(CacheModel, register=False):
     # Data categories
     cloud: list[CloudMetadata] = Field(default_factory=list)
     cluster: ClusterInfo = Field(default_factory=ClusterInfo)
-    nodes: list[NodeInfo] = Field(default_factory=list)
+    nodes: list[OntapNodeResponse] = Field(default_factory=list)
     network: NetworkInfo = Field(default_factory=NetworkInfo)
     storage: StorageInfo = Field(default_factory=StorageInfo)
-    license_packages: list[LicensePackage] = Field(default_factory=list)
-    mediator: MediatorInfo = Field(default_factory=MediatorInfo)
+    license_packages: list[OntapLicensePackageResponse] = Field(default_factory=list)
+    mediator: OntapMediatorResponse = Field(default_factory=OntapMediatorResponse)
     relationships: RelationshipsInfo = Field(default_factory=RelationshipsInfo)
     protocols: ProtocolsInfo = Field(default_factory=ProtocolsInfo)
 
@@ -122,7 +124,7 @@ class CachedClusterMetadata(CacheModel, register=False):
 
     @cached_property
     def uuid_index(self) -> dict[str, HasUUID]:
-        """Build a flat UUID → object index across all cached object types.
+        """Build a flat UUID -> object index across all cached object types.
 
         Discovers UUID-bearing objects via introspection: walks all model fields
         on this instance and nested BaseModel containers, indexing any list item

@@ -1,0 +1,19 @@
+[endpoint]
+path = "/cluster/metrocluster/dr-groups"
+schema = "metrocluster_dr_group"
+class_name = "OntapMetroclusterDrGroup"
+
+[fields.dr_pairs]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.mccip_ports]
+cache_strategy = "cache"
+
+[fields.partner_cluster_name]
+cache_strategy = "cache"
+
+[fields.partner_cluster_uuid]
+cache_strategy = "cache"

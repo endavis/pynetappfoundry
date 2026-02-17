@@ -1,0 +1,19 @@
+[endpoint]
+path = "/protocols/nfs/export-policies/{policy.id}/rules/{index}/clients"
+schema = "export_client"
+class_name = "OntapExportClient"
+
+[fields.index]
+cache_strategy = "cache"
+
+[fields.match]
+cache_strategy = "cache"
+
+[fields.policy_id]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"

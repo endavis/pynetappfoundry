@@ -1,0 +1,22 @@
+[endpoint]
+path = "/protocols/ndmp/nodes"
+schema = "ndmp_node"
+class_name = "OntapNdmpNode"
+
+[fields.authentication_types]
+cache_strategy = "cache"
+
+[fields.enabled]
+cache_strategy = "cache"
+
+[fields.node_name]
+cache_strategy = "cache"
+
+[fields.node_uuid]
+cache_strategy = "cache"
+
+[fields.password]
+cache_strategy = "cache"
+
+[fields.user]
+cache_strategy = "cache"

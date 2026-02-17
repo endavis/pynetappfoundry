@@ -1,9 +1,5 @@
-"""Re-export NFS service cache models."""
+"""OntapNfsService cache model."""
 
-from __future__ import annotations
+from pynetappfoundry.cache.protocols.nfs.services.model import OntapNfsService
 
-from pynetappfoundry.cache.protocols.nfs.services.model import NFSServiceInfo
-
-__all__ = [
-    "NFSServiceInfo",
-]
+__all__ = ["OntapNfsService"]

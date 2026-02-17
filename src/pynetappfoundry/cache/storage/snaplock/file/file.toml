@@ -1,0 +1,31 @@
+[endpoint]
+path = "/storage/snaplock/file/{volume.uuid}/{path}"
+schema = "snaplock_file_retention"
+class_name = "OntapSnaplockFileRetention"
+
+[fields.expiry_time]
+cache_strategy = "cache"
+
+[fields.file_path]
+cache_strategy = "cache"
+
+[fields.is_expired]
+cache_strategy = "cache"
+
+[fields.retention_period]
+cache_strategy = "cache"
+
+[fields.seconds_until_expiry]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.volume_name]
+cache_strategy = "cache"
+
+[fields.volume_uuid]
+cache_strategy = "cache"

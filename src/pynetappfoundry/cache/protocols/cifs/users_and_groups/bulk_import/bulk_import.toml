@@ -1,0 +1,46 @@
+[endpoint]
+path = "/protocols/cifs/users-and-groups/bulk-import/{svm.uuid}"
+schema = "local_cifs_users_and_groups_import"
+class_name = "OntapLocalCifsUsersAndGroupsImport"
+
+[fields.decryption_password]
+cache_strategy = "cache"
+
+[fields.detailed_status_code]
+cache_strategy = "cache"
+
+[fields.detailed_status_message]
+cache_strategy = "cache"
+
+[fields.elements_ignored]
+cache_strategy = "cache"
+
+[fields.elements_imported]
+cache_strategy = "cache"
+
+[fields.import_uri_password]
+cache_strategy = "cache"
+
+[fields.import_uri_path]
+cache_strategy = "cache"
+
+[fields.import_uri_username]
+cache_strategy = "cache"
+
+[fields.state]
+cache_strategy = "cache"
+
+[fields.status_uri_password]
+cache_strategy = "cache"
+
+[fields.status_uri_path]
+cache_strategy = "cache"
+
+[fields.status_uri_username]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"

@@ -1,0 +1,40 @@
+[endpoint]
+path = "/network/fc/logins"
+schema = "fc_login"
+class_name = "OntapFcLogin"
+
+[fields.igroups]
+cache_strategy = "cache"
+
+[fields.initiator_aliases]
+cache_strategy = "cache"
+
+[fields.initiator_comment]
+cache_strategy = "cache"
+
+[fields.initiator_port_address]
+cache_strategy = "cache"
+
+[fields.initiator_wwnn]
+cache_strategy = "cache"
+
+[fields.initiator_wwpn]
+cache_strategy = "cache"
+
+[fields.interface_name]
+cache_strategy = "cache"
+
+[fields.interface_uuid]
+cache_strategy = "cache"
+
+[fields.interface_wwpn]
+cache_strategy = "cache"
+
+[fields.protocol]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"

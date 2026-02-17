@@ -1,0 +1,28 @@
+[endpoint]
+path = "/protocols/cifs/shares/{svm.uuid}/{share}/acls"
+schema = "cifs_share_acl"
+class_name = "OntapCifsShareAcl"
+
+[fields.permission]
+cache_strategy = "cache"
+
+[fields.share]
+cache_strategy = "cache"
+
+[fields.sid]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.unix_id]
+cache_strategy = "cache"
+
+[fields.user_or_group]
+cache_strategy = "cache"

@@ -1,11 +1,5 @@
-"""Re-export DNS cache models and mappings."""
+"""OntapDns cache model."""
 
-from __future__ import annotations
+from pynetappfoundry.cache.name_services.dns.model import OntapDns
 
-from pynetappfoundry.cache.name_services.dns.mapping import DNS_MAPPING
-from pynetappfoundry.cache.name_services.dns.model import DNSInfo
-
-__all__ = [
-    "DNS_MAPPING",
-    "DNSInfo",
-]
+__all__ = ["OntapDns"]

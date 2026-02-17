@@ -1,0 +1,76 @@
+[endpoint]
+path = "/security/ipsec/policies"
+schema = "ipsec_policy_response"
+class_name = "OntapIpsecPolicyResponse"
+
+[fields.action]
+cache_strategy = "cache"
+
+[fields.authentication_method]
+cache_strategy = "cache"
+
+[fields.certificate_name]
+cache_strategy = "cache"
+
+[fields.certificate_uuid]
+cache_strategy = "cache"
+
+[fields.enabled]
+cache_strategy = "cache"
+
+[fields.ipspace_name]
+cache_strategy = "cache"
+
+[fields.ipspace_uuid]
+cache_strategy = "cache"
+
+[fields.local_endpoint_address]
+cache_strategy = "cache"
+
+[fields.local_endpoint_family]
+cache_strategy = "cache"
+
+[fields.local_endpoint_netmask]
+cache_strategy = "cache"
+
+[fields.local_endpoint_port]
+cache_strategy = "cache"
+
+[fields.local_identity]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.protocol]
+cache_strategy = "cache"
+
+[fields.remote_endpoint_address]
+cache_strategy = "cache"
+
+[fields.remote_endpoint_family]
+cache_strategy = "cache"
+
+[fields.remote_endpoint_netmask]
+cache_strategy = "cache"
+
+[fields.remote_endpoint_port]
+cache_strategy = "cache"
+
+[fields.remote_identity]
+cache_strategy = "cache"
+
+[fields.scope]
+cache_strategy = "cache"
+
+[fields.secret_key]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

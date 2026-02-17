@@ -1,0 +1,7 @@
+[endpoint]
+path = "/protocols/ndmp"
+schema = "cluster_ndmp_properties"
+class_name = "OntapClusterNdmpProperties"
+
+[fields.mode]
+cache_strategy = "cache"

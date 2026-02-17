@@ -1,9 +1,5 @@
-"""Re-export SAN igroup cache models."""
+"""OntapIgroup cache model."""
 
-from __future__ import annotations
+from pynetappfoundry.cache.protocols.san.igroups.model import OntapIgroup
 
-from pynetappfoundry.cache.protocols.san.igroups.model import IgroupInfo
-
-__all__ = [
-    "IgroupInfo",
-]
+__all__ = ["OntapIgroup"]

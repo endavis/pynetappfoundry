@@ -1,0 +1,103 @@
+[endpoint]
+path = "/protocols/san/igroups"
+schema = "igroup"
+class_name = "OntapIgroup"
+
+[fields.comment]
+cache_strategy = "cache"
+
+[fields.connectivity_tracking_alerts]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.connectivity_tracking_connection_state]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.connectivity_tracking_required_nodes]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.delete_on_unmap]
+cache_strategy = "cache"
+
+[fields.igroups]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.initiators]
+cache_strategy = "cache"
+
+[fields.lun_maps]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.os_type]
+cache_strategy = "cache"
+
+[fields.parent_igroups]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.portset_name]
+cache_strategy = "cache"
+
+[fields.portset_uuid]
+cache_strategy = "cache"
+
+[fields.protocol]
+cache_strategy = "cache"
+
+[fields.replication_error_igroup_local_svm]
+cache_strategy = "cache"
+
+[fields.replication_error_igroup_name]
+cache_strategy = "cache"
+
+[fields.replication_error_igroup_uuid]
+cache_strategy = "cache"
+
+[fields.replication_error_summary_arguments]
+cache_strategy = "cache"
+
+[fields.replication_error_summary_code]
+cache_strategy = "cache"
+
+[fields.replication_error_summary_message]
+cache_strategy = "cache"
+
+[fields.replication_peer_svm_name]
+cache_strategy = "cache"
+
+[fields.replication_peer_svm_uuid]
+cache_strategy = "cache"
+
+[fields.replication_state]
+cache_strategy = "cache"
+
+[fields.supports_igroups]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.target_firmware_revision]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.target_product_id]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.target_vendor_id]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.uuid]
+cache_strategy = "cache"

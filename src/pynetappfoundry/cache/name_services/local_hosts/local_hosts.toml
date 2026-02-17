@@ -1,0 +1,22 @@
+[endpoint]
+path = "/name-services/local-hosts"
+schema = "local_host"
+class_name = "OntapLocalHost"
+
+[fields.address]
+cache_strategy = "cache"
+
+[fields.aliases]
+cache_strategy = "cache"
+
+[fields.hostname]
+cache_strategy = "cache"
+
+[fields.owner_name]
+cache_strategy = "cache"
+
+[fields.owner_uuid]
+cache_strategy = "cache"
+
+[fields.scope]
+cache_strategy = "cache"

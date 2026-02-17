@@ -164,12 +164,67 @@ def _singularize(name: str) -> str:
     return name
 
 
+_PYTHON_KEYWORDS: frozenset[str] = frozenset(
+    {
+        "False",
+        "None",
+        "True",
+        "and",
+        "as",
+        "assert",
+        "async",
+        "await",
+        "break",
+        "class",
+        "continue",
+        "def",
+        "del",
+        "elif",
+        "else",
+        "except",
+        "finally",
+        "for",
+        "from",
+        "global",
+        "if",
+        "import",
+        "in",
+        "is",
+        "lambda",
+        "nonlocal",
+        "not",
+        "or",
+        "pass",
+        "raise",
+        "return",
+        "try",
+        "while",
+        "with",
+        "yield",
+        "type",
+        # Pydantic BaseModel reserved attributes
+        "schema",
+        "model",
+    }
+)
+
+
+def _safe_attr_name(name: str) -> str:
+    """Append underscore to Python reserved words.
+
+    ``"class"`` → ``"class_"``
+    ``"type"`` → ``"type_"``
+    """
+    return f"{name}_" if name in _PYTHON_KEYWORDS else name
+
+
 def _field_to_cache_attr(field: ParsedField) -> str:
     """Convert a ParsedField's api_path to a flat cache attribute name.
 
     ``"svm.name"`` → ``"svm_name"``
     ``"autosize.mode"`` → ``"autosize_mode"``
     ``"nas.export_policy.name"`` → ``"nas_export_policy_name"``
+    ``"class"`` → ``"class_"``
 
     Args:
         field: Parsed field.
@@ -177,7 +232,8 @@ def _field_to_cache_attr(field: ParsedField) -> str:
     Returns:
         Flat Python attribute name.
     """
-    return field.api_path.replace(".", "_").replace("-", "_")
+    attr = field.api_path.replace(".", "_").replace("-", "_")
+    return _safe_attr_name(attr)
 
 
 def _sub_model_name(parent_class: str, field: ParsedField) -> str:
@@ -230,17 +286,20 @@ def _python_type_annotation(field: ParsedField, sub_model_map: dict[str, str] | 
     return field.python_type
 
 
-def _python_default_repr(field: ParsedField) -> str:
+def _python_default_repr(field: ParsedField, *, for_mapping: bool = False) -> str:
     """Get the Python default value representation for a field.
 
     Args:
         field: Parsed field.
+        for_mapping: If True, emit plain ``[]`` for list fields instead of
+            ``Field(default_factory=list)``.  FieldMapping defaults are plain
+            values, not Pydantic Field descriptors.
 
     Returns:
         Default value as Python source code.
     """
     if field.is_list:
-        return "Field(default_factory=list)"
+        return "[]" if for_mapping else "Field(default_factory=list)"
     default = field.default
     if isinstance(default, str):
         return f'"{default}"'
@@ -287,15 +346,22 @@ def generate_model(endpoint: ParsedEndpoint, api_type: str = "ontap") -> str:
         Python source code for the model module.
     """
     class_name = _path_to_class_name(endpoint.path, endpoint.schema_name, api_type)
-    doc = f"{class_name} — {endpoint.path}."
+    doc = f"{class_name} information."
     leaves = _select_leaf_fields(endpoint.fields)
 
     # Identify fields that get typed sub-models
     sub_model_map: dict[str, str] = {}  # field api_path -> sub-model class name
     sub_model_fields: list[tuple[str, ParsedField]] = []  # (sub_class_name, field)
+    _seen_sub_names: dict[str, int] = {}
     for field in leaves:
         if _has_typed_sub_fields(field):
             sub_cls = _sub_model_name(class_name, field)
+            # Deduplicate sub-model class names
+            if sub_cls in _seen_sub_names:
+                _seen_sub_names[sub_cls] += 1
+                sub_cls = f"{sub_cls}{_seen_sub_names[sub_cls]}"
+            else:
+                _seen_sub_names[sub_cls] = 1
             sub_model_map[field.api_path] = sub_cls
             sub_model_fields.append((sub_cls, field))
 
@@ -306,11 +372,17 @@ def generate_model(endpoint: ParsedEndpoint, api_type: str = "ontap") -> str:
     )
     needs_uuid_import = any(f.is_uuid for f in leaves)
 
-    # Check sub-model fields for UUID needs
+    # Check sub-model fields for UUID needs and Any needs
     for _sub_cls, sf in sub_model_fields:
         sub_leaves = _select_leaf_fields(sf.sub_fields)
         if any(ssf.is_uuid for ssf in sub_leaves):
             needs_uuid_import = True
+        # Sub-model may have list[dict[str, Any]] fields that need Any import
+        if any(ssf.is_list and ssf.is_object for ssf in sub_leaves):
+            needs_any_import = True
+        # Sub-model may have list fields needing Field import
+        if any(ssf.is_list for ssf in sub_leaves):
+            needs_field_import = True
 
     lines = [
         f'"""{doc}"""',
@@ -347,8 +419,13 @@ def generate_model(endpoint: ParsedEndpoint, api_type: str = "ontap") -> str:
         if not sub_leaves:
             lines.append("    pass")
         else:
+            seen_attrs: set[str] = set()
             for sf in sub_leaves:
-                attr = sf.name.replace("-", "_")
+                attr = _safe_attr_name(sf.api_path.replace(".", "_").replace("-", "_"))
+                # Deduplicate: if attr already seen, skip
+                if attr in seen_attrs:
+                    continue
+                seen_attrs.add(attr)
                 type_ann = _python_type_annotation(sf)
                 default_repr = _python_default_repr(sf)
                 lines.append(f"    {attr}: {type_ann} = {default_repr}")
@@ -362,14 +439,22 @@ def generate_model(endpoint: ParsedEndpoint, api_type: str = "ontap") -> str:
     if not leaves:
         lines.append("    pass")
     else:
+        parent_seen: set[str] = set()
         for field in leaves:
             attr = _field_to_cache_attr(field)
+            if attr in parent_seen:
+                continue  # skip duplicate flattened names
+            parent_seen.add(attr)
             type_ann = _python_type_annotation(field, sub_model_map)
             default_repr = _python_default_repr(field)
             lines.append(f"    {attr}: {type_ann} = {default_repr}")
 
     lines.append("")
-    return "\n".join(lines)
+    result = "\n".join(lines)
+    # Add noqa directive if any line exceeds the line-length limit
+    if any(len(line) > 100 for line in lines):
+        result = "# ruff: noqa: E501\n" + result
+    return result
 
 
 def generate_mapping(
@@ -397,11 +482,18 @@ def generate_mapping(
     mapping_name = f"{class_name.upper()}_MAPPING"
     leaves = _select_leaf_fields(endpoint.fields)
 
-    # Identify sub-model fields
+    # Identify sub-model fields (must mirror dedup logic from generate_model)
     sub_model_map: dict[str, str] = {}
+    _seen_sub_names: dict[str, int] = {}
     for field in leaves:
         if _has_typed_sub_fields(field):
-            sub_model_map[field.api_path] = _sub_model_name(class_name, field)
+            sub_cls = _sub_model_name(class_name, field)
+            if sub_cls in _seen_sub_names:
+                _seen_sub_names[sub_cls] += 1
+                sub_cls = f"{sub_cls}{_seen_sub_names[sub_cls]}"
+            else:
+                _seen_sub_names[sub_cls] = 1
+            sub_model_map[field.api_path] = sub_cls
 
     # Build the import path for the model
     model_import = f"pynetappfoundry.cache.{'.'.join(module_parts)}.model"
@@ -409,8 +501,9 @@ def generate_mapping(
     # Build model imports (parent class + any sub-model classes)
     model_classes = [class_name, *sorted(sub_model_map.values())]
 
+    docstring = f'"""{class_name} type mapping."""'
     lines = [
-        f'"""{class_name} type mapping — {endpoint.path}."""',
+        docstring,
         "",
         "from __future__ import annotations",
         "",
@@ -424,9 +517,17 @@ def generate_mapping(
         [
             "from pynetappfoundry.cache._registry import model_registry",
             "from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping",
-            f"from {model_import} import {', '.join(model_classes)}",
         ]
     )
+    # Split long model import across multiple lines
+    model_import_line = f"from {model_import} import {', '.join(model_classes)}"
+    if len(model_import_line) > 100:
+        lines.append(f"from {model_import} import (")
+        for cls in model_classes:
+            lines.append(f"    {cls},")
+        lines.append(")")
+    else:
+        lines.append(model_import_line)
 
     # Generate transform functions for sub-model fields
     if sub_model_map:
@@ -437,11 +538,24 @@ def generate_mapping(
             func_name = f"_transform_{_field_to_cache_attr(field)}"
             lines.append("")
             lines.append("")
-            lines.append(f"def {func_name}(record: dict[str, Any]) -> list[{sub_cls}]:")
-            lines.append(f'    """Transform {field.api_path} dicts into {sub_cls} instances."""')
-            lines.append(
+            sig = f"def {func_name}(record: dict[str, Any]) -> list[{sub_cls}]:"
+            if len(sig) > 100:
+                lines.append(f"def {func_name}(")
+                lines.append("    record: dict[str, Any],")
+                lines.append(f") -> list[{sub_cls}]:")
+            else:
+                lines.append(sig)
+            lines.append(f'    """Transform {field.api_path} into {sub_cls} list."""')
+            ret_line = (
                 f'    return [{sub_cls}(**item) for item in record.get("{field.api_path}", [])]'
             )
+            if len(ret_line) > 100:
+                lines.append("    return [")
+                lines.append(f"        {sub_cls}(**item)")
+                lines.append(f'        for item in record.get("{field.api_path}", [])')
+                lines.append("    ]")
+            else:
+                lines.append(ret_line)
 
     lines.append("")
     lines.append("")
@@ -473,9 +587,13 @@ def generate_mapping(
 
     lines.append("    fields=(")
 
+    seen_attrs: set[str] = set()
     for field in leaves:
         attr = _field_to_cache_attr(field)
-        default_repr = _python_default_repr(field)
+        if attr in seen_attrs:
+            continue
+        seen_attrs.add(attr)
+        default_repr = _python_default_repr(field, for_mapping=True)
 
         field_args = [f'        cache_attr="{attr}"']
 
@@ -486,7 +604,7 @@ def generate_mapping(
         else:
             field_args.append(f'        api_path="{field.api_path}"')
 
-        if field.default != "":
+        if field.default != "" or field.is_list:
             field_args.append(f"        default={default_repr}")
 
         if field.requires_explicit_fetch:
@@ -503,7 +621,10 @@ def generate_mapping(
     lines.append(f'model_registry.register_mapping("{class_name}", {mapping_name})')
     lines.append("")
 
-    return "\n".join(lines)
+    result = "\n".join(lines)
+    if any(len(line) > 100 for line in lines):
+        result = "# ruff: noqa: E501\n" + result
+    return result
 
 
 def generate_init(endpoint: ParsedEndpoint, api_type: str = "ontap") -> str:
@@ -519,14 +640,10 @@ def generate_init(endpoint: ParsedEndpoint, api_type: str = "ontap") -> str:
     class_name = _path_to_class_name(endpoint.path, endpoint.schema_name, api_type)
     module_parts = _path_to_module_parts(endpoint.path)
 
-    lines = [
-        f'"""{class_name} cache model — /{"/".join(module_parts)}."""',
-        "",
-        f"from pynetappfoundry.cache.{'.'.join(module_parts)}.model import {class_name}",
-        "",
-        f'__all__ = ["{class_name}"]',
-        "",
-    ]
+    docstring = f'"""{class_name} cache model."""'
+    import_line = f"from pynetappfoundry.cache.{'.'.join(module_parts)}.model import {class_name}"
+
+    lines = [docstring, "", import_line, "", f'__all__ = ["{class_name}"]', ""]
     return "\n".join(lines)
 
 

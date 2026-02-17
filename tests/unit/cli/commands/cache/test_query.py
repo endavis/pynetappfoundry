@@ -13,7 +13,7 @@ from click.testing import CliRunner
 from pynetappfoundry.cache import CachedClusterMetadata
 from pynetappfoundry.cache.cloud.metadata.model import CloudMetadata
 from pynetappfoundry.cache.cluster.model import ClusterInfo
-from pynetappfoundry.cache.cluster.nodes.model import NodeInfo
+from pynetappfoundry.cache.cluster.nodes.model import OntapNodeResponse
 from pynetappfoundry.cli.main import nf
 
 
@@ -58,8 +58,8 @@ base_api_path = "/api"
                 ontap_version="9.14.1",
             ),
             nodes=[
-                NodeInfo(name="node-01", serial_number="SN001"),
-                NodeInfo(name="node-02", serial_number="SN002"),
+                OntapNodeResponse(name="node-01", serial_number="SN001"),
+                OntapNodeResponse(name="node-02", serial_number="SN002"),
             ],
         )
 

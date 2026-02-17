@@ -1,0 +1,238 @@
+[endpoint]
+path = "/application/consistency-groups"
+schema = "consistency_group_response"
+class_name = "OntapConsistencyGroupResponse"
+
+[fields.application_component_type]
+cache_strategy = "cache"
+
+[fields.application_type]
+cache_strategy = "cache"
+
+[fields.clone_guarantee_type]
+cache_strategy = "cache"
+
+[fields.clone_is_flexclone]
+cache_strategy = "cache"
+
+[fields.clone_parent_consistency_group_name]
+cache_strategy = "cache"
+
+[fields.clone_parent_consistency_group_uuid]
+cache_strategy = "cache"
+
+[fields.clone_parent_snapshot_name]
+cache_strategy = "cache"
+
+[fields.clone_parent_snapshot_uuid]
+cache_strategy = "cache"
+
+[fields.clone_parent_svm_name]
+cache_strategy = "cache"
+
+[fields.clone_parent_svm_uuid]
+cache_strategy = "cache"
+
+[fields.clone_split_complete_percent]
+cache_strategy = "cache"
+
+[fields.clone_split_estimate]
+cache_strategy = "cache"
+
+[fields.clone_split_initiated]
+cache_strategy = "cache"
+
+[fields.clone_volume_prefix]
+cache_strategy = "cache"
+
+[fields.clone_volume_suffix]
+cache_strategy = "cache"
+
+[fields.consistency_groups]
+cache_strategy = "cache"
+
+[fields.luns]
+cache_strategy = "cache"
+
+[fields.metric_available_space]
+cache_strategy = "cache"
+
+[fields.metric_duration]
+cache_strategy = "cache"
+
+[fields.metric_iops_other]
+cache_strategy = "cache"
+
+[fields.metric_iops_read]
+cache_strategy = "cache"
+
+[fields.metric_iops_total]
+cache_strategy = "cache"
+
+[fields.metric_iops_write]
+cache_strategy = "cache"
+
+[fields.metric_latency_other]
+cache_strategy = "cache"
+
+[fields.metric_latency_read]
+cache_strategy = "cache"
+
+[fields.metric_latency_total]
+cache_strategy = "cache"
+
+[fields.metric_latency_write]
+cache_strategy = "cache"
+
+[fields.metric_size]
+cache_strategy = "cache"
+
+[fields.metric_status]
+cache_strategy = "cache"
+
+[fields.metric_throughput_other]
+cache_strategy = "cache"
+
+[fields.metric_throughput_read]
+cache_strategy = "cache"
+
+[fields.metric_throughput_total]
+cache_strategy = "cache"
+
+[fields.metric_throughput_write]
+cache_strategy = "cache"
+
+[fields.metric_timestamp]
+cache_strategy = "cache"
+
+[fields.metric_used_space]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.namespaces]
+cache_strategy = "cache"
+
+[fields.parent_consistency_group_name]
+cache_strategy = "cache"
+
+[fields.parent_consistency_group_uuid]
+cache_strategy = "cache"
+
+[fields.provisioning_options_action]
+cache_strategy = "cache"
+
+[fields.provisioning_options_name]
+cache_strategy = "cache"
+
+[fields.provisioning_options_storage_service_name]
+cache_strategy = "cache"
+
+[fields.qos_policy_name]
+cache_strategy = "cache"
+
+[fields.qos_policy_uuid]
+cache_strategy = "cache"
+
+[fields.replicated]
+cache_strategy = "cache"
+
+[fields.replication_relationships]
+cache_strategy = "cache"
+
+[fields.replication_source]
+cache_strategy = "cache"
+
+[fields.restore_to_snapshot_name]
+cache_strategy = "cache"
+
+[fields.restore_to_snapshot_uuid]
+cache_strategy = "cache"
+
+[fields.snapshot_policy_name]
+cache_strategy = "cache"
+
+[fields.snapshot_policy_uuid]
+cache_strategy = "cache"
+
+[fields.space_available]
+cache_strategy = "cache"
+
+[fields.space_size]
+cache_strategy = "cache"
+
+[fields.space_used]
+cache_strategy = "cache"
+
+[fields.statistics_available_space]
+cache_strategy = "cache"
+
+[fields.statistics_iops_raw_other]
+cache_strategy = "cache"
+
+[fields.statistics_iops_raw_read]
+cache_strategy = "cache"
+
+[fields.statistics_iops_raw_total]
+cache_strategy = "cache"
+
+[fields.statistics_iops_raw_write]
+cache_strategy = "cache"
+
+[fields.statistics_latency_raw_other]
+cache_strategy = "cache"
+
+[fields.statistics_latency_raw_read]
+cache_strategy = "cache"
+
+[fields.statistics_latency_raw_total]
+cache_strategy = "cache"
+
+[fields.statistics_latency_raw_write]
+cache_strategy = "cache"
+
+[fields.statistics_size]
+cache_strategy = "cache"
+
+[fields.statistics_status]
+cache_strategy = "cache"
+
+[fields.statistics_throughput_raw_other]
+cache_strategy = "cache"
+
+[fields.statistics_throughput_raw_read]
+cache_strategy = "cache"
+
+[fields.statistics_throughput_raw_total]
+cache_strategy = "cache"
+
+[fields.statistics_throughput_raw_write]
+cache_strategy = "cache"
+
+[fields.statistics_timestamp]
+cache_strategy = "cache"
+
+[fields.statistics_used_space]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.tiering_control]
+cache_strategy = "cache"
+
+[fields.tiering_object_stores]
+cache_strategy = "cache"
+
+[fields.tiering_policy]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"
+
+[fields.volumes]
+cache_strategy = "cache"

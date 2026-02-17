@@ -1,0 +1,16 @@
+[endpoint]
+path = "/protocols/cifs/users-and-groups/privileges"
+schema = "user_group_privileges"
+class_name = "OntapUserGroupPrivileges"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.privileges]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"

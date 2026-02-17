@@ -1,0 +1,25 @@
+[endpoint]
+path = "/name-services/cache/netgroup/settings"
+schema = "netgroups_settings"
+class_name = "OntapNetgroupsSettings"
+
+[fields.enabled]
+cache_strategy = "cache"
+
+[fields.negative_cache_enabled_byhost]
+cache_strategy = "cache"
+
+[fields.negative_ttl_byhost]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.ttl_byhost]
+cache_strategy = "cache"
+
+[fields.ttl_for_members]
+cache_strategy = "cache"

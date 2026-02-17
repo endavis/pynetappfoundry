@@ -1,0 +1,34 @@
+[endpoint]
+path = "/protocols/vscan/{svm.uuid}"
+schema = "vscan"
+class_name = "OntapVscan"
+
+[fields.enabled]
+cache_strategy = "cache"
+
+[fields.mandatory]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.scope_exclude_extensions]
+cache_strategy = "cache"
+
+[fields.scope_exclude_paths]
+cache_strategy = "cache"
+
+[fields.scope_include_extensions]
+cache_strategy = "cache"
+
+[fields.scope_max_file_size]
+cache_strategy = "cache"
+
+[fields.scope_only_execute_access]
+cache_strategy = "cache"
+
+[fields.scope_scan_readonly_volumes]
+cache_strategy = "cache"
+
+[fields.scope_scan_without_extension]
+cache_strategy = "cache"

@@ -1,0 +1,1 @@
+"""Coredump cache models."""

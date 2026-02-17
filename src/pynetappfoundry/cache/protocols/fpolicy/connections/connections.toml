@@ -1,0 +1,40 @@
+[endpoint]
+path = "/protocols/fpolicy/{svm.uuid}/connections"
+schema = "fpolicy_connection"
+class_name = "OntapFpolicyConnection"
+
+[fields.disconnected_reason_code]
+cache_strategy = "cache"
+
+[fields.disconnected_reason_message]
+cache_strategy = "cache"
+
+[fields.node_name]
+cache_strategy = "cache"
+
+[fields.node_uuid]
+cache_strategy = "cache"
+
+[fields.policy_name]
+cache_strategy = "cache"
+
+[fields.server]
+cache_strategy = "cache"
+
+[fields.session_uuid]
+cache_strategy = "cache"
+
+[fields.state]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.update_time]
+cache_strategy = "cache"

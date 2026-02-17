@@ -1,0 +1,43 @@
+[endpoint]
+path = "/storage/snaplock/event-retention/operations"
+schema = "ebr_operation"
+class_name = "OntapEbrOperation"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.num_files_failed]
+cache_strategy = "cache"
+
+[fields.num_files_processed]
+cache_strategy = "cache"
+
+[fields.num_files_skipped]
+cache_strategy = "cache"
+
+[fields.num_inodes_ignored]
+cache_strategy = "cache"
+
+[fields.path]
+cache_strategy = "cache"
+
+[fields.policy_name]
+cache_strategy = "cache"
+
+[fields.policy_retention_period]
+cache_strategy = "cache"
+
+[fields.state]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.volume_name]
+cache_strategy = "cache"
+
+[fields.volume_uuid]
+cache_strategy = "cache"

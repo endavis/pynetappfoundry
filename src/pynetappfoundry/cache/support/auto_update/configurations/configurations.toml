@@ -1,0 +1,19 @@
+[endpoint]
+path = "/support/auto-update/configurations"
+schema = "auto_update_configuration"
+class_name = "OntapAutoUpdateConfiguration"
+
+[fields.action]
+cache_strategy = "cache"
+
+[fields.category]
+cache_strategy = "cache"
+
+[fields.description_code]
+cache_strategy = "cache"
+
+[fields.description_message]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

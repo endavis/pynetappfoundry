@@ -1,9 +1,5 @@
-"""Re-export S3 bucket cache models."""
+"""OntapS3Bucket cache model."""
 
-from __future__ import annotations
+from pynetappfoundry.cache.protocols.s3.buckets.model import OntapS3Bucket
 
-from pynetappfoundry.cache.protocols.s3.buckets.model import S3BucketInfo
-
-__all__ = [
-    "S3BucketInfo",
-]
+__all__ = ["OntapS3Bucket"]

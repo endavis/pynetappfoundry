@@ -1,0 +1,61 @@
+[endpoint]
+path = "/security/multi-admin-verify/requests"
+schema = "multi_admin_verify_request"
+class_name = "OntapMultiAdminVerifyRequest"
+
+[fields.approve_expiry_time]
+cache_strategy = "cache"
+
+[fields.approve_time]
+cache_strategy = "cache"
+
+[fields.approved_users]
+cache_strategy = "cache"
+
+[fields.comment]
+cache_strategy = "cache"
+
+[fields.create_time]
+cache_strategy = "cache"
+
+[fields.execute_on_approval]
+cache_strategy = "cache"
+
+[fields.execution_expiry_time]
+cache_strategy = "cache"
+
+[fields.index]
+cache_strategy = "cache"
+
+[fields.operation]
+cache_strategy = "cache"
+
+[fields.owner_name]
+cache_strategy = "cache"
+
+[fields.owner_uuid]
+cache_strategy = "cache"
+
+[fields.pending_approvers]
+cache_strategy = "cache"
+
+[fields.permitted_users]
+cache_strategy = "cache"
+
+[fields.potential_approvers]
+cache_strategy = "cache"
+
+[fields.query]
+cache_strategy = "cache"
+
+[fields.required_approvers]
+cache_strategy = "cache"
+
+[fields.state]
+cache_strategy = "cache"
+
+[fields.user_requested]
+cache_strategy = "cache"
+
+[fields.user_vetoed]
+cache_strategy = "cache"

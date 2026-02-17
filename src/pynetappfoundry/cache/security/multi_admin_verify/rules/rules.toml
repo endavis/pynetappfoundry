@@ -1,0 +1,37 @@
+[endpoint]
+path = "/security/multi-admin-verify/rules"
+schema = "multi_admin_verify_rule"
+class_name = "OntapMultiAdminVerifyRule"
+
+[fields.approval_expiry]
+cache_strategy = "cache"
+
+[fields.approval_groups]
+cache_strategy = "cache"
+
+[fields.auto_request_create]
+cache_strategy = "cache"
+
+[fields.create_time]
+cache_strategy = "cache"
+
+[fields.execution_expiry]
+cache_strategy = "cache"
+
+[fields.operation]
+cache_strategy = "cache"
+
+[fields.owner_name]
+cache_strategy = "cache"
+
+[fields.owner_uuid]
+cache_strategy = "cache"
+
+[fields.query]
+cache_strategy = "cache"
+
+[fields.required_approvers]
+cache_strategy = "cache"
+
+[fields.system_defined]
+cache_strategy = "cache"

@@ -1,0 +1,13 @@
+[endpoint]
+path = "/protocols/nfs/connected-client-settings"
+schema = "nfs_clients_cache"
+class_name = "OntapNfsClientsCache"
+
+[fields.client_retention_interval]
+cache_strategy = "cache"
+
+[fields.enable_nfs_clients_deletion]
+cache_strategy = "cache"
+
+[fields.update_interval]
+cache_strategy = "cache"

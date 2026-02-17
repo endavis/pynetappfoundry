@@ -1,0 +1,328 @@
+[endpoint]
+path = "/protocols/cifs/services"
+schema = "cifs_service"
+class_name = "OntapCifsService"
+
+[fields.ad_domain_default_site]
+cache_strategy = "cache"
+
+[fields.ad_domain_fqdn]
+cache_strategy = "cache"
+
+[fields.ad_domain_organizational_unit]
+cache_strategy = "cache"
+
+[fields.ad_domain_password]
+cache_strategy = "cache"
+
+[fields.ad_domain_user]
+cache_strategy = "cache"
+
+[fields.auth_style]
+cache_strategy = "cache"
+
+[fields.auth_user_type]
+cache_strategy = "cache"
+
+[fields.authentication_method]
+cache_strategy = "cache"
+
+[fields.client_certificate]
+cache_strategy = "cache"
+
+[fields.client_id]
+cache_strategy = "cache"
+
+[fields.client_secret]
+cache_strategy = "cache"
+
+[fields.comment]
+cache_strategy = "cache"
+
+[fields.default_unix_user]
+cache_strategy = "cache"
+
+[fields.enabled]
+cache_strategy = "cache"
+
+[fields.group_policy_object_enabled]
+cache_strategy = "cache"
+
+[fields.key_vault_uri]
+cache_strategy = "cache"
+
+[fields.metric_duration]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_iops_other]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_iops_read]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_iops_total]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_iops_write]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_latency_other]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_latency_read]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_latency_total]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_latency_write]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_status]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_throughput_read]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_throughput_total]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_throughput_write]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_timestamp]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.netbios_aliases]
+cache_strategy = "cache"
+
+[fields.netbios_enabled]
+cache_strategy = "cache"
+
+[fields.netbios_wins_servers]
+cache_strategy = "cache"
+
+[fields.oauth_host]
+cache_strategy = "cache"
+
+[fields.options_admin_to_root_mapping]
+cache_strategy = "cache"
+
+[fields.options_advanced_sparse_file]
+cache_strategy = "cache"
+
+[fields.options_backup_symlink_enabled]
+cache_strategy = "cache"
+
+[fields.options_client_dup_detection_enabled]
+cache_strategy = "cache"
+
+[fields.options_client_version_reporting_enabled]
+cache_strategy = "cache"
+
+[fields.options_copy_offload]
+cache_strategy = "cache"
+
+[fields.options_dac_enabled]
+cache_strategy = "cache"
+
+[fields.options_export_policy_enabled]
+cache_strategy = "cache"
+
+[fields.options_fake_open]
+cache_strategy = "cache"
+
+[fields.options_fsctl_trim]
+cache_strategy = "cache"
+
+[fields.options_junction_reparse]
+cache_strategy = "cache"
+
+[fields.options_large_mtu]
+cache_strategy = "cache"
+
+[fields.options_max_connections_per_session]
+cache_strategy = "cache"
+
+[fields.options_max_lifs_per_session]
+cache_strategy = "cache"
+
+[fields.options_max_opens_same_file_per_tree]
+cache_strategy = "cache"
+
+[fields.options_max_same_tree_connect_per_session]
+cache_strategy = "cache"
+
+[fields.options_max_same_user_sessions_per_connection]
+cache_strategy = "cache"
+
+[fields.options_max_watches_set_per_tree]
+cache_strategy = "cache"
+
+[fields.options_multichannel]
+cache_strategy = "cache"
+
+[fields.options_null_user_windows_name]
+cache_strategy = "cache"
+
+[fields.options_path_component_cache]
+cache_strategy = "cache"
+
+[fields.options_referral]
+cache_strategy = "cache"
+
+[fields.options_shadowcopy]
+cache_strategy = "cache"
+
+[fields.options_shadowcopy_dir_depth]
+cache_strategy = "cache"
+
+[fields.options_smb_credits]
+cache_strategy = "cache"
+
+[fields.options_trusted_domain_enum_search_enabled]
+cache_strategy = "cache"
+
+[fields.options_widelink_reparse_versions]
+cache_strategy = "cache"
+
+[fields.proxy_host]
+cache_strategy = "cache"
+
+[fields.proxy_password]
+cache_strategy = "cache"
+
+[fields.proxy_port]
+cache_strategy = "cache"
+
+[fields.proxy_type]
+cache_strategy = "cache"
+
+[fields.proxy_username]
+cache_strategy = "cache"
+
+[fields.security_advertised_kdc_encryptions]
+cache_strategy = "cache"
+
+[fields.security_aes_netlogon_enabled]
+cache_strategy = "cache"
+
+[fields.security_encrypt_dc_connection]
+cache_strategy = "cache"
+
+[fields.security_kdc_encryption]
+cache_strategy = "cache"
+
+[fields.security_ldap_referral_enabled]
+cache_strategy = "cache"
+
+[fields.security_lm_compatibility_level]
+cache_strategy = "cache"
+
+[fields.security_restrict_anonymous]
+cache_strategy = "cache"
+
+[fields.security_session_security]
+cache_strategy = "cache"
+
+[fields.security_smb_encryption]
+cache_strategy = "cache"
+
+[fields.security_smb_signing]
+cache_strategy = "cache"
+
+[fields.security_try_ldap_channel_binding]
+cache_strategy = "cache"
+
+[fields.security_use_ldaps]
+cache_strategy = "cache"
+
+[fields.security_use_start_tls]
+cache_strategy = "cache"
+
+[fields.statistics_iops_raw_other]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_iops_raw_read]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_iops_raw_total]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_iops_raw_write]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_latency_raw_other]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_latency_raw_read]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_latency_raw_total]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_latency_raw_write]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_status]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_throughput_raw_read]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_throughput_raw_total]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_throughput_raw_write]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_timestamp]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.tenant_id]
+cache_strategy = "cache"
+
+[fields.timeout]
+cache_strategy = "cache"
+
+[fields.verify_host]
+cache_strategy = "cache"
+
+[fields.workgroup]
+cache_strategy = "cache"

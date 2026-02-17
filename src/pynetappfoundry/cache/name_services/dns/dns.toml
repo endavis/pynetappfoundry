@@ -1,0 +1,61 @@
+[endpoint]
+path = "/name-services/dns"
+schema = "dns"
+class_name = "OntapDns"
+
+[fields.attempts]
+cache_strategy = "cache"
+
+[fields.domains]
+cache_strategy = "cache"
+
+[fields.dynamic_dns_enabled]
+cache_strategy = "cache"
+
+[fields.dynamic_dns_fqdn]
+cache_strategy = "cache"
+
+[fields.dynamic_dns_skip_fqdn_validation]
+cache_strategy = "cache"
+
+[fields.dynamic_dns_time_to_live]
+cache_strategy = "cache"
+
+[fields.dynamic_dns_use_secure]
+cache_strategy = "cache"
+
+[fields.packet_query_match]
+cache_strategy = "cache"
+
+[fields.scope]
+cache_strategy = "cache"
+
+[fields.servers]
+cache_strategy = "cache"
+
+[fields.service_ips]
+cache_strategy = "cache"
+
+[fields.skip_config_validation]
+cache_strategy = "cache"
+
+[fields.source_address_match]
+cache_strategy = "cache"
+
+[fields.status]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.timeout]
+cache_strategy = "cache"
+
+[fields.tld_query_enabled]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

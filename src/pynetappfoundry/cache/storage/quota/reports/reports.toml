@@ -1,0 +1,67 @@
+[endpoint]
+path = "/storage/quota/reports"
+schema = "quota_report"
+class_name = "OntapQuotaReport"
+
+[fields.files_hard_limit]
+cache_strategy = "cache"
+
+[fields.files_soft_limit]
+cache_strategy = "cache"
+
+[fields.files_used_hard_limit_percent]
+cache_strategy = "cache"
+
+[fields.files_used_soft_limit_percent]
+cache_strategy = "cache"
+
+[fields.files_used_total]
+cache_strategy = "cache"
+
+[fields.group_id]
+cache_strategy = "cache"
+
+[fields.group_name]
+cache_strategy = "cache"
+
+[fields.index]
+cache_strategy = "cache"
+
+[fields.qtree_id]
+cache_strategy = "cache"
+
+[fields.qtree_name]
+cache_strategy = "cache"
+
+[fields.space_hard_limit]
+cache_strategy = "cache"
+
+[fields.space_soft_limit]
+cache_strategy = "cache"
+
+[fields.space_used_hard_limit_percent]
+cache_strategy = "cache"
+
+[fields.space_used_soft_limit_percent]
+cache_strategy = "cache"
+
+[fields.space_used_total]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.users]
+cache_strategy = "cache"
+
+[fields.volume_name]
+cache_strategy = "cache"
+
+[fields.volume_uuid]
+cache_strategy = "cache"

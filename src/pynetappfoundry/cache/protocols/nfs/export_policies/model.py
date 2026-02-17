@@ -1,4 +1,4 @@
-"""Export policy information — /protocols/nfs/export-policies."""
+"""OntapExportPolicy information."""
 
 from __future__ import annotations
 
@@ -7,22 +7,23 @@ from pydantic import Field
 from pynetappfoundry.cache._base import CacheModel
 
 
-class ExportRuleInfo(CacheModel):
-    """Export rule within an export policy."""
+class OntapExportPolicyClient(CacheModel):
+    """OntapExportPolicyClient sub-model for clients."""
 
+    clients_match: str = ""
+
+
+class OntapExportPolicy(CacheModel):
+    """OntapExportPolicy information."""
+
+    allow_device_creation: bool = False
+    allow_suid: bool = False
+    anonymous_user: str = ""
+    chown_mode: str = ""
+    clients: list[OntapExportPolicyClient] = Field(default_factory=list)
     index: int = 0
-    clients: list[str] = Field(default_factory=list)
+    ntfs_unix_security: str = ""
     protocols: list[str] = Field(default_factory=list)
     ro_rule: list[str] = Field(default_factory=list)
     rw_rule: list[str] = Field(default_factory=list)
     superuser: list[str] = Field(default_factory=list)
-    anonymous_user: str = ""
-
-
-class ExportPolicyInfo(CacheModel):
-    """NFS export policy information."""
-
-    id: int = 0
-    name: str = ""
-    svm: str = ""
-    rules: list[ExportRuleInfo] = Field(default_factory=list)

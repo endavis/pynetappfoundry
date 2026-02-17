@@ -1,0 +1,25 @@
+[endpoint]
+path = "/protocols/san/portsets"
+schema = "portset"
+class_name = "OntapPortset"
+
+[fields.igroups]
+cache_strategy = "cache"
+
+[fields.interfaces]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.protocol]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

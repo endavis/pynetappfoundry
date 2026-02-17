@@ -1,0 +1,64 @@
+[endpoint]
+path = "/protocols/cifs/domains"
+schema = "cifs_domain"
+class_name = "OntapCifsDomain"
+
+[fields.ad_domain_password]
+cache_strategy = "cache"
+
+[fields.ad_domain_user]
+cache_strategy = "cache"
+
+[fields.client_certificate]
+cache_strategy = "cache"
+
+[fields.client_id]
+cache_strategy = "cache"
+
+[fields.discovered_servers]
+cache_strategy = "cache"
+
+[fields.name_mapping_trusted_domains]
+cache_strategy = "cache"
+
+[fields.password_schedule_schedule_day_of_week]
+cache_strategy = "cache"
+
+[fields.password_schedule_schedule_description]
+cache_strategy = "cache"
+
+[fields.password_schedule_schedule_enabled]
+cache_strategy = "cache"
+
+[fields.password_schedule_schedule_last_changed_time]
+cache_strategy = "cache"
+
+[fields.password_schedule_schedule_randomized_minute]
+cache_strategy = "cache"
+
+[fields.password_schedule_schedule_time_of_day]
+cache_strategy = "cache"
+
+[fields.password_schedule_schedule_warn_message]
+cache_strategy = "cache"
+
+[fields.password_schedule_schedule_weekly_interval]
+cache_strategy = "cache"
+
+[fields.preferred_dcs]
+cache_strategy = "cache"
+
+[fields.server_discovery_mode]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.tenant_id]
+cache_strategy = "cache"
+
+[fields.trust_relationships]
+cache_strategy = "cache"

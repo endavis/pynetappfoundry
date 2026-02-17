@@ -1,0 +1,31 @@
+[endpoint]
+path = "/svm/migrations/{svm_migration.uuid}/volumes"
+schema = "svm_migration_volume"
+class_name = "OntapSvmMigrationVolume"
+
+[fields.errors]
+cache_strategy = "cache"
+
+[fields.healthy]
+cache_strategy = "cache"
+
+[fields.node_name]
+cache_strategy = "cache"
+
+[fields.node_uuid]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.transfer_state]
+cache_strategy = "cache"
+
+[fields.volume_name]
+cache_strategy = "cache"
+
+[fields.volume_uuid]
+cache_strategy = "cache"

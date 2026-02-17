@@ -1,0 +1,62 @@
+"""OntapFirmwareHistory type mapping."""
+
+from __future__ import annotations
+
+from typing import Any
+
+from pynetappfoundry.cache._registry import model_registry
+from pynetappfoundry.cache.cluster.firmware.history.model import (
+    OntapFirmwareHistory,
+    OntapFirmwareHistoryUpdateStatu,
+)
+from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
+
+
+def _transform_update_status(record: dict[str, Any]) -> list[OntapFirmwareHistoryUpdateStatu]:
+    """Transform update_status into OntapFirmwareHistoryUpdateStatu list."""
+    return [OntapFirmwareHistoryUpdateStatu(**item) for item in record.get("update_status", [])]
+
+
+ONTAPFIRMWAREHISTORY_MAPPING = TypeMapping(
+    name="OntapFirmwareHistory",
+    model_class=OntapFirmwareHistory,
+    api_endpoint="/cluster/firmware/history?fields=*",
+    api_type="ontap",
+    fields=(
+        FieldMapping(
+            cache_attr="end_time",
+            api_path="end_time",
+        ),
+        FieldMapping(
+            cache_attr="fw_file_name",
+            api_path="fw_file_name",
+        ),
+        FieldMapping(
+            cache_attr="fw_update_state",
+            api_path="fw_update_state",
+        ),
+        FieldMapping(
+            cache_attr="job_uuid",
+            api_path="job.uuid",
+        ),
+        FieldMapping(
+            cache_attr="node_name",
+            api_path="node.name",
+        ),
+        FieldMapping(
+            cache_attr="node_uuid",
+            api_path="node.uuid",
+        ),
+        FieldMapping(
+            cache_attr="start_time",
+            api_path="start_time",
+        ),
+        FieldMapping(
+            cache_attr="update_status",
+            transform=_transform_update_status,
+            default=[],
+        ),
+    ),
+)
+
+model_registry.register_mapping("OntapFirmwareHistory", ONTAPFIRMWAREHISTORY_MAPPING)

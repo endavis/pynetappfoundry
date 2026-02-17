@@ -1,0 +1,52 @@
+[endpoint]
+path = "/network/ip/subnets"
+schema = "ip_subnet"
+class_name = "OntapIpSubnet"
+
+[fields.available_count]
+cache_strategy = "cache"
+
+[fields.available_ip_ranges]
+cache_strategy = "cache"
+
+[fields.broadcast_domain_name]
+cache_strategy = "cache"
+
+[fields.broadcast_domain_uuid]
+cache_strategy = "cache"
+
+[fields.fail_if_lifs_conflict]
+cache_strategy = "cache"
+
+[fields.gateway]
+cache_strategy = "cache"
+
+[fields.ip_ranges]
+cache_strategy = "cache"
+
+[fields.ipspace_name]
+cache_strategy = "cache"
+
+[fields.ipspace_uuid]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.subnet_address]
+cache_strategy = "cache"
+
+[fields.subnet_family]
+cache_strategy = "cache"
+
+[fields.subnet_netmask]
+cache_strategy = "cache"
+
+[fields.total_count]
+cache_strategy = "cache"
+
+[fields.used_count]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

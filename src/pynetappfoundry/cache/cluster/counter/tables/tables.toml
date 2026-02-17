@@ -1,0 +1,19 @@
+[endpoint]
+path = "/cluster/counter/tables/{name}"
+schema = "counter_table"
+class_name = "OntapCounterTable"
+
+[fields.denominator_name]
+cache_strategy = "cache"
+
+[fields.description]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.unit]
+cache_strategy = "cache"

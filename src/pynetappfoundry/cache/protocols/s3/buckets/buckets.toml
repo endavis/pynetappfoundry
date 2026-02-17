@@ -1,0 +1,118 @@
+[endpoint]
+path = "/protocols/s3/buckets"
+schema = "s3_bucket"
+class_name = "OntapS3Bucket"
+
+[fields.aggregates]
+cache_strategy = "cache"
+
+[fields.allowed]
+cache_strategy = "cache"
+
+[fields.audit_event_selector_access]
+cache_strategy = "cache"
+
+[fields.audit_event_selector_permission]
+cache_strategy = "cache"
+
+[fields.comment]
+cache_strategy = "cache"
+
+[fields.constituents_per_aggregate]
+cache_strategy = "cache"
+
+[fields.cors_rules]
+cache_strategy = "cache"
+
+[fields.encryption_enabled]
+cache_strategy = "cache"
+
+[fields.lifecycle_management_rules]
+cache_strategy = "cache"
+
+[fields.logical_used_size]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.nas_path]
+cache_strategy = "cache"
+
+[fields.policy_statements]
+cache_strategy = "cache"
+
+[fields.protection_status_destination_is_cloud]
+cache_strategy = "cache"
+
+[fields.protection_status_destination_is_external_cloud]
+cache_strategy = "cache"
+
+[fields.protection_status_destination_is_ontap]
+cache_strategy = "cache"
+
+[fields.protection_status_is_protected]
+cache_strategy = "cache"
+
+[fields.qos_policy_max_throughput_iops]
+cache_strategy = "cache"
+
+[fields.qos_policy_max_throughput_mbps]
+cache_strategy = "cache"
+
+[fields.qos_policy_min_throughput_iops]
+cache_strategy = "cache"
+
+[fields.qos_policy_min_throughput_mbps]
+cache_strategy = "cache"
+
+[fields.qos_policy_name]
+cache_strategy = "cache"
+
+[fields.qos_policy_uuid]
+cache_strategy = "cache"
+
+[fields.retention_default_period]
+cache_strategy = "cache"
+
+[fields.retention_mode]
+cache_strategy = "cache"
+
+[fields.role]
+cache_strategy = "cache"
+
+[fields.size]
+cache_strategy = "cache"
+
+[fields.snapshot_policy_name]
+cache_strategy = "cache"
+
+[fields.snapshot_policy_uuid]
+cache_strategy = "cache"
+
+[fields.storage_service_level]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.use_mirrored_aggregates]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"
+
+[fields.versioning_state]
+cache_strategy = "cache"
+
+[fields.volume_name]
+cache_strategy = "cache"
+
+[fields.volume_uuid]
+cache_strategy = "cache"

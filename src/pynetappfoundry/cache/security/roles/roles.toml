@@ -1,0 +1,22 @@
+[endpoint]
+path = "/security/roles"
+schema = "role"
+class_name = "OntapRole"
+
+[fields.builtin]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.owner_name]
+cache_strategy = "cache"
+
+[fields.owner_uuid]
+cache_strategy = "cache"
+
+[fields.privileges]
+cache_strategy = "cache"
+
+[fields.scope]
+cache_strategy = "cache"

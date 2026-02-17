@@ -1,0 +1,7 @@
+[endpoint]
+path = "/storage/qos/qos-options"
+schema = "qos_option"
+class_name = "OntapQosOption"
+
+[fields.background_task_reserve]
+cache_strategy = "cache"

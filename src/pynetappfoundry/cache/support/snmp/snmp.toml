@@ -1,0 +1,22 @@
+[endpoint]
+path = "/support/snmp"
+schema = "snmp"
+class_name = "OntapSnmp"
+
+[fields.auth_traps_enabled]
+cache_strategy = "cache"
+
+[fields.contact]
+cache_strategy = "cache"
+
+[fields.enabled]
+cache_strategy = "cache"
+
+[fields.location]
+cache_strategy = "cache"
+
+[fields.traps_enabled]
+cache_strategy = "cache"
+
+[fields.trigger_test_trap]
+cache_strategy = "cache"

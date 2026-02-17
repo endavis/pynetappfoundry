@@ -1,0 +1,46 @@
+[endpoint]
+path = "/protocols/nfs/kerberos/interfaces"
+schema = "kerberos_interface"
+class_name = "OntapKerberosInterface"
+
+[fields.enabled]
+cache_strategy = "cache"
+
+[fields.encryption_types]
+cache_strategy = "cache"
+
+[fields.force]
+cache_strategy = "cache"
+
+[fields.interface_ip_address]
+cache_strategy = "cache"
+
+[fields.interface_name]
+cache_strategy = "cache"
+
+[fields.interface_uuid]
+cache_strategy = "cache"
+
+[fields.keytab_uri]
+cache_strategy = "cache"
+
+[fields.machine_account]
+cache_strategy = "cache"
+
+[fields.organizational_unit]
+cache_strategy = "cache"
+
+[fields.password]
+cache_strategy = "cache"
+
+[fields.spn]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.user]
+cache_strategy = "cache"

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from pynetappfoundry.cache.network.ethernet.broadcast_domains import BroadcastDomain
+from pynetappfoundry.cache.network.ethernet.broadcast_domains import OntapBroadcastDomain
 
 __all__ = [
-    "BroadcastDomain",
+    "OntapBroadcastDomain",
 ]

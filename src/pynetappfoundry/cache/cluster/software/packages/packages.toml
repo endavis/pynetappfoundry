@@ -1,0 +1,10 @@
+[endpoint]
+path = "/cluster/software/packages"
+schema = "software_package"
+class_name = "OntapSoftwarePackage"
+
+[fields.create_time]
+cache_strategy = "cache"
+
+[fields.version]
+cache_strategy = "cache"

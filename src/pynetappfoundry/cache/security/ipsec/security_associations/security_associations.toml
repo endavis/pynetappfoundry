@@ -1,0 +1,94 @@
+[endpoint]
+path = "/security/ipsec/security-associations"
+schema = "security_association_response"
+class_name = "OntapSecurityAssociationResponse"
+
+[fields.cipher_suite]
+cache_strategy = "cache"
+
+[fields.ike_authentication]
+cache_strategy = "cache"
+
+[fields.ike_initiator_security_parameter_index]
+cache_strategy = "cache"
+
+[fields.ike_is_initiator]
+cache_strategy = "cache"
+
+[fields.ike_responder_security_parameter_index]
+cache_strategy = "cache"
+
+[fields.ike_state]
+cache_strategy = "cache"
+
+[fields.ike_version]
+cache_strategy = "cache"
+
+[fields.ipsec_action]
+cache_strategy = "cache"
+
+[fields.ipsec_inbound_bytes]
+cache_strategy = "cache"
+
+[fields.ipsec_inbound_offload_bytes]
+cache_strategy = "cache"
+
+[fields.ipsec_inbound_offload_packets]
+cache_strategy = "cache"
+
+[fields.ipsec_inbound_packets]
+cache_strategy = "cache"
+
+[fields.ipsec_inbound_security_parameter_index]
+cache_strategy = "cache"
+
+[fields.ipsec_outbound_bytes]
+cache_strategy = "cache"
+
+[fields.ipsec_outbound_offload_bytes]
+cache_strategy = "cache"
+
+[fields.ipsec_outbound_offload_packets]
+cache_strategy = "cache"
+
+[fields.ipsec_outbound_packets]
+cache_strategy = "cache"
+
+[fields.ipsec_outbound_security_parameter_index]
+cache_strategy = "cache"
+
+[fields.ipsec_state]
+cache_strategy = "cache"
+
+[fields.lifetime]
+cache_strategy = "cache"
+
+[fields.local_address]
+cache_strategy = "cache"
+
+[fields.node_name]
+cache_strategy = "cache"
+
+[fields.node_uuid]
+cache_strategy = "cache"
+
+[fields.policy_name]
+cache_strategy = "cache"
+
+[fields.remote_address]
+cache_strategy = "cache"
+
+[fields.scope]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

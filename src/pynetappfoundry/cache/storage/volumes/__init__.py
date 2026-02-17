@@ -1,11 +1,5 @@
-"""Re-export storage volume cache models and mappings."""
+"""OntapVolume cache model."""
 
-from __future__ import annotations
+from pynetappfoundry.cache.storage.volumes.model import OntapVolume
 
-from pynetappfoundry.cache.storage.volumes.mapping import VOLUME_MAPPING
-from pynetappfoundry.cache.storage.volumes.model import VolumeInfo
-
-__all__ = [
-    "VOLUME_MAPPING",
-    "VolumeInfo",
-]
+__all__ = ["OntapVolume"]

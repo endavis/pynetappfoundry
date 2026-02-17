@@ -1,0 +1,49 @@
+[endpoint]
+path = "/protocols/nfs/export-policies/{policy.id}/rules"
+schema = "export_rule"
+class_name = "OntapExportRule"
+
+[fields.allow_device_creation]
+cache_strategy = "cache"
+
+[fields.allow_suid]
+cache_strategy = "cache"
+
+[fields.anonymous_user]
+cache_strategy = "cache"
+
+[fields.chown_mode]
+cache_strategy = "cache"
+
+[fields.clients]
+cache_strategy = "cache"
+
+[fields.index]
+cache_strategy = "cache"
+
+[fields.ntfs_unix_security]
+cache_strategy = "cache"
+
+[fields.policy_id]
+cache_strategy = "cache"
+
+[fields.policy_name]
+cache_strategy = "cache"
+
+[fields.protocols]
+cache_strategy = "cache"
+
+[fields.ro_rule]
+cache_strategy = "cache"
+
+[fields.rw_rule]
+cache_strategy = "cache"
+
+[fields.superuser]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"

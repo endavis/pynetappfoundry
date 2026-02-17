@@ -1,0 +1,100 @@
+[endpoint]
+path = "/security/azure-key-vaults"
+schema = "azure_key_vault"
+class_name = "OntapAzureKeyVault"
+
+[fields.authentication_method]
+cache_strategy = "cache"
+
+[fields.azure_reachability_code]
+cache_strategy = "cache"
+
+[fields.azure_reachability_message]
+cache_strategy = "cache"
+
+[fields.azure_reachability_reachable]
+cache_strategy = "cache"
+
+[fields.client_certificate]
+cache_strategy = "cache"
+
+[fields.client_id]
+cache_strategy = "cache"
+
+[fields.client_secret]
+cache_strategy = "cache"
+
+[fields.configuration_name]
+cache_strategy = "cache"
+
+[fields.configuration_uuid]
+cache_strategy = "cache"
+
+[fields.ekmip_reachability]
+cache_strategy = "cache"
+
+[fields.enabled]
+cache_strategy = "cache"
+
+[fields.key_id]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.oauth_host]
+cache_strategy = "cache"
+
+[fields.port]
+cache_strategy = "cache"
+
+[fields.proxy_host]
+cache_strategy = "cache"
+
+[fields.proxy_password]
+cache_strategy = "cache"
+
+[fields.proxy_port]
+cache_strategy = "cache"
+
+[fields.proxy_type]
+cache_strategy = "cache"
+
+[fields.proxy_username]
+cache_strategy = "cache"
+
+[fields.scope]
+cache_strategy = "cache"
+
+[fields.skip_verification]
+cache_strategy = "cache"
+
+[fields.state_available]
+cache_strategy = "cache"
+
+[fields.state_code]
+cache_strategy = "cache"
+
+[fields.state_message]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.tenant_id]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"
+
+[fields.vault_host]
+cache_strategy = "cache"
+
+[fields.verify_host]
+cache_strategy = "cache"
+
+[fields.verify_ip]
+cache_strategy = "cache"

@@ -1,0 +1,16 @@
+[endpoint]
+path = "/cluster/ntp/servers"
+schema = "ntp_server"
+class_name = "OntapNtpServer"
+
+[fields.authentication_enabled]
+cache_strategy = "cache"
+
+[fields.key_id]
+cache_strategy = "cache"
+
+[fields.server]
+cache_strategy = "cache"
+
+[fields.version]
+cache_strategy = "cache"

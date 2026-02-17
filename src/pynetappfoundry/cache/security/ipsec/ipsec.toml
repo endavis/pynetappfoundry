@@ -1,0 +1,13 @@
+[endpoint]
+path = "/security/ipsec"
+schema = "ipsec"
+class_name = "OntapIpsec"
+
+[fields.enabled]
+cache_strategy = "cache"
+
+[fields.offload_enabled]
+cache_strategy = "cache"
+
+[fields.replay_window]
+cache_strategy = "cache"

@@ -1,13 +1,5 @@
-"""Re-export NFS export policy cache models."""
+"""OntapExportPolicy cache model."""
 
-from __future__ import annotations
+from pynetappfoundry.cache.protocols.nfs.export_policies.model import OntapExportPolicy
 
-from pynetappfoundry.cache.protocols.nfs.export_policies.model import (
-    ExportPolicyInfo,
-    ExportRuleInfo,
-)
-
-__all__ = [
-    "ExportPolicyInfo",
-    "ExportRuleInfo",
-]
+__all__ = ["OntapExportPolicy"]

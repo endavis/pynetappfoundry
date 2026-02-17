@@ -1,0 +1,31 @@
+[endpoint]
+path = "/protocols/cifs/group-policies/{svm.uuid}/central-access-rules"
+schema = "group_policy_object_central_access_rule"
+class_name = "OntapGroupPolicyObjectCentralAccessRule"
+
+[fields.create_time]
+cache_strategy = "cache"
+
+[fields.current_permission]
+cache_strategy = "cache"
+
+[fields.description]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.proposed_permission]
+cache_strategy = "cache"
+
+[fields.resource_criteria]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.update_time]
+cache_strategy = "cache"

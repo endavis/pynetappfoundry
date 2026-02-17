@@ -1,0 +1,19 @@
+[endpoint]
+path = "/cluster/nodes/{uuid}/metrics"
+schema = "node_metrics_response"
+class_name = "OntapNodeMetricsResponse"
+
+[fields.duration]
+cache_strategy = "cache"
+
+[fields.processor_utilization]
+cache_strategy = "cache"
+
+[fields.status]
+cache_strategy = "cache"
+
+[fields.timestamp]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

@@ -1,0 +1,28 @@
+[endpoint]
+path = "/security/webauthn/global-settings"
+schema = "webauthn_global"
+class_name = "OntapWebauthnGlobal"
+
+[fields.attestation]
+cache_strategy = "cache"
+
+[fields.owner_name]
+cache_strategy = "cache"
+
+[fields.owner_uuid]
+cache_strategy = "cache"
+
+[fields.require_rk]
+cache_strategy = "cache"
+
+[fields.resident_key]
+cache_strategy = "cache"
+
+[fields.scope]
+cache_strategy = "cache"
+
+[fields.timeout]
+cache_strategy = "cache"
+
+[fields.user_verification]
+cache_strategy = "cache"

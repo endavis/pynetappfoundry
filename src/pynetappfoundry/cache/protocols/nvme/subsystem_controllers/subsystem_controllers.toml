@@ -1,0 +1,82 @@
+[endpoint]
+path = "/protocols/nvme/subsystem-controllers"
+schema = "nvme_subsystem_controller"
+class_name = "OntapNvmeSubsystemController"
+
+[fields.admin_queue_depth]
+cache_strategy = "cache"
+
+[fields.dh_hmac_chap_group_size]
+cache_strategy = "cache"
+
+[fields.dh_hmac_chap_hash_function]
+cache_strategy = "cache"
+
+[fields.dh_hmac_chap_mode]
+cache_strategy = "cache"
+
+[fields.digest_data]
+cache_strategy = "cache"
+
+[fields.digest_header]
+cache_strategy = "cache"
+
+[fields.host_id]
+cache_strategy = "cache"
+
+[fields.host_nqn]
+cache_strategy = "cache"
+
+[fields.host_transport_address]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.interface_name]
+cache_strategy = "cache"
+
+[fields.interface_transport_address]
+cache_strategy = "cache"
+
+[fields.interface_uuid]
+cache_strategy = "cache"
+
+[fields.io_queue_count]
+cache_strategy = "cache"
+
+[fields.io_queue_depth]
+cache_strategy = "cache"
+
+[fields.keep_alive_timeout]
+cache_strategy = "cache"
+
+[fields.node_name]
+cache_strategy = "cache"
+
+[fields.node_uuid]
+cache_strategy = "cache"
+
+[fields.subsystem_name]
+cache_strategy = "cache"
+
+[fields.subsystem_uuid]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.tls_cipher]
+cache_strategy = "cache"
+
+[fields.tls_key_type]
+cache_strategy = "cache"
+
+[fields.tls_psk_identity]
+cache_strategy = "cache"
+
+[fields.transport_protocol]
+cache_strategy = "cache"

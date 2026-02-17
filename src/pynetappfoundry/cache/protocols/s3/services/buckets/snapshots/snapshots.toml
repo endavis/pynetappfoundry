@@ -1,0 +1,22 @@
+[endpoint]
+path = "/protocols/s3/services/{svm.uuid}/buckets/{s3_bucket.uuid}/snapshots"
+schema = "s3_bucket_snapshot"
+class_name = "OntapS3BucketSnapshot"
+
+[fields.bucket_uuid]
+cache_strategy = "cache"
+
+[fields.create_time]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

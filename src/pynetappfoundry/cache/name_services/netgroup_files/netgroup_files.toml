@@ -1,0 +1,22 @@
+[endpoint]
+path = "/name-services/netgroup-files/{svm.uuid}"
+schema = "netgroup_file"
+class_name = "OntapNetgroupFile"
+
+[fields.file_size]
+cache_strategy = "cache"
+
+[fields.hash_value]
+cache_strategy = "cache"
+
+[fields.hash_value_by_host]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.timestamp]
+cache_strategy = "cache"

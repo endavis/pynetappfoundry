@@ -1,0 +1,10 @@
+[endpoint]
+path = "/resource-tags"
+schema = "resource_tag"
+class_name = "OntapResourceTag"
+
+[fields.num_resources]
+cache_strategy = "cache"
+
+[fields.value]
+cache_strategy = "cache"

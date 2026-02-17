@@ -1,0 +1,75 @@
+[endpoint]
+path = "/security/key-managers"
+schema = "security_key_manager"
+class_name = "OntapSecurityKeyManager"
+
+[fields.configuration_name]
+cache_strategy = "cache"
+
+[fields.configuration_uuid]
+cache_strategy = "cache"
+
+[fields.enabled]
+cache_strategy = "cache"
+
+[fields.external_client_certificate_name]
+cache_strategy = "cache"
+
+[fields.external_client_certificate_uuid]
+cache_strategy = "cache"
+
+[fields.external_server_ca_certificates]
+cache_strategy = "cache"
+
+[fields.external_servers]
+cache_strategy = "cache"
+
+[fields.is_default_data_at_rest_encryption_disabled]
+cache_strategy = "cache"
+
+[fields.onboard_enabled]
+cache_strategy = "cache"
+
+[fields.onboard_existing_passphrase]
+cache_strategy = "cache"
+
+[fields.onboard_key_backup]
+cache_strategy = "cache"
+
+[fields.onboard_passphrase]
+cache_strategy = "cache"
+
+[fields.onboard_synchronize]
+cache_strategy = "cache"
+
+[fields.policy]
+cache_strategy = "cache"
+
+[fields.scope]
+cache_strategy = "cache"
+
+[fields.status_code]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.status_message]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"
+
+[fields.volume_encryption_code]
+cache_strategy = "cache"
+
+[fields.volume_encryption_message]
+cache_strategy = "cache"
+
+[fields.volume_encryption_supported]
+cache_strategy = "cache"

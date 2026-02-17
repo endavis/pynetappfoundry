@@ -1,0 +1,136 @@
+[endpoint]
+path = "/name-services/ldap"
+schema = "ldap_service"
+class_name = "OntapLdapService"
+
+[fields.ad_domain]
+cache_strategy = "cache"
+
+[fields.base_dn]
+cache_strategy = "cache"
+
+[fields.base_scope]
+cache_strategy = "cache"
+
+[fields.bind_as_cifs_server]
+cache_strategy = "cache"
+
+[fields.bind_dn]
+cache_strategy = "cache"
+
+[fields.bind_password]
+cache_strategy = "cache"
+
+[fields.group_dn]
+cache_strategy = "cache"
+
+[fields.group_membership_filter]
+cache_strategy = "cache"
+
+[fields.group_scope]
+cache_strategy = "cache"
+
+[fields.is_netgroup_byhost_enabled]
+cache_strategy = "cache"
+
+[fields.is_owner]
+cache_strategy = "cache"
+
+[fields.ldaps_enabled]
+cache_strategy = "cache"
+
+[fields.min_bind_level]
+cache_strategy = "cache"
+
+[fields.netgroup_byhost_dn]
+cache_strategy = "cache"
+
+[fields.netgroup_byhost_scope]
+cache_strategy = "cache"
+
+[fields.netgroup_dn]
+cache_strategy = "cache"
+
+[fields.netgroup_scope]
+cache_strategy = "cache"
+
+[fields.port]
+cache_strategy = "cache"
+
+[fields.preferred_ad_servers]
+cache_strategy = "cache"
+
+[fields.query_timeout]
+cache_strategy = "cache"
+
+[fields.referral_enabled]
+cache_strategy = "cache"
+
+[fields.restrict_discovery_to_site]
+cache_strategy = "cache"
+
+[fields.schema_]
+cache_strategy = "cache"
+
+[fields.servers]
+cache_strategy = "cache"
+
+[fields.session_security]
+cache_strategy = "cache"
+
+[fields.skip_config_validation]
+cache_strategy = "cache"
+
+[fields.status_code]
+cache_strategy = "cache"
+
+[fields.status_dn_message]
+cache_strategy = "cache"
+
+[fields.status_ipv4_code]
+cache_strategy = "cache"
+
+[fields.status_ipv4_dn_messages]
+cache_strategy = "cache"
+
+[fields.status_ipv4_message]
+cache_strategy = "cache"
+
+[fields.status_ipv4_state]
+cache_strategy = "cache"
+
+[fields.status_ipv6_code]
+cache_strategy = "cache"
+
+[fields.status_ipv6_dn_messages]
+cache_strategy = "cache"
+
+[fields.status_ipv6_message]
+cache_strategy = "cache"
+
+[fields.status_ipv6_state]
+cache_strategy = "cache"
+
+[fields.status_message]
+cache_strategy = "cache"
+
+[fields.status_state]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.try_channel_binding]
+cache_strategy = "cache"
+
+[fields.use_start_tls]
+cache_strategy = "cache"
+
+[fields.user_dn]
+cache_strategy = "cache"
+
+[fields.user_scope]
+cache_strategy = "cache"

@@ -1,0 +1,13 @@
+[endpoint]
+path = "/cluster/licensing/license-managers"
+schema = "license_manager_response"
+class_name = "OntapLicenseManagerResponse"
+
+[fields.default]
+cache_strategy = "cache"
+
+[fields.uri_host]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

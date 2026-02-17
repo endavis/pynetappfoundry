@@ -1,0 +1,22 @@
+[endpoint]
+path = "/storage/file/clone/split-loads"
+schema = "split_load"
+class_name = "OntapSplitLoad"
+
+[fields.load_allowable]
+cache_strategy = "cache"
+
+[fields.load_current]
+cache_strategy = "cache"
+
+[fields.load_maximum]
+cache_strategy = "cache"
+
+[fields.load_token_reserved]
+cache_strategy = "cache"
+
+[fields.node_name]
+cache_strategy = "cache"
+
+[fields.node_uuid]
+cache_strategy = "cache"

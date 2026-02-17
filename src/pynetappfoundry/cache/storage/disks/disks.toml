@@ -1,0 +1,181 @@
+[endpoint]
+path = "/storage/disks"
+schema = "disk"
+class_name = "OntapDisk"
+
+[fields.aggregates]
+cache_strategy = "cache"
+
+[fields.bay]
+cache_strategy = "cache"
+
+[fields.bytes_per_sector]
+cache_strategy = "cache"
+
+[fields.class_]
+cache_strategy = "cache"
+
+[fields.compliance_standard]
+cache_strategy = "cache"
+
+[fields.container_type]
+cache_strategy = "cache"
+
+[fields.control_standard]
+cache_strategy = "cache"
+
+[fields.dr_node_name]
+cache_strategy = "cache"
+
+[fields.dr_node_uuid]
+cache_strategy = "cache"
+
+[fields.drawer_id]
+cache_strategy = "cache"
+
+[fields.drawer_slot]
+cache_strategy = "cache"
+
+[fields.effective_type]
+cache_strategy = "cache"
+
+[fields.encryption_operation]
+cache_strategy = "cache"
+
+[fields.error]
+cache_strategy = "cache"
+
+[fields.fips_certified]
+cache_strategy = "cache"
+
+[fields.firmware_version]
+cache_strategy = "cache"
+
+[fields.home_node_name]
+cache_strategy = "cache"
+
+[fields.home_node_uuid]
+cache_strategy = "cache"
+
+[fields.key_id_data]
+cache_strategy = "cache"
+
+[fields.key_id_fips]
+cache_strategy = "cache"
+
+[fields.local]
+cache_strategy = "cache"
+
+[fields.location]
+cache_strategy = "cache"
+
+[fields.model_]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.node_name]
+cache_strategy = "cache"
+
+[fields.node_uuid]
+cache_strategy = "cache"
+
+[fields.outage_persistently_failed]
+cache_strategy = "cache"
+
+[fields.outage_reason_arguments]
+cache_strategy = "cache"
+
+[fields.outage_reason_code]
+cache_strategy = "cache"
+
+[fields.outage_reason_message]
+cache_strategy = "cache"
+
+[fields.overall_security]
+cache_strategy = "cache"
+
+[fields.paths]
+cache_strategy = "cache"
+
+[fields.physical_size]
+cache_strategy = "cache"
+
+[fields.pool]
+cache_strategy = "cache"
+
+[fields.protection_mode]
+cache_strategy = "cache"
+
+[fields.rated_life_used_percent]
+cache_strategy = "cache"
+
+[fields.right_size_sector_count]
+cache_strategy = "cache"
+
+[fields.rpm]
+cache_strategy = "cache"
+
+[fields.sanitize_spare]
+cache_strategy = "cache"
+
+[fields.sector_count]
+cache_strategy = "cache"
+
+[fields.self_encrypting]
+cache_strategy = "cache"
+
+[fields.serial_number]
+cache_strategy = "cache"
+
+[fields.shelf_uid]
+cache_strategy = "cache"
+
+[fields.state]
+cache_strategy = "cache"
+
+[fields.stats_average_latency]
+cache_strategy = "cache"
+
+[fields.stats_iops_total]
+cache_strategy = "cache"
+
+[fields.stats_path_error_count]
+cache_strategy = "cache"
+
+[fields.stats_power_on_hours]
+cache_strategy = "cache"
+
+[fields.stats_throughput]
+cache_strategy = "cache"
+
+[fields.storage_pool_name]
+cache_strategy = "cache"
+
+[fields.storage_pool_uuid]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.uid]
+cache_strategy = "cache"
+
+[fields.usable_size]
+cache_strategy = "cache"
+
+[fields.vendor]
+cache_strategy = "cache"
+
+[fields.virtual_container]
+cache_strategy = "cache"
+
+[fields.virtual_object]
+cache_strategy = "cache"
+
+[fields.virtual_storage_account]
+cache_strategy = "cache"
+
+[fields.virtual_target_address]
+cache_strategy = "cache"

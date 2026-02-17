@@ -1,11 +1,5 @@
-"""Re-export storage aggregate cache models and mappings."""
+"""OntapAggregate cache model."""
 
-from __future__ import annotations
+from pynetappfoundry.cache.storage.aggregates.model import OntapAggregate
 
-from pynetappfoundry.cache.storage.aggregates.mapping import AGGREGATE_MAPPING
-from pynetappfoundry.cache.storage.aggregates.model import AggregateInfo
-
-__all__ = [
-    "AGGREGATE_MAPPING",
-    "AggregateInfo",
-]
+__all__ = ["OntapAggregate"]

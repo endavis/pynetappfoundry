@@ -1,0 +1,46 @@
+[endpoint]
+path = "/protocols/nvme/subsystems/{subsystem.uuid}/hosts"
+schema = "nvme_subsystem_host"
+class_name = "OntapNvmeSubsystemHost"
+
+[fields.dh_hmac_chap_controller_secret_key]
+cache_strategy = "cache"
+
+[fields.dh_hmac_chap_group_size]
+cache_strategy = "cache"
+
+[fields.dh_hmac_chap_hash_function]
+cache_strategy = "cache"
+
+[fields.dh_hmac_chap_host_secret_key]
+cache_strategy = "cache"
+
+[fields.dh_hmac_chap_mode]
+cache_strategy = "cache"
+
+[fields.io_queue_count]
+cache_strategy = "cache"
+
+[fields.io_queue_depth]
+cache_strategy = "cache"
+
+[fields.nqn]
+cache_strategy = "cache"
+
+[fields.priority]
+cache_strategy = "cache"
+
+[fields.records]
+cache_strategy = "cache"
+
+[fields.subsystem_name]
+cache_strategy = "cache"
+
+[fields.subsystem_uuid]
+cache_strategy = "cache"
+
+[fields.tls_configured_psk]
+cache_strategy = "cache"
+
+[fields.tls_key_type]
+cache_strategy = "cache"

@@ -1,0 +1,31 @@
+[endpoint]
+path = "/protocols/san/portsets/{portset.uuid}/interfaces"
+schema = "portset_interface"
+class_name = "OntapPortsetInterface"
+
+[fields.fc_name]
+cache_strategy = "cache"
+
+[fields.fc_uuid]
+cache_strategy = "cache"
+
+[fields.fc_wwpn]
+cache_strategy = "cache"
+
+[fields.ip_ip_address]
+cache_strategy = "cache"
+
+[fields.ip_name]
+cache_strategy = "cache"
+
+[fields.ip_uuid]
+cache_strategy = "cache"
+
+[fields.portset_uuid]
+cache_strategy = "cache"
+
+[fields.records]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

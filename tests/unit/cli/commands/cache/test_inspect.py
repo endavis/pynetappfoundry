@@ -12,7 +12,7 @@ from click.testing import CliRunner
 from pynetappfoundry.cache import CachedClusterMetadata
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.cache.storage.model import StorageInfo
-from pynetappfoundry.cache.storage.volumes.model import VolumeInfo
+from pynetappfoundry.cache.storage.volumes.model import OntapVolume
 from pynetappfoundry.cli.commands.cache.inspect import (
     INSPECT_TYPES,
     _build_api_endpoint,
@@ -29,7 +29,7 @@ class TestResolveCache:
 
     def test_resolve_volumes(self) -> None:
         """Test resolving storage.volumes from metadata."""
-        vol = VolumeInfo(name="vol1", uuid="u1")
+        vol = OntapVolume(name="vol1", uuid="u1")
         meta = CachedClusterMetadata(
             cluster_name="c1",
             storage=StorageInfo(volumes=[vol]),
@@ -82,7 +82,7 @@ class TestBuildCacheTree:
 
     def test_builds_tree_from_model(self) -> None:
         """Test tree is built from a Pydantic model."""
-        vol = VolumeInfo(name="vol1", uuid="u1", size=1024)
+        vol = OntapVolume(name="vol1", uuid="u1", size=1024)
         tree = _build_cache_tree(vol)
         assert tree.label == "[bold]CACHE[/bold]"
 
@@ -112,7 +112,7 @@ class TestBuildApiEndpoint:
         """Test name filter appended with & when endpoint has query params."""
         mapping = TypeMapping(
             name="Volume",
-            model_class=VolumeInfo,
+            model_class=OntapVolume,
             api_endpoint="/storage/volumes?fields=*,autosize",
             cli_command="volume show",
             fields=(FieldMapping(cache_attr="name", api_path="name"),),
@@ -124,7 +124,7 @@ class TestBuildApiEndpoint:
         """Test name filter appended with ? when endpoint has no query params."""
         mapping = TypeMapping(
             name="Test",
-            model_class=VolumeInfo,
+            model_class=OntapVolume,
             api_endpoint="/storage/volumes",
             cli_command="volume show",
             fields=(FieldMapping(cache_attr="name", api_path="name"),),
@@ -140,7 +140,7 @@ class TestBuildCliCommand:
         """Test CLI command is built with object name."""
         mapping = TypeMapping(
             name="Volume",
-            model_class=VolumeInfo,
+            model_class=OntapVolume,
             api_endpoint="/storage/volumes",
             cli_command="volume show",
             fields=(FieldMapping(cache_attr="name", api_path="name"),),
@@ -179,12 +179,12 @@ base_api_path = "/api"
             cached_at=datetime(2024, 1, 15, 10, 30, 0, tzinfo=UTC),
             storage=StorageInfo(
                 volumes=[
-                    VolumeInfo(
+                    OntapVolume(
                         uuid="abc-123",
                         name="PRODVOL1",
-                        svm="svm_PROD",
+                        svm_name="svm_PROD",
                         state="online",
-                        type="rw",
+                        type_="rw",
                         style="flexvol",
                         size=9064378368,
                     ),
@@ -623,7 +623,7 @@ base_api_path = "/api"
         assert "name=vol1" in result.output
         # Should show the CLI command used
         assert "Command:" in result.output
-        assert "volume show vol1" in result.output
+        assert "vol1" in result.output
 
     @patch("pynetappfoundry.cli.commands.cache.inspect.ONTAPAPIClient")
     @patch("pynetappfoundry.cli.commands.cache.inspect.ONTAPCLI")

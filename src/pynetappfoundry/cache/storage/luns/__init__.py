@@ -1,9 +1,5 @@
-"""Re-export storage LUN cache models."""
+"""OntapLun cache model."""
 
-from __future__ import annotations
+from pynetappfoundry.cache.storage.luns.model import OntapLun
 
-from pynetappfoundry.cache.storage.luns.model import LunInfo
-
-__all__ = [
-    "LunInfo",
-]
+__all__ = ["OntapLun"]

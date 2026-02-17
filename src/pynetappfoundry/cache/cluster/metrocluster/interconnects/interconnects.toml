@@ -1,0 +1,37 @@
+[endpoint]
+path = "/cluster/metrocluster/interconnects"
+schema = "metrocluster_interconnect"
+class_name = "OntapMetroclusterInterconnect"
+
+[fields.adapter]
+cache_strategy = "cache"
+
+[fields.interfaces]
+cache_strategy = "cache"
+
+[fields.mirror_enabled]
+cache_strategy = "cache"
+
+[fields.mirror_state]
+cache_strategy = "cache"
+
+[fields.multipath_policy]
+cache_strategy = "cache"
+
+[fields.node_name]
+cache_strategy = "cache"
+
+[fields.node_uuid]
+cache_strategy = "cache"
+
+[fields.partner_type]
+cache_strategy = "cache"
+
+[fields.state]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.vlan_id]
+cache_strategy = "cache"

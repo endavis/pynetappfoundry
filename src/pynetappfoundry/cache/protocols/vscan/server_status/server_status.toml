@@ -1,0 +1,46 @@
+[endpoint]
+path = "/protocols/vscan/server-status"
+schema = "vscan_server_status"
+class_name = "OntapVscanServerStatus"
+
+[fields.disconnected_reason]
+cache_strategy = "cache"
+
+[fields.interface_ip_address]
+cache_strategy = "cache"
+
+[fields.interface_name]
+cache_strategy = "cache"
+
+[fields.interface_uuid]
+cache_strategy = "cache"
+
+[fields.ip]
+cache_strategy = "cache"
+
+[fields.node_name]
+cache_strategy = "cache"
+
+[fields.node_uuid]
+cache_strategy = "cache"
+
+[fields.state]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.update_time]
+cache_strategy = "cache"
+
+[fields.vendor]
+cache_strategy = "cache"
+
+[fields.version]
+cache_strategy = "cache"

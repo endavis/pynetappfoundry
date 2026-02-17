@@ -1,0 +1,52 @@
+[endpoint]
+path = "/security/key-manager-configs"
+schema = "key_manager_config"
+class_name = "OntapKeyManagerConfig"
+
+[fields.cc_mode_enabled]
+cache_strategy = "cache"
+
+[fields.cloud_kms_retry_count]
+cache_strategy = "cache"
+
+[fields.health_monitor_policy_akv_enabled]
+cache_strategy = "cache"
+
+[fields.health_monitor_policy_akv_manage_volume_offline]
+cache_strategy = "cache"
+
+[fields.health_monitor_policy_aws_enabled]
+cache_strategy = "cache"
+
+[fields.health_monitor_policy_aws_manage_volume_offline]
+cache_strategy = "cache"
+
+[fields.health_monitor_policy_gcp_enabled]
+cache_strategy = "cache"
+
+[fields.health_monitor_policy_gcp_manage_volume_offline]
+cache_strategy = "cache"
+
+[fields.health_monitor_policy_ikp_enabled]
+cache_strategy = "cache"
+
+[fields.health_monitor_policy_ikp_manage_volume_offline]
+cache_strategy = "cache"
+
+[fields.health_monitor_policy_kmip_enabled]
+cache_strategy = "cache"
+
+[fields.health_monitor_policy_kmip_manage_volume_offline]
+cache_strategy = "cache"
+
+[fields.health_monitor_policy_okm_enabled]
+cache_strategy = "cache"
+
+[fields.health_monitor_policy_okm_manage_volume_offline]
+cache_strategy = "cache"
+
+[fields.health_monitor_polling_interval]
+cache_strategy = "cache"
+
+[fields.passphrase]
+cache_strategy = "cache"

@@ -1,0 +1,91 @@
+[endpoint]
+path = "/storage/shelves"
+schema = "shelf"
+class_name = "OntapShelf"
+
+[fields.acps]
+cache_strategy = "cache"
+
+[fields.bays]
+cache_strategy = "cache"
+
+[fields.connection_type]
+cache_strategy = "cache"
+
+[fields.current_sensors]
+cache_strategy = "cache"
+
+[fields.disk_count]
+cache_strategy = "cache"
+
+[fields.drawers]
+cache_strategy = "cache"
+
+[fields.errors]
+cache_strategy = "cache"
+
+[fields.fans]
+cache_strategy = "cache"
+
+[fields.frus]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.internal]
+cache_strategy = "cache"
+
+[fields.local]
+cache_strategy = "cache"
+
+[fields.location_led]
+cache_strategy = "cache"
+
+[fields.manufacturer_name]
+cache_strategy = "cache"
+
+[fields.model_]
+cache_strategy = "cache"
+
+[fields.module_type]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.paths]
+cache_strategy = "cache"
+
+[fields.ports]
+cache_strategy = "cache"
+
+[fields.serial_number]
+cache_strategy = "cache"
+
+[fields.state]
+cache_strategy = "cache"
+
+[fields.temperature_sensors]
+cache_strategy = "cache"
+
+[fields.uid]
+cache_strategy = "cache"
+
+[fields.vendor_manufacturer]
+cache_strategy = "cache"
+
+[fields.vendor_name]
+cache_strategy = "cache"
+
+[fields.vendor_part_number]
+cache_strategy = "cache"
+
+[fields.vendor_product]
+cache_strategy = "cache"
+
+[fields.vendor_serial_number]
+cache_strategy = "cache"
+
+[fields.voltage_sensors]
+cache_strategy = "cache"

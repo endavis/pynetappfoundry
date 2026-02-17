@@ -1,0 +1,28 @@
+[endpoint]
+path = "/storage/snapshot-policies"
+schema = "snapshot_policy"
+class_name = "OntapSnapshotPolicy"
+
+[fields.comment]
+cache_strategy = "cache"
+
+[fields.copies]
+cache_strategy = "cache"
+
+[fields.enabled]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.scope]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

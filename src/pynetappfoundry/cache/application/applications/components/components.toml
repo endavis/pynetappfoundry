@@ -1,0 +1,61 @@
+[endpoint]
+path = "/application/applications/{application.uuid}/components"
+schema = "application_component"
+class_name = "OntapApplicationComponent"
+
+[fields.application_name]
+cache_strategy = "cache"
+
+[fields.application_uuid]
+cache_strategy = "cache"
+
+[fields.backing_storage_luns]
+cache_strategy = "cache"
+
+[fields.backing_storage_namespaces]
+cache_strategy = "cache"
+
+[fields.backing_storage_volumes]
+cache_strategy = "cache"
+
+[fields.cifs_access]
+cache_strategy = "cache"
+
+[fields.file_system]
+cache_strategy = "cache"
+
+[fields.host_management_url]
+cache_strategy = "cache"
+
+[fields.host_name]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.nfs_access]
+cache_strategy = "cache"
+
+[fields.nvme_access]
+cache_strategy = "cache"
+
+[fields.protection_groups]
+cache_strategy = "cache"
+
+[fields.san_access]
+cache_strategy = "cache"
+
+[fields.storage_service_name]
+cache_strategy = "cache"
+
+[fields.storage_service_uuid]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

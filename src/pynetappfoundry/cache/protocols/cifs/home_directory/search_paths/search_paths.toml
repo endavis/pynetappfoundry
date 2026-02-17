@@ -1,0 +1,16 @@
+[endpoint]
+path = "/protocols/cifs/home-directory/search-paths"
+schema = "cifs_search_path"
+class_name = "OntapCifsSearchPath"
+
+[fields.index]
+cache_strategy = "cache"
+
+[fields.path]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"

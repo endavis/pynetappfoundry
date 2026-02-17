@@ -1,0 +1,19 @@
+[endpoint]
+path = "/security/external-role-mappings"
+schema = "security_external_role_mapping"
+class_name = "OntapSecurityExternalRoleMapping"
+
+[fields.comment]
+cache_strategy = "cache"
+
+[fields.external_role]
+cache_strategy = "cache"
+
+[fields.ontap_role_name]
+cache_strategy = "cache"
+
+[fields.provider]
+cache_strategy = "cache"
+
+[fields.timestamp]
+cache_strategy = "cache"

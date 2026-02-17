@@ -1,0 +1,49 @@
+[endpoint]
+path = "/storage/namespaces/{nvme_namespace.uuid}/metrics"
+schema = "performance_namespace_metric_response"
+class_name = "OntapPerformanceNamespaceMetricResponse"
+
+[fields.duration]
+cache_strategy = "cache"
+
+[fields.iops_other]
+cache_strategy = "cache"
+
+[fields.iops_read]
+cache_strategy = "cache"
+
+[fields.iops_total]
+cache_strategy = "cache"
+
+[fields.iops_write]
+cache_strategy = "cache"
+
+[fields.latency_other]
+cache_strategy = "cache"
+
+[fields.latency_read]
+cache_strategy = "cache"
+
+[fields.latency_total]
+cache_strategy = "cache"
+
+[fields.latency_write]
+cache_strategy = "cache"
+
+[fields.status]
+cache_strategy = "cache"
+
+[fields.throughput_read]
+cache_strategy = "cache"
+
+[fields.throughput_total]
+cache_strategy = "cache"
+
+[fields.throughput_write]
+cache_strategy = "cache"
+
+[fields.timestamp]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

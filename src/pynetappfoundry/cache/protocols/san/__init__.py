@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from pynetappfoundry.cache.protocols.san.igroups import IgroupInfo
+from pynetappfoundry.cache.protocols.san.igroups import OntapIgroup
 
 __all__ = [
-    "IgroupInfo",
+    "OntapIgroup",
 ]
