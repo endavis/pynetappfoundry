@@ -20,11 +20,8 @@ def _transform_clients(record: dict[str, Any]) -> list[OntapExportPolicyClient]:
 ONTAPEXPORTPOLICY_MAPPING = TypeMapping(
     name="OntapExportPolicy",
     model_class=OntapExportPolicy,
-    api_endpoint="/protocols/nfs/export-policies/{id}?fields=*",
+    api_endpoint="/protocols/nfs/export-policies?fields=*,rules",
     api_type="ontap",
-    records_path="rules",
-    parent_mapping="OntapProtocolsNfsExportPolicy",
-    parent_id_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="allow_device_creation",

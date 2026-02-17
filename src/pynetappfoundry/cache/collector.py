@@ -1079,15 +1079,13 @@ class MetadataCollector:
             return StorageInfo()
 
         # Make all API calls in parallel using cached calls
-        # NOTE: snapshot-policies needs ?fields=*,copies which the generated
-        # mapping does not include, so we hardcode the endpoint.
         endpoints = [
             ONTAPAGGREGATE_MAPPING.api_endpoint,
             ONTAPSVM_MAPPING.api_endpoint,
             ONTAPCLOUDTARGET_MAPPING.api_endpoint,
             ONTAPVOLUME_MAPPING.api_endpoint,
             ONTAPQTREE_MAPPING.api_endpoint,
-            "/storage/snapshot-policies?fields=*,copies",
+            ONTAPSNAPSHOTPOLICY_MAPPING.api_endpoint,
             ONTAPSCHEDULE_MAPPING.api_endpoint,
             ONTAPLUN_MAPPING.api_endpoint,
             ONTAPIGROUP_MAPPING.api_endpoint,
@@ -1491,11 +1489,8 @@ class MetadataCollector:
             logger.debug("%s No API client available for protocols collection", self._log_prefix)
             return ProtocolsInfo()
 
-        # NOTE: export-policies generated mapping has a single-item endpoint
-        # with {id} which won't work for collection, so we hardcode the
-        # endpoint with ?fields=*,rules for the collection call.
         endpoints = [
-            "/protocols/nfs/export-policies?fields=*,rules",
+            ONTAPEXPORTPOLICY_MAPPING.api_endpoint,
             ONTAPCIFSSHARE_MAPPING.api_endpoint,
             ONTAPNFSSERVICE_MAPPING.api_endpoint,
             ONTAPCIFSSERVICE_MAPPING.api_endpoint,

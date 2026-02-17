@@ -8,6 +8,7 @@ cache_strategy = "cache"
 
 [fields.copies]
 cache_strategy = "cache"
+requires_explicit_fetch = true
 
 [fields.enabled]
 cache_strategy = "cache"
