@@ -43,37 +43,109 @@ def _path_to_module_parts(api_path: str) -> list[str]:
     return result
 
 
-def _path_to_class_name(api_path: str) -> str:
-    """Convert an API path to a PascalCase class name.
+_CLASS_NAME_OVERRIDES: dict[str, str] = {}
+"""Manual overrides for class names keyed by API path.
 
-    ``"/storage/volumes"`` → ``"StorageVolume"``
-    ``"/network/ip/interfaces"`` → ``"NetworkIpInterface"``
+Use this as an escape hatch for names the algorithm can't handle.
+Example: ``{"/some/weird/path": "OntapBetterName"}``.
+"""
 
-    Uses singular form by stripping trailing ``s`` from the last segment.
+
+def _schema_to_pascal(name: str) -> str:
+    """Convert a snake_case schema name to PascalCase.
+
+    ``"cloud_target"`` → ``"CloudTarget"``
+    ``"ip_interface"`` → ``"IpInterface"``
+    ``"svm"`` → ``"Svm"``
+
+    Args:
+        name: Schema name (typically snake_case).
+
+    Returns:
+        PascalCase string.
+    """
+    return "".join(w.capitalize() for w in name.split("_"))
+
+
+def _path_to_class_name(
+    api_path: str,
+    schema_name: str = "",
+    api_type: str = "ontap",
+) -> str:
+    """Derive a PascalCase class name for an API endpoint.
+
+    Uses ``{ApiType}{SchemaName}`` when a schema ``$ref`` name is
+    available.  Falls back to ``{ApiType}{UrlPathDerived}`` for inline
+    schemas (with redundant-segment deduplication).
+
+    Examples (with ``api_type="ontap"``):
+
+    * ``schema_name="volume"`` → ``"OntapVolume"``
+    * ``schema_name="svm"`` → ``"OntapSvm"``
+    * ``schema_name="cloud_target"`` → ``"OntapCloudTarget"``
+    * ``schema_name=""`` (inline), path ``"/cluster"`` → ``"OntapCluster"``
+    * ``schema_name=""`` (inline), path ``"/cluster/licensing/licenses"``
+      → ``"OntapClusterLicensingLicense"``
 
     Args:
         api_path: API endpoint path.
+        schema_name: Schema ``$ref`` name (e.g. ``"volume"``).
+            Empty string for inline schemas.
+        api_type: API type prefix (e.g. ``"ontap"``, ``"aiqum"``).
 
     Returns:
         PascalCase class name string.
     """
+    if api_path in _CLASS_NAME_OVERRIDES:
+        return _CLASS_NAME_OVERRIDES[api_path]
+
+    prefix = api_type.capitalize()
+
+    if schema_name:
+        return f"{prefix}{_schema_to_pascal(schema_name)}"
+
+    # Fallback: derive from the URL path
     parts = _path_to_module_parts(api_path)
-    words = []
+    if parts:
+        parts[-1] = _singularize(parts[-1])
+
+    # Remove redundant segments
+    deduped: list[str] = []
     for i, part in enumerate(parts):
-        # Singularize only the last segment
-        if i == len(parts) - 1:
-            part = _singularize(part)
-        # Convert underscores to PascalCase
+        if part in parts[i + 1 :]:
+            continue
+        deduped.append(part)
+
+    words = []
+    for part in deduped:
         for word in part.split("_"):
             words.append(word.capitalize())
-    return "".join(words)
+    return f"{prefix}{''.join(words)}"
+
+
+_SINGULAR_EXCEPTIONS: dict[str, str] = {
+    "dns": "dns",
+    "licenses": "license",
+    "chassis": "chassis",
+    "flexcaches": "flexcache",
+    "status": "status",
+    "alias": "alias",
+    "bus": "bus",
+    "metrocluster": "metrocluster",
+    "nfs": "nfs",
+    "cifs": "cifs",
+    "s3": "s3",
+    "iscsi": "iscsi",
+    "nvme": "nvme",
+    "fpolicy": "fpolicy",
+}
 
 
 def _singularize(name: str) -> str:
-    """Naive singularization of a plural resource name.
+    """Singularize a plural resource name.
 
-    Handles common patterns: ``policies`` → ``policy``,
-    ``interfaces`` → ``interface``, ``volumes`` → ``volume``.
+    Checks an exception dictionary first, then applies common English
+    pluralization rules.
 
     Args:
         name: Plural resource name.
@@ -81,6 +153,8 @@ def _singularize(name: str) -> str:
     Returns:
         Singular form.
     """
+    if name in _SINGULAR_EXCEPTIONS:
+        return _SINGULAR_EXCEPTIONS[name]
     if name.endswith("ies"):
         return name[:-3] + "y"
     if name.endswith("ses") or name.endswith("xes") or name.endswith("zes"):
@@ -106,17 +180,51 @@ def _field_to_cache_attr(field: ParsedField) -> str:
     return field.api_path.replace(".", "_").replace("-", "_")
 
 
-def _python_type_annotation(field: ParsedField) -> str:
+def _sub_model_name(parent_class: str, field: ParsedField) -> str:
+    """Build a sub-model class name for an array-of-objects field.
+
+    Convention: ``{ParentClassName}{FieldNameSingularized}``.
+
+    ``StorageSnapshotPolicy`` + ``copies`` → ``StorageSnapshotPolicyCopy``
+
+    Args:
+        parent_class: Parent model class name.
+        field: The array-of-objects field.
+
+    Returns:
+        Sub-model class name.
+    """
+    singular = _singularize(field.name)
+    # PascalCase the singular field name
+    pascal = "".join(w.capitalize() for w in singular.split("_"))
+    return f"{parent_class}{pascal}"
+
+
+def _has_typed_sub_fields(field: ParsedField) -> bool:
+    """Check if a field should get a typed sub-model.
+
+    True when the field is an array of objects with at least one
+    non-object sub-field (i.e. actual leaf data to model).
+    """
+    if not (field.is_list and field.is_object and field.sub_fields):
+        return False
+    return any(not (sf.is_object and not sf.is_list) for sf in field.sub_fields)
+
+
+def _python_type_annotation(field: ParsedField, sub_model_map: dict[str, str] | None = None) -> str:
     """Get the Python type annotation string for a field.
 
     Args:
         field: Parsed field.
+        sub_model_map: Optional mapping from field api_path to sub-model class name.
 
     Returns:
         Type annotation string.
     """
     if field.is_uuid:
         return "OntapUUID"
+    if sub_model_map and field.api_path in sub_model_map:
+        return f"list[{sub_model_map[field.api_path]}]"
     if field.is_list:
         return field.python_type
     return field.python_type
@@ -168,6 +276,8 @@ def generate_model(endpoint: ParsedEndpoint, api_type: str = "ontap") -> str:
     """Generate a Pydantic model class for an endpoint.
 
     Produces a flat ``CacheModel`` subclass following ADR-0007 naming.
+    Array-of-objects fields with sub-fields get typed sub-model classes
+    defined before the parent class.
 
     Args:
         endpoint: Parsed endpoint with fields.
@@ -176,13 +286,31 @@ def generate_model(endpoint: ParsedEndpoint, api_type: str = "ontap") -> str:
     Returns:
         Python source code for the model module.
     """
-    class_name = _path_to_class_name(endpoint.path)
+    class_name = _path_to_class_name(endpoint.path, endpoint.schema_name, api_type)
     doc = f"{class_name} — {endpoint.path}."
     leaves = _select_leaf_fields(endpoint.fields)
 
+    # Identify fields that get typed sub-models
+    sub_model_map: dict[str, str] = {}  # field api_path -> sub-model class name
+    sub_model_fields: list[tuple[str, ParsedField]] = []  # (sub_class_name, field)
+    for field in leaves:
+        if _has_typed_sub_fields(field):
+            sub_cls = _sub_model_name(class_name, field)
+            sub_model_map[field.api_path] = sub_cls
+            sub_model_fields.append((sub_cls, field))
+
     needs_field_import = any(f.is_list for f in leaves)
-    needs_any_import = any(f.is_list and f.is_object for f in leaves)
+    # Only need Any import if there are list-of-object fields WITHOUT sub-models
+    needs_any_import = any(
+        f.is_list and f.is_object and f.api_path not in sub_model_map for f in leaves
+    )
     needs_uuid_import = any(f.is_uuid for f in leaves)
+
+    # Check sub-model fields for UUID needs
+    for _sub_cls, sf in sub_model_fields:
+        sub_leaves = _select_leaf_fields(sf.sub_fields)
+        if any(ssf.is_uuid for ssf in sub_leaves):
+            needs_uuid_import = True
 
     lines = [
         f'"""{doc}"""',
@@ -197,9 +325,6 @@ def generate_model(endpoint: ParsedEndpoint, api_type: str = "ontap") -> str:
         lines.append("")
 
     pydantic_imports = ["Field"] if needs_field_import else []
-    if not pydantic_imports:
-        # No pydantic imports needed beyond CacheModel
-        pass
 
     base_imports = ["CacheModel"]
     if needs_uuid_import:
@@ -211,6 +336,24 @@ def generate_model(endpoint: ParsedEndpoint, api_type: str = "ontap") -> str:
 
     lines.append(f"from pynetappfoundry.cache._base import {', '.join(sorted(base_imports))}")
     lines.append("")
+
+    # Generate sub-model classes before the parent
+    for sub_cls, field in sub_model_fields:
+        lines.append("")
+        lines.append(f"class {sub_cls}(CacheModel):")
+        lines.append(f'    """{sub_cls} sub-model for {field.name}."""')
+        lines.append("")
+        sub_leaves = _select_leaf_fields(field.sub_fields)
+        if not sub_leaves:
+            lines.append("    pass")
+        else:
+            for sf in sub_leaves:
+                attr = sf.name.replace("-", "_")
+                type_ann = _python_type_annotation(sf)
+                default_repr = _python_default_repr(sf)
+                lines.append(f"    {attr}: {type_ann} = {default_repr}")
+        lines.append("")
+
     lines.append("")
     lines.append(f"class {class_name}(CacheModel):")
     lines.append(f'    """{class_name} information."""')
@@ -221,7 +364,7 @@ def generate_model(endpoint: ParsedEndpoint, api_type: str = "ontap") -> str:
     else:
         for field in leaves:
             attr = _field_to_cache_attr(field)
-            type_ann = _python_type_annotation(field)
+            type_ann = _python_type_annotation(field, sub_model_map)
             default_repr = _python_default_repr(field)
             lines.append(f"    {attr}: {type_ann} = {default_repr}")
 
@@ -232,42 +375,80 @@ def generate_model(endpoint: ParsedEndpoint, api_type: str = "ontap") -> str:
 def generate_mapping(
     endpoint: ParsedEndpoint,
     api_type: str = "ontap",
+    schema_lookup: dict[str, str] | None = None,
 ) -> str:
     """Generate a TypeMapping/FieldMapping module for an endpoint.
 
     Produces a ``mapping.py`` file with the mapping constant and
-    registry registration call.
+    registry registration call.  Array-of-objects fields with typed
+    sub-models get transform functions that construct sub-model instances.
 
     Args:
         endpoint: Parsed endpoint with fields.
         api_type: API type tag.
+        schema_lookup: Optional mapping of API path → schema name for
+            resolving parent class names.
 
     Returns:
         Python source code for the mapping module.
     """
-    class_name = _path_to_class_name(endpoint.path)
+    class_name = _path_to_class_name(endpoint.path, endpoint.schema_name, api_type)
     module_parts = _path_to_module_parts(endpoint.path)
     mapping_name = f"{class_name.upper()}_MAPPING"
     leaves = _select_leaf_fields(endpoint.fields)
 
+    # Identify sub-model fields
+    sub_model_map: dict[str, str] = {}
+    for field in leaves:
+        if _has_typed_sub_fields(field):
+            sub_model_map[field.api_path] = _sub_model_name(class_name, field)
+
     # Build the import path for the model
     model_import = f"pynetappfoundry.cache.{'.'.join(module_parts)}.model"
+
+    # Build model imports (parent class + any sub-model classes)
+    model_classes = [class_name, *sorted(sub_model_map.values())]
 
     lines = [
         f'"""{class_name} type mapping — {endpoint.path}."""',
         "",
         "from __future__ import annotations",
         "",
-        "from pynetappfoundry.cache._registry import model_registry",
-        "from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping",
-        f"from {model_import} import {class_name}",
-        "",
-        "",
-        f"{mapping_name} = TypeMapping(",
-        f'    name="{class_name}",',
-        f"    model_class={class_name},",
-        f'    api_endpoint="{endpoint.path}?fields=*',
     ]
+
+    if sub_model_map:
+        lines.append("from typing import Any")
+        lines.append("")
+
+    lines.extend(
+        [
+            "from pynetappfoundry.cache._registry import model_registry",
+            "from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping",
+            f"from {model_import} import {', '.join(model_classes)}",
+        ]
+    )
+
+    # Generate transform functions for sub-model fields
+    if sub_model_map:
+        for field in leaves:
+            if field.api_path not in sub_model_map:
+                continue
+            sub_cls = sub_model_map[field.api_path]
+            func_name = f"_transform_{_field_to_cache_attr(field)}"
+            lines.append("")
+            lines.append("")
+            lines.append(f"def {func_name}(record: dict[str, Any]) -> list[{sub_cls}]:")
+            lines.append(f'    """Transform {field.api_path} dicts into {sub_cls} instances."""')
+            lines.append(
+                f'    return [{sub_cls}(**item) for item in record.get("{field.api_path}", [])]'
+            )
+
+    lines.append("")
+    lines.append("")
+    lines.append(f"{mapping_name} = TypeMapping(")
+    lines.append(f'    name="{class_name}",')
+    lines.append(f"    model_class={class_name},")
+    lines.append(f'    api_endpoint="{endpoint.path}?fields=*')
 
     # Add expensive fields to the endpoint query
     expensive = [f for f in leaves if f.requires_explicit_fetch]
@@ -285,7 +466,8 @@ def generate_mapping(
 
     if endpoint.has_parent:
         # Derive parent mapping name from parent path
-        parent_class = _path_to_class_name(endpoint.parent_path)
+        parent_schema = (schema_lookup or {}).get(endpoint.parent_path, "")
+        parent_class = _path_to_class_name(endpoint.parent_path, parent_schema, api_type)
         lines.append(f'    parent_mapping="{parent_class}",')
         lines.append('    parent_id_field="uuid",')
 
@@ -296,7 +478,13 @@ def generate_mapping(
         default_repr = _python_default_repr(field)
 
         field_args = [f'        cache_attr="{attr}"']
-        field_args.append(f'        api_path="{field.api_path}"')
+
+        if field.api_path in sub_model_map:
+            # Sub-model field: use transform instead of api_path
+            func_name = f"_transform_{attr}"
+            field_args.append(f"        transform={func_name}")
+        else:
+            field_args.append(f'        api_path="{field.api_path}"')
 
         if field.default != "":
             field_args.append(f"        default={default_repr}")
@@ -318,16 +506,17 @@ def generate_mapping(
     return "\n".join(lines)
 
 
-def generate_init(endpoint: ParsedEndpoint) -> str:
+def generate_init(endpoint: ParsedEndpoint, api_type: str = "ontap") -> str:
     """Generate an ``__init__.py`` for an endpoint's package.
 
     Args:
         endpoint: Parsed endpoint.
+        api_type: API type prefix for class naming.
 
     Returns:
         Python source code for ``__init__.py``.
     """
-    class_name = _path_to_class_name(endpoint.path)
+    class_name = _path_to_class_name(endpoint.path, endpoint.schema_name, api_type)
     module_parts = _path_to_module_parts(endpoint.path)
 
     lines = [
@@ -344,6 +533,7 @@ def generate_init(endpoint: ParsedEndpoint) -> str:
 def generate_toml_overlay(
     endpoint: ParsedEndpoint,
     existing_path: Path | None = None,
+    api_type: str = "ontap",
 ) -> str:
     """Generate or update a TOML overlay for an endpoint.
 
@@ -354,11 +544,12 @@ def generate_toml_overlay(
     Args:
         endpoint: Parsed endpoint with fields.
         existing_path: Path to existing overlay file, or None.
+        api_type: API type prefix for class naming.
 
     Returns:
         TOML content as a string.
     """
-    class_name = _path_to_class_name(endpoint.path)
+    class_name = _path_to_class_name(endpoint.path, endpoint.schema_name, api_type)
     leaves = _select_leaf_fields(endpoint.fields)
 
     # Load existing overlay if present
@@ -403,6 +594,7 @@ def write_endpoint_files(
     output_dir: Path,
     api_type: str = "ontap",
     overlay_dir: Path | None = None,
+    schema_lookup: dict[str, str] | None = None,
 ) -> list[Path]:
     """Write all generated files for an endpoint.
 
@@ -416,6 +608,8 @@ def write_endpoint_files(
         api_type: API type tag.
         overlay_dir: Directory for TOML overlay files.  If None, overlays
             are written next to the model files.
+        schema_lookup: Mapping of API path → schema name for resolving
+            parent class names in mappings.
 
     Returns:
         List of paths to all files written.
@@ -438,12 +632,12 @@ def write_endpoint_files(
 
     # mapping.py
     mapping_path = pkg_dir / "mapping.py"
-    mapping_path.write_text(generate_mapping(endpoint, api_type))
+    mapping_path.write_text(generate_mapping(endpoint, api_type, schema_lookup))
     written.append(mapping_path)
 
     # __init__.py for the leaf package
     init_path = pkg_dir / "__init__.py"
-    init_path.write_text(generate_init(endpoint))
+    init_path.write_text(generate_init(endpoint, api_type))
     written.append(init_path)
 
     # TOML overlay
@@ -451,7 +645,7 @@ def write_endpoint_files(
     toml_dir.mkdir(parents=True, exist_ok=True)
     toml_path = toml_dir / f"{module_parts[-1]}.toml"
     existing = toml_path if toml_path.exists() else None
-    toml_path.write_text(generate_toml_overlay(endpoint, existing))
+    toml_path.write_text(generate_toml_overlay(endpoint, existing, api_type))
     written.append(toml_path)
 
     return written
