@@ -26,6 +26,13 @@ Use **SQLite** as the storage backend for caching ONTAP cluster metadata that do
 - **Redis/external cache**: Overkill for local CLI tool, adds deployment complexity
 - **Automatic refresh with TTL**: Adds complexity, harder to reason about data freshness
 
+## Evolution
+
+The storage format evolved from a single JSON blob (schema v1) to per-model SQL
+tables (schema v2) in [ADR-0009](0009-sql-table-storage.md). The SQLite backend
+and manual refresh model remain unchanged; only the internal table structure
+changed to enable SQL-level queries and per-field indexing.
+
 ## Related Issues
 
 - Issue #32: feat: add cluster metadata cache for ONTAP clusters
