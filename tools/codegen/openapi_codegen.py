@@ -17,8 +17,48 @@ import argparse
 import sys
 from pathlib import Path
 
-from tools.codegen.adapters import parse_openapi_spec
-from tools.codegen.generators import write_endpoint_files
+from tools.codegen.adapters import ParsedEndpoint, parse_openapi_spec
+from tools.codegen.generators import (
+    _path_to_class_name,
+    _path_to_module_parts,
+    _select_leaf_fields,
+    write_endpoint_files,
+)
+
+
+def _deduplicate_endpoints(endpoints: list[ParsedEndpoint]) -> list[ParsedEndpoint]:
+    """Deduplicate endpoints that resolve to the same module path.
+
+    When ``/storage/volumes`` and ``/storage/volumes/{uuid}`` both map to
+    module path ``["storage", "volumes"]``, keep the endpoint with the
+    most leaf fields (the richer schema).
+
+    Args:
+        endpoints: List of parsed endpoints.
+
+    Returns:
+        Deduplicated list, preserving original order for the winners.
+    """
+    groups: dict[tuple[str, ...], list[ParsedEndpoint]] = {}
+    for ep in endpoints:
+        key = tuple(_path_to_module_parts(ep.path))
+        groups.setdefault(key, []).append(ep)
+
+    seen: set[tuple[str, ...]] = set()
+    result: list[ParsedEndpoint] = []
+    for ep in endpoints:
+        key = tuple(_path_to_module_parts(ep.path))
+        if key in seen:
+            continue
+        seen.add(key)
+        candidates = groups[key]
+        if len(candidates) == 1:
+            result.append(candidates[0])
+        else:
+            # Pick the endpoint with the most leaf fields
+            best = max(candidates, key=lambda e: len(_select_leaf_fields(e.fields)))
+            result.append(best)
+    return result
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -97,15 +137,24 @@ def run(
         endpoints = [e for e in endpoints if e.path in endpoint_filter]
         print(f"Filtered to {len(endpoints)} endpoints.")
 
+    # Deduplicate endpoints that resolve to the same module path.
+    # e.g. /storage/volumes and /storage/volumes/{uuid} both map to
+    # storage/volumes — keep the one with the most leaf fields.
+    endpoints = _deduplicate_endpoints(endpoints)
+
     if not endpoints:
         print("No endpoints to generate.", file=sys.stderr)
         return []
+
+    # Build schema lookup for parent path resolution in mappings
+    schema_lookup: dict[str, str] = {ep.path: ep.schema_name for ep in endpoints}
 
     all_written: list[Path] = []
 
     for ep in endpoints:
         if dry_run:
-            print(f"  [dry-run] {ep.path} -> {len(ep.fields)} fields")
+            class_name = _path_to_class_name(ep.path, ep.schema_name, api_type)
+            print(f"  [dry-run] {ep.path} -> {class_name} ({len(ep.fields)} fields)")
             continue
 
         written = write_endpoint_files(
@@ -113,6 +162,7 @@ def run(
             output,
             api_type,
             overlay_dir,
+            schema_lookup,
         )
         all_written.extend(written)
         field_count = len([f for f in ep.fields if not f.is_object or f.is_list])
