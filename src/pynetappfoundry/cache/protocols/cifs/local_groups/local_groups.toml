@@ -1,0 +1,22 @@
+[endpoint]
+path = "/protocols/cifs/local-groups"
+schema = "local_cifs_group"
+class_name = "OntapLocalCifsGroup"
+
+[fields.description]
+cache_strategy = "cache"
+
+[fields.members]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.sid]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"

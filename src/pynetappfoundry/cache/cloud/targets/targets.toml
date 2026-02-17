@@ -1,0 +1,94 @@
+[endpoint]
+path = "/cloud/targets"
+schema = "cloud_target"
+class_name = "OntapCloudTarget"
+
+[fields.access_key]
+cache_strategy = "cache"
+
+[fields.authentication_type]
+cache_strategy = "cache"
+
+[fields.azure_account]
+cache_strategy = "cache"
+
+[fields.azure_msi_token]
+cache_strategy = "cache"
+
+[fields.azure_private_key]
+cache_strategy = "cache"
+
+[fields.azure_sas_token]
+cache_strategy = "cache"
+
+[fields.cap_url]
+cache_strategy = "cache"
+
+[fields.certificate_validation_enabled]
+cache_strategy = "cache"
+
+[fields.cluster_name]
+cache_strategy = "cache"
+
+[fields.cluster_uuid]
+cache_strategy = "cache"
+
+[fields.container]
+cache_strategy = "cache"
+
+[fields.ipspace_name]
+cache_strategy = "cache"
+
+[fields.ipspace_uuid]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.owner]
+cache_strategy = "cache"
+
+[fields.port]
+cache_strategy = "cache"
+
+[fields.provider_type]
+cache_strategy = "cache"
+
+[fields.read_latency_warning_threshold]
+cache_strategy = "cache"
+
+[fields.scope]
+cache_strategy = "cache"
+
+[fields.secret_password]
+cache_strategy = "cache"
+
+[fields.server]
+cache_strategy = "cache"
+
+[fields.server_side_encryption]
+cache_strategy = "cache"
+
+[fields.snapmirror_use]
+cache_strategy = "cache"
+
+[fields.ssl_enabled]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.url_style]
+cache_strategy = "cache"
+
+[fields.use_http_proxy]
+cache_strategy = "cache"
+
+[fields.used]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

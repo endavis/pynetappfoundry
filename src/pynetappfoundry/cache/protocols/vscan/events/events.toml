@@ -1,0 +1,46 @@
+[endpoint]
+path = "/protocols/vscan/{svm.uuid}/events"
+schema = "vscan_event"
+class_name = "OntapVscanEvent"
+
+[fields.disconnect_reason]
+cache_strategy = "cache"
+
+[fields.event_time]
+cache_strategy = "cache"
+
+[fields.file_path]
+cache_strategy = "cache"
+
+[fields.interface_ip_address]
+cache_strategy = "cache"
+
+[fields.interface_name]
+cache_strategy = "cache"
+
+[fields.interface_uuid]
+cache_strategy = "cache"
+
+[fields.node_name]
+cache_strategy = "cache"
+
+[fields.node_uuid]
+cache_strategy = "cache"
+
+[fields.server]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.vendor]
+cache_strategy = "cache"
+
+[fields.version]
+cache_strategy = "cache"

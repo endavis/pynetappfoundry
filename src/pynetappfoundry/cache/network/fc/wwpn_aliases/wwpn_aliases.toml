@@ -1,0 +1,16 @@
+[endpoint]
+path = "/network/fc/wwpn-aliases"
+schema = "wwpn_alias"
+class_name = "OntapWwpnAlias"
+
+[fields.alias]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.wwpn]
+cache_strategy = "cache"

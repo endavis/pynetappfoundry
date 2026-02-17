@@ -1,0 +1,52 @@
+[endpoint]
+path = "/storage/quota/rules"
+schema = "quota_rule"
+class_name = "OntapQuotaRule"
+
+[fields.files_hard_limit]
+cache_strategy = "cache"
+
+[fields.files_soft_limit]
+cache_strategy = "cache"
+
+[fields.group_id]
+cache_strategy = "cache"
+
+[fields.group_name]
+cache_strategy = "cache"
+
+[fields.qtree_id]
+cache_strategy = "cache"
+
+[fields.qtree_name]
+cache_strategy = "cache"
+
+[fields.space_hard_limit]
+cache_strategy = "cache"
+
+[fields.space_soft_limit]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.user_mapping]
+cache_strategy = "cache"
+
+[fields.users]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"
+
+[fields.volume_name]
+cache_strategy = "cache"
+
+[fields.volume_uuid]
+cache_strategy = "cache"

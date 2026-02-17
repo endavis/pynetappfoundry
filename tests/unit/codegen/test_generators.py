@@ -594,10 +594,10 @@ class TestGenerateModelSubModel:
     def test_sub_model_has_leaf_fields(self):
         ep = _make_endpoint_with_sub_model()
         code = generate_model(ep)
-        # The sub-model should have 'count' and 'name' (leaf fields from copies sub_fields)
-        # but not 'schedule' (which is a pure object container)
-        assert "    count: int = 0" in code
-        assert "    name: str" in code
+        # The sub-model should have leaf fields from copies sub_fields
+        # Field names use full api_path (dots -> underscores)
+        assert "    copies_count: int = 0" in code
+        assert "    copies_schedule_name: str" in code
 
     def test_valid_python(self):
         ep = _make_endpoint_with_sub_model()

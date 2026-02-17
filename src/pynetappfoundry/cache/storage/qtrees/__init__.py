@@ -1,9 +1,5 @@
-"""Re-export storage qtree cache models."""
+"""OntapQtree cache model."""
 
-from __future__ import annotations
+from pynetappfoundry.cache.storage.qtrees.model import OntapQtree
 
-from pynetappfoundry.cache.storage.qtrees.model import QtreeInfo
-
-__all__ = [
-    "QtreeInfo",
-]
+__all__ = ["OntapQtree"]

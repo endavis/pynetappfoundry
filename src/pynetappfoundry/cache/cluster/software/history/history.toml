@@ -1,0 +1,25 @@
+[endpoint]
+path = "/cluster/software/history"
+schema = "software_history"
+class_name = "OntapSoftwareHistory"
+
+[fields.end_time]
+cache_strategy = "cache"
+
+[fields.from_version]
+cache_strategy = "cache"
+
+[fields.node_name]
+cache_strategy = "cache"
+
+[fields.node_uuid]
+cache_strategy = "cache"
+
+[fields.start_time]
+cache_strategy = "cache"
+
+[fields.state]
+cache_strategy = "cache"
+
+[fields.to_version]
+cache_strategy = "cache"

@@ -1,0 +1,88 @@
+[endpoint]
+path = "/cluster/metrocluster/nodes"
+schema = "metrocluster_node"
+class_name = "OntapMetroclusterNode"
+
+[fields.automatic_uso]
+cache_strategy = "cache"
+
+[fields.cluster_name]
+cache_strategy = "cache"
+
+[fields.cluster_uuid]
+cache_strategy = "cache"
+
+[fields.configuration_state]
+cache_strategy = "cache"
+
+[fields.dr_auxiliary_cluster_name]
+cache_strategy = "cache"
+
+[fields.dr_auxiliary_cluster_uuid]
+cache_strategy = "cache"
+
+[fields.dr_auxiliary_partner_name]
+cache_strategy = "cache"
+
+[fields.dr_auxiliary_partner_system_id]
+cache_strategy = "cache"
+
+[fields.dr_auxiliary_partner_uuid]
+cache_strategy = "cache"
+
+[fields.dr_group_id]
+cache_strategy = "cache"
+
+[fields.dr_mirroring_state]
+cache_strategy = "cache"
+
+[fields.dr_operation_state]
+cache_strategy = "cache"
+
+[fields.dr_partner_name]
+cache_strategy = "cache"
+
+[fields.dr_partner_system_id]
+cache_strategy = "cache"
+
+[fields.dr_partner_uuid]
+cache_strategy = "cache"
+
+[fields.dr_partner_cluster_name]
+cache_strategy = "cache"
+
+[fields.dr_partner_cluster_uuid]
+cache_strategy = "cache"
+
+[fields.encryption_enabled]
+cache_strategy = "cache"
+
+[fields.ha_partner_name]
+cache_strategy = "cache"
+
+[fields.ha_partner_system_id]
+cache_strategy = "cache"
+
+[fields.ha_partner_uuid]
+cache_strategy = "cache"
+
+[fields.ha_partner_cluster_name]
+cache_strategy = "cache"
+
+[fields.ha_partner_cluster_uuid]
+cache_strategy = "cache"
+
+[fields.is_mccip]
+cache_strategy = "cache"
+
+[fields.limit_enforcement]
+cache_strategy = "cache"
+
+[fields.node_name]
+cache_strategy = "cache"
+
+[fields.node_system_id]
+cache_strategy = "cache"
+
+[fields.node_uuid]
+cache_strategy = "cache"

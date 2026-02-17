@@ -1,0 +1,37 @@
+[endpoint]
+path = "/protocols/san/igroups/{igroup.uuid}/initiators"
+schema = "igroup_initiator"
+class_name = "OntapIgroupInitiator"
+
+[fields.comment]
+cache_strategy = "cache"
+
+[fields.connectivity_tracking_alerts]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.connectivity_tracking_connection_state]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.connectivity_tracking_connections]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.igroup_name]
+cache_strategy = "cache"
+
+[fields.igroup_uuid]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.proximity_local_svm]
+cache_strategy = "cache"
+
+[fields.proximity_peer_svms]
+cache_strategy = "cache"
+
+[fields.records]
+cache_strategy = "cache"

@@ -1,45 +1,236 @@
-"""SnapMirror type mapping definition for the declarative field mapping framework.
-
-Defines SNAPMIRROR_MAPPING which maps ONTAP REST API SnapMirror relationship
-data to SnapMirrorRelationship cache model attributes. SnapMirror is API-only
--- there is no CLI command for this data.
-
-All fields use simple ``api_path`` dot notation with no transform functions.
-The ``source.path`` and ``destination.path`` fields already contain the full
-``"svm:volume"`` formatted string per the ONTAP REST API.
-"""
+# ruff: noqa: E501
+"""OntapSnapmirrorRelationship type mapping."""
 
 from __future__ import annotations
 
+from typing import Any
+
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.snapmirror.relationships.model import SnapMirrorRelationship
+from pynetappfoundry.cache.snapmirror.relationships.model import (
+    OntapSnapmirrorRelationship,
+    OntapSnapmirrorRelationshipArgument,
+    OntapSnapmirrorRelationshipConsistencyGroupVolume,
+    OntapSnapmirrorRelationshipConsistencyGroupVolume2,
+    OntapSnapmirrorRelationshipSvmdrVolume,
+    OntapSnapmirrorRelationshipUnhealthyReason,
+)
 
-SNAPMIRROR_MAPPING = TypeMapping(
-    name="SnapMirror",
-    model_class=SnapMirrorRelationship,
-    api_endpoint=(
-        "/snapmirror/relationships"
-        "?fields=uuid,source.path,destination.path,policy.type,policy.uuid,"
-        "throttle,group_type,transfer_schedule.uuid"
-    ),
-    cli_command="",
-    id_field="uuid",
+
+def _transform_consistency_group_failover_error_arguments(
+    record: dict[str, Any],
+) -> list[OntapSnapmirrorRelationshipArgument]:
+    """Transform consistency_group_failover.error.arguments into OntapSnapmirrorRelationshipArgument list."""
+    return [
+        OntapSnapmirrorRelationshipArgument(**item)
+        for item in record.get("consistency_group_failover.error.arguments", [])
+    ]
+
+
+def _transform_destination_consistency_group_volumes(
+    record: dict[str, Any],
+) -> list[OntapSnapmirrorRelationshipConsistencyGroupVolume]:
+    """Transform destination.consistency_group_volumes into OntapSnapmirrorRelationshipConsistencyGroupVolume list."""
+    return [
+        OntapSnapmirrorRelationshipConsistencyGroupVolume(**item)
+        for item in record.get("destination.consistency_group_volumes", [])
+    ]
+
+
+def _transform_source_consistency_group_volumes(
+    record: dict[str, Any],
+) -> list[OntapSnapmirrorRelationshipConsistencyGroupVolume2]:
+    """Transform source.consistency_group_volumes into OntapSnapmirrorRelationshipConsistencyGroupVolume2 list."""
+    return [
+        OntapSnapmirrorRelationshipConsistencyGroupVolume2(**item)
+        for item in record.get("source.consistency_group_volumes", [])
+    ]
+
+
+def _transform_svmdr_volumes(
+    record: dict[str, Any],
+) -> list[OntapSnapmirrorRelationshipSvmdrVolume]:
+    """Transform svmdr_volumes into OntapSnapmirrorRelationshipSvmdrVolume list."""
+    return [
+        OntapSnapmirrorRelationshipSvmdrVolume(**item) for item in record.get("svmdr_volumes", [])
+    ]
+
+
+def _transform_unhealthy_reason(
+    record: dict[str, Any],
+) -> list[OntapSnapmirrorRelationshipUnhealthyReason]:
+    """Transform unhealthy_reason into OntapSnapmirrorRelationshipUnhealthyReason list."""
+    return [
+        OntapSnapmirrorRelationshipUnhealthyReason(**item)
+        for item in record.get("unhealthy_reason", [])
+    ]
+
+
+ONTAPSNAPMIRRORRELATIONSHIP_MAPPING = TypeMapping(
+    name="OntapSnapmirrorRelationship",
+    model_class=OntapSnapmirrorRelationship,
+    api_endpoint="/snapmirror/relationships?fields=*",
+    api_type="ontap",
     fields=(
         FieldMapping(
-            cache_attr="uuid",
-            api_path="uuid",
+            cache_attr="backoff_level",
+            api_path="backoff_level",
         ),
         FieldMapping(
-            cache_attr="source_path",
-            api_path="source.path",
+            cache_attr="consistency_group_failover_error_arguments",
+            transform=_transform_consistency_group_failover_error_arguments,
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="consistency_group_failover_error_code",
+            api_path="consistency_group_failover.error.code",
+        ),
+        FieldMapping(
+            cache_attr="consistency_group_failover_error_message",
+            api_path="consistency_group_failover.error.message",
+        ),
+        FieldMapping(
+            cache_attr="consistency_group_failover_state",
+            api_path="consistency_group_failover.state",
+        ),
+        FieldMapping(
+            cache_attr="consistency_group_failover_status_code",
+            api_path="consistency_group_failover.status.code",
+        ),
+        FieldMapping(
+            cache_attr="consistency_group_failover_status_message",
+            api_path="consistency_group_failover.status.message",
+        ),
+        FieldMapping(
+            cache_attr="consistency_group_failover_type",
+            api_path="consistency_group_failover.type",
+        ),
+        FieldMapping(
+            cache_attr="create_destination_bucket_retention_default_period",
+            api_path="create_destination.bucket_retention.default_period",
+        ),
+        FieldMapping(
+            cache_attr="create_destination_bucket_retention_mode",
+            api_path="create_destination.bucket_retention.mode",
+        ),
+        FieldMapping(
+            cache_attr="create_destination_enabled",
+            api_path="create_destination.enabled",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="create_destination_size",
+            api_path="create_destination.size",
+            default=0,
+        ),
+        FieldMapping(
+            cache_attr="create_destination_snapshot_locking_enabled",
+            api_path="create_destination.snapshot_locking_enabled",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="create_destination_storage_service_enabled",
+            api_path="create_destination.storage_service.enabled",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="create_destination_storage_service_enforce_performance",
+            api_path="create_destination.storage_service.enforce_performance",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="create_destination_storage_service_name",
+            api_path="create_destination.storage_service.name",
+        ),
+        FieldMapping(
+            cache_attr="create_destination_tiering_policy",
+            api_path="create_destination.tiering.policy",
+        ),
+        FieldMapping(
+            cache_attr="create_destination_tiering_supported",
+            api_path="create_destination.tiering.supported",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="destination_cluster_name",
+            api_path="destination.cluster.name",
+        ),
+        FieldMapping(
+            cache_attr="destination_cluster_uuid",
+            api_path="destination.cluster.uuid",
+        ),
+        FieldMapping(
+            cache_attr="destination_consistency_group_volumes",
+            transform=_transform_destination_consistency_group_volumes,
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="destination_ipspace",
+            api_path="destination.ipspace",
+        ),
+        FieldMapping(
+            cache_attr="destination_luns_name",
+            api_path="destination.luns.name",
+        ),
+        FieldMapping(
+            cache_attr="destination_luns_uuid",
+            api_path="destination.luns.uuid",
         ),
         FieldMapping(
             cache_attr="destination_path",
             api_path="destination.path",
         ),
         FieldMapping(
-            cache_attr="relationship_type",
+            cache_attr="destination_svm_name",
+            api_path="destination.svm.name",
+        ),
+        FieldMapping(
+            cache_attr="destination_svm_uuid",
+            api_path="destination.svm.uuid",
+        ),
+        FieldMapping(
+            cache_attr="exported_snapshot",
+            api_path="exported_snapshot",
+        ),
+        FieldMapping(
+            cache_attr="group_type",
+            api_path="group_type",
+        ),
+        FieldMapping(
+            cache_attr="healthy",
+            api_path="healthy",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="identity_preservation",
+            api_path="identity_preservation",
+        ),
+        FieldMapping(
+            cache_attr="io_serving_copy",
+            api_path="io_serving_copy",
+        ),
+        FieldMapping(
+            cache_attr="lag_time",
+            api_path="lag_time",
+        ),
+        FieldMapping(
+            cache_attr="last_transfer_network_compression_ratio",
+            api_path="last_transfer_network_compression_ratio",
+        ),
+        FieldMapping(
+            cache_attr="last_transfer_type",
+            api_path="last_transfer_type",
+        ),
+        FieldMapping(
+            cache_attr="master_bias_activated_site",
+            api_path="master_bias_activated_site",
+        ),
+        FieldMapping(
+            cache_attr="policy_name",
+            api_path="policy.name",
+        ),
+        FieldMapping(
+            cache_attr="policy_type",
             api_path="policy.type",
         ),
         FieldMapping(
@@ -47,19 +238,136 @@ SNAPMIRROR_MAPPING = TypeMapping(
             api_path="policy.uuid",
         ),
         FieldMapping(
+            cache_attr="preferred_site",
+            api_path="preferred_site",
+        ),
+        FieldMapping(
+            cache_attr="preserve",
+            api_path="preserve",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="quick_resync",
+            api_path="quick_resync",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="recover_after_break",
+            api_path="recover_after_break",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="restore",
+            api_path="restore",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="restore_to_snapshot",
+            api_path="restore_to_snapshot",
+        ),
+        FieldMapping(
+            cache_attr="source_cluster_name",
+            api_path="source.cluster.name",
+        ),
+        FieldMapping(
+            cache_attr="source_cluster_uuid",
+            api_path="source.cluster.uuid",
+        ),
+        FieldMapping(
+            cache_attr="source_consistency_group_volumes",
+            transform=_transform_source_consistency_group_volumes,
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="source_luns_name",
+            api_path="source.luns.name",
+        ),
+        FieldMapping(
+            cache_attr="source_luns_uuid",
+            api_path="source.luns.uuid",
+        ),
+        FieldMapping(
+            cache_attr="source_path",
+            api_path="source.path",
+        ),
+        FieldMapping(
+            cache_attr="source_svm_name",
+            api_path="source.svm.name",
+        ),
+        FieldMapping(
+            cache_attr="source_svm_uuid",
+            api_path="source.svm.uuid",
+        ),
+        FieldMapping(
+            cache_attr="state",
+            api_path="state",
+        ),
+        FieldMapping(
+            cache_attr="svmdr_volumes",
+            transform=_transform_svmdr_volumes,
+            default=[],
+        ),
+        FieldMapping(
             cache_attr="throttle",
             api_path="throttle",
             default=0,
         ),
         FieldMapping(
-            cache_attr="group_type",
-            api_path="group_type",
+            cache_attr="total_transfer_bytes",
+            api_path="total_transfer_bytes",
+            default=0,
+        ),
+        FieldMapping(
+            cache_attr="total_transfer_duration",
+            api_path="total_transfer_duration",
+        ),
+        FieldMapping(
+            cache_attr="transfer_bytes_transferred",
+            api_path="transfer.bytes_transferred",
+            default=0,
+        ),
+        FieldMapping(
+            cache_attr="transfer_end_time",
+            api_path="transfer.end_time",
+        ),
+        FieldMapping(
+            cache_attr="transfer_last_updated_time",
+            api_path="transfer.last_updated_time",
+        ),
+        FieldMapping(
+            cache_attr="transfer_state",
+            api_path="transfer.state",
+        ),
+        FieldMapping(
+            cache_attr="transfer_total_duration",
+            api_path="transfer.total_duration",
+        ),
+        FieldMapping(
+            cache_attr="transfer_type",
+            api_path="transfer.type",
+        ),
+        FieldMapping(
+            cache_attr="transfer_uuid",
+            api_path="transfer.uuid",
+        ),
+        FieldMapping(
+            cache_attr="transfer_schedule_name",
+            api_path="transfer_schedule.name",
         ),
         FieldMapping(
             cache_attr="transfer_schedule_uuid",
             api_path="transfer_schedule.uuid",
         ),
+        FieldMapping(
+            cache_attr="unhealthy_reason",
+            transform=_transform_unhealthy_reason,
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="uuid",
+            api_path="uuid",
+        ),
     ),
 )
 
-model_registry.register_mapping("SnapMirror", SNAPMIRROR_MAPPING)
+model_registry.register_mapping("OntapSnapmirrorRelationship", ONTAPSNAPMIRRORRELATIONSHIP_MAPPING)

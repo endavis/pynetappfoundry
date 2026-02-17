@@ -1,0 +1,43 @@
+[endpoint]
+path = "/security/authentication/publickeys"
+schema = "publickey"
+class_name = "OntapPublickey"
+
+[fields.account_name]
+cache_strategy = "cache"
+
+[fields.certificate]
+cache_strategy = "cache"
+
+[fields.certificate_details]
+cache_strategy = "cache"
+
+[fields.certificate_expired]
+cache_strategy = "cache"
+
+[fields.certificate_revoked]
+cache_strategy = "cache"
+
+[fields.comment]
+cache_strategy = "cache"
+
+[fields.index]
+cache_strategy = "cache"
+
+[fields.obfuscated_fingerprint]
+cache_strategy = "cache"
+
+[fields.owner_name]
+cache_strategy = "cache"
+
+[fields.owner_uuid]
+cache_strategy = "cache"
+
+[fields.public_key]
+cache_strategy = "cache"
+
+[fields.scope]
+cache_strategy = "cache"
+
+[fields.sha_fingerprint]
+cache_strategy = "cache"

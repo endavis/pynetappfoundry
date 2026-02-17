@@ -1,0 +1,91 @@
+[endpoint]
+path = "/security/gcp-kms"
+schema = "gcp_kms"
+class_name = "OntapGcpKms"
+
+[fields.application_credentials]
+cache_strategy = "cache"
+
+[fields.caller_account]
+cache_strategy = "cache"
+
+[fields.cloudkms_host]
+cache_strategy = "cache"
+
+[fields.ekmip_reachability]
+cache_strategy = "cache"
+
+[fields.google_reachability_code]
+cache_strategy = "cache"
+
+[fields.google_reachability_message]
+cache_strategy = "cache"
+
+[fields.google_reachability_reachable]
+cache_strategy = "cache"
+
+[fields.key_name]
+cache_strategy = "cache"
+
+[fields.key_ring_location]
+cache_strategy = "cache"
+
+[fields.key_ring_name]
+cache_strategy = "cache"
+
+[fields.oauth_host]
+cache_strategy = "cache"
+
+[fields.oauth_url]
+cache_strategy = "cache"
+
+[fields.port]
+cache_strategy = "cache"
+
+[fields.privileged_account]
+cache_strategy = "cache"
+
+[fields.project_id]
+cache_strategy = "cache"
+
+[fields.proxy_host]
+cache_strategy = "cache"
+
+[fields.proxy_password]
+cache_strategy = "cache"
+
+[fields.proxy_port]
+cache_strategy = "cache"
+
+[fields.proxy_type]
+cache_strategy = "cache"
+
+[fields.proxy_username]
+cache_strategy = "cache"
+
+[fields.scope]
+cache_strategy = "cache"
+
+[fields.state_cluster_state]
+cache_strategy = "cache"
+
+[fields.state_code]
+cache_strategy = "cache"
+
+[fields.state_message]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"
+
+[fields.verify_host]
+cache_strategy = "cache"
+
+[fields.verify_ip]
+cache_strategy = "cache"

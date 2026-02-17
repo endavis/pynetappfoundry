@@ -1,0 +1,13 @@
+[endpoint]
+path = "/cluster/ntp/keys"
+schema = "ntp_key"
+class_name = "OntapNtpKey"
+
+[fields.digest_type]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.value]
+cache_strategy = "cache"

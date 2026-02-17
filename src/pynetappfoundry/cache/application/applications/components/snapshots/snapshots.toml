@@ -1,0 +1,40 @@
+[endpoint]
+path = "/application/applications/{application.uuid}/components/{component.uuid}/snapshots"
+schema = "application_component_snapshot"
+class_name = "OntapApplicationComponentSnapshot"
+
+[fields.application_name]
+cache_strategy = "cache"
+
+[fields.application_uuid]
+cache_strategy = "cache"
+
+[fields.comment]
+cache_strategy = "cache"
+
+[fields.component_name]
+cache_strategy = "cache"
+
+[fields.component_uuid]
+cache_strategy = "cache"
+
+[fields.consistency_type]
+cache_strategy = "cache"
+
+[fields.create_time]
+cache_strategy = "cache"
+
+[fields.is_partial]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

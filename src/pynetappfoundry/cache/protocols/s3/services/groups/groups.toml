@@ -1,0 +1,25 @@
+[endpoint]
+path = "/protocols/s3/services/{svm.uuid}/groups"
+schema = "s3_group"
+class_name = "OntapS3Group"
+
+[fields.comment]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.policies]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.users]
+cache_strategy = "cache"

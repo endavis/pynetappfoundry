@@ -1,0 +1,55 @@
+[endpoint]
+path = "/security/authentication/cluster/oauth2/clients"
+schema = "security_oauth2"
+class_name = "OntapSecurityOauth2"
+
+[fields.application]
+cache_strategy = "cache"
+
+[fields.audience]
+cache_strategy = "cache"
+
+[fields.client_id]
+cache_strategy = "cache"
+
+[fields.client_secret]
+cache_strategy = "cache"
+
+[fields.hashed_client_secret]
+cache_strategy = "cache"
+
+[fields.introspection_endpoint_uri]
+cache_strategy = "cache"
+
+[fields.introspection_interval]
+cache_strategy = "cache"
+
+[fields.issuer]
+cache_strategy = "cache"
+
+[fields.jwks_provider_uri]
+cache_strategy = "cache"
+
+[fields.jwks_refresh_interval]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.outgoing_proxy]
+cache_strategy = "cache"
+
+[fields.provider]
+cache_strategy = "cache"
+
+[fields.remote_user_claim]
+cache_strategy = "cache"
+
+[fields.skip_uri_validation]
+cache_strategy = "cache"
+
+[fields.use_local_roles_if_present]
+cache_strategy = "cache"
+
+[fields.use_mutual_tls]
+cache_strategy = "cache"

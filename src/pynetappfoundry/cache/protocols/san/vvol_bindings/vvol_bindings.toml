@@ -1,0 +1,34 @@
+[endpoint]
+path = "/protocols/san/vvol-bindings"
+schema = "vvol_binding"
+class_name = "OntapVvolBinding"
+
+[fields.count]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.is_optimal]
+cache_strategy = "cache"
+
+[fields.protocol_endpoint_name]
+cache_strategy = "cache"
+
+[fields.protocol_endpoint_uuid]
+cache_strategy = "cache"
+
+[fields.secondary_id]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.vvol_name]
+cache_strategy = "cache"
+
+[fields.vvol_uuid]
+cache_strategy = "cache"

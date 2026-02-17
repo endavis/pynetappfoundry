@@ -1,0 +1,16 @@
+[endpoint]
+path = "/name-services/cache/group-membership/settings"
+schema = "group_membership_settings"
+class_name = "OntapGroupMembershipSettings"
+
+[fields.enabled]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.ttl]
+cache_strategy = "cache"

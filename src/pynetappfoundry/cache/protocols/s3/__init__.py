@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from pynetappfoundry.cache.protocols.s3.buckets import S3BucketInfo
+from pynetappfoundry.cache.protocols.s3.buckets import OntapS3Bucket
 
 __all__ = [
-    "S3BucketInfo",
+    "OntapS3Bucket",
 ]

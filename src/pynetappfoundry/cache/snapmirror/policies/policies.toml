@@ -1,0 +1,64 @@
+[endpoint]
+path = "/snapmirror/policies"
+schema = "snapmirror_policy"
+class_name = "OntapSnapmirrorPolicy"
+
+[fields.comment]
+cache_strategy = "cache"
+
+[fields.copy_all_source_snapshots]
+cache_strategy = "cache"
+
+[fields.copy_latest_source_snapshot]
+cache_strategy = "cache"
+
+[fields.create_snapshot_on_source]
+cache_strategy = "cache"
+
+[fields.identity_preservation]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.network_compression_enabled]
+cache_strategy = "cache"
+
+[fields.retention]
+cache_strategy = "cache"
+
+[fields.rpo]
+cache_strategy = "cache"
+
+[fields.scope]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.sync_common_snapshot_schedule_name]
+cache_strategy = "cache"
+
+[fields.sync_common_snapshot_schedule_uuid]
+cache_strategy = "cache"
+
+[fields.sync_type]
+cache_strategy = "cache"
+
+[fields.throttle]
+cache_strategy = "cache"
+
+[fields.transfer_schedule_name]
+cache_strategy = "cache"
+
+[fields.transfer_schedule_uuid]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

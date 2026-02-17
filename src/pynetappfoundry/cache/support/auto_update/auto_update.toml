@@ -1,0 +1,19 @@
+[endpoint]
+path = "/support/auto-update"
+schema = "auto_update_info"
+class_name = "OntapAutoUpdateInfo"
+
+[fields.enabled]
+cache_strategy = "cache"
+
+[fields.eula_accepted]
+cache_strategy = "cache"
+
+[fields.eula_accepted_ip_address]
+cache_strategy = "cache"
+
+[fields.eula_accepted_timestamp]
+cache_strategy = "cache"
+
+[fields.eula_user_id_accepted]
+cache_strategy = "cache"

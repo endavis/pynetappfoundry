@@ -1,0 +1,25 @@
+[endpoint]
+path = "/security/anti-ransomware/suspects"
+schema = "anti_ransomware_suspect"
+class_name = "OntapAntiRansomwareSuspect"
+
+[fields.file_format]
+cache_strategy = "cache"
+
+[fields.file_name]
+cache_strategy = "cache"
+
+[fields.file_path]
+cache_strategy = "cache"
+
+[fields.file_reason]
+cache_strategy = "cache"
+
+[fields.file_suspect_time]
+cache_strategy = "cache"
+
+[fields.volume_name]
+cache_strategy = "cache"
+
+[fields.volume_uuid]
+cache_strategy = "cache"

@@ -1,0 +1,22 @@
+[endpoint]
+path = "/security/webauthn/supported-algorithms"
+schema = "supported_algorithms"
+class_name = "OntapSupportedAlgorithms"
+
+[fields.algorithm_id]
+cache_strategy = "cache"
+
+[fields.algorithm_name]
+cache_strategy = "cache"
+
+[fields.algorithm_type]
+cache_strategy = "cache"
+
+[fields.owner_name]
+cache_strategy = "cache"
+
+[fields.owner_uuid]
+cache_strategy = "cache"
+
+[fields.scope]
+cache_strategy = "cache"

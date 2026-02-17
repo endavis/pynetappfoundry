@@ -1,0 +1,28 @@
+[endpoint]
+path = "/support/autosupport"
+schema = "autosupport"
+class_name = "OntapAutosupport"
+
+[fields.component]
+cache_strategy = "cache"
+
+[fields.corrective_action_code]
+cache_strategy = "cache"
+
+[fields.corrective_action_message]
+cache_strategy = "cache"
+
+[fields.destination]
+cache_strategy = "cache"
+
+[fields.issue_code]
+cache_strategy = "cache"
+
+[fields.issue_message]
+cache_strategy = "cache"
+
+[fields.node_name]
+cache_strategy = "cache"
+
+[fields.node_uuid]
+cache_strategy = "cache"

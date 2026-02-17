@@ -1,0 +1,22 @@
+[endpoint]
+path = "/storage/file/clone/tokens"
+schema = "token"
+class_name = "OntapToken"
+
+[fields.expiry_time_left]
+cache_strategy = "cache"
+
+[fields.expiry_time_limit]
+cache_strategy = "cache"
+
+[fields.node_name]
+cache_strategy = "cache"
+
+[fields.node_uuid]
+cache_strategy = "cache"
+
+[fields.reserve_size]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

@@ -1,0 +1,76 @@
+[endpoint]
+path = "/storage/flexcache/flexcaches"
+schema = "flexcache"
+class_name = "OntapFlexcache"
+
+[fields.aggregates]
+cache_strategy = "cache"
+
+[fields.atime_scrub_enabled]
+cache_strategy = "cache"
+
+[fields.atime_scrub_period]
+cache_strategy = "cache"
+
+[fields.cifs_change_notify_enabled]
+cache_strategy = "cache"
+
+[fields.constituents_per_aggregate]
+cache_strategy = "cache"
+
+[fields.dr_cache]
+cache_strategy = "cache"
+
+[fields.global_file_locking_enabled]
+cache_strategy = "cache"
+
+[fields.guarantee_type]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.origins]
+cache_strategy = "cache"
+
+[fields.override_encryption]
+cache_strategy = "cache"
+
+[fields.path]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.prepopulate_dir_paths]
+cache_strategy = "cache"
+
+[fields.prepopulate_exclude_dir_paths]
+cache_strategy = "cache"
+
+[fields.prepopulate_recurse]
+cache_strategy = "cache"
+
+[fields.relative_size_enabled]
+cache_strategy = "cache"
+
+[fields.relative_size_percentage]
+cache_strategy = "cache"
+
+[fields.size]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.use_tiered_aggregate]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"
+
+[fields.writeback_enabled]
+cache_strategy = "cache"

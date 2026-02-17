@@ -1,0 +1,10 @@
+[endpoint]
+path = "/storage/snaplock/litigations/{litigation.id}/files"
+schema = "snaplock_litigation_file_response"
+class_name = "OntapSnaplockLitigationFileResponse"
+
+[fields.file]
+cache_strategy = "cache"
+
+[fields.sequence_index]
+cache_strategy = "cache"

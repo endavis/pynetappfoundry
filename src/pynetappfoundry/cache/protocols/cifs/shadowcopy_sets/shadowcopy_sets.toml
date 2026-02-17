@@ -1,0 +1,16 @@
+[endpoint]
+path = "/protocols/cifs/shadowcopy-sets"
+schema = "shadowcopy_set"
+class_name = "OntapShadowcopySet"
+
+[fields.keep_snapshots]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

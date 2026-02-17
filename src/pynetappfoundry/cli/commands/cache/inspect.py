@@ -14,17 +14,19 @@ from rich.tree import Tree
 
 from pynetappfoundry.cache import ClusterMetadataDB
 from pynetappfoundry.cache.cloud.metadata.mapping import CLOUD_METADATA_MAPPING
-from pynetappfoundry.cache.cluster.licensing.mapping import LICENSE_PACKAGE_MAPPING
-from pynetappfoundry.cache.cluster.nodes.mapping import NODE_MAPPING
-from pynetappfoundry.cache.cluster.peers.mapping import CLUSTER_PEER_MAPPING
+from pynetappfoundry.cache.cluster.licensing.licenses.mapping import (
+    ONTAPLICENSEPACKAGERESPONSE_MAPPING,
+)
+from pynetappfoundry.cache.cluster.nodes.mapping import ONTAPNODERESPONSE_MAPPING
+from pynetappfoundry.cache.cluster.peers.mapping import ONTAPCLUSTERPEER_MAPPING
 from pynetappfoundry.cache.field_mapping import TypeMapping
 from pynetappfoundry.cache.network.ethernet.broadcast_domains.mapping import (
-    BROADCAST_DOMAIN_MAPPING,
+    ONTAPBROADCASTDOMAIN_MAPPING,
 )
-from pynetappfoundry.cache.network.ip.interfaces.mapping import NETWORK_LIF_MAPPING
-from pynetappfoundry.cache.storage.aggregates.mapping import AGGREGATE_MAPPING
-from pynetappfoundry.cache.storage.volumes.mapping import VOLUME_MAPPING
-from pynetappfoundry.cache.svm.mapping import SVM_MAPPING
+from pynetappfoundry.cache.network.ip.interfaces.mapping import ONTAPIPINTERFACE_MAPPING
+from pynetappfoundry.cache.storage.aggregates.mapping import ONTAPAGGREGATE_MAPPING
+from pynetappfoundry.cache.storage.volumes.mapping import ONTAPVOLUME_MAPPING
+from pynetappfoundry.cache.svm.svms.mapping import ONTAPSVM_MAPPING
 from pynetappfoundry.cli.utils import (
     format_value_markup,
     print_error,
@@ -41,15 +43,15 @@ console = Console()
 # Maps type name to (TypeMapping, cache_path) where cache_path is the
 # dot-path to the list of objects in CachedClusterMetadata.
 INSPECT_TYPES: dict[str, tuple[TypeMapping, str]] = {
-    "aggregate": (AGGREGATE_MAPPING, "storage.aggregates"),
-    "broadcast_domain": (BROADCAST_DOMAIN_MAPPING, "network.ethernet_broadcast_domains"),
+    "aggregate": (ONTAPAGGREGATE_MAPPING, "storage.aggregates"),
+    "broadcast_domain": (ONTAPBROADCASTDOMAIN_MAPPING, "network.ethernet_broadcast_domains"),
     "cloud_metadata": (CLOUD_METADATA_MAPPING, "cloud"),
-    "cluster_peer": (CLUSTER_PEER_MAPPING, "relationships.cluster_peers"),
-    "license": (LICENSE_PACKAGE_MAPPING, "license_packages"),
-    "node": (NODE_MAPPING, "nodes"),
-    "svm": (SVM_MAPPING, "storage.svms"),
-    "network_lif": (NETWORK_LIF_MAPPING, "network.ip_interfaces"),
-    "volume": (VOLUME_MAPPING, "storage.volumes"),
+    "cluster_peer": (ONTAPCLUSTERPEER_MAPPING, "relationships.cluster_peers"),
+    "license": (ONTAPLICENSEPACKAGERESPONSE_MAPPING, "license_packages"),
+    "node": (ONTAPNODERESPONSE_MAPPING, "nodes"),
+    "svm": (ONTAPSVM_MAPPING, "storage.svms"),
+    "network_lif": (ONTAPIPINTERFACE_MAPPING, "network.ip_interfaces"),
+    "volume": (ONTAPVOLUME_MAPPING, "storage.volumes"),
 }
 
 
@@ -258,7 +260,7 @@ def inspect(ctx: click.Context, cluster: str, object_name: str, object_type: str
 
     mapping, cache_path = INSPECT_TYPES[object_type.lower()]
 
-    # ── CACHE section ──────────────────────────────────────────────
+    # -- CACHE section --
     console.print()
     console.rule("[bold] CACHE [/bold]")
     db = ClusterMetadataDB(config=config)
@@ -282,7 +284,7 @@ def inspect(ctx: click.Context, cluster: str, object_name: str, object_type: str
     cli_command = _build_cli_command(mapping, object_name)
     api_endpoint = _build_api_endpoint(mapping, object_name)
 
-    # ── CLI section ────────────────────────────────────────────────
+    # -- CLI section --
     console.print()
     console.rule("[bold] CLI [/bold]")
     console.print(f"[dim]Command: {cli_command}[/dim]")
@@ -315,7 +317,7 @@ def inspect(ctx: click.Context, cluster: str, object_name: str, object_type: str
             with contextlib.suppress(Exception):
                 cli_client.disconnect()
 
-    # ── API (filtered) section ────────────────────────────────────
+    # -- API (filtered) section --
     console.print()
     console.rule("[bold] API (filtered) [/bold]")
     console.print(f"[dim]Endpoint: {api_endpoint}[/dim]")
@@ -339,7 +341,7 @@ def inspect(ctx: click.Context, cluster: str, object_name: str, object_type: str
     except Exception as e:
         print_exception(f"API query failed: {e}", e)
 
-    # ── API (all) section ──────────────────────────────────────
+    # -- API (all) section --
     base_endpoint = mapping.api_endpoint
     console.print()
     console.rule("[bold] API (all) [/bold]")

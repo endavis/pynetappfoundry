@@ -1,0 +1,70 @@
+[endpoint]
+path = "/protocols/fpolicy/{svm.uuid}/engines"
+schema = "fpolicy_engine"
+class_name = "OntapFpolicyEngine"
+
+[fields.buffer_size_recv_buffer]
+cache_strategy = "cache"
+
+[fields.buffer_size_send_buffer]
+cache_strategy = "cache"
+
+[fields.certificate_ca]
+cache_strategy = "cache"
+
+[fields.certificate_name]
+cache_strategy = "cache"
+
+[fields.certificate_serial_number]
+cache_strategy = "cache"
+
+[fields.format]
+cache_strategy = "cache"
+
+[fields.keep_alive_interval]
+cache_strategy = "cache"
+
+[fields.max_server_requests]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.port]
+cache_strategy = "cache"
+
+[fields.primary_servers]
+cache_strategy = "cache"
+
+[fields.request_abort_timeout]
+cache_strategy = "cache"
+
+[fields.request_cancel_timeout]
+cache_strategy = "cache"
+
+[fields.resiliency_directory_path]
+cache_strategy = "cache"
+
+[fields.resiliency_enabled]
+cache_strategy = "cache"
+
+[fields.resiliency_retention_duration]
+cache_strategy = "cache"
+
+[fields.secondary_servers]
+cache_strategy = "cache"
+
+[fields.server_progress_timeout]
+cache_strategy = "cache"
+
+[fields.ssl_option]
+cache_strategy = "cache"
+
+[fields.status_request_interval]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"

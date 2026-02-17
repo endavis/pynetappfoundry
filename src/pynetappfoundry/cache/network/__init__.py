@@ -2,15 +2,14 @@
 
 from __future__ import annotations
 
-from pynetappfoundry.cache.network.ethernet.broadcast_domains import BroadcastDomain
-from pynetappfoundry.cache.network.ip.interfaces import NETWORK_LIF_MAPPING, NetworkLIF
-from pynetappfoundry.cache.network.ip.subnets import IPSubnetInfo
+from pynetappfoundry.cache.network.ethernet.broadcast_domains import OntapBroadcastDomain
+from pynetappfoundry.cache.network.ip.interfaces import OntapIpInterface
+from pynetappfoundry.cache.network.ip.subnets import OntapIpSubnet
 from pynetappfoundry.cache.network.model import NetworkInfo
 
 __all__ = [
-    "NETWORK_LIF_MAPPING",
-    "BroadcastDomain",
-    "IPSubnetInfo",
     "NetworkInfo",
-    "NetworkLIF",
+    "OntapBroadcastDomain",
+    "OntapIpInterface",
+    "OntapIpSubnet",
 ]

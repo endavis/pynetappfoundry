@@ -1,0 +1,37 @@
+[endpoint]
+path = "/storage/aggregates/{aggregate.uuid}/cloud-stores"
+schema = "cloud_store"
+class_name = "OntapCloudStore"
+
+[fields.aggregate_name]
+cache_strategy = "cache"
+
+[fields.availability]
+cache_strategy = "cache"
+
+[fields.availability_at_partner]
+cache_strategy = "cache"
+
+[fields.mirror_degraded]
+cache_strategy = "cache"
+
+[fields.primary]
+cache_strategy = "cache"
+
+[fields.resync_progress]
+cache_strategy = "cache"
+
+[fields.target_name]
+cache_strategy = "cache"
+
+[fields.target_uuid]
+cache_strategy = "cache"
+
+[fields.unavailable_reason_message]
+cache_strategy = "cache"
+
+[fields.unreclaimed_space_threshold]
+cache_strategy = "cache"
+
+[fields.used]
+cache_strategy = "cache"

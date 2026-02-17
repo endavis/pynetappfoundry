@@ -1,0 +1,10 @@
+[endpoint]
+path = "/name-services/cache/setting"
+schema = "global_cache_setting"
+class_name = "OntapGlobalCacheSetting"
+
+[fields.eviction_time_interval]
+cache_strategy = "cache"
+
+[fields.remote_fetch_enabled]
+cache_strategy = "cache"

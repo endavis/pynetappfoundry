@@ -1,0 +1,40 @@
+[endpoint]
+path = "/support/snmp/users"
+schema = "snmp_user"
+class_name = "OntapSnmpUser"
+
+[fields.authentication_method]
+cache_strategy = "cache"
+
+[fields.comment]
+cache_strategy = "cache"
+
+[fields.engine_id]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.owner_name]
+cache_strategy = "cache"
+
+[fields.owner_uuid]
+cache_strategy = "cache"
+
+[fields.scope]
+cache_strategy = "cache"
+
+[fields.snmpv3_authentication_password]
+cache_strategy = "cache"
+
+[fields.snmpv3_authentication_protocol]
+cache_strategy = "cache"
+
+[fields.snmpv3_privacy_password]
+cache_strategy = "cache"
+
+[fields.snmpv3_privacy_protocol]
+cache_strategy = "cache"
+
+[fields.switch_address]
+cache_strategy = "cache"

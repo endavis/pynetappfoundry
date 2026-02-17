@@ -1,0 +1,46 @@
+[endpoint]
+path = "/security/audit/messages"
+schema = "security_audit_log"
+class_name = "OntapSecurityAuditLog"
+
+[fields.application]
+cache_strategy = "cache"
+
+[fields.command_id]
+cache_strategy = "cache"
+
+[fields.index]
+cache_strategy = "cache"
+
+[fields.input]
+cache_strategy = "cache"
+
+[fields.location]
+cache_strategy = "cache"
+
+[fields.message]
+cache_strategy = "cache"
+
+[fields.node_name]
+cache_strategy = "cache"
+
+[fields.node_uuid]
+cache_strategy = "cache"
+
+[fields.scope]
+cache_strategy = "cache"
+
+[fields.session_id]
+cache_strategy = "cache"
+
+[fields.state]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.timestamp]
+cache_strategy = "cache"
+
+[fields.user]
+cache_strategy = "cache"

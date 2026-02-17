@@ -1,0 +1,67 @@
+[endpoint]
+path = "/protocols/fpolicy/{svm.uuid}/policies"
+schema = "fpolicy_policy"
+class_name = "OntapFpolicyPolicy"
+
+[fields.allow_privileged_access]
+cache_strategy = "cache"
+
+[fields.enabled]
+cache_strategy = "cache"
+
+[fields.engine_name]
+cache_strategy = "cache"
+
+[fields.events]
+cache_strategy = "cache"
+
+[fields.mandatory]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.passthrough_read]
+cache_strategy = "cache"
+
+[fields.persistent_store]
+cache_strategy = "cache"
+
+[fields.priority]
+cache_strategy = "cache"
+
+[fields.privileged_user]
+cache_strategy = "cache"
+
+[fields.scope_check_extensions_on_directories]
+cache_strategy = "cache"
+
+[fields.scope_exclude_export_policies]
+cache_strategy = "cache"
+
+[fields.scope_exclude_extension]
+cache_strategy = "cache"
+
+[fields.scope_exclude_shares]
+cache_strategy = "cache"
+
+[fields.scope_exclude_volumes]
+cache_strategy = "cache"
+
+[fields.scope_include_export_policies]
+cache_strategy = "cache"
+
+[fields.scope_include_extension]
+cache_strategy = "cache"
+
+[fields.scope_include_shares]
+cache_strategy = "cache"
+
+[fields.scope_include_volumes]
+cache_strategy = "cache"
+
+[fields.scope_object_monitoring_with_no_extension]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"

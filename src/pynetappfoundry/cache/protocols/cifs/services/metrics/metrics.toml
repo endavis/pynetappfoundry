@@ -1,0 +1,49 @@
+[endpoint]
+path = "/protocols/cifs/services/{svm.uuid}/metrics"
+schema = "performance_cifs_metric_response"
+class_name = "OntapPerformanceCifsMetricResponse"
+
+[fields.duration]
+cache_strategy = "cache"
+
+[fields.iops_other]
+cache_strategy = "cache"
+
+[fields.iops_read]
+cache_strategy = "cache"
+
+[fields.iops_total]
+cache_strategy = "cache"
+
+[fields.iops_write]
+cache_strategy = "cache"
+
+[fields.latency_other]
+cache_strategy = "cache"
+
+[fields.latency_read]
+cache_strategy = "cache"
+
+[fields.latency_total]
+cache_strategy = "cache"
+
+[fields.latency_write]
+cache_strategy = "cache"
+
+[fields.status]
+cache_strategy = "cache"
+
+[fields.throughput_other]
+cache_strategy = "cache"
+
+[fields.throughput_read]
+cache_strategy = "cache"
+
+[fields.throughput_total]
+cache_strategy = "cache"
+
+[fields.throughput_write]
+cache_strategy = "cache"
+
+[fields.timestamp]
+cache_strategy = "cache"

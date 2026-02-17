@@ -1,0 +1,58 @@
+[endpoint]
+path = "/security/key-managers/{security_key_manager.uuid}/keys/{node.uuid}/key-ids"
+schema = "key_manager_keys"
+class_name = "OntapKeyManagerKeys"
+
+[fields.crn]
+cache_strategy = "cache"
+
+[fields.encryption_algorithm]
+cache_strategy = "cache"
+
+[fields.key_id]
+cache_strategy = "cache"
+
+[fields.key_manager]
+cache_strategy = "cache"
+
+[fields.key_server]
+cache_strategy = "cache"
+
+[fields.key_store]
+cache_strategy = "cache"
+
+[fields.key_store_type]
+cache_strategy = "cache"
+
+[fields.key_tag]
+cache_strategy = "cache"
+
+[fields.key_type]
+cache_strategy = "cache"
+
+[fields.key_user]
+cache_strategy = "cache"
+
+[fields.node_name]
+cache_strategy = "cache"
+
+[fields.node_uuid]
+cache_strategy = "cache"
+
+[fields.policy]
+cache_strategy = "cache"
+
+[fields.restored]
+cache_strategy = "cache"
+
+[fields.scope]
+cache_strategy = "cache"
+
+[fields.security_key_manager_uuid]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"

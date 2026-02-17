@@ -1,0 +1,35 @@
+[endpoint]
+path = "/network/fc/fabrics/{fabric.name}/switches"
+schema = "fc_switch"
+class_name = "OntapFcSwitch"
+
+[fields.cache_age]
+cache_strategy = "cache"
+
+[fields.cache_is_current]
+cache_strategy = "cache"
+
+[fields.cache_update_time]
+cache_strategy = "cache"
+
+[fields.domain_id]
+cache_strategy = "cache"
+
+[fields.fabric_name]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.ports]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.release]
+cache_strategy = "cache"
+
+[fields.vendor]
+cache_strategy = "cache"
+
+[fields.wwn]
+cache_strategy = "cache"

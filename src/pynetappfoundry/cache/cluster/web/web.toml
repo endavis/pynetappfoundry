@@ -1,0 +1,49 @@
+[endpoint]
+path = "/cluster/web"
+schema = "web"
+class_name = "OntapWeb"
+
+[fields.certificate_name]
+cache_strategy = "cache"
+
+[fields.certificate_uuid]
+cache_strategy = "cache"
+
+[fields.client_enabled]
+cache_strategy = "cache"
+
+[fields.csrf_protection_enabled]
+cache_strategy = "cache"
+
+[fields.csrf_token_concurrent_limit]
+cache_strategy = "cache"
+
+[fields.csrf_token_idle_timeout]
+cache_strategy = "cache"
+
+[fields.csrf_token_max_timeout]
+cache_strategy = "cache"
+
+[fields.enabled]
+cache_strategy = "cache"
+
+[fields.http_enabled]
+cache_strategy = "cache"
+
+[fields.http_port]
+cache_strategy = "cache"
+
+[fields.https_port]
+cache_strategy = "cache"
+
+[fields.ocsp_enabled]
+cache_strategy = "cache"
+
+[fields.per_address_limit]
+cache_strategy = "cache"
+
+[fields.state]
+cache_strategy = "cache"
+
+[fields.wait_queue_capacity]
+cache_strategy = "cache"

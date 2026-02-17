@@ -1,0 +1,106 @@
+[endpoint]
+path = "/name-services/ldap-schemas"
+schema = "ldap_schema"
+class_name = "OntapLdapSchema"
+
+[fields.comment]
+cache_strategy = "cache"
+
+[fields.global_schema]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.name_mapping_account_unix]
+cache_strategy = "cache"
+
+[fields.name_mapping_account_windows]
+cache_strategy = "cache"
+
+[fields.name_mapping_windows_to_unix_attribute]
+cache_strategy = "cache"
+
+[fields.name_mapping_windows_to_unix_no_domain_prefix]
+cache_strategy = "cache"
+
+[fields.name_mapping_windows_to_unix_object_class]
+cache_strategy = "cache"
+
+[fields.owner_name]
+cache_strategy = "cache"
+
+[fields.owner_uuid]
+cache_strategy = "cache"
+
+[fields.rfc2307_attribute_gecos]
+cache_strategy = "cache"
+
+[fields.rfc2307_attribute_gid_number]
+cache_strategy = "cache"
+
+[fields.rfc2307_attribute_home_directory]
+cache_strategy = "cache"
+
+[fields.rfc2307_attribute_login_shell]
+cache_strategy = "cache"
+
+[fields.rfc2307_attribute_uid]
+cache_strategy = "cache"
+
+[fields.rfc2307_attribute_uid_number]
+cache_strategy = "cache"
+
+[fields.rfc2307_attribute_user_password]
+cache_strategy = "cache"
+
+[fields.rfc2307_cn_group]
+cache_strategy = "cache"
+
+[fields.rfc2307_cn_netgroup]
+cache_strategy = "cache"
+
+[fields.rfc2307_member_nis_netgroup]
+cache_strategy = "cache"
+
+[fields.rfc2307_member_uid]
+cache_strategy = "cache"
+
+[fields.rfc2307_nis_mapentry]
+cache_strategy = "cache"
+
+[fields.rfc2307_nis_mapname]
+cache_strategy = "cache"
+
+[fields.rfc2307_nis_netgroup]
+cache_strategy = "cache"
+
+[fields.rfc2307_nis_netgroup_triple]
+cache_strategy = "cache"
+
+[fields.rfc2307_nis_object]
+cache_strategy = "cache"
+
+[fields.rfc2307_posix_account]
+cache_strategy = "cache"
+
+[fields.rfc2307_posix_group]
+cache_strategy = "cache"
+
+[fields.rfc2307bis_enabled]
+cache_strategy = "cache"
+
+[fields.rfc2307bis_group_of_unique_names]
+cache_strategy = "cache"
+
+[fields.rfc2307bis_maximum_groups]
+cache_strategy = "cache"
+
+[fields.rfc2307bis_unique_member]
+cache_strategy = "cache"
+
+[fields.scope]
+cache_strategy = "cache"
+
+[fields.template_name]
+cache_strategy = "cache"

@@ -1,0 +1,19 @@
+[endpoint]
+path = "/svm/peer-permissions"
+schema = "svm_peer_permission"
+class_name = "OntapSvmPeerPermission"
+
+[fields.applications]
+cache_strategy = "cache"
+
+[fields.cluster_peer_name]
+cache_strategy = "cache"
+
+[fields.cluster_peer_uuid]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"

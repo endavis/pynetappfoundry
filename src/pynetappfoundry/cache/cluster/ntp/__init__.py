@@ -1,0 +1,1 @@
+"""Ntp cache models."""

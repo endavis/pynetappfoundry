@@ -1,0 +1,19 @@
+[endpoint]
+path = "/resource-tags/{resource_tag.value}/resources"
+schema = "resource_tag_resource"
+class_name = "OntapResourceTagResource"
+
+[fields.href]
+cache_strategy = "cache"
+
+[fields.label]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.value]
+cache_strategy = "cache"

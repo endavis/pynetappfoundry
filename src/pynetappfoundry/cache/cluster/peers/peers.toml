@@ -1,0 +1,85 @@
+[endpoint]
+path = "/cluster/peers"
+schema = "cluster_peer"
+class_name = "OntapClusterPeer"
+
+[fields.authentication_expiry_time]
+cache_strategy = "cache"
+
+[fields.authentication_generate_passphrase]
+cache_strategy = "cache"
+
+[fields.authentication_in_use]
+cache_strategy = "cache"
+
+[fields.authentication_passphrase]
+cache_strategy = "cache"
+
+[fields.authentication_state]
+cache_strategy = "cache"
+
+[fields.encryption_proposed]
+cache_strategy = "cache"
+
+[fields.encryption_state]
+cache_strategy = "cache"
+
+[fields.initial_allowed_svms]
+cache_strategy = "cache"
+
+[fields.ip_address]
+cache_strategy = "cache"
+
+[fields.ipspace_name]
+cache_strategy = "cache"
+
+[fields.ipspace_uuid]
+cache_strategy = "cache"
+
+[fields.local_network_broadcast_domain]
+cache_strategy = "cache"
+
+[fields.local_network_gateway]
+cache_strategy = "cache"
+
+[fields.local_network_interfaces]
+cache_strategy = "cache"
+
+[fields.local_network_netmask]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.peer_applications]
+cache_strategy = "cache"
+
+[fields.remote_ip_addresses]
+cache_strategy = "cache"
+
+[fields.remote_name]
+cache_strategy = "cache"
+
+[fields.remote_serial_number]
+cache_strategy = "cache"
+
+[fields.status_state]
+cache_strategy = "cache"
+
+[fields.status_update_time]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"
+
+[fields.version_full]
+cache_strategy = "cache"
+
+[fields.version_generation]
+cache_strategy = "cache"
+
+[fields.version_major]
+cache_strategy = "cache"
+
+[fields.version_minor]
+cache_strategy = "cache"

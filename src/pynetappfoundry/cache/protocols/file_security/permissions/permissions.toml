@@ -1,0 +1,73 @@
+[endpoint]
+path = "/protocols/file-security/permissions/{svm.uuid}/{path}"
+schema = "file_directory_security"
+class_name = "OntapFileDirectorySecurity"
+
+[fields.access]
+cache_strategy = "cache"
+
+[fields.access_control]
+cache_strategy = "cache"
+
+[fields.advanced_rights_append_data]
+cache_strategy = "cache"
+
+[fields.advanced_rights_delete]
+cache_strategy = "cache"
+
+[fields.advanced_rights_delete_child]
+cache_strategy = "cache"
+
+[fields.advanced_rights_execute_file]
+cache_strategy = "cache"
+
+[fields.advanced_rights_full_control]
+cache_strategy = "cache"
+
+[fields.advanced_rights_read_attr]
+cache_strategy = "cache"
+
+[fields.advanced_rights_read_data]
+cache_strategy = "cache"
+
+[fields.advanced_rights_read_ea]
+cache_strategy = "cache"
+
+[fields.advanced_rights_read_perm]
+cache_strategy = "cache"
+
+[fields.advanced_rights_synchronize]
+cache_strategy = "cache"
+
+[fields.advanced_rights_write_attr]
+cache_strategy = "cache"
+
+[fields.advanced_rights_write_data]
+cache_strategy = "cache"
+
+[fields.advanced_rights_write_ea]
+cache_strategy = "cache"
+
+[fields.advanced_rights_write_owner]
+cache_strategy = "cache"
+
+[fields.advanced_rights_write_perm]
+cache_strategy = "cache"
+
+[fields.apply_to_files]
+cache_strategy = "cache"
+
+[fields.apply_to_sub_folders]
+cache_strategy = "cache"
+
+[fields.apply_to_this_folder]
+cache_strategy = "cache"
+
+[fields.inherited]
+cache_strategy = "cache"
+
+[fields.rights]
+cache_strategy = "cache"
+
+[fields.user]
+cache_strategy = "cache"

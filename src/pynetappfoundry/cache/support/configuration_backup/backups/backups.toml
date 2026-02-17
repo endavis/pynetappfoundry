@@ -1,0 +1,34 @@
+[endpoint]
+path = "/support/configuration-backup/backups"
+schema = "configuration_backup_file"
+class_name = "OntapConfigurationBackupFile"
+
+[fields.auto]
+cache_strategy = "cache"
+
+[fields.backup_nodes]
+cache_strategy = "cache"
+
+[fields.download_link]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.node_name]
+cache_strategy = "cache"
+
+[fields.node_uuid]
+cache_strategy = "cache"
+
+[fields.size]
+cache_strategy = "cache"
+
+[fields.time]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.version]
+cache_strategy = "cache"

@@ -1,0 +1,46 @@
+[endpoint]
+path = "/cluster/schedules"
+schema = "schedule"
+class_name = "OntapSchedule"
+
+[fields.cluster_name]
+cache_strategy = "cache"
+
+[fields.cluster_uuid]
+cache_strategy = "cache"
+
+[fields.cron_days]
+cache_strategy = "cache"
+
+[fields.cron_hours]
+cache_strategy = "cache"
+
+[fields.cron_minutes]
+cache_strategy = "cache"
+
+[fields.cron_months]
+cache_strategy = "cache"
+
+[fields.cron_weekdays]
+cache_strategy = "cache"
+
+[fields.interval]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.scope]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

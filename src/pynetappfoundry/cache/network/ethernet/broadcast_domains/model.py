@@ -1,4 +1,4 @@
-"""Broadcast domain information — /network/ethernet/broadcast-domains."""
+"""OntapBroadcastDomain information."""
 
 from __future__ import annotations
 
@@ -7,11 +7,20 @@ from pydantic import Field
 from pynetappfoundry.cache._base import CacheModel
 
 
-class BroadcastDomain(CacheModel):
-    """Broadcast domain configuration."""
+class OntapBroadcastDomainPort(CacheModel):
+    """OntapBroadcastDomainPort sub-model for ports."""
 
-    uuid: str = ""
-    name: str = ""
-    mtu: int = 0
+    ports_name: str = ""
+    ports_node_name: str = ""
+    ports_uuid: str = ""
+
+
+class OntapBroadcastDomain(CacheModel):
+    """OntapBroadcastDomain information."""
+
+    ipspace_name: str = ""
     ipspace_uuid: str = ""
-    port_uuids: list[str] = Field(default_factory=list)
+    mtu: int = 0
+    name: str = ""
+    ports: list[OntapBroadcastDomainPort] = Field(default_factory=list)
+    uuid: str = ""

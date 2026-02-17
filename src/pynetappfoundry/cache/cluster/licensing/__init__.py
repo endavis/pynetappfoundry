@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
-from pynetappfoundry.cache.cluster.licensing.mapping import LICENSE_PACKAGE_MAPPING
-from pynetappfoundry.cache.cluster.licensing.model import (
-    LicenseInstance,
-    LicensePackage,
+from pynetappfoundry.cache.cluster.licensing.licenses.mapping import (
+    ONTAPLICENSEPACKAGERESPONSE_MAPPING,
+)
+from pynetappfoundry.cache.cluster.licensing.licenses.model import (
+    OntapLicensePackageResponse,
+    OntapLicensePackageResponseLicense,
 )
 
 __all__ = [
-    "LICENSE_PACKAGE_MAPPING",
-    "LicenseInstance",
-    "LicensePackage",
+    "ONTAPLICENSEPACKAGERESPONSE_MAPPING",
+    "OntapLicensePackageResponse",
+    "OntapLicensePackageResponseLicense",
 ]

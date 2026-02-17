@@ -2,23 +2,18 @@
 
 from __future__ import annotations
 
-from pynetappfoundry.cache.protocols.cifs import CIFSServiceInfo, CIFSShareInfo
+from pynetappfoundry.cache.protocols.cifs import OntapCifsService, OntapCifsShare
 from pynetappfoundry.cache.protocols.model import ProtocolsInfo
-from pynetappfoundry.cache.protocols.nfs import (
-    ExportPolicyInfo,
-    ExportRuleInfo,
-    NFSServiceInfo,
-)
-from pynetappfoundry.cache.protocols.s3 import S3BucketInfo
-from pynetappfoundry.cache.protocols.san import IgroupInfo
+from pynetappfoundry.cache.protocols.nfs import OntapExportPolicy, OntapNfsService
+from pynetappfoundry.cache.protocols.s3 import OntapS3Bucket
+from pynetappfoundry.cache.protocols.san import OntapIgroup
 
 __all__ = [
-    "CIFSServiceInfo",
-    "CIFSShareInfo",
-    "ExportPolicyInfo",
-    "ExportRuleInfo",
-    "IgroupInfo",
-    "NFSServiceInfo",
+    "OntapCifsService",
+    "OntapCifsShare",
+    "OntapExportPolicy",
+    "OntapIgroup",
+    "OntapNfsService",
+    "OntapS3Bucket",
     "ProtocolsInfo",
-    "S3BucketInfo",
 ]

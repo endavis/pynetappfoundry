@@ -1,0 +1,34 @@
+[endpoint]
+path = "/security/key-stores"
+schema = "security_keystore"
+class_name = "OntapSecurityKeystore"
+
+[fields.configuration_name]
+cache_strategy = "cache"
+
+[fields.configuration_uuid]
+cache_strategy = "cache"
+
+[fields.enabled]
+cache_strategy = "cache"
+
+[fields.location]
+cache_strategy = "cache"
+
+[fields.scope]
+cache_strategy = "cache"
+
+[fields.state]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

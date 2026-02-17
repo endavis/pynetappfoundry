@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from pynetappfoundry.cache.storage.qos.model import QosPolicyInfo
+from pynetappfoundry.cache.storage.qos.policies.model import OntapQosPolicy
 
 __all__ = [
-    "QosPolicyInfo",
+    "OntapQosPolicy",
 ]

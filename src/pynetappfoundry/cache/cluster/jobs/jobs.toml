@@ -1,0 +1,43 @@
+[endpoint]
+path = "/cluster/jobs"
+schema = "job"
+class_name = "OntapJob"
+
+[fields.code]
+cache_strategy = "cache"
+
+[fields.description]
+cache_strategy = "cache"
+
+[fields.end_time]
+cache_strategy = "cache"
+
+[fields.error_arguments]
+cache_strategy = "cache"
+
+[fields.error_code]
+cache_strategy = "cache"
+
+[fields.error_message]
+cache_strategy = "cache"
+
+[fields.message]
+cache_strategy = "cache"
+
+[fields.node_name]
+cache_strategy = "cache"
+
+[fields.start_time]
+cache_strategy = "cache"
+
+[fields.state]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

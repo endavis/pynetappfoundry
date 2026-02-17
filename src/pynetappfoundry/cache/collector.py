@@ -25,63 +25,82 @@ from pynetappfoundry.cache._metadata import (
 )
 from pynetappfoundry.cache.cloud.metadata.mapping import CLOUD_METADATA_MAPPING
 from pynetappfoundry.cache.cloud.metadata.model import CloudMetadata
-from pynetappfoundry.cache.cloud.targets.model import CloudTargetInfo
-from pynetappfoundry.cache.cluster.licensing.mapping import LICENSE_PACKAGE_MAPPING
-from pynetappfoundry.cache.cluster.licensing.model import LicensePackage
+from pynetappfoundry.cache.cloud.targets.mapping import ONTAPCLOUDTARGET_MAPPING
+from pynetappfoundry.cache.cloud.targets.model import OntapCloudTarget
+from pynetappfoundry.cache.cluster.licensing.licenses.mapping import (
+    ONTAPLICENSEPACKAGERESPONSE_MAPPING,
+)
+from pynetappfoundry.cache.cluster.licensing.licenses.model import (
+    OntapLicensePackageResponse,
+)
 from pynetappfoundry.cache.cluster.mapping import CLUSTER_MAPPING
-from pynetappfoundry.cache.cluster.mediators.mapping import MEDIATOR_MAPPING
-from pynetappfoundry.cache.cluster.mediators.model import MediatorInfo
+from pynetappfoundry.cache.cluster.mediators.mapping import ONTAPMEDIATORRESPONSE_MAPPING
+from pynetappfoundry.cache.cluster.mediators.model import OntapMediatorResponse
 from pynetappfoundry.cache.cluster.model import ClusterInfo
-from pynetappfoundry.cache.cluster.nodes.mapping import NODE_MAPPING
-from pynetappfoundry.cache.cluster.nodes.model import NodeInfo
-from pynetappfoundry.cache.cluster.peers.mapping import CLUSTER_PEER_MAPPING
-from pynetappfoundry.cache.cluster.peers.model import ClusterPeer
-from pynetappfoundry.cache.cluster.schedules.model import ScheduleInfo
+from pynetappfoundry.cache.cluster.nodes.mapping import ONTAPNODERESPONSE_MAPPING
+from pynetappfoundry.cache.cluster.nodes.model import OntapNodeResponse
+from pynetappfoundry.cache.cluster.peers.mapping import ONTAPCLUSTERPEER_MAPPING
+from pynetappfoundry.cache.cluster.peers.model import OntapClusterPeer
+from pynetappfoundry.cache.cluster.schedules.mapping import ONTAPSCHEDULE_MAPPING
+from pynetappfoundry.cache.cluster.schedules.model import OntapSchedule
 from pynetappfoundry.cache.field_mapping import (
     parse_api_record,
     parse_api_response,
     parse_cli_records,
 )
-from pynetappfoundry.cache.name_services.dns.mapping import DNS_MAPPING
-from pynetappfoundry.cache.name_services.dns.model import DNSInfo
+from pynetappfoundry.cache.name_services.dns.mapping import ONTAPDNS_MAPPING
+from pynetappfoundry.cache.name_services.dns.model import OntapDns
 from pynetappfoundry.cache.network.ethernet.broadcast_domains.mapping import (
-    BROADCAST_DOMAIN_MAPPING,
+    ONTAPBROADCASTDOMAIN_MAPPING,
 )
 from pynetappfoundry.cache.network.ethernet.broadcast_domains.model import (
-    BroadcastDomain,
+    OntapBroadcastDomain,
 )
-from pynetappfoundry.cache.network.ip.interfaces.mapping import NETWORK_LIF_MAPPING
-from pynetappfoundry.cache.network.ip.interfaces.model import NetworkLIF
-from pynetappfoundry.cache.network.ip.subnets.model import IPSubnetInfo
+from pynetappfoundry.cache.network.ip.interfaces.mapping import ONTAPIPINTERFACE_MAPPING
+from pynetappfoundry.cache.network.ip.interfaces.model import OntapIpInterface
+from pynetappfoundry.cache.network.ip.subnets.mapping import ONTAPIPSUBNET_MAPPING
+from pynetappfoundry.cache.network.ip.subnets.model import OntapIpSubnet
 from pynetappfoundry.cache.network.model import NetworkInfo
-from pynetappfoundry.cache.protocols.cifs.services.model import CIFSServiceInfo
-from pynetappfoundry.cache.protocols.cifs.shares.model import CIFSShareInfo
+from pynetappfoundry.cache.protocols.cifs.services.mapping import ONTAPCIFSSERVICE_MAPPING
+from pynetappfoundry.cache.protocols.cifs.services.model import OntapCifsService
+from pynetappfoundry.cache.protocols.cifs.shares.mapping import ONTAPCIFSSHARE_MAPPING
+from pynetappfoundry.cache.protocols.cifs.shares.model import OntapCifsShare
 from pynetappfoundry.cache.protocols.model import ProtocolsInfo
-from pynetappfoundry.cache.protocols.nfs.export_policies.model import (
-    ExportPolicyInfo,
-    ExportRuleInfo,
+from pynetappfoundry.cache.protocols.nfs.export_policies.mapping import (
+    ONTAPEXPORTPOLICY_MAPPING,
 )
-from pynetappfoundry.cache.protocols.nfs.services.model import NFSServiceInfo
-from pynetappfoundry.cache.protocols.s3.buckets.model import S3BucketInfo
-from pynetappfoundry.cache.protocols.san.igroups.model import IgroupInfo
-from pynetappfoundry.cache.snapmirror.relationships.mapping import SNAPMIRROR_MAPPING
-from pynetappfoundry.cache.snapmirror.relationships.model import SnapMirrorRelationship
-from pynetappfoundry.cache.storage.aggregates.mapping import AGGREGATE_MAPPING
-from pynetappfoundry.cache.storage.aggregates.model import AggregateInfo
-from pynetappfoundry.cache.storage.flexcache.model import FlexCacheInfo
-from pynetappfoundry.cache.storage.luns.model import LunInfo
+from pynetappfoundry.cache.protocols.nfs.export_policies.model import OntapExportPolicy
+from pynetappfoundry.cache.protocols.nfs.services.mapping import ONTAPNFSSERVICE_MAPPING
+from pynetappfoundry.cache.protocols.nfs.services.model import OntapNfsService
+from pynetappfoundry.cache.protocols.s3.buckets.mapping import ONTAPS3BUCKET_MAPPING
+from pynetappfoundry.cache.protocols.s3.buckets.model import OntapS3Bucket
+from pynetappfoundry.cache.protocols.san.igroups.mapping import ONTAPIGROUP_MAPPING
+from pynetappfoundry.cache.protocols.san.igroups.model import OntapIgroup
+from pynetappfoundry.cache.snapmirror.relationships.mapping import (
+    ONTAPSNAPMIRRORRELATIONSHIP_MAPPING,
+)
+from pynetappfoundry.cache.snapmirror.relationships.model import (
+    OntapSnapmirrorRelationship,
+)
+from pynetappfoundry.cache.storage.aggregates.mapping import ONTAPAGGREGATE_MAPPING
+from pynetappfoundry.cache.storage.aggregates.model import OntapAggregate
+from pynetappfoundry.cache.storage.flexcache.flexcaches.mapping import ONTAPFLEXCACHE_MAPPING
+from pynetappfoundry.cache.storage.flexcache.flexcaches.model import OntapFlexcache
+from pynetappfoundry.cache.storage.luns.mapping import ONTAPLUN_MAPPING
+from pynetappfoundry.cache.storage.luns.model import OntapLun
 from pynetappfoundry.cache.storage.model import StorageInfo
-from pynetappfoundry.cache.storage.qos.model import QosPolicyInfo
-from pynetappfoundry.cache.storage.qtrees.model import QtreeInfo
-from pynetappfoundry.cache.storage.snapshot_policies.model import (
-    SnapshotPolicyInfo,
-    SnapshotScheduleInfo,
-)
-from pynetappfoundry.cache.storage.volumes.mapping import VOLUME_MAPPING
-from pynetappfoundry.cache.storage.volumes.model import VolumeInfo
-from pynetappfoundry.cache.svm.mapping import SVM_MAPPING
-from pynetappfoundry.cache.svm.model import SVMInfo
-from pynetappfoundry.cache.svm.peers.model import SVMPeerInfo
+from pynetappfoundry.cache.storage.qos.policies.mapping import ONTAPQOSPOLICY_MAPPING
+from pynetappfoundry.cache.storage.qos.policies.model import OntapQosPolicy
+from pynetappfoundry.cache.storage.qtrees.mapping import ONTAPQTREE_MAPPING
+from pynetappfoundry.cache.storage.qtrees.model import OntapQtree
+from pynetappfoundry.cache.storage.snapshot_policies.mapping import ONTAPSNAPSHOTPOLICY_MAPPING
+from pynetappfoundry.cache.storage.snapshot_policies.model import OntapSnapshotPolicy
+from pynetappfoundry.cache.storage.volumes.mapping import ONTAPVOLUME_MAPPING
+from pynetappfoundry.cache.storage.volumes.model import OntapVolume
+from pynetappfoundry.cache.svm.peers.mapping import ONTAPSVMPEER_MAPPING
+from pynetappfoundry.cache.svm.peers.model import OntapSvmPeer
+from pynetappfoundry.cache.svm.svms.mapping import ONTAPSVM_MAPPING
+from pynetappfoundry.cache.svm.svms.model import OntapSvm
 from pynetappfoundry.utils.cloud import (
     build_cloud_instance_link,
     build_cloud_instance_sso_link,
@@ -849,11 +868,11 @@ class MetadataCollector:
     # Node Collection
     # -------------------------------------------------------------------------
 
-    def collect_nodes(self) -> list[NodeInfo]:
+    def collect_nodes(self) -> list[OntapNodeResponse]:
         """Collect node information (API-only).
 
         Returns:
-            List of NodeInfo objects.
+            List of OntapNodeResponse objects.
 
         Raises:
             CollectionError: If no API client is available.
@@ -874,24 +893,26 @@ class MetadataCollector:
             )
             raise
 
-    def _collect_nodes_via_api(self) -> list[NodeInfo]:
+    def _collect_nodes_via_api(self) -> list[OntapNodeResponse]:
         """Collect nodes using REST API.
 
         Returns:
-            List of NodeInfo from /cluster/nodes endpoint.
+            List of OntapNodeResponse from /cluster/nodes endpoint.
         """
         if not self.api_client:
             logger.debug("%s No API client available for nodes collection", self._log_prefix)
             return []
 
         # Use cached API call to avoid duplicate requests (also used by HA collection)
-        response = self._cached_api_call(NODE_MAPPING.api_endpoint)
+        response = self._cached_api_call(ONTAPNODERESPONSE_MAPPING.api_endpoint)
         if not response:
             return []
 
         return cast(
-            list[NodeInfo],
-            parse_api_response(NODE_MAPPING, response, self._log_prefix, self._log_missing_fields),
+            list[OntapNodeResponse],
+            parse_api_response(
+                ONTAPNODERESPONSE_MAPPING, response, self._log_prefix, self._log_missing_fields
+            ),
         )
 
     # -------------------------------------------------------------------------
@@ -937,11 +958,11 @@ class MetadataCollector:
 
         # Make all 5 API calls in parallel using cached calls
         endpoints = [
-            NETWORK_LIF_MAPPING.api_endpoint,
-            BROADCAST_DOMAIN_MAPPING.api_endpoint,
+            ONTAPIPINTERFACE_MAPPING.api_endpoint,
+            ONTAPBROADCASTDOMAIN_MAPPING.api_endpoint,
             "/network/ipspaces?fields=*",
-            DNS_MAPPING.api_endpoint,
-            "/network/ip/subnets?fields=*",
+            ONTAPDNS_MAPPING.api_endpoint,
+            ONTAPIPSUBNET_MAPPING.api_endpoint,
         ]
 
         if self.parallel:
@@ -956,9 +977,9 @@ class MetadataCollector:
 
         # Process LIFs response
         all_lifs = cast(
-            list[NetworkLIF],
+            list[OntapIpInterface],
             parse_api_response(
-                NETWORK_LIF_MAPPING,
+                ONTAPIPINTERFACE_MAPPING,
                 responses.get(endpoints[0]),
                 self._log_prefix,
                 self._log_missing_fields,
@@ -966,9 +987,9 @@ class MetadataCollector:
         )
         # Process broadcast domains response
         broadcast_domains = cast(
-            list[BroadcastDomain],
+            list[OntapBroadcastDomain],
             parse_api_response(
-                BROADCAST_DOMAIN_MAPPING,
+                ONTAPBROADCASTDOMAIN_MAPPING,
                 responses.get(endpoints[1]),
                 self._log_prefix,
                 self._log_missing_fields,
@@ -986,9 +1007,9 @@ class MetadataCollector:
 
         # Process DNS response
         dns = cast(
-            list[DNSInfo],
+            list[OntapDns],
             parse_api_response(
-                DNS_MAPPING,
+                ONTAPDNS_MAPPING,
                 responses.get(endpoints[3]),
                 self._log_prefix,
                 self._log_missing_fields,
@@ -996,7 +1017,15 @@ class MetadataCollector:
         )
 
         # Process subnets response
-        subnets = self._parse_subnets_response(responses.get(endpoints[4]))
+        subnets = cast(
+            list[OntapIpSubnet],
+            parse_api_response(
+                ONTAPIPSUBNET_MAPPING,
+                responses.get(endpoints[4]),
+                self._log_prefix,
+                self._log_missing_fields,
+            ),
+        )
 
         return NetworkInfo(
             ip_interfaces=all_lifs,
@@ -1048,18 +1077,20 @@ class MetadataCollector:
             return StorageInfo()
 
         # Make all API calls in parallel using cached calls
+        # NOTE: snapshot-policies needs ?fields=*,copies which the generated
+        # mapping does not include, so we hardcode the endpoint.
         endpoints = [
-            AGGREGATE_MAPPING.api_endpoint,
-            SVM_MAPPING.api_endpoint,
-            "/cloud/targets?fields=*",
-            "/storage/volumes?fields=*,autosize,files,nas.path,nas.security_style",
-            "/storage/qtrees?fields=*",
+            ONTAPAGGREGATE_MAPPING.api_endpoint,
+            ONTAPSVM_MAPPING.api_endpoint,
+            ONTAPCLOUDTARGET_MAPPING.api_endpoint,
+            ONTAPVOLUME_MAPPING.api_endpoint,
+            ONTAPQTREE_MAPPING.api_endpoint,
             "/storage/snapshot-policies?fields=*,copies",
-            "/cluster/schedules?fields=*",
-            "/storage/luns?fields=*",
-            "/protocols/san/igroups?fields=*",
-            "/storage/qos/policies?fields=*",
-            "/storage/flexcache/flexcaches?fields=*",
+            ONTAPSCHEDULE_MAPPING.api_endpoint,
+            ONTAPLUN_MAPPING.api_endpoint,
+            ONTAPIGROUP_MAPPING.api_endpoint,
+            ONTAPQOSPOLICY_MAPPING.api_endpoint,
+            ONTAPFLEXCACHE_MAPPING.api_endpoint,
         ]
 
         def safe_api_call(endpoint: str) -> Any:
@@ -1085,9 +1116,9 @@ class MetadataCollector:
 
         # Process aggregates response
         aggregates = cast(
-            list[AggregateInfo],
+            list[OntapAggregate],
             parse_api_response(
-                AGGREGATE_MAPPING,
+                ONTAPAGGREGATE_MAPPING,
                 responses.get(endpoints[0]),
                 self._log_prefix,
                 self._log_missing_fields,
@@ -1096,9 +1127,9 @@ class MetadataCollector:
 
         # Process SVMs response
         svms = cast(
-            list[SVMInfo],
+            list[OntapSvm],
             parse_api_response(
-                SVM_MAPPING,
+                ONTAPSVM_MAPPING,
                 responses.get(endpoints[1]),
                 self._log_prefix,
                 self._log_missing_fields,
@@ -1106,31 +1137,103 @@ class MetadataCollector:
         )
 
         # Process cloud targets response
-        cloud_targets = self._parse_cloud_targets_response(responses.get(endpoints[2]))
+        cloud_targets = cast(
+            list[OntapCloudTarget],
+            parse_api_response(
+                ONTAPCLOUDTARGET_MAPPING,
+                responses.get(endpoints[2]),
+                self._log_prefix,
+                self._log_missing_fields,
+            ),
+        )
 
         # Process volumes response
-        volumes = self._parse_volumes_response(responses.get(endpoints[3]))
+        volumes = cast(
+            list[OntapVolume],
+            parse_api_response(
+                ONTAPVOLUME_MAPPING,
+                responses.get(endpoints[3]),
+                self._log_prefix,
+                self._log_missing_fields,
+            ),
+        )
 
         # Process qtrees response
-        qtrees = self._parse_qtrees_response(responses.get(endpoints[4]))
+        qtrees = cast(
+            list[OntapQtree],
+            parse_api_response(
+                ONTAPQTREE_MAPPING,
+                responses.get(endpoints[4]),
+                self._log_prefix,
+                self._log_missing_fields,
+            ),
+        )
 
         # Process snapshot policies response
-        snapshot_policies = self._parse_snapshot_policies_response(responses.get(endpoints[5]))
+        snapshot_policies = cast(
+            list[OntapSnapshotPolicy],
+            parse_api_response(
+                ONTAPSNAPSHOTPOLICY_MAPPING,
+                responses.get(endpoints[5]),
+                self._log_prefix,
+                self._log_missing_fields,
+            ),
+        )
 
         # Process schedules response
-        schedules = self._parse_schedules_response(responses.get(endpoints[6]))
+        schedules = cast(
+            list[OntapSchedule],
+            parse_api_response(
+                ONTAPSCHEDULE_MAPPING,
+                responses.get(endpoints[6]),
+                self._log_prefix,
+                self._log_missing_fields,
+            ),
+        )
 
         # Process LUNs response
-        luns = self._parse_luns_response(responses.get(endpoints[7]))
+        luns = cast(
+            list[OntapLun],
+            parse_api_response(
+                ONTAPLUN_MAPPING,
+                responses.get(endpoints[7]),
+                self._log_prefix,
+                self._log_missing_fields,
+            ),
+        )
 
         # Process igroups response
-        igroups = self._parse_igroups_response(responses.get(endpoints[8]))
+        igroups = cast(
+            list[OntapIgroup],
+            parse_api_response(
+                ONTAPIGROUP_MAPPING,
+                responses.get(endpoints[8]),
+                self._log_prefix,
+                self._log_missing_fields,
+            ),
+        )
 
         # Process QoS policies response
-        qos_policies = self._parse_qos_policies_response(responses.get(endpoints[9]))
+        qos_policies = cast(
+            list[OntapQosPolicy],
+            parse_api_response(
+                ONTAPQOSPOLICY_MAPPING,
+                responses.get(endpoints[9]),
+                self._log_prefix,
+                self._log_missing_fields,
+            ),
+        )
 
         # Process FlexCache response
-        flexcaches = self._parse_flexcaches_response(responses.get(endpoints[10]))
+        flexcaches = cast(
+            list[OntapFlexcache],
+            parse_api_response(
+                ONTAPFLEXCACHE_MAPPING,
+                responses.get(endpoints[10]),
+                self._log_prefix,
+                self._log_missing_fields,
+            ),
+        )
 
         return StorageInfo(
             aggregates=aggregates,
@@ -1146,70 +1249,15 @@ class MetadataCollector:
             flexcaches=flexcaches,
         )
 
-    def _parse_cloud_targets_response(self, response: Any) -> list[CloudTargetInfo]:
-        """Parse cloud targets API response.
-
-        Args:
-            response: API response dict or None.
-
-        Returns:
-            List of CloudTargetInfo objects.
-        """
-        if not response:
-            return []
-
-        logger.debug(
-            "%s API response: %d cloud targets", self._log_prefix, len(response.get("records", []))
-        )
-        cloud_targets = []
-        for record in response.get("records", []):
-            self._log_missing_fields(
-                record,
-                [
-                    "name",
-                    "uuid",
-                    "provider_type",
-                    "server",
-                    "container",
-                    "owner",
-                    "scope",
-                    "svm",
-                    "ssl_enabled",
-                    "authentication_type",
-                    "ipspace",
-                    "snapmirror_use",
-                ],
-                "CloudTarget",
-                record.get("name", record.get("uuid", "unknown")),
-            )
-            target = CloudTargetInfo(
-                name=record.get("name", ""),
-                uuid=record.get("uuid", ""),
-                provider_type=record.get("provider_type", ""),
-                server=record.get("server", ""),
-                container=record.get("container", ""),
-                owner=record.get("owner", ""),
-                scope=record.get("scope", ""),
-                svm=record.get("svm", {}).get("name", "") if record.get("svm") else "",
-                ssl_enabled=record.get("ssl_enabled", True),
-                authentication_type=record.get("authentication_type", ""),
-                ipspace=record.get("ipspace", {}).get("name", "") if record.get("ipspace") else "",
-                snapmirror_use=record.get("snapmirror_use", ""),
-                access_key=record.get("access_key", ""),
-                azure_account=record.get("azure_account", ""),
-            )
-            cloud_targets.append(target)
-        return cloud_targets
-
     # -------------------------------------------------------------------------
     # License Collection
     # -------------------------------------------------------------------------
 
-    def collect_licenses(self) -> list[LicensePackage]:
+    def collect_licenses(self) -> list[OntapLicensePackageResponse]:
         """Collect licensing information (API-only).
 
         Returns:
-            List of LicensePackage objects.
+            List of OntapLicensePackageResponse objects.
 
         Raises:
             CollectionError: If no API client is available.
@@ -1230,21 +1278,24 @@ class MetadataCollector:
             )
             raise
 
-    def _collect_licenses_via_api(self) -> list[LicensePackage]:
+    def _collect_licenses_via_api(self) -> list[OntapLicensePackageResponse]:
         """Collect licenses using REST API.
 
         Returns:
-            List of LicensePackage from /cluster/licensing/licenses endpoint.
+            List of OntapLicensePackageResponse from /cluster/licensing/licenses endpoint.
         """
         if not self.api_client:
             logger.debug("%s No API client available for license collection", self._log_prefix)
             return []
 
-        response = self._cached_api_call(LICENSE_PACKAGE_MAPPING.api_endpoint)
+        response = self._cached_api_call(ONTAPLICENSEPACKAGERESPONSE_MAPPING.api_endpoint)
         return cast(
-            list[LicensePackage],
+            list[OntapLicensePackageResponse],
             parse_api_response(
-                LICENSE_PACKAGE_MAPPING, response, self._log_prefix, self._log_missing_fields
+                ONTAPLICENSEPACKAGERESPONSE_MAPPING,
+                response,
+                self._log_prefix,
+                self._log_missing_fields,
             ),
         )
 
@@ -1252,11 +1303,11 @@ class MetadataCollector:
     # Mediator Collection
     # -------------------------------------------------------------------------
 
-    def collect_mediator(self) -> MediatorInfo:
+    def collect_mediator(self) -> OntapMediatorResponse:
         """Collect ONTAP Mediator information (API-only).
 
         Returns:
-            MediatorInfo object.
+            OntapMediatorResponse object.
 
         Raises:
             CollectionError: If no API client is available.
@@ -1276,23 +1327,26 @@ class MetadataCollector:
             )
             raise
 
-    def _collect_mediator_via_api(self) -> MediatorInfo:
+    def _collect_mediator_via_api(self) -> OntapMediatorResponse:
         """Collect mediator info using REST API.
 
         Returns:
-            MediatorInfo from /cluster/mediators endpoint.
+            OntapMediatorResponse from /cluster/mediators endpoint.
         """
         try:
-            mediator_response = self._cached_api_call(MEDIATOR_MAPPING.api_endpoint)
+            mediator_response = self._cached_api_call(ONTAPMEDIATORRESPONSE_MAPPING.api_endpoint)
             parsed = parse_api_response(
-                MEDIATOR_MAPPING, mediator_response, self._log_prefix, self._log_missing_fields
+                ONTAPMEDIATORRESPONSE_MAPPING,
+                mediator_response,
+                self._log_prefix,
+                self._log_missing_fields,
             )
             if parsed:
-                return cast(MediatorInfo, parsed[0])
+                return cast(OntapMediatorResponse, parsed[0])
         except Exception as e:
             logger.debug("%s Mediator endpoint not available: %s", self._log_prefix, e)
 
-        return MediatorInfo()
+        return OntapMediatorResponse()
 
     # -------------------------------------------------------------------------
     # Relationships Collection
@@ -1340,9 +1394,9 @@ class MetadataCollector:
         # Make all 3 API calls in parallel using cached calls
         # Request only needed fields for snapmirror to avoid timeout on large clusters
         endpoints = [
-            SNAPMIRROR_MAPPING.api_endpoint,
-            "/cluster/peers?fields=*",
-            "/svm/peers?fields=*",
+            ONTAPSNAPMIRRORRELATIONSHIP_MAPPING.api_endpoint,
+            ONTAPCLUSTERPEER_MAPPING.api_endpoint,
+            ONTAPSVMPEER_MAPPING.api_endpoint,
         ]
 
         if self.parallel:
@@ -1357,9 +1411,9 @@ class MetadataCollector:
 
         # Process SnapMirror relationships
         snapmirror_destinations = cast(
-            list[SnapMirrorRelationship],
+            list[OntapSnapmirrorRelationship],
             parse_api_response(
-                SNAPMIRROR_MAPPING,
+                ONTAPSNAPMIRRORRELATIONSHIP_MAPPING,
                 responses.get(endpoints[0]),
                 self._log_prefix,
                 self._log_missing_fields,
@@ -1367,325 +1421,32 @@ class MetadataCollector:
         )
 
         # Process cluster peers
-        cluster_peers = self._parse_cluster_peers_response(responses.get(endpoints[1]))
+        cluster_peers = cast(
+            list[OntapClusterPeer],
+            parse_api_response(
+                ONTAPCLUSTERPEER_MAPPING,
+                responses.get(endpoints[1]),
+                self._log_prefix,
+                self._log_missing_fields,
+            ),
+        )
 
         # Process SVM peers
-        svm_peers = self._parse_svm_peers_response(responses.get(endpoints[2]))
+        svm_peers = cast(
+            list[OntapSvmPeer],
+            parse_api_response(
+                ONTAPSVMPEER_MAPPING,
+                responses.get(endpoints[2]),
+                self._log_prefix,
+                self._log_missing_fields,
+            ),
+        )
 
         return RelationshipsInfo(
             snapmirror_destinations=snapmirror_destinations,
             cluster_peers=cluster_peers,
             svm_peers=svm_peers,
         )
-
-    # -------------------------------------------------------------------------
-    # Volume Parsing
-    # -------------------------------------------------------------------------
-
-    def _parse_volumes_response(self, response: Any) -> list[VolumeInfo]:
-        """Parse volumes API response.
-
-        Delegates to the declarative field mapping framework.
-
-        Args:
-            response: API response dict or None.
-
-        Returns:
-            List of VolumeInfo objects.
-        """
-        results = parse_api_response(
-            VOLUME_MAPPING, response, self._log_prefix, self._log_missing_fields
-        )
-        return cast(list[VolumeInfo], results)
-
-    # -------------------------------------------------------------------------
-    # Cluster Peer Parsing
-    # -------------------------------------------------------------------------
-
-    def _parse_cluster_peers_response(self, response: Any) -> list[ClusterPeer]:
-        """Parse cluster peers API response.
-
-        Delegates to the declarative field mapping framework.
-
-        Args:
-            response: API response dict or None.
-
-        Returns:
-            List of ClusterPeer objects.
-        """
-        results = parse_api_response(
-            CLUSTER_PEER_MAPPING, response, self._log_prefix, self._log_missing_fields
-        )
-        return cast(list[ClusterPeer], results)
-
-    def _parse_qtrees_response(self, response: Any) -> list[QtreeInfo]:
-        """Parse qtrees API response.
-
-        Args:
-            response: API response dict or None.
-
-        Returns:
-            List of QtreeInfo objects.
-        """
-        if not response:
-            return []
-
-        logger.debug(
-            "%s API response: %d qtrees", self._log_prefix, len(response.get("records", []))
-        )
-        qtrees = []
-        for record in response.get("records", []):
-            self._log_missing_fields(
-                record,
-                [
-                    "id",
-                    "name",
-                    "svm",
-                    "volume",
-                    "path",
-                    "security_style",
-                    "unix_permissions",
-                    "export_policy",
-                ],
-                "Qtree",
-                record.get("name", str(record.get("id", "unknown"))),
-            )
-            qtree = QtreeInfo(
-                id=record.get("id", 0),
-                name=record.get("name", ""),
-                svm=record.get("svm", {}).get("name", "") if record.get("svm") else "",
-                volume=record.get("volume", {}).get("name", "") if record.get("volume") else "",
-                path=record.get("path", ""),
-                security_style=record.get("security_style", ""),
-                unix_permissions=str(record.get("unix_permissions", "")),
-                export_policy=(
-                    record.get("export_policy", {}).get("name", "")
-                    if record.get("export_policy")
-                    else ""
-                ),
-            )
-            qtrees.append(qtree)
-        return qtrees
-
-    def _parse_snapshot_policies_response(self, response: Any) -> list[SnapshotPolicyInfo]:
-        """Parse snapshot policies API response.
-
-        Args:
-            response: API response dict or None.
-
-        Returns:
-            List of SnapshotPolicyInfo objects.
-        """
-        if not response:
-            return []
-
-        logger.debug(
-            "%s API response: %d snapshot policies",
-            self._log_prefix,
-            len(response.get("records", [])),
-        )
-        policies = []
-        for record in response.get("records", []):
-            self._log_missing_fields(
-                record,
-                ["uuid", "name", "svm", "enabled", "scope", "copies"],
-                "SnapshotPolicy",
-                record.get("name", record.get("uuid", "unknown")),
-            )
-            schedules = []
-            for copy in record.get("copies", []):
-                sched = SnapshotScheduleInfo(
-                    schedule=(
-                        copy.get("schedule", {}).get("name", "")
-                        if isinstance(copy.get("schedule"), dict)
-                        else str(copy.get("schedule", ""))
-                    ),
-                    count=copy.get("count", 0),
-                    prefix=copy.get("prefix", ""),
-                    snapmirror_label=copy.get("snapmirror_label", ""),
-                )
-                schedules.append(sched)
-
-            policy = SnapshotPolicyInfo(
-                uuid=record.get("uuid", ""),
-                name=record.get("name", ""),
-                svm=record.get("svm", {}).get("name", "") if record.get("svm") else "",
-                enabled=record.get("enabled", True),
-                scope=record.get("scope", ""),
-                schedules=schedules,
-            )
-            policies.append(policy)
-        return policies
-
-    def _parse_schedules_response(self, response: Any) -> list[ScheduleInfo]:
-        """Parse cluster schedules API response.
-
-        Args:
-            response: API response dict or None.
-
-        Returns:
-            List of ScheduleInfo objects.
-        """
-        if not response:
-            return []
-
-        logger.debug(
-            "%s API response: %d schedules", self._log_prefix, len(response.get("records", []))
-        )
-        schedules = []
-        for record in response.get("records", []):
-            self._log_missing_fields(
-                record,
-                ["uuid", "name", "type", "scope", "svm", "cron", "interval"],
-                "Schedule",
-                record.get("name", record.get("uuid", "unknown")),
-            )
-            cron = record.get("cron", {}) or {}
-            schedule = ScheduleInfo(
-                uuid=record.get("uuid", ""),
-                name=record.get("name", ""),
-                type=record.get("type", ""),
-                scope=record.get("scope", ""),
-                svm=record.get("svm", {}).get("name", "") if record.get("svm") else "",
-                cron=cron,
-                interval=record.get("interval", ""),
-            )
-            schedules.append(schedule)
-        return schedules
-
-    def _parse_luns_response(self, response: Any) -> list[LunInfo]:
-        """Parse LUNs API response.
-
-        Args:
-            response: API response dict or None.
-
-        Returns:
-            List of LunInfo objects.
-        """
-        if not response:
-            return []
-
-        logger.debug("%s API response: %d LUNs", self._log_prefix, len(response.get("records", [])))
-        luns = []
-        for record in response.get("records", []):
-            self._log_missing_fields(
-                record,
-                [
-                    "uuid",
-                    "name",
-                    "svm",
-                    "location",
-                    "space",
-                    "os_type",
-                    "serial_number",
-                    "enabled",
-                    "comment",
-                    "qos_policy",
-                    "create_time",
-                ],
-                "LUN",
-                record.get("name", record.get("uuid", "unknown")),
-            )
-            location = record.get("location", {})
-            lun = LunInfo(
-                uuid=record.get("uuid", ""),
-                name=record.get("name", ""),
-                svm=record.get("svm", {}).get("name", "") if record.get("svm") else "",
-                volume=(
-                    location.get("volume", {}).get("name", "") if location.get("volume") else ""
-                ),
-                size=record.get("space", {}).get("size", 0),
-                os_type=record.get("os_type", ""),
-                serial_number=record.get("serial_number", ""),
-                enabled=record.get("enabled", True),
-                comment=record.get("comment", "") or "",
-                qos_policy=(
-                    record.get("qos_policy", {}).get("name", "") if record.get("qos_policy") else ""
-                ),
-                create_time=record.get("create_time", ""),
-            )
-            luns.append(lun)
-        return luns
-
-    def _parse_igroups_response(self, response: Any) -> list[IgroupInfo]:
-        """Parse igroups API response.
-
-        Args:
-            response: API response dict or None.
-
-        Returns:
-            List of IgroupInfo objects.
-        """
-        if not response:
-            return []
-
-        logger.debug(
-            "%s API response: %d igroups", self._log_prefix, len(response.get("records", []))
-        )
-        igroups = []
-        for record in response.get("records", []):
-            self._log_missing_fields(
-                record,
-                ["uuid", "name", "svm", "protocol", "os_type", "initiators", "comment"],
-                "Igroup",
-                record.get("name", record.get("uuid", "unknown")),
-            )
-            initiators = [i.get("name", "") for i in record.get("initiators", []) if i.get("name")]
-            igroup = IgroupInfo(
-                uuid=record.get("uuid", ""),
-                name=record.get("name", ""),
-                svm=record.get("svm", {}).get("name", "") if record.get("svm") else "",
-                protocol=record.get("protocol", ""),
-                os_type=record.get("os_type", ""),
-                initiators=initiators,
-                comment=record.get("comment", "") or "",
-            )
-            igroups.append(igroup)
-        return igroups
-
-    def _parse_qos_policies_response(self, response: Any) -> list[QosPolicyInfo]:
-        """Parse QoS policies API response.
-
-        Args:
-            response: API response dict or None.
-
-        Returns:
-            List of QosPolicyInfo objects.
-        """
-        if not response:
-            return []
-
-        logger.debug(
-            "%s API response: %d QoS policies",
-            self._log_prefix,
-            len(response.get("records", [])),
-        )
-        policies = []
-        for record in response.get("records", []):
-            self._log_missing_fields(
-                record,
-                ["uuid", "name", "svm", "scope", "object_type", "fixed", "adaptive"],
-                "QoSPolicy",
-                record.get("name", record.get("uuid", "unknown")),
-            )
-            fixed = record.get("fixed", {}) or {}
-            adaptive = record.get("adaptive", {}) or {}
-            max_throughput_iops = fixed.get("max_throughput_iops", 0)
-            max_throughput_mbps = fixed.get("max_throughput_mbps", 0)
-            policy = QosPolicyInfo(
-                uuid=record.get("uuid", ""),
-                name=record.get("name", ""),
-                svm=record.get("svm", {}).get("name", "") if record.get("svm") else "",
-                scope=record.get("scope", ""),
-                policy_class=record.get("object_type", ""),
-                fixed_max_throughput_iops=max_throughput_iops if max_throughput_iops else 0,
-                fixed_max_throughput_mbps=max_throughput_mbps if max_throughput_mbps else 0,
-                adaptive_expected_iops=adaptive.get("expected_iops", 0) or 0,
-                adaptive_peak_iops=adaptive.get("peak_iops", 0) or 0,
-                adaptive_block_size=adaptive.get("block_size", ""),
-            )
-            policies.append(policy)
-        return policies
 
     # -------------------------------------------------------------------------
     # Protocols Collection
@@ -1728,12 +1489,15 @@ class MetadataCollector:
             logger.debug("%s No API client available for protocols collection", self._log_prefix)
             return ProtocolsInfo()
 
+        # NOTE: export-policies generated mapping has a single-item endpoint
+        # with {id} which won't work for collection, so we hardcode the
+        # endpoint with ?fields=*,rules for the collection call.
         endpoints = [
             "/protocols/nfs/export-policies?fields=*,rules",
-            "/protocols/cifs/shares?fields=*",
-            "/protocols/nfs/services?fields=*",
-            "/protocols/cifs/services?fields=*",
-            "/protocols/s3/buckets?fields=*",
+            ONTAPCIFSSHARE_MAPPING.api_endpoint,
+            ONTAPNFSSERVICE_MAPPING.api_endpoint,
+            ONTAPCIFSSERVICE_MAPPING.api_endpoint,
+            ONTAPS3BUCKET_MAPPING.api_endpoint,
         ]
 
         if self.parallel:
@@ -1746,11 +1510,51 @@ class MetadataCollector:
         else:
             responses = {ep: self._cached_api_call(ep) for ep in endpoints}
 
-        export_policies = self._parse_export_policies_response(responses.get(endpoints[0]))
-        cifs_shares = self._parse_cifs_shares_response(responses.get(endpoints[1]))
-        nfs_services = self._parse_nfs_services_response(responses.get(endpoints[2]))
-        cifs_services = self._parse_cifs_services_response(responses.get(endpoints[3]))
-        s3_buckets = self._parse_s3_buckets_response(responses.get(endpoints[4]))
+        export_policies = cast(
+            list[OntapExportPolicy],
+            parse_api_response(
+                ONTAPEXPORTPOLICY_MAPPING,
+                responses.get(endpoints[0]),
+                self._log_prefix,
+                self._log_missing_fields,
+            ),
+        )
+        cifs_shares = cast(
+            list[OntapCifsShare],
+            parse_api_response(
+                ONTAPCIFSSHARE_MAPPING,
+                responses.get(endpoints[1]),
+                self._log_prefix,
+                self._log_missing_fields,
+            ),
+        )
+        nfs_services = cast(
+            list[OntapNfsService],
+            parse_api_response(
+                ONTAPNFSSERVICE_MAPPING,
+                responses.get(endpoints[2]),
+                self._log_prefix,
+                self._log_missing_fields,
+            ),
+        )
+        cifs_services = cast(
+            list[OntapCifsService],
+            parse_api_response(
+                ONTAPCIFSSERVICE_MAPPING,
+                responses.get(endpoints[3]),
+                self._log_prefix,
+                self._log_missing_fields,
+            ),
+        )
+        s3_buckets = cast(
+            list[OntapS3Bucket],
+            parse_api_response(
+                ONTAPS3BUCKET_MAPPING,
+                responses.get(endpoints[4]),
+                self._log_prefix,
+                self._log_missing_fields,
+            ),
+        )
 
         return ProtocolsInfo(
             nfs_export_policies=export_policies,
@@ -1759,385 +1563,3 @@ class MetadataCollector:
             cifs_services=cifs_services,
             s3_buckets=s3_buckets,
         )
-
-    def _parse_export_policies_response(self, response: Any) -> list[ExportPolicyInfo]:
-        """Parse export policies API response.
-
-        Args:
-            response: API response dict or None.
-
-        Returns:
-            List of ExportPolicyInfo objects.
-        """
-        if not response:
-            return []
-
-        logger.debug(
-            "%s API response: %d export policies",
-            self._log_prefix,
-            len(response.get("records", [])),
-        )
-        policies = []
-        for record in response.get("records", []):
-            self._log_missing_fields(
-                record,
-                ["id", "name", "svm", "rules"],
-                "ExportPolicy",
-                record.get("name", str(record.get("id", "unknown"))),
-            )
-            rules = []
-            for rule_record in record.get("rules", []):
-                rule = ExportRuleInfo(
-                    index=rule_record.get("index", 0),
-                    clients=[
-                        c.get("match", "") for c in rule_record.get("clients", []) if c.get("match")
-                    ],
-                    protocols=rule_record.get("protocols", []) or [],
-                    ro_rule=rule_record.get("ro_rule", []) or [],
-                    rw_rule=rule_record.get("rw_rule", []) or [],
-                    superuser=rule_record.get("superuser", []) or [],
-                    anonymous_user=rule_record.get("anonymous_user", ""),
-                )
-                rules.append(rule)
-
-            policy = ExportPolicyInfo(
-                id=record.get("id", 0),
-                name=record.get("name", ""),
-                svm=record.get("svm", {}).get("name", "") if record.get("svm") else "",
-                rules=rules,
-            )
-            policies.append(policy)
-        return policies
-
-    def _parse_cifs_shares_response(self, response: Any) -> list[CIFSShareInfo]:
-        """Parse CIFS shares API response.
-
-        Args:
-            response: API response dict or None.
-
-        Returns:
-            List of CIFSShareInfo objects.
-        """
-        if not response:
-            return []
-
-        logger.debug(
-            "%s API response: %d CIFS shares",
-            self._log_prefix,
-            len(response.get("records", [])),
-        )
-        shares = []
-        for record in response.get("records", []):
-            self._log_missing_fields(
-                record,
-                [
-                    "name",
-                    "path",
-                    "svm",
-                    "comment",
-                    "home_directory",
-                    "oplocks",
-                    "access_based_enumeration",
-                    "change_notify",
-                    "encryption",
-                    "unix_symlink",
-                ],
-                "CIFSShare",
-                record.get("name", "unknown"),
-            )
-            share = CIFSShareInfo(
-                name=record.get("name", ""),
-                path=record.get("path", ""),
-                svm=record.get("svm", {}).get("name", "") if record.get("svm") else "",
-                comment=record.get("comment", "") or "",
-                home_directory=record.get("home_directory", False),
-                oplocks=record.get("oplocks", True),
-                access_based_enumeration=record.get("access_based_enumeration", False),
-                change_notify=record.get("change_notify", True),
-                encryption=record.get("encryption", False),
-                unix_symlink=record.get("unix_symlink", ""),
-            )
-            shares.append(share)
-        return shares
-
-    def _parse_nfs_services_response(self, response: Any) -> list[NFSServiceInfo]:
-        """Parse NFS services API response.
-
-        Args:
-            response: API response dict or None.
-
-        Returns:
-            List of NFSServiceInfo objects.
-        """
-        if not response:
-            return []
-
-        logger.debug(
-            "%s API response: %d NFS services",
-            self._log_prefix,
-            len(response.get("records", [])),
-        )
-        services = []
-        for record in response.get("records", []):
-            self._log_missing_fields(
-                record,
-                ["svm", "enabled", "protocol", "showmount_enabled", "vstorage_enabled"],
-                "NFSService",
-                record.get("svm", {}).get("name", "unknown")
-                if isinstance(record.get("svm"), dict)
-                else "unknown",
-            )
-            protocol = record.get("protocol", {})
-            service = NFSServiceInfo(
-                svm=record.get("svm", {}).get("name", "") if record.get("svm") else "",
-                enabled=record.get("enabled", False),
-                protocol_v3_enabled=protocol.get("v3_enabled", False),
-                protocol_v4_enabled=protocol.get("v40_enabled", False),
-                protocol_v41_enabled=protocol.get("v41_enabled", False),
-                showmount_enabled=record.get("showmount_enabled", False),
-                vstorage_enabled=record.get("vstorage_enabled", False),
-            )
-            services.append(service)
-        return services
-
-    def _parse_cifs_services_response(self, response: Any) -> list[CIFSServiceInfo]:
-        """Parse CIFS services API response.
-
-        Args:
-            response: API response dict or None.
-
-        Returns:
-            List of CIFSServiceInfo objects.
-        """
-        if not response:
-            return []
-
-        logger.debug(
-            "%s API response: %d CIFS services",
-            self._log_prefix,
-            len(response.get("records", [])),
-        )
-        services = []
-        for record in response.get("records", []):
-            self._log_missing_fields(
-                record,
-                ["svm", "name", "enabled", "ad_domain", "comment", "default_unix_user", "netbios"],
-                "CIFSService",
-                record.get("name", "unknown"),
-            )
-            ad_domain = record.get("ad_domain", {})
-            service = CIFSServiceInfo(
-                svm=record.get("svm", {}).get("name", "") if record.get("svm") else "",
-                name=record.get("name", ""),
-                enabled=record.get("enabled", False),
-                ad_domain=ad_domain.get("fqdn", "")
-                if isinstance(ad_domain, dict)
-                else str(ad_domain or ""),
-                comment=record.get("comment", "") or "",
-                default_unix_user=record.get("default_unix_user", ""),
-                netbios_aliases=record.get("netbios", {}).get("aliases", []) or []
-                if record.get("netbios")
-                else [],
-            )
-            services.append(service)
-        return services
-
-    def _parse_subnets_response(self, response: Any) -> list[IPSubnetInfo]:
-        """Parse IP subnets API response.
-
-        Args:
-            response: API response dict or None.
-
-        Returns:
-            List of IPSubnetInfo objects.
-        """
-        if not response:
-            return []
-
-        logger.debug(
-            "%s API response: %d subnets", self._log_prefix, len(response.get("records", []))
-        )
-        subnets = []
-        for record in response.get("records", []):
-            self._log_missing_fields(
-                record,
-                ["uuid", "name", "ipspace", "broadcast_domain", "subnet", "gateway", "ip_ranges"],
-                "IPSubnet",
-                record.get("name", record.get("uuid", "unknown")),
-            )
-            ip_ranges = []
-            for r in record.get("ip_ranges", []):
-                if isinstance(r, dict):
-                    start = r.get("start", "")
-                    end = r.get("end", "")
-                    if start and end:
-                        ip_ranges.append(f"{start}-{end}")
-                    elif start:
-                        ip_ranges.append(start)
-                elif isinstance(r, str):
-                    ip_ranges.append(r)
-
-            subnet_obj = record.get("subnet", {})
-            if subnet_obj:
-                subnet_str = (
-                    subnet_obj.get("address", "") + "/" + str(subnet_obj.get("netmask", ""))
-                )
-            else:
-                subnet_str = ""
-
-            subnet = IPSubnetInfo(
-                uuid=record.get("uuid", ""),
-                name=record.get("name", ""),
-                ipspace=(
-                    record.get("ipspace", {}).get("name", "") if record.get("ipspace") else ""
-                ),
-                broadcast_domain=(
-                    record.get("broadcast_domain", {}).get("name", "")
-                    if record.get("broadcast_domain")
-                    else ""
-                ),
-                subnet=subnet_str,
-                gateway=record.get("gateway", ""),
-                ip_ranges=ip_ranges,
-            )
-            subnets.append(subnet)
-        return subnets
-
-    def _parse_flexcaches_response(self, response: Any) -> list[FlexCacheInfo]:
-        """Parse FlexCache volumes API response.
-
-        Args:
-            response: API response dict or None.
-
-        Returns:
-            List of FlexCacheInfo objects.
-        """
-        if not response:
-            return []
-
-        logger.debug(
-            "%s API response: %d FlexCache volumes",
-            self._log_prefix,
-            len(response.get("records", [])),
-        )
-        flexcaches = []
-        for record in response.get("records", []):
-            self._log_missing_fields(
-                record,
-                [
-                    "uuid",
-                    "name",
-                    "svm",
-                    "path",
-                    "size",
-                    "origins",
-                    "global_file_locking_enabled",
-                    "dr_cache",
-                ],
-                "FlexCache",
-                record.get("name", record.get("uuid", "unknown")),
-            )
-            origins = []
-            for origin in record.get("origins", []):
-                vol = origin.get("volume", {})
-                svm = origin.get("svm", {})
-                vol_name = vol.get("name", "") if isinstance(vol, dict) else str(vol or "")
-                svm_name = svm.get("name", "") if isinstance(svm, dict) else str(svm or "")
-                if svm_name and vol_name:
-                    origins.append(f"{svm_name}:{vol_name}")
-                elif vol_name:
-                    origins.append(vol_name)
-
-            fc = FlexCacheInfo(
-                uuid=record.get("uuid", ""),
-                name=record.get("name", ""),
-                svm=record.get("svm", {}).get("name", "") if record.get("svm") else "",
-                path=record.get("path", ""),
-                size=record.get("size", 0),
-                origins=origins,
-                global_file_locking_enabled=record.get("global_file_locking_enabled", False),
-                dr_cache=record.get("dr_cache", False),
-            )
-            flexcaches.append(fc)
-        return flexcaches
-
-    def _parse_svm_peers_response(self, response: Any) -> list[SVMPeerInfo]:
-        """Parse SVM peers API response.
-
-        Args:
-            response: API response dict or None.
-
-        Returns:
-            List of SVMPeerInfo objects.
-        """
-        if not response:
-            return []
-
-        logger.debug(
-            "%s API response: %d SVM peers", self._log_prefix, len(response.get("records", []))
-        )
-        peers = []
-        for record in response.get("records", []):
-            self._log_missing_fields(
-                record,
-                ["uuid", "name", "svm", "peer", "state", "applications"],
-                "SVMPeer",
-                record.get("name", record.get("uuid", "unknown")),
-            )
-            svm = record.get("svm", {})
-            peer_obj = record.get("peer", {})
-            peer = SVMPeerInfo(
-                uuid=record.get("uuid", ""),
-                name=record.get("name", ""),
-                svm=svm.get("name", "") if isinstance(svm, dict) else str(svm or ""),
-                peer_svm=(
-                    peer_obj.get("svm", {}).get("name", "")
-                    if isinstance(peer_obj, dict) and isinstance(peer_obj.get("svm"), dict)
-                    else ""
-                ),
-                peer_cluster=(
-                    peer_obj.get("cluster", {}).get("name", "")
-                    if isinstance(peer_obj, dict) and isinstance(peer_obj.get("cluster"), dict)
-                    else ""
-                ),
-                state=record.get("state", ""),
-                applications=record.get("applications", []) or [],
-            )
-            peers.append(peer)
-        return peers
-
-    def _parse_s3_buckets_response(self, response: Any) -> list[S3BucketInfo]:
-        """Parse S3 buckets API response.
-
-        Args:
-            response: API response dict or None.
-
-        Returns:
-            List of S3BucketInfo objects.
-        """
-        if not response:
-            return []
-
-        logger.debug(
-            "%s API response: %d S3 buckets", self._log_prefix, len(response.get("records", []))
-        )
-        buckets = []
-        for record in response.get("records", []):
-            self._log_missing_fields(
-                record,
-                ["uuid", "name", "svm", "type", "size", "versioning_state", "comment", "nas_path"],
-                "S3Bucket",
-                record.get("name", record.get("uuid", "unknown")),
-            )
-            bucket = S3BucketInfo(
-                uuid=record.get("uuid", ""),
-                name=record.get("name", ""),
-                svm=record.get("svm", {}).get("name", "") if record.get("svm") else "",
-                type=record.get("type", ""),
-                size=record.get("size", 0),
-                versioning_state=record.get("versioning_state", ""),
-                comment=record.get("comment", "") or "",
-                nas_path=record.get("nas_path", ""),
-            )
-            buckets.append(bucket)
-        return buckets

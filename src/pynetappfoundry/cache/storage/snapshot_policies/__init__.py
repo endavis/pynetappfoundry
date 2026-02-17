@@ -1,13 +1,5 @@
-"""Re-export storage snapshot policy cache models."""
+"""OntapSnapshotPolicy cache model."""
 
-from __future__ import annotations
+from pynetappfoundry.cache.storage.snapshot_policies.model import OntapSnapshotPolicy
 
-from pynetappfoundry.cache.storage.snapshot_policies.model import (
-    SnapshotPolicyInfo,
-    SnapshotScheduleInfo,
-)
-
-__all__ = [
-    "SnapshotPolicyInfo",
-    "SnapshotScheduleInfo",
-]
+__all__ = ["OntapSnapshotPolicy"]

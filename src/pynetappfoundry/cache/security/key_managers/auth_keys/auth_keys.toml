@@ -1,0 +1,16 @@
+[endpoint]
+path = "/security/key-managers/{security_key_manager.uuid}/auth-keys"
+schema = "key_manager_auth_key"
+class_name = "OntapKeyManagerAuthKey"
+
+[fields.key_id]
+cache_strategy = "cache"
+
+[fields.key_tag]
+cache_strategy = "cache"
+
+[fields.passphrase]
+cache_strategy = "cache"
+
+[fields.security_key_manager_uuid]
+cache_strategy = "cache"

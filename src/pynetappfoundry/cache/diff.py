@@ -17,32 +17,38 @@ from pydantic import BaseModel
 
 from pynetappfoundry.cache._base import CacheModel
 from pynetappfoundry.cache.cloud.metadata.model import CloudMetadata
-from pynetappfoundry.cache.cloud.targets.model import CloudTargetInfo
-from pynetappfoundry.cache.cluster.licensing.model import LicensePackage
+from pynetappfoundry.cache.cloud.targets.model import OntapCloudTarget
+from pynetappfoundry.cache.cluster.licensing.licenses.model import (
+    OntapLicensePackageResponse,
+)
 from pynetappfoundry.cache.cluster.model import ClusterInfo
-from pynetappfoundry.cache.cluster.nodes.model import NodeInfo
-from pynetappfoundry.cache.cluster.peers.model import ClusterPeer
-from pynetappfoundry.cache.cluster.schedules.model import ScheduleInfo
-from pynetappfoundry.cache.name_services.dns.model import DNSInfo
-from pynetappfoundry.cache.network.ethernet.broadcast_domains.model import BroadcastDomain
-from pynetappfoundry.cache.network.ip.interfaces.model import NetworkLIF
-from pynetappfoundry.cache.network.ip.subnets.model import IPSubnetInfo
-from pynetappfoundry.cache.protocols.cifs.services.model import CIFSServiceInfo
-from pynetappfoundry.cache.protocols.cifs.shares.model import CIFSShareInfo
-from pynetappfoundry.cache.protocols.nfs.export_policies.model import ExportPolicyInfo
-from pynetappfoundry.cache.protocols.nfs.services.model import NFSServiceInfo
-from pynetappfoundry.cache.protocols.s3.buckets.model import S3BucketInfo
-from pynetappfoundry.cache.protocols.san.igroups.model import IgroupInfo
-from pynetappfoundry.cache.snapmirror.relationships.model import SnapMirrorRelationship
-from pynetappfoundry.cache.storage.aggregates.model import AggregateInfo
-from pynetappfoundry.cache.storage.flexcache.model import FlexCacheInfo
-from pynetappfoundry.cache.storage.luns.model import LunInfo
-from pynetappfoundry.cache.storage.qos.model import QosPolicyInfo
-from pynetappfoundry.cache.storage.qtrees.model import QtreeInfo
-from pynetappfoundry.cache.storage.snapshot_policies.model import SnapshotPolicyInfo
-from pynetappfoundry.cache.storage.volumes.model import VolumeInfo
-from pynetappfoundry.cache.svm.model import SVMInfo
-from pynetappfoundry.cache.svm.peers.model import SVMPeerInfo
+from pynetappfoundry.cache.cluster.nodes.model import OntapNodeResponse
+from pynetappfoundry.cache.cluster.peers.model import OntapClusterPeer
+from pynetappfoundry.cache.cluster.schedules.model import OntapSchedule
+from pynetappfoundry.cache.name_services.dns.model import OntapDns
+from pynetappfoundry.cache.network.ethernet.broadcast_domains.model import (
+    OntapBroadcastDomain,
+)
+from pynetappfoundry.cache.network.ip.interfaces.model import OntapIpInterface
+from pynetappfoundry.cache.network.ip.subnets.model import OntapIpSubnet
+from pynetappfoundry.cache.protocols.cifs.services.model import OntapCifsService
+from pynetappfoundry.cache.protocols.cifs.shares.model import OntapCifsShare
+from pynetappfoundry.cache.protocols.nfs.export_policies.model import OntapExportPolicy
+from pynetappfoundry.cache.protocols.nfs.services.model import OntapNfsService
+from pynetappfoundry.cache.protocols.s3.buckets.model import OntapS3Bucket
+from pynetappfoundry.cache.protocols.san.igroups.model import OntapIgroup
+from pynetappfoundry.cache.snapmirror.relationships.model import (
+    OntapSnapmirrorRelationship,
+)
+from pynetappfoundry.cache.storage.aggregates.model import OntapAggregate
+from pynetappfoundry.cache.storage.flexcache.flexcaches.model import OntapFlexcache
+from pynetappfoundry.cache.storage.luns.model import OntapLun
+from pynetappfoundry.cache.storage.qos.policies.model import OntapQosPolicy
+from pynetappfoundry.cache.storage.qtrees.model import OntapQtree
+from pynetappfoundry.cache.storage.snapshot_policies.model import OntapSnapshotPolicy
+from pynetappfoundry.cache.storage.volumes.model import OntapVolume
+from pynetappfoundry.cache.svm.peers.model import OntapSvmPeer
+from pynetappfoundry.cache.svm.svms.model import OntapSvm
 
 if TYPE_CHECKING:
     from pynetappfoundry.cache._metadata import CachedClusterMetadata
@@ -131,92 +137,92 @@ _ENTITY_CONFIGS: dict[str, EntityConfig] = {
     # --- Models WITH uuid (use uuid as stable identity key) ---
     "nodes": EntityConfig(
         key_field="uuid",
-        model_class=NodeInfo,
+        model_class=OntapNodeResponse,
         display_field="name",
     ),
     "network.ethernet_broadcast_domains": EntityConfig(
         key_field="uuid",
-        model_class=BroadcastDomain,
+        model_class=OntapBroadcastDomain,
         display_field="name",
     ),
     "network.ip_subnets": EntityConfig(
         key_field="uuid",
-        model_class=IPSubnetInfo,
+        model_class=OntapIpSubnet,
         display_field="name",
     ),
     "network.dns": EntityConfig(
         key_field="uuid",
-        model_class=DNSInfo,
+        model_class=OntapDns,
         display_field="svm_uuid",
     ),
     "storage.aggregates": EntityConfig(
         key_field="uuid",
-        model_class=AggregateInfo,
+        model_class=OntapAggregate,
         display_field="name",
     ),
     "storage.svms": EntityConfig(
         key_field="uuid",
-        model_class=SVMInfo,
+        model_class=OntapSvm,
         display_field="name",
     ),
     "storage.cloud_targets": EntityConfig(
         key_field="uuid",
-        model_class=CloudTargetInfo,
+        model_class=OntapCloudTarget,
         display_field="name",
     ),
     "storage.volumes": EntityConfig(
         key_field="uuid",
-        model_class=VolumeInfo,
+        model_class=OntapVolume,
         display_field="name",
     ),
     "storage.snapshot_policies": EntityConfig(
         key_field="uuid",
-        model_class=SnapshotPolicyInfo,
+        model_class=OntapSnapshotPolicy,
         display_field="name",
     ),
     "storage.schedules": EntityConfig(
         key_field="uuid",
-        model_class=ScheduleInfo,
+        model_class=OntapSchedule,
         display_field="name",
     ),
     "storage.luns": EntityConfig(
         key_field="uuid",
-        model_class=LunInfo,
+        model_class=OntapLun,
         display_field="name",
     ),
     "storage.igroups": EntityConfig(
         key_field="uuid",
-        model_class=IgroupInfo,
+        model_class=OntapIgroup,
         display_field="name",
     ),
     "storage.qos_policies": EntityConfig(
         key_field="uuid",
-        model_class=QosPolicyInfo,
+        model_class=OntapQosPolicy,
         display_field="name",
     ),
     "storage.flexcaches": EntityConfig(
         key_field="uuid",
-        model_class=FlexCacheInfo,
+        model_class=OntapFlexcache,
         display_field="name",
     ),
     "protocols.s3_buckets": EntityConfig(
         key_field="uuid",
-        model_class=S3BucketInfo,
+        model_class=OntapS3Bucket,
         display_field="name",
     ),
     "relationships.snapmirror_destinations": EntityConfig(
         key_field="uuid",
-        model_class=SnapMirrorRelationship,
+        model_class=OntapSnapmirrorRelationship,
         display_field="{source_path}->{destination_path}",
     ),
     "relationships.cluster_peers": EntityConfig(
         key_field="uuid",
-        model_class=ClusterPeer,
+        model_class=OntapClusterPeer,
         display_field="name",
     ),
     "relationships.svm_peers": EntityConfig(
         key_field="uuid",
-        model_class=SVMPeerInfo,
+        model_class=OntapSvmPeer,
         display_field="name",
     ),
     # --- Models WITHOUT uuid (keep current key) ---
@@ -227,37 +233,37 @@ _ENTITY_CONFIGS: dict[str, EntityConfig] = {
     ),
     "network.ip_interfaces": EntityConfig(
         key_field="uuid",
-        model_class=NetworkLIF,
+        model_class=OntapIpInterface,
         display_field="name",
     ),
     "storage.qtrees": EntityConfig(
         key_field="name",
-        model_class=QtreeInfo,
+        model_class=OntapQtree,
         display_field="name",
     ),
     "protocols.nfs_export_policies": EntityConfig(
         key_field="name",
-        model_class=ExportPolicyInfo,
+        model_class=OntapExportPolicy,
         display_field="name",
     ),
     "protocols.cifs_shares": EntityConfig(
         key_field="name",
-        model_class=CIFSShareInfo,
+        model_class=OntapCifsShare,
         display_field="name",
     ),
     "protocols.nfs_services": EntityConfig(
-        key_field="svm",
-        model_class=NFSServiceInfo,
-        display_field="svm",
+        key_field="svm_name",
+        model_class=OntapNfsService,
+        display_field="svm_name",
     ),
     "protocols.cifs_services": EntityConfig(
-        key_field="svm",
-        model_class=CIFSServiceInfo,
-        display_field="svm",
+        key_field="svm_name",
+        model_class=OntapCifsService,
+        display_field="svm_name",
     ),
     "license_packages": EntityConfig(
         key_field="name",
-        model_class=LicensePackage,
+        model_class=OntapLicensePackageResponse,
         display_field="name",
     ),
 }
@@ -488,7 +494,7 @@ def _diff_mediator_info(
 ) -> list[dict[str, Any]]:
     """Diff mediator info (singleton).
 
-    Tracked fields are derived dynamically from MediatorInfo.model_fields.
+    Tracked fields are derived dynamically from OntapMediatorResponse.model_fields.
 
     Args:
         before: Previous snapshot (None for initial).
@@ -497,11 +503,11 @@ def _diff_mediator_info(
     Returns:
         List of change dictionaries.
     """
-    from pynetappfoundry.cache.cluster.mediators.model import MediatorInfo
+    from pynetappfoundry.cache.cluster.mediators.model import OntapMediatorResponse
 
     changes: list[dict[str, Any]] = []
     category = "mediator"
-    tracked_fields = list(MediatorInfo.model_fields)
+    tracked_fields = list(OntapMediatorResponse.model_fields)
 
     if before is None:
         # Initial capture - record mediator if any field is populated

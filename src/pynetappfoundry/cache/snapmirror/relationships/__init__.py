@@ -1,13 +1,5 @@
-"""Re-export SnapMirror relationship cache models and mappings."""
+"""OntapSnapmirrorRelationship cache model."""
 
-from __future__ import annotations
+from pynetappfoundry.cache.snapmirror.relationships.model import OntapSnapmirrorRelationship
 
-from pynetappfoundry.cache.snapmirror.relationships.mapping import SNAPMIRROR_MAPPING
-from pynetappfoundry.cache.snapmirror.relationships.model import (
-    SnapMirrorRelationship,
-)
-
-__all__ = [
-    "SNAPMIRROR_MAPPING",
-    "SnapMirrorRelationship",
-]
+__all__ = ["OntapSnapmirrorRelationship"]

@@ -1,0 +1,13 @@
+[endpoint]
+path = "/security/audit"
+schema = "security_audit"
+class_name = "OntapSecurityAudit"
+
+[fields.cli]
+cache_strategy = "cache"
+
+[fields.http]
+cache_strategy = "cache"
+
+[fields.ontapi]
+cache_strategy = "cache"

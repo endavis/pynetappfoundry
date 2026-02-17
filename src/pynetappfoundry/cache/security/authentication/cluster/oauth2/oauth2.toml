@@ -1,0 +1,7 @@
+[endpoint]
+path = "/security/authentication/cluster/oauth2"
+schema = "security_oauth2_global"
+class_name = "OntapSecurityOauth2Global"
+
+[fields.enabled]
+cache_strategy = "cache"

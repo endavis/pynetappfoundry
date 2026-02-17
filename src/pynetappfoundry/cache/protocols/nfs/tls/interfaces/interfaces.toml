@@ -1,0 +1,28 @@
+[endpoint]
+path = "/protocols/nfs/tls/interfaces"
+schema = "nfs_tls_interface"
+class_name = "OntapNfsTlsInterface"
+
+[fields.certificate_name]
+cache_strategy = "cache"
+
+[fields.certificate_uuid]
+cache_strategy = "cache"
+
+[fields.enabled]
+cache_strategy = "cache"
+
+[fields.interface_ip_address]
+cache_strategy = "cache"
+
+[fields.interface_name]
+cache_strategy = "cache"
+
+[fields.interface_uuid]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"

@@ -1,0 +1,19 @@
+[endpoint]
+path = "/security/multi-admin-verify/approval-groups"
+schema = "multi_admin_verify_approval_group"
+class_name = "OntapMultiAdminVerifyApprovalGroup"
+
+[fields.approvers]
+cache_strategy = "cache"
+
+[fields.email]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.owner_name]
+cache_strategy = "cache"
+
+[fields.owner_uuid]
+cache_strategy = "cache"

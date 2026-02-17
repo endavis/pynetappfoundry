@@ -1,31 +1,35 @@
-"""BroadcastDomain type mapping definition for the declarative field mapping framework.
-
-Defines BROADCAST_DOMAIN_MAPPING which maps ONTAP REST API broadcast domain
-data to BroadcastDomain cache model attributes. BroadcastDomain is API-only --
-there is no CLI command for this data.
-
-All fields use simple dot-path extraction; no transform functions are needed.
-"""
+"""OntapBroadcastDomain type mapping."""
 
 from __future__ import annotations
 
+from typing import Any
+
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.network.ethernet.broadcast_domains.model import BroadcastDomain
+from pynetappfoundry.cache.network.ethernet.broadcast_domains.model import (
+    OntapBroadcastDomain,
+    OntapBroadcastDomainPort,
+)
 
-BROADCAST_DOMAIN_MAPPING = TypeMapping(
-    name="BroadcastDomain",
-    model_class=BroadcastDomain,
+
+def _transform_ports(record: dict[str, Any]) -> list[OntapBroadcastDomainPort]:
+    """Transform ports into OntapBroadcastDomainPort list."""
+    return [OntapBroadcastDomainPort(**item) for item in record.get("ports", [])]
+
+
+ONTAPBROADCASTDOMAIN_MAPPING = TypeMapping(
+    name="OntapBroadcastDomain",
+    model_class=OntapBroadcastDomain,
     api_endpoint="/network/ethernet/broadcast-domains?fields=*",
-    cli_command="",
+    api_type="ontap",
     fields=(
         FieldMapping(
-            cache_attr="uuid",
-            api_path="uuid",
+            cache_attr="ipspace_name",
+            api_path="ipspace.name",
         ),
         FieldMapping(
-            cache_attr="name",
-            api_path="name",
+            cache_attr="ipspace_uuid",
+            api_path="ipspace.uuid",
         ),
         FieldMapping(
             cache_attr="mtu",
@@ -33,15 +37,19 @@ BROADCAST_DOMAIN_MAPPING = TypeMapping(
             default=0,
         ),
         FieldMapping(
-            cache_attr="ipspace_uuid",
-            api_path="ipspace.uuid",
+            cache_attr="name",
+            api_path="name",
         ),
         FieldMapping(
-            cache_attr="port_uuids",
-            api_path="ports[*].uuid",
+            cache_attr="ports",
+            transform=_transform_ports,
             default=[],
+        ),
+        FieldMapping(
+            cache_attr="uuid",
+            api_path="uuid",
         ),
     ),
 )
 
-model_registry.register_mapping("BroadcastDomain", BROADCAST_DOMAIN_MAPPING)
+model_registry.register_mapping("OntapBroadcastDomain", ONTAPBROADCASTDOMAIN_MAPPING)

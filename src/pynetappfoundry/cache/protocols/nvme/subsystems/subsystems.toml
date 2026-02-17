@@ -1,0 +1,46 @@
+[endpoint]
+path = "/protocols/nvme/subsystems"
+schema = "nvme_subsystem"
+class_name = "OntapNvmeSubsystem"
+
+[fields.comment]
+cache_strategy = "cache"
+
+[fields.delete_on_unmap]
+cache_strategy = "cache"
+
+[fields.hosts]
+cache_strategy = "cache"
+
+[fields.io_queue_default_count]
+cache_strategy = "cache"
+
+[fields.io_queue_default_depth]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.os_type]
+cache_strategy = "cache"
+
+[fields.serial_number]
+cache_strategy = "cache"
+
+[fields.subsystem_maps]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.target_nqn]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"
+
+[fields.vendor_uuids]
+cache_strategy = "cache"

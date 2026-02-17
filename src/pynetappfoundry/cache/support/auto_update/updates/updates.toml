@@ -1,0 +1,61 @@
+[endpoint]
+path = "/support/auto-update/updates"
+schema = "auto_update_status"
+class_name = "OntapAutoUpdateStatus"
+
+[fields.action]
+cache_strategy = "cache"
+
+[fields.content_category]
+cache_strategy = "cache"
+
+[fields.content_type]
+cache_strategy = "cache"
+
+[fields.creation_time]
+cache_strategy = "cache"
+
+[fields.description]
+cache_strategy = "cache"
+
+[fields.end_time]
+cache_strategy = "cache"
+
+[fields.expiry_time]
+cache_strategy = "cache"
+
+[fields.last_state_change_time]
+cache_strategy = "cache"
+
+[fields.package_id]
+cache_strategy = "cache"
+
+[fields.percent_complete]
+cache_strategy = "cache"
+
+[fields.remaining_time]
+cache_strategy = "cache"
+
+[fields.schedule_time]
+cache_strategy = "cache"
+
+[fields.scheduled_time]
+cache_strategy = "cache"
+
+[fields.start_time]
+cache_strategy = "cache"
+
+[fields.state]
+cache_strategy = "cache"
+
+[fields.status_arguments]
+cache_strategy = "cache"
+
+[fields.status_code]
+cache_strategy = "cache"
+
+[fields.status_message]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

@@ -1,0 +1,22 @@
+[endpoint]
+path = "/protocols/s3/services/{svm.uuid}/policies"
+schema = "s3_policy"
+class_name = "OntapS3Policy"
+
+[fields.comment]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.read_only]
+cache_strategy = "cache"
+
+[fields.statements]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"

@@ -1,0 +1,182 @@
+[endpoint]
+path = "/network/fc/ports"
+schema = "fc_port"
+class_name = "OntapFcPort"
+
+[fields.description]
+cache_strategy = "cache"
+
+[fields.enabled]
+cache_strategy = "cache"
+
+[fields.fabric_connected]
+cache_strategy = "cache"
+
+[fields.fabric_connected_speed]
+cache_strategy = "cache"
+
+[fields.fabric_name]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.fabric_port_address]
+cache_strategy = "cache"
+
+[fields.fabric_switch_port]
+cache_strategy = "cache"
+
+[fields.interface_count]
+cache_strategy = "cache"
+
+[fields.metric_duration]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_iops_other]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_iops_read]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_iops_total]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_iops_write]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_latency_other]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_latency_read]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_latency_total]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_latency_write]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_status]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_throughput_read]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_throughput_total]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_throughput_write]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_timestamp]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.node_name]
+cache_strategy = "cache"
+
+[fields.node_uuid]
+cache_strategy = "cache"
+
+[fields.physical_protocol]
+cache_strategy = "cache"
+
+[fields.speed_configured]
+cache_strategy = "cache"
+
+[fields.speed_maximum]
+cache_strategy = "cache"
+
+[fields.state]
+cache_strategy = "cache"
+
+[fields.statistics_iops_raw_other]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_iops_raw_read]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_iops_raw_total]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_iops_raw_write]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_latency_raw_other]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_latency_raw_read]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_latency_raw_total]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_latency_raw_write]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_status]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_throughput_raw_read]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_throughput_raw_total]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_throughput_raw_write]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_timestamp]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.supported_protocols]
+cache_strategy = "cache"
+
+[fields.transceiver_capabilities]
+cache_strategy = "cache"
+
+[fields.transceiver_form_factor]
+cache_strategy = "cache"
+
+[fields.transceiver_manufacturer]
+cache_strategy = "cache"
+
+[fields.transceiver_part_number]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"
+
+[fields.wwnn]
+cache_strategy = "cache"
+
+[fields.wwpn]
+cache_strategy = "cache"

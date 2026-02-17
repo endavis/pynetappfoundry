@@ -1,0 +1,88 @@
+[endpoint]
+path = "/snapmirror/relationships/{relationship.uuid}/transfers"
+schema = "snapmirror_transfer"
+class_name = "OntapSnapmirrorTransfer"
+
+[fields.bytes_transferred]
+cache_strategy = "cache"
+
+[fields.checkpoint_size]
+cache_strategy = "cache"
+
+[fields.end_time]
+cache_strategy = "cache"
+
+[fields.error_info_code]
+cache_strategy = "cache"
+
+[fields.error_info_message]
+cache_strategy = "cache"
+
+[fields.files]
+cache_strategy = "cache"
+
+[fields.last_updated_time]
+cache_strategy = "cache"
+
+[fields.network_compression_ratio]
+cache_strategy = "cache"
+
+[fields.on_demand_attrs]
+cache_strategy = "cache"
+
+[fields.options]
+cache_strategy = "cache"
+
+[fields.relationship_destination_cluster_name]
+cache_strategy = "cache"
+
+[fields.relationship_destination_cluster_uuid]
+cache_strategy = "cache"
+
+[fields.relationship_destination_consistency_group_volumes]
+cache_strategy = "cache"
+
+[fields.relationship_destination_ipspace]
+cache_strategy = "cache"
+
+[fields.relationship_destination_luns_name]
+cache_strategy = "cache"
+
+[fields.relationship_destination_luns_uuid]
+cache_strategy = "cache"
+
+[fields.relationship_destination_path]
+cache_strategy = "cache"
+
+[fields.relationship_destination_svm_name]
+cache_strategy = "cache"
+
+[fields.relationship_destination_svm_uuid]
+cache_strategy = "cache"
+
+[fields.relationship_restore]
+cache_strategy = "cache"
+
+[fields.relationship_uuid]
+cache_strategy = "cache"
+
+[fields.snapshot]
+cache_strategy = "cache"
+
+[fields.source_snapshot]
+cache_strategy = "cache"
+
+[fields.state]
+cache_strategy = "cache"
+
+[fields.storage_efficiency_enabled]
+cache_strategy = "cache"
+
+[fields.throttle]
+cache_strategy = "cache"
+
+[fields.total_duration]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

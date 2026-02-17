@@ -1,0 +1,22 @@
+[endpoint]
+path = "/security/authentication/cluster/saml-sp"
+schema = "security_saml_sp"
+class_name = "OntapSecuritySamlSp"
+
+[fields.certificate_ca]
+cache_strategy = "cache"
+
+[fields.certificate_common_name]
+cache_strategy = "cache"
+
+[fields.certificate_serial_number]
+cache_strategy = "cache"
+
+[fields.enabled]
+cache_strategy = "cache"
+
+[fields.host]
+cache_strategy = "cache"
+
+[fields.idp_uri]
+cache_strategy = "cache"

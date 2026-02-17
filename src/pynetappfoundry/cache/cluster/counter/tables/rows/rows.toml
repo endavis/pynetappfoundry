@@ -1,0 +1,22 @@
+[endpoint]
+path = "/cluster/counter/tables/{counter_table.name}/rows"
+schema = "counter_row"
+class_name = "OntapCounterRow"
+
+[fields.aggregation_complete]
+cache_strategy = "cache"
+
+[fields.aggregation_count]
+cache_strategy = "cache"
+
+[fields.counter_table_name]
+cache_strategy = "cache"
+
+[fields.counters]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.properties]
+cache_strategy = "cache"

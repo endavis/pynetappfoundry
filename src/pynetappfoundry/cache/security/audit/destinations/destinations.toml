@@ -1,0 +1,34 @@
+[endpoint]
+path = "/security/audit/destinations"
+schema = "security_audit_log_forward"
+class_name = "OntapSecurityAuditLogForward"
+
+[fields.address]
+cache_strategy = "cache"
+
+[fields.facility]
+cache_strategy = "cache"
+
+[fields.hostname_format_override]
+cache_strategy = "cache"
+
+[fields.ipspace_name]
+cache_strategy = "cache"
+
+[fields.ipspace_uuid]
+cache_strategy = "cache"
+
+[fields.message_format]
+cache_strategy = "cache"
+
+[fields.port]
+cache_strategy = "cache"
+
+[fields.protocol]
+cache_strategy = "cache"
+
+[fields.timestamp_format_override]
+cache_strategy = "cache"
+
+[fields.verify_server]
+cache_strategy = "cache"

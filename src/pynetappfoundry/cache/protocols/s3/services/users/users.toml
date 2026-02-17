@@ -1,0 +1,28 @@
+[endpoint]
+path = "/protocols/s3/services/{svm.uuid}/users"
+schema = "s3_user"
+class_name = "OntapS3User"
+
+[fields.access_key]
+cache_strategy = "cache"
+
+[fields.comment]
+cache_strategy = "cache"
+
+[fields.key_expiry_time]
+cache_strategy = "cache"
+
+[fields.key_time_to_live]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.secret_key]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"

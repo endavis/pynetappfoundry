@@ -1,0 +1,37 @@
+[endpoint]
+path = "/cluster/mediators"
+schema = "mediator_response"
+class_name = "OntapMediatorResponse"
+
+[fields.ca_certificate]
+cache_strategy = "cache"
+
+[fields.dr_group_id]
+cache_strategy = "cache"
+
+[fields.ip_address]
+cache_strategy = "cache"
+
+[fields.password]
+cache_strategy = "cache"
+
+[fields.peer_cluster_name]
+cache_strategy = "cache"
+
+[fields.peer_cluster_uuid]
+cache_strategy = "cache"
+
+[fields.peer_mediator_connectivity]
+cache_strategy = "cache"
+
+[fields.port]
+cache_strategy = "cache"
+
+[fields.reachable]
+cache_strategy = "cache"
+
+[fields.user]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

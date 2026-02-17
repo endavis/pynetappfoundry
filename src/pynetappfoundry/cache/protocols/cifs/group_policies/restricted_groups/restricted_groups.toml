@@ -1,0 +1,28 @@
+[endpoint]
+path = "/protocols/cifs/group-policies/{svm.uuid}/restricted-groups"
+schema = "group_policy_object_restricted_group"
+class_name = "OntapGroupPolicyObjectRestrictedGroup"
+
+[fields.group_name]
+cache_strategy = "cache"
+
+[fields.link]
+cache_strategy = "cache"
+
+[fields.members]
+cache_strategy = "cache"
+
+[fields.memberships]
+cache_strategy = "cache"
+
+[fields.policy_name]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.version]
+cache_strategy = "cache"

@@ -1,0 +1,22 @@
+[endpoint]
+path = "/name-services/nis"
+schema = "nis_service"
+class_name = "OntapNisService"
+
+[fields.binding_details]
+cache_strategy = "cache"
+
+[fields.bound_servers]
+cache_strategy = "cache"
+
+[fields.domain]
+cache_strategy = "cache"
+
+[fields.servers]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"

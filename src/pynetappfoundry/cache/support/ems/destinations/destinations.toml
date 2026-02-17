@@ -1,0 +1,52 @@
+[endpoint]
+path = "/support/ems/destinations"
+schema = "ems_destination_response"
+class_name = "OntapEmsDestinationResponse"
+
+[fields.access_control_role_name]
+cache_strategy = "cache"
+
+[fields.certificate_ca]
+cache_strategy = "cache"
+
+[fields.certificate_name]
+cache_strategy = "cache"
+
+[fields.certificate_serial_number]
+cache_strategy = "cache"
+
+[fields.connectivity_errors]
+cache_strategy = "cache"
+
+[fields.connectivity_state]
+cache_strategy = "cache"
+
+[fields.destination]
+cache_strategy = "cache"
+
+[fields.filters]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.syslog_format_hostname_override]
+cache_strategy = "cache"
+
+[fields.syslog_format_message]
+cache_strategy = "cache"
+
+[fields.syslog_format_timestamp_override]
+cache_strategy = "cache"
+
+[fields.syslog_port]
+cache_strategy = "cache"
+
+[fields.syslog_transport]
+cache_strategy = "cache"
+
+[fields.system_defined]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"

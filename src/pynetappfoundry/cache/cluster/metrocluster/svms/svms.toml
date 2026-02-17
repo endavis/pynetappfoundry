@@ -1,0 +1,34 @@
+[endpoint]
+path = "/cluster/metrocluster/svms"
+schema = "metrocluster_svm"
+class_name = "OntapMetroclusterSvm"
+
+[fields.cluster_name]
+cache_strategy = "cache"
+
+[fields.cluster_uuid]
+cache_strategy = "cache"
+
+[fields.configuration_state]
+cache_strategy = "cache"
+
+[fields.failed_reason_arguments]
+cache_strategy = "cache"
+
+[fields.failed_reason_code]
+cache_strategy = "cache"
+
+[fields.failed_reason_message]
+cache_strategy = "cache"
+
+[fields.partner_svm_name]
+cache_strategy = "cache"
+
+[fields.partner_svm_uuid]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"

@@ -1,0 +1,79 @@
+[endpoint]
+path = "/protocols/audit"
+schema = "audit"
+class_name = "OntapAudit"
+
+[fields.charge_qos]
+cache_strategy = "cache"
+
+[fields.enabled]
+cache_strategy = "cache"
+
+[fields.events_async_delete]
+cache_strategy = "cache"
+
+[fields.events_audit_policy_change]
+cache_strategy = "cache"
+
+[fields.events_authorization_policy]
+cache_strategy = "cache"
+
+[fields.events_cap_staging]
+cache_strategy = "cache"
+
+[fields.events_cifs_logon_logoff]
+cache_strategy = "cache"
+
+[fields.events_file_operations]
+cache_strategy = "cache"
+
+[fields.events_file_share]
+cache_strategy = "cache"
+
+[fields.events_security_group]
+cache_strategy = "cache"
+
+[fields.events_user_account]
+cache_strategy = "cache"
+
+[fields.guarantee]
+cache_strategy = "cache"
+
+[fields.log_format]
+cache_strategy = "cache"
+
+[fields.log_retention_count]
+cache_strategy = "cache"
+
+[fields.log_retention_duration]
+cache_strategy = "cache"
+
+[fields.log_rotation_now]
+cache_strategy = "cache"
+
+[fields.log_rotation_schedule_days]
+cache_strategy = "cache"
+
+[fields.log_rotation_schedule_hours]
+cache_strategy = "cache"
+
+[fields.log_rotation_schedule_minutes]
+cache_strategy = "cache"
+
+[fields.log_rotation_schedule_months]
+cache_strategy = "cache"
+
+[fields.log_rotation_schedule_weekdays]
+cache_strategy = "cache"
+
+[fields.log_rotation_size]
+cache_strategy = "cache"
+
+[fields.log_path]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"

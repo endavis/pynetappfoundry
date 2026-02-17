@@ -1,0 +1,153 @@
+"""OntapSecurityAssociationResponse type mapping."""
+
+from __future__ import annotations
+
+from pynetappfoundry.cache._registry import model_registry
+from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
+from pynetappfoundry.cache.security.ipsec.security_associations.model import (
+    OntapSecurityAssociationResponse,
+)
+
+ONTAPSECURITYASSOCIATIONRESPONSE_MAPPING = TypeMapping(
+    name="OntapSecurityAssociationResponse",
+    model_class=OntapSecurityAssociationResponse,
+    api_endpoint="/security/ipsec/security-associations?fields=*",
+    api_type="ontap",
+    fields=(
+        FieldMapping(
+            cache_attr="cipher_suite",
+            api_path="cipher_suite",
+        ),
+        FieldMapping(
+            cache_attr="ike_authentication",
+            api_path="ike.authentication",
+        ),
+        FieldMapping(
+            cache_attr="ike_initiator_security_parameter_index",
+            api_path="ike.initiator_security_parameter_index",
+        ),
+        FieldMapping(
+            cache_attr="ike_is_initiator",
+            api_path="ike.is_initiator",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="ike_responder_security_parameter_index",
+            api_path="ike.responder_security_parameter_index",
+        ),
+        FieldMapping(
+            cache_attr="ike_state",
+            api_path="ike.state",
+        ),
+        FieldMapping(
+            cache_attr="ike_version",
+            api_path="ike.version",
+            default=0,
+        ),
+        FieldMapping(
+            cache_attr="ipsec_action",
+            api_path="ipsec.action",
+        ),
+        FieldMapping(
+            cache_attr="ipsec_inbound_bytes",
+            api_path="ipsec.inbound.bytes",
+            default=0,
+        ),
+        FieldMapping(
+            cache_attr="ipsec_inbound_offload_bytes",
+            api_path="ipsec.inbound.offload_bytes",
+            default=0,
+        ),
+        FieldMapping(
+            cache_attr="ipsec_inbound_offload_packets",
+            api_path="ipsec.inbound.offload_packets",
+            default=0,
+        ),
+        FieldMapping(
+            cache_attr="ipsec_inbound_packets",
+            api_path="ipsec.inbound.packets",
+            default=0,
+        ),
+        FieldMapping(
+            cache_attr="ipsec_inbound_security_parameter_index",
+            api_path="ipsec.inbound.security_parameter_index",
+        ),
+        FieldMapping(
+            cache_attr="ipsec_outbound_bytes",
+            api_path="ipsec.outbound.bytes",
+            default=0,
+        ),
+        FieldMapping(
+            cache_attr="ipsec_outbound_offload_bytes",
+            api_path="ipsec.outbound.offload_bytes",
+            default=0,
+        ),
+        FieldMapping(
+            cache_attr="ipsec_outbound_offload_packets",
+            api_path="ipsec.outbound.offload_packets",
+            default=0,
+        ),
+        FieldMapping(
+            cache_attr="ipsec_outbound_packets",
+            api_path="ipsec.outbound.packets",
+            default=0,
+        ),
+        FieldMapping(
+            cache_attr="ipsec_outbound_security_parameter_index",
+            api_path="ipsec.outbound.security_parameter_index",
+        ),
+        FieldMapping(
+            cache_attr="ipsec_state",
+            api_path="ipsec.state",
+        ),
+        FieldMapping(
+            cache_attr="lifetime",
+            api_path="lifetime",
+            default=0,
+        ),
+        FieldMapping(
+            cache_attr="local_address",
+            api_path="local_address",
+        ),
+        FieldMapping(
+            cache_attr="node_name",
+            api_path="node.name",
+        ),
+        FieldMapping(
+            cache_attr="node_uuid",
+            api_path="node.uuid",
+        ),
+        FieldMapping(
+            cache_attr="policy_name",
+            api_path="policy_name",
+        ),
+        FieldMapping(
+            cache_attr="remote_address",
+            api_path="remote_address",
+        ),
+        FieldMapping(
+            cache_attr="scope",
+            api_path="scope",
+        ),
+        FieldMapping(
+            cache_attr="svm_name",
+            api_path="svm.name",
+        ),
+        FieldMapping(
+            cache_attr="svm_uuid",
+            api_path="svm.uuid",
+        ),
+        FieldMapping(
+            cache_attr="type_",
+            api_path="type",
+        ),
+        FieldMapping(
+            cache_attr="uuid",
+            api_path="uuid",
+        ),
+    ),
+)
+
+model_registry.register_mapping(
+    "OntapSecurityAssociationResponse", ONTAPSECURITYASSOCIATIONRESPONSE_MAPPING
+)

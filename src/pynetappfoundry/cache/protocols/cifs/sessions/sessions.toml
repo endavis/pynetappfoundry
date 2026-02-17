@@ -1,0 +1,73 @@
+[endpoint]
+path = "/protocols/cifs/sessions"
+schema = "cifs_session"
+class_name = "OntapCifsSession"
+
+[fields.authentication]
+cache_strategy = "cache"
+
+[fields.client_ip]
+cache_strategy = "cache"
+
+[fields.connected_duration]
+cache_strategy = "cache"
+
+[fields.connection_count]
+cache_strategy = "cache"
+
+[fields.connection_id]
+cache_strategy = "cache"
+
+[fields.continuous_availability]
+cache_strategy = "cache"
+
+[fields.identifier]
+cache_strategy = "cache"
+
+[fields.idle_duration]
+cache_strategy = "cache"
+
+[fields.large_mtu]
+cache_strategy = "cache"
+
+[fields.mapped_unix_user]
+cache_strategy = "cache"
+
+[fields.node_name]
+cache_strategy = "cache"
+
+[fields.node_uuid]
+cache_strategy = "cache"
+
+[fields.open_files]
+cache_strategy = "cache"
+
+[fields.open_other]
+cache_strategy = "cache"
+
+[fields.open_shares]
+cache_strategy = "cache"
+
+[fields.protocol]
+cache_strategy = "cache"
+
+[fields.server_ip]
+cache_strategy = "cache"
+
+[fields.smb_encryption]
+cache_strategy = "cache"
+
+[fields.smb_signing]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.user]
+cache_strategy = "cache"
+
+[fields.volumes]
+cache_strategy = "cache"

@@ -1,0 +1,64 @@
+[endpoint]
+path = "/application/consistency-groups/{consistency_group.uuid}/snapshots"
+schema = "consistency_group_snapshot_response"
+class_name = "OntapConsistencyGroupSnapshotResponse"
+
+[fields.comment]
+cache_strategy = "cache"
+
+[fields.consistency_group_name]
+cache_strategy = "cache"
+
+[fields.consistency_group_uuid]
+cache_strategy = "cache"
+
+[fields.consistency_type]
+cache_strategy = "cache"
+
+[fields.create_time]
+cache_strategy = "cache"
+
+[fields.is_partial]
+cache_strategy = "cache"
+
+[fields.luns]
+cache_strategy = "cache"
+
+[fields.missing_luns]
+cache_strategy = "cache"
+
+[fields.missing_namespaces]
+cache_strategy = "cache"
+
+[fields.missing_volumes]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.namespaces]
+cache_strategy = "cache"
+
+[fields.reclaimable_space]
+cache_strategy = "cache"
+
+[fields.restore_size]
+cache_strategy = "cache"
+
+[fields.snapmirror_label]
+cache_strategy = "cache"
+
+[fields.snapshot_volumes]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"
+
+[fields.write_fence]
+cache_strategy = "cache"

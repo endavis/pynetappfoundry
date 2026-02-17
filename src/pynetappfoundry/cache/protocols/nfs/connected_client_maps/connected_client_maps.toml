@@ -1,0 +1,22 @@
+[endpoint]
+path = "/protocols/nfs/connected-client-maps"
+schema = "nfs_clients_map"
+class_name = "OntapNfsClientsMap"
+
+[fields.client_ips]
+cache_strategy = "cache"
+
+[fields.node_name]
+cache_strategy = "cache"
+
+[fields.node_uuid]
+cache_strategy = "cache"
+
+[fields.server_ip]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"

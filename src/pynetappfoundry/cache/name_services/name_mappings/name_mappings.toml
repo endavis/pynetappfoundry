@@ -1,0 +1,25 @@
+[endpoint]
+path = "/name-services/name-mappings"
+schema = "name_mapping"
+class_name = "OntapNameMapping"
+
+[fields.client_match]
+cache_strategy = "cache"
+
+[fields.direction]
+cache_strategy = "cache"
+
+[fields.index]
+cache_strategy = "cache"
+
+[fields.pattern]
+cache_strategy = "cache"
+
+[fields.replacement]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"

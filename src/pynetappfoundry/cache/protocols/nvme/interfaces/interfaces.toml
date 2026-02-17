@@ -1,0 +1,61 @@
+[endpoint]
+path = "/protocols/nvme/interfaces"
+schema = "nvme_interface"
+class_name = "OntapNvmeInterface"
+
+[fields.enabled]
+cache_strategy = "cache"
+
+[fields.fc_interface_port_name]
+cache_strategy = "cache"
+
+[fields.fc_interface_port_node_name]
+cache_strategy = "cache"
+
+[fields.fc_interface_port_uuid]
+cache_strategy = "cache"
+
+[fields.fc_interface_wwnn]
+cache_strategy = "cache"
+
+[fields.fc_interface_wwpn]
+cache_strategy = "cache"
+
+[fields.interface_type]
+cache_strategy = "cache"
+
+[fields.ip_interface_ip_address]
+cache_strategy = "cache"
+
+[fields.ip_interface_location_port_name]
+cache_strategy = "cache"
+
+[fields.ip_interface_location_port_node_name]
+cache_strategy = "cache"
+
+[fields.ip_interface_location_port_uuid]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.node_name]
+cache_strategy = "cache"
+
+[fields.node_uuid]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.transport_address]
+cache_strategy = "cache"
+
+[fields.transport_protocols]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

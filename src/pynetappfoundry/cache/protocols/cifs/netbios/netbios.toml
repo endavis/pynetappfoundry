@@ -1,0 +1,43 @@
+[endpoint]
+path = "/protocols/cifs/netbios"
+schema = "netbios"
+class_name = "OntapNetbios"
+
+[fields.interfaces]
+cache_strategy = "cache"
+
+[fields.mode]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.name_registration_type]
+cache_strategy = "cache"
+
+[fields.node_name]
+cache_strategy = "cache"
+
+[fields.node_uuid]
+cache_strategy = "cache"
+
+[fields.scope]
+cache_strategy = "cache"
+
+[fields.state]
+cache_strategy = "cache"
+
+[fields.suffix]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.time_left]
+cache_strategy = "cache"
+
+[fields.wins_servers]
+cache_strategy = "cache"

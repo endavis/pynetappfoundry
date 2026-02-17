@@ -1,28 +1,40 @@
-"""Cloud target information — /cloud/targets."""
+"""OntapCloudTarget information."""
 
 from __future__ import annotations
 
 from pynetappfoundry.cache._base import CacheModel
 
 
-class CloudTargetInfo(CacheModel):
-    """Cloud object store target configuration.
+class OntapCloudTarget(CacheModel):
+    """OntapCloudTarget information."""
 
-    Represents a cloud target used for FabricPool tiering or SnapMirror-to-cloud.
-    Available via /cloud/targets REST API (ONTAP 9.6+).
-    """
-
+    access_key: str = ""
+    authentication_type: str = ""
+    azure_account: str = ""
+    azure_msi_token: str = ""
+    azure_private_key: str = ""
+    azure_sas_token: str = ""
+    cap_url: str = ""
+    certificate_validation_enabled: bool = False
+    cluster_name: str = ""
+    cluster_uuid: str = ""
+    container: str = ""
+    ipspace_name: str = ""
+    ipspace_uuid: str = ""
     name: str = ""
-    uuid: str = ""
-    provider_type: str = ""  # AWS_S3, Azure_Cloud, SGWS, etc.
+    owner: str = ""
+    port: int = 0
+    provider_type: str = ""
+    read_latency_warning_threshold: int = 0
+    scope: str = ""
+    secret_password: str = ""
     server: str = ""
-    container: str = ""  # Bucket/container name
-    owner: str = ""  # fabricpool, snapmirror
-    scope: str = ""  # cluster, svm (9.12+)
-    svm: str = ""
-    ssl_enabled: bool = True
-    authentication_type: str = ""  # key, cap, etc.
-    ipspace: str = ""
+    server_side_encryption: str = ""
     snapmirror_use: str = ""
-    access_key: str = ""  # AWS/S3 access key ID
-    azure_account: str = ""  # Azure account name
+    ssl_enabled: bool = False
+    svm_name: str = ""
+    svm_uuid: str = ""
+    url_style: str = ""
+    use_http_proxy: bool = False
+    used: int = 0
+    uuid: str = ""

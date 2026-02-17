@@ -1,0 +1,50 @@
+[endpoint]
+path = "/protocols/nfs/connected-clients"
+schema = "nfs_clients"
+class_name = "OntapNfsClients"
+
+[fields.client_ip]
+cache_strategy = "cache"
+
+[fields.export_policy_id]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.export_policy_name]
+cache_strategy = "cache"
+
+[fields.idle_duration]
+cache_strategy = "cache"
+
+[fields.local_request_count]
+cache_strategy = "cache"
+
+[fields.node_name]
+cache_strategy = "cache"
+
+[fields.node_uuid]
+cache_strategy = "cache"
+
+[fields.protocol]
+cache_strategy = "cache"
+
+[fields.remote_request_count]
+cache_strategy = "cache"
+
+[fields.server_ip]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.trunking_enabled]
+cache_strategy = "cache"
+
+[fields.volume_name]
+cache_strategy = "cache"
+
+[fields.volume_uuid]
+cache_strategy = "cache"

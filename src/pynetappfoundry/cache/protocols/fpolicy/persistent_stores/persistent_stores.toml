@@ -1,0 +1,19 @@
+[endpoint]
+path = "/protocols/fpolicy/{svm.uuid}/persistent-stores"
+schema = "fpolicy_persistent_store"
+class_name = "OntapFpolicyPersistentStore"
+
+[fields.autosize_mode]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.size]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.volume]
+cache_strategy = "cache"

@@ -1,19 +1,26 @@
-"""Job schedule information — /cluster/schedules."""
+"""OntapSchedule information."""
 
 from __future__ import annotations
 
 from pydantic import Field
 
-from pynetappfoundry.cache._base import CacheModel
+from pynetappfoundry.cache._base import CacheModel, OntapUUID
 
 
-class ScheduleInfo(CacheModel):
-    """Job schedule information."""
+class OntapSchedule(CacheModel):
+    """OntapSchedule information."""
 
-    uuid: str = ""
-    name: str = ""
-    type: str = ""  # cron, interval
-    scope: str = ""  # cluster, svm
-    svm: str = ""
-    cron: dict[str, list[int]] = Field(default_factory=dict)
+    cluster_name: str = ""
+    cluster_uuid: OntapUUID = ""
+    cron_days: list[int] = Field(default_factory=list)
+    cron_hours: list[int] = Field(default_factory=list)
+    cron_minutes: list[int] = Field(default_factory=list)
+    cron_months: list[int] = Field(default_factory=list)
+    cron_weekdays: list[int] = Field(default_factory=list)
     interval: str = ""
+    name: str = ""
+    scope: str = ""
+    svm_name: str = ""
+    svm_uuid: str = ""
+    type_: str = ""
+    uuid: OntapUUID = ""

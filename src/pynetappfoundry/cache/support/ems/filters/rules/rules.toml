@@ -1,0 +1,22 @@
+[endpoint]
+path = "/support/ems/filters/{name}/rules"
+schema = "ems_filter_rule_response"
+class_name = "OntapEmsFilterRuleResponse"
+
+[fields.index]
+cache_strategy = "cache"
+
+[fields.message_criteria_name_pattern]
+cache_strategy = "cache"
+
+[fields.message_criteria_severities]
+cache_strategy = "cache"
+
+[fields.message_criteria_snmp_trap_types]
+cache_strategy = "cache"
+
+[fields.parameter_criteria]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"

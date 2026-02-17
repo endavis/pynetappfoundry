@@ -1,0 +1,28 @@
+[endpoint]
+path = "/support/ems"
+schema = "ems_config"
+class_name = "OntapEmsConfig"
+
+[fields.mail_from]
+cache_strategy = "cache"
+
+[fields.mail_server]
+cache_strategy = "cache"
+
+[fields.mail_server_password]
+cache_strategy = "cache"
+
+[fields.mail_server_user]
+cache_strategy = "cache"
+
+[fields.proxy_password]
+cache_strategy = "cache"
+
+[fields.proxy_url]
+cache_strategy = "cache"
+
+[fields.proxy_user]
+cache_strategy = "cache"
+
+[fields.pubsub_enabled]
+cache_strategy = "cache"

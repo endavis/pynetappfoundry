@@ -1,0 +1,16 @@
+[endpoint]
+path = "/protocols/san/igroups/{igroup.uuid}/igroups"
+schema = "igroup_nested"
+class_name = "OntapIgroupNested"
+
+[fields.igroup_uuid]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.records]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

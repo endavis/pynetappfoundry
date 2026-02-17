@@ -1,0 +1,28 @@
+[endpoint]
+path = "/storage/snaplock/litigations/{litigation.id}/operations/{id}"
+schema = "snaplock_legal_hold_operation"
+class_name = "OntapSnaplockLegalHoldOperation"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.num_files_failed]
+cache_strategy = "cache"
+
+[fields.num_files_processed]
+cache_strategy = "cache"
+
+[fields.num_files_skipped]
+cache_strategy = "cache"
+
+[fields.num_inodes_ignored]
+cache_strategy = "cache"
+
+[fields.path]
+cache_strategy = "cache"
+
+[fields.state]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"

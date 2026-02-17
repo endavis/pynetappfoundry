@@ -1,0 +1,28 @@
+[endpoint]
+path = "/protocols/vscan/{svm.uuid}/scanner-pools"
+schema = "vscan_scanner_pool"
+class_name = "OntapVscanScannerPool"
+
+[fields.cluster_name]
+cache_strategy = "cache"
+
+[fields.cluster_uuid]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.privileged_users]
+cache_strategy = "cache"
+
+[fields.role]
+cache_strategy = "cache"
+
+[fields.servers]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"

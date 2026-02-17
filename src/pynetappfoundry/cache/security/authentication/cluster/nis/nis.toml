@@ -1,0 +1,13 @@
+[endpoint]
+path = "/security/authentication/cluster/nis"
+schema = "cluster_nis_service"
+class_name = "OntapClusterNisService"
+
+[fields.server]
+cache_strategy = "cache"
+
+[fields.status_code]
+cache_strategy = "cache"
+
+[fields.status_message]
+cache_strategy = "cache"

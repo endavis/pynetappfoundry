@@ -1,0 +1,46 @@
+[endpoint]
+path = "/cluster/sensors"
+schema = "sensors"
+class_name = "OntapSensors"
+
+[fields.critical_high_threshold]
+cache_strategy = "cache"
+
+[fields.critical_low_threshold]
+cache_strategy = "cache"
+
+[fields.discrete_state]
+cache_strategy = "cache"
+
+[fields.discrete_value]
+cache_strategy = "cache"
+
+[fields.index]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.node_name]
+cache_strategy = "cache"
+
+[fields.node_uuid]
+cache_strategy = "cache"
+
+[fields.threshold_state]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.value]
+cache_strategy = "cache"
+
+[fields.value_units]
+cache_strategy = "cache"
+
+[fields.warning_high_threshold]
+cache_strategy = "cache"
+
+[fields.warning_low_threshold]
+cache_strategy = "cache"

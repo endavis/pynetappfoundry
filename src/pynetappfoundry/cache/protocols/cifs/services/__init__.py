@@ -1,9 +1,5 @@
-"""Re-export CIFS service cache models."""
+"""OntapCifsService cache model."""
 
-from __future__ import annotations
+from pynetappfoundry.cache.protocols.cifs.services.model import OntapCifsService
 
-from pynetappfoundry.cache.protocols.cifs.services.model import CIFSServiceInfo
-
-__all__ = [
-    "CIFSServiceInfo",
-]
+__all__ = ["OntapCifsService"]

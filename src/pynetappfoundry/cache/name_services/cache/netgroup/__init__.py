@@ -1,0 +1,1 @@
+"""Netgroup cache models."""

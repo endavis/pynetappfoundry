@@ -1,0 +1,13 @@
+[endpoint]
+path = "/cluster/software/download"
+schema = "software_package_download_get"
+class_name = "OntapSoftwarePackageDownloadGet"
+
+[fields.code]
+cache_strategy = "cache"
+
+[fields.message]
+cache_strategy = "cache"
+
+[fields.state]
+cache_strategy = "cache"

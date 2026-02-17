@@ -1,0 +1,35 @@
+[endpoint]
+path = "/protocols/nvme/subsystem-maps"
+schema = "nvme_subsystem_map"
+class_name = "OntapNvmeSubsystemMap"
+
+[fields.anagrpid]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.namespace_name]
+cache_strategy = "cache"
+
+[fields.namespace_node_name]
+cache_strategy = "cache"
+
+[fields.namespace_node_uuid]
+cache_strategy = "cache"
+
+[fields.namespace_uuid]
+cache_strategy = "cache"
+
+[fields.nsid]
+cache_strategy = "cache"
+
+[fields.subsystem_name]
+cache_strategy = "cache"
+
+[fields.subsystem_uuid]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"

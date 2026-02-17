@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-from pynetappfoundry.cache.network.ip.interfaces import NETWORK_LIF_MAPPING, NetworkLIF
-from pynetappfoundry.cache.network.ip.subnets import IPSubnetInfo
+from pynetappfoundry.cache.network.ip.interfaces import OntapIpInterface
+from pynetappfoundry.cache.network.ip.subnets import OntapIpSubnet
 
 __all__ = [
-    "NETWORK_LIF_MAPPING",
-    "IPSubnetInfo",
-    "NetworkLIF",
+    "OntapIpInterface",
+    "OntapIpSubnet",
 ]

@@ -1,0 +1,23 @@
+[endpoint]
+path = "/network/fc/fabrics/{fabric.name}/zones"
+schema = "fc_zone"
+class_name = "OntapFcZone"
+
+[fields.cache_age]
+cache_strategy = "cache"
+
+[fields.cache_is_current]
+cache_strategy = "cache"
+
+[fields.cache_update_time]
+cache_strategy = "cache"
+
+[fields.fabric_name]
+cache_strategy = "cache"
+
+[fields.members]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.name]
+cache_strategy = "cache"

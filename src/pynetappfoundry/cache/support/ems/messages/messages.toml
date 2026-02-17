@@ -1,0 +1,22 @@
+[endpoint]
+path = "/support/ems/messages"
+schema = "ems_message_response"
+class_name = "OntapEmsMessageResponse"
+
+[fields.corrective_action]
+cache_strategy = "cache"
+
+[fields.deprecated]
+cache_strategy = "cache"
+
+[fields.description]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.severity]
+cache_strategy = "cache"
+
+[fields.snmp_trap_type]
+cache_strategy = "cache"

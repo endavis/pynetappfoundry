@@ -1,0 +1,25 @@
+[endpoint]
+path = "/security/login/totps"
+schema = "totp"
+class_name = "OntapTotp"
+
+[fields.account_name]
+cache_strategy = "cache"
+
+[fields.comment]
+cache_strategy = "cache"
+
+[fields.enabled]
+cache_strategy = "cache"
+
+[fields.owner_name]
+cache_strategy = "cache"
+
+[fields.owner_uuid]
+cache_strategy = "cache"
+
+[fields.scope]
+cache_strategy = "cache"
+
+[fields.sha_fingerprint]
+cache_strategy = "cache"

@@ -1,0 +1,58 @@
+[endpoint]
+path = "/network/ip/bgp/peer-groups"
+schema = "bgp_peer_group"
+class_name = "OntapBgpPeerGroup"
+
+[fields.ipspace_name]
+cache_strategy = "cache"
+
+[fields.ipspace_uuid]
+cache_strategy = "cache"
+
+[fields.local_interface_ip_address]
+cache_strategy = "cache"
+
+[fields.local_interface_name]
+cache_strategy = "cache"
+
+[fields.local_interface_uuid]
+cache_strategy = "cache"
+
+[fields.local_ip_address]
+cache_strategy = "cache"
+
+[fields.local_ip_netmask]
+cache_strategy = "cache"
+
+[fields.local_port_name]
+cache_strategy = "cache"
+
+[fields.local_port_node_name]
+cache_strategy = "cache"
+
+[fields.local_port_uuid]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.peer_address]
+cache_strategy = "cache"
+
+[fields.peer_asn]
+cache_strategy = "cache"
+
+[fields.peer_is_next_hop]
+cache_strategy = "cache"
+
+[fields.peer_md5_enabled]
+cache_strategy = "cache"
+
+[fields.peer_md5_secret]
+cache_strategy = "cache"
+
+[fields.state]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

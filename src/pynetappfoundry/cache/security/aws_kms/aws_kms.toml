@@ -1,0 +1,97 @@
+[endpoint]
+path = "/security/aws-kms"
+schema = "aws_kms"
+class_name = "OntapAwsKms"
+
+[fields.access_key_id]
+cache_strategy = "cache"
+
+[fields.amazon_reachability_code]
+cache_strategy = "cache"
+
+[fields.amazon_reachability_message]
+cache_strategy = "cache"
+
+[fields.amazon_reachability_reachable]
+cache_strategy = "cache"
+
+[fields.default_domain]
+cache_strategy = "cache"
+
+[fields.ekmip_reachability]
+cache_strategy = "cache"
+
+[fields.encryption_context]
+cache_strategy = "cache"
+
+[fields.host]
+cache_strategy = "cache"
+
+[fields.key_id]
+cache_strategy = "cache"
+
+[fields.polling_period]
+cache_strategy = "cache"
+
+[fields.port]
+cache_strategy = "cache"
+
+[fields.proxy_host]
+cache_strategy = "cache"
+
+[fields.proxy_password]
+cache_strategy = "cache"
+
+[fields.proxy_port]
+cache_strategy = "cache"
+
+[fields.proxy_type]
+cache_strategy = "cache"
+
+[fields.proxy_username]
+cache_strategy = "cache"
+
+[fields.region]
+cache_strategy = "cache"
+
+[fields.scope]
+cache_strategy = "cache"
+
+[fields.secret_access_key]
+cache_strategy = "cache"
+
+[fields.service]
+cache_strategy = "cache"
+
+[fields.skip_verify]
+cache_strategy = "cache"
+
+[fields.state_cluster_state]
+cache_strategy = "cache"
+
+[fields.state_code]
+cache_strategy = "cache"
+
+[fields.state_message]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.timeout]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"
+
+[fields.verify]
+cache_strategy = "cache"
+
+[fields.verify_host]
+cache_strategy = "cache"
+
+[fields.verify_ip]
+cache_strategy = "cache"

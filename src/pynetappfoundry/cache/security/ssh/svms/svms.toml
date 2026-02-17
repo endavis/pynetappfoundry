@@ -1,0 +1,28 @@
+[endpoint]
+path = "/security/ssh/svms"
+schema = "svm_ssh_server"
+class_name = "OntapSvmSshServer"
+
+[fields.ciphers]
+cache_strategy = "cache"
+
+[fields.host_key_algorithms]
+cache_strategy = "cache"
+
+[fields.is_rsa_in_publickey_algorithms_enabled]
+cache_strategy = "cache"
+
+[fields.key_exchange_algorithms]
+cache_strategy = "cache"
+
+[fields.mac_algorithms]
+cache_strategy = "cache"
+
+[fields.max_authentication_retry_count]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"

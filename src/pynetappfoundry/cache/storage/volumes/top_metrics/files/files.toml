@@ -1,0 +1,43 @@
+[endpoint]
+path = "/storage/volumes/{volume.uuid}/top-metrics/files"
+schema = "top_metrics_file"
+class_name = "OntapTopMetricsFile"
+
+[fields.iops_error_lower_bound]
+cache_strategy = "cache"
+
+[fields.iops_error_upper_bound]
+cache_strategy = "cache"
+
+[fields.iops_read]
+cache_strategy = "cache"
+
+[fields.iops_write]
+cache_strategy = "cache"
+
+[fields.path]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.throughput_error_lower_bound]
+cache_strategy = "cache"
+
+[fields.throughput_error_upper_bound]
+cache_strategy = "cache"
+
+[fields.throughput_read]
+cache_strategy = "cache"
+
+[fields.throughput_write]
+cache_strategy = "cache"
+
+[fields.volume_name]
+cache_strategy = "cache"
+
+[fields.volume_uuid]
+cache_strategy = "cache"

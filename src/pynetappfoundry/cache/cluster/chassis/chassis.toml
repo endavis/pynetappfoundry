@@ -1,0 +1,19 @@
+[endpoint]
+path = "/cluster/chassis"
+schema = "chassis"
+class_name = "OntapChassis"
+
+[fields.frus]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.nodes]
+cache_strategy = "cache"
+
+[fields.shelves]
+cache_strategy = "cache"
+
+[fields.state]
+cache_strategy = "cache"

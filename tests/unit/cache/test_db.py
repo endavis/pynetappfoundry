@@ -10,7 +10,7 @@ import pytest
 from pynetappfoundry.cache import CachedClusterMetadata
 from pynetappfoundry.cache.cloud.metadata.model import CloudMetadata
 from pynetappfoundry.cache.cluster.model import ClusterInfo
-from pynetappfoundry.cache.cluster.nodes.model import NodeInfo
+from pynetappfoundry.cache.cluster.nodes.model import OntapNodeResponse
 from pynetappfoundry.cache.db import ClusterMetadataDB, _validate_cluster_name
 
 
@@ -66,8 +66,8 @@ class TestClusterMetadataDB:
                 ontap_version="9.14.1",
             ),
             nodes=[
-                NodeInfo(name="node1", serial_number="123"),
-                NodeInfo(name="node2", serial_number="456"),
+                OntapNodeResponse(name="node1", serial_number="123"),
+                OntapNodeResponse(name="node2", serial_number="456"),
             ],
         )
 

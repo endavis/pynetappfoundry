@@ -1,0 +1,10 @@
+[endpoint]
+path = "/security/authentication/cluster/ad-proxy"
+schema = "cluster_ad_proxy"
+class_name = "OntapClusterAdProxy"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"

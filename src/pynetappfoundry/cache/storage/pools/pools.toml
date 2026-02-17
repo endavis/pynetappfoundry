@@ -1,0 +1,49 @@
+[endpoint]
+path = "/storage/pools"
+schema = "storage_pool"
+class_name = "OntapStoragePool"
+
+[fields.capacity_disk_count]
+cache_strategy = "cache"
+
+[fields.capacity_disks]
+cache_strategy = "cache"
+
+[fields.capacity_remaining]
+cache_strategy = "cache"
+
+[fields.capacity_spare_allocation_units]
+cache_strategy = "cache"
+
+[fields.capacity_total]
+cache_strategy = "cache"
+
+[fields.capacity_used_allocation_units]
+cache_strategy = "cache"
+
+[fields.health_is_healthy]
+cache_strategy = "cache"
+
+[fields.health_state]
+cache_strategy = "cache"
+
+[fields.health_unhealthy_reason_arguments]
+cache_strategy = "cache"
+
+[fields.health_unhealthy_reason_code]
+cache_strategy = "cache"
+
+[fields.health_unhealthy_reason_message]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.nodes]
+cache_strategy = "cache"
+
+[fields.storage_type]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

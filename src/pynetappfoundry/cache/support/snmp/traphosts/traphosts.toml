@@ -1,0 +1,13 @@
+[endpoint]
+path = "/support/snmp/traphosts"
+schema = "snmp_traphost"
+class_name = "OntapSnmpTraphost"
+
+[fields.host]
+cache_strategy = "cache"
+
+[fields.ip_address]
+cache_strategy = "cache"
+
+[fields.user_name]
+cache_strategy = "cache"

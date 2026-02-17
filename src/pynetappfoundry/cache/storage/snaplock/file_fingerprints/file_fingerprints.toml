@@ -1,0 +1,43 @@
+[endpoint]
+path = "/storage/snaplock/file-fingerprints/{id}"
+schema = "snaplock_file_fingerprint"
+class_name = "OntapSnaplockFileFingerprint"
+
+[fields.algorithm]
+cache_strategy = "cache"
+
+[fields.data_fingerprint]
+cache_strategy = "cache"
+
+[fields.file_size]
+cache_strategy = "cache"
+
+[fields.file_type]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.metadata_fingerprint]
+cache_strategy = "cache"
+
+[fields.path]
+cache_strategy = "cache"
+
+[fields.scope]
+cache_strategy = "cache"
+
+[fields.state]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.volume_name]
+cache_strategy = "cache"
+
+[fields.volume_uuid]
+cache_strategy = "cache"

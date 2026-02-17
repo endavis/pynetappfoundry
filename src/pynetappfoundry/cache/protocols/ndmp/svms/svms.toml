@@ -1,0 +1,16 @@
+[endpoint]
+path = "/protocols/ndmp/svms"
+schema = "ndmp_svm"
+class_name = "OntapNdmpSvm"
+
+[fields.authentication_types]
+cache_strategy = "cache"
+
+[fields.enabled]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"

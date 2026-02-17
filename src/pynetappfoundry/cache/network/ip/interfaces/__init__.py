@@ -1,11 +1,5 @@
-"""Re-export network IP interface cache models."""
+"""OntapIpInterface cache model."""
 
-from __future__ import annotations
+from pynetappfoundry.cache.network.ip.interfaces.model import OntapIpInterface
 
-from pynetappfoundry.cache.network.ip.interfaces.mapping import NETWORK_LIF_MAPPING
-from pynetappfoundry.cache.network.ip.interfaces.model import NetworkLIF
-
-__all__ = [
-    "NETWORK_LIF_MAPPING",
-    "NetworkLIF",
-]
+__all__ = ["OntapIpInterface"]

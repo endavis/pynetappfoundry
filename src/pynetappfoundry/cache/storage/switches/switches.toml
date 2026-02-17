@@ -1,0 +1,76 @@
+[endpoint]
+path = "/storage/switches"
+schema = "storage_switch"
+class_name = "OntapStorageSwitch"
+
+[fields.connections]
+cache_strategy = "cache"
+
+[fields.director_class]
+cache_strategy = "cache"
+
+[fields.domain_id]
+cache_strategy = "cache"
+
+[fields.errors]
+cache_strategy = "cache"
+
+[fields.fabric_name]
+cache_strategy = "cache"
+
+[fields.fans]
+cache_strategy = "cache"
+
+[fields.firmware_version]
+cache_strategy = "cache"
+
+[fields.ip_address]
+cache_strategy = "cache"
+
+[fields.local]
+cache_strategy = "cache"
+
+[fields.model_]
+cache_strategy = "cache"
+
+[fields.monitored_blades]
+cache_strategy = "cache"
+
+[fields.monitoring_enabled]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.paths]
+cache_strategy = "cache"
+
+[fields.ports]
+cache_strategy = "cache"
+
+[fields.power_supply_units]
+cache_strategy = "cache"
+
+[fields.role]
+cache_strategy = "cache"
+
+[fields.state]
+cache_strategy = "cache"
+
+[fields.symbolic_name]
+cache_strategy = "cache"
+
+[fields.temperature_sensors]
+cache_strategy = "cache"
+
+[fields.vendor]
+cache_strategy = "cache"
+
+[fields.vsans]
+cache_strategy = "cache"
+
+[fields.wwn]
+cache_strategy = "cache"
+
+[fields.zones]
+cache_strategy = "cache"

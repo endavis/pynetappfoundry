@@ -1,0 +1,40 @@
+[endpoint]
+path = "/storage/qos/workloads"
+schema = "qos_workload"
+class_name = "OntapQosWorkload"
+
+[fields.file]
+cache_strategy = "cache"
+
+[fields.lun]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.policy_name]
+cache_strategy = "cache"
+
+[fields.policy_uuid]
+cache_strategy = "cache"
+
+[fields.qtree]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"
+
+[fields.volume]
+cache_strategy = "cache"
+
+[fields.wid]
+cache_strategy = "cache"
+
+[fields.workload_class]
+cache_strategy = "cache"

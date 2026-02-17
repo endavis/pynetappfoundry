@@ -1,0 +1,88 @@
+[endpoint]
+path = "/cluster/software"
+schema = "software_reference"
+class_name = "OntapSoftwareReference"
+
+[fields.firmware_cluster_fw_progress]
+cache_strategy = "cache"
+
+[fields.firmware_disk_average_duration_per_disk]
+cache_strategy = "cache"
+
+[fields.firmware_disk_num_waiting_download]
+cache_strategy = "cache"
+
+[fields.firmware_disk_total_completion_estimate]
+cache_strategy = "cache"
+
+[fields.firmware_disk_update_status]
+cache_strategy = "cache"
+
+[fields.firmware_dqp_file_name]
+cache_strategy = "cache"
+
+[fields.firmware_dqp_record_count_alias]
+cache_strategy = "cache"
+
+[fields.firmware_dqp_record_count_device]
+cache_strategy = "cache"
+
+[fields.firmware_dqp_record_count_drive]
+cache_strategy = "cache"
+
+[fields.firmware_dqp_record_count_system]
+cache_strategy = "cache"
+
+[fields.firmware_dqp_revision]
+cache_strategy = "cache"
+
+[fields.firmware_dqp_version]
+cache_strategy = "cache"
+
+[fields.firmware_shelf_in_progress_count]
+cache_strategy = "cache"
+
+[fields.firmware_shelf_update_status]
+cache_strategy = "cache"
+
+[fields.firmware_sp_bmc_autoupdate]
+cache_strategy = "cache"
+
+[fields.firmware_sp_bmc_end_time]
+cache_strategy = "cache"
+
+[fields.firmware_sp_bmc_fw_type]
+cache_strategy = "cache"
+
+[fields.firmware_sp_bmc_image]
+cache_strategy = "cache"
+
+[fields.firmware_sp_bmc_in_progress]
+cache_strategy = "cache"
+
+[fields.firmware_sp_bmc_is_current]
+cache_strategy = "cache"
+
+[fields.firmware_sp_bmc_last_update_state]
+cache_strategy = "cache"
+
+[fields.firmware_sp_bmc_percent_done]
+cache_strategy = "cache"
+
+[fields.firmware_sp_bmc_running_version]
+cache_strategy = "cache"
+
+[fields.firmware_sp_bmc_start_time]
+cache_strategy = "cache"
+
+[fields.firmware_sp_bmc_state]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.software_images]
+cache_strategy = "cache"
+
+[fields.version]
+cache_strategy = "cache"

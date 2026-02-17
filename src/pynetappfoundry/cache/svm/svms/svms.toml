@@ -1,0 +1,334 @@
+[endpoint]
+path = "/svm/svms"
+schema = "svm"
+class_name = "OntapSvm"
+
+[fields.aggregates]
+cache_strategy = "cache"
+
+[fields.aggregates_delegated]
+cache_strategy = "cache"
+
+[fields.anti_ransomware_event_log_is_enabled_on_new_file_extension_seen]
+cache_strategy = "cache"
+
+[fields.anti_ransomware_event_log_is_enabled_on_snapshot_copy_creation]
+cache_strategy = "cache"
+
+[fields.anti_ransomware_auto_switch_duration_without_new_file_extension]
+cache_strategy = "cache"
+
+[fields.anti_ransomware_auto_switch_from_learning_to_enabled]
+cache_strategy = "cache"
+
+[fields.anti_ransomware_auto_switch_minimum_file_count]
+cache_strategy = "cache"
+
+[fields.anti_ransomware_auto_switch_minimum_file_extension]
+cache_strategy = "cache"
+
+[fields.anti_ransomware_auto_switch_minimum_incoming_data]
+cache_strategy = "cache"
+
+[fields.anti_ransomware_auto_switch_minimum_learning_period]
+cache_strategy = "cache"
+
+[fields.anti_ransomware_default_volume_state]
+cache_strategy = "cache"
+
+[fields.anti_ransomware_incoming_write_threshold]
+cache_strategy = "cache"
+
+[fields.anti_ransomware_incoming_write_threshold_percent]
+cache_strategy = "cache"
+
+[fields.auto_enable_activity_tracking]
+cache_strategy = "cache"
+
+[fields.auto_enable_analytics]
+cache_strategy = "cache"
+
+[fields.certificate_name]
+cache_strategy = "cache"
+
+[fields.certificate_uuid]
+cache_strategy = "cache"
+
+[fields.cifs_ad_domain_default_site]
+cache_strategy = "cache"
+
+[fields.cifs_ad_domain_fqdn]
+cache_strategy = "cache"
+
+[fields.cifs_ad_domain_organizational_unit]
+cache_strategy = "cache"
+
+[fields.cifs_ad_domain_password]
+cache_strategy = "cache"
+
+[fields.cifs_ad_domain_user]
+cache_strategy = "cache"
+
+[fields.cifs_allowed]
+cache_strategy = "cache"
+
+[fields.cifs_auth_style]
+cache_strategy = "cache"
+
+[fields.cifs_domain_workgroup]
+cache_strategy = "cache"
+
+[fields.cifs_enabled]
+cache_strategy = "cache"
+
+[fields.cifs_name]
+cache_strategy = "cache"
+
+[fields.cifs_workgroup]
+cache_strategy = "cache"
+
+[fields.comment]
+cache_strategy = "cache"
+
+[fields.dns_domains]
+cache_strategy = "cache"
+
+[fields.dns_servers]
+cache_strategy = "cache"
+
+[fields.fc_interfaces]
+cache_strategy = "cache"
+
+[fields.fcp_allowed]
+cache_strategy = "cache"
+
+[fields.fcp_enabled]
+cache_strategy = "cache"
+
+[fields.ip_interfaces]
+cache_strategy = "cache"
+
+[fields.ipspace_name]
+cache_strategy = "cache"
+
+[fields.ipspace_uuid]
+cache_strategy = "cache"
+
+[fields.is_space_enforcement_logical]
+cache_strategy = "cache"
+
+[fields.is_space_reporting_logical]
+cache_strategy = "cache"
+
+[fields.iscsi_allowed]
+cache_strategy = "cache"
+
+[fields.iscsi_enabled]
+cache_strategy = "cache"
+
+[fields.language]
+cache_strategy = "cache"
+
+[fields.ldap_ad_domain]
+cache_strategy = "cache"
+
+[fields.ldap_base_dn]
+cache_strategy = "cache"
+
+[fields.ldap_bind_dn]
+cache_strategy = "cache"
+
+[fields.ldap_enabled]
+cache_strategy = "cache"
+
+[fields.ldap_restrict_discovery_to_site]
+cache_strategy = "cache"
+
+[fields.ldap_servers]
+cache_strategy = "cache"
+
+[fields.max_volumes]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.ndmp_allowed]
+cache_strategy = "cache"
+
+[fields.nfs_allowed]
+cache_strategy = "cache"
+
+[fields.nfs_enabled]
+cache_strategy = "cache"
+
+[fields.nis_domain]
+cache_strategy = "cache"
+
+[fields.nis_enabled]
+cache_strategy = "cache"
+
+[fields.nis_servers]
+cache_strategy = "cache"
+
+[fields.nsswitch_group]
+cache_strategy = "cache"
+
+[fields.nsswitch_hosts]
+cache_strategy = "cache"
+
+[fields.nsswitch_namemap]
+cache_strategy = "cache"
+
+[fields.nsswitch_netgroup]
+cache_strategy = "cache"
+
+[fields.nsswitch_passwd]
+cache_strategy = "cache"
+
+[fields.number_of_volumes_in_recovery_queue]
+cache_strategy = "cache"
+
+[fields.nvme_allowed]
+cache_strategy = "cache"
+
+[fields.nvme_enabled]
+cache_strategy = "cache"
+
+[fields.qos_adaptive_policy_group_template_max_throughput_iops]
+cache_strategy = "cache"
+
+[fields.qos_adaptive_policy_group_template_max_throughput_mbps]
+cache_strategy = "cache"
+
+[fields.qos_adaptive_policy_group_template_min_throughput_iops]
+cache_strategy = "cache"
+
+[fields.qos_adaptive_policy_group_template_min_throughput_mbps]
+cache_strategy = "cache"
+
+[fields.qos_adaptive_policy_group_template_name]
+cache_strategy = "cache"
+
+[fields.qos_adaptive_policy_group_template_uuid]
+cache_strategy = "cache"
+
+[fields.qos_policy_max_throughput_iops]
+cache_strategy = "cache"
+
+[fields.qos_policy_max_throughput_mbps]
+cache_strategy = "cache"
+
+[fields.qos_policy_min_throughput_iops]
+cache_strategy = "cache"
+
+[fields.qos_policy_min_throughput_mbps]
+cache_strategy = "cache"
+
+[fields.qos_policy_name]
+cache_strategy = "cache"
+
+[fields.qos_policy_uuid]
+cache_strategy = "cache"
+
+[fields.qos_policy_group_template_max_throughput_iops]
+cache_strategy = "cache"
+
+[fields.qos_policy_group_template_max_throughput_mbps]
+cache_strategy = "cache"
+
+[fields.qos_policy_group_template_min_throughput_iops]
+cache_strategy = "cache"
+
+[fields.qos_policy_group_template_min_throughput_mbps]
+cache_strategy = "cache"
+
+[fields.qos_policy_group_template_name]
+cache_strategy = "cache"
+
+[fields.qos_policy_group_template_uuid]
+cache_strategy = "cache"
+
+[fields.routes]
+cache_strategy = "cache"
+
+[fields.s3_allowed]
+cache_strategy = "cache"
+
+[fields.s3_certificate_name]
+cache_strategy = "cache"
+
+[fields.s3_certificate_uuid]
+cache_strategy = "cache"
+
+[fields.s3_default_unix_user]
+cache_strategy = "cache"
+
+[fields.s3_default_win_user]
+cache_strategy = "cache"
+
+[fields.s3_enabled]
+cache_strategy = "cache"
+
+[fields.s3_is_http_enabled]
+cache_strategy = "cache"
+
+[fields.s3_is_https_enabled]
+cache_strategy = "cache"
+
+[fields.s3_name]
+cache_strategy = "cache"
+
+[fields.s3_port]
+cache_strategy = "cache"
+
+[fields.s3_secure_port]
+cache_strategy = "cache"
+
+[fields.snapmirror_is_protected]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.snapmirror_protected_consistency_group_count]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.snapmirror_protected_volumes_count]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.snapshot_policy_name]
+cache_strategy = "cache"
+
+[fields.snapshot_policy_uuid]
+cache_strategy = "cache"
+
+[fields.state]
+cache_strategy = "cache"
+
+[fields.storage_allocated]
+cache_strategy = "cache"
+
+[fields.storage_available]
+cache_strategy = "cache"
+
+[fields.storage_limit]
+cache_strategy = "cache"
+
+[fields.storage_limit_threshold_alert]
+cache_strategy = "cache"
+
+[fields.storage_limit_threshold_exceeded]
+cache_strategy = "cache"
+
+[fields.storage_used_percentage]
+cache_strategy = "cache"
+
+[fields.subtype]
+cache_strategy = "cache"
+
+[fields.total_volume_size_in_recovery_queue]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

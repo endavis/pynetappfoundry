@@ -1,0 +1,106 @@
+[endpoint]
+path = "/protocols/cifs/group-policies/{svm.uuid}/objects"
+schema = "group_policy_object"
+class_name = "OntapGroupPolicyObject"
+
+[fields.central_access_policy_settings]
+cache_strategy = "cache"
+
+[fields.central_access_policy_staging_audit_type]
+cache_strategy = "cache"
+
+[fields.enabled]
+cache_strategy = "cache"
+
+[fields.extensions]
+cache_strategy = "cache"
+
+[fields.file_system_path]
+cache_strategy = "cache"
+
+[fields.index]
+cache_strategy = "cache"
+
+[fields.ldap_path]
+cache_strategy = "cache"
+
+[fields.link]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.registry_settings_branchcache_hash_publication_mode]
+cache_strategy = "cache"
+
+[fields.registry_settings_branchcache_supported_hash_version]
+cache_strategy = "cache"
+
+[fields.registry_settings_refresh_time_interval]
+cache_strategy = "cache"
+
+[fields.registry_settings_refresh_time_random_offset]
+cache_strategy = "cache"
+
+[fields.security_settings_event_audit_settings_logon_type]
+cache_strategy = "cache"
+
+[fields.security_settings_event_audit_settings_object_access_type]
+cache_strategy = "cache"
+
+[fields.security_settings_event_log_settings_max_size]
+cache_strategy = "cache"
+
+[fields.security_settings_event_log_settings_retention_method]
+cache_strategy = "cache"
+
+[fields.security_settings_files_or_folders]
+cache_strategy = "cache"
+
+[fields.security_settings_kerberos_max_clock_skew]
+cache_strategy = "cache"
+
+[fields.security_settings_kerberos_max_renew_age]
+cache_strategy = "cache"
+
+[fields.security_settings_kerberos_max_ticket_age]
+cache_strategy = "cache"
+
+[fields.security_settings_privilege_rights_change_notify_users]
+cache_strategy = "cache"
+
+[fields.security_settings_privilege_rights_security_privilege_users]
+cache_strategy = "cache"
+
+[fields.security_settings_privilege_rights_take_ownership_users]
+cache_strategy = "cache"
+
+[fields.security_settings_registry_values_signing_required]
+cache_strategy = "cache"
+
+[fields.security_settings_restrict_anonymous_anonymous_access_to_shares_and_named_pipes_restricted]
+cache_strategy = "cache"
+
+[fields.security_settings_restrict_anonymous_combined_restriction_for_anonymous_user]
+cache_strategy = "cache"
+
+[fields.security_settings_restrict_anonymous_no_enumeration_of_sam_accounts]
+cache_strategy = "cache"
+
+[fields.security_settings_restrict_anonymous_no_enumeration_of_sam_accounts_and_shares]
+cache_strategy = "cache"
+
+[fields.security_settings_restricted_groups]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"
+
+[fields.version]
+cache_strategy = "cache"

@@ -1,0 +1,41 @@
+[endpoint]
+path = "/network/ip/routes"
+schema = "network_route"
+class_name = "OntapNetworkRoute"
+
+[fields.destination_address]
+cache_strategy = "cache"
+
+[fields.destination_family]
+cache_strategy = "cache"
+
+[fields.destination_netmask]
+cache_strategy = "cache"
+
+[fields.gateway]
+cache_strategy = "cache"
+
+[fields.interfaces]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.ipspace_name]
+cache_strategy = "cache"
+
+[fields.ipspace_uuid]
+cache_strategy = "cache"
+
+[fields.metric]
+cache_strategy = "cache"
+
+[fields.scope]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

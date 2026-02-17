@@ -1,0 +1,37 @@
+[endpoint]
+path = "/svm/svms/{svm.uuid}/top-metrics/clients"
+schema = "top_metrics_svm_client"
+class_name = "OntapTopMetricsSvmClient"
+
+[fields.client_ip]
+cache_strategy = "cache"
+
+[fields.iops_error_lower_bound]
+cache_strategy = "cache"
+
+[fields.iops_error_upper_bound]
+cache_strategy = "cache"
+
+[fields.iops_read]
+cache_strategy = "cache"
+
+[fields.iops_write]
+cache_strategy = "cache"
+
+[fields.svm_name]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.throughput_error_lower_bound]
+cache_strategy = "cache"
+
+[fields.throughput_error_upper_bound]
+cache_strategy = "cache"
+
+[fields.throughput_read]
+cache_strategy = "cache"
+
+[fields.throughput_write]
+cache_strategy = "cache"

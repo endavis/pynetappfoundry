@@ -1,9 +1,5 @@
-"""Re-export SVM peer cache models."""
+"""OntapSvmPeer cache model."""
 
-from __future__ import annotations
+from pynetappfoundry.cache.svm.peers.model import OntapSvmPeer
 
-from pynetappfoundry.cache.svm.peers.model import SVMPeerInfo
-
-__all__ = [
-    "SVMPeerInfo",
-]
+__all__ = ["OntapSvmPeer"]

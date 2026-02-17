@@ -1,0 +1,16 @@
+[endpoint]
+path = "/protocols/san/lun-maps/{lun.uuid}/{igroup.uuid}/reporting-nodes"
+schema = "lun_map_reporting_node"
+class_name = "OntapLunMapReportingNode"
+
+[fields.igroup_uuid]
+cache_strategy = "cache"
+
+[fields.lun_uuid]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

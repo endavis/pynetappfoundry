@@ -6,8 +6,8 @@ doesn't change frequently. Cache is manually refreshed via CLI.
 Models live at ``cache/<api-path>/model.py`` and should be imported
 from their sub-package, e.g.::
 
-    from pynetappfoundry.cache.storage.volumes import VolumeInfo
-    from pynetappfoundry.cache.cluster.nodes import NodeInfo
+    from pynetappfoundry.cache.storage.volumes.model import OntapVolume
+    from pynetappfoundry.cache.cluster.nodes.model import OntapNodeResponse
 
 Infrastructure (DB, collector, diff, registry) is imported from here::
 
@@ -20,16 +20,32 @@ Infrastructure (DB, collector, diff, registry) is imported from here::
 # Models are already registered via CacheModel.__init_subclass__ when
 # _metadata.py transitively imports all leaf model.py files above.
 import pynetappfoundry.cache.cloud.metadata
-import pynetappfoundry.cache.cluster.licensing
+import pynetappfoundry.cache.cloud.targets
+import pynetappfoundry.cache.cluster.licensing.licenses
 import pynetappfoundry.cache.cluster.mediators
 import pynetappfoundry.cache.cluster.nodes
 import pynetappfoundry.cache.cluster.peers
+import pynetappfoundry.cache.cluster.schedules
 import pynetappfoundry.cache.name_services.dns
+import pynetappfoundry.cache.network.ethernet.broadcast_domains
 import pynetappfoundry.cache.network.ip.interfaces
+import pynetappfoundry.cache.network.ip.subnets
+import pynetappfoundry.cache.protocols.cifs.services
+import pynetappfoundry.cache.protocols.cifs.shares
+import pynetappfoundry.cache.protocols.nfs.export_policies
+import pynetappfoundry.cache.protocols.nfs.services
+import pynetappfoundry.cache.protocols.s3.buckets
+import pynetappfoundry.cache.protocols.san.igroups
 import pynetappfoundry.cache.snapmirror.relationships
 import pynetappfoundry.cache.storage.aggregates
+import pynetappfoundry.cache.storage.flexcache.flexcaches
+import pynetappfoundry.cache.storage.luns
+import pynetappfoundry.cache.storage.qos.policies
+import pynetappfoundry.cache.storage.qtrees
+import pynetappfoundry.cache.storage.snapshot_policies
 import pynetappfoundry.cache.storage.volumes
-import pynetappfoundry.cache.svm  # noqa: F401
+import pynetappfoundry.cache.svm.peers
+import pynetappfoundry.cache.svm.svms  # noqa: F401
 from pynetappfoundry.cache._base import (
     METADATA_SCHEMA_MIN_COMPATIBLE,
     METADATA_SCHEMA_VERSION,
@@ -49,7 +65,7 @@ from pynetappfoundry.cache._metadata import (
 
 # Layer 1: Registry
 from pynetappfoundry.cache._registry import model_registry
-from pynetappfoundry.cache.cluster.mediators.model import MediatorInfo
+from pynetappfoundry.cache.cluster.mediators.model import OntapMediatorResponse
 
 # Infrastructure (collector, db, diff, etc.)
 from pynetappfoundry.cache.collector import (
@@ -76,8 +92,8 @@ __all__ = [
     "CollectionPhase",
     "FieldMapping",
     "HasUUID",
-    "MediatorInfo",
     "MetadataCollector",
+    "OntapMediatorResponse",
     "OntapUUID",
     "ProgressCallback",
     "ProgressInfo",

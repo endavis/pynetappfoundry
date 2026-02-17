@@ -1,0 +1,145 @@
+[endpoint]
+path = "/network/ethernet/ports"
+schema = "port"
+class_name = "OntapPort"
+
+[fields.broadcast_domain_ipspace_name]
+cache_strategy = "cache"
+
+[fields.broadcast_domain_name]
+cache_strategy = "cache"
+
+[fields.broadcast_domain_uuid]
+cache_strategy = "cache"
+
+[fields.discovered_devices]
+cache_strategy = "cache"
+
+[fields.enabled]
+cache_strategy = "cache"
+
+[fields.flowcontrol_admin]
+cache_strategy = "cache"
+
+[fields.interface_count]
+cache_strategy = "cache"
+
+[fields.lag_active_ports]
+cache_strategy = "cache"
+
+[fields.lag_distribution_policy]
+cache_strategy = "cache"
+
+[fields.lag_member_ports]
+cache_strategy = "cache"
+
+[fields.lag_mode]
+cache_strategy = "cache"
+
+[fields.mac_address]
+cache_strategy = "cache"
+
+[fields.metric_duration]
+cache_strategy = "cache"
+
+[fields.metric_status]
+cache_strategy = "cache"
+
+[fields.metric_throughput_read]
+cache_strategy = "cache"
+
+[fields.metric_throughput_total]
+cache_strategy = "cache"
+
+[fields.metric_throughput_write]
+cache_strategy = "cache"
+
+[fields.metric_timestamp]
+cache_strategy = "cache"
+
+[fields.mtu]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.node_name]
+cache_strategy = "cache"
+
+[fields.node_uuid]
+cache_strategy = "cache"
+
+[fields.pfc_queues_admin]
+cache_strategy = "cache"
+
+[fields.rdma_protocols]
+cache_strategy = "cache"
+
+[fields.reachability]
+cache_strategy = "cache"
+
+[fields.reachable_broadcast_domains]
+cache_strategy = "cache"
+
+[fields.speed]
+cache_strategy = "cache"
+
+[fields.state]
+cache_strategy = "cache"
+
+[fields.statistics_device_link_down_count_raw]
+cache_strategy = "cache"
+
+[fields.statistics_device_receive_raw_discards]
+cache_strategy = "cache"
+
+[fields.statistics_device_receive_raw_errors]
+cache_strategy = "cache"
+
+[fields.statistics_device_receive_raw_packets]
+cache_strategy = "cache"
+
+[fields.statistics_device_timestamp]
+cache_strategy = "cache"
+
+[fields.statistics_device_transmit_raw_discards]
+cache_strategy = "cache"
+
+[fields.statistics_device_transmit_raw_errors]
+cache_strategy = "cache"
+
+[fields.statistics_device_transmit_raw_packets]
+cache_strategy = "cache"
+
+[fields.statistics_status]
+cache_strategy = "cache"
+
+[fields.statistics_throughput_raw_read]
+cache_strategy = "cache"
+
+[fields.statistics_throughput_raw_total]
+cache_strategy = "cache"
+
+[fields.statistics_throughput_raw_write]
+cache_strategy = "cache"
+
+[fields.statistics_timestamp]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"
+
+[fields.vlan_base_port_name]
+cache_strategy = "cache"
+
+[fields.vlan_base_port_node_name]
+cache_strategy = "cache"
+
+[fields.vlan_base_port_uuid]
+cache_strategy = "cache"
+
+[fields.vlan_tag]
+cache_strategy = "cache"

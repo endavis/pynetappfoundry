@@ -1,0 +1,31 @@
+[endpoint]
+path = "/support/ems/events"
+schema = "ems_event_response"
+class_name = "OntapEmsEventResponse"
+
+[fields.index]
+cache_strategy = "cache"
+
+[fields.log_message]
+cache_strategy = "cache"
+
+[fields.message_name]
+cache_strategy = "cache"
+
+[fields.message_severity]
+cache_strategy = "cache"
+
+[fields.node_name]
+cache_strategy = "cache"
+
+[fields.node_uuid]
+cache_strategy = "cache"
+
+[fields.parameters]
+cache_strategy = "cache"
+
+[fields.source]
+cache_strategy = "cache"
+
+[fields.time]
+cache_strategy = "cache"

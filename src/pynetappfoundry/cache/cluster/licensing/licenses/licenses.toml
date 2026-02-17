@@ -1,0 +1,28 @@
+[endpoint]
+path = "/cluster/licensing/licenses"
+schema = "license_package_response"
+class_name = "OntapLicensePackageResponse"
+
+[fields.description]
+cache_strategy = "cache"
+
+[fields.entitlement_action]
+cache_strategy = "cache"
+
+[fields.entitlement_risk]
+cache_strategy = "cache"
+
+[fields.keys]
+cache_strategy = "cache"
+
+[fields.licenses]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.scope]
+cache_strategy = "cache"
+
+[fields.state]
+cache_strategy = "cache"

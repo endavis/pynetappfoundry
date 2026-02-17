@@ -1,0 +1,52 @@
+[endpoint]
+path = "/storage/luns/{lun.uuid}/metrics"
+schema = "performance_lun_metric_response"
+class_name = "OntapPerformanceLunMetricResponse"
+
+[fields.duration]
+cache_strategy = "cache"
+
+[fields.iops_other]
+cache_strategy = "cache"
+
+[fields.iops_read]
+cache_strategy = "cache"
+
+[fields.iops_total]
+cache_strategy = "cache"
+
+[fields.iops_write]
+cache_strategy = "cache"
+
+[fields.latency_other]
+cache_strategy = "cache"
+
+[fields.latency_read]
+cache_strategy = "cache"
+
+[fields.latency_total]
+cache_strategy = "cache"
+
+[fields.latency_write]
+cache_strategy = "cache"
+
+[fields.status]
+cache_strategy = "cache"
+
+[fields.throughput_other]
+cache_strategy = "cache"
+
+[fields.throughput_read]
+cache_strategy = "cache"
+
+[fields.throughput_total]
+cache_strategy = "cache"
+
+[fields.throughput_write]
+cache_strategy = "cache"
+
+[fields.timestamp]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

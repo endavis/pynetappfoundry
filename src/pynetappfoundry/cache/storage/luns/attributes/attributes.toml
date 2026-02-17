@@ -1,0 +1,13 @@
+[endpoint]
+path = "/storage/luns/{lun.uuid}/attributes"
+schema = "lun_attribute"
+class_name = "OntapLunAttribute"
+
+[fields.lun_uuid]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.value]
+cache_strategy = "cache"

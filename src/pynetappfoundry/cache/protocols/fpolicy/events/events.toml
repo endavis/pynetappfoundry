@@ -1,0 +1,130 @@
+[endpoint]
+path = "/protocols/fpolicy/{svm.uuid}/events"
+schema = "fpolicy_event"
+class_name = "OntapFpolicyEvent"
+
+[fields.file_operations_access]
+cache_strategy = "cache"
+
+[fields.file_operations_close]
+cache_strategy = "cache"
+
+[fields.file_operations_create]
+cache_strategy = "cache"
+
+[fields.file_operations_create_dir]
+cache_strategy = "cache"
+
+[fields.file_operations_delete]
+cache_strategy = "cache"
+
+[fields.file_operations_delete_dir]
+cache_strategy = "cache"
+
+[fields.file_operations_getattr]
+cache_strategy = "cache"
+
+[fields.file_operations_link]
+cache_strategy = "cache"
+
+[fields.file_operations_lookup]
+cache_strategy = "cache"
+
+[fields.file_operations_open]
+cache_strategy = "cache"
+
+[fields.file_operations_read]
+cache_strategy = "cache"
+
+[fields.file_operations_rename]
+cache_strategy = "cache"
+
+[fields.file_operations_rename_dir]
+cache_strategy = "cache"
+
+[fields.file_operations_setattr]
+cache_strategy = "cache"
+
+[fields.file_operations_symlink]
+cache_strategy = "cache"
+
+[fields.file_operations_write]
+cache_strategy = "cache"
+
+[fields.filters_close_with_modification]
+cache_strategy = "cache"
+
+[fields.filters_close_with_read]
+cache_strategy = "cache"
+
+[fields.filters_close_without_modification]
+cache_strategy = "cache"
+
+[fields.filters_exclude_directory]
+cache_strategy = "cache"
+
+[fields.filters_first_read]
+cache_strategy = "cache"
+
+[fields.filters_first_write]
+cache_strategy = "cache"
+
+[fields.filters_monitor_ads]
+cache_strategy = "cache"
+
+[fields.filters_offline_bit]
+cache_strategy = "cache"
+
+[fields.filters_open_with_delete_intent]
+cache_strategy = "cache"
+
+[fields.filters_open_with_write_intent]
+cache_strategy = "cache"
+
+[fields.filters_setattr_with_access_time_change]
+cache_strategy = "cache"
+
+[fields.filters_setattr_with_allocation_size_change]
+cache_strategy = "cache"
+
+[fields.filters_setattr_with_creation_time_change]
+cache_strategy = "cache"
+
+[fields.filters_setattr_with_dacl_change]
+cache_strategy = "cache"
+
+[fields.filters_setattr_with_group_change]
+cache_strategy = "cache"
+
+[fields.filters_setattr_with_mode_change]
+cache_strategy = "cache"
+
+[fields.filters_setattr_with_modify_time_change]
+cache_strategy = "cache"
+
+[fields.filters_setattr_with_owner_change]
+cache_strategy = "cache"
+
+[fields.filters_setattr_with_sacl_change]
+cache_strategy = "cache"
+
+[fields.filters_setattr_with_size_change]
+cache_strategy = "cache"
+
+[fields.filters_write_with_size_change]
+cache_strategy = "cache"
+
+[fields.monitor_fileop_failure]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.protocol]
+cache_strategy = "cache"
+
+[fields.svm_uuid]
+cache_strategy = "cache"
+
+[fields.volume_monitoring]
+cache_strategy = "cache"

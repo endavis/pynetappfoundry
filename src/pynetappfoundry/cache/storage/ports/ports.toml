@@ -1,0 +1,85 @@
+[endpoint]
+path = "/storage/ports"
+schema = "storage_port"
+class_name = "OntapStoragePort"
+
+[fields.board_name]
+cache_strategy = "cache"
+
+[fields.cable_identifier]
+cache_strategy = "cache"
+
+[fields.cable_length]
+cache_strategy = "cache"
+
+[fields.cable_part_number]
+cache_strategy = "cache"
+
+[fields.cable_serial_number]
+cache_strategy = "cache"
+
+[fields.cable_transceiver]
+cache_strategy = "cache"
+
+[fields.cable_vendor]
+cache_strategy = "cache"
+
+[fields.description]
+cache_strategy = "cache"
+
+[fields.enabled]
+cache_strategy = "cache"
+
+[fields.error_corrective_action]
+cache_strategy = "cache"
+
+[fields.error_message]
+cache_strategy = "cache"
+
+[fields.firmware_version]
+cache_strategy = "cache"
+
+[fields.force]
+cache_strategy = "cache"
+
+[fields.in_use]
+cache_strategy = "cache"
+
+[fields.mac_address]
+cache_strategy = "cache"
+
+[fields.mode]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.node_name]
+cache_strategy = "cache"
+
+[fields.node_uuid]
+cache_strategy = "cache"
+
+[fields.part_number]
+cache_strategy = "cache"
+
+[fields.redundant]
+cache_strategy = "cache"
+
+[fields.serial_number]
+cache_strategy = "cache"
+
+[fields.speed]
+cache_strategy = "cache"
+
+[fields.state]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.wwn]
+cache_strategy = "cache"
+
+[fields.wwpn]
+cache_strategy = "cache"

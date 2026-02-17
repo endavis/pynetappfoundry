@@ -1,0 +1,16 @@
+[endpoint]
+path = "/support/configuration-backup"
+schema = "configuration_backup"
+class_name = "OntapConfigurationBackup"
+
+[fields.password]
+cache_strategy = "cache"
+
+[fields.url]
+cache_strategy = "cache"
+
+[fields.username]
+cache_strategy = "cache"
+
+[fields.validate_certificate]
+cache_strategy = "cache"

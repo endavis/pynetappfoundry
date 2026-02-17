@@ -1,0 +1,421 @@
+[endpoint]
+path = "/storage/aggregates"
+schema = "aggregate"
+class_name = "OntapAggregate"
+
+[fields.block_storage_hybrid_cache_disk_count]
+cache_strategy = "cache"
+
+[fields.block_storage_hybrid_cache_disk_type]
+cache_strategy = "cache"
+
+[fields.block_storage_hybrid_cache_enabled]
+cache_strategy = "cache"
+
+[fields.block_storage_hybrid_cache_raid_size]
+cache_strategy = "cache"
+
+[fields.block_storage_hybrid_cache_raid_type]
+cache_strategy = "cache"
+
+[fields.block_storage_hybrid_cache_simulated_raid_groups]
+cache_strategy = "cache"
+
+[fields.block_storage_hybrid_cache_size]
+cache_strategy = "cache"
+
+[fields.block_storage_hybrid_cache_storage_pools]
+cache_strategy = "cache"
+
+[fields.block_storage_hybrid_cache_used]
+cache_strategy = "cache"
+
+[fields.block_storage_mirror_enabled]
+cache_strategy = "cache"
+
+[fields.block_storage_mirror_state]
+cache_strategy = "cache"
+
+[fields.block_storage_plexes]
+cache_strategy = "cache"
+
+[fields.block_storage_primary_checksum_style]
+cache_strategy = "cache"
+
+[fields.block_storage_primary_disk_class]
+cache_strategy = "cache"
+
+[fields.block_storage_primary_disk_count]
+cache_strategy = "cache"
+
+[fields.block_storage_primary_disk_type]
+cache_strategy = "cache"
+
+[fields.block_storage_primary_raid_size]
+cache_strategy = "cache"
+
+[fields.block_storage_primary_raid_type]
+cache_strategy = "cache"
+
+[fields.block_storage_primary_simulated_raid_groups]
+cache_strategy = "cache"
+
+[fields.block_storage_storage_type]
+cache_strategy = "cache"
+
+[fields.block_storage_uses_partitions]
+cache_strategy = "cache"
+
+[fields.cloud_storage_attach_eligible]
+cache_strategy = "cache"
+
+[fields.cloud_storage_migrate_threshold]
+cache_strategy = "cache"
+
+[fields.cloud_storage_stores]
+cache_strategy = "cache"
+
+[fields.cloud_storage_tiering_fullness_threshold]
+cache_strategy = "cache"
+
+[fields.create_time]
+cache_strategy = "cache"
+
+[fields.data_encryption_drive_protection_enabled]
+cache_strategy = "cache"
+
+[fields.data_encryption_software_encryption_enabled]
+cache_strategy = "cache"
+
+[fields.dr_home_node_name]
+cache_strategy = "cache"
+
+[fields.dr_home_node_uuid]
+cache_strategy = "cache"
+
+[fields.home_node_name]
+cache_strategy = "cache"
+
+[fields.home_node_uuid]
+cache_strategy = "cache"
+
+[fields.inactive_data_reporting_enabled]
+cache_strategy = "cache"
+
+[fields.inactive_data_reporting_start_time]
+cache_strategy = "cache"
+
+[fields.inode_attributes_file_private_capacity]
+cache_strategy = "cache"
+
+[fields.inode_attributes_file_public_capacity]
+cache_strategy = "cache"
+
+[fields.inode_attributes_files_private_used]
+cache_strategy = "cache"
+
+[fields.inode_attributes_files_total]
+cache_strategy = "cache"
+
+[fields.inode_attributes_files_used]
+cache_strategy = "cache"
+
+[fields.inode_attributes_max_files_available]
+cache_strategy = "cache"
+
+[fields.inode_attributes_max_files_possible]
+cache_strategy = "cache"
+
+[fields.inode_attributes_max_files_used]
+cache_strategy = "cache"
+
+[fields.inode_attributes_used_percent]
+cache_strategy = "cache"
+
+[fields.inode_attributes_version]
+cache_strategy = "cache"
+
+[fields.is_spare_low]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_duration]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_iops_other]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_iops_read]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_iops_total]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_iops_write]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_latency_other]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_latency_read]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_latency_total]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_latency_write]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_status]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_throughput_other]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_throughput_read]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_throughput_total]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_throughput_write]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.metric_timestamp]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.node_name]
+cache_strategy = "cache"
+
+[fields.node_uuid]
+cache_strategy = "cache"
+
+[fields.sidl_enabled]
+cache_strategy = "cache"
+
+[fields.snaplock_type]
+cache_strategy = "cache"
+
+[fields.snapshot_files_total]
+cache_strategy = "cache"
+
+[fields.snapshot_files_used]
+cache_strategy = "cache"
+
+[fields.snapshot_max_files_available]
+cache_strategy = "cache"
+
+[fields.snapshot_max_files_used]
+cache_strategy = "cache"
+
+[fields.space_block_storage_aggregate_metadata]
+cache_strategy = "cache"
+
+[fields.space_block_storage_aggregate_metadata_percent]
+cache_strategy = "cache"
+
+[fields.space_block_storage_available]
+cache_strategy = "cache"
+
+[fields.space_block_storage_data_compacted_count]
+cache_strategy = "cache"
+
+[fields.space_block_storage_data_compaction_space_saved]
+cache_strategy = "cache"
+
+[fields.space_block_storage_data_compaction_space_saved_percent]
+cache_strategy = "cache"
+
+[fields.space_block_storage_full_threshold_percent]
+cache_strategy = "cache"
+
+[fields.space_block_storage_inactive_user_data]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.space_block_storage_inactive_user_data_percent]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.space_block_storage_physical_used]
+cache_strategy = "cache"
+
+[fields.space_block_storage_physical_used_percent]
+cache_strategy = "cache"
+
+[fields.space_block_storage_size]
+cache_strategy = "cache"
+
+[fields.space_block_storage_used]
+cache_strategy = "cache"
+
+[fields.space_block_storage_used_including_snapshot_reserve]
+cache_strategy = "cache"
+
+[fields.space_block_storage_used_including_snapshot_reserve_percent]
+cache_strategy = "cache"
+
+[fields.space_block_storage_used_percent]
+cache_strategy = "cache"
+
+[fields.space_block_storage_volume_deduplication_shared_count]
+cache_strategy = "cache"
+
+[fields.space_block_storage_volume_deduplication_space_saved]
+cache_strategy = "cache"
+
+[fields.space_block_storage_volume_deduplication_space_saved_percent]
+cache_strategy = "cache"
+
+[fields.space_block_storage_volume_footprints_percent]
+cache_strategy = "cache"
+
+[fields.space_cloud_storage_used]
+cache_strategy = "cache"
+
+[fields.space_efficiency_auto_adaptive_compression_savings]
+cache_strategy = "cache"
+
+[fields.space_efficiency_cross_volume_background_dedupe]
+cache_strategy = "cache"
+
+[fields.space_efficiency_cross_volume_dedupe_savings]
+cache_strategy = "cache"
+
+[fields.space_efficiency_cross_volume_inline_dedupe]
+cache_strategy = "cache"
+
+[fields.space_efficiency_enable_workload_informed_tsse]
+cache_strategy = "cache"
+
+[fields.space_efficiency_logical_used]
+cache_strategy = "cache"
+
+[fields.space_efficiency_ratio]
+cache_strategy = "cache"
+
+[fields.space_efficiency_savings]
+cache_strategy = "cache"
+
+[fields.space_efficiency_wise_tsse_min_used_capacity_pct]
+cache_strategy = "cache"
+
+[fields.space_efficiency_without_snapshots_logical_used]
+cache_strategy = "cache"
+
+[fields.space_efficiency_without_snapshots_ratio]
+cache_strategy = "cache"
+
+[fields.space_efficiency_without_snapshots_savings]
+cache_strategy = "cache"
+
+[fields.space_efficiency_without_snapshots_flexclones_logical_used]
+cache_strategy = "cache"
+
+[fields.space_efficiency_without_snapshots_flexclones_ratio]
+cache_strategy = "cache"
+
+[fields.space_efficiency_without_snapshots_flexclones_savings]
+cache_strategy = "cache"
+
+[fields.space_footprint]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.space_snapshot_available]
+cache_strategy = "cache"
+
+[fields.space_snapshot_reserve_percent]
+cache_strategy = "cache"
+
+[fields.space_snapshot_total]
+cache_strategy = "cache"
+
+[fields.space_snapshot_used]
+cache_strategy = "cache"
+
+[fields.space_snapshot_used_percent]
+cache_strategy = "cache"
+
+[fields.state]
+cache_strategy = "cache"
+
+[fields.statistics_iops_raw_other]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_iops_raw_read]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_iops_raw_total]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_iops_raw_write]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_latency_raw_other]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_latency_raw_read]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_latency_raw_total]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_latency_raw_write]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_status]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_throughput_raw_other]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_throughput_raw_read]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_throughput_raw_total]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_throughput_raw_write]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.statistics_timestamp]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.uuid]
+cache_strategy = "cache"
+
+[fields.volume_count]
+cache_strategy = "cache"

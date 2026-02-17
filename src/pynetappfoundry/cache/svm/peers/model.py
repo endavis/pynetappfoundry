@@ -1,4 +1,4 @@
-"""SVM peering information — /svm/peers."""
+"""OntapSvmPeer information."""
 
 from __future__ import annotations
 
@@ -7,13 +7,17 @@ from pydantic import Field
 from pynetappfoundry.cache._base import CacheModel
 
 
-class SVMPeerInfo(CacheModel):
-    """SVM peering information."""
+class OntapSvmPeer(CacheModel):
+    """OntapSvmPeer information."""
 
-    uuid: str = ""
-    name: str = ""
-    svm: str = ""
-    peer_svm: str = ""
-    peer_cluster: str = ""
-    state: str = ""  # peered, initiated, pending, etc.
     applications: list[str] = Field(default_factory=list)
+    force: bool = False
+    name: str = ""
+    peer_cluster_name: str = ""
+    peer_cluster_uuid: str = ""
+    peer_svm_name: str = ""
+    peer_svm_uuid: str = ""
+    state: str = ""
+    svm_name: str = ""
+    svm_uuid: str = ""
+    uuid: str = ""

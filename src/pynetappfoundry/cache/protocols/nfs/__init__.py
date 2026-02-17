@@ -2,14 +2,10 @@
 
 from __future__ import annotations
 
-from pynetappfoundry.cache.protocols.nfs.export_policies import (
-    ExportPolicyInfo,
-    ExportRuleInfo,
-)
-from pynetappfoundry.cache.protocols.nfs.services import NFSServiceInfo
+from pynetappfoundry.cache.protocols.nfs.export_policies import OntapExportPolicy
+from pynetappfoundry.cache.protocols.nfs.services import OntapNfsService
 
 __all__ = [
-    "ExportPolicyInfo",
-    "ExportRuleInfo",
-    "NFSServiceInfo",
+    "OntapExportPolicy",
+    "OntapNfsService",
 ]

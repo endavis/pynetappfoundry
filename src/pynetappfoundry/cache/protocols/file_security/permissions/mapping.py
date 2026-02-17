@@ -1,0 +1,134 @@
+"""OntapFileDirectorySecurity type mapping."""
+
+from __future__ import annotations
+
+from pynetappfoundry.cache._registry import model_registry
+from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
+from pynetappfoundry.cache.protocols.file_security.permissions.model import (
+    OntapFileDirectorySecurity,
+)
+
+ONTAPFILEDIRECTORYSECURITY_MAPPING = TypeMapping(
+    name="OntapFileDirectorySecurity",
+    model_class=OntapFileDirectorySecurity,
+    api_endpoint="/protocols/file-security/permissions/{svm.uuid}/{path}?fields=*",
+    api_type="ontap",
+    records_path="acls",
+    parent_mapping="OntapProtocolsFileSecurityPermission",
+    parent_id_field="uuid",
+    fields=(
+        FieldMapping(
+            cache_attr="access",
+            api_path="access",
+        ),
+        FieldMapping(
+            cache_attr="access_control",
+            api_path="access_control",
+        ),
+        FieldMapping(
+            cache_attr="advanced_rights_append_data",
+            api_path="advanced_rights.append_data",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="advanced_rights_delete",
+            api_path="advanced_rights.delete",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="advanced_rights_delete_child",
+            api_path="advanced_rights.delete_child",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="advanced_rights_execute_file",
+            api_path="advanced_rights.execute_file",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="advanced_rights_full_control",
+            api_path="advanced_rights.full_control",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="advanced_rights_read_attr",
+            api_path="advanced_rights.read_attr",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="advanced_rights_read_data",
+            api_path="advanced_rights.read_data",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="advanced_rights_read_ea",
+            api_path="advanced_rights.read_ea",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="advanced_rights_read_perm",
+            api_path="advanced_rights.read_perm",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="advanced_rights_synchronize",
+            api_path="advanced_rights.synchronize",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="advanced_rights_write_attr",
+            api_path="advanced_rights.write_attr",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="advanced_rights_write_data",
+            api_path="advanced_rights.write_data",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="advanced_rights_write_ea",
+            api_path="advanced_rights.write_ea",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="advanced_rights_write_owner",
+            api_path="advanced_rights.write_owner",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="advanced_rights_write_perm",
+            api_path="advanced_rights.write_perm",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="apply_to_files",
+            api_path="apply_to.files",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="apply_to_sub_folders",
+            api_path="apply_to.sub_folders",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="apply_to_this_folder",
+            api_path="apply_to.this_folder",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="inherited",
+            api_path="inherited",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="rights",
+            api_path="rights",
+        ),
+        FieldMapping(
+            cache_attr="user",
+            api_path="user",
+        ),
+    ),
+)
+
+model_registry.register_mapping("OntapFileDirectorySecurity", ONTAPFILEDIRECTORYSECURITY_MAPPING)
