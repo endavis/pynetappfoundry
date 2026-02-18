@@ -1,0 +1,7 @@
+"""OntapPortsetInterface cache model."""
+
+from pynetappfoundry.cache.ontap.protocols.san.portsets.interfaces.model import (
+    OntapPortsetInterface,
+)
+
+__all__ = ["OntapPortsetInterface"]

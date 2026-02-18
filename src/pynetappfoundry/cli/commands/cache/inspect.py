@@ -13,20 +13,20 @@ from rich.console import Console
 from rich.tree import Tree
 
 from pynetappfoundry.cache import ClusterMetadataDB
-from pynetappfoundry.cache.cloud.metadata.mapping import CLOUD_METADATA_MAPPING
-from pynetappfoundry.cache.cluster.licensing.licenses.mapping import (
+from pynetappfoundry.cache.field_mapping import TypeMapping
+from pynetappfoundry.cache.ontap.cloud.metadata.mapping import CLOUD_METADATA_MAPPING
+from pynetappfoundry.cache.ontap.cluster.licensing.licenses.mapping import (
     ONTAPLICENSEPACKAGERESPONSE_MAPPING,
 )
-from pynetappfoundry.cache.cluster.nodes.mapping import ONTAPNODERESPONSE_MAPPING
-from pynetappfoundry.cache.cluster.peers.mapping import ONTAPCLUSTERPEER_MAPPING
-from pynetappfoundry.cache.field_mapping import TypeMapping
-from pynetappfoundry.cache.network.ethernet.broadcast_domains.mapping import (
+from pynetappfoundry.cache.ontap.cluster.nodes.mapping import ONTAPNODERESPONSE_MAPPING
+from pynetappfoundry.cache.ontap.cluster.peers.mapping import ONTAPCLUSTERPEER_MAPPING
+from pynetappfoundry.cache.ontap.network.ethernet.broadcast_domains.mapping import (
     ONTAPBROADCASTDOMAIN_MAPPING,
 )
-from pynetappfoundry.cache.network.ip.interfaces.mapping import ONTAPIPINTERFACE_MAPPING
-from pynetappfoundry.cache.storage.aggregates.mapping import ONTAPAGGREGATE_MAPPING
-from pynetappfoundry.cache.storage.volumes.mapping import ONTAPVOLUME_MAPPING
-from pynetappfoundry.cache.svm.svms.mapping import ONTAPSVM_MAPPING
+from pynetappfoundry.cache.ontap.network.ip.interfaces.mapping import ONTAPIPINTERFACE_MAPPING
+from pynetappfoundry.cache.ontap.storage.aggregates.mapping import ONTAPAGGREGATE_MAPPING
+from pynetappfoundry.cache.ontap.storage.volumes.mapping import ONTAPVOLUME_MAPPING
+from pynetappfoundry.cache.ontap.svm.svms.mapping import ONTAPSVM_MAPPING
 from pynetappfoundry.cli.utils import (
     format_value_markup,
     print_error,

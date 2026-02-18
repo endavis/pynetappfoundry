@@ -15,8 +15,8 @@ from pynetappfoundry.cache import (
     is_schema_compatible,
     parse_schema_version,
 )
-from pynetappfoundry.cache.cluster.nodes.model import OntapNodeResponse
 from pynetappfoundry.cache.history_db import CacheHistoryDB
+from pynetappfoundry.cache.ontap.cluster.nodes.model import OntapNodeResponse
 from pynetappfoundry.cli.commands.cache.history import history
 
 

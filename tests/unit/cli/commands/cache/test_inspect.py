@@ -11,8 +11,8 @@ from click.testing import CliRunner
 
 from pynetappfoundry.cache import CachedClusterMetadata
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.storage.model import StorageInfo
-from pynetappfoundry.cache.storage.volumes.model import OntapVolume
+from pynetappfoundry.cache.ontap.storage.model import StorageInfo
+from pynetappfoundry.cache.ontap.storage.volumes.model import OntapVolume
 from pynetappfoundry.cli.commands.cache.inspect import (
     INSPECT_TYPES,
     _build_api_endpoint,

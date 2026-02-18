@@ -6,8 +6,8 @@ doesn't change frequently. Cache is manually refreshed via CLI.
 Models live at ``cache/<api-path>/model.py`` and should be imported
 from their sub-package, e.g.::
 
-    from pynetappfoundry.cache.storage.volumes.model import OntapVolume
-    from pynetappfoundry.cache.cluster.nodes.model import OntapNodeResponse
+    from pynetappfoundry.cache.ontap.storage.volumes.model import OntapVolume
+    from pynetappfoundry.cache.ontap.cluster.nodes.model import OntapNodeResponse
 
 Infrastructure (DB, collector, diff, registry) is imported from here::
 
@@ -19,33 +19,33 @@ Infrastructure (DB, collector, diff, registry) is imported from here::
 # its mapping.py which calls model_registry.register_mapping().
 # Models are already registered via CacheModel.__init_subclass__ when
 # _metadata.py transitively imports all leaf model.py files above.
-import pynetappfoundry.cache.cloud.metadata
-import pynetappfoundry.cache.cloud.targets
-import pynetappfoundry.cache.cluster.licensing.licenses
-import pynetappfoundry.cache.cluster.mediators
-import pynetappfoundry.cache.cluster.nodes
-import pynetappfoundry.cache.cluster.peers
-import pynetappfoundry.cache.cluster.schedules
-import pynetappfoundry.cache.name_services.dns
-import pynetappfoundry.cache.network.ethernet.broadcast_domains
-import pynetappfoundry.cache.network.ip.interfaces
-import pynetappfoundry.cache.network.ip.subnets
-import pynetappfoundry.cache.protocols.cifs.services
-import pynetappfoundry.cache.protocols.cifs.shares
-import pynetappfoundry.cache.protocols.nfs.export_policies
-import pynetappfoundry.cache.protocols.nfs.services
-import pynetappfoundry.cache.protocols.s3.buckets
-import pynetappfoundry.cache.protocols.san.igroups
-import pynetappfoundry.cache.snapmirror.relationships
-import pynetappfoundry.cache.storage.aggregates
-import pynetappfoundry.cache.storage.flexcache.flexcaches
-import pynetappfoundry.cache.storage.luns
-import pynetappfoundry.cache.storage.qos.policies
-import pynetappfoundry.cache.storage.qtrees
-import pynetappfoundry.cache.storage.snapshot_policies
-import pynetappfoundry.cache.storage.volumes
-import pynetappfoundry.cache.svm.peers
-import pynetappfoundry.cache.svm.svms  # noqa: F401
+import pynetappfoundry.cache.ontap.cloud.metadata
+import pynetappfoundry.cache.ontap.cloud.targets
+import pynetappfoundry.cache.ontap.cluster.licensing.licenses
+import pynetappfoundry.cache.ontap.cluster.mediators
+import pynetappfoundry.cache.ontap.cluster.nodes
+import pynetappfoundry.cache.ontap.cluster.peers
+import pynetappfoundry.cache.ontap.cluster.schedules
+import pynetappfoundry.cache.ontap.name_services.dns
+import pynetappfoundry.cache.ontap.network.ethernet.broadcast_domains
+import pynetappfoundry.cache.ontap.network.ip.interfaces
+import pynetappfoundry.cache.ontap.network.ip.subnets
+import pynetappfoundry.cache.ontap.protocols.cifs.services
+import pynetappfoundry.cache.ontap.protocols.cifs.shares
+import pynetappfoundry.cache.ontap.protocols.nfs.export_policies
+import pynetappfoundry.cache.ontap.protocols.nfs.services
+import pynetappfoundry.cache.ontap.protocols.s3.buckets
+import pynetappfoundry.cache.ontap.protocols.san.igroups
+import pynetappfoundry.cache.ontap.snapmirror.relationships
+import pynetappfoundry.cache.ontap.storage.aggregates
+import pynetappfoundry.cache.ontap.storage.flexcache.flexcaches
+import pynetappfoundry.cache.ontap.storage.luns
+import pynetappfoundry.cache.ontap.storage.qos.policies
+import pynetappfoundry.cache.ontap.storage.qtrees
+import pynetappfoundry.cache.ontap.storage.snapshot_policies
+import pynetappfoundry.cache.ontap.storage.volumes
+import pynetappfoundry.cache.ontap.svm.peers
+import pynetappfoundry.cache.ontap.svm.svms  # noqa: F401
 from pynetappfoundry.cache._base import (
     METADATA_SCHEMA_MIN_COMPATIBLE,
     METADATA_SCHEMA_VERSION,
@@ -65,7 +65,6 @@ from pynetappfoundry.cache._metadata import (
 
 # Layer 1: Registry
 from pynetappfoundry.cache._registry import model_registry
-from pynetappfoundry.cache.cluster.mediators.model import OntapMediatorResponse
 
 # Infrastructure (collector, db, diff, etc.)
 from pynetappfoundry.cache.collector import (
@@ -79,6 +78,7 @@ from pynetappfoundry.cache.db import ClusterMetadataDB
 from pynetappfoundry.cache.diff import ChangeEntry, compute_diff, format_diff_summary
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.cache.history_db import CacheHistoryDB
+from pynetappfoundry.cache.ontap.cluster.mediators.model import OntapMediatorResponse
 
 __all__ = [
     "METADATA_SCHEMA_MIN_COMPATIBLE",

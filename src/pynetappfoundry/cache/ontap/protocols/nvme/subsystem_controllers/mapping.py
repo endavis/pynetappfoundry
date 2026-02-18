@@ -1,0 +1,132 @@
+"""OntapNvmeSubsystemController type mapping."""
+
+from __future__ import annotations
+
+from pynetappfoundry.cache._registry import model_registry
+from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
+from pynetappfoundry.cache.ontap.protocols.nvme.subsystem_controllers.model import (
+    OntapNvmeSubsystemController,
+)
+
+ONTAPNVMESUBSYSTEMCONTROLLER_MAPPING = TypeMapping(
+    name="OntapNvmeSubsystemController",
+    model_class=OntapNvmeSubsystemController,
+    api_endpoint="/protocols/nvme/subsystem-controllers?fields=*",
+    api_type="ontap",
+    fields=(
+        FieldMapping(
+            cache_attr="admin_queue_depth",
+            api_path="admin_queue.depth",
+            default=0,
+        ),
+        FieldMapping(
+            cache_attr="dh_hmac_chap_group_size",
+            api_path="dh_hmac_chap.group_size",
+        ),
+        FieldMapping(
+            cache_attr="dh_hmac_chap_hash_function",
+            api_path="dh_hmac_chap.hash_function",
+        ),
+        FieldMapping(
+            cache_attr="dh_hmac_chap_mode",
+            api_path="dh_hmac_chap.mode",
+        ),
+        FieldMapping(
+            cache_attr="digest_data",
+            api_path="digest.data",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="digest_header",
+            api_path="digest.header",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="host_id",
+            api_path="host.id",
+        ),
+        FieldMapping(
+            cache_attr="host_nqn",
+            api_path="host.nqn",
+        ),
+        FieldMapping(
+            cache_attr="host_transport_address",
+            api_path="host.transport_address",
+        ),
+        FieldMapping(
+            cache_attr="id",
+            api_path="id",
+        ),
+        FieldMapping(
+            cache_attr="interface_name",
+            api_path="interface.name",
+        ),
+        FieldMapping(
+            cache_attr="interface_transport_address",
+            api_path="interface.transport_address",
+        ),
+        FieldMapping(
+            cache_attr="interface_uuid",
+            api_path="interface.uuid",
+        ),
+        FieldMapping(
+            cache_attr="io_queue_count",
+            api_path="io_queue.count",
+            default=0,
+        ),
+        FieldMapping(
+            cache_attr="io_queue_depth",
+            api_path="io_queue.depth",
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="keep_alive_timeout",
+            api_path="keep_alive_timeout",
+            default=0,
+        ),
+        FieldMapping(
+            cache_attr="node_name",
+            api_path="node.name",
+        ),
+        FieldMapping(
+            cache_attr="node_uuid",
+            api_path="node.uuid",
+        ),
+        FieldMapping(
+            cache_attr="subsystem_name",
+            api_path="subsystem.name",
+        ),
+        FieldMapping(
+            cache_attr="subsystem_uuid",
+            api_path="subsystem.uuid",
+        ),
+        FieldMapping(
+            cache_attr="svm_name",
+            api_path="svm.name",
+        ),
+        FieldMapping(
+            cache_attr="svm_uuid",
+            api_path="svm.uuid",
+        ),
+        FieldMapping(
+            cache_attr="tls_cipher",
+            api_path="tls.cipher",
+        ),
+        FieldMapping(
+            cache_attr="tls_key_type",
+            api_path="tls.key_type",
+        ),
+        FieldMapping(
+            cache_attr="tls_psk_identity",
+            api_path="tls.psk_identity",
+        ),
+        FieldMapping(
+            cache_attr="transport_protocol",
+            api_path="transport_protocol",
+        ),
+    ),
+)
+
+model_registry.register_mapping(
+    "OntapNvmeSubsystemController", ONTAPNVMESUBSYSTEMCONTROLLER_MAPPING
+)

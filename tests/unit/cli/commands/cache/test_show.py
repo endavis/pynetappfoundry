@@ -10,7 +10,7 @@ import pytest
 from click.testing import CliRunner
 
 from pynetappfoundry.cache import CachedClusterMetadata
-from pynetappfoundry.cache.cloud.metadata.model import CloudMetadata
+from pynetappfoundry.cache.ontap.cloud.metadata.model import CloudMetadata
 from pynetappfoundry.cli.main import nf
 
 

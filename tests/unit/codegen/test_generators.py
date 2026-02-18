@@ -350,7 +350,7 @@ class TestGenerateInit:
     def test_exports_class(self):
         ep = _make_endpoint()
         code = generate_init(ep)
-        assert "from pynetappfoundry.cache.storage.volumes.model import OntapVolume" in code
+        assert "from pynetappfoundry.cache.ontap.storage.volumes.model import OntapVolume" in code
         assert '__all__ = ["OntapVolume"]' in code
 
 

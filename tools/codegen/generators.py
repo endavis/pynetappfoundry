@@ -451,9 +451,16 @@ def generate_model(endpoint: ParsedEndpoint, api_type: str = "ontap") -> str:
 
     lines.append("")
     result = "\n".join(lines)
-    # Add noqa directive if any line exceeds the line-length limit
+    # Add noqa directives for generated code that can't conform to lint rules
+    noqa_codes: list[str] = []
     if any(len(line) > 100 for line in lines):
-        result = "# ruff: noqa: E501\n" + result
+        noqa_codes.append("E501")
+    # Detect mixed-case field names from the API (e.g., isDnsTTLEnabled)
+    all_attrs = [_field_to_cache_attr(f) for f in leaves] if leaves else []
+    if any(c.isupper() for attr in all_attrs for c in attr):
+        noqa_codes.append("N815")
+    if noqa_codes:
+        result = f"# ruff: noqa: {', '.join(noqa_codes)}\n" + result
     return result
 
 
@@ -496,7 +503,7 @@ def generate_mapping(
             sub_model_map[field.api_path] = sub_cls
 
     # Build the import path for the model
-    model_import = f"pynetappfoundry.cache.{'.'.join(module_parts)}.model"
+    model_import = f"pynetappfoundry.cache.{api_type}.{'.'.join(module_parts)}.model"
 
     # Build model imports (parent class + any sub-model classes)
     model_classes = [class_name, *sorted(sub_model_map.values())]
@@ -641,7 +648,12 @@ def generate_init(endpoint: ParsedEndpoint, api_type: str = "ontap") -> str:
     module_parts = _path_to_module_parts(endpoint.path)
 
     docstring = f'"""{class_name} cache model."""'
-    import_line = f"from pynetappfoundry.cache.{'.'.join(module_parts)}.model import {class_name}"
+    module_path = f"pynetappfoundry.cache.{api_type}.{'.'.join(module_parts)}.model"
+    import_line = f"from {module_path} import {class_name}"
+    if len(import_line) > 100:
+        paren_first_line = f"from {module_path} import ("
+        noqa = "  # noqa: E501" if len(paren_first_line) > 100 else ""
+        import_line = f"{paren_first_line}{noqa}\n    {class_name},\n)"
 
     lines = [docstring, "", import_line, "", f'__all__ = ["{class_name}"]', ""]
     return "\n".join(lines)
