@@ -20,7 +20,7 @@ def _transform_copies(record: dict[str, Any]) -> list[OntapSnapshotPolicyCopy]:
 ONTAPSNAPSHOTPOLICY_MAPPING = TypeMapping(
     name="OntapSnapshotPolicy",
     model_class=OntapSnapshotPolicy,
-    api_endpoint="/storage/snapshot-policies?fields=*",
+    api_endpoint="/storage/snapshot-policies?fields=*,copies",
     api_type="ontap",
     fields=(
         FieldMapping(
@@ -31,6 +31,7 @@ ONTAPSNAPSHOTPOLICY_MAPPING = TypeMapping(
             cache_attr="copies",
             transform=_transform_copies,
             default=[],
+            requires_explicit_fetch=True,
         ),
         FieldMapping(
             cache_attr="enabled",

@@ -739,3 +739,183 @@ class TestTransformFailureLogTag:
         tf_msgs = [r for r in caplog.records if "TRANSFORM_FAILURE" in r.message]
         assert len(tf_msgs) == 1
         assert tf_msgs[0].levelno == logging.ERROR
+
+
+# ---------------------------------------------------------------------------
+# collection_endpoint tests
+# ---------------------------------------------------------------------------
+
+
+class TestCollectionEndpoint:
+    """Tests for TypeMapping.collection_endpoint property."""
+
+    def test_non_parameterized_returns_unchanged(self) -> None:
+        """Non-parameterized endpoint returns api_endpoint unchanged."""
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/storage/volumes?fields=*",
+            fields=(FieldMapping(cache_attr="name", api_path="name"),),
+        )
+        assert tm.collection_endpoint == "/storage/volumes?fields=*"
+
+    def test_strips_id_placeholder(self) -> None:
+        """Parameterized endpoint strips {id} placeholder."""
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/protocols/nfs/export-policies/{id}?fields=*",
+            fields=(FieldMapping(cache_attr="name", api_path="name"),),
+        )
+        assert tm.collection_endpoint == "/protocols/nfs/export-policies?fields=*"
+
+    def test_strips_named_placeholder(self) -> None:
+        """Parameterized endpoint strips named placeholders like {svm.uuid}."""
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/svm/svms/{svm.uuid}/top-metrics/files?fields=*",
+            fields=(FieldMapping(cache_attr="name", api_path="name"),),
+        )
+        assert tm.collection_endpoint == "/svm/svms/top-metrics/files?fields=*"
+
+    def test_preserves_query_params(self) -> None:
+        """Query parameters are preserved after stripping placeholder."""
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/storage/volumes/{uuid}?fields=*,statistics",
+            fields=(FieldMapping(cache_attr="name", api_path="name"),),
+        )
+        assert tm.collection_endpoint == "/storage/volumes?fields=*,statistics"
+
+    def test_no_query_string(self) -> None:
+        """Endpoint without query string works."""
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/storage/volumes/{uuid}",
+            fields=(FieldMapping(cache_attr="name", api_path="name"),),
+        )
+        assert tm.collection_endpoint == "/storage/volumes"
+
+
+# ---------------------------------------------------------------------------
+# cache_strategy filtering in parse_api_record tests
+# ---------------------------------------------------------------------------
+
+
+class TestCacheStrategyFiltering:
+    """Tests for cache_strategy filtering in parse_api_record."""
+
+    def test_skips_realtime_fields(self) -> None:
+        """Realtime fields are skipped and get model defaults."""
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/t",
+            fields=(
+                FieldMapping(cache_attr="name", api_path="name"),
+                FieldMapping(
+                    cache_attr="value",
+                    api_path="value",
+                    default=0,
+                    cache_strategy="realtime",
+                ),
+            ),
+        )
+        record = {"name": "test1", "value": 99}
+        result = parse_api_record(tm, record, "[test]")
+        assert result.name == "test1"
+        # value is realtime, should get model default (0), not 99
+        assert result.value == 0
+
+    def test_skips_derived_fields(self) -> None:
+        """Derived fields are skipped and get model defaults."""
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/t",
+            fields=(
+                FieldMapping(cache_attr="name", api_path="name"),
+                FieldMapping(
+                    cache_attr="value",
+                    api_path="value",
+                    default=0,
+                    cache_strategy="derived",
+                ),
+            ),
+        )
+        record = {"name": "test1", "value": 42}
+        result = parse_api_record(tm, record, "[test]")
+        assert result.name == "test1"
+        assert result.value == 0
+
+    def test_includes_cache_fields(self) -> None:
+        """Cache fields are extracted normally."""
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/t",
+            fields=(
+                FieldMapping(cache_attr="name", api_path="name", cache_strategy="cache"),
+                FieldMapping(
+                    cache_attr="value", api_path="value", default=0, cache_strategy="cache"
+                ),
+            ),
+        )
+        record = {"name": "test1", "value": 42}
+        result = parse_api_record(tm, record, "[test]")
+        assert result.name == "test1"
+        assert result.value == 42
+
+
+# ---------------------------------------------------------------------------
+# post_collection in parse_api_response tests
+# ---------------------------------------------------------------------------
+
+
+class TestPostCollection:
+    """Tests for post_collection wiring in parse_api_response."""
+
+    def test_post_collection_called_for_derived_fields(self) -> None:
+        """post_collection is called for derived fields after parsing."""
+        call_log: list[str] = []
+
+        def post_fn(item: _SampleModel) -> _SampleModel:
+            call_log.append(item.name)
+            return item
+
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/t",
+            fields=(
+                FieldMapping(cache_attr="name", api_path="name"),
+                FieldMapping(
+                    cache_attr="value",
+                    cache_strategy="derived",
+                    post_collection=post_fn,
+                ),
+            ),
+        )
+        response = {"records": [{"name": "a"}, {"name": "b"}]}
+        results = parse_api_response(tm, response, "[t]", MagicMock())
+        assert len(results) == 2
+        assert call_log == ["a", "b"]
+
+    def test_post_collection_not_called_when_none(self) -> None:
+        """Derived fields without post_collection are harmless."""
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/t",
+            fields=(
+                FieldMapping(cache_attr="name", api_path="name"),
+                FieldMapping(cache_attr="value", cache_strategy="derived"),
+            ),
+        )
+        response = {"records": [{"name": "a"}]}
+        # Should not raise
+        results = parse_api_response(tm, response, "[t]", MagicMock())
+        assert len(results) == 1

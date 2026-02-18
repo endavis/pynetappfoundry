@@ -13,6 +13,7 @@ Example:
 from __future__ import annotations
 
 import logging
+import re
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any, Literal
@@ -153,6 +154,21 @@ class TypeMapping:
         """
         return tuple(f for f in self.fields if f.cache_strategy == "derived")
 
+    @property
+    def collection_endpoint(self) -> str:
+        """Bulk-collection endpoint (strips ``{id}`` path placeholders).
+
+        For non-parameterized mappings, returns ``api_endpoint`` unchanged.
+        For ``/{id}`` mappings, strips the placeholder to produce a bulk
+        listing URL.
+
+        Returns:
+            Endpoint URL suitable for bulk collection.
+        """
+        parts = self.api_endpoint.split("?", 1)
+        path = re.sub(r"/\{[^}]+\}", "", parts[0])
+        return f"{path}?{parts[1]}" if len(parts) > 1 else path
+
 
 def _coerce_cli_value(value: str, default: Any) -> Any:
     """Coerce a CLI string value to match the default's type.
@@ -205,6 +221,8 @@ def parse_api_record(
     """
     kwargs: dict[str, Any] = {}
     for field in mapping.fields:
+        if field.cache_strategy != "cache":
+            continue  # realtime/derived fields not collected during bulk
         if field.transform is not None:
             try:
                 kwargs[field.cache_attr] = field.transform(record)
@@ -310,6 +328,12 @@ def parse_api_response(
         record_id = record.get(mapping.id_field, record.get("uuid", "unknown"))
         log_missing_fn(record, expected, mapping.name, record_id)
         results.append(parse_api_record(mapping, record, log_prefix))
+
+    # Apply post_collection transforms for derived fields
+    for field in mapping.derived_fields():
+        if field.post_collection is not None:
+            results = [field.post_collection(item) for item in results]
+
     return results
 
 
