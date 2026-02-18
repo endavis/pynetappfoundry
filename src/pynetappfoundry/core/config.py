@@ -298,8 +298,8 @@ class Config:
         This method runs BEFORE add_searchable_keys() so cloud fields
         can be included in searchable keys.
         """
-        from pynetappfoundry.cache.cloud.metadata.model import CloudMetadata
         from pynetappfoundry.cache.db import ClusterMetadataDB
+        from pynetappfoundry.cache.ontap.cloud.metadata.model import CloudMetadata
 
         # Define which cloud fields to add (with cloud_ prefix)
         cloud_fields = [

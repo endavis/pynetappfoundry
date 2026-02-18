@@ -11,9 +11,9 @@ import pytest
 from click.testing import CliRunner
 
 from pynetappfoundry.cache import CachedClusterMetadata
-from pynetappfoundry.cache.cloud.metadata.model import CloudMetadata
-from pynetappfoundry.cache.cluster.model import ClusterInfo
-from pynetappfoundry.cache.cluster.nodes.model import OntapNodeResponse
+from pynetappfoundry.cache.ontap.cloud.metadata.model import CloudMetadata
+from pynetappfoundry.cache.ontap.cluster.model import ClusterInfo
+from pynetappfoundry.cache.ontap.cluster.nodes.model import OntapNodeResponse
 from pynetappfoundry.cli.main import nf
 
 

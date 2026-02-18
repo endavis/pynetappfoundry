@@ -23,84 +23,86 @@ from pynetappfoundry.cache._metadata import (
     CachedClusterMetadata,
     RelationshipsInfo,
 )
-from pynetappfoundry.cache.cloud.metadata.mapping import CLOUD_METADATA_MAPPING
-from pynetappfoundry.cache.cloud.metadata.model import CloudMetadata
-from pynetappfoundry.cache.cloud.targets.mapping import ONTAPCLOUDTARGET_MAPPING
-from pynetappfoundry.cache.cloud.targets.model import OntapCloudTarget
-from pynetappfoundry.cache.cluster.licensing.licenses.mapping import (
-    ONTAPLICENSEPACKAGERESPONSE_MAPPING,
-)
-from pynetappfoundry.cache.cluster.licensing.licenses.model import (
-    OntapLicensePackageResponse,
-)
-from pynetappfoundry.cache.cluster.mapping import CLUSTER_MAPPING
-from pynetappfoundry.cache.cluster.mediators.mapping import ONTAPMEDIATORRESPONSE_MAPPING
-from pynetappfoundry.cache.cluster.mediators.model import OntapMediatorResponse
-from pynetappfoundry.cache.cluster.model import ClusterInfo
-from pynetappfoundry.cache.cluster.nodes.mapping import ONTAPNODERESPONSE_MAPPING
-from pynetappfoundry.cache.cluster.nodes.model import OntapNodeResponse
-from pynetappfoundry.cache.cluster.peers.mapping import ONTAPCLUSTERPEER_MAPPING
-from pynetappfoundry.cache.cluster.peers.model import OntapClusterPeer
-from pynetappfoundry.cache.cluster.schedules.mapping import ONTAPSCHEDULE_MAPPING
-from pynetappfoundry.cache.cluster.schedules.model import OntapSchedule
 from pynetappfoundry.cache.field_mapping import (
     parse_api_record,
     parse_api_response,
     parse_cli_records,
 )
-from pynetappfoundry.cache.name_services.dns.mapping import ONTAPDNS_MAPPING
-from pynetappfoundry.cache.name_services.dns.model import OntapDns
-from pynetappfoundry.cache.network.ethernet.broadcast_domains.mapping import (
+from pynetappfoundry.cache.ontap.cloud.metadata.mapping import CLOUD_METADATA_MAPPING
+from pynetappfoundry.cache.ontap.cloud.metadata.model import CloudMetadata
+from pynetappfoundry.cache.ontap.cloud.targets.mapping import ONTAPCLOUDTARGET_MAPPING
+from pynetappfoundry.cache.ontap.cloud.targets.model import OntapCloudTarget
+from pynetappfoundry.cache.ontap.cluster.licensing.licenses.mapping import (
+    ONTAPLICENSEPACKAGERESPONSE_MAPPING,
+)
+from pynetappfoundry.cache.ontap.cluster.licensing.licenses.model import (
+    OntapLicensePackageResponse,
+)
+from pynetappfoundry.cache.ontap.cluster.mapping import CLUSTER_MAPPING
+from pynetappfoundry.cache.ontap.cluster.mediators.mapping import ONTAPMEDIATORRESPONSE_MAPPING
+from pynetappfoundry.cache.ontap.cluster.mediators.model import OntapMediatorResponse
+from pynetappfoundry.cache.ontap.cluster.model import ClusterInfo
+from pynetappfoundry.cache.ontap.cluster.nodes.mapping import ONTAPNODERESPONSE_MAPPING
+from pynetappfoundry.cache.ontap.cluster.nodes.model import OntapNodeResponse
+from pynetappfoundry.cache.ontap.cluster.peers.mapping import ONTAPCLUSTERPEER_MAPPING
+from pynetappfoundry.cache.ontap.cluster.peers.model import OntapClusterPeer
+from pynetappfoundry.cache.ontap.cluster.schedules.mapping import ONTAPSCHEDULE_MAPPING
+from pynetappfoundry.cache.ontap.cluster.schedules.model import OntapSchedule
+from pynetappfoundry.cache.ontap.name_services.dns.mapping import ONTAPDNS_MAPPING
+from pynetappfoundry.cache.ontap.name_services.dns.model import OntapDns
+from pynetappfoundry.cache.ontap.network.ethernet.broadcast_domains.mapping import (
     ONTAPBROADCASTDOMAIN_MAPPING,
 )
-from pynetappfoundry.cache.network.ethernet.broadcast_domains.model import (
+from pynetappfoundry.cache.ontap.network.ethernet.broadcast_domains.model import (
     OntapBroadcastDomain,
 )
-from pynetappfoundry.cache.network.ip.interfaces.mapping import ONTAPIPINTERFACE_MAPPING
-from pynetappfoundry.cache.network.ip.interfaces.model import OntapIpInterface
-from pynetappfoundry.cache.network.ip.subnets.mapping import ONTAPIPSUBNET_MAPPING
-from pynetappfoundry.cache.network.ip.subnets.model import OntapIpSubnet
-from pynetappfoundry.cache.network.model import NetworkInfo
-from pynetappfoundry.cache.protocols.cifs.services.mapping import ONTAPCIFSSERVICE_MAPPING
-from pynetappfoundry.cache.protocols.cifs.services.model import OntapCifsService
-from pynetappfoundry.cache.protocols.cifs.shares.mapping import ONTAPCIFSSHARE_MAPPING
-from pynetappfoundry.cache.protocols.cifs.shares.model import OntapCifsShare
-from pynetappfoundry.cache.protocols.model import ProtocolsInfo
-from pynetappfoundry.cache.protocols.nfs.export_policies.mapping import (
+from pynetappfoundry.cache.ontap.network.ip.interfaces.mapping import ONTAPIPINTERFACE_MAPPING
+from pynetappfoundry.cache.ontap.network.ip.interfaces.model import OntapIpInterface
+from pynetappfoundry.cache.ontap.network.ip.subnets.mapping import ONTAPIPSUBNET_MAPPING
+from pynetappfoundry.cache.ontap.network.ip.subnets.model import OntapIpSubnet
+from pynetappfoundry.cache.ontap.network.model import NetworkInfo
+from pynetappfoundry.cache.ontap.protocols.cifs.services.mapping import ONTAPCIFSSERVICE_MAPPING
+from pynetappfoundry.cache.ontap.protocols.cifs.services.model import OntapCifsService
+from pynetappfoundry.cache.ontap.protocols.cifs.shares.mapping import ONTAPCIFSSHARE_MAPPING
+from pynetappfoundry.cache.ontap.protocols.cifs.shares.model import OntapCifsShare
+from pynetappfoundry.cache.ontap.protocols.model import ProtocolsInfo
+from pynetappfoundry.cache.ontap.protocols.nfs.export_policies.mapping import (
     ONTAPEXPORTPOLICY_MAPPING,
 )
-from pynetappfoundry.cache.protocols.nfs.export_policies.model import OntapExportPolicy
-from pynetappfoundry.cache.protocols.nfs.services.mapping import ONTAPNFSSERVICE_MAPPING
-from pynetappfoundry.cache.protocols.nfs.services.model import OntapNfsService
-from pynetappfoundry.cache.protocols.s3.buckets.mapping import ONTAPS3BUCKET_MAPPING
-from pynetappfoundry.cache.protocols.s3.buckets.model import OntapS3Bucket
-from pynetappfoundry.cache.protocols.san.igroups.mapping import ONTAPIGROUP_MAPPING
-from pynetappfoundry.cache.protocols.san.igroups.model import OntapIgroup
-from pynetappfoundry.cache.snapmirror.relationships.mapping import (
+from pynetappfoundry.cache.ontap.protocols.nfs.export_policies.model import OntapExportPolicy
+from pynetappfoundry.cache.ontap.protocols.nfs.services.mapping import ONTAPNFSSERVICE_MAPPING
+from pynetappfoundry.cache.ontap.protocols.nfs.services.model import OntapNfsService
+from pynetappfoundry.cache.ontap.protocols.s3.buckets.mapping import ONTAPS3BUCKET_MAPPING
+from pynetappfoundry.cache.ontap.protocols.s3.buckets.model import OntapS3Bucket
+from pynetappfoundry.cache.ontap.protocols.san.igroups.mapping import ONTAPIGROUP_MAPPING
+from pynetappfoundry.cache.ontap.protocols.san.igroups.model import OntapIgroup
+from pynetappfoundry.cache.ontap.snapmirror.relationships.mapping import (
     ONTAPSNAPMIRRORRELATIONSHIP_MAPPING,
 )
-from pynetappfoundry.cache.snapmirror.relationships.model import (
+from pynetappfoundry.cache.ontap.snapmirror.relationships.model import (
     OntapSnapmirrorRelationship,
 )
-from pynetappfoundry.cache.storage.aggregates.mapping import ONTAPAGGREGATE_MAPPING
-from pynetappfoundry.cache.storage.aggregates.model import OntapAggregate
-from pynetappfoundry.cache.storage.flexcache.flexcaches.mapping import ONTAPFLEXCACHE_MAPPING
-from pynetappfoundry.cache.storage.flexcache.flexcaches.model import OntapFlexcache
-from pynetappfoundry.cache.storage.luns.mapping import ONTAPLUN_MAPPING
-from pynetappfoundry.cache.storage.luns.model import OntapLun
-from pynetappfoundry.cache.storage.model import StorageInfo
-from pynetappfoundry.cache.storage.qos.policies.mapping import ONTAPQOSPOLICY_MAPPING
-from pynetappfoundry.cache.storage.qos.policies.model import OntapQosPolicy
-from pynetappfoundry.cache.storage.qtrees.mapping import ONTAPQTREE_MAPPING
-from pynetappfoundry.cache.storage.qtrees.model import OntapQtree
-from pynetappfoundry.cache.storage.snapshot_policies.mapping import ONTAPSNAPSHOTPOLICY_MAPPING
-from pynetappfoundry.cache.storage.snapshot_policies.model import OntapSnapshotPolicy
-from pynetappfoundry.cache.storage.volumes.mapping import ONTAPVOLUME_MAPPING
-from pynetappfoundry.cache.storage.volumes.model import OntapVolume
-from pynetappfoundry.cache.svm.peers.mapping import ONTAPSVMPEER_MAPPING
-from pynetappfoundry.cache.svm.peers.model import OntapSvmPeer
-from pynetappfoundry.cache.svm.svms.mapping import ONTAPSVM_MAPPING
-from pynetappfoundry.cache.svm.svms.model import OntapSvm
+from pynetappfoundry.cache.ontap.storage.aggregates.mapping import ONTAPAGGREGATE_MAPPING
+from pynetappfoundry.cache.ontap.storage.aggregates.model import OntapAggregate
+from pynetappfoundry.cache.ontap.storage.flexcache.flexcaches.mapping import ONTAPFLEXCACHE_MAPPING
+from pynetappfoundry.cache.ontap.storage.flexcache.flexcaches.model import OntapFlexcache
+from pynetappfoundry.cache.ontap.storage.luns.mapping import ONTAPLUN_MAPPING
+from pynetappfoundry.cache.ontap.storage.luns.model import OntapLun
+from pynetappfoundry.cache.ontap.storage.model import StorageInfo
+from pynetappfoundry.cache.ontap.storage.qos.policies.mapping import ONTAPQOSPOLICY_MAPPING
+from pynetappfoundry.cache.ontap.storage.qos.policies.model import OntapQosPolicy
+from pynetappfoundry.cache.ontap.storage.qtrees.mapping import ONTAPQTREE_MAPPING
+from pynetappfoundry.cache.ontap.storage.qtrees.model import OntapQtree
+from pynetappfoundry.cache.ontap.storage.snapshot_policies.mapping import (
+    ONTAPSNAPSHOTPOLICY_MAPPING,
+)
+from pynetappfoundry.cache.ontap.storage.snapshot_policies.model import OntapSnapshotPolicy
+from pynetappfoundry.cache.ontap.storage.volumes.mapping import ONTAPVOLUME_MAPPING
+from pynetappfoundry.cache.ontap.storage.volumes.model import OntapVolume
+from pynetappfoundry.cache.ontap.svm.peers.mapping import ONTAPSVMPEER_MAPPING
+from pynetappfoundry.cache.ontap.svm.peers.model import OntapSvmPeer
+from pynetappfoundry.cache.ontap.svm.svms.mapping import ONTAPSVM_MAPPING
+from pynetappfoundry.cache.ontap.svm.svms.model import OntapSvm
 from pynetappfoundry.utils.cloud import (
     build_cloud_instance_link,
     build_cloud_instance_sso_link,

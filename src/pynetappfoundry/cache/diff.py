@@ -16,39 +16,39 @@ from typing import TYPE_CHECKING, Any
 from pydantic import BaseModel
 
 from pynetappfoundry.cache._base import CacheModel
-from pynetappfoundry.cache.cloud.metadata.model import CloudMetadata
-from pynetappfoundry.cache.cloud.targets.model import OntapCloudTarget
-from pynetappfoundry.cache.cluster.licensing.licenses.model import (
+from pynetappfoundry.cache.ontap.cloud.metadata.model import CloudMetadata
+from pynetappfoundry.cache.ontap.cloud.targets.model import OntapCloudTarget
+from pynetappfoundry.cache.ontap.cluster.licensing.licenses.model import (
     OntapLicensePackageResponse,
 )
-from pynetappfoundry.cache.cluster.model import ClusterInfo
-from pynetappfoundry.cache.cluster.nodes.model import OntapNodeResponse
-from pynetappfoundry.cache.cluster.peers.model import OntapClusterPeer
-from pynetappfoundry.cache.cluster.schedules.model import OntapSchedule
-from pynetappfoundry.cache.name_services.dns.model import OntapDns
-from pynetappfoundry.cache.network.ethernet.broadcast_domains.model import (
+from pynetappfoundry.cache.ontap.cluster.model import ClusterInfo
+from pynetappfoundry.cache.ontap.cluster.nodes.model import OntapNodeResponse
+from pynetappfoundry.cache.ontap.cluster.peers.model import OntapClusterPeer
+from pynetappfoundry.cache.ontap.cluster.schedules.model import OntapSchedule
+from pynetappfoundry.cache.ontap.name_services.dns.model import OntapDns
+from pynetappfoundry.cache.ontap.network.ethernet.broadcast_domains.model import (
     OntapBroadcastDomain,
 )
-from pynetappfoundry.cache.network.ip.interfaces.model import OntapIpInterface
-from pynetappfoundry.cache.network.ip.subnets.model import OntapIpSubnet
-from pynetappfoundry.cache.protocols.cifs.services.model import OntapCifsService
-from pynetappfoundry.cache.protocols.cifs.shares.model import OntapCifsShare
-from pynetappfoundry.cache.protocols.nfs.export_policies.model import OntapExportPolicy
-from pynetappfoundry.cache.protocols.nfs.services.model import OntapNfsService
-from pynetappfoundry.cache.protocols.s3.buckets.model import OntapS3Bucket
-from pynetappfoundry.cache.protocols.san.igroups.model import OntapIgroup
-from pynetappfoundry.cache.snapmirror.relationships.model import (
+from pynetappfoundry.cache.ontap.network.ip.interfaces.model import OntapIpInterface
+from pynetappfoundry.cache.ontap.network.ip.subnets.model import OntapIpSubnet
+from pynetappfoundry.cache.ontap.protocols.cifs.services.model import OntapCifsService
+from pynetappfoundry.cache.ontap.protocols.cifs.shares.model import OntapCifsShare
+from pynetappfoundry.cache.ontap.protocols.nfs.export_policies.model import OntapExportPolicy
+from pynetappfoundry.cache.ontap.protocols.nfs.services.model import OntapNfsService
+from pynetappfoundry.cache.ontap.protocols.s3.buckets.model import OntapS3Bucket
+from pynetappfoundry.cache.ontap.protocols.san.igroups.model import OntapIgroup
+from pynetappfoundry.cache.ontap.snapmirror.relationships.model import (
     OntapSnapmirrorRelationship,
 )
-from pynetappfoundry.cache.storage.aggregates.model import OntapAggregate
-from pynetappfoundry.cache.storage.flexcache.flexcaches.model import OntapFlexcache
-from pynetappfoundry.cache.storage.luns.model import OntapLun
-from pynetappfoundry.cache.storage.qos.policies.model import OntapQosPolicy
-from pynetappfoundry.cache.storage.qtrees.model import OntapQtree
-from pynetappfoundry.cache.storage.snapshot_policies.model import OntapSnapshotPolicy
-from pynetappfoundry.cache.storage.volumes.model import OntapVolume
-from pynetappfoundry.cache.svm.peers.model import OntapSvmPeer
-from pynetappfoundry.cache.svm.svms.model import OntapSvm
+from pynetappfoundry.cache.ontap.storage.aggregates.model import OntapAggregate
+from pynetappfoundry.cache.ontap.storage.flexcache.flexcaches.model import OntapFlexcache
+from pynetappfoundry.cache.ontap.storage.luns.model import OntapLun
+from pynetappfoundry.cache.ontap.storage.qos.policies.model import OntapQosPolicy
+from pynetappfoundry.cache.ontap.storage.qtrees.model import OntapQtree
+from pynetappfoundry.cache.ontap.storage.snapshot_policies.model import OntapSnapshotPolicy
+from pynetappfoundry.cache.ontap.storage.volumes.model import OntapVolume
+from pynetappfoundry.cache.ontap.svm.peers.model import OntapSvmPeer
+from pynetappfoundry.cache.ontap.svm.svms.model import OntapSvm
 
 if TYPE_CHECKING:
     from pynetappfoundry.cache._metadata import CachedClusterMetadata
@@ -503,7 +503,7 @@ def _diff_mediator_info(
     Returns:
         List of change dictionaries.
     """
-    from pynetappfoundry.cache.cluster.mediators.model import OntapMediatorResponse
+    from pynetappfoundry.cache.ontap.cluster.mediators.model import OntapMediatorResponse
 
     changes: list[dict[str, Any]] = []
     category = "mediator"

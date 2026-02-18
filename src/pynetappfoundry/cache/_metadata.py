@@ -18,20 +18,20 @@ from pynetappfoundry.cache._base import (
     HasUUID,
     _utcnow,
 )
-from pynetappfoundry.cache.cloud.metadata.model import CloudMetadata
-from pynetappfoundry.cache.cluster.licensing.licenses.model import (
+from pynetappfoundry.cache.ontap.cloud.metadata.model import CloudMetadata
+from pynetappfoundry.cache.ontap.cluster.licensing.licenses.model import (
     OntapLicensePackageResponse,
 )
-from pynetappfoundry.cache.cluster.mediators.model import OntapMediatorResponse
-from pynetappfoundry.cache.cluster.model import ClusterInfo
-from pynetappfoundry.cache.cluster.nodes.model import OntapNodeResponse
-from pynetappfoundry.cache.network.model import NetworkInfo
-from pynetappfoundry.cache.protocols.model import ProtocolsInfo
-from pynetappfoundry.cache.snapmirror.relationships.model import (
+from pynetappfoundry.cache.ontap.cluster.mediators.model import OntapMediatorResponse
+from pynetappfoundry.cache.ontap.cluster.model import ClusterInfo
+from pynetappfoundry.cache.ontap.cluster.nodes.model import OntapNodeResponse
+from pynetappfoundry.cache.ontap.network.model import NetworkInfo
+from pynetappfoundry.cache.ontap.protocols.model import ProtocolsInfo
+from pynetappfoundry.cache.ontap.snapmirror.relationships.model import (
     OntapSnapmirrorRelationship,
 )
-from pynetappfoundry.cache.storage.model import StorageInfo
-from pynetappfoundry.cache.svm.peers.model import OntapSvmPeer
+from pynetappfoundry.cache.ontap.storage.model import StorageInfo
+from pynetappfoundry.cache.ontap.svm.peers.model import OntapSvmPeer
 
 
 class RelationshipsInfo(CacheModel):
@@ -47,7 +47,7 @@ class RelationshipsInfo(CacheModel):
 
 # Deferred import to avoid circular reference — OntapClusterPeer used above in a
 # forward-reference string annotation, resolved here after the class body.
-from pynetappfoundry.cache.cluster.peers.model import OntapClusterPeer  # noqa: E402
+from pynetappfoundry.cache.ontap.cluster.peers.model import OntapClusterPeer  # noqa: E402
 
 RelationshipsInfo.model_rebuild()
 

@@ -9,11 +9,11 @@ from pathlib import Path
 import pytest
 
 from pynetappfoundry.cache import CachedClusterMetadata
-from pynetappfoundry.cache.cloud.metadata.model import CloudMetadata
-from pynetappfoundry.cache.cluster.model import ClusterInfo
-from pynetappfoundry.cache.cluster.nodes.model import OntapNodeResponse
 from pynetappfoundry.cache.db import ClusterMetadataDB, _validate_cluster_name
-from pynetappfoundry.cache.storage.volumes.model import OntapVolume
+from pynetappfoundry.cache.ontap.cloud.metadata.model import CloudMetadata
+from pynetappfoundry.cache.ontap.cluster.model import ClusterInfo
+from pynetappfoundry.cache.ontap.cluster.nodes.model import OntapNodeResponse
+from pynetappfoundry.cache.ontap.storage.volumes.model import OntapVolume
 
 
 class TestValidateClusterName:
@@ -421,7 +421,7 @@ class TestClusterMetadataDB:
 
     def test_list_field_json_round_trip(self, db: ClusterMetadataDB) -> None:
         """Sub-model list fields survive serialization round-trip."""
-        from pynetappfoundry.cache.cluster.nodes.model import (
+        from pynetappfoundry.cache.ontap.cluster.nodes.model import (
             OntapNodeResponseClusterInterface,
         )
 
@@ -505,7 +505,7 @@ class TestClusterMetadataDB:
 
     def test_storage_volumes_round_trip(self, db: ClusterMetadataDB) -> None:
         """Large models like OntapVolume serialize and deserialize correctly."""
-        from pynetappfoundry.cache.storage.model import StorageInfo
+        from pynetappfoundry.cache.ontap.storage.model import StorageInfo
 
         meta = CachedClusterMetadata(
             cluster_name="test-cluster",
