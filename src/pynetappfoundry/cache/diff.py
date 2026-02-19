@@ -242,9 +242,9 @@ _ENTITY_CONFIGS: dict[str, EntityConfig] = {
         display_field="name",
     ),
     "protocols.nfs_export_policies": EntityConfig(
-        key_field="name",
+        key_field="index",
         model_class=OntapExportPolicy,
-        display_field="name",
+        display_field="index",
     ),
     "protocols.cifs_shares": EntityConfig(
         key_field="name",
