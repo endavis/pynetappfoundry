@@ -173,7 +173,7 @@ class ClusterMetadataDB(SQLiteDB):
 
     def __init__(
         self,
-        db_path: Path | None = None,
+        db_path: Path | str | None = None,
         config: Config | None = None,
     ) -> None:
         """Initialize the metadata cache database.

@@ -991,3 +991,36 @@ class TestCacheEnrichment:
             assert "test-cluster-1" in eastus_clusters
         finally:
             os.chdir(original_cwd)
+
+    def test_enrich_skips_db_when_no_cache_file(
+        self, temp_config_dir: Path, tmp_path: Path
+    ) -> None:
+        """Test that ClusterMetadataDB is never instantiated when no cache file exists."""
+        import os
+        from unittest.mock import patch
+
+        original_cwd = os.getcwd()
+        os.chdir(tmp_path)
+        try:
+            output_dir = tmp_path / "output"
+            output_dir.mkdir(exist_ok=True)
+
+            # Ensure no cache DB file exists
+            cache_path = temp_config_dir / ".cache" / "cluster_metadata.db"
+            assert not cache_path.exists()
+
+            with patch("pynetappfoundry.cache.db.ClusterMetadataDB") as mock_db_cls:
+                config = Config(
+                    config_dir=str(temp_config_dir),
+                    output_dir=str(output_dir),
+                    script_name="test_script",
+                )
+                mock_db_cls.assert_not_called()
+
+            # Clusters should still have default cloud fields
+            for cluster_name in config.data.get("clusters", {}):
+                cluster = config.data["clusters"][cluster_name]
+                assert "cloud_provider" in cluster
+                assert cluster["cloud_provider"] == ""
+        finally:
+            os.chdir(original_cwd)

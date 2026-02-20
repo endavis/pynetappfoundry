@@ -52,10 +52,9 @@ class TestClusterMetadataDB:
     """Tests for ClusterMetadataDB class."""
 
     @pytest.fixture
-    def db(self, tmp_path: Path) -> ClusterMetadataDB:
-        """Create a test database."""
-        db_path = tmp_path / "test_cache.db"
-        return ClusterMetadataDB(db_path=db_path)
+    def db(self) -> ClusterMetadataDB:
+        """Create an in-memory test database."""
+        return ClusterMetadataDB(db_path=":memory:")
 
     @pytest.fixture
     def sample_metadata(self) -> CachedClusterMetadata:
