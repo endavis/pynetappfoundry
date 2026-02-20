@@ -32,32 +32,32 @@ jobs:
         id: griffe
         run: |
           set +e
+          TMPFILE=$(mktemp)
           # Run griffe and filter out _version.py changes (auto-generated, not public API)
-          RAW_OUTPUT=$(griffe check pynetappfoundry \
+          griffe check pynetappfoundry \
             --against "origin/${{ github.base_ref }}" \
             --search src \
-            --verbose 2>&1)
-          EXIT_CODE=$?
-
-          # Filter out _version module from output
-          OUTPUT=$(echo "$RAW_OUTPUT" | grep -v "_version" || true)
+            --verbose 2>&1 | grep -v "_version" > "$TMPFILE" || true
           set -e
 
-          echo "$OUTPUT"
+          cat "$TMPFILE"
 
           # Check if there are any breaking changes after filtering
-          if [ -n "$OUTPUT" ] && echo "$OUTPUT" | grep -qE "pynetappfoundry"; then
+          if [ -s "$TMPFILE" ] && grep -qE "pynetappfoundry" "$TMPFILE"; then
             echo "has_breaking=true" >> "$GITHUB_OUTPUT"
           else
             echo "has_breaking=false" >> "$GITHUB_OUTPUT"
           fi
 
           # Save output for comment step (handle multiline)
+          # Truncate to 64KB to avoid GitHub Actions env var overflow
           {
             echo "details<<EOF"
-            echo "$OUTPUT" | head -c 65536
+            head -c 65536 "$TMPFILE"
+            echo ""
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
+          rm -f "$TMPFILE"
 
       - name: Report breaking changes
         if: always()
