@@ -93,8 +93,8 @@ class TestFieldMappingNewFields:
         assert fm.requires_explicit_fetch is True
 
     def test_post_collection_callable(self) -> None:
-        """post_collection accepts a callable."""
-        fn = lambda x: x  # noqa: E731
+        """post_collection accepts a callable with (item, results) signature."""
+        fn = lambda x, r: x  # noqa: E731
         fm = FieldMapping(cache_attr="x", cache_strategy="derived", post_collection=fn)
         assert fm.post_collection is fn
 
@@ -284,7 +284,7 @@ class TestTypeMapping:
 
     def test_derived_fields(self) -> None:
         """derived_fields returns only cache_strategy='derived' fields."""
-        fn = lambda x: x  # noqa: E731
+        fn = lambda x, r: x  # noqa: E731
         tm = TypeMapping(
             name="T",
             model_class=_SampleModel,
@@ -1099,18 +1099,23 @@ class TestCacheStrategyFiltering:
 
 
 # ---------------------------------------------------------------------------
-# post_collection in parse_api_response tests
+# post_collection NOT in parse_api_response tests
 # ---------------------------------------------------------------------------
 
 
 class TestPostCollection:
-    """Tests for post_collection wiring in parse_api_response."""
+    """Tests verifying post_collection is NOT called in parse_api_response.
 
-    def test_post_collection_called_for_derived_fields(self) -> None:
-        """post_collection is called for derived fields after parsing."""
+    Derived field evaluation has been moved to the collector level
+    (``MetadataCollector._evaluate_derived_fields``) where cross-collection
+    context is available.
+    """
+
+    def test_post_collection_not_called_in_parse_api_response(self) -> None:
+        """post_collection is NOT called during parse_api_response."""
         call_log: list[str] = []
 
-        def post_fn(item: _SampleModel) -> _SampleModel:
+        def post_fn(item: _SampleModel, results: dict[str, Any]) -> _SampleModel:
             call_log.append(item.name)
             return item
 
@@ -1130,10 +1135,11 @@ class TestPostCollection:
         response = {"records": [{"name": "a"}, {"name": "b"}]}
         results = parse_api_response(tm, response, "[t]", MagicMock())
         assert len(results) == 2
-        assert call_log == ["a", "b"]
+        # post_collection should NOT have been called
+        assert call_log == []
 
-    def test_post_collection_not_called_when_none(self) -> None:
-        """Derived fields without post_collection are harmless."""
+    def test_derived_fields_without_post_collection_harmless(self) -> None:
+        """Derived fields without post_collection are harmless in parse_api_response."""
         tm = TypeMapping(
             name="T",
             model_class=_SampleModel,

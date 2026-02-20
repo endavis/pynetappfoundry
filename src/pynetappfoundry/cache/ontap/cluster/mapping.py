@@ -2,16 +2,30 @@
 
 Defines CLUSTER_MAPPING which maps ONTAP REST API /cluster data to
 ClusterInfo cache model attributes.
-
-Note: ``is_ha`` is derived post-collection from node count and is
-intentionally excluded from the mapping.
 """
 
 from __future__ import annotations
 
+from typing import Any
+
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.cache.ontap.cluster.model import ClusterInfo
+
+
+def compute_is_ha(cluster: ClusterInfo, results: dict[str, Any]) -> ClusterInfo:
+    """Derive ``is_ha`` from the collected node count.
+
+    Args:
+        cluster: The ClusterInfo instance to update.
+        results: Full collection results dict (needs ``"nodes"`` key).
+
+    Returns:
+        Updated ClusterInfo with ``is_ha`` set.
+    """
+    nodes = results.get("nodes", [])
+    return cluster.model_copy(update={"is_ha": len(nodes) > 1})
+
 
 CLUSTER_MAPPING = TypeMapping(
     name="Cluster",
@@ -112,6 +126,12 @@ CLUSTER_MAPPING = TypeMapping(
             cache_attr="auto_enable_analytics",
             api_path="auto_enable_analytics",
             default=False,
+        ),
+        FieldMapping(
+            cache_attr="is_ha",
+            cache_strategy="derived",
+            default=False,
+            post_collection=compute_is_ha,
         ),
     ),
 )

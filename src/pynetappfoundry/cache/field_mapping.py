@@ -45,7 +45,9 @@ class FieldMapping:
         requires_explicit_fetch: Whether this field requires explicit ``?fields=``
             in the API request (ONTAP expensive fields).
         post_collection: Optional callable to compute derived field values
-            after all records have been collected.
+            after all collection phases complete.  Signature:
+            ``(model_instance, results_dict) -> model_instance`` where
+            *results_dict* is the full cross-collection results dictionary.
     """
 
     cache_attr: str
@@ -56,7 +58,7 @@ class FieldMapping:
     cli_transform: Callable[[dict[str, Any]], Any] | None = None
     cache_strategy: Literal["cache", "realtime", "derived"] = "cache"
     requires_explicit_fetch: bool = False
-    post_collection: Callable[[Any], Any] | None = None
+    post_collection: Callable[[Any, dict[str, Any]], Any] | None = None
 
 
 @dataclass(frozen=True)
@@ -378,11 +380,6 @@ def parse_api_response(
         record_id = record.get(mapping.id_field, record.get("uuid", "unknown"))
         log_missing_fn(record, expected, mapping.name, record_id)
         results.append(parse_api_record(mapping, record, log_prefix))
-
-    # Apply post_collection transforms for derived fields
-    for field in mapping.derived_fields():
-        if field.post_collection is not None:
-            results = [field.post_collection(item) for item in results]
 
     return results
 
