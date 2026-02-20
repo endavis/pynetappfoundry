@@ -55,7 +55,7 @@ jobs:
           # Save output for comment step (handle multiline)
           {
             echo "details<<EOF"
-            echo "$OUTPUT" | head -500
+            echo "$OUTPUT" | head -c 65536
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
