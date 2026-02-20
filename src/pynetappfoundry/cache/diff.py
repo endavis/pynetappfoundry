@@ -125,8 +125,10 @@ def _get_display_name(entity: Any, display_field: str) -> str:
             return display_field.format(**fmt_dict)
         except (KeyError, AttributeError):
             return str(entity)
-    value = getattr(entity, display_field, "") or ""
-    return value or str(entity)
+    value = getattr(entity, display_field, None)
+    if value is None or value == "":
+        return str(entity)
+    return str(value)
 
 
 # Entity configurations: maps category path -> EntityConfig.
@@ -378,14 +380,14 @@ def _diff_entity_list(
     # Build lookup maps by key
     before_map: dict[str, Any] = {}
     for entity in before_list:
-        key = getattr(entity, key_field, "") or ""
-        if key:
+        key = getattr(entity, key_field, None)
+        if key is not None:
             before_map[key] = entity
 
     after_map: dict[str, Any] = {}
     for entity in after_list:
-        key = getattr(entity, key_field, "") or ""
-        if key:
+        key = getattr(entity, key_field, None)
+        if key is not None:
             after_map[key] = entity
 
     # Find removed entities
