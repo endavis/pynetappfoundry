@@ -16,7 +16,7 @@ class SimpleDB(SQLiteDB):
 
     SCHEMA_VERSION: ClassVar[int] = 1
 
-    def __init__(self, db_path: Path) -> None:
+    def __init__(self, db_path: Path | str) -> None:
         self.conn = sqlite3.connect(db_path)
         self.conn.row_factory = sqlite3.Row
         self._init_db()
@@ -30,7 +30,7 @@ class VersionedDB(SQLiteDB):
 
     SCHEMA_VERSION: ClassVar[int] = 3
 
-    def __init__(self, db_path: Path) -> None:
+    def __init__(self, db_path: Path | str) -> None:
         self.conn = sqlite3.connect(db_path)
         self.conn.row_factory = sqlite3.Row
         self._init_db()
@@ -56,7 +56,7 @@ class MissingUpgradeDB(SQLiteDB):
 
     SCHEMA_VERSION: ClassVar[int] = 2
 
-    def __init__(self, db_path: Path) -> None:
+    def __init__(self, db_path: Path | str) -> None:
         self.conn = sqlite3.connect(db_path)
         self.conn.row_factory = sqlite3.Row
         self._init_db()
@@ -72,7 +72,7 @@ class FailingUpgradeDB(SQLiteDB):
 
     SCHEMA_VERSION: ClassVar[int] = 2
 
-    def __init__(self, db_path: Path) -> None:
+    def __init__(self, db_path: Path | str) -> None:
         self.conn = sqlite3.connect(db_path)
         self.conn.row_factory = sqlite3.Row
         self._init_db()
@@ -88,10 +88,9 @@ class FailingUpgradeDB(SQLiteDB):
 class TestSQLiteDBNewDatabase:
     """Tests for creating new databases."""
 
-    def test_new_database_creates_schema(self, tmp_path: Path) -> None:
+    def test_new_database_creates_schema(self) -> None:
         """Test that a new database creates the schema."""
-        db_path = tmp_path / "new.db"
-        db = SimpleDB(db_path)
+        db = SimpleDB(":memory:")
 
         # Verify table was created
         cursor = db.conn.execute(
@@ -100,10 +99,9 @@ class TestSQLiteDBNewDatabase:
         assert cursor.fetchone() is not None
         db.close()
 
-    def test_new_database_sets_version(self, tmp_path: Path) -> None:
+    def test_new_database_sets_version(self) -> None:
         """Test that a new database sets the correct version."""
-        db_path = tmp_path / "new.db"
-        db = SimpleDB(db_path)
+        db = SimpleDB(":memory:")
 
         # Verify version was set
         cursor = db.conn.execute("SELECT version FROM _schema_version")
@@ -111,10 +109,9 @@ class TestSQLiteDBNewDatabase:
         assert version == 1
         db.close()
 
-    def test_new_versioned_database_uses_current_schema(self, tmp_path: Path) -> None:
+    def test_new_versioned_database_uses_current_schema(self) -> None:
         """Test that a new versioned database creates current schema."""
-        db_path = tmp_path / "versioned.db"
-        db = VersionedDB(db_path)
+        db = VersionedDB(":memory:")
 
         # Verify schema is at v3 with all columns
         cursor = db.conn.execute("PRAGMA table_info(test_table)")
@@ -281,11 +278,9 @@ class TestSQLiteDBMigrationErrors:
 class TestSQLiteDBContextManager:
     """Tests for context manager support."""
 
-    def test_context_manager_closes_connection(self, tmp_path: Path) -> None:
+    def test_context_manager_closes_connection(self) -> None:
         """Test that context manager closes connection on exit."""
-        db_path = tmp_path / "context.db"
-
-        with SimpleDB(db_path) as db:
+        with SimpleDB(":memory:") as db:
             db.conn.execute("INSERT INTO test_table (name) VALUES ('test')")
             db.conn.commit()
 
@@ -293,11 +288,9 @@ class TestSQLiteDBContextManager:
         with pytest.raises(sqlite3.ProgrammingError):
             db.conn.execute("SELECT * FROM test_table")
 
-    def test_context_manager_closes_on_exception(self, tmp_path: Path) -> None:
+    def test_context_manager_closes_on_exception(self) -> None:
         """Test that context manager closes connection on exception."""
-        db_path = tmp_path / "context_exc.db"
-
-        with pytest.raises(ValueError, match="test error"), SimpleDB(db_path) as db:
+        with pytest.raises(ValueError, match="test error"), SimpleDB(":memory:") as db:
             raise ValueError("test error")
 
         # Connection should be closed

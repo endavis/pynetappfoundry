@@ -605,10 +605,9 @@ class TestClusterMetadataDBInitialization:
         with pytest.raises(ValueError, match="Either db_path or config"):
             ClusterMetadataDB()
 
-    def test_close(self, tmp_path: Path) -> None:
+    def test_close(self) -> None:
         """Test closing database connection."""
-        db_path = tmp_path / "close_test.db"
-        db = ClusterMetadataDB(db_path=db_path)
+        db = ClusterMetadataDB(db_path=":memory:")
         db.close()
         # Attempting operations after close should fail
         with pytest.raises(sqlite3.ProgrammingError):
