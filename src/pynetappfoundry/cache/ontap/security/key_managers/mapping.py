@@ -32,7 +32,7 @@ def _transform_external_servers(record: dict[str, Any]) -> list[OntapSecurityKey
 ONTAPSECURITYKEYMANAGER_MAPPING = TypeMapping(
     name="OntapSecurityKeyManager",
     model_class=OntapSecurityKeyManager,
-    api_endpoint="/security/key-managers?fields=*,status",
+    api_endpoint="/security/key-managers?fields=*",
     api_type="ontap",
     fields=(
         FieldMapping(

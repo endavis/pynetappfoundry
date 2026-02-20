@@ -66,7 +66,7 @@ def _transform_replication_error_summary_arguments(
 ONTAPIGROUP_MAPPING = TypeMapping(
     name="OntapIgroup",
     model_class=OntapIgroup,
-    api_endpoint="/protocols/san/igroups?fields=*,connectivity_tracking,igroups,lun_maps,parent_igroups,target",
+    api_endpoint="/protocols/san/igroups?fields=*",
     api_type="ontap",
     fields=(
         FieldMapping(

@@ -60,7 +60,7 @@ def _transform_cloud_storage_stores(record: dict[str, Any]) -> list[OntapAggrega
 ONTAPAGGREGATE_MAPPING = TypeMapping(
     name="OntapAggregate",
     model_class=OntapAggregate,
-    api_endpoint="/storage/aggregates?fields=*,is_spare_low,metric,space,statistics",
+    api_endpoint="/storage/aggregates?fields=*",
     api_type="ontap",
     fields=(
         FieldMapping(

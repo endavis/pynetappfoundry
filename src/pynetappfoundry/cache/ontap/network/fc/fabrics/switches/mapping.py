@@ -20,7 +20,7 @@ def _transform_ports(record: dict[str, Any]) -> list[OntapFcSwitchPort]:
 ONTAPFCSWITCH_MAPPING = TypeMapping(
     name="OntapFcSwitch",
     model_class=OntapFcSwitch,
-    api_endpoint="/network/fc/fabrics/{fabric.name}/switches?fields=*,ports",
+    api_endpoint="/network/fc/fabrics/{fabric.name}/switches?fields=*",
     api_type="ontap",
     parent_mapping="OntapFabric",
     parent_id_field="uuid",

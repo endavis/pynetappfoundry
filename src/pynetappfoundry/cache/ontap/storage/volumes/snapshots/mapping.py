@@ -9,7 +9,7 @@ from pynetappfoundry.cache.ontap.storage.volumes.snapshots.model import OntapSna
 ONTAPSNAPSHOT_MAPPING = TypeMapping(
     name="OntapSnapshot",
     model_class=OntapSnapshot,
-    api_endpoint="/storage/volumes/{volume.uuid}/snapshots?fields=*,reclaimable_space",
+    api_endpoint="/storage/volumes/{volume.uuid}/snapshots?fields=*",
     api_type="ontap",
     parent_mapping="OntapVolume",
     parent_id_field="uuid",

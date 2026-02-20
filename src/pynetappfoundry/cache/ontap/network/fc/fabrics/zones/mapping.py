@@ -20,7 +20,7 @@ def _transform_members(record: dict[str, Any]) -> list[OntapFcZoneMember]:
 ONTAPFCZONE_MAPPING = TypeMapping(
     name="OntapFcZone",
     model_class=OntapFcZone,
-    api_endpoint="/network/fc/fabrics/{fabric.name}/zones?fields=*,members",
+    api_endpoint="/network/fc/fabrics/{fabric.name}/zones?fields=*",
     api_type="ontap",
     parent_mapping="OntapFabric",
     parent_id_field="uuid",

@@ -9,7 +9,7 @@ from pynetappfoundry.cache.ontap.protocols.san.fcp.services.model import OntapFc
 ONTAPFCPSERVICE_MAPPING = TypeMapping(
     name="OntapFcpService",
     model_class=OntapFcpService,
-    api_endpoint="/protocols/san/fcp/services?fields=*,metric,statistics",
+    api_endpoint="/protocols/san/fcp/services?fields=*",
     api_type="ontap",
     fields=(
         FieldMapping(

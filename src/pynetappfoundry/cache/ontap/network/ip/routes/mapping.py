@@ -20,7 +20,7 @@ def _transform_interfaces(record: dict[str, Any]) -> list[OntapNetworkRouteInter
 ONTAPNETWORKROUTE_MAPPING = TypeMapping(
     name="OntapNetworkRoute",
     model_class=OntapNetworkRoute,
-    api_endpoint="/network/ip/routes?fields=*,interfaces",
+    api_endpoint="/network/ip/routes?fields=*",
     api_type="ontap",
     fields=(
         FieldMapping(

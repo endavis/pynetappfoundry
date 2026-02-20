@@ -20,7 +20,7 @@ def _transform_clients(record: dict[str, Any]) -> list[OntapExportPolicyClient]:
 ONTAPEXPORTPOLICY_MAPPING = TypeMapping(
     name="OntapExportPolicy",
     model_class=OntapExportPolicy,
-    api_endpoint="/protocols/nfs/export-policies?fields=*,rules",
+    api_endpoint="/protocols/nfs/export-policies?fields=*",
     api_type="ontap",
     fields=(
         FieldMapping(

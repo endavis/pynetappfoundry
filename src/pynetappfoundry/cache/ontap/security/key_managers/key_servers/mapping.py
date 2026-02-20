@@ -26,7 +26,7 @@ def _transform_records(record: dict[str, Any]) -> list[OntapKeyServerRecord]:
 ONTAPKEYSERVER_MAPPING = TypeMapping(
     name="OntapKeyServer",
     model_class=OntapKeyServer,
-    api_endpoint="/security/key-managers/{uuid}/key-servers?fields=*,connectivity",
+    api_endpoint="/security/key-managers/{uuid}/key-servers?fields=*",
     api_type="ontap",
     parent_mapping="OntapSecurityKeyManager",
     parent_id_field="uuid",

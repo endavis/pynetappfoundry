@@ -154,6 +154,56 @@ class TypeMapping:
         """
         return tuple(f for f in self.fields if f.cache_strategy == "derived")
 
+    def explicit_fetch_api_fields(self) -> list[str]:
+        """Return deduplicated, sorted top-level API field names for explicit fetch.
+
+        Considers only fields where ``requires_explicit_fetch=True`` AND
+        ``cache_strategy="cache"``.  Extracts the first segment of
+        ``api_path`` (before ``.`` or ``[``); falls back to ``cache_attr``
+        for transform-only fields (no ``api_path``).
+
+        Returns:
+            Sorted list of unique top-level API field names.
+        """
+        keys: set[str] = set()
+        for field in self.fields:
+            if not field.requires_explicit_fetch:
+                continue
+            if field.cache_strategy != "cache":
+                continue
+            if field.api_path is not None:
+                first_segment = field.api_path.split(".")[0].split("[")[0]
+                keys.add(first_segment)
+            else:
+                keys.add(field.cache_attr)
+        return sorted(keys)
+
+    def build_collection_url(self) -> str:
+        """Build the collection URL with dynamically appended expensive fields.
+
+        Strips ``{id}`` path placeholders (like :attr:`collection_endpoint`).
+        If the endpoint contains ``?fields=*``, appends the top-level API
+        field names for fields that require explicit fetch.  Otherwise
+        returns the endpoint unchanged (after placeholder stripping).
+
+        Returns:
+            Endpoint URL suitable for bulk collection.
+        """
+        parts = self.api_endpoint.split("?", 1)
+        path = re.sub(r"/\{[^}]+\}", "", parts[0])
+
+        if len(parts) == 1:
+            return path
+
+        query = parts[1]
+        if not query.startswith("fields=*"):
+            return f"{path}?{query}"
+
+        expensive = self.explicit_fetch_api_fields()
+        if expensive:
+            return f"{path}?fields=*,{','.join(expensive)}"
+        return f"{path}?fields=*"
+
     @property
     def collection_endpoint(self) -> str:
         """Bulk-collection endpoint (strips ``{id}`` path placeholders).

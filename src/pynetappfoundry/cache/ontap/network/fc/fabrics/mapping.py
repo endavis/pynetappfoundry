@@ -17,7 +17,7 @@ def _transform_connections(record: dict[str, Any]) -> list[OntapFabricConnection
 ONTAPFABRIC_MAPPING = TypeMapping(
     name="OntapFabric",
     model_class=OntapFabric,
-    api_endpoint="/network/fc/fabrics?fields=*,connections",
+    api_endpoint="/network/fc/fabrics?fields=*",
     api_type="ontap",
     fields=(
         FieldMapping(

@@ -26,7 +26,7 @@ def _transform_origins(record: dict[str, Any]) -> list[OntapFlexcacheOrigin]:
 ONTAPFLEXCACHE_MAPPING = TypeMapping(
     name="OntapFlexcache",
     model_class=OntapFlexcache,
-    api_endpoint="/storage/flexcache/flexcaches?fields=*,guarantee,path,size",
+    api_endpoint="/storage/flexcache/flexcaches?fields=*",
     api_type="ontap",
     fields=(
         FieldMapping(

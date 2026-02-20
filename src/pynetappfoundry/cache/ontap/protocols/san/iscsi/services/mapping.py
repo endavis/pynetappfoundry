@@ -9,7 +9,7 @@ from pynetappfoundry.cache.ontap.protocols.san.iscsi.services.model import Ontap
 ONTAPISCSISERVICE_MAPPING = TypeMapping(
     name="OntapIscsiService",
     model_class=OntapIscsiService,
-    api_endpoint="/protocols/san/iscsi/services?fields=*,metric,statistics",
+    api_endpoint="/protocols/san/iscsi/services?fields=*",
     api_type="ontap",
     fields=(
         FieldMapping(

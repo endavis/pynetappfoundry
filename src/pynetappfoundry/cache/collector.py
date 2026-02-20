@@ -848,7 +848,7 @@ class MetadataCollector:
             logger.debug("%s No API client available for cluster info collection", self._log_prefix)
             return ClusterInfo()
 
-        response = self._cached_api_call(CLUSTER_MAPPING.api_endpoint, paginate=False)
+        response = self._cached_api_call(CLUSTER_MAPPING.build_collection_url(), paginate=False)
         if not response:
             return ClusterInfo()
 
@@ -906,7 +906,7 @@ class MetadataCollector:
             return []
 
         # Use cached API call to avoid duplicate requests (also used by HA collection)
-        response = self._cached_api_call(ONTAPNODERESPONSE_MAPPING.api_endpoint)
+        response = self._cached_api_call(ONTAPNODERESPONSE_MAPPING.build_collection_url())
         if not response:
             return []
 
@@ -960,11 +960,11 @@ class MetadataCollector:
 
         # Make all 5 API calls in parallel using cached calls
         endpoints = [
-            ONTAPIPINTERFACE_MAPPING.api_endpoint,
-            ONTAPBROADCASTDOMAIN_MAPPING.api_endpoint,
+            ONTAPIPINTERFACE_MAPPING.build_collection_url(),
+            ONTAPBROADCASTDOMAIN_MAPPING.build_collection_url(),
             "/network/ipspaces?fields=*",
-            ONTAPDNS_MAPPING.api_endpoint,
-            ONTAPIPSUBNET_MAPPING.api_endpoint,
+            ONTAPDNS_MAPPING.build_collection_url(),
+            ONTAPIPSUBNET_MAPPING.build_collection_url(),
         ]
 
         if self.parallel:
@@ -1080,17 +1080,17 @@ class MetadataCollector:
 
         # Make all API calls in parallel using cached calls
         endpoints = [
-            ONTAPAGGREGATE_MAPPING.api_endpoint,
-            ONTAPSVM_MAPPING.api_endpoint,
-            ONTAPCLOUDTARGET_MAPPING.api_endpoint,
-            ONTAPVOLUME_MAPPING.api_endpoint,
-            ONTAPQTREE_MAPPING.api_endpoint,
-            ONTAPSNAPSHOTPOLICY_MAPPING.api_endpoint,
-            ONTAPSCHEDULE_MAPPING.api_endpoint,
-            ONTAPLUN_MAPPING.api_endpoint,
-            ONTAPIGROUP_MAPPING.api_endpoint,
-            ONTAPQOSPOLICY_MAPPING.api_endpoint,
-            ONTAPFLEXCACHE_MAPPING.api_endpoint,
+            ONTAPAGGREGATE_MAPPING.build_collection_url(),
+            ONTAPSVM_MAPPING.build_collection_url(),
+            ONTAPCLOUDTARGET_MAPPING.build_collection_url(),
+            ONTAPVOLUME_MAPPING.build_collection_url(),
+            ONTAPQTREE_MAPPING.build_collection_url(),
+            ONTAPSNAPSHOTPOLICY_MAPPING.build_collection_url(),
+            ONTAPSCHEDULE_MAPPING.build_collection_url(),
+            ONTAPLUN_MAPPING.build_collection_url(),
+            ONTAPIGROUP_MAPPING.build_collection_url(),
+            ONTAPQOSPOLICY_MAPPING.build_collection_url(),
+            ONTAPFLEXCACHE_MAPPING.build_collection_url(),
         ]
 
         def safe_api_call(endpoint: str) -> Any:
@@ -1288,7 +1288,7 @@ class MetadataCollector:
             logger.debug("%s No API client available for license collection", self._log_prefix)
             return []
 
-        response = self._cached_api_call(ONTAPLICENSEPACKAGERESPONSE_MAPPING.api_endpoint)
+        response = self._cached_api_call(ONTAPLICENSEPACKAGERESPONSE_MAPPING.build_collection_url())
         return cast(
             list[OntapLicensePackageResponse],
             parse_api_response(
@@ -1334,7 +1334,9 @@ class MetadataCollector:
             OntapMediatorResponse from /cluster/mediators endpoint.
         """
         try:
-            mediator_response = self._cached_api_call(ONTAPMEDIATORRESPONSE_MAPPING.api_endpoint)
+            mediator_response = self._cached_api_call(
+                ONTAPMEDIATORRESPONSE_MAPPING.build_collection_url()
+            )
             parsed = parse_api_response(
                 ONTAPMEDIATORRESPONSE_MAPPING,
                 mediator_response,
@@ -1394,9 +1396,9 @@ class MetadataCollector:
         # Make all 3 API calls in parallel using cached calls
         # Request only needed fields for snapmirror to avoid timeout on large clusters
         endpoints = [
-            ONTAPSNAPMIRRORRELATIONSHIP_MAPPING.api_endpoint,
-            ONTAPCLUSTERPEER_MAPPING.api_endpoint,
-            ONTAPSVMPEER_MAPPING.api_endpoint,
+            ONTAPSNAPMIRRORRELATIONSHIP_MAPPING.build_collection_url(),
+            ONTAPCLUSTERPEER_MAPPING.build_collection_url(),
+            ONTAPSVMPEER_MAPPING.build_collection_url(),
         ]
 
         if self.parallel:
@@ -1490,11 +1492,11 @@ class MetadataCollector:
             return ProtocolsInfo()
 
         endpoints = [
-            ONTAPEXPORTPOLICY_MAPPING.api_endpoint,
-            ONTAPCIFSSHARE_MAPPING.api_endpoint,
-            ONTAPNFSSERVICE_MAPPING.api_endpoint,
-            ONTAPCIFSSERVICE_MAPPING.api_endpoint,
-            ONTAPS3BUCKET_MAPPING.api_endpoint,
+            ONTAPEXPORTPOLICY_MAPPING.build_collection_url(),
+            ONTAPCIFSSHARE_MAPPING.build_collection_url(),
+            ONTAPNFSSERVICE_MAPPING.build_collection_url(),
+            ONTAPCIFSSERVICE_MAPPING.build_collection_url(),
+            ONTAPS3BUCKET_MAPPING.build_collection_url(),
         ]
 
         if self.parallel:

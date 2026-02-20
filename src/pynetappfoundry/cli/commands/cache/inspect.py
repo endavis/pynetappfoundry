@@ -126,7 +126,7 @@ def _build_api_endpoint(mapping: TypeMapping, object_name: str) -> str:
     Returns:
         Full endpoint string.
     """
-    base_endpoint = mapping.api_endpoint
+    base_endpoint = mapping.build_collection_url()
     separator = "&" if "?" in base_endpoint else "?"
     return f"{base_endpoint}{separator}name={object_name}"
 
@@ -342,7 +342,7 @@ def inspect(ctx: click.Context, cluster: str, object_name: str, object_type: str
         print_exception(f"API query failed: {e}", e)
 
     # -- API (all) section --
-    base_endpoint = mapping.api_endpoint
+    base_endpoint = mapping.build_collection_url()
     console.print()
     console.rule("[bold] API (all) [/bold]")
     console.print(f"[dim]Endpoint: {base_endpoint}[/dim]")

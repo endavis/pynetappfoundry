@@ -569,16 +569,7 @@ def generate_mapping(
     lines.append(f"{mapping_name} = TypeMapping(")
     lines.append(f'    name="{class_name}",')
     lines.append(f"    model_class={class_name},")
-    lines.append(f'    api_endpoint="{endpoint.path}?fields=*')
-
-    # Add expensive fields to the endpoint query
-    expensive = [f for f in leaves if f.requires_explicit_fetch]
-    if expensive:
-        # Group by top-level prefix
-        top_level = sorted({f.api_path.split(".")[0] for f in expensive})
-        lines[-1] += "," + ",".join(top_level)
-
-    lines[-1] += '",'
+    lines.append(f'    api_endpoint="{endpoint.path}?fields=*",')
 
     lines.append(f'    api_type="{api_type}",')
 

@@ -9,7 +9,7 @@ from pynetappfoundry.cache.ontap.storage.volumes.files.model import OntapFileInf
 ONTAPFILEINFO_MAPPING = TypeMapping(
     name="OntapFileInfo",
     model_class=OntapFileInfo,
-    api_endpoint="/storage/volumes/{volume.uuid}/files/{path}?fields=*,qos_policy",
+    api_endpoint="/storage/volumes/{volume.uuid}/files/{path}?fields=*",
     api_type="ontap",
     parent_mapping="OntapVolume",
     parent_id_field="uuid",
