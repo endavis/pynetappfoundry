@@ -46,7 +46,15 @@ import pynetappfoundry.cache.ontap.storage.snapshot_policies
 import pynetappfoundry.cache.ontap.storage.volumes
 import pynetappfoundry.cache.ontap.svm.peers
 import pynetappfoundry.cache.ontap.svm.svms  # noqa: F401
-from pynetappfoundry.cache._base import (
+from pynetappfoundry.cache._registry import model_registry as _reg
+
+# Apply package-default TOML overlay field strategies
+from pynetappfoundry.cache.overlay_loader import load_overlays as _load_overlays
+
+_load_overlays(_reg)
+del _load_overlays, _reg
+
+from pynetappfoundry.cache._base import (  # noqa: E402
     METADATA_SCHEMA_MIN_COMPATIBLE,
     METADATA_SCHEMA_VERSION,
     CacheModel,
@@ -58,27 +66,27 @@ from pynetappfoundry.cache._base import (
 
 # Layer 3: Container models (importing _metadata triggers the full
 # model registration chain via transitive leaf-model imports)
-from pynetappfoundry.cache._metadata import (
+from pynetappfoundry.cache._metadata import (  # noqa: E402
     CachedClusterMetadata,
     RelationshipsInfo,
 )
 
 # Layer 1: Registry
-from pynetappfoundry.cache._registry import model_registry
+from pynetappfoundry.cache._registry import model_registry  # noqa: E402
 
 # Infrastructure (collector, db, diff, etc.)
-from pynetappfoundry.cache.collector import (
+from pynetappfoundry.cache.collector import (  # noqa: E402
     CollectionError,
     CollectionPhase,
     MetadataCollector,
     ProgressCallback,
     ProgressInfo,
 )
-from pynetappfoundry.cache.db import ClusterMetadataDB
-from pynetappfoundry.cache.diff import ChangeEntry, compute_diff, format_diff_summary
-from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.history_db import CacheHistoryDB
-from pynetappfoundry.cache.ontap.cluster.mediators.model import OntapMediatorResponse
+from pynetappfoundry.cache.db import ClusterMetadataDB  # noqa: E402
+from pynetappfoundry.cache.diff import ChangeEntry, compute_diff, format_diff_summary  # noqa: E402
+from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping  # noqa: E402
+from pynetappfoundry.cache.history_db import CacheHistoryDB  # noqa: E402
+from pynetappfoundry.cache.ontap.cluster.mediators.model import OntapMediatorResponse  # noqa: E402
 
 __all__ = [
     "METADATA_SCHEMA_MIN_COMPATIBLE",
