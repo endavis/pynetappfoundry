@@ -46,7 +46,7 @@ jobs:
           echo "$OUTPUT"
 
           # Check if there are any breaking changes after filtering
-          if [ -n "$OUTPUT" ] && echo "$OUTPUT" | grep -qE "^pynetappfoundry"; then
+          if [ -n "$OUTPUT" ] && echo "$OUTPUT" | grep -qE "pynetappfoundry"; then
             echo "has_breaking=true" >> "$GITHUB_OUTPUT"
           else
             echo "has_breaking=false" >> "$GITHUB_OUTPUT"
@@ -55,7 +55,7 @@ jobs:
           # Save output for comment step (handle multiline)
           {
             echo "details<<EOF"
-            echo "$OUTPUT"
+            echo "$OUTPUT" | head -500
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
