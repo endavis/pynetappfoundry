@@ -22,6 +22,7 @@ from pynetappfoundry.cache.diff import (
 from pynetappfoundry.cache.ontap.cluster.mediators.model import OntapMediatorResponse
 from pynetappfoundry.cache.ontap.cluster.model import ClusterInfo
 from pynetappfoundry.cache.ontap.cluster.nodes.model import OntapNodeResponse
+from pynetappfoundry.cache.ontap.protocols.nfs.export_policies.model import OntapExportPolicy
 from pynetappfoundry.cache.ontap.snapmirror.relationships.model import (
     OntapSnapmirrorRelationship,
 )
@@ -153,6 +154,12 @@ class TestGetDisplayName:
         result = _get_display_name(sm, "{source_path}->{destination_path}")
         assert result == "svm1:vol1->svm2:vol2"
 
+    def test_int_display_field_zero(self) -> None:
+        """Int display_field with value 0 returns '0', not model repr."""
+        policy = OntapExportPolicy(index=0)
+        result = _get_display_name(policy, "index")
+        assert result == "0"
+
     def test_missing_attribute_fallback(self) -> None:
         """Falls back to str(entity) when attribute is empty."""
         node = _node(UUID1, "")
@@ -226,6 +233,38 @@ class TestDiffEntityList:
         changes = _diff_entity_list("nodes", before, after, node_config)
         types = {c["type"] for c in changes}
         assert types == {"added", "removed", "modified"}
+
+    def test_entity_with_int_key_zero_added(self) -> None:
+        """Entity with int key_field=0 detected as added."""
+        config = _ENTITY_CONFIGS["protocols.nfs_export_policies"]
+        before: list[Any] = []
+        after = [OntapExportPolicy(index=0)]
+        changes = _diff_entity_list("protocols.nfs_export_policies", before, after, config)
+        assert len(changes) == 1
+        assert changes[0]["type"] == "added"
+        assert changes[0]["entity"] == "0"
+
+    def test_entity_with_int_key_zero_removed(self) -> None:
+        """Entity with int key_field=0 detected as removed."""
+        config = _ENTITY_CONFIGS["protocols.nfs_export_policies"]
+        before = [OntapExportPolicy(index=0)]
+        after: list[Any] = []
+        changes = _diff_entity_list("protocols.nfs_export_policies", before, after, config)
+        assert len(changes) == 1
+        assert changes[0]["type"] == "removed"
+        assert changes[0]["entity"] == "0"
+
+    def test_entity_with_int_key_zero_modified(self) -> None:
+        """Entity with int key_field=0 and changed field detected as modified."""
+        config = _ENTITY_CONFIGS["protocols.nfs_export_policies"]
+        before = [OntapExportPolicy(index=0, chown_mode="restricted")]
+        after = [OntapExportPolicy(index=0, chown_mode="unrestricted")]
+        changes = _diff_entity_list("protocols.nfs_export_policies", before, after, config)
+        mod_changes = [c for c in changes if c["type"] == "modified"]
+        assert len(mod_changes) == 1
+        assert mod_changes[0]["field"] == "chown_mode"
+        assert mod_changes[0]["old"] == "restricted"
+        assert mod_changes[0]["new"] == "unrestricted"
 
 
 # ---------------------------------------------------------------------------
