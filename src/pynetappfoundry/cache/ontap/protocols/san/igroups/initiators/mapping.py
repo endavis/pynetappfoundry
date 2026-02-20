@@ -47,7 +47,7 @@ def _transform_records(record: dict[str, Any]) -> list[OntapIgroupInitiatorRecor
 ONTAPIGROUPINITIATOR_MAPPING = TypeMapping(
     name="OntapIgroupInitiator",
     model_class=OntapIgroupInitiator,
-    api_endpoint="/protocols/san/igroups/{igroup.uuid}/initiators?fields=*,connectivity_tracking",
+    api_endpoint="/protocols/san/igroups/{igroup.uuid}/initiators?fields=*",
     api_type="ontap",
     parent_mapping="OntapIgroup",
     parent_id_field="uuid",

@@ -1,4 +1,4 @@
-"""Tests for collector endpoint usage — verifies mappings are used instead of hardcoded strings."""
+"""Tests for collector endpoint usage — verifies mappings produce correct collection URLs."""
 
 from __future__ import annotations
 
@@ -13,30 +13,34 @@ from pynetappfoundry.cache.ontap.storage.snapshot_policies.mapping import (
 class TestCollectorMappingEndpoints:
     """Verify that collector-relevant mappings have correct endpoints."""
 
-    def test_snapshot_policies_includes_copies(self) -> None:
-        """Snapshot-policies mapping includes copies in api_endpoint."""
-        assert ",copies" in ONTAPSNAPSHOTPOLICY_MAPPING.api_endpoint
+    def test_snapshot_policies_api_endpoint_simplified(self) -> None:
+        """Snapshot-policies api_endpoint is now simplified to ?fields=*."""
+        assert ONTAPSNAPSHOTPOLICY_MAPPING.api_endpoint == "/storage/snapshot-policies?fields=*"
 
-    def test_snapshot_policies_endpoint(self) -> None:
-        """Snapshot-policies mapping has the expected full endpoint."""
+    def test_snapshot_policies_build_collection_url_includes_copies(self) -> None:
+        """build_collection_url() dynamically appends copies."""
+        url = ONTAPSNAPSHOTPOLICY_MAPPING.build_collection_url()
+        assert ",copies" in url
+
+    def test_snapshot_policies_collection_url(self) -> None:
+        """Snapshot-policies build_collection_url() has the expected full URL."""
         assert (
-            ONTAPSNAPSHOTPOLICY_MAPPING.api_endpoint == "/storage/snapshot-policies?fields=*,copies"
+            ONTAPSNAPSHOTPOLICY_MAPPING.build_collection_url()
+            == "/storage/snapshot-policies?fields=*,copies"
         )
 
     def test_export_policies_bulk_endpoint(self) -> None:
-        """Export-policies mapping has a bulk collection endpoint (no {id})."""
+        """Export-policies api_endpoint has no {id} placeholder."""
         assert "{" not in ONTAPEXPORTPOLICY_MAPPING.api_endpoint
 
-    def test_export_policies_includes_rules(self) -> None:
-        """Export-policies mapping includes rules in api_endpoint."""
-        assert ",rules" in ONTAPEXPORTPOLICY_MAPPING.api_endpoint
+    def test_export_policies_api_endpoint_simplified(self) -> None:
+        """Export-policies api_endpoint is now simplified to ?fields=*."""
+        assert ONTAPEXPORTPOLICY_MAPPING.api_endpoint == "/protocols/nfs/export-policies?fields=*"
 
-    def test_export_policies_endpoint(self) -> None:
-        """Export-policies mapping has the expected full endpoint."""
-        assert (
-            ONTAPEXPORTPOLICY_MAPPING.api_endpoint
-            == "/protocols/nfs/export-policies?fields=*,rules"
-        )
+    def test_export_policies_build_collection_url(self) -> None:
+        """build_collection_url() returns base endpoint (no expensive fields annotated)."""
+        url = ONTAPEXPORTPOLICY_MAPPING.build_collection_url()
+        assert url == "/protocols/nfs/export-policies?fields=*"
 
     def test_export_policies_records_path(self) -> None:
         """Export-policies mapping uses standard records path."""

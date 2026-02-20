@@ -77,7 +77,7 @@ def _transform_rebalancing_notices(record: dict[str, Any]) -> list[OntapVolumeNo
 ONTAPVOLUME_MAPPING = TypeMapping(
     name="OntapVolume",
     model_class=OntapVolume,
-    api_endpoint="/storage/volumes?fields=*,aggressive_readahead_mode,analytics,anti_ransomware,application,asynchronous_directory_delete,autosize,clone,cloud_write_enabled,convert_unicode,efficiency,encryption,error_state,files,flexcache_endpoint_type,guarantee,is_svm_root,max_dir_size,metric,movement,nas,qos,queue_for_encryption,quota,rebalancing,snaplock,snapshot_policy,space,statistics",
+    api_endpoint="/storage/volumes?fields=*",
     api_type="ontap",
     fields=(
         FieldMapping(

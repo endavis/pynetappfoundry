@@ -38,7 +38,7 @@ def _transform_routes(record: dict[str, Any]) -> list[OntapSvmRoute]:
 ONTAPSVM_MAPPING = TypeMapping(
     name="OntapSvm",
     model_class=OntapSvm,
-    api_endpoint="/svm/svms?fields=*,snapmirror",
+    api_endpoint="/svm/svms?fields=*",
     api_type="ontap",
     fields=(
         FieldMapping(

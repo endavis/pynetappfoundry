@@ -73,7 +73,7 @@ def _transform_metrocluster_ports(record: dict[str, Any]) -> list[OntapNodeRespo
 ONTAPNODERESPONSE_MAPPING = TypeMapping(
     name="OntapNodeResponse",
     model_class=OntapNodeResponse,
-    api_endpoint="/cluster/nodes?fields=*,metric,statistics",
+    api_endpoint="/cluster/nodes?fields=*",
     api_type="ontap",
     fields=(
         FieldMapping(

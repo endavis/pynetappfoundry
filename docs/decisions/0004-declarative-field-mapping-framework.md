@@ -71,10 +71,22 @@ parent_id_field: str | None = None   # Placeholder value field on parent
 
 # Computed methods
 def explicit_fetch_fields(self) -> list[str]: ...
+def explicit_fetch_api_fields(self) -> list[str]: ...  # Issue #317
+def build_collection_url(self) -> str: ...              # Issue #317
 def cached_fields(self) -> tuple[FieldMapping, ...]: ...
 def realtime_fields(self) -> tuple[FieldMapping, ...]: ...
 def derived_fields(self) -> tuple[FieldMapping, ...]: ...
 ```
+
+### Dynamic URL Building (Issue #317)
+
+`build_collection_url()` makes `requires_explicit_fetch` the single source of truth
+for expensive ONTAP fields. Instead of hardcoding expensive field names in
+`api_endpoint` (e.g., `?fields=*,analytics,autosize,...`), the mapping stores only
+`?fields=*` and `build_collection_url()` dynamically appends the expensive fields
+by inspecting `requires_explicit_fetch` on each `FieldMapping`. This eliminates the
+dual source of truth and ensures TOML overlays that change `requires_explicit_fetch`
+are automatically reflected in collection URLs.
 
 ### OntapUUID Dedicated Type
 
@@ -113,6 +125,7 @@ annotated mappings from API specs, with per-field customization via TOML overlay
 - Issue #211: refactor: migrate NetworkLIF to field mapping framework
 - Issue #212: refactor: migrate BroadcastDomain to field mapping framework
 - Issue #301: feat: field annotations, OpenAPI codegen, and SQL cache storage
+- Issue #317: feat: collector ?fields= expansion for expensive ONTAP fields
 
 ## Related Documentation
 

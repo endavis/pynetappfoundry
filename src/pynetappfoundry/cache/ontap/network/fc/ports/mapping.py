@@ -9,7 +9,7 @@ from pynetappfoundry.cache.ontap.network.fc.ports.model import OntapFcPort
 ONTAPFCPORT_MAPPING = TypeMapping(
     name="OntapFcPort",
     model_class=OntapFcPort,
-    api_endpoint="/network/fc/ports?fields=*,fabric,metric,statistics",
+    api_endpoint="/network/fc/ports?fields=*",
     api_type="ontap",
     fields=(
         FieldMapping(

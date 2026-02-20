@@ -9,7 +9,7 @@ from pynetappfoundry.cache.ontap.protocols.cifs.services.model import OntapCifsS
 ONTAPCIFSSERVICE_MAPPING = TypeMapping(
     name="OntapCifsService",
     model_class=OntapCifsService,
-    api_endpoint="/protocols/cifs/services?fields=*,metric,statistics",
+    api_endpoint="/protocols/cifs/services?fields=*",
     api_type="ontap",
     fields=(
         FieldMapping(

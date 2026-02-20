@@ -9,7 +9,7 @@ from pynetappfoundry.cache.ontap.protocols.nfs.services.model import OntapNfsSer
 ONTAPNFSSERVICE_MAPPING = TypeMapping(
     name="OntapNfsService",
     model_class=OntapNfsService,
-    api_endpoint="/protocols/nfs/services?fields=*,metric,statistics",
+    api_endpoint="/protocols/nfs/services?fields=*",
     api_type="ontap",
     fields=(
         FieldMapping(

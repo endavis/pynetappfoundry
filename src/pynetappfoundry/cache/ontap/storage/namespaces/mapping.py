@@ -36,7 +36,7 @@ def _transform_subsystem_map_subsystem_hosts(
 ONTAPNVMENAMESPACE_MAPPING = TypeMapping(
     name="OntapNvmeNamespace",
     model_class=OntapNvmeNamespace,
-    api_endpoint="/storage/namespaces?fields=*,auto_delete,metric,space,statistics,status,subsystem_map",
+    api_endpoint="/storage/namespaces?fields=*",
     api_type="ontap",
     fields=(
         FieldMapping(

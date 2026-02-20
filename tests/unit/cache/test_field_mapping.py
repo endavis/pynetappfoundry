@@ -801,6 +801,234 @@ class TestCollectionEndpoint:
 
 
 # ---------------------------------------------------------------------------
+# explicit_fetch_api_fields tests
+# ---------------------------------------------------------------------------
+
+
+class TestExplicitFetchApiFields:
+    """Tests for TypeMapping.explicit_fetch_api_fields."""
+
+    def test_extracts_top_level_name(self) -> None:
+        """Extracts the first segment of api_path for expensive fields."""
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/t?fields=*",
+            fields=(
+                FieldMapping(cache_attr="name", api_path="name"),
+                FieldMapping(
+                    cache_attr="analytics_state",
+                    api_path="analytics.state",
+                    requires_explicit_fetch=True,
+                ),
+            ),
+        )
+        assert tm.explicit_fetch_api_fields() == ["analytics"]
+
+    def test_deduplicates_top_level(self) -> None:
+        """Multiple fields under the same top-level are deduplicated."""
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/t?fields=*",
+            fields=(
+                FieldMapping(
+                    cache_attr="analytics_state",
+                    api_path="analytics.state",
+                    requires_explicit_fetch=True,
+                ),
+                FieldMapping(
+                    cache_attr="analytics_progress",
+                    api_path="analytics.progress",
+                    requires_explicit_fetch=True,
+                ),
+            ),
+        )
+        assert tm.explicit_fetch_api_fields() == ["analytics"]
+
+    def test_transform_only_falls_back_to_cache_attr(self) -> None:
+        """Fields without api_path fall back to cache_attr."""
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/t?fields=*",
+            fields=(
+                FieldMapping(
+                    cache_attr="copies",
+                    transform=lambda r: r.get("copies", []),
+                    default=[],
+                    requires_explicit_fetch=True,
+                ),
+            ),
+        )
+        assert tm.explicit_fetch_api_fields() == ["copies"]
+
+    def test_excludes_non_cache_strategy(self) -> None:
+        """Fields with strategy != 'cache' are excluded."""
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/t?fields=*",
+            fields=(
+                FieldMapping(
+                    cache_attr="rt_metric",
+                    api_path="metric.throughput",
+                    requires_explicit_fetch=True,
+                    cache_strategy="realtime",
+                ),
+            ),
+        )
+        assert tm.explicit_fetch_api_fields() == []
+
+    def test_empty_when_none_require_explicit_fetch(self) -> None:
+        """Returns empty list when no fields need explicit fetch."""
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/t?fields=*",
+            fields=(
+                FieldMapping(cache_attr="name", api_path="name"),
+                FieldMapping(cache_attr="value", api_path="value", default=0),
+            ),
+        )
+        assert tm.explicit_fetch_api_fields() == []
+
+    def test_sorted_output(self) -> None:
+        """Output is sorted alphabetically."""
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/t?fields=*",
+            fields=(
+                FieldMapping(
+                    cache_attr="z_field",
+                    api_path="zebra.data",
+                    requires_explicit_fetch=True,
+                ),
+                FieldMapping(
+                    cache_attr="a_field",
+                    api_path="alpha.data",
+                    requires_explicit_fetch=True,
+                ),
+            ),
+        )
+        assert tm.explicit_fetch_api_fields() == ["alpha", "zebra"]
+
+
+# ---------------------------------------------------------------------------
+# build_collection_url tests
+# ---------------------------------------------------------------------------
+
+
+class TestBuildCollectionUrl:
+    """Tests for TypeMapping.build_collection_url."""
+
+    def test_no_expensive_fields(self) -> None:
+        """Endpoint with no expensive fields returns ?fields=*."""
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/cluster?fields=*",
+            fields=(FieldMapping(cache_attr="name", api_path="name"),),
+        )
+        assert tm.build_collection_url() == "/cluster?fields=*"
+
+    def test_with_expensive_fields(self) -> None:
+        """Expensive fields are appended to ?fields=*."""
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/storage/volumes?fields=*",
+            fields=(
+                FieldMapping(cache_attr="name", api_path="name"),
+                FieldMapping(
+                    cache_attr="analytics_state",
+                    api_path="analytics.state",
+                    requires_explicit_fetch=True,
+                ),
+                FieldMapping(
+                    cache_attr="metric_iops",
+                    api_path="metric.iops",
+                    requires_explicit_fetch=True,
+                ),
+            ),
+        )
+        assert tm.build_collection_url() == "/storage/volumes?fields=*,analytics,metric"
+
+    def test_strips_id_placeholder(self) -> None:
+        """Placeholders are stripped from the path."""
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/storage/volumes/{volume.uuid}/snapshots?fields=*",
+            fields=(
+                FieldMapping(cache_attr="name", api_path="name"),
+                FieldMapping(
+                    cache_attr="reclaimable_space",
+                    api_path="reclaimable_space",
+                    requires_explicit_fetch=True,
+                ),
+            ),
+        )
+        assert tm.build_collection_url() == "/storage/volumes/snapshots?fields=*,reclaimable_space"
+
+    def test_endpoint_without_fields_star_unchanged(self) -> None:
+        """Endpoint without ?fields=* is returned unchanged."""
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/cluster/nodes?order_by=name",
+            fields=(
+                FieldMapping(cache_attr="name", api_path="name"),
+                FieldMapping(
+                    cache_attr="metric",
+                    api_path="metric.iops",
+                    requires_explicit_fetch=True,
+                ),
+            ),
+        )
+        assert tm.build_collection_url() == "/cluster/nodes?order_by=name"
+
+    def test_transform_only_fields(self) -> None:
+        """Transform-only fields use cache_attr as field name."""
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/storage/snapshot-policies?fields=*",
+            fields=(
+                FieldMapping(cache_attr="name", api_path="name"),
+                FieldMapping(
+                    cache_attr="copies",
+                    transform=lambda r: r.get("copies", []),
+                    default=[],
+                    requires_explicit_fetch=True,
+                ),
+            ),
+        )
+        assert tm.build_collection_url() == "/storage/snapshot-policies?fields=*,copies"
+
+    def test_empty_endpoint(self) -> None:
+        """Empty endpoint returns empty string."""
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="",
+            fields=(FieldMapping(cache_attr="name", api_path="name"),),
+        )
+        assert tm.build_collection_url() == ""
+
+    def test_no_query_string(self) -> None:
+        """Endpoint without query string returns path only."""
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/storage/volumes/{uuid}",
+            fields=(FieldMapping(cache_attr="name", api_path="name"),),
+        )
+        assert tm.build_collection_url() == "/storage/volumes"
+
+
+# ---------------------------------------------------------------------------
 # cache_strategy filtering in parse_api_record tests
 # ---------------------------------------------------------------------------
 

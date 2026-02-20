@@ -9,7 +9,7 @@ from pynetappfoundry.cache.ontap.protocols.nvme.services.model import OntapNvmeS
 ONTAPNVMESERVICE_MAPPING = TypeMapping(
     name="OntapNvmeService",
     model_class=OntapNvmeService,
-    api_endpoint="/protocols/nvme/services?fields=*,metric,statistics",
+    api_endpoint="/protocols/nvme/services?fields=*",
     api_type="ontap",
     fields=(
         FieldMapping(

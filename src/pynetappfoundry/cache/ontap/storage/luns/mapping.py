@@ -70,7 +70,7 @@ def _transform_vvol_bindings(record: dict[str, Any]) -> list[OntapLunBinding]:
 ONTAPLUN_MAPPING = TypeMapping(
     name="OntapLun",
     model_class=OntapLun,
-    api_endpoint="/storage/luns?fields=*,attributes,auto_delete,copy,lun_maps,metric,movement,space,statistics,vvol",
+    api_endpoint="/storage/luns?fields=*",
     api_type="ontap",
     fields=(
         FieldMapping(

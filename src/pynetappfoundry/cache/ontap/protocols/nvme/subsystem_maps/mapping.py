@@ -9,7 +9,7 @@ from pynetappfoundry.cache.ontap.protocols.nvme.subsystem_maps.model import Onta
 ONTAPNVMESUBSYSTEMMAP_MAPPING = TypeMapping(
     name="OntapNvmeSubsystemMap",
     model_class=OntapNvmeSubsystemMap,
-    api_endpoint="/protocols/nvme/subsystem-maps?fields=*,anagrpid",
+    api_endpoint="/protocols/nvme/subsystem-maps?fields=*",
     api_type="ontap",
     fields=(
         FieldMapping(

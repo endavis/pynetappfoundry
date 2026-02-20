@@ -9,7 +9,7 @@ from pynetappfoundry.cache.ontap.storage.qtrees.model import OntapQtree
 ONTAPQTREE_MAPPING = TypeMapping(
     name="OntapQtree",
     model_class=OntapQtree,
-    api_endpoint="/storage/qtrees?fields=*,ext_performance_monitoring,metric,statistics",
+    api_endpoint="/storage/qtrees?fields=*",
     api_type="ontap",
     fields=(
         FieldMapping(

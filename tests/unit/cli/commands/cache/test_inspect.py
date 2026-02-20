@@ -113,9 +113,16 @@ class TestBuildApiEndpoint:
         mapping = TypeMapping(
             name="Volume",
             model_class=OntapVolume,
-            api_endpoint="/storage/volumes?fields=*,autosize",
+            api_endpoint="/storage/volumes?fields=*",
             cli_command="volume show",
-            fields=(FieldMapping(cache_attr="name", api_path="name"),),
+            fields=(
+                FieldMapping(cache_attr="name", api_path="name"),
+                FieldMapping(
+                    cache_attr="autosize_mode",
+                    api_path="autosize.mode",
+                    requires_explicit_fetch=True,
+                ),
+            ),
         )
         result = _build_api_endpoint(mapping, "vol1")
         assert result == "/storage/volumes?fields=*,autosize&name=vol1"

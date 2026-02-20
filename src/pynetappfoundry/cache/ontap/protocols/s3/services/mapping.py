@@ -26,7 +26,7 @@ def _transform_users(record: dict[str, Any]) -> list[OntapS3ServiceUser]:
 ONTAPS3SERVICE_MAPPING = TypeMapping(
     name="OntapS3Service",
     model_class=OntapS3Service,
-    api_endpoint="/protocols/s3/services?fields=*,metric,statistics",
+    api_endpoint="/protocols/s3/services?fields=*",
     api_type="ontap",
     fields=(
         FieldMapping(

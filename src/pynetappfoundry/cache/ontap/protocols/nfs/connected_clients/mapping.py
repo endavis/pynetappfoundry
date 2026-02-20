@@ -9,7 +9,7 @@ from pynetappfoundry.cache.ontap.protocols.nfs.connected_clients.model import On
 ONTAPNFSCLIENTS_MAPPING = TypeMapping(
     name="OntapNfsClients",
     model_class=OntapNfsClients,
-    api_endpoint="/protocols/nfs/connected-clients?fields=*,export_policy",
+    api_endpoint="/protocols/nfs/connected-clients?fields=*",
     api_type="ontap",
     fields=(
         FieldMapping(
