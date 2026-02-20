@@ -23,6 +23,7 @@ from pynetappfoundry.cache._metadata import (
     CachedClusterMetadata,
     RelationshipsInfo,
 )
+from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import (
     parse_api_record,
     parse_api_response,
@@ -172,6 +173,13 @@ class MetadataCollector:
         CollectionPhase.PROTOCOLS: "Protocols",
     }
 
+    # Maps TypeMapping registry names to results dict keys for derived field evaluation.
+    # Only TypeMappings that have derived fields need to be listed here.
+    _MAPPING_RESULTS_KEYS: ClassVar[list[tuple[str, str]]] = [
+        ("Cluster", "cluster"),
+        ("OntapNodeResponse", "nodes"),
+    ]
+
     def __init__(
         self,
         api_client: ONTAPAPIClient | None = None,
@@ -283,6 +291,57 @@ class MetadataCollector:
         with self._cache_lock:
             self._api_cache.clear()
 
+    def _evaluate_derived_fields(self, results: dict[str, Any]) -> dict[str, Any]:
+        """Evaluate derived fields across all TypeMappings that declare them.
+
+        Iterates ``_MAPPING_RESULTS_KEYS``, looks up each TypeMapping from
+        the model registry, and for any that have ``derived_fields()``,
+        calls each field's ``post_collection(item, results)`` on every item
+        in the results dict.
+
+        Handles both singular results (e.g. ``ClusterInfo``) and list results
+        (e.g. ``list[OntapNodeResponse]``).
+
+        Args:
+            results: The full collection results dict keyed by phase name.
+
+        Returns:
+            Updated results dict with derived fields evaluated.
+        """
+        for mapping_name, results_key in self._MAPPING_RESULTS_KEYS:
+            if results_key not in results:
+                continue
+
+            mapping = model_registry.get_mapping(mapping_name)
+            if mapping is None:
+                continue
+
+            derived = mapping.derived_fields()
+            if not derived:
+                continue
+
+            result = results[results_key]
+            is_list = isinstance(result, list)
+            items = result if is_list else [result]
+
+            for field in derived:
+                if field.post_collection is None:
+                    continue
+                try:
+                    items = [field.post_collection(item, results) for item in items]
+                except Exception:
+                    logger.error(
+                        "%s DERIVED_FIELD_FAILURE: %s.%s - post_collection error",
+                        self._log_prefix,
+                        mapping_name,
+                        field.cache_attr,
+                    )
+                    raise
+
+            results[results_key] = items if is_list else items[0]
+
+        return results
+
     def collect_all(self, cluster_name: str) -> CachedClusterMetadata:
         """Collect all metadata categories for a cluster.
 
@@ -311,11 +370,9 @@ class MetadataCollector:
         total_elapsed = time.monotonic() - total_start
         logger.info("%s Completed metadata collection in %.2fs", self._log_prefix, total_elapsed)
 
-        # Enrich cluster info with is_ha (derived from node count)
+        # Evaluate derived fields (e.g. is_ha from node count)
+        results = self._evaluate_derived_fields(results)
         cluster_info: ClusterInfo = results["cluster"]
-        cluster_info = cluster_info.model_copy(
-            update={"is_ha": len(results["nodes"]) > 1},
-        )
 
         # Post-process Azure cloud metadata to fix instance links
         cloud_metadata = self._update_azure_cloud_links(
