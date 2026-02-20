@@ -53,13 +53,14 @@ class CacheHistoryDB(SQLiteDB):
 
     def __init__(
         self,
-        db_path: Path | None = None,
+        db_path: Path | str | None = None,
         config: Config | None = None,
     ) -> None:
         """Initialize the cache history database.
 
         Args:
-            db_path: Direct path to database file (for testing).
+            db_path: Direct path to database file, or ":memory:" for
+                in-memory databases (useful for testing).
             config: Configuration object with config_dir path.
                    If provided, uses {config_dir}/.cache/cache_history.db.
 

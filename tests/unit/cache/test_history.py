@@ -24,10 +24,9 @@ class TestCacheHistoryDB:
     """Tests for CacheHistoryDB class."""
 
     @pytest.fixture
-    def db(self, tmp_path: Path) -> CacheHistoryDB:
-        """Create a test history database."""
-        db_path = tmp_path / "test_history.db"
-        return CacheHistoryDB(db_path=db_path)
+    def db(self) -> CacheHistoryDB:
+        """Create an in-memory test history database."""
+        return CacheHistoryDB(db_path=":memory:")
 
     def test_init_creates_table(self, db: CacheHistoryDB) -> None:
         """Test that initialization creates the cache_changes table."""
@@ -293,10 +292,9 @@ class TestHistoryIntegration:
     """Integration tests for history tracking during cache operations."""
 
     @pytest.fixture
-    def history_db(self, tmp_path: Path) -> CacheHistoryDB:
-        """Create a test history database."""
-        db_path = tmp_path / "test_history.db"
-        return CacheHistoryDB(db_path=db_path)
+    def history_db(self) -> CacheHistoryDB:
+        """Create an in-memory test history database."""
+        return CacheHistoryDB(db_path=":memory:")
 
     def test_initial_capture_records_history(self, history_db: CacheHistoryDB) -> None:
         """Test that first cache refresh records initial snapshot."""
@@ -492,10 +490,9 @@ class TestHistoryPreservation:
     """Tests verifying history is preserved through various operations."""
 
     @pytest.fixture
-    def history_db(self, tmp_path: Path) -> CacheHistoryDB:
-        """Create a test history database."""
-        db_path = tmp_path / "test_preserve.db"
-        return CacheHistoryDB(db_path=db_path)
+    def history_db(self) -> CacheHistoryDB:
+        """Create an in-memory test history database."""
+        return CacheHistoryDB(db_path=":memory:")
 
     def test_history_survives_database_reopen(self, tmp_path: Path) -> None:
         """Test that history survives database close and reopen."""

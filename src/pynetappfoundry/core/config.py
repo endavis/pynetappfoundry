@@ -322,12 +322,16 @@ class Config:
             logging.debug(f"{_file_name} : no clusters to enrich with cache")
             return
 
-        # Try to open the cache database
+        # Try to open the cache database (skip if no cache file exists)
         cache_db: ClusterMetadataDB | None = None
-        try:
-            cache_db = ClusterMetadataDB(config=self)
-        except Exception as e:
-            logging.debug(f"{_file_name} : could not open cache database: {e}")
+        cache_db_path = self.config_dir / ".cache" / "cluster_metadata.db"
+        if not cache_db_path.exists():
+            logging.debug(f"{_file_name} : no cache database found, using defaults")
+        else:
+            try:
+                cache_db = ClusterMetadataDB(config=self)
+            except Exception as e:
+                logging.debug(f"{_file_name} : could not open cache database: {e}")
 
         for cluster_name, cluster_data in clusters.items():
             # Add default values for all cloud fields
