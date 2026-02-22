@@ -25,6 +25,7 @@ from pynetappfoundry.utils.cloud import (
 )
 
 if TYPE_CHECKING:
+    from pynetappfoundry.core.cluster_entry import ClusterEntry
     from pynetappfoundry.core.config import Config
 
 # CSS for tree view styling
@@ -275,7 +276,13 @@ class HTMLReportBuilder:
         self.counts["connectors"] = self.config.count("connectors", "ip")
 
         for item in self.cluster_details:
-            self.clusterdata[item] = ClusterData(item, self, **self.cluster_details[item])
+            entry = self.cluster_details[item]
+            self.clusterdata[item] = ClusterData(
+                item,
+                self,
+                cluster_entry=entry,  # type: ignore[arg-type]
+                **entry,
+            )
             cluster = self.clusterdata[item]
 
             # Count HA vs single-node clusters
@@ -702,6 +709,7 @@ class ClusterData:
         self,
         clustername: str,
         app_instance: HTMLReportBuilder,
+        cluster_entry: ClusterEntry | None = None,
         **kwargs: Any,
     ) -> None:
         """Initialize cluster data and gather information from the cluster.
@@ -709,10 +717,12 @@ class ClusterData:
         Args:
             clustername: Name of the cluster.
             app_instance: Parent HTMLReportBuilder instance.
+            cluster_entry: ClusterEntry wrapper with lazy cache accessors.
             **kwargs: Cluster configuration from TOML.
         """
         self.name = clustername
         self.cluster_type = ""
+        self._cluster_entry = cluster_entry
         for name, value in kwargs.items():
             setattr(self, name, value)
         self.fetched_data: dict[str, Any] = {}
@@ -734,13 +744,28 @@ class ClusterData:
     def _build_cloud_info(self) -> None:
         """Build cloud-specific information (Azure subscription IDs, resource URLs).
 
-        Uses cloud_* fields from cluster config (enriched from cache).
+        Uses cached metadata from ClusterEntry.ontap.cloud.
         """
-        # Get cloud info from cluster config (enriched by Config._enrich_with_cache)
-        cloud_provider = getattr(self, "cloud_provider", "")
-        if cloud_provider.lower() == "azure":
-            sub_id = getattr(self, "cloud_account_id", "")
-            resource_group = getattr(self, "cloud_resource_group_name", "")
+        if not self._cluster_entry:
+            return
+
+        ontap = self._cluster_entry.ontap
+        if not ontap or not ontap.cloud:
+            return
+
+        first_cloud = ontap.cloud[0]
+        self.cloud_provider = first_cloud.provider
+        self.cloud_account_id = first_cloud.account_id
+        self.cloud_resource_group_name = first_cloud.resource_group_name
+        self.cloud_instance_id = first_cloud.instance_id
+        self.cloud_instance_type = first_cloud.instance_type
+        self.cloud_region = first_cloud.region
+        self.cloud_primary_ip = first_cloud.primary_ip
+        self.cloud_availability_zone = first_cloud.availability_zone
+
+        if self.cloud_provider.lower() == "azure":
+            sub_id = self.cloud_account_id
+            resource_group = self.cloud_resource_group_name
             if sub_id and resource_group:
                 self.cloud_resource_group_id = build_azure_id(sub_id, resource_group)
                 self.cloud_resource_group_url = build_azure_portal_link(
