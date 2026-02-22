@@ -180,6 +180,34 @@ class TypeMapping:
                 keys.add(field.cache_attr)
         return sorted(keys)
 
+    def build_parameterized_url(self, parent_id: str) -> str:
+        """Build a parameterized endpoint URL by substituting the placeholder.
+
+        Replaces the first ``{...}`` path placeholder with *parent_id*,
+        then appends explicit-fetch fields the same way
+        :meth:`build_collection_url` does.
+
+        Args:
+            parent_id: The parent object's identifier value.
+
+        Returns:
+            Fully resolved endpoint URL.
+        """
+        parts = self.api_endpoint.split("?", 1)
+        path = re.sub(r"\{[^}]+\}", parent_id, parts[0], count=1)
+
+        if len(parts) == 1:
+            return path
+
+        query = parts[1]
+        if not query.startswith("fields=*"):
+            return f"{path}?{query}"
+
+        expensive = self.explicit_fetch_api_fields()
+        if expensive:
+            return f"{path}?fields=*,{','.join(expensive)}"
+        return f"{path}?fields=*"
+
     def build_collection_url(self) -> str:
         """Build the collection URL with dynamically appended expensive fields.
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 from unittest.mock import patch
 
@@ -319,3 +320,149 @@ class TestClusterMappingIsHa:
         assert derived[0].cache_attr == "is_ha"
         assert derived[0].cache_strategy == "derived"
         assert derived[0].post_collection is compute_is_ha
+
+
+# ---------------------------------------------------------------------------
+# _collect_parameterized tests
+# ---------------------------------------------------------------------------
+
+
+class _ParentModel(BaseModel):
+    """Parent model with uuid for parameterized tests."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class _ChildModel(BaseModel):
+    """Child model for parameterized tests."""
+
+    name: str = ""
+    parent_uuid: str = ""
+
+
+_CHILD_MAPPING = TypeMapping(
+    name="Child",
+    model_class=_ChildModel,
+    api_endpoint="/parents/{parent.uuid}/children?fields=*",
+    fields=(
+        FieldMapping(cache_attr="name", api_path="name"),
+        FieldMapping(cache_attr="parent_uuid", api_path="parent.uuid", default=""),
+    ),
+    parent_mapping="Parent",
+    parent_id_field="uuid",
+)
+
+
+class TestCollectParameterized:
+    """Tests for MetadataCollector._collect_parameterized."""
+
+    @pytest.fixture
+    def collector(self) -> MetadataCollector:
+        """Collector with no clients (for unit testing)."""
+        return MetadataCollector(api_client=None, cli_client=None)
+
+    def test_iterates_parents_aggregates_results(self, collector: MetadataCollector) -> None:
+        """2 parents each returning 2 children → 4 total."""
+        parents = [
+            _ParentModel(name="p1", uuid="uuid-1"),
+            _ParentModel(name="p2", uuid="uuid-2"),
+        ]
+        responses = {
+            "/parents/uuid-1/children?fields=*": {
+                "records": [
+                    {"name": "c1", "parent": {"uuid": "uuid-1"}},
+                    {"name": "c2", "parent": {"uuid": "uuid-1"}},
+                ],
+            },
+            "/parents/uuid-2/children?fields=*": {
+                "records": [
+                    {"name": "c3", "parent": {"uuid": "uuid-2"}},
+                    {"name": "c4", "parent": {"uuid": "uuid-2"}},
+                ],
+            },
+        }
+
+        with patch.object(
+            collector, "_cached_api_call", side_effect=lambda url, **kw: responses[url]
+        ):
+            result = collector._collect_parameterized(_CHILD_MAPPING, parents)
+        assert len(result) == 4
+        names = [r.name for r in result]  # type: ignore[attr-defined]
+        assert names == ["c1", "c2", "c3", "c4"]
+
+    def test_empty_parent_list_returns_empty(self, collector: MetadataCollector) -> None:
+        """No parents → empty list."""
+        result = collector._collect_parameterized(_CHILD_MAPPING, [])
+        assert result == []
+
+    def test_parent_missing_id_field_skipped(
+        self, collector: MetadataCollector, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """Parent without the id attr → logged warning, skipped."""
+        # _ParentModel has uuid="" by default (empty → falsy → skip)
+        parents = [_ParentModel(name="no-uuid")]
+
+        with caplog.at_level(logging.WARNING):
+            result = collector._collect_parameterized(_CHILD_MAPPING, parents)
+        assert result == []
+        assert any("SKIP_PARENT" in r.message for r in caplog.records)
+
+    def test_parent_empty_id_skipped(
+        self, collector: MetadataCollector, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """Parent with empty string id → skipped."""
+        parents = [_ParentModel(name="empty-uuid", uuid="")]
+
+        with caplog.at_level(logging.WARNING):
+            result = collector._collect_parameterized(_CHILD_MAPPING, parents)
+        assert result == []
+        assert any("SKIP_PARENT" in r.message for r in caplog.records)
+
+    def test_failed_child_fetch_continues(
+        self, collector: MetadataCollector, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """API error on one parent → warns, continues, returns partial results."""
+        parents = [
+            _ParentModel(name="p1", uuid="uuid-1"),
+            _ParentModel(name="p2", uuid="uuid-2"),
+        ]
+
+        def side_effect(url: str, **kw: Any) -> dict[str, Any]:
+            if "uuid-1" in url:
+                raise ConnectionError("timeout")
+            return {"records": [{"name": "c1", "parent": {"uuid": "uuid-2"}}]}
+
+        with (
+            caplog.at_level(logging.WARNING),
+            patch.object(collector, "_cached_api_call", side_effect=side_effect),
+        ):
+            result = collector._collect_parameterized(_CHILD_MAPPING, parents)
+        assert len(result) == 1
+        assert any("CHILD_FETCH_FAILED" in r.message for r in caplog.records)
+
+    def test_raises_if_no_parent_mapping(self, collector: MetadataCollector) -> None:
+        """parent_mapping=None → ValueError."""
+        mapping = TypeMapping(
+            name="Bad",
+            model_class=_ChildModel,
+            api_endpoint="/bad",
+            fields=(),
+            parent_mapping=None,
+            parent_id_field="uuid",
+        )
+        with pytest.raises(ValueError, match="parent_mapping must be set"):
+            collector._collect_parameterized(mapping, [])
+
+    def test_raises_if_no_parent_id_field(self, collector: MetadataCollector) -> None:
+        """parent_id_field=None → ValueError."""
+        mapping = TypeMapping(
+            name="Bad",
+            model_class=_ChildModel,
+            api_endpoint="/bad",
+            fields=(),
+            parent_mapping="Parent",
+            parent_id_field=None,
+        )
+        with pytest.raises(ValueError, match="parent_id_field must be set"):
+            collector._collect_parameterized(mapping, [])
