@@ -107,6 +107,10 @@ from pynetappfoundry.cache.ontap.svm.peers.mapping import ONTAPSVMPEER_MAPPING
 from pynetappfoundry.cache.ontap.svm.peers.model import OntapSvmPeer
 from pynetappfoundry.cache.ontap.svm.svms.mapping import ONTAPSVM_MAPPING
 from pynetappfoundry.cache.ontap.svm.svms.model import OntapSvm
+from pynetappfoundry.cache.ontap.svm.svms.top_metrics.users.mapping import (
+    ONTAPTOPMETRICSSVMUSER_MAPPING,
+)
+from pynetappfoundry.cache.ontap.svm.svms.top_metrics.users.model import OntapTopMetricsSvmUser
 from pynetappfoundry.utils.cloud import (
     build_cloud_instance_link,
     build_cloud_instance_sso_link,
@@ -439,6 +443,14 @@ class MetadataCollector:
         # Evaluate derived fields (e.g. is_ha from node count)
         results = self._evaluate_derived_fields(results)
         cluster_info: ClusterInfo = results["cluster"]
+
+        # Collect parameterized endpoints (requires parent objects from phases)
+        storage_info: StorageInfo = results["storage"]
+        svm_top_metrics_users = self._collect_svm_top_metrics_users(storage_info.svms)
+        storage_info = storage_info.model_copy(
+            update={"svm_top_metrics_users": svm_top_metrics_users}
+        )
+        results["storage"] = storage_info
 
         # Post-process Azure cloud metadata to fix instance links
         cloud_metadata = self._update_azure_cloud_links(
@@ -1571,6 +1583,26 @@ class MetadataCollector:
             snapmirror_destinations=snapmirror_destinations,
             cluster_peers=cluster_peers,
             svm_peers=svm_peers,
+        )
+
+    # -------------------------------------------------------------------------
+    # Parameterized Endpoint Collection
+    # -------------------------------------------------------------------------
+
+    def _collect_svm_top_metrics_users(self, svms: list[OntapSvm]) -> list[OntapTopMetricsSvmUser]:
+        """Collect top-metrics users per SVM using parameterized endpoint.
+
+        Args:
+            svms: List of collected SVM objects (parents).
+
+        Returns:
+            Aggregated list of OntapTopMetricsSvmUser across all SVMs.
+        """
+        if not self.api_client:
+            return []
+        return cast(
+            list[OntapTopMetricsSvmUser],
+            self._collect_parameterized(ONTAPTOPMETRICSSVMUSER_MAPPING, svms),
         )
 
     # -------------------------------------------------------------------------

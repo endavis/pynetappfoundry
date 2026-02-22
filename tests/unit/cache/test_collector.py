@@ -466,3 +466,49 @@ class TestCollectParameterized:
         )
         with pytest.raises(ValueError, match="parent_id_field must be set"):
             collector._collect_parameterized(mapping, [])
+
+
+# ---------------------------------------------------------------------------
+# _collect_svm_top_metrics_users integration tests
+# ---------------------------------------------------------------------------
+
+
+class TestCollectSvmTopMetricsUsers:
+    """Tests for MetadataCollector._collect_svm_top_metrics_users."""
+
+    @pytest.fixture
+    def collector(self) -> MetadataCollector:
+        """Collector with no clients (for unit testing)."""
+        return MetadataCollector(api_client=None, cli_client=None)
+
+    def test_returns_empty_without_api_client(self, collector: MetadataCollector) -> None:
+        """No API client → empty list without attempting collection."""
+        from pynetappfoundry.cache.ontap.svm.svms.model import OntapSvm
+
+        svms = [OntapSvm(name="svm1", uuid="uuid-1")]
+        result = collector._collect_svm_top_metrics_users(svms)
+        assert result == []
+
+    def test_delegates_to_collect_parameterized(self, collector: MetadataCollector) -> None:
+        """Delegates to _collect_parameterized with correct mapping and parents."""
+        from pynetappfoundry.cache.ontap.svm.svms.model import OntapSvm
+        from pynetappfoundry.cache.ontap.svm.svms.top_metrics.users.mapping import (
+            ONTAPTOPMETRICSSVMUSER_MAPPING,
+        )
+
+        svms = [OntapSvm(name="svm1", uuid="uuid-1")]
+        captured_args: list[tuple[Any, Any]] = []
+
+        def fake_collect_parameterized(mapping: Any, parents: Any) -> list[Any]:
+            captured_args.append((mapping, parents))
+            return []
+
+        collector.api_client = True  # type: ignore[assignment]
+        with patch.object(
+            collector, "_collect_parameterized", side_effect=fake_collect_parameterized
+        ):
+            collector._collect_svm_top_metrics_users(svms)
+
+        assert len(captured_args) == 1
+        assert captured_args[0][0] is ONTAPTOPMETRICSSVMUSER_MAPPING
+        assert captured_args[0][1] is svms
