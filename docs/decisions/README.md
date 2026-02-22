@@ -72,3 +72,6 @@ Template-inherited ADRs (9XXX range) are maintained in [docs/template/decisions/
 | [0005](0005-uuid-index-for-cache-cross-references.md) | UUID index for cache cross-references | Accepted |
 | [0006](0006-generalize-field-mapping-for-multi-api.md) | Generalize field mapping framework for multi-API data collection | Accepted |
 | [0007](0007-url-tree-model-registry.md) | Deep URL-tree structure with automatic model and mapping discovery | Accepted |
+| [0008](0008-openapi-codegen-for-model-generation.md) | OpenAPI codegen for model and mapping generation | Accepted |
+| [0009](0009-sql-table-storage.md) | Per-Model SQL Table Storage for Cache Layer | Accepted |
+| [0010](0010-clusterentry-and-namespace-access-pattern.md) | ClusterEntry and namespace access pattern | Accepted |
