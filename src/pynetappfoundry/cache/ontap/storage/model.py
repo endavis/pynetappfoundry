@@ -16,6 +16,7 @@ from pynetappfoundry.cache.ontap.storage.qtrees.model import OntapQtree
 from pynetappfoundry.cache.ontap.storage.snapshot_policies.model import OntapSnapshotPolicy
 from pynetappfoundry.cache.ontap.storage.volumes.model import OntapVolume
 from pynetappfoundry.cache.ontap.svm.svms.model import OntapSvm
+from pynetappfoundry.cache.ontap.svm.svms.top_metrics.users.model import OntapTopMetricsSvmUser
 
 
 class StorageInfo(CacheModel):
@@ -37,3 +38,4 @@ class StorageInfo(CacheModel):
     igroups: list[OntapIgroup] = Field(default_factory=list)
     qos_policies: list[OntapQosPolicy] = Field(default_factory=list)
     flexcaches: list[OntapFlexcache] = Field(default_factory=list)
+    svm_top_metrics_users: list[OntapTopMetricsSvmUser] = Field(default_factory=list)
