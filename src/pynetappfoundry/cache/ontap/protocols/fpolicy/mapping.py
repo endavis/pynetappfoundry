@@ -12,7 +12,7 @@ ONTAPFPOLICY_MAPPING = TypeMapping(
     api_endpoint="/protocols/fpolicy/{svm.uuid}?fields=*",
     api_type="ontap",
     records_path="engines",
-    parent_mapping="OntapProtocolsFpolicy",
+    parent_mapping="OntapSvm",
     parent_id_field="uuid",
     fields=(
         FieldMapping(

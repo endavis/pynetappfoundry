@@ -12,8 +12,8 @@ ONTAPSNAPLOCKLITIGATION_MAPPING = TypeMapping(
     api_endpoint="/storage/snaplock/litigations/{id}?fields=*",
     api_type="ontap",
     records_path="operations",
-    parent_mapping="OntapStorageSnaplockLitigation",
-    parent_id_field="uuid",
+    parent_mapping=None,
+    parent_id_field=None,
     fields=(
         FieldMapping(
             cache_attr="id",

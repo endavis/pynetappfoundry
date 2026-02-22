@@ -11,7 +11,7 @@ ONTAPFPOLICYEVENT_MAPPING = TypeMapping(
     model_class=OntapFpolicyEvent,
     api_endpoint="/protocols/fpolicy/{svm.uuid}/events?fields=*",
     api_type="ontap",
-    parent_mapping="OntapProtocolsFpolicy",
+    parent_mapping="OntapSvm",
     parent_id_field="uuid",
     fields=(
         FieldMapping(

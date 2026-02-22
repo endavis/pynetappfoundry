@@ -12,7 +12,7 @@ ONTAPS3AUDIT_MAPPING = TypeMapping(
     api_endpoint="/protocols/audit/{svm.uuid}/object-store?fields=*",
     api_type="ontap",
     parent_mapping="OntapAudit",
-    parent_id_field="uuid",
+    parent_id_field="svm_uuid",
     fields=(
         FieldMapping(
             cache_attr="enabled",

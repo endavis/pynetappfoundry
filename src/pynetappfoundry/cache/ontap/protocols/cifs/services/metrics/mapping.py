@@ -14,7 +14,7 @@ ONTAPPERFORMANCECIFSMETRICRESPONSE_MAPPING = TypeMapping(
     api_endpoint="/protocols/cifs/services/{svm.uuid}/metrics?fields=*",
     api_type="ontap",
     parent_mapping="OntapCifsService",
-    parent_id_field="uuid",
+    parent_id_field="svm_uuid",
     fields=(
         FieldMapping(
             cache_attr="duration",

@@ -14,7 +14,7 @@ ONTAPPERFORMANCESVMNFSRESPONSE_MAPPING = TypeMapping(
     api_endpoint="/protocols/nfs/services/{svm.uuid}/metrics?fields=*",
     api_type="ontap",
     parent_mapping="OntapNfsService",
-    parent_id_field="uuid",
+    parent_id_field="svm_uuid",
     fields=(
         FieldMapping(
             cache_attr="v3_duration",

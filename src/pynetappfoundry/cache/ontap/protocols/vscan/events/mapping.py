@@ -11,7 +11,7 @@ ONTAPVSCANEVENT_MAPPING = TypeMapping(
     model_class=OntapVscanEvent,
     api_endpoint="/protocols/vscan/{svm.uuid}/events?fields=*",
     api_type="ontap",
-    parent_mapping="OntapProtocolsVscan",
+    parent_mapping="OntapSvm",
     parent_id_field="uuid",
     fields=(
         FieldMapping(

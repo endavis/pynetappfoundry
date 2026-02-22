@@ -15,7 +15,7 @@ ONTAPACTIVEDIRECTORYPREFERREDDC_MAPPING = TypeMapping(
     api_endpoint="/protocols/active-directory/{svm.uuid}/preferred-domain-controllers?fields=*",
     api_type="ontap",
     parent_mapping="OntapActiveDirectory",
-    parent_id_field="uuid",
+    parent_id_field="svm_uuid",
     fields=(
         FieldMapping(
             cache_attr="fqdn",

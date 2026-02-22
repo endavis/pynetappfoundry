@@ -12,7 +12,7 @@ ONTAPRESOURCETAGRESOURCE_MAPPING = TypeMapping(
     api_endpoint="/resource-tags/{resource_tag.value}/resources?fields=*",
     api_type="ontap",
     parent_mapping="OntapResourceTag",
-    parent_id_field="uuid",
+    parent_id_field="value",
     fields=(
         FieldMapping(
             cache_attr="href",

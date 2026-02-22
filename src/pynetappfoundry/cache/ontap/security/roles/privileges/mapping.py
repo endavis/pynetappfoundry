@@ -12,7 +12,7 @@ ONTAPROLEPRIVILEGE_MAPPING = TypeMapping(
     api_endpoint="/security/roles/{owner.uuid}/{name}/privileges?fields=*",
     api_type="ontap",
     parent_mapping="OntapRole",
-    parent_id_field="uuid",
+    parent_id_field="owner_uuid",
     fields=(
         FieldMapping(
             cache_attr="access",

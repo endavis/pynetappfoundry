@@ -14,7 +14,7 @@ ONTAPGROUPPOLICYOBJECT_MAPPING = TypeMapping(
     api_endpoint="/protocols/cifs/group-policies/{svm.uuid}/objects?fields=*",
     api_type="ontap",
     parent_mapping="OntapPoliciesAndRulesToBeApplied",
-    parent_id_field="uuid",
+    parent_id_field="svm_uuid",
     fields=(
         FieldMapping(
             cache_attr="central_access_policy_settings",

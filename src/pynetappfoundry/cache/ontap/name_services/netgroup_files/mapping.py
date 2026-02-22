@@ -11,7 +11,7 @@ ONTAPNETGROUPFILE_MAPPING = TypeMapping(
     model_class=OntapNetgroupFile,
     api_endpoint="/name-services/netgroup-files/{svm.uuid}?fields=*",
     api_type="ontap",
-    parent_mapping="OntapNameServicesNetgroupFile",
+    parent_mapping="OntapSvm",
     parent_id_field="uuid",
     fields=(
         FieldMapping(

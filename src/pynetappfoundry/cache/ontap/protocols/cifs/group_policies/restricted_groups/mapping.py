@@ -14,7 +14,7 @@ ONTAPGROUPPOLICYOBJECTRESTRICTEDGROUP_MAPPING = TypeMapping(
     api_endpoint="/protocols/cifs/group-policies/{svm.uuid}/restricted-groups?fields=*",
     api_type="ontap",
     parent_mapping="OntapPoliciesAndRulesToBeApplied",
-    parent_id_field="uuid",
+    parent_id_field="svm_uuid",
     fields=(
         FieldMapping(
             cache_attr="group_name",

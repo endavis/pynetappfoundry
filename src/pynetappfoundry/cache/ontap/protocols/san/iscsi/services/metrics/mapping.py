@@ -14,7 +14,7 @@ ONTAPPERFORMANCEISCSIMETRICRESPONSE_MAPPING = TypeMapping(
     api_endpoint="/protocols/san/iscsi/services/{svm.uuid}/metrics?fields=*",
     api_type="ontap",
     parent_mapping="OntapIscsiService",
-    parent_id_field="uuid",
+    parent_id_field="svm_uuid",
     fields=(
         FieldMapping(
             cache_attr="duration",

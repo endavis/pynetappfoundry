@@ -23,7 +23,7 @@ ONTAPFCZONE_MAPPING = TypeMapping(
     api_endpoint="/network/fc/fabrics/{fabric.name}/zones?fields=*",
     api_type="ontap",
     parent_mapping="OntapFabric",
-    parent_id_field="uuid",
+    parent_id_field="name",
     fields=(
         FieldMapping(
             cache_attr="cache_age",
