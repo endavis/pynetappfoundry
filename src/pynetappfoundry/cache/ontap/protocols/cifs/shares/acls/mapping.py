@@ -12,7 +12,7 @@ ONTAPCIFSSHAREACL_MAPPING = TypeMapping(
     api_endpoint="/protocols/cifs/shares/{svm.uuid}/{share}/acls?fields=*",
     api_type="ontap",
     parent_mapping="OntapCifsShare",
-    parent_id_field="uuid",
+    parent_id_field="svm_uuid",
     fields=(
         FieldMapping(
             cache_attr="permission",

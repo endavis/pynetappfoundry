@@ -13,8 +13,8 @@ ONTAPSNAPLOCKLITIGATIONFILERESPONSE_MAPPING = TypeMapping(
     model_class=OntapSnaplockLitigationFileResponse,
     api_endpoint="/storage/snaplock/litigations/{litigation.id}/files?fields=*",
     api_type="ontap",
-    parent_mapping="OntapStorageSnaplockLitigation",
-    parent_id_field="uuid",
+    parent_mapping="OntapSnaplockLitigation",
+    parent_id_field="id",
     fields=(
         FieldMapping(
             cache_attr="file",

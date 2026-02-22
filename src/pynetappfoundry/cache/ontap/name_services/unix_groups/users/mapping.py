@@ -23,7 +23,7 @@ ONTAPUNIXGROUPUSERS_MAPPING = TypeMapping(
     api_endpoint="/name-services/unix-groups/{svm.uuid}/{unix_group.name}/users?fields=*",
     api_type="ontap",
     parent_mapping="OntapUnixGroup",
-    parent_id_field="uuid",
+    parent_id_field="svm_uuid",
     fields=(
         FieldMapping(
             cache_attr="name",

@@ -11,7 +11,7 @@ ONTAPSNAPLOCKFILERETENTION_MAPPING = TypeMapping(
     model_class=OntapSnaplockFileRetention,
     api_endpoint="/storage/snaplock/file/{volume.uuid}/{path}?fields=*",
     api_type="ontap",
-    parent_mapping="OntapStorageSnaplockFile",
+    parent_mapping="OntapVolume",
     parent_id_field="uuid",
     fields=(
         FieldMapping(

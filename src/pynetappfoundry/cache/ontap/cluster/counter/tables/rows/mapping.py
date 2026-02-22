@@ -28,8 +28,8 @@ ONTAPCOUNTERROW_MAPPING = TypeMapping(
     model_class=OntapCounterRow,
     api_endpoint="/cluster/counter/tables/{counter_table.name}/rows?fields=*",
     api_type="ontap",
-    parent_mapping="OntapClusterCounterTable",
-    parent_id_field="uuid",
+    parent_mapping="OntapCounterTable",
+    parent_id_field="name",
     fields=(
         FieldMapping(
             cache_attr="aggregation_complete",

@@ -13,7 +13,7 @@ ONTAPLOCALCIFSUSERSANDGROUPSIMPORT_MAPPING = TypeMapping(
     model_class=OntapLocalCifsUsersAndGroupsImport,
     api_endpoint="/protocols/cifs/users-and-groups/bulk-import/{svm.uuid}?fields=*",
     api_type="ontap",
-    parent_mapping="OntapProtocolsCifsUsersAndGroupsBulkImport",
+    parent_mapping="OntapSvm",
     parent_id_field="uuid",
     fields=(
         FieldMapping(

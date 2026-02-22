@@ -14,7 +14,7 @@ ONTAPS3BUCKETSNAPSHOT_MAPPING = TypeMapping(
     api_endpoint="/protocols/s3/services/{svm.uuid}/buckets/{s3_bucket.uuid}/snapshots?fields=*",
     api_type="ontap",
     parent_mapping="OntapS3Service",
-    parent_id_field="uuid",
+    parent_id_field="svm_uuid",
     fields=(
         FieldMapping(
             cache_attr="bucket_uuid",

@@ -12,7 +12,7 @@ ONTAPVSCAN_MAPPING = TypeMapping(
     api_endpoint="/protocols/vscan/{svm.uuid}?fields=*",
     api_type="ontap",
     records_path="on_access_policies",
-    parent_mapping="OntapProtocolsVscan",
+    parent_mapping="OntapSvm",
     parent_id_field="uuid",
     fields=(
         FieldMapping(

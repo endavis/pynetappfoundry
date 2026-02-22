@@ -13,8 +13,8 @@ ONTAPSNAPLOCKFILEFINGERPRINT_MAPPING = TypeMapping(
     model_class=OntapSnaplockFileFingerprint,
     api_endpoint="/storage/snaplock/file-fingerprints/{id}?fields=*",
     api_type="ontap",
-    parent_mapping="OntapStorageSnaplockFileFingerprint",
-    parent_id_field="uuid",
+    parent_mapping=None,
+    parent_id_field=None,
     fields=(
         FieldMapping(
             cache_attr="algorithm",
