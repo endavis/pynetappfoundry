@@ -12,12 +12,14 @@ import logging
 import re
 import threading
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import Enum
 from typing import TYPE_CHECKING, Any, ClassVar, cast
+
+from pydantic import BaseModel
 
 from pynetappfoundry.cache._metadata import (
     CachedClusterMetadata,
@@ -25,6 +27,7 @@ from pynetappfoundry.cache._metadata import (
 )
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import (
+    TypeMapping,
     parse_api_record,
     parse_api_response,
     parse_cli_records,
@@ -290,6 +293,69 @@ class MetadataCollector:
         """Clear the API response cache."""
         with self._cache_lock:
             self._api_cache.clear()
+
+    def _collect_parameterized(
+        self,
+        mapping: TypeMapping,
+        parent_objects: Sequence[BaseModel],
+    ) -> list[BaseModel]:
+        """Fetch child records from a parameterized endpoint by iterating parents.
+
+        For each parent object, substitutes the parent's identifier into the
+        URL placeholder, fetches child records, and aggregates them.
+
+        Args:
+            mapping: Child TypeMapping (must have parent_mapping and parent_id_field set).
+            parent_objects: List of already-collected parent model instances.
+
+        Returns:
+            Aggregated list of child model instances across all parents.
+
+        Raises:
+            ValueError: If mapping.parent_mapping or mapping.parent_id_field is not set.
+        """
+        if not mapping.parent_mapping:
+            raise ValueError(
+                f"{mapping.name}: parent_mapping must be set for parameterized collection"
+            )
+        if not mapping.parent_id_field:
+            raise ValueError(
+                f"{mapping.name}: parent_id_field must be set for parameterized collection"
+            )
+
+        aggregated: list[BaseModel] = []
+        for parent in parent_objects:
+            parent_id = getattr(parent, mapping.parent_id_field, None)
+            if not parent_id:
+                parent_name = getattr(parent, "name", repr(parent))
+                logger.warning(
+                    "%s SKIP_PARENT: %s - parent %s has no '%s'",
+                    self._log_prefix,
+                    mapping.name,
+                    parent_name,
+                    mapping.parent_id_field,
+                )
+                continue
+
+            url = mapping.build_parameterized_url(str(parent_id))
+            try:
+                response = self._cached_api_call(url)
+                children = parse_api_response(
+                    mapping, response, self._log_prefix, self._log_missing_fields
+                )
+                aggregated.extend(children)
+            except Exception as e:
+                parent_name = getattr(parent, "name", repr(parent))
+                logger.warning(
+                    "%s CHILD_FETCH_FAILED: %s for parent %s - %s: %s",
+                    self._log_prefix,
+                    mapping.name,
+                    parent_name,
+                    type(e).__name__,
+                    e,
+                )
+
+        return aggregated
 
     def _evaluate_derived_fields(self, results: dict[str, Any]) -> dict[str, Any]:
         """Evaluate derived fields across all TypeMappings that declare them.

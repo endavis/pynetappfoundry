@@ -920,6 +920,83 @@ class TestExplicitFetchApiFields:
 # ---------------------------------------------------------------------------
 
 
+class TestBuildParameterizedUrl:
+    """Tests for TypeMapping.build_parameterized_url."""
+
+    def test_substitutes_named_placeholder(self) -> None:
+        """Named placeholder like {svm.uuid} is replaced with parent_id."""
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/svm/svms/{svm.uuid}/top-metrics/users?fields=*",
+            fields=(FieldMapping(cache_attr="name", api_path="name"),),
+        )
+        url = tm.build_parameterized_url("abc-123")
+        assert url == "/svm/svms/abc-123/top-metrics/users?fields=*"
+
+    def test_substitutes_bare_placeholder(self) -> None:
+        """Bare placeholder like {uuid} is replaced with parent_id."""
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/storage/volumes/{uuid}/snapshots?fields=*",
+            fields=(FieldMapping(cache_attr="name", api_path="name"),),
+        )
+        url = tm.build_parameterized_url("vol-uuid-456")
+        assert url == "/storage/volumes/vol-uuid-456/snapshots?fields=*"
+
+    def test_appends_explicit_fetch_fields(self) -> None:
+        """Expensive fields are appended after substitution."""
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/svm/svms/{svm.uuid}/metrics?fields=*",
+            fields=(
+                FieldMapping(cache_attr="name", api_path="name"),
+                FieldMapping(
+                    cache_attr="throughput",
+                    api_path="throughput.total",
+                    requires_explicit_fetch=True,
+                ),
+            ),
+        )
+        url = tm.build_parameterized_url("svm-uuid")
+        assert url == "/svm/svms/svm-uuid/metrics?fields=*,throughput"
+
+    def test_no_placeholder_returns_unchanged(self) -> None:
+        """URL without {placeholder} passes through unchanged."""
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/storage/volumes?fields=*",
+            fields=(FieldMapping(cache_attr="name", api_path="name"),),
+        )
+        url = tm.build_parameterized_url("some-id")
+        assert url == "/storage/volumes?fields=*"
+
+    def test_only_first_placeholder_replaced(self) -> None:
+        """Multi-placeholder URL: only the first placeholder is replaced."""
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/a/{parent.uuid}/b/{child.uuid}?fields=*",
+            fields=(FieldMapping(cache_attr="name", api_path="name"),),
+        )
+        url = tm.build_parameterized_url("parent-id")
+        assert url == "/a/parent-id/b/{child.uuid}?fields=*"
+
+    def test_preserves_non_fields_star_query_params(self) -> None:
+        """Query params that don't start with fields=* are preserved."""
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/svm/svms/{svm.uuid}/data?order_by=name",
+            fields=(FieldMapping(cache_attr="name", api_path="name"),),
+        )
+        url = tm.build_parameterized_url("svm-id")
+        assert url == "/svm/svms/svm-id/data?order_by=name"
+
+
 class TestBuildCollectionUrl:
     """Tests for TypeMapping.build_collection_url."""
 
