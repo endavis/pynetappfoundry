@@ -37,7 +37,7 @@ def mock_config() -> MagicMock:
 
 @pytest.fixture
 def sample_cluster_config() -> dict[str, dict[str, Any]]:
-    """Sample cluster configuration for testing (with cache-enriched cloud fields)."""
+    """Sample cluster configuration for testing."""
     return {
         "test-cluster-1": {
             "name": "test-cluster-1",
@@ -50,22 +50,13 @@ def sample_cluster_config() -> dict[str, dict[str, Any]]:
             "cloud": "azure",
             "region": "eastus",
             "tags": ["active"],
-            # Cache-enriched cloud fields
-            "cloud_provider": "Azure",
-            "cloud_region": "eastus",
-            "cloud_account_id": "sub-12345-67890",
-            "cloud_resource_group_name": "rg-test",
-            "cloud_instance_id": "",
-            "cloud_instance_type": "",
-            "cloud_primary_ip": "",
-            "cloud_availability_zone": "",
         },
     }
 
 
 @pytest.fixture
 def sample_cluster_config_multi() -> dict[str, dict[str, Any]]:
-    """Sample cluster configuration with multiple clusters (cache-enriched)."""
+    """Sample cluster configuration with multiple clusters."""
     return {
         "test-cluster-1": {
             "name": "test-cluster-1",
@@ -78,14 +69,6 @@ def sample_cluster_config_multi() -> dict[str, dict[str, Any]]:
             "cloud": "azure",
             "region": "eastus",
             "tags": ["active"],
-            "cloud_provider": "Azure",
-            "cloud_region": "eastus",
-            "cloud_account_id": "",
-            "cloud_resource_group_name": "",
-            "cloud_instance_id": "",
-            "cloud_instance_type": "",
-            "cloud_primary_ip": "",
-            "cloud_availability_zone": "",
         },
         "test-cluster-2": {
             "name": "test-cluster-2",
@@ -98,14 +81,6 @@ def sample_cluster_config_multi() -> dict[str, dict[str, Any]]:
             "cloud": "azure",
             "region": "westus",
             "tags": [],
-            "cloud_provider": "Azure",
-            "cloud_region": "westus",
-            "cloud_account_id": "",
-            "cloud_resource_group_name": "",
-            "cloud_instance_id": "",
-            "cloud_instance_type": "",
-            "cloud_primary_ip": "",
-            "cloud_availability_zone": "",
         },
         "test-cluster-3": {
             "name": "test-cluster-3",
@@ -118,14 +93,6 @@ def sample_cluster_config_multi() -> dict[str, dict[str, Any]]:
             "cloud": "aws",
             "region": "us-east-1",
             "tags": [],
-            "cloud_provider": "AWS",
-            "cloud_region": "us-east-1",
-            "cloud_account_id": "",
-            "cloud_resource_group_name": "",
-            "cloud_instance_id": "",
-            "cloud_instance_type": "",
-            "cloud_primary_ip": "",
-            "cloud_availability_zone": "",
         },
     }
 
@@ -717,14 +684,6 @@ class TestHTMLFileGeneration:
                 "cloud": "azure",
                 "region": "eastus",
                 "tags": ["active", "cvo", "ha"],
-                "cloud_provider": "Azure",
-                "cloud_region": "eastus",
-                "cloud_account_id": "12345678-1234-1234-1234-123456789abc",
-                "cloud_resource_group_name": "rg-netapp-prod",
-                "cloud_instance_id": "i-azure123",
-                "cloud_instance_type": "Standard_DS4_v2",
-                "cloud_primary_ip": "10.0.1.100",
-                "cloud_availability_zone": "eastus-1",
             },
             "AZURE-DEV-01": {
                 "name": "AZURE-DEV-01",
@@ -737,14 +696,6 @@ class TestHTMLFileGeneration:
                 "cloud": "azure",
                 "region": "westus",
                 "tags": ["active", "cvo"],
-                "cloud_provider": "Azure",
-                "cloud_region": "westus",
-                "cloud_account_id": "12345678-1234-1234-1234-123456789abc",
-                "cloud_resource_group_name": "rg-netapp-dev",
-                "cloud_instance_id": "",
-                "cloud_instance_type": "",
-                "cloud_primary_ip": "",
-                "cloud_availability_zone": "",
             },
             "AWS-PROD-01": {
                 "name": "AWS-PROD-01",
@@ -757,14 +708,6 @@ class TestHTMLFileGeneration:
                 "cloud": "aws",
                 "region": "us-east-1",
                 "tags": ["active", "cvo", "ha"],
-                "cloud_provider": "AWS",
-                "cloud_region": "us-east-1",
-                "cloud_account_id": "123456789012",
-                "cloud_resource_group_name": "",
-                "cloud_instance_id": "i-0abc123def456",
-                "cloud_instance_type": "m5.xlarge",
-                "cloud_primary_ip": "10.1.1.100",
-                "cloud_availability_zone": "us-east-1a",
             },
             "GCP-PROD-01": {
                 "name": "GCP-PROD-01",
@@ -777,14 +720,6 @@ class TestHTMLFileGeneration:
                 "cloud": "gcp",
                 "region": "us-central1",
                 "tags": ["active", "cvo"],
-                "cloud_provider": "GCP",
-                "cloud_region": "us-central1",
-                "cloud_account_id": "my-gcp-project",
-                "cloud_resource_group_name": "",
-                "cloud_instance_id": "",
-                "cloud_instance_type": "n1-standard-4",
-                "cloud_primary_ip": "",
-                "cloud_availability_zone": "us-central1-a",
             },
             "ONPREM-PROD-01": {
                 "name": "ONPREM-PROD-01",
@@ -797,14 +732,6 @@ class TestHTMLFileGeneration:
                 "cloud": "onprem",
                 "region": "DATACENTER-EAST",
                 "tags": ["active", "fas", "nfs", "cifs"],
-                "cloud_provider": "",
-                "cloud_region": "",
-                "cloud_account_id": "",
-                "cloud_resource_group_name": "",
-                "cloud_instance_id": "",
-                "cloud_instance_type": "",
-                "cloud_primary_ip": "",
-                "cloud_availability_zone": "",
             },
             "ONPREM-DR-01": {
                 "name": "ONPREM-DR-01",
@@ -817,14 +744,6 @@ class TestHTMLFileGeneration:
                 "cloud": "onprem",
                 "region": "DATACENTER-WEST",
                 "tags": ["standby", "fas", "dr"],
-                "cloud_provider": "",
-                "cloud_region": "",
-                "cloud_account_id": "",
-                "cloud_resource_group_name": "",
-                "cloud_instance_id": "",
-                "cloud_instance_type": "",
-                "cloud_primary_ip": "",
-                "cloud_availability_zone": "",
             },
         }
 
@@ -931,6 +850,77 @@ class TestHTMLFileGeneration:
         """
         from pynetappfoundry.cli.commands.reports.html import ClusterData
 
+        # Build mock cloud metadata for each cluster
+        cloud_data_by_cluster: dict[str, dict[str, str]] = {
+            "AZURE-PROD-01": {
+                "provider": "Azure",
+                "region": "eastus",
+                "account_id": "12345678-1234-1234-1234-123456789abc",
+                "resource_group_name": "rg-netapp-prod",
+                "instance_id": "i-azure123",
+                "instance_type": "Standard_DS4_v2",
+                "primary_ip": "10.0.1.100",
+                "availability_zone": "eastus-1",
+            },
+            "AZURE-DEV-01": {
+                "provider": "Azure",
+                "region": "westus",
+                "account_id": "12345678-1234-1234-1234-123456789abc",
+                "resource_group_name": "rg-netapp-dev",
+                "instance_id": "",
+                "instance_type": "",
+                "primary_ip": "",
+                "availability_zone": "",
+            },
+            "AWS-PROD-01": {
+                "provider": "AWS",
+                "region": "us-east-1",
+                "account_id": "123456789012",
+                "resource_group_name": "",
+                "instance_id": "i-0abc123def456",
+                "instance_type": "m5.xlarge",
+                "primary_ip": "10.1.1.100",
+                "availability_zone": "us-east-1a",
+            },
+            "GCP-PROD-01": {
+                "provider": "GCP",
+                "region": "us-central1",
+                "account_id": "my-gcp-project",
+                "resource_group_name": "",
+                "instance_id": "",
+                "instance_type": "n1-standard-4",
+                "primary_ip": "",
+                "availability_zone": "us-central1-a",
+            },
+        }
+
+        def _make_mock_entry(cluster_name: str, data: dict[str, Any]) -> MagicMock:
+            """Create a mock ClusterEntry with cloud metadata."""
+            mock_entry = MagicMock()
+            # Make the mock support dict-like access for **entry unpacking
+            mock_entry.keys.return_value = data.keys()
+            mock_entry.__getitem__ = lambda self, k: data[k]
+            mock_entry.__iter__ = lambda self: iter(data)
+            mock_entry.__contains__ = lambda self, k: k in data
+
+            if cluster_name in cloud_data_by_cluster:
+                cloud_mock = MagicMock()
+                cd = cloud_data_by_cluster[cluster_name]
+                for field, value in cd.items():
+                    setattr(cloud_mock, field, value)
+                ontap_mock = MagicMock()
+                ontap_mock.cloud = [cloud_mock]
+                mock_entry.ontap = ontap_mock
+            else:
+                mock_entry.ontap = None
+
+            return mock_entry
+
+        # Wrap cluster configs in mock ClusterEntry objects
+        wrapped_configs: dict[str, Any] = {}
+        for name, data in comprehensive_cluster_configs.items():
+            wrapped_configs[name] = _make_mock_entry(name, data)
+
         # Store original _gather_data
         original_gather_data = ClusterData._gather_data
 
@@ -939,11 +929,9 @@ class TestHTMLFileGeneration:
             cluster_self._build_cloud_info()
             # Use different data based on cluster name for variety
             if "ONPREM" in cluster_self.name or "DR" in cluster_self.name:
-                # On-prem clusters get full data
                 cluster_self.fetched_data = comprehensive_ontap_data.copy()
                 cluster_self.cluster_type = "HA"
             elif "DEV" in cluster_self.name:
-                # Dev clusters get single-node data
                 cluster_self.fetched_data = {
                     "cluster": comprehensive_ontap_data["cluster"].copy(),
                     "nodes": {"dev-node-01": comprehensive_ontap_data["nodes"]["cluster-01"]},
@@ -955,7 +943,6 @@ class TestHTMLFileGeneration:
                 }
                 cluster_self.cluster_type = "SN"
             else:
-                # Prod clusters get HA data
                 cluster_self.fetched_data = comprehensive_ontap_data.copy()
                 cluster_self.cluster_type = "HA"
 
@@ -965,7 +952,7 @@ class TestHTMLFileGeneration:
         try:
             builder = HTMLReportBuilder(
                 "NetApp Infrastructure Report",
-                comprehensive_cluster_configs,
+                wrapped_configs,
                 mock_config,
             )
             html_content = builder.generate_html()
@@ -982,7 +969,7 @@ class TestHTMLFileGeneration:
 
             # Verify the HTML contains expected elements
             assert "<!DOCTYPE html>" in html_content
-            assert "NetApp Cluster Report" in html_content  # Title is set in template
+            assert "NetApp Cluster Report" in html_content
 
             # Verify all divisions are present
             assert "Engineering" in html_content
