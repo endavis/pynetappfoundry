@@ -41,7 +41,7 @@ The pilot migration (VolumeInfo) was completed in PR #189.
 ### Alternatives Considered
 
 - **Keep hand-written parsers**: Simpler per-type, but doesn't scale and makes parity hard to verify.
-- **Code generation from a schema**: More automated, but ONTAP's CLI/API asymmetry makes a pure schema approach fragile.
+- **Code generation from a schema**: More automated, but ONTAP's CLI/API asymmetry makes a pure schema approach fragile. *Later adopted for model and mapping generation via ADR-0008, while the declarative framework itself remained the foundation. The CLI/API asymmetry concern was addressed by generating only the API side and keeping CLI mappings manual where needed.*
 - **Third-party ORM/mapping library**: Adds external dependency for a domain-specific problem that's well-served by two small dataclasses.
 
 ## Evolution: Field Annotations for Cache Strategy (Issue #301)
@@ -100,11 +100,11 @@ annotated mappings from API specs, with per-field customization via TOML overlay
 
 ## Consequences
 
-- All new ONTAP object types should use the mapping framework instead of hand-written parsers.
-- Existing hand-written parsers can be migrated incrementally (one type at a time).
+- All ONTAP models and mappings are now generated from OpenAPI specs via the codegen tool (ADR-0008). Hand-written models have been fully replaced.
 - The `cache inspect` command automatically works with any registered mapping.
-- Adding a new type follows a documented, repeatable process.
-- Field annotations enable the codegen tool to auto-generate mappings with appropriate strategies.
+- Adding a new type means running codegen against the spec and customizing the TOML overlay.
+- Field annotations drive collection behavior: `parse_api_record()` skips non-cache fields during bulk collection, and `parse_api_response()` applies `post_collection` transforms for derived fields.
+- The `collection_endpoint` property on `TypeMapping` strips `{id}` placeholders for bulk collection URLs, eliminating the need for hardcoded endpoint strings in the collector.
 
 ## Related Issues
 
@@ -125,6 +125,7 @@ annotated mappings from API specs, with per-field customization via TOML overlay
 - Issue #211: refactor: migrate NetworkLIF to field mapping framework
 - Issue #212: refactor: migrate BroadcastDomain to field mapping framework
 - Issue #301: feat: field annotations, OpenAPI codegen, and SQL cache storage
+- Issue #312: fix: remove hardcoded collector endpoints and wire cache_strategy into parsing
 - Issue #317: feat: collector ?fields= expansion for expensive ONTAP fields
 
 ## Related Documentation
