@@ -35,6 +35,11 @@ pynetappfoundry provides a comprehensive Python library and command-line interfa
 - **Multi-cluster Support** - Manage multiple ONTAP clusters
 - **REST API Support** - Full ONTAP REST API integration via netapp-ontap SDK
 - **SSH CLI Support** - Direct CLI access via Paramiko
+- **Auto Dependency Sync** - Post-merge and post-checkout hooks keep dependencies in sync
+- **Mutation Testing** - mutmut for test suite effectiveness analysis
+- **Property-Based Testing** - Hypothesis for invariant-based testing with random inputs
+- **Benchmark Tracking** - Historical CI benchmarks with regression detection
+- **SBOM Generation** - CycloneDX Software Bill of Materials for compliance and security
 
 ## Quick Start
 

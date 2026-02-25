@@ -6,7 +6,9 @@ Plan the implementation for GitHub issue #$ARGUMENTS.
 
 This command runs in the main conversation context (NOT in a subagent) so the user can ask questions, discuss tradeoffs, and refine the plan interactively.
 
-### Step 1: Validate the issue
+### Step 1: Go into Plan Mode
+
+### Step 2: Validate the issue
 
 1. **Verify the issue exists and is open:**
    ```bash
@@ -23,60 +25,65 @@ This command runs in the main conversation context (NOT in a subagent) so the us
      > "Issue #$ARGUMENTS already has an implementation plan comment. Continuing will post a new one. Proceed?"
    - Wait for user confirmation before continuing.
 
-### Step 2: Read the project rules
+### Step 3: Read the project rules
 
 - Read `AGENTS.md` — understand workflow, conventions, and commit guidelines
 - Read `.claude/CLAUDE.md` — understand TodoWrite requirements
 
-### Step 3: Fetch the issue details
+### Step 4: Fetch the issue details
 
 - Run: `gh issue view $ARGUMENTS --json title,body,labels,assignees`
 - Parse the issue body to understand what needs to be done
 - Check if the issue has the `needs-adr` label
 
-### Step 4: Explore the codebase
+### Step 5: Explore the codebase
 
 - Identify which files, modules, and tests are relevant
 - Understand existing patterns and conventions in the affected areas
 - Check for related ADRs in `docs/decisions/`
 - If anything is ambiguous or there are multiple valid approaches, **ask the user** before deciding
 
-### Step 5: Draft the implementation plan
+### Step 6: Draft the plan and iterate with the user (inside plan mode)
 
-Present the plan to the user for discussion. The plan MUST include these sections:
+**Stay in plan mode for this entire step.** Draft the plan, present it, and iterate until the user approves — all before leaving plan mode.
 
-```
-## Implementation Plan for #<number>: <title>
+1. Present the plan to the user. The plan MUST include these sections:
 
-### Overview
-Brief description of what will be done.
+   ```
+   ## Implementation Plan for #<number>: <title>
 
-### Files to Create/Modify
-- [ ] `path/to/file.py` — description of changes
-- [ ] `tests/test_file.py` — description of test coverage
+   ### Overview
+   Brief description of what will be done.
 
-### Test Plan
-- [ ] Test case 1: description
-- [ ] Test case 2: description
+   ### Files to Create/Modify
+   - [ ] `path/to/file.py` — description of changes
+   - [ ] `tests/test_file.py` — description of test coverage
 
-### Documentation
-- [ ] Any docs that need updating
-- [ ] ADR needed: yes/no (if yes, brief description)
+   ### Test Plan
+   - [ ] Test case 1: description
+   - [ ] Test case 2: description
 
-### Validation
-- [ ] `doit check` passes
-- [ ] Manual verification steps
-```
+   ### Documentation
+   - [ ] Any docs that need updating
+   - [ ] ADR needed: yes/no (if yes, brief description)
 
-### Step 6: Iterate with the user
+   ### Validation
+   - [ ] `doit check` passes
+   - [ ] Manual verification steps
+   ```
 
-- Present the plan and ask for feedback
-- Discuss alternatives, answer questions, adjust the plan as needed
-- Do NOT post the plan to the issue until the user approves it
+2. Use `AskUserQuestion` to ask for feedback on the plan.
+3. Discuss alternatives, answer questions, and adjust the plan as the user requests.
+4. Keep iterating inside plan mode until the user explicitly says the plan is approved.
+5. Do NOT leave plan mode until the user confirms approval.
 
-### Step 7: Post the approved plan to the issue
+### Step 7: Leave plan mode
 
-Only after the user approves the plan:
+Once the user has approved the plan, leave plan mode. The `ExitPlanMode` approval prompt means: **"Post the approved plan to the issue."** The plan has already been reviewed and approved by the user during Step 6.
+
+### Step 8: Post the approved plan to the issue
+
+Post the approved plan as a comment on the issue:
 
 ```bash
 gh issue comment $ARGUMENTS --body "<approved plan>"

@@ -1,4 +1,4 @@
-name: Chore / Maintenance
+name: 🔨 Chore / Maintenance
 description: Maintenance tasks, tooling, CI/CD, or dependency updates
 labels: ["chore", "needs-triage"]
 body:

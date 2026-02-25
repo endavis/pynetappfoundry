@@ -1,4 +1,4 @@
-name: Documentation Request
+name: 📚 Documentation Request
 description: Request new documentation or improvements to existing docs
 labels: ["documentation", "needs-triage"]
 body:

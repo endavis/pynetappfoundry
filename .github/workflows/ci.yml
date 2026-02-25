@@ -65,6 +65,7 @@ jobs:
       matrix: ${{ fromJson(needs.setup.outputs.matrix) }}
     env:
       UV_CACHE_DIR: ${{ github.workspace }}/.uv-cache
+      HYPOTHESIS_PROFILE: ci
 
     steps:
       - name: Configure git line endings (Windows)
@@ -135,7 +136,7 @@ jobs:
         run: uv pip install --upgrade pip
 
       - name: Run dependency audit
-        run: uv run pip-audit
+        run: uv run pip-audit --skip-editable
 
       - name: Run tests with coverage
         run: uv run pytest --cov=pynetappfoundry --cov-report=xml:tmp/coverage.xml --cov-report=term -v

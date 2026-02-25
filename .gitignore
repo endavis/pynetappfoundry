@@ -1,12 +1,8 @@
-# Byte-compiled / optimized / DLL files
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
-
-# C extensions
 *.so
-
-# Distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -23,68 +19,69 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
 
-# PyInstaller
-*.manifest
-*.spec
+# Virtual environments
+venv/
+.venv/
+.venv*/
+ENV/
+env/
 
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
+# Testing
+.pytest_cache/
 .coverage
 .coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
+htmlcov/
+.tox/
 .hypothesis/
-.pytest_cache/
 
-# Translations
-*.mo
-*.pot
+# Type checking and linting
+.mypy_cache/
+.ruff_cache/
+.pytype/
+.pyre/
+.dmypy.json
+dmypy.json
 
-# Environments
-.env
-.envrc.local
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-
-# IDE
+# IDEs
 .idea/
 .vscode/
 *.swp
 *.swo
 *~
+.DS_Store
 
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
+# direnv
+.direnv/
+.envrc.local
 
-# Ruff
-.ruff_cache/
-
-# pyright
-.pyright/
+# Environment variables
+.env
+.env.*
 
 # Temporary files
-tmp/
-temp/
-*.tmp
-*.temp
+tmp/*
+!tmp/.gitkeep
+.cache/
 
-# Data directories
+# Documentation
+site/
+docs/_build/
+
+# Build and packaging
+*.whl
+.uv-cache/
+**/_version.py
+
+# Project specific
+*.log
+.doit.db.db
+coverage.xml
+.nfs*
+.gemini/settings.json.orig
+
+# Project-specific data directories
 data/
 output/
 
@@ -92,22 +89,5 @@ output/
 config/*.toml
 !config/*.example.toml
 
-# Lock files (keep uv.lock if using uv)
-# uv.lock
-
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Documentation build
-site/
-docs/_build/
-.doit.db.db
-
-# Auto-generated version file
-src/pynetappfoundry/_version.py
+# Example config (large API files)
+# Keep the exclude pattern for pre-commit hooks

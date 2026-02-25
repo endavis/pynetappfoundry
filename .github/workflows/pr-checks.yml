@@ -18,19 +18,19 @@ jobs:
 
             if (!pattern.test(title)) {
               core.setFailed(
-                'PR title must follow Conventional Commits format:\n' +
+                '❌ PR title must follow Conventional Commits format:\n' +
                 '   <type>: <subject>\n' +
                 '   or\n' +
                 '   <type>(<scope>): <subject>\n\n' +
                 'Valid types: feat, fix, refactor, docs, test, chore, ci, perf\n\n' +
                 'Examples:\n' +
-                '  feat: add user authentication\n' +
-                '  fix(api): handle null response\n' +
-                '  docs: update installation guide\n\n' +
+                '  ✅ feat: add user authentication\n' +
+                '  ✅ fix(api): handle null response\n' +
+                '  ✅ docs: update installation guide\n\n' +
                 `Current title: "${title}"`
               );
             } else {
-              console.log('PR title follows conventional commits format');
+              console.log('✅ PR title follows conventional commits format');
             }
 
   validate-issue-link:
@@ -72,7 +72,7 @@ jobs:
             );
 
             if (isDocsOnly) {
-              console.log('Docs-only PR - issue link not required');
+              console.log('✅ Docs-only PR - issue link not required');
               return;
             }
 
@@ -88,18 +88,18 @@ jobs:
 
             if (!hasIssueLink) {
               core.setFailed(
-                'PR must reference an issue number\n\n' +
+                '❌ PR must reference an issue number\n\n' +
                 'Code changes require a linked GitHub issue.\n' +
                 'Add the following to your PR description:\n' +
                 '  - "Addresses #123"\n\n' +
-                'Documentation-only PRs are exempt from this requirement.\n\n' +
+                '📝 Documentation-only PRs are exempt from this requirement.\n\n' +
                 'Why? Issue-driven development ensures:\n' +
-                '  Clear tracking of why changes were made\n' +
-                '  Better project management\n' +
-                '  Searchable history of decisions'
+                '  • Clear tracking of why changes were made\n' +
+                '  • Better project management\n' +
+                '  • Searchable history of decisions'
               );
             } else {
-              console.log('PR has linked issue');
+              console.log('✅ PR has linked issue');
             }
 
   validate-pr-description:
@@ -114,12 +114,12 @@ jobs:
 
             if (body.trim().length < 50) {
               core.setFailed(
-                'PR description is too short\n\n' +
+                '❌ PR description is too short\n\n' +
                 'Please provide a meaningful description that includes:\n' +
-                '  Summary of changes (2-3 sentences)\n' +
-                '  What issue this addresses\n' +
-                '  How to test the changes\n' +
-                '  Any breaking changes or special considerations\n\n' +
+                '  • Summary of changes (2-3 sentences)\n' +
+                '  • What issue this addresses\n' +
+                '  • How to test the changes\n' +
+                '  • Any breaking changes or special considerations\n\n' +
                 'Minimum length: 50 characters\n' +
                 `Current length: ${body.trim().length} characters`
               );
@@ -131,9 +131,9 @@ jobs:
 
             if (!hasTestingSection) {
               core.warning(
-                'PR description should include testing information\n' +
+                '⚠️ PR description should include testing information\n' +
                 'Consider adding a "Testing" or "Test Plan" section'
               );
             }
 
-            console.log('PR description meets minimum requirements');
+            console.log('✅ PR description meets minimum requirements');
