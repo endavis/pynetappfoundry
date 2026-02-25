@@ -64,8 +64,8 @@ EOF
 
 | File | Description |
 |------|-------------|
-| [`block-dangerous-commands.py`](https://github.com/endavis/pynetappfoundry/blob/main/tools/hooks/ai/block-dangerous-commands.py) | The hook script (shared by Claude and Gemini) |
-| [`test_hook.py`](https://github.com/endavis/pynetappfoundry/blob/main/tools/hooks/ai/test_hook.py) | Test suite to verify hook behavior |
+| [`block-dangerous-commands.py`](../../../tools/hooks/ai/block-dangerous-commands.py) | The hook script (shared by Claude and Gemini) |
+| [`test_hook.py`](../../../tools/hooks/ai/test_hook.py) | Test suite to verify hook behavior |
 
 ### Configuration
 
@@ -220,5 +220,5 @@ Then run the test suite to verify.
 ## Related
 
 - [AI Enforcement Principles](enforcement-principles.md) - Why and how we enforce rules in code
-- [AGENTS.md](https://github.com/endavis/pynetappfoundry/blob/main/AGENTS.md) - AI agent rules including "When Blocked Protocol"
+- [AGENTS.md](../../../AGENTS.md) - AI agent rules including "When Blocked Protocol"
 - [AI Agent Setup](../AI_SETUP.md) - Setting up AI coding assistants
