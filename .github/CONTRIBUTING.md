@@ -68,6 +68,7 @@ Common commands:
 ```bash
 doit test          # Run tests
 doit coverage      # Run tests with coverage
+doit benchmark     # Run performance benchmarks
 doit lint          # Run linting
 doit format        # Format code
 doit type_check    # Run type checking

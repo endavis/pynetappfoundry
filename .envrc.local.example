@@ -16,3 +16,17 @@
 
 # Example: Override cache directories
 # export UV_CACHE_DIR="$HOME/.cache/uv"
+# export RUFF_CACHE_DIR="$HOME/.cache/ruff"
+# export MYPY_CACHE_DIR="$HOME/.cache/mypy"
+# export COVERAGE_FILE="$HOME/.cache/coverage/.coverage"
+# export PRE_COMMIT_HOME="$HOME/.cache/pre-commit"
+
+# Example: Editor and browser
+# export EDITOR=nvim
+# export BROWSER=firefox
+
+# Example: Enable LSP tool for Claude Code (see .claude/lsp-setup.md)
+# export ENABLE_LSP_TOOL=1
+
+# Example: Pyright debug logging (for LSP troubleshooting)
+# export PYRIGHT_PYTHON_DEBUG=1

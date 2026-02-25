@@ -31,10 +31,11 @@ doit <task_name>
 
 | Category | Tasks | Description |
 |----------|-------|-------------|
-| [Testing](#testing-tasks) | `test`, `coverage` | Run tests and coverage |
+| [Testing](#testing-tasks) | `test`, `coverage`, `mutate`, `mutate_html` | Run tests, coverage, and mutation testing |
+| [Benchmarking](#benchmarking-tasks) | `benchmark`, `benchmark_save`, `benchmark_compare` | Performance benchmarking |
 | [Code Quality](#code-quality-tasks) | `format`, `lint`, `type_check`, `check` | Code formatting and linting |
 | [Code Analysis](#code-analysis-tasks) | `complexity`, `maintainability`, `deadcode` | Code metrics and analysis |
-| [Security](#security-tasks) | `security`, `audit`, `licenses` | Security scanning |
+| [Security](#security-tasks) | `security`, `audit`, `licenses`, `sbom` | Security scanning and SBOM |
 | [Documentation](#documentation-tasks) | `docs_serve`, `docs_build`, `docs_deploy`, `docs_toc` | Documentation management |
 | [Dependencies](#dependency-tasks) | `install`, `install_dev`, `update_deps` | Package management |
 | [GitHub Workflow](#github-workflow-tasks) | `issue`, `pr`, `pr_merge`, `adr` | Issue and PR management |
@@ -86,6 +87,92 @@ uv run pytest --cov=src --cov-report=term-missing --cov-report=html:tmp/htmlcov 
 - Terminal: Shows coverage summary with missing lines
 - HTML: `tmp/htmlcov/index.html`
 - XML: `tmp/coverage.xml`
+
+### `mutate`
+
+Run mutation testing with mutmut.
+
+```bash
+doit mutate
+```
+
+**What it does:**
+- Runs `mutmut run` to apply mutations to source code and check if tests catch them
+- Runs `mutmut results` to display the summary
+
+**Equivalent command:**
+```bash
+uv run mutmut run && uv run mutmut results
+```
+
+### `mutate_html`
+
+Generate HTML report from mutmut results.
+
+```bash
+doit mutate_html
+```
+
+**What it does:**
+- Generates an HTML report from the latest mutmut run
+- Report is saved to `tmp/mutmut/`
+
+**Equivalent command:**
+```bash
+uv run mutmut html --html-dir tmp/mutmut
+```
+
+---
+
+## Benchmarking Tasks
+
+### `benchmark`
+
+Run performance benchmarks.
+
+```bash
+doit benchmark
+```
+
+**What it does:**
+- Runs pytest benchmarks from `tests/benchmarks/` with benchmark mode enabled
+
+**Equivalent command:**
+```bash
+uv run pytest tests/benchmarks/ --benchmark-enable --benchmark-only -v
+```
+
+### `benchmark_save`
+
+Run benchmarks and save results as baseline.
+
+```bash
+doit benchmark_save
+```
+
+**What it does:**
+- Runs benchmarks and saves results as a baseline to `tmp/benchmarks/`
+
+**Equivalent command:**
+```bash
+uv run pytest tests/benchmarks/ --benchmark-enable --benchmark-only --benchmark-save=baseline --benchmark-storage=tmp/benchmarks -v
+```
+
+### `benchmark_compare`
+
+Run benchmarks and compare against saved baseline.
+
+```bash
+doit benchmark_compare
+```
+
+**What it does:**
+- Runs benchmarks and compares against the previously saved baseline
+
+**Equivalent command:**
+```bash
+uv run pytest tests/benchmarks/ --benchmark-enable --benchmark-only --benchmark-compare=0001_baseline --benchmark-storage=tmp/benchmarks -v
+```
 
 ---
 
@@ -350,6 +437,26 @@ doit licenses
 
 **Requires:** `[security]` extras installed (`uv sync --extra security`)
 
+### `sbom`
+
+Generate SBOM in CycloneDX format.
+
+```bash
+doit sbom
+```
+
+**What it does:**
+- Generates Software Bill of Materials in both JSON and XML formats
+- Files are saved to `tmp/sbom.json` and `tmp/sbom.xml`
+
+**Requires:** `[security]` extras installed (`uv sync --extra security`)
+
+**Equivalent command:**
+```bash
+uv run cyclonedx-py environment --of JSON -o tmp/sbom.json
+uv run cyclonedx-py environment --of XML -o tmp/sbom.xml
+```
+
 ---
 
 ## Documentation Tasks
@@ -556,7 +663,7 @@ doit pr_merge --pr=123
 **What it does:**
 1. Finds PR associated with current branch (or uses `--pr`)
 2. Validates PR is approved and checks pass
-3. Merges with conventional commit format: `<type>: <subject> (merges PR #XX, closes #YY)`
+3. Merges with conventional commit format: `<type>: <subject> (merges PR #XX, addresses #YY)`
 
 **Options:**
 - `--pr`: PR number to merge (defaults to PR for current branch)

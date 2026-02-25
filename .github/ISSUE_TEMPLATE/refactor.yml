@@ -1,4 +1,4 @@
-name: Refactor Request
+name: 🔧 Refactor Request
 description: Propose code refactoring or improvement
 labels: ["refactor", "needs-triage"]
 body:
