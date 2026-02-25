@@ -10,11 +10,13 @@ Restructure the `cache/` module from a monolithic `models.py` (793 lines, 30+ Py
 
 ### Directory Structure
 
-Models live at `cache/<api-path>/model.py` and mappings at `cache/<api-path>/mapping.py`, mirroring the ONTAP REST API URL hierarchy:
+Models live at `cache/<api-type>/<api-path>/model.py` and mappings at `cache/<api-type>/<api-path>/mapping.py`, namespaced by API type and mirroring the REST API URL hierarchy:
 
-- `cache/storage/volumes/model.py` + `mapping.py` (maps to `/storage/volumes`)
-- `cache/cluster/nodes/model.py` + `mapping.py` (maps to `/cluster/nodes`)
-- `cache/protocols/nfs/services/model.py` (maps to `/protocols/nfs/services`)
+- `cache/ontap/storage/volumes/model.py` + `mapping.py` (maps to `/storage/volumes`)
+- `cache/ontap/cluster/nodes/model.py` + `mapping.py` (maps to `/cluster/nodes`)
+- `cache/ontap/protocols/nfs/services/model.py` (maps to `/protocols/nfs/services`)
+
+The `<api-type>` namespace (`ontap/`, `aiqum/`, etc.) prevents path collisions when multiple APIs share endpoint paths like `/cluster`.
 
 ### Cache Field and Container Naming
 
@@ -57,7 +59,7 @@ Imports flow upward only (DAG guaranteed, no circular deps):
 
 3. **Automatic registration** - The `ModelRegistry` singleton enables tooling to discover all models and mappings without hardcoded lists, supporting future features like dynamic inspection and plugin systems.
 
-4. **Explicit imports** - Consumer code imports models from their URL-tree path (e.g., `from pynetappfoundry.cache.storage.volumes import VolumeInfo`), making the origin of each model immediately clear. Infrastructure (DB, collector, diff, registry) is imported from `pynetappfoundry.cache`.
+4. **Explicit imports** - Consumer code imports models from their URL-tree path (e.g., `from pynetappfoundry.cache.ontap.storage.volumes import VolumeInfo`), making the origin of each model immediately clear. Infrastructure (DB, collector, diff, registry) is imported from `pynetappfoundry.cache`.
 
 5. **Scalability** - The three-layer hierarchy prevents circular imports by construction. New models slot in at Layer 2 with no risk of breaking the import DAG.
 
@@ -65,6 +67,7 @@ Imports flow upward only (DAG guaranteed, no circular deps):
 
 - Issue #257: refactor: deep URL-tree structure with automatic model and mapping discovery
 - Issue #295: refactor: align cache field names and containers with ONTAP API endpoint hierarchy
+- Issue #314: refactor: namespace cache models under api-type directories
 
 ## Related Documentation
 

@@ -40,22 +40,22 @@ Both databases are SQLite files stored in the config directory:
 The `CachedClusterMetadata` Pydantic model defines the structure of cached data:
 
 ```python
-class CachedClusterMetadata(BaseModel):
+class CachedClusterMetadata(CacheModel, register=False):
     # Cache metadata
     cluster_name: str
     cached_at: datetime
     cache_version: str = "1.0"  # Schema version
 
     # Data categories
-    cloud: list[CloudMetadata]       # Cloud provider info per node
-    cluster: ClusterInfo             # Cluster identity
-    nodes: list[NodeInfo]            # Node information
-    network: NetworkInfo             # IP interfaces, broadcast domains, DNS, subnets
-    storage: StorageInfo             # Aggregates, SVMs, volumes, LUNs, etc.
-    licenses: LicenseInfo            # License information
-    mediator: MediatorInfo           # ONTAP Mediator configuration
-    relationships: RelationshipsInfo # SnapMirror, cluster/SVM peering
-    protocols: ProtocolsInfo         # Export policies, CIFS, NFS, S3
+    cloud: list[CloudMetadata]                          # Cloud provider info per node
+    cluster: ClusterInfo                                # Cluster identity
+    nodes: list[OntapNodeResponse]                      # Node information
+    network: NetworkInfo                                 # IP interfaces, broadcast domains, DNS, subnets
+    storage: StorageInfo                                 # Aggregates, SVMs, volumes, LUNs, etc.
+    license_packages: list[OntapLicensePackageResponse]  # License information
+    mediator: OntapMediatorResponse                      # ONTAP Mediator configuration
+    relationships: RelationshipsInfo                     # SnapMirror, cluster/SVM peering
+    protocols: ProtocolsInfo                             # Export policies, CIFS, NFS, S3
 ```
 
 ### UUID Cross-Reference Index
@@ -270,7 +270,7 @@ Update `METADATA_SCHEMA_VERSION` when modifying `CachedClusterMetadata`:
 
 When modifying the cache schema:
 
-1. **Update the model** in the appropriate `src/pynetappfoundry/cache/<api-path>/model.py` file
+1. **Update the model** in the appropriate `src/pynetappfoundry/cache/<api-type>/<api-path>/model.py` file
 
 2. **Update version constant**:
    ```python
@@ -378,18 +378,20 @@ All models use `ConfigDict(extra="allow")` for forward compatibility with new AP
 
 | Model | Key Fields | Description |
 |-------|------------|-------------|
-| `CloudMetadata` | node, instance_id, provider, region, instance_type | Cloud provider metadata per node |
-| `ClusterInfo` | cluster_name, cluster_uuid, ontap_version, version_generation, version_major, version_minor, contact, location, is_ha | Core cluster identity |
-| `NodeInfo` | uuid, name, serial_number, system_id, model, location, membership, version_full, storage_configuration, system_machine_type, controller_board, controller_memory_size, controller_cpu_count, vm_provider_type, ha_enabled, ha_auto_giveback, ha_partner_uuids, system_aggregate_uuid, cluster_interface_uuids, management_interface_uuids | Cluster node information |
+| `CloudMetadata` | node, instance_id, provider, region, instance_type | Cloud provider metadata per node (CLI-only) |
+| `ClusterInfo` | cluster_name, cluster_uuid, ontap_version, version_generation, version_major, version_minor, contact, location, is_ha, san_optimized | Core cluster identity |
+| `OntapNodeResponse` | uuid, name, serial_number, model, location, membership, version_full | Cluster node information (codegen-generated, ~118 fields) |
+| `OntapLicensePackageResponse` | name, scope, state | License package (codegen-generated) |
+| `OntapMediatorResponse` | ip_address, ca_certificate, dr_group_id | ONTAP Mediator configuration (codegen-generated) |
 
 ### Network
 
 | Model | Key Fields | Description |
 |-------|------------|-------------|
-| `NetworkLIF` | uuid, name, ip_address, netmask, ip_family, enabled, state, scope, vip, svm_uuid, ipspace_uuid, service_policy_uuid, services, auto_revert, failover, is_home, home_node_uuid, home_port_uuid, current_node_uuid, current_port_uuid, dns_zone, ddns_enabled, subnet_uuid, probe_port, rdma_protocols | Logical interface |
-| `BroadcastDomain` | uuid, name, ipspace, mtu, ports | Broadcast domain configuration |
-| `IPSubnetInfo` | uuid, name, ipspace, broadcast_domain, subnet, gateway, ip_ranges | IP subnet |
-| `DNSInfo` | uuid, svm, scope, domains, servers, timeout, attempts | DNS configuration |
+| `OntapIpInterface` | uuid, name, ip_address, netmask, enabled, state, scope | Logical interface (codegen-generated, ~49 fields) |
+| `OntapBroadcastDomain` | uuid, name, mtu | Broadcast domain configuration (codegen-generated) |
+| `OntapIpSubnet` | uuid, name, subnet, gateway | IP subnet (codegen-generated) |
+| `OntapDns` | uuid, domains, servers | DNS configuration (codegen-generated) |
 
 **Container:** `NetworkInfo` holds `ip_interfaces`, `ethernet_broadcast_domains`, `ipspaces`, `dns`, `ip_subnets`.
 
@@ -397,17 +399,17 @@ All models use `ConfigDict(extra="allow")` for forward compatibility with new AP
 
 | Model | Key Fields | Description |
 |-------|------------|-------------|
-| `AggregateInfo` | uuid, name, node, state, type, total_size, disk_count, disk_type, raid_type | Storage aggregate |
-| `SVMInfo` | uuid, name, state, subtype, root_volume, allowed_protocols, language | Storage VM |
-| `VolumeInfo` | uuid, name, svm, state, type, style, size, junction_path, export_policy, snapshot_policy | Volume |
-| `QtreeInfo` | id, name, svm, volume, path, security_style, export_policy | Qtree |
-| `CloudTargetInfo` | uuid, name, provider_type, server, container, owner, scope | Cloud object store target |
-| `FlexCacheInfo` | uuid, name, svm, path, size, origins, global_file_locking_enabled | FlexCache volume |
-| `SnapshotPolicyInfo` | uuid, name, svm, enabled, scope, schedules | Snapshot policy |
-| `ScheduleInfo` | uuid, name, type, scope, svm, cron, interval | Job schedule |
-| `LunInfo` | uuid, name, svm, volume, size, os_type, serial_number, enabled | LUN |
-| `IgroupInfo` | uuid, name, svm, protocol, os_type, initiators | Initiator group |
-| `QosPolicyInfo` | uuid, name, svm, scope, policy_class | QoS policy |
+| `OntapAggregate` | uuid, name, state | Storage aggregate (codegen-generated, ~128 fields) |
+| `OntapSvm` | uuid, name, state, subtype | Storage VM (codegen-generated, ~109 fields) |
+| `OntapVolume` | uuid, name, state, type, style, size | Volume (codegen-generated, ~512 fields) |
+| `OntapQtree` | uuid, name, security_style | Qtree (codegen-generated, ~52 fields) |
+| `OntapCloudTarget` | uuid, name, provider_type, server, container | Cloud object store target (codegen-generated) |
+| `OntapFlexcache` | uuid, name, size | FlexCache volume (codegen-generated) |
+| `OntapSnapshotPolicy` | uuid, name, enabled, scope | Snapshot policy (codegen-generated) |
+| `OntapSchedule` | uuid, name, type, scope | Job schedule (codegen-generated) |
+| `OntapLun` | uuid, name, size, os_type, serial_number, enabled | LUN (codegen-generated, ~105 fields) |
+| `OntapIgroup` | uuid, name, protocol, os_type | Initiator group (codegen-generated) |
+| `OntapQosPolicy` | uuid, name, scope | QoS policy (codegen-generated) |
 
 **Container:** `StorageInfo` holds `aggregates`, `svms`, `cloud_targets`, `volumes`, `qtrees`, `snapshot_policies`, `schedules`, `luns`, `igroups`, `qos_policies`, `flexcaches`.
 
@@ -415,32 +417,21 @@ All models use `ConfigDict(extra="allow")` for forward compatibility with new AP
 
 | Model | Key Fields | Description |
 |-------|------------|-------------|
-| `ExportPolicyInfo` | id, name, svm, rules | NFS export policy |
-| `ExportRuleInfo` | index, clients, protocols, ro_rule, rw_rule, superuser | Export rule |
-| `CIFSShareInfo` | name, path, svm, comment, oplocks, encryption | CIFS/SMB share |
-| `CIFSServiceInfo` | svm, name, enabled, ad_domain, netbios_aliases | CIFS service config |
-| `NFSServiceInfo` | svm, enabled, protocol_v3/v4/v41_enabled | NFS service config |
-| `S3BucketInfo` | uuid, name, svm, type, size, versioning_state | S3 bucket |
+| `OntapExportPolicy` | id, name | NFS export policy (codegen-generated) |
+| `OntapCifsShare` | name, path | CIFS/SMB share (codegen-generated) |
+| `OntapCifsService` | name, enabled | CIFS service config (codegen-generated, ~99 fields) |
+| `OntapNfsService` | enabled, state | NFS service config (codegen-generated, ~158 fields) |
+| `OntapS3Bucket` | uuid, name, type, size | S3 bucket (codegen-generated) |
 
 **Container:** `ProtocolsInfo` holds `nfs_export_policies`, `cifs_shares`, `nfs_services`, `cifs_services`, `s3_buckets`.
-
-### Licensing & Mediator
-
-| Model | Key Fields | Description |
-|-------|------------|-------------|
-| `LicenseFeature` | name, state, scope | Feature license |
-| `CapacityLicense` | name, licensed_capacity, used_capacity | Capacity license |
-| `MediatorInfo` | mediator_address, mediator_uuid, mediator_port | ONTAP Mediator configuration |
-
-**Container:** `LicenseInfo` holds `feature_licenses`, `capacity_licenses`.
 
 ### Relationships
 
 | Model | Key Fields | Description |
 |-------|------------|-------------|
-| `SnapMirrorRelationship` | uuid, source_path, destination_path, relationship_type, state | SnapMirror relationship |
-| `ClusterPeer` | uuid, name, remote_cluster_name, peer_addresses, authentication_state | Cluster peer |
-| `SVMPeerInfo` | uuid, name, svm, peer_svm, peer_cluster, state, applications | SVM peer |
+| `OntapSnapmirrorRelationship` | uuid, source_path, destination_path, state | SnapMirror relationship (codegen-generated, ~69 fields) |
+| `OntapClusterPeer` | uuid, name | Cluster peer (codegen-generated) |
+| `OntapSvmPeer` | uuid, name, state | SVM peer (codegen-generated) |
 
 **Container:** `RelationshipsInfo` holds `snapmirror_destinations`, `cluster_peers`, `svm_peers`.
 
@@ -478,16 +469,16 @@ from pynetappfoundry.cache import (
 )
 
 # Models (import from their URL-tree sub-package)
-from pynetappfoundry.cache.cloud.metadata import CloudMetadata
-from pynetappfoundry.cache.cluster import ClusterInfo
-from pynetappfoundry.cache.cluster.mediators import MediatorInfo
-from pynetappfoundry.cache.cluster.nodes import NodeInfo
-from pynetappfoundry.cache.cluster.peers import ClusterPeer
-from pynetappfoundry.cache.network import NetworkInfo
-from pynetappfoundry.cache.network.ip.interfaces import NetworkLIF
-from pynetappfoundry.cache.storage import StorageInfo
-from pynetappfoundry.cache.storage.aggregates import AggregateInfo
-from pynetappfoundry.cache.storage.volumes import VolumeInfo
+from pynetappfoundry.cache.ontap.cloud.metadata import CloudMetadata
+from pynetappfoundry.cache.ontap.cluster import ClusterInfo
+from pynetappfoundry.cache.ontap.cluster.mediators import MediatorInfo
+from pynetappfoundry.cache.ontap.cluster.nodes import NodeInfo
+from pynetappfoundry.cache.ontap.cluster.peers import ClusterPeer
+from pynetappfoundry.cache.ontap.network import NetworkInfo
+from pynetappfoundry.cache.ontap.network.ip.interfaces import NetworkLIF
+from pynetappfoundry.cache.ontap.storage import StorageInfo
+from pynetappfoundry.cache.ontap.storage.aggregates import AggregateInfo
+from pynetappfoundry.cache.ontap.storage.volumes import VolumeInfo
 # ... etc. — see URL-tree structure for all model paths
 ```
 
@@ -503,13 +494,7 @@ db.set("cluster1", metadata)
 metadata = db.get("cluster1")  # Returns CachedClusterMetadata or None
 
 # List all clusters
-clusters = db.list_clusters()  # Returns list of cluster names
-
-# Delete cluster
-db.delete("cluster1")
-
-# Always close when done
-db.close()
+clusters = db.list_clusters()  # Returns list of dicts with cluster info
 ```
 
 ### CacheHistoryDB

@@ -56,6 +56,9 @@ Maps a single field across three domains: API response, CLI output, and cache mo
 | `default` | `Any` | Default value when the field is missing. Default: `""`. |
 | `transform` | `Callable \| None` | Custom API extraction function receiving the full record dict. Overrides `api_path`. |
 | `cli_transform` | `Callable \| None` | Custom CLI extraction function receiving the full record dict. Overrides `cli_field`. |
+| `cache_strategy` | `Literal["cache", "realtime", "derived"]` | How the field is collected and stored. Default: `"cache"`. See [Cache Model Architecture](cache-models.md#field-strategies). |
+| `requires_explicit_fetch` | `bool` | Whether this field requires explicit `?fields=` inclusion (ONTAP expensive fields). Default: `False`. |
+| `post_collection` | `Callable \| None` | Callable to compute derived field values after collection. Only used when `cache_strategy="derived"`. |
 
 ### TypeMapping
 
@@ -63,7 +66,7 @@ Defines a complete API object type mapping.
 
 | Attribute | Type | Description |
 |-----------|------|-------------|
-| `name` | `str` | Human-readable type name (e.g., `"Volume"`). |
+| `name` | `str` | Human-readable type name (e.g., `"OntapVolume"`). |
 | `model_class` | `type[BaseModel]` | Pydantic model class for the cache object. |
 | `api_endpoint` | `str` | REST API endpoint including query params. |
 | `cli_command` | `str` | CLI show command name. Default: `""` (empty, optional). |
@@ -71,11 +74,17 @@ Defines a complete API object type mapping.
 | `id_field` | `str` | Field used for log identification. Default: `"name"`. |
 | `records_path` | `str` | Dot-notation path to records list in the API response envelope. Default: `"records"`. Supports nested paths like `"_embedded.items"`. |
 | `api_type` | `str` | Tag identifying which API client/unit registry to use. Default: `"ontap"`. |
+| `parent_mapping` | `str \| None` | Name of the parent TypeMapping for parameterized endpoints. |
+| `parent_id_field` | `str \| None` | Field on the parent model providing the placeholder value. |
 
 Helper methods:
 
 - `api_expected_fields()` — derives top-level API keys from all `api_path` values (used for missing-field logging).
 - `cli_expected_fields()` — derives CLI field names from all `cli_field` values.
+- `explicit_fetch_fields()` — returns `cache_attr` names for fields with `requires_explicit_fetch=True`.
+- `cached_fields()` — returns fields with `cache_strategy="cache"`.
+- `realtime_fields()` — returns fields with `cache_strategy="realtime"`.
+- `derived_fields()` — returns fields with `cache_strategy="derived"`.
 
 ### Generic Parsers
 
@@ -102,7 +111,7 @@ Helper methods:
 
 ### Step 1: Create the mapping module
 
-Create `src/pynetappfoundry/cache/<api-path>/mapping.py` co-located with the model:
+Create `src/pynetappfoundry/cache/<api-type>/<api-path>/mapping.py` co-located with the model:
 
 ```python
 """<Type> type mapping definition."""
@@ -111,7 +120,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.<api_path>.model import <TypeModel>
+from pynetappfoundry.cache.<api_type>.<api_path>.model import <TypeModel>
 
 <TYPE>_MAPPING = TypeMapping(
     name="<Type>",
@@ -166,11 +175,11 @@ The `cli_command` defaults to `""` (empty) since non-ONTAP APIs typically have n
 
 ### Step 2: Export from the package's `__init__.py`
 
-Add the import and `__all__` entry in `src/pynetappfoundry/cache/<api-path>/__init__.py`:
+Add the import and `__all__` entry in `src/pynetappfoundry/cache/<api-type>/<api-path>/__init__.py`:
 
 ```python
-from pynetappfoundry.cache.<api_path>.mapping import <TYPE>_MAPPING
-from pynetappfoundry.cache.<api_path>.model import <TypeModel>
+from pynetappfoundry.cache.<api_type>.<api_path>.mapping import <TYPE>_MAPPING
+from pynetappfoundry.cache.<api_type>.<api_path>.model import <TypeModel>
 
 __all__ = ["<TYPE>_MAPPING", "<TypeModel>"]
 ```
@@ -181,7 +190,7 @@ Replace hand-written parsing in the collector with the generic parsers:
 
 ```python
 from pynetappfoundry.cache.field_mapping import parse_api_response
-from pynetappfoundry.cache.<api_path>.mapping import <TYPE>_MAPPING
+from pynetappfoundry.cache.<api_type>.<api_path>.mapping import <TYPE>_MAPPING
 
 # API parsing
 items = parse_api_response(<TYPE>_MAPPING, response, log_prefix, log_missing_fn)
@@ -219,22 +228,18 @@ For CLI-only types, also test:
 - CLI record parsing (including coercion edge cases)
 - `cli_expected_fields()`
 
-## Migrated Types
+## Hand-Written Mappings
 
-| Type | Mapping | Model | Fields | Notes |
-|------|---------|-------|--------|-------|
-| Volume | `VOLUME_MAPPING` | `VolumeInfo` | 21 | API-only. Uses transform for aggregate list extraction. |
-| Aggregate | `AGGREGATE_MAPPING` | `AggregateInfo` | 28 | API-only. Deeply nested API paths (`block_storage.primary.*`). Explicit `?fields=*,is_spare_low,sidl_enabled`. |
-| Node | `NODE_MAPPING` | `NodeInfo` | 20 | API-only. Wildcard `[*]` syntax for list fields. `field_validator` for int→str coercion. |
-| ClusterPeer | `CLUSTER_PEER_MAPPING` | `ClusterPeer` | 7 | API-only. Uses transform for dict-vs-string fallback on `remote`, `authentication`, and `encryption`. |
-| Cluster | `CLUSTER_MAPPING` | `ClusterInfo` | 18 | API-only. Single-object endpoint (no `records` list), uses `parse_api_record()` directly. `is_ha` derived post-collection. |
-| CloudMetadata | `CLOUD_METADATA_MAPPING` | `CloudMetadata` | 19 | CLI-only (no API endpoint). Computed link fields built as post-processing in collector. |
-| BroadcastDomain | `BROADCAST_DOMAIN_MAPPING` | `BroadcastDomain` | 5 | API-only. Wildcard `[*]` syntax for `port_uuids`. Nested dot-path for `ipspace_uuid`. |
-| NetworkLIF | `NETWORK_LIF_MAPPING` | `NetworkLIF` | 25 | API-only. UUID-only nested refs for svm, ipspace, service_policy, subnet, and location nodes/ports. Scope-based sorting in collector. |
+Most mappings are now codegen-generated (e.g., `ONTAPVOLUME_MAPPING`, `ONTAPNODERESPONSE_MAPPING`). Two hand-written mappings remain for types that don't map to standard REST GET endpoints:
+
+| Type | Mapping | Model | Notes |
+|------|---------|-------|-------|
+| Cluster | `CLUSTER_MAPPING` | `ClusterInfo` | Hand-written. Single-object endpoint (no `records` list), uses `parse_api_record()` directly. `is_ha` derived post-collection. |
+| CloudMetadata | `CLOUD_METADATA_MAPPING` | `CloudMetadata` | Hand-written. CLI-only (no API endpoint). Computed link fields built as post-processing in collector. |
 
 ## Reference: Field Mapping Patterns
 
-The `VOLUME_MAPPING` in `src/pynetappfoundry/cache/mappings/volume.py` is the canonical example. It demonstrates all API field mapping patterns:
+The `VOLUME_MAPPING` in `src/pynetappfoundry/cache/ontap/storage/volumes/mapping.py` is the canonical example. It demonstrates all API field mapping patterns:
 
 ### Simple field (direct path)
 
