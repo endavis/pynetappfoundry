@@ -62,7 +62,7 @@ After installation:
 Per [Template Manager](manage.md) "Workflow: Staying Up to Date":
 
 ```bash
-python tools/pyproject_template/manage.py check
+python tools/pyproject_template/manage.py --yes check
 ```
 
 This will (per [Tools Reference](tools-reference.md)):
@@ -200,7 +200,7 @@ Add any new dev dependencies required by new doit tasks:
 Per [Template Manager](manage.md) step [5]:
 
 ```bash
-python tools/pyproject_template/manage.py sync
+python tools/pyproject_template/manage.py --yes sync
 ```
 
 This:
@@ -233,11 +233,11 @@ This:
 
 Once `tools/pyproject_template/manage.py` is installed and sync state is tracked, future updates follow this simplified workflow:
 
-1. **Check:** `python tools/pyproject_template/manage.py check`
+1. **Check:** `python tools/pyproject_template/manage.py --yes check`
 2. **Review:** Inspect diffs for Modified/Missing files
 3. **Apply:** Manually merge relevant changes
 4. **Validate:** `doit check`
-5. **Mark synced:** `python tools/pyproject_template/manage.py sync`
+5. **Mark synced:** `python tools/pyproject_template/manage.py --yes sync`
 6. **Commit:** Follow issue → branch → PR workflow
 
 ---
