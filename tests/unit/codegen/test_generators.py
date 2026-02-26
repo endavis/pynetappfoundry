@@ -425,10 +425,10 @@ class TestWriteEndpointFiles:
         ep = _make_endpoint()
         written = write_endpoint_files(ep, tmp_path)
 
-        assert (tmp_path / "storage" / "volumes" / "model.py").exists()
-        assert (tmp_path / "storage" / "volumes" / "mapping.py").exists()
-        assert (tmp_path / "storage" / "volumes" / "__init__.py").exists()
-        assert (tmp_path / "storage" / "volumes" / "volumes.toml").exists()
+        assert (tmp_path / "ontap" / "storage" / "volumes" / "model.py").exists()
+        assert (tmp_path / "ontap" / "storage" / "volumes" / "mapping.py").exists()
+        assert (tmp_path / "ontap" / "storage" / "volumes" / "__init__.py").exists()
+        assert (tmp_path / "ontap" / "storage" / "volumes" / "volumes.toml").exists()
         assert len(written) == 4
 
     def test_intermediate_init_files(self, tmp_path):
@@ -441,14 +441,14 @@ class TestWriteEndpointFiles:
         )
         write_endpoint_files(ep, tmp_path)
 
-        assert (tmp_path / "network" / "__init__.py").exists()
-        assert (tmp_path / "network" / "ip" / "__init__.py").exists()
+        assert (tmp_path / "ontap" / "network" / "__init__.py").exists()
+        assert (tmp_path / "ontap" / "network" / "ip" / "__init__.py").exists()
 
     def test_generated_model_is_valid_python(self, tmp_path):
         ep = _make_endpoint()
         write_endpoint_files(ep, tmp_path)
 
-        model_code = (tmp_path / "storage" / "volumes" / "model.py").read_text()
+        model_code = (tmp_path / "ontap" / "storage" / "volumes" / "model.py").read_text()
         # Should compile without syntax errors
         compile(model_code, "model.py", "exec")
 
@@ -456,7 +456,7 @@ class TestWriteEndpointFiles:
         ep = _make_endpoint()
         write_endpoint_files(ep, tmp_path)
 
-        mapping_code = (tmp_path / "storage" / "volumes" / "mapping.py").read_text()
+        mapping_code = (tmp_path / "ontap" / "storage" / "volumes" / "mapping.py").read_text()
         compile(mapping_code, "mapping.py", "exec")
 
     def test_schema_lookup_passed_to_mapping(self, tmp_path):
@@ -473,8 +473,27 @@ class TestWriteEndpointFiles:
         schema_lookup = {"/svm/svms": "svm"}
         write_endpoint_files(ep, tmp_path, schema_lookup=schema_lookup)
 
-        mapping_code = (tmp_path / "svm" / "svms" / "web" / "mapping.py").read_text()
+        mapping_code = (tmp_path / "ontap" / "svm" / "svms" / "web" / "mapping.py").read_text()
         assert 'parent_mapping="OntapSvm"' in mapping_code
+
+    def test_no_orphan_dirs_under_output_dir(self, tmp_path):
+        """Only the api_type subdirectory should exist directly under output_dir."""
+        ep = _make_endpoint()
+        write_endpoint_files(ep, tmp_path)
+
+        subdirs = [p.name for p in tmp_path.iterdir() if p.is_dir()]
+        assert subdirs == ["ontap"]
+
+    def test_custom_api_type(self, tmp_path):
+        """Files should land under the custom api_type subdirectory."""
+        ep = _make_endpoint()
+        write_endpoint_files(ep, tmp_path, api_type="aiqum")
+
+        assert (tmp_path / "aiqum" / "storage" / "volumes" / "model.py").exists()
+        assert (tmp_path / "aiqum" / "storage" / "volumes" / "mapping.py").exists()
+        assert (tmp_path / "aiqum" / "storage" / "volumes" / "__init__.py").exists()
+        # No ontap directory should exist
+        assert not (tmp_path / "ontap").exists()
 
 
 # ---------------------------------------------------------------------------
