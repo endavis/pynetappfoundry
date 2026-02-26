@@ -735,7 +735,7 @@ def write_endpoint_files(
         List of paths to all files written.
     """
     module_parts = _path_to_module_parts(endpoint.path)
-    pkg_dir = output_dir
+    pkg_dir = output_dir / api_type
     for part in module_parts:
         pkg_dir = pkg_dir / part
 
@@ -743,7 +743,7 @@ def write_endpoint_files(
     written: list[Path] = []
 
     # Also ensure intermediate __init__.py files exist
-    _ensure_init_files(output_dir, module_parts)
+    _ensure_init_files(output_dir / api_type, module_parts)
 
     # model.py
     model_path = pkg_dir / "model.py"
