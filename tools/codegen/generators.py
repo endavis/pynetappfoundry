@@ -205,6 +205,18 @@ _PYTHON_KEYWORDS: frozenset[str] = frozenset(
         # Pydantic BaseModel reserved attributes
         "schema",
         "model",
+        # Pydantic v2 reserved attributes
+        "model_config",
+        "model_fields",
+        "model_computed_fields",
+        "model_extra",
+        "model_fields_set",
+        "model_post_init",
+        "model_validate",
+        "model_dump",
+        "model_json_schema",
+        "metadata",
+        "config",
     }
 )
 

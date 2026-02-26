@@ -10,6 +10,7 @@ from tools.codegen.generators import (
     _has_typed_sub_fields,
     _path_to_class_name,
     _path_to_module_parts,
+    _safe_attr_name,
     _schema_to_pascal,
     _select_leaf_fields,
     _singularize,
@@ -645,3 +646,24 @@ class TestGenerateMappingSubModel:
         ep = _make_endpoint_with_sub_model()
         code = generate_mapping(ep)
         compile(code, "mapping.py", "exec")
+
+
+# ---------------------------------------------------------------------------
+# _safe_attr_name
+# ---------------------------------------------------------------------------
+
+
+class TestSafeAttrName:
+    """Direct tests for _safe_attr_name."""
+
+    def test_python_keyword(self):
+        assert _safe_attr_name("class") == "class_"
+
+    def test_pydantic_reserved(self):
+        assert _safe_attr_name("model_config") == "model_config_"
+
+    def test_unreserved(self):
+        assert _safe_attr_name("name") == "name"
+
+    def test_compound_not_reserved(self):
+        assert _safe_attr_name("space_metadata") == "space_metadata"
