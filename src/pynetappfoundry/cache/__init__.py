@@ -66,6 +66,7 @@ from pynetappfoundry.cache._base import (  # noqa: E402
 
 # Layer 3: Container models (importing _metadata triggers the full
 # model registration chain via transitive leaf-model imports)
+from pynetappfoundry.cache._lazy import LazyClusterMetadata  # noqa: E402
 from pynetappfoundry.cache._metadata import (  # noqa: E402
     CachedClusterMetadata,
     RelationshipsInfo,
@@ -100,6 +101,7 @@ __all__ = [
     "CollectionPhase",
     "FieldMapping",
     "HasUUID",
+    "LazyClusterMetadata",
     "MetadataCollector",
     "OntapMediatorResponse",
     "OntapUUID",

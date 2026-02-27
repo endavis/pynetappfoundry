@@ -54,10 +54,12 @@ Integration point: `Config._wrap_clusters()` replaces each raw cluster dict with
 
 - Issue #320: feat: replace `_enrich_with_cache` with ClusterEntry lazy cache accessors
 - Issue #301: feat: field annotations, OpenAPI codegen, and SQL cache storage
+- Issue #352: refactor: lazy `_reconstruct_metadata` to avoid loading all model tables on every `get()`
 
 ## Related Documentation
 
 - `ClusterEntry` implementation: `src/pynetappfoundry/core/cluster_entry.py`
+- `LazyClusterMetadata` implementation: `src/pynetappfoundry/cache/_lazy.py`
 - Config integration: `src/pynetappfoundry/core/config.py` (`_wrap_clusters()`)
 - [ADR-0004: Declarative field mapping framework](0004-declarative-field-mapping-framework.md)
 - [ADR-0009: Per-model SQL table storage](0009-sql-table-storage.md)

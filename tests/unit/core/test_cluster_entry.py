@@ -137,7 +137,7 @@ class TestLazyLoading:
 
         mock_metadata = MagicMock()
         mock_db_instance = MagicMock()
-        mock_db_instance.get.return_value = mock_metadata
+        mock_db_instance.get_lazy.return_value = mock_metadata
 
         with patch(
             "pynetappfoundry.cache.db.ClusterMetadataDB",
@@ -146,7 +146,7 @@ class TestLazyLoading:
             entry = ClusterEntry("test-cluster", sample_data, cache_path)
             result = entry.ontap
             assert result is mock_metadata
-            mock_db_instance.get.assert_called_once_with("test-cluster")
+            mock_db_instance.get_lazy.assert_called_once_with("test-cluster")
             mock_db_instance.close.assert_called_once()
 
     def test_ontap_cached_on_second_access(
@@ -159,7 +159,7 @@ class TestLazyLoading:
 
         mock_metadata = MagicMock()
         mock_db_instance = MagicMock()
-        mock_db_instance.get.return_value = mock_metadata
+        mock_db_instance.get_lazy.return_value = mock_metadata
 
         with patch(
             "pynetappfoundry.cache.db.ClusterMetadataDB",
@@ -170,7 +170,7 @@ class TestLazyLoading:
             result2 = entry.ontap
             assert result1 is result2
             # DB should only be opened once
-            mock_db_instance.get.assert_called_once()
+            mock_db_instance.get_lazy.assert_called_once()
 
     def test_ontap_returns_none_when_no_cache_file(self, entry: ClusterEntry) -> None:
         """Test that .ontap returns None when cache DB file doesn't exist."""
@@ -205,7 +205,7 @@ class TestLazyLoading:
         mock_metadata.cloud = [mock_cloud]
 
         mock_db_instance = MagicMock()
-        mock_db_instance.get.return_value = mock_metadata
+        mock_db_instance.get_lazy.return_value = mock_metadata
 
         with patch(
             "pynetappfoundry.cache.db.ClusterMetadataDB",

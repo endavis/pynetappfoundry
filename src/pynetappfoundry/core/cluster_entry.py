@@ -15,7 +15,7 @@ from functools import cached_property
 from pathlib import Path
 from typing import Any
 
-from pynetappfoundry.cache._metadata import CachedClusterMetadata
+from pynetappfoundry.cache._lazy import LazyClusterMetadata
 
 _file_name = Path(__file__).name
 
@@ -117,14 +117,15 @@ class ClusterEntry(MutableMapping[str, Any]):
     # ------------------------------------------------------------------
 
     @cached_property
-    def ontap(self) -> CachedClusterMetadata | None:
+    def ontap(self) -> LazyClusterMetadata | None:
         """Lazily load ONTAP cached metadata for this cluster.
 
-        Opens the cache database on first access, retrieves the metadata,
+        Opens the cache database on first access, retrieves a lazy-loading
+        proxy that defers per-field-group queries until attribute access,
         closes the database, and caches the result.
 
         Returns:
-            CachedClusterMetadata if cache data exists, None otherwise.
+            LazyClusterMetadata proxy if cache data exists, None otherwise.
         """
         return self._load_cached_metadata()
 
@@ -147,8 +148,8 @@ class ClusterEntry(MutableMapping[str, Any]):
     # Private helpers
     # ------------------------------------------------------------------
 
-    def _load_cached_metadata(self) -> CachedClusterMetadata | None:
-        """Open the cache DB, fetch metadata for this cluster, close, return."""
+    def _load_cached_metadata(self) -> LazyClusterMetadata | None:
+        """Open the cache DB, fetch lazy metadata for this cluster, close, return."""
         if not self._cache_db_path.exists():
             logging.debug(f"{_file_name} : no cache DB at {self._cache_db_path} for {self._name}")
             return None
@@ -158,7 +159,7 @@ class ClusterEntry(MutableMapping[str, Any]):
 
             db = ClusterMetadataDB(db_path=self._cache_db_path)
             try:
-                result = db.get(self._name)
+                result = db.get_lazy(self._name)
                 logging.debug(
                     f"{_file_name} : loaded cache for {self._name}: "
                     f"{'found' if result else 'not found'}"
