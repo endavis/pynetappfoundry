@@ -284,14 +284,6 @@ def generate_uuid_column_index_ddl(table_name: str) -> str:
 # Fixed table DDL
 # ---------------------------------------------------------------------------
 
-UUID_INDEX_DDL = """\
-CREATE TABLE _uuid_index (
-    cluster_name TEXT NOT NULL,
-    uuid TEXT NOT NULL,
-    table_name TEXT NOT NULL,
-    PRIMARY KEY (cluster_name, uuid)
-)"""
-
 ENVELOPE_DDL = """\
 CREATE TABLE cluster_metadata (
     cluster_name TEXT PRIMARY KEY,
