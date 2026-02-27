@@ -6,49 +6,36 @@ for change history tracking.
 Tracked fields are derived dynamically from each model's ``model_fields``,
 so new fields added to cache models are automatically tracked without
 manual updates to this module.
+
+Entity configurations are built dynamically by introspecting
+``CachedClusterMetadata`` model fields and looking up ``TypeMapping``
+entries in the model registry.  A small overrides dict handles
+models whose key/display fields don't follow the convention
+(``uuid`` if present, else ``name``).
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, get_args, get_origin
 
 from pydantic import BaseModel
 
 from pynetappfoundry.cache._base import CacheModel
 from pynetappfoundry.cache.ontap.cloud.metadata.model import CloudMetadata
-from pynetappfoundry.cache.ontap.cloud.targets.model import OntapCloudTarget
 from pynetappfoundry.cache.ontap.cluster.licensing.licenses.model import (
     OntapLicensePackageResponse,
 )
 from pynetappfoundry.cache.ontap.cluster.model import ClusterInfo
-from pynetappfoundry.cache.ontap.cluster.nodes.model import OntapNodeResponse
-from pynetappfoundry.cache.ontap.cluster.peers.model import OntapClusterPeer
-from pynetappfoundry.cache.ontap.cluster.schedules.model import OntapSchedule
 from pynetappfoundry.cache.ontap.name_services.dns.model import OntapDns
-from pynetappfoundry.cache.ontap.network.ethernet.broadcast_domains.model import (
-    OntapBroadcastDomain,
-)
-from pynetappfoundry.cache.ontap.network.ip.interfaces.model import OntapIpInterface
-from pynetappfoundry.cache.ontap.network.ip.subnets.model import OntapIpSubnet
 from pynetappfoundry.cache.ontap.protocols.cifs.services.model import OntapCifsService
 from pynetappfoundry.cache.ontap.protocols.cifs.shares.model import OntapCifsShare
 from pynetappfoundry.cache.ontap.protocols.nfs.export_policies.model import OntapExportPolicy
 from pynetappfoundry.cache.ontap.protocols.nfs.services.model import OntapNfsService
-from pynetappfoundry.cache.ontap.protocols.s3.buckets.model import OntapS3Bucket
-from pynetappfoundry.cache.ontap.protocols.san.igroups.model import OntapIgroup
 from pynetappfoundry.cache.ontap.snapmirror.relationships.model import (
     OntapSnapmirrorRelationship,
 )
-from pynetappfoundry.cache.ontap.storage.aggregates.model import OntapAggregate
-from pynetappfoundry.cache.ontap.storage.flexcache.flexcaches.model import OntapFlexcache
-from pynetappfoundry.cache.ontap.storage.luns.model import OntapLun
-from pynetappfoundry.cache.ontap.storage.qos.policies.model import OntapQosPolicy
 from pynetappfoundry.cache.ontap.storage.qtrees.model import OntapQtree
-from pynetappfoundry.cache.ontap.storage.snapshot_policies.model import OntapSnapshotPolicy
-from pynetappfoundry.cache.ontap.storage.volumes.model import OntapVolume
-from pynetappfoundry.cache.ontap.svm.peers.model import OntapSvmPeer
-from pynetappfoundry.cache.ontap.svm.svms.model import OntapSvm
 
 if TYPE_CHECKING:
     from pynetappfoundry.cache._metadata import CachedClusterMetadata
@@ -131,144 +118,114 @@ def _get_display_name(entity: Any, display_field: str) -> str:
     return str(value)
 
 
-# Entity configurations: maps category path -> EntityConfig.
-# key_field is used for identity matching between snapshots.
-# display_field is the human-readable label shown in change output.
-# Tracked fields are derived automatically from model_class.model_fields.
-_ENTITY_CONFIGS: dict[str, EntityConfig] = {
-    # --- Models WITH uuid (use uuid as stable identity key) ---
-    "nodes": EntityConfig(
-        key_field="uuid",
-        model_class=OntapNodeResponse,
-        display_field="name",
-    ),
-    "network.ethernet_broadcast_domains": EntityConfig(
-        key_field="uuid",
-        model_class=OntapBroadcastDomain,
-        display_field="name",
-    ),
-    "network.ip_subnets": EntityConfig(
-        key_field="uuid",
-        model_class=OntapIpSubnet,
-        display_field="name",
-    ),
-    "network.dns": EntityConfig(
-        key_field="uuid",
-        model_class=OntapDns,
-        display_field="svm_uuid",
-    ),
-    "storage.aggregates": EntityConfig(
-        key_field="uuid",
-        model_class=OntapAggregate,
-        display_field="name",
-    ),
-    "storage.svms": EntityConfig(
-        key_field="uuid",
-        model_class=OntapSvm,
-        display_field="name",
-    ),
-    "storage.cloud_targets": EntityConfig(
-        key_field="uuid",
-        model_class=OntapCloudTarget,
-        display_field="name",
-    ),
-    "storage.volumes": EntityConfig(
-        key_field="uuid",
-        model_class=OntapVolume,
-        display_field="name",
-    ),
-    "storage.snapshot_policies": EntityConfig(
-        key_field="uuid",
-        model_class=OntapSnapshotPolicy,
-        display_field="name",
-    ),
-    "storage.schedules": EntityConfig(
-        key_field="uuid",
-        model_class=OntapSchedule,
-        display_field="name",
-    ),
-    "storage.luns": EntityConfig(
-        key_field="uuid",
-        model_class=OntapLun,
-        display_field="name",
-    ),
-    "storage.igroups": EntityConfig(
-        key_field="uuid",
-        model_class=OntapIgroup,
-        display_field="name",
-    ),
-    "storage.qos_policies": EntityConfig(
-        key_field="uuid",
-        model_class=OntapQosPolicy,
-        display_field="name",
-    ),
-    "storage.flexcaches": EntityConfig(
-        key_field="uuid",
-        model_class=OntapFlexcache,
-        display_field="name",
-    ),
-    "protocols.s3_buckets": EntityConfig(
-        key_field="uuid",
-        model_class=OntapS3Bucket,
-        display_field="name",
-    ),
-    "relationships.snapmirror_destinations": EntityConfig(
-        key_field="uuid",
-        model_class=OntapSnapmirrorRelationship,
-        display_field="{source_path}->{destination_path}",
-    ),
-    "relationships.cluster_peers": EntityConfig(
-        key_field="uuid",
-        model_class=OntapClusterPeer,
-        display_field="name",
-    ),
-    "relationships.svm_peers": EntityConfig(
-        key_field="uuid",
-        model_class=OntapSvmPeer,
-        display_field="name",
-    ),
-    # --- Models WITHOUT uuid (keep current key) ---
-    "cloud": EntityConfig(
-        key_field="node",
-        model_class=CloudMetadata,
-        display_field="node",
-    ),
-    "network.ip_interfaces": EntityConfig(
-        key_field="uuid",
-        model_class=OntapIpInterface,
-        display_field="name",
-    ),
-    "storage.qtrees": EntityConfig(
-        key_field="name",
-        model_class=OntapQtree,
-        display_field="name",
-    ),
-    "protocols.nfs_export_policies": EntityConfig(
-        key_field="index",
-        model_class=OntapExportPolicy,
-        display_field="index",
-    ),
-    "protocols.cifs_shares": EntityConfig(
-        key_field="name",
-        model_class=OntapCifsShare,
-        display_field="name",
-    ),
-    "protocols.nfs_services": EntityConfig(
-        key_field="svm_name",
-        model_class=OntapNfsService,
-        display_field="svm_name",
-    ),
-    "protocols.cifs_services": EntityConfig(
-        key_field="svm_name",
-        model_class=OntapCifsService,
-        display_field="svm_name",
-    ),
-    "license_packages": EntityConfig(
-        key_field="name",
-        model_class=OntapLicensePackageResponse,
-        display_field="name",
-    ),
+# ---------------------------------------------------------------------------
+# Dynamic entity config builder
+# ---------------------------------------------------------------------------
+
+# Overrides for models whose key/display fields don't follow the convention
+# (convention: key_field="uuid" if present else "name", display_field="name").
+# key: model class, value: (key_field, display_field)
+_DIFF_OVERRIDES: dict[type[CacheModel], tuple[str, str]] = {
+    CloudMetadata: ("node", "node"),
+    OntapDns: ("uuid", "svm_uuid"),
+    OntapQtree: ("name", "name"),
+    OntapExportPolicy: ("index", "index"),
+    OntapCifsShare: ("name", "name"),
+    OntapNfsService: ("svm_name", "svm_name"),
+    OntapCifsService: ("svm_name", "svm_name"),
+    OntapSnapmirrorRelationship: ("uuid", "{source_path}->{destination_path}"),
+    OntapLicensePackageResponse: ("name", "name"),
 }
+
+# Singleton fields on CachedClusterMetadata that are diffed separately
+# by _diff_cluster_info() and _diff_mediator_info().
+_SINGLETON_FIELDS = frozenset({"cluster", "mediator"})
+
+# Metadata-only fields on CachedClusterMetadata (not diffable entities).
+_METADATA_FIELDS = frozenset({"cluster_name", "cached_at", "cache_version"})
+
+
+def _build_entity_configs() -> dict[str, EntityConfig]:
+    """Build entity configs by introspecting CachedClusterMetadata.
+
+    Walks the model fields of ``CachedClusterMetadata`` recursively to
+    discover all ``list[CacheModel]`` fields and their category paths.
+    For each discovered model, looks up a matching ``TypeMapping`` in the
+    model registry to confirm it is a diffable entity, then applies
+    convention-based defaults or overrides for key/display fields.
+
+    Returns:
+        Mapping of category path to EntityConfig.
+    """
+    from pynetappfoundry.cache._metadata import CachedClusterMetadata
+    from pynetappfoundry.cache._registry import model_registry
+
+    # Build a set of model classes that have TypeMappings registered
+    mapped_classes: set[type[BaseModel]] = {
+        mapping.model_class for mapping in model_registry.mappings.values()
+    }
+
+    configs: dict[str, EntityConfig] = {}
+
+    def _walk(model_cls: type[BaseModel], prefix: str) -> None:
+        for field_name, field_info in model_cls.model_fields.items():
+            path = f"{prefix}.{field_name}" if prefix else field_name
+
+            # Skip metadata and singleton fields at the top level
+            if not prefix and field_name in (_METADATA_FIELDS | _SINGLETON_FIELDS):
+                continue
+
+            annotation = field_info.annotation
+            origin = get_origin(annotation)
+            args = get_args(annotation)
+
+            if origin is list and args:
+                inner = args[0]
+                if not (isinstance(inner, type) and issubclass(inner, CacheModel)):
+                    continue  # list[str] or other non-model list
+                if inner not in mapped_classes:
+                    continue  # no TypeMapping → not a diffable entity
+
+                # Determine key_field and display_field
+                if inner in _DIFF_OVERRIDES:
+                    key_field, display_field = _DIFF_OVERRIDES[inner]
+                elif "uuid" in inner.model_fields:
+                    key_field = "uuid"
+                    display_field = "name"
+                elif "name" in inner.model_fields:
+                    key_field = "name"
+                    display_field = "name"
+                else:
+                    continue  # no suitable identity key
+
+                configs[path] = EntityConfig(
+                    key_field=key_field,
+                    model_class=inner,
+                    display_field=display_field,
+                )
+
+            elif isinstance(annotation, type) and issubclass(annotation, BaseModel):
+                # Container model (e.g., StorageInfo, NetworkInfo) — recurse
+                _walk(annotation, path)
+
+    _walk(CachedClusterMetadata, "")
+    return configs
+
+
+# Lazy singleton — built on first access.
+_entity_configs: dict[str, EntityConfig] | None = None
+
+
+def _get_entity_configs() -> dict[str, EntityConfig]:
+    """Return the entity configs dict, building it on first access.
+
+    Returns:
+        Mapping of category path to EntityConfig.
+    """
+    global _entity_configs
+    if _entity_configs is None:
+        _entity_configs = _build_entity_configs()
+    return _entity_configs
 
 
 def compute_diff(
@@ -295,7 +252,7 @@ def compute_diff(
     # Handle initial capture (no before)
     if before is None:
         # Record all entities as "added"
-        for category, config in _ENTITY_CONFIGS.items():
+        for category, config in _get_entity_configs().items():
             entities = _get_entities(after, category)
             for entity in entities:
                 display = _get_display_name(entity, config.display_field)
@@ -312,7 +269,7 @@ def compute_diff(
         return changes
 
     # Compare each category
-    for category, config in _ENTITY_CONFIGS.items():
+    for category, config in _get_entity_configs().items():
         before_entities = _get_entities(before, category)
         after_entities = _get_entities(after, category)
         changes.extend(
