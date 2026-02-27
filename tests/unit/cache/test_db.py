@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
+import json
 import sqlite3
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
+from pydantic import BaseModel
 
 from pynetappfoundry.cache import CachedClusterMetadata
-from pynetappfoundry.cache.db import ClusterMetadataDB, _validate_cluster_name
+from pynetappfoundry.cache.db import ClusterMetadataDB, _model_to_row, _validate_cluster_name
 from pynetappfoundry.cache.ontap.cloud.metadata.model import CloudMetadata
 from pynetappfoundry.cache.ontap.cluster.model import ClusterInfo
 from pynetappfoundry.cache.ontap.cluster.nodes.model import OntapNodeResponse
@@ -445,6 +447,35 @@ class TestClusterMetadataDB:
         assert len(got.nodes[0].cluster_interfaces) == 1
         assert got.nodes[0].cluster_interfaces[0].cluster_interfaces_name == "e0a"
         assert got.nodes[0].cluster_interfaces[0].cluster_interfaces_ip_address == "10.0.0.1"
+
+    def test_list_field_model_dump_uses_json_mode(self) -> None:
+        """model_dump(mode='json') ensures non-JSON-native types serialize correctly.
+
+        Without ``mode="json"``, ``model_dump()`` returns Python objects (e.g.
+        ``datetime``) that ``json.dumps`` cannot handle.  The fix adds
+        ``mode="json"`` so that list items with such types are converted to
+        JSON-compatible primitives (e.g. ISO-8601 strings for datetimes).
+        """
+
+        class _Inner(BaseModel):
+            ts: datetime
+            label: str = ""
+
+        class _Outer(BaseModel):
+            items: list[_Inner] = []
+
+        stamp = datetime(2025, 6, 15, 12, 0, 0, tzinfo=UTC)
+        outer = _Outer(items=[_Inner(ts=stamp, label="a")])
+
+        row = _model_to_row(outer, _Outer)
+
+        # The 'items' column must be a valid JSON string
+        parsed = json.loads(row["items"])
+        assert isinstance(parsed, list)
+        assert len(parsed) == 1
+        # datetime should be serialized as an ISO-8601 string, not a raw object
+        assert parsed[0]["ts"] == "2025-06-15T12:00:00Z"
+        assert parsed[0]["label"] == "a"
 
     def test_extra_fields_preserved(self, db: ClusterMetadataDB) -> None:
         """Extra fields (extra='allow') round-trip via _extra_json."""
