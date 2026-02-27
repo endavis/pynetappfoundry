@@ -81,7 +81,10 @@ def _model_to_row(
                 row[field_name] = value.model_dump_json()
             elif isinstance(value, list):
                 row[field_name] = json.dumps(
-                    [item.model_dump() if isinstance(item, BaseModel) else item for item in value]
+                    [
+                        item.model_dump(mode="json") if isinstance(item, BaseModel) else item
+                        for item in value
+                    ]
                 )
             elif isinstance(value, dict):
                 row[field_name] = json.dumps(value)
