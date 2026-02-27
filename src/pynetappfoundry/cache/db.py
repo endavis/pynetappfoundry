@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from pydantic import BaseModel
 
+from pynetappfoundry.cache._lazy import LazyClusterMetadata
 from pynetappfoundry.cache._metadata import CachedClusterMetadata
 from pynetappfoundry.cache.db_schema import (
     ENVELOPE_DDL,
@@ -154,6 +155,59 @@ def _set_by_path(target: dict[str, Any], path: str, value: Any) -> None:
     for part in parts[:-1]:
         target = target.setdefault(part, {})
     target[parts[-1]] = value
+
+
+def _query_registry_subset(
+    conn: sqlite3.Connection,
+    cluster_name: str,
+    registry_subset: dict[str, Any],
+) -> dict[str, Any]:
+    """Query a subset of registry tables and build a kwargs dict.
+
+    Shared helper used by both :meth:`ClusterMetadataDB._reconstruct_metadata`
+    and :class:`LazyClusterMetadata._load_field_group`.
+
+    Args:
+        conn: Open SQLite connection with ``row_factory = sqlite3.Row``.
+        cluster_name: Cluster name to filter rows.
+        registry_subset: ``{metadata_path: TableSpec}`` entries to query.
+
+    Returns:
+        Nested dict suitable for ``CachedClusterMetadata.model_validate()``.
+    """
+    root_kwargs: dict[str, Any] = {}
+
+    for path, spec in registry_subset.items():
+        cursor = conn.execute(
+            f"SELECT * FROM {spec.table_name} WHERE cluster_name = ?",
+            (cluster_name,),
+        )
+        rows = [dict(r) for r in cursor.fetchall()]
+
+        model_has_cluster_name = "cluster_name" in spec.model_class.model_fields
+        strip_keys = {"_row_id"}
+        if not model_has_cluster_name:
+            strip_keys.add("cluster_name")
+
+        if spec.is_list:
+            models = [
+                _row_to_model(
+                    {k: v for k, v in row.items() if k not in strip_keys},
+                    spec.model_class,
+                )
+                for row in rows
+            ]
+            _set_by_path(root_kwargs, path, models)
+        else:
+            if rows:
+                row = rows[0]
+                model = _row_to_model(
+                    {k: v for k, v in row.items() if k not in strip_keys},
+                    spec.model_class,
+                )
+                _set_by_path(root_kwargs, path, model)
+
+    return root_kwargs
 
 
 # ---------------------------------------------------------------------------
@@ -328,38 +382,8 @@ class ClusterMetadataDB(SQLiteDB):
             "cache_version": envelope["cache_version"],
         }
 
-        for path, spec in self._registry.items():
-            cursor = self.conn.execute(
-                f"SELECT * FROM {spec.table_name} WHERE cluster_name = ?",
-                (cluster_name,),
-            )
-            rows = [dict(r) for r in cursor.fetchall()]
-
-            # Determine which columns to strip from the row before model construction.
-            # Always strip _row_id.  Strip cluster_name only if the model doesn't
-            # have its own cluster_name field (e.g. ClusterInfo keeps it).
-            model_has_cluster_name = "cluster_name" in spec.model_class.model_fields
-            strip_keys = {"_row_id"}
-            if not model_has_cluster_name:
-                strip_keys.add("cluster_name")
-
-            if spec.is_list:
-                models = [
-                    _row_to_model(
-                        {k: v for k, v in row.items() if k not in strip_keys},
-                        spec.model_class,
-                    )
-                    for row in rows
-                ]
-                _set_by_path(root_kwargs, path, models)
-            else:
-                if rows:
-                    row = rows[0]
-                    model = _row_to_model(
-                        {k: v for k, v in row.items() if k not in strip_keys},
-                        spec.model_class,
-                    )
-                    _set_by_path(root_kwargs, path, model)
+        data_kwargs = _query_registry_subset(self.conn, cluster_name, self._registry)
+        root_kwargs.update(data_kwargs)
 
         return CachedClusterMetadata.model_validate(root_kwargs)
 
@@ -406,6 +430,39 @@ class ClusterMetadataDB(SQLiteDB):
         if row is None:
             return None
         return self._reconstruct_metadata(cluster_name, dict(row))
+
+    def get_lazy(self, cluster_name: str) -> LazyClusterMetadata | None:
+        """Retrieve a lazy-loading proxy for cached metadata.
+
+        Only the envelope table is queried.  Data field groups are loaded
+        from the database on first attribute access.
+
+        Args:
+            cluster_name: Name of the cluster.
+
+        Returns:
+            LazyClusterMetadata proxy if found, None otherwise.
+
+        Raises:
+            ValueError: If cluster_name is invalid.
+        """
+        _validate_cluster_name(cluster_name)
+        cursor = self.conn.execute(
+            "SELECT cluster_name, cached_at, cache_version "
+            "FROM cluster_metadata WHERE cluster_name = ?",
+            (cluster_name,),
+        )
+        row = cursor.fetchone()
+        if row is None:
+            return None
+        envelope = dict(row)
+        return LazyClusterMetadata(
+            cluster_name=cluster_name,
+            cached_at=envelope["cached_at"],
+            cache_version=envelope["cache_version"],
+            db_path=self.db_path,
+            registry=self._registry,
+        )
 
     def set(self, cluster_name: str, metadata: CachedClusterMetadata) -> None:
         """Store or update cached metadata for a cluster.
