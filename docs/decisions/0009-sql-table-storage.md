@@ -32,7 +32,10 @@ model field definitions:
   They lack independent identity and don't need separate tables.
 - **`_extra_json` column**: Every model table has this column to preserve
   `extra="allow"` fields from newer ONTAP versions.
-- **`_uuid_index` table**: Cross-model UUID lookup, populated on `set()`.
+- **`_uuid_index` table**: ~~Cross-model UUID lookup, populated on `set()`.~~
+  Removed in schema v3 — never queried in production. UUID resolution uses
+  the in-memory `CachedClusterMetadata.uuid_index` cached property
+  (see [ADR-0005](0005-uuid-index-for-cache-cross-references.md)).
 - **v1 → v2 migration**: Reads JSON blobs, decomposes into new tables, rebuilds
   the envelope table without `metadata_json`.
 

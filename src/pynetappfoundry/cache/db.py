@@ -1,9 +1,10 @@
 """SQLite database operations for cluster metadata cache.
 
-Schema v2 stores each Pydantic model in its own SQL table instead of a
-single JSON blob.  The public API (``get``/``set``/``clear``/etc.) is
-preserved so callers (collectors, query, inspect, diff, refresh) work
-unchanged.
+Schema v3 stores each Pydantic model in its own SQL table instead of a
+single JSON blob.  v3 removes the unused ``_uuid_index`` SQL table (UUID
+resolution uses the in-memory ``CachedClusterMetadata.uuid_index``).
+The public API (``get``/``set``/``clear``/etc.) is preserved so callers
+(collectors, query, inspect, diff, refresh) work unchanged.
 """
 
 from __future__ import annotations
@@ -20,7 +21,6 @@ from pydantic import BaseModel
 from pynetappfoundry.cache._metadata import CachedClusterMetadata
 from pynetappfoundry.cache.db_schema import (
     ENVELOPE_DDL,
-    UUID_INDEX_DDL,
     _ensure_registry,
     _is_json_column,
     generate_cluster_name_index_ddl,
@@ -164,14 +164,16 @@ def _set_by_path(target: dict[str, Any], path: str, value: Any) -> None:
 class ClusterMetadataDB(SQLiteDB):
     """SQLite database for caching cluster metadata.
 
-    Schema v2 decomposes CachedClusterMetadata into per-model SQL tables.
+    Schema v3 decomposes CachedClusterMetadata into per-model SQL tables.
+    The ``_uuid_index`` SQL table was removed in v3 (UUID resolution uses
+    the in-memory ``CachedClusterMetadata.uuid_index`` per ADR-0005).
     The public ``get``/``set``/``clear`` API is preserved.
 
     Note: Change history is stored in a separate database (CacheHistoryDB)
     for data safety and isolation.
     """
 
-    SCHEMA_VERSION: ClassVar[int] = 2
+    SCHEMA_VERSION: ClassVar[int] = 3
     TABLE_NAME: ClassVar[str] = "cluster_metadata"
 
     def __init__(
@@ -229,9 +231,6 @@ class ClusterMetadataDB(SQLiteDB):
             if spec.has_uuid:
                 self.conn.execute(generate_uuid_column_index_ddl(spec.table_name))
 
-        # UUID index table
-        self.conn.execute(UUID_INDEX_DDL)
-
     # ------------------------------------------------------------------
     # Migration v1 → v2
     # ------------------------------------------------------------------
@@ -251,14 +250,12 @@ class ClusterMetadataDB(SQLiteDB):
             self.conn.execute(generate_cluster_name_index_ddl(spec.table_name))
             if spec.has_uuid:
                 self.conn.execute(generate_uuid_column_index_ddl(spec.table_name))
-        self.conn.execute(UUID_INDEX_DDL)
 
         # 3. Migrate each cluster's data
         for v1_row in v1_rows:
             cluster_name = v1_row["cluster_name"]
             metadata = CachedClusterMetadata.model_validate(json.loads(v1_row["metadata_json"]))
             self._insert_model_data(cluster_name, metadata)
-            self._populate_uuid_index(cluster_name, metadata)
 
         # 4. Recreate envelope table without metadata_json
         #    (SQLite doesn't support DROP COLUMN before 3.35)
@@ -269,6 +266,14 @@ class ClusterMetadataDB(SQLiteDB):
             "SELECT cluster_name, cached_at, cache_version FROM _old_cluster_metadata"
         )
         self.conn.execute("DROP TABLE _old_cluster_metadata")
+
+    # ------------------------------------------------------------------
+    # Migration v2 → v3
+    # ------------------------------------------------------------------
+
+    def _upgrade_to_v3(self) -> None:
+        """Remove the unused _uuid_index table (never queried in production)."""
+        self.conn.execute("DROP TABLE IF EXISTS _uuid_index")
 
     # ------------------------------------------------------------------
     # Internal: decompose metadata into tables
@@ -306,29 +311,6 @@ class ClusterMetadataDB(SQLiteDB):
         sql = f"INSERT INTO {table_name} ({col_names}) VALUES ({placeholders})"
         values = [tuple(row[c] for c in columns) for row in rows]
         self.conn.executemany(sql, values)
-
-    def _populate_uuid_index(
-        self,
-        cluster_name: str,
-        metadata: CachedClusterMetadata,
-    ) -> None:
-        """Populate the _uuid_index table from a CachedClusterMetadata."""
-        rows: list[tuple[str, str, str]] = []
-        for path, spec in self._registry.items():
-            if not spec.has_uuid:
-                continue
-            data = _get_by_path(metadata, path)
-            items = data if spec.is_list else [data]
-            for item in items:
-                uuid_val = getattr(item, "uuid", "")
-                if uuid_val:
-                    rows.append((cluster_name, uuid_val, spec.table_name))
-        if rows:
-            self.conn.executemany(
-                "INSERT OR REPLACE INTO _uuid_index (cluster_name, uuid, table_name) "
-                "VALUES (?, ?, ?)",
-                rows,
-            )
 
     # ------------------------------------------------------------------
     # Internal: reconstruct metadata from tables
@@ -392,16 +374,11 @@ class ClusterMetadataDB(SQLiteDB):
                 f"DELETE FROM {spec.table_name} WHERE cluster_name = ?",
                 (cluster_name,),
             )
-        self.conn.execute(
-            "DELETE FROM _uuid_index WHERE cluster_name = ?",
-            (cluster_name,),
-        )
 
     def _delete_all_model_data(self) -> None:
         """Delete all model rows from every table."""
         for spec in self._registry.values():
             self.conn.execute(f"DELETE FROM {spec.table_name}")
-        self.conn.execute("DELETE FROM _uuid_index")
 
     # ------------------------------------------------------------------
     # Public API — preserved interface
@@ -458,7 +435,6 @@ class ClusterMetadataDB(SQLiteDB):
             # Delete old model rows then re-insert
             self._delete_model_data(cluster_name)
             self._insert_model_data(cluster_name, metadata)
-            self._populate_uuid_index(cluster_name, metadata)
 
     def clear(self, cluster_name: str | None = None) -> int:
         """Clear cached metadata.

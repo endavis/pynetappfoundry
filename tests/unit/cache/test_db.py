@@ -80,7 +80,6 @@ class TestClusterMetadataDB:
         tables = {row["name"] for row in cursor.fetchall()}
         assert "cluster_metadata" in tables
         assert "_schema_version" in tables
-        assert "_uuid_index" in tables
 
     def test_set_and_get(
         self, db: ClusterMetadataDB, sample_metadata: CachedClusterMetadata
@@ -356,48 +355,10 @@ class TestClusterMetadataDB:
         """export_json returns None for missing cluster."""
         assert db.export_json("nonexistent") is None
 
-    def test_uuid_index_populated(self, db: ClusterMetadataDB) -> None:
-        """_uuid_index table should have entries for models with non-empty uuids."""
-        meta = CachedClusterMetadata(
-            cluster_name="test-cluster",
-            nodes=[
-                OntapNodeResponse(
-                    name="node1",
-                    uuid="12345678-1234-1234-1234-123456789abc",
-                ),
-            ],
-        )
-        db.set("test-cluster", meta)
-
-        cursor = db.conn.execute(
-            "SELECT * FROM _uuid_index WHERE cluster_name = ?",
-            ("test-cluster",),
-        )
-        rows = [dict(r) for r in cursor.fetchall()]
-        assert len(rows) >= 1
-        uuids = {r["uuid"] for r in rows}
-        assert "12345678-1234-1234-1234-123456789abc" in uuids
-
-    def test_uuid_index_skips_empty(self, db: ClusterMetadataDB) -> None:
-        """_uuid_index should not include entries with empty uuid."""
-        meta = CachedClusterMetadata(
-            cluster_name="test-cluster",
-            nodes=[OntapNodeResponse(name="node1")],  # uuid defaults to ""
-        )
-        db.set("test-cluster", meta)
-
-        cursor = db.conn.execute(
-            "SELECT * FROM _uuid_index WHERE cluster_name = ?",
-            ("test-cluster",),
-        )
-        rows = cursor.fetchall()
-        # No entries because uuid is empty
-        assert len(rows) == 0
-
     def test_clear_removes_from_all_tables(
         self, db: ClusterMetadataDB, sample_metadata: CachedClusterMetadata
     ) -> None:
-        """clear() should remove rows from all model tables and uuid_index."""
+        """clear() should remove rows from all model tables."""
         db.set("test-cluster", sample_metadata)
         db.clear("test-cluster")
 
@@ -410,12 +371,6 @@ class TestClusterMetadataDB:
 
         cursor = db.conn.execute(
             "SELECT COUNT(*) FROM cloudmetadata WHERE cluster_name = ?",
-            ("test-cluster",),
-        )
-        assert cursor.fetchone()[0] == 0
-
-        cursor = db.conn.execute(
-            "SELECT COUNT(*) FROM _uuid_index WHERE cluster_name = ?",
             ("test-cluster",),
         )
         assert cursor.fetchone()[0] == 0
@@ -617,6 +572,93 @@ class TestClusterMetadataDBMigration:
         columns = {row[1] for row in cursor.fetchall()}
         assert "metadata_json" not in columns
         assert "cached_at" in columns
+
+        db.close()
+
+
+class TestClusterMetadataDBMigrationV3:
+    """Tests for v2 → v3 migration (drop _uuid_index table)."""
+
+    def test_migration_v2_to_v3(self, tmp_path: Path) -> None:
+        """Create a v2 database with _uuid_index data, open with v3 code, verify table is gone."""
+        db_path = tmp_path / "migrate_v3.db"
+
+        # Create a v2 database manually
+        conn = sqlite3.connect(db_path)
+        conn.row_factory = sqlite3.Row
+
+        # Envelope table
+        conn.execute(
+            "CREATE TABLE cluster_metadata ("
+            "  cluster_name TEXT PRIMARY KEY,"
+            "  cached_at TEXT NOT NULL,"
+            "  cache_version TEXT NOT NULL"
+            ")"
+        )
+
+        # _uuid_index table (the one v3 removes)
+        conn.execute(
+            "CREATE TABLE _uuid_index ("
+            "  cluster_name TEXT NOT NULL,"
+            "  uuid TEXT NOT NULL,"
+            "  table_name TEXT NOT NULL,"
+            "  PRIMARY KEY (cluster_name, uuid)"
+            ")"
+        )
+        conn.execute(
+            "INSERT INTO _uuid_index (cluster_name, uuid, table_name) VALUES (?, ?, ?)",
+            ("test-cluster", "aaaa-bbbb-cccc", "ontapnoderesponse"),
+        )
+
+        # Schema version = 2
+        conn.execute("CREATE TABLE _schema_version (version INTEGER NOT NULL)")
+        conn.execute("INSERT INTO _schema_version (version) VALUES (2)")
+
+        # Insert envelope row
+        conn.execute(
+            "INSERT INTO cluster_metadata (cluster_name, cached_at, cache_version) "
+            "VALUES (?, ?, ?)",
+            ("test-cluster", "2025-01-01T00:00:00+00:00", "1.0.0"),
+        )
+
+        # Create per-model tables so the v3 DB can reconstruct metadata.
+        # We need at least the tables that CachedClusterMetadata expects.
+        # Open a temporary in-memory v3 DB to discover table DDL, then replay.
+        from pynetappfoundry.cache.db_schema import (
+            _ensure_registry,
+            generate_cluster_name_index_ddl,
+            generate_table_ddl,
+            generate_uuid_column_index_ddl,
+        )
+
+        registry = _ensure_registry()
+        for spec in registry.values():
+            ddl = generate_table_ddl(spec.table_name, spec.model_class)
+            conn.execute(ddl)
+            conn.execute(generate_cluster_name_index_ddl(spec.table_name))
+            if spec.has_uuid:
+                conn.execute(generate_uuid_column_index_ddl(spec.table_name))
+
+        conn.commit()
+        conn.close()
+
+        # Open with v3 code — should trigger migration
+        db = ClusterMetadataDB(db_path=db_path)
+
+        # Verify _uuid_index table is gone
+        cursor = db.conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='_uuid_index'"
+        )
+        assert cursor.fetchone() is None
+
+        # Verify schema version is 3
+        cursor = db.conn.execute("SELECT version FROM _schema_version")
+        assert cursor.fetchone()[0] == 3
+
+        # Verify existing envelope data is intact
+        got = db.get("test-cluster")
+        assert got is not None
+        assert got.cluster_name == "test-cluster"
 
         db.close()
 
