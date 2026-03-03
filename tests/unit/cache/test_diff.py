@@ -8,13 +8,14 @@ import pytest
 
 from pynetappfoundry.cache._metadata import CachedClusterMetadata
 from pynetappfoundry.cache.diff import (
-    _ENTITY_CONFIGS,
     EntityConfig,
+    _build_entity_configs,
     _diff_cluster_info,
     _diff_entity_list,
     _diff_mediator_info,
     _get_display_name,
     _get_entities,
+    _get_entity_configs,
     _get_tracked_fields,
     compute_diff,
     format_diff_summary,
@@ -236,7 +237,7 @@ class TestDiffEntityList:
 
     def test_entity_with_int_key_zero_added(self) -> None:
         """Entity with int key_field=0 detected as added."""
-        config = _ENTITY_CONFIGS["protocols.nfs_export_policies"]
+        config = _get_entity_configs()["protocols.nfs_export_policies"]
         before: list[Any] = []
         after = [OntapExportPolicy(index=0)]
         changes = _diff_entity_list("protocols.nfs_export_policies", before, after, config)
@@ -246,7 +247,7 @@ class TestDiffEntityList:
 
     def test_entity_with_int_key_zero_removed(self) -> None:
         """Entity with int key_field=0 detected as removed."""
-        config = _ENTITY_CONFIGS["protocols.nfs_export_policies"]
+        config = _get_entity_configs()["protocols.nfs_export_policies"]
         before = [OntapExportPolicy(index=0)]
         after: list[Any] = []
         changes = _diff_entity_list("protocols.nfs_export_policies", before, after, config)
@@ -256,7 +257,7 @@ class TestDiffEntityList:
 
     def test_entity_with_int_key_zero_modified(self) -> None:
         """Entity with int key_field=0 and changed field detected as modified."""
-        config = _ENTITY_CONFIGS["protocols.nfs_export_policies"]
+        config = _get_entity_configs()["protocols.nfs_export_policies"]
         before = [OntapExportPolicy(index=0, chown_mode="restricted")]
         after = [OntapExportPolicy(index=0, chown_mode="unrestricted")]
         changes = _diff_entity_list("protocols.nfs_export_policies", before, after, config)
@@ -466,18 +467,18 @@ class TestFormatDiffSummary:
 
 
 class TestEntityConfigsIntegrity:
-    """Verify _ENTITY_CONFIGS are correct."""
+    """Verify _get_entity_configs() are correct."""
 
     def test_all_category_paths_resolve(self) -> None:
-        """Every _ENTITY_CONFIGS key resolves on a default CachedClusterMetadata."""
+        """Every _get_entity_configs() key resolves on a default CachedClusterMetadata."""
         md = _make_metadata()
-        for category in _ENTITY_CONFIGS:
+        for category in _get_entity_configs():
             result = _get_entities(md, category)
             assert isinstance(result, list), f"{category} did not resolve to a list"
 
     def test_all_key_fields_exist_on_model(self) -> None:
         """Each config's key_field is in model_class.model_fields."""
-        for category, config in _ENTITY_CONFIGS.items():
+        for category, config in _get_entity_configs().items():
             assert config.key_field in config.model_class.model_fields, (
                 f"{category}: key_field '{config.key_field}' not in "
                 f"{config.model_class.__name__}.model_fields"
@@ -485,7 +486,7 @@ class TestEntityConfigsIntegrity:
 
     def test_all_display_fields_exist_or_are_templates(self) -> None:
         """Each config's display_field is a valid field name or contains '{'."""
-        for category, config in _ENTITY_CONFIGS.items():
+        for category, config in _get_entity_configs().items():
             if "{" in config.display_field:
                 continue  # Template — valid
             assert config.display_field in config.model_class.model_fields, (
@@ -495,4 +496,135 @@ class TestEntityConfigsIntegrity:
 
     def test_entity_config_count(self) -> None:
         """Currently 26 configs (catches accidental additions/removals)."""
-        assert len(_ENTITY_CONFIGS) == 26
+        assert len(_get_entity_configs()) == 26
+
+
+# ---------------------------------------------------------------------------
+# TestBuildEntityConfigs
+# ---------------------------------------------------------------------------
+
+
+class TestBuildEntityConfigs:
+    """Verify _build_entity_configs() dynamic builder."""
+
+    def test_returns_correct_count(self) -> None:
+        """Builder discovers exactly 26 diffable entity categories."""
+        configs = _build_entity_configs()
+        assert len(configs) == 26
+
+    def test_matches_lazy_accessor(self) -> None:
+        """_build_entity_configs() and _get_entity_configs() return same data."""
+        built = _build_entity_configs()
+        cached = _get_entity_configs()
+        assert set(built.keys()) == set(cached.keys())
+        for key in built:
+            assert built[key].key_field == cached[key].key_field
+            assert built[key].model_class is cached[key].model_class
+            assert built[key].display_field == cached[key].display_field
+
+    def test_convention_uuid_model_gets_uuid_key(self) -> None:
+        """Models with uuid field and no override get key_field='uuid'."""
+        configs = _build_entity_configs()
+        # OntapAggregate has uuid, no override
+        config = configs["storage.aggregates"]
+        assert config.key_field == "uuid"
+        assert config.display_field == "name"
+
+    def test_convention_name_default_display(self) -> None:
+        """Convention defaults display_field to 'name'."""
+        configs = _build_entity_configs()
+        config = configs["nodes"]
+        assert config.display_field == "name"
+
+    def test_override_cloud_metadata(self) -> None:
+        """CloudMetadata override: key_field='node', display_field='node'."""
+        configs = _build_entity_configs()
+        config = configs["cloud"]
+        assert config.key_field == "node"
+        assert config.display_field == "node"
+
+    def test_override_dns(self) -> None:
+        """OntapDns override: display_field='svm_uuid'."""
+        configs = _build_entity_configs()
+        config = configs["network.dns"]
+        assert config.key_field == "uuid"
+        assert config.display_field == "svm_uuid"
+
+    def test_override_snapmirror_template(self) -> None:
+        """OntapSnapmirrorRelationship override uses format template."""
+        configs = _build_entity_configs()
+        config = configs["relationships.snapmirror_destinations"]
+        assert config.key_field == "uuid"
+        assert "{" in config.display_field
+
+    def test_override_export_policy(self) -> None:
+        """OntapExportPolicy override: key_field='index'."""
+        configs = _build_entity_configs()
+        config = configs["protocols.nfs_export_policies"]
+        assert config.key_field == "index"
+        assert config.display_field == "index"
+
+    def test_override_nfs_services(self) -> None:
+        """OntapNfsService override: key_field='svm_name'."""
+        configs = _build_entity_configs()
+        config = configs["protocols.nfs_services"]
+        assert config.key_field == "svm_name"
+        assert config.display_field == "svm_name"
+
+    def test_override_cifs_services(self) -> None:
+        """OntapCifsService override: key_field='svm_name'."""
+        configs = _build_entity_configs()
+        config = configs["protocols.cifs_services"]
+        assert config.key_field == "svm_name"
+        assert config.display_field == "svm_name"
+
+    def test_override_cifs_shares(self) -> None:
+        """OntapCifsShare override: key_field='name'."""
+        configs = _build_entity_configs()
+        config = configs["protocols.cifs_shares"]
+        assert config.key_field == "name"
+        assert config.display_field == "name"
+
+    def test_override_license_packages(self) -> None:
+        """OntapLicensePackageResponse override: key_field='name'."""
+        configs = _build_entity_configs()
+        config = configs["license_packages"]
+        assert config.key_field == "name"
+        assert config.display_field == "name"
+
+    def test_override_qtrees(self) -> None:
+        """OntapQtree override: key_field='name'."""
+        configs = _build_entity_configs()
+        config = configs["storage.qtrees"]
+        assert config.key_field == "name"
+        assert config.display_field == "name"
+
+    def test_singletons_excluded(self) -> None:
+        """Singleton fields (cluster, mediator) are not in configs."""
+        configs = _build_entity_configs()
+        assert "cluster" not in configs
+        assert "mediator" not in configs
+
+    def test_metadata_fields_excluded(self) -> None:
+        """Metadata fields (cluster_name, cached_at, cache_version) excluded."""
+        configs = _build_entity_configs()
+        assert "cluster_name" not in configs
+        assert "cached_at" not in configs
+        assert "cache_version" not in configs
+
+    def test_nested_categories_have_dotted_paths(self) -> None:
+        """Container fields produce dotted category paths."""
+        configs = _build_entity_configs()
+        nested = [k for k in configs if "." in k]
+        assert len(nested) > 0
+        assert "storage.aggregates" in configs
+        assert "network.ip_interfaces" in configs
+        assert "protocols.s3_buckets" in configs
+        assert "relationships.cluster_peers" in configs
+
+    def test_models_without_identity_key_excluded(self) -> None:
+        """Models with no uuid/name and no override are skipped."""
+        configs = _build_entity_configs()
+        # OntapTopMetricsSvmUser has a TypeMapping but no uuid/name field
+        categories_models = {cfg.model_class.__name__ for cfg in configs.values()}
+        assert "OntapTopMetricsSvmUser" not in categories_models
