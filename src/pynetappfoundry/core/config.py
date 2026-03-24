@@ -15,7 +15,7 @@ a data toml has the following section:
 type='data'
 
 the following sections are valid in a data toml:
-[aiquims]
+[aiqums]
 [connectors]
 [clusters]
 [cloudinsights]
@@ -61,7 +61,7 @@ T = TypeVar("T")
 # Valid data types for config sections (used in data/*.toml files)
 VALID_DATA_TYPES = frozenset(
     {
-        "aiquims",
+        "aiqums",
         "connectors",
         "clusters",
         "cloudinsights",
