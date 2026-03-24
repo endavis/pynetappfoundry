@@ -51,6 +51,7 @@ ONTAPEMSDESTINATIONRESPONSE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="connectivity_errors",
+            api_path="connectivity.errors",
             transform=_transform_connectivity_errors,
             default=[],
         ),
@@ -64,6 +65,7 @@ ONTAPEMSDESTINATIONRESPONSE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="filters",
+            api_path="filters",
             transform=_transform_filters,
             default=[],
         ),

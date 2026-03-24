@@ -31,11 +31,13 @@ ONTAPPORTSET_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="igroups",
+            api_path="igroups",
             transform=_transform_igroups,
             default=[],
         ),
         FieldMapping(
             cache_attr="interfaces",
+            api_path="interfaces",
             transform=_transform_interfaces,
             default=[],
         ),

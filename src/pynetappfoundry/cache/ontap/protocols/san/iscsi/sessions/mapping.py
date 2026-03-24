@@ -31,11 +31,13 @@ ONTAPISCSISESSION_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="connections",
+            api_path="connections",
             transform=_transform_connections,
             default=[],
         ),
         FieldMapping(
             cache_attr="igroups",
+            api_path="igroups",
             transform=_transform_igroups,
             default=[],
         ),

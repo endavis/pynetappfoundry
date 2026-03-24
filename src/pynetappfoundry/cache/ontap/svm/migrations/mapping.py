@@ -86,16 +86,19 @@ ONTAPSVMMIGRATION_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="destination_volume_placement_aggregates",
+            api_path="destination.volume_placement.aggregates",
             transform=_transform_destination_volume_placement_aggregates,
             default=[],
         ),
         FieldMapping(
             cache_attr="destination_volume_placement_volume_aggregate_pairs",
+            api_path="destination.volume_placement.volume_aggregate_pairs",
             transform=_transform_destination_volume_placement_volume_aggregate_pairs,
             default=[],
         ),
         FieldMapping(
             cache_attr="ip_interface_placement_ip_interfaces",
+            api_path="ip_interface_placement.ip_interfaces",
             transform=_transform_ip_interface_placement_ip_interfaces,
             default=[],
         ),
@@ -109,6 +112,7 @@ ONTAPSVMMIGRATION_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="messages",
+            api_path="messages",
             transform=_transform_messages,
             default=[],
         ),

@@ -82,6 +82,7 @@ ONTAPSTORAGESWITCH_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="connections",
+            api_path="connections",
             transform=_transform_connections,
             default=[],
         ),
@@ -97,6 +98,7 @@ ONTAPSTORAGESWITCH_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="errors",
+            api_path="errors",
             transform=_transform_errors,
             default=[],
         ),
@@ -106,6 +108,7 @@ ONTAPSTORAGESWITCH_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="fans",
+            api_path="fans",
             transform=_transform_fans,
             default=[],
         ),
@@ -142,16 +145,19 @@ ONTAPSTORAGESWITCH_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="paths",
+            api_path="paths",
             transform=_transform_paths,
             default=[],
         ),
         FieldMapping(
             cache_attr="ports",
+            api_path="ports",
             transform=_transform_ports,
             default=[],
         ),
         FieldMapping(
             cache_attr="power_supply_units",
+            api_path="power_supply_units",
             transform=_transform_power_supply_units,
             default=[],
         ),
@@ -169,6 +175,7 @@ ONTAPSTORAGESWITCH_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="temperature_sensors",
+            api_path="temperature_sensors",
             transform=_transform_temperature_sensors,
             default=[],
         ),
@@ -178,6 +185,7 @@ ONTAPSTORAGESWITCH_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="vsans",
+            api_path="vsans",
             transform=_transform_vsans,
             default=[],
         ),
@@ -187,6 +195,7 @@ ONTAPSTORAGESWITCH_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="zones",
+            api_path="zones",
             transform=_transform_zones,
             default=[],
         ),

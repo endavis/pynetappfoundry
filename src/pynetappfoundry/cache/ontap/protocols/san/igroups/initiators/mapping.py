@@ -58,6 +58,7 @@ ONTAPIGROUPINITIATOR_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="connectivity_tracking_alerts",
+            api_path="connectivity_tracking.alerts",
             transform=_transform_connectivity_tracking_alerts,
             default=[],
             requires_explicit_fetch=True,
@@ -69,6 +70,7 @@ ONTAPIGROUPINITIATOR_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="connectivity_tracking_connections",
+            api_path="connectivity_tracking.connections",
             transform=_transform_connectivity_tracking_connections,
             default=[],
             requires_explicit_fetch=True,
@@ -92,11 +94,13 @@ ONTAPIGROUPINITIATOR_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="proximity_peer_svms",
+            api_path="proximity.peer_svms",
             transform=_transform_proximity_peer_svms,
             default=[],
         ),
         FieldMapping(
             cache_attr="records",
+            api_path="records",
             transform=_transform_records,
             default=[],
         ),

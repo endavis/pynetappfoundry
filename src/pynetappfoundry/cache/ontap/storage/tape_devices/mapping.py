@@ -39,6 +39,7 @@ ONTAPTAPEDEVICE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="aliases",
+            api_path="aliases",
             transform=_transform_aliases,
             default=[],
         ),
@@ -61,6 +62,7 @@ ONTAPTAPEDEVICE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="device_names",
+            api_path="device_names",
             transform=_transform_device_names,
             default=[],
         ),

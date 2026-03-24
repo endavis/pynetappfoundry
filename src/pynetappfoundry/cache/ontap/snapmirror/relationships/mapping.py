@@ -78,6 +78,7 @@ ONTAPSNAPMIRRORRELATIONSHIP_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="consistency_group_failover_error_arguments",
+            api_path="consistency_group_failover.error.arguments",
             transform=_transform_consistency_group_failover_error_arguments,
             default=[],
         ),
@@ -161,6 +162,7 @@ ONTAPSNAPMIRRORRELATIONSHIP_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="destination_consistency_group_volumes",
+            api_path="destination.consistency_group_volumes",
             transform=_transform_destination_consistency_group_volumes,
             default=[],
         ),
@@ -275,6 +277,7 @@ ONTAPSNAPMIRRORRELATIONSHIP_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="source_consistency_group_volumes",
+            api_path="source.consistency_group_volumes",
             transform=_transform_source_consistency_group_volumes,
             default=[],
         ),
@@ -304,6 +307,7 @@ ONTAPSNAPMIRRORRELATIONSHIP_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="svmdr_volumes",
+            api_path="svmdr_volumes",
             transform=_transform_svmdr_volumes,
             default=[],
         ),
@@ -360,6 +364,7 @@ ONTAPSNAPMIRRORRELATIONSHIP_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="unhealthy_reason",
+            api_path="unhealthy_reason",
             transform=_transform_unhealthy_reason,
             default=[],
         ),

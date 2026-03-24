@@ -57,11 +57,13 @@ ONTAPISCSICREDENTIALS_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="initiator_address_masks",
+            api_path="initiator_address.masks",
             transform=_transform_initiator_address_masks,
             default=[],
         ),
         FieldMapping(
             cache_attr="initiator_address_ranges",
+            api_path="initiator_address.ranges",
             transform=_transform_initiator_address_ranges,
             default=[],
         ),

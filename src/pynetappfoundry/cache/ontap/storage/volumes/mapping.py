@@ -104,6 +104,7 @@ ONTAPVOLUME_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="aggregates",
+            api_path="aggregates",
             transform=_transform_aggregates,
             default=[],
         ),
@@ -251,6 +252,7 @@ ONTAPVOLUME_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="anti_ransomware_attack_reports",
+            api_path="anti_ransomware.attack_reports",
             transform=_transform_anti_ransomware_attack_reports,
             default=[],
             requires_explicit_fetch=True,
@@ -344,6 +346,7 @@ ONTAPVOLUME_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="anti_ransomware_suspect_files",
+            api_path="anti_ransomware.suspect_files",
             transform=_transform_anti_ransomware_suspect_files,
             default=[],
             requires_explicit_fetch=True,
@@ -428,6 +431,7 @@ ONTAPVOLUME_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="anti_ransomware_workload_newly_observed_file_extensions",
+            api_path="anti_ransomware.workload.newly_observed_file_extensions",
             transform=_transform_anti_ransomware_workload_newly_observed_file_extensions,
             default=[],
             requires_explicit_fetch=True,
@@ -499,6 +503,7 @@ ONTAPVOLUME_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="anti_ransomware_workload_surge_usage_newly_observed_file_extensions",
+            api_path="anti_ransomware.workload.surge_usage.newly_observed_file_extensions",
             transform=_transform_anti_ransomware_workload_surge_usage_newly_observed_file_extensions,
             default=[],
             requires_explicit_fetch=True,
@@ -680,6 +685,7 @@ ONTAPVOLUME_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="constituents",
+            api_path="constituents",
             transform=_transform_constituents,
             default=[],
         ),
@@ -1646,6 +1652,7 @@ ONTAPVOLUME_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="rebalancing_notices",
+            api_path="rebalancing.notices",
             transform=_transform_rebalancing_notices,
             default=[],
             requires_explicit_fetch=True,

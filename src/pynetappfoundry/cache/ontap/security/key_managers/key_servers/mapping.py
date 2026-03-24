@@ -39,6 +39,7 @@ ONTAPKEYSERVER_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="connectivity_node_states",
+            api_path="connectivity.node_states",
             transform=_transform_connectivity_node_states,
             default=[],
         ),
@@ -53,6 +54,7 @@ ONTAPKEYSERVER_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="records",
+            api_path="records",
             transform=_transform_records,
             default=[],
         ),

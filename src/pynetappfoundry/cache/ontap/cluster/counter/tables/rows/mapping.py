@@ -47,6 +47,7 @@ ONTAPCOUNTERROW_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="counters",
+            api_path="counters",
             transform=_transform_counters,
             default=[],
         ),
@@ -56,6 +57,7 @@ ONTAPCOUNTERROW_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="properties",
+            api_path="properties",
             transform=_transform_properties,
             default=[],
         ),

@@ -637,6 +637,22 @@ class TestGenerateMappingSubModel:
         code = generate_mapping(ep)
         assert "transform=_transform_copies" in code
 
+    def test_sub_model_field_emits_api_path_and_transform(self):
+        ep = _make_endpoint_with_sub_model()
+        code = generate_mapping(ep)
+        assert 'api_path="copies"' in code
+        assert "transform=_transform_copies" in code
+        # Both must appear in the same FieldMapping block
+        lines = code.splitlines()
+        api_path_indices = [i for i, line in enumerate(lines) if 'api_path="copies"' in line]
+        transform_indices = [
+            i for i, line in enumerate(lines) if "transform=_transform_copies" in line
+        ]
+        assert api_path_indices, "api_path not found in mapping output"
+        assert transform_indices, "transform not found in mapping output"
+        # api_path line should come right before transform line
+        assert transform_indices[0] == api_path_indices[0] + 1
+
     def test_sub_model_imported(self):
         ep = _make_endpoint_with_sub_model()
         code = generate_mapping(ep)

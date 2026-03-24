@@ -75,6 +75,7 @@ ONTAPIGROUP_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="connectivity_tracking_alerts",
+            api_path="connectivity_tracking.alerts",
             transform=_transform_connectivity_tracking_alerts,
             default=[],
             requires_explicit_fetch=True,
@@ -86,6 +87,7 @@ ONTAPIGROUP_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="connectivity_tracking_required_nodes",
+            api_path="connectivity_tracking.required_nodes",
             transform=_transform_connectivity_tracking_required_nodes,
             default=[],
             requires_explicit_fetch=True,
@@ -97,17 +99,20 @@ ONTAPIGROUP_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="igroups",
+            api_path="igroups",
             transform=_transform_igroups,
             default=[],
             requires_explicit_fetch=True,
         ),
         FieldMapping(
             cache_attr="initiators",
+            api_path="initiators",
             transform=_transform_initiators,
             default=[],
         ),
         FieldMapping(
             cache_attr="lun_maps",
+            api_path="lun_maps",
             transform=_transform_lun_maps,
             default=[],
             requires_explicit_fetch=True,
@@ -122,6 +127,7 @@ ONTAPIGROUP_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="parent_igroups",
+            api_path="parent_igroups",
             transform=_transform_parent_igroups,
             default=[],
             requires_explicit_fetch=True,
@@ -153,6 +159,7 @@ ONTAPIGROUP_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="replication_error_summary_arguments",
+            api_path="replication.error.summary.arguments",
             transform=_transform_replication_error_summary_arguments,
             default=[],
         ),

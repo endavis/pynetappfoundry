@@ -38,6 +38,7 @@ ONTAPLOCALCIFSUSER_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="membership",
+            api_path="membership",
             transform=_transform_membership,
             default=[],
         ),

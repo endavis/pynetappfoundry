@@ -57,6 +57,7 @@ ONTAPSNAPMIRRORPOLICY_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="retention",
+            api_path="retention",
             transform=_transform_retention,
             default=[],
         ),

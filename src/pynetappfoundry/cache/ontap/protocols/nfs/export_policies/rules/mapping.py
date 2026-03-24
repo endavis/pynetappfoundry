@@ -45,6 +45,7 @@ ONTAPEXPORTRULE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="clients",
+            api_path="clients",
             transform=_transform_clients,
             default=[],
         ),

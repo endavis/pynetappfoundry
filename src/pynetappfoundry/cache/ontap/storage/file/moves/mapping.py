@@ -69,6 +69,7 @@ ONTAPFILEMOVE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="failure_arguments",
+            api_path="failure.arguments",
             transform=_transform_failure_arguments,
             default=[],
         ),
@@ -82,11 +83,13 @@ ONTAPFILEMOVE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="files_to_move_destinations",
+            api_path="files_to_move.destinations",
             transform=_transform_files_to_move_destinations,
             default=[],
         ),
         FieldMapping(
             cache_attr="files_to_move_sources",
+            api_path="files_to_move.sources",
             transform=_transform_files_to_move_sources,
             default=[],
         ),

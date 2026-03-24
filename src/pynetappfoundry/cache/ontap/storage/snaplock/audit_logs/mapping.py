@@ -34,6 +34,7 @@ ONTAPSNAPLOCKLOG_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="log_files",
+            api_path="log_files",
             transform=_transform_log_files,
             default=[],
         ),

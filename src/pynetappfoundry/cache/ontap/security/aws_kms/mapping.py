@@ -46,6 +46,7 @@ ONTAPAWSKMS_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="ekmip_reachability",
+            api_path="ekmip_reachability",
             transform=_transform_ekmip_reachability,
             default=[],
         ),

@@ -43,6 +43,7 @@ ONTAPDISK_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="aggregates",
+            api_path="aggregates",
             transform=_transform_aggregates,
             default=[],
         ),
@@ -100,6 +101,7 @@ ONTAPDISK_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="error",
+            api_path="error",
             transform=_transform_error,
             default=[],
         ),
@@ -160,6 +162,7 @@ ONTAPDISK_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="outage_reason_arguments",
+            api_path="outage.reason.arguments",
             transform=_transform_outage_reason_arguments,
             default=[],
         ),
@@ -177,6 +180,7 @@ ONTAPDISK_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="paths",
+            api_path="paths",
             transform=_transform_paths,
             default=[],
         ),

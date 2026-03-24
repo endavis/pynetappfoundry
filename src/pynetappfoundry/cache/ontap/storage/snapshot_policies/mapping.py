@@ -29,6 +29,7 @@ ONTAPSNAPSHOTPOLICY_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="copies",
+            api_path="copies",
             transform=_transform_copies,
             default=[],
             requires_explicit_fetch=True,

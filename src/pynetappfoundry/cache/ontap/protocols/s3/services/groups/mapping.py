@@ -46,6 +46,7 @@ ONTAPS3GROUP_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="policies",
+            api_path="policies",
             transform=_transform_policies,
             default=[],
         ),
@@ -59,6 +60,7 @@ ONTAPS3GROUP_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="users",
+            api_path="users",
             transform=_transform_users,
             default=[],
         ),

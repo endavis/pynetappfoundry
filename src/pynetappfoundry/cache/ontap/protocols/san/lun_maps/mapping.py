@@ -77,6 +77,7 @@ ONTAPLUNMAP_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="reporting_nodes",
+            api_path="reporting_nodes",
             transform=_transform_reporting_nodes,
             default=[],
         ),

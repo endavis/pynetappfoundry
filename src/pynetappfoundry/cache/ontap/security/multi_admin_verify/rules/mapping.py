@@ -33,6 +33,7 @@ ONTAPMULTIADMINVERIFYRULE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="approval_groups",
+            api_path="approval_groups",
             transform=_transform_approval_groups,
             default=[],
         ),

@@ -31,6 +31,7 @@ ONTAPMETROCLUSTERDRGROUP_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="dr_pairs",
+            api_path="dr_pairs",
             transform=_transform_dr_pairs,
             default=[],
         ),
@@ -41,6 +42,7 @@ ONTAPMETROCLUSTERDRGROUP_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="mccip_ports",
+            api_path="mccip_ports",
             transform=_transform_mccip_ports,
             default=[],
         ),

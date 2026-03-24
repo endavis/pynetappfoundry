@@ -50,6 +50,7 @@ ONTAPEMSEVENTRESPONSE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="parameters",
+            api_path="parameters",
             transform=_transform_parameters,
             default=[],
         ),

@@ -25,6 +25,7 @@ ONTAPNISSERVICE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="binding_details",
+            api_path="binding_details",
             transform=_transform_binding_details,
             default=[],
         ),

@@ -49,6 +49,7 @@ ONTAPEMSFILTERRULERESPONSE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="parameter_criteria",
+            api_path="parameter_criteria",
             transform=_transform_parameter_criteria,
             default=[],
         ),

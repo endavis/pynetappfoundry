@@ -36,6 +36,7 @@ ONTAPIPSUBNET_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="available_ip_ranges",
+            api_path="available_ip_ranges",
             transform=_transform_available_ip_ranges,
             default=[],
         ),
@@ -58,6 +59,7 @@ ONTAPIPSUBNET_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="ip_ranges",
+            api_path="ip_ranges",
             transform=_transform_ip_ranges,
             default=[],
         ),

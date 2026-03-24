@@ -135,11 +135,13 @@ ONTAPCONSISTENCYGROUPRESPONSE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="consistency_groups",
+            api_path="consistency_groups",
             transform=_transform_consistency_groups,
             default=[],
         ),
         FieldMapping(
             cache_attr="luns",
+            api_path="luns",
             transform=_transform_luns,
             default=[],
         ),
@@ -236,6 +238,7 @@ ONTAPCONSISTENCYGROUPRESPONSE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="namespaces",
+            api_path="namespaces",
             transform=_transform_namespaces,
             default=[],
         ),
@@ -274,6 +277,7 @@ ONTAPCONSISTENCYGROUPRESPONSE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="replication_relationships",
+            api_path="replication_relationships",
             transform=_transform_replication_relationships,
             default=[],
         ),
@@ -410,6 +414,7 @@ ONTAPCONSISTENCYGROUPRESPONSE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="tiering_object_stores",
+            api_path="tiering.object_stores",
             transform=_transform_tiering_object_stores,
             default=[],
         ),
@@ -423,6 +428,7 @@ ONTAPCONSISTENCYGROUPRESPONSE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="volumes",
+            api_path="volumes",
             transform=_transform_volumes,
             default=[],
         ),

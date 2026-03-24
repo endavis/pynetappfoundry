@@ -108,21 +108,25 @@ ONTAPCONSISTENCYGROUPSNAPSHOTRESPONSE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="luns",
+            api_path="luns",
             transform=_transform_luns,
             default=[],
         ),
         FieldMapping(
             cache_attr="missing_luns",
+            api_path="missing_luns",
             transform=_transform_missing_luns,
             default=[],
         ),
         FieldMapping(
             cache_attr="missing_namespaces",
+            api_path="missing_namespaces",
             transform=_transform_missing_namespaces,
             default=[],
         ),
         FieldMapping(
             cache_attr="missing_volumes",
+            api_path="missing_volumes",
             transform=_transform_missing_volumes,
             default=[],
         ),
@@ -132,6 +136,7 @@ ONTAPCONSISTENCYGROUPSNAPSHOTRESPONSE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="namespaces",
+            api_path="namespaces",
             transform=_transform_namespaces,
             default=[],
         ),
@@ -151,6 +156,7 @@ ONTAPCONSISTENCYGROUPSNAPSHOTRESPONSE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="snapshot_volumes",
+            api_path="snapshot_volumes",
             transform=_transform_snapshot_volumes,
             default=[],
         ),

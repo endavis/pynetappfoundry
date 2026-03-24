@@ -236,6 +236,7 @@ ONTAPNVMENAMESPACE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="provisioning_options_tiering_object_stores",
+            api_path="provisioning_options.tiering.object_stores",
             transform=_transform_provisioning_options_tiering_object_stores,
             default=[],
         ),
@@ -403,6 +404,7 @@ ONTAPNVMENAMESPACE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="subsystem_map_subsystem_hosts",
+            api_path="subsystem_map.subsystem.hosts",
             transform=_transform_subsystem_map_subsystem_hosts,
             default=[],
             requires_explicit_fetch=True,
