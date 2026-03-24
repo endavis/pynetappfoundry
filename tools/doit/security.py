@@ -9,7 +9,8 @@ def task_audit() -> dict[str, Any]:
     """Run security audit with pip-audit (requires security extras)."""
     return {
         "actions": [
-            "uv run pip-audit --skip-editable || "
+            # TODO: Remove --ignore-vuln once pygments releases a fix for CVE-2026-4539
+            "uv run pip-audit --skip-editable --ignore-vuln CVE-2026-4539 || "
             "echo 'pip-audit not installed. Run: uv sync --extra security'"
         ],
         "title": title_with_actions,
