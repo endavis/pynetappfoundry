@@ -136,7 +136,8 @@ jobs:
         run: uv pip install --upgrade pip
 
       - name: Run dependency audit
-        run: uv run pip-audit --skip-editable
+        # TODO: Remove --ignore-vuln once pygments releases a fix for CVE-2026-4539
+        run: uv run pip-audit --skip-editable --ignore-vuln CVE-2026-4539
 
       - name: Run tests with coverage
         run: uv run pytest --cov=pynetappfoundry --cov-report=xml:tmp/coverage.xml --cov-report=term -v
