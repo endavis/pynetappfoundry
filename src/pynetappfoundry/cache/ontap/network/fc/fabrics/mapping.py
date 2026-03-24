@@ -35,6 +35,7 @@ ONTAPFABRIC_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="connections",
+            api_path="connections",
             transform=_transform_connections,
             default=[],
             requires_explicit_fetch=True,

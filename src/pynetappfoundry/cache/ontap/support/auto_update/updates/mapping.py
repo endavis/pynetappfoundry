@@ -86,6 +86,7 @@ ONTAPAUTOUPDATESTATUS_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="status_arguments",
+            api_path="status.arguments",
             transform=_transform_status_arguments,
             default=[],
         ),

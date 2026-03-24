@@ -60,6 +60,7 @@ ONTAPPORT_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="discovered_devices",
+            api_path="discovered_devices",
             transform=_transform_discovered_devices,
             default=[],
         ),
@@ -79,6 +80,7 @@ ONTAPPORT_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="lag_active_ports",
+            api_path="lag.active_ports",
             transform=_transform_lag_active_ports,
             default=[],
         ),
@@ -88,6 +90,7 @@ ONTAPPORT_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="lag_member_ports",
+            api_path="lag.member_ports",
             transform=_transform_lag_member_ports,
             default=[],
         ),
@@ -159,6 +162,7 @@ ONTAPPORT_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="reachable_broadcast_domains",
+            api_path="reachable_broadcast_domains",
             transform=_transform_reachable_broadcast_domains,
             default=[],
         ),

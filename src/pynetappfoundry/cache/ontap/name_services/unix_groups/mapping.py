@@ -47,6 +47,7 @@ ONTAPUNIXGROUP_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="users",
+            api_path="users",
             transform=_transform_users,
             default=[],
         ),

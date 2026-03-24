@@ -266,6 +266,7 @@ ONTAPAPPLICATIONTEMPLATE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="mongo_db_on_san_new_igroups",
+            api_path="mongo_db_on_san.new_igroups",
             transform=_transform_mongo_db_on_san_new_igroups,
             default=[],
         ),
@@ -287,16 +288,19 @@ ONTAPAPPLICATIONTEMPLATE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="mongo_db_on_san_secondary_igroups",
+            api_path="mongo_db_on_san.secondary_igroups",
             transform=_transform_mongo_db_on_san_secondary_igroups,
             default=[],
         ),
         FieldMapping(
             cache_attr="nas_application_components",
+            api_path="nas.application_components",
             transform=_transform_nas_application_components,
             default=[],
         ),
         FieldMapping(
             cache_attr="nas_cifs_access",
+            api_path="nas.cifs_access",
             transform=_transform_nas_cifs_access,
             default=[],
         ),
@@ -306,11 +310,13 @@ ONTAPAPPLICATIONTEMPLATE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="nas_exclude_aggregates",
+            api_path="nas.exclude_aggregates",
             transform=_transform_nas_exclude_aggregates,
             default=[],
         ),
         FieldMapping(
             cache_attr="nas_nfs_access",
+            api_path="nas.nfs_access",
             transform=_transform_nas_nfs_access,
             default=[],
         ),
@@ -328,6 +334,7 @@ ONTAPAPPLICATIONTEMPLATE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="nvme_components",
+            api_path="nvme.components",
             transform=_transform_nvme_components,
             default=[],
         ),
@@ -367,6 +374,7 @@ ONTAPAPPLICATIONTEMPLATE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="oracle_on_nfs_nfs_access",
+            api_path="oracle_on_nfs.nfs_access",
             transform=_transform_oracle_on_nfs_nfs_access,
             default=[],
         ),
@@ -425,6 +433,7 @@ ONTAPAPPLICATIONTEMPLATE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="oracle_on_san_new_igroups",
+            api_path="oracle_on_san.new_igroups",
             transform=_transform_oracle_on_san_new_igroups,
             default=[],
         ),
@@ -492,6 +501,7 @@ ONTAPAPPLICATIONTEMPLATE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="oracle_rac_on_nfs_nfs_access",
+            api_path="oracle_rac_on_nfs.nfs_access",
             transform=_transform_oracle_rac_on_nfs_nfs_access,
             default=[],
         ),
@@ -560,6 +570,7 @@ ONTAPAPPLICATIONTEMPLATE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="oracle_rac_on_san_db_sids",
+            api_path="oracle_rac_on_san.db_sids",
             transform=_transform_oracle_rac_on_san_db_sids,
             default=[],
         ),
@@ -574,6 +585,7 @@ ONTAPAPPLICATIONTEMPLATE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="oracle_rac_on_san_new_igroups",
+            api_path="oracle_rac_on_san.new_igroups",
             transform=_transform_oracle_rac_on_san_new_igroups,
             default=[],
         ),
@@ -632,6 +644,7 @@ ONTAPAPPLICATIONTEMPLATE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="s3_bucket_application_components",
+            api_path="s3_bucket.application_components",
             transform=_transform_s3_bucket_application_components,
             default=[],
         ),
@@ -641,16 +654,19 @@ ONTAPAPPLICATIONTEMPLATE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="san_application_components",
+            api_path="san.application_components",
             transform=_transform_san_application_components,
             default=[],
         ),
         FieldMapping(
             cache_attr="san_exclude_aggregates",
+            api_path="san.exclude_aggregates",
             transform=_transform_san_exclude_aggregates,
             default=[],
         ),
         FieldMapping(
             cache_attr="san_new_igroups",
+            api_path="san.new_igroups",
             transform=_transform_san_new_igroups,
             default=[],
         ),
@@ -694,6 +710,7 @@ ONTAPAPPLICATIONTEMPLATE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="sql_on_san_new_igroups",
+            api_path="sql_on_san.new_igroups",
             transform=_transform_sql_on_san_new_igroups,
             default=[],
         ),
@@ -791,6 +808,7 @@ ONTAPAPPLICATIONTEMPLATE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="vdi_on_nas_nfs_access",
+            api_path="vdi_on_nas.nfs_access",
             transform=_transform_vdi_on_nas_nfs_access,
             default=[],
         ),
@@ -826,6 +844,7 @@ ONTAPAPPLICATIONTEMPLATE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="vdi_on_san_new_igroups",
+            api_path="vdi_on_san.new_igroups",
             transform=_transform_vdi_on_san_new_igroups,
             default=[],
         ),
@@ -857,6 +876,7 @@ ONTAPAPPLICATIONTEMPLATE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="vsi_on_nas_nfs_access",
+            api_path="vsi_on_nas.nfs_access",
             transform=_transform_vsi_on_nas_nfs_access,
             default=[],
         ),
@@ -892,6 +912,7 @@ ONTAPAPPLICATIONTEMPLATE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="vsi_on_san_new_igroups",
+            api_path="vsi_on_san.new_igroups",
             transform=_transform_vsi_on_san_new_igroups,
             default=[],
         ),

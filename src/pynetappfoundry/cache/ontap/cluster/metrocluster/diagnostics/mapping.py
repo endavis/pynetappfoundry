@@ -61,6 +61,7 @@ ONTAPMETROCLUSTERDIAGNOSTICS_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="aggregate_details",
+            api_path="aggregate.details",
             transform=_transform_aggregate_details,
             default=[],
         ),
@@ -82,6 +83,7 @@ ONTAPMETROCLUSTERDIAGNOSTICS_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="cluster_details",
+            api_path="cluster.details",
             transform=_transform_cluster_details,
             default=[],
         ),
@@ -119,6 +121,7 @@ ONTAPMETROCLUSTERDIAGNOSTICS_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="connection_details",
+            api_path="connection.details",
             transform=_transform_connection_details,
             default=[],
         ),
@@ -156,6 +159,7 @@ ONTAPMETROCLUSTERDIAGNOSTICS_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="node_details",
+            api_path="node.details",
             transform=_transform_node_details,
             default=[],
         ),
@@ -177,6 +181,7 @@ ONTAPMETROCLUSTERDIAGNOSTICS_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="volume_details",
+            api_path="volume.details",
             transform=_transform_volume_details,
             default=[],
         ),

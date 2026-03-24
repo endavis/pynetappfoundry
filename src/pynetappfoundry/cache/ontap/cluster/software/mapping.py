@@ -39,6 +39,7 @@ ONTAPSOFTWAREREFERENCE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="firmware_cluster_fw_progress",
+            api_path="firmware.cluster_fw_progress",
             transform=_transform_firmware_cluster_fw_progress,
             default=[],
         ),
@@ -156,6 +157,7 @@ ONTAPSOFTWAREREFERENCE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="software_images",
+            api_path="software_images",
             transform=_transform_software_images,
             default=[],
         ),

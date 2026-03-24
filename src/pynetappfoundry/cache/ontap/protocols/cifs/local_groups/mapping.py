@@ -29,6 +29,7 @@ ONTAPLOCALCIFSGROUP_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="members",
+            api_path="members",
             transform=_transform_members,
             default=[],
         ),

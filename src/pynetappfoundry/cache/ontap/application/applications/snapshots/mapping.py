@@ -39,6 +39,7 @@ ONTAPAPPLICATIONSNAPSHOT_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="components",
+            api_path="components",
             transform=_transform_components,
             default=[],
         ),

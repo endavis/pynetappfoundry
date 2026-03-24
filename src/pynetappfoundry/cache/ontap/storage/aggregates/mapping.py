@@ -88,6 +88,7 @@ ONTAPAGGREGATE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="block_storage_hybrid_cache_simulated_raid_groups",
+            api_path="block_storage.hybrid_cache.simulated_raid_groups",
             transform=_transform_block_storage_hybrid_cache_simulated_raid_groups,
             default=[],
         ),
@@ -98,6 +99,7 @@ ONTAPAGGREGATE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="block_storage_hybrid_cache_storage_pools",
+            api_path="block_storage.hybrid_cache.storage_pools",
             transform=_transform_block_storage_hybrid_cache_storage_pools,
             default=[],
         ),
@@ -117,6 +119,7 @@ ONTAPAGGREGATE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="block_storage_plexes",
+            api_path="block_storage.plexes",
             transform=_transform_block_storage_plexes,
             default=[],
         ),
@@ -148,6 +151,7 @@ ONTAPAGGREGATE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="block_storage_primary_simulated_raid_groups",
+            api_path="block_storage.primary.simulated_raid_groups",
             transform=_transform_block_storage_primary_simulated_raid_groups,
             default=[],
         ),
@@ -172,6 +176,7 @@ ONTAPAGGREGATE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="cloud_storage_stores",
+            api_path="cloud_storage.stores",
             transform=_transform_cloud_storage_stores,
             default=[],
         ),

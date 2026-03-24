@@ -43,6 +43,7 @@ ONTAPS3BUCKET_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="aggregates",
+            api_path="aggregates",
             transform=_transform_aggregates,
             default=[],
         ),
@@ -70,6 +71,7 @@ ONTAPS3BUCKET_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="cors_rules",
+            api_path="cors.rules",
             transform=_transform_cors_rules,
             default=[],
         ),
@@ -80,6 +82,7 @@ ONTAPS3BUCKET_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="lifecycle_management_rules",
+            api_path="lifecycle_management.rules",
             transform=_transform_lifecycle_management_rules,
             default=[],
         ),
@@ -98,6 +101,7 @@ ONTAPS3BUCKET_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="policy_statements",
+            api_path="policy.statements",
             transform=_transform_policy_statements,
             default=[],
         ),

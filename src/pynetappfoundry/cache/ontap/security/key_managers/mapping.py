@@ -58,11 +58,13 @@ ONTAPSECURITYKEYMANAGER_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="external_server_ca_certificates",
+            api_path="external.server_ca_certificates",
             transform=_transform_external_server_ca_certificates,
             default=[],
         ),
         FieldMapping(
             cache_attr="external_servers",
+            api_path="external.servers",
             transform=_transform_external_servers,
             default=[],
         ),

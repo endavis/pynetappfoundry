@@ -121,6 +121,7 @@ ONTAPCIFSSESSION_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="volumes",
+            api_path="volumes",
             transform=_transform_volumes,
             default=[],
         ),

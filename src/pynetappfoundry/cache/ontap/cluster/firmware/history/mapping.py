@@ -53,6 +53,7 @@ ONTAPFIRMWAREHISTORY_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="update_status",
+            api_path="update_status",
             transform=_transform_update_status,
             default=[],
         ),

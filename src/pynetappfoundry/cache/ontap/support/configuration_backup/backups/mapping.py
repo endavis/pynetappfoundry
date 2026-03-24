@@ -32,6 +32,7 @@ ONTAPCONFIGURATIONBACKUPFILE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="backup_nodes",
+            api_path="backup_nodes",
             transform=_transform_backup_nodes,
             default=[],
         ),

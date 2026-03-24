@@ -846,8 +846,44 @@ class TestExplicitFetchApiFields:
         )
         assert tm.explicit_fetch_api_fields() == ["analytics"]
 
-    def test_transform_only_falls_back_to_cache_attr(self) -> None:
-        """Fields without api_path fall back to cache_attr."""
+    def test_transform_with_api_path_uses_api_path(self) -> None:
+        """Transform fields with api_path use api_path for derivation."""
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/t?fields=*",
+            fields=(
+                FieldMapping(
+                    cache_attr="copies",
+                    api_path="copies",
+                    transform=lambda r: r.get("copies", []),
+                    default=[],
+                    requires_explicit_fetch=True,
+                ),
+            ),
+        )
+        assert tm.explicit_fetch_api_fields() == ["copies"]
+
+    def test_transform_with_dotted_api_path(self) -> None:
+        """Transform fields with dotted api_path derive top-level segment."""
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/t?fields=*",
+            fields=(
+                FieldMapping(
+                    cache_attr="connectivity_tracking_alerts",
+                    api_path="connectivity_tracking.alerts",
+                    transform=lambda r: r.get("connectivity_tracking", {}).get("alerts", []),
+                    default=[],
+                    requires_explicit_fetch=True,
+                ),
+            ),
+        )
+        assert tm.explicit_fetch_api_fields() == ["connectivity_tracking"]
+
+    def test_transform_without_api_path_excluded(self) -> None:
+        """Transform-only fields without api_path are silently excluded."""
         tm = TypeMapping(
             name="T",
             model_class=_SampleModel,
@@ -861,7 +897,7 @@ class TestExplicitFetchApiFields:
                 ),
             ),
         )
-        assert tm.explicit_fetch_api_fields() == ["copies"]
+        assert tm.explicit_fetch_api_fields() == []
 
     def test_excludes_non_cache_strategy(self) -> None:
         """Fields with strategy != 'cache' are excluded."""
@@ -1067,7 +1103,7 @@ class TestBuildCollectionUrl:
         assert tm.build_collection_url() == "/cluster/nodes?order_by=name"
 
     def test_transform_only_fields(self) -> None:
-        """Transform-only fields use cache_attr as field name."""
+        """Transform fields with api_path use api_path for field name."""
         tm = TypeMapping(
             name="T",
             model_class=_SampleModel,
@@ -1076,6 +1112,7 @@ class TestBuildCollectionUrl:
                 FieldMapping(cache_attr="name", api_path="name"),
                 FieldMapping(
                     cache_attr="copies",
+                    api_path="copies",
                     transform=lambda r: r.get("copies", []),
                     default=[],
                     requires_explicit_fetch=True,

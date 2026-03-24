@@ -73,11 +73,13 @@ ONTAPSTORAGEBRIDGE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="errors",
+            api_path="errors",
             transform=_transform_errors,
             default=[],
         ),
         FieldMapping(
             cache_attr="fc_ports",
+            api_path="fc_ports",
             transform=_transform_fc_ports,
             default=[],
         ),
@@ -91,6 +93,7 @@ ONTAPSTORAGEBRIDGE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="last_reboot_reason_arguments",
+            api_path="last_reboot.reason.arguments",
             transform=_transform_last_reboot_reason_arguments,
             default=[],
         ),
@@ -125,16 +128,19 @@ ONTAPSTORAGEBRIDGE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="paths",
+            api_path="paths",
             transform=_transform_paths,
             default=[],
         ),
         FieldMapping(
             cache_attr="power_supply_units",
+            api_path="power_supply_units",
             transform=_transform_power_supply_units,
             default=[],
         ),
         FieldMapping(
             cache_attr="sas_ports",
+            api_path="sas_ports",
             transform=_transform_sas_ports,
             default=[],
         ),

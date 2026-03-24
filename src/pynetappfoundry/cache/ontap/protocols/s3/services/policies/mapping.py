@@ -40,6 +40,7 @@ ONTAPS3POLICY_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="statements",
+            api_path="statements",
             transform=_transform_statements,
             default=[],
         ),

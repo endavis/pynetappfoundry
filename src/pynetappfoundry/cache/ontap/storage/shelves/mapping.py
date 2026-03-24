@@ -85,11 +85,13 @@ ONTAPSHELF_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="acps",
+            api_path="acps",
             transform=_transform_acps,
             default=[],
         ),
         FieldMapping(
             cache_attr="bays",
+            api_path="bays",
             transform=_transform_bays,
             default=[],
         ),
@@ -99,6 +101,7 @@ ONTAPSHELF_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="current_sensors",
+            api_path="current_sensors",
             transform=_transform_current_sensors,
             default=[],
         ),
@@ -109,21 +112,25 @@ ONTAPSHELF_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="drawers",
+            api_path="drawers",
             transform=_transform_drawers,
             default=[],
         ),
         FieldMapping(
             cache_attr="errors",
+            api_path="errors",
             transform=_transform_errors,
             default=[],
         ),
         FieldMapping(
             cache_attr="fans",
+            api_path="fans",
             transform=_transform_fans,
             default=[],
         ),
         FieldMapping(
             cache_attr="frus",
+            api_path="frus",
             transform=_transform_frus,
             default=[],
         ),
@@ -163,11 +170,13 @@ ONTAPSHELF_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="paths",
+            api_path="paths",
             transform=_transform_paths,
             default=[],
         ),
         FieldMapping(
             cache_attr="ports",
+            api_path="ports",
             transform=_transform_ports,
             default=[],
         ),
@@ -181,6 +190,7 @@ ONTAPSHELF_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="temperature_sensors",
+            api_path="temperature_sensors",
             transform=_transform_temperature_sensors,
             default=[],
         ),
@@ -210,6 +220,7 @@ ONTAPSHELF_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="voltage_sensors",
+            api_path="voltage_sensors",
             transform=_transform_voltage_sensors,
             default=[],
         ),

@@ -29,6 +29,7 @@ ONTAPMETROCLUSTERINTERCONNECT_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="interfaces",
+            api_path="interfaces",
             transform=_transform_interfaces,
             default=[],
         ),

@@ -31,6 +31,7 @@ ONTAPUNIXGROUPUSERS_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="records",
+            api_path="records",
             transform=_transform_records,
             default=[],
         ),

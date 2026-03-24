@@ -84,6 +84,7 @@ ONTAPDNS_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="status",
+            api_path="status",
             transform=_transform_status,
             default=[],
         ),

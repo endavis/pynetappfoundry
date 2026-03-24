@@ -35,6 +35,7 @@ ONTAPJOB_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="error_arguments",
+            api_path="error.arguments",
             transform=_transform_error_arguments,
             default=[],
         ),

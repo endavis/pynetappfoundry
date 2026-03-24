@@ -59,6 +59,7 @@ ONTAPCIFSDOMAIN_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="discovered_servers",
+            api_path="discovered_servers",
             transform=_transform_discovered_servers,
             default=[],
         ),
@@ -104,6 +105,7 @@ ONTAPCIFSDOMAIN_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="preferred_dcs",
+            api_path="preferred_dcs",
             transform=_transform_preferred_dcs,
             default=[],
         ),
@@ -125,6 +127,7 @@ ONTAPCIFSDOMAIN_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="trust_relationships",
+            api_path="trust_relationships",
             transform=_transform_trust_relationships,
             default=[],
         ),

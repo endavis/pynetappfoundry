@@ -69,6 +69,7 @@ ONTAPSTORAGEPOOL_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="capacity_disks",
+            api_path="capacity.disks",
             transform=_transform_capacity_disks,
             default=[],
         ),
@@ -79,6 +80,7 @@ ONTAPSTORAGEPOOL_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="capacity_spare_allocation_units",
+            api_path="capacity.spare_allocation_units",
             transform=_transform_capacity_spare_allocation_units,
             default=[],
         ),
@@ -89,6 +91,7 @@ ONTAPSTORAGEPOOL_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="capacity_used_allocation_units",
+            api_path="capacity.used_allocation_units",
             transform=_transform_capacity_used_allocation_units,
             default=[],
         ),
@@ -103,6 +106,7 @@ ONTAPSTORAGEPOOL_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="health_unhealthy_reason_arguments",
+            api_path="health.unhealthy_reason.arguments",
             transform=_transform_health_unhealthy_reason_arguments,
             default=[],
         ),
@@ -120,6 +124,7 @@ ONTAPSTORAGEPOOL_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="nodes",
+            api_path="nodes",
             transform=_transform_nodes,
             default=[],
         ),

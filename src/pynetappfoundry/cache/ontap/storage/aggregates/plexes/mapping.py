@@ -48,6 +48,7 @@ ONTAPPLEX_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="raid_groups",
+            api_path="raid_groups",
             transform=_transform_raid_groups,
             default=[],
         ),

@@ -39,6 +39,7 @@ ONTAPROLE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="privileges",
+            api_path="privileges",
             transform=_transform_privileges,
             default=[],
         ),

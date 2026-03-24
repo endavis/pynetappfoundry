@@ -36,6 +36,7 @@ ONTAPACTIVEDIRECTORY_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="discovered_servers",
+            api_path="discovered_servers",
             transform=_transform_discovered_servers,
             default=[],
         ),
@@ -62,6 +63,7 @@ ONTAPACTIVEDIRECTORY_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="preferred_dcs",
+            api_path="preferred_dcs",
             transform=_transform_preferred_dcs,
             default=[],
         ),

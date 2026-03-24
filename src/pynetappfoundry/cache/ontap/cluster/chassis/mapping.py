@@ -37,6 +37,7 @@ ONTAPCHASSIS_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="frus",
+            api_path="frus",
             transform=_transform_frus,
             default=[],
         ),
@@ -46,11 +47,13 @@ ONTAPCHASSIS_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="nodes",
+            api_path="nodes",
             transform=_transform_nodes,
             default=[],
         ),
         FieldMapping(
             cache_attr="shelves",
+            api_path="shelves",
             transform=_transform_shelves,
             default=[],
         ),

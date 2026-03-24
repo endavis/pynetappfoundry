@@ -40,6 +40,7 @@ ONTAPNVMESUBSYSTEM_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="hosts",
+            api_path="hosts",
             transform=_transform_hosts,
             default=[],
         ),
@@ -67,6 +68,7 @@ ONTAPNVMESUBSYSTEM_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="subsystem_maps",
+            api_path="subsystem_maps",
             transform=_transform_subsystem_maps,
             default=[],
         ),

@@ -86,6 +86,7 @@ ONTAPNODERESPONSE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="cluster_interfaces",
+            api_path="cluster_interfaces",
             transform=_transform_cluster_interfaces,
             default=[],
         ),
@@ -134,11 +135,13 @@ ONTAPNODERESPONSE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="controller_flash_cache",
+            api_path="controller.flash_cache",
             transform=_transform_controller_flash_cache,
             default=[],
         ),
         FieldMapping(
             cache_attr="controller_frus",
+            api_path="controller.frus",
             transform=_transform_controller_frus,
             default=[],
         ),
@@ -200,6 +203,7 @@ ONTAPNODERESPONSE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="ha_giveback_status",
+            api_path="ha.giveback.status",
             transform=_transform_ha_giveback_status,
             default=[],
         ),
@@ -213,11 +217,13 @@ ONTAPNODERESPONSE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="ha_partners",
+            api_path="ha.partners",
             transform=_transform_ha_partners,
             default=[],
         ),
         FieldMapping(
             cache_attr="ha_ports",
+            api_path="ha.ports",
             transform=_transform_ha_ports,
             default=[],
         ),
@@ -290,6 +296,7 @@ ONTAPNODERESPONSE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="management_interfaces",
+            api_path="management_interfaces",
             transform=_transform_management_interfaces,
             default=[],
         ),
@@ -330,6 +337,7 @@ ONTAPNODERESPONSE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="metrocluster_ports",
+            api_path="metrocluster.ports",
             transform=_transform_metrocluster_ports,
             default=[],
         ),

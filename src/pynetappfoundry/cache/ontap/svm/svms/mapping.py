@@ -43,6 +43,7 @@ ONTAPSVM_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="aggregates",
+            api_path="aggregates",
             transform=_transform_aggregates,
             default=[],
         ),
@@ -182,6 +183,7 @@ ONTAPSVM_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="fc_interfaces",
+            api_path="fc_interfaces",
             transform=_transform_fc_interfaces,
             default=[],
         ),
@@ -197,6 +199,7 @@ ONTAPSVM_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="ip_interfaces",
+            api_path="ip_interfaces",
             transform=_transform_ip_interfaces,
             default=[],
         ),
@@ -422,6 +425,7 @@ ONTAPSVM_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="routes",
+            api_path="routes",
             transform=_transform_routes,
             default=[],
         ),

@@ -27,6 +27,7 @@ ONTAPSVMMIGRATIONVOLUME_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="errors",
+            api_path="errors",
             transform=_transform_errors,
             default=[],
         ),

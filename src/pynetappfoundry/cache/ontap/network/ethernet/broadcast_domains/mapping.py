@@ -42,6 +42,7 @@ ONTAPBROADCASTDOMAIN_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="ports",
+            api_path="ports",
             transform=_transform_ports,
             default=[],
         ),

@@ -41,6 +41,7 @@ ONTAPMETROCLUSTERSVM_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="failed_reason_arguments",
+            api_path="failed_reason.arguments",
             transform=_transform_failed_reason_arguments,
             default=[],
         ),

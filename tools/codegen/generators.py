@@ -608,8 +608,10 @@ def generate_mapping(
         field_args = [f'        cache_attr="{attr}"']
 
         if field.api_path in sub_model_map:
-            # Sub-model field: use transform instead of api_path
+            # Sub-model field: keep api_path for field-name derivation,
+            # add transform for custom extraction logic
             func_name = f"_transform_{attr}"
+            field_args.append(f'        api_path="{field.api_path}"')
             field_args.append(f"        transform={func_name}")
         else:
             field_args.append(f'        api_path="{field.api_path}"')

@@ -42,6 +42,7 @@ ONTAPLICENSEPACKAGERESPONSE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="licenses",
+            api_path="licenses",
             transform=_transform_licenses,
             default=[],
         ),

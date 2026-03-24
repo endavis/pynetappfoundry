@@ -58,6 +58,7 @@ ONTAPCLUSTERPEER_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="initial_allowed_svms",
+            api_path="initial_allowed_svms",
             transform=_transform_initial_allowed_svms,
             default=[],
         ),

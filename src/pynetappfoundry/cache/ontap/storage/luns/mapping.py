@@ -75,6 +75,7 @@ ONTAPLUN_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="attributes",
+            api_path="attributes",
             transform=_transform_attributes,
             default=[],
             requires_explicit_fetch=True,
@@ -119,6 +120,7 @@ ONTAPLUN_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="copy_destinations",
+            api_path="copy.destinations",
             transform=_transform_copy_destinations,
             default=[],
             requires_explicit_fetch=True,
@@ -152,6 +154,7 @@ ONTAPLUN_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="copy_source_progress_failure_arguments",
+            api_path="copy.source.progress.failure.arguments",
             transform=_transform_copy_source_progress_failure_arguments,
             default=[],
             requires_explicit_fetch=True,
@@ -228,6 +231,7 @@ ONTAPLUN_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="lun_maps",
+            api_path="lun_maps",
             transform=_transform_lun_maps,
             default=[],
             requires_explicit_fetch=True,
@@ -343,6 +347,7 @@ ONTAPLUN_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="movement_progress_failure_arguments",
+            api_path="movement.progress.failure.arguments",
             transform=_transform_movement_progress_failure_arguments,
             default=[],
             requires_explicit_fetch=True,
@@ -418,6 +423,7 @@ ONTAPLUN_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="provisioning_options_tiering_object_stores",
+            api_path="provisioning_options.tiering.object_stores",
             transform=_transform_provisioning_options_tiering_object_stores,
             default=[],
         ),
@@ -599,6 +605,7 @@ ONTAPLUN_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="vvol_bindings",
+            api_path="vvol.bindings",
             transform=_transform_vvol_bindings,
             default=[],
             requires_explicit_fetch=True,

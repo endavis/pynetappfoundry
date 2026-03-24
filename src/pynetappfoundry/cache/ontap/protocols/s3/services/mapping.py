@@ -31,6 +31,7 @@ ONTAPS3SERVICE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="buckets",
+            api_path="buckets",
             transform=_transform_buckets,
             default=[],
         ),
@@ -262,6 +263,7 @@ ONTAPS3SERVICE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="users",
+            api_path="users",
             transform=_transform_users,
             default=[],
         ),

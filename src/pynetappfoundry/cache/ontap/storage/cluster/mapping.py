@@ -35,6 +35,7 @@ ONTAPCLUSTERSPACE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="block_storage_medias",
+            api_path="block_storage.medias",
             transform=_transform_block_storage_medias,
             default=[],
         ),

@@ -62,6 +62,7 @@ ONTAPSNAPMIRRORTRANSFER_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="files",
+            api_path="files",
             transform=_transform_files,
             default=[],
         ),
@@ -92,6 +93,7 @@ ONTAPSNAPMIRRORTRANSFER_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="relationship_destination_consistency_group_volumes",
+            api_path="relationship.destination.consistency_group_volumes",
             transform=_transform_relationship_destination_consistency_group_volumes,
             default=[],
         ),

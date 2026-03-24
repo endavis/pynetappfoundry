@@ -29,6 +29,7 @@ ONTAPCAPACITYPOOLRESPONSE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="nodes",
+            api_path="nodes",
             transform=_transform_nodes,
             default=[],
         ),

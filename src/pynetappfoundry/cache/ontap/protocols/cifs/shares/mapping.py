@@ -30,6 +30,7 @@ ONTAPCIFSSHARE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="acls",
+            api_path="acls",
             transform=_transform_acls,
             default=[],
         ),

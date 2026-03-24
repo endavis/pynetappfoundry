@@ -75,6 +75,7 @@ ONTAPNETBIOS_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="wins_servers",
+            api_path="wins_servers",
             transform=_transform_wins_servers,
             default=[],
         ),

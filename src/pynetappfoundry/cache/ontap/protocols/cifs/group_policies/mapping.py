@@ -72,21 +72,25 @@ ONTAPPOLICIESANDRULESTOBEAPPLIED_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="to_be_applied_access_policies",
+            api_path="to_be_applied.access_policies",
             transform=_transform_to_be_applied_access_policies,
             default=[],
         ),
         FieldMapping(
             cache_attr="to_be_applied_access_rules",
+            api_path="to_be_applied.access_rules",
             transform=_transform_to_be_applied_access_rules,
             default=[],
         ),
         FieldMapping(
             cache_attr="to_be_applied_objects",
+            api_path="to_be_applied.objects",
             transform=_transform_to_be_applied_objects,
             default=[],
         ),
         FieldMapping(
             cache_attr="to_be_applied_restricted_groups",
+            api_path="to_be_applied.restricted_groups",
             transform=_transform_to_be_applied_restricted_groups,
             default=[],
         ),

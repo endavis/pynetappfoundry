@@ -41,6 +41,7 @@ ONTAPFPOLICYPOLICY_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="events",
+            api_path="events",
             transform=_transform_events,
             default=[],
         ),

@@ -35,7 +35,10 @@ class FieldMapping:
         cli_field: Hyphenated CLI field name (e.g. ``"vserver"``).
         default: Default value when the field is missing.
         transform: Custom API extraction function receiving the full record dict.
-            Overrides ``api_path`` when set.
+            Overrides ``api_path`` for *extraction* when set.  ``api_path``
+            should still be provided alongside ``transform`` so that
+            :meth:`TypeMapping.explicit_fetch_api_fields` can derive the
+            correct top-level API field name.
         cli_transform: Custom CLI extraction function receiving the full record dict.
             Overrides ``cli_field`` when set.
         cache_strategy: How this field is collected and stored.
@@ -161,8 +164,9 @@ class TypeMapping:
 
         Considers only fields where ``requires_explicit_fetch=True`` AND
         ``cache_strategy="cache"``.  Extracts the first segment of
-        ``api_path`` (before ``.`` or ``[``); falls back to ``cache_attr``
-        for transform-only fields (no ``api_path``).
+        ``api_path`` (before ``.`` or ``[``).  Transform-only fields
+        without ``api_path`` are silently excluded because
+        ``cache_attr`` is not a valid API field name.
 
         Returns:
             Sorted list of unique top-level API field names.
@@ -176,8 +180,6 @@ class TypeMapping:
             if field.api_path is not None:
                 first_segment = field.api_path.split(".")[0].split("[")[0]
                 keys.add(first_segment)
-            else:
-                keys.add(field.cache_attr)
         return sorted(keys)
 
     def build_parameterized_url(self, parent_id: str) -> str:

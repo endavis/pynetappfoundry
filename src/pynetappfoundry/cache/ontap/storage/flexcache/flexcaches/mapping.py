@@ -31,6 +31,7 @@ ONTAPFLEXCACHE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="aggregates",
+            api_path="aggregates",
             transform=_transform_aggregates,
             default=[],
         ),
@@ -75,6 +76,7 @@ ONTAPFLEXCACHE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="origins",
+            api_path="origins",
             transform=_transform_origins,
             default=[],
         ),

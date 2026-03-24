@@ -22,6 +22,7 @@ ONTAPFCLOGIN_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="igroups",
+            api_path="igroups",
             transform=_transform_igroups,
             default=[],
         ),

@@ -92,21 +92,25 @@ ONTAPAPPLICATIONCOMPONENT_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="backing_storage_luns",
+            api_path="backing_storage.luns",
             transform=_transform_backing_storage_luns,
             default=[],
         ),
         FieldMapping(
             cache_attr="backing_storage_namespaces",
+            api_path="backing_storage.namespaces",
             transform=_transform_backing_storage_namespaces,
             default=[],
         ),
         FieldMapping(
             cache_attr="backing_storage_volumes",
+            api_path="backing_storage.volumes",
             transform=_transform_backing_storage_volumes,
             default=[],
         ),
         FieldMapping(
             cache_attr="cifs_access",
+            api_path="cifs_access",
             transform=_transform_cifs_access,
             default=[],
         ),
@@ -128,21 +132,25 @@ ONTAPAPPLICATIONCOMPONENT_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="nfs_access",
+            api_path="nfs_access",
             transform=_transform_nfs_access,
             default=[],
         ),
         FieldMapping(
             cache_attr="nvme_access",
+            api_path="nvme_access",
             transform=_transform_nvme_access,
             default=[],
         ),
         FieldMapping(
             cache_attr="protection_groups",
+            api_path="protection_groups",
             transform=_transform_protection_groups,
             default=[],
         ),
         FieldMapping(
             cache_attr="san_access",
+            api_path="san_access",
             transform=_transform_san_access,
             default=[],
         ),

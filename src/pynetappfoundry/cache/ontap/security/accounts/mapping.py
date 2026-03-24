@@ -25,6 +25,7 @@ ONTAPACCOUNT_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="applications",
+            api_path="applications",
             transform=_transform_applications,
             default=[],
         ),
