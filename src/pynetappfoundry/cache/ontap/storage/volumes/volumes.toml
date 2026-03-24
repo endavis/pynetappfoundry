@@ -357,7 +357,7 @@ requires_explicit_fetch = true
 cache_strategy = "cache"
 
 [fields.clone_inherited_physical_used]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.clone_inherited_savings]
 cache_strategy = "cache"
@@ -635,11 +635,11 @@ cache_strategy = "cache"
 requires_explicit_fetch = true
 
 [fields.files_maximum]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.files_used]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.flash_pool_cache_eligibility]
@@ -690,127 +690,127 @@ cache_strategy = "cache"
 requires_explicit_fetch = true
 
 [fields.metric_cloud_duration]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_cloud_iops_other]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_cloud_iops_read]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_cloud_iops_total]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_cloud_iops_write]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_cloud_latency_other]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_cloud_latency_read]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_cloud_latency_total]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_cloud_latency_write]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_cloud_status]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_cloud_timestamp]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_duration]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_flexcache_bandwidth_savings]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_flexcache_cache_miss_percent]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_flexcache_duration]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_flexcache_status]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_flexcache_timestamp]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_iops_other]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_iops_read]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_iops_total]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_iops_write]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_latency_other]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_latency_read]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_latency_total]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_latency_write]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_status]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_throughput_other]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_throughput_read]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_throughput_total]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_throughput_write]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_timestamp]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.movement_capacity_tier_optimized]
@@ -1209,66 +1209,66 @@ cache_strategy = "cache"
 requires_explicit_fetch = true
 
 [fields.space_afs_total]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.space_auto_adaptive_compression_footprint_data_reduction]
 cache_strategy = "cache"
 
 [fields.space_available]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.space_available_percent]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.space_block_storage_inactive_user_data]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.space_block_storage_inactive_user_data_percent]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.space_capacity_tier_footprint]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.space_capacity_tier_footprint_data_reduction]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.space_compaction_footprint_data_reduction]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.space_cross_volume_dedupe_metafiles_footprint]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.space_cross_volume_dedupe_metafiles_temporary_footprint]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.space_dedupe_metafiles_footprint]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.space_dedupe_metafiles_temporary_footprint]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.space_delayed_free_footprint]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.space_effective_total_footprint]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.space_expected_available]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.space_file_operation_metadata]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.space_filesystem_size]
@@ -1280,7 +1280,7 @@ cache_strategy = "cache"
 requires_explicit_fetch = true
 
 [fields.space_footprint]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.space_fractional_reserve]
@@ -1292,17 +1292,17 @@ cache_strategy = "cache"
 requires_explicit_fetch = true
 
 [fields.space_is_used_stale]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.space_large_size_enabled]
 cache_strategy = "cache"
 
 [fields.space_local_tier_footprint]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.space_logical_space_available]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.space_logical_space_enforcement]
@@ -1314,26 +1314,26 @@ cache_strategy = "cache"
 requires_explicit_fetch = true
 
 [fields.space_logical_space_used]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.space_logical_space_used_by_afs]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.space_logical_space_used_by_snapshots]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.space_logical_space_used_percent]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.space_max_size]
 cache_strategy = "cache"
 
 [fields.space_metadata]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.space_nearly_full_threshold_percent]
@@ -1341,7 +1341,7 @@ cache_strategy = "cache"
 requires_explicit_fetch = true
 
 [fields.space_over_provisioned]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.space_overwrite_reserve]
@@ -1349,34 +1349,34 @@ cache_strategy = "cache"
 requires_explicit_fetch = true
 
 [fields.space_overwrite_reserve_used]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.space_percent_used]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.space_performance_tier_footprint]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.space_physical_used]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.space_physical_used_percent]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.space_size]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.space_size_available_for_snapshots]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.space_snapmirror_destination_footprint]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.space_snapshot_autodelete_commitment]
@@ -1408,7 +1408,7 @@ cache_strategy = "cache"
 requires_explicit_fetch = true
 
 [fields.space_snapshot_reserve_available]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.space_snapshot_reserve_percent]
@@ -1416,531 +1416,531 @@ cache_strategy = "cache"
 requires_explicit_fetch = true
 
 [fields.space_snapshot_reserve_size]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.space_snapshot_space_used_percent]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.space_snapshot_used]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.space_snapshot_reserve_unusable]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.space_snapshot_spill]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.space_total_footprint]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.space_total_metadata]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.space_total_metadata_footprint]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.space_used]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.space_used_by_afs]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.space_user_data]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.space_volume_guarantee_footprint]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.state]
 cache_strategy = "cache"
 
 [fields.statistics_cifs_ops_raw_access_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_access_total_time]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_audit_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_audit_total_time]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_create_dir_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_create_dir_total_time]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_create_file_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_create_file_total_time]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_create_other_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_create_other_total_time]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_create_symlink_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_create_symlink_total_time]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_getattr_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_getattr_total_time]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_link_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_link_total_time]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_lock_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_lock_total_time]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_lookup_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_lookup_total_time]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_open_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_open_total_time]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_read_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_read_total_time]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_read_volume_protocol_latency_histogram_counts]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_read_volume_protocol_latency_histogram_labels]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_read_volume_protocol_size_histogram_counts]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_read_volume_protocol_size_histogram_labels]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_readdir_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_readdir_total_time]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_readlink_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_readlink_total_time]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_rename_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_rename_total_time]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_setattr_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_setattr_total_time]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_unlink_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_unlink_total_time]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_watch_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_watch_total_time]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_write_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_write_total_time]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_write_volume_protocol_latency_histogram_counts]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_write_volume_protocol_latency_histogram_labels]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_write_volume_protocol_size_histogram_counts]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cifs_ops_raw_write_volume_protocol_size_histogram_labels]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cloud_iops_raw_other]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cloud_iops_raw_read]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cloud_iops_raw_total]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cloud_iops_raw_write]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cloud_latency_raw_other]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cloud_latency_raw_read]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cloud_latency_raw_total]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cloud_latency_raw_write]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cloud_status]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_cloud_timestamp]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_flexcache_raw_cache_miss_blocks]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_flexcache_raw_client_requested_blocks]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_flexcache_raw_status]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_flexcache_raw_timestamp]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_iops_raw_other]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_iops_raw_read]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_iops_raw_total]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_iops_raw_write]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_latency_raw_other]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_latency_raw_read]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_latency_raw_total]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_latency_raw_write]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_access_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_access_total_time]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_audit_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_audit_total_time]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_create_dir_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_create_dir_total_time]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_create_file_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_create_file_total_time]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_create_other_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_create_other_total_time]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_create_symlink_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_create_symlink_total_time]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_getattr_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_getattr_total_time]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_link_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_link_total_time]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_lock_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_lock_total_time]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_lookup_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_lookup_total_time]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_open_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_open_total_time]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_read_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_read_total_time]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_read_volume_protocol_latency_histogram_counts]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_read_volume_protocol_latency_histogram_labels]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_read_volume_protocol_size_histogram_counts]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_read_volume_protocol_size_histogram_labels]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_readdir_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_readdir_total_time]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_readlink_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_readlink_total_time]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_rename_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_rename_total_time]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_setattr_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_setattr_total_time]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_unlink_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_unlink_total_time]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_watch_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_watch_total_time]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_write_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_write_total_time]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_write_volume_protocol_latency_histogram_counts]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_write_volume_protocol_latency_histogram_labels]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_write_volume_protocol_size_histogram_counts]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_nfs_ops_raw_write_volume_protocol_size_histogram_labels]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_status]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_throughput_raw_other]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_throughput_raw_read]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_throughput_raw_total]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_throughput_raw_write]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_timestamp]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.status]

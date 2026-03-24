@@ -119,63 +119,63 @@ cache_strategy = "cache"
 requires_explicit_fetch = true
 
 [fields.metric_duration]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_iops_other]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_iops_read]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_iops_total]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_iops_write]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_latency_other]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_latency_read]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_latency_total]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_latency_write]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_status]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_throughput_other]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_throughput_read]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_throughput_total]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_throughput_write]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_timestamp]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.movement_max_throughput]
@@ -267,86 +267,86 @@ cache_strategy = "cache"
 cache_strategy = "cache"
 
 [fields.space_efficiency_ratio]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.space_guarantee_requested]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.space_guarantee_reserved]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.space_physical_used]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.space_physical_used_by_snapshots]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.space_scsi_thin_provisioning_support_enabled]
 cache_strategy = "cache"
 
 [fields.space_size]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.space_used]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.statistics_iops_raw_other]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_iops_raw_read]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_iops_raw_total]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_iops_raw_write]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_latency_raw_other]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_latency_raw_read]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_latency_raw_total]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_latency_raw_write]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_status]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_throughput_raw_other]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_throughput_raw_read]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_throughput_raw_total]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_throughput_raw_write]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_timestamp]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.status_container_state]

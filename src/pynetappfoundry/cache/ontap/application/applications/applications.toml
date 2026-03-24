@@ -52,55 +52,55 @@ cache_strategy = "cache"
 cache_strategy = "cache"
 
 [fields.statistics_components]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.statistics_iops_per_tb]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.statistics_iops_total]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.statistics_latency_average]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.statistics_latency_raw]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.statistics_shared_storage_pool]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.statistics_snapshot_reserve]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.statistics_snapshot_used]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.statistics_space_available]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.statistics_space_logical_used]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.statistics_space_provisioned]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.statistics_space_reserved_unused]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.statistics_space_savings]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.statistics_space_used]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.statistics_space_used_excluding_reserves]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.statistics_space_used_percent]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.statistics_statistics_incomplete]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.template_name]
 cache_strategy = "cache"

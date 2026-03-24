@@ -14,10 +14,10 @@ requires_explicit_fetch = true
 cache_strategy = "cache"
 
 [fields.idle_duration]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.local_request_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.node_name]
 cache_strategy = "cache"
@@ -29,7 +29,7 @@ cache_strategy = "cache"
 cache_strategy = "cache"
 
 [fields.remote_request_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.server_ip]
 cache_strategy = "cache"

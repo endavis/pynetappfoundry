@@ -22,6 +22,7 @@ ONTAPSNAPSHOT_MAPPING = TypeMapping(
             cache_attr="compress_savings",
             api_path="compress_savings",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="create_time",
@@ -31,11 +32,13 @@ ONTAPSNAPSHOT_MAPPING = TypeMapping(
             cache_attr="dedup_savings",
             api_path="dedup_savings",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="delta_size_consumed",
             api_path="delta.size_consumed",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="delta_time_elapsed",
@@ -49,6 +52,7 @@ ONTAPSNAPSHOT_MAPPING = TypeMapping(
             cache_attr="logical_size",
             api_path="logical_size",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="name",
@@ -68,11 +72,13 @@ ONTAPSNAPSHOT_MAPPING = TypeMapping(
             api_path="reclaimable_space",
             default=0,
             requires_explicit_fetch=True,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="size",
             api_path="size",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="snaplock_expired",
@@ -111,6 +117,7 @@ ONTAPSNAPSHOT_MAPPING = TypeMapping(
             cache_attr="vbn0_savings",
             api_path="vbn0_savings",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="version_uuid",

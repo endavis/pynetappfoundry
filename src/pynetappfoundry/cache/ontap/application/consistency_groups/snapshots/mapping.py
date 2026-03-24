@@ -144,6 +144,7 @@ ONTAPCONSISTENCYGROUPSNAPSHOTRESPONSE_MAPPING = TypeMapping(
             cache_attr="reclaimable_space",
             api_path="reclaimable_space",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="restore_size",

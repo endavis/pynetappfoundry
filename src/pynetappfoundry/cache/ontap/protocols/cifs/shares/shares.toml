@@ -25,7 +25,7 @@ cache_strategy = "cache"
 cache_strategy = "cache"
 
 [fields.continuously_available]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.dir_umask]
 cache_strategy = "cache"

@@ -62,6 +62,7 @@ ONTAPCIFSSHARE_MAPPING = TypeMapping(
             cache_attr="continuously_available",
             api_path="continuously_available",
             default=False,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="dir_umask",

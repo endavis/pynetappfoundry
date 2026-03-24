@@ -22,7 +22,7 @@ cache_strategy = "cache"
 cache_strategy = "cache"
 
 [fields.transfer_state]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.volume_name]
 cache_strategy = "cache"

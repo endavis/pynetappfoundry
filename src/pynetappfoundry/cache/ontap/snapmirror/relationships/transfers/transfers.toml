@@ -4,13 +4,13 @@ schema = "snapmirror_transfer"
 class_name = "OntapSnapmirrorTransfer"
 
 [fields.bytes_transferred]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.checkpoint_size]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.end_time]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.error_info_code]
 cache_strategy = "cache"
@@ -19,13 +19,13 @@ cache_strategy = "cache"
 cache_strategy = "cache"
 
 [fields.files]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.last_updated_time]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.network_compression_ratio]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.on_demand_attrs]
 cache_strategy = "cache"
@@ -73,7 +73,7 @@ cache_strategy = "cache"
 cache_strategy = "cache"
 
 [fields.state]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.storage_efficiency_enabled]
 cache_strategy = "cache"
@@ -82,7 +82,7 @@ cache_strategy = "cache"
 cache_strategy = "cache"
 
 [fields.total_duration]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.uuid]
 cache_strategy = "cache"

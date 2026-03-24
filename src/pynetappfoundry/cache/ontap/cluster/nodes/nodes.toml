@@ -151,23 +151,23 @@ cache_strategy = "cache"
 cache_strategy = "cache"
 
 [fields.metric_duration]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_processor_utilization]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_status]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_timestamp]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metric_uuid]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.metrocluster_custom_vlan_capable]
@@ -312,19 +312,19 @@ cache_strategy = "cache"
 cache_strategy = "cache"
 
 [fields.statistics_processor_utilization_base]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_processor_utilization_raw]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_status]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.statistics_timestamp]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.storage_configuration]
@@ -343,7 +343,7 @@ cache_strategy = "cache"
 cache_strategy = "cache"
 
 [fields.uptime]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.uuid]
 cache_strategy = "cache"

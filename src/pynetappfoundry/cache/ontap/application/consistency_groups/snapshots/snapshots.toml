@@ -40,7 +40,7 @@ cache_strategy = "cache"
 cache_strategy = "cache"
 
 [fields.reclaimable_space]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.restore_size]
 cache_strategy = "cache"

@@ -24,11 +24,13 @@ ONTAPQUOTARULE_MAPPING = TypeMapping(
             cache_attr="files_hard_limit",
             api_path="files.hard_limit",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="files_soft_limit",
             api_path="files.soft_limit",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="group_id",
@@ -51,11 +53,13 @@ ONTAPQUOTARULE_MAPPING = TypeMapping(
             cache_attr="space_hard_limit",
             api_path="space.hard_limit",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="space_soft_limit",
             api_path="space.soft_limit",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="svm_name",

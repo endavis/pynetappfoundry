@@ -59,6 +59,7 @@ ONTAPCIFSCONNECTION_MAPPING = TypeMapping(
             api_path="sessions",
             transform=_transform_sessions,
             default=[],
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="svm_name",

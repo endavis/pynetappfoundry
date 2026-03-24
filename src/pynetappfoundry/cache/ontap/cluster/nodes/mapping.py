@@ -308,27 +308,32 @@ ONTAPNODERESPONSE_MAPPING = TypeMapping(
             cache_attr="metric_duration",
             api_path="metric.duration",
             requires_explicit_fetch=True,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="metric_processor_utilization",
             api_path="metric.processor_utilization",
             default=0,
             requires_explicit_fetch=True,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="metric_status",
             api_path="metric.status",
             requires_explicit_fetch=True,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="metric_timestamp",
             api_path="metric.timestamp",
             requires_explicit_fetch=True,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="metric_uuid",
             api_path="metric.uuid",
             requires_explicit_fetch=True,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="metrocluster_custom_vlan_capable",
@@ -542,22 +547,26 @@ ONTAPNODERESPONSE_MAPPING = TypeMapping(
             api_path="statistics.processor_utilization_base",
             default=0,
             requires_explicit_fetch=True,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="statistics_processor_utilization_raw",
             api_path="statistics.processor_utilization_raw",
             default=0,
             requires_explicit_fetch=True,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="statistics_status",
             api_path="statistics.status",
             requires_explicit_fetch=True,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="statistics_timestamp",
             api_path="statistics.timestamp",
             requires_explicit_fetch=True,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="storage_configuration",
@@ -583,6 +592,7 @@ ONTAPNODERESPONSE_MAPPING = TypeMapping(
             cache_attr="uptime",
             api_path="uptime",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="uuid",

@@ -55,22 +55,22 @@ cache_strategy = "cache"
 cache_strategy = "cache"
 
 [fields.statistics_receive_raw_discards]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.statistics_receive_raw_errors]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.statistics_receive_raw_packets]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.statistics_transmit_raw_discards]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.statistics_transmit_raw_errors]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.statistics_transmit_raw_packets]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.switch_name]
 cache_strategy = "cache"

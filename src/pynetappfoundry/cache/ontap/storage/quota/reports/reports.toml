@@ -4,19 +4,19 @@ schema = "quota_report"
 class_name = "OntapQuotaReport"
 
 [fields.files_hard_limit]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.files_soft_limit]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.files_used_hard_limit_percent]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.files_used_soft_limit_percent]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.files_used_total]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.group_id]
 cache_strategy = "cache"
@@ -34,19 +34,19 @@ cache_strategy = "cache"
 cache_strategy = "cache"
 
 [fields.space_hard_limit]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.space_soft_limit]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.space_used_hard_limit_percent]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.space_used_soft_limit_percent]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.space_used_total]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.svm_name]
 cache_strategy = "cache"

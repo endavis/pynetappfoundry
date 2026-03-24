@@ -27,6 +27,7 @@ ONTAPCLUSTERSPACE_MAPPING = TypeMapping(
             cache_attr="block_storage_available",
             api_path="block_storage.available",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="block_storage_inactive_data",
@@ -43,16 +44,19 @@ ONTAPCLUSTERSPACE_MAPPING = TypeMapping(
             cache_attr="block_storage_physical_used",
             api_path="block_storage.physical_used",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="block_storage_size",
             api_path="block_storage.size",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="block_storage_used",
             api_path="block_storage.used",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="cloud_storage_used",
@@ -63,46 +67,55 @@ ONTAPCLUSTERSPACE_MAPPING = TypeMapping(
             cache_attr="efficiency_logical_used",
             api_path="efficiency.logical_used",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="efficiency_ratio",
             api_path="efficiency.ratio",
             default=0.0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="efficiency_savings",
             api_path="efficiency.savings",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="efficiency_without_snapshots_logical_used",
             api_path="efficiency_without_snapshots.logical_used",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="efficiency_without_snapshots_ratio",
             api_path="efficiency_without_snapshots.ratio",
             default=0.0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="efficiency_without_snapshots_savings",
             api_path="efficiency_without_snapshots.savings",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="efficiency_without_snapshots_flexclones_logical_used",
             api_path="efficiency_without_snapshots_flexclones.logical_used",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="efficiency_without_snapshots_flexclones_ratio",
             api_path="efficiency_without_snapshots_flexclones.ratio",
             default=0.0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="efficiency_without_snapshots_flexclones_savings",
             api_path="efficiency_without_snapshots_flexclones.savings",
             default=0,
+            cache_strategy="realtime",
         ),
     ),
 )

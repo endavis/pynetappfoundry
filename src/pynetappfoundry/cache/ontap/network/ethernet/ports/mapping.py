@@ -105,29 +105,35 @@ ONTAPPORT_MAPPING = TypeMapping(
         FieldMapping(
             cache_attr="metric_duration",
             api_path="metric.duration",
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="metric_status",
             api_path="metric.status",
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="metric_throughput_read",
             api_path="metric.throughput.read",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="metric_throughput_total",
             api_path="metric.throughput.total",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="metric_throughput_write",
             api_path="metric.throughput.write",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="metric_timestamp",
             api_path="metric.timestamp",
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="mtu",
@@ -179,63 +185,76 @@ ONTAPPORT_MAPPING = TypeMapping(
             cache_attr="statistics_device_link_down_count_raw",
             api_path="statistics.device.link_down_count_raw",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="statistics_device_receive_raw_discards",
             api_path="statistics.device.receive_raw.discards",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="statistics_device_receive_raw_errors",
             api_path="statistics.device.receive_raw.errors",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="statistics_device_receive_raw_packets",
             api_path="statistics.device.receive_raw.packets",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="statistics_device_timestamp",
             api_path="statistics.device.timestamp",
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="statistics_device_transmit_raw_discards",
             api_path="statistics.device.transmit_raw.discards",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="statistics_device_transmit_raw_errors",
             api_path="statistics.device.transmit_raw.errors",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="statistics_device_transmit_raw_packets",
             api_path="statistics.device.transmit_raw.packets",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="statistics_status",
             api_path="statistics.status",
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="statistics_throughput_raw_read",
             api_path="statistics.throughput_raw.read",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="statistics_throughput_raw_total",
             api_path="statistics.throughput_raw.total",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="statistics_throughput_raw_write",
             api_path="statistics.throughput_raw.write",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="statistics_timestamp",
             api_path="statistics.timestamp",
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="type_",

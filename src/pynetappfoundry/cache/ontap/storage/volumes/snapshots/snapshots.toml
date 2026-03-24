@@ -7,16 +7,16 @@ class_name = "OntapSnapshot"
 cache_strategy = "cache"
 
 [fields.compress_savings]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.create_time]
 cache_strategy = "cache"
 
 [fields.dedup_savings]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.delta_size_consumed]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.delta_time_elapsed]
 cache_strategy = "cache"
@@ -25,7 +25,7 @@ cache_strategy = "cache"
 cache_strategy = "cache"
 
 [fields.logical_size]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.name]
 cache_strategy = "cache"
@@ -37,11 +37,11 @@ cache_strategy = "cache"
 cache_strategy = "cache"
 
 [fields.reclaimable_space]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.size]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.snaplock_expired]
 cache_strategy = "cache"
@@ -68,7 +68,7 @@ cache_strategy = "cache"
 cache_strategy = "cache"
 
 [fields.vbn0_savings]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.version_uuid]
 cache_strategy = "cache"

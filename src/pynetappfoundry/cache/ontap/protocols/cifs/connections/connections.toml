@@ -25,7 +25,7 @@ cache_strategy = "cache"
 cache_strategy = "cache"
 
 [fields.sessions]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.svm_name]
 cache_strategy = "cache"
