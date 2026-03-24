@@ -40,22 +40,22 @@ cache_strategy = "cache"
 cache_strategy = "cache"
 
 [fields.metric_duration]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.metric_status]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.metric_throughput_read]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.metric_throughput_total]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.metric_throughput_write]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.metric_timestamp]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.mtu]
 cache_strategy = "cache"
@@ -88,43 +88,43 @@ cache_strategy = "cache"
 cache_strategy = "cache"
 
 [fields.statistics_device_link_down_count_raw]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.statistics_device_receive_raw_discards]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.statistics_device_receive_raw_errors]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.statistics_device_receive_raw_packets]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.statistics_device_timestamp]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.statistics_device_transmit_raw_discards]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.statistics_device_transmit_raw_errors]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.statistics_device_transmit_raw_packets]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.statistics_status]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.statistics_throughput_raw_read]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.statistics_throughput_raw_total]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.statistics_throughput_raw_write]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.statistics_timestamp]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.type_]
 cache_strategy = "cache"

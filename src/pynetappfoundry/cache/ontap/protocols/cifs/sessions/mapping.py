@@ -34,11 +34,13 @@ ONTAPCIFSSESSION_MAPPING = TypeMapping(
         FieldMapping(
             cache_attr="connected_duration",
             api_path="connected_duration",
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="connection_count",
             api_path="connection_count",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="connection_id",
@@ -57,6 +59,7 @@ ONTAPCIFSSESSION_MAPPING = TypeMapping(
         FieldMapping(
             cache_attr="idle_duration",
             api_path="idle_duration",
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="large_mtu",
@@ -79,16 +82,19 @@ ONTAPCIFSSESSION_MAPPING = TypeMapping(
             cache_attr="open_files",
             api_path="open_files",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="open_other",
             api_path="open_other",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="open_shares",
             api_path="open_shares",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="protocol",

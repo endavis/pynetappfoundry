@@ -55,6 +55,7 @@ ONTAPSVMMIGRATIONVOLUME_MAPPING = TypeMapping(
         FieldMapping(
             cache_attr="transfer_state",
             api_path="transfer_state",
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="volume_name",

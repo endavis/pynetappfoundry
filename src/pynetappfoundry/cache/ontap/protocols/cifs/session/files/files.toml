@@ -4,13 +4,13 @@ schema = "cifs_open_file"
 class_name = "OntapCifsOpenFile"
 
 [fields.connection_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.connection_identifier]
 cache_strategy = "cache"
 
 [fields.continuously_available]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.identifier]
 cache_strategy = "cache"
@@ -28,7 +28,7 @@ cache_strategy = "cache"
 cache_strategy = "cache"
 
 [fields.range_locks_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.session_identifier]
 cache_strategy = "cache"

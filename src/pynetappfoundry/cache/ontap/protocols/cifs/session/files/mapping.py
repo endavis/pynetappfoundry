@@ -16,6 +16,7 @@ ONTAPCIFSOPENFILE_MAPPING = TypeMapping(
             cache_attr="connection_count",
             api_path="connection.count",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="connection_identifier",
@@ -25,6 +26,7 @@ ONTAPCIFSOPENFILE_MAPPING = TypeMapping(
         FieldMapping(
             cache_attr="continuously_available",
             api_path="continuously_available",
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="identifier",
@@ -51,6 +53,7 @@ ONTAPCIFSOPENFILE_MAPPING = TypeMapping(
             cache_attr="range_locks_count",
             api_path="range_locks_count",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="session_identifier",

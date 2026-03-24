@@ -41,15 +41,18 @@ ONTAPSNAPMIRRORTRANSFER_MAPPING = TypeMapping(
             cache_attr="bytes_transferred",
             api_path="bytes_transferred",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="checkpoint_size",
             api_path="checkpoint_size",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="end_time",
             api_path="end_time",
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="error_info_code",
@@ -65,14 +68,17 @@ ONTAPSNAPMIRRORTRANSFER_MAPPING = TypeMapping(
             api_path="files",
             transform=_transform_files,
             default=[],
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="last_updated_time",
             api_path="last_updated_time",
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="network_compression_ratio",
             api_path="network_compression_ratio",
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="on_demand_attrs",
@@ -141,6 +147,7 @@ ONTAPSNAPMIRRORTRANSFER_MAPPING = TypeMapping(
         FieldMapping(
             cache_attr="state",
             api_path="state",
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="storage_efficiency_enabled",
@@ -155,6 +162,7 @@ ONTAPSNAPMIRRORTRANSFER_MAPPING = TypeMapping(
         FieldMapping(
             cache_attr="total_duration",
             api_path="total_duration",
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="uuid",

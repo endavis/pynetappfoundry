@@ -10,10 +10,10 @@ cache_strategy = "cache"
 cache_strategy = "cache"
 
 [fields.connected_duration]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.connection_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.connection_id]
 cache_strategy = "cache"
@@ -25,7 +25,7 @@ cache_strategy = "cache"
 cache_strategy = "cache"
 
 [fields.idle_duration]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.large_mtu]
 cache_strategy = "cache"
@@ -40,13 +40,13 @@ cache_strategy = "cache"
 cache_strategy = "cache"
 
 [fields.open_files]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.open_other]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.open_shares]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.protocol]
 cache_strategy = "cache"

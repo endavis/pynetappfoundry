@@ -214,14 +214,17 @@ ONTAPSNAPMIRRORRELATIONSHIP_MAPPING = TypeMapping(
         FieldMapping(
             cache_attr="lag_time",
             api_path="lag_time",
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="last_transfer_network_compression_ratio",
             api_path="last_transfer_network_compression_ratio",
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="last_transfer_type",
             api_path="last_transfer_type",
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="master_bias_activated_site",
@@ -329,22 +332,27 @@ ONTAPSNAPMIRRORRELATIONSHIP_MAPPING = TypeMapping(
             cache_attr="transfer_bytes_transferred",
             api_path="transfer.bytes_transferred",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="transfer_end_time",
             api_path="transfer.end_time",
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="transfer_last_updated_time",
             api_path="transfer.last_updated_time",
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="transfer_state",
             api_path="transfer.state",
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="transfer_total_duration",
             api_path="transfer.total_duration",
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="transfer_type",

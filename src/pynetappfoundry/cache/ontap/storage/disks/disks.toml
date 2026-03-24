@@ -109,7 +109,7 @@ cache_strategy = "cache"
 cache_strategy = "cache"
 
 [fields.rated_life_used_percent]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.right_size_sector_count]
 cache_strategy = "cache"
@@ -136,19 +136,19 @@ cache_strategy = "cache"
 cache_strategy = "cache"
 
 [fields.stats_average_latency]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.stats_iops_total]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.stats_path_error_count]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.stats_power_on_hours]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.stats_throughput]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.storage_pool_name]
 cache_strategy = "cache"

@@ -4,7 +4,7 @@ schema = "cluster_space"
 class_name = "OntapClusterSpace"
 
 [fields.block_storage_available]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.block_storage_inactive_data]
 cache_strategy = "cache"
@@ -13,40 +13,40 @@ cache_strategy = "cache"
 cache_strategy = "cache"
 
 [fields.block_storage_physical_used]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.block_storage_size]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.block_storage_used]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.cloud_storage_used]
 cache_strategy = "cache"
 
 [fields.efficiency_logical_used]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.efficiency_ratio]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.efficiency_savings]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.efficiency_without_snapshots_logical_used]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.efficiency_without_snapshots_ratio]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.efficiency_without_snapshots_savings]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.efficiency_without_snapshots_flexclones_logical_used]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.efficiency_without_snapshots_flexclones_ratio]
-cache_strategy = "cache"
+cache_strategy = "realtime"
 
 [fields.efficiency_without_snapshots_flexclones_savings]
-cache_strategy = "cache"
+cache_strategy = "realtime"

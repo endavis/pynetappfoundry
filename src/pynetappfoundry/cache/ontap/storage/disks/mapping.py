@@ -201,6 +201,7 @@ ONTAPDISK_MAPPING = TypeMapping(
             cache_attr="rated_life_used_percent",
             api_path="rated_life_used_percent",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="right_size_sector_count",
@@ -243,26 +244,31 @@ ONTAPDISK_MAPPING = TypeMapping(
             cache_attr="stats_average_latency",
             api_path="stats.average_latency",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="stats_iops_total",
             api_path="stats.iops_total",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="stats_path_error_count",
             api_path="stats.path_error_count",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="stats_power_on_hours",
             api_path="stats.power_on_hours",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="stats_throughput",
             api_path="stats.throughput",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="storage_pool_name",

@@ -90,31 +90,37 @@ ONTAPSWITCHPORT_MAPPING = TypeMapping(
             cache_attr="statistics_receive_raw_discards",
             api_path="statistics.receive_raw.discards",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="statistics_receive_raw_errors",
             api_path="statistics.receive_raw.errors",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="statistics_receive_raw_packets",
             api_path="statistics.receive_raw.packets",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="statistics_transmit_raw_discards",
             api_path="statistics.transmit_raw.discards",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="statistics_transmit_raw_errors",
             api_path="statistics.transmit_raw.errors",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="statistics_transmit_raw_packets",
             api_path="statistics.transmit_raw.packets",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="switch_name",

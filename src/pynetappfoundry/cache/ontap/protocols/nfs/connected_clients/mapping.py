@@ -29,11 +29,13 @@ ONTAPNFSCLIENTS_MAPPING = TypeMapping(
         FieldMapping(
             cache_attr="idle_duration",
             api_path="idle_duration",
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="local_request_count",
             api_path="local_request_count",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="node_name",
@@ -51,6 +53,7 @@ ONTAPNFSCLIENTS_MAPPING = TypeMapping(
             cache_attr="remote_request_count",
             api_path="remote_request_count",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="server_ip",

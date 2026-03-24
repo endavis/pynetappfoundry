@@ -27,26 +27,31 @@ ONTAPQUOTAREPORT_MAPPING = TypeMapping(
             cache_attr="files_hard_limit",
             api_path="files.hard_limit",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="files_soft_limit",
             api_path="files.soft_limit",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="files_used_hard_limit_percent",
             api_path="files.used.hard_limit_percent",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="files_used_soft_limit_percent",
             api_path="files.used.soft_limit_percent",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="files_used_total",
             api_path="files.used.total",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="group_id",
@@ -74,26 +79,31 @@ ONTAPQUOTAREPORT_MAPPING = TypeMapping(
             cache_attr="space_hard_limit",
             api_path="space.hard_limit",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="space_soft_limit",
             api_path="space.soft_limit",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="space_used_hard_limit_percent",
             api_path="space.used.hard_limit_percent",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="space_used_soft_limit_percent",
             api_path="space.used.soft_limit_percent",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="space_used_total",
             api_path="space.used.total",
             default=0,
+            cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="svm_name",
