@@ -6,12 +6,18 @@ import json
 import sqlite3
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
 from pydantic import BaseModel
 
 from pynetappfoundry.cache import CachedClusterMetadata
-from pynetappfoundry.cache.db import ClusterMetadataDB, _model_to_row, _validate_cluster_name
+from pynetappfoundry.cache.db import (
+    ClusterMetadataDB,
+    _model_to_row,
+    _realtime_attrs,
+    _validate_cluster_name,
+)
 from pynetappfoundry.cache.ontap.cloud.metadata.model import CloudMetadata
 from pynetappfoundry.cache.ontap.cluster.model import ClusterInfo
 from pynetappfoundry.cache.ontap.cluster.nodes.model import OntapNodeResponse
@@ -685,3 +691,127 @@ class TestClusterMetadataDBInitialization:
         # Attempting operations after close should fail
         with pytest.raises(sqlite3.ProgrammingError):
             db.list_clusters()
+
+
+class TestModelToRowExclude:
+    """Tests for _model_to_row exclude parameter."""
+
+    def test_excludes_fields_in_exclude_set(self) -> None:
+        """_model_to_row skips fields listed in the exclude frozenset."""
+
+        class _Sample(BaseModel):
+            name: str = ""
+            value: int = 0
+            metric: float = 0.0
+
+        instance = _Sample(name="test", value=42, metric=3.14)
+        row = _model_to_row(instance, _Sample, frozenset({"metric"}))
+
+        assert "name" in row
+        assert "value" in row
+        assert "metric" not in row
+
+    def test_includes_all_fields_when_exclude_empty(self) -> None:
+        """_model_to_row includes all fields when exclude is empty (backward compat)."""
+
+        class _Sample2(BaseModel):
+            name: str = ""
+            value: int = 0
+
+        instance = _Sample2(name="test", value=42)
+        row = _model_to_row(instance, _Sample2, frozenset())
+
+        assert "name" in row
+        assert "value" in row
+        assert row["name"] == "test"
+        assert row["value"] == 42
+
+    def test_includes_all_fields_when_exclude_not_provided(self) -> None:
+        """_model_to_row includes all fields when exclude defaults."""
+
+        class _Sample3(BaseModel):
+            name: str = ""
+            count: int = 0
+
+        instance = _Sample3(name="hello", count=7)
+        row = _model_to_row(instance, _Sample3)
+
+        assert "name" in row
+        assert "count" in row
+
+    def test_excludes_multiple_fields(self) -> None:
+        """_model_to_row can exclude multiple fields at once."""
+
+        class _Multi(BaseModel):
+            keep: str = ""
+            drop_a: int = 0
+            drop_b: float = 0.0
+
+        instance = _Multi(keep="yes", drop_a=1, drop_b=2.0)
+        row = _model_to_row(instance, _Multi, frozenset({"drop_a", "drop_b"}))
+
+        assert "keep" in row
+        assert "drop_a" not in row
+        assert "drop_b" not in row
+
+
+class TestRealtimeAttrs:
+    """Tests for _realtime_attrs helper."""
+
+    def test_returns_realtime_cache_attrs_for_mapped_model(self) -> None:
+        """_realtime_attrs returns correct field names for models with realtime mappings."""
+        # Import the mapping module to trigger register_mapping() calls
+        from pynetappfoundry.cache.ontap.network.fc.ports.model import OntapFcPort
+
+        # Clear lru_cache to ensure fresh lookup
+        _realtime_attrs.cache_clear()
+
+        result = _realtime_attrs(OntapFcPort)
+
+        assert isinstance(result, frozenset)
+        assert len(result) > 0
+        # These are known realtime fields from ports.toml
+        assert "metric_duration" in result
+        assert "metric_iops_total" in result
+        assert "metric_iops_read" in result
+
+    def test_returns_empty_frozenset_for_unmapped_model(self) -> None:
+        """_realtime_attrs returns empty frozenset for models without mappings."""
+        _realtime_attrs.cache_clear()
+
+        # CachedClusterMetadata is a container model with no TypeMapping
+        result = _realtime_attrs(CachedClusterMetadata)
+
+        assert isinstance(result, frozenset)
+        assert len(result) == 0
+
+    def test_returns_empty_frozenset_for_model_without_realtime_fields(self) -> None:
+        """_realtime_attrs returns empty frozenset when mapping has no realtime fields."""
+        _realtime_attrs.cache_clear()
+
+        # Create a mock mapping with no realtime fields
+        mock_mapping = MagicMock()
+        mock_mapping.realtime_fields.return_value = ()
+
+        class _NoRealtime(BaseModel):
+            name: str = ""
+
+        with patch("pynetappfoundry.cache._registry.model_registry") as mock_registry:
+            mock_registry.get_mapping.return_value = mock_mapping
+            result = _realtime_attrs(_NoRealtime)
+
+        assert isinstance(result, frozenset)
+        assert len(result) == 0
+
+    def test_caches_result_per_model_class(self) -> None:
+        """_realtime_attrs caches results (lru_cache)."""
+        _realtime_attrs.cache_clear()
+
+        # First call populates cache
+        result1 = _realtime_attrs(CachedClusterMetadata)
+        result2 = _realtime_attrs(CachedClusterMetadata)
+
+        assert result1 is result2
+        # Verify cache was used
+        info = _realtime_attrs.cache_info()
+        assert info.hits >= 1
