@@ -9,6 +9,7 @@ The public API (``get``/``set``/``clear``/etc.) is preserved so callers
 
 from __future__ import annotations
 
+import functools
 import json
 import re
 import sqlite3
@@ -61,20 +62,43 @@ def _validate_cluster_name(cluster_name: str) -> None:
 # ---------------------------------------------------------------------------
 
 
+@functools.cache
+def _realtime_attrs(model_class: type[BaseModel]) -> frozenset[str]:
+    """Return cache_attr names of realtime fields for a model class.
+
+    Uses deferred import of ``model_registry`` to avoid circular imports.
+    The ``lru_cache`` ensures each model class is resolved only once.
+    """
+    from pynetappfoundry.cache._registry import model_registry
+
+    mapping = model_registry.get_mapping(model_class.__name__)
+    if mapping is None:
+        return frozenset()
+    return frozenset(f.cache_attr for f in mapping.realtime_fields())
+
+
 def _model_to_row(
     model_instance: BaseModel,
     model_class: type[BaseModel],
+    exclude: frozenset[str] = frozenset(),
 ) -> dict[str, Any]:
     """Convert a Pydantic model instance to a dict suitable for SQL INSERT.
 
     Scalar fields are passed through.  ``list``/``dict``/sub-model fields
     are serialised to JSON strings.  Any extra fields (from ``extra="allow"``)
     are collected into the ``_extra_json`` column.
+
+    Args:
+        model_instance: The Pydantic model to convert.
+        model_class: The model's class (for field introspection).
+        exclude: Field names to skip (e.g. realtime fields).
     """
     row: dict[str, Any] = {}
     known_fields = set(model_class.model_fields)
 
     for field_name, field_info in model_class.model_fields.items():
+        if field_name in exclude:
+            continue
         value = getattr(model_instance, field_name)
         if _is_json_column(field_info.annotation):
             # Serialize list/dict/sub-model to JSON
@@ -341,17 +365,18 @@ class ClusterMetadataDB(SQLiteDB):
         """Walk TABLE_REGISTRY and insert model data into per-model tables."""
         for path, spec in self._registry.items():
             data = _get_by_path(metadata, path)
+            rt = _realtime_attrs(spec.model_class)
 
             if spec.is_list:
                 if not data:
                     continue
-                rows = [_model_to_row(item, spec.model_class) for item in data]
+                rows = [_model_to_row(item, spec.model_class, rt) for item in data]
                 for row in rows:
                     row["cluster_name"] = cluster_name
                 self._bulk_insert(spec.table_name, rows)
             else:
                 # Singleton
-                row = _model_to_row(data, spec.model_class)
+                row = _model_to_row(data, spec.model_class, rt)
                 row["cluster_name"] = cluster_name
                 self._bulk_insert(spec.table_name, [row])
 
