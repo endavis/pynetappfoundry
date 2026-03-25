@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 from pathlib import Path
 
@@ -11,6 +12,7 @@ from rich.panel import Panel
 from rich.tree import Tree
 
 from pynetappfoundry.cache import ClusterMetadataDB
+from pynetappfoundry.cache.db import all_realtime_attrs
 from pynetappfoundry.cli.utils import (
     format_value_markup,
     print_error,
@@ -21,6 +23,32 @@ from pynetappfoundry.core.config import Config
 
 logger = logging.getLogger(__name__)
 console = Console()
+
+
+def _strip_realtime_fields(data: dict[str, object], rt_attrs: frozenset[str]) -> dict[str, object]:
+    """Remove realtime fields from a nested model dump dict.
+
+    Args:
+        data: Dictionary from ``model_dump()``.
+        rt_attrs: Set of realtime attribute names to strip.
+
+    Returns:
+        New dictionary with realtime keys removed at every nesting level.
+    """
+    result: dict[str, object] = {}
+    for key, value in data.items():
+        if key in rt_attrs:
+            continue
+        if isinstance(value, dict):
+            result[key] = _strip_realtime_fields(value, rt_attrs)
+        elif isinstance(value, list):
+            result[key] = [
+                _strip_realtime_fields(item, rt_attrs) if isinstance(item, dict) else item
+                for item in value
+            ]
+        else:
+            result[key] = value
+    return result
 
 
 def _format_value(value: object) -> str:
@@ -156,12 +184,15 @@ def show(ctx: click.Context, cluster: str | None, section: str | None, output_js
         console.print("Use 'nf cache refresh {cluster}' to populate the cache.")
         ctx.exit(1)
 
+    rt = all_realtime_attrs()
+
     if output_json:
-        console.print(metadata.model_dump_json(indent=2))
+        data = _strip_realtime_fields(metadata.model_dump(mode="json"), rt)
+        console.print_json(json.dumps(data, indent=2))
         return
 
     # Build display tree
-    data = metadata.model_dump()
+    data = _strip_realtime_fields(metadata.model_dump(), rt)
 
     if section:
         section_lower = section.lower()

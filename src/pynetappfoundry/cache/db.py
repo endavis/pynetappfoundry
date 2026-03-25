@@ -63,11 +63,11 @@ def _validate_cluster_name(cluster_name: str) -> None:
 
 
 @functools.cache
-def _realtime_attrs(model_class: type[BaseModel]) -> frozenset[str]:
+def realtime_attrs(model_class: type[BaseModel]) -> frozenset[str]:
     """Return cache_attr names of realtime fields for a model class.
 
     Uses deferred import of ``model_registry`` to avoid circular imports.
-    The ``lru_cache`` ensures each model class is resolved only once.
+    The ``functools.cache`` ensures each model class is resolved only once.
     """
     from pynetappfoundry.cache._registry import model_registry
 
@@ -75,6 +75,17 @@ def _realtime_attrs(model_class: type[BaseModel]) -> frozenset[str]:
     if mapping is None:
         return frozenset()
     return frozenset(f.cache_attr for f in mapping.realtime_fields())
+
+
+@functools.cache
+def all_realtime_attrs() -> frozenset[str]:
+    """Return all realtime cache_attr names across all registered models."""
+    from pynetappfoundry.cache._registry import model_registry
+
+    attrs: set[str] = set()
+    for mapping in model_registry.mappings.values():
+        attrs.update(f.cache_attr for f in mapping.realtime_fields())
+    return frozenset(attrs)
 
 
 def _model_to_row(
@@ -365,7 +376,7 @@ class ClusterMetadataDB(SQLiteDB):
         """Walk TABLE_REGISTRY and insert model data into per-model tables."""
         for path, spec in self._registry.items():
             data = _get_by_path(metadata, path)
-            rt = _realtime_attrs(spec.model_class)
+            rt = realtime_attrs(spec.model_class)
 
             if spec.is_list:
                 if not data:

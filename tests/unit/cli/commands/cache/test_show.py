@@ -10,7 +10,9 @@ import pytest
 from click.testing import CliRunner
 
 from pynetappfoundry.cache import CachedClusterMetadata
+from pynetappfoundry.cache.db import all_realtime_attrs
 from pynetappfoundry.cache.ontap.cloud.metadata.model import CloudMetadata
+from pynetappfoundry.cli.commands.cache.show import _strip_realtime_fields
 from pynetappfoundry.cli.main import nf
 
 
@@ -222,3 +224,98 @@ base_api_path = "/api"
         assert "Invalid cluster name" in result.output
         # Should NOT suggest cache query for names without dots/brackets
         assert "nf cache query" not in result.output
+
+
+class TestStripRealtimeFields:
+    """Tests for _strip_realtime_fields helper."""
+
+    def test_removes_known_realtime_keys(self) -> None:
+        """Realtime keys are stripped from a flat dict."""
+        rt = frozenset({"metric_a", "metric_b"})
+        data: dict[str, object] = {"name": "vol1", "metric_a": 100, "metric_b": 200, "size": 500}
+        result = _strip_realtime_fields(data, rt)
+
+        assert result == {"name": "vol1", "size": 500}
+
+    def test_preserves_non_realtime_keys(self) -> None:
+        """Non-realtime keys are preserved unchanged."""
+        rt = frozenset({"metric_a"})
+        data: dict[str, object] = {"name": "vol1", "size": 500}
+        result = _strip_realtime_fields(data, rt)
+
+        assert result == {"name": "vol1", "size": 500}
+
+    def test_handles_nested_dicts(self) -> None:
+        """Realtime keys are stripped recursively from nested dicts."""
+        rt = frozenset({"metric_a"})
+        data: dict[str, object] = {
+            "name": "cluster1",
+            "storage": {"name": "aggr1", "metric_a": 42, "capacity": 1024},
+        }
+        result = _strip_realtime_fields(data, rt)
+
+        assert result == {
+            "name": "cluster1",
+            "storage": {"name": "aggr1", "capacity": 1024},
+        }
+
+    def test_handles_lists_of_dicts(self) -> None:
+        """Realtime keys are stripped from dicts inside lists."""
+        rt = frozenset({"metric_a"})
+        data: dict[str, object] = {
+            "volumes": [
+                {"name": "vol1", "metric_a": 10},
+                {"name": "vol2", "metric_a": 20},
+            ],
+        }
+        result = _strip_realtime_fields(data, rt)
+
+        assert result == {
+            "volumes": [
+                {"name": "vol1"},
+                {"name": "vol2"},
+            ],
+        }
+
+    def test_handles_lists_of_scalars(self) -> None:
+        """Scalar lists are preserved unchanged."""
+        rt = frozenset({"metric_a"})
+        data: dict[str, object] = {"tags": ["a", "b", "c"]}
+        result = _strip_realtime_fields(data, rt)
+
+        assert result == {"tags": ["a", "b", "c"]}
+
+    def test_empty_rt_attrs_returns_same_structure(self) -> None:
+        """With no realtime attrs, the dict is returned unchanged."""
+        rt: frozenset[str] = frozenset()
+        data: dict[str, object] = {"name": "vol1", "size": 500}
+        result = _strip_realtime_fields(data, rt)
+
+        assert result == {"name": "vol1", "size": 500}
+
+    def test_empty_dict_returns_empty(self) -> None:
+        """An empty dict returns an empty dict."""
+        rt = frozenset({"metric_a"})
+        result = _strip_realtime_fields({}, rt)
+
+        assert result == {}
+
+
+class TestAllRealtimeAttrs:
+    """Tests for all_realtime_attrs function."""
+
+    def test_returns_non_empty_frozenset(self) -> None:
+        """all_realtime_attrs returns a non-empty frozenset of realtime field names."""
+        all_realtime_attrs.cache_clear()
+        result = all_realtime_attrs()
+
+        assert isinstance(result, frozenset)
+        assert len(result) > 0
+
+    def test_contains_known_realtime_field(self) -> None:
+        """all_realtime_attrs includes known realtime cache_attr names."""
+        all_realtime_attrs.cache_clear()
+        result = all_realtime_attrs()
+
+        # metric_duration is a realtime field on FC ports (and likely others)
+        assert "metric_duration" in result

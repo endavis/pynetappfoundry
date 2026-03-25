@@ -15,8 +15,8 @@ from pynetappfoundry.cache import CachedClusterMetadata
 from pynetappfoundry.cache.db import (
     ClusterMetadataDB,
     _model_to_row,
-    _realtime_attrs,
     _validate_cluster_name,
+    realtime_attrs,
 )
 from pynetappfoundry.cache.ontap.cloud.metadata.model import CloudMetadata
 from pynetappfoundry.cache.ontap.cluster.model import ClusterInfo
@@ -756,17 +756,17 @@ class TestModelToRowExclude:
 
 
 class TestRealtimeAttrs:
-    """Tests for _realtime_attrs helper."""
+    """Tests for realtime_attrs helper."""
 
     def test_returns_realtime_cache_attrs_for_mapped_model(self) -> None:
-        """_realtime_attrs returns correct field names for models with realtime mappings."""
+        """realtime_attrs returns correct field names for models with realtime mappings."""
         # Import the mapping module to trigger register_mapping() calls
         from pynetappfoundry.cache.ontap.network.fc.ports.model import OntapFcPort
 
-        # Clear lru_cache to ensure fresh lookup
-        _realtime_attrs.cache_clear()
+        # Clear cache to ensure fresh lookup
+        realtime_attrs.cache_clear()
 
-        result = _realtime_attrs(OntapFcPort)
+        result = realtime_attrs(OntapFcPort)
 
         assert isinstance(result, frozenset)
         assert len(result) > 0
@@ -776,18 +776,18 @@ class TestRealtimeAttrs:
         assert "metric_iops_read" in result
 
     def test_returns_empty_frozenset_for_unmapped_model(self) -> None:
-        """_realtime_attrs returns empty frozenset for models without mappings."""
-        _realtime_attrs.cache_clear()
+        """realtime_attrs returns empty frozenset for models without mappings."""
+        realtime_attrs.cache_clear()
 
         # CachedClusterMetadata is a container model with no TypeMapping
-        result = _realtime_attrs(CachedClusterMetadata)
+        result = realtime_attrs(CachedClusterMetadata)
 
         assert isinstance(result, frozenset)
         assert len(result) == 0
 
     def test_returns_empty_frozenset_for_model_without_realtime_fields(self) -> None:
-        """_realtime_attrs returns empty frozenset when mapping has no realtime fields."""
-        _realtime_attrs.cache_clear()
+        """realtime_attrs returns empty frozenset when mapping has no realtime fields."""
+        realtime_attrs.cache_clear()
 
         # Create a mock mapping with no realtime fields
         mock_mapping = MagicMock()
@@ -798,20 +798,20 @@ class TestRealtimeAttrs:
 
         with patch("pynetappfoundry.cache._registry.model_registry") as mock_registry:
             mock_registry.get_mapping.return_value = mock_mapping
-            result = _realtime_attrs(_NoRealtime)
+            result = realtime_attrs(_NoRealtime)
 
         assert isinstance(result, frozenset)
         assert len(result) == 0
 
     def test_caches_result_per_model_class(self) -> None:
-        """_realtime_attrs caches results (lru_cache)."""
-        _realtime_attrs.cache_clear()
+        """realtime_attrs caches results (functools.cache)."""
+        realtime_attrs.cache_clear()
 
         # First call populates cache
-        result1 = _realtime_attrs(CachedClusterMetadata)
-        result2 = _realtime_attrs(CachedClusterMetadata)
+        result1 = realtime_attrs(CachedClusterMetadata)
+        result2 = realtime_attrs(CachedClusterMetadata)
 
         assert result1 is result2
         # Verify cache was used
-        info = _realtime_attrs.cache_info()
+        info = realtime_attrs.cache_info()
         assert info.hits >= 1
