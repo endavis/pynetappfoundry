@@ -1,6 +1,6 @@
 """OntapExportClient cache model."""
 
-from pynetappfoundry.cache.ontap.protocols.nfs.export_policies.rules.clients.model import (
+from pynetappfoundry.models.ontap.protocols.nfs.export_policies.rules.clients.model import (
     OntapExportClient,
 )
 

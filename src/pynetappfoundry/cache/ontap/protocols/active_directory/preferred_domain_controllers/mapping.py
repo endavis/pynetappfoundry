@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.protocols.active_directory.preferred_domain_controllers.model import (
+from pynetappfoundry.models.ontap.protocols.active_directory.preferred_domain_controllers.model import (
     OntapActiveDirectoryPreferredDc,
 )
 

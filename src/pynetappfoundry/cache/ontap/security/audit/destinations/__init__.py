@@ -1,6 +1,6 @@
 """OntapSecurityAuditLogForward cache model."""
 
-from pynetappfoundry.cache.ontap.security.audit.destinations.model import (
+from pynetappfoundry.models.ontap.security.audit.destinations.model import (
     OntapSecurityAuditLogForward,
 )
 

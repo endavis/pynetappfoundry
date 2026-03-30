@@ -67,11 +67,22 @@ Re-running codegen preserves user edits, adds new fields with defaults, and warn
 - **Hand-written $ref resolver**: Simpler but fragile for edge cases (`allOf`, circular refs, deeply nested schemas).
 - **No codegen (continue hand-writing)**: Doesn't scale to 30+ model types with 50+ fields each.
 
+## Amendments
+
+### Model output path change (Issue #402)
+
+Codegen now generates `model.py` files to `models/ontap/` instead of `cache/ontap/`.
+Mapping files (`mapping.py`, `__init__.py`, TOML overlays) remain under `cache/ontap/`.
+Generated models inherit from `OntapModel` (defined in `models._base`) instead of
+`CacheModel`.
+
 ## Related Issues
 
 - Issue #301: feat: field annotations, OpenAPI codegen, and SQL cache storage
+- Issue #402: refactor: move ONTAP API models from cache/ to models/ package
 
 ## Related Documentation
 
 - [ADR-0004: Declarative field mapping framework](0004-declarative-field-mapping-framework.md)
 - [ADR-0007: URL-tree model registry](0007-url-tree-model-registry.md)
+- [Cache Model Architecture](../development/cache-models.md)

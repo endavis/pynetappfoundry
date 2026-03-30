@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.security.group.role_mappings.model import OntapGroupRoleMappings
+from pynetappfoundry.models.ontap.security.group.role_mappings.model import OntapGroupRoleMappings
 
 ONTAPGROUPROLEMAPPINGS_MAPPING = TypeMapping(
     name="OntapGroupRoleMappings",

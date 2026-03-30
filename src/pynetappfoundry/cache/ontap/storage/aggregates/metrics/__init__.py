@@ -1,6 +1,6 @@
 """OntapPerformanceMetricResponse cache model."""
 
-from pynetappfoundry.cache.ontap.storage.aggregates.metrics.model import (
+from pynetappfoundry.models.ontap.storage.aggregates.metrics.model import (
     OntapPerformanceMetricResponse,
 )
 

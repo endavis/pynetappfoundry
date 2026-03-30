@@ -1,6 +1,6 @@
 """OntapSecurityExternalRoleMapping cache model."""
 
-from pynetappfoundry.cache.ontap.security.external_role_mappings.model import (
+from pynetappfoundry.models.ontap.security.external_role_mappings.model import (
     OntapSecurityExternalRoleMapping,
 )
 

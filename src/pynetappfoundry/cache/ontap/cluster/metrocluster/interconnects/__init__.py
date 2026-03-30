@@ -1,6 +1,6 @@
 """OntapMetroclusterInterconnect cache model."""
 
-from pynetappfoundry.cache.ontap.cluster.metrocluster.interconnects.model import (
+from pynetappfoundry.models.ontap.cluster.metrocluster.interconnects.model import (
     OntapMetroclusterInterconnect,
 )
 

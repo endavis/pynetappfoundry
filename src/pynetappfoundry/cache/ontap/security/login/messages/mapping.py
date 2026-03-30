@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.security.login.messages.model import OntapLoginMessages
+from pynetappfoundry.models.ontap.security.login.messages.model import OntapLoginMessages
 
 ONTAPLOGINMESSAGES_MAPPING = TypeMapping(
     name="OntapLoginMessages",

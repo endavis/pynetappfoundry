@@ -3,22 +3,19 @@
 Provides caching infrastructure for ONTAP cluster metadata that
 doesn't change frequently. Cache is manually refreshed via CLI.
 
-Models live at ``cache/<api-path>/model.py`` and should be imported
+Models live at ``models/ontap/<api-path>/model.py`` and should be imported
 from their sub-package, e.g.::
 
-    from pynetappfoundry.cache.ontap.storage.volumes.model import OntapVolume
-    from pynetappfoundry.cache.ontap.cluster.nodes.model import OntapNodeResponse
+    from pynetappfoundry.models.ontap.storage.volumes.model import OntapVolume
+    from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
 
 Infrastructure (DB, collector, diff, registry) is imported from here::
 
     from pynetappfoundry.cache import ClusterMetadataDB, MetadataCollector
 """
 
-# Layer 1: Base class, protocol, schema utilities
-# Trigger mapping registration — each sub-package __init__.py imports
+# Trigger mapping registration -- each sub-package __init__.py imports
 # its mapping.py which calls model_registry.register_mapping().
-# Models are already registered via CacheModel.__init_subclass__ when
-# _metadata.py transitively imports all leaf model.py files above.
 import pynetappfoundry.cache.ontap.cloud.metadata
 import pynetappfoundry.cache.ontap.cloud.targets
 import pynetappfoundry.cache.ontap.cluster.licensing.licenses
@@ -64,8 +61,7 @@ from pynetappfoundry.cache._base import (  # noqa: E402
     parse_schema_version,
 )
 
-# Layer 3: Container models (importing _metadata triggers the full
-# model registration chain via transitive leaf-model imports)
+# Container models and metadata
 from pynetappfoundry.cache._lazy import LazyClusterMetadata  # noqa: E402
 from pynetappfoundry.cache._metadata import (  # noqa: E402
     CachedClusterMetadata,
@@ -87,7 +83,7 @@ from pynetappfoundry.cache.db import ClusterMetadataDB  # noqa: E402
 from pynetappfoundry.cache.diff import ChangeEntry, compute_diff, format_diff_summary  # noqa: E402
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping  # noqa: E402
 from pynetappfoundry.cache.history_db import CacheHistoryDB  # noqa: E402
-from pynetappfoundry.cache.ontap.cluster.mediators.model import OntapMediatorResponse  # noqa: E402
+from pynetappfoundry.models.ontap.cluster.mediators.model import OntapMediatorResponse  # noqa: E402
 
 __all__ = [
     "METADATA_SCHEMA_MIN_COMPATIBLE",

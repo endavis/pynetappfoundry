@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.cloud.targets.model import OntapCloudTarget
+from pynetappfoundry.models.ontap.cloud.targets.model import OntapCloudTarget
 
 ONTAPCLOUDTARGET_MAPPING = TypeMapping(
     name="OntapCloudTarget",

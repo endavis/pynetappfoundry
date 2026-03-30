@@ -248,8 +248,8 @@ class TestGenerateModel:
     def test_basic_structure(self):
         ep = _make_endpoint()
         code = generate_model(ep)
-        assert "class OntapVolume(CacheModel):" in code
-        assert "from pynetappfoundry.cache._base import CacheModel" in code
+        assert "class OntapVolume(OntapModel):" in code
+        assert "from pynetappfoundry.models._base import OntapModel" in code
 
     def test_uuid_import(self):
         ep = _make_endpoint()
@@ -351,7 +351,7 @@ class TestGenerateInit:
     def test_exports_class(self):
         ep = _make_endpoint()
         code = generate_init(ep)
-        assert "from pynetappfoundry.cache.ontap.storage.volumes.model import OntapVolume" in code
+        assert "from pynetappfoundry.models.ontap.storage.volumes.model import OntapVolume" in code
         assert '__all__ = ["OntapVolume"]' in code
 
 
@@ -424,12 +424,16 @@ class TestGenerateTomlOverlay:
 class TestWriteEndpointFiles:
     def test_creates_directory_tree(self, tmp_path):
         ep = _make_endpoint()
-        written = write_endpoint_files(ep, tmp_path)
+        cache_dir = tmp_path / "cache"
+        models_dir = tmp_path / "models"
+        written = write_endpoint_files(ep, cache_dir, models_dir=models_dir)
 
-        assert (tmp_path / "ontap" / "storage" / "volumes" / "model.py").exists()
-        assert (tmp_path / "ontap" / "storage" / "volumes" / "mapping.py").exists()
-        assert (tmp_path / "ontap" / "storage" / "volumes" / "__init__.py").exists()
-        assert (tmp_path / "ontap" / "storage" / "volumes" / "volumes.toml").exists()
+        # Model files go into models/
+        assert (models_dir / "ontap" / "storage" / "volumes" / "model.py").exists()
+        assert (models_dir / "ontap" / "storage" / "volumes" / "__init__.py").exists()
+        # Cache files go into cache/
+        assert (cache_dir / "ontap" / "storage" / "volumes" / "mapping.py").exists()
+        assert (cache_dir / "ontap" / "storage" / "volumes" / "volumes.toml").exists()
         assert len(written) == 4
 
     def test_intermediate_init_files(self, tmp_path):
@@ -440,24 +444,33 @@ class TestWriteEndpointFiles:
                 ParsedField(name="name", api_path="name"),
             ],
         )
-        write_endpoint_files(ep, tmp_path)
+        cache_dir = tmp_path / "cache"
+        models_dir = tmp_path / "models"
+        write_endpoint_files(ep, cache_dir, models_dir=models_dir)
 
-        assert (tmp_path / "ontap" / "network" / "__init__.py").exists()
-        assert (tmp_path / "ontap" / "network" / "ip" / "__init__.py").exists()
+        # Intermediate __init__.py in both trees
+        assert (models_dir / "ontap" / "network" / "__init__.py").exists()
+        assert (models_dir / "ontap" / "network" / "ip" / "__init__.py").exists()
+        assert (cache_dir / "ontap" / "network" / "__init__.py").exists()
+        assert (cache_dir / "ontap" / "network" / "ip" / "__init__.py").exists()
 
     def test_generated_model_is_valid_python(self, tmp_path):
         ep = _make_endpoint()
-        write_endpoint_files(ep, tmp_path)
+        cache_dir = tmp_path / "cache"
+        models_dir = tmp_path / "models"
+        write_endpoint_files(ep, cache_dir, models_dir=models_dir)
 
-        model_code = (tmp_path / "ontap" / "storage" / "volumes" / "model.py").read_text()
+        model_code = (models_dir / "ontap" / "storage" / "volumes" / "model.py").read_text()
         # Should compile without syntax errors
         compile(model_code, "model.py", "exec")
 
     def test_generated_mapping_is_valid_python(self, tmp_path):
         ep = _make_endpoint()
-        write_endpoint_files(ep, tmp_path)
+        cache_dir = tmp_path / "cache"
+        models_dir = tmp_path / "models"
+        write_endpoint_files(ep, cache_dir, models_dir=models_dir)
 
-        mapping_code = (tmp_path / "ontap" / "storage" / "volumes" / "mapping.py").read_text()
+        mapping_code = (cache_dir / "ontap" / "storage" / "volumes" / "mapping.py").read_text()
         compile(mapping_code, "mapping.py", "exec")
 
     def test_schema_lookup_passed_to_mapping(self, tmp_path):
@@ -472,29 +485,40 @@ class TestWriteEndpointFiles:
             ],
         )
         schema_lookup = {"/svm/svms": "svm"}
-        write_endpoint_files(ep, tmp_path, schema_lookup=schema_lookup)
+        cache_dir = tmp_path / "cache"
+        models_dir = tmp_path / "models"
+        write_endpoint_files(ep, cache_dir, schema_lookup=schema_lookup, models_dir=models_dir)
 
-        mapping_code = (tmp_path / "ontap" / "svm" / "svms" / "web" / "mapping.py").read_text()
+        mapping_code = (cache_dir / "ontap" / "svm" / "svms" / "web" / "mapping.py").read_text()
         assert 'parent_mapping="OntapSvm"' in mapping_code
 
     def test_no_orphan_dirs_under_output_dir(self, tmp_path):
-        """Only the api_type subdirectory should exist directly under output_dir."""
+        """Only the api_type subdirectory should exist under each output dir."""
         ep = _make_endpoint()
-        write_endpoint_files(ep, tmp_path)
+        cache_dir = tmp_path / "cache"
+        models_dir = tmp_path / "models"
+        write_endpoint_files(ep, cache_dir, models_dir=models_dir)
 
-        subdirs = [p.name for p in tmp_path.iterdir() if p.is_dir()]
-        assert subdirs == ["ontap"]
+        cache_subdirs = [p.name for p in cache_dir.iterdir() if p.is_dir()]
+        assert cache_subdirs == ["ontap"]
+        models_subdirs = [p.name for p in models_dir.iterdir() if p.is_dir()]
+        assert models_subdirs == ["ontap"]
 
     def test_custom_api_type(self, tmp_path):
         """Files should land under the custom api_type subdirectory."""
         ep = _make_endpoint()
-        write_endpoint_files(ep, tmp_path, api_type="aiqum")
+        cache_dir = tmp_path / "cache"
+        models_dir = tmp_path / "models"
+        write_endpoint_files(ep, cache_dir, api_type="aiqum", models_dir=models_dir)
 
-        assert (tmp_path / "aiqum" / "storage" / "volumes" / "model.py").exists()
-        assert (tmp_path / "aiqum" / "storage" / "volumes" / "mapping.py").exists()
-        assert (tmp_path / "aiqum" / "storage" / "volumes" / "__init__.py").exists()
+        # Model files in models/
+        assert (models_dir / "aiqum" / "storage" / "volumes" / "model.py").exists()
+        assert (models_dir / "aiqum" / "storage" / "volumes" / "__init__.py").exists()
+        # Mapping files in cache/
+        assert (cache_dir / "aiqum" / "storage" / "volumes" / "mapping.py").exists()
         # No ontap directory should exist
-        assert not (tmp_path / "ontap").exists()
+        assert not (cache_dir / "ontap").exists()
+        assert not (models_dir / "ontap").exists()
 
 
 # ---------------------------------------------------------------------------
@@ -592,13 +616,13 @@ class TestGenerateModelSubModel:
     def test_sub_model_class_generated(self):
         ep = _make_endpoint_with_sub_model()
         code = generate_model(ep)
-        assert "class OntapSnapshotPolicyCopy(CacheModel):" in code
+        assert "class OntapSnapshotPolicyCopy(OntapModel):" in code
 
     def test_sub_model_before_parent(self):
         ep = _make_endpoint_with_sub_model()
         code = generate_model(ep)
         sub_pos = code.index("class OntapSnapshotPolicyCopy")
-        parent_pos = code.index("class OntapSnapshotPolicy(CacheModel)")
+        parent_pos = code.index("class OntapSnapshotPolicy(OntapModel)")
         assert sub_pos < parent_pos
 
     def test_parent_field_typed_with_sub_model(self):

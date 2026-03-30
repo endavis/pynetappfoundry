@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.protocols.ndmp.nodes.model import OntapNdmpNode
+from pynetappfoundry.models.ontap.protocols.ndmp.nodes.model import OntapNdmpNode
 
 ONTAPNDMPNODE_MAPPING = TypeMapping(
     name="OntapNdmpNode",

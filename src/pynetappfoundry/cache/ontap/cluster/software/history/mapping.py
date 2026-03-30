@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.cluster.software.history.model import OntapSoftwareHistory
+from pynetappfoundry.models.ontap.cluster.software.history.model import OntapSoftwareHistory
 
 ONTAPSOFTWAREHISTORY_MAPPING = TypeMapping(
     name="OntapSoftwareHistory",

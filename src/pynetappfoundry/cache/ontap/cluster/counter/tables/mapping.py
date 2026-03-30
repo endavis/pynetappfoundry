@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.cluster.counter.tables.model import OntapCounterTable
+from pynetappfoundry.models.ontap.cluster.counter.tables.model import OntapCounterTable
 
 ONTAPCOUNTERTABLE_MAPPING = TypeMapping(
     name="OntapCounterTable",

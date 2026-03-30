@@ -1,6 +1,6 @@
 """OntapPerformanceFcInterfaceMetricResponse cache model."""
 
-from pynetappfoundry.cache.ontap.network.fc.interfaces.metrics.model import (
+from pynetappfoundry.models.ontap.network.fc.interfaces.metrics.model import (
     OntapPerformanceFcInterfaceMetricResponse,
 )
 

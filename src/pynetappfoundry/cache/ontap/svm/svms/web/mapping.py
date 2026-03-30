@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.svm.svms.web.model import OntapWebSvm
+from pynetappfoundry.models.ontap.svm.svms.web.model import OntapWebSvm
 
 ONTAPWEBSVM_MAPPING = TypeMapping(
     name="OntapWebSvm",

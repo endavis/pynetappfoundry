@@ -1,5 +1,5 @@
 """OntapSnaplockLog cache model."""
 
-from pynetappfoundry.cache.ontap.storage.snaplock.audit_logs.model import OntapSnaplockLog
+from pynetappfoundry.models.ontap.storage.snaplock.audit_logs.model import OntapSnaplockLog
 
 __all__ = ["OntapSnaplockLog"]

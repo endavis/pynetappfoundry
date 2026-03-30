@@ -1,5 +1,5 @@
 """OntapGlobalCacheSetting cache model."""
 
-from pynetappfoundry.cache.ontap.name_services.cache.setting.model import OntapGlobalCacheSetting
+from pynetappfoundry.models.ontap.name_services.cache.setting.model import OntapGlobalCacheSetting
 
 __all__ = ["OntapGlobalCacheSetting"]

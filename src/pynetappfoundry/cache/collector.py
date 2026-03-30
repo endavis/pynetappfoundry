@@ -33,84 +33,84 @@ from pynetappfoundry.cache.field_mapping import (
     parse_cli_records,
 )
 from pynetappfoundry.cache.ontap.cloud.metadata.mapping import CLOUD_METADATA_MAPPING
-from pynetappfoundry.cache.ontap.cloud.metadata.model import CloudMetadata
 from pynetappfoundry.cache.ontap.cloud.targets.mapping import ONTAPCLOUDTARGET_MAPPING
-from pynetappfoundry.cache.ontap.cloud.targets.model import OntapCloudTarget
 from pynetappfoundry.cache.ontap.cluster.licensing.licenses.mapping import (
     ONTAPLICENSEPACKAGERESPONSE_MAPPING,
 )
-from pynetappfoundry.cache.ontap.cluster.licensing.licenses.model import (
-    OntapLicensePackageResponse,
-)
 from pynetappfoundry.cache.ontap.cluster.mapping import CLUSTER_MAPPING
 from pynetappfoundry.cache.ontap.cluster.mediators.mapping import ONTAPMEDIATORRESPONSE_MAPPING
-from pynetappfoundry.cache.ontap.cluster.mediators.model import OntapMediatorResponse
-from pynetappfoundry.cache.ontap.cluster.model import ClusterInfo
 from pynetappfoundry.cache.ontap.cluster.nodes.mapping import ONTAPNODERESPONSE_MAPPING
-from pynetappfoundry.cache.ontap.cluster.nodes.model import OntapNodeResponse
 from pynetappfoundry.cache.ontap.cluster.peers.mapping import ONTAPCLUSTERPEER_MAPPING
-from pynetappfoundry.cache.ontap.cluster.peers.model import OntapClusterPeer
 from pynetappfoundry.cache.ontap.cluster.schedules.mapping import ONTAPSCHEDULE_MAPPING
-from pynetappfoundry.cache.ontap.cluster.schedules.model import OntapSchedule
 from pynetappfoundry.cache.ontap.name_services.dns.mapping import ONTAPDNS_MAPPING
-from pynetappfoundry.cache.ontap.name_services.dns.model import OntapDns
 from pynetappfoundry.cache.ontap.network.ethernet.broadcast_domains.mapping import (
     ONTAPBROADCASTDOMAIN_MAPPING,
 )
-from pynetappfoundry.cache.ontap.network.ethernet.broadcast_domains.model import (
-    OntapBroadcastDomain,
-)
 from pynetappfoundry.cache.ontap.network.ip.interfaces.mapping import ONTAPIPINTERFACE_MAPPING
-from pynetappfoundry.cache.ontap.network.ip.interfaces.model import OntapIpInterface
 from pynetappfoundry.cache.ontap.network.ip.subnets.mapping import ONTAPIPSUBNET_MAPPING
-from pynetappfoundry.cache.ontap.network.ip.subnets.model import OntapIpSubnet
-from pynetappfoundry.cache.ontap.network.model import NetworkInfo
 from pynetappfoundry.cache.ontap.protocols.cifs.services.mapping import ONTAPCIFSSERVICE_MAPPING
-from pynetappfoundry.cache.ontap.protocols.cifs.services.model import OntapCifsService
 from pynetappfoundry.cache.ontap.protocols.cifs.shares.mapping import ONTAPCIFSSHARE_MAPPING
-from pynetappfoundry.cache.ontap.protocols.cifs.shares.model import OntapCifsShare
-from pynetappfoundry.cache.ontap.protocols.model import ProtocolsInfo
 from pynetappfoundry.cache.ontap.protocols.nfs.export_policies.mapping import (
     ONTAPEXPORTPOLICY_MAPPING,
 )
-from pynetappfoundry.cache.ontap.protocols.nfs.export_policies.model import OntapExportPolicy
 from pynetappfoundry.cache.ontap.protocols.nfs.services.mapping import ONTAPNFSSERVICE_MAPPING
-from pynetappfoundry.cache.ontap.protocols.nfs.services.model import OntapNfsService
 from pynetappfoundry.cache.ontap.protocols.s3.buckets.mapping import ONTAPS3BUCKET_MAPPING
-from pynetappfoundry.cache.ontap.protocols.s3.buckets.model import OntapS3Bucket
 from pynetappfoundry.cache.ontap.protocols.san.igroups.mapping import ONTAPIGROUP_MAPPING
-from pynetappfoundry.cache.ontap.protocols.san.igroups.model import OntapIgroup
 from pynetappfoundry.cache.ontap.snapmirror.relationships.mapping import (
     ONTAPSNAPMIRRORRELATIONSHIP_MAPPING,
 )
-from pynetappfoundry.cache.ontap.snapmirror.relationships.model import (
-    OntapSnapmirrorRelationship,
-)
 from pynetappfoundry.cache.ontap.storage.aggregates.mapping import ONTAPAGGREGATE_MAPPING
-from pynetappfoundry.cache.ontap.storage.aggregates.model import OntapAggregate
 from pynetappfoundry.cache.ontap.storage.flexcache.flexcaches.mapping import ONTAPFLEXCACHE_MAPPING
-from pynetappfoundry.cache.ontap.storage.flexcache.flexcaches.model import OntapFlexcache
 from pynetappfoundry.cache.ontap.storage.luns.mapping import ONTAPLUN_MAPPING
-from pynetappfoundry.cache.ontap.storage.luns.model import OntapLun
-from pynetappfoundry.cache.ontap.storage.model import StorageInfo
 from pynetappfoundry.cache.ontap.storage.qos.policies.mapping import ONTAPQOSPOLICY_MAPPING
-from pynetappfoundry.cache.ontap.storage.qos.policies.model import OntapQosPolicy
 from pynetappfoundry.cache.ontap.storage.qtrees.mapping import ONTAPQTREE_MAPPING
-from pynetappfoundry.cache.ontap.storage.qtrees.model import OntapQtree
 from pynetappfoundry.cache.ontap.storage.snapshot_policies.mapping import (
     ONTAPSNAPSHOTPOLICY_MAPPING,
 )
-from pynetappfoundry.cache.ontap.storage.snapshot_policies.model import OntapSnapshotPolicy
 from pynetappfoundry.cache.ontap.storage.volumes.mapping import ONTAPVOLUME_MAPPING
-from pynetappfoundry.cache.ontap.storage.volumes.model import OntapVolume
 from pynetappfoundry.cache.ontap.svm.peers.mapping import ONTAPSVMPEER_MAPPING
-from pynetappfoundry.cache.ontap.svm.peers.model import OntapSvmPeer
 from pynetappfoundry.cache.ontap.svm.svms.mapping import ONTAPSVM_MAPPING
-from pynetappfoundry.cache.ontap.svm.svms.model import OntapSvm
 from pynetappfoundry.cache.ontap.svm.svms.top_metrics.users.mapping import (
     ONTAPTOPMETRICSSVMUSER_MAPPING,
 )
-from pynetappfoundry.cache.ontap.svm.svms.top_metrics.users.model import OntapTopMetricsSvmUser
+from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
+from pynetappfoundry.models.ontap.cloud.targets.model import OntapCloudTarget
+from pynetappfoundry.models.ontap.cluster.licensing.licenses.model import (
+    OntapLicensePackageResponse,
+)
+from pynetappfoundry.models.ontap.cluster.mediators.model import OntapMediatorResponse
+from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
+from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
+from pynetappfoundry.models.ontap.cluster.peers.model import OntapClusterPeer
+from pynetappfoundry.models.ontap.cluster.schedules.model import OntapSchedule
+from pynetappfoundry.models.ontap.name_services.dns.model import OntapDns
+from pynetappfoundry.models.ontap.network.ethernet.broadcast_domains.model import (
+    OntapBroadcastDomain,
+)
+from pynetappfoundry.models.ontap.network.ip.interfaces.model import OntapIpInterface
+from pynetappfoundry.models.ontap.network.ip.subnets.model import OntapIpSubnet
+from pynetappfoundry.models.ontap.network.model import NetworkInfo
+from pynetappfoundry.models.ontap.protocols.cifs.services.model import OntapCifsService
+from pynetappfoundry.models.ontap.protocols.cifs.shares.model import OntapCifsShare
+from pynetappfoundry.models.ontap.protocols.model import ProtocolsInfo
+from pynetappfoundry.models.ontap.protocols.nfs.export_policies.model import OntapExportPolicy
+from pynetappfoundry.models.ontap.protocols.nfs.services.model import OntapNfsService
+from pynetappfoundry.models.ontap.protocols.s3.buckets.model import OntapS3Bucket
+from pynetappfoundry.models.ontap.protocols.san.igroups.model import OntapIgroup
+from pynetappfoundry.models.ontap.snapmirror.relationships.model import (
+    OntapSnapmirrorRelationship,
+)
+from pynetappfoundry.models.ontap.storage.aggregates.model import OntapAggregate
+from pynetappfoundry.models.ontap.storage.flexcache.flexcaches.model import OntapFlexcache
+from pynetappfoundry.models.ontap.storage.luns.model import OntapLun
+from pynetappfoundry.models.ontap.storage.model import StorageInfo
+from pynetappfoundry.models.ontap.storage.qos.policies.model import OntapQosPolicy
+from pynetappfoundry.models.ontap.storage.qtrees.model import OntapQtree
+from pynetappfoundry.models.ontap.storage.snapshot_policies.model import OntapSnapshotPolicy
+from pynetappfoundry.models.ontap.storage.volumes.model import OntapVolume
+from pynetappfoundry.models.ontap.svm.peers.model import OntapSvmPeer
+from pynetappfoundry.models.ontap.svm.svms.model import OntapSvm
+from pynetappfoundry.models.ontap.svm.svms.top_metrics.users.model import OntapTopMetricsSvmUser
 from pynetappfoundry.utils.cloud import (
     build_cloud_instance_link,
     build_cloud_instance_sso_link,

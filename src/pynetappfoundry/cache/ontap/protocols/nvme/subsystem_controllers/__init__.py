@@ -1,6 +1,6 @@
 """OntapNvmeSubsystemController cache model."""
 
-from pynetappfoundry.cache.ontap.protocols.nvme.subsystem_controllers.model import (
+from pynetappfoundry.models.ontap.protocols.nvme.subsystem_controllers.model import (
     OntapNvmeSubsystemController,
 )
 

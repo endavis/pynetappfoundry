@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.cluster.licensing.license_managers.model import (
+from pynetappfoundry.models.ontap.cluster.licensing.license_managers.model import (
     OntapLicenseManagerResponse,
 )
 

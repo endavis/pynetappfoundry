@@ -1,5 +1,5 @@
 """OntapFpolicyEvent cache model."""
 
-from pynetappfoundry.cache.ontap.protocols.fpolicy.events.model import OntapFpolicyEvent
+from pynetappfoundry.models.ontap.protocols.fpolicy.events.model import OntapFpolicyEvent
 
 __all__ = ["OntapFpolicyEvent"]

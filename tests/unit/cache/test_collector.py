@@ -13,13 +13,13 @@ from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.collector import MetadataCollector
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.cache.ontap.cluster.mapping import compute_is_ha
-from pynetappfoundry.cache.ontap.cluster.model import ClusterInfo
 from pynetappfoundry.cache.ontap.protocols.nfs.export_policies.mapping import (
     ONTAPEXPORTPOLICY_MAPPING,
 )
 from pynetappfoundry.cache.ontap.storage.snapshot_policies.mapping import (
     ONTAPSNAPSHOTPOLICY_MAPPING,
 )
+from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
 
 
 class TestCollectorMappingEndpoints:
@@ -483,7 +483,7 @@ class TestCollectSvmTopMetricsUsers:
 
     def test_returns_empty_without_api_client(self, collector: MetadataCollector) -> None:
         """No API client → empty list without attempting collection."""
-        from pynetappfoundry.cache.ontap.svm.svms.model import OntapSvm
+        from pynetappfoundry.models.ontap.svm.svms.model import OntapSvm
 
         svms = [OntapSvm(name="svm1", uuid="uuid-1")]
         result = collector._collect_svm_top_metrics_users(svms)
@@ -491,10 +491,10 @@ class TestCollectSvmTopMetricsUsers:
 
     def test_delegates_to_collect_parameterized(self, collector: MetadataCollector) -> None:
         """Delegates to _collect_parameterized with correct mapping and parents."""
-        from pynetappfoundry.cache.ontap.svm.svms.model import OntapSvm
         from pynetappfoundry.cache.ontap.svm.svms.top_metrics.users.mapping import (
             ONTAPTOPMETRICSSVMUSER_MAPPING,
         )
+        from pynetappfoundry.models.ontap.svm.svms.model import OntapSvm
 
         svms = [OntapSvm(name="svm1", uuid="uuid-1")]
         captured_args: list[tuple[Any, Any]] = []

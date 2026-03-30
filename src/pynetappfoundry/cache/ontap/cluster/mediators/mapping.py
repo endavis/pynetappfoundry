@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.cluster.mediators.model import OntapMediatorResponse
+from pynetappfoundry.models.ontap.cluster.mediators.model import OntapMediatorResponse
 
 ONTAPMEDIATORRESPONSE_MAPPING = TypeMapping(
     name="OntapMediatorResponse",

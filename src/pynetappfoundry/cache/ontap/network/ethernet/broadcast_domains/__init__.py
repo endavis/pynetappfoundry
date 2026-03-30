@@ -1,6 +1,6 @@
 """OntapBroadcastDomain cache model."""
 
-from pynetappfoundry.cache.ontap.network.ethernet.broadcast_domains.model import (
+from pynetappfoundry.models.ontap.network.ethernet.broadcast_domains.model import (
     OntapBroadcastDomain,
 )
 

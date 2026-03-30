@@ -1,51 +1,18 @@
 """Base class and utilities for cache models.
 
-Provides CacheModel (auto-registering Pydantic base), HasUUID protocol,
-OntapUUID validated type, and schema versioning functions. This module is
-Layer 1 of the import hierarchy and MUST NOT import from any cache sub-module.
+Re-exports OntapModel as CacheModel for backward compatibility within
+the cache layer.  Schema versioning functions live here as they are
+cache-specific concerns.
 """
 
 from __future__ import annotations
 
-import re
 from datetime import UTC, datetime
-from typing import Annotated, Any, Protocol, runtime_checkable
 
-from pydantic import AfterValidator, BaseModel, ConfigDict
+from pynetappfoundry.models._base import HasUUID, OntapModel, OntapUUID, _validate_ontap_uuid
 
-_UUID_PATTERN = re.compile(
-    r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
-    re.IGNORECASE,
-)
-
-
-def _validate_ontap_uuid(v: str) -> str:
-    """Validate an ONTAP UUID string.
-
-    Allows empty strings (ONTAP returns ``""`` for optional UUID fields).
-
-    Args:
-        v: The string value to validate.
-
-    Returns:
-        The validated string.
-
-    Raises:
-        ValueError: If the string is non-empty and not a valid UUID format.
-    """
-    if v and not _UUID_PATTERN.match(v):
-        raise ValueError(f"Invalid UUID: {v}")
-    return v
-
-
-OntapUUID = Annotated[str, AfterValidator(_validate_ontap_uuid)]
-"""Dedicated type for ONTAP UUID fields.
-
-A plain ``str`` at runtime with Pydantic validation that rejects malformed
-UUIDs on model construction.  Empty strings are allowed because ONTAP
-returns ``""`` for optional UUID fields.
-"""
-
+# Re-export OntapModel as CacheModel for cache-layer compatibility
+CacheModel = OntapModel
 
 # Schema version for CachedClusterMetadata model.
 # Increment MINOR for backward-compatible changes (new optional fields).
@@ -105,31 +72,14 @@ def _utcnow() -> datetime:
     return datetime.now(UTC)
 
 
-class CacheModel(BaseModel):
-    """Base class for all cache models.
-
-    Provides:
-    - ``model_config = ConfigDict(extra="allow")`` inherited by all subclasses
-    - Automatic registration in the ``ModelRegistry`` via ``__init_subclass__``
-
-    Opt out of registration by passing ``register=False``::
-
-        class MyContainer(CacheModel, register=False):
-            ...
-    """
-
-    model_config = ConfigDict(extra="allow")
-
-    def __init_subclass__(cls, register: bool = True, **kwargs: Any) -> None:
-        super().__init_subclass__(**kwargs)
-        if register:
-            from pynetappfoundry.cache._registry import model_registry
-
-            model_registry.register_model(cls)
-
-
-@runtime_checkable
-class HasUUID(Protocol):
-    """Protocol for models that have a uuid field."""
-
-    uuid: str
+__all__ = [
+    "METADATA_SCHEMA_MIN_COMPATIBLE",
+    "METADATA_SCHEMA_VERSION",
+    "CacheModel",
+    "HasUUID",
+    "OntapUUID",
+    "_utcnow",
+    "_validate_ontap_uuid",
+    "is_schema_compatible",
+    "parse_schema_version",
+]

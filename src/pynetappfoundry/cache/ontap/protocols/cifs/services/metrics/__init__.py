@@ -1,6 +1,6 @@
 """OntapPerformanceCifsMetricResponse cache model."""
 
-from pynetappfoundry.cache.ontap.protocols.cifs.services.metrics.model import (
+from pynetappfoundry.models.ontap.protocols.cifs.services.metrics.model import (
     OntapPerformanceCifsMetricResponse,
 )
 

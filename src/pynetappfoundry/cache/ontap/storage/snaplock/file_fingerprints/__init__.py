@@ -1,6 +1,6 @@
 """OntapSnaplockFileFingerprint cache model."""
 
-from pynetappfoundry.cache.ontap.storage.snaplock.file_fingerprints.model import (
+from pynetappfoundry.models.ontap.storage.snaplock.file_fingerprints.model import (
     OntapSnaplockFileFingerprint,
 )
 

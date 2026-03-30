@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.protocols.nvme.services.model import OntapNvmeService
+from pynetappfoundry.models.ontap.protocols.nvme.services.model import OntapNvmeService
 
 ONTAPNVMESERVICE_MAPPING = TypeMapping(
     name="OntapNvmeService",

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.network.ip.service_policies.model import OntapIpServicePolicy
+from pynetappfoundry.models.ontap.network.ip.service_policies.model import OntapIpServicePolicy
 
 ONTAPIPSERVICEPOLICY_MAPPING = TypeMapping(
     name="OntapIpServicePolicy",

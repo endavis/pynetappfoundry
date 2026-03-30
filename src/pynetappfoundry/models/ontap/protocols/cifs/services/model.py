@@ -1,0 +1,111 @@
+"""OntapCifsService information."""
+
+from __future__ import annotations
+
+from pydantic import Field
+
+from pynetappfoundry.models._base import OntapModel
+
+
+class OntapCifsService(OntapModel):
+    """OntapCifsService information."""
+
+    ad_domain_default_site: str = ""
+    ad_domain_fqdn: str = ""
+    ad_domain_organizational_unit: str = ""
+    ad_domain_password: str = ""
+    ad_domain_user: str = ""
+    auth_style: str = ""
+    auth_user_type: str = ""
+    authentication_method: str = ""
+    client_certificate: str = ""
+    client_id: str = ""
+    client_secret: str = ""
+    comment: str = ""
+    default_unix_user: str = ""
+    enabled: bool = False
+    group_policy_object_enabled: bool = False
+    key_vault_uri: str = ""
+    metric_duration: str = ""
+    metric_iops_other: int = 0
+    metric_iops_read: int = 0
+    metric_iops_total: int = 0
+    metric_iops_write: int = 0
+    metric_latency_other: int = 0
+    metric_latency_read: int = 0
+    metric_latency_total: int = 0
+    metric_latency_write: int = 0
+    metric_status: str = ""
+    metric_throughput_read: int = 0
+    metric_throughput_total: int = 0
+    metric_throughput_write: int = 0
+    metric_timestamp: str = ""
+    name: str = ""
+    netbios_aliases: list[str] = Field(default_factory=list)
+    netbios_enabled: bool = False
+    netbios_wins_servers: list[str] = Field(default_factory=list)
+    oauth_host: str = ""
+    options_admin_to_root_mapping: bool = False
+    options_advanced_sparse_file: bool = False
+    options_backup_symlink_enabled: bool = False
+    options_client_dup_detection_enabled: bool = False
+    options_client_version_reporting_enabled: bool = False
+    options_copy_offload: bool = False
+    options_dac_enabled: bool = False
+    options_export_policy_enabled: bool = False
+    options_fake_open: bool = False
+    options_fsctl_trim: bool = False
+    options_junction_reparse: bool = False
+    options_large_mtu: bool = False
+    options_max_connections_per_session: int = 0
+    options_max_lifs_per_session: int = 0
+    options_max_opens_same_file_per_tree: int = 0
+    options_max_same_tree_connect_per_session: int = 0
+    options_max_same_user_sessions_per_connection: int = 0
+    options_max_watches_set_per_tree: int = 0
+    options_multichannel: bool = False
+    options_null_user_windows_name: str = ""
+    options_path_component_cache: bool = False
+    options_referral: bool = False
+    options_shadowcopy: bool = False
+    options_shadowcopy_dir_depth: int = 0
+    options_smb_credits: int = 0
+    options_trusted_domain_enum_search_enabled: bool = False
+    options_widelink_reparse_versions: list[str] = Field(default_factory=list)
+    proxy_host: str = ""
+    proxy_password: str = ""
+    proxy_port: int = 0
+    proxy_type: str = ""
+    proxy_username: str = ""
+    security_advertised_kdc_encryptions: list[str] = Field(default_factory=list)
+    security_aes_netlogon_enabled: bool = False
+    security_encrypt_dc_connection: bool = False
+    security_kdc_encryption: bool = False
+    security_ldap_referral_enabled: bool = False
+    security_lm_compatibility_level: str = ""
+    security_restrict_anonymous: str = ""
+    security_session_security: str = ""
+    security_smb_encryption: bool = False
+    security_smb_signing: bool = False
+    security_try_ldap_channel_binding: bool = False
+    security_use_ldaps: bool = False
+    security_use_start_tls: bool = False
+    statistics_iops_raw_other: int = 0
+    statistics_iops_raw_read: int = 0
+    statistics_iops_raw_total: int = 0
+    statistics_iops_raw_write: int = 0
+    statistics_latency_raw_other: int = 0
+    statistics_latency_raw_read: int = 0
+    statistics_latency_raw_total: int = 0
+    statistics_latency_raw_write: int = 0
+    statistics_status: str = ""
+    statistics_throughput_raw_read: int = 0
+    statistics_throughput_raw_total: int = 0
+    statistics_throughput_raw_write: int = 0
+    statistics_timestamp: str = ""
+    svm_name: str = ""
+    svm_uuid: str = ""
+    tenant_id: str = ""
+    timeout: int = 0
+    verify_host: bool = False
+    workgroup: str = ""

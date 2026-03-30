@@ -1,5 +1,5 @@
 """OntapCoredump cache model."""
 
-from pynetappfoundry.cache.ontap.support.coredump.coredumps.model import OntapCoredump
+from pynetappfoundry.models.ontap.support.coredump.coredumps.model import OntapCoredump
 
 __all__ = ["OntapCoredump"]

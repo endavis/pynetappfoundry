@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.security.authentication.duo.groups.model import OntapDuogroup
+from pynetappfoundry.models.ontap.security.authentication.duo.groups.model import OntapDuogroup
 
 ONTAPDUOGROUP_MAPPING = TypeMapping(
     name="OntapDuogroup",

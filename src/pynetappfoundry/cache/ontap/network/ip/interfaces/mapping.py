@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.network.ip.interfaces.model import OntapIpInterface
+from pynetappfoundry.models.ontap.network.ip.interfaces.model import OntapIpInterface
 
 ONTAPIPINTERFACE_MAPPING = TypeMapping(
     name="OntapIpInterface",

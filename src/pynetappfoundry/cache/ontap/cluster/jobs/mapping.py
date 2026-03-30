@@ -6,7 +6,7 @@ from typing import Any
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.cluster.jobs.model import OntapJob, OntapJobArgument
+from pynetappfoundry.models.ontap.cluster.jobs.model import OntapJob, OntapJobArgument
 
 
 def _transform_error_arguments(record: dict[str, Any]) -> list[OntapJobArgument]:

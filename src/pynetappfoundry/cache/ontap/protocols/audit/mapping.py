@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.protocols.audit.model import OntapAudit
+from pynetappfoundry.models.ontap.protocols.audit.model import OntapAudit
 
 ONTAPAUDIT_MAPPING = TypeMapping(
     name="OntapAudit",

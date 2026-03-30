@@ -1,6 +1,6 @@
 """OntapTopMetricsClient cache model."""
 
-from pynetappfoundry.cache.ontap.storage.volumes.top_metrics.clients.model import (
+from pynetappfoundry.models.ontap.storage.volumes.top_metrics.clients.model import (
     OntapTopMetricsClient,
 )
 

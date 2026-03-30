@@ -1,6 +1,6 @@
 """OntapLocalCifsUsersAndGroupsImport cache model."""
 
-from pynetappfoundry.cache.ontap.protocols.cifs.users_and_groups.bulk_import.model import (
+from pynetappfoundry.models.ontap.protocols.cifs.users_and_groups.bulk_import.model import (
     OntapLocalCifsUsersAndGroupsImport,
 )
 

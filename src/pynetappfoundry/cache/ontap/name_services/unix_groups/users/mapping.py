@@ -6,7 +6,7 @@ from typing import Any
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.name_services.unix_groups.users.model import (
+from pynetappfoundry.models.ontap.name_services.unix_groups.users.model import (
     OntapUnixGroupUsers,
     OntapUnixGroupUsersRecord,
 )

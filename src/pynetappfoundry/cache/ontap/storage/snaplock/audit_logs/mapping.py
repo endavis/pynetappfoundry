@@ -6,7 +6,7 @@ from typing import Any
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.storage.snaplock.audit_logs.model import (
+from pynetappfoundry.models.ontap.storage.snaplock.audit_logs.model import (
     OntapSnaplockLog,
     OntapSnaplockLogLogFile,
 )

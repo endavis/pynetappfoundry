@@ -1,6 +1,6 @@
 """OntapClusterNisService cache model."""
 
-from pynetappfoundry.cache.ontap.security.authentication.cluster.nis.model import (
+from pynetappfoundry.models.ontap.security.authentication.cluster.nis.model import (
     OntapClusterNisService,
 )
 

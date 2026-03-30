@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.protocols.nfs.kerberos.realms.model import OntapKerberosRealm
+from pynetappfoundry.models.ontap.protocols.nfs.kerberos.realms.model import OntapKerberosRealm
 
 ONTAPKERBEROSREALM_MAPPING = TypeMapping(
     name="OntapKerberosRealm",

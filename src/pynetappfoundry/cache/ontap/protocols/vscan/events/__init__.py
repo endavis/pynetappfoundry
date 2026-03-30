@@ -1,5 +1,5 @@
 """OntapVscanEvent cache model."""
 
-from pynetappfoundry.cache.ontap.protocols.vscan.events.model import OntapVscanEvent
+from pynetappfoundry.models.ontap.protocols.vscan.events.model import OntapVscanEvent
 
 __all__ = ["OntapVscanEvent"]

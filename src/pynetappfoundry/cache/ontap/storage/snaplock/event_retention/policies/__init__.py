@@ -1,6 +1,6 @@
 """OntapSnaplockRetentionPolicy cache model."""
 
-from pynetappfoundry.cache.ontap.storage.snaplock.event_retention.policies.model import (
+from pynetappfoundry.models.ontap.storage.snaplock.event_retention.policies.model import (
     OntapSnaplockRetentionPolicy,
 )
 

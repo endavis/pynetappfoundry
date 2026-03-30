@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.security.ipsec.policies.model import OntapIpsecPolicyResponse
+from pynetappfoundry.models.ontap.security.ipsec.policies.model import OntapIpsecPolicyResponse
 
 ONTAPIPSECPOLICYRESPONSE_MAPPING = TypeMapping(
     name="OntapIpsecPolicyResponse",

@@ -6,7 +6,7 @@ from typing import Any
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.security.roles.model import OntapRole, OntapRolePrivilege
+from pynetappfoundry.models.ontap.security.roles.model import OntapRole, OntapRolePrivilege
 
 
 def _transform_privileges(record: dict[str, Any]) -> list[OntapRolePrivilege]:

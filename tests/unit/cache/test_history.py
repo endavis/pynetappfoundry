@@ -16,8 +16,8 @@ from pynetappfoundry.cache import (
     parse_schema_version,
 )
 from pynetappfoundry.cache.history_db import CacheHistoryDB
-from pynetappfoundry.cache.ontap.cluster.nodes.model import OntapNodeResponse
 from pynetappfoundry.cli.commands.cache.history import history
+from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
 
 
 class TestCacheHistoryDB:

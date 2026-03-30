@@ -18,10 +18,10 @@ from pynetappfoundry.cache.db import (
     _validate_cluster_name,
     realtime_attrs,
 )
-from pynetappfoundry.cache.ontap.cloud.metadata.model import CloudMetadata
-from pynetappfoundry.cache.ontap.cluster.model import ClusterInfo
-from pynetappfoundry.cache.ontap.cluster.nodes.model import OntapNodeResponse
-from pynetappfoundry.cache.ontap.storage.volumes.model import OntapVolume
+from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
+from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
+from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
+from pynetappfoundry.models.ontap.storage.volumes.model import OntapVolume
 
 
 class TestValidateClusterName:
@@ -383,7 +383,7 @@ class TestClusterMetadataDB:
 
     def test_list_field_json_round_trip(self, db: ClusterMetadataDB) -> None:
         """Sub-model list fields survive serialization round-trip."""
-        from pynetappfoundry.cache.ontap.cluster.nodes.model import (
+        from pynetappfoundry.models.ontap.cluster.nodes.model import (
             OntapNodeResponseClusterInterface,
         )
 
@@ -496,7 +496,7 @@ class TestClusterMetadataDB:
 
     def test_storage_volumes_round_trip(self, db: ClusterMetadataDB) -> None:
         """Large models like OntapVolume serialize and deserialize correctly."""
-        from pynetappfoundry.cache.ontap.storage.model import StorageInfo
+        from pynetappfoundry.models.ontap.storage.model import StorageInfo
 
         meta = CachedClusterMetadata(
             cluster_name="test-cluster",
@@ -761,7 +761,7 @@ class TestRealtimeAttrs:
     def test_returns_realtime_cache_attrs_for_mapped_model(self) -> None:
         """realtime_attrs returns correct field names for models with realtime mappings."""
         # Import the mapping module to trigger register_mapping() calls
-        from pynetappfoundry.cache.ontap.network.fc.ports.model import OntapFcPort
+        from pynetappfoundry.models.ontap.network.fc.ports.model import OntapFcPort
 
         # Clear cache to ensure fresh lookup
         realtime_attrs.cache_clear()

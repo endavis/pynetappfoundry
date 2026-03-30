@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.storage.luns.attributes.model import OntapLunAttribute
+from pynetappfoundry.models.ontap.storage.luns.attributes.model import OntapLunAttribute
 
 ONTAPLUNATTRIBUTE_MAPPING = TypeMapping(
     name="OntapLunAttribute",

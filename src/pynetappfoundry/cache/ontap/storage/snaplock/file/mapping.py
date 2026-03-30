@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.storage.snaplock.file.model import OntapSnaplockFileRetention
+from pynetappfoundry.models.ontap.storage.snaplock.file.model import OntapSnaplockFileRetention
 
 ONTAPSNAPLOCKFILERETENTION_MAPPING = TypeMapping(
     name="OntapSnaplockFileRetention",

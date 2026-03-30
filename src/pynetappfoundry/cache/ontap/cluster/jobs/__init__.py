@@ -1,5 +1,5 @@
 """OntapJob cache model."""
 
-from pynetappfoundry.cache.ontap.cluster.jobs.model import OntapJob
+from pynetappfoundry.models.ontap.cluster.jobs.model import OntapJob
 
 __all__ = ["OntapJob"]

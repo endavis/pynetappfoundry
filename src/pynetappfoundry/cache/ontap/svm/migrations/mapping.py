@@ -7,7 +7,7 @@ from typing import Any
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.svm.migrations.model import (
+from pynetappfoundry.models.ontap.svm.migrations.model import (
     OntapSvmMigration,
     OntapSvmMigrationAggregate,
     OntapSvmMigrationIpInterface,

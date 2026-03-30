@@ -1,6 +1,6 @@
 """OntapConsistencyGroupResponse cache model."""
 
-from pynetappfoundry.cache.ontap.application.consistency_groups.model import (
+from pynetappfoundry.models.ontap.application.consistency_groups.model import (
     OntapConsistencyGroupResponse,
 )
 

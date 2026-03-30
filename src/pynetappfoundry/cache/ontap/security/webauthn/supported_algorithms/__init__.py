@@ -1,6 +1,6 @@
 """OntapSupportedAlgorithms cache model."""
 
-from pynetappfoundry.cache.ontap.security.webauthn.supported_algorithms.model import (
+from pynetappfoundry.models.ontap.security.webauthn.supported_algorithms.model import (
     OntapSupportedAlgorithms,
 )
 

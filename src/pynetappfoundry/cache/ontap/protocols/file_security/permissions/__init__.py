@@ -1,6 +1,6 @@
 """OntapFileDirectorySecurity cache model."""
 
-from pynetappfoundry.cache.ontap.protocols.file_security.permissions.model import (
+from pynetappfoundry.models.ontap.protocols.file_security.permissions.model import (
     OntapFileDirectorySecurity,
 )
 

@@ -1,5 +1,5 @@
 """OntapNdmpNode cache model."""
 
-from pynetappfoundry.cache.ontap.protocols.ndmp.nodes.model import OntapNdmpNode
+from pynetappfoundry.models.ontap.protocols.ndmp.nodes.model import OntapNdmpNode
 
 __all__ = ["OntapNdmpNode"]

@@ -1,6 +1,6 @@
 """OntapPerformanceNamespaceMetricResponse cache model."""
 
-from pynetappfoundry.cache.ontap.storage.namespaces.metrics.model import (
+from pynetappfoundry.models.ontap.storage.namespaces.metrics.model import (
     OntapPerformanceNamespaceMetricResponse,
 )
 

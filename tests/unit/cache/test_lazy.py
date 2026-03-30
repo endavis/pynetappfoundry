@@ -13,11 +13,11 @@ import pytest
 from pynetappfoundry.cache import CachedClusterMetadata, LazyClusterMetadata
 from pynetappfoundry.cache._lazy import _DATA_FIELDS
 from pynetappfoundry.cache.db import ClusterMetadataDB
-from pynetappfoundry.cache.ontap.cloud.metadata.model import CloudMetadata
-from pynetappfoundry.cache.ontap.cluster.model import ClusterInfo
-from pynetappfoundry.cache.ontap.cluster.nodes.model import OntapNodeResponse
-from pynetappfoundry.cache.ontap.storage.model import StorageInfo
-from pynetappfoundry.cache.ontap.storage.volumes.model import OntapVolume
+from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
+from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
+from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
+from pynetappfoundry.models.ontap.storage.model import StorageInfo
+from pynetappfoundry.models.ontap.storage.volumes.model import OntapVolume
 
 
 @pytest.fixture

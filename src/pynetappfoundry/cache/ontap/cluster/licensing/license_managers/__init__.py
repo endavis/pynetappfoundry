@@ -1,6 +1,6 @@
 """OntapLicenseManagerResponse cache model."""
 
-from pynetappfoundry.cache.ontap.cluster.licensing.license_managers.model import (
+from pynetappfoundry.models.ontap.cluster.licensing.license_managers.model import (
     OntapLicenseManagerResponse,
 )
 

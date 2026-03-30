@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.name_services.cache.setting.model import OntapGlobalCacheSetting
+from pynetappfoundry.models.ontap.name_services.cache.setting.model import OntapGlobalCacheSetting
 
 ONTAPGLOBALCACHESETTING_MAPPING = TypeMapping(
     name="OntapGlobalCacheSetting",

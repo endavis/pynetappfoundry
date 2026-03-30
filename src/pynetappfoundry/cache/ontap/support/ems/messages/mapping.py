@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.support.ems.messages.model import OntapEmsMessageResponse
+from pynetappfoundry.models.ontap.support.ems.messages.model import OntapEmsMessageResponse
 
 ONTAPEMSMESSAGERESPONSE_MAPPING = TypeMapping(
     name="OntapEmsMessageResponse",

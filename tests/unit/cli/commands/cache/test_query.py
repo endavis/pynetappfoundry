@@ -11,10 +11,10 @@ import pytest
 from click.testing import CliRunner
 
 from pynetappfoundry.cache import CachedClusterMetadata
-from pynetappfoundry.cache.ontap.cloud.metadata.model import CloudMetadata
-from pynetappfoundry.cache.ontap.cluster.model import ClusterInfo
-from pynetappfoundry.cache.ontap.cluster.nodes.model import OntapNodeResponse
 from pynetappfoundry.cli.main import nf
+from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
+from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
+from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
 
 
 class TestCacheQueryCommand:

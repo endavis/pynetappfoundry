@@ -6,7 +6,7 @@ from typing import Any
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.support.ems.filters.model import (
+from pynetappfoundry.models.ontap.support.ems.filters.model import (
     OntapEmsFilter,
     OntapEmsFilterParameterCriteria,
 )

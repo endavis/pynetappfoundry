@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 from pynetappfoundry.cache.ontap.protocols.cifs import OntapCifsService, OntapCifsShare
-from pynetappfoundry.cache.ontap.protocols.model import ProtocolsInfo
 from pynetappfoundry.cache.ontap.protocols.nfs import OntapExportPolicy, OntapNfsService
 from pynetappfoundry.cache.ontap.protocols.s3 import OntapS3Bucket
 from pynetappfoundry.cache.ontap.protocols.san import OntapIgroup
+from pynetappfoundry.models.ontap.protocols.model import ProtocolsInfo
 
 __all__ = [
     "OntapCifsService",

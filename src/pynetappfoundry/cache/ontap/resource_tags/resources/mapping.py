@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.resource_tags.resources.model import OntapResourceTagResource
+from pynetappfoundry.models.ontap.resource_tags.resources.model import OntapResourceTagResource
 
 ONTAPRESOURCETAGRESOURCE_MAPPING = TypeMapping(
     name="OntapResourceTagResource",

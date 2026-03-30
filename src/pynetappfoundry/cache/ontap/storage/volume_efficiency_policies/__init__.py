@@ -1,6 +1,6 @@
 """OntapVolumeEfficiencyPolicy cache model."""
 
-from pynetappfoundry.cache.ontap.storage.volume_efficiency_policies.model import (
+from pynetappfoundry.models.ontap.storage.volume_efficiency_policies.model import (
     OntapVolumeEfficiencyPolicy,
 )
 

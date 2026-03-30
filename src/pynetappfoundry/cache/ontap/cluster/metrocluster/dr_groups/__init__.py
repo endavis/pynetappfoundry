@@ -1,6 +1,6 @@
 """OntapMetroclusterDrGroup cache model."""
 
-from pynetappfoundry.cache.ontap.cluster.metrocluster.dr_groups.model import (
+from pynetappfoundry.models.ontap.cluster.metrocluster.dr_groups.model import (
     OntapMetroclusterDrGroup,
 )
 

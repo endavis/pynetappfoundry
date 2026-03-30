@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pynetappfoundry.cache.ontap.storage.flexcache.flexcaches.model import OntapFlexcache
+from pynetappfoundry.models.ontap.storage.flexcache.flexcaches.model import OntapFlexcache
 
 __all__ = [
     "OntapFlexcache",

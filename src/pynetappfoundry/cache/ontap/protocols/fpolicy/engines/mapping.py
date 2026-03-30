@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.protocols.fpolicy.engines.model import OntapFpolicyEngine
+from pynetappfoundry.models.ontap.protocols.fpolicy.engines.model import OntapFpolicyEngine
 
 ONTAPFPOLICYENGINE_MAPPING = TypeMapping(
     name="OntapFpolicyEngine",

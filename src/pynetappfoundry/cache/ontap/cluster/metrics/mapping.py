@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.cluster.metrics.model import OntapClusterMetricsResponse
+from pynetappfoundry.models.ontap.cluster.metrics.model import OntapClusterMetricsResponse
 
 ONTAPCLUSTERMETRICSRESPONSE_MAPPING = TypeMapping(
     name="OntapClusterMetricsResponse",

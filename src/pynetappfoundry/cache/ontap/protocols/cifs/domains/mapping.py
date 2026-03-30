@@ -6,7 +6,7 @@ from typing import Any
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.protocols.cifs.domains.model import (
+from pynetappfoundry.models.ontap.protocols.cifs.domains.model import (
     OntapCifsDomain,
     OntapCifsDomainDiscoveredServer,
     OntapCifsDomainPreferredDc,

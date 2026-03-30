@@ -346,7 +346,7 @@ def _select_leaf_fields(fields: list[ParsedField]) -> list[ParsedField]:
 def generate_model(endpoint: ParsedEndpoint, api_type: str = "ontap") -> str:
     """Generate a Pydantic model class for an endpoint.
 
-    Produces a flat ``CacheModel`` subclass following ADR-0007 naming.
+    Produces a flat ``OntapModel`` subclass following ADR-0007 naming.
     Array-of-objects fields with sub-fields get typed sub-model classes
     defined before the parent class.
 
@@ -410,7 +410,7 @@ def generate_model(endpoint: ParsedEndpoint, api_type: str = "ontap") -> str:
 
     pydantic_imports = ["Field"] if needs_field_import else []
 
-    base_imports = ["CacheModel"]
+    base_imports = ["OntapModel"]
     if needs_uuid_import:
         base_imports.append("OntapUUID")
 
@@ -418,13 +418,13 @@ def generate_model(endpoint: ParsedEndpoint, api_type: str = "ontap") -> str:
         lines.append(f"from pydantic import {', '.join(sorted(pydantic_imports))}")
         lines.append("")
 
-    lines.append(f"from pynetappfoundry.cache._base import {', '.join(sorted(base_imports))}")
+    lines.append(f"from pynetappfoundry.models._base import {', '.join(sorted(base_imports))}")
     lines.append("")
 
     # Generate sub-model classes before the parent
     for sub_cls, field in sub_model_fields:
         lines.append("")
-        lines.append(f"class {sub_cls}(CacheModel):")
+        lines.append(f"class {sub_cls}(OntapModel):")
         lines.append(f'    """{sub_cls} sub-model for {field.name}."""')
         lines.append("")
         sub_leaves = _select_leaf_fields(field.sub_fields)
@@ -444,7 +444,7 @@ def generate_model(endpoint: ParsedEndpoint, api_type: str = "ontap") -> str:
         lines.append("")
 
     lines.append("")
-    lines.append(f"class {class_name}(CacheModel):")
+    lines.append(f"class {class_name}(OntapModel):")
     lines.append(f'    """{class_name} information."""')
     lines.append("")
 
@@ -514,8 +514,8 @@ def generate_mapping(
                 _seen_sub_names[sub_cls] = 1
             sub_model_map[field.api_path] = sub_cls
 
-    # Build the import path for the model
-    model_import = f"pynetappfoundry.cache.{api_type}.{'.'.join(module_parts)}.model"
+    # Build the import path for the model (models live in models.ontap/)
+    model_import = f"pynetappfoundry.models.{api_type}.{'.'.join(module_parts)}.model"
 
     # Build model imports (parent class + any sub-model classes)
     model_classes = [class_name, *sorted(sub_model_map.values())]
@@ -652,8 +652,8 @@ def generate_init(endpoint: ParsedEndpoint, api_type: str = "ontap") -> str:
     class_name = _path_to_class_name(endpoint.path, endpoint.schema_name, api_type)
     module_parts = _path_to_module_parts(endpoint.path)
 
-    docstring = f'"""{class_name} cache model."""'
-    module_path = f"pynetappfoundry.cache.{api_type}.{'.'.join(module_parts)}.model"
+    docstring = f'"""{class_name} model."""'
+    module_path = f"pynetappfoundry.models.{api_type}.{'.'.join(module_parts)}.model"
     import_line = f"from {module_path} import {class_name}"
     if len(import_line) > 100:
         paren_first_line = f"from {module_path} import ("
@@ -729,53 +729,70 @@ def write_endpoint_files(
     api_type: str = "ontap",
     overlay_dir: Path | None = None,
     schema_lookup: dict[str, str] | None = None,
+    models_dir: Path | None = None,
 ) -> list[Path]:
     """Write all generated files for an endpoint.
 
-    Creates the directory tree under ``output_dir`` following ADR-0007's
-    URL-tree convention, then writes ``model.py``, ``mapping.py``,
-    ``__init__.py``, and optionally a TOML overlay.
+    Creates the directory tree following ADR-0007's URL-tree convention.
+    Model files (``model.py``, ``__init__.py``) are written under
+    ``models_dir`` (defaults to ``output_dir/../models/``).  Mapping and
+    TOML overlay files are written under ``output_dir`` (``cache/``).
 
     Args:
         endpoint: Parsed endpoint with fields.
-        output_dir: Root output directory (e.g. ``src/pynetappfoundry/cache/``).
+        output_dir: Root output directory for cache files
+            (e.g. ``src/pynetappfoundry/cache/``).
         api_type: API type tag.
         overlay_dir: Directory for TOML overlay files.  If None, overlays
-            are written next to the model files.
-        schema_lookup: Mapping of API path → schema name for resolving
+            are written next to the mapping files.
+        schema_lookup: Mapping of API path -> schema name for resolving
             parent class names in mappings.
+        models_dir: Root output directory for model files
+            (e.g. ``src/pynetappfoundry/models/``).  Defaults to
+            ``output_dir/../models/``.
 
     Returns:
         List of paths to all files written.
     """
     module_parts = _path_to_module_parts(endpoint.path)
-    pkg_dir = output_dir / api_type
-    for part in module_parts:
-        pkg_dir = pkg_dir / part
 
-    pkg_dir.mkdir(parents=True, exist_ok=True)
+    # Model files go into models/<api_type>/...
+    if models_dir is None:
+        models_dir = output_dir.parent / "models"
+    model_pkg_dir = models_dir / api_type
+    for part in module_parts:
+        model_pkg_dir = model_pkg_dir / part
+    model_pkg_dir.mkdir(parents=True, exist_ok=True)
+
+    # Cache files (mapping, TOML) go into cache/<api_type>/...
+    cache_pkg_dir = output_dir / api_type
+    for part in module_parts:
+        cache_pkg_dir = cache_pkg_dir / part
+    cache_pkg_dir.mkdir(parents=True, exist_ok=True)
+
     written: list[Path] = []
 
-    # Also ensure intermediate __init__.py files exist
-    _ensure_init_files(output_dir / api_type, module_parts)
+    # Ensure intermediate __init__.py files exist in both trees
+    _ensure_init_files(models_dir / api_type, module_parts, pkg_type="models")
+    _ensure_init_files(output_dir / api_type, module_parts, pkg_type="cache")
 
-    # model.py
-    model_path = pkg_dir / "model.py"
+    # model.py (in models/)
+    model_path = model_pkg_dir / "model.py"
     model_path.write_text(generate_model(endpoint, api_type))
     written.append(model_path)
 
-    # mapping.py
-    mapping_path = pkg_dir / "mapping.py"
-    mapping_path.write_text(generate_mapping(endpoint, api_type, schema_lookup))
-    written.append(mapping_path)
-
-    # __init__.py for the leaf package
-    init_path = pkg_dir / "__init__.py"
+    # __init__.py for the leaf model package (in models/)
+    init_path = model_pkg_dir / "__init__.py"
     init_path.write_text(generate_init(endpoint, api_type))
     written.append(init_path)
 
-    # TOML overlay
-    toml_dir = overlay_dir or pkg_dir
+    # mapping.py (in cache/)
+    mapping_path = cache_pkg_dir / "mapping.py"
+    mapping_path.write_text(generate_mapping(endpoint, api_type, schema_lookup))
+    written.append(mapping_path)
+
+    # TOML overlay (in cache/ or overlay_dir)
+    toml_dir = overlay_dir or cache_pkg_dir
     toml_dir.mkdir(parents=True, exist_ok=True)
     toml_path = toml_dir / f"{module_parts[-1]}.toml"
     existing = toml_path if toml_path.exists() else None
@@ -785,18 +802,19 @@ def write_endpoint_files(
     return written
 
 
-def _ensure_init_files(base_dir: Path, parts: list[str]) -> None:
+def _ensure_init_files(base_dir: Path, parts: list[str], pkg_type: str = "cache") -> None:
     """Ensure ``__init__.py`` exists at every intermediate directory.
 
     Args:
         base_dir: Root directory.
         parts: Module path segments.
+        pkg_type: Type label for the docstring (``"cache"`` or ``"models"``).
     """
     current = base_dir
-    for part in parts[:-1]:  # Skip the leaf — it gets a full __init__.py
+    for part in parts[:-1]:  # Skip the leaf -- it gets a full __init__.py
         current = current / part
         current.mkdir(parents=True, exist_ok=True)
         init_file = current / "__init__.py"
         if not init_file.exists():
             pkg_name = part.replace("_", " ").title()
-            init_file.write_text(f'"""{pkg_name} cache models."""\n')
+            init_file.write_text(f'"""{pkg_name} {pkg_type} models."""\n')

@@ -1,5 +1,5 @@
 """OntapQosWorkload cache model."""
 
-from pynetappfoundry.cache.ontap.storage.qos.workloads.model import OntapQosWorkload
+from pynetappfoundry.models.ontap.storage.qos.workloads.model import OntapQosWorkload
 
 __all__ = ["OntapQosWorkload"]

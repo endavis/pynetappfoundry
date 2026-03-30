@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.protocols.nfs.connected_clients.model import OntapNfsClients
+from pynetappfoundry.models.ontap.protocols.nfs.connected_clients.model import OntapNfsClients
 
 ONTAPNFSCLIENTS_MAPPING = TypeMapping(
     name="OntapNfsClients",

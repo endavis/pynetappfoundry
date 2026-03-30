@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.security.key_managers.auth_keys.model import OntapKeyManagerAuthKey
+from pynetappfoundry.models.ontap.security.key_managers.auth_keys.model import (
+    OntapKeyManagerAuthKey,
+)
 
 ONTAPKEYMANAGERAUTHKEY_MAPPING = TypeMapping(
     name="OntapKeyManagerAuthKey",

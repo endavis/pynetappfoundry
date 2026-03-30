@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.security.ssh.svms.model import OntapSvmSshServer
+from pynetappfoundry.models.ontap.security.ssh.svms.model import OntapSvmSshServer
 
 ONTAPSVMSSHSERVER_MAPPING = TypeMapping(
     name="OntapSvmSshServer",

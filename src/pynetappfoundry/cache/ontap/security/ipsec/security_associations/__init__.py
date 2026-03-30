@@ -1,6 +1,6 @@
 """OntapSecurityAssociationResponse cache model."""
 
-from pynetappfoundry.cache.ontap.security.ipsec.security_associations.model import (
+from pynetappfoundry.models.ontap.security.ipsec.security_associations.model import (
     OntapSecurityAssociationResponse,
 )
 

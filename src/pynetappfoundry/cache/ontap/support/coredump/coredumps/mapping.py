@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.support.coredump.coredumps.model import OntapCoredump
+from pynetappfoundry.models.ontap.support.coredump.coredumps.model import OntapCoredump
 
 ONTAPCOREDUMP_MAPPING = TypeMapping(
     name="OntapCoredump",

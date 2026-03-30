@@ -20,14 +20,14 @@ from pynetappfoundry.cache.diff import (
     compute_diff,
     format_diff_summary,
 )
-from pynetappfoundry.cache.ontap.cluster.mediators.model import OntapMediatorResponse
-from pynetappfoundry.cache.ontap.cluster.model import ClusterInfo
-from pynetappfoundry.cache.ontap.cluster.nodes.model import OntapNodeResponse
-from pynetappfoundry.cache.ontap.protocols.nfs.export_policies.model import OntapExportPolicy
-from pynetappfoundry.cache.ontap.snapmirror.relationships.model import (
+from pynetappfoundry.models.ontap.cluster.mediators.model import OntapMediatorResponse
+from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
+from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
+from pynetappfoundry.models.ontap.protocols.nfs.export_policies.model import OntapExportPolicy
+from pynetappfoundry.models.ontap.snapmirror.relationships.model import (
     OntapSnapmirrorRelationship,
 )
-from pynetappfoundry.cache.ontap.storage.aggregates.model import OntapAggregate
+from pynetappfoundry.models.ontap.storage.aggregates.model import OntapAggregate
 
 # ---------------------------------------------------------------------------
 # Constants — valid UUID strings for OntapUUID-validated fields
@@ -82,7 +82,7 @@ class TestGetEntities:
 
     def test_nested_list(self) -> None:
         """'storage.aggregates' resolves to metadata.storage.aggregates."""
-        from pynetappfoundry.cache.ontap.storage.model import StorageInfo
+        from pynetappfoundry.models.ontap.storage.model import StorageInfo
 
         aggr = _aggregate(UUID1, "aggr1")
         md = _make_metadata(storage=StorageInfo(aggregates=[aggr]))
@@ -301,7 +301,7 @@ class TestComputeDiff:
 
     def test_changes_across_categories(self) -> None:
         """Detects changes in storage and nodes simultaneously."""
-        from pynetappfoundry.cache.ontap.storage.model import StorageInfo
+        from pynetappfoundry.models.ontap.storage.model import StorageInfo
 
         before = _make_metadata(
             nodes=[_node(UUID1, "n1")],

@@ -1,6 +1,6 @@
 """OntapAutoUpdateConfiguration cache model."""
 
-from pynetappfoundry.cache.ontap.support.auto_update.configurations.model import (
+from pynetappfoundry.models.ontap.support.auto_update.configurations.model import (
     OntapAutoUpdateConfiguration,
 )
 

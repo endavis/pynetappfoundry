@@ -1,5 +1,5 @@
 """OntapQtree cache model."""
 
-from pynetappfoundry.cache.ontap.storage.qtrees.model import OntapQtree
+from pynetappfoundry.models.ontap.storage.qtrees.model import OntapQtree
 
 __all__ = ["OntapQtree"]

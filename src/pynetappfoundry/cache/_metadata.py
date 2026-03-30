@@ -1,7 +1,7 @@
-"""Cross-cutting metadata models — top-level container and relationships.
+"""Cross-cutting metadata models -- top-level container and relationships.
 
 These models don't map to a single ONTAP REST API URL path.
-CachedClusterMetadata is the root container (register=False).
+CachedClusterMetadata is the root container.
 """
 
 from __future__ import annotations
@@ -18,20 +18,20 @@ from pynetappfoundry.cache._base import (
     HasUUID,
     _utcnow,
 )
-from pynetappfoundry.cache.ontap.cloud.metadata.model import CloudMetadata
-from pynetappfoundry.cache.ontap.cluster.licensing.licenses.model import (
+from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
+from pynetappfoundry.models.ontap.cluster.licensing.licenses.model import (
     OntapLicensePackageResponse,
 )
-from pynetappfoundry.cache.ontap.cluster.mediators.model import OntapMediatorResponse
-from pynetappfoundry.cache.ontap.cluster.model import ClusterInfo
-from pynetappfoundry.cache.ontap.cluster.nodes.model import OntapNodeResponse
-from pynetappfoundry.cache.ontap.network.model import NetworkInfo
-from pynetappfoundry.cache.ontap.protocols.model import ProtocolsInfo
-from pynetappfoundry.cache.ontap.snapmirror.relationships.model import (
+from pynetappfoundry.models.ontap.cluster.mediators.model import OntapMediatorResponse
+from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
+from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
+from pynetappfoundry.models.ontap.network.model import NetworkInfo
+from pynetappfoundry.models.ontap.protocols.model import ProtocolsInfo
+from pynetappfoundry.models.ontap.snapmirror.relationships.model import (
     OntapSnapmirrorRelationship,
 )
-from pynetappfoundry.cache.ontap.storage.model import StorageInfo
-from pynetappfoundry.cache.ontap.svm.peers.model import OntapSvmPeer
+from pynetappfoundry.models.ontap.storage.model import StorageInfo
+from pynetappfoundry.models.ontap.svm.peers.model import OntapSvmPeer
 
 
 class RelationshipsInfo(CacheModel):
@@ -45,14 +45,14 @@ class RelationshipsInfo(CacheModel):
     svm_peers: list[OntapSvmPeer] = Field(default_factory=list)
 
 
-# Deferred import to avoid circular reference — OntapClusterPeer used above in a
+# Deferred import to avoid circular reference -- OntapClusterPeer used above in a
 # forward-reference string annotation, resolved here after the class body.
-from pynetappfoundry.cache.ontap.cluster.peers.model import OntapClusterPeer  # noqa: E402
+from pynetappfoundry.models.ontap.cluster.peers.model import OntapClusterPeer  # noqa: E402
 
 RelationshipsInfo.model_rebuild()
 
 
-class CachedClusterMetadata(CacheModel, register=False):
+class CachedClusterMetadata(CacheModel):
     """Complete cached metadata for a cluster.
 
     This is the top-level model containing all cached data categories.

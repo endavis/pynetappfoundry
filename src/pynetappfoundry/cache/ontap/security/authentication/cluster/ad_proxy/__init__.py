@@ -1,6 +1,6 @@
 """OntapClusterAdProxy cache model."""
 
-from pynetappfoundry.cache.ontap.security.authentication.cluster.ad_proxy.model import (
+from pynetappfoundry.models.ontap.security.authentication.cluster.ad_proxy.model import (
     OntapClusterAdProxy,
 )
 

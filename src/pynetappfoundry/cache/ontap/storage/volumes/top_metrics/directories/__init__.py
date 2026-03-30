@@ -1,6 +1,6 @@
 """OntapTopMetricsDirectory cache model."""
 
-from pynetappfoundry.cache.ontap.storage.volumes.top_metrics.directories.model import (
+from pynetappfoundry.models.ontap.storage.volumes.top_metrics.directories.model import (
     OntapTopMetricsDirectory,
 )
 

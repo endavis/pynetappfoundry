@@ -1,6 +1,6 @@
 """OntapPerformanceIscsiMetricResponse cache model."""
 
-from pynetappfoundry.cache.ontap.protocols.san.iscsi.services.metrics.model import (
+from pynetappfoundry.models.ontap.protocols.san.iscsi.services.metrics.model import (
     OntapPerformanceIscsiMetricResponse,
 )
 

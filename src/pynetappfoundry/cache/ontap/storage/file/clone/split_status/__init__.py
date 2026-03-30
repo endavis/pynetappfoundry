@@ -1,5 +1,5 @@
 """OntapSplitStatus cache model."""
 
-from pynetappfoundry.cache.ontap.storage.file.clone.split_status.model import OntapSplitStatus
+from pynetappfoundry.models.ontap.storage.file.clone.split_status.model import OntapSplitStatus
 
 __all__ = ["OntapSplitStatus"]

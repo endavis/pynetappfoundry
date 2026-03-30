@@ -1,6 +1,6 @@
 """OntapSnaplockLitigationFileResponse cache model."""
 
-from pynetappfoundry.cache.ontap.storage.snaplock.litigations.files.model import (
+from pynetappfoundry.models.ontap.storage.snaplock.litigations.files.model import (
     OntapSnaplockLitigationFileResponse,
 )
 

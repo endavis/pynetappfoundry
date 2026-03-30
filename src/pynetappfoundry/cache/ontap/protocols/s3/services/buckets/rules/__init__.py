@@ -1,6 +1,6 @@
 """OntapS3BucketLifecycleRule cache model."""
 
-from pynetappfoundry.cache.ontap.protocols.s3.services.buckets.rules.model import (
+from pynetappfoundry.models.ontap.protocols.s3.services.buckets.rules.model import (
     OntapS3BucketLifecycleRule,
 )
 

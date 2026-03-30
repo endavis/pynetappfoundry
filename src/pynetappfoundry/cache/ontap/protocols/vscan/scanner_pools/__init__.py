@@ -1,5 +1,5 @@
 """OntapVscanScannerPool cache model."""
 
-from pynetappfoundry.cache.ontap.protocols.vscan.scanner_pools.model import OntapVscanScannerPool
+from pynetappfoundry.models.ontap.protocols.vscan.scanner_pools.model import OntapVscanScannerPool
 
 __all__ = ["OntapVscanScannerPool"]
