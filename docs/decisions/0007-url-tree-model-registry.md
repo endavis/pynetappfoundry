@@ -10,11 +10,11 @@ Restructure the `cache/` module from a monolithic `models.py` (793 lines, 30+ Py
 
 ### Directory Structure
 
-Models live at `cache/<api-type>/<api-path>/model.py` and mappings at `cache/<api-type>/<api-path>/mapping.py`, namespaced by API type and mirroring the REST API URL hierarchy:
+Models live at `models/<api-type>/<api-path>/model.py` and mappings at `cache/<api-type>/<api-path>/mapping.py`, namespaced by API type and mirroring the REST API URL hierarchy:
 
-- `cache/ontap/storage/volumes/model.py` + `mapping.py` (maps to `/storage/volumes`)
-- `cache/ontap/cluster/nodes/model.py` + `mapping.py` (maps to `/cluster/nodes`)
-- `cache/ontap/protocols/nfs/services/model.py` (maps to `/protocols/nfs/services`)
+- `models/ontap/storage/volumes/model.py` + `cache/ontap/storage/volumes/mapping.py` (maps to `/storage/volumes`)
+- `models/ontap/cluster/nodes/model.py` + `cache/ontap/cluster/nodes/mapping.py` (maps to `/cluster/nodes`)
+- `models/ontap/protocols/nfs/services/model.py` (maps to `/protocols/nfs/services`)
 
 The `<api-type>` namespace (`ontap/`, `aiqum/`, etc.) prevents path collisions when multiple APIs share endpoint paths like `/cluster`.
 
@@ -63,13 +63,27 @@ Imports flow upward only (DAG guaranteed, no circular deps):
 
 5. **Scalability** - The three-layer hierarchy prevents circular imports by construction. New models slot in at Layer 2 with no risk of breaking the import DAG.
 
+## Amendments
+
+### Model/cache split (Issue #402)
+
+Model files (`model.py`) moved from `cache/ontap/` to a standalone `models/ontap/`
+package. Mapping files (`mapping.py`) remain under `cache/ontap/`. The directory
+tree still mirrors ONTAP REST API URL paths, and the three-layer import hierarchy
+is preserved -- `OntapModel` (formerly `CacheModel`) now lives in `models._base`
+with a `CacheModel = OntapModel` alias in `cache._base` for backward compatibility.
+Auto-registration via `__init_subclass__` was removed; model discovery uses the
+`ModelRegistry` singleton exclusively.
+
 ## Related Issues
 
 - Issue #257: refactor: deep URL-tree structure with automatic model and mapping discovery
 - Issue #295: refactor: align cache field names and containers with ONTAP API endpoint hierarchy
 - Issue #314: refactor: namespace cache models under api-type directories
+- Issue #402: refactor: move ONTAP API models from cache/ to models/ package
 
 ## Related Documentation
 
 - [Cache System Reference](../reference/cache.md)
+- [Cache Model Architecture](../development/cache-models.md)
 - [Field Mapping Framework Developer Guide](../development/field-mapping.md)

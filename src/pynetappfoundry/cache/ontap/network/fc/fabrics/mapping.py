@@ -6,7 +6,7 @@ from typing import Any
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.network.fc.fabrics.model import OntapFabric, OntapFabricConnection
+from pynetappfoundry.models.ontap.network.fc.fabrics.model import OntapFabric, OntapFabricConnection
 
 
 def _transform_connections(record: dict[str, Any]) -> list[OntapFabricConnection]:

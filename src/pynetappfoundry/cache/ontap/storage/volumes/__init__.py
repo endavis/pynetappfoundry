@@ -1,5 +1,5 @@
 """OntapVolume cache model."""
 
-from pynetappfoundry.cache.ontap.storage.volumes.model import OntapVolume
+from pynetappfoundry.models.ontap.storage.volumes.model import OntapVolume
 
 __all__ = ["OntapVolume"]

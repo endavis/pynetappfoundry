@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.storage.volumes.files.model import OntapFileInfo
+from pynetappfoundry.models.ontap.storage.volumes.files.model import OntapFileInfo
 
 ONTAPFILEINFO_MAPPING = TypeMapping(
     name="OntapFileInfo",

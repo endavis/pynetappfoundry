@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.support.ems.model import OntapEmsConfig
+from pynetappfoundry.models.ontap.support.ems.model import OntapEmsConfig
 
 ONTAPEMSCONFIG_MAPPING = TypeMapping(
     name="OntapEmsConfig",

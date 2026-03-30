@@ -6,7 +6,10 @@ from typing import Any
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.storage.quota.rules.model import OntapQuotaRule, OntapQuotaRuleUser
+from pynetappfoundry.models.ontap.storage.quota.rules.model import (
+    OntapQuotaRule,
+    OntapQuotaRuleUser,
+)
 
 
 def _transform_users(record: dict[str, Any]) -> list[OntapQuotaRuleUser]:

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.network.http_proxy.model import OntapNetworkHttpProxy
+from pynetappfoundry.models.ontap.network.http_proxy.model import OntapNetworkHttpProxy
 
 ONTAPNETWORKHTTPPROXY_MAPPING = TypeMapping(
     name="OntapNetworkHttpProxy",

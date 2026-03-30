@@ -1,5 +1,5 @@
 """OntapFcPort cache model."""
 
-from pynetappfoundry.cache.ontap.network.fc.ports.model import OntapFcPort
+from pynetappfoundry.models.ontap.network.fc.ports.model import OntapFcPort
 
 __all__ = ["OntapFcPort"]

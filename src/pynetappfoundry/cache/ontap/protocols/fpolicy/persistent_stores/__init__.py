@@ -1,6 +1,6 @@
 """OntapFpolicyPersistentStore cache model."""
 
-from pynetappfoundry.cache.ontap.protocols.fpolicy.persistent_stores.model import (
+from pynetappfoundry.models.ontap.protocols.fpolicy.persistent_stores.model import (
     OntapFpolicyPersistentStore,
 )
 

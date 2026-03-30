@@ -1,6 +1,6 @@
 """OntapSnapmirrorTransfer cache model."""
 
-from pynetappfoundry.cache.ontap.snapmirror.relationships.transfers.model import (
+from pynetappfoundry.models.ontap.snapmirror.relationships.transfers.model import (
     OntapSnapmirrorTransfer,
 )
 

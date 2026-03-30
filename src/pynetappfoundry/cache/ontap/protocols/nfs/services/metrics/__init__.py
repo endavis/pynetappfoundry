@@ -1,6 +1,6 @@
 """OntapPerformanceSvmNfsResponse cache model."""
 
-from pynetappfoundry.cache.ontap.protocols.nfs.services.metrics.model import (
+from pynetappfoundry.models.ontap.protocols.nfs.services.metrics.model import (
     OntapPerformanceSvmNfsResponse,
 )
 

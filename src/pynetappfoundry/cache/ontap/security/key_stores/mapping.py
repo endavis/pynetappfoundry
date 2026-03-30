@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.security.key_stores.model import OntapSecurityKeystore
+from pynetappfoundry.models.ontap.security.key_stores.model import OntapSecurityKeystore
 
 ONTAPSECURITYKEYSTORE_MAPPING = TypeMapping(
     name="OntapSecurityKeystore",

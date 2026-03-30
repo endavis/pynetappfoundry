@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.security.anti_ransomware.model import OntapAntiRansomware
+from pynetappfoundry.models.ontap.security.anti_ransomware.model import OntapAntiRansomware
 
 ONTAPANTIRANSOMWARE_MAPPING = TypeMapping(
     name="OntapAntiRansomware",

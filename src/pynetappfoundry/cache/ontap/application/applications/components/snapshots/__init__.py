@@ -1,6 +1,6 @@
 """OntapApplicationComponentSnapshot cache model."""
 
-from pynetappfoundry.cache.ontap.application.applications.components.snapshots.model import (
+from pynetappfoundry.models.ontap.application.applications.components.snapshots.model import (
     OntapApplicationComponentSnapshot,
 )
 

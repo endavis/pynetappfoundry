@@ -1,5 +1,5 @@
 """OntapStoragePort cache model."""
 
-from pynetappfoundry.cache.ontap.storage.ports.model import OntapStoragePort
+from pynetappfoundry.models.ontap.storage.ports.model import OntapStoragePort
 
 __all__ = ["OntapStoragePort"]

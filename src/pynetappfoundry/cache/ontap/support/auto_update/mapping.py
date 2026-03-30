@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.support.auto_update.model import OntapAutoUpdateInfo
+from pynetappfoundry.models.ontap.support.auto_update.model import OntapAutoUpdateInfo
 
 ONTAPAUTOUPDATEINFO_MAPPING = TypeMapping(
     name="OntapAutoUpdateInfo",

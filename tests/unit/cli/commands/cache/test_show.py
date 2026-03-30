@@ -11,9 +11,9 @@ from click.testing import CliRunner
 
 from pynetappfoundry.cache import CachedClusterMetadata
 from pynetappfoundry.cache.db import all_realtime_attrs
-from pynetappfoundry.cache.ontap.cloud.metadata.model import CloudMetadata
 from pynetappfoundry.cli.commands.cache.show import _strip_realtime_fields
 from pynetappfoundry.cli.main import nf
+from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
 
 
 class TestCacheShowCommand:

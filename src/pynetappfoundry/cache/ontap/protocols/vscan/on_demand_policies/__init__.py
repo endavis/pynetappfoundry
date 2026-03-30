@@ -1,5 +1,5 @@
 """OntapVscanOnDemand cache model."""
 
-from pynetappfoundry.cache.ontap.protocols.vscan.on_demand_policies.model import OntapVscanOnDemand
+from pynetappfoundry.models.ontap.protocols.vscan.on_demand_policies.model import OntapVscanOnDemand
 
 __all__ = ["OntapVscanOnDemand"]

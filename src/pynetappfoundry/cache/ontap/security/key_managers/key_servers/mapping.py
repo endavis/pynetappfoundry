@@ -6,7 +6,7 @@ from typing import Any
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.security.key_managers.key_servers.model import (
+from pynetappfoundry.models.ontap.security.key_managers.key_servers.model import (
     OntapKeyServer,
     OntapKeyServerNodeState,
     OntapKeyServerRecord,

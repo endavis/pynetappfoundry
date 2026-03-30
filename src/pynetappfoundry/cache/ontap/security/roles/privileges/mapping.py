@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.security.roles.privileges.model import OntapRolePrivilege
+from pynetappfoundry.models.ontap.security.roles.privileges.model import OntapRolePrivilege
 
 ONTAPROLEPRIVILEGE_MAPPING = TypeMapping(
     name="OntapRolePrivilege",

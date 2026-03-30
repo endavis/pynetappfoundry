@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.storage.flexcache.origins.model import OntapFlexcacheOrigin
+from pynetappfoundry.models.ontap.storage.flexcache.origins.model import OntapFlexcacheOrigin
 
 ONTAPFLEXCACHEORIGIN_MAPPING = TypeMapping(
     name="OntapFlexcacheOrigin",

@@ -1,6 +1,6 @@
 """OntapSnapshotPolicySchedule cache model."""
 
-from pynetappfoundry.cache.ontap.storage.snapshot_policies.schedules.model import (
+from pynetappfoundry.models.ontap.storage.snapshot_policies.schedules.model import (
     OntapSnapshotPolicySchedule,
 )
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.cluster.schedules.model import OntapSchedule
+from pynetappfoundry.models.ontap.cluster.schedules.model import OntapSchedule
 
 ONTAPSCHEDULE_MAPPING = TypeMapping(
     name="OntapSchedule",

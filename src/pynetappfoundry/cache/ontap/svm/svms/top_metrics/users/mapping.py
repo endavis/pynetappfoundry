@@ -6,7 +6,7 @@ from typing import Any
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.svm.svms.top_metrics.users.model import (
+from pynetappfoundry.models.ontap.svm.svms.top_metrics.users.model import (
     OntapTopMetricsSvmUser,
     OntapTopMetricsSvmUserVolume,
 )

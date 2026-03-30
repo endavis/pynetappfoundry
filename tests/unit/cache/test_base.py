@@ -1,4 +1,4 @@
-"""Tests for cache._base module — CacheModel, HasUUID, OntapUUID, schema utilities."""
+"""Tests for cache._base module -- CacheModel alias, HasUUID, OntapUUID, schema utilities."""
 
 from __future__ import annotations
 
@@ -16,7 +16,6 @@ from pynetappfoundry.cache._base import (
     is_schema_compatible,
     parse_schema_version,
 )
-from pynetappfoundry.cache._registry import model_registry
 
 # ---------------------------------------------------------------------------
 # Schema versioning
@@ -69,12 +68,18 @@ class TestUtcNow:
 
 
 # ---------------------------------------------------------------------------
-# CacheModel base class
+# CacheModel alias
 # ---------------------------------------------------------------------------
 
 
 class TestCacheModel:
-    """Tests for CacheModel base class behaviour."""
+    """Tests for CacheModel (alias of OntapModel) base class behaviour."""
+
+    def test_cache_model_is_ontap_model(self) -> None:
+        """CacheModel is an alias for OntapModel."""
+        from pynetappfoundry.models._base import OntapModel
+
+        assert CacheModel is OntapModel
 
     def test_extra_allow_inherited(self) -> None:
         """Subclasses inherit extra='allow' without declaring model_config."""
@@ -85,22 +90,6 @@ class TestCacheModel:
         obj = MyModel(name="test", unknown_field="hello")  # type: ignore[call-arg]
         assert obj.name == "test"
         assert obj.unknown_field == "hello"  # type: ignore[attr-defined]
-
-    def test_auto_registration(self) -> None:
-        """Defining a subclass auto-registers it in the model_registry."""
-
-        class AutoReg(CacheModel):
-            pass
-
-        assert model_registry.get_model("AutoReg") is AutoReg
-
-    def test_opt_out_registration(self) -> None:
-        """Passing register=False skips registration."""
-
-        class NoReg(CacheModel, register=False):
-            pass
-
-        assert model_registry.get_model("NoReg") is None
 
     def test_field_validator_works(self) -> None:
         """field_validator still works on CacheModel subclasses."""
@@ -127,18 +116,6 @@ class TestCacheModel:
         assert obj.x == 1
         with pytest.raises(ValidationError):
             Strict(x=1, bad="field")  # type: ignore[call-arg]
-
-    def test_register_does_not_inherit(self) -> None:
-        """register=False on parent does NOT propagate to children."""
-
-        class Parent(CacheModel, register=False):
-            pass
-
-        class Child(Parent):
-            pass
-
-        assert model_registry.get_model("Parent") is None
-        assert model_registry.get_model("Child") is Child
 
 
 # ---------------------------------------------------------------------------

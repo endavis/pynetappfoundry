@@ -1,6 +1,6 @@
 """OntapCapacityPoolResponse cache model."""
 
-from pynetappfoundry.cache.ontap.cluster.licensing.capacity_pools.model import (
+from pynetappfoundry.models.ontap.cluster.licensing.capacity_pools.model import (
     OntapCapacityPoolResponse,
 )
 

@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.cloud.metadata.model import CloudMetadata
+from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
 
 CLOUD_METADATA_MAPPING = TypeMapping(
     name="CloudMetadata",

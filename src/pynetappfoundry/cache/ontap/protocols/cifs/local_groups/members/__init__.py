@@ -1,6 +1,6 @@
 """OntapLocalCifsGroupMembers cache model."""
 
-from pynetappfoundry.cache.ontap.protocols.cifs.local_groups.members.model import (
+from pynetappfoundry.models.ontap.protocols.cifs.local_groups.members.model import (
     OntapLocalCifsGroupMembers,
 )
 

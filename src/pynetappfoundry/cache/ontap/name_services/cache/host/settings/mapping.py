@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.name_services.cache.host.settings.model import OntapHostsSettings
+from pynetappfoundry.models.ontap.name_services.cache.host.settings.model import OntapHostsSettings
 
 ONTAPHOSTSSETTINGS_MAPPING = TypeMapping(
     name="OntapHostsSettings",

@@ -1,6 +1,6 @@
 """OntapPerformanceS3MetricResponse cache model."""
 
-from pynetappfoundry.cache.ontap.protocols.s3.services.metrics.model import (
+from pynetappfoundry.models.ontap.protocols.s3.services.metrics.model import (
     OntapPerformanceS3MetricResponse,
 )
 

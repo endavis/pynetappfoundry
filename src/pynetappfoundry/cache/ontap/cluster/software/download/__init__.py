@@ -1,6 +1,6 @@
 """OntapSoftwarePackageDownloadGet cache model."""
 
-from pynetappfoundry.cache.ontap.cluster.software.download.model import (
+from pynetappfoundry.models.ontap.cluster.software.download.model import (
     OntapSoftwarePackageDownloadGet,
 )
 

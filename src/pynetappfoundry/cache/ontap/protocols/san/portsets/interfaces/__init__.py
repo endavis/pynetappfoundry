@@ -1,6 +1,6 @@
 """OntapPortsetInterface cache model."""
 
-from pynetappfoundry.cache.ontap.protocols.san.portsets.interfaces.model import (
+from pynetappfoundry.models.ontap.protocols.san.portsets.interfaces.model import (
     OntapPortsetInterface,
 )
 

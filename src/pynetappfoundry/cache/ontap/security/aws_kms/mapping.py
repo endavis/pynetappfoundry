@@ -6,7 +6,7 @@ from typing import Any
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.security.aws_kms.model import (
+from pynetappfoundry.models.ontap.security.aws_kms.model import (
     OntapAwsKms,
     OntapAwsKmsEkmipReachability,
 )

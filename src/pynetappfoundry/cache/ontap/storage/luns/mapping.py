@@ -6,7 +6,7 @@ from typing import Any
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.storage.luns.model import (
+from pynetappfoundry.models.ontap.storage.luns.model import (
     OntapLun,
     OntapLunArgument,
     OntapLunArgument2,

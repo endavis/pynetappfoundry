@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.storage.aggregates.cloud_stores.model import OntapCloudStore
+from pynetappfoundry.models.ontap.storage.aggregates.cloud_stores.model import OntapCloudStore
 
 ONTAPCLOUDSTORE_MAPPING = TypeMapping(
     name="OntapCloudStore",

@@ -1,5 +1,5 @@
 """OntapAutosupport cache model."""
 
-from pynetappfoundry.cache.ontap.support.autosupport.model import OntapAutosupport
+from pynetappfoundry.models.ontap.support.autosupport.model import OntapAutosupport
 
 __all__ = ["OntapAutosupport"]

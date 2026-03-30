@@ -1,5 +1,5 @@
 """OntapApplicationTemplate cache model."""
 
-from pynetappfoundry.cache.ontap.application.templates.model import OntapApplicationTemplate
+from pynetappfoundry.models.ontap.application.templates.model import OntapApplicationTemplate
 
 __all__ = ["OntapApplicationTemplate"]

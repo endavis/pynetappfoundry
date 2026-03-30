@@ -1,6 +1,6 @@
 """OntapConfigurationBackupFile cache model."""
 
-from pynetappfoundry.cache.ontap.support.configuration_backup.backups.model import (
+from pynetappfoundry.models.ontap.support.configuration_backup.backups.model import (
     OntapConfigurationBackupFile,
 )
 

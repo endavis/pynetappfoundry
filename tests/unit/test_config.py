@@ -869,7 +869,7 @@ class TestClusterEntryWrapping:
 
         from pynetappfoundry.cache import CachedClusterMetadata
         from pynetappfoundry.cache.db import ClusterMetadataDB
-        from pynetappfoundry.cache.ontap.cloud.metadata.model import CloudMetadata
+        from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
 
         original_cwd = os.getcwd()
         os.chdir(tmp_path)

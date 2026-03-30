@@ -10,7 +10,7 @@ from typing import Any
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.cluster.model import ClusterInfo
+from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
 
 
 def compute_is_ha(cluster: ClusterInfo, results: dict[str, Any]) -> ClusterInfo:

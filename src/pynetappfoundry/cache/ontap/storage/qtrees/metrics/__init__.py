@@ -1,6 +1,6 @@
 """OntapPerformanceQtreeMetricResponse cache model."""
 
-from pynetappfoundry.cache.ontap.storage.qtrees.metrics.model import (
+from pynetappfoundry.models.ontap.storage.qtrees.metrics.model import (
     OntapPerformanceQtreeMetricResponse,
 )
 

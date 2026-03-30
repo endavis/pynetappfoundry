@@ -6,7 +6,7 @@ from typing import Any
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.network.fc.logins.model import OntapFcLogin, OntapFcLoginIgroup
+from pynetappfoundry.models.ontap.network.fc.logins.model import OntapFcLogin, OntapFcLoginIgroup
 
 
 def _transform_igroups(record: dict[str, Any]) -> list[OntapFcLoginIgroup]:

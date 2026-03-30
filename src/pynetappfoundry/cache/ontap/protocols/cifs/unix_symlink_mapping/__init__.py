@@ -1,6 +1,6 @@
 """OntapCifsSymlinkMapping cache model."""
 
-from pynetappfoundry.cache.ontap.protocols.cifs.unix_symlink_mapping.model import (
+from pynetappfoundry.models.ontap.protocols.cifs.unix_symlink_mapping.model import (
     OntapCifsSymlinkMapping,
 )
 

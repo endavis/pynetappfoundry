@@ -22,20 +22,20 @@ from typing import TYPE_CHECKING, Any, get_args, get_origin
 from pydantic import BaseModel
 
 from pynetappfoundry.cache._base import CacheModel
-from pynetappfoundry.cache.ontap.cloud.metadata.model import CloudMetadata
-from pynetappfoundry.cache.ontap.cluster.licensing.licenses.model import (
+from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
+from pynetappfoundry.models.ontap.cluster.licensing.licenses.model import (
     OntapLicensePackageResponse,
 )
-from pynetappfoundry.cache.ontap.cluster.model import ClusterInfo
-from pynetappfoundry.cache.ontap.name_services.dns.model import OntapDns
-from pynetappfoundry.cache.ontap.protocols.cifs.services.model import OntapCifsService
-from pynetappfoundry.cache.ontap.protocols.cifs.shares.model import OntapCifsShare
-from pynetappfoundry.cache.ontap.protocols.nfs.export_policies.model import OntapExportPolicy
-from pynetappfoundry.cache.ontap.protocols.nfs.services.model import OntapNfsService
-from pynetappfoundry.cache.ontap.snapmirror.relationships.model import (
+from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
+from pynetappfoundry.models.ontap.name_services.dns.model import OntapDns
+from pynetappfoundry.models.ontap.protocols.cifs.services.model import OntapCifsService
+from pynetappfoundry.models.ontap.protocols.cifs.shares.model import OntapCifsShare
+from pynetappfoundry.models.ontap.protocols.nfs.export_policies.model import OntapExportPolicy
+from pynetappfoundry.models.ontap.protocols.nfs.services.model import OntapNfsService
+from pynetappfoundry.models.ontap.snapmirror.relationships.model import (
     OntapSnapmirrorRelationship,
 )
-from pynetappfoundry.cache.ontap.storage.qtrees.model import OntapQtree
+from pynetappfoundry.models.ontap.storage.qtrees.model import OntapQtree
 
 if TYPE_CHECKING:
     from pynetappfoundry.cache._metadata import CachedClusterMetadata
@@ -462,7 +462,7 @@ def _diff_mediator_info(
     Returns:
         List of change dictionaries.
     """
-    from pynetappfoundry.cache.ontap.cluster.mediators.model import OntapMediatorResponse
+    from pynetappfoundry.models.ontap.cluster.mediators.model import OntapMediatorResponse
 
     changes: list[dict[str, Any]] = []
     category = "mediator"

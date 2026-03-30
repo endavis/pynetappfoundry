@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.security.webauthn.global_settings.model import OntapWebauthnGlobal
+from pynetappfoundry.models.ontap.security.webauthn.global_settings.model import OntapWebauthnGlobal
 
 ONTAPWEBAUTHNGLOBAL_MAPPING = TypeMapping(
     name="OntapWebauthnGlobal",

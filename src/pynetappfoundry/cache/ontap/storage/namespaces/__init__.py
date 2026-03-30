@@ -1,5 +1,5 @@
 """OntapNvmeNamespace cache model."""
 
-from pynetappfoundry.cache.ontap.storage.namespaces.model import OntapNvmeNamespace
+from pynetappfoundry.models.ontap.storage.namespaces.model import OntapNvmeNamespace
 
 __all__ = ["OntapNvmeNamespace"]

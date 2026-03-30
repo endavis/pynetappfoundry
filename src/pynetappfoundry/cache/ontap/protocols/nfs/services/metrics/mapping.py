@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.protocols.nfs.services.metrics.model import (
+from pynetappfoundry.models.ontap.protocols.nfs.services.metrics.model import (
     OntapPerformanceSvmNfsResponse,
 )
 

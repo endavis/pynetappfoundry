@@ -1,6 +1,6 @@
 """OntapPoliciesAndRulesToBeApplied cache model."""
 
-from pynetappfoundry.cache.ontap.protocols.cifs.group_policies.model import (
+from pynetappfoundry.models.ontap.protocols.cifs.group_policies.model import (
     OntapPoliciesAndRulesToBeApplied,
 )
 

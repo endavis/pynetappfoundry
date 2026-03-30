@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.protocols.fpolicy.persistent_stores.model import (
+from pynetappfoundry.models.ontap.protocols.fpolicy.persistent_stores.model import (
     OntapFpolicyPersistentStore,
 )
 

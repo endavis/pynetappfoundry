@@ -1,6 +1,6 @@
 """OntapGroupMembershipSettings cache model."""
 
-from pynetappfoundry.cache.ontap.name_services.cache.group_membership.settings.model import (
+from pynetappfoundry.models.ontap.name_services.cache.group_membership.settings.model import (
     OntapGroupMembershipSettings,
 )
 

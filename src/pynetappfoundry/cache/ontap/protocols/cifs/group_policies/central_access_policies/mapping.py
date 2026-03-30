@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.protocols.cifs.group_policies.central_access_policies.model import (
+from pynetappfoundry.models.ontap.protocols.cifs.group_policies.central_access_policies.model import (
     OntapGroupPolicyObjectCentralAccessPolicy,
 )
 

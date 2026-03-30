@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.application.applications.components.snapshots.model import (
+from pynetappfoundry.models.ontap.application.applications.components.snapshots.model import (
     OntapApplicationComponentSnapshot,
 )
 

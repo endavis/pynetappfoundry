@@ -1,5 +1,5 @@
 """OntapIgroup cache model."""
 
-from pynetappfoundry.cache.ontap.protocols.san.igroups.model import OntapIgroup
+from pynetappfoundry.models.ontap.protocols.san.igroups.model import OntapIgroup
 
 __all__ = ["OntapIgroup"]

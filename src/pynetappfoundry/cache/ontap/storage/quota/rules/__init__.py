@@ -1,5 +1,5 @@
 """OntapQuotaRule cache model."""
 
-from pynetappfoundry.cache.ontap.storage.quota.rules.model import OntapQuotaRule
+from pynetappfoundry.models.ontap.storage.quota.rules.model import OntapQuotaRule
 
 __all__ = ["OntapQuotaRule"]

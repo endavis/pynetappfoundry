@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.cluster.ntp.servers.model import OntapNtpServer
+from pynetappfoundry.models.ontap.cluster.ntp.servers.model import OntapNtpServer
 
 ONTAPNTPSERVER_MAPPING = TypeMapping(
     name="OntapNtpServer",

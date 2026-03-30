@@ -1,6 +1,6 @@
 """OntapAntiRansomwareSuspect cache model."""
 
-from pynetappfoundry.cache.ontap.security.anti_ransomware.suspects.model import (
+from pynetappfoundry.models.ontap.security.anti_ransomware.suspects.model import (
     OntapAntiRansomwareSuspect,
 )
 

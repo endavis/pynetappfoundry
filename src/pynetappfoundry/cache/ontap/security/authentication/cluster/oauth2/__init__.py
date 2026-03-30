@@ -1,6 +1,6 @@
 """OntapSecurityOauth2Global cache model."""
 
-from pynetappfoundry.cache.ontap.security.authentication.cluster.oauth2.model import (
+from pynetappfoundry.models.ontap.security.authentication.cluster.oauth2.model import (
     OntapSecurityOauth2Global,
 )
 

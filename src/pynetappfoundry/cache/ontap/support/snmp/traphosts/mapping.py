@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.support.snmp.traphosts.model import OntapSnmpTraphost
+from pynetappfoundry.models.ontap.support.snmp.traphosts.model import OntapSnmpTraphost
 
 ONTAPSNMPTRAPHOST_MAPPING = TypeMapping(
     name="OntapSnmpTraphost",

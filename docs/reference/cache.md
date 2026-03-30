@@ -270,7 +270,7 @@ Update `METADATA_SCHEMA_VERSION` when modifying `CachedClusterMetadata`:
 
 When modifying the cache schema:
 
-1. **Update the model** in the appropriate `src/pynetappfoundry/cache/<api-type>/<api-path>/model.py` file
+1. **Update the model** in the appropriate `src/pynetappfoundry/models/<api-type>/<api-path>/model.py` file
 
 2. **Update version constant**:
    ```python
@@ -468,18 +468,18 @@ from pynetappfoundry.cache import (
     is_schema_compatible,
 )
 
-# Models (import from their URL-tree sub-package)
-from pynetappfoundry.cache.ontap.cloud.metadata import CloudMetadata
-from pynetappfoundry.cache.ontap.cluster import ClusterInfo
-from pynetappfoundry.cache.ontap.cluster.mediators import MediatorInfo
-from pynetappfoundry.cache.ontap.cluster.nodes import NodeInfo
-from pynetappfoundry.cache.ontap.cluster.peers import ClusterPeer
-from pynetappfoundry.cache.ontap.network import NetworkInfo
-from pynetappfoundry.cache.ontap.network.ip.interfaces import NetworkLIF
-from pynetappfoundry.cache.ontap.storage import StorageInfo
-from pynetappfoundry.cache.ontap.storage.aggregates import AggregateInfo
-from pynetappfoundry.cache.ontap.storage.volumes import VolumeInfo
-# ... etc. — see URL-tree structure for all model paths
+# Models (import from models/ or via cache re-exports)
+from pynetappfoundry.models.ontap.cloud.metadata import CloudMetadata
+from pynetappfoundry.models.ontap.cluster import ClusterInfo
+from pynetappfoundry.models.ontap.cluster.mediators import MediatorInfo
+from pynetappfoundry.models.ontap.cluster.nodes import NodeInfo
+from pynetappfoundry.models.ontap.cluster.peers import ClusterPeer
+from pynetappfoundry.models.ontap.network import NetworkInfo
+from pynetappfoundry.models.ontap.network.ip.interfaces import NetworkLIF
+from pynetappfoundry.models.ontap.storage import StorageInfo
+from pynetappfoundry.models.ontap.storage.aggregates import AggregateInfo
+from pynetappfoundry.models.ontap.storage.volumes import VolumeInfo
+# ... etc. — see models/ontap/ URL-tree structure for all model paths
 ```
 
 ### ClusterMetadataDB

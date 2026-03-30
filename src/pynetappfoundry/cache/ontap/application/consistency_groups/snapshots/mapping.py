@@ -7,7 +7,7 @@ from typing import Any
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.application.consistency_groups.snapshots.model import (
+from pynetappfoundry.models.ontap.application.consistency_groups.snapshots.model import (
     OntapConsistencyGroupSnapshotResponse,
     OntapConsistencyGroupSnapshotResponseLun,
     OntapConsistencyGroupSnapshotResponseMissingLun,

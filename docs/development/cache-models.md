@@ -148,13 +148,16 @@ doit generate_models --api=ontap --dry-run
 
 ### What Gets Generated
 
-For each GET endpoint with a response schema, the codegen produces four files
-under `src/pynetappfoundry/cache/<api-type>/`:
+For each GET endpoint with a response schema, the codegen produces files
+split between `src/pynetappfoundry/models/<api-type>/` (model classes) and
+`src/pynetappfoundry/cache/<api-type>/` (mappings, init, TOML overlays):
 
-#### `model.py` — Pydantic Model
+#### `model.py` — Pydantic Model (in `models/<api-type>/`)
 
 ```python
-class OntapVolume(CacheModel):
+from pynetappfoundry.models import OntapModel
+
+class OntapVolume(OntapModel):
     """OntapVolume information."""
 
     name: str = ""
@@ -166,6 +169,7 @@ class OntapVolume(CacheModel):
     # ... all fields from the API schema
 ```
 
+- Model files live under `models/<api-type>/`, not `cache/<api-type>/`
 - Flat structure: nested API objects are flattened with underscore-joined names
   (e.g., `svm.name` → `svm_name`)
 - UUID fields use `OntapUUID` validated type
@@ -206,11 +210,11 @@ ONTAPVOLUME_MAPPING = TypeMapping(
 - Sub-model fields use `transform` functions instead of `api_path`
 - `requires_explicit_fetch=True` marks ONTAP expensive fields
 
-#### `__init__.py` — Package Exports
+#### `__init__.py` — Package Exports (in `cache/<api-type>/`)
 
 ```python
 from pynetappfoundry.cache.ontap.storage.volumes.mapping import ONTAPVOLUME_MAPPING
-from pynetappfoundry.cache.ontap.storage.volumes.model import OntapVolume
+from pynetappfoundry.models.ontap.storage.volumes.model import OntapVolume
 
 __all__ = ["ONTAPVOLUME_MAPPING", "OntapVolume"]
 ```
@@ -239,33 +243,44 @@ See [Field Strategies](#field-strategies) below.
 
 ### Directory Structure
 
-Models follow the API URL path hierarchy (ADR-0007):
+Models and mappings follow the API URL path hierarchy (ADR-0007), split
+across two packages:
 
 ```
-src/pynetappfoundry/cache/
+src/pynetappfoundry/models/          ← Model classes (OntapModel subclasses)
+├── _base.py                         ← OntapModel, OntapUUID, HasUUID
+├── __init__.py
+└── ontap/
+    ├── storage/
+    │   ├── volumes/
+    │   │   └── model.py
+    │   ├── aggregates/
+    │   └── snapshot_policies/
+    ├── cluster/
+    │   ├── nodes/
+    │   └── schedules/
+    ├── protocols/
+    │   ├── nfs/
+    │   │   ├── services/
+    │   │   └── export_policies/
+    │   └── cifs/
+    └── network/
+        ├── ip/
+        │   └── interfaces/
+        └── ethernet/
+            └── broadcast_domains/
+
+src/pynetappfoundry/cache/           ← Mappings, registration, DB, collector
 ├── ontap/
 │   ├── storage/
 │   │   ├── volumes/
-│   │   │   ├── model.py
 │   │   │   ├── mapping.py
 │   │   │   ├── __init__.py
 │   │   │   └── volumes.toml
 │   │   ├── aggregates/
 │   │   └── snapshot_policies/
-│   ├── cluster/
-│   │   ├── nodes/
-│   │   └── schedules/
-│   ├── protocols/
-│   │   ├── nfs/
-│   │   │   ├── services/
-│   │   │   └── export_policies/
-│   │   └── cifs/
-│   └── network/
-│       ├── ip/
-│       │   └── interfaces/
-│       └── ethernet/
-│           └── broadcast_domains/
-├── _base.py
+│   └── ...
+├── _base.py                         ← CacheModel = OntapModel alias, schema versioning
 ├── _registry.py
 ├── field_mapping.py
 └── ...
@@ -523,14 +538,9 @@ and make individual API calls."
 
 ### Model Registration
 
-Every `CacheModel` subclass is automatically registered in the `ModelRegistry`
-singleton when its class is defined (via `CacheModel.__init_subclass__`):
-
-```python
-class OntapVolume(CacheModel):
-    ...
-# OntapVolume is now in model_registry._models["OntapVolume"]
-```
+Models are registered in the `ModelRegistry` singleton via explicit
+`register_model()` calls in each cache `__init__.py`, not via
+`__init_subclass__`.
 
 ### Mapping Registration
 
@@ -542,24 +552,25 @@ model_registry.register_mapping("OntapVolume", ONTAPVOLUME_MAPPING)
 
 ### Import Chain
 
-The `__init__.py` chain triggers all imports, so registration happens
-automatically when the `cache` package is imported:
+The `__init__.py` chain in `cache/` triggers model and mapping imports,
+so registration happens automatically when the `cache` package is imported:
 
 ```
 cache/__init__.py
   → cache/ontap/storage/__init__.py
     → cache/ontap/storage/volumes/__init__.py
-      → imports model.py (registers OntapVolume)
-      → imports mapping.py (registers ONTAPVOLUME_MAPPING)
+      → imports models.ontap.storage.volumes.model (OntapVolume)
+      → imports cache.ontap.storage.volumes.mapping (ONTAPVOLUME_MAPPING)
+      → registers both via model_registry
 ```
 
 ### Three-Layer Import Hierarchy
 
 Imports flow upward only (DAG, no circular deps):
 
-1. **Layer 1**: `_base.py` (CacheModel, OntapUUID) and `_registry.py` (ModelRegistry)
-2. **Layer 2**: Leaf `model.py` files (import only from `_base.py`)
-3. **Layer 3**: Container models, `_metadata.py` (import leaf models)
+1. **Layer 1**: `models._base` (OntapModel, OntapUUID, HasUUID) and `cache._registry` (ModelRegistry)
+2. **Layer 2**: Leaf `model.py` files in `models/ontap/` (import only from `models._base`)
+3. **Layer 3**: Container models in `cache/`, `_metadata.py` (import leaf models from `models/`)
 
 ---
 
@@ -708,8 +719,9 @@ doit check
 | `tools/codegen/expensive_fields.py` | Parse ONTAP expensive field annotations |
 | `tools/codegen/openapi_codegen.py` | CLI entry point and pipeline orchestration |
 | `tools/doit/codegen.py` | `doit` task wrappers for fetch, convert, generate |
+| `src/.../models/_base.py` | `OntapModel` base class, `OntapUUID` type, `HasUUID` protocol |
 | `src/.../cache/field_mapping.py` | `FieldMapping`, `TypeMapping`, generic parsers |
-| `src/.../cache/_base.py` | `CacheModel` base class, `OntapUUID` type |
+| `src/.../cache/_base.py` | `CacheModel` alias for `OntapModel`, schema versioning |
 | `src/.../cache/_registry.py` | `ModelRegistry` singleton |
 | `src/.../cache/db_schema.py` | DDL generation from Pydantic models |
 | `src/.../cache/db.py` | `ClusterMetadataDB` — SQLite storage layer |

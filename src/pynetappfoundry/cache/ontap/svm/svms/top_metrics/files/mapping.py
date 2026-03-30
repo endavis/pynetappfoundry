@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.svm.svms.top_metrics.files.model import OntapTopMetricsSvmFile
+from pynetappfoundry.models.ontap.svm.svms.top_metrics.files.model import OntapTopMetricsSvmFile
 
 ONTAPTOPMETRICSSVMFILE_MAPPING = TypeMapping(
     name="OntapTopMetricsSvmFile",

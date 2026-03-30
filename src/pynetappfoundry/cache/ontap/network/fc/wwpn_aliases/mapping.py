@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.network.fc.wwpn_aliases.model import OntapWwpnAlias
+from pynetappfoundry.models.ontap.network.fc.wwpn_aliases.model import OntapWwpnAlias
 
 ONTAPWWPNALIAS_MAPPING = TypeMapping(
     name="OntapWwpnAlias",

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.storage.qos.workloads.model import OntapQosWorkload
+from pynetappfoundry.models.ontap.storage.qos.workloads.model import OntapQosWorkload
 
 ONTAPQOSWORKLOAD_MAPPING = TypeMapping(
     name="OntapQosWorkload",

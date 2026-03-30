@@ -1,6 +1,6 @@
 """OntapKerberosInterface cache model."""
 
-from pynetappfoundry.cache.ontap.protocols.nfs.kerberos.interfaces.model import (
+from pynetappfoundry.models.ontap.protocols.nfs.kerberos.interfaces.model import (
     OntapKerberosInterface,
 )
 

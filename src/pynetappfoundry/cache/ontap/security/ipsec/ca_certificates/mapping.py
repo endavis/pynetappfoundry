@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.security.ipsec.ca_certificates.model import OntapIpsecCaCertificate
+from pynetappfoundry.models.ontap.security.ipsec.ca_certificates.model import (
+    OntapIpsecCaCertificate,
+)
 
 ONTAPIPSECCACERTIFICATE_MAPPING = TypeMapping(
     name="OntapIpsecCaCertificate",
