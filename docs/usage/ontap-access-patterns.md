@@ -19,13 +19,87 @@ pynetappfoundry provides three different ways to interact with ONTAP clusters. E
 
 | Pattern | Connection | Best For |
 |---------|------------|----------|
+| `QuerySet` + `Mutation` | HTTPS REST | Type-safe ONTAP queries and writes with model attribute translation |
 | `netapp_ontap` SDK | HTTPS REST | Structured data retrieval, reports, typed objects |
 | `ONTAPCLI` | SSH | Ad-hoc CLI commands, operations not in REST API |
 | `APIWrapper` | HTTPS REST | Custom queries, OpenAPI-based workflows, DII integration |
 
 ## Pattern Details
 
-### 1. netapp_ontap SDK (Recommended for Most Tasks)
+### 1. QuerySet + Mutation (Recommended for New Code)
+
+pynetappfoundry's native query and mutation layer uses the project's own Pydantic models (`OntapModel` subclasses) with declarative field mappings. `QuerySet` handles reads, `Mutation` handles writes.
+
+**When to Use:**
+
+- Querying ONTAP resources with type-safe filtering
+- Creating, updating, or deleting ONTAP resources
+- When you want model attribute names (e.g., `svm_name`) instead of raw API paths (`svm.name`)
+- Building automation that leverages the project's config-driven connections
+
+**Advantages:**
+
+- Fluent, chainable query API with field projection, ordering, and limits
+- Automatic translation between model attributes and API field paths
+- Write operations build nested JSON from flat kwargs
+- Retry safety — POST disables retry (non-idempotent), PATCH/DELETE use default retry
+- Type-safe Pydantic model instances as return values
+- Works with any registered `TypeMapping` (296 ONTAP resource types)
+
+**Limitations:**
+
+- Requires the model's `TypeMapping` to be registered (import its mapping module)
+- Async job tracking not yet built in (returns raw 202 responses)
+- Parameterized endpoints (child resources) not yet supported
+
+**Example Usage:**
+
+```python
+from pynetappfoundry.clients.ontap.api import ONTAPAPIClient
+from pynetappfoundry.query import QuerySet, Mutation
+from pynetappfoundry.models.ontap.storage.volumes import OntapVolume
+
+# Setup client from config
+client = ONTAPAPIClient(cluster, config)
+
+# Query: list online volumes for an SVM
+vols = (QuerySet(OntapVolume, client)
+    .filter(svm_name="vs1", state="online")
+    .fields("name", "uuid", "size")
+    .order_by("name")
+    .limit(50)
+    .all())
+
+# Query: get a single volume
+vol = QuerySet(OntapVolume, client).get(uuid="abc-123-def")
+
+# Query: count matching resources
+count = QuerySet(OntapVolume, client).filter(state="online").count()
+
+# Query: iterate with wildcards
+for vol in QuerySet(OntapVolume, client).filter(name="*_backup"):
+    print(vol.name)
+
+# Create a volume
+result = Mutation(OntapVolume, client).create(
+    name="vol1",
+    svm_name="vs1",
+    size=1073741824,
+)
+
+# Update a volume
+result = Mutation(OntapVolume, client).update(
+    uuid="abc-123-def",
+    size=2147483648,
+)
+
+# Delete a volume
+Mutation(OntapVolume, client).delete(uuid="abc-123-def")
+```
+
+---
+
+### 2. netapp_ontap SDK
 
 NetApp's official Python SDK provides ORM-like objects for ONTAP resources. This is the **preferred pattern** for most operations.
 
@@ -265,14 +339,16 @@ Use this matrix to choose the right pattern:
 
 | Scenario | Recommended Pattern | Reason |
 |----------|---------------------|--------|
-| Generate a report | `netapp_ontap` SDK | Typed objects, pagination handling |
-| List volumes/aggregates | `netapp_ontap` SDK | Clean API, well-documented |
+| Query ONTAP resources | `QuerySet` | Type-safe filtering, model attribute translation |
+| Create/update/delete resources | `Mutation` | Nested JSON from flat attrs, retry safety |
+| List volumes/aggregates | `QuerySet` | Fluent API, field projection, pagination |
+| Bulk data export | `QuerySet` | Handles pagination, typed results |
+| Generate a report | `netapp_ontap` SDK | Typed objects, well-documented |
 | Check license status | `netapp_ontap` SDK | LicensePackage resource available |
 | Run CLI-only command | `ONTAPCLI` | No REST equivalent |
 | Debug cluster issue | `ONTAPCLI` | Full CLI access |
 | Query DII metrics | `APIWrapper` | DII uses different API |
 | Custom REST endpoint | `APIWrapper` | Flexible, schema-validated |
-| Bulk data export | `netapp_ontap` SDK | Handles pagination |
 | Interactive troubleshooting | `ONTAPCLI` | Familiar CLI interface |
 
 ## Configuration Flow
