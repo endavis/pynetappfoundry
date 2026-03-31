@@ -13,7 +13,7 @@ from typing import Any
 try:
     import tomllib
 except ModuleNotFoundError:  # pragma: no cover - Python < 3.11
-    import tomli as tomllib  # type: ignore[no-redef]
+    import tomli as tomllib  # type: ignore[no-redef,import-not-found]
 
 import tomli_w
 
@@ -433,7 +433,8 @@ def generate_model(endpoint: ParsedEndpoint, api_type: str = "ontap") -> str:
         else:
             seen_attrs: set[str] = set()
             for sf in sub_leaves:
-                attr = _safe_attr_name(sf.api_path.replace(".", "_").replace("-", "_"))
+                leaf = sf.api_path.rsplit(".", 1)[-1]
+                attr = _safe_attr_name(leaf.replace("-", "_"))
                 # Deduplicate: if attr already seen, skip
                 if attr in seen_attrs:
                     continue

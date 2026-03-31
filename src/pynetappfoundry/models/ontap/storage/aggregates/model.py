@@ -10,50 +10,50 @@ from pynetappfoundry.models._base import OntapModel
 class OntapAggregateSimulatedRaidGroup(OntapModel):
     """OntapAggregateSimulatedRaidGroup sub-model for simulated_raid_groups."""
 
-    block_storage_hybrid_cache_simulated_raid_groups_added_data_disk_count: int = 0
-    block_storage_hybrid_cache_simulated_raid_groups_added_parity_disk_count: int = 0
-    block_storage_hybrid_cache_simulated_raid_groups_existing_data_disk_count: int = 0
-    block_storage_hybrid_cache_simulated_raid_groups_existing_parity_disk_count: int = 0
-    block_storage_hybrid_cache_simulated_raid_groups_is_partition: bool = False
-    block_storage_hybrid_cache_simulated_raid_groups_name: str = ""
-    block_storage_hybrid_cache_simulated_raid_groups_usable_size: int = 0
+    added_data_disk_count: int = 0
+    added_parity_disk_count: int = 0
+    existing_data_disk_count: int = 0
+    existing_parity_disk_count: int = 0
+    is_partition: bool = False
+    name: str = ""
+    usable_size: int = 0
 
 
 class OntapAggregateStoragePool(OntapModel):
     """OntapAggregateStoragePool sub-model for storage_pools."""
 
-    block_storage_hybrid_cache_storage_pools_allocation_units_count: int = 0
-    block_storage_hybrid_cache_storage_pools_storage_pool_name: str = ""
-    block_storage_hybrid_cache_storage_pools_storage_pool_uuid: str = ""
+    allocation_units_count: int = 0
+    storage_pool_name: str = ""
+    storage_pool_uuid: str = ""
 
 
 class OntapAggregatePlex(OntapModel):
     """OntapAggregatePlex sub-model for plexes."""
 
-    block_storage_plexes_name: str = ""
+    name: str = ""
 
 
 class OntapAggregateSimulatedRaidGroup2(OntapModel):
     """OntapAggregateSimulatedRaidGroup2 sub-model for simulated_raid_groups."""
 
-    block_storage_primary_simulated_raid_groups_added_data_disk_count: int = 0
-    block_storage_primary_simulated_raid_groups_added_parity_disk_count: int = 0
-    block_storage_primary_simulated_raid_groups_data_disk_count: int = 0
-    block_storage_primary_simulated_raid_groups_existing_data_disk_count: int = 0
-    block_storage_primary_simulated_raid_groups_existing_parity_disk_count: int = 0
-    block_storage_primary_simulated_raid_groups_is_partition: bool = False
-    block_storage_primary_simulated_raid_groups_name: str = ""
-    block_storage_primary_simulated_raid_groups_parity_disk_count: int = 0
-    block_storage_primary_simulated_raid_groups_raid_type: str = ""
-    block_storage_primary_simulated_raid_groups_usable_size: int = 0
+    added_data_disk_count: int = 0
+    added_parity_disk_count: int = 0
+    data_disk_count: int = 0
+    existing_data_disk_count: int = 0
+    existing_parity_disk_count: int = 0
+    is_partition: bool = False
+    name: str = ""
+    parity_disk_count: int = 0
+    raid_type: str = ""
+    usable_size: int = 0
 
 
 class OntapAggregateStore(OntapModel):
     """OntapAggregateStore sub-model for stores."""
 
-    cloud_storage_stores_cloud_store_name: str = ""
-    cloud_storage_stores_cloud_store_uuid: str = ""
-    cloud_storage_stores_used: int = 0
+    cloud_store_name: str = ""
+    cloud_store_uuid: str = ""
+    used: int = 0
 
 
 class OntapAggregate(OntapModel):

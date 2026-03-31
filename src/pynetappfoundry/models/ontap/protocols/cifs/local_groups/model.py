@@ -10,7 +10,7 @@ from pynetappfoundry.models._base import OntapModel
 class OntapLocalCifsGroupMember(OntapModel):
     """OntapLocalCifsGroupMember sub-model for members."""
 
-    members_name: str = ""
+    name: str = ""
 
 
 class OntapLocalCifsGroup(OntapModel):

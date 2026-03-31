@@ -12,65 +12,63 @@ from pynetappfoundry.models._base import OntapModel
 class OntapIgroupAlert(OntapModel):
     """OntapIgroupAlert sub-model for alerts."""
 
-    connectivity_tracking_alerts_summary_arguments: list[dict[str, Any]] = Field(
-        default_factory=list
-    )
-    connectivity_tracking_alerts_summary_code: str = ""
-    connectivity_tracking_alerts_summary_message: str = ""
+    summary_arguments: list[dict[str, Any]] = Field(default_factory=list)
+    summary_code: str = ""
+    summary_message: str = ""
 
 
 class OntapIgroupRequiredNode(OntapModel):
     """OntapIgroupRequiredNode sub-model for required_nodes."""
 
-    connectivity_tracking_required_nodes_name: str = ""
-    connectivity_tracking_required_nodes_uuid: str = ""
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapIgroupIgroup(OntapModel):
     """OntapIgroupIgroup sub-model for igroups."""
 
-    igroups_comment: str = ""
-    igroups_igroups: list[dict[str, Any]] = Field(default_factory=list)
-    igroups_name: str = ""
-    igroups_uuid: str = ""
+    comment: str = ""
+    igroups: list[dict[str, Any]] = Field(default_factory=list)
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapIgroupInitiator(OntapModel):
     """OntapIgroupInitiator sub-model for initiators."""
 
-    initiators_comment: str = ""
-    initiators_connectivity_tracking_connection_state: str = ""
-    initiators_igroup_name: str = ""
-    initiators_igroup_uuid: str = ""
-    initiators_name: str = ""
-    initiators_proximity_local_svm: bool = False
-    initiators_proximity_peer_svms: list[dict[str, Any]] = Field(default_factory=list)
+    comment: str = ""
+    connectivity_tracking_connection_state: str = ""
+    igroup_name: str = ""
+    igroup_uuid: str = ""
+    name: str = ""
+    proximity_local_svm: bool = False
+    proximity_peer_svms: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class OntapIgroupLunMap(OntapModel):
     """OntapIgroupLunMap sub-model for lun_maps."""
 
-    lun_maps_logical_unit_number: int = 0
-    lun_maps_lun_name: str = ""
-    lun_maps_lun_node_name: str = ""
-    lun_maps_lun_node_uuid: str = ""
-    lun_maps_lun_uuid: str = ""
+    logical_unit_number: int = 0
+    lun_name: str = ""
+    lun_node_name: str = ""
+    lun_node_uuid: str = ""
+    lun_uuid: str = ""
 
 
 class OntapIgroupParentIgroup(OntapModel):
     """OntapIgroupParentIgroup sub-model for parent_igroups."""
 
-    parent_igroups_comment: str = ""
-    parent_igroups_name: str = ""
-    parent_igroups_parent_igroups: list[dict[str, Any]] = Field(default_factory=list)
-    parent_igroups_uuid: str = ""
+    comment: str = ""
+    name: str = ""
+    parent_igroups: list[dict[str, Any]] = Field(default_factory=list)
+    uuid: str = ""
 
 
 class OntapIgroupArgument(OntapModel):
     """OntapIgroupArgument sub-model for arguments."""
 
-    replication_error_summary_arguments_code: str = ""
-    replication_error_summary_arguments_message: str = ""
+    code: str = ""
+    message: str = ""
 
 
 class OntapIgroup(OntapModel):

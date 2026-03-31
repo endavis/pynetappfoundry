@@ -10,12 +10,12 @@ from pynetappfoundry.models._base import OntapModel
 class OntapFabricConnection(OntapModel):
     """OntapFabricConnection sub-model for connections."""
 
-    connections_cluster_port_name: str = ""
-    connections_cluster_port_node_name: str = ""
-    connections_cluster_port_uuid: str = ""
-    connections_cluster_port_wwpn: str = ""
-    connections_switch_port_wwpn: str = ""
-    connections_switch_wwn: str = ""
+    cluster_port_name: str = ""
+    cluster_port_node_name: str = ""
+    cluster_port_uuid: str = ""
+    cluster_port_wwpn: str = ""
+    switch_port_wwpn: str = ""
+    switch_wwn: str = ""
 
 
 class OntapFabric(OntapModel):

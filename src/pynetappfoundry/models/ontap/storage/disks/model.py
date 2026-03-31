@@ -12,38 +12,38 @@ from pynetappfoundry.models._base import OntapModel
 class OntapDiskAggregate(OntapModel):
     """OntapDiskAggregate sub-model for aggregates."""
 
-    aggregates_name: str = ""
-    aggregates_uuid: str = ""
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapDiskError(OntapModel):
     """OntapDiskError sub-model for error."""
 
-    error_reason_arguments: list[dict[str, Any]] = Field(default_factory=list)
-    error_reason_code: str = ""
-    error_reason_message: str = ""
-    error_type: str = ""
+    reason_arguments: list[dict[str, Any]] = Field(default_factory=list)
+    reason_code: str = ""
+    reason_message: str = ""
+    type: str = ""
 
 
 class OntapDiskArgument(OntapModel):
     """OntapDiskArgument sub-model for arguments."""
 
-    outage_reason_arguments_code: str = ""
-    outage_reason_arguments_message: str = ""
+    code: str = ""
+    message: str = ""
 
 
 class OntapDiskPath(OntapModel):
     """OntapDiskPath sub-model for paths."""
 
-    paths_disk_path_name: str = ""
-    paths_initiator: str = ""
-    paths_node_name: str = ""
-    paths_node_uuid: str = ""
-    paths_port_name: str = ""
-    paths_port_type: str = ""
-    paths_vmdisk_hypervisor_file_name: str = ""
-    paths_wwnn: str = ""
-    paths_wwpn: str = ""
+    disk_path_name: str = ""
+    initiator: str = ""
+    node_name: str = ""
+    node_uuid: str = ""
+    port_name: str = ""
+    port_type: str = ""
+    vmdisk_hypervisor_file_name: str = ""
+    wwnn: str = ""
+    wwpn: str = ""
 
 
 class OntapDisk(OntapModel):

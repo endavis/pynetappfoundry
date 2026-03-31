@@ -12,17 +12,17 @@ from pynetappfoundry.models._base import OntapModel
 class OntapEmsDestinationResponseError(OntapModel):
     """OntapEmsDestinationResponseError sub-model for errors."""
 
-    connectivity_errors_message_arguments: list[dict[str, Any]] = Field(default_factory=list)
-    connectivity_errors_message_code: str = ""
-    connectivity_errors_message_message: str = ""
-    connectivity_errors_node_name: str = ""
-    connectivity_errors_node_uuid: str = ""
+    message_arguments: list[dict[str, Any]] = Field(default_factory=list)
+    message_code: str = ""
+    message_message: str = ""
+    node_name: str = ""
+    node_uuid: str = ""
 
 
 class OntapEmsDestinationResponseFilter(OntapModel):
     """OntapEmsDestinationResponseFilter sub-model for filters."""
 
-    filters_name: str = ""
+    name: str = ""
 
 
 class OntapEmsDestinationResponse(OntapModel):

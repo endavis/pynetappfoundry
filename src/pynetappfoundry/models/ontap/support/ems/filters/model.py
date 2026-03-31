@@ -10,8 +10,8 @@ from pynetappfoundry.models._base import OntapModel
 class OntapEmsFilterParameterCriteria(OntapModel):
     """OntapEmsFilterParameterCriteria sub-model for parameter_criteria."""
 
-    parameter_criteria_name_pattern: str = ""
-    parameter_criteria_value_pattern: str = ""
+    name_pattern: str = ""
+    value_pattern: str = ""
 
 
 class OntapEmsFilter(OntapModel):

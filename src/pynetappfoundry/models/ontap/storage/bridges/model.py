@@ -12,78 +12,78 @@ from pynetappfoundry.models._base import OntapModel
 class OntapStorageBridgeError(OntapModel):
     """OntapStorageBridgeError sub-model for errors."""
 
-    errors_component_id: int = 0
-    errors_component_name: str = ""
-    errors_component_unique_id: str = ""
-    errors_reason_arguments: list[dict[str, Any]] = Field(default_factory=list)
-    errors_reason_code: str = ""
-    errors_reason_message: str = ""
-    errors_severity: str = ""
-    errors_type: str = ""
+    component_id: int = 0
+    component_name: str = ""
+    component_unique_id: str = ""
+    reason_arguments: list[dict[str, Any]] = Field(default_factory=list)
+    reason_code: str = ""
+    reason_message: str = ""
+    severity: str = ""
+    type: str = ""
 
 
 class OntapStorageBridgeFcPort(OntapModel):
     """OntapStorageBridgeFcPort sub-model for fc_ports."""
 
-    fc_ports_configured_data_rate: float = 0.0
-    fc_ports_connection_mode: str = ""
-    fc_ports_data_rate_capability: float = 0.0
-    fc_ports_enabled: bool = False
-    fc_ports_id: int = 0
-    fc_ports_negotiated_data_rate: float = 0.0
-    fc_ports_peer_wwn: str = ""
-    fc_ports_sfp_data_rate_capability: float = 0.0
-    fc_ports_sfp_part_number: str = ""
-    fc_ports_sfp_serial_number: str = ""
-    fc_ports_sfp_vendor: str = ""
-    fc_ports_state: str = ""
-    fc_ports_wwn: str = ""
+    configured_data_rate: float = 0.0
+    connection_mode: str = ""
+    data_rate_capability: float = 0.0
+    enabled: bool = False
+    id: int = 0
+    negotiated_data_rate: float = 0.0
+    peer_wwn: str = ""
+    sfp_data_rate_capability: float = 0.0
+    sfp_part_number: str = ""
+    sfp_serial_number: str = ""
+    sfp_vendor: str = ""
+    state: str = ""
+    wwn: str = ""
 
 
 class OntapStorageBridgeArgument(OntapModel):
     """OntapStorageBridgeArgument sub-model for arguments."""
 
-    last_reboot_reason_arguments_code: str = ""
-    last_reboot_reason_arguments_message: str = ""
+    code: str = ""
+    message: str = ""
 
 
 class OntapStorageBridgePath(OntapModel):
     """OntapStorageBridgePath sub-model for paths."""
 
-    paths_name: str = ""
-    paths_node_name: str = ""
-    paths_node_uuid: str = ""
-    paths_source_port_id: str = ""
-    paths_source_port_name: str = ""
-    paths_target_port_id: str = ""
-    paths_target_port_name: str = ""
-    paths_target_port_wwn: str = ""
+    name: str = ""
+    node_name: str = ""
+    node_uuid: str = ""
+    source_port_id: str = ""
+    source_port_name: str = ""
+    target_port_id: str = ""
+    target_port_name: str = ""
+    target_port_wwn: str = ""
 
 
 class OntapStorageBridgePowerSupplyUnit(OntapModel):
     """OntapStorageBridgePowerSupplyUnit sub-model for power_supply_units."""
 
-    power_supply_units_name: str = ""
-    power_supply_units_state: str = ""
+    name: str = ""
+    state: str = ""
 
 
 class OntapStorageBridgeSasPort(OntapModel):
     """OntapStorageBridgeSasPort sub-model for sas_ports."""
 
-    sas_ports_cable_part_number: str = ""
-    sas_ports_cable_serial_number: str = ""
-    sas_ports_cable_technology: str = ""
-    sas_ports_cable_vendor: str = ""
-    sas_ports_data_rate_capability: float = 0.0
-    sas_ports_enabled: bool = False
-    sas_ports_id: int = 0
-    sas_ports_negotiated_data_rate: float = 0.0
-    sas_ports_phy_1_state: str = ""
-    sas_ports_phy_2_state: str = ""
-    sas_ports_phy_3_state: str = ""
-    sas_ports_phy_4_state: str = ""
-    sas_ports_state: str = ""
-    sas_ports_wwn: str = ""
+    cable_part_number: str = ""
+    cable_serial_number: str = ""
+    cable_technology: str = ""
+    cable_vendor: str = ""
+    data_rate_capability: float = 0.0
+    enabled: bool = False
+    id: int = 0
+    negotiated_data_rate: float = 0.0
+    phy_1_state: str = ""
+    phy_2_state: str = ""
+    phy_3_state: str = ""
+    phy_4_state: str = ""
+    state: str = ""
+    wwn: str = ""
 
 
 class OntapStorageBridge(OntapModel):

@@ -10,12 +10,12 @@ from pynetappfoundry.models._base import OntapModel
 class OntapFcSwitchPort(OntapModel):
     """OntapFcSwitchPort sub-model for ports."""
 
-    ports_attached_device_port_id: str = ""
-    ports_attached_device_wwpn: str = ""
-    ports_slot: str = ""
-    ports_state: str = ""
-    ports_type: str = ""
-    ports_wwpn: str = ""
+    attached_device_port_id: str = ""
+    attached_device_wwpn: str = ""
+    slot: str = ""
+    state: str = ""
+    type: str = ""
+    wwpn: str = ""
 
 
 class OntapFcSwitch(OntapModel):

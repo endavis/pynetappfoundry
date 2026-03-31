@@ -10,10 +10,10 @@ from pynetappfoundry.models._base import OntapModel
 class OntapDnsStatus(OntapModel):
     """OntapDnsStatus sub-model for status."""
 
-    status_code: int = 0
-    status_message: str = ""
-    status_name_server: str = ""
-    status_state: str = ""
+    code: int = 0
+    message: str = ""
+    name_server: str = ""
+    state: str = ""
 
 
 class OntapDns(OntapModel):

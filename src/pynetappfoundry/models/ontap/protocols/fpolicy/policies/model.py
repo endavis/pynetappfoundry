@@ -10,7 +10,7 @@ from pynetappfoundry.models._base import OntapModel
 class OntapFpolicyPolicyEvent(OntapModel):
     """OntapFpolicyPolicyEvent sub-model for events."""
 
-    events_name: str = ""
+    name: str = ""
 
 
 class OntapFpolicyPolicy(OntapModel):

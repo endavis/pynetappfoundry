@@ -10,8 +10,8 @@ from pynetappfoundry.models._base import OntapModel
 class OntapTopMetricsSvmUserVolume(OntapModel):
     """OntapTopMetricsSvmUserVolume sub-model for volumes."""
 
-    volumes_name: str = ""
-    volumes_uuid: str = ""
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapTopMetricsSvmUser(OntapModel):

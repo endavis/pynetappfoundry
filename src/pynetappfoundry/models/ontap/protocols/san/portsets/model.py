@@ -10,20 +10,20 @@ from pynetappfoundry.models._base import OntapModel
 class OntapPortsetIgroup(OntapModel):
     """OntapPortsetIgroup sub-model for igroups."""
 
-    igroups_name: str = ""
-    igroups_uuid: str = ""
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapPortsetInterface(OntapModel):
     """OntapPortsetInterface sub-model for interfaces."""
 
-    interfaces_fc_name: str = ""
-    interfaces_fc_uuid: str = ""
-    interfaces_fc_wwpn: str = ""
-    interfaces_ip_ip_address: str = ""
-    interfaces_ip_name: str = ""
-    interfaces_ip_uuid: str = ""
-    interfaces_uuid: str = ""
+    fc_name: str = ""
+    fc_uuid: str = ""
+    fc_wwpn: str = ""
+    ip_ip_address: str = ""
+    ip_name: str = ""
+    ip_uuid: str = ""
+    uuid: str = ""
 
 
 class OntapPortset(OntapModel):

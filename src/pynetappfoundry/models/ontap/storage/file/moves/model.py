@@ -10,28 +10,28 @@ from pynetappfoundry.models._base import OntapModel
 class OntapFileMoveArgument(OntapModel):
     """OntapFileMoveArgument sub-model for arguments."""
 
-    failure_arguments_code: str = ""
-    failure_arguments_message: str = ""
+    code: str = ""
+    message: str = ""
 
 
 class OntapFileMoveDestination(OntapModel):
     """OntapFileMoveDestination sub-model for destinations."""
 
-    files_to_move_destinations_path: str = ""
-    files_to_move_destinations_svm_name: str = ""
-    files_to_move_destinations_svm_uuid: str = ""
-    files_to_move_destinations_volume_name: str = ""
-    files_to_move_destinations_volume_uuid: str = ""
+    path: str = ""
+    svm_name: str = ""
+    svm_uuid: str = ""
+    volume_name: str = ""
+    volume_uuid: str = ""
 
 
 class OntapFileMoveSource(OntapModel):
     """OntapFileMoveSource sub-model for sources."""
 
-    files_to_move_sources_path: str = ""
-    files_to_move_sources_svm_name: str = ""
-    files_to_move_sources_svm_uuid: str = ""
-    files_to_move_sources_volume_name: str = ""
-    files_to_move_sources_volume_uuid: str = ""
+    path: str = ""
+    svm_name: str = ""
+    svm_uuid: str = ""
+    volume_name: str = ""
+    volume_uuid: str = ""
 
 
 class OntapFileMove(OntapModel):

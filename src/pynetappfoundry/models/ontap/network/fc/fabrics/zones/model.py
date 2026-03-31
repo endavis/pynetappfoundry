@@ -10,8 +10,8 @@ from pynetappfoundry.models._base import OntapModel
 class OntapFcZoneMember(OntapModel):
     """OntapFcZoneMember sub-model for members."""
 
-    members_name: str = ""
-    members_type: str = ""
+    name: str = ""
+    type: str = ""
 
 
 class OntapFcZone(OntapModel):

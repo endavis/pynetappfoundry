@@ -12,27 +12,27 @@ from pynetappfoundry.models._base import OntapModel
 class OntapChassisFru(OntapModel):
     """OntapChassisFru sub-model for frus."""
 
-    frus_id: str = ""
-    frus_state: str = ""
-    frus_type: str = ""
+    id: str = ""
+    state: str = ""
+    type: str = ""
 
 
 class OntapChassisNode(OntapModel):
     """OntapChassisNode sub-model for nodes."""
 
-    nodes_name: str = ""
-    nodes_pcis_cards: list[dict[str, Any]] = Field(default_factory=list)
-    nodes_position: str = ""
-    nodes_usbs_enabled: bool = False
-    nodes_usbs_ports: list[dict[str, Any]] = Field(default_factory=list)
-    nodes_usbs_supported: bool = False
-    nodes_uuid: str = ""
+    name: str = ""
+    pcis_cards: list[dict[str, Any]] = Field(default_factory=list)
+    position: str = ""
+    usbs_enabled: bool = False
+    usbs_ports: list[dict[str, Any]] = Field(default_factory=list)
+    usbs_supported: bool = False
+    uuid: str = ""
 
 
 class OntapChassisShelve(OntapModel):
     """OntapChassisShelve sub-model for shelves."""
 
-    shelves_uid: str = ""
+    uid: str = ""
 
 
 class OntapChassis(OntapModel):

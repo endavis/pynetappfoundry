@@ -10,14 +10,14 @@ from pynetappfoundry.models._base import OntapModel, OntapUUID
 class OntapSnapmirrorPolicyRetention(OntapModel):
     """OntapSnapmirrorPolicyRetention sub-model for retention."""
 
-    retention_count: int = 0
-    retention_creation_schedule_name: str = ""
-    retention_creation_schedule_uuid: str = ""
-    retention_label: str = ""
-    retention_period: str = ""
-    retention_prefix: str = ""
-    retention_preserve: bool = False
-    retention_warn: int = 0
+    count: int = 0
+    creation_schedule_name: str = ""
+    creation_schedule_uuid: str = ""
+    label: str = ""
+    period: str = ""
+    prefix: str = ""
+    preserve: bool = False
+    warn: int = 0
 
 
 class OntapSnapmirrorPolicy(OntapModel):

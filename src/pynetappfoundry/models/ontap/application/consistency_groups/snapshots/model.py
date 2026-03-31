@@ -10,45 +10,45 @@ from pynetappfoundry.models._base import OntapModel
 class OntapConsistencyGroupSnapshotResponseLun(OntapModel):
     """OntapConsistencyGroupSnapshotResponseLun sub-model for luns."""
 
-    luns_name: str = ""
-    luns_uuid: str = ""
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapConsistencyGroupSnapshotResponseMissingLun(OntapModel):
     """OntapConsistencyGroupSnapshotResponseMissingLun sub-model for missing_luns."""
 
-    missing_luns_name: str = ""
-    missing_luns_uuid: str = ""
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapConsistencyGroupSnapshotResponseMissingNamespace(OntapModel):
     """OntapConsistencyGroupSnapshotResponseMissingNamespace sub-model for missing_namespaces."""
 
-    missing_namespaces_name: str = ""
-    missing_namespaces_uuid: str = ""
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapConsistencyGroupSnapshotResponseMissingVolume(OntapModel):
     """OntapConsistencyGroupSnapshotResponseMissingVolume sub-model for missing_volumes."""
 
-    missing_volumes_name: str = ""
-    missing_volumes_uuid: str = ""
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapConsistencyGroupSnapshotResponseNamespace(OntapModel):
     """OntapConsistencyGroupSnapshotResponseNamespace sub-model for namespaces."""
 
-    namespaces_name: str = ""
-    namespaces_uuid: str = ""
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapConsistencyGroupSnapshotResponseSnapshotVolume(OntapModel):
     """OntapConsistencyGroupSnapshotResponseSnapshotVolume sub-model for snapshot_volumes."""
 
-    snapshot_volumes_snapshot_name: str = ""
-    snapshot_volumes_snapshot_uuid: str = ""
-    snapshot_volumes_volume_name: str = ""
-    snapshot_volumes_volume_uuid: str = ""
+    snapshot_name: str = ""
+    snapshot_uuid: str = ""
+    volume_name: str = ""
+    volume_uuid: str = ""
 
 
 class OntapConsistencyGroupSnapshotResponse(OntapModel):

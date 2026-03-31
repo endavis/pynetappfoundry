@@ -10,8 +10,8 @@ from pynetappfoundry.models._base import OntapModel, OntapUUID
 class OntapJobArgument(OntapModel):
     """OntapJobArgument sub-model for arguments."""
 
-    error_arguments_code: str = ""
-    error_arguments_message: str = ""
+    code: str = ""
+    message: str = ""
 
 
 class OntapJob(OntapModel):

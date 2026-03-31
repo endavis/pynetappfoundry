@@ -10,8 +10,8 @@ from pynetappfoundry.models._base import OntapModel
 class OntapLocalCifsUserMembership(OntapModel):
     """OntapLocalCifsUserMembership sub-model for membership."""
 
-    membership_name: str = ""
-    membership_sid: str = ""
+    name: str = ""
+    sid: str = ""
 
 
 class OntapLocalCifsUser(OntapModel):

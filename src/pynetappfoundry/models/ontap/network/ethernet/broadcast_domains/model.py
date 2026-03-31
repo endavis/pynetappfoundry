@@ -10,9 +10,9 @@ from pynetappfoundry.models._base import OntapModel
 class OntapBroadcastDomainPort(OntapModel):
     """OntapBroadcastDomainPort sub-model for ports."""
 
-    ports_name: str = ""
-    ports_node_name: str = ""
-    ports_uuid: str = ""
+    name: str = ""
+    node_name: str = ""
+    uuid: str = ""
 
 
 class OntapBroadcastDomain(OntapModel):

@@ -10,9 +10,9 @@ from pynetappfoundry.models._base import OntapModel
 class OntapRolePrivilege(OntapModel):
     """OntapRolePrivilege sub-model for privileges."""
 
-    privileges_access: str = ""
-    privileges_path: str = ""
-    privileges_query: str = ""
+    access: str = ""
+    path: str = ""
+    query: str = ""
 
 
 class OntapRole(OntapModel):

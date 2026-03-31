@@ -10,18 +10,18 @@ from pynetappfoundry.models._base import OntapModel
 class OntapLicensePackageResponseLicense(OntapModel):
     """OntapLicensePackageResponseLicense sub-model for licenses."""
 
-    licenses_active: bool = False
-    licenses_capacity_maximum_size: int = 0
-    licenses_capacity_used_size: int = 0
-    licenses_compliance_state: str = ""
-    licenses_evaluation: bool = False
-    licenses_expiry_time: str = ""
-    licenses_host_id: str = ""
-    licenses_installed_license: str = ""
-    licenses_owner: str = ""
-    licenses_serial_number: str = ""
-    licenses_shutdown_imminent: bool = False
-    licenses_start_time: str = ""
+    active: bool = False
+    capacity_maximum_size: int = 0
+    capacity_used_size: int = 0
+    compliance_state: str = ""
+    evaluation: bool = False
+    expiry_time: str = ""
+    host_id: str = ""
+    installed_license: str = ""
+    owner: str = ""
+    serial_number: str = ""
+    shutdown_imminent: bool = False
+    start_time: str = ""
 
 
 class OntapLicensePackageResponse(OntapModel):

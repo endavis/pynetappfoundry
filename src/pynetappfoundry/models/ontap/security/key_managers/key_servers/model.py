@@ -12,20 +12,20 @@ from pynetappfoundry.models._base import OntapModel
 class OntapKeyServerNodeState(OntapModel):
     """OntapKeyServerNodeState sub-model for node_states."""
 
-    connectivity_node_states_node_name: str = ""
-    connectivity_node_states_node_uuid: str = ""
-    connectivity_node_states_state: str = ""
+    node_name: str = ""
+    node_uuid: str = ""
+    state: str = ""
 
 
 class OntapKeyServerRecord(OntapModel):
     """OntapKeyServerRecord sub-model for records."""
 
-    records_connectivity_cluster_availability: bool = False
-    records_connectivity_node_states: list[dict[str, Any]] = Field(default_factory=list)
-    records_password: str = ""
-    records_server: str = ""
-    records_timeout: int = 0
-    records_username: str = ""
+    connectivity_cluster_availability: bool = False
+    connectivity_node_states: list[dict[str, Any]] = Field(default_factory=list)
+    password: str = ""
+    server: str = ""
+    timeout: int = 0
+    username: str = ""
 
 
 class OntapKeyServer(OntapModel):

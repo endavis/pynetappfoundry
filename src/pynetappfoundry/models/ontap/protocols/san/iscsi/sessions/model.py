@@ -10,21 +10,21 @@ from pynetappfoundry.models._base import OntapModel
 class OntapIscsiSessionConnection(OntapModel):
     """OntapIscsiSessionConnection sub-model for connections."""
 
-    connections_authentication_type: str = ""
-    connections_cid: int = 0
-    connections_initiator_address_address: str = ""
-    connections_initiator_address_port: int = 0
-    connections_interface_ip_address: str = ""
-    connections_interface_ip_port: int = 0
-    connections_interface_name: str = ""
-    connections_interface_uuid: str = ""
+    authentication_type: str = ""
+    cid: int = 0
+    initiator_address_address: str = ""
+    initiator_address_port: int = 0
+    interface_ip_address: str = ""
+    interface_ip_port: int = 0
+    interface_name: str = ""
+    interface_uuid: str = ""
 
 
 class OntapIscsiSessionIgroup(OntapModel):
     """OntapIscsiSessionIgroup sub-model for igroups."""
 
-    igroups_name: str = ""
-    igroups_uuid: str = ""
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapIscsiSession(OntapModel):

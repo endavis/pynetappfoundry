@@ -10,8 +10,8 @@ from pynetappfoundry.models._base import OntapModel
 class OntapNetbiosWinsServer(OntapModel):
     """OntapNetbiosWinsServer sub-model for wins_servers."""
 
-    wins_servers_ip: str = ""
-    wins_servers_state: str = ""
+    ip: str = ""
+    state: str = ""
 
 
 class OntapNetbios(OntapModel):

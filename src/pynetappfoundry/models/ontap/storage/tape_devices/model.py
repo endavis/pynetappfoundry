@@ -10,16 +10,16 @@ from pynetappfoundry.models._base import OntapModel
 class OntapTapeDeviceAlias(OntapModel):
     """OntapTapeDeviceAlias sub-model for aliases."""
 
-    aliases_mapping: str = ""
-    aliases_name: str = ""
+    mapping: str = ""
+    name: str = ""
 
 
 class OntapTapeDeviceDeviceName(OntapModel):
     """OntapTapeDeviceDeviceName sub-model for device_names."""
 
-    device_names_no_rewind_device: str = ""
-    device_names_rewind_device: str = ""
-    device_names_unload_reload_device: str = ""
+    no_rewind_device: str = ""
+    rewind_device: str = ""
+    unload_reload_device: str = ""
 
 
 class OntapTapeDevice(OntapModel):

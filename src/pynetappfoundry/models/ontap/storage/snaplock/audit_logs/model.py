@@ -10,10 +10,10 @@ from pynetappfoundry.models._base import OntapModel
 class OntapSnaplockLogLogFile(OntapModel):
     """OntapSnaplockLogLogFile sub-model for log_files."""
 
-    log_files_base_name: str = ""
-    log_files_expiry_time: str = ""
-    log_files_path: str = ""
-    log_files_size: int = 0
+    base_name: str = ""
+    expiry_time: str = ""
+    path: str = ""
+    size: int = 0
 
 
 class OntapSnaplockLog(OntapModel):

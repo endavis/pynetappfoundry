@@ -10,21 +10,21 @@ from pynetappfoundry.models._base import OntapModel
 class OntapActiveDirectoryDiscoveredServer(OntapModel):
     """OntapActiveDirectoryDiscoveredServer sub-model for discovered_servers."""
 
-    discovered_servers_domain: str = ""
-    discovered_servers_node_name: str = ""
-    discovered_servers_node_uuid: str = ""
-    discovered_servers_preference: str = ""
-    discovered_servers_server_ip: str = ""
-    discovered_servers_server_name: str = ""
-    discovered_servers_server_type: str = ""
-    discovered_servers_state: str = ""
+    domain: str = ""
+    node_name: str = ""
+    node_uuid: str = ""
+    preference: str = ""
+    server_ip: str = ""
+    server_name: str = ""
+    server_type: str = ""
+    state: str = ""
 
 
 class OntapActiveDirectoryPreferredDc(OntapModel):
     """OntapActiveDirectoryPreferredDc sub-model for preferred_dcs."""
 
-    preferred_dcs_fqdn: str = ""
-    preferred_dcs_server_ip: str = ""
+    fqdn: str = ""
+    server_ip: str = ""
 
 
 class OntapActiveDirectory(OntapModel):

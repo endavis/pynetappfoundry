@@ -10,8 +10,8 @@ from pynetappfoundry.models._base import OntapModel
 class OntapIgroupNestedRecord(OntapModel):
     """OntapIgroupNestedRecord sub-model for records."""
 
-    records_name: str = ""
-    records_uuid: str = ""
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapIgroupNested(OntapModel):

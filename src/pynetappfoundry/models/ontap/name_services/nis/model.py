@@ -10,9 +10,9 @@ from pynetappfoundry.models._base import OntapModel
 class OntapNisServiceBindingDetail(OntapModel):
     """OntapNisServiceBindingDetail sub-model for binding_details."""
 
-    binding_details_server: str = ""
-    binding_details_status_code: str = ""
-    binding_details_status_message: str = ""
+    server: str = ""
+    status_code: str = ""
+    status_message: str = ""
 
 
 class OntapNisService(OntapModel):

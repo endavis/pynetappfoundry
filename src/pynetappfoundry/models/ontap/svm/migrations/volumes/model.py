@@ -10,8 +10,8 @@ from pynetappfoundry.models._base import OntapModel
 class OntapSvmMigrationVolumeError(OntapModel):
     """OntapSvmMigrationVolumeError sub-model for errors."""
 
-    errors_code: str = ""
-    errors_message: str = ""
+    code: str = ""
+    message: str = ""
 
 
 class OntapSvmMigrationVolume(OntapModel):

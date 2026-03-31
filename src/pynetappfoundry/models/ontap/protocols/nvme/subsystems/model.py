@@ -10,24 +10,24 @@ from pynetappfoundry.models._base import OntapModel
 class OntapNvmeSubsystemHost(OntapModel):
     """OntapNvmeSubsystemHost sub-model for hosts."""
 
-    hosts_dh_hmac_chap_controller_secret_key: str = ""
-    hosts_dh_hmac_chap_group_size: str = ""
-    hosts_dh_hmac_chap_hash_function: str = ""
-    hosts_dh_hmac_chap_host_secret_key: str = ""
-    hosts_dh_hmac_chap_mode: str = ""
-    hosts_nqn: str = ""
-    hosts_priority: str = ""
-    hosts_tls_configured_psk: str = ""
-    hosts_tls_key_type: str = ""
+    dh_hmac_chap_controller_secret_key: str = ""
+    dh_hmac_chap_group_size: str = ""
+    dh_hmac_chap_hash_function: str = ""
+    dh_hmac_chap_host_secret_key: str = ""
+    dh_hmac_chap_mode: str = ""
+    nqn: str = ""
+    priority: str = ""
+    tls_configured_psk: str = ""
+    tls_key_type: str = ""
 
 
 class OntapNvmeSubsystemSubsystemMap(OntapModel):
     """OntapNvmeSubsystemSubsystemMap sub-model for subsystem_maps."""
 
-    subsystem_maps_anagrpid: str = ""
-    subsystem_maps_namespace_name: str = ""
-    subsystem_maps_namespace_uuid: str = ""
-    subsystem_maps_nsid: str = ""
+    anagrpid: str = ""
+    namespace_name: str = ""
+    namespace_uuid: str = ""
+    nsid: str = ""
 
 
 class OntapNvmeSubsystem(OntapModel):

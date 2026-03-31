@@ -12,51 +12,51 @@ from pynetappfoundry.models._base import OntapModel, OntapUUID
 class OntapS3BucketSvmAggregate(OntapModel):
     """OntapS3BucketSvmAggregate sub-model for aggregates."""
 
-    aggregates_name: str = ""
-    aggregates_uuid: str = ""
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapS3BucketSvmRule(OntapModel):
     """OntapS3BucketSvmRule sub-model for rules."""
 
-    cors_rules_allowed_headers: list[str] = Field(default_factory=list)
-    cors_rules_allowed_methods: list[str] = Field(default_factory=list)
-    cors_rules_allowed_origins: list[str] = Field(default_factory=list)
-    cors_rules_expose_headers: list[str] = Field(default_factory=list)
-    cors_rules_id: str = ""
-    cors_rules_max_age_seconds: int = 0
+    allowed_headers: list[str] = Field(default_factory=list)
+    allowed_methods: list[str] = Field(default_factory=list)
+    allowed_origins: list[str] = Field(default_factory=list)
+    expose_headers: list[str] = Field(default_factory=list)
+    id: str = ""
+    max_age_seconds: int = 0
 
 
 class OntapS3BucketSvmRule2(OntapModel):
     """OntapS3BucketSvmRule2 sub-model for rules."""
 
-    lifecycle_management_rules_abort_incomplete_multipart_upload_after_initiation_days: int = 0
-    lifecycle_management_rules_bucket_name: str = ""
-    lifecycle_management_rules_enabled: bool = False
-    lifecycle_management_rules_expiration_expired_object_delete_marker: bool = False
-    lifecycle_management_rules_expiration_object_age_days: int = 0
-    lifecycle_management_rules_expiration_object_expiry_date: str = ""
-    lifecycle_management_rules_name: str = ""
-    lifecycle_management_rules_non_current_version_expiration_new_non_current_versions: int = 0
-    lifecycle_management_rules_non_current_version_expiration_non_current_days: int = 0
-    lifecycle_management_rules_object_filter_prefix: str = ""
-    lifecycle_management_rules_object_filter_size_greater_than: int = 0
-    lifecycle_management_rules_object_filter_size_less_than: int = 0
-    lifecycle_management_rules_object_filter_tags: list[str] = Field(default_factory=list)
-    lifecycle_management_rules_svm_name: str = ""
-    lifecycle_management_rules_svm_uuid: str = ""
-    lifecycle_management_rules_uuid: OntapUUID = ""
+    abort_incomplete_multipart_upload_after_initiation_days: int = 0
+    bucket_name: str = ""
+    enabled: bool = False
+    expiration_expired_object_delete_marker: bool = False
+    expiration_object_age_days: int = 0
+    expiration_object_expiry_date: str = ""
+    name: str = ""
+    non_current_version_expiration_new_non_current_versions: int = 0
+    non_current_version_expiration_non_current_days: int = 0
+    object_filter_prefix: str = ""
+    object_filter_size_greater_than: int = 0
+    object_filter_size_less_than: int = 0
+    object_filter_tags: list[str] = Field(default_factory=list)
+    svm_name: str = ""
+    svm_uuid: str = ""
+    uuid: OntapUUID = ""
 
 
 class OntapS3BucketSvmStatement(OntapModel):
     """OntapS3BucketSvmStatement sub-model for statements."""
 
-    policy_statements_actions: list[str] = Field(default_factory=list)
-    policy_statements_conditions: list[dict[str, Any]] = Field(default_factory=list)
-    policy_statements_effect: str = ""
-    policy_statements_principals: list[str] = Field(default_factory=list)
-    policy_statements_resources: list[str] = Field(default_factory=list)
-    policy_statements_sid: str = ""
+    actions: list[str] = Field(default_factory=list)
+    conditions: list[dict[str, Any]] = Field(default_factory=list)
+    effect: str = ""
+    principals: list[str] = Field(default_factory=list)
+    resources: list[str] = Field(default_factory=list)
+    sid: str = ""
 
 
 class OntapS3BucketSvm(OntapModel):
