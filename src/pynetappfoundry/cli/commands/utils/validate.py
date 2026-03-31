@@ -5,9 +5,9 @@ from __future__ import annotations
 from typing import Any
 
 import click
-from netapp_ontap import HostConnection
-from netapp_ontap.resources import Cluster, Node, Volume
 
+import pynetappfoundry.cache.ontap.cluster.nodes.mapping  # register TypeMapping
+import pynetappfoundry.cache.ontap.storage.volumes.mapping  # noqa: F401 - register TypeMapping
 from pynetappfoundry.cli.decorators import with_config
 from pynetappfoundry.cli.utils import (
     print_debug,
@@ -16,8 +16,13 @@ from pynetappfoundry.cli.utils import (
     print_success,
     print_warning,
 )
+from pynetappfoundry.clients.ontap.api import ONTAPAPIClient
 from pynetappfoundry.clients.ontap.cli import ONTAPCLI
 from pynetappfoundry.core.config import Config
+from pynetappfoundry.core.models import ClusterConfig
+from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
+from pynetappfoundry.models.ontap.storage.volumes.model import OntapVolume
+from pynetappfoundry.query import QuerySet
 
 
 @click.command()
@@ -89,33 +94,25 @@ def _validate_cluster(
     Returns:
         Tuple of (node_count, volume_count, success).
     """
-    user, password = config.get_user("clusters", name)
     node_count = 0
     vol_count = 0
     success = False
 
     try:
-        with HostConnection(
-            details["ip"],
-            username=user,
-            password=password,
-            verify=False,
-        ):
-            cluster = Cluster()
-            cluster.get()
+        cluster_config = ClusterConfig(**details)
+        client = ONTAPAPIClient(cluster=cluster_config, config=config)
 
-            nodes = list(Node.get_collection())
-            node_count = len(nodes)
+        response = client.call_endpoint("/cluster")
+        cluster_name = response.get("name", "") if isinstance(response, dict) else ""
 
-            volumes = list(Volume.get_collection())
-            vol_count = len(volumes)
+        node_count = QuerySet(OntapNodeResponse, client).count()
+        vol_count = QuerySet(OntapVolume, client).count()
 
-            print_success("  API: Connected successfully")
-            success = True
+        print_success("  API: Connected successfully")
+        success = True
 
-            cluster_name = cluster["name"]
-            if cluster_name != name:
-                print_warning(f"    Config name {name} does not match cluster name {cluster_name}")
+        if cluster_name != name:
+            print_warning(f"    Config name {name} does not match cluster name {cluster_name}")
 
     except Exception as e:
         print_error(f"  API: Could not connect to config {name}")
