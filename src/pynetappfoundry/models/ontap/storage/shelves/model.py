@@ -12,142 +12,142 @@ from pynetappfoundry.models._base import OntapModel
 class OntapShelfAcp(OntapModel):
     """OntapShelfAcp sub-model for acps."""
 
-    acps_address: str = ""
-    acps_channel: str = ""
-    acps_connection_state: str = ""
-    acps_enabled: bool = False
-    acps_error_reason_arguments: list[dict[str, Any]] = Field(default_factory=list)
-    acps_error_reason_code: str = ""
-    acps_error_reason_message: str = ""
-    acps_error_severity: str = ""
-    acps_error_type: str = ""
-    acps_netmask: str = ""
-    acps_node_name: str = ""
-    acps_node_uuid: str = ""
-    acps_port: str = ""
-    acps_subnet: str = ""
+    address: str = ""
+    channel: str = ""
+    connection_state: str = ""
+    enabled: bool = False
+    error_reason_arguments: list[dict[str, Any]] = Field(default_factory=list)
+    error_reason_code: str = ""
+    error_reason_message: str = ""
+    error_severity: str = ""
+    error_type: str = ""
+    netmask: str = ""
+    node_name: str = ""
+    node_uuid: str = ""
+    port: str = ""
+    subnet: str = ""
 
 
 class OntapShelfBay(OntapModel):
     """OntapShelfBay sub-model for bays."""
 
-    bays_drawer_id: int = 0
-    bays_drawer_slot: int = 0
-    bays_has_disk: bool = False
-    bays_id: int = 0
-    bays_state: str = ""
-    bays_type: str = ""
+    drawer_id: int = 0
+    drawer_slot: int = 0
+    has_disk: bool = False
+    id: int = 0
+    state: str = ""
+    type: str = ""
 
 
 class OntapShelfCurrentSensor(OntapModel):
     """OntapShelfCurrentSensor sub-model for current_sensors."""
 
-    current_sensors_current: int = 0
-    current_sensors_id: int = 0
-    current_sensors_installed: bool = False
-    current_sensors_location: str = ""
-    current_sensors_state: str = ""
+    current: int = 0
+    id: int = 0
+    installed: bool = False
+    location: str = ""
+    state: str = ""
 
 
 class OntapShelfDrawer(OntapModel):
     """OntapShelfDrawer sub-model for drawers."""
 
-    drawers_closed: bool = False
-    drawers_disk_count: int = 0
-    drawers_error: str = ""
-    drawers_id: int = 0
-    drawers_part_number: str = ""
-    drawers_serial_number: str = ""
-    drawers_state: str = ""
+    closed: bool = False
+    disk_count: int = 0
+    error: str = ""
+    id: int = 0
+    part_number: str = ""
+    serial_number: str = ""
+    state: str = ""
 
 
 class OntapShelfError(OntapModel):
     """OntapShelfError sub-model for errors."""
 
-    errors_reason_arguments: list[dict[str, Any]] = Field(default_factory=list)
-    errors_reason_code: str = ""
-    errors_reason_message: str = ""
+    reason_arguments: list[dict[str, Any]] = Field(default_factory=list)
+    reason_code: str = ""
+    reason_message: str = ""
 
 
 class OntapShelfFan(OntapModel):
     """OntapShelfFan sub-model for fans."""
 
-    fans_id: int = 0
-    fans_installed: bool = False
-    fans_location: str = ""
-    fans_rpm: int = 0
-    fans_state: str = ""
+    id: int = 0
+    installed: bool = False
+    location: str = ""
+    rpm: int = 0
+    state: str = ""
 
 
 class OntapShelfFru(OntapModel):
     """OntapShelfFru sub-model for frus."""
 
-    frus_firmware_version: str = ""
-    frus_id: int = 0
-    frus_installed: bool = False
-    frus_part_number: str = ""
-    frus_psu_crest_factor: int = 0
-    frus_psu_model: str = ""
-    frus_psu_power_drawn: int = 0
-    frus_psu_power_rating: int = 0
-    frus_serial_number: str = ""
-    frus_state: str = ""
-    frus_type: str = ""
+    firmware_version: str = ""
+    id: int = 0
+    installed: bool = False
+    part_number: str = ""
+    psu_crest_factor: int = 0
+    psu_model: str = ""
+    psu_power_drawn: int = 0
+    psu_power_rating: int = 0
+    serial_number: str = ""
+    state: str = ""
+    type: str = ""
 
 
 class OntapShelfPath(OntapModel):
     """OntapShelfPath sub-model for paths."""
 
-    paths_name: str = ""
-    paths_node_name: str = ""
-    paths_node_uuid: str = ""
+    name: str = ""
+    node_name: str = ""
+    node_uuid: str = ""
 
 
 class OntapShelfPort(OntapModel):
     """OntapShelfPort sub-model for ports."""
 
-    ports_cable_identifier: str = ""
-    ports_cable_length: str = ""
-    ports_cable_part_number: str = ""
-    ports_cable_serial_number: str = ""
-    ports_designator: str = ""
-    ports_id: int = 0
-    ports_internal: bool = False
-    ports_mac_address: str = ""
-    ports_module_id: str = ""
-    ports_remote_chassis: str = ""
-    ports_remote_device: str = ""
-    ports_remote_mac_address: str = ""
-    ports_remote_phy: str = ""
-    ports_remote_port: str = ""
-    ports_remote_wwn: str = ""
-    ports_state: str = ""
-    ports_wwn: str = ""
+    cable_identifier: str = ""
+    cable_length: str = ""
+    cable_part_number: str = ""
+    cable_serial_number: str = ""
+    designator: str = ""
+    id: int = 0
+    internal: bool = False
+    mac_address: str = ""
+    module_id: str = ""
+    remote_chassis: str = ""
+    remote_device: str = ""
+    remote_mac_address: str = ""
+    remote_phy: str = ""
+    remote_port: str = ""
+    remote_wwn: str = ""
+    state: str = ""
+    wwn: str = ""
 
 
 class OntapShelfTemperatureSensor(OntapModel):
     """OntapShelfTemperatureSensor sub-model for temperature_sensors."""
 
-    temperature_sensors_ambient: bool = False
-    temperature_sensors_id: int = 0
-    temperature_sensors_installed: bool = False
-    temperature_sensors_location: str = ""
-    temperature_sensors_state: str = ""
-    temperature_sensors_temperature: int = 0
-    temperature_sensors_threshold_high_critical: int = 0
-    temperature_sensors_threshold_high_warning: int = 0
-    temperature_sensors_threshold_low_critical: int = 0
-    temperature_sensors_threshold_low_warning: int = 0
+    ambient: bool = False
+    id: int = 0
+    installed: bool = False
+    location: str = ""
+    state: str = ""
+    temperature: int = 0
+    threshold_high_critical: int = 0
+    threshold_high_warning: int = 0
+    threshold_low_critical: int = 0
+    threshold_low_warning: int = 0
 
 
 class OntapShelfVoltageSensor(OntapModel):
     """OntapShelfVoltageSensor sub-model for voltage_sensors."""
 
-    voltage_sensors_id: int = 0
-    voltage_sensors_installed: bool = False
-    voltage_sensors_location: str = ""
-    voltage_sensors_state: str = ""
-    voltage_sensors_voltage: float = 0.0
+    id: int = 0
+    installed: bool = False
+    location: str = ""
+    state: str = ""
+    voltage: float = 0.0
 
 
 class OntapShelf(OntapModel):

@@ -10,23 +10,23 @@ from pynetappfoundry.models._base import OntapModel, OntapUUID
 class OntapFlexcacheAggregate(OntapModel):
     """OntapFlexcacheAggregate sub-model for aggregates."""
 
-    aggregates_name: str = ""
-    aggregates_uuid: str = ""
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapFlexcacheOrigin(OntapModel):
     """OntapFlexcacheOrigin sub-model for origins."""
 
-    origins_cluster_name: str = ""
-    origins_cluster_uuid: OntapUUID = ""
-    origins_create_time: str = ""
-    origins_ip_address: str = ""
-    origins_size: int = 0
-    origins_state: str = ""
-    origins_svm_name: str = ""
-    origins_svm_uuid: str = ""
-    origins_volume_name: str = ""
-    origins_volume_uuid: str = ""
+    cluster_name: str = ""
+    cluster_uuid: OntapUUID = ""
+    create_time: str = ""
+    ip_address: str = ""
+    size: int = 0
+    state: str = ""
+    svm_name: str = ""
+    svm_uuid: str = ""
+    volume_name: str = ""
+    volume_uuid: str = ""
 
 
 class OntapFlexcache(OntapModel):

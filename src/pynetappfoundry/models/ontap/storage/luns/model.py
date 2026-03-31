@@ -12,67 +12,67 @@ from pynetappfoundry.models._base import OntapModel
 class OntapLunAttribute(OntapModel):
     """OntapLunAttribute sub-model for attributes."""
 
-    attributes_name: str = ""
-    attributes_value: str = ""
+    name: str = ""
+    value: str = ""
 
 
 class OntapLunDestination(OntapModel):
     """OntapLunDestination sub-model for destinations."""
 
-    copy_destinations_max_throughput: int = 0
-    copy_destinations_name: str = ""
-    copy_destinations_peer_name: str = ""
-    copy_destinations_peer_uuid: str = ""
-    copy_destinations_progress_elapsed: int = 0
-    copy_destinations_progress_failure_arguments: list[dict[str, Any]] = Field(default_factory=list)
-    copy_destinations_progress_failure_code: str = ""
-    copy_destinations_progress_failure_message: str = ""
-    copy_destinations_progress_percent_complete: int = 0
-    copy_destinations_progress_state: str = ""
-    copy_destinations_progress_volume_snapshot_blocked: bool = False
-    copy_destinations_uuid: str = ""
+    max_throughput: int = 0
+    name: str = ""
+    peer_name: str = ""
+    peer_uuid: str = ""
+    progress_elapsed: int = 0
+    progress_failure_arguments: list[dict[str, Any]] = Field(default_factory=list)
+    progress_failure_code: str = ""
+    progress_failure_message: str = ""
+    progress_percent_complete: int = 0
+    progress_state: str = ""
+    progress_volume_snapshot_blocked: bool = False
+    uuid: str = ""
 
 
 class OntapLunArgument(OntapModel):
     """OntapLunArgument sub-model for arguments."""
 
-    copy_source_progress_failure_arguments_code: str = ""
-    copy_source_progress_failure_arguments_message: str = ""
+    code: str = ""
+    message: str = ""
 
 
 class OntapLunLunMap(OntapModel):
     """OntapLunLunMap sub-model for lun_maps."""
 
-    lun_maps_igroup_comment: str = ""
-    lun_maps_igroup_igroups: list[dict[str, Any]] = Field(default_factory=list)
-    lun_maps_igroup_initiators: list[dict[str, Any]] = Field(default_factory=list)
-    lun_maps_igroup_name: str = ""
-    lun_maps_igroup_os_type: str = ""
-    lun_maps_igroup_protocol: str = ""
-    lun_maps_igroup_uuid: str = ""
-    lun_maps_logical_unit_number: int = 0
+    igroup_comment: str = ""
+    igroup_igroups: list[dict[str, Any]] = Field(default_factory=list)
+    igroup_initiators: list[dict[str, Any]] = Field(default_factory=list)
+    igroup_name: str = ""
+    igroup_os_type: str = ""
+    igroup_protocol: str = ""
+    igroup_uuid: str = ""
+    logical_unit_number: int = 0
 
 
 class OntapLunArgument2(OntapModel):
     """OntapLunArgument2 sub-model for arguments."""
 
-    movement_progress_failure_arguments_code: str = ""
-    movement_progress_failure_arguments_message: str = ""
+    code: str = ""
+    message: str = ""
 
 
 class OntapLunObjectStore(OntapModel):
     """OntapLunObjectStore sub-model for object_stores."""
 
-    provisioning_options_tiering_object_stores_name: str = ""
+    name: str = ""
 
 
 class OntapLunBinding(OntapModel):
     """OntapLunBinding sub-model for bindings."""
 
-    vvol_bindings_id: int = 0
-    vvol_bindings_partner_name: str = ""
-    vvol_bindings_partner_uuid: str = ""
-    vvol_bindings_secondary_id: str = ""
+    id: int = 0
+    partner_name: str = ""
+    partner_uuid: str = ""
+    secondary_id: str = ""
 
 
 class OntapLun(OntapModel):

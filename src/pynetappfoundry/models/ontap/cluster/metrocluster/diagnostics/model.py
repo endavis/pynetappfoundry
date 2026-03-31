@@ -12,71 +12,71 @@ from pynetappfoundry.models._base import OntapModel, OntapUUID
 class OntapMetroclusterDiagnosticsDetail(OntapModel):
     """OntapMetroclusterDiagnosticsDetail sub-model for details."""
 
-    aggregate_details_aggregate_name: str = ""
-    aggregate_details_aggregate_uuid: str = ""
-    aggregate_details_checks: list[dict[str, Any]] = Field(default_factory=list)
-    aggregate_details_cluster_name: str = ""
-    aggregate_details_cluster_uuid: OntapUUID = ""
-    aggregate_details_node_name: str = ""
-    aggregate_details_node_uuid: str = ""
-    aggregate_details_timestamp: str = ""
-    aggregate_details_volume_name: str = ""
-    aggregate_details_volume_uuid: str = ""
+    aggregate_name: str = ""
+    aggregate_uuid: str = ""
+    checks: list[dict[str, Any]] = Field(default_factory=list)
+    cluster_name: str = ""
+    cluster_uuid: OntapUUID = ""
+    node_name: str = ""
+    node_uuid: str = ""
+    timestamp: str = ""
+    volume_name: str = ""
+    volume_uuid: str = ""
 
 
 class OntapMetroclusterDiagnosticsDetail2(OntapModel):
     """OntapMetroclusterDiagnosticsDetail2 sub-model for details."""
 
-    cluster_details_aggregate_name: str = ""
-    cluster_details_aggregate_uuid: str = ""
-    cluster_details_checks: list[dict[str, Any]] = Field(default_factory=list)
-    cluster_details_cluster_name: str = ""
-    cluster_details_cluster_uuid: OntapUUID = ""
-    cluster_details_node_name: str = ""
-    cluster_details_node_uuid: str = ""
-    cluster_details_timestamp: str = ""
-    cluster_details_volume_name: str = ""
-    cluster_details_volume_uuid: str = ""
+    aggregate_name: str = ""
+    aggregate_uuid: str = ""
+    checks: list[dict[str, Any]] = Field(default_factory=list)
+    cluster_name: str = ""
+    cluster_uuid: OntapUUID = ""
+    node_name: str = ""
+    node_uuid: str = ""
+    timestamp: str = ""
+    volume_name: str = ""
+    volume_uuid: str = ""
 
 
 class OntapMetroclusterDiagnosticsDetail3(OntapModel):
     """OntapMetroclusterDiagnosticsDetail3 sub-model for details."""
 
-    connection_details_cluster_name: str = ""
-    connection_details_cluster_uuid: OntapUUID = ""
-    connection_details_connections: list[dict[str, Any]] = Field(default_factory=list)
-    connection_details_node_name: str = ""
-    connection_details_node_uuid: str = ""
+    cluster_name: str = ""
+    cluster_uuid: OntapUUID = ""
+    connections: list[dict[str, Any]] = Field(default_factory=list)
+    node_name: str = ""
+    node_uuid: str = ""
 
 
 class OntapMetroclusterDiagnosticsDetail4(OntapModel):
     """OntapMetroclusterDiagnosticsDetail4 sub-model for details."""
 
-    node_details_aggregate_name: str = ""
-    node_details_aggregate_uuid: str = ""
-    node_details_checks: list[dict[str, Any]] = Field(default_factory=list)
-    node_details_cluster_name: str = ""
-    node_details_cluster_uuid: OntapUUID = ""
-    node_details_node_name: str = ""
-    node_details_node_uuid: str = ""
-    node_details_timestamp: str = ""
-    node_details_volume_name: str = ""
-    node_details_volume_uuid: str = ""
+    aggregate_name: str = ""
+    aggregate_uuid: str = ""
+    checks: list[dict[str, Any]] = Field(default_factory=list)
+    cluster_name: str = ""
+    cluster_uuid: OntapUUID = ""
+    node_name: str = ""
+    node_uuid: str = ""
+    timestamp: str = ""
+    volume_name: str = ""
+    volume_uuid: str = ""
 
 
 class OntapMetroclusterDiagnosticsDetail5(OntapModel):
     """OntapMetroclusterDiagnosticsDetail5 sub-model for details."""
 
-    volume_details_aggregate_name: str = ""
-    volume_details_aggregate_uuid: str = ""
-    volume_details_checks: list[dict[str, Any]] = Field(default_factory=list)
-    volume_details_cluster_name: str = ""
-    volume_details_cluster_uuid: OntapUUID = ""
-    volume_details_node_name: str = ""
-    volume_details_node_uuid: str = ""
-    volume_details_timestamp: str = ""
-    volume_details_volume_name: str = ""
-    volume_details_volume_uuid: str = ""
+    aggregate_name: str = ""
+    aggregate_uuid: str = ""
+    checks: list[dict[str, Any]] = Field(default_factory=list)
+    cluster_name: str = ""
+    cluster_uuid: OntapUUID = ""
+    node_name: str = ""
+    node_uuid: str = ""
+    timestamp: str = ""
+    volume_name: str = ""
+    volume_uuid: str = ""
 
 
 class OntapMetroclusterDiagnostics(OntapModel):

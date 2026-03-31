@@ -10,7 +10,7 @@ from pynetappfoundry.models._base import OntapModel
 class OntapMultiAdminVerifyRuleApprovalGroup(OntapModel):
     """OntapMultiAdminVerifyRuleApprovalGroup sub-model for approval_groups."""
 
-    approval_groups_name: str = ""
+    name: str = ""
 
 
 class OntapMultiAdminVerifyRule(OntapModel):

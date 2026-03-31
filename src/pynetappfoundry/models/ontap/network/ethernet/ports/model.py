@@ -10,40 +10,40 @@ from pynetappfoundry.models._base import OntapModel
 class OntapPortDiscoveredDevice(OntapModel):
     """OntapPortDiscoveredDevice sub-model for discovered_devices."""
 
-    discovered_devices_capabilities: list[str] = Field(default_factory=list)
-    discovered_devices_chassis_id: str = ""
-    discovered_devices_ip_addresses: list[str] = Field(default_factory=list)
-    discovered_devices_name: str = ""
-    discovered_devices_platform: str = ""
-    discovered_devices_protocol: str = ""
-    discovered_devices_remaining_hold_time: int = 0
-    discovered_devices_remote_port: str = ""
-    discovered_devices_system_name: str = ""
-    discovered_devices_version: str = ""
+    capabilities: list[str] = Field(default_factory=list)
+    chassis_id: str = ""
+    ip_addresses: list[str] = Field(default_factory=list)
+    name: str = ""
+    platform: str = ""
+    protocol: str = ""
+    remaining_hold_time: int = 0
+    remote_port: str = ""
+    system_name: str = ""
+    version: str = ""
 
 
 class OntapPortActivePort(OntapModel):
     """OntapPortActivePort sub-model for active_ports."""
 
-    lag_active_ports_name: str = ""
-    lag_active_ports_node_name: str = ""
-    lag_active_ports_uuid: str = ""
+    name: str = ""
+    node_name: str = ""
+    uuid: str = ""
 
 
 class OntapPortMemberPort(OntapModel):
     """OntapPortMemberPort sub-model for member_ports."""
 
-    lag_member_ports_name: str = ""
-    lag_member_ports_node_name: str = ""
-    lag_member_ports_uuid: str = ""
+    name: str = ""
+    node_name: str = ""
+    uuid: str = ""
 
 
 class OntapPortReachableBroadcastDomain(OntapModel):
     """OntapPortReachableBroadcastDomain sub-model for reachable_broadcast_domains."""
 
-    reachable_broadcast_domains_ipspace_name: str = ""
-    reachable_broadcast_domains_name: str = ""
-    reachable_broadcast_domains_uuid: str = ""
+    ipspace_name: str = ""
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapPort(OntapModel):

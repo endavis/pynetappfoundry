@@ -10,11 +10,11 @@ from pynetappfoundry.models._base import OntapModel
 class OntapAccountApplication(OntapModel):
     """OntapAccountApplication sub-model for applications."""
 
-    applications_application: str = ""
-    applications_authentication_methods: list[str] = Field(default_factory=list)
-    applications_is_ldap_fastbind: bool = False
-    applications_is_ns_switch_group: bool = False
-    applications_second_authentication_method: str = ""
+    application: str = ""
+    authentication_methods: list[str] = Field(default_factory=list)
+    is_ldap_fastbind: bool = False
+    is_ns_switch_group: bool = False
+    second_authentication_method: str = ""
 
 
 class OntapAccount(OntapModel):

@@ -12,16 +12,16 @@ from pynetappfoundry.models._base import OntapModel, OntapUUID
 class OntapSoftwareReferenceClusterFwProgress(OntapModel):
     """OntapSoftwareReferenceClusterFwProgress sub-model for cluster_fw_progress."""
 
-    firmware_cluster_fw_progress_job_uuid: OntapUUID = ""
-    firmware_cluster_fw_progress_update_state: list[dict[str, Any]] = Field(default_factory=list)
-    firmware_cluster_fw_progress_update_type: str = ""
-    firmware_cluster_fw_progress_zip_file_name: str = ""
+    job_uuid: OntapUUID = ""
+    update_state: list[dict[str, Any]] = Field(default_factory=list)
+    update_type: str = ""
+    zip_file_name: str = ""
 
 
 class OntapSoftwareReferenceSoftwareImage(OntapModel):
     """OntapSoftwareReferenceSoftwareImage sub-model for software_images."""
 
-    software_images_package: str = ""
+    package: str = ""
 
 
 class OntapSoftwareReference(OntapModel):

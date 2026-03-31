@@ -10,35 +10,35 @@ from pynetappfoundry.models._base import OntapModel, OntapUUID
 class OntapSvmMigrationAggregate(OntapModel):
     """OntapSvmMigrationAggregate sub-model for aggregates."""
 
-    destination_volume_placement_aggregates_name: str = ""
-    destination_volume_placement_aggregates_uuid: str = ""
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapSvmMigrationVolumeAggregatePair(OntapModel):
     """OntapSvmMigrationVolumeAggregatePair sub-model for volume_aggregate_pairs."""
 
-    destination_volume_placement_volume_aggregate_pairs_aggregate_name: str = ""
-    destination_volume_placement_volume_aggregate_pairs_aggregate_uuid: str = ""
-    destination_volume_placement_volume_aggregate_pairs_volume_name: str = ""
-    destination_volume_placement_volume_aggregate_pairs_volume_uuid: str = ""
+    aggregate_name: str = ""
+    aggregate_uuid: str = ""
+    volume_name: str = ""
+    volume_uuid: str = ""
 
 
 class OntapSvmMigrationIpInterface(OntapModel):
     """OntapSvmMigrationIpInterface sub-model for ip_interfaces."""
 
-    ip_interface_placement_ip_interfaces_interface_ip_address: str = ""
-    ip_interface_placement_ip_interfaces_interface_name: str = ""
-    ip_interface_placement_ip_interfaces_interface_uuid: str = ""
-    ip_interface_placement_ip_interfaces_port_name: str = ""
-    ip_interface_placement_ip_interfaces_port_node_name: str = ""
-    ip_interface_placement_ip_interfaces_port_uuid: str = ""
+    interface_ip_address: str = ""
+    interface_name: str = ""
+    interface_uuid: str = ""
+    port_name: str = ""
+    port_node_name: str = ""
+    port_uuid: str = ""
 
 
 class OntapSvmMigrationMessage(OntapModel):
     """OntapSvmMigrationMessage sub-model for messages."""
 
-    messages_code: str = ""
-    messages_message: str = ""
+    code: str = ""
+    message: str = ""
 
 
 class OntapSvmMigration(OntapModel):

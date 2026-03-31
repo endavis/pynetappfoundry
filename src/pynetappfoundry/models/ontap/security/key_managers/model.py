@@ -12,19 +12,19 @@ from pynetappfoundry.models._base import OntapModel
 class OntapSecurityKeyManagerServerCaCertificate(OntapModel):
     """OntapSecurityKeyManagerServerCaCertificate sub-model for server_ca_certificates."""
 
-    external_server_ca_certificates_name: str = ""
-    external_server_ca_certificates_uuid: str = ""
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapSecurityKeyManagerServer(OntapModel):
     """OntapSecurityKeyManagerServer sub-model for servers."""
 
-    external_servers_connectivity_cluster_availability: bool = False
-    external_servers_connectivity_node_states: list[dict[str, Any]] = Field(default_factory=list)
-    external_servers_secondary_key_servers: str = ""
-    external_servers_server: str = ""
-    external_servers_timeout: int = 0
-    external_servers_username: str = ""
+    connectivity_cluster_availability: bool = False
+    connectivity_node_states: list[dict[str, Any]] = Field(default_factory=list)
+    secondary_key_servers: str = ""
+    server: str = ""
+    timeout: int = 0
+    username: str = ""
 
 
 class OntapSecurityKeyManager(OntapModel):

@@ -10,7 +10,7 @@ from pynetappfoundry.models._base import OntapModel
 class OntapConfigurationBackupFileBackupNode(OntapModel):
     """OntapConfigurationBackupFileBackupNode sub-model for backup_nodes."""
 
-    backup_nodes_name: str = ""
+    name: str = ""
 
 
 class OntapConfigurationBackupFile(OntapModel):

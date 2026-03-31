@@ -10,8 +10,8 @@ from pynetappfoundry.models._base import OntapModel
 class OntapLunMapReportingNode(OntapModel):
     """OntapLunMapReportingNode sub-model for reporting_nodes."""
 
-    reporting_nodes_name: str = ""
-    reporting_nodes_uuid: str = ""
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapLunMap(OntapModel):

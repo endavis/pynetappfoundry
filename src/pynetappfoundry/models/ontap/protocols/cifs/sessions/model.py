@@ -10,8 +10,8 @@ from pynetappfoundry.models._base import OntapModel
 class OntapCifsSessionVolume(OntapModel):
     """OntapCifsSessionVolume sub-model for volumes."""
 
-    volumes_name: str = ""
-    volumes_uuid: str = ""
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapCifsSession(OntapModel):

@@ -10,11 +10,11 @@ from pynetappfoundry.models._base import OntapModel
 class OntapS3PolicyStatement(OntapModel):
     """OntapS3PolicyStatement sub-model for statements."""
 
-    statements_actions: list[str] = Field(default_factory=list)
-    statements_effect: str = ""
-    statements_index: int = 0
-    statements_resources: list[str] = Field(default_factory=list)
-    statements_sid: str = ""
+    actions: list[str] = Field(default_factory=list)
+    effect: str = ""
+    index: int = 0
+    resources: list[str] = Field(default_factory=list)
+    sid: str = ""
 
 
 class OntapS3Policy(OntapModel):

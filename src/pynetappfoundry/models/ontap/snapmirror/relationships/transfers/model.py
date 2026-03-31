@@ -12,15 +12,15 @@ from pynetappfoundry.models._base import OntapModel, OntapUUID
 class OntapSnapmirrorTransferFile(OntapModel):
     """OntapSnapmirrorTransferFile sub-model for files."""
 
-    files_destination_path: str = ""
-    files_source_path: str = ""
+    destination_path: str = ""
+    source_path: str = ""
 
 
 class OntapSnapmirrorTransferConsistencyGroupVolume(OntapModel):
     """OntapSnapmirrorTransferConsistencyGroupVolume sub-model for consistency_group_volumes."""
 
-    relationship_destination_consistency_group_volumes_name: str = ""
-    relationship_destination_consistency_group_volumes_uuid: str = ""
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapSnapmirrorTransfer(OntapModel):

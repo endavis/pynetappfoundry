@@ -10,8 +10,8 @@ from pynetappfoundry.models._base import OntapModel
 class OntapFcLoginIgroup(OntapModel):
     """OntapFcLoginIgroup sub-model for igroups."""
 
-    igroups_name: str = ""
-    igroups_uuid: str = ""
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapFcLogin(OntapModel):

@@ -12,85 +12,85 @@ from pynetappfoundry.models._base import OntapModel
 class OntapApplicationComponentLun(OntapModel):
     """OntapApplicationComponentLun sub-model for luns."""
 
-    backing_storage_luns_creation_timestamp: str = ""
-    backing_storage_luns_path: str = ""
-    backing_storage_luns_size: int = 0
-    backing_storage_luns_uuid: str = ""
+    creation_timestamp: str = ""
+    path: str = ""
+    size: int = 0
+    uuid: str = ""
 
 
 class OntapApplicationComponentNamespace(OntapModel):
     """OntapApplicationComponentNamespace sub-model for namespaces."""
 
-    backing_storage_namespaces_creation_timestamp: str = ""
-    backing_storage_namespaces_name: str = ""
-    backing_storage_namespaces_size: int = 0
-    backing_storage_namespaces_uuid: str = ""
+    creation_timestamp: str = ""
+    name: str = ""
+    size: int = 0
+    uuid: str = ""
 
 
 class OntapApplicationComponentVolume(OntapModel):
     """OntapApplicationComponentVolume sub-model for volumes."""
 
-    backing_storage_volumes_creation_timestamp: str = ""
-    backing_storage_volumes_name: str = ""
-    backing_storage_volumes_size: int = 0
-    backing_storage_volumes_uuid: str = ""
+    creation_timestamp: str = ""
+    name: str = ""
+    size: int = 0
+    uuid: str = ""
 
 
 class OntapApplicationComponentCifsAccess(OntapModel):
     """OntapApplicationComponentCifsAccess sub-model for cifs_access."""
 
-    cifs_access_backing_storage_type: str = ""
-    cifs_access_backing_storage_uuid: str = ""
-    cifs_access_ips: list[str] = Field(default_factory=list)
-    cifs_access_path: str = ""
-    cifs_access_permissions: list[dict[str, Any]] = Field(default_factory=list)
-    cifs_access_server_name: str = ""
-    cifs_access_share_name: str = ""
+    backing_storage_type: str = ""
+    backing_storage_uuid: str = ""
+    ips: list[str] = Field(default_factory=list)
+    path: str = ""
+    permissions: list[dict[str, Any]] = Field(default_factory=list)
+    server_name: str = ""
+    share_name: str = ""
 
 
 class OntapApplicationComponentNfsAccess(OntapModel):
     """OntapApplicationComponentNfsAccess sub-model for nfs_access."""
 
-    nfs_access_backing_storage_type: str = ""
-    nfs_access_backing_storage_uuid: str = ""
-    nfs_access_export_policy_name: str = ""
-    nfs_access_ips: list[str] = Field(default_factory=list)
-    nfs_access_path: str = ""
-    nfs_access_permissions: list[dict[str, Any]] = Field(default_factory=list)
+    backing_storage_type: str = ""
+    backing_storage_uuid: str = ""
+    export_policy_name: str = ""
+    ips: list[str] = Field(default_factory=list)
+    path: str = ""
+    permissions: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class OntapApplicationComponentNvmeAccess(OntapModel):
     """OntapApplicationComponentNvmeAccess sub-model for nvme_access."""
 
-    nvme_access_backing_storage_type: str = ""
-    nvme_access_backing_storage_uuid: str = ""
-    nvme_access_is_clone: bool = False
-    nvme_access_subsystem_map_anagrpid: str = ""
-    nvme_access_subsystem_map_nsid: str = ""
-    nvme_access_subsystem_map_subsystem_hosts: list[dict[str, Any]] = Field(default_factory=list)
-    nvme_access_subsystem_map_subsystem_name: str = ""
-    nvme_access_subsystem_map_subsystem_uuid: str = ""
+    backing_storage_type: str = ""
+    backing_storage_uuid: str = ""
+    is_clone: bool = False
+    subsystem_map_anagrpid: str = ""
+    subsystem_map_nsid: str = ""
+    subsystem_map_subsystem_hosts: list[dict[str, Any]] = Field(default_factory=list)
+    subsystem_map_subsystem_name: str = ""
+    subsystem_map_subsystem_uuid: str = ""
 
 
 class OntapApplicationComponentProtectionGroup(OntapModel):
     """OntapApplicationComponentProtectionGroup sub-model for protection_groups."""
 
-    protection_groups_name: str = ""
-    protection_groups_rpo_local_description: str = ""
-    protection_groups_rpo_local_name: str = ""
-    protection_groups_rpo_remote_description: str = ""
-    protection_groups_rpo_remote_name: str = ""
-    protection_groups_uuid: str = ""
+    name: str = ""
+    rpo_local_description: str = ""
+    rpo_local_name: str = ""
+    rpo_remote_description: str = ""
+    rpo_remote_name: str = ""
+    uuid: str = ""
 
 
 class OntapApplicationComponentSanAccess(OntapModel):
     """OntapApplicationComponentSanAccess sub-model for san_access."""
 
-    san_access_backing_storage_type: str = ""
-    san_access_backing_storage_uuid: str = ""
-    san_access_is_clone: bool = False
-    san_access_lun_mappings: list[dict[str, Any]] = Field(default_factory=list)
-    san_access_serial_number: str = ""
+    backing_storage_type: str = ""
+    backing_storage_uuid: str = ""
+    is_clone: bool = False
+    lun_mappings: list[dict[str, Any]] = Field(default_factory=list)
+    serial_number: str = ""
 
 
 class OntapApplicationComponent(OntapModel):

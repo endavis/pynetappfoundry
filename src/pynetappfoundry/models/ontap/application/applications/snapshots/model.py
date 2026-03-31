@@ -10,8 +10,8 @@ from pynetappfoundry.models._base import OntapModel
 class OntapApplicationSnapshotComponent(OntapModel):
     """OntapApplicationSnapshotComponent sub-model for components."""
 
-    components_name: str = ""
-    components_uuid: str = ""
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapApplicationSnapshot(OntapModel):

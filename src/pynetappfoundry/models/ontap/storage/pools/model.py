@@ -10,45 +10,45 @@ from pynetappfoundry.models._base import OntapModel
 class OntapStoragePoolDisk(OntapModel):
     """OntapStoragePoolDisk sub-model for disks."""
 
-    capacity_disks_disk_name: str = ""
-    capacity_disks_total_size: int = 0
-    capacity_disks_usable_size: int = 0
+    disk_name: str = ""
+    total_size: int = 0
+    usable_size: int = 0
 
 
 class OntapStoragePoolSpareAllocationUnit(OntapModel):
     """OntapStoragePoolSpareAllocationUnit sub-model for spare_allocation_units."""
 
-    capacity_spare_allocation_units_available_size: int = 0
-    capacity_spare_allocation_units_count: int = 0
-    capacity_spare_allocation_units_node_name: str = ""
-    capacity_spare_allocation_units_node_uuid: str = ""
-    capacity_spare_allocation_units_size: int = 0
-    capacity_spare_allocation_units_syncmirror_pool: str = ""
+    available_size: int = 0
+    count: int = 0
+    node_name: str = ""
+    node_uuid: str = ""
+    size: int = 0
+    syncmirror_pool: str = ""
 
 
 class OntapStoragePoolUsedAllocationUnit(OntapModel):
     """OntapStoragePoolUsedAllocationUnit sub-model for used_allocation_units."""
 
-    capacity_used_allocation_units_aggregate_name: str = ""
-    capacity_used_allocation_units_aggregate_uuid: str = ""
-    capacity_used_allocation_units_count: int = 0
-    capacity_used_allocation_units_current_usage: int = 0
-    capacity_used_allocation_units_node_name: str = ""
-    capacity_used_allocation_units_node_uuid: str = ""
+    aggregate_name: str = ""
+    aggregate_uuid: str = ""
+    count: int = 0
+    current_usage: int = 0
+    node_name: str = ""
+    node_uuid: str = ""
 
 
 class OntapStoragePoolArgument(OntapModel):
     """OntapStoragePoolArgument sub-model for arguments."""
 
-    health_unhealthy_reason_arguments_code: str = ""
-    health_unhealthy_reason_arguments_message: str = ""
+    code: str = ""
+    message: str = ""
 
 
 class OntapStoragePoolNode(OntapModel):
     """OntapStoragePoolNode sub-model for nodes."""
 
-    nodes_name: str = ""
-    nodes_uuid: str = ""
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapStoragePool(OntapModel):

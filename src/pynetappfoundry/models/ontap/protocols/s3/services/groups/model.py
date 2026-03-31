@@ -10,13 +10,13 @@ from pynetappfoundry.models._base import OntapModel
 class OntapS3GroupPolicy(OntapModel):
     """OntapS3GroupPolicy sub-model for policies."""
 
-    policies_name: str = ""
+    name: str = ""
 
 
 class OntapS3GroupUser(OntapModel):
     """OntapS3GroupUser sub-model for users."""
 
-    users_name: str = ""
+    name: str = ""
 
 
 class OntapS3Group(OntapModel):

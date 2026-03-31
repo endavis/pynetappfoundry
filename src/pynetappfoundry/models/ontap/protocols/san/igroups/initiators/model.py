@@ -12,35 +12,33 @@ from pynetappfoundry.models._base import OntapModel
 class OntapIgroupInitiatorAlert(OntapModel):
     """OntapIgroupInitiatorAlert sub-model for alerts."""
 
-    connectivity_tracking_alerts_summary_arguments: list[dict[str, Any]] = Field(
-        default_factory=list
-    )
-    connectivity_tracking_alerts_summary_code: str = ""
-    connectivity_tracking_alerts_summary_message: str = ""
+    summary_arguments: list[dict[str, Any]] = Field(default_factory=list)
+    summary_code: str = ""
+    summary_message: str = ""
 
 
 class OntapIgroupInitiatorConnection(OntapModel):
     """OntapIgroupInitiatorConnection sub-model for connections."""
 
-    connectivity_tracking_connections_logins: list[dict[str, Any]] = Field(default_factory=list)
-    connectivity_tracking_connections_node_name: str = ""
-    connectivity_tracking_connections_node_uuid: str = ""
+    logins: list[dict[str, Any]] = Field(default_factory=list)
+    node_name: str = ""
+    node_uuid: str = ""
 
 
 class OntapIgroupInitiatorPeerSvm(OntapModel):
     """OntapIgroupInitiatorPeerSvm sub-model for peer_svms."""
 
-    proximity_peer_svms_name: str = ""
-    proximity_peer_svms_uuid: str = ""
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapIgroupInitiatorRecord(OntapModel):
     """OntapIgroupInitiatorRecord sub-model for records."""
 
-    records_comment: str = ""
-    records_name: str = ""
-    records_proximity_local_svm: bool = False
-    records_proximity_peer_svms: list[dict[str, Any]] = Field(default_factory=list)
+    comment: str = ""
+    name: str = ""
+    proximity_local_svm: bool = False
+    proximity_peer_svms: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class OntapIgroupInitiator(OntapModel):

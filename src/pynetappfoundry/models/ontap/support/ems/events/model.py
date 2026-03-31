@@ -10,8 +10,8 @@ from pynetappfoundry.models._base import OntapModel
 class OntapEmsEventResponseParameter(OntapModel):
     """OntapEmsEventResponseParameter sub-model for parameters."""
 
-    parameters_name: str = ""
-    parameters_value: str = ""
+    name: str = ""
+    value: str = ""
 
 
 class OntapEmsEventResponse(OntapModel):

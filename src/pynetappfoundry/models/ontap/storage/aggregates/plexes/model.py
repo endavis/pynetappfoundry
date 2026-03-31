@@ -12,15 +12,15 @@ from pynetappfoundry.models._base import OntapModel
 class OntapPlexRaidGroup(OntapModel):
     """OntapPlexRaidGroup sub-model for raid_groups."""
 
-    raid_groups_cache_tier: bool = False
-    raid_groups_degraded: bool = False
-    raid_groups_disks: list[dict[str, Any]] = Field(default_factory=list)
-    raid_groups_name: str = ""
-    raid_groups_raid_type: str = ""
-    raid_groups_recomputing_parity_active: bool = False
-    raid_groups_recomputing_parity_percent: int = 0
-    raid_groups_reconstruct_active: bool = False
-    raid_groups_reconstruct_percent: int = 0
+    cache_tier: bool = False
+    degraded: bool = False
+    disks: list[dict[str, Any]] = Field(default_factory=list)
+    name: str = ""
+    raid_type: str = ""
+    recomputing_parity_active: bool = False
+    recomputing_parity_percent: int = 0
+    reconstruct_active: bool = False
+    reconstruct_percent: int = 0
 
 
 class OntapPlex(OntapModel):

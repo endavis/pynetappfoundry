@@ -10,7 +10,7 @@ from pynetappfoundry.models._base import OntapModel
 class OntapUnixGroupUsersRecord(OntapModel):
     """OntapUnixGroupUsersRecord sub-model for records."""
 
-    records_name: str = ""
+    name: str = ""
 
 
 class OntapUnixGroupUsers(OntapModel):

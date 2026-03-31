@@ -10,10 +10,10 @@ from pynetappfoundry.models._base import OntapModel
 class OntapCifsShareAcl(OntapModel):
     """OntapCifsShareAcl sub-model for acls."""
 
-    acls_permission: str = ""
-    acls_type: str = ""
-    acls_user_or_group: str = ""
-    acls_win_sid_unix_id: str = ""
+    permission: str = ""
+    type: str = ""
+    user_or_group: str = ""
+    win_sid_unix_id: str = ""
 
 
 class OntapCifsShare(OntapModel):

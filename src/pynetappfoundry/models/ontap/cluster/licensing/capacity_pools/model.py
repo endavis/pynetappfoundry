@@ -10,9 +10,9 @@ from pynetappfoundry.models._base import OntapModel, OntapUUID
 class OntapCapacityPoolResponseNode(OntapModel):
     """OntapCapacityPoolResponseNode sub-model for nodes."""
 
-    nodes_node_name: str = ""
-    nodes_node_uuid: str = ""
-    nodes_used_size: int = 0
+    node_name: str = ""
+    node_uuid: str = ""
+    used_size: int = 0
 
 
 class OntapCapacityPoolResponse(OntapModel):

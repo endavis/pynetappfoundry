@@ -12,18 +12,18 @@ from pynetappfoundry.models._base import OntapModel
 class OntapCounterRowCounter(OntapModel):
     """OntapCounterRowCounter sub-model for counters."""
 
-    counters_counters: list[dict[str, Any]] = Field(default_factory=list)
-    counters_labels: list[str] = Field(default_factory=list)
-    counters_name: str = ""
-    counters_value: int = 0
-    counters_values: list[int] = Field(default_factory=list)
+    counters: list[dict[str, Any]] = Field(default_factory=list)
+    labels: list[str] = Field(default_factory=list)
+    name: str = ""
+    value: int = 0
+    values: list[int] = Field(default_factory=list)
 
 
 class OntapCounterRowProperty(OntapModel):
     """OntapCounterRowProperty sub-model for properties."""
 
-    properties_name: str = ""
-    properties_value: str = ""
+    name: str = ""
+    value: str = ""
 
 
 class OntapCounterRow(OntapModel):

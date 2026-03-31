@@ -10,9 +10,9 @@ from pynetappfoundry.models._base import OntapModel
 class OntapMetroclusterInterconnectInterface(OntapModel):
     """OntapMetroclusterInterconnectInterface sub-model for interfaces."""
 
-    interfaces_address: str = ""
-    interfaces_gateway: str = ""
-    interfaces_netmask: str = ""
+    address: str = ""
+    gateway: str = ""
+    netmask: str = ""
 
 
 class OntapMetroclusterInterconnect(OntapModel):

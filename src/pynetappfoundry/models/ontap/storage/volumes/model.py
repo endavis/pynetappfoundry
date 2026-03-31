@@ -13,84 +13,84 @@ from pynetappfoundry.models._base import OntapModel
 class OntapVolumeAggregate(OntapModel):
     """OntapVolumeAggregate sub-model for aggregates."""
 
-    aggregates_name: str = ""
-    aggregates_uuid: str = ""
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapVolumeAttackReport(OntapModel):
     """OntapVolumeAttackReport sub-model for attack_reports."""
 
-    anti_ransomware_attack_reports_time: str = ""
+    time: str = ""
 
 
 class OntapVolumeSuspectFile(OntapModel):
     """OntapVolumeSuspectFile sub-model for suspect_files."""
 
-    anti_ransomware_suspect_files_count: int = 0
-    anti_ransomware_suspect_files_entropy: str = ""
-    anti_ransomware_suspect_files_format: str = ""
+    count: int = 0
+    entropy: str = ""
+    format: str = ""
 
 
 class OntapVolumeNewlyObservedFileExtension(OntapModel):
     """OntapVolumeNewlyObservedFileExtension sub-model for newly_observed_file_extensions."""
 
-    anti_ransomware_workload_newly_observed_file_extensions_count: int = 0
-    anti_ransomware_workload_newly_observed_file_extensions_name: str = ""
+    count: int = 0
+    name: str = ""
 
 
 class OntapVolumeNewlyObservedFileExtension2(OntapModel):
     """OntapVolumeNewlyObservedFileExtension2 sub-model for newly_observed_file_extensions."""
 
-    anti_ransomware_workload_surge_usage_newly_observed_file_extensions_count: int = 0
-    anti_ransomware_workload_surge_usage_newly_observed_file_extensions_name: str = ""
+    count: int = 0
+    name: str = ""
 
 
 class OntapVolumeConstituent(OntapModel):
     """OntapVolumeConstituent sub-model for constituents."""
 
-    constituents_aggregates_name: str = ""
-    constituents_aggregates_uuid: str = ""
-    constituents_movement_cutover_window: int = 0
-    constituents_movement_destination_aggregate_name: str = ""
-    constituents_movement_destination_aggregate_uuid: str = ""
-    constituents_movement_percent_complete: int = 0
-    constituents_movement_state: str = ""
-    constituents_movement_tiering_policy: str = ""
-    constituents_name: str = ""
-    constituents_space_afs_total: int = 0
-    constituents_space_available: int = 0
-    constituents_space_available_percent: int = 0
-    constituents_space_block_storage_inactive_user_data: int = 0
-    constituents_space_capacity_tier_footprint: int = 0
-    constituents_space_footprint: int = 0
-    constituents_space_large_size_enabled: bool = False
-    constituents_space_local_tier_footprint: int = 0
-    constituents_space_logical_space_available: int = 0
-    constituents_space_logical_space_enforcement: bool = False
-    constituents_space_logical_space_reporting: bool = False
-    constituents_space_logical_space_used_by_afs: int = 0
-    constituents_space_max_size: str = ""
-    constituents_space_metadata: int = 0
-    constituents_space_over_provisioned: int = 0
-    constituents_space_performance_tier_footprint: int = 0
-    constituents_space_size: int = 0
-    constituents_space_snapshot_autodelete_enabled: bool = False
-    constituents_space_snapshot_reserve_percent: int = 0
-    constituents_space_snapshot_used: int = 0
-    constituents_space_total_footprint: int = 0
-    constituents_space_total_metadata: int = 0
-    constituents_space_total_metadata_footprint: int = 0
-    constituents_space_used: int = 0
-    constituents_space_used_by_afs: int = 0
-    constituents_space_used_percent: int = 0
+    aggregates_name: str = ""
+    aggregates_uuid: str = ""
+    movement_cutover_window: int = 0
+    movement_destination_aggregate_name: str = ""
+    movement_destination_aggregate_uuid: str = ""
+    movement_percent_complete: int = 0
+    movement_state: str = ""
+    movement_tiering_policy: str = ""
+    name: str = ""
+    space_afs_total: int = 0
+    space_available: int = 0
+    space_available_percent: int = 0
+    space_block_storage_inactive_user_data: int = 0
+    space_capacity_tier_footprint: int = 0
+    space_footprint: int = 0
+    space_large_size_enabled: bool = False
+    space_local_tier_footprint: int = 0
+    space_logical_space_available: int = 0
+    space_logical_space_enforcement: bool = False
+    space_logical_space_reporting: bool = False
+    space_logical_space_used_by_afs: int = 0
+    space_max_size: str = ""
+    space_metadata: int = 0
+    space_over_provisioned: int = 0
+    space_performance_tier_footprint: int = 0
+    space_size: int = 0
+    space_snapshot_autodelete_enabled: bool = False
+    space_snapshot_reserve_percent: int = 0
+    space_snapshot_used: int = 0
+    space_total_footprint: int = 0
+    space_total_metadata: int = 0
+    space_total_metadata_footprint: int = 0
+    space_used: int = 0
+    space_used_by_afs: int = 0
+    space_used_percent: int = 0
 
 
 class OntapVolumeNotice(OntapModel):
     """OntapVolumeNotice sub-model for notices."""
 
-    rebalancing_notices_arguments: list[dict[str, Any]] = Field(default_factory=list)
-    rebalancing_notices_code: str = ""
-    rebalancing_notices_message: str = ""
+    arguments: list[dict[str, Any]] = Field(default_factory=list)
+    code: str = ""
+    message: str = ""
 
 
 class OntapVolume(OntapModel):

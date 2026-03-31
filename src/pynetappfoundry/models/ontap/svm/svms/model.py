@@ -10,51 +10,51 @@ from pynetappfoundry.models._base import OntapModel
 class OntapSvmAggregate(OntapModel):
     """OntapSvmAggregate sub-model for aggregates."""
 
-    aggregates_available_size: int = 0
-    aggregates_name: str = ""
-    aggregates_snaplock_type: str = ""
-    aggregates_state: str = ""
-    aggregates_type: str = ""
-    aggregates_uuid: str = ""
+    available_size: int = 0
+    name: str = ""
+    snaplock_type: str = ""
+    state: str = ""
+    type: str = ""
+    uuid: str = ""
 
 
 class OntapSvmFcInterface(OntapModel):
     """OntapSvmFcInterface sub-model for fc_interfaces."""
 
-    fc_interfaces_data_protocol: str = ""
-    fc_interfaces_location_port_name: str = ""
-    fc_interfaces_location_port_node_name: str = ""
-    fc_interfaces_location_port_uuid: str = ""
-    fc_interfaces_name: str = ""
-    fc_interfaces_uuid: str = ""
+    data_protocol: str = ""
+    location_port_name: str = ""
+    location_port_node_name: str = ""
+    location_port_uuid: str = ""
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapSvmIpInterface(OntapModel):
     """OntapSvmIpInterface sub-model for ip_interfaces."""
 
-    ip_interfaces_ip_address: str = ""
-    ip_interfaces_ip_netmask: str = ""
-    ip_interfaces_location_broadcast_domain_name: str = ""
-    ip_interfaces_location_broadcast_domain_uuid: str = ""
-    ip_interfaces_location_home_node_name: str = ""
-    ip_interfaces_location_home_node_uuid: str = ""
-    ip_interfaces_location_home_port_name: str = ""
-    ip_interfaces_location_home_port_uuid: str = ""
-    ip_interfaces_name: str = ""
-    ip_interfaces_service_policy: str = ""
-    ip_interfaces_services: list[str] = Field(default_factory=list)
-    ip_interfaces_subnet_name: str = ""
-    ip_interfaces_subnet_uuid: str = ""
-    ip_interfaces_uuid: str = ""
+    ip_address: str = ""
+    ip_netmask: str = ""
+    location_broadcast_domain_name: str = ""
+    location_broadcast_domain_uuid: str = ""
+    location_home_node_name: str = ""
+    location_home_node_uuid: str = ""
+    location_home_port_name: str = ""
+    location_home_port_uuid: str = ""
+    name: str = ""
+    service_policy: str = ""
+    services: list[str] = Field(default_factory=list)
+    subnet_name: str = ""
+    subnet_uuid: str = ""
+    uuid: str = ""
 
 
 class OntapSvmRoute(OntapModel):
     """OntapSvmRoute sub-model for routes."""
 
-    routes_destination_address: str = ""
-    routes_destination_family: str = ""
-    routes_destination_netmask: str = ""
-    routes_gateway: str = ""
+    destination_address: str = ""
+    destination_family: str = ""
+    destination_netmask: str = ""
+    gateway: str = ""
 
 
 class OntapSvm(OntapModel):

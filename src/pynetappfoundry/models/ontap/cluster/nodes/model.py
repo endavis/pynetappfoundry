@@ -10,70 +10,70 @@ from pynetappfoundry.models._base import OntapModel, OntapUUID
 class OntapNodeResponseClusterInterface(OntapModel):
     """OntapNodeResponseClusterInterface sub-model for cluster_interfaces."""
 
-    cluster_interfaces_ip_address: str = ""
-    cluster_interfaces_name: str = ""
-    cluster_interfaces_uuid: str = ""
+    ip_address: str = ""
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapNodeResponseFlashCache(OntapModel):
     """OntapNodeResponseFlashCache sub-model for flash_cache."""
 
-    controller_flash_cache_capacity: int = 0
-    controller_flash_cache_device_id: int = 0
-    controller_flash_cache_firmware_file: str = ""
-    controller_flash_cache_firmware_version: str = ""
-    controller_flash_cache_hardware_revision: str = ""
-    controller_flash_cache_model: str = ""
-    controller_flash_cache_part_number: str = ""
-    controller_flash_cache_serial_number: str = ""
-    controller_flash_cache_slot: str = ""
-    controller_flash_cache_state: str = ""
+    capacity: int = 0
+    device_id: int = 0
+    firmware_file: str = ""
+    firmware_version: str = ""
+    hardware_revision: str = ""
+    model: str = ""
+    part_number: str = ""
+    serial_number: str = ""
+    slot: str = ""
+    state: str = ""
 
 
 class OntapNodeResponseFru(OntapModel):
     """OntapNodeResponseFru sub-model for frus."""
 
-    controller_frus_id: str = ""
-    controller_frus_state: str = ""
-    controller_frus_type: str = ""
+    id: str = ""
+    state: str = ""
+    type: str = ""
 
 
 class OntapNodeResponseStatus(OntapModel):
     """OntapNodeResponseStatus sub-model for status."""
 
-    ha_giveback_status_aggregate_name: str = ""
-    ha_giveback_status_aggregate_uuid: str = ""
-    ha_giveback_status_error_code: str = ""
-    ha_giveback_status_error_message: str = ""
-    ha_giveback_status_state: str = ""
+    aggregate_name: str = ""
+    aggregate_uuid: str = ""
+    error_code: str = ""
+    error_message: str = ""
+    state: str = ""
 
 
 class OntapNodeResponsePartner(OntapModel):
     """OntapNodeResponsePartner sub-model for partners."""
 
-    ha_partners_name: str = ""
-    ha_partners_uuid: str = ""
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapNodeResponsePort(OntapModel):
     """OntapNodeResponsePort sub-model for ports."""
 
-    ha_ports_number: int = 0
-    ha_ports_state: str = ""
+    number: int = 0
+    state: str = ""
 
 
 class OntapNodeResponseManagementInterface(OntapModel):
     """OntapNodeResponseManagementInterface sub-model for management_interfaces."""
 
-    management_interfaces_ip_address: str = ""
-    management_interfaces_name: str = ""
-    management_interfaces_uuid: str = ""
+    ip_address: str = ""
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapNodeResponsePort2(OntapModel):
     """OntapNodeResponsePort2 sub-model for ports."""
 
-    metrocluster_ports_name: str = ""
+    name: str = ""
 
 
 class OntapNodeResponse(OntapModel):

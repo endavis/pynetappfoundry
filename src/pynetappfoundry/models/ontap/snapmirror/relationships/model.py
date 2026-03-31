@@ -11,36 +11,36 @@ from pynetappfoundry.models._base import OntapModel, OntapUUID
 class OntapSnapmirrorRelationshipArgument(OntapModel):
     """OntapSnapmirrorRelationshipArgument sub-model for arguments."""
 
-    consistency_group_failover_error_arguments_code: str = ""
-    consistency_group_failover_error_arguments_message: str = ""
+    code: str = ""
+    message: str = ""
 
 
 class OntapSnapmirrorRelationshipConsistencyGroupVolume(OntapModel):
     """OntapSnapmirrorRelationshipConsistencyGroupVolume sub-model for consistency_group_volumes."""
 
-    destination_consistency_group_volumes_name: str = ""
-    destination_consistency_group_volumes_uuid: str = ""
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapSnapmirrorRelationshipConsistencyGroupVolume2(OntapModel):
     """OntapSnapmirrorRelationshipConsistencyGroupVolume2 sub-model for consistency_group_volumes."""
 
-    source_consistency_group_volumes_name: str = ""
-    source_consistency_group_volumes_uuid: str = ""
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapSnapmirrorRelationshipSvmdrVolume(OntapModel):
     """OntapSnapmirrorRelationshipSvmdrVolume sub-model for svmdr_volumes."""
 
-    svmdr_volumes_name: str = ""
+    name: str = ""
 
 
 class OntapSnapmirrorRelationshipUnhealthyReason(OntapModel):
     """OntapSnapmirrorRelationshipUnhealthyReason sub-model for unhealthy_reason."""
 
-    unhealthy_reason_arguments: list[str] = Field(default_factory=list)
-    unhealthy_reason_code: str = ""
-    unhealthy_reason_message: str = ""
+    arguments: list[str] = Field(default_factory=list)
+    code: str = ""
+    message: str = ""
 
 
 class OntapSnapmirrorRelationship(OntapModel):

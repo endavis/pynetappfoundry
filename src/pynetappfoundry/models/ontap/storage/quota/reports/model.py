@@ -10,8 +10,8 @@ from pynetappfoundry.models._base import OntapModel
 class OntapQuotaReportUser(OntapModel):
     """OntapQuotaReportUser sub-model for users."""
 
-    users_id: str = ""
-    users_name: str = ""
+    id: str = ""
+    name: str = ""
 
 
 class OntapQuotaReport(OntapModel):

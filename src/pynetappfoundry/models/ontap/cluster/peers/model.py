@@ -12,8 +12,8 @@ from pynetappfoundry.models._base import OntapModel
 class OntapClusterPeerInitialAllowedSvm(OntapModel):
     """OntapClusterPeerInitialAllowedSvm sub-model for initial_allowed_svms."""
 
-    initial_allowed_svms_name: str = ""
-    initial_allowed_svms_uuid: str = ""
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapClusterPeer(OntapModel):

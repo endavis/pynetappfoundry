@@ -10,7 +10,7 @@ from pynetappfoundry.models._base import OntapModel
 class OntapExportRuleClient(OntapModel):
     """OntapExportRuleClient sub-model for clients."""
 
-    clients_match: str = ""
+    match: str = ""
 
 
 class OntapExportRule(OntapModel):

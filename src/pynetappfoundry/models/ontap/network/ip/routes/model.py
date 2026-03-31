@@ -10,9 +10,9 @@ from pynetappfoundry.models._base import OntapModel
 class OntapNetworkRouteInterface(OntapModel):
     """OntapNetworkRouteInterface sub-model for interfaces."""
 
-    interfaces_ip_address: str = ""
-    interfaces_name: str = ""
-    interfaces_uuid: str = ""
+    ip_address: str = ""
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapNetworkRoute(OntapModel):

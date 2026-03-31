@@ -12,57 +12,57 @@ from pynetappfoundry.models._base import OntapModel, OntapUUID
 class OntapS3ServiceBucket(OntapModel):
     """OntapS3ServiceBucket sub-model for buckets."""
 
-    buckets_aggregates: list[dict[str, Any]] = Field(default_factory=list)
-    buckets_allowed: bool = False
-    buckets_audit_event_selector_access: str = ""
-    buckets_audit_event_selector_permission: str = ""
-    buckets_comment: str = ""
-    buckets_constituents_per_aggregate: int = 0
-    buckets_cors_rules: list[dict[str, Any]] = Field(default_factory=list)
-    buckets_encryption_enabled: bool = False
-    buckets_lifecycle_management_rules: list[dict[str, Any]] = Field(default_factory=list)
-    buckets_logical_used_size: int = 0
-    buckets_name: str = ""
-    buckets_nas_path: str = ""
-    buckets_policy_statements: list[dict[str, Any]] = Field(default_factory=list)
-    buckets_protection_status_destination_is_cloud: bool = False
-    buckets_protection_status_destination_is_external_cloud: bool = False
-    buckets_protection_status_destination_is_ontap: bool = False
-    buckets_protection_status_is_protected: bool = False
-    buckets_qos_policy_max_throughput_iops: int = 0
-    buckets_qos_policy_max_throughput_mbps: int = 0
-    buckets_qos_policy_min_throughput_iops: int = 0
-    buckets_qos_policy_min_throughput_mbps: int = 0
-    buckets_qos_policy_name: str = ""
-    buckets_qos_policy_uuid: str = ""
-    buckets_retention_default_period: str = ""
-    buckets_retention_mode: str = ""
-    buckets_role: str = ""
-    buckets_size: int = 0
-    buckets_snapshot_policy_name: str = ""
-    buckets_snapshot_policy_uuid: OntapUUID = ""
-    buckets_storage_service_level: str = ""
-    buckets_svm_name: str = ""
-    buckets_svm_uuid: str = ""
-    buckets_type: str = ""
-    buckets_use_mirrored_aggregates: bool = False
-    buckets_uuid: OntapUUID = ""
-    buckets_versioning_state: str = ""
-    buckets_volume_name: str = ""
-    buckets_volume_uuid: str = ""
+    aggregates: list[dict[str, Any]] = Field(default_factory=list)
+    allowed: bool = False
+    audit_event_selector_access: str = ""
+    audit_event_selector_permission: str = ""
+    comment: str = ""
+    constituents_per_aggregate: int = 0
+    cors_rules: list[dict[str, Any]] = Field(default_factory=list)
+    encryption_enabled: bool = False
+    lifecycle_management_rules: list[dict[str, Any]] = Field(default_factory=list)
+    logical_used_size: int = 0
+    name: str = ""
+    nas_path: str = ""
+    policy_statements: list[dict[str, Any]] = Field(default_factory=list)
+    protection_status_destination_is_cloud: bool = False
+    protection_status_destination_is_external_cloud: bool = False
+    protection_status_destination_is_ontap: bool = False
+    protection_status_is_protected: bool = False
+    qos_policy_max_throughput_iops: int = 0
+    qos_policy_max_throughput_mbps: int = 0
+    qos_policy_min_throughput_iops: int = 0
+    qos_policy_min_throughput_mbps: int = 0
+    qos_policy_name: str = ""
+    qos_policy_uuid: str = ""
+    retention_default_period: str = ""
+    retention_mode: str = ""
+    role: str = ""
+    size: int = 0
+    snapshot_policy_name: str = ""
+    snapshot_policy_uuid: OntapUUID = ""
+    storage_service_level: str = ""
+    svm_name: str = ""
+    svm_uuid: str = ""
+    type: str = ""
+    use_mirrored_aggregates: bool = False
+    uuid: OntapUUID = ""
+    versioning_state: str = ""
+    volume_name: str = ""
+    volume_uuid: str = ""
 
 
 class OntapS3ServiceUser(OntapModel):
     """OntapS3ServiceUser sub-model for users."""
 
-    users_access_key: str = ""
-    users_comment: str = ""
-    users_key_expiry_time: str = ""
-    users_key_time_to_live: str = ""
-    users_name: str = ""
-    users_secret_key: str = ""
-    users_svm_name: str = ""
-    users_svm_uuid: str = ""
+    access_key: str = ""
+    comment: str = ""
+    key_expiry_time: str = ""
+    key_time_to_live: str = ""
+    name: str = ""
+    secret_key: str = ""
+    svm_name: str = ""
+    svm_uuid: str = ""
 
 
 class OntapS3Service(OntapModel):

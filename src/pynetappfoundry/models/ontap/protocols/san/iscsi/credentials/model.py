@@ -10,16 +10,16 @@ from pynetappfoundry.models._base import OntapModel
 class OntapIscsiCredentialsMask(OntapModel):
     """OntapIscsiCredentialsMask sub-model for masks."""
 
-    initiator_address_masks_address: str = ""
-    initiator_address_masks_family: str = ""
-    initiator_address_masks_netmask: str = ""
+    address: str = ""
+    family: str = ""
+    netmask: str = ""
 
 
 class OntapIscsiCredentialsRange(OntapModel):
     """OntapIscsiCredentialsRange sub-model for ranges."""
 
-    initiator_address_ranges_end: str = ""
-    initiator_address_ranges_family: str = ""
+    end: str = ""
+    family: str = ""
 
 
 class OntapIscsiCredentials(OntapModel):

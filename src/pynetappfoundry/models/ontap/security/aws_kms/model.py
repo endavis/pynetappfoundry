@@ -10,11 +10,11 @@ from pynetappfoundry.models._base import OntapModel
 class OntapAwsKmsEkmipReachability(OntapModel):
     """OntapAwsKmsEkmipReachability sub-model for ekmip_reachability."""
 
-    ekmip_reachability_code: str = ""
-    ekmip_reachability_message: str = ""
-    ekmip_reachability_node_name: str = ""
-    ekmip_reachability_node_uuid: str = ""
-    ekmip_reachability_reachable: bool = False
+    code: str = ""
+    message: str = ""
+    node_name: str = ""
+    node_uuid: str = ""
+    reachable: bool = False
 
 
 class OntapAwsKms(OntapModel):

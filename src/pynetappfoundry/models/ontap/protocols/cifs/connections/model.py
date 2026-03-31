@@ -10,7 +10,7 @@ from pynetappfoundry.models._base import OntapModel
 class OntapCifsConnectionSession(OntapModel):
     """OntapCifsConnectionSession sub-model for sessions."""
 
-    sessions_identifier: int = 0
+    identifier: int = 0
 
 
 class OntapCifsConnection(OntapModel):

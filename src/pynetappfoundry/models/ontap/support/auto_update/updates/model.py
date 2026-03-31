@@ -10,8 +10,8 @@ from pynetappfoundry.models._base import OntapModel
 class OntapAutoUpdateStatusArgument(OntapModel):
     """OntapAutoUpdateStatusArgument sub-model for arguments."""
 
-    status_arguments_code: str = ""
-    status_arguments_message: str = ""
+    code: str = ""
+    message: str = ""
 
 
 class OntapAutoUpdateStatus(OntapModel):

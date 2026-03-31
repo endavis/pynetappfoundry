@@ -10,15 +10,15 @@ from pynetappfoundry.models._base import OntapModel
 class OntapIpSubnetAvailableIpRange(OntapModel):
     """OntapIpSubnetAvailableIpRange sub-model for available_ip_ranges."""
 
-    available_ip_ranges_end: str = ""
-    available_ip_ranges_family: str = ""
+    end: str = ""
+    family: str = ""
 
 
 class OntapIpSubnetIpRange(OntapModel):
     """OntapIpSubnetIpRange sub-model for ip_ranges."""
 
-    ip_ranges_end: str = ""
-    ip_ranges_family: str = ""
+    end: str = ""
+    family: str = ""
 
 
 class OntapIpSubnet(OntapModel):

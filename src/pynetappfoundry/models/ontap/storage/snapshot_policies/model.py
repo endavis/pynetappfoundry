@@ -10,12 +10,12 @@ from pynetappfoundry.models._base import OntapModel
 class OntapSnapshotPolicyCopy(OntapModel):
     """OntapSnapshotPolicyCopy sub-model for copies."""
 
-    copies_count: int = 0
-    copies_prefix: str = ""
-    copies_retention_period: str = ""
-    copies_schedule_name: str = ""
-    copies_schedule_uuid: str = ""
-    copies_snapmirror_label: str = ""
+    count: int = 0
+    prefix: str = ""
+    retention_period: str = ""
+    schedule_name: str = ""
+    schedule_uuid: str = ""
+    snapmirror_label: str = ""
 
 
 class OntapSnapshotPolicy(OntapModel):

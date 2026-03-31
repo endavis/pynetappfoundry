@@ -10,8 +10,8 @@ from pynetappfoundry.models._base import OntapModel, OntapUUID
 class OntapMetroclusterSvmArgument(OntapModel):
     """OntapMetroclusterSvmArgument sub-model for arguments."""
 
-    failed_reason_arguments_code: str = ""
-    failed_reason_arguments_message: str = ""
+    code: str = ""
+    message: str = ""
 
 
 class OntapMetroclusterSvm(OntapModel):
