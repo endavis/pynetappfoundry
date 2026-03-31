@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import sqlite3
+import uuid
 from datetime import UTC, datetime, timedelta
-from pathlib import Path
 from typing import Any
 from unittest.mock import patch
 
@@ -21,14 +21,15 @@ from pynetappfoundry.models.ontap.storage.volumes.model import OntapVolume
 
 
 @pytest.fixture
-def db_path(tmp_path: Path) -> Path:
-    """Return a temp DB path."""
-    return tmp_path / "test.db"
+def db_path() -> str:
+    """Return a unique shared in-memory DB URI for test isolation."""
+    unique = uuid.uuid4().hex[:8]
+    return f"file:test_lazy_{unique}?mode=memory&cache=shared"
 
 
 @pytest.fixture
-def db(db_path: Path) -> ClusterMetadataDB:
-    """Create a file-backed test database."""
+def db(db_path: str) -> ClusterMetadataDB:
+    """Create an in-memory test database."""
     return ClusterMetadataDB(db_path=db_path)
 
 
@@ -98,7 +99,7 @@ class TestLazyLoading:
     def test_lazy_loads_only_accessed_field(
         self,
         populated_db: ClusterMetadataDB,
-        db_path: Path,
+        db_path: str,
     ) -> None:
         """Accessing .cloud queries only cloud-related registry entries."""
         lazy = populated_db.get_lazy("test-cluster")
@@ -126,7 +127,7 @@ class TestLazyLoading:
     def test_lazy_does_not_load_unaccessed_fields(
         self,
         populated_db: ClusterMetadataDB,
-        db_path: Path,
+        db_path: str,
     ) -> None:
         """Accessing .cloud does not trigger loading of storage entries."""
         lazy = populated_db.get_lazy("test-cluster")
@@ -151,7 +152,7 @@ class TestLazyLoading:
     def test_field_cached_on_second_access(
         self,
         populated_db: ClusterMetadataDB,
-        db_path: Path,
+        db_path: str,
     ) -> None:
         """Second access to same field uses cache, no re-query."""
         lazy = populated_db.get_lazy("test-cluster")
@@ -287,7 +288,7 @@ class TestIsStaleDelegation:
     def test_is_stale_no_materialization(
         self,
         populated_db: ClusterMetadataDB,
-        db_path: Path,
+        db_path: str,
     ) -> None:
         """is_stale does not open a DB connection (uses envelope data)."""
         lazy = populated_db.get_lazy("test-cluster")

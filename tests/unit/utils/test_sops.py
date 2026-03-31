@@ -161,15 +161,15 @@ class TestSOPSIntegration:
     These tests require age and sops to be installed.
     """
 
-    @pytest.fixture
-    def age_keypair(self, tmp_path: Path) -> tuple[str, Path]:
-        """Generate a temporary age keypair for testing."""
+    @pytest.fixture(scope="class")
+    def age_keypair(self, tmp_path_factory: pytest.TempPathFactory) -> tuple[str, Path]:
+        """Generate a temporary age keypair once per test class."""
         from pynetappfoundry.utils.sops import generate_age_keypair, is_age_installed
 
         if not is_age_installed():
             pytest.skip("age is not installed")
 
-        key_path = tmp_path / "age-key.txt"
+        key_path = tmp_path_factory.mktemp("sops") / "age-key.txt"
         public_key, _ = generate_age_keypair(key_path)
         return public_key, key_path
 
