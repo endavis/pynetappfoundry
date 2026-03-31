@@ -81,18 +81,32 @@ class Mutation:
             raise ValueError(msg)
         return mapping
 
-    def create(self, **kwargs: Any) -> Any:
+    def create(
+        self,
+        *,
+        poll: bool = False,
+        poll_interval: float = 5,
+        poll_timeout: float = 300,
+        **kwargs: Any,
+    ) -> Any:
         """Create a new resource via POST.
 
         Translates keyword arguments from model attribute names to nested
         API JSON.  Disables retry (POST is non-idempotent).
 
         Args:
+            poll: If True and the response contains a job, block until
+                the job completes and return the final
+                :class:`~pynetappfoundry.models.ontap.cluster.jobs.model.OntapJob`.
+            poll_interval: Seconds between poll requests (default 5).
+            poll_timeout: Maximum seconds to wait (default 300).
             **kwargs: Model attribute name/value pairs.
 
         Returns:
-            Parsed model instance, or raw response for async jobs.
+            Parsed model instance, or :class:`OntapJob` when *poll* is True.
         """
+        from pynetappfoundry.query.job import JobTracker
+
         body = self._build_body(kwargs)
         path = self._collection_path()
         logger.debug("Mutation.create %s: POST %s body=%s", self._mapping.name, path, body)
@@ -102,18 +116,41 @@ class Mutation:
             body=body,
             retry_config=RetryConfig(enabled=False),
         )
+        if poll and isinstance(response, dict) and "job" in response:
+            tracker = JobTracker.from_response(
+                response,
+                self._client,
+                poll_interval=poll_interval,
+                poll_timeout=poll_timeout,
+            )
+            return tracker.wait()
         return self._parse_response(response)
 
-    def update(self, uuid: str, **kwargs: Any) -> Any:
+    def update(
+        self,
+        uuid: str,
+        *,
+        poll: bool = False,
+        poll_interval: float = 5,
+        poll_timeout: float = 300,
+        **kwargs: Any,
+    ) -> Any:
         """Update an existing resource via PATCH.
 
         Args:
             uuid: Resource UUID.
+            poll: If True and the response contains a job, block until
+                the job completes and return the final
+                :class:`~pynetappfoundry.models.ontap.cluster.jobs.model.OntapJob`.
+            poll_interval: Seconds between poll requests (default 5).
+            poll_timeout: Maximum seconds to wait (default 300).
             **kwargs: Model attribute name/value pairs to update.
 
         Returns:
-            Parsed model instance, or raw response for async jobs.
+            Parsed model instance, or :class:`OntapJob` when *poll* is True.
         """
+        from pynetappfoundry.query.job import JobTracker
+
         body = self._build_body(kwargs)
         path = f"{self._collection_path()}/{uuid}"
         logger.debug("Mutation.update %s: PATCH %s body=%s", self._mapping.name, path, body)
@@ -122,6 +159,14 @@ class Mutation:
             method="PATCH",
             body=body,
         )
+        if poll and isinstance(response, dict) and "job" in response:
+            tracker = JobTracker.from_response(
+                response,
+                self._client,
+                poll_interval=poll_interval,
+                poll_timeout=poll_timeout,
+            )
+            return tracker.wait()
         return self._parse_response(response)
 
     def delete(self, uuid: str, **kwargs: Any) -> Any:
