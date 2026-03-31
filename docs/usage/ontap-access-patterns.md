@@ -123,6 +123,27 @@ if isinstance(response, dict) and "job" in response:
         print(f"Job failed: {e.message} (code={e.error_code})")
 ```
 
+#### Relationship Traversal
+
+ONTAP resources have rich relationships (volumes belong to SVMs, LUNs map to igroups, etc.). The `related()` and `related_one()` functions provide a convenient way to traverse these relationships using model attribute filters.
+
+```python
+from pynetappfoundry.query import related, related_one
+from pynetappfoundry.models.ontap.storage.volumes import OntapVolume
+from pynetappfoundry.models.ontap.svm.svms import OntapSvm
+
+# Fetch all volumes belonging to an SVM
+vols = related(OntapVolume, client, svm_uuid="abc-123")
+
+# Fetch the SVM for a specific volume (one-to-one)
+svm = related_one(OntapSvm, client, uuid="svm-uuid-123")
+
+# Combine multiple filters
+vols = related(OntapVolume, client, svm_name="vs1", state="online")
+```
+
+These are equivalent to `QuerySet(...).filter(...).all()` and `QuerySet(...).filter(...).first()` respectively, but express relationship-traversal intent more clearly.
+
 #### Realtime Fields
 
 Many ONTAP models define fields with `cache_strategy="realtime"` (metrics like IOPS, latency, space usage) that are excluded from cache storage because they change constantly. The `query.realtime` module provides on-demand access to these fields.
