@@ -49,7 +49,7 @@ pynetappfoundry's native query and mutation layer uses the project's own Pydanti
 **Limitations:**
 
 - Requires the model's `TypeMapping` to be registered (import its mapping module)
-- Async job tracking not yet built in (returns raw 202 responses)
+- Async job tracking via `poll=True` or `JobTracker` (returns `OntapJob` on completion)
 - Parameterized endpoints (child resources) not yet supported
 
 **Example Usage:**
@@ -95,6 +95,32 @@ result = Mutation(OntapVolume, client).update(
 
 # Delete a volume
 Mutation(OntapVolume, client).delete(uuid="abc-123-def")
+
+# Create with job tracking (blocks until the async job completes)
+from pynetappfoundry.query import JobTracker, JobError
+
+job = Mutation(OntapVolume, client).create(
+    poll=True,          # wait for async job
+    poll_interval=5,    # seconds between polls (default)
+    poll_timeout=300,   # max wait in seconds (default)
+    name="vol1",
+    svm_name="vs1",
+    size=1073741824,
+)
+print(f"Job {job.uuid} completed: {job.state}")
+
+# Manual job tracking for finer control
+response = Mutation(OntapVolume, client).create(name="vol1", svm_name="vs1")
+if isinstance(response, dict) and "job" in response:
+    tracker = JobTracker.from_response(response, client)
+    # Non-blocking: check current state
+    current = tracker.poll()
+    print(f"State: {current.state}")
+    # Blocking: wait for completion
+    try:
+        final = tracker.wait()
+    except JobError as e:
+        print(f"Job failed: {e.message} (code={e.error_code})")
 ```
 
 ---
