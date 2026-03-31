@@ -72,7 +72,10 @@ class LazyClusterMetadata:
         self._cluster_name = cluster_name
         self._cached_at = cached_at
         self._cache_version = cache_version
-        self._db_path = Path(db_path) if not isinstance(db_path, Path) else db_path
+        if isinstance(db_path, str) and db_path.startswith("file:"):
+            self._db_path: Path | str = db_path  # SQLite URI — keep as string
+        else:
+            self._db_path = Path(db_path) if not isinstance(db_path, Path) else db_path
         self._registry = registry
         self._loaded: dict[str, Any] = {}
         self._materialized: CachedClusterMetadata | None = None
@@ -125,7 +128,8 @@ class LazyClusterMetadata:
             if path == name or path.startswith(f"{name}.")
         }
 
-        conn = sqlite3.connect(self._db_path, detect_types=sqlite3.PARSE_DECLTYPES)
+        is_uri = isinstance(self._db_path, str) and str(self._db_path).startswith("file:")
+        conn = sqlite3.connect(self._db_path, detect_types=sqlite3.PARSE_DECLTYPES, uri=is_uri)
         conn.row_factory = sqlite3.Row
         try:
             root_kwargs = _query_registry_subset(conn, self._cluster_name, subset)

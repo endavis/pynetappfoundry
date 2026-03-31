@@ -289,7 +289,8 @@ class ClusterMetadataDB(SQLiteDB):
         else:
             raise ValueError("Either db_path or config must be provided")
 
-        self.conn = sqlite3.connect(self.db_path, detect_types=sqlite3.PARSE_DECLTYPES)
+        is_uri = isinstance(self.db_path, str) and str(self.db_path).startswith("file:")
+        self.conn = sqlite3.connect(self.db_path, detect_types=sqlite3.PARSE_DECLTYPES, uri=is_uri)
         self.conn.row_factory = sqlite3.Row
         self._registry = _ensure_registry()
         self._migrate_old_schema_info()
