@@ -14,6 +14,7 @@ from pynetappfoundry.query.realtime import (
     fetch_realtime_collection,
     watch_realtime,
 )
+from pynetappfoundry.query.related import related, related_one
 
 __all__ = [
     "JobError",
@@ -25,5 +26,7 @@ __all__ = [
     "compare_realtime",
     "fetch_realtime",
     "fetch_realtime_collection",
+    "related",
+    "related_one",
     "watch_realtime",
 ]
