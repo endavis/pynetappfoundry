@@ -123,6 +123,50 @@ if isinstance(response, dict) and "job" in response:
         print(f"Job failed: {e.message} (code={e.error_code})")
 ```
 
+#### Realtime Fields
+
+Many ONTAP models define fields with `cache_strategy="realtime"` (metrics like IOPS, latency, space usage) that are excluded from cache storage because they change constantly. The `query.realtime` module provides on-demand access to these fields.
+
+```python
+from pynetappfoundry.query import (
+    fetch_realtime,
+    fetch_realtime_collection,
+    watch_realtime,
+    compare_realtime,
+)
+from pynetappfoundry.models.ontap.storage.volumes import OntapVolume
+
+# Fetch realtime metrics for a single volume
+metrics = fetch_realtime(OntapVolume, client, uuid="abc-123-def")
+print(f"IOPS read: {metrics['iops_read']}")
+
+# Fetch only specific realtime fields
+metrics = fetch_realtime(
+    OntapVolume, client, uuid="abc-123-def",
+    fields=["iops_read", "iops_write"],
+)
+
+# Fetch realtime metrics for multiple volumes (with filtering)
+all_metrics = fetch_realtime_collection(
+    OntapVolume, client, svm_name="vs1",
+)
+for m in all_metrics:
+    print(f"{m['name']}: read={m['iops_read']}, write={m['iops_write']}")
+
+# Poll metrics every 10 seconds (3 snapshots)
+for snapshot in watch_realtime(
+    OntapVolume, client, uuid="abc-123-def",
+    interval=10, count=3,
+):
+    print(f"[{snapshot['_timestamp']}] IOPS: {snapshot['iops_read']}")
+
+# Compare current metrics against a baseline
+baseline = fetch_realtime(OntapVolume, client, uuid="abc-123-def")
+# ... time passes ...
+diff = compare_realtime(OntapVolume, client, uuid="abc-123-def", baseline=baseline)
+print(f"IOPS read delta: {diff['iops_read']['delta']}")
+```
+
 ---
 
 ### 2. netapp_ontap SDK
@@ -368,6 +412,8 @@ Use this matrix to choose the right pattern:
 | Query ONTAP resources | `QuerySet` | Type-safe filtering, model attribute translation |
 | Create/update/delete resources | `Mutation` | Nested JSON from flat attrs, retry safety |
 | List volumes/aggregates | `QuerySet` | Fluent API, field projection, pagination |
+| Fetch live IOPS/latency metrics | `fetch_realtime` | On-demand realtime fields |
+| Poll metrics over time | `watch_realtime` | Generator-based polling |
 | Bulk data export | `QuerySet` | Handles pagination, typed results |
 | Generate a report | `netapp_ontap` SDK | Typed objects, well-documented |
 | Check license status | `netapp_ontap` SDK | LicensePackage resource available |
