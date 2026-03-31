@@ -8,9 +8,14 @@ from typing import Any
 import click
 from openpyxl import Workbook
 
+import pynetappfoundry.cache.ontap.protocols.locks.mapping  # noqa: F401 - register TypeMapping
 from pynetappfoundry.cli.decorators import with_config
 from pynetappfoundry.cli.utils import print_debug, print_error, print_info, print_success
+from pynetappfoundry.clients.ontap.api import ONTAPAPIClient
 from pynetappfoundry.core.config import Config
+from pynetappfoundry.core.models import ClusterConfig
+from pynetappfoundry.models.ontap.protocols.locks import OntapClientLock
+from pynetappfoundry.query import QuerySet
 
 
 @click.command()
@@ -54,58 +59,48 @@ def _gather_lock_data(
     wb: Workbook,
 ) -> None:
     """Gather lock data from a single cluster."""
-    from netapp_ontap import HostConnection
-    from netapp_ontap.resources import ClientLock
-
-    user, password = config.get_user("clusters", name)
-
     try:
-        with HostConnection(
-            details["ip"],
-            username=user,
-            password=password,
-            verify=False,
-        ):
-            ws = wb.create_sheet(name)
-            ws.append(["Volume", "Protocol", "Type", "Path", "Lock", "State", "IP Address"])
+        cluster_config = ClusterConfig(**details)
+        client = ONTAPAPIClient(cluster=cluster_config, config=config)
 
-            locks_data: list[dict[str, Any]] = []
-            for lock in ClientLock.get_collection(fields="*"):
-                locks_data.append(lock.to_dict())
+        locks_data: list[OntapClientLock] = QuerySet(OntapClientLock, client).all()
 
-            print_debug(f"Locks found: {len(locks_data)}")
+        ws = wb.create_sheet(name)
+        ws.append(["Volume", "Protocol", "Type", "Path", "Lock", "State", "IP Address"])
 
-            for item in locks_data:
-                try:
-                    lock_type = item.get("type", "unknown")
-                    if lock_type == "share_level":
-                        ws.append(
-                            [
-                                item.get("volume", {}).get("name", "Unknown"),
-                                item.get("protocol", "Unknown"),
-                                lock_type,
-                                item.get("path", "Unknown"),
-                                str(item.get("share_lock", "")),
-                                item.get("state", "Unknown"),
-                                item.get("client_address", "Unknown"),
-                            ]
-                        )
-                    elif lock_type == "op_lock":
-                        ws.append(
-                            [
-                                item.get("volume", {}).get("name", "Unknown"),
-                                item.get("protocol", "Unknown"),
-                                lock_type,
-                                item.get("path", "Unknown"),
-                                str(item.get("oplock_level", "")),
-                                item.get("state", "Unknown"),
-                                item.get("client_address", "Unknown"),
-                            ]
-                        )
-                    else:
-                        print_debug(f"Unknown lock type: {lock_type}")
-                except Exception as e:
-                    print_error(f"Lock error: {e}")
+        print_debug(f"Locks found: {len(locks_data)}")
+
+        for lock in locks_data:
+            try:
+                lock_type = lock.type_
+                if lock_type == "share_level":
+                    ws.append(
+                        [
+                            lock.volume_name or "Unknown",
+                            lock.protocol or "Unknown",
+                            lock_type,
+                            lock.path or "Unknown",
+                            lock.share_lock_mode,
+                            lock.state or "Unknown",
+                            lock.client_address or "Unknown",
+                        ]
+                    )
+                elif lock_type == "op_lock":
+                    ws.append(
+                        [
+                            lock.volume_name or "Unknown",
+                            lock.protocol or "Unknown",
+                            lock_type,
+                            lock.path or "Unknown",
+                            lock.oplock_level,
+                            lock.state or "Unknown",
+                            lock.client_address or "Unknown",
+                        ]
+                    )
+                else:
+                    print_debug(f"Unknown lock type: {lock_type}")
+            except Exception as e:
+                print_error(f"Lock error: {e}")
 
     except Exception as e:
         print_error(f"Could not gather lock data for {name}: {e}")
