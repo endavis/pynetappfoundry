@@ -285,6 +285,8 @@ def parse_api_record(
     mapping: TypeMapping,
     record: dict[str, Any],
     log_prefix: str,
+    *,
+    skip_realtime: bool = False,
 ) -> BaseModel:
     """Parse a single API response record into a model instance.
 
@@ -297,13 +299,15 @@ def parse_api_record(
         mapping: Type mapping definition.
         record: Single API response record dict.
         log_prefix: Prefix for log messages.
+        skip_realtime: If True, skip realtime/derived fields (used by cache
+            collector to exclude volatile metrics from storage).
 
     Returns:
         Populated model instance.
     """
     kwargs: dict[str, Any] = {}
     for field in mapping.fields:
-        if field.cache_strategy != "cache":
+        if skip_realtime and field.cache_strategy != "cache":
             continue  # realtime/derived fields not collected during bulk
         if field.transform is not None:
             try:
@@ -379,6 +383,8 @@ def parse_api_response(
         [dict[str, Any], list[str], str, str],
         None,
     ],
+    *,
+    skip_realtime: bool = False,
 ) -> list[BaseModel]:
     """Parse a full API response into a list of model instances.
 
@@ -391,6 +397,8 @@ def parse_api_response(
         response: Full API response dict or None.
         log_prefix: Prefix for log messages.
         log_missing_fn: Callback for logging missing fields.
+        skip_realtime: If True, skip realtime/derived fields (passed through
+            to ``parse_api_record``).
 
     Returns:
         List of populated model instances.
@@ -409,7 +417,7 @@ def parse_api_response(
     for record in records:
         record_id = record.get(mapping.id_field, record.get("uuid", "unknown"))
         log_missing_fn(record, expected, mapping.name, record_id)
-        results.append(parse_api_record(mapping, record, log_prefix))
+        results.append(parse_api_record(mapping, record, log_prefix, skip_realtime=skip_realtime))
 
     return results
 

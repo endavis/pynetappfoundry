@@ -1150,8 +1150,8 @@ class TestBuildCollectionUrl:
 class TestCacheStrategyFiltering:
     """Tests for cache_strategy filtering in parse_api_record."""
 
-    def test_skips_realtime_fields(self) -> None:
-        """Realtime fields are skipped and get model defaults."""
+    def test_includes_realtime_fields_by_default(self) -> None:
+        """Realtime fields are included when skip_realtime=False (default)."""
         tm = TypeMapping(
             name="T",
             model_class=_SampleModel,
@@ -1169,11 +1169,31 @@ class TestCacheStrategyFiltering:
         record = {"name": "test1", "value": 99}
         result = parse_api_record(tm, record, "[test]")
         assert result.name == "test1"
-        # value is realtime, should get model default (0), not 99
+        assert result.value == 99
+
+    def test_skips_realtime_fields_when_requested(self) -> None:
+        """Realtime fields are skipped when skip_realtime=True."""
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/t",
+            fields=(
+                FieldMapping(cache_attr="name", api_path="name"),
+                FieldMapping(
+                    cache_attr="value",
+                    api_path="value",
+                    default=0,
+                    cache_strategy="realtime",
+                ),
+            ),
+        )
+        record = {"name": "test1", "value": 99}
+        result = parse_api_record(tm, record, "[test]", skip_realtime=True)
+        assert result.name == "test1"
         assert result.value == 0
 
-    def test_skips_derived_fields(self) -> None:
-        """Derived fields are skipped and get model defaults."""
+    def test_skips_derived_fields_when_requested(self) -> None:
+        """Derived fields are skipped when skip_realtime=True."""
         tm = TypeMapping(
             name="T",
             model_class=_SampleModel,
@@ -1189,7 +1209,7 @@ class TestCacheStrategyFiltering:
             ),
         )
         record = {"name": "test1", "value": 42}
-        result = parse_api_record(tm, record, "[test]")
+        result = parse_api_record(tm, record, "[test]", skip_realtime=True)
         assert result.name == "test1"
         assert result.value == 0
 
@@ -1247,7 +1267,7 @@ class TestPostCollection:
             ),
         )
         response = {"records": [{"name": "a"}, {"name": "b"}]}
-        results = parse_api_response(tm, response, "[t]", MagicMock())
+        results = parse_api_response(tm, response, "[t]", MagicMock(), skip_realtime=True)
         assert len(results) == 2
         # post_collection should NOT have been called
         assert call_log == []
@@ -1265,5 +1285,5 @@ class TestPostCollection:
         )
         response = {"records": [{"name": "a"}]}
         # Should not raise
-        results = parse_api_response(tm, response, "[t]", MagicMock())
+        results = parse_api_response(tm, response, "[t]", MagicMock(), skip_realtime=True)
         assert len(results) == 1
