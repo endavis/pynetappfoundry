@@ -8,7 +8,7 @@ Usage:
         --host aiqum.example.com \\
         --username admin \\
         --password secret \\
-        --output example-config/apis/aiqum/all.json
+        --output docs/example-config/apis/aiqum/all.json
 
     # Skip TLS verification (self-signed certs)
     uv run python tools/scripts/fetch_aiqum_spec.py \\
@@ -148,8 +148,8 @@ def main() -> None:
     parser.add_argument("--password", required=True, help="AIQUM password")
     parser.add_argument(
         "--output",
-        default="example-config/apis/aiqum/all.json",
-        help="Output file path (default: example-config/apis/aiqum/all.json)",
+        default="docs/example-config/apis/aiqum/all.json",
+        help="Output file path (default: docs/example-config/apis/aiqum/all.json)",
     )
     parser.add_argument(
         "--no-verify",

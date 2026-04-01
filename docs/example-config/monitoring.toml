@@ -5,4 +5,3 @@
 default_thresholds = {inodes=80, aggregate=90, volume=90}
 # maybe change this in the monitoring script to check for a snapmirror relationship and/or DP volume
 DR = {inodes=90, aggregate=90, volume=90}
-

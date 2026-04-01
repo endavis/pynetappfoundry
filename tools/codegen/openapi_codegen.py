@@ -6,7 +6,7 @@ definitions, and TOML overlay files.
 Usage::
 
     uv run python tools/codegen/openapi_codegen.py \\
-        --spec example-config/apis/ontap/openapi3.json \\
+        --spec docs/example-config/apis/ontap/openapi3.json \\
         --output src/pynetappfoundry/cache/ontap/ \\
         --api-type ontap
 """

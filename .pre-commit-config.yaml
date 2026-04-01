@@ -4,20 +4,22 @@ repos:
     rev: v5.0.0
     hooks:
       - id: trailing-whitespace
+        exclude: ^docs/example-config/apis/
         stages: [pre-commit]
       - id: end-of-file-fixer
+        exclude: ^docs/example-config/apis/
         stages: [pre-commit]
       - id: check-yaml
         stages: [pre-commit]
       - id: check-added-large-files
-        exclude: ^example-config/apis/
+        exclude: ^docs/example-config/apis/
         stages: [pre-commit]
       - id: check-toml
         stages: [pre-commit]
       - id: check-merge-conflict
         stages: [pre-commit]
       - id: detect-private-key
-        exclude: ^example-config/apis/
+        exclude: ^docs/example-config/apis/
         stages: [pre-commit]
 
   # Conventional commits enforcement
@@ -72,7 +74,7 @@ repos:
         entry: uv run codespell
         language: system
         types: [text]
-        exclude: ^(\.git/|\.venv/|uv\.lock|example-config/apis/)
+        exclude: ^(\.git/|\.venv/|uv\.lock|docs/example-config/apis/)
         stages: [pre-commit]
 
       # Branch naming enforcement
