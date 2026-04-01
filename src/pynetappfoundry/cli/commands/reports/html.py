@@ -12,13 +12,27 @@ This module generates an interactive HTML report with:
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import click
 from yattag import Doc, indent
 
+import pynetappfoundry.cache.ontap.cluster.mapping
+import pynetappfoundry.cache.ontap.cluster.nodes.mapping
+import pynetappfoundry.cache.ontap.network.ip.interfaces.mapping
+import pynetappfoundry.cache.ontap.protocols.cifs.services.mapping
+import pynetappfoundry.cache.ontap.svm.svms.mapping  # noqa: F401
+from pynetappfoundry.cache.field_mapping import parse_api_record
+from pynetappfoundry.cache.ontap.cluster.mapping import CLUSTER_MAPPING
 from pynetappfoundry.cli.decorators import with_config
 from pynetappfoundry.cli.utils import print_debug, print_error, print_info, print_success
+from pynetappfoundry.clients.ontap.api import ONTAPAPIClient
+from pynetappfoundry.core.models import ClusterConfig
+from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
+from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
+from pynetappfoundry.models.ontap.protocols.cifs.services.model import OntapCifsService
+from pynetappfoundry.models.ontap.svm.svms.model import OntapSvm
+from pynetappfoundry.query import QuerySet
 from pynetappfoundry.utils.cloud import (
     build_azure_id,
     build_azure_portal_link,
@@ -286,7 +300,7 @@ class HTMLReportBuilder:
             cluster = self.clusterdata[item]
 
             # Count HA vs single-node clusters
-            if len(list(cluster.fetched_data.get("nodes", {}).keys())) > 1:
+            if len(cluster.nodes) > 1:
                 self.counts["ha"] += 1
             else:
                 self.counts["sn"] += 1
@@ -700,7 +714,11 @@ class ClusterData:
 
     Attributes:
         name: Cluster name.
-        fetched_data: Dictionary of data fetched from the cluster.
+        cluster_info: ClusterInfo from the /cluster endpoint.
+        nodes: List of OntapNodeResponse objects.
+        svms: List of OntapSvm objects.
+        cifs_services: List of OntapCifsService objects.
+        management_ip: Cluster management IP address.
         app_instance: Reference to the parent HTMLReportBuilder.
         ele_class: CSS class for active cluster highlighting.
     """
@@ -725,7 +743,11 @@ class ClusterData:
         self._cluster_entry = cluster_entry
         for name, value in kwargs.items():
             setattr(self, name, value)
-        self.fetched_data: dict[str, Any] = {}
+        self.cluster_info: ClusterInfo | None = None
+        self.nodes: list[OntapNodeResponse] = []
+        self.svms: list[OntapSvm] = []
+        self.cifs_services: list[OntapCifsService] = []
+        self.management_ip: str = ""
         self.app_instance = app_instance
 
         # Build element class for active cluster navigation
@@ -774,9 +796,6 @@ class ClusterData:
 
     def _gather_data(self) -> None:
         """Gather data from the cluster via ONTAP REST API."""
-        from netapp_ontap import HostConnection
-        from netapp_ontap.resources import CifsService, Cluster, IpInterface, Node, Svm
-
         print_debug(f"Gathering data for {self.name}")
         self._build_cloud_info()
 
@@ -786,36 +805,25 @@ class ClusterData:
             return
 
         try:
-            user, password = self.app_instance.config.get_user("clusters", self.name)
+            cluster_config = ClusterConfig(name=self.name, ip=ip)
+            client = ONTAPAPIClient(cluster=cluster_config, config=self.app_instance.config)
         except Exception as e:
             print_error(f"Could not get credentials for {self.name}: {e}")
             return
 
         try:
-            with HostConnection(ip, username=user, password=password, verify=False):
-                cluster = Cluster()
-                cluster.get()
-                self.fetched_data["cluster"] = cluster.to_dict()
+            # ClusterInfo singleton — /cluster returns flat dict, not records
+            response = client.call_endpoint(CLUSTER_MAPPING.build_collection_url())
+            if response:
+                self.cluster_info = cast(
+                    ClusterInfo,
+                    parse_api_record(CLUSTER_MAPPING, response, f"[{self.name}]"),
+                )
 
-                nodes = list(Node.get_collection(fields="*"))
-                self.fetched_data["nodes"] = {}
-                for node in nodes:
-                    self.fetched_data["nodes"][node["name"]] = node.to_dict()
-
-                svms = list(Svm.get_collection(fields="*"))
-                self.fetched_data["svms"] = {}
-                for svm in svms:
-                    self.fetched_data["svms"][svm["name"]] = svm.to_dict()
-
-                ipinterfaces = list(IpInterface.get_collection(fields="*"))
-                self.fetched_data["interfaces"] = {}
-                for interface in ipinterfaces:
-                    self.fetched_data["interfaces"][interface["name"]] = interface.to_dict()
-
-                cifsservices = list(CifsService.get_collection(fields="*"))
-                self.fetched_data["cifs"] = {}
-                for cifserver in cifsservices:
-                    self.fetched_data["cifs"][cifserver["name"]] = cifserver.to_dict()
+            self.management_ip = ip
+            self.nodes = QuerySet(OntapNodeResponse, client).all()
+            self.svms = QuerySet(OntapSvm, client).all()
+            self.cifs_services = QuerySet(OntapCifsService, client).all()
         except Exception as e:
             print_error(f"Could not gather data from {self.name}: {e}")
 
@@ -893,19 +901,13 @@ class ClusterData:
 
     def _format_netapp_cluster_info(self) -> None:
         """Format cluster-level information (version, management IPs, DNS, NTP)."""
-        if "cluster" not in self.fetched_data:
+        if self.cluster_info is None:
             return
 
         tag = self.app_instance.tag
         text = self.app_instance.text
-        cluster_data = self.fetched_data["cluster"]
 
-        mgmt_interfaces = cluster_data.get("management_interfaces", [])
-        if mgmt_interfaces:
-            management_ip = mgmt_interfaces[0].get("ip", {}).get("address", "")
-            management_link = f"https://{management_ip}"
-        else:
-            management_link = ""
+        management_link = f"https://{self.management_ip}" if self.management_ip else ""
 
         with tag("li"):
             with tag("details"):
@@ -918,13 +920,12 @@ class ClusterData:
                 with tag("ul"):
                     with tag("li"):
                         with tag("table", ("class", "custom-table")):
-                            version = cluster_data.get("version", {}).get("full", "Unknown")
+                            version = self.cluster_info.ontap_version or "Unknown"
                             self.app_instance.format_table_row_text("Version", version)
 
-                            if mgmt_interfaces:
-                                mgmt_ip = mgmt_interfaces[0].get("ip", {}).get("address", "Unknown")
+                            if self.management_ip:
                                 self.app_instance.format_table_row_text(
-                                    "Cluster Management IP", mgmt_ip
+                                    "Cluster Management IP", self.management_ip
                                 )
                             if management_link:
                                 self.app_instance.format_table_row_link(
@@ -942,12 +943,12 @@ class ClusterData:
                             with tag("ul"):
                                 with tag("li"):
                                     with tag("table", ("class", "custom-table")):
-                                        domains = cluster_data.get("dns_domains", [])
+                                        domains = self.cluster_info.dns_domains
                                         self.app_instance.format_table_row_text(
                                             "Domains", ", ".join(domains) if domains else "None"
                                         )
                                         for i, name_server in enumerate(
-                                            cluster_data.get("name_servers", [])
+                                            self.cluster_info.name_servers
                                         ):
                                             self.app_instance.format_table_row_text(
                                                 f"Server {i + 1}", name_server
@@ -961,7 +962,7 @@ class ClusterData:
                             with tag("ul"):
                                 with tag("li"):
                                     with tag("table", ("class", "custom-table")):
-                                        ntp_servers = cluster_data.get("ntp_servers", [])
+                                        ntp_servers = self.cluster_info.ntp_servers
                                         if ntp_servers:
                                             for i, name_server in enumerate(ntp_servers):
                                                 self.app_instance.format_table_row_text(
@@ -974,35 +975,33 @@ class ClusterData:
 
     def _format_netapp_vservers_info(self) -> None:
         """Format SVM/vserver information."""
-        if "svms" not in self.fetched_data:
+        if not self.svms:
             return
 
         tag = self.app_instance.tag
         text = self.app_instance.text
 
-        for svm_name in sorted(self.fetched_data["svms"].keys()):
-            svm_data = self.fetched_data["svms"][svm_name]
-            print_debug(f"  SVM: {svm_data.get('name', svm_name)}")
+        for svm in sorted(self.svms, key=lambda s: s.name):
+            print_debug(f"  SVM: {svm.name}")
 
-            state = svm_data.get("state", "")
-            state_text = " - State: Stopped" if state == "stopped" else ""
+            state_text = " - State: Stopped" if svm.state == "stopped" else ""
 
             with tag("li"):
                 with tag("details"):
                     with tag("summary"):
-                        text(f"vserver {svm_data.get('name', svm_name)}{state_text}")
+                        text(f"vserver {svm.name}{state_text}")
                     with tag("ul"):
-                        self._format_netapp_vserver_interfaces_info(svm_data)
-                        self._format_netapp_vserver_dns_info(svm_data)
-                        self._format_netapp_vserver_smb_server_info(svm_data)
+                        self._format_netapp_vserver_interfaces_info(svm)
+                        self._format_netapp_vserver_dns_info(svm)
+                        self._format_netapp_vserver_smb_server_info(svm)
 
-    def _format_netapp_vserver_interfaces_info(self, svm_data: dict[str, Any]) -> None:
+    def _format_netapp_vserver_interfaces_info(self, svm: OntapSvm) -> None:
         """Format SVM network interface information.
 
         Args:
-            svm_data: SVM data dictionary.
+            svm: OntapSvm model instance.
         """
-        if "ip_interfaces" not in svm_data:
+        if not svm.ip_interfaces:
             return
 
         tag = self.app_instance.tag
@@ -1018,35 +1017,24 @@ class ClusterData:
                             self.app_instance.format_table_row_text(
                                 "LIF name", "LIF IP", "Home Node", header=True
                             )
-                            for svm_interface in svm_data["ip_interfaces"]:
-                                iface_name = svm_interface.get("name", "")
-                                ip_interface = self.fetched_data.get("interfaces", {}).get(
-                                    iface_name, {}
+                            for iface in svm.ip_interfaces:
+                                ip_addr = iface.ip_address or "Unknown"
+                                netmask = iface.ip_netmask
+                                home_node = iface.location_home_node_name or "Unknown"
+                                self.app_instance.format_table_row_text(
+                                    iface.name,
+                                    f"{ip_addr}/{netmask}" if netmask else ip_addr,
+                                    home_node,
                                 )
-                                if ip_interface:
-                                    ip_info = ip_interface.get("ip", {})
-                                    ip_addr = ip_info.get("address", "Unknown")
-                                    netmask = ip_info.get("netmask", "")
-                                    home_node = (
-                                        ip_interface.get("location", {})
-                                        .get("home_node", {})
-                                        .get("name", "Unknown")
-                                    )
-                                    self.app_instance.format_table_row_text(
-                                        iface_name,
-                                        f"{ip_addr}/{netmask}" if netmask else ip_addr,
-                                        home_node,
-                                    )
 
-    def _format_netapp_vserver_dns_info(self, svm_data: dict[str, Any]) -> None:
+    def _format_netapp_vserver_dns_info(self, svm: OntapSvm) -> None:
         """Format SVM DNS configuration.
 
         Args:
-            svm_data: SVM data dictionary.
+            svm: OntapSvm model instance.
         """
         tag = self.app_instance.tag
         text = self.app_instance.text
-        dns_data = svm_data.get("dns", {})
 
         with tag("li"):
             with tag("details"):
@@ -1055,28 +1043,32 @@ class ClusterData:
                 with tag("ul"):
                     with tag("li"):
                         with tag("table", ("class", "custom-table")):
-                            domains = dns_data.get("domains", [])
+                            domains = svm.dns_domains
                             self.app_instance.format_table_row_text(
                                 "Domains", ", ".join(domains) if domains else "None"
                             )
-                            for i, name_server in enumerate(dns_data.get("servers", [])):
+                            for i, name_server in enumerate(svm.dns_servers):
                                 self.app_instance.format_table_row_text(
                                     f"Server {i + 1}", name_server
                                 )
 
-    def _format_netapp_vserver_smb_server_info(self, svm_data: dict[str, Any]) -> None:
+    def _format_netapp_vserver_smb_server_info(self, svm: OntapSvm) -> None:
         """Format SVM CIFS/SMB server configuration.
 
         Args:
-            svm_data: SVM data dictionary.
+            svm: OntapSvm model instance.
         """
-        cifs_ref = svm_data.get("cifs", {})
-        if "name" not in cifs_ref:
+        if not svm.cifs_name:
             return
 
-        cifs_name = cifs_ref["name"]
-        cifs_data = self.fetched_data.get("cifs", {}).get(cifs_name, {})
-        if not cifs_data:
+        # Find matching CIFS service by name
+        cifs: OntapCifsService | None = None
+        for cs in self.cifs_services:
+            if cs.name == svm.cifs_name:
+                cifs = cs
+                break
+
+        if cifs is None:
             return
 
         tag = self.app_instance.tag
@@ -1089,18 +1081,11 @@ class ClusterData:
                 with tag("ul"):
                     with tag("li"):
                         with tag("table", ("class", "custom-table")):
+                            self.app_instance.format_table_row_text("Enabled", str(cifs.enabled))
+                            self.app_instance.format_table_row_text("Name", cifs.name)
+                            self.app_instance.format_table_row_text("Domain", cifs.ad_domain_fqdn)
                             self.app_instance.format_table_row_text(
-                                "Enabled", str(cifs_data.get("enabled", "Unknown"))
-                            )
-                            self.app_instance.format_table_row_text(
-                                "Name", cifs_data.get("name", "")
-                            )
-                            ad_domain = cifs_data.get("ad_domain", {})
-                            self.app_instance.format_table_row_text(
-                                "Domain", ad_domain.get("fqdn", "")
-                            )
-                            self.app_instance.format_table_row_text(
-                                "Organizational Unit", ad_domain.get("organizational_unit", "")
+                                "Organizational Unit", cifs.ad_domain_organizational_unit
                             )
 
                     # Security settings
@@ -1111,40 +1096,64 @@ class ClusterData:
                             with tag("ul"):
                                 with tag("li"):
                                     with tag("table", ("class", "custom-table")):
-                                        security = cifs_data.get("security", {})
-                                        items = [
-                                            ("Is Signing Required", "smb_signing"),
+                                        items: list[tuple[str, str, Any]] = [
+                                            (
+                                                "Is Signing Required",
+                                                "security_smb_signing",
+                                                cifs.security_smb_signing,
+                                            ),
                                             (
                                                 "Use start_tls for AD LDAP connection",
-                                                "use_start_tls",
+                                                "security_use_start_tls",
+                                                cifs.security_use_start_tls,
                                             ),
-                                            ("LM Compatibility Level", "lm_compatibility_level"),
-                                            ("Is SMB Encryption Required", "smb_encryption"),
-                                            ("Client Session Security", "session_security"),
+                                            (
+                                                "LM Compatibility Level",
+                                                "security_lm_compatibility_level",
+                                                cifs.security_lm_compatibility_level,
+                                            ),
+                                            (
+                                                "Is SMB Encryption Required",
+                                                "security_smb_encryption",
+                                                cifs.security_smb_encryption,
+                                            ),
+                                            (
+                                                "Client Session Security",
+                                                "security_session_security",
+                                                cifs.security_session_security,
+                                            ),
                                             (
                                                 "LDAP Referral Enabled For AD LDAP connections",
-                                                "ldap_referral_enabled",
+                                                "security_ldap_referral_enabled",
+                                                cifs.security_ldap_referral_enabled,
                                             ),
-                                            ("Use LDAPS for AD LDAP connection", "use_ldaps"),
+                                            (
+                                                "Use LDAPS for AD LDAP connection",
+                                                "security_use_ldaps",
+                                                cifs.security_use_ldaps,
+                                            ),
                                             (
                                                 "Encryption is required for DC Connections",
-                                                "encrypt_dc_connection",
+                                                "security_encrypt_dc_connection",
+                                                cifs.security_encrypt_dc_connection,
                                             ),
                                             (
                                                 "AES session key enabled for NetLogon channel",
-                                                "aes_netlogon_enabled",
+                                                "security_aes_netlogon_enabled",
+                                                cifs.security_aes_netlogon_enabled,
                                             ),
                                             (
                                                 "Try Channel Binding For AD LDAP Connections",
-                                                "try_ldap_channel_binding",
+                                                "security_try_ldap_channel_binding",
+                                                cifs.security_try_ldap_channel_binding,
                                             ),
                                             (
                                                 "Encryption Types Advertised to Kerberos",
-                                                "advertised_kdc_encryptions",
+                                                "security_advertised_kdc_encryptions",
+                                                cifs.security_advertised_kdc_encryptions,
                                             ),
                                         ]
-                                        for header, key in items:
-                                            value = security.get(key, "")
+                                        for header, _attr, value in items:
                                             if isinstance(value, list):
                                                 self.app_instance.format_table_row_text(
                                                     header, ", ".join(str(v) for v in value)
@@ -1156,29 +1165,23 @@ class ClusterData:
 
     def _format_netapp_nodes(self) -> None:
         """Format cluster node information."""
-        if "nodes" not in self.fetched_data:
+        if not self.nodes:
             return
 
-        for node_name in sorted(self.fetched_data["nodes"].keys()):
-            node_data = self.fetched_data["nodes"][node_name]
-            self._format_netapp_node(node_data)
+        for node in sorted(self.nodes, key=lambda n: n.name):
+            self._format_netapp_node(node)
 
-    def _format_netapp_node(self, node_data: dict[str, Any]) -> None:
+    def _format_netapp_node(self, node: OntapNodeResponse) -> None:
         """Format a single node's information.
 
         Args:
-            node_data: Node data dictionary.
+            node: OntapNodeResponse model instance.
         """
         tag = self.app_instance.tag
         text = self.app_instance.text
 
-        mgmt_interfaces = node_data.get("management_interfaces", [])
-        if mgmt_interfaces:
-            mgmt_ip = mgmt_interfaces[0].get("ip", {}).get("address", "")
-            management_link = f"https://{mgmt_ip}"
-        else:
-            management_link = ""
-            mgmt_ip = ""
+        mgmt_ip = node.management_interface_ip_address
+        management_link = f"https://{mgmt_ip}" if mgmt_ip else ""
 
         # Build VM information for cloud deployments
         vm_id = None
@@ -1188,7 +1191,7 @@ class ClusterData:
         cloud_provider = getattr(self, "cloud_provider", "")
 
         if cloud_provider.lower() == "azure":
-            node_name = node_data.get("name", "")
+            node_name = node.name
             short_name = node_name.split("-")[0] if "-" in node_name else node_name
 
             try:
@@ -1197,10 +1200,7 @@ class ClusterData:
                 node_number = 1
 
             vm_type = "Azure VM"
-            if len(self.fetched_data.get("nodes", {})) > 1:
-                vm_name = f"{short_name}-vm{node_number}"
-            else:
-                vm_name = short_name
+            vm_name = f"{short_name}-vm{node_number}" if len(self.nodes) > 1 else short_name
 
             sub_id = getattr(self, "cloud_account_id", "")
             resource_group = getattr(self, "cloud_resource_group_name", "")
@@ -1213,9 +1213,9 @@ class ClusterData:
                 with tag("summary"):
                     if management_link:
                         with tag("a", ("href", management_link)):
-                            text(node_data.get("name", "Unknown"))
+                            text(node.name or "Unknown")
                     else:
-                        text(node_data.get("name", "Unknown"))
+                        text(node.name or "Unknown")
                 with tag("ul"):
                     with tag("li"):
                         with tag("table", ("class", "custom-table")):
@@ -1223,7 +1223,7 @@ class ClusterData:
                                 self.app_instance.format_table_row_text(
                                     "Node Management IP", mgmt_ip
                                 )
-                            serial = node_data.get("serial_number", "Unknown")
+                            serial = node.serial_number or "Unknown"
                             self.app_instance.format_table_row_text("Serial Number", serial)
                             if management_link:
                                 self.app_instance.format_table_row_link(
