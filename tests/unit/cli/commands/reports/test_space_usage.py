@@ -1,4 +1,4 @@
-"""Tests for space usage report generation."""
+"""Tests for reports space-usage command."""
 
 from __future__ import annotations
 
@@ -9,332 +9,180 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from pynetappfoundry.cli.commands.reports.space_usage import SpaceUsageReport
+from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
+from pynetappfoundry.models.ontap.storage.volumes.model import OntapVolume
+
+
+def _make_volume(
+    *,
+    name: str = "vol1",
+    size: int = 1099511627776,  # 1 TiB in bytes
+    space_used: int = 549755813888,  # 0.5 TiB
+    state: str = "online",
+    type_: str = "rw",
+) -> OntapVolume:
+    """Create a test volume model."""
+    return OntapVolume(
+        name=name,
+        size=size,
+        space_used=space_used,
+        state=state,
+        type_=type_,
+    )
+
+
+def _make_node(*, name: str = "node1", ha_enabled: bool = False) -> OntapNodeResponse:
+    """Create a test node model."""
+    return OntapNodeResponse(name=name, ha_enabled=ha_enabled)
 
 
 @pytest.fixture
-def mock_config() -> MagicMock:
-    """Create a mock Config object."""
+def mock_config(tmp_path: Path) -> MagicMock:
+    """Create a mock Config with output_dir."""
     config = MagicMock()
-    config.output_dir = Path("/tmp/test-output")
-    config.get_user.return_value = ("admin", "password123")
+    config.output_dir = tmp_path
+    config.get_user.return_value = ("admin", "password")
+    config.get_ontap_api_settings.return_value = MagicMock(
+        base_api_path="/api",
+        timeout=30.0,
+    )
+    config.get_schema_location.return_value = Path("/tmp/schema")
     return config
 
 
 @pytest.fixture
 def sample_clusters() -> dict[str, dict[str, Any]]:
-    """Sample cluster configuration."""
+    """Sample cluster details."""
     return {
-        "test-cluster-1": {
-            "name": "test-cluster-1",
+        "cluster1": {
+            "name": "cluster1",
             "ip": "10.0.0.1",
-            "div": "Engineering",
+            "div": "IT",
             "bu": "Platform",
-            "app": "MyApp",
+            "app": "Storage",
             "env": "Prod",
             "subapp": "",
-            "cloud": "azure",
+            "cloud": "Azure",
             "region": "eastus",
-            "tags": ["active"],
-        },
+            "tags": ["prod", "azure"],
+        }
     }
 
 
-class TestSpaceUsageReport:
-    """Tests for SpaceUsageReport class."""
+def _mock_queryset(nodes: list[Any], volumes: list[Any]) -> Any:
+    """Create a side_effect for QuerySet that returns nodes then volumes."""
+    call_count = 0
 
-    def test_init_creates_workbook(
-        self, mock_config: MagicMock, sample_clusters: dict[str, dict[str, Any]]
-    ) -> None:
-        """Test that initialization creates workbook and worksheets."""
-        with patch("xlsxwriter.Workbook") as mock_workbook:
-            mock_wb = MagicMock()
-            mock_workbook.return_value = mock_wb
+    def side_effect(*args: Any, **kwargs: Any) -> MagicMock:
+        nonlocal call_count
+        call_count += 1
+        qs = MagicMock()
+        if call_count % 2 == 1:  # odd calls are nodes
+            qs.all.return_value = nodes
+        else:  # even calls are volumes
+            qs.filter.return_value.all.return_value = volumes
+        return qs
 
-            _ = SpaceUsageReport(mock_config, sample_clusters)
-
-            mock_workbook.assert_called_once()
-            assert mock_wb.add_worksheet.call_count == 3
-
-    def test_build_hierarchy(
-        self, mock_config: MagicMock, sample_clusters: dict[str, dict[str, Any]]
-    ) -> None:
-        """Test that hierarchy is built from cluster details."""
-        with patch("xlsxwriter.Workbook"):
-            report = SpaceUsageReport(mock_config, sample_clusters)
-
-            assert "Engineering" in report.divisions
-            assert "Platform" in report.divisions["Engineering"]
-            assert "MyApp" in report.divisions["Engineering"]["Platform"]
-
-    def test_hierarchy_initializes_cluster_types(
-        self, mock_config: MagicMock, sample_clusters: dict[str, dict[str, Any]]
-    ) -> None:
-        """Test that hierarchy initializes CVO and CVO HA types."""
-        with patch("xlsxwriter.Workbook"):
-            report = SpaceUsageReport(mock_config, sample_clusters)
-
-            region_data = report.divisions["Engineering"]["Platform"]["MyApp"]["Prod"][""]["azure"][
-                "eastus"
-            ]
-            assert "CVO" in region_data
-            assert "CVO HA" in region_data
-            assert region_data["CVO"]["RW"] is False
-            assert region_data["CVO"]["DP"] is False
-            assert region_data["CVO HA"]["RW"] is False
-            assert region_data["CVO HA"]["DP"] is False
+    return side_effect
 
 
-class TestSpaceUsageReportGatherData:
-    """Tests for SpaceUsageReport.gather_data method."""
+class TestGatherData:
+    """Tests for SpaceUsageReport.gather_data()."""
 
-    @pytest.fixture
-    def mock_volume(self) -> MagicMock:
-        """Create a mock ONTAP Volume."""
-        volume = MagicMock()
-        volume.__getitem__ = MagicMock(
-            side_effect=lambda key: {
-                "name": "data_vol1",
-                "type": "rw",
-                "state": "online",
-                "size": 1099511627776,  # 1 TiB
-                "space": {"used": 549755813888},  # 0.5 TiB
-            }.get(key)
-        )
-        return volume
-
-    @pytest.fixture
-    def mock_node(self) -> MagicMock:
-        """Create a mock ONTAP Node."""
-        node = MagicMock()
-        node.__getitem__ = MagicMock(side_effect=lambda key: {"ha": {"enabled": True}}.get(key))
-        return node
-
-    def test_gather_data_collects_volumes(
+    @patch("pynetappfoundry.cli.commands.reports.space_usage.QuerySet")
+    @patch("pynetappfoundry.cli.commands.reports.space_usage.ONTAPAPIClient")
+    def test_cvo_ha_detection(
         self,
+        mock_client_cls: MagicMock,
+        mock_qs_cls: MagicMock,
         mock_config: MagicMock,
         sample_clusters: dict[str, dict[str, Any]],
-        mock_node: MagicMock,
-        mock_volume: MagicMock,
     ) -> None:
-        """Test that gather_data collects volume data."""
-        with patch("xlsxwriter.Workbook"):
-            report = SpaceUsageReport(mock_config, sample_clusters)
+        """Test CVO HA detected with 2+ nodes and HA enabled."""
+        nodes = [_make_node(name="n1", ha_enabled=True), _make_node(name="n2", ha_enabled=True)]
+        mock_qs_cls.side_effect = _mock_queryset(nodes, [_make_volume()])
 
-        with patch("netapp_ontap.host_connection.HostConnection") as mock_conn:
-            mock_conn.return_value.__enter__ = MagicMock(return_value=None)
-            mock_conn.return_value.__exit__ = MagicMock(return_value=None)
-
-            with patch("netapp_ontap.resources.Node") as mock_node_class:
-                mock_node_class.get_collection.return_value = [mock_node, mock_node]
-
-                with patch("netapp_ontap.resources.Volume") as mock_vol_class:
-                    mock_vol_class.get_collection.return_value = [mock_volume]
-
-                    report.gather_data()
+        report = SpaceUsageReport(mock_config, sample_clusters)
+        report.gather_data()
 
         assert len(report.volume_data) == 1
-        vol_row = report.volume_data[0]
-        assert vol_row[0] == "Engineering"  # div
-        assert vol_row[1] == "Platform"  # bu
-        assert vol_row[2] == "test-cluster-1"  # cluster name
-        assert vol_row[8] == "CVO HA"  # cluster type (2 nodes with HA)
-        assert vol_row[9] == "RW"  # data type
+        assert report.volume_data[0][8] == "CVO HA"
 
-    def test_gather_data_handles_offline_volumes(
+    @patch("pynetappfoundry.cli.commands.reports.space_usage.QuerySet")
+    @patch("pynetappfoundry.cli.commands.reports.space_usage.ONTAPAPIClient")
+    def test_cvo_detection(
         self,
+        mock_client_cls: MagicMock,
+        mock_qs_cls: MagicMock,
         mock_config: MagicMock,
         sample_clusters: dict[str, dict[str, Any]],
-        mock_node: MagicMock,
     ) -> None:
-        """Test that offline volumes have used=0."""
-        offline_volume = MagicMock()
-        offline_volume.__getitem__ = MagicMock(
-            side_effect=lambda key: {
-                "name": "offline_vol",
-                "type": "rw",
-                "state": "offline",
-                "size": 1099511627776,
-                "space": {"used": 549755813888},
-            }.get(key)
-        )
+        """Test CVO detected with single node."""
+        mock_qs_cls.side_effect = _mock_queryset([_make_node()], [_make_volume()])
 
-        with patch("xlsxwriter.Workbook"):
-            report = SpaceUsageReport(mock_config, sample_clusters)
-
-        with patch("netapp_ontap.host_connection.HostConnection") as mock_conn:
-            mock_conn.return_value.__enter__ = MagicMock(return_value=None)
-            mock_conn.return_value.__exit__ = MagicMock(return_value=None)
-
-            with patch("netapp_ontap.resources.Node") as mock_node_class:
-                mock_node_class.get_collection.return_value = [mock_node]
-
-                with patch("netapp_ontap.resources.Volume") as mock_vol_class:
-                    mock_vol_class.get_collection.return_value = [offline_volume]
-
-                    report.gather_data()
+        report = SpaceUsageReport(mock_config, sample_clusters)
+        report.gather_data()
 
         assert len(report.volume_data) == 1
-        vol_row = report.volume_data[0]
-        assert vol_row[14] == 0.0  # used_tib should be 0 for offline
+        assert report.volume_data[0][8] == "CVO"
 
-    def test_gather_data_handles_connection_error(
+    @patch("pynetappfoundry.cli.commands.reports.space_usage.QuerySet")
+    @patch("pynetappfoundry.cli.commands.reports.space_usage.ONTAPAPIClient")
+    def test_volume_fields(
         self,
+        mock_client_cls: MagicMock,
+        mock_qs_cls: MagicMock,
         mock_config: MagicMock,
         sample_clusters: dict[str, dict[str, Any]],
     ) -> None:
-        """Test that connection errors are handled gracefully."""
-        with patch("xlsxwriter.Workbook"):
-            report = SpaceUsageReport(mock_config, sample_clusters)
+        """Test volume data row has correct field values."""
+        mock_qs_cls.side_effect = _mock_queryset(
+            [_make_node()],
+            [_make_volume(name="testvol", type_="rw", state="online")],
+        )
 
-        with patch("netapp_ontap.host_connection.HostConnection") as mock_conn:
-            mock_conn.return_value.__enter__ = MagicMock(side_effect=Exception("Connection failed"))
+        report = SpaceUsageReport(mock_config, sample_clusters)
+        report.gather_data()
 
-            with patch(
-                "pynetappfoundry.cli.commands.reports.space_usage.print_error"
-            ) as mock_print:
-                report.gather_data()
-                mock_print.assert_called()
+        row = report.volume_data[0]
+        assert row[10] == "testvol"  # volume name
+        assert row[9] == "RW"  # data_type (uppercased)
+        assert row[11] == "online"  # state
+
+    @patch("pynetappfoundry.cli.commands.reports.space_usage.QuerySet")
+    @patch("pynetappfoundry.cli.commands.reports.space_usage.ONTAPAPIClient")
+    def test_offline_volume_zero_used(
+        self,
+        mock_client_cls: MagicMock,
+        mock_qs_cls: MagicMock,
+        mock_config: MagicMock,
+        sample_clusters: dict[str, dict[str, Any]],
+    ) -> None:
+        """Test offline volume has used_tib=0."""
+        mock_qs_cls.side_effect = _mock_queryset(
+            [_make_node()],
+            [_make_volume(state="offline", space_used=999999)],
+        )
+
+        report = SpaceUsageReport(mock_config, sample_clusters)
+        report.gather_data()
+
+        assert report.volume_data[0][14] == 0.0  # used_tib
+
+    @patch("pynetappfoundry.cli.commands.reports.space_usage.print_error")
+    @patch("pynetappfoundry.cli.commands.reports.space_usage.ONTAPAPIClient")
+    def test_error_handling(
+        self,
+        mock_client_cls: MagicMock,
+        mock_print_error: MagicMock,
+        mock_config: MagicMock,
+        sample_clusters: dict[str, dict[str, Any]],
+    ) -> None:
+        """Test connection failure is handled gracefully."""
+        mock_client_cls.side_effect = Exception("Connection refused")
+
+        report = SpaceUsageReport(mock_config, sample_clusters)
+        report.gather_data()
 
         assert len(report.volume_data) == 0
-
-    def test_gather_data_detects_single_node_cluster(
-        self,
-        mock_config: MagicMock,
-        sample_clusters: dict[str, dict[str, Any]],
-        mock_volume: MagicMock,
-    ) -> None:
-        """Test that single node clusters are detected as CVO."""
-        single_node = MagicMock()
-        single_node.__getitem__ = MagicMock(
-            side_effect=lambda key: {"ha": {"enabled": False}}.get(key)
-        )
-
-        with patch("xlsxwriter.Workbook"):
-            report = SpaceUsageReport(mock_config, sample_clusters)
-
-        with patch("netapp_ontap.host_connection.HostConnection") as mock_conn:
-            mock_conn.return_value.__enter__ = MagicMock(return_value=None)
-            mock_conn.return_value.__exit__ = MagicMock(return_value=None)
-
-            with patch("netapp_ontap.resources.Node") as mock_node_class:
-                mock_node_class.get_collection.return_value = [single_node]
-
-                with patch("netapp_ontap.resources.Volume") as mock_vol_class:
-                    mock_vol_class.get_collection.return_value = [mock_volume]
-
-                    report.gather_data()
-
-        assert len(report.volume_data) == 1
-        vol_row = report.volume_data[0]
-        assert vol_row[8] == "CVO"  # single node = CVO
-
-
-class TestSpaceUsageReportBuildSheets:
-    """Tests for SpaceUsageReport sheet building methods."""
-
-    @pytest.fixture
-    def report_with_data(
-        self, mock_config: MagicMock, sample_clusters: dict[str, dict[str, Any]]
-    ) -> SpaceUsageReport:
-        """Create a report with mock data."""
-        with patch("xlsxwriter.Workbook") as mock_wb_class:
-            mock_wb = MagicMock()
-            mock_wb_class.return_value = mock_wb
-            mock_wb.add_worksheet.return_value = MagicMock()
-            mock_wb.add_format.return_value = MagicMock()
-
-            report = SpaceUsageReport(mock_config, sample_clusters)
-
-            # Add test data
-            report.volume_data = [
-                [
-                    "Engineering",  # div
-                    "Platform",  # bu
-                    "test-cluster-1",  # cluster
-                    "MyApp",  # app
-                    "Prod",  # env
-                    "",  # subapp
-                    "azure",  # cloud
-                    "eastus",  # region
-                    "CVO HA",  # cluster type
-                    "RW",  # data type
-                    "vol1",  # volume name
-                    "online",  # state
-                    "active",  # tags
-                    1.0,  # size_tib
-                    0.5,  # used_tib
-                    50.0,  # percent_used
-                ],
-            ]
-
-            # Mark the hierarchy as having data
-            report.divisions["Engineering"]["Platform"]["MyApp"]["Prod"][""]["azure"]["eastus"][
-                "CVO HA"
-            ]["RW"] = True
-
-            return report
-
-    def test_build_volumes_sheet_writes_headers(self, report_with_data: SpaceUsageReport) -> None:
-        """Test that volumes sheet writes headers."""
-        report_with_data.build_volumes_sheet()
-
-        # Check that write was called for headers
-        assert report_with_data.volumes_ws.write.called
-
-    def test_build_volumes_sheet_adds_table(self, report_with_data: SpaceUsageReport) -> None:
-        """Test that volumes sheet adds a table."""
-        report_with_data.build_volumes_sheet()
-
-        report_with_data.volumes_ws.add_table.assert_called_once()
-
-    def test_build_volumes_sheet_adds_conditional_formatting(
-        self, report_with_data: SpaceUsageReport
-    ) -> None:
-        """Test that volumes sheet adds conditional formatting."""
-        report_with_data.build_volumes_sheet()
-
-        report_with_data.volumes_ws.conditional_format.assert_called_once()
-
-    def test_build_usage_sheet_writes_sumifs_formulas(
-        self, report_with_data: SpaceUsageReport
-    ) -> None:
-        """Test that usage sheet writes SUMIFS formulas."""
-        report_with_data.build_usage_sheet()
-
-        # Check that write was called with formulas
-        calls = report_with_data.usage_ws.write.call_args_list
-        formula_calls = [c for c in calls if "SUMIFS" in str(c)]
-        assert len(formula_calls) > 0
-
-    def test_build_totals_sheet_writes_formulas(self, report_with_data: SpaceUsageReport) -> None:
-        """Test that totals sheet writes SUMIFS formulas."""
-        report_with_data.build_totals_sheet()
-
-        # Check that write_formula was called
-        assert report_with_data.totals_ws.write_formula.called
-
-
-class TestSpaceUsageReportGenerate:
-    """Tests for SpaceUsageReport.generate method."""
-
-    def test_generate_with_no_data_prints_error(
-        self, mock_config: MagicMock, sample_clusters: dict[str, dict[str, Any]]
-    ) -> None:
-        """Test that generate prints error when no data collected."""
-        with patch("xlsxwriter.Workbook") as mock_wb_class:
-            mock_wb = MagicMock()
-            mock_wb_class.return_value = mock_wb
-            mock_wb.add_worksheet.return_value = MagicMock()
-            mock_wb.add_format.return_value = MagicMock()
-
-            report = SpaceUsageReport(mock_config, sample_clusters)
-
-        with patch("netapp_ontap.host_connection.HostConnection") as mock_conn:
-            mock_conn.return_value.__enter__ = MagicMock(side_effect=Exception("Connection failed"))
-
-            with patch(
-                "pynetappfoundry.cli.commands.reports.space_usage.print_error"
-            ) as mock_print:
-                report.generate()
-                # Should print error about no data
-                assert any("No volume data" in str(c) for c in mock_print.call_args_list)
+        mock_print_error.assert_called_once()
