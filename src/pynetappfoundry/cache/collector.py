@@ -17,6 +17,7 @@ from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import Enum
+from functools import partial
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from pydantic import BaseModel
@@ -28,9 +29,13 @@ from pynetappfoundry.cache._metadata import (
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import (
     TypeMapping,
-    parse_api_record,
-    parse_api_response,
     parse_cli_records,
+)
+from pynetappfoundry.cache.field_mapping import (
+    parse_api_record as _parse_api_record_raw,
+)
+from pynetappfoundry.cache.field_mapping import (
+    parse_api_response as _parse_api_response_raw,
 )
 from pynetappfoundry.cache.ontap.cloud.metadata.mapping import CLOUD_METADATA_MAPPING
 from pynetappfoundry.cache.ontap.cloud.targets.mapping import ONTAPCLOUDTARGET_MAPPING
@@ -116,6 +121,10 @@ from pynetappfoundry.utils.cloud import (
     build_cloud_instance_sso_link,
     build_cloud_resource_group_link,
 )
+
+# Cache collector skips realtime fields (volatile metrics not persisted).
+parse_api_record = partial(_parse_api_record_raw, skip_realtime=True)
+parse_api_response = partial(_parse_api_response_raw, skip_realtime=True)
 
 if TYPE_CHECKING:
     from pynetappfoundry.clients.ontap.api import ONTAPAPIClient
