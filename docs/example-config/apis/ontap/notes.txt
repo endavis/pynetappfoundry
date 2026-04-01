@@ -1,4 +1,4 @@
-Get the yaml from https://<aiqum>/docs/api/v2.yaml 
+Get the yaml from https://<cluster>/docs/api/swagger.yaml
 
 Convert from yaml to json at https://openapi-yaml-json-converter.com/
 save it as all.json

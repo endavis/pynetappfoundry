@@ -1,2 +1,0 @@
-# Age public key for SOPS encryption
-age1t42xwxsjg7resf42hzy6des2ryan5qswt3j6wqxu4u5alxzp7ehsue6m43

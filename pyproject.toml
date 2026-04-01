@@ -241,7 +241,7 @@ skips = [
 ]
 
 [tool.codespell]
-skip = "tmp,.venv,.git,*.lock,*.pyc,__pycache__"
+skip = "tmp,.venv,.git,*.lock,*.pyc,__pycache__,docs/example-config/apis"
 ignore-words-list = "crate,bu,medias"
 
 [tool.pyright]

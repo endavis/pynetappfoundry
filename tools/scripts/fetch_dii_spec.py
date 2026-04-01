@@ -7,7 +7,7 @@ Usage:
     uv run python tools/scripts/fetch_dii_spec.py \\
         --host your-tenant.cloudinsights.netapp.com \\
         --api-key YOUR_API_KEY \\
-        --output example-config/apis/dii/all.json
+        --output docs/example-config/apis/dii/all.json
 """
 
 from __future__ import annotations
@@ -150,8 +150,8 @@ def main() -> None:
     parser.add_argument("--api-key", required=True, help="DII API access token")
     parser.add_argument(
         "--output",
-        default="example-config/apis/dii/all.json",
-        help="Output file path (default: example-config/apis/dii/all.json)",
+        default="docs/example-config/apis/dii/all.json",
+        help="Output file path (default: docs/example-config/apis/dii/all.json)",
     )
     parser.add_argument(
         "--no-verify",

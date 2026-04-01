@@ -56,6 +56,10 @@ dmypy.json
 .direnv/
 .envrc.local
 
+# Local config symlinks (user-specific, not project)
+/*-config
+.sops-public-key.txt
+
 # Environment variables
 .env
 .env.*

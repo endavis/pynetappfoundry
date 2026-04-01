@@ -30,11 +30,11 @@ API Endpoint (live cluster)
   │  doit fetch_spec --api=<type>
   ▼
 Raw Spec (Swagger 1.2/2.0 or OpenAPI 3.0)
-  │  example-config/apis/<type>/all.json
+  │  docs/example-config/apis/<type>/all.json
   │  doit convert_specs
   ▼
 OpenAPI 3.0 Spec (normalized)
-  │  example-config/apis/<type>/openapi3.json
+  │  docs/example-config/apis/<type>/openapi3.json
   │  doit generate_models --api=<type>
   ▼
 Generated Files (per endpoint)
@@ -81,7 +81,7 @@ doit fetch_spec --api=occm --host=connector.local --username=user@co.com --passw
 doit fetch_spec --api=ontap --host=10.0.0.1 --username=admin --password=secret --no-verify
 ```
 
-Output: `example-config/apis/<type>/all.json`
+Output: `docs/example-config/apis/<type>/all.json`
 
 Each fetch script also sanitizes the spec (removes security blocks, fixes
 dangling `$ref` references, removes fake paths).
@@ -89,7 +89,7 @@ dangling `$ref` references, removes fake paths).
 ### Spec Location
 
 ```
-example-config/apis/
+docs/example-config/apis/
 ├── ontap/
 │   ├── all.json          ← raw fetched spec
 │   └── openapi3.json     ← converted (Step 2)

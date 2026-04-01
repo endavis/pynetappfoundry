@@ -398,7 +398,7 @@ class TestParseOpenAPISpec:
 
     def test_real_ontap_spec(self):
         """Smoke test with the real ONTAP spec if available."""
-        spec_path = Path("example-config/apis/ontap/openapi3.json")
+        spec_path = Path("docs/example-config/apis/ontap/openapi3.json")
         if not spec_path.exists():
             pytest.skip("ONTAP spec not available")
 

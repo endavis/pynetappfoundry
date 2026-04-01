@@ -10,7 +10,7 @@ from typing import Any
 from doit.tools import title_with_actions
 
 # Spec directory relative to project root
-_SPEC_DIR = Path("example-config/apis")
+_SPEC_DIR = Path("docs/example-config/apis")
 
 # APIs that support fetching, with their auth type
 _FETCH_APIS = {

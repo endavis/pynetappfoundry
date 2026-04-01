@@ -8,7 +8,7 @@ Usage:
         --host 10.0.0.1 \\
         --username admin \\
         --password secret \\
-        --output example-config/apis/ontap/all.json
+        --output docs/example-config/apis/ontap/all.json
 
     # Skip TLS verification (self-signed certs)
     uv run python tools/scripts/fetch_ontap_spec.py \\
@@ -142,8 +142,8 @@ def main() -> None:
     parser.add_argument("--password", required=True, help="ONTAP password")
     parser.add_argument(
         "--output",
-        default="example-config/apis/ontap/all.json",
-        help="Output file path (default: example-config/apis/ontap/all.json)",
+        default="docs/example-config/apis/ontap/all.json",
+        help="Output file path (default: docs/example-config/apis/ontap/all.json)",
     )
     parser.add_argument(
         "--no-verify",

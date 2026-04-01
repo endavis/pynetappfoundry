@@ -15,14 +15,14 @@ Usage:
         --host 10.0.0.1 \\
         --email user@company.com \\
         --password 'secret' \\
-        --output example-config/apis/occm/all.json
+        --output docs/example-config/apis/occm/all.json
 
     # With --no-verify to skip TLS certificate verification
     uv run python tools/scripts/fetch_occm_spec.py \\
         --host 10.0.0.1 \\
         --email user@company.com \\
         --password 'secret' \\
-        --output example-config/apis/occm/all.json \\
+        --output docs/example-config/apis/occm/all.json \\
         --no-verify
 
     # Dry run: just fetch the index and show available paths
@@ -448,8 +448,8 @@ def main() -> None:
     parser.add_argument("--password", required=True, help="Auth password")
     parser.add_argument(
         "--output",
-        default="example-config/apis/occm/all.json",
-        help="Output file path (default: example-config/apis/occm/all.json)",
+        default="docs/example-config/apis/occm/all.json",
+        help="Output file path (default: docs/example-config/apis/occm/all.json)",
     )
     parser.add_argument(
         "--no-verify",
