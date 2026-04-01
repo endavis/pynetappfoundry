@@ -14,6 +14,10 @@ from pynetappfoundry.cli.commands.reports.html import (
     ClusterData,
     HTMLReportBuilder,
 )
+from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
+from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
+from pynetappfoundry.models.ontap.protocols.cifs.services.model import OntapCifsService
+from pynetappfoundry.models.ontap.svm.svms.model import OntapSvm, OntapSvmIpInterface
 
 
 @pytest.fixture
@@ -98,66 +102,78 @@ def sample_cluster_config_multi() -> dict[str, dict[str, Any]]:
 
 
 @pytest.fixture
-def mock_ontap_data() -> dict[str, Any]:
-    """Mock data returned from ONTAP cluster."""
-    return {
-        "cluster": {
-            "name": "test-cluster-1",
-            "version": {"full": "9.12.1"},
-            "management_interfaces": [{"ip": {"address": "10.0.0.1"}}],
-            "dns_domains": ["example.com"],
-            "name_servers": ["8.8.8.8", "8.8.4.4"],
-            "ntp_servers": ["time.example.com"],
-        },
-        "nodes": {
-            "test-cluster-1-01": {
-                "name": "test-cluster-1-01",
-                "serial_number": "SN123456",
-                "management_interfaces": [{"ip": {"address": "10.0.0.11"}}],
-            },
-            "test-cluster-1-02": {
-                "name": "test-cluster-1-02",
-                "serial_number": "SN123457",
-                "management_interfaces": [{"ip": {"address": "10.0.0.12"}}],
-            },
-        },
-        "svms": {
-            "svm1": {
-                "name": "svm1",
-                "state": "running",
-                "ip_interfaces": [{"name": "lif1"}],
-                "dns": {"domains": ["example.com"], "servers": ["8.8.8.8"]},
-                "cifs": {"name": "cifs1"},
-            },
-        },
-        "interfaces": {
-            "lif1": {
-                "name": "lif1",
-                "ip": {"address": "10.0.0.100", "netmask": "24"},
-                "location": {"home_node": {"name": "test-cluster-1-01"}},
-            },
-        },
-        "cifs": {
-            "cifs1": {
-                "name": "cifs1",
-                "enabled": True,
-                "ad_domain": {"fqdn": "ad.example.com", "organizational_unit": "OU=Servers"},
-                "security": {
-                    "smb_signing": True,
-                    "use_start_tls": False,
-                    "lm_compatibility_level": "ntlm_ntlmv2_krb",
-                    "smb_encryption": False,
-                    "session_security": "none",
-                    "ldap_referral_enabled": True,
-                    "use_ldaps": False,
-                    "encrypt_dc_connection": False,
-                    "aes_netlogon_enabled": True,
-                    "try_ldap_channel_binding": True,
-                    "advertised_kdc_encryptions": ["aes128", "aes256"],
-                },
-            },
-        },
-    }
+def mock_cluster_info() -> ClusterInfo:
+    """Mock ClusterInfo model instance."""
+    return ClusterInfo(
+        cluster_name="test-cluster-1",
+        ontap_version="9.12.1",
+        dns_domains=["example.com"],
+        name_servers=["8.8.8.8", "8.8.4.4"],
+        ntp_servers=["time.example.com"],
+    )
+
+
+@pytest.fixture
+def mock_nodes() -> list[OntapNodeResponse]:
+    """Mock OntapNodeResponse model instances."""
+    return [
+        OntapNodeResponse(
+            name="test-cluster-1-01",
+            serial_number="SN123456",
+            management_interface_ip_address="10.0.0.11",
+        ),
+        OntapNodeResponse(
+            name="test-cluster-1-02",
+            serial_number="SN123457",
+            management_interface_ip_address="10.0.0.12",
+        ),
+    ]
+
+
+@pytest.fixture
+def mock_svms() -> list[OntapSvm]:
+    """Mock OntapSvm model instances."""
+    return [
+        OntapSvm(
+            name="svm1",
+            state="running",
+            ip_interfaces=[
+                OntapSvmIpInterface(
+                    name="lif1",
+                    ip_address="10.0.0.100",
+                    ip_netmask="24",
+                    location_home_node_name="test-cluster-1-01",
+                ),
+            ],
+            dns_domains=["example.com"],
+            dns_servers=["8.8.8.8"],
+            cifs_name="cifs1",
+        ),
+    ]
+
+
+@pytest.fixture
+def mock_cifs_services() -> list[OntapCifsService]:
+    """Mock OntapCifsService model instances."""
+    return [
+        OntapCifsService(
+            name="cifs1",
+            enabled=True,
+            ad_domain_fqdn="ad.example.com",
+            ad_domain_organizational_unit="OU=Servers",
+            security_smb_signing=True,
+            security_use_start_tls=False,
+            security_lm_compatibility_level="ntlm_ntlmv2_krb",
+            security_smb_encryption=False,
+            security_session_security="none",
+            security_ldap_referral_enabled=True,
+            security_use_ldaps=False,
+            security_encrypt_dc_connection=False,
+            security_aes_netlogon_enabled=True,
+            security_try_ldap_channel_binding=True,
+            security_advertised_kdc_encryptions=["aes128", "aes256"],
+        ),
+    ]
 
 
 class TestHTMLReportBuilder:
@@ -181,7 +197,7 @@ class TestHTMLReportBuilder:
         mock_cluster.cloud = "azure"
         mock_cluster.region = "eastus"
         mock_cluster.ele_class = ""
-        mock_cluster.fetched_data = {"nodes": {"node1": {}}}
+        mock_cluster.nodes = [OntapNodeResponse(name="node1")]
         mock_cluster_data.return_value = mock_cluster
 
         builder = HTMLReportBuilder("Test Report", sample_cluster_config, mock_config)
@@ -208,7 +224,7 @@ class TestHTMLReportBuilder:
         mock_cluster.cloud = "azure"
         mock_cluster.region = "eastus"
         mock_cluster.ele_class = ""
-        mock_cluster.fetched_data = {"nodes": {"node1": {}, "node2": {}}}  # HA pair
+        mock_cluster.nodes = [OntapNodeResponse(name="node1"), OntapNodeResponse(name="node2")]
         mock_cluster_data.return_value = mock_cluster
 
         builder = HTMLReportBuilder("Test Report", sample_cluster_config, mock_config)
@@ -234,7 +250,7 @@ class TestHTMLReportBuilder:
         mock_cluster.cloud = "azure"
         mock_cluster.region = "eastus"
         mock_cluster.ele_class = ""
-        mock_cluster.fetched_data = {"nodes": {"node1": {}}}
+        mock_cluster.nodes = [OntapNodeResponse(name="node1")]
         mock_cluster_data.return_value = mock_cluster
 
         builder = HTMLReportBuilder("Test Report", sample_cluster_config, mock_config)
@@ -262,7 +278,7 @@ class TestHTMLReportBuilder:
         mock_cluster.cloud = "azure"
         mock_cluster.region = "eastus"
         mock_cluster.ele_class = ""
-        mock_cluster.fetched_data = {"nodes": {"node1": {}}}
+        mock_cluster.nodes = [OntapNodeResponse(name="node1")]
         mock_cluster_data.return_value = mock_cluster
 
         builder = HTMLReportBuilder("Test Report", sample_cluster_config, mock_config)
@@ -289,7 +305,7 @@ class TestHTMLReportBuilder:
         mock_cluster.cloud = "azure"
         mock_cluster.region = "eastus"
         mock_cluster.ele_class = ""
-        mock_cluster.fetched_data = {"nodes": {"node1": {}}}
+        mock_cluster.nodes = [OntapNodeResponse(name="node1")]
         mock_cluster_data.return_value = mock_cluster
 
         builder = HTMLReportBuilder("Test Report", sample_cluster_config, mock_config)
@@ -448,17 +464,20 @@ class TestClusterData:
             tags=[],
         )
 
-        # Should not raise, should have empty fetched_data
-        assert cluster.fetched_data == {}
+        # Should not raise, should have no data
+        assert cluster.cluster_info is None
+        assert cluster.nodes == []
 
+    @patch("pynetappfoundry.cli.commands.reports.html.ONTAPAPIClient")
     def test_gather_data_handles_credential_error(
         self,
+        mock_api_client_class: MagicMock,
         mock_config: MagicMock,
     ) -> None:
         """Test that _gather_data handles credential errors gracefully."""
         mock_builder = MagicMock()
         mock_builder.config = mock_config
-        mock_config.get_user.side_effect = Exception("Credential error")
+        mock_api_client_class.side_effect = Exception("Credential error")
 
         cluster = ClusterData(
             "test-cluster",
@@ -469,8 +488,9 @@ class TestClusterData:
             tags=[],
         )
 
-        # Should not raise, should have empty fetched_data
-        assert cluster.fetched_data == {}
+        # Should not raise, should have no data
+        assert cluster.cluster_info is None
+        assert cluster.nodes == []
 
 
 class TestCSSAndJS:
@@ -598,7 +618,7 @@ class TestHierarchyBuilding:
             mock.cloud = kwargs.get("cloud", "")
             mock.region = kwargs.get("region", "")
             mock.ele_class = ""
-            mock.fetched_data = {"nodes": {"node1": {}}}
+            mock.nodes = [OntapNodeResponse(name="node1")]
             return mock
 
         mock_cluster_data.side_effect = [
@@ -654,7 +674,7 @@ class TestHierarchyBuilding:
         mock_cluster.cloud = "azure"
         mock_cluster.region = "eastus"
         mock_cluster.ele_class = "Div-BU-App-Prod"
-        mock_cluster.fetched_data = {"nodes": {"node1": {}}}
+        mock_cluster.nodes = [OntapNodeResponse(name="node1")]
         mock_cluster_data.return_value = mock_cluster
 
         builder = HTMLReportBuilder(
@@ -748,99 +768,93 @@ class TestHTMLFileGeneration:
         }
 
     @pytest.fixture
-    def comprehensive_ontap_data(self) -> dict[str, Any]:
-        """Comprehensive mock ONTAP data for realistic HTML output."""
+    def comprehensive_ontap_models(self) -> dict[str, Any]:
+        """Comprehensive typed model data for realistic HTML output."""
         return {
-            "cluster": {
-                "name": "test-cluster",
-                "version": {"full": "NetApp Release 9.14.1"},
-                "management_interfaces": [{"ip": {"address": "10.0.0.1"}}],
-                "dns_domains": ["corp.example.com", "example.com"],
-                "name_servers": ["10.0.0.10", "10.0.0.11"],
-                "ntp_servers": ["time1.example.com", "time2.example.com"],
-            },
-            "nodes": {
-                "cluster-01": {
-                    "name": "cluster-01",
-                    "serial_number": "SN-ABC123456",
-                    "model": "FAS8700",
-                    "management_interfaces": [{"ip": {"address": "10.0.0.11"}}],
-                },
-                "cluster-02": {
-                    "name": "cluster-02",
-                    "serial_number": "SN-ABC123457",
-                    "model": "FAS8700",
-                    "management_interfaces": [{"ip": {"address": "10.0.0.12"}}],
-                },
-            },
-            "svms": {
-                "svm-data-01": {
-                    "name": "svm-data-01",
-                    "state": "running",
-                    "ip_interfaces": [{"name": "lif-data-01"}, {"name": "lif-data-02"}],
-                    "dns": {
-                        "domains": ["corp.example.com"],
-                        "servers": ["10.0.0.10"],
-                    },
-                    "cifs": {"name": "CIFS-SVM01"},
-                },
-                "svm-data-02": {
-                    "name": "svm-data-02",
-                    "state": "running",
-                    "ip_interfaces": [{"name": "lif-data-03"}],
-                    "dns": {
-                        "domains": ["corp.example.com"],
-                        "servers": ["10.0.0.10"],
-                    },
-                },
-            },
-            "interfaces": {
-                "lif-data-01": {
-                    "name": "lif-data-01",
-                    "ip": {"address": "10.0.1.100", "netmask": "24"},
-                    "location": {"home_node": {"name": "cluster-01"}},
-                },
-                "lif-data-02": {
-                    "name": "lif-data-02",
-                    "ip": {"address": "10.0.1.101", "netmask": "24"},
-                    "location": {"home_node": {"name": "cluster-02"}},
-                },
-                "lif-data-03": {
-                    "name": "lif-data-03",
-                    "ip": {"address": "10.0.2.100", "netmask": "24"},
-                    "location": {"home_node": {"name": "cluster-01"}},
-                },
-            },
-            "cifs": {
-                "CIFS-SVM01": {
-                    "name": "CIFS-SVM01",
-                    "enabled": True,
-                    "ad_domain": {
-                        "fqdn": "ad.corp.example.com",
-                        "organizational_unit": "OU=NetApp,OU=Servers,DC=corp,DC=example,DC=com",
-                    },
-                    "security": {
-                        "smb_signing": True,
-                        "use_start_tls": False,
-                        "lm_compatibility_level": "ntlm_ntlmv2_krb",
-                        "smb_encryption": True,
-                        "session_security": "seal",
-                        "ldap_referral_enabled": True,
-                        "use_ldaps": True,
-                        "encrypt_dc_connection": True,
-                        "aes_netlogon_enabled": True,
-                        "try_ldap_channel_binding": True,
-                        "advertised_kdc_encryptions": ["aes128", "aes256", "des3"],
-                    },
-                },
-            },
+            "cluster_info": ClusterInfo(
+                cluster_name="test-cluster",
+                ontap_version="NetApp Release 9.14.1",
+                dns_domains=["corp.example.com", "example.com"],
+                name_servers=["10.0.0.10", "10.0.0.11"],
+                ntp_servers=["time1.example.com", "time2.example.com"],
+            ),
+            "nodes": [
+                OntapNodeResponse(
+                    name="cluster-01",
+                    serial_number="SN-ABC123456",
+                    management_interface_ip_address="10.0.0.11",
+                ),
+                OntapNodeResponse(
+                    name="cluster-02",
+                    serial_number="SN-ABC123457",
+                    management_interface_ip_address="10.0.0.12",
+                ),
+            ],
+            "svms": [
+                OntapSvm(
+                    name="svm-data-01",
+                    state="running",
+                    ip_interfaces=[
+                        OntapSvmIpInterface(
+                            name="lif-data-01",
+                            ip_address="10.0.1.100",
+                            ip_netmask="24",
+                            location_home_node_name="cluster-01",
+                        ),
+                        OntapSvmIpInterface(
+                            name="lif-data-02",
+                            ip_address="10.0.1.101",
+                            ip_netmask="24",
+                            location_home_node_name="cluster-02",
+                        ),
+                    ],
+                    dns_domains=["corp.example.com"],
+                    dns_servers=["10.0.0.10"],
+                    cifs_name="CIFS-SVM01",
+                ),
+                OntapSvm(
+                    name="svm-data-02",
+                    state="running",
+                    ip_interfaces=[
+                        OntapSvmIpInterface(
+                            name="lif-data-03",
+                            ip_address="10.0.2.100",
+                            ip_netmask="24",
+                            location_home_node_name="cluster-01",
+                        ),
+                    ],
+                    dns_domains=["corp.example.com"],
+                    dns_servers=["10.0.0.10"],
+                ),
+            ],
+            "cifs_services": [
+                OntapCifsService(
+                    name="CIFS-SVM01",
+                    enabled=True,
+                    ad_domain_fqdn="ad.corp.example.com",
+                    ad_domain_organizational_unit=(
+                        "OU=NetApp,OU=Servers,DC=corp,DC=example,DC=com"
+                    ),
+                    security_smb_signing=True,
+                    security_use_start_tls=False,
+                    security_lm_compatibility_level="ntlm_ntlmv2_krb",
+                    security_smb_encryption=True,
+                    security_session_security="seal",
+                    security_ldap_referral_enabled=True,
+                    security_use_ldaps=True,
+                    security_encrypt_dc_connection=True,
+                    security_aes_netlogon_enabled=True,
+                    security_try_ldap_channel_binding=True,
+                    security_advertised_kdc_encryptions=["aes128", "aes256", "des3"],
+                ),
+            ],
         }
 
     def test_generate_html_file(
         self,
         mock_config: MagicMock,
         comprehensive_cluster_configs: dict[str, dict[str, Any]],
-        comprehensive_ontap_data: dict[str, Any],
+        comprehensive_ontap_models: dict[str, Any],
         tmp_path: Path,
     ) -> None:
         """Generate an actual HTML file for visual inspection.
@@ -924,26 +938,28 @@ class TestHTMLFileGeneration:
         # Store original _gather_data
         original_gather_data = ClusterData._gather_data
 
-        # Mock _gather_data to populate fetched_data without calling ONTAP
+        # Mock _gather_data to populate typed model attributes without calling ONTAP
         def mock_gather_data(cluster_self: Any) -> None:
             cluster_self._build_cloud_info()
+            cluster_self.management_ip = getattr(cluster_self, "ip", "")
             # Use different data based on cluster name for variety
             if "ONPREM" in cluster_self.name or "DR" in cluster_self.name:
-                cluster_self.fetched_data = comprehensive_ontap_data.copy()
+                cluster_self.cluster_info = comprehensive_ontap_models["cluster_info"]
+                cluster_self.nodes = comprehensive_ontap_models["nodes"]
+                cluster_self.svms = comprehensive_ontap_models["svms"]
+                cluster_self.cifs_services = comprehensive_ontap_models["cifs_services"]
                 cluster_self.cluster_type = "HA"
             elif "DEV" in cluster_self.name:
-                cluster_self.fetched_data = {
-                    "cluster": comprehensive_ontap_data["cluster"].copy(),
-                    "nodes": {"dev-node-01": comprehensive_ontap_data["nodes"]["cluster-01"]},
-                    "svms": {"svm-dev": comprehensive_ontap_data["svms"]["svm-data-02"]},
-                    "interfaces": {
-                        "lif-dev": comprehensive_ontap_data["interfaces"]["lif-data-01"]
-                    },
-                    "cifs": {},
-                }
+                cluster_self.cluster_info = comprehensive_ontap_models["cluster_info"]
+                cluster_self.nodes = [comprehensive_ontap_models["nodes"][0]]
+                cluster_self.svms = [comprehensive_ontap_models["svms"][1]]
+                cluster_self.cifs_services = []
                 cluster_self.cluster_type = "SN"
             else:
-                cluster_self.fetched_data = comprehensive_ontap_data.copy()
+                cluster_self.cluster_info = comprehensive_ontap_models["cluster_info"]
+                cluster_self.nodes = comprehensive_ontap_models["nodes"]
+                cluster_self.svms = comprehensive_ontap_models["svms"]
+                cluster_self.cifs_services = comprehensive_ontap_models["cifs_services"]
                 cluster_self.cluster_type = "HA"
 
         # Monkey-patch the method
