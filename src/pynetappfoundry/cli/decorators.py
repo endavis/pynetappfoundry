@@ -37,8 +37,14 @@ def with_config(action: str) -> Callable[[F], F]:
             debug = ctx.obj.get("debug", False)
             filter_str = kwargs.pop("filter", None)
 
-            # Get command name for script_name
-            script_name = ctx.info_name or "unknown"
+            # Build script_name from full command path (e.g., "licenses_get")
+            parts: list[str] = []
+            c: click.Context | None = ctx
+            while c:
+                if c.info_name and c.info_name != "nf":
+                    parts.append(c.info_name)
+                c = c.parent
+            script_name = "_".join(reversed(parts)) or "unknown"
 
             # Setup logging
             setup_logger(script_name)
