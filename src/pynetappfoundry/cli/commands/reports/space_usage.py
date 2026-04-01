@@ -16,9 +16,16 @@ import click
 import xlsxwriter
 import xlsxwriter.utility
 
+import pynetappfoundry.cache.ontap.cluster.nodes.mapping
+import pynetappfoundry.cache.ontap.storage.volumes.mapping  # noqa: F401 - register TypeMapping
 from pynetappfoundry.cli.decorators import with_config
 from pynetappfoundry.cli.utils import print_error, print_info, print_success
+from pynetappfoundry.clients.ontap.api import ONTAPAPIClient
 from pynetappfoundry.core.config import Config
+from pynetappfoundry.core.models import ClusterConfig
+from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
+from pynetappfoundry.models.ontap.storage.volumes.model import OntapVolume
+from pynetappfoundry.query import QuerySet
 from pynetappfoundry.utils.size import approximate_size_specific
 
 
@@ -92,87 +99,77 @@ class SpaceUsageReport:
 
     def gather_data(self) -> None:
         """Gather data from all clusters."""
-        from netapp_ontap.host_connection import HostConnection
-        from netapp_ontap.resources import Node, Volume
-
         for name, details in self.cluster_details.items():
             print_info(f"Gathering data for {name}...")
-            user, password = self.config.get_user("clusters", name)
 
             try:
-                with HostConnection(
-                    details["ip"],
-                    username=user,
-                    password=password,
-                    verify=False,
-                ):
-                    # Detect cluster type
-                    nodes = list(Node.get_collection(fields="ha"))
-                    if len(nodes) > 1 and nodes[0]["ha"]["enabled"]:
-                        cluster_type = "CVO HA"
+                cluster_config = ClusterConfig(**details)
+                client = ONTAPAPIClient(cluster=cluster_config, config=self.config)
+
+                # Detect cluster type
+                nodes: list[OntapNodeResponse] = QuerySet(OntapNodeResponse, client).all()
+                cluster_type = "CVO HA" if len(nodes) > 1 and nodes[0].ha_enabled else "CVO"
+
+                # Get volumes (exclude SVM root volumes)
+                volumes: list[OntapVolume] = (
+                    QuerySet(OntapVolume, client).filter(is_svm_root=False).all()
+                )
+
+                div = details.get("div", "")
+                bu = details.get("bu", "")
+                app = details.get("app", "")
+                env = details.get("env", "")
+                subapp = details.get("subapp", "")
+                cloud = details.get("cloud", "")
+                region = details.get("region", "")
+                tags = details.get("tags", [])
+
+                for volume in volumes:
+                    vol_size = volume.size
+                    size_tib = float(
+                        f"{approximate_size_specific(vol_size, 'TiB', withsuffix=False):.7f}"
+                    )
+
+                    if volume.state == "offline":
+                        used_tib = 0.0
                     else:
-                        cluster_type = "CVO"
+                        used_bytes = volume.space_used
+                        size_val = approximate_size_specific(used_bytes, "TiB", withsuffix=False)
+                        used_tib = float(f"{size_val:.7f}")
 
-                    # Get volumes (exclude SVM root volumes)
-                    volumes = list(Volume.get_collection(is_svm_root=False, fields="*"))
+                    data_type = volume.type_.upper()
 
-                    div = details.get("div", "")
-                    bu = details.get("bu", "")
-                    app = details.get("app", "")
-                    env = details.get("env", "")
-                    subapp = details.get("subapp", "")
-                    cloud = details.get("cloud", "")
-                    region = details.get("region", "")
-                    tags = details.get("tags", [])
+                    # Mark this combination as having data
+                    self.divisions[div][bu][app][env][subapp][cloud][region][cluster_type][
+                        data_type
+                    ] = True
 
-                    for volume in volumes:
-                        vol_size = volume["size"]
-                        size_tib = float(
-                            f"{approximate_size_specific(vol_size, 'TiB', withsuffix=False):.7f}"
-                        )
+                    # Calculate percent used
+                    if size_tib > 0:
+                        percent_used = float(f"{(used_tib / size_tib) * 100:.3f}")
+                    else:
+                        percent_used = 0.0
 
-                        if volume["state"] == "offline":
-                            used_tib = 0.0
-                        else:
-                            used_bytes = volume["space"]["used"]
-                            size_val = approximate_size_specific(
-                                used_bytes, "TiB", withsuffix=False
-                            )
-                            used_tib = float(f"{size_val:.7f}")
-
-                        data_type = volume["type"].upper()
-
-                        # Mark this combination as having data
-                        self.divisions[div][bu][app][env][subapp][cloud][region][cluster_type][
-                            data_type
-                        ] = True
-
-                        # Calculate percent used
-                        if size_tib > 0:
-                            percent_used = float(f"{(used_tib / size_tib) * 100:.3f}")
-                        else:
-                            percent_used = 0.0
-
-                        self.volume_data.append(
-                            [
-                                div,
-                                bu,
-                                name,
-                                app,
-                                env,
-                                subapp,
-                                cloud,
-                                region,
-                                cluster_type,
-                                data_type,
-                                volume["name"],
-                                volume["state"],
-                                ",".join(tags) if tags else "",
-                                size_tib,
-                                used_tib,
-                                percent_used,
-                            ]
-                        )
+                    self.volume_data.append(
+                        [
+                            div,
+                            bu,
+                            name,
+                            app,
+                            env,
+                            subapp,
+                            cloud,
+                            region,
+                            cluster_type,
+                            data_type,
+                            volume.name,
+                            volume.state,
+                            ",".join(tags) if tags else "",
+                            size_tib,
+                            used_tib,
+                            percent_used,
+                        ]
+                    )
 
             except Exception as e:
                 print_error(f"Could not retrieve data for {name}: {e}")
