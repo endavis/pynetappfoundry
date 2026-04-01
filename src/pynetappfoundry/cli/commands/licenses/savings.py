@@ -5,13 +5,16 @@ from __future__ import annotations
 from typing import Any
 
 import click
-from netapp_ontap import HostConnection
-from netapp_ontap.resources import LicensePackage
 from rich.table import Table
 
+import pynetappfoundry.cache.ontap.cluster.licensing.licenses.mapping  # noqa: F401
 from pynetappfoundry.cli.decorators import with_config
 from pynetappfoundry.cli.utils import console, print_error, print_info
+from pynetappfoundry.clients.ontap.api import ONTAPAPIClient
 from pynetappfoundry.core.config import Config
+from pynetappfoundry.core.models import ClusterConfig
+from pynetappfoundry.models.ontap.cluster.licensing.licenses import OntapLicensePackageResponse
+from pynetappfoundry.query import QuerySet
 
 
 @click.command()
@@ -41,42 +44,40 @@ def _analyze_cluster_savings(
     config: Config,
 ) -> None:
     """Analyze savings for a single cluster."""
-    user, password = config.get_user("clusters", name)
-
     try:
-        with HostConnection(
-            details["ip"],
-            username=user,
-            password=password,
-            verify=False,
-        ):
-            table = Table(title=f"License Usage for {name}")
-            table.add_column("Package")
-            table.add_column("License Type")
-            table.add_column("Used Capacity")
-            table.add_column("Entitled Capacity")
+        cluster_config = ClusterConfig(**details)
+        client = ONTAPAPIClient(cluster=cluster_config, config=config)
 
-            for lic in LicensePackage.get_collection(fields="*"):
-                lic_dict = lic.to_dict()
-                for item in lic_dict.get("licenses", []):
-                    serial = item.get("serial_number", "")
-                    license_type = "Standard"
+        packages: list[OntapLicensePackageResponse] = QuerySet(
+            OntapLicensePackageResponse, client
+        ).all()
 
-                    if serial.startswith("9092"):
-                        license_type = "Cloud Capacity"
-                    elif serial.startswith("2265"):
-                        license_type = "Data Tiering"
-                    elif serial.startswith("3200"):
-                        license_type = "ONTAP Select"
+        table = Table(title=f"License Usage for {name}")
+        table.add_column("Package")
+        table.add_column("License Type")
+        table.add_column("Used Capacity")
+        table.add_column("Entitled Capacity")
 
-                    table.add_row(
-                        lic_dict.get("name", "Unknown"),
-                        license_type,
-                        str(item.get("capacity", {}).get("used_size", "N/A")),
-                        str(item.get("capacity", {}).get("maximum_size", "N/A")),
-                    )
+        for pkg in packages:
+            for lic in pkg.licenses:
+                serial = lic.serial_number
+                license_type = "Standard"
 
-            console.print(table)
+                if serial.startswith("9092"):
+                    license_type = "Cloud Capacity"
+                elif serial.startswith("2265"):
+                    license_type = "Data Tiering"
+                elif serial.startswith("3200"):
+                    license_type = "ONTAP Select"
+
+                table.add_row(
+                    pkg.name or "Unknown",
+                    license_type,
+                    str(lic.capacity_used_size or "N/A"),
+                    str(lic.capacity_maximum_size or "N/A"),
+                )
+
+        console.print(table)
 
     except Exception as e:
         print_error(f"Could not analyze savings for {name}: {e}")
