@@ -80,6 +80,7 @@ Generated models inherit from `OntapModel` (defined in `models._base`) instead o
 
 - Issue #301: feat: field annotations, OpenAPI codegen, and SQL cache storage
 - Issue #402: refactor: move ONTAP API models from cache/ to models/ package
+- Issue #444: refactor: evaluate nested models to replace flat model pattern (see ADR-0011)
 
 ## Related Documentation
 

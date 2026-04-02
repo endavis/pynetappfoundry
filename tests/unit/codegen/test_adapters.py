@@ -222,11 +222,16 @@ class TestFlattenSchema:
         assert "size" in names
 
     def test_nested_ref_resolved(self, simple_spec):
+        """Nested $ref fields appear as sub_fields of the parent object."""
         schema = simple_spec["components"]["schemas"]["volume"]
         fields = _flatten_schema(simple_spec, schema, "", [])
-        names = {f.api_path for f in fields}
-        assert "svm.name" in names
-        assert "svm.uuid" in names
+        # Top-level should have the parent object "svm"
+        svm_field = next(f for f in fields if f.api_path == "svm")
+        assert svm_field.is_object
+        # Sub-fields hold the nested paths
+        sub_names = {sf.api_path for sf in svm_field.sub_fields}
+        assert "svm.name" in sub_names
+        assert "svm.uuid" in sub_names
 
     def test_uuid_detected(self, simple_spec):
         schema = simple_spec["components"]["schemas"]["volume"]
@@ -246,7 +251,11 @@ class TestFlattenSchema:
         patterns = ["analytics.*", "autosize.*", "statistics.*"]
         fields = _flatten_schema(expensive_spec, schema, "", patterns)
 
-        analytics_state = next(f for f in fields if f.api_path == "analytics.state")
+        # analytics.state is now in sub_fields of the analytics object
+        analytics_field = next(f for f in fields if f.api_path == "analytics")
+        analytics_state = next(
+            sf for sf in analytics_field.sub_fields if sf.api_path == "analytics.state"
+        )
         assert analytics_state.requires_explicit_fetch
 
         name_field = next(f for f in fields if f.api_path == "name")
@@ -360,11 +369,14 @@ class TestParseOpenAPISpec:
         assert ep.records_path == "records"
         assert len(ep.fields) > 0
 
-        # Check field structure
+        # Check field structure (tree: svm.name is in svm.sub_fields)
         field_paths = {f.api_path for f in ep.fields}
         assert "uuid" in field_paths
         assert "name" in field_paths
-        assert "svm.name" in field_paths
+        assert "svm" in field_paths
+        svm_field = next(f for f in ep.fields if f.api_path == "svm")
+        sub_paths = {sf.api_path for sf in svm_field.sub_fields}
+        assert "svm.name" in sub_paths
 
     def test_expensive_fields_annotated(self, expensive_spec, tmp_path):
         spec_path = _write_spec(expensive_spec, tmp_path)
@@ -374,7 +386,13 @@ class TestParseOpenAPISpec:
         ep = endpoints[0]
         assert len(ep.expensive_patterns) == 3
 
-        expensive_fields = [f for f in ep.fields if f.requires_explicit_fetch]
+        # Expensive fields are now in sub_fields (tree structure)
+        def _all_fields(fields):
+            for f in fields:
+                yield f
+                yield from _all_fields(f.sub_fields)
+
+        expensive_fields = [f for f in _all_fields(ep.fields) if f.requires_explicit_fetch]
         assert len(expensive_fields) > 0
 
     def test_non_ontap_no_expensive(self, expensive_spec, tmp_path):
@@ -384,7 +402,13 @@ class TestParseOpenAPISpec:
 
         ep = endpoints[0]
         assert ep.expensive_patterns == []
-        expensive_fields = [f for f in ep.fields if f.requires_explicit_fetch]
+
+        def _all_fields(fields):
+            for f in fields:
+                yield f
+                yield from _all_fields(f.sub_fields)
+
+        expensive_fields = [f for f in _all_fields(ep.fields) if f.requires_explicit_fetch]
         assert len(expensive_fields) == 0
 
     def test_parameterized_endpoint(self, parameterized_spec, tmp_path):

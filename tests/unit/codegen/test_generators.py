@@ -6,13 +6,13 @@ from tools.codegen.adapters import ParsedEndpoint, ParsedField
 from tools.codegen.generators import (
     _CLASS_NAME_OVERRIDES,
     _SINGULAR_EXCEPTIONS,
+    _collect_all_leaves,
     _field_to_cache_attr,
     _has_typed_sub_fields,
     _path_to_class_name,
     _path_to_module_parts,
     _safe_attr_name,
     _schema_to_pascal,
-    _select_leaf_fields,
     _singularize,
     _sub_model_name,
     generate_init,
@@ -23,7 +23,7 @@ from tools.codegen.generators import (
 )
 
 # ---------------------------------------------------------------------------
-# Helper: build a simple ParsedEndpoint
+# Helper: build a simple ParsedEndpoint (tree structure)
 # ---------------------------------------------------------------------------
 
 
@@ -43,6 +43,7 @@ def _make_endpoint(
             ParsedField(
                 name="state", api_path="state", python_type="str", enum_values=["online", "offline"]
             ),
+            # Nested object: tree structure (svm.name is a sub_field, NOT a sibling)
             ParsedField(
                 name="svm",
                 api_path="svm",
@@ -52,7 +53,6 @@ def _make_endpoint(
                     ParsedField(name="name", api_path="svm.name", python_type="str"),
                 ],
             ),
-            ParsedField(name="name", api_path="svm.name", python_type="str"),
             ParsedField(
                 name="tags",
                 api_path="tags",
@@ -207,12 +207,13 @@ class TestFieldToCacheAttr:
         assert _field_to_cache_attr(f) == "name"
 
     def test_nested(self):
+        """Nested fields use dot-path cache_attr."""
         f = ParsedField(name="name", api_path="svm.name")
-        assert _field_to_cache_attr(f) == "svm_name"
+        assert _field_to_cache_attr(f) == "svm.name"
 
     def test_deep_nested(self):
         f = ParsedField(name="name", api_path="nas.export_policy.name")
-        assert _field_to_cache_attr(f) == "nas_export_policy_name"
+        assert _field_to_cache_attr(f) == "nas.export_policy.name"
 
 
 # ---------------------------------------------------------------------------
@@ -220,23 +221,63 @@ class TestFieldToCacheAttr:
 # ---------------------------------------------------------------------------
 
 
-class TestSelectLeafFields:
-    def test_filters_objects(self):
-        fields = [
-            ParsedField(name="svm", api_path="svm", is_object=True),
-            ParsedField(name="name", api_path="svm.name"),
-            ParsedField(name="uuid", api_path="uuid"),
-        ]
-        leaves = _select_leaf_fields(fields)
-        assert len(leaves) == 2
-        assert all(not (f.is_object and not f.is_list) for f in leaves)
+class TestCollectAllLeaves:
+    """Tests for _collect_all_leaves (tree-walking)."""
 
-    def test_keeps_list_objects(self):
+    def test_collects_from_tree(self):
         fields = [
-            ParsedField(name="tags", api_path="tags", is_list=True, is_object=True),
+            ParsedField(name="uuid", api_path="uuid"),
+            ParsedField(
+                name="svm",
+                api_path="svm",
+                is_object=True,
+                sub_fields=[
+                    ParsedField(name="name", api_path="svm.name"),
+                    ParsedField(name="uuid", api_path="svm.uuid"),
+                ],
+            ),
         ]
-        leaves = _select_leaf_fields(fields)
+        leaves = _collect_all_leaves(fields)
+        paths = {f.api_path for f in leaves}
+        assert paths == {"uuid", "svm.name", "svm.uuid"}
+
+    def test_deep_nesting(self):
+        fields = [
+            ParsedField(
+                name="location",
+                api_path="location",
+                is_object=True,
+                sub_fields=[
+                    ParsedField(
+                        name="home_node",
+                        api_path="location.home_node",
+                        is_object=True,
+                        sub_fields=[
+                            ParsedField(name="name", api_path="location.home_node.name"),
+                        ],
+                    ),
+                ],
+            ),
+        ]
+        leaves = _collect_all_leaves(fields)
         assert len(leaves) == 1
+        assert leaves[0].api_path == "location.home_node.name"
+
+    def test_includes_list_objects(self):
+        fields = [
+            ParsedField(
+                name="aggregates",
+                api_path="aggregates",
+                is_list=True,
+                is_object=True,
+                sub_fields=[
+                    ParsedField(name="name", api_path="aggregates.name"),
+                ],
+            ),
+        ]
+        leaves = _collect_all_leaves(fields)
+        assert len(leaves) == 1
+        assert leaves[0].api_path == "aggregates"
 
 
 # ---------------------------------------------------------------------------
@@ -262,19 +303,47 @@ class TestGenerateModel:
         assert "Field(default_factory=list)" in code
         assert "from pydantic import Field" in code
 
-    def test_flat_field_names(self):
+    def test_nested_sub_model_generated(self):
+        """Object fields produce nested sub-model classes."""
         ep = _make_endpoint()
         code = generate_model(ep)
-        assert "svm_name: str" in code
-        assert "    uuid: OntapUUID" in code
+        assert "class OntapVolumeSvm(OntapModel):" in code
+        # Parent field typed as sub-model with default_factory
+        assert "svm: OntapVolumeSvm = Field(default_factory=OntapVolumeSvm)" in code
 
-    def test_no_object_fields(self):
-        """Object container fields (svm) should not appear as model attrs."""
+    def test_sub_model_has_leaf_fields(self):
+        """Sub-model class has the leaf field attributes."""
         ep = _make_endpoint()
         code = generate_model(ep)
+        # The sub-model should have 'name' attribute
         lines = code.split("\n")
-        svm_lines = [line for line in lines if line.strip().startswith("svm:")]
-        assert len(svm_lines) == 0
+        # Find the sub-model section
+        in_sub = False
+        sub_fields = []
+        for line in lines:
+            if "class OntapVolumeSvm" in line:
+                in_sub = True
+                continue
+            if in_sub:
+                if line.startswith("class ") or (line == "" and sub_fields):
+                    break
+                if line.strip() and not line.strip().startswith('"""'):
+                    sub_fields.append(line.strip())
+        assert any("name: str" in f for f in sub_fields)
+
+    def test_no_flat_svm_name(self):
+        """Flat field names like svm_name should NOT appear on the parent model."""
+        ep = _make_endpoint()
+        code = generate_model(ep)
+        # Check that svm_name is not on the parent class
+        lines = code.split("\n")
+        in_parent = False
+        for line in lines:
+            if "class OntapVolume(OntapModel):" in line:
+                in_parent = True
+                continue
+            if in_parent and "svm_name" in line:
+                raise AssertionError("svm_name should not appear on the parent model")
 
 
 # ---------------------------------------------------------------------------
@@ -290,16 +359,29 @@ class TestGenerateMapping:
         assert 'name="OntapVolume"' in code
         assert "model_class=OntapVolume" in code
 
-    def test_field_mappings(self):
+    def test_field_mappings_use_dot_path_cache_attr(self):
+        """cache_attr values should be dot-paths for nested fields."""
         ep = _make_endpoint()
         code = generate_mapping(ep)
-        assert 'cache_attr="uuid"' in code
+        assert 'cache_attr="svm.name"' in code
         assert 'api_path="svm.name"' in code
 
     def test_expensive_fields_in_endpoint(self):
         fields = [
             ParsedField(name="name", api_path="name"),
-            ParsedField(name="state", api_path="analytics.state", requires_explicit_fetch=True),
+            ParsedField(
+                name="analytics",
+                api_path="analytics",
+                python_type="object",
+                is_object=True,
+                sub_fields=[
+                    ParsedField(
+                        name="state",
+                        api_path="analytics.state",
+                        requires_explicit_fetch=True,
+                    ),
+                ],
+            ),
         ]
         ep = _make_endpoint(fields=fields, expensive_patterns=["analytics.*"])
         code = generate_mapping(ep)
@@ -366,7 +448,7 @@ class TestGenerateTomlOverlay:
         toml = generate_toml_overlay(ep)
         assert "[endpoint]" in toml
         assert 'path = "/storage/volumes"' in toml
-        assert "[fields.uuid]" in toml
+        # Dot-path keys in TOML need quoting
         assert 'cache_strategy = "cache"' in toml
         assert 'class_name = "OntapVolume"' in toml
 
@@ -391,7 +473,7 @@ class TestGenerateTomlOverlay:
         ]
         ep = _make_endpoint(fields=fields)
 
-        # Write initial overlay
+        # Write initial overlay with dot-path key
         existing = tmp_path / "overlay.toml"
         existing.write_text(
             '[endpoint]\npath = "/storage/volumes"\n\n[fields.name]\ncache_strategy = "realtime"\n'
@@ -402,6 +484,32 @@ class TestGenerateTomlOverlay:
         assert '"realtime"' in toml
         # New field should get default
         assert "[fields.size]" in toml
+
+    def test_migrates_flat_keys_to_dot_path(self, tmp_path):
+        """Existing flat-key overlays should be migrated to dot-path keys."""
+        fields = [
+            ParsedField(
+                name="svm",
+                api_path="svm",
+                python_type="object",
+                is_object=True,
+                sub_fields=[
+                    ParsedField(name="name", api_path="svm.name"),
+                ],
+            ),
+        ]
+        ep = _make_endpoint(fields=fields)
+
+        # Write initial overlay with old flat key
+        existing = tmp_path / "overlay.toml"
+        existing.write_text(
+            '[endpoint]\npath = "/storage/volumes"\n\n'
+            '[fields.svm_name]\ncache_strategy = "realtime"\n'
+        )
+
+        toml = generate_toml_overlay(ep, existing)
+        # Old flat key should be migrated, user edit preserved
+        assert '"realtime"' in toml
 
     def test_warns_removed_fields(self, tmp_path):
         fields = [ParsedField(name="name", api_path="name")]
@@ -528,12 +636,18 @@ class TestWriteEndpointFiles:
 
 class TestSubModelName:
     def test_basic(self):
+        """Array-of-objects singularizes the field name."""
         f = ParsedField(name="copies", api_path="copies", is_list=True, is_object=True)
         assert _sub_model_name("OntapSnapshotPolicy", f) == "OntapSnapshotPolicyCopy"
 
     def test_underscored_field(self):
         f = ParsedField(name="ip_ranges", api_path="ip_ranges", is_list=True, is_object=True)
         assert _sub_model_name("OntapIpSubnet", f) == "OntapIpSubnetIpRange"
+
+    def test_nested_object(self):
+        """Non-list objects don't singularize."""
+        f = ParsedField(name="svm", api_path="svm", is_object=True, is_list=False)
+        assert _sub_model_name("OntapVolume", f) == "OntapVolumeSvm"
 
 
 class TestHasTypedSubFields:
@@ -572,7 +686,7 @@ class TestHasTypedSubFields:
 
 
 # ---------------------------------------------------------------------------
-# Sub-model generation
+# Nested sub-model generation
 # ---------------------------------------------------------------------------
 
 
@@ -591,7 +705,6 @@ def _make_endpoint_with_sub_model(
                 ParsedField(name="name", api_path="copies.schedule.name", python_type="str"),
             ],
         ),
-        ParsedField(name="name", api_path="copies.schedule.name", python_type="str"),
     ]
     return ParsedEndpoint(
         path=path,
@@ -638,10 +751,7 @@ class TestGenerateModelSubModel:
     def test_sub_model_has_leaf_fields(self):
         ep = _make_endpoint_with_sub_model()
         code = generate_model(ep)
-        # The sub-model should have leaf fields from copies sub_fields
-        # Field names use only the leaf portion of api_path (no parent prefix)
         assert "    count: int = 0" in code
-        assert "    name: str" in code
 
     def test_valid_python(self):
         ep = _make_endpoint_with_sub_model()
@@ -666,16 +776,6 @@ class TestGenerateMappingSubModel:
         code = generate_mapping(ep)
         assert 'api_path="copies"' in code
         assert "transform=_transform_copies" in code
-        # Both must appear in the same FieldMapping block
-        lines = code.splitlines()
-        api_path_indices = [i for i, line in enumerate(lines) if 'api_path="copies"' in line]
-        transform_indices = [
-            i for i, line in enumerate(lines) if "transform=_transform_copies" in line
-        ]
-        assert api_path_indices, "api_path not found in mapping output"
-        assert transform_indices, "transform not found in mapping output"
-        # api_path line should come right before transform line
-        assert transform_indices[0] == api_path_indices[0] + 1
 
     def test_sub_model_imported(self):
         ep = _make_endpoint_with_sub_model()

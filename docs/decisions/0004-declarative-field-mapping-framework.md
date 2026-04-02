@@ -127,6 +127,7 @@ annotated mappings from API specs, with per-field customization via TOML overlay
 - Issue #301: feat: field annotations, OpenAPI codegen, and SQL cache storage
 - Issue #312: fix: remove hardcoded collector endpoints and wire cache_strategy into parsing
 - Issue #317: feat: collector ?fields= expansion for expensive ONTAP fields
+- Issue #444: refactor: evaluate nested models to replace flat model pattern (see ADR-0011)
 
 ## Related Documentation
 

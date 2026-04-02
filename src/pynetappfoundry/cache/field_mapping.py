@@ -281,6 +281,40 @@ def _coerce_cli_value(value: str, default: Any) -> Any:
     return value
 
 
+def _nest_kwargs(flat: dict[str, Any]) -> dict[str, Any]:
+    """Convert dot-path keys to nested dicts for Pydantic model construction.
+
+    Transforms ``{"ip.address": "10.0.0.1", "ip.family": "ipv4"}`` into
+    ``{"ip": {"address": "10.0.0.1", "family": "ipv4"}}``.
+
+    Keys without dots pass through unchanged.  Sibling paths are merged
+    into the same sub-dict.
+
+    Args:
+        flat: Dict with dot-path keys.
+
+    Returns:
+        Nested dict suitable for ``model_class(**kwargs)``.
+    """
+    nested: dict[str, Any] = {}
+    for key, value in flat.items():
+        parts = key.split(".")
+        if len(parts) == 1:
+            nested[key] = value
+            continue
+        current = nested
+        for part in parts[:-1]:
+            if part not in current:
+                current[part] = {}
+            elif not isinstance(current[part], dict):
+                # Conflict: a scalar was already set at this path.
+                # The more-specific (deeper) path wins.
+                current[part] = {}
+            current = current[part]
+        current[parts[-1]] = value
+    return nested
+
+
 def parse_api_record(
     mapping: TypeMapping,
     record: dict[str, Any],
@@ -294,6 +328,11 @@ def parse_api_record(
     via ``get_nested_value(record, api_path)``. Falls back to default on
     ``PathNotFoundError``. Transform exceptions propagate (logged as
     ``TRANSFORM_FAILURE``).
+
+    After extraction, dot-path ``cache_attr`` keys are restructured into
+    nested dicts via :func:`_nest_kwargs` so that nested Pydantic models
+    can be constructed (e.g. ``{"ip.address": "10.0.0.1"}`` becomes
+    ``{"ip": {"address": "10.0.0.1"}}``).
 
     Args:
         mapping: Type mapping definition.
@@ -328,7 +367,10 @@ def parse_api_record(
                 kwargs[field.cache_attr] = field.default
         else:
             kwargs[field.cache_attr] = field.default
-    return mapping.model_class(**kwargs)
+
+    # Restructure dot-path keys into nested dicts for nested models
+    nested_kwargs = _nest_kwargs(kwargs)
+    return mapping.model_class(**nested_kwargs)
 
 
 def parse_cli_record(

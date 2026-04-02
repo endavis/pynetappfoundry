@@ -19,9 +19,9 @@ from pathlib import Path
 
 from tools.codegen.adapters import ParsedEndpoint, parse_openapi_spec
 from tools.codegen.generators import (
+    _collect_all_leaves,
     _path_to_class_name,
     _path_to_module_parts,
-    _select_leaf_fields,
     write_endpoint_files,
 )
 
@@ -56,7 +56,7 @@ def _deduplicate_endpoints(endpoints: list[ParsedEndpoint]) -> list[ParsedEndpoi
             result.append(candidates[0])
         else:
             # Pick the endpoint with the most leaf fields
-            best = max(candidates, key=lambda e: len(_select_leaf_fields(e.fields)))
+            best = max(candidates, key=lambda e: len(_collect_all_leaves(e.fields)))
             result.append(best)
     return result
 
