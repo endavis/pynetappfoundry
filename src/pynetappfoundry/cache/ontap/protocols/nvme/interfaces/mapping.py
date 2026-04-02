@@ -18,23 +18,23 @@ ONTAPNVMEINTERFACE_MAPPING = TypeMapping(
             default=False,
         ),
         FieldMapping(
-            cache_attr="fc_interface_port_name",
+            cache_attr="fc_interface.port.name",
             api_path="fc_interface.port.name",
         ),
         FieldMapping(
-            cache_attr="fc_interface_port_node_name",
+            cache_attr="fc_interface.port.node.name",
             api_path="fc_interface.port.node.name",
         ),
         FieldMapping(
-            cache_attr="fc_interface_port_uuid",
+            cache_attr="fc_interface.port.uuid",
             api_path="fc_interface.port.uuid",
         ),
         FieldMapping(
-            cache_attr="fc_interface_wwnn",
+            cache_attr="fc_interface.wwnn",
             api_path="fc_interface.wwnn",
         ),
         FieldMapping(
-            cache_attr="fc_interface_wwpn",
+            cache_attr="fc_interface.wwpn",
             api_path="fc_interface.wwpn",
         ),
         FieldMapping(
@@ -42,19 +42,19 @@ ONTAPNVMEINTERFACE_MAPPING = TypeMapping(
             api_path="interface_type",
         ),
         FieldMapping(
-            cache_attr="ip_interface_ip_address",
+            cache_attr="ip_interface.ip.address",
             api_path="ip_interface.ip.address",
         ),
         FieldMapping(
-            cache_attr="ip_interface_location_port_name",
+            cache_attr="ip_interface.location.port.name",
             api_path="ip_interface.location.port.name",
         ),
         FieldMapping(
-            cache_attr="ip_interface_location_port_node_name",
+            cache_attr="ip_interface.location.port.node.name",
             api_path="ip_interface.location.port.node.name",
         ),
         FieldMapping(
-            cache_attr="ip_interface_location_port_uuid",
+            cache_attr="ip_interface.location.port.uuid",
             api_path="ip_interface.location.port.uuid",
         ),
         FieldMapping(
@@ -62,19 +62,19 @@ ONTAPNVMEINTERFACE_MAPPING = TypeMapping(
             api_path="name",
         ),
         FieldMapping(
-            cache_attr="node_name",
+            cache_attr="node.name",
             api_path="node.name",
         ),
         FieldMapping(
-            cache_attr="node_uuid",
+            cache_attr="node.uuid",
             api_path="node.uuid",
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(

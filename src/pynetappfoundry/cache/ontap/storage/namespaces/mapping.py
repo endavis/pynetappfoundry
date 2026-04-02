@@ -9,28 +9,32 @@ from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.storage.namespaces.model import (
     OntapNvmeNamespace,
-    OntapNvmeNamespaceHost,
-    OntapNvmeNamespaceObjectStore,
+    OntapNvmeNamespaceProvisioningOptionsTieringObjectStore,
+    OntapNvmeNamespaceSubsystemMapSubsystemHost,
 )
+from pynetappfoundry.utils.dict_path import get_nested_value
 
 
 def _transform_provisioning_options_tiering_object_stores(
     record: dict[str, Any],
-) -> list[OntapNvmeNamespaceObjectStore]:
-    """Transform provisioning_options.tiering.object_stores into OntapNvmeNamespaceObjectStore list."""
-    return [
-        OntapNvmeNamespaceObjectStore(**item)
-        for item in record.get("provisioning_options.tiering.object_stores", [])
-    ]
+) -> list[OntapNvmeNamespaceProvisioningOptionsTieringObjectStore]:
+    """Transform provisioning_options.tiering.object_stores into OntapNvmeNamespaceProvisioningOptionsTieringObjectStore list."""
+    try:
+        items = get_nested_value(record, "provisioning_options.tiering.object_stores")
+    except Exception:
+        items = []
+    return [OntapNvmeNamespaceProvisioningOptionsTieringObjectStore(**item) for item in items]
 
 
 def _transform_subsystem_map_subsystem_hosts(
     record: dict[str, Any],
-) -> list[OntapNvmeNamespaceHost]:
-    """Transform subsystem_map.subsystem.hosts into OntapNvmeNamespaceHost list."""
-    return [
-        OntapNvmeNamespaceHost(**item) for item in record.get("subsystem_map.subsystem.hosts", [])
-    ]
+) -> list[OntapNvmeNamespaceSubsystemMapSubsystemHost]:
+    """Transform subsystem_map.subsystem.hosts into OntapNvmeNamespaceSubsystemMapSubsystemHost list."""
+    try:
+        items = get_nested_value(record, "subsystem_map.subsystem.hosts")
+    except Exception:
+        items = []
+    return [OntapNvmeNamespaceSubsystemMapSubsystemHost(**item) for item in items]
 
 
 ONTAPNVMENAMESPACE_MAPPING = TypeMapping(
@@ -46,11 +50,11 @@ ONTAPNVMENAMESPACE_MAPPING = TypeMapping(
             requires_explicit_fetch=True,
         ),
         FieldMapping(
-            cache_attr="clone_source_name",
+            cache_attr="clone.source.name",
             api_path="clone.source.name",
         ),
         FieldMapping(
-            cache_attr="clone_source_uuid",
+            cache_attr="clone.source.uuid",
             api_path="clone.source.uuid",
         ),
         FieldMapping(
@@ -58,19 +62,19 @@ ONTAPNVMENAMESPACE_MAPPING = TypeMapping(
             api_path="comment",
         ),
         FieldMapping(
-            cache_attr="consistency_group_name",
+            cache_attr="consistency_group.name",
             api_path="consistency_group.name",
         ),
         FieldMapping(
-            cache_attr="consistency_group_uuid",
+            cache_attr="consistency_group.uuid",
             api_path="consistency_group.uuid",
         ),
         FieldMapping(
-            cache_attr="convert_lun_name",
+            cache_attr="convert.lun.name",
             api_path="convert.lun.name",
         ),
         FieldMapping(
-            cache_attr="convert_lun_uuid",
+            cache_attr="convert.lun.uuid",
             api_path="convert.lun.uuid",
         ),
         FieldMapping(
@@ -83,128 +87,128 @@ ONTAPNVMENAMESPACE_MAPPING = TypeMapping(
             default=False,
         ),
         FieldMapping(
-            cache_attr="location_namespace",
+            cache_attr="location.namespace",
             api_path="location.namespace",
         ),
         FieldMapping(
-            cache_attr="location_node_name",
+            cache_attr="location.node.name",
             api_path="location.node.name",
         ),
         FieldMapping(
-            cache_attr="location_node_uuid",
+            cache_attr="location.node.uuid",
             api_path="location.node.uuid",
         ),
         FieldMapping(
-            cache_attr="location_qtree_id",
+            cache_attr="location.qtree.id",
             api_path="location.qtree.id",
             default=0,
         ),
         FieldMapping(
-            cache_attr="location_qtree_name",
+            cache_attr="location.qtree.name",
             api_path="location.qtree.name",
         ),
         FieldMapping(
-            cache_attr="location_volume_name",
+            cache_attr="location.volume.name",
             api_path="location.volume.name",
         ),
         FieldMapping(
-            cache_attr="location_volume_uuid",
+            cache_attr="location.volume.uuid",
             api_path="location.volume.uuid",
         ),
         FieldMapping(
-            cache_attr="metric_duration",
+            cache_attr="metric.duration",
             api_path="metric.duration",
-            requires_explicit_fetch=True,
             cache_strategy="realtime",
+            requires_explicit_fetch=True,
         ),
         FieldMapping(
-            cache_attr="metric_iops_other",
+            cache_attr="metric.iops.other",
             api_path="metric.iops.other",
+            cache_strategy="realtime",
             default=0,
             requires_explicit_fetch=True,
-            cache_strategy="realtime",
         ),
         FieldMapping(
-            cache_attr="metric_iops_read",
+            cache_attr="metric.iops.read",
             api_path="metric.iops.read",
+            cache_strategy="realtime",
             default=0,
             requires_explicit_fetch=True,
-            cache_strategy="realtime",
         ),
         FieldMapping(
-            cache_attr="metric_iops_total",
+            cache_attr="metric.iops.total",
             api_path="metric.iops.total",
+            cache_strategy="realtime",
             default=0,
             requires_explicit_fetch=True,
-            cache_strategy="realtime",
         ),
         FieldMapping(
-            cache_attr="metric_iops_write",
+            cache_attr="metric.iops.write",
             api_path="metric.iops.write",
+            cache_strategy="realtime",
             default=0,
             requires_explicit_fetch=True,
-            cache_strategy="realtime",
         ),
         FieldMapping(
-            cache_attr="metric_latency_other",
+            cache_attr="metric.latency.other",
             api_path="metric.latency.other",
+            cache_strategy="realtime",
             default=0,
             requires_explicit_fetch=True,
-            cache_strategy="realtime",
         ),
         FieldMapping(
-            cache_attr="metric_latency_read",
+            cache_attr="metric.latency.read",
             api_path="metric.latency.read",
+            cache_strategy="realtime",
             default=0,
             requires_explicit_fetch=True,
-            cache_strategy="realtime",
         ),
         FieldMapping(
-            cache_attr="metric_latency_total",
+            cache_attr="metric.latency.total",
             api_path="metric.latency.total",
+            cache_strategy="realtime",
             default=0,
             requires_explicit_fetch=True,
-            cache_strategy="realtime",
         ),
         FieldMapping(
-            cache_attr="metric_latency_write",
+            cache_attr="metric.latency.write",
             api_path="metric.latency.write",
+            cache_strategy="realtime",
             default=0,
             requires_explicit_fetch=True,
-            cache_strategy="realtime",
         ),
         FieldMapping(
-            cache_attr="metric_status",
+            cache_attr="metric.status",
             api_path="metric.status",
-            requires_explicit_fetch=True,
             cache_strategy="realtime",
+            requires_explicit_fetch=True,
         ),
         FieldMapping(
-            cache_attr="metric_throughput_read",
+            cache_attr="metric.throughput.read",
             api_path="metric.throughput.read",
+            cache_strategy="realtime",
             default=0,
             requires_explicit_fetch=True,
-            cache_strategy="realtime",
         ),
         FieldMapping(
-            cache_attr="metric_throughput_total",
+            cache_attr="metric.throughput.total",
             api_path="metric.throughput.total",
+            cache_strategy="realtime",
             default=0,
             requires_explicit_fetch=True,
-            cache_strategy="realtime",
         ),
         FieldMapping(
-            cache_attr="metric_throughput_write",
+            cache_attr="metric.throughput.write",
             api_path="metric.throughput.write",
+            cache_strategy="realtime",
             default=0,
             requires_explicit_fetch=True,
-            cache_strategy="realtime",
         ),
         FieldMapping(
-            cache_attr="metric_timestamp",
+            cache_attr="metric.timestamp",
             api_path="metric.timestamp",
-            requires_explicit_fetch=True,
             cache_strategy="realtime",
+            requires_explicit_fetch=True,
         ),
         FieldMapping(
             cache_attr="name",
@@ -215,255 +219,255 @@ ONTAPNVMENAMESPACE_MAPPING = TypeMapping(
             api_path="os_type",
         ),
         FieldMapping(
-            cache_attr="provisioning_options_auto",
+            cache_attr="provisioning_options.auto",
             api_path="provisioning_options.auto",
             default=False,
         ),
         FieldMapping(
-            cache_attr="provisioning_options_count",
+            cache_attr="provisioning_options.count",
             api_path="provisioning_options.count",
             default=0,
         ),
         FieldMapping(
-            cache_attr="provisioning_options_qos_policy_name",
+            cache_attr="provisioning_options.qos_policy.name",
             api_path="provisioning_options.qos_policy.name",
         ),
         FieldMapping(
-            cache_attr="provisioning_options_qos_policy_uuid",
+            cache_attr="provisioning_options.qos_policy.uuid",
             api_path="provisioning_options.qos_policy.uuid",
         ),
         FieldMapping(
-            cache_attr="provisioning_options_snapshot_policy_name",
+            cache_attr="provisioning_options.snapshot_policy.name",
             api_path="provisioning_options.snapshot_policy.name",
         ),
         FieldMapping(
-            cache_attr="provisioning_options_snapshot_policy_uuid",
+            cache_attr="provisioning_options.snapshot_policy.uuid",
             api_path="provisioning_options.snapshot_policy.uuid",
         ),
         FieldMapping(
-            cache_attr="provisioning_options_storage_service_name",
+            cache_attr="provisioning_options.storage_service.name",
             api_path="provisioning_options.storage_service.name",
         ),
         FieldMapping(
-            cache_attr="provisioning_options_tiering_control",
+            cache_attr="provisioning_options.tiering.control",
             api_path="provisioning_options.tiering.control",
         ),
         FieldMapping(
-            cache_attr="provisioning_options_tiering_object_stores",
+            cache_attr="provisioning_options.tiering.object_stores",
             api_path="provisioning_options.tiering.object_stores",
             transform=_transform_provisioning_options_tiering_object_stores,
             default=[],
         ),
         FieldMapping(
-            cache_attr="provisioning_options_tiering_policy",
+            cache_attr="provisioning_options.tiering.policy",
             api_path="provisioning_options.tiering.policy",
         ),
         FieldMapping(
-            cache_attr="provisioning_options_use_mirrored_aggregates",
+            cache_attr="provisioning_options.use_mirrored_aggregates",
             api_path="provisioning_options.use_mirrored_aggregates",
             default=False,
         ),
         FieldMapping(
-            cache_attr="space_block_size",
+            cache_attr="space.block_size",
             api_path="space.block_size",
             default=0,
         ),
         FieldMapping(
-            cache_attr="space_efficiency_ratio",
+            cache_attr="space.efficiency_ratio",
             api_path="space.efficiency_ratio",
+            cache_strategy="realtime",
             default=0.0,
             requires_explicit_fetch=True,
-            cache_strategy="realtime",
         ),
         FieldMapping(
-            cache_attr="space_guarantee_requested",
+            cache_attr="space.guarantee.requested",
             api_path="space.guarantee.requested",
-            default=False,
             cache_strategy="realtime",
+            default=False,
         ),
         FieldMapping(
-            cache_attr="space_guarantee_reserved",
+            cache_attr="space.guarantee.reserved",
             api_path="space.guarantee.reserved",
+            cache_strategy="realtime",
             default=False,
-            cache_strategy="realtime",
         ),
         FieldMapping(
-            cache_attr="space_physical_used",
+            cache_attr="space.physical_used",
             api_path="space.physical_used",
+            cache_strategy="realtime",
             default=0,
             requires_explicit_fetch=True,
-            cache_strategy="realtime",
         ),
         FieldMapping(
-            cache_attr="space_physical_used_by_snapshots",
+            cache_attr="space.physical_used_by_snapshots",
             api_path="space.physical_used_by_snapshots",
+            cache_strategy="realtime",
             default=0,
             requires_explicit_fetch=True,
-            cache_strategy="realtime",
         ),
         FieldMapping(
-            cache_attr="space_size",
+            cache_attr="space.size",
             api_path="space.size",
-            default=0,
             cache_strategy="realtime",
+            default=0,
         ),
         FieldMapping(
-            cache_attr="space_used",
+            cache_attr="space.used",
             api_path="space.used",
-            default=0,
             cache_strategy="realtime",
+            default=0,
         ),
         FieldMapping(
-            cache_attr="statistics_iops_raw_other",
+            cache_attr="statistics.iops_raw.other",
             api_path="statistics.iops_raw.other",
+            cache_strategy="realtime",
             default=0,
             requires_explicit_fetch=True,
-            cache_strategy="realtime",
         ),
         FieldMapping(
-            cache_attr="statistics_iops_raw_read",
+            cache_attr="statistics.iops_raw.read",
             api_path="statistics.iops_raw.read",
+            cache_strategy="realtime",
             default=0,
             requires_explicit_fetch=True,
-            cache_strategy="realtime",
         ),
         FieldMapping(
-            cache_attr="statistics_iops_raw_total",
+            cache_attr="statistics.iops_raw.total",
             api_path="statistics.iops_raw.total",
+            cache_strategy="realtime",
             default=0,
             requires_explicit_fetch=True,
-            cache_strategy="realtime",
         ),
         FieldMapping(
-            cache_attr="statistics_iops_raw_write",
+            cache_attr="statistics.iops_raw.write",
             api_path="statistics.iops_raw.write",
+            cache_strategy="realtime",
             default=0,
             requires_explicit_fetch=True,
-            cache_strategy="realtime",
         ),
         FieldMapping(
-            cache_attr="statistics_latency_raw_other",
+            cache_attr="statistics.latency_raw.other",
             api_path="statistics.latency_raw.other",
+            cache_strategy="realtime",
             default=0,
             requires_explicit_fetch=True,
-            cache_strategy="realtime",
         ),
         FieldMapping(
-            cache_attr="statistics_latency_raw_read",
+            cache_attr="statistics.latency_raw.read",
             api_path="statistics.latency_raw.read",
+            cache_strategy="realtime",
             default=0,
             requires_explicit_fetch=True,
-            cache_strategy="realtime",
         ),
         FieldMapping(
-            cache_attr="statistics_latency_raw_total",
+            cache_attr="statistics.latency_raw.total",
             api_path="statistics.latency_raw.total",
+            cache_strategy="realtime",
             default=0,
             requires_explicit_fetch=True,
-            cache_strategy="realtime",
         ),
         FieldMapping(
-            cache_attr="statistics_latency_raw_write",
+            cache_attr="statistics.latency_raw.write",
             api_path="statistics.latency_raw.write",
+            cache_strategy="realtime",
             default=0,
             requires_explicit_fetch=True,
-            cache_strategy="realtime",
         ),
         FieldMapping(
-            cache_attr="statistics_status",
+            cache_attr="statistics.status",
             api_path="statistics.status",
-            requires_explicit_fetch=True,
             cache_strategy="realtime",
+            requires_explicit_fetch=True,
         ),
         FieldMapping(
-            cache_attr="statistics_throughput_raw_read",
+            cache_attr="statistics.throughput_raw.read",
             api_path="statistics.throughput_raw.read",
+            cache_strategy="realtime",
             default=0,
             requires_explicit_fetch=True,
-            cache_strategy="realtime",
         ),
         FieldMapping(
-            cache_attr="statistics_throughput_raw_total",
+            cache_attr="statistics.throughput_raw.total",
             api_path="statistics.throughput_raw.total",
+            cache_strategy="realtime",
             default=0,
             requires_explicit_fetch=True,
-            cache_strategy="realtime",
         ),
         FieldMapping(
-            cache_attr="statistics_throughput_raw_write",
+            cache_attr="statistics.throughput_raw.write",
             api_path="statistics.throughput_raw.write",
+            cache_strategy="realtime",
             default=0,
             requires_explicit_fetch=True,
-            cache_strategy="realtime",
         ),
         FieldMapping(
-            cache_attr="statistics_timestamp",
+            cache_attr="statistics.timestamp",
             api_path="statistics.timestamp",
-            requires_explicit_fetch=True,
             cache_strategy="realtime",
+            requires_explicit_fetch=True,
         ),
         FieldMapping(
-            cache_attr="status_container_state",
+            cache_attr="status.container_state",
             api_path="status.container_state",
         ),
         FieldMapping(
-            cache_attr="status_mapped",
+            cache_attr="status.mapped",
             api_path="status.mapped",
             default=False,
             requires_explicit_fetch=True,
         ),
         FieldMapping(
-            cache_attr="status_read_only",
+            cache_attr="status.read_only",
             api_path="status.read_only",
             default=False,
         ),
         FieldMapping(
-            cache_attr="status_state",
+            cache_attr="status.state",
             api_path="status.state",
         ),
         FieldMapping(
-            cache_attr="subsystem_map_anagrpid",
+            cache_attr="subsystem_map.anagrpid",
             api_path="subsystem_map.anagrpid",
             requires_explicit_fetch=True,
         ),
         FieldMapping(
-            cache_attr="subsystem_map_nsid",
+            cache_attr="subsystem_map.nsid",
             api_path="subsystem_map.nsid",
             requires_explicit_fetch=True,
         ),
         FieldMapping(
-            cache_attr="subsystem_map_subsystem_comment",
+            cache_attr="subsystem_map.subsystem.comment",
             api_path="subsystem_map.subsystem.comment",
             requires_explicit_fetch=True,
         ),
         FieldMapping(
-            cache_attr="subsystem_map_subsystem_hosts",
+            cache_attr="subsystem_map.subsystem.hosts",
             api_path="subsystem_map.subsystem.hosts",
             transform=_transform_subsystem_map_subsystem_hosts,
             default=[],
             requires_explicit_fetch=True,
         ),
         FieldMapping(
-            cache_attr="subsystem_map_subsystem_name",
+            cache_attr="subsystem_map.subsystem.name",
             api_path="subsystem_map.subsystem.name",
             requires_explicit_fetch=True,
         ),
         FieldMapping(
-            cache_attr="subsystem_map_subsystem_os_type",
+            cache_attr="subsystem_map.subsystem.os_type",
             api_path="subsystem_map.subsystem.os_type",
             requires_explicit_fetch=True,
         ),
         FieldMapping(
-            cache_attr="subsystem_map_subsystem_uuid",
+            cache_attr="subsystem_map.subsystem.uuid",
             api_path="subsystem_map.subsystem.uuid",
             requires_explicit_fetch=True,
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(

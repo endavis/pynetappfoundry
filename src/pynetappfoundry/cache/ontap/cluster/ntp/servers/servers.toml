@@ -6,7 +6,7 @@ class_name = "OntapNtpServer"
 [fields.authentication_enabled]
 cache_strategy = "cache"
 
-[fields.key_id]
+[fields."key.id"]
 cache_strategy = "cache"
 
 [fields.server]

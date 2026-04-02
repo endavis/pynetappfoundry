@@ -6,13 +6,13 @@ class_name = "OntapFlexcache"
 [fields.aggregates]
 cache_strategy = "cache"
 
-[fields.atime_scrub_enabled]
+[fields."atime_scrub.enabled"]
 cache_strategy = "cache"
 
-[fields.atime_scrub_period]
+[fields."atime_scrub.period"]
 cache_strategy = "cache"
 
-[fields.cifs_change_notify_enabled]
+[fields."cifs_change_notify.enabled"]
 cache_strategy = "cache"
 
 [fields.constituents_per_aggregate]
@@ -24,7 +24,7 @@ cache_strategy = "cache"
 [fields.global_file_locking_enabled]
 cache_strategy = "cache"
 
-[fields.guarantee_type]
+[fields."guarantee.type_"]
 cache_strategy = "cache"
 requires_explicit_fetch = true
 
@@ -41,29 +41,29 @@ cache_strategy = "cache"
 cache_strategy = "cache"
 requires_explicit_fetch = true
 
-[fields.prepopulate_dir_paths]
+[fields."prepopulate.dir_paths"]
 cache_strategy = "cache"
 
-[fields.prepopulate_exclude_dir_paths]
+[fields."prepopulate.exclude_dir_paths"]
 cache_strategy = "cache"
 
-[fields.prepopulate_recurse]
+[fields."prepopulate.recurse"]
 cache_strategy = "cache"
 
-[fields.relative_size_enabled]
+[fields."relative_size.enabled"]
 cache_strategy = "cache"
 
-[fields.relative_size_percentage]
+[fields."relative_size.percentage"]
 cache_strategy = "cache"
 
 [fields.size]
 cache_strategy = "cache"
 requires_explicit_fetch = true
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.use_tiered_aggregate]
@@ -72,5 +72,5 @@ cache_strategy = "cache"
 [fields.uuid]
 cache_strategy = "cache"
 
-[fields.writeback_enabled]
+[fields."writeback.enabled"]
 cache_strategy = "cache"

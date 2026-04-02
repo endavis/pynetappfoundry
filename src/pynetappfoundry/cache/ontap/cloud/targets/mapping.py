@@ -46,11 +46,11 @@ ONTAPCLOUDTARGET_MAPPING = TypeMapping(
             default=False,
         ),
         FieldMapping(
-            cache_attr="cluster_name",
+            cache_attr="cluster.name",
             api_path="cluster.name",
         ),
         FieldMapping(
-            cache_attr="cluster_uuid",
+            cache_attr="cluster.uuid",
             api_path="cluster.uuid",
         ),
         FieldMapping(
@@ -58,11 +58,11 @@ ONTAPCLOUDTARGET_MAPPING = TypeMapping(
             api_path="container",
         ),
         FieldMapping(
-            cache_attr="ipspace_name",
+            cache_attr="ipspace.name",
             api_path="ipspace.name",
         ),
         FieldMapping(
-            cache_attr="ipspace_uuid",
+            cache_attr="ipspace.uuid",
             api_path="ipspace.uuid",
         ),
         FieldMapping(
@@ -113,11 +113,11 @@ ONTAPCLOUDTARGET_MAPPING = TypeMapping(
             default=False,
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(

@@ -3,25 +3,25 @@ path = "/protocols/san/portsets/{portset.uuid}/interfaces"
 schema = "portset_interface"
 class_name = "OntapPortsetInterface"
 
-[fields.fc_name]
+[fields."fc.name"]
 cache_strategy = "cache"
 
-[fields.fc_uuid]
+[fields."fc.uuid"]
 cache_strategy = "cache"
 
-[fields.fc_wwpn]
+[fields."fc.wwpn"]
 cache_strategy = "cache"
 
-[fields.ip_ip_address]
+[fields."ip.ip.address"]
 cache_strategy = "cache"
 
-[fields.ip_name]
+[fields."ip.name"]
 cache_strategy = "cache"
 
-[fields.ip_uuid]
+[fields."ip.uuid"]
 cache_strategy = "cache"
 
-[fields.portset_uuid]
+[fields."portset.uuid"]
 cache_strategy = "cache"
 
 [fields.records]

@@ -3,7 +3,7 @@ path = "/storage/luns/{lun.uuid}/attributes"
 schema = "lun_attribute"
 class_name = "OntapLunAttribute"
 
-[fields.lun_uuid]
+[fields."lun.uuid"]
 cache_strategy = "cache"
 
 [fields.name]

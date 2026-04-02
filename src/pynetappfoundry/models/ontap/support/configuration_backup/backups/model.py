@@ -13,6 +13,13 @@ class OntapConfigurationBackupFileBackupNode(OntapModel):
     name: str = ""
 
 
+class OntapConfigurationBackupFileNode(OntapModel):
+    """OntapConfigurationBackupFileNode sub-model for node."""
+
+    name: str = ""
+    uuid: str = ""
+
+
 class OntapConfigurationBackupFile(OntapModel):
     """OntapConfigurationBackupFile information."""
 
@@ -20,8 +27,7 @@ class OntapConfigurationBackupFile(OntapModel):
     backup_nodes: list[OntapConfigurationBackupFileBackupNode] = Field(default_factory=list)
     download_link: str = ""
     name: str = ""
-    node_name: str = ""
-    node_uuid: str = ""
+    node: OntapConfigurationBackupFileNode = Field(default_factory=OntapConfigurationBackupFileNode)
     size: int = 0
     time: str = ""
     type_: str = ""

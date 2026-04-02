@@ -3,55 +3,55 @@ path = "/storage/quota/reports"
 schema = "quota_report"
 class_name = "OntapQuotaReport"
 
-[fields.files_hard_limit]
+[fields."files.hard_limit"]
 cache_strategy = "realtime"
 
-[fields.files_soft_limit]
+[fields."files.soft_limit"]
 cache_strategy = "realtime"
 
-[fields.files_used_hard_limit_percent]
+[fields."files.used.hard_limit_percent"]
 cache_strategy = "realtime"
 
-[fields.files_used_soft_limit_percent]
+[fields."files.used.soft_limit_percent"]
 cache_strategy = "realtime"
 
-[fields.files_used_total]
+[fields."files.used.total"]
 cache_strategy = "realtime"
 
-[fields.group_id]
+[fields."group.id"]
 cache_strategy = "cache"
 
-[fields.group_name]
+[fields."group.name"]
 cache_strategy = "cache"
 
 [fields.index]
 cache_strategy = "cache"
 
-[fields.qtree_id]
+[fields."qtree.id"]
 cache_strategy = "cache"
 
-[fields.qtree_name]
+[fields."qtree.name"]
 cache_strategy = "cache"
 
-[fields.space_hard_limit]
+[fields."space.hard_limit"]
 cache_strategy = "realtime"
 
-[fields.space_soft_limit]
+[fields."space.soft_limit"]
 cache_strategy = "realtime"
 
-[fields.space_used_hard_limit_percent]
+[fields."space.used.hard_limit_percent"]
 cache_strategy = "realtime"
 
-[fields.space_used_soft_limit_percent]
+[fields."space.used.soft_limit_percent"]
 cache_strategy = "realtime"
 
-[fields.space_used_total]
+[fields."space.used.total"]
 cache_strategy = "realtime"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.type_]
@@ -60,8 +60,8 @@ cache_strategy = "cache"
 [fields.users]
 cache_strategy = "cache"
 
-[fields.volume_name]
+[fields."volume.name"]
 cache_strategy = "cache"
 
-[fields.volume_uuid]
+[fields."volume.uuid"]
 cache_strategy = "cache"

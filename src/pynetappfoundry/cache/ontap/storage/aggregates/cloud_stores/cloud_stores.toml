@@ -3,7 +3,7 @@ path = "/storage/aggregates/{aggregate.uuid}/cloud-stores"
 schema = "cloud_store"
 class_name = "OntapCloudStore"
 
-[fields.aggregate_name]
+[fields."aggregate.name"]
 cache_strategy = "cache"
 
 [fields.availability]
@@ -21,13 +21,13 @@ cache_strategy = "cache"
 [fields.resync_progress]
 cache_strategy = "cache"
 
-[fields.target_name]
+[fields."target.name"]
 cache_strategy = "cache"
 
-[fields.target_uuid]
+[fields."target.uuid"]
 cache_strategy = "cache"
 
-[fields.unavailable_reason_message]
+[fields."unavailable_reason.message"]
 cache_strategy = "cache"
 
 [fields.unreclaimed_space_threshold]

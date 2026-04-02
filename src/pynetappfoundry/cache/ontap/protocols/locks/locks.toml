@@ -3,22 +3,22 @@ path = "/protocols/locks"
 schema = "client_lock"
 class_name = "OntapClientLock"
 
-[fields.byte_lock_exclusive]
+[fields."byte_lock.exclusive"]
 cache_strategy = "cache"
 
-[fields.byte_lock_length]
+[fields."byte_lock.length"]
 cache_strategy = "cache"
 
-[fields.byte_lock_mandatory]
+[fields."byte_lock.mandatory"]
 cache_strategy = "cache"
 
-[fields.byte_lock_offset]
+[fields."byte_lock.offset"]
 cache_strategy = "cache"
 
-[fields.byte_lock_soft]
+[fields."byte_lock.soft"]
 cache_strategy = "cache"
 
-[fields.byte_lock_super]
+[fields."byte_lock.super"]
 cache_strategy = "cache"
 
 [fields.client_address]
@@ -30,19 +30,19 @@ cache_strategy = "cache"
 [fields.delegation]
 cache_strategy = "cache"
 
-[fields.interface_ip_address]
+[fields."interface.ip.address"]
 cache_strategy = "cache"
 
-[fields.interface_name]
+[fields."interface.name"]
 cache_strategy = "cache"
 
-[fields.interface_uuid]
+[fields."interface.uuid"]
 cache_strategy = "cache"
 
-[fields.node_name]
+[fields."node.name"]
 cache_strategy = "cache"
 
-[fields.node_uuid]
+[fields."node.uuid"]
 cache_strategy = "cache"
 
 [fields.oplock_level]
@@ -57,28 +57,28 @@ cache_strategy = "cache"
 [fields.protocol]
 cache_strategy = "cache"
 
-[fields.share_lock_mode]
+[fields."share_lock.mode"]
 cache_strategy = "cache"
 
-[fields.share_lock_soft]
+[fields."share_lock.soft"]
 cache_strategy = "cache"
 
-[fields.smb_connect_state]
+[fields."smb.connect_state"]
 cache_strategy = "cache"
 
-[fields.smb_open_group_id]
+[fields."smb.open_group_id"]
 cache_strategy = "cache"
 
-[fields.smb_open_type]
+[fields."smb.open_type"]
 cache_strategy = "cache"
 
 [fields.state]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.type_]
@@ -87,8 +87,8 @@ cache_strategy = "cache"
 [fields.uuid]
 cache_strategy = "cache"
 
-[fields.volume_name]
+[fields."volume.name"]
 cache_strategy = "cache"
 
-[fields.volume_uuid]
+[fields."volume.uuid"]
 cache_strategy = "cache"

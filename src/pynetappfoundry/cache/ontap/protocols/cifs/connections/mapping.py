@@ -43,11 +43,11 @@ ONTAPCIFSCONNECTION_MAPPING = TypeMapping(
             default=0,
         ),
         FieldMapping(
-            cache_attr="node_name",
+            cache_attr="node.name",
             api_path="node.name",
         ),
         FieldMapping(
-            cache_attr="node_uuid",
+            cache_attr="node.uuid",
             api_path="node.uuid",
         ),
         FieldMapping(
@@ -57,16 +57,16 @@ ONTAPCIFSCONNECTION_MAPPING = TypeMapping(
         FieldMapping(
             cache_attr="sessions",
             api_path="sessions",
+            cache_strategy="realtime",
             transform=_transform_sessions,
             default=[],
-            cache_strategy="realtime",
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
     ),

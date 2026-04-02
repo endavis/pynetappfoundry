@@ -9,19 +9,19 @@ cache_strategy = "cache"
 [fields.domains]
 cache_strategy = "cache"
 
-[fields.dynamic_dns_enabled]
+[fields."dynamic_dns.enabled"]
 cache_strategy = "cache"
 
-[fields.dynamic_dns_fqdn]
+[fields."dynamic_dns.fqdn"]
 cache_strategy = "cache"
 
-[fields.dynamic_dns_skip_fqdn_validation]
+[fields."dynamic_dns.skip_fqdn_validation"]
 cache_strategy = "cache"
 
-[fields.dynamic_dns_time_to_live]
+[fields."dynamic_dns.time_to_live"]
 cache_strategy = "cache"
 
-[fields.dynamic_dns_use_secure]
+[fields."dynamic_dns.use_secure"]
 cache_strategy = "cache"
 
 [fields.packet_query_match]
@@ -45,10 +45,10 @@ cache_strategy = "cache"
 [fields.status]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.timeout]

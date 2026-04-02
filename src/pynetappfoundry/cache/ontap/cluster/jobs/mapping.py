@@ -6,12 +6,17 @@ from typing import Any
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.models.ontap.cluster.jobs.model import OntapJob, OntapJobArgument
+from pynetappfoundry.models.ontap.cluster.jobs.model import OntapJob, OntapJobErrorArgument
+from pynetappfoundry.utils.dict_path import get_nested_value
 
 
-def _transform_error_arguments(record: dict[str, Any]) -> list[OntapJobArgument]:
-    """Transform error.arguments into OntapJobArgument list."""
-    return [OntapJobArgument(**item) for item in record.get("error.arguments", [])]
+def _transform_error_arguments(record: dict[str, Any]) -> list[OntapJobErrorArgument]:
+    """Transform error.arguments into OntapJobErrorArgument list."""
+    try:
+        items = get_nested_value(record, "error.arguments")
+    except Exception:
+        items = []
+    return [OntapJobErrorArgument(**item) for item in items]
 
 
 ONTAPJOB_MAPPING = TypeMapping(
@@ -34,17 +39,17 @@ ONTAPJOB_MAPPING = TypeMapping(
             api_path="end_time",
         ),
         FieldMapping(
-            cache_attr="error_arguments",
+            cache_attr="error.arguments",
             api_path="error.arguments",
             transform=_transform_error_arguments,
             default=[],
         ),
         FieldMapping(
-            cache_attr="error_code",
+            cache_attr="error.code",
             api_path="error.code",
         ),
         FieldMapping(
-            cache_attr="error_message",
+            cache_attr="error.message",
             api_path="error.message",
         ),
         FieldMapping(
@@ -52,7 +57,7 @@ ONTAPJOB_MAPPING = TypeMapping(
             api_path="message",
         ),
         FieldMapping(
-            cache_attr="node_name",
+            cache_attr="node.name",
             api_path="node.name",
         ),
         FieldMapping(
@@ -64,11 +69,11 @@ ONTAPJOB_MAPPING = TypeMapping(
             api_path="state",
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(

@@ -12,25 +12,25 @@ cache_strategy = "cache"
 [fields.client_port]
 cache_strategy = "cache"
 
-[fields.data_bytes_processed]
+[fields."data.bytes_processed"]
 cache_strategy = "cache"
 
-[fields.data_connection_address]
+[fields."data.connection.address"]
 cache_strategy = "cache"
 
-[fields.data_connection_port]
+[fields."data.connection.port"]
 cache_strategy = "cache"
 
-[fields.data_connection_type]
+[fields."data.connection.type_"]
 cache_strategy = "cache"
 
-[fields.data_operation]
+[fields."data.operation"]
 cache_strategy = "cache"
 
-[fields.data_reason]
+[fields."data.reason"]
 cache_strategy = "cache"
 
-[fields.data_state]
+[fields."data.state"]
 cache_strategy = "cache"
 
 [fields.data_path]
@@ -39,52 +39,52 @@ cache_strategy = "cache"
 [fields.id]
 cache_strategy = "cache"
 
-[fields.mover_bytes_moved]
+[fields."mover.bytes_moved"]
 cache_strategy = "cache"
 
-[fields.mover_connection_address]
+[fields."mover.connection.address"]
 cache_strategy = "cache"
 
-[fields.mover_connection_port]
+[fields."mover.connection.port"]
 cache_strategy = "cache"
 
-[fields.mover_connection_type]
+[fields."mover.connection.type_"]
 cache_strategy = "cache"
 
-[fields.mover_mode]
+[fields."mover.mode"]
 cache_strategy = "cache"
 
-[fields.mover_reason]
+[fields."mover.reason"]
 cache_strategy = "cache"
 
-[fields.mover_state]
+[fields."mover.state"]
 cache_strategy = "cache"
 
-[fields.node_name]
+[fields."node.name"]
 cache_strategy = "cache"
 
-[fields.node_uuid]
+[fields."node.uuid"]
 cache_strategy = "cache"
 
-[fields.scsi_device_id]
+[fields."scsi.device_id"]
 cache_strategy = "cache"
 
-[fields.scsi_host_adapter]
+[fields."scsi.host_adapter"]
 cache_strategy = "cache"
 
-[fields.scsi_lun_id]
+[fields."scsi.lun_id"]
 cache_strategy = "cache"
 
-[fields.scsi_target_id]
+[fields."scsi.target_id"]
 cache_strategy = "cache"
 
 [fields.source_address]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.tape_device]

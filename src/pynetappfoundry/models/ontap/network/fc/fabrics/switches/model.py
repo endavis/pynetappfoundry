@@ -7,25 +7,45 @@ from pydantic import Field
 from pynetappfoundry.models._base import OntapModel
 
 
+class OntapFcSwitchCache(OntapModel):
+    """OntapFcSwitchCache sub-model for cache."""
+
+    age: str = ""
+    is_current: bool = False
+    update_time: str = ""
+
+
+class OntapFcSwitchFabric(OntapModel):
+    """OntapFcSwitchFabric sub-model for fabric."""
+
+    name: str = ""
+
+
+class OntapFcSwitchPortAttachedDevice(OntapModel):
+    """OntapFcSwitchPortAttachedDevice sub-model for attached_device."""
+
+    port_id: str = ""
+    wwpn: str = ""
+
+
 class OntapFcSwitchPort(OntapModel):
     """OntapFcSwitchPort sub-model for ports."""
 
-    attached_device_port_id: str = ""
-    attached_device_wwpn: str = ""
+    attached_device: OntapFcSwitchPortAttachedDevice = Field(
+        default_factory=OntapFcSwitchPortAttachedDevice
+    )
     slot: str = ""
     state: str = ""
-    type: str = ""
+    type_: str = ""
     wwpn: str = ""
 
 
 class OntapFcSwitch(OntapModel):
     """OntapFcSwitch information."""
 
-    cache_age: str = ""
-    cache_is_current: bool = False
-    cache_update_time: str = ""
+    cache: OntapFcSwitchCache = Field(default_factory=OntapFcSwitchCache)
     domain_id: int = 0
-    fabric_name: str = ""
+    fabric: OntapFcSwitchFabric = Field(default_factory=OntapFcSwitchFabric)
     name: str = ""
     ports: list[OntapFcSwitchPort] = Field(default_factory=list)
     release: str = ""

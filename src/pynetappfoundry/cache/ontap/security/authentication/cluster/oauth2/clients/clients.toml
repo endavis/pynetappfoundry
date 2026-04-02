@@ -18,19 +18,19 @@ cache_strategy = "cache"
 [fields.hashed_client_secret]
 cache_strategy = "cache"
 
-[fields.introspection_endpoint_uri]
+[fields."introspection.endpoint_uri"]
 cache_strategy = "cache"
 
-[fields.introspection_interval]
+[fields."introspection.interval"]
 cache_strategy = "cache"
 
 [fields.issuer]
 cache_strategy = "cache"
 
-[fields.jwks_provider_uri]
+[fields."jwks.provider_uri"]
 cache_strategy = "cache"
 
-[fields.jwks_refresh_interval]
+[fields."jwks.refresh_interval"]
 cache_strategy = "cache"
 
 [fields.name]

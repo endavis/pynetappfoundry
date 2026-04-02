@@ -13,6 +13,13 @@ class OntapS3GroupPolicy(OntapModel):
     name: str = ""
 
 
+class OntapS3GroupSvm(OntapModel):
+    """OntapS3GroupSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
+
+
 class OntapS3GroupUser(OntapModel):
     """OntapS3GroupUser sub-model for users."""
 
@@ -26,6 +33,5 @@ class OntapS3Group(OntapModel):
     id: int = 0
     name: str = ""
     policies: list[OntapS3GroupPolicy] = Field(default_factory=list)
-    svm_name: str = ""
-    svm_uuid: str = ""
+    svm: OntapS3GroupSvm = Field(default_factory=OntapS3GroupSvm)
     users: list[OntapS3GroupUser] = Field(default_factory=list)

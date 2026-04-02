@@ -2,7 +2,22 @@
 
 from __future__ import annotations
 
+from pydantic import Field
+
 from pynetappfoundry.models._base import OntapModel
+
+
+class OntapVolumeEfficiencyPolicySchedule(OntapModel):
+    """OntapVolumeEfficiencyPolicySchedule sub-model for schedule."""
+
+    name: str = ""
+
+
+class OntapVolumeEfficiencyPolicySvm(OntapModel):
+    """OntapVolumeEfficiencyPolicySvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapVolumeEfficiencyPolicy(OntapModel):
@@ -13,9 +28,10 @@ class OntapVolumeEfficiencyPolicy(OntapModel):
     enabled: bool = False
     name: str = ""
     qos_policy: str = ""
-    schedule_name: str = ""
+    schedule: OntapVolumeEfficiencyPolicySchedule = Field(
+        default_factory=OntapVolumeEfficiencyPolicySchedule
+    )
     start_threshold_percent: int = 0
-    svm_name: str = ""
-    svm_uuid: str = ""
+    svm: OntapVolumeEfficiencyPolicySvm = Field(default_factory=OntapVolumeEfficiencyPolicySvm)
     type_: str = ""
     uuid: str = ""

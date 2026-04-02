@@ -3,16 +3,16 @@ path = "/storage/file/clone/tokens"
 schema = "token"
 class_name = "OntapToken"
 
-[fields.expiry_time_left]
+[fields."expiry_time.left"]
 cache_strategy = "cache"
 
-[fields.expiry_time_limit]
+[fields."expiry_time.limit"]
 cache_strategy = "cache"
 
-[fields.node_name]
+[fields."node.name"]
 cache_strategy = "cache"
 
-[fields.node_uuid]
+[fields."node.uuid"]
 cache_strategy = "cache"
 
 [fields.reserve_size]

@@ -2,17 +2,45 @@
 
 from __future__ import annotations
 
+from pydantic import Field
+
 from pynetappfoundry.models._base import OntapModel
+
+
+class OntapNfsTlsInterfaceCertificate(OntapModel):
+    """OntapNfsTlsInterfaceCertificate sub-model for certificate."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapNfsTlsInterfaceInterfaceIp(OntapModel):
+    """OntapNfsTlsInterfaceInterfaceIp sub-model for ip."""
+
+    address: str = ""
+
+
+class OntapNfsTlsInterfaceInterface(OntapModel):
+    """OntapNfsTlsInterfaceInterface sub-model for interface."""
+
+    ip: OntapNfsTlsInterfaceInterfaceIp = Field(default_factory=OntapNfsTlsInterfaceInterfaceIp)
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapNfsTlsInterfaceSvm(OntapModel):
+    """OntapNfsTlsInterfaceSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapNfsTlsInterface(OntapModel):
     """OntapNfsTlsInterface information."""
 
-    certificate_name: str = ""
-    certificate_uuid: str = ""
+    certificate: OntapNfsTlsInterfaceCertificate = Field(
+        default_factory=OntapNfsTlsInterfaceCertificate
+    )
     enabled: bool = False
-    interface_ip_address: str = ""
-    interface_name: str = ""
-    interface_uuid: str = ""
-    svm_name: str = ""
-    svm_uuid: str = ""
+    interface: OntapNfsTlsInterfaceInterface = Field(default_factory=OntapNfsTlsInterfaceInterface)
+    svm: OntapNfsTlsInterfaceSvm = Field(default_factory=OntapNfsTlsInterfaceSvm)

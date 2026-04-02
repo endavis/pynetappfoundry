@@ -3,7 +3,7 @@ path = "/protocols/san/igroups/{igroup.uuid}/igroups"
 schema = "igroup_nested"
 class_name = "OntapIgroupNested"
 
-[fields.igroup_uuid]
+[fields."igroup.uuid"]
 cache_strategy = "cache"
 
 [fields.name]

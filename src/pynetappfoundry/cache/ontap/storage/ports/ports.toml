@@ -6,22 +6,22 @@ class_name = "OntapStoragePort"
 [fields.board_name]
 cache_strategy = "cache"
 
-[fields.cable_identifier]
+[fields."cable.identifier"]
 cache_strategy = "cache"
 
-[fields.cable_length]
+[fields."cable.length"]
 cache_strategy = "cache"
 
-[fields.cable_part_number]
+[fields."cable.part_number"]
 cache_strategy = "cache"
 
-[fields.cable_serial_number]
+[fields."cable.serial_number"]
 cache_strategy = "cache"
 
-[fields.cable_transceiver]
+[fields."cable.transceiver"]
 cache_strategy = "cache"
 
-[fields.cable_vendor]
+[fields."cable.vendor"]
 cache_strategy = "cache"
 
 [fields.description]
@@ -30,10 +30,10 @@ cache_strategy = "cache"
 [fields.enabled]
 cache_strategy = "cache"
 
-[fields.error_corrective_action]
+[fields."error.corrective_action"]
 cache_strategy = "cache"
 
-[fields.error_message]
+[fields."error.message"]
 cache_strategy = "cache"
 
 [fields.firmware_version]
@@ -54,10 +54,10 @@ cache_strategy = "cache"
 [fields.name]
 cache_strategy = "cache"
 
-[fields.node_name]
+[fields."node.name"]
 cache_strategy = "cache"
 
-[fields.node_uuid]
+[fields."node.uuid"]
 cache_strategy = "cache"
 
 [fields.part_number]

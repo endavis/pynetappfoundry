@@ -30,11 +30,11 @@ ONTAPSECURITYGROUP_MAPPING = TypeMapping(
             api_path="name",
         ),
         FieldMapping(
-            cache_attr="owner_name",
+            cache_attr="owner.name",
             api_path="owner.name",
         ),
         FieldMapping(
-            cache_attr="owner_uuid",
+            cache_attr="owner.uuid",
             api_path="owner.uuid",
         ),
         FieldMapping(

@@ -17,6 +17,19 @@ class OntapAccountApplication(OntapModel):
     second_authentication_method: str = ""
 
 
+class OntapAccountOwner(OntapModel):
+    """OntapAccountOwner sub-model for owner."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapAccountRole(OntapModel):
+    """OntapAccountRole sub-model for role."""
+
+    name: str = ""
+
+
 class OntapAccount(OntapModel):
     """OntapAccount information."""
 
@@ -24,9 +37,8 @@ class OntapAccount(OntapModel):
     comment: str = ""
     locked: bool = False
     name: str = ""
-    owner_name: str = ""
-    owner_uuid: str = ""
+    owner: OntapAccountOwner = Field(default_factory=OntapAccountOwner)
     password: str = ""
     password_hash_algorithm: str = ""
-    role_name: str = ""
+    role: OntapAccountRole = Field(default_factory=OntapAccountRole)
     scope: str = ""

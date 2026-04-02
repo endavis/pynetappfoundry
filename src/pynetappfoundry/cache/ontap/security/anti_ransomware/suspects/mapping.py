@@ -15,31 +15,31 @@ ONTAPANTIRANSOMWARESUSPECT_MAPPING = TypeMapping(
     api_type="ontap",
     fields=(
         FieldMapping(
-            cache_attr="file_format",
+            cache_attr="file.format",
             api_path="file.format",
         ),
         FieldMapping(
-            cache_attr="file_name",
+            cache_attr="file.name",
             api_path="file.name",
         ),
         FieldMapping(
-            cache_attr="file_path",
+            cache_attr="file.path",
             api_path="file.path",
         ),
         FieldMapping(
-            cache_attr="file_reason",
+            cache_attr="file.reason",
             api_path="file.reason",
         ),
         FieldMapping(
-            cache_attr="file_suspect_time",
+            cache_attr="file.suspect_time",
             api_path="file.suspect_time",
         ),
         FieldMapping(
-            cache_attr="volume_name",
+            cache_attr="volume.name",
             api_path="volume.name",
         ),
         FieldMapping(
-            cache_attr="volume_uuid",
+            cache_attr="volume.uuid",
             api_path="volume.uuid",
         ),
     ),

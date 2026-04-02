@@ -6,43 +6,43 @@ class_name = "OntapSecurityCertificate"
 [fields.authority_key_identifier]
 cache_strategy = "cache"
 
-[fields.azure_client_certificate]
+[fields."azure.client_certificate"]
 cache_strategy = "cache"
 
-[fields.azure_client_id]
+[fields."azure.client_id"]
 cache_strategy = "cache"
 
-[fields.azure_client_secret]
+[fields."azure.client_secret"]
 cache_strategy = "cache"
 
-[fields.azure_key_vault]
+[fields."azure.key_vault"]
 cache_strategy = "cache"
 
-[fields.azure_oauth_host]
+[fields."azure.oauth_host"]
 cache_strategy = "cache"
 
-[fields.azure_proxy_host]
+[fields."azure.proxy.host"]
 cache_strategy = "cache"
 
-[fields.azure_proxy_password]
+[fields."azure.proxy.password"]
 cache_strategy = "cache"
 
-[fields.azure_proxy_port]
+[fields."azure.proxy.port"]
 cache_strategy = "cache"
 
-[fields.azure_proxy_type]
+[fields."azure.proxy.type_"]
 cache_strategy = "cache"
 
-[fields.azure_proxy_username]
+[fields."azure.proxy.username"]
 cache_strategy = "cache"
 
-[fields.azure_tenant_id]
+[fields."azure.tenant_id"]
 cache_strategy = "cache"
 
-[fields.azure_timeout]
+[fields."azure.timeout"]
 cache_strategy = "cache"
 
-[fields.azure_verify_host]
+[fields."azure.verify_host"]
 cache_strategy = "cache"
 
 [fields.ca]
@@ -78,25 +78,25 @@ cache_strategy = "cache"
 [fields.serial_number]
 cache_strategy = "cache"
 
-[fields.subject_alternatives_dns]
+[fields."subject_alternatives.dns"]
 cache_strategy = "cache"
 
-[fields.subject_alternatives_email]
+[fields."subject_alternatives.email"]
 cache_strategy = "cache"
 
-[fields.subject_alternatives_ip]
+[fields."subject_alternatives.ip"]
 cache_strategy = "cache"
 
-[fields.subject_alternatives_uri]
+[fields."subject_alternatives.uri"]
 cache_strategy = "cache"
 
 [fields.subject_key_identifier]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.type_]

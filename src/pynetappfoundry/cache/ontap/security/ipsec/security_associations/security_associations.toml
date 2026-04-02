@@ -6,58 +6,58 @@ class_name = "OntapSecurityAssociationResponse"
 [fields.cipher_suite]
 cache_strategy = "cache"
 
-[fields.ike_authentication]
+[fields."ike.authentication"]
 cache_strategy = "cache"
 
-[fields.ike_initiator_security_parameter_index]
+[fields."ike.initiator_security_parameter_index"]
 cache_strategy = "cache"
 
-[fields.ike_is_initiator]
+[fields."ike.is_initiator"]
 cache_strategy = "cache"
 
-[fields.ike_responder_security_parameter_index]
+[fields."ike.responder_security_parameter_index"]
 cache_strategy = "cache"
 
-[fields.ike_state]
+[fields."ike.state"]
 cache_strategy = "cache"
 
-[fields.ike_version]
+[fields."ike.version"]
 cache_strategy = "cache"
 
-[fields.ipsec_action]
+[fields."ipsec.action"]
 cache_strategy = "cache"
 
-[fields.ipsec_inbound_bytes]
+[fields."ipsec.inbound.bytes"]
 cache_strategy = "cache"
 
-[fields.ipsec_inbound_offload_bytes]
+[fields."ipsec.inbound.offload_bytes"]
 cache_strategy = "cache"
 
-[fields.ipsec_inbound_offload_packets]
+[fields."ipsec.inbound.offload_packets"]
 cache_strategy = "cache"
 
-[fields.ipsec_inbound_packets]
+[fields."ipsec.inbound.packets"]
 cache_strategy = "cache"
 
-[fields.ipsec_inbound_security_parameter_index]
+[fields."ipsec.inbound.security_parameter_index"]
 cache_strategy = "cache"
 
-[fields.ipsec_outbound_bytes]
+[fields."ipsec.outbound.bytes"]
 cache_strategy = "cache"
 
-[fields.ipsec_outbound_offload_bytes]
+[fields."ipsec.outbound.offload_bytes"]
 cache_strategy = "cache"
 
-[fields.ipsec_outbound_offload_packets]
+[fields."ipsec.outbound.offload_packets"]
 cache_strategy = "cache"
 
-[fields.ipsec_outbound_packets]
+[fields."ipsec.outbound.packets"]
 cache_strategy = "cache"
 
-[fields.ipsec_outbound_security_parameter_index]
+[fields."ipsec.outbound.security_parameter_index"]
 cache_strategy = "cache"
 
-[fields.ipsec_state]
+[fields."ipsec.state"]
 cache_strategy = "cache"
 
 [fields.lifetime]
@@ -66,10 +66,10 @@ cache_strategy = "cache"
 [fields.local_address]
 cache_strategy = "cache"
 
-[fields.node_name]
+[fields."node.name"]
 cache_strategy = "cache"
 
-[fields.node_uuid]
+[fields."node.uuid"]
 cache_strategy = "cache"
 
 [fields.policy_name]
@@ -81,10 +81,10 @@ cache_strategy = "cache"
 [fields.scope]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.type_]

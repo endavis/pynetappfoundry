@@ -3,29 +3,29 @@ path = "/storage/snaplock/audit-logs"
 schema = "snaplock_log"
 class_name = "OntapSnaplockLog"
 
-[fields.log_archive_archive]
+[fields."log_archive.archive"]
 cache_strategy = "cache"
 
-[fields.log_archive_base_name]
+[fields."log_archive.base_name"]
 cache_strategy = "cache"
 
 [fields.log_files]
 cache_strategy = "cache"
 
-[fields.log_volume_max_log_size]
+[fields."log_volume.max_log_size"]
 cache_strategy = "cache"
 
-[fields.log_volume_retention_period]
+[fields."log_volume.retention_period"]
 cache_strategy = "cache"
 
-[fields.log_volume_volume_name]
+[fields."log_volume.volume.name"]
 cache_strategy = "cache"
 
-[fields.log_volume_volume_uuid]
+[fields."log_volume.volume.uuid"]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"

@@ -13,6 +13,13 @@ class OntapMultiAdminVerifyRuleApprovalGroup(OntapModel):
     name: str = ""
 
 
+class OntapMultiAdminVerifyRuleOwner(OntapModel):
+    """OntapMultiAdminVerifyRuleOwner sub-model for owner."""
+
+    name: str = ""
+    uuid: str = ""
+
+
 class OntapMultiAdminVerifyRule(OntapModel):
     """OntapMultiAdminVerifyRule information."""
 
@@ -22,8 +29,7 @@ class OntapMultiAdminVerifyRule(OntapModel):
     create_time: str = ""
     execution_expiry: str = ""
     operation: str = ""
-    owner_name: str = ""
-    owner_uuid: str = ""
+    owner: OntapMultiAdminVerifyRuleOwner = Field(default_factory=OntapMultiAdminVerifyRuleOwner)
     query: str = ""
     required_approvers: int = 0
     system_defined: bool = False

@@ -15,25 +15,25 @@ cache_strategy = "cache"
 [fields.name]
 cache_strategy = "cache"
 
-[fields.owner_name]
+[fields."owner.name"]
 cache_strategy = "cache"
 
-[fields.owner_uuid]
+[fields."owner.uuid"]
 cache_strategy = "cache"
 
 [fields.scope]
 cache_strategy = "cache"
 
-[fields.snmpv3_authentication_password]
+[fields."snmpv3.authentication_password"]
 cache_strategy = "cache"
 
-[fields.snmpv3_authentication_protocol]
+[fields."snmpv3.authentication_protocol"]
 cache_strategy = "cache"
 
-[fields.snmpv3_privacy_password]
+[fields."snmpv3.privacy_password"]
 cache_strategy = "cache"
 
-[fields.snmpv3_privacy_protocol]
+[fields."snmpv3.privacy_protocol"]
 cache_strategy = "cache"
 
 [fields.switch_address]

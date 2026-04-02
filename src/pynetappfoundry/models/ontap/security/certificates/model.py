@@ -7,23 +7,53 @@ from pydantic import Field
 from pynetappfoundry.models._base import OntapModel
 
 
+class OntapSecurityCertificateAzureProxy(OntapModel):
+    """OntapSecurityCertificateAzureProxy sub-model for proxy."""
+
+    host: str = ""
+    password: str = ""
+    port: int = 0
+    type_: str = ""
+    username: str = ""
+
+
+class OntapSecurityCertificateAzure(OntapModel):
+    """OntapSecurityCertificateAzure sub-model for azure."""
+
+    client_certificate: str = ""
+    client_id: str = ""
+    client_secret: str = ""
+    key_vault: str = ""
+    oauth_host: str = ""
+    proxy: OntapSecurityCertificateAzureProxy = Field(
+        default_factory=OntapSecurityCertificateAzureProxy
+    )
+    tenant_id: str = ""
+    timeout: int = 0
+    verify_host: bool = False
+
+
+class OntapSecurityCertificateSubjectAlternatives(OntapModel):
+    """OntapSecurityCertificateSubjectAlternatives sub-model for subject_alternatives."""
+
+    dns: list[str] = Field(default_factory=list)
+    email: list[str] = Field(default_factory=list)
+    ip: list[str] = Field(default_factory=list)
+    uri: list[str] = Field(default_factory=list)
+
+
+class OntapSecurityCertificateSvm(OntapModel):
+    """OntapSecurityCertificateSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
+
+
 class OntapSecurityCertificate(OntapModel):
     """OntapSecurityCertificate information."""
 
     authority_key_identifier: str = ""
-    azure_client_certificate: str = ""
-    azure_client_id: str = ""
-    azure_client_secret: str = ""
-    azure_key_vault: str = ""
-    azure_oauth_host: str = ""
-    azure_proxy_host: str = ""
-    azure_proxy_password: str = ""
-    azure_proxy_port: int = 0
-    azure_proxy_type: str = ""
-    azure_proxy_username: str = ""
-    azure_tenant_id: str = ""
-    azure_timeout: int = 0
-    azure_verify_host: bool = False
+    azure: OntapSecurityCertificateAzure = Field(default_factory=OntapSecurityCertificateAzure)
     ca: str = ""
     common_name: str = ""
     expiry_time: str = ""
@@ -35,12 +65,10 @@ class OntapSecurityCertificate(OntapModel):
     public_certificate: str = ""
     scope: str = ""
     serial_number: str = ""
-    subject_alternatives_dns: list[str] = Field(default_factory=list)
-    subject_alternatives_email: list[str] = Field(default_factory=list)
-    subject_alternatives_ip: list[str] = Field(default_factory=list)
-    subject_alternatives_uri: list[str] = Field(default_factory=list)
+    subject_alternatives: OntapSecurityCertificateSubjectAlternatives = Field(
+        default_factory=OntapSecurityCertificateSubjectAlternatives
+    )
     subject_key_identifier: str = ""
-    svm_name: str = ""
-    svm_uuid: str = ""
+    svm: OntapSecurityCertificateSvm = Field(default_factory=OntapSecurityCertificateSvm)
     type_: str = ""
     uuid: str = ""

@@ -14,15 +14,40 @@ class OntapPortsetIgroup(OntapModel):
     uuid: str = ""
 
 
+class OntapPortsetInterfaceFc(OntapModel):
+    """OntapPortsetInterfaceFc sub-model for fc."""
+
+    name: str = ""
+    uuid: str = ""
+    wwpn: str = ""
+
+
+class OntapPortsetInterfaceIpIp(OntapModel):
+    """OntapPortsetInterfaceIpIp sub-model for ip."""
+
+    address: str = ""
+
+
+class OntapPortsetInterfaceIp(OntapModel):
+    """OntapPortsetInterfaceIp sub-model for ip."""
+
+    ip: OntapPortsetInterfaceIpIp = Field(default_factory=OntapPortsetInterfaceIpIp)
+    name: str = ""
+    uuid: str = ""
+
+
 class OntapPortsetInterface(OntapModel):
     """OntapPortsetInterface sub-model for interfaces."""
 
-    fc_name: str = ""
-    fc_uuid: str = ""
-    fc_wwpn: str = ""
-    ip_ip_address: str = ""
-    ip_name: str = ""
-    ip_uuid: str = ""
+    fc: OntapPortsetInterfaceFc = Field(default_factory=OntapPortsetInterfaceFc)
+    ip: OntapPortsetInterfaceIp = Field(default_factory=OntapPortsetInterfaceIp)
+    uuid: str = ""
+
+
+class OntapPortsetSvm(OntapModel):
+    """OntapPortsetSvm sub-model for svm."""
+
+    name: str = ""
     uuid: str = ""
 
 
@@ -33,6 +58,5 @@ class OntapPortset(OntapModel):
     interfaces: list[OntapPortsetInterface] = Field(default_factory=list)
     name: str = ""
     protocol: str = ""
-    svm_name: str = ""
-    svm_uuid: str = ""
+    svm: OntapPortsetSvm = Field(default_factory=OntapPortsetSvm)
     uuid: str = ""

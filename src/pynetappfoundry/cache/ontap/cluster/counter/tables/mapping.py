@@ -16,7 +16,7 @@ ONTAPCOUNTERTABLE_MAPPING = TypeMapping(
     parent_id_field=None,
     fields=(
         FieldMapping(
-            cache_attr="denominator_name",
+            cache_attr="denominator.name",
             api_path="denominator.name",
         ),
         FieldMapping(

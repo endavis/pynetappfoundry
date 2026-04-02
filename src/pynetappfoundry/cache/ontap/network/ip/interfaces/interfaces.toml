@@ -15,82 +15,82 @@ cache_strategy = "cache"
 [fields.fail_if_subnet_conflicts]
 cache_strategy = "cache"
 
-[fields.ip_address]
+[fields."ip.address"]
 cache_strategy = "cache"
 
-[fields.ip_family]
+[fields."ip.family"]
 cache_strategy = "cache"
 
-[fields.ip_netmask]
+[fields."ip.netmask"]
 cache_strategy = "cache"
 
-[fields.ipspace_name]
+[fields."ipspace.name"]
 cache_strategy = "cache"
 
-[fields.ipspace_uuid]
+[fields."ipspace.uuid"]
 cache_strategy = "cache"
 
-[fields.location_auto_revert]
+[fields."location.auto_revert"]
 cache_strategy = "cache"
 
-[fields.location_broadcast_domain_name]
+[fields."location.broadcast_domain.name"]
 cache_strategy = "cache"
 
-[fields.location_broadcast_domain_uuid]
+[fields."location.broadcast_domain.uuid"]
 cache_strategy = "cache"
 
-[fields.location_failover]
+[fields."location.failover"]
 cache_strategy = "cache"
 
-[fields.location_home_node_name]
+[fields."location.home_node.name"]
 cache_strategy = "cache"
 
-[fields.location_home_node_uuid]
+[fields."location.home_node.uuid"]
 cache_strategy = "cache"
 
-[fields.location_home_port_name]
+[fields."location.home_port.name"]
 cache_strategy = "cache"
 
-[fields.location_home_port_node_name]
+[fields."location.home_port.node.name"]
 cache_strategy = "cache"
 
-[fields.location_home_port_uuid]
+[fields."location.home_port.uuid"]
 cache_strategy = "cache"
 
-[fields.location_is_home]
+[fields."location.is_home"]
 cache_strategy = "cache"
 
-[fields.location_node_name]
+[fields."location.node.name"]
 cache_strategy = "cache"
 
-[fields.location_node_uuid]
+[fields."location.node.uuid"]
 cache_strategy = "cache"
 
-[fields.location_port_name]
+[fields."location.port.name"]
 cache_strategy = "cache"
 
-[fields.location_port_node_name]
+[fields."location.port.node.name"]
 cache_strategy = "cache"
 
-[fields.location_port_uuid]
+[fields."location.port.uuid"]
 cache_strategy = "cache"
 
-[fields.metric_duration]
+[fields."metric.duration"]
 cache_strategy = "realtime"
 
-[fields.metric_status]
+[fields."metric.status"]
 cache_strategy = "realtime"
 
-[fields.metric_throughput_read]
+[fields."metric.throughput.read"]
 cache_strategy = "realtime"
 
-[fields.metric_throughput_total]
+[fields."metric.throughput.total"]
 cache_strategy = "realtime"
 
-[fields.metric_throughput_write]
+[fields."metric.throughput.write"]
 cache_strategy = "realtime"
 
-[fields.metric_timestamp]
+[fields."metric.timestamp"]
 cache_strategy = "realtime"
 
 [fields.name]
@@ -105,10 +105,10 @@ cache_strategy = "cache"
 [fields.scope]
 cache_strategy = "cache"
 
-[fields.service_policy_name]
+[fields."service_policy.name"]
 cache_strategy = "cache"
 
-[fields.service_policy_uuid]
+[fields."service_policy.uuid"]
 cache_strategy = "cache"
 
 [fields.services]
@@ -117,31 +117,31 @@ cache_strategy = "cache"
 [fields.state]
 cache_strategy = "cache"
 
-[fields.statistics_status]
+[fields."statistics.status"]
 cache_strategy = "realtime"
 
-[fields.statistics_throughput_raw_read]
+[fields."statistics.throughput_raw.read"]
 cache_strategy = "realtime"
 
-[fields.statistics_throughput_raw_total]
+[fields."statistics.throughput_raw.total"]
 cache_strategy = "realtime"
 
-[fields.statistics_throughput_raw_write]
+[fields."statistics.throughput_raw.write"]
 cache_strategy = "realtime"
 
-[fields.statistics_timestamp]
+[fields."statistics.timestamp"]
 cache_strategy = "realtime"
 
-[fields.subnet_name]
+[fields."subnet.name"]
 cache_strategy = "cache"
 
-[fields.subnet_uuid]
+[fields."subnet.uuid"]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.uuid]

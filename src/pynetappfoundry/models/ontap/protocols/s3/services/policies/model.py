@@ -17,6 +17,13 @@ class OntapS3PolicyStatement(OntapModel):
     sid: str = ""
 
 
+class OntapS3PolicySvm(OntapModel):
+    """OntapS3PolicySvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
+
+
 class OntapS3Policy(OntapModel):
     """OntapS3Policy information."""
 
@@ -24,5 +31,4 @@ class OntapS3Policy(OntapModel):
     name: str = ""
     read_only: bool = False
     statements: list[OntapS3PolicyStatement] = Field(default_factory=list)
-    svm_name: str = ""
-    svm_uuid: str = ""
+    svm: OntapS3PolicySvm = Field(default_factory=OntapS3PolicySvm)

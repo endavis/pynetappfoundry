@@ -28,11 +28,11 @@ ONTAPVVOLBINDING_MAPPING = TypeMapping(
             default=False,
         ),
         FieldMapping(
-            cache_attr="protocol_endpoint_name",
+            cache_attr="protocol_endpoint.name",
             api_path="protocol_endpoint.name",
         ),
         FieldMapping(
-            cache_attr="protocol_endpoint_uuid",
+            cache_attr="protocol_endpoint.uuid",
             api_path="protocol_endpoint.uuid",
         ),
         FieldMapping(
@@ -40,19 +40,19 @@ ONTAPVVOLBINDING_MAPPING = TypeMapping(
             api_path="secondary_id",
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(
-            cache_attr="vvol_name",
+            cache_attr="vvol.name",
             api_path="vvol.name",
         ),
         FieldMapping(
-            cache_attr="vvol_uuid",
+            cache_attr="vvol.uuid",
             api_path="vvol.uuid",
         ),
     ),

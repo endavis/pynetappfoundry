@@ -12,17 +12,17 @@ cache_strategy = "cache"
 [fields.retention_period]
 cache_strategy = "cache"
 
-[fields.schedule_name]
+[fields."schedule.name"]
 cache_strategy = "cache"
 
-[fields.schedule_uuid]
+[fields."schedule.uuid"]
 cache_strategy = "cache"
 
 [fields.snapmirror_label]
 cache_strategy = "cache"
 
-[fields.snapshot_policy_name]
+[fields."snapshot_policy.name"]
 cache_strategy = "cache"
 
-[fields.snapshot_policy_uuid]
+[fields."snapshot_policy.uuid"]
 cache_strategy = "cache"

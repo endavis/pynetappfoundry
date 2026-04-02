@@ -12,79 +12,79 @@ cache_strategy = "cache"
 [fields.enabled]
 cache_strategy = "cache"
 
-[fields.location_home_node_name]
+[fields."location.home_node.name"]
 cache_strategy = "cache"
 
-[fields.location_home_node_uuid]
+[fields."location.home_node.uuid"]
 cache_strategy = "cache"
 
-[fields.location_home_port_name]
+[fields."location.home_port.name"]
 cache_strategy = "cache"
 
-[fields.location_home_port_node_name]
+[fields."location.home_port.node.name"]
 cache_strategy = "cache"
 
-[fields.location_home_port_uuid]
+[fields."location.home_port.uuid"]
 cache_strategy = "cache"
 
-[fields.location_is_home]
+[fields."location.is_home"]
 cache_strategy = "cache"
 
-[fields.location_node_name]
+[fields."location.node.name"]
 cache_strategy = "cache"
 
-[fields.location_node_uuid]
+[fields."location.node.uuid"]
 cache_strategy = "cache"
 
-[fields.location_port_name]
+[fields."location.port.name"]
 cache_strategy = "cache"
 
-[fields.location_port_node_name]
+[fields."location.port.node.name"]
 cache_strategy = "cache"
 
-[fields.location_port_uuid]
+[fields."location.port.uuid"]
 cache_strategy = "cache"
 
-[fields.metric_duration]
+[fields."metric.duration"]
 cache_strategy = "realtime"
 
-[fields.metric_iops_other]
+[fields."metric.iops.other"]
 cache_strategy = "realtime"
 
-[fields.metric_iops_read]
+[fields."metric.iops.read"]
 cache_strategy = "realtime"
 
-[fields.metric_iops_total]
+[fields."metric.iops.total"]
 cache_strategy = "realtime"
 
-[fields.metric_iops_write]
+[fields."metric.iops.write"]
 cache_strategy = "realtime"
 
-[fields.metric_latency_other]
+[fields."metric.latency.other"]
 cache_strategy = "realtime"
 
-[fields.metric_latency_read]
+[fields."metric.latency.read"]
 cache_strategy = "realtime"
 
-[fields.metric_latency_total]
+[fields."metric.latency.total"]
 cache_strategy = "realtime"
 
-[fields.metric_latency_write]
+[fields."metric.latency.write"]
 cache_strategy = "realtime"
 
-[fields.metric_status]
+[fields."metric.status"]
 cache_strategy = "realtime"
 
-[fields.metric_throughput_read]
+[fields."metric.throughput.read"]
 cache_strategy = "realtime"
 
-[fields.metric_throughput_total]
+[fields."metric.throughput.total"]
 cache_strategy = "realtime"
 
-[fields.metric_throughput_write]
+[fields."metric.throughput.write"]
 cache_strategy = "realtime"
 
-[fields.metric_timestamp]
+[fields."metric.timestamp"]
 cache_strategy = "realtime"
 
 [fields.name]
@@ -96,49 +96,49 @@ cache_strategy = "cache"
 [fields.state]
 cache_strategy = "cache"
 
-[fields.statistics_iops_raw_other]
+[fields."statistics.iops_raw.other"]
 cache_strategy = "realtime"
 
-[fields.statistics_iops_raw_read]
+[fields."statistics.iops_raw.read"]
 cache_strategy = "realtime"
 
-[fields.statistics_iops_raw_total]
+[fields."statistics.iops_raw.total"]
 cache_strategy = "realtime"
 
-[fields.statistics_iops_raw_write]
+[fields."statistics.iops_raw.write"]
 cache_strategy = "realtime"
 
-[fields.statistics_latency_raw_other]
+[fields."statistics.latency_raw.other"]
 cache_strategy = "realtime"
 
-[fields.statistics_latency_raw_read]
+[fields."statistics.latency_raw.read"]
 cache_strategy = "realtime"
 
-[fields.statistics_latency_raw_total]
+[fields."statistics.latency_raw.total"]
 cache_strategy = "realtime"
 
-[fields.statistics_latency_raw_write]
+[fields."statistics.latency_raw.write"]
 cache_strategy = "realtime"
 
-[fields.statistics_status]
+[fields."statistics.status"]
 cache_strategy = "realtime"
 
-[fields.statistics_throughput_raw_read]
+[fields."statistics.throughput_raw.read"]
 cache_strategy = "realtime"
 
-[fields.statistics_throughput_raw_total]
+[fields."statistics.throughput_raw.total"]
 cache_strategy = "realtime"
 
-[fields.statistics_throughput_raw_write]
+[fields."statistics.throughput_raw.write"]
 cache_strategy = "realtime"
 
-[fields.statistics_timestamp]
+[fields."statistics.timestamp"]
 cache_strategy = "realtime"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.uuid]

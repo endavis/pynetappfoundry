@@ -2,7 +2,15 @@
 
 from __future__ import annotations
 
+from pydantic import Field
+
 from pynetappfoundry.models._base import OntapModel
+
+
+class OntapFpolicyPersistentStoreSvm(OntapModel):
+    """OntapFpolicyPersistentStoreSvm sub-model for svm."""
+
+    uuid: str = ""
 
 
 class OntapFpolicyPersistentStore(OntapModel):
@@ -11,5 +19,5 @@ class OntapFpolicyPersistentStore(OntapModel):
     autosize_mode: str = ""
     name: str = ""
     size: int = 0
-    svm_uuid: str = ""
+    svm: OntapFpolicyPersistentStoreSvm = Field(default_factory=OntapFpolicyPersistentStoreSvm)
     volume: str = ""

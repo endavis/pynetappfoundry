@@ -17,15 +17,15 @@ ONTAPVSCANSERVERSTATUS_MAPPING = TypeMapping(
             api_path="disconnected_reason",
         ),
         FieldMapping(
-            cache_attr="interface_ip_address",
+            cache_attr="interface.ip.address",
             api_path="interface.ip.address",
         ),
         FieldMapping(
-            cache_attr="interface_name",
+            cache_attr="interface.name",
             api_path="interface.name",
         ),
         FieldMapping(
-            cache_attr="interface_uuid",
+            cache_attr="interface.uuid",
             api_path="interface.uuid",
         ),
         FieldMapping(
@@ -33,11 +33,11 @@ ONTAPVSCANSERVERSTATUS_MAPPING = TypeMapping(
             api_path="ip",
         ),
         FieldMapping(
-            cache_attr="node_name",
+            cache_attr="node.name",
             api_path="node.name",
         ),
         FieldMapping(
-            cache_attr="node_uuid",
+            cache_attr="node.uuid",
             api_path="node.uuid",
         ),
         FieldMapping(
@@ -45,11 +45,11 @@ ONTAPVSCANSERVERSTATUS_MAPPING = TypeMapping(
             api_path="state",
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(

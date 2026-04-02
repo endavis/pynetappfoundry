@@ -2,7 +2,36 @@
 
 from __future__ import annotations
 
+from pydantic import Field
+
 from pynetappfoundry.models._base import OntapModel
+
+
+class OntapConsistencyGroupMetricsResponseIops(OntapModel):
+    """OntapConsistencyGroupMetricsResponseIops sub-model for iops."""
+
+    other: int = 0
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapConsistencyGroupMetricsResponseLatency(OntapModel):
+    """OntapConsistencyGroupMetricsResponseLatency sub-model for latency."""
+
+    other: int = 0
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapConsistencyGroupMetricsResponseThroughput(OntapModel):
+    """OntapConsistencyGroupMetricsResponseThroughput sub-model for throughput."""
+
+    other: int = 0
+    read: int = 0
+    total: int = 0
+    write: int = 0
 
 
 class OntapConsistencyGroupMetricsResponse(OntapModel):
@@ -10,19 +39,16 @@ class OntapConsistencyGroupMetricsResponse(OntapModel):
 
     available_space: int = 0
     duration: str = ""
-    iops_other: int = 0
-    iops_read: int = 0
-    iops_total: int = 0
-    iops_write: int = 0
-    latency_other: int = 0
-    latency_read: int = 0
-    latency_total: int = 0
-    latency_write: int = 0
+    iops: OntapConsistencyGroupMetricsResponseIops = Field(
+        default_factory=OntapConsistencyGroupMetricsResponseIops
+    )
+    latency: OntapConsistencyGroupMetricsResponseLatency = Field(
+        default_factory=OntapConsistencyGroupMetricsResponseLatency
+    )
     size: int = 0
     status: str = ""
-    throughput_other: int = 0
-    throughput_read: int = 0
-    throughput_total: int = 0
-    throughput_write: int = 0
+    throughput: OntapConsistencyGroupMetricsResponseThroughput = Field(
+        default_factory=OntapConsistencyGroupMetricsResponseThroughput
+    )
     timestamp: str = ""
     used_space: int = 0

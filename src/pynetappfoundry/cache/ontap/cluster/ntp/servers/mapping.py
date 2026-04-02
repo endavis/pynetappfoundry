@@ -18,7 +18,7 @@ ONTAPNTPSERVER_MAPPING = TypeMapping(
             default=False,
         ),
         FieldMapping(
-            cache_attr="key_id",
+            cache_attr="key.id",
             api_path="key.id",
             default=0,
         ),

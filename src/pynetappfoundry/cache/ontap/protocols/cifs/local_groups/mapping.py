@@ -42,11 +42,11 @@ ONTAPLOCALCIFSGROUP_MAPPING = TypeMapping(
             api_path="sid",
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
     ),

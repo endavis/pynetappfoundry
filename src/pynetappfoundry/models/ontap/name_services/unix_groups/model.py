@@ -7,6 +7,13 @@ from pydantic import Field
 from pynetappfoundry.models._base import OntapModel
 
 
+class OntapUnixGroupSvm(OntapModel):
+    """OntapUnixGroupSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
+
+
 class OntapUnixGroupUser(OntapModel):
     """OntapUnixGroupUser sub-model for users."""
 
@@ -19,6 +26,5 @@ class OntapUnixGroup(OntapModel):
     id: int = 0
     name: str = ""
     skip_name_validation: bool = False
-    svm_name: str = ""
-    svm_uuid: str = ""
+    svm: OntapUnixGroupSvm = Field(default_factory=OntapUnixGroupSvm)
     users: list[OntapUnixGroupUser] = Field(default_factory=list)

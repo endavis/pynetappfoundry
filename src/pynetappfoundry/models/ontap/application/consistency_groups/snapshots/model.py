@@ -2,9 +2,18 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from pydantic import Field
 
 from pynetappfoundry.models._base import OntapModel
+
+
+class OntapConsistencyGroupSnapshotResponseConsistencyGroup(OntapModel):
+    """OntapConsistencyGroupSnapshotResponseConsistencyGroup sub-model for consistency_group."""
+
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapConsistencyGroupSnapshotResponseLun(OntapModel):
@@ -42,21 +51,20 @@ class OntapConsistencyGroupSnapshotResponseNamespace(OntapModel):
     uuid: str = ""
 
 
-class OntapConsistencyGroupSnapshotResponseSnapshotVolume(OntapModel):
-    """OntapConsistencyGroupSnapshotResponseSnapshotVolume sub-model for snapshot_volumes."""
+class OntapConsistencyGroupSnapshotResponseSvm(OntapModel):
+    """OntapConsistencyGroupSnapshotResponseSvm sub-model for svm."""
 
-    snapshot_name: str = ""
-    snapshot_uuid: str = ""
-    volume_name: str = ""
-    volume_uuid: str = ""
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapConsistencyGroupSnapshotResponse(OntapModel):
     """OntapConsistencyGroupSnapshotResponse information."""
 
     comment: str = ""
-    consistency_group_name: str = ""
-    consistency_group_uuid: str = ""
+    consistency_group: OntapConsistencyGroupSnapshotResponseConsistencyGroup = Field(
+        default_factory=OntapConsistencyGroupSnapshotResponseConsistencyGroup
+    )
     consistency_type: str = ""
     create_time: str = ""
     is_partial: bool = False
@@ -75,10 +83,9 @@ class OntapConsistencyGroupSnapshotResponse(OntapModel):
     reclaimable_space: int = 0
     restore_size: int = 0
     snapmirror_label: str = ""
-    snapshot_volumes: list[OntapConsistencyGroupSnapshotResponseSnapshotVolume] = Field(
-        default_factory=list
+    snapshot_volumes: list[dict[str, Any]] = Field(default_factory=list)
+    svm: OntapConsistencyGroupSnapshotResponseSvm = Field(
+        default_factory=OntapConsistencyGroupSnapshotResponseSvm
     )
-    svm_name: str = ""
-    svm_uuid: str = ""
     uuid: str = ""
     write_fence: bool = False

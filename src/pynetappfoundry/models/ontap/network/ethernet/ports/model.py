@@ -7,6 +7,22 @@ from pydantic import Field
 from pynetappfoundry.models._base import OntapModel
 
 
+class OntapPortBroadcastDomainIpspace(OntapModel):
+    """OntapPortBroadcastDomainIpspace sub-model for ipspace."""
+
+    name: str = ""
+
+
+class OntapPortBroadcastDomain(OntapModel):
+    """OntapPortBroadcastDomain sub-model for broadcast_domain."""
+
+    ipspace: OntapPortBroadcastDomainIpspace = Field(
+        default_factory=OntapPortBroadcastDomainIpspace
+    )
+    name: str = ""
+    uuid: str = ""
+
+
 class OntapPortDiscoveredDevice(OntapModel):
     """OntapPortDiscoveredDevice sub-model for discovered_devices."""
 
@@ -22,55 +38,166 @@ class OntapPortDiscoveredDevice(OntapModel):
     version: str = ""
 
 
-class OntapPortActivePort(OntapModel):
-    """OntapPortActivePort sub-model for active_ports."""
+class OntapPortLagActivePortNode(OntapModel):
+    """OntapPortLagActivePortNode sub-model for node."""
 
     name: str = ""
-    node_name: str = ""
+
+
+class OntapPortLagActivePort(OntapModel):
+    """OntapPortLagActivePort sub-model for active_ports."""
+
+    name: str = ""
+    node: OntapPortLagActivePortNode = Field(default_factory=OntapPortLagActivePortNode)
     uuid: str = ""
 
 
-class OntapPortMemberPort(OntapModel):
-    """OntapPortMemberPort sub-model for member_ports."""
+class OntapPortLagMemberPortNode(OntapModel):
+    """OntapPortLagMemberPortNode sub-model for node."""
 
     name: str = ""
-    node_name: str = ""
+
+
+class OntapPortLagMemberPort(OntapModel):
+    """OntapPortLagMemberPort sub-model for member_ports."""
+
+    name: str = ""
+    node: OntapPortLagMemberPortNode = Field(default_factory=OntapPortLagMemberPortNode)
     uuid: str = ""
+
+
+class OntapPortLag(OntapModel):
+    """OntapPortLag sub-model for lag."""
+
+    active_ports: list[OntapPortLagActivePort] = Field(default_factory=list)
+    distribution_policy: str = ""
+    member_ports: list[OntapPortLagMemberPort] = Field(default_factory=list)
+    mode: str = ""
+
+
+class OntapPortMetricThroughput(OntapModel):
+    """OntapPortMetricThroughput sub-model for throughput."""
+
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapPortMetric(OntapModel):
+    """OntapPortMetric sub-model for metric."""
+
+    duration: str = ""
+    status: str = ""
+    throughput: OntapPortMetricThroughput = Field(default_factory=OntapPortMetricThroughput)
+    timestamp: str = ""
+
+
+class OntapPortNode(OntapModel):
+    """OntapPortNode sub-model for node."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapPortReachableBroadcastDomainIpspace(OntapModel):
+    """OntapPortReachableBroadcastDomainIpspace sub-model for ipspace."""
+
+    name: str = ""
 
 
 class OntapPortReachableBroadcastDomain(OntapModel):
     """OntapPortReachableBroadcastDomain sub-model for reachable_broadcast_domains."""
 
-    ipspace_name: str = ""
+    ipspace: OntapPortReachableBroadcastDomainIpspace = Field(
+        default_factory=OntapPortReachableBroadcastDomainIpspace
+    )
     name: str = ""
     uuid: str = ""
+
+
+class OntapPortStatisticsDeviceReceiveRaw(OntapModel):
+    """OntapPortStatisticsDeviceReceiveRaw sub-model for receive_raw."""
+
+    discards: int = 0
+    errors: int = 0
+    packets: int = 0
+
+
+class OntapPortStatisticsDeviceTransmitRaw(OntapModel):
+    """OntapPortStatisticsDeviceTransmitRaw sub-model for transmit_raw."""
+
+    discards: int = 0
+    errors: int = 0
+    packets: int = 0
+
+
+class OntapPortStatisticsDevice(OntapModel):
+    """OntapPortStatisticsDevice sub-model for device."""
+
+    link_down_count_raw: int = 0
+    receive_raw: OntapPortStatisticsDeviceReceiveRaw = Field(
+        default_factory=OntapPortStatisticsDeviceReceiveRaw
+    )
+    timestamp: str = ""
+    transmit_raw: OntapPortStatisticsDeviceTransmitRaw = Field(
+        default_factory=OntapPortStatisticsDeviceTransmitRaw
+    )
+
+
+class OntapPortStatisticsThroughputRaw(OntapModel):
+    """OntapPortStatisticsThroughputRaw sub-model for throughput_raw."""
+
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapPortStatistics(OntapModel):
+    """OntapPortStatistics sub-model for statistics."""
+
+    device: OntapPortStatisticsDevice = Field(default_factory=OntapPortStatisticsDevice)
+    status: str = ""
+    throughput_raw: OntapPortStatisticsThroughputRaw = Field(
+        default_factory=OntapPortStatisticsThroughputRaw
+    )
+    timestamp: str = ""
+
+
+class OntapPortVlanBasePortNode(OntapModel):
+    """OntapPortVlanBasePortNode sub-model for node."""
+
+    name: str = ""
+
+
+class OntapPortVlanBasePort(OntapModel):
+    """OntapPortVlanBasePort sub-model for base_port."""
+
+    name: str = ""
+    node: OntapPortVlanBasePortNode = Field(default_factory=OntapPortVlanBasePortNode)
+    uuid: str = ""
+
+
+class OntapPortVlan(OntapModel):
+    """OntapPortVlan sub-model for vlan."""
+
+    base_port: OntapPortVlanBasePort = Field(default_factory=OntapPortVlanBasePort)
+    tag: int = 0
 
 
 class OntapPort(OntapModel):
     """OntapPort information."""
 
-    broadcast_domain_ipspace_name: str = ""
-    broadcast_domain_name: str = ""
-    broadcast_domain_uuid: str = ""
+    broadcast_domain: OntapPortBroadcastDomain = Field(default_factory=OntapPortBroadcastDomain)
     discovered_devices: list[OntapPortDiscoveredDevice] = Field(default_factory=list)
     enabled: bool = False
     flowcontrol_admin: str = ""
     interface_count: int = 0
-    lag_active_ports: list[OntapPortActivePort] = Field(default_factory=list)
-    lag_distribution_policy: str = ""
-    lag_member_ports: list[OntapPortMemberPort] = Field(default_factory=list)
-    lag_mode: str = ""
+    lag: OntapPortLag = Field(default_factory=OntapPortLag)
     mac_address: str = ""
-    metric_duration: str = ""
-    metric_status: str = ""
-    metric_throughput_read: int = 0
-    metric_throughput_total: int = 0
-    metric_throughput_write: int = 0
-    metric_timestamp: str = ""
+    metric: OntapPortMetric = Field(default_factory=OntapPortMetric)
     mtu: int = 0
     name: str = ""
-    node_name: str = ""
-    node_uuid: str = ""
+    node: OntapPortNode = Field(default_factory=OntapPortNode)
     pfc_queues_admin: list[int] = Field(default_factory=list)
     rdma_protocols: list[str] = Field(default_factory=list)
     reachability: str = ""
@@ -79,22 +206,7 @@ class OntapPort(OntapModel):
     )
     speed: int = 0
     state: str = ""
-    statistics_device_link_down_count_raw: int = 0
-    statistics_device_receive_raw_discards: int = 0
-    statistics_device_receive_raw_errors: int = 0
-    statistics_device_receive_raw_packets: int = 0
-    statistics_device_timestamp: str = ""
-    statistics_device_transmit_raw_discards: int = 0
-    statistics_device_transmit_raw_errors: int = 0
-    statistics_device_transmit_raw_packets: int = 0
-    statistics_status: str = ""
-    statistics_throughput_raw_read: int = 0
-    statistics_throughput_raw_total: int = 0
-    statistics_throughput_raw_write: int = 0
-    statistics_timestamp: str = ""
+    statistics: OntapPortStatistics = Field(default_factory=OntapPortStatistics)
     type_: str = ""
     uuid: str = ""
-    vlan_base_port_name: str = ""
-    vlan_base_port_node_name: str = ""
-    vlan_base_port_uuid: str = ""
-    vlan_tag: int = 0
+    vlan: OntapPortVlan = Field(default_factory=OntapPortVlan)

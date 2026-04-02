@@ -6,10 +6,10 @@ class_name = "OntapAutosupportMessage"
 [fields.destination]
 cache_strategy = "cache"
 
-[fields.error_code]
+[fields."error.code"]
 cache_strategy = "cache"
 
-[fields.error_message]
+[fields."error.message"]
 cache_strategy = "cache"
 
 [fields.generated_on]
@@ -21,10 +21,10 @@ cache_strategy = "cache"
 [fields.message]
 cache_strategy = "cache"
 
-[fields.node_name]
+[fields."node.name"]
 cache_strategy = "cache"
 
-[fields.node_uuid]
+[fields."node.uuid"]
 cache_strategy = "cache"
 
 [fields.state]

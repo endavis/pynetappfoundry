@@ -30,10 +30,10 @@ cache_strategy = "cache"
 [fields.max_prompts]
 cache_strategy = "cache"
 
-[fields.owner_name]
+[fields."owner.name"]
 cache_strategy = "cache"
 
-[fields.owner_uuid]
+[fields."owner.uuid"]
 cache_strategy = "cache"
 
 [fields.push_info]

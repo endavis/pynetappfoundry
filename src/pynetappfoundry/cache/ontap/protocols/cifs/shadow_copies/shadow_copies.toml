@@ -12,28 +12,28 @@ cache_strategy = "cache"
 [fields.files]
 cache_strategy = "cache"
 
-[fields.shadowcopy_set_uuid]
+[fields."shadowcopy_set.uuid"]
 cache_strategy = "cache"
 
-[fields.share_name]
+[fields."share.name"]
 cache_strategy = "cache"
 
 [fields.source_dir]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.uuid]
 cache_strategy = "cache"
 
-[fields.volume_name]
+[fields."volume.name"]
 cache_strategy = "cache"
 
-[fields.volume_uuid]
+[fields."volume.uuid"]
 cache_strategy = "cache"
 
 [fields.with_content]

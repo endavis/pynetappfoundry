@@ -3,7 +3,7 @@ path = "/protocols/cifs/local-groups/{svm.uuid}/{local_cifs_group.sid}/members"
 schema = "local_cifs_group_members"
 class_name = "OntapLocalCifsGroupMembers"
 
-[fields.local_cifs_group_sid]
+[fields."local_cifs_group.sid"]
 cache_strategy = "cache"
 
 [fields.name]
@@ -12,8 +12,8 @@ cache_strategy = "cache"
 [fields.records]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"

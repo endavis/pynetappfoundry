@@ -18,8 +18,8 @@ cache_strategy = "cache"
 [fields.skip_name_validation]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"

@@ -12,19 +12,19 @@ cache_strategy = "cache"
 [fields.end_time]
 cache_strategy = "cache"
 
-[fields.error_arguments]
+[fields."error.arguments"]
 cache_strategy = "cache"
 
-[fields.error_code]
+[fields."error.code"]
 cache_strategy = "cache"
 
-[fields.error_message]
+[fields."error.message"]
 cache_strategy = "cache"
 
 [fields.message]
 cache_strategy = "cache"
 
-[fields.node_name]
+[fields."node.name"]
 cache_strategy = "cache"
 
 [fields.start_time]
@@ -33,10 +33,10 @@ cache_strategy = "cache"
 [fields.state]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.uuid]

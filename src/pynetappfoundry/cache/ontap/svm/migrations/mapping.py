@@ -9,41 +9,21 @@ from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.svm.migrations.model import (
     OntapSvmMigration,
-    OntapSvmMigrationAggregate,
-    OntapSvmMigrationIpInterface,
+    OntapSvmMigrationDestinationVolumePlacementAggregate,
     OntapSvmMigrationMessage,
-    OntapSvmMigrationVolumeAggregatePair,
 )
+from pynetappfoundry.utils.dict_path import get_nested_value
 
 
 def _transform_destination_volume_placement_aggregates(
     record: dict[str, Any],
-) -> list[OntapSvmMigrationAggregate]:
-    """Transform destination.volume_placement.aggregates into OntapSvmMigrationAggregate list."""
-    return [
-        OntapSvmMigrationAggregate(**item)
-        for item in record.get("destination.volume_placement.aggregates", [])
-    ]
-
-
-def _transform_destination_volume_placement_volume_aggregate_pairs(
-    record: dict[str, Any],
-) -> list[OntapSvmMigrationVolumeAggregatePair]:
-    """Transform destination.volume_placement.volume_aggregate_pairs into OntapSvmMigrationVolumeAggregatePair list."""
-    return [
-        OntapSvmMigrationVolumeAggregatePair(**item)
-        for item in record.get("destination.volume_placement.volume_aggregate_pairs", [])
-    ]
-
-
-def _transform_ip_interface_placement_ip_interfaces(
-    record: dict[str, Any],
-) -> list[OntapSvmMigrationIpInterface]:
-    """Transform ip_interface_placement.ip_interfaces into OntapSvmMigrationIpInterface list."""
-    return [
-        OntapSvmMigrationIpInterface(**item)
-        for item in record.get("ip_interface_placement.ip_interfaces", [])
-    ]
+) -> list[OntapSvmMigrationDestinationVolumePlacementAggregate]:
+    """Transform destination.volume_placement.aggregates into OntapSvmMigrationDestinationVolumePlacementAggregate list."""
+    try:
+        items = get_nested_value(record, "destination.volume_placement.aggregates")
+    except Exception:
+        items = []
+    return [OntapSvmMigrationDestinationVolumePlacementAggregate(**item) for item in items]
 
 
 def _transform_messages(record: dict[str, Any]) -> list[OntapSvmMigrationMessage]:
@@ -77,29 +57,27 @@ ONTAPSVMMIGRATION_MAPPING = TypeMapping(
             api_path="current_operation",
         ),
         FieldMapping(
-            cache_attr="destination_ipspace_name",
+            cache_attr="destination.ipspace.name",
             api_path="destination.ipspace.name",
         ),
         FieldMapping(
-            cache_attr="destination_ipspace_uuid",
+            cache_attr="destination.ipspace.uuid",
             api_path="destination.ipspace.uuid",
         ),
         FieldMapping(
-            cache_attr="destination_volume_placement_aggregates",
+            cache_attr="destination.volume_placement.aggregates",
             api_path="destination.volume_placement.aggregates",
             transform=_transform_destination_volume_placement_aggregates,
             default=[],
         ),
         FieldMapping(
-            cache_attr="destination_volume_placement_volume_aggregate_pairs",
+            cache_attr="destination.volume_placement.volume_aggregate_pairs",
             api_path="destination.volume_placement.volume_aggregate_pairs",
-            transform=_transform_destination_volume_placement_volume_aggregate_pairs,
             default=[],
         ),
         FieldMapping(
-            cache_attr="ip_interface_placement_ip_interfaces",
+            cache_attr="ip_interface_placement.ip_interfaces",
             api_path="ip_interface_placement.ip_interfaces",
-            transform=_transform_ip_interface_placement_ip_interfaces,
             default=[],
         ),
         FieldMapping(
@@ -127,19 +105,19 @@ ONTAPSVMMIGRATION_MAPPING = TypeMapping(
             default=0,
         ),
         FieldMapping(
-            cache_attr="source_cluster_name",
+            cache_attr="source.cluster.name",
             api_path="source.cluster.name",
         ),
         FieldMapping(
-            cache_attr="source_cluster_uuid",
+            cache_attr="source.cluster.uuid",
             api_path="source.cluster.uuid",
         ),
         FieldMapping(
-            cache_attr="source_svm_name",
+            cache_attr="source.svm.name",
             api_path="source.svm.name",
         ),
         FieldMapping(
-            cache_attr="source_svm_uuid",
+            cache_attr="source.svm.uuid",
             api_path="source.svm.uuid",
         ),
         FieldMapping(
@@ -148,31 +126,31 @@ ONTAPSVMMIGRATION_MAPPING = TypeMapping(
             default=0,
         ),
         FieldMapping(
-            cache_attr="time_metrics_cutover_complete_time",
+            cache_attr="time_metrics.cutover_complete_time",
             api_path="time_metrics.cutover_complete_time",
         ),
         FieldMapping(
-            cache_attr="time_metrics_cutover_start_time",
+            cache_attr="time_metrics.cutover_start_time",
             api_path="time_metrics.cutover_start_time",
         ),
         FieldMapping(
-            cache_attr="time_metrics_cutover_trigger_time",
+            cache_attr="time_metrics.cutover_trigger_time",
             api_path="time_metrics.cutover_trigger_time",
         ),
         FieldMapping(
-            cache_attr="time_metrics_end_time",
+            cache_attr="time_metrics.end_time",
             api_path="time_metrics.end_time",
         ),
         FieldMapping(
-            cache_attr="time_metrics_last_pause_time",
+            cache_attr="time_metrics.last_pause_time",
             api_path="time_metrics.last_pause_time",
         ),
         FieldMapping(
-            cache_attr="time_metrics_last_resume_time",
+            cache_attr="time_metrics.last_resume_time",
             api_path="time_metrics.last_resume_time",
         ),
         FieldMapping(
-            cache_attr="time_metrics_start_time",
+            cache_attr="time_metrics.start_time",
             api_path="time_metrics.start_time",
         ),
         FieldMapping(

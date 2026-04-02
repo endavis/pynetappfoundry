@@ -24,7 +24,7 @@ ONTAPCAPACITYPOOLRESPONSE_MAPPING = TypeMapping(
     api_type="ontap",
     fields=(
         FieldMapping(
-            cache_attr="license_manager_uuid",
+            cache_attr="license_manager.uuid",
             api_path="license_manager.uuid",
         ),
         FieldMapping(

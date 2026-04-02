@@ -25,11 +25,11 @@ ONTAPQOSWORKLOAD_MAPPING = TypeMapping(
             api_path="name",
         ),
         FieldMapping(
-            cache_attr="policy_name",
+            cache_attr="policy.name",
             api_path="policy.name",
         ),
         FieldMapping(
-            cache_attr="policy_uuid",
+            cache_attr="policy.uuid",
             api_path="policy.uuid",
         ),
         FieldMapping(
@@ -37,11 +37,11 @@ ONTAPQOSWORKLOAD_MAPPING = TypeMapping(
             api_path="qtree",
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(

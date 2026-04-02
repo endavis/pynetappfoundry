@@ -15,16 +15,32 @@ class OntapMetroclusterInterconnectInterface(OntapModel):
     netmask: str = ""
 
 
+class OntapMetroclusterInterconnectMirror(OntapModel):
+    """OntapMetroclusterInterconnectMirror sub-model for mirror."""
+
+    enabled: bool = False
+    state: str = ""
+
+
+class OntapMetroclusterInterconnectNode(OntapModel):
+    """OntapMetroclusterInterconnectNode sub-model for node."""
+
+    name: str = ""
+    uuid: str = ""
+
+
 class OntapMetroclusterInterconnect(OntapModel):
     """OntapMetroclusterInterconnect information."""
 
     adapter: str = ""
     interfaces: list[OntapMetroclusterInterconnectInterface] = Field(default_factory=list)
-    mirror_enabled: bool = False
-    mirror_state: str = ""
+    mirror: OntapMetroclusterInterconnectMirror = Field(
+        default_factory=OntapMetroclusterInterconnectMirror
+    )
     multipath_policy: str = ""
-    node_name: str = ""
-    node_uuid: str = ""
+    node: OntapMetroclusterInterconnectNode = Field(
+        default_factory=OntapMetroclusterInterconnectNode
+    )
     partner_type: str = ""
     state: str = ""
     type_: str = ""

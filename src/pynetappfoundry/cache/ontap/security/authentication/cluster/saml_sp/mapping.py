@@ -15,15 +15,15 @@ ONTAPSECURITYSAMLSP_MAPPING = TypeMapping(
     api_type="ontap",
     fields=(
         FieldMapping(
-            cache_attr="certificate_ca",
+            cache_attr="certificate.ca",
             api_path="certificate.ca",
         ),
         FieldMapping(
-            cache_attr="certificate_common_name",
+            cache_attr="certificate.common_name",
             api_path="certificate.common_name",
         ),
         FieldMapping(
-            cache_attr="certificate_serial_number",
+            cache_attr="certificate.serial_number",
             api_path="certificate.serial_number",
         ),
         FieldMapping(

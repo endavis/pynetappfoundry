@@ -3,26 +3,26 @@ path = "/protocols/nfs/tls/interfaces"
 schema = "nfs_tls_interface"
 class_name = "OntapNfsTlsInterface"
 
-[fields.certificate_name]
+[fields."certificate.name"]
 cache_strategy = "cache"
 
-[fields.certificate_uuid]
+[fields."certificate.uuid"]
 cache_strategy = "cache"
 
 [fields.enabled]
 cache_strategy = "cache"
 
-[fields.interface_ip_address]
+[fields."interface.ip.address"]
 cache_strategy = "cache"
 
-[fields.interface_name]
+[fields."interface.name"]
 cache_strategy = "cache"
 
-[fields.interface_uuid]
+[fields."interface.uuid"]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"

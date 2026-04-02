@@ -2,7 +2,16 @@
 
 from __future__ import annotations
 
+from pydantic import Field
+
 from pynetappfoundry.models._base import OntapModel
+
+
+class OntapNameMappingSvm(OntapModel):
+    """OntapNameMappingSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapNameMapping(OntapModel):
@@ -13,5 +22,4 @@ class OntapNameMapping(OntapModel):
     index: int = 0
     pattern: str = ""
     replacement: str = ""
-    svm_name: str = ""
-    svm_uuid: str = ""
+    svm: OntapNameMappingSvm = Field(default_factory=OntapNameMappingSvm)

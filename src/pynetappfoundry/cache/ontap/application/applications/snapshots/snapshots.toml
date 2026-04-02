@@ -3,10 +3,10 @@ path = "/application/applications/{application.uuid}/snapshots"
 schema = "application_snapshot"
 class_name = "OntapApplicationSnapshot"
 
-[fields.application_name]
+[fields."application.name"]
 cache_strategy = "cache"
 
-[fields.application_uuid]
+[fields."application.uuid"]
 cache_strategy = "cache"
 
 [fields.comment]
@@ -27,10 +27,10 @@ cache_strategy = "cache"
 [fields.name]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.uuid]

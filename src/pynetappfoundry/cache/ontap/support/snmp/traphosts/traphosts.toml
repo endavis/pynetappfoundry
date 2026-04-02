@@ -9,5 +9,5 @@ cache_strategy = "cache"
 [fields.ip_address]
 cache_strategy = "cache"
 
-[fields.user_name]
+[fields."user.name"]
 cache_strategy = "cache"

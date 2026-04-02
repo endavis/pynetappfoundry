@@ -9,10 +9,11 @@ from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.storage.disks.model import (
     OntapDisk,
     OntapDiskAggregate,
-    OntapDiskArgument,
     OntapDiskError,
+    OntapDiskOutageReasonArgument,
     OntapDiskPath,
 )
+from pynetappfoundry.utils.dict_path import get_nested_value
 
 
 def _transform_aggregates(record: dict[str, Any]) -> list[OntapDiskAggregate]:
@@ -25,9 +26,15 @@ def _transform_error(record: dict[str, Any]) -> list[OntapDiskError]:
     return [OntapDiskError(**item) for item in record.get("error", [])]
 
 
-def _transform_outage_reason_arguments(record: dict[str, Any]) -> list[OntapDiskArgument]:
-    """Transform outage.reason.arguments into OntapDiskArgument list."""
-    return [OntapDiskArgument(**item) for item in record.get("outage.reason.arguments", [])]
+def _transform_outage_reason_arguments(
+    record: dict[str, Any],
+) -> list[OntapDiskOutageReasonArgument]:
+    """Transform outage.reason.arguments into OntapDiskOutageReasonArgument list."""
+    try:
+        items = get_nested_value(record, "outage.reason.arguments")
+    except Exception:
+        items = []
+    return [OntapDiskOutageReasonArgument(**item) for item in items]
 
 
 def _transform_paths(record: dict[str, Any]) -> list[OntapDiskPath]:
@@ -74,20 +81,20 @@ ONTAPDISK_MAPPING = TypeMapping(
             api_path="control_standard",
         ),
         FieldMapping(
-            cache_attr="dr_node_name",
+            cache_attr="dr_node.name",
             api_path="dr_node.name",
         ),
         FieldMapping(
-            cache_attr="dr_node_uuid",
+            cache_attr="dr_node.uuid",
             api_path="dr_node.uuid",
         ),
         FieldMapping(
-            cache_attr="drawer_id",
+            cache_attr="drawer.id",
             api_path="drawer.id",
             default=0,
         ),
         FieldMapping(
-            cache_attr="drawer_slot",
+            cache_attr="drawer.slot",
             api_path="drawer.slot",
             default=0,
         ),
@@ -115,19 +122,19 @@ ONTAPDISK_MAPPING = TypeMapping(
             api_path="firmware_version",
         ),
         FieldMapping(
-            cache_attr="home_node_name",
+            cache_attr="home_node.name",
             api_path="home_node.name",
         ),
         FieldMapping(
-            cache_attr="home_node_uuid",
+            cache_attr="home_node.uuid",
             api_path="home_node.uuid",
         ),
         FieldMapping(
-            cache_attr="key_id_data",
+            cache_attr="key_id.data",
             api_path="key_id.data",
         ),
         FieldMapping(
-            cache_attr="key_id_fips",
+            cache_attr="key_id.fips",
             api_path="key_id.fips",
         ),
         FieldMapping(
@@ -148,30 +155,30 @@ ONTAPDISK_MAPPING = TypeMapping(
             api_path="name",
         ),
         FieldMapping(
-            cache_attr="node_name",
+            cache_attr="node.name",
             api_path="node.name",
         ),
         FieldMapping(
-            cache_attr="node_uuid",
+            cache_attr="node.uuid",
             api_path="node.uuid",
         ),
         FieldMapping(
-            cache_attr="outage_persistently_failed",
+            cache_attr="outage.persistently_failed",
             api_path="outage.persistently_failed",
             default=False,
         ),
         FieldMapping(
-            cache_attr="outage_reason_arguments",
+            cache_attr="outage.reason.arguments",
             api_path="outage.reason.arguments",
             transform=_transform_outage_reason_arguments,
             default=[],
         ),
         FieldMapping(
-            cache_attr="outage_reason_code",
+            cache_attr="outage.reason.code",
             api_path="outage.reason.code",
         ),
         FieldMapping(
-            cache_attr="outage_reason_message",
+            cache_attr="outage.reason.message",
             api_path="outage.reason.message",
         ),
         FieldMapping(
@@ -200,8 +207,8 @@ ONTAPDISK_MAPPING = TypeMapping(
         FieldMapping(
             cache_attr="rated_life_used_percent",
             api_path="rated_life_used_percent",
-            default=0,
             cache_strategy="realtime",
+            default=0,
         ),
         FieldMapping(
             cache_attr="right_size_sector_count",
@@ -233,7 +240,7 @@ ONTAPDISK_MAPPING = TypeMapping(
             api_path="serial_number",
         ),
         FieldMapping(
-            cache_attr="shelf_uid",
+            cache_attr="shelf.uid",
             api_path="shelf.uid",
         ),
         FieldMapping(
@@ -241,41 +248,41 @@ ONTAPDISK_MAPPING = TypeMapping(
             api_path="state",
         ),
         FieldMapping(
-            cache_attr="stats_average_latency",
+            cache_attr="stats.average_latency",
             api_path="stats.average_latency",
-            default=0,
             cache_strategy="realtime",
+            default=0,
         ),
         FieldMapping(
-            cache_attr="stats_iops_total",
+            cache_attr="stats.iops_total",
             api_path="stats.iops_total",
-            default=0,
             cache_strategy="realtime",
+            default=0,
         ),
         FieldMapping(
-            cache_attr="stats_path_error_count",
+            cache_attr="stats.path_error_count",
             api_path="stats.path_error_count",
-            default=0,
             cache_strategy="realtime",
+            default=0,
         ),
         FieldMapping(
-            cache_attr="stats_power_on_hours",
+            cache_attr="stats.power_on_hours",
             api_path="stats.power_on_hours",
-            default=0,
             cache_strategy="realtime",
+            default=0,
         ),
         FieldMapping(
-            cache_attr="stats_throughput",
+            cache_attr="stats.throughput",
             api_path="stats.throughput",
-            default=0,
             cache_strategy="realtime",
+            default=0,
         ),
         FieldMapping(
-            cache_attr="storage_pool_name",
+            cache_attr="storage_pool.name",
             api_path="storage_pool.name",
         ),
         FieldMapping(
-            cache_attr="storage_pool_uuid",
+            cache_attr="storage_pool.uuid",
             api_path="storage_pool.uuid",
         ),
         FieldMapping(
@@ -296,19 +303,19 @@ ONTAPDISK_MAPPING = TypeMapping(
             api_path="vendor",
         ),
         FieldMapping(
-            cache_attr="virtual_container",
+            cache_attr="virtual.container",
             api_path="virtual.container",
         ),
         FieldMapping(
-            cache_attr="virtual_object",
+            cache_attr="virtual.object",
             api_path="virtual.object",
         ),
         FieldMapping(
-            cache_attr="virtual_storage_account",
+            cache_attr="virtual.storage_account",
             api_path="virtual.storage_account",
         ),
         FieldMapping(
-            cache_attr="virtual_target_address",
+            cache_attr="virtual.target_address",
             api_path="virtual.target_address",
         ),
     ),

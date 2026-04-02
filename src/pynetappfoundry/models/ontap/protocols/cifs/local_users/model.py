@@ -14,6 +14,13 @@ class OntapLocalCifsUserMembership(OntapModel):
     sid: str = ""
 
 
+class OntapLocalCifsUserSvm(OntapModel):
+    """OntapLocalCifsUserSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
+
+
 class OntapLocalCifsUser(OntapModel):
     """OntapLocalCifsUser information."""
 
@@ -24,5 +31,4 @@ class OntapLocalCifsUser(OntapModel):
     name: str = ""
     password: str = ""
     sid: str = ""
-    svm_name: str = ""
-    svm_uuid: str = ""
+    svm: OntapLocalCifsUserSvm = Field(default_factory=OntapLocalCifsUserSvm)

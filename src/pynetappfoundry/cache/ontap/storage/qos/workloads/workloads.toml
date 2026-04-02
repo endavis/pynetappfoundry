@@ -12,19 +12,19 @@ cache_strategy = "cache"
 [fields.name]
 cache_strategy = "cache"
 
-[fields.policy_name]
+[fields."policy.name"]
 cache_strategy = "cache"
 
-[fields.policy_uuid]
+[fields."policy.uuid"]
 cache_strategy = "cache"
 
 [fields.qtree]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.uuid]

@@ -6,35 +6,35 @@ class_name = "OntapFcLogin"
 [fields.igroups]
 cache_strategy = "cache"
 
-[fields.initiator_aliases]
+[fields."initiator.aliases"]
 cache_strategy = "cache"
 
-[fields.initiator_comment]
+[fields."initiator.comment"]
 cache_strategy = "cache"
 
-[fields.initiator_port_address]
+[fields."initiator.port_address"]
 cache_strategy = "cache"
 
-[fields.initiator_wwnn]
+[fields."initiator.wwnn"]
 cache_strategy = "cache"
 
-[fields.initiator_wwpn]
+[fields."initiator.wwpn"]
 cache_strategy = "cache"
 
-[fields.interface_name]
+[fields."interface.name"]
 cache_strategy = "cache"
 
-[fields.interface_uuid]
+[fields."interface.uuid"]
 cache_strategy = "cache"
 
-[fields.interface_wwpn]
+[fields."interface.wwpn"]
 cache_strategy = "cache"
 
 [fields.protocol]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"

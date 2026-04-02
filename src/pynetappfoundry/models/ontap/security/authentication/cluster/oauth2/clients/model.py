@@ -2,7 +2,23 @@
 
 from __future__ import annotations
 
+from pydantic import Field
+
 from pynetappfoundry.models._base import OntapModel
+
+
+class OntapSecurityOauth2Introspection(OntapModel):
+    """OntapSecurityOauth2Introspection sub-model for introspection."""
+
+    endpoint_uri: str = ""
+    interval: str = ""
+
+
+class OntapSecurityOauth2Jwks(OntapModel):
+    """OntapSecurityOauth2Jwks sub-model for jwks."""
+
+    provider_uri: str = ""
+    refresh_interval: str = ""
 
 
 class OntapSecurityOauth2(OntapModel):
@@ -13,11 +29,11 @@ class OntapSecurityOauth2(OntapModel):
     client_id: str = ""
     client_secret: str = ""
     hashed_client_secret: str = ""
-    introspection_endpoint_uri: str = ""
-    introspection_interval: str = ""
+    introspection: OntapSecurityOauth2Introspection = Field(
+        default_factory=OntapSecurityOauth2Introspection
+    )
     issuer: str = ""
-    jwks_provider_uri: str = ""
-    jwks_refresh_interval: str = ""
+    jwks: OntapSecurityOauth2Jwks = Field(default_factory=OntapSecurityOauth2Jwks)
     name: str = ""
     outgoing_proxy: str = ""
     provider: str = ""

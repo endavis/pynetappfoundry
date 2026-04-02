@@ -26,11 +26,11 @@ ONTAPSHADOWCOPY_MAPPING = TypeMapping(
             default=[],
         ),
         FieldMapping(
-            cache_attr="shadowcopy_set_uuid",
+            cache_attr="shadowcopy_set.uuid",
             api_path="shadowcopy_set.uuid",
         ),
         FieldMapping(
-            cache_attr="share_name",
+            cache_attr="share.name",
             api_path="share.name",
         ),
         FieldMapping(
@@ -38,11 +38,11 @@ ONTAPSHADOWCOPY_MAPPING = TypeMapping(
             api_path="source_dir",
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(
@@ -50,11 +50,11 @@ ONTAPSHADOWCOPY_MAPPING = TypeMapping(
             api_path="uuid",
         ),
         FieldMapping(
-            cache_attr="volume_name",
+            cache_attr="volume.name",
             api_path="volume.name",
         ),
         FieldMapping(
-            cache_attr="volume_uuid",
+            cache_attr="volume.uuid",
             api_path="volume.uuid",
         ),
         FieldMapping(

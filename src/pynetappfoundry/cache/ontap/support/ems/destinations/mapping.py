@@ -8,18 +8,8 @@ from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.support.ems.destinations.model import (
     OntapEmsDestinationResponse,
-    OntapEmsDestinationResponseError,
     OntapEmsDestinationResponseFilter,
 )
-
-
-def _transform_connectivity_errors(
-    record: dict[str, Any],
-) -> list[OntapEmsDestinationResponseError]:
-    """Transform connectivity.errors into OntapEmsDestinationResponseError list."""
-    return [
-        OntapEmsDestinationResponseError(**item) for item in record.get("connectivity.errors", [])
-    ]
 
 
 def _transform_filters(record: dict[str, Any]) -> list[OntapEmsDestinationResponseFilter]:
@@ -34,29 +24,28 @@ ONTAPEMSDESTINATIONRESPONSE_MAPPING = TypeMapping(
     api_type="ontap",
     fields=(
         FieldMapping(
-            cache_attr="access_control_role_name",
+            cache_attr="access_control_role.name",
             api_path="access_control_role.name",
         ),
         FieldMapping(
-            cache_attr="certificate_ca",
+            cache_attr="certificate.ca",
             api_path="certificate.ca",
         ),
         FieldMapping(
-            cache_attr="certificate_name",
+            cache_attr="certificate.name",
             api_path="certificate.name",
         ),
         FieldMapping(
-            cache_attr="certificate_serial_number",
+            cache_attr="certificate.serial_number",
             api_path="certificate.serial_number",
         ),
         FieldMapping(
-            cache_attr="connectivity_errors",
+            cache_attr="connectivity.errors",
             api_path="connectivity.errors",
-            transform=_transform_connectivity_errors,
             default=[],
         ),
         FieldMapping(
-            cache_attr="connectivity_state",
+            cache_attr="connectivity.state",
             api_path="connectivity.state",
         ),
         FieldMapping(
@@ -74,24 +63,24 @@ ONTAPEMSDESTINATIONRESPONSE_MAPPING = TypeMapping(
             api_path="name",
         ),
         FieldMapping(
-            cache_attr="syslog_format_hostname_override",
+            cache_attr="syslog.format.hostname_override",
             api_path="syslog.format.hostname_override",
         ),
         FieldMapping(
-            cache_attr="syslog_format_message",
+            cache_attr="syslog.format.message",
             api_path="syslog.format.message",
         ),
         FieldMapping(
-            cache_attr="syslog_format_timestamp_override",
+            cache_attr="syslog.format.timestamp_override",
             api_path="syslog.format.timestamp_override",
         ),
         FieldMapping(
-            cache_attr="syslog_port",
+            cache_attr="syslog.port",
             api_path="syslog.port",
             default=0,
         ),
         FieldMapping(
-            cache_attr="syslog_transport",
+            cache_attr="syslog.transport",
             api_path="syslog.transport",
         ),
         FieldMapping(

@@ -32,15 +32,15 @@ ONTAPAZUREKEYVAULT_MAPPING = TypeMapping(
             api_path="authentication_method",
         ),
         FieldMapping(
-            cache_attr="azure_reachability_code",
+            cache_attr="azure_reachability.code",
             api_path="azure_reachability.code",
         ),
         FieldMapping(
-            cache_attr="azure_reachability_message",
+            cache_attr="azure_reachability.message",
             api_path="azure_reachability.message",
         ),
         FieldMapping(
-            cache_attr="azure_reachability_reachable",
+            cache_attr="azure_reachability.reachable",
             api_path="azure_reachability.reachable",
             default=False,
         ),
@@ -57,11 +57,11 @@ ONTAPAZUREKEYVAULT_MAPPING = TypeMapping(
             api_path="client_secret",
         ),
         FieldMapping(
-            cache_attr="configuration_name",
+            cache_attr="configuration.name",
             api_path="configuration.name",
         ),
         FieldMapping(
-            cache_attr="configuration_uuid",
+            cache_attr="configuration.uuid",
             api_path="configuration.uuid",
         ),
         FieldMapping(
@@ -123,24 +123,24 @@ ONTAPAZUREKEYVAULT_MAPPING = TypeMapping(
             default=False,
         ),
         FieldMapping(
-            cache_attr="state_available",
+            cache_attr="state.available",
             api_path="state.available",
             default=False,
         ),
         FieldMapping(
-            cache_attr="state_code",
+            cache_attr="state.code",
             api_path="state.code",
         ),
         FieldMapping(
-            cache_attr="state_message",
+            cache_attr="state.message",
             api_path="state.message",
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(

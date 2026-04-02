@@ -23,11 +23,11 @@ ONTAPAUTOUPDATECONFIGURATION_MAPPING = TypeMapping(
             api_path="category",
         ),
         FieldMapping(
-            cache_attr="description_code",
+            cache_attr="description.code",
             api_path="description.code",
         ),
         FieldMapping(
-            cache_attr="description_message",
+            cache_attr="description.message",
             api_path="description.message",
         ),
         FieldMapping(

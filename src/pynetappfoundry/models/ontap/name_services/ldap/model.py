@@ -7,6 +7,44 @@ from pydantic import Field
 from pynetappfoundry.models._base import OntapModel
 
 
+class OntapLdapServiceStatusIpv4(OntapModel):
+    """OntapLdapServiceStatusIpv4 sub-model for ipv4."""
+
+    code: int = 0
+    dn_messages: list[str] = Field(default_factory=list)
+    message: str = ""
+    state: str = ""
+
+
+class OntapLdapServiceStatusIpv6(OntapModel):
+    """OntapLdapServiceStatusIpv6 sub-model for ipv6."""
+
+    code: int = 0
+    dn_messages: list[str] = Field(default_factory=list)
+    message: str = ""
+    state: str = ""
+
+
+class OntapLdapServiceStatus(OntapModel):
+    """OntapLdapServiceStatus sub-model for status."""
+
+    code: int = 0
+    dn_message: list[str] = Field(default_factory=list)
+    ipv4: OntapLdapServiceStatusIpv4 = Field(default_factory=OntapLdapServiceStatusIpv4)
+    ipv4_state: str = ""
+    ipv6: OntapLdapServiceStatusIpv6 = Field(default_factory=OntapLdapServiceStatusIpv6)
+    ipv6_state: str = ""
+    message: str = ""
+    state: str = ""
+
+
+class OntapLdapServiceSvm(OntapModel):
+    """OntapLdapServiceSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
+
+
 class OntapLdapService(OntapModel):
     """OntapLdapService information."""
 
@@ -36,20 +74,8 @@ class OntapLdapService(OntapModel):
     servers: list[str] = Field(default_factory=list)
     session_security: str = ""
     skip_config_validation: bool = False
-    status_code: int = 0
-    status_dn_message: list[str] = Field(default_factory=list)
-    status_ipv4_code: int = 0
-    status_ipv4_dn_messages: list[str] = Field(default_factory=list)
-    status_ipv4_message: str = ""
-    status_ipv4_state: str = ""
-    status_ipv6_code: int = 0
-    status_ipv6_dn_messages: list[str] = Field(default_factory=list)
-    status_ipv6_message: str = ""
-    status_ipv6_state: str = ""
-    status_message: str = ""
-    status_state: str = ""
-    svm_name: str = ""
-    svm_uuid: str = ""
+    status: OntapLdapServiceStatus = Field(default_factory=OntapLdapServiceStatus)
+    svm: OntapLdapServiceSvm = Field(default_factory=OntapLdapServiceSvm)
     try_channel_binding: bool = False
     use_start_tls: bool = False
     user_dn: str = ""

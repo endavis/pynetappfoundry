@@ -317,5 +317,5 @@ class TestAllRealtimeAttrs:
         all_realtime_attrs.cache_clear()
         result = all_realtime_attrs()
 
-        # metric_duration is a realtime field on FC ports (and likely others)
-        assert "metric_duration" in result
+        # metric.duration is a realtime field on FC ports (and likely others)
+        assert "metric.duration" in result

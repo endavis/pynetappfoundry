@@ -19,11 +19,11 @@ ONTAPWEBAUTHNCREDENTIALS_MAPPING = TypeMapping(
             api_path="creation_time",
         ),
         FieldMapping(
-            cache_attr="credential_id_sha",
+            cache_attr="credential.id_sha",
             api_path="credential.id_sha",
         ),
         FieldMapping(
-            cache_attr="credential_type",
+            cache_attr="credential.type_",
             api_path="credential.type",
         ),
         FieldMapping(
@@ -40,27 +40,27 @@ ONTAPWEBAUTHNCREDENTIALS_MAPPING = TypeMapping(
             api_path="last_used_time",
         ),
         FieldMapping(
-            cache_attr="owner_name",
+            cache_attr="owner.name",
             api_path="owner.name",
         ),
         FieldMapping(
-            cache_attr="owner_uuid",
+            cache_attr="owner.uuid",
             api_path="owner.uuid",
         ),
         FieldMapping(
-            cache_attr="public_key_algorithm",
+            cache_attr="public_key.algorithm",
             api_path="public_key.algorithm",
         ),
         FieldMapping(
-            cache_attr="public_key_value",
+            cache_attr="public_key.value",
             api_path="public_key.value",
         ),
         FieldMapping(
-            cache_attr="relying_party_id",
+            cache_attr="relying_party.id",
             api_path="relying_party.id",
         ),
         FieldMapping(
-            cache_attr="relying_party_name",
+            cache_attr="relying_party.name",
             api_path="relying_party.name",
         ),
         FieldMapping(

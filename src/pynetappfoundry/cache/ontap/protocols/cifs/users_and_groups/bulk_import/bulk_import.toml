@@ -6,10 +6,10 @@ class_name = "OntapLocalCifsUsersAndGroupsImport"
 [fields.decryption_password]
 cache_strategy = "cache"
 
-[fields.detailed_status_code]
+[fields."detailed_status.code"]
 cache_strategy = "cache"
 
-[fields.detailed_status_message]
+[fields."detailed_status.message"]
 cache_strategy = "cache"
 
 [fields.elements_ignored]
@@ -18,29 +18,29 @@ cache_strategy = "cache"
 [fields.elements_imported]
 cache_strategy = "cache"
 
-[fields.import_uri_password]
+[fields."import_uri.password"]
 cache_strategy = "cache"
 
-[fields.import_uri_path]
+[fields."import_uri.path"]
 cache_strategy = "cache"
 
-[fields.import_uri_username]
+[fields."import_uri.username"]
 cache_strategy = "cache"
 
 [fields.state]
 cache_strategy = "cache"
 
-[fields.status_uri_password]
+[fields."status_uri.password"]
 cache_strategy = "cache"
 
-[fields.status_uri_path]
+[fields."status_uri.path"]
 cache_strategy = "cache"
 
-[fields.status_uri_username]
+[fields."status_uri.username"]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"

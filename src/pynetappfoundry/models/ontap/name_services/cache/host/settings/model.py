@@ -2,7 +2,16 @@
 
 from __future__ import annotations
 
+from pydantic import Field
+
 from pynetappfoundry.models._base import OntapModel
+
+
+class OntapHostsSettingsSvm(OntapModel):
+    """OntapHostsSettingsSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapHostsSettings(OntapModel):
@@ -12,7 +21,6 @@ class OntapHostsSettings(OntapModel):
     enabled: bool = False
     negative_cache_enabled: bool = False
     negative_ttl: str = ""
-    svm_name: str = ""
-    svm_uuid: str = ""
+    svm: OntapHostsSettingsSvm = Field(default_factory=OntapHostsSettingsSvm)
     ttl: str = ""
     uuid: str = ""

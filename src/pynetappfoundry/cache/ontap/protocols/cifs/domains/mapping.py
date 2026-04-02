@@ -42,11 +42,11 @@ ONTAPCIFSDOMAIN_MAPPING = TypeMapping(
     api_type="ontap",
     fields=(
         FieldMapping(
-            cache_attr="ad_domain_password",
+            cache_attr="ad_domain.password",
             api_path="ad_domain.password",
         ),
         FieldMapping(
-            cache_attr="ad_domain_user",
+            cache_attr="ad_domain.user",
             api_path="ad_domain.user",
         ),
         FieldMapping(
@@ -64,42 +64,42 @@ ONTAPCIFSDOMAIN_MAPPING = TypeMapping(
             default=[],
         ),
         FieldMapping(
-            cache_attr="name_mapping_trusted_domains",
+            cache_attr="name_mapping.trusted_domains",
             api_path="name_mapping.trusted_domains",
             default=[],
         ),
         FieldMapping(
-            cache_attr="password_schedule_schedule_day_of_week",
+            cache_attr="password_schedule.schedule_day_of_week",
             api_path="password_schedule.schedule_day_of_week",
         ),
         FieldMapping(
-            cache_attr="password_schedule_schedule_description",
+            cache_attr="password_schedule.schedule_description",
             api_path="password_schedule.schedule_description",
         ),
         FieldMapping(
-            cache_attr="password_schedule_schedule_enabled",
+            cache_attr="password_schedule.schedule_enabled",
             api_path="password_schedule.schedule_enabled",
             default=False,
         ),
         FieldMapping(
-            cache_attr="password_schedule_schedule_last_changed_time",
+            cache_attr="password_schedule.schedule_last_changed_time",
             api_path="password_schedule.schedule_last_changed_time",
         ),
         FieldMapping(
-            cache_attr="password_schedule_schedule_randomized_minute",
+            cache_attr="password_schedule.schedule_randomized_minute",
             api_path="password_schedule.schedule_randomized_minute",
             default=0,
         ),
         FieldMapping(
-            cache_attr="password_schedule_schedule_time_of_day",
+            cache_attr="password_schedule.schedule_time_of_day",
             api_path="password_schedule.schedule_time_of_day",
         ),
         FieldMapping(
-            cache_attr="password_schedule_schedule_warn_message",
+            cache_attr="password_schedule.schedule_warn_message",
             api_path="password_schedule.schedule_warn_message",
         ),
         FieldMapping(
-            cache_attr="password_schedule_schedule_weekly_interval",
+            cache_attr="password_schedule.schedule_weekly_interval",
             api_path="password_schedule.schedule_weekly_interval",
             default=0,
         ),
@@ -114,11 +114,11 @@ ONTAPCIFSDOMAIN_MAPPING = TypeMapping(
             api_path="server_discovery_mode",
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(

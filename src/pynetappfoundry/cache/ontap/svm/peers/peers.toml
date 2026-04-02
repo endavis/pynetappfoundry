@@ -12,25 +12,25 @@ cache_strategy = "cache"
 [fields.name]
 cache_strategy = "cache"
 
-[fields.peer_cluster_name]
+[fields."peer.cluster.name"]
 cache_strategy = "cache"
 
-[fields.peer_cluster_uuid]
+[fields."peer.cluster.uuid"]
 cache_strategy = "cache"
 
-[fields.peer_svm_name]
+[fields."peer.svm.name"]
 cache_strategy = "cache"
 
-[fields.peer_svm_uuid]
+[fields."peer.svm.uuid"]
 cache_strategy = "cache"
 
 [fields.state]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.uuid]

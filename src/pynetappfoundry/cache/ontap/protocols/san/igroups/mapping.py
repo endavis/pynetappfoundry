@@ -1,3 +1,4 @@
+# ruff: noqa: E501
 """OntapIgroup type mapping."""
 
 from __future__ import annotations
@@ -8,29 +9,25 @@ from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.protocols.san.igroups.model import (
     OntapIgroup,
-    OntapIgroupAlert,
-    OntapIgroupArgument,
+    OntapIgroupConnectivityTrackingRequiredNode,
     OntapIgroupIgroup,
     OntapIgroupInitiator,
     OntapIgroupLunMap,
     OntapIgroupParentIgroup,
-    OntapIgroupRequiredNode,
+    OntapIgroupReplicationErrorSummaryArgument,
 )
-
-
-def _transform_connectivity_tracking_alerts(record: dict[str, Any]) -> list[OntapIgroupAlert]:
-    """Transform connectivity_tracking.alerts into OntapIgroupAlert list."""
-    return [OntapIgroupAlert(**item) for item in record.get("connectivity_tracking.alerts", [])]
+from pynetappfoundry.utils.dict_path import get_nested_value
 
 
 def _transform_connectivity_tracking_required_nodes(
     record: dict[str, Any],
-) -> list[OntapIgroupRequiredNode]:
-    """Transform connectivity_tracking.required_nodes into OntapIgroupRequiredNode list."""
-    return [
-        OntapIgroupRequiredNode(**item)
-        for item in record.get("connectivity_tracking.required_nodes", [])
-    ]
+) -> list[OntapIgroupConnectivityTrackingRequiredNode]:
+    """Transform connectivity_tracking.required_nodes into OntapIgroupConnectivityTrackingRequiredNode list."""
+    try:
+        items = get_nested_value(record, "connectivity_tracking.required_nodes")
+    except Exception:
+        items = []
+    return [OntapIgroupConnectivityTrackingRequiredNode(**item) for item in items]
 
 
 def _transform_igroups(record: dict[str, Any]) -> list[OntapIgroupIgroup]:
@@ -55,12 +52,13 @@ def _transform_parent_igroups(record: dict[str, Any]) -> list[OntapIgroupParentI
 
 def _transform_replication_error_summary_arguments(
     record: dict[str, Any],
-) -> list[OntapIgroupArgument]:
-    """Transform replication.error.summary.arguments into OntapIgroupArgument list."""
-    return [
-        OntapIgroupArgument(**item)
-        for item in record.get("replication.error.summary.arguments", [])
-    ]
+) -> list[OntapIgroupReplicationErrorSummaryArgument]:
+    """Transform replication.error.summary.arguments into OntapIgroupReplicationErrorSummaryArgument list."""
+    try:
+        items = get_nested_value(record, "replication.error.summary.arguments")
+    except Exception:
+        items = []
+    return [OntapIgroupReplicationErrorSummaryArgument(**item) for item in items]
 
 
 ONTAPIGROUP_MAPPING = TypeMapping(
@@ -74,19 +72,18 @@ ONTAPIGROUP_MAPPING = TypeMapping(
             api_path="comment",
         ),
         FieldMapping(
-            cache_attr="connectivity_tracking_alerts",
+            cache_attr="connectivity_tracking.alerts",
             api_path="connectivity_tracking.alerts",
-            transform=_transform_connectivity_tracking_alerts,
             default=[],
             requires_explicit_fetch=True,
         ),
         FieldMapping(
-            cache_attr="connectivity_tracking_connection_state",
+            cache_attr="connectivity_tracking.connection_state",
             api_path="connectivity_tracking.connection_state",
             requires_explicit_fetch=True,
         ),
         FieldMapping(
-            cache_attr="connectivity_tracking_required_nodes",
+            cache_attr="connectivity_tracking.required_nodes",
             api_path="connectivity_tracking.required_nodes",
             transform=_transform_connectivity_tracking_required_nodes,
             default=[],
@@ -133,11 +130,11 @@ ONTAPIGROUP_MAPPING = TypeMapping(
             requires_explicit_fetch=True,
         ),
         FieldMapping(
-            cache_attr="portset_name",
+            cache_attr="portset.name",
             api_path="portset.name",
         ),
         FieldMapping(
-            cache_attr="portset_uuid",
+            cache_attr="portset.uuid",
             api_path="portset.uuid",
         ),
         FieldMapping(
@@ -145,42 +142,42 @@ ONTAPIGROUP_MAPPING = TypeMapping(
             api_path="protocol",
         ),
         FieldMapping(
-            cache_attr="replication_error_igroup_local_svm",
+            cache_attr="replication.error.igroup.local_svm",
             api_path="replication.error.igroup.local_svm",
             default=False,
         ),
         FieldMapping(
-            cache_attr="replication_error_igroup_name",
+            cache_attr="replication.error.igroup.name",
             api_path="replication.error.igroup.name",
         ),
         FieldMapping(
-            cache_attr="replication_error_igroup_uuid",
+            cache_attr="replication.error.igroup.uuid",
             api_path="replication.error.igroup.uuid",
         ),
         FieldMapping(
-            cache_attr="replication_error_summary_arguments",
+            cache_attr="replication.error.summary.arguments",
             api_path="replication.error.summary.arguments",
             transform=_transform_replication_error_summary_arguments,
             default=[],
         ),
         FieldMapping(
-            cache_attr="replication_error_summary_code",
+            cache_attr="replication.error.summary.code",
             api_path="replication.error.summary.code",
         ),
         FieldMapping(
-            cache_attr="replication_error_summary_message",
+            cache_attr="replication.error.summary.message",
             api_path="replication.error.summary.message",
         ),
         FieldMapping(
-            cache_attr="replication_peer_svm_name",
+            cache_attr="replication.peer_svm.name",
             api_path="replication.peer_svm.name",
         ),
         FieldMapping(
-            cache_attr="replication_peer_svm_uuid",
+            cache_attr="replication.peer_svm.uuid",
             api_path="replication.peer_svm.uuid",
         ),
         FieldMapping(
-            cache_attr="replication_state",
+            cache_attr="replication.state",
             api_path="replication.state",
         ),
         FieldMapping(
@@ -189,25 +186,25 @@ ONTAPIGROUP_MAPPING = TypeMapping(
             default=False,
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(
-            cache_attr="target_firmware_revision",
+            cache_attr="target.firmware_revision",
             api_path="target.firmware_revision",
             requires_explicit_fetch=True,
         ),
         FieldMapping(
-            cache_attr="target_product_id",
+            cache_attr="target.product_id",
             api_path="target.product_id",
             requires_explicit_fetch=True,
         ),
         FieldMapping(
-            cache_attr="target_vendor_id",
+            cache_attr="target.vendor_id",
             api_path="target.vendor_id",
             requires_explicit_fetch=True,
         ),

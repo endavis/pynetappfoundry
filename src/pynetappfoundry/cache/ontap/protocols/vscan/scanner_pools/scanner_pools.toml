@@ -3,10 +3,10 @@ path = "/protocols/vscan/{svm.uuid}/scanner-pools"
 schema = "vscan_scanner_pool"
 class_name = "OntapVscanScannerPool"
 
-[fields.cluster_name]
+[fields."cluster.name"]
 cache_strategy = "cache"
 
-[fields.cluster_uuid]
+[fields."cluster.uuid"]
 cache_strategy = "cache"
 
 [fields.name]
@@ -21,8 +21,8 @@ cache_strategy = "cache"
 [fields.servers]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"

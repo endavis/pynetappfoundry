@@ -75,7 +75,7 @@ class TestCacheSchemaCommand:
 
         assert result.exit_code == 0
         # Check deeply nested paths
-        assert "network.ip_interfaces[N].ip_address" in result.output
+        assert "network.ip_interfaces[N].ip.address" in result.output
         assert "storage.aggregates[N].name" in result.output
         assert "license_packages[N].name" in result.output
 

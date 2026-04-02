@@ -6,14 +6,14 @@ class_name = "OntapSvmPeerPermission"
 [fields.applications]
 cache_strategy = "cache"
 
-[fields.cluster_peer_name]
+[fields."cluster_peer.name"]
 cache_strategy = "cache"
 
-[fields.cluster_peer_uuid]
+[fields."cluster_peer.uuid"]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"

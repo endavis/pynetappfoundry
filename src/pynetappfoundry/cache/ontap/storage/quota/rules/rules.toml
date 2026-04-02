@@ -3,34 +3,34 @@ path = "/storage/quota/rules"
 schema = "quota_rule"
 class_name = "OntapQuotaRule"
 
-[fields.files_hard_limit]
+[fields."files.hard_limit"]
 cache_strategy = "realtime"
 
-[fields.files_soft_limit]
+[fields."files.soft_limit"]
 cache_strategy = "realtime"
 
-[fields.group_id]
+[fields."group.id"]
 cache_strategy = "cache"
 
-[fields.group_name]
+[fields."group.name"]
 cache_strategy = "cache"
 
-[fields.qtree_id]
+[fields."qtree.id"]
 cache_strategy = "cache"
 
-[fields.qtree_name]
+[fields."qtree.name"]
 cache_strategy = "cache"
 
-[fields.space_hard_limit]
+[fields."space.hard_limit"]
 cache_strategy = "realtime"
 
-[fields.space_soft_limit]
+[fields."space.soft_limit"]
 cache_strategy = "realtime"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.type_]
@@ -45,8 +45,8 @@ cache_strategy = "cache"
 [fields.uuid]
 cache_strategy = "cache"
 
-[fields.volume_name]
+[fields."volume.name"]
 cache_strategy = "cache"
 
-[fields.volume_uuid]
+[fields."volume.uuid"]
 cache_strategy = "cache"

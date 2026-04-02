@@ -8,14 +8,8 @@ from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.cluster.metrocluster.dr_groups.model import (
     OntapMetroclusterDrGroup,
-    OntapMetroclusterDrGroupDrPair,
     OntapMetroclusterDrGroupMccipPort,
 )
-
-
-def _transform_dr_pairs(record: dict[str, Any]) -> list[OntapMetroclusterDrGroupDrPair]:
-    """Transform dr_pairs into OntapMetroclusterDrGroupDrPair list."""
-    return [OntapMetroclusterDrGroupDrPair(**item) for item in record.get("dr_pairs", [])]
 
 
 def _transform_mccip_ports(record: dict[str, Any]) -> list[OntapMetroclusterDrGroupMccipPort]:
@@ -32,7 +26,6 @@ ONTAPMETROCLUSTERDRGROUP_MAPPING = TypeMapping(
         FieldMapping(
             cache_attr="dr_pairs",
             api_path="dr_pairs",
-            transform=_transform_dr_pairs,
             default=[],
         ),
         FieldMapping(
@@ -47,11 +40,11 @@ ONTAPMETROCLUSTERDRGROUP_MAPPING = TypeMapping(
             default=[],
         ),
         FieldMapping(
-            cache_attr="partner_cluster_name",
+            cache_attr="partner_cluster.name",
             api_path="partner_cluster.name",
         ),
         FieldMapping(
-            cache_attr="partner_cluster_uuid",
+            cache_attr="partner_cluster.uuid",
             api_path="partner_cluster.uuid",
         ),
     ),

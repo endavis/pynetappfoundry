@@ -6,13 +6,13 @@ class_name = "OntapEmsFilterRuleResponse"
 [fields.index]
 cache_strategy = "cache"
 
-[fields.message_criteria_name_pattern]
+[fields."message_criteria.name_pattern"]
 cache_strategy = "cache"
 
-[fields.message_criteria_severities]
+[fields."message_criteria.severities"]
 cache_strategy = "cache"
 
-[fields.message_criteria_snmp_trap_types]
+[fields."message_criteria.snmp_trap_types"]
 cache_strategy = "cache"
 
 [fields.parameter_criteria]

@@ -15,9 +15,25 @@ from pynetappfoundry.cli.commands.reports.html import (
     HTMLReportBuilder,
 )
 from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
-from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
-from pynetappfoundry.models.ontap.protocols.cifs.services.model import OntapCifsService
-from pynetappfoundry.models.ontap.svm.svms.model import OntapSvm, OntapSvmIpInterface
+from pynetappfoundry.models.ontap.cluster.nodes.model import (
+    OntapNodeResponse,
+    OntapNodeResponseManagementInterface,
+    OntapNodeResponseManagementInterfaceIp,
+)
+from pynetappfoundry.models.ontap.protocols.cifs.services.model import (
+    OntapCifsService,
+    OntapCifsServiceAdDomain,
+    OntapCifsServiceSecurity,
+)
+from pynetappfoundry.models.ontap.svm.svms.model import (
+    OntapSvm,
+    OntapSvmCifs,
+    OntapSvmDns,
+    OntapSvmIpInterface,
+    OntapSvmIpInterfaceIp,
+    OntapSvmIpInterfaceLocation,
+    OntapSvmIpInterfaceLocationHomeNode,
+)
 
 
 @pytest.fixture
@@ -120,12 +136,16 @@ def mock_nodes() -> list[OntapNodeResponse]:
         OntapNodeResponse(
             name="test-cluster-1-01",
             serial_number="SN123456",
-            management_interface_ip_address="10.0.0.11",
+            management_interface=OntapNodeResponseManagementInterface(
+                ip=OntapNodeResponseManagementInterfaceIp(address="10.0.0.11"),
+            ),
         ),
         OntapNodeResponse(
             name="test-cluster-1-02",
             serial_number="SN123457",
-            management_interface_ip_address="10.0.0.12",
+            management_interface=OntapNodeResponseManagementInterface(
+                ip=OntapNodeResponseManagementInterfaceIp(address="10.0.0.12"),
+            ),
         ),
     ]
 
@@ -140,14 +160,16 @@ def mock_svms() -> list[OntapSvm]:
             ip_interfaces=[
                 OntapSvmIpInterface(
                     name="lif1",
-                    ip_address="10.0.0.100",
-                    ip_netmask="24",
-                    location_home_node_name="test-cluster-1-01",
+                    ip=OntapSvmIpInterfaceIp(address="10.0.0.100", netmask="24"),
+                    location=OntapSvmIpInterfaceLocation(
+                        home_node=OntapSvmIpInterfaceLocationHomeNode(
+                            name="test-cluster-1-01",
+                        ),
+                    ),
                 ),
             ],
-            dns_domains=["example.com"],
-            dns_servers=["8.8.8.8"],
-            cifs_name="cifs1",
+            dns=OntapSvmDns(domains=["example.com"], servers=["8.8.8.8"]),
+            cifs=OntapSvmCifs(name="cifs1"),
         ),
     ]
 
@@ -159,19 +181,23 @@ def mock_cifs_services() -> list[OntapCifsService]:
         OntapCifsService(
             name="cifs1",
             enabled=True,
-            ad_domain_fqdn="ad.example.com",
-            ad_domain_organizational_unit="OU=Servers",
-            security_smb_signing=True,
-            security_use_start_tls=False,
-            security_lm_compatibility_level="ntlm_ntlmv2_krb",
-            security_smb_encryption=False,
-            security_session_security="none",
-            security_ldap_referral_enabled=True,
-            security_use_ldaps=False,
-            security_encrypt_dc_connection=False,
-            security_aes_netlogon_enabled=True,
-            security_try_ldap_channel_binding=True,
-            security_advertised_kdc_encryptions=["aes128", "aes256"],
+            ad_domain=OntapCifsServiceAdDomain(
+                fqdn="ad.example.com",
+                organizational_unit="OU=Servers",
+            ),
+            security=OntapCifsServiceSecurity(
+                smb_signing=True,
+                use_start_tls=False,
+                lm_compatibility_level="ntlm_ntlmv2_krb",
+                smb_encryption=False,
+                session_security="none",
+                ldap_referral_enabled=True,
+                use_ldaps=False,
+                encrypt_dc_connection=False,
+                aes_netlogon_enabled=True,
+                try_ldap_channel_binding=True,
+                advertised_kdc_encryptions=["aes128", "aes256"],
+            ),
         ),
     ]
 
@@ -782,12 +808,16 @@ class TestHTMLFileGeneration:
                 OntapNodeResponse(
                     name="cluster-01",
                     serial_number="SN-ABC123456",
-                    management_interface_ip_address="10.0.0.11",
+                    management_interface=OntapNodeResponseManagementInterface(
+                        ip=OntapNodeResponseManagementInterfaceIp(address="10.0.0.11"),
+                    ),
                 ),
                 OntapNodeResponse(
                     name="cluster-02",
                     serial_number="SN-ABC123457",
-                    management_interface_ip_address="10.0.0.12",
+                    management_interface=OntapNodeResponseManagementInterface(
+                        ip=OntapNodeResponseManagementInterfaceIp(address="10.0.0.12"),
+                    ),
                 ),
             ],
             "svms": [
@@ -797,20 +827,25 @@ class TestHTMLFileGeneration:
                     ip_interfaces=[
                         OntapSvmIpInterface(
                             name="lif-data-01",
-                            ip_address="10.0.1.100",
-                            ip_netmask="24",
-                            location_home_node_name="cluster-01",
+                            ip=OntapSvmIpInterfaceIp(address="10.0.1.100", netmask="24"),
+                            location=OntapSvmIpInterfaceLocation(
+                                home_node=OntapSvmIpInterfaceLocationHomeNode(
+                                    name="cluster-01",
+                                ),
+                            ),
                         ),
                         OntapSvmIpInterface(
                             name="lif-data-02",
-                            ip_address="10.0.1.101",
-                            ip_netmask="24",
-                            location_home_node_name="cluster-02",
+                            ip=OntapSvmIpInterfaceIp(address="10.0.1.101", netmask="24"),
+                            location=OntapSvmIpInterfaceLocation(
+                                home_node=OntapSvmIpInterfaceLocationHomeNode(
+                                    name="cluster-02",
+                                ),
+                            ),
                         ),
                     ],
-                    dns_domains=["corp.example.com"],
-                    dns_servers=["10.0.0.10"],
-                    cifs_name="CIFS-SVM01",
+                    dns=OntapSvmDns(domains=["corp.example.com"], servers=["10.0.0.10"]),
+                    cifs=OntapSvmCifs(name="CIFS-SVM01"),
                 ),
                 OntapSvm(
                     name="svm-data-02",
@@ -818,34 +853,38 @@ class TestHTMLFileGeneration:
                     ip_interfaces=[
                         OntapSvmIpInterface(
                             name="lif-data-03",
-                            ip_address="10.0.2.100",
-                            ip_netmask="24",
-                            location_home_node_name="cluster-01",
+                            ip=OntapSvmIpInterfaceIp(address="10.0.2.100", netmask="24"),
+                            location=OntapSvmIpInterfaceLocation(
+                                home_node=OntapSvmIpInterfaceLocationHomeNode(
+                                    name="cluster-01",
+                                ),
+                            ),
                         ),
                     ],
-                    dns_domains=["corp.example.com"],
-                    dns_servers=["10.0.0.10"],
+                    dns=OntapSvmDns(domains=["corp.example.com"], servers=["10.0.0.10"]),
                 ),
             ],
             "cifs_services": [
                 OntapCifsService(
                     name="CIFS-SVM01",
                     enabled=True,
-                    ad_domain_fqdn="ad.corp.example.com",
-                    ad_domain_organizational_unit=(
-                        "OU=NetApp,OU=Servers,DC=corp,DC=example,DC=com"
+                    ad_domain=OntapCifsServiceAdDomain(
+                        fqdn="ad.corp.example.com",
+                        organizational_unit=("OU=NetApp,OU=Servers,DC=corp,DC=example,DC=com"),
                     ),
-                    security_smb_signing=True,
-                    security_use_start_tls=False,
-                    security_lm_compatibility_level="ntlm_ntlmv2_krb",
-                    security_smb_encryption=True,
-                    security_session_security="seal",
-                    security_ldap_referral_enabled=True,
-                    security_use_ldaps=True,
-                    security_encrypt_dc_connection=True,
-                    security_aes_netlogon_enabled=True,
-                    security_try_ldap_channel_binding=True,
-                    security_advertised_kdc_encryptions=["aes128", "aes256", "des3"],
+                    security=OntapCifsServiceSecurity(
+                        smb_signing=True,
+                        use_start_tls=False,
+                        lm_compatibility_level="ntlm_ntlmv2_krb",
+                        smb_encryption=True,
+                        session_security="seal",
+                        ldap_referral_enabled=True,
+                        use_ldaps=True,
+                        encrypt_dc_connection=True,
+                        aes_netlogon_enabled=True,
+                        try_ldap_channel_binding=True,
+                        advertised_kdc_encryptions=["aes128", "aes256", "des3"],
+                    ),
                 ),
             ],
         }
@@ -1165,12 +1204,16 @@ class TestCloudSections:
             OntapNodeResponse(
                 name="test-cluster-01",
                 serial_number="SN001",
-                management_interface_ip_address="10.0.0.11",
+                management_interface=OntapNodeResponseManagementInterface(
+                    ip=OntapNodeResponseManagementInterfaceIp(address="10.0.0.11"),
+                ),
             ),
             OntapNodeResponse(
                 name="test-cluster-02",
                 serial_number="SN002",
-                management_interface_ip_address="10.0.0.12",
+                management_interface=OntapNodeResponseManagementInterface(
+                    ip=OntapNodeResponseManagementInterfaceIp(address="10.0.0.12"),
+                ),
             ),
         ]
         return cluster

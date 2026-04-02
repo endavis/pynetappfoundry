@@ -18,11 +18,11 @@ ONTAPNETWORKHTTPPROXY_MAPPING = TypeMapping(
             default=False,
         ),
         FieldMapping(
-            cache_attr="ipspace_name",
+            cache_attr="ipspace.name",
             api_path="ipspace.name",
         ),
         FieldMapping(
-            cache_attr="ipspace_uuid",
+            cache_attr="ipspace.uuid",
             api_path="ipspace.uuid",
         ),
         FieldMapping(
@@ -43,11 +43,11 @@ ONTAPNETWORKHTTPPROXY_MAPPING = TypeMapping(
             api_path="server",
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(

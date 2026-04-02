@@ -7,9 +7,17 @@ from pydantic import Field
 from pynetappfoundry.models._base import OntapModel
 
 
-class OntapAutoUpdateStatusArgument(OntapModel):
-    """OntapAutoUpdateStatusArgument sub-model for arguments."""
+class OntapAutoUpdateStatusStatusArgument(OntapModel):
+    """OntapAutoUpdateStatusStatusArgument sub-model for arguments."""
 
+    code: str = ""
+    message: str = ""
+
+
+class OntapAutoUpdateStatusStatus(OntapModel):
+    """OntapAutoUpdateStatusStatus sub-model for status."""
+
+    arguments: list[OntapAutoUpdateStatusStatusArgument] = Field(default_factory=list)
     code: str = ""
     message: str = ""
 
@@ -32,7 +40,5 @@ class OntapAutoUpdateStatus(OntapModel):
     scheduled_time: str = ""
     start_time: str = ""
     state: str = ""
-    status_arguments: list[OntapAutoUpdateStatusArgument] = Field(default_factory=list)
-    status_code: str = ""
-    status_message: str = ""
+    status: OntapAutoUpdateStatusStatus = Field(default_factory=OntapAutoUpdateStatusStatus)
     uuid: str = ""

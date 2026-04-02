@@ -15,10 +15,10 @@ cache_strategy = "cache"
 [fields.dedup_savings]
 cache_strategy = "realtime"
 
-[fields.delta_size_consumed]
+[fields."delta.size_consumed"]
 cache_strategy = "realtime"
 
-[fields.delta_time_elapsed]
+[fields."delta.time_elapsed"]
 cache_strategy = "cache"
 
 [fields.expiry_time]
@@ -33,7 +33,7 @@ cache_strategy = "cache"
 [fields.owners]
 cache_strategy = "cache"
 
-[fields.provenance_volume_uuid]
+[fields."provenance_volume.uuid"]
 cache_strategy = "cache"
 
 [fields.reclaimable_space]
@@ -43,13 +43,16 @@ requires_explicit_fetch = true
 [fields.size]
 cache_strategy = "realtime"
 
-[fields.snaplock_expired]
+[fields."snaplock.expired"]
+cache_strategy = "cache"
+
+[fields."snaplock.expiry_time"]
+cache_strategy = "cache"
+
+[fields."snaplock.time_until_expiry"]
 cache_strategy = "cache"
 
 [fields.snaplock_expiry_time]
-cache_strategy = "cache"
-
-[fields.snaplock_time_until_expiry]
 cache_strategy = "cache"
 
 [fields.snapmirror_label]
@@ -58,10 +61,10 @@ cache_strategy = "cache"
 [fields.state]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.uuid]
@@ -73,8 +76,8 @@ cache_strategy = "realtime"
 [fields.version_uuid]
 cache_strategy = "cache"
 
-[fields.volume_name]
+[fields."volume.name"]
 cache_strategy = "cache"
 
-[fields.volume_uuid]
+[fields."volume.uuid"]
 cache_strategy = "cache"

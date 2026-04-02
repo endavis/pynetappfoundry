@@ -6,7 +6,7 @@ class_name = "OntapLicenseManagerResponse"
 [fields.default]
 cache_strategy = "cache"
 
-[fields.uri_host]
+[fields."uri.host"]
 cache_strategy = "cache"
 
 [fields.uuid]

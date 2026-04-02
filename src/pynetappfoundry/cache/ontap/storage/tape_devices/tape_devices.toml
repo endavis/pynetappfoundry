@@ -3,10 +3,10 @@ path = "/storage/tape-devices"
 schema = "tape_device"
 class_name = "OntapTapeDevice"
 
-[fields.alias_mapping]
+[fields."alias.mapping"]
 cache_strategy = "cache"
 
-[fields.alias_name]
+[fields."alias.name"]
 cache_strategy = "cache"
 
 [fields.aliases]
@@ -39,19 +39,19 @@ cache_strategy = "cache"
 [fields.interface]
 cache_strategy = "cache"
 
-[fields.node_name]
+[fields."node.name"]
 cache_strategy = "cache"
 
-[fields.node_uuid]
+[fields."node.uuid"]
 cache_strategy = "cache"
 
 [fields.online]
 cache_strategy = "cache"
 
-[fields.position_count]
+[fields."position.count"]
 cache_strategy = "cache"
 
-[fields.position_operation]
+[fields."position.operation"]
 cache_strategy = "cache"
 
 [fields.reservation_type]
@@ -63,7 +63,7 @@ cache_strategy = "cache"
 [fields.serial_number]
 cache_strategy = "cache"
 
-[fields.storage_port_name]
+[fields."storage_port.name"]
 cache_strategy = "cache"
 
 [fields.type_]

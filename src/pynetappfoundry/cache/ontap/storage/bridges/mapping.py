@@ -1,3 +1,4 @@
+# ruff: noqa: E501
 """OntapStorageBridge type mapping."""
 
 from __future__ import annotations
@@ -8,13 +9,14 @@ from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.storage.bridges.model import (
     OntapStorageBridge,
-    OntapStorageBridgeArgument,
     OntapStorageBridgeError,
     OntapStorageBridgeFcPort,
+    OntapStorageBridgeLastRebootReasonArgument,
     OntapStorageBridgePath,
     OntapStorageBridgePowerSupplyUnit,
     OntapStorageBridgeSasPort,
 )
+from pynetappfoundry.utils.dict_path import get_nested_value
 
 
 def _transform_errors(record: dict[str, Any]) -> list[OntapStorageBridgeError]:
@@ -29,12 +31,13 @@ def _transform_fc_ports(record: dict[str, Any]) -> list[OntapStorageBridgeFcPort
 
 def _transform_last_reboot_reason_arguments(
     record: dict[str, Any],
-) -> list[OntapStorageBridgeArgument]:
-    """Transform last_reboot.reason.arguments into OntapStorageBridgeArgument list."""
-    return [
-        OntapStorageBridgeArgument(**item)
-        for item in record.get("last_reboot.reason.arguments", [])
-    ]
+) -> list[OntapStorageBridgeLastRebootReasonArgument]:
+    """Transform last_reboot.reason.arguments into OntapStorageBridgeLastRebootReasonArgument list."""
+    try:
+        items = get_nested_value(record, "last_reboot.reason.arguments")
+    except Exception:
+        items = []
+    return [OntapStorageBridgeLastRebootReasonArgument(**item) for item in items]
 
 
 def _transform_paths(record: dict[str, Any]) -> list[OntapStorageBridgePath]:
@@ -92,21 +95,21 @@ ONTAPSTORAGEBRIDGE_MAPPING = TypeMapping(
             api_path="ip_address",
         ),
         FieldMapping(
-            cache_attr="last_reboot_reason_arguments",
+            cache_attr="last_reboot.reason.arguments",
             api_path="last_reboot.reason.arguments",
             transform=_transform_last_reboot_reason_arguments,
             default=[],
         ),
         FieldMapping(
-            cache_attr="last_reboot_reason_code",
+            cache_attr="last_reboot.reason.code",
             api_path="last_reboot.reason.code",
         ),
         FieldMapping(
-            cache_attr="last_reboot_reason_message",
+            cache_attr="last_reboot.reason.message",
             api_path="last_reboot.reason.message",
         ),
         FieldMapping(
-            cache_attr="last_reboot_time",
+            cache_attr="last_reboot.time",
             api_path="last_reboot.time",
         ),
         FieldMapping(
@@ -162,26 +165,26 @@ ONTAPSTORAGEBRIDGE_MAPPING = TypeMapping(
             api_path="symbolic_name",
         ),
         FieldMapping(
-            cache_attr="temperature_sensor_maximum",
+            cache_attr="temperature_sensor.maximum",
             api_path="temperature_sensor.maximum",
             default=0,
         ),
         FieldMapping(
-            cache_attr="temperature_sensor_minimum",
+            cache_attr="temperature_sensor.minimum",
             api_path="temperature_sensor.minimum",
             default=0,
         ),
         FieldMapping(
-            cache_attr="temperature_sensor_name",
+            cache_attr="temperature_sensor.name",
             api_path="temperature_sensor.name",
         ),
         FieldMapping(
-            cache_attr="temperature_sensor_reading",
+            cache_attr="temperature_sensor.reading",
             api_path="temperature_sensor.reading",
             default=0,
         ),
         FieldMapping(
-            cache_attr="temperature_sensor_state",
+            cache_attr="temperature_sensor.state",
             api_path="temperature_sensor.state",
         ),
         FieldMapping(

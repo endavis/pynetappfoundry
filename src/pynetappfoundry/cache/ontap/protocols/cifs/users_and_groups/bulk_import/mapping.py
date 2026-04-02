@@ -21,11 +21,11 @@ ONTAPLOCALCIFSUSERSANDGROUPSIMPORT_MAPPING = TypeMapping(
             api_path="decryption_password",
         ),
         FieldMapping(
-            cache_attr="detailed_status_code",
+            cache_attr="detailed_status.code",
             api_path="detailed_status.code",
         ),
         FieldMapping(
-            cache_attr="detailed_status_message",
+            cache_attr="detailed_status.message",
             api_path="detailed_status.message",
         ),
         FieldMapping(
@@ -39,15 +39,15 @@ ONTAPLOCALCIFSUSERSANDGROUPSIMPORT_MAPPING = TypeMapping(
             default=0,
         ),
         FieldMapping(
-            cache_attr="import_uri_password",
+            cache_attr="import_uri.password",
             api_path="import_uri.password",
         ),
         FieldMapping(
-            cache_attr="import_uri_path",
+            cache_attr="import_uri.path",
             api_path="import_uri.path",
         ),
         FieldMapping(
-            cache_attr="import_uri_username",
+            cache_attr="import_uri.username",
             api_path="import_uri.username",
         ),
         FieldMapping(
@@ -55,23 +55,23 @@ ONTAPLOCALCIFSUSERSANDGROUPSIMPORT_MAPPING = TypeMapping(
             api_path="state",
         ),
         FieldMapping(
-            cache_attr="status_uri_password",
+            cache_attr="status_uri.password",
             api_path="status_uri.password",
         ),
         FieldMapping(
-            cache_attr="status_uri_path",
+            cache_attr="status_uri.path",
             api_path="status_uri.path",
         ),
         FieldMapping(
-            cache_attr="status_uri_username",
+            cache_attr="status_uri.username",
             api_path="status_uri.username",
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
     ),

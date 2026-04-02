@@ -7,16 +7,22 @@ from pydantic import Field
 from pynetappfoundry.models._base import OntapModel
 
 
+class OntapVscanScope(OntapModel):
+    """OntapVscanScope sub-model for scope."""
+
+    exclude_extensions: list[str] = Field(default_factory=list)
+    exclude_paths: list[str] = Field(default_factory=list)
+    include_extensions: list[str] = Field(default_factory=list)
+    max_file_size: int = 0
+    only_execute_access: bool = False
+    scan_readonly_volumes: bool = False
+    scan_without_extension: bool = False
+
+
 class OntapVscan(OntapModel):
     """OntapVscan information."""
 
     enabled: bool = False
     mandatory: bool = False
     name: str = ""
-    scope_exclude_extensions: list[str] = Field(default_factory=list)
-    scope_exclude_paths: list[str] = Field(default_factory=list)
-    scope_include_extensions: list[str] = Field(default_factory=list)
-    scope_max_file_size: int = 0
-    scope_only_execute_access: bool = False
-    scope_scan_readonly_volumes: bool = False
-    scope_scan_without_extension: bool = False
+    scope: OntapVscanScope = Field(default_factory=OntapVscanScope)

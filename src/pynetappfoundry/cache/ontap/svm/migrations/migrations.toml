@@ -15,19 +15,19 @@ cache_strategy = "cache"
 [fields.current_operation]
 cache_strategy = "cache"
 
-[fields.destination_ipspace_name]
+[fields."destination.ipspace.name"]
 cache_strategy = "cache"
 
-[fields.destination_ipspace_uuid]
+[fields."destination.ipspace.uuid"]
 cache_strategy = "cache"
 
-[fields.destination_volume_placement_aggregates]
+[fields."destination.volume_placement.aggregates"]
 cache_strategy = "cache"
 
-[fields.destination_volume_placement_volume_aggregate_pairs]
+[fields."destination.volume_placement.volume_aggregate_pairs"]
 cache_strategy = "cache"
 
-[fields.ip_interface_placement_ip_interfaces]
+[fields."ip_interface_placement.ip_interfaces"]
 cache_strategy = "cache"
 
 [fields.last_failed_state]
@@ -45,40 +45,40 @@ cache_strategy = "cache"
 [fields.restart_count]
 cache_strategy = "cache"
 
-[fields.source_cluster_name]
+[fields."source.cluster.name"]
 cache_strategy = "cache"
 
-[fields.source_cluster_uuid]
+[fields."source.cluster.uuid"]
 cache_strategy = "cache"
 
-[fields.source_svm_name]
+[fields."source.svm.name"]
 cache_strategy = "cache"
 
-[fields.source_svm_uuid]
+[fields."source.svm.uuid"]
 cache_strategy = "cache"
 
 [fields.throttle]
 cache_strategy = "cache"
 
-[fields.time_metrics_cutover_complete_time]
+[fields."time_metrics.cutover_complete_time"]
 cache_strategy = "cache"
 
-[fields.time_metrics_cutover_start_time]
+[fields."time_metrics.cutover_start_time"]
 cache_strategy = "cache"
 
-[fields.time_metrics_cutover_trigger_time]
+[fields."time_metrics.cutover_trigger_time"]
 cache_strategy = "cache"
 
-[fields.time_metrics_end_time]
+[fields."time_metrics.end_time"]
 cache_strategy = "cache"
 
-[fields.time_metrics_last_pause_time]
+[fields."time_metrics.last_pause_time"]
 cache_strategy = "cache"
 
-[fields.time_metrics_last_resume_time]
+[fields."time_metrics.last_resume_time"]
 cache_strategy = "cache"
 
-[fields.time_metrics_start_time]
+[fields."time_metrics.start_time"]
 cache_strategy = "cache"
 
 [fields.uuid]

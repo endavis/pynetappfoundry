@@ -2,7 +2,16 @@
 
 from __future__ import annotations
 
+from pydantic import Field
+
 from pynetappfoundry.models._base import OntapModel
+
+
+class OntapS3UserSvm(OntapModel):
+    """OntapS3UserSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapS3User(OntapModel):
@@ -14,5 +23,4 @@ class OntapS3User(OntapModel):
     key_time_to_live: str = ""
     name: str = ""
     secret_key: str = ""
-    svm_name: str = ""
-    svm_uuid: str = ""
+    svm: OntapS3UserSvm = Field(default_factory=OntapS3UserSvm)

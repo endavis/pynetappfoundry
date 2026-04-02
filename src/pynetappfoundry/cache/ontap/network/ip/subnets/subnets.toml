@@ -9,10 +9,10 @@ cache_strategy = "cache"
 [fields.available_ip_ranges]
 cache_strategy = "cache"
 
-[fields.broadcast_domain_name]
+[fields."broadcast_domain.name"]
 cache_strategy = "cache"
 
-[fields.broadcast_domain_uuid]
+[fields."broadcast_domain.uuid"]
 cache_strategy = "cache"
 
 [fields.fail_if_lifs_conflict]
@@ -24,22 +24,22 @@ cache_strategy = "cache"
 [fields.ip_ranges]
 cache_strategy = "cache"
 
-[fields.ipspace_name]
+[fields."ipspace.name"]
 cache_strategy = "cache"
 
-[fields.ipspace_uuid]
+[fields."ipspace.uuid"]
 cache_strategy = "cache"
 
 [fields.name]
 cache_strategy = "cache"
 
-[fields.subnet_address]
+[fields."subnet.address"]
 cache_strategy = "cache"
 
-[fields.subnet_family]
+[fields."subnet.family"]
 cache_strategy = "cache"
 
-[fields.subnet_netmask]
+[fields."subnet.netmask"]
 cache_strategy = "cache"
 
 [fields.total_count]

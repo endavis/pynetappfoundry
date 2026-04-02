@@ -14,18 +14,36 @@ class OntapFcLoginIgroup(OntapModel):
     uuid: str = ""
 
 
+class OntapFcLoginInitiator(OntapModel):
+    """OntapFcLoginInitiator sub-model for initiator."""
+
+    aliases: list[str] = Field(default_factory=list)
+    comment: str = ""
+    port_address: str = ""
+    wwnn: str = ""
+    wwpn: str = ""
+
+
+class OntapFcLoginInterface(OntapModel):
+    """OntapFcLoginInterface sub-model for interface."""
+
+    name: str = ""
+    uuid: str = ""
+    wwpn: str = ""
+
+
+class OntapFcLoginSvm(OntapModel):
+    """OntapFcLoginSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
+
+
 class OntapFcLogin(OntapModel):
     """OntapFcLogin information."""
 
     igroups: list[OntapFcLoginIgroup] = Field(default_factory=list)
-    initiator_aliases: list[str] = Field(default_factory=list)
-    initiator_comment: str = ""
-    initiator_port_address: str = ""
-    initiator_wwnn: str = ""
-    initiator_wwpn: str = ""
-    interface_name: str = ""
-    interface_uuid: str = ""
-    interface_wwpn: str = ""
+    initiator: OntapFcLoginInitiator = Field(default_factory=OntapFcLoginInitiator)
+    interface: OntapFcLoginInterface = Field(default_factory=OntapFcLoginInterface)
     protocol: str = ""
-    svm_name: str = ""
-    svm_uuid: str = ""
+    svm: OntapFcLoginSvm = Field(default_factory=OntapFcLoginSvm)

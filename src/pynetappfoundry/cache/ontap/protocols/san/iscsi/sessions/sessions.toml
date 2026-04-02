@@ -9,22 +9,22 @@ cache_strategy = "cache"
 [fields.igroups]
 cache_strategy = "cache"
 
-[fields.initiator_alias]
+[fields."initiator.alias"]
 cache_strategy = "cache"
 
-[fields.initiator_comment]
+[fields."initiator.comment"]
 cache_strategy = "cache"
 
-[fields.initiator_name]
+[fields."initiator.name"]
 cache_strategy = "cache"
 
 [fields.isid]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.target_portal_group]

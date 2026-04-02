@@ -12,7 +12,7 @@ ONTAPS3USER_MAPPING = TypeMapping(
     api_endpoint="/protocols/s3/services/{svm.uuid}/users?fields=*",
     api_type="ontap",
     parent_mapping="OntapS3Service",
-    parent_id_field="svm_uuid",
+    parent_id_field="svm.uuid",
     fields=(
         FieldMapping(
             cache_attr="access_key",
@@ -39,11 +39,11 @@ ONTAPS3USER_MAPPING = TypeMapping(
             api_path="secret_key",
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
     ),

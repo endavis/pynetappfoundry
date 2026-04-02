@@ -3,10 +3,10 @@ path = "/protocols/san/lun-maps/{lun.uuid}/{igroup.uuid}/reporting-nodes"
 schema = "lun_map_reporting_node"
 class_name = "OntapLunMapReportingNode"
 
-[fields.igroup_uuid]
+[fields."igroup.uuid"]
 cache_strategy = "cache"
 
-[fields.lun_uuid]
+[fields."lun.uuid"]
 cache_strategy = "cache"
 
 [fields.name]

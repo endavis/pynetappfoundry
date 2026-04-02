@@ -7,6 +7,13 @@ from pydantic import Field
 from pynetappfoundry.models._base import OntapModel
 
 
+class OntapMetroclusterOperationNode(OntapModel):
+    """OntapMetroclusterOperationNode sub-model for node."""
+
+    name: str = ""
+    uuid: str = ""
+
+
 class OntapMetroclusterOperation(OntapModel):
     """OntapMetroclusterOperation information."""
 
@@ -14,8 +21,7 @@ class OntapMetroclusterOperation(OntapModel):
     command_line: str = ""
     end_time: str = ""
     errors: list[str] = Field(default_factory=list)
-    node_name: str = ""
-    node_uuid: str = ""
+    node: OntapMetroclusterOperationNode = Field(default_factory=OntapMetroclusterOperationNode)
     start_time: str = ""
     state: str = ""
     type_: str = ""

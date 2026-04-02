@@ -2,20 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.models.ontap.cluster.firmware.history.model import (
-    OntapFirmwareHistory,
-    OntapFirmwareHistoryUpdateStatu,
-)
-
-
-def _transform_update_status(record: dict[str, Any]) -> list[OntapFirmwareHistoryUpdateStatu]:
-    """Transform update_status into OntapFirmwareHistoryUpdateStatu list."""
-    return [OntapFirmwareHistoryUpdateStatu(**item) for item in record.get("update_status", [])]
-
+from pynetappfoundry.models.ontap.cluster.firmware.history.model import OntapFirmwareHistory
 
 ONTAPFIRMWAREHISTORY_MAPPING = TypeMapping(
     name="OntapFirmwareHistory",
@@ -36,15 +25,15 @@ ONTAPFIRMWAREHISTORY_MAPPING = TypeMapping(
             api_path="fw_update_state",
         ),
         FieldMapping(
-            cache_attr="job_uuid",
+            cache_attr="job.uuid",
             api_path="job.uuid",
         ),
         FieldMapping(
-            cache_attr="node_name",
+            cache_attr="node.name",
             api_path="node.name",
         ),
         FieldMapping(
-            cache_attr="node_uuid",
+            cache_attr="node.uuid",
             api_path="node.uuid",
         ),
         FieldMapping(
@@ -54,7 +43,6 @@ ONTAPFIRMWAREHISTORY_MAPPING = TypeMapping(
         FieldMapping(
             cache_attr="update_status",
             api_path="update_status",
-            transform=_transform_update_status,
             default=[],
         ),
     ),

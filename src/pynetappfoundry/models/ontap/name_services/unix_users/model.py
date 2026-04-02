@@ -2,7 +2,16 @@
 
 from __future__ import annotations
 
+from pydantic import Field
+
 from pynetappfoundry.models._base import OntapModel
+
+
+class OntapUnixUserSvm(OntapModel):
+    """OntapUnixUserSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapUnixUser(OntapModel):
@@ -13,5 +22,4 @@ class OntapUnixUser(OntapModel):
     name: str = ""
     primary_gid: int = 0
     skip_name_validation: bool = False
-    svm_name: str = ""
-    svm_uuid: str = ""
+    svm: OntapUnixUserSvm = Field(default_factory=OntapUnixUserSvm)

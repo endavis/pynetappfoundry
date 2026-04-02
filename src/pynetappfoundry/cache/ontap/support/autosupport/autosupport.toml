@@ -6,23 +6,23 @@ class_name = "OntapAutosupport"
 [fields.component]
 cache_strategy = "cache"
 
-[fields.corrective_action_code]
+[fields."corrective_action.code"]
 cache_strategy = "cache"
 
-[fields.corrective_action_message]
+[fields."corrective_action.message"]
 cache_strategy = "cache"
 
 [fields.destination]
 cache_strategy = "cache"
 
-[fields.issue_code]
+[fields."issue.code"]
 cache_strategy = "cache"
 
-[fields.issue_message]
+[fields."issue.message"]
 cache_strategy = "cache"
 
-[fields.node_name]
+[fields."node.name"]
 cache_strategy = "cache"
 
-[fields.node_uuid]
+[fields."node.uuid"]
 cache_strategy = "cache"

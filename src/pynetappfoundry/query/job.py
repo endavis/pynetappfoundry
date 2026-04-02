@@ -31,8 +31,8 @@ class JobError(Exception):
 
     def __init__(self, job: OntapJob) -> None:
         self.job = job
-        self.message = job.error_message or job.message
-        self.error_code = job.error_code
+        self.message = job.error.message or job.message
+        self.error_code = job.error.code
         super().__init__(f"Job {job.uuid} failed: {self.message} (code={self.error_code})")
 
 

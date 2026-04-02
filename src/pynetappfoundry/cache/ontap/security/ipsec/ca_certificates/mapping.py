@@ -15,7 +15,7 @@ ONTAPIPSECCACERTIFICATE_MAPPING = TypeMapping(
     api_type="ontap",
     fields=(
         FieldMapping(
-            cache_attr="certificate_uuid",
+            cache_attr="certificate.uuid",
             api_path="certificate.uuid",
         ),
         FieldMapping(
@@ -23,11 +23,11 @@ ONTAPIPSECCACERTIFICATE_MAPPING = TypeMapping(
             api_path="scope",
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
     ),

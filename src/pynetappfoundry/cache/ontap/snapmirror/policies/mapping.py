@@ -71,19 +71,19 @@ ONTAPSNAPMIRRORPOLICY_MAPPING = TypeMapping(
             api_path="scope",
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(
-            cache_attr="sync_common_snapshot_schedule_name",
+            cache_attr="sync_common_snapshot_schedule.name",
             api_path="sync_common_snapshot_schedule.name",
         ),
         FieldMapping(
-            cache_attr="sync_common_snapshot_schedule_uuid",
+            cache_attr="sync_common_snapshot_schedule.uuid",
             api_path="sync_common_snapshot_schedule.uuid",
         ),
         FieldMapping(
@@ -96,11 +96,11 @@ ONTAPSNAPMIRRORPOLICY_MAPPING = TypeMapping(
             default=0,
         ),
         FieldMapping(
-            cache_attr="transfer_schedule_name",
+            cache_attr="transfer_schedule.name",
             api_path="transfer_schedule.name",
         ),
         FieldMapping(
-            cache_attr="transfer_schedule_uuid",
+            cache_attr="transfer_schedule.uuid",
             api_path="transfer_schedule.uuid",
         ),
         FieldMapping(

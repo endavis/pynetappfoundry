@@ -6,10 +6,10 @@ class_name = "OntapLicensePackageResponse"
 [fields.description]
 cache_strategy = "cache"
 
-[fields.entitlement_action]
+[fields."entitlement.action"]
 cache_strategy = "cache"
 
-[fields.entitlement_risk]
+[fields."entitlement.risk"]
 cache_strategy = "cache"
 
 [fields.keys]

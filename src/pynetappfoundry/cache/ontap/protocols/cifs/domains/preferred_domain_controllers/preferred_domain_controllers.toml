@@ -9,14 +9,14 @@ cache_strategy = "cache"
 [fields.server_ip]
 cache_strategy = "cache"
 
-[fields.status_details]
+[fields."status.details"]
 cache_strategy = "cache"
 
-[fields.status_reachable]
+[fields."status.reachable"]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"

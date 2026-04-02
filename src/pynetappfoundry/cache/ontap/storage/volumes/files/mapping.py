@@ -19,60 +19,60 @@ ONTAPFILEINFO_MAPPING = TypeMapping(
             api_path="accessed_time",
         ),
         FieldMapping(
-            cache_attr="analytics_by_accessed_time_bytes_used_labels",
+            cache_attr="analytics.by_accessed_time.bytes_used.labels",
             api_path="analytics.by_accessed_time.bytes_used.labels",
             default=[],
         ),
         FieldMapping(
-            cache_attr="analytics_by_accessed_time_bytes_used_newest_label",
+            cache_attr="analytics.by_accessed_time.bytes_used.newest_label",
             api_path="analytics.by_accessed_time.bytes_used.newest_label",
         ),
         FieldMapping(
-            cache_attr="analytics_by_accessed_time_bytes_used_percentages",
+            cache_attr="analytics.by_accessed_time.bytes_used.percentages",
             api_path="analytics.by_accessed_time.bytes_used.percentages",
             default=[],
         ),
         FieldMapping(
-            cache_attr="analytics_by_accessed_time_bytes_used_values",
+            cache_attr="analytics.by_accessed_time.bytes_used.values",
             api_path="analytics.by_accessed_time.bytes_used.values",
             default=[],
         ),
         FieldMapping(
-            cache_attr="analytics_by_modified_time_bytes_used_labels",
+            cache_attr="analytics.by_modified_time.bytes_used.labels",
             api_path="analytics.by_modified_time.bytes_used.labels",
             default=[],
         ),
         FieldMapping(
-            cache_attr="analytics_by_modified_time_bytes_used_newest_label",
+            cache_attr="analytics.by_modified_time.bytes_used.newest_label",
             api_path="analytics.by_modified_time.bytes_used.newest_label",
         ),
         FieldMapping(
-            cache_attr="analytics_by_modified_time_bytes_used_percentages",
+            cache_attr="analytics.by_modified_time.bytes_used.percentages",
             api_path="analytics.by_modified_time.bytes_used.percentages",
             default=[],
         ),
         FieldMapping(
-            cache_attr="analytics_by_modified_time_bytes_used_values",
+            cache_attr="analytics.by_modified_time.bytes_used.values",
             api_path="analytics.by_modified_time.bytes_used.values",
             default=[],
         ),
         FieldMapping(
-            cache_attr="analytics_bytes_used",
+            cache_attr="analytics.bytes_used",
             api_path="analytics.bytes_used",
             default=0,
         ),
         FieldMapping(
-            cache_attr="analytics_file_count",
+            cache_attr="analytics.file_count",
             api_path="analytics.file_count",
             default=0,
         ),
         FieldMapping(
-            cache_attr="analytics_incomplete_data",
+            cache_attr="analytics.incomplete_data",
             api_path="analytics.incomplete_data",
             default=False,
         ),
         FieldMapping(
-            cache_attr="analytics_subdir_count",
+            cache_attr="analytics.subdir_count",
             api_path="analytics.subdir_count",
             default=0,
         ),
@@ -86,11 +86,11 @@ ONTAPFILEINFO_MAPPING = TypeMapping(
             api_path="changed_time",
         ),
         FieldMapping(
-            cache_attr="constituent_name",
+            cache_attr="constituent.name",
             api_path="constituent.name",
         ),
         FieldMapping(
-            cache_attr="constituent_uuid",
+            cache_attr="constituent.uuid",
             api_path="constituent.uuid",
         ),
         FieldMapping(
@@ -165,12 +165,12 @@ ONTAPFILEINFO_MAPPING = TypeMapping(
             api_path="path",
         ),
         FieldMapping(
-            cache_attr="qos_policy_name",
+            cache_attr="qos_policy.name",
             api_path="qos_policy.name",
             requires_explicit_fetch=True,
         ),
         FieldMapping(
-            cache_attr="qos_policy_uuid",
+            cache_attr="qos_policy.uuid",
             api_path="qos_policy.uuid",
             requires_explicit_fetch=True,
         ),
@@ -198,11 +198,11 @@ ONTAPFILEINFO_MAPPING = TypeMapping(
             default=0,
         ),
         FieldMapping(
-            cache_attr="volume_name",
+            cache_attr="volume.name",
             api_path="volume.name",
         ),
         FieldMapping(
-            cache_attr="volume_uuid",
+            cache_attr="volume.uuid",
             api_path="volume.uuid",
         ),
     ),

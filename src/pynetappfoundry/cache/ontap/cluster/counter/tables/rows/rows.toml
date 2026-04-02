@@ -3,13 +3,13 @@ path = "/cluster/counter/tables/{counter_table.name}/rows"
 schema = "counter_row"
 class_name = "OntapCounterRow"
 
-[fields.aggregation_complete]
+[fields."aggregation.complete"]
 cache_strategy = "cache"
 
-[fields.aggregation_count]
+[fields."aggregation.count"]
 cache_strategy = "cache"
 
-[fields.counter_table_name]
+[fields."counter_table.name"]
 cache_strategy = "cache"
 
 [fields.counters]

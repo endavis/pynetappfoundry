@@ -61,6 +61,18 @@ class ChangeEntry(BaseModel):
     new_value: Any = None
 
 
+def _is_populated(value: Any) -> bool:
+    """Check whether a value is meaningfully populated.
+
+    Pydantic sub-models with all-default/empty fields are considered
+    *not* populated, so they behave like ``""`` or ``0`` when deciding
+    whether a parent record should be treated as "present".
+    """
+    if isinstance(value, BaseModel):
+        return any(_is_populated(getattr(value, f)) for f in type(value).model_fields)
+    return bool(value)
+
+
 @dataclass(frozen=True, slots=True)
 class EntityConfig:
     """Configuration for diffing a category of entities.
@@ -92,6 +104,27 @@ def _get_tracked_fields(config: EntityConfig) -> list[str]:
     return [f for f in config.model_class.model_fields if f != config.key_field]
 
 
+def _flatten_model_attrs(entity: Any, prefix: str = "") -> dict[str, Any]:
+    """Build a flat dict of model attributes including dotted nested paths.
+
+    For a model with ``source.path``, the returned dict contains both
+    ``"source": <OntapSource(...)>`` and ``"source.path": "svm1:vol1"``.
+    """
+    result: dict[str, Any] = {}
+    model_cls = type(entity)
+    if not hasattr(model_cls, "model_fields"):
+        return result
+    for field_name in model_cls.model_fields:
+        value = getattr(entity, field_name, "")
+        key = f"{prefix}{field_name}" if prefix else field_name
+        result[key] = value
+        # Recurse into nested Pydantic models (not lists/dicts)
+        if hasattr(type(value), "model_fields"):
+            nested = _flatten_model_attrs(value, prefix=f"{key}.")
+            result.update(nested)
+    return result
+
+
 def _get_display_name(entity: Any, display_field: str) -> str:
     """Get a human-readable display name for an entity.
 
@@ -108,7 +141,7 @@ def _get_display_name(entity: Any, display_field: str) -> str:
     """
     if "{" in display_field:
         try:
-            fmt_dict = {field: getattr(entity, field, "") for field in type(entity).model_fields}
+            fmt_dict = _flatten_model_attrs(entity)
             return display_field.format(**fmt_dict)
         except (KeyError, AttributeError):
             return str(entity)
@@ -127,13 +160,13 @@ def _get_display_name(entity: Any, display_field: str) -> str:
 # key: model class, value: (key_field, display_field)
 _DIFF_OVERRIDES: dict[type[CacheModel], tuple[str, str]] = {
     CloudMetadata: ("node", "node"),
-    OntapDns: ("uuid", "svm_uuid"),
+    OntapDns: ("uuid", "{svm.uuid}"),
     OntapQtree: ("name", "name"),
     OntapExportPolicy: ("index", "index"),
     OntapCifsShare: ("name", "name"),
-    OntapNfsService: ("svm_name", "svm_name"),
-    OntapCifsService: ("svm_name", "svm_name"),
-    OntapSnapmirrorRelationship: ("uuid", "{source_path}->{destination_path}"),
+    OntapNfsService: ("svm.name", "{svm.name}"),
+    OntapCifsService: ("svm.name", "{svm.name}"),
+    OntapSnapmirrorRelationship: ("uuid", "{source.path}->{destination.path}"),
     OntapLicensePackageResponse: ("name", "name"),
 }
 
@@ -334,16 +367,27 @@ def _diff_entity_list(
     key_field = config.key_field
     tracked_fields = _get_tracked_fields(config)
 
+    def _resolve_key(entity: Any) -> Any:
+        """Resolve a potentially dotted key_field path."""
+        if "." not in key_field:
+            return getattr(entity, key_field, None)
+        obj = entity
+        for part in key_field.split("."):
+            obj = getattr(obj, part, None)
+            if obj is None:
+                return None
+        return obj
+
     # Build lookup maps by key
     before_map: dict[str, Any] = {}
     for entity in before_list:
-        key = getattr(entity, key_field, None)
+        key = _resolve_key(entity)
         if key is not None:
             before_map[key] = entity
 
     after_map: dict[str, Any] = {}
     for entity in after_list:
-        key = getattr(entity, key_field, None)
+        key = _resolve_key(entity)
         if key is not None:
             after_map[key] = entity
 
@@ -469,9 +513,11 @@ def _diff_mediator_info(
     tracked_fields = list(OntapMediatorResponse.model_fields)
 
     if before is None:
-        # Initial capture - record mediator if any field is populated
+        # Initial capture - record mediator if any field is populated.
+        # Nested sub-models are considered populated only when they contain
+        # at least one truthy leaf value.
         mediator = after.mediator
-        if any(getattr(mediator, f) for f in tracked_fields):
+        if any(_is_populated(getattr(mediator, f)) for f in tracked_fields):
             changes.append(
                 {
                     "category": category,

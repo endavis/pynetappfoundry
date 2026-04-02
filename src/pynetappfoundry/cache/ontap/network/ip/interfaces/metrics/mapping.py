@@ -25,17 +25,17 @@ ONTAPINTERFACEMETRICSRESPONSE_MAPPING = TypeMapping(
             api_path="status",
         ),
         FieldMapping(
-            cache_attr="throughput_read",
+            cache_attr="throughput.read",
             api_path="throughput.read",
             default=0,
         ),
         FieldMapping(
-            cache_attr="throughput_total",
+            cache_attr="throughput.total",
             api_path="throughput.total",
             default=0,
         ),
         FieldMapping(
-            cache_attr="throughput_write",
+            cache_attr="throughput.write",
             api_path="throughput.write",
             default=0,
         ),

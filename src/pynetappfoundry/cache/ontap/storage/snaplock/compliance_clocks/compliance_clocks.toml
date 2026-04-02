@@ -3,10 +3,10 @@ path = "/storage/snaplock/compliance-clocks"
 schema = "snaplock_compliance_clock"
 class_name = "OntapSnaplockComplianceClock"
 
-[fields.node_name]
+[fields."node.name"]
 cache_strategy = "cache"
 
-[fields.node_uuid]
+[fields."node.uuid"]
 cache_strategy = "cache"
 
 [fields.time]

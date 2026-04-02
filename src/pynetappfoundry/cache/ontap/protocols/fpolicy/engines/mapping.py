@@ -15,25 +15,25 @@ ONTAPFPOLICYENGINE_MAPPING = TypeMapping(
     parent_id_field="uuid",
     fields=(
         FieldMapping(
-            cache_attr="buffer_size_recv_buffer",
+            cache_attr="buffer_size.recv_buffer",
             api_path="buffer_size.recv_buffer",
             default=0,
         ),
         FieldMapping(
-            cache_attr="buffer_size_send_buffer",
+            cache_attr="buffer_size.send_buffer",
             api_path="buffer_size.send_buffer",
             default=0,
         ),
         FieldMapping(
-            cache_attr="certificate_ca",
+            cache_attr="certificate.ca",
             api_path="certificate.ca",
         ),
         FieldMapping(
-            cache_attr="certificate_name",
+            cache_attr="certificate.name",
             api_path="certificate.name",
         ),
         FieldMapping(
-            cache_attr="certificate_serial_number",
+            cache_attr="certificate.serial_number",
             api_path="certificate.serial_number",
         ),
         FieldMapping(
@@ -72,16 +72,16 @@ ONTAPFPOLICYENGINE_MAPPING = TypeMapping(
             api_path="request_cancel_timeout",
         ),
         FieldMapping(
-            cache_attr="resiliency_directory_path",
+            cache_attr="resiliency.directory_path",
             api_path="resiliency.directory_path",
         ),
         FieldMapping(
-            cache_attr="resiliency_enabled",
+            cache_attr="resiliency.enabled",
             api_path="resiliency.enabled",
             default=False,
         ),
         FieldMapping(
-            cache_attr="resiliency_retention_duration",
+            cache_attr="resiliency.retention_duration",
             api_path="resiliency.retention_duration",
         ),
         FieldMapping(
@@ -102,7 +102,7 @@ ONTAPFPOLICYENGINE_MAPPING = TypeMapping(
             api_path="status_request_interval",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(

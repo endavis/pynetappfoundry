@@ -3,37 +3,37 @@ path = "/storage/pools"
 schema = "storage_pool"
 class_name = "OntapStoragePool"
 
-[fields.capacity_disk_count]
+[fields."capacity.disk_count"]
 cache_strategy = "cache"
 
-[fields.capacity_disks]
+[fields."capacity.disks"]
 cache_strategy = "cache"
 
-[fields.capacity_remaining]
+[fields."capacity.remaining"]
 cache_strategy = "cache"
 
-[fields.capacity_spare_allocation_units]
+[fields."capacity.spare_allocation_units"]
 cache_strategy = "cache"
 
-[fields.capacity_total]
+[fields."capacity.total"]
 cache_strategy = "cache"
 
-[fields.capacity_used_allocation_units]
+[fields."capacity.used_allocation_units"]
 cache_strategy = "cache"
 
-[fields.health_is_healthy]
+[fields."health.is_healthy"]
 cache_strategy = "cache"
 
-[fields.health_state]
+[fields."health.state"]
 cache_strategy = "cache"
 
-[fields.health_unhealthy_reason_arguments]
+[fields."health.unhealthy_reason.arguments"]
 cache_strategy = "cache"
 
-[fields.health_unhealthy_reason_code]
+[fields."health.unhealthy_reason.code"]
 cache_strategy = "cache"
 
-[fields.health_unhealthy_reason_message]
+[fields."health.unhealthy_reason.message"]
 cache_strategy = "cache"
 
 [fields.name]

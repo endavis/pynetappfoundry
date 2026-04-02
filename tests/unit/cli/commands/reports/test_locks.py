@@ -10,7 +10,11 @@ import pytest
 from openpyxl import Workbook
 
 from pynetappfoundry.cli.commands.reports.locks import _gather_lock_data
-from pynetappfoundry.models.ontap.protocols.locks.model import OntapClientLock
+from pynetappfoundry.models.ontap.protocols.locks.model import (
+    OntapClientLock,
+    OntapClientLockShareLock,
+    OntapClientLockVolume,
+)
 
 
 def _make_lock(
@@ -26,11 +30,11 @@ def _make_lock(
 ) -> OntapClientLock:
     """Create an OntapClientLock with common defaults."""
     return OntapClientLock(
-        volume_name=volume_name,
+        volume=OntapClientLockVolume(name=volume_name),
         protocol=protocol,
         type_=type_,
         path=path,
-        share_lock_mode=share_lock_mode,
+        share_lock=OntapClientLockShareLock(mode=share_lock_mode),
         oplock_level=oplock_level,
         state=state,
         client_address=client_address,

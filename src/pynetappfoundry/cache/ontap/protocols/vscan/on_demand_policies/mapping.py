@@ -28,44 +28,44 @@ ONTAPVSCANONDEMAND_MAPPING = TypeMapping(
             default=[],
         ),
         FieldMapping(
-            cache_attr="schedule_name",
+            cache_attr="schedule.name",
             api_path="schedule.name",
         ),
         FieldMapping(
-            cache_attr="schedule_uuid",
+            cache_attr="schedule.uuid",
             api_path="schedule.uuid",
         ),
         FieldMapping(
-            cache_attr="scope_exclude_extensions",
+            cache_attr="scope.exclude_extensions",
             api_path="scope.exclude_extensions",
             default=[],
         ),
         FieldMapping(
-            cache_attr="scope_exclude_paths",
+            cache_attr="scope.exclude_paths",
             api_path="scope.exclude_paths",
             default=[],
         ),
         FieldMapping(
-            cache_attr="scope_include_extensions",
+            cache_attr="scope.include_extensions",
             api_path="scope.include_extensions",
             default=[],
         ),
         FieldMapping(
-            cache_attr="scope_max_file_size",
+            cache_attr="scope.max_file_size",
             api_path="scope.max_file_size",
             default=0,
         ),
         FieldMapping(
-            cache_attr="scope_scan_without_extension",
+            cache_attr="scope.scan_without_extension",
             api_path="scope.scan_without_extension",
             default=False,
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
     ),

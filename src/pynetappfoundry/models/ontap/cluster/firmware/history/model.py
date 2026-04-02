@@ -2,19 +2,24 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from pydantic import Field
 
 from pynetappfoundry.models._base import OntapModel, OntapUUID
 
 
-class OntapFirmwareHistoryUpdateStatu(OntapModel):
-    """OntapFirmwareHistoryUpdateStatu sub-model for update_status."""
+class OntapFirmwareHistoryJob(OntapModel):
+    """OntapFirmwareHistoryJob sub-model for job."""
 
-    worker_error_code: int = 0
-    worker_error_message: str = ""
-    worker_node_name: str = ""
-    worker_node_uuid: str = ""
-    worker_state: str = ""
+    uuid: OntapUUID = ""
+
+
+class OntapFirmwareHistoryNode(OntapModel):
+    """OntapFirmwareHistoryNode sub-model for node."""
+
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapFirmwareHistory(OntapModel):
@@ -23,8 +28,7 @@ class OntapFirmwareHistory(OntapModel):
     end_time: str = ""
     fw_file_name: str = ""
     fw_update_state: str = ""
-    job_uuid: OntapUUID = ""
-    node_name: str = ""
-    node_uuid: str = ""
+    job: OntapFirmwareHistoryJob = Field(default_factory=OntapFirmwareHistoryJob)
+    node: OntapFirmwareHistoryNode = Field(default_factory=OntapFirmwareHistoryNode)
     start_time: str = ""
-    update_status: list[OntapFirmwareHistoryUpdateStatu] = Field(default_factory=list)
+    update_status: list[dict[str, Any]] = Field(default_factory=list)

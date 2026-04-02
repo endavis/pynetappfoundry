@@ -3,7 +3,7 @@ path = "/security/authentication/publickeys"
 schema = "publickey"
 class_name = "OntapPublickey"
 
-[fields.account_name]
+[fields."account.name"]
 cache_strategy = "cache"
 
 [fields.certificate]
@@ -27,10 +27,10 @@ cache_strategy = "cache"
 [fields.obfuscated_fingerprint]
 cache_strategy = "cache"
 
-[fields.owner_name]
+[fields."owner.name"]
 cache_strategy = "cache"
 
-[fields.owner_uuid]
+[fields."owner.uuid"]
 cache_strategy = "cache"
 
 [fields.public_key]

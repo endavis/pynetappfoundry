@@ -3,25 +3,25 @@ path = "/protocols/cifs/unix-symlink-mapping"
 schema = "cifs_symlink_mapping"
 class_name = "OntapCifsSymlinkMapping"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
-[fields.target_home_directory]
+[fields."target.home_directory"]
 cache_strategy = "cache"
 
-[fields.target_locality]
+[fields."target.locality"]
 cache_strategy = "cache"
 
-[fields.target_path]
+[fields."target.path"]
 cache_strategy = "cache"
 
-[fields.target_server]
+[fields."target.server"]
 cache_strategy = "cache"
 
-[fields.target_share]
+[fields."target.share"]
 cache_strategy = "cache"
 
 [fields.unix_path]

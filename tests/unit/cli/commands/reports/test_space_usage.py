@@ -9,8 +9,11 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from pynetappfoundry.cli.commands.reports.space_usage import SpaceUsageReport
-from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
-from pynetappfoundry.models.ontap.storage.volumes.model import OntapVolume
+from pynetappfoundry.models.ontap.cluster.nodes.model import (
+    OntapNodeResponse,
+    OntapNodeResponseHa,
+)
+from pynetappfoundry.models.ontap.storage.volumes.model import OntapVolume, OntapVolumeSpace
 
 
 def _make_volume(
@@ -25,7 +28,7 @@ def _make_volume(
     return OntapVolume(
         name=name,
         size=size,
-        space_used=space_used,
+        space=OntapVolumeSpace(used=space_used),
         state=state,
         type_=type_,
     )
@@ -33,7 +36,7 @@ def _make_volume(
 
 def _make_node(*, name: str = "node1", ha_enabled: bool = False) -> OntapNodeResponse:
     """Create a test node model."""
-    return OntapNodeResponse(name=name, ha_enabled=ha_enabled)
+    return OntapNodeResponse(name=name, ha=OntapNodeResponseHa(enabled=ha_enabled))
 
 
 @pytest.fixture

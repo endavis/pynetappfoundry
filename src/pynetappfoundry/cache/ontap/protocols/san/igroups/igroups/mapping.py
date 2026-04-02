@@ -26,7 +26,7 @@ ONTAPIGROUPNESTED_MAPPING = TypeMapping(
     parent_id_field="uuid",
     fields=(
         FieldMapping(
-            cache_attr="igroup_uuid",
+            cache_attr="igroup.uuid",
             api_path="igroup.uuid",
         ),
         FieldMapping(

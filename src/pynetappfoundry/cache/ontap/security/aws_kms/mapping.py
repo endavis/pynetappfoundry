@@ -28,15 +28,15 @@ ONTAPAWSKMS_MAPPING = TypeMapping(
             api_path="access_key_id",
         ),
         FieldMapping(
-            cache_attr="amazon_reachability_code",
+            cache_attr="amazon_reachability.code",
             api_path="amazon_reachability.code",
         ),
         FieldMapping(
-            cache_attr="amazon_reachability_message",
+            cache_attr="amazon_reachability.message",
             api_path="amazon_reachability.message",
         ),
         FieldMapping(
-            cache_attr="amazon_reachability_reachable",
+            cache_attr="amazon_reachability.reachable",
             api_path="amazon_reachability.reachable",
             default=False,
         ),
@@ -115,24 +115,24 @@ ONTAPAWSKMS_MAPPING = TypeMapping(
             default=False,
         ),
         FieldMapping(
-            cache_attr="state_cluster_state",
+            cache_attr="state.cluster_state",
             api_path="state.cluster_state",
             default=False,
         ),
         FieldMapping(
-            cache_attr="state_code",
+            cache_attr="state.code",
             api_path="state.code",
         ),
         FieldMapping(
-            cache_attr="state_message",
+            cache_attr="state.message",
             api_path="state.message",
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(

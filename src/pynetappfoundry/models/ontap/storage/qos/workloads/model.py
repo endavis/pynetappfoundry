@@ -2,7 +2,23 @@
 
 from __future__ import annotations
 
+from pydantic import Field
+
 from pynetappfoundry.models._base import OntapModel
+
+
+class OntapQosWorkloadPolicy(OntapModel):
+    """OntapQosWorkloadPolicy sub-model for policy."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapQosWorkloadSvm(OntapModel):
+    """OntapQosWorkloadSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapQosWorkload(OntapModel):
@@ -11,11 +27,9 @@ class OntapQosWorkload(OntapModel):
     file: str = ""
     lun: str = ""
     name: str = ""
-    policy_name: str = ""
-    policy_uuid: str = ""
+    policy: OntapQosWorkloadPolicy = Field(default_factory=OntapQosWorkloadPolicy)
     qtree: str = ""
-    svm_name: str = ""
-    svm_uuid: str = ""
+    svm: OntapQosWorkloadSvm = Field(default_factory=OntapQosWorkloadSvm)
     uuid: str = ""
     volume: str = ""
     wid: int = 0

@@ -7,19 +7,31 @@ from pydantic import Field
 from pynetappfoundry.models._base import OntapModel
 
 
+class OntapFcZoneCache(OntapModel):
+    """OntapFcZoneCache sub-model for cache."""
+
+    age: str = ""
+    is_current: bool = False
+    update_time: str = ""
+
+
+class OntapFcZoneFabric(OntapModel):
+    """OntapFcZoneFabric sub-model for fabric."""
+
+    name: str = ""
+
+
 class OntapFcZoneMember(OntapModel):
     """OntapFcZoneMember sub-model for members."""
 
     name: str = ""
-    type: str = ""
+    type_: str = ""
 
 
 class OntapFcZone(OntapModel):
     """OntapFcZone information."""
 
-    cache_age: str = ""
-    cache_is_current: bool = False
-    cache_update_time: str = ""
-    fabric_name: str = ""
+    cache: OntapFcZoneCache = Field(default_factory=OntapFcZoneCache)
+    fabric: OntapFcZoneFabric = Field(default_factory=OntapFcZoneFabric)
     members: list[OntapFcZoneMember] = Field(default_factory=list)
     name: str = ""

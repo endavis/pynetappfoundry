@@ -12,10 +12,10 @@ cache_strategy = "cache"
 [fields.hosts]
 cache_strategy = "cache"
 
-[fields.io_queue_default_count]
+[fields."io_queue.default.count"]
 cache_strategy = "cache"
 
-[fields.io_queue_default_depth]
+[fields."io_queue.default.depth"]
 cache_strategy = "cache"
 
 [fields.name]
@@ -30,10 +30,10 @@ cache_strategy = "cache"
 [fields.subsystem_maps]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.target_nqn]

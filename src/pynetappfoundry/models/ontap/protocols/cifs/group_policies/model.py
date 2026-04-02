@@ -8,21 +8,43 @@ from pydantic import Field
 from pynetappfoundry.models._base import OntapModel
 
 
-class OntapPoliciesAndRulesToBeAppliedAccessPolicy(OntapModel):
-    """OntapPoliciesAndRulesToBeAppliedAccessPolicy sub-model for access_policies."""
+class OntapPoliciesAndRulesToBeAppliedSvm(OntapModel):
+    """OntapPoliciesAndRulesToBeAppliedSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapPoliciesAndRulesToBeAppliedToBeAppliedAccessPolicySvm(OntapModel):
+    """OntapPoliciesAndRulesToBeAppliedToBeAppliedAccessPolicySvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapPoliciesAndRulesToBeAppliedToBeAppliedAccessPolicy(OntapModel):
+    """OntapPoliciesAndRulesToBeAppliedToBeAppliedAccessPolicy sub-model for access_policies."""
 
     create_time: str = ""
     description: str = ""
     member_rules: list[str] = Field(default_factory=list)
     name: str = ""
     sid: str = ""
-    svm_name: str = ""
-    svm_uuid: str = ""
+    svm: OntapPoliciesAndRulesToBeAppliedToBeAppliedAccessPolicySvm = Field(
+        default_factory=OntapPoliciesAndRulesToBeAppliedToBeAppliedAccessPolicySvm
+    )
     update_time: str = ""
 
 
-class OntapPoliciesAndRulesToBeAppliedAccessRule(OntapModel):
-    """OntapPoliciesAndRulesToBeAppliedAccessRule sub-model for access_rules."""
+class OntapPoliciesAndRulesToBeAppliedToBeAppliedAccessRuleSvm(OntapModel):
+    """OntapPoliciesAndRulesToBeAppliedToBeAppliedAccessRuleSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapPoliciesAndRulesToBeAppliedToBeAppliedAccessRule(OntapModel):
+    """OntapPoliciesAndRulesToBeAppliedToBeAppliedAccessRule sub-model for access_rules."""
 
     create_time: str = ""
     current_permission: str = ""
@@ -30,13 +52,112 @@ class OntapPoliciesAndRulesToBeAppliedAccessRule(OntapModel):
     name: str = ""
     proposed_permission: str = ""
     resource_criteria: str = ""
-    svm_name: str = ""
-    svm_uuid: str = ""
+    svm: OntapPoliciesAndRulesToBeAppliedToBeAppliedAccessRuleSvm = Field(
+        default_factory=OntapPoliciesAndRulesToBeAppliedToBeAppliedAccessRuleSvm
+    )
     update_time: str = ""
 
 
-class OntapPoliciesAndRulesToBeAppliedObject(OntapModel):
-    """OntapPoliciesAndRulesToBeAppliedObject sub-model for objects."""
+class OntapPoliciesAndRulesToBeAppliedToBeAppliedObjectRegistrySettingsBranchcache(OntapModel):
+    """OntapPoliciesAndRulesToBeAppliedToBeAppliedObjectRegistrySettingsBranchcache sub-model for branchcache."""
+
+    hash_publication_mode: str = ""
+    supported_hash_version: str = ""
+
+
+class OntapPoliciesAndRulesToBeAppliedToBeAppliedObjectRegistrySettings(OntapModel):
+    """OntapPoliciesAndRulesToBeAppliedToBeAppliedObjectRegistrySettings sub-model for registry_settings."""
+
+    branchcache: OntapPoliciesAndRulesToBeAppliedToBeAppliedObjectRegistrySettingsBranchcache = Field(
+        default_factory=OntapPoliciesAndRulesToBeAppliedToBeAppliedObjectRegistrySettingsBranchcache
+    )
+    refresh_time_interval: str = ""
+    refresh_time_random_offset: str = ""
+
+
+class OntapPoliciesAndRulesToBeAppliedToBeAppliedObjectSecuritySettingsEventAuditSettings(
+    OntapModel
+):
+    """OntapPoliciesAndRulesToBeAppliedToBeAppliedObjectSecuritySettingsEventAuditSettings sub-model for event_audit_settings."""
+
+    logon_type: str = ""
+    object_access_type: str = ""
+
+
+class OntapPoliciesAndRulesToBeAppliedToBeAppliedObjectSecuritySettingsEventLogSettings(OntapModel):
+    """OntapPoliciesAndRulesToBeAppliedToBeAppliedObjectSecuritySettingsEventLogSettings sub-model for event_log_settings."""
+
+    max_size: int = 0
+    retention_method: str = ""
+
+
+class OntapPoliciesAndRulesToBeAppliedToBeAppliedObjectSecuritySettingsKerberos(OntapModel):
+    """OntapPoliciesAndRulesToBeAppliedToBeAppliedObjectSecuritySettingsKerberos sub-model for kerberos."""
+
+    max_clock_skew: str = ""
+    max_renew_age: str = ""
+    max_ticket_age: str = ""
+
+
+class OntapPoliciesAndRulesToBeAppliedToBeAppliedObjectSecuritySettingsPrivilegeRights(OntapModel):
+    """OntapPoliciesAndRulesToBeAppliedToBeAppliedObjectSecuritySettingsPrivilegeRights sub-model for privilege_rights."""
+
+    change_notify_users: list[str] = Field(default_factory=list)
+    security_privilege_users: list[str] = Field(default_factory=list)
+    take_ownership_users: list[str] = Field(default_factory=list)
+
+
+class OntapPoliciesAndRulesToBeAppliedToBeAppliedObjectSecuritySettingsRegistryValues(OntapModel):
+    """OntapPoliciesAndRulesToBeAppliedToBeAppliedObjectSecuritySettingsRegistryValues sub-model for registry_values."""
+
+    signing_required: bool = False
+
+
+class OntapPoliciesAndRulesToBeAppliedToBeAppliedObjectSecuritySettingsRestrictAnonymous(
+    OntapModel
+):
+    """OntapPoliciesAndRulesToBeAppliedToBeAppliedObjectSecuritySettingsRestrictAnonymous sub-model for restrict_anonymous."""
+
+    anonymous_access_to_shares_and_named_pipes_restricted: bool = False
+    combined_restriction_for_anonymous_user: str = ""
+    no_enumeration_of_sam_accounts: bool = False
+    no_enumeration_of_sam_accounts_and_shares: bool = False
+
+
+class OntapPoliciesAndRulesToBeAppliedToBeAppliedObjectSecuritySettings(OntapModel):
+    """OntapPoliciesAndRulesToBeAppliedToBeAppliedObjectSecuritySettings sub-model for security_settings."""
+
+    event_audit_settings: OntapPoliciesAndRulesToBeAppliedToBeAppliedObjectSecuritySettingsEventAuditSettings = Field(
+        default_factory=OntapPoliciesAndRulesToBeAppliedToBeAppliedObjectSecuritySettingsEventAuditSettings
+    )
+    event_log_settings: OntapPoliciesAndRulesToBeAppliedToBeAppliedObjectSecuritySettingsEventLogSettings = Field(
+        default_factory=OntapPoliciesAndRulesToBeAppliedToBeAppliedObjectSecuritySettingsEventLogSettings
+    )
+    files_or_folders: list[str] = Field(default_factory=list)
+    kerberos: OntapPoliciesAndRulesToBeAppliedToBeAppliedObjectSecuritySettingsKerberos = Field(
+        default_factory=OntapPoliciesAndRulesToBeAppliedToBeAppliedObjectSecuritySettingsKerberos
+    )
+    privilege_rights: OntapPoliciesAndRulesToBeAppliedToBeAppliedObjectSecuritySettingsPrivilegeRights = Field(
+        default_factory=OntapPoliciesAndRulesToBeAppliedToBeAppliedObjectSecuritySettingsPrivilegeRights
+    )
+    registry_values: OntapPoliciesAndRulesToBeAppliedToBeAppliedObjectSecuritySettingsRegistryValues = Field(
+        default_factory=OntapPoliciesAndRulesToBeAppliedToBeAppliedObjectSecuritySettingsRegistryValues
+    )
+    restrict_anonymous: OntapPoliciesAndRulesToBeAppliedToBeAppliedObjectSecuritySettingsRestrictAnonymous = Field(
+        default_factory=OntapPoliciesAndRulesToBeAppliedToBeAppliedObjectSecuritySettingsRestrictAnonymous
+    )
+    restricted_groups: list[str] = Field(default_factory=list)
+
+
+class OntapPoliciesAndRulesToBeAppliedToBeAppliedObjectSvm(OntapModel):
+    """OntapPoliciesAndRulesToBeAppliedToBeAppliedObjectSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapPoliciesAndRulesToBeAppliedToBeAppliedObject(OntapModel):
+    """OntapPoliciesAndRulesToBeAppliedToBeAppliedObject sub-model for objects."""
 
     central_access_policy_settings: list[str] = Field(default_factory=list)
     central_access_policy_staging_audit_type: str = ""
@@ -47,62 +168,61 @@ class OntapPoliciesAndRulesToBeAppliedObject(OntapModel):
     ldap_path: str = ""
     link: str = ""
     name: str = ""
-    registry_settings_branchcache_hash_publication_mode: str = ""
-    registry_settings_branchcache_supported_hash_version: str = ""
-    registry_settings_refresh_time_interval: str = ""
-    registry_settings_refresh_time_random_offset: str = ""
-    security_settings_event_audit_settings_logon_type: str = ""
-    security_settings_event_audit_settings_object_access_type: str = ""
-    security_settings_event_log_settings_max_size: int = 0
-    security_settings_event_log_settings_retention_method: str = ""
-    security_settings_files_or_folders: list[str] = Field(default_factory=list)
-    security_settings_kerberos_max_clock_skew: str = ""
-    security_settings_kerberos_max_renew_age: str = ""
-    security_settings_kerberos_max_ticket_age: str = ""
-    security_settings_privilege_rights_change_notify_users: list[str] = Field(default_factory=list)
-    security_settings_privilege_rights_security_privilege_users: list[str] = Field(
-        default_factory=list
+    registry_settings: OntapPoliciesAndRulesToBeAppliedToBeAppliedObjectRegistrySettings = Field(
+        default_factory=OntapPoliciesAndRulesToBeAppliedToBeAppliedObjectRegistrySettings
     )
-    security_settings_privilege_rights_take_ownership_users: list[str] = Field(default_factory=list)
-    security_settings_registry_values_signing_required: bool = False
-    security_settings_restrict_anonymous_anonymous_access_to_shares_and_named_pipes_restricted: bool = False
-    security_settings_restrict_anonymous_combined_restriction_for_anonymous_user: str = ""
-    security_settings_restrict_anonymous_no_enumeration_of_sam_accounts: bool = False
-    security_settings_restrict_anonymous_no_enumeration_of_sam_accounts_and_shares: bool = False
-    security_settings_restricted_groups: list[str] = Field(default_factory=list)
-    svm_name: str = ""
-    svm_uuid: str = ""
+    security_settings: OntapPoliciesAndRulesToBeAppliedToBeAppliedObjectSecuritySettings = Field(
+        default_factory=OntapPoliciesAndRulesToBeAppliedToBeAppliedObjectSecuritySettings
+    )
+    svm: OntapPoliciesAndRulesToBeAppliedToBeAppliedObjectSvm = Field(
+        default_factory=OntapPoliciesAndRulesToBeAppliedToBeAppliedObjectSvm
+    )
     uuid: str = ""
     version: int = 0
 
 
-class OntapPoliciesAndRulesToBeAppliedRestrictedGroup(OntapModel):
-    """OntapPoliciesAndRulesToBeAppliedRestrictedGroup sub-model for restricted_groups."""
+class OntapPoliciesAndRulesToBeAppliedToBeAppliedRestrictedGroupSvm(OntapModel):
+    """OntapPoliciesAndRulesToBeAppliedToBeAppliedRestrictedGroupSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapPoliciesAndRulesToBeAppliedToBeAppliedRestrictedGroup(OntapModel):
+    """OntapPoliciesAndRulesToBeAppliedToBeAppliedRestrictedGroup sub-model for restricted_groups."""
 
     group_name: str = ""
     link: str = ""
     members: list[str] = Field(default_factory=list)
     memberships: list[str] = Field(default_factory=list)
     policy_name: str = ""
-    svm_name: str = ""
-    svm_uuid: str = ""
+    svm: OntapPoliciesAndRulesToBeAppliedToBeAppliedRestrictedGroupSvm = Field(
+        default_factory=OntapPoliciesAndRulesToBeAppliedToBeAppliedRestrictedGroupSvm
+    )
     version: int = 0
+
+
+class OntapPoliciesAndRulesToBeAppliedToBeApplied(OntapModel):
+    """OntapPoliciesAndRulesToBeAppliedToBeApplied sub-model for to_be_applied."""
+
+    access_policies: list[OntapPoliciesAndRulesToBeAppliedToBeAppliedAccessPolicy] = Field(
+        default_factory=list
+    )
+    access_rules: list[OntapPoliciesAndRulesToBeAppliedToBeAppliedAccessRule] = Field(
+        default_factory=list
+    )
+    objects: list[OntapPoliciesAndRulesToBeAppliedToBeAppliedObject] = Field(default_factory=list)
+    restricted_groups: list[OntapPoliciesAndRulesToBeAppliedToBeAppliedRestrictedGroup] = Field(
+        default_factory=list
+    )
 
 
 class OntapPoliciesAndRulesToBeApplied(OntapModel):
     """OntapPoliciesAndRulesToBeApplied information."""
 
-    svm_name: str = ""
-    svm_uuid: str = ""
-    to_be_applied_access_policies: list[OntapPoliciesAndRulesToBeAppliedAccessPolicy] = Field(
-        default_factory=list
+    svm: OntapPoliciesAndRulesToBeAppliedSvm = Field(
+        default_factory=OntapPoliciesAndRulesToBeAppliedSvm
     )
-    to_be_applied_access_rules: list[OntapPoliciesAndRulesToBeAppliedAccessRule] = Field(
-        default_factory=list
-    )
-    to_be_applied_objects: list[OntapPoliciesAndRulesToBeAppliedObject] = Field(
-        default_factory=list
-    )
-    to_be_applied_restricted_groups: list[OntapPoliciesAndRulesToBeAppliedRestrictedGroup] = Field(
-        default_factory=list
+    to_be_applied: OntapPoliciesAndRulesToBeAppliedToBeApplied = Field(
+        default_factory=OntapPoliciesAndRulesToBeAppliedToBeApplied
     )

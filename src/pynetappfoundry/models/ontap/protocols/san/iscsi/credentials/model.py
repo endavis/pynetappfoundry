@@ -7,31 +7,67 @@ from pydantic import Field
 from pynetappfoundry.models._base import OntapModel
 
 
-class OntapIscsiCredentialsMask(OntapModel):
-    """OntapIscsiCredentialsMask sub-model for masks."""
+class OntapIscsiCredentialsChapInbound(OntapModel):
+    """OntapIscsiCredentialsChapInbound sub-model for inbound."""
+
+    password: str = ""
+    user: str = ""
+
+
+class OntapIscsiCredentialsChapOutbound(OntapModel):
+    """OntapIscsiCredentialsChapOutbound sub-model for outbound."""
+
+    password: str = ""
+    user: str = ""
+
+
+class OntapIscsiCredentialsChap(OntapModel):
+    """OntapIscsiCredentialsChap sub-model for chap."""
+
+    inbound: OntapIscsiCredentialsChapInbound = Field(
+        default_factory=OntapIscsiCredentialsChapInbound
+    )
+    outbound: OntapIscsiCredentialsChapOutbound = Field(
+        default_factory=OntapIscsiCredentialsChapOutbound
+    )
+
+
+class OntapIscsiCredentialsInitiatorAddressMask(OntapModel):
+    """OntapIscsiCredentialsInitiatorAddressMask sub-model for masks."""
 
     address: str = ""
     family: str = ""
     netmask: str = ""
 
 
-class OntapIscsiCredentialsRange(OntapModel):
-    """OntapIscsiCredentialsRange sub-model for ranges."""
+class OntapIscsiCredentialsInitiatorAddressRange(OntapModel):
+    """OntapIscsiCredentialsInitiatorAddressRange sub-model for ranges."""
 
     end: str = ""
     family: str = ""
+
+
+class OntapIscsiCredentialsInitiatorAddress(OntapModel):
+    """OntapIscsiCredentialsInitiatorAddress sub-model for initiator_address."""
+
+    masks: list[OntapIscsiCredentialsInitiatorAddressMask] = Field(default_factory=list)
+    ranges: list[OntapIscsiCredentialsInitiatorAddressRange] = Field(default_factory=list)
+
+
+class OntapIscsiCredentialsSvm(OntapModel):
+    """OntapIscsiCredentialsSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapIscsiCredentials(OntapModel):
     """OntapIscsiCredentials information."""
 
     authentication_type: str = ""
-    chap_inbound_password: str = ""
-    chap_inbound_user: str = ""
-    chap_outbound_password: str = ""
-    chap_outbound_user: str = ""
+    chap: OntapIscsiCredentialsChap = Field(default_factory=OntapIscsiCredentialsChap)
     initiator: str = ""
-    initiator_address_masks: list[OntapIscsiCredentialsMask] = Field(default_factory=list)
-    initiator_address_ranges: list[OntapIscsiCredentialsRange] = Field(default_factory=list)
-    svm_name: str = ""
-    svm_uuid: str = ""
+    initiator_address: OntapIscsiCredentialsInitiatorAddress = Field(
+        default_factory=OntapIscsiCredentialsInitiatorAddress
+    )
+    svm: OntapIscsiCredentialsSvm = Field(default_factory=OntapIscsiCredentialsSvm)

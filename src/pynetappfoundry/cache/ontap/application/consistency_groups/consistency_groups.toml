@@ -3,49 +3,49 @@ path = "/application/consistency-groups"
 schema = "consistency_group_response"
 class_name = "OntapConsistencyGroupResponse"
 
-[fields.application_component_type]
+[fields."application.component_type"]
 cache_strategy = "cache"
 
-[fields.application_type]
+[fields."application.type_"]
 cache_strategy = "cache"
 
-[fields.clone_guarantee_type]
+[fields."clone.guarantee.type_"]
 cache_strategy = "cache"
 
-[fields.clone_is_flexclone]
+[fields."clone.is_flexclone"]
 cache_strategy = "cache"
 
-[fields.clone_parent_consistency_group_name]
+[fields."clone.parent_consistency_group.name"]
 cache_strategy = "cache"
 
-[fields.clone_parent_consistency_group_uuid]
+[fields."clone.parent_consistency_group.uuid"]
 cache_strategy = "cache"
 
-[fields.clone_parent_snapshot_name]
+[fields."clone.parent_snapshot.name"]
 cache_strategy = "cache"
 
-[fields.clone_parent_snapshot_uuid]
+[fields."clone.parent_snapshot.uuid"]
 cache_strategy = "cache"
 
-[fields.clone_parent_svm_name]
+[fields."clone.parent_svm.name"]
 cache_strategy = "cache"
 
-[fields.clone_parent_svm_uuid]
+[fields."clone.parent_svm.uuid"]
 cache_strategy = "cache"
 
-[fields.clone_split_complete_percent]
+[fields."clone.split_complete_percent"]
 cache_strategy = "cache"
 
-[fields.clone_split_estimate]
+[fields."clone.split_estimate"]
 cache_strategy = "cache"
 
-[fields.clone_split_initiated]
+[fields."clone.split_initiated"]
 cache_strategy = "cache"
 
-[fields.clone_volume_prefix]
+[fields."clone.volume.prefix"]
 cache_strategy = "cache"
 
-[fields.clone_volume_suffix]
+[fields."clone.volume.suffix"]
 cache_strategy = "cache"
 
 [fields.consistency_groups]
@@ -54,58 +54,58 @@ cache_strategy = "cache"
 [fields.luns]
 cache_strategy = "cache"
 
-[fields.metric_available_space]
+[fields."metric.available_space"]
 cache_strategy = "realtime"
 
-[fields.metric_duration]
+[fields."metric.duration"]
 cache_strategy = "realtime"
 
-[fields.metric_iops_other]
+[fields."metric.iops.other"]
 cache_strategy = "realtime"
 
-[fields.metric_iops_read]
+[fields."metric.iops.read"]
 cache_strategy = "realtime"
 
-[fields.metric_iops_total]
+[fields."metric.iops.total"]
 cache_strategy = "realtime"
 
-[fields.metric_iops_write]
+[fields."metric.iops.write"]
 cache_strategy = "realtime"
 
-[fields.metric_latency_other]
+[fields."metric.latency.other"]
 cache_strategy = "realtime"
 
-[fields.metric_latency_read]
+[fields."metric.latency.read"]
 cache_strategy = "realtime"
 
-[fields.metric_latency_total]
+[fields."metric.latency.total"]
 cache_strategy = "realtime"
 
-[fields.metric_latency_write]
+[fields."metric.latency.write"]
 cache_strategy = "realtime"
 
-[fields.metric_size]
+[fields."metric.size"]
 cache_strategy = "realtime"
 
-[fields.metric_status]
+[fields."metric.status"]
 cache_strategy = "realtime"
 
-[fields.metric_throughput_other]
+[fields."metric.throughput.other"]
 cache_strategy = "realtime"
 
-[fields.metric_throughput_read]
+[fields."metric.throughput.read"]
 cache_strategy = "realtime"
 
-[fields.metric_throughput_total]
+[fields."metric.throughput.total"]
 cache_strategy = "realtime"
 
-[fields.metric_throughput_write]
+[fields."metric.throughput.write"]
 cache_strategy = "realtime"
 
-[fields.metric_timestamp]
+[fields."metric.timestamp"]
 cache_strategy = "realtime"
 
-[fields.metric_used_space]
+[fields."metric.used_space"]
 cache_strategy = "realtime"
 
 [fields.name]
@@ -114,25 +114,25 @@ cache_strategy = "cache"
 [fields.namespaces]
 cache_strategy = "cache"
 
-[fields.parent_consistency_group_name]
+[fields."parent_consistency_group.name"]
 cache_strategy = "cache"
 
-[fields.parent_consistency_group_uuid]
+[fields."parent_consistency_group.uuid"]
 cache_strategy = "cache"
 
-[fields.provisioning_options_action]
+[fields."provisioning_options.action"]
 cache_strategy = "cache"
 
-[fields.provisioning_options_name]
+[fields."provisioning_options.name"]
 cache_strategy = "cache"
 
-[fields.provisioning_options_storage_service_name]
+[fields."provisioning_options.storage_service.name"]
 cache_strategy = "cache"
 
-[fields.qos_policy_name]
+[fields."qos.policy.name"]
 cache_strategy = "cache"
 
-[fields.qos_policy_uuid]
+[fields."qos.policy.uuid"]
 cache_strategy = "cache"
 
 [fields.replicated]
@@ -144,91 +144,91 @@ cache_strategy = "cache"
 [fields.replication_source]
 cache_strategy = "cache"
 
-[fields.restore_to_snapshot_name]
+[fields."restore_to.snapshot.name"]
 cache_strategy = "cache"
 
-[fields.restore_to_snapshot_uuid]
+[fields."restore_to.snapshot.uuid"]
 cache_strategy = "cache"
 
-[fields.snapshot_policy_name]
+[fields."snapshot_policy.name"]
 cache_strategy = "cache"
 
-[fields.snapshot_policy_uuid]
+[fields."snapshot_policy.uuid"]
 cache_strategy = "cache"
 
-[fields.space_available]
+[fields."space.available"]
 cache_strategy = "realtime"
 
-[fields.space_size]
+[fields."space.size"]
 cache_strategy = "realtime"
 
-[fields.space_used]
+[fields."space.used"]
 cache_strategy = "realtime"
 
-[fields.statistics_available_space]
+[fields."statistics.available_space"]
 cache_strategy = "realtime"
 
-[fields.statistics_iops_raw_other]
+[fields."statistics.iops_raw.other"]
 cache_strategy = "realtime"
 
-[fields.statistics_iops_raw_read]
+[fields."statistics.iops_raw.read"]
 cache_strategy = "realtime"
 
-[fields.statistics_iops_raw_total]
+[fields."statistics.iops_raw.total"]
 cache_strategy = "realtime"
 
-[fields.statistics_iops_raw_write]
+[fields."statistics.iops_raw.write"]
 cache_strategy = "realtime"
 
-[fields.statistics_latency_raw_other]
+[fields."statistics.latency_raw.other"]
 cache_strategy = "realtime"
 
-[fields.statistics_latency_raw_read]
+[fields."statistics.latency_raw.read"]
 cache_strategy = "realtime"
 
-[fields.statistics_latency_raw_total]
+[fields."statistics.latency_raw.total"]
 cache_strategy = "realtime"
 
-[fields.statistics_latency_raw_write]
+[fields."statistics.latency_raw.write"]
 cache_strategy = "realtime"
 
-[fields.statistics_size]
+[fields."statistics.size"]
 cache_strategy = "realtime"
 
-[fields.statistics_status]
+[fields."statistics.status"]
 cache_strategy = "realtime"
 
-[fields.statistics_throughput_raw_other]
+[fields."statistics.throughput_raw.other"]
 cache_strategy = "realtime"
 
-[fields.statistics_throughput_raw_read]
+[fields."statistics.throughput_raw.read"]
 cache_strategy = "realtime"
 
-[fields.statistics_throughput_raw_total]
+[fields."statistics.throughput_raw.total"]
 cache_strategy = "realtime"
 
-[fields.statistics_throughput_raw_write]
+[fields."statistics.throughput_raw.write"]
 cache_strategy = "realtime"
 
-[fields.statistics_timestamp]
+[fields."statistics.timestamp"]
 cache_strategy = "realtime"
 
-[fields.statistics_used_space]
+[fields."statistics.used_space"]
 cache_strategy = "realtime"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
-[fields.tiering_control]
+[fields."tiering.control"]
 cache_strategy = "cache"
 
-[fields.tiering_object_stores]
+[fields."tiering.object_stores"]
 cache_strategy = "cache"
 
-[fields.tiering_policy]
+[fields."tiering.policy"]
 cache_strategy = "cache"
 
 [fields.uuid]

@@ -8,27 +8,42 @@ from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.storage.file.moves.model import (
     OntapFileMove,
-    OntapFileMoveArgument,
-    OntapFileMoveDestination,
-    OntapFileMoveSource,
+    OntapFileMoveFailureArgument,
+    OntapFileMoveFilesToMoveDestination,
+    OntapFileMoveFilesToMoveSource,
 )
+from pynetappfoundry.utils.dict_path import get_nested_value
 
 
-def _transform_failure_arguments(record: dict[str, Any]) -> list[OntapFileMoveArgument]:
-    """Transform failure.arguments into OntapFileMoveArgument list."""
-    return [OntapFileMoveArgument(**item) for item in record.get("failure.arguments", [])]
+def _transform_failure_arguments(record: dict[str, Any]) -> list[OntapFileMoveFailureArgument]:
+    """Transform failure.arguments into OntapFileMoveFailureArgument list."""
+    try:
+        items = get_nested_value(record, "failure.arguments")
+    except Exception:
+        items = []
+    return [OntapFileMoveFailureArgument(**item) for item in items]
 
 
-def _transform_files_to_move_destinations(record: dict[str, Any]) -> list[OntapFileMoveDestination]:
-    """Transform files_to_move.destinations into OntapFileMoveDestination list."""
-    return [
-        OntapFileMoveDestination(**item) for item in record.get("files_to_move.destinations", [])
-    ]
+def _transform_files_to_move_destinations(
+    record: dict[str, Any],
+) -> list[OntapFileMoveFilesToMoveDestination]:
+    """Transform files_to_move.destinations into OntapFileMoveFilesToMoveDestination list."""
+    try:
+        items = get_nested_value(record, "files_to_move.destinations")
+    except Exception:
+        items = []
+    return [OntapFileMoveFilesToMoveDestination(**item) for item in items]
 
 
-def _transform_files_to_move_sources(record: dict[str, Any]) -> list[OntapFileMoveSource]:
-    """Transform files_to_move.sources into OntapFileMoveSource list."""
-    return [OntapFileMoveSource(**item) for item in record.get("files_to_move.sources", [])]
+def _transform_files_to_move_sources(
+    record: dict[str, Any],
+) -> list[OntapFileMoveFilesToMoveSource]:
+    """Transform files_to_move.sources into OntapFileMoveFilesToMoveSource list."""
+    try:
+        items = get_nested_value(record, "files_to_move.sources")
+    except Exception:
+        items = []
+    return [OntapFileMoveFilesToMoveSource(**item) for item in items]
 
 
 ONTAPFILEMOVE_MAPPING = TypeMapping(
@@ -43,23 +58,23 @@ ONTAPFILEMOVE_MAPPING = TypeMapping(
             default=0,
         ),
         FieldMapping(
-            cache_attr="destination_path",
+            cache_attr="destination.path",
             api_path="destination.path",
         ),
         FieldMapping(
-            cache_attr="destination_svm_name",
+            cache_attr="destination.svm.name",
             api_path="destination.svm.name",
         ),
         FieldMapping(
-            cache_attr="destination_svm_uuid",
+            cache_attr="destination.svm.uuid",
             api_path="destination.svm.uuid",
         ),
         FieldMapping(
-            cache_attr="destination_volume_name",
+            cache_attr="destination.volume.name",
             api_path="destination.volume.name",
         ),
         FieldMapping(
-            cache_attr="destination_volume_uuid",
+            cache_attr="destination.volume.uuid",
             api_path="destination.volume.uuid",
         ),
         FieldMapping(
@@ -68,27 +83,27 @@ ONTAPFILEMOVE_MAPPING = TypeMapping(
             default=0,
         ),
         FieldMapping(
-            cache_attr="failure_arguments",
+            cache_attr="failure.arguments",
             api_path="failure.arguments",
             transform=_transform_failure_arguments,
             default=[],
         ),
         FieldMapping(
-            cache_attr="failure_code",
+            cache_attr="failure.code",
             api_path="failure.code",
         ),
         FieldMapping(
-            cache_attr="failure_message",
+            cache_attr="failure.message",
             api_path="failure.message",
         ),
         FieldMapping(
-            cache_attr="files_to_move_destinations",
+            cache_attr="files_to_move.destinations",
             api_path="files_to_move.destinations",
             transform=_transform_files_to_move_destinations,
             default=[],
         ),
         FieldMapping(
-            cache_attr="files_to_move_sources",
+            cache_attr="files_to_move.sources",
             api_path="files_to_move.sources",
             transform=_transform_files_to_move_sources,
             default=[],
@@ -124,83 +139,83 @@ ONTAPFILEMOVE_MAPPING = TypeMapping(
             default=0,
         ),
         FieldMapping(
-            cache_attr="node_name",
+            cache_attr="node.name",
             api_path="node.name",
         ),
         FieldMapping(
-            cache_attr="node_uuid",
+            cache_attr="node.uuid",
             api_path="node.uuid",
         ),
         FieldMapping(
-            cache_attr="reference_max_cutover_time",
+            cache_attr="reference.max_cutover_time",
             api_path="reference.max_cutover_time",
             default=0,
         ),
         FieldMapping(
-            cache_attr="reference_path",
+            cache_attr="reference.path",
             api_path="reference.path",
         ),
         FieldMapping(
-            cache_attr="reference_svm_name",
+            cache_attr="reference.svm.name",
             api_path="reference.svm.name",
         ),
         FieldMapping(
-            cache_attr="reference_svm_uuid",
+            cache_attr="reference.svm.uuid",
             api_path="reference.svm.uuid",
         ),
         FieldMapping(
-            cache_attr="reference_volume_name",
+            cache_attr="reference.volume.name",
             api_path="reference.volume.name",
         ),
         FieldMapping(
-            cache_attr="reference_volume_uuid",
+            cache_attr="reference.volume.uuid",
             api_path="reference.volume.uuid",
         ),
         FieldMapping(
-            cache_attr="scanner_percent",
+            cache_attr="scanner.percent",
             api_path="scanner.percent",
             default=0,
         ),
         FieldMapping(
-            cache_attr="scanner_progress",
+            cache_attr="scanner.progress",
             api_path="scanner.progress",
             default=0,
         ),
         FieldMapping(
-            cache_attr="scanner_state",
+            cache_attr="scanner.state",
             api_path="scanner.state",
         ),
         FieldMapping(
-            cache_attr="scanner_total",
+            cache_attr="scanner.total",
             api_path="scanner.total",
             default=0,
         ),
         FieldMapping(
-            cache_attr="source_path",
+            cache_attr="source.path",
             api_path="source.path",
         ),
         FieldMapping(
-            cache_attr="source_svm_name",
+            cache_attr="source.svm.name",
             api_path="source.svm.name",
         ),
         FieldMapping(
-            cache_attr="source_svm_uuid",
+            cache_attr="source.svm.uuid",
             api_path="source.svm.uuid",
         ),
         FieldMapping(
-            cache_attr="source_volume_name",
+            cache_attr="source.volume.name",
             api_path="source.volume.name",
         ),
         FieldMapping(
-            cache_attr="source_volume_uuid",
+            cache_attr="source.volume.uuid",
             api_path="source.volume.uuid",
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(
@@ -208,11 +223,11 @@ ONTAPFILEMOVE_MAPPING = TypeMapping(
             api_path="uuid",
         ),
         FieldMapping(
-            cache_attr="volume_name",
+            cache_attr="volume.name",
             api_path="volume.name",
         ),
         FieldMapping(
-            cache_attr="volume_uuid",
+            cache_attr="volume.uuid",
             api_path="volume.uuid",
         ),
     ),

@@ -18,19 +18,19 @@ ONTAPNVMESUBSYSTEMMAP_MAPPING = TypeMapping(
             requires_explicit_fetch=True,
         ),
         FieldMapping(
-            cache_attr="namespace_name",
+            cache_attr="namespace.name",
             api_path="namespace.name",
         ),
         FieldMapping(
-            cache_attr="namespace_node_name",
+            cache_attr="namespace.node.name",
             api_path="namespace.node.name",
         ),
         FieldMapping(
-            cache_attr="namespace_node_uuid",
+            cache_attr="namespace.node.uuid",
             api_path="namespace.node.uuid",
         ),
         FieldMapping(
-            cache_attr="namespace_uuid",
+            cache_attr="namespace.uuid",
             api_path="namespace.uuid",
         ),
         FieldMapping(
@@ -38,19 +38,19 @@ ONTAPNVMESUBSYSTEMMAP_MAPPING = TypeMapping(
             api_path="nsid",
         ),
         FieldMapping(
-            cache_attr="subsystem_name",
+            cache_attr="subsystem.name",
             api_path="subsystem.name",
         ),
         FieldMapping(
-            cache_attr="subsystem_uuid",
+            cache_attr="subsystem.uuid",
             api_path="subsystem.uuid",
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
     ),

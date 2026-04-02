@@ -12,7 +12,7 @@ cache_strategy = "cache"
 [fields.size]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.volume]

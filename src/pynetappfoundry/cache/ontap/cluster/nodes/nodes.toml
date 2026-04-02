@@ -6,133 +6,133 @@ class_name = "OntapNodeResponse"
 [fields.anti_ransomware_version]
 cache_strategy = "cache"
 
-[fields.cluster_interface_ip_address]
+[fields."cluster_interface.ip.address"]
 cache_strategy = "cache"
 
 [fields.cluster_interfaces]
 cache_strategy = "cache"
 
-[fields.controller_board]
+[fields."controller.board"]
 cache_strategy = "cache"
 
-[fields.controller_cpu_count]
+[fields."controller.cpu.count"]
 cache_strategy = "cache"
 
-[fields.controller_cpu_firmware_release]
+[fields."controller.cpu.firmware_release"]
 cache_strategy = "cache"
 
-[fields.controller_cpu_processor]
+[fields."controller.cpu.processor"]
 cache_strategy = "cache"
 
-[fields.controller_failed_fan_count]
+[fields."controller.failed_fan.count"]
 cache_strategy = "cache"
 
-[fields.controller_failed_fan_message_code]
+[fields."controller.failed_fan.message.code"]
 cache_strategy = "cache"
 
-[fields.controller_failed_fan_message_message]
+[fields."controller.failed_fan.message.message"]
 cache_strategy = "cache"
 
-[fields.controller_failed_power_supply_count]
+[fields."controller.failed_power_supply.count"]
 cache_strategy = "cache"
 
-[fields.controller_failed_power_supply_message_code]
+[fields."controller.failed_power_supply.message.code"]
 cache_strategy = "cache"
 
-[fields.controller_failed_power_supply_message_message]
+[fields."controller.failed_power_supply.message.message"]
 cache_strategy = "cache"
 
-[fields.controller_flash_cache]
+[fields."controller.flash_cache"]
 cache_strategy = "cache"
 
-[fields.controller_frus]
+[fields."controller.frus"]
 cache_strategy = "cache"
 
-[fields.controller_memory_size]
+[fields."controller.memory_size"]
 cache_strategy = "cache"
 
-[fields.controller_over_temperature]
+[fields."controller.over_temperature"]
 cache_strategy = "cache"
 
 [fields.date]
 cache_strategy = "cache"
 
-[fields.external_cache_is_enabled]
+[fields."external_cache.is_enabled"]
 cache_strategy = "cache"
 
-[fields.external_cache_is_hya_enabled]
+[fields."external_cache.is_hya_enabled"]
 cache_strategy = "cache"
 
-[fields.external_cache_is_rewarm_enabled]
+[fields."external_cache.is_rewarm_enabled"]
 cache_strategy = "cache"
 
-[fields.external_cache_pcs_size]
+[fields."external_cache.pcs_size"]
 cache_strategy = "cache"
 
-[fields.ha_auto_giveback]
+[fields."ha.auto_giveback"]
 cache_strategy = "cache"
 
-[fields.ha_enabled]
+[fields."ha.enabled"]
 cache_strategy = "cache"
 
-[fields.ha_giveback_failure_code]
+[fields."ha.giveback.failure.code"]
 cache_strategy = "cache"
 
-[fields.ha_giveback_failure_message]
+[fields."ha.giveback.failure.message"]
 cache_strategy = "cache"
 
-[fields.ha_giveback_state]
+[fields."ha.giveback.state"]
 cache_strategy = "cache"
 
-[fields.ha_giveback_status]
+[fields."ha.giveback.status"]
 cache_strategy = "cache"
 
-[fields.ha_interconnect_adapter]
+[fields."ha.interconnect.adapter"]
 cache_strategy = "cache"
 
-[fields.ha_interconnect_state]
+[fields."ha.interconnect.state"]
 cache_strategy = "cache"
 
-[fields.ha_partners]
+[fields."ha.partners"]
 cache_strategy = "cache"
 
-[fields.ha_ports]
+[fields."ha.ports"]
 cache_strategy = "cache"
 
-[fields.ha_takeover_failure_code]
+[fields."ha.takeover.failure.code"]
 cache_strategy = "cache"
 
-[fields.ha_takeover_failure_message]
+[fields."ha.takeover.failure.message"]
 cache_strategy = "cache"
 
-[fields.ha_takeover_state]
+[fields."ha.takeover.state"]
 cache_strategy = "cache"
 
-[fields.ha_takeover_check_reasons]
+[fields."ha.takeover_check.reasons"]
 cache_strategy = "cache"
 
-[fields.ha_takeover_check_takeover_possible]
+[fields."ha.takeover_check.takeover_possible"]
 cache_strategy = "cache"
 
-[fields.hw_assist_status_enabled]
+[fields."hw_assist.status.enabled"]
 cache_strategy = "cache"
 
-[fields.hw_assist_status_local_ip]
+[fields."hw_assist.status.local.ip"]
 cache_strategy = "cache"
 
-[fields.hw_assist_status_local_port]
+[fields."hw_assist.status.local.port"]
 cache_strategy = "cache"
 
-[fields.hw_assist_status_local_state]
+[fields."hw_assist.status.local.state"]
 cache_strategy = "cache"
 
-[fields.hw_assist_status_partner_ip]
+[fields."hw_assist.status.partner.ip"]
 cache_strategy = "cache"
 
-[fields.hw_assist_status_partner_port]
+[fields."hw_assist.status.partner.port"]
 cache_strategy = "cache"
 
-[fields.hw_assist_status_partner_state]
+[fields."hw_assist.status.partner.state"]
 cache_strategy = "cache"
 
 [fields.is_spares_low]
@@ -141,7 +141,7 @@ cache_strategy = "cache"
 [fields.location]
 cache_strategy = "cache"
 
-[fields.management_interface_ip_address]
+[fields."management_interface.ip.address"]
 cache_strategy = "cache"
 
 [fields.management_interfaces]
@@ -150,33 +150,33 @@ cache_strategy = "cache"
 [fields.membership]
 cache_strategy = "cache"
 
-[fields.metric_duration]
+[fields."metric.duration"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_processor_utilization]
+[fields."metric.processor_utilization"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_status]
+[fields."metric.status"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_timestamp]
+[fields."metric.timestamp"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_uuid]
+[fields."metric.uuid"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metrocluster_custom_vlan_capable]
+[fields."metrocluster.custom_vlan_capable"]
 cache_strategy = "cache"
 
-[fields.metrocluster_ports]
+[fields."metrocluster.ports"]
 cache_strategy = "cache"
 
-[fields.metrocluster_type]
+[fields."metrocluster.type_"]
 cache_strategy = "cache"
 
 [fields.model_]
@@ -185,10 +185,10 @@ cache_strategy = "cache"
 [fields.name]
 cache_strategy = "cache"
 
-[fields.nvram_battery_state]
+[fields."nvram.battery_state"]
 cache_strategy = "cache"
 
-[fields.nvram_id]
+[fields."nvram.id"]
 cache_strategy = "cache"
 
 [fields.owner]
@@ -197,143 +197,143 @@ cache_strategy = "cache"
 [fields.serial_number]
 cache_strategy = "cache"
 
-[fields.service_processor_api_service_enabled]
+[fields."service_processor.api_service.enabled"]
 cache_strategy = "cache"
 
-[fields.service_processor_api_service_limit_access]
+[fields."service_processor.api_service.limit_access"]
 cache_strategy = "cache"
 
-[fields.service_processor_api_service_port]
+[fields."service_processor.api_service.port"]
 cache_strategy = "cache"
 
-[fields.service_processor_auto_config_ipv4_subnet]
+[fields."service_processor.auto_config.ipv4_subnet"]
 cache_strategy = "cache"
 
-[fields.service_processor_auto_config_ipv6_subnet]
+[fields."service_processor.auto_config.ipv6_subnet"]
 cache_strategy = "cache"
 
-[fields.service_processor_autoupdate_enabled]
+[fields."service_processor.autoupdate_enabled"]
 cache_strategy = "cache"
 
-[fields.service_processor_backup_is_current]
+[fields."service_processor.backup.is_current"]
 cache_strategy = "cache"
 
-[fields.service_processor_backup_state]
+[fields."service_processor.backup.state"]
 cache_strategy = "cache"
 
-[fields.service_processor_backup_version]
+[fields."service_processor.backup.version"]
 cache_strategy = "cache"
 
-[fields.service_processor_dhcp_enabled]
+[fields."service_processor.dhcp_enabled"]
 cache_strategy = "cache"
 
-[fields.service_processor_firmware_version]
+[fields."service_processor.firmware_version"]
 cache_strategy = "cache"
 
-[fields.service_processor_ipv4_interface_address]
+[fields."service_processor.ipv4_interface.address"]
 cache_strategy = "cache"
 
-[fields.service_processor_ipv4_interface_enabled]
+[fields."service_processor.ipv4_interface.enabled"]
 cache_strategy = "cache"
 
-[fields.service_processor_ipv4_interface_gateway]
+[fields."service_processor.ipv4_interface.gateway"]
 cache_strategy = "cache"
 
-[fields.service_processor_ipv4_interface_netmask]
+[fields."service_processor.ipv4_interface.netmask"]
 cache_strategy = "cache"
 
-[fields.service_processor_ipv4_interface_setup_state]
+[fields."service_processor.ipv4_interface.setup_state"]
 cache_strategy = "cache"
 
-[fields.service_processor_ipv6_interface_address]
+[fields."service_processor.ipv6_interface.address"]
 cache_strategy = "cache"
 
-[fields.service_processor_ipv6_interface_enabled]
+[fields."service_processor.ipv6_interface.enabled"]
 cache_strategy = "cache"
 
-[fields.service_processor_ipv6_interface_gateway]
+[fields."service_processor.ipv6_interface.gateway"]
 cache_strategy = "cache"
 
-[fields.service_processor_ipv6_interface_is_ipv6_ra_enabled]
+[fields."service_processor.ipv6_interface.is_ipv6_ra_enabled"]
 cache_strategy = "cache"
 
-[fields.service_processor_ipv6_interface_link_local_ip]
+[fields."service_processor.ipv6_interface.link_local_ip"]
 cache_strategy = "cache"
 
-[fields.service_processor_ipv6_interface_netmask]
+[fields."service_processor.ipv6_interface.netmask"]
 cache_strategy = "cache"
 
-[fields.service_processor_ipv6_interface_router_ip]
+[fields."service_processor.ipv6_interface.router_ip"]
 cache_strategy = "cache"
 
-[fields.service_processor_ipv6_interface_setup_state]
+[fields."service_processor.ipv6_interface.setup_state"]
 cache_strategy = "cache"
 
-[fields.service_processor_is_ip_configured]
+[fields."service_processor.is_ip_configured"]
 cache_strategy = "cache"
 
-[fields.service_processor_last_update_state]
+[fields."service_processor.last_update_state"]
 cache_strategy = "cache"
 
-[fields.service_processor_link_status]
+[fields."service_processor.link_status"]
 cache_strategy = "cache"
 
-[fields.service_processor_mac_address]
+[fields."service_processor.mac_address"]
 cache_strategy = "cache"
 
-[fields.service_processor_primary_is_current]
+[fields."service_processor.primary.is_current"]
 cache_strategy = "cache"
 
-[fields.service_processor_primary_state]
+[fields."service_processor.primary.state"]
 cache_strategy = "cache"
 
-[fields.service_processor_primary_version]
+[fields."service_processor.primary.version"]
 cache_strategy = "cache"
 
-[fields.service_processor_ssh_info_allowed_addresses]
+[fields."service_processor.ssh_info.allowed_addresses"]
 cache_strategy = "cache"
 
-[fields.service_processor_state]
+[fields."service_processor.state"]
 cache_strategy = "cache"
 
-[fields.service_processor_type]
+[fields."service_processor.type_"]
 cache_strategy = "cache"
 
-[fields.service_processor_web_service_enabled]
+[fields."service_processor.web_service.enabled"]
 cache_strategy = "cache"
 
-[fields.service_processor_web_service_limit_access]
+[fields."service_processor.web_service.limit_access"]
 cache_strategy = "cache"
 
-[fields.snaplock_compliance_clock_time]
+[fields."snaplock.compliance_clock_time"]
 cache_strategy = "cache"
 
 [fields.state]
 cache_strategy = "cache"
 
-[fields.statistics_processor_utilization_base]
+[fields."statistics.processor_utilization_base"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_processor_utilization_raw]
+[fields."statistics.processor_utilization_raw"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_status]
+[fields."statistics.status"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_timestamp]
+[fields."statistics.timestamp"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.storage_configuration]
 cache_strategy = "cache"
 
-[fields.system_aggregate_name]
+[fields."system_aggregate.name"]
 cache_strategy = "cache"
 
-[fields.system_aggregate_uuid]
+[fields."system_aggregate.uuid"]
 cache_strategy = "cache"
 
 [fields.system_id]
@@ -351,17 +351,17 @@ cache_strategy = "cache"
 [fields.vendor_serial_number]
 cache_strategy = "cache"
 
-[fields.version_full]
+[fields."version.full"]
 cache_strategy = "cache"
 
-[fields.version_generation]
+[fields."version.generation"]
 cache_strategy = "cache"
 
-[fields.version_major]
+[fields."version.major"]
 cache_strategy = "cache"
 
-[fields.version_minor]
+[fields."version.minor"]
 cache_strategy = "cache"
 
-[fields.vm_provider_type]
+[fields."vm.provider_type"]
 cache_strategy = "cache"

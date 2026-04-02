@@ -384,7 +384,8 @@ class TestClusterMetadataDB:
     def test_list_field_json_round_trip(self, db: ClusterMetadataDB) -> None:
         """Sub-model list fields survive serialization round-trip."""
         from pynetappfoundry.models.ontap.cluster.nodes.model import (
-            OntapNodeResponseClusterInterface,
+            OntapNodeResponseClusterInterface2,
+            OntapNodeResponseClusterInterface2Ip,
         )
 
         meta = CachedClusterMetadata(
@@ -393,9 +394,9 @@ class TestClusterMetadataDB:
                 OntapNodeResponse(
                     name="node1",
                     cluster_interfaces=[
-                        OntapNodeResponseClusterInterface(
-                            cluster_interfaces_name="e0a",
-                            cluster_interfaces_ip_address="10.0.0.1",
+                        OntapNodeResponseClusterInterface2(
+                            name="e0a",
+                            ip=OntapNodeResponseClusterInterface2Ip(address="10.0.0.1"),
                         ),
                     ],
                 ),
@@ -406,8 +407,8 @@ class TestClusterMetadataDB:
 
         assert got is not None
         assert len(got.nodes[0].cluster_interfaces) == 1
-        assert got.nodes[0].cluster_interfaces[0].cluster_interfaces_name == "e0a"
-        assert got.nodes[0].cluster_interfaces[0].cluster_interfaces_ip_address == "10.0.0.1"
+        assert got.nodes[0].cluster_interfaces[0].name == "e0a"
+        assert got.nodes[0].cluster_interfaces[0].ip.address == "10.0.0.1"
 
     def test_list_field_model_dump_uses_json_mode(self) -> None:
         """model_dump(mode='json') ensures non-JSON-native types serialize correctly.
@@ -756,6 +757,7 @@ class TestRealtimeAttrs:
     def test_returns_realtime_cache_attrs_for_mapped_model(self) -> None:
         """realtime_attrs returns correct field names for models with realtime mappings."""
         # Import the mapping module to trigger register_mapping() calls
+        import pynetappfoundry.cache.ontap.network.fc.ports.mapping  # noqa: F401
         from pynetappfoundry.models.ontap.network.fc.ports.model import OntapFcPort
 
         # Clear cache to ensure fresh lookup
@@ -765,9 +767,9 @@ class TestRealtimeAttrs:
 
         assert isinstance(result, frozenset)
         assert len(result) > 0
-        # These are known realtime fields from ports.toml
-        assert "metric_duration" in result
-        assert "metric_iops_total" in result
+        # These are known realtime fields from ports.toml (dotted paths with nested models)
+        assert "metric.duration" in result
+        assert "metric.iops.total" in result
 
     def test_returns_empty_frozenset_for_unmapped_model(self) -> None:
         """realtime_attrs returns empty frozenset for models without mappings."""

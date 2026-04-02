@@ -24,29 +24,29 @@ ONTAPLUNMAP_MAPPING = TypeMapping(
     api_type="ontap",
     fields=(
         FieldMapping(
-            cache_attr="igroup_initiators",
+            cache_attr="igroup.initiators",
             api_path="igroup.initiators",
             default=[],
         ),
         FieldMapping(
-            cache_attr="igroup_name",
+            cache_attr="igroup.name",
             api_path="igroup.name",
         ),
         FieldMapping(
-            cache_attr="igroup_os_type",
+            cache_attr="igroup.os_type",
             api_path="igroup.os_type",
         ),
         FieldMapping(
-            cache_attr="igroup_protocol",
+            cache_attr="igroup.protocol",
             api_path="igroup.protocol",
         ),
         FieldMapping(
-            cache_attr="igroup_replicated",
+            cache_attr="igroup.replicated",
             api_path="igroup.replicated",
             default=False,
         ),
         FieldMapping(
-            cache_attr="igroup_uuid",
+            cache_attr="igroup.uuid",
             api_path="igroup.uuid",
         ),
         FieldMapping(
@@ -55,24 +55,24 @@ ONTAPLUNMAP_MAPPING = TypeMapping(
             default=0,
         ),
         FieldMapping(
-            cache_attr="lun_name",
+            cache_attr="lun.name",
             api_path="lun.name",
         ),
         FieldMapping(
-            cache_attr="lun_node_name",
+            cache_attr="lun.node.name",
             api_path="lun.node.name",
         ),
         FieldMapping(
-            cache_attr="lun_node_uuid",
+            cache_attr="lun.node.uuid",
             api_path="lun.node.uuid",
         ),
         FieldMapping(
-            cache_attr="lun_smbc_replicated",
+            cache_attr="lun.smbc.replicated",
             api_path="lun.smbc.replicated",
             default=False,
         ),
         FieldMapping(
-            cache_attr="lun_uuid",
+            cache_attr="lun.uuid",
             api_path="lun.uuid",
         ),
         FieldMapping(
@@ -82,11 +82,11 @@ ONTAPLUNMAP_MAPPING = TypeMapping(
             default=[],
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
     ),

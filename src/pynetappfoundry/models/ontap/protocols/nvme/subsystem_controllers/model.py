@@ -7,32 +7,104 @@ from pydantic import Field
 from pynetappfoundry.models._base import OntapModel
 
 
+class OntapNvmeSubsystemControllerAdminQueue(OntapModel):
+    """OntapNvmeSubsystemControllerAdminQueue sub-model for admin_queue."""
+
+    depth: int = 0
+
+
+class OntapNvmeSubsystemControllerDhHmacChap(OntapModel):
+    """OntapNvmeSubsystemControllerDhHmacChap sub-model for dh_hmac_chap."""
+
+    group_size: str = ""
+    hash_function: str = ""
+    mode: str = ""
+
+
+class OntapNvmeSubsystemControllerDigest(OntapModel):
+    """OntapNvmeSubsystemControllerDigest sub-model for digest."""
+
+    data: bool = False
+    header: bool = False
+
+
+class OntapNvmeSubsystemControllerHost(OntapModel):
+    """OntapNvmeSubsystemControllerHost sub-model for host."""
+
+    id: str = ""
+    nqn: str = ""
+    transport_address: str = ""
+
+
+class OntapNvmeSubsystemControllerInterface(OntapModel):
+    """OntapNvmeSubsystemControllerInterface sub-model for interface."""
+
+    name: str = ""
+    transport_address: str = ""
+    uuid: str = ""
+
+
+class OntapNvmeSubsystemControllerIoQueue(OntapModel):
+    """OntapNvmeSubsystemControllerIoQueue sub-model for io_queue."""
+
+    count: int = 0
+    depth: list[int] = Field(default_factory=list)
+
+
+class OntapNvmeSubsystemControllerNode(OntapModel):
+    """OntapNvmeSubsystemControllerNode sub-model for node."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapNvmeSubsystemControllerSubsystem(OntapModel):
+    """OntapNvmeSubsystemControllerSubsystem sub-model for subsystem."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapNvmeSubsystemControllerSvm(OntapModel):
+    """OntapNvmeSubsystemControllerSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapNvmeSubsystemControllerTls(OntapModel):
+    """OntapNvmeSubsystemControllerTls sub-model for tls."""
+
+    cipher: str = ""
+    key_type: str = ""
+    psk_identity: str = ""
+
+
 class OntapNvmeSubsystemController(OntapModel):
     """OntapNvmeSubsystemController information."""
 
-    admin_queue_depth: int = 0
-    dh_hmac_chap_group_size: str = ""
-    dh_hmac_chap_hash_function: str = ""
-    dh_hmac_chap_mode: str = ""
-    digest_data: bool = False
-    digest_header: bool = False
-    host_id: str = ""
-    host_nqn: str = ""
-    host_transport_address: str = ""
+    admin_queue: OntapNvmeSubsystemControllerAdminQueue = Field(
+        default_factory=OntapNvmeSubsystemControllerAdminQueue
+    )
+    dh_hmac_chap: OntapNvmeSubsystemControllerDhHmacChap = Field(
+        default_factory=OntapNvmeSubsystemControllerDhHmacChap
+    )
+    digest: OntapNvmeSubsystemControllerDigest = Field(
+        default_factory=OntapNvmeSubsystemControllerDigest
+    )
+    host: OntapNvmeSubsystemControllerHost = Field(default_factory=OntapNvmeSubsystemControllerHost)
     id: str = ""
-    interface_name: str = ""
-    interface_transport_address: str = ""
-    interface_uuid: str = ""
-    io_queue_count: int = 0
-    io_queue_depth: list[int] = Field(default_factory=list)
+    interface: OntapNvmeSubsystemControllerInterface = Field(
+        default_factory=OntapNvmeSubsystemControllerInterface
+    )
+    io_queue: OntapNvmeSubsystemControllerIoQueue = Field(
+        default_factory=OntapNvmeSubsystemControllerIoQueue
+    )
     keep_alive_timeout: int = 0
-    node_name: str = ""
-    node_uuid: str = ""
-    subsystem_name: str = ""
-    subsystem_uuid: str = ""
-    svm_name: str = ""
-    svm_uuid: str = ""
-    tls_cipher: str = ""
-    tls_key_type: str = ""
-    tls_psk_identity: str = ""
+    node: OntapNvmeSubsystemControllerNode = Field(default_factory=OntapNvmeSubsystemControllerNode)
+    subsystem: OntapNvmeSubsystemControllerSubsystem = Field(
+        default_factory=OntapNvmeSubsystemControllerSubsystem
+    )
+    svm: OntapNvmeSubsystemControllerSvm = Field(default_factory=OntapNvmeSubsystemControllerSvm)
+    tls: OntapNvmeSubsystemControllerTls = Field(default_factory=OntapNvmeSubsystemControllerTls)
     transport_protocol: str = ""

@@ -3,14 +3,14 @@ path = "/cluster/metrocluster"
 schema = "metrocluster"
 class_name = "OntapMetrocluster"
 
-[fields.node_name]
+[fields."node.name"]
 cache_strategy = "cache"
 
-[fields.node_uuid]
+[fields."node.uuid"]
 cache_strategy = "cache"
 
-[fields.partner_name]
+[fields."partner.name"]
 cache_strategy = "cache"
 
-[fields.partner_uuid]
+[fields."partner.uuid"]
 cache_strategy = "cache"

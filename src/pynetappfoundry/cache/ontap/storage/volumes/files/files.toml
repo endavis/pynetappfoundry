@@ -6,40 +6,40 @@ class_name = "OntapFileInfo"
 [fields.accessed_time]
 cache_strategy = "cache"
 
-[fields.analytics_by_accessed_time_bytes_used_labels]
+[fields."analytics.by_accessed_time.bytes_used.labels"]
 cache_strategy = "cache"
 
-[fields.analytics_by_accessed_time_bytes_used_newest_label]
+[fields."analytics.by_accessed_time.bytes_used.newest_label"]
 cache_strategy = "cache"
 
-[fields.analytics_by_accessed_time_bytes_used_percentages]
+[fields."analytics.by_accessed_time.bytes_used.percentages"]
 cache_strategy = "cache"
 
-[fields.analytics_by_accessed_time_bytes_used_values]
+[fields."analytics.by_accessed_time.bytes_used.values"]
 cache_strategy = "cache"
 
-[fields.analytics_by_modified_time_bytes_used_labels]
+[fields."analytics.by_modified_time.bytes_used.labels"]
 cache_strategy = "cache"
 
-[fields.analytics_by_modified_time_bytes_used_newest_label]
+[fields."analytics.by_modified_time.bytes_used.newest_label"]
 cache_strategy = "cache"
 
-[fields.analytics_by_modified_time_bytes_used_percentages]
+[fields."analytics.by_modified_time.bytes_used.percentages"]
 cache_strategy = "cache"
 
-[fields.analytics_by_modified_time_bytes_used_values]
+[fields."analytics.by_modified_time.bytes_used.values"]
 cache_strategy = "cache"
 
-[fields.analytics_bytes_used]
+[fields."analytics.bytes_used"]
 cache_strategy = "cache"
 
-[fields.analytics_file_count]
+[fields."analytics.file_count"]
 cache_strategy = "cache"
 
-[fields.analytics_incomplete_data]
+[fields."analytics.incomplete_data"]
 cache_strategy = "cache"
 
-[fields.analytics_subdir_count]
+[fields."analytics.subdir_count"]
 cache_strategy = "cache"
 
 [fields.bytes_used]
@@ -48,10 +48,10 @@ cache_strategy = "cache"
 [fields.changed_time]
 cache_strategy = "cache"
 
-[fields.constituent_name]
+[fields."constituent.name"]
 cache_strategy = "cache"
 
-[fields.constituent_uuid]
+[fields."constituent.uuid"]
 cache_strategy = "cache"
 
 [fields.creation_time]
@@ -99,11 +99,11 @@ cache_strategy = "cache"
 [fields.path]
 cache_strategy = "cache"
 
-[fields.qos_policy_name]
+[fields."qos_policy.name"]
 cache_strategy = "cache"
 requires_explicit_fetch = true
 
-[fields.qos_policy_uuid]
+[fields."qos_policy.uuid"]
 cache_strategy = "cache"
 requires_explicit_fetch = true
 
@@ -122,8 +122,8 @@ cache_strategy = "cache"
 [fields.unix_permissions]
 cache_strategy = "cache"
 
-[fields.volume_name]
+[fields."volume.name"]
 cache_strategy = "cache"
 
-[fields.volume_uuid]
+[fields."volume.uuid"]
 cache_strategy = "cache"

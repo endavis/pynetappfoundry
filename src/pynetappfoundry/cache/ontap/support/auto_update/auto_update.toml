@@ -6,14 +6,14 @@ class_name = "OntapAutoUpdateInfo"
 [fields.enabled]
 cache_strategy = "cache"
 
-[fields.eula_accepted]
+[fields."eula.accepted"]
 cache_strategy = "cache"
 
-[fields.eula_accepted_ip_address]
+[fields."eula.accepted_ip_address"]
 cache_strategy = "cache"
 
-[fields.eula_accepted_timestamp]
+[fields."eula.accepted_timestamp"]
 cache_strategy = "cache"
 
-[fields.eula_user_id_accepted]
+[fields."eula.user_id_accepted"]
 cache_strategy = "cache"

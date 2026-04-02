@@ -2,17 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.models.ontap.network.fc.fabrics.model import OntapFabric, OntapFabricConnection
-
-
-def _transform_connections(record: dict[str, Any]) -> list[OntapFabricConnection]:
-    """Transform connections into OntapFabricConnection list."""
-    return [OntapFabricConnection(**item) for item in record.get("connections", [])]
-
+from pynetappfoundry.models.ontap.network.fc.fabrics.model import OntapFabric
 
 ONTAPFABRIC_MAPPING = TypeMapping(
     name="OntapFabric",
@@ -21,22 +13,21 @@ ONTAPFABRIC_MAPPING = TypeMapping(
     api_type="ontap",
     fields=(
         FieldMapping(
-            cache_attr="cache_age",
+            cache_attr="cache.age",
             api_path="cache.age",
         ),
         FieldMapping(
-            cache_attr="cache_is_current",
+            cache_attr="cache.is_current",
             api_path="cache.is_current",
             default=False,
         ),
         FieldMapping(
-            cache_attr="cache_update_time",
+            cache_attr="cache.update_time",
             api_path="cache.update_time",
         ),
         FieldMapping(
             cache_attr="connections",
             api_path="connections",
-            transform=_transform_connections,
             default=[],
             requires_explicit_fetch=True,
         ),
@@ -45,7 +36,7 @@ ONTAPFABRIC_MAPPING = TypeMapping(
             api_path="name",
         ),
         FieldMapping(
-            cache_attr="zoneset_name",
+            cache_attr="zoneset.name",
             api_path="zoneset.name",
         ),
     ),

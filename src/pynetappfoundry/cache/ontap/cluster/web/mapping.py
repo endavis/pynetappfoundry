@@ -13,11 +13,11 @@ ONTAPWEB_MAPPING = TypeMapping(
     api_type="ontap",
     fields=(
         FieldMapping(
-            cache_attr="certificate_name",
+            cache_attr="certificate.name",
             api_path="certificate.name",
         ),
         FieldMapping(
-            cache_attr="certificate_uuid",
+            cache_attr="certificate.uuid",
             api_path="certificate.uuid",
         ),
         FieldMapping(
@@ -26,22 +26,22 @@ ONTAPWEB_MAPPING = TypeMapping(
             default=False,
         ),
         FieldMapping(
-            cache_attr="csrf_protection_enabled",
+            cache_attr="csrf.protection_enabled",
             api_path="csrf.protection_enabled",
             default=False,
         ),
         FieldMapping(
-            cache_attr="csrf_token_concurrent_limit",
+            cache_attr="csrf.token.concurrent_limit",
             api_path="csrf.token.concurrent_limit",
             default=0,
         ),
         FieldMapping(
-            cache_attr="csrf_token_idle_timeout",
+            cache_attr="csrf.token.idle_timeout",
             api_path="csrf.token.idle_timeout",
             default=0,
         ),
         FieldMapping(
-            cache_attr="csrf_token_max_timeout",
+            cache_attr="csrf.token.max_timeout",
             api_path="csrf.token.max_timeout",
             default=0,
         ),

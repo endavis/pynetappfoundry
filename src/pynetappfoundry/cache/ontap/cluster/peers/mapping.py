@@ -28,32 +28,32 @@ ONTAPCLUSTERPEER_MAPPING = TypeMapping(
     api_type="ontap",
     fields=(
         FieldMapping(
-            cache_attr="authentication_expiry_time",
+            cache_attr="authentication.expiry_time",
             api_path="authentication.expiry_time",
         ),
         FieldMapping(
-            cache_attr="authentication_generate_passphrase",
+            cache_attr="authentication.generate_passphrase",
             api_path="authentication.generate_passphrase",
             default=False,
         ),
         FieldMapping(
-            cache_attr="authentication_in_use",
+            cache_attr="authentication.in_use",
             api_path="authentication.in_use",
         ),
         FieldMapping(
-            cache_attr="authentication_passphrase",
+            cache_attr="authentication.passphrase",
             api_path="authentication.passphrase",
         ),
         FieldMapping(
-            cache_attr="authentication_state",
+            cache_attr="authentication.state",
             api_path="authentication.state",
         ),
         FieldMapping(
-            cache_attr="encryption_proposed",
+            cache_attr="encryption.proposed",
             api_path="encryption.proposed",
         ),
         FieldMapping(
-            cache_attr="encryption_state",
+            cache_attr="encryption.state",
             api_path="encryption.state",
         ),
         FieldMapping(
@@ -67,28 +67,28 @@ ONTAPCLUSTERPEER_MAPPING = TypeMapping(
             api_path="ip_address",
         ),
         FieldMapping(
-            cache_attr="ipspace_name",
+            cache_attr="ipspace.name",
             api_path="ipspace.name",
         ),
         FieldMapping(
-            cache_attr="ipspace_uuid",
+            cache_attr="ipspace.uuid",
             api_path="ipspace.uuid",
         ),
         FieldMapping(
-            cache_attr="local_network_broadcast_domain",
+            cache_attr="local_network.broadcast_domain",
             api_path="local_network.broadcast_domain",
         ),
         FieldMapping(
-            cache_attr="local_network_gateway",
+            cache_attr="local_network.gateway",
             api_path="local_network.gateway",
         ),
         FieldMapping(
-            cache_attr="local_network_interfaces",
+            cache_attr="local_network.interfaces",
             api_path="local_network.interfaces",
             default=[],
         ),
         FieldMapping(
-            cache_attr="local_network_netmask",
+            cache_attr="local_network.netmask",
             api_path="local_network.netmask",
         ),
         FieldMapping(
@@ -101,24 +101,24 @@ ONTAPCLUSTERPEER_MAPPING = TypeMapping(
             default=[],
         ),
         FieldMapping(
-            cache_attr="remote_ip_addresses",
+            cache_attr="remote.ip_addresses",
             api_path="remote.ip_addresses",
             default=[],
         ),
         FieldMapping(
-            cache_attr="remote_name",
+            cache_attr="remote.name",
             api_path="remote.name",
         ),
         FieldMapping(
-            cache_attr="remote_serial_number",
+            cache_attr="remote.serial_number",
             api_path="remote.serial_number",
         ),
         FieldMapping(
-            cache_attr="status_state",
+            cache_attr="status.state",
             api_path="status.state",
         ),
         FieldMapping(
-            cache_attr="status_update_time",
+            cache_attr="status.update_time",
             api_path="status.update_time",
         ),
         FieldMapping(
@@ -126,21 +126,21 @@ ONTAPCLUSTERPEER_MAPPING = TypeMapping(
             api_path="uuid",
         ),
         FieldMapping(
-            cache_attr="version_full",
+            cache_attr="version.full",
             api_path="version.full",
         ),
         FieldMapping(
-            cache_attr="version_generation",
+            cache_attr="version.generation",
             api_path="version.generation",
             default=0,
         ),
         FieldMapping(
-            cache_attr="version_major",
+            cache_attr="version.major",
             api_path="version.major",
             default=0,
         ),
         FieldMapping(
-            cache_attr="version_minor",
+            cache_attr="version.minor",
             api_path="version.minor",
             default=0,
         ),

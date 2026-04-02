@@ -6,62 +6,62 @@ class_name = "OntapPerformanceQtreeMetricResponse"
 [fields.duration]
 cache_strategy = "cache"
 
-[fields.iops_other]
+[fields."iops.other"]
 cache_strategy = "cache"
 
-[fields.iops_read]
+[fields."iops.read"]
 cache_strategy = "cache"
 
-[fields.iops_total]
+[fields."iops.total"]
 cache_strategy = "cache"
 
-[fields.iops_write]
+[fields."iops.write"]
 cache_strategy = "cache"
 
-[fields.latency_other]
+[fields."latency.other"]
 cache_strategy = "cache"
 
-[fields.latency_read]
+[fields."latency.read"]
 cache_strategy = "cache"
 
-[fields.latency_total]
+[fields."latency.total"]
 cache_strategy = "cache"
 
-[fields.latency_write]
+[fields."latency.write"]
 cache_strategy = "cache"
 
-[fields.qtree_id]
+[fields."qtree.id"]
 cache_strategy = "cache"
 
-[fields.qtree_name]
+[fields."qtree.name"]
 cache_strategy = "cache"
 
 [fields.status]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
-[fields.throughput_other]
+[fields."throughput.other"]
 cache_strategy = "cache"
 
-[fields.throughput_read]
+[fields."throughput.read"]
 cache_strategy = "cache"
 
-[fields.throughput_total]
+[fields."throughput.total"]
 cache_strategy = "cache"
 
-[fields.throughput_write]
+[fields."throughput.write"]
 cache_strategy = "cache"
 
 [fields.timestamp]
 cache_strategy = "cache"
 
-[fields.volume_name]
+[fields."volume.name"]
 cache_strategy = "cache"
 
-[fields.volume_uuid]
+[fields."volume.uuid"]
 cache_strategy = "cache"

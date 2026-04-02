@@ -9,10 +9,10 @@ cache_strategy = "cache"
 [fields.category]
 cache_strategy = "cache"
 
-[fields.description_code]
+[fields."description.code"]
 cache_strategy = "cache"
 
-[fields.description_message]
+[fields."description.message"]
 cache_strategy = "cache"
 
 [fields.uuid]

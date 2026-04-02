@@ -9,13 +9,13 @@ cache_strategy = "cache"
 [fields.duplex_type]
 cache_strategy = "cache"
 
-[fields.identity_index]
+[fields."identity.index"]
 cache_strategy = "cache"
 
-[fields.identity_name]
+[fields."identity.name"]
 cache_strategy = "cache"
 
-[fields.identity_number]
+[fields."identity.number"]
 cache_strategy = "cache"
 
 [fields.isl]
@@ -27,25 +27,25 @@ cache_strategy = "cache"
 [fields.mtu]
 cache_strategy = "cache"
 
-[fields.remote_port_device_node_name]
+[fields."remote_port.device.node.name"]
 cache_strategy = "cache"
 
-[fields.remote_port_device_node_uuid]
+[fields."remote_port.device.node.uuid"]
 cache_strategy = "cache"
 
-[fields.remote_port_device_shelf_module]
+[fields."remote_port.device.shelf.module"]
 cache_strategy = "cache"
 
-[fields.remote_port_device_shelf_name]
+[fields."remote_port.device.shelf.name"]
 cache_strategy = "cache"
 
-[fields.remote_port_device_shelf_uid]
+[fields."remote_port.device.shelf.uid"]
 cache_strategy = "cache"
 
-[fields.remote_port_mtu]
+[fields."remote_port.mtu"]
 cache_strategy = "cache"
 
-[fields.remote_port_name]
+[fields."remote_port.name"]
 cache_strategy = "cache"
 
 [fields.speed]
@@ -54,25 +54,25 @@ cache_strategy = "cache"
 [fields.state]
 cache_strategy = "cache"
 
-[fields.statistics_receive_raw_discards]
+[fields."statistics.receive_raw.discards"]
 cache_strategy = "realtime"
 
-[fields.statistics_receive_raw_errors]
+[fields."statistics.receive_raw.errors"]
 cache_strategy = "realtime"
 
-[fields.statistics_receive_raw_packets]
+[fields."statistics.receive_raw.packets"]
 cache_strategy = "realtime"
 
-[fields.statistics_transmit_raw_discards]
+[fields."statistics.transmit_raw.discards"]
 cache_strategy = "realtime"
 
-[fields.statistics_transmit_raw_errors]
+[fields."statistics.transmit_raw.errors"]
 cache_strategy = "realtime"
 
-[fields.statistics_transmit_raw_packets]
+[fields."statistics.transmit_raw.packets"]
 cache_strategy = "realtime"
 
-[fields.switch_name]
+[fields."switch.name"]
 cache_strategy = "cache"
 
 [fields.type_]

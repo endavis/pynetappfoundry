@@ -20,11 +20,11 @@ ONTAPNFSCLIENTSMAP_MAPPING = TypeMapping(
             default=[],
         ),
         FieldMapping(
-            cache_attr="node_name",
+            cache_attr="node.name",
             api_path="node.name",
         ),
         FieldMapping(
-            cache_attr="node_uuid",
+            cache_attr="node.uuid",
             api_path="node.uuid",
         ),
         FieldMapping(
@@ -32,11 +32,11 @@ ONTAPNFSCLIENTSMAP_MAPPING = TypeMapping(
             api_path="server_ip",
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
     ),

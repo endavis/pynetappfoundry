@@ -18,11 +18,11 @@ ONTAPAUTOSUPPORT_MAPPING = TypeMapping(
             api_path="component",
         ),
         FieldMapping(
-            cache_attr="corrective_action_code",
+            cache_attr="corrective_action.code",
             api_path="corrective_action.code",
         ),
         FieldMapping(
-            cache_attr="corrective_action_message",
+            cache_attr="corrective_action.message",
             api_path="corrective_action.message",
         ),
         FieldMapping(
@@ -30,19 +30,19 @@ ONTAPAUTOSUPPORT_MAPPING = TypeMapping(
             api_path="destination",
         ),
         FieldMapping(
-            cache_attr="issue_code",
+            cache_attr="issue.code",
             api_path="issue.code",
         ),
         FieldMapping(
-            cache_attr="issue_message",
+            cache_attr="issue.message",
             api_path="issue.message",
         ),
         FieldMapping(
-            cache_attr="node_name",
+            cache_attr="node.name",
             api_path="node.name",
         ),
         FieldMapping(
-            cache_attr="node_uuid",
+            cache_attr="node.uuid",
             api_path="node.uuid",
         ),
     ),

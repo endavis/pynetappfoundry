@@ -9,6 +9,23 @@ from pydantic import Field
 from pynetappfoundry.models._base import OntapModel
 
 
+class OntapClusterPeerAuthentication(OntapModel):
+    """OntapClusterPeerAuthentication sub-model for authentication."""
+
+    expiry_time: str = ""
+    generate_passphrase: bool = False
+    in_use: str = ""
+    passphrase: str = ""
+    state: str = ""
+
+
+class OntapClusterPeerEncryption(OntapModel):
+    """OntapClusterPeerEncryption sub-model for encryption."""
+
+    proposed: str = ""
+    state: str = ""
+
+
 class OntapClusterPeerInitialAllowedSvm(OntapModel):
     """OntapClusterPeerInitialAllowedSvm sub-model for initial_allowed_svms."""
 
@@ -16,33 +33,62 @@ class OntapClusterPeerInitialAllowedSvm(OntapModel):
     uuid: str = ""
 
 
+class OntapClusterPeerIpspace(OntapModel):
+    """OntapClusterPeerIpspace sub-model for ipspace."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapClusterPeerLocalNetwork(OntapModel):
+    """OntapClusterPeerLocalNetwork sub-model for local_network."""
+
+    broadcast_domain: str = ""
+    gateway: str = ""
+    interfaces: list[dict[str, Any]] = Field(default_factory=list)
+    netmask: str = ""
+
+
+class OntapClusterPeerRemote(OntapModel):
+    """OntapClusterPeerRemote sub-model for remote."""
+
+    ip_addresses: list[str] = Field(default_factory=list)
+    name: str = ""
+    serial_number: str = ""
+
+
+class OntapClusterPeerStatus(OntapModel):
+    """OntapClusterPeerStatus sub-model for status."""
+
+    state: str = ""
+    update_time: str = ""
+
+
+class OntapClusterPeerVersion(OntapModel):
+    """OntapClusterPeerVersion sub-model for version."""
+
+    full: str = ""
+    generation: int = 0
+    major: int = 0
+    minor: int = 0
+
+
 class OntapClusterPeer(OntapModel):
     """OntapClusterPeer information."""
 
-    authentication_expiry_time: str = ""
-    authentication_generate_passphrase: bool = False
-    authentication_in_use: str = ""
-    authentication_passphrase: str = ""
-    authentication_state: str = ""
-    encryption_proposed: str = ""
-    encryption_state: str = ""
+    authentication: OntapClusterPeerAuthentication = Field(
+        default_factory=OntapClusterPeerAuthentication
+    )
+    encryption: OntapClusterPeerEncryption = Field(default_factory=OntapClusterPeerEncryption)
     initial_allowed_svms: list[OntapClusterPeerInitialAllowedSvm] = Field(default_factory=list)
     ip_address: str = ""
-    ipspace_name: str = ""
-    ipspace_uuid: str = ""
-    local_network_broadcast_domain: str = ""
-    local_network_gateway: str = ""
-    local_network_interfaces: list[dict[str, Any]] = Field(default_factory=list)
-    local_network_netmask: str = ""
+    ipspace: OntapClusterPeerIpspace = Field(default_factory=OntapClusterPeerIpspace)
+    local_network: OntapClusterPeerLocalNetwork = Field(
+        default_factory=OntapClusterPeerLocalNetwork
+    )
     name: str = ""
     peer_applications: list[str] = Field(default_factory=list)
-    remote_ip_addresses: list[str] = Field(default_factory=list)
-    remote_name: str = ""
-    remote_serial_number: str = ""
-    status_state: str = ""
-    status_update_time: str = ""
+    remote: OntapClusterPeerRemote = Field(default_factory=OntapClusterPeerRemote)
+    status: OntapClusterPeerStatus = Field(default_factory=OntapClusterPeerStatus)
     uuid: str = ""
-    version_full: str = ""
-    version_generation: int = 0
-    version_major: int = 0
-    version_minor: int = 0
+    version: OntapClusterPeerVersion = Field(default_factory=OntapClusterPeerVersion)

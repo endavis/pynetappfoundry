@@ -2,38 +2,63 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from pydantic import Field
 
 from pynetappfoundry.models._base import OntapModel, OntapUUID
 
 
-class OntapMetroclusterDrGroupDrPair(OntapModel):
-    """OntapMetroclusterDrGroupDrPair sub-model for dr_pairs."""
+class OntapMetroclusterDrGroupMccipPortL3ConfigIpv4Interface(OntapModel):
+    """OntapMetroclusterDrGroupMccipPortL3ConfigIpv4Interface sub-model for ipv4_interface."""
 
-    node_name: str = ""
-    node_uuid: str = ""
-    partner_name: str = ""
-    partner_uuid: str = ""
+    address: str = ""
+    gateway: str = ""
+    netmask: str = ""
+
+
+class OntapMetroclusterDrGroupMccipPortL3Config(OntapModel):
+    """OntapMetroclusterDrGroupMccipPortL3Config sub-model for l3_config."""
+
+    ipv4_interface: OntapMetroclusterDrGroupMccipPortL3ConfigIpv4Interface = Field(
+        default_factory=OntapMetroclusterDrGroupMccipPortL3ConfigIpv4Interface
+    )
+
+
+class OntapMetroclusterDrGroupMccipPortNode(OntapModel):
+    """OntapMetroclusterDrGroupMccipPortNode sub-model for node."""
+
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapMetroclusterDrGroupMccipPort(OntapModel):
     """OntapMetroclusterDrGroupMccipPort sub-model for mccip_ports."""
 
-    l3_config_ipv4_interface_address: str = ""
-    l3_config_ipv4_interface_gateway: str = ""
-    l3_config_ipv4_interface_netmask: str = ""
+    l3_config: OntapMetroclusterDrGroupMccipPortL3Config = Field(
+        default_factory=OntapMetroclusterDrGroupMccipPortL3Config
+    )
     name: str = ""
-    node_name: str = ""
-    node_uuid: str = ""
+    node: OntapMetroclusterDrGroupMccipPortNode = Field(
+        default_factory=OntapMetroclusterDrGroupMccipPortNode
+    )
     uuid: str = ""
     vlan_id: int = 0
+
+
+class OntapMetroclusterDrGroupPartnerCluster(OntapModel):
+    """OntapMetroclusterDrGroupPartnerCluster sub-model for partner_cluster."""
+
+    name: str = ""
+    uuid: OntapUUID = ""
 
 
 class OntapMetroclusterDrGroup(OntapModel):
     """OntapMetroclusterDrGroup information."""
 
-    dr_pairs: list[OntapMetroclusterDrGroupDrPair] = Field(default_factory=list)
+    dr_pairs: list[dict[str, Any]] = Field(default_factory=list)
     id: int = 0
     mccip_ports: list[OntapMetroclusterDrGroupMccipPort] = Field(default_factory=list)
-    partner_cluster_name: str = ""
-    partner_cluster_uuid: OntapUUID = ""
+    partner_cluster: OntapMetroclusterDrGroupPartnerCluster = Field(
+        default_factory=OntapMetroclusterDrGroupPartnerCluster
+    )

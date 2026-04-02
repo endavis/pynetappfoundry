@@ -3,47 +3,47 @@ path = "/protocols/san/lun-maps"
 schema = "lun_map"
 class_name = "OntapLunMap"
 
-[fields.igroup_initiators]
+[fields."igroup.initiators"]
 cache_strategy = "cache"
 
-[fields.igroup_name]
+[fields."igroup.name"]
 cache_strategy = "cache"
 
-[fields.igroup_os_type]
+[fields."igroup.os_type"]
 cache_strategy = "cache"
 
-[fields.igroup_protocol]
+[fields."igroup.protocol"]
 cache_strategy = "cache"
 
-[fields.igroup_replicated]
+[fields."igroup.replicated"]
 cache_strategy = "cache"
 
-[fields.igroup_uuid]
+[fields."igroup.uuid"]
 cache_strategy = "cache"
 
 [fields.logical_unit_number]
 cache_strategy = "cache"
 
-[fields.lun_name]
+[fields."lun.name"]
 cache_strategy = "cache"
 
-[fields.lun_node_name]
+[fields."lun.node.name"]
 cache_strategy = "cache"
 
-[fields.lun_node_uuid]
+[fields."lun.node.uuid"]
 cache_strategy = "cache"
 
-[fields.lun_smbc_replicated]
+[fields."lun.smbc.replicated"]
 cache_strategy = "cache"
 
-[fields.lun_uuid]
+[fields."lun.uuid"]
 cache_strategy = "cache"
 
 [fields.reporting_nodes]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"

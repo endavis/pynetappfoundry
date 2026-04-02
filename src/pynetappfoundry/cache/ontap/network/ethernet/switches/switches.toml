@@ -12,13 +12,13 @@ cache_strategy = "cache"
 [fields.model_]
 cache_strategy = "cache"
 
-[fields.monitoring_enabled]
+[fields."monitoring.enabled"]
 cache_strategy = "cache"
 
-[fields.monitoring_monitored]
+[fields."monitoring.monitored"]
 cache_strategy = "cache"
 
-[fields.monitoring_reason]
+[fields."monitoring.reason"]
 cache_strategy = "cache"
 
 [fields.name]
@@ -30,10 +30,10 @@ cache_strategy = "cache"
 [fields.serial_number]
 cache_strategy = "cache"
 
-[fields.snmp_user]
+[fields."snmp.user"]
 cache_strategy = "cache"
 
-[fields.snmp_version]
+[fields."snmp.version"]
 cache_strategy = "cache"
 
 [fields.version]

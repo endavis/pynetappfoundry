@@ -6,15 +6,15 @@ class_name = "OntapIgroup"
 [fields.comment]
 cache_strategy = "cache"
 
-[fields.connectivity_tracking_alerts]
+[fields."connectivity_tracking.alerts"]
 cache_strategy = "cache"
 requires_explicit_fetch = true
 
-[fields.connectivity_tracking_connection_state]
+[fields."connectivity_tracking.connection_state"]
 cache_strategy = "cache"
 requires_explicit_fetch = true
 
-[fields.connectivity_tracking_required_nodes]
+[fields."connectivity_tracking.required_nodes"]
 cache_strategy = "cache"
 requires_explicit_fetch = true
 
@@ -42,60 +42,60 @@ cache_strategy = "cache"
 cache_strategy = "cache"
 requires_explicit_fetch = true
 
-[fields.portset_name]
+[fields."portset.name"]
 cache_strategy = "cache"
 
-[fields.portset_uuid]
+[fields."portset.uuid"]
 cache_strategy = "cache"
 
 [fields.protocol]
 cache_strategy = "cache"
 
-[fields.replication_error_igroup_local_svm]
+[fields."replication.error.igroup.local_svm"]
 cache_strategy = "cache"
 
-[fields.replication_error_igroup_name]
+[fields."replication.error.igroup.name"]
 cache_strategy = "cache"
 
-[fields.replication_error_igroup_uuid]
+[fields."replication.error.igroup.uuid"]
 cache_strategy = "cache"
 
-[fields.replication_error_summary_arguments]
+[fields."replication.error.summary.arguments"]
 cache_strategy = "cache"
 
-[fields.replication_error_summary_code]
+[fields."replication.error.summary.code"]
 cache_strategy = "cache"
 
-[fields.replication_error_summary_message]
+[fields."replication.error.summary.message"]
 cache_strategy = "cache"
 
-[fields.replication_peer_svm_name]
+[fields."replication.peer_svm.name"]
 cache_strategy = "cache"
 
-[fields.replication_peer_svm_uuid]
+[fields."replication.peer_svm.uuid"]
 cache_strategy = "cache"
 
-[fields.replication_state]
+[fields."replication.state"]
 cache_strategy = "cache"
 
 [fields.supports_igroups]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
-[fields.target_firmware_revision]
-cache_strategy = "cache"
-requires_explicit_fetch = true
-
-[fields.target_product_id]
+[fields."target.firmware_revision"]
 cache_strategy = "cache"
 requires_explicit_fetch = true
 
-[fields.target_vendor_id]
+[fields."target.product_id"]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields."target.vendor_id"]
 cache_strategy = "cache"
 requires_explicit_fetch = true
 

@@ -3,10 +3,10 @@ path = "/storage/aggregates/{aggregate.uuid}/plexes"
 schema = "plex"
 class_name = "OntapPlex"
 
-[fields.aggregate_name]
+[fields."aggregate.name"]
 cache_strategy = "cache"
 
-[fields.aggregate_uuid]
+[fields."aggregate.uuid"]
 cache_strategy = "cache"
 
 [fields.name]
@@ -21,13 +21,13 @@ cache_strategy = "cache"
 [fields.raid_groups]
 cache_strategy = "cache"
 
-[fields.resync_active]
+[fields."resync.active"]
 cache_strategy = "cache"
 
-[fields.resync_level]
+[fields."resync.level"]
 cache_strategy = "cache"
 
-[fields.resync_percent]
+[fields."resync.percent"]
 cache_strategy = "cache"
 
 [fields.state]

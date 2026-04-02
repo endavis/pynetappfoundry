@@ -7,41 +7,104 @@ from pydantic import Field
 from pynetappfoundry.models._base import OntapModel
 
 
-class OntapStoragePoolDisk(OntapModel):
-    """OntapStoragePoolDisk sub-model for disks."""
+class OntapStoragePoolCapacityDiskDisk(OntapModel):
+    """OntapStoragePoolCapacityDiskDisk sub-model for disk."""
 
-    disk_name: str = ""
+    name: str = ""
+
+
+class OntapStoragePoolCapacityDisk(OntapModel):
+    """OntapStoragePoolCapacityDisk sub-model for disks."""
+
+    disk: OntapStoragePoolCapacityDiskDisk = Field(default_factory=OntapStoragePoolCapacityDiskDisk)
     total_size: int = 0
     usable_size: int = 0
 
 
-class OntapStoragePoolSpareAllocationUnit(OntapModel):
-    """OntapStoragePoolSpareAllocationUnit sub-model for spare_allocation_units."""
+class OntapStoragePoolCapacitySpareAllocationUnitNode(OntapModel):
+    """OntapStoragePoolCapacitySpareAllocationUnitNode sub-model for node."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapStoragePoolCapacitySpareAllocationUnit(OntapModel):
+    """OntapStoragePoolCapacitySpareAllocationUnit sub-model for spare_allocation_units."""
 
     available_size: int = 0
     count: int = 0
-    node_name: str = ""
-    node_uuid: str = ""
+    node: OntapStoragePoolCapacitySpareAllocationUnitNode = Field(
+        default_factory=OntapStoragePoolCapacitySpareAllocationUnitNode
+    )
     size: int = 0
     syncmirror_pool: str = ""
 
 
-class OntapStoragePoolUsedAllocationUnit(OntapModel):
-    """OntapStoragePoolUsedAllocationUnit sub-model for used_allocation_units."""
+class OntapStoragePoolCapacityUsedAllocationUnitAggregate(OntapModel):
+    """OntapStoragePoolCapacityUsedAllocationUnitAggregate sub-model for aggregate."""
 
-    aggregate_name: str = ""
-    aggregate_uuid: str = ""
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapStoragePoolCapacityUsedAllocationUnitNode(OntapModel):
+    """OntapStoragePoolCapacityUsedAllocationUnitNode sub-model for node."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapStoragePoolCapacityUsedAllocationUnit(OntapModel):
+    """OntapStoragePoolCapacityUsedAllocationUnit sub-model for used_allocation_units."""
+
+    aggregate: OntapStoragePoolCapacityUsedAllocationUnitAggregate = Field(
+        default_factory=OntapStoragePoolCapacityUsedAllocationUnitAggregate
+    )
     count: int = 0
     current_usage: int = 0
-    node_name: str = ""
-    node_uuid: str = ""
+    node: OntapStoragePoolCapacityUsedAllocationUnitNode = Field(
+        default_factory=OntapStoragePoolCapacityUsedAllocationUnitNode
+    )
 
 
-class OntapStoragePoolArgument(OntapModel):
-    """OntapStoragePoolArgument sub-model for arguments."""
+class OntapStoragePoolCapacity(OntapModel):
+    """OntapStoragePoolCapacity sub-model for capacity."""
+
+    disk_count: int = 0
+    disks: list[OntapStoragePoolCapacityDisk] = Field(default_factory=list)
+    remaining: int = 0
+    spare_allocation_units: list[OntapStoragePoolCapacitySpareAllocationUnit] = Field(
+        default_factory=list
+    )
+    total: int = 0
+    used_allocation_units: list[OntapStoragePoolCapacityUsedAllocationUnit] = Field(
+        default_factory=list
+    )
+
+
+class OntapStoragePoolHealthUnhealthyReasonArgument(OntapModel):
+    """OntapStoragePoolHealthUnhealthyReasonArgument sub-model for arguments."""
 
     code: str = ""
     message: str = ""
+
+
+class OntapStoragePoolHealthUnhealthyReason(OntapModel):
+    """OntapStoragePoolHealthUnhealthyReason sub-model for unhealthy_reason."""
+
+    arguments: list[OntapStoragePoolHealthUnhealthyReasonArgument] = Field(default_factory=list)
+    code: str = ""
+    message: str = ""
+
+
+class OntapStoragePoolHealth(OntapModel):
+    """OntapStoragePoolHealth sub-model for health."""
+
+    is_healthy: bool = False
+    state: str = ""
+    unhealthy_reason: OntapStoragePoolHealthUnhealthyReason = Field(
+        default_factory=OntapStoragePoolHealthUnhealthyReason
+    )
 
 
 class OntapStoragePoolNode(OntapModel):
@@ -54,21 +117,8 @@ class OntapStoragePoolNode(OntapModel):
 class OntapStoragePool(OntapModel):
     """OntapStoragePool information."""
 
-    capacity_disk_count: int = 0
-    capacity_disks: list[OntapStoragePoolDisk] = Field(default_factory=list)
-    capacity_remaining: int = 0
-    capacity_spare_allocation_units: list[OntapStoragePoolSpareAllocationUnit] = Field(
-        default_factory=list
-    )
-    capacity_total: int = 0
-    capacity_used_allocation_units: list[OntapStoragePoolUsedAllocationUnit] = Field(
-        default_factory=list
-    )
-    health_is_healthy: bool = False
-    health_state: str = ""
-    health_unhealthy_reason_arguments: list[OntapStoragePoolArgument] = Field(default_factory=list)
-    health_unhealthy_reason_code: str = ""
-    health_unhealthy_reason_message: str = ""
+    capacity: OntapStoragePoolCapacity = Field(default_factory=OntapStoragePoolCapacity)
+    health: OntapStoragePoolHealth = Field(default_factory=OntapStoragePoolHealth)
     name: str = ""
     nodes: list[OntapStoragePoolNode] = Field(default_factory=list)
     storage_type: str = ""

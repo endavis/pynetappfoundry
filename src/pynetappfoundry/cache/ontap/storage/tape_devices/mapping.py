@@ -8,14 +8,14 @@ from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.storage.tape_devices.model import (
     OntapTapeDevice,
-    OntapTapeDeviceAlias,
+    OntapTapeDeviceAlias2,
     OntapTapeDeviceDeviceName,
 )
 
 
-def _transform_aliases(record: dict[str, Any]) -> list[OntapTapeDeviceAlias]:
-    """Transform aliases into OntapTapeDeviceAlias list."""
-    return [OntapTapeDeviceAlias(**item) for item in record.get("aliases", [])]
+def _transform_aliases(record: dict[str, Any]) -> list[OntapTapeDeviceAlias2]:
+    """Transform aliases into OntapTapeDeviceAlias2 list."""
+    return [OntapTapeDeviceAlias2(**item) for item in record.get("aliases", [])]
 
 
 def _transform_device_names(record: dict[str, Any]) -> list[OntapTapeDeviceDeviceName]:
@@ -30,11 +30,11 @@ ONTAPTAPEDEVICE_MAPPING = TypeMapping(
     api_type="ontap",
     fields=(
         FieldMapping(
-            cache_attr="alias_mapping",
+            cache_attr="alias.mapping",
             api_path="alias.mapping",
         ),
         FieldMapping(
-            cache_attr="alias_name",
+            cache_attr="alias.name",
             api_path="alias.name",
         ),
         FieldMapping(
@@ -85,11 +85,11 @@ ONTAPTAPEDEVICE_MAPPING = TypeMapping(
             api_path="interface",
         ),
         FieldMapping(
-            cache_attr="node_name",
+            cache_attr="node.name",
             api_path="node.name",
         ),
         FieldMapping(
-            cache_attr="node_uuid",
+            cache_attr="node.uuid",
             api_path="node.uuid",
         ),
         FieldMapping(
@@ -98,12 +98,12 @@ ONTAPTAPEDEVICE_MAPPING = TypeMapping(
             default=False,
         ),
         FieldMapping(
-            cache_attr="position_count",
+            cache_attr="position.count",
             api_path="position.count",
             default=0,
         ),
         FieldMapping(
-            cache_attr="position_operation",
+            cache_attr="position.operation",
             api_path="position.operation",
         ),
         FieldMapping(
@@ -120,7 +120,7 @@ ONTAPTAPEDEVICE_MAPPING = TypeMapping(
             api_path="serial_number",
         ),
         FieldMapping(
-            cache_attr="storage_port_name",
+            cache_attr="storage_port.name",
             api_path="storage_port.name",
         ),
         FieldMapping(

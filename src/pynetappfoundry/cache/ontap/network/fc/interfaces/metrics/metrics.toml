@@ -6,40 +6,40 @@ class_name = "OntapPerformanceFcInterfaceMetricResponse"
 [fields.duration]
 cache_strategy = "cache"
 
-[fields.iops_other]
+[fields."iops.other"]
 cache_strategy = "cache"
 
-[fields.iops_read]
+[fields."iops.read"]
 cache_strategy = "cache"
 
-[fields.iops_total]
+[fields."iops.total"]
 cache_strategy = "cache"
 
-[fields.iops_write]
+[fields."iops.write"]
 cache_strategy = "cache"
 
-[fields.latency_other]
+[fields."latency.other"]
 cache_strategy = "cache"
 
-[fields.latency_read]
+[fields."latency.read"]
 cache_strategy = "cache"
 
-[fields.latency_total]
+[fields."latency.total"]
 cache_strategy = "cache"
 
-[fields.latency_write]
+[fields."latency.write"]
 cache_strategy = "cache"
 
 [fields.status]
 cache_strategy = "cache"
 
-[fields.throughput_read]
+[fields."throughput.read"]
 cache_strategy = "cache"
 
-[fields.throughput_total]
+[fields."throughput.total"]
 cache_strategy = "cache"
 
-[fields.throughput_write]
+[fields."throughput.write"]
 cache_strategy = "cache"
 
 [fields.timestamp]

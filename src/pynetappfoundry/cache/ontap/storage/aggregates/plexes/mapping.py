@@ -26,11 +26,11 @@ ONTAPPLEX_MAPPING = TypeMapping(
     parent_id_field="uuid",
     fields=(
         FieldMapping(
-            cache_attr="aggregate_name",
+            cache_attr="aggregate.name",
             api_path="aggregate.name",
         ),
         FieldMapping(
-            cache_attr="aggregate_uuid",
+            cache_attr="aggregate.uuid",
             api_path="aggregate.uuid",
         ),
         FieldMapping(
@@ -53,16 +53,16 @@ ONTAPPLEX_MAPPING = TypeMapping(
             default=[],
         ),
         FieldMapping(
-            cache_attr="resync_active",
+            cache_attr="resync.active",
             api_path="resync.active",
             default=False,
         ),
         FieldMapping(
-            cache_attr="resync_level",
+            cache_attr="resync.level",
             api_path="resync.level",
         ),
         FieldMapping(
-            cache_attr="resync_percent",
+            cache_attr="resync.percent",
             api_path="resync.percent",
             default=0,
         ),

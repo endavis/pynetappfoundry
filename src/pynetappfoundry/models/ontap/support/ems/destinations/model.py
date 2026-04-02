@@ -9,14 +9,25 @@ from pydantic import Field
 from pynetappfoundry.models._base import OntapModel
 
 
-class OntapEmsDestinationResponseError(OntapModel):
-    """OntapEmsDestinationResponseError sub-model for errors."""
+class OntapEmsDestinationResponseAccessControlRole(OntapModel):
+    """OntapEmsDestinationResponseAccessControlRole sub-model for access_control_role."""
 
-    message_arguments: list[dict[str, Any]] = Field(default_factory=list)
-    message_code: str = ""
-    message_message: str = ""
-    node_name: str = ""
-    node_uuid: str = ""
+    name: str = ""
+
+
+class OntapEmsDestinationResponseCertificate(OntapModel):
+    """OntapEmsDestinationResponseCertificate sub-model for certificate."""
+
+    ca: str = ""
+    name: str = ""
+    serial_number: str = ""
+
+
+class OntapEmsDestinationResponseConnectivity(OntapModel):
+    """OntapEmsDestinationResponseConnectivity sub-model for connectivity."""
+
+    errors: list[dict[str, Any]] = Field(default_factory=list)
+    state: str = ""
 
 
 class OntapEmsDestinationResponseFilter(OntapModel):
@@ -25,22 +36,41 @@ class OntapEmsDestinationResponseFilter(OntapModel):
     name: str = ""
 
 
+class OntapEmsDestinationResponseSyslogFormat(OntapModel):
+    """OntapEmsDestinationResponseSyslogFormat sub-model for format."""
+
+    hostname_override: str = ""
+    message: str = ""
+    timestamp_override: str = ""
+
+
+class OntapEmsDestinationResponseSyslog(OntapModel):
+    """OntapEmsDestinationResponseSyslog sub-model for syslog."""
+
+    format: OntapEmsDestinationResponseSyslogFormat = Field(
+        default_factory=OntapEmsDestinationResponseSyslogFormat
+    )
+    port: int = 0
+    transport: str = ""
+
+
 class OntapEmsDestinationResponse(OntapModel):
     """OntapEmsDestinationResponse information."""
 
-    access_control_role_name: str = ""
-    certificate_ca: str = ""
-    certificate_name: str = ""
-    certificate_serial_number: str = ""
-    connectivity_errors: list[OntapEmsDestinationResponseError] = Field(default_factory=list)
-    connectivity_state: str = ""
+    access_control_role: OntapEmsDestinationResponseAccessControlRole = Field(
+        default_factory=OntapEmsDestinationResponseAccessControlRole
+    )
+    certificate: OntapEmsDestinationResponseCertificate = Field(
+        default_factory=OntapEmsDestinationResponseCertificate
+    )
+    connectivity: OntapEmsDestinationResponseConnectivity = Field(
+        default_factory=OntapEmsDestinationResponseConnectivity
+    )
     destination: str = ""
     filters: list[OntapEmsDestinationResponseFilter] = Field(default_factory=list)
     name: str = ""
-    syslog_format_hostname_override: str = ""
-    syslog_format_message: str = ""
-    syslog_format_timestamp_override: str = ""
-    syslog_port: int = 0
-    syslog_transport: str = ""
+    syslog: OntapEmsDestinationResponseSyslog = Field(
+        default_factory=OntapEmsDestinationResponseSyslog
+    )
     system_defined: bool = False
     type_: str = ""

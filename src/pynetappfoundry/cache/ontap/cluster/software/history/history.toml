@@ -9,10 +9,10 @@ cache_strategy = "cache"
 [fields.from_version]
 cache_strategy = "cache"
 
-[fields.node_name]
+[fields."node.name"]
 cache_strategy = "cache"
 
-[fields.node_uuid]
+[fields."node.uuid"]
 cache_strategy = "cache"
 
 [fields.start_time]

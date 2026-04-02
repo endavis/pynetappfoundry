@@ -14,7 +14,6 @@ from pynetappfoundry.models.ontap.application.consistency_groups.snapshots.model
     OntapConsistencyGroupSnapshotResponseMissingNamespace,
     OntapConsistencyGroupSnapshotResponseMissingVolume,
     OntapConsistencyGroupSnapshotResponseNamespace,
-    OntapConsistencyGroupSnapshotResponseSnapshotVolume,
 )
 
 
@@ -63,16 +62,6 @@ def _transform_namespaces(
     ]
 
 
-def _transform_snapshot_volumes(
-    record: dict[str, Any],
-) -> list[OntapConsistencyGroupSnapshotResponseSnapshotVolume]:
-    """Transform snapshot_volumes into OntapConsistencyGroupSnapshotResponseSnapshotVolume list."""
-    return [
-        OntapConsistencyGroupSnapshotResponseSnapshotVolume(**item)
-        for item in record.get("snapshot_volumes", [])
-    ]
-
-
 ONTAPCONSISTENCYGROUPSNAPSHOTRESPONSE_MAPPING = TypeMapping(
     name="OntapConsistencyGroupSnapshotResponse",
     model_class=OntapConsistencyGroupSnapshotResponse,
@@ -86,11 +75,11 @@ ONTAPCONSISTENCYGROUPSNAPSHOTRESPONSE_MAPPING = TypeMapping(
             api_path="comment",
         ),
         FieldMapping(
-            cache_attr="consistency_group_name",
+            cache_attr="consistency_group.name",
             api_path="consistency_group.name",
         ),
         FieldMapping(
-            cache_attr="consistency_group_uuid",
+            cache_attr="consistency_group.uuid",
             api_path="consistency_group.uuid",
         ),
         FieldMapping(
@@ -143,8 +132,8 @@ ONTAPCONSISTENCYGROUPSNAPSHOTRESPONSE_MAPPING = TypeMapping(
         FieldMapping(
             cache_attr="reclaimable_space",
             api_path="reclaimable_space",
-            default=0,
             cache_strategy="realtime",
+            default=0,
         ),
         FieldMapping(
             cache_attr="restore_size",
@@ -158,15 +147,14 @@ ONTAPCONSISTENCYGROUPSNAPSHOTRESPONSE_MAPPING = TypeMapping(
         FieldMapping(
             cache_attr="snapshot_volumes",
             api_path="snapshot_volumes",
-            transform=_transform_snapshot_volumes,
             default=[],
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(

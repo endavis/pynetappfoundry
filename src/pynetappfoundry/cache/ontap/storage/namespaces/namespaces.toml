@@ -7,25 +7,25 @@ class_name = "OntapNvmeNamespace"
 cache_strategy = "cache"
 requires_explicit_fetch = true
 
-[fields.clone_source_name]
+[fields."clone.source.name"]
 cache_strategy = "cache"
 
-[fields.clone_source_uuid]
+[fields."clone.source.uuid"]
 cache_strategy = "cache"
 
 [fields.comment]
 cache_strategy = "cache"
 
-[fields.consistency_group_name]
+[fields."consistency_group.name"]
 cache_strategy = "cache"
 
-[fields.consistency_group_uuid]
+[fields."consistency_group.uuid"]
 cache_strategy = "cache"
 
-[fields.convert_lun_name]
+[fields."convert.lun.name"]
 cache_strategy = "cache"
 
-[fields.convert_lun_uuid]
+[fields."convert.lun.uuid"]
 cache_strategy = "cache"
 
 [fields.create_time]
@@ -34,80 +34,80 @@ cache_strategy = "cache"
 [fields.enabled]
 cache_strategy = "cache"
 
-[fields.location_namespace]
+[fields."location.namespace"]
 cache_strategy = "cache"
 
-[fields.location_node_name]
+[fields."location.node.name"]
 cache_strategy = "cache"
 
-[fields.location_node_uuid]
+[fields."location.node.uuid"]
 cache_strategy = "cache"
 
-[fields.location_qtree_id]
+[fields."location.qtree.id"]
 cache_strategy = "cache"
 
-[fields.location_qtree_name]
+[fields."location.qtree.name"]
 cache_strategy = "cache"
 
-[fields.location_volume_name]
+[fields."location.volume.name"]
 cache_strategy = "cache"
 
-[fields.location_volume_uuid]
+[fields."location.volume.uuid"]
 cache_strategy = "cache"
 
-[fields.metric_duration]
+[fields."metric.duration"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_iops_other]
+[fields."metric.iops.other"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_iops_read]
+[fields."metric.iops.read"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_iops_total]
+[fields."metric.iops.total"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_iops_write]
+[fields."metric.iops.write"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_latency_other]
+[fields."metric.latency.other"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_latency_read]
+[fields."metric.latency.read"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_latency_total]
+[fields."metric.latency.total"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_latency_write]
+[fields."metric.latency.write"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_status]
+[fields."metric.status"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_throughput_read]
+[fields."metric.throughput.read"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_throughput_total]
+[fields."metric.throughput.total"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_throughput_write]
+[fields."metric.throughput.write"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_timestamp]
+[fields."metric.timestamp"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
@@ -117,163 +117,163 @@ cache_strategy = "cache"
 [fields.os_type]
 cache_strategy = "cache"
 
-[fields.provisioning_options_auto]
+[fields."provisioning_options.auto"]
 cache_strategy = "cache"
 
-[fields.provisioning_options_count]
+[fields."provisioning_options.count"]
 cache_strategy = "cache"
 
-[fields.provisioning_options_qos_policy_name]
+[fields."provisioning_options.qos_policy.name"]
 cache_strategy = "cache"
 
-[fields.provisioning_options_qos_policy_uuid]
+[fields."provisioning_options.qos_policy.uuid"]
 cache_strategy = "cache"
 
-[fields.provisioning_options_snapshot_policy_name]
+[fields."provisioning_options.snapshot_policy.name"]
 cache_strategy = "cache"
 
-[fields.provisioning_options_snapshot_policy_uuid]
+[fields."provisioning_options.snapshot_policy.uuid"]
 cache_strategy = "cache"
 
-[fields.provisioning_options_storage_service_name]
+[fields."provisioning_options.storage_service.name"]
 cache_strategy = "cache"
 
-[fields.provisioning_options_tiering_control]
+[fields."provisioning_options.tiering.control"]
 cache_strategy = "cache"
 
-[fields.provisioning_options_tiering_object_stores]
+[fields."provisioning_options.tiering.object_stores"]
 cache_strategy = "cache"
 
-[fields.provisioning_options_tiering_policy]
+[fields."provisioning_options.tiering.policy"]
 cache_strategy = "cache"
 
-[fields.provisioning_options_use_mirrored_aggregates]
+[fields."provisioning_options.use_mirrored_aggregates"]
 cache_strategy = "cache"
 
-[fields.space_block_size]
+[fields."space.block_size"]
 cache_strategy = "cache"
 
-[fields.space_efficiency_ratio]
+[fields."space.efficiency_ratio"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.space_guarantee_requested]
+[fields."space.guarantee.requested"]
 cache_strategy = "realtime"
 
-[fields.space_guarantee_reserved]
+[fields."space.guarantee.reserved"]
 cache_strategy = "realtime"
 
-[fields.space_physical_used]
-cache_strategy = "realtime"
-requires_explicit_fetch = true
-
-[fields.space_physical_used_by_snapshots]
+[fields."space.physical_used"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.space_size]
-cache_strategy = "realtime"
-
-[fields.space_used]
-cache_strategy = "realtime"
-
-[fields.statistics_iops_raw_other]
+[fields."space.physical_used_by_snapshots"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_iops_raw_read]
+[fields."space.size"]
+cache_strategy = "realtime"
+
+[fields."space.used"]
+cache_strategy = "realtime"
+
+[fields."statistics.iops_raw.other"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_iops_raw_total]
+[fields."statistics.iops_raw.read"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_iops_raw_write]
+[fields."statistics.iops_raw.total"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_latency_raw_other]
+[fields."statistics.iops_raw.write"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_latency_raw_read]
+[fields."statistics.latency_raw.other"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_latency_raw_total]
+[fields."statistics.latency_raw.read"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_latency_raw_write]
+[fields."statistics.latency_raw.total"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_status]
+[fields."statistics.latency_raw.write"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_throughput_raw_read]
+[fields."statistics.status"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_throughput_raw_total]
+[fields."statistics.throughput_raw.read"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_throughput_raw_write]
+[fields."statistics.throughput_raw.total"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_timestamp]
+[fields."statistics.throughput_raw.write"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.status_container_state]
+[fields."statistics.timestamp"]
+cache_strategy = "realtime"
+requires_explicit_fetch = true
+
+[fields."status.container_state"]
 cache_strategy = "cache"
 
-[fields.status_mapped]
-cache_strategy = "cache"
-requires_explicit_fetch = true
-
-[fields.status_read_only]
-cache_strategy = "cache"
-
-[fields.status_state]
-cache_strategy = "cache"
-
-[fields.subsystem_map_anagrpid]
+[fields."status.mapped"]
 cache_strategy = "cache"
 requires_explicit_fetch = true
 
-[fields.subsystem_map_nsid]
+[fields."status.read_only"]
+cache_strategy = "cache"
+
+[fields."status.state"]
+cache_strategy = "cache"
+
+[fields."subsystem_map.anagrpid"]
 cache_strategy = "cache"
 requires_explicit_fetch = true
 
-[fields.subsystem_map_subsystem_comment]
+[fields."subsystem_map.nsid"]
 cache_strategy = "cache"
 requires_explicit_fetch = true
 
-[fields.subsystem_map_subsystem_hosts]
+[fields."subsystem_map.subsystem.comment"]
 cache_strategy = "cache"
 requires_explicit_fetch = true
 
-[fields.subsystem_map_subsystem_name]
+[fields."subsystem_map.subsystem.hosts"]
 cache_strategy = "cache"
 requires_explicit_fetch = true
 
-[fields.subsystem_map_subsystem_os_type]
+[fields."subsystem_map.subsystem.name"]
 cache_strategy = "cache"
 requires_explicit_fetch = true
 
-[fields.subsystem_map_subsystem_uuid]
+[fields."subsystem_map.subsystem.os_type"]
 cache_strategy = "cache"
 requires_explicit_fetch = true
 
-[fields.svm_name]
+[fields."subsystem_map.subsystem.uuid"]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.uuid]

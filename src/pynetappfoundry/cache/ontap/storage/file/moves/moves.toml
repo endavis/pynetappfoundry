@@ -6,37 +6,37 @@ class_name = "OntapFileMove"
 [fields.cutover_time]
 cache_strategy = "cache"
 
-[fields.destination_path]
+[fields."destination.path"]
 cache_strategy = "cache"
 
-[fields.destination_svm_name]
+[fields."destination.svm.name"]
 cache_strategy = "cache"
 
-[fields.destination_svm_uuid]
+[fields."destination.svm.uuid"]
 cache_strategy = "cache"
 
-[fields.destination_volume_name]
+[fields."destination.volume.name"]
 cache_strategy = "cache"
 
-[fields.destination_volume_uuid]
+[fields."destination.volume.uuid"]
 cache_strategy = "cache"
 
 [fields.elapsed_time]
 cache_strategy = "cache"
 
-[fields.failure_arguments]
+[fields."failure.arguments"]
 cache_strategy = "cache"
 
-[fields.failure_code]
+[fields."failure.code"]
 cache_strategy = "cache"
 
-[fields.failure_message]
+[fields."failure.message"]
 cache_strategy = "cache"
 
-[fields.files_to_move_destinations]
+[fields."files_to_move.destinations"]
 cache_strategy = "cache"
 
-[fields.files_to_move_sources]
+[fields."files_to_move.sources"]
 cache_strategy = "cache"
 
 [fields.index]
@@ -57,68 +57,68 @@ cache_strategy = "cache"
 [fields.max_throughput]
 cache_strategy = "cache"
 
-[fields.node_name]
+[fields."node.name"]
 cache_strategy = "cache"
 
-[fields.node_uuid]
+[fields."node.uuid"]
 cache_strategy = "cache"
 
-[fields.reference_max_cutover_time]
+[fields."reference.max_cutover_time"]
 cache_strategy = "cache"
 
-[fields.reference_path]
+[fields."reference.path"]
 cache_strategy = "cache"
 
-[fields.reference_svm_name]
+[fields."reference.svm.name"]
 cache_strategy = "cache"
 
-[fields.reference_svm_uuid]
+[fields."reference.svm.uuid"]
 cache_strategy = "cache"
 
-[fields.reference_volume_name]
+[fields."reference.volume.name"]
 cache_strategy = "cache"
 
-[fields.reference_volume_uuid]
+[fields."reference.volume.uuid"]
 cache_strategy = "cache"
 
-[fields.scanner_percent]
+[fields."scanner.percent"]
 cache_strategy = "cache"
 
-[fields.scanner_progress]
+[fields."scanner.progress"]
 cache_strategy = "cache"
 
-[fields.scanner_state]
+[fields."scanner.state"]
 cache_strategy = "cache"
 
-[fields.scanner_total]
+[fields."scanner.total"]
 cache_strategy = "cache"
 
-[fields.source_path]
+[fields."source.path"]
 cache_strategy = "cache"
 
-[fields.source_svm_name]
+[fields."source.svm.name"]
 cache_strategy = "cache"
 
-[fields.source_svm_uuid]
+[fields."source.svm.uuid"]
 cache_strategy = "cache"
 
-[fields.source_volume_name]
+[fields."source.volume.name"]
 cache_strategy = "cache"
 
-[fields.source_volume_uuid]
+[fields."source.volume.uuid"]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.uuid]
 cache_strategy = "cache"
 
-[fields.volume_name]
+[fields."volume.name"]
 cache_strategy = "cache"
 
-[fields.volume_uuid]
+[fields."volume.uuid"]
 cache_strategy = "cache"

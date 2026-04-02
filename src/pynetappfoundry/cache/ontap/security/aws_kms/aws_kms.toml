@@ -6,13 +6,13 @@ class_name = "OntapAwsKms"
 [fields.access_key_id]
 cache_strategy = "cache"
 
-[fields.amazon_reachability_code]
+[fields."amazon_reachability.code"]
 cache_strategy = "cache"
 
-[fields.amazon_reachability_message]
+[fields."amazon_reachability.message"]
 cache_strategy = "cache"
 
-[fields.amazon_reachability_reachable]
+[fields."amazon_reachability.reachable"]
 cache_strategy = "cache"
 
 [fields.default_domain]
@@ -66,19 +66,19 @@ cache_strategy = "cache"
 [fields.skip_verify]
 cache_strategy = "cache"
 
-[fields.state_cluster_state]
+[fields."state.cluster_state"]
 cache_strategy = "cache"
 
-[fields.state_code]
+[fields."state.code"]
 cache_strategy = "cache"
 
-[fields.state_message]
+[fields."state.message"]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.timeout]

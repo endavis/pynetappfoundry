@@ -6,8 +6,8 @@ class_name = "OntapClusterNisService"
 [fields.server]
 cache_strategy = "cache"
 
-[fields.status_code]
+[fields."status.code"]
 cache_strategy = "cache"
 
-[fields.status_message]
+[fields."status.message"]
 cache_strategy = "cache"

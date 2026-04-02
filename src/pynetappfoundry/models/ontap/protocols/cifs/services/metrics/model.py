@@ -2,24 +2,50 @@
 
 from __future__ import annotations
 
+from pydantic import Field
+
 from pynetappfoundry.models._base import OntapModel
+
+
+class OntapPerformanceCifsMetricResponseIops(OntapModel):
+    """OntapPerformanceCifsMetricResponseIops sub-model for iops."""
+
+    other: int = 0
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapPerformanceCifsMetricResponseLatency(OntapModel):
+    """OntapPerformanceCifsMetricResponseLatency sub-model for latency."""
+
+    other: int = 0
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapPerformanceCifsMetricResponseThroughput(OntapModel):
+    """OntapPerformanceCifsMetricResponseThroughput sub-model for throughput."""
+
+    other: int = 0
+    read: int = 0
+    total: int = 0
+    write: int = 0
 
 
 class OntapPerformanceCifsMetricResponse(OntapModel):
     """OntapPerformanceCifsMetricResponse information."""
 
     duration: str = ""
-    iops_other: int = 0
-    iops_read: int = 0
-    iops_total: int = 0
-    iops_write: int = 0
-    latency_other: int = 0
-    latency_read: int = 0
-    latency_total: int = 0
-    latency_write: int = 0
+    iops: OntapPerformanceCifsMetricResponseIops = Field(
+        default_factory=OntapPerformanceCifsMetricResponseIops
+    )
+    latency: OntapPerformanceCifsMetricResponseLatency = Field(
+        default_factory=OntapPerformanceCifsMetricResponseLatency
+    )
     status: str = ""
-    throughput_other: int = 0
-    throughput_read: int = 0
-    throughput_total: int = 0
-    throughput_write: int = 0
+    throughput: OntapPerformanceCifsMetricResponseThroughput = Field(
+        default_factory=OntapPerformanceCifsMetricResponseThroughput
+    )
     timestamp: str = ""

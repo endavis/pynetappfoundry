@@ -2,7 +2,16 @@
 
 from __future__ import annotations
 
+from pydantic import Field
+
 from pynetappfoundry.models._base import OntapModel
+
+
+class OntapDuoOwner(OntapModel):
+    """OntapDuoOwner sub-model for owner."""
+
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapDuo(OntapModel):
@@ -17,8 +26,7 @@ class OntapDuo(OntapModel):
     integration_key: str = ""
     is_enabled: bool = False
     max_prompts: int = 0
-    owner_name: str = ""
-    owner_uuid: str = ""
+    owner: OntapDuoOwner = Field(default_factory=OntapDuoOwner)
     push_info: bool = False
     secret_key: str = ""
     status: str = ""

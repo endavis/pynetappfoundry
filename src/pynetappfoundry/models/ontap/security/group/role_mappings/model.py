@@ -2,7 +2,15 @@
 
 from __future__ import annotations
 
+from pydantic import Field
+
 from pynetappfoundry.models._base import OntapModel
+
+
+class OntapGroupRoleMappingsOntapRole(OntapModel):
+    """OntapGroupRoleMappingsOntapRole sub-model for ontap_role."""
+
+    name: str = ""
 
 
 class OntapGroupRoleMappings(OntapModel):
@@ -10,5 +18,7 @@ class OntapGroupRoleMappings(OntapModel):
 
     comment: str = ""
     group_id: int = 0
-    ontap_role_name: str = ""
+    ontap_role: OntapGroupRoleMappingsOntapRole = Field(
+        default_factory=OntapGroupRoleMappingsOntapRole
+    )
     scope: str = ""
