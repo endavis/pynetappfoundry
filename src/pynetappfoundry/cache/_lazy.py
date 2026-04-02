@@ -7,6 +7,11 @@ available immediately without touching the database.
 
 This avoids the overhead of querying all ~29 model tables when the caller
 only needs a small subset (e.g. ``entry.ontap.cloud``).
+
+When a :class:`~pynetappfoundry.cache._fetcher.FieldGroupFetcher` is
+attached, accessing a field group that is missing from the cache DB
+(or when there is no DB at all) will transparently fall back to a live
+ONTAP API/CLI fetch.
 """
 
 from __future__ import annotations
@@ -20,6 +25,7 @@ from pynetappfoundry.cache._base import _utcnow
 from pynetappfoundry.cache._metadata import CachedClusterMetadata
 
 if TYPE_CHECKING:
+    from pynetappfoundry.cache._fetcher import FieldGroupFetcher
     from pynetappfoundry.cache.db_schema import TableSpec
 
 # Top-level data field names on CachedClusterMetadata (everything except
@@ -56,6 +62,7 @@ class LazyClusterMetadata:
         "_cached_at",
         "_cluster_name",
         "_db_path",
+        "_fetcher",
         "_loaded",
         "_materialized",
         "_registry",
@@ -66,17 +73,22 @@ class LazyClusterMetadata:
         cluster_name: str,
         cached_at: str,
         cache_version: str,
-        db_path: Path | str,
+        db_path: Path | str | None,
         registry: dict[str, TableSpec],
+        *,
+        fetcher: FieldGroupFetcher | None = None,
     ) -> None:
         self._cluster_name = cluster_name
         self._cached_at = cached_at
         self._cache_version = cache_version
-        if isinstance(db_path, str) and db_path.startswith("file:"):
-            self._db_path: Path | str = db_path  # SQLite URI — keep as string
+        if db_path is None:
+            self._db_path: Path | str | None = None
+        elif isinstance(db_path, str) and db_path.startswith("file:"):
+            self._db_path = db_path  # SQLite URI — keep as string
         else:
             self._db_path = Path(db_path) if not isinstance(db_path, Path) else db_path
         self._registry = registry
+        self._fetcher = fetcher
         self._loaded: dict[str, Any] = {}
         self._materialized: CachedClusterMetadata | None = None
 
@@ -112,47 +124,28 @@ class LazyClusterMetadata:
         raise AttributeError(f"'{type(self).__name__}' object has no attribute {name!r}")
 
     def _load_field_group(self, name: str) -> Any:
-        """Query only the registry entries that belong to *name*.
+        """Load a field group via DB, fetcher, or default — in that order.
 
-        Opens a short-lived SQLite connection, queries matching tables,
-        builds Pydantic models, closes the connection, and caches the
-        result in ``_loaded``.
+        1. **DB** (existing path) — skipped when ``_db_path is None``.
+        2. **Fetcher** — live API/CLI fetch when a
+           :class:`FieldGroupFetcher` is attached.
+        3. **Default** — the ``CachedClusterMetadata`` field default.
+
+        Results are cached in ``_loaded`` for subsequent reads.
         """
-        from pynetappfoundry.cache.db import _query_registry_subset
+        value: Any = None
 
-        # Select registry entries whose path equals *name* or starts with
-        # ``name.`` (e.g. ``storage.volumes``, ``storage.aggregates``).
-        subset = {
-            path: spec
-            for path, spec in self._registry.items()
-            if path == name or path.startswith(f"{name}.")
-        }
+        # --- Step 1: try the cache DB ---
+        if self._db_path is not None:
+            value = self._load_from_db(name)
 
-        is_uri = isinstance(self._db_path, str) and str(self._db_path).startswith("file:")
-        conn = sqlite3.connect(self._db_path, detect_types=sqlite3.PARSE_DECLTYPES, uri=is_uri)
-        conn.row_factory = sqlite3.Row
-        try:
-            root_kwargs = _query_registry_subset(conn, self._cluster_name, subset)
-        finally:
-            conn.close()
+        # --- Step 2: try the live fetcher ---
+        if value is None and self._fetcher is not None:
+            value = self._fetcher.fetch(name)
 
-        # Determine the value to cache.
-        # For a container field like ``storage`` the result dict may look
-        # like ``{"storage": {"volumes": [...], ...}}`` (nested) or just
-        # ``{"storage": <model>}`` for a singleton.
-        value = root_kwargs.get(name)
-
-        # If the field was not present in any table, fall back to the
-        # CachedClusterMetadata default.
+        # --- Step 3: fall back to model default ---
         if value is None:
-            field_info = CachedClusterMetadata.model_fields.get(name)
-            if field_info is not None and field_info.default_factory is not None:
-                factory = field_info.default_factory
-                value = factory()  # type: ignore[call-arg]
-            elif field_info is not None:
-                value = field_info.default
-            else:
-                value = None
+            value = self._get_default(name)
 
         # For container fields (e.g. storage, network) that are represented
         # as nested dicts, validate them into the actual Pydantic model.
@@ -165,6 +158,45 @@ class LazyClusterMetadata:
 
         self._loaded[name] = value
         return value
+
+    def _load_from_db(self, name: str) -> Any:
+        """Query the cache DB for the given field group.
+
+        Returns the value if found, or ``None`` if the DB has no data
+        for this group.
+        """
+        from pynetappfoundry.cache.db import _query_registry_subset
+
+        subset = {
+            path: spec
+            for path, spec in self._registry.items()
+            if path == name or path.startswith(f"{name}.")
+        }
+
+        is_uri = isinstance(self._db_path, str) and str(self._db_path).startswith("file:")
+        conn = sqlite3.connect(
+            self._db_path,  # type: ignore[arg-type]
+            detect_types=sqlite3.PARSE_DECLTYPES,
+            uri=is_uri,
+        )
+        conn.row_factory = sqlite3.Row
+        try:
+            root_kwargs = _query_registry_subset(conn, self._cluster_name, subset)
+        finally:
+            conn.close()
+
+        return root_kwargs.get(name)
+
+    @staticmethod
+    def _get_default(name: str) -> Any:
+        """Return the ``CachedClusterMetadata`` default for *name*."""
+        field_info = CachedClusterMetadata.model_fields.get(name)
+        if field_info is not None and field_info.default_factory is not None:
+            factory = field_info.default_factory
+            return factory()  # type: ignore[call-arg]
+        if field_info is not None:
+            return field_info.default
+        return None
 
     # ------------------------------------------------------------------
     # Materialization (full CachedClusterMetadata)

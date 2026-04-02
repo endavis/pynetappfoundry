@@ -297,7 +297,7 @@ class Config:
         clusters = self.data.get("clusters", {})
         for name, data in clusters.items():
             if not isinstance(data, ClusterEntry):
-                clusters[name] = ClusterEntry(name, data, cache_db_path)  # type: ignore[assignment]
+                clusters[name] = ClusterEntry(name, data, cache_db_path, config=self)  # type: ignore[assignment]
 
     def parse_toml(self, file: Path) -> None:
         """Parse a single TOML file.

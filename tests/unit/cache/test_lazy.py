@@ -377,6 +377,136 @@ class TestGetLazy:
         assert lazy._materialize().model_dump() == eager.model_dump()
 
 
+class TestFetcherFallback:
+    """Tests for the DB -> fetcher -> default fallback chain."""
+
+    def test_db_first_then_fetcher_not_called(
+        self,
+        populated_db: ClusterMetadataDB,
+    ) -> None:
+        """When DB has data, fetcher.fetch() is never called."""
+        from unittest.mock import MagicMock
+
+        mock_fetcher = MagicMock()
+        lazy = populated_db.get_lazy("test-cluster")
+        assert lazy is not None
+        lazy._fetcher = mock_fetcher
+
+        # Access cloud — should come from DB
+        result = lazy.cloud
+        assert len(result) == 1
+        assert result[0].provider == "AWS"
+        mock_fetcher.fetch.assert_not_called()
+
+    def test_fetcher_called_when_db_empty(self, db_path: str) -> None:
+        """When DB has no data for a group, fetcher is used."""
+        from unittest.mock import MagicMock
+
+        from pynetappfoundry.cache.db_schema import _ensure_registry
+
+        mock_fetcher = MagicMock()
+        mock_cluster = ClusterInfo(cluster_name="fetched", ontap_version="9.15.0")
+        mock_fetcher.fetch.return_value = mock_cluster
+
+        # Create a DB-less lazy metadata with fetcher
+        lazy = LazyClusterMetadata(
+            cluster_name="test-cluster",
+            cached_at="2024-01-01T00:00:00+00:00",
+            cache_version="1.0",
+            db_path=None,
+            registry=_ensure_registry(),
+            fetcher=mock_fetcher,
+        )
+
+        result = lazy.cluster
+        mock_fetcher.fetch.assert_called_once_with("cluster")
+        assert result.ontap_version == "9.15.0"
+
+    def test_fetcher_result_cached_in_loaded(self, db_path: str) -> None:
+        """Fetcher result is cached — second access does not call fetch again."""
+        from unittest.mock import MagicMock
+
+        from pynetappfoundry.cache.db_schema import _ensure_registry
+
+        mock_fetcher = MagicMock()
+        mock_fetcher.fetch.return_value = ClusterInfo(cluster_name="cached", ontap_version="9.14.0")
+
+        lazy = LazyClusterMetadata(
+            cluster_name="test-cluster",
+            cached_at="2024-01-01T00:00:00+00:00",
+            cache_version="1.0",
+            db_path=None,
+            registry=_ensure_registry(),
+            fetcher=mock_fetcher,
+        )
+
+        result1 = lazy.cluster
+        result2 = lazy.cluster
+        assert result1 is result2
+        mock_fetcher.fetch.assert_called_once()
+
+    def test_default_when_no_db_and_no_fetcher(self) -> None:
+        """Without DB or fetcher, model defaults are returned."""
+        from pynetappfoundry.cache.db_schema import _ensure_registry
+
+        lazy = LazyClusterMetadata(
+            cluster_name="test-cluster",
+            cached_at="2024-01-01T00:00:00+00:00",
+            cache_version="1.0",
+            db_path=None,
+            registry=_ensure_registry(),
+        )
+
+        # cloud default is an empty list
+        assert lazy.cloud == []
+        # cluster default is an empty ClusterInfo
+        assert isinstance(lazy.cluster, ClusterInfo)
+
+    def test_default_when_fetcher_returns_none(self) -> None:
+        """When fetcher returns None, model defaults are used."""
+        from unittest.mock import MagicMock
+
+        from pynetappfoundry.cache.db_schema import _ensure_registry
+
+        mock_fetcher = MagicMock()
+        mock_fetcher.fetch.return_value = None
+
+        lazy = LazyClusterMetadata(
+            cluster_name="test-cluster",
+            cached_at="2024-01-01T00:00:00+00:00",
+            cache_version="1.0",
+            db_path=None,
+            registry=_ensure_registry(),
+            fetcher=mock_fetcher,
+        )
+
+        result = lazy.cloud
+        assert result == []
+        mock_fetcher.fetch.assert_called_once_with("cloud")
+
+    def test_db_less_materialize(self) -> None:
+        """Materialization works in DB-less fetcher-only mode."""
+        from unittest.mock import MagicMock
+
+        from pynetappfoundry.cache.db_schema import _ensure_registry
+
+        mock_fetcher = MagicMock()
+        mock_fetcher.fetch.return_value = None  # All groups return None -> defaults
+
+        lazy = LazyClusterMetadata(
+            cluster_name="test-cluster",
+            cached_at="2024-01-01T00:00:00+00:00",
+            cache_version="1.0",
+            db_path=None,
+            registry=_ensure_registry(),
+            fetcher=mock_fetcher,
+        )
+
+        full = lazy._materialize()
+        assert isinstance(full, CachedClusterMetadata)
+        assert full.cluster_name == "test-cluster"
+
+
 class TestDataFieldsConstant:
     """Verify _DATA_FIELDS matches CachedClusterMetadata data fields."""
 
