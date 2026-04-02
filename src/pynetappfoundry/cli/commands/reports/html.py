@@ -36,11 +36,14 @@ from pynetappfoundry.query import QuerySet
 from pynetappfoundry.utils.cloud import (
     build_azure_id,
     build_azure_portal_link,
+    build_azure_vm_name,
+    get_cloud_account_name,
 )
 
 if TYPE_CHECKING:
     from pynetappfoundry.core.cluster_entry import ClusterEntry
     from pynetappfoundry.core.config import Config
+    from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
 
 # CSS for tree view styling
 CSS_STYLES = """
@@ -748,6 +751,13 @@ class ClusterData:
         self.svms: list[OntapSvm] = []
         self.cifs_services: list[OntapCifsService] = []
         self.management_ip: str = ""
+        self.cloud_metadata: list[CloudMetadata] = []
+        self.cloud_metadata_by_node: dict[str, CloudMetadata] = {}
+        self.cloud_provider: str = ""
+        self.cloud_account_id: str = ""
+        self.cloud_resource_group_name: str = ""
+        self.cloud_region: str = ""
+        self.cloud_resource_group_link: str = ""
         self.app_instance = app_instance
 
         # Build element class for active cluster navigation
@@ -764,9 +774,12 @@ class ClusterData:
         self._gather_data()
 
     def _build_cloud_info(self) -> None:
-        """Build cloud-specific information (Azure subscription IDs, resource URLs).
+        """Build cloud-specific information from cached metadata.
 
-        Uses cached metadata from ClusterEntry.ontap.cloud.
+        Stores the full list of CloudMetadata and a lookup dict keyed by node name.
+        Extracts cluster-level fields (provider, account, region, resource group)
+        from the first entry. Per-node fields (instance_id, instance_type, etc.)
+        are accessed via cloud_metadata_by_node in _format_netapp_node().
         """
         if not self._cluster_entry:
             return
@@ -775,24 +788,15 @@ class ClusterData:
         if not ontap or not ontap.cloud:
             return
 
+        self.cloud_metadata = ontap.cloud
+        self.cloud_metadata_by_node = {cm.node: cm for cm in ontap.cloud}
+
         first_cloud = ontap.cloud[0]
         self.cloud_provider = first_cloud.provider
         self.cloud_account_id = first_cloud.account_id
         self.cloud_resource_group_name = first_cloud.resource_group_name
-        self.cloud_instance_id = first_cloud.instance_id
-        self.cloud_instance_type = first_cloud.instance_type
         self.cloud_region = first_cloud.region
-        self.cloud_primary_ip = first_cloud.primary_ip
-        self.cloud_availability_zone = first_cloud.availability_zone
-
-        if self.cloud_provider.lower() == "azure":
-            sub_id = self.cloud_account_id
-            resource_group = self.cloud_resource_group_name
-            if sub_id and resource_group:
-                self.cloud_resource_group_id = build_azure_id(sub_id, resource_group)
-                self.cloud_resource_group_url = build_azure_portal_link(
-                    self.cloud_resource_group_id
-                )
+        self.cloud_resource_group_link = first_cloud.resource_group_link
 
     def _gather_data(self) -> None:
         """Gather data from the cluster via ONTAP REST API."""
@@ -855,49 +859,44 @@ class ClusterData:
                     self._format_netapp_nodes()
 
     def _format_netapp_cloud_info(self) -> None:
-        """Format cloud provider information for the cluster.
+        """Format cluster-level cloud provider information.
 
-        Uses cloud_* fields from cluster config (enriched from cache).
+        Shows provider, account/subscription ID, resource group, and region.
+        Per-node fields (instance_id, instance_type, etc.) are rendered
+        in _format_netapp_node() instead.
         """
         tag = self.app_instance.tag
         text = self.app_instance.text
         fmt = self.app_instance.format_table_row_text
         fmt_link = self.app_instance.format_table_row_link
 
-        cloud_provider = getattr(self, "cloud_provider", "")
-        if not cloud_provider:
+        if not self.cloud_provider:
             return
+
+        provider_lower = self.cloud_provider.lower()
+        account_label = get_cloud_account_name(provider_lower).title() + " ID"
 
         with tag("li"):
             with tag("details"):
                 with tag("summary"):
-                    text(f"{cloud_provider} Information")
+                    text(f"Cloud - {self.cloud_provider}")
                 with tag("ul"):
                     with tag("li"):
                         with tag("table", ("class", "custom-table")):
-                            fmt("Provider", cloud_provider)
-                            region = getattr(self, "cloud_region", "")
-                            if region:
-                                fmt("Region", region)
-                            instance_type = getattr(self, "cloud_instance_type", "")
-                            if instance_type:
-                                fmt("Instance Type", instance_type)
-                            instance_id = getattr(self, "cloud_instance_id", "")
-                            if instance_id:
-                                fmt("Instance ID", instance_id)
-
-                            # Azure-specific fields
-                            if cloud_provider.lower() == "azure":
-                                account_id = getattr(self, "cloud_account_id", "")
-                                if account_id:
-                                    fmt("Subscription ID", account_id)
-                                rg_name = getattr(self, "cloud_resource_group_name", "")
-                                if rg_name:
-                                    rg_url = getattr(self, "cloud_resource_group_url", "")
-                                    if rg_url:
-                                        fmt_link("Resource Group", rg_name, rg_url)
-                                    else:
-                                        fmt("Resource Group", rg_name)
+                            fmt("Provider", self.cloud_provider)
+                            if self.cloud_account_id:
+                                fmt(account_label, self.cloud_account_id)
+                            if self.cloud_resource_group_name:
+                                if self.cloud_resource_group_link:
+                                    fmt_link(
+                                        "Resource Group",
+                                        self.cloud_resource_group_name,
+                                        self.cloud_resource_group_link,
+                                    )
+                                else:
+                                    fmt("Resource Group", self.cloud_resource_group_name)
+                            if self.cloud_region:
+                                fmt("Region", self.cloud_region)
 
     def _format_netapp_cluster_info(self) -> None:
         """Format cluster-level information (version, management IPs, DNS, NTP)."""
@@ -1179,34 +1178,11 @@ class ClusterData:
         """
         tag = self.app_instance.tag
         text = self.app_instance.text
+        fmt = self.app_instance.format_table_row_text
+        fmt_link = self.app_instance.format_table_row_link
 
         mgmt_ip = node.management_interface_ip_address
         management_link = f"https://{mgmt_ip}" if mgmt_ip else ""
-
-        # Build VM information for cloud deployments
-        vm_id = None
-        vm_url = None
-        vm_name = None
-        vm_type = None
-        cloud_provider = getattr(self, "cloud_provider", "")
-
-        if cloud_provider.lower() == "azure":
-            node_name = node.name
-            short_name = node_name.split("-")[0] if "-" in node_name else node_name
-
-            try:
-                node_number = int(node_name.split("-")[1]) if "-" in node_name else 1
-            except (ValueError, IndexError):
-                node_number = 1
-
-            vm_type = "Azure VM"
-            vm_name = f"{short_name}-vm{node_number}" if len(self.nodes) > 1 else short_name
-
-            sub_id = getattr(self, "cloud_account_id", "")
-            resource_group = getattr(self, "cloud_resource_group_name", "")
-            if sub_id and resource_group:
-                vm_id = build_azure_id(sub_id, resource_group, resource_name=vm_name)
-                vm_url = build_azure_portal_link(vm_id)
 
         with tag("li"):
             with tag("details"):
@@ -1220,21 +1196,69 @@ class ClusterData:
                     with tag("li"):
                         with tag("table", ("class", "custom-table")):
                             if mgmt_ip:
-                                self.app_instance.format_table_row_text(
-                                    "Node Management IP", mgmt_ip
-                                )
+                                fmt("Node Management IP", mgmt_ip)
                             serial = node.serial_number or "Unknown"
-                            self.app_instance.format_table_row_text("Serial Number", serial)
+                            fmt("Serial Number", serial)
                             if management_link:
-                                self.app_instance.format_table_row_link(
-                                    "System Manager", "Link", management_link
+                                fmt_link("System Manager", "Link", management_link)
+                                fmt_link("SPI", "Link", f"{management_link}/spi")
+
+                    # Per-node cloud section
+                    cloud_meta = self.cloud_metadata_by_node.get(node.name)
+                    if cloud_meta:
+                        self._format_node_cloud_section(node, cloud_meta)
+
+    def _format_node_cloud_section(
+        self,
+        node: OntapNodeResponse,
+        cloud_meta: CloudMetadata,
+    ) -> None:
+        """Format per-node cloud provider information.
+
+        Shows VM name, instance ID, instance type, availability zone,
+        and cloud console links for the given node.
+
+        Args:
+            node: OntapNodeResponse model instance.
+            cloud_meta: CloudMetadata for this node.
+        """
+        tag = self.app_instance.tag
+        text = self.app_instance.text
+        fmt = self.app_instance.format_table_row_text
+        fmt_link = self.app_instance.format_table_row_link
+
+        provider = cloud_meta.provider
+        provider_lower = provider.lower()
+
+        # Derive VM name
+        if provider_lower == "azure":
+            vm_name = build_azure_vm_name(self.name, node.name, is_ha=len(self.nodes) > 1)
+        else:
+            vm_name = node.name
+
+        with tag("li"):
+            with tag("details"):
+                with tag("summary"):
+                    text(f"Cloud - {provider}")
+                with tag("ul"):
+                    with tag("li"):
+                        with tag("table", ("class", "custom-table")):
+                            if vm_name:
+                                fmt("VM Name", vm_name)
+                            if cloud_meta.instance_id:
+                                fmt("Instance ID", cloud_meta.instance_id)
+                            if cloud_meta.instance_type:
+                                fmt("Instance Type", cloud_meta.instance_type)
+                            if cloud_meta.availability_zone:
+                                fmt("Availability Zone", cloud_meta.availability_zone)
+                            if cloud_meta.instance_link:
+                                fmt_link("Cloud Console", "Link", cloud_meta.instance_link)
+                            if cloud_meta.instance_sso_link:
+                                fmt_link(
+                                    "Cloud Console (SSO)",
+                                    "Link",
+                                    cloud_meta.instance_sso_link,
                                 )
-                                self.app_instance.format_table_row_link(
-                                    "SPI", "Link", f"{management_link}/spi"
-                                )
-                            if vm_name and vm_id and vm_url and vm_type:
-                                self.app_instance.format_table_row_text(f"{vm_type} Name", vm_name)
-                                self.app_instance.format_table_row_link(vm_type, vm_id, vm_url)
 
 
 @click.command()

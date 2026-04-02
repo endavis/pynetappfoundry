@@ -865,51 +865,129 @@ class TestHTMLFileGeneration:
         from pynetappfoundry.cli.commands.reports.html import ClusterData
 
         # Build mock cloud metadata for each cluster
-        cloud_data_by_cluster: dict[str, dict[str, str]] = {
-            "AZURE-PROD-01": {
-                "provider": "Azure",
-                "region": "eastus",
-                "account_id": "12345678-1234-1234-1234-123456789abc",
-                "resource_group_name": "rg-netapp-prod",
-                "instance_id": "i-azure123",
-                "instance_type": "Standard_DS4_v2",
-                "primary_ip": "10.0.1.100",
-                "availability_zone": "eastus-1",
-            },
-            "AZURE-DEV-01": {
-                "provider": "Azure",
-                "region": "westus",
-                "account_id": "12345678-1234-1234-1234-123456789abc",
-                "resource_group_name": "rg-netapp-dev",
-                "instance_id": "",
-                "instance_type": "",
-                "primary_ip": "",
-                "availability_zone": "",
-            },
-            "AWS-PROD-01": {
-                "provider": "AWS",
-                "region": "us-east-1",
-                "account_id": "123456789012",
-                "resource_group_name": "",
-                "instance_id": "i-0abc123def456",
-                "instance_type": "m5.xlarge",
-                "primary_ip": "10.1.1.100",
-                "availability_zone": "us-east-1a",
-            },
-            "GCP-PROD-01": {
-                "provider": "GCP",
-                "region": "us-central1",
-                "account_id": "my-gcp-project",
-                "resource_group_name": "",
-                "instance_id": "",
-                "instance_type": "n1-standard-4",
-                "primary_ip": "",
-                "availability_zone": "us-central1-a",
-            },
+        cloud_data_by_cluster: dict[str, list[dict[str, str]]] = {
+            "AZURE-PROD-01": [
+                {
+                    "node": "cluster-01",
+                    "provider": "Azure",
+                    "region": "eastus",
+                    "account_id": "12345678-1234-1234-1234-123456789abc",
+                    "resource_group_name": "rg-netapp-prod",
+                    "resource_group_link": (
+                        "https://portal.azure.com/#resource/subscriptions/"
+                        "12345678-1234-1234-1234-123456789abc/"
+                        "resourceGroups/rg-netapp-prod"
+                    ),
+                    "instance_id": "i-azure123",
+                    "instance_type": "Standard_DS4_v2",
+                    "primary_ip": "10.0.1.100",
+                    "availability_zone": "eastus-1",
+                    "instance_link": (
+                        "https://portal.azure.com/#resource/subscriptions/"
+                        "12345678-1234-1234-1234-123456789abc/"
+                        "resourceGroups/rg-netapp-prod/providers/"
+                        "Microsoft.Compute/virtualMachines/test-cluster-vm1"
+                    ),
+                    "instance_sso_link": "",
+                },
+                {
+                    "node": "cluster-02",
+                    "provider": "Azure",
+                    "region": "eastus",
+                    "account_id": "12345678-1234-1234-1234-123456789abc",
+                    "resource_group_name": "rg-netapp-prod",
+                    "resource_group_link": (
+                        "https://portal.azure.com/#resource/subscriptions/"
+                        "12345678-1234-1234-1234-123456789abc/"
+                        "resourceGroups/rg-netapp-prod"
+                    ),
+                    "instance_id": "i-azure456",
+                    "instance_type": "Standard_DS4_v2",
+                    "primary_ip": "10.0.1.101",
+                    "availability_zone": "eastus-2",
+                    "instance_link": (
+                        "https://portal.azure.com/#resource/subscriptions/"
+                        "12345678-1234-1234-1234-123456789abc/"
+                        "resourceGroups/rg-netapp-prod/providers/"
+                        "Microsoft.Compute/virtualMachines/test-cluster-vm2"
+                    ),
+                    "instance_sso_link": "",
+                },
+            ],
+            "AZURE-DEV-01": [
+                {
+                    "node": "cluster-01",
+                    "provider": "Azure",
+                    "region": "westus",
+                    "account_id": "12345678-1234-1234-1234-123456789abc",
+                    "resource_group_name": "rg-netapp-dev",
+                    "resource_group_link": "",
+                    "instance_id": "",
+                    "instance_type": "",
+                    "primary_ip": "",
+                    "availability_zone": "",
+                    "instance_link": "",
+                    "instance_sso_link": "",
+                },
+            ],
+            "AWS-PROD-01": [
+                {
+                    "node": "cluster-01",
+                    "provider": "AWS",
+                    "region": "us-east-1",
+                    "account_id": "123456789012",
+                    "resource_group_name": "",
+                    "resource_group_link": "",
+                    "instance_id": "i-0abc123def456",
+                    "instance_type": "m5.xlarge",
+                    "primary_ip": "10.1.1.100",
+                    "availability_zone": "us-east-1a",
+                    "instance_link": (
+                        "https://us-east-1.console.aws.amazon.com/ec2/home"
+                        "?region=us-east-1#InstanceDetails:instanceId=i-0abc123def456"
+                    ),
+                    "instance_sso_link": "",
+                },
+                {
+                    "node": "cluster-02",
+                    "provider": "AWS",
+                    "region": "us-east-1",
+                    "account_id": "123456789012",
+                    "resource_group_name": "",
+                    "resource_group_link": "",
+                    "instance_id": "i-0abc123def789",
+                    "instance_type": "m5.xlarge",
+                    "primary_ip": "10.1.1.101",
+                    "availability_zone": "us-east-1b",
+                    "instance_link": (
+                        "https://us-east-1.console.aws.amazon.com/ec2/home"
+                        "?region=us-east-1#InstanceDetails:instanceId=i-0abc123def789"
+                    ),
+                    "instance_sso_link": "",
+                },
+            ],
+            "GCP-PROD-01": [
+                {
+                    "node": "cluster-01",
+                    "provider": "GCP",
+                    "region": "us-central1",
+                    "account_id": "my-gcp-project",
+                    "resource_group_name": "",
+                    "resource_group_link": "",
+                    "instance_id": "",
+                    "instance_type": "n1-standard-4",
+                    "primary_ip": "",
+                    "availability_zone": "us-central1-a",
+                    "instance_link": "",
+                    "instance_sso_link": "",
+                },
+            ],
         }
 
         def _make_mock_entry(cluster_name: str, data: dict[str, Any]) -> MagicMock:
             """Create a mock ClusterEntry with cloud metadata."""
+            from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
+
             mock_entry = MagicMock()
             # Make the mock support dict-like access for **entry unpacking
             mock_entry.keys.return_value = data.keys()
@@ -918,12 +996,9 @@ class TestHTMLFileGeneration:
             mock_entry.__contains__ = lambda self, k: k in data
 
             if cluster_name in cloud_data_by_cluster:
-                cloud_mock = MagicMock()
-                cd = cloud_data_by_cluster[cluster_name]
-                for field, value in cd.items():
-                    setattr(cloud_mock, field, value)
+                cloud_list = [CloudMetadata(**cd) for cd in cloud_data_by_cluster[cluster_name]]
                 ontap_mock = MagicMock()
-                ontap_mock.cloud = [cloud_mock]
+                ontap_mock.cloud = cloud_list
                 mock_entry.ontap = ontap_mock
             else:
                 mock_entry.ontap = None
@@ -993,10 +1068,10 @@ class TestHTMLFileGeneration:
             assert "Research" in html_content
             assert "Corporate" in html_content
 
-            # Verify cloud providers are shown
-            assert "Azure Information" in html_content
-            assert "AWS Information" in html_content
-            assert "GCP Information" in html_content
+            # Verify cloud providers are shown (cluster-level sections)
+            assert "Cloud - Azure" in html_content
+            assert "Cloud - AWS" in html_content
+            assert "Cloud - GCP" in html_content
 
             # Verify Azure-specific fields
             assert "Subscription ID" in html_content
@@ -1024,3 +1099,288 @@ class TestHTMLFileGeneration:
         finally:
             # Restore original method
             ClusterData._gather_data = original_gather_data  # type: ignore[method-assign]
+
+
+class TestCloudSections:
+    """Tests for cloud sections at cluster and node level."""
+
+    @pytest.fixture
+    def mock_builder(self, mock_config: MagicMock) -> MagicMock:
+        """Create a mock HTMLReportBuilder with yattag Doc."""
+        from yattag import Doc
+
+        builder = MagicMock()
+        builder.config = mock_config
+        doc, tag, text = Doc().tagtext()
+        builder.doc = doc
+        builder.tag = tag
+        builder.text = text
+
+        # Wire up format helpers to actual HTMLReportBuilder methods
+        from pynetappfoundry.cli.commands.reports.html import HTMLReportBuilder
+
+        with patch("pynetappfoundry.cli.commands.reports.html.ClusterData"):
+            real_builder = HTMLReportBuilder("Test", {}, mock_config)
+        # Share the same doc/tag/text
+        real_builder.doc = doc
+        real_builder.tag = tag
+        real_builder.text = text
+        builder.format_table_row_text = real_builder.format_table_row_text
+        builder.format_table_row_link = real_builder.format_table_row_link
+        return builder
+
+    def _make_cluster(
+        self,
+        mock_builder: MagicMock,
+        cloud_entries: list[dict[str, str]] | None = None,
+    ) -> ClusterData:
+        """Create a ClusterData with optional cloud metadata."""
+        from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
+
+        mock_entry = MagicMock()
+        if cloud_entries:
+            cloud_list = [CloudMetadata(**cd) for cd in cloud_entries]
+            ontap_mock = MagicMock()
+            ontap_mock.cloud = cloud_list
+            mock_entry.ontap = ontap_mock
+        else:
+            mock_entry.ontap = None
+
+        with patch.object(ClusterData, "_gather_data"):
+            cluster = ClusterData(
+                "test-cluster",
+                mock_builder,
+                cluster_entry=mock_entry,
+                div="Div1",
+                bu="BU1",
+                app="App1",
+                env="Prod",
+                subapp="",
+                tags=[],
+                ip="10.0.0.1",
+            )
+        # Manually call _build_cloud_info since _gather_data was patched
+        cluster._build_cloud_info()
+        cluster.nodes = [
+            OntapNodeResponse(
+                name="test-cluster-01",
+                serial_number="SN001",
+                management_interface_ip_address="10.0.0.11",
+            ),
+            OntapNodeResponse(
+                name="test-cluster-02",
+                serial_number="SN002",
+                management_interface_ip_address="10.0.0.12",
+            ),
+        ]
+        return cluster
+
+    def test_cluster_cloud_section_azure(self, mock_builder: MagicMock) -> None:
+        """Test cluster-level cloud section for Azure shows correct fields."""
+        cluster = self._make_cluster(
+            mock_builder,
+            [
+                {
+                    "node": "test-cluster-01",
+                    "provider": "Azure",
+                    "region": "eastus",
+                    "account_id": "sub-123",
+                    "resource_group_name": "rg-test",
+                    "resource_group_link": "https://portal.azure.com/#resource/rg-test",
+                    "instance_id": "i-123",
+                    "instance_type": "Standard_DS4_v2",
+                    "availability_zone": "eastus-1",
+                    "instance_link": "https://portal.azure.com/#resource/vm1",
+                    "instance_sso_link": "",
+                },
+            ],
+        )
+        cluster._format_netapp_cloud_info()
+        html = mock_builder.doc.getvalue()
+
+        assert "Cloud - Azure" in html
+        assert "Provider" in html
+        assert "Azure" in html
+        assert "Subscription ID" in html
+        assert "sub-123" in html
+        assert "Resource Group" in html
+        assert "rg-test" in html
+        assert "https://portal.azure.com/#resource/rg-test" in html
+        assert "Region" in html
+        assert "eastus" in html
+        # Instance-level fields should NOT appear at cluster level
+        assert "Instance ID" not in html
+        assert "Instance Type" not in html
+
+    def test_cluster_cloud_section_aws(self, mock_builder: MagicMock) -> None:
+        """Test cluster-level cloud section for AWS uses Account ID label."""
+        cluster = self._make_cluster(
+            mock_builder,
+            [
+                {
+                    "node": "test-cluster-01",
+                    "provider": "AWS",
+                    "region": "us-east-1",
+                    "account_id": "123456789012",
+                    "resource_group_name": "",
+                    "resource_group_link": "",
+                    "instance_id": "i-abc",
+                    "instance_type": "m5.xlarge",
+                    "availability_zone": "us-east-1a",
+                    "instance_link": "https://console.aws.amazon.com/ec2",
+                    "instance_sso_link": "",
+                },
+            ],
+        )
+        cluster._format_netapp_cloud_info()
+        html = mock_builder.doc.getvalue()
+
+        assert "Cloud - AWS" in html
+        assert "Account ID" in html
+        assert "123456789012" in html
+        # No resource group for AWS
+        assert "Resource Group" not in html
+
+    def test_node_cloud_section_azure(self, mock_builder: MagicMock) -> None:
+        """Test per-node cloud section for Azure with VM name and links."""
+        cluster = self._make_cluster(
+            mock_builder,
+            [
+                {
+                    "node": "test-cluster-01",
+                    "provider": "Azure",
+                    "region": "eastus",
+                    "account_id": "sub-123",
+                    "resource_group_name": "rg-test",
+                    "resource_group_link": "",
+                    "instance_id": "i-123",
+                    "instance_type": "Standard_DS4_v2",
+                    "availability_zone": "eastus-1",
+                    "instance_link": "https://portal.azure.com/#resource/vm1",
+                    "instance_sso_link": "",
+                },
+                {
+                    "node": "test-cluster-02",
+                    "provider": "Azure",
+                    "region": "eastus",
+                    "account_id": "sub-123",
+                    "resource_group_name": "rg-test",
+                    "resource_group_link": "",
+                    "instance_id": "i-456",
+                    "instance_type": "Standard_DS4_v2",
+                    "availability_zone": "eastus-2",
+                    "instance_link": "https://portal.azure.com/#resource/vm2",
+                    "instance_sso_link": "",
+                },
+            ],
+        )
+        node = cluster.nodes[0]
+        cluster._format_netapp_node(node)
+        html = mock_builder.doc.getvalue()
+
+        assert "Cloud - Azure" in html
+        assert "VM Name" in html
+        assert "test-cluster-vm1" in html
+        assert "Instance ID" in html
+        assert "i-123" in html
+        assert "Instance Type" in html
+        assert "Standard_DS4_v2" in html
+        assert "Availability Zone" in html
+        assert "eastus-1" in html
+        assert "Cloud Console" in html
+        assert "https://portal.azure.com/#resource/vm1" in html
+
+    def test_node_cloud_section_aws(self, mock_builder: MagicMock) -> None:
+        """Test per-node cloud section for AWS with console link."""
+        cluster = self._make_cluster(
+            mock_builder,
+            [
+                {
+                    "node": "test-cluster-01",
+                    "provider": "AWS",
+                    "region": "us-east-1",
+                    "account_id": "123456789012",
+                    "resource_group_name": "",
+                    "resource_group_link": "",
+                    "instance_id": "i-0abc123",
+                    "instance_type": "m5.xlarge",
+                    "availability_zone": "us-east-1a",
+                    "instance_link": "https://us-east-1.console.aws.amazon.com/ec2",
+                    "instance_sso_link": "https://sso.awsapps.com/start/#/console",
+                },
+            ],
+        )
+        node = cluster.nodes[0]
+        cluster._format_netapp_node(node)
+        html = mock_builder.doc.getvalue()
+
+        assert "Cloud - AWS" in html
+        assert "VM Name" in html
+        assert "test-cluster-01" in html
+        assert "Instance ID" in html
+        assert "i-0abc123" in html
+        assert "Cloud Console" in html
+        assert "https://us-east-1.console.aws.amazon.com/ec2" in html
+        assert "Cloud Console (SSO)" in html
+        assert "https://sso.awsapps.com/start/#/console" in html
+
+    def test_no_cloud_section_when_no_data(self, mock_builder: MagicMock) -> None:
+        """Test no cloud sections appear when cloud data is absent."""
+        cluster = self._make_cluster(mock_builder, cloud_entries=None)
+        cluster._format_netapp_cloud_info()
+        html = mock_builder.doc.getvalue()
+
+        assert "Cloud -" not in html
+        assert "Provider" not in html
+
+    def test_no_node_cloud_section_when_no_data(self, mock_builder: MagicMock) -> None:
+        """Test no per-node cloud section appears when no cloud metadata."""
+        cluster = self._make_cluster(mock_builder, cloud_entries=None)
+        node = cluster.nodes[0]
+        cluster._format_netapp_node(node)
+        html = mock_builder.doc.getvalue()
+
+        # Node info should be present but no cloud section
+        assert "test-cluster-01" in html
+        assert "SN001" in html
+        assert "Cloud -" not in html
+
+    def test_cloud_metadata_by_node_lookup(self, mock_builder: MagicMock) -> None:
+        """Test cloud_metadata_by_node dict is keyed correctly by node name."""
+        cluster = self._make_cluster(
+            mock_builder,
+            [
+                {
+                    "node": "test-cluster-01",
+                    "provider": "Azure",
+                    "region": "eastus",
+                    "account_id": "sub-123",
+                    "resource_group_name": "rg-test",
+                    "resource_group_link": "",
+                    "instance_id": "i-111",
+                    "instance_type": "Standard_DS4_v2",
+                    "availability_zone": "",
+                    "instance_link": "",
+                    "instance_sso_link": "",
+                },
+                {
+                    "node": "test-cluster-02",
+                    "provider": "Azure",
+                    "region": "eastus",
+                    "account_id": "sub-123",
+                    "resource_group_name": "rg-test",
+                    "resource_group_link": "",
+                    "instance_id": "i-222",
+                    "instance_type": "Standard_DS4_v2",
+                    "availability_zone": "",
+                    "instance_link": "",
+                    "instance_sso_link": "",
+                },
+            ],
+        )
+
+        assert "test-cluster-01" in cluster.cloud_metadata_by_node
+        assert "test-cluster-02" in cluster.cloud_metadata_by_node
+        assert cluster.cloud_metadata_by_node["test-cluster-01"].instance_id == "i-111"
+        assert cluster.cloud_metadata_by_node["test-cluster-02"].instance_id == "i-222"
+        assert len(cluster.cloud_metadata) == 2
