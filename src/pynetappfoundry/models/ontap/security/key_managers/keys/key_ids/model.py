@@ -2,7 +2,29 @@
 
 from __future__ import annotations
 
+from pydantic import Field
+
 from pynetappfoundry.models._base import OntapModel
+
+
+class OntapKeyManagerKeysNode(OntapModel):
+    """OntapKeyManagerKeysNode sub-model for node."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapKeyManagerKeysSecurityKeyManager(OntapModel):
+    """OntapKeyManagerKeysSecurityKeyManager sub-model for security_key_manager."""
+
+    uuid: str = ""
+
+
+class OntapKeyManagerKeysSvm(OntapModel):
+    """OntapKeyManagerKeysSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapKeyManagerKeys(OntapModel):
@@ -18,11 +40,11 @@ class OntapKeyManagerKeys(OntapModel):
     key_tag: str = ""
     key_type: str = ""
     key_user: str = ""
-    node_name: str = ""
-    node_uuid: str = ""
+    node: OntapKeyManagerKeysNode = Field(default_factory=OntapKeyManagerKeysNode)
     policy: str = ""
     restored: bool = False
     scope: str = ""
-    security_key_manager_uuid: str = ""
-    svm_name: str = ""
-    svm_uuid: str = ""
+    security_key_manager: OntapKeyManagerKeysSecurityKeyManager = Field(
+        default_factory=OntapKeyManagerKeysSecurityKeyManager
+    )
+    svm: OntapKeyManagerKeysSvm = Field(default_factory=OntapKeyManagerKeysSvm)

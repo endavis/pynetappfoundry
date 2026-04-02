@@ -15,7 +15,7 @@ ONTAPLUNATTRIBUTE_MAPPING = TypeMapping(
     parent_id_field="uuid",
     fields=(
         FieldMapping(
-            cache_attr="lun_uuid",
+            cache_attr="lun.uuid",
             api_path="lun.uuid",
         ),
         FieldMapping(

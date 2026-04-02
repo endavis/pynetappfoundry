@@ -6,11 +6,11 @@ class_name = "OntapNfsClients"
 [fields.client_ip]
 cache_strategy = "cache"
 
-[fields.export_policy_id]
+[fields."export_policy.id"]
 cache_strategy = "cache"
 requires_explicit_fetch = true
 
-[fields.export_policy_name]
+[fields."export_policy.name"]
 cache_strategy = "cache"
 
 [fields.idle_duration]
@@ -19,10 +19,10 @@ cache_strategy = "realtime"
 [fields.local_request_count]
 cache_strategy = "realtime"
 
-[fields.node_name]
+[fields."node.name"]
 cache_strategy = "cache"
 
-[fields.node_uuid]
+[fields."node.uuid"]
 cache_strategy = "cache"
 
 [fields.protocol]
@@ -34,17 +34,17 @@ cache_strategy = "realtime"
 [fields.server_ip]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.trunking_enabled]
 cache_strategy = "cache"
 
-[fields.volume_name]
+[fields."volume.name"]
 cache_strategy = "cache"
 
-[fields.volume_uuid]
+[fields."volume.uuid"]
 cache_strategy = "cache"

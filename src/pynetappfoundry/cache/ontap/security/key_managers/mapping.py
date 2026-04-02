@@ -9,24 +9,32 @@ from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.security.key_managers.model import (
     OntapSecurityKeyManager,
-    OntapSecurityKeyManagerServer,
-    OntapSecurityKeyManagerServerCaCertificate,
+    OntapSecurityKeyManagerExternalServer,
+    OntapSecurityKeyManagerExternalServerCaCertificate,
 )
+from pynetappfoundry.utils.dict_path import get_nested_value
 
 
 def _transform_external_server_ca_certificates(
     record: dict[str, Any],
-) -> list[OntapSecurityKeyManagerServerCaCertificate]:
-    """Transform external.server_ca_certificates into OntapSecurityKeyManagerServerCaCertificate list."""
-    return [
-        OntapSecurityKeyManagerServerCaCertificate(**item)
-        for item in record.get("external.server_ca_certificates", [])
-    ]
+) -> list[OntapSecurityKeyManagerExternalServerCaCertificate]:
+    """Transform external.server_ca_certificates into OntapSecurityKeyManagerExternalServerCaCertificate list."""
+    try:
+        items = get_nested_value(record, "external.server_ca_certificates")
+    except Exception:
+        items = []
+    return [OntapSecurityKeyManagerExternalServerCaCertificate(**item) for item in items]
 
 
-def _transform_external_servers(record: dict[str, Any]) -> list[OntapSecurityKeyManagerServer]:
-    """Transform external.servers into OntapSecurityKeyManagerServer list."""
-    return [OntapSecurityKeyManagerServer(**item) for item in record.get("external.servers", [])]
+def _transform_external_servers(
+    record: dict[str, Any],
+) -> list[OntapSecurityKeyManagerExternalServer]:
+    """Transform external.servers into OntapSecurityKeyManagerExternalServer list."""
+    try:
+        items = get_nested_value(record, "external.servers")
+    except Exception:
+        items = []
+    return [OntapSecurityKeyManagerExternalServer(**item) for item in items]
 
 
 ONTAPSECURITYKEYMANAGER_MAPPING = TypeMapping(
@@ -36,11 +44,11 @@ ONTAPSECURITYKEYMANAGER_MAPPING = TypeMapping(
     api_type="ontap",
     fields=(
         FieldMapping(
-            cache_attr="configuration_name",
+            cache_attr="configuration.name",
             api_path="configuration.name",
         ),
         FieldMapping(
-            cache_attr="configuration_uuid",
+            cache_attr="configuration.uuid",
             api_path="configuration.uuid",
         ),
         FieldMapping(
@@ -49,21 +57,21 @@ ONTAPSECURITYKEYMANAGER_MAPPING = TypeMapping(
             default=False,
         ),
         FieldMapping(
-            cache_attr="external_client_certificate_name",
+            cache_attr="external.client_certificate.name",
             api_path="external.client_certificate.name",
         ),
         FieldMapping(
-            cache_attr="external_client_certificate_uuid",
+            cache_attr="external.client_certificate.uuid",
             api_path="external.client_certificate.uuid",
         ),
         FieldMapping(
-            cache_attr="external_server_ca_certificates",
+            cache_attr="external.server_ca_certificates",
             api_path="external.server_ca_certificates",
             transform=_transform_external_server_ca_certificates,
             default=[],
         ),
         FieldMapping(
-            cache_attr="external_servers",
+            cache_attr="external.servers",
             api_path="external.servers",
             transform=_transform_external_servers,
             default=[],
@@ -74,24 +82,24 @@ ONTAPSECURITYKEYMANAGER_MAPPING = TypeMapping(
             default=False,
         ),
         FieldMapping(
-            cache_attr="onboard_enabled",
+            cache_attr="onboard.enabled",
             api_path="onboard.enabled",
             default=False,
         ),
         FieldMapping(
-            cache_attr="onboard_existing_passphrase",
+            cache_attr="onboard.existing_passphrase",
             api_path="onboard.existing_passphrase",
         ),
         FieldMapping(
-            cache_attr="onboard_key_backup",
+            cache_attr="onboard.key_backup",
             api_path="onboard.key_backup",
         ),
         FieldMapping(
-            cache_attr="onboard_passphrase",
+            cache_attr="onboard.passphrase",
             api_path="onboard.passphrase",
         ),
         FieldMapping(
-            cache_attr="onboard_synchronize",
+            cache_attr="onboard.synchronize",
             api_path="onboard.synchronize",
             default=False,
         ),
@@ -104,22 +112,22 @@ ONTAPSECURITYKEYMANAGER_MAPPING = TypeMapping(
             api_path="scope",
         ),
         FieldMapping(
-            cache_attr="status_code",
+            cache_attr="status.code",
             api_path="status.code",
             default=0,
             requires_explicit_fetch=True,
         ),
         FieldMapping(
-            cache_attr="status_message",
+            cache_attr="status.message",
             api_path="status.message",
             requires_explicit_fetch=True,
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(
@@ -127,16 +135,16 @@ ONTAPSECURITYKEYMANAGER_MAPPING = TypeMapping(
             api_path="uuid",
         ),
         FieldMapping(
-            cache_attr="volume_encryption_code",
+            cache_attr="volume_encryption.code",
             api_path="volume_encryption.code",
             default=0,
         ),
         FieldMapping(
-            cache_attr="volume_encryption_message",
+            cache_attr="volume_encryption.message",
             api_path="volume_encryption.message",
         ),
         FieldMapping(
-            cache_attr="volume_encryption_supported",
+            cache_attr="volume_encryption.supported",
             api_path="volume_encryption.supported",
             default=False,
         ),

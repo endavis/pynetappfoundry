@@ -13,6 +13,20 @@ class OntapExportRuleClient(OntapModel):
     match: str = ""
 
 
+class OntapExportRulePolicy(OntapModel):
+    """OntapExportRulePolicy sub-model for policy."""
+
+    id: int = 0
+    name: str = ""
+
+
+class OntapExportRuleSvm(OntapModel):
+    """OntapExportRuleSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
+
+
 class OntapExportRule(OntapModel):
     """OntapExportRule information."""
 
@@ -23,11 +37,9 @@ class OntapExportRule(OntapModel):
     clients: list[OntapExportRuleClient] = Field(default_factory=list)
     index: int = 0
     ntfs_unix_security: str = ""
-    policy_id: int = 0
-    policy_name: str = ""
+    policy: OntapExportRulePolicy = Field(default_factory=OntapExportRulePolicy)
     protocols: list[str] = Field(default_factory=list)
     ro_rule: list[str] = Field(default_factory=list)
     rw_rule: list[str] = Field(default_factory=list)
     superuser: list[str] = Field(default_factory=list)
-    svm_name: str = ""
-    svm_uuid: str = ""
+    svm: OntapExportRuleSvm = Field(default_factory=OntapExportRuleSvm)

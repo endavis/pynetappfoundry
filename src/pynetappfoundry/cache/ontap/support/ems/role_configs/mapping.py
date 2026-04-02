@@ -13,11 +13,11 @@ ONTAPEMSROLECONFIGRESPONSE_MAPPING = TypeMapping(
     api_type="ontap",
     fields=(
         FieldMapping(
-            cache_attr="access_control_role_name",
+            cache_attr="access_control_role.name",
             api_path="access_control_role.name",
         ),
         FieldMapping(
-            cache_attr="event_filter_name",
+            cache_attr="event_filter.name",
             api_path="event_filter.name",
         ),
         FieldMapping(

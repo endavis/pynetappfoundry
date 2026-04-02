@@ -33,16 +33,16 @@ cache_strategy = "cache"
 [fields.scope]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
-[fields.sync_common_snapshot_schedule_name]
+[fields."sync_common_snapshot_schedule.name"]
 cache_strategy = "cache"
 
-[fields.sync_common_snapshot_schedule_uuid]
+[fields."sync_common_snapshot_schedule.uuid"]
 cache_strategy = "cache"
 
 [fields.sync_type]
@@ -51,10 +51,10 @@ cache_strategy = "cache"
 [fields.throttle]
 cache_strategy = "cache"
 
-[fields.transfer_schedule_name]
+[fields."transfer_schedule.name"]
 cache_strategy = "cache"
 
-[fields.transfer_schedule_uuid]
+[fields."transfer_schedule.uuid"]
 cache_strategy = "cache"
 
 [fields.type_]

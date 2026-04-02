@@ -81,16 +81,24 @@ class TestParentIdFieldExists:
         )
 
         parent_model = parent.model_class
-        # Check Pydantic model_fields (preferred) or fallback to hasattr
-        if hasattr(parent_model, "model_fields"):
-            field_names = set(parent_model.model_fields.keys())
-            assert mapping.parent_id_field in field_names, (
-                f"Mapping {name!r} declares parent_id_field={mapping.parent_id_field!r} "
-                f"but parent model {parent_model.__name__} has fields: "
-                f"{sorted(field_names)}"
-            )
-        else:
-            assert hasattr(parent_model, mapping.parent_id_field), (
-                f"Mapping {name!r} declares parent_id_field={mapping.parent_id_field!r} "
-                f"but parent model {parent_model.__name__} has no such attribute"
-            )
+        # Resolve dotted parent_id_field paths (e.g. "svm.uuid") by
+        # walking through nested Pydantic model_fields.
+        parts = mapping.parent_id_field.split(".")
+        current_model = parent_model
+        for i, part in enumerate(parts):
+            if hasattr(current_model, "model_fields"):
+                field_names = set(current_model.model_fields.keys())
+                assert part in field_names, (
+                    f"Mapping {name!r} declares parent_id_field={mapping.parent_id_field!r} "
+                    f"but {current_model.__name__} has no field {part!r} "
+                    f"(available: {sorted(field_names)})"
+                )
+                # If there are more parts, descend into the nested model
+                if i < len(parts) - 1:
+                    field_info = current_model.model_fields[part]
+                    current_model = field_info.annotation
+            else:
+                assert hasattr(current_model, part), (
+                    f"Mapping {name!r} declares parent_id_field={mapping.parent_id_field!r} "
+                    f"but {current_model.__name__} has no attribute {part!r}"
+                )

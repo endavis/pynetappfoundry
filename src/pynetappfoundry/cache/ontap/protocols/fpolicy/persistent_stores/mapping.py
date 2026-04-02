@@ -30,7 +30,7 @@ ONTAPFPOLICYPERSISTENTSTORE_MAPPING = TypeMapping(
             default=0,
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(

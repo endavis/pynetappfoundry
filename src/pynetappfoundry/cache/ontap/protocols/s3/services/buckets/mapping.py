@@ -9,10 +9,11 @@ from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.protocols.s3.services.buckets.model import (
     OntapS3BucketSvm,
     OntapS3BucketSvmAggregate,
-    OntapS3BucketSvmRule,
-    OntapS3BucketSvmRule2,
-    OntapS3BucketSvmStatement,
+    OntapS3BucketSvmCorsRule,
+    OntapS3BucketSvmLifecycleManagementRule,
+    OntapS3BucketSvmPolicyStatement,
 )
+from pynetappfoundry.utils.dict_path import get_nested_value
 
 
 def _transform_aggregates(record: dict[str, Any]) -> list[OntapS3BucketSvmAggregate]:
@@ -20,19 +21,33 @@ def _transform_aggregates(record: dict[str, Any]) -> list[OntapS3BucketSvmAggreg
     return [OntapS3BucketSvmAggregate(**item) for item in record.get("aggregates", [])]
 
 
-def _transform_cors_rules(record: dict[str, Any]) -> list[OntapS3BucketSvmRule]:
-    """Transform cors.rules into OntapS3BucketSvmRule list."""
-    return [OntapS3BucketSvmRule(**item) for item in record.get("cors.rules", [])]
+def _transform_cors_rules(record: dict[str, Any]) -> list[OntapS3BucketSvmCorsRule]:
+    """Transform cors.rules into OntapS3BucketSvmCorsRule list."""
+    try:
+        items = get_nested_value(record, "cors.rules")
+    except Exception:
+        items = []
+    return [OntapS3BucketSvmCorsRule(**item) for item in items]
 
 
-def _transform_lifecycle_management_rules(record: dict[str, Any]) -> list[OntapS3BucketSvmRule2]:
-    """Transform lifecycle_management.rules into OntapS3BucketSvmRule2 list."""
-    return [OntapS3BucketSvmRule2(**item) for item in record.get("lifecycle_management.rules", [])]
+def _transform_lifecycle_management_rules(
+    record: dict[str, Any],
+) -> list[OntapS3BucketSvmLifecycleManagementRule]:
+    """Transform lifecycle_management.rules into OntapS3BucketSvmLifecycleManagementRule list."""
+    try:
+        items = get_nested_value(record, "lifecycle_management.rules")
+    except Exception:
+        items = []
+    return [OntapS3BucketSvmLifecycleManagementRule(**item) for item in items]
 
 
-def _transform_policy_statements(record: dict[str, Any]) -> list[OntapS3BucketSvmStatement]:
-    """Transform policy.statements into OntapS3BucketSvmStatement list."""
-    return [OntapS3BucketSvmStatement(**item) for item in record.get("policy.statements", [])]
+def _transform_policy_statements(record: dict[str, Any]) -> list[OntapS3BucketSvmPolicyStatement]:
+    """Transform policy.statements into OntapS3BucketSvmPolicyStatement list."""
+    try:
+        items = get_nested_value(record, "policy.statements")
+    except Exception:
+        items = []
+    return [OntapS3BucketSvmPolicyStatement(**item) for item in items]
 
 
 ONTAPS3BUCKETSVM_MAPPING = TypeMapping(
@@ -41,7 +56,7 @@ ONTAPS3BUCKETSVM_MAPPING = TypeMapping(
     api_endpoint="/protocols/s3/services/{svm.uuid}/buckets?fields=*",
     api_type="ontap",
     parent_mapping="OntapS3Service",
-    parent_id_field="svm_uuid",
+    parent_id_field="svm.uuid",
     fields=(
         FieldMapping(
             cache_attr="aggregates",
@@ -50,11 +65,11 @@ ONTAPS3BUCKETSVM_MAPPING = TypeMapping(
             default=[],
         ),
         FieldMapping(
-            cache_attr="audit_event_selector_access",
+            cache_attr="audit_event_selector.access",
             api_path="audit_event_selector.access",
         ),
         FieldMapping(
-            cache_attr="audit_event_selector_permission",
+            cache_attr="audit_event_selector.permission",
             api_path="audit_event_selector.permission",
         ),
         FieldMapping(
@@ -67,18 +82,18 @@ ONTAPS3BUCKETSVM_MAPPING = TypeMapping(
             default=0,
         ),
         FieldMapping(
-            cache_attr="cors_rules",
+            cache_attr="cors.rules",
             api_path="cors.rules",
             transform=_transform_cors_rules,
             default=[],
         ),
         FieldMapping(
-            cache_attr="encryption_enabled",
+            cache_attr="encryption.enabled",
             api_path="encryption.enabled",
             default=False,
         ),
         FieldMapping(
-            cache_attr="lifecycle_management_rules",
+            cache_attr="lifecycle_management.rules",
             api_path="lifecycle_management.rules",
             transform=_transform_lifecycle_management_rules,
             default=[],
@@ -97,65 +112,65 @@ ONTAPS3BUCKETSVM_MAPPING = TypeMapping(
             api_path="nas_path",
         ),
         FieldMapping(
-            cache_attr="policy_statements",
+            cache_attr="policy.statements",
             api_path="policy.statements",
             transform=_transform_policy_statements,
             default=[],
         ),
         FieldMapping(
-            cache_attr="protection_status_destination_is_cloud",
+            cache_attr="protection_status.destination.is_cloud",
             api_path="protection_status.destination.is_cloud",
             default=False,
         ),
         FieldMapping(
-            cache_attr="protection_status_destination_is_external_cloud",
+            cache_attr="protection_status.destination.is_external_cloud",
             api_path="protection_status.destination.is_external_cloud",
             default=False,
         ),
         FieldMapping(
-            cache_attr="protection_status_destination_is_ontap",
+            cache_attr="protection_status.destination.is_ontap",
             api_path="protection_status.destination.is_ontap",
             default=False,
         ),
         FieldMapping(
-            cache_attr="protection_status_is_protected",
+            cache_attr="protection_status.is_protected",
             api_path="protection_status.is_protected",
             default=False,
         ),
         FieldMapping(
-            cache_attr="qos_policy_max_throughput_iops",
+            cache_attr="qos_policy.max_throughput_iops",
             api_path="qos_policy.max_throughput_iops",
             default=0,
         ),
         FieldMapping(
-            cache_attr="qos_policy_max_throughput_mbps",
+            cache_attr="qos_policy.max_throughput_mbps",
             api_path="qos_policy.max_throughput_mbps",
             default=0,
         ),
         FieldMapping(
-            cache_attr="qos_policy_min_throughput_iops",
+            cache_attr="qos_policy.min_throughput_iops",
             api_path="qos_policy.min_throughput_iops",
             default=0,
         ),
         FieldMapping(
-            cache_attr="qos_policy_min_throughput_mbps",
+            cache_attr="qos_policy.min_throughput_mbps",
             api_path="qos_policy.min_throughput_mbps",
             default=0,
         ),
         FieldMapping(
-            cache_attr="qos_policy_name",
+            cache_attr="qos_policy.name",
             api_path="qos_policy.name",
         ),
         FieldMapping(
-            cache_attr="qos_policy_uuid",
+            cache_attr="qos_policy.uuid",
             api_path="qos_policy.uuid",
         ),
         FieldMapping(
-            cache_attr="retention_default_period",
+            cache_attr="retention.default_period",
             api_path="retention.default_period",
         ),
         FieldMapping(
-            cache_attr="retention_mode",
+            cache_attr="retention.mode",
             api_path="retention.mode",
         ),
         FieldMapping(
@@ -168,11 +183,11 @@ ONTAPS3BUCKETSVM_MAPPING = TypeMapping(
             default=0,
         ),
         FieldMapping(
-            cache_attr="snapshot_policy_name",
+            cache_attr="snapshot_policy.name",
             api_path="snapshot_policy.name",
         ),
         FieldMapping(
-            cache_attr="snapshot_policy_uuid",
+            cache_attr="snapshot_policy.uuid",
             api_path="snapshot_policy.uuid",
         ),
         FieldMapping(
@@ -180,11 +195,11 @@ ONTAPS3BUCKETSVM_MAPPING = TypeMapping(
             api_path="storage_service_level",
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(
@@ -200,11 +215,11 @@ ONTAPS3BUCKETSVM_MAPPING = TypeMapping(
             api_path="versioning_state",
         ),
         FieldMapping(
-            cache_attr="volume_name",
+            cache_attr="volume.name",
             api_path="volume.name",
         ),
         FieldMapping(
-            cache_attr="volume_uuid",
+            cache_attr="volume.uuid",
             api_path="volume.uuid",
         ),
     ),

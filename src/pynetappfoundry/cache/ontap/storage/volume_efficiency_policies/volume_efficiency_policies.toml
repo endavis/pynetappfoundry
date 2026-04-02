@@ -18,16 +18,16 @@ cache_strategy = "cache"
 [fields.qos_policy]
 cache_strategy = "cache"
 
-[fields.schedule_name]
+[fields."schedule.name"]
 cache_strategy = "cache"
 
 [fields.start_threshold_percent]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.type_]

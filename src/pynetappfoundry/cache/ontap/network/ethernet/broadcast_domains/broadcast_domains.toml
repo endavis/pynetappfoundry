@@ -3,10 +3,10 @@ path = "/network/ethernet/broadcast-domains"
 schema = "broadcast_domain"
 class_name = "OntapBroadcastDomain"
 
-[fields.ipspace_name]
+[fields."ipspace.name"]
 cache_strategy = "cache"
 
-[fields.ipspace_uuid]
+[fields."ipspace.uuid"]
 cache_strategy = "cache"
 
 [fields.mtu]

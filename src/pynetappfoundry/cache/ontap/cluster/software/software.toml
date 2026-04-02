@@ -3,79 +3,79 @@ path = "/cluster/software"
 schema = "software_reference"
 class_name = "OntapSoftwareReference"
 
-[fields.firmware_cluster_fw_progress]
+[fields."firmware.cluster_fw_progress"]
 cache_strategy = "cache"
 
-[fields.firmware_disk_average_duration_per_disk]
+[fields."firmware.disk.average_duration_per_disk"]
 cache_strategy = "cache"
 
-[fields.firmware_disk_num_waiting_download]
+[fields."firmware.disk.num_waiting_download"]
 cache_strategy = "cache"
 
-[fields.firmware_disk_total_completion_estimate]
+[fields."firmware.disk.total_completion_estimate"]
 cache_strategy = "cache"
 
-[fields.firmware_disk_update_status]
+[fields."firmware.disk.update_status"]
 cache_strategy = "cache"
 
-[fields.firmware_dqp_file_name]
+[fields."firmware.dqp.file_name"]
 cache_strategy = "cache"
 
-[fields.firmware_dqp_record_count_alias]
+[fields."firmware.dqp.record_count.alias"]
 cache_strategy = "cache"
 
-[fields.firmware_dqp_record_count_device]
+[fields."firmware.dqp.record_count.device"]
 cache_strategy = "cache"
 
-[fields.firmware_dqp_record_count_drive]
+[fields."firmware.dqp.record_count.drive"]
 cache_strategy = "cache"
 
-[fields.firmware_dqp_record_count_system]
+[fields."firmware.dqp.record_count.system"]
 cache_strategy = "cache"
 
-[fields.firmware_dqp_revision]
+[fields."firmware.dqp.revision"]
 cache_strategy = "cache"
 
-[fields.firmware_dqp_version]
+[fields."firmware.dqp.version"]
 cache_strategy = "cache"
 
-[fields.firmware_shelf_in_progress_count]
+[fields."firmware.shelf.in_progress_count"]
 cache_strategy = "cache"
 
-[fields.firmware_shelf_update_status]
+[fields."firmware.shelf.update_status"]
 cache_strategy = "cache"
 
-[fields.firmware_sp_bmc_autoupdate]
+[fields."firmware.sp_bmc.autoupdate"]
 cache_strategy = "cache"
 
-[fields.firmware_sp_bmc_end_time]
+[fields."firmware.sp_bmc.end_time"]
 cache_strategy = "cache"
 
-[fields.firmware_sp_bmc_fw_type]
+[fields."firmware.sp_bmc.fw_type"]
 cache_strategy = "cache"
 
-[fields.firmware_sp_bmc_image]
+[fields."firmware.sp_bmc.image"]
 cache_strategy = "cache"
 
-[fields.firmware_sp_bmc_in_progress]
+[fields."firmware.sp_bmc.in_progress"]
 cache_strategy = "cache"
 
-[fields.firmware_sp_bmc_is_current]
+[fields."firmware.sp_bmc.is_current"]
 cache_strategy = "cache"
 
-[fields.firmware_sp_bmc_last_update_state]
+[fields."firmware.sp_bmc.last_update_state"]
 cache_strategy = "cache"
 
-[fields.firmware_sp_bmc_percent_done]
+[fields."firmware.sp_bmc.percent_done"]
 cache_strategy = "cache"
 
-[fields.firmware_sp_bmc_running_version]
+[fields."firmware.sp_bmc.running_version"]
 cache_strategy = "cache"
 
-[fields.firmware_sp_bmc_start_time]
+[fields."firmware.sp_bmc.start_time"]
 cache_strategy = "cache"
 
-[fields.firmware_sp_bmc_state]
+[fields."firmware.sp_bmc.state"]
 cache_strategy = "cache"
 
 [fields.name]

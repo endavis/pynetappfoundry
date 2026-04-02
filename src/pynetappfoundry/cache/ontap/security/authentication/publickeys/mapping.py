@@ -13,7 +13,7 @@ ONTAPPUBLICKEY_MAPPING = TypeMapping(
     api_type="ontap",
     fields=(
         FieldMapping(
-            cache_attr="account_name",
+            cache_attr="account.name",
             api_path="account.name",
         ),
         FieldMapping(
@@ -46,11 +46,11 @@ ONTAPPUBLICKEY_MAPPING = TypeMapping(
             api_path="obfuscated_fingerprint",
         ),
         FieldMapping(
-            cache_attr="owner_name",
+            cache_attr="owner.name",
             api_path="owner.name",
         ),
         FieldMapping(
-            cache_attr="owner_uuid",
+            cache_attr="owner.uuid",
             api_path="owner.uuid",
         ),
         FieldMapping(

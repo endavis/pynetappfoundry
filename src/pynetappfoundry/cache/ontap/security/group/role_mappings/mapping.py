@@ -22,7 +22,7 @@ ONTAPGROUPROLEMAPPINGS_MAPPING = TypeMapping(
             default=0,
         ),
         FieldMapping(
-            cache_attr="ontap_role_name",
+            cache_attr="ontap_role.name",
             api_path="ontap_role.name",
         ),
         FieldMapping(

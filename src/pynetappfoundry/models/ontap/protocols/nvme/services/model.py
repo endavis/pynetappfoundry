@@ -2,93 +2,273 @@
 
 from __future__ import annotations
 
+from pydantic import Field
+
 from pynetappfoundry.models._base import OntapModel
+
+
+class OntapNvmeServiceMetricFcIops(OntapModel):
+    """OntapNvmeServiceMetricFcIops sub-model for iops."""
+
+    other: int = 0
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapNvmeServiceMetricFcLatency(OntapModel):
+    """OntapNvmeServiceMetricFcLatency sub-model for latency."""
+
+    other: int = 0
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapNvmeServiceMetricFcThroughput(OntapModel):
+    """OntapNvmeServiceMetricFcThroughput sub-model for throughput."""
+
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapNvmeServiceMetricFc(OntapModel):
+    """OntapNvmeServiceMetricFc sub-model for fc."""
+
+    duration: str = ""
+    iops: OntapNvmeServiceMetricFcIops = Field(default_factory=OntapNvmeServiceMetricFcIops)
+    latency: OntapNvmeServiceMetricFcLatency = Field(
+        default_factory=OntapNvmeServiceMetricFcLatency
+    )
+    status: str = ""
+    throughput: OntapNvmeServiceMetricFcThroughput = Field(
+        default_factory=OntapNvmeServiceMetricFcThroughput
+    )
+    timestamp: str = ""
+
+
+class OntapNvmeServiceMetricIops(OntapModel):
+    """OntapNvmeServiceMetricIops sub-model for iops."""
+
+    other: int = 0
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapNvmeServiceMetricLatency(OntapModel):
+    """OntapNvmeServiceMetricLatency sub-model for latency."""
+
+    other: int = 0
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapNvmeServiceMetricTcpIops(OntapModel):
+    """OntapNvmeServiceMetricTcpIops sub-model for iops."""
+
+    other: int = 0
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapNvmeServiceMetricTcpLatency(OntapModel):
+    """OntapNvmeServiceMetricTcpLatency sub-model for latency."""
+
+    other: int = 0
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapNvmeServiceMetricTcpThroughput(OntapModel):
+    """OntapNvmeServiceMetricTcpThroughput sub-model for throughput."""
+
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapNvmeServiceMetricTcp(OntapModel):
+    """OntapNvmeServiceMetricTcp sub-model for tcp."""
+
+    duration: str = ""
+    iops: OntapNvmeServiceMetricTcpIops = Field(default_factory=OntapNvmeServiceMetricTcpIops)
+    latency: OntapNvmeServiceMetricTcpLatency = Field(
+        default_factory=OntapNvmeServiceMetricTcpLatency
+    )
+    status: str = ""
+    throughput: OntapNvmeServiceMetricTcpThroughput = Field(
+        default_factory=OntapNvmeServiceMetricTcpThroughput
+    )
+    timestamp: str = ""
+
+
+class OntapNvmeServiceMetricThroughput(OntapModel):
+    """OntapNvmeServiceMetricThroughput sub-model for throughput."""
+
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapNvmeServiceMetric(OntapModel):
+    """OntapNvmeServiceMetric sub-model for metric."""
+
+    duration: str = ""
+    fc: OntapNvmeServiceMetricFc = Field(default_factory=OntapNvmeServiceMetricFc)
+    iops: OntapNvmeServiceMetricIops = Field(default_factory=OntapNvmeServiceMetricIops)
+    latency: OntapNvmeServiceMetricLatency = Field(default_factory=OntapNvmeServiceMetricLatency)
+    status: str = ""
+    tcp: OntapNvmeServiceMetricTcp = Field(default_factory=OntapNvmeServiceMetricTcp)
+    throughput: OntapNvmeServiceMetricThroughput = Field(
+        default_factory=OntapNvmeServiceMetricThroughput
+    )
+    timestamp: str = ""
+
+
+class OntapNvmeServiceStatisticsFcIopsRaw(OntapModel):
+    """OntapNvmeServiceStatisticsFcIopsRaw sub-model for iops_raw."""
+
+    other: int = 0
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapNvmeServiceStatisticsFcLatencyRaw(OntapModel):
+    """OntapNvmeServiceStatisticsFcLatencyRaw sub-model for latency_raw."""
+
+    other: int = 0
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapNvmeServiceStatisticsFcThroughputRaw(OntapModel):
+    """OntapNvmeServiceStatisticsFcThroughputRaw sub-model for throughput_raw."""
+
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapNvmeServiceStatisticsFc(OntapModel):
+    """OntapNvmeServiceStatisticsFc sub-model for fc."""
+
+    iops_raw: OntapNvmeServiceStatisticsFcIopsRaw = Field(
+        default_factory=OntapNvmeServiceStatisticsFcIopsRaw
+    )
+    latency_raw: OntapNvmeServiceStatisticsFcLatencyRaw = Field(
+        default_factory=OntapNvmeServiceStatisticsFcLatencyRaw
+    )
+    status: str = ""
+    throughput_raw: OntapNvmeServiceStatisticsFcThroughputRaw = Field(
+        default_factory=OntapNvmeServiceStatisticsFcThroughputRaw
+    )
+    timestamp: str = ""
+
+
+class OntapNvmeServiceStatisticsIopsRaw(OntapModel):
+    """OntapNvmeServiceStatisticsIopsRaw sub-model for iops_raw."""
+
+    other: int = 0
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapNvmeServiceStatisticsLatencyRaw(OntapModel):
+    """OntapNvmeServiceStatisticsLatencyRaw sub-model for latency_raw."""
+
+    other: int = 0
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapNvmeServiceStatisticsTcpIopsRaw(OntapModel):
+    """OntapNvmeServiceStatisticsTcpIopsRaw sub-model for iops_raw."""
+
+    other: int = 0
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapNvmeServiceStatisticsTcpLatencyRaw(OntapModel):
+    """OntapNvmeServiceStatisticsTcpLatencyRaw sub-model for latency_raw."""
+
+    other: int = 0
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapNvmeServiceStatisticsTcpThroughputRaw(OntapModel):
+    """OntapNvmeServiceStatisticsTcpThroughputRaw sub-model for throughput_raw."""
+
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapNvmeServiceStatisticsTcp(OntapModel):
+    """OntapNvmeServiceStatisticsTcp sub-model for tcp."""
+
+    iops_raw: OntapNvmeServiceStatisticsTcpIopsRaw = Field(
+        default_factory=OntapNvmeServiceStatisticsTcpIopsRaw
+    )
+    latency_raw: OntapNvmeServiceStatisticsTcpLatencyRaw = Field(
+        default_factory=OntapNvmeServiceStatisticsTcpLatencyRaw
+    )
+    status: str = ""
+    throughput_raw: OntapNvmeServiceStatisticsTcpThroughputRaw = Field(
+        default_factory=OntapNvmeServiceStatisticsTcpThroughputRaw
+    )
+    timestamp: str = ""
+
+
+class OntapNvmeServiceStatisticsThroughputRaw(OntapModel):
+    """OntapNvmeServiceStatisticsThroughputRaw sub-model for throughput_raw."""
+
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapNvmeServiceStatistics(OntapModel):
+    """OntapNvmeServiceStatistics sub-model for statistics."""
+
+    fc: OntapNvmeServiceStatisticsFc = Field(default_factory=OntapNvmeServiceStatisticsFc)
+    iops_raw: OntapNvmeServiceStatisticsIopsRaw = Field(
+        default_factory=OntapNvmeServiceStatisticsIopsRaw
+    )
+    latency_raw: OntapNvmeServiceStatisticsLatencyRaw = Field(
+        default_factory=OntapNvmeServiceStatisticsLatencyRaw
+    )
+    status: str = ""
+    tcp: OntapNvmeServiceStatisticsTcp = Field(default_factory=OntapNvmeServiceStatisticsTcp)
+    throughput_raw: OntapNvmeServiceStatisticsThroughputRaw = Field(
+        default_factory=OntapNvmeServiceStatisticsThroughputRaw
+    )
+    timestamp: str = ""
+
+
+class OntapNvmeServiceSvm(OntapModel):
+    """OntapNvmeServiceSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapNvmeService(OntapModel):
     """OntapNvmeService information."""
 
     enabled: bool = False
-    metric_duration: str = ""
-    metric_fc_duration: str = ""
-    metric_fc_iops_other: int = 0
-    metric_fc_iops_read: int = 0
-    metric_fc_iops_total: int = 0
-    metric_fc_iops_write: int = 0
-    metric_fc_latency_other: int = 0
-    metric_fc_latency_read: int = 0
-    metric_fc_latency_total: int = 0
-    metric_fc_latency_write: int = 0
-    metric_fc_status: str = ""
-    metric_fc_throughput_read: int = 0
-    metric_fc_throughput_total: int = 0
-    metric_fc_throughput_write: int = 0
-    metric_fc_timestamp: str = ""
-    metric_iops_other: int = 0
-    metric_iops_read: int = 0
-    metric_iops_total: int = 0
-    metric_iops_write: int = 0
-    metric_latency_other: int = 0
-    metric_latency_read: int = 0
-    metric_latency_total: int = 0
-    metric_latency_write: int = 0
-    metric_status: str = ""
-    metric_tcp_duration: str = ""
-    metric_tcp_iops_other: int = 0
-    metric_tcp_iops_read: int = 0
-    metric_tcp_iops_total: int = 0
-    metric_tcp_iops_write: int = 0
-    metric_tcp_latency_other: int = 0
-    metric_tcp_latency_read: int = 0
-    metric_tcp_latency_total: int = 0
-    metric_tcp_latency_write: int = 0
-    metric_tcp_status: str = ""
-    metric_tcp_throughput_read: int = 0
-    metric_tcp_throughput_total: int = 0
-    metric_tcp_throughput_write: int = 0
-    metric_tcp_timestamp: str = ""
-    metric_throughput_read: int = 0
-    metric_throughput_total: int = 0
-    metric_throughput_write: int = 0
-    metric_timestamp: str = ""
-    statistics_fc_iops_raw_other: int = 0
-    statistics_fc_iops_raw_read: int = 0
-    statistics_fc_iops_raw_total: int = 0
-    statistics_fc_iops_raw_write: int = 0
-    statistics_fc_latency_raw_other: int = 0
-    statistics_fc_latency_raw_read: int = 0
-    statistics_fc_latency_raw_total: int = 0
-    statistics_fc_latency_raw_write: int = 0
-    statistics_fc_status: str = ""
-    statistics_fc_throughput_raw_read: int = 0
-    statistics_fc_throughput_raw_total: int = 0
-    statistics_fc_throughput_raw_write: int = 0
-    statistics_fc_timestamp: str = ""
-    statistics_iops_raw_other: int = 0
-    statistics_iops_raw_read: int = 0
-    statistics_iops_raw_total: int = 0
-    statistics_iops_raw_write: int = 0
-    statistics_latency_raw_other: int = 0
-    statistics_latency_raw_read: int = 0
-    statistics_latency_raw_total: int = 0
-    statistics_latency_raw_write: int = 0
-    statistics_status: str = ""
-    statistics_tcp_iops_raw_other: int = 0
-    statistics_tcp_iops_raw_read: int = 0
-    statistics_tcp_iops_raw_total: int = 0
-    statistics_tcp_iops_raw_write: int = 0
-    statistics_tcp_latency_raw_other: int = 0
-    statistics_tcp_latency_raw_read: int = 0
-    statistics_tcp_latency_raw_total: int = 0
-    statistics_tcp_latency_raw_write: int = 0
-    statistics_tcp_status: str = ""
-    statistics_tcp_throughput_raw_read: int = 0
-    statistics_tcp_throughput_raw_total: int = 0
-    statistics_tcp_throughput_raw_write: int = 0
-    statistics_tcp_timestamp: str = ""
-    statistics_throughput_raw_read: int = 0
-    statistics_throughput_raw_total: int = 0
-    statistics_throughput_raw_write: int = 0
-    statistics_timestamp: str = ""
-    svm_name: str = ""
-    svm_uuid: str = ""
+    metric: OntapNvmeServiceMetric = Field(default_factory=OntapNvmeServiceMetric)
+    statistics: OntapNvmeServiceStatistics = Field(default_factory=OntapNvmeServiceStatistics)
+    svm: OntapNvmeServiceSvm = Field(default_factory=OntapNvmeServiceSvm)

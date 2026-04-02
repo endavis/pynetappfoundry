@@ -48,13 +48,13 @@ cache_strategy = "cache"
 [fields.state]
 cache_strategy = "cache"
 
-[fields.status_arguments]
+[fields."status.arguments"]
 cache_strategy = "cache"
 
-[fields.status_code]
+[fields."status.code"]
 cache_strategy = "cache"
 
-[fields.status_message]
+[fields."status.message"]
 cache_strategy = "cache"
 
 [fields.uuid]

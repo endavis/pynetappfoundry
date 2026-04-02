@@ -1017,9 +1017,9 @@ class ClusterData:
                                 "LIF name", "LIF IP", "Home Node", header=True
                             )
                             for iface in svm.ip_interfaces:
-                                ip_addr = iface.ip_address or "Unknown"
-                                netmask = iface.ip_netmask
-                                home_node = iface.location_home_node_name or "Unknown"
+                                ip_addr = iface.ip.address or "Unknown"
+                                netmask = iface.ip.netmask
+                                home_node = iface.location.home_node.name or "Unknown"
                                 self.app_instance.format_table_row_text(
                                     iface.name,
                                     f"{ip_addr}/{netmask}" if netmask else ip_addr,
@@ -1042,11 +1042,11 @@ class ClusterData:
                 with tag("ul"):
                     with tag("li"):
                         with tag("table", ("class", "custom-table")):
-                            domains = svm.dns_domains
+                            domains = svm.dns.domains
                             self.app_instance.format_table_row_text(
                                 "Domains", ", ".join(domains) if domains else "None"
                             )
-                            for i, name_server in enumerate(svm.dns_servers):
+                            for i, name_server in enumerate(svm.dns.servers):
                                 self.app_instance.format_table_row_text(
                                     f"Server {i + 1}", name_server
                                 )
@@ -1057,13 +1057,13 @@ class ClusterData:
         Args:
             svm: OntapSvm model instance.
         """
-        if not svm.cifs_name:
+        if not svm.cifs.name:
             return
 
         # Find matching CIFS service by name
         cifs: OntapCifsService | None = None
         for cs in self.cifs_services:
-            if cs.name == svm.cifs_name:
+            if cs.name == svm.cifs.name:
                 cifs = cs
                 break
 
@@ -1082,9 +1082,9 @@ class ClusterData:
                         with tag("table", ("class", "custom-table")):
                             self.app_instance.format_table_row_text("Enabled", str(cifs.enabled))
                             self.app_instance.format_table_row_text("Name", cifs.name)
-                            self.app_instance.format_table_row_text("Domain", cifs.ad_domain_fqdn)
+                            self.app_instance.format_table_row_text("Domain", cifs.ad_domain.fqdn)
                             self.app_instance.format_table_row_text(
-                                "Organizational Unit", cifs.ad_domain_organizational_unit
+                                "Organizational Unit", cifs.ad_domain.organizational_unit
                             )
 
                     # Security settings
@@ -1098,58 +1098,58 @@ class ClusterData:
                                         items: list[tuple[str, str, Any]] = [
                                             (
                                                 "Is Signing Required",
-                                                "security_smb_signing",
-                                                cifs.security_smb_signing,
+                                                "security.smb_signing",
+                                                cifs.security.smb_signing,
                                             ),
                                             (
                                                 "Use start_tls for AD LDAP connection",
-                                                "security_use_start_tls",
-                                                cifs.security_use_start_tls,
+                                                "security.use_start_tls",
+                                                cifs.security.use_start_tls,
                                             ),
                                             (
                                                 "LM Compatibility Level",
-                                                "security_lm_compatibility_level",
-                                                cifs.security_lm_compatibility_level,
+                                                "security.lm_compatibility_level",
+                                                cifs.security.lm_compatibility_level,
                                             ),
                                             (
                                                 "Is SMB Encryption Required",
-                                                "security_smb_encryption",
-                                                cifs.security_smb_encryption,
+                                                "security.smb_encryption",
+                                                cifs.security.smb_encryption,
                                             ),
                                             (
                                                 "Client Session Security",
-                                                "security_session_security",
-                                                cifs.security_session_security,
+                                                "security.session_security",
+                                                cifs.security.session_security,
                                             ),
                                             (
                                                 "LDAP Referral Enabled For AD LDAP connections",
-                                                "security_ldap_referral_enabled",
-                                                cifs.security_ldap_referral_enabled,
+                                                "security.ldap_referral_enabled",
+                                                cifs.security.ldap_referral_enabled,
                                             ),
                                             (
                                                 "Use LDAPS for AD LDAP connection",
-                                                "security_use_ldaps",
-                                                cifs.security_use_ldaps,
+                                                "security.use_ldaps",
+                                                cifs.security.use_ldaps,
                                             ),
                                             (
                                                 "Encryption is required for DC Connections",
-                                                "security_encrypt_dc_connection",
-                                                cifs.security_encrypt_dc_connection,
+                                                "security.encrypt_dc_connection",
+                                                cifs.security.encrypt_dc_connection,
                                             ),
                                             (
                                                 "AES session key enabled for NetLogon channel",
-                                                "security_aes_netlogon_enabled",
-                                                cifs.security_aes_netlogon_enabled,
+                                                "security.aes_netlogon_enabled",
+                                                cifs.security.aes_netlogon_enabled,
                                             ),
                                             (
                                                 "Try Channel Binding For AD LDAP Connections",
-                                                "security_try_ldap_channel_binding",
-                                                cifs.security_try_ldap_channel_binding,
+                                                "security.try_ldap_channel_binding",
+                                                cifs.security.try_ldap_channel_binding,
                                             ),
                                             (
                                                 "Encryption Types Advertised to Kerberos",
-                                                "security_advertised_kdc_encryptions",
-                                                cifs.security_advertised_kdc_encryptions,
+                                                "security.advertised_kdc_encryptions",
+                                                cifs.security.advertised_kdc_encryptions,
                                             ),
                                         ]
                                         for header, _attr, value in items:
@@ -1181,7 +1181,7 @@ class ClusterData:
         fmt = self.app_instance.format_table_row_text
         fmt_link = self.app_instance.format_table_row_link
 
-        mgmt_ip = node.management_interface_ip_address
+        mgmt_ip = node.management_interface.ip.address
         management_link = f"https://{mgmt_ip}" if mgmt_ip else ""
 
         with tag("li"):

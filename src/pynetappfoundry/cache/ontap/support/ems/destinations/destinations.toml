@@ -3,22 +3,22 @@ path = "/support/ems/destinations"
 schema = "ems_destination_response"
 class_name = "OntapEmsDestinationResponse"
 
-[fields.access_control_role_name]
+[fields."access_control_role.name"]
 cache_strategy = "cache"
 
-[fields.certificate_ca]
+[fields."certificate.ca"]
 cache_strategy = "cache"
 
-[fields.certificate_name]
+[fields."certificate.name"]
 cache_strategy = "cache"
 
-[fields.certificate_serial_number]
+[fields."certificate.serial_number"]
 cache_strategy = "cache"
 
-[fields.connectivity_errors]
+[fields."connectivity.errors"]
 cache_strategy = "cache"
 
-[fields.connectivity_state]
+[fields."connectivity.state"]
 cache_strategy = "cache"
 
 [fields.destination]
@@ -30,19 +30,19 @@ cache_strategy = "cache"
 [fields.name]
 cache_strategy = "cache"
 
-[fields.syslog_format_hostname_override]
+[fields."syslog.format.hostname_override"]
 cache_strategy = "cache"
 
-[fields.syslog_format_message]
+[fields."syslog.format.message"]
 cache_strategy = "cache"
 
-[fields.syslog_format_timestamp_override]
+[fields."syslog.format.timestamp_override"]
 cache_strategy = "cache"
 
-[fields.syslog_port]
+[fields."syslog.port"]
 cache_strategy = "cache"
 
-[fields.syslog_transport]
+[fields."syslog.transport"]
 cache_strategy = "cache"
 
 [fields.system_defined]

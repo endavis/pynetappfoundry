@@ -3,16 +3,16 @@ path = "/network/fc/fabrics/{fabric.name}/zones"
 schema = "fc_zone"
 class_name = "OntapFcZone"
 
-[fields.cache_age]
+[fields."cache.age"]
 cache_strategy = "cache"
 
-[fields.cache_is_current]
+[fields."cache.is_current"]
 cache_strategy = "cache"
 
-[fields.cache_update_time]
+[fields."cache.update_time"]
 cache_strategy = "cache"
 
-[fields.fabric_name]
+[fields."fabric.name"]
 cache_strategy = "cache"
 
 [fields.members]

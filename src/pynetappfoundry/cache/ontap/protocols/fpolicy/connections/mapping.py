@@ -15,24 +15,24 @@ ONTAPFPOLICYCONNECTION_MAPPING = TypeMapping(
     parent_id_field="uuid",
     fields=(
         FieldMapping(
-            cache_attr="disconnected_reason_code",
+            cache_attr="disconnected_reason.code",
             api_path="disconnected_reason.code",
             default=0,
         ),
         FieldMapping(
-            cache_attr="disconnected_reason_message",
+            cache_attr="disconnected_reason.message",
             api_path="disconnected_reason.message",
         ),
         FieldMapping(
-            cache_attr="node_name",
+            cache_attr="node.name",
             api_path="node.name",
         ),
         FieldMapping(
-            cache_attr="node_uuid",
+            cache_attr="node.uuid",
             api_path="node.uuid",
         ),
         FieldMapping(
-            cache_attr="policy_name",
+            cache_attr="policy.name",
             api_path="policy.name",
         ),
         FieldMapping(
@@ -48,11 +48,11 @@ ONTAPFPOLICYCONNECTION_MAPPING = TypeMapping(
             api_path="state",
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(

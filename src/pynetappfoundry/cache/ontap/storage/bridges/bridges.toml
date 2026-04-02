@@ -21,16 +21,16 @@ cache_strategy = "cache"
 [fields.ip_address]
 cache_strategy = "cache"
 
-[fields.last_reboot_reason_arguments]
+[fields."last_reboot.reason.arguments"]
 cache_strategy = "cache"
 
-[fields.last_reboot_reason_code]
+[fields."last_reboot.reason.code"]
 cache_strategy = "cache"
 
-[fields.last_reboot_reason_message]
+[fields."last_reboot.reason.message"]
 cache_strategy = "cache"
 
-[fields.last_reboot_time]
+[fields."last_reboot.time"]
 cache_strategy = "cache"
 
 [fields.managed_by]
@@ -66,19 +66,19 @@ cache_strategy = "cache"
 [fields.symbolic_name]
 cache_strategy = "cache"
 
-[fields.temperature_sensor_maximum]
+[fields."temperature_sensor.maximum"]
 cache_strategy = "cache"
 
-[fields.temperature_sensor_minimum]
+[fields."temperature_sensor.minimum"]
 cache_strategy = "cache"
 
-[fields.temperature_sensor_name]
+[fields."temperature_sensor.name"]
 cache_strategy = "cache"
 
-[fields.temperature_sensor_reading]
+[fields."temperature_sensor.reading"]
 cache_strategy = "cache"
 
-[fields.temperature_sensor_state]
+[fields."temperature_sensor.state"]
 cache_strategy = "cache"
 
 [fields.vendor]

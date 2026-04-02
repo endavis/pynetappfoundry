@@ -2,7 +2,24 @@
 
 from __future__ import annotations
 
+from pydantic import Field
+
 from pynetappfoundry.models._base import OntapModel
+
+
+class OntapSwitchMonitoring(OntapModel):
+    """OntapSwitchMonitoring sub-model for monitoring."""
+
+    enabled: bool = False
+    monitored: bool = False
+    reason: str = ""
+
+
+class OntapSwitchSnmp(OntapModel):
+    """OntapSwitchSnmp sub-model for snmp."""
+
+    user: str = ""
+    version: str = ""
 
 
 class OntapSwitch(OntapModel):
@@ -11,12 +28,9 @@ class OntapSwitch(OntapModel):
     address: str = ""
     discovered: bool = False
     model_: str = ""
-    monitoring_enabled: bool = False
-    monitoring_monitored: bool = False
-    monitoring_reason: str = ""
+    monitoring: OntapSwitchMonitoring = Field(default_factory=OntapSwitchMonitoring)
     name: str = ""
     network: str = ""
     serial_number: str = ""
-    snmp_user: str = ""
-    snmp_version: str = ""
+    snmp: OntapSwitchSnmp = Field(default_factory=OntapSwitchSnmp)
     version: str = ""

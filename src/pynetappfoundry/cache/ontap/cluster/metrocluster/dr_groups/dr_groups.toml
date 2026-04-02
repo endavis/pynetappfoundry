@@ -12,8 +12,8 @@ cache_strategy = "cache"
 [fields.mccip_ports]
 cache_strategy = "cache"
 
-[fields.partner_cluster_name]
+[fields."partner_cluster.name"]
 cache_strategy = "cache"
 
-[fields.partner_cluster_uuid]
+[fields."partner_cluster.uuid"]
 cache_strategy = "cache"

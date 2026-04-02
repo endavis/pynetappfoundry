@@ -73,8 +73,8 @@ def _analyze_cluster_savings(
                 table.add_row(
                     pkg.name or "Unknown",
                     license_type,
-                    str(lic.capacity_used_size or "N/A"),
-                    str(lic.capacity_maximum_size or "N/A"),
+                    str(lic.capacity.used_size or "N/A"),
+                    str(lic.capacity.maximum_size or "N/A"),
                 )
 
         console.print(table)

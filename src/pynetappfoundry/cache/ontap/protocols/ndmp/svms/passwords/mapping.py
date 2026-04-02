@@ -12,18 +12,18 @@ ONTAPNDMPPASSWORD_MAPPING = TypeMapping(
     api_endpoint="/protocols/ndmp/svms/{svm.uuid}/passwords/{user}?fields=*",
     api_type="ontap",
     parent_mapping="OntapNdmpSvm",
-    parent_id_field="svm_uuid",
+    parent_id_field="svm.uuid",
     fields=(
         FieldMapping(
             cache_attr="password",
             api_path="password",
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(

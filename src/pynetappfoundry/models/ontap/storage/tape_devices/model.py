@@ -8,7 +8,14 @@ from pynetappfoundry.models._base import OntapModel
 
 
 class OntapTapeDeviceAlias(OntapModel):
-    """OntapTapeDeviceAlias sub-model for aliases."""
+    """OntapTapeDeviceAlias sub-model for alias."""
+
+    mapping: str = ""
+    name: str = ""
+
+
+class OntapTapeDeviceAlias2(OntapModel):
+    """OntapTapeDeviceAlias2 sub-model for aliases."""
 
     mapping: str = ""
     name: str = ""
@@ -22,12 +29,31 @@ class OntapTapeDeviceDeviceName(OntapModel):
     unload_reload_device: str = ""
 
 
+class OntapTapeDeviceNode(OntapModel):
+    """OntapTapeDeviceNode sub-model for node."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapTapeDevicePosition(OntapModel):
+    """OntapTapeDevicePosition sub-model for position."""
+
+    count: int = 0
+    operation: str = ""
+
+
+class OntapTapeDeviceStoragePort(OntapModel):
+    """OntapTapeDeviceStoragePort sub-model for storage_port."""
+
+    name: str = ""
+
+
 class OntapTapeDevice(OntapModel):
     """OntapTapeDevice information."""
 
-    alias_mapping: str = ""
-    alias_name: str = ""
-    aliases: list[OntapTapeDeviceAlias] = Field(default_factory=list)
+    alias: OntapTapeDeviceAlias = Field(default_factory=OntapTapeDeviceAlias)
+    aliases: list[OntapTapeDeviceAlias2] = Field(default_factory=list)
     block_number: int = 0
     density: str = ""
     description: str = ""
@@ -37,15 +63,13 @@ class OntapTapeDevice(OntapModel):
     file_number: int = 0
     formats: list[str] = Field(default_factory=list)
     interface: str = ""
-    node_name: str = ""
-    node_uuid: str = ""
+    node: OntapTapeDeviceNode = Field(default_factory=OntapTapeDeviceNode)
     online: bool = False
-    position_count: int = 0
-    position_operation: str = ""
+    position: OntapTapeDevicePosition = Field(default_factory=OntapTapeDevicePosition)
     reservation_type: str = ""
     residual_count: int = 0
     serial_number: str = ""
-    storage_port_name: str = ""
+    storage_port: OntapTapeDeviceStoragePort = Field(default_factory=OntapTapeDeviceStoragePort)
     type_: str = ""
     wwnn: str = ""
     wwpn: str = ""

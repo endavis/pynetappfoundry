@@ -2,15 +2,29 @@
 
 from __future__ import annotations
 
+from pydantic import Field
+
 from pynetappfoundry.models._base import OntapModel
+
+
+class OntapSplitLoadLoad(OntapModel):
+    """OntapSplitLoadLoad sub-model for load."""
+
+    allowable: int = 0
+    current: int = 0
+    maximum: int = 0
+    token_reserved: int = 0
+
+
+class OntapSplitLoadNode(OntapModel):
+    """OntapSplitLoadNode sub-model for node."""
+
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapSplitLoad(OntapModel):
     """OntapSplitLoad information."""
 
-    load_allowable: int = 0
-    load_current: int = 0
-    load_maximum: int = 0
-    load_token_reserved: int = 0
-    node_name: str = ""
-    node_uuid: str = ""
+    load: OntapSplitLoadLoad = Field(default_factory=OntapSplitLoadLoad)
+    node: OntapSplitLoadNode = Field(default_factory=OntapSplitLoadNode)

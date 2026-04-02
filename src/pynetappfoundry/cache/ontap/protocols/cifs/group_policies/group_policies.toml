@@ -3,20 +3,20 @@ path = "/protocols/cifs/group-policies"
 schema = "policies_and_rules_to_be_applied"
 class_name = "OntapPoliciesAndRulesToBeApplied"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
-[fields.to_be_applied_access_policies]
+[fields."to_be_applied.access_policies"]
 cache_strategy = "cache"
 
-[fields.to_be_applied_access_rules]
+[fields."to_be_applied.access_rules"]
 cache_strategy = "cache"
 
-[fields.to_be_applied_objects]
+[fields."to_be_applied.objects"]
 cache_strategy = "cache"
 
-[fields.to_be_applied_restricted_groups]
+[fields."to_be_applied.restricted_groups"]
 cache_strategy = "cache"

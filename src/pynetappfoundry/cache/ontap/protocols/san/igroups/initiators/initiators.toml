@@ -6,31 +6,31 @@ class_name = "OntapIgroupInitiator"
 [fields.comment]
 cache_strategy = "cache"
 
-[fields.connectivity_tracking_alerts]
+[fields."connectivity_tracking.alerts"]
 cache_strategy = "cache"
 requires_explicit_fetch = true
 
-[fields.connectivity_tracking_connection_state]
+[fields."connectivity_tracking.connection_state"]
 cache_strategy = "cache"
 requires_explicit_fetch = true
 
-[fields.connectivity_tracking_connections]
+[fields."connectivity_tracking.connections"]
 cache_strategy = "cache"
 requires_explicit_fetch = true
 
-[fields.igroup_name]
+[fields."igroup.name"]
 cache_strategy = "cache"
 
-[fields.igroup_uuid]
+[fields."igroup.uuid"]
 cache_strategy = "cache"
 
 [fields.name]
 cache_strategy = "cache"
 
-[fields.proximity_local_svm]
+[fields."proximity.local_svm"]
 cache_strategy = "cache"
 
-[fields.proximity_peer_svms]
+[fields."proximity.peer_svms"]
 cache_strategy = "cache"
 
 [fields.records]

@@ -3,10 +3,10 @@ path = "/support/ems/role-configs"
 schema = "ems_role_config_response"
 class_name = "OntapEmsRoleConfigResponse"
 
-[fields.access_control_role_name]
+[fields."access_control_role.name"]
 cache_strategy = "cache"
 
-[fields.event_filter_name]
+[fields."event_filter.name"]
 cache_strategy = "cache"
 
 [fields.limit_access_to_global_configs]

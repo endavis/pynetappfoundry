@@ -13,12 +13,24 @@ class OntapUnixGroupUsersRecord(OntapModel):
     name: str = ""
 
 
+class OntapUnixGroupUsersSvm(OntapModel):
+    """OntapUnixGroupUsersSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapUnixGroupUsersUnixGroup(OntapModel):
+    """OntapUnixGroupUsersUnixGroup sub-model for unix_group."""
+
+    name: str = ""
+
+
 class OntapUnixGroupUsers(OntapModel):
     """OntapUnixGroupUsers information."""
 
     name: str = ""
     records: list[OntapUnixGroupUsersRecord] = Field(default_factory=list)
     skip_name_validation: bool = False
-    svm_name: str = ""
-    svm_uuid: str = ""
-    unix_group_name: str = ""
+    svm: OntapUnixGroupUsersSvm = Field(default_factory=OntapUnixGroupUsersSvm)
+    unix_group: OntapUnixGroupUsersUnixGroup = Field(default_factory=OntapUnixGroupUsersUnixGroup)

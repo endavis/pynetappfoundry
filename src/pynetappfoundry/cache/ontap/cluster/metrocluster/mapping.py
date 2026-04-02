@@ -14,19 +14,19 @@ ONTAPMETROCLUSTER_MAPPING = TypeMapping(
     records_path="dr_pairs",
     fields=(
         FieldMapping(
-            cache_attr="node_name",
+            cache_attr="node.name",
             api_path="node.name",
         ),
         FieldMapping(
-            cache_attr="node_uuid",
+            cache_attr="node.uuid",
             api_path="node.uuid",
         ),
         FieldMapping(
-            cache_attr="partner_name",
+            cache_attr="partner.name",
             api_path="partner.name",
         ),
         FieldMapping(
-            cache_attr="partner_uuid",
+            cache_attr="partner.uuid",
             api_path="partner.uuid",
         ),
     ),

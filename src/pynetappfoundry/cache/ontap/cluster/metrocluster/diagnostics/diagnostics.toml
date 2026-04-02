@@ -3,101 +3,101 @@ path = "/cluster/metrocluster/diagnostics"
 schema = "metrocluster_diagnostics"
 class_name = "OntapMetroclusterDiagnostics"
 
-[fields.aggregate_details]
+[fields."aggregate.details"]
 cache_strategy = "cache"
 
-[fields.aggregate_state]
+[fields."aggregate.state"]
 cache_strategy = "cache"
 
-[fields.aggregate_summary_code]
+[fields."aggregate.summary.code"]
 cache_strategy = "cache"
 
-[fields.aggregate_summary_message]
+[fields."aggregate.summary.message"]
 cache_strategy = "cache"
 
-[fields.aggregate_timestamp]
+[fields."aggregate.timestamp"]
 cache_strategy = "cache"
 
-[fields.cluster_details]
+[fields."cluster.details"]
 cache_strategy = "cache"
 
-[fields.cluster_state]
+[fields."cluster.state"]
 cache_strategy = "cache"
 
-[fields.cluster_summary_code]
+[fields."cluster.summary.code"]
 cache_strategy = "cache"
 
-[fields.cluster_summary_message]
+[fields."cluster.summary.message"]
 cache_strategy = "cache"
 
-[fields.cluster_timestamp]
+[fields."cluster.timestamp"]
 cache_strategy = "cache"
 
-[fields.config_replication_state]
+[fields."config_replication.state"]
 cache_strategy = "cache"
 
-[fields.config_replication_summary_code]
+[fields."config_replication.summary.code"]
 cache_strategy = "cache"
 
-[fields.config_replication_summary_message]
+[fields."config_replication.summary.message"]
 cache_strategy = "cache"
 
-[fields.config_replication_timestamp]
+[fields."config_replication.timestamp"]
 cache_strategy = "cache"
 
-[fields.connection_details]
+[fields."connection.details"]
 cache_strategy = "cache"
 
-[fields.connection_state]
+[fields."connection.state"]
 cache_strategy = "cache"
 
-[fields.connection_summary_code]
+[fields."connection.summary.code"]
 cache_strategy = "cache"
 
-[fields.connection_summary_message]
+[fields."connection.summary.message"]
 cache_strategy = "cache"
 
-[fields.connection_timestamp]
+[fields."connection.timestamp"]
 cache_strategy = "cache"
 
-[fields.interface_state]
+[fields."interface.state"]
 cache_strategy = "cache"
 
-[fields.interface_summary_code]
+[fields."interface.summary.code"]
 cache_strategy = "cache"
 
-[fields.interface_summary_message]
+[fields."interface.summary.message"]
 cache_strategy = "cache"
 
-[fields.interface_timestamp]
+[fields."interface.timestamp"]
 cache_strategy = "cache"
 
-[fields.node_details]
+[fields."node.details"]
 cache_strategy = "cache"
 
-[fields.node_state]
+[fields."node.state"]
 cache_strategy = "cache"
 
-[fields.node_summary_code]
+[fields."node.summary.code"]
 cache_strategy = "cache"
 
-[fields.node_summary_message]
+[fields."node.summary.message"]
 cache_strategy = "cache"
 
-[fields.node_timestamp]
+[fields."node.timestamp"]
 cache_strategy = "cache"
 
-[fields.volume_details]
+[fields."volume.details"]
 cache_strategy = "cache"
 
-[fields.volume_state]
+[fields."volume.state"]
 cache_strategy = "cache"
 
-[fields.volume_summary_code]
+[fields."volume.summary.code"]
 cache_strategy = "cache"
 
-[fields.volume_summary_message]
+[fields."volume.summary.message"]
 cache_strategy = "cache"
 
-[fields.volume_timestamp]
+[fields."volume.timestamp"]
 cache_strategy = "cache"

@@ -11,9 +11,23 @@ class OntapCifsShareAcl(OntapModel):
     """OntapCifsShareAcl sub-model for acls."""
 
     permission: str = ""
-    type: str = ""
+    type_: str = ""
     user_or_group: str = ""
     win_sid_unix_id: str = ""
+
+
+class OntapCifsShareSvm(OntapModel):
+    """OntapCifsShareSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapCifsShareVolume(OntapModel):
+    """OntapCifsShareVolume sub-model for volume."""
+
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapCifsShare(OntapModel):
@@ -41,9 +55,7 @@ class OntapCifsShare(OntapModel):
     path: str = ""
     show_previous_versions: bool = False
     show_snapshot: bool = False
-    svm_name: str = ""
-    svm_uuid: str = ""
+    svm: OntapCifsShareSvm = Field(default_factory=OntapCifsShareSvm)
     unix_symlink: str = ""
-    volume_name: str = ""
-    volume_uuid: str = ""
+    volume: OntapCifsShareVolume = Field(default_factory=OntapCifsShareVolume)
     vscan_profile: str = ""

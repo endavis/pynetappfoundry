@@ -58,10 +58,15 @@ def _aggregate(uuid: str, name: str, **kw: Any) -> OntapAggregate:
 
 
 def _snapmirror(uuid: str, source_path: str, destination_path: str) -> OntapSnapmirrorRelationship:
+    from pynetappfoundry.models.ontap.snapmirror.relationships.model import (
+        OntapSnapmirrorRelationshipDestination,
+        OntapSnapmirrorRelationshipSource,
+    )
+
     return OntapSnapmirrorRelationship(
         uuid=uuid,
-        source_path=source_path,
-        destination_path=destination_path,
+        source=OntapSnapmirrorRelationshipSource(path=source_path),
+        destination=OntapSnapmirrorRelationshipDestination(path=destination_path),
     )
 
 
@@ -150,9 +155,9 @@ class TestGetDisplayName:
         assert _get_display_name(node, "name") == "node-1"
 
     def test_format_template(self) -> None:
-        """{source_path}->{destination_path} style template."""
+        """{source.path}->{destination.path} style template."""
         sm = _snapmirror(UUID1, "svm1:vol1", "svm2:vol2")
-        result = _get_display_name(sm, "{source_path}->{destination_path}")
+        result = _get_display_name(sm, "{source.path}->{destination.path}")
         assert result == "svm1:vol1->svm2:vol2"
 
     def test_int_display_field_zero(self) -> None:
@@ -477,12 +482,17 @@ class TestEntityConfigsIntegrity:
             assert isinstance(result, list), f"{category} did not resolve to a list"
 
     def test_all_key_fields_exist_on_model(self) -> None:
-        """Each config's key_field is in model_class.model_fields."""
+        """Each config's key_field resolves on model_class (supports dotted paths)."""
         for category, config in _get_entity_configs().items():
-            assert config.key_field in config.model_class.model_fields, (
-                f"{category}: key_field '{config.key_field}' not in "
-                f"{config.model_class.__name__}.model_fields"
-            )
+            parts = config.key_field.split(".")
+            current_model = config.model_class
+            for i, part in enumerate(parts):
+                assert part in current_model.model_fields, (
+                    f"{category}: key_field '{config.key_field}' part '{part}' not in "
+                    f"{current_model.__name__}.model_fields"
+                )
+                if i < len(parts) - 1:
+                    current_model = current_model.model_fields[part].annotation
 
     def test_all_display_fields_exist_or_are_templates(self) -> None:
         """Each config's display_field is a valid field name or contains '{'."""
@@ -544,11 +554,11 @@ class TestBuildEntityConfigs:
         assert config.display_field == "node"
 
     def test_override_dns(self) -> None:
-        """OntapDns override: display_field='svm_uuid'."""
+        """OntapDns override: display_field='{svm.uuid}'."""
         configs = _build_entity_configs()
         config = configs["network.dns"]
         assert config.key_field == "uuid"
-        assert config.display_field == "svm_uuid"
+        assert config.display_field == "{svm.uuid}"
 
     def test_override_snapmirror_template(self) -> None:
         """OntapSnapmirrorRelationship override uses format template."""
@@ -565,18 +575,18 @@ class TestBuildEntityConfigs:
         assert config.display_field == "index"
 
     def test_override_nfs_services(self) -> None:
-        """OntapNfsService override: key_field='svm_name'."""
+        """OntapNfsService override: key_field='svm.name'."""
         configs = _build_entity_configs()
         config = configs["protocols.nfs_services"]
-        assert config.key_field == "svm_name"
-        assert config.display_field == "svm_name"
+        assert config.key_field == "svm.name"
+        assert config.display_field == "{svm.name}"
 
     def test_override_cifs_services(self) -> None:
-        """OntapCifsService override: key_field='svm_name'."""
+        """OntapCifsService override: key_field='svm.name'."""
         configs = _build_entity_configs()
         config = configs["protocols.cifs_services"]
-        assert config.key_field == "svm_name"
-        assert config.display_field == "svm_name"
+        assert config.key_field == "svm.name"
+        assert config.display_field == "{svm.name}"
 
     def test_override_cifs_shares(self) -> None:
         """OntapCifsShare override: key_field='name'."""

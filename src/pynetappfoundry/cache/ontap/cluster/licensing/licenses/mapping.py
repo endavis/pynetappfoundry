@@ -28,11 +28,11 @@ ONTAPLICENSEPACKAGERESPONSE_MAPPING = TypeMapping(
             api_path="description",
         ),
         FieldMapping(
-            cache_attr="entitlement_action",
+            cache_attr="entitlement.action",
             api_path="entitlement.action",
         ),
         FieldMapping(
-            cache_attr="entitlement_risk",
+            cache_attr="entitlement.risk",
             api_path="entitlement.risk",
         ),
         FieldMapping(

@@ -108,7 +108,7 @@ class SpaceUsageReport:
 
                 # Detect cluster type
                 nodes: list[OntapNodeResponse] = QuerySet(OntapNodeResponse, client).all()
-                cluster_type = "CVO HA" if len(nodes) > 1 and nodes[0].ha_enabled else "CVO"
+                cluster_type = "CVO HA" if len(nodes) > 1 and nodes[0].ha.enabled else "CVO"
 
                 # Get volumes (exclude SVM root volumes)
                 volumes: list[OntapVolume] = (
@@ -133,7 +133,7 @@ class SpaceUsageReport:
                     if volume.state == "offline":
                         used_tib = 0.0
                     else:
-                        used_bytes = volume.space_used
+                        used_bytes = volume.space.used
                         size_val = approximate_size_specific(used_bytes, "TiB", withsuffix=False)
                         used_tib = float(f"{size_val:.7f}")
 

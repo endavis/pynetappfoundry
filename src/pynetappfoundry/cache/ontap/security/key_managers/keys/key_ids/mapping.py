@@ -57,11 +57,11 @@ ONTAPKEYMANAGERKEYS_MAPPING = TypeMapping(
             api_path="key_user",
         ),
         FieldMapping(
-            cache_attr="node_name",
+            cache_attr="node.name",
             api_path="node.name",
         ),
         FieldMapping(
-            cache_attr="node_uuid",
+            cache_attr="node.uuid",
             api_path="node.uuid",
         ),
         FieldMapping(
@@ -78,15 +78,15 @@ ONTAPKEYMANAGERKEYS_MAPPING = TypeMapping(
             api_path="scope",
         ),
         FieldMapping(
-            cache_attr="security_key_manager_uuid",
+            cache_attr="security_key_manager.uuid",
             api_path="security_key_manager.uuid",
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
     ),

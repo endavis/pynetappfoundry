@@ -7,20 +7,38 @@ from pydantic import Field
 from pynetappfoundry.models._base import OntapModel, OntapUUID
 
 
+class OntapScheduleCluster(OntapModel):
+    """OntapScheduleCluster sub-model for cluster."""
+
+    name: str = ""
+    uuid: OntapUUID = ""
+
+
+class OntapScheduleCron(OntapModel):
+    """OntapScheduleCron sub-model for cron."""
+
+    days: list[int] = Field(default_factory=list)
+    hours: list[int] = Field(default_factory=list)
+    minutes: list[int] = Field(default_factory=list)
+    months: list[int] = Field(default_factory=list)
+    weekdays: list[int] = Field(default_factory=list)
+
+
+class OntapScheduleSvm(OntapModel):
+    """OntapScheduleSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
+
+
 class OntapSchedule(OntapModel):
     """OntapSchedule information."""
 
-    cluster_name: str = ""
-    cluster_uuid: OntapUUID = ""
-    cron_days: list[int] = Field(default_factory=list)
-    cron_hours: list[int] = Field(default_factory=list)
-    cron_minutes: list[int] = Field(default_factory=list)
-    cron_months: list[int] = Field(default_factory=list)
-    cron_weekdays: list[int] = Field(default_factory=list)
+    cluster: OntapScheduleCluster = Field(default_factory=OntapScheduleCluster)
+    cron: OntapScheduleCron = Field(default_factory=OntapScheduleCron)
     interval: str = ""
     name: str = ""
     scope: str = ""
-    svm_name: str = ""
-    svm_uuid: str = ""
+    svm: OntapScheduleSvm = Field(default_factory=OntapScheduleSvm)
     type_: str = ""
     uuid: OntapUUID = ""

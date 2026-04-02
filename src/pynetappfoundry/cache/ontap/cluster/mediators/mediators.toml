@@ -6,7 +6,7 @@ class_name = "OntapMediatorResponse"
 [fields.ca_certificate]
 cache_strategy = "cache"
 
-[fields.dr_group_id]
+[fields."dr_group.id"]
 cache_strategy = "cache"
 
 [fields.ip_address]
@@ -15,10 +15,10 @@ cache_strategy = "cache"
 [fields.password]
 cache_strategy = "cache"
 
-[fields.peer_cluster_name]
+[fields."peer_cluster.name"]
 cache_strategy = "cache"
 
-[fields.peer_cluster_uuid]
+[fields."peer_cluster.uuid"]
 cache_strategy = "cache"
 
 [fields.peer_mediator_connectivity]

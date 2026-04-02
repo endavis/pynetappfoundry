@@ -6,10 +6,10 @@ class_name = "OntapNetworkHttpProxy"
 [fields.authentication_enabled]
 cache_strategy = "cache"
 
-[fields.ipspace_name]
+[fields."ipspace.name"]
 cache_strategy = "cache"
 
-[fields.ipspace_uuid]
+[fields."ipspace.uuid"]
 cache_strategy = "cache"
 
 [fields.password]
@@ -24,10 +24,10 @@ cache_strategy = "cache"
 [fields.server]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.username]

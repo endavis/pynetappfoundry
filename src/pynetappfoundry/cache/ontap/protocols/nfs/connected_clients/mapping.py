@@ -17,13 +17,13 @@ ONTAPNFSCLIENTS_MAPPING = TypeMapping(
             api_path="client_ip",
         ),
         FieldMapping(
-            cache_attr="export_policy_id",
+            cache_attr="export_policy.id",
             api_path="export_policy.id",
             default=0,
             requires_explicit_fetch=True,
         ),
         FieldMapping(
-            cache_attr="export_policy_name",
+            cache_attr="export_policy.name",
             api_path="export_policy.name",
         ),
         FieldMapping(
@@ -34,15 +34,15 @@ ONTAPNFSCLIENTS_MAPPING = TypeMapping(
         FieldMapping(
             cache_attr="local_request_count",
             api_path="local_request_count",
-            default=0,
             cache_strategy="realtime",
+            default=0,
         ),
         FieldMapping(
-            cache_attr="node_name",
+            cache_attr="node.name",
             api_path="node.name",
         ),
         FieldMapping(
-            cache_attr="node_uuid",
+            cache_attr="node.uuid",
             api_path="node.uuid",
         ),
         FieldMapping(
@@ -52,19 +52,19 @@ ONTAPNFSCLIENTS_MAPPING = TypeMapping(
         FieldMapping(
             cache_attr="remote_request_count",
             api_path="remote_request_count",
-            default=0,
             cache_strategy="realtime",
+            default=0,
         ),
         FieldMapping(
             cache_attr="server_ip",
             api_path="server_ip",
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(
@@ -73,11 +73,11 @@ ONTAPNFSCLIENTS_MAPPING = TypeMapping(
             default=False,
         ),
         FieldMapping(
-            cache_attr="volume_name",
+            cache_attr="volume.name",
             api_path="volume.name",
         ),
         FieldMapping(
-            cache_attr="volume_uuid",
+            cache_attr="volume.uuid",
             api_path="volume.uuid",
         ),
     ),

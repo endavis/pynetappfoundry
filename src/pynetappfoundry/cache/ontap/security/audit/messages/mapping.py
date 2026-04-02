@@ -38,11 +38,11 @@ ONTAPSECURITYAUDITLOG_MAPPING = TypeMapping(
             api_path="message",
         ),
         FieldMapping(
-            cache_attr="node_name",
+            cache_attr="node.name",
             api_path="node.name",
         ),
         FieldMapping(
-            cache_attr="node_uuid",
+            cache_attr="node.uuid",
             api_path="node.uuid",
         ),
         FieldMapping(
@@ -58,7 +58,7 @@ ONTAPSECURITYAUDITLOG_MAPPING = TypeMapping(
             api_path="state",
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(

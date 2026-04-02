@@ -15,11 +15,11 @@ ONTAPWEBSVM_MAPPING = TypeMapping(
     parent_id_field="uuid",
     fields=(
         FieldMapping(
-            cache_attr="certificate_name",
+            cache_attr="certificate.name",
             api_path="certificate.name",
         ),
         FieldMapping(
-            cache_attr="certificate_uuid",
+            cache_attr="certificate.uuid",
             api_path="certificate.uuid",
         ),
         FieldMapping(
@@ -33,11 +33,11 @@ ONTAPWEBSVM_MAPPING = TypeMapping(
             default=False,
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
     ),

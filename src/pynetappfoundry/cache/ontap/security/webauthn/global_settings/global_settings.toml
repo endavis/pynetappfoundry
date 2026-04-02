@@ -6,10 +6,10 @@ class_name = "OntapWebauthnGlobal"
 [fields.attestation]
 cache_strategy = "cache"
 
-[fields.owner_name]
+[fields."owner.name"]
 cache_strategy = "cache"
 
-[fields.owner_uuid]
+[fields."owner.uuid"]
 cache_strategy = "cache"
 
 [fields.require_rk]

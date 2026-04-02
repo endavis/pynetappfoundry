@@ -21,23 +21,23 @@ cache_strategy = "cache"
 [fields.path]
 cache_strategy = "cache"
 
-[fields.policy_name]
+[fields."policy.name"]
 cache_strategy = "cache"
 
-[fields.policy_retention_period]
+[fields."policy.retention_period"]
 cache_strategy = "cache"
 
 [fields.state]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
-[fields.volume_name]
+[fields."volume.name"]
 cache_strategy = "cache"
 
-[fields.volume_uuid]
+[fields."volume.uuid"]
 cache_strategy = "cache"

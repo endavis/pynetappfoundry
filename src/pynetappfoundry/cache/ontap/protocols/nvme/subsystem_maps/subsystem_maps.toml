@@ -7,29 +7,29 @@ class_name = "OntapNvmeSubsystemMap"
 cache_strategy = "cache"
 requires_explicit_fetch = true
 
-[fields.namespace_name]
+[fields."namespace.name"]
 cache_strategy = "cache"
 
-[fields.namespace_node_name]
+[fields."namespace.node.name"]
 cache_strategy = "cache"
 
-[fields.namespace_node_uuid]
+[fields."namespace.node.uuid"]
 cache_strategy = "cache"
 
-[fields.namespace_uuid]
+[fields."namespace.uuid"]
 cache_strategy = "cache"
 
 [fields.nsid]
 cache_strategy = "cache"
 
-[fields.subsystem_name]
+[fields."subsystem.name"]
 cache_strategy = "cache"
 
-[fields.subsystem_uuid]
+[fields."subsystem.uuid"]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"

@@ -3,19 +3,19 @@ path = "/application/applications/{application.uuid}/components"
 schema = "application_component"
 class_name = "OntapApplicationComponent"
 
-[fields.application_name]
+[fields."application.name"]
 cache_strategy = "cache"
 
-[fields.application_uuid]
+[fields."application.uuid"]
 cache_strategy = "cache"
 
-[fields.backing_storage_luns]
+[fields."backing_storage.luns"]
 cache_strategy = "cache"
 
-[fields.backing_storage_namespaces]
+[fields."backing_storage.namespaces"]
 cache_strategy = "cache"
 
-[fields.backing_storage_volumes]
+[fields."backing_storage.volumes"]
 cache_strategy = "cache"
 
 [fields.cifs_access]
@@ -45,16 +45,16 @@ cache_strategy = "cache"
 [fields.san_access]
 cache_strategy = "cache"
 
-[fields.storage_service_name]
+[fields."storage_service.name"]
 cache_strategy = "cache"
 
-[fields.storage_service_uuid]
+[fields."storage_service.uuid"]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.uuid]

@@ -3,7 +3,7 @@ path = "/cluster/counter/tables/{name}"
 schema = "counter_table"
 class_name = "OntapCounterTable"
 
-[fields.denominator_name]
+[fields."denominator.name"]
 cache_strategy = "cache"
 
 [fields.description]

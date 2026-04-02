@@ -12,13 +12,13 @@ cache_strategy = "cache"
 [fields.force]
 cache_strategy = "cache"
 
-[fields.interface_ip_address]
+[fields."interface.ip.address"]
 cache_strategy = "cache"
 
-[fields.interface_name]
+[fields."interface.name"]
 cache_strategy = "cache"
 
-[fields.interface_uuid]
+[fields."interface.uuid"]
 cache_strategy = "cache"
 
 [fields.keytab_uri]
@@ -36,10 +36,10 @@ cache_strategy = "cache"
 [fields.spn]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.user]

@@ -26,11 +26,11 @@ ONTAPAPPLICATIONSNAPSHOT_MAPPING = TypeMapping(
     parent_id_field="uuid",
     fields=(
         FieldMapping(
-            cache_attr="application_name",
+            cache_attr="application.name",
             api_path="application.name",
         ),
         FieldMapping(
-            cache_attr="application_uuid",
+            cache_attr="application.uuid",
             api_path="application.uuid",
         ),
         FieldMapping(
@@ -61,11 +61,11 @@ ONTAPAPPLICATIONSNAPSHOT_MAPPING = TypeMapping(
             api_path="name",
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(

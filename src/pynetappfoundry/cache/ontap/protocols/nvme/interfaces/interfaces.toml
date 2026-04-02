@@ -6,49 +6,49 @@ class_name = "OntapNvmeInterface"
 [fields.enabled]
 cache_strategy = "cache"
 
-[fields.fc_interface_port_name]
+[fields."fc_interface.port.name"]
 cache_strategy = "cache"
 
-[fields.fc_interface_port_node_name]
+[fields."fc_interface.port.node.name"]
 cache_strategy = "cache"
 
-[fields.fc_interface_port_uuid]
+[fields."fc_interface.port.uuid"]
 cache_strategy = "cache"
 
-[fields.fc_interface_wwnn]
+[fields."fc_interface.wwnn"]
 cache_strategy = "cache"
 
-[fields.fc_interface_wwpn]
+[fields."fc_interface.wwpn"]
 cache_strategy = "cache"
 
 [fields.interface_type]
 cache_strategy = "cache"
 
-[fields.ip_interface_ip_address]
+[fields."ip_interface.ip.address"]
 cache_strategy = "cache"
 
-[fields.ip_interface_location_port_name]
+[fields."ip_interface.location.port.name"]
 cache_strategy = "cache"
 
-[fields.ip_interface_location_port_node_name]
+[fields."ip_interface.location.port.node.name"]
 cache_strategy = "cache"
 
-[fields.ip_interface_location_port_uuid]
+[fields."ip_interface.location.port.uuid"]
 cache_strategy = "cache"
 
 [fields.name]
 cache_strategy = "cache"
 
-[fields.node_name]
+[fields."node.name"]
 cache_strategy = "cache"
 
-[fields.node_uuid]
+[fields."node.uuid"]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.transport_address]

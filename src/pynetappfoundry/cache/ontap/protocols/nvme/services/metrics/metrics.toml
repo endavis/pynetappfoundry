@@ -6,121 +6,121 @@ class_name = "OntapPerformanceNvmeMetricResponse"
 [fields.duration]
 cache_strategy = "cache"
 
-[fields.fc_duration]
+[fields."fc.duration"]
 cache_strategy = "cache"
 
-[fields.fc_iops_other]
+[fields."fc.iops.other"]
 cache_strategy = "cache"
 
-[fields.fc_iops_read]
+[fields."fc.iops.read"]
 cache_strategy = "cache"
 
-[fields.fc_iops_total]
+[fields."fc.iops.total"]
 cache_strategy = "cache"
 
-[fields.fc_iops_write]
+[fields."fc.iops.write"]
 cache_strategy = "cache"
 
-[fields.fc_latency_other]
+[fields."fc.latency.other"]
 cache_strategy = "cache"
 
-[fields.fc_latency_read]
+[fields."fc.latency.read"]
 cache_strategy = "cache"
 
-[fields.fc_latency_total]
+[fields."fc.latency.total"]
 cache_strategy = "cache"
 
-[fields.fc_latency_write]
+[fields."fc.latency.write"]
 cache_strategy = "cache"
 
-[fields.fc_status]
+[fields."fc.status"]
 cache_strategy = "cache"
 
-[fields.fc_throughput_read]
+[fields."fc.throughput.read"]
 cache_strategy = "cache"
 
-[fields.fc_throughput_total]
+[fields."fc.throughput.total"]
 cache_strategy = "cache"
 
-[fields.fc_throughput_write]
+[fields."fc.throughput.write"]
 cache_strategy = "cache"
 
-[fields.iops_other]
+[fields."iops.other"]
 cache_strategy = "cache"
 
-[fields.iops_read]
+[fields."iops.read"]
 cache_strategy = "cache"
 
-[fields.iops_total]
+[fields."iops.total"]
 cache_strategy = "cache"
 
-[fields.iops_write]
+[fields."iops.write"]
 cache_strategy = "cache"
 
-[fields.latency_other]
+[fields."latency.other"]
 cache_strategy = "cache"
 
-[fields.latency_read]
+[fields."latency.read"]
 cache_strategy = "cache"
 
-[fields.latency_total]
+[fields."latency.total"]
 cache_strategy = "cache"
 
-[fields.latency_write]
+[fields."latency.write"]
 cache_strategy = "cache"
 
 [fields.status]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
-[fields.tcp_duration]
+[fields."tcp.duration"]
 cache_strategy = "cache"
 
-[fields.tcp_iops_other]
+[fields."tcp.iops.other"]
 cache_strategy = "cache"
 
-[fields.tcp_iops_read]
+[fields."tcp.iops.read"]
 cache_strategy = "cache"
 
-[fields.tcp_iops_total]
+[fields."tcp.iops.total"]
 cache_strategy = "cache"
 
-[fields.tcp_iops_write]
+[fields."tcp.iops.write"]
 cache_strategy = "cache"
 
-[fields.tcp_latency_other]
+[fields."tcp.latency.other"]
 cache_strategy = "cache"
 
-[fields.tcp_latency_read]
+[fields."tcp.latency.read"]
 cache_strategy = "cache"
 
-[fields.tcp_latency_total]
+[fields."tcp.latency.total"]
 cache_strategy = "cache"
 
-[fields.tcp_latency_write]
+[fields."tcp.latency.write"]
 cache_strategy = "cache"
 
-[fields.tcp_status]
+[fields."tcp.status"]
 cache_strategy = "cache"
 
-[fields.tcp_throughput_read]
+[fields."tcp.throughput.read"]
 cache_strategy = "cache"
 
-[fields.tcp_throughput_total]
+[fields."tcp.throughput.total"]
 cache_strategy = "cache"
 
-[fields.tcp_throughput_write]
+[fields."tcp.throughput.write"]
 cache_strategy = "cache"
 
-[fields.throughput_read]
+[fields."throughput.read"]
 cache_strategy = "cache"
 
-[fields.throughput_total]
+[fields."throughput.total"]
 cache_strategy = "cache"
 
-[fields.throughput_write]
+[fields."throughput.write"]
 cache_strategy = "cache"
 
 [fields.timestamp]

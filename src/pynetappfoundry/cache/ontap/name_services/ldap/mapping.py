@@ -128,65 +128,73 @@ ONTAPLDAPSERVICE_MAPPING = TypeMapping(
             default=False,
         ),
         FieldMapping(
-            cache_attr="status_code",
+            cache_attr="status.code",
             api_path="status.code",
             default=0,
         ),
         FieldMapping(
-            cache_attr="status_dn_message",
+            cache_attr="status.dn_message",
             api_path="status.dn_message",
             default=[],
         ),
         FieldMapping(
-            cache_attr="status_ipv4_code",
+            cache_attr="status.ipv4.code",
             api_path="status.ipv4.code",
             default=0,
         ),
         FieldMapping(
-            cache_attr="status_ipv4_dn_messages",
+            cache_attr="status.ipv4.dn_messages",
             api_path="status.ipv4.dn_messages",
             default=[],
         ),
         FieldMapping(
-            cache_attr="status_ipv4_message",
+            cache_attr="status.ipv4.message",
             api_path="status.ipv4.message",
         ),
         FieldMapping(
-            cache_attr="status_ipv4_state",
+            cache_attr="status.ipv4.state",
             api_path="status.ipv4.state",
         ),
         FieldMapping(
-            cache_attr="status_ipv6_code",
+            cache_attr="status.ipv4_state",
+            api_path="status.ipv4_state",
+        ),
+        FieldMapping(
+            cache_attr="status.ipv6.code",
             api_path="status.ipv6.code",
             default=0,
         ),
         FieldMapping(
-            cache_attr="status_ipv6_dn_messages",
+            cache_attr="status.ipv6.dn_messages",
             api_path="status.ipv6.dn_messages",
             default=[],
         ),
         FieldMapping(
-            cache_attr="status_ipv6_message",
+            cache_attr="status.ipv6.message",
             api_path="status.ipv6.message",
         ),
         FieldMapping(
-            cache_attr="status_ipv6_state",
+            cache_attr="status.ipv6.state",
             api_path="status.ipv6.state",
         ),
         FieldMapping(
-            cache_attr="status_message",
+            cache_attr="status.ipv6_state",
+            api_path="status.ipv6_state",
+        ),
+        FieldMapping(
+            cache_attr="status.message",
             api_path="status.message",
         ),
         FieldMapping(
-            cache_attr="status_state",
+            cache_attr="status.state",
             api_path="status.state",
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(

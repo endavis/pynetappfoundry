@@ -36,17 +36,17 @@ ONTAPFLEXCACHE_MAPPING = TypeMapping(
             default=[],
         ),
         FieldMapping(
-            cache_attr="atime_scrub_enabled",
+            cache_attr="atime_scrub.enabled",
             api_path="atime_scrub.enabled",
             default=False,
         ),
         FieldMapping(
-            cache_attr="atime_scrub_period",
+            cache_attr="atime_scrub.period",
             api_path="atime_scrub.period",
             default=0,
         ),
         FieldMapping(
-            cache_attr="cifs_change_notify_enabled",
+            cache_attr="cifs_change_notify.enabled",
             api_path="cifs_change_notify.enabled",
             default=False,
         ),
@@ -66,7 +66,7 @@ ONTAPFLEXCACHE_MAPPING = TypeMapping(
             default=False,
         ),
         FieldMapping(
-            cache_attr="guarantee_type",
+            cache_attr="guarantee.type_",
             api_path="guarantee.type",
             requires_explicit_fetch=True,
         ),
@@ -91,27 +91,27 @@ ONTAPFLEXCACHE_MAPPING = TypeMapping(
             requires_explicit_fetch=True,
         ),
         FieldMapping(
-            cache_attr="prepopulate_dir_paths",
+            cache_attr="prepopulate.dir_paths",
             api_path="prepopulate.dir_paths",
             default=[],
         ),
         FieldMapping(
-            cache_attr="prepopulate_exclude_dir_paths",
+            cache_attr="prepopulate.exclude_dir_paths",
             api_path="prepopulate.exclude_dir_paths",
             default=[],
         ),
         FieldMapping(
-            cache_attr="prepopulate_recurse",
+            cache_attr="prepopulate.recurse",
             api_path="prepopulate.recurse",
             default=False,
         ),
         FieldMapping(
-            cache_attr="relative_size_enabled",
+            cache_attr="relative_size.enabled",
             api_path="relative_size.enabled",
             default=False,
         ),
         FieldMapping(
-            cache_attr="relative_size_percentage",
+            cache_attr="relative_size.percentage",
             api_path="relative_size.percentage",
             default=0,
         ),
@@ -122,11 +122,11 @@ ONTAPFLEXCACHE_MAPPING = TypeMapping(
             requires_explicit_fetch=True,
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(
@@ -139,7 +139,7 @@ ONTAPFLEXCACHE_MAPPING = TypeMapping(
             api_path="uuid",
         ),
         FieldMapping(
-            cache_attr="writeback_enabled",
+            cache_attr="writeback.enabled",
             api_path="writeback.enabled",
             default=False,
         ),

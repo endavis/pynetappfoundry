@@ -1,3 +1,4 @@
+# ruff: noqa: E501
 """OntapApplicationComponent type mapping."""
 
 from __future__ import annotations
@@ -8,40 +9,49 @@ from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.application.applications.components.model import (
     OntapApplicationComponent,
+    OntapApplicationComponentBackingStorageLun,
+    OntapApplicationComponentBackingStorageNamespace,
+    OntapApplicationComponentBackingStorageVolume,
     OntapApplicationComponentCifsAccess,
-    OntapApplicationComponentLun,
-    OntapApplicationComponentNamespace,
     OntapApplicationComponentNfsAccess,
     OntapApplicationComponentNvmeAccess,
     OntapApplicationComponentProtectionGroup,
     OntapApplicationComponentSanAccess,
-    OntapApplicationComponentVolume,
 )
+from pynetappfoundry.utils.dict_path import get_nested_value
 
 
-def _transform_backing_storage_luns(record: dict[str, Any]) -> list[OntapApplicationComponentLun]:
-    """Transform backing_storage.luns into OntapApplicationComponentLun list."""
-    return [OntapApplicationComponentLun(**item) for item in record.get("backing_storage.luns", [])]
+def _transform_backing_storage_luns(
+    record: dict[str, Any],
+) -> list[OntapApplicationComponentBackingStorageLun]:
+    """Transform backing_storage.luns into OntapApplicationComponentBackingStorageLun list."""
+    try:
+        items = get_nested_value(record, "backing_storage.luns")
+    except Exception:
+        items = []
+    return [OntapApplicationComponentBackingStorageLun(**item) for item in items]
 
 
 def _transform_backing_storage_namespaces(
     record: dict[str, Any],
-) -> list[OntapApplicationComponentNamespace]:
-    """Transform backing_storage.namespaces into OntapApplicationComponentNamespace list."""
-    return [
-        OntapApplicationComponentNamespace(**item)
-        for item in record.get("backing_storage.namespaces", [])
-    ]
+) -> list[OntapApplicationComponentBackingStorageNamespace]:
+    """Transform backing_storage.namespaces into OntapApplicationComponentBackingStorageNamespace list."""
+    try:
+        items = get_nested_value(record, "backing_storage.namespaces")
+    except Exception:
+        items = []
+    return [OntapApplicationComponentBackingStorageNamespace(**item) for item in items]
 
 
 def _transform_backing_storage_volumes(
     record: dict[str, Any],
-) -> list[OntapApplicationComponentVolume]:
-    """Transform backing_storage.volumes into OntapApplicationComponentVolume list."""
-    return [
-        OntapApplicationComponentVolume(**item)
-        for item in record.get("backing_storage.volumes", [])
-    ]
+) -> list[OntapApplicationComponentBackingStorageVolume]:
+    """Transform backing_storage.volumes into OntapApplicationComponentBackingStorageVolume list."""
+    try:
+        items = get_nested_value(record, "backing_storage.volumes")
+    except Exception:
+        items = []
+    return [OntapApplicationComponentBackingStorageVolume(**item) for item in items]
 
 
 def _transform_cifs_access(record: dict[str, Any]) -> list[OntapApplicationComponentCifsAccess]:
@@ -83,27 +93,27 @@ ONTAPAPPLICATIONCOMPONENT_MAPPING = TypeMapping(
     parent_id_field="uuid",
     fields=(
         FieldMapping(
-            cache_attr="application_name",
+            cache_attr="application.name",
             api_path="application.name",
         ),
         FieldMapping(
-            cache_attr="application_uuid",
+            cache_attr="application.uuid",
             api_path="application.uuid",
         ),
         FieldMapping(
-            cache_attr="backing_storage_luns",
+            cache_attr="backing_storage.luns",
             api_path="backing_storage.luns",
             transform=_transform_backing_storage_luns,
             default=[],
         ),
         FieldMapping(
-            cache_attr="backing_storage_namespaces",
+            cache_attr="backing_storage.namespaces",
             api_path="backing_storage.namespaces",
             transform=_transform_backing_storage_namespaces,
             default=[],
         ),
         FieldMapping(
-            cache_attr="backing_storage_volumes",
+            cache_attr="backing_storage.volumes",
             api_path="backing_storage.volumes",
             transform=_transform_backing_storage_volumes,
             default=[],
@@ -155,19 +165,19 @@ ONTAPAPPLICATIONCOMPONENT_MAPPING = TypeMapping(
             default=[],
         ),
         FieldMapping(
-            cache_attr="storage_service_name",
+            cache_attr="storage_service.name",
             api_path="storage_service.name",
         ),
         FieldMapping(
-            cache_attr="storage_service_uuid",
+            cache_attr="storage_service.uuid",
             api_path="storage_service.uuid",
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(

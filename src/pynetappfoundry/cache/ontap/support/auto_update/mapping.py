@@ -18,20 +18,20 @@ ONTAPAUTOUPDATEINFO_MAPPING = TypeMapping(
             default=False,
         ),
         FieldMapping(
-            cache_attr="eula_accepted",
+            cache_attr="eula.accepted",
             api_path="eula.accepted",
             default=False,
         ),
         FieldMapping(
-            cache_attr="eula_accepted_ip_address",
+            cache_attr="eula.accepted_ip_address",
             api_path="eula.accepted_ip_address",
         ),
         FieldMapping(
-            cache_attr="eula_accepted_timestamp",
+            cache_attr="eula.accepted_timestamp",
             api_path="eula.accepted_timestamp",
         ),
         FieldMapping(
-            cache_attr="eula_user_id_accepted",
+            cache_attr="eula.user_id_accepted",
             api_path="eula.user_id_accepted",
         ),
     ),

@@ -2,16 +2,30 @@
 
 from __future__ import annotations
 
+from pydantic import Field
+
 from pynetappfoundry.models._base import OntapModel
+
+
+class OntapTotpAccount(OntapModel):
+    """OntapTotpAccount sub-model for account."""
+
+    name: str = ""
+
+
+class OntapTotpOwner(OntapModel):
+    """OntapTotpOwner sub-model for owner."""
+
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapTotp(OntapModel):
     """OntapTotp information."""
 
-    account_name: str = ""
+    account: OntapTotpAccount = Field(default_factory=OntapTotpAccount)
     comment: str = ""
     enabled: bool = False
-    owner_name: str = ""
-    owner_uuid: str = ""
+    owner: OntapTotpOwner = Field(default_factory=OntapTotpOwner)
     scope: str = ""
     sha_fingerprint: str = ""

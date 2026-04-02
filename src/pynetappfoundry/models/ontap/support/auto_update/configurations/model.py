@@ -2,7 +2,16 @@
 
 from __future__ import annotations
 
+from pydantic import Field
+
 from pynetappfoundry.models._base import OntapModel
+
+
+class OntapAutoUpdateConfigurationDescription(OntapModel):
+    """OntapAutoUpdateConfigurationDescription sub-model for description."""
+
+    code: str = ""
+    message: str = ""
 
 
 class OntapAutoUpdateConfiguration(OntapModel):
@@ -10,6 +19,7 @@ class OntapAutoUpdateConfiguration(OntapModel):
 
     action: str = ""
     category: str = ""
-    description_code: str = ""
-    description_message: str = ""
+    description: OntapAutoUpdateConfigurationDescription = Field(
+        default_factory=OntapAutoUpdateConfigurationDescription
+    )
     uuid: str = ""

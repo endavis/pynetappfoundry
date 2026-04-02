@@ -9,7 +9,7 @@ cache_strategy = "cache"
 [fields.external_role]
 cache_strategy = "cache"
 
-[fields.ontap_role_name]
+[fields."ontap_role.name"]
 cache_strategy = "cache"
 
 [fields.provider]

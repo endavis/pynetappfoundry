@@ -3,19 +3,19 @@ path = "/application/applications/{application.uuid}/components/{component.uuid}
 schema = "application_component_snapshot"
 class_name = "OntapApplicationComponentSnapshot"
 
-[fields.application_name]
+[fields."application.name"]
 cache_strategy = "cache"
 
-[fields.application_uuid]
+[fields."application.uuid"]
 cache_strategy = "cache"
 
 [fields.comment]
 cache_strategy = "cache"
 
-[fields.component_name]
+[fields."component.name"]
 cache_strategy = "cache"
 
-[fields.component_uuid]
+[fields."component.uuid"]
 cache_strategy = "cache"
 
 [fields.consistency_type]
@@ -30,10 +30,10 @@ cache_strategy = "cache"
 [fields.name]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.uuid]

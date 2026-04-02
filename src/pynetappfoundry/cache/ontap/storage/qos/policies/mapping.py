@@ -13,54 +13,54 @@ ONTAPQOSPOLICY_MAPPING = TypeMapping(
     api_type="ontap",
     fields=(
         FieldMapping(
-            cache_attr="adaptive_absolute_min_iops",
+            cache_attr="adaptive.absolute_min_iops",
             api_path="adaptive.absolute_min_iops",
             default=0,
         ),
         FieldMapping(
-            cache_attr="adaptive_block_size",
+            cache_attr="adaptive.block_size",
             api_path="adaptive.block_size",
         ),
         FieldMapping(
-            cache_attr="adaptive_expected_iops",
+            cache_attr="adaptive.expected_iops",
             api_path="adaptive.expected_iops",
             default=0,
         ),
         FieldMapping(
-            cache_attr="adaptive_expected_iops_allocation",
+            cache_attr="adaptive.expected_iops_allocation",
             api_path="adaptive.expected_iops_allocation",
         ),
         FieldMapping(
-            cache_attr="adaptive_peak_iops",
+            cache_attr="adaptive.peak_iops",
             api_path="adaptive.peak_iops",
             default=0,
         ),
         FieldMapping(
-            cache_attr="adaptive_peak_iops_allocation",
+            cache_attr="adaptive.peak_iops_allocation",
             api_path="adaptive.peak_iops_allocation",
         ),
         FieldMapping(
-            cache_attr="fixed_capacity_shared",
+            cache_attr="fixed.capacity_shared",
             api_path="fixed.capacity_shared",
             default=False,
         ),
         FieldMapping(
-            cache_attr="fixed_max_throughput_iops",
+            cache_attr="fixed.max_throughput_iops",
             api_path="fixed.max_throughput_iops",
             default=0,
         ),
         FieldMapping(
-            cache_attr="fixed_max_throughput_mbps",
+            cache_attr="fixed.max_throughput_mbps",
             api_path="fixed.max_throughput_mbps",
             default=0,
         ),
         FieldMapping(
-            cache_attr="fixed_min_throughput_iops",
+            cache_attr="fixed.min_throughput_iops",
             api_path="fixed.min_throughput_iops",
             default=0,
         ),
         FieldMapping(
-            cache_attr="fixed_min_throughput_mbps",
+            cache_attr="fixed.min_throughput_mbps",
             api_path="fixed.min_throughput_mbps",
             default=0,
         ),
@@ -87,11 +87,11 @@ ONTAPQOSPOLICY_MAPPING = TypeMapping(
             api_path="scope",
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(

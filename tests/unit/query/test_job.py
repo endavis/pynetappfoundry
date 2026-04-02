@@ -10,7 +10,7 @@ from pydantic import BaseModel
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.models.ontap.cluster.jobs.model import OntapJob
+from pynetappfoundry.models.ontap.cluster.jobs.model import OntapJob, OntapJobError
 from pynetappfoundry.query.job import JobError, JobTracker
 from pynetappfoundry.query.mutation import Mutation
 
@@ -87,8 +87,7 @@ class TestJobError:
         job = OntapJob(
             uuid="22222222-2222-2222-2222-222222222222",
             state="failure",
-            error_message="disk full",
-            error_code="123456",
+            error=OntapJobError(message="disk full", code="123456"),
         )
         err = JobError(job)
         assert err.job is job

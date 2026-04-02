@@ -6,28 +6,28 @@ class_name = "OntapMetroclusterNode"
 [fields.automatic_uso]
 cache_strategy = "cache"
 
-[fields.cluster_name]
+[fields."cluster.name"]
 cache_strategy = "cache"
 
-[fields.cluster_uuid]
+[fields."cluster.uuid"]
 cache_strategy = "cache"
 
 [fields.configuration_state]
 cache_strategy = "cache"
 
-[fields.dr_auxiliary_cluster_name]
+[fields."dr_auxiliary_cluster.name"]
 cache_strategy = "cache"
 
-[fields.dr_auxiliary_cluster_uuid]
+[fields."dr_auxiliary_cluster.uuid"]
 cache_strategy = "cache"
 
-[fields.dr_auxiliary_partner_name]
+[fields."dr_auxiliary_partner.name"]
 cache_strategy = "cache"
 
-[fields.dr_auxiliary_partner_system_id]
+[fields."dr_auxiliary_partner.system_id"]
 cache_strategy = "cache"
 
-[fields.dr_auxiliary_partner_uuid]
+[fields."dr_auxiliary_partner.uuid"]
 cache_strategy = "cache"
 
 [fields.dr_group_id]
@@ -39,37 +39,37 @@ cache_strategy = "cache"
 [fields.dr_operation_state]
 cache_strategy = "cache"
 
-[fields.dr_partner_name]
+[fields."dr_partner.name"]
 cache_strategy = "cache"
 
-[fields.dr_partner_system_id]
+[fields."dr_partner.system_id"]
 cache_strategy = "cache"
 
-[fields.dr_partner_uuid]
+[fields."dr_partner.uuid"]
 cache_strategy = "cache"
 
-[fields.dr_partner_cluster_name]
+[fields."dr_partner_cluster.name"]
 cache_strategy = "cache"
 
-[fields.dr_partner_cluster_uuid]
+[fields."dr_partner_cluster.uuid"]
 cache_strategy = "cache"
 
 [fields.encryption_enabled]
 cache_strategy = "cache"
 
-[fields.ha_partner_name]
+[fields."ha_partner.name"]
 cache_strategy = "cache"
 
-[fields.ha_partner_system_id]
+[fields."ha_partner.system_id"]
 cache_strategy = "cache"
 
-[fields.ha_partner_uuid]
+[fields."ha_partner.uuid"]
 cache_strategy = "cache"
 
-[fields.ha_partner_cluster_name]
+[fields."ha_partner_cluster.name"]
 cache_strategy = "cache"
 
-[fields.ha_partner_cluster_uuid]
+[fields."ha_partner_cluster.uuid"]
 cache_strategy = "cache"
 
 [fields.is_mccip]
@@ -78,11 +78,11 @@ cache_strategy = "cache"
 [fields.limit_enforcement]
 cache_strategy = "cache"
 
-[fields.node_name]
+[fields."node.name"]
 cache_strategy = "cache"
 
-[fields.node_system_id]
+[fields."node.system_id"]
 cache_strategy = "cache"
 
-[fields.node_uuid]
+[fields."node.uuid"]
 cache_strategy = "cache"

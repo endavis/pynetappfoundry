@@ -6,10 +6,10 @@ class_name = "OntapConsistencyGroupSnapshotResponse"
 [fields.comment]
 cache_strategy = "cache"
 
-[fields.consistency_group_name]
+[fields."consistency_group.name"]
 cache_strategy = "cache"
 
-[fields.consistency_group_uuid]
+[fields."consistency_group.uuid"]
 cache_strategy = "cache"
 
 [fields.consistency_type]
@@ -51,10 +51,10 @@ cache_strategy = "cache"
 [fields.snapshot_volumes]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.uuid]

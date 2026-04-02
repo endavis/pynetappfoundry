@@ -16,11 +16,11 @@ ONTAPFLEXCACHEORIGIN_MAPPING = TypeMapping(
     parent_id_field=None,
     fields=(
         FieldMapping(
-            cache_attr="cluster_name",
+            cache_attr="cluster.name",
             api_path="cluster.name",
         ),
         FieldMapping(
-            cache_attr="cluster_uuid",
+            cache_attr="cluster.uuid",
             api_path="cluster.uuid",
         ),
         FieldMapping(
@@ -41,19 +41,19 @@ ONTAPFLEXCACHEORIGIN_MAPPING = TypeMapping(
             api_path="state",
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(
-            cache_attr="volume_name",
+            cache_attr="volume.name",
             api_path="volume.name",
         ),
         FieldMapping(
-            cache_attr="volume_uuid",
+            cache_attr="volume.uuid",
             api_path="volume.uuid",
         ),
     ),

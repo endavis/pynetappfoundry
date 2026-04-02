@@ -34,12 +34,12 @@ ONTAPMETROCLUSTERINTERCONNECT_MAPPING = TypeMapping(
             default=[],
         ),
         FieldMapping(
-            cache_attr="mirror_enabled",
+            cache_attr="mirror.enabled",
             api_path="mirror.enabled",
             default=False,
         ),
         FieldMapping(
-            cache_attr="mirror_state",
+            cache_attr="mirror.state",
             api_path="mirror.state",
         ),
         FieldMapping(
@@ -47,11 +47,11 @@ ONTAPMETROCLUSTERINTERCONNECT_MAPPING = TypeMapping(
             api_path="multipath_policy",
         ),
         FieldMapping(
-            cache_attr="node_name",
+            cache_attr="node.name",
             api_path="node.name",
         ),
         FieldMapping(
-            cache_attr="node_uuid",
+            cache_attr="node.uuid",
             api_path="node.uuid",
         ),
         FieldMapping(

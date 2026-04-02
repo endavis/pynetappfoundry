@@ -30,10 +30,10 @@ cache_strategy = "cache"
 [fields.operation]
 cache_strategy = "cache"
 
-[fields.owner_name]
+[fields."owner.name"]
 cache_strategy = "cache"
 
-[fields.owner_uuid]
+[fields."owner.uuid"]
 cache_strategy = "cache"
 
 [fields.pending_approvers]

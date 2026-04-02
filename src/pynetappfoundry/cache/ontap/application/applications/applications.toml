@@ -3,10 +3,10 @@ path = "/application/applications"
 schema = "application"
 class_name = "OntapApplication"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
 [fields.uuid]
@@ -27,22 +27,22 @@ cache_strategy = "cache"
 [fields.protection_granularity]
 cache_strategy = "cache"
 
-[fields.rpo_components]
+[fields."rpo.components"]
 cache_strategy = "cache"
 
-[fields.rpo_is_supported]
+[fields."rpo.is_supported"]
 cache_strategy = "cache"
 
-[fields.rpo_local_name]
+[fields."rpo.local.name"]
 cache_strategy = "cache"
 
-[fields.rpo_local_description]
+[fields."rpo.local.description"]
 cache_strategy = "cache"
 
-[fields.rpo_remote_name]
+[fields."rpo.remote.name"]
 cache_strategy = "cache"
 
-[fields.rpo_remote_description]
+[fields."rpo.remote.description"]
 cache_strategy = "cache"
 
 [fields.smart_container]
@@ -51,503 +51,503 @@ cache_strategy = "cache"
 [fields.state]
 cache_strategy = "cache"
 
-[fields.statistics_components]
+[fields."statistics.components"]
 cache_strategy = "realtime"
 
-[fields.statistics_iops_per_tb]
+[fields."statistics.iops.per_tb"]
 cache_strategy = "realtime"
 
-[fields.statistics_iops_total]
+[fields."statistics.iops.total"]
 cache_strategy = "realtime"
 
-[fields.statistics_latency_average]
+[fields."statistics.latency.average"]
 cache_strategy = "realtime"
 
-[fields.statistics_latency_raw]
+[fields."statistics.latency.raw"]
 cache_strategy = "realtime"
 
-[fields.statistics_shared_storage_pool]
+[fields."statistics.shared_storage_pool"]
 cache_strategy = "realtime"
 
-[fields.statistics_snapshot_reserve]
+[fields."statistics.snapshot.reserve"]
 cache_strategy = "realtime"
 
-[fields.statistics_snapshot_used]
+[fields."statistics.snapshot.used"]
 cache_strategy = "realtime"
 
-[fields.statistics_space_available]
+[fields."statistics.space.available"]
 cache_strategy = "realtime"
 
-[fields.statistics_space_logical_used]
+[fields."statistics.space.logical_used"]
 cache_strategy = "realtime"
 
-[fields.statistics_space_provisioned]
+[fields."statistics.space.provisioned"]
 cache_strategy = "realtime"
 
-[fields.statistics_space_reserved_unused]
+[fields."statistics.space.reserved_unused"]
 cache_strategy = "realtime"
 
-[fields.statistics_space_savings]
+[fields."statistics.space.savings"]
 cache_strategy = "realtime"
 
-[fields.statistics_space_used]
+[fields."statistics.space.used"]
 cache_strategy = "realtime"
 
-[fields.statistics_space_used_excluding_reserves]
+[fields."statistics.space.used_excluding_reserves"]
 cache_strategy = "realtime"
 
-[fields.statistics_space_used_percent]
+[fields."statistics.space.used_percent"]
 cache_strategy = "realtime"
 
-[fields.statistics_statistics_incomplete]
+[fields."statistics.statistics_incomplete"]
 cache_strategy = "realtime"
 
-[fields.template_name]
+[fields."template.name"]
 cache_strategy = "cache"
 
-[fields.template_protocol]
+[fields."template.protocol"]
 cache_strategy = "cache"
 
-[fields.template_version]
+[fields."template.version"]
 cache_strategy = "cache"
 
-[fields.mongo_db_on_san_dataset_element_count]
+[fields."mongo_db_on_san.dataset.element_count"]
 cache_strategy = "cache"
 
-[fields.mongo_db_on_san_dataset_replication_factor]
+[fields."mongo_db_on_san.dataset.replication_factor"]
 cache_strategy = "cache"
 
-[fields.mongo_db_on_san_dataset_size]
+[fields."mongo_db_on_san.dataset.size"]
 cache_strategy = "cache"
 
-[fields.mongo_db_on_san_dataset_storage_service_name]
+[fields."mongo_db_on_san.dataset.storage_service.name"]
 cache_strategy = "cache"
 
-[fields.mongo_db_on_san_new_igroups]
+[fields."mongo_db_on_san.new_igroups"]
 cache_strategy = "cache"
 
-[fields.mongo_db_on_san_os_type]
+[fields."mongo_db_on_san.os_type"]
 cache_strategy = "cache"
 
-[fields.mongo_db_on_san_primary_igroup_name]
+[fields."mongo_db_on_san.primary_igroup_name"]
 cache_strategy = "cache"
 
-[fields.mongo_db_on_san_protection_type_local_rpo]
+[fields."mongo_db_on_san.protection_type.local_rpo"]
 cache_strategy = "cache"
 
-[fields.mongo_db_on_san_protection_type_remote_rpo]
+[fields."mongo_db_on_san.protection_type.remote_rpo"]
 cache_strategy = "cache"
 
-[fields.mongo_db_on_san_secondary_igroups]
+[fields."mongo_db_on_san.secondary_igroups"]
 cache_strategy = "cache"
 
-[fields.nas_application_components]
+[fields."nas.application_components"]
 cache_strategy = "cache"
 
-[fields.nas_cifs_access]
+[fields."nas.cifs_access"]
 cache_strategy = "cache"
 
-[fields.nas_cifs_share_name]
+[fields."nas.cifs_share_name"]
 cache_strategy = "cache"
 
-[fields.nas_exclude_aggregates]
+[fields."nas.exclude_aggregates"]
 cache_strategy = "cache"
 
-[fields.nas_nfs_access]
+[fields."nas.nfs_access"]
 cache_strategy = "cache"
 
-[fields.nas_protection_type_local_policy]
+[fields."nas.protection_type.local_policy"]
 cache_strategy = "cache"
 
-[fields.nas_protection_type_local_rpo]
+[fields."nas.protection_type.local_rpo"]
 cache_strategy = "cache"
 
-[fields.nas_protection_type_remote_rpo]
+[fields."nas.protection_type.remote_rpo"]
 cache_strategy = "cache"
 
-[fields.nvme_components]
+[fields."nvme.components"]
 cache_strategy = "cache"
 
-[fields.nvme_os_type]
+[fields."nvme.os_type"]
 cache_strategy = "cache"
 
-[fields.nvme_rpo_local_name]
+[fields."nvme.rpo.local.name"]
 cache_strategy = "cache"
 
-[fields.nvme_rpo_local_policy]
+[fields."nvme.rpo.local.policy"]
 cache_strategy = "cache"
 
-[fields.nvme_rpo_remote_name]
+[fields."nvme.rpo.remote.name"]
 cache_strategy = "cache"
 
-[fields.oracle_on_nfs_archive_log_size]
+[fields."oracle_on_nfs.archive_log.size"]
 cache_strategy = "cache"
 
-[fields.oracle_on_nfs_archive_log_storage_service_name]
+[fields."oracle_on_nfs.archive_log.storage_service.name"]
 cache_strategy = "cache"
 
-[fields.oracle_on_nfs_db_size]
+[fields."oracle_on_nfs.db.size"]
 cache_strategy = "cache"
 
-[fields.oracle_on_nfs_db_storage_service_name]
+[fields."oracle_on_nfs.db.storage_service.name"]
 cache_strategy = "cache"
 
-[fields.oracle_on_nfs_nfs_access]
+[fields."oracle_on_nfs.nfs_access"]
 cache_strategy = "cache"
 
-[fields.oracle_on_nfs_ora_home_size]
+[fields."oracle_on_nfs.ora_home.size"]
 cache_strategy = "cache"
 
-[fields.oracle_on_nfs_ora_home_storage_service_name]
+[fields."oracle_on_nfs.ora_home.storage_service.name"]
 cache_strategy = "cache"
 
-[fields.oracle_on_nfs_protection_type_local_rpo]
+[fields."oracle_on_nfs.protection_type.local_rpo"]
 cache_strategy = "cache"
 
-[fields.oracle_on_nfs_protection_type_remote_rpo]
+[fields."oracle_on_nfs.protection_type.remote_rpo"]
 cache_strategy = "cache"
 
-[fields.oracle_on_nfs_redo_log_mirrored]
+[fields."oracle_on_nfs.redo_log.mirrored"]
 cache_strategy = "cache"
 
-[fields.oracle_on_nfs_redo_log_size]
+[fields."oracle_on_nfs.redo_log.size"]
 cache_strategy = "cache"
 
-[fields.oracle_on_nfs_redo_log_storage_service_name]
+[fields."oracle_on_nfs.redo_log.storage_service.name"]
 cache_strategy = "cache"
 
-[fields.oracle_on_san_archive_log_size]
+[fields."oracle_on_san.archive_log.size"]
 cache_strategy = "cache"
 
-[fields.oracle_on_san_archive_log_storage_service_name]
+[fields."oracle_on_san.archive_log.storage_service.name"]
 cache_strategy = "cache"
 
-[fields.oracle_on_san_db_size]
+[fields."oracle_on_san.db.size"]
 cache_strategy = "cache"
 
-[fields.oracle_on_san_db_storage_service_name]
+[fields."oracle_on_san.db.storage_service.name"]
 cache_strategy = "cache"
 
-[fields.oracle_on_san_igroup_name]
+[fields."oracle_on_san.igroup_name"]
 cache_strategy = "cache"
 
-[fields.oracle_on_san_new_igroups]
+[fields."oracle_on_san.new_igroups"]
 cache_strategy = "cache"
 
-[fields.oracle_on_san_ora_home_size]
+[fields."oracle_on_san.ora_home.size"]
 cache_strategy = "cache"
 
-[fields.oracle_on_san_ora_home_storage_service_name]
+[fields."oracle_on_san.ora_home.storage_service.name"]
 cache_strategy = "cache"
 
-[fields.oracle_on_san_os_type]
+[fields."oracle_on_san.os_type"]
 cache_strategy = "cache"
 
-[fields.oracle_on_san_protection_type_local_rpo]
+[fields."oracle_on_san.protection_type.local_rpo"]
 cache_strategy = "cache"
 
-[fields.oracle_on_san_protection_type_remote_rpo]
+[fields."oracle_on_san.protection_type.remote_rpo"]
 cache_strategy = "cache"
 
-[fields.oracle_on_san_redo_log_mirrored]
+[fields."oracle_on_san.redo_log.mirrored"]
 cache_strategy = "cache"
 
-[fields.oracle_on_san_redo_log_size]
+[fields."oracle_on_san.redo_log.size"]
 cache_strategy = "cache"
 
-[fields.oracle_on_san_redo_log_storage_service_name]
+[fields."oracle_on_san.redo_log.storage_service.name"]
 cache_strategy = "cache"
 
-[fields.oracle_rac_on_nfs_archive_log_size]
+[fields."oracle_rac_on_nfs.archive_log.size"]
 cache_strategy = "cache"
 
-[fields.oracle_rac_on_nfs_archive_log_storage_service_name]
+[fields."oracle_rac_on_nfs.archive_log.storage_service.name"]
 cache_strategy = "cache"
 
-[fields.oracle_rac_on_nfs_db_size]
+[fields."oracle_rac_on_nfs.db.size"]
 cache_strategy = "cache"
 
-[fields.oracle_rac_on_nfs_db_storage_service_name]
+[fields."oracle_rac_on_nfs.db.storage_service.name"]
 cache_strategy = "cache"
 
-[fields.oracle_rac_on_nfs_grid_binary_size]
+[fields."oracle_rac_on_nfs.grid_binary.size"]
 cache_strategy = "cache"
 
-[fields.oracle_rac_on_nfs_grid_binary_storage_service_name]
+[fields."oracle_rac_on_nfs.grid_binary.storage_service.name"]
 cache_strategy = "cache"
 
-[fields.oracle_rac_on_nfs_nfs_access]
+[fields."oracle_rac_on_nfs.nfs_access"]
 cache_strategy = "cache"
 
-[fields.oracle_rac_on_nfs_ora_home_size]
+[fields."oracle_rac_on_nfs.ora_home.size"]
 cache_strategy = "cache"
 
-[fields.oracle_rac_on_nfs_ora_home_storage_service_name]
+[fields."oracle_rac_on_nfs.ora_home.storage_service.name"]
 cache_strategy = "cache"
 
-[fields.oracle_rac_on_nfs_oracle_crs_copies]
+[fields."oracle_rac_on_nfs.oracle_crs.copies"]
 cache_strategy = "cache"
 
-[fields.oracle_rac_on_nfs_oracle_crs_size]
+[fields."oracle_rac_on_nfs.oracle_crs.size"]
 cache_strategy = "cache"
 
-[fields.oracle_rac_on_nfs_oracle_crs_storage_service_name]
+[fields."oracle_rac_on_nfs.oracle_crs.storage_service.name"]
 cache_strategy = "cache"
 
-[fields.oracle_rac_on_nfs_protection_type_local_rpo]
+[fields."oracle_rac_on_nfs.protection_type.local_rpo"]
 cache_strategy = "cache"
 
-[fields.oracle_rac_on_nfs_protection_type_remote_rpo]
+[fields."oracle_rac_on_nfs.protection_type.remote_rpo"]
 cache_strategy = "cache"
 
-[fields.oracle_rac_on_nfs_redo_log_mirrored]
+[fields."oracle_rac_on_nfs.redo_log.mirrored"]
 cache_strategy = "cache"
 
-[fields.oracle_rac_on_nfs_redo_log_size]
+[fields."oracle_rac_on_nfs.redo_log.size"]
 cache_strategy = "cache"
 
-[fields.oracle_rac_on_nfs_redo_log_storage_service_name]
+[fields."oracle_rac_on_nfs.redo_log.storage_service.name"]
 cache_strategy = "cache"
 
-[fields.oracle_rac_on_san_archive_log_size]
+[fields."oracle_rac_on_san.archive_log.size"]
 cache_strategy = "cache"
 
-[fields.oracle_rac_on_san_archive_log_storage_service_name]
+[fields."oracle_rac_on_san.archive_log.storage_service.name"]
 cache_strategy = "cache"
 
-[fields.oracle_rac_on_san_db_size]
+[fields."oracle_rac_on_san.db.size"]
 cache_strategy = "cache"
 
-[fields.oracle_rac_on_san_db_storage_service_name]
+[fields."oracle_rac_on_san.db.storage_service.name"]
 cache_strategy = "cache"
 
-[fields.oracle_rac_on_san_db_sids]
+[fields."oracle_rac_on_san.db_sids"]
 cache_strategy = "cache"
 
-[fields.oracle_rac_on_san_grid_binary_size]
+[fields."oracle_rac_on_san.grid_binary.size"]
 cache_strategy = "cache"
 
-[fields.oracle_rac_on_san_grid_binary_storage_service_name]
+[fields."oracle_rac_on_san.grid_binary.storage_service.name"]
 cache_strategy = "cache"
 
-[fields.oracle_rac_on_san_new_igroups]
+[fields."oracle_rac_on_san.new_igroups"]
 cache_strategy = "cache"
 
-[fields.oracle_rac_on_san_ora_home_size]
+[fields."oracle_rac_on_san.ora_home.size"]
 cache_strategy = "cache"
 
-[fields.oracle_rac_on_san_ora_home_storage_service_name]
+[fields."oracle_rac_on_san.ora_home.storage_service.name"]
 cache_strategy = "cache"
 
-[fields.oracle_rac_on_san_oracle_crs_copies]
+[fields."oracle_rac_on_san.oracle_crs.copies"]
 cache_strategy = "cache"
 
-[fields.oracle_rac_on_san_oracle_crs_size]
+[fields."oracle_rac_on_san.oracle_crs.size"]
 cache_strategy = "cache"
 
-[fields.oracle_rac_on_san_oracle_crs_storage_service_name]
+[fields."oracle_rac_on_san.oracle_crs.storage_service.name"]
 cache_strategy = "cache"
 
-[fields.oracle_rac_on_san_os_type]
+[fields."oracle_rac_on_san.os_type"]
 cache_strategy = "cache"
 
-[fields.oracle_rac_on_san_protection_type_local_rpo]
+[fields."oracle_rac_on_san.protection_type.local_rpo"]
 cache_strategy = "cache"
 
-[fields.oracle_rac_on_san_protection_type_remote_rpo]
+[fields."oracle_rac_on_san.protection_type.remote_rpo"]
 cache_strategy = "cache"
 
-[fields.oracle_rac_on_san_redo_log_mirrored]
+[fields."oracle_rac_on_san.redo_log.mirrored"]
 cache_strategy = "cache"
 
-[fields.oracle_rac_on_san_redo_log_size]
+[fields."oracle_rac_on_san.redo_log.size"]
 cache_strategy = "cache"
 
-[fields.oracle_rac_on_san_redo_log_storage_service_name]
+[fields."oracle_rac_on_san.redo_log.storage_service.name"]
 cache_strategy = "cache"
 
-[fields.s3_bucket_application_components]
+[fields."s3_bucket.application_components"]
 cache_strategy = "cache"
 
-[fields.s3_bucket_protection_type_remote_rpo]
+[fields."s3_bucket.protection_type.remote_rpo"]
 cache_strategy = "cache"
 
-[fields.san_application_components]
+[fields."san.application_components"]
 cache_strategy = "cache"
 
-[fields.san_exclude_aggregates]
+[fields."san.exclude_aggregates"]
 cache_strategy = "cache"
 
-[fields.san_new_igroups]
+[fields."san.new_igroups"]
 cache_strategy = "cache"
 
-[fields.san_os_type]
+[fields."san.os_type"]
 cache_strategy = "cache"
 
-[fields.san_protection_type_local_policy]
+[fields."san.protection_type.local_policy"]
 cache_strategy = "cache"
 
-[fields.san_protection_type_local_rpo]
+[fields."san.protection_type.local_rpo"]
 cache_strategy = "cache"
 
-[fields.san_protection_type_remote_rpo]
+[fields."san.protection_type.remote_rpo"]
 cache_strategy = "cache"
 
-[fields.sql_on_san_db_size]
+[fields."sql_on_san.db.size"]
 cache_strategy = "cache"
 
-[fields.sql_on_san_db_storage_service_name]
+[fields."sql_on_san.db.storage_service.name"]
 cache_strategy = "cache"
 
-[fields.sql_on_san_igroup_name]
+[fields."sql_on_san.igroup_name"]
 cache_strategy = "cache"
 
-[fields.sql_on_san_log_size]
+[fields."sql_on_san.log.size"]
 cache_strategy = "cache"
 
-[fields.sql_on_san_log_storage_service_name]
+[fields."sql_on_san.log.storage_service.name"]
 cache_strategy = "cache"
 
-[fields.sql_on_san_new_igroups]
+[fields."sql_on_san.new_igroups"]
 cache_strategy = "cache"
 
-[fields.sql_on_san_os_type]
+[fields."sql_on_san.os_type"]
 cache_strategy = "cache"
 
-[fields.sql_on_san_protection_type_local_rpo]
+[fields."sql_on_san.protection_type.local_rpo"]
 cache_strategy = "cache"
 
-[fields.sql_on_san_protection_type_remote_rpo]
+[fields."sql_on_san.protection_type.remote_rpo"]
 cache_strategy = "cache"
 
-[fields.sql_on_san_server_cores_count]
+[fields."sql_on_san.server_cores_count"]
 cache_strategy = "cache"
 
-[fields.sql_on_san_temp_db_size]
+[fields."sql_on_san.temp_db.size"]
 cache_strategy = "cache"
 
-[fields.sql_on_san_temp_db_storage_service_name]
+[fields."sql_on_san.temp_db.storage_service.name"]
 cache_strategy = "cache"
 
-[fields.sql_on_smb_access_installer]
+[fields."sql_on_smb.access.installer"]
 cache_strategy = "cache"
 
-[fields.sql_on_smb_access_service_account]
+[fields."sql_on_smb.access.service_account"]
 cache_strategy = "cache"
 
-[fields.sql_on_smb_db_size]
+[fields."sql_on_smb.db.size"]
 cache_strategy = "cache"
 
-[fields.sql_on_smb_db_storage_service_name]
+[fields."sql_on_smb.db.storage_service.name"]
 cache_strategy = "cache"
 
-[fields.sql_on_smb_log_size]
+[fields."sql_on_smb.log.size"]
 cache_strategy = "cache"
 
-[fields.sql_on_smb_log_storage_service_name]
+[fields."sql_on_smb.log.storage_service.name"]
 cache_strategy = "cache"
 
-[fields.sql_on_smb_protection_type_local_rpo]
+[fields."sql_on_smb.protection_type.local_rpo"]
 cache_strategy = "cache"
 
-[fields.sql_on_smb_protection_type_remote_rpo]
+[fields."sql_on_smb.protection_type.remote_rpo"]
 cache_strategy = "cache"
 
-[fields.sql_on_smb_server_cores_count]
+[fields."sql_on_smb.server_cores_count"]
 cache_strategy = "cache"
 
-[fields.sql_on_smb_temp_db_size]
+[fields."sql_on_smb.temp_db.size"]
 cache_strategy = "cache"
 
-[fields.sql_on_smb_temp_db_storage_service_name]
+[fields."sql_on_smb.temp_db.storage_service.name"]
 cache_strategy = "cache"
 
-[fields.vdi_on_nas_desktops_count]
+[fields."vdi_on_nas.desktops.count"]
 cache_strategy = "cache"
 
-[fields.vdi_on_nas_desktops_size]
+[fields."vdi_on_nas.desktops.size"]
 cache_strategy = "cache"
 
-[fields.vdi_on_nas_desktops_storage_service_name]
+[fields."vdi_on_nas.desktops.storage_service.name"]
 cache_strategy = "cache"
 
-[fields.vdi_on_nas_hyper_v_access_service_account]
+[fields."vdi_on_nas.hyper_v_access.service_account"]
 cache_strategy = "cache"
 
-[fields.vdi_on_nas_nfs_access]
+[fields."vdi_on_nas.nfs_access"]
 cache_strategy = "cache"
 
-[fields.vdi_on_nas_protection_type_local_rpo]
+[fields."vdi_on_nas.protection_type.local_rpo"]
 cache_strategy = "cache"
 
-[fields.vdi_on_nas_protection_type_remote_rpo]
+[fields."vdi_on_nas.protection_type.remote_rpo"]
 cache_strategy = "cache"
 
-[fields.vdi_on_san_desktops_count]
+[fields."vdi_on_san.desktops.count"]
 cache_strategy = "cache"
 
-[fields.vdi_on_san_desktops_size]
+[fields."vdi_on_san.desktops.size"]
 cache_strategy = "cache"
 
-[fields.vdi_on_san_desktops_storage_service_name]
+[fields."vdi_on_san.desktops.storage_service.name"]
 cache_strategy = "cache"
 
-[fields.vdi_on_san_hypervisor]
+[fields."vdi_on_san.hypervisor"]
 cache_strategy = "cache"
 
-[fields.vdi_on_san_igroup_name]
+[fields."vdi_on_san.igroup_name"]
 cache_strategy = "cache"
 
-[fields.vdi_on_san_new_igroups]
+[fields."vdi_on_san.new_igroups"]
 cache_strategy = "cache"
 
-[fields.vdi_on_san_protection_type_local_rpo]
+[fields."vdi_on_san.protection_type.local_rpo"]
 cache_strategy = "cache"
 
-[fields.vdi_on_san_protection_type_remote_rpo]
+[fields."vdi_on_san.protection_type.remote_rpo"]
 cache_strategy = "cache"
 
-[fields.vsi_on_nas_datastore_count]
+[fields."vsi_on_nas.datastore.count"]
 cache_strategy = "cache"
 
-[fields.vsi_on_nas_datastore_size]
+[fields."vsi_on_nas.datastore.size"]
 cache_strategy = "cache"
 
-[fields.vsi_on_nas_datastore_storage_service_name]
+[fields."vsi_on_nas.datastore.storage_service.name"]
 cache_strategy = "cache"
 
-[fields.vsi_on_nas_hyper_v_access_service_account]
+[fields."vsi_on_nas.hyper_v_access.service_account"]
 cache_strategy = "cache"
 
-[fields.vsi_on_nas_nfs_access]
+[fields."vsi_on_nas.nfs_access"]
 cache_strategy = "cache"
 
-[fields.vsi_on_nas_protection_type_local_rpo]
+[fields."vsi_on_nas.protection_type.local_rpo"]
 cache_strategy = "cache"
 
-[fields.vsi_on_nas_protection_type_remote_rpo]
+[fields."vsi_on_nas.protection_type.remote_rpo"]
 cache_strategy = "cache"
 
-[fields.vsi_on_san_datastore_count]
+[fields."vsi_on_san.datastore.count"]
 cache_strategy = "cache"
 
-[fields.vsi_on_san_datastore_size]
+[fields."vsi_on_san.datastore.size"]
 cache_strategy = "cache"
 
-[fields.vsi_on_san_datastore_storage_service_name]
+[fields."vsi_on_san.datastore.storage_service.name"]
 cache_strategy = "cache"
 
-[fields.vsi_on_san_hypervisor]
+[fields."vsi_on_san.hypervisor"]
 cache_strategy = "cache"
 
-[fields.vsi_on_san_igroup_name]
+[fields."vsi_on_san.igroup_name"]
 cache_strategy = "cache"
 
-[fields.vsi_on_san_new_igroups]
+[fields."vsi_on_san.new_igroups"]
 cache_strategy = "cache"
 
-[fields.vsi_on_san_protection_type_local_rpo]
+[fields."vsi_on_san.protection_type.local_rpo"]
 cache_strategy = "cache"
 
-[fields.vsi_on_san_protection_type_remote_rpo]
+[fields."vsi_on_san.protection_type.remote_rpo"]
 cache_strategy = "cache"

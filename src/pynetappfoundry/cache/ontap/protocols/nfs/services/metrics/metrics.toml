@@ -3,128 +3,128 @@ path = "/protocols/nfs/services/{svm.uuid}/metrics"
 schema = "performance_svm_nfs_response"
 class_name = "OntapPerformanceSvmNfsResponse"
 
-[fields.v3_duration]
+[fields."v3.duration"]
 cache_strategy = "cache"
 
-[fields.v3_iops_other]
+[fields."v3.iops.other"]
 cache_strategy = "cache"
 
-[fields.v3_iops_read]
+[fields."v3.iops.read"]
 cache_strategy = "cache"
 
-[fields.v3_iops_total]
+[fields."v3.iops.total"]
 cache_strategy = "cache"
 
-[fields.v3_iops_write]
+[fields."v3.iops.write"]
 cache_strategy = "cache"
 
-[fields.v3_latency_other]
+[fields."v3.latency.other"]
 cache_strategy = "cache"
 
-[fields.v3_latency_read]
+[fields."v3.latency.read"]
 cache_strategy = "cache"
 
-[fields.v3_latency_total]
+[fields."v3.latency.total"]
 cache_strategy = "cache"
 
-[fields.v3_latency_write]
+[fields."v3.latency.write"]
 cache_strategy = "cache"
 
-[fields.v3_status]
+[fields."v3.status"]
 cache_strategy = "cache"
 
-[fields.v3_throughput_read]
+[fields."v3.throughput.read"]
 cache_strategy = "cache"
 
-[fields.v3_throughput_total]
+[fields."v3.throughput.total"]
 cache_strategy = "cache"
 
-[fields.v3_throughput_write]
+[fields."v3.throughput.write"]
 cache_strategy = "cache"
 
-[fields.v3_timestamp]
+[fields."v3.timestamp"]
 cache_strategy = "cache"
 
-[fields.v4_duration]
+[fields."v4.duration"]
 cache_strategy = "cache"
 
-[fields.v4_iops_other]
+[fields."v4.iops.other"]
 cache_strategy = "cache"
 
-[fields.v4_iops_read]
+[fields."v4.iops.read"]
 cache_strategy = "cache"
 
-[fields.v4_iops_total]
+[fields."v4.iops.total"]
 cache_strategy = "cache"
 
-[fields.v4_iops_write]
+[fields."v4.iops.write"]
 cache_strategy = "cache"
 
-[fields.v4_latency_other]
+[fields."v4.latency.other"]
 cache_strategy = "cache"
 
-[fields.v4_latency_read]
+[fields."v4.latency.read"]
 cache_strategy = "cache"
 
-[fields.v4_latency_total]
+[fields."v4.latency.total"]
 cache_strategy = "cache"
 
-[fields.v4_latency_write]
+[fields."v4.latency.write"]
 cache_strategy = "cache"
 
-[fields.v4_status]
+[fields."v4.status"]
 cache_strategy = "cache"
 
-[fields.v4_throughput_read]
+[fields."v4.throughput.read"]
 cache_strategy = "cache"
 
-[fields.v4_throughput_total]
+[fields."v4.throughput.total"]
 cache_strategy = "cache"
 
-[fields.v4_throughput_write]
+[fields."v4.throughput.write"]
 cache_strategy = "cache"
 
-[fields.v4_timestamp]
+[fields."v4.timestamp"]
 cache_strategy = "cache"
 
-[fields.v41_duration]
+[fields."v41.duration"]
 cache_strategy = "cache"
 
-[fields.v41_iops_other]
+[fields."v41.iops.other"]
 cache_strategy = "cache"
 
-[fields.v41_iops_read]
+[fields."v41.iops.read"]
 cache_strategy = "cache"
 
-[fields.v41_iops_total]
+[fields."v41.iops.total"]
 cache_strategy = "cache"
 
-[fields.v41_iops_write]
+[fields."v41.iops.write"]
 cache_strategy = "cache"
 
-[fields.v41_latency_other]
+[fields."v41.latency.other"]
 cache_strategy = "cache"
 
-[fields.v41_latency_read]
+[fields."v41.latency.read"]
 cache_strategy = "cache"
 
-[fields.v41_latency_total]
+[fields."v41.latency.total"]
 cache_strategy = "cache"
 
-[fields.v41_latency_write]
+[fields."v41.latency.write"]
 cache_strategy = "cache"
 
-[fields.v41_status]
+[fields."v41.status"]
 cache_strategy = "cache"
 
-[fields.v41_throughput_read]
+[fields."v41.throughput.read"]
 cache_strategy = "cache"
 
-[fields.v41_throughput_total]
+[fields."v41.throughput.total"]
 cache_strategy = "cache"
 
-[fields.v41_throughput_write]
+[fields."v41.throughput.write"]
 cache_strategy = "cache"
 
-[fields.v41_timestamp]
+[fields."v41.timestamp"]
 cache_strategy = "cache"

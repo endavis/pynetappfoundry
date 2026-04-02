@@ -45,11 +45,11 @@ ONTAPCONFIGURATIONBACKUPFILE_MAPPING = TypeMapping(
             api_path="name",
         ),
         FieldMapping(
-            cache_attr="node_name",
+            cache_attr="node.name",
             api_path="node.name",
         ),
         FieldMapping(
-            cache_attr="node_uuid",
+            cache_attr="node.uuid",
             api_path="node.uuid",
         ),
         FieldMapping(

@@ -24,11 +24,11 @@ ONTAPBROADCASTDOMAIN_MAPPING = TypeMapping(
     api_type="ontap",
     fields=(
         FieldMapping(
-            cache_attr="ipspace_name",
+            cache_attr="ipspace.name",
             api_path="ipspace.name",
         ),
         FieldMapping(
-            cache_attr="ipspace_uuid",
+            cache_attr="ipspace.uuid",
             api_path="ipspace.uuid",
         ),
         FieldMapping(

@@ -31,25 +31,25 @@ ONTAPDNS_MAPPING = TypeMapping(
             default=[],
         ),
         FieldMapping(
-            cache_attr="dynamic_dns_enabled",
+            cache_attr="dynamic_dns.enabled",
             api_path="dynamic_dns.enabled",
             default=False,
         ),
         FieldMapping(
-            cache_attr="dynamic_dns_fqdn",
+            cache_attr="dynamic_dns.fqdn",
             api_path="dynamic_dns.fqdn",
         ),
         FieldMapping(
-            cache_attr="dynamic_dns_skip_fqdn_validation",
+            cache_attr="dynamic_dns.skip_fqdn_validation",
             api_path="dynamic_dns.skip_fqdn_validation",
             default=False,
         ),
         FieldMapping(
-            cache_attr="dynamic_dns_time_to_live",
+            cache_attr="dynamic_dns.time_to_live",
             api_path="dynamic_dns.time_to_live",
         ),
         FieldMapping(
-            cache_attr="dynamic_dns_use_secure",
+            cache_attr="dynamic_dns.use_secure",
             api_path="dynamic_dns.use_secure",
             default=False,
         ),
@@ -89,11 +89,11 @@ ONTAPDNS_MAPPING = TypeMapping(
             default=[],
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(

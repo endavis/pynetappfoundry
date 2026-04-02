@@ -3,13 +3,13 @@ path = "/network/ip/routes"
 schema = "network_route"
 class_name = "OntapNetworkRoute"
 
-[fields.destination_address]
+[fields."destination.address"]
 cache_strategy = "cache"
 
-[fields.destination_family]
+[fields."destination.family"]
 cache_strategy = "cache"
 
-[fields.destination_netmask]
+[fields."destination.netmask"]
 cache_strategy = "cache"
 
 [fields.gateway]
@@ -19,10 +19,10 @@ cache_strategy = "cache"
 cache_strategy = "cache"
 requires_explicit_fetch = true
 
-[fields.ipspace_name]
+[fields."ipspace.name"]
 cache_strategy = "cache"
 
-[fields.ipspace_uuid]
+[fields."ipspace.uuid"]
 cache_strategy = "cache"
 
 [fields.metric]
@@ -31,10 +31,10 @@ cache_strategy = "cache"
 [fields.scope]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.uuid]

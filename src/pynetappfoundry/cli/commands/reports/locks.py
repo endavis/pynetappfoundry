@@ -76,11 +76,11 @@ def _gather_lock_data(
                 if lock_type == "share_level":
                     ws.append(
                         [
-                            lock.volume_name or "Unknown",
+                            lock.volume.name or "Unknown",
                             lock.protocol or "Unknown",
                             lock_type,
                             lock.path or "Unknown",
-                            lock.share_lock_mode,
+                            lock.share_lock.mode,
                             lock.state or "Unknown",
                             lock.client_address or "Unknown",
                         ]
@@ -88,7 +88,7 @@ def _gather_lock_data(
                 elif lock_type == "op_lock":
                     ws.append(
                         [
-                            lock.volume_name or "Unknown",
+                            lock.volume.name or "Unknown",
                             lock.protocol or "Unknown",
                             lock_type,
                             lock.path or "Unknown",

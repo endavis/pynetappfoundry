@@ -3,43 +3,43 @@ path = "/security/key-managers"
 schema = "security_key_manager"
 class_name = "OntapSecurityKeyManager"
 
-[fields.configuration_name]
+[fields."configuration.name"]
 cache_strategy = "cache"
 
-[fields.configuration_uuid]
+[fields."configuration.uuid"]
 cache_strategy = "cache"
 
 [fields.enabled]
 cache_strategy = "cache"
 
-[fields.external_client_certificate_name]
+[fields."external.client_certificate.name"]
 cache_strategy = "cache"
 
-[fields.external_client_certificate_uuid]
+[fields."external.client_certificate.uuid"]
 cache_strategy = "cache"
 
-[fields.external_server_ca_certificates]
+[fields."external.server_ca_certificates"]
 cache_strategy = "cache"
 
-[fields.external_servers]
+[fields."external.servers"]
 cache_strategy = "cache"
 
 [fields.is_default_data_at_rest_encryption_disabled]
 cache_strategy = "cache"
 
-[fields.onboard_enabled]
+[fields."onboard.enabled"]
 cache_strategy = "cache"
 
-[fields.onboard_existing_passphrase]
+[fields."onboard.existing_passphrase"]
 cache_strategy = "cache"
 
-[fields.onboard_key_backup]
+[fields."onboard.key_backup"]
 cache_strategy = "cache"
 
-[fields.onboard_passphrase]
+[fields."onboard.passphrase"]
 cache_strategy = "cache"
 
-[fields.onboard_synchronize]
+[fields."onboard.synchronize"]
 cache_strategy = "cache"
 
 [fields.policy]
@@ -48,28 +48,28 @@ cache_strategy = "cache"
 [fields.scope]
 cache_strategy = "cache"
 
-[fields.status_code]
+[fields."status.code"]
 cache_strategy = "cache"
 requires_explicit_fetch = true
 
-[fields.status_message]
+[fields."status.message"]
 cache_strategy = "cache"
 requires_explicit_fetch = true
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.uuid]
 cache_strategy = "cache"
 
-[fields.volume_encryption_code]
+[fields."volume_encryption.code"]
 cache_strategy = "cache"
 
-[fields.volume_encryption_message]
+[fields."volume_encryption.message"]
 cache_strategy = "cache"
 
-[fields.volume_encryption_supported]
+[fields."volume_encryption.supported"]
 cache_strategy = "cache"

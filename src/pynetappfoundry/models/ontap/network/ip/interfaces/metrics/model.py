@@ -2,7 +2,17 @@
 
 from __future__ import annotations
 
+from pydantic import Field
+
 from pynetappfoundry.models._base import OntapModel
+
+
+class OntapInterfaceMetricsResponseThroughput(OntapModel):
+    """OntapInterfaceMetricsResponseThroughput sub-model for throughput."""
+
+    read: int = 0
+    total: int = 0
+    write: int = 0
 
 
 class OntapInterfaceMetricsResponse(OntapModel):
@@ -10,8 +20,8 @@ class OntapInterfaceMetricsResponse(OntapModel):
 
     duration: str = ""
     status: str = ""
-    throughput_read: int = 0
-    throughput_total: int = 0
-    throughput_write: int = 0
+    throughput: OntapInterfaceMetricsResponseThroughput = Field(
+        default_factory=OntapInterfaceMetricsResponseThroughput
+    )
     timestamp: str = ""
     uuid: str = ""

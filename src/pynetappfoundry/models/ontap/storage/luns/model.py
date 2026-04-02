@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pydantic import Field
 
 from pynetappfoundry.models._base import OntapModel
@@ -16,63 +14,434 @@ class OntapLunAttribute(OntapModel):
     value: str = ""
 
 
-class OntapLunDestination(OntapModel):
-    """OntapLunDestination sub-model for destinations."""
+class OntapLunCloneSource(OntapModel):
+    """OntapLunCloneSource sub-model for source."""
 
-    max_throughput: int = 0
     name: str = ""
-    peer_name: str = ""
-    peer_uuid: str = ""
-    progress_elapsed: int = 0
-    progress_failure_arguments: list[dict[str, Any]] = Field(default_factory=list)
-    progress_failure_code: str = ""
-    progress_failure_message: str = ""
-    progress_percent_complete: int = 0
-    progress_state: str = ""
-    progress_volume_snapshot_blocked: bool = False
     uuid: str = ""
 
 
-class OntapLunArgument(OntapModel):
-    """OntapLunArgument sub-model for arguments."""
+class OntapLunClone(OntapModel):
+    """OntapLunClone sub-model for clone."""
+
+    source: OntapLunCloneSource = Field(default_factory=OntapLunCloneSource)
+
+
+class OntapLunConsistencyGroup(OntapModel):
+    """OntapLunConsistencyGroup sub-model for consistency_group."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapLunConvertNamespace(OntapModel):
+    """OntapLunConvertNamespace sub-model for namespace."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapLunConvert(OntapModel):
+    """OntapLunConvert sub-model for convert."""
+
+    namespace: OntapLunConvertNamespace = Field(default_factory=OntapLunConvertNamespace)
+
+
+class OntapLunCopyDestinationPeer(OntapModel):
+    """OntapLunCopyDestinationPeer sub-model for peer."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapLunCopyDestinationProgressFailureArgument(OntapModel):
+    """OntapLunCopyDestinationProgressFailureArgument sub-model for arguments."""
 
     code: str = ""
     message: str = ""
+
+
+class OntapLunCopyDestinationProgressFailure(OntapModel):
+    """OntapLunCopyDestinationProgressFailure sub-model for failure."""
+
+    arguments: list[OntapLunCopyDestinationProgressFailureArgument] = Field(default_factory=list)
+    code: str = ""
+    message: str = ""
+
+
+class OntapLunCopyDestinationProgress(OntapModel):
+    """OntapLunCopyDestinationProgress sub-model for progress."""
+
+    elapsed: int = 0
+    failure: OntapLunCopyDestinationProgressFailure = Field(
+        default_factory=OntapLunCopyDestinationProgressFailure
+    )
+    percent_complete: int = 0
+    state: str = ""
+    volume_snapshot_blocked: bool = False
+
+
+class OntapLunCopyDestination(OntapModel):
+    """OntapLunCopyDestination sub-model for destinations."""
+
+    max_throughput: int = 0
+    name: str = ""
+    peer: OntapLunCopyDestinationPeer = Field(default_factory=OntapLunCopyDestinationPeer)
+    progress: OntapLunCopyDestinationProgress = Field(
+        default_factory=OntapLunCopyDestinationProgress
+    )
+    uuid: str = ""
+
+
+class OntapLunCopySourcePeer(OntapModel):
+    """OntapLunCopySourcePeer sub-model for peer."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapLunCopySourceProgressFailureArgument(OntapModel):
+    """OntapLunCopySourceProgressFailureArgument sub-model for arguments."""
+
+    code: str = ""
+    message: str = ""
+
+
+class OntapLunCopySourceProgressFailure(OntapModel):
+    """OntapLunCopySourceProgressFailure sub-model for failure."""
+
+    arguments: list[OntapLunCopySourceProgressFailureArgument] = Field(default_factory=list)
+    code: str = ""
+    message: str = ""
+
+
+class OntapLunCopySourceProgress(OntapModel):
+    """OntapLunCopySourceProgress sub-model for progress."""
+
+    elapsed: int = 0
+    failure: OntapLunCopySourceProgressFailure = Field(
+        default_factory=OntapLunCopySourceProgressFailure
+    )
+    percent_complete: int = 0
+    state: str = ""
+    volume_snapshot_blocked: bool = False
+
+
+class OntapLunCopySource(OntapModel):
+    """OntapLunCopySource sub-model for source."""
+
+    max_throughput: int = 0
+    name: str = ""
+    peer: OntapLunCopySourcePeer = Field(default_factory=OntapLunCopySourcePeer)
+    progress: OntapLunCopySourceProgress = Field(default_factory=OntapLunCopySourceProgress)
+    uuid: str = ""
+
+
+class OntapLunCopy(OntapModel):
+    """OntapLunCopy sub-model for copy."""
+
+    destinations: list[OntapLunCopyDestination] = Field(default_factory=list)
+    source: OntapLunCopySource = Field(default_factory=OntapLunCopySource)
+
+
+class OntapLunLocationNode(OntapModel):
+    """OntapLunLocationNode sub-model for node."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapLunLocationQtree(OntapModel):
+    """OntapLunLocationQtree sub-model for qtree."""
+
+    id: int = 0
+    name: str = ""
+
+
+class OntapLunLocationVolume(OntapModel):
+    """OntapLunLocationVolume sub-model for volume."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapLunLocation(OntapModel):
+    """OntapLunLocation sub-model for location."""
+
+    logical_unit: str = ""
+    node: OntapLunLocationNode = Field(default_factory=OntapLunLocationNode)
+    qtree: OntapLunLocationQtree = Field(default_factory=OntapLunLocationQtree)
+    volume: OntapLunLocationVolume = Field(default_factory=OntapLunLocationVolume)
+
+
+class OntapLunLunMapIgroupIgroup(OntapModel):
+    """OntapLunLunMapIgroupIgroup sub-model for igroups."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapLunLunMapIgroupInitiator(OntapModel):
+    """OntapLunLunMapIgroupInitiator sub-model for initiators."""
+
+    comment: str = ""
+    name: str = ""
+
+
+class OntapLunLunMapIgroup(OntapModel):
+    """OntapLunLunMapIgroup sub-model for igroup."""
+
+    comment: str = ""
+    igroups: list[OntapLunLunMapIgroupIgroup] = Field(default_factory=list)
+    initiators: list[OntapLunLunMapIgroupInitiator] = Field(default_factory=list)
+    name: str = ""
+    os_type: str = ""
+    protocol: str = ""
+    uuid: str = ""
 
 
 class OntapLunLunMap(OntapModel):
     """OntapLunLunMap sub-model for lun_maps."""
 
-    igroup_comment: str = ""
-    igroup_igroups: list[dict[str, Any]] = Field(default_factory=list)
-    igroup_initiators: list[dict[str, Any]] = Field(default_factory=list)
-    igroup_name: str = ""
-    igroup_os_type: str = ""
-    igroup_protocol: str = ""
-    igroup_uuid: str = ""
+    igroup: OntapLunLunMapIgroup = Field(default_factory=OntapLunLunMapIgroup)
     logical_unit_number: int = 0
 
 
-class OntapLunArgument2(OntapModel):
-    """OntapLunArgument2 sub-model for arguments."""
+class OntapLunMetricIops(OntapModel):
+    """OntapLunMetricIops sub-model for iops."""
+
+    other: int = 0
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapLunMetricLatency(OntapModel):
+    """OntapLunMetricLatency sub-model for latency."""
+
+    other: int = 0
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapLunMetricThroughput(OntapModel):
+    """OntapLunMetricThroughput sub-model for throughput."""
+
+    other: int = 0
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapLunMetric(OntapModel):
+    """OntapLunMetric sub-model for metric."""
+
+    duration: str = ""
+    iops: OntapLunMetricIops = Field(default_factory=OntapLunMetricIops)
+    latency: OntapLunMetricLatency = Field(default_factory=OntapLunMetricLatency)
+    status: str = ""
+    throughput: OntapLunMetricThroughput = Field(default_factory=OntapLunMetricThroughput)
+    timestamp: str = ""
+
+
+class OntapLunMovementPaths(OntapModel):
+    """OntapLunMovementPaths sub-model for paths."""
+
+    destination: str = ""
+    source: str = ""
+
+
+class OntapLunMovementProgressFailureArgument(OntapModel):
+    """OntapLunMovementProgressFailureArgument sub-model for arguments."""
 
     code: str = ""
     message: str = ""
 
 
-class OntapLunObjectStore(OntapModel):
-    """OntapLunObjectStore sub-model for object_stores."""
+class OntapLunMovementProgressFailure(OntapModel):
+    """OntapLunMovementProgressFailure sub-model for failure."""
+
+    arguments: list[OntapLunMovementProgressFailureArgument] = Field(default_factory=list)
+    code: str = ""
+    message: str = ""
+
+
+class OntapLunMovementProgress(OntapModel):
+    """OntapLunMovementProgress sub-model for progress."""
+
+    elapsed: int = 0
+    failure: OntapLunMovementProgressFailure = Field(
+        default_factory=OntapLunMovementProgressFailure
+    )
+    percent_complete: int = 0
+    state: str = ""
+    volume_snapshot_blocked: bool = False
+
+
+class OntapLunMovement(OntapModel):
+    """OntapLunMovement sub-model for movement."""
+
+    max_throughput: int = 0
+    paths: OntapLunMovementPaths = Field(default_factory=OntapLunMovementPaths)
+    progress: OntapLunMovementProgress = Field(default_factory=OntapLunMovementProgress)
+
+
+class OntapLunProvisioningOptionsQosPolicy(OntapModel):
+    """OntapLunProvisioningOptionsQosPolicy sub-model for qos_policy."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapLunProvisioningOptionsSnapshotPolicy(OntapModel):
+    """OntapLunProvisioningOptionsSnapshotPolicy sub-model for snapshot_policy."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapLunProvisioningOptionsStorageService(OntapModel):
+    """OntapLunProvisioningOptionsStorageService sub-model for storage_service."""
 
     name: str = ""
 
 
-class OntapLunBinding(OntapModel):
-    """OntapLunBinding sub-model for bindings."""
+class OntapLunProvisioningOptionsTieringObjectStore(OntapModel):
+    """OntapLunProvisioningOptionsTieringObjectStore sub-model for object_stores."""
+
+    name: str = ""
+
+
+class OntapLunProvisioningOptionsTiering(OntapModel):
+    """OntapLunProvisioningOptionsTiering sub-model for tiering."""
+
+    control: str = ""
+    object_stores: list[OntapLunProvisioningOptionsTieringObjectStore] = Field(default_factory=list)
+    policy: str = ""
+
+
+class OntapLunProvisioningOptions(OntapModel):
+    """OntapLunProvisioningOptions sub-model for provisioning_options."""
+
+    auto: bool = False
+    count: int = 0
+    qos_policy: OntapLunProvisioningOptionsQosPolicy = Field(
+        default_factory=OntapLunProvisioningOptionsQosPolicy
+    )
+    snapshot_policy: OntapLunProvisioningOptionsSnapshotPolicy = Field(
+        default_factory=OntapLunProvisioningOptionsSnapshotPolicy
+    )
+    storage_service: OntapLunProvisioningOptionsStorageService = Field(
+        default_factory=OntapLunProvisioningOptionsStorageService
+    )
+    tiering: OntapLunProvisioningOptionsTiering = Field(
+        default_factory=OntapLunProvisioningOptionsTiering
+    )
+    use_mirrored_aggregates: bool = False
+
+
+class OntapLunQosPolicy(OntapModel):
+    """OntapLunQosPolicy sub-model for qos_policy."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapLunSpaceGuarantee(OntapModel):
+    """OntapLunSpaceGuarantee sub-model for guarantee."""
+
+    requested: bool = False
+    reserved: bool = False
+
+
+class OntapLunSpace(OntapModel):
+    """OntapLunSpace sub-model for space."""
+
+    efficiency_ratio: float = 0.0
+    guarantee: OntapLunSpaceGuarantee = Field(default_factory=OntapLunSpaceGuarantee)
+    physical_used: int = 0
+    physical_used_by_snapshots: int = 0
+    scsi_thin_provisioning_support_enabled: bool = False
+    size: int = 0
+    used: int = 0
+
+
+class OntapLunStatisticsIopsRaw(OntapModel):
+    """OntapLunStatisticsIopsRaw sub-model for iops_raw."""
+
+    other: int = 0
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapLunStatisticsLatencyRaw(OntapModel):
+    """OntapLunStatisticsLatencyRaw sub-model for latency_raw."""
+
+    other: int = 0
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapLunStatisticsThroughputRaw(OntapModel):
+    """OntapLunStatisticsThroughputRaw sub-model for throughput_raw."""
+
+    other: int = 0
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapLunStatistics(OntapModel):
+    """OntapLunStatistics sub-model for statistics."""
+
+    iops_raw: OntapLunStatisticsIopsRaw = Field(default_factory=OntapLunStatisticsIopsRaw)
+    latency_raw: OntapLunStatisticsLatencyRaw = Field(default_factory=OntapLunStatisticsLatencyRaw)
+    status: str = ""
+    throughput_raw: OntapLunStatisticsThroughputRaw = Field(
+        default_factory=OntapLunStatisticsThroughputRaw
+    )
+    timestamp: str = ""
+
+
+class OntapLunStatus(OntapModel):
+    """OntapLunStatus sub-model for status."""
+
+    container_state: str = ""
+    mapped: bool = False
+    read_only: bool = False
+    state: str = ""
+
+
+class OntapLunSvm(OntapModel):
+    """OntapLunSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapLunVvolBindingPartner(OntapModel):
+    """OntapLunVvolBindingPartner sub-model for partner."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapLunVvolBinding(OntapModel):
+    """OntapLunVvolBinding sub-model for bindings."""
 
     id: int = 0
-    partner_name: str = ""
-    partner_uuid: str = ""
+    partner: OntapLunVvolBindingPartner = Field(default_factory=OntapLunVvolBindingPartner)
     secondary_id: str = ""
+
+
+class OntapLunVvol(OntapModel):
+    """OntapLunVvol sub-model for vvol."""
+
+    bindings: list[OntapLunVvolBinding] = Field(default_factory=list)
+    is_bound: bool = False
 
 
 class OntapLun(OntapModel):
@@ -81,107 +450,27 @@ class OntapLun(OntapModel):
     attributes: list[OntapLunAttribute] = Field(default_factory=list)
     auto_delete: bool = False
     class_: str = ""
-    clone_source_name: str = ""
-    clone_source_uuid: str = ""
+    clone: OntapLunClone = Field(default_factory=OntapLunClone)
     comment: str = ""
-    consistency_group_name: str = ""
-    consistency_group_uuid: str = ""
-    convert_namespace_name: str = ""
-    convert_namespace_uuid: str = ""
-    copy_destinations: list[OntapLunDestination] = Field(default_factory=list)
-    copy_source_max_throughput: int = 0
-    copy_source_name: str = ""
-    copy_source_peer_name: str = ""
-    copy_source_peer_uuid: str = ""
-    copy_source_progress_elapsed: int = 0
-    copy_source_progress_failure_arguments: list[OntapLunArgument] = Field(default_factory=list)
-    copy_source_progress_failure_code: str = ""
-    copy_source_progress_failure_message: str = ""
-    copy_source_progress_percent_complete: int = 0
-    copy_source_progress_state: str = ""
-    copy_source_progress_volume_snapshot_blocked: bool = False
-    copy_source_uuid: str = ""
+    consistency_group: OntapLunConsistencyGroup = Field(default_factory=OntapLunConsistencyGroup)
+    convert: OntapLunConvert = Field(default_factory=OntapLunConvert)
+    copy_: OntapLunCopy = Field(default_factory=OntapLunCopy)
     create_time: str = ""
     enabled: bool = False
-    location_logical_unit: str = ""
-    location_node_name: str = ""
-    location_node_uuid: str = ""
-    location_qtree_id: int = 0
-    location_qtree_name: str = ""
-    location_volume_name: str = ""
-    location_volume_uuid: str = ""
+    location: OntapLunLocation = Field(default_factory=OntapLunLocation)
     lun_maps: list[OntapLunLunMap] = Field(default_factory=list)
-    metric_duration: str = ""
-    metric_iops_other: int = 0
-    metric_iops_read: int = 0
-    metric_iops_total: int = 0
-    metric_iops_write: int = 0
-    metric_latency_other: int = 0
-    metric_latency_read: int = 0
-    metric_latency_total: int = 0
-    metric_latency_write: int = 0
-    metric_status: str = ""
-    metric_throughput_other: int = 0
-    metric_throughput_read: int = 0
-    metric_throughput_total: int = 0
-    metric_throughput_write: int = 0
-    metric_timestamp: str = ""
-    movement_max_throughput: int = 0
-    movement_paths_destination: str = ""
-    movement_paths_source: str = ""
-    movement_progress_elapsed: int = 0
-    movement_progress_failure_arguments: list[OntapLunArgument2] = Field(default_factory=list)
-    movement_progress_failure_code: str = ""
-    movement_progress_failure_message: str = ""
-    movement_progress_percent_complete: int = 0
-    movement_progress_state: str = ""
-    movement_progress_volume_snapshot_blocked: bool = False
+    metric: OntapLunMetric = Field(default_factory=OntapLunMetric)
+    movement: OntapLunMovement = Field(default_factory=OntapLunMovement)
     name: str = ""
     os_type: str = ""
-    provisioning_options_auto: bool = False
-    provisioning_options_count: int = 0
-    provisioning_options_qos_policy_name: str = ""
-    provisioning_options_qos_policy_uuid: str = ""
-    provisioning_options_snapshot_policy_name: str = ""
-    provisioning_options_snapshot_policy_uuid: str = ""
-    provisioning_options_storage_service_name: str = ""
-    provisioning_options_tiering_control: str = ""
-    provisioning_options_tiering_object_stores: list[OntapLunObjectStore] = Field(
-        default_factory=list
+    provisioning_options: OntapLunProvisioningOptions = Field(
+        default_factory=OntapLunProvisioningOptions
     )
-    provisioning_options_tiering_policy: str = ""
-    provisioning_options_use_mirrored_aggregates: bool = False
-    qos_policy_name: str = ""
-    qos_policy_uuid: str = ""
+    qos_policy: OntapLunQosPolicy = Field(default_factory=OntapLunQosPolicy)
     serial_number: str = ""
-    space_efficiency_ratio: float = 0.0
-    space_guarantee_requested: bool = False
-    space_guarantee_reserved: bool = False
-    space_physical_used: int = 0
-    space_physical_used_by_snapshots: int = 0
-    space_scsi_thin_provisioning_support_enabled: bool = False
-    space_size: int = 0
-    space_used: int = 0
-    statistics_iops_raw_other: int = 0
-    statistics_iops_raw_read: int = 0
-    statistics_iops_raw_total: int = 0
-    statistics_iops_raw_write: int = 0
-    statistics_latency_raw_other: int = 0
-    statistics_latency_raw_read: int = 0
-    statistics_latency_raw_total: int = 0
-    statistics_latency_raw_write: int = 0
-    statistics_status: str = ""
-    statistics_throughput_raw_other: int = 0
-    statistics_throughput_raw_read: int = 0
-    statistics_throughput_raw_total: int = 0
-    statistics_throughput_raw_write: int = 0
-    statistics_timestamp: str = ""
-    status_container_state: str = ""
-    status_mapped: bool = False
-    status_read_only: bool = False
-    status_state: str = ""
-    svm_name: str = ""
-    svm_uuid: str = ""
+    space: OntapLunSpace = Field(default_factory=OntapLunSpace)
+    statistics: OntapLunStatistics = Field(default_factory=OntapLunStatistics)
+    status: OntapLunStatus = Field(default_factory=OntapLunStatus)
+    svm: OntapLunSvm = Field(default_factory=OntapLunSvm)
     uuid: str = ""
-    vvol_bindings: list[OntapLunBinding] = Field(default_factory=list)
-    vvol_is_bound: bool = False
+    vvol: OntapLunVvol = Field(default_factory=OntapLunVvol)

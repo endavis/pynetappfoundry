@@ -12,95 +12,95 @@ cache_strategy = "cache"
 [fields.name]
 cache_strategy = "cache"
 
-[fields.name_mapping_account_unix]
+[fields."name_mapping.account.unix"]
 cache_strategy = "cache"
 
-[fields.name_mapping_account_windows]
+[fields."name_mapping.account.windows"]
 cache_strategy = "cache"
 
-[fields.name_mapping_windows_to_unix_attribute]
+[fields."name_mapping.windows_to_unix.attribute"]
 cache_strategy = "cache"
 
-[fields.name_mapping_windows_to_unix_no_domain_prefix]
+[fields."name_mapping.windows_to_unix.no_domain_prefix"]
 cache_strategy = "cache"
 
-[fields.name_mapping_windows_to_unix_object_class]
+[fields."name_mapping.windows_to_unix.object_class"]
 cache_strategy = "cache"
 
-[fields.owner_name]
+[fields."owner.name"]
 cache_strategy = "cache"
 
-[fields.owner_uuid]
+[fields."owner.uuid"]
 cache_strategy = "cache"
 
-[fields.rfc2307_attribute_gecos]
+[fields."rfc2307.attribute.gecos"]
 cache_strategy = "cache"
 
-[fields.rfc2307_attribute_gid_number]
+[fields."rfc2307.attribute.gid_number"]
 cache_strategy = "cache"
 
-[fields.rfc2307_attribute_home_directory]
+[fields."rfc2307.attribute.home_directory"]
 cache_strategy = "cache"
 
-[fields.rfc2307_attribute_login_shell]
+[fields."rfc2307.attribute.login_shell"]
 cache_strategy = "cache"
 
-[fields.rfc2307_attribute_uid]
+[fields."rfc2307.attribute.uid"]
 cache_strategy = "cache"
 
-[fields.rfc2307_attribute_uid_number]
+[fields."rfc2307.attribute.uid_number"]
 cache_strategy = "cache"
 
-[fields.rfc2307_attribute_user_password]
+[fields."rfc2307.attribute.user_password"]
 cache_strategy = "cache"
 
-[fields.rfc2307_cn_group]
+[fields."rfc2307.cn.group"]
 cache_strategy = "cache"
 
-[fields.rfc2307_cn_netgroup]
+[fields."rfc2307.cn.netgroup"]
 cache_strategy = "cache"
 
-[fields.rfc2307_member_nis_netgroup]
+[fields."rfc2307.member.nis_netgroup"]
 cache_strategy = "cache"
 
-[fields.rfc2307_member_uid]
+[fields."rfc2307.member.uid"]
 cache_strategy = "cache"
 
-[fields.rfc2307_nis_mapentry]
+[fields."rfc2307.nis.mapentry"]
 cache_strategy = "cache"
 
-[fields.rfc2307_nis_mapname]
+[fields."rfc2307.nis.mapname"]
 cache_strategy = "cache"
 
-[fields.rfc2307_nis_netgroup]
+[fields."rfc2307.nis.netgroup"]
 cache_strategy = "cache"
 
-[fields.rfc2307_nis_netgroup_triple]
+[fields."rfc2307.nis.netgroup_triple"]
 cache_strategy = "cache"
 
-[fields.rfc2307_nis_object]
+[fields."rfc2307.nis.object"]
 cache_strategy = "cache"
 
-[fields.rfc2307_posix_account]
+[fields."rfc2307.posix.account"]
 cache_strategy = "cache"
 
-[fields.rfc2307_posix_group]
+[fields."rfc2307.posix.group"]
 cache_strategy = "cache"
 
-[fields.rfc2307bis_enabled]
+[fields."rfc2307bis.enabled"]
 cache_strategy = "cache"
 
-[fields.rfc2307bis_group_of_unique_names]
+[fields."rfc2307bis.group_of_unique_names"]
 cache_strategy = "cache"
 
-[fields.rfc2307bis_maximum_groups]
+[fields."rfc2307bis.maximum_groups"]
 cache_strategy = "cache"
 
-[fields.rfc2307bis_unique_member]
+[fields."rfc2307bis.unique_member"]
 cache_strategy = "cache"
 
 [fields.scope]
 cache_strategy = "cache"
 
-[fields.template_name]
+[fields."template.name"]
 cache_strategy = "cache"

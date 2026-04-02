@@ -8,21 +8,14 @@ from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.storage.switches.model import (
     OntapStorageSwitch,
-    OntapStorageSwitchConnection,
     OntapStorageSwitchError,
     OntapStorageSwitchFan,
-    OntapStorageSwitchPath,
     OntapStorageSwitchPort,
     OntapStorageSwitchPowerSupplyUnit,
     OntapStorageSwitchTemperatureSensor,
     OntapStorageSwitchVsan,
     OntapStorageSwitchZone,
 )
-
-
-def _transform_connections(record: dict[str, Any]) -> list[OntapStorageSwitchConnection]:
-    """Transform connections into OntapStorageSwitchConnection list."""
-    return [OntapStorageSwitchConnection(**item) for item in record.get("connections", [])]
 
 
 def _transform_errors(record: dict[str, Any]) -> list[OntapStorageSwitchError]:
@@ -33,11 +26,6 @@ def _transform_errors(record: dict[str, Any]) -> list[OntapStorageSwitchError]:
 def _transform_fans(record: dict[str, Any]) -> list[OntapStorageSwitchFan]:
     """Transform fans into OntapStorageSwitchFan list."""
     return [OntapStorageSwitchFan(**item) for item in record.get("fans", [])]
-
-
-def _transform_paths(record: dict[str, Any]) -> list[OntapStorageSwitchPath]:
-    """Transform paths into OntapStorageSwitchPath list."""
-    return [OntapStorageSwitchPath(**item) for item in record.get("paths", [])]
 
 
 def _transform_ports(record: dict[str, Any]) -> list[OntapStorageSwitchPort]:
@@ -83,7 +71,6 @@ ONTAPSTORAGESWITCH_MAPPING = TypeMapping(
         FieldMapping(
             cache_attr="connections",
             api_path="connections",
-            transform=_transform_connections,
             default=[],
         ),
         FieldMapping(
@@ -146,7 +133,6 @@ ONTAPSTORAGESWITCH_MAPPING = TypeMapping(
         FieldMapping(
             cache_attr="paths",
             api_path="paths",
-            transform=_transform_paths,
             default=[],
         ),
         FieldMapping(

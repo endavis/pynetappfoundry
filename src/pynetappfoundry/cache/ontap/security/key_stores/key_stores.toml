@@ -3,10 +3,10 @@ path = "/security/key-stores"
 schema = "security_keystore"
 class_name = "OntapSecurityKeystore"
 
-[fields.configuration_name]
+[fields."configuration.name"]
 cache_strategy = "cache"
 
-[fields.configuration_uuid]
+[fields."configuration.uuid"]
 cache_strategy = "cache"
 
 [fields.enabled]
@@ -21,10 +21,10 @@ cache_strategy = "cache"
 [fields.state]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.type_]

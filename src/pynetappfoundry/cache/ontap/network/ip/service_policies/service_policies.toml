@@ -3,10 +3,10 @@ path = "/network/ip/service-policies"
 schema = "ip_service_policy"
 class_name = "OntapIpServicePolicy"
 
-[fields.ipspace_name]
+[fields."ipspace.name"]
 cache_strategy = "cache"
 
-[fields.ipspace_uuid]
+[fields."ipspace.uuid"]
 cache_strategy = "cache"
 
 [fields.is_built_in]
@@ -21,10 +21,10 @@ cache_strategy = "cache"
 [fields.services]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.uuid]

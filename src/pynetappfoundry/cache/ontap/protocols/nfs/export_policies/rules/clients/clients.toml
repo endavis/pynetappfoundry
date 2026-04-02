@@ -9,11 +9,11 @@ cache_strategy = "cache"
 [fields.match]
 cache_strategy = "cache"
 
-[fields.policy_id]
+[fields."policy.id"]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"

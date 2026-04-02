@@ -7,6 +7,13 @@ from pydantic import Field
 from pynetappfoundry.models._base import OntapModel
 
 
+class OntapMultiAdminVerifyRequestOwner(OntapModel):
+    """OntapMultiAdminVerifyRequestOwner sub-model for owner."""
+
+    name: str = ""
+    uuid: str = ""
+
+
 class OntapMultiAdminVerifyRequest(OntapModel):
     """OntapMultiAdminVerifyRequest information."""
 
@@ -19,8 +26,9 @@ class OntapMultiAdminVerifyRequest(OntapModel):
     execution_expiry_time: str = ""
     index: int = 0
     operation: str = ""
-    owner_name: str = ""
-    owner_uuid: str = ""
+    owner: OntapMultiAdminVerifyRequestOwner = Field(
+        default_factory=OntapMultiAdminVerifyRequestOwner
+    )
     pending_approvers: int = 0
     permitted_users: list[str] = Field(default_factory=list)
     potential_approvers: list[str] = Field(default_factory=list)

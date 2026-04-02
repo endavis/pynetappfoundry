@@ -7,6 +7,13 @@ from pydantic import Field
 from pynetappfoundry.models._base import OntapModel
 
 
+class OntapSvmSshServerSvm(OntapModel):
+    """OntapSvmSshServerSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
+
+
 class OntapSvmSshServer(OntapModel):
     """OntapSvmSshServer information."""
 
@@ -16,5 +23,4 @@ class OntapSvmSshServer(OntapModel):
     key_exchange_algorithms: list[str] = Field(default_factory=list)
     mac_algorithms: list[str] = Field(default_factory=list)
     max_authentication_retry_count: int = 0
-    svm_name: str = ""
-    svm_uuid: str = ""
+    svm: OntapSvmSshServerSvm = Field(default_factory=OntapSvmSshServerSvm)

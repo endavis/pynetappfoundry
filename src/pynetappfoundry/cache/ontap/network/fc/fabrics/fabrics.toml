@@ -3,13 +3,13 @@ path = "/network/fc/fabrics"
 schema = "fabric"
 class_name = "OntapFabric"
 
-[fields.cache_age]
+[fields."cache.age"]
 cache_strategy = "cache"
 
-[fields.cache_is_current]
+[fields."cache.is_current"]
 cache_strategy = "cache"
 
-[fields.cache_update_time]
+[fields."cache.update_time"]
 cache_strategy = "cache"
 
 [fields.connections]
@@ -19,5 +19,5 @@ requires_explicit_fetch = true
 [fields.name]
 cache_strategy = "cache"
 
-[fields.zoneset_name]
+[fields."zoneset.name"]
 cache_strategy = "cache"

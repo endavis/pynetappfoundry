@@ -6,82 +6,82 @@ class_name = "OntapSnapmirrorRelationship"
 [fields.backoff_level]
 cache_strategy = "cache"
 
-[fields.consistency_group_failover_error_arguments]
+[fields."consistency_group_failover.error.arguments"]
 cache_strategy = "cache"
 
-[fields.consistency_group_failover_error_code]
+[fields."consistency_group_failover.error.code"]
 cache_strategy = "cache"
 
-[fields.consistency_group_failover_error_message]
+[fields."consistency_group_failover.error.message"]
 cache_strategy = "cache"
 
-[fields.consistency_group_failover_state]
+[fields."consistency_group_failover.state"]
 cache_strategy = "cache"
 
-[fields.consistency_group_failover_status_code]
+[fields."consistency_group_failover.status.code"]
 cache_strategy = "cache"
 
-[fields.consistency_group_failover_status_message]
+[fields."consistency_group_failover.status.message"]
 cache_strategy = "cache"
 
-[fields.consistency_group_failover_type]
+[fields."consistency_group_failover.type_"]
 cache_strategy = "cache"
 
-[fields.create_destination_bucket_retention_default_period]
+[fields."create_destination.bucket_retention.default_period"]
 cache_strategy = "cache"
 
-[fields.create_destination_bucket_retention_mode]
+[fields."create_destination.bucket_retention.mode"]
 cache_strategy = "cache"
 
-[fields.create_destination_enabled]
+[fields."create_destination.enabled"]
 cache_strategy = "cache"
 
-[fields.create_destination_size]
+[fields."create_destination.size"]
 cache_strategy = "cache"
 
-[fields.create_destination_snapshot_locking_enabled]
+[fields."create_destination.snapshot_locking_enabled"]
 cache_strategy = "cache"
 
-[fields.create_destination_storage_service_enabled]
+[fields."create_destination.storage_service.enabled"]
 cache_strategy = "cache"
 
-[fields.create_destination_storage_service_enforce_performance]
+[fields."create_destination.storage_service.enforce_performance"]
 cache_strategy = "cache"
 
-[fields.create_destination_storage_service_name]
+[fields."create_destination.storage_service.name"]
 cache_strategy = "cache"
 
-[fields.create_destination_tiering_policy]
+[fields."create_destination.tiering.policy"]
 cache_strategy = "cache"
 
-[fields.create_destination_tiering_supported]
+[fields."create_destination.tiering.supported"]
 cache_strategy = "cache"
 
-[fields.destination_cluster_name]
+[fields."destination.cluster.name"]
 cache_strategy = "cache"
 
-[fields.destination_cluster_uuid]
+[fields."destination.cluster.uuid"]
 cache_strategy = "cache"
 
-[fields.destination_consistency_group_volumes]
+[fields."destination.consistency_group_volumes"]
 cache_strategy = "cache"
 
-[fields.destination_ipspace]
+[fields."destination.ipspace"]
 cache_strategy = "cache"
 
-[fields.destination_luns_name]
+[fields."destination.luns.name"]
 cache_strategy = "cache"
 
-[fields.destination_luns_uuid]
+[fields."destination.luns.uuid"]
 cache_strategy = "cache"
 
-[fields.destination_path]
+[fields."destination.path"]
 cache_strategy = "cache"
 
-[fields.destination_svm_name]
+[fields."destination.svm.name"]
 cache_strategy = "cache"
 
-[fields.destination_svm_uuid]
+[fields."destination.svm.uuid"]
 cache_strategy = "cache"
 
 [fields.exported_snapshot]
@@ -111,13 +111,13 @@ cache_strategy = "realtime"
 [fields.master_bias_activated_site]
 cache_strategy = "cache"
 
-[fields.policy_name]
+[fields."policy.name"]
 cache_strategy = "cache"
 
-[fields.policy_type]
+[fields."policy.type_"]
 cache_strategy = "cache"
 
-[fields.policy_uuid]
+[fields."policy.uuid"]
 cache_strategy = "cache"
 
 [fields.preferred_site]
@@ -138,28 +138,28 @@ cache_strategy = "cache"
 [fields.restore_to_snapshot]
 cache_strategy = "cache"
 
-[fields.source_cluster_name]
+[fields."source.cluster.name"]
 cache_strategy = "cache"
 
-[fields.source_cluster_uuid]
+[fields."source.cluster.uuid"]
 cache_strategy = "cache"
 
-[fields.source_consistency_group_volumes]
+[fields."source.consistency_group_volumes"]
 cache_strategy = "cache"
 
-[fields.source_luns_name]
+[fields."source.luns.name"]
 cache_strategy = "cache"
 
-[fields.source_luns_uuid]
+[fields."source.luns.uuid"]
 cache_strategy = "cache"
 
-[fields.source_path]
+[fields."source.path"]
 cache_strategy = "cache"
 
-[fields.source_svm_name]
+[fields."source.svm.name"]
 cache_strategy = "cache"
 
-[fields.source_svm_uuid]
+[fields."source.svm.uuid"]
 cache_strategy = "cache"
 
 [fields.state]
@@ -177,31 +177,31 @@ cache_strategy = "cache"
 [fields.total_transfer_duration]
 cache_strategy = "cache"
 
-[fields.transfer_bytes_transferred]
+[fields."transfer.bytes_transferred"]
 cache_strategy = "realtime"
 
-[fields.transfer_end_time]
+[fields."transfer.end_time"]
 cache_strategy = "realtime"
 
-[fields.transfer_last_updated_time]
+[fields."transfer.last_updated_time"]
 cache_strategy = "realtime"
 
-[fields.transfer_state]
+[fields."transfer.state"]
 cache_strategy = "realtime"
 
-[fields.transfer_total_duration]
+[fields."transfer.total_duration"]
 cache_strategy = "realtime"
 
-[fields.transfer_type]
+[fields."transfer.type_"]
 cache_strategy = "cache"
 
-[fields.transfer_uuid]
+[fields."transfer.uuid"]
 cache_strategy = "cache"
 
-[fields.transfer_schedule_name]
+[fields."transfer_schedule.name"]
 cache_strategy = "cache"
 
-[fields.transfer_schedule_uuid]
+[fields."transfer_schedule.uuid"]
 cache_strategy = "cache"
 
 [fields.unhealthy_reason]

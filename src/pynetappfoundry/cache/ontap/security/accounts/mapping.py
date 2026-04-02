@@ -43,11 +43,11 @@ ONTAPACCOUNT_MAPPING = TypeMapping(
             api_path="name",
         ),
         FieldMapping(
-            cache_attr="owner_name",
+            cache_attr="owner.name",
             api_path="owner.name",
         ),
         FieldMapping(
-            cache_attr="owner_uuid",
+            cache_attr="owner.uuid",
             api_path="owner.uuid",
         ),
         FieldMapping(
@@ -59,7 +59,7 @@ ONTAPACCOUNT_MAPPING = TypeMapping(
             api_path="password_hash_algorithm",
         ),
         FieldMapping(
-            cache_attr="role_name",
+            cache_attr="role.name",
             api_path="role.name",
         ),
         FieldMapping(

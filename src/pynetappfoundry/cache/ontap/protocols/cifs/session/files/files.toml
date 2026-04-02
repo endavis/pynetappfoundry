@@ -3,10 +3,10 @@ path = "/protocols/cifs/session/files"
 schema = "cifs_open_file"
 class_name = "OntapCifsOpenFile"
 
-[fields.connection_count]
+[fields."connection.count"]
 cache_strategy = "realtime"
 
-[fields.connection_identifier]
+[fields."connection.identifier"]
 cache_strategy = "cache"
 
 [fields.continuously_available]
@@ -15,10 +15,10 @@ cache_strategy = "realtime"
 [fields.identifier]
 cache_strategy = "cache"
 
-[fields.node_name]
+[fields."node.name"]
 cache_strategy = "cache"
 
-[fields.node_uuid]
+[fields."node.uuid"]
 cache_strategy = "cache"
 
 [fields.open_mode]
@@ -30,26 +30,26 @@ cache_strategy = "cache"
 [fields.range_locks_count]
 cache_strategy = "realtime"
 
-[fields.session_identifier]
+[fields."session.identifier"]
 cache_strategy = "cache"
 
-[fields.share_mode]
+[fields."share.mode"]
 cache_strategy = "cache"
 
-[fields.share_name]
+[fields."share.name"]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.type_]
 cache_strategy = "cache"
 
-[fields.volume_name]
+[fields."volume.name"]
 cache_strategy = "cache"
 
-[fields.volume_uuid]
+[fields."volume.uuid"]
 cache_strategy = "cache"

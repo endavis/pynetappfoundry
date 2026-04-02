@@ -3,79 +3,79 @@ path = "/protocols/nvme/subsystem-controllers"
 schema = "nvme_subsystem_controller"
 class_name = "OntapNvmeSubsystemController"
 
-[fields.admin_queue_depth]
+[fields."admin_queue.depth"]
 cache_strategy = "cache"
 
-[fields.dh_hmac_chap_group_size]
+[fields."dh_hmac_chap.group_size"]
 cache_strategy = "cache"
 
-[fields.dh_hmac_chap_hash_function]
+[fields."dh_hmac_chap.hash_function"]
 cache_strategy = "cache"
 
-[fields.dh_hmac_chap_mode]
+[fields."dh_hmac_chap.mode"]
 cache_strategy = "cache"
 
-[fields.digest_data]
+[fields."digest.data"]
 cache_strategy = "cache"
 
-[fields.digest_header]
+[fields."digest.header"]
 cache_strategy = "cache"
 
-[fields.host_id]
+[fields."host.id"]
 cache_strategy = "cache"
 
-[fields.host_nqn]
+[fields."host.nqn"]
 cache_strategy = "cache"
 
-[fields.host_transport_address]
+[fields."host.transport_address"]
 cache_strategy = "cache"
 
 [fields.id]
 cache_strategy = "cache"
 
-[fields.interface_name]
+[fields."interface.name"]
 cache_strategy = "cache"
 
-[fields.interface_transport_address]
+[fields."interface.transport_address"]
 cache_strategy = "cache"
 
-[fields.interface_uuid]
+[fields."interface.uuid"]
 cache_strategy = "cache"
 
-[fields.io_queue_count]
+[fields."io_queue.count"]
 cache_strategy = "cache"
 
-[fields.io_queue_depth]
+[fields."io_queue.depth"]
 cache_strategy = "cache"
 
 [fields.keep_alive_timeout]
 cache_strategy = "cache"
 
-[fields.node_name]
+[fields."node.name"]
 cache_strategy = "cache"
 
-[fields.node_uuid]
+[fields."node.uuid"]
 cache_strategy = "cache"
 
-[fields.subsystem_name]
+[fields."subsystem.name"]
 cache_strategy = "cache"
 
-[fields.subsystem_uuid]
+[fields."subsystem.uuid"]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
-[fields.tls_cipher]
+[fields."tls.cipher"]
 cache_strategy = "cache"
 
-[fields.tls_key_type]
+[fields."tls.key_type"]
 cache_strategy = "cache"
 
-[fields.tls_psk_identity]
+[fields."tls.psk_identity"]
 cache_strategy = "cache"
 
 [fields.transport_protocol]

@@ -2,7 +2,16 @@
 
 from __future__ import annotations
 
+from pydantic import Field
+
 from pynetappfoundry.models._base import OntapModel
+
+
+class OntapSnaplockRetentionPolicySvm(OntapModel):
+    """OntapSnaplockRetentionPolicySvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapSnaplockRetentionPolicy(OntapModel):
@@ -10,5 +19,4 @@ class OntapSnaplockRetentionPolicy(OntapModel):
 
     name: str = ""
     retention_period: str = ""
-    svm_name: str = ""
-    svm_uuid: str = ""
+    svm: OntapSnaplockRetentionPolicySvm = Field(default_factory=OntapSnaplockRetentionPolicySvm)

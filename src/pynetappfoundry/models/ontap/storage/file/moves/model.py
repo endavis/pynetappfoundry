@@ -7,73 +7,195 @@ from pydantic import Field
 from pynetappfoundry.models._base import OntapModel
 
 
-class OntapFileMoveArgument(OntapModel):
-    """OntapFileMoveArgument sub-model for arguments."""
+class OntapFileMoveDestinationSvm(OntapModel):
+    """OntapFileMoveDestinationSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapFileMoveDestinationVolume(OntapModel):
+    """OntapFileMoveDestinationVolume sub-model for volume."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapFileMoveDestination(OntapModel):
+    """OntapFileMoveDestination sub-model for destination."""
+
+    path: str = ""
+    svm: OntapFileMoveDestinationSvm = Field(default_factory=OntapFileMoveDestinationSvm)
+    volume: OntapFileMoveDestinationVolume = Field(default_factory=OntapFileMoveDestinationVolume)
+
+
+class OntapFileMoveFailureArgument(OntapModel):
+    """OntapFileMoveFailureArgument sub-model for arguments."""
 
     code: str = ""
     message: str = ""
 
 
-class OntapFileMoveDestination(OntapModel):
-    """OntapFileMoveDestination sub-model for destinations."""
+class OntapFileMoveFailure(OntapModel):
+    """OntapFileMoveFailure sub-model for failure."""
+
+    arguments: list[OntapFileMoveFailureArgument] = Field(default_factory=list)
+    code: str = ""
+    message: str = ""
+
+
+class OntapFileMoveFilesToMoveDestinationSvm(OntapModel):
+    """OntapFileMoveFilesToMoveDestinationSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapFileMoveFilesToMoveDestinationVolume(OntapModel):
+    """OntapFileMoveFilesToMoveDestinationVolume sub-model for volume."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapFileMoveFilesToMoveDestination(OntapModel):
+    """OntapFileMoveFilesToMoveDestination sub-model for destinations."""
 
     path: str = ""
-    svm_name: str = ""
-    svm_uuid: str = ""
-    volume_name: str = ""
-    volume_uuid: str = ""
+    svm: OntapFileMoveFilesToMoveDestinationSvm = Field(
+        default_factory=OntapFileMoveFilesToMoveDestinationSvm
+    )
+    volume: OntapFileMoveFilesToMoveDestinationVolume = Field(
+        default_factory=OntapFileMoveFilesToMoveDestinationVolume
+    )
+
+
+class OntapFileMoveFilesToMoveSourceSvm(OntapModel):
+    """OntapFileMoveFilesToMoveSourceSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapFileMoveFilesToMoveSourceVolume(OntapModel):
+    """OntapFileMoveFilesToMoveSourceVolume sub-model for volume."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapFileMoveFilesToMoveSource(OntapModel):
+    """OntapFileMoveFilesToMoveSource sub-model for sources."""
+
+    path: str = ""
+    svm: OntapFileMoveFilesToMoveSourceSvm = Field(
+        default_factory=OntapFileMoveFilesToMoveSourceSvm
+    )
+    volume: OntapFileMoveFilesToMoveSourceVolume = Field(
+        default_factory=OntapFileMoveFilesToMoveSourceVolume
+    )
+
+
+class OntapFileMoveFilesToMove(OntapModel):
+    """OntapFileMoveFilesToMove sub-model for files_to_move."""
+
+    destinations: list[OntapFileMoveFilesToMoveDestination] = Field(default_factory=list)
+    sources: list[OntapFileMoveFilesToMoveSource] = Field(default_factory=list)
+
+
+class OntapFileMoveNode(OntapModel):
+    """OntapFileMoveNode sub-model for node."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapFileMoveReferenceSvm(OntapModel):
+    """OntapFileMoveReferenceSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapFileMoveReferenceVolume(OntapModel):
+    """OntapFileMoveReferenceVolume sub-model for volume."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapFileMoveReference(OntapModel):
+    """OntapFileMoveReference sub-model for reference."""
+
+    max_cutover_time: int = 0
+    path: str = ""
+    svm: OntapFileMoveReferenceSvm = Field(default_factory=OntapFileMoveReferenceSvm)
+    volume: OntapFileMoveReferenceVolume = Field(default_factory=OntapFileMoveReferenceVolume)
+
+
+class OntapFileMoveScanner(OntapModel):
+    """OntapFileMoveScanner sub-model for scanner."""
+
+    percent: int = 0
+    progress: int = 0
+    state: str = ""
+    total: int = 0
+
+
+class OntapFileMoveSourceSvm(OntapModel):
+    """OntapFileMoveSourceSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapFileMoveSourceVolume(OntapModel):
+    """OntapFileMoveSourceVolume sub-model for volume."""
+
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapFileMoveSource(OntapModel):
-    """OntapFileMoveSource sub-model for sources."""
+    """OntapFileMoveSource sub-model for source."""
 
     path: str = ""
-    svm_name: str = ""
-    svm_uuid: str = ""
-    volume_name: str = ""
-    volume_uuid: str = ""
+    svm: OntapFileMoveSourceSvm = Field(default_factory=OntapFileMoveSourceSvm)
+    volume: OntapFileMoveSourceVolume = Field(default_factory=OntapFileMoveSourceVolume)
+
+
+class OntapFileMoveSvm(OntapModel):
+    """OntapFileMoveSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapFileMoveVolume(OntapModel):
+    """OntapFileMoveVolume sub-model for volume."""
+
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapFileMove(OntapModel):
     """OntapFileMove information."""
 
     cutover_time: int = 0
-    destination_path: str = ""
-    destination_svm_name: str = ""
-    destination_svm_uuid: str = ""
-    destination_volume_name: str = ""
-    destination_volume_uuid: str = ""
+    destination: OntapFileMoveDestination = Field(default_factory=OntapFileMoveDestination)
     elapsed_time: int = 0
-    failure_arguments: list[OntapFileMoveArgument] = Field(default_factory=list)
-    failure_code: str = ""
-    failure_message: str = ""
-    files_to_move_destinations: list[OntapFileMoveDestination] = Field(default_factory=list)
-    files_to_move_sources: list[OntapFileMoveSource] = Field(default_factory=list)
+    failure: OntapFileMoveFailure = Field(default_factory=OntapFileMoveFailure)
+    files_to_move: OntapFileMoveFilesToMove = Field(default_factory=OntapFileMoveFilesToMove)
     index: int = 0
     is_destination_ready: bool = False
     is_flexgroup: bool = False
     is_snapshot_fenced: bool = False
     max_cutover_time: int = 0
     max_throughput: int = 0
-    node_name: str = ""
-    node_uuid: str = ""
-    reference_max_cutover_time: int = 0
-    reference_path: str = ""
-    reference_svm_name: str = ""
-    reference_svm_uuid: str = ""
-    reference_volume_name: str = ""
-    reference_volume_uuid: str = ""
-    scanner_percent: int = 0
-    scanner_progress: int = 0
-    scanner_state: str = ""
-    scanner_total: int = 0
-    source_path: str = ""
-    source_svm_name: str = ""
-    source_svm_uuid: str = ""
-    source_volume_name: str = ""
-    source_volume_uuid: str = ""
-    svm_name: str = ""
-    svm_uuid: str = ""
+    node: OntapFileMoveNode = Field(default_factory=OntapFileMoveNode)
+    reference: OntapFileMoveReference = Field(default_factory=OntapFileMoveReference)
+    scanner: OntapFileMoveScanner = Field(default_factory=OntapFileMoveScanner)
+    source: OntapFileMoveSource = Field(default_factory=OntapFileMoveSource)
+    svm: OntapFileMoveSvm = Field(default_factory=OntapFileMoveSvm)
     uuid: str = ""
-    volume_name: str = ""
-    volume_uuid: str = ""
+    volume: OntapFileMoveVolume = Field(default_factory=OntapFileMoveVolume)

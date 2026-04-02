@@ -7,23 +7,52 @@ from pydantic import Field
 from pynetappfoundry.models._base import OntapModel
 
 
+class OntapAwsKmsAmazonReachability(OntapModel):
+    """OntapAwsKmsAmazonReachability sub-model for amazon_reachability."""
+
+    code: str = ""
+    message: str = ""
+    reachable: bool = False
+
+
+class OntapAwsKmsEkmipReachabilityNode(OntapModel):
+    """OntapAwsKmsEkmipReachabilityNode sub-model for node."""
+
+    name: str = ""
+    uuid: str = ""
+
+
 class OntapAwsKmsEkmipReachability(OntapModel):
     """OntapAwsKmsEkmipReachability sub-model for ekmip_reachability."""
 
     code: str = ""
     message: str = ""
-    node_name: str = ""
-    node_uuid: str = ""
+    node: OntapAwsKmsEkmipReachabilityNode = Field(default_factory=OntapAwsKmsEkmipReachabilityNode)
     reachable: bool = False
+
+
+class OntapAwsKmsState(OntapModel):
+    """OntapAwsKmsState sub-model for state."""
+
+    cluster_state: bool = False
+    code: str = ""
+    message: str = ""
+
+
+class OntapAwsKmsSvm(OntapModel):
+    """OntapAwsKmsSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapAwsKms(OntapModel):
     """OntapAwsKms information."""
 
     access_key_id: str = ""
-    amazon_reachability_code: str = ""
-    amazon_reachability_message: str = ""
-    amazon_reachability_reachable: bool = False
+    amazon_reachability: OntapAwsKmsAmazonReachability = Field(
+        default_factory=OntapAwsKmsAmazonReachability
+    )
     default_domain: str = ""
     ekmip_reachability: list[OntapAwsKmsEkmipReachability] = Field(default_factory=list)
     encryption_context: str = ""
@@ -41,11 +70,8 @@ class OntapAwsKms(OntapModel):
     secret_access_key: str = ""
     service: str = ""
     skip_verify: bool = False
-    state_cluster_state: bool = False
-    state_code: str = ""
-    state_message: str = ""
-    svm_name: str = ""
-    svm_uuid: str = ""
+    state: OntapAwsKmsState = Field(default_factory=OntapAwsKmsState)
+    svm: OntapAwsKmsSvm = Field(default_factory=OntapAwsKmsSvm)
     timeout: int = 0
     uuid: str = ""
     verify: bool = False

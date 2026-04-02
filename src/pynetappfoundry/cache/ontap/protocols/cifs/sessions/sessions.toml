@@ -33,10 +33,10 @@ cache_strategy = "cache"
 [fields.mapped_unix_user]
 cache_strategy = "cache"
 
-[fields.node_name]
+[fields."node.name"]
 cache_strategy = "cache"
 
-[fields.node_uuid]
+[fields."node.uuid"]
 cache_strategy = "cache"
 
 [fields.open_files]
@@ -60,10 +60,10 @@ cache_strategy = "cache"
 [fields.smb_signing]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.user]

@@ -2,7 +2,23 @@
 
 from __future__ import annotations
 
+from pydantic import Field
+
 from pynetappfoundry.models._base import OntapModel
+
+
+class OntapSnaplockFileFingerprintSvm(OntapModel):
+    """OntapSnaplockFileFingerprintSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapSnaplockFileFingerprintVolume(OntapModel):
+    """OntapSnaplockFileFingerprintVolume sub-model for volume."""
+
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapSnaplockFileFingerprint(OntapModel):
@@ -17,7 +33,7 @@ class OntapSnaplockFileFingerprint(OntapModel):
     path: str = ""
     scope: str = ""
     state: str = ""
-    svm_name: str = ""
-    svm_uuid: str = ""
-    volume_name: str = ""
-    volume_uuid: str = ""
+    svm: OntapSnaplockFileFingerprintSvm = Field(default_factory=OntapSnaplockFileFingerprintSvm)
+    volume: OntapSnaplockFileFingerprintVolume = Field(
+        default_factory=OntapSnaplockFileFingerprintVolume
+    )

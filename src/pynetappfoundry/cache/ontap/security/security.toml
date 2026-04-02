@@ -3,38 +3,38 @@ path = "/security"
 schema = "security_config"
 class_name = "OntapSecurityConfig"
 
-[fields.fips_enabled]
+[fields."fips.enabled"]
 cache_strategy = "cache"
 
-[fields.management_protocols_rsh_enabled]
+[fields."management_protocols.rsh_enabled"]
 cache_strategy = "cache"
 
-[fields.management_protocols_telnet_enabled]
+[fields."management_protocols.telnet_enabled"]
 cache_strategy = "cache"
 
-[fields.onboard_key_manager_configurable_status_code]
+[fields."onboard_key_manager_configurable_status.code"]
 cache_strategy = "cache"
 
-[fields.onboard_key_manager_configurable_status_message]
+[fields."onboard_key_manager_configurable_status.message"]
 cache_strategy = "cache"
 
-[fields.onboard_key_manager_configurable_status_supported]
+[fields."onboard_key_manager_configurable_status.supported"]
 cache_strategy = "cache"
 
-[fields.software_data_encryption_conversion_enabled]
+[fields."software_data_encryption.conversion_enabled"]
 cache_strategy = "cache"
 
-[fields.software_data_encryption_disabled_by_default]
+[fields."software_data_encryption.disabled_by_default"]
 cache_strategy = "cache"
 
-[fields.software_data_encryption_encryption_state]
+[fields."software_data_encryption.encryption_state"]
 cache_strategy = "cache"
 
-[fields.software_data_encryption_rekey]
+[fields."software_data_encryption.rekey"]
 cache_strategy = "cache"
 
-[fields.tls_cipher_suites]
+[fields."tls.cipher_suites"]
 cache_strategy = "cache"
 
-[fields.tls_protocol_versions]
+[fields."tls.protocol_versions"]
 cache_strategy = "cache"

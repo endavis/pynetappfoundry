@@ -12,10 +12,10 @@ cache_strategy = "realtime"
 [fields.end_time]
 cache_strategy = "realtime"
 
-[fields.error_info_code]
+[fields."error_info.code"]
 cache_strategy = "cache"
 
-[fields.error_info_message]
+[fields."error_info.message"]
 cache_strategy = "cache"
 
 [fields.files]
@@ -33,37 +33,37 @@ cache_strategy = "cache"
 [fields.options]
 cache_strategy = "cache"
 
-[fields.relationship_destination_cluster_name]
+[fields."relationship.destination.cluster.name"]
 cache_strategy = "cache"
 
-[fields.relationship_destination_cluster_uuid]
+[fields."relationship.destination.cluster.uuid"]
 cache_strategy = "cache"
 
-[fields.relationship_destination_consistency_group_volumes]
+[fields."relationship.destination.consistency_group_volumes"]
 cache_strategy = "cache"
 
-[fields.relationship_destination_ipspace]
+[fields."relationship.destination.ipspace"]
 cache_strategy = "cache"
 
-[fields.relationship_destination_luns_name]
+[fields."relationship.destination.luns.name"]
 cache_strategy = "cache"
 
-[fields.relationship_destination_luns_uuid]
+[fields."relationship.destination.luns.uuid"]
 cache_strategy = "cache"
 
-[fields.relationship_destination_path]
+[fields."relationship.destination.path"]
 cache_strategy = "cache"
 
-[fields.relationship_destination_svm_name]
+[fields."relationship.destination.svm.name"]
 cache_strategy = "cache"
 
-[fields.relationship_destination_svm_uuid]
+[fields."relationship.destination.svm.uuid"]
 cache_strategy = "cache"
 
-[fields.relationship_restore]
+[fields."relationship.restore"]
 cache_strategy = "cache"
 
-[fields.relationship_uuid]
+[fields."relationship.uuid"]
 cache_strategy = "cache"
 
 [fields.snapshot]

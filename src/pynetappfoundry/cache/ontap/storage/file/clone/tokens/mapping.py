@@ -13,19 +13,19 @@ ONTAPTOKEN_MAPPING = TypeMapping(
     api_type="ontap",
     fields=(
         FieldMapping(
-            cache_attr="expiry_time_left",
+            cache_attr="expiry_time.left",
             api_path="expiry_time.left",
         ),
         FieldMapping(
-            cache_attr="expiry_time_limit",
+            cache_attr="expiry_time.limit",
             api_path="expiry_time.limit",
         ),
         FieldMapping(
-            cache_attr="node_name",
+            cache_attr="node.name",
             api_path="node.name",
         ),
         FieldMapping(
-            cache_attr="node_uuid",
+            cache_attr="node.uuid",
             api_path="node.uuid",
         ),
         FieldMapping(

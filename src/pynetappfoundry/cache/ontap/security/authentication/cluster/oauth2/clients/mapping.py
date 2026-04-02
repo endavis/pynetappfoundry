@@ -35,11 +35,11 @@ ONTAPSECURITYOAUTH2_MAPPING = TypeMapping(
             api_path="hashed_client_secret",
         ),
         FieldMapping(
-            cache_attr="introspection_endpoint_uri",
+            cache_attr="introspection.endpoint_uri",
             api_path="introspection.endpoint_uri",
         ),
         FieldMapping(
-            cache_attr="introspection_interval",
+            cache_attr="introspection.interval",
             api_path="introspection.interval",
         ),
         FieldMapping(
@@ -47,11 +47,11 @@ ONTAPSECURITYOAUTH2_MAPPING = TypeMapping(
             api_path="issuer",
         ),
         FieldMapping(
-            cache_attr="jwks_provider_uri",
+            cache_attr="jwks.provider_uri",
             api_path="jwks.provider_uri",
         ),
         FieldMapping(
-            cache_attr="jwks_refresh_interval",
+            cache_attr="jwks.refresh_interval",
             api_path="jwks.refresh_interval",
         ),
         FieldMapping(

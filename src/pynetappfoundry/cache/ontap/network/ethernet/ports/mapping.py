@@ -8,11 +8,12 @@ from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.network.ethernet.ports.model import (
     OntapPort,
-    OntapPortActivePort,
     OntapPortDiscoveredDevice,
-    OntapPortMemberPort,
+    OntapPortLagActivePort,
+    OntapPortLagMemberPort,
     OntapPortReachableBroadcastDomain,
 )
+from pynetappfoundry.utils.dict_path import get_nested_value
 
 
 def _transform_discovered_devices(record: dict[str, Any]) -> list[OntapPortDiscoveredDevice]:
@@ -20,14 +21,22 @@ def _transform_discovered_devices(record: dict[str, Any]) -> list[OntapPortDisco
     return [OntapPortDiscoveredDevice(**item) for item in record.get("discovered_devices", [])]
 
 
-def _transform_lag_active_ports(record: dict[str, Any]) -> list[OntapPortActivePort]:
-    """Transform lag.active_ports into OntapPortActivePort list."""
-    return [OntapPortActivePort(**item) for item in record.get("lag.active_ports", [])]
+def _transform_lag_active_ports(record: dict[str, Any]) -> list[OntapPortLagActivePort]:
+    """Transform lag.active_ports into OntapPortLagActivePort list."""
+    try:
+        items = get_nested_value(record, "lag.active_ports")
+    except Exception:
+        items = []
+    return [OntapPortLagActivePort(**item) for item in items]
 
 
-def _transform_lag_member_ports(record: dict[str, Any]) -> list[OntapPortMemberPort]:
-    """Transform lag.member_ports into OntapPortMemberPort list."""
-    return [OntapPortMemberPort(**item) for item in record.get("lag.member_ports", [])]
+def _transform_lag_member_ports(record: dict[str, Any]) -> list[OntapPortLagMemberPort]:
+    """Transform lag.member_ports into OntapPortLagMemberPort list."""
+    try:
+        items = get_nested_value(record, "lag.member_ports")
+    except Exception:
+        items = []
+    return [OntapPortLagMemberPort(**item) for item in items]
 
 
 def _transform_reachable_broadcast_domains(
@@ -47,15 +56,15 @@ ONTAPPORT_MAPPING = TypeMapping(
     api_type="ontap",
     fields=(
         FieldMapping(
-            cache_attr="broadcast_domain_ipspace_name",
+            cache_attr="broadcast_domain.ipspace.name",
             api_path="broadcast_domain.ipspace.name",
         ),
         FieldMapping(
-            cache_attr="broadcast_domain_name",
+            cache_attr="broadcast_domain.name",
             api_path="broadcast_domain.name",
         ),
         FieldMapping(
-            cache_attr="broadcast_domain_uuid",
+            cache_attr="broadcast_domain.uuid",
             api_path="broadcast_domain.uuid",
         ),
         FieldMapping(
@@ -79,23 +88,23 @@ ONTAPPORT_MAPPING = TypeMapping(
             default=0,
         ),
         FieldMapping(
-            cache_attr="lag_active_ports",
+            cache_attr="lag.active_ports",
             api_path="lag.active_ports",
             transform=_transform_lag_active_ports,
             default=[],
         ),
         FieldMapping(
-            cache_attr="lag_distribution_policy",
+            cache_attr="lag.distribution_policy",
             api_path="lag.distribution_policy",
         ),
         FieldMapping(
-            cache_attr="lag_member_ports",
+            cache_attr="lag.member_ports",
             api_path="lag.member_ports",
             transform=_transform_lag_member_ports,
             default=[],
         ),
         FieldMapping(
-            cache_attr="lag_mode",
+            cache_attr="lag.mode",
             api_path="lag.mode",
         ),
         FieldMapping(
@@ -103,35 +112,35 @@ ONTAPPORT_MAPPING = TypeMapping(
             api_path="mac_address",
         ),
         FieldMapping(
-            cache_attr="metric_duration",
+            cache_attr="metric.duration",
             api_path="metric.duration",
             cache_strategy="realtime",
         ),
         FieldMapping(
-            cache_attr="metric_status",
+            cache_attr="metric.status",
             api_path="metric.status",
             cache_strategy="realtime",
         ),
         FieldMapping(
-            cache_attr="metric_throughput_read",
+            cache_attr="metric.throughput.read",
             api_path="metric.throughput.read",
-            default=0,
             cache_strategy="realtime",
+            default=0,
         ),
         FieldMapping(
-            cache_attr="metric_throughput_total",
+            cache_attr="metric.throughput.total",
             api_path="metric.throughput.total",
-            default=0,
             cache_strategy="realtime",
+            default=0,
         ),
         FieldMapping(
-            cache_attr="metric_throughput_write",
+            cache_attr="metric.throughput.write",
             api_path="metric.throughput.write",
-            default=0,
             cache_strategy="realtime",
+            default=0,
         ),
         FieldMapping(
-            cache_attr="metric_timestamp",
+            cache_attr="metric.timestamp",
             api_path="metric.timestamp",
             cache_strategy="realtime",
         ),
@@ -145,11 +154,11 @@ ONTAPPORT_MAPPING = TypeMapping(
             api_path="name",
         ),
         FieldMapping(
-            cache_attr="node_name",
+            cache_attr="node.name",
             api_path="node.name",
         ),
         FieldMapping(
-            cache_attr="node_uuid",
+            cache_attr="node.uuid",
             api_path="node.uuid",
         ),
         FieldMapping(
@@ -182,77 +191,77 @@ ONTAPPORT_MAPPING = TypeMapping(
             api_path="state",
         ),
         FieldMapping(
-            cache_attr="statistics_device_link_down_count_raw",
+            cache_attr="statistics.device.link_down_count_raw",
             api_path="statistics.device.link_down_count_raw",
-            default=0,
             cache_strategy="realtime",
+            default=0,
         ),
         FieldMapping(
-            cache_attr="statistics_device_receive_raw_discards",
+            cache_attr="statistics.device.receive_raw.discards",
             api_path="statistics.device.receive_raw.discards",
-            default=0,
             cache_strategy="realtime",
+            default=0,
         ),
         FieldMapping(
-            cache_attr="statistics_device_receive_raw_errors",
+            cache_attr="statistics.device.receive_raw.errors",
             api_path="statistics.device.receive_raw.errors",
-            default=0,
             cache_strategy="realtime",
+            default=0,
         ),
         FieldMapping(
-            cache_attr="statistics_device_receive_raw_packets",
+            cache_attr="statistics.device.receive_raw.packets",
             api_path="statistics.device.receive_raw.packets",
-            default=0,
             cache_strategy="realtime",
+            default=0,
         ),
         FieldMapping(
-            cache_attr="statistics_device_timestamp",
+            cache_attr="statistics.device.timestamp",
             api_path="statistics.device.timestamp",
             cache_strategy="realtime",
         ),
         FieldMapping(
-            cache_attr="statistics_device_transmit_raw_discards",
+            cache_attr="statistics.device.transmit_raw.discards",
             api_path="statistics.device.transmit_raw.discards",
-            default=0,
             cache_strategy="realtime",
+            default=0,
         ),
         FieldMapping(
-            cache_attr="statistics_device_transmit_raw_errors",
+            cache_attr="statistics.device.transmit_raw.errors",
             api_path="statistics.device.transmit_raw.errors",
-            default=0,
             cache_strategy="realtime",
+            default=0,
         ),
         FieldMapping(
-            cache_attr="statistics_device_transmit_raw_packets",
+            cache_attr="statistics.device.transmit_raw.packets",
             api_path="statistics.device.transmit_raw.packets",
-            default=0,
             cache_strategy="realtime",
+            default=0,
         ),
         FieldMapping(
-            cache_attr="statistics_status",
+            cache_attr="statistics.status",
             api_path="statistics.status",
             cache_strategy="realtime",
         ),
         FieldMapping(
-            cache_attr="statistics_throughput_raw_read",
+            cache_attr="statistics.throughput_raw.read",
             api_path="statistics.throughput_raw.read",
-            default=0,
             cache_strategy="realtime",
+            default=0,
         ),
         FieldMapping(
-            cache_attr="statistics_throughput_raw_total",
+            cache_attr="statistics.throughput_raw.total",
             api_path="statistics.throughput_raw.total",
-            default=0,
             cache_strategy="realtime",
+            default=0,
         ),
         FieldMapping(
-            cache_attr="statistics_throughput_raw_write",
+            cache_attr="statistics.throughput_raw.write",
             api_path="statistics.throughput_raw.write",
-            default=0,
             cache_strategy="realtime",
+            default=0,
         ),
         FieldMapping(
-            cache_attr="statistics_timestamp",
+            cache_attr="statistics.timestamp",
             api_path="statistics.timestamp",
             cache_strategy="realtime",
         ),
@@ -265,19 +274,19 @@ ONTAPPORT_MAPPING = TypeMapping(
             api_path="uuid",
         ),
         FieldMapping(
-            cache_attr="vlan_base_port_name",
+            cache_attr="vlan.base_port.name",
             api_path="vlan.base_port.name",
         ),
         FieldMapping(
-            cache_attr="vlan_base_port_node_name",
+            cache_attr="vlan.base_port.node.name",
             api_path="vlan.base_port.node.name",
         ),
         FieldMapping(
-            cache_attr="vlan_base_port_uuid",
+            cache_attr="vlan.base_port.uuid",
             api_path="vlan.base_port.uuid",
         ),
         FieldMapping(
-            cache_attr="vlan_tag",
+            cache_attr="vlan.tag",
             api_path="vlan.tag",
             default=0,
         ),

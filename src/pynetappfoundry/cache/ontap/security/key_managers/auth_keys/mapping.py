@@ -29,7 +29,7 @@ ONTAPKEYMANAGERAUTHKEY_MAPPING = TypeMapping(
             api_path="passphrase",
         ),
         FieldMapping(
-            cache_attr="security_key_manager_uuid",
+            cache_attr="security_key_manager.uuid",
             api_path="security_key_manager.uuid",
         ),
     ),

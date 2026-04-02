@@ -3,115 +3,115 @@ path = "/protocols/fpolicy/{svm.uuid}/events"
 schema = "fpolicy_event"
 class_name = "OntapFpolicyEvent"
 
-[fields.file_operations_access]
+[fields."file_operations.access"]
 cache_strategy = "cache"
 
-[fields.file_operations_close]
+[fields."file_operations.close"]
 cache_strategy = "cache"
 
-[fields.file_operations_create]
+[fields."file_operations.create"]
 cache_strategy = "cache"
 
-[fields.file_operations_create_dir]
+[fields."file_operations.create_dir"]
 cache_strategy = "cache"
 
-[fields.file_operations_delete]
+[fields."file_operations.delete"]
 cache_strategy = "cache"
 
-[fields.file_operations_delete_dir]
+[fields."file_operations.delete_dir"]
 cache_strategy = "cache"
 
-[fields.file_operations_getattr]
+[fields."file_operations.getattr"]
 cache_strategy = "cache"
 
-[fields.file_operations_link]
+[fields."file_operations.link"]
 cache_strategy = "cache"
 
-[fields.file_operations_lookup]
+[fields."file_operations.lookup"]
 cache_strategy = "cache"
 
-[fields.file_operations_open]
+[fields."file_operations.open"]
 cache_strategy = "cache"
 
-[fields.file_operations_read]
+[fields."file_operations.read"]
 cache_strategy = "cache"
 
-[fields.file_operations_rename]
+[fields."file_operations.rename"]
 cache_strategy = "cache"
 
-[fields.file_operations_rename_dir]
+[fields."file_operations.rename_dir"]
 cache_strategy = "cache"
 
-[fields.file_operations_setattr]
+[fields."file_operations.setattr"]
 cache_strategy = "cache"
 
-[fields.file_operations_symlink]
+[fields."file_operations.symlink"]
 cache_strategy = "cache"
 
-[fields.file_operations_write]
+[fields."file_operations.write"]
 cache_strategy = "cache"
 
-[fields.filters_close_with_modification]
+[fields."filters.close_with_modification"]
 cache_strategy = "cache"
 
-[fields.filters_close_with_read]
+[fields."filters.close_with_read"]
 cache_strategy = "cache"
 
-[fields.filters_close_without_modification]
+[fields."filters.close_without_modification"]
 cache_strategy = "cache"
 
-[fields.filters_exclude_directory]
+[fields."filters.exclude_directory"]
 cache_strategy = "cache"
 
-[fields.filters_first_read]
+[fields."filters.first_read"]
 cache_strategy = "cache"
 
-[fields.filters_first_write]
+[fields."filters.first_write"]
 cache_strategy = "cache"
 
-[fields.filters_monitor_ads]
+[fields."filters.monitor_ads"]
 cache_strategy = "cache"
 
-[fields.filters_offline_bit]
+[fields."filters.offline_bit"]
 cache_strategy = "cache"
 
-[fields.filters_open_with_delete_intent]
+[fields."filters.open_with_delete_intent"]
 cache_strategy = "cache"
 
-[fields.filters_open_with_write_intent]
+[fields."filters.open_with_write_intent"]
 cache_strategy = "cache"
 
-[fields.filters_setattr_with_access_time_change]
+[fields."filters.setattr_with_access_time_change"]
 cache_strategy = "cache"
 
-[fields.filters_setattr_with_allocation_size_change]
+[fields."filters.setattr_with_allocation_size_change"]
 cache_strategy = "cache"
 
-[fields.filters_setattr_with_creation_time_change]
+[fields."filters.setattr_with_creation_time_change"]
 cache_strategy = "cache"
 
-[fields.filters_setattr_with_dacl_change]
+[fields."filters.setattr_with_dacl_change"]
 cache_strategy = "cache"
 
-[fields.filters_setattr_with_group_change]
+[fields."filters.setattr_with_group_change"]
 cache_strategy = "cache"
 
-[fields.filters_setattr_with_mode_change]
+[fields."filters.setattr_with_mode_change"]
 cache_strategy = "cache"
 
-[fields.filters_setattr_with_modify_time_change]
+[fields."filters.setattr_with_modify_time_change"]
 cache_strategy = "cache"
 
-[fields.filters_setattr_with_owner_change]
+[fields."filters.setattr_with_owner_change"]
 cache_strategy = "cache"
 
-[fields.filters_setattr_with_sacl_change]
+[fields."filters.setattr_with_sacl_change"]
 cache_strategy = "cache"
 
-[fields.filters_setattr_with_size_change]
+[fields."filters.setattr_with_size_change"]
 cache_strategy = "cache"
 
-[fields.filters_write_with_size_change]
+[fields."filters.write_with_size_change"]
 cache_strategy = "cache"
 
 [fields.monitor_fileop_failure]
@@ -123,7 +123,7 @@ cache_strategy = "cache"
 [fields.protocol]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.volume_monitoring]

@@ -3,16 +3,16 @@ path = "/svm/svms/{svm.uuid}/top-metrics/directories"
 schema = "top_metrics_svm_directory"
 class_name = "OntapTopMetricsSvmDirectory"
 
-[fields.iops_error_lower_bound]
+[fields."iops.error.lower_bound"]
 cache_strategy = "cache"
 
-[fields.iops_error_upper_bound]
+[fields."iops.error.upper_bound"]
 cache_strategy = "cache"
 
-[fields.iops_read]
+[fields."iops.read"]
 cache_strategy = "cache"
 
-[fields.iops_write]
+[fields."iops.write"]
 cache_strategy = "cache"
 
 [fields.junction_path]
@@ -21,26 +21,26 @@ cache_strategy = "cache"
 [fields.path]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
-[fields.throughput_error_lower_bound]
+[fields."throughput.error.lower_bound"]
 cache_strategy = "cache"
 
-[fields.throughput_error_upper_bound]
+[fields."throughput.error.upper_bound"]
 cache_strategy = "cache"
 
-[fields.throughput_read]
+[fields."throughput.read"]
 cache_strategy = "cache"
 
-[fields.throughput_write]
+[fields."throughput.write"]
 cache_strategy = "cache"
 
-[fields.volume_name]
+[fields."volume.name"]
 cache_strategy = "cache"
 
-[fields.volume_uuid]
+[fields."volume.uuid"]
 cache_strategy = "cache"

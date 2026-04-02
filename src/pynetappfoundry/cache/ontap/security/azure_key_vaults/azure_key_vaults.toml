@@ -6,13 +6,13 @@ class_name = "OntapAzureKeyVault"
 [fields.authentication_method]
 cache_strategy = "cache"
 
-[fields.azure_reachability_code]
+[fields."azure_reachability.code"]
 cache_strategy = "cache"
 
-[fields.azure_reachability_message]
+[fields."azure_reachability.message"]
 cache_strategy = "cache"
 
-[fields.azure_reachability_reachable]
+[fields."azure_reachability.reachable"]
 cache_strategy = "cache"
 
 [fields.client_certificate]
@@ -24,10 +24,10 @@ cache_strategy = "cache"
 [fields.client_secret]
 cache_strategy = "cache"
 
-[fields.configuration_name]
+[fields."configuration.name"]
 cache_strategy = "cache"
 
-[fields.configuration_uuid]
+[fields."configuration.uuid"]
 cache_strategy = "cache"
 
 [fields.ekmip_reachability]
@@ -69,19 +69,19 @@ cache_strategy = "cache"
 [fields.skip_verification]
 cache_strategy = "cache"
 
-[fields.state_available]
+[fields."state.available"]
 cache_strategy = "cache"
 
-[fields.state_code]
+[fields."state.code"]
 cache_strategy = "cache"
 
-[fields.state_message]
+[fields."state.message"]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.tenant_id]

@@ -3,19 +3,19 @@ path = "/protocols/cifs/services"
 schema = "cifs_service"
 class_name = "OntapCifsService"
 
-[fields.ad_domain_default_site]
+[fields."ad_domain.default_site"]
 cache_strategy = "cache"
 
-[fields.ad_domain_fqdn]
+[fields."ad_domain.fqdn"]
 cache_strategy = "cache"
 
-[fields.ad_domain_organizational_unit]
+[fields."ad_domain.organizational_unit"]
 cache_strategy = "cache"
 
-[fields.ad_domain_password]
+[fields."ad_domain.password"]
 cache_strategy = "cache"
 
-[fields.ad_domain_user]
+[fields."ad_domain.user"]
 cache_strategy = "cache"
 
 [fields.auth_style]
@@ -51,156 +51,156 @@ cache_strategy = "cache"
 [fields.key_vault_uri]
 cache_strategy = "cache"
 
-[fields.metric_duration]
+[fields."metric.duration"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_iops_other]
+[fields."metric.iops.other"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_iops_read]
+[fields."metric.iops.read"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_iops_total]
+[fields."metric.iops.total"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_iops_write]
+[fields."metric.iops.write"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_latency_other]
+[fields."metric.latency.other"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_latency_read]
+[fields."metric.latency.read"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_latency_total]
+[fields."metric.latency.total"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_latency_write]
+[fields."metric.latency.write"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_status]
+[fields."metric.status"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_throughput_read]
+[fields."metric.throughput.read"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_throughput_total]
+[fields."metric.throughput.total"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_throughput_write]
+[fields."metric.throughput.write"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_timestamp]
+[fields."metric.timestamp"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.name]
 cache_strategy = "cache"
 
-[fields.netbios_aliases]
+[fields."netbios.aliases"]
 cache_strategy = "cache"
 
-[fields.netbios_enabled]
+[fields."netbios.enabled"]
 cache_strategy = "cache"
 
-[fields.netbios_wins_servers]
+[fields."netbios.wins_servers"]
 cache_strategy = "cache"
 
 [fields.oauth_host]
 cache_strategy = "cache"
 
-[fields.options_admin_to_root_mapping]
+[fields."options.admin_to_root_mapping"]
 cache_strategy = "cache"
 
-[fields.options_advanced_sparse_file]
+[fields."options.advanced_sparse_file"]
 cache_strategy = "cache"
 
-[fields.options_backup_symlink_enabled]
+[fields."options.backup_symlink_enabled"]
 cache_strategy = "cache"
 
-[fields.options_client_dup_detection_enabled]
+[fields."options.client_dup_detection_enabled"]
 cache_strategy = "cache"
 
-[fields.options_client_version_reporting_enabled]
+[fields."options.client_version_reporting_enabled"]
 cache_strategy = "cache"
 
-[fields.options_copy_offload]
+[fields."options.copy_offload"]
 cache_strategy = "cache"
 
-[fields.options_dac_enabled]
+[fields."options.dac_enabled"]
 cache_strategy = "cache"
 
-[fields.options_export_policy_enabled]
+[fields."options.export_policy_enabled"]
 cache_strategy = "cache"
 
-[fields.options_fake_open]
+[fields."options.fake_open"]
 cache_strategy = "cache"
 
-[fields.options_fsctl_trim]
+[fields."options.fsctl_trim"]
 cache_strategy = "cache"
 
-[fields.options_junction_reparse]
+[fields."options.junction_reparse"]
 cache_strategy = "cache"
 
-[fields.options_large_mtu]
+[fields."options.large_mtu"]
 cache_strategy = "cache"
 
-[fields.options_max_connections_per_session]
+[fields."options.max_connections_per_session"]
 cache_strategy = "cache"
 
-[fields.options_max_lifs_per_session]
+[fields."options.max_lifs_per_session"]
 cache_strategy = "cache"
 
-[fields.options_max_opens_same_file_per_tree]
+[fields."options.max_opens_same_file_per_tree"]
 cache_strategy = "cache"
 
-[fields.options_max_same_tree_connect_per_session]
+[fields."options.max_same_tree_connect_per_session"]
 cache_strategy = "cache"
 
-[fields.options_max_same_user_sessions_per_connection]
+[fields."options.max_same_user_sessions_per_connection"]
 cache_strategy = "cache"
 
-[fields.options_max_watches_set_per_tree]
+[fields."options.max_watches_set_per_tree"]
 cache_strategy = "cache"
 
-[fields.options_multichannel]
+[fields."options.multichannel"]
 cache_strategy = "cache"
 
-[fields.options_null_user_windows_name]
+[fields."options.null_user_windows_name"]
 cache_strategy = "cache"
 
-[fields.options_path_component_cache]
+[fields."options.path_component_cache"]
 cache_strategy = "cache"
 
-[fields.options_referral]
+[fields."options.referral"]
 cache_strategy = "cache"
 
-[fields.options_shadowcopy]
+[fields."options.shadowcopy"]
 cache_strategy = "cache"
 
-[fields.options_shadowcopy_dir_depth]
+[fields."options.shadowcopy_dir_depth"]
 cache_strategy = "cache"
 
-[fields.options_smb_credits]
+[fields."options.smb_credits"]
 cache_strategy = "cache"
 
-[fields.options_trusted_domain_enum_search_enabled]
+[fields."options.trusted_domain_enum_search_enabled"]
 cache_strategy = "cache"
 
-[fields.options_widelink_reparse_versions]
+[fields."options.widelink_reparse_versions"]
 cache_strategy = "cache"
 
 [fields.proxy_host]
@@ -218,101 +218,101 @@ cache_strategy = "cache"
 [fields.proxy_username]
 cache_strategy = "cache"
 
-[fields.security_advertised_kdc_encryptions]
+[fields."security.advertised_kdc_encryptions"]
 cache_strategy = "cache"
 
-[fields.security_aes_netlogon_enabled]
+[fields."security.aes_netlogon_enabled"]
 cache_strategy = "cache"
 
-[fields.security_encrypt_dc_connection]
+[fields."security.encrypt_dc_connection"]
 cache_strategy = "cache"
 
-[fields.security_kdc_encryption]
+[fields."security.kdc_encryption"]
 cache_strategy = "cache"
 
-[fields.security_ldap_referral_enabled]
+[fields."security.ldap_referral_enabled"]
 cache_strategy = "cache"
 
-[fields.security_lm_compatibility_level]
+[fields."security.lm_compatibility_level"]
 cache_strategy = "cache"
 
-[fields.security_restrict_anonymous]
+[fields."security.restrict_anonymous"]
 cache_strategy = "cache"
 
-[fields.security_session_security]
+[fields."security.session_security"]
 cache_strategy = "cache"
 
-[fields.security_smb_encryption]
+[fields."security.smb_encryption"]
 cache_strategy = "cache"
 
-[fields.security_smb_signing]
+[fields."security.smb_signing"]
 cache_strategy = "cache"
 
-[fields.security_try_ldap_channel_binding]
+[fields."security.try_ldap_channel_binding"]
 cache_strategy = "cache"
 
-[fields.security_use_ldaps]
+[fields."security.use_ldaps"]
 cache_strategy = "cache"
 
-[fields.security_use_start_tls]
+[fields."security.use_start_tls"]
 cache_strategy = "cache"
 
-[fields.statistics_iops_raw_other]
+[fields."statistics.iops_raw.other"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_iops_raw_read]
+[fields."statistics.iops_raw.read"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_iops_raw_total]
+[fields."statistics.iops_raw.total"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_iops_raw_write]
+[fields."statistics.iops_raw.write"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_latency_raw_other]
+[fields."statistics.latency_raw.other"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_latency_raw_read]
+[fields."statistics.latency_raw.read"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_latency_raw_total]
+[fields."statistics.latency_raw.total"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_latency_raw_write]
+[fields."statistics.latency_raw.write"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_status]
+[fields."statistics.status"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_throughput_raw_read]
+[fields."statistics.throughput_raw.read"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_throughput_raw_total]
+[fields."statistics.throughput_raw.total"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_throughput_raw_write]
+[fields."statistics.throughput_raw.write"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_timestamp]
+[fields."statistics.timestamp"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.tenant_id]

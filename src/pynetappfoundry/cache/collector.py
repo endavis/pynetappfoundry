@@ -133,6 +133,21 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+def _resolve_dotted_attr(obj: object, dotted_path: str) -> Any:
+    """Resolve a dotted attribute path on an object.
+
+    For example, ``_resolve_dotted_attr(parent, "svm.uuid")`` returns
+    ``parent.svm.uuid``.  Returns ``None`` if any intermediate attribute
+    is missing or ``None``.
+    """
+    current = obj
+    for part in dotted_path.split("."):
+        current = getattr(current, part, None)
+        if current is None:
+            return None
+    return current
+
+
 class CollectionPhase(Enum):
     """Phases of metadata collection."""
 
@@ -338,7 +353,7 @@ class MetadataCollector:
 
         aggregated: list[BaseModel] = []
         for parent in parent_objects:
-            parent_id = getattr(parent, mapping.parent_id_field, None)
+            parent_id = _resolve_dotted_attr(parent, mapping.parent_id_field)
             if not parent_id:
                 parent_name = getattr(parent, "name", repr(parent))
                 logger.warning(

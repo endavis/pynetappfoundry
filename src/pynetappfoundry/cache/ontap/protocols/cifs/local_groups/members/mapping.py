@@ -23,10 +23,10 @@ ONTAPLOCALCIFSGROUPMEMBERS_MAPPING = TypeMapping(
     api_endpoint="/protocols/cifs/local-groups/{svm.uuid}/{local_cifs_group.sid}/members?fields=*",
     api_type="ontap",
     parent_mapping="OntapLocalCifsGroup",
-    parent_id_field="svm_uuid",
+    parent_id_field="svm.uuid",
     fields=(
         FieldMapping(
-            cache_attr="local_cifs_group_sid",
+            cache_attr="local_cifs_group.sid",
             api_path="local_cifs_group.sid",
         ),
         FieldMapping(
@@ -40,11 +40,11 @@ ONTAPLOCALCIFSGROUPMEMBERS_MAPPING = TypeMapping(
             default=[],
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
     ),

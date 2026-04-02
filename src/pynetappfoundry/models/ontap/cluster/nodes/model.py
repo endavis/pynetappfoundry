@@ -7,193 +7,511 @@ from pydantic import Field
 from pynetappfoundry.models._base import OntapModel, OntapUUID
 
 
-class OntapNodeResponseClusterInterface(OntapModel):
-    """OntapNodeResponseClusterInterface sub-model for cluster_interfaces."""
+class OntapNodeResponseClusterInterfaceIp(OntapModel):
+    """OntapNodeResponseClusterInterfaceIp sub-model for ip."""
 
-    ip_address: str = ""
+    address: str = ""
+
+
+class OntapNodeResponseClusterInterface(OntapModel):
+    """OntapNodeResponseClusterInterface sub-model for cluster_interface."""
+
+    ip: OntapNodeResponseClusterInterfaceIp = Field(
+        default_factory=OntapNodeResponseClusterInterfaceIp
+    )
+
+
+class OntapNodeResponseClusterInterface2Ip(OntapModel):
+    """OntapNodeResponseClusterInterface2Ip sub-model for ip."""
+
+    address: str = ""
+
+
+class OntapNodeResponseClusterInterface2(OntapModel):
+    """OntapNodeResponseClusterInterface2 sub-model for cluster_interfaces."""
+
+    ip: OntapNodeResponseClusterInterface2Ip = Field(
+        default_factory=OntapNodeResponseClusterInterface2Ip
+    )
     name: str = ""
     uuid: str = ""
 
 
-class OntapNodeResponseFlashCache(OntapModel):
-    """OntapNodeResponseFlashCache sub-model for flash_cache."""
+class OntapNodeResponseControllerCpu(OntapModel):
+    """OntapNodeResponseControllerCpu sub-model for cpu."""
+
+    count: int = 0
+    firmware_release: str = ""
+    processor: str = ""
+
+
+class OntapNodeResponseControllerFailedFanMessage(OntapModel):
+    """OntapNodeResponseControllerFailedFanMessage sub-model for message."""
+
+    code: str = ""
+    message: str = ""
+
+
+class OntapNodeResponseControllerFailedFan(OntapModel):
+    """OntapNodeResponseControllerFailedFan sub-model for failed_fan."""
+
+    count: int = 0
+    message: OntapNodeResponseControllerFailedFanMessage = Field(
+        default_factory=OntapNodeResponseControllerFailedFanMessage
+    )
+
+
+class OntapNodeResponseControllerFailedPowerSupplyMessage(OntapModel):
+    """OntapNodeResponseControllerFailedPowerSupplyMessage sub-model for message."""
+
+    code: str = ""
+    message: str = ""
+
+
+class OntapNodeResponseControllerFailedPowerSupply(OntapModel):
+    """OntapNodeResponseControllerFailedPowerSupply sub-model for failed_power_supply."""
+
+    count: int = 0
+    message: OntapNodeResponseControllerFailedPowerSupplyMessage = Field(
+        default_factory=OntapNodeResponseControllerFailedPowerSupplyMessage
+    )
+
+
+class OntapNodeResponseControllerFlashCache(OntapModel):
+    """OntapNodeResponseControllerFlashCache sub-model for flash_cache."""
 
     capacity: int = 0
     device_id: int = 0
     firmware_file: str = ""
     firmware_version: str = ""
     hardware_revision: str = ""
-    model: str = ""
+    model_: str = ""
     part_number: str = ""
     serial_number: str = ""
     slot: str = ""
     state: str = ""
 
 
-class OntapNodeResponseFru(OntapModel):
-    """OntapNodeResponseFru sub-model for frus."""
+class OntapNodeResponseControllerFru(OntapModel):
+    """OntapNodeResponseControllerFru sub-model for frus."""
 
     id: str = ""
     state: str = ""
-    type: str = ""
+    type_: str = ""
 
 
-class OntapNodeResponseStatus(OntapModel):
-    """OntapNodeResponseStatus sub-model for status."""
+class OntapNodeResponseController(OntapModel):
+    """OntapNodeResponseController sub-model for controller."""
 
-    aggregate_name: str = ""
-    aggregate_uuid: str = ""
-    error_code: str = ""
-    error_message: str = ""
-    state: str = ""
+    board: str = ""
+    cpu: OntapNodeResponseControllerCpu = Field(default_factory=OntapNodeResponseControllerCpu)
+    failed_fan: OntapNodeResponseControllerFailedFan = Field(
+        default_factory=OntapNodeResponseControllerFailedFan
+    )
+    failed_power_supply: OntapNodeResponseControllerFailedPowerSupply = Field(
+        default_factory=OntapNodeResponseControllerFailedPowerSupply
+    )
+    flash_cache: list[OntapNodeResponseControllerFlashCache] = Field(default_factory=list)
+    frus: list[OntapNodeResponseControllerFru] = Field(default_factory=list)
+    memory_size: int = 0
+    over_temperature: str = ""
 
 
-class OntapNodeResponsePartner(OntapModel):
-    """OntapNodeResponsePartner sub-model for partners."""
+class OntapNodeResponseExternalCache(OntapModel):
+    """OntapNodeResponseExternalCache sub-model for external_cache."""
+
+    is_enabled: bool = False
+    is_hya_enabled: bool = False
+    is_rewarm_enabled: bool = False
+    pcs_size: int = 0
+
+
+class OntapNodeResponseHaGivebackFailure(OntapModel):
+    """OntapNodeResponseHaGivebackFailure sub-model for failure."""
+
+    code: int = 0
+    message: str = ""
+
+
+class OntapNodeResponseHaGivebackStatusAggregate(OntapModel):
+    """OntapNodeResponseHaGivebackStatusAggregate sub-model for aggregate."""
 
     name: str = ""
     uuid: str = ""
 
 
-class OntapNodeResponsePort(OntapModel):
-    """OntapNodeResponsePort sub-model for ports."""
+class OntapNodeResponseHaGivebackStatusError(OntapModel):
+    """OntapNodeResponseHaGivebackStatusError sub-model for error."""
+
+    code: str = ""
+    message: str = ""
+
+
+class OntapNodeResponseHaGivebackStatus(OntapModel):
+    """OntapNodeResponseHaGivebackStatus sub-model for status."""
+
+    aggregate: OntapNodeResponseHaGivebackStatusAggregate = Field(
+        default_factory=OntapNodeResponseHaGivebackStatusAggregate
+    )
+    error: OntapNodeResponseHaGivebackStatusError = Field(
+        default_factory=OntapNodeResponseHaGivebackStatusError
+    )
+    state: str = ""
+
+
+class OntapNodeResponseHaGiveback(OntapModel):
+    """OntapNodeResponseHaGiveback sub-model for giveback."""
+
+    failure: OntapNodeResponseHaGivebackFailure = Field(
+        default_factory=OntapNodeResponseHaGivebackFailure
+    )
+    state: str = ""
+    status: list[OntapNodeResponseHaGivebackStatus] = Field(default_factory=list)
+
+
+class OntapNodeResponseHaInterconnect(OntapModel):
+    """OntapNodeResponseHaInterconnect sub-model for interconnect."""
+
+    adapter: str = ""
+    state: str = ""
+
+
+class OntapNodeResponseHaPartner(OntapModel):
+    """OntapNodeResponseHaPartner sub-model for partners."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapNodeResponseHaPort(OntapModel):
+    """OntapNodeResponseHaPort sub-model for ports."""
 
     number: int = 0
     state: str = ""
 
 
-class OntapNodeResponseManagementInterface(OntapModel):
-    """OntapNodeResponseManagementInterface sub-model for management_interfaces."""
+class OntapNodeResponseHaTakeoverFailure(OntapModel):
+    """OntapNodeResponseHaTakeoverFailure sub-model for failure."""
 
-    ip_address: str = ""
+    code: int = 0
+    message: str = ""
+
+
+class OntapNodeResponseHaTakeover(OntapModel):
+    """OntapNodeResponseHaTakeover sub-model for takeover."""
+
+    failure: OntapNodeResponseHaTakeoverFailure = Field(
+        default_factory=OntapNodeResponseHaTakeoverFailure
+    )
+    state: str = ""
+
+
+class OntapNodeResponseHaTakeoverCheck(OntapModel):
+    """OntapNodeResponseHaTakeoverCheck sub-model for takeover_check."""
+
+    reasons: list[str] = Field(default_factory=list)
+    takeover_possible: bool = False
+
+
+class OntapNodeResponseHa(OntapModel):
+    """OntapNodeResponseHa sub-model for ha."""
+
+    auto_giveback: bool = False
+    enabled: bool = False
+    giveback: OntapNodeResponseHaGiveback = Field(default_factory=OntapNodeResponseHaGiveback)
+    interconnect: OntapNodeResponseHaInterconnect = Field(
+        default_factory=OntapNodeResponseHaInterconnect
+    )
+    partners: list[OntapNodeResponseHaPartner] = Field(default_factory=list)
+    ports: list[OntapNodeResponseHaPort] = Field(default_factory=list)
+    takeover: OntapNodeResponseHaTakeover = Field(default_factory=OntapNodeResponseHaTakeover)
+    takeover_check: OntapNodeResponseHaTakeoverCheck = Field(
+        default_factory=OntapNodeResponseHaTakeoverCheck
+    )
+
+
+class OntapNodeResponseHwAssistStatusLocal(OntapModel):
+    """OntapNodeResponseHwAssistStatusLocal sub-model for local."""
+
+    ip: str = ""
+    port: int = 0
+    state: str = ""
+
+
+class OntapNodeResponseHwAssistStatusPartner(OntapModel):
+    """OntapNodeResponseHwAssistStatusPartner sub-model for partner."""
+
+    ip: str = ""
+    port: int = 0
+    state: str = ""
+
+
+class OntapNodeResponseHwAssistStatus(OntapModel):
+    """OntapNodeResponseHwAssistStatus sub-model for status."""
+
+    enabled: bool = False
+    local: OntapNodeResponseHwAssistStatusLocal = Field(
+        default_factory=OntapNodeResponseHwAssistStatusLocal
+    )
+    partner: OntapNodeResponseHwAssistStatusPartner = Field(
+        default_factory=OntapNodeResponseHwAssistStatusPartner
+    )
+
+
+class OntapNodeResponseHwAssist(OntapModel):
+    """OntapNodeResponseHwAssist sub-model for hw_assist."""
+
+    status: OntapNodeResponseHwAssistStatus = Field(default_factory=OntapNodeResponseHwAssistStatus)
+
+
+class OntapNodeResponseManagementInterfaceIp(OntapModel):
+    """OntapNodeResponseManagementInterfaceIp sub-model for ip."""
+
+    address: str = ""
+
+
+class OntapNodeResponseManagementInterface(OntapModel):
+    """OntapNodeResponseManagementInterface sub-model for management_interface."""
+
+    ip: OntapNodeResponseManagementInterfaceIp = Field(
+        default_factory=OntapNodeResponseManagementInterfaceIp
+    )
+
+
+class OntapNodeResponseManagementInterface2Ip(OntapModel):
+    """OntapNodeResponseManagementInterface2Ip sub-model for ip."""
+
+    address: str = ""
+
+
+class OntapNodeResponseManagementInterface2(OntapModel):
+    """OntapNodeResponseManagementInterface2 sub-model for management_interfaces."""
+
+    ip: OntapNodeResponseManagementInterface2Ip = Field(
+        default_factory=OntapNodeResponseManagementInterface2Ip
+    )
     name: str = ""
     uuid: str = ""
 
 
-class OntapNodeResponsePort2(OntapModel):
-    """OntapNodeResponsePort2 sub-model for ports."""
+class OntapNodeResponseMetric(OntapModel):
+    """OntapNodeResponseMetric sub-model for metric."""
+
+    duration: str = ""
+    processor_utilization: int = 0
+    status: str = ""
+    timestamp: str = ""
+    uuid: str = ""
+
+
+class OntapNodeResponseMetroclusterPort(OntapModel):
+    """OntapNodeResponseMetroclusterPort sub-model for ports."""
 
     name: str = ""
+
+
+class OntapNodeResponseMetrocluster(OntapModel):
+    """OntapNodeResponseMetrocluster sub-model for metrocluster."""
+
+    custom_vlan_capable: bool = False
+    ports: list[OntapNodeResponseMetroclusterPort] = Field(default_factory=list)
+    type_: str = ""
+
+
+class OntapNodeResponseNvram(OntapModel):
+    """OntapNodeResponseNvram sub-model for nvram."""
+
+    battery_state: str = ""
+    id: int = 0
+
+
+class OntapNodeResponseServiceProcessorApiService(OntapModel):
+    """OntapNodeResponseServiceProcessorApiService sub-model for api_service."""
+
+    enabled: bool = False
+    limit_access: bool = False
+    port: int = 0
+
+
+class OntapNodeResponseServiceProcessorAutoConfig(OntapModel):
+    """OntapNodeResponseServiceProcessorAutoConfig sub-model for auto_config."""
+
+    ipv4_subnet: str = ""
+    ipv6_subnet: str = ""
+
+
+class OntapNodeResponseServiceProcessorBackup(OntapModel):
+    """OntapNodeResponseServiceProcessorBackup sub-model for backup."""
+
+    is_current: bool = False
+    state: str = ""
+    version: str = ""
+
+
+class OntapNodeResponseServiceProcessorIpv4Interface(OntapModel):
+    """OntapNodeResponseServiceProcessorIpv4Interface sub-model for ipv4_interface."""
+
+    address: str = ""
+    enabled: bool = False
+    gateway: str = ""
+    netmask: str = ""
+    setup_state: str = ""
+
+
+class OntapNodeResponseServiceProcessorIpv6Interface(OntapModel):
+    """OntapNodeResponseServiceProcessorIpv6Interface sub-model for ipv6_interface."""
+
+    address: str = ""
+    enabled: bool = False
+    gateway: str = ""
+    is_ipv6_ra_enabled: bool = False
+    link_local_ip: str = ""
+    netmask: int = 0
+    router_ip: str = ""
+    setup_state: str = ""
+
+
+class OntapNodeResponseServiceProcessorPrimary(OntapModel):
+    """OntapNodeResponseServiceProcessorPrimary sub-model for primary."""
+
+    is_current: bool = False
+    state: str = ""
+    version: str = ""
+
+
+class OntapNodeResponseServiceProcessorSshInfo(OntapModel):
+    """OntapNodeResponseServiceProcessorSshInfo sub-model for ssh_info."""
+
+    allowed_addresses: list[str] = Field(default_factory=list)
+
+
+class OntapNodeResponseServiceProcessorWebService(OntapModel):
+    """OntapNodeResponseServiceProcessorWebService sub-model for web_service."""
+
+    enabled: bool = False
+    limit_access: bool = False
+
+
+class OntapNodeResponseServiceProcessor(OntapModel):
+    """OntapNodeResponseServiceProcessor sub-model for service_processor."""
+
+    api_service: OntapNodeResponseServiceProcessorApiService = Field(
+        default_factory=OntapNodeResponseServiceProcessorApiService
+    )
+    auto_config: OntapNodeResponseServiceProcessorAutoConfig = Field(
+        default_factory=OntapNodeResponseServiceProcessorAutoConfig
+    )
+    autoupdate_enabled: bool = False
+    backup: OntapNodeResponseServiceProcessorBackup = Field(
+        default_factory=OntapNodeResponseServiceProcessorBackup
+    )
+    dhcp_enabled: bool = False
+    firmware_version: str = ""
+    ipv4_interface: OntapNodeResponseServiceProcessorIpv4Interface = Field(
+        default_factory=OntapNodeResponseServiceProcessorIpv4Interface
+    )
+    ipv6_interface: OntapNodeResponseServiceProcessorIpv6Interface = Field(
+        default_factory=OntapNodeResponseServiceProcessorIpv6Interface
+    )
+    is_ip_configured: bool = False
+    last_update_state: str = ""
+    link_status: str = ""
+    mac_address: str = ""
+    primary: OntapNodeResponseServiceProcessorPrimary = Field(
+        default_factory=OntapNodeResponseServiceProcessorPrimary
+    )
+    ssh_info: OntapNodeResponseServiceProcessorSshInfo = Field(
+        default_factory=OntapNodeResponseServiceProcessorSshInfo
+    )
+    state: str = ""
+    type_: str = ""
+    web_service: OntapNodeResponseServiceProcessorWebService = Field(
+        default_factory=OntapNodeResponseServiceProcessorWebService
+    )
+
+
+class OntapNodeResponseSnaplock(OntapModel):
+    """OntapNodeResponseSnaplock sub-model for snaplock."""
+
+    compliance_clock_time: str = ""
+
+
+class OntapNodeResponseStatistics(OntapModel):
+    """OntapNodeResponseStatistics sub-model for statistics."""
+
+    processor_utilization_base: int = 0
+    processor_utilization_raw: int = 0
+    status: str = ""
+    timestamp: str = ""
+
+
+class OntapNodeResponseSystemAggregate(OntapModel):
+    """OntapNodeResponseSystemAggregate sub-model for system_aggregate."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapNodeResponseVersion(OntapModel):
+    """OntapNodeResponseVersion sub-model for version."""
+
+    full: str = ""
+    generation: int = 0
+    major: int = 0
+    minor: int = 0
+
+
+class OntapNodeResponseVm(OntapModel):
+    """OntapNodeResponseVm sub-model for vm."""
+
+    provider_type: str = ""
 
 
 class OntapNodeResponse(OntapModel):
     """OntapNodeResponse information."""
 
     anti_ransomware_version: str = ""
-    cluster_interface_ip_address: str = ""
-    cluster_interfaces: list[OntapNodeResponseClusterInterface] = Field(default_factory=list)
-    controller_board: str = ""
-    controller_cpu_count: int = 0
-    controller_cpu_firmware_release: str = ""
-    controller_cpu_processor: str = ""
-    controller_failed_fan_count: int = 0
-    controller_failed_fan_message_code: str = ""
-    controller_failed_fan_message_message: str = ""
-    controller_failed_power_supply_count: int = 0
-    controller_failed_power_supply_message_code: str = ""
-    controller_failed_power_supply_message_message: str = ""
-    controller_flash_cache: list[OntapNodeResponseFlashCache] = Field(default_factory=list)
-    controller_frus: list[OntapNodeResponseFru] = Field(default_factory=list)
-    controller_memory_size: int = 0
-    controller_over_temperature: str = ""
+    cluster_interface: OntapNodeResponseClusterInterface = Field(
+        default_factory=OntapNodeResponseClusterInterface
+    )
+    cluster_interfaces: list[OntapNodeResponseClusterInterface2] = Field(default_factory=list)
+    controller: OntapNodeResponseController = Field(default_factory=OntapNodeResponseController)
     date: str = ""
-    external_cache_is_enabled: bool = False
-    external_cache_is_hya_enabled: bool = False
-    external_cache_is_rewarm_enabled: bool = False
-    external_cache_pcs_size: int = 0
-    ha_auto_giveback: bool = False
-    ha_enabled: bool = False
-    ha_giveback_failure_code: int = 0
-    ha_giveback_failure_message: str = ""
-    ha_giveback_state: str = ""
-    ha_giveback_status: list[OntapNodeResponseStatus] = Field(default_factory=list)
-    ha_interconnect_adapter: str = ""
-    ha_interconnect_state: str = ""
-    ha_partners: list[OntapNodeResponsePartner] = Field(default_factory=list)
-    ha_ports: list[OntapNodeResponsePort] = Field(default_factory=list)
-    ha_takeover_failure_code: int = 0
-    ha_takeover_failure_message: str = ""
-    ha_takeover_state: str = ""
-    ha_takeover_check_reasons: list[str] = Field(default_factory=list)
-    ha_takeover_check_takeover_possible: bool = False
-    hw_assist_status_enabled: bool = False
-    hw_assist_status_local_ip: str = ""
-    hw_assist_status_local_port: int = 0
-    hw_assist_status_local_state: str = ""
-    hw_assist_status_partner_ip: str = ""
-    hw_assist_status_partner_port: int = 0
-    hw_assist_status_partner_state: str = ""
+    external_cache: OntapNodeResponseExternalCache = Field(
+        default_factory=OntapNodeResponseExternalCache
+    )
+    ha: OntapNodeResponseHa = Field(default_factory=OntapNodeResponseHa)
+    hw_assist: OntapNodeResponseHwAssist = Field(default_factory=OntapNodeResponseHwAssist)
     is_spares_low: bool = False
     location: str = ""
-    management_interface_ip_address: str = ""
-    management_interfaces: list[OntapNodeResponseManagementInterface] = Field(default_factory=list)
+    management_interface: OntapNodeResponseManagementInterface = Field(
+        default_factory=OntapNodeResponseManagementInterface
+    )
+    management_interfaces: list[OntapNodeResponseManagementInterface2] = Field(default_factory=list)
     membership: str = ""
-    metric_duration: str = ""
-    metric_processor_utilization: int = 0
-    metric_status: str = ""
-    metric_timestamp: str = ""
-    metric_uuid: str = ""
-    metrocluster_custom_vlan_capable: bool = False
-    metrocluster_ports: list[OntapNodeResponsePort2] = Field(default_factory=list)
-    metrocluster_type: str = ""
+    metric: OntapNodeResponseMetric = Field(default_factory=OntapNodeResponseMetric)
+    metrocluster: OntapNodeResponseMetrocluster = Field(
+        default_factory=OntapNodeResponseMetrocluster
+    )
     model_: str = ""
     name: str = ""
-    nvram_battery_state: str = ""
-    nvram_id: int = 0
+    nvram: OntapNodeResponseNvram = Field(default_factory=OntapNodeResponseNvram)
     owner: str = ""
     serial_number: str = ""
-    service_processor_api_service_enabled: bool = False
-    service_processor_api_service_limit_access: bool = False
-    service_processor_api_service_port: int = 0
-    service_processor_auto_config_ipv4_subnet: str = ""
-    service_processor_auto_config_ipv6_subnet: str = ""
-    service_processor_autoupdate_enabled: bool = False
-    service_processor_backup_is_current: bool = False
-    service_processor_backup_state: str = ""
-    service_processor_backup_version: str = ""
-    service_processor_dhcp_enabled: bool = False
-    service_processor_firmware_version: str = ""
-    service_processor_ipv4_interface_address: str = ""
-    service_processor_ipv4_interface_enabled: bool = False
-    service_processor_ipv4_interface_gateway: str = ""
-    service_processor_ipv4_interface_netmask: str = ""
-    service_processor_ipv4_interface_setup_state: str = ""
-    service_processor_ipv6_interface_address: str = ""
-    service_processor_ipv6_interface_enabled: bool = False
-    service_processor_ipv6_interface_gateway: str = ""
-    service_processor_ipv6_interface_is_ipv6_ra_enabled: bool = False
-    service_processor_ipv6_interface_link_local_ip: str = ""
-    service_processor_ipv6_interface_netmask: int = 0
-    service_processor_ipv6_interface_router_ip: str = ""
-    service_processor_ipv6_interface_setup_state: str = ""
-    service_processor_is_ip_configured: bool = False
-    service_processor_last_update_state: str = ""
-    service_processor_link_status: str = ""
-    service_processor_mac_address: str = ""
-    service_processor_primary_is_current: bool = False
-    service_processor_primary_state: str = ""
-    service_processor_primary_version: str = ""
-    service_processor_ssh_info_allowed_addresses: list[str] = Field(default_factory=list)
-    service_processor_state: str = ""
-    service_processor_type: str = ""
-    service_processor_web_service_enabled: bool = False
-    service_processor_web_service_limit_access: bool = False
-    snaplock_compliance_clock_time: str = ""
+    service_processor: OntapNodeResponseServiceProcessor = Field(
+        default_factory=OntapNodeResponseServiceProcessor
+    )
+    snaplock: OntapNodeResponseSnaplock = Field(default_factory=OntapNodeResponseSnaplock)
     state: str = ""
-    statistics_processor_utilization_base: int = 0
-    statistics_processor_utilization_raw: int = 0
-    statistics_status: str = ""
-    statistics_timestamp: str = ""
+    statistics: OntapNodeResponseStatistics = Field(default_factory=OntapNodeResponseStatistics)
     storage_configuration: str = ""
-    system_aggregate_name: str = ""
-    system_aggregate_uuid: str = ""
+    system_aggregate: OntapNodeResponseSystemAggregate = Field(
+        default_factory=OntapNodeResponseSystemAggregate
+    )
     system_id: str = ""
     system_machine_type: str = ""
     uptime: int = 0
     uuid: OntapUUID = ""
     vendor_serial_number: str = ""
-    version_full: str = ""
-    version_generation: int = 0
-    version_major: int = 0
-    version_minor: int = 0
-    vm_provider_type: str = ""
+    version: OntapNodeResponseVersion = Field(default_factory=OntapNodeResponseVersion)
+    vm: OntapNodeResponseVm = Field(default_factory=OntapNodeResponseVm)

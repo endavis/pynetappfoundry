@@ -15,11 +15,11 @@ ONTAPVSCANSCANNERPOOL_MAPPING = TypeMapping(
     parent_id_field="uuid",
     fields=(
         FieldMapping(
-            cache_attr="cluster_name",
+            cache_attr="cluster.name",
             api_path="cluster.name",
         ),
         FieldMapping(
-            cache_attr="cluster_uuid",
+            cache_attr="cluster.uuid",
             api_path="cluster.uuid",
         ),
         FieldMapping(
@@ -41,11 +41,11 @@ ONTAPVSCANSCANNERPOOL_MAPPING = TypeMapping(
             default=[],
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
     ),

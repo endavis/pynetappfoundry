@@ -9,23 +9,23 @@ cache_strategy = "cache"
 [fields.healthy]
 cache_strategy = "cache"
 
-[fields.node_name]
+[fields."node.name"]
 cache_strategy = "cache"
 
-[fields.node_uuid]
+[fields."node.uuid"]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.transfer_state]
 cache_strategy = "realtime"
 
-[fields.volume_name]
+[fields."volume.name"]
 cache_strategy = "cache"
 
-[fields.volume_uuid]
+[fields."volume.uuid"]
 cache_strategy = "cache"

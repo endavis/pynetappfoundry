@@ -27,36 +27,36 @@ ONTAPFCLOGIN_MAPPING = TypeMapping(
             default=[],
         ),
         FieldMapping(
-            cache_attr="initiator_aliases",
+            cache_attr="initiator.aliases",
             api_path="initiator.aliases",
             default=[],
         ),
         FieldMapping(
-            cache_attr="initiator_comment",
+            cache_attr="initiator.comment",
             api_path="initiator.comment",
         ),
         FieldMapping(
-            cache_attr="initiator_port_address",
+            cache_attr="initiator.port_address",
             api_path="initiator.port_address",
         ),
         FieldMapping(
-            cache_attr="initiator_wwnn",
+            cache_attr="initiator.wwnn",
             api_path="initiator.wwnn",
         ),
         FieldMapping(
-            cache_attr="initiator_wwpn",
+            cache_attr="initiator.wwpn",
             api_path="initiator.wwpn",
         ),
         FieldMapping(
-            cache_attr="interface_name",
+            cache_attr="interface.name",
             api_path="interface.name",
         ),
         FieldMapping(
-            cache_attr="interface_uuid",
+            cache_attr="interface.uuid",
             api_path="interface.uuid",
         ),
         FieldMapping(
-            cache_attr="interface_wwpn",
+            cache_attr="interface.wwpn",
             api_path="interface.wwpn",
         ),
         FieldMapping(
@@ -64,11 +64,11 @@ ONTAPFCLOGIN_MAPPING = TypeMapping(
             api_path="protocol",
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
     ),

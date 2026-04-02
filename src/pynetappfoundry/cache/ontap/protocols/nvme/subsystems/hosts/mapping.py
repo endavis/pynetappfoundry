@@ -26,32 +26,32 @@ ONTAPNVMESUBSYSTEMHOST_MAPPING = TypeMapping(
     parent_id_field="uuid",
     fields=(
         FieldMapping(
-            cache_attr="dh_hmac_chap_controller_secret_key",
+            cache_attr="dh_hmac_chap.controller_secret_key",
             api_path="dh_hmac_chap.controller_secret_key",
         ),
         FieldMapping(
-            cache_attr="dh_hmac_chap_group_size",
+            cache_attr="dh_hmac_chap.group_size",
             api_path="dh_hmac_chap.group_size",
         ),
         FieldMapping(
-            cache_attr="dh_hmac_chap_hash_function",
+            cache_attr="dh_hmac_chap.hash_function",
             api_path="dh_hmac_chap.hash_function",
         ),
         FieldMapping(
-            cache_attr="dh_hmac_chap_host_secret_key",
+            cache_attr="dh_hmac_chap.host_secret_key",
             api_path="dh_hmac_chap.host_secret_key",
         ),
         FieldMapping(
-            cache_attr="dh_hmac_chap_mode",
+            cache_attr="dh_hmac_chap.mode",
             api_path="dh_hmac_chap.mode",
         ),
         FieldMapping(
-            cache_attr="io_queue_count",
+            cache_attr="io_queue.count",
             api_path="io_queue.count",
             default=0,
         ),
         FieldMapping(
-            cache_attr="io_queue_depth",
+            cache_attr="io_queue.depth",
             api_path="io_queue.depth",
             default=0,
         ),
@@ -70,19 +70,19 @@ ONTAPNVMESUBSYSTEMHOST_MAPPING = TypeMapping(
             default=[],
         ),
         FieldMapping(
-            cache_attr="subsystem_name",
+            cache_attr="subsystem.name",
             api_path="subsystem.name",
         ),
         FieldMapping(
-            cache_attr="subsystem_uuid",
+            cache_attr="subsystem.uuid",
             api_path="subsystem.uuid",
         ),
         FieldMapping(
-            cache_attr="tls_configured_psk",
+            cache_attr="tls.configured_psk",
             api_path="tls.configured_psk",
         ),
         FieldMapping(
-            cache_attr="tls_key_type",
+            cache_attr="tls.key_type",
             api_path="tls.key_type",
         ),
     ),

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pydantic import Field
 
 from pynetappfoundry.models._base import OntapModel
@@ -14,18 +12,44 @@ class OntapChassisFru(OntapModel):
 
     id: str = ""
     state: str = ""
-    type: str = ""
+    type_: str = ""
+
+
+class OntapChassisNodePcisCard(OntapModel):
+    """OntapChassisNodePcisCard sub-model for cards."""
+
+    device: str = ""
+    info: str = ""
+    slot: str = ""
+
+
+class OntapChassisNodePcis(OntapModel):
+    """OntapChassisNodePcis sub-model for pcis."""
+
+    cards: list[OntapChassisNodePcisCard] = Field(default_factory=list)
+
+
+class OntapChassisNodeUsbsPort(OntapModel):
+    """OntapChassisNodeUsbsPort sub-model for ports."""
+
+    connected: bool = False
+
+
+class OntapChassisNodeUsbs(OntapModel):
+    """OntapChassisNodeUsbs sub-model for usbs."""
+
+    enabled: bool = False
+    ports: list[OntapChassisNodeUsbsPort] = Field(default_factory=list)
+    supported: bool = False
 
 
 class OntapChassisNode(OntapModel):
     """OntapChassisNode sub-model for nodes."""
 
     name: str = ""
-    pcis_cards: list[dict[str, Any]] = Field(default_factory=list)
+    pcis: OntapChassisNodePcis = Field(default_factory=OntapChassisNodePcis)
     position: str = ""
-    usbs_enabled: bool = False
-    usbs_ports: list[dict[str, Any]] = Field(default_factory=list)
-    usbs_supported: bool = False
+    usbs: OntapChassisNodeUsbs = Field(default_factory=OntapChassisNodeUsbs)
     uuid: str = ""
 
 

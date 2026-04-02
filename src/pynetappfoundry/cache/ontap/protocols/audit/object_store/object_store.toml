@@ -6,47 +6,47 @@ class_name = "OntapS3Audit"
 [fields.enabled]
 cache_strategy = "cache"
 
-[fields.events_data]
+[fields."events.data"]
 cache_strategy = "cache"
 
-[fields.events_management]
+[fields."events.management"]
 cache_strategy = "cache"
 
-[fields.log_format]
+[fields."log.format"]
 cache_strategy = "cache"
 
-[fields.log_retention_count]
+[fields."log.retention.count"]
 cache_strategy = "cache"
 
-[fields.log_retention_duration]
+[fields."log.retention.duration"]
 cache_strategy = "cache"
 
-[fields.log_rotation_now]
+[fields."log.rotation.now"]
 cache_strategy = "cache"
 
-[fields.log_rotation_schedule_days]
+[fields."log.rotation.schedule.days"]
 cache_strategy = "cache"
 
-[fields.log_rotation_schedule_hours]
+[fields."log.rotation.schedule.hours"]
 cache_strategy = "cache"
 
-[fields.log_rotation_schedule_minutes]
+[fields."log.rotation.schedule.minutes"]
 cache_strategy = "cache"
 
-[fields.log_rotation_schedule_months]
+[fields."log.rotation.schedule.months"]
 cache_strategy = "cache"
 
-[fields.log_rotation_schedule_weekdays]
+[fields."log.rotation.schedule.weekdays"]
 cache_strategy = "cache"
 
-[fields.log_rotation_size]
+[fields."log.rotation.size"]
 cache_strategy = "cache"
 
 [fields.log_path]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"

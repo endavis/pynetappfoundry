@@ -3,25 +3,25 @@ path = "/cluster/peers"
 schema = "cluster_peer"
 class_name = "OntapClusterPeer"
 
-[fields.authentication_expiry_time]
+[fields."authentication.expiry_time"]
 cache_strategy = "cache"
 
-[fields.authentication_generate_passphrase]
+[fields."authentication.generate_passphrase"]
 cache_strategy = "cache"
 
-[fields.authentication_in_use]
+[fields."authentication.in_use"]
 cache_strategy = "cache"
 
-[fields.authentication_passphrase]
+[fields."authentication.passphrase"]
 cache_strategy = "cache"
 
-[fields.authentication_state]
+[fields."authentication.state"]
 cache_strategy = "cache"
 
-[fields.encryption_proposed]
+[fields."encryption.proposed"]
 cache_strategy = "cache"
 
-[fields.encryption_state]
+[fields."encryption.state"]
 cache_strategy = "cache"
 
 [fields.initial_allowed_svms]
@@ -30,22 +30,22 @@ cache_strategy = "cache"
 [fields.ip_address]
 cache_strategy = "cache"
 
-[fields.ipspace_name]
+[fields."ipspace.name"]
 cache_strategy = "cache"
 
-[fields.ipspace_uuid]
+[fields."ipspace.uuid"]
 cache_strategy = "cache"
 
-[fields.local_network_broadcast_domain]
+[fields."local_network.broadcast_domain"]
 cache_strategy = "cache"
 
-[fields.local_network_gateway]
+[fields."local_network.gateway"]
 cache_strategy = "cache"
 
-[fields.local_network_interfaces]
+[fields."local_network.interfaces"]
 cache_strategy = "cache"
 
-[fields.local_network_netmask]
+[fields."local_network.netmask"]
 cache_strategy = "cache"
 
 [fields.name]
@@ -54,32 +54,32 @@ cache_strategy = "cache"
 [fields.peer_applications]
 cache_strategy = "cache"
 
-[fields.remote_ip_addresses]
+[fields."remote.ip_addresses"]
 cache_strategy = "cache"
 
-[fields.remote_name]
+[fields."remote.name"]
 cache_strategy = "cache"
 
-[fields.remote_serial_number]
+[fields."remote.serial_number"]
 cache_strategy = "cache"
 
-[fields.status_state]
+[fields."status.state"]
 cache_strategy = "cache"
 
-[fields.status_update_time]
+[fields."status.update_time"]
 cache_strategy = "cache"
 
 [fields.uuid]
 cache_strategy = "cache"
 
-[fields.version_full]
+[fields."version.full"]
 cache_strategy = "cache"
 
-[fields.version_generation]
+[fields."version.generation"]
 cache_strategy = "cache"
 
-[fields.version_major]
+[fields."version.major"]
 cache_strategy = "cache"
 
-[fields.version_minor]
+[fields."version.minor"]
 cache_strategy = "cache"

@@ -3,14 +3,14 @@ path = "/security/ipsec/ca-certificates"
 schema = "ipsec_ca_certificate"
 class_name = "OntapIpsecCaCertificate"
 
-[fields.certificate_uuid]
+[fields."certificate.uuid"]
 cache_strategy = "cache"
 
 [fields.scope]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"

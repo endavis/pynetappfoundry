@@ -3,16 +3,16 @@ path = "/protocols/nfs/kerberos/realms"
 schema = "kerberos_realm"
 class_name = "OntapKerberosRealm"
 
-[fields.ad_server_address]
+[fields."ad_server.address"]
 cache_strategy = "cache"
 
-[fields.ad_server_name]
+[fields."ad_server.name"]
 cache_strategy = "cache"
 
-[fields.admin_server_address]
+[fields."admin_server.address"]
 cache_strategy = "cache"
 
-[fields.admin_server_port]
+[fields."admin_server.port"]
 cache_strategy = "cache"
 
 [fields.clock_skew]
@@ -24,26 +24,26 @@ cache_strategy = "cache"
 [fields.encryption_types]
 cache_strategy = "cache"
 
-[fields.kdc_ip]
+[fields."kdc.ip"]
 cache_strategy = "cache"
 
-[fields.kdc_port]
+[fields."kdc.port"]
 cache_strategy = "cache"
 
-[fields.kdc_vendor]
+[fields."kdc.vendor"]
 cache_strategy = "cache"
 
 [fields.name]
 cache_strategy = "cache"
 
-[fields.password_server_address]
+[fields."password_server.address"]
 cache_strategy = "cache"
 
-[fields.password_server_port]
+[fields."password_server.port"]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"

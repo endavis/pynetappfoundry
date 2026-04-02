@@ -27,19 +27,19 @@ ONTAPSVMPEER_MAPPING = TypeMapping(
             api_path="name",
         ),
         FieldMapping(
-            cache_attr="peer_cluster_name",
+            cache_attr="peer.cluster.name",
             api_path="peer.cluster.name",
         ),
         FieldMapping(
-            cache_attr="peer_cluster_uuid",
+            cache_attr="peer.cluster.uuid",
             api_path="peer.cluster.uuid",
         ),
         FieldMapping(
-            cache_attr="peer_svm_name",
+            cache_attr="peer.svm.name",
             api_path="peer.svm.name",
         ),
         FieldMapping(
-            cache_attr="peer_svm_uuid",
+            cache_attr="peer.svm.uuid",
             api_path="peer.svm.uuid",
         ),
         FieldMapping(
@@ -47,11 +47,11 @@ ONTAPSVMPEER_MAPPING = TypeMapping(
             api_path="state",
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(

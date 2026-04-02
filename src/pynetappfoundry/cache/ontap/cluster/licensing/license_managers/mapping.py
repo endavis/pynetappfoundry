@@ -20,7 +20,7 @@ ONTAPLICENSEMANAGERRESPONSE_MAPPING = TypeMapping(
             default=False,
         ),
         FieldMapping(
-            cache_attr="uri_host",
+            cache_attr="uri.host",
             api_path="uri.host",
         ),
         FieldMapping(

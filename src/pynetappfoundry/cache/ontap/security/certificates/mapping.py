@@ -17,57 +17,57 @@ ONTAPSECURITYCERTIFICATE_MAPPING = TypeMapping(
             api_path="authority_key_identifier",
         ),
         FieldMapping(
-            cache_attr="azure_client_certificate",
+            cache_attr="azure.client_certificate",
             api_path="azure.client_certificate",
         ),
         FieldMapping(
-            cache_attr="azure_client_id",
+            cache_attr="azure.client_id",
             api_path="azure.client_id",
         ),
         FieldMapping(
-            cache_attr="azure_client_secret",
+            cache_attr="azure.client_secret",
             api_path="azure.client_secret",
         ),
         FieldMapping(
-            cache_attr="azure_key_vault",
+            cache_attr="azure.key_vault",
             api_path="azure.key_vault",
         ),
         FieldMapping(
-            cache_attr="azure_oauth_host",
+            cache_attr="azure.oauth_host",
             api_path="azure.oauth_host",
         ),
         FieldMapping(
-            cache_attr="azure_proxy_host",
+            cache_attr="azure.proxy.host",
             api_path="azure.proxy.host",
         ),
         FieldMapping(
-            cache_attr="azure_proxy_password",
+            cache_attr="azure.proxy.password",
             api_path="azure.proxy.password",
         ),
         FieldMapping(
-            cache_attr="azure_proxy_port",
+            cache_attr="azure.proxy.port",
             api_path="azure.proxy.port",
             default=0,
         ),
         FieldMapping(
-            cache_attr="azure_proxy_type",
+            cache_attr="azure.proxy.type_",
             api_path="azure.proxy.type",
         ),
         FieldMapping(
-            cache_attr="azure_proxy_username",
+            cache_attr="azure.proxy.username",
             api_path="azure.proxy.username",
         ),
         FieldMapping(
-            cache_attr="azure_tenant_id",
+            cache_attr="azure.tenant_id",
             api_path="azure.tenant_id",
         ),
         FieldMapping(
-            cache_attr="azure_timeout",
+            cache_attr="azure.timeout",
             api_path="azure.timeout",
             default=0,
         ),
         FieldMapping(
-            cache_attr="azure_verify_host",
+            cache_attr="azure.verify_host",
             api_path="azure.verify_host",
             default=False,
         ),
@@ -118,22 +118,22 @@ ONTAPSECURITYCERTIFICATE_MAPPING = TypeMapping(
             api_path="serial_number",
         ),
         FieldMapping(
-            cache_attr="subject_alternatives_dns",
+            cache_attr="subject_alternatives.dns",
             api_path="subject_alternatives.dns",
             default=[],
         ),
         FieldMapping(
-            cache_attr="subject_alternatives_email",
+            cache_attr="subject_alternatives.email",
             api_path="subject_alternatives.email",
             default=[],
         ),
         FieldMapping(
-            cache_attr="subject_alternatives_ip",
+            cache_attr="subject_alternatives.ip",
             api_path="subject_alternatives.ip",
             default=[],
         ),
         FieldMapping(
-            cache_attr="subject_alternatives_uri",
+            cache_attr="subject_alternatives.uri",
             api_path="subject_alternatives.uri",
             default=[],
         ),
@@ -142,11 +142,11 @@ ONTAPSECURITYCERTIFICATE_MAPPING = TypeMapping(
             api_path="subject_key_identifier",
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(

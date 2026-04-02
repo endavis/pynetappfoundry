@@ -14,14 +14,14 @@ ONTAPLUNMAPREPORTINGNODE_MAPPING = TypeMapping(
     api_endpoint="/protocols/san/lun-maps/{lun.uuid}/{igroup.uuid}/reporting-nodes?fields=*",
     api_type="ontap",
     parent_mapping="OntapLunMap",
-    parent_id_field="lun_uuid",
+    parent_id_field="lun.uuid",
     fields=(
         FieldMapping(
-            cache_attr="igroup_uuid",
+            cache_attr="igroup.uuid",
             api_path="igroup.uuid",
         ),
         FieldMapping(
-            cache_attr="lun_uuid",
+            cache_attr="lun.uuid",
             api_path="lun.uuid",
         ),
         FieldMapping(

@@ -26,50 +26,50 @@ ONTAPTOPMETRICSSVMUSER_MAPPING = TypeMapping(
     parent_id_field="uuid",
     fields=(
         FieldMapping(
-            cache_attr="iops_error_lower_bound",
+            cache_attr="iops.error.lower_bound",
             api_path="iops.error.lower_bound",
             default=0,
         ),
         FieldMapping(
-            cache_attr="iops_error_upper_bound",
+            cache_attr="iops.error.upper_bound",
             api_path="iops.error.upper_bound",
             default=0,
         ),
         FieldMapping(
-            cache_attr="iops_read",
+            cache_attr="iops.read",
             api_path="iops.read",
             default=0,
         ),
         FieldMapping(
-            cache_attr="iops_write",
+            cache_attr="iops.write",
             api_path="iops.write",
             default=0,
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(
-            cache_attr="throughput_error_lower_bound",
+            cache_attr="throughput.error.lower_bound",
             api_path="throughput.error.lower_bound",
             default=0,
         ),
         FieldMapping(
-            cache_attr="throughput_error_upper_bound",
+            cache_attr="throughput.error.upper_bound",
             api_path="throughput.error.upper_bound",
             default=0,
         ),
         FieldMapping(
-            cache_attr="throughput_read",
+            cache_attr="throughput.read",
             api_path="throughput.read",
             default=0,
         ),
         FieldMapping(
-            cache_attr="throughput_write",
+            cache_attr="throughput.write",
             api_path="throughput.write",
             default=0,
         ),

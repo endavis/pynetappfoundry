@@ -7,6 +7,13 @@ from pydantic import Field
 from pynetappfoundry.models._base import OntapModel
 
 
+class OntapRoleOwner(OntapModel):
+    """OntapRoleOwner sub-model for owner."""
+
+    name: str = ""
+    uuid: str = ""
+
+
 class OntapRolePrivilege(OntapModel):
     """OntapRolePrivilege sub-model for privileges."""
 
@@ -20,7 +27,6 @@ class OntapRole(OntapModel):
 
     builtin: bool = False
     name: str = ""
-    owner_name: str = ""
-    owner_uuid: str = ""
+    owner: OntapRoleOwner = Field(default_factory=OntapRoleOwner)
     privileges: list[OntapRolePrivilege] = Field(default_factory=list)
     scope: str = ""

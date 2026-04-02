@@ -3,40 +3,40 @@ path = "/protocols/nfs/services"
 schema = "nfs_service"
 class_name = "OntapNfsService"
 
-[fields.access_cache_config_harvest_timeout]
+[fields."access_cache_config.harvest_timeout"]
 cache_strategy = "cache"
 
-[fields.access_cache_config_isDnsTTLEnabled]
+[fields."access_cache_config.isDnsTTLEnabled"]
 cache_strategy = "cache"
 
-[fields.access_cache_config_ttl_failure]
+[fields."access_cache_config.ttl_failure"]
 cache_strategy = "cache"
 
-[fields.access_cache_config_ttl_negative]
+[fields."access_cache_config.ttl_negative"]
 cache_strategy = "cache"
 
-[fields.access_cache_config_ttl_positive]
+[fields."access_cache_config.ttl_positive"]
 cache_strategy = "cache"
 
 [fields.auth_sys_extended_groups_enabled]
 cache_strategy = "cache"
 
-[fields.credential_cache_negative_ttl]
+[fields."credential_cache.negative_ttl"]
 cache_strategy = "cache"
 
-[fields.credential_cache_positive_ttl]
+[fields."credential_cache.positive_ttl"]
 cache_strategy = "cache"
 
-[fields.credential_cache_transient_error_ttl]
+[fields."credential_cache.transient_error_ttl"]
 cache_strategy = "cache"
 
 [fields.enabled]
 cache_strategy = "cache"
 
-[fields.exports_name_service_lookup_protocol]
+[fields."exports.name_service_lookup_protocol"]
 cache_strategy = "cache"
 
-[fields.exports_netgroup_trust_any_nsswitch_no_match]
+[fields."exports.netgroup_trust_any_nsswitch_no_match"]
 cache_strategy = "cache"
 
 [fields.extended_groups_limit]
@@ -48,322 +48,322 @@ cache_strategy = "cache"
 [fields.file_session_io_grouping_duration]
 cache_strategy = "cache"
 
-[fields.metric_v3_duration]
+[fields."metric.v3.duration"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_v3_iops_other]
+[fields."metric.v3.iops.other"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_v3_iops_read]
+[fields."metric.v3.iops.read"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_v3_iops_total]
+[fields."metric.v3.iops.total"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_v3_iops_write]
+[fields."metric.v3.iops.write"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_v3_latency_other]
+[fields."metric.v3.latency.other"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_v3_latency_read]
+[fields."metric.v3.latency.read"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_v3_latency_total]
+[fields."metric.v3.latency.total"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_v3_latency_write]
+[fields."metric.v3.latency.write"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_v3_status]
+[fields."metric.v3.status"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_v3_throughput_read]
+[fields."metric.v3.throughput.read"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_v3_throughput_total]
+[fields."metric.v3.throughput.total"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_v3_throughput_write]
+[fields."metric.v3.throughput.write"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_v3_timestamp]
+[fields."metric.v3.timestamp"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_v4_duration]
+[fields."metric.v4.duration"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_v4_iops_other]
+[fields."metric.v4.iops.other"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_v4_iops_read]
+[fields."metric.v4.iops.read"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_v4_iops_total]
+[fields."metric.v4.iops.total"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_v4_iops_write]
+[fields."metric.v4.iops.write"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_v4_latency_other]
+[fields."metric.v4.latency.other"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_v4_latency_read]
+[fields."metric.v4.latency.read"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_v4_latency_total]
+[fields."metric.v4.latency.total"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_v4_latency_write]
+[fields."metric.v4.latency.write"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_v4_status]
+[fields."metric.v4.status"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_v4_throughput_read]
+[fields."metric.v4.throughput.read"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_v4_throughput_total]
+[fields."metric.v4.throughput.total"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_v4_throughput_write]
+[fields."metric.v4.throughput.write"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_v4_timestamp]
+[fields."metric.v4.timestamp"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_v41_duration]
+[fields."metric.v41.duration"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_v41_iops_other]
+[fields."metric.v41.iops.other"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_v41_iops_read]
+[fields."metric.v41.iops.read"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_v41_iops_total]
+[fields."metric.v41.iops.total"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_v41_iops_write]
+[fields."metric.v41.iops.write"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_v41_latency_other]
+[fields."metric.v41.latency.other"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_v41_latency_read]
+[fields."metric.v41.latency.read"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_v41_latency_total]
+[fields."metric.v41.latency.total"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_v41_latency_write]
+[fields."metric.v41.latency.write"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_v41_status]
+[fields."metric.v41.status"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_v41_throughput_read]
+[fields."metric.v41.throughput.read"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_v41_throughput_total]
+[fields."metric.v41.throughput.total"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_v41_throughput_write]
+[fields."metric.v41.throughput.write"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_v41_timestamp]
+[fields."metric.v41.timestamp"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.protocol_v3_64bit_identifiers_enabled]
+[fields."protocol.v3_64bit_identifiers_enabled"]
 cache_strategy = "cache"
 
-[fields.protocol_v3_enabled]
+[fields."protocol.v3_enabled"]
 cache_strategy = "cache"
 
-[fields.protocol_v3_features_connection_drop]
+[fields."protocol.v3_features.connection_drop"]
 cache_strategy = "cache"
 
-[fields.protocol_v3_features_ejukebox_enabled]
+[fields."protocol.v3_features.ejukebox_enabled"]
 cache_strategy = "cache"
 
-[fields.protocol_v3_features_fsid_change]
+[fields."protocol.v3_features.fsid_change"]
 cache_strategy = "cache"
 
-[fields.protocol_v3_features_hide_snapshot_enabled]
+[fields."protocol.v3_features.hide_snapshot_enabled"]
 cache_strategy = "cache"
 
-[fields.protocol_v3_features_mount_daemon_port]
+[fields."protocol.v3_features.mount_daemon_port"]
 cache_strategy = "cache"
 
-[fields.protocol_v3_features_mount_root_only]
+[fields."protocol.v3_features.mount_root_only"]
 cache_strategy = "cache"
 
-[fields.protocol_v3_features_network_lock_manager_port]
+[fields."protocol.v3_features.network_lock_manager_port"]
 cache_strategy = "cache"
 
-[fields.protocol_v3_features_network_status_monitor_port]
+[fields."protocol.v3_features.network_status_monitor_port"]
 cache_strategy = "cache"
 
-[fields.protocol_v3_features_rquota_daemon_port]
+[fields."protocol.v3_features.rquota_daemon_port"]
 cache_strategy = "cache"
 
-[fields.protocol_v40_enabled]
+[fields."protocol.v40_enabled"]
 cache_strategy = "cache"
 
-[fields.protocol_v40_features_acl_enabled]
+[fields."protocol.v40_features.acl_enabled"]
 cache_strategy = "cache"
 
-[fields.protocol_v40_features_acl_max_aces]
+[fields."protocol.v40_features.acl_max_aces"]
 cache_strategy = "cache"
 
-[fields.protocol_v40_features_acl_preserve]
+[fields."protocol.v40_features.acl_preserve"]
 cache_strategy = "cache"
 
-[fields.protocol_v40_features_read_delegation_enabled]
+[fields."protocol.v40_features.read_delegation_enabled"]
 cache_strategy = "cache"
 
-[fields.protocol_v40_features_referrals_enabled]
+[fields."protocol.v40_features.referrals_enabled"]
 cache_strategy = "cache"
 
-[fields.protocol_v40_features_write_delegation_enabled]
+[fields."protocol.v40_features.write_delegation_enabled"]
 cache_strategy = "cache"
 
-[fields.protocol_v41_enabled]
+[fields."protocol.v41_enabled"]
 cache_strategy = "cache"
 
-[fields.protocol_v41_features_acl_enabled]
+[fields."protocol.v41_features.acl_enabled"]
 cache_strategy = "cache"
 
-[fields.protocol_v41_features_implementation_domain]
+[fields."protocol.v41_features.implementation_domain"]
 cache_strategy = "cache"
 
-[fields.protocol_v41_features_implementation_name]
+[fields."protocol.v41_features.implementation_name"]
 cache_strategy = "cache"
 
-[fields.protocol_v41_features_pnfs_enabled]
+[fields."protocol.v41_features.pnfs_enabled"]
 cache_strategy = "cache"
 
-[fields.protocol_v41_features_read_delegation_enabled]
+[fields."protocol.v41_features.read_delegation_enabled"]
 cache_strategy = "cache"
 
-[fields.protocol_v41_features_referrals_enabled]
+[fields."protocol.v41_features.referrals_enabled"]
 cache_strategy = "cache"
 
-[fields.protocol_v41_features_trunking_enabled]
+[fields."protocol.v41_features.trunking_enabled"]
 cache_strategy = "cache"
 
-[fields.protocol_v41_features_write_delegation_enabled]
+[fields."protocol.v41_features.write_delegation_enabled"]
 cache_strategy = "cache"
 
-[fields.protocol_v42_features_seclabel_enabled]
+[fields."protocol.v42_features.seclabel_enabled"]
 cache_strategy = "cache"
 
-[fields.protocol_v42_features_sparsefile_ops_enabled]
+[fields."protocol.v42_features.sparsefile_ops_enabled"]
 cache_strategy = "cache"
 
-[fields.protocol_v42_features_xattrs_enabled]
+[fields."protocol.v42_features.xattrs_enabled"]
 cache_strategy = "cache"
 
-[fields.protocol_v4_64bit_identifiers_enabled]
+[fields."protocol.v4_64bit_identifiers_enabled"]
 cache_strategy = "cache"
 
-[fields.protocol_v4_fsid_change]
+[fields."protocol.v4_fsid_change"]
 cache_strategy = "cache"
 
-[fields.protocol_v4_grace_seconds]
+[fields."protocol.v4_grace_seconds"]
 cache_strategy = "cache"
 
-[fields.protocol_v4_id_domain]
+[fields."protocol.v4_id_domain"]
 cache_strategy = "cache"
 
-[fields.protocol_v4_lease_seconds]
+[fields."protocol.v4_lease_seconds"]
 cache_strategy = "cache"
 
-[fields.protocol_v4_session_slot_reply_cache_size]
+[fields."protocol.v4_session_slot_reply_cache_size"]
 cache_strategy = "cache"
 
-[fields.protocol_v4_session_slots]
+[fields."protocol.v4_session_slots"]
 cache_strategy = "cache"
 
-[fields.protocol_access_rules_cifs_access_type]
+[fields."protocol_access_rules.cifs_access_type"]
 cache_strategy = "cache"
 
-[fields.protocol_access_rules_nfs3_access_type]
+[fields."protocol_access_rules.nfs3_access_type"]
 cache_strategy = "cache"
 
-[fields.protocol_access_rules_nfs4_access_type]
+[fields."protocol_access_rules.nfs4_access_type"]
 cache_strategy = "cache"
 
-[fields.qtree_export_enabled]
+[fields."qtree.export_enabled"]
 cache_strategy = "cache"
 
-[fields.qtree_validate_export]
+[fields."qtree.validate_export"]
 cache_strategy = "cache"
 
-[fields.root_ignore_nt_acl]
+[fields."root.ignore_nt_acl"]
 cache_strategy = "cache"
 
-[fields.root_skip_write_permission_check]
+[fields."root.skip_write_permission_check"]
 cache_strategy = "cache"
 
 [fields.rquota_enabled]
 cache_strategy = "cache"
 
-[fields.security_chown_mode]
+[fields."security.chown_mode"]
 cache_strategy = "cache"
 
-[fields.security_nt_acl_display_permission]
+[fields."security.nt_acl_display_permission"]
 cache_strategy = "cache"
 
-[fields.security_ntfs_unix_security]
+[fields."security.ntfs_unix_security"]
 cache_strategy = "cache"
 
-[fields.security_permitted_encryption_types]
+[fields."security.permitted_encryption_types"]
 cache_strategy = "cache"
 
-[fields.security_rpcsec_context_idle]
+[fields."security.rpcsec_context_idle"]
 cache_strategy = "cache"
 
 [fields.showmount_enabled]
@@ -372,188 +372,188 @@ cache_strategy = "cache"
 [fields.state]
 cache_strategy = "cache"
 
-[fields.statistics_v3_iops_raw_other]
+[fields."statistics.v3.iops_raw.other"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_v3_iops_raw_read]
+[fields."statistics.v3.iops_raw.read"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_v3_iops_raw_total]
+[fields."statistics.v3.iops_raw.total"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_v3_iops_raw_write]
+[fields."statistics.v3.iops_raw.write"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_v3_latency_raw_other]
+[fields."statistics.v3.latency_raw.other"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_v3_latency_raw_read]
+[fields."statistics.v3.latency_raw.read"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_v3_latency_raw_total]
+[fields."statistics.v3.latency_raw.total"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_v3_latency_raw_write]
+[fields."statistics.v3.latency_raw.write"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_v3_status]
+[fields."statistics.v3.status"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_v3_throughput_raw_read]
+[fields."statistics.v3.throughput_raw.read"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_v3_throughput_raw_total]
+[fields."statistics.v3.throughput_raw.total"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_v3_throughput_raw_write]
+[fields."statistics.v3.throughput_raw.write"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_v3_timestamp]
+[fields."statistics.v3.timestamp"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_v4_iops_raw_other]
+[fields."statistics.v4.iops_raw.other"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_v4_iops_raw_read]
+[fields."statistics.v4.iops_raw.read"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_v4_iops_raw_total]
+[fields."statistics.v4.iops_raw.total"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_v4_iops_raw_write]
+[fields."statistics.v4.iops_raw.write"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_v4_latency_raw_other]
+[fields."statistics.v4.latency_raw.other"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_v4_latency_raw_read]
+[fields."statistics.v4.latency_raw.read"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_v4_latency_raw_total]
+[fields."statistics.v4.latency_raw.total"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_v4_latency_raw_write]
+[fields."statistics.v4.latency_raw.write"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_v4_status]
+[fields."statistics.v4.status"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_v4_throughput_raw_read]
+[fields."statistics.v4.throughput_raw.read"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_v4_throughput_raw_total]
+[fields."statistics.v4.throughput_raw.total"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_v4_throughput_raw_write]
+[fields."statistics.v4.throughput_raw.write"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_v4_timestamp]
+[fields."statistics.v4.timestamp"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_v41_iops_raw_other]
+[fields."statistics.v41.iops_raw.other"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_v41_iops_raw_read]
+[fields."statistics.v41.iops_raw.read"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_v41_iops_raw_total]
+[fields."statistics.v41.iops_raw.total"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_v41_iops_raw_write]
+[fields."statistics.v41.iops_raw.write"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_v41_latency_raw_other]
+[fields."statistics.v41.latency_raw.other"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_v41_latency_raw_read]
+[fields."statistics.v41.latency_raw.read"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_v41_latency_raw_total]
+[fields."statistics.v41.latency_raw.total"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_v41_latency_raw_write]
+[fields."statistics.v41.latency_raw.write"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_v41_status]
+[fields."statistics.v41.status"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_v41_throughput_raw_read]
+[fields."statistics.v41.throughput_raw.read"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_v41_throughput_raw_total]
+[fields."statistics.v41.throughput_raw.total"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_v41_throughput_raw_write]
+[fields."statistics.v41.throughput_raw.write"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_v41_timestamp]
+[fields."statistics.v41.timestamp"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
-[fields.transport_rdma_enabled]
+[fields."transport.rdma_enabled"]
 cache_strategy = "cache"
 
-[fields.transport_tcp_enabled]
+[fields."transport.tcp_enabled"]
 cache_strategy = "cache"
 
-[fields.transport_tcp_max_transfer_size]
+[fields."transport.tcp_max_transfer_size"]
 cache_strategy = "cache"
 
-[fields.transport_udp_enabled]
+[fields."transport.udp_enabled"]
 cache_strategy = "cache"
 
 [fields.vstorage_enabled]
 cache_strategy = "cache"
 
-[fields.windows_default_user]
+[fields."windows.default_user"]
 cache_strategy = "cache"
 
-[fields.windows_map_unknown_uid_to_default_user]
+[fields."windows.map_unknown_uid_to_default_user"]
 cache_strategy = "cache"
 
-[fields.windows_v3_ms_dos_client_enabled]
+[fields."windows.v3_ms_dos_client_enabled"]
 cache_strategy = "cache"

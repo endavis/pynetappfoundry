@@ -13,13 +13,13 @@ ONTAPCIFSOPENFILE_MAPPING = TypeMapping(
     api_type="ontap",
     fields=(
         FieldMapping(
-            cache_attr="connection_count",
+            cache_attr="connection.count",
             api_path="connection.count",
-            default=0,
             cache_strategy="realtime",
+            default=0,
         ),
         FieldMapping(
-            cache_attr="connection_identifier",
+            cache_attr="connection.identifier",
             api_path="connection.identifier",
             default=0,
         ),
@@ -34,11 +34,11 @@ ONTAPCIFSOPENFILE_MAPPING = TypeMapping(
             default=0,
         ),
         FieldMapping(
-            cache_attr="node_name",
+            cache_attr="node.name",
             api_path="node.name",
         ),
         FieldMapping(
-            cache_attr="node_uuid",
+            cache_attr="node.uuid",
             api_path="node.uuid",
         ),
         FieldMapping(
@@ -52,28 +52,28 @@ ONTAPCIFSOPENFILE_MAPPING = TypeMapping(
         FieldMapping(
             cache_attr="range_locks_count",
             api_path="range_locks_count",
-            default=0,
             cache_strategy="realtime",
+            default=0,
         ),
         FieldMapping(
-            cache_attr="session_identifier",
+            cache_attr="session.identifier",
             api_path="session.identifier",
             default=0,
         ),
         FieldMapping(
-            cache_attr="share_mode",
+            cache_attr="share.mode",
             api_path="share.mode",
         ),
         FieldMapping(
-            cache_attr="share_name",
+            cache_attr="share.name",
             api_path="share.name",
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(
@@ -81,11 +81,11 @@ ONTAPCIFSOPENFILE_MAPPING = TypeMapping(
             api_path="type",
         ),
         FieldMapping(
-            cache_attr="volume_name",
+            cache_attr="volume.name",
             api_path="volume.name",
         ),
         FieldMapping(
-            cache_attr="volume_uuid",
+            cache_attr="volume.uuid",
             api_path="volume.uuid",
         ),
     ),

@@ -3,32 +3,32 @@ path = "/cluster/metrocluster/svms"
 schema = "metrocluster_svm"
 class_name = "OntapMetroclusterSvm"
 
-[fields.cluster_name]
+[fields."cluster.name"]
 cache_strategy = "cache"
 
-[fields.cluster_uuid]
+[fields."cluster.uuid"]
 cache_strategy = "cache"
 
 [fields.configuration_state]
 cache_strategy = "cache"
 
-[fields.failed_reason_arguments]
+[fields."failed_reason.arguments"]
 cache_strategy = "cache"
 
-[fields.failed_reason_code]
+[fields."failed_reason.code"]
 cache_strategy = "cache"
 
-[fields.failed_reason_message]
+[fields."failed_reason.message"]
 cache_strategy = "cache"
 
-[fields.partner_svm_name]
+[fields."partner_svm.name"]
 cache_strategy = "cache"
 
-[fields.partner_svm_uuid]
+[fields."partner_svm.uuid"]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"

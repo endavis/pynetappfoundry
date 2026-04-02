@@ -3,7 +3,7 @@ path = "/cluster/licensing/capacity-pools"
 schema = "capacity_pool_response"
 class_name = "OntapCapacityPoolResponse"
 
-[fields.license_manager_uuid]
+[fields."license_manager.uuid"]
 cache_strategy = "cache"
 
 [fields.nodes]

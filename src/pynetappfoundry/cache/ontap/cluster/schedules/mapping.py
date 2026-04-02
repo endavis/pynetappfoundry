@@ -13,35 +13,35 @@ ONTAPSCHEDULE_MAPPING = TypeMapping(
     api_type="ontap",
     fields=(
         FieldMapping(
-            cache_attr="cluster_name",
+            cache_attr="cluster.name",
             api_path="cluster.name",
         ),
         FieldMapping(
-            cache_attr="cluster_uuid",
+            cache_attr="cluster.uuid",
             api_path="cluster.uuid",
         ),
         FieldMapping(
-            cache_attr="cron_days",
+            cache_attr="cron.days",
             api_path="cron.days",
             default=[],
         ),
         FieldMapping(
-            cache_attr="cron_hours",
+            cache_attr="cron.hours",
             api_path="cron.hours",
             default=[],
         ),
         FieldMapping(
-            cache_attr="cron_minutes",
+            cache_attr="cron.minutes",
             api_path="cron.minutes",
             default=[],
         ),
         FieldMapping(
-            cache_attr="cron_months",
+            cache_attr="cron.months",
             api_path="cron.months",
             default=[],
         ),
         FieldMapping(
-            cache_attr="cron_weekdays",
+            cache_attr="cron.weekdays",
             api_path="cron.weekdays",
             default=[],
         ),
@@ -58,11 +58,11 @@ ONTAPSCHEDULE_MAPPING = TypeMapping(
             api_path="scope",
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(

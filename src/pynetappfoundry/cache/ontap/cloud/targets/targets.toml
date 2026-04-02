@@ -27,19 +27,19 @@ cache_strategy = "cache"
 [fields.certificate_validation_enabled]
 cache_strategy = "cache"
 
-[fields.cluster_name]
+[fields."cluster.name"]
 cache_strategy = "cache"
 
-[fields.cluster_uuid]
+[fields."cluster.uuid"]
 cache_strategy = "cache"
 
 [fields.container]
 cache_strategy = "cache"
 
-[fields.ipspace_name]
+[fields."ipspace.name"]
 cache_strategy = "cache"
 
-[fields.ipspace_uuid]
+[fields."ipspace.uuid"]
 cache_strategy = "cache"
 
 [fields.name]
@@ -75,10 +75,10 @@ cache_strategy = "cache"
 [fields.ssl_enabled]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.url_style]

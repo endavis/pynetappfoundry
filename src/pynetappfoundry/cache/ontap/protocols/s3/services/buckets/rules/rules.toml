@@ -3,7 +3,7 @@ path = "/protocols/s3/services/{svm.uuid}/buckets/{s3_bucket.uuid}/rules"
 schema = "s3_bucket_lifecycle_rule"
 class_name = "OntapS3BucketLifecycleRule"
 
-[fields.abort_incomplete_multipart_upload_after_initiation_days]
+[fields."abort_incomplete_multipart_upload.after_initiation_days"]
 cache_strategy = "cache"
 
 [fields.bucket_name]
@@ -12,40 +12,40 @@ cache_strategy = "cache"
 [fields.enabled]
 cache_strategy = "cache"
 
-[fields.expiration_expired_object_delete_marker]
+[fields."expiration.expired_object_delete_marker"]
 cache_strategy = "cache"
 
-[fields.expiration_object_age_days]
+[fields."expiration.object_age_days"]
 cache_strategy = "cache"
 
-[fields.expiration_object_expiry_date]
+[fields."expiration.object_expiry_date"]
 cache_strategy = "cache"
 
 [fields.name]
 cache_strategy = "cache"
 
-[fields.non_current_version_expiration_new_non_current_versions]
+[fields."non_current_version_expiration.new_non_current_versions"]
 cache_strategy = "cache"
 
-[fields.non_current_version_expiration_non_current_days]
+[fields."non_current_version_expiration.non_current_days"]
 cache_strategy = "cache"
 
-[fields.object_filter_prefix]
+[fields."object_filter.prefix"]
 cache_strategy = "cache"
 
-[fields.object_filter_size_greater_than]
+[fields."object_filter.size_greater_than"]
 cache_strategy = "cache"
 
-[fields.object_filter_size_less_than]
+[fields."object_filter.size_less_than"]
 cache_strategy = "cache"
 
-[fields.object_filter_tags]
+[fields."object_filter.tags"]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.uuid]

@@ -8,31 +8,206 @@ from pydantic import Field
 from pynetappfoundry.models._base import OntapModel, OntapUUID
 
 
-class OntapSnapmirrorRelationshipArgument(OntapModel):
-    """OntapSnapmirrorRelationshipArgument sub-model for arguments."""
+class OntapSnapmirrorRelationshipConsistencyGroupFailoverErrorArgument(OntapModel):
+    """OntapSnapmirrorRelationshipConsistencyGroupFailoverErrorArgument sub-model for arguments."""
 
     code: str = ""
     message: str = ""
 
 
-class OntapSnapmirrorRelationshipConsistencyGroupVolume(OntapModel):
-    """OntapSnapmirrorRelationshipConsistencyGroupVolume sub-model for consistency_group_volumes."""
+class OntapSnapmirrorRelationshipConsistencyGroupFailoverError(OntapModel):
+    """OntapSnapmirrorRelationshipConsistencyGroupFailoverError sub-model for error."""
+
+    arguments: list[OntapSnapmirrorRelationshipConsistencyGroupFailoverErrorArgument] = Field(
+        default_factory=list
+    )
+    code: str = ""
+    message: str = ""
+
+
+class OntapSnapmirrorRelationshipConsistencyGroupFailoverStatus(OntapModel):
+    """OntapSnapmirrorRelationshipConsistencyGroupFailoverStatus sub-model for status."""
+
+    code: str = ""
+    message: str = ""
+
+
+class OntapSnapmirrorRelationshipConsistencyGroupFailover(OntapModel):
+    """OntapSnapmirrorRelationshipConsistencyGroupFailover sub-model for consistency_group_failover."""
+
+    error: OntapSnapmirrorRelationshipConsistencyGroupFailoverError = Field(
+        default_factory=OntapSnapmirrorRelationshipConsistencyGroupFailoverError
+    )
+    state: str = ""
+    status: OntapSnapmirrorRelationshipConsistencyGroupFailoverStatus = Field(
+        default_factory=OntapSnapmirrorRelationshipConsistencyGroupFailoverStatus
+    )
+    type_: str = ""
+
+
+class OntapSnapmirrorRelationshipCreateDestinationBucketRetention(OntapModel):
+    """OntapSnapmirrorRelationshipCreateDestinationBucketRetention sub-model for bucket_retention."""
+
+    default_period: str = ""
+    mode: str = ""
+
+
+class OntapSnapmirrorRelationshipCreateDestinationStorageService(OntapModel):
+    """OntapSnapmirrorRelationshipCreateDestinationStorageService sub-model for storage_service."""
+
+    enabled: bool = False
+    enforce_performance: bool = False
+    name: str = ""
+
+
+class OntapSnapmirrorRelationshipCreateDestinationTiering(OntapModel):
+    """OntapSnapmirrorRelationshipCreateDestinationTiering sub-model for tiering."""
+
+    policy: str = ""
+    supported: bool = False
+
+
+class OntapSnapmirrorRelationshipCreateDestination(OntapModel):
+    """OntapSnapmirrorRelationshipCreateDestination sub-model for create_destination."""
+
+    bucket_retention: OntapSnapmirrorRelationshipCreateDestinationBucketRetention = Field(
+        default_factory=OntapSnapmirrorRelationshipCreateDestinationBucketRetention
+    )
+    enabled: bool = False
+    size: int = 0
+    snapshot_locking_enabled: bool = False
+    storage_service: OntapSnapmirrorRelationshipCreateDestinationStorageService = Field(
+        default_factory=OntapSnapmirrorRelationshipCreateDestinationStorageService
+    )
+    tiering: OntapSnapmirrorRelationshipCreateDestinationTiering = Field(
+        default_factory=OntapSnapmirrorRelationshipCreateDestinationTiering
+    )
+
+
+class OntapSnapmirrorRelationshipDestinationCluster(OntapModel):
+    """OntapSnapmirrorRelationshipDestinationCluster sub-model for cluster."""
+
+    name: str = ""
+    uuid: OntapUUID = ""
+
+
+class OntapSnapmirrorRelationshipDestinationConsistencyGroupVolume(OntapModel):
+    """OntapSnapmirrorRelationshipDestinationConsistencyGroupVolume sub-model for consistency_group_volumes."""
 
     name: str = ""
     uuid: str = ""
 
 
-class OntapSnapmirrorRelationshipConsistencyGroupVolume2(OntapModel):
-    """OntapSnapmirrorRelationshipConsistencyGroupVolume2 sub-model for consistency_group_volumes."""
+class OntapSnapmirrorRelationshipDestinationLuns(OntapModel):
+    """OntapSnapmirrorRelationshipDestinationLuns sub-model for luns."""
 
     name: str = ""
     uuid: str = ""
+
+
+class OntapSnapmirrorRelationshipDestinationSvm(OntapModel):
+    """OntapSnapmirrorRelationshipDestinationSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapSnapmirrorRelationshipDestination(OntapModel):
+    """OntapSnapmirrorRelationshipDestination sub-model for destination."""
+
+    cluster: OntapSnapmirrorRelationshipDestinationCluster = Field(
+        default_factory=OntapSnapmirrorRelationshipDestinationCluster
+    )
+    consistency_group_volumes: list[
+        OntapSnapmirrorRelationshipDestinationConsistencyGroupVolume
+    ] = Field(default_factory=list)
+    ipspace: str = ""
+    luns: OntapSnapmirrorRelationshipDestinationLuns = Field(
+        default_factory=OntapSnapmirrorRelationshipDestinationLuns
+    )
+    path: str = ""
+    svm: OntapSnapmirrorRelationshipDestinationSvm = Field(
+        default_factory=OntapSnapmirrorRelationshipDestinationSvm
+    )
+
+
+class OntapSnapmirrorRelationshipPolicy(OntapModel):
+    """OntapSnapmirrorRelationshipPolicy sub-model for policy."""
+
+    name: str = ""
+    type_: str = ""
+    uuid: OntapUUID = ""
+
+
+class OntapSnapmirrorRelationshipSourceCluster(OntapModel):
+    """OntapSnapmirrorRelationshipSourceCluster sub-model for cluster."""
+
+    name: str = ""
+    uuid: OntapUUID = ""
+
+
+class OntapSnapmirrorRelationshipSourceConsistencyGroupVolume(OntapModel):
+    """OntapSnapmirrorRelationshipSourceConsistencyGroupVolume sub-model for consistency_group_volumes."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapSnapmirrorRelationshipSourceLuns(OntapModel):
+    """OntapSnapmirrorRelationshipSourceLuns sub-model for luns."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapSnapmirrorRelationshipSourceSvm(OntapModel):
+    """OntapSnapmirrorRelationshipSourceSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapSnapmirrorRelationshipSource(OntapModel):
+    """OntapSnapmirrorRelationshipSource sub-model for source."""
+
+    cluster: OntapSnapmirrorRelationshipSourceCluster = Field(
+        default_factory=OntapSnapmirrorRelationshipSourceCluster
+    )
+    consistency_group_volumes: list[OntapSnapmirrorRelationshipSourceConsistencyGroupVolume] = (
+        Field(default_factory=list)
+    )
+    luns: OntapSnapmirrorRelationshipSourceLuns = Field(
+        default_factory=OntapSnapmirrorRelationshipSourceLuns
+    )
+    path: str = ""
+    svm: OntapSnapmirrorRelationshipSourceSvm = Field(
+        default_factory=OntapSnapmirrorRelationshipSourceSvm
+    )
 
 
 class OntapSnapmirrorRelationshipSvmdrVolume(OntapModel):
     """OntapSnapmirrorRelationshipSvmdrVolume sub-model for svmdr_volumes."""
 
     name: str = ""
+
+
+class OntapSnapmirrorRelationshipTransfer(OntapModel):
+    """OntapSnapmirrorRelationshipTransfer sub-model for transfer."""
+
+    bytes_transferred: int = 0
+    end_time: str = ""
+    last_updated_time: str = ""
+    state: str = ""
+    total_duration: str = ""
+    type_: str = ""
+    uuid: OntapUUID = ""
+
+
+class OntapSnapmirrorRelationshipTransferSchedule(OntapModel):
+    """OntapSnapmirrorRelationshipTransferSchedule sub-model for transfer_schedule."""
+
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapSnapmirrorRelationshipUnhealthyReason(OntapModel):
@@ -47,36 +222,15 @@ class OntapSnapmirrorRelationship(OntapModel):
     """OntapSnapmirrorRelationship information."""
 
     backoff_level: str = ""
-    consistency_group_failover_error_arguments: list[OntapSnapmirrorRelationshipArgument] = Field(
-        default_factory=list
+    consistency_group_failover: OntapSnapmirrorRelationshipConsistencyGroupFailover = Field(
+        default_factory=OntapSnapmirrorRelationshipConsistencyGroupFailover
     )
-    consistency_group_failover_error_code: str = ""
-    consistency_group_failover_error_message: str = ""
-    consistency_group_failover_state: str = ""
-    consistency_group_failover_status_code: str = ""
-    consistency_group_failover_status_message: str = ""
-    consistency_group_failover_type: str = ""
-    create_destination_bucket_retention_default_period: str = ""
-    create_destination_bucket_retention_mode: str = ""
-    create_destination_enabled: bool = False
-    create_destination_size: int = 0
-    create_destination_snapshot_locking_enabled: bool = False
-    create_destination_storage_service_enabled: bool = False
-    create_destination_storage_service_enforce_performance: bool = False
-    create_destination_storage_service_name: str = ""
-    create_destination_tiering_policy: str = ""
-    create_destination_tiering_supported: bool = False
-    destination_cluster_name: str = ""
-    destination_cluster_uuid: OntapUUID = ""
-    destination_consistency_group_volumes: list[
-        OntapSnapmirrorRelationshipConsistencyGroupVolume
-    ] = Field(default_factory=list)
-    destination_ipspace: str = ""
-    destination_luns_name: str = ""
-    destination_luns_uuid: str = ""
-    destination_path: str = ""
-    destination_svm_name: str = ""
-    destination_svm_uuid: str = ""
+    create_destination: OntapSnapmirrorRelationshipCreateDestination = Field(
+        default_factory=OntapSnapmirrorRelationshipCreateDestination
+    )
+    destination: OntapSnapmirrorRelationshipDestination = Field(
+        default_factory=OntapSnapmirrorRelationshipDestination
+    )
     exported_snapshot: str = ""
     group_type: str = ""
     healthy: bool = False
@@ -86,38 +240,28 @@ class OntapSnapmirrorRelationship(OntapModel):
     last_transfer_network_compression_ratio: str = ""
     last_transfer_type: str = ""
     master_bias_activated_site: str = ""
-    policy_name: str = ""
-    policy_type: str = ""
-    policy_uuid: OntapUUID = ""
+    policy: OntapSnapmirrorRelationshipPolicy = Field(
+        default_factory=OntapSnapmirrorRelationshipPolicy
+    )
     preferred_site: str = ""
     preserve: bool = False
     quick_resync: bool = False
     recover_after_break: bool = False
     restore: bool = False
     restore_to_snapshot: str = ""
-    source_cluster_name: str = ""
-    source_cluster_uuid: OntapUUID = ""
-    source_consistency_group_volumes: list[OntapSnapmirrorRelationshipConsistencyGroupVolume2] = (
-        Field(default_factory=list)
+    source: OntapSnapmirrorRelationshipSource = Field(
+        default_factory=OntapSnapmirrorRelationshipSource
     )
-    source_luns_name: str = ""
-    source_luns_uuid: str = ""
-    source_path: str = ""
-    source_svm_name: str = ""
-    source_svm_uuid: str = ""
     state: str = ""
     svmdr_volumes: list[OntapSnapmirrorRelationshipSvmdrVolume] = Field(default_factory=list)
     throttle: int = 0
     total_transfer_bytes: int = 0
     total_transfer_duration: str = ""
-    transfer_bytes_transferred: int = 0
-    transfer_end_time: str = ""
-    transfer_last_updated_time: str = ""
-    transfer_state: str = ""
-    transfer_total_duration: str = ""
-    transfer_type: str = ""
-    transfer_uuid: OntapUUID = ""
-    transfer_schedule_name: str = ""
-    transfer_schedule_uuid: str = ""
+    transfer: OntapSnapmirrorRelationshipTransfer = Field(
+        default_factory=OntapSnapmirrorRelationshipTransfer
+    )
+    transfer_schedule: OntapSnapmirrorRelationshipTransferSchedule = Field(
+        default_factory=OntapSnapmirrorRelationshipTransferSchedule
+    )
     unhealthy_reason: list[OntapSnapmirrorRelationshipUnhealthyReason] = Field(default_factory=list)
     uuid: OntapUUID = ""

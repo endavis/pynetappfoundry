@@ -21,52 +21,52 @@ ONTAPPERFORMANCEQTREEMETRICRESPONSE_MAPPING = TypeMapping(
             api_path="duration",
         ),
         FieldMapping(
-            cache_attr="iops_other",
+            cache_attr="iops.other",
             api_path="iops.other",
             default=0,
         ),
         FieldMapping(
-            cache_attr="iops_read",
+            cache_attr="iops.read",
             api_path="iops.read",
             default=0,
         ),
         FieldMapping(
-            cache_attr="iops_total",
+            cache_attr="iops.total",
             api_path="iops.total",
             default=0,
         ),
         FieldMapping(
-            cache_attr="iops_write",
+            cache_attr="iops.write",
             api_path="iops.write",
             default=0,
         ),
         FieldMapping(
-            cache_attr="latency_other",
+            cache_attr="latency.other",
             api_path="latency.other",
             default=0,
         ),
         FieldMapping(
-            cache_attr="latency_read",
+            cache_attr="latency.read",
             api_path="latency.read",
             default=0,
         ),
         FieldMapping(
-            cache_attr="latency_total",
+            cache_attr="latency.total",
             api_path="latency.total",
             default=0,
         ),
         FieldMapping(
-            cache_attr="latency_write",
+            cache_attr="latency.write",
             api_path="latency.write",
             default=0,
         ),
         FieldMapping(
-            cache_attr="qtree_id",
+            cache_attr="qtree.id",
             api_path="qtree.id",
             default=0,
         ),
         FieldMapping(
-            cache_attr="qtree_name",
+            cache_attr="qtree.name",
             api_path="qtree.name",
         ),
         FieldMapping(
@@ -74,30 +74,30 @@ ONTAPPERFORMANCEQTREEMETRICRESPONSE_MAPPING = TypeMapping(
             api_path="status",
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(
-            cache_attr="throughput_other",
+            cache_attr="throughput.other",
             api_path="throughput.other",
             default=0,
         ),
         FieldMapping(
-            cache_attr="throughput_read",
+            cache_attr="throughput.read",
             api_path="throughput.read",
             default=0,
         ),
         FieldMapping(
-            cache_attr="throughput_total",
+            cache_attr="throughput.total",
             api_path="throughput.total",
             default=0,
         ),
         FieldMapping(
-            cache_attr="throughput_write",
+            cache_attr="throughput.write",
             api_path="throughput.write",
             default=0,
         ),
@@ -106,11 +106,11 @@ ONTAPPERFORMANCEQTREEMETRICRESPONSE_MAPPING = TypeMapping(
             api_path="timestamp",
         ),
         FieldMapping(
-            cache_attr="volume_name",
+            cache_attr="volume.name",
             api_path="volume.name",
         ),
         FieldMapping(
-            cache_attr="volume_uuid",
+            cache_attr="volume.uuid",
             api_path="volume.uuid",
         ),
     ),

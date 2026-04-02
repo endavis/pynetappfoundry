@@ -2,7 +2,22 @@
 
 from __future__ import annotations
 
+from pydantic import Field
+
 from pynetappfoundry.models._base import OntapModel
+
+
+class OntapSecurityAuditLogNode(OntapModel):
+    """OntapSecurityAuditLogNode sub-model for node."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapSecurityAuditLogSvm(OntapModel):
+    """OntapSecurityAuditLogSvm sub-model for svm."""
+
+    name: str = ""
 
 
 class OntapSecurityAuditLog(OntapModel):
@@ -14,11 +29,10 @@ class OntapSecurityAuditLog(OntapModel):
     input: str = ""
     location: str = ""
     message: str = ""
-    node_name: str = ""
-    node_uuid: str = ""
+    node: OntapSecurityAuditLogNode = Field(default_factory=OntapSecurityAuditLogNode)
     scope: str = ""
     session_id: str = ""
     state: str = ""
-    svm_name: str = ""
+    svm: OntapSecurityAuditLogSvm = Field(default_factory=OntapSecurityAuditLogSvm)
     timestamp: str = ""
     user: str = ""

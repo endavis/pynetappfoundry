@@ -7,14 +7,43 @@ from pydantic import Field
 from pynetappfoundry.models._base import OntapModel
 
 
+class OntapGcpKmsEkmipReachabilityNode(OntapModel):
+    """OntapGcpKmsEkmipReachabilityNode sub-model for node."""
+
+    name: str = ""
+    uuid: str = ""
+
+
 class OntapGcpKmsEkmipReachability(OntapModel):
     """OntapGcpKmsEkmipReachability sub-model for ekmip_reachability."""
 
     code: str = ""
     message: str = ""
-    node_name: str = ""
-    node_uuid: str = ""
+    node: OntapGcpKmsEkmipReachabilityNode = Field(default_factory=OntapGcpKmsEkmipReachabilityNode)
     reachable: bool = False
+
+
+class OntapGcpKmsGoogleReachability(OntapModel):
+    """OntapGcpKmsGoogleReachability sub-model for google_reachability."""
+
+    code: str = ""
+    message: str = ""
+    reachable: bool = False
+
+
+class OntapGcpKmsState(OntapModel):
+    """OntapGcpKmsState sub-model for state."""
+
+    cluster_state: bool = False
+    code: str = ""
+    message: str = ""
+
+
+class OntapGcpKmsSvm(OntapModel):
+    """OntapGcpKmsSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapGcpKms(OntapModel):
@@ -24,9 +53,9 @@ class OntapGcpKms(OntapModel):
     caller_account: str = ""
     cloudkms_host: str = ""
     ekmip_reachability: list[OntapGcpKmsEkmipReachability] = Field(default_factory=list)
-    google_reachability_code: str = ""
-    google_reachability_message: str = ""
-    google_reachability_reachable: bool = False
+    google_reachability: OntapGcpKmsGoogleReachability = Field(
+        default_factory=OntapGcpKmsGoogleReachability
+    )
     key_name: str = ""
     key_ring_location: str = ""
     key_ring_name: str = ""
@@ -41,11 +70,8 @@ class OntapGcpKms(OntapModel):
     proxy_type: str = ""
     proxy_username: str = ""
     scope: str = ""
-    state_cluster_state: bool = False
-    state_code: str = ""
-    state_message: str = ""
-    svm_name: str = ""
-    svm_uuid: str = ""
+    state: OntapGcpKmsState = Field(default_factory=OntapGcpKmsState)
+    svm: OntapGcpKmsSvm = Field(default_factory=OntapGcpKmsSvm)
     uuid: str = ""
     verify_host: bool = False
     verify_ip: bool = False

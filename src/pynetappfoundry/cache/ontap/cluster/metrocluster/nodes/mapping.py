@@ -18,11 +18,11 @@ ONTAPMETROCLUSTERNODE_MAPPING = TypeMapping(
             default=False,
         ),
         FieldMapping(
-            cache_attr="cluster_name",
+            cache_attr="cluster.name",
             api_path="cluster.name",
         ),
         FieldMapping(
-            cache_attr="cluster_uuid",
+            cache_attr="cluster.uuid",
             api_path="cluster.uuid",
         ),
         FieldMapping(
@@ -30,23 +30,23 @@ ONTAPMETROCLUSTERNODE_MAPPING = TypeMapping(
             api_path="configuration_state",
         ),
         FieldMapping(
-            cache_attr="dr_auxiliary_cluster_name",
+            cache_attr="dr_auxiliary_cluster.name",
             api_path="dr_auxiliary_cluster.name",
         ),
         FieldMapping(
-            cache_attr="dr_auxiliary_cluster_uuid",
+            cache_attr="dr_auxiliary_cluster.uuid",
             api_path="dr_auxiliary_cluster.uuid",
         ),
         FieldMapping(
-            cache_attr="dr_auxiliary_partner_name",
+            cache_attr="dr_auxiliary_partner.name",
             api_path="dr_auxiliary_partner.name",
         ),
         FieldMapping(
-            cache_attr="dr_auxiliary_partner_system_id",
+            cache_attr="dr_auxiliary_partner.system_id",
             api_path="dr_auxiliary_partner.system_id",
         ),
         FieldMapping(
-            cache_attr="dr_auxiliary_partner_uuid",
+            cache_attr="dr_auxiliary_partner.uuid",
             api_path="dr_auxiliary_partner.uuid",
         ),
         FieldMapping(
@@ -63,23 +63,23 @@ ONTAPMETROCLUSTERNODE_MAPPING = TypeMapping(
             api_path="dr_operation_state",
         ),
         FieldMapping(
-            cache_attr="dr_partner_name",
+            cache_attr="dr_partner.name",
             api_path="dr_partner.name",
         ),
         FieldMapping(
-            cache_attr="dr_partner_system_id",
+            cache_attr="dr_partner.system_id",
             api_path="dr_partner.system_id",
         ),
         FieldMapping(
-            cache_attr="dr_partner_uuid",
+            cache_attr="dr_partner.uuid",
             api_path="dr_partner.uuid",
         ),
         FieldMapping(
-            cache_attr="dr_partner_cluster_name",
+            cache_attr="dr_partner_cluster.name",
             api_path="dr_partner_cluster.name",
         ),
         FieldMapping(
-            cache_attr="dr_partner_cluster_uuid",
+            cache_attr="dr_partner_cluster.uuid",
             api_path="dr_partner_cluster.uuid",
         ),
         FieldMapping(
@@ -88,23 +88,23 @@ ONTAPMETROCLUSTERNODE_MAPPING = TypeMapping(
             default=False,
         ),
         FieldMapping(
-            cache_attr="ha_partner_name",
+            cache_attr="ha_partner.name",
             api_path="ha_partner.name",
         ),
         FieldMapping(
-            cache_attr="ha_partner_system_id",
+            cache_attr="ha_partner.system_id",
             api_path="ha_partner.system_id",
         ),
         FieldMapping(
-            cache_attr="ha_partner_uuid",
+            cache_attr="ha_partner.uuid",
             api_path="ha_partner.uuid",
         ),
         FieldMapping(
-            cache_attr="ha_partner_cluster_name",
+            cache_attr="ha_partner_cluster.name",
             api_path="ha_partner_cluster.name",
         ),
         FieldMapping(
-            cache_attr="ha_partner_cluster_uuid",
+            cache_attr="ha_partner_cluster.uuid",
             api_path="ha_partner_cluster.uuid",
         ),
         FieldMapping(
@@ -117,15 +117,15 @@ ONTAPMETROCLUSTERNODE_MAPPING = TypeMapping(
             api_path="limit_enforcement",
         ),
         FieldMapping(
-            cache_attr="node_name",
+            cache_attr="node.name",
             api_path="node.name",
         ),
         FieldMapping(
-            cache_attr="node_system_id",
+            cache_attr="node.system_id",
             api_path="node.system_id",
         ),
         FieldMapping(
-            cache_attr="node_uuid",
+            cache_attr="node.uuid",
             api_path="node.uuid",
         ),
     ),

@@ -1,3 +1,4 @@
+# ruff: noqa: E501
 """OntapStoragePool type mapping."""
 
 from __future__ import annotations
@@ -8,47 +9,55 @@ from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.storage.pools.model import (
     OntapStoragePool,
-    OntapStoragePoolArgument,
-    OntapStoragePoolDisk,
+    OntapStoragePoolCapacityDisk,
+    OntapStoragePoolCapacitySpareAllocationUnit,
+    OntapStoragePoolCapacityUsedAllocationUnit,
+    OntapStoragePoolHealthUnhealthyReasonArgument,
     OntapStoragePoolNode,
-    OntapStoragePoolSpareAllocationUnit,
-    OntapStoragePoolUsedAllocationUnit,
 )
+from pynetappfoundry.utils.dict_path import get_nested_value
 
 
-def _transform_capacity_disks(record: dict[str, Any]) -> list[OntapStoragePoolDisk]:
-    """Transform capacity.disks into OntapStoragePoolDisk list."""
-    return [OntapStoragePoolDisk(**item) for item in record.get("capacity.disks", [])]
+def _transform_capacity_disks(record: dict[str, Any]) -> list[OntapStoragePoolCapacityDisk]:
+    """Transform capacity.disks into OntapStoragePoolCapacityDisk list."""
+    try:
+        items = get_nested_value(record, "capacity.disks")
+    except Exception:
+        items = []
+    return [OntapStoragePoolCapacityDisk(**item) for item in items]
 
 
 def _transform_capacity_spare_allocation_units(
     record: dict[str, Any],
-) -> list[OntapStoragePoolSpareAllocationUnit]:
-    """Transform capacity.spare_allocation_units into OntapStoragePoolSpareAllocationUnit list."""
-    return [
-        OntapStoragePoolSpareAllocationUnit(**item)
-        for item in record.get("capacity.spare_allocation_units", [])
-    ]
+) -> list[OntapStoragePoolCapacitySpareAllocationUnit]:
+    """Transform capacity.spare_allocation_units into OntapStoragePoolCapacitySpareAllocationUnit list."""
+    try:
+        items = get_nested_value(record, "capacity.spare_allocation_units")
+    except Exception:
+        items = []
+    return [OntapStoragePoolCapacitySpareAllocationUnit(**item) for item in items]
 
 
 def _transform_capacity_used_allocation_units(
     record: dict[str, Any],
-) -> list[OntapStoragePoolUsedAllocationUnit]:
-    """Transform capacity.used_allocation_units into OntapStoragePoolUsedAllocationUnit list."""
-    return [
-        OntapStoragePoolUsedAllocationUnit(**item)
-        for item in record.get("capacity.used_allocation_units", [])
-    ]
+) -> list[OntapStoragePoolCapacityUsedAllocationUnit]:
+    """Transform capacity.used_allocation_units into OntapStoragePoolCapacityUsedAllocationUnit list."""
+    try:
+        items = get_nested_value(record, "capacity.used_allocation_units")
+    except Exception:
+        items = []
+    return [OntapStoragePoolCapacityUsedAllocationUnit(**item) for item in items]
 
 
 def _transform_health_unhealthy_reason_arguments(
     record: dict[str, Any],
-) -> list[OntapStoragePoolArgument]:
-    """Transform health.unhealthy_reason.arguments into OntapStoragePoolArgument list."""
-    return [
-        OntapStoragePoolArgument(**item)
-        for item in record.get("health.unhealthy_reason.arguments", [])
-    ]
+) -> list[OntapStoragePoolHealthUnhealthyReasonArgument]:
+    """Transform health.unhealthy_reason.arguments into OntapStoragePoolHealthUnhealthyReasonArgument list."""
+    try:
+        items = get_nested_value(record, "health.unhealthy_reason.arguments")
+    except Exception:
+        items = []
+    return [OntapStoragePoolHealthUnhealthyReasonArgument(**item) for item in items]
 
 
 def _transform_nodes(record: dict[str, Any]) -> list[OntapStoragePoolNode]:
@@ -63,59 +72,59 @@ ONTAPSTORAGEPOOL_MAPPING = TypeMapping(
     api_type="ontap",
     fields=(
         FieldMapping(
-            cache_attr="capacity_disk_count",
+            cache_attr="capacity.disk_count",
             api_path="capacity.disk_count",
             default=0,
         ),
         FieldMapping(
-            cache_attr="capacity_disks",
+            cache_attr="capacity.disks",
             api_path="capacity.disks",
             transform=_transform_capacity_disks,
             default=[],
         ),
         FieldMapping(
-            cache_attr="capacity_remaining",
+            cache_attr="capacity.remaining",
             api_path="capacity.remaining",
             default=0,
         ),
         FieldMapping(
-            cache_attr="capacity_spare_allocation_units",
+            cache_attr="capacity.spare_allocation_units",
             api_path="capacity.spare_allocation_units",
             transform=_transform_capacity_spare_allocation_units,
             default=[],
         ),
         FieldMapping(
-            cache_attr="capacity_total",
+            cache_attr="capacity.total",
             api_path="capacity.total",
             default=0,
         ),
         FieldMapping(
-            cache_attr="capacity_used_allocation_units",
+            cache_attr="capacity.used_allocation_units",
             api_path="capacity.used_allocation_units",
             transform=_transform_capacity_used_allocation_units,
             default=[],
         ),
         FieldMapping(
-            cache_attr="health_is_healthy",
+            cache_attr="health.is_healthy",
             api_path="health.is_healthy",
             default=False,
         ),
         FieldMapping(
-            cache_attr="health_state",
+            cache_attr="health.state",
             api_path="health.state",
         ),
         FieldMapping(
-            cache_attr="health_unhealthy_reason_arguments",
+            cache_attr="health.unhealthy_reason.arguments",
             api_path="health.unhealthy_reason.arguments",
             transform=_transform_health_unhealthy_reason_arguments,
             default=[],
         ),
         FieldMapping(
-            cache_attr="health_unhealthy_reason_code",
+            cache_attr="health.unhealthy_reason.code",
             api_path="health.unhealthy_reason.code",
         ),
         FieldMapping(
-            cache_attr="health_unhealthy_reason_message",
+            cache_attr="health.unhealthy_reason.message",
             api_path="health.unhealthy_reason.message",
         ),
         FieldMapping(

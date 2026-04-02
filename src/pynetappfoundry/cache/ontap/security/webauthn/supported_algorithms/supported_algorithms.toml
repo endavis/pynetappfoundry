@@ -3,19 +3,19 @@ path = "/security/webauthn/supported-algorithms"
 schema = "supported_algorithms"
 class_name = "OntapSupportedAlgorithms"
 
-[fields.algorithm_id]
+[fields."algorithm.id"]
 cache_strategy = "cache"
 
-[fields.algorithm_name]
+[fields."algorithm.name"]
 cache_strategy = "cache"
 
-[fields.algorithm_type]
+[fields."algorithm.type_"]
 cache_strategy = "cache"
 
-[fields.owner_name]
+[fields."owner.name"]
 cache_strategy = "cache"
 
-[fields.owner_uuid]
+[fields."owner.uuid"]
 cache_strategy = "cache"
 
 [fields.scope]

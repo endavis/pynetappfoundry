@@ -2,7 +2,16 @@
 
 from __future__ import annotations
 
+from pydantic import Field
+
 from pynetappfoundry.models._base import OntapModel
+
+
+class OntapGroupPolicyObjectCentralAccessRuleSvm(OntapModel):
+    """OntapGroupPolicyObjectCentralAccessRuleSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapGroupPolicyObjectCentralAccessRule(OntapModel):
@@ -14,6 +23,7 @@ class OntapGroupPolicyObjectCentralAccessRule(OntapModel):
     name: str = ""
     proposed_permission: str = ""
     resource_criteria: str = ""
-    svm_name: str = ""
-    svm_uuid: str = ""
+    svm: OntapGroupPolicyObjectCentralAccessRuleSvm = Field(
+        default_factory=OntapGroupPolicyObjectCentralAccessRuleSvm
+    )
     update_time: str = ""

@@ -29,11 +29,11 @@ ONTAPSNMPUSER_MAPPING = TypeMapping(
             api_path="name",
         ),
         FieldMapping(
-            cache_attr="owner_name",
+            cache_attr="owner.name",
             api_path="owner.name",
         ),
         FieldMapping(
-            cache_attr="owner_uuid",
+            cache_attr="owner.uuid",
             api_path="owner.uuid",
         ),
         FieldMapping(
@@ -41,19 +41,19 @@ ONTAPSNMPUSER_MAPPING = TypeMapping(
             api_path="scope",
         ),
         FieldMapping(
-            cache_attr="snmpv3_authentication_password",
+            cache_attr="snmpv3.authentication_password",
             api_path="snmpv3.authentication_password",
         ),
         FieldMapping(
-            cache_attr="snmpv3_authentication_protocol",
+            cache_attr="snmpv3.authentication_protocol",
             api_path="snmpv3.authentication_protocol",
         ),
         FieldMapping(
-            cache_attr="snmpv3_privacy_password",
+            cache_attr="snmpv3.privacy_password",
             api_path="snmpv3.privacy_password",
         ),
         FieldMapping(
-            cache_attr="snmpv3_privacy_protocol",
+            cache_attr="snmpv3.privacy_protocol",
             api_path="snmpv3.privacy_protocol",
         ),
         FieldMapping(

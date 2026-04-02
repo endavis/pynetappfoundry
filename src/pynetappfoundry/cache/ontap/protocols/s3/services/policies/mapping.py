@@ -23,7 +23,7 @@ ONTAPS3POLICY_MAPPING = TypeMapping(
     api_endpoint="/protocols/s3/services/{svm.uuid}/policies?fields=*",
     api_type="ontap",
     parent_mapping="OntapS3Service",
-    parent_id_field="svm_uuid",
+    parent_id_field="svm.uuid",
     fields=(
         FieldMapping(
             cache_attr="comment",
@@ -45,11 +45,11 @@ ONTAPS3POLICY_MAPPING = TypeMapping(
             default=[],
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
     ),

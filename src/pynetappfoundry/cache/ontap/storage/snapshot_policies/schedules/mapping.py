@@ -30,11 +30,11 @@ ONTAPSNAPSHOTPOLICYSCHEDULE_MAPPING = TypeMapping(
             api_path="retention_period",
         ),
         FieldMapping(
-            cache_attr="schedule_name",
+            cache_attr="schedule.name",
             api_path="schedule.name",
         ),
         FieldMapping(
-            cache_attr="schedule_uuid",
+            cache_attr="schedule.uuid",
             api_path="schedule.uuid",
         ),
         FieldMapping(
@@ -42,11 +42,11 @@ ONTAPSNAPSHOTPOLICYSCHEDULE_MAPPING = TypeMapping(
             api_path="snapmirror_label",
         ),
         FieldMapping(
-            cache_attr="snapshot_policy_name",
+            cache_attr="snapshot_policy.name",
             api_path="snapshot_policy.name",
         ),
         FieldMapping(
-            cache_attr="snapshot_policy_uuid",
+            cache_attr="snapshot_policy.uuid",
             api_path="snapshot_policy.uuid",
         ),
     ),

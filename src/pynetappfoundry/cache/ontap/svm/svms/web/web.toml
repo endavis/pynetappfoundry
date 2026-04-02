@@ -3,10 +3,10 @@ path = "/svm/svms/{svm.uuid}/web"
 schema = "web_svm"
 class_name = "OntapWebSvm"
 
-[fields.certificate_name]
+[fields."certificate.name"]
 cache_strategy = "cache"
 
-[fields.certificate_uuid]
+[fields."certificate.uuid"]
 cache_strategy = "cache"
 
 [fields.client_enabled]
@@ -15,8 +15,8 @@ cache_strategy = "cache"
 [fields.ocsp_enabled]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"

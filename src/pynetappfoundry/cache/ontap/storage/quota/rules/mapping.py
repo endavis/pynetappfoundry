@@ -24,52 +24,52 @@ ONTAPQUOTARULE_MAPPING = TypeMapping(
     api_type="ontap",
     fields=(
         FieldMapping(
-            cache_attr="files_hard_limit",
+            cache_attr="files.hard_limit",
             api_path="files.hard_limit",
-            default=0,
             cache_strategy="realtime",
+            default=0,
         ),
         FieldMapping(
-            cache_attr="files_soft_limit",
+            cache_attr="files.soft_limit",
             api_path="files.soft_limit",
-            default=0,
             cache_strategy="realtime",
+            default=0,
         ),
         FieldMapping(
-            cache_attr="group_id",
+            cache_attr="group.id",
             api_path="group.id",
         ),
         FieldMapping(
-            cache_attr="group_name",
+            cache_attr="group.name",
             api_path="group.name",
         ),
         FieldMapping(
-            cache_attr="qtree_id",
+            cache_attr="qtree.id",
             api_path="qtree.id",
             default=0,
         ),
         FieldMapping(
-            cache_attr="qtree_name",
+            cache_attr="qtree.name",
             api_path="qtree.name",
         ),
         FieldMapping(
-            cache_attr="space_hard_limit",
+            cache_attr="space.hard_limit",
             api_path="space.hard_limit",
-            default=0,
             cache_strategy="realtime",
+            default=0,
         ),
         FieldMapping(
-            cache_attr="space_soft_limit",
+            cache_attr="space.soft_limit",
             api_path="space.soft_limit",
-            default=0,
             cache_strategy="realtime",
+            default=0,
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(
@@ -92,11 +92,11 @@ ONTAPQUOTARULE_MAPPING = TypeMapping(
             api_path="uuid",
         ),
         FieldMapping(
-            cache_attr="volume_name",
+            cache_attr="volume.name",
             api_path="volume.name",
         ),
         FieldMapping(
-            cache_attr="volume_uuid",
+            cache_attr="volume.uuid",
             api_path="volume.uuid",
         ),
     ),

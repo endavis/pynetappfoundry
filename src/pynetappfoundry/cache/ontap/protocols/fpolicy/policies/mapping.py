@@ -36,7 +36,7 @@ ONTAPFPOLICYPOLICY_MAPPING = TypeMapping(
             default=False,
         ),
         FieldMapping(
-            cache_attr="engine_name",
+            cache_attr="engine.name",
             api_path="engine.name",
         ),
         FieldMapping(
@@ -73,57 +73,57 @@ ONTAPFPOLICYPOLICY_MAPPING = TypeMapping(
             api_path="privileged_user",
         ),
         FieldMapping(
-            cache_attr="scope_check_extensions_on_directories",
+            cache_attr="scope.check_extensions_on_directories",
             api_path="scope.check_extensions_on_directories",
             default=False,
         ),
         FieldMapping(
-            cache_attr="scope_exclude_export_policies",
+            cache_attr="scope.exclude_export_policies",
             api_path="scope.exclude_export_policies",
             default=[],
         ),
         FieldMapping(
-            cache_attr="scope_exclude_extension",
+            cache_attr="scope.exclude_extension",
             api_path="scope.exclude_extension",
             default=[],
         ),
         FieldMapping(
-            cache_attr="scope_exclude_shares",
+            cache_attr="scope.exclude_shares",
             api_path="scope.exclude_shares",
             default=[],
         ),
         FieldMapping(
-            cache_attr="scope_exclude_volumes",
+            cache_attr="scope.exclude_volumes",
             api_path="scope.exclude_volumes",
             default=[],
         ),
         FieldMapping(
-            cache_attr="scope_include_export_policies",
+            cache_attr="scope.include_export_policies",
             api_path="scope.include_export_policies",
             default=[],
         ),
         FieldMapping(
-            cache_attr="scope_include_extension",
+            cache_attr="scope.include_extension",
             api_path="scope.include_extension",
             default=[],
         ),
         FieldMapping(
-            cache_attr="scope_include_shares",
+            cache_attr="scope.include_shares",
             api_path="scope.include_shares",
             default=[],
         ),
         FieldMapping(
-            cache_attr="scope_include_volumes",
+            cache_attr="scope.include_volumes",
             api_path="scope.include_volumes",
             default=[],
         ),
         FieldMapping(
-            cache_attr="scope_object_monitoring_with_no_extension",
+            cache_attr="scope.object_monitoring_with_no_extension",
             api_path="scope.object_monitoring_with_no_extension",
             default=False,
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
     ),

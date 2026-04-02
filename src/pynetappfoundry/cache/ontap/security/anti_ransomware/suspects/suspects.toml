@@ -3,23 +3,23 @@ path = "/security/anti-ransomware/suspects"
 schema = "anti_ransomware_suspect"
 class_name = "OntapAntiRansomwareSuspect"
 
-[fields.file_format]
+[fields."file.format"]
 cache_strategy = "cache"
 
-[fields.file_name]
+[fields."file.name"]
 cache_strategy = "cache"
 
-[fields.file_path]
+[fields."file.path"]
 cache_strategy = "cache"
 
-[fields.file_reason]
+[fields."file.reason"]
 cache_strategy = "cache"
 
-[fields.file_suspect_time]
+[fields."file.suspect_time"]
 cache_strategy = "cache"
 
-[fields.volume_name]
+[fields."volume.name"]
 cache_strategy = "cache"
 
-[fields.volume_uuid]
+[fields."volume.uuid"]
 cache_strategy = "cache"

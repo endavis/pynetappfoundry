@@ -13,11 +13,11 @@ ONTAPSECURITYKEYSTORE_MAPPING = TypeMapping(
     api_type="ontap",
     fields=(
         FieldMapping(
-            cache_attr="configuration_name",
+            cache_attr="configuration.name",
             api_path="configuration.name",
         ),
         FieldMapping(
-            cache_attr="configuration_uuid",
+            cache_attr="configuration.uuid",
             api_path="configuration.uuid",
         ),
         FieldMapping(
@@ -38,11 +38,11 @@ ONTAPSECURITYKEYSTORE_MAPPING = TypeMapping(
             api_path="state",
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(

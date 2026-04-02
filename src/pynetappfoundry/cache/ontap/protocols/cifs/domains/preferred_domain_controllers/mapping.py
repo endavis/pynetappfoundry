@@ -14,7 +14,7 @@ ONTAPCIFSDOMAINPREFERREDDC_MAPPING = TypeMapping(
     api_endpoint="/protocols/cifs/domains/{svm.uuid}/preferred-domain-controllers?fields=*",
     api_type="ontap",
     parent_mapping="OntapCifsDomain",
-    parent_id_field="svm_uuid",
+    parent_id_field="svm.uuid",
     fields=(
         FieldMapping(
             cache_attr="fqdn",
@@ -25,20 +25,20 @@ ONTAPCIFSDOMAINPREFERREDDC_MAPPING = TypeMapping(
             api_path="server_ip",
         ),
         FieldMapping(
-            cache_attr="status_details",
+            cache_attr="status.details",
             api_path="status.details",
         ),
         FieldMapping(
-            cache_attr="status_reachable",
+            cache_attr="status.reachable",
             api_path="status.reachable",
             default=False,
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
     ),

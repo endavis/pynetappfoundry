@@ -39,8 +39,8 @@ ONTAPCIFSSESSION_MAPPING = TypeMapping(
         FieldMapping(
             cache_attr="connection_count",
             api_path="connection_count",
-            default=0,
             cache_strategy="realtime",
+            default=0,
         ),
         FieldMapping(
             cache_attr="connection_id",
@@ -71,30 +71,30 @@ ONTAPCIFSSESSION_MAPPING = TypeMapping(
             api_path="mapped_unix_user",
         ),
         FieldMapping(
-            cache_attr="node_name",
+            cache_attr="node.name",
             api_path="node.name",
         ),
         FieldMapping(
-            cache_attr="node_uuid",
+            cache_attr="node.uuid",
             api_path="node.uuid",
         ),
         FieldMapping(
             cache_attr="open_files",
             api_path="open_files",
-            default=0,
             cache_strategy="realtime",
+            default=0,
         ),
         FieldMapping(
             cache_attr="open_other",
             api_path="open_other",
-            default=0,
             cache_strategy="realtime",
+            default=0,
         ),
         FieldMapping(
             cache_attr="open_shares",
             api_path="open_shares",
-            default=0,
             cache_strategy="realtime",
+            default=0,
         ),
         FieldMapping(
             cache_attr="protocol",
@@ -114,11 +114,11 @@ ONTAPCIFSSESSION_MAPPING = TypeMapping(
             default=False,
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(

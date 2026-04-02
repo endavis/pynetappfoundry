@@ -42,15 +42,15 @@ ONTAPISCSISESSION_MAPPING = TypeMapping(
             default=[],
         ),
         FieldMapping(
-            cache_attr="initiator_alias",
+            cache_attr="initiator.alias",
             api_path="initiator.alias",
         ),
         FieldMapping(
-            cache_attr="initiator_comment",
+            cache_attr="initiator.comment",
             api_path="initiator.comment",
         ),
         FieldMapping(
-            cache_attr="initiator_name",
+            cache_attr="initiator.name",
             api_path="initiator.name",
         ),
         FieldMapping(
@@ -58,11 +58,11 @@ ONTAPISCSISESSION_MAPPING = TypeMapping(
             api_path="isid",
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(

@@ -3,19 +3,19 @@ path = "/network/fc/fabrics/{fabric.name}/switches"
 schema = "fc_switch"
 class_name = "OntapFcSwitch"
 
-[fields.cache_age]
+[fields."cache.age"]
 cache_strategy = "cache"
 
-[fields.cache_is_current]
+[fields."cache.is_current"]
 cache_strategy = "cache"
 
-[fields.cache_update_time]
+[fields."cache.update_time"]
 cache_strategy = "cache"
 
 [fields.domain_id]
 cache_strategy = "cache"
 
-[fields.fabric_name]
+[fields."fabric.name"]
 cache_strategy = "cache"
 
 [fields.name]

@@ -32,17 +32,17 @@ ONTAPCOUNTERROW_MAPPING = TypeMapping(
     parent_id_field="name",
     fields=(
         FieldMapping(
-            cache_attr="aggregation_complete",
+            cache_attr="aggregation.complete",
             api_path="aggregation.complete",
             default=False,
         ),
         FieldMapping(
-            cache_attr="aggregation_count",
+            cache_attr="aggregation.count",
             api_path="aggregation.count",
             default=0,
         ),
         FieldMapping(
-            cache_attr="counter_table_name",
+            cache_attr="counter_table.name",
             api_path="counter_table.name",
         ),
         FieldMapping(

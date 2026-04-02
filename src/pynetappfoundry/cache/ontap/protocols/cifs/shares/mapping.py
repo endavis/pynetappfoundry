@@ -61,8 +61,8 @@ ONTAPCIFSSHARE_MAPPING = TypeMapping(
         FieldMapping(
             cache_attr="continuously_available",
             api_path="continuously_available",
-            default=False,
             cache_strategy="realtime",
+            default=False,
         ),
         FieldMapping(
             cache_attr="dir_umask",
@@ -129,11 +129,11 @@ ONTAPCIFSSHARE_MAPPING = TypeMapping(
             default=False,
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(
@@ -141,11 +141,11 @@ ONTAPCIFSSHARE_MAPPING = TypeMapping(
             api_path="unix_symlink",
         ),
         FieldMapping(
-            cache_attr="volume_name",
+            cache_attr="volume.name",
             api_path="volume.name",
         ),
         FieldMapping(
-            cache_attr="volume_uuid",
+            cache_attr="volume.uuid",
             api_path="volume.uuid",
         ),
         FieldMapping(

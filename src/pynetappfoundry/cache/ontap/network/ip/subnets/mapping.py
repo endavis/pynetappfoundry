@@ -41,11 +41,11 @@ ONTAPIPSUBNET_MAPPING = TypeMapping(
             default=[],
         ),
         FieldMapping(
-            cache_attr="broadcast_domain_name",
+            cache_attr="broadcast_domain.name",
             api_path="broadcast_domain.name",
         ),
         FieldMapping(
-            cache_attr="broadcast_domain_uuid",
+            cache_attr="broadcast_domain.uuid",
             api_path="broadcast_domain.uuid",
         ),
         FieldMapping(
@@ -64,11 +64,11 @@ ONTAPIPSUBNET_MAPPING = TypeMapping(
             default=[],
         ),
         FieldMapping(
-            cache_attr="ipspace_name",
+            cache_attr="ipspace.name",
             api_path="ipspace.name",
         ),
         FieldMapping(
-            cache_attr="ipspace_uuid",
+            cache_attr="ipspace.uuid",
             api_path="ipspace.uuid",
         ),
         FieldMapping(
@@ -76,15 +76,15 @@ ONTAPIPSUBNET_MAPPING = TypeMapping(
             api_path="name",
         ),
         FieldMapping(
-            cache_attr="subnet_address",
+            cache_attr="subnet.address",
             api_path="subnet.address",
         ),
         FieldMapping(
-            cache_attr="subnet_family",
+            cache_attr="subnet.family",
             api_path="subnet.family",
         ),
         FieldMapping(
-            cache_attr="subnet_netmask",
+            cache_attr="subnet.netmask",
             api_path="subnet.netmask",
         ),
         FieldMapping(

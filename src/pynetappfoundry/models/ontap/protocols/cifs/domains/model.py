@@ -7,17 +7,51 @@ from pydantic import Field
 from pynetappfoundry.models._base import OntapModel
 
 
+class OntapCifsDomainAdDomain(OntapModel):
+    """OntapCifsDomainAdDomain sub-model for ad_domain."""
+
+    password: str = ""
+    user: str = ""
+
+
+class OntapCifsDomainDiscoveredServerNode(OntapModel):
+    """OntapCifsDomainDiscoveredServerNode sub-model for node."""
+
+    name: str = ""
+    uuid: str = ""
+
+
 class OntapCifsDomainDiscoveredServer(OntapModel):
     """OntapCifsDomainDiscoveredServer sub-model for discovered_servers."""
 
     domain: str = ""
-    node_name: str = ""
-    node_uuid: str = ""
+    node: OntapCifsDomainDiscoveredServerNode = Field(
+        default_factory=OntapCifsDomainDiscoveredServerNode
+    )
     preference: str = ""
     server_ip: str = ""
     server_name: str = ""
     server_type: str = ""
     state: str = ""
+
+
+class OntapCifsDomainNameMapping(OntapModel):
+    """OntapCifsDomainNameMapping sub-model for name_mapping."""
+
+    trusted_domains: list[str] = Field(default_factory=list)
+
+
+class OntapCifsDomainPasswordSchedule(OntapModel):
+    """OntapCifsDomainPasswordSchedule sub-model for password_schedule."""
+
+    schedule_day_of_week: str = ""
+    schedule_description: str = ""
+    schedule_enabled: bool = False
+    schedule_last_changed_time: str = ""
+    schedule_randomized_minute: int = 0
+    schedule_time_of_day: str = ""
+    schedule_warn_message: str = ""
+    schedule_weekly_interval: int = 0
 
 
 class OntapCifsDomainPreferredDc(OntapModel):
@@ -27,35 +61,43 @@ class OntapCifsDomainPreferredDc(OntapModel):
     server_ip: str = ""
 
 
+class OntapCifsDomainSvm(OntapModel):
+    """OntapCifsDomainSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapCifsDomainTrustRelationshipNode(OntapModel):
+    """OntapCifsDomainTrustRelationshipNode sub-model for node."""
+
+    name: str = ""
+    uuid: str = ""
+
+
 class OntapCifsDomainTrustRelationship(OntapModel):
     """OntapCifsDomainTrustRelationship sub-model for trust_relationships."""
 
     home_domain: str = ""
-    node_name: str = ""
-    node_uuid: str = ""
+    node: OntapCifsDomainTrustRelationshipNode = Field(
+        default_factory=OntapCifsDomainTrustRelationshipNode
+    )
     trusted_domains: list[str] = Field(default_factory=list)
 
 
 class OntapCifsDomain(OntapModel):
     """OntapCifsDomain information."""
 
-    ad_domain_password: str = ""
-    ad_domain_user: str = ""
+    ad_domain: OntapCifsDomainAdDomain = Field(default_factory=OntapCifsDomainAdDomain)
     client_certificate: str = ""
     client_id: str = ""
     discovered_servers: list[OntapCifsDomainDiscoveredServer] = Field(default_factory=list)
-    name_mapping_trusted_domains: list[str] = Field(default_factory=list)
-    password_schedule_schedule_day_of_week: str = ""
-    password_schedule_schedule_description: str = ""
-    password_schedule_schedule_enabled: bool = False
-    password_schedule_schedule_last_changed_time: str = ""
-    password_schedule_schedule_randomized_minute: int = 0
-    password_schedule_schedule_time_of_day: str = ""
-    password_schedule_schedule_warn_message: str = ""
-    password_schedule_schedule_weekly_interval: int = 0
+    name_mapping: OntapCifsDomainNameMapping = Field(default_factory=OntapCifsDomainNameMapping)
+    password_schedule: OntapCifsDomainPasswordSchedule = Field(
+        default_factory=OntapCifsDomainPasswordSchedule
+    )
     preferred_dcs: list[OntapCifsDomainPreferredDc] = Field(default_factory=list)
     server_discovery_mode: str = ""
-    svm_name: str = ""
-    svm_uuid: str = ""
+    svm: OntapCifsDomainSvm = Field(default_factory=OntapCifsDomainSvm)
     tenant_id: str = ""
     trust_relationships: list[OntapCifsDomainTrustRelationship] = Field(default_factory=list)

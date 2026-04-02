@@ -8,21 +8,32 @@ from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.protocols.san.iscsi.credentials.model import (
     OntapIscsiCredentials,
-    OntapIscsiCredentialsMask,
-    OntapIscsiCredentialsRange,
+    OntapIscsiCredentialsInitiatorAddressMask,
+    OntapIscsiCredentialsInitiatorAddressRange,
 )
+from pynetappfoundry.utils.dict_path import get_nested_value
 
 
-def _transform_initiator_address_masks(record: dict[str, Any]) -> list[OntapIscsiCredentialsMask]:
-    """Transform initiator_address.masks into OntapIscsiCredentialsMask list."""
-    return [OntapIscsiCredentialsMask(**item) for item in record.get("initiator_address.masks", [])]
+def _transform_initiator_address_masks(
+    record: dict[str, Any],
+) -> list[OntapIscsiCredentialsInitiatorAddressMask]:
+    """Transform initiator_address.masks into OntapIscsiCredentialsInitiatorAddressMask list."""
+    try:
+        items = get_nested_value(record, "initiator_address.masks")
+    except Exception:
+        items = []
+    return [OntapIscsiCredentialsInitiatorAddressMask(**item) for item in items]
 
 
-def _transform_initiator_address_ranges(record: dict[str, Any]) -> list[OntapIscsiCredentialsRange]:
-    """Transform initiator_address.ranges into OntapIscsiCredentialsRange list."""
-    return [
-        OntapIscsiCredentialsRange(**item) for item in record.get("initiator_address.ranges", [])
-    ]
+def _transform_initiator_address_ranges(
+    record: dict[str, Any],
+) -> list[OntapIscsiCredentialsInitiatorAddressRange]:
+    """Transform initiator_address.ranges into OntapIscsiCredentialsInitiatorAddressRange list."""
+    try:
+        items = get_nested_value(record, "initiator_address.ranges")
+    except Exception:
+        items = []
+    return [OntapIscsiCredentialsInitiatorAddressRange(**item) for item in items]
 
 
 ONTAPISCSICREDENTIALS_MAPPING = TypeMapping(
@@ -36,19 +47,19 @@ ONTAPISCSICREDENTIALS_MAPPING = TypeMapping(
             api_path="authentication_type",
         ),
         FieldMapping(
-            cache_attr="chap_inbound_password",
+            cache_attr="chap.inbound.password",
             api_path="chap.inbound.password",
         ),
         FieldMapping(
-            cache_attr="chap_inbound_user",
+            cache_attr="chap.inbound.user",
             api_path="chap.inbound.user",
         ),
         FieldMapping(
-            cache_attr="chap_outbound_password",
+            cache_attr="chap.outbound.password",
             api_path="chap.outbound.password",
         ),
         FieldMapping(
-            cache_attr="chap_outbound_user",
+            cache_attr="chap.outbound.user",
             api_path="chap.outbound.user",
         ),
         FieldMapping(
@@ -56,23 +67,23 @@ ONTAPISCSICREDENTIALS_MAPPING = TypeMapping(
             api_path="initiator",
         ),
         FieldMapping(
-            cache_attr="initiator_address_masks",
+            cache_attr="initiator_address.masks",
             api_path="initiator_address.masks",
             transform=_transform_initiator_address_masks,
             default=[],
         ),
         FieldMapping(
-            cache_attr="initiator_address_ranges",
+            cache_attr="initiator_address.ranges",
             api_path="initiator_address.ranges",
             transform=_transform_initiator_address_ranges,
             default=[],
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
     ),

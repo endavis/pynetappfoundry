@@ -20,11 +20,11 @@ ONTAPCLUSTERNISSERVICE_MAPPING = TypeMapping(
             api_path="server",
         ),
         FieldMapping(
-            cache_attr="status_code",
+            cache_attr="status.code",
             api_path="status.code",
         ),
         FieldMapping(
-            cache_attr="status_message",
+            cache_attr="status.message",
             api_path="status.message",
         ),
     ),

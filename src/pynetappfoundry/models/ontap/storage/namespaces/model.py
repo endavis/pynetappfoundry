@@ -7,107 +7,321 @@ from pydantic import Field
 from pynetappfoundry.models._base import OntapModel
 
 
-class OntapNvmeNamespaceObjectStore(OntapModel):
-    """OntapNvmeNamespaceObjectStore sub-model for object_stores."""
+class OntapNvmeNamespaceCloneSource(OntapModel):
+    """OntapNvmeNamespaceCloneSource sub-model for source."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapNvmeNamespaceClone(OntapModel):
+    """OntapNvmeNamespaceClone sub-model for clone."""
+
+    source: OntapNvmeNamespaceCloneSource = Field(default_factory=OntapNvmeNamespaceCloneSource)
+
+
+class OntapNvmeNamespaceConsistencyGroup(OntapModel):
+    """OntapNvmeNamespaceConsistencyGroup sub-model for consistency_group."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapNvmeNamespaceConvertLun(OntapModel):
+    """OntapNvmeNamespaceConvertLun sub-model for lun."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapNvmeNamespaceConvert(OntapModel):
+    """OntapNvmeNamespaceConvert sub-model for convert."""
+
+    lun: OntapNvmeNamespaceConvertLun = Field(default_factory=OntapNvmeNamespaceConvertLun)
+
+
+class OntapNvmeNamespaceLocationNode(OntapModel):
+    """OntapNvmeNamespaceLocationNode sub-model for node."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapNvmeNamespaceLocationQtree(OntapModel):
+    """OntapNvmeNamespaceLocationQtree sub-model for qtree."""
+
+    id: int = 0
+    name: str = ""
+
+
+class OntapNvmeNamespaceLocationVolume(OntapModel):
+    """OntapNvmeNamespaceLocationVolume sub-model for volume."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapNvmeNamespaceLocation(OntapModel):
+    """OntapNvmeNamespaceLocation sub-model for location."""
+
+    namespace: str = ""
+    node: OntapNvmeNamespaceLocationNode = Field(default_factory=OntapNvmeNamespaceLocationNode)
+    qtree: OntapNvmeNamespaceLocationQtree = Field(default_factory=OntapNvmeNamespaceLocationQtree)
+    volume: OntapNvmeNamespaceLocationVolume = Field(
+        default_factory=OntapNvmeNamespaceLocationVolume
+    )
+
+
+class OntapNvmeNamespaceMetricIops(OntapModel):
+    """OntapNvmeNamespaceMetricIops sub-model for iops."""
+
+    other: int = 0
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapNvmeNamespaceMetricLatency(OntapModel):
+    """OntapNvmeNamespaceMetricLatency sub-model for latency."""
+
+    other: int = 0
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapNvmeNamespaceMetricThroughput(OntapModel):
+    """OntapNvmeNamespaceMetricThroughput sub-model for throughput."""
+
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapNvmeNamespaceMetric(OntapModel):
+    """OntapNvmeNamespaceMetric sub-model for metric."""
+
+    duration: str = ""
+    iops: OntapNvmeNamespaceMetricIops = Field(default_factory=OntapNvmeNamespaceMetricIops)
+    latency: OntapNvmeNamespaceMetricLatency = Field(
+        default_factory=OntapNvmeNamespaceMetricLatency
+    )
+    status: str = ""
+    throughput: OntapNvmeNamespaceMetricThroughput = Field(
+        default_factory=OntapNvmeNamespaceMetricThroughput
+    )
+    timestamp: str = ""
+
+
+class OntapNvmeNamespaceProvisioningOptionsQosPolicy(OntapModel):
+    """OntapNvmeNamespaceProvisioningOptionsQosPolicy sub-model for qos_policy."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapNvmeNamespaceProvisioningOptionsSnapshotPolicy(OntapModel):
+    """OntapNvmeNamespaceProvisioningOptionsSnapshotPolicy sub-model for snapshot_policy."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapNvmeNamespaceProvisioningOptionsStorageService(OntapModel):
+    """OntapNvmeNamespaceProvisioningOptionsStorageService sub-model for storage_service."""
 
     name: str = ""
 
 
-class OntapNvmeNamespaceHost(OntapModel):
-    """OntapNvmeNamespaceHost sub-model for hosts."""
+class OntapNvmeNamespaceProvisioningOptionsTieringObjectStore(OntapModel):
+    """OntapNvmeNamespaceProvisioningOptionsTieringObjectStore sub-model for object_stores."""
 
-    dh_hmac_chap_controller_secret_key: str = ""
-    dh_hmac_chap_group_size: str = ""
-    dh_hmac_chap_hash_function: str = ""
-    dh_hmac_chap_host_secret_key: str = ""
-    dh_hmac_chap_mode: str = ""
+    name: str = ""
+
+
+class OntapNvmeNamespaceProvisioningOptionsTiering(OntapModel):
+    """OntapNvmeNamespaceProvisioningOptionsTiering sub-model for tiering."""
+
+    control: str = ""
+    object_stores: list[OntapNvmeNamespaceProvisioningOptionsTieringObjectStore] = Field(
+        default_factory=list
+    )
+    policy: str = ""
+
+
+class OntapNvmeNamespaceProvisioningOptions(OntapModel):
+    """OntapNvmeNamespaceProvisioningOptions sub-model for provisioning_options."""
+
+    auto: bool = False
+    count: int = 0
+    qos_policy: OntapNvmeNamespaceProvisioningOptionsQosPolicy = Field(
+        default_factory=OntapNvmeNamespaceProvisioningOptionsQosPolicy
+    )
+    snapshot_policy: OntapNvmeNamespaceProvisioningOptionsSnapshotPolicy = Field(
+        default_factory=OntapNvmeNamespaceProvisioningOptionsSnapshotPolicy
+    )
+    storage_service: OntapNvmeNamespaceProvisioningOptionsStorageService = Field(
+        default_factory=OntapNvmeNamespaceProvisioningOptionsStorageService
+    )
+    tiering: OntapNvmeNamespaceProvisioningOptionsTiering = Field(
+        default_factory=OntapNvmeNamespaceProvisioningOptionsTiering
+    )
+    use_mirrored_aggregates: bool = False
+
+
+class OntapNvmeNamespaceSpaceGuarantee(OntapModel):
+    """OntapNvmeNamespaceSpaceGuarantee sub-model for guarantee."""
+
+    requested: bool = False
+    reserved: bool = False
+
+
+class OntapNvmeNamespaceSpace(OntapModel):
+    """OntapNvmeNamespaceSpace sub-model for space."""
+
+    block_size: int = 0
+    efficiency_ratio: float = 0.0
+    guarantee: OntapNvmeNamespaceSpaceGuarantee = Field(
+        default_factory=OntapNvmeNamespaceSpaceGuarantee
+    )
+    physical_used: int = 0
+    physical_used_by_snapshots: int = 0
+    size: int = 0
+    used: int = 0
+
+
+class OntapNvmeNamespaceStatisticsIopsRaw(OntapModel):
+    """OntapNvmeNamespaceStatisticsIopsRaw sub-model for iops_raw."""
+
+    other: int = 0
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapNvmeNamespaceStatisticsLatencyRaw(OntapModel):
+    """OntapNvmeNamespaceStatisticsLatencyRaw sub-model for latency_raw."""
+
+    other: int = 0
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapNvmeNamespaceStatisticsThroughputRaw(OntapModel):
+    """OntapNvmeNamespaceStatisticsThroughputRaw sub-model for throughput_raw."""
+
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapNvmeNamespaceStatistics(OntapModel):
+    """OntapNvmeNamespaceStatistics sub-model for statistics."""
+
+    iops_raw: OntapNvmeNamespaceStatisticsIopsRaw = Field(
+        default_factory=OntapNvmeNamespaceStatisticsIopsRaw
+    )
+    latency_raw: OntapNvmeNamespaceStatisticsLatencyRaw = Field(
+        default_factory=OntapNvmeNamespaceStatisticsLatencyRaw
+    )
+    status: str = ""
+    throughput_raw: OntapNvmeNamespaceStatisticsThroughputRaw = Field(
+        default_factory=OntapNvmeNamespaceStatisticsThroughputRaw
+    )
+    timestamp: str = ""
+
+
+class OntapNvmeNamespaceStatus(OntapModel):
+    """OntapNvmeNamespaceStatus sub-model for status."""
+
+    container_state: str = ""
+    mapped: bool = False
+    read_only: bool = False
+    state: str = ""
+
+
+class OntapNvmeNamespaceSubsystemMapSubsystemHostDhHmacChap(OntapModel):
+    """OntapNvmeNamespaceSubsystemMapSubsystemHostDhHmacChap sub-model for dh_hmac_chap."""
+
+    controller_secret_key: str = ""
+    group_size: str = ""
+    hash_function: str = ""
+    host_secret_key: str = ""
+    mode: str = ""
+
+
+class OntapNvmeNamespaceSubsystemMapSubsystemHostTls(OntapModel):
+    """OntapNvmeNamespaceSubsystemMapSubsystemHostTls sub-model for tls."""
+
+    configured_psk: str = ""
+    key_type: str = ""
+
+
+class OntapNvmeNamespaceSubsystemMapSubsystemHost(OntapModel):
+    """OntapNvmeNamespaceSubsystemMapSubsystemHost sub-model for hosts."""
+
+    dh_hmac_chap: OntapNvmeNamespaceSubsystemMapSubsystemHostDhHmacChap = Field(
+        default_factory=OntapNvmeNamespaceSubsystemMapSubsystemHostDhHmacChap
+    )
     nqn: str = ""
     priority: str = ""
-    tls_configured_psk: str = ""
-    tls_key_type: str = ""
+    tls: OntapNvmeNamespaceSubsystemMapSubsystemHostTls = Field(
+        default_factory=OntapNvmeNamespaceSubsystemMapSubsystemHostTls
+    )
+
+
+class OntapNvmeNamespaceSubsystemMapSubsystem(OntapModel):
+    """OntapNvmeNamespaceSubsystemMapSubsystem sub-model for subsystem."""
+
+    comment: str = ""
+    hosts: list[OntapNvmeNamespaceSubsystemMapSubsystemHost] = Field(default_factory=list)
+    name: str = ""
+    os_type: str = ""
+    uuid: str = ""
+
+
+class OntapNvmeNamespaceSubsystemMap(OntapModel):
+    """OntapNvmeNamespaceSubsystemMap sub-model for subsystem_map."""
+
+    anagrpid: str = ""
+    nsid: str = ""
+    subsystem: OntapNvmeNamespaceSubsystemMapSubsystem = Field(
+        default_factory=OntapNvmeNamespaceSubsystemMapSubsystem
+    )
+
+
+class OntapNvmeNamespaceSvm(OntapModel):
+    """OntapNvmeNamespaceSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapNvmeNamespace(OntapModel):
     """OntapNvmeNamespace information."""
 
     auto_delete: bool = False
-    clone_source_name: str = ""
-    clone_source_uuid: str = ""
+    clone: OntapNvmeNamespaceClone = Field(default_factory=OntapNvmeNamespaceClone)
     comment: str = ""
-    consistency_group_name: str = ""
-    consistency_group_uuid: str = ""
-    convert_lun_name: str = ""
-    convert_lun_uuid: str = ""
+    consistency_group: OntapNvmeNamespaceConsistencyGroup = Field(
+        default_factory=OntapNvmeNamespaceConsistencyGroup
+    )
+    convert: OntapNvmeNamespaceConvert = Field(default_factory=OntapNvmeNamespaceConvert)
     create_time: str = ""
     enabled: bool = False
-    location_namespace: str = ""
-    location_node_name: str = ""
-    location_node_uuid: str = ""
-    location_qtree_id: int = 0
-    location_qtree_name: str = ""
-    location_volume_name: str = ""
-    location_volume_uuid: str = ""
-    metric_duration: str = ""
-    metric_iops_other: int = 0
-    metric_iops_read: int = 0
-    metric_iops_total: int = 0
-    metric_iops_write: int = 0
-    metric_latency_other: int = 0
-    metric_latency_read: int = 0
-    metric_latency_total: int = 0
-    metric_latency_write: int = 0
-    metric_status: str = ""
-    metric_throughput_read: int = 0
-    metric_throughput_total: int = 0
-    metric_throughput_write: int = 0
-    metric_timestamp: str = ""
+    location: OntapNvmeNamespaceLocation = Field(default_factory=OntapNvmeNamespaceLocation)
+    metric: OntapNvmeNamespaceMetric = Field(default_factory=OntapNvmeNamespaceMetric)
     name: str = ""
     os_type: str = ""
-    provisioning_options_auto: bool = False
-    provisioning_options_count: int = 0
-    provisioning_options_qos_policy_name: str = ""
-    provisioning_options_qos_policy_uuid: str = ""
-    provisioning_options_snapshot_policy_name: str = ""
-    provisioning_options_snapshot_policy_uuid: str = ""
-    provisioning_options_storage_service_name: str = ""
-    provisioning_options_tiering_control: str = ""
-    provisioning_options_tiering_object_stores: list[OntapNvmeNamespaceObjectStore] = Field(
-        default_factory=list
+    provisioning_options: OntapNvmeNamespaceProvisioningOptions = Field(
+        default_factory=OntapNvmeNamespaceProvisioningOptions
     )
-    provisioning_options_tiering_policy: str = ""
-    provisioning_options_use_mirrored_aggregates: bool = False
-    space_block_size: int = 0
-    space_efficiency_ratio: float = 0.0
-    space_guarantee_requested: bool = False
-    space_guarantee_reserved: bool = False
-    space_physical_used: int = 0
-    space_physical_used_by_snapshots: int = 0
-    space_size: int = 0
-    space_used: int = 0
-    statistics_iops_raw_other: int = 0
-    statistics_iops_raw_read: int = 0
-    statistics_iops_raw_total: int = 0
-    statistics_iops_raw_write: int = 0
-    statistics_latency_raw_other: int = 0
-    statistics_latency_raw_read: int = 0
-    statistics_latency_raw_total: int = 0
-    statistics_latency_raw_write: int = 0
-    statistics_status: str = ""
-    statistics_throughput_raw_read: int = 0
-    statistics_throughput_raw_total: int = 0
-    statistics_throughput_raw_write: int = 0
-    statistics_timestamp: str = ""
-    status_container_state: str = ""
-    status_mapped: bool = False
-    status_read_only: bool = False
-    status_state: str = ""
-    subsystem_map_anagrpid: str = ""
-    subsystem_map_nsid: str = ""
-    subsystem_map_subsystem_comment: str = ""
-    subsystem_map_subsystem_hosts: list[OntapNvmeNamespaceHost] = Field(default_factory=list)
-    subsystem_map_subsystem_name: str = ""
-    subsystem_map_subsystem_os_type: str = ""
-    subsystem_map_subsystem_uuid: str = ""
-    svm_name: str = ""
-    svm_uuid: str = ""
+    space: OntapNvmeNamespaceSpace = Field(default_factory=OntapNvmeNamespaceSpace)
+    statistics: OntapNvmeNamespaceStatistics = Field(default_factory=OntapNvmeNamespaceStatistics)
+    status: OntapNvmeNamespaceStatus = Field(default_factory=OntapNvmeNamespaceStatus)
+    subsystem_map: OntapNvmeNamespaceSubsystemMap = Field(
+        default_factory=OntapNvmeNamespaceSubsystemMap
+    )
+    svm: OntapNvmeNamespaceSvm = Field(default_factory=OntapNvmeNamespaceSvm)
     uuid: str = ""

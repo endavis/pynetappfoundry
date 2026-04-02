@@ -12,6 +12,7 @@ from pynetappfoundry.cli.commands.licenses.savings import _analyze_cluster_savin
 from pynetappfoundry.models.ontap.cluster.licensing.licenses.model import (
     OntapLicensePackageResponse,
     OntapLicensePackageResponseLicense,
+    OntapLicensePackageResponseLicenseCapacity,
 )
 
 
@@ -24,8 +25,10 @@ def _make_license(
     """Create a license sub-model."""
     return OntapLicensePackageResponseLicense(
         serial_number=serial_number,
-        capacity_used_size=capacity_used_size,
-        capacity_maximum_size=capacity_maximum_size,
+        capacity=OntapLicensePackageResponseLicenseCapacity(
+            used_size=capacity_used_size,
+            maximum_size=capacity_maximum_size,
+        ),
     )
 
 

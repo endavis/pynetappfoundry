@@ -9,7 +9,7 @@ cache_strategy = "cache"
 [fields.enabled]
 cache_strategy = "cache"
 
-[fields.engine_name]
+[fields."engine.name"]
 cache_strategy = "cache"
 
 [fields.events]
@@ -33,35 +33,35 @@ cache_strategy = "cache"
 [fields.privileged_user]
 cache_strategy = "cache"
 
-[fields.scope_check_extensions_on_directories]
+[fields."scope.check_extensions_on_directories"]
 cache_strategy = "cache"
 
-[fields.scope_exclude_export_policies]
+[fields."scope.exclude_export_policies"]
 cache_strategy = "cache"
 
-[fields.scope_exclude_extension]
+[fields."scope.exclude_extension"]
 cache_strategy = "cache"
 
-[fields.scope_exclude_shares]
+[fields."scope.exclude_shares"]
 cache_strategy = "cache"
 
-[fields.scope_exclude_volumes]
+[fields."scope.exclude_volumes"]
 cache_strategy = "cache"
 
-[fields.scope_include_export_policies]
+[fields."scope.include_export_policies"]
 cache_strategy = "cache"
 
-[fields.scope_include_extension]
+[fields."scope.include_extension"]
 cache_strategy = "cache"
 
-[fields.scope_include_shares]
+[fields."scope.include_shares"]
 cache_strategy = "cache"
 
-[fields.scope_include_volumes]
+[fields."scope.include_volumes"]
 cache_strategy = "cache"
 
-[fields.scope_object_monitoring_with_no_extension]
+[fields."scope.object_monitoring_with_no_extension"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"

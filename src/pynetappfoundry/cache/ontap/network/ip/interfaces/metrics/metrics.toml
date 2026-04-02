@@ -9,13 +9,13 @@ cache_strategy = "cache"
 [fields.status]
 cache_strategy = "cache"
 
-[fields.throughput_read]
+[fields."throughput.read"]
 cache_strategy = "cache"
 
-[fields.throughput_total]
+[fields."throughput.total"]
 cache_strategy = "cache"
 
-[fields.throughput_write]
+[fields."throughput.write"]
 cache_strategy = "cache"
 
 [fields.timestamp]

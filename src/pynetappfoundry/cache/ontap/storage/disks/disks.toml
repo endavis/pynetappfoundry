@@ -24,16 +24,16 @@ cache_strategy = "cache"
 [fields.control_standard]
 cache_strategy = "cache"
 
-[fields.dr_node_name]
+[fields."dr_node.name"]
 cache_strategy = "cache"
 
-[fields.dr_node_uuid]
+[fields."dr_node.uuid"]
 cache_strategy = "cache"
 
-[fields.drawer_id]
+[fields."drawer.id"]
 cache_strategy = "cache"
 
-[fields.drawer_slot]
+[fields."drawer.slot"]
 cache_strategy = "cache"
 
 [fields.effective_type]
@@ -51,16 +51,16 @@ cache_strategy = "cache"
 [fields.firmware_version]
 cache_strategy = "cache"
 
-[fields.home_node_name]
+[fields."home_node.name"]
 cache_strategy = "cache"
 
-[fields.home_node_uuid]
+[fields."home_node.uuid"]
 cache_strategy = "cache"
 
-[fields.key_id_data]
+[fields."key_id.data"]
 cache_strategy = "cache"
 
-[fields.key_id_fips]
+[fields."key_id.fips"]
 cache_strategy = "cache"
 
 [fields.local]
@@ -75,22 +75,22 @@ cache_strategy = "cache"
 [fields.name]
 cache_strategy = "cache"
 
-[fields.node_name]
+[fields."node.name"]
 cache_strategy = "cache"
 
-[fields.node_uuid]
+[fields."node.uuid"]
 cache_strategy = "cache"
 
-[fields.outage_persistently_failed]
+[fields."outage.persistently_failed"]
 cache_strategy = "cache"
 
-[fields.outage_reason_arguments]
+[fields."outage.reason.arguments"]
 cache_strategy = "cache"
 
-[fields.outage_reason_code]
+[fields."outage.reason.code"]
 cache_strategy = "cache"
 
-[fields.outage_reason_message]
+[fields."outage.reason.message"]
 cache_strategy = "cache"
 
 [fields.overall_security]
@@ -129,31 +129,31 @@ cache_strategy = "cache"
 [fields.serial_number]
 cache_strategy = "cache"
 
-[fields.shelf_uid]
+[fields."shelf.uid"]
 cache_strategy = "cache"
 
 [fields.state]
 cache_strategy = "cache"
 
-[fields.stats_average_latency]
+[fields."stats.average_latency"]
 cache_strategy = "realtime"
 
-[fields.stats_iops_total]
+[fields."stats.iops_total"]
 cache_strategy = "realtime"
 
-[fields.stats_path_error_count]
+[fields."stats.path_error_count"]
 cache_strategy = "realtime"
 
-[fields.stats_power_on_hours]
+[fields."stats.power_on_hours"]
 cache_strategy = "realtime"
 
-[fields.stats_throughput]
+[fields."stats.throughput"]
 cache_strategy = "realtime"
 
-[fields.storage_pool_name]
+[fields."storage_pool.name"]
 cache_strategy = "cache"
 
-[fields.storage_pool_uuid]
+[fields."storage_pool.uuid"]
 cache_strategy = "cache"
 
 [fields.type_]
@@ -168,14 +168,14 @@ cache_strategy = "cache"
 [fields.vendor]
 cache_strategy = "cache"
 
-[fields.virtual_container]
+[fields."virtual.container"]
 cache_strategy = "cache"
 
-[fields.virtual_object]
+[fields."virtual.object"]
 cache_strategy = "cache"
 
-[fields.virtual_storage_account]
+[fields."virtual.storage_account"]
 cache_strategy = "cache"
 
-[fields.virtual_target_address]
+[fields."virtual.target_address"]
 cache_strategy = "cache"

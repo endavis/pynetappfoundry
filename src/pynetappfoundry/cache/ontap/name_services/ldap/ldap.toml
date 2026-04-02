@@ -81,46 +81,52 @@ cache_strategy = "cache"
 [fields.skip_config_validation]
 cache_strategy = "cache"
 
-[fields.status_code]
+[fields."status.code"]
 cache_strategy = "cache"
 
-[fields.status_dn_message]
+[fields."status.dn_message"]
 cache_strategy = "cache"
 
-[fields.status_ipv4_code]
+[fields."status.ipv4.code"]
 cache_strategy = "cache"
 
-[fields.status_ipv4_dn_messages]
+[fields."status.ipv4.dn_messages"]
 cache_strategy = "cache"
 
-[fields.status_ipv4_message]
+[fields."status.ipv4.message"]
 cache_strategy = "cache"
 
-[fields.status_ipv4_state]
+[fields."status.ipv4.state"]
 cache_strategy = "cache"
 
-[fields.status_ipv6_code]
+[fields."status.ipv4_state"]
 cache_strategy = "cache"
 
-[fields.status_ipv6_dn_messages]
+[fields."status.ipv6.code"]
 cache_strategy = "cache"
 
-[fields.status_ipv6_message]
+[fields."status.ipv6.dn_messages"]
 cache_strategy = "cache"
 
-[fields.status_ipv6_state]
+[fields."status.ipv6.message"]
 cache_strategy = "cache"
 
-[fields.status_message]
+[fields."status.ipv6.state"]
 cache_strategy = "cache"
 
-[fields.status_state]
+[fields."status.ipv6_state"]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."status.message"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."status.state"]
+cache_strategy = "cache"
+
+[fields."svm.name"]
+cache_strategy = "cache"
+
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.try_channel_binding]

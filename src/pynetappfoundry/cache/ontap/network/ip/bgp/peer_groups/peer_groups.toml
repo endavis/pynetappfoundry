@@ -3,52 +3,52 @@ path = "/network/ip/bgp/peer-groups"
 schema = "bgp_peer_group"
 class_name = "OntapBgpPeerGroup"
 
-[fields.ipspace_name]
+[fields."ipspace.name"]
 cache_strategy = "cache"
 
-[fields.ipspace_uuid]
+[fields."ipspace.uuid"]
 cache_strategy = "cache"
 
-[fields.local_interface_ip_address]
+[fields."local.interface.ip.address"]
 cache_strategy = "cache"
 
-[fields.local_interface_name]
+[fields."local.interface.name"]
 cache_strategy = "cache"
 
-[fields.local_interface_uuid]
+[fields."local.interface.uuid"]
 cache_strategy = "cache"
 
-[fields.local_ip_address]
+[fields."local.ip.address"]
 cache_strategy = "cache"
 
-[fields.local_ip_netmask]
+[fields."local.ip.netmask"]
 cache_strategy = "cache"
 
-[fields.local_port_name]
+[fields."local.port.name"]
 cache_strategy = "cache"
 
-[fields.local_port_node_name]
+[fields."local.port.node.name"]
 cache_strategy = "cache"
 
-[fields.local_port_uuid]
+[fields."local.port.uuid"]
 cache_strategy = "cache"
 
 [fields.name]
 cache_strategy = "cache"
 
-[fields.peer_address]
+[fields."peer.address"]
 cache_strategy = "cache"
 
-[fields.peer_asn]
+[fields."peer.asn"]
 cache_strategy = "cache"
 
-[fields.peer_is_next_hop]
+[fields."peer.is_next_hop"]
 cache_strategy = "cache"
 
-[fields.peer_md5_enabled]
+[fields."peer.md5_enabled"]
 cache_strategy = "cache"
 
-[fields.peer_md5_secret]
+[fields."peer.md5_secret"]
 cache_strategy = "cache"
 
 [fields.state]

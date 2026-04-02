@@ -26,16 +26,16 @@ ONTAPFCSWITCH_MAPPING = TypeMapping(
     parent_id_field="name",
     fields=(
         FieldMapping(
-            cache_attr="cache_age",
+            cache_attr="cache.age",
             api_path="cache.age",
         ),
         FieldMapping(
-            cache_attr="cache_is_current",
+            cache_attr="cache.is_current",
             api_path="cache.is_current",
             default=False,
         ),
         FieldMapping(
-            cache_attr="cache_update_time",
+            cache_attr="cache.update_time",
             api_path="cache.update_time",
         ),
         FieldMapping(
@@ -44,7 +44,7 @@ ONTAPFCSWITCH_MAPPING = TypeMapping(
             default=0,
         ),
         FieldMapping(
-            cache_attr="fabric_name",
+            cache_attr="fabric.name",
             api_path="fabric.name",
         ),
         FieldMapping(

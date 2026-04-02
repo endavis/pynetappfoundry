@@ -12,23 +12,23 @@ cache_strategy = "cache"
 [fields.is_optimal]
 cache_strategy = "cache"
 
-[fields.protocol_endpoint_name]
+[fields."protocol_endpoint.name"]
 cache_strategy = "cache"
 
-[fields.protocol_endpoint_uuid]
+[fields."protocol_endpoint.uuid"]
 cache_strategy = "cache"
 
 [fields.secondary_id]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
-[fields.vvol_name]
+[fields."vvol.name"]
 cache_strategy = "cache"
 
-[fields.vvol_uuid]
+[fields."vvol.uuid"]
 cache_strategy = "cache"

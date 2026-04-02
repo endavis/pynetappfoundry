@@ -19,85 +19,85 @@ ONTAPSECURITYASSOCIATIONRESPONSE_MAPPING = TypeMapping(
             api_path="cipher_suite",
         ),
         FieldMapping(
-            cache_attr="ike_authentication",
+            cache_attr="ike.authentication",
             api_path="ike.authentication",
         ),
         FieldMapping(
-            cache_attr="ike_initiator_security_parameter_index",
+            cache_attr="ike.initiator_security_parameter_index",
             api_path="ike.initiator_security_parameter_index",
         ),
         FieldMapping(
-            cache_attr="ike_is_initiator",
+            cache_attr="ike.is_initiator",
             api_path="ike.is_initiator",
             default=False,
         ),
         FieldMapping(
-            cache_attr="ike_responder_security_parameter_index",
+            cache_attr="ike.responder_security_parameter_index",
             api_path="ike.responder_security_parameter_index",
         ),
         FieldMapping(
-            cache_attr="ike_state",
+            cache_attr="ike.state",
             api_path="ike.state",
         ),
         FieldMapping(
-            cache_attr="ike_version",
+            cache_attr="ike.version",
             api_path="ike.version",
             default=0,
         ),
         FieldMapping(
-            cache_attr="ipsec_action",
+            cache_attr="ipsec.action",
             api_path="ipsec.action",
         ),
         FieldMapping(
-            cache_attr="ipsec_inbound_bytes",
+            cache_attr="ipsec.inbound.bytes",
             api_path="ipsec.inbound.bytes",
             default=0,
         ),
         FieldMapping(
-            cache_attr="ipsec_inbound_offload_bytes",
+            cache_attr="ipsec.inbound.offload_bytes",
             api_path="ipsec.inbound.offload_bytes",
             default=0,
         ),
         FieldMapping(
-            cache_attr="ipsec_inbound_offload_packets",
+            cache_attr="ipsec.inbound.offload_packets",
             api_path="ipsec.inbound.offload_packets",
             default=0,
         ),
         FieldMapping(
-            cache_attr="ipsec_inbound_packets",
+            cache_attr="ipsec.inbound.packets",
             api_path="ipsec.inbound.packets",
             default=0,
         ),
         FieldMapping(
-            cache_attr="ipsec_inbound_security_parameter_index",
+            cache_attr="ipsec.inbound.security_parameter_index",
             api_path="ipsec.inbound.security_parameter_index",
         ),
         FieldMapping(
-            cache_attr="ipsec_outbound_bytes",
+            cache_attr="ipsec.outbound.bytes",
             api_path="ipsec.outbound.bytes",
             default=0,
         ),
         FieldMapping(
-            cache_attr="ipsec_outbound_offload_bytes",
+            cache_attr="ipsec.outbound.offload_bytes",
             api_path="ipsec.outbound.offload_bytes",
             default=0,
         ),
         FieldMapping(
-            cache_attr="ipsec_outbound_offload_packets",
+            cache_attr="ipsec.outbound.offload_packets",
             api_path="ipsec.outbound.offload_packets",
             default=0,
         ),
         FieldMapping(
-            cache_attr="ipsec_outbound_packets",
+            cache_attr="ipsec.outbound.packets",
             api_path="ipsec.outbound.packets",
             default=0,
         ),
         FieldMapping(
-            cache_attr="ipsec_outbound_security_parameter_index",
+            cache_attr="ipsec.outbound.security_parameter_index",
             api_path="ipsec.outbound.security_parameter_index",
         ),
         FieldMapping(
-            cache_attr="ipsec_state",
+            cache_attr="ipsec.state",
             api_path="ipsec.state",
         ),
         FieldMapping(
@@ -110,11 +110,11 @@ ONTAPSECURITYASSOCIATIONRESPONSE_MAPPING = TypeMapping(
             api_path="local_address",
         ),
         FieldMapping(
-            cache_attr="node_name",
+            cache_attr="node.name",
             api_path="node.name",
         ),
         FieldMapping(
-            cache_attr="node_uuid",
+            cache_attr="node.uuid",
             api_path="node.uuid",
         ),
         FieldMapping(
@@ -130,11 +130,11 @@ ONTAPSECURITYASSOCIATIONRESPONSE_MAPPING = TypeMapping(
             api_path="scope",
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(

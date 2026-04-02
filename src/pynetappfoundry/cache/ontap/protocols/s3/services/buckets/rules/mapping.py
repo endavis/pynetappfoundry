@@ -14,10 +14,10 @@ ONTAPS3BUCKETLIFECYCLERULE_MAPPING = TypeMapping(
     api_endpoint="/protocols/s3/services/{svm.uuid}/buckets/{s3_bucket.uuid}/rules?fields=*",
     api_type="ontap",
     parent_mapping="OntapS3Service",
-    parent_id_field="svm_uuid",
+    parent_id_field="svm.uuid",
     fields=(
         FieldMapping(
-            cache_attr="abort_incomplete_multipart_upload_after_initiation_days",
+            cache_attr="abort_incomplete_multipart_upload.after_initiation_days",
             api_path="abort_incomplete_multipart_upload.after_initiation_days",
             default=0,
         ),
@@ -31,17 +31,17 @@ ONTAPS3BUCKETLIFECYCLERULE_MAPPING = TypeMapping(
             default=False,
         ),
         FieldMapping(
-            cache_attr="expiration_expired_object_delete_marker",
+            cache_attr="expiration.expired_object_delete_marker",
             api_path="expiration.expired_object_delete_marker",
             default=False,
         ),
         FieldMapping(
-            cache_attr="expiration_object_age_days",
+            cache_attr="expiration.object_age_days",
             api_path="expiration.object_age_days",
             default=0,
         ),
         FieldMapping(
-            cache_attr="expiration_object_expiry_date",
+            cache_attr="expiration.object_expiry_date",
             api_path="expiration.object_expiry_date",
         ),
         FieldMapping(
@@ -49,40 +49,40 @@ ONTAPS3BUCKETLIFECYCLERULE_MAPPING = TypeMapping(
             api_path="name",
         ),
         FieldMapping(
-            cache_attr="non_current_version_expiration_new_non_current_versions",
+            cache_attr="non_current_version_expiration.new_non_current_versions",
             api_path="non_current_version_expiration.new_non_current_versions",
             default=0,
         ),
         FieldMapping(
-            cache_attr="non_current_version_expiration_non_current_days",
+            cache_attr="non_current_version_expiration.non_current_days",
             api_path="non_current_version_expiration.non_current_days",
             default=0,
         ),
         FieldMapping(
-            cache_attr="object_filter_prefix",
+            cache_attr="object_filter.prefix",
             api_path="object_filter.prefix",
         ),
         FieldMapping(
-            cache_attr="object_filter_size_greater_than",
+            cache_attr="object_filter.size_greater_than",
             api_path="object_filter.size_greater_than",
             default=0,
         ),
         FieldMapping(
-            cache_attr="object_filter_size_less_than",
+            cache_attr="object_filter.size_less_than",
             api_path="object_filter.size_less_than",
             default=0,
         ),
         FieldMapping(
-            cache_attr="object_filter_tags",
+            cache_attr="object_filter.tags",
             api_path="object_filter.tags",
             default=[],
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(

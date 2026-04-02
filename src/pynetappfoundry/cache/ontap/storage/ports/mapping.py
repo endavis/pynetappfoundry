@@ -17,27 +17,27 @@ ONTAPSTORAGEPORT_MAPPING = TypeMapping(
             api_path="board_name",
         ),
         FieldMapping(
-            cache_attr="cable_identifier",
+            cache_attr="cable.identifier",
             api_path="cable.identifier",
         ),
         FieldMapping(
-            cache_attr="cable_length",
+            cache_attr="cable.length",
             api_path="cable.length",
         ),
         FieldMapping(
-            cache_attr="cable_part_number",
+            cache_attr="cable.part_number",
             api_path="cable.part_number",
         ),
         FieldMapping(
-            cache_attr="cable_serial_number",
+            cache_attr="cable.serial_number",
             api_path="cable.serial_number",
         ),
         FieldMapping(
-            cache_attr="cable_transceiver",
+            cache_attr="cable.transceiver",
             api_path="cable.transceiver",
         ),
         FieldMapping(
-            cache_attr="cable_vendor",
+            cache_attr="cable.vendor",
             api_path="cable.vendor",
         ),
         FieldMapping(
@@ -50,11 +50,11 @@ ONTAPSTORAGEPORT_MAPPING = TypeMapping(
             default=False,
         ),
         FieldMapping(
-            cache_attr="error_corrective_action",
+            cache_attr="error.corrective_action",
             api_path="error.corrective_action",
         ),
         FieldMapping(
-            cache_attr="error_message",
+            cache_attr="error.message",
             api_path="error.message",
         ),
         FieldMapping(
@@ -84,11 +84,11 @@ ONTAPSTORAGEPORT_MAPPING = TypeMapping(
             api_path="name",
         ),
         FieldMapping(
-            cache_attr="node_name",
+            cache_attr="node.name",
             api_path="node.name",
         ),
         FieldMapping(
-            cache_attr="node_uuid",
+            cache_attr="node.uuid",
             api_path="node.uuid",
         ),
         FieldMapping(

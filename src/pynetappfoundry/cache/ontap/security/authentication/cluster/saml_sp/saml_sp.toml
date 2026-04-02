@@ -3,13 +3,13 @@ path = "/security/authentication/cluster/saml-sp"
 schema = "security_saml_sp"
 class_name = "OntapSecuritySamlSp"
 
-[fields.certificate_ca]
+[fields."certificate.ca"]
 cache_strategy = "cache"
 
-[fields.certificate_common_name]
+[fields."certificate.common_name"]
 cache_strategy = "cache"
 
-[fields.certificate_serial_number]
+[fields."certificate.serial_number"]
 cache_strategy = "cache"
 
 [fields.enabled]

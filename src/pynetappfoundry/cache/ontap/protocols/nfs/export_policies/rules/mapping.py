@@ -59,12 +59,12 @@ ONTAPEXPORTRULE_MAPPING = TypeMapping(
             api_path="ntfs_unix_security",
         ),
         FieldMapping(
-            cache_attr="policy_id",
+            cache_attr="policy.id",
             api_path="policy.id",
             default=0,
         ),
         FieldMapping(
-            cache_attr="policy_name",
+            cache_attr="policy.name",
             api_path="policy.name",
         ),
         FieldMapping(
@@ -88,11 +88,11 @@ ONTAPEXPORTRULE_MAPPING = TypeMapping(
             default=[],
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
     ),

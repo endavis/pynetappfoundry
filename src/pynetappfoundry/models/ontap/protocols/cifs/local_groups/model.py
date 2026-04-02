@@ -13,6 +13,13 @@ class OntapLocalCifsGroupMember(OntapModel):
     name: str = ""
 
 
+class OntapLocalCifsGroupSvm(OntapModel):
+    """OntapLocalCifsGroupSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
+
+
 class OntapLocalCifsGroup(OntapModel):
     """OntapLocalCifsGroup information."""
 
@@ -20,5 +27,4 @@ class OntapLocalCifsGroup(OntapModel):
     members: list[OntapLocalCifsGroupMember] = Field(default_factory=list)
     name: str = ""
     sid: str = ""
-    svm_name: str = ""
-    svm_uuid: str = ""
+    svm: OntapLocalCifsGroupSvm = Field(default_factory=OntapLocalCifsGroupSvm)

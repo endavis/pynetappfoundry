@@ -21,7 +21,7 @@ ONTAPSNMPTRAPHOST_MAPPING = TypeMapping(
             api_path="ip_address",
         ),
         FieldMapping(
-            cache_attr="user_name",
+            cache_attr="user.name",
             api_path="user.name",
         ),
     ),

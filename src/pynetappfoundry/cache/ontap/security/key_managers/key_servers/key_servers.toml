@@ -3,11 +3,11 @@ path = "/security/key-managers/{uuid}/key-servers"
 schema = "key_server"
 class_name = "OntapKeyServer"
 
-[fields.connectivity_cluster_availability]
+[fields."connectivity.cluster_availability"]
 cache_strategy = "cache"
 requires_explicit_fetch = true
 
-[fields.connectivity_node_states]
+[fields."connectivity.node_states"]
 cache_strategy = "cache"
 
 [fields.create_remove_timeout]

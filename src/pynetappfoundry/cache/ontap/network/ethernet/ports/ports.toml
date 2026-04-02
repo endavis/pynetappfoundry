@@ -3,13 +3,13 @@ path = "/network/ethernet/ports"
 schema = "port"
 class_name = "OntapPort"
 
-[fields.broadcast_domain_ipspace_name]
+[fields."broadcast_domain.ipspace.name"]
 cache_strategy = "cache"
 
-[fields.broadcast_domain_name]
+[fields."broadcast_domain.name"]
 cache_strategy = "cache"
 
-[fields.broadcast_domain_uuid]
+[fields."broadcast_domain.uuid"]
 cache_strategy = "cache"
 
 [fields.discovered_devices]
@@ -24,37 +24,37 @@ cache_strategy = "cache"
 [fields.interface_count]
 cache_strategy = "cache"
 
-[fields.lag_active_ports]
+[fields."lag.active_ports"]
 cache_strategy = "cache"
 
-[fields.lag_distribution_policy]
+[fields."lag.distribution_policy"]
 cache_strategy = "cache"
 
-[fields.lag_member_ports]
+[fields."lag.member_ports"]
 cache_strategy = "cache"
 
-[fields.lag_mode]
+[fields."lag.mode"]
 cache_strategy = "cache"
 
 [fields.mac_address]
 cache_strategy = "cache"
 
-[fields.metric_duration]
+[fields."metric.duration"]
 cache_strategy = "realtime"
 
-[fields.metric_status]
+[fields."metric.status"]
 cache_strategy = "realtime"
 
-[fields.metric_throughput_read]
+[fields."metric.throughput.read"]
 cache_strategy = "realtime"
 
-[fields.metric_throughput_total]
+[fields."metric.throughput.total"]
 cache_strategy = "realtime"
 
-[fields.metric_throughput_write]
+[fields."metric.throughput.write"]
 cache_strategy = "realtime"
 
-[fields.metric_timestamp]
+[fields."metric.timestamp"]
 cache_strategy = "realtime"
 
 [fields.mtu]
@@ -63,10 +63,10 @@ cache_strategy = "cache"
 [fields.name]
 cache_strategy = "cache"
 
-[fields.node_name]
+[fields."node.name"]
 cache_strategy = "cache"
 
-[fields.node_uuid]
+[fields."node.uuid"]
 cache_strategy = "cache"
 
 [fields.pfc_queues_admin]
@@ -87,43 +87,43 @@ cache_strategy = "cache"
 [fields.state]
 cache_strategy = "cache"
 
-[fields.statistics_device_link_down_count_raw]
+[fields."statistics.device.link_down_count_raw"]
 cache_strategy = "realtime"
 
-[fields.statistics_device_receive_raw_discards]
+[fields."statistics.device.receive_raw.discards"]
 cache_strategy = "realtime"
 
-[fields.statistics_device_receive_raw_errors]
+[fields."statistics.device.receive_raw.errors"]
 cache_strategy = "realtime"
 
-[fields.statistics_device_receive_raw_packets]
+[fields."statistics.device.receive_raw.packets"]
 cache_strategy = "realtime"
 
-[fields.statistics_device_timestamp]
+[fields."statistics.device.timestamp"]
 cache_strategy = "realtime"
 
-[fields.statistics_device_transmit_raw_discards]
+[fields."statistics.device.transmit_raw.discards"]
 cache_strategy = "realtime"
 
-[fields.statistics_device_transmit_raw_errors]
+[fields."statistics.device.transmit_raw.errors"]
 cache_strategy = "realtime"
 
-[fields.statistics_device_transmit_raw_packets]
+[fields."statistics.device.transmit_raw.packets"]
 cache_strategy = "realtime"
 
-[fields.statistics_status]
+[fields."statistics.status"]
 cache_strategy = "realtime"
 
-[fields.statistics_throughput_raw_read]
+[fields."statistics.throughput_raw.read"]
 cache_strategy = "realtime"
 
-[fields.statistics_throughput_raw_total]
+[fields."statistics.throughput_raw.total"]
 cache_strategy = "realtime"
 
-[fields.statistics_throughput_raw_write]
+[fields."statistics.throughput_raw.write"]
 cache_strategy = "realtime"
 
-[fields.statistics_timestamp]
+[fields."statistics.timestamp"]
 cache_strategy = "realtime"
 
 [fields.type_]
@@ -132,14 +132,14 @@ cache_strategy = "cache"
 [fields.uuid]
 cache_strategy = "cache"
 
-[fields.vlan_base_port_name]
+[fields."vlan.base_port.name"]
 cache_strategy = "cache"
 
-[fields.vlan_base_port_node_name]
+[fields."vlan.base_port.node.name"]
 cache_strategy = "cache"
 
-[fields.vlan_base_port_uuid]
+[fields."vlan.base_port.uuid"]
 cache_strategy = "cache"
 
-[fields.vlan_tag]
+[fields."vlan.tag"]
 cache_strategy = "cache"

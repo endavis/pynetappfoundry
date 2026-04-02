@@ -17,7 +17,7 @@ ONTAPMEDIATORRESPONSE_MAPPING = TypeMapping(
             api_path="ca_certificate",
         ),
         FieldMapping(
-            cache_attr="dr_group_id",
+            cache_attr="dr_group.id",
             api_path="dr_group.id",
             default=0,
         ),
@@ -30,11 +30,11 @@ ONTAPMEDIATORRESPONSE_MAPPING = TypeMapping(
             api_path="password",
         ),
         FieldMapping(
-            cache_attr="peer_cluster_name",
+            cache_attr="peer_cluster.name",
             api_path="peer_cluster.name",
         ),
         FieldMapping(
-            cache_attr="peer_cluster_uuid",
+            cache_attr="peer_cluster.uuid",
             api_path="peer_cluster.uuid",
         ),
         FieldMapping(

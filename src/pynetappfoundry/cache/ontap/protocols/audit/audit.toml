@@ -9,71 +9,71 @@ cache_strategy = "cache"
 [fields.enabled]
 cache_strategy = "cache"
 
-[fields.events_async_delete]
+[fields."events.async_delete"]
 cache_strategy = "cache"
 
-[fields.events_audit_policy_change]
+[fields."events.audit_policy_change"]
 cache_strategy = "cache"
 
-[fields.events_authorization_policy]
+[fields."events.authorization_policy"]
 cache_strategy = "cache"
 
-[fields.events_cap_staging]
+[fields."events.cap_staging"]
 cache_strategy = "cache"
 
-[fields.events_cifs_logon_logoff]
+[fields."events.cifs_logon_logoff"]
 cache_strategy = "cache"
 
-[fields.events_file_operations]
+[fields."events.file_operations"]
 cache_strategy = "cache"
 
-[fields.events_file_share]
+[fields."events.file_share"]
 cache_strategy = "cache"
 
-[fields.events_security_group]
+[fields."events.security_group"]
 cache_strategy = "cache"
 
-[fields.events_user_account]
+[fields."events.user_account"]
 cache_strategy = "cache"
 
 [fields.guarantee]
 cache_strategy = "cache"
 
-[fields.log_format]
+[fields."log.format"]
 cache_strategy = "cache"
 
-[fields.log_retention_count]
+[fields."log.retention.count"]
 cache_strategy = "cache"
 
-[fields.log_retention_duration]
+[fields."log.retention.duration"]
 cache_strategy = "cache"
 
-[fields.log_rotation_now]
+[fields."log.rotation.now"]
 cache_strategy = "cache"
 
-[fields.log_rotation_schedule_days]
+[fields."log.rotation.schedule.days"]
 cache_strategy = "cache"
 
-[fields.log_rotation_schedule_hours]
+[fields."log.rotation.schedule.hours"]
 cache_strategy = "cache"
 
-[fields.log_rotation_schedule_minutes]
+[fields."log.rotation.schedule.minutes"]
 cache_strategy = "cache"
 
-[fields.log_rotation_schedule_months]
+[fields."log.rotation.schedule.months"]
 cache_strategy = "cache"
 
-[fields.log_rotation_schedule_weekdays]
+[fields."log.rotation.schedule.weekdays"]
 cache_strategy = "cache"
 
-[fields.log_rotation_size]
+[fields."log.rotation.size"]
 cache_strategy = "cache"
 
 [fields.log_path]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"

@@ -24,15 +24,15 @@ ONTAPNETWORKROUTE_MAPPING = TypeMapping(
     api_type="ontap",
     fields=(
         FieldMapping(
-            cache_attr="destination_address",
+            cache_attr="destination.address",
             api_path="destination.address",
         ),
         FieldMapping(
-            cache_attr="destination_family",
+            cache_attr="destination.family",
             api_path="destination.family",
         ),
         FieldMapping(
-            cache_attr="destination_netmask",
+            cache_attr="destination.netmask",
             api_path="destination.netmask",
         ),
         FieldMapping(
@@ -47,11 +47,11 @@ ONTAPNETWORKROUTE_MAPPING = TypeMapping(
             requires_explicit_fetch=True,
         ),
         FieldMapping(
-            cache_attr="ipspace_name",
+            cache_attr="ipspace.name",
             api_path="ipspace.name",
         ),
         FieldMapping(
-            cache_attr="ipspace_uuid",
+            cache_attr="ipspace.uuid",
             api_path="ipspace.uuid",
         ),
         FieldMapping(
@@ -64,11 +64,11 @@ ONTAPNETWORKROUTE_MAPPING = TypeMapping(
             api_path="scope",
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(

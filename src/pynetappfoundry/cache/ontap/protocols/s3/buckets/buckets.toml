@@ -9,10 +9,10 @@ cache_strategy = "cache"
 [fields.allowed]
 cache_strategy = "cache"
 
-[fields.audit_event_selector_access]
+[fields."audit_event_selector.access"]
 cache_strategy = "cache"
 
-[fields.audit_event_selector_permission]
+[fields."audit_event_selector.permission"]
 cache_strategy = "cache"
 
 [fields.comment]
@@ -21,13 +21,13 @@ cache_strategy = "cache"
 [fields.constituents_per_aggregate]
 cache_strategy = "cache"
 
-[fields.cors_rules]
+[fields."cors.rules"]
 cache_strategy = "cache"
 
-[fields.encryption_enabled]
+[fields."encryption.enabled"]
 cache_strategy = "cache"
 
-[fields.lifecycle_management_rules]
+[fields."lifecycle_management.rules"]
 cache_strategy = "cache"
 
 [fields.logical_used_size]
@@ -39,43 +39,43 @@ cache_strategy = "cache"
 [fields.nas_path]
 cache_strategy = "cache"
 
-[fields.policy_statements]
+[fields."policy.statements"]
 cache_strategy = "cache"
 
-[fields.protection_status_destination_is_cloud]
+[fields."protection_status.destination.is_cloud"]
 cache_strategy = "cache"
 
-[fields.protection_status_destination_is_external_cloud]
+[fields."protection_status.destination.is_external_cloud"]
 cache_strategy = "cache"
 
-[fields.protection_status_destination_is_ontap]
+[fields."protection_status.destination.is_ontap"]
 cache_strategy = "cache"
 
-[fields.protection_status_is_protected]
+[fields."protection_status.is_protected"]
 cache_strategy = "cache"
 
-[fields.qos_policy_max_throughput_iops]
+[fields."qos_policy.max_throughput_iops"]
 cache_strategy = "cache"
 
-[fields.qos_policy_max_throughput_mbps]
+[fields."qos_policy.max_throughput_mbps"]
 cache_strategy = "cache"
 
-[fields.qos_policy_min_throughput_iops]
+[fields."qos_policy.min_throughput_iops"]
 cache_strategy = "cache"
 
-[fields.qos_policy_min_throughput_mbps]
+[fields."qos_policy.min_throughput_mbps"]
 cache_strategy = "cache"
 
-[fields.qos_policy_name]
+[fields."qos_policy.name"]
 cache_strategy = "cache"
 
-[fields.qos_policy_uuid]
+[fields."qos_policy.uuid"]
 cache_strategy = "cache"
 
-[fields.retention_default_period]
+[fields."retention.default_period"]
 cache_strategy = "cache"
 
-[fields.retention_mode]
+[fields."retention.mode"]
 cache_strategy = "cache"
 
 [fields.role]
@@ -84,19 +84,19 @@ cache_strategy = "cache"
 [fields.size]
 cache_strategy = "cache"
 
-[fields.snapshot_policy_name]
+[fields."snapshot_policy.name"]
 cache_strategy = "cache"
 
-[fields.snapshot_policy_uuid]
+[fields."snapshot_policy.uuid"]
 cache_strategy = "cache"
 
 [fields.storage_service_level]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.type_]
@@ -111,8 +111,8 @@ cache_strategy = "cache"
 [fields.versioning_state]
 cache_strategy = "cache"
 
-[fields.volume_name]
+[fields."volume.name"]
 cache_strategy = "cache"
 
-[fields.volume_uuid]
+[fields."volume.uuid"]
 cache_strategy = "cache"

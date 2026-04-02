@@ -45,12 +45,12 @@ ONTAPNVMESUBSYSTEM_MAPPING = TypeMapping(
             default=[],
         ),
         FieldMapping(
-            cache_attr="io_queue_default_count",
+            cache_attr="io_queue.default.count",
             api_path="io_queue.default.count",
             default=0,
         ),
         FieldMapping(
-            cache_attr="io_queue_default_depth",
+            cache_attr="io_queue.default.depth",
             api_path="io_queue.default.depth",
             default=0,
         ),
@@ -73,11 +73,11 @@ ONTAPNVMESUBSYSTEM_MAPPING = TypeMapping(
             default=[],
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
         FieldMapping(

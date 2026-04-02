@@ -12,7 +12,6 @@ from pynetappfoundry.models.ontap.storage.shelves.model import (
     OntapShelfBay,
     OntapShelfCurrentSensor,
     OntapShelfDrawer,
-    OntapShelfError,
     OntapShelfFan,
     OntapShelfFru,
     OntapShelfPath,
@@ -40,11 +39,6 @@ def _transform_current_sensors(record: dict[str, Any]) -> list[OntapShelfCurrent
 def _transform_drawers(record: dict[str, Any]) -> list[OntapShelfDrawer]:
     """Transform drawers into OntapShelfDrawer list."""
     return [OntapShelfDrawer(**item) for item in record.get("drawers", [])]
-
-
-def _transform_errors(record: dict[str, Any]) -> list[OntapShelfError]:
-    """Transform errors into OntapShelfError list."""
-    return [OntapShelfError(**item) for item in record.get("errors", [])]
 
 
 def _transform_fans(record: dict[str, Any]) -> list[OntapShelfFan]:
@@ -119,7 +113,6 @@ ONTAPSHELF_MAPPING = TypeMapping(
         FieldMapping(
             cache_attr="errors",
             api_path="errors",
-            transform=_transform_errors,
             default=[],
         ),
         FieldMapping(
@@ -153,7 +146,7 @@ ONTAPSHELF_MAPPING = TypeMapping(
             api_path="location_led",
         ),
         FieldMapping(
-            cache_attr="manufacturer_name",
+            cache_attr="manufacturer.name",
             api_path="manufacturer.name",
         ),
         FieldMapping(
@@ -199,23 +192,23 @@ ONTAPSHELF_MAPPING = TypeMapping(
             api_path="uid",
         ),
         FieldMapping(
-            cache_attr="vendor_manufacturer",
+            cache_attr="vendor.manufacturer",
             api_path="vendor.manufacturer",
         ),
         FieldMapping(
-            cache_attr="vendor_name",
+            cache_attr="vendor.name",
             api_path="vendor.name",
         ),
         FieldMapping(
-            cache_attr="vendor_part_number",
+            cache_attr="vendor.part_number",
             api_path="vendor.part_number",
         ),
         FieldMapping(
-            cache_attr="vendor_product",
+            cache_attr="vendor.product",
             api_path="vendor.product",
         ),
         FieldMapping(
-            cache_attr="vendor_serial_number",
+            cache_attr="vendor.serial_number",
             api_path="vendor.serial_number",
         ),
         FieldMapping(

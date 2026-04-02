@@ -3,25 +3,25 @@ path = "/cluster/schedules"
 schema = "schedule"
 class_name = "OntapSchedule"
 
-[fields.cluster_name]
+[fields."cluster.name"]
 cache_strategy = "cache"
 
-[fields.cluster_uuid]
+[fields."cluster.uuid"]
 cache_strategy = "cache"
 
-[fields.cron_days]
+[fields."cron.days"]
 cache_strategy = "cache"
 
-[fields.cron_hours]
+[fields."cron.hours"]
 cache_strategy = "cache"
 
-[fields.cron_minutes]
+[fields."cron.minutes"]
 cache_strategy = "cache"
 
-[fields.cron_months]
+[fields."cron.months"]
 cache_strategy = "cache"
 
-[fields.cron_weekdays]
+[fields."cron.weekdays"]
 cache_strategy = "cache"
 
 [fields.interval]
@@ -33,10 +33,10 @@ cache_strategy = "cache"
 [fields.scope]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.type_]

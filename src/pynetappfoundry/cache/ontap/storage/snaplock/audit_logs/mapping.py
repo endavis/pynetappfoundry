@@ -24,12 +24,12 @@ ONTAPSNAPLOCKLOG_MAPPING = TypeMapping(
     api_type="ontap",
     fields=(
         FieldMapping(
-            cache_attr="log_archive_archive",
+            cache_attr="log_archive.archive",
             api_path="log_archive.archive",
             default=False,
         ),
         FieldMapping(
-            cache_attr="log_archive_base_name",
+            cache_attr="log_archive.base_name",
             api_path="log_archive.base_name",
         ),
         FieldMapping(
@@ -39,28 +39,28 @@ ONTAPSNAPLOCKLOG_MAPPING = TypeMapping(
             default=[],
         ),
         FieldMapping(
-            cache_attr="log_volume_max_log_size",
+            cache_attr="log_volume.max_log_size",
             api_path="log_volume.max_log_size",
             default=0,
         ),
         FieldMapping(
-            cache_attr="log_volume_retention_period",
+            cache_attr="log_volume.retention_period",
             api_path="log_volume.retention_period",
         ),
         FieldMapping(
-            cache_attr="log_volume_volume_name",
+            cache_attr="log_volume.volume.name",
             api_path="log_volume.volume.name",
         ),
         FieldMapping(
-            cache_attr="log_volume_volume_uuid",
+            cache_attr="log_volume.volume.uuid",
             api_path="log_volume.volume.uuid",
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
     ),

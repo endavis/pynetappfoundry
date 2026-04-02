@@ -12,29 +12,29 @@ cache_strategy = "cache"
 [fields.name]
 cache_strategy = "cache"
 
-[fields.scope_exclude_extensions]
+[fields."scope.exclude_extensions"]
 cache_strategy = "cache"
 
-[fields.scope_exclude_paths]
+[fields."scope.exclude_paths"]
 cache_strategy = "cache"
 
-[fields.scope_include_extensions]
+[fields."scope.include_extensions"]
 cache_strategy = "cache"
 
-[fields.scope_max_file_size]
+[fields."scope.max_file_size"]
 cache_strategy = "cache"
 
-[fields.scope_only_execute_access]
+[fields."scope.only_execute_access"]
 cache_strategy = "cache"
 
-[fields.scope_scan_readonly_volumes]
+[fields."scope.scan_readonly_volumes"]
 cache_strategy = "cache"
 
-[fields.scope_scan_without_extension]
+[fields."scope.scan_without_extension"]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"

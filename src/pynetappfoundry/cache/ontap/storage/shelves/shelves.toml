@@ -42,7 +42,7 @@ cache_strategy = "cache"
 [fields.location_led]
 cache_strategy = "cache"
 
-[fields.manufacturer_name]
+[fields."manufacturer.name"]
 cache_strategy = "cache"
 
 [fields.model_]
@@ -72,19 +72,19 @@ cache_strategy = "cache"
 [fields.uid]
 cache_strategy = "cache"
 
-[fields.vendor_manufacturer]
+[fields."vendor.manufacturer"]
 cache_strategy = "cache"
 
-[fields.vendor_name]
+[fields."vendor.name"]
 cache_strategy = "cache"
 
-[fields.vendor_part_number]
+[fields."vendor.part_number"]
 cache_strategy = "cache"
 
-[fields.vendor_product]
+[fields."vendor.product"]
 cache_strategy = "cache"
 
-[fields.vendor_serial_number]
+[fields."vendor.serial_number"]
 cache_strategy = "cache"
 
 [fields.voltage_sensors]

@@ -3,10 +3,10 @@ path = "/protocols/cifs/domains"
 schema = "cifs_domain"
 class_name = "OntapCifsDomain"
 
-[fields.ad_domain_password]
+[fields."ad_domain.password"]
 cache_strategy = "cache"
 
-[fields.ad_domain_user]
+[fields."ad_domain.user"]
 cache_strategy = "cache"
 
 [fields.client_certificate]
@@ -18,31 +18,31 @@ cache_strategy = "cache"
 [fields.discovered_servers]
 cache_strategy = "cache"
 
-[fields.name_mapping_trusted_domains]
+[fields."name_mapping.trusted_domains"]
 cache_strategy = "cache"
 
-[fields.password_schedule_schedule_day_of_week]
+[fields."password_schedule.schedule_day_of_week"]
 cache_strategy = "cache"
 
-[fields.password_schedule_schedule_description]
+[fields."password_schedule.schedule_description"]
 cache_strategy = "cache"
 
-[fields.password_schedule_schedule_enabled]
+[fields."password_schedule.schedule_enabled"]
 cache_strategy = "cache"
 
-[fields.password_schedule_schedule_last_changed_time]
+[fields."password_schedule.schedule_last_changed_time"]
 cache_strategy = "cache"
 
-[fields.password_schedule_schedule_randomized_minute]
+[fields."password_schedule.schedule_randomized_minute"]
 cache_strategy = "cache"
 
-[fields.password_schedule_schedule_time_of_day]
+[fields."password_schedule.schedule_time_of_day"]
 cache_strategy = "cache"
 
-[fields.password_schedule_schedule_warn_message]
+[fields."password_schedule.schedule_warn_message"]
 cache_strategy = "cache"
 
-[fields.password_schedule_schedule_weekly_interval]
+[fields."password_schedule.schedule_weekly_interval"]
 cache_strategy = "cache"
 
 [fields.preferred_dcs]
@@ -51,10 +51,10 @@ cache_strategy = "cache"
 [fields.server_discovery_mode]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.tenant_id]

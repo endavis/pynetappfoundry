@@ -15,7 +15,7 @@ ONTAPCLOUDSTORE_MAPPING = TypeMapping(
     parent_id_field="uuid",
     fields=(
         FieldMapping(
-            cache_attr="aggregate_name",
+            cache_attr="aggregate.name",
             api_path="aggregate.name",
         ),
         FieldMapping(
@@ -42,15 +42,15 @@ ONTAPCLOUDSTORE_MAPPING = TypeMapping(
             default=0,
         ),
         FieldMapping(
-            cache_attr="target_name",
+            cache_attr="target.name",
             api_path="target.name",
         ),
         FieldMapping(
-            cache_attr="target_uuid",
+            cache_attr="target.uuid",
             api_path="target.uuid",
         ),
         FieldMapping(
-            cache_attr="unavailable_reason_message",
+            cache_attr="unavailable_reason.message",
             api_path="unavailable_reason.message",
         ),
         FieldMapping(

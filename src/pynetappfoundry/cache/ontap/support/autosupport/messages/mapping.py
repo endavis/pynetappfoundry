@@ -17,12 +17,12 @@ ONTAPAUTOSUPPORTMESSAGE_MAPPING = TypeMapping(
             api_path="destination",
         ),
         FieldMapping(
-            cache_attr="error_code",
+            cache_attr="error.code",
             api_path="error.code",
             default=0,
         ),
         FieldMapping(
-            cache_attr="error_message",
+            cache_attr="error.message",
             api_path="error.message",
         ),
         FieldMapping(
@@ -39,11 +39,11 @@ ONTAPAUTOSUPPORTMESSAGE_MAPPING = TypeMapping(
             api_path="message",
         ),
         FieldMapping(
-            cache_attr="node_name",
+            cache_attr="node.name",
             api_path="node.name",
         ),
         FieldMapping(
-            cache_attr="node_uuid",
+            cache_attr="node.uuid",
             api_path="node.uuid",
         ),
         FieldMapping(

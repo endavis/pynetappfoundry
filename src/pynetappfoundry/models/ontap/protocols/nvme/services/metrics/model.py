@@ -2,50 +2,148 @@
 
 from __future__ import annotations
 
+from pydantic import Field
+
 from pynetappfoundry.models._base import OntapModel
+
+
+class OntapPerformanceNvmeMetricResponseFcIops(OntapModel):
+    """OntapPerformanceNvmeMetricResponseFcIops sub-model for iops."""
+
+    other: int = 0
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapPerformanceNvmeMetricResponseFcLatency(OntapModel):
+    """OntapPerformanceNvmeMetricResponseFcLatency sub-model for latency."""
+
+    other: int = 0
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapPerformanceNvmeMetricResponseFcThroughput(OntapModel):
+    """OntapPerformanceNvmeMetricResponseFcThroughput sub-model for throughput."""
+
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapPerformanceNvmeMetricResponseFc(OntapModel):
+    """OntapPerformanceNvmeMetricResponseFc sub-model for fc."""
+
+    duration: str = ""
+    iops: OntapPerformanceNvmeMetricResponseFcIops = Field(
+        default_factory=OntapPerformanceNvmeMetricResponseFcIops
+    )
+    latency: OntapPerformanceNvmeMetricResponseFcLatency = Field(
+        default_factory=OntapPerformanceNvmeMetricResponseFcLatency
+    )
+    status: str = ""
+    throughput: OntapPerformanceNvmeMetricResponseFcThroughput = Field(
+        default_factory=OntapPerformanceNvmeMetricResponseFcThroughput
+    )
+
+
+class OntapPerformanceNvmeMetricResponseIops(OntapModel):
+    """OntapPerformanceNvmeMetricResponseIops sub-model for iops."""
+
+    other: int = 0
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapPerformanceNvmeMetricResponseLatency(OntapModel):
+    """OntapPerformanceNvmeMetricResponseLatency sub-model for latency."""
+
+    other: int = 0
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapPerformanceNvmeMetricResponseSvm(OntapModel):
+    """OntapPerformanceNvmeMetricResponseSvm sub-model for svm."""
+
+    uuid: str = ""
+
+
+class OntapPerformanceNvmeMetricResponseTcpIops(OntapModel):
+    """OntapPerformanceNvmeMetricResponseTcpIops sub-model for iops."""
+
+    other: int = 0
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapPerformanceNvmeMetricResponseTcpLatency(OntapModel):
+    """OntapPerformanceNvmeMetricResponseTcpLatency sub-model for latency."""
+
+    other: int = 0
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapPerformanceNvmeMetricResponseTcpThroughput(OntapModel):
+    """OntapPerformanceNvmeMetricResponseTcpThroughput sub-model for throughput."""
+
+    read: int = 0
+    total: int = 0
+    write: int = 0
+
+
+class OntapPerformanceNvmeMetricResponseTcp(OntapModel):
+    """OntapPerformanceNvmeMetricResponseTcp sub-model for tcp."""
+
+    duration: str = ""
+    iops: OntapPerformanceNvmeMetricResponseTcpIops = Field(
+        default_factory=OntapPerformanceNvmeMetricResponseTcpIops
+    )
+    latency: OntapPerformanceNvmeMetricResponseTcpLatency = Field(
+        default_factory=OntapPerformanceNvmeMetricResponseTcpLatency
+    )
+    status: str = ""
+    throughput: OntapPerformanceNvmeMetricResponseTcpThroughput = Field(
+        default_factory=OntapPerformanceNvmeMetricResponseTcpThroughput
+    )
+
+
+class OntapPerformanceNvmeMetricResponseThroughput(OntapModel):
+    """OntapPerformanceNvmeMetricResponseThroughput sub-model for throughput."""
+
+    read: int = 0
+    total: int = 0
+    write: int = 0
 
 
 class OntapPerformanceNvmeMetricResponse(OntapModel):
     """OntapPerformanceNvmeMetricResponse information."""
 
     duration: str = ""
-    fc_duration: str = ""
-    fc_iops_other: int = 0
-    fc_iops_read: int = 0
-    fc_iops_total: int = 0
-    fc_iops_write: int = 0
-    fc_latency_other: int = 0
-    fc_latency_read: int = 0
-    fc_latency_total: int = 0
-    fc_latency_write: int = 0
-    fc_status: str = ""
-    fc_throughput_read: int = 0
-    fc_throughput_total: int = 0
-    fc_throughput_write: int = 0
-    iops_other: int = 0
-    iops_read: int = 0
-    iops_total: int = 0
-    iops_write: int = 0
-    latency_other: int = 0
-    latency_read: int = 0
-    latency_total: int = 0
-    latency_write: int = 0
+    fc: OntapPerformanceNvmeMetricResponseFc = Field(
+        default_factory=OntapPerformanceNvmeMetricResponseFc
+    )
+    iops: OntapPerformanceNvmeMetricResponseIops = Field(
+        default_factory=OntapPerformanceNvmeMetricResponseIops
+    )
+    latency: OntapPerformanceNvmeMetricResponseLatency = Field(
+        default_factory=OntapPerformanceNvmeMetricResponseLatency
+    )
     status: str = ""
-    svm_uuid: str = ""
-    tcp_duration: str = ""
-    tcp_iops_other: int = 0
-    tcp_iops_read: int = 0
-    tcp_iops_total: int = 0
-    tcp_iops_write: int = 0
-    tcp_latency_other: int = 0
-    tcp_latency_read: int = 0
-    tcp_latency_total: int = 0
-    tcp_latency_write: int = 0
-    tcp_status: str = ""
-    tcp_throughput_read: int = 0
-    tcp_throughput_total: int = 0
-    tcp_throughput_write: int = 0
-    throughput_read: int = 0
-    throughput_total: int = 0
-    throughput_write: int = 0
+    svm: OntapPerformanceNvmeMetricResponseSvm = Field(
+        default_factory=OntapPerformanceNvmeMetricResponseSvm
+    )
+    tcp: OntapPerformanceNvmeMetricResponseTcp = Field(
+        default_factory=OntapPerformanceNvmeMetricResponseTcp
+    )
+    throughput: OntapPerformanceNvmeMetricResponseThroughput = Field(
+        default_factory=OntapPerformanceNvmeMetricResponseThroughput
+    )
     timestamp: str = ""

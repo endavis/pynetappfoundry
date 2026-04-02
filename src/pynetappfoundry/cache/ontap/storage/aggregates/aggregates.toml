@@ -3,209 +3,209 @@ path = "/storage/aggregates"
 schema = "aggregate"
 class_name = "OntapAggregate"
 
-[fields.block_storage_hybrid_cache_disk_count]
+[fields."block_storage.hybrid_cache.disk_count"]
 cache_strategy = "cache"
 
-[fields.block_storage_hybrid_cache_disk_type]
+[fields."block_storage.hybrid_cache.disk_type"]
 cache_strategy = "cache"
 
-[fields.block_storage_hybrid_cache_enabled]
+[fields."block_storage.hybrid_cache.enabled"]
 cache_strategy = "cache"
 
-[fields.block_storage_hybrid_cache_raid_size]
+[fields."block_storage.hybrid_cache.raid_size"]
 cache_strategy = "cache"
 
-[fields.block_storage_hybrid_cache_raid_type]
+[fields."block_storage.hybrid_cache.raid_type"]
 cache_strategy = "cache"
 
-[fields.block_storage_hybrid_cache_simulated_raid_groups]
+[fields."block_storage.hybrid_cache.simulated_raid_groups"]
 cache_strategy = "cache"
 
-[fields.block_storage_hybrid_cache_size]
+[fields."block_storage.hybrid_cache.size"]
 cache_strategy = "cache"
 
-[fields.block_storage_hybrid_cache_storage_pools]
+[fields."block_storage.hybrid_cache.storage_pools"]
 cache_strategy = "cache"
 
-[fields.block_storage_hybrid_cache_used]
+[fields."block_storage.hybrid_cache.used"]
 cache_strategy = "cache"
 
-[fields.block_storage_mirror_enabled]
+[fields."block_storage.mirror.enabled"]
 cache_strategy = "cache"
 
-[fields.block_storage_mirror_state]
+[fields."block_storage.mirror.state"]
 cache_strategy = "cache"
 
-[fields.block_storage_plexes]
+[fields."block_storage.plexes"]
 cache_strategy = "cache"
 
-[fields.block_storage_primary_checksum_style]
+[fields."block_storage.primary.checksum_style"]
 cache_strategy = "cache"
 
-[fields.block_storage_primary_disk_class]
+[fields."block_storage.primary.disk_class"]
 cache_strategy = "cache"
 
-[fields.block_storage_primary_disk_count]
+[fields."block_storage.primary.disk_count"]
 cache_strategy = "cache"
 
-[fields.block_storage_primary_disk_type]
+[fields."block_storage.primary.disk_type"]
 cache_strategy = "cache"
 
-[fields.block_storage_primary_raid_size]
+[fields."block_storage.primary.raid_size"]
 cache_strategy = "cache"
 
-[fields.block_storage_primary_raid_type]
+[fields."block_storage.primary.raid_type"]
 cache_strategy = "cache"
 
-[fields.block_storage_primary_simulated_raid_groups]
+[fields."block_storage.primary.simulated_raid_groups"]
 cache_strategy = "cache"
 
-[fields.block_storage_storage_type]
+[fields."block_storage.storage_type"]
 cache_strategy = "cache"
 
-[fields.block_storage_uses_partitions]
+[fields."block_storage.uses_partitions"]
 cache_strategy = "cache"
 
-[fields.cloud_storage_attach_eligible]
+[fields."cloud_storage.attach_eligible"]
 cache_strategy = "cache"
 
-[fields.cloud_storage_migrate_threshold]
+[fields."cloud_storage.migrate_threshold"]
 cache_strategy = "cache"
 
-[fields.cloud_storage_stores]
+[fields."cloud_storage.stores"]
 cache_strategy = "cache"
 
-[fields.cloud_storage_tiering_fullness_threshold]
+[fields."cloud_storage.tiering_fullness_threshold"]
 cache_strategy = "cache"
 
 [fields.create_time]
 cache_strategy = "cache"
 
-[fields.data_encryption_drive_protection_enabled]
+[fields."data_encryption.drive_protection_enabled"]
 cache_strategy = "cache"
 
-[fields.data_encryption_software_encryption_enabled]
+[fields."data_encryption.software_encryption_enabled"]
 cache_strategy = "cache"
 
-[fields.dr_home_node_name]
+[fields."dr_home_node.name"]
 cache_strategy = "cache"
 
-[fields.dr_home_node_uuid]
+[fields."dr_home_node.uuid"]
 cache_strategy = "cache"
 
-[fields.home_node_name]
+[fields."home_node.name"]
 cache_strategy = "cache"
 
-[fields.home_node_uuid]
+[fields."home_node.uuid"]
 cache_strategy = "cache"
 
-[fields.inactive_data_reporting_enabled]
+[fields."inactive_data_reporting.enabled"]
 cache_strategy = "cache"
 
-[fields.inactive_data_reporting_start_time]
+[fields."inactive_data_reporting.start_time"]
 cache_strategy = "cache"
 
-[fields.inode_attributes_file_private_capacity]
+[fields."inode_attributes.file_private_capacity"]
 cache_strategy = "cache"
 
-[fields.inode_attributes_file_public_capacity]
+[fields."inode_attributes.file_public_capacity"]
 cache_strategy = "cache"
 
-[fields.inode_attributes_files_private_used]
+[fields."inode_attributes.files_private_used"]
 cache_strategy = "cache"
 
-[fields.inode_attributes_files_total]
+[fields."inode_attributes.files_total"]
 cache_strategy = "cache"
 
-[fields.inode_attributes_files_used]
+[fields."inode_attributes.files_used"]
 cache_strategy = "cache"
 
-[fields.inode_attributes_max_files_available]
+[fields."inode_attributes.max_files_available"]
 cache_strategy = "realtime"
 
-[fields.inode_attributes_max_files_possible]
+[fields."inode_attributes.max_files_possible"]
 cache_strategy = "cache"
 
-[fields.inode_attributes_max_files_used]
+[fields."inode_attributes.max_files_used"]
 cache_strategy = "cache"
 
-[fields.inode_attributes_used_percent]
+[fields."inode_attributes.used_percent"]
 cache_strategy = "cache"
 
-[fields.inode_attributes_version]
+[fields."inode_attributes.version"]
 cache_strategy = "cache"
 
 [fields.is_spare_low]
 cache_strategy = "cache"
 requires_explicit_fetch = true
 
-[fields.metric_duration]
+[fields."metric.duration"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_iops_other]
+[fields."metric.iops.other"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_iops_read]
+[fields."metric.iops.read"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_iops_total]
+[fields."metric.iops.total"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_iops_write]
+[fields."metric.iops.write"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_latency_other]
+[fields."metric.latency.other"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_latency_read]
+[fields."metric.latency.read"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_latency_total]
+[fields."metric.latency.total"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_latency_write]
+[fields."metric.latency.write"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_status]
+[fields."metric.status"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_throughput_other]
+[fields."metric.throughput.other"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_throughput_read]
+[fields."metric.throughput.read"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_throughput_total]
+[fields."metric.throughput.total"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_throughput_write]
+[fields."metric.throughput.write"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.metric_timestamp]
+[fields."metric.timestamp"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
 [fields.name]
 cache_strategy = "cache"
 
-[fields.node_name]
+[fields."node.name"]
 cache_strategy = "cache"
 
-[fields.node_uuid]
+[fields."node.uuid"]
 cache_strategy = "cache"
 
 [fields.sidl_enabled]
@@ -214,203 +214,203 @@ cache_strategy = "cache"
 [fields.snaplock_type]
 cache_strategy = "cache"
 
-[fields.snapshot_files_total]
+[fields."snapshot.files_total"]
 cache_strategy = "cache"
 
-[fields.snapshot_files_used]
+[fields."snapshot.files_used"]
 cache_strategy = "cache"
 
-[fields.snapshot_max_files_available]
+[fields."snapshot.max_files_available"]
 cache_strategy = "cache"
 
-[fields.snapshot_max_files_used]
+[fields."snapshot.max_files_used"]
 cache_strategy = "cache"
 
-[fields.space_block_storage_aggregate_metadata]
+[fields."space.block_storage.aggregate_metadata"]
 cache_strategy = "realtime"
 
-[fields.space_block_storage_aggregate_metadata_percent]
+[fields."space.block_storage.aggregate_metadata_percent"]
 cache_strategy = "realtime"
 
-[fields.space_block_storage_available]
+[fields."space.block_storage.available"]
 cache_strategy = "realtime"
 
-[fields.space_block_storage_data_compacted_count]
+[fields."space.block_storage.data_compacted_count"]
 cache_strategy = "realtime"
 
-[fields.space_block_storage_data_compaction_space_saved]
+[fields."space.block_storage.data_compaction_space_saved"]
 cache_strategy = "realtime"
 
-[fields.space_block_storage_data_compaction_space_saved_percent]
+[fields."space.block_storage.data_compaction_space_saved_percent"]
 cache_strategy = "realtime"
 
-[fields.space_block_storage_full_threshold_percent]
+[fields."space.block_storage.full_threshold_percent"]
 cache_strategy = "cache"
 
-[fields.space_block_storage_inactive_user_data]
+[fields."space.block_storage.inactive_user_data"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.space_block_storage_inactive_user_data_percent]
+[fields."space.block_storage.inactive_user_data_percent"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.space_block_storage_physical_used]
+[fields."space.block_storage.physical_used"]
 cache_strategy = "realtime"
 
-[fields.space_block_storage_physical_used_percent]
+[fields."space.block_storage.physical_used_percent"]
 cache_strategy = "realtime"
 
-[fields.space_block_storage_size]
+[fields."space.block_storage.size"]
 cache_strategy = "realtime"
 
-[fields.space_block_storage_used]
+[fields."space.block_storage.used"]
 cache_strategy = "realtime"
 
-[fields.space_block_storage_used_including_snapshot_reserve]
+[fields."space.block_storage.used_including_snapshot_reserve"]
 cache_strategy = "realtime"
 
-[fields.space_block_storage_used_including_snapshot_reserve_percent]
+[fields."space.block_storage.used_including_snapshot_reserve_percent"]
 cache_strategy = "realtime"
 
-[fields.space_block_storage_used_percent]
+[fields."space.block_storage.used_percent"]
 cache_strategy = "realtime"
 
-[fields.space_block_storage_volume_deduplication_shared_count]
+[fields."space.block_storage.volume_deduplication_shared_count"]
 cache_strategy = "realtime"
 
-[fields.space_block_storage_volume_deduplication_space_saved]
+[fields."space.block_storage.volume_deduplication_space_saved"]
 cache_strategy = "realtime"
 
-[fields.space_block_storage_volume_deduplication_space_saved_percent]
+[fields."space.block_storage.volume_deduplication_space_saved_percent"]
 cache_strategy = "realtime"
 
-[fields.space_block_storage_volume_footprints_percent]
+[fields."space.block_storage.volume_footprints_percent"]
 cache_strategy = "realtime"
 
-[fields.space_cloud_storage_used]
+[fields."space.cloud_storage.used"]
 cache_strategy = "realtime"
 
-[fields.space_efficiency_auto_adaptive_compression_savings]
+[fields."space.efficiency.auto_adaptive_compression_savings"]
 cache_strategy = "realtime"
 
-[fields.space_efficiency_cross_volume_background_dedupe]
+[fields."space.efficiency.cross_volume_background_dedupe"]
 cache_strategy = "cache"
 
-[fields.space_efficiency_cross_volume_dedupe_savings]
+[fields."space.efficiency.cross_volume_dedupe_savings"]
 cache_strategy = "realtime"
 
-[fields.space_efficiency_cross_volume_inline_dedupe]
+[fields."space.efficiency.cross_volume_inline_dedupe"]
 cache_strategy = "cache"
 
-[fields.space_efficiency_enable_workload_informed_tsse]
+[fields."space.efficiency.enable_workload_informed_tsse"]
 cache_strategy = "cache"
 
-[fields.space_efficiency_logical_used]
+[fields."space.efficiency.logical_used"]
 cache_strategy = "realtime"
 
-[fields.space_efficiency_ratio]
+[fields."space.efficiency.ratio"]
 cache_strategy = "realtime"
 
-[fields.space_efficiency_savings]
+[fields."space.efficiency.savings"]
 cache_strategy = "realtime"
 
-[fields.space_efficiency_wise_tsse_min_used_capacity_pct]
+[fields."space.efficiency.wise_tsse_min_used_capacity_pct"]
 cache_strategy = "cache"
 
-[fields.space_efficiency_without_snapshots_logical_used]
+[fields."space.efficiency_without_snapshots.logical_used"]
 cache_strategy = "realtime"
 
-[fields.space_efficiency_without_snapshots_ratio]
+[fields."space.efficiency_without_snapshots.ratio"]
 cache_strategy = "realtime"
 
-[fields.space_efficiency_without_snapshots_savings]
+[fields."space.efficiency_without_snapshots.savings"]
 cache_strategy = "realtime"
 
-[fields.space_efficiency_without_snapshots_flexclones_logical_used]
+[fields."space.efficiency_without_snapshots_flexclones.logical_used"]
 cache_strategy = "realtime"
 
-[fields.space_efficiency_without_snapshots_flexclones_ratio]
+[fields."space.efficiency_without_snapshots_flexclones.ratio"]
 cache_strategy = "realtime"
 
-[fields.space_efficiency_without_snapshots_flexclones_savings]
+[fields."space.efficiency_without_snapshots_flexclones.savings"]
 cache_strategy = "realtime"
 
-[fields.space_footprint]
+[fields."space.footprint"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.space_snapshot_available]
+[fields."space.snapshot.available"]
 cache_strategy = "realtime"
 
-[fields.space_snapshot_reserve_percent]
+[fields."space.snapshot.reserve_percent"]
 cache_strategy = "cache"
 
-[fields.space_snapshot_total]
+[fields."space.snapshot.total"]
 cache_strategy = "realtime"
 
-[fields.space_snapshot_used]
+[fields."space.snapshot.used"]
 cache_strategy = "realtime"
 
-[fields.space_snapshot_used_percent]
+[fields."space.snapshot.used_percent"]
 cache_strategy = "realtime"
 
 [fields.state]
 cache_strategy = "cache"
 
-[fields.statistics_iops_raw_other]
+[fields."statistics.iops_raw.other"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_iops_raw_read]
+[fields."statistics.iops_raw.read"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_iops_raw_total]
+[fields."statistics.iops_raw.total"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_iops_raw_write]
+[fields."statistics.iops_raw.write"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_latency_raw_other]
+[fields."statistics.latency_raw.other"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_latency_raw_read]
+[fields."statistics.latency_raw.read"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_latency_raw_total]
+[fields."statistics.latency_raw.total"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_latency_raw_write]
+[fields."statistics.latency_raw.write"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_status]
+[fields."statistics.status"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_throughput_raw_other]
+[fields."statistics.throughput_raw.other"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_throughput_raw_read]
+[fields."statistics.throughput_raw.read"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_throughput_raw_total]
+[fields."statistics.throughput_raw.total"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_throughput_raw_write]
+[fields."statistics.throughput_raw.write"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 
-[fields.statistics_timestamp]
+[fields."statistics.timestamp"]
 cache_strategy = "realtime"
 requires_explicit_fetch = true
 

@@ -33,19 +33,19 @@ ONTAPEMSEVENTRESPONSE_MAPPING = TypeMapping(
             api_path="log_message",
         ),
         FieldMapping(
-            cache_attr="message_name",
+            cache_attr="message.name",
             api_path="message.name",
         ),
         FieldMapping(
-            cache_attr="message_severity",
+            cache_attr="message.severity",
             api_path="message.severity",
         ),
         FieldMapping(
-            cache_attr="node_name",
+            cache_attr="node.name",
             api_path="node.name",
         ),
         FieldMapping(
-            cache_attr="node_uuid",
+            cache_attr="node.uuid",
             api_path="node.uuid",
         ),
         FieldMapping(

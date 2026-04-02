@@ -14,15 +14,33 @@ class OntapSvmMigrationVolumeError(OntapModel):
     message: str = ""
 
 
+class OntapSvmMigrationVolumeNode(OntapModel):
+    """OntapSvmMigrationVolumeNode sub-model for node."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapSvmMigrationVolumeSvm(OntapModel):
+    """OntapSvmMigrationVolumeSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapSvmMigrationVolumeVolume(OntapModel):
+    """OntapSvmMigrationVolumeVolume sub-model for volume."""
+
+    name: str = ""
+    uuid: str = ""
+
+
 class OntapSvmMigrationVolume(OntapModel):
     """OntapSvmMigrationVolume information."""
 
     errors: list[OntapSvmMigrationVolumeError] = Field(default_factory=list)
     healthy: bool = False
-    node_name: str = ""
-    node_uuid: str = ""
-    svm_name: str = ""
-    svm_uuid: str = ""
+    node: OntapSvmMigrationVolumeNode = Field(default_factory=OntapSvmMigrationVolumeNode)
+    svm: OntapSvmMigrationVolumeSvm = Field(default_factory=OntapSvmMigrationVolumeSvm)
     transfer_state: str = ""
-    volume_name: str = ""
-    volume_uuid: str = ""
+    volume: OntapSvmMigrationVolumeVolume = Field(default_factory=OntapSvmMigrationVolumeVolume)

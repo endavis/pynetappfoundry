@@ -9,40 +9,40 @@ cache_strategy = "cache"
 [fields.cloud_kms_retry_count]
 cache_strategy = "cache"
 
-[fields.health_monitor_policy_akv_enabled]
+[fields."health_monitor_policy.akv.enabled"]
 cache_strategy = "cache"
 
-[fields.health_monitor_policy_akv_manage_volume_offline]
+[fields."health_monitor_policy.akv.manage_volume_offline"]
 cache_strategy = "cache"
 
-[fields.health_monitor_policy_aws_enabled]
+[fields."health_monitor_policy.aws.enabled"]
 cache_strategy = "cache"
 
-[fields.health_monitor_policy_aws_manage_volume_offline]
+[fields."health_monitor_policy.aws.manage_volume_offline"]
 cache_strategy = "cache"
 
-[fields.health_monitor_policy_gcp_enabled]
+[fields."health_monitor_policy.gcp.enabled"]
 cache_strategy = "cache"
 
-[fields.health_monitor_policy_gcp_manage_volume_offline]
+[fields."health_monitor_policy.gcp.manage_volume_offline"]
 cache_strategy = "cache"
 
-[fields.health_monitor_policy_ikp_enabled]
+[fields."health_monitor_policy.ikp.enabled"]
 cache_strategy = "cache"
 
-[fields.health_monitor_policy_ikp_manage_volume_offline]
+[fields."health_monitor_policy.ikp.manage_volume_offline"]
 cache_strategy = "cache"
 
-[fields.health_monitor_policy_kmip_enabled]
+[fields."health_monitor_policy.kmip.enabled"]
 cache_strategy = "cache"
 
-[fields.health_monitor_policy_kmip_manage_volume_offline]
+[fields."health_monitor_policy.kmip.manage_volume_offline"]
 cache_strategy = "cache"
 
-[fields.health_monitor_policy_okm_enabled]
+[fields."health_monitor_policy.okm.enabled"]
 cache_strategy = "cache"
 
-[fields.health_monitor_policy_okm_manage_volume_offline]
+[fields."health_monitor_policy.okm.manage_volume_offline"]
 cache_strategy = "cache"
 
 [fields.health_monitor_polling_interval]

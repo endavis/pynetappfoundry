@@ -13,19 +13,19 @@ ONTAPKERBEROSREALM_MAPPING = TypeMapping(
     api_type="ontap",
     fields=(
         FieldMapping(
-            cache_attr="ad_server_address",
+            cache_attr="ad_server.address",
             api_path="ad_server.address",
         ),
         FieldMapping(
-            cache_attr="ad_server_name",
+            cache_attr="ad_server.name",
             api_path="ad_server.name",
         ),
         FieldMapping(
-            cache_attr="admin_server_address",
+            cache_attr="admin_server.address",
             api_path="admin_server.address",
         ),
         FieldMapping(
-            cache_attr="admin_server_port",
+            cache_attr="admin_server.port",
             api_path="admin_server.port",
             default=0,
         ),
@@ -44,16 +44,16 @@ ONTAPKERBEROSREALM_MAPPING = TypeMapping(
             default=[],
         ),
         FieldMapping(
-            cache_attr="kdc_ip",
+            cache_attr="kdc.ip",
             api_path="kdc.ip",
         ),
         FieldMapping(
-            cache_attr="kdc_port",
+            cache_attr="kdc.port",
             api_path="kdc.port",
             default=0,
         ),
         FieldMapping(
-            cache_attr="kdc_vendor",
+            cache_attr="kdc.vendor",
             api_path="kdc.vendor",
         ),
         FieldMapping(
@@ -61,20 +61,20 @@ ONTAPKERBEROSREALM_MAPPING = TypeMapping(
             api_path="name",
         ),
         FieldMapping(
-            cache_attr="password_server_address",
+            cache_attr="password_server.address",
             api_path="password_server.address",
         ),
         FieldMapping(
-            cache_attr="password_server_port",
+            cache_attr="password_server.port",
             api_path="password_server.port",
             default=0,
         ),
         FieldMapping(
-            cache_attr="svm_name",
+            cache_attr="svm.name",
             api_path="svm.name",
         ),
         FieldMapping(
-            cache_attr="svm_uuid",
+            cache_attr="svm.uuid",
             api_path="svm.uuid",
         ),
     ),

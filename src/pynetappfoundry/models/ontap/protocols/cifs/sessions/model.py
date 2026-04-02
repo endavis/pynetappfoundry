@@ -7,6 +7,20 @@ from pydantic import Field
 from pynetappfoundry.models._base import OntapModel
 
 
+class OntapCifsSessionNode(OntapModel):
+    """OntapCifsSessionNode sub-model for node."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapCifsSessionSvm(OntapModel):
+    """OntapCifsSessionSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
+
+
 class OntapCifsSessionVolume(OntapModel):
     """OntapCifsSessionVolume sub-model for volumes."""
 
@@ -27,8 +41,7 @@ class OntapCifsSession(OntapModel):
     idle_duration: str = ""
     large_mtu: bool = False
     mapped_unix_user: str = ""
-    node_name: str = ""
-    node_uuid: str = ""
+    node: OntapCifsSessionNode = Field(default_factory=OntapCifsSessionNode)
     open_files: int = 0
     open_other: int = 0
     open_shares: int = 0
@@ -36,7 +49,6 @@ class OntapCifsSession(OntapModel):
     server_ip: str = ""
     smb_encryption: str = ""
     smb_signing: bool = False
-    svm_name: str = ""
-    svm_uuid: str = ""
+    svm: OntapCifsSessionSvm = Field(default_factory=OntapCifsSessionSvm)
     user: str = ""
     volumes: list[OntapCifsSessionVolume] = Field(default_factory=list)

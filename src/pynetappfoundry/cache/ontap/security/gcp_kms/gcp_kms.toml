@@ -15,13 +15,13 @@ cache_strategy = "cache"
 [fields.ekmip_reachability]
 cache_strategy = "cache"
 
-[fields.google_reachability_code]
+[fields."google_reachability.code"]
 cache_strategy = "cache"
 
-[fields.google_reachability_message]
+[fields."google_reachability.message"]
 cache_strategy = "cache"
 
-[fields.google_reachability_reachable]
+[fields."google_reachability.reachable"]
 cache_strategy = "cache"
 
 [fields.key_name]
@@ -66,19 +66,19 @@ cache_strategy = "cache"
 [fields.scope]
 cache_strategy = "cache"
 
-[fields.state_cluster_state]
+[fields."state.cluster_state"]
 cache_strategy = "cache"
 
-[fields.state_code]
+[fields."state.code"]
 cache_strategy = "cache"
 
-[fields.state_message]
+[fields."state.message"]
 cache_strategy = "cache"
 
-[fields.svm_name]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.svm_uuid]
+[fields."svm.uuid"]
 cache_strategy = "cache"
 
 [fields.uuid]

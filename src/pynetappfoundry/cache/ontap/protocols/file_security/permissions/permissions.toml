@@ -9,58 +9,58 @@ cache_strategy = "cache"
 [fields.access_control]
 cache_strategy = "cache"
 
-[fields.advanced_rights_append_data]
+[fields."advanced_rights.append_data"]
 cache_strategy = "cache"
 
-[fields.advanced_rights_delete]
+[fields."advanced_rights.delete"]
 cache_strategy = "cache"
 
-[fields.advanced_rights_delete_child]
+[fields."advanced_rights.delete_child"]
 cache_strategy = "cache"
 
-[fields.advanced_rights_execute_file]
+[fields."advanced_rights.execute_file"]
 cache_strategy = "cache"
 
-[fields.advanced_rights_full_control]
+[fields."advanced_rights.full_control"]
 cache_strategy = "cache"
 
-[fields.advanced_rights_read_attr]
+[fields."advanced_rights.read_attr"]
 cache_strategy = "cache"
 
-[fields.advanced_rights_read_data]
+[fields."advanced_rights.read_data"]
 cache_strategy = "cache"
 
-[fields.advanced_rights_read_ea]
+[fields."advanced_rights.read_ea"]
 cache_strategy = "cache"
 
-[fields.advanced_rights_read_perm]
+[fields."advanced_rights.read_perm"]
 cache_strategy = "cache"
 
-[fields.advanced_rights_synchronize]
+[fields."advanced_rights.synchronize"]
 cache_strategy = "cache"
 
-[fields.advanced_rights_write_attr]
+[fields."advanced_rights.write_attr"]
 cache_strategy = "cache"
 
-[fields.advanced_rights_write_data]
+[fields."advanced_rights.write_data"]
 cache_strategy = "cache"
 
-[fields.advanced_rights_write_ea]
+[fields."advanced_rights.write_ea"]
 cache_strategy = "cache"
 
-[fields.advanced_rights_write_owner]
+[fields."advanced_rights.write_owner"]
 cache_strategy = "cache"
 
-[fields.advanced_rights_write_perm]
+[fields."advanced_rights.write_perm"]
 cache_strategy = "cache"
 
-[fields.apply_to_files]
+[fields."apply_to.files"]
 cache_strategy = "cache"
 
-[fields.apply_to_sub_folders]
+[fields."apply_to.sub_folders"]
 cache_strategy = "cache"
 
-[fields.apply_to_this_folder]
+[fields."apply_to.this_folder"]
 cache_strategy = "cache"
 
 [fields.inherited]

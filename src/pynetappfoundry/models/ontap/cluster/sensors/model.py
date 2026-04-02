@@ -2,7 +2,16 @@
 
 from __future__ import annotations
 
+from pydantic import Field
+
 from pynetappfoundry.models._base import OntapModel
+
+
+class OntapSensorsNode(OntapModel):
+    """OntapSensorsNode sub-model for node."""
+
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapSensors(OntapModel):
@@ -14,8 +23,7 @@ class OntapSensors(OntapModel):
     discrete_value: str = ""
     index: int = 0
     name: str = ""
-    node_name: str = ""
-    node_uuid: str = ""
+    node: OntapSensorsNode = Field(default_factory=OntapSensorsNode)
     threshold_state: str = ""
     type_: str = ""
     value: int = 0

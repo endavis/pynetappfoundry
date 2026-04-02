@@ -26,17 +26,17 @@ ONTAPSWITCH_MAPPING = TypeMapping(
             api_path="model",
         ),
         FieldMapping(
-            cache_attr="monitoring_enabled",
+            cache_attr="monitoring.enabled",
             api_path="monitoring.enabled",
             default=False,
         ),
         FieldMapping(
-            cache_attr="monitoring_monitored",
+            cache_attr="monitoring.monitored",
             api_path="monitoring.monitored",
             default=False,
         ),
         FieldMapping(
-            cache_attr="monitoring_reason",
+            cache_attr="monitoring.reason",
             api_path="monitoring.reason",
         ),
         FieldMapping(
@@ -52,11 +52,11 @@ ONTAPSWITCH_MAPPING = TypeMapping(
             api_path="serial_number",
         ),
         FieldMapping(
-            cache_attr="snmp_user",
+            cache_attr="snmp.user",
             api_path="snmp.user",
         ),
         FieldMapping(
-            cache_attr="snmp_version",
+            cache_attr="snmp.version",
             api_path="snmp.version",
         ),
         FieldMapping(

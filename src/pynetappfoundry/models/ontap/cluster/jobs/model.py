@@ -7,11 +7,32 @@ from pydantic import Field
 from pynetappfoundry.models._base import OntapModel, OntapUUID
 
 
-class OntapJobArgument(OntapModel):
-    """OntapJobArgument sub-model for arguments."""
+class OntapJobErrorArgument(OntapModel):
+    """OntapJobErrorArgument sub-model for arguments."""
 
     code: str = ""
     message: str = ""
+
+
+class OntapJobError(OntapModel):
+    """OntapJobError sub-model for error."""
+
+    arguments: list[OntapJobErrorArgument] = Field(default_factory=list)
+    code: str = ""
+    message: str = ""
+
+
+class OntapJobNode(OntapModel):
+    """OntapJobNode sub-model for node."""
+
+    name: str = ""
+
+
+class OntapJobSvm(OntapModel):
+    """OntapJobSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
 
 
 class OntapJob(OntapModel):
@@ -20,13 +41,10 @@ class OntapJob(OntapModel):
     code: int = 0
     description: str = ""
     end_time: str = ""
-    error_arguments: list[OntapJobArgument] = Field(default_factory=list)
-    error_code: str = ""
-    error_message: str = ""
+    error: OntapJobError = Field(default_factory=OntapJobError)
     message: str = ""
-    node_name: str = ""
+    node: OntapJobNode = Field(default_factory=OntapJobNode)
     start_time: str = ""
     state: str = ""
-    svm_name: str = ""
-    svm_uuid: str = ""
+    svm: OntapJobSvm = Field(default_factory=OntapJobSvm)
     uuid: OntapUUID = ""
