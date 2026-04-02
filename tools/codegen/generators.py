@@ -3,6 +3,11 @@
 Produces Python source code and TOML configuration files from
 :class:`~tools.codegen.adapters.ParsedEndpoint` data.  Generated output
 follows the project's URL-tree convention (ADR-0007).
+
+Models are generated with **nested sub-model classes** that mirror the
+ONTAP API structure (ADR-0011).  For example, ``ip.address`` in the API
+becomes ``iface.ip.address`` on the Pydantic model, not
+``iface.ip_address``.
 """
 
 from __future__ import annotations
@@ -205,6 +210,7 @@ _PYTHON_KEYWORDS: frozenset[str] = frozenset(
         # Pydantic BaseModel reserved attributes
         "schema",
         "model",
+        "copy",
         # Pydantic v2 reserved attributes
         "model_config",
         "model_fields",
@@ -231,40 +237,48 @@ def _safe_attr_name(name: str) -> str:
 
 
 def _field_to_cache_attr(field: ParsedField) -> str:
-    """Convert a ParsedField's api_path to a flat cache attribute name.
+    """Convert a ParsedField's api_path to a dot-path cache attribute.
 
-    ``"svm.name"`` → ``"svm_name"``
-    ``"autosize.mode"`` → ``"autosize_mode"``
-    ``"nas.export_policy.name"`` → ``"nas_export_policy_name"``
-    ``"class"`` → ``"class_"``
+    For nested models the ``cache_attr`` is the same as ``api_path``:
+    ``"svm.name"`` → ``"svm.name"``
+    ``"nas.export_policy.name"`` → ``"nas.export_policy.name"``
+
+    Python reserved words at any level get an underscore suffix.
 
     Args:
         field: Parsed field.
 
     Returns:
-        Flat Python attribute name.
+        Dot-path cache attribute name.
     """
-    attr = field.api_path.replace(".", "_").replace("-", "_")
-    return _safe_attr_name(attr)
+    parts = field.api_path.replace("-", "_").split(".")
+    safe_parts = [_safe_attr_name(p) for p in parts]
+    return ".".join(safe_parts)
 
 
 def _sub_model_name(parent_class: str, field: ParsedField) -> str:
-    """Build a sub-model class name for an array-of-objects field.
+    """Build a sub-model class name for a nested object field.
 
-    Convention: ``{ParentClassName}{FieldNameSingularized}``.
+    Convention: ``{ParentClassName}{FieldNamePascalized}``.
 
-    ``StorageSnapshotPolicy`` + ``copies`` → ``StorageSnapshotPolicyCopy``
+    ``OntapVolume`` + ``svm`` → ``OntapVolumeSvm``
+    ``OntapIpInterface`` + ``ip`` → ``OntapIpInterfaceIp``
+
+    For array-of-objects: singularize the field name.
+    ``OntapSnapshotPolicy`` + ``copies`` → ``OntapSnapshotPolicyCopy``
 
     Args:
         parent_class: Parent model class name.
-        field: The array-of-objects field.
+        field: The nested object field.
 
     Returns:
         Sub-model class name.
     """
-    singular = _singularize(field.name)
-    # PascalCase the singular field name
-    pascal = "".join(w.capitalize() for w in singular.split("_"))
+    name = field.name.replace("-", "_")
+    if field.is_list:
+        name = _singularize(name)
+    # PascalCase the field name
+    pascal = "".join(w.capitalize() for w in name.split("_"))
     return f"{parent_class}{pascal}"
 
 
@@ -292,7 +306,10 @@ def _python_type_annotation(field: ParsedField, sub_model_map: dict[str, str] | 
     if field.is_uuid:
         return "OntapUUID"
     if sub_model_map and field.api_path in sub_model_map:
-        return f"list[{sub_model_map[field.api_path]}]"
+        cls = sub_model_map[field.api_path]
+        if field.is_list:
+            return f"list[{cls}]"
+        return cls
     if field.is_list:
         return field.python_type
     return field.python_type
@@ -320,38 +337,224 @@ def _python_default_repr(field: ParsedField, *, for_mapping: bool = False) -> st
     return repr(default)
 
 
-def _select_leaf_fields(fields: list[ParsedField]) -> list[ParsedField]:
-    """Select only leaf (non-object) fields for model generation.
+# ---------------------------------------------------------------------------
+# Nested model generation helpers
+# ---------------------------------------------------------------------------
 
-    Object fields are flattened — we include their children, not the
-    parent. For array-of-objects, we include the array field itself
-    (typed as ``list[dict[str, Any]]``).
+
+def _collect_all_leaves(fields: list[ParsedField]) -> list[ParsedField]:
+    """Recursively collect all leaf fields from a field tree.
+
+    Walks the tree depth-first and returns every non-object scalar field
+    and every array-of-objects field.  Pure object containers are skipped
+    but their children are included.
 
     Args:
-        fields: All parsed fields including nested objects.
+        fields: Top-level field tree.
 
     Returns:
-        List of leaf fields suitable for model attributes.
+        Flat list of all leaf fields with full ``api_path``.
     """
-    leaves = []
+    result: list[ParsedField] = []
     for f in fields:
         if f.is_object and not f.is_list:
-            # Skip pure object containers — their children are already
-            # in the list as separate flat fields
-            continue
-        leaves.append(f)
-    return leaves
+            # Recurse into sub-fields
+            result.extend(_collect_all_leaves(f.sub_fields))
+        else:
+            result.append(f)
+    return result
+
+
+def _generate_nested_sub_models(
+    parent_class: str,
+    fields: list[ParsedField],
+    sub_model_map: dict[str, str],
+    lines: list[str],
+    *,
+    _seen_sub_names: dict[str, int] | None = None,
+) -> None:
+    """Recursively generate nested sub-model classes (deepest-first).
+
+    Modifies *lines* in place with class definitions and populates
+    *sub_model_map* with ``{api_path: ClassName}`` entries for every
+    generated sub-model.
+
+    Args:
+        parent_class: Name of the parent class.
+        fields: Fields at the current nesting level.
+        sub_model_map: Accumulator for api_path → class name.
+        lines: Accumulator for source code lines.
+        _seen_sub_names: Deduplication tracker for class names.
+    """
+    if _seen_sub_names is None:
+        _seen_sub_names = {}
+
+    for field in fields:
+        if field.is_object and not field.is_list and field.sub_fields:
+            # Nested object — generate a sub-model class
+            sub_cls = _sub_model_name(parent_class, field)
+            if sub_cls in _seen_sub_names:
+                _seen_sub_names[sub_cls] += 1
+                sub_cls = f"{sub_cls}{_seen_sub_names[sub_cls]}"
+            else:
+                _seen_sub_names[sub_cls] = 1
+            sub_model_map[field.api_path] = sub_cls
+
+            # Recurse first (deepest-first ordering)
+            _generate_nested_sub_models(
+                sub_cls,
+                field.sub_fields,
+                sub_model_map,
+                lines,
+                _seen_sub_names=_seen_sub_names,
+            )
+
+            # Now emit this sub-model class
+            lines.append("")
+            lines.append(f"class {sub_cls}(OntapModel):")
+            lines.append(f'    """{sub_cls} sub-model for {field.name}."""')
+            lines.append("")
+
+            has_fields = False
+            for sf in field.sub_fields:
+                attr = _safe_attr_name(sf.name.replace("-", "_"))
+                if sf.is_object and not sf.is_list and sf.api_path in sub_model_map:
+                    # Nested object field — typed as sub-model with default_factory
+                    nested_cls = sub_model_map[sf.api_path]
+                    lines.append(f"    {attr}: {nested_cls} = Field(default_factory={nested_cls})")
+                    has_fields = True
+                elif sf.is_list and sf.is_object and sf.api_path in sub_model_map:
+                    # Array-of-objects with typed sub-model
+                    nested_cls = sub_model_map[sf.api_path]
+                    lines.append(f"    {attr}: list[{nested_cls}] = Field(default_factory=list)")
+                    has_fields = True
+                elif sf.is_object and not sf.is_list:
+                    # Object without sub-fields (shouldn't happen but be safe)
+                    continue
+                else:
+                    # Scalar or simple list
+                    type_ann = _python_type_annotation(sf, sub_model_map)
+                    default_repr = _python_default_repr(sf)
+                    lines.append(f"    {attr}: {type_ann} = {default_repr}")
+                    has_fields = True
+
+            if not has_fields:
+                lines.append("    pass")
+            lines.append("")
+
+        elif field.is_list and field.is_object and _has_typed_sub_fields(field):
+            # Array-of-objects — generate a sub-model for array items
+            sub_cls = _sub_model_name(parent_class, field)
+            if sub_cls in _seen_sub_names:
+                _seen_sub_names[sub_cls] += 1
+                sub_cls = f"{sub_cls}{_seen_sub_names[sub_cls]}"
+            else:
+                _seen_sub_names[sub_cls] = 1
+            sub_model_map[field.api_path] = sub_cls
+
+            # Recurse into sub-fields for deeper nesting
+            _generate_nested_sub_models(
+                sub_cls,
+                field.sub_fields,
+                sub_model_map,
+                lines,
+                _seen_sub_names=_seen_sub_names,
+            )
+
+            # Emit the sub-model class
+            lines.append("")
+            lines.append(f"class {sub_cls}(OntapModel):")
+            lines.append(f'    """{sub_cls} sub-model for {field.name}."""')
+            lines.append("")
+
+            has_fields = False
+            for sf in field.sub_fields:
+                if sf.is_object and not sf.is_list and sf.api_path in sub_model_map:
+                    nested_cls = sub_model_map[sf.api_path]
+                    attr = _safe_attr_name(sf.name.replace("-", "_"))
+                    lines.append(f"    {attr}: {nested_cls} = Field(default_factory={nested_cls})")
+                    has_fields = True
+                elif sf.is_list and sf.is_object and sf.api_path in sub_model_map:
+                    # Array-of-objects with typed sub-model
+                    nested_cls = sub_model_map[sf.api_path]
+                    attr = _safe_attr_name(sf.name.replace("-", "_"))
+                    lines.append(f"    {attr}: list[{nested_cls}] = Field(default_factory=list)")
+                    has_fields = True
+                elif sf.is_object and not sf.is_list:
+                    continue
+                else:
+                    leaf = sf.api_path.rsplit(".", 1)[-1]
+                    attr = _safe_attr_name(leaf.replace("-", "_"))
+                    type_ann = _python_type_annotation(sf, sub_model_map)
+                    default_repr = _python_default_repr(sf)
+                    lines.append(f"    {attr}: {type_ann} = {default_repr}")
+                    has_fields = True
+
+            if not has_fields:
+                lines.append("    pass")
+            lines.append("")
+
+
+def _needs_field_import(
+    fields: list[ParsedField],
+    sub_model_map: dict[str, str],
+) -> bool:
+    """Check if any field requires ``from pydantic import Field``."""
+    for f in fields:
+        if f.is_list:
+            return True
+        if f.is_object and not f.is_list and f.api_path in sub_model_map:
+            return True
+        if f.is_object and f.sub_fields and _needs_field_import(f.sub_fields, sub_model_map):
+            return True
+    return False
+
+
+def _needs_any_import(fields: list[ParsedField], sub_model_map: dict[str, str]) -> bool:
+    """Check if ``from typing import Any`` is needed."""
+    for f in fields:
+        if f.is_list and f.is_object and f.api_path not in sub_model_map:
+            return True
+        if f.sub_fields and _needs_any_import(f.sub_fields, sub_model_map):
+            return True
+    return False
+
+
+def _needs_uuid_import(fields: list[ParsedField]) -> bool:
+    """Check if any field uses ``OntapUUID``."""
+    for f in fields:
+        if f.is_uuid:
+            return True
+        if f.sub_fields and _needs_uuid_import(f.sub_fields):
+            return True
+    return False
+
+
+def _collect_all_attrs(fields: list[ParsedField], sub_model_map: dict[str, str]) -> list[str]:
+    """Collect all attribute names recursively for noqa detection."""
+    attrs: list[str] = []
+    for f in fields:
+        if f.is_object and not f.is_list:
+            attr = _safe_attr_name(f.name.replace("-", "_"))
+            attrs.append(attr)
+            attrs.extend(_collect_all_attrs(f.sub_fields, sub_model_map))
+        else:
+            attr = _field_to_cache_attr(f)
+            # For top-level fields, the attr is just the field name
+            leaf = f.api_path.rsplit(".", 1)[-1] if "." in f.api_path else f.api_path
+            attrs.append(_safe_attr_name(leaf.replace("-", "_")))
+    return attrs
 
 
 def generate_model(endpoint: ParsedEndpoint, api_type: str = "ontap") -> str:
     """Generate a Pydantic model class for an endpoint.
 
-    Produces a flat ``OntapModel`` subclass following ADR-0007 naming.
-    Array-of-objects fields with sub-fields get typed sub-model classes
-    defined before the parent class.
+    Produces nested ``OntapModel`` subclasses mirroring the API structure
+    (ADR-0011).  Object fields become typed sub-model attributes with
+    ``Field(default_factory=SubModelClass)`` for safe chained access.
 
     Args:
-        endpoint: Parsed endpoint with fields.
+        endpoint: Parsed endpoint with fields (tree structure).
         api_type: API type for import path context.
 
     Returns:
@@ -359,42 +562,20 @@ def generate_model(endpoint: ParsedEndpoint, api_type: str = "ontap") -> str:
     """
     class_name = _path_to_class_name(endpoint.path, endpoint.schema_name, api_type)
     doc = f"{class_name} information."
-    leaves = _select_leaf_fields(endpoint.fields)
 
-    # Identify fields that get typed sub-models
-    sub_model_map: dict[str, str] = {}  # field api_path -> sub-model class name
-    sub_model_fields: list[tuple[str, ParsedField]] = []  # (sub_class_name, field)
-    _seen_sub_names: dict[str, int] = {}
-    for field in leaves:
-        if _has_typed_sub_fields(field):
-            sub_cls = _sub_model_name(class_name, field)
-            # Deduplicate sub-model class names
-            if sub_cls in _seen_sub_names:
-                _seen_sub_names[sub_cls] += 1
-                sub_cls = f"{sub_cls}{_seen_sub_names[sub_cls]}"
-            else:
-                _seen_sub_names[sub_cls] = 1
-            sub_model_map[field.api_path] = sub_cls
-            sub_model_fields.append((sub_cls, field))
-
-    needs_field_import = any(f.is_list for f in leaves)
-    # Only need Any import if there are list-of-object fields WITHOUT sub-models
-    needs_any_import = any(
-        f.is_list and f.is_object and f.api_path not in sub_model_map for f in leaves
+    # Build sub-model map by walking the field tree
+    sub_model_map: dict[str, str] = {}  # api_path → sub-model class name
+    sub_model_lines: list[str] = []
+    _generate_nested_sub_models(
+        class_name,
+        endpoint.fields,
+        sub_model_map,
+        sub_model_lines,
     )
-    needs_uuid_import = any(f.is_uuid for f in leaves)
 
-    # Check sub-model fields for UUID needs and Any needs
-    for _sub_cls, sf in sub_model_fields:
-        sub_leaves = _select_leaf_fields(sf.sub_fields)
-        if any(ssf.is_uuid for ssf in sub_leaves):
-            needs_uuid_import = True
-        # Sub-model may have list[dict[str, Any]] fields that need Any import
-        if any(ssf.is_list and ssf.is_object for ssf in sub_leaves):
-            needs_any_import = True
-        # Sub-model may have list fields needing Field import
-        if any(ssf.is_list for ssf in sub_leaves):
-            needs_field_import = True
+    needs_field = _needs_field_import(endpoint.fields, sub_model_map)
+    needs_any = _needs_any_import(endpoint.fields, sub_model_map)
+    needs_uuid = _needs_uuid_import(endpoint.fields)
 
     lines = [
         f'"""{doc}"""',
@@ -404,14 +585,14 @@ def generate_model(endpoint: ParsedEndpoint, api_type: str = "ontap") -> str:
     ]
 
     # Conditional imports
-    if needs_any_import:
+    if needs_any:
         lines.append("from typing import Any")
         lines.append("")
 
-    pydantic_imports = ["Field"] if needs_field_import else []
+    pydantic_imports = ["Field"] if needs_field else []
 
     base_imports = ["OntapModel"]
-    if needs_uuid_import:
+    if needs_uuid:
         base_imports.append("OntapUUID")
 
     if pydantic_imports:
@@ -421,55 +602,51 @@ def generate_model(endpoint: ParsedEndpoint, api_type: str = "ontap") -> str:
     lines.append(f"from pynetappfoundry.models._base import {', '.join(sorted(base_imports))}")
     lines.append("")
 
-    # Generate sub-model classes before the parent
-    for sub_cls, field in sub_model_fields:
-        lines.append("")
-        lines.append(f"class {sub_cls}(OntapModel):")
-        lines.append(f'    """{sub_cls} sub-model for {field.name}."""')
-        lines.append("")
-        sub_leaves = _select_leaf_fields(field.sub_fields)
-        if not sub_leaves:
-            lines.append("    pass")
-        else:
-            seen_attrs: set[str] = set()
-            for sf in sub_leaves:
-                leaf = sf.api_path.rsplit(".", 1)[-1]
-                attr = _safe_attr_name(leaf.replace("-", "_"))
-                # Deduplicate: if attr already seen, skip
-                if attr in seen_attrs:
-                    continue
-                seen_attrs.add(attr)
-                type_ann = _python_type_annotation(sf)
-                default_repr = _python_default_repr(sf)
-                lines.append(f"    {attr}: {type_ann} = {default_repr}")
-        lines.append("")
+    # Add sub-model class definitions (already generated deepest-first)
+    lines.extend(sub_model_lines)
 
+    # Generate the parent class
     lines.append("")
     lines.append(f"class {class_name}(OntapModel):")
     lines.append(f'    """{class_name} information."""')
     lines.append("")
 
-    if not leaves:
+    if not endpoint.fields:
         lines.append("    pass")
     else:
         parent_seen: set[str] = set()
-        for field in leaves:
-            attr = _field_to_cache_attr(field)
+        for field in endpoint.fields:
+            attr = _safe_attr_name(field.name.replace("-", "_"))
             if attr in parent_seen:
-                continue  # skip duplicate flattened names
+                continue
             parent_seen.add(attr)
-            type_ann = _python_type_annotation(field, sub_model_map)
-            default_repr = _python_default_repr(field)
-            lines.append(f"    {attr}: {type_ann} = {default_repr}")
+
+            if field.is_object and not field.is_list and field.api_path in sub_model_map:
+                # Nested object → typed sub-model with default_factory
+                nested_cls = sub_model_map[field.api_path]
+                lines.append(f"    {attr}: {nested_cls} = Field(default_factory={nested_cls})")
+            elif field.is_list and field.is_object and field.api_path in sub_model_map:
+                # Array-of-objects with typed sub-model
+                nested_cls = sub_model_map[field.api_path]
+                lines.append(f"    {attr}: list[{nested_cls}] = Field(default_factory=list)")
+            elif field.is_object and not field.is_list:
+                # Object without sub-model (no sub_fields) — skip
+                continue
+            else:
+                # Scalar or simple list
+                type_ann = _python_type_annotation(field, sub_model_map)
+                default_repr = _python_default_repr(field)
+                lines.append(f"    {attr}: {type_ann} = {default_repr}")
 
     lines.append("")
     result = "\n".join(lines)
+
     # Add noqa directives for generated code that can't conform to lint rules
     noqa_codes: list[str] = []
     if any(len(line) > 100 for line in lines):
         noqa_codes.append("E501")
     # Detect mixed-case field names from the API (e.g., isDnsTTLEnabled)
-    all_attrs = [_field_to_cache_attr(f) for f in leaves] if leaves else []
+    all_attrs = _collect_all_attrs(endpoint.fields, sub_model_map)
     if any(c.isupper() for attr in all_attrs for c in attr):
         noqa_codes.append("N815")
     if noqa_codes:
@@ -485,11 +662,14 @@ def generate_mapping(
     """Generate a TypeMapping/FieldMapping module for an endpoint.
 
     Produces a ``mapping.py`` file with the mapping constant and
-    registry registration call.  Array-of-objects fields with typed
-    sub-models get transform functions that construct sub-model instances.
+    registry registration call.  ``cache_attr`` values use dot-path
+    notation matching the ``api_path`` (e.g. ``"svm.name"``).
+
+    Array-of-objects fields with typed sub-models get transform functions
+    that construct sub-model instances using ``get_nested_value()``.
 
     Args:
-        endpoint: Parsed endpoint with fields.
+        endpoint: Parsed endpoint with fields (tree structure).
         api_type: API type tag.
         schema_lookup: Optional mapping of API path → schema name for
             resolving parent class names.
@@ -500,26 +680,32 @@ def generate_mapping(
     class_name = _path_to_class_name(endpoint.path, endpoint.schema_name, api_type)
     module_parts = _path_to_module_parts(endpoint.path)
     mapping_name = f"{class_name.upper()}_MAPPING"
-    leaves = _select_leaf_fields(endpoint.fields)
 
-    # Identify sub-model fields (must mirror dedup logic from generate_model)
+    # Collect all leaf fields from the tree
+    leaves = _collect_all_leaves(endpoint.fields)
+
+    # Identify sub-model fields for array-of-objects transforms
+    # Build the same sub_model_map as generate_model to get consistent names
     sub_model_map: dict[str, str] = {}
-    _seen_sub_names: dict[str, int] = {}
+    _temp_lines: list[str] = []
+    _generate_nested_sub_models(
+        class_name,
+        endpoint.fields,
+        sub_model_map,
+        _temp_lines,
+    )
+
+    # Only array-of-objects sub-models need transforms in the mapping
+    array_sub_models: dict[str, str] = {}
     for field in leaves:
-        if _has_typed_sub_fields(field):
-            sub_cls = _sub_model_name(class_name, field)
-            if sub_cls in _seen_sub_names:
-                _seen_sub_names[sub_cls] += 1
-                sub_cls = f"{sub_cls}{_seen_sub_names[sub_cls]}"
-            else:
-                _seen_sub_names[sub_cls] = 1
-            sub_model_map[field.api_path] = sub_cls
+        if field.is_list and field.is_object and field.api_path in sub_model_map:
+            array_sub_models[field.api_path] = sub_model_map[field.api_path]
 
     # Build the import path for the model (models live in models.ontap/)
     model_import = f"pynetappfoundry.models.{api_type}.{'.'.join(module_parts)}.model"
 
-    # Build model imports (parent class + any sub-model classes)
-    model_classes = [class_name, *sorted(sub_model_map.values())]
+    # Build model imports (parent class + any array sub-model classes)
+    model_classes = [class_name, *sorted(array_sub_models.values())]
 
     docstring = f'"""{class_name} type mapping."""'
     lines = [
@@ -529,7 +715,7 @@ def generate_mapping(
         "",
     ]
 
-    if sub_model_map:
+    if array_sub_models:
         lines.append("from typing import Any")
         lines.append("")
 
@@ -539,6 +725,12 @@ def generate_mapping(
             "from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping",
         ]
     )
+
+    # Add get_nested_value import if we have nested transforms
+    has_nested_transforms = any("." in ap for ap in array_sub_models)
+    if has_nested_transforms:
+        lines.append("from pynetappfoundry.utils.dict_path import get_nested_value")
+
     # Split long model import across multiple lines
     model_import_line = f"from {model_import} import {', '.join(model_classes)}"
     if len(model_import_line) > 100:
@@ -549,13 +741,14 @@ def generate_mapping(
     else:
         lines.append(model_import_line)
 
-    # Generate transform functions for sub-model fields
-    if sub_model_map:
+    # Generate transform functions for array sub-model fields
+    if array_sub_models:
         for field in leaves:
-            if field.api_path not in sub_model_map:
+            if field.api_path not in array_sub_models:
                 continue
-            sub_cls = sub_model_map[field.api_path]
-            func_name = f"_transform_{_field_to_cache_attr(field)}"
+            sub_cls = array_sub_models[field.api_path]
+            # Use the leaf field name for the transform function name
+            func_name = f"_transform_{field.api_path.replace('.', '_')}"
             lines.append("")
             lines.append("")
             sig = f"def {func_name}(record: dict[str, Any]) -> list[{sub_cls}]:"
@@ -566,13 +759,25 @@ def generate_mapping(
             else:
                 lines.append(sig)
             lines.append(f'    """Transform {field.api_path} into {sub_cls} list."""')
-            ret_line = (
-                f'    return [{sub_cls}(**item) for item in record.get("{field.api_path}", [])]'
-            )
+
+            # Use get_nested_value for nested paths, record.get() for top-level
+            if "." in field.api_path:
+                lines.append("    try:")
+                lines.append(f'        items = get_nested_value(record, "{field.api_path}")')
+                lines.append("    except Exception:")
+                lines.append("        items = []")
+                ret_line = f"    return [{sub_cls}(**item) for item in items]"
+            else:
+                ret_line = (
+                    f'    return [{sub_cls}(**item) for item in record.get("{field.api_path}", [])]'
+                )
             if len(ret_line) > 100:
                 lines.append("    return [")
                 lines.append(f"        {sub_cls}(**item)")
-                lines.append(f'        for item in record.get("{field.api_path}", [])')
+                if "." in field.api_path:
+                    lines.append("        for item in items")
+                else:
+                    lines.append(f'        for item in record.get("{field.api_path}", [])')
                 lines.append("    ]")
             else:
                 lines.append(ret_line)
@@ -600,18 +805,16 @@ def generate_mapping(
 
     seen_attrs: set[str] = set()
     for field in leaves:
-        attr = _field_to_cache_attr(field)
-        if attr in seen_attrs:
+        cache_attr = _field_to_cache_attr(field)
+        if cache_attr in seen_attrs:
             continue
-        seen_attrs.add(attr)
+        seen_attrs.add(cache_attr)
         default_repr = _python_default_repr(field, for_mapping=True)
 
-        field_args = [f'        cache_attr="{attr}"']
+        field_args = [f'        cache_attr="{cache_attr}"']
 
-        if field.api_path in sub_model_map:
-            # Sub-model field: keep api_path for field-name derivation,
-            # add transform for custom extraction logic
-            func_name = f"_transform_{attr}"
+        if field.api_path in array_sub_models:
+            func_name = f"_transform_{field.api_path.replace('.', '_')}"
             field_args.append(f'        api_path="{field.api_path}"')
             field_args.append(f"        transform={func_name}")
         else:
@@ -674,10 +877,11 @@ def generate_toml_overlay(
 
     If ``existing_path`` points to an existing TOML file, user edits
     are preserved — new fields get defaults, removed fields get a
-    warning comment.
+    warning comment.  Field keys use dot-path notation (e.g.
+    ``"svm.name"``) matching the nested model structure.
 
     Args:
-        endpoint: Parsed endpoint with fields.
+        endpoint: Parsed endpoint with fields (tree structure).
         existing_path: Path to existing overlay file, or None.
         api_type: API type prefix for class naming.
 
@@ -685,7 +889,7 @@ def generate_toml_overlay(
         TOML content as a string.
     """
     class_name = _path_to_class_name(endpoint.path, endpoint.schema_name, api_type)
-    leaves = _select_leaf_fields(endpoint.fields)
+    leaves = _collect_all_leaves(endpoint.fields)
 
     # Load existing overlay if present
     existing: dict[str, Any] = {}
@@ -694,6 +898,15 @@ def generate_toml_overlay(
             existing = tomllib.load(f)
 
     existing_fields = existing.get("fields", {})
+
+    # Build a migration map from old flat keys to new dot-path keys
+    # so we can preserve user edits from the old format
+    flat_to_dot: dict[str, str] = {}
+    for field in leaves:
+        dot_key = _field_to_cache_attr(field)
+        flat_key = field.api_path.replace(".", "_").replace("-", "_")
+        if flat_key != dot_key:
+            flat_to_dot[flat_key] = dot_key
 
     # Build new overlay
     overlay: dict[str, Any] = {
@@ -706,18 +919,29 @@ def generate_toml_overlay(
     }
 
     for field in leaves:
-        attr = _field_to_cache_attr(field)
-        if attr in existing_fields:
-            # Preserve user edits
-            overlay["fields"][attr] = existing_fields[attr]
+        # Use dot-path as the TOML key
+        dot_key = _field_to_cache_attr(field)
+        # Also check the old flat key for migration
+        flat_key = field.api_path.replace(".", "_").replace("-", "_")
+
+        if dot_key in existing_fields:
+            # Preserve user edits (already using new format)
+            overlay["fields"][dot_key] = existing_fields[dot_key]
+        elif flat_key in existing_fields:
+            # Migrate from old flat key format
+            overlay["fields"][dot_key] = existing_fields[flat_key]
         else:
             entry: dict[str, Any] = {"cache_strategy": "cache"}
             if field.requires_explicit_fetch:
                 entry["requires_explicit_fetch"] = True
-            overlay["fields"][attr] = entry
+            overlay["fields"][dot_key] = entry
 
-    # Warn about removed fields
-    removed = set(existing_fields) - {_field_to_cache_attr(f) for f in leaves}
+    # Warn about removed fields (check both dot and flat keys)
+    current_keys = set()
+    for field in leaves:
+        current_keys.add(_field_to_cache_attr(field))
+        current_keys.add(field.api_path.replace(".", "_").replace("-", "_"))
+    removed = set(existing_fields) - current_keys
     if removed:
         overlay["_removed_fields"] = sorted(removed)
 

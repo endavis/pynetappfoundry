@@ -1,10 +1,15 @@
 """SQLite database operations for cluster metadata cache.
 
-Schema v3 stores each Pydantic model in its own SQL table instead of a
-single JSON blob.  v3 removes the unused ``_uuid_index`` SQL table (UUID
-resolution uses the in-memory ``CachedClusterMetadata.uuid_index``).
-The public API (``get``/``set``/``clear``/etc.) is preserved so callers
-(collectors, query, inspect, diff, refresh) work unchanged.
+Schema v4 drops and recreates all per-model SQL tables because the
+nested-model refactoring (ADR-0011 / issue #444) changed column names
+from flat (``ip_address``) to nested sub-model attributes (``ip``
+serialised as JSON).  Cached data is lost on upgrade — a fresh
+collection is required.
+
+Previous versions:
+- v3: removed unused ``_uuid_index`` table.
+- v2: decomposed ``CachedClusterMetadata`` into per-model SQL tables.
+- v1: single JSON blob.
 """
 
 from __future__ import annotations
@@ -262,7 +267,7 @@ class ClusterMetadataDB(SQLiteDB):
     for data safety and isolation.
     """
 
-    SCHEMA_VERSION: ClassVar[int] = 3
+    SCHEMA_VERSION: ClassVar[int] = 4
     TABLE_NAME: ClassVar[str] = "cluster_metadata"
 
     def __init__(
@@ -364,6 +369,34 @@ class ClusterMetadataDB(SQLiteDB):
     def _upgrade_to_v3(self) -> None:
         """Remove the unused _uuid_index table (never queried in production)."""
         self.conn.execute("DROP TABLE IF EXISTS _uuid_index")
+
+    # ------------------------------------------------------------------
+    # Migration v3 → v4
+    # ------------------------------------------------------------------
+
+    def _upgrade_to_v4(self) -> None:
+        """Drop and recreate per-model tables for nested model columns.
+
+        The nested-model refactoring changed column names (flat
+        ``ip_address`` → nested sub-model ``ip`` serialised as JSON).
+        Existing cached data is incompatible, so we drop all model
+        tables, recreate them with the new schema, and clear the
+        envelope table so collectors know a fresh run is needed.
+        """
+        # Drop all existing model tables
+        for spec in self._registry.values():
+            self.conn.execute(f"DROP TABLE IF EXISTS {spec.table_name}")
+
+        # Recreate with new column definitions
+        for spec in self._registry.values():
+            ddl = generate_table_ddl(spec.table_name, spec.model_class)
+            self.conn.execute(ddl)
+            self.conn.execute(generate_cluster_name_index_ddl(spec.table_name))
+            if spec.has_uuid:
+                self.conn.execute(generate_uuid_column_index_ddl(spec.table_name))
+
+        # Clear envelope so callers detect stale/missing cache
+        self.conn.execute("DELETE FROM cluster_metadata")
 
     # ------------------------------------------------------------------
     # Internal: decompose metadata into tables

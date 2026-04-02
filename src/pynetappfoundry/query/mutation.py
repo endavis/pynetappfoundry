@@ -199,14 +199,27 @@ class Mutation:
     def _attr_to_api_path(self, attr: str) -> str:
         """Translate a model attribute name to an API field path.
 
-        Iterates TypeMapping.fields looking for a FieldMapping whose
-        ``cache_attr`` matches *attr*.  Returns the corresponding
-        ``api_path`` if found, otherwise returns *attr* unchanged
-        (allowing raw API field names).
+        Supports three lookup strategies (in order):
+
+        1. Exact ``cache_attr`` match (e.g. ``"name"`` → ``"name"``).
+        2. Dunder-separated kwargs: ``"ip__address"`` is normalised to
+           ``"ip.address"`` and matched against ``cache_attr`` values.
+        3. Pass-through: if no match, return *attr* unchanged (allows
+           raw API field names).
         """
+        # Direct match on cache_attr
         for field in self._mapping.fields:
             if field.cache_attr == attr and field.api_path is not None:
                 return field.api_path
+
+        # Dunder → dot translation for Python kwargs compatibility
+        if "__" in attr:
+            dot_attr = attr.replace("__", ".")
+            for field in self._mapping.fields:
+                if field.cache_attr == dot_attr and field.api_path is not None:
+                    return field.api_path
+            return dot_attr
+
         return attr
 
     def _build_body(self, kwargs: dict[str, Any]) -> dict[str, Any]:

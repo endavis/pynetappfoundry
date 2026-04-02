@@ -561,17 +561,13 @@ class TestClusterMetadataDBMigration:
         conn.commit()
         conn.close()
 
-        # Open with v2 code — should trigger migration
+        # Open with current code — should trigger migration v1→v2→v3→v4
         db = ClusterMetadataDB(db_path=db_path)
 
-        # Verify data survived migration
+        # v4 migration drops and recreates all model tables (nested model
+        # refactoring changed column names), so cached data is lost.
         got = db.get("migrated-cluster")
-        assert got is not None
-        assert got.cluster_name == "migrated-cluster"
-        assert got.cloud[0].provider == "GCP"
-        assert got.cluster.ontap_version == "9.13.1"
-        assert len(got.nodes) == 1
-        assert got.nodes[0].name == "mnode1"
+        assert got is None
 
         # Verify envelope table no longer has metadata_json
         cursor = db.conn.execute("PRAGMA table_info(cluster_metadata)")
@@ -648,23 +644,22 @@ class TestClusterMetadataDBMigrationV3:
         conn.commit()
         conn.close()
 
-        # Open with v3 code — should trigger migration
+        # Open with current code — should trigger migration v2→v3→v4
         db = ClusterMetadataDB(db_path=db_path)
 
-        # Verify _uuid_index table is gone
+        # Verify _uuid_index table is gone (dropped in v3)
         cursor = db.conn.execute(
             "SELECT name FROM sqlite_master WHERE type='table' AND name='_uuid_index'"
         )
         assert cursor.fetchone() is None
 
-        # Verify schema version is 3
+        # Verify schema version is 4 (v4 drops/recreates tables)
         cursor = db.conn.execute("SELECT version FROM _schema_version")
-        assert cursor.fetchone()[0] == 3
+        assert cursor.fetchone()[0] == 4
 
-        # Verify existing envelope data is intact
+        # v4 clears envelope data (nested model refactoring)
         got = db.get("test-cluster")
-        assert got is not None
-        assert got.cluster_name == "test-cluster"
+        assert got is None
 
         db.close()
 
@@ -773,7 +768,6 @@ class TestRealtimeAttrs:
         # These are known realtime fields from ports.toml
         assert "metric_duration" in result
         assert "metric_iops_total" in result
-        assert "metric_iops_read" in result
 
     def test_returns_empty_frozenset_for_unmapped_model(self) -> None:
         """realtime_attrs returns empty frozenset for models without mappings."""

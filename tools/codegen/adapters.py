@@ -5,7 +5,7 @@ by the ``doit convert_specs`` task) and produces normalized
 :class:`ParsedEndpoint` and :class:`ParsedField` dataclasses.
 
 Uses ``datamodel-code-generator`` for ``$ref`` resolution and type mapping,
-then extracts the resolved field structure for our flat model generation.
+then extracts the resolved field structure for nested model generation.
 """
 
 from __future__ import annotations
@@ -78,7 +78,7 @@ class ParsedEndpoint:
     schema_name: str = ""
     description: str = ""
     records_path: str = "records"
-    fields: list[ParsedField] = field(default_factory=list)
+    fields: list[ParsedField] = field(default_factory=list)  # tree structure
     expensive_patterns: list[str] = field(default_factory=list)
     has_parent: bool = False
     parent_path: str = ""
@@ -122,11 +122,15 @@ def _flatten_schema(
     depth: int = 0,
     max_depth: int = 5,
 ) -> list[ParsedField]:
-    """Recursively flatten an OpenAPI schema into dot-path fields.
+    """Recursively parse an OpenAPI schema into a tree of dot-path fields.
+
+    Nested objects are represented as ``ParsedField`` nodes with
+    ``sub_fields`` holding their children — the tree structure is
+    preserved (children are **not** promoted to the parent list).
 
     Args:
         spec: The full OpenAPI spec (for ``$ref`` resolution).
-        schema: The schema dict to flatten.
+        schema: The schema dict to parse.
         prefix: Current dot-path prefix.
         expensive_patterns: Expensive field patterns for annotation.
         visited: Set of ``$ref`` strings already visited (cycle guard).
@@ -134,7 +138,7 @@ def _flatten_schema(
         max_depth: Maximum recursion depth to prevent unbounded nesting.
 
     Returns:
-        List of :class:`ParsedField` instances.
+        List of :class:`ParsedField` instances (tree structure).
     """
     if depth > max_depth:
         return []
@@ -216,7 +220,6 @@ def _flatten_schema(
                     sub_fields=sub_fields,
                 )
             )
-            fields.extend(sub_fields)
         elif prop_type == "array":
             items = resolved_prop.get("items", {})
             if "$ref" in items:
