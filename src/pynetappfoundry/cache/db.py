@@ -34,6 +34,7 @@ from pynetappfoundry.cache.db_schema import (
     generate_table_ddl,
     generate_uuid_column_index_ddl,
 )
+from pynetappfoundry.cache.query_engine import build_where_clause, parse_filters
 from pynetappfoundry.db.base import SQLiteDB
 
 if TYPE_CHECKING:
@@ -701,6 +702,66 @@ class ClusterMetadataDB(SQLiteDB):
             params.append(val)
 
         sql = f"SELECT * FROM {spec.table_name} WHERE {' AND '.join(conditions)}"
+        cursor = self.conn.execute(sql, params)
+        rows = [dict(r) for r in cursor.fetchall()]
+
+        return [
+            _row_to_model(
+                {k: v for k, v in row.items() if k not in ("cluster_name", "_row_id")},
+                spec.model_class,
+            )
+            for row in rows
+        ]
+
+    def query_with_filters(
+        self,
+        cluster_name: str,
+        model_name: str,
+        filters: list[str],
+    ) -> list[BaseModel]:
+        """Query a model table with expressive filter expressions.
+
+        Supports equality, comparison, in/not in, null checks, and
+        nested JSON field filtering via ``json_extract()``.
+
+        Filter expression format::
+
+            name = 'vol1'
+            autosize.mode != 'grow_shrink'
+            size > 1073741824
+            state in ('online', 'mixed')
+            comment = null
+
+        Multiple filters are AND-joined.
+
+        Args:
+            cluster_name: Name of the cluster.
+            model_name: The metadata_path key (e.g. ``"storage.volumes"``).
+            filters: List of filter expression strings.
+
+        Returns:
+            List of deserialized model instances matching all filters.
+
+        Raises:
+            ValueError: If cluster_name is invalid, model_name not found,
+                or a filter expression is malformed.
+        """
+        _validate_cluster_name(cluster_name)
+        spec = self._registry.get(model_name)
+        if spec is None:
+            raise ValueError(f"Unknown model name: {model_name!r}")
+
+        parsed = parse_filters(filters)
+        where_clause, params = build_where_clause(
+            parsed,
+            spec.model_class,
+            cluster_name=cluster_name,
+        )
+
+        sql = f"SELECT * FROM {spec.table_name}"
+        if where_clause:
+            sql = f"{sql} {where_clause}"
+
         cursor = self.conn.execute(sql, params)
         rows = [dict(r) for r in cursor.fetchall()]
 

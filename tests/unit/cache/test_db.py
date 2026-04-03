@@ -522,6 +522,168 @@ class TestClusterMetadataDB:
         assert got.storage.volumes[0].size == 1073741824
 
 
+class TestQueryWithFilters:
+    """Tests for ClusterMetadataDB.query_with_filters()."""
+
+    @pytest.fixture
+    def db(self) -> ClusterMetadataDB:
+        """Create an in-memory test database."""
+        return ClusterMetadataDB(db_path=":memory:")
+
+    @pytest.fixture
+    def db_with_volumes(self, db: ClusterMetadataDB) -> ClusterMetadataDB:
+        """Database with sample volume data including JSON fields."""
+        from pynetappfoundry.models.ontap.storage.model import StorageInfo
+        from pynetappfoundry.models.ontap.storage.volumes.model import OntapVolumeAutosize
+
+        meta = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            storage=StorageInfo(
+                volumes=[
+                    OntapVolume(
+                        name="vol1",
+                        uuid="11111111-1111-1111-1111-111111111111",
+                        size=1073741824,
+                        state="online",
+                        autosize=OntapVolumeAutosize(
+                            mode="grow_shrink",
+                            grow_threshold=85,
+                            maximum=2147483648,
+                        ),
+                    ),
+                    OntapVolume(
+                        name="vol2",
+                        uuid="22222222-2222-2222-2222-222222222222",
+                        size=536870912,
+                        state="online",
+                        autosize=OntapVolumeAutosize(
+                            mode="off",
+                            grow_threshold=0,
+                            maximum=0,
+                        ),
+                    ),
+                    OntapVolume(
+                        name="vol3",
+                        uuid="33333333-3333-3333-3333-333333333333",
+                        size=2147483648,
+                        state="offline",
+                        autosize=OntapVolumeAutosize(
+                            mode="grow_shrink",
+                            grow_threshold=90,
+                            maximum=4294967296,
+                        ),
+                    ),
+                ],
+            ),
+        )
+        db.set("test-cluster", meta)
+        return db
+
+    def test_filter_by_scalar_column(self, db_with_volumes: ClusterMetadataDB) -> None:
+        """Filter by scalar column returns matching models."""
+        results = db_with_volumes.query_with_filters(
+            "test-cluster", "storage.volumes", ["name = 'vol1'"]
+        )
+        assert len(results) == 1
+        assert results[0].name == "vol1"
+
+    def test_filter_by_json_sub_field(self, db_with_volumes: ClusterMetadataDB) -> None:
+        """Filter by JSON sub-field returns matching models."""
+        results = db_with_volumes.query_with_filters(
+            "test-cluster",
+            "storage.volumes",
+            ["autosize.mode = 'grow_shrink'"],
+        )
+        assert len(results) == 2
+        names = {r.name for r in results}
+        assert names == {"vol1", "vol3"}
+
+    def test_filter_comparison_on_json_numeric(self, db_with_volumes: ClusterMetadataDB) -> None:
+        """Filter with comparison on JSON numeric field."""
+        results = db_with_volumes.query_with_filters(
+            "test-cluster",
+            "storage.volumes",
+            ["autosize.grow_threshold >= 85"],
+        )
+        assert len(results) == 2
+        names = {r.name for r in results}
+        assert names == {"vol1", "vol3"}
+
+    def test_multiple_filters_and(self, db_with_volumes: ClusterMetadataDB) -> None:
+        """Multiple filters narrow results (AND logic)."""
+        results = db_with_volumes.query_with_filters(
+            "test-cluster",
+            "storage.volumes",
+            [
+                "state = 'online'",
+                "autosize.mode = 'grow_shrink'",
+            ],
+        )
+        assert len(results) == 1
+        assert results[0].name == "vol1"
+
+    def test_no_matches_returns_empty(self, db_with_volumes: ClusterMetadataDB) -> None:
+        """No matches returns empty list."""
+        results = db_with_volumes.query_with_filters(
+            "test-cluster",
+            "storage.volumes",
+            ["name = 'nonexistent'"],
+        )
+        assert results == []
+
+    def test_invalid_model_name_raises(self, db_with_volumes: ClusterMetadataDB) -> None:
+        """Invalid model name raises ValueError."""
+        with pytest.raises(ValueError, match="Unknown model name"):
+            db_with_volumes.query_with_filters(
+                "test-cluster", "nonexistent.path", ["name = 'vol1'"]
+            )
+
+    def test_invalid_field_raises(self, db_with_volumes: ClusterMetadataDB) -> None:
+        """Invalid field path raises ValueError."""
+        with pytest.raises(ValueError, match="Unknown field"):
+            db_with_volumes.query_with_filters("test-cluster", "storage.volumes", ["bogus = 'val'"])
+
+    def test_empty_filters_returns_all(self, db_with_volumes: ClusterMetadataDB) -> None:
+        """Empty filters list returns all rows for cluster."""
+        results = db_with_volumes.query_with_filters("test-cluster", "storage.volumes", [])
+        assert len(results) == 3
+
+    def test_filter_by_size_greater_than(self, db_with_volumes: ClusterMetadataDB) -> None:
+        """Filter by scalar numeric comparison."""
+        results = db_with_volumes.query_with_filters(
+            "test-cluster",
+            "storage.volumes",
+            ["size > 1073741824"],
+        )
+        assert len(results) == 1
+        assert results[0].name == "vol3"
+
+    def test_in_operator(self, db_with_volumes: ClusterMetadataDB) -> None:
+        """Filter with in operator."""
+        results = db_with_volumes.query_with_filters(
+            "test-cluster",
+            "storage.volumes",
+            ["state in ('online', 'offline')"],
+        )
+        assert len(results) == 3
+
+    def test_inequality_json_field(self, db_with_volumes: ClusterMetadataDB) -> None:
+        """Filter JSON sub-field with inequality."""
+        results = db_with_volumes.query_with_filters(
+            "test-cluster",
+            "storage.volumes",
+            ["autosize.mode != 'off'"],
+        )
+        assert len(results) == 2
+        names = {r.name for r in results}
+        assert names == {"vol1", "vol3"}
+
+    def test_invalid_cluster_name_raises(self, db_with_volumes: ClusterMetadataDB) -> None:
+        """Invalid cluster name raises ValueError."""
+        with pytest.raises(ValueError, match="Invalid cluster name"):
+            db_with_volumes.query_with_filters("123invalid", "storage.volumes", ["name = 'vol1'"])
+
+
 class TestClusterMetadataDBMigration:
     """Tests for v1 → v2 migration."""
 
