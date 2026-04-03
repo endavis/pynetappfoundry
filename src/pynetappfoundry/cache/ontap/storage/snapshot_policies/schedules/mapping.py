@@ -18,36 +18,28 @@ ONTAPSNAPSHOTPOLICYSCHEDULE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="count",
-            api_path="count",
             default=0,
         ),
         FieldMapping(
             cache_attr="prefix",
-            api_path="prefix",
         ),
         FieldMapping(
             cache_attr="retention_period",
-            api_path="retention_period",
         ),
         FieldMapping(
             cache_attr="schedule.name",
-            api_path="schedule.name",
         ),
         FieldMapping(
             cache_attr="schedule.uuid",
-            api_path="schedule.uuid",
         ),
         FieldMapping(
             cache_attr="snapmirror_label",
-            api_path="snapmirror_label",
         ),
         FieldMapping(
             cache_attr="snapshot_policy.name",
-            api_path="snapshot_policy.name",
         ),
         FieldMapping(
             cache_attr="snapshot_policy.uuid",
-            api_path="snapshot_policy.uuid",
         ),
     ),
 )

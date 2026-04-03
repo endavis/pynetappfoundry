@@ -16,54 +16,43 @@ ONTAPTOPMETRICSSVMCLIENT_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="client_ip",
-            api_path="client_ip",
         ),
         FieldMapping(
             cache_attr="iops.error.lower_bound",
-            api_path="iops.error.lower_bound",
             default=0,
         ),
         FieldMapping(
             cache_attr="iops.error.upper_bound",
-            api_path="iops.error.upper_bound",
             default=0,
         ),
         FieldMapping(
             cache_attr="iops.read",
-            api_path="iops.read",
             default=0,
         ),
         FieldMapping(
             cache_attr="iops.write",
-            api_path="iops.write",
             default=0,
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="throughput.error.lower_bound",
-            api_path="throughput.error.lower_bound",
             default=0,
         ),
         FieldMapping(
             cache_attr="throughput.error.upper_bound",
-            api_path="throughput.error.upper_bound",
             default=0,
         ),
         FieldMapping(
             cache_attr="throughput.read",
-            api_path="throughput.read",
             default=0,
         ),
         FieldMapping(
             cache_attr="throughput.write",
-            api_path="throughput.write",
             default=0,
         ),
     ),

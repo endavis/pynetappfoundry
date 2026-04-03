@@ -25,39 +25,31 @@ ONTAPSNAPSHOTPOLICY_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="comment",
-            api_path="comment",
         ),
         FieldMapping(
             cache_attr="copies",
-            api_path="copies",
             transform=_transform_copies,
             default=[],
             requires_explicit_fetch=True,
         ),
         FieldMapping(
             cache_attr="enabled",
-            api_path="enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="scope",
-            api_path="scope",
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="uuid",
-            api_path="uuid",
         ),
     ),
 )

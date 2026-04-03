@@ -18,61 +18,47 @@ ONTAPLOCALCIFSUSERSANDGROUPSIMPORT_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="decryption_password",
-            api_path="decryption_password",
         ),
         FieldMapping(
             cache_attr="detailed_status.code",
-            api_path="detailed_status.code",
         ),
         FieldMapping(
             cache_attr="detailed_status.message",
-            api_path="detailed_status.message",
         ),
         FieldMapping(
             cache_attr="elements_ignored",
-            api_path="elements_ignored",
             default=0,
         ),
         FieldMapping(
             cache_attr="elements_imported",
-            api_path="elements_imported",
             default=0,
         ),
         FieldMapping(
             cache_attr="import_uri.password",
-            api_path="import_uri.password",
         ),
         FieldMapping(
             cache_attr="import_uri.path",
-            api_path="import_uri.path",
         ),
         FieldMapping(
             cache_attr="import_uri.username",
-            api_path="import_uri.username",
         ),
         FieldMapping(
             cache_attr="state",
-            api_path="state",
         ),
         FieldMapping(
             cache_attr="status_uri.password",
-            api_path="status_uri.password",
         ),
         FieldMapping(
             cache_attr="status_uri.path",
-            api_path="status_uri.path",
         ),
         FieldMapping(
             cache_attr="status_uri.username",
-            api_path="status_uri.username",
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
     ),
 )

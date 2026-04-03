@@ -16,28 +16,22 @@ ONTAPSECURITYSAMLSP_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="certificate.ca",
-            api_path="certificate.ca",
         ),
         FieldMapping(
             cache_attr="certificate.common_name",
-            api_path="certificate.common_name",
         ),
         FieldMapping(
             cache_attr="certificate.serial_number",
-            api_path="certificate.serial_number",
         ),
         FieldMapping(
             cache_attr="enabled",
-            api_path="enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="host",
-            api_path="host",
         ),
         FieldMapping(
             cache_attr="idp_uri",
-            api_path="idp_uri",
         ),
     ),
 )

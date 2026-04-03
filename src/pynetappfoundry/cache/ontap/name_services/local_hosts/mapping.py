@@ -14,28 +14,22 @@ ONTAPLOCALHOST_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="address",
-            api_path="address",
         ),
         FieldMapping(
             cache_attr="aliases",
-            api_path="aliases",
             default=[],
         ),
         FieldMapping(
             cache_attr="hostname",
-            api_path="hostname",
         ),
         FieldMapping(
             cache_attr="owner.name",
-            api_path="owner.name",
         ),
         FieldMapping(
             cache_attr="owner.uuid",
-            api_path="owner.uuid",
         ),
         FieldMapping(
             cache_attr="scope",
-            api_path="scope",
         ),
     ),
 )

@@ -73,77 +73,62 @@ ONTAPSTORAGEPOOL_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="capacity.disk_count",
-            api_path="capacity.disk_count",
             default=0,
         ),
         FieldMapping(
             cache_attr="capacity.disks",
-            api_path="capacity.disks",
             transform=_transform_capacity_disks,
             default=[],
         ),
         FieldMapping(
             cache_attr="capacity.remaining",
-            api_path="capacity.remaining",
             default=0,
         ),
         FieldMapping(
             cache_attr="capacity.spare_allocation_units",
-            api_path="capacity.spare_allocation_units",
             transform=_transform_capacity_spare_allocation_units,
             default=[],
         ),
         FieldMapping(
             cache_attr="capacity.total",
-            api_path="capacity.total",
             default=0,
         ),
         FieldMapping(
             cache_attr="capacity.used_allocation_units",
-            api_path="capacity.used_allocation_units",
             transform=_transform_capacity_used_allocation_units,
             default=[],
         ),
         FieldMapping(
             cache_attr="health.is_healthy",
-            api_path="health.is_healthy",
             default=False,
         ),
         FieldMapping(
             cache_attr="health.state",
-            api_path="health.state",
         ),
         FieldMapping(
             cache_attr="health.unhealthy_reason.arguments",
-            api_path="health.unhealthy_reason.arguments",
             transform=_transform_health_unhealthy_reason_arguments,
             default=[],
         ),
         FieldMapping(
             cache_attr="health.unhealthy_reason.code",
-            api_path="health.unhealthy_reason.code",
         ),
         FieldMapping(
             cache_attr="health.unhealthy_reason.message",
-            api_path="health.unhealthy_reason.message",
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="nodes",
-            api_path="nodes",
             transform=_transform_nodes,
             default=[],
         ),
         FieldMapping(
             cache_attr="storage_type",
-            api_path="storage_type",
         ),
         FieldMapping(
             cache_attr="uuid",
-            api_path="uuid",
         ),
     ),
 )

@@ -16,37 +16,29 @@ ONTAPVSCANSCANNERPOOL_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="cluster.name",
-            api_path="cluster.name",
         ),
         FieldMapping(
             cache_attr="cluster.uuid",
-            api_path="cluster.uuid",
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="privileged_users",
-            api_path="privileged_users",
             default=[],
         ),
         FieldMapping(
             cache_attr="role",
-            api_path="role",
         ),
         FieldMapping(
             cache_attr="servers",
-            api_path="servers",
             default=[],
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
     ),
 )

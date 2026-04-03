@@ -19,11 +19,9 @@ ONTAPACTIVEDIRECTORYPREFERREDDC_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="fqdn",
-            api_path="fqdn",
         ),
         FieldMapping(
             cache_attr="server_ip",
-            api_path="server_ip",
         ),
     ),
 )

@@ -14,32 +14,25 @@ ONTAPLOGINMESSAGES_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="banner",
-            api_path="banner",
         ),
         FieldMapping(
             cache_attr="message",
-            api_path="message",
         ),
         FieldMapping(
             cache_attr="scope",
-            api_path="scope",
         ),
         FieldMapping(
             cache_attr="show_cluster_message",
-            api_path="show_cluster_message",
             default=False,
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="uuid",
-            api_path="uuid",
         ),
     ),
 )

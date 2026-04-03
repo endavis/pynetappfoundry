@@ -364,7 +364,8 @@ class TestGenerateMapping:
         ep = _make_endpoint()
         code = generate_mapping(ep)
         assert 'cache_attr="svm.name"' in code
-        assert 'api_path="svm.name"' in code
+        # api_path is omitted when it matches cache_attr (auto-defaults via __post_init__)
+        assert 'api_path="svm.name"' not in code
 
     def test_expensive_fields_in_endpoint(self):
         fields = [
@@ -771,10 +772,11 @@ class TestGenerateMappingSubModel:
         code = generate_mapping(ep)
         assert "transform=_transform_copies" in code
 
-    def test_sub_model_field_emits_api_path_and_transform(self):
+    def test_sub_model_field_emits_transform(self):
         ep = _make_endpoint_with_sub_model()
         code = generate_mapping(ep)
-        assert 'api_path="copies"' in code
+        # api_path omitted when it matches cache_attr (auto-defaults via __post_init__)
+        assert 'api_path="copies"' not in code
         assert "transform=_transform_copies" in code
 
     def test_sub_model_imported(self):

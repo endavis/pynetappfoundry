@@ -18,24 +18,19 @@ ONTAPFPOLICYPERSISTENTSTORE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="autosize_mode",
-            api_path="autosize_mode",
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="size",
-            api_path="size",
             default=0,
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="volume",
-            api_path="volume",
         ),
     ),
 )

@@ -40,48 +40,39 @@ ONTAPKEYSERVER_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="connectivity.cluster_availability",
-            api_path="connectivity.cluster_availability",
             default=False,
             requires_explicit_fetch=True,
         ),
         FieldMapping(
             cache_attr="connectivity.node_states",
-            api_path="connectivity.node_states",
             transform=_transform_connectivity_node_states,
             default=[],
         ),
         FieldMapping(
             cache_attr="create_remove_timeout",
-            api_path="create_remove_timeout",
             default=0,
         ),
         FieldMapping(
             cache_attr="password",
-            api_path="password",
         ),
         FieldMapping(
             cache_attr="records",
-            api_path="records",
             transform=_transform_records,
             default=[],
         ),
         FieldMapping(
             cache_attr="secondary_key_servers",
-            api_path="secondary_key_servers",
             default=[],
         ),
         FieldMapping(
             cache_attr="server",
-            api_path="server",
         ),
         FieldMapping(
             cache_attr="timeout",
-            api_path="timeout",
             default=0,
         ),
         FieldMapping(
             cache_attr="username",
-            api_path="username",
         ),
     ),
 )

@@ -14,7 +14,6 @@ ONTAPQOSOPTION_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="background_task_reserve",
-            api_path="background_task_reserve",
             default=0,
         ),
     ),

@@ -14,36 +14,28 @@ ONTAPNFSTLSINTERFACE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="certificate.name",
-            api_path="certificate.name",
         ),
         FieldMapping(
             cache_attr="certificate.uuid",
-            api_path="certificate.uuid",
         ),
         FieldMapping(
             cache_attr="enabled",
-            api_path="enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="interface.ip.address",
-            api_path="interface.ip.address",
         ),
         FieldMapping(
             cache_attr="interface.name",
-            api_path="interface.name",
         ),
         FieldMapping(
             cache_attr="interface.uuid",
-            api_path="interface.uuid",
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
     ),
 )

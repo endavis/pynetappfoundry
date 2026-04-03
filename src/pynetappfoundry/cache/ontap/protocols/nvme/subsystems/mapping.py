@@ -31,66 +31,52 @@ ONTAPNVMESUBSYSTEM_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="comment",
-            api_path="comment",
         ),
         FieldMapping(
             cache_attr="delete_on_unmap",
-            api_path="delete_on_unmap",
             default=False,
         ),
         FieldMapping(
             cache_attr="hosts",
-            api_path="hosts",
             transform=_transform_hosts,
             default=[],
         ),
         FieldMapping(
             cache_attr="io_queue.default.count",
-            api_path="io_queue.default.count",
             default=0,
         ),
         FieldMapping(
             cache_attr="io_queue.default.depth",
-            api_path="io_queue.default.depth",
             default=0,
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="os_type",
-            api_path="os_type",
         ),
         FieldMapping(
             cache_attr="serial_number",
-            api_path="serial_number",
         ),
         FieldMapping(
             cache_attr="subsystem_maps",
-            api_path="subsystem_maps",
             transform=_transform_subsystem_maps,
             default=[],
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="target_nqn",
-            api_path="target_nqn",
         ),
         FieldMapping(
             cache_attr="uuid",
-            api_path="uuid",
         ),
         FieldMapping(
             cache_attr="vendor_uuids",
-            api_path="vendor_uuids",
             default=[],
         ),
     ),

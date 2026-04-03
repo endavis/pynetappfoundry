@@ -16,12 +16,10 @@ ONTAPSUPPORTEDALGORITHMS_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="algorithm.id",
-            api_path="algorithm.id",
             default=0,
         ),
         FieldMapping(
             cache_attr="algorithm.name",
-            api_path="algorithm.name",
         ),
         FieldMapping(
             cache_attr="algorithm.type_",
@@ -29,15 +27,12 @@ ONTAPSUPPORTEDALGORITHMS_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="owner.name",
-            api_path="owner.name",
         ),
         FieldMapping(
             cache_attr="owner.uuid",
-            api_path="owner.uuid",
         ),
         FieldMapping(
             cache_attr="scope",
-            api_path="scope",
         ),
     ),
 )

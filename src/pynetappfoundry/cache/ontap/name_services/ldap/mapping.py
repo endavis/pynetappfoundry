@@ -14,99 +14,77 @@ ONTAPLDAPSERVICE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="ad_domain",
-            api_path="ad_domain",
         ),
         FieldMapping(
             cache_attr="base_dn",
-            api_path="base_dn",
         ),
         FieldMapping(
             cache_attr="base_scope",
-            api_path="base_scope",
         ),
         FieldMapping(
             cache_attr="bind_as_cifs_server",
-            api_path="bind_as_cifs_server",
             default=False,
         ),
         FieldMapping(
             cache_attr="bind_dn",
-            api_path="bind_dn",
         ),
         FieldMapping(
             cache_attr="bind_password",
-            api_path="bind_password",
         ),
         FieldMapping(
             cache_attr="group_dn",
-            api_path="group_dn",
         ),
         FieldMapping(
             cache_attr="group_membership_filter",
-            api_path="group_membership_filter",
         ),
         FieldMapping(
             cache_attr="group_scope",
-            api_path="group_scope",
         ),
         FieldMapping(
             cache_attr="is_netgroup_byhost_enabled",
-            api_path="is_netgroup_byhost_enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="is_owner",
-            api_path="is_owner",
             default=False,
         ),
         FieldMapping(
             cache_attr="ldaps_enabled",
-            api_path="ldaps_enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="min_bind_level",
-            api_path="min_bind_level",
         ),
         FieldMapping(
             cache_attr="netgroup_byhost_dn",
-            api_path="netgroup_byhost_dn",
         ),
         FieldMapping(
             cache_attr="netgroup_byhost_scope",
-            api_path="netgroup_byhost_scope",
         ),
         FieldMapping(
             cache_attr="netgroup_dn",
-            api_path="netgroup_dn",
         ),
         FieldMapping(
             cache_attr="netgroup_scope",
-            api_path="netgroup_scope",
         ),
         FieldMapping(
             cache_attr="port",
-            api_path="port",
             default=0,
         ),
         FieldMapping(
             cache_attr="preferred_ad_servers",
-            api_path="preferred_ad_servers",
             default=[],
         ),
         FieldMapping(
             cache_attr="query_timeout",
-            api_path="query_timeout",
             default=0,
         ),
         FieldMapping(
             cache_attr="referral_enabled",
-            api_path="referral_enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="restrict_discovery_to_site",
-            api_path="restrict_discovery_to_site",
             default=False,
         ),
         FieldMapping(
@@ -115,105 +93,82 @@ ONTAPLDAPSERVICE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="servers",
-            api_path="servers",
             default=[],
         ),
         FieldMapping(
             cache_attr="session_security",
-            api_path="session_security",
         ),
         FieldMapping(
             cache_attr="skip_config_validation",
-            api_path="skip_config_validation",
             default=False,
         ),
         FieldMapping(
             cache_attr="status.code",
-            api_path="status.code",
             default=0,
         ),
         FieldMapping(
             cache_attr="status.dn_message",
-            api_path="status.dn_message",
             default=[],
         ),
         FieldMapping(
             cache_attr="status.ipv4.code",
-            api_path="status.ipv4.code",
             default=0,
         ),
         FieldMapping(
             cache_attr="status.ipv4.dn_messages",
-            api_path="status.ipv4.dn_messages",
             default=[],
         ),
         FieldMapping(
             cache_attr="status.ipv4.message",
-            api_path="status.ipv4.message",
         ),
         FieldMapping(
             cache_attr="status.ipv4.state",
-            api_path="status.ipv4.state",
         ),
         FieldMapping(
             cache_attr="status.ipv4_state",
-            api_path="status.ipv4_state",
         ),
         FieldMapping(
             cache_attr="status.ipv6.code",
-            api_path="status.ipv6.code",
             default=0,
         ),
         FieldMapping(
             cache_attr="status.ipv6.dn_messages",
-            api_path="status.ipv6.dn_messages",
             default=[],
         ),
         FieldMapping(
             cache_attr="status.ipv6.message",
-            api_path="status.ipv6.message",
         ),
         FieldMapping(
             cache_attr="status.ipv6.state",
-            api_path="status.ipv6.state",
         ),
         FieldMapping(
             cache_attr="status.ipv6_state",
-            api_path="status.ipv6_state",
         ),
         FieldMapping(
             cache_attr="status.message",
-            api_path="status.message",
         ),
         FieldMapping(
             cache_attr="status.state",
-            api_path="status.state",
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="try_channel_binding",
-            api_path="try_channel_binding",
             default=False,
         ),
         FieldMapping(
             cache_attr="use_start_tls",
-            api_path="use_start_tls",
             default=False,
         ),
         FieldMapping(
             cache_attr="user_dn",
-            api_path="user_dn",
         ),
         FieldMapping(
             cache_attr="user_scope",
-            api_path="user_scope",
         ),
     ),
 )

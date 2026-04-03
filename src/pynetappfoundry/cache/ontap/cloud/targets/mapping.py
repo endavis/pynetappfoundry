@@ -14,129 +14,99 @@ ONTAPCLOUDTARGET_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="access_key",
-            api_path="access_key",
         ),
         FieldMapping(
             cache_attr="authentication_type",
-            api_path="authentication_type",
         ),
         FieldMapping(
             cache_attr="azure_account",
-            api_path="azure_account",
         ),
         FieldMapping(
             cache_attr="azure_msi_token",
-            api_path="azure_msi_token",
         ),
         FieldMapping(
             cache_attr="azure_private_key",
-            api_path="azure_private_key",
         ),
         FieldMapping(
             cache_attr="azure_sas_token",
-            api_path="azure_sas_token",
         ),
         FieldMapping(
             cache_attr="cap_url",
-            api_path="cap_url",
         ),
         FieldMapping(
             cache_attr="certificate_validation_enabled",
-            api_path="certificate_validation_enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="cluster.name",
-            api_path="cluster.name",
         ),
         FieldMapping(
             cache_attr="cluster.uuid",
-            api_path="cluster.uuid",
         ),
         FieldMapping(
             cache_attr="container",
-            api_path="container",
         ),
         FieldMapping(
             cache_attr="ipspace.name",
-            api_path="ipspace.name",
         ),
         FieldMapping(
             cache_attr="ipspace.uuid",
-            api_path="ipspace.uuid",
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="owner",
-            api_path="owner",
         ),
         FieldMapping(
             cache_attr="port",
-            api_path="port",
             default=0,
         ),
         FieldMapping(
             cache_attr="provider_type",
-            api_path="provider_type",
         ),
         FieldMapping(
             cache_attr="read_latency_warning_threshold",
-            api_path="read_latency_warning_threshold",
             default=0,
         ),
         FieldMapping(
             cache_attr="scope",
-            api_path="scope",
         ),
         FieldMapping(
             cache_attr="secret_password",
-            api_path="secret_password",
         ),
         FieldMapping(
             cache_attr="server",
-            api_path="server",
         ),
         FieldMapping(
             cache_attr="server_side_encryption",
-            api_path="server_side_encryption",
         ),
         FieldMapping(
             cache_attr="snapmirror_use",
-            api_path="snapmirror_use",
         ),
         FieldMapping(
             cache_attr="ssl_enabled",
-            api_path="ssl_enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="url_style",
-            api_path="url_style",
         ),
         FieldMapping(
             cache_attr="use_http_proxy",
-            api_path="use_http_proxy",
             default=False,
         ),
         FieldMapping(
             cache_attr="used",
-            api_path="used",
             default=0,
         ),
         FieldMapping(
             cache_attr="uuid",
-            api_path="uuid",
         ),
     ),
 )

@@ -16,28 +16,22 @@ ONTAPNFSCLIENTSMAP_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="client_ips",
-            api_path="client_ips",
             default=[],
         ),
         FieldMapping(
             cache_attr="node.name",
-            api_path="node.name",
         ),
         FieldMapping(
             cache_attr="node.uuid",
-            api_path="node.uuid",
         ),
         FieldMapping(
             cache_attr="server_ip",
-            api_path="server_ip",
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
     ),
 )

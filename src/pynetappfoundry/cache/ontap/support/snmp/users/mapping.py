@@ -14,51 +14,39 @@ ONTAPSNMPUSER_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="authentication_method",
-            api_path="authentication_method",
         ),
         FieldMapping(
             cache_attr="comment",
-            api_path="comment",
         ),
         FieldMapping(
             cache_attr="engine_id",
-            api_path="engine_id",
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="owner.name",
-            api_path="owner.name",
         ),
         FieldMapping(
             cache_attr="owner.uuid",
-            api_path="owner.uuid",
         ),
         FieldMapping(
             cache_attr="scope",
-            api_path="scope",
         ),
         FieldMapping(
             cache_attr="snmpv3.authentication_password",
-            api_path="snmpv3.authentication_password",
         ),
         FieldMapping(
             cache_attr="snmpv3.authentication_protocol",
-            api_path="snmpv3.authentication_protocol",
         ),
         FieldMapping(
             cache_attr="snmpv3.privacy_password",
-            api_path="snmpv3.privacy_password",
         ),
         FieldMapping(
             cache_attr="snmpv3.privacy_protocol",
-            api_path="snmpv3.privacy_protocol",
         ),
         FieldMapping(
             cache_attr="switch_address",
-            api_path="switch_address",
         ),
     ),
 )

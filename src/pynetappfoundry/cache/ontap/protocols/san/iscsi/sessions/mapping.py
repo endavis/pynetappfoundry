@@ -31,52 +31,41 @@ ONTAPISCSISESSION_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="connections",
-            api_path="connections",
             transform=_transform_connections,
             default=[],
         ),
         FieldMapping(
             cache_attr="igroups",
-            api_path="igroups",
             transform=_transform_igroups,
             default=[],
         ),
         FieldMapping(
             cache_attr="initiator.alias",
-            api_path="initiator.alias",
         ),
         FieldMapping(
             cache_attr="initiator.comment",
-            api_path="initiator.comment",
         ),
         FieldMapping(
             cache_attr="initiator.name",
-            api_path="initiator.name",
         ),
         FieldMapping(
             cache_attr="isid",
-            api_path="isid",
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="target_portal_group",
-            api_path="target_portal_group",
         ),
         FieldMapping(
             cache_attr="target_portal_group_tag",
-            api_path="target_portal_group_tag",
             default=0,
         ),
         FieldMapping(
             cache_attr="tsih",
-            api_path="tsih",
             default=0,
         ),
     ),

@@ -14,7 +14,6 @@ ONTAPCLUSTERNDMPPROPERTIES_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="mode",
-            api_path="mode",
         ),
     ),
 )

@@ -25,69 +25,54 @@ ONTAPLUNMAP_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="igroup.initiators",
-            api_path="igroup.initiators",
             default=[],
         ),
         FieldMapping(
             cache_attr="igroup.name",
-            api_path="igroup.name",
         ),
         FieldMapping(
             cache_attr="igroup.os_type",
-            api_path="igroup.os_type",
         ),
         FieldMapping(
             cache_attr="igroup.protocol",
-            api_path="igroup.protocol",
         ),
         FieldMapping(
             cache_attr="igroup.replicated",
-            api_path="igroup.replicated",
             default=False,
         ),
         FieldMapping(
             cache_attr="igroup.uuid",
-            api_path="igroup.uuid",
         ),
         FieldMapping(
             cache_attr="logical_unit_number",
-            api_path="logical_unit_number",
             default=0,
         ),
         FieldMapping(
             cache_attr="lun.name",
-            api_path="lun.name",
         ),
         FieldMapping(
             cache_attr="lun.node.name",
-            api_path="lun.node.name",
         ),
         FieldMapping(
             cache_attr="lun.node.uuid",
-            api_path="lun.node.uuid",
         ),
         FieldMapping(
             cache_attr="lun.smbc.replicated",
-            api_path="lun.smbc.replicated",
             default=False,
         ),
         FieldMapping(
             cache_attr="lun.uuid",
-            api_path="lun.uuid",
         ),
         FieldMapping(
             cache_attr="reporting_nodes",
-            api_path="reporting_nodes",
             transform=_transform_reporting_nodes,
             default=[],
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
     ),
 )

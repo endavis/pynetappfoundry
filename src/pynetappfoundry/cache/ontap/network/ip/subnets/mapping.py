@@ -31,75 +31,59 @@ ONTAPIPSUBNET_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="available_count",
-            api_path="available_count",
             default=0,
         ),
         FieldMapping(
             cache_attr="available_ip_ranges",
-            api_path="available_ip_ranges",
             transform=_transform_available_ip_ranges,
             default=[],
         ),
         FieldMapping(
             cache_attr="broadcast_domain.name",
-            api_path="broadcast_domain.name",
         ),
         FieldMapping(
             cache_attr="broadcast_domain.uuid",
-            api_path="broadcast_domain.uuid",
         ),
         FieldMapping(
             cache_attr="fail_if_lifs_conflict",
-            api_path="fail_if_lifs_conflict",
             default=False,
         ),
         FieldMapping(
             cache_attr="gateway",
-            api_path="gateway",
         ),
         FieldMapping(
             cache_attr="ip_ranges",
-            api_path="ip_ranges",
             transform=_transform_ip_ranges,
             default=[],
         ),
         FieldMapping(
             cache_attr="ipspace.name",
-            api_path="ipspace.name",
         ),
         FieldMapping(
             cache_attr="ipspace.uuid",
-            api_path="ipspace.uuid",
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="subnet.address",
-            api_path="subnet.address",
         ),
         FieldMapping(
             cache_attr="subnet.family",
-            api_path="subnet.family",
         ),
         FieldMapping(
             cache_attr="subnet.netmask",
-            api_path="subnet.netmask",
         ),
         FieldMapping(
             cache_attr="total_count",
-            api_path="total_count",
             default=0,
         ),
         FieldMapping(
             cache_attr="used_count",
-            api_path="used_count",
             default=0,
         ),
         FieldMapping(
             cache_attr="uuid",
-            api_path="uuid",
         ),
     ),
 )

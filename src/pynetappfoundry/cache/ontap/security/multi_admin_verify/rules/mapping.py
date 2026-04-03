@@ -29,51 +29,40 @@ ONTAPMULTIADMINVERIFYRULE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="approval_expiry",
-            api_path="approval_expiry",
         ),
         FieldMapping(
             cache_attr="approval_groups",
-            api_path="approval_groups",
             transform=_transform_approval_groups,
             default=[],
         ),
         FieldMapping(
             cache_attr="auto_request_create",
-            api_path="auto_request_create",
             default=False,
         ),
         FieldMapping(
             cache_attr="create_time",
-            api_path="create_time",
         ),
         FieldMapping(
             cache_attr="execution_expiry",
-            api_path="execution_expiry",
         ),
         FieldMapping(
             cache_attr="operation",
-            api_path="operation",
         ),
         FieldMapping(
             cache_attr="owner.name",
-            api_path="owner.name",
         ),
         FieldMapping(
             cache_attr="owner.uuid",
-            api_path="owner.uuid",
         ),
         FieldMapping(
             cache_attr="query",
-            api_path="query",
         ),
         FieldMapping(
             cache_attr="required_approvers",
-            api_path="required_approvers",
             default=0,
         ),
         FieldMapping(
             cache_attr="system_defined",
-            api_path="system_defined",
             default=False,
         ),
     ),

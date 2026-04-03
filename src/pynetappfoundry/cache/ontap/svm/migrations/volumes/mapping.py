@@ -27,43 +27,34 @@ ONTAPSVMMIGRATIONVOLUME_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="errors",
-            api_path="errors",
             transform=_transform_errors,
             default=[],
         ),
         FieldMapping(
             cache_attr="healthy",
-            api_path="healthy",
             default=False,
         ),
         FieldMapping(
             cache_attr="node.name",
-            api_path="node.name",
         ),
         FieldMapping(
             cache_attr="node.uuid",
-            api_path="node.uuid",
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="transfer_state",
-            api_path="transfer_state",
             cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="volume.name",
-            api_path="volume.name",
         ),
         FieldMapping(
             cache_attr="volume.uuid",
-            api_path="volume.uuid",
         ),
     ),
 )

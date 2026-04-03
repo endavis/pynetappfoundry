@@ -16,172 +16,136 @@ ONTAPFILEINFO_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="accessed_time",
-            api_path="accessed_time",
         ),
         FieldMapping(
             cache_attr="analytics.by_accessed_time.bytes_used.labels",
-            api_path="analytics.by_accessed_time.bytes_used.labels",
             default=[],
         ),
         FieldMapping(
             cache_attr="analytics.by_accessed_time.bytes_used.newest_label",
-            api_path="analytics.by_accessed_time.bytes_used.newest_label",
         ),
         FieldMapping(
             cache_attr="analytics.by_accessed_time.bytes_used.percentages",
-            api_path="analytics.by_accessed_time.bytes_used.percentages",
             default=[],
         ),
         FieldMapping(
             cache_attr="analytics.by_accessed_time.bytes_used.values",
-            api_path="analytics.by_accessed_time.bytes_used.values",
             default=[],
         ),
         FieldMapping(
             cache_attr="analytics.by_modified_time.bytes_used.labels",
-            api_path="analytics.by_modified_time.bytes_used.labels",
             default=[],
         ),
         FieldMapping(
             cache_attr="analytics.by_modified_time.bytes_used.newest_label",
-            api_path="analytics.by_modified_time.bytes_used.newest_label",
         ),
         FieldMapping(
             cache_attr="analytics.by_modified_time.bytes_used.percentages",
-            api_path="analytics.by_modified_time.bytes_used.percentages",
             default=[],
         ),
         FieldMapping(
             cache_attr="analytics.by_modified_time.bytes_used.values",
-            api_path="analytics.by_modified_time.bytes_used.values",
             default=[],
         ),
         FieldMapping(
             cache_attr="analytics.bytes_used",
-            api_path="analytics.bytes_used",
             default=0,
         ),
         FieldMapping(
             cache_attr="analytics.file_count",
-            api_path="analytics.file_count",
             default=0,
         ),
         FieldMapping(
             cache_attr="analytics.incomplete_data",
-            api_path="analytics.incomplete_data",
             default=False,
         ),
         FieldMapping(
             cache_attr="analytics.subdir_count",
-            api_path="analytics.subdir_count",
             default=0,
         ),
         FieldMapping(
             cache_attr="bytes_used",
-            api_path="bytes_used",
             default=0,
         ),
         FieldMapping(
             cache_attr="changed_time",
-            api_path="changed_time",
         ),
         FieldMapping(
             cache_attr="constituent.name",
-            api_path="constituent.name",
         ),
         FieldMapping(
             cache_attr="constituent.uuid",
-            api_path="constituent.uuid",
         ),
         FieldMapping(
             cache_attr="creation_time",
-            api_path="creation_time",
         ),
         FieldMapping(
             cache_attr="fill_enabled",
-            api_path="fill_enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="group_id",
-            api_path="group_id",
             default=0,
         ),
         FieldMapping(
             cache_attr="hard_links_count",
-            api_path="hard_links_count",
             default=0,
         ),
         FieldMapping(
             cache_attr="inode_generation",
-            api_path="inode_generation",
             default=0,
         ),
         FieldMapping(
             cache_attr="inode_number",
-            api_path="inode_number",
             default=0,
         ),
         FieldMapping(
             cache_attr="is_empty",
-            api_path="is_empty",
             default=False,
         ),
         FieldMapping(
             cache_attr="is_junction",
-            api_path="is_junction",
             default=False,
         ),
         FieldMapping(
             cache_attr="is_snapshot",
-            api_path="is_snapshot",
             default=False,
         ),
         FieldMapping(
             cache_attr="is_vm_aligned",
-            api_path="is_vm_aligned",
             default=False,
         ),
         FieldMapping(
             cache_attr="modified_time",
-            api_path="modified_time",
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="overwrite_enabled",
-            api_path="overwrite_enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="owner_id",
-            api_path="owner_id",
             default=0,
         ),
         FieldMapping(
             cache_attr="path",
-            api_path="path",
         ),
         FieldMapping(
             cache_attr="qos_policy.name",
-            api_path="qos_policy.name",
             requires_explicit_fetch=True,
         ),
         FieldMapping(
             cache_attr="qos_policy.uuid",
-            api_path="qos_policy.uuid",
             requires_explicit_fetch=True,
         ),
         FieldMapping(
             cache_attr="size",
-            api_path="size",
             default=0,
         ),
         FieldMapping(
             cache_attr="target",
-            api_path="target",
         ),
         FieldMapping(
             cache_attr="type_",
@@ -189,21 +153,17 @@ ONTAPFILEINFO_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="unique_bytes",
-            api_path="unique_bytes",
             default=0,
         ),
         FieldMapping(
             cache_attr="unix_permissions",
-            api_path="unix_permissions",
             default=0,
         ),
         FieldMapping(
             cache_attr="volume.name",
-            api_path="volume.name",
         ),
         FieldMapping(
             cache_attr="volume.uuid",
-            api_path="volume.uuid",
         ),
     ),
 )

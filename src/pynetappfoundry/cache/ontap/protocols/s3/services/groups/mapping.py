@@ -33,34 +33,27 @@ ONTAPS3GROUP_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="comment",
-            api_path="comment",
         ),
         FieldMapping(
             cache_attr="id",
-            api_path="id",
             default=0,
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="policies",
-            api_path="policies",
             transform=_transform_policies,
             default=[],
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="users",
-            api_path="users",
             transform=_transform_users,
             default=[],
         ),

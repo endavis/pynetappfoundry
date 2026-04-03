@@ -16,31 +16,24 @@ ONTAPANTIRANSOMWARESUSPECT_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="file.format",
-            api_path="file.format",
         ),
         FieldMapping(
             cache_attr="file.name",
-            api_path="file.name",
         ),
         FieldMapping(
             cache_attr="file.path",
-            api_path="file.path",
         ),
         FieldMapping(
             cache_attr="file.reason",
-            api_path="file.reason",
         ),
         FieldMapping(
             cache_attr="file.suspect_time",
-            api_path="file.suspect_time",
         ),
         FieldMapping(
             cache_attr="volume.name",
-            api_path="volume.name",
         ),
         FieldMapping(
             cache_attr="volume.uuid",
-            api_path="volume.uuid",
         ),
     ),
 )

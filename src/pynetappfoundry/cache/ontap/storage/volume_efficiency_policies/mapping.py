@@ -16,42 +16,33 @@ ONTAPVOLUMEEFFICIENCYPOLICY_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="comment",
-            api_path="comment",
         ),
         FieldMapping(
             cache_attr="duration",
-            api_path="duration",
             default=0,
         ),
         FieldMapping(
             cache_attr="enabled",
-            api_path="enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="qos_policy",
-            api_path="qos_policy",
         ),
         FieldMapping(
             cache_attr="schedule.name",
-            api_path="schedule.name",
         ),
         FieldMapping(
             cache_attr="start_threshold_percent",
-            api_path="start_threshold_percent",
             default=0,
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="type_",
@@ -59,7 +50,6 @@ ONTAPVOLUMEEFFICIENCYPOLICY_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="uuid",
-            api_path="uuid",
         ),
     ),
 )

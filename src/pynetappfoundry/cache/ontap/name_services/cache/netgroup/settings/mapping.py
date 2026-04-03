@@ -16,33 +16,26 @@ ONTAPNETGROUPSSETTINGS_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="enabled",
-            api_path="enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="negative_cache_enabled_byhost",
-            api_path="negative_cache_enabled_byhost",
             default=False,
         ),
         FieldMapping(
             cache_attr="negative_ttl_byhost",
-            api_path="negative_ttl_byhost",
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="ttl_byhost",
-            api_path="ttl_byhost",
         ),
         FieldMapping(
             cache_attr="ttl_for_members",
-            api_path="ttl_for_members",
         ),
     ),
 )

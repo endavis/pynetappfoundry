@@ -25,42 +25,33 @@ ONTAPLOCALCIFSUSER_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="account_disabled",
-            api_path="account_disabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="description",
-            api_path="description",
         ),
         FieldMapping(
             cache_attr="full_name",
-            api_path="full_name",
         ),
         FieldMapping(
             cache_attr="membership",
-            api_path="membership",
             transform=_transform_membership,
             default=[],
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="password",
-            api_path="password",
         ),
         FieldMapping(
             cache_attr="sid",
-            api_path="sid",
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
     ),
 )

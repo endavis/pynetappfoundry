@@ -27,25 +27,20 @@ ONTAPLOCALCIFSGROUPMEMBERS_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="local_cifs_group.sid",
-            api_path="local_cifs_group.sid",
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="records",
-            api_path="records",
             transform=_transform_records,
             default=[],
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
     ),
 )

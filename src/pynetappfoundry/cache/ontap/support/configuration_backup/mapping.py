@@ -14,19 +14,15 @@ ONTAPCONFIGURATIONBACKUP_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="password",
-            api_path="password",
         ),
         FieldMapping(
             cache_attr="url",
-            api_path="url",
         ),
         FieldMapping(
             cache_attr="username",
-            api_path="username",
         ),
         FieldMapping(
             cache_attr="validate_certificate",
-            api_path="validate_certificate",
             default=False,
         ),
     ),

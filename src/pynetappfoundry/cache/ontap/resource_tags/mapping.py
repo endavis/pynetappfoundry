@@ -14,12 +14,10 @@ ONTAPRESOURCETAG_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="num_resources",
-            api_path="num_resources",
             default=0,
         ),
         FieldMapping(
             cache_attr="value",
-            api_path="value",
         ),
     ),
 )

@@ -15,11 +15,9 @@ ONTAPANTIRANSOMWARE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="version",
-            api_path="version",
         ),
     ),
 )

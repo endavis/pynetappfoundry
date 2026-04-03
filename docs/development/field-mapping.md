@@ -51,7 +51,7 @@ Maps a single field across three domains: API response, CLI output, and cache mo
 | Attribute | Type | Description |
 |-----------|------|-------------|
 | `cache_attr` | `str` | Model attribute name on the target Pydantic model. |
-| `api_path` | `str \| None` | Dot-path for API extraction (e.g., `"svm.name"`, `"aggregates[0].name"`). |
+| `api_path` | `str \| None` | Dot-path for API extraction (e.g., `"svm.name"`, `"aggregates[0].name"`). Defaults to `cache_attr` for `cache` and `realtime` fields; remains `None` for `derived` fields. |
 | `cli_field` | `str \| None` | Hyphenated CLI field name (e.g., `"vserver"`). |
 | `default` | `Any` | Default value when the field is missing. Default: `""`. |
 | `transform` | `Callable \| None` | Custom API extraction function receiving the full record dict. Overrides `api_path`. |
@@ -246,11 +246,10 @@ The `VOLUME_MAPPING` in `src/pynetappfoundry/cache/ontap/storage/volumes/mapping
 ```python
 FieldMapping(
     cache_attr="name",
-    api_path="name",
 )
 ```
 
-A straightforward top-level API field.
+A straightforward top-level API field. Since `api_path` defaults to `cache_attr` for `cache` and `realtime` fields, you only need to specify `api_path` when it differs from `cache_attr`.
 
 ### Nested API field (dot-path)
 

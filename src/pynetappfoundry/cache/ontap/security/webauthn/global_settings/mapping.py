@@ -14,37 +14,29 @@ ONTAPWEBAUTHNGLOBAL_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="attestation",
-            api_path="attestation",
         ),
         FieldMapping(
             cache_attr="owner.name",
-            api_path="owner.name",
         ),
         FieldMapping(
             cache_attr="owner.uuid",
-            api_path="owner.uuid",
         ),
         FieldMapping(
             cache_attr="require_rk",
-            api_path="require_rk",
             default=False,
         ),
         FieldMapping(
             cache_attr="resident_key",
-            api_path="resident_key",
         ),
         FieldMapping(
             cache_attr="scope",
-            api_path="scope",
         ),
         FieldMapping(
             cache_attr="timeout",
-            api_path="timeout",
             default=0,
         ),
         FieldMapping(
             cache_attr="user_verification",
-            api_path="user_verification",
         ),
     ),
 )

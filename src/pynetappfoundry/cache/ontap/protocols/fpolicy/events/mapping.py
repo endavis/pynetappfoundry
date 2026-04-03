@@ -16,209 +16,167 @@ ONTAPFPOLICYEVENT_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="file_operations.access",
-            api_path="file_operations.access",
             default=False,
         ),
         FieldMapping(
             cache_attr="file_operations.close",
-            api_path="file_operations.close",
             default=False,
         ),
         FieldMapping(
             cache_attr="file_operations.create",
-            api_path="file_operations.create",
             default=False,
         ),
         FieldMapping(
             cache_attr="file_operations.create_dir",
-            api_path="file_operations.create_dir",
             default=False,
         ),
         FieldMapping(
             cache_attr="file_operations.delete",
-            api_path="file_operations.delete",
             default=False,
         ),
         FieldMapping(
             cache_attr="file_operations.delete_dir",
-            api_path="file_operations.delete_dir",
             default=False,
         ),
         FieldMapping(
             cache_attr="file_operations.getattr",
-            api_path="file_operations.getattr",
             default=False,
         ),
         FieldMapping(
             cache_attr="file_operations.link",
-            api_path="file_operations.link",
             default=False,
         ),
         FieldMapping(
             cache_attr="file_operations.lookup",
-            api_path="file_operations.lookup",
             default=False,
         ),
         FieldMapping(
             cache_attr="file_operations.open",
-            api_path="file_operations.open",
             default=False,
         ),
         FieldMapping(
             cache_attr="file_operations.read",
-            api_path="file_operations.read",
             default=False,
         ),
         FieldMapping(
             cache_attr="file_operations.rename",
-            api_path="file_operations.rename",
             default=False,
         ),
         FieldMapping(
             cache_attr="file_operations.rename_dir",
-            api_path="file_operations.rename_dir",
             default=False,
         ),
         FieldMapping(
             cache_attr="file_operations.setattr",
-            api_path="file_operations.setattr",
             default=False,
         ),
         FieldMapping(
             cache_attr="file_operations.symlink",
-            api_path="file_operations.symlink",
             default=False,
         ),
         FieldMapping(
             cache_attr="file_operations.write",
-            api_path="file_operations.write",
             default=False,
         ),
         FieldMapping(
             cache_attr="filters.close_with_modification",
-            api_path="filters.close_with_modification",
             default=False,
         ),
         FieldMapping(
             cache_attr="filters.close_with_read",
-            api_path="filters.close_with_read",
             default=False,
         ),
         FieldMapping(
             cache_attr="filters.close_without_modification",
-            api_path="filters.close_without_modification",
             default=False,
         ),
         FieldMapping(
             cache_attr="filters.exclude_directory",
-            api_path="filters.exclude_directory",
             default=False,
         ),
         FieldMapping(
             cache_attr="filters.first_read",
-            api_path="filters.first_read",
             default=False,
         ),
         FieldMapping(
             cache_attr="filters.first_write",
-            api_path="filters.first_write",
             default=False,
         ),
         FieldMapping(
             cache_attr="filters.monitor_ads",
-            api_path="filters.monitor_ads",
             default=False,
         ),
         FieldMapping(
             cache_attr="filters.offline_bit",
-            api_path="filters.offline_bit",
             default=False,
         ),
         FieldMapping(
             cache_attr="filters.open_with_delete_intent",
-            api_path="filters.open_with_delete_intent",
             default=False,
         ),
         FieldMapping(
             cache_attr="filters.open_with_write_intent",
-            api_path="filters.open_with_write_intent",
             default=False,
         ),
         FieldMapping(
             cache_attr="filters.setattr_with_access_time_change",
-            api_path="filters.setattr_with_access_time_change",
             default=False,
         ),
         FieldMapping(
             cache_attr="filters.setattr_with_allocation_size_change",
-            api_path="filters.setattr_with_allocation_size_change",
             default=False,
         ),
         FieldMapping(
             cache_attr="filters.setattr_with_creation_time_change",
-            api_path="filters.setattr_with_creation_time_change",
             default=False,
         ),
         FieldMapping(
             cache_attr="filters.setattr_with_dacl_change",
-            api_path="filters.setattr_with_dacl_change",
             default=False,
         ),
         FieldMapping(
             cache_attr="filters.setattr_with_group_change",
-            api_path="filters.setattr_with_group_change",
             default=False,
         ),
         FieldMapping(
             cache_attr="filters.setattr_with_mode_change",
-            api_path="filters.setattr_with_mode_change",
             default=False,
         ),
         FieldMapping(
             cache_attr="filters.setattr_with_modify_time_change",
-            api_path="filters.setattr_with_modify_time_change",
             default=False,
         ),
         FieldMapping(
             cache_attr="filters.setattr_with_owner_change",
-            api_path="filters.setattr_with_owner_change",
             default=False,
         ),
         FieldMapping(
             cache_attr="filters.setattr_with_sacl_change",
-            api_path="filters.setattr_with_sacl_change",
             default=False,
         ),
         FieldMapping(
             cache_attr="filters.setattr_with_size_change",
-            api_path="filters.setattr_with_size_change",
             default=False,
         ),
         FieldMapping(
             cache_attr="filters.write_with_size_change",
-            api_path="filters.write_with_size_change",
             default=False,
         ),
         FieldMapping(
             cache_attr="monitor_fileop_failure",
-            api_path="monitor_fileop_failure",
             default=False,
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="protocol",
-            api_path="protocol",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="volume_monitoring",
-            api_path="volume_monitoring",
             default=False,
         ),
     ),

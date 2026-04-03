@@ -14,50 +14,39 @@ ONTAPMEDIATORRESPONSE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="ca_certificate",
-            api_path="ca_certificate",
         ),
         FieldMapping(
             cache_attr="dr_group.id",
-            api_path="dr_group.id",
             default=0,
         ),
         FieldMapping(
             cache_attr="ip_address",
-            api_path="ip_address",
         ),
         FieldMapping(
             cache_attr="password",
-            api_path="password",
         ),
         FieldMapping(
             cache_attr="peer_cluster.name",
-            api_path="peer_cluster.name",
         ),
         FieldMapping(
             cache_attr="peer_cluster.uuid",
-            api_path="peer_cluster.uuid",
         ),
         FieldMapping(
             cache_attr="peer_mediator_connectivity",
-            api_path="peer_mediator_connectivity",
         ),
         FieldMapping(
             cache_attr="port",
-            api_path="port",
             default=0,
         ),
         FieldMapping(
             cache_attr="reachable",
-            api_path="reachable",
             default=False,
         ),
         FieldMapping(
             cache_attr="user",
-            api_path="user",
         ),
         FieldMapping(
             cache_attr="uuid",
-            api_path="uuid",
         ),
     ),
 )

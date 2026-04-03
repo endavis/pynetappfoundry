@@ -16,19 +16,15 @@ ONTAPSNAPLOCKRETENTIONPOLICY_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="retention_period",
-            api_path="retention_period",
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
     ),
 )

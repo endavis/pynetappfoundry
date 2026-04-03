@@ -16,60 +16,48 @@ ONTAPVSCANONACCESS_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="enabled",
-            api_path="enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="mandatory",
-            api_path="mandatory",
             default=False,
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="scope.exclude_extensions",
-            api_path="scope.exclude_extensions",
             default=[],
         ),
         FieldMapping(
             cache_attr="scope.exclude_paths",
-            api_path="scope.exclude_paths",
             default=[],
         ),
         FieldMapping(
             cache_attr="scope.include_extensions",
-            api_path="scope.include_extensions",
             default=[],
         ),
         FieldMapping(
             cache_attr="scope.max_file_size",
-            api_path="scope.max_file_size",
             default=0,
         ),
         FieldMapping(
             cache_attr="scope.only_execute_access",
-            api_path="scope.only_execute_access",
             default=False,
         ),
         FieldMapping(
             cache_attr="scope.scan_readonly_volumes",
-            api_path="scope.scan_readonly_volumes",
             default=False,
         ),
         FieldMapping(
             cache_attr="scope.scan_without_extension",
-            api_path="scope.scan_without_extension",
             default=False,
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
     ),
 )

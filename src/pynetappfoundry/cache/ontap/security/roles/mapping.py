@@ -22,30 +22,24 @@ ONTAPROLE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="builtin",
-            api_path="builtin",
             default=False,
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="owner.name",
-            api_path="owner.name",
         ),
         FieldMapping(
             cache_attr="owner.uuid",
-            api_path="owner.uuid",
         ),
         FieldMapping(
             cache_attr="privileges",
-            api_path="privileges",
             transform=_transform_privileges,
             default=[],
         ),
         FieldMapping(
             cache_attr="scope",
-            api_path="scope",
         ),
     ),
 )

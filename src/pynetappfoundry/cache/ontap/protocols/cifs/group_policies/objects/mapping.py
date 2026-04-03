@@ -18,153 +18,119 @@ ONTAPGROUPPOLICYOBJECT_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="central_access_policy_settings",
-            api_path="central_access_policy_settings",
             default=[],
         ),
         FieldMapping(
             cache_attr="central_access_policy_staging_audit_type",
-            api_path="central_access_policy_staging_audit_type",
         ),
         FieldMapping(
             cache_attr="enabled",
-            api_path="enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="extensions",
-            api_path="extensions",
             default=[],
         ),
         FieldMapping(
             cache_attr="file_system_path",
-            api_path="file_system_path",
         ),
         FieldMapping(
             cache_attr="index",
-            api_path="index",
             default=0,
         ),
         FieldMapping(
             cache_attr="ldap_path",
-            api_path="ldap_path",
         ),
         FieldMapping(
             cache_attr="link",
-            api_path="link",
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="registry_settings.branchcache.hash_publication_mode",
-            api_path="registry_settings.branchcache.hash_publication_mode",
         ),
         FieldMapping(
             cache_attr="registry_settings.branchcache.supported_hash_version",
-            api_path="registry_settings.branchcache.supported_hash_version",
         ),
         FieldMapping(
             cache_attr="registry_settings.refresh_time_interval",
-            api_path="registry_settings.refresh_time_interval",
         ),
         FieldMapping(
             cache_attr="registry_settings.refresh_time_random_offset",
-            api_path="registry_settings.refresh_time_random_offset",
         ),
         FieldMapping(
             cache_attr="security_settings.event_audit_settings.logon_type",
-            api_path="security_settings.event_audit_settings.logon_type",
         ),
         FieldMapping(
             cache_attr="security_settings.event_audit_settings.object_access_type",
-            api_path="security_settings.event_audit_settings.object_access_type",
         ),
         FieldMapping(
             cache_attr="security_settings.event_log_settings.max_size",
-            api_path="security_settings.event_log_settings.max_size",
             default=0,
         ),
         FieldMapping(
             cache_attr="security_settings.event_log_settings.retention_method",
-            api_path="security_settings.event_log_settings.retention_method",
         ),
         FieldMapping(
             cache_attr="security_settings.files_or_folders",
-            api_path="security_settings.files_or_folders",
             default=[],
         ),
         FieldMapping(
             cache_attr="security_settings.kerberos.max_clock_skew",
-            api_path="security_settings.kerberos.max_clock_skew",
         ),
         FieldMapping(
             cache_attr="security_settings.kerberos.max_renew_age",
-            api_path="security_settings.kerberos.max_renew_age",
         ),
         FieldMapping(
             cache_attr="security_settings.kerberos.max_ticket_age",
-            api_path="security_settings.kerberos.max_ticket_age",
         ),
         FieldMapping(
             cache_attr="security_settings.privilege_rights.change_notify_users",
-            api_path="security_settings.privilege_rights.change_notify_users",
             default=[],
         ),
         FieldMapping(
             cache_attr="security_settings.privilege_rights.security_privilege_users",
-            api_path="security_settings.privilege_rights.security_privilege_users",
             default=[],
         ),
         FieldMapping(
             cache_attr="security_settings.privilege_rights.take_ownership_users",
-            api_path="security_settings.privilege_rights.take_ownership_users",
             default=[],
         ),
         FieldMapping(
             cache_attr="security_settings.registry_values.signing_required",
-            api_path="security_settings.registry_values.signing_required",
             default=False,
         ),
         FieldMapping(
             cache_attr="security_settings.restrict_anonymous.anonymous_access_to_shares_and_named_pipes_restricted",
-            api_path="security_settings.restrict_anonymous.anonymous_access_to_shares_and_named_pipes_restricted",
             default=False,
         ),
         FieldMapping(
             cache_attr="security_settings.restrict_anonymous.combined_restriction_for_anonymous_user",
-            api_path="security_settings.restrict_anonymous.combined_restriction_for_anonymous_user",
         ),
         FieldMapping(
             cache_attr="security_settings.restrict_anonymous.no_enumeration_of_sam_accounts",
-            api_path="security_settings.restrict_anonymous.no_enumeration_of_sam_accounts",
             default=False,
         ),
         FieldMapping(
             cache_attr="security_settings.restrict_anonymous.no_enumeration_of_sam_accounts_and_shares",
-            api_path="security_settings.restrict_anonymous.no_enumeration_of_sam_accounts_and_shares",
             default=False,
         ),
         FieldMapping(
             cache_attr="security_settings.restricted_groups",
-            api_path="security_settings.restricted_groups",
             default=[],
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="uuid",
-            api_path="uuid",
         ),
         FieldMapping(
             cache_attr="version",
-            api_path="version",
             default=0,
         ),
     ),

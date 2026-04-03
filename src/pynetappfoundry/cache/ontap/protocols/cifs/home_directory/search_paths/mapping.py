@@ -16,20 +16,16 @@ ONTAPCIFSSEARCHPATH_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="index",
-            api_path="index",
             default=0,
         ),
         FieldMapping(
             cache_attr="path",
-            api_path="path",
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
     ),
 )

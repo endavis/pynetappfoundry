@@ -14,224 +14,175 @@ ONTAPIPINTERFACE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="ddns_enabled",
-            api_path="ddns_enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="dns_zone",
-            api_path="dns_zone",
         ),
         FieldMapping(
             cache_attr="enabled",
-            api_path="enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="fail_if_subnet_conflicts",
-            api_path="fail_if_subnet_conflicts",
             default=False,
         ),
         FieldMapping(
             cache_attr="ip.address",
-            api_path="ip.address",
         ),
         FieldMapping(
             cache_attr="ip.family",
-            api_path="ip.family",
         ),
         FieldMapping(
             cache_attr="ip.netmask",
-            api_path="ip.netmask",
         ),
         FieldMapping(
             cache_attr="ipspace.name",
-            api_path="ipspace.name",
         ),
         FieldMapping(
             cache_attr="ipspace.uuid",
-            api_path="ipspace.uuid",
         ),
         FieldMapping(
             cache_attr="location.auto_revert",
-            api_path="location.auto_revert",
             default=False,
         ),
         FieldMapping(
             cache_attr="location.broadcast_domain.name",
-            api_path="location.broadcast_domain.name",
         ),
         FieldMapping(
             cache_attr="location.broadcast_domain.uuid",
-            api_path="location.broadcast_domain.uuid",
         ),
         FieldMapping(
             cache_attr="location.failover",
-            api_path="location.failover",
         ),
         FieldMapping(
             cache_attr="location.home_node.name",
-            api_path="location.home_node.name",
         ),
         FieldMapping(
             cache_attr="location.home_node.uuid",
-            api_path="location.home_node.uuid",
         ),
         FieldMapping(
             cache_attr="location.home_port.name",
-            api_path="location.home_port.name",
         ),
         FieldMapping(
             cache_attr="location.home_port.node.name",
-            api_path="location.home_port.node.name",
         ),
         FieldMapping(
             cache_attr="location.home_port.uuid",
-            api_path="location.home_port.uuid",
         ),
         FieldMapping(
             cache_attr="location.is_home",
-            api_path="location.is_home",
             default=False,
         ),
         FieldMapping(
             cache_attr="location.node.name",
-            api_path="location.node.name",
         ),
         FieldMapping(
             cache_attr="location.node.uuid",
-            api_path="location.node.uuid",
         ),
         FieldMapping(
             cache_attr="location.port.name",
-            api_path="location.port.name",
         ),
         FieldMapping(
             cache_attr="location.port.node.name",
-            api_path="location.port.node.name",
         ),
         FieldMapping(
             cache_attr="location.port.uuid",
-            api_path="location.port.uuid",
         ),
         FieldMapping(
             cache_attr="metric.duration",
-            api_path="metric.duration",
             cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="metric.status",
-            api_path="metric.status",
             cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="metric.throughput.read",
-            api_path="metric.throughput.read",
             cache_strategy="realtime",
             default=0,
         ),
         FieldMapping(
             cache_attr="metric.throughput.total",
-            api_path="metric.throughput.total",
             cache_strategy="realtime",
             default=0,
         ),
         FieldMapping(
             cache_attr="metric.throughput.write",
-            api_path="metric.throughput.write",
             cache_strategy="realtime",
             default=0,
         ),
         FieldMapping(
             cache_attr="metric.timestamp",
-            api_path="metric.timestamp",
             cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="probe_port",
-            api_path="probe_port",
             default=0,
         ),
         FieldMapping(
             cache_attr="rdma_protocols",
-            api_path="rdma_protocols",
             default=[],
         ),
         FieldMapping(
             cache_attr="scope",
-            api_path="scope",
         ),
         FieldMapping(
             cache_attr="service_policy.name",
-            api_path="service_policy.name",
         ),
         FieldMapping(
             cache_attr="service_policy.uuid",
-            api_path="service_policy.uuid",
         ),
         FieldMapping(
             cache_attr="services",
-            api_path="services",
             default=[],
         ),
         FieldMapping(
             cache_attr="state",
-            api_path="state",
         ),
         FieldMapping(
             cache_attr="statistics.status",
-            api_path="statistics.status",
             cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="statistics.throughput_raw.read",
-            api_path="statistics.throughput_raw.read",
             cache_strategy="realtime",
             default=0,
         ),
         FieldMapping(
             cache_attr="statistics.throughput_raw.total",
-            api_path="statistics.throughput_raw.total",
             cache_strategy="realtime",
             default=0,
         ),
         FieldMapping(
             cache_attr="statistics.throughput_raw.write",
-            api_path="statistics.throughput_raw.write",
             cache_strategy="realtime",
             default=0,
         ),
         FieldMapping(
             cache_attr="statistics.timestamp",
-            api_path="statistics.timestamp",
             cache_strategy="realtime",
         ),
         FieldMapping(
             cache_attr="subnet.name",
-            api_path="subnet.name",
         ),
         FieldMapping(
             cache_attr="subnet.uuid",
-            api_path="subnet.uuid",
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="uuid",
-            api_path="uuid",
         ),
         FieldMapping(
             cache_attr="vip",
-            api_path="vip",
             default=False,
         ),
     ),

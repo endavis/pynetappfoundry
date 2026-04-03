@@ -14,29 +14,23 @@ ONTAPSPLITSTATUS_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="pending_splits",
-            api_path="pending_splits",
             default=0,
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="unsplit_size",
-            api_path="unsplit_size",
             default=0,
         ),
         FieldMapping(
             cache_attr="volume.name",
-            api_path="volume.name",
         ),
         FieldMapping(
             cache_attr="volume.uuid",
-            api_path="volume.uuid",
         ),
     ),
 )

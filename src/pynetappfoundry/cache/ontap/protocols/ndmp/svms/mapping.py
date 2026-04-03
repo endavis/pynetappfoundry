@@ -14,21 +14,17 @@ ONTAPNDMPSVM_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="authentication_types",
-            api_path="authentication_types",
             default=[],
         ),
         FieldMapping(
             cache_attr="enabled",
-            api_path="enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
     ),
 )

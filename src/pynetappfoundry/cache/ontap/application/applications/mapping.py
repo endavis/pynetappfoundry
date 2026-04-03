@@ -287,864 +287,681 @@ ONTAPAPPLICATION_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="uuid",
-            api_path="uuid",
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="creation_timestamp",
-            api_path="creation_timestamp",
         ),
         FieldMapping(
             cache_attr="delete_data",
-            api_path="delete_data",
             default=False,
         ),
         FieldMapping(
             cache_attr="generation",
-            api_path="generation",
             default=0,
         ),
         FieldMapping(
             cache_attr="protection_granularity",
-            api_path="protection_granularity",
         ),
         FieldMapping(
             cache_attr="rpo.components",
-            api_path="rpo.components",
             transform=_transform_rpo_components,
             default=[],
         ),
         FieldMapping(
             cache_attr="rpo.is_supported",
-            api_path="rpo.is_supported",
             default=False,
         ),
         FieldMapping(
             cache_attr="rpo.local.name",
-            api_path="rpo.local.name",
         ),
         FieldMapping(
             cache_attr="rpo.local.description",
-            api_path="rpo.local.description",
         ),
         FieldMapping(
             cache_attr="rpo.remote.name",
-            api_path="rpo.remote.name",
         ),
         FieldMapping(
             cache_attr="rpo.remote.description",
-            api_path="rpo.remote.description",
         ),
         FieldMapping(
             cache_attr="smart_container",
-            api_path="smart_container",
             default=False,
         ),
         FieldMapping(
             cache_attr="state",
-            api_path="state",
         ),
         FieldMapping(
             cache_attr="statistics.components",
-            api_path="statistics.components",
             cache_strategy="realtime",
             transform=_transform_statistics_components,
             default=[],
         ),
         FieldMapping(
             cache_attr="statistics.iops.per_tb",
-            api_path="statistics.iops.per_tb",
             cache_strategy="realtime",
             default=0,
         ),
         FieldMapping(
             cache_attr="statistics.iops.total",
-            api_path="statistics.iops.total",
             cache_strategy="realtime",
             default=0,
         ),
         FieldMapping(
             cache_attr="statistics.latency.average",
-            api_path="statistics.latency.average",
             cache_strategy="realtime",
             default=0,
         ),
         FieldMapping(
             cache_attr="statistics.latency.raw",
-            api_path="statistics.latency.raw",
             cache_strategy="realtime",
             default=0,
         ),
         FieldMapping(
             cache_attr="statistics.shared_storage_pool",
-            api_path="statistics.shared_storage_pool",
             cache_strategy="realtime",
             default=False,
         ),
         FieldMapping(
             cache_attr="statistics.snapshot.reserve",
-            api_path="statistics.snapshot.reserve",
             cache_strategy="realtime",
             default=0,
         ),
         FieldMapping(
             cache_attr="statistics.snapshot.used",
-            api_path="statistics.snapshot.used",
             cache_strategy="realtime",
             default=0,
         ),
         FieldMapping(
             cache_attr="statistics.space.available",
-            api_path="statistics.space.available",
             cache_strategy="realtime",
             default=0,
         ),
         FieldMapping(
             cache_attr="statistics.space.logical_used",
-            api_path="statistics.space.logical_used",
             cache_strategy="realtime",
             default=0,
         ),
         FieldMapping(
             cache_attr="statistics.space.provisioned",
-            api_path="statistics.space.provisioned",
             cache_strategy="realtime",
             default=0,
         ),
         FieldMapping(
             cache_attr="statistics.space.reserved_unused",
-            api_path="statistics.space.reserved_unused",
             cache_strategy="realtime",
             default=0,
         ),
         FieldMapping(
             cache_attr="statistics.space.savings",
-            api_path="statistics.space.savings",
             cache_strategy="realtime",
             default=0,
         ),
         FieldMapping(
             cache_attr="statistics.space.used",
-            api_path="statistics.space.used",
             cache_strategy="realtime",
             default=0,
         ),
         FieldMapping(
             cache_attr="statistics.space.used_excluding_reserves",
-            api_path="statistics.space.used_excluding_reserves",
             cache_strategy="realtime",
             default=0,
         ),
         FieldMapping(
             cache_attr="statistics.space.used_percent",
-            api_path="statistics.space.used_percent",
             cache_strategy="realtime",
             default=0,
         ),
         FieldMapping(
             cache_attr="statistics.statistics_incomplete",
-            api_path="statistics.statistics_incomplete",
             cache_strategy="realtime",
             default=False,
         ),
         FieldMapping(
             cache_attr="template.name",
-            api_path="template.name",
         ),
         FieldMapping(
             cache_attr="template.protocol",
-            api_path="template.protocol",
         ),
         FieldMapping(
             cache_attr="template.version",
-            api_path="template.version",
             default=0,
         ),
         FieldMapping(
             cache_attr="mongo_db_on_san.dataset.element_count",
-            api_path="mongo_db_on_san.dataset.element_count",
             default=0,
         ),
         FieldMapping(
             cache_attr="mongo_db_on_san.dataset.replication_factor",
-            api_path="mongo_db_on_san.dataset.replication_factor",
             default=0,
         ),
         FieldMapping(
             cache_attr="mongo_db_on_san.dataset.size",
-            api_path="mongo_db_on_san.dataset.size",
             default=0,
         ),
         FieldMapping(
             cache_attr="mongo_db_on_san.dataset.storage_service.name",
-            api_path="mongo_db_on_san.dataset.storage_service.name",
         ),
         FieldMapping(
             cache_attr="mongo_db_on_san.new_igroups",
-            api_path="mongo_db_on_san.new_igroups",
             transform=_transform_mongo_db_on_san_new_igroups,
             default=[],
         ),
         FieldMapping(
             cache_attr="mongo_db_on_san.os_type",
-            api_path="mongo_db_on_san.os_type",
         ),
         FieldMapping(
             cache_attr="mongo_db_on_san.primary_igroup_name",
-            api_path="mongo_db_on_san.primary_igroup_name",
         ),
         FieldMapping(
             cache_attr="mongo_db_on_san.protection_type.local_rpo",
-            api_path="mongo_db_on_san.protection_type.local_rpo",
         ),
         FieldMapping(
             cache_attr="mongo_db_on_san.protection_type.remote_rpo",
-            api_path="mongo_db_on_san.protection_type.remote_rpo",
         ),
         FieldMapping(
             cache_attr="mongo_db_on_san.secondary_igroups",
-            api_path="mongo_db_on_san.secondary_igroups",
             transform=_transform_mongo_db_on_san_secondary_igroups,
             default=[],
         ),
         FieldMapping(
             cache_attr="nas.application_components",
-            api_path="nas.application_components",
             transform=_transform_nas_application_components,
             default=[],
         ),
         FieldMapping(
             cache_attr="nas.cifs_access",
-            api_path="nas.cifs_access",
             transform=_transform_nas_cifs_access,
             default=[],
         ),
         FieldMapping(
             cache_attr="nas.cifs_share_name",
-            api_path="nas.cifs_share_name",
         ),
         FieldMapping(
             cache_attr="nas.exclude_aggregates",
-            api_path="nas.exclude_aggregates",
             transform=_transform_nas_exclude_aggregates,
             default=[],
         ),
         FieldMapping(
             cache_attr="nas.nfs_access",
-            api_path="nas.nfs_access",
             transform=_transform_nas_nfs_access,
             default=[],
         ),
         FieldMapping(
             cache_attr="nas.protection_type.local_policy",
-            api_path="nas.protection_type.local_policy",
         ),
         FieldMapping(
             cache_attr="nas.protection_type.local_rpo",
-            api_path="nas.protection_type.local_rpo",
         ),
         FieldMapping(
             cache_attr="nas.protection_type.remote_rpo",
-            api_path="nas.protection_type.remote_rpo",
         ),
         FieldMapping(
             cache_attr="nvme.components",
-            api_path="nvme.components",
             transform=_transform_nvme_components,
             default=[],
         ),
         FieldMapping(
             cache_attr="nvme.os_type",
-            api_path="nvme.os_type",
         ),
         FieldMapping(
             cache_attr="nvme.rpo.local.name",
-            api_path="nvme.rpo.local.name",
         ),
         FieldMapping(
             cache_attr="nvme.rpo.local.policy",
-            api_path="nvme.rpo.local.policy",
         ),
         FieldMapping(
             cache_attr="nvme.rpo.remote.name",
-            api_path="nvme.rpo.remote.name",
         ),
         FieldMapping(
             cache_attr="oracle_on_nfs.archive_log.size",
-            api_path="oracle_on_nfs.archive_log.size",
             default=0,
         ),
         FieldMapping(
             cache_attr="oracle_on_nfs.archive_log.storage_service.name",
-            api_path="oracle_on_nfs.archive_log.storage_service.name",
         ),
         FieldMapping(
             cache_attr="oracle_on_nfs.db.size",
-            api_path="oracle_on_nfs.db.size",
             default=0,
         ),
         FieldMapping(
             cache_attr="oracle_on_nfs.db.storage_service.name",
-            api_path="oracle_on_nfs.db.storage_service.name",
         ),
         FieldMapping(
             cache_attr="oracle_on_nfs.nfs_access",
-            api_path="oracle_on_nfs.nfs_access",
             transform=_transform_oracle_on_nfs_nfs_access,
             default=[],
         ),
         FieldMapping(
             cache_attr="oracle_on_nfs.ora_home.size",
-            api_path="oracle_on_nfs.ora_home.size",
             default=0,
         ),
         FieldMapping(
             cache_attr="oracle_on_nfs.ora_home.storage_service.name",
-            api_path="oracle_on_nfs.ora_home.storage_service.name",
         ),
         FieldMapping(
             cache_attr="oracle_on_nfs.protection_type.local_rpo",
-            api_path="oracle_on_nfs.protection_type.local_rpo",
         ),
         FieldMapping(
             cache_attr="oracle_on_nfs.protection_type.remote_rpo",
-            api_path="oracle_on_nfs.protection_type.remote_rpo",
         ),
         FieldMapping(
             cache_attr="oracle_on_nfs.redo_log.mirrored",
-            api_path="oracle_on_nfs.redo_log.mirrored",
             default=False,
         ),
         FieldMapping(
             cache_attr="oracle_on_nfs.redo_log.size",
-            api_path="oracle_on_nfs.redo_log.size",
             default=0,
         ),
         FieldMapping(
             cache_attr="oracle_on_nfs.redo_log.storage_service.name",
-            api_path="oracle_on_nfs.redo_log.storage_service.name",
         ),
         FieldMapping(
             cache_attr="oracle_on_san.archive_log.size",
-            api_path="oracle_on_san.archive_log.size",
             default=0,
         ),
         FieldMapping(
             cache_attr="oracle_on_san.archive_log.storage_service.name",
-            api_path="oracle_on_san.archive_log.storage_service.name",
         ),
         FieldMapping(
             cache_attr="oracle_on_san.db.size",
-            api_path="oracle_on_san.db.size",
             default=0,
         ),
         FieldMapping(
             cache_attr="oracle_on_san.db.storage_service.name",
-            api_path="oracle_on_san.db.storage_service.name",
         ),
         FieldMapping(
             cache_attr="oracle_on_san.igroup_name",
-            api_path="oracle_on_san.igroup_name",
         ),
         FieldMapping(
             cache_attr="oracle_on_san.new_igroups",
-            api_path="oracle_on_san.new_igroups",
             transform=_transform_oracle_on_san_new_igroups,
             default=[],
         ),
         FieldMapping(
             cache_attr="oracle_on_san.ora_home.size",
-            api_path="oracle_on_san.ora_home.size",
             default=0,
         ),
         FieldMapping(
             cache_attr="oracle_on_san.ora_home.storage_service.name",
-            api_path="oracle_on_san.ora_home.storage_service.name",
         ),
         FieldMapping(
             cache_attr="oracle_on_san.os_type",
-            api_path="oracle_on_san.os_type",
         ),
         FieldMapping(
             cache_attr="oracle_on_san.protection_type.local_rpo",
-            api_path="oracle_on_san.protection_type.local_rpo",
         ),
         FieldMapping(
             cache_attr="oracle_on_san.protection_type.remote_rpo",
-            api_path="oracle_on_san.protection_type.remote_rpo",
         ),
         FieldMapping(
             cache_attr="oracle_on_san.redo_log.mirrored",
-            api_path="oracle_on_san.redo_log.mirrored",
             default=False,
         ),
         FieldMapping(
             cache_attr="oracle_on_san.redo_log.size",
-            api_path="oracle_on_san.redo_log.size",
             default=0,
         ),
         FieldMapping(
             cache_attr="oracle_on_san.redo_log.storage_service.name",
-            api_path="oracle_on_san.redo_log.storage_service.name",
         ),
         FieldMapping(
             cache_attr="oracle_rac_on_nfs.archive_log.size",
-            api_path="oracle_rac_on_nfs.archive_log.size",
             default=0,
         ),
         FieldMapping(
             cache_attr="oracle_rac_on_nfs.archive_log.storage_service.name",
-            api_path="oracle_rac_on_nfs.archive_log.storage_service.name",
         ),
         FieldMapping(
             cache_attr="oracle_rac_on_nfs.db.size",
-            api_path="oracle_rac_on_nfs.db.size",
             default=0,
         ),
         FieldMapping(
             cache_attr="oracle_rac_on_nfs.db.storage_service.name",
-            api_path="oracle_rac_on_nfs.db.storage_service.name",
         ),
         FieldMapping(
             cache_attr="oracle_rac_on_nfs.grid_binary.size",
-            api_path="oracle_rac_on_nfs.grid_binary.size",
             default=0,
         ),
         FieldMapping(
             cache_attr="oracle_rac_on_nfs.grid_binary.storage_service.name",
-            api_path="oracle_rac_on_nfs.grid_binary.storage_service.name",
         ),
         FieldMapping(
             cache_attr="oracle_rac_on_nfs.nfs_access",
-            api_path="oracle_rac_on_nfs.nfs_access",
             transform=_transform_oracle_rac_on_nfs_nfs_access,
             default=[],
         ),
         FieldMapping(
             cache_attr="oracle_rac_on_nfs.ora_home.size",
-            api_path="oracle_rac_on_nfs.ora_home.size",
             default=0,
         ),
         FieldMapping(
             cache_attr="oracle_rac_on_nfs.ora_home.storage_service.name",
-            api_path="oracle_rac_on_nfs.ora_home.storage_service.name",
         ),
         FieldMapping(
             cache_attr="oracle_rac_on_nfs.oracle_crs.copies",
-            api_path="oracle_rac_on_nfs.oracle_crs.copies",
             default=0,
         ),
         FieldMapping(
             cache_attr="oracle_rac_on_nfs.oracle_crs.size",
-            api_path="oracle_rac_on_nfs.oracle_crs.size",
             default=0,
         ),
         FieldMapping(
             cache_attr="oracle_rac_on_nfs.oracle_crs.storage_service.name",
-            api_path="oracle_rac_on_nfs.oracle_crs.storage_service.name",
         ),
         FieldMapping(
             cache_attr="oracle_rac_on_nfs.protection_type.local_rpo",
-            api_path="oracle_rac_on_nfs.protection_type.local_rpo",
         ),
         FieldMapping(
             cache_attr="oracle_rac_on_nfs.protection_type.remote_rpo",
-            api_path="oracle_rac_on_nfs.protection_type.remote_rpo",
         ),
         FieldMapping(
             cache_attr="oracle_rac_on_nfs.redo_log.mirrored",
-            api_path="oracle_rac_on_nfs.redo_log.mirrored",
             default=False,
         ),
         FieldMapping(
             cache_attr="oracle_rac_on_nfs.redo_log.size",
-            api_path="oracle_rac_on_nfs.redo_log.size",
             default=0,
         ),
         FieldMapping(
             cache_attr="oracle_rac_on_nfs.redo_log.storage_service.name",
-            api_path="oracle_rac_on_nfs.redo_log.storage_service.name",
         ),
         FieldMapping(
             cache_attr="oracle_rac_on_san.archive_log.size",
-            api_path="oracle_rac_on_san.archive_log.size",
             default=0,
         ),
         FieldMapping(
             cache_attr="oracle_rac_on_san.archive_log.storage_service.name",
-            api_path="oracle_rac_on_san.archive_log.storage_service.name",
         ),
         FieldMapping(
             cache_attr="oracle_rac_on_san.db.size",
-            api_path="oracle_rac_on_san.db.size",
             default=0,
         ),
         FieldMapping(
             cache_attr="oracle_rac_on_san.db.storage_service.name",
-            api_path="oracle_rac_on_san.db.storage_service.name",
         ),
         FieldMapping(
             cache_attr="oracle_rac_on_san.db_sids",
-            api_path="oracle_rac_on_san.db_sids",
             transform=_transform_oracle_rac_on_san_db_sids,
             default=[],
         ),
         FieldMapping(
             cache_attr="oracle_rac_on_san.grid_binary.size",
-            api_path="oracle_rac_on_san.grid_binary.size",
             default=0,
         ),
         FieldMapping(
             cache_attr="oracle_rac_on_san.grid_binary.storage_service.name",
-            api_path="oracle_rac_on_san.grid_binary.storage_service.name",
         ),
         FieldMapping(
             cache_attr="oracle_rac_on_san.new_igroups",
-            api_path="oracle_rac_on_san.new_igroups",
             transform=_transform_oracle_rac_on_san_new_igroups,
             default=[],
         ),
         FieldMapping(
             cache_attr="oracle_rac_on_san.ora_home.size",
-            api_path="oracle_rac_on_san.ora_home.size",
             default=0,
         ),
         FieldMapping(
             cache_attr="oracle_rac_on_san.ora_home.storage_service.name",
-            api_path="oracle_rac_on_san.ora_home.storage_service.name",
         ),
         FieldMapping(
             cache_attr="oracle_rac_on_san.oracle_crs.copies",
-            api_path="oracle_rac_on_san.oracle_crs.copies",
             default=0,
         ),
         FieldMapping(
             cache_attr="oracle_rac_on_san.oracle_crs.size",
-            api_path="oracle_rac_on_san.oracle_crs.size",
             default=0,
         ),
         FieldMapping(
             cache_attr="oracle_rac_on_san.oracle_crs.storage_service.name",
-            api_path="oracle_rac_on_san.oracle_crs.storage_service.name",
         ),
         FieldMapping(
             cache_attr="oracle_rac_on_san.os_type",
-            api_path="oracle_rac_on_san.os_type",
         ),
         FieldMapping(
             cache_attr="oracle_rac_on_san.protection_type.local_rpo",
-            api_path="oracle_rac_on_san.protection_type.local_rpo",
         ),
         FieldMapping(
             cache_attr="oracle_rac_on_san.protection_type.remote_rpo",
-            api_path="oracle_rac_on_san.protection_type.remote_rpo",
         ),
         FieldMapping(
             cache_attr="oracle_rac_on_san.redo_log.mirrored",
-            api_path="oracle_rac_on_san.redo_log.mirrored",
             default=False,
         ),
         FieldMapping(
             cache_attr="oracle_rac_on_san.redo_log.size",
-            api_path="oracle_rac_on_san.redo_log.size",
             default=0,
         ),
         FieldMapping(
             cache_attr="oracle_rac_on_san.redo_log.storage_service.name",
-            api_path="oracle_rac_on_san.redo_log.storage_service.name",
         ),
         FieldMapping(
             cache_attr="s3_bucket.application_components",
-            api_path="s3_bucket.application_components",
             transform=_transform_s3_bucket_application_components,
             default=[],
         ),
         FieldMapping(
             cache_attr="s3_bucket.protection_type.remote_rpo",
-            api_path="s3_bucket.protection_type.remote_rpo",
         ),
         FieldMapping(
             cache_attr="san.application_components",
-            api_path="san.application_components",
             transform=_transform_san_application_components,
             default=[],
         ),
         FieldMapping(
             cache_attr="san.exclude_aggregates",
-            api_path="san.exclude_aggregates",
             transform=_transform_san_exclude_aggregates,
             default=[],
         ),
         FieldMapping(
             cache_attr="san.new_igroups",
-            api_path="san.new_igroups",
             transform=_transform_san_new_igroups,
             default=[],
         ),
         FieldMapping(
             cache_attr="san.os_type",
-            api_path="san.os_type",
         ),
         FieldMapping(
             cache_attr="san.protection_type.local_policy",
-            api_path="san.protection_type.local_policy",
         ),
         FieldMapping(
             cache_attr="san.protection_type.local_rpo",
-            api_path="san.protection_type.local_rpo",
         ),
         FieldMapping(
             cache_attr="san.protection_type.remote_rpo",
-            api_path="san.protection_type.remote_rpo",
         ),
         FieldMapping(
             cache_attr="sql_on_san.db.size",
-            api_path="sql_on_san.db.size",
             default=0,
         ),
         FieldMapping(
             cache_attr="sql_on_san.db.storage_service.name",
-            api_path="sql_on_san.db.storage_service.name",
         ),
         FieldMapping(
             cache_attr="sql_on_san.igroup_name",
-            api_path="sql_on_san.igroup_name",
         ),
         FieldMapping(
             cache_attr="sql_on_san.log.size",
-            api_path="sql_on_san.log.size",
             default=0,
         ),
         FieldMapping(
             cache_attr="sql_on_san.log.storage_service.name",
-            api_path="sql_on_san.log.storage_service.name",
         ),
         FieldMapping(
             cache_attr="sql_on_san.new_igroups",
-            api_path="sql_on_san.new_igroups",
             transform=_transform_sql_on_san_new_igroups,
             default=[],
         ),
         FieldMapping(
             cache_attr="sql_on_san.os_type",
-            api_path="sql_on_san.os_type",
         ),
         FieldMapping(
             cache_attr="sql_on_san.protection_type.local_rpo",
-            api_path="sql_on_san.protection_type.local_rpo",
         ),
         FieldMapping(
             cache_attr="sql_on_san.protection_type.remote_rpo",
-            api_path="sql_on_san.protection_type.remote_rpo",
         ),
         FieldMapping(
             cache_attr="sql_on_san.server_cores_count",
-            api_path="sql_on_san.server_cores_count",
             default=0,
         ),
         FieldMapping(
             cache_attr="sql_on_san.temp_db.size",
-            api_path="sql_on_san.temp_db.size",
             default=0,
         ),
         FieldMapping(
             cache_attr="sql_on_san.temp_db.storage_service.name",
-            api_path="sql_on_san.temp_db.storage_service.name",
         ),
         FieldMapping(
             cache_attr="sql_on_smb.access.installer",
-            api_path="sql_on_smb.access.installer",
         ),
         FieldMapping(
             cache_attr="sql_on_smb.access.service_account",
-            api_path="sql_on_smb.access.service_account",
         ),
         FieldMapping(
             cache_attr="sql_on_smb.db.size",
-            api_path="sql_on_smb.db.size",
             default=0,
         ),
         FieldMapping(
             cache_attr="sql_on_smb.db.storage_service.name",
-            api_path="sql_on_smb.db.storage_service.name",
         ),
         FieldMapping(
             cache_attr="sql_on_smb.log.size",
-            api_path="sql_on_smb.log.size",
             default=0,
         ),
         FieldMapping(
             cache_attr="sql_on_smb.log.storage_service.name",
-            api_path="sql_on_smb.log.storage_service.name",
         ),
         FieldMapping(
             cache_attr="sql_on_smb.protection_type.local_rpo",
-            api_path="sql_on_smb.protection_type.local_rpo",
         ),
         FieldMapping(
             cache_attr="sql_on_smb.protection_type.remote_rpo",
-            api_path="sql_on_smb.protection_type.remote_rpo",
         ),
         FieldMapping(
             cache_attr="sql_on_smb.server_cores_count",
-            api_path="sql_on_smb.server_cores_count",
             default=0,
         ),
         FieldMapping(
             cache_attr="sql_on_smb.temp_db.size",
-            api_path="sql_on_smb.temp_db.size",
             default=0,
         ),
         FieldMapping(
             cache_attr="sql_on_smb.temp_db.storage_service.name",
-            api_path="sql_on_smb.temp_db.storage_service.name",
         ),
         FieldMapping(
             cache_attr="vdi_on_nas.desktops.count",
-            api_path="vdi_on_nas.desktops.count",
             default=0,
         ),
         FieldMapping(
             cache_attr="vdi_on_nas.desktops.size",
-            api_path="vdi_on_nas.desktops.size",
             default=0,
         ),
         FieldMapping(
             cache_attr="vdi_on_nas.desktops.storage_service.name",
-            api_path="vdi_on_nas.desktops.storage_service.name",
         ),
         FieldMapping(
             cache_attr="vdi_on_nas.hyper_v_access.service_account",
-            api_path="vdi_on_nas.hyper_v_access.service_account",
         ),
         FieldMapping(
             cache_attr="vdi_on_nas.nfs_access",
-            api_path="vdi_on_nas.nfs_access",
             transform=_transform_vdi_on_nas_nfs_access,
             default=[],
         ),
         FieldMapping(
             cache_attr="vdi_on_nas.protection_type.local_rpo",
-            api_path="vdi_on_nas.protection_type.local_rpo",
         ),
         FieldMapping(
             cache_attr="vdi_on_nas.protection_type.remote_rpo",
-            api_path="vdi_on_nas.protection_type.remote_rpo",
         ),
         FieldMapping(
             cache_attr="vdi_on_san.desktops.count",
-            api_path="vdi_on_san.desktops.count",
             default=0,
         ),
         FieldMapping(
             cache_attr="vdi_on_san.desktops.size",
-            api_path="vdi_on_san.desktops.size",
             default=0,
         ),
         FieldMapping(
             cache_attr="vdi_on_san.desktops.storage_service.name",
-            api_path="vdi_on_san.desktops.storage_service.name",
         ),
         FieldMapping(
             cache_attr="vdi_on_san.hypervisor",
-            api_path="vdi_on_san.hypervisor",
         ),
         FieldMapping(
             cache_attr="vdi_on_san.igroup_name",
-            api_path="vdi_on_san.igroup_name",
         ),
         FieldMapping(
             cache_attr="vdi_on_san.new_igroups",
-            api_path="vdi_on_san.new_igroups",
             transform=_transform_vdi_on_san_new_igroups,
             default=[],
         ),
         FieldMapping(
             cache_attr="vdi_on_san.protection_type.local_rpo",
-            api_path="vdi_on_san.protection_type.local_rpo",
         ),
         FieldMapping(
             cache_attr="vdi_on_san.protection_type.remote_rpo",
-            api_path="vdi_on_san.protection_type.remote_rpo",
         ),
         FieldMapping(
             cache_attr="vsi_on_nas.datastore.count",
-            api_path="vsi_on_nas.datastore.count",
             default=0,
         ),
         FieldMapping(
             cache_attr="vsi_on_nas.datastore.size",
-            api_path="vsi_on_nas.datastore.size",
             default=0,
         ),
         FieldMapping(
             cache_attr="vsi_on_nas.datastore.storage_service.name",
-            api_path="vsi_on_nas.datastore.storage_service.name",
         ),
         FieldMapping(
             cache_attr="vsi_on_nas.hyper_v_access.service_account",
-            api_path="vsi_on_nas.hyper_v_access.service_account",
         ),
         FieldMapping(
             cache_attr="vsi_on_nas.nfs_access",
-            api_path="vsi_on_nas.nfs_access",
             transform=_transform_vsi_on_nas_nfs_access,
             default=[],
         ),
         FieldMapping(
             cache_attr="vsi_on_nas.protection_type.local_rpo",
-            api_path="vsi_on_nas.protection_type.local_rpo",
         ),
         FieldMapping(
             cache_attr="vsi_on_nas.protection_type.remote_rpo",
-            api_path="vsi_on_nas.protection_type.remote_rpo",
         ),
         FieldMapping(
             cache_attr="vsi_on_san.datastore.count",
-            api_path="vsi_on_san.datastore.count",
             default=0,
         ),
         FieldMapping(
             cache_attr="vsi_on_san.datastore.size",
-            api_path="vsi_on_san.datastore.size",
             default=0,
         ),
         FieldMapping(
             cache_attr="vsi_on_san.datastore.storage_service.name",
-            api_path="vsi_on_san.datastore.storage_service.name",
         ),
         FieldMapping(
             cache_attr="vsi_on_san.hypervisor",
-            api_path="vsi_on_san.hypervisor",
         ),
         FieldMapping(
             cache_attr="vsi_on_san.igroup_name",
-            api_path="vsi_on_san.igroup_name",
         ),
         FieldMapping(
             cache_attr="vsi_on_san.new_igroups",
-            api_path="vsi_on_san.new_igroups",
             transform=_transform_vsi_on_san_new_igroups,
             default=[],
         ),
         FieldMapping(
             cache_attr="vsi_on_san.protection_type.local_rpo",
-            api_path="vsi_on_san.protection_type.local_rpo",
         ),
         FieldMapping(
             cache_attr="vsi_on_san.protection_type.remote_rpo",
-            api_path="vsi_on_san.protection_type.remote_rpo",
         ),
     ),
 )

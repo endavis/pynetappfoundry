@@ -27,104 +27,83 @@ ONTAPFPOLICYPOLICY_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="allow_privileged_access",
-            api_path="allow_privileged_access",
             default=False,
         ),
         FieldMapping(
             cache_attr="enabled",
-            api_path="enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="engine.name",
-            api_path="engine.name",
         ),
         FieldMapping(
             cache_attr="events",
-            api_path="events",
             transform=_transform_events,
             default=[],
         ),
         FieldMapping(
             cache_attr="mandatory",
-            api_path="mandatory",
             default=False,
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="passthrough_read",
-            api_path="passthrough_read",
             default=False,
         ),
         FieldMapping(
             cache_attr="persistent_store",
-            api_path="persistent_store",
         ),
         FieldMapping(
             cache_attr="priority",
-            api_path="priority",
             default=0,
         ),
         FieldMapping(
             cache_attr="privileged_user",
-            api_path="privileged_user",
         ),
         FieldMapping(
             cache_attr="scope.check_extensions_on_directories",
-            api_path="scope.check_extensions_on_directories",
             default=False,
         ),
         FieldMapping(
             cache_attr="scope.exclude_export_policies",
-            api_path="scope.exclude_export_policies",
             default=[],
         ),
         FieldMapping(
             cache_attr="scope.exclude_extension",
-            api_path="scope.exclude_extension",
             default=[],
         ),
         FieldMapping(
             cache_attr="scope.exclude_shares",
-            api_path="scope.exclude_shares",
             default=[],
         ),
         FieldMapping(
             cache_attr="scope.exclude_volumes",
-            api_path="scope.exclude_volumes",
             default=[],
         ),
         FieldMapping(
             cache_attr="scope.include_export_policies",
-            api_path="scope.include_export_policies",
             default=[],
         ),
         FieldMapping(
             cache_attr="scope.include_extension",
-            api_path="scope.include_extension",
             default=[],
         ),
         FieldMapping(
             cache_attr="scope.include_shares",
-            api_path="scope.include_shares",
             default=[],
         ),
         FieldMapping(
             cache_attr="scope.include_volumes",
-            api_path="scope.include_volumes",
             default=[],
         ),
         FieldMapping(
             cache_attr="scope.object_monitoring_with_no_extension",
-            api_path="scope.object_monitoring_with_no_extension",
             default=False,
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
     ),
 )

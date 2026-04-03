@@ -32,45 +32,35 @@ ONTAPMETROCLUSTERSVM_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="cluster.name",
-            api_path="cluster.name",
         ),
         FieldMapping(
             cache_attr="cluster.uuid",
-            api_path="cluster.uuid",
         ),
         FieldMapping(
             cache_attr="configuration_state",
-            api_path="configuration_state",
         ),
         FieldMapping(
             cache_attr="failed_reason.arguments",
-            api_path="failed_reason.arguments",
             transform=_transform_failed_reason_arguments,
             default=[],
         ),
         FieldMapping(
             cache_attr="failed_reason.code",
-            api_path="failed_reason.code",
         ),
         FieldMapping(
             cache_attr="failed_reason.message",
-            api_path="failed_reason.message",
         ),
         FieldMapping(
             cache_attr="partner_svm.name",
-            api_path="partner_svm.name",
         ),
         FieldMapping(
             cache_attr="partner_svm.uuid",
-            api_path="partner_svm.uuid",
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
     ),
 )

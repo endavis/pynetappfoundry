@@ -16,20 +16,16 @@ ONTAPGROUPMEMBERSHIPSETTINGS_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="enabled",
-            api_path="enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="ttl",
-            api_path="ttl",
         ),
     ),
 )

@@ -44,47 +44,37 @@ ONTAPISCSICREDENTIALS_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="authentication_type",
-            api_path="authentication_type",
         ),
         FieldMapping(
             cache_attr="chap.inbound.password",
-            api_path="chap.inbound.password",
         ),
         FieldMapping(
             cache_attr="chap.inbound.user",
-            api_path="chap.inbound.user",
         ),
         FieldMapping(
             cache_attr="chap.outbound.password",
-            api_path="chap.outbound.password",
         ),
         FieldMapping(
             cache_attr="chap.outbound.user",
-            api_path="chap.outbound.user",
         ),
         FieldMapping(
             cache_attr="initiator",
-            api_path="initiator",
         ),
         FieldMapping(
             cache_attr="initiator_address.masks",
-            api_path="initiator_address.masks",
             transform=_transform_initiator_address_masks,
             default=[],
         ),
         FieldMapping(
             cache_attr="initiator_address.ranges",
-            api_path="initiator_address.ranges",
             transform=_transform_initiator_address_ranges,
             default=[],
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
     ),
 )

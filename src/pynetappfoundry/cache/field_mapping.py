@@ -63,6 +63,16 @@ class FieldMapping:
     requires_explicit_fetch: bool = False
     post_collection: Callable[[Any, dict[str, Any]], Any] | None = None
 
+    def __post_init__(self) -> None:
+        """Default ``api_path`` to ``cache_attr`` for cache/realtime fields.
+
+        Derived fields (``cache_strategy="derived"``) keep ``api_path=None``
+        because they have no API extraction path.  Uses
+        ``object.__setattr__`` because the dataclass is frozen.
+        """
+        if self.api_path is None and self.cache_strategy in ("cache", "realtime"):
+            object.__setattr__(self, "api_path", self.cache_attr)
+
 
 @dataclass(frozen=True)
 class TypeMapping:
@@ -164,9 +174,8 @@ class TypeMapping:
 
         Considers only fields where ``requires_explicit_fetch=True`` AND
         ``cache_strategy="cache"``.  Extracts the first segment of
-        ``api_path`` (before ``.`` or ``[``).  Transform-only fields
-        without ``api_path`` are silently excluded because
-        ``cache_attr`` is not a valid API field name.
+        ``api_path`` (before ``.`` or ``[``).  Fields without
+        ``api_path`` (e.g. derived fields) are silently excluded.
 
         Returns:
             Sorted list of unique top-level API field names.

@@ -27,48 +27,38 @@ ONTAPFCSWITCH_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="cache.age",
-            api_path="cache.age",
         ),
         FieldMapping(
             cache_attr="cache.is_current",
-            api_path="cache.is_current",
             default=False,
         ),
         FieldMapping(
             cache_attr="cache.update_time",
-            api_path="cache.update_time",
         ),
         FieldMapping(
             cache_attr="domain_id",
-            api_path="domain_id",
             default=0,
         ),
         FieldMapping(
             cache_attr="fabric.name",
-            api_path="fabric.name",
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="ports",
-            api_path="ports",
             transform=_transform_ports,
             default=[],
             requires_explicit_fetch=True,
         ),
         FieldMapping(
             cache_attr="release",
-            api_path="release",
         ),
         FieldMapping(
             cache_attr="vendor",
-            api_path="vendor",
         ),
         FieldMapping(
             cache_attr="wwn",
-            api_path="wwn",
         ),
     ),
 )

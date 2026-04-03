@@ -16,62 +16,48 @@ ONTAPKERBEROSINTERFACE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="enabled",
-            api_path="enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="encryption_types",
-            api_path="encryption_types",
             default=[],
         ),
         FieldMapping(
             cache_attr="force",
-            api_path="force",
             default=False,
         ),
         FieldMapping(
             cache_attr="interface.ip.address",
-            api_path="interface.ip.address",
         ),
         FieldMapping(
             cache_attr="interface.name",
-            api_path="interface.name",
         ),
         FieldMapping(
             cache_attr="interface.uuid",
-            api_path="interface.uuid",
         ),
         FieldMapping(
             cache_attr="keytab_uri",
-            api_path="keytab_uri",
         ),
         FieldMapping(
             cache_attr="machine_account",
-            api_path="machine_account",
         ),
         FieldMapping(
             cache_attr="organizational_unit",
-            api_path="organizational_unit",
         ),
         FieldMapping(
             cache_attr="password",
-            api_path="password",
         ),
         FieldMapping(
             cache_attr="spn",
-            api_path="spn",
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="user",
-            api_path="user",
         ),
     ),
 )

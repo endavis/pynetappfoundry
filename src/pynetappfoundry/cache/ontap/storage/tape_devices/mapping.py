@@ -31,97 +31,76 @@ ONTAPTAPEDEVICE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="alias.mapping",
-            api_path="alias.mapping",
         ),
         FieldMapping(
             cache_attr="alias.name",
-            api_path="alias.name",
         ),
         FieldMapping(
             cache_attr="aliases",
-            api_path="aliases",
             transform=_transform_aliases,
             default=[],
         ),
         FieldMapping(
             cache_attr="block_number",
-            api_path="block_number",
             default=0,
         ),
         FieldMapping(
             cache_attr="density",
-            api_path="density",
         ),
         FieldMapping(
             cache_attr="description",
-            api_path="description",
         ),
         FieldMapping(
             cache_attr="device_id",
-            api_path="device_id",
         ),
         FieldMapping(
             cache_attr="device_names",
-            api_path="device_names",
             transform=_transform_device_names,
             default=[],
         ),
         FieldMapping(
             cache_attr="device_state",
-            api_path="device_state",
         ),
         FieldMapping(
             cache_attr="file_number",
-            api_path="file_number",
             default=0,
         ),
         FieldMapping(
             cache_attr="formats",
-            api_path="formats",
             default=[],
         ),
         FieldMapping(
             cache_attr="interface",
-            api_path="interface",
         ),
         FieldMapping(
             cache_attr="node.name",
-            api_path="node.name",
         ),
         FieldMapping(
             cache_attr="node.uuid",
-            api_path="node.uuid",
         ),
         FieldMapping(
             cache_attr="online",
-            api_path="online",
             default=False,
         ),
         FieldMapping(
             cache_attr="position.count",
-            api_path="position.count",
             default=0,
         ),
         FieldMapping(
             cache_attr="position.operation",
-            api_path="position.operation",
         ),
         FieldMapping(
             cache_attr="reservation_type",
-            api_path="reservation_type",
         ),
         FieldMapping(
             cache_attr="residual_count",
-            api_path="residual_count",
             default=0,
         ),
         FieldMapping(
             cache_attr="serial_number",
-            api_path="serial_number",
         ),
         FieldMapping(
             cache_attr="storage_port.name",
-            api_path="storage_port.name",
         ),
         FieldMapping(
             cache_attr="type_",
@@ -129,11 +108,9 @@ ONTAPTAPEDEVICE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="wwnn",
-            api_path="wwnn",
         ),
         FieldMapping(
             cache_attr="wwpn",
-            api_path="wwpn",
         ),
     ),
 )

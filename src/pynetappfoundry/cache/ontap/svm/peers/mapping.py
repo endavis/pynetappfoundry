@@ -14,49 +14,38 @@ ONTAPSVMPEER_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="applications",
-            api_path="applications",
             default=[],
         ),
         FieldMapping(
             cache_attr="force",
-            api_path="force",
             default=False,
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="peer.cluster.name",
-            api_path="peer.cluster.name",
         ),
         FieldMapping(
             cache_attr="peer.cluster.uuid",
-            api_path="peer.cluster.uuid",
         ),
         FieldMapping(
             cache_attr="peer.svm.name",
-            api_path="peer.svm.name",
         ),
         FieldMapping(
             cache_attr="peer.svm.uuid",
-            api_path="peer.svm.uuid",
         ),
         FieldMapping(
             cache_attr="state",
-            api_path="state",
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="uuid",
-            api_path="uuid",
         ),
     ),
 )

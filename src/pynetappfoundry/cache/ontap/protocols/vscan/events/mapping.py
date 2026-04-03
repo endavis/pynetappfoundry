@@ -16,47 +16,36 @@ ONTAPVSCANEVENT_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="disconnect_reason",
-            api_path="disconnect_reason",
         ),
         FieldMapping(
             cache_attr="event_time",
-            api_path="event_time",
         ),
         FieldMapping(
             cache_attr="file_path",
-            api_path="file_path",
         ),
         FieldMapping(
             cache_attr="interface.ip.address",
-            api_path="interface.ip.address",
         ),
         FieldMapping(
             cache_attr="interface.name",
-            api_path="interface.name",
         ),
         FieldMapping(
             cache_attr="interface.uuid",
-            api_path="interface.uuid",
         ),
         FieldMapping(
             cache_attr="node.name",
-            api_path="node.name",
         ),
         FieldMapping(
             cache_attr="node.uuid",
-            api_path="node.uuid",
         ),
         FieldMapping(
             cache_attr="server",
-            api_path="server",
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="type_",
@@ -64,11 +53,9 @@ ONTAPVSCANEVENT_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="vendor",
-            api_path="vendor",
         ),
         FieldMapping(
             cache_attr="version",
-            api_path="version",
         ),
     ),
 )

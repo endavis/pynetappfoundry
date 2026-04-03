@@ -14,11 +14,9 @@ ONTAPIPSPACE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="uuid",
-            api_path="uuid",
         ),
     ),
 )

@@ -18,76 +18,60 @@ ONTAPS3BUCKETLIFECYCLERULE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="abort_incomplete_multipart_upload.after_initiation_days",
-            api_path="abort_incomplete_multipart_upload.after_initiation_days",
             default=0,
         ),
         FieldMapping(
             cache_attr="bucket_name",
-            api_path="bucket_name",
         ),
         FieldMapping(
             cache_attr="enabled",
-            api_path="enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="expiration.expired_object_delete_marker",
-            api_path="expiration.expired_object_delete_marker",
             default=False,
         ),
         FieldMapping(
             cache_attr="expiration.object_age_days",
-            api_path="expiration.object_age_days",
             default=0,
         ),
         FieldMapping(
             cache_attr="expiration.object_expiry_date",
-            api_path="expiration.object_expiry_date",
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="non_current_version_expiration.new_non_current_versions",
-            api_path="non_current_version_expiration.new_non_current_versions",
             default=0,
         ),
         FieldMapping(
             cache_attr="non_current_version_expiration.non_current_days",
-            api_path="non_current_version_expiration.non_current_days",
             default=0,
         ),
         FieldMapping(
             cache_attr="object_filter.prefix",
-            api_path="object_filter.prefix",
         ),
         FieldMapping(
             cache_attr="object_filter.size_greater_than",
-            api_path="object_filter.size_greater_than",
             default=0,
         ),
         FieldMapping(
             cache_attr="object_filter.size_less_than",
-            api_path="object_filter.size_less_than",
             default=0,
         ),
         FieldMapping(
             cache_attr="object_filter.tags",
-            api_path="object_filter.tags",
             default=[],
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="uuid",
-            api_path="uuid",
         ),
     ),
 )

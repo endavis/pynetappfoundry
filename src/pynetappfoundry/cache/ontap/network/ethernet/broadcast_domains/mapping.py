@@ -25,30 +25,24 @@ ONTAPBROADCASTDOMAIN_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="ipspace.name",
-            api_path="ipspace.name",
         ),
         FieldMapping(
             cache_attr="ipspace.uuid",
-            api_path="ipspace.uuid",
         ),
         FieldMapping(
             cache_attr="mtu",
-            api_path="mtu",
             default=0,
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="ports",
-            api_path="ports",
             transform=_transform_ports,
             default=[],
         ),
         FieldMapping(
             cache_attr="uuid",
-            api_path="uuid",
         ),
     ),
 )

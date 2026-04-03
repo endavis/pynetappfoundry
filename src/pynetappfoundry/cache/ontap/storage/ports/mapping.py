@@ -14,104 +14,80 @@ ONTAPSTORAGEPORT_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="board_name",
-            api_path="board_name",
         ),
         FieldMapping(
             cache_attr="cable.identifier",
-            api_path="cable.identifier",
         ),
         FieldMapping(
             cache_attr="cable.length",
-            api_path="cable.length",
         ),
         FieldMapping(
             cache_attr="cable.part_number",
-            api_path="cable.part_number",
         ),
         FieldMapping(
             cache_attr="cable.serial_number",
-            api_path="cable.serial_number",
         ),
         FieldMapping(
             cache_attr="cable.transceiver",
-            api_path="cable.transceiver",
         ),
         FieldMapping(
             cache_attr="cable.vendor",
-            api_path="cable.vendor",
         ),
         FieldMapping(
             cache_attr="description",
-            api_path="description",
         ),
         FieldMapping(
             cache_attr="enabled",
-            api_path="enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="error.corrective_action",
-            api_path="error.corrective_action",
         ),
         FieldMapping(
             cache_attr="error.message",
-            api_path="error.message",
         ),
         FieldMapping(
             cache_attr="firmware_version",
-            api_path="firmware_version",
         ),
         FieldMapping(
             cache_attr="force",
-            api_path="force",
             default=False,
         ),
         FieldMapping(
             cache_attr="in_use",
-            api_path="in_use",
             default=False,
         ),
         FieldMapping(
             cache_attr="mac_address",
-            api_path="mac_address",
         ),
         FieldMapping(
             cache_attr="mode",
-            api_path="mode",
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="node.name",
-            api_path="node.name",
         ),
         FieldMapping(
             cache_attr="node.uuid",
-            api_path="node.uuid",
         ),
         FieldMapping(
             cache_attr="part_number",
-            api_path="part_number",
         ),
         FieldMapping(
             cache_attr="redundant",
-            api_path="redundant",
             default=False,
         ),
         FieldMapping(
             cache_attr="serial_number",
-            api_path="serial_number",
         ),
         FieldMapping(
             cache_attr="speed",
-            api_path="speed",
             default=0.0,
         ),
         FieldMapping(
             cache_attr="state",
-            api_path="state",
         ),
         FieldMapping(
             cache_attr="type_",
@@ -119,11 +95,9 @@ ONTAPSTORAGEPORT_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="wwn",
-            api_path="wwn",
         ),
         FieldMapping(
             cache_attr="wwpn",
-            api_path="wwpn",
         ),
     ),
 )

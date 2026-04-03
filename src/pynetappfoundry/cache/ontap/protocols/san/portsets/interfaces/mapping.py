@@ -27,41 +27,32 @@ ONTAPPORTSETINTERFACE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="fc.name",
-            api_path="fc.name",
         ),
         FieldMapping(
             cache_attr="fc.uuid",
-            api_path="fc.uuid",
         ),
         FieldMapping(
             cache_attr="fc.wwpn",
-            api_path="fc.wwpn",
         ),
         FieldMapping(
             cache_attr="ip.ip.address",
-            api_path="ip.ip.address",
         ),
         FieldMapping(
             cache_attr="ip.name",
-            api_path="ip.name",
         ),
         FieldMapping(
             cache_attr="ip.uuid",
-            api_path="ip.uuid",
         ),
         FieldMapping(
             cache_attr="portset.uuid",
-            api_path="portset.uuid",
         ),
         FieldMapping(
             cache_attr="records",
-            api_path="records",
             transform=_transform_records,
             default=[],
         ),
         FieldMapping(
             cache_attr="uuid",
-            api_path="uuid",
         ),
     ),
 )

@@ -14,29 +14,23 @@ ONTAPNDMPNODE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="authentication_types",
-            api_path="authentication_types",
             default=[],
         ),
         FieldMapping(
             cache_attr="enabled",
-            api_path="enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="node.name",
-            api_path="node.name",
         ),
         FieldMapping(
             cache_attr="node.uuid",
-            api_path="node.uuid",
         ),
         FieldMapping(
             cache_attr="password",
-            api_path="password",
         ),
         FieldMapping(
             cache_attr="user",
-            api_path="user",
         ),
     ),
 )

@@ -15,35 +15,27 @@ ONTAPAUTOSUPPORT_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="component",
-            api_path="component",
         ),
         FieldMapping(
             cache_attr="corrective_action.code",
-            api_path="corrective_action.code",
         ),
         FieldMapping(
             cache_attr="corrective_action.message",
-            api_path="corrective_action.message",
         ),
         FieldMapping(
             cache_attr="destination",
-            api_path="destination",
         ),
         FieldMapping(
             cache_attr="issue.code",
-            api_path="issue.code",
         ),
         FieldMapping(
             cache_attr="issue.message",
-            api_path="issue.message",
         ),
         FieldMapping(
             cache_attr="node.name",
-            api_path="node.name",
         ),
         FieldMapping(
             cache_attr="node.uuid",
-            api_path="node.uuid",
         ),
     ),
 )

@@ -14,15 +14,12 @@ ONTAPSNMPTRAPHOST_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="host",
-            api_path="host",
         ),
         FieldMapping(
             cache_attr="ip_address",
-            api_path="ip_address",
         ),
         FieldMapping(
             cache_attr="user.name",
-            api_path="user.name",
         ),
     ),
 )

@@ -16,23 +16,18 @@ ONTAPRESOURCETAGRESOURCE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="href",
-            api_path="href",
         ),
         FieldMapping(
             cache_attr="label",
-            api_path="label",
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="value",
-            api_path="value",
         ),
     ),
 )

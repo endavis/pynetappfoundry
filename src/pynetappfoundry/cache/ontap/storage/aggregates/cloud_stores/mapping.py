@@ -16,24 +16,19 @@ ONTAPCLOUDSTORE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="aggregate.name",
-            api_path="aggregate.name",
         ),
         FieldMapping(
             cache_attr="availability",
-            api_path="availability",
         ),
         FieldMapping(
             cache_attr="availability_at_partner",
-            api_path="availability_at_partner",
         ),
         FieldMapping(
             cache_attr="mirror_degraded",
-            api_path="mirror_degraded",
             default=False,
         ),
         FieldMapping(
             cache_attr="primary",
-            api_path="primary",
             default=False,
         ),
         FieldMapping(
@@ -43,24 +38,19 @@ ONTAPCLOUDSTORE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="target.name",
-            api_path="target.name",
         ),
         FieldMapping(
             cache_attr="target.uuid",
-            api_path="target.uuid",
         ),
         FieldMapping(
             cache_attr="unavailable_reason.message",
-            api_path="unavailable_reason.message",
         ),
         FieldMapping(
             cache_attr="unreclaimed_space_threshold",
-            api_path="unreclaimed_space_threshold",
             default=0,
         ),
         FieldMapping(
             cache_attr="used",
-            api_path="used",
             default=0,
         ),
     ),

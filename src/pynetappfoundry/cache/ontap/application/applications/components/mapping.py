@@ -94,95 +94,76 @@ ONTAPAPPLICATIONCOMPONENT_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="application.name",
-            api_path="application.name",
         ),
         FieldMapping(
             cache_attr="application.uuid",
-            api_path="application.uuid",
         ),
         FieldMapping(
             cache_attr="backing_storage.luns",
-            api_path="backing_storage.luns",
             transform=_transform_backing_storage_luns,
             default=[],
         ),
         FieldMapping(
             cache_attr="backing_storage.namespaces",
-            api_path="backing_storage.namespaces",
             transform=_transform_backing_storage_namespaces,
             default=[],
         ),
         FieldMapping(
             cache_attr="backing_storage.volumes",
-            api_path="backing_storage.volumes",
             transform=_transform_backing_storage_volumes,
             default=[],
         ),
         FieldMapping(
             cache_attr="cifs_access",
-            api_path="cifs_access",
             transform=_transform_cifs_access,
             default=[],
         ),
         FieldMapping(
             cache_attr="file_system",
-            api_path="file_system",
         ),
         FieldMapping(
             cache_attr="host_management_url",
-            api_path="host_management_url",
         ),
         FieldMapping(
             cache_attr="host_name",
-            api_path="host_name",
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="nfs_access",
-            api_path="nfs_access",
             transform=_transform_nfs_access,
             default=[],
         ),
         FieldMapping(
             cache_attr="nvme_access",
-            api_path="nvme_access",
             transform=_transform_nvme_access,
             default=[],
         ),
         FieldMapping(
             cache_attr="protection_groups",
-            api_path="protection_groups",
             transform=_transform_protection_groups,
             default=[],
         ),
         FieldMapping(
             cache_attr="san_access",
-            api_path="san_access",
             transform=_transform_san_access,
             default=[],
         ),
         FieldMapping(
             cache_attr="storage_service.name",
-            api_path="storage_service.name",
         ),
         FieldMapping(
             cache_attr="storage_service.uuid",
-            api_path="storage_service.uuid",
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="uuid",
-            api_path="uuid",
         ),
     ),
 )

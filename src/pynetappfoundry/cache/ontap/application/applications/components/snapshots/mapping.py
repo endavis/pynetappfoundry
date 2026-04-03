@@ -18,52 +18,40 @@ ONTAPAPPLICATIONCOMPONENTSNAPSHOT_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="application.name",
-            api_path="application.name",
         ),
         FieldMapping(
             cache_attr="application.uuid",
-            api_path="application.uuid",
         ),
         FieldMapping(
             cache_attr="comment",
-            api_path="comment",
         ),
         FieldMapping(
             cache_attr="component.name",
-            api_path="component.name",
         ),
         FieldMapping(
             cache_attr="component.uuid",
-            api_path="component.uuid",
         ),
         FieldMapping(
             cache_attr="consistency_type",
-            api_path="consistency_type",
         ),
         FieldMapping(
             cache_attr="create_time",
-            api_path="create_time",
         ),
         FieldMapping(
             cache_attr="is_partial",
-            api_path="is_partial",
             default=False,
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="uuid",
-            api_path="uuid",
         ),
     ),
 )

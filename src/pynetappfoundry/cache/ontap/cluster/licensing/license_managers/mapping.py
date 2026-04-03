@@ -16,16 +16,13 @@ ONTAPLICENSEMANAGERRESPONSE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="default",
-            api_path="default",
             default=False,
         ),
         FieldMapping(
             cache_attr="uri.host",
-            api_path="uri.host",
         ),
         FieldMapping(
             cache_attr="uuid",
-            api_path="uuid",
         ),
     ),
 )

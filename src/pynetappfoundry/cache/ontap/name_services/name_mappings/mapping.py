@@ -14,32 +14,25 @@ ONTAPNAMEMAPPING_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="client_match",
-            api_path="client_match",
         ),
         FieldMapping(
             cache_attr="direction",
-            api_path="direction",
         ),
         FieldMapping(
             cache_attr="index",
-            api_path="index",
             default=0,
         ),
         FieldMapping(
             cache_attr="pattern",
-            api_path="pattern",
         ),
         FieldMapping(
             cache_attr="replacement",
-            api_path="replacement",
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
     ),
 )

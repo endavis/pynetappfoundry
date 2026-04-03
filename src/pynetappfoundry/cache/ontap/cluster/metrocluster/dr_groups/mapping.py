@@ -25,27 +25,22 @@ ONTAPMETROCLUSTERDRGROUP_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="dr_pairs",
-            api_path="dr_pairs",
             default=[],
         ),
         FieldMapping(
             cache_attr="id",
-            api_path="id",
             default=0,
         ),
         FieldMapping(
             cache_attr="mccip_ports",
-            api_path="mccip_ports",
             transform=_transform_mccip_ports,
             default=[],
         ),
         FieldMapping(
             cache_attr="partner_cluster.name",
-            api_path="partner_cluster.name",
         ),
         FieldMapping(
             cache_attr="partner_cluster.uuid",
-            api_path="partner_cluster.uuid",
         ),
     ),
 )

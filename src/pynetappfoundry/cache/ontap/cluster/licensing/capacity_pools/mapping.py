@@ -25,17 +25,14 @@ ONTAPCAPACITYPOOLRESPONSE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="license_manager.uuid",
-            api_path="license_manager.uuid",
         ),
         FieldMapping(
             cache_attr="nodes",
-            api_path="nodes",
             transform=_transform_nodes,
             default=[],
         ),
         FieldMapping(
             cache_attr="serial_number",
-            api_path="serial_number",
         ),
     ),
 )

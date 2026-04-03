@@ -36,48 +36,38 @@ ONTAPACTIVEDIRECTORY_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="discovered_servers",
-            api_path="discovered_servers",
             transform=_transform_discovered_servers,
             default=[],
         ),
         FieldMapping(
             cache_attr="force_account_overwrite",
-            api_path="force_account_overwrite",
             default=False,
         ),
         FieldMapping(
             cache_attr="fqdn",
-            api_path="fqdn",
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="organizational_unit",
-            api_path="organizational_unit",
         ),
         FieldMapping(
             cache_attr="password",
-            api_path="password",
         ),
         FieldMapping(
             cache_attr="preferred_dcs",
-            api_path="preferred_dcs",
             transform=_transform_preferred_dcs,
             default=[],
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="username",
-            api_path="username",
         ),
     ),
 )

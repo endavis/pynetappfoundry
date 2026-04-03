@@ -16,126 +16,98 @@ ONTAPSECURITYASSOCIATIONRESPONSE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="cipher_suite",
-            api_path="cipher_suite",
         ),
         FieldMapping(
             cache_attr="ike.authentication",
-            api_path="ike.authentication",
         ),
         FieldMapping(
             cache_attr="ike.initiator_security_parameter_index",
-            api_path="ike.initiator_security_parameter_index",
         ),
         FieldMapping(
             cache_attr="ike.is_initiator",
-            api_path="ike.is_initiator",
             default=False,
         ),
         FieldMapping(
             cache_attr="ike.responder_security_parameter_index",
-            api_path="ike.responder_security_parameter_index",
         ),
         FieldMapping(
             cache_attr="ike.state",
-            api_path="ike.state",
         ),
         FieldMapping(
             cache_attr="ike.version",
-            api_path="ike.version",
             default=0,
         ),
         FieldMapping(
             cache_attr="ipsec.action",
-            api_path="ipsec.action",
         ),
         FieldMapping(
             cache_attr="ipsec.inbound.bytes",
-            api_path="ipsec.inbound.bytes",
             default=0,
         ),
         FieldMapping(
             cache_attr="ipsec.inbound.offload_bytes",
-            api_path="ipsec.inbound.offload_bytes",
             default=0,
         ),
         FieldMapping(
             cache_attr="ipsec.inbound.offload_packets",
-            api_path="ipsec.inbound.offload_packets",
             default=0,
         ),
         FieldMapping(
             cache_attr="ipsec.inbound.packets",
-            api_path="ipsec.inbound.packets",
             default=0,
         ),
         FieldMapping(
             cache_attr="ipsec.inbound.security_parameter_index",
-            api_path="ipsec.inbound.security_parameter_index",
         ),
         FieldMapping(
             cache_attr="ipsec.outbound.bytes",
-            api_path="ipsec.outbound.bytes",
             default=0,
         ),
         FieldMapping(
             cache_attr="ipsec.outbound.offload_bytes",
-            api_path="ipsec.outbound.offload_bytes",
             default=0,
         ),
         FieldMapping(
             cache_attr="ipsec.outbound.offload_packets",
-            api_path="ipsec.outbound.offload_packets",
             default=0,
         ),
         FieldMapping(
             cache_attr="ipsec.outbound.packets",
-            api_path="ipsec.outbound.packets",
             default=0,
         ),
         FieldMapping(
             cache_attr="ipsec.outbound.security_parameter_index",
-            api_path="ipsec.outbound.security_parameter_index",
         ),
         FieldMapping(
             cache_attr="ipsec.state",
-            api_path="ipsec.state",
         ),
         FieldMapping(
             cache_attr="lifetime",
-            api_path="lifetime",
             default=0,
         ),
         FieldMapping(
             cache_attr="local_address",
-            api_path="local_address",
         ),
         FieldMapping(
             cache_attr="node.name",
-            api_path="node.name",
         ),
         FieldMapping(
             cache_attr="node.uuid",
-            api_path="node.uuid",
         ),
         FieldMapping(
             cache_attr="policy_name",
-            api_path="policy_name",
         ),
         FieldMapping(
             cache_attr="remote_address",
-            api_path="remote_address",
         ),
         FieldMapping(
             cache_attr="scope",
-            api_path="scope",
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="type_",
@@ -143,7 +115,6 @@ ONTAPSECURITYASSOCIATIONRESPONSE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="uuid",
-            api_path="uuid",
         ),
     ),
 )

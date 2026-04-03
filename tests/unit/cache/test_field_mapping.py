@@ -49,7 +49,7 @@ class TestFieldMapping:
     def test_defaults(self) -> None:
         """Unset optional fields get correct defaults."""
         fm = FieldMapping(cache_attr="x")
-        assert fm.api_path is None
+        assert fm.api_path == "x"  # auto-defaulted from cache_attr
         assert fm.cli_field is None
         assert fm.default == ""
         assert fm.transform is None
@@ -100,6 +100,86 @@ class TestFieldMappingNewFields:
 
 
 # ---------------------------------------------------------------------------
+# FieldMapping api_path auto-defaulting tests
+# ---------------------------------------------------------------------------
+
+
+class TestFieldMappingApiPathDefault:
+    """Tests for __post_init__ api_path auto-defaulting from cache_attr."""
+
+    def test_cache_strategy_defaults_api_path(self) -> None:
+        """cache_strategy='cache' auto-defaults api_path to cache_attr."""
+        fm = FieldMapping(cache_attr="ip.address")
+        assert fm.api_path == "ip.address"
+
+    def test_explicit_api_path_preserved(self) -> None:
+        """Explicit api_path is not overwritten by auto-default."""
+        fm = FieldMapping(cache_attr="name", api_path="cluster_name")
+        assert fm.api_path == "cluster_name"
+
+    def test_derived_strategy_keeps_none(self) -> None:
+        """Derived fields keep api_path=None (no API extraction)."""
+        fm = FieldMapping(cache_attr="is_ha", cache_strategy="derived")
+        assert fm.api_path is None
+
+    def test_realtime_strategy_defaults_api_path(self) -> None:
+        """cache_strategy='realtime' also auto-defaults api_path."""
+        fm = FieldMapping(cache_attr="stats", cache_strategy="realtime")
+        assert fm.api_path == "stats"
+
+    def test_dataclasses_replace_works(self) -> None:
+        """dataclasses.replace() triggers __post_init__ correctly."""
+        import dataclasses
+
+        fm = FieldMapping(cache_attr="name", api_path="cluster_name")
+        replaced = dataclasses.replace(fm, cache_attr="new_name", api_path=None)
+        # After replace, __post_init__ should set api_path to "new_name"
+        assert replaced.api_path == "new_name"
+
+    def test_dataclasses_replace_preserves_explicit(self) -> None:
+        """dataclasses.replace() preserves explicit api_path."""
+        import dataclasses
+
+        fm = FieldMapping(cache_attr="name", api_path="cluster_name")
+        replaced = dataclasses.replace(fm, cache_attr="new_name")
+        # Explicit api_path="cluster_name" should remain
+        assert replaced.api_path == "cluster_name"
+
+    def test_parse_api_record_with_auto_default(self) -> None:
+        """parse_api_record works with auto-defaulted api_path."""
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/t",
+            fields=(
+                FieldMapping(cache_attr="name"),  # api_path auto-defaults to "name"
+                FieldMapping(cache_attr="value", default=0),
+            ),
+        )
+        record = {"name": "auto_test", "value": 77}
+        result = parse_api_record(tm, record, "[test]")
+        assert result.name == "auto_test"
+        assert result.value == 77
+
+    def test_explicit_fetch_api_fields_with_auto_default(self) -> None:
+        """explicit_fetch_api_fields works with auto-defaulted api_path."""
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/t?fields=*",
+            fields=(
+                FieldMapping(cache_attr="name"),
+                FieldMapping(
+                    cache_attr="value",
+                    requires_explicit_fetch=True,
+                    default=0,
+                ),
+            ),
+        )
+        assert tm.explicit_fetch_api_fields() == ["value"]
+
+
+# ---------------------------------------------------------------------------
 # TypeMapping tests
 # ---------------------------------------------------------------------------
 
@@ -136,7 +216,8 @@ class TestTypeMapping:
     def test_api_expected_fields_deduplication(self, sample_mapping: TypeMapping) -> None:
         """api_expected_fields deduplicates nested paths to top-level keys."""
         expected = sample_mapping.api_expected_fields()
-        assert expected == ["name", "nested"]
+        # "items" now included because api_path auto-defaults from cache_attr
+        assert expected == ["items", "name", "nested"]
 
     def test_api_expected_fields_with_index(self) -> None:
         """Array index paths extract the key before brackets."""
@@ -433,13 +514,19 @@ class TestParseApiRecord:
             parse_api_record(tm, {}, "[test]")
 
     def test_no_api_path_no_transform_uses_default(self) -> None:
-        """Field with neither api_path nor transform uses default."""
+        """Field with neither api_path nor transform uses default (derived strategy)."""
         tm = TypeMapping(
             name="T",
             model_class=_SampleModel,
             api_endpoint="/t",
             cli_command="t",
-            fields=(FieldMapping(cache_attr="name", default="def"),),
+            fields=(
+                FieldMapping(
+                    cache_attr="name",
+                    default="def",
+                    cache_strategy="derived",
+                ),
+            ),
         )
         result = parse_api_record(tm, {"name": "ignored"}, "[test]")
         assert result.name == "def"
@@ -882,8 +969,8 @@ class TestExplicitFetchApiFields:
         )
         assert tm.explicit_fetch_api_fields() == ["connectivity_tracking"]
 
-    def test_transform_without_api_path_excluded(self) -> None:
-        """Transform-only fields without api_path are silently excluded."""
+    def test_transform_without_explicit_api_path_uses_default(self) -> None:
+        """Transform fields without explicit api_path use auto-defaulted api_path."""
         tm = TypeMapping(
             name="T",
             model_class=_SampleModel,
@@ -894,6 +981,25 @@ class TestExplicitFetchApiFields:
                     transform=lambda r: r.get("copies", []),
                     default=[],
                     requires_explicit_fetch=True,
+                ),
+            ),
+        )
+        # api_path auto-defaults to "copies" from cache_attr
+        assert tm.explicit_fetch_api_fields() == ["copies"]
+
+    def test_derived_transform_without_api_path_excluded(self) -> None:
+        """Derived transform fields keep api_path=None and are excluded."""
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/t?fields=*",
+            fields=(
+                FieldMapping(
+                    cache_attr="copies",
+                    transform=lambda r: r.get("copies", []),
+                    default=[],
+                    requires_explicit_fetch=True,
+                    cache_strategy="derived",
                 ),
             ),
         )

@@ -25,38 +25,30 @@ ONTAPLICENSEPACKAGERESPONSE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="description",
-            api_path="description",
         ),
         FieldMapping(
             cache_attr="entitlement.action",
-            api_path="entitlement.action",
         ),
         FieldMapping(
             cache_attr="entitlement.risk",
-            api_path="entitlement.risk",
         ),
         FieldMapping(
             cache_attr="keys",
-            api_path="keys",
             default=[],
         ),
         FieldMapping(
             cache_attr="licenses",
-            api_path="licenses",
             transform=_transform_licenses,
             default=[],
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="scope",
-            api_path="scope",
         ),
         FieldMapping(
             cache_attr="state",
-            api_path="state",
         ),
     ),
 )

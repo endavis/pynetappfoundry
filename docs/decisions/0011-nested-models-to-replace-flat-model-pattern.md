@@ -94,6 +94,7 @@ The codegen tool (ADR-0008) can leverage `datamodel-code-generator` more directl
 - Issue #444: refactor: evaluate nested models to replace flat model pattern
 - Issue #443: refactor: fix all sub-model transforms to use declarative field mapping (superseded)
 - Issue #440: fix: HTML report bugs - missing data, title formatting, cloud section placement (catalyst)
+- Issue #447: refactor: simplify or remove FieldMapping after nested model migration
 
 ## Related Documentation
 

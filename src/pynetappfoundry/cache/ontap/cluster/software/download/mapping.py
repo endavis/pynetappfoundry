@@ -16,16 +16,13 @@ ONTAPSOFTWAREPACKAGEDOWNLOADGET_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="code",
-            api_path="code",
             default=0,
         ),
         FieldMapping(
             cache_attr="message",
-            api_path="message",
         ),
         FieldMapping(
             cache_attr="state",
-            api_path="state",
         ),
     ),
 )

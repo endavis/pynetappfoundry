@@ -16,16 +16,13 @@ ONTAPNFSCLIENTSCACHE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="client_retention_interval",
-            api_path="client_retention_interval",
         ),
         FieldMapping(
             cache_attr="enable_nfs_clients_deletion",
-            api_path="enable_nfs_clients_deletion",
             default=False,
         ),
         FieldMapping(
             cache_attr="update_interval",
-            api_path="update_interval",
         ),
     ),
 )

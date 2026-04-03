@@ -16,7 +16,6 @@ ONTAPSECURITYOAUTH2GLOBAL_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="enabled",
-            api_path="enabled",
             default=False,
         ),
     ),

@@ -16,36 +16,28 @@ ONTAPCIFSSYMLINKMAPPING_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="target.home_directory",
-            api_path="target.home_directory",
             default=False,
         ),
         FieldMapping(
             cache_attr="target.locality",
-            api_path="target.locality",
         ),
         FieldMapping(
             cache_attr="target.path",
-            api_path="target.path",
         ),
         FieldMapping(
             cache_attr="target.server",
-            api_path="target.server",
         ),
         FieldMapping(
             cache_attr="target.share",
-            api_path="target.share",
         ),
         FieldMapping(
             cache_attr="unix_path",
-            api_path="unix_path",
         ),
     ),
 )

@@ -116,6 +116,7 @@ annotated mappings from API specs, with per-field customization via TOML overlay
 - Issue #216: refactor: migrate ClusterPeer to field mapping framework
 - Issue #214: refactor: migrate HAInfo to field mapping framework
 - Issue #237: refactor: all-or-nothing collection with no CLI fallback
+- Issue #447: refactor: simplify or remove FieldMapping after nested model migration
 - Issue #259: feat: generalize field mapping framework for multi-API data collection
 - Issue #209: refactor: migrate ClusterInfo to field mapping framework
 - Issue #257: refactor: deep URL-tree structure with automatic model and mapping discovery

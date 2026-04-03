@@ -16,23 +16,18 @@ ONTAPCIFSSHAREACL_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="permission",
-            api_path="permission",
         ),
         FieldMapping(
             cache_attr="share",
-            api_path="share",
         ),
         FieldMapping(
             cache_attr="sid",
-            api_path="sid",
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="type_",
@@ -40,12 +35,10 @@ ONTAPCIFSSHAREACL_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="unix_id",
-            api_path="unix_id",
             default=0,
         ),
         FieldMapping(
             cache_attr="user_or_group",
-            api_path="user_or_group",
         ),
     ),
 )

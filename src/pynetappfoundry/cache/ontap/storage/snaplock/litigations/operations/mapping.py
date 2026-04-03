@@ -18,32 +18,25 @@ ONTAPSNAPLOCKLEGALHOLDOPERATION_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="id",
-            api_path="id",
             default=0,
         ),
         FieldMapping(
             cache_attr="num_files_failed",
-            api_path="num_files_failed",
         ),
         FieldMapping(
             cache_attr="num_files_processed",
-            api_path="num_files_processed",
         ),
         FieldMapping(
             cache_attr="num_files_skipped",
-            api_path="num_files_skipped",
         ),
         FieldMapping(
             cache_attr="num_inodes_ignored",
-            api_path="num_inodes_ignored",
         ),
         FieldMapping(
             cache_attr="path",
-            api_path="path",
         ),
         FieldMapping(
             cache_attr="state",
-            api_path="state",
         ),
         FieldMapping(
             cache_attr="type_",

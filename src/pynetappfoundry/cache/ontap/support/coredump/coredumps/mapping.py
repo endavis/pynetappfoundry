@@ -14,37 +14,29 @@ ONTAPCOREDUMP_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="is_partial",
-            api_path="is_partial",
             default=False,
         ),
         FieldMapping(
             cache_attr="is_saved",
-            api_path="is_saved",
             default=False,
         ),
         FieldMapping(
             cache_attr="md5_data_checksum",
-            api_path="md5_data_checksum",
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="node.name",
-            api_path="node.name",
         ),
         FieldMapping(
             cache_attr="node.uuid",
-            api_path="node.uuid",
         ),
         FieldMapping(
             cache_attr="panic_time",
-            api_path="panic_time",
         ),
         FieldMapping(
             cache_attr="size",
-            api_path="size",
             default=0,
         ),
         FieldMapping(
