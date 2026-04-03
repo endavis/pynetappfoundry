@@ -83,6 +83,12 @@ from pynetappfoundry.cache.db import ClusterMetadataDB  # noqa: E402
 from pynetappfoundry.cache.diff import ChangeEntry, compute_diff, format_diff_summary  # noqa: E402
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping  # noqa: E402
 from pynetappfoundry.cache.history_db import CacheHistoryDB  # noqa: E402
+from pynetappfoundry.cache.query_engine import (  # noqa: E402
+    ParsedFilter,
+    SQLCondition,
+    parse_filter,
+    parse_filters,
+)
 from pynetappfoundry.models.ontap.cluster.mediators.model import OntapMediatorResponse  # noqa: E402
 
 __all__ = [
@@ -101,13 +107,17 @@ __all__ = [
     "MetadataCollector",
     "OntapMediatorResponse",
     "OntapUUID",
+    "ParsedFilter",
     "ProgressCallback",
     "ProgressInfo",
     "RelationshipsInfo",
+    "SQLCondition",
     "TypeMapping",
     "compute_diff",
     "format_diff_summary",
     "is_schema_compatible",
     "model_registry",
+    "parse_filter",
+    "parse_filters",
     "parse_schema_version",
 ]
