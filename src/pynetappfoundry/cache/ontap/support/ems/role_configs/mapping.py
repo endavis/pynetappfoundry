@@ -14,15 +14,12 @@ ONTAPEMSROLECONFIGRESPONSE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="access_control_role.name",
-            api_path="access_control_role.name",
         ),
         FieldMapping(
             cache_attr="event_filter.name",
-            api_path="event_filter.name",
         ),
         FieldMapping(
             cache_attr="limit_access_to_global_configs",
-            api_path="limit_access_to_global_configs",
             default=False,
         ),
     ),

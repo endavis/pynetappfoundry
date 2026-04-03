@@ -16,57 +16,45 @@ ONTAPVSCANONDEMAND_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="log_path",
-            api_path="log_path",
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="scan_paths",
-            api_path="scan_paths",
             default=[],
         ),
         FieldMapping(
             cache_attr="schedule.name",
-            api_path="schedule.name",
         ),
         FieldMapping(
             cache_attr="schedule.uuid",
-            api_path="schedule.uuid",
         ),
         FieldMapping(
             cache_attr="scope.exclude_extensions",
-            api_path="scope.exclude_extensions",
             default=[],
         ),
         FieldMapping(
             cache_attr="scope.exclude_paths",
-            api_path="scope.exclude_paths",
             default=[],
         ),
         FieldMapping(
             cache_attr="scope.include_extensions",
-            api_path="scope.include_extensions",
             default=[],
         ),
         FieldMapping(
             cache_attr="scope.max_file_size",
-            api_path="scope.max_file_size",
             default=0,
         ),
         FieldMapping(
             cache_attr="scope.scan_without_extension",
-            api_path="scope.scan_without_extension",
             default=False,
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
     ),
 )

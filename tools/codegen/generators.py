@@ -815,9 +815,10 @@ def generate_mapping(
 
         if field.api_path in array_sub_models:
             func_name = f"_transform_{field.api_path.replace('.', '_')}"
-            field_args.append(f'        api_path="{field.api_path}"')
+            if field.api_path != cache_attr:
+                field_args.append(f'        api_path="{field.api_path}"')
             field_args.append(f"        transform={func_name}")
-        else:
+        elif field.api_path != cache_attr:
             field_args.append(f'        api_path="{field.api_path}"')
 
         if field.default != "" or field.is_list:

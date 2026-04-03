@@ -62,15 +62,12 @@ CLUSTER_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="contact",
-            api_path="contact",
         ),
         FieldMapping(
             cache_attr="location",
-            api_path="location",
         ),
         FieldMapping(
             cache_attr="san_optimized",
-            api_path="san_optimized",
             default=False,
         ),
         FieldMapping(
@@ -79,17 +76,14 @@ CLUSTER_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="dns_domains",
-            api_path="dns_domains",
             default=[],
         ),
         FieldMapping(
             cache_attr="name_servers",
-            api_path="name_servers",
             default=[],
         ),
         FieldMapping(
             cache_attr="ntp_servers",
-            api_path="ntp_servers",
             default=[],
         ),
         FieldMapping(
@@ -114,17 +108,14 @@ CLUSTER_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="disaggregated",
-            api_path="disaggregated",
             default=False,
         ),
         FieldMapping(
             cache_attr="auto_enable_activity_tracking",
-            api_path="auto_enable_activity_tracking",
             default=False,
         ),
         FieldMapping(
             cache_attr="auto_enable_analytics",
-            api_path="auto_enable_analytics",
             default=False,
         ),
         FieldMapping(

@@ -18,19 +18,15 @@ ONTAPLUNMAPREPORTINGNODE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="igroup.uuid",
-            api_path="igroup.uuid",
         ),
         FieldMapping(
             cache_attr="lun.uuid",
-            api_path="lun.uuid",
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="uuid",
-            api_path="uuid",
         ),
     ),
 )

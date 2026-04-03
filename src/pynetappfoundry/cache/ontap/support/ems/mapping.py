@@ -14,35 +14,27 @@ ONTAPEMSCONFIG_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="mail_from",
-            api_path="mail_from",
         ),
         FieldMapping(
             cache_attr="mail_server",
-            api_path="mail_server",
         ),
         FieldMapping(
             cache_attr="mail_server_password",
-            api_path="mail_server_password",
         ),
         FieldMapping(
             cache_attr="mail_server_user",
-            api_path="mail_server_user",
         ),
         FieldMapping(
             cache_attr="proxy_password",
-            api_path="proxy_password",
         ),
         FieldMapping(
             cache_attr="proxy_url",
-            api_path="proxy_url",
         ),
         FieldMapping(
             cache_attr="proxy_user",
-            api_path="proxy_user",
         ),
         FieldMapping(
             cache_attr="pubsub_enabled",
-            api_path="pubsub_enabled",
             default=False,
         ),
     ),

@@ -14,115 +14,89 @@ ONTAPCLIENTLOCK_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="byte_lock.exclusive",
-            api_path="byte_lock.exclusive",
             default=False,
         ),
         FieldMapping(
             cache_attr="byte_lock.length",
-            api_path="byte_lock.length",
             default=0,
         ),
         FieldMapping(
             cache_attr="byte_lock.mandatory",
-            api_path="byte_lock.mandatory",
             default=False,
         ),
         FieldMapping(
             cache_attr="byte_lock.offset",
-            api_path="byte_lock.offset",
             default=0,
         ),
         FieldMapping(
             cache_attr="byte_lock.soft",
-            api_path="byte_lock.soft",
             default=False,
         ),
         FieldMapping(
             cache_attr="byte_lock.super",
-            api_path="byte_lock.super",
             default=False,
         ),
         FieldMapping(
             cache_attr="client_address",
-            api_path="client_address",
         ),
         FieldMapping(
             cache_attr="constituent",
-            api_path="constituent",
             default=False,
         ),
         FieldMapping(
             cache_attr="delegation",
-            api_path="delegation",
         ),
         FieldMapping(
             cache_attr="interface.ip.address",
-            api_path="interface.ip.address",
         ),
         FieldMapping(
             cache_attr="interface.name",
-            api_path="interface.name",
         ),
         FieldMapping(
             cache_attr="interface.uuid",
-            api_path="interface.uuid",
         ),
         FieldMapping(
             cache_attr="node.name",
-            api_path="node.name",
         ),
         FieldMapping(
             cache_attr="node.uuid",
-            api_path="node.uuid",
         ),
         FieldMapping(
             cache_attr="oplock_level",
-            api_path="oplock_level",
         ),
         FieldMapping(
             cache_attr="owner_id",
-            api_path="owner_id",
         ),
         FieldMapping(
             cache_attr="path",
-            api_path="path",
         ),
         FieldMapping(
             cache_attr="protocol",
-            api_path="protocol",
         ),
         FieldMapping(
             cache_attr="share_lock.mode",
-            api_path="share_lock.mode",
         ),
         FieldMapping(
             cache_attr="share_lock.soft",
-            api_path="share_lock.soft",
             default=False,
         ),
         FieldMapping(
             cache_attr="smb.connect_state",
-            api_path="smb.connect_state",
         ),
         FieldMapping(
             cache_attr="smb.open_group_id",
-            api_path="smb.open_group_id",
         ),
         FieldMapping(
             cache_attr="smb.open_type",
-            api_path="smb.open_type",
         ),
         FieldMapping(
             cache_attr="state",
-            api_path="state",
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="type_",
@@ -130,15 +104,12 @@ ONTAPCLIENTLOCK_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="uuid",
-            api_path="uuid",
         ),
         FieldMapping(
             cache_attr="volume.name",
-            api_path="volume.name",
         ),
         FieldMapping(
             cache_attr="volume.uuid",
-            api_path="volume.uuid",
         ),
     ),
 )

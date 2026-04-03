@@ -14,119 +14,91 @@ ONTAPMETROCLUSTERNODE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="automatic_uso",
-            api_path="automatic_uso",
             default=False,
         ),
         FieldMapping(
             cache_attr="cluster.name",
-            api_path="cluster.name",
         ),
         FieldMapping(
             cache_attr="cluster.uuid",
-            api_path="cluster.uuid",
         ),
         FieldMapping(
             cache_attr="configuration_state",
-            api_path="configuration_state",
         ),
         FieldMapping(
             cache_attr="dr_auxiliary_cluster.name",
-            api_path="dr_auxiliary_cluster.name",
         ),
         FieldMapping(
             cache_attr="dr_auxiliary_cluster.uuid",
-            api_path="dr_auxiliary_cluster.uuid",
         ),
         FieldMapping(
             cache_attr="dr_auxiliary_partner.name",
-            api_path="dr_auxiliary_partner.name",
         ),
         FieldMapping(
             cache_attr="dr_auxiliary_partner.system_id",
-            api_path="dr_auxiliary_partner.system_id",
         ),
         FieldMapping(
             cache_attr="dr_auxiliary_partner.uuid",
-            api_path="dr_auxiliary_partner.uuid",
         ),
         FieldMapping(
             cache_attr="dr_group_id",
-            api_path="dr_group_id",
             default=0,
         ),
         FieldMapping(
             cache_attr="dr_mirroring_state",
-            api_path="dr_mirroring_state",
         ),
         FieldMapping(
             cache_attr="dr_operation_state",
-            api_path="dr_operation_state",
         ),
         FieldMapping(
             cache_attr="dr_partner.name",
-            api_path="dr_partner.name",
         ),
         FieldMapping(
             cache_attr="dr_partner.system_id",
-            api_path="dr_partner.system_id",
         ),
         FieldMapping(
             cache_attr="dr_partner.uuid",
-            api_path="dr_partner.uuid",
         ),
         FieldMapping(
             cache_attr="dr_partner_cluster.name",
-            api_path="dr_partner_cluster.name",
         ),
         FieldMapping(
             cache_attr="dr_partner_cluster.uuid",
-            api_path="dr_partner_cluster.uuid",
         ),
         FieldMapping(
             cache_attr="encryption_enabled",
-            api_path="encryption_enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="ha_partner.name",
-            api_path="ha_partner.name",
         ),
         FieldMapping(
             cache_attr="ha_partner.system_id",
-            api_path="ha_partner.system_id",
         ),
         FieldMapping(
             cache_attr="ha_partner.uuid",
-            api_path="ha_partner.uuid",
         ),
         FieldMapping(
             cache_attr="ha_partner_cluster.name",
-            api_path="ha_partner_cluster.name",
         ),
         FieldMapping(
             cache_attr="ha_partner_cluster.uuid",
-            api_path="ha_partner_cluster.uuid",
         ),
         FieldMapping(
             cache_attr="is_mccip",
-            api_path="is_mccip",
             default=False,
         ),
         FieldMapping(
             cache_attr="limit_enforcement",
-            api_path="limit_enforcement",
         ),
         FieldMapping(
             cache_attr="node.name",
-            api_path="node.name",
         ),
         FieldMapping(
             cache_attr="node.system_id",
-            api_path="node.system_id",
         ),
         FieldMapping(
             cache_attr="node.uuid",
-            api_path="node.uuid",
         ),
     ),
 )

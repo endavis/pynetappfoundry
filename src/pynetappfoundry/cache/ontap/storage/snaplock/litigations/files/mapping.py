@@ -18,12 +18,10 @@ ONTAPSNAPLOCKLITIGATIONFILERESPONSE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="file",
-            api_path="file",
             default=[],
         ),
         FieldMapping(
             cache_attr="sequence_index",
-            api_path="sequence_index",
             default=0,
         ),
     ),

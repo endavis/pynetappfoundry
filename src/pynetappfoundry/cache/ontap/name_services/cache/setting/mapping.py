@@ -14,11 +14,9 @@ ONTAPGLOBALCACHESETTING_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="eviction_time_interval",
-            api_path="eviction_time_interval",
         ),
         FieldMapping(
             cache_attr="remote_fetch_enabled",
-            api_path="remote_fetch_enabled",
             default=False,
         ),
     ),

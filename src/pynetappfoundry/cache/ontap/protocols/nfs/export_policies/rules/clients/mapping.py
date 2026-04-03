@@ -18,25 +18,20 @@ ONTAPEXPORTCLIENT_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="index",
-            api_path="index",
             default=0,
         ),
         FieldMapping(
             cache_attr="match",
-            api_path="match",
         ),
         FieldMapping(
             cache_attr="policy.id",
-            api_path="policy.id",
             default=0,
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
     ),
 )

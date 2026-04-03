@@ -14,68 +14,53 @@ ONTAPKERBEROSREALM_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="ad_server.address",
-            api_path="ad_server.address",
         ),
         FieldMapping(
             cache_attr="ad_server.name",
-            api_path="ad_server.name",
         ),
         FieldMapping(
             cache_attr="admin_server.address",
-            api_path="admin_server.address",
         ),
         FieldMapping(
             cache_attr="admin_server.port",
-            api_path="admin_server.port",
             default=0,
         ),
         FieldMapping(
             cache_attr="clock_skew",
-            api_path="clock_skew",
             default=0,
         ),
         FieldMapping(
             cache_attr="comment",
-            api_path="comment",
         ),
         FieldMapping(
             cache_attr="encryption_types",
-            api_path="encryption_types",
             default=[],
         ),
         FieldMapping(
             cache_attr="kdc.ip",
-            api_path="kdc.ip",
         ),
         FieldMapping(
             cache_attr="kdc.port",
-            api_path="kdc.port",
             default=0,
         ),
         FieldMapping(
             cache_attr="kdc.vendor",
-            api_path="kdc.vendor",
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="password_server.address",
-            api_path="password_server.address",
         ),
         FieldMapping(
             cache_attr="password_server.port",
-            api_path="password_server.port",
             default=0,
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
     ),
 )

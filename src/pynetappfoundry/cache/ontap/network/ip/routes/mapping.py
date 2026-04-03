@@ -25,55 +25,43 @@ ONTAPNETWORKROUTE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="destination.address",
-            api_path="destination.address",
         ),
         FieldMapping(
             cache_attr="destination.family",
-            api_path="destination.family",
         ),
         FieldMapping(
             cache_attr="destination.netmask",
-            api_path="destination.netmask",
         ),
         FieldMapping(
             cache_attr="gateway",
-            api_path="gateway",
         ),
         FieldMapping(
             cache_attr="interfaces",
-            api_path="interfaces",
             transform=_transform_interfaces,
             default=[],
             requires_explicit_fetch=True,
         ),
         FieldMapping(
             cache_attr="ipspace.name",
-            api_path="ipspace.name",
         ),
         FieldMapping(
             cache_attr="ipspace.uuid",
-            api_path="ipspace.uuid",
         ),
         FieldMapping(
             cache_attr="metric",
-            api_path="metric",
             default=0,
         ),
         FieldMapping(
             cache_attr="scope",
-            api_path="scope",
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="uuid",
-            api_path="uuid",
         ),
     ),
 )

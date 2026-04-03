@@ -32,82 +32,63 @@ ONTAPAUTOUPDATESTATUS_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="action",
-            api_path="action",
         ),
         FieldMapping(
             cache_attr="content_category",
-            api_path="content_category",
         ),
         FieldMapping(
             cache_attr="content_type",
-            api_path="content_type",
         ),
         FieldMapping(
             cache_attr="creation_time",
-            api_path="creation_time",
         ),
         FieldMapping(
             cache_attr="description",
-            api_path="description",
         ),
         FieldMapping(
             cache_attr="end_time",
-            api_path="end_time",
         ),
         FieldMapping(
             cache_attr="expiry_time",
-            api_path="expiry_time",
         ),
         FieldMapping(
             cache_attr="last_state_change_time",
-            api_path="last_state_change_time",
         ),
         FieldMapping(
             cache_attr="package_id",
-            api_path="package_id",
         ),
         FieldMapping(
             cache_attr="percent_complete",
-            api_path="percent_complete",
             default=0,
         ),
         FieldMapping(
             cache_attr="remaining_time",
-            api_path="remaining_time",
         ),
         FieldMapping(
             cache_attr="schedule_time",
-            api_path="schedule_time",
         ),
         FieldMapping(
             cache_attr="scheduled_time",
-            api_path="scheduled_time",
         ),
         FieldMapping(
             cache_attr="start_time",
-            api_path="start_time",
         ),
         FieldMapping(
             cache_attr="state",
-            api_path="state",
         ),
         FieldMapping(
             cache_attr="status.arguments",
-            api_path="status.arguments",
             transform=_transform_status_arguments,
             default=[],
         ),
         FieldMapping(
             cache_attr="status.code",
-            api_path="status.code",
         ),
         FieldMapping(
             cache_attr="status.message",
-            api_path="status.message",
         ),
         FieldMapping(
             cache_attr="uuid",
-            api_path="uuid",
         ),
     ),
 )

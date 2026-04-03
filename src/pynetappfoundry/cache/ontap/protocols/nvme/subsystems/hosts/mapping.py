@@ -27,63 +27,49 @@ ONTAPNVMESUBSYSTEMHOST_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="dh_hmac_chap.controller_secret_key",
-            api_path="dh_hmac_chap.controller_secret_key",
         ),
         FieldMapping(
             cache_attr="dh_hmac_chap.group_size",
-            api_path="dh_hmac_chap.group_size",
         ),
         FieldMapping(
             cache_attr="dh_hmac_chap.hash_function",
-            api_path="dh_hmac_chap.hash_function",
         ),
         FieldMapping(
             cache_attr="dh_hmac_chap.host_secret_key",
-            api_path="dh_hmac_chap.host_secret_key",
         ),
         FieldMapping(
             cache_attr="dh_hmac_chap.mode",
-            api_path="dh_hmac_chap.mode",
         ),
         FieldMapping(
             cache_attr="io_queue.count",
-            api_path="io_queue.count",
             default=0,
         ),
         FieldMapping(
             cache_attr="io_queue.depth",
-            api_path="io_queue.depth",
             default=0,
         ),
         FieldMapping(
             cache_attr="nqn",
-            api_path="nqn",
         ),
         FieldMapping(
             cache_attr="priority",
-            api_path="priority",
         ),
         FieldMapping(
             cache_attr="records",
-            api_path="records",
             transform=_transform_records,
             default=[],
         ),
         FieldMapping(
             cache_attr="subsystem.name",
-            api_path="subsystem.name",
         ),
         FieldMapping(
             cache_attr="subsystem.uuid",
-            api_path="subsystem.uuid",
         ),
         FieldMapping(
             cache_attr="tls.configured_psk",
-            api_path="tls.configured_psk",
         ),
         FieldMapping(
             cache_attr="tls.key_type",
-            api_path="tls.key_type",
         ),
     ),
 )

@@ -25,46 +25,36 @@ ONTAPACCOUNT_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="applications",
-            api_path="applications",
             transform=_transform_applications,
             default=[],
         ),
         FieldMapping(
             cache_attr="comment",
-            api_path="comment",
         ),
         FieldMapping(
             cache_attr="locked",
-            api_path="locked",
             default=False,
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="owner.name",
-            api_path="owner.name",
         ),
         FieldMapping(
             cache_attr="owner.uuid",
-            api_path="owner.uuid",
         ),
         FieldMapping(
             cache_attr="password",
-            api_path="password",
         ),
         FieldMapping(
             cache_attr="password_hash_algorithm",
-            api_path="password_hash_algorithm",
         ),
         FieldMapping(
             cache_attr="role.name",
-            api_path="role.name",
         ),
         FieldMapping(
             cache_attr="scope",
-            api_path="scope",
         ),
     ),
 )

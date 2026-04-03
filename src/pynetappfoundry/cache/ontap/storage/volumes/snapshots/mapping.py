@@ -16,124 +16,98 @@ ONTAPSNAPSHOT_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="comment",
-            api_path="comment",
         ),
         FieldMapping(
             cache_attr="compress_savings",
-            api_path="compress_savings",
             cache_strategy="realtime",
             default=0,
         ),
         FieldMapping(
             cache_attr="create_time",
-            api_path="create_time",
         ),
         FieldMapping(
             cache_attr="dedup_savings",
-            api_path="dedup_savings",
             cache_strategy="realtime",
             default=0,
         ),
         FieldMapping(
             cache_attr="delta.size_consumed",
-            api_path="delta.size_consumed",
             cache_strategy="realtime",
             default=0,
         ),
         FieldMapping(
             cache_attr="delta.time_elapsed",
-            api_path="delta.time_elapsed",
         ),
         FieldMapping(
             cache_attr="expiry_time",
-            api_path="expiry_time",
         ),
         FieldMapping(
             cache_attr="logical_size",
-            api_path="logical_size",
             cache_strategy="realtime",
             default=0,
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="owners",
-            api_path="owners",
             default=[],
         ),
         FieldMapping(
             cache_attr="provenance_volume.uuid",
-            api_path="provenance_volume.uuid",
         ),
         FieldMapping(
             cache_attr="reclaimable_space",
-            api_path="reclaimable_space",
             cache_strategy="realtime",
             default=0,
             requires_explicit_fetch=True,
         ),
         FieldMapping(
             cache_attr="size",
-            api_path="size",
             cache_strategy="realtime",
             default=0,
         ),
         FieldMapping(
             cache_attr="snaplock.expired",
-            api_path="snaplock.expired",
             default=False,
         ),
         FieldMapping(
             cache_attr="snaplock.expiry_time",
-            api_path="snaplock.expiry_time",
         ),
         FieldMapping(
             cache_attr="snaplock.time_until_expiry",
-            api_path="snaplock.time_until_expiry",
         ),
         FieldMapping(
             cache_attr="snaplock_expiry_time",
-            api_path="snaplock_expiry_time",
         ),
         FieldMapping(
             cache_attr="snapmirror_label",
-            api_path="snapmirror_label",
         ),
         FieldMapping(
             cache_attr="state",
-            api_path="state",
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="uuid",
-            api_path="uuid",
         ),
         FieldMapping(
             cache_attr="vbn0_savings",
-            api_path="vbn0_savings",
             cache_strategy="realtime",
             default=0,
         ),
         FieldMapping(
             cache_attr="version_uuid",
-            api_path="version_uuid",
         ),
         FieldMapping(
             cache_attr="volume.name",
-            api_path="volume.name",
         ),
         FieldMapping(
             cache_attr="volume.uuid",
-            api_path="volume.uuid",
         ),
     ),
 )

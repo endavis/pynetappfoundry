@@ -14,31 +14,24 @@ ONTAPSOFTWAREHISTORY_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="end_time",
-            api_path="end_time",
         ),
         FieldMapping(
             cache_attr="from_version",
-            api_path="from_version",
         ),
         FieldMapping(
             cache_attr="node.name",
-            api_path="node.name",
         ),
         FieldMapping(
             cache_attr="node.uuid",
-            api_path="node.uuid",
         ),
         FieldMapping(
             cache_attr="start_time",
-            api_path="start_time",
         ),
         FieldMapping(
             cache_attr="state",
-            api_path="state",
         ),
         FieldMapping(
             cache_attr="to_version",
-            api_path="to_version",
         ),
     ),
 )

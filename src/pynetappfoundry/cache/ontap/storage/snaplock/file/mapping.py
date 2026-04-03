@@ -16,41 +16,32 @@ ONTAPSNAPLOCKFILERETENTION_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="expiry_time",
-            api_path="expiry_time",
         ),
         FieldMapping(
             cache_attr="file_path",
-            api_path="file_path",
         ),
         FieldMapping(
             cache_attr="is_expired",
-            api_path="is_expired",
             default=False,
         ),
         FieldMapping(
             cache_attr="retention_period",
-            api_path="retention_period",
         ),
         FieldMapping(
             cache_attr="seconds_until_expiry",
-            api_path="seconds_until_expiry",
             default=0,
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="volume.name",
-            api_path="volume.name",
         ),
         FieldMapping(
             cache_attr="volume.uuid",
-            api_path="volume.uuid",
         ),
     ),
 )

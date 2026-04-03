@@ -27,11 +27,9 @@ ONTAPS3POLICY_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="comment",
-            api_path="comment",
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="read_only",
@@ -40,17 +38,14 @@ ONTAPS3POLICY_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="statements",
-            api_path="statements",
             transform=_transform_statements,
             default=[],
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
     ),
 )

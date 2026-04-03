@@ -27,31 +27,25 @@ ONTAPFCZONE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="cache.age",
-            api_path="cache.age",
         ),
         FieldMapping(
             cache_attr="cache.is_current",
-            api_path="cache.is_current",
             default=False,
         ),
         FieldMapping(
             cache_attr="cache.update_time",
-            api_path="cache.update_time",
         ),
         FieldMapping(
             cache_attr="fabric.name",
-            api_path="fabric.name",
         ),
         FieldMapping(
             cache_attr="members",
-            api_path="members",
             transform=_transform_members,
             default=[],
             requires_explicit_fetch=True,
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
     ),
 )

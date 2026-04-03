@@ -27,39 +27,31 @@ ONTAPCONFIGURATIONBACKUPFILE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="auto",
-            api_path="auto",
             default=False,
         ),
         FieldMapping(
             cache_attr="backup_nodes",
-            api_path="backup_nodes",
             transform=_transform_backup_nodes,
             default=[],
         ),
         FieldMapping(
             cache_attr="download_link",
-            api_path="download_link",
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="node.name",
-            api_path="node.name",
         ),
         FieldMapping(
             cache_attr="node.uuid",
-            api_path="node.uuid",
         ),
         FieldMapping(
             cache_attr="size",
-            api_path="size",
             default=0,
         ),
         FieldMapping(
             cache_attr="time",
-            api_path="time",
         ),
         FieldMapping(
             cache_attr="type_",
@@ -67,7 +59,6 @@ ONTAPCONFIGURATIONBACKUPFILE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="version",
-            api_path="version",
         ),
     ),
 )

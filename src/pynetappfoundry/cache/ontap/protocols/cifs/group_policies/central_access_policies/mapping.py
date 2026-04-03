@@ -19,36 +19,28 @@ ONTAPGROUPPOLICYOBJECTCENTRALACCESSPOLICY_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="create_time",
-            api_path="create_time",
         ),
         FieldMapping(
             cache_attr="description",
-            api_path="description",
         ),
         FieldMapping(
             cache_attr="member_rules",
-            api_path="member_rules",
             default=[],
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="sid",
-            api_path="sid",
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="update_time",
-            api_path="update_time",
         ),
     ),
 )

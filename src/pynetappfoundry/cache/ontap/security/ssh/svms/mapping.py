@@ -14,41 +14,33 @@ ONTAPSVMSSHSERVER_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="ciphers",
-            api_path="ciphers",
             default=[],
         ),
         FieldMapping(
             cache_attr="host_key_algorithms",
-            api_path="host_key_algorithms",
             default=[],
         ),
         FieldMapping(
             cache_attr="is_rsa_in_publickey_algorithms_enabled",
-            api_path="is_rsa_in_publickey_algorithms_enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="key_exchange_algorithms",
-            api_path="key_exchange_algorithms",
             default=[],
         ),
         FieldMapping(
             cache_attr="mac_algorithms",
-            api_path="mac_algorithms",
             default=[],
         ),
         FieldMapping(
             cache_attr="max_authentication_retry_count",
-            api_path="max_authentication_retry_count",
             default=0,
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
     ),
 )

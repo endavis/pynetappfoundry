@@ -14,143 +14,109 @@ ONTAPLDAPSCHEMA_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="comment",
-            api_path="comment",
         ),
         FieldMapping(
             cache_attr="global_schema",
-            api_path="global_schema",
             default=False,
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="name_mapping.account.unix",
-            api_path="name_mapping.account.unix",
         ),
         FieldMapping(
             cache_attr="name_mapping.account.windows",
-            api_path="name_mapping.account.windows",
         ),
         FieldMapping(
             cache_attr="name_mapping.windows_to_unix.attribute",
-            api_path="name_mapping.windows_to_unix.attribute",
         ),
         FieldMapping(
             cache_attr="name_mapping.windows_to_unix.no_domain_prefix",
-            api_path="name_mapping.windows_to_unix.no_domain_prefix",
             default=False,
         ),
         FieldMapping(
             cache_attr="name_mapping.windows_to_unix.object_class",
-            api_path="name_mapping.windows_to_unix.object_class",
         ),
         FieldMapping(
             cache_attr="owner.name",
-            api_path="owner.name",
         ),
         FieldMapping(
             cache_attr="owner.uuid",
-            api_path="owner.uuid",
         ),
         FieldMapping(
             cache_attr="rfc2307.attribute.gecos",
-            api_path="rfc2307.attribute.gecos",
         ),
         FieldMapping(
             cache_attr="rfc2307.attribute.gid_number",
-            api_path="rfc2307.attribute.gid_number",
         ),
         FieldMapping(
             cache_attr="rfc2307.attribute.home_directory",
-            api_path="rfc2307.attribute.home_directory",
         ),
         FieldMapping(
             cache_attr="rfc2307.attribute.login_shell",
-            api_path="rfc2307.attribute.login_shell",
         ),
         FieldMapping(
             cache_attr="rfc2307.attribute.uid",
-            api_path="rfc2307.attribute.uid",
         ),
         FieldMapping(
             cache_attr="rfc2307.attribute.uid_number",
-            api_path="rfc2307.attribute.uid_number",
         ),
         FieldMapping(
             cache_attr="rfc2307.attribute.user_password",
-            api_path="rfc2307.attribute.user_password",
         ),
         FieldMapping(
             cache_attr="rfc2307.cn.group",
-            api_path="rfc2307.cn.group",
         ),
         FieldMapping(
             cache_attr="rfc2307.cn.netgroup",
-            api_path="rfc2307.cn.netgroup",
         ),
         FieldMapping(
             cache_attr="rfc2307.member.nis_netgroup",
-            api_path="rfc2307.member.nis_netgroup",
         ),
         FieldMapping(
             cache_attr="rfc2307.member.uid",
-            api_path="rfc2307.member.uid",
         ),
         FieldMapping(
             cache_attr="rfc2307.nis.mapentry",
-            api_path="rfc2307.nis.mapentry",
         ),
         FieldMapping(
             cache_attr="rfc2307.nis.mapname",
-            api_path="rfc2307.nis.mapname",
         ),
         FieldMapping(
             cache_attr="rfc2307.nis.netgroup",
-            api_path="rfc2307.nis.netgroup",
         ),
         FieldMapping(
             cache_attr="rfc2307.nis.netgroup_triple",
-            api_path="rfc2307.nis.netgroup_triple",
         ),
         FieldMapping(
             cache_attr="rfc2307.nis.object",
-            api_path="rfc2307.nis.object",
         ),
         FieldMapping(
             cache_attr="rfc2307.posix.account",
-            api_path="rfc2307.posix.account",
         ),
         FieldMapping(
             cache_attr="rfc2307.posix.group",
-            api_path="rfc2307.posix.group",
         ),
         FieldMapping(
             cache_attr="rfc2307bis.enabled",
-            api_path="rfc2307bis.enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="rfc2307bis.group_of_unique_names",
-            api_path="rfc2307bis.group_of_unique_names",
         ),
         FieldMapping(
             cache_attr="rfc2307bis.maximum_groups",
-            api_path="rfc2307bis.maximum_groups",
             default=0,
         ),
         FieldMapping(
             cache_attr="rfc2307bis.unique_member",
-            api_path="rfc2307bis.unique_member",
         ),
         FieldMapping(
             cache_attr="scope",
-            api_path="scope",
         ),
         FieldMapping(
             cache_attr="template.name",
-            api_path="template.name",
         ),
     ),
 )

@@ -16,113 +16,87 @@ ONTAPNVMESUBSYSTEMCONTROLLER_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="admin_queue.depth",
-            api_path="admin_queue.depth",
             default=0,
         ),
         FieldMapping(
             cache_attr="dh_hmac_chap.group_size",
-            api_path="dh_hmac_chap.group_size",
         ),
         FieldMapping(
             cache_attr="dh_hmac_chap.hash_function",
-            api_path="dh_hmac_chap.hash_function",
         ),
         FieldMapping(
             cache_attr="dh_hmac_chap.mode",
-            api_path="dh_hmac_chap.mode",
         ),
         FieldMapping(
             cache_attr="digest.data",
-            api_path="digest.data",
             default=False,
         ),
         FieldMapping(
             cache_attr="digest.header",
-            api_path="digest.header",
             default=False,
         ),
         FieldMapping(
             cache_attr="host.id",
-            api_path="host.id",
         ),
         FieldMapping(
             cache_attr="host.nqn",
-            api_path="host.nqn",
         ),
         FieldMapping(
             cache_attr="host.transport_address",
-            api_path="host.transport_address",
         ),
         FieldMapping(
             cache_attr="id",
-            api_path="id",
         ),
         FieldMapping(
             cache_attr="interface.name",
-            api_path="interface.name",
         ),
         FieldMapping(
             cache_attr="interface.transport_address",
-            api_path="interface.transport_address",
         ),
         FieldMapping(
             cache_attr="interface.uuid",
-            api_path="interface.uuid",
         ),
         FieldMapping(
             cache_attr="io_queue.count",
-            api_path="io_queue.count",
             default=0,
         ),
         FieldMapping(
             cache_attr="io_queue.depth",
-            api_path="io_queue.depth",
             default=[],
         ),
         FieldMapping(
             cache_attr="keep_alive_timeout",
-            api_path="keep_alive_timeout",
             default=0,
         ),
         FieldMapping(
             cache_attr="node.name",
-            api_path="node.name",
         ),
         FieldMapping(
             cache_attr="node.uuid",
-            api_path="node.uuid",
         ),
         FieldMapping(
             cache_attr="subsystem.name",
-            api_path="subsystem.name",
         ),
         FieldMapping(
             cache_attr="subsystem.uuid",
-            api_path="subsystem.uuid",
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="tls.cipher",
-            api_path="tls.cipher",
         ),
         FieldMapping(
             cache_attr="tls.key_type",
-            api_path="tls.key_type",
         ),
         FieldMapping(
             cache_attr="tls.psk_identity",
-            api_path="tls.psk_identity",
         ),
         FieldMapping(
             cache_attr="transport_protocol",
-            api_path="transport_protocol",
         ),
     ),
 )

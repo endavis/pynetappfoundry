@@ -17,44 +17,34 @@ ONTAPFLEXCACHEORIGIN_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="cluster.name",
-            api_path="cluster.name",
         ),
         FieldMapping(
             cache_attr="cluster.uuid",
-            api_path="cluster.uuid",
         ),
         FieldMapping(
             cache_attr="create_time",
-            api_path="create_time",
         ),
         FieldMapping(
             cache_attr="ip_address",
-            api_path="ip_address",
         ),
         FieldMapping(
             cache_attr="size",
-            api_path="size",
             default=0,
         ),
         FieldMapping(
             cache_attr="state",
-            api_path="state",
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="volume.name",
-            api_path="volume.name",
         ),
         FieldMapping(
             cache_attr="volume.uuid",
-            api_path="volume.uuid",
         ),
     ),
 )

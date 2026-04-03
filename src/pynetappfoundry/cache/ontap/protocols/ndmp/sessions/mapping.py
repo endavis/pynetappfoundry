@@ -14,29 +14,23 @@ ONTAPNDMPSESSION_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="backup_engine",
-            api_path="backup_engine",
         ),
         FieldMapping(
             cache_attr="client_address",
-            api_path="client_address",
         ),
         FieldMapping(
             cache_attr="client_port",
-            api_path="client_port",
             default=0,
         ),
         FieldMapping(
             cache_attr="data.bytes_processed",
-            api_path="data.bytes_processed",
             default=0,
         ),
         FieldMapping(
             cache_attr="data.connection.address",
-            api_path="data.connection.address",
         ),
         FieldMapping(
             cache_attr="data.connection.port",
-            api_path="data.connection.port",
             default=0,
         ),
         FieldMapping(
@@ -45,36 +39,28 @@ ONTAPNDMPSESSION_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="data.operation",
-            api_path="data.operation",
         ),
         FieldMapping(
             cache_attr="data.reason",
-            api_path="data.reason",
         ),
         FieldMapping(
             cache_attr="data.state",
-            api_path="data.state",
         ),
         FieldMapping(
             cache_attr="data_path",
-            api_path="data_path",
         ),
         FieldMapping(
             cache_attr="id",
-            api_path="id",
         ),
         FieldMapping(
             cache_attr="mover.bytes_moved",
-            api_path="mover.bytes_moved",
             default=0,
         ),
         FieldMapping(
             cache_attr="mover.connection.address",
-            api_path="mover.connection.address",
         ),
         FieldMapping(
             cache_attr="mover.connection.port",
-            api_path="mover.connection.port",
             default=0,
         ),
         FieldMapping(
@@ -83,66 +69,51 @@ ONTAPNDMPSESSION_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="mover.mode",
-            api_path="mover.mode",
         ),
         FieldMapping(
             cache_attr="mover.reason",
-            api_path="mover.reason",
         ),
         FieldMapping(
             cache_attr="mover.state",
-            api_path="mover.state",
         ),
         FieldMapping(
             cache_attr="node.name",
-            api_path="node.name",
         ),
         FieldMapping(
             cache_attr="node.uuid",
-            api_path="node.uuid",
         ),
         FieldMapping(
             cache_attr="scsi.device_id",
-            api_path="scsi.device_id",
         ),
         FieldMapping(
             cache_attr="scsi.host_adapter",
-            api_path="scsi.host_adapter",
             default=0,
         ),
         FieldMapping(
             cache_attr="scsi.lun_id",
-            api_path="scsi.lun_id",
             default=0,
         ),
         FieldMapping(
             cache_attr="scsi.target_id",
-            api_path="scsi.target_id",
             default=0,
         ),
         FieldMapping(
             cache_attr="source_address",
-            api_path="source_address",
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="tape_device",
-            api_path="tape_device",
         ),
         FieldMapping(
             cache_attr="tape_mode",
-            api_path="tape_mode",
         ),
         FieldMapping(
             cache_attr="uuid",
-            api_path="uuid",
         ),
     ),
 )

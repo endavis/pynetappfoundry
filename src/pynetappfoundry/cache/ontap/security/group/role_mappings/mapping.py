@@ -14,20 +14,16 @@ ONTAPGROUPROLEMAPPINGS_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="comment",
-            api_path="comment",
         ),
         FieldMapping(
             cache_attr="group_id",
-            api_path="group_id",
             default=0,
         ),
         FieldMapping(
             cache_attr="ontap_role.name",
-            api_path="ontap_role.name",
         ),
         FieldMapping(
             cache_attr="scope",
-            api_path="scope",
         ),
     ),
 )

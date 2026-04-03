@@ -17,15 +17,12 @@ ONTAPCOUNTERTABLE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="denominator.name",
-            api_path="denominator.name",
         ),
         FieldMapping(
             cache_attr="description",
-            api_path="description",
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="type_",
@@ -33,7 +30,6 @@ ONTAPCOUNTERTABLE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="unit",
-            api_path="unit",
         ),
     ),
 )

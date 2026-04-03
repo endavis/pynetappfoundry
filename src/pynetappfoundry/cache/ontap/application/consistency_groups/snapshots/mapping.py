@@ -72,98 +72,78 @@ ONTAPCONSISTENCYGROUPSNAPSHOTRESPONSE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="comment",
-            api_path="comment",
         ),
         FieldMapping(
             cache_attr="consistency_group.name",
-            api_path="consistency_group.name",
         ),
         FieldMapping(
             cache_attr="consistency_group.uuid",
-            api_path="consistency_group.uuid",
         ),
         FieldMapping(
             cache_attr="consistency_type",
-            api_path="consistency_type",
         ),
         FieldMapping(
             cache_attr="create_time",
-            api_path="create_time",
         ),
         FieldMapping(
             cache_attr="is_partial",
-            api_path="is_partial",
             default=False,
         ),
         FieldMapping(
             cache_attr="luns",
-            api_path="luns",
             transform=_transform_luns,
             default=[],
         ),
         FieldMapping(
             cache_attr="missing_luns",
-            api_path="missing_luns",
             transform=_transform_missing_luns,
             default=[],
         ),
         FieldMapping(
             cache_attr="missing_namespaces",
-            api_path="missing_namespaces",
             transform=_transform_missing_namespaces,
             default=[],
         ),
         FieldMapping(
             cache_attr="missing_volumes",
-            api_path="missing_volumes",
             transform=_transform_missing_volumes,
             default=[],
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="namespaces",
-            api_path="namespaces",
             transform=_transform_namespaces,
             default=[],
         ),
         FieldMapping(
             cache_attr="reclaimable_space",
-            api_path="reclaimable_space",
             cache_strategy="realtime",
             default=0,
         ),
         FieldMapping(
             cache_attr="restore_size",
-            api_path="restore_size",
             default=0,
         ),
         FieldMapping(
             cache_attr="snapmirror_label",
-            api_path="snapmirror_label",
         ),
         FieldMapping(
             cache_attr="snapshot_volumes",
-            api_path="snapshot_volumes",
             default=[],
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="uuid",
-            api_path="uuid",
         ),
         FieldMapping(
             cache_attr="write_fence",
-            api_path="write_fence",
             default=False,
         ),
     ),

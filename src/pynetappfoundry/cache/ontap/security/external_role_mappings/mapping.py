@@ -16,23 +16,18 @@ ONTAPSECURITYEXTERNALROLEMAPPING_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="comment",
-            api_path="comment",
         ),
         FieldMapping(
             cache_attr="external_role",
-            api_path="external_role",
         ),
         FieldMapping(
             cache_attr="ontap_role.name",
-            api_path="ontap_role.name",
         ),
         FieldMapping(
             cache_attr="provider",
-            api_path="provider",
         ),
         FieldMapping(
             cache_attr="timestamp",
-            api_path="timestamp",
         ),
     ),
 )

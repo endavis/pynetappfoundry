@@ -79,75 +79,61 @@ ONTAPSHELF_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="acps",
-            api_path="acps",
             transform=_transform_acps,
             default=[],
         ),
         FieldMapping(
             cache_attr="bays",
-            api_path="bays",
             transform=_transform_bays,
             default=[],
         ),
         FieldMapping(
             cache_attr="connection_type",
-            api_path="connection_type",
         ),
         FieldMapping(
             cache_attr="current_sensors",
-            api_path="current_sensors",
             transform=_transform_current_sensors,
             default=[],
         ),
         FieldMapping(
             cache_attr="disk_count",
-            api_path="disk_count",
             default=0,
         ),
         FieldMapping(
             cache_attr="drawers",
-            api_path="drawers",
             transform=_transform_drawers,
             default=[],
         ),
         FieldMapping(
             cache_attr="errors",
-            api_path="errors",
             default=[],
         ),
         FieldMapping(
             cache_attr="fans",
-            api_path="fans",
             transform=_transform_fans,
             default=[],
         ),
         FieldMapping(
             cache_attr="frus",
-            api_path="frus",
             transform=_transform_frus,
             default=[],
         ),
         FieldMapping(
             cache_attr="id",
-            api_path="id",
         ),
         FieldMapping(
             cache_attr="internal",
-            api_path="internal",
             default=False,
         ),
         FieldMapping(
             cache_attr="local",
-            api_path="local",
             default=False,
         ),
         FieldMapping(
             cache_attr="location_led",
-            api_path="location_led",
         ),
         FieldMapping(
             cache_attr="manufacturer.name",
-            api_path="manufacturer.name",
         ),
         FieldMapping(
             cache_attr="model_",
@@ -155,65 +141,51 @@ ONTAPSHELF_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="module_type",
-            api_path="module_type",
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="paths",
-            api_path="paths",
             transform=_transform_paths,
             default=[],
         ),
         FieldMapping(
             cache_attr="ports",
-            api_path="ports",
             transform=_transform_ports,
             default=[],
         ),
         FieldMapping(
             cache_attr="serial_number",
-            api_path="serial_number",
         ),
         FieldMapping(
             cache_attr="state",
-            api_path="state",
         ),
         FieldMapping(
             cache_attr="temperature_sensors",
-            api_path="temperature_sensors",
             transform=_transform_temperature_sensors,
             default=[],
         ),
         FieldMapping(
             cache_attr="uid",
-            api_path="uid",
         ),
         FieldMapping(
             cache_attr="vendor.manufacturer",
-            api_path="vendor.manufacturer",
         ),
         FieldMapping(
             cache_attr="vendor.name",
-            api_path="vendor.name",
         ),
         FieldMapping(
             cache_attr="vendor.part_number",
-            api_path="vendor.part_number",
         ),
         FieldMapping(
             cache_attr="vendor.product",
-            api_path="vendor.product",
         ),
         FieldMapping(
             cache_attr="vendor.serial_number",
-            api_path="vendor.serial_number",
         ),
         FieldMapping(
             cache_attr="voltage_sensors",
-            api_path="voltage_sensors",
             transform=_transform_voltage_sensors,
             default=[],
         ),

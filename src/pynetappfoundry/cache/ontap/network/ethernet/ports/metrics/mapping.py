@@ -18,34 +18,27 @@ ONTAPPORTMETRICSRESPONSE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="duration",
-            api_path="duration",
         ),
         FieldMapping(
             cache_attr="status",
-            api_path="status",
         ),
         FieldMapping(
             cache_attr="throughput.read",
-            api_path="throughput.read",
             default=0,
         ),
         FieldMapping(
             cache_attr="throughput.total",
-            api_path="throughput.total",
             default=0,
         ),
         FieldMapping(
             cache_attr="throughput.write",
-            api_path="throughput.write",
             default=0,
         ),
         FieldMapping(
             cache_attr="timestamp",
-            api_path="timestamp",
         ),
         FieldMapping(
             cache_attr="uuid",
-            api_path="uuid",
         ),
     ),
 )

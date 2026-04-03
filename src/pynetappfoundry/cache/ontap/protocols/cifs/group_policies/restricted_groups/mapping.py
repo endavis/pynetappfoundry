@@ -18,37 +18,29 @@ ONTAPGROUPPOLICYOBJECTRESTRICTEDGROUP_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="group_name",
-            api_path="group_name",
         ),
         FieldMapping(
             cache_attr="link",
-            api_path="link",
         ),
         FieldMapping(
             cache_attr="members",
-            api_path="members",
             default=[],
         ),
         FieldMapping(
             cache_attr="memberships",
-            api_path="memberships",
             default=[],
         ),
         FieldMapping(
             cache_attr="policy_name",
-            api_path="policy_name",
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="version",
-            api_path="version",
             default=0,
         ),
     ),

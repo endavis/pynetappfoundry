@@ -14,117 +14,93 @@ ONTAPSWITCHPORT_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="configured",
-            api_path="configured",
         ),
         FieldMapping(
             cache_attr="duplex_type",
-            api_path="duplex_type",
         ),
         FieldMapping(
             cache_attr="identity.index",
-            api_path="identity.index",
             default=0,
         ),
         FieldMapping(
             cache_attr="identity.name",
-            api_path="identity.name",
         ),
         FieldMapping(
             cache_attr="identity.number",
-            api_path="identity.number",
             default=0,
         ),
         FieldMapping(
             cache_attr="isl",
-            api_path="isl",
             default=False,
         ),
         FieldMapping(
             cache_attr="mac_address",
-            api_path="mac_address",
         ),
         FieldMapping(
             cache_attr="mtu",
-            api_path="mtu",
             default=0,
         ),
         FieldMapping(
             cache_attr="remote_port.device.node.name",
-            api_path="remote_port.device.node.name",
         ),
         FieldMapping(
             cache_attr="remote_port.device.node.uuid",
-            api_path="remote_port.device.node.uuid",
         ),
         FieldMapping(
             cache_attr="remote_port.device.shelf.module",
-            api_path="remote_port.device.shelf.module",
         ),
         FieldMapping(
             cache_attr="remote_port.device.shelf.name",
-            api_path="remote_port.device.shelf.name",
         ),
         FieldMapping(
             cache_attr="remote_port.device.shelf.uid",
-            api_path="remote_port.device.shelf.uid",
         ),
         FieldMapping(
             cache_attr="remote_port.mtu",
-            api_path="remote_port.mtu",
             default=0,
         ),
         FieldMapping(
             cache_attr="remote_port.name",
-            api_path="remote_port.name",
         ),
         FieldMapping(
             cache_attr="speed",
-            api_path="speed",
             default=0,
         ),
         FieldMapping(
             cache_attr="state",
-            api_path="state",
         ),
         FieldMapping(
             cache_attr="statistics.receive_raw.discards",
-            api_path="statistics.receive_raw.discards",
             cache_strategy="realtime",
             default=0,
         ),
         FieldMapping(
             cache_attr="statistics.receive_raw.errors",
-            api_path="statistics.receive_raw.errors",
             cache_strategy="realtime",
             default=0,
         ),
         FieldMapping(
             cache_attr="statistics.receive_raw.packets",
-            api_path="statistics.receive_raw.packets",
             cache_strategy="realtime",
             default=0,
         ),
         FieldMapping(
             cache_attr="statistics.transmit_raw.discards",
-            api_path="statistics.transmit_raw.discards",
             cache_strategy="realtime",
             default=0,
         ),
         FieldMapping(
             cache_attr="statistics.transmit_raw.errors",
-            api_path="statistics.transmit_raw.errors",
             cache_strategy="realtime",
             default=0,
         ),
         FieldMapping(
             cache_attr="statistics.transmit_raw.packets",
-            api_path="statistics.transmit_raw.packets",
             cache_strategy="realtime",
             default=0,
         ),
         FieldMapping(
             cache_attr="switch.name",
-            api_path="switch.name",
         ),
         FieldMapping(
             cache_attr="type_",
@@ -132,12 +108,10 @@ ONTAPSWITCHPORT_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="vlan_id",
-            api_path="vlan_id",
             default=[],
         ),
         FieldMapping(
             cache_attr="vpc_peer_link",
-            api_path="vpc_peer_link",
             default=False,
         ),
     ),

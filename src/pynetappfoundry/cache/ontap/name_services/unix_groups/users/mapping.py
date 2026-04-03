@@ -27,30 +27,24 @@ ONTAPUNIXGROUPUSERS_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="records",
-            api_path="records",
             transform=_transform_records,
             default=[],
         ),
         FieldMapping(
             cache_attr="skip_name_validation",
-            api_path="skip_name_validation",
             default=False,
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="unix_group.name",
-            api_path="unix_group.name",
         ),
     ),
 )

@@ -70,46 +70,37 @@ ONTAPSTORAGESWITCH_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="connections",
-            api_path="connections",
             default=[],
         ),
         FieldMapping(
             cache_attr="director_class",
-            api_path="director_class",
             default=False,
         ),
         FieldMapping(
             cache_attr="domain_id",
-            api_path="domain_id",
             default=0,
         ),
         FieldMapping(
             cache_attr="errors",
-            api_path="errors",
             transform=_transform_errors,
             default=[],
         ),
         FieldMapping(
             cache_attr="fabric_name",
-            api_path="fabric_name",
         ),
         FieldMapping(
             cache_attr="fans",
-            api_path="fans",
             transform=_transform_fans,
             default=[],
         ),
         FieldMapping(
             cache_attr="firmware_version",
-            api_path="firmware_version",
         ),
         FieldMapping(
             cache_attr="ip_address",
-            api_path="ip_address",
         ),
         FieldMapping(
             cache_attr="local",
-            api_path="local",
             default=False,
         ),
         FieldMapping(
@@ -118,70 +109,56 @@ ONTAPSTORAGESWITCH_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="monitored_blades",
-            api_path="monitored_blades",
             default=[],
         ),
         FieldMapping(
             cache_attr="monitoring_enabled",
-            api_path="monitoring_enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="paths",
-            api_path="paths",
             default=[],
         ),
         FieldMapping(
             cache_attr="ports",
-            api_path="ports",
             transform=_transform_ports,
             default=[],
         ),
         FieldMapping(
             cache_attr="power_supply_units",
-            api_path="power_supply_units",
             transform=_transform_power_supply_units,
             default=[],
         ),
         FieldMapping(
             cache_attr="role",
-            api_path="role",
         ),
         FieldMapping(
             cache_attr="state",
-            api_path="state",
         ),
         FieldMapping(
             cache_attr="symbolic_name",
-            api_path="symbolic_name",
         ),
         FieldMapping(
             cache_attr="temperature_sensors",
-            api_path="temperature_sensors",
             transform=_transform_temperature_sensors,
             default=[],
         ),
         FieldMapping(
             cache_attr="vendor",
-            api_path="vendor",
         ),
         FieldMapping(
             cache_attr="vsans",
-            api_path="vsans",
             transform=_transform_vsans,
             default=[],
         ),
         FieldMapping(
             cache_attr="wwn",
-            api_path="wwn",
         ),
         FieldMapping(
             cache_attr="zones",
-            api_path="zones",
             transform=_transform_zones,
             default=[],
         ),

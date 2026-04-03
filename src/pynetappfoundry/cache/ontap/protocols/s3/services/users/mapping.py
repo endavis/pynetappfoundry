@@ -16,35 +16,27 @@ ONTAPS3USER_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="access_key",
-            api_path="access_key",
         ),
         FieldMapping(
             cache_attr="comment",
-            api_path="comment",
         ),
         FieldMapping(
             cache_attr="key_expiry_time",
-            api_path="key_expiry_time",
         ),
         FieldMapping(
             cache_attr="key_time_to_live",
-            api_path="key_time_to_live",
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="secret_key",
-            api_path="secret_key",
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
     ),
 )

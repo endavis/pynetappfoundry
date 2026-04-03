@@ -43,107 +43,84 @@ ONTAPSVM_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="aggregates",
-            api_path="aggregates",
             transform=_transform_aggregates,
             default=[],
         ),
         FieldMapping(
             cache_attr="aggregates_delegated",
-            api_path="aggregates_delegated",
             default=False,
         ),
         FieldMapping(
             cache_attr="anti_ransomware.event_log.is_enabled_on_new_file_extension_seen",
-            api_path="anti_ransomware.event_log.is_enabled_on_new_file_extension_seen",
             default=False,
         ),
         FieldMapping(
             cache_attr="anti_ransomware.event_log.is_enabled_on_snapshot_copy_creation",
-            api_path="anti_ransomware.event_log.is_enabled_on_snapshot_copy_creation",
             default=False,
         ),
         FieldMapping(
             cache_attr="anti_ransomware_auto_switch_duration_without_new_file_extension",
-            api_path="anti_ransomware_auto_switch_duration_without_new_file_extension",
             default=0,
         ),
         FieldMapping(
             cache_attr="anti_ransomware_auto_switch_from_learning_to_enabled",
-            api_path="anti_ransomware_auto_switch_from_learning_to_enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="anti_ransomware_auto_switch_minimum_file_count",
-            api_path="anti_ransomware_auto_switch_minimum_file_count",
             default=0,
         ),
         FieldMapping(
             cache_attr="anti_ransomware_auto_switch_minimum_file_extension",
-            api_path="anti_ransomware_auto_switch_minimum_file_extension",
             default=0,
         ),
         FieldMapping(
             cache_attr="anti_ransomware_auto_switch_minimum_incoming_data",
-            api_path="anti_ransomware_auto_switch_minimum_incoming_data",
         ),
         FieldMapping(
             cache_attr="anti_ransomware_auto_switch_minimum_learning_period",
-            api_path="anti_ransomware_auto_switch_minimum_learning_period",
             default=0,
         ),
         FieldMapping(
             cache_attr="anti_ransomware_default_volume_state",
-            api_path="anti_ransomware_default_volume_state",
         ),
         FieldMapping(
             cache_attr="anti_ransomware_incoming_write_threshold",
-            api_path="anti_ransomware_incoming_write_threshold",
         ),
         FieldMapping(
             cache_attr="anti_ransomware_incoming_write_threshold_percent",
-            api_path="anti_ransomware_incoming_write_threshold_percent",
         ),
         FieldMapping(
             cache_attr="auto_enable_activity_tracking",
-            api_path="auto_enable_activity_tracking",
             default=False,
         ),
         FieldMapping(
             cache_attr="auto_enable_analytics",
-            api_path="auto_enable_analytics",
             default=False,
         ),
         FieldMapping(
             cache_attr="certificate.name",
-            api_path="certificate.name",
         ),
         FieldMapping(
             cache_attr="certificate.uuid",
-            api_path="certificate.uuid",
         ),
         FieldMapping(
             cache_attr="cifs.ad_domain.default_site",
-            api_path="cifs.ad_domain.default_site",
         ),
         FieldMapping(
             cache_attr="cifs.ad_domain.fqdn",
-            api_path="cifs.ad_domain.fqdn",
         ),
         FieldMapping(
             cache_attr="cifs.ad_domain.organizational_unit",
-            api_path="cifs.ad_domain.organizational_unit",
         ),
         FieldMapping(
             cache_attr="cifs.ad_domain.password",
-            api_path="cifs.ad_domain.password",
         ),
         FieldMapping(
             cache_attr="cifs.ad_domain.user",
-            api_path="cifs.ad_domain.user",
         ),
         FieldMapping(
             cache_attr="cifs.allowed",
-            api_path="cifs.allowed",
             default=False,
         ),
         FieldMapping(
@@ -152,405 +129,320 @@ ONTAPSVM_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="cifs.domain_workgroup",
-            api_path="cifs.domain_workgroup",
         ),
         FieldMapping(
             cache_attr="cifs.enabled",
-            api_path="cifs.enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="cifs.name",
-            api_path="cifs.name",
         ),
         FieldMapping(
             cache_attr="cifs.workgroup",
-            api_path="cifs.workgroup",
         ),
         FieldMapping(
             cache_attr="comment",
-            api_path="comment",
         ),
         FieldMapping(
             cache_attr="dns.domains",
-            api_path="dns.domains",
             default=[],
         ),
         FieldMapping(
             cache_attr="dns.servers",
-            api_path="dns.servers",
             default=[],
         ),
         FieldMapping(
             cache_attr="fc_interfaces",
-            api_path="fc_interfaces",
             transform=_transform_fc_interfaces,
             default=[],
         ),
         FieldMapping(
             cache_attr="fcp.allowed",
-            api_path="fcp.allowed",
             default=False,
         ),
         FieldMapping(
             cache_attr="fcp.enabled",
-            api_path="fcp.enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="ip_interfaces",
-            api_path="ip_interfaces",
             transform=_transform_ip_interfaces,
             default=[],
         ),
         FieldMapping(
             cache_attr="ipspace.name",
-            api_path="ipspace.name",
         ),
         FieldMapping(
             cache_attr="ipspace.uuid",
-            api_path="ipspace.uuid",
         ),
         FieldMapping(
             cache_attr="is_space_enforcement_logical",
-            api_path="is_space_enforcement_logical",
             default=False,
         ),
         FieldMapping(
             cache_attr="is_space_reporting_logical",
-            api_path="is_space_reporting_logical",
             default=False,
         ),
         FieldMapping(
             cache_attr="iscsi.allowed",
-            api_path="iscsi.allowed",
             default=False,
         ),
         FieldMapping(
             cache_attr="iscsi.enabled",
-            api_path="iscsi.enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="language",
-            api_path="language",
         ),
         FieldMapping(
             cache_attr="ldap.ad_domain",
-            api_path="ldap.ad_domain",
         ),
         FieldMapping(
             cache_attr="ldap.base_dn",
-            api_path="ldap.base_dn",
         ),
         FieldMapping(
             cache_attr="ldap.bind_dn",
-            api_path="ldap.bind_dn",
         ),
         FieldMapping(
             cache_attr="ldap.enabled",
-            api_path="ldap.enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="ldap.restrict_discovery_to_site",
-            api_path="ldap.restrict_discovery_to_site",
             default=False,
         ),
         FieldMapping(
             cache_attr="ldap.servers",
-            api_path="ldap.servers",
             default=[],
         ),
         FieldMapping(
             cache_attr="max_volumes",
-            api_path="max_volumes",
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="ndmp.allowed",
-            api_path="ndmp.allowed",
             default=False,
         ),
         FieldMapping(
             cache_attr="nfs.allowed",
-            api_path="nfs.allowed",
             default=False,
         ),
         FieldMapping(
             cache_attr="nfs.enabled",
-            api_path="nfs.enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="nis.domain",
-            api_path="nis.domain",
         ),
         FieldMapping(
             cache_attr="nis.enabled",
-            api_path="nis.enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="nis.servers",
-            api_path="nis.servers",
             default=[],
         ),
         FieldMapping(
             cache_attr="nsswitch.group",
-            api_path="nsswitch.group",
             default=[],
         ),
         FieldMapping(
             cache_attr="nsswitch.hosts",
-            api_path="nsswitch.hosts",
             default=[],
         ),
         FieldMapping(
             cache_attr="nsswitch.namemap",
-            api_path="nsswitch.namemap",
             default=[],
         ),
         FieldMapping(
             cache_attr="nsswitch.netgroup",
-            api_path="nsswitch.netgroup",
             default=[],
         ),
         FieldMapping(
             cache_attr="nsswitch.passwd",
-            api_path="nsswitch.passwd",
             default=[],
         ),
         FieldMapping(
             cache_attr="number_of_volumes_in_recovery_queue",
-            api_path="number_of_volumes_in_recovery_queue",
             default=0,
         ),
         FieldMapping(
             cache_attr="nvme.allowed",
-            api_path="nvme.allowed",
             default=False,
         ),
         FieldMapping(
             cache_attr="nvme.enabled",
-            api_path="nvme.enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="qos_adaptive_policy_group_template.max_throughput_iops",
-            api_path="qos_adaptive_policy_group_template.max_throughput_iops",
             default=0,
         ),
         FieldMapping(
             cache_attr="qos_adaptive_policy_group_template.max_throughput_mbps",
-            api_path="qos_adaptive_policy_group_template.max_throughput_mbps",
             default=0,
         ),
         FieldMapping(
             cache_attr="qos_adaptive_policy_group_template.min_throughput_iops",
-            api_path="qos_adaptive_policy_group_template.min_throughput_iops",
             default=0,
         ),
         FieldMapping(
             cache_attr="qos_adaptive_policy_group_template.min_throughput_mbps",
-            api_path="qos_adaptive_policy_group_template.min_throughput_mbps",
             default=0,
         ),
         FieldMapping(
             cache_attr="qos_adaptive_policy_group_template.name",
-            api_path="qos_adaptive_policy_group_template.name",
         ),
         FieldMapping(
             cache_attr="qos_adaptive_policy_group_template.uuid",
-            api_path="qos_adaptive_policy_group_template.uuid",
         ),
         FieldMapping(
             cache_attr="qos_policy.max_throughput_iops",
-            api_path="qos_policy.max_throughput_iops",
             default=0,
         ),
         FieldMapping(
             cache_attr="qos_policy.max_throughput_mbps",
-            api_path="qos_policy.max_throughput_mbps",
             default=0,
         ),
         FieldMapping(
             cache_attr="qos_policy.min_throughput_iops",
-            api_path="qos_policy.min_throughput_iops",
             default=0,
         ),
         FieldMapping(
             cache_attr="qos_policy.min_throughput_mbps",
-            api_path="qos_policy.min_throughput_mbps",
             default=0,
         ),
         FieldMapping(
             cache_attr="qos_policy.name",
-            api_path="qos_policy.name",
         ),
         FieldMapping(
             cache_attr="qos_policy.uuid",
-            api_path="qos_policy.uuid",
         ),
         FieldMapping(
             cache_attr="qos_policy_group_template.max_throughput_iops",
-            api_path="qos_policy_group_template.max_throughput_iops",
             default=0,
         ),
         FieldMapping(
             cache_attr="qos_policy_group_template.max_throughput_mbps",
-            api_path="qos_policy_group_template.max_throughput_mbps",
             default=0,
         ),
         FieldMapping(
             cache_attr="qos_policy_group_template.min_throughput_iops",
-            api_path="qos_policy_group_template.min_throughput_iops",
             default=0,
         ),
         FieldMapping(
             cache_attr="qos_policy_group_template.min_throughput_mbps",
-            api_path="qos_policy_group_template.min_throughput_mbps",
             default=0,
         ),
         FieldMapping(
             cache_attr="qos_policy_group_template.name",
-            api_path="qos_policy_group_template.name",
         ),
         FieldMapping(
             cache_attr="qos_policy_group_template.uuid",
-            api_path="qos_policy_group_template.uuid",
         ),
         FieldMapping(
             cache_attr="routes",
-            api_path="routes",
             transform=_transform_routes,
             default=[],
         ),
         FieldMapping(
             cache_attr="s3.allowed",
-            api_path="s3.allowed",
             default=False,
         ),
         FieldMapping(
             cache_attr="s3.certificate.name",
-            api_path="s3.certificate.name",
         ),
         FieldMapping(
             cache_attr="s3.certificate.uuid",
-            api_path="s3.certificate.uuid",
         ),
         FieldMapping(
             cache_attr="s3.default_unix_user",
-            api_path="s3.default_unix_user",
         ),
         FieldMapping(
             cache_attr="s3.default_win_user",
-            api_path="s3.default_win_user",
         ),
         FieldMapping(
             cache_attr="s3.enabled",
-            api_path="s3.enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="s3.is_http_enabled",
-            api_path="s3.is_http_enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="s3.is_https_enabled",
-            api_path="s3.is_https_enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="s3.name",
-            api_path="s3.name",
         ),
         FieldMapping(
             cache_attr="s3.port",
-            api_path="s3.port",
             default=0,
         ),
         FieldMapping(
             cache_attr="s3.secure_port",
-            api_path="s3.secure_port",
             default=0,
         ),
         FieldMapping(
             cache_attr="snapmirror.is_protected",
-            api_path="snapmirror.is_protected",
             default=False,
             requires_explicit_fetch=True,
         ),
         FieldMapping(
             cache_attr="snapmirror.protected_consistency_group_count",
-            api_path="snapmirror.protected_consistency_group_count",
             default=0,
             requires_explicit_fetch=True,
         ),
         FieldMapping(
             cache_attr="snapmirror.protected_volumes_count",
-            api_path="snapmirror.protected_volumes_count",
             default=0,
             requires_explicit_fetch=True,
         ),
         FieldMapping(
             cache_attr="snapshot_policy.name",
-            api_path="snapshot_policy.name",
         ),
         FieldMapping(
             cache_attr="snapshot_policy.uuid",
-            api_path="snapshot_policy.uuid",
         ),
         FieldMapping(
             cache_attr="state",
-            api_path="state",
         ),
         FieldMapping(
             cache_attr="storage.allocated",
-            api_path="storage.allocated",
             default=0,
         ),
         FieldMapping(
             cache_attr="storage.available",
-            api_path="storage.available",
             default=0,
         ),
         FieldMapping(
             cache_attr="storage.limit",
-            api_path="storage.limit",
             default=0,
         ),
         FieldMapping(
             cache_attr="storage.limit_threshold_alert",
-            api_path="storage.limit_threshold_alert",
             default=0,
         ),
         FieldMapping(
             cache_attr="storage.limit_threshold_exceeded",
-            api_path="storage.limit_threshold_exceeded",
             default=False,
         ),
         FieldMapping(
             cache_attr="storage.used_percentage",
-            api_path="storage.used_percentage",
             default=0,
         ),
         FieldMapping(
             cache_attr="subtype",
-            api_path="subtype",
         ),
         FieldMapping(
             cache_attr="total_volume_size_in_recovery_queue",
-            api_path="total_volume_size_in_recovery_queue",
             default=0,
         ),
         FieldMapping(
             cache_attr="uuid",
-            api_path="uuid",
         ),
     ),
 )

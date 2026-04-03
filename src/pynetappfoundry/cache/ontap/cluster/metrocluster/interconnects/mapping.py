@@ -25,42 +25,33 @@ ONTAPMETROCLUSTERINTERCONNECT_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="adapter",
-            api_path="adapter",
         ),
         FieldMapping(
             cache_attr="interfaces",
-            api_path="interfaces",
             transform=_transform_interfaces,
             default=[],
         ),
         FieldMapping(
             cache_attr="mirror.enabled",
-            api_path="mirror.enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="mirror.state",
-            api_path="mirror.state",
         ),
         FieldMapping(
             cache_attr="multipath_policy",
-            api_path="multipath_policy",
         ),
         FieldMapping(
             cache_attr="node.name",
-            api_path="node.name",
         ),
         FieldMapping(
             cache_attr="node.uuid",
-            api_path="node.uuid",
         ),
         FieldMapping(
             cache_attr="partner_type",
-            api_path="partner_type",
         ),
         FieldMapping(
             cache_attr="state",
-            api_path="state",
         ),
         FieldMapping(
             cache_attr="type_",
@@ -68,7 +59,6 @@ ONTAPMETROCLUSTERINTERCONNECT_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="vlan_id",
-            api_path="vlan_id",
             default=0,
         ),
     ),

@@ -14,11 +14,9 @@ ONTAPSWITCH_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="address",
-            api_path="address",
         ),
         FieldMapping(
             cache_attr="discovered",
-            api_path="discovered",
             default=False,
         ),
         FieldMapping(
@@ -27,41 +25,32 @@ ONTAPSWITCH_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="monitoring.enabled",
-            api_path="monitoring.enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="monitoring.monitored",
-            api_path="monitoring.monitored",
             default=False,
         ),
         FieldMapping(
             cache_attr="monitoring.reason",
-            api_path="monitoring.reason",
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="network",
-            api_path="network",
         ),
         FieldMapping(
             cache_attr="serial_number",
-            api_path="serial_number",
         ),
         FieldMapping(
             cache_attr="snmp.user",
-            api_path="snmp.user",
         ),
         FieldMapping(
             cache_attr="snmp.version",
-            api_path="snmp.version",
         ),
         FieldMapping(
             cache_attr="version",
-            api_path="version",
         ),
     ),
 )

@@ -16,36 +16,28 @@ ONTAPMETROCLUSTEROPERATION_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="additional_info",
-            api_path="additional_info",
         ),
         FieldMapping(
             cache_attr="command_line",
-            api_path="command_line",
         ),
         FieldMapping(
             cache_attr="end_time",
-            api_path="end_time",
         ),
         FieldMapping(
             cache_attr="errors",
-            api_path="errors",
             default=[],
         ),
         FieldMapping(
             cache_attr="node.name",
-            api_path="node.name",
         ),
         FieldMapping(
             cache_attr="node.uuid",
-            api_path="node.uuid",
         ),
         FieldMapping(
             cache_attr="start_time",
-            api_path="start_time",
         ),
         FieldMapping(
             cache_attr="state",
-            api_path="state",
         ),
         FieldMapping(
             cache_attr="type_",
@@ -53,7 +45,6 @@ ONTAPMETROCLUSTEROPERATION_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="uuid",
-            api_path="uuid",
         ),
     ),
 )

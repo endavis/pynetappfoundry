@@ -14,28 +14,22 @@ ONTAPTOKEN_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="expiry_time.left",
-            api_path="expiry_time.left",
         ),
         FieldMapping(
             cache_attr="expiry_time.limit",
-            api_path="expiry_time.limit",
         ),
         FieldMapping(
             cache_attr="node.name",
-            api_path="node.name",
         ),
         FieldMapping(
             cache_attr="node.uuid",
-            api_path="node.uuid",
         ),
         FieldMapping(
             cache_attr="reserve_size",
-            api_path="reserve_size",
             default=0,
         ),
         FieldMapping(
             cache_attr="uuid",
-            api_path="uuid",
         ),
     ),
 )

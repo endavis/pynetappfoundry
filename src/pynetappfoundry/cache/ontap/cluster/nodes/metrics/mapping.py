@@ -16,24 +16,19 @@ ONTAPNODEMETRICSRESPONSE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="duration",
-            api_path="duration",
         ),
         FieldMapping(
             cache_attr="processor_utilization",
-            api_path="processor_utilization",
             default=0,
         ),
         FieldMapping(
             cache_attr="status",
-            api_path="status",
         ),
         FieldMapping(
             cache_attr="timestamp",
-            api_path="timestamp",
         ),
         FieldMapping(
             cache_attr="uuid",
-            api_path="uuid",
         ),
     ),
 )

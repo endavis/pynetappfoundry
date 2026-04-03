@@ -14,11 +14,9 @@ ONTAPSOFTWAREPACKAGE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="create_time",
-            api_path="create_time",
         ),
         FieldMapping(
             cache_attr="version",
-            api_path="version",
         ),
     ),
 )

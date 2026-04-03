@@ -22,54 +22,42 @@ ONTAPFCLOGIN_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="igroups",
-            api_path="igroups",
             transform=_transform_igroups,
             default=[],
         ),
         FieldMapping(
             cache_attr="initiator.aliases",
-            api_path="initiator.aliases",
             default=[],
         ),
         FieldMapping(
             cache_attr="initiator.comment",
-            api_path="initiator.comment",
         ),
         FieldMapping(
             cache_attr="initiator.port_address",
-            api_path="initiator.port_address",
         ),
         FieldMapping(
             cache_attr="initiator.wwnn",
-            api_path="initiator.wwnn",
         ),
         FieldMapping(
             cache_attr="initiator.wwpn",
-            api_path="initiator.wwpn",
         ),
         FieldMapping(
             cache_attr="interface.name",
-            api_path="interface.name",
         ),
         FieldMapping(
             cache_attr="interface.uuid",
-            api_path="interface.uuid",
         ),
         FieldMapping(
             cache_attr="interface.wwpn",
-            api_path="interface.wwpn",
         ),
         FieldMapping(
             cache_attr="protocol",
-            api_path="protocol",
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
     ),
 )

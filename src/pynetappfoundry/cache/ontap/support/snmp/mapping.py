@@ -14,30 +14,24 @@ ONTAPSNMP_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="auth_traps_enabled",
-            api_path="auth_traps_enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="contact",
-            api_path="contact",
         ),
         FieldMapping(
             cache_attr="enabled",
-            api_path="enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="location",
-            api_path="location",
         ),
         FieldMapping(
             cache_attr="traps_enabled",
-            api_path="traps_enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="trigger_test_trap",
-            api_path="trigger_test_trap",
             default=False,
         ),
     ),

@@ -18,27 +18,21 @@ ONTAPS3BUCKETSNAPSHOT_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="bucket_uuid",
-            api_path="bucket_uuid",
         ),
         FieldMapping(
             cache_attr="create_time",
-            api_path="create_time",
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="uuid",
-            api_path="uuid",
         ),
     ),
 )

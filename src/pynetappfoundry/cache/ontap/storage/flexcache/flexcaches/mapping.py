@@ -31,38 +31,31 @@ ONTAPFLEXCACHE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="aggregates",
-            api_path="aggregates",
             transform=_transform_aggregates,
             default=[],
         ),
         FieldMapping(
             cache_attr="atime_scrub.enabled",
-            api_path="atime_scrub.enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="atime_scrub.period",
-            api_path="atime_scrub.period",
             default=0,
         ),
         FieldMapping(
             cache_attr="cifs_change_notify.enabled",
-            api_path="cifs_change_notify.enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="constituents_per_aggregate",
-            api_path="constituents_per_aggregate",
             default=0,
         ),
         FieldMapping(
             cache_attr="dr_cache",
-            api_path="dr_cache",
             default=False,
         ),
         FieldMapping(
             cache_attr="global_file_locking_enabled",
-            api_path="global_file_locking_enabled",
             default=False,
         ),
         FieldMapping(
@@ -72,75 +65,60 @@ ONTAPFLEXCACHE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="origins",
-            api_path="origins",
             transform=_transform_origins,
             default=[],
         ),
         FieldMapping(
             cache_attr="override_encryption",
-            api_path="override_encryption",
             default=False,
         ),
         FieldMapping(
             cache_attr="path",
-            api_path="path",
             requires_explicit_fetch=True,
         ),
         FieldMapping(
             cache_attr="prepopulate.dir_paths",
-            api_path="prepopulate.dir_paths",
             default=[],
         ),
         FieldMapping(
             cache_attr="prepopulate.exclude_dir_paths",
-            api_path="prepopulate.exclude_dir_paths",
             default=[],
         ),
         FieldMapping(
             cache_attr="prepopulate.recurse",
-            api_path="prepopulate.recurse",
             default=False,
         ),
         FieldMapping(
             cache_attr="relative_size.enabled",
-            api_path="relative_size.enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="relative_size.percentage",
-            api_path="relative_size.percentage",
             default=0,
         ),
         FieldMapping(
             cache_attr="size",
-            api_path="size",
             default=0,
             requires_explicit_fetch=True,
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="use_tiered_aggregate",
-            api_path="use_tiered_aggregate",
             default=False,
         ),
         FieldMapping(
             cache_attr="uuid",
-            api_path="uuid",
         ),
         FieldMapping(
             cache_attr="writeback.enabled",
-            api_path="writeback.enabled",
             default=False,
         ),
     ),

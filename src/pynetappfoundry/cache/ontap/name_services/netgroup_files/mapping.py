@@ -16,28 +16,22 @@ ONTAPNETGROUPFILE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="file_size",
-            api_path="file_size",
             default=0,
         ),
         FieldMapping(
             cache_attr="hash_value",
-            api_path="hash_value",
         ),
         FieldMapping(
             cache_attr="hash_value_by_host",
-            api_path="hash_value_by_host",
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="timestamp",
-            api_path="timestamp",
         ),
     ),
 )

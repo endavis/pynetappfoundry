@@ -14,20 +14,16 @@ ONTAPSHADOWCOPYSET_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="keep_snapshots",
-            api_path="keep_snapshots",
             default=False,
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="uuid",
-            api_path="uuid",
         ),
     ),
 )

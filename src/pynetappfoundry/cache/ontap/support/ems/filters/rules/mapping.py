@@ -32,24 +32,19 @@ ONTAPEMSFILTERRULERESPONSE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="index",
-            api_path="index",
             default=0,
         ),
         FieldMapping(
             cache_attr="message_criteria.name_pattern",
-            api_path="message_criteria.name_pattern",
         ),
         FieldMapping(
             cache_attr="message_criteria.severities",
-            api_path="message_criteria.severities",
         ),
         FieldMapping(
             cache_attr="message_criteria.snmp_trap_types",
-            api_path="message_criteria.snmp_trap_types",
         ),
         FieldMapping(
             cache_attr="parameter_criteria",
-            api_path="parameter_criteria",
             transform=_transform_parameter_criteria,
             default=[],
         ),

@@ -14,82 +14,66 @@ ONTAPKEYMANAGERCONFIG_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="cc_mode_enabled",
-            api_path="cc_mode_enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="cloud_kms_retry_count",
-            api_path="cloud_kms_retry_count",
             default=0,
         ),
         FieldMapping(
             cache_attr="health_monitor_policy.akv.enabled",
-            api_path="health_monitor_policy.akv.enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="health_monitor_policy.akv.manage_volume_offline",
-            api_path="health_monitor_policy.akv.manage_volume_offline",
             default=False,
         ),
         FieldMapping(
             cache_attr="health_monitor_policy.aws.enabled",
-            api_path="health_monitor_policy.aws.enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="health_monitor_policy.aws.manage_volume_offline",
-            api_path="health_monitor_policy.aws.manage_volume_offline",
             default=False,
         ),
         FieldMapping(
             cache_attr="health_monitor_policy.gcp.enabled",
-            api_path="health_monitor_policy.gcp.enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="health_monitor_policy.gcp.manage_volume_offline",
-            api_path="health_monitor_policy.gcp.manage_volume_offline",
             default=False,
         ),
         FieldMapping(
             cache_attr="health_monitor_policy.ikp.enabled",
-            api_path="health_monitor_policy.ikp.enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="health_monitor_policy.ikp.manage_volume_offline",
-            api_path="health_monitor_policy.ikp.manage_volume_offline",
             default=False,
         ),
         FieldMapping(
             cache_attr="health_monitor_policy.kmip.enabled",
-            api_path="health_monitor_policy.kmip.enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="health_monitor_policy.kmip.manage_volume_offline",
-            api_path="health_monitor_policy.kmip.manage_volume_offline",
             default=False,
         ),
         FieldMapping(
             cache_attr="health_monitor_policy.okm.enabled",
-            api_path="health_monitor_policy.okm.enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="health_monitor_policy.okm.manage_volume_offline",
-            api_path="health_monitor_policy.okm.manage_volume_offline",
             default=False,
         ),
         FieldMapping(
             cache_attr="health_monitor_polling_interval",
-            api_path="health_monitor_polling_interval",
             default=0,
         ),
         FieldMapping(
             cache_attr="passphrase",
-            api_path="passphrase",
         ),
     ),
 )

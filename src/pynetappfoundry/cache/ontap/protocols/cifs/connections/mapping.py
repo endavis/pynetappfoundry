@@ -25,49 +25,39 @@ ONTAPCIFSCONNECTION_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="client_ip",
-            api_path="client_ip",
         ),
         FieldMapping(
             cache_attr="client_port",
-            api_path="client_port",
             default=0,
         ),
         FieldMapping(
             cache_attr="identifier",
-            api_path="identifier",
             default=0,
         ),
         FieldMapping(
             cache_attr="network_context_id",
-            api_path="network_context_id",
             default=0,
         ),
         FieldMapping(
             cache_attr="node.name",
-            api_path="node.name",
         ),
         FieldMapping(
             cache_attr="node.uuid",
-            api_path="node.uuid",
         ),
         FieldMapping(
             cache_attr="server_ip",
-            api_path="server_ip",
         ),
         FieldMapping(
             cache_attr="sessions",
-            api_path="sessions",
             cache_strategy="realtime",
             transform=_transform_sessions,
             default=[],
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
     ),
 )

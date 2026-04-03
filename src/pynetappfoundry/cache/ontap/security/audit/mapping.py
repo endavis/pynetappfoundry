@@ -14,17 +14,14 @@ ONTAPSECURITYAUDIT_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="cli",
-            api_path="cli",
             default=False,
         ),
         FieldMapping(
             cache_attr="http",
-            api_path="http",
             default=False,
         ),
         FieldMapping(
             cache_attr="ontapi",
-            api_path="ontapi",
             default=False,
         ),
     ),

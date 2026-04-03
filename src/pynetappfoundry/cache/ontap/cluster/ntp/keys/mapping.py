@@ -14,16 +14,13 @@ ONTAPNTPKEY_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="digest_type",
-            api_path="digest_type",
         ),
         FieldMapping(
             cache_attr="id",
-            api_path="id",
             default=0,
         ),
         FieldMapping(
             cache_attr="value",
-            api_path="value",
         ),
     ),
 )

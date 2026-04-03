@@ -17,15 +17,12 @@ ONTAPCLUSTERNISSERVICE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="server",
-            api_path="server",
         ),
         FieldMapping(
             cache_attr="status.code",
-            api_path="status.code",
         ),
         FieldMapping(
             cache_attr="status.message",
-            api_path="status.message",
         ),
     ),
 )

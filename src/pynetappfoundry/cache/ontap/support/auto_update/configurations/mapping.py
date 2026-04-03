@@ -16,23 +16,18 @@ ONTAPAUTOUPDATECONFIGURATION_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="action",
-            api_path="action",
         ),
         FieldMapping(
             cache_attr="category",
-            api_path="category",
         ),
         FieldMapping(
             cache_attr="description.code",
-            api_path="description.code",
         ),
         FieldMapping(
             cache_attr="description.message",
-            api_path="description.message",
         ),
         FieldMapping(
             cache_attr="uuid",
-            api_path="uuid",
         ),
     ),
 )

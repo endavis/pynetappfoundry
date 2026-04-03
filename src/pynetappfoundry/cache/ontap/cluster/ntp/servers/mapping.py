@@ -14,21 +14,17 @@ ONTAPNTPSERVER_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="authentication_enabled",
-            api_path="authentication_enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="key.id",
-            api_path="key.id",
             default=0,
         ),
         FieldMapping(
             cache_attr="server",
-            api_path="server",
         ),
         FieldMapping(
             cache_attr="version",
-            api_path="version",
         ),
     ),
 )

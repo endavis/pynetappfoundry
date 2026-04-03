@@ -25,52 +25,42 @@ ONTAPQUOTARULE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="files.hard_limit",
-            api_path="files.hard_limit",
             cache_strategy="realtime",
             default=0,
         ),
         FieldMapping(
             cache_attr="files.soft_limit",
-            api_path="files.soft_limit",
             cache_strategy="realtime",
             default=0,
         ),
         FieldMapping(
             cache_attr="group.id",
-            api_path="group.id",
         ),
         FieldMapping(
             cache_attr="group.name",
-            api_path="group.name",
         ),
         FieldMapping(
             cache_attr="qtree.id",
-            api_path="qtree.id",
             default=0,
         ),
         FieldMapping(
             cache_attr="qtree.name",
-            api_path="qtree.name",
         ),
         FieldMapping(
             cache_attr="space.hard_limit",
-            api_path="space.hard_limit",
             cache_strategy="realtime",
             default=0,
         ),
         FieldMapping(
             cache_attr="space.soft_limit",
-            api_path="space.soft_limit",
             cache_strategy="realtime",
             default=0,
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="type_",
@@ -78,26 +68,21 @@ ONTAPQUOTARULE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="user_mapping",
-            api_path="user_mapping",
             default=False,
         ),
         FieldMapping(
             cache_attr="users",
-            api_path="users",
             transform=_transform_users,
             default=[],
         ),
         FieldMapping(
             cache_attr="uuid",
-            api_path="uuid",
         ),
         FieldMapping(
             cache_attr="volume.name",
-            api_path="volume.name",
         ),
         FieldMapping(
             cache_attr="volume.uuid",
-            api_path="volume.uuid",
         ),
     ),
 )

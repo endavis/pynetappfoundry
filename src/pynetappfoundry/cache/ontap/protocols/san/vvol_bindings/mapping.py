@@ -14,46 +14,36 @@ ONTAPVVOLBINDING_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="count",
-            api_path="count",
             default=0,
         ),
         FieldMapping(
             cache_attr="id",
-            api_path="id",
             default=0,
         ),
         FieldMapping(
             cache_attr="is_optimal",
-            api_path="is_optimal",
             default=False,
         ),
         FieldMapping(
             cache_attr="protocol_endpoint.name",
-            api_path="protocol_endpoint.name",
         ),
         FieldMapping(
             cache_attr="protocol_endpoint.uuid",
-            api_path="protocol_endpoint.uuid",
         ),
         FieldMapping(
             cache_attr="secondary_id",
-            api_path="secondary_id",
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="vvol.name",
-            api_path="vvol.name",
         ),
         FieldMapping(
             cache_attr="vvol.uuid",
-            api_path="vvol.uuid",
         ),
     ),
 )

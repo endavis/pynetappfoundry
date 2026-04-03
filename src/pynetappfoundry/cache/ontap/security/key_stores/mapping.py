@@ -14,36 +14,28 @@ ONTAPSECURITYKEYSTORE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="configuration.name",
-            api_path="configuration.name",
         ),
         FieldMapping(
             cache_attr="configuration.uuid",
-            api_path="configuration.uuid",
         ),
         FieldMapping(
             cache_attr="enabled",
-            api_path="enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="location",
-            api_path="location",
         ),
         FieldMapping(
             cache_attr="scope",
-            api_path="scope",
         ),
         FieldMapping(
             cache_attr="state",
-            api_path="state",
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="type_",
@@ -51,7 +43,6 @@ ONTAPSECURITYKEYSTORE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="uuid",
-            api_path="uuid",
         ),
     ),
 )

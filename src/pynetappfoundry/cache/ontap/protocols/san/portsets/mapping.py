@@ -31,35 +31,28 @@ ONTAPPORTSET_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="igroups",
-            api_path="igroups",
             transform=_transform_igroups,
             default=[],
         ),
         FieldMapping(
             cache_attr="interfaces",
-            api_path="interfaces",
             transform=_transform_interfaces,
             default=[],
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="protocol",
-            api_path="protocol",
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="uuid",
-            api_path="uuid",
         ),
     ),
 )

@@ -14,31 +14,25 @@ ONTAPSPLITLOAD_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="load.allowable",
-            api_path="load.allowable",
             default=0,
         ),
         FieldMapping(
             cache_attr="load.current",
-            api_path="load.current",
             default=0,
         ),
         FieldMapping(
             cache_attr="load.maximum",
-            api_path="load.maximum",
             default=0,
         ),
         FieldMapping(
             cache_attr="load.token_reserved",
-            api_path="load.token_reserved",
             default=0,
         ),
         FieldMapping(
             cache_attr="node.name",
-            api_path="node.name",
         ),
         FieldMapping(
             cache_attr="node.uuid",
-            api_path="node.uuid",
         ),
     ),
 )

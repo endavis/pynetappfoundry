@@ -14,17 +14,14 @@ ONTAPIPSEC_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="enabled",
-            api_path="enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="offload_enabled",
-            api_path="offload_enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="replay_window",
-            api_path="replay_window",
             default=0,
         ),
     ),

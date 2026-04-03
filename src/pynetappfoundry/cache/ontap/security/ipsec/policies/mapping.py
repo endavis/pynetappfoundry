@@ -14,100 +14,76 @@ ONTAPIPSECPOLICYRESPONSE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="action",
-            api_path="action",
         ),
         FieldMapping(
             cache_attr="authentication_method",
-            api_path="authentication_method",
         ),
         FieldMapping(
             cache_attr="certificate.name",
-            api_path="certificate.name",
         ),
         FieldMapping(
             cache_attr="certificate.uuid",
-            api_path="certificate.uuid",
         ),
         FieldMapping(
             cache_attr="enabled",
-            api_path="enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="ipspace.name",
-            api_path="ipspace.name",
         ),
         FieldMapping(
             cache_attr="ipspace.uuid",
-            api_path="ipspace.uuid",
         ),
         FieldMapping(
             cache_attr="local_endpoint.address",
-            api_path="local_endpoint.address",
         ),
         FieldMapping(
             cache_attr="local_endpoint.family",
-            api_path="local_endpoint.family",
         ),
         FieldMapping(
             cache_attr="local_endpoint.netmask",
-            api_path="local_endpoint.netmask",
         ),
         FieldMapping(
             cache_attr="local_endpoint.port",
-            api_path="local_endpoint.port",
         ),
         FieldMapping(
             cache_attr="local_identity",
-            api_path="local_identity",
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="protocol",
-            api_path="protocol",
         ),
         FieldMapping(
             cache_attr="remote_endpoint.address",
-            api_path="remote_endpoint.address",
         ),
         FieldMapping(
             cache_attr="remote_endpoint.family",
-            api_path="remote_endpoint.family",
         ),
         FieldMapping(
             cache_attr="remote_endpoint.netmask",
-            api_path="remote_endpoint.netmask",
         ),
         FieldMapping(
             cache_attr="remote_endpoint.port",
-            api_path="remote_endpoint.port",
         ),
         FieldMapping(
             cache_attr="remote_identity",
-            api_path="remote_identity",
         ),
         FieldMapping(
             cache_attr="scope",
-            api_path="scope",
         ),
         FieldMapping(
             cache_attr="secret_key",
-            api_path="secret_key",
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="uuid",
-            api_path="uuid",
         ),
     ),
 )

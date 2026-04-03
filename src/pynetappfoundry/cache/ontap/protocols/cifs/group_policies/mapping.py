@@ -69,33 +69,27 @@ ONTAPPOLICIESANDRULESTOBEAPPLIED_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="to_be_applied.access_policies",
-            api_path="to_be_applied.access_policies",
             transform=_transform_to_be_applied_access_policies,
             default=[],
         ),
         FieldMapping(
             cache_attr="to_be_applied.access_rules",
-            api_path="to_be_applied.access_rules",
             transform=_transform_to_be_applied_access_rules,
             default=[],
         ),
         FieldMapping(
             cache_attr="to_be_applied.objects",
-            api_path="to_be_applied.objects",
             transform=_transform_to_be_applied_objects,
             default=[],
         ),
         FieldMapping(
             cache_attr="to_be_applied.restricted_groups",
-            api_path="to_be_applied.restricted_groups",
             transform=_transform_to_be_applied_restricted_groups,
             default=[],
         ),

@@ -16,29 +16,23 @@ ONTAPWEBSVM_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="certificate.name",
-            api_path="certificate.name",
         ),
         FieldMapping(
             cache_attr="certificate.uuid",
-            api_path="certificate.uuid",
         ),
         FieldMapping(
             cache_attr="client_enabled",
-            api_path="client_enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="ocsp_enabled",
-            api_path="ocsp_enabled",
             default=False,
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
     ),
 )

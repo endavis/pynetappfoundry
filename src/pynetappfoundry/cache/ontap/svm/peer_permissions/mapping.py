@@ -14,24 +14,19 @@ ONTAPSVMPEERPERMISSION_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="applications",
-            api_path="applications",
             default=[],
         ),
         FieldMapping(
             cache_attr="cluster_peer.name",
-            api_path="cluster_peer.name",
         ),
         FieldMapping(
             cache_attr="cluster_peer.uuid",
-            api_path="cluster_peer.uuid",
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
     ),
 )

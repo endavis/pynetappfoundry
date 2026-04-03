@@ -25,57 +25,44 @@ ONTAPNETBIOS_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="interfaces",
-            api_path="interfaces",
             default=[],
         ),
         FieldMapping(
             cache_attr="mode",
-            api_path="mode",
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="name_registration_type",
-            api_path="name_registration_type",
         ),
         FieldMapping(
             cache_attr="node.name",
-            api_path="node.name",
         ),
         FieldMapping(
             cache_attr="node.uuid",
-            api_path="node.uuid",
         ),
         FieldMapping(
             cache_attr="scope",
-            api_path="scope",
         ),
         FieldMapping(
             cache_attr="state",
-            api_path="state",
         ),
         FieldMapping(
             cache_attr="suffix",
-            api_path="suffix",
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="time_left",
-            api_path="time_left",
             default=0,
         ),
         FieldMapping(
             cache_attr="wins_servers",
-            api_path="wins_servers",
             transform=_transform_wins_servers,
             default=[],
         ),

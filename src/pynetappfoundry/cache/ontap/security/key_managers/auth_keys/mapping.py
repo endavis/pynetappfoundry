@@ -18,19 +18,15 @@ ONTAPKEYMANAGERAUTHKEY_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="key_id",
-            api_path="key_id",
         ),
         FieldMapping(
             cache_attr="key_tag",
-            api_path="key_tag",
         ),
         FieldMapping(
             cache_attr="passphrase",
-            api_path="passphrase",
         ),
         FieldMapping(
             cache_attr="security_key_manager.uuid",
-            api_path="security_key_manager.uuid",
         ),
     ),
 )

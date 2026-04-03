@@ -25,138 +25,107 @@ ONTAPAWSKMS_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="access_key_id",
-            api_path="access_key_id",
         ),
         FieldMapping(
             cache_attr="amazon_reachability.code",
-            api_path="amazon_reachability.code",
         ),
         FieldMapping(
             cache_attr="amazon_reachability.message",
-            api_path="amazon_reachability.message",
         ),
         FieldMapping(
             cache_attr="amazon_reachability.reachable",
-            api_path="amazon_reachability.reachable",
             default=False,
         ),
         FieldMapping(
             cache_attr="default_domain",
-            api_path="default_domain",
         ),
         FieldMapping(
             cache_attr="ekmip_reachability",
-            api_path="ekmip_reachability",
             transform=_transform_ekmip_reachability,
             default=[],
         ),
         FieldMapping(
             cache_attr="encryption_context",
-            api_path="encryption_context",
         ),
         FieldMapping(
             cache_attr="host",
-            api_path="host",
         ),
         FieldMapping(
             cache_attr="key_id",
-            api_path="key_id",
         ),
         FieldMapping(
             cache_attr="polling_period",
-            api_path="polling_period",
             default=0,
         ),
         FieldMapping(
             cache_attr="port",
-            api_path="port",
             default=0,
         ),
         FieldMapping(
             cache_attr="proxy_host",
-            api_path="proxy_host",
         ),
         FieldMapping(
             cache_attr="proxy_password",
-            api_path="proxy_password",
         ),
         FieldMapping(
             cache_attr="proxy_port",
-            api_path="proxy_port",
             default=0,
         ),
         FieldMapping(
             cache_attr="proxy_type",
-            api_path="proxy_type",
         ),
         FieldMapping(
             cache_attr="proxy_username",
-            api_path="proxy_username",
         ),
         FieldMapping(
             cache_attr="region",
-            api_path="region",
         ),
         FieldMapping(
             cache_attr="scope",
-            api_path="scope",
         ),
         FieldMapping(
             cache_attr="secret_access_key",
-            api_path="secret_access_key",
         ),
         FieldMapping(
             cache_attr="service",
-            api_path="service",
         ),
         FieldMapping(
             cache_attr="skip_verify",
-            api_path="skip_verify",
             default=False,
         ),
         FieldMapping(
             cache_attr="state.cluster_state",
-            api_path="state.cluster_state",
             default=False,
         ),
         FieldMapping(
             cache_attr="state.code",
-            api_path="state.code",
         ),
         FieldMapping(
             cache_attr="state.message",
-            api_path="state.message",
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
         FieldMapping(
             cache_attr="timeout",
-            api_path="timeout",
             default=0,
         ),
         FieldMapping(
             cache_attr="uuid",
-            api_path="uuid",
         ),
         FieldMapping(
             cache_attr="verify",
-            api_path="verify",
             default=False,
         ),
         FieldMapping(
             cache_attr="verify_host",
-            api_path="verify_host",
             default=False,
         ),
         FieldMapping(
             cache_attr="verify_ip",
-            api_path="verify_ip",
             default=False,
         ),
     ),

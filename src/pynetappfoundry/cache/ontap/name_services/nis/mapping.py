@@ -25,31 +25,25 @@ ONTAPNISSERVICE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="binding_details",
-            api_path="binding_details",
             transform=_transform_binding_details,
             default=[],
         ),
         FieldMapping(
             cache_attr="bound_servers",
-            api_path="bound_servers",
             default=[],
         ),
         FieldMapping(
             cache_attr="domain",
-            api_path="domain",
         ),
         FieldMapping(
             cache_attr="servers",
-            api_path="servers",
             default=[],
         ),
         FieldMapping(
             cache_attr="svm.name",
-            api_path="svm.name",
         ),
         FieldMapping(
             cache_attr="svm.uuid",
-            api_path="svm.uuid",
         ),
     ),
 )

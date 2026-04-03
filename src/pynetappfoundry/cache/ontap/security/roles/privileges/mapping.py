@@ -16,15 +16,12 @@ ONTAPROLEPRIVILEGE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="access",
-            api_path="access",
         ),
         FieldMapping(
             cache_attr="path",
-            api_path="path",
         ),
         FieldMapping(
             cache_attr="query",
-            api_path="query",
         ),
     ),
 )

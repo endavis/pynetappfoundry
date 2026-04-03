@@ -16,25 +16,20 @@ ONTAPMULTIADMINVERIFYAPPROVALGROUP_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="approvers",
-            api_path="approvers",
             default=[],
         ),
         FieldMapping(
             cache_attr="email",
-            api_path="email",
             default=[],
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="owner.name",
-            api_path="owner.name",
         ),
         FieldMapping(
             cache_attr="owner.uuid",
-            api_path="owner.uuid",
         ),
     ),
 )

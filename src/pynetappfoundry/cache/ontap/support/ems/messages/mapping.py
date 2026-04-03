@@ -14,28 +14,22 @@ ONTAPEMSMESSAGERESPONSE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="corrective_action",
-            api_path="corrective_action",
         ),
         FieldMapping(
             cache_attr="deprecated",
-            api_path="deprecated",
             default=False,
         ),
         FieldMapping(
             cache_attr="description",
-            api_path="description",
         ),
         FieldMapping(
             cache_attr="name",
-            api_path="name",
         ),
         FieldMapping(
             cache_attr="severity",
-            api_path="severity",
         ),
         FieldMapping(
             cache_attr="snmp_trap_type",
-            api_path="snmp_trap_type",
         ),
     ),
 )

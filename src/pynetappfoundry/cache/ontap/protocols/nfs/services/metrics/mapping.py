@@ -18,204 +18,162 @@ ONTAPPERFORMANCESVMNFSRESPONSE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="v3.duration",
-            api_path="v3.duration",
         ),
         FieldMapping(
             cache_attr="v3.iops.other",
-            api_path="v3.iops.other",
             default=0,
         ),
         FieldMapping(
             cache_attr="v3.iops.read",
-            api_path="v3.iops.read",
             default=0,
         ),
         FieldMapping(
             cache_attr="v3.iops.total",
-            api_path="v3.iops.total",
             default=0,
         ),
         FieldMapping(
             cache_attr="v3.iops.write",
-            api_path="v3.iops.write",
             default=0,
         ),
         FieldMapping(
             cache_attr="v3.latency.other",
-            api_path="v3.latency.other",
             default=0,
         ),
         FieldMapping(
             cache_attr="v3.latency.read",
-            api_path="v3.latency.read",
             default=0,
         ),
         FieldMapping(
             cache_attr="v3.latency.total",
-            api_path="v3.latency.total",
             default=0,
         ),
         FieldMapping(
             cache_attr="v3.latency.write",
-            api_path="v3.latency.write",
             default=0,
         ),
         FieldMapping(
             cache_attr="v3.status",
-            api_path="v3.status",
         ),
         FieldMapping(
             cache_attr="v3.throughput.read",
-            api_path="v3.throughput.read",
             default=0,
         ),
         FieldMapping(
             cache_attr="v3.throughput.total",
-            api_path="v3.throughput.total",
             default=0,
         ),
         FieldMapping(
             cache_attr="v3.throughput.write",
-            api_path="v3.throughput.write",
             default=0,
         ),
         FieldMapping(
             cache_attr="v3.timestamp",
-            api_path="v3.timestamp",
         ),
         FieldMapping(
             cache_attr="v4.duration",
-            api_path="v4.duration",
         ),
         FieldMapping(
             cache_attr="v4.iops.other",
-            api_path="v4.iops.other",
             default=0,
         ),
         FieldMapping(
             cache_attr="v4.iops.read",
-            api_path="v4.iops.read",
             default=0,
         ),
         FieldMapping(
             cache_attr="v4.iops.total",
-            api_path="v4.iops.total",
             default=0,
         ),
         FieldMapping(
             cache_attr="v4.iops.write",
-            api_path="v4.iops.write",
             default=0,
         ),
         FieldMapping(
             cache_attr="v4.latency.other",
-            api_path="v4.latency.other",
             default=0,
         ),
         FieldMapping(
             cache_attr="v4.latency.read",
-            api_path="v4.latency.read",
             default=0,
         ),
         FieldMapping(
             cache_attr="v4.latency.total",
-            api_path="v4.latency.total",
             default=0,
         ),
         FieldMapping(
             cache_attr="v4.latency.write",
-            api_path="v4.latency.write",
             default=0,
         ),
         FieldMapping(
             cache_attr="v4.status",
-            api_path="v4.status",
         ),
         FieldMapping(
             cache_attr="v4.throughput.read",
-            api_path="v4.throughput.read",
             default=0,
         ),
         FieldMapping(
             cache_attr="v4.throughput.total",
-            api_path="v4.throughput.total",
             default=0,
         ),
         FieldMapping(
             cache_attr="v4.throughput.write",
-            api_path="v4.throughput.write",
             default=0,
         ),
         FieldMapping(
             cache_attr="v4.timestamp",
-            api_path="v4.timestamp",
         ),
         FieldMapping(
             cache_attr="v41.duration",
-            api_path="v41.duration",
         ),
         FieldMapping(
             cache_attr="v41.iops.other",
-            api_path="v41.iops.other",
             default=0,
         ),
         FieldMapping(
             cache_attr="v41.iops.read",
-            api_path="v41.iops.read",
             default=0,
         ),
         FieldMapping(
             cache_attr="v41.iops.total",
-            api_path="v41.iops.total",
             default=0,
         ),
         FieldMapping(
             cache_attr="v41.iops.write",
-            api_path="v41.iops.write",
             default=0,
         ),
         FieldMapping(
             cache_attr="v41.latency.other",
-            api_path="v41.latency.other",
             default=0,
         ),
         FieldMapping(
             cache_attr="v41.latency.read",
-            api_path="v41.latency.read",
             default=0,
         ),
         FieldMapping(
             cache_attr="v41.latency.total",
-            api_path="v41.latency.total",
             default=0,
         ),
         FieldMapping(
             cache_attr="v41.latency.write",
-            api_path="v41.latency.write",
             default=0,
         ),
         FieldMapping(
             cache_attr="v41.status",
-            api_path="v41.status",
         ),
         FieldMapping(
             cache_attr="v41.throughput.read",
-            api_path="v41.throughput.read",
             default=0,
         ),
         FieldMapping(
             cache_attr="v41.throughput.total",
-            api_path="v41.throughput.total",
             default=0,
         ),
         FieldMapping(
             cache_attr="v41.throughput.write",
-            api_path="v41.throughput.write",
             default=0,
         ),
         FieldMapping(
             cache_attr="v41.timestamp",
-            api_path="v41.timestamp",
         ),
     ),
 )
