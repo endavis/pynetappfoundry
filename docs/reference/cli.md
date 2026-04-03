@@ -107,6 +107,7 @@ nf cache [OPTIONS] COMMAND [ARGS]...
 | `refresh` | Refresh the metadata cache for cluster(s) |
 | `show` | Display cached metadata for a cluster |
 | `query` | Query specific fields from cached metadata |
+| `check` | Query cached model data with filtering |
 | `schema` | Display the cache metadata schema |
 | `status` | Show cache status for all clusters |
 | `clear` | Clear the metadata cache |
@@ -267,6 +268,31 @@ nf cache clear --all
 
 # Clear without confirmation
 nf cache clear --all -f
+
+# Check: find volumes where autosize mode is not grow_shrink
+nf cache check cluster1 storage.volumes \
+    -w "autosize.mode != 'grow_shrink'" \
+    -F name,svm.name,autosize.mode
+
+# Check all clusters for a model filter
+nf cache check --all storage.volumes \
+    -w "autosize.mode != 'grow_shrink'"
+
+# Check with cluster filter and data filter
+nf cache check -f '{"env":"Prod"}' storage.volumes \
+    -w "autosize.mode != 'grow_shrink'" \
+    -F name,svm.name,autosize.mode
+
+# Count matching records only
+nf cache check --all storage.volumes \
+    -w "size > 1073741824" --count
+
+# JSON output for scripting
+nf cache check --all nodes -w "model_ = 'FAS8200'" --json
+
+# CSV output
+nf cache check --all storage.volumes \
+    -w "state = 'online'" --csv
 
 # Query cloud console links
 nf cache query cluster1 cloud[0].instance_link

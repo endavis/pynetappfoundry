@@ -2,6 +2,7 @@
 
 import click
 
+from pynetappfoundry.cli.commands.cache.check import check
 from pynetappfoundry.cli.commands.cache.clear import clear
 from pynetappfoundry.cli.commands.cache.history import history
 from pynetappfoundry.cli.commands.cache.inspect import inspect
@@ -26,6 +27,7 @@ def cache() -> None:
     pass
 
 
+cache.add_command(check)
 cache.add_command(clear)
 cache.add_command(history)
 cache.add_command(inspect)
