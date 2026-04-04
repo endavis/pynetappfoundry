@@ -13,6 +13,8 @@ repos:
         stages: [pre-commit]
       - id: check-added-large-files
         exclude: ^docs/example-config/apis/
+        # Add project-specific exclusions for large data/generated directories:
+        # exclude: ^(vendor/|fixtures/|data/)
         stages: [pre-commit]
       - id: check-toml
         stages: [pre-commit]
@@ -20,6 +22,8 @@ repos:
         stages: [pre-commit]
       - id: detect-private-key
         exclude: ^docs/example-config/apis/
+        # Exclude directories with non-secret key-like patterns:
+        # exclude: ^(example-config/|test-fixtures/)
         stages: [pre-commit]
 
   # Conventional commits enforcement

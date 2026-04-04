@@ -12,7 +12,6 @@ Usage:
     python manage.py check       # Check for template updates
     python manage.py repo        # Update repository settings
     python manage.py sync        # Mark as synced to latest template
-    python manage.py cleanup     # Clean up template files
 
     # Non-interactive
     python manage.py --yes       # Run recommended action non-interactively
