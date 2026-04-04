@@ -119,7 +119,7 @@ def install_tool(
             check=True,
         )
         version_output = result.stdout.strip() or result.stderr.strip()
-        print(f"\u2713 {name} already installed: {version_output}")
+        print(f"OK: {name} already installed: {version_output}")
         return
 
     print(f"Installing {name}...")
@@ -140,7 +140,7 @@ def install_tool(
         print(f"Unsupported OS for {name}: {system}")
         sys.exit(1)
 
-    print(f"\u2713 {name} installed.")
+    print(f"OK: {name} installed.")
     if post_install_message:
         print(post_install_message)
 
@@ -201,7 +201,7 @@ def _install_age() -> None:
             check=True,
         )
         version_output = result.stdout.strip() or result.stderr.strip()
-        print(f"\u2713 age already installed: {version_output}")
+        print(f"OK: age already installed: {version_output}")
         return
 
     print("Installing age...")
@@ -260,7 +260,7 @@ def _install_age() -> None:
         print(f"Unsupported OS: {system}")
         sys.exit(1)
 
-    print("\u2713 age installed.")
+    print("OK: age installed.")
 
 
 def task_install_age() -> dict[str, Any]:

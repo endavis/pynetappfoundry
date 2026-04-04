@@ -42,9 +42,14 @@ jobs:
       - name: Run benchmarks
         run: |
           mkdir -p tmp
-          uv run pytest tests/benchmarks/ \
-            --benchmark-enable --benchmark-only \
-            --benchmark-json=tmp/benchmark-results.json -v
+          if [ -d tests/benchmarks ]; then
+            uv run pytest tests/benchmarks/ \
+              --benchmark-enable --benchmark-only \
+              --benchmark-json=tmp/benchmark-results.json -v
+          else
+            echo '{"machine_info": {}, "commit_info": {}, "benchmarks": []}' > tmp/benchmark-results.json
+            echo "No benchmark tests found in tests/benchmarks/ — skipping"
+          fi
 
       - name: Check for benchmark data branch
         id: check-bench-branch
