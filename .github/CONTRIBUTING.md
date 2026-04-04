@@ -794,6 +794,7 @@ Features:
 
 #### 5. **Merge:** Format Must Include PR and Issue Numbers
 
+**Merge commit format:**
 ```
 <type>: <subject> (merges PR #XX, addresses #YY)
 ```

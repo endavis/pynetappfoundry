@@ -294,7 +294,13 @@ ignore_decorators = [
     "@click.command",
     "@click.option",
     "@click.group",
+    "@click.argument",
+    "@click.pass_context",
+    "@click.version_option",
     "@abstractmethod",
+    "@field_validator",
+    "@model_validator",
+    "@cached_property",
 ]
 
 [tool.mutmut]

@@ -14,9 +14,6 @@ from .configure import (
     load_defaults,
     run_configure,
 )
-from .migrate_existing_project import (
-    run_migrate,
-)
 from .settings import (
     ProjectContext,
     ProjectSettings,
@@ -39,30 +36,28 @@ from .utils import (
 )
 
 __all__ = [
-    # Utils
-    "Colors",
-    "GitHubCLI",
-    "Logger",
     # Settings
     "ProjectContext",
     "ProjectSettings",
     "SettingsManager",
     "TemplateState",
-    # Check updates
-    "compare_files",
-    "download_and_extract_archive",
-    "download_template",
-    "get_latest_release",
     "get_template_commits_since",
     "get_template_latest_commit",
+    # Check updates
+    "compare_files",
+    "download_template",
+    "get_latest_release",
+    "run_check_updates",
     # Configure
     "load_defaults",
+    "run_configure",
+    # Utils
+    "Colors",
+    "GitHubCLI",
+    "Logger",
+    "download_and_extract_archive",
     "prompt",
     "prompt_confirm",
-    "run_check_updates",
-    "run_configure",
-    # Migrate
-    "run_migrate",
     "update_file",
     "validate_email",
     "validate_package_name",
