@@ -108,6 +108,7 @@ nf cache [OPTIONS] COMMAND [ARGS]...
 | `show` | Display cached metadata for a cluster |
 | `query` | Query specific fields from cached metadata |
 | `check` | Query cached model data with filtering |
+| `compliance` | Run config-driven compliance checks against cached data |
 | `schema` | Display the cache metadata schema |
 | `status` | Show cache status for all clusters |
 | `clear` | Clear the metadata cache |
@@ -302,6 +303,28 @@ nf cache query cluster1 cloud[0].instance_sso_link
 
 # Query Azure resource group link
 nf cache query cluster1 cloud[0].resource_group_link
+```
+
+### Compliance Checks
+
+```bash
+# Run all compliance checks for a single cluster
+nf cache compliance cluster1
+
+# Run compliance checks for all cached clusters
+nf cache compliance --all
+
+# Filter clusters and run a specific check
+nf cache compliance -f '{"env":"Prod"}' -k vol_autosize
+
+# Only show errors (filter by minimum severity)
+nf cache compliance --all -s error
+
+# JSON output for scripting
+nf cache compliance --all --json
+
+# CSV output
+nf cache compliance --all --csv
 ```
 
 ### Cloud Resource Links

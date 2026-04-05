@@ -4,6 +4,7 @@ import click
 
 from pynetappfoundry.cli.commands.cache.check import check
 from pynetappfoundry.cli.commands.cache.clear import clear
+from pynetappfoundry.cli.commands.cache.compliance import compliance
 from pynetappfoundry.cli.commands.cache.history import history
 from pynetappfoundry.cli.commands.cache.inspect import inspect
 from pynetappfoundry.cli.commands.cache.query import query
@@ -29,6 +30,7 @@ def cache() -> None:
 
 cache.add_command(check)
 cache.add_command(clear)
+cache.add_command(compliance)
 cache.add_command(history)
 cache.add_command(inspect)
 cache.add_command(query)
