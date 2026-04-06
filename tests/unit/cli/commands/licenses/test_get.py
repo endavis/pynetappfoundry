@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, PropertyMock, patch
 
 import pytest
 
@@ -46,6 +45,26 @@ def _make_package(
     )
 
 
+def _make_cluster_entry_mock(
+    packages: list[OntapLicensePackageResponse] | None,
+) -> MagicMock:
+    """Build a mock cluster entry whose .ontap.license_packages returns packages."""
+    metadata = MagicMock()
+    metadata.license_packages = packages
+    entry = MagicMock()
+    entry.ontap = metadata
+    return entry
+
+
+def _setup_config_with_packages(
+    mock_config: MagicMock,
+    name: str,
+    packages: list[OntapLicensePackageResponse] | None,
+) -> None:
+    """Populate mock_config.data with a cluster entry exposing packages."""
+    mock_config.data = {"clusters": {name: _make_cluster_entry_mock(packages)}}
+
+
 @pytest.fixture
 def mock_config() -> MagicMock:
     """Create a mock Config object."""
@@ -60,30 +79,16 @@ def mock_config() -> MagicMock:
     return config
 
 
-@pytest.fixture
-def sample_details() -> dict[str, Any]:
-    """Sample cluster connection details."""
-    return {"ip": "10.0.0.1", "bu": "Platform", "env": "Prod"}
-
-
 class TestGetClusterLicenses:
     """Tests for _get_cluster_licenses."""
 
-    @patch("pynetappfoundry.cli.commands.licenses.get.QuerySet")
-    @patch("pynetappfoundry.cli.commands.licenses.get.ONTAPAPIClient")
-    def test_returns_filtered_rows(
-        self,
-        mock_client_cls: MagicMock,
-        mock_qs_cls: MagicMock,
-        mock_config: MagicMock,
-        sample_details: dict[str, Any],
-    ) -> None:
+    def test_returns_filtered_rows(self, mock_config: MagicMock) -> None:
         """Test that licenses with expiry and valid owner are included."""
         lic = _make_license()
         pkg = _make_package(description="Cloud ONTAP License", licenses=[lic])
-        mock_qs_cls.return_value.all.return_value = [pkg]
+        _setup_config_with_packages(mock_config, "cluster1", [pkg])
 
-        rows = _get_cluster_licenses("cluster1", sample_details, mock_config)
+        rows = _get_cluster_licenses("cluster1", mock_config)
 
         assert len(rows) == 1
         assert rows[0] == (
@@ -94,87 +99,78 @@ class TestGetClusterLicenses:
             "2026-12-31T00:00:00Z",
         )
 
-    @patch("pynetappfoundry.cli.commands.licenses.get.QuerySet")
-    @patch("pynetappfoundry.cli.commands.licenses.get.ONTAPAPIClient")
-    def test_no_expiry_shows_as_no_expiry(
-        self,
-        mock_client_cls: MagicMock,
-        mock_qs_cls: MagicMock,
-        mock_config: MagicMock,
-        sample_details: dict[str, Any],
-    ) -> None:
+    def test_no_expiry_shows_as_no_expiry(self, mock_config: MagicMock) -> None:
         """Test that licenses without expiry_time show 'No expiry'."""
         lic = _make_license(expiry="")
         pkg = _make_package(description="Cloud ONTAP License", licenses=[lic])
-        mock_qs_cls.return_value.all.return_value = [pkg]
+        _setup_config_with_packages(mock_config, "cluster1", [pkg])
 
-        rows = _get_cluster_licenses("cluster1", sample_details, mock_config)
+        rows = _get_cluster_licenses("cluster1", mock_config)
 
         assert len(rows) == 1
         assert rows[0] == ("cluster1", "Cloud ONTAP License", "node1", "SN-001", "No expiry")
 
-    @patch("pynetappfoundry.cli.commands.licenses.get.QuerySet")
-    @patch("pynetappfoundry.cli.commands.licenses.get.ONTAPAPIClient")
-    def test_filters_owner_none(
-        self,
-        mock_client_cls: MagicMock,
-        mock_qs_cls: MagicMock,
-        mock_config: MagicMock,
-        sample_details: dict[str, Any],
-    ) -> None:
+    def test_filters_owner_none(self, mock_config: MagicMock) -> None:
         """Test that licenses with owner 'none' are excluded."""
         lic = _make_license(owner="none")
         pkg = _make_package(description="Cloud ONTAP License", licenses=[lic])
-        mock_qs_cls.return_value.all.return_value = [pkg]
+        _setup_config_with_packages(mock_config, "cluster1", [pkg])
 
-        rows = _get_cluster_licenses("cluster1", sample_details, mock_config)
+        rows = _get_cluster_licenses("cluster1", mock_config)
 
         assert rows == []
 
-    @patch("pynetappfoundry.cli.commands.licenses.get.QuerySet")
-    @patch("pynetappfoundry.cli.commands.licenses.get.ONTAPAPIClient")
-    def test_filters_empty_owner(
-        self,
-        mock_client_cls: MagicMock,
-        mock_qs_cls: MagicMock,
-        mock_config: MagicMock,
-        sample_details: dict[str, Any],
-    ) -> None:
+    def test_filters_empty_owner(self, mock_config: MagicMock) -> None:
         """Test that licenses with empty owner are excluded."""
         lic = _make_license(owner="")
         pkg = _make_package(description="Cloud ONTAP License", licenses=[lic])
-        mock_qs_cls.return_value.all.return_value = [pkg]
+        _setup_config_with_packages(mock_config, "cluster1", [pkg])
 
-        rows = _get_cluster_licenses("cluster1", sample_details, mock_config)
+        rows = _get_cluster_licenses("cluster1", mock_config)
 
         assert rows == []
 
     @patch("pynetappfoundry.cli.commands.licenses.get.print_error")
-    @patch("pynetappfoundry.cli.commands.licenses.get.ONTAPAPIClient")
     def test_error_handling_returns_empty(
         self,
-        mock_client_cls: MagicMock,
         mock_print_error: MagicMock,
         mock_config: MagicMock,
-        sample_details: dict[str, Any],
     ) -> None:
-        """Test that connection errors are handled gracefully."""
-        mock_client_cls.side_effect = Exception("Connection refused")
+        """Test that exceptions during access are handled gracefully."""
+        entry = MagicMock()
+        type(entry).ontap = PropertyMock(side_effect=Exception("boom"))
+        mock_config.data = {"clusters": {"cluster1": entry}}
 
-        rows = _get_cluster_licenses("cluster1", sample_details, mock_config)
+        rows = _get_cluster_licenses("cluster1", mock_config)
 
         assert rows == []
         mock_print_error.assert_called_once()
 
-    @patch("pynetappfoundry.cli.commands.licenses.get.QuerySet")
-    @patch("pynetappfoundry.cli.commands.licenses.get.ONTAPAPIClient")
-    def test_multiple_packages_and_licenses(
+    @patch("pynetappfoundry.cli.commands.licenses.get.print_error")
+    def test_no_metadata_returns_empty(
         self,
-        mock_client_cls: MagicMock,
-        mock_qs_cls: MagicMock,
+        mock_print_error: MagicMock,
         mock_config: MagicMock,
-        sample_details: dict[str, Any],
     ) -> None:
+        """Test that a None .ontap returns [] and logs an error."""
+        entry = MagicMock()
+        entry.ontap = None
+        mock_config.data = {"clusters": {"cluster1": entry}}
+
+        rows = _get_cluster_licenses("cluster1", mock_config)
+
+        assert rows == []
+        mock_print_error.assert_called_once()
+
+    def test_empty_license_packages(self, mock_config: MagicMock) -> None:
+        """Test that an empty license_packages list returns []."""
+        _setup_config_with_packages(mock_config, "cluster1", [])
+
+        rows = _get_cluster_licenses("cluster1", mock_config)
+
+        assert rows == []
+
+    def test_multiple_packages_and_licenses(self, mock_config: MagicMock) -> None:
         """Test processing multiple packages with multiple licenses."""
         lic1 = _make_license(owner="node1", serial="SN-001")
         lic2 = _make_license(owner="node2", serial="SN-002")
@@ -183,9 +179,9 @@ class TestGetClusterLicenses:
         lic3 = _make_license(owner="node1", serial="SN-003")
         pkg2 = _make_package(description="NFS License", licenses=[lic3])
 
-        mock_qs_cls.return_value.all.return_value = [pkg1, pkg2]
+        _setup_config_with_packages(mock_config, "cluster1", [pkg1, pkg2])
 
-        rows = _get_cluster_licenses("cluster1", sample_details, mock_config)
+        rows = _get_cluster_licenses("cluster1", mock_config)
 
         assert len(rows) == 3
         assert rows[0][3] == "SN-001"
