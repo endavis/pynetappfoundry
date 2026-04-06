@@ -6,20 +6,36 @@ Stores change history separately from the main cache for data safety.
 from __future__ import annotations
 
 import json
+import re
 import sqlite3
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar
+
+from pydantic import BaseModel
 
 from pynetappfoundry.db.base import SQLiteDB
 
 if TYPE_CHECKING:
     from pynetappfoundry.core.config import Config
 
+
+def _json_default(obj: object) -> object:
+    """JSON encoder fallback for diff summary values.
+
+    Pydantic submodels (e.g. ``OntapVolumeEfficiency`` nested on
+    ``OntapVolume``) can appear as ``old``/``new`` values in the change
+    summary and are not natively JSON-serializable. Convert them to plain
+    dicts via ``model_dump(mode='json')`` so the serialization is lossless
+    and round-trippable. Anything else falls back to ``str``.
+    """
+    if isinstance(obj, BaseModel):
+        return obj.model_dump(mode="json")
+    return str(obj)
+
+
 # Pattern for valid cluster names: alphanumeric, underscores, hyphens
 # Must start with a letter, max 128 characters
-import re
-
 _CLUSTER_NAME_PATTERN = re.compile(r"^[a-zA-Z][a-zA-Z0-9_\-]{0,127}$")
 
 
@@ -147,7 +163,7 @@ class CacheHistoryDB(SQLiteDB):
         """
         _validate_cluster_name(cluster_name)
         changed_at = datetime.now(UTC).isoformat()
-        summary_json = json.dumps(summary)
+        summary_json = json.dumps(summary, default=_json_default)
 
         with self.conn:
             cursor = self.conn.execute(
