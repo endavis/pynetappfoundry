@@ -6,11 +6,13 @@ from pathlib import Path
 from unittest.mock import MagicMock, PropertyMock, patch
 
 import pytest
+from click.testing import CliRunner
 
 from pynetappfoundry.cli.commands.licenses.get import (
     _get_cluster_licenses,
     _print_table,
     _write_csv,
+    get,
 )
 from pynetappfoundry.models.ontap.cluster.licensing.licenses.model import (
     OntapLicensePackageResponse,
@@ -264,3 +266,49 @@ class TestWriteCsv:
         lines = content.strip().split("\n")
         assert len(lines) == 1  # header only
         assert "Cluster" in lines[0]
+
+
+class TestLiveFlag:
+    """Tests for the --live CLI flag wiring."""
+
+    @patch("pynetappfoundry.cli.decorators.Config")
+    def test_live_flag_accepted_by_command(self, mock_config_cls: MagicMock) -> None:
+        """`nf licenses get --live` runs and passes no_cache=True to Config."""
+        captured: dict[str, object] = {}
+
+        def capture_config(*args: object, **kwargs: object) -> MagicMock:
+            captured.update(kwargs)
+            mock = MagicMock()
+            mock.no_cache = kwargs.get("no_cache", False)
+            mock.get_clusters = MagicMock(return_value={})
+            mock.output_dir = Path("/tmp")
+            return mock
+
+        mock_config_cls.side_effect = capture_config
+
+        runner = CliRunner()
+        result = runner.invoke(get, ["--live"], obj={})
+
+        assert result.exit_code == 0, result.output
+        assert captured.get("no_cache") is True
+
+    @patch("pynetappfoundry.cli.decorators.Config")
+    def test_no_live_flag_defaults_no_cache_false(self, mock_config_cls: MagicMock) -> None:
+        """Without --live, Config is built with no_cache=False."""
+        captured: dict[str, object] = {}
+
+        def capture_config(*args: object, **kwargs: object) -> MagicMock:
+            captured.update(kwargs)
+            mock = MagicMock()
+            mock.no_cache = kwargs.get("no_cache", False)
+            mock.get_clusters = MagicMock(return_value={})
+            mock.output_dir = Path("/tmp")
+            return mock
+
+        mock_config_cls.side_effect = capture_config
+
+        runner = CliRunner()
+        result = runner.invoke(get, [], obj={})
+
+        assert result.exit_code == 0, result.output
+        assert captured.get("no_cache") is False

@@ -838,6 +838,55 @@ class TestClusterEntryWrapping:
         finally:
             os.chdir(original_cwd)
 
+    def test_no_cache_default_false(self, temp_config_dir: Path, tmp_path: Path) -> None:
+        """Config() default leaves wrapped ClusterEntry _no_cache=False."""
+        import os
+
+        from pynetappfoundry.core.cluster_entry import ClusterEntry
+
+        original_cwd = os.getcwd()
+        os.chdir(tmp_path)
+        try:
+            output_dir = tmp_path / "output"
+            output_dir.mkdir(exist_ok=True)
+            config = Config(
+                config_dir=str(temp_config_dir),
+                output_dir=str(output_dir),
+                script_name="test_script",
+            )
+            assert config.no_cache is False
+            for cluster in config.data["clusters"].values():
+                assert isinstance(cluster, ClusterEntry)
+                assert cluster._no_cache is False
+        finally:
+            os.chdir(original_cwd)
+
+    def test_no_cache_propagates_to_cluster_entries(
+        self, temp_config_dir: Path, tmp_path: Path
+    ) -> None:
+        """Config(no_cache=True) propagates to wrapped ClusterEntry instances."""
+        import os
+
+        from pynetappfoundry.core.cluster_entry import ClusterEntry
+
+        original_cwd = os.getcwd()
+        os.chdir(tmp_path)
+        try:
+            output_dir = tmp_path / "output"
+            output_dir.mkdir(exist_ok=True)
+            config = Config(
+                config_dir=str(temp_config_dir),
+                output_dir=str(output_dir),
+                script_name="test_script",
+                no_cache=True,
+            )
+            assert config.no_cache is True
+            for cluster in config.data["clusters"].values():
+                assert isinstance(cluster, ClusterEntry)
+                assert cluster._no_cache is True
+        finally:
+            os.chdir(original_cwd)
+
     def test_cluster_entry_static_access(self, temp_config_dir: Path, tmp_path: Path) -> None:
         """Test that TOML fields are accessible via entry['key'] and entry.key."""
         import os
