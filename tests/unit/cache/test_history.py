@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -43,6 +44,46 @@ class TestCacheHistoryDB:
             summary=[{"category": "nodes", "type": "added", "entity": "node1"}],
         )
         assert change_id > 0
+
+    def test_record_change_with_pydantic_submodel_values(self, db: CacheHistoryDB) -> None:
+        """Pydantic submodels in old/new must serialize losslessly.
+
+        Regression test for #483: ``OntapVolume.efficiency`` (an
+        ``OntapVolumeEfficiency`` submodel) appearing in the diff summary
+        used to crash ``json.dumps`` with ``TypeError``.
+        """
+        from pynetappfoundry.models.ontap.storage.volumes.model import (
+            OntapVolumeEfficiency,
+        )
+
+        old_eff = OntapVolumeEfficiency()
+        new_eff = OntapVolumeEfficiency()
+        change_id = db.record_change(
+            cluster_name="test-cluster",
+            before_json='{"version": "1"}',
+            after_json='{"version": "2"}',
+            summary=[
+                {
+                    "category": "storage.volumes",
+                    "type": "modified",
+                    "entity": "vol1",
+                    "field": "efficiency",
+                    "old": old_eff,
+                    "new": new_eff,
+                }
+            ],
+        )
+        assert change_id > 0
+
+        # Verify round-trip: the stored summary parses as JSON and the
+        # submodels were converted to dicts (not lossy str reprs).
+        cursor = db.conn.execute(
+            "SELECT summary_json FROM cache_changes WHERE id = ?", (change_id,)
+        )
+        row = cursor.fetchone()
+        loaded = json.loads(row["summary_json"])
+        assert isinstance(loaded[0]["old"], dict)
+        assert isinstance(loaded[0]["new"], dict)
 
     def test_record_change_with_before(self, db: CacheHistoryDB) -> None:
         """Test recording change with before snapshot."""

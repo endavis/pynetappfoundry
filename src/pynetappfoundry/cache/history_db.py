@@ -6,20 +6,21 @@ Stores change history separately from the main cache for data safety.
 from __future__ import annotations
 
 import json
+import re
 import sqlite3
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar
 
+from pynetappfoundry.cache._json import json_default
 from pynetappfoundry.db.base import SQLiteDB
 
 if TYPE_CHECKING:
     from pynetappfoundry.core.config import Config
 
+
 # Pattern for valid cluster names: alphanumeric, underscores, hyphens
 # Must start with a letter, max 128 characters
-import re
-
 _CLUSTER_NAME_PATTERN = re.compile(r"^[a-zA-Z][a-zA-Z0-9_\-]{0,127}$")
 
 
@@ -147,7 +148,7 @@ class CacheHistoryDB(SQLiteDB):
         """
         _validate_cluster_name(cluster_name)
         changed_at = datetime.now(UTC).isoformat()
-        summary_json = json.dumps(summary)
+        summary_json = json.dumps(summary, default=json_default)
 
         with self.conn:
             cursor = self.conn.execute(

@@ -439,6 +439,50 @@ class TestClusterMetadataDB:
         assert parsed[0]["ts"] == "2025-06-15T12:00:00Z"
         assert parsed[0]["label"] == "a"
 
+    def test_dict_field_with_basemodel_values_serializes(self) -> None:
+        """dict JSON columns containing BaseModel values must serialize.
+
+        Defensive coverage for #483: ``_model_to_row`` falls through to
+        ``json.dumps`` for dict-typed JSON columns. If a future model
+        declares ``dict[str, SomeSubmodel]`` the encoder must handle the
+        nested Pydantic instances rather than crashing with TypeError.
+        """
+
+        class _Inner(BaseModel):
+            label: str = ""
+
+        class _Outer(BaseModel):
+            mapping: dict[str, _Inner] = {}
+
+        outer = _Outer(mapping={"a": _Inner(label="hello")})
+
+        row = _model_to_row(outer, _Outer)
+
+        parsed = json.loads(row["mapping"])
+        assert parsed == {"a": {"label": "hello"}}
+
+    def test_extra_fields_with_basemodel_values_serialize(self) -> None:
+        """Extra (``extra='allow'``) fields holding BaseModel values must serialize.
+
+        Defensive coverage for #483: extras flow through ``_extra_json``
+        unchecked. If a model accepted a Pydantic submodel as an extra
+        attribute, the old encoder would have crashed.
+        """
+
+        class _Extra(BaseModel):
+            kind: str = ""
+
+        class _Outer(BaseModel):
+            model_config = {"extra": "allow"}
+            name: str = ""
+
+        outer = _Outer(name="x", bonus=_Extra(kind="y"))  # type: ignore[call-arg]
+
+        row = _model_to_row(outer, _Outer)
+
+        parsed = json.loads(row["_extra_json"])
+        assert parsed == {"bonus": {"kind": "y"}}
+
     def test_extra_fields_preserved(self, db: ClusterMetadataDB) -> None:
         """Extra fields (extra='allow') round-trip via _extra_json."""
         meta = CachedClusterMetadata(
