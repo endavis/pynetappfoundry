@@ -56,6 +56,7 @@ Integration point: `Config._wrap_clusters()` replaces each raw cluster dict with
 - Issue #301: feat: field annotations, OpenAPI codegen, and SQL cache storage
 - Issue #352: refactor: lazy `_reconstruct_metadata` to avoid loading all model tables on every `get()`
 - Issue #464: refactor: convert `nf licenses get` to use cache + on-demand fetch (pilot migration to ClusterEntry namespace access)
+- Issue #472: feat: add Config.no_cache flag and --live CLI option to bypass cache (extends namespace access with cache-bypass mode)
 
 ## Related Documentation
 

@@ -97,6 +97,8 @@ class Config:
         output_dir: str | Path = "",
         script_name: str = "",
         args: Any = None,
+        *,
+        no_cache: bool = False,
     ) -> None:
         """Initialize the configuration manager.
 
@@ -106,9 +108,14 @@ class Config:
             output_dir: Directory for output files. If empty, uses data/{script_name}/output.
             script_name: Name of the calling script (used for directory naming).
             args: Optional parsed arguments object.
+            no_cache: When True, every wrapped :class:`ClusterEntry` is built
+                with ``no_cache=True``, causing ``.ontap`` accesses to bypass
+                the cache database and fetch field groups live from the
+                ONTAP API/CLI. Typically set via the ``--live`` CLI flag.
         """
         self.data: dict[str, dict[str, dict[str, Any]]] = {}
         self.args = args
+        self.no_cache = no_cache
         self.config_dir = Path.cwd() / config_dir
         self.data_types = ["aiqums", "connectors", "cloudinsights", "clusters", "azure"]
         self.settings: dict[str, Any] = {}
@@ -297,7 +304,13 @@ class Config:
         clusters = self.data.get("clusters", {})
         for name, data in clusters.items():
             if not isinstance(data, ClusterEntry):
-                clusters[name] = ClusterEntry(name, data, cache_db_path, config=self)  # type: ignore[assignment]
+                clusters[name] = ClusterEntry(  # type: ignore[assignment]  # pyright: ignore[reportArgumentType]
+                    name,
+                    data,
+                    cache_db_path,
+                    config=self,
+                    no_cache=self.no_cache,
+                )
 
     def parse_toml(self, file: Path) -> None:
         """Parse a single TOML file.

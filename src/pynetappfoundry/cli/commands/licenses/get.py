@@ -44,6 +44,17 @@ LicenseRow = tuple[str, str, str, str, str]
     default=None,
     help="CSV output file path (default: timestamped file in output dir).",
 )
+@click.option(
+    "--live",
+    "live",
+    is_flag=True,
+    default=False,
+    help=(
+        "Bypass the cache and fetch licenses live from each cluster. "
+        "This is significantly slower than reading from the cache because "
+        "every field group is fetched over the network."
+    ),
+)
 @with_config("Get licenses failed")
 def get(
     config: Config,

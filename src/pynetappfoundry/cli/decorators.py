@@ -36,6 +36,7 @@ def with_config(action: str) -> Callable[[F], F]:
             output_dir = ctx.obj.get("output_dir", "")
             debug = ctx.obj.get("debug", False)
             filter_str = kwargs.pop("filter", None)
+            live = kwargs.pop("live", False)
 
             # Build script_name from full command path (e.g., "licenses_get")
             parts: list[str] = []
@@ -60,7 +61,12 @@ def with_config(action: str) -> Callable[[F], F]:
                     filter_dict = json.loads(filter_str)
 
                 # Create config
-                config = Config(config_dir, output_dir, script_name=script_name)
+                config = Config(
+                    config_dir,
+                    output_dir,
+                    script_name=script_name,
+                    no_cache=live,
+                )
                 clusters = config.get_clusters(filter_dict)
 
                 return func(*args, config=config, clusters=clusters, **kwargs)

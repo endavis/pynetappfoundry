@@ -321,6 +321,61 @@ class TestConfigAwareFetcher:
         assert entry._config is None
 
 
+class TestNoCacheBypass:
+    """Tests for the no_cache constructor flag."""
+
+    def test_no_cache_default_false(self, entry: ClusterEntry) -> None:
+        """Default constructor leaves _no_cache False."""
+        assert entry._no_cache is False
+
+    def test_no_cache_stored(self, sample_data: dict[str, Any], cache_db_path: Path) -> None:
+        """no_cache=True is stored on the entry."""
+        entry = ClusterEntry("test-cluster", sample_data, cache_db_path, no_cache=True)
+        assert entry._no_cache is True
+
+    def test_no_cache_skips_db_even_when_present(
+        self, sample_data: dict[str, Any], tmp_path: Path
+    ) -> None:
+        """When no_cache=True, .ontap does not open the cache DB."""
+        from pynetappfoundry.cache._lazy import LazyClusterMetadata
+
+        cache_path = tmp_path / ".cache" / "cluster_metadata.db"
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        cache_path.touch()
+
+        mock_config = MagicMock()
+        mock_config.get_user.return_value = ("admin", "pass")
+
+        with (
+            patch("pynetappfoundry.cache.db.ClusterMetadataDB") as mock_db_cls,
+            patch("pynetappfoundry.cache._fetcher.FieldGroupFetcher") as mock_fetcher_cls,
+        ):
+            mock_fetcher = MagicMock()
+            mock_fetcher_cls.return_value = mock_fetcher
+
+            entry = ClusterEntry(
+                "test-cluster",
+                sample_data,
+                cache_path,
+                config=mock_config,
+                no_cache=True,
+            )
+            result = entry.ontap
+
+            mock_db_cls.assert_not_called()
+            assert isinstance(result, LazyClusterMetadata)
+            assert result._db_path is None
+            assert result._fetcher is mock_fetcher
+
+    def test_no_cache_returns_none_without_config(
+        self, sample_data: dict[str, Any], tmp_path: Path
+    ) -> None:
+        """no_cache=True without a Config returns None (no fetcher possible)."""
+        cache_path = tmp_path / ".cache" / "cluster_metadata.db"
+        entry = ClusterEntry("test-cluster", sample_data, cache_path, no_cache=True)
+        assert entry.ontap is None
+
+
 class TestRepr:
     """Tests for ClusterEntry repr."""
 
