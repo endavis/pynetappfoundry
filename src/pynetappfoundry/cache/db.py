@@ -24,6 +24,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from pydantic import BaseModel
 
+from pynetappfoundry.cache._json import json_default
 from pynetappfoundry.cache._lazy import LazyClusterMetadata
 from pynetappfoundry.cache._metadata import CachedClusterMetadata
 from pynetappfoundry.cache.db_schema import (
@@ -129,9 +130,9 @@ def _model_to_row(
                     ]
                 )
             elif isinstance(value, dict):
-                row[field_name] = json.dumps(value)
+                row[field_name] = json.dumps(value, default=json_default)
             else:
-                row[field_name] = json.dumps(value)
+                row[field_name] = json.dumps(value, default=json_default)
         elif isinstance(value, datetime):
             row[field_name] = value.isoformat()
         elif isinstance(value, bool):
@@ -145,7 +146,7 @@ def _model_to_row(
         if attr_name not in known_fields:
             extra_data[attr_name] = getattr(model_instance, attr_name)
 
-    row["_extra_json"] = json.dumps(extra_data) if extra_data else None
+    row["_extra_json"] = json.dumps(extra_data, default=json_default) if extra_data else None
     return row
 
 
