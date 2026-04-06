@@ -5,21 +5,15 @@ from __future__ import annotations
 import csv
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import click
 from rich.table import Table
 
-import pynetappfoundry.cache.ontap.cluster.licensing.licenses.mapping  # noqa: F401 - register TypeMapping
 from pynetappfoundry.cli.decorators import with_config
 from pynetappfoundry.cli.utils import console, print_error, print_info
-from pynetappfoundry.clients.ontap.api import ONTAPAPIClient
+from pynetappfoundry.core.cluster_entry import ClusterEntry
 from pynetappfoundry.core.config import Config
-from pynetappfoundry.core.models import ClusterConfig
-from pynetappfoundry.models.ontap.cluster.licensing.licenses import (
-    OntapLicensePackageResponse,
-)
-from pynetappfoundry.query import QuerySet
 
 # Column headers used for both table and CSV output
 COLUMNS = ("Cluster", "License Description", "Node", "Serial #", "Expiration")
@@ -65,9 +59,9 @@ def get(
     """
     all_rows: list[LicenseRow] = []
 
-    for name, details in clusters.items():
+    for name in clusters:
         print_info(f"Getting licenses for {name}...")
-        rows = _get_cluster_licenses(name, details, config)
+        rows = _get_cluster_licenses(name, config)
         all_rows.extend(rows)
 
     if csv_output:
@@ -78,34 +72,30 @@ def get(
 
 def _get_cluster_licenses(
     name: str,
-    details: dict[str, Any],
     config: Config,
 ) -> list[LicenseRow]:
-    """Get licenses from a single cluster.
+    """Get licenses from a single cluster via cache + on-demand fetch.
 
     Args:
         name: Cluster name.
-        details: Cluster connection details.
         config: Application configuration.
 
     Returns:
         List of license row tuples for this cluster.
     """
     try:
-        cluster_config = ClusterConfig(**details)
-        client = ONTAPAPIClient(cluster=cluster_config, config=config)
-
-        packages: list[OntapLicensePackageResponse] = QuerySet(
-            OntapLicensePackageResponse, client
-        ).all()
+        cluster_entry = cast(ClusterEntry, config.data["clusters"][name])
+        metadata = cluster_entry.ontap
+        if metadata is None:
+            print_error(f"No cached or fetchable data for {name}")
+            return []
+        packages = metadata.license_packages or []
 
         rows: list[LicenseRow] = []
-
         for pkg in packages:
             for lic in pkg.licenses:
                 if not lic.owner or lic.owner.lower() == "none":
                     continue
-
                 rows.append(
                     (
                         name,
@@ -115,9 +105,7 @@ def _get_cluster_licenses(
                         lic.expiry_time or "No expiry",
                     )
                 )
-
         return rows
-
     except Exception as e:
         print_error(f"Could not retrieve licenses for {name}: {e}")
         return []
