@@ -38,10 +38,12 @@ changed to enable SQL-level queries and per-field indexing.
 - Issue #32: feat: add cluster metadata cache for ONTAP clusters
 - Issue #38: refactor: move cluster metadata cache to config directory
 - Issue #130: feat: add nf cache query command
+- Issue #479: doc: refresh cache architecture documentation
 
 ## Related Documentation
 
 - Cache module: `src/pynetappfoundry/cache/`
+- [Cache System Reference](../reference/cache.md)
 - CLI commands: `nf cache refresh`, `nf cache show`, `nf cache query`, `nf cache schema`, `nf cache status`, `nf cache clear`
 - CLI Reference: [docs/reference/cli.md](../reference/cli.md#cache)
 - Usage Guide: [docs/usage/basics.md](../usage/basics.md#cluster-metadata-caching)

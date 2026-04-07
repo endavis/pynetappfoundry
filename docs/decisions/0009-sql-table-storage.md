@@ -67,9 +67,11 @@ model field definitions:
 
 - Issue #309: feat: per-model SQL table storage for cache layer
 - Issue #301: feat: field annotations, OpenAPI codegen, and SQL cache storage
+- Issue #479: doc: refresh cache architecture documentation
 
 ## Related Documentation
 
 - Cache module: `src/pynetappfoundry/cache/`
+- [Cache System Reference](../reference/cache.md) — Storage Architecture section documents the per-model SQL table layout
 - ADR-0001: [Use SQLite for cluster metadata caching](0001-use-sqlite-for-cluster-metadata-caching.md)
 - ADR-0003: [Base SQLiteDB class with version-based migrations](0003-use-base-sqlitedb-class-with-version-based-migrations.md)

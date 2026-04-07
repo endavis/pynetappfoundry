@@ -95,7 +95,9 @@ The codegen tool (ADR-0008) can leverage `datamodel-code-generator` more directl
 - Issue #443: refactor: fix all sub-model transforms to use declarative field mapping (superseded)
 - Issue #440: fix: HTML report bugs - missing data, title formatting, cloud section placement (catalyst)
 - Issue #447: refactor: simplify or remove FieldMapping after nested model migration
+- Issue #479: doc: refresh cache architecture documentation
 
 ## Related Documentation
 
 - [Field Mapping Framework Developer Guide](../development/field-mapping.md)
+- [Cache System Reference](../reference/cache.md) — Nested Models Pattern section
