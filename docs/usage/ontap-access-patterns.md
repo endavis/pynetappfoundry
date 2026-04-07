@@ -20,7 +20,7 @@ pynetappfoundry provides three different ways to interact with ONTAP clusters. E
 | Pattern | Connection | Best For |
 |---------|------------|----------|
 | `ClusterEntry.ontap` namespace | Cache DB + HTTPS REST (+ SSH for `cloud`) | High-level reads of cached cluster metadata with on-demand fetch fallback |
-| `QuerySet` + `Mutation` | HTTPS REST | Type-safe ONTAP queries and writes with model attribute translation |
+| `QuerySet` + `Mutation` | HTTPS REST | Type-safe ONTAP queries and writes with model attribute translation (see [Query Layer](query-layer.md)) |
 | `netapp_ontap` SDK | HTTPS REST | Structured data retrieval, reports, typed objects |
 | `ONTAPCLI` | SSH | Ad-hoc CLI commands, operations not in REST API |
 | `APIWrapper` | HTTPS REST | Custom queries, OpenAPI-based workflows, DII integration |
@@ -164,167 +164,13 @@ The `--live` flag is wired through `@with_config`, which constructs `Config(no_c
 
 ---
 
-### 2. QuerySet + Mutation (Recommended for New Code)
+### 2. QuerySet + Mutation (Query Layer)
 
-pynetappfoundry's native query and mutation layer uses the project's own Pydantic models (`OntapModel` subclasses) with declarative field mappings. `QuerySet` handles reads, `Mutation` handles writes.
+`pynetappfoundry.query` is a thin, fluent layer over the ONTAP REST API that uses the project's `TypeMapping` metadata to translate model attribute filters into API requests and to parse responses back into Pydantic models. It covers reads (`QuerySet`), writes (`Mutation`), async job polling (`JobTracker`), relationship traversal (`related` / `related_one`), and on-demand realtime field access.
 
-**When to Use:**
+Choose `cluster_entry.ontap` for cached field-group reads with a `--live` bypass, and reach for `QuerySet` / `Mutation` whenever you need ad-hoc filtering, projection, or any write operation.
 
-- Querying ONTAP resources with type-safe filtering
-- Creating, updating, or deleting ONTAP resources
-- When you want model attribute names (e.g., `svm_name`) instead of raw API paths (`svm.name`)
-- Building automation that leverages the project's config-driven connections
-
-**Advantages:**
-
-- Fluent, chainable query API with field projection, ordering, and limits
-- Automatic translation between model attributes and API field paths
-- Write operations build nested JSON from flat kwargs
-- Retry safety — POST disables retry (non-idempotent), PATCH/DELETE use default retry
-- Type-safe Pydantic model instances as return values
-- Works with any registered `TypeMapping` (296 ONTAP resource types)
-
-**Limitations:**
-
-- Requires the model's `TypeMapping` to be registered (import its mapping module)
-- Async job tracking via `poll=True` or `JobTracker` (returns `OntapJob` on completion)
-- Parameterized endpoints (child resources) not yet supported
-
-**Example Usage:**
-
-```python
-from pynetappfoundry.clients.ontap.api import ONTAPAPIClient
-from pynetappfoundry.query import QuerySet, Mutation
-from pynetappfoundry.models.ontap.storage.volumes import OntapVolume
-
-# Setup client from config
-client = ONTAPAPIClient(cluster, config)
-
-# Query: list online volumes for an SVM
-vols = (QuerySet(OntapVolume, client)
-    .filter(svm_name="vs1", state="online")
-    .fields("name", "uuid", "size")
-    .order_by("name")
-    .limit(50)
-    .all())
-
-# Query: get a single volume
-vol = QuerySet(OntapVolume, client).get(uuid="abc-123-def")
-
-# Query: count matching resources
-count = QuerySet(OntapVolume, client).filter(state="online").count()
-
-# Query: iterate with wildcards
-for vol in QuerySet(OntapVolume, client).filter(name="*_backup"):
-    print(vol.name)
-
-# Create a volume
-result = Mutation(OntapVolume, client).create(
-    name="vol1",
-    svm_name="vs1",
-    size=1073741824,
-)
-
-# Update a volume
-result = Mutation(OntapVolume, client).update(
-    uuid="abc-123-def",
-    size=2147483648,
-)
-
-# Delete a volume
-Mutation(OntapVolume, client).delete(uuid="abc-123-def")
-
-# Create with job tracking (blocks until the async job completes)
-from pynetappfoundry.query import JobTracker, JobError
-
-job = Mutation(OntapVolume, client).create(
-    poll=True,          # wait for async job
-    poll_interval=5,    # seconds between polls (default)
-    poll_timeout=300,   # max wait in seconds (default)
-    name="vol1",
-    svm_name="vs1",
-    size=1073741824,
-)
-print(f"Job {job.uuid} completed: {job.state}")
-
-# Manual job tracking for finer control
-response = Mutation(OntapVolume, client).create(name="vol1", svm_name="vs1")
-if isinstance(response, dict) and "job" in response:
-    tracker = JobTracker.from_response(response, client)
-    # Non-blocking: check current state
-    current = tracker.poll()
-    print(f"State: {current.state}")
-    # Blocking: wait for completion
-    try:
-        final = tracker.wait()
-    except JobError as e:
-        print(f"Job failed: {e.message} (code={e.error_code})")
-```
-
-#### Relationship Traversal
-
-ONTAP resources have rich relationships (volumes belong to SVMs, LUNs map to igroups, etc.). The `related()` and `related_one()` functions provide a convenient way to traverse these relationships using model attribute filters.
-
-```python
-from pynetappfoundry.query import related, related_one
-from pynetappfoundry.models.ontap.storage.volumes import OntapVolume
-from pynetappfoundry.models.ontap.svm.svms import OntapSvm
-
-# Fetch all volumes belonging to an SVM
-vols = related(OntapVolume, client, svm_uuid="abc-123")
-
-# Fetch the SVM for a specific volume (one-to-one)
-svm = related_one(OntapSvm, client, uuid="svm-uuid-123")
-
-# Combine multiple filters
-vols = related(OntapVolume, client, svm_name="vs1", state="online")
-```
-
-These are equivalent to `QuerySet(...).filter(...).all()` and `QuerySet(...).filter(...).first()` respectively, but express relationship-traversal intent more clearly.
-
-#### Realtime Fields
-
-Many ONTAP models define fields with `cache_strategy="realtime"` (metrics like IOPS, latency, space usage) that are excluded from cache storage because they change constantly. The `query.realtime` module provides on-demand access to these fields.
-
-```python
-from pynetappfoundry.query import (
-    fetch_realtime,
-    fetch_realtime_collection,
-    watch_realtime,
-    compare_realtime,
-)
-from pynetappfoundry.models.ontap.storage.volumes import OntapVolume
-
-# Fetch realtime metrics for a single volume
-metrics = fetch_realtime(OntapVolume, client, uuid="abc-123-def")
-print(f"IOPS read: {metrics['iops_read']}")
-
-# Fetch only specific realtime fields
-metrics = fetch_realtime(
-    OntapVolume, client, uuid="abc-123-def",
-    fields=["iops_read", "iops_write"],
-)
-
-# Fetch realtime metrics for multiple volumes (with filtering)
-all_metrics = fetch_realtime_collection(
-    OntapVolume, client, svm_name="vs1",
-)
-for m in all_metrics:
-    print(f"{m['name']}: read={m['iops_read']}, write={m['iops_write']}")
-
-# Poll metrics every 10 seconds (3 snapshots)
-for snapshot in watch_realtime(
-    OntapVolume, client, uuid="abc-123-def",
-    interval=10, count=3,
-):
-    print(f"[{snapshot['_timestamp']}] IOPS: {snapshot['iops_read']}")
-
-# Compare current metrics against a baseline
-baseline = fetch_realtime(OntapVolume, client, uuid="abc-123-def")
-# ... time passes ...
-diff = compare_realtime(OntapVolume, client, uuid="abc-123-def", baseline=baseline)
-print(f"IOPS read delta: {diff['iops_read']['delta']}")
-```
+See the dedicated [Query Layer](query-layer.md) guide for the full API reference, worked examples, and exception semantics.
 
 ---
 
@@ -571,12 +417,12 @@ Use this matrix to choose the right pattern:
 | Read cached cluster metadata (licenses, nodes, storage, etc.) | `ClusterEntry.ontap` | Sub-ms SQLite reads, transparent fallback |
 | Read cluster metadata when the cache is empty | `ClusterEntry.ontap` | On-demand `FieldGroupFetcher` fallback, no caller changes needed |
 | Force-live read of cluster metadata | `ClusterEntry.ontap` with `Config(no_cache=True)` / `--live` | Bypasses cache entirely, same call site |
-| Query ONTAP resources | `QuerySet` | Type-safe filtering, model attribute translation |
-| Create/update/delete resources | `Mutation` | Nested JSON from flat attrs, retry safety |
-| List volumes/aggregates | `QuerySet` | Fluent API, field projection, pagination |
-| Fetch live IOPS/latency metrics | `fetch_realtime` | On-demand realtime fields |
-| Poll metrics over time | `watch_realtime` | Generator-based polling |
-| Bulk data export | `QuerySet` | Handles pagination, typed results |
+| Query ONTAP resources | `QuerySet` | Type-safe filtering, model attribute translation — see [Query Layer](query-layer.md) |
+| Create/update/delete resources | `Mutation` | Nested JSON from flat attrs, retry safety — see [Query Layer](query-layer.md) |
+| List volumes/aggregates | `QuerySet` | Fluent API, field projection, pagination — see [Query Layer](query-layer.md) |
+| Fetch live IOPS/latency metrics | `fetch_realtime` | On-demand realtime fields — see [Query Layer](query-layer.md) |
+| Poll metrics over time | `watch_realtime` | Generator-based polling — see [Query Layer](query-layer.md) |
+| Bulk data export | `QuerySet` | Handles pagination, typed results — see [Query Layer](query-layer.md) |
 | Generate a report | `netapp_ontap` SDK | Typed objects, well-documented |
 | Check license status | `netapp_ontap` SDK | LicensePackage resource available |
 | Run CLI-only command | `ONTAPCLI` | No REST equivalent |
