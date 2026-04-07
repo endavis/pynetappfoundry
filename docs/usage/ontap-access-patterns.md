@@ -19,6 +19,7 @@ pynetappfoundry provides three different ways to interact with ONTAP clusters. E
 
 | Pattern | Connection | Best For |
 |---------|------------|----------|
+| `ClusterEntry.ontap` namespace | Cache DB + HTTPS REST (+ SSH for `cloud`) | High-level reads of cached cluster metadata with on-demand fetch fallback |
 | `QuerySet` + `Mutation` | HTTPS REST | Type-safe ONTAP queries and writes with model attribute translation |
 | `netapp_ontap` SDK | HTTPS REST | Structured data retrieval, reports, typed objects |
 | `ONTAPCLI` | SSH | Ad-hoc CLI commands, operations not in REST API |
@@ -26,7 +27,144 @@ pynetappfoundry provides three different ways to interact with ONTAP clusters. E
 
 ## Pattern Details
 
-### 1. QuerySet + Mutation (Recommended for New Code)
+### 1. ClusterEntry Namespace Access (Recommended for High-Level Reads)
+
+The `ClusterEntry.ontap` namespace is the highest-level way to read cluster metadata. It transparently serves data from a per-cluster SQLite cache when available and falls back to an on-demand live fetch when the cache is missing or has been explicitly bypassed. This is the pattern new CLI commands and reports should prefer for read-only workloads.
+
+See [ADR-0010](../decisions/0010-clusterentry-and-namespace-access-pattern.md) for the architectural rationale and [ADR-0009](../decisions/0009-sql-table-storage.md) for the cache storage model.
+
+**When to Use:**
+
+- Reading cluster-wide metadata (licenses, nodes, storage, network, protocols, cloud placement) from CLI commands, reports, or scripts
+- Any workload that benefits from the cache (dashboards, iterative development, bulk reporting across many clusters)
+- Cases where "live, but only if the cache is stale" is the desired default
+- New CLI commands that need an on-demand freshness override via `--live`
+
+**Advantages:**
+
+- Single, uniform entry point: `config.data["clusters"][name].ontap`
+- Sub-millisecond cache reads from per-cluster SQLite (per-model SQL tables, see ADR-0009)
+- Transparent fallback: a cache miss triggers `FieldGroupFetcher` to fetch the needed field group live — callers do not change their code
+- Namespace separation (`.ontap`, and reserved `.occm` / `.aiqum` / `.dii`) prevents naming collisions between TOML config keys and fetched data from different API sources
+- `--live` / `Config(no_cache=True)` toggles the bypass without requiring alternative code paths
+
+**Limitations:**
+
+- Read-only; writes must use `Mutation` (Pattern #2) or the `netapp_ontap` SDK (Pattern #3)
+- Cached data freshness is bounded by the last refresh; use `--live` when freshness is critical
+- Only the `cloud` field group requires SSH (REST first, with an SSH `virtual-machine instance show` fallback). All other field groups are REST-only.
+- As of this writing, `nf licenses get` is the only shipping CLI migrated to this pattern; other field-group attributes listed below are valid but are illustrative until further CLIs are migrated
+
+#### Three Access Modes
+
+All three modes use the same call site — `cluster_entry.ontap` — and differ only in how `Config` is constructed and whether a cache DB exists for the cluster.
+
+1. **Cache hit** — the per-cluster SQLite cache exists, so `LazyClusterMetadata` serves attributes directly from DB rows. Sub-millisecond reads. This is the default on any cluster whose cache has been populated.
+2. **Cache miss → on-demand fetch** — no cache DB (or the requested field group is absent). `LazyClusterMetadata` delegates to `FieldGroupFetcher.fetch(group)`, which invokes the matching `MetadataCollector` method and returns live data. One REST round-trip per field group requested.
+3. **Forced live** — the caller built `Config(no_cache=True)` (the CLI sets this when `--live` is passed via `@with_config`). `ClusterEntry.ontap` skips the DB entirely and returns a fetcher-only proxy, so every attribute access fetches live from the ONTAP API (or SSH for `cloud`).
+
+#### Available Field Groups
+
+`LazyClusterMetadata` exposes the same attributes as `CachedClusterMetadata`:
+
+| Attribute | Type | Source |
+|---|---|---|
+| `cloud` | `list[CloudMetadata]` | REST, SSH fallback (`virtual-machine instance show`) |
+| `cluster` | `ClusterInfo` | REST |
+| `nodes` | `list[OntapNodeResponse]` | REST |
+| `network` | `NetworkInfo` | REST |
+| `storage` | `StorageInfo` | REST |
+| `license_packages` | `list[OntapLicensePackageResponse]` | REST |
+| `mediator` | `OntapMediatorResponse` | REST |
+| `relationships` | `RelationshipsInfo` | REST |
+| `protocols` | `ProtocolsInfo` | REST |
+
+Only `cloud` requires SSH, and only as a fallback when the REST endpoint does not return usable data. All other field groups are REST-only.
+
+#### Performance Trade-offs
+
+| Mode | Latency | Freshness | Use when |
+|---|---|---|---|
+| Cache hit | sub-ms (SQLite) | Bounded by last refresh | Reports, dashboards, dev iteration |
+| Cache miss, on-demand fetch | seconds (single REST call per field group) | Live | First access after cache reset or new field group |
+| Forced live (`--live`) | seconds to tens of seconds per group | Always live | Verifying remediation, audits, troubleshooting |
+
+#### Example Usage
+
+The canonical pattern — used by `nf licenses get` — is to grab `cluster_entry.ontap` into a local variable, null-check it, and then read field-group attributes off the local.
+
+```python
+from typing import cast
+
+from pynetappfoundry.core.cluster_entry import ClusterEntry
+from pynetappfoundry.core.config import Config
+
+# Cache-first (default): served from SQLite when available, otherwise
+# fetched on demand via FieldGroupFetcher.
+config = Config()
+cluster_entry = cast(ClusterEntry, config.data["clusters"]["mycluster"])
+metadata = cluster_entry.ontap  # LazyClusterMetadata | None
+if metadata is None:
+    # No cache and no live fetcher could be built (e.g., missing credentials).
+    raise SystemExit("No cached or fetchable data for mycluster")
+
+packages = metadata.license_packages or []
+for pkg in packages:
+    for lic in pkg.licenses:
+        print(pkg.name, lic.owner, lic.state)
+```
+
+`cluster_entry.ontap` is a `@cached_property`, so the local-variable pattern above is for clarity and null-checking — repeated `.ontap` accesses on the same `ClusterEntry` do not re-trigger loads.
+
+Forcing a live fetch bypasses the cache entirely:
+
+```python
+from typing import cast
+
+from pynetappfoundry.core.cluster_entry import ClusterEntry
+from pynetappfoundry.core.config import Config
+
+# Forced live: every .ontap access fetches from the ONTAP API (or SSH for `cloud`).
+config = Config(no_cache=True)
+cluster_entry = cast(ClusterEntry, config.data["clusters"]["mycluster"])
+metadata = cluster_entry.ontap
+fresh_packages = metadata.license_packages if metadata else []
+```
+
+Other field-group attributes are valid per `CachedClusterMetadata` but not yet consumed by any shipping CLI — the following examples are illustrative:
+
+```python
+# Illustrative: not yet used by any shipping CLI command as of this writing.
+if metadata is not None:
+    volumes = metadata.storage.volumes
+    node_count = len(metadata.nodes)
+    cloud_placements = metadata.cloud
+```
+
+**CLI equivalent:**
+
+```bash
+nf licenses get                # cache-first (default)
+nf licenses get --live         # bypass cache, fetch live for every cluster
+```
+
+The `--live` flag is wired through `@with_config`, which constructs `Config(no_cache=True)` so that every `ClusterEntry` built from that `Config` inherits the bypass.
+
+#### Why Namespace Separation Exists
+
+`ClusterEntry` is a `MutableMapping` that wraps the raw TOML config dict for a cluster, so existing dict-style access (`cluster_entry["name"]`, `cluster_entry["ip"]`) keeps working. Fetched metadata lives under dedicated namespaces (`.ontap` today, `.occm` / `.aiqum` / `.dii` reserved) so that:
+
+- TOML config keys never collide with attribute names fetched from different API sources
+- Each namespace can carry its own cache, fetcher, and lifecycle
+- Future BlueXP/OCCM, AIQUM, or DII data can be added without reshaping the cluster config surface
+
+**Commands Using This Pattern:**
+
+- `nf licenses get` — reads `metadata.license_packages` (supports `--live`)
+
+---
+
+### 2. QuerySet + Mutation (Recommended for New Code)
 
 pynetappfoundry's native query and mutation layer uses the project's own Pydantic models (`OntapModel` subclasses) with declarative field mappings. `QuerySet` handles reads, `Mutation` handles writes.
 
@@ -190,7 +328,7 @@ print(f"IOPS read delta: {diff['iops_read']['delta']}")
 
 ---
 
-### 2. netapp_ontap SDK
+### 3. netapp_ontap SDK
 
 NetApp's official Python SDK provides ORM-like objects for ONTAP resources. This is the **preferred pattern** for most operations.
 
@@ -265,7 +403,7 @@ password = "base64_encoded_password"
 
 ---
 
-### 2. ONTAPCLI (SSH Access)
+### 4. ONTAPCLI (SSH Access)
 
 Direct SSH connection using Paramiko for executing ONTAP CLI commands.
 
@@ -334,7 +472,7 @@ Same as netapp_ontap SDK (cluster IP and credentials).
 
 ---
 
-### 3. APIWrapper / ONTAPAPIClient (Custom REST)
+### 5. APIWrapper / ONTAPAPIClient (Custom REST)
 
 Custom OpenAPI-based REST client that works with any OpenAPI/Swagger specification.
 
@@ -430,6 +568,9 @@ Use this matrix to choose the right pattern:
 
 | Scenario | Recommended Pattern | Reason |
 |----------|---------------------|--------|
+| Read cached cluster metadata (licenses, nodes, storage, etc.) | `ClusterEntry.ontap` | Sub-ms SQLite reads, transparent fallback |
+| Read cluster metadata when the cache is empty | `ClusterEntry.ontap` | On-demand `FieldGroupFetcher` fallback, no caller changes needed |
+| Force-live read of cluster metadata | `ClusterEntry.ontap` with `Config(no_cache=True)` / `--live` | Bypasses cache entirely, same call site |
 | Query ONTAP resources | `QuerySet` | Type-safe filtering, model attribute translation |
 | Create/update/delete resources | `Mutation` | Nested JSON from flat attrs, retry safety |
 | List volumes/aggregates | `QuerySet` | Fluent API, field projection, pagination |
@@ -468,6 +609,17 @@ All patterns share a common configuration flow:
 │  Config class   │ ← Unified access to all configuration
 └────────┬────────┘
          │
+         ├──► ClusterEntry.ontap ──► LazyClusterMetadata
+         │                              │
+         │                              ├──► cache DB (per-cluster SQLite)
+         │                              │      (cache hit — sub-ms reads)
+         │                              │
+         │                              └──► FieldGroupFetcher
+         │                                     (cache miss or no_cache=True)
+         │                                     │
+         │                                     ├──► ONTAP REST API
+         │                                     └──► ONTAPCLI (cloud fallback only)
+         │
          ├──► netapp_ontap SDK (HostConnection)
          ├──► ONTAPCLI (SSH connection)
          └──► APIWrapper (REST client)
@@ -490,3 +642,5 @@ All patterns share a common configuration flow:
 - [Configuration Schema](../reference/config-schema.md) - Complete configuration reference
 - [Usage Guide](basics.md) - General usage patterns
 - [CLI Reference](../reference/cli.md) - Available CLI commands
+- [ADR-0010: ClusterEntry and namespace access pattern](../decisions/0010-clusterentry-and-namespace-access-pattern.md) - Rationale for the `ClusterEntry.ontap` namespace design
+- [ADR-0009: SQL table storage](../decisions/0009-sql-table-storage.md) - Per-model SQL table layout backing the cache
