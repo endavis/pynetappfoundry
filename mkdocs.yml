@@ -81,6 +81,7 @@ nav:
       - Coding Standards: development/coding-standards.md
       - doit Tasks: development/doit-tasks-reference.md
       - CI/CD & Testing: development/ci-cd-testing.md
+      - Benchmarks: development/benchmarks.md
       - Release Process: development/release-and-automation.md
       - AI Setup: development/AI_SETUP.md
       - AI Command Blocking: development/ai/command-blocking.md
