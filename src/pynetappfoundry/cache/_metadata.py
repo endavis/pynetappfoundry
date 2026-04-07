@@ -58,6 +58,11 @@ class CachedClusterMetadata(CacheModel):
     This is the top-level model containing all cached data categories.
 
     Schema Version History:
+        2.0 - Renamed cache fields to match the ONTAP REST URL hierarchy:
+              network.lifs -> network.ip_interfaces,
+              network.broadcast_domains -> network.ethernet_broadcast_domains,
+              network.subnets -> network.ip_subnets,
+              protocols.export_policies -> protocols.nfs_export_policies
         1.0 - Initial schema with comprehensive model coverage
 
     Note: The cache_version field tracks the schema version of the stored data.
