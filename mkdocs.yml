@@ -68,6 +68,7 @@ nav:
       - Installation: getting-started/installation.md
   - Usage:
       - Basics: usage/basics.md
+      - ONTAP Access Patterns: usage/ontap-access-patterns.md
   - Reference:
       - CLI Reference: reference/cli.md
       - API Reference: reference/api.md
