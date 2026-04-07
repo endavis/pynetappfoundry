@@ -129,7 +129,9 @@ annotated mappings from API specs, with per-field customization via TOML overlay
 - Issue #312: fix: remove hardcoded collector endpoints and wire cache_strategy into parsing
 - Issue #317: feat: collector ?fields= expansion for expensive ONTAP fields
 - Issue #444: refactor: evaluate nested models to replace flat model pattern (see ADR-0011)
+- Issue #478: doc: document the QuerySet query layer and fluent builder (consumes `TypeMapping` / `cache_attr` / realtime field annotations)
 
 ## Related Documentation
 
 - [Field Mapping Framework Developer Guide](../development/field-mapping.md)
+- [Query Layer guide](../usage/query-layer.md)
