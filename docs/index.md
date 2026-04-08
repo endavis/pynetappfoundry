@@ -75,6 +75,7 @@ client = ONTAPAPIClient(config, "cluster1")
 - **[CLI Reference](reference/cli.md)** - Command-line interface documentation
 - **[API Reference](reference/api.md)** - Python API documentation
 - **[Cache System](reference/cache.md)** - Cluster metadata caching and history tracking
+- **[Compliance Checks](usage/compliance-checks.md)** - Configure and run config-driven compliance checks
 
 ### For Contributors
 

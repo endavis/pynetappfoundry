@@ -541,6 +541,8 @@ nf cache compliance --all --json
 nf cache compliance --all --csv
 ```
 
+See also: [Compliance Checks user guide](../usage/compliance-checks.md) for the full TOML format, per-cluster overrides, and worked examples.
+
 ### Cloud Resource Links
 
 The cache includes computed URL fields for quick access to cloud provider consoles:
