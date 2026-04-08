@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Accepted. Partially superseded by [ADR-0012: Unified DataSource accessor for all cluster reads](0012-unified-datasource-accessor.md) — the cache-versus-live-fetch routing described below moves into `DataSource`, while `ClusterEntry` retains its config and identity role (credentials, cluster name, namespace property surface).
 
 ## Context
 
@@ -66,5 +66,6 @@ Integration point: `Config._wrap_clusters()` replaces each raw cluster dict with
 - Config integration: `src/pynetappfoundry/core/config.py` (`_wrap_clusters()`)
 - [ADR-0004: Declarative field mapping framework](0004-declarative-field-mapping-framework.md)
 - [ADR-0009: Per-model SQL table storage](0009-sql-table-storage.md)
+- [ADR-0012: Unified DataSource accessor for all cluster reads](0012-unified-datasource-accessor.md)
 - [Cache reference](../reference/cache.md)
 - [Cache models development guide](../development/cache-models.md)

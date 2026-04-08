@@ -131,9 +131,11 @@ annotated mappings from API specs, with per-field customization via TOML overlay
 - Issue #444: refactor: evaluate nested models to replace flat model pattern (see ADR-0011)
 - Issue #478: doc: document the QuerySet query layer and fluent builder (consumes `TypeMapping` / `cache_attr` / realtime field annotations)
 - Issue #479: doc: refresh cache architecture documentation
+- Issue #495: feat: unified DataSource for all cluster reads (ADR-0012 — `FieldMapping`/`TypeMapping` become the metadata foundation for the unified `DataSource` accessor)
 
 ## Related Documentation
 
 - [Field Mapping Framework Developer Guide](../development/field-mapping.md)
 - [Query Layer guide](../usage/query-layer.md)
 - [Cache System Reference](../reference/cache.md) — Field Mapping section
+- [ADR-0012: Unified DataSource accessor for all cluster reads](0012-unified-datasource-accessor.md) — makes `FieldMapping`/`TypeMapping` the metadata foundation for the unified accessor

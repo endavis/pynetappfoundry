@@ -32,7 +32,9 @@ Issue #263 integrated `get_all_records()` into `MetadataCollector._cached_api_ca
 - Issue #260: feat: add configurable pagination support to APIWrapper
 - Issue #259: feat: generalize field mapping framework for multi-API data collection
 - Issue #258: feat: multi-API data collection strategy (superseded by #259)
+- Issue #495: feat: unified DataSource for all cluster reads (ADR-0012 — builds on the multi-API generalization here by introducing a per-`api_type` backend registry)
 
 ## Related Documentation
 
 - [Field Mapping Framework Developer Guide](../development/field-mapping.md)
+- [ADR-0012: Unified DataSource accessor for all cluster reads](0012-unified-datasource-accessor.md) — introduces the per-`api_type` backend registry
