@@ -24,6 +24,16 @@ All commands support these global options:
 | `--debug / --no-debug` | Enable debug logging |
 | `--help` | Show help and exit |
 
+### Cluster Filter Convention
+
+Most commands accept `-f, --filter` to narrow the set of clusters they act on.
+The filter is a JSON object matched against cluster metadata fields such as
+`bu` (business unit) and `env` (environment):
+
+```bash
+-f '{"bu":"Business","env":"Prod"}'
+```
+
 ## Commands
 
 ### licenses
@@ -38,9 +48,38 @@ nf licenses [OPTIONS] COMMAND [ARGS]...
 
 | Command | Description |
 |---------|-------------|
-| `list` | List licenses for clusters |
-| `export` | Export licenses to file |
-| `check` | Check license compliance |
+| `get` | Get license information from clusters |
+| `check` | Check clusters for licensing issues |
+| `savings` | Calculate license savings information |
+
+**`licenses get` options:**
+
+| Option | Description |
+|--------|-------------|
+| `-f, --filter TEXT` | JSON cluster filter, e.g. `'{"bu":"Business","env":"Prod"}'` |
+| `--csv` | Output to CSV file instead of console table |
+| `-o, --output PATH` | CSV output file path (default: timestamped file in output dir) |
+| `--live` | Bypass the cache and fetch licenses live from each cluster |
+
+!!! note "About `--live`"
+    The `--live` flag bypasses the metadata cache and fetches every license
+    field group directly from each cluster over the network. This is
+    **significantly slower** than the default cache-backed path. Currently
+    `licenses get` is the only command that supports `--live`; all other
+    commands in this reference read from the cache.
+
+**`licenses check` options:**
+
+| Option | Description |
+|--------|-------------|
+| `-f, --filter TEXT` | JSON cluster filter |
+| `--send-email / --no-send-email` | Send email notification (default: enabled) |
+
+**`licenses savings` options:**
+
+| Option | Description |
+|--------|-------------|
+| `-f, --filter TEXT` | JSON cluster filter |
 
 ### reports
 
@@ -54,10 +93,12 @@ nf reports [OPTIONS] COMMAND [ARGS]...
 
 | Command | Description |
 |---------|-------------|
-| `space` | Generate space utilization report |
-| `aggregate` | Generate aggregate report |
-| `volume` | Generate volume report |
-| `performance` | Generate performance report |
+| `html` | Generate HTML reports with hierarchical tree view |
+| `locks` | Generate client lock reports (Excel) |
+| `space-usage` | Generate space usage reports (Excel) |
+
+All `reports` subcommands accept `-f, --filter` to scope the report to a
+subset of clusters.
 
 ### events
 
@@ -71,14 +112,29 @@ nf events [OPTIONS] COMMAND [ARGS]...
 
 | Command | Description |
 |---------|-------------|
-| `fetch` | Fetch events from clusters |
-| `list` | List stored events |
-| `export` | Export events to file |
-| `clear` | Clear event database |
+| `get` | Get EMS events from clusters |
+| `save-azure` | Save Azure maintenance events to database |
+
+**`events get` options:**
+
+| Option | Description |
+|--------|-------------|
+| `-f, --filter TEXT` | JSON cluster filter |
+| `-s, --severity` | Filter by severity: `emergency`, `alert`, `error`, `notice`, `informational`, `debug` |
+| `-n, --name TEXT` | Filter by event name (repeatable) |
+| `-o, --output PATH` | Output to CSV file instead of console |
+| `--sort [time|-time]` | Sort order (default: `time` ascending; `-time` for descending) |
+| `-l, --limit INTEGER` | Maximum number of events to retrieve (default: 50) |
+
+**`events save-azure` options:**
+
+| Option | Description |
+|--------|-------------|
+| `-f, --filter TEXT` | JSON cluster filter |
 
 ### metrics
 
-Metrics collection commands.
+Metrics commands.
 
 ```bash
 nf metrics [OPTIONS] COMMAND [ARGS]...
@@ -88,9 +144,14 @@ nf metrics [OPTIONS] COMMAND [ARGS]...
 
 | Command | Description |
 |---------|-------------|
-| `collect` | Collect metrics from clusters |
-| `query` | Query stored metrics |
-| `export` | Export metrics to file |
+| `dump-dii` | Dump metrics from Data Infrastructure Insights into SQLite |
+
+**`metrics dump-dii` options:**
+
+| Option | Description |
+|--------|-------------|
+| `-f, --filter TEXT` | JSON cluster filter |
+| `-d, --days INTEGER` | Number of days of history to retrieve (default: 7) |
 
 ### cache
 
@@ -112,6 +173,80 @@ nf cache [OPTIONS] COMMAND [ARGS]...
 | `schema` | Display the cache metadata schema |
 | `status` | Show cache status for all clusters |
 | `clear` | Clear the metadata cache |
+| `history` | View cache change history (see below) |
+| `inspect` | Inspect cache, CLI, and API data for a single object |
+
+**`cache history` sub-subcommands:**
+
+| Command | Description |
+|---------|-------------|
+| `list` | List change history events (optionally filtered by cluster, limit, or date range) |
+| `show` | Show full details of a specific change by change ID |
+| `diff` | Show a human-readable formatted diff for a specific change |
+| `snapshot` | Get the cache state for a cluster at a specific date (optionally `--restore`) |
+
+```bash
+# List recent changes for a cluster
+nf cache history list cluster1 -n 50
+
+# Show the formatted diff for change #5
+nf cache history diff 5
+
+# Snapshot a cluster's cached state as of a given date
+nf cache history snapshot cluster1 -d 2024-06-01
+```
+
+`cache inspect` takes a cluster name and an object name, and accepts
+`-t, --type` to choose the object type (default: `volume`; other values include
+`aggregate`, `broadcast_domain`, `cloud_metadata`, `cluster_peer`, `license`,
+`network_lif`, `node`, `svm`).
+
+### config
+
+Configuration management commands. View and validate pynetappfoundry
+configuration, bootstrap SOPS encryption, and store encrypted credentials.
+
+```bash
+nf config [OPTIONS] COMMAND [ARGS]...
+```
+
+**Subcommands:**
+
+| Command | Description |
+|---------|-------------|
+| `show` | Display current configuration (sensitive values masked by default) |
+| `validate` | Validate configuration files |
+| `init-sops` | Initialize SOPS encryption with age for credential storage |
+| `set-credential` | Set encrypted credentials for a cluster or resource type |
+
+**`config show` options:**
+
+| Option | Description |
+|--------|-------------|
+| `-s, --section TEXT` | Show only a specific section (e.g. `clusters`, `settings`, `users`) |
+| `--unmask` | Show passwords and tokens unmasked (use with caution) |
+
+**`config validate` options:**
+
+No options beyond `--help`. Checks that all configuration files parse and
+contain valid values.
+
+**`config init-sops` options:**
+
+| Option | Description |
+|--------|-------------|
+| `--key-path PATH` | Path to store the age private key (default: `~/.sops/age/keys.txt`) |
+| `--force` | Overwrite existing key file |
+
+**`config set-credential` options:**
+
+| Option | Description |
+|--------|-------------|
+| `--cluster TEXT` | Set credentials for a specific cluster (per-cluster override) |
+| `--type` | Set default credentials for all resources of a type: `aiqums`, `azure`, `cloudinsights`, `clusters`, `connectors`, `ibm` |
+| `--user TEXT` | Username (required) |
+| `--password TEXT` | Password (will prompt if not provided) |
+| `--no-encrypt` | Store password as plain text (not recommended) |
 
 ### utils
 
@@ -125,68 +260,147 @@ nf utils [OPTIONS] COMMAND [ARGS]...
 
 | Command | Description |
 |---------|-------------|
-| `config` | Configuration management |
-| `test-connection` | Test cluster connectivity |
-| `version` | Show detailed version info |
+| `validate` | Validate cluster connectivity and configuration |
+| `run-cmd` | Run an ONTAP CLI command on matching clusters via SSH |
+| `sqlite-to-excel` | Convert a SQLite database to an Excel workbook |
+
+**`utils validate` options:**
+
+| Option | Description |
+|--------|-------------|
+| `-f, --filter TEXT` | JSON cluster filter |
+| `--ssh / --no-ssh` | Also validate SSH connectivity (default: disabled) |
+
+**`utils run-cmd`**: takes a single quoted ONTAP CLI command as its argument,
+and accepts `-f, --filter` to select clusters.
+
+**`utils sqlite-to-excel`**: takes a `DB_PATH` argument and an optional
+`-o, --output PATH` for the destination Excel file (defaults to the same name
+as the database with a `.xlsx` extension).
 
 ## Examples
 
 ### License Management
 
 ```bash
-# List all licenses
-nf licenses list
+# Get licenses for all clusters (cache-backed, fast)
+nf licenses get
 
-# List licenses for specific cluster
-nf licenses list --cluster cluster1
+# Get licenses for a filtered set of clusters
+nf licenses get -f '{"bu":"Business","env":"Prod"}'
 
-# Export to Excel
-nf licenses export --format xlsx -o licenses.xlsx
+# Write licenses to a CSV file
+nf licenses get --csv -o licenses.csv
 
-# Check compliance
-nf licenses check --cluster cluster1
+# Bypass the cache and fetch licenses live from each cluster (slow)
+nf licenses get --live
+
+# Check clusters for license issues and send email notifications
+nf licenses check
+
+# Run the license check without sending email
+nf licenses check --no-send-email
+
+# Calculate potential license savings across a filtered fleet
+nf licenses savings -f '{"env":"Prod"}'
 ```
 
 ### Report Generation
 
 ```bash
-# Space report for all clusters
-nf reports space --all-clusters
+# Generate the HTML tree report for all clusters
+nf reports html
 
-# Volume report with filtering
-nf reports volume --cluster cluster1 --svm svm1
+# Generate the HTML tree report for a filtered subset
+nf reports html -f '{"bu":"Business","env":"Prod"}'
 
-# Export report to HTML
-nf reports space --format html -o space-report.html
+# Generate the client locks Excel workbook
+nf reports locks
+
+# Generate the space-usage Excel workbook
+nf reports space-usage -f '{"env":"Prod"}'
 ```
 
 ### Event Monitoring
 
 ```bash
-# Fetch last 24 hours of events
-nf events fetch --hours 24
+# Get the most recent 50 events across all clusters (default)
+nf events get
 
-# Fetch events for specific cluster
-nf events fetch --cluster cluster1 --hours 48
+# Get only error-severity events
+nf events get -s error
 
-# List error events
-nf events list --severity error
+# Filter by one or more event names
+nf events get -n vsa.mlx.nic.detach -n vsa.mlx.nic.attach
 
-# Export to CSV
-nf events export --format csv -o events.csv
+# Sort descending by time and limit to 200 events
+nf events get --sort -time -l 200
+
+# Write events to CSV instead of the console
+nf events get -o events.csv
+
+# Record Azure maintenance events to the database
+nf events save-azure -f '{"env":"Prod"}'
 ```
 
 ### Metrics Collection
 
 ```bash
-# Collect all metrics
-nf metrics collect --all-clusters
+# Dump the last 7 days of DII metrics (default) for all clusters
+nf metrics dump-dii
 
-# Query specific metric
-nf metrics query --metric volume_used --cluster cluster1
+# Dump the last 30 days for a filtered set of clusters
+nf metrics dump-dii -d 30 -f '{"env":"Prod"}'
+```
 
-# Export metrics
-nf metrics export --format json -o metrics.json
+### Configuration
+
+```bash
+# Display the full loaded configuration (secrets masked)
+nf config show
+
+# Show only the clusters section
+nf config show -s clusters
+
+# Reveal passwords and tokens (use with caution)
+nf config show --unmask
+
+# Validate all configuration files
+nf config validate
+
+# Initialize SOPS + age encryption for credential storage
+nf config init-sops
+
+# Initialize SOPS with a custom key path, overwriting any existing key
+nf config init-sops --key-path ~/.my-keys/age.txt --force
+
+# Set encrypted credentials for a specific cluster
+nf config set-credential --cluster mycluster --user admin
+
+# Set default credentials for all clusters
+nf config set-credential --type clusters --user admin
+
+# Store a password without encryption (not recommended)
+nf config set-credential --cluster mycluster --user admin --no-encrypt
+```
+
+### Utilities
+
+```bash
+# Validate connectivity and configuration for all clusters
+nf utils validate
+
+# Also validate SSH connectivity (required for `utils run-cmd`)
+nf utils validate --ssh
+
+# Run an ONTAP CLI command across matching clusters
+nf utils run-cmd "vol show" -f '{"env":"Prod"}'
+
+# Convert a SQLite database produced by `metrics dump-dii` to Excel
+nf utils sqlite-to-excel metrics.db
+
+# Convert with a custom output path
+nf utils sqlite-to-excel metrics.db -o metrics-report.xlsx
 ```
 
 ### Cache Management
