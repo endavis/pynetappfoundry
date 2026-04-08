@@ -221,7 +221,83 @@ class TestOntapBackendQuery:
         for vol in results:
             assert {"name", "uuid"}.issubset(vol._fetched_fields)
 
-    def test_ontap_query_partial_raises(
+
+class TestOntapBackendQueryPartial:
+    """Tests for the Approach C partial-fetch algorithm in ``query()``."""
+
+    def test_partial_query_happy_path_single_key(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        backend = _make_backend(mock_config)
+        decision = RoutingDecision(
+            cache_fields=("name", "uuid", "size"),
+            live_fields=("iops",),
+        )
+        cached = [
+            FakeVolume(name="v1", uuid="u1", size=100),
+            FakeVolume(name="v2", uuid="u2", size=200),
+            FakeVolume(name="v3", uuid="u3", size=300),
+        ]
+        live = [
+            FakeVolume(uuid="u1", iops=10.0),
+            FakeVolume(uuid="u2", iops=20.0),
+            FakeVolume(uuid="u3", iops=30.0),
+        ]
+
+        mock_db = MagicMock()
+        mock_db.query_with_filters.return_value = cached
+        mock_client = MagicMock()
+        mock_client.get_all_records.return_value = {"records": []}
+
+        with (
+            patch.object(OntapBackend, "_cache_db", new=mock_db),
+            patch.object(backend, "_get_api_client", return_value=mock_client),
+            patch(
+                "pynetappfoundry.data.backends.parse_api_response",
+                return_value=live,
+            ),
+            _patch_metadata_path(backend),
+        ):
+            results = backend.query(
+                FakeVolume,
+                fake_volume_mapping,
+                decision,
+                cluster="prod1",
+                filters={"name": "v1"},
+            )
+
+        assert len(results) == 3
+        by_uuid = {r.uuid: r for r in results}
+        assert by_uuid["u1"].iops == 10.0
+        assert by_uuid["u2"].iops == 20.0
+        assert by_uuid["u3"].iops == 30.0
+        for r in results:
+            assert r.was_fetched("name")
+            assert r.was_fetched("uuid")
+            assert r.was_fetched("iops")
+
+    def test_partial_query_composite_key_raises_not_implemented(
+        self,
+        fake_composite_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        from tests.unit.data._fakes import FakeComposite
+
+        backend = _make_backend(mock_config)
+        decision = RoutingDecision(cache_fields=("name",), live_fields=("svm_name",))
+
+        with pytest.raises(NotImplementedError, match="FakeComposite"):
+            backend.query(
+                FakeComposite,
+                fake_composite_mapping,
+                decision,
+                cluster="prod1",
+                filters={},
+            )
+
+    def test_partial_query_realtime_field_filter_raises(
         self,
         fake_volume_mapping: TypeMapping,
         mock_config: Any,
@@ -229,7 +305,222 @@ class TestOntapBackendQuery:
         backend = _make_backend(mock_config)
         decision = RoutingDecision(cache_fields=("name",), live_fields=("iops",))
 
-        with pytest.raises(NotImplementedError, match="partial cache"):
+        with pytest.raises(NotImplementedError, match="'iops'"):
+            backend.query(
+                FakeVolume,
+                fake_volume_mapping,
+                decision,
+                cluster="prod1",
+                filters={"iops": 42.0},
+            )
+
+    def test_partial_query_no_identifier_field_raises(
+        self,
+        mock_config: Any,
+    ) -> None:
+        from pynetappfoundry.cache._registry import model_registry
+        from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
+
+        mapping = TypeMapping(
+            name="NoIdVolume",
+            model_class=FakeVolume,
+            api_endpoint="/storage/no-id?fields=*",
+            api_type="ontap",
+            identifier_field=None,
+            fields=(
+                FieldMapping(cache_attr="name", cache_strategy="cache"),
+                FieldMapping(cache_attr="iops", cache_strategy="realtime"),
+            ),
+        )
+        model_registry.register_mapping("NoIdVolume", mapping)
+        try:
+            backend = _make_backend(mock_config)
+            decision = RoutingDecision(cache_fields=("name",), live_fields=("iops",))
+            with pytest.raises(ValueError, match="NoIdVolume"):
+                backend.query(
+                    FakeVolume,
+                    mapping,
+                    decision,
+                    cluster="prod1",
+                    filters={},
+                )
+        finally:
+            model_registry._mappings.pop("NoIdVolume", None)
+
+    def test_partial_query_empty_cache_result(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        backend = _make_backend(mock_config)
+        decision = RoutingDecision(cache_fields=("name",), live_fields=("iops",))
+
+        mock_db = MagicMock()
+        mock_db.query_with_filters.return_value = []
+        mock_client = MagicMock()
+
+        with (
+            patch.object(OntapBackend, "_cache_db", new=mock_db),
+            patch.object(backend, "_get_api_client", return_value=mock_client),
+            _patch_metadata_path(backend),
+        ):
+            results = backend.query(
+                FakeVolume,
+                fake_volume_mapping,
+                decision,
+                cluster="prod1",
+                filters={"name": "nope"},
+            )
+
+        assert results == []
+        mock_client.get_all_records.assert_not_called()
+
+    def test_partial_query_live_returns_extras_dropped(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        backend = _make_backend(mock_config)
+        decision = RoutingDecision(cache_fields=("uuid",), live_fields=("iops",))
+        cached = [FakeVolume(uuid=f"u{i}") for i in range(1, 4)]
+        live = [FakeVolume(uuid=f"u{i}", iops=float(i)) for i in range(1, 6)]
+
+        mock_db = MagicMock()
+        mock_db.query_with_filters.return_value = cached
+        mock_client = MagicMock()
+        mock_client.get_all_records.return_value = {"records": []}
+
+        with (
+            patch.object(OntapBackend, "_cache_db", new=mock_db),
+            patch.object(backend, "_get_api_client", return_value=mock_client),
+            patch(
+                "pynetappfoundry.data.backends.parse_api_response",
+                return_value=live,
+            ),
+            _patch_metadata_path(backend),
+        ):
+            results = backend.query(
+                FakeVolume,
+                fake_volume_mapping,
+                decision,
+                cluster="prod1",
+                filters={},
+            )
+
+        assert len(results) == 3
+        uuids = {r.uuid for r in results}
+        assert uuids == {"u1", "u2", "u3"}
+
+    def test_partial_query_live_returns_fewer_unmerged_passthrough(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        backend = _make_backend(mock_config)
+        decision = RoutingDecision(cache_fields=("uuid",), live_fields=("iops",))
+        cached = [FakeVolume(uuid=f"u{i}") for i in range(1, 6)]
+        live = [FakeVolume(uuid=f"u{i}", iops=float(i)) for i in range(1, 4)]
+
+        mock_db = MagicMock()
+        mock_db.query_with_filters.return_value = cached
+        mock_client = MagicMock()
+        mock_client.get_all_records.return_value = {"records": []}
+
+        with (
+            patch.object(OntapBackend, "_cache_db", new=mock_db),
+            patch.object(backend, "_get_api_client", return_value=mock_client),
+            patch(
+                "pynetappfoundry.data.backends.parse_api_response",
+                return_value=live,
+            ),
+            _patch_metadata_path(backend),
+        ):
+            results = backend.query(
+                FakeVolume,
+                fake_volume_mapping,
+                decision,
+                cluster="prod1",
+                filters={},
+            )
+
+        assert len(results) == 5
+        by_uuid = {r.uuid: r for r in results}
+        for uid in ("u1", "u2", "u3"):
+            assert by_uuid[uid].was_fetched("iops")
+        for uid in ("u4", "u5"):
+            assert not by_uuid[uid].was_fetched("iops")
+            assert by_uuid[uid].was_fetched("uuid")
+
+    def test_partial_query_chunks_over_batch_size(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        backend = _make_backend(mock_config)
+        decision = RoutingDecision(cache_fields=("uuid",), live_fields=("iops",))
+        cached = [FakeVolume(uuid=f"u{i}") for i in range(250)]
+        live_all = [FakeVolume(uuid=f"u{i}", iops=float(i)) for i in range(250)]
+
+        mock_db = MagicMock()
+        mock_db.query_with_filters.return_value = cached
+        mock_client = MagicMock()
+        mock_client.get_all_records.return_value = {"records": []}
+
+        # Return chunked slices of live records, 100/100/50, on successive
+        # parse_api_response calls.
+        parse_side_effect = [live_all[0:100], live_all[100:200], live_all[200:250]]
+
+        with (
+            patch.object(OntapBackend, "_cache_db", new=mock_db),
+            patch.object(backend, "_get_api_client", return_value=mock_client),
+            patch(
+                "pynetappfoundry.data.backends.parse_api_response",
+                side_effect=parse_side_effect,
+            ),
+            _patch_metadata_path(backend),
+        ):
+            results = backend.query(
+                FakeVolume,
+                fake_volume_mapping,
+                decision,
+                cluster="prod1",
+                filters={},
+            )
+
+        assert len(results) == 250
+        assert mock_client.get_all_records.call_count == 3
+        # Verify merged iops values populated
+        for i, r in enumerate(results):
+            assert r.iops == float(i)
+
+    def test_partial_query_chunk_failure_propagates(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        backend = _make_backend(mock_config)
+        decision = RoutingDecision(cache_fields=("uuid",), live_fields=("iops",))
+        cached = [FakeVolume(uuid=f"u{i}") for i in range(250)]
+
+        mock_db = MagicMock()
+        mock_db.query_with_filters.return_value = cached
+        mock_client = MagicMock()
+        mock_client.get_all_records.side_effect = [
+            {"records": []},
+            RuntimeError("second chunk boom"),
+            {"records": []},
+        ]
+
+        with (
+            patch.object(OntapBackend, "_cache_db", new=mock_db),
+            patch.object(backend, "_get_api_client", return_value=mock_client),
+            patch(
+                "pynetappfoundry.data.backends.parse_api_response",
+                return_value=[],
+            ),
+            _patch_metadata_path(backend),
+            pytest.raises(RuntimeError, match="second chunk boom"),
+        ):
             backend.query(
                 FakeVolume,
                 fake_volume_mapping,
@@ -237,3 +528,74 @@ class TestOntapBackendQuery:
                 cluster="prod1",
                 filters={},
             )
+
+    def test_partial_query_url_uses_pipe_or_for_identifiers(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        backend = _make_backend(mock_config)
+        decision = RoutingDecision(cache_fields=("uuid",), live_fields=("iops",))
+        cached = [FakeVolume(uuid=f"u{i}") for i in range(1, 4)]
+
+        mock_db = MagicMock()
+        mock_db.query_with_filters.return_value = cached
+        mock_client = MagicMock()
+        mock_client.get_all_records.return_value = {"records": []}
+
+        with (
+            patch.object(OntapBackend, "_cache_db", new=mock_db),
+            patch.object(backend, "_get_api_client", return_value=mock_client),
+            patch(
+                "pynetappfoundry.data.backends.parse_api_response",
+                return_value=[],
+            ),
+            _patch_metadata_path(backend),
+        ):
+            backend.query(
+                FakeVolume,
+                fake_volume_mapping,
+                decision,
+                cluster="prod1",
+                filters={},
+            )
+
+        mock_client.get_all_records.assert_called_once()
+        url = mock_client.get_all_records.call_args[0][0]
+        # urlencode quotes `|` as %7C
+        assert "uuid=u1%7Cu2%7Cu3" in url
+        assert "fields=iops" in url
+
+    def test_partial_query_identifier_extract_single_key(self) -> None:
+        instances = [
+            FakeVolume(uuid="u1"),
+            FakeVolume(uuid="u2"),
+            FakeVolume(uuid="u3"),
+        ]
+        ids = OntapBackend._extract_identifiers(instances, "uuid")
+        assert ids == ["u1", "u2", "u3"]
+
+    def test_partial_query_identifier_index_builds_correct_keys(self) -> None:
+        instances = [
+            FakeVolume(uuid="u1", iops=1.0),
+            FakeVolume(uuid="u2", iops=2.0),
+        ]
+        index = OntapBackend._build_identifier_index(instances, "uuid")
+        assert set(index.keys()) == {"u1", "u2"}
+        assert index["u1"].iops == 1.0
+        assert index["u2"].iops == 2.0
+
+    def test_partial_query_chunked_helper(self) -> None:
+        assert list(OntapBackend._chunked([], 100)) == []
+        assert list(OntapBackend._chunked([1, 2, 3], 100)) == [[1, 2, 3]]
+        assert list(OntapBackend._chunked([1, 2, 3, 4], 2)) == [[1, 2], [3, 4]]
+        assert list(OntapBackend._chunked(list(range(5)), 2)) == [
+            [0, 1],
+            [2, 3],
+            [4],
+        ]
+        assert list(OntapBackend._chunked(list(range(250)), 100)) == [
+            list(range(0, 100)),
+            list(range(100, 200)),
+            list(range(200, 250)),
+        ]

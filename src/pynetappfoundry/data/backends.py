@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
+from collections.abc import Iterator
 from functools import cached_property
 from typing import TYPE_CHECKING, Any, TypeVar
 
@@ -31,6 +32,13 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T", bound=BaseModel)
+
+_BATCH_SIZE = 100
+"""Hardcoded chunk size for batch live fetches in partial-fetch query.
+
+Per design notes on issue #495, this is intentionally a constant for v1.
+Promote to a config knob only if a real workload hits the limit.
+"""
 
 
 def _log_missing_fields(
@@ -273,16 +281,22 @@ class OntapBackend(Backend):
         cluster: str,
         filters: dict[str, Any],
     ) -> list[T]:
-        """Fetch a list of instances matching *filters*."""
+        """Fetch a list of instances matching *filters*.
+
+        When the routing decision is *partial* (mix of cache and live
+        fields), implements the Approach C algorithm: the cache query
+        defines membership, a single batched live fetch enriches by
+        identifier, and results are merged by identifier. See the design
+        notes on issue #495 for the full rationale.
+        """
         if decision.partial:
-            # Partial-merge for collection queries is out of scope for the
-            # spike: collection responses pair up by identifier, which is
-            # non-trivial. Phase 3 will address this if real callers need it.
-            msg = (
-                "OntapBackend.query() does not yet support partial cache+live "
-                "routing for collections; request all-cache or all-live."
+            return self._query_partial(
+                model_class,
+                mapping,
+                decision,
+                cluster,
+                filters,
             )
-            raise NotImplementedError(msg)
 
         if decision.cache_fields:
             filter_expressions = [f"{key} = '{value}'" for key, value in filters.items()]
@@ -309,6 +323,206 @@ class OntapBackend(Backend):
         if existing is None:
             return
         existing.update(paths)
+
+    def _query_partial(
+        self,
+        model_class: type[T],
+        mapping: TypeMapping,
+        decision: RoutingDecision,
+        cluster: str,
+        filters: dict[str, Any],
+    ) -> list[T]:
+        """Execute the partial-fetch (Approach C) algorithm for collections.
+
+        1. Validate filter keys are cache-side only.
+        2. Validate mapping.identifier_field is a single string.
+        3. Run the cache query (defines membership).
+        4. Short-circuit on empty cache result.
+        5. Batch live fetch by identifier, chunked at ``_BATCH_SIZE``.
+        6. Merge each cached instance with its live counterpart by
+           identifier. Extras from live are silently dropped; cached
+           instances without a live match pass through unmerged.
+        """
+        self._validate_partial_query_filter(mapping, filters)
+
+        identifier_field = mapping.identifier_field
+        if identifier_field is None:
+            msg = (
+                f"Model {mapping.name!r} has no identifier_field declared in "
+                f"its TypeMapping; partial-fetch collection queries require "
+                f"identifier_field for merging cache and live results"
+            )
+            raise ValueError(msg)
+        if isinstance(identifier_field, tuple):
+            msg = (
+                f"Partial-fetch collection queries are not yet supported for "
+                f"composite-key models like {mapping.name!r}; use "
+                f"source='cache' or source='live' for now"
+            )
+            raise NotImplementedError(msg)
+
+        filter_expressions = [f"{key} = '{value}'" for key, value in filters.items()]
+        cached_instances = self._fetch_cache(model_class, cluster, filter_expressions)
+        for instance in cached_instances:
+            self._mark_fetched(instance, decision.cache_fields)
+
+        if not cached_instances:
+            return []
+
+        if not decision.live_fields:
+            # Defensive: decision.partial requires both sides, so this
+            # branch should be unreachable. Kept to document intent.
+            return cached_instances
+
+        identifiers = self._extract_identifiers(cached_instances, identifier_field)
+        live_instances = self._fetch_live_by_identifiers(
+            model_class,
+            mapping,
+            cluster,
+            identifiers,
+            identifier_field,
+            decision.live_fields,
+        )
+        live_index = self._build_identifier_index(live_instances, identifier_field)
+        return self._merge_partial_collection(
+            cached_instances,
+            live_index,
+            identifier_field,
+            decision,
+        )
+
+    @staticmethod
+    def _validate_partial_query_filter(
+        mapping: TypeMapping,
+        filters: dict[str, Any],
+    ) -> None:
+        """Raise NotImplementedError if any filter key targets a realtime field.
+
+        Filter keys are matched against :attr:`FieldMapping.cache_attr`.
+        Unknown filter keys are permitted (they fall through to the cache
+        layer, which surfaces its own error).
+        """
+        fields_by_attr = {f.cache_attr: f for f in mapping.fields}
+        for key in filters:
+            field = fields_by_attr.get(key)
+            if field is not None and field.cache_strategy == "realtime":
+                msg = (
+                    f"Filtering collection queries on realtime field {key!r} "
+                    f"is not yet supported; use source='live' or split the query"
+                )
+                raise NotImplementedError(msg)
+
+    @staticmethod
+    def _extract_identifiers(
+        instances: list[T],
+        identifier_field: str,
+    ) -> list[str]:
+        """Return a list of identifier values from *instances*.
+
+        v1 partial-fetch is single-key only, so *identifier_field* is a
+        plain string and the returned list is a list of strings.
+        """
+        return [getattr(inst, identifier_field) for inst in instances]
+
+    @staticmethod
+    def _chunked(items: list[Any], size: int) -> Iterator[list[Any]]:
+        """Yield successive chunks of *items* of length *size*."""
+        for i in range(0, len(items), size):
+            yield items[i : i + size]
+
+    def _fetch_live_by_identifiers(
+        self,
+        model_class: type[T],
+        mapping: TypeMapping,
+        cluster: str,
+        identifiers: list[str],
+        identifier_field: str,
+        live_field_paths: tuple[str, ...],
+    ) -> list[T]:
+        """Batch-fetch live data for *identifiers*, chunked at ``_BATCH_SIZE``.
+
+        For each chunk, builds one URL using ONTAP REST pipe-OR syntax
+        on the identifier filter (``?{identifier_field}=id1|id2|id3``)
+        with the ``fields=`` query parameter restricted to the
+        ``api_path`` values of *live_field_paths*. Results across all
+        chunks are concatenated into a single list.
+
+        Chunk failures propagate atomically — if any chunk's call raises
+        (network error, REST 5xx, parser failure), the whole fetch
+        raises. There is no partial result and no exception swallowing.
+        """
+        from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
+
+        client = self._get_api_client(cluster)
+        base_url = mapping.api_endpoint
+        parsed = urlparse(base_url)
+        base_query: dict[str, list[str]] = parse_qs(parsed.query, keep_blank_values=True)
+
+        # Translate live cache_attr paths to api_path values.
+        api_paths: list[str] = []
+        for attr in live_field_paths:
+            field = next(
+                (f for f in mapping.fields if f.cache_attr == attr),
+                None,
+            )
+            if field is not None and field.api_path is not None:
+                api_paths.append(field.api_path)
+            else:
+                api_paths.append(attr)
+
+        results: list[T] = []
+        for chunk in self._chunked(list(identifiers), _BATCH_SIZE):
+            query = {k: list(v) for k, v in base_query.items()}
+            if api_paths:
+                query["fields"] = [",".join(api_paths)]
+            query[identifier_field] = ["|".join(chunk)]
+            url = urlunparse(parsed._replace(query=urlencode(query, doseq=True)))
+            response = client.get_all_records(url)
+            parsed_records = parse_api_response(
+                mapping,
+                response,
+                f"OntapBackend<{mapping.name}>",
+                _log_missing_fields,
+            )
+            results.extend(r for r in parsed_records if isinstance(r, model_class))
+        return results
+
+    @staticmethod
+    def _build_identifier_index(
+        instances: list[T],
+        identifier_field: str,
+    ) -> dict[str, T]:
+        """Return ``dict[identifier_value, instance]`` for fast lookup."""
+        return {getattr(inst, identifier_field): inst for inst in instances}
+
+    def _merge_partial_collection(
+        self,
+        cached_instances: list[T],
+        live_index: dict[str, T],
+        identifier_field: str,
+        decision: RoutingDecision,
+    ) -> list[T]:
+        """Walk *cached_instances*, merging in live data by identifier.
+
+        Cached instances without a matching live entry pass through
+        unchanged — their ``_fetched_fields`` still reflect only the
+        cache fields that were stamped earlier. Live extras that do not
+        match any cached identifier are silently dropped via the
+        dict-lookup semantics.
+        """
+        merged_list: list[T] = []
+        for cached in cached_instances:
+            key = getattr(cached, identifier_field)
+            live = live_index.get(key)
+            if live is None:
+                merged_list.append(cached)
+                continue
+            merged = merge_models(cached, live)
+            # merge_models unions _fetched_fields already, but stamp the
+            # live fields explicitly to be defensive.
+            self._mark_fetched(merged, decision.live_fields)
+            merged_list.append(merged)
+        return merged_list
 
     def _finalize_single(
         self,
