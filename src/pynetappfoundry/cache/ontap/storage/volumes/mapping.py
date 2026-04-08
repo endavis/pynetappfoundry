@@ -93,6 +93,7 @@ ONTAPVOLUME_MAPPING = TypeMapping(
     model_class=OntapVolume,
     api_endpoint="/storage/volumes?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="access_time_enabled",
