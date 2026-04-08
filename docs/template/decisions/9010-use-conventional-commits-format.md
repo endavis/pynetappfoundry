@@ -20,4 +20,4 @@ Provides consistent, readable git history, enables automated changelog generatio
 
 ## Related Documentation
 
-- [CONTRIBUTING.md](../../../.github/CONTRIBUTING.md)
+- [CONTRIBUTING.md](https://github.com/endavis/pynetappfoundry/blob/main/.github/CONTRIBUTING.md)

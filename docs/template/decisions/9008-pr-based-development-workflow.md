@@ -21,4 +21,4 @@ Provides clear audit trail linking issues to PRs to commits, enables code review
 ## Related Documentation
 
 - [CI/CD Testing Guide](../../development/ci-cd-testing.md)
-- [CONTRIBUTING.md](../../../.github/CONTRIBUTING.md)
+- [CONTRIBUTING.md](https://github.com/endavis/pynetappfoundry/blob/main/.github/CONTRIBUTING.md)
