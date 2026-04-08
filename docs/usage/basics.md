@@ -252,31 +252,28 @@ nf cache query -f '{"env":"Prod"}' cluster.ontap_version
 ### License Reporting
 
 ```bash
-# List licenses for all clusters
-nf licenses list
+# Get license information for all clusters
+nf licenses get
 
-# Export licenses to Excel
-nf licenses export --format xlsx --output licenses.xlsx
+# Export licenses to CSV
+nf licenses get --csv -o licenses.csv
 ```
 
-### Space Reporting
+### Reports
 
 ```bash
-# Generate space report
-nf reports space --cluster CLUSTER-PROD-01
-
-# Generate aggregate report
-nf reports aggregate --all-clusters
+# Generate space usage report for a specific cluster
+nf reports space-usage -f '{"name":"CLUSTER-PROD-01"}'
 ```
 
 ### Event Monitoring
 
 ```bash
-# Fetch recent events
-nf events fetch --hours 24
+# Get recent events (most recent 100)
+nf events get -l 100
 
-# List events by severity
-nf events list --severity error
+# Get events by severity
+nf events get -s error
 ```
 
 ## Error Handling
