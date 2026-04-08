@@ -99,6 +99,39 @@ class TestFieldMappingNewFields:
         assert fm.post_collection is fn
 
 
+class TestTypeMappingIdentifierField:
+    """Tests for TypeMapping.identifier_field."""
+
+    def test_typemapping_identifier_field_default_none(self) -> None:
+        """Default identifier_field is None."""
+        tm = TypeMapping(
+            name="X",
+            model_class=_SampleModel,
+            api_endpoint="/x",
+        )
+        assert tm.identifier_field is None
+
+    def test_typemapping_identifier_field_string(self) -> None:
+        """A string identifier_field declares a single-key identifier."""
+        tm = TypeMapping(
+            name="X",
+            model_class=_SampleModel,
+            api_endpoint="/x",
+            identifier_field="uuid",
+        )
+        assert tm.identifier_field == "uuid"
+
+    def test_typemapping_identifier_field_tuple(self) -> None:
+        """A tuple identifier_field declares a composite key."""
+        tm = TypeMapping(
+            name="X",
+            model_class=_SampleModel,
+            api_endpoint="/x",
+            identifier_field=("svm.name", "name"),
+        )
+        assert tm.identifier_field == ("svm.name", "name")
+
+
 # ---------------------------------------------------------------------------
 # FieldMapping api_path auto-defaulting tests
 # ---------------------------------------------------------------------------

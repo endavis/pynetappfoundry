@@ -95,6 +95,13 @@ class TypeMapping:
             ``/svm/svms/{svm.uuid}/...``).
         parent_id_field: Field on the parent model that provides the
             placeholder value (e.g. ``"uuid"``).
+        identifier_field: Field (or composite tuple of fields) that uniquely
+            identifies a single instance of this model. Used by
+            :class:`pynetappfoundry.data.DataSource` to normalize ``get(id=...)``
+            calls. Default ``None`` means the model cannot be ``get()``'d by
+            identifier; only ``query()`` works. A string declares a single-key
+            identifier (e.g. ``"uuid"``); a tuple declares a composite key
+            (e.g. ``("svm.name", "name")``).
     """
 
     name: str
@@ -107,6 +114,7 @@ class TypeMapping:
     api_type: str = "ontap"
     parent_mapping: str | None = None
     parent_id_field: str | None = None
+    identifier_field: str | tuple[str, ...] | None = None
 
     def api_expected_fields(self) -> list[str]:
         """Derive top-level API keys expected in a response record.

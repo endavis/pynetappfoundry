@@ -10,7 +10,7 @@ from __future__ import annotations
 import re
 from typing import Annotated, Protocol, runtime_checkable
 
-from pydantic import AfterValidator, BaseModel, ConfigDict
+from pydantic import AfterValidator, BaseModel, ConfigDict, PrivateAttr
 
 _UUID_PATTERN = re.compile(
     r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
@@ -51,9 +51,29 @@ class OntapModel(BaseModel):
 
     Provides ``model_config = ConfigDict(extra="allow")`` inherited by all
     subclasses, allowing forward-compatible deserialization of new API fields.
+
+    Tracks which dotted-path fields were populated by the
+    :class:`pynetappfoundry.data.DataSource` accessor via the
+    ``_fetched_fields`` private attribute.  The set is empty for any model
+    constructed directly (e.g. by tests or fixtures); only ``DataSource``
+    backends populate it.  Use :meth:`was_fetched` to check whether a
+    specific field was populated by a fetch.
     """
 
     model_config = ConfigDict(extra="allow")
+
+    _fetched_fields: set[str] = PrivateAttr(default_factory=set)
+
+    def was_fetched(self, path: str) -> bool:
+        """Return whether *path* was populated by a DataSource fetch.
+
+        Args:
+            path: Dotted attribute path (e.g. ``"space.size"``).
+
+        Returns:
+            True if *path* is in the model's ``_fetched_fields`` set.
+        """
+        return path in self._fetched_fields
 
 
 @runtime_checkable

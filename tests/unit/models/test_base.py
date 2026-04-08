@@ -71,6 +71,60 @@ class TestOntapModel:
 
 
 # ---------------------------------------------------------------------------
+# _fetched_fields / was_fetched
+# ---------------------------------------------------------------------------
+
+
+class TestFetchedFields:
+    """Tests for OntapModel._fetched_fields and was_fetched()."""
+
+    def test_fetched_fields_starts_empty(self) -> None:
+        """A freshly constructed model has an empty _fetched_fields set."""
+
+        class M(OntapModel):
+            name: str = ""
+
+        obj = M(name="x")
+        assert obj._fetched_fields == set()
+
+    def test_fetched_fields_not_in_model_dump(self) -> None:
+        """_fetched_fields is a PrivateAttr -- never appears in model_dump()."""
+
+        class M(OntapModel):
+            name: str = ""
+
+        obj = M(name="x")
+        obj._fetched_fields.add("name")
+        dumped = obj.model_dump()
+        assert "_fetched_fields" not in dumped
+        assert dumped == {"name": "x"}
+
+    def test_was_fetched_returns_bool(self) -> None:
+        """was_fetched() returns True/False based on the underlying set."""
+
+        class M(OntapModel):
+            name: str = ""
+
+        obj = M(name="x")
+        assert obj.was_fetched("name") is False
+        obj._fetched_fields.add("name")
+        assert obj.was_fetched("name") is True
+        assert obj.was_fetched("missing") is False
+
+    def test_fetched_fields_is_per_instance(self) -> None:
+        """Two instances do not share _fetched_fields state."""
+
+        class M(OntapModel):
+            name: str = ""
+
+        a = M(name="a")
+        b = M(name="b")
+        a._fetched_fields.add("name")
+        assert b._fetched_fields == set()
+        assert a._fetched_fields == {"name"}
+
+
+# ---------------------------------------------------------------------------
 # HasUUID protocol
 # ---------------------------------------------------------------------------
 

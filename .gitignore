@@ -84,8 +84,9 @@ coverage.xml
 .nfs*
 .gemini/settings.json.orig
 
-# Project-specific data directories
-data/
+# Project-specific data directories (top-level only -- the
+# `pynetappfoundry.data` package and `tests/unit/data` are tracked.)
+/data/
 output/
 
 # Configuration with secrets
