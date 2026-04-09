@@ -278,16 +278,19 @@ ONTAP exposes per-resource counters (IOPS, latency, throughput, deduplication sa
 
 All four functions resolve the model's `TypeMapping`, optionally filter the realtime field set down to a `fields=` whitelist (matched on `cache_attr`), and project a request that asks ONTAP only for the top-level API keys actually needed.
 
-### `fetch_realtime(model_class, client, uuid, fields=None)`
+### `fetch_realtime(model_class, config, cluster, uuid, fields=None)`
 
-Fetch current realtime values for a single resource by UUID. Returns a flat `dict[cache_attr, value]`.
+Fetch current realtime values for a single resource by UUID. Returns a flat `dict[cache_attr, value]`. Phase 3d of ADR-0012 routes this through `DataSource.get(..., source="live")`; the dotted-key dict output is preserved for backwards compatibility and will be replaced with Pydantic model instances in Phase 4.
 
 ```python
+from pynetappfoundry.core.config import Config
 from pynetappfoundry.query import fetch_realtime
 
+config = Config()
 metrics = fetch_realtime(
     OntapVolume,
-    client,
+    config,
+    cluster="prod-cluster",
     uuid="abc-123-def",
     fields=["metric.iops.read", "metric.iops.write", "metric.latency.read"],
 )
@@ -296,16 +299,17 @@ print(metrics["metric.iops.read"], metrics["metric.iops.write"])
 
 If the model has no realtime fields (or none survive the `fields=` filter), the function returns `{}` without making a request.
 
-### `fetch_realtime_collection(model_class, client, fields=None, **filters)`
+### `fetch_realtime_collection(model_class, config, cluster, fields=None, **filters)`
 
-Fetch realtime values for many resources in one request. `**filters` are translated via the same `cache_attr` lookup that `QuerySet.filter` uses (without the dunder rewrite — pass dotted API paths as `**{"svm.name": "vs1"}` if you need them). The response always includes `uuid` and `name` for identification.
+Fetch realtime values for many resources in one request. `**filters` are translated via the same `cache_attr` lookup used elsewhere — pass dotted API paths as `**{"svm.name": "vs1"}` if you need them. The response always includes `uuid` and `name` for identification. Routes through `DataSource.query(..., source="live")`.
 
 ```python
 from pynetappfoundry.query import fetch_realtime_collection
 
 rows = fetch_realtime_collection(
     OntapVolume,
-    client,
+    config,
+    cluster="prod-cluster",
     fields=["metric.iops.read", "metric.iops.write"],
     state="online",
 )
@@ -313,16 +317,17 @@ for row in rows:
     print(row["name"], row["metric.iops.read"], row["metric.iops.write"])
 ```
 
-### `watch_realtime(model_class, client, uuid, fields=None, interval=5, count=None)`
+### `watch_realtime(model_class, config, cluster, uuid, fields=None, interval=5, count=None)`
 
-Generator that calls `fetch_realtime` in a loop, adding an ISO-8601 UTC `_timestamp` key to each yielded dict. `count=None` runs forever; pass an integer to stop after N samples. `interval` is seconds between polls.
+Generator that polls realtime values in a loop, adding an ISO-8601 UTC `_timestamp` key to each yielded dict. `count=None` runs forever; pass an integer to stop after N samples. `interval` is seconds between polls. A single `DataSource` is constructed before the loop and reused across iterations.
 
 ```python
 from pynetappfoundry.query import watch_realtime
 
 for snapshot in watch_realtime(
     OntapVolume,
-    client,
+    config,
+    cluster="prod-cluster",
     uuid="abc-123-def",
     fields=["metric.iops.read"],
     interval=10,
@@ -331,7 +336,7 @@ for snapshot in watch_realtime(
     print(snapshot["_timestamp"], snapshot["metric.iops.read"])
 ```
 
-### `compare_realtime(model_class, client, uuid, baseline, fields=None)`
+### `compare_realtime(model_class, config, cluster, uuid, baseline, fields=None)`
 
 Fetches the current realtime values and diffs them against a `baseline` dict (typically captured earlier with `fetch_realtime`). For numeric values, the result includes `baseline`, `current`, and `delta`. For non-numeric values, only `baseline` and `current`. Fields present in `current` but absent from `baseline` get a `current`-only entry.
 
@@ -339,12 +344,13 @@ Fetches the current realtime values and diffs them against a `baseline` dict (ty
 from pynetappfoundry.query import compare_realtime, fetch_realtime
 
 baseline = fetch_realtime(
-    OntapVolume, client, uuid="abc-123-def",
+    OntapVolume, config, cluster="prod-cluster", uuid="abc-123-def",
     fields=["metric.iops.read", "metric.iops.write"],
 )
 # ... time passes, workload runs ...
 diff = compare_realtime(
-    OntapVolume, client, uuid="abc-123-def", baseline=baseline,
+    OntapVolume, config, cluster="prod-cluster", uuid="abc-123-def",
+    baseline=baseline,
     fields=["metric.iops.read", "metric.iops.write"],
 )
 print(diff["metric.iops.read"]["delta"])
