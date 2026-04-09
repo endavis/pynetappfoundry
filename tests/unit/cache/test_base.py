@@ -127,7 +127,6 @@ class TestHasUUID:
     """Tests for HasUUID runtime-checkable protocol."""
 
     def test_model_with_uuid(self) -> None:
-
         class WithUUID(CacheModel):
             uuid: str = ""
 
@@ -136,7 +135,6 @@ class TestHasUUID:
         assert obj.uuid == "abc-123"
 
     def test_model_without_uuid(self) -> None:
-
         class NoUUID(CacheModel):
             name: str = ""
 
