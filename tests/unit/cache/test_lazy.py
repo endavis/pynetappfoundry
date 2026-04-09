@@ -2,17 +2,18 @@
 
 from __future__ import annotations
 
-import sqlite3
 import uuid
+from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from typing import Any
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from pynetappfoundry.cache import CachedClusterMetadata, LazyClusterMetadata
 from pynetappfoundry.cache._lazy import _DATA_FIELDS
 from pynetappfoundry.cache.db import ClusterMetadataDB
+from pynetappfoundry.core.config import Config
 from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
 from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
 from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
@@ -28,9 +29,21 @@ def db_path() -> str:
 
 
 @pytest.fixture
-def db(db_path: str) -> ClusterMetadataDB:
-    """Create an in-memory test database."""
-    return ClusterMetadataDB(db_path=db_path)
+def mock_config_for_db() -> MagicMock:
+    """Stub Config for DB construction; Phase 3b requires it for get_lazy()."""
+    cfg = MagicMock(spec=Config)
+    return cfg
+
+
+@pytest.fixture
+def db(db_path: str, mock_config_for_db: MagicMock) -> ClusterMetadataDB:
+    """Create an in-memory test database bound to a stub Config.
+
+    Phase 3b (#502) requires ``ClusterMetadataDB`` to be constructed with
+    a ``Config`` so :meth:`ClusterMetadataDB.get_lazy` can plumb it into
+    the :class:`LazyClusterMetadata` DataSource shim.
+    """
+    return ClusterMetadataDB(db_path=db_path, config=mock_config_for_db)
 
 
 @pytest.fixture
@@ -99,81 +112,97 @@ class TestLazyLoading:
     def test_lazy_loads_only_accessed_field(
         self,
         populated_db: ClusterMetadataDB,
-        db_path: str,
     ) -> None:
-        """Accessing .cloud queries only cloud-related registry entries."""
+        """Accessing .cloud queries only cloud-related model classes."""
         lazy = populated_db.get_lazy("test-cluster")
         assert lazy is not None
 
-        from pynetappfoundry.cache.db import _query_registry_subset
+        queried_models: list[str] = []
 
-        queried_paths: list[str] = []
-        original_fn = _query_registry_subset
+        from pynetappfoundry.data.source import DataSource
 
-        def tracking_query(conn: Any, cluster_name: str, registry_subset: dict[str, Any]) -> Any:
-            queried_paths.extend(registry_subset.keys())
-            return original_fn(conn, cluster_name, registry_subset)
+        original_query = DataSource.query
 
-        with patch("pynetappfoundry.cache.db._query_registry_subset", tracking_query):
+        def tracking_query(self: DataSource, model_class: type, **kwargs: Any) -> Any:
+            queried_models.append(model_class.__name__)
+            return original_query(self, model_class, **kwargs)
+
+        with patch.object(DataSource, "query", tracking_query):
             _ = lazy.cloud
 
-        assert len(queried_paths) > 0
-        # Only cloud-related paths should be queried
-        for path in queried_paths:
-            assert path == "cloud" or path.startswith("cloud."), (
-                f"Unexpected registry path queried: {path}"
-            )
+        # CloudMetadata should have been queried. Storage/network models
+        # should not have.
+        assert "CloudMetadata" in queried_models
+        assert "OntapVolume" not in queried_models
+        assert "OntapAggregate" not in queried_models
 
     def test_lazy_does_not_load_unaccessed_fields(
         self,
         populated_db: ClusterMetadataDB,
-        db_path: str,
     ) -> None:
-        """Accessing .cloud does not trigger loading of storage entries."""
+        """Accessing .cloud does not trigger loading of storage model classes."""
         lazy = populated_db.get_lazy("test-cluster")
         assert lazy is not None
 
-        from pynetappfoundry.cache.db import _query_registry_subset
+        queried_models: list[str] = []
 
-        queried_paths: list[str] = []
-        original_fn = _query_registry_subset
+        from pynetappfoundry.data.source import DataSource
 
-        def tracking_query(conn: Any, cluster_name: str, registry_subset: dict[str, Any]) -> Any:
-            queried_paths.extend(registry_subset.keys())
-            return original_fn(conn, cluster_name, registry_subset)
+        original_query = DataSource.query
 
-        with patch("pynetappfoundry.cache.db._query_registry_subset", tracking_query):
+        def tracking_query(self: DataSource, model_class: type, **kwargs: Any) -> Any:
+            queried_models.append(model_class.__name__)
+            return original_query(self, model_class, **kwargs)
+
+        with patch.object(DataSource, "query", tracking_query):
             _ = lazy.cloud
 
-        # Storage paths should NOT be in the queried list
-        for path in queried_paths:
-            assert not path.startswith("storage"), f"Storage path queried: {path}"
+        # No storage-side model classes should have been queried.
+        storage_models = {
+            "OntapVolume",
+            "OntapAggregate",
+            "OntapLun",
+            "OntapQtree",
+            "OntapSnapshotPolicy",
+            "OntapSchedule",
+            "OntapIgroup",
+            "OntapQosPolicy",
+            "OntapFlexcache",
+            "OntapCloudTarget",
+            "OntapSvm",
+            "OntapTopMetricsSvmUser",
+        }
+        assert not (storage_models & set(queried_models)), (
+            f"Storage models unexpectedly queried: {storage_models & set(queried_models)}"
+        )
 
     def test_field_cached_on_second_access(
         self,
         populated_db: ClusterMetadataDB,
-        db_path: str,
     ) -> None:
         """Second access to same field uses cache, no re-query."""
         lazy = populated_db.get_lazy("test-cluster")
         assert lazy is not None
 
-        # First access — loads from DB
+        # First access — loads via DataSource shim
         result1 = lazy.cloud
 
-        connect_count = 0
-        original_connect = sqlite3.connect
+        query_count = 0
 
-        def counting_connect(*args: Any, **kwargs: Any) -> Any:
-            nonlocal connect_count
-            connect_count += 1
-            return original_connect(*args, **kwargs)
+        from pynetappfoundry.data.source import DataSource
 
-        with patch("pynetappfoundry.cache._lazy.sqlite3.connect", counting_connect):
+        original_query = DataSource.query
+
+        def counting_query(self: DataSource, *args: Any, **kwargs: Any) -> Any:
+            nonlocal query_count
+            query_count += 1
+            return original_query(self, *args, **kwargs)
+
+        with patch.object(DataSource, "query", counting_query):
             result2 = lazy.cloud
 
         assert result1 is result2
-        assert connect_count == 0, "DB was opened on second access"
+        assert query_count == 0, "DataSource.query was called on second access"
 
     def test_cloud_data_correct(self, populated_db: ClusterMetadataDB) -> None:
         """Lazy-loaded cloud data matches what was stored."""
@@ -288,24 +317,26 @@ class TestIsStaleDelegation:
     def test_is_stale_no_materialization(
         self,
         populated_db: ClusterMetadataDB,
-        db_path: str,
     ) -> None:
-        """is_stale does not open a DB connection (uses envelope data)."""
+        """is_stale does not trigger a DataSource query (uses envelope data)."""
         lazy = populated_db.get_lazy("test-cluster")
         assert lazy is not None
 
-        connect_count = 0
-        original_connect = sqlite3.connect
+        query_count = 0
 
-        def counting_connect(*args: Any, **kwargs: Any) -> Any:
-            nonlocal connect_count
-            connect_count += 1
-            return original_connect(*args, **kwargs)
+        from pynetappfoundry.data.source import DataSource
 
-        with patch("pynetappfoundry.cache._lazy.sqlite3.connect", counting_connect):
+        original_query = DataSource.query
+
+        def counting_query(self: DataSource, *args: Any, **kwargs: Any) -> Any:
+            nonlocal query_count
+            query_count += 1
+            return original_query(self, *args, **kwargs)
+
+        with patch.object(DataSource, "query", counting_query):
             lazy.is_stale(ttl_days=30)
 
-        assert connect_count == 0, "is_stale should not open DB"
+        assert query_count == 0, "is_stale should not query DataSource"
 
 
 class TestDelegatedMethods:
@@ -398,23 +429,24 @@ class TestFetcherFallback:
         assert result[0].provider == "AWS"
         mock_fetcher.fetch.assert_not_called()
 
-    def test_fetcher_called_when_db_empty(self, db_path: str) -> None:
-        """When DB has no data for a group, fetcher is used."""
-        from unittest.mock import MagicMock
-
+    def test_fetcher_called_when_db_empty(
+        self,
+        lazy_metadata_factory: Callable[..., LazyClusterMetadata],
+    ) -> None:
+        """When DataSource cache returns nothing, fetcher is used."""
         from pynetappfoundry.cache.db_schema import _ensure_registry
 
         mock_fetcher = MagicMock()
         mock_cluster = ClusterInfo(cluster_name="fetched", ontap_version="9.15.0")
         mock_fetcher.fetch.return_value = mock_cluster
 
-        # Create a DB-less lazy metadata with fetcher
-        lazy = LazyClusterMetadata(
+        lazy = lazy_metadata_factory(
             cluster_name="test-cluster",
             cached_at="2024-01-01T00:00:00+00:00",
             cache_version="1.0",
             db_path=None,
             registry=_ensure_registry(),
+            config=None,  # no DataSource → straight to fetcher
             fetcher=mock_fetcher,
         )
 
@@ -422,21 +454,23 @@ class TestFetcherFallback:
         mock_fetcher.fetch.assert_called_once_with("cluster")
         assert result.ontap_version == "9.15.0"
 
-    def test_fetcher_result_cached_in_loaded(self, db_path: str) -> None:
+    def test_fetcher_result_cached_in_loaded(
+        self,
+        lazy_metadata_factory: Callable[..., LazyClusterMetadata],
+    ) -> None:
         """Fetcher result is cached — second access does not call fetch again."""
-        from unittest.mock import MagicMock
-
         from pynetappfoundry.cache.db_schema import _ensure_registry
 
         mock_fetcher = MagicMock()
         mock_fetcher.fetch.return_value = ClusterInfo(cluster_name="cached", ontap_version="9.14.0")
 
-        lazy = LazyClusterMetadata(
+        lazy = lazy_metadata_factory(
             cluster_name="test-cluster",
             cached_at="2024-01-01T00:00:00+00:00",
             cache_version="1.0",
             db_path=None,
             registry=_ensure_registry(),
+            config=None,
             fetcher=mock_fetcher,
         )
 
@@ -445,16 +479,20 @@ class TestFetcherFallback:
         assert result1 is result2
         mock_fetcher.fetch.assert_called_once()
 
-    def test_default_when_no_db_and_no_fetcher(self) -> None:
-        """Without DB or fetcher, model defaults are returned."""
+    def test_default_when_no_db_and_no_fetcher(
+        self,
+        lazy_metadata_factory: Callable[..., LazyClusterMetadata],
+    ) -> None:
+        """Without DataSource or fetcher, model defaults are returned."""
         from pynetappfoundry.cache.db_schema import _ensure_registry
 
-        lazy = LazyClusterMetadata(
+        lazy = lazy_metadata_factory(
             cluster_name="test-cluster",
             cached_at="2024-01-01T00:00:00+00:00",
             cache_version="1.0",
             db_path=None,
             registry=_ensure_registry(),
+            config=None,
         )
 
         # cloud default is an empty list
@@ -462,21 +500,23 @@ class TestFetcherFallback:
         # cluster default is an empty ClusterInfo
         assert isinstance(lazy.cluster, ClusterInfo)
 
-    def test_default_when_fetcher_returns_none(self) -> None:
+    def test_default_when_fetcher_returns_none(
+        self,
+        lazy_metadata_factory: Callable[..., LazyClusterMetadata],
+    ) -> None:
         """When fetcher returns None, model defaults are used."""
-        from unittest.mock import MagicMock
-
         from pynetappfoundry.cache.db_schema import _ensure_registry
 
         mock_fetcher = MagicMock()
         mock_fetcher.fetch.return_value = None
 
-        lazy = LazyClusterMetadata(
+        lazy = lazy_metadata_factory(
             cluster_name="test-cluster",
             cached_at="2024-01-01T00:00:00+00:00",
             cache_version="1.0",
             db_path=None,
             registry=_ensure_registry(),
+            config=None,
             fetcher=mock_fetcher,
         )
 
@@ -484,21 +524,23 @@ class TestFetcherFallback:
         assert result == []
         mock_fetcher.fetch.assert_called_once_with("cloud")
 
-    def test_db_less_materialize(self) -> None:
+    def test_db_less_materialize(
+        self,
+        lazy_metadata_factory: Callable[..., LazyClusterMetadata],
+    ) -> None:
         """Materialization works in DB-less fetcher-only mode."""
-        from unittest.mock import MagicMock
-
         from pynetappfoundry.cache.db_schema import _ensure_registry
 
         mock_fetcher = MagicMock()
         mock_fetcher.fetch.return_value = None  # All groups return None -> defaults
 
-        lazy = LazyClusterMetadata(
+        lazy = lazy_metadata_factory(
             cluster_name="test-cluster",
             cached_at="2024-01-01T00:00:00+00:00",
             cache_version="1.0",
             db_path=None,
             registry=_ensure_registry(),
+            config=None,
             fetcher=mock_fetcher,
         )
 
@@ -515,3 +557,117 @@ class TestDataFieldsConstant:
         envelope = {"cluster_name", "cached_at", "cache_version"}
         model_data_fields = set(CachedClusterMetadata.model_fields.keys()) - envelope
         assert model_data_fields == _DATA_FIELDS
+
+
+class TestDataSourceShim:
+    """Phase 3b (#502): verify the shim routes through :class:`DataSource`.
+
+    Mirrors the ``OntapBackend`` test style from ``test_backends.py``:
+    the shim's ``DataSource`` is patched or observed, and each test
+    pins one routing behavior.
+    """
+
+    def test_storage_access_routes_through_datasource(
+        self,
+        populated_db: ClusterMetadataDB,
+    ) -> None:
+        """Accessing .storage calls DataSource.query for storage models."""
+        lazy = populated_db.get_lazy("test-cluster")
+        assert lazy is not None
+
+        from pynetappfoundry.data.source import DataSource
+
+        observed_models: list[str] = []
+        original_query = DataSource.query
+
+        def tracking_query(self: DataSource, model_class: type, **kwargs: Any) -> Any:
+            observed_models.append(model_class.__name__)
+            return original_query(self, model_class, **kwargs)
+
+        with patch.object(DataSource, "query", tracking_query):
+            _ = lazy.storage
+
+        # At minimum, OntapVolume must be among the storage-side queries.
+        assert "OntapVolume" in observed_models
+        # And everything queried must correspond to a storage table entry.
+        expected_storage = {
+            "OntapAggregate",
+            "OntapSvm",
+            "OntapCloudTarget",
+            "OntapVolume",
+            "OntapQtree",
+            "OntapSnapshotPolicy",
+            "OntapSchedule",
+            "OntapLun",
+            "OntapIgroup",
+            "OntapQosPolicy",
+            "OntapFlexcache",
+            "OntapTopMetricsSvmUser",
+        }
+        assert set(observed_models).issubset(expected_storage), (
+            f"Unexpected non-storage model queried: {set(observed_models) - expected_storage}"
+        )
+
+    def test_lazy_isolation_storage_does_not_load_network(
+        self,
+        populated_db: ClusterMetadataDB,
+    ) -> None:
+        """Accessing .storage does not call DataSource.query for network models."""
+        lazy = populated_db.get_lazy("test-cluster")
+        assert lazy is not None
+
+        from pynetappfoundry.data.source import DataSource
+
+        observed_models: list[str] = []
+        original_query = DataSource.query
+
+        def tracking_query(self: DataSource, model_class: type, **kwargs: Any) -> Any:
+            observed_models.append(model_class.__name__)
+            return original_query(self, model_class, **kwargs)
+
+        with patch.object(DataSource, "query", tracking_query):
+            _ = lazy.storage
+
+        network_models = {
+            "OntapDns",
+            "OntapIpInterface",
+            "OntapIpSubnet",
+            "OntapBroadcastDomain",
+        }
+        assert not (network_models & set(observed_models)), (
+            f"Network model queried while loading storage: {network_models & set(observed_models)}"
+        )
+
+    def test_storage_reassembles_into_storage_info(
+        self,
+        populated_db: ClusterMetadataDB,
+    ) -> None:
+        """Lazy-loaded .storage validates as a StorageInfo instance."""
+        lazy = populated_db.get_lazy("test-cluster")
+        assert lazy is not None
+
+        storage = lazy.storage
+        assert isinstance(storage, StorageInfo)
+        assert len(storage.volumes) == 1
+        assert storage.volumes[0].name == "vol1"
+
+    def test_cache_miss_falls_back_to_default(
+        self,
+        db: ClusterMetadataDB,
+    ) -> None:
+        """When DataSource returns empty, the group falls through to default."""
+        # Populate only the envelope + cloud so storage queries return empty.
+        empty = CachedClusterMetadata(
+            cluster_name="empty-cluster",
+            cloud=[CloudMetadata(provider="GCP")],
+        )
+        db.set("empty-cluster", empty)
+
+        lazy = db.get_lazy("empty-cluster")
+        assert lazy is not None
+
+        # Storage should be the StorageInfo default (all empty lists).
+        storage = lazy.storage
+        assert isinstance(storage, StorageInfo)
+        assert storage.volumes == []
+        assert storage.aggregates == []
