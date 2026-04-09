@@ -96,8 +96,23 @@ class Backend(ABC):
         decision: RoutingDecision,
         cluster: str,
         filters: dict[str, Any],
+        *,
+        where_expressions: tuple[str, ...] = (),
     ) -> list[T]:
-        """Fetch a list of instances matching *filters*."""
+        """Fetch a list of instances matching *filters*.
+
+        Args:
+            model_class: The Pydantic model class to fetch.
+            mapping: The :class:`TypeMapping` for the model.
+            decision: The routing decision driving cache vs live vs partial.
+            cluster: Name of the cluster to fetch from.
+            filters: Equality filter dict (dotted API paths as keys).
+            where_expressions: SQL-like filter expression strings
+                (e.g. ``"size > 1000000000"``) ANDed with the dict
+                filters. Only supported on the cache path; live and
+                partial paths raise :class:`NotImplementedError` when
+                non-empty. Defaults to ``()``.
+        """
 
 
 class OntapBackend(Backend):
@@ -324,6 +339,8 @@ class OntapBackend(Backend):
         decision: RoutingDecision,
         cluster: str,
         filters: dict[str, Any],
+        *,
+        where_expressions: tuple[str, ...] = (),
     ) -> list[T]:
         """Fetch a list of instances matching *filters*.
 
@@ -332,8 +349,21 @@ class OntapBackend(Backend):
         defines membership, a single batched live fetch enriches by
         identifier, and results are merged by identifier. See the design
         notes on issue #495 for the full rationale.
+
+        *where_expressions* adds SQL-like filter strings that are ANDed
+        with the dict-derived equality fragments on the cache path. Live
+        and partial-fetch routes raise :class:`NotImplementedError` when
+        *where_expressions* is non-empty; see issue #512.
         """
         if decision.partial:
+            if where_expressions:
+                msg = (
+                    f"DataSource.QueryBuilder.where() is not supported for "
+                    f"partial-fetch (mixed cache + live) routing decisions in v1; "
+                    f"use source='cache' to apply where-expressions on the cache "
+                    f"path only. Expressions were: {list(where_expressions)}"
+                )
+                raise NotImplementedError(msg)
             return self._query_partial(
                 model_class,
                 mapping,
@@ -343,13 +373,23 @@ class OntapBackend(Backend):
             )
 
         if decision.cache_fields:
-            filter_expressions = [f"{key} = '{value}'" for key, value in filters.items()]
+            filter_expressions = [f"{key} = '{value}'" for key, value in filters.items()] + list(
+                where_expressions
+            )
             results = self._fetch_cache(model_class, cluster, filter_expressions)
             for instance in results:
                 self._mark_fetched(instance, decision.cache_fields)
             return results
 
         if decision.live_fields:
+            if where_expressions:
+                msg = (
+                    f"DataSource.QueryBuilder.where() is not supported on the live "
+                    f"path in v1; use .filter({{...}}) for equality filters on "
+                    f"live queries. SQL-like expression translation is tracked as "
+                    f"a follow-up to #512. Expressions were: {list(where_expressions)}"
+                )
+                raise NotImplementedError(msg)
             results = self._fetch_live(model_class, mapping, cluster, filters, decision.live_fields)
             for instance in results:
                 self._mark_fetched(instance, decision.live_fields)

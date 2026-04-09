@@ -601,6 +601,189 @@ class TestOntapBackendQueryPartial:
         ]
 
 
+class TestQueryWithWhereExpressions:
+    """Tests for ``where_expressions`` kwarg on :meth:`OntapBackend.query`."""
+
+    def test_cache_path_concatenates_filter_dict_with_where_exprs(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        backend = _make_backend(mock_config)
+        decision = RoutingDecision(cache_fields=("name", "uuid"), live_fields=())
+
+        mock_db = MagicMock()
+        mock_db.query_with_filters.return_value = []
+
+        with (
+            patch.object(OntapBackend, "_cache_db", new=mock_db),
+            _patch_metadata_path(backend),
+        ):
+            backend.query(
+                FakeVolume,
+                fake_volume_mapping,
+                decision,
+                cluster="prod1",
+                filters={"svm.name": "vs1"},
+                where_expressions=("size > 1000000000",),
+            )
+
+        mock_db.query_with_filters.assert_called_once_with(
+            "prod1",
+            "storage.fake_volumes",
+            ["svm.name = 'vs1'", "size > 1000000000"],
+        )
+
+    def test_cache_path_where_only(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        backend = _make_backend(mock_config)
+        decision = RoutingDecision(cache_fields=("name", "uuid"), live_fields=())
+
+        mock_db = MagicMock()
+        mock_db.query_with_filters.return_value = []
+
+        with (
+            patch.object(OntapBackend, "_cache_db", new=mock_db),
+            _patch_metadata_path(backend),
+        ):
+            backend.query(
+                FakeVolume,
+                fake_volume_mapping,
+                decision,
+                cluster="prod1",
+                filters={},
+                where_expressions=("size > 0",),
+            )
+
+        mock_db.query_with_filters.assert_called_once_with(
+            "prod1", "storage.fake_volumes", ["size > 0"]
+        )
+
+    def test_cache_path_no_where_unchanged(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        backend = _make_backend(mock_config)
+        decision = RoutingDecision(cache_fields=("name", "uuid"), live_fields=())
+
+        mock_db = MagicMock()
+        mock_db.query_with_filters.return_value = []
+
+        with (
+            patch.object(OntapBackend, "_cache_db", new=mock_db),
+            _patch_metadata_path(backend),
+        ):
+            backend.query(
+                FakeVolume,
+                fake_volume_mapping,
+                decision,
+                cluster="prod1",
+                filters={"svm.name": "vs1"},
+            )
+
+        mock_db.query_with_filters.assert_called_once_with(
+            "prod1", "storage.fake_volumes", ["svm.name = 'vs1'"]
+        )
+
+    def test_live_path_raises_when_where_used(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        backend = _make_backend(mock_config)
+        decision = RoutingDecision(cache_fields=(), live_fields=("iops",))
+
+        with pytest.raises(NotImplementedError, match=r"\.filter") as exc_info:
+            backend.query(
+                FakeVolume,
+                fake_volume_mapping,
+                decision,
+                cluster="prod1",
+                filters={},
+                where_expressions=("iops > 100",),
+            )
+        assert "#512" in str(exc_info.value)
+
+    def test_live_path_no_where_unchanged(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        backend = _make_backend(mock_config)
+        decision = RoutingDecision(cache_fields=(), live_fields=("iops",))
+
+        mock_client = MagicMock()
+        mock_client.get_all_records.return_value = {"records": []}
+
+        with (
+            patch.object(backend, "_get_api_client", return_value=mock_client),
+            patch(
+                "pynetappfoundry.data.backends.parse_api_response",
+                return_value=[],
+            ),
+        ):
+            result = backend.query(
+                FakeVolume,
+                fake_volume_mapping,
+                decision,
+                cluster="prod1",
+                filters={},
+            )
+
+        assert result == []
+        mock_client.get_all_records.assert_called_once()
+
+    def test_partial_path_raises_when_where_used(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        backend = _make_backend(mock_config)
+        decision = RoutingDecision(cache_fields=("name",), live_fields=("iops",))
+
+        with pytest.raises(NotImplementedError, match="source='cache'"):
+            backend.query(
+                FakeVolume,
+                fake_volume_mapping,
+                decision,
+                cluster="prod1",
+                filters={},
+                where_expressions=("size > 0",),
+            )
+
+    def test_partial_path_no_where_unchanged(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        backend = _make_backend(mock_config)
+        decision = RoutingDecision(cache_fields=("name",), live_fields=("iops",))
+
+        mock_db = MagicMock()
+        mock_db.query_with_filters.return_value = []
+        mock_client = MagicMock()
+
+        with (
+            patch.object(OntapBackend, "_cache_db", new=mock_db),
+            patch.object(backend, "_get_api_client", return_value=mock_client),
+            _patch_metadata_path(backend),
+        ):
+            result = backend.query(
+                FakeVolume,
+                fake_volume_mapping,
+                decision,
+                cluster="prod1",
+                filters={"name": "v1"},
+            )
+
+        assert result == []
+        mock_db.query_with_filters.assert_called_once()
+
+
 class TestCountLive:
     """Tests for :meth:`OntapBackend._count_live`.
 

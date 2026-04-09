@@ -205,6 +205,38 @@ class QueryBuilder[T: BaseModel]:
         self._source_mode: SourceMode = source_mode
         self._filters: dict[str, Any] = {}
         self._fields: list[str] | None = None
+        self._where_expressions: list[str] = []
+
+    def where(self, *expressions: str) -> QueryBuilder[T]:
+        """Add SQL-like filter expressions to the query.
+
+        Accepts one or more string expressions (e.g. ``"size > 1000000000"``,
+        ``"state != 'offline'"``) that are ANDed together with any equality
+        filters added via :meth:`filter`. Multiple ``.where()`` calls
+        accumulate; an empty call (``.where()``) is a no-op.
+
+        Expressions are evaluated by the backend's cache substrate
+        (:meth:`ClusterMetadataDB.query_with_filters`) and are only
+        supported on the cache-only path. Using ``.where()`` with a
+        routing decision that requires the live REST API (``source="live"``)
+        or a partial-fetch mix (``source="auto"`` when the model has both
+        cached and realtime fields) raises :class:`NotImplementedError`
+        at iteration time. Use ``source="cache"`` to opt into the
+        cache-only path and apply ``.where()`` expressions there.
+
+        Composes freely with :meth:`filter` — the final filter list is
+        the dict entries translated to ``key = 'value'`` followed by the
+        accumulated where-expressions, in a single ANDed list.
+
+        Args:
+            *expressions: One or more filter expression strings to AND
+                into the query.
+
+        Returns:
+            ``self`` for chaining.
+        """
+        self._where_expressions.extend(expressions)
+        return self
 
     def filter(
         self,
@@ -238,5 +270,6 @@ class QueryBuilder[T: BaseModel]:
             decision,
             self._cluster,
             self._filters,
+            where_expressions=tuple(self._where_expressions),
         )
         return iter(results)
