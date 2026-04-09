@@ -599,3 +599,89 @@ class TestOntapBackendQueryPartial:
             list(range(100, 200)),
             list(range(200, 250)),
         ]
+
+
+class TestCountLive:
+    """Tests for :meth:`OntapBackend._count_live`.
+
+    Counts route through ``call_endpoint`` (NOT ``get_all_records``) so
+    the live API can return ``num_records`` without sending the records.
+    """
+
+    def test_count_live_returns_num_records(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        backend = _make_backend(mock_config)
+        mock_client = MagicMock()
+        mock_client.call_endpoint.return_value = {"num_records": 42}
+
+        with patch.object(backend, "_get_api_client", return_value=mock_client):
+            result = backend._count_live(fake_volume_mapping, "prod1", {})
+
+        assert result == 42
+        mock_client.call_endpoint.assert_called_once()
+        mock_client.get_all_records.assert_not_called()
+
+    def test_count_live_empty_response_returns_zero(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        backend = _make_backend(mock_config)
+        mock_client = MagicMock()
+        mock_client.call_endpoint.return_value = {}
+
+        with patch.object(backend, "_get_api_client", return_value=mock_client):
+            result = backend._count_live(fake_volume_mapping, "prod1", {})
+
+        assert result == 0
+
+    def test_count_live_none_response_returns_zero(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        backend = _make_backend(mock_config)
+        mock_client = MagicMock()
+        mock_client.call_endpoint.return_value = None
+
+        with patch.object(backend, "_get_api_client", return_value=mock_client):
+            result = backend._count_live(fake_volume_mapping, "prod1", {})
+
+        assert result == 0
+
+    def test_count_live_url_includes_return_records_false(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        backend = _make_backend(mock_config)
+        mock_client = MagicMock()
+        mock_client.call_endpoint.return_value = {"num_records": 0}
+
+        with patch.object(backend, "_get_api_client", return_value=mock_client):
+            backend._count_live(fake_volume_mapping, "prod1", {})
+
+        url = mock_client.call_endpoint.call_args[0][0]
+        assert "return_records=false" in url
+
+    def test_count_live_filters_in_url(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        backend = _make_backend(mock_config)
+        mock_client = MagicMock()
+        mock_client.call_endpoint.return_value = {"num_records": 0}
+
+        with patch.object(backend, "_get_api_client", return_value=mock_client):
+            backend._count_live(
+                fake_volume_mapping,
+                "prod1",
+                {"svm.name": "vs1"},
+            )
+
+        url = mock_client.call_endpoint.call_args[0][0]
+        assert "svm.name=vs1" in url
