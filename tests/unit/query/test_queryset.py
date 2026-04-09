@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 from typing import Any
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 from pydantic import BaseModel
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
+from pynetappfoundry.core.config import Config
 from pynetappfoundry.query.exceptions import MultipleResultsError, NotFoundError
 from pynetappfoundry.query.queryset import QuerySet
 
@@ -312,3 +313,218 @@ class TestExceptions:
         assert "Volume" in str(err)
         assert err.count == 3
         assert err.filters == {"svm.name": "vs1"}
+
+
+# ---------------------------------------------------------------------------
+# DataSource shim routing tests (Phase 3c, ADR-0012 §10)
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture()
+def shim_client() -> MagicMock:
+    """Mock APIWrapper carrying a ``.name`` for cluster-name extraction."""
+    client = MagicMock(spec=["get_all_records", "call_endpoint", "name"])
+    client.name = "test-cluster"
+    return client
+
+
+@pytest.fixture()
+def shim_config() -> MagicMock:
+    """Mock Config for the shim ctor (DataSource construction is patched)."""
+    return MagicMock(spec=Config)
+
+
+def _make_shim_qs(
+    shim_config: MagicMock,
+    shim_client: MagicMock,
+) -> tuple[QuerySet, MagicMock, MagicMock]:
+    """Build a QuerySet with the shim path active and mocked internals.
+
+    Returns ``(qs, mock_data_source, mock_backend)``. ``mock_data_source``
+    is the patched ``DataSource`` instance the shim built; its ``.query``
+    method returns a chainable mock that mimics ``QueryBuilder``.
+    """
+    mock_backend = MagicMock()
+    # Real backends carry an ``_api_clients`` dict; the shim writes into
+    # it during __init__, so the mock needs the same shape.
+    mock_backend._api_clients = {}
+
+    mock_data_source = MagicMock()
+    mock_data_source._get_backend.return_value = mock_backend
+
+    with patch(
+        "pynetappfoundry.query.queryset.DataSource",
+        return_value=mock_data_source,
+    ):
+        qs = QuerySet(FakeVolume, shim_client, config=shim_config)
+    return qs, mock_data_source, mock_backend
+
+
+def _set_query_results(mock_data_source: MagicMock, results: list[Any]) -> MagicMock:
+    """Wire ``mock_data_source.query(...)`` to a chainable builder mock.
+
+    The returned builder iterates over *results*. Returns the builder
+    mock so tests can assert on its ``.filter`` / ``.fields`` calls.
+    """
+    builder = MagicMock()
+    builder.filter.return_value = builder
+    builder.fields.return_value = builder
+    builder.__iter__ = lambda self: iter(results)
+    mock_data_source.query.return_value = builder
+    return builder
+
+
+class TestQuerySetShimRouting:
+    """Tests for the ``config=`` shim path that routes through ``DataSource``."""
+
+    def test_api_client_injection(self, shim_config: MagicMock, shim_client: MagicMock) -> None:
+        _qs, _ds, backend = _make_shim_qs(shim_config, shim_client)
+        # Identity check: the shim must reuse the caller's client, not
+        # construct a duplicate via the backend's _get_api_client fallback.
+        assert backend._api_clients["test-cluster"] is shim_client
+
+    def test_cluster_name_derived_from_client_name(
+        self, shim_config: MagicMock, shim_client: MagicMock
+    ) -> None:
+        qs, _ds, _backend = _make_shim_qs(shim_config, shim_client)
+        assert qs._cluster_name == "test-cluster"
+
+    def test_all_routes_through_datasource(
+        self, shim_config: MagicMock, shim_client: MagicMock
+    ) -> None:
+        qs, ds, _backend = _make_shim_qs(shim_config, shim_client)
+        vol = FakeVolume(name="vol1", uuid="abc")
+        builder = _set_query_results(ds, [vol])
+
+        results = qs.all()
+
+        assert results == [vol]
+        ds.query.assert_called_once_with(FakeVolume, cluster="test-cluster", source="live")
+        builder.filter.assert_called_once_with({})
+
+    def test_filter_chains_into_datasource_call(
+        self, shim_config: MagicMock, shim_client: MagicMock
+    ) -> None:
+        qs, ds, _backend = _make_shim_qs(shim_config, shim_client)
+        builder = _set_query_results(ds, [])
+
+        # Dunder rewrite must still happen as a pre-pass before the dict
+        # is handed to DataSource.query().filter(...).
+        qs.filter(svm__name="vs1").all()
+
+        builder.filter.assert_called_once_with({"svm.name": "vs1"})
+
+    def test_order_by_translates_to_filter_entry(
+        self, shim_config: MagicMock, shim_client: MagicMock
+    ) -> None:
+        qs, ds, _backend = _make_shim_qs(shim_config, shim_client)
+        builder = _set_query_results(ds, [])
+
+        qs.order_by("name asc").all()
+
+        builder.filter.assert_called_once_with({"order_by": "name asc"})
+
+    def test_limit_translates_to_max_records_entry(
+        self, shim_config: MagicMock, shim_client: MagicMock
+    ) -> None:
+        qs, ds, _backend = _make_shim_qs(shim_config, shim_client)
+        builder = _set_query_results(ds, [])
+
+        qs.limit(10).all()
+
+        builder.filter.assert_called_once_with({"max_records": "10"})
+
+    def test_first_uses_limit_one(self, shim_config: MagicMock, shim_client: MagicMock) -> None:
+        qs, ds, _backend = _make_shim_qs(shim_config, shim_client)
+        vol = FakeVolume(name="vol1")
+        builder = _set_query_results(ds, [vol])
+
+        result = qs.first()
+
+        assert result is vol
+        builder.filter.assert_called_once_with({"max_records": "1"})
+
+    def test_fields_routes_into_builder(
+        self, shim_config: MagicMock, shim_client: MagicMock
+    ) -> None:
+        qs, ds, _backend = _make_shim_qs(shim_config, shim_client)
+        builder = _set_query_results(ds, [])
+
+        qs.fields("name", "svm_name").all()
+
+        # The dunder-to-dot rewrite already runs in .fields(), so the
+        # builder receives api_path values.
+        builder.fields.assert_called_once_with("name", "svm.name")
+
+    def test_get_routes_through_datasource_single_result(
+        self, shim_config: MagicMock, shim_client: MagicMock
+    ) -> None:
+        qs, ds, _backend = _make_shim_qs(shim_config, shim_client)
+        vol = FakeVolume(name="vol1", uuid="abc")
+        _set_query_results(ds, [vol])
+
+        result = qs.get(uuid="abc")
+
+        assert result is vol
+
+    def test_get_raises_not_found(self, shim_config: MagicMock, shim_client: MagicMock) -> None:
+        qs, ds, _backend = _make_shim_qs(shim_config, shim_client)
+        _set_query_results(ds, [])
+
+        with pytest.raises(NotFoundError, match="FakeVolume"):
+            qs.get(uuid="missing")
+
+    def test_get_raises_multiple_results(
+        self, shim_config: MagicMock, shim_client: MagicMock
+    ) -> None:
+        qs, ds, _backend = _make_shim_qs(shim_config, shim_client)
+        _set_query_results(
+            ds,
+            [FakeVolume(name="vol1"), FakeVolume(name="vol2")],
+        )
+
+        with pytest.raises(MultipleResultsError, match="2"):
+            qs.get(svm_name="vs1")
+
+    def test_count_calls_backend_count_live(
+        self, shim_config: MagicMock, shim_client: MagicMock
+    ) -> None:
+        qs, _ds, backend = _make_shim_qs(shim_config, shim_client)
+        backend._count_live.return_value = 42
+
+        result = qs.filter(svm__name="vs1").count()
+
+        assert result == 42
+        backend._count_live.assert_called_once_with(
+            FAKE_MAPPING, "test-cluster", {"svm.name": "vs1"}
+        )
+        # The shim must NOT fall back to the legacy direct-client path.
+        shim_client.call_endpoint.assert_not_called()
+
+    def test_iter_routes_through_datasource(
+        self, shim_config: MagicMock, shim_client: MagicMock
+    ) -> None:
+        qs, ds, _backend = _make_shim_qs(shim_config, shim_client)
+        vols = [FakeVolume(name="v1"), FakeVolume(name="v2")]
+        _set_query_results(ds, vols)
+
+        names = [v.name for v in qs]
+
+        assert names == ["v1", "v2"]
+
+    def test_clone_preserves_data_source(
+        self, shim_config: MagicMock, shim_client: MagicMock
+    ) -> None:
+        qs, ds, _backend = _make_shim_qs(shim_config, shim_client)
+        clone = qs.filter(svm__name="vs1")
+        assert clone._data_source is ds
+        assert clone._cluster_name == "test-cluster"
+
+    def test_legacy_fallback_when_config_none(self, mock_client: MagicMock) -> None:
+        # Sanity check: passing config=None (the default) keeps the
+        # legacy direct-client path. No DataSource is constructed.
+        mock_client.get_all_records.return_value = _make_api_response([])
+        qs = QuerySet(FakeVolume, mock_client)
+        assert qs._data_source is None
+        qs.all()
+        mock_client.get_all_records.assert_called_once()

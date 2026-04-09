@@ -17,6 +17,8 @@ from pydantic import BaseModel
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import TypeMapping, parse_api_response
 from pynetappfoundry.clients.openapi import APIWrapper
+from pynetappfoundry.core.config import Config
+from pynetappfoundry.data.source import DataSource
 from pynetappfoundry.query.exceptions import MultipleResultsError, NotFoundError
 
 logger = logging.getLogger(__name__)
@@ -65,6 +67,8 @@ class QuerySet:
         self,
         model_class: type[T],
         client: APIWrapper,
+        *,
+        config: Config | None = None,
     ) -> None:
         self._model_class = model_class
         self._client = client
@@ -73,6 +77,31 @@ class QuerySet:
         self._fields_list: list[str] = []
         self._order_by_list: list[str] = []
         self._max_records: int | None = None
+        # Phase 3c shim: when ``config`` is provided, terminal methods
+        # route through a unified ``DataSource`` (ADR-0012). When it is
+        # ``None``, the legacy direct-client path below is used. This
+        # split lets call sites without a ``Config`` in scope (notably
+        # ``query/related.py``) keep working unchanged.
+        self._data_source: DataSource | None = None
+        self._cluster_name: str = ""
+        if config is not None:
+            self._data_source = DataSource(config)
+            backend = self._data_source._get_backend(self._mapping.api_type)
+            # Inject the caller's API client into the backend's per-cluster
+            # cache so that DataSource-routed fetches reuse the same
+            # connection (and credentials) instead of constructing a
+            # duplicate ``ONTAPAPIClient`` via the backend's
+            # ``_get_api_client`` fallback. This mirrors the
+            # ``object.__setattr__(backend, "_cache_db", self)`` trick used
+            # in Phase 3b's ``ClusterMetadataDB.get_lazy()``. Both
+            # ``APIWrapper`` and its ``ONTAPAPIClient`` subclass set
+            # ``self.name`` to the cluster name at construction.
+            self._cluster_name = client.name
+            # Backends register only ``OntapBackend`` here today; the
+            # ``_api_clients`` dict lives on that subclass.
+            api_clients = getattr(backend, "_api_clients", None)
+            if api_clients is not None:
+                api_clients[self._cluster_name] = client
 
     @staticmethod
     def _resolve_mapping(model_class: type[T]) -> TypeMapping:
@@ -147,6 +176,8 @@ class QuerySet:
 
     def all(self) -> list[Any]:
         """Execute the query and return all matching model instances."""
+        if self._data_source is not None:
+            return self._all_via_data_source()
         url = self._build_url()
         response = self._client.get_all_records(url)
         return parse_api_response(
@@ -186,6 +217,13 @@ class QuerySet:
 
     def count(self) -> int:
         """Return the number of matching records without fetching them."""
+        if self._data_source is not None:
+            # Drop down to the backend's count helper -- count does not
+            # care about ordering or limits, only the filter dict.
+            backend = self._data_source._get_backend(self._mapping.api_type)
+            count_live = getattr(backend, "_count_live", None)
+            if count_live is not None:
+                return int(count_live(self._mapping, self._cluster_name, dict(self._filters)))
         url = self._build_url(return_records=False)
         response = self._client.call_endpoint(url)
         if isinstance(response, dict):
@@ -195,6 +233,38 @@ class QuerySet:
     def __iter__(self) -> Any:
         """Iterate over all results."""
         return iter(self.all())
+
+    # ------------------------------------------------------------------
+    # DataSource shim helpers (Phase 3c, ADR-0012 §10)
+    # ------------------------------------------------------------------
+
+    def _build_merged_filter_dict(self) -> dict[str, Any]:
+        """Build the filter dict handed to ``DataSource.query().filter()``.
+
+        Includes the dotted-path filter entries already accumulated by
+        :meth:`filter`, plus ``order_by`` / ``max_records`` translated
+        into raw query-param entries (see ADR-0012 plan: no new public
+        methods on ``DataSource.QueryBuilder``; ordering and limiting
+        flow through the filter dict and ONTAP honors them server-side).
+        """
+        merged: dict[str, Any] = dict(self._filters)
+        if self._order_by_list:
+            merged["order_by"] = ", ".join(self._order_by_list)
+        if self._max_records is not None:
+            merged["max_records"] = str(self._max_records)
+        return merged
+
+    def _all_via_data_source(self) -> list[Any]:
+        """Routed equivalent of :meth:`all` for the shim path."""
+        assert self._data_source is not None  # narrowing for mypy
+        builder = self._data_source.query(
+            self._model_class,
+            cluster=self._cluster_name,
+            source="live",
+        ).filter(self._build_merged_filter_dict())
+        if self._fields_list:
+            builder = builder.fields(*self._fields_list)
+        return list(builder)
 
     # ------------------------------------------------------------------
     # Internal helpers

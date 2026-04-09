@@ -165,12 +165,18 @@ class OntapBackend(Backend):
         mapping: TypeMapping,
         params: dict[str, Any],
         live_field_paths: tuple[str, ...],
+        *,
+        return_records: bool = True,
     ) -> str:
         """Build a live REST URL from a mapping plus params and field set.
 
         Strips ``{id}`` placeholders from the endpoint, appends each
         param as a query string entry, and overrides the ``fields``
         parameter with the live field set's ``api_path`` values.
+
+        When *return_records* is ``False``, ``return_records=false`` is
+        appended to the query string. This is used by :meth:`_count_live`
+        to ask ONTAP for ``num_records`` only.
         """
         from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
@@ -195,7 +201,45 @@ class OntapBackend(Backend):
         for key, value in params.items():
             query[key] = [str(value)]
 
+        if not return_records:
+            query["return_records"] = ["false"]
+
         return urlunparse(parsed._replace(query=urlencode(query, doseq=True)))
+
+    def _count_live(
+        self,
+        mapping: TypeMapping,
+        cluster: str,
+        filters: dict[str, Any],
+    ) -> int:
+        """Count records via the live REST API without fetching them.
+
+        Builds a URL via :meth:`_build_live_url` with
+        ``return_records=False``, calls
+        :meth:`ONTAPAPIClient.call_endpoint` (NOT ``get_all_records``,
+        which would fetch the records and defeat the purpose), and
+        reads ``num_records`` off the response envelope.
+
+        Args:
+            mapping: The :class:`TypeMapping` for the model to count.
+            cluster: Name of the cluster to query.
+            filters: Query-string filter dict (dotted API paths).
+
+        Returns:
+            The count from ``num_records``, or ``0`` if the response is
+            empty / not a dict.
+        """
+        client = self._get_api_client(cluster)
+        url = self._build_live_url(
+            mapping,
+            filters,
+            live_field_paths=(),
+            return_records=False,
+        )
+        response = client.call_endpoint(url)
+        if isinstance(response, dict):
+            return int(response.get("num_records", 0))
+        return 0
 
     def _fetch_cache(
         self,
