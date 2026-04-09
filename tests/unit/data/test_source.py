@@ -200,6 +200,81 @@ class TestDataSourceQuery:
         assert filters_arg == {"svm.name": "vs1", "name": "vol1"}
 
 
+class TestQueryBuilderWhere:
+    """Tests for the ``.where()`` chain method on :class:`QueryBuilder`."""
+
+    def test_where_extends_expressions_list(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        ds = DataSource(mock_config)
+        qb = ds.query(FakeVolume, cluster="prod1")
+        qb.where("a > 1", "b < 2")
+        assert qb._where_expressions == ["a > 1", "b < 2"]
+
+    def test_where_returns_self_for_chaining(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        ds = DataSource(mock_config)
+        qb = ds.query(FakeVolume, cluster="prod1")
+        result = qb.where("a > 1")
+        assert result is qb
+
+    def test_multiple_where_calls_accumulate(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        ds = DataSource(mock_config)
+        qb = ds.query(FakeVolume, cluster="prod1")
+        qb.where("a > 1").where("b < 2")
+        assert qb._where_expressions == ["a > 1", "b < 2"]
+
+    def test_empty_where_is_noop(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        ds = DataSource(mock_config)
+        qb = ds.query(FakeVolume, cluster="prod1")
+        qb.where()
+        assert qb._where_expressions == []
+
+    def test_where_passes_to_backend_via_iter(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        ds = DataSource(mock_config)
+        fake_backend = MagicMock()
+        fake_backend.query.return_value = []
+        ds._backends["ontap"] = fake_backend
+
+        list(ds.query(FakeVolume, cluster="prod1").where("a > 1"))
+
+        kwargs = fake_backend.query.call_args.kwargs
+        assert kwargs.get("where_expressions") == ("a > 1",)
+
+    def test_filter_and_where_compose_in_iter(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        ds = DataSource(mock_config)
+        fake_backend = MagicMock()
+        fake_backend.query.return_value = []
+        ds._backends["ontap"] = fake_backend
+
+        list(ds.query(FakeVolume, cluster="prod1").filter({"svm.name": "vs1"}).where("size > 0"))
+
+        call = fake_backend.query.call_args
+        assert call.args[4] == {"svm.name": "vs1"}
+        assert call.kwargs.get("where_expressions") == ("size > 0",)
+
+
 class TestBackendsRegistry:
     def test_ontap_backend_registered_at_import(self) -> None:
         assert "ontap" in _BACKENDS

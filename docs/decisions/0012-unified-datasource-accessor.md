@@ -44,6 +44,8 @@ Add a `_fetched_fields: set[str]` instance attribute on `OntapModel` (`src/pynet
 
 `DataSource.query(OntapVolume).filter({"svm.name": "vs1", "autosize.mode": "grow"})` is the canonical form: a positional `dict[str, Any]` whose keys are dotted API paths. `**kwargs` (`filter(name="vol1", state="online")`) remains supported for top-level scalar fields as a convenience. The dunder-to-dot rewrite from today's `QuerySet.filter._attr_to_api_path` is **not** carried forward into `DataSource`. Existing `QuerySet` keeps the rewrite for backwards compatibility during migration and has it removed during Phase 4. This resolves issue #487.
 
+String filter expressions beyond equality land via `DataSource.QueryBuilder.where(*expressions: str)` (issue #512) — e.g. `.where("size > 1000000000", "state != 'offline'")` — which the cache backend concatenates with the dict-derived equality fragments and hands to `ClusterMetadataDB.query_with_filters` as a single ANDed list. v1 supports `.where()` on the cache path only; live and partial-fetch paths raise `NotImplementedError`. The typed field-reference DSL (e.g. `OntapVolume.svm.name == "vs1"`) remains deferred as issue #497 and will eventually compile down to the same string-expression shape that `.where()` already accepts.
+
 ### 4. Per-call source override
 
 `DataSource` accepts `source="auto" | "cache" | "live"` on every read:
@@ -120,6 +122,14 @@ This ADR is Phase 1 of a four-phase plan. The full plan is in issue #495.
 - **Phase 3 — Shim migration.** Five follow-up issues, one per existing surface (`LazyClusterMetadata`, cache CLIs, `QuerySet`, realtime functions, remaining #485 call sites). Each surface becomes a thin shim over `DataSource`. This phase absorbs the remainder of issue #485.
 
   **Phase 3 progress:**
+
+  **Phase 3 prerequisites:**
+
+  - Issue #512 — `DataSource.QueryBuilder.where(*expressions)` for SQL-like
+    filter expressions on the cache path — landed independently of the
+    shim migrations to unblock Phase 3e (`nf cache check` shim, issue
+    #509), whose `--where` flag requires non-equality filter expressions
+    that `filter({...})` cannot express.
 
   - Phase 3a — `OntapBackend.query()` partial-fetch (issue #500, merged in PR #501).
   - Phase 3b — `LazyClusterMetadata` migrated to a `DataSource` shim (issue #502). `_load_field_group()` now routes every per-model read through `DataSource.query(source="cache")`, reassembling the results into the corresponding `CachedClusterMetadata` sub-model. `FieldGroupFetcher` is retained as an opt-in fallback for the live-only call site (`ClusterEntry._build_live_metadata`) and will be removed in Phase 4.
