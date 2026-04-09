@@ -118,7 +118,13 @@ This ADR is Phase 1 of a four-phase plan. The full plan is in issue #495.
 - **Phase 1 — ADR (this PR).** Pure docs. Locks in the design points above.
 - **Phase 2 — Spike.** End-to-end implementation against one model (`OntapVolume`, chosen because it exercises cached, derived, realtime, and `requires_explicit_fetch` fields). New code under `src/pynetappfoundry/data/` plus the `_fetched_fields` attribute on `OntapModel`. No existing surface is migrated yet.
 - **Phase 3 — Shim migration.** Five follow-up issues, one per existing surface (`LazyClusterMetadata`, cache CLIs, `QuerySet`, realtime functions, remaining #485 call sites). Each surface becomes a thin shim over `DataSource`. This phase absorbs the remainder of issue #485.
-- **Phase 4 — Cleanup.** Remove the dunder-to-dot rewrite from `QuerySet`, remove the dotted-key `dict` shape from realtime functions, write the `docs/usage/data-source.md` user guide, and update `docs/usage/query-layer.md` to position `QuerySet` as the lower-level surface.
+
+  **Phase 3 progress:**
+
+  - Phase 3a — `OntapBackend.query()` partial-fetch (issue #500, merged in PR #501).
+  - Phase 3b — `LazyClusterMetadata` migrated to a `DataSource` shim (issue #502). `_load_field_group()` now routes every per-model read through `DataSource.query(source="cache")`, reassembling the results into the corresponding `CachedClusterMetadata` sub-model. `FieldGroupFetcher` is retained as an opt-in fallback for the live-only call site (`ClusterEntry._build_live_metadata`) and will be removed in Phase 4.
+
+- **Phase 4 — Cleanup.** Remove the dunder-to-dot rewrite from `QuerySet`, remove the dotted-key `dict` shape from realtime functions, remove `FieldGroupFetcher` (now unused once every reader is a `DataSource` shim), remove the back-compat `db_path` / `registry` / `fetcher` kwargs on `LazyClusterMetadata`, drop `cluster_entry._build_fetcher` / `_build_live_metadata`, write the `docs/usage/data-source.md` user guide, and update `docs/usage/query-layer.md` to position `QuerySet` as the lower-level surface.
 
 ### Links to Documentation
 

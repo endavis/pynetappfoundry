@@ -251,6 +251,7 @@ class ClusterEntry(MutableMapping[str, Any]):
             cache_version=METADATA_SCHEMA_VERSION,
             db_path=None,
             registry=_ensure_registry(),
+            config=self._config,
             fetcher=fetcher,
         )
 
