@@ -91,6 +91,9 @@ class TestGatherLockData:
         assert ws.cell(row=1, column=7).value == "IP Address"
         # Data row
         assert ws.cell(row=2, column=1).value == "vol1"
+        # Verify config= is threaded to QuerySet (DataSource shim)
+        for call in mock_qs_cls.call_args_list:
+            assert call.kwargs.get("config") is mock_config
 
     @patch("pynetappfoundry.cli.commands.reports.locks.QuerySet")
     @patch("pynetappfoundry.cli.commands.reports.locks.ONTAPAPIClient")
@@ -124,6 +127,9 @@ class TestGatherLockData:
         assert ws.cell(row=2, column=5).value == "read_write"
         assert ws.cell(row=2, column=6).value == "granted"
         assert ws.cell(row=2, column=7).value == "192.168.1.10"
+        # Verify config= is threaded to QuerySet (DataSource shim)
+        for call in mock_qs_cls.call_args_list:
+            assert call.kwargs.get("config") is mock_config
 
     @patch("pynetappfoundry.cli.commands.reports.locks.QuerySet")
     @patch("pynetappfoundry.cli.commands.reports.locks.ONTAPAPIClient")
@@ -152,6 +158,9 @@ class TestGatherLockData:
         ws = wb["cluster1"]
         assert ws.cell(row=2, column=3).value == "op_lock"
         assert ws.cell(row=2, column=5).value == "batch"
+        # Verify config= is threaded to QuerySet (DataSource shim)
+        for call in mock_qs_cls.call_args_list:
+            assert call.kwargs.get("config") is mock_config
 
     @patch("pynetappfoundry.cli.commands.reports.locks.print_error")
     @patch("pynetappfoundry.cli.commands.reports.locks.ONTAPAPIClient")
@@ -200,3 +209,6 @@ class TestGatherLockData:
         ws = wb["cluster1"]
         assert ws.cell(row=1, column=1).value == "Volume"
         assert ws.cell(row=2, column=1).value is None
+        # Verify config= is threaded to QuerySet (DataSource shim)
+        for call in mock_qs_cls.call_args_list:
+            assert call.kwargs.get("config") is mock_config
