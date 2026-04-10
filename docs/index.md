@@ -70,6 +70,7 @@ client = ONTAPAPIClient(config, "cluster1")
 
 - **[Installation](getting-started/installation.md)** - How to install the package
 - **[Usage Guide](usage/basics.md)** - How to use the package
+- **[DataSource Guide](usage/data-source.md)** - Unified entry point for reading cluster data
 - **[ONTAP Access Patterns](usage/ontap-access-patterns.md)** - Guide to choosing between SDK, SSH, and REST access
 - **[Configuration Schema](reference/config-schema.md)** - Complete TOML configuration reference
 - **[CLI Reference](reference/cli.md)** - Command-line interface documentation

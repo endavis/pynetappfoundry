@@ -12,6 +12,17 @@ tags:
   - realtime
 ---
 
+!!! note "Prefer DataSource for new code"
+    `DataSource` is the recommended entry point for reading cluster data.
+    It routes reads through cache or live API based on the `source=` parameter
+    and supports `.filter()`, `.where()`, and `.fields()` chaining.
+    See the [DataSource guide](data-source.md) for details.
+
+    `QuerySet` remains available as the lower-level REST query surface
+    used internally by `DataSource` and for direct REST operations
+    (mutations, job tracking, relationship traversal) that `DataSource`
+    does not cover.
+
 # Query Layer
 
 `pynetappfoundry.query` is a thin, fluent layer on top of the ONTAP REST API client. It uses the same declarative `TypeMapping` metadata that drives the cache (see [ADR-0004](../decisions/0004-declarative-field-mapping-framework.md)) to translate model attribute names into API field paths and to parse responses back into Pydantic model instances.
