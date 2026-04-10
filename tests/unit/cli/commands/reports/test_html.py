@@ -518,6 +518,41 @@ class TestClusterData:
         assert cluster.cluster_info is None
         assert cluster.nodes == []
 
+    @patch("pynetappfoundry.cli.commands.reports.html.QuerySet")
+    @patch("pynetappfoundry.cli.commands.reports.html.parse_api_record")
+    @patch("pynetappfoundry.cli.commands.reports.html.ONTAPAPIClient")
+    def test_gather_data_threads_config_to_queryset(
+        self,
+        mock_api_client_class: MagicMock,
+        mock_parse: MagicMock,
+        mock_qs_cls: MagicMock,
+        mock_config: MagicMock,
+    ) -> None:
+        """Test that _gather_data passes config= to every QuerySet call."""
+        mock_builder = MagicMock()
+        mock_builder.config = mock_config
+
+        mock_client = MagicMock()
+        mock_api_client_class.return_value = mock_client
+        mock_client.call_endpoint.return_value = {}
+        mock_parse.return_value = MagicMock(spec=ClusterInfo)
+        mock_qs_cls.return_value.all.return_value = []
+
+        cluster = ClusterData(
+            "test-cluster",
+            mock_builder,
+            div="Div1",
+            bu="BU1",
+            ip="10.0.0.1",
+            tags=[],
+        )
+
+        # 3 QuerySet calls: nodes, svms, cifs_services
+        assert mock_qs_cls.call_count == 3
+        for call in mock_qs_cls.call_args_list:
+            assert call.kwargs.get("config") is mock_config
+        assert cluster.nodes == []
+
 
 class TestCSSAndJS:
     """Tests for CSS and JavaScript constants."""
