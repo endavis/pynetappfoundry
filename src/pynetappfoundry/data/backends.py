@@ -215,8 +215,9 @@ class OntapBackend(Backend):
             # ONTAP's fields=* returns all fields, which is a superset
             # of any explicit field list. Enumerating individual fields
             # can produce URLs too long for ONTAP to accept (400 error).
-            existing = query.get("fields", [])
-            if existing != ["*"]:
+            # The value may be "*" or "*,nested.path" — both start with *.
+            existing = query.get("fields", [""])[0]
+            if not existing.startswith("*"):
                 query["fields"] = [",".join(api_paths)]
 
         for key, value in params.items():
@@ -565,8 +566,8 @@ class OntapBackend(Backend):
             query = {k: list(v) for k, v in base_query.items()}
             if api_paths:
                 # Preserve fields=* from the base endpoint when present.
-                existing = query.get("fields", [])
-                if existing != ["*"]:
+                existing = query.get("fields", [""])[0]
+                if not existing.startswith("*"):
                     query["fields"] = [",".join(api_paths)]
             query[identifier_field] = ["|".join(chunk)]
             url = urlunparse(parsed._replace(query=urlencode(query, doseq=True)))
