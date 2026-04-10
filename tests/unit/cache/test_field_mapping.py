@@ -1280,6 +1280,13 @@ class TestBuildCollectionUrl:
         )
         assert tm.build_collection_url() == "/storage/volumes"
 
+    def test_svm_mapping_requests_ip_interfaces_location(self) -> None:
+        """SVM mapping explicitly requests ip_interfaces.location for nested data."""
+        from pynetappfoundry.cache.ontap.svm.svms.mapping import ONTAPSVM_MAPPING
+
+        url = ONTAPSVM_MAPPING.build_collection_url()
+        assert "ip_interfaces.location" in url
+
 
 # ---------------------------------------------------------------------------
 # cache_strategy filtering in parse_api_record tests

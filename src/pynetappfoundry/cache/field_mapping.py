@@ -231,9 +231,10 @@ class TypeMapping:
         """Build the collection URL with dynamically appended expensive fields.
 
         Strips ``{id}`` path placeholders (like :attr:`collection_endpoint`).
-        If the endpoint contains ``?fields=*``, appends the top-level API
-        field names for fields that require explicit fetch.  Otherwise
-        returns the endpoint unchanged (after placeholder stripping).
+        If the endpoint contains ``?fields=*``, preserves any extra fields
+        appended after the ``*`` (e.g. nested array paths) and merges with
+        expensive (``requires_explicit_fetch``) fields.  Otherwise returns
+        the endpoint unchanged (after placeholder stripping).
 
         Returns:
             Endpoint URL suitable for bulk collection.
@@ -248,9 +249,17 @@ class TypeMapping:
         if not query.startswith("fields=*"):
             return f"{path}?{query}"
 
+        # Preserve extra fields after fields=* in the base endpoint
+        # (e.g. "fields=*,ip_interfaces.location") and merge with
+        # expensive (requires_explicit_fetch) fields.
+        base_fields_part = query.split("&", 1)[0]  # "fields=*,extra,..."
+        extra = base_fields_part.removeprefix("fields=*").lstrip(",")
+        extra_list = [f for f in extra.split(",") if f]
+
         expensive = self.explicit_fetch_api_fields()
-        if expensive:
-            return f"{path}?fields=*,{','.join(expensive)}"
+        all_extra = extra_list + expensive
+        if all_extra:
+            return f"{path}?fields=*,{','.join(all_extra)}"
         return f"{path}?fields=*"
 
     @property
