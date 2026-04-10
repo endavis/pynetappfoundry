@@ -63,7 +63,7 @@ def _gather_lock_data(
         cluster_config = ClusterConfig(**details)
         client = ONTAPAPIClient(cluster=cluster_config, config=config)
 
-        locks_data: list[OntapClientLock] = QuerySet(OntapClientLock, client).all()
+        locks_data: list[OntapClientLock] = QuerySet(OntapClientLock, client, config=config).all()
 
         ws = wb.create_sheet(name)
         ws.append(["Volume", "Protocol", "Type", "Path", "Lock", "State", "IP Address"])
