@@ -825,9 +825,10 @@ class ClusterData:
                 )
 
             self.management_ip = ip
-            self.nodes = QuerySet(OntapNodeResponse, client).all()
-            self.svms = QuerySet(OntapSvm, client).all()
-            self.cifs_services = QuerySet(OntapCifsService, client).all()
+            config = self.app_instance.config
+            self.nodes = QuerySet(OntapNodeResponse, client, config=config).all()
+            self.svms = QuerySet(OntapSvm, client, config=config).all()
+            self.cifs_services = QuerySet(OntapCifsService, client, config=config).all()
         except Exception as e:
             print_error(f"Could not gather data from {self.name}: {e}")
 
