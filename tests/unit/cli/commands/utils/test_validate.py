@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 import pytest
 
@@ -11,6 +11,8 @@ from pynetappfoundry.cli.commands.utils.validate import (
     _validate_cluster,
     _validate_ssh,
 )
+from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
+from pynetappfoundry.models.ontap.storage.volumes.model import OntapVolume
 
 MODULE = "pynetappfoundry.cli.commands.utils.validate"
 
@@ -58,6 +60,11 @@ class TestValidateCluster:
         assert node_count == 2
         assert vol_count == 5
         assert success is True
+
+        assert mock_qs_cls.call_args_list == [
+            call(OntapNodeResponse, mock_client, config=mock_config),
+            call(OntapVolume, mock_client, config=mock_config),
+        ]
 
     @patch(f"{MODULE}.print_warning")
     @patch(f"{MODULE}.QuerySet")

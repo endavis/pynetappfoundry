@@ -105,8 +105,8 @@ def _validate_cluster(
         response = client.call_endpoint("/cluster")
         cluster_name = response.get("name", "") if isinstance(response, dict) else ""
 
-        node_count = QuerySet(OntapNodeResponse, client).count()
-        vol_count = QuerySet(OntapVolume, client).count()
+        node_count = QuerySet(OntapNodeResponse, client, config=config).count()
+        vol_count = QuerySet(OntapVolume, client, config=config).count()
 
         print_success("  API: Connected successfully")
         success = True
