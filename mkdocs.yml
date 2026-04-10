@@ -69,6 +69,7 @@ nav:
   - Usage:
       - Basics: usage/basics.md
       - ONTAP Access Patterns: usage/ontap-access-patterns.md
+      - DataSource: usage/data-source.md
       - Query Layer: usage/query-layer.md
       - Compliance Checks: usage/compliance-checks.md
   - Reference:

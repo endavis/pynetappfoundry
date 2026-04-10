@@ -141,7 +141,7 @@ This ADR is Phase 1 of a four-phase plan. The full plan is in issue #495.
 
 ### Links to Documentation
 
-The user-facing guide for `DataSource` (`docs/usage/data-source.md`) does **not** exist yet — it will be created in Phase 4. This ADR will be updated with the doc link when that PR lands.
+- [DataSource User Guide](../usage/data-source.md) — comprehensive guide covering `DataSource.query()`, `DataSource.get()`, source modes, `QueryBuilder` chaining (`.filter()`, `.where()`, `.fields()`), and common patterns.
 
 ## Related Issues
 
