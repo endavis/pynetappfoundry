@@ -50,9 +50,9 @@ String filter expressions beyond equality land via `DataSource.QueryBuilder.wher
 
 `DataSource` accepts `source="auto" | "cache" | "live"` on every read:
 
-- `auto` (default) honors the per-field `cache_strategy` declared on `FieldMapping`.
-- `cache` raises if asked for a `realtime` field.
-- `live` bypasses the cache entirely.
+- `auto` (default) honors the per-field `cache_strategy` declared on `FieldMapping`. If the cache returns no results, automatically retries with live routing (cache-miss fallback, issue #528). The fallback excludes derived fields (cache-only) and is skipped when `.where()` expressions are present.
+- `cache` raises if asked for a `realtime` field. No fallback on empty results.
+- `live` bypasses the cache entirely. No fallback.
 
 The CLI `--live` flag from issue #472 becomes a passthrough to `source="live"`, which generalizes the existing narrow override to every read path.
 

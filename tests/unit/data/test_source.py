@@ -90,7 +90,8 @@ class TestDataSourceGet:
         ds._backends["ontap"] = fake_backend
 
         ds.get(FakeVolume, cluster="prod1", id="abc-123")
-        identifier = fake_backend.get.call_args.args[4]
+        # Check the first call (cache path) for identifier normalization.
+        identifier = fake_backend.get.call_args_list[0].args[4]
         assert identifier == {"uuid": "abc-123"}
 
     def test_get_normalizes_dict_id_for_composite_key_model(
@@ -196,7 +197,8 @@ class TestDataSourceQuery:
         ds._backends["ontap"] = fake_backend
 
         list(ds.query(FakeVolume, cluster="prod1").filter({"svm.name": "vs1"}, name="vol1"))
-        filters_arg = fake_backend.query.call_args.args[4]
+        # Check the first call (cache path) for filter merging.
+        filters_arg = fake_backend.query.call_args_list[0].args[4]
         assert filters_arg == {"svm.name": "vs1", "name": "vol1"}
 
 
@@ -309,3 +311,137 @@ class TestRealOntapVolumeRouting:
         )
 
         assert ONTAPVOLUME_MAPPING.identifier_field == "uuid"
+
+
+class TestAutoFallback:
+    """Tests for source="auto" cache-miss → live fallback."""
+
+    def test_query_auto_cache_hit_no_fallback(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        """When cache returns data, no live call is made."""
+        ds = DataSource(mock_config)
+        fake_backend = MagicMock()
+        fake_backend.query.return_value = [FakeVolume(uuid="u1")]
+        ds._backends["ontap"] = fake_backend
+
+        results = list(ds.query(FakeVolume, cluster="prod1"))
+
+        assert len(results) == 1
+        assert fake_backend.query.call_count == 1
+
+    def test_query_auto_cache_miss_falls_back_to_live(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        """When cache returns empty, retries with live routing."""
+        ds = DataSource(mock_config)
+        fake_backend = MagicMock()
+        live_vol = FakeVolume(uuid="live1")
+        # First call (cache) returns empty, second call (live) returns data.
+        fake_backend.query.side_effect = [[], [live_vol]]
+        ds._backends["ontap"] = fake_backend
+
+        results = list(ds.query(FakeVolume, cluster="prod1"))
+
+        assert results == [live_vol]
+        assert fake_backend.query.call_count == 2
+        # Second call should use a live routing decision (no cache_fields).
+        second_decision = fake_backend.query.call_args_list[1].args[2]
+        assert not second_decision.cache_fields
+        assert second_decision.live_fields
+
+    def test_query_auto_cache_miss_live_also_empty(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        """When both cache and live return empty, result is empty."""
+        ds = DataSource(mock_config)
+        fake_backend = MagicMock()
+        fake_backend.query.side_effect = [[], []]
+        ds._backends["ontap"] = fake_backend
+
+        results = list(ds.query(FakeVolume, cluster="prod1"))
+
+        assert results == []
+        assert fake_backend.query.call_count == 2
+
+    def test_query_auto_with_where_no_fallback(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        """When where_expressions present, cache empty does NOT fall back."""
+        ds = DataSource(mock_config)
+        fake_backend = MagicMock()
+        fake_backend.query.return_value = []
+        ds._backends["ontap"] = fake_backend
+
+        results = list(ds.query(FakeVolume, cluster="prod1").where("size > 100"))
+
+        assert results == []
+        assert fake_backend.query.call_count == 1
+
+    def test_query_cache_mode_no_fallback(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        """source='cache' with empty result does NOT fall back to live."""
+        ds = DataSource(mock_config)
+        fake_backend = MagicMock()
+        fake_backend.query.return_value = []
+        ds._backends["ontap"] = fake_backend
+
+        results = list(ds.query(FakeVolume, cluster="prod1", source="cache"))
+
+        assert results == []
+        assert fake_backend.query.call_count == 1
+
+    def test_query_live_mode_no_cache_attempt(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        """source='live' goes directly to live, no fallback logic."""
+        ds = DataSource(mock_config)
+        fake_backend = MagicMock()
+        fake_backend.query.return_value = [FakeVolume(uuid="live1")]
+        ds._backends["ontap"] = fake_backend
+
+        # Use explicit non-derived fields to avoid ValueError on derived 'is_root'.
+        results = list(
+            ds.query(FakeVolume, cluster="prod1", source="live").fields("name", "uuid", "size")
+        )
+
+        assert len(results) == 1
+        assert fake_backend.query.call_count == 1
+        # The decision should have no cache_fields (live mode).
+        decision = fake_backend.query.call_args.args[2]
+        assert not decision.cache_fields
+
+    def test_get_auto_cache_miss_falls_back_to_live(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        """get() with auto: cache returns None → retries live."""
+        ds = DataSource(mock_config)
+        fake_backend = MagicMock()
+        live_vol = FakeVolume(uuid="abc-123", name="live-vol")
+        # First call (cache) returns None, second call (live) returns data.
+        fake_backend.get.side_effect = [None, live_vol]
+        ds._backends["ontap"] = fake_backend
+
+        result = ds.get(FakeVolume, cluster="prod1", id="abc-123")
+
+        assert result is live_vol
+        assert fake_backend.get.call_count == 2
+        # Second call should use a live routing decision.
+        second_decision = fake_backend.get.call_args_list[1].args[2]
+        assert not second_decision.cache_fields
+        assert second_decision.live_fields

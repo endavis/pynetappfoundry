@@ -175,9 +175,12 @@ Every `DataSource` method accepts a `source=` parameter that controls where data
 
 | Mode | Behavior | When to use |
 |------|----------|-------------|
-| `"auto"` (default) | Serves cached and derived fields from cache; fetches realtime and `requires_explicit_fetch` fields live only when explicitly named in `fields=` | General-purpose reads |
-| `"cache"` | Forces all requested fields through the cache; raises `ValueError` if any field is realtime-only | Fast, deterministic reads against local data |
-| `"live"` | Forces all requested fields through the live REST API; raises `ValueError` if any field is derived (derived fields exist only in cache) | Fresh data from the cluster, bypassing cache |
+| `"auto"` (default) | Serves cached and derived fields from cache; fetches realtime and `requires_explicit_fetch` fields live only when explicitly named in `fields=`. **If the cache returns no results, automatically retries with live routing** (cache-miss fallback). | General-purpose reads |
+| `"cache"` | Forces all requested fields through the cache; raises `ValueError` if any field is realtime-only. No fallback on empty results. | Fast, deterministic reads against local data |
+| `"live"` | Forces all requested fields through the live REST API; raises `ValueError` if any field is derived (derived fields exist only in cache). No fallback. | Fresh data from the cluster, bypassing cache |
+
+!!! note "Auto mode cache-miss fallback"
+    When `source="auto"` and the initial cache-routed request returns no results (`None` for `.get()`, empty list for `.query()`), DataSource transparently retries with live routing. This means callers get data regardless of whether the cache has been populated for a given cluster. The fallback is skipped when `.where()` expressions are present, since those are cache-only and cannot be evaluated on the live path.
 
 ```python
 # Default: auto-routing based on field metadata
