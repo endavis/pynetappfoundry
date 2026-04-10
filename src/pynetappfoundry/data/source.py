@@ -37,6 +37,14 @@ _BACKENDS: dict[str, type[Backend]] = {
 }
 
 
+def _field_strategy(mapping: TypeMapping, cache_attr: str) -> str | None:
+    """Return the ``cache_strategy`` for *cache_attr*, or ``None`` if unknown."""
+    for f in mapping.fields:
+        if f.cache_attr == cache_attr:
+            return f.cache_strategy
+    return None
+
+
 class DataSource:
     """Unified accessor for model instances across cache and live API.
 
@@ -159,7 +167,18 @@ class DataSource:
         identifier = self._normalize_identifier(mapping, id)
         backend = self._get_backend(mapping.api_type)
         decision = decide_path(mapping, fields, source)
-        return backend.get(model_class, mapping, decision, cluster, identifier)
+        result = backend.get(model_class, mapping, decision, cluster, identifier)
+        # Cache-miss fallback: if auto routed to cache and got nothing, try live.
+        # Pass the cache_fields explicitly so derived fields are excluded
+        # (derived fields cannot be fetched live and would raise ValueError).
+        if result is None and source == "auto" and decision.cache_fields:
+            live_fields = [
+                f for f in decision.cache_fields if _field_strategy(mapping, f) != "derived"
+            ]
+            if live_fields:
+                live_decision = decide_path(mapping, live_fields, "live")
+                result = backend.get(model_class, mapping, live_decision, cluster, identifier)
+        return result
 
     def query(
         self,
@@ -272,4 +291,27 @@ class QueryBuilder[T: BaseModel]:
             self._filters,
             where_expressions=tuple(self._where_expressions),
         )
+        # Cache-miss fallback: if auto routed to cache and got nothing, try live.
+        # Skip if where_expressions are present (cache-only, would raise on live).
+        # Pass the cache_fields explicitly so derived fields are excluded
+        # (derived fields cannot be fetched live and would raise ValueError).
+        if (
+            not results
+            and self._source_mode == "auto"
+            and decision.cache_fields
+            and not self._where_expressions
+        ):
+            live_fields = [
+                f for f in decision.cache_fields if _field_strategy(self._mapping, f) != "derived"
+            ]
+            if live_fields:
+                live_decision = decide_path(self._mapping, live_fields, "live")
+                results = backend.query(
+                    self._model_class,
+                    self._mapping,
+                    live_decision,
+                    self._cluster,
+                    self._filters,
+                    where_expressions=(),
+                )
         return iter(results)
