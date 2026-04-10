@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Any
 
 import click
+from pydantic import BaseModel
 from rich.console import Console
 from rich.table import Table
 
@@ -26,9 +27,36 @@ from pynetappfoundry.cache import ClusterMetadataDB
 from pynetappfoundry.cache.query_engine import parse_filter
 from pynetappfoundry.cli.utils import print_error, print_exception, print_warning
 from pynetappfoundry.core.config import Config
+from pynetappfoundry.data._routing import SourceMode
+from pynetappfoundry.data.source import DataSource
 from pynetappfoundry.utils.dict_path import get_nested_value
 
 console = Console()
+
+
+def _resolve_model_class(metadata_path: str) -> type[BaseModel]:
+    """Resolve a metadata path (e.g. ``"storage.volumes"``) to its Pydantic model class.
+
+    Uses the table registry built from ``CachedClusterMetadata`` field definitions.
+
+    Args:
+        metadata_path: Dot-path from CachedClusterMetadata root.
+
+    Returns:
+        The Pydantic model class for the given path.
+
+    Raises:
+        ValueError: If the path is not found in the registry.
+    """
+    from pynetappfoundry.cache.db_schema import _ensure_registry
+
+    registry = _ensure_registry()
+    spec = registry.get(metadata_path)
+    if spec is None:
+        available = ", ".join(sorted(registry.keys()))
+        msg = f"Unknown model name: '{metadata_path}'. Available models: {available}"
+        raise ValueError(msg)
+    return spec.model_class
 
 
 def _extract_where_fields(where_exprs: tuple[str, ...]) -> list[str]:
@@ -248,6 +276,15 @@ def _format_display(value: Any) -> str:
     is_flag=True,
     help="Only print match count per cluster.",
 )
+@click.option(
+    "--live",
+    "live",
+    is_flag=True,
+    default=False,
+    help=(
+        "Bypass the cache and fetch data live from each cluster. Cannot be combined with --where."
+    ),
+)
 @click.pass_context
 def check(
     ctx: click.Context,
@@ -260,6 +297,7 @@ def check(
     output_json: bool,
     output_csv: bool,
     output_count: bool,
+    live: bool = False,
 ) -> None:
     """Query cached model data with filtering.
 
@@ -302,6 +340,14 @@ def check(
     config_path = Path.cwd() / config_dir
     if not config_path.exists():
         print_error(f"Configuration directory not found: {config_path}")
+        ctx.exit(2)
+
+    # --live and --where are mutually exclusive
+    if live and where_exprs:
+        print_error(
+            "--live and --where cannot be used together. "
+            "SQL-like filter expressions are only supported on cached data."
+        )
         ctx.exit(2)
 
     # When --all or --filter is used, Click parses the first positional arg
@@ -370,20 +416,31 @@ def check(
     if fields_str:
         fields = [f.strip() for f in fields_str.split(",") if f.strip()]
 
+    # Resolve model class from metadata path
+    try:
+        model_class = _resolve_model_class(effective_model)
+    except ValueError as e:
+        print_error(str(e))
+        db.close()
+        ctx.exit(2)
+
+    # Build DataSource for query routing
+    source: SourceMode = "live" if live else "cache"
+    ds = DataSource(config)
+
     # Query each cluster
     all_rows: dict[str, list[dict[str, Any]]] = {}
     total_matches = 0
 
     for name in cluster_names:
         try:
-            results = db.query_with_filters(name, effective_model, list(where_exprs))
+            builder = ds.query(model_class, cluster=name, source=source)
+            if where_exprs:
+                builder = builder.where(*where_exprs)
+            results = list(builder)
         except ValueError as e:
             error_msg = str(e)
-            if "Unknown model name" in error_msg:
-                available = ", ".join(sorted(db._registry.keys()))
-                print_error(f"{error_msg}. Available models: {available}")
-            else:
-                print_error(error_msg)
+            print_error(error_msg)
             db.close()
             ctx.exit(2)
 

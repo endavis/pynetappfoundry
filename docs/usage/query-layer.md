@@ -146,6 +146,8 @@ total = QuerySet(OntapVolume, client).filter(state="online").count()
 !!! note "Server-side filter vs. cache query engine"
     For complex predicates (`autosize.mode != 'grow_shrink'`, ranges, NOT, OR), the cache SQL query engine — used by `nf cache check` and `nf cache compliance` — is usually a better fit because it operates on the local SQLite cache without round-tripping to the cluster. `QuerySet` is the right tool when you want live data, single-cluster access, and the simple equality / wildcard semantics that ONTAP REST exposes natively.
 
+    `nf cache check` also supports a `--live` flag that bypasses the cache and fetches data directly from each cluster via `DataSource(source="live")`. Note that `--live` and `--where` are mutually exclusive — SQL-like filter expressions are only supported on cached data.
+
 ## Mutation Writes
 
 `Mutation` wraps the same `TypeMapping` to translate flat model-attribute kwargs into the nested JSON body that ONTAP REST expects.

@@ -17,6 +17,13 @@ from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
 from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
 
 
+def _make_lazy_mock(metadata: CachedClusterMetadata) -> MagicMock:
+    """Create a mock LazyClusterMetadata that returns a model_dump from the metadata."""
+    lazy = MagicMock()
+    lazy.model_dump.return_value = metadata.model_dump()
+    return lazy
+
+
 class TestCacheQueryCommand:
     """Tests for nf cache query command."""
 
@@ -73,7 +80,7 @@ base_api_path = "/api"
     ) -> None:
         """Test querying a single field from a single cluster."""
         mock_db = MagicMock()
-        mock_db.get.return_value = sample_metadata
+        mock_db.get_lazy.return_value = _make_lazy_mock(sample_metadata)
         mock_db_class.return_value = mock_db
 
         result = runner.invoke(
@@ -95,7 +102,7 @@ base_api_path = "/api"
     ) -> None:
         """Test querying multiple fields from a single cluster."""
         mock_db = MagicMock()
-        mock_db.get.return_value = sample_metadata
+        mock_db.get_lazy.return_value = _make_lazy_mock(sample_metadata)
         mock_db_class.return_value = mock_db
 
         result = runner.invoke(
@@ -139,7 +146,9 @@ base_api_path = "/api"
             cached_at=datetime(2024, 1, 15, tzinfo=UTC),
             cloud=[CloudMetadata(provider="Azure", instance_type="Standard_D4s_v3")],
         )
-        mock_db.get.side_effect = lambda name: metadata1 if name == "cluster1" else metadata2
+        mock_db.get_lazy.side_effect = lambda name: (
+            _make_lazy_mock(metadata1) if name == "cluster1" else _make_lazy_mock(metadata2)
+        )
         mock_db_class.return_value = mock_db
 
         result = runner.invoke(
@@ -173,7 +182,7 @@ base_api_path = "/api"
             cached_at=datetime(2024, 1, 15, tzinfo=UTC),
             cloud=[CloudMetadata(provider="AWS", region="us-east-1")],
         )
-        mock_db.get.return_value = metadata
+        mock_db.get_lazy.return_value = _make_lazy_mock(metadata)
         mock_db_class.return_value = mock_db
 
         result = runner.invoke(
@@ -205,7 +214,7 @@ base_api_path = "/api"
     ) -> None:
         """Test JSON output format."""
         mock_db = MagicMock()
-        mock_db.get.return_value = sample_metadata
+        mock_db.get_lazy.return_value = _make_lazy_mock(sample_metadata)
         mock_db_class.return_value = mock_db
 
         result = runner.invoke(
@@ -235,7 +244,7 @@ base_api_path = "/api"
     ) -> None:
         """Test raw output format."""
         mock_db = MagicMock()
-        mock_db.get.return_value = sample_metadata
+        mock_db.get_lazy.return_value = _make_lazy_mock(sample_metadata)
         mock_db_class.return_value = mock_db
 
         result = runner.invoke(
@@ -286,7 +295,7 @@ base_api_path = "/api"
     ) -> None:
         """Test querying array elements by index."""
         mock_db = MagicMock()
-        mock_db.get.return_value = sample_metadata
+        mock_db.get_lazy.return_value = _make_lazy_mock(sample_metadata)
         mock_db_class.return_value = mock_db
 
         result = runner.invoke(
@@ -307,7 +316,7 @@ base_api_path = "/api"
     ) -> None:
         """Test error when field path doesn't exist."""
         mock_db = MagicMock()
-        mock_db.get.return_value = sample_metadata
+        mock_db.get_lazy.return_value = _make_lazy_mock(sample_metadata)
         mock_db_class.return_value = mock_db
 
         result = runner.invoke(
@@ -327,7 +336,7 @@ base_api_path = "/api"
     ) -> None:
         """Test error when cluster doesn't exist in cache."""
         mock_db = MagicMock()
-        mock_db.get.return_value = None
+        mock_db.get_lazy.return_value = None
         mock_db_class.return_value = mock_db
 
         result = runner.invoke(
@@ -403,7 +412,7 @@ base_api_path = "/api"
             cached_at=datetime(2024, 1, 15, tzinfo=UTC),
             cloud=[CloudMetadata(provider="AWS", region="us-east-1")],
         )
-        mock_db.get.return_value = metadata
+        mock_db.get_lazy.return_value = _make_lazy_mock(metadata)
         mock_db_class.return_value = mock_db
 
         # With --all, both positional args should be treated as fields
@@ -509,7 +518,7 @@ base_api_path = "/api"
     ) -> None:
         """Test JSON output with multiple fields."""
         mock_db = MagicMock()
-        mock_db.get.return_value = sample_metadata
+        mock_db.get_lazy.return_value = _make_lazy_mock(sample_metadata)
         mock_db_class.return_value = mock_db
 
         result = runner.invoke(
@@ -547,7 +556,7 @@ base_api_path = "/api"
     ) -> None:
         """Test raw output with multiple fields (one value per line)."""
         mock_db = MagicMock()
-        mock_db.get.return_value = sample_metadata
+        mock_db.get_lazy.return_value = _make_lazy_mock(sample_metadata)
         mock_db_class.return_value = mock_db
 
         result = runner.invoke(
@@ -578,7 +587,7 @@ base_api_path = "/api"
     ) -> None:
         """Test querying a boolean value."""
         mock_db = MagicMock()
-        mock_db.get.return_value = sample_metadata
+        mock_db.get_lazy.return_value = _make_lazy_mock(sample_metadata)
         mock_db_class.return_value = mock_db
 
         result = runner.invoke(
@@ -607,7 +616,7 @@ base_api_path = "/api"
     ) -> None:
         """Test querying nested array with multiple indices."""
         mock_db = MagicMock()
-        mock_db.get.return_value = sample_metadata
+        mock_db.get_lazy.return_value = _make_lazy_mock(sample_metadata)
         mock_db_class.return_value = mock_db
 
         result = runner.invoke(
@@ -635,7 +644,7 @@ base_api_path = "/api"
     ) -> None:
         """Test querying all array elements with wildcard [*] syntax."""
         mock_db = MagicMock()
-        mock_db.get.return_value = sample_metadata
+        mock_db.get_lazy.return_value = _make_lazy_mock(sample_metadata)
         mock_db_class.return_value = mock_db
 
         result = runner.invoke(
@@ -659,7 +668,7 @@ base_api_path = "/api"
     ) -> None:
         """Test wildcard query with JSON output."""
         mock_db = MagicMock()
-        mock_db.get.return_value = sample_metadata
+        mock_db.get_lazy.return_value = _make_lazy_mock(sample_metadata)
         mock_db_class.return_value = mock_db
 
         result = runner.invoke(
@@ -689,7 +698,7 @@ base_api_path = "/api"
     ) -> None:
         """Test wildcard query with raw output (one value per line)."""
         mock_db = MagicMock()
-        mock_db.get.return_value = sample_metadata
+        mock_db.get_lazy.return_value = _make_lazy_mock(sample_metadata)
         mock_db_class.return_value = mock_db
 
         result = runner.invoke(
@@ -719,7 +728,7 @@ base_api_path = "/api"
     ) -> None:
         """Test wildcard query for serial numbers."""
         mock_db = MagicMock()
-        mock_db.get.return_value = sample_metadata
+        mock_db.get_lazy.return_value = _make_lazy_mock(sample_metadata)
         mock_db_class.return_value = mock_db
 
         result = runner.invoke(
@@ -749,7 +758,7 @@ base_api_path = "/api"
     ) -> None:
         """Test CSV output format with single cluster."""
         mock_db = MagicMock()
-        mock_db.get.return_value = sample_metadata
+        mock_db.get_lazy.return_value = _make_lazy_mock(sample_metadata)
         mock_db_class.return_value = mock_db
 
         result = runner.invoke(
@@ -795,7 +804,9 @@ base_api_path = "/api"
             cached_at=datetime(2024, 1, 15, tzinfo=UTC),
             cloud=[CloudMetadata(provider="Azure", region="eastus")],
         )
-        mock_db.get.side_effect = lambda name: metadata1 if name == "cluster1" else metadata2
+        mock_db.get_lazy.side_effect = lambda name: (
+            _make_lazy_mock(metadata1) if name == "cluster1" else _make_lazy_mock(metadata2)
+        )
         mock_db_class.return_value = mock_db
 
         result = runner.invoke(
@@ -828,7 +839,7 @@ base_api_path = "/api"
     ) -> None:
         """Test CSV output with wildcard expands to multiple rows."""
         mock_db = MagicMock()
-        mock_db.get.return_value = sample_metadata
+        mock_db.get_lazy.return_value = _make_lazy_mock(sample_metadata)
         mock_db_class.return_value = mock_db
 
         result = runner.invoke(
@@ -861,7 +872,7 @@ base_api_path = "/api"
     ) -> None:
         """Test CSV output formats boolean values correctly."""
         mock_db = MagicMock()
-        mock_db.get.return_value = sample_metadata
+        mock_db.get_lazy.return_value = _make_lazy_mock(sample_metadata)
         mock_db_class.return_value = mock_db
 
         result = runner.invoke(
@@ -896,7 +907,7 @@ base_api_path = "/api"
             cached_at=datetime(2024, 1, 15, tzinfo=UTC),
             cloud=[CloudMetadata(provider="AWS", region="")],
         )
-        mock_db.get.return_value = metadata
+        mock_db.get_lazy.return_value = _make_lazy_mock(metadata)
         mock_db_class.return_value = mock_db
 
         result = runner.invoke(
@@ -928,7 +939,7 @@ base_api_path = "/api"
     ) -> None:
         """Test that nested dicts display as indented JSON in default output."""
         mock_db = MagicMock()
-        mock_db.get.return_value = sample_metadata
+        mock_db.get_lazy.return_value = _make_lazy_mock(sample_metadata)
         mock_db_class.return_value = mock_db
 
         result = runner.invoke(
@@ -954,7 +965,7 @@ base_api_path = "/api"
     ) -> None:
         """Test that scalar values display inline in default output."""
         mock_db = MagicMock()
-        mock_db.get.return_value = sample_metadata
+        mock_db.get_lazy.return_value = _make_lazy_mock(sample_metadata)
         mock_db_class.return_value = mock_db
 
         result = runner.invoke(
@@ -985,7 +996,7 @@ base_api_path = "/api"
     ) -> None:
         """Test that --raw output still uses compact JSON for dicts."""
         mock_db = MagicMock()
-        mock_db.get.return_value = sample_metadata
+        mock_db.get_lazy.return_value = _make_lazy_mock(sample_metadata)
         mock_db_class.return_value = mock_db
 
         result = runner.invoke(
@@ -1007,3 +1018,154 @@ base_api_path = "/api"
         parsed = json.loads(output)
         assert parsed["provider"] == "AWS"
         assert parsed["region"] == "us-east-1"
+
+    # ------------------------------------------------------------------
+    # --live flag tests
+    # ------------------------------------------------------------------
+
+    @patch("pynetappfoundry.cli.commands.cache.query._fetch_live_groups")
+    @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
+    def test_live_basic(
+        self,
+        mock_db_class: MagicMock,
+        mock_fetch_live: MagicMock,
+        runner: CliRunner,
+        mock_config_dir: Path,
+    ) -> None:
+        """Test --live fetches data via _fetch_live_groups."""
+        mock_db = MagicMock()
+        mock_db_class.return_value = mock_db
+
+        mock_fetch_live.return_value = {
+            "cluster_name": "test-cluster",
+            "cloud": [{"provider": "AWS", "region": "us-east-1", "instance_type": "m5.xlarge"}],
+        }
+
+        result = runner.invoke(
+            nf,
+            [
+                "-c",
+                str(mock_config_dir),
+                "cache",
+                "query",
+                "test-cluster",
+                "cloud[0].provider",
+                "--live",
+            ],
+        )
+
+        assert result.exit_code == 0
+        assert "cloud[0].provider: AWS" in result.output
+        mock_fetch_live.assert_called_once()
+
+    @patch("pynetappfoundry.cli.commands.cache.query._fetch_live_groups")
+    @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
+    def test_live_many_groups_warning(
+        self,
+        mock_db_class: MagicMock,
+        mock_fetch_live: MagicMock,
+        runner: CliRunner,
+        mock_config_dir: Path,
+    ) -> None:
+        """Test --live emits warning when >3 field groups are requested."""
+        mock_db = MagicMock()
+        mock_db_class.return_value = mock_db
+
+        mock_fetch_live.return_value = {
+            "cluster_name": "test-cluster",
+            "cloud": [{"provider": "AWS"}],
+            "cluster": {"ontap_version": "9.14.1"},
+            "nodes": [{"name": "node-01"}],
+            "storage": {"volumes": []},
+        }
+
+        result = runner.invoke(
+            nf,
+            [
+                "-c",
+                str(mock_config_dir),
+                "cache",
+                "query",
+                "test-cluster",
+                "cloud[0].provider",
+                "cluster.ontap_version",
+                "nodes[0].name",
+                "storage.volumes",
+                "--live",
+            ],
+        )
+
+        assert result.exit_code == 0
+        assert "field groups" in result.output
+        assert "slow" in result.output
+
+    @patch("pynetappfoundry.cli.commands.cache.query._fetch_live_groups")
+    @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
+    def test_live_json_output(
+        self,
+        mock_db_class: MagicMock,
+        mock_fetch_live: MagicMock,
+        runner: CliRunner,
+        mock_config_dir: Path,
+    ) -> None:
+        """Test --live with JSON output."""
+        mock_db = MagicMock()
+        mock_db_class.return_value = mock_db
+
+        mock_fetch_live.return_value = {
+            "cluster_name": "test-cluster",
+            "cloud": [{"provider": "AWS", "region": "us-east-1", "instance_type": "m5.xlarge"}],
+        }
+
+        result = runner.invoke(
+            nf,
+            [
+                "-c",
+                str(mock_config_dir),
+                "cache",
+                "query",
+                "test-cluster",
+                "cloud[0].provider",
+                "--live",
+                "--json",
+            ],
+        )
+
+        assert result.exit_code == 0
+        output = json.loads(result.output)
+        assert output == {"test-cluster": {"cloud[0].provider": "AWS"}}
+
+    @patch("pynetappfoundry.cli.commands.cache.query._fetch_live_groups")
+    @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
+    def test_live_raw_output(
+        self,
+        mock_db_class: MagicMock,
+        mock_fetch_live: MagicMock,
+        runner: CliRunner,
+        mock_config_dir: Path,
+    ) -> None:
+        """Test --live with raw output."""
+        mock_db = MagicMock()
+        mock_db_class.return_value = mock_db
+
+        mock_fetch_live.return_value = {
+            "cluster_name": "test-cluster",
+            "cluster": {"ontap_version": "9.14.1"},
+        }
+
+        result = runner.invoke(
+            nf,
+            [
+                "-c",
+                str(mock_config_dir),
+                "cache",
+                "query",
+                "test-cluster",
+                "cluster.ontap_version",
+                "--live",
+                "--raw",
+            ],
+        )
+
+        assert result.exit_code == 0
+        assert result.output.strip() == "9.14.1"
