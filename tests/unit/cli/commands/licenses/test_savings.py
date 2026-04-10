@@ -83,6 +83,8 @@ class TestAnalyzeClusterSavings:
         _analyze_cluster_savings("cluster1", sample_details, mock_config)
 
         mock_console.print.assert_called_once()
+        # Verify config= is threaded to QuerySet (DataSource shim)
+        assert mock_qs_cls.call_args.kwargs.get("config") is mock_config
 
     @patch("pynetappfoundry.cli.commands.licenses.savings.console")
     @patch("pynetappfoundry.cli.commands.licenses.savings.QuerySet")

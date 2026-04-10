@@ -80,10 +80,12 @@ def _check_cluster_licenses(
         client = ONTAPAPIClient(cluster=cluster_config, config=config)
 
         packages: list[OntapLicensePackageResponse] = QuerySet(
-            OntapLicensePackageResponse, client
+            OntapLicensePackageResponse, client, config=config
         ).all()
 
-        nodes_response: list[OntapNodeResponse] = QuerySet(OntapNodeResponse, client).all()
+        nodes_response: list[OntapNodeResponse] = QuerySet(
+            OntapNodeResponse, client, config=config
+        ).all()
 
         nodes_data: dict[str, dict[str, Any]] = {}
         for node in nodes_response:
