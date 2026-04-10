@@ -297,7 +297,7 @@ def check(
     output_json: bool,
     output_csv: bool,
     output_count: bool,
-    live: bool,
+    live: bool = False,
 ) -> None:
     """Query cached model data with filtering.
 

@@ -306,7 +306,7 @@ def query(
     output_json: bool,
     raw: bool,
     output_csv: bool,
-    live: bool,
+    live: bool = False,
 ) -> None:
     """Query specific fields from cached cluster metadata.
 
