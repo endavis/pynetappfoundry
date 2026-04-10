@@ -247,6 +247,9 @@ nf cache query --all cloud.instance_type
 
 # Query with filtering
 nf cache query -f '{"env":"Prod"}' cluster.ontap_version
+
+# Bypass cache and fetch live data
+nf cache query cluster1 cloud.provider --live
 ```
 
 ### License Reporting

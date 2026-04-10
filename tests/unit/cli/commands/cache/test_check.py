@@ -62,18 +62,35 @@ base_api_path = "/api"
             ),
         ]
 
+    @pytest.fixture
+    def mock_builder(self) -> MagicMock:
+        """Create a mock QueryBuilder."""
+        builder = MagicMock()
+        builder.where.return_value = builder
+        return builder
+
+    @patch("pynetappfoundry.cli.commands.cache.check.DataSource")
+    @patch("pynetappfoundry.cli.commands.cache.check._resolve_model_class")
     @patch("pynetappfoundry.cli.commands.cache.check.ClusterMetadataDB")
     def test_single_cluster_with_where(
         self,
         mock_db_class: MagicMock,
+        mock_resolve: MagicMock,
+        mock_ds_class: MagicMock,
         runner: CliRunner,
         mock_config_dir: Path,
         sample_nodes: list[OntapNodeResponse],
+        mock_builder: MagicMock,
     ) -> None:
         """Test single cluster query with --where filter returns matching results."""
         mock_db = MagicMock()
-        mock_db.query_with_filters.return_value = sample_nodes[:2]
         mock_db_class.return_value = mock_db
+        mock_resolve.return_value = OntapNodeResponse
+
+        mock_builder.__iter__ = MagicMock(return_value=iter(sample_nodes[:2]))
+        mock_ds = MagicMock()
+        mock_ds.query.return_value = mock_builder
+        mock_ds_class.return_value = mock_ds
 
         result = runner.invoke(
             nf,
@@ -90,14 +107,19 @@ base_api_path = "/api"
         )
 
         assert result.exit_code == 1  # matches found
-        mock_db.query_with_filters.assert_called_once_with(
-            "test-cluster", "nodes", ["model_ = 'FAS8200'"]
+        mock_ds.query.assert_called_once_with(
+            OntapNodeResponse, cluster="test-cluster", source="cache"
         )
+        mock_builder.where.assert_called_once_with("model_ = 'FAS8200'")
 
+    @patch("pynetappfoundry.cli.commands.cache.check.DataSource")
+    @patch("pynetappfoundry.cli.commands.cache.check._resolve_model_class")
     @patch("pynetappfoundry.cli.commands.cache.check.ClusterMetadataDB")
     def test_all_queries_multiple_clusters(
         self,
         mock_db_class: MagicMock,
+        mock_resolve: MagicMock,
+        mock_ds_class: MagicMock,
         runner: CliRunner,
         mock_config_dir: Path,
         sample_nodes: list[OntapNodeResponse],
@@ -108,11 +130,20 @@ base_api_path = "/api"
             {"cluster_name": "cluster1"},
             {"cluster_name": "cluster2"},
         ]
-        mock_db.query_with_filters.side_effect = [
-            sample_nodes[:1],
-            sample_nodes[1:2],
-        ]
         mock_db_class.return_value = mock_db
+        mock_resolve.return_value = OntapNodeResponse
+
+        # Each query call returns a new builder
+        builder1 = MagicMock()
+        builder1.where.return_value = builder1
+        builder1.__iter__ = MagicMock(return_value=iter(sample_nodes[:1]))
+        builder2 = MagicMock()
+        builder2.where.return_value = builder2
+        builder2.__iter__ = MagicMock(return_value=iter(sample_nodes[1:2]))
+
+        mock_ds = MagicMock()
+        mock_ds.query.side_effect = [builder1, builder2]
+        mock_ds_class.return_value = mock_ds
 
         result = runner.invoke(
             nf,
@@ -129,20 +160,31 @@ base_api_path = "/api"
         )
 
         assert result.exit_code == 1
-        assert mock_db.query_with_filters.call_count == 2
+        assert mock_ds.query.call_count == 2
 
+    @patch("pynetappfoundry.cli.commands.cache.check.DataSource")
+    @patch("pynetappfoundry.cli.commands.cache.check._resolve_model_class")
     @patch("pynetappfoundry.cli.commands.cache.check.ClusterMetadataDB")
     def test_fields_projection(
         self,
         mock_db_class: MagicMock,
+        mock_resolve: MagicMock,
+        mock_ds_class: MagicMock,
         runner: CliRunner,
         mock_config_dir: Path,
         sample_nodes: list[OntapNodeResponse],
     ) -> None:
         """Test --fields projects only requested fields."""
         mock_db = MagicMock()
-        mock_db.query_with_filters.return_value = sample_nodes[:1]
         mock_db_class.return_value = mock_db
+        mock_resolve.return_value = OntapNodeResponse
+
+        builder = MagicMock()
+        builder.where.return_value = builder
+        builder.__iter__ = MagicMock(return_value=iter(sample_nodes[:1]))
+        mock_ds = MagicMock()
+        mock_ds.query.return_value = builder
+        mock_ds_class.return_value = mock_ds
 
         result = runner.invoke(
             nf,
@@ -162,18 +204,29 @@ base_api_path = "/api"
         assert "node-01" in result.output
         assert "SN001" in result.output
 
+    @patch("pynetappfoundry.cli.commands.cache.check.DataSource")
+    @patch("pynetappfoundry.cli.commands.cache.check._resolve_model_class")
     @patch("pynetappfoundry.cli.commands.cache.check.ClusterMetadataDB")
     def test_json_output(
         self,
         mock_db_class: MagicMock,
+        mock_resolve: MagicMock,
+        mock_ds_class: MagicMock,
         runner: CliRunner,
         mock_config_dir: Path,
         sample_nodes: list[OntapNodeResponse],
     ) -> None:
         """Test --json output is valid JSON."""
         mock_db = MagicMock()
-        mock_db.query_with_filters.return_value = [sample_nodes[0]]
         mock_db_class.return_value = mock_db
+        mock_resolve.return_value = OntapNodeResponse
+
+        builder = MagicMock()
+        builder.where.return_value = builder
+        builder.__iter__ = MagicMock(return_value=iter([sample_nodes[0]]))
+        mock_ds = MagicMock()
+        mock_ds.query.return_value = builder
+        mock_ds_class.return_value = mock_ds
 
         result = runner.invoke(
             nf,
@@ -196,18 +249,29 @@ base_api_path = "/api"
         assert output["test-cluster"][0]["name"] == "node-01"
         assert output["test-cluster"][0]["uuid"] == "00000000-0000-0000-0000-000000000001"
 
+    @patch("pynetappfoundry.cli.commands.cache.check.DataSource")
+    @patch("pynetappfoundry.cli.commands.cache.check._resolve_model_class")
     @patch("pynetappfoundry.cli.commands.cache.check.ClusterMetadataDB")
     def test_csv_output(
         self,
         mock_db_class: MagicMock,
+        mock_resolve: MagicMock,
+        mock_ds_class: MagicMock,
         runner: CliRunner,
         mock_config_dir: Path,
         sample_nodes: list[OntapNodeResponse],
     ) -> None:
         """Test --csv output has header and data rows."""
         mock_db = MagicMock()
-        mock_db.query_with_filters.return_value = [sample_nodes[0]]
         mock_db_class.return_value = mock_db
+        mock_resolve.return_value = OntapNodeResponse
+
+        builder = MagicMock()
+        builder.where.return_value = builder
+        builder.__iter__ = MagicMock(return_value=iter([sample_nodes[0]]))
+        mock_ds = MagicMock()
+        mock_ds.query.return_value = builder
+        mock_ds_class.return_value = mock_ds
 
         result = runner.invoke(
             nf,
@@ -229,18 +293,29 @@ base_api_path = "/api"
         assert lines[0] == "cluster,name,serial_number"
         assert "test-cluster,node-01,SN001" in lines[1]
 
+    @patch("pynetappfoundry.cli.commands.cache.check.DataSource")
+    @patch("pynetappfoundry.cli.commands.cache.check._resolve_model_class")
     @patch("pynetappfoundry.cli.commands.cache.check.ClusterMetadataDB")
     def test_count_output(
         self,
         mock_db_class: MagicMock,
+        mock_resolve: MagicMock,
+        mock_ds_class: MagicMock,
         runner: CliRunner,
         mock_config_dir: Path,
         sample_nodes: list[OntapNodeResponse],
     ) -> None:
         """Test --count outputs match count per cluster."""
         mock_db = MagicMock()
-        mock_db.query_with_filters.return_value = sample_nodes[:2]
         mock_db_class.return_value = mock_db
+        mock_resolve.return_value = OntapNodeResponse
+
+        builder = MagicMock()
+        builder.where.return_value = builder
+        builder.__iter__ = MagicMock(return_value=iter(sample_nodes[:2]))
+        mock_ds = MagicMock()
+        mock_ds.query.return_value = builder
+        mock_ds_class.return_value = mock_ds
 
         result = runner.invoke(
             nf,
@@ -258,17 +333,28 @@ base_api_path = "/api"
         assert result.exit_code == 1  # matches found
         assert "test-cluster: 2" in result.output
 
+    @patch("pynetappfoundry.cli.commands.cache.check.DataSource")
+    @patch("pynetappfoundry.cli.commands.cache.check._resolve_model_class")
     @patch("pynetappfoundry.cli.commands.cache.check.ClusterMetadataDB")
     def test_exit_code_0_no_matches(
         self,
         mock_db_class: MagicMock,
+        mock_resolve: MagicMock,
+        mock_ds_class: MagicMock,
         runner: CliRunner,
         mock_config_dir: Path,
     ) -> None:
         """Test exit code 0 when no matches found."""
         mock_db = MagicMock()
-        mock_db.query_with_filters.return_value = []
         mock_db_class.return_value = mock_db
+        mock_resolve.return_value = OntapNodeResponse
+
+        builder = MagicMock()
+        builder.where.return_value = builder
+        builder.__iter__ = MagicMock(return_value=iter([]))
+        mock_ds = MagicMock()
+        mock_ds.query.return_value = builder
+        mock_ds_class.return_value = mock_ds
 
         result = runner.invoke(
             nf,
@@ -286,18 +372,29 @@ base_api_path = "/api"
 
         assert result.exit_code == 0
 
+    @patch("pynetappfoundry.cli.commands.cache.check.DataSource")
+    @patch("pynetappfoundry.cli.commands.cache.check._resolve_model_class")
     @patch("pynetappfoundry.cli.commands.cache.check.ClusterMetadataDB")
     def test_exit_code_1_matches_found(
         self,
         mock_db_class: MagicMock,
+        mock_resolve: MagicMock,
+        mock_ds_class: MagicMock,
         runner: CliRunner,
         mock_config_dir: Path,
         sample_nodes: list[OntapNodeResponse],
     ) -> None:
         """Test exit code 1 when matches found."""
         mock_db = MagicMock()
-        mock_db.query_with_filters.return_value = [sample_nodes[0]]
         mock_db_class.return_value = mock_db
+        mock_resolve.return_value = OntapNodeResponse
+
+        builder = MagicMock()
+        builder.where.return_value = builder
+        builder.__iter__ = MagicMock(return_value=iter([sample_nodes[0]]))
+        mock_ds = MagicMock()
+        mock_ds.query.return_value = builder
+        mock_ds_class.return_value = mock_ds
 
         result = runner.invoke(
             nf,
@@ -313,18 +410,21 @@ base_api_path = "/api"
 
         assert result.exit_code == 1
 
+    @patch("pynetappfoundry.cli.commands.cache.check._resolve_model_class")
     @patch("pynetappfoundry.cli.commands.cache.check.ClusterMetadataDB")
     def test_exit_code_2_invalid_model_name(
         self,
         mock_db_class: MagicMock,
+        mock_resolve: MagicMock,
         runner: CliRunner,
         mock_config_dir: Path,
     ) -> None:
         """Test exit code 2 on invalid model name."""
         mock_db = MagicMock()
-        mock_db.query_with_filters.side_effect = ValueError("Unknown model name: 'invalid.model'")
-        mock_db._registry = {"nodes": None, "storage.volumes": None}
         mock_db_class.return_value = mock_db
+        mock_resolve.side_effect = ValueError(
+            "Unknown model name: 'invalid.model'. Available models: nodes, storage.volumes"
+        )
 
         result = runner.invoke(
             nf,
@@ -342,18 +442,29 @@ base_api_path = "/api"
         assert "Unknown model name" in result.output
         assert "Available models:" in result.output
 
+    @patch("pynetappfoundry.cli.commands.cache.check.DataSource")
+    @patch("pynetappfoundry.cli.commands.cache.check._resolve_model_class")
     @patch("pynetappfoundry.cli.commands.cache.check.ClusterMetadataDB")
     def test_multiple_where_filters_and_joined(
         self,
         mock_db_class: MagicMock,
+        mock_resolve: MagicMock,
+        mock_ds_class: MagicMock,
         runner: CliRunner,
         mock_config_dir: Path,
         sample_nodes: list[OntapNodeResponse],
     ) -> None:
         """Test multiple --where expressions are AND-joined."""
         mock_db = MagicMock()
-        mock_db.query_with_filters.return_value = [sample_nodes[0]]
         mock_db_class.return_value = mock_db
+        mock_resolve.return_value = OntapNodeResponse
+
+        builder = MagicMock()
+        builder.where.return_value = builder
+        builder.__iter__ = MagicMock(return_value=iter([sample_nodes[0]]))
+        mock_ds = MagicMock()
+        mock_ds.query.return_value = builder
+        mock_ds_class.return_value = mock_ds
 
         result = runner.invoke(
             nf,
@@ -372,9 +483,8 @@ base_api_path = "/api"
         )
 
         assert result.exit_code == 1
-        mock_db.query_with_filters.assert_called_once_with(
-            "test-cluster", "nodes", ["model_ = 'FAS8200'", "state = 'up'"]
-        )
+        mock_builder = mock_ds.query.return_value
+        mock_builder.where.assert_called_once_with("model_ = 'FAS8200'", "state = 'up'")
 
     def test_no_cluster_selection_error(
         self,
@@ -391,18 +501,29 @@ base_api_path = "/api"
         # This should trigger a Click missing argument error or our validation.
         assert result.exit_code == 2
 
+    @patch("pynetappfoundry.cli.commands.cache.check.DataSource")
+    @patch("pynetappfoundry.cli.commands.cache.check._resolve_model_class")
     @patch("pynetappfoundry.cli.commands.cache.check.ClusterMetadataDB")
     def test_default_fields_include_name_uuid_where(
         self,
         mock_db_class: MagicMock,
+        mock_resolve: MagicMock,
+        mock_ds_class: MagicMock,
         runner: CliRunner,
         mock_config_dir: Path,
         sample_nodes: list[OntapNodeResponse],
     ) -> None:
         """Test default fields include name, uuid, and where field paths."""
         mock_db = MagicMock()
-        mock_db.query_with_filters.return_value = [sample_nodes[0]]
         mock_db_class.return_value = mock_db
+        mock_resolve.return_value = OntapNodeResponse
+
+        builder = MagicMock()
+        builder.where.return_value = builder
+        builder.__iter__ = MagicMock(return_value=iter([sample_nodes[0]]))
+        mock_ds = MagicMock()
+        mock_ds.query.return_value = builder
+        mock_ds_class.return_value = mock_ds
 
         result = runner.invoke(
             nf,
@@ -424,12 +545,16 @@ base_api_path = "/api"
         assert "uuid" in result.output
         assert "model_" in result.output
 
+    @patch("pynetappfoundry.cli.commands.cache.check.DataSource")
+    @patch("pynetappfoundry.cli.commands.cache.check._resolve_model_class")
     @patch("pynetappfoundry.cli.commands.cache.check.Config")
     @patch("pynetappfoundry.cli.commands.cache.check.ClusterMetadataDB")
     def test_filter_cluster_selection(
         self,
         mock_db_class: MagicMock,
         mock_config_class: MagicMock,
+        mock_resolve: MagicMock,
+        mock_ds_class: MagicMock,
         runner: CliRunner,
         mock_config_dir: Path,
         sample_nodes: list[OntapNodeResponse],
@@ -440,8 +565,15 @@ base_api_path = "/api"
         mock_config_class.return_value = mock_config
 
         mock_db = MagicMock()
-        mock_db.query_with_filters.return_value = [sample_nodes[0]]
         mock_db_class.return_value = mock_db
+        mock_resolve.return_value = OntapNodeResponse
+
+        builder = MagicMock()
+        builder.where.return_value = builder
+        builder.__iter__ = MagicMock(return_value=iter([sample_nodes[0]]))
+        mock_ds = MagicMock()
+        mock_ds.query.return_value = builder
+        mock_ds_class.return_value = mock_ds
 
         result = runner.invoke(
             nf,
@@ -459,19 +591,32 @@ base_api_path = "/api"
         )
 
         assert result.exit_code == 1
-        mock_db.query_with_filters.assert_called_once_with("prod-cluster", "nodes", [])
+        mock_ds.query.assert_called_once_with(
+            OntapNodeResponse, cluster="prod-cluster", source="cache"
+        )
 
+    @patch("pynetappfoundry.cli.commands.cache.check.DataSource")
+    @patch("pynetappfoundry.cli.commands.cache.check._resolve_model_class")
     @patch("pynetappfoundry.cli.commands.cache.check.ClusterMetadataDB")
     def test_count_zero_matches(
         self,
         mock_db_class: MagicMock,
+        mock_resolve: MagicMock,
+        mock_ds_class: MagicMock,
         runner: CliRunner,
         mock_config_dir: Path,
     ) -> None:
         """Test --count with zero matches gives exit code 0."""
         mock_db = MagicMock()
-        mock_db.query_with_filters.return_value = []
         mock_db_class.return_value = mock_db
+        mock_resolve.return_value = OntapNodeResponse
+
+        builder = MagicMock()
+        builder.where.return_value = builder
+        builder.__iter__ = MagicMock(return_value=iter([]))
+        mock_ds = MagicMock()
+        mock_ds.query.return_value = builder
+        mock_ds_class.return_value = mock_ds
 
         result = runner.invoke(
             nf,
@@ -512,10 +657,14 @@ base_api_path = "/api"
         assert result.exit_code == 2
         assert "not found" in result.output
 
+    @patch("pynetappfoundry.cli.commands.cache.check.DataSource")
+    @patch("pynetappfoundry.cli.commands.cache.check._resolve_model_class")
     @patch("pynetappfoundry.cli.commands.cache.check.ClusterMetadataDB")
     def test_empty_cache_with_all(
         self,
         mock_db_class: MagicMock,
+        mock_resolve: MagicMock,
+        mock_ds_class: MagicMock,
         runner: CliRunner,
         mock_config_dir: Path,
     ) -> None:
@@ -531,3 +680,166 @@ base_api_path = "/api"
 
         assert result.exit_code == 0
         assert "No cached clusters" in result.output
+
+    # ------------------------------------------------------------------
+    # --live flag tests
+    # ------------------------------------------------------------------
+
+    @patch("pynetappfoundry.cli.commands.cache.check.DataSource")
+    @patch("pynetappfoundry.cli.commands.cache.check._resolve_model_class")
+    @patch("pynetappfoundry.cli.commands.cache.check.ClusterMetadataDB")
+    def test_live_basic(
+        self,
+        mock_db_class: MagicMock,
+        mock_resolve: MagicMock,
+        mock_ds_class: MagicMock,
+        runner: CliRunner,
+        mock_config_dir: Path,
+        sample_nodes: list[OntapNodeResponse],
+    ) -> None:
+        """Test --live routes through DataSource with source='live'."""
+        mock_db = MagicMock()
+        mock_db_class.return_value = mock_db
+        mock_resolve.return_value = OntapNodeResponse
+
+        builder = MagicMock()
+        builder.where.return_value = builder
+        builder.__iter__ = MagicMock(return_value=iter([sample_nodes[0]]))
+        mock_ds = MagicMock()
+        mock_ds.query.return_value = builder
+        mock_ds_class.return_value = mock_ds
+
+        result = runner.invoke(
+            nf,
+            [
+                "-c",
+                str(mock_config_dir),
+                "cache",
+                "check",
+                "test-cluster",
+                "nodes",
+                "--live",
+                "-F",
+                "name,uuid",
+            ],
+        )
+
+        assert result.exit_code == 1
+        mock_ds.query.assert_called_once_with(
+            OntapNodeResponse, cluster="test-cluster", source="live"
+        )
+
+    def test_live_where_mutual_exclusivity(
+        self,
+        runner: CliRunner,
+        mock_config_dir: Path,
+    ) -> None:
+        """Test --live and --where cannot be combined."""
+        result = runner.invoke(
+            nf,
+            [
+                "-c",
+                str(mock_config_dir),
+                "cache",
+                "check",
+                "test-cluster",
+                "nodes",
+                "--live",
+                "-w",
+                "state = 'up'",
+            ],
+        )
+
+        assert result.exit_code == 2
+        assert "--live and --where cannot be used together" in result.output
+
+    @patch("pynetappfoundry.cli.commands.cache.check.DataSource")
+    @patch("pynetappfoundry.cli.commands.cache.check._resolve_model_class")
+    @patch("pynetappfoundry.cli.commands.cache.check.ClusterMetadataDB")
+    def test_live_with_all(
+        self,
+        mock_db_class: MagicMock,
+        mock_resolve: MagicMock,
+        mock_ds_class: MagicMock,
+        runner: CliRunner,
+        mock_config_dir: Path,
+        sample_nodes: list[OntapNodeResponse],
+    ) -> None:
+        """Test --live combined with --all queries all clusters live."""
+        mock_db = MagicMock()
+        mock_db.list_clusters.return_value = [
+            {"cluster_name": "cluster1"},
+            {"cluster_name": "cluster2"},
+        ]
+        mock_db_class.return_value = mock_db
+        mock_resolve.return_value = OntapNodeResponse
+
+        builder1 = MagicMock()
+        builder1.__iter__ = MagicMock(return_value=iter([sample_nodes[0]]))
+        builder2 = MagicMock()
+        builder2.__iter__ = MagicMock(return_value=iter([sample_nodes[1]]))
+
+        mock_ds = MagicMock()
+        mock_ds.query.side_effect = [builder1, builder2]
+        mock_ds_class.return_value = mock_ds
+
+        result = runner.invoke(
+            nf,
+            [
+                "-c",
+                str(mock_config_dir),
+                "cache",
+                "check",
+                "--all",
+                "nodes",
+                "--live",
+                "-F",
+                "name",
+            ],
+        )
+
+        assert result.exit_code == 1
+        assert mock_ds.query.call_count == 2
+        # Both calls should use source="live"
+        for call in mock_ds.query.call_args_list:
+            assert call.kwargs["source"] == "live"
+
+    @patch("pynetappfoundry.cli.commands.cache.check.DataSource")
+    @patch("pynetappfoundry.cli.commands.cache.check._resolve_model_class")
+    @patch("pynetappfoundry.cli.commands.cache.check.ClusterMetadataDB")
+    def test_live_with_count(
+        self,
+        mock_db_class: MagicMock,
+        mock_resolve: MagicMock,
+        mock_ds_class: MagicMock,
+        runner: CliRunner,
+        mock_config_dir: Path,
+        sample_nodes: list[OntapNodeResponse],
+    ) -> None:
+        """Test --live combined with --count works correctly."""
+        mock_db = MagicMock()
+        mock_db_class.return_value = mock_db
+        mock_resolve.return_value = OntapNodeResponse
+
+        builder = MagicMock()
+        builder.__iter__ = MagicMock(return_value=iter(sample_nodes[:2]))
+        mock_ds = MagicMock()
+        mock_ds.query.return_value = builder
+        mock_ds_class.return_value = mock_ds
+
+        result = runner.invoke(
+            nf,
+            [
+                "-c",
+                str(mock_config_dir),
+                "cache",
+                "check",
+                "test-cluster",
+                "nodes",
+                "--live",
+                "--count",
+            ],
+        )
+
+        assert result.exit_code == 1
+        assert "test-cluster: 2" in result.output

@@ -5,6 +5,8 @@ from __future__ import annotations
 import csv
 import io
 import json
+import re
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -12,6 +14,7 @@ import click
 from rich.console import Console
 
 from pynetappfoundry.cache import ClusterMetadataDB
+from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cli.utils import (
     format_value_markup,
     print_error,
@@ -19,6 +22,7 @@ from pynetappfoundry.cli.utils import (
     print_warning,
 )
 from pynetappfoundry.core.config import Config
+from pynetappfoundry.data.source import DataSource
 from pynetappfoundry.utils.dict_path import PathNotFoundError, get_nested_value
 
 console = Console()
@@ -150,6 +154,106 @@ def _output_csv(
     return output.getvalue().rstrip("\r\n")
 
 
+def _extract_field_groups(fields: tuple[str, ...]) -> set[str]:
+    """Extract the top-level field group from each field path.
+
+    The first path segment (before ``.`` or ``[``) identifies the field
+    group on ``CachedClusterMetadata``.
+
+    Args:
+        fields: Field path strings (e.g. ``"nodes[0].name"``).
+
+    Returns:
+        Set of unique top-level group names.
+    """
+    groups: set[str] = set()
+    for field in fields:
+        head = re.split(r"[.\[]", field, maxsplit=1)[0]
+        groups.add(head)
+    return groups
+
+
+def _fetch_live_groups(
+    config: Config,
+    cluster: str,
+    field_groups: set[str],
+) -> dict[str, Any]:
+    """Fetch field groups live via DataSource and assemble a dict.
+
+    Each group is resolved via the table registry. Groups with a
+    ``TypeMapping`` are fetched through ``DataSource.query(source="live")``;
+    groups without one are skipped with a warning.
+
+    Args:
+        config: Application config.
+        cluster: Cluster name.
+        field_groups: Set of top-level field group names to fetch.
+
+    Returns:
+        Dict compatible with ``get_nested_value()`` walking (mirrors
+        the shape of ``CachedClusterMetadata.model_dump()``).
+    """
+    from pynetappfoundry.cache.db_schema import _ensure_registry
+
+    registry = _ensure_registry()
+    ds = DataSource(config)
+    data: dict[str, Any] = {
+        "cluster_name": cluster,
+        "cached_at": datetime.now(tz=UTC).isoformat(),
+    }
+
+    for group in field_groups:
+        # Find all registry entries belonging to this group
+        group_entries = [
+            (path, spec)
+            for path, spec in registry.items()
+            if path == group or path.startswith(f"{group}.")
+        ]
+        if not group_entries:
+            # Envelope/non-data field — skip silently
+            continue
+
+        group_data: dict[str, Any] = {}
+        for path, spec in group_entries:
+            mapping = model_registry.get_mapping(spec.model_class.__name__)
+            if mapping is None:
+                print_warning(
+                    f"Field group '{path}' cannot be fetched live (no TypeMapping); skipping."
+                )
+                continue
+
+            try:
+                results = list(ds.query(spec.model_class, cluster=cluster, source="live"))
+            except ValueError as e:
+                print_warning(f"Cannot fetch '{path}' live: {e}")
+                continue
+
+            # Build nested structure under group_data
+            relative = path[len(group) :].lstrip(".")
+            dumped: Any
+            if spec.is_list:
+                dumped = [r.model_dump() for r in results]
+            else:
+                dumped = results[0].model_dump() if results else {}
+
+            if relative:
+                _set_nested(group_data, relative, dumped)
+            else:
+                group_data = dumped
+
+        data[group] = group_data
+
+    return data
+
+
+def _set_nested(target: dict[str, Any], dotted_path: str, value: Any) -> None:
+    """Set a value in a nested dict via dot-path, creating intermediate dicts."""
+    parts = dotted_path.split(".")
+    for part in parts[:-1]:
+        target = target.setdefault(part, {})
+    target[parts[-1]] = value
+
+
 @click.command()
 @click.argument("cluster", required=False)
 @click.argument("fields", nargs=-1)
@@ -182,6 +286,16 @@ def _output_csv(
     is_flag=True,
     help="Output as CSV with header row.",
 )
+@click.option(
+    "--live",
+    "live",
+    is_flag=True,
+    default=False,
+    help=(
+        "Bypass the cache and fetch data live from each cluster. "
+        "Only the requested field groups are fetched."
+    ),
+)
 @click.pass_context
 def query(
     ctx: click.Context,
@@ -192,6 +306,7 @@ def query(
     output_json: bool,
     raw: bool,
     output_csv: bool,
+    live: bool,
 ) -> None:
     """Query specific fields from cached cluster metadata.
 
@@ -303,17 +418,30 @@ def query(
             ctx.exit(0)
         cluster_names = list(filtered.keys())
 
+    # Warn if --live requests many field groups
+    if live:
+        field_groups = _extract_field_groups(effective_fields)
+        if len(field_groups) > 3:
+            print_warning(
+                f"--live is fetching {len(field_groups)} field groups "
+                f"({', '.join(sorted(field_groups))}); this may be slow."
+            )
+
     # Query each cluster
     results: dict[str, dict[str, Any]] = {}
     errors: list[str] = []
 
     for name in cluster_names:
-        metadata = db.get(name)
-        if not metadata:
-            print_warning(f"No cached data for cluster '{name}', skipping.")
-            continue
+        if live:
+            live_groups = _extract_field_groups(effective_fields)
+            data = _fetch_live_groups(config, name, live_groups)
+        else:
+            metadata = db.get_lazy(name)
+            if not metadata:
+                print_warning(f"No cached data for cluster '{name}', skipping.")
+                continue
+            data = metadata.model_dump()
 
-        data = metadata.model_dump()
         cluster_results: dict[str, Any] = {}
 
         for field in effective_fields:
