@@ -49,7 +49,7 @@ def _analyze_cluster_savings(
         client = ONTAPAPIClient(cluster=cluster_config, config=config)
 
         packages: list[OntapLicensePackageResponse] = QuerySet(
-            OntapLicensePackageResponse, client
+            OntapLicensePackageResponse, client, config=config
         ).all()
 
         table = Table(title=f"License Usage for {name}")

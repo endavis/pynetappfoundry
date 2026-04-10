@@ -100,6 +100,9 @@ class TestCheckClusterLicenses:
         assert len(issues) == 1
         assert issues[0]["error"] == "Expiring license"
         assert issues[0]["days_checked"] in (9, 10)
+        # Verify config= is threaded to QuerySet (DataSource shim)
+        for call in mock_qs_cls.call_args_list:
+            assert call.kwargs.get("config") is mock_config
 
     @patch("pynetappfoundry.cli.commands.licenses.check.QuerySet")
     @patch("pynetappfoundry.cli.commands.licenses.check.ONTAPAPIClient")
@@ -123,6 +126,9 @@ class TestCheckClusterLicenses:
         issues = _check_cluster_licenses("cluster1", sample_details, mock_config)
 
         assert len(issues) == 0
+        # Verify config= is threaded to QuerySet (DataSource shim)
+        for call in mock_qs_cls.call_args_list:
+            assert call.kwargs.get("config") is mock_config
 
     @patch("pynetappfoundry.cli.commands.licenses.check.QuerySet")
     @patch("pynetappfoundry.cli.commands.licenses.check.ONTAPAPIClient")
