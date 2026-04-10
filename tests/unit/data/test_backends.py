@@ -90,7 +90,7 @@ class TestOntapBackendGet:
         mock_client.get_all_records.assert_called_once()
         url = mock_client.get_all_records.call_args[0][0]
         assert "uuid=abc-123" in url
-        assert "fields=iops" in url
+        assert "fields=%2A" in url or "fields=*" in url
         parse_mock.assert_called_once()
         assert "iops" in result._fetched_fields  # type: ignore[union-attr]
 
@@ -564,7 +564,7 @@ class TestOntapBackendQueryPartial:
         url = mock_client.get_all_records.call_args[0][0]
         # urlencode quotes `|` as %7C
         assert "uuid=u1%7Cu2%7Cu3" in url
-        assert "fields=iops" in url
+        assert "fields=%2A" in url or "fields=*" in url
 
     def test_partial_query_identifier_extract_single_key(self) -> None:
         instances = [
@@ -868,3 +868,68 @@ class TestCountLive:
 
         url = mock_client.call_endpoint.call_args[0][0]
         assert "svm.name=vs1" in url
+
+
+class TestBuildLiveUrlFieldsStar:
+    """Tests for :meth:`OntapBackend._build_live_url` preserving ``fields=*``."""
+
+    def test_fields_star_preserved_when_base_endpoint_has_star(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        """When api_endpoint has ``fields=*``, _build_live_url must not
+        overwrite it with enumerated field names (#522)."""
+        backend = _make_backend(mock_config)
+        url = backend._build_live_url(
+            fake_volume_mapping,
+            params={"svm.name": "vs1"},
+            live_field_paths=("iops",),
+        )
+        # fields=* must survive; must NOT become fields=iops
+        assert "fields=%2A" in url or "fields=*" in url
+        assert "fields=iops" not in url
+        assert "svm.name=vs1" in url
+
+    def test_fields_enumerated_when_base_endpoint_has_no_star(
+        self,
+        mock_config: Any,
+    ) -> None:
+        """When api_endpoint does NOT have ``fields=*``, _build_live_url
+        must enumerate individual field api_paths as before."""
+        from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
+
+        mapping = TypeMapping(
+            name="NoStar",
+            model_class=FakeVolume,
+            api_endpoint="/storage/volumes",
+            api_type="ontap",
+            identifier_field="uuid",
+            fields=(
+                FieldMapping(cache_attr="uuid", cache_strategy="cache"),
+                FieldMapping(cache_attr="iops", cache_strategy="realtime"),
+            ),
+        )
+        backend = _make_backend(mock_config)
+        url = backend._build_live_url(
+            mapping,
+            params={},
+            live_field_paths=("iops",),
+        )
+        assert "fields=iops" in url
+
+    def test_fields_star_preserved_with_return_records_false(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        """Preserve ``fields=*`` even when return_records=False."""
+        backend = _make_backend(mock_config)
+        url = backend._build_live_url(
+            fake_volume_mapping,
+            params={},
+            live_field_paths=("iops",),
+            return_records=False,
+        )
+        assert "fields=%2A" in url or "fields=*" in url
+        assert "return_records=false" in url
