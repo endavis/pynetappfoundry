@@ -81,7 +81,12 @@ class DataSource:
 
     @staticmethod
     def _resolve_mapping(model_class: type[T]) -> TypeMapping:
-        mapping = model_registry.get_mapping(model_class.__name__)
+        # Use the class-keyed reverse index added in Phase 2 of ADR-0013
+        # (see ``_registry.ModelRegistry.get_mapping_by_model_class``).
+        # The name-keyed index would fail when a mapping's registered name
+        # does not match the Pydantic model class name — e.g., CLUSTER_MAPPING
+        # is registered as "Cluster" but the model class is ``ClusterInfo``.
+        mapping = model_registry.get_mapping_by_model_class(model_class)
         if mapping is None:
             msg = (
                 f"No TypeMapping registered for {model_class.__name__!r}. "
