@@ -16,6 +16,17 @@ Infrastructure (DB, collector, diff, registry) is imported from here::
 
 # Trigger mapping registration -- each sub-package __init__.py imports
 # its mapping.py which calls model_registry.register_mapping().
+# Walk the cache.ontap tree and import every mapping.py module so that
+# each TypeMapping calls model_registry.register_mapping() at import time.
+# The explicit sub-package imports above only load the model sub-modules;
+# without this walk, mapping.py modules that are not transitively imported
+# elsewhere would never register, and ``fetchers.fetch(model_class)`` /
+# ``DataSource._resolve_mapping(model_class)`` would fail at runtime with
+# "no TypeMapping registered for model class <...>".
+import importlib as _importlib
+import pkgutil as _pkgutil
+
+import pynetappfoundry.cache.ontap as _ontap_pkg
 import pynetappfoundry.cache.ontap.cloud.metadata
 import pynetappfoundry.cache.ontap.cloud.targets
 import pynetappfoundry.cache.ontap.cluster.licensing.licenses
@@ -43,10 +54,20 @@ import pynetappfoundry.cache.ontap.storage.snapshot_policies
 import pynetappfoundry.cache.ontap.storage.volumes
 import pynetappfoundry.cache.ontap.svm.peers
 import pynetappfoundry.cache.ontap.svm.svms  # noqa: F401
-from pynetappfoundry.cache._registry import model_registry as _reg
+
+for _modinfo in _pkgutil.walk_packages(
+    _ontap_pkg.__path__,
+    prefix="pynetappfoundry.cache.ontap.",
+):
+    if _modinfo.name.endswith(".mapping"):
+        _importlib.import_module(_modinfo.name)
+
+del _modinfo, _importlib, _pkgutil, _ontap_pkg
+
+from pynetappfoundry.cache._registry import model_registry as _reg  # noqa: E402
 
 # Apply package-default TOML overlay field strategies
-from pynetappfoundry.cache.overlay_loader import load_overlays as _load_overlays
+from pynetappfoundry.cache.overlay_loader import load_overlays as _load_overlays  # noqa: E402
 
 _load_overlays(_reg)
 del _load_overlays, _reg
