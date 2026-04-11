@@ -33,6 +33,7 @@ CLUSTER_MAPPING = TypeMapping(
     api_endpoint="/cluster?fields=*",
     cli_command="",
     id_field="name",
+    response_shape="singleton",
     fields=(
         FieldMapping(
             cache_attr="cluster_name",

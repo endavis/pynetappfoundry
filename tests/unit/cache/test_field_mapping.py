@@ -58,6 +58,15 @@ class TestFieldMapping:
         assert fm.requires_explicit_fetch is False
         assert fm.post_collection is None
 
+    def test_type_mapping_response_shape_default(self) -> None:
+        """TypeMapping.response_shape defaults to ``"envelope"`` (issue #541)."""
+        tm = TypeMapping(
+            name="X",
+            model_class=_SampleModel,
+            api_endpoint="/x",
+        )
+        assert tm.response_shape == "envelope"
+
     def test_with_all_fields(self) -> None:
         """All fields can be set."""
         tx = lambda r: r.get("x")  # noqa: E731

@@ -102,6 +102,13 @@ class TypeMapping:
             identifier; only ``query()`` works. A string declares a single-key
             identifier (e.g. ``"uuid"``); a tuple declares a composite key
             (e.g. ``("svm.name", "name")``).
+        response_shape: Shape of the API response for this endpoint.
+            ``"envelope"`` (default) means the endpoint returns a
+            ``{"records": [...]}`` envelope and uses ``get_all_records`` +
+            ``parse_api_response`` (pagination-aware). ``"singleton"`` means
+            the endpoint returns a single flat-dict object (e.g.
+            ``/cluster``) and uses ``call_endpoint`` (paginate=False) +
+            ``parse_api_record``.
     """
 
     name: str
@@ -115,6 +122,7 @@ class TypeMapping:
     parent_mapping: str | None = None
     parent_id_field: str | None = None
     identifier_field: str | tuple[str, ...] | None = None
+    response_shape: Literal["envelope", "singleton"] = "envelope"
 
     def api_expected_fields(self) -> list[str]:
         """Derive top-level API keys expected in a response record.
