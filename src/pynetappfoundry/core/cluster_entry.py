@@ -195,25 +195,32 @@ class ClusterEntry(MutableMapping[str, Any]):
         fetcher = self._build_fetcher()
 
         if self._cache_db_path.exists():
-            try:
-                from pynetappfoundry.cache.db import ClusterMetadataDB
+            from pynetappfoundry.cache.db import ClusterMetadataDB
 
-                db = ClusterMetadataDB(db_path=self._cache_db_path)
-                try:
-                    result = db.get_lazy(self._name)
-                    logging.debug(
-                        f"{_file_name} : loaded cache for {self._name}: "
-                        f"{'found' if result else 'not found'}"
-                    )
-                    # Attach fetcher so missing groups can be fetched live.
-                    if result is not None and fetcher is not None:
-                        result._fetcher = fetcher
-                    return result
-                finally:
-                    db.close()
+            db: ClusterMetadataDB | None = None
+            result: LazyClusterMetadata | None = None
+            try:
+                db = ClusterMetadataDB(db_path=self._cache_db_path, config=self._config)
+                result = db.get_lazy(self._name)
             except Exception as e:
+                if db is not None:
+                    db.close()
                 logging.debug(f"{_file_name} : could not load cache for {self._name}: {e}")
-                # Fall through to fetcher-only path below.
+                result = None
+            else:
+                logging.debug(
+                    f"{_file_name} : loaded cache for {self._name}: "
+                    f"{'found' if result else 'not found'}"
+                )
+            if result is not None:
+                # Attach fetcher so missing groups can be fetched live.
+                if fetcher is not None:
+                    result._fetcher = fetcher
+                return result  # caller owns the db via the shim
+            # No shim — close the db before falling through.
+            if db is not None:
+                db.close()
+            # Fall through to fetcher-only path below.
 
         # No cache DB (or DB load failed) — try fetcher-only mode.
         live = self._build_live_metadata(fetcher=fetcher)

@@ -147,7 +147,39 @@ class TestLazyLoading:
             result = entry.ontap
             assert result is mock_metadata
             mock_db_instance.get_lazy.assert_called_once_with("test-cluster")
-            mock_db_instance.close.assert_called_once()
+            # After fix: success path does NOT close db; shim owns the connection.
+            mock_db_instance.close.assert_not_called()
+
+    def test_cache_db_constructed_with_config(
+        self, sample_data: dict[str, Any], tmp_path: Path
+    ) -> None:
+        """ClusterMetadataDB is constructed with config= so get_lazy() works.
+
+        Regression for #548: previously the db was constructed without
+        ``config=``, causing ``get_lazy()`` to raise ``ValueError``. Also
+        verifies the db is NOT closed when a shim is returned, since the
+        shim shares the open connection.
+        """
+        cache_path = tmp_path / ".cache" / "cluster_metadata.db"
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        cache_path.touch()
+
+        mock_metadata = MagicMock()
+        mock_db_instance = MagicMock()
+        mock_db_instance.get_lazy.return_value = mock_metadata
+        mock_config = MagicMock()
+
+        with patch(
+            "pynetappfoundry.cache.db.ClusterMetadataDB",
+            return_value=mock_db_instance,
+        ) as mock_db:
+            entry = ClusterEntry("test-cluster", sample_data, cache_path, config=mock_config)
+            result = entry.ontap
+            assert result is mock_metadata
+            # Key assertion: BOTH db_path and config must be passed.
+            mock_db.assert_called_once_with(db_path=cache_path, config=mock_config)
+            # Db must NOT be closed: the shim owns the connection.
+            mock_db_instance.close.assert_not_called()
 
     def test_ontap_cached_on_second_access(
         self, sample_data: dict[str, Any], tmp_path: Path
@@ -302,6 +334,7 @@ class TestConfigAwareFetcher:
             entry = ClusterEntry("test-cluster", sample_data, cache_path, config=mock_config)
             result = entry.ontap
 
+            assert result is not None
             assert result is mock_metadata
             assert result._fetcher is mock_fetcher
 
@@ -363,6 +396,7 @@ class TestNoCacheBypass:
             result = entry.ontap
 
             mock_db_cls.assert_not_called()
+            assert result is not None
             assert isinstance(result, LazyClusterMetadata)
             assert result._db_path is None
             assert result._fetcher is mock_fetcher
