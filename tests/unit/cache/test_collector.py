@@ -12,7 +12,11 @@ from pydantic import BaseModel
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.collector import MetadataCollector
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.cluster.mapping import compute_is_ha
+from pynetappfoundry.cache.ontap.cluster.mapping import (
+    _is_cloud_node,
+    compute_is_cloud,
+    compute_is_ha,
+)
 from pynetappfoundry.cache.ontap.protocols.nfs.export_policies.mapping import (
     ONTAPEXPORTPOLICY_MAPPING,
 )
@@ -20,6 +24,7 @@ from pynetappfoundry.cache.ontap.storage.snapshot_policies.mapping import (
     ONTAPSNAPSHOTPOLICY_MAPPING,
 )
 from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
+from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
 
 
 class TestCollectorMappingEndpoints:
@@ -312,14 +317,161 @@ class TestClusterMappingIsHa:
     """Verify the is_ha derived field is declared on CLUSTER_MAPPING."""
 
     def test_cluster_mapping_has_is_ha_derived_field(self) -> None:
-        """CLUSTER_MAPPING declares is_ha as a derived field."""
+        """CLUSTER_MAPPING declares is_ha as a derived field with a node dependency."""
         from pynetappfoundry.cache.ontap.cluster.mapping import CLUSTER_MAPPING
 
         derived = CLUSTER_MAPPING.derived_fields()
-        assert len(derived) == 1
-        assert derived[0].cache_attr == "is_ha"
-        assert derived[0].cache_strategy == "derived"
-        assert derived[0].post_collection is compute_is_ha
+        by_attr = {f.cache_attr: f for f in derived}
+        assert "is_ha" in by_attr
+        field = by_attr["is_ha"]
+        assert field.cache_strategy == "derived"
+        assert field.post_collection is compute_is_ha
+        assert field.depends_on == (OntapNodeResponse,)
+
+    def test_cluster_mapping_has_is_cloud_derived_field(self) -> None:
+        """CLUSTER_MAPPING declares is_cloud as a derived field with a node dependency."""
+        from pynetappfoundry.cache.ontap.cluster.mapping import CLUSTER_MAPPING
+
+        derived = CLUSTER_MAPPING.derived_fields()
+        by_attr = {f.cache_attr: f for f in derived}
+        assert "is_cloud" in by_attr
+        field = by_attr["is_cloud"]
+        assert field.cache_strategy == "derived"
+        assert field.post_collection is compute_is_cloud
+        assert field.depends_on == (OntapNodeResponse,)
+
+
+# ---------------------------------------------------------------------------
+# _is_cloud_node / compute_is_cloud tests (issue #547)
+# ---------------------------------------------------------------------------
+
+
+class TestIsCloudNode:
+    """Truth table for :func:`_is_cloud_node`."""
+
+    def test_onprem_node_returns_false(self) -> None:
+        """FAS hardware with non-cloud serial is not cloud."""
+        node = OntapNodeResponse(name="fas", model_="FAS8200", serial_number="123456789")
+        assert _is_cloud_node(node) is False
+
+    def test_cvo_by_model_prefix(self) -> None:
+        """CDvM200 model is detected as cloud regardless of serial."""
+        node = OntapNodeResponse(name="cvo", model_="CDvM200", serial_number="")
+        assert _is_cloud_node(node) is True
+
+    def test_cvo_by_serial_prefix_ha(self) -> None:
+        """9092014* HA serial is detected as cloud regardless of model."""
+        node = OntapNodeResponse(name="cvo", model_="", serial_number="9092014567")
+        assert _is_cloud_node(node) is True
+
+    def test_cvo_by_serial_prefix_single(self) -> None:
+        """9092013* single-node serial is detected as cloud."""
+        node = OntapNodeResponse(name="cvo", model_="", serial_number="9092013001")
+        assert _is_cloud_node(node) is True
+
+    def test_both_populated_cvo(self) -> None:
+        """Both fields populated with CVO values is cloud."""
+        node = OntapNodeResponse(name="cvo", model_="CDvM200", serial_number="9092014567")
+        assert _is_cloud_node(node) is True
+
+    def test_both_empty_returns_false(self) -> None:
+        """Empty model + empty serial is not cloud."""
+        node = OntapNodeResponse(name="x", model_="", serial_number="")
+        assert _is_cloud_node(node) is False
+
+    def test_aff_hardware_returns_false(self) -> None:
+        """AFF hardware with on-prem serial is not cloud."""
+        node = OntapNodeResponse(name="aff", model_="AFF-A400", serial_number="721234567")
+        assert _is_cloud_node(node) is False
+
+
+class TestComputeIsCloud:
+    """Tests for the compute_is_cloud derived field function."""
+
+    def test_empty_nodes_returns_false(self) -> None:
+        """No nodes → is_cloud=False."""
+        cluster = ClusterInfo(cluster_name="test")
+        updated = compute_is_cloud(cluster, {"nodes": []})
+        assert updated.is_cloud is False
+
+    def test_all_onprem_returns_false(self) -> None:
+        """All on-prem nodes → is_cloud=False."""
+        cluster = ClusterInfo(cluster_name="test")
+        nodes = [
+            OntapNodeResponse(name="n1", model_="FAS8200", serial_number="721234"),
+            OntapNodeResponse(name="n2", model_="FAS8200", serial_number="721235"),
+        ]
+        updated = compute_is_cloud(cluster, {"nodes": nodes})
+        assert updated.is_cloud is False
+
+    def test_one_cvo_node_returns_true(self) -> None:
+        """Single CVO node → is_cloud=True."""
+        cluster = ClusterInfo(cluster_name="test")
+        nodes = [OntapNodeResponse(name="cvo", model_="CDvM200")]
+        updated = compute_is_cloud(cluster, {"nodes": nodes})
+        assert updated.is_cloud is True
+
+    def test_mixed_nodes_returns_true(self) -> None:
+        """Mixed set with any CVO node → is_cloud=True."""
+        cluster = ClusterInfo(cluster_name="test")
+        nodes = [
+            OntapNodeResponse(name="fas", model_="FAS8200"),
+            OntapNodeResponse(name="cvo", serial_number="9092014999"),
+        ]
+        updated = compute_is_cloud(cluster, {"nodes": nodes})
+        assert updated.is_cloud is True
+
+    def test_reads_registry_key_alias(self) -> None:
+        """compute_is_cloud reads either 'OntapNodeResponse' or 'nodes' key."""
+        cluster = ClusterInfo(cluster_name="test")
+        nodes = [OntapNodeResponse(name="cvo", model_="CDvM200")]
+        updated = compute_is_cloud(cluster, {"OntapNodeResponse": nodes})
+        assert updated.is_cloud is True
+
+    def test_preserves_other_fields(self) -> None:
+        """compute_is_cloud preserves other ClusterInfo fields."""
+        cluster = ClusterInfo(cluster_name="prod", ontap_version="9.14.1")
+        nodes = [OntapNodeResponse(name="cvo", model_="CDvM200")]
+        updated = compute_is_cloud(cluster, {"nodes": nodes})
+        assert updated.cluster_name == "prod"
+        assert updated.ontap_version == "9.14.1"
+        assert updated.is_cloud is True
+
+
+# ---------------------------------------------------------------------------
+# collect_cloud_metadata gating (issue #547)
+# ---------------------------------------------------------------------------
+
+
+class TestCollectCloudMetadataGate:
+    """Verify that collect_cloud_metadata gates on node cloud detection."""
+
+    def test_skips_when_no_nodes_in_cache(self) -> None:
+        """Empty nodes cache → skip CLI, return []."""
+        cli = MagicMock()
+        collector = MetadataCollector(api_client=MagicMock(), cli_client=cli)
+        collector._results_cache = {"nodes": []}
+        result = collector.collect_cloud_metadata()
+        assert result == []
+        cli.run_command.assert_not_called()
+
+    def test_skips_when_only_onprem_nodes(self) -> None:
+        """On-prem nodes only → skip CLI, return []."""
+        cli = MagicMock()
+        collector = MetadataCollector(api_client=MagicMock(), cli_client=cli)
+        collector._results_cache = {"nodes": [OntapNodeResponse(name="fas", model_="FAS8200")]}
+        result = collector.collect_cloud_metadata()
+        assert result == []
+        cli.run_command.assert_not_called()
+
+    def test_proceeds_when_cvo_node_present(self) -> None:
+        """Any CVO node → call into CLI path."""
+        cli = MagicMock()
+        cli.run_command.return_value = ""  # empty → parse_cli_records yields []
+        collector = MetadataCollector(api_client=MagicMock(), cli_client=cli)
+        collector._results_cache = {"nodes": [OntapNodeResponse(name="cvo", model_="CDvM200")]}
+        collector.collect_cloud_metadata()
+        cli.run_command.assert_called_once()
 
 
 # ---------------------------------------------------------------------------

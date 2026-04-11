@@ -18,12 +18,14 @@ on declared metadata:
 
 Post-collection hooks declared on :class:`FieldMapping` with
 ``cache_strategy="derived"`` are invoked against the fetched instances
-before return. The only cross-model hook dependency hardcoded here is
-``compute_is_ha``: when the resolved mapping is ``CLUSTER_MAPPING`` and
-no ``results_cache`` is supplied, this module recursively fetches
-:class:`OntapNodeResponse` to populate ``results["nodes"]``. A general
-``FieldMapping.depends_on=[...]`` mechanism is deferred (see ADR-0013 §5)
-until a second derived field with cross-model dependencies appears.
+before return. Cross-model dependencies are declared via
+``FieldMapping.depends_on=(<ModelClass>, ...)``: this module iterates
+every derived field's ``depends_on`` tuple and, for each dependency
+missing from the shared ``results_cache``, recursively calls
+:func:`fetch` to populate it. Results are keyed by the dependency's
+``__name__`` so callers that pre-populate the cache (e.g. the
+``MetadataCollector``) short-circuit the recursive fetch. See ADR-0013
+§5 for the full design.
 """
 
 from __future__ import annotations
@@ -252,11 +254,12 @@ def fetch[T: BaseModel](
         cli_client: Optional SSH/CLI client. Only consulted when the
             mapping declares ``cli_command`` (deferred to #532).
         results_cache: Optional shared results dict. When supplied it is
-            passed to every ``post_collection`` hook (so ``compute_is_ha``
-            can short-circuit to already-fetched nodes). When omitted and
-            the resolved mapping's derived fields depend on nodes, this
-            function recursively fetches :class:`OntapNodeResponse` to
-            populate ``results_cache["nodes"]``.
+            passed to every ``post_collection`` hook so derived-field
+            hooks can short-circuit to already-fetched dependencies.
+            When omitted (or when a dependency declared via
+            ``FieldMapping.depends_on`` is absent from the dict), this
+            function recursively fetches the dependency and stores it
+            under ``results_cache[dep_class.__name__]``.
         log_prefix: Prefix for log messages.
 
     Returns:
@@ -289,22 +292,27 @@ def fetch[T: BaseModel](
     # Prepare results_cache used by post-collection hooks.
     local_cache: dict[str, Any] = results_cache if results_cache is not None else {}
 
-    # Hardcoded cross-model dependency: compute_is_ha needs results["nodes"].
-    # See ADR-0013 §5 amendment — a general FieldMapping.depends_on=[...]
-    # mechanism will be added when a second derived field needs one.
-    if results_cache is None and "nodes" not in local_cache and _needs_nodes_dependency(mapping):
-        # Avoid a circular dependency: only import the node mapping's model
-        # class lazily when the hook actually needs it.
-        from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
-
-        nodes_result = fetch(
-            OntapNodeResponse,
-            cluster="",
-            config=None,
-            api_client=api_client,
-            log_prefix=log_prefix,
-        )
-        local_cache["nodes"] = nodes_result if isinstance(nodes_result, list) else [nodes_result]
+    # Generic cross-model dependency resolution driven by
+    # ``FieldMapping.depends_on``. For each derived-field hook, ensure
+    # every declared dependency is populated in ``local_cache`` under the
+    # dependency's ``__name__`` key before the hook runs. Callers that
+    # pre-populate the cache (e.g. ``MetadataCollector``) short-circuit
+    # this fan-out via the cache-hit check below. See ADR-0013 §5.
+    for field in mapping.derived_fields():
+        if field.post_collection is None or not field.depends_on:
+            continue
+        for dep_class in field.depends_on:
+            dep_key = dep_class.__name__
+            if dep_key in local_cache or _dep_has_legacy_key(local_cache, dep_class):
+                continue
+            dep_result = fetch(
+                dep_class,
+                cluster="",
+                config=None,
+                api_client=api_client,
+                log_prefix=log_prefix,
+            )
+            local_cache[dep_key] = dep_result if isinstance(dep_result, list) else [dep_result]
 
     # Fetch instances.
     if mapping.parent_mapping:
@@ -329,20 +337,20 @@ def fetch[T: BaseModel](
     return cast("list[T]", items)
 
 
-def _needs_nodes_dependency(mapping: TypeMapping) -> bool:
-    """Return True if any derived-field hook on ``mapping`` needs ``results['nodes']``.
+# Legacy ``results_cache`` keys preserved for pre-existing callers that
+# populated the shared dict under short aliases (e.g. the
+# ``MetadataCollector`` publishes nodes under ``"nodes"``).  Keeping this
+# map lets those call sites short-circuit the generic ``depends_on``
+# fan-out without churning every hook and collector in one PR.
+_LEGACY_DEP_KEYS: dict[str, str] = {
+    "OntapNodeResponse": "nodes",
+}
 
-    Phase 2 only recognizes ``compute_is_ha`` from
-    ``pynetappfoundry.cache.ontap.cluster.mapping``. A general mechanism
-    is deferred (ADR-0013 §5).
-    """
-    for field in mapping.derived_fields():
-        hook = field.post_collection
-        if hook is None:
-            continue
-        if getattr(hook, "__name__", "") == "compute_is_ha":
-            return True
-    return False
+
+def _dep_has_legacy_key(cache: dict[str, Any], dep_class: type[BaseModel]) -> bool:
+    """Return True when *cache* already holds a legacy alias for *dep_class*."""
+    legacy_key = _LEGACY_DEP_KEYS.get(dep_class.__name__)
+    return legacy_key is not None and legacy_key in cache
 
 
 def _results_key_for_parent(parent_mapping_name: str) -> str:

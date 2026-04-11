@@ -57,6 +57,7 @@ class TestFieldMapping:
         assert fm.cache_strategy == "cache"
         assert fm.requires_explicit_fetch is False
         assert fm.post_collection is None
+        assert fm.depends_on == ()
 
     def test_type_mapping_response_shape_default(self) -> None:
         """TypeMapping.response_shape defaults to ``"envelope"`` (issue #541)."""
@@ -106,6 +107,28 @@ class TestFieldMappingNewFields:
         fn = lambda x, r: x  # noqa: E731
         fm = FieldMapping(cache_attr="x", cache_strategy="derived", post_collection=fn)
         assert fm.post_collection is fn
+
+    def test_depends_on_default_empty_tuple(self) -> None:
+        """depends_on defaults to an empty tuple (no cross-model dependency)."""
+        fm = FieldMapping(cache_attr="x")
+        assert fm.depends_on == ()
+
+    def test_depends_on_accepts_model_classes(self) -> None:
+        """depends_on accepts a tuple of BaseModel subclasses."""
+        from pydantic import BaseModel
+
+        class DepAlpha(BaseModel):
+            pass
+
+        class DepBeta(BaseModel):
+            pass
+
+        fm = FieldMapping(
+            cache_attr="x",
+            cache_strategy="derived",
+            depends_on=(DepAlpha, DepBeta),
+        )
+        assert fm.depends_on == (DepAlpha, DepBeta)
 
 
 class TestTypeMappingIdentifierField:
