@@ -98,26 +98,26 @@ class TestComputeIsHa:
     def test_is_ha_true_multi_node(self) -> None:
         """2+ nodes sets is_ha=True."""
         cluster = ClusterInfo(cluster_name="test")
-        results: dict[str, Any] = {"nodes": ["node1", "node2"]}
+        results: dict[str, Any] = {"OntapNodeResponse": ["node1", "node2"]}
         updated = compute_is_ha(cluster, results)
         assert updated.is_ha is True
 
     def test_is_ha_false_single_node(self) -> None:
         """1 node sets is_ha=False."""
         cluster = ClusterInfo(cluster_name="test")
-        results: dict[str, Any] = {"nodes": ["node1"]}
+        results: dict[str, Any] = {"OntapNodeResponse": ["node1"]}
         updated = compute_is_ha(cluster, results)
         assert updated.is_ha is False
 
     def test_is_ha_false_no_nodes(self) -> None:
         """Empty nodes list sets is_ha=False."""
         cluster = ClusterInfo(cluster_name="test")
-        results: dict[str, Any] = {"nodes": []}
+        results: dict[str, Any] = {"OntapNodeResponse": []}
         updated = compute_is_ha(cluster, results)
         assert updated.is_ha is False
 
     def test_is_ha_false_missing_nodes_key(self) -> None:
-        """Missing 'nodes' key in results sets is_ha=False."""
+        """Missing 'OntapNodeResponse' key in results sets is_ha=False."""
         cluster = ClusterInfo(cluster_name="test")
         results: dict[str, Any] = {}
         updated = compute_is_ha(cluster, results)
@@ -126,7 +126,7 @@ class TestComputeIsHa:
     def test_preserves_other_fields(self) -> None:
         """compute_is_ha preserves other ClusterInfo fields."""
         cluster = ClusterInfo(cluster_name="prod", ontap_version="9.14.1")
-        results: dict[str, Any] = {"nodes": ["n1", "n2"]}
+        results: dict[str, Any] = {"OntapNodeResponse": ["n1", "n2"]}
         updated = compute_is_ha(cluster, results)
         assert updated.cluster_name == "prod"
         assert updated.ontap_version == "9.14.1"
@@ -391,7 +391,7 @@ class TestComputeIsCloud:
     def test_empty_nodes_returns_false(self) -> None:
         """No nodes → is_cloud=False."""
         cluster = ClusterInfo(cluster_name="test")
-        updated = compute_is_cloud(cluster, {"nodes": []})
+        updated = compute_is_cloud(cluster, {"OntapNodeResponse": []})
         assert updated.is_cloud is False
 
     def test_all_onprem_returns_false(self) -> None:
@@ -401,14 +401,14 @@ class TestComputeIsCloud:
             OntapNodeResponse(name="n1", model_="FAS8200", serial_number="721234"),
             OntapNodeResponse(name="n2", model_="FAS8200", serial_number="721235"),
         ]
-        updated = compute_is_cloud(cluster, {"nodes": nodes})
+        updated = compute_is_cloud(cluster, {"OntapNodeResponse": nodes})
         assert updated.is_cloud is False
 
     def test_one_cvo_node_returns_true(self) -> None:
         """Single CVO node → is_cloud=True."""
         cluster = ClusterInfo(cluster_name="test")
         nodes = [OntapNodeResponse(name="cvo", model_="CDvM200")]
-        updated = compute_is_cloud(cluster, {"nodes": nodes})
+        updated = compute_is_cloud(cluster, {"OntapNodeResponse": nodes})
         assert updated.is_cloud is True
 
     def test_mixed_nodes_returns_true(self) -> None:
@@ -418,11 +418,11 @@ class TestComputeIsCloud:
             OntapNodeResponse(name="fas", model_="FAS8200"),
             OntapNodeResponse(name="cvo", serial_number="9092014999"),
         ]
-        updated = compute_is_cloud(cluster, {"nodes": nodes})
+        updated = compute_is_cloud(cluster, {"OntapNodeResponse": nodes})
         assert updated.is_cloud is True
 
     def test_reads_registry_key_alias(self) -> None:
-        """compute_is_cloud reads either 'OntapNodeResponse' or 'nodes' key."""
+        """compute_is_cloud reads the 'OntapNodeResponse' key."""
         cluster = ClusterInfo(cluster_name="test")
         nodes = [OntapNodeResponse(name="cvo", model_="CDvM200")]
         updated = compute_is_cloud(cluster, {"OntapNodeResponse": nodes})
@@ -432,7 +432,7 @@ class TestComputeIsCloud:
         """compute_is_cloud preserves other ClusterInfo fields."""
         cluster = ClusterInfo(cluster_name="prod", ontap_version="9.14.1")
         nodes = [OntapNodeResponse(name="cvo", model_="CDvM200")]
-        updated = compute_is_cloud(cluster, {"nodes": nodes})
+        updated = compute_is_cloud(cluster, {"OntapNodeResponse": nodes})
         assert updated.cluster_name == "prod"
         assert updated.ontap_version == "9.14.1"
         assert updated.is_cloud is True
@@ -450,7 +450,7 @@ class TestCollectCloudMetadataGate:
         """Empty nodes cache → skip CLI, return []."""
         cli = MagicMock()
         collector = MetadataCollector(api_client=MagicMock(), cli_client=cli)
-        collector._results_cache = {"nodes": []}
+        collector._results_cache = {"OntapNodeResponse": []}
         result = collector.collect_cloud_metadata()
         assert result == []
         cli.run_command.assert_not_called()
@@ -459,7 +459,9 @@ class TestCollectCloudMetadataGate:
         """On-prem nodes only → skip CLI, return []."""
         cli = MagicMock()
         collector = MetadataCollector(api_client=MagicMock(), cli_client=cli)
-        collector._results_cache = {"nodes": [OntapNodeResponse(name="fas", model_="FAS8200")]}
+        collector._results_cache = {
+            "OntapNodeResponse": [OntapNodeResponse(name="fas", model_="FAS8200")]
+        }
         result = collector.collect_cloud_metadata()
         assert result == []
         cli.run_command.assert_not_called()
@@ -469,7 +471,9 @@ class TestCollectCloudMetadataGate:
         cli = MagicMock()
         cli.run_command.return_value = ""  # empty → parse_cli_records yields []
         collector = MetadataCollector(api_client=MagicMock(), cli_client=cli)
-        collector._results_cache = {"nodes": [OntapNodeResponse(name="cvo", model_="CDvM200")]}
+        collector._results_cache = {
+            "OntapNodeResponse": [OntapNodeResponse(name="cvo", model_="CDvM200")]
+        }
         collector.collect_cloud_metadata()
         cli.run_command.assert_called_once()
 

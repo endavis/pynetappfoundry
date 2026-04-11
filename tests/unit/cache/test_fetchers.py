@@ -112,7 +112,7 @@ class TestFetchSingleton:
             cluster="c1",
             config=None,
             api_client=client,
-            results_cache={"nodes": []},
+            results_cache={"OntapNodeResponse": []},
         )
         assert isinstance(result, ClusterInfo)
         assert result.cluster_name == "cluster1"
@@ -127,7 +127,7 @@ class TestFetchSingleton:
             cluster="c1",
             config=None,
             api_client=client,
-            results_cache={"nodes": []},
+            results_cache={"OntapNodeResponse": []},
         )
         called_url = client.call_endpoint.call_args[0][0]
         assert called_url == CLUSTER_MAPPING.build_collection_url()
@@ -142,7 +142,7 @@ class TestFetchSingleton:
             cluster="c1",
             config=None,
             api_client=client,
-            results_cache={"nodes": [node_a, node_b]},
+            results_cache={"OntapNodeResponse": [node_a, node_b]},
         )
         assert isinstance(result, ClusterInfo)
         assert result.is_ha is True
@@ -155,7 +155,7 @@ class TestFetchSingleton:
             cluster="c1",
             config=None,
             api_client=client,
-            results_cache={"nodes": [OntapNodeResponse(name="solo")]},
+            results_cache={"OntapNodeResponse": [OntapNodeResponse(name="solo")]},
         )
         assert isinstance(result, ClusterInfo)
         assert result.is_ha is False
@@ -169,7 +169,7 @@ class TestFetchSingleton:
             cluster="c1",
             config=None,
             api_client=client,
-            results_cache={"nodes": []},
+            results_cache={"OntapNodeResponse": []},
         )
         assert client.get_all_records.call_count == 0
 
@@ -215,7 +215,7 @@ class TestFetchSingleton:
             cluster="c1",
             config=None,
             api_client=client,
-            results_cache={"nodes": []},
+            results_cache={"OntapNodeResponse": []},
         )
         assert isinstance(result, ClusterInfo)
 
@@ -521,7 +521,7 @@ class TestFetchDoesNotPersist:
                 cluster="c1",
                 config=None,
                 api_client=client,
-                results_cache={"nodes": []},
+                results_cache={"OntapNodeResponse": []},
             )
             assert mock_set.call_count == 0
 

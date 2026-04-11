@@ -52,12 +52,12 @@ def compute_is_ha(cluster: ClusterInfo, results: dict[str, Any]) -> ClusterInfo:
 
     Args:
         cluster: The ClusterInfo instance to update.
-        results: Full collection results dict (needs ``"nodes"`` key).
+        results: Full collection results dict (needs ``"OntapNodeResponse"`` key).
 
     Returns:
         Updated ClusterInfo with ``is_ha`` set.
     """
-    nodes = results.get("OntapNodeResponse", results.get("nodes", []))
+    nodes = results.get("OntapNodeResponse", [])
     return cluster.model_copy(update={"is_ha": len(nodes) > 1})
 
 
@@ -69,12 +69,12 @@ def compute_is_cloud(cluster: ClusterInfo, results: dict[str, Any]) -> ClusterIn
 
     Args:
         cluster: The ClusterInfo instance to update.
-        results: Full collection results dict (needs ``"nodes"`` key).
+        results: Full collection results dict (needs ``"OntapNodeResponse"`` key).
 
     Returns:
         Updated ClusterInfo with ``is_cloud`` set.
     """
-    nodes = results.get("OntapNodeResponse", results.get("nodes", []))
+    nodes = results.get("OntapNodeResponse", [])
     return cluster.model_copy(update={"is_cloud": any(_is_cloud_node(n) for n in nodes)})
 
 
