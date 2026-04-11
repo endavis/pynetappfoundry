@@ -150,6 +150,11 @@ class DataSource:
     ) -> T | None:
         """Fetch one instance of *model_class* by identifier.
 
+        Internally this is a thin wrapper over
+        ``self.query(model_class, cluster=cluster, source=source)
+        .filter({identifier_field: id}).first()``. Cache-miss fallback
+        behavior is inherited from the shared query-iteration path.
+
         Args:
             model_class: The Pydantic model class to fetch.
             cluster: Name of the cluster to fetch from.
@@ -165,20 +170,10 @@ class DataSource:
         """
         mapping = self._resolve_mapping(model_class)
         identifier = self._normalize_identifier(mapping, id)
-        backend = self._get_backend(mapping.api_type)
-        decision = decide_path(mapping, fields, source)
-        result = backend.get(model_class, mapping, decision, cluster, identifier)
-        # Cache-miss fallback: if auto routed to cache and got nothing, try live.
-        # Pass the cache_fields explicitly so derived fields are excluded
-        # (derived fields cannot be fetched live and would raise ValueError).
-        if result is None and source == "auto" and decision.cache_fields:
-            live_fields = [
-                f for f in decision.cache_fields if _field_strategy(mapping, f) != "derived"
-            ]
-            if live_fields:
-                live_decision = decide_path(mapping, live_fields, "live")
-                result = backend.get(model_class, mapping, live_decision, cluster, identifier)
-        return result
+        qb = self.query(model_class, cluster=cluster, source=source).filter(identifier)
+        if fields is not None:
+            qb = qb.fields(*fields)
+        return qb.first()
 
     def query(
         self,
@@ -278,6 +273,14 @@ class QueryBuilder[T: BaseModel]:
         """Restrict the query to a subset of fields."""
         self._fields = list(paths)
         return self
+
+    def first(self) -> T | None:
+        """Return the first result or ``None`` if the query is empty.
+
+        Iterates at most once over the underlying query results. Cache-miss
+        fallback is inherited from :meth:`__iter__`.
+        """
+        return next(iter(self), None)
 
     def __iter__(self) -> Iterator[T]:
         """Execute the query and yield results."""

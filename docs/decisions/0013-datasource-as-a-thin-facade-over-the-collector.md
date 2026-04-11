@@ -58,6 +58,20 @@ Derived-field hooks (e.g. `compute_is_ha` from ADR-0012 §6) move from "runs aft
 
 The partial-fetch merge path for `cache_strategy="realtime"` fields is genuinely narrower than the whole-model path: 846 of 863 realtime fields are inline sub-fields of standard collection endpoints, so a restricted-field live query (`?fields=metric.iops.read,metric.latency.*&uuid=<id>`) is sufficient. This path stays in `DataSource` (or its delegating backend) as a dedicated thin fetcher. The 17 realtime fields on 4 parent-keyed mappings (`storage/volumes/snapshots`, `snapmirror/relationships/transfers`, `application/consistency_groups/snapshots`, `svm/migrations/volumes`) need path-parameter substitution — the realtime path inherits a narrow, scoped subset of Gap 6 for those four cases. This is a small, concrete piece of code, not generic path-param support.
 
+**§7 amendment (Phase 3, issue #542 — parent-keyed partial-fetch deferred).** Partial-fetch (cache + realtime live merge) on the four parent-keyed mappings is **not yet supported** in Phase 3. Cached instances of these models span multiple parents, so the restricted-field live merge would need to group cached instances by parent identifier and build one live URL per parent — non-trivial plumbing that Phase 3 did not take on. Instead, `OntapBackend._query_partial()` raises `NotImplementedError` when invoked on a mapping whose `parent_mapping` is set. The affected models and fields are:
+
+- `OntapSnapshot` (`storage/volumes/{volume.uuid}/snapshots`) — realtime size/space metrics.
+- `OntapSnapmirrorTransfer` (`snapmirror/relationships/{relationship.uuid}/transfers`) — realtime transfer state and progress.
+- `OntapConsistencyGroupSnapshotResponse` (`application/consistency_groups/{consistency_group.uuid}/snapshots`) — realtime reclaimable/size metrics.
+- `OntapSvmMigrationVolume` (`svm/migrations/{svm_migration.uuid}/volumes`) — realtime migration transfer state.
+
+17 realtime fields total. These fields are **still populated correctly** by `nf cache refresh`, which goes through the whole-model fetch path (the generic `fetch()` dispatcher handles parent-keyed mappings via `_fetch_parameterized`, iterating parents and substituting into the URL). The available workarounds are:
+
+- `source="cache"` after a `nf cache refresh` — returns the last-refreshed realtime snapshot.
+- `source="live"` on the whole model — bypasses the cache entirely and calls `fetch()` directly.
+
+Tracked as #544 (follow-up filed at Phase 3 landing).
+
 ### 8. `.get()` is a convenience over `.query()`
 
 `DataSource.get(model, cluster=X, id=...)` is internally `.query(model, cluster=X).filter({identifier_field: id})` followed by first-or-`None`. Same routing, same backend, same realtime merge. The independent `OntapBackend.get()` method is removed; composite-identifier translation (Gap 5, issue #535) happens at the query-filter layer, not at the backend.
