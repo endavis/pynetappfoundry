@@ -23,19 +23,36 @@ class TestDataSourceGet:
         ds = DataSource(mock_config)
         fake_vol = FakeVolume(uuid="abc-123", name="vol1")
         fake_backend = MagicMock()
-        fake_backend.get.return_value = fake_vol
+        # DataSource.get() is now a .query().filter().first() wrapper,
+        # so the backend receives a query() call with the identifier as
+        # an equality filter.
+        fake_backend.query.return_value = [fake_vol]
 
         ds._backends["ontap"] = fake_backend
         result = ds.get(FakeVolume, cluster="prod1", id="abc-123")
 
         assert result is fake_vol
-        fake_backend.get.assert_called_once()
-        args = fake_backend.get.call_args.args
-        # Positional: model_class, mapping, decision, cluster, identifier
+        fake_backend.query.assert_called_once()
+        args = fake_backend.query.call_args.args
+        # Positional: model_class, mapping, decision, cluster, filters
         assert args[0] is FakeVolume
         assert args[1] is fake_volume_mapping
         assert args[3] == "prod1"
         assert args[4] == {"uuid": "abc-123"}
+
+    def test_get_returns_none_when_empty(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        ds = DataSource(mock_config)
+        fake_backend = MagicMock()
+        fake_backend.query.return_value = []
+        ds._backends["ontap"] = fake_backend
+
+        result = ds.get(FakeVolume, cluster="prod1", id="abc-123")
+
+        assert result is None
 
     def test_get_unknown_api_type_raises(
         self,
@@ -70,7 +87,7 @@ class TestDataSourceGet:
     ) -> None:
         ds = DataSource(mock_config)
         fake_backend = MagicMock()
-        fake_backend.get.return_value = None
+        fake_backend.query.return_value = []
         ds._backends["ontap"] = fake_backend
 
         with patch(
@@ -86,13 +103,13 @@ class TestDataSourceGet:
     ) -> None:
         ds = DataSource(mock_config)
         fake_backend = MagicMock()
-        fake_backend.get.return_value = None
+        fake_backend.query.return_value = []
         ds._backends["ontap"] = fake_backend
 
         ds.get(FakeVolume, cluster="prod1", id="abc-123")
-        # Check the first call (cache path) for identifier normalization.
-        identifier = fake_backend.get.call_args_list[0].args[4]
-        assert identifier == {"uuid": "abc-123"}
+        # String id is translated to {identifier_field: id} equality filter.
+        filters = fake_backend.query.call_args_list[0].args[4]
+        assert filters == {"uuid": "abc-123"}
 
     def test_get_normalizes_dict_id_for_composite_key_model(
         self,
@@ -101,7 +118,7 @@ class TestDataSourceGet:
     ) -> None:
         ds = DataSource(mock_config)
         fake_backend = MagicMock()
-        fake_backend.get.return_value = None
+        fake_backend.query.return_value = []
         ds._backends["ontap"] = fake_backend
 
         ds.get(
@@ -109,8 +126,8 @@ class TestDataSourceGet:
             cluster="prod1",
             id={"svm_name": "vs1", "name": "vol1"},
         )
-        identifier = fake_backend.get.call_args.args[4]
-        assert identifier == {"svm_name": "vs1", "name": "vol1"}
+        filters = fake_backend.query.call_args.args[4]
+        assert filters == {"svm_name": "vs1", "name": "vol1"}
 
     def test_get_raises_when_identifier_field_undeclared(
         self,
@@ -277,6 +294,55 @@ class TestQueryBuilderWhere:
         assert call.kwargs.get("where_expressions") == ("size > 0",)
 
 
+class TestQueryBuilderFirst:
+    """Tests for :meth:`QueryBuilder.first`."""
+
+    def test_first_returns_first_result(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        ds = DataSource(mock_config)
+        v1 = FakeVolume(uuid="u1")
+        v2 = FakeVolume(uuid="u2")
+        fake_backend = MagicMock()
+        fake_backend.query.return_value = [v1, v2]
+        ds._backends["ontap"] = fake_backend
+
+        result = ds.query(FakeVolume, cluster="prod1").first()
+
+        assert result is v1
+
+    def test_first_returns_none_on_empty(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        ds = DataSource(mock_config)
+        fake_backend = MagicMock()
+        fake_backend.query.return_value = []
+        ds._backends["ontap"] = fake_backend
+
+        result = ds.query(FakeVolume, cluster="prod1", source="cache").first()
+
+        assert result is None
+
+    def test_first_does_not_over_fetch(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        """first() iterates only once; backend.query is called exactly once."""
+        ds = DataSource(mock_config)
+        fake_backend = MagicMock()
+        fake_backend.query.return_value = [FakeVolume(uuid="u1"), FakeVolume(uuid="u2")]
+        ds._backends["ontap"] = fake_backend
+
+        ds.query(FakeVolume, cluster="prod1", source="cache").first()
+
+        assert fake_backend.query.call_count == 1
+
+
 class TestBackendsRegistry:
     def test_ontap_backend_registered_at_import(self) -> None:
         assert "ontap" in _BACKENDS
@@ -429,19 +495,20 @@ class TestAutoFallback:
         fake_volume_mapping: TypeMapping,
         mock_config: Any,
     ) -> None:
-        """get() with auto: cache returns None → retries live."""
+        """get() with auto: cache returns empty → retries live (via shared
+        QueryBuilder fallback path)."""
         ds = DataSource(mock_config)
         fake_backend = MagicMock()
         live_vol = FakeVolume(uuid="abc-123", name="live-vol")
-        # First call (cache) returns None, second call (live) returns data.
-        fake_backend.get.side_effect = [None, live_vol]
+        # First call (cache) returns empty, second call (live) returns data.
+        fake_backend.query.side_effect = [[], [live_vol]]
         ds._backends["ontap"] = fake_backend
 
         result = ds.get(FakeVolume, cluster="prod1", id="abc-123")
 
         assert result is live_vol
-        assert fake_backend.get.call_count == 2
+        assert fake_backend.query.call_count == 2
         # Second call should use a live routing decision.
-        second_decision = fake_backend.get.call_args_list[1].args[2]
+        second_decision = fake_backend.query.call_args_list[1].args[2]
         assert not second_decision.cache_fields
         assert second_decision.live_fields

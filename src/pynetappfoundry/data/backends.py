@@ -1,12 +1,14 @@
 """Backends for the unified DataSource accessor.
 
 Defines the :class:`Backend` ABC that all data sources implement, plus
-the spike's only concrete implementation, :class:`OntapBackend`, which
-routes ``get()`` and ``query()`` calls to either the cache database or
-the live ONTAP REST API based on a :class:`RoutingDecision`.
+the Phase 3 :class:`OntapBackend`: a thin delegator that routes
+``query()`` calls to either the cache database, the generic
+:func:`pynetappfoundry.cache.fetch` dispatcher (for whole-model live
+reads), or a small filtered-live helper (for filtered / field-restricted
+live reads).
 
-Phase 2 ships with a single backend (``"ontap"``). Future phases add
-``"aiqum"``, ``"occm"``, ``"dii"``, etc., behind the same ABC.
+Per ADR-0013 §6-§9, ``Backend.get()`` has been removed;
+``DataSource.get()`` is now a thin ``query().filter().first()`` wrapper.
 """
 
 from __future__ import annotations
@@ -19,6 +21,7 @@ from typing import TYPE_CHECKING, Any, TypeVar
 
 from pydantic import BaseModel
 
+from pynetappfoundry.cache import fetch
 from pynetappfoundry.cache.field_mapping import parse_api_response
 from pynetappfoundry.data._merge import merge_models
 
@@ -61,10 +64,9 @@ def _log_missing_fields(
 class Backend(ABC):
     """Abstract base class for DataSource backends.
 
-    Each backend translates a :class:`RoutingDecision` plus an
-    identifier or filter set into concrete fetches against its
-    upstream system, and returns populated model instances with
-    ``_fetched_fields`` set.
+    Each backend translates a :class:`RoutingDecision` plus a filter
+    dict into concrete fetches against its upstream system and returns
+    populated model instances with ``_fetched_fields`` set.
 
     Args:
         config: The :class:`pynetappfoundry.core.config.Config` instance.
@@ -72,21 +74,6 @@ class Backend(ABC):
 
     def __init__(self, config: Config) -> None:
         self._config = config
-
-    @abstractmethod
-    def get(
-        self,
-        model_class: type[T],
-        mapping: TypeMapping,
-        decision: RoutingDecision,
-        cluster: str,
-        identifier: dict[str, Any],
-    ) -> T | None:
-        """Fetch exactly one instance by identifier.
-
-        Returns ``None`` if no matching instance exists. Raises
-        :class:`ValueError` if more than one match is found.
-        """
 
     @abstractmethod
     def query(
@@ -140,8 +127,8 @@ class OntapBackend(Backend):
     def _get_api_client(self, cluster: str) -> ONTAPAPIClient:
         """Lazily create an ONTAP API client for *cluster*.
 
-        Cached per-cluster so multiple ``get()``/``query()`` calls
-        against the same cluster reuse the same connection pool.
+        Cached per-cluster so multiple ``query()`` calls against the
+        same cluster reuse the same connection pool.
         """
         if cluster not in self._api_clients:
             from pynetappfoundry.clients.ontap.api import ONTAPAPIClient
@@ -171,62 +158,31 @@ class OntapBackend(Backend):
         raise ValueError(msg)
 
     @staticmethod
-    def _identifier_to_filter_expressions(identifier: dict[str, Any]) -> list[str]:
-        """Translate an identifier dict to ``query_with_filters`` strings."""
-        return [f"{key} = '{value}'" for key, value in identifier.items()]
-
-    @staticmethod
-    def _build_live_url(
+    def _is_full_live_scan(
         mapping: TypeMapping,
-        params: dict[str, Any],
-        live_field_paths: tuple[str, ...],
-        *,
-        return_records: bool = True,
-    ) -> str:
-        """Build a live REST URL from a mapping plus params and field set.
+        decision: RoutingDecision,
+        filters: dict[str, Any],
+    ) -> bool:
+        """Return True when the live path should delegate to :func:`fetch`.
 
-        Strips ``{id}`` placeholders from the endpoint, appends each
-        param as a query string entry, and overrides the ``fields``
-        parameter with the live field set's ``api_path`` values.
+        The generic :func:`fetch` dispatcher is filterless and fetches
+        every instance with every (non-derived) field populated. We
+        delegate to it only when:
 
-        When *return_records* is ``False``, ``return_records=false`` is
-        appended to the query string. This is used by :meth:`_count_live`
-        to ask ONTAP for ``num_records`` only.
+        - There are no equality filters.
+        - The routing decision's ``live_fields`` covers every live-
+          eligible (non-derived) field in the mapping.
+
+        Any field restriction or filter falls through to
+        :meth:`_fetch_live_filtered`, which builds a URL with the
+        narrower ``fields=`` and query-string params.
         """
-        from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
-
-        base_url = mapping.collection_endpoint
-        parsed = urlparse(base_url)
-        query: dict[str, list[str]] = parse_qs(parsed.query, keep_blank_values=True)
-
-        # Translate live cache_attr paths to api_path values for the query.
-        api_paths: list[str] = []
-        for attr in live_field_paths:
-            field = next(
-                (f for f in mapping.fields if f.cache_attr == attr),
-                None,
-            )
-            if field is not None and field.api_path is not None:
-                api_paths.append(field.api_path)
-            else:
-                api_paths.append(attr)
-        if api_paths:
-            # Preserve fields=* from the base endpoint when present.
-            # ONTAP's fields=* returns all fields, which is a superset
-            # of any explicit field list. Enumerating individual fields
-            # can produce URLs too long for ONTAP to accept (400 error).
-            # The value may be "*" or "*,nested.path" — both start with *.
-            existing = query.get("fields", [""])[0]
-            if not existing.startswith("*"):
-                query["fields"] = [",".join(api_paths)]
-
-        for key, value in params.items():
-            query[key] = [str(value)]
-
-        if not return_records:
-            query["return_records"] = ["false"]
-
-        return urlunparse(parsed._replace(query=urlencode(query, doseq=True)))
+        if filters:
+            return False
+        if not decision.live_fields:
+            return False
+        live_eligible = {f.cache_attr for f in mapping.fields if f.cache_strategy != "derived"}
+        return live_eligible.issubset(set(decision.live_fields))
 
     def _count_live(
         self,
@@ -236,8 +192,8 @@ class OntapBackend(Backend):
     ) -> int:
         """Count records via the live REST API without fetching them.
 
-        Builds a URL via :meth:`_build_live_url` with
-        ``return_records=False``, calls
+        Builds a URL with ``return_records=false`` via the same URL
+        builder used by :meth:`_fetch_live_filtered`, calls
         :meth:`ONTAPAPIClient.call_endpoint` (NOT ``get_all_records``,
         which would fetch the records and defeat the purpose), and
         reads ``num_records`` off the response envelope.
@@ -274,17 +230,79 @@ class OntapBackend(Backend):
         results = self._cache_db.query_with_filters(cluster, metadata_path, filter_expressions)
         return [r for r in results if isinstance(r, model_class)]
 
-    def _fetch_live(
+    @staticmethod
+    def _build_live_url(
+        mapping: TypeMapping,
+        params: dict[str, Any],
+        live_field_paths: tuple[str, ...],
+        *,
+        return_records: bool = True,
+    ) -> str:
+        """Build a live REST URL from a mapping plus params and field set.
+
+        Strips ``{id}`` placeholders from the endpoint, appends each
+        param as a query string entry, and overrides the ``fields``
+        parameter with the live field set's ``api_path`` values.
+
+        When *return_records* is ``False``, ``return_records=false`` is
+        appended to the query string. This is used by :meth:`_count_live`
+        to ask ONTAP for ``num_records`` only.
+
+        This helper is also used by :meth:`_fetch_live_filtered` to
+        construct the filtered / field-restricted live read URL.
+        """
+        from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
+
+        base_url = mapping.collection_endpoint
+        parsed = urlparse(base_url)
+        query: dict[str, list[str]] = parse_qs(parsed.query, keep_blank_values=True)
+
+        # Translate live cache_attr paths to api_path values for the query.
+        api_paths: list[str] = []
+        for attr in live_field_paths:
+            field = next(
+                (f for f in mapping.fields if f.cache_attr == attr),
+                None,
+            )
+            if field is not None and field.api_path is not None:
+                api_paths.append(field.api_path)
+            else:
+                api_paths.append(attr)
+        if api_paths:
+            # Preserve fields=* from the base endpoint when present.
+            # ONTAP's fields=* returns all fields, which is a superset
+            # of any explicit field list. Enumerating individual fields
+            # can produce URLs too long for ONTAP to accept (400 error).
+            existing = query.get("fields", [""])[0]
+            if not existing.startswith("*"):
+                query["fields"] = [",".join(api_paths)]
+
+        for key, value in params.items():
+            query[key] = [str(value)]
+
+        if not return_records:
+            query["return_records"] = ["false"]
+
+        return urlunparse(parsed._replace(query=urlencode(query, doseq=True)))
+
+    def _fetch_live_filtered(
         self,
         model_class: type[T],
         mapping: TypeMapping,
         cluster: str,
-        params: dict[str, Any],
+        filters: dict[str, Any],
         live_fields: tuple[str, ...],
     ) -> list[T]:
-        """Run a live REST fetch and parse the response into model instances."""
+        """Filtered / field-restricted live read for a model.
+
+        This is the narrow live path used when :func:`fetch` cannot
+        apply (the caller restricted the field set or supplied an
+        equality filter). Builds a URL via :meth:`_build_live_url`,
+        calls :meth:`ONTAPAPIClient.get_all_records`, and parses the
+        response with :func:`parse_api_response`.
+        """
         client = self._get_api_client(cluster)
-        url = self._build_live_url(mapping, params, live_fields)
+        url = self._build_live_url(mapping, filters, live_fields)
         response = client.get_all_records(url)
         parsed = parse_api_response(
             mapping,
@@ -293,51 +311,6 @@ class OntapBackend(Backend):
             _log_missing_fields,
         )
         return [r for r in parsed if isinstance(r, model_class)]
-
-    def get(
-        self,
-        model_class: type[T],
-        mapping: TypeMapping,
-        decision: RoutingDecision,
-        cluster: str,
-        identifier: dict[str, Any],
-    ) -> T | None:
-        """Fetch a single instance by identifier dict."""
-        cached_instance: T | None = None
-        live_instance: T | None = None
-
-        if decision.cache_fields:
-            filters = self._identifier_to_filter_expressions(identifier)
-            results = self._fetch_cache(model_class, cluster, filters)
-            if len(results) == 0:
-                return None
-            if len(results) > 1:
-                msg = (
-                    f"Expected exactly one {mapping.name} matching {identifier!r}, "
-                    f"got {len(results)}"
-                )
-                raise ValueError(msg)
-            cached_instance = results[0]
-
-        if decision.live_fields:
-            results = self._fetch_live(
-                model_class,
-                mapping,
-                cluster,
-                identifier,
-                decision.live_fields,
-            )
-            if len(results) == 0:
-                return None
-            if len(results) > 1:
-                msg = (
-                    f"Expected exactly one live {mapping.name} matching "
-                    f"{identifier!r}, got {len(results)}"
-                )
-                raise ValueError(msg)
-            live_instance = results[0]
-
-        return self._finalize_single(cached_instance, live_instance, decision)
 
     def query(
         self,
@@ -356,6 +329,11 @@ class OntapBackend(Backend):
         defines membership, a single batched live fetch enriches by
         identifier, and results are merged by identifier. See the design
         notes on issue #495 for the full rationale.
+
+        When the decision is whole-model live (no filters, no field
+        restriction), delegates to :func:`pynetappfoundry.cache.fetch`.
+        Otherwise filtered/field-restricted live reads go through
+        :meth:`_fetch_live_filtered`.
 
         *where_expressions* adds SQL-like filter strings that are ANDed
         with the dict-derived equality fragments on the cache path. Live
@@ -397,7 +375,26 @@ class OntapBackend(Backend):
                     f"a follow-up to #512. Expressions were: {list(where_expressions)}"
                 )
                 raise NotImplementedError(msg)
-            results = self._fetch_live(model_class, mapping, cluster, filters, decision.live_fields)
+
+            if self._is_full_live_scan(mapping, decision, filters):
+                # Whole-model unfiltered live read: delegate to the
+                # generic fetcher (ADR-0013 §6/§7).
+                fetched = fetch(
+                    model_class,
+                    cluster=cluster,
+                    config=self._config,
+                    api_client=self._get_api_client(cluster),
+                )
+                results = list(fetched) if isinstance(fetched, list) else [fetched]
+            else:
+                results = self._fetch_live_filtered(
+                    model_class,
+                    mapping,
+                    cluster,
+                    filters,
+                    decision.live_fields,
+                )
+
             for instance in results:
                 self._mark_fetched(instance, decision.live_fields)
             return results
@@ -407,9 +404,6 @@ class OntapBackend(Backend):
     @staticmethod
     def _mark_fetched(instance: BaseModel, paths: tuple[str, ...]) -> None:
         """Populate ``_fetched_fields`` on a model instance."""
-        # OntapModel guarantees the attribute exists. Plain BaseModel
-        # subclasses (the synthetic test models) inherit from OntapModel
-        # in real usage; we still defensively guard.
         existing = getattr(instance, "_fetched_fields", None)
         if existing is None:
             return
@@ -425,15 +419,30 @@ class OntapBackend(Backend):
     ) -> list[T]:
         """Execute the partial-fetch (Approach C) algorithm for collections.
 
-        1. Validate filter keys are cache-side only.
-        2. Validate mapping.identifier_field is a single string.
-        3. Run the cache query (defines membership).
-        4. Short-circuit on empty cache result.
-        5. Batch live fetch by identifier, chunked at ``_BATCH_SIZE``.
-        6. Merge each cached instance with its live counterpart by
+        1. Reject parent-keyed mappings (deferred; tracked as #544).
+        2. Validate filter keys are cache-side only.
+        3. Validate mapping.identifier_field is a single string.
+        4. Run the cache query (defines membership).
+        5. Short-circuit on empty cache result.
+        6. Batch live fetch by identifier, chunked at ``_BATCH_SIZE``.
+        7. Merge each cached instance with its live counterpart by
            identifier. Extras from live are silently dropped; cached
            instances without a live match pass through unmerged.
         """
+        if mapping.parent_mapping is not None:
+            msg = (
+                f"Partial-fetch (cache + realtime live merge) on parent-keyed "
+                f"mappings is not yet supported. The affected models are "
+                f"OntapSnapshot, OntapSnapmirrorTransfer, "
+                f"OntapConsistencyGroupSnapshotResponse, and "
+                f"OntapSvmMigrationVolume. These models' realtime fields are "
+                f"still populated by `nf cache refresh`; use source='cache' "
+                f"after refresh, or fetch the whole model via source='live'. "
+                f"Tracked as #544. "
+                f"Triggered on mapping {mapping.name!r}."
+            )
+            raise NotImplementedError(msg)
+
         self._validate_partial_query_filter(mapping, filters)
 
         identifier_field = mapping.identifier_field
@@ -465,7 +474,7 @@ class OntapBackend(Backend):
             # branch should be unreachable. Kept to document intent.
             return cached_instances
 
-        identifiers = self._extract_identifiers(cached_instances, identifier_field)
+        identifiers = [getattr(inst, identifier_field) for inst in cached_instances]
         live_instances = self._fetch_live_by_identifiers(
             model_class,
             mapping,
@@ -474,7 +483,7 @@ class OntapBackend(Backend):
             identifier_field,
             decision.live_fields,
         )
-        live_index = self._build_identifier_index(live_instances, identifier_field)
+        live_index = {getattr(inst, identifier_field): inst for inst in live_instances}
         return self._merge_partial_collection(
             cached_instances,
             live_index,
@@ -502,18 +511,6 @@ class OntapBackend(Backend):
                     f"is not yet supported; use source='live' or split the query"
                 )
                 raise NotImplementedError(msg)
-
-    @staticmethod
-    def _extract_identifiers(
-        instances: list[T],
-        identifier_field: str,
-    ) -> list[str]:
-        """Return a list of identifier values from *instances*.
-
-        v1 partial-fetch is single-key only, so *identifier_field* is a
-        plain string and the returned list is a list of strings.
-        """
-        return [getattr(inst, identifier_field) for inst in instances]
 
     @staticmethod
     def _chunked(items: list[Any], size: int) -> Iterator[list[Any]]:
@@ -581,14 +578,6 @@ class OntapBackend(Backend):
             results.extend(r for r in parsed_records if isinstance(r, model_class))
         return results
 
-    @staticmethod
-    def _build_identifier_index(
-        instances: list[T],
-        identifier_field: str,
-    ) -> dict[str, T]:
-        """Return ``dict[identifier_value, instance]`` for fast lookup."""
-        return {getattr(inst, identifier_field): inst for inst in instances}
-
     def _merge_partial_collection(
         self,
         cached_instances: list[T],
@@ -617,22 +606,3 @@ class OntapBackend(Backend):
             self._mark_fetched(merged, decision.live_fields)
             merged_list.append(merged)
         return merged_list
-
-    def _finalize_single(
-        self,
-        cached: T | None,
-        live: T | None,
-        decision: RoutingDecision,
-    ) -> T | None:
-        """Merge optional cache + live instances and stamp _fetched_fields."""
-        if cached is not None and live is not None:
-            merged = merge_models(cached, live)
-            self._mark_fetched(merged, decision.cache_fields + decision.live_fields)
-            return merged
-        if cached is not None:
-            self._mark_fetched(cached, decision.cache_fields)
-            return cached
-        if live is not None:
-            self._mark_fetched(live, decision.live_fields)
-            return live
-        return None
