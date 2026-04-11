@@ -81,6 +81,7 @@ from pynetappfoundry.cache.collector import (  # noqa: E402
 )
 from pynetappfoundry.cache.db import ClusterMetadataDB  # noqa: E402
 from pynetappfoundry.cache.diff import ChangeEntry, compute_diff, format_diff_summary  # noqa: E402
+from pynetappfoundry.cache.fetchers import fetch  # noqa: E402
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping  # noqa: E402
 from pynetappfoundry.cache.history_db import CacheHistoryDB  # noqa: E402
 from pynetappfoundry.cache.query_engine import (  # noqa: E402
@@ -114,6 +115,7 @@ __all__ = [
     "SQLCondition",
     "TypeMapping",
     "compute_diff",
+    "fetch",
     "format_diff_summary",
     "is_schema_compatible",
     "model_registry",

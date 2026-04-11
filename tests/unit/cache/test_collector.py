@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from typing import Any
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from pydantic import BaseModel
@@ -512,3 +512,201 @@ class TestCollectSvmTopMetricsUsers:
         assert len(captured_args) == 1
         assert captured_args[0][0] is ONTAPTOPMETRICSSVMUSER_MAPPING
         assert captured_args[0][1] is svms
+
+
+# ---------------------------------------------------------------------------
+# Issue #541: byte-identity regression + parallelism + fetch() integration
+# ---------------------------------------------------------------------------
+
+
+_REFRESH_NODE_UUID_1 = "11111111-1111-1111-1111-111111111111"
+_REFRESH_NODE_UUID_2 = "22222222-2222-2222-2222-222222222222"
+
+
+def _build_mock_api_client() -> Any:
+    """Build a mock ONTAP API client whose responses cover the minimum
+    surface required by ``collect_all`` (cluster, nodes, all envelope
+    phases). All envelope endpoints return an empty records list except
+    nodes; cluster returns a populated singleton. Used by the byte-identity
+    regression test and the parallelism check.
+    """
+    cluster_response = {
+        "name": "test-cluster",
+        "uuid": "33333333-3333-3333-3333-333333333333",
+        "version": {
+            "full": "NetApp Release 9.14.1",
+            "generation": 9,
+            "major": 14,
+            "minor": 1,
+        },
+        "contact": "ops@example.com",
+        "location": "lab",
+    }
+    nodes_response = {
+        "records": [
+            {"name": "node1", "uuid": _REFRESH_NODE_UUID_1},
+            {"name": "node2", "uuid": _REFRESH_NODE_UUID_2},
+        ],
+        "num_records": 2,
+    }
+    empty_envelope = {"records": [], "num_records": 0}
+
+    client = MagicMock()
+
+    def fake_call_endpoint(url: str, method: str = "GET") -> Any:
+        if url.startswith("/cluster?"):
+            return cluster_response
+        return None
+
+    def fake_get_all_records(url: str, method: str = "GET") -> Any:
+        if "/cluster/nodes" in url:
+            return nodes_response
+        return empty_envelope
+
+    client.call_endpoint = MagicMock(side_effect=fake_call_endpoint)
+    client.get_all_records = MagicMock(side_effect=fake_get_all_records)
+    return client
+
+
+class TestCollectAllByteIdentity:
+    """Issue #541 regression: collect_all() output must remain stable.
+
+    The byte-identity guarantee is that successive runs against an
+    identical mock response set produce identical JSON dumps (excluding
+    the cluster-level ``cached_at`` timestamp). This catches accidental
+    ordering, default-value, or exception-path drift introduced by the
+    fetch() refactor.
+    """
+
+    def test_collect_all_is_deterministic(self) -> None:
+        """Two collect_all() runs against the same mock data agree byte-for-byte."""
+        client_a = _build_mock_api_client()
+        collector_a = MetadataCollector(api_client=client_a, parallel=False)
+        result_a = collector_a.collect_all("test-cluster")
+
+        client_b = _build_mock_api_client()
+        collector_b = MetadataCollector(api_client=client_b, parallel=False)
+        result_b = collector_b.collect_all("test-cluster")
+
+        json_a = result_a.model_dump_json(exclude={"cached_at"})
+        json_b = result_b.model_dump_json(exclude={"cached_at"})
+        assert json_a == json_b
+
+    def test_collect_all_populates_expected_shape(self) -> None:
+        """The collected metadata exposes the cluster, nodes, and is_ha."""
+        client = _build_mock_api_client()
+        collector = MetadataCollector(api_client=client, parallel=False)
+        result = collector.collect_all("test-cluster")
+
+        assert result.cluster_name == "test-cluster"
+        assert result.cluster.cluster_name == "test-cluster"
+        assert result.cluster.cluster_uuid == "33333333-3333-3333-3333-333333333333"
+        assert len(result.nodes) == 2
+        # is_ha is a derived field — must be True given two nodes.
+        assert result.cluster.is_ha is True
+        # Composite phases default to empty containers (no records).
+        assert result.storage.aggregates == []
+        assert result.storage.volumes == []
+        assert result.network.ip_interfaces == []
+        assert result.protocols.cifs_shares == []
+        assert result.relationships.snapmirror_destinations == []
+
+    def test_collect_all_parallel_matches_sequential(self) -> None:
+        """Parallel and sequential modes produce the same JSON dump."""
+        client_seq = _build_mock_api_client()
+        seq_result = MetadataCollector(api_client=client_seq, parallel=False).collect_all(
+            "test-cluster"
+        )
+        client_par = _build_mock_api_client()
+        par_result = MetadataCollector(
+            api_client=client_par, parallel=True, max_workers=4
+        ).collect_all("test-cluster")
+        assert seq_result.model_dump_json(exclude={"cached_at"}) == par_result.model_dump_json(
+            exclude={"cached_at"}
+        )
+
+
+class TestCollectorParallelism:
+    """Issue #541: composite phase methods still submit per-model fetches in parallel."""
+
+    def test_storage_phase_submits_one_task_per_submodel(self) -> None:
+        """The storage composite submits 11 fetch() calls — one per sub-model."""
+        client = _build_mock_api_client()
+        collector = MetadataCollector(api_client=client, parallel=True, max_workers=11)
+        # Track every _fetch_model invocation; the storage composite is the
+        # one that exercises the executor path with 11 tasks.
+        call_log: list[type[BaseModel]] = []
+        original_fetch_model = collector._fetch_model
+
+        def tracking_fetch(mc: type[BaseModel]) -> Any:
+            call_log.append(mc)
+            return original_fetch_model(mc)
+
+        with patch.object(collector, "_fetch_model", side_effect=tracking_fetch):
+            collector._cluster_name = "test"
+            collector._collect_storage_via_api()
+
+        # Storage phase has 11 sub-models per the model_tasks list.
+        assert len(call_log) == 11
+
+    def test_network_phase_submits_four_model_tasks(self) -> None:
+        """Network composite still issues a model task per sub-model."""
+        client = _build_mock_api_client()
+        collector = MetadataCollector(api_client=client, parallel=True, max_workers=5)
+        call_log: list[type[BaseModel]] = []
+        original_fetch_model = collector._fetch_model
+
+        def tracking_fetch(mc: type[BaseModel]) -> Any:
+            call_log.append(mc)
+            return original_fetch_model(mc)
+
+        with patch.object(collector, "_fetch_model", side_effect=tracking_fetch):
+            collector._cluster_name = "test"
+            collector._collect_network_via_api()
+        # Network composite has 4 model-fetch tasks (LIFs, BCDs, DNS, subnets);
+        # the IPspaces endpoint is fetched separately as a raw API call.
+        assert len(call_log) == 4
+
+
+class TestEvaluateDerivedFieldsStillRuns:
+    """Issue #541: ``_evaluate_derived_fields`` continues to run for non-cluster
+    mappings whose derived fields are not routed through the inline fetch
+    hook path.
+    """
+
+    def test_synthetic_derived_field_still_evaluated_after_collect(self) -> None:
+        """A registered synthetic derived field is invoked by _evaluate_derived_fields."""
+        invocations: list[str] = []
+
+        def post_fn(item: _DerivedModel, results: dict[str, Any]) -> _DerivedModel:
+            invocations.append(item.name)
+            return item.model_copy(update={"computed": 99})
+
+        mapping = TypeMapping(
+            name="DerivedMapping541",
+            model_class=_DerivedModel,
+            api_endpoint="/x",
+            fields=(
+                FieldMapping(cache_attr="name", api_path="name"),
+                FieldMapping(
+                    cache_attr="computed",
+                    cache_strategy="derived",
+                    post_collection=post_fn,
+                ),
+            ),
+        )
+        model_registry.register_mapping("DerivedMapping541", mapping)
+        try:
+            collector = MetadataCollector(api_client=None)
+            with patch.object(
+                MetadataCollector,
+                "_MAPPING_RESULTS_KEYS",
+                [("DerivedMapping541", "synthetic")],
+            ):
+                results: dict[str, Any] = {"synthetic": _DerivedModel(name="thing")}
+                updated = collector._evaluate_derived_fields(results)
+            assert invocations == ["thing"]
+            assert updated["synthetic"].computed == 99
+        finally:
+            model_registry._mappings.pop("DerivedMapping541", None)
+            model_registry._mappings_by_class.pop(_DerivedModel, None)

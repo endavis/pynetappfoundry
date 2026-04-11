@@ -27,6 +27,7 @@ from pynetappfoundry.cache._metadata import (
     RelationshipsInfo,
 )
 from pynetappfoundry.cache._registry import model_registry
+from pynetappfoundry.cache.fetchers import fetch as _fetch
 from pynetappfoundry.cache.field_mapping import (
     TypeMapping,
     parse_cli_records,
@@ -38,43 +39,6 @@ from pynetappfoundry.cache.field_mapping import (
     parse_api_response as _parse_api_response_raw,
 )
 from pynetappfoundry.cache.ontap.cloud.metadata.mapping import CLOUD_METADATA_MAPPING
-from pynetappfoundry.cache.ontap.cloud.targets.mapping import ONTAPCLOUDTARGET_MAPPING
-from pynetappfoundry.cache.ontap.cluster.licensing.licenses.mapping import (
-    ONTAPLICENSEPACKAGERESPONSE_MAPPING,
-)
-from pynetappfoundry.cache.ontap.cluster.mapping import CLUSTER_MAPPING
-from pynetappfoundry.cache.ontap.cluster.mediators.mapping import ONTAPMEDIATORRESPONSE_MAPPING
-from pynetappfoundry.cache.ontap.cluster.nodes.mapping import ONTAPNODERESPONSE_MAPPING
-from pynetappfoundry.cache.ontap.cluster.peers.mapping import ONTAPCLUSTERPEER_MAPPING
-from pynetappfoundry.cache.ontap.cluster.schedules.mapping import ONTAPSCHEDULE_MAPPING
-from pynetappfoundry.cache.ontap.name_services.dns.mapping import ONTAPDNS_MAPPING
-from pynetappfoundry.cache.ontap.network.ethernet.broadcast_domains.mapping import (
-    ONTAPBROADCASTDOMAIN_MAPPING,
-)
-from pynetappfoundry.cache.ontap.network.ip.interfaces.mapping import ONTAPIPINTERFACE_MAPPING
-from pynetappfoundry.cache.ontap.network.ip.subnets.mapping import ONTAPIPSUBNET_MAPPING
-from pynetappfoundry.cache.ontap.protocols.cifs.services.mapping import ONTAPCIFSSERVICE_MAPPING
-from pynetappfoundry.cache.ontap.protocols.cifs.shares.mapping import ONTAPCIFSSHARE_MAPPING
-from pynetappfoundry.cache.ontap.protocols.nfs.export_policies.mapping import (
-    ONTAPEXPORTPOLICY_MAPPING,
-)
-from pynetappfoundry.cache.ontap.protocols.nfs.services.mapping import ONTAPNFSSERVICE_MAPPING
-from pynetappfoundry.cache.ontap.protocols.s3.buckets.mapping import ONTAPS3BUCKET_MAPPING
-from pynetappfoundry.cache.ontap.protocols.san.igroups.mapping import ONTAPIGROUP_MAPPING
-from pynetappfoundry.cache.ontap.snapmirror.relationships.mapping import (
-    ONTAPSNAPMIRRORRELATIONSHIP_MAPPING,
-)
-from pynetappfoundry.cache.ontap.storage.aggregates.mapping import ONTAPAGGREGATE_MAPPING
-from pynetappfoundry.cache.ontap.storage.flexcache.flexcaches.mapping import ONTAPFLEXCACHE_MAPPING
-from pynetappfoundry.cache.ontap.storage.luns.mapping import ONTAPLUN_MAPPING
-from pynetappfoundry.cache.ontap.storage.qos.policies.mapping import ONTAPQOSPOLICY_MAPPING
-from pynetappfoundry.cache.ontap.storage.qtrees.mapping import ONTAPQTREE_MAPPING
-from pynetappfoundry.cache.ontap.storage.snapshot_policies.mapping import (
-    ONTAPSNAPSHOTPOLICY_MAPPING,
-)
-from pynetappfoundry.cache.ontap.storage.volumes.mapping import ONTAPVOLUME_MAPPING
-from pynetappfoundry.cache.ontap.svm.peers.mapping import ONTAPSVMPEER_MAPPING
-from pynetappfoundry.cache.ontap.svm.svms.mapping import ONTAPSVM_MAPPING
 from pynetappfoundry.cache.ontap.svm.svms.top_metrics.users.mapping import (
     ONTAPTOPMETRICSSVMUSER_MAPPING,
 )
@@ -246,6 +210,12 @@ class MetadataCollector:
         self._api_cache: dict[str, Any] = {}
         self._cache_lock = threading.Lock()
 
+        # Cross-phase results cache used by fetch() to short-circuit
+        # post-collection hooks (e.g. compute_is_ha looking up "nodes").
+        # Populated by phase methods as they complete; consulted by
+        # subsequent fetch() calls.
+        self._results_cache: dict[str, Any] = {}
+
     @property
     def _log_prefix(self) -> str:
         """Return log prefix with cluster name for consistent logging."""
@@ -321,6 +291,25 @@ class MetadataCollector:
         """Clear the API response cache."""
         with self._cache_lock:
             self._api_cache.clear()
+
+    def _fetch_model(self, model_class: type[BaseModel]) -> Any:
+        """Delegate to the generic ``fetch()`` dispatcher for one model class.
+
+        Thin shim used by composite phase methods so that each per-model
+        fetch can be submitted to a ``ThreadPoolExecutor`` (preserving
+        the existing parallelism). Always supplies the collector's
+        shared ``_results_cache`` so that post-collection hooks can
+        short-circuit cross-model dependencies.
+        """
+        return _fetch(
+            model_class,
+            cluster=self._cluster_name,
+            config=None,
+            api_client=self.api_client,  # type: ignore[arg-type]
+            cli_client=self.cli_client,
+            results_cache=self._results_cache,
+            log_prefix=self._log_prefix,
+        )
 
     def _collect_parameterized(
         self,
@@ -455,6 +444,7 @@ class MetadataCollector:
 
         # Clear cache from any previous run
         self._clear_cache()
+        self._results_cache = {}
 
         if self.parallel:
             results = self._collect_all_parallel(cluster_name)
@@ -1007,22 +997,17 @@ class MetadataCollector:
             logger.debug("%s No API client available for cluster info collection", self._log_prefix)
             return ClusterInfo()
 
-        response = self._cached_api_call(CLUSTER_MAPPING.build_collection_url(), paginate=False)
-        if not response:
-            return ClusterInfo()
-
-        logger.debug(
-            "%s API response: cluster=%s", self._log_prefix, response.get("name", "unknown")
-        )
-        self._log_missing_fields(
-            response,
-            CLUSTER_MAPPING.api_expected_fields(),
-            "Cluster",
-            response.get("name", "unknown"),
-        )
         return cast(
             ClusterInfo,
-            parse_api_record(CLUSTER_MAPPING, response, self._log_prefix),
+            _fetch(
+                ClusterInfo,
+                cluster=self._cluster_name,
+                config=None,
+                api_client=self.api_client,
+                cli_client=self.cli_client,
+                results_cache=self._results_cache,
+                log_prefix=self._log_prefix,
+            ),
         )
 
     # -------------------------------------------------------------------------
@@ -1064,17 +1049,21 @@ class MetadataCollector:
             logger.debug("%s No API client available for nodes collection", self._log_prefix)
             return []
 
-        # Use cached API call to avoid duplicate requests (also used by HA collection)
-        response = self._cached_api_call(ONTAPNODERESPONSE_MAPPING.build_collection_url())
-        if not response:
-            return []
-
-        return cast(
+        nodes = cast(
             list[OntapNodeResponse],
-            parse_api_response(
-                ONTAPNODERESPONSE_MAPPING, response, self._log_prefix, self._log_missing_fields
+            _fetch(
+                OntapNodeResponse,
+                cluster=self._cluster_name,
+                config=None,
+                api_client=self.api_client,
+                cli_client=self.cli_client,
+                results_cache=self._results_cache,
+                log_prefix=self._log_prefix,
             ),
         )
+        # Publish for downstream phases (e.g. cluster's compute_is_ha hook).
+        self._results_cache["nodes"] = nodes
+        return nodes
 
     # -------------------------------------------------------------------------
     # Network Collection
@@ -1117,48 +1106,33 @@ class MetadataCollector:
             logger.debug("%s No API client available for network collection", self._log_prefix)
             return NetworkInfo()
 
-        # Make all 5 API calls in parallel using cached calls
-        endpoints = [
-            ONTAPIPINTERFACE_MAPPING.build_collection_url(),
-            ONTAPBROADCASTDOMAIN_MAPPING.build_collection_url(),
-            "/network/ipspaces?fields=*",
-            ONTAPDNS_MAPPING.build_collection_url(),
-            ONTAPIPSUBNET_MAPPING.build_collection_url(),
+        # Each task fetches one model class via the generic fetch() dispatcher.
+        # Parallelism is preserved: each fetch() call is submitted to the
+        # ThreadPoolExecutor exactly as the per-endpoint calls were before.
+        ipspace_url = "/network/ipspaces?fields=*"
+        model_tasks: list[tuple[str, type[BaseModel]]] = [
+            ("ip_interfaces", OntapIpInterface),
+            ("broadcast_domains", OntapBroadcastDomain),
+            ("dns", OntapDns),
+            ("subnets", OntapIpSubnet),
         ]
 
+        results: dict[str, Any] = {}
         if self.parallel:
             with ThreadPoolExecutor(max_workers=5) as executor:
-                futures = {executor.submit(self._cached_api_call, ep): ep for ep in endpoints}
-                responses: dict[str, Any] = {}
-                for future in as_completed(futures):
-                    ep = futures[future]
-                    responses[ep] = future.result()
+                model_futures = {
+                    executor.submit(self._fetch_model, mc): key for key, mc in model_tasks
+                }
+                ipspace_future = executor.submit(self._cached_api_call, ipspace_url)
+                for future in as_completed(model_futures):
+                    results[model_futures[future]] = future.result()
+                results["ipspace_response"] = ipspace_future.result()
         else:
-            responses = {ep: self._cached_api_call(ep) for ep in endpoints}
+            for key, mc in model_tasks:
+                results[key] = self._fetch_model(mc)
+            results["ipspace_response"] = self._cached_api_call(ipspace_url)
 
-        # Process LIFs response
-        all_lifs = cast(
-            list[OntapIpInterface],
-            parse_api_response(
-                ONTAPIPINTERFACE_MAPPING,
-                responses.get(endpoints[0]),
-                self._log_prefix,
-                self._log_missing_fields,
-            ),
-        )
-        # Process broadcast domains response
-        broadcast_domains = cast(
-            list[OntapBroadcastDomain],
-            parse_api_response(
-                ONTAPBROADCASTDOMAIN_MAPPING,
-                responses.get(endpoints[1]),
-                self._log_prefix,
-                self._log_missing_fields,
-            ),
-        )
-
-        # Process IPspaces response
-        ipspace_response = responses.get(endpoints[2]) or {}
+        ipspace_response = results.get("ipspace_response") or {}
         logger.debug(
             "%s API response: %d IPspaces",
             self._log_prefix,
@@ -1166,34 +1140,14 @@ class MetadataCollector:
         )
         ipspaces = [r.get("name", "") for r in ipspace_response.get("records", [])]
 
-        # Process DNS response
-        dns = cast(
-            list[OntapDns],
-            parse_api_response(
-                ONTAPDNS_MAPPING,
-                responses.get(endpoints[3]),
-                self._log_prefix,
-                self._log_missing_fields,
-            ),
-        )
-
-        # Process subnets response
-        subnets = cast(
-            list[OntapIpSubnet],
-            parse_api_response(
-                ONTAPIPSUBNET_MAPPING,
-                responses.get(endpoints[4]),
-                self._log_prefix,
-                self._log_missing_fields,
-            ),
-        )
-
         return NetworkInfo(
-            ip_interfaces=all_lifs,
-            ethernet_broadcast_domains=broadcast_domains,
+            ip_interfaces=cast(list[OntapIpInterface], results["ip_interfaces"]),
+            ethernet_broadcast_domains=cast(
+                list[OntapBroadcastDomain], results["broadcast_domains"]
+            ),
             ipspaces=ipspaces,
-            dns=dns,
-            ip_subnets=subnets,
+            dns=cast(list[OntapDns], results["dns"]),
+            ip_subnets=cast(list[OntapIpSubnet], results["subnets"]),
         )
 
     # -------------------------------------------------------------------------
@@ -1237,175 +1191,55 @@ class MetadataCollector:
             logger.debug("%s No API client available for storage collection", self._log_prefix)
             return StorageInfo()
 
-        # Make all API calls in parallel using cached calls
-        endpoints = [
-            ONTAPAGGREGATE_MAPPING.build_collection_url(),
-            ONTAPSVM_MAPPING.build_collection_url(),
-            ONTAPCLOUDTARGET_MAPPING.build_collection_url(),
-            ONTAPVOLUME_MAPPING.build_collection_url(),
-            ONTAPQTREE_MAPPING.build_collection_url(),
-            ONTAPSNAPSHOTPOLICY_MAPPING.build_collection_url(),
-            ONTAPSCHEDULE_MAPPING.build_collection_url(),
-            ONTAPLUN_MAPPING.build_collection_url(),
-            ONTAPIGROUP_MAPPING.build_collection_url(),
-            ONTAPQOSPOLICY_MAPPING.build_collection_url(),
-            ONTAPFLEXCACHE_MAPPING.build_collection_url(),
+        # Each per-model fetch becomes one task in the executor — same
+        # parallelism shape as before (one task per sub-model), with
+        # OntapCloudTarget tolerating absence on older ONTAP versions.
+        model_tasks: list[tuple[str, type[BaseModel]]] = [
+            ("aggregates", OntapAggregate),
+            ("svms", OntapSvm),
+            ("cloud_targets", OntapCloudTarget),
+            ("volumes", OntapVolume),
+            ("qtrees", OntapQtree),
+            ("snapshot_policies", OntapSnapshotPolicy),
+            ("schedules", OntapSchedule),
+            ("luns", OntapLun),
+            ("igroups", OntapIgroup),
+            ("qos_policies", OntapQosPolicy),
+            ("flexcaches", OntapFlexcache),
         ]
 
-        def safe_api_call(endpoint: str) -> Any:
-            """Make API call, returning None on failure for optional endpoints."""
+        def safe_fetch_model(model_class: type[BaseModel]) -> Any:
+            """Fetch a model, returning [] on failure for optional endpoints."""
             try:
-                return self._cached_api_call(endpoint)
+                return self._fetch_model(model_class)
             except Exception as e:
-                # Cloud targets may not exist on older ONTAP versions
-                if "cloud/targets" in endpoint:
+                if model_class is OntapCloudTarget:
                     logger.debug("%s Cloud targets endpoint not available: %s", self._log_prefix, e)
-                    return None
+                    return []
                 raise
 
+        results: dict[str, Any] = {}
         if self.parallel:
             with ThreadPoolExecutor(max_workers=11) as executor:
-                futures = {executor.submit(safe_api_call, ep): ep for ep in endpoints}
-                responses: dict[str, Any] = {}
+                futures = {executor.submit(safe_fetch_model, mc): key for key, mc in model_tasks}
                 for future in as_completed(futures):
-                    ep = futures[future]
-                    responses[ep] = future.result()
+                    results[futures[future]] = future.result()
         else:
-            responses = {ep: safe_api_call(ep) for ep in endpoints}
-
-        # Process aggregates response
-        aggregates = cast(
-            list[OntapAggregate],
-            parse_api_response(
-                ONTAPAGGREGATE_MAPPING,
-                responses.get(endpoints[0]),
-                self._log_prefix,
-                self._log_missing_fields,
-            ),
-        )
-
-        # Process SVMs response
-        svms = cast(
-            list[OntapSvm],
-            parse_api_response(
-                ONTAPSVM_MAPPING,
-                responses.get(endpoints[1]),
-                self._log_prefix,
-                self._log_missing_fields,
-            ),
-        )
-
-        # Process cloud targets response
-        cloud_targets = cast(
-            list[OntapCloudTarget],
-            parse_api_response(
-                ONTAPCLOUDTARGET_MAPPING,
-                responses.get(endpoints[2]),
-                self._log_prefix,
-                self._log_missing_fields,
-            ),
-        )
-
-        # Process volumes response
-        volumes = cast(
-            list[OntapVolume],
-            parse_api_response(
-                ONTAPVOLUME_MAPPING,
-                responses.get(endpoints[3]),
-                self._log_prefix,
-                self._log_missing_fields,
-            ),
-        )
-
-        # Process qtrees response
-        qtrees = cast(
-            list[OntapQtree],
-            parse_api_response(
-                ONTAPQTREE_MAPPING,
-                responses.get(endpoints[4]),
-                self._log_prefix,
-                self._log_missing_fields,
-            ),
-        )
-
-        # Process snapshot policies response
-        snapshot_policies = cast(
-            list[OntapSnapshotPolicy],
-            parse_api_response(
-                ONTAPSNAPSHOTPOLICY_MAPPING,
-                responses.get(endpoints[5]),
-                self._log_prefix,
-                self._log_missing_fields,
-            ),
-        )
-
-        # Process schedules response
-        schedules = cast(
-            list[OntapSchedule],
-            parse_api_response(
-                ONTAPSCHEDULE_MAPPING,
-                responses.get(endpoints[6]),
-                self._log_prefix,
-                self._log_missing_fields,
-            ),
-        )
-
-        # Process LUNs response
-        luns = cast(
-            list[OntapLun],
-            parse_api_response(
-                ONTAPLUN_MAPPING,
-                responses.get(endpoints[7]),
-                self._log_prefix,
-                self._log_missing_fields,
-            ),
-        )
-
-        # Process igroups response
-        igroups = cast(
-            list[OntapIgroup],
-            parse_api_response(
-                ONTAPIGROUP_MAPPING,
-                responses.get(endpoints[8]),
-                self._log_prefix,
-                self._log_missing_fields,
-            ),
-        )
-
-        # Process QoS policies response
-        qos_policies = cast(
-            list[OntapQosPolicy],
-            parse_api_response(
-                ONTAPQOSPOLICY_MAPPING,
-                responses.get(endpoints[9]),
-                self._log_prefix,
-                self._log_missing_fields,
-            ),
-        )
-
-        # Process FlexCache response
-        flexcaches = cast(
-            list[OntapFlexcache],
-            parse_api_response(
-                ONTAPFLEXCACHE_MAPPING,
-                responses.get(endpoints[10]),
-                self._log_prefix,
-                self._log_missing_fields,
-            ),
-        )
+            for key, mc in model_tasks:
+                results[key] = safe_fetch_model(mc)
 
         return StorageInfo(
-            aggregates=aggregates,
-            svms=svms,
-            cloud_targets=cloud_targets,
-            volumes=volumes,
-            qtrees=qtrees,
-            snapshot_policies=snapshot_policies,
-            schedules=schedules,
-            luns=luns,
-            igroups=igroups,
-            qos_policies=qos_policies,
-            flexcaches=flexcaches,
+            aggregates=cast(list[OntapAggregate], results["aggregates"]),
+            svms=cast(list[OntapSvm], results["svms"]),
+            cloud_targets=cast(list[OntapCloudTarget], results["cloud_targets"]),
+            volumes=cast(list[OntapVolume], results["volumes"]),
+            qtrees=cast(list[OntapQtree], results["qtrees"]),
+            snapshot_policies=cast(list[OntapSnapshotPolicy], results["snapshot_policies"]),
+            schedules=cast(list[OntapSchedule], results["schedules"]),
+            luns=cast(list[OntapLun], results["luns"]),
+            igroups=cast(list[OntapIgroup], results["igroups"]),
+            qos_policies=cast(list[OntapQosPolicy], results["qos_policies"]),
+            flexcaches=cast(list[OntapFlexcache], results["flexcaches"]),
         )
 
     # -------------------------------------------------------------------------
@@ -1447,14 +1281,16 @@ class MetadataCollector:
             logger.debug("%s No API client available for license collection", self._log_prefix)
             return []
 
-        response = self._cached_api_call(ONTAPLICENSEPACKAGERESPONSE_MAPPING.build_collection_url())
         return cast(
             list[OntapLicensePackageResponse],
-            parse_api_response(
-                ONTAPLICENSEPACKAGERESPONSE_MAPPING,
-                response,
-                self._log_prefix,
-                self._log_missing_fields,
+            _fetch(
+                OntapLicensePackageResponse,
+                cluster=self._cluster_name,
+                config=None,
+                api_client=self.api_client,
+                cli_client=self.cli_client,
+                results_cache=self._results_cache,
+                log_prefix=self._log_prefix,
             ),
         )
 
@@ -1492,18 +1328,23 @@ class MetadataCollector:
         Returns:
             OntapMediatorResponse from /cluster/mediators endpoint.
         """
+        if not self.api_client:
+            return OntapMediatorResponse()
         try:
-            mediator_response = self._cached_api_call(
-                ONTAPMEDIATORRESPONSE_MAPPING.build_collection_url()
-            )
-            parsed = parse_api_response(
-                ONTAPMEDIATORRESPONSE_MAPPING,
-                mediator_response,
-                self._log_prefix,
-                self._log_missing_fields,
+            parsed = cast(
+                list[OntapMediatorResponse],
+                _fetch(
+                    OntapMediatorResponse,
+                    cluster=self._cluster_name,
+                    config=None,
+                    api_client=self.api_client,
+                    cli_client=self.cli_client,
+                    results_cache=self._results_cache,
+                    log_prefix=self._log_prefix,
+                ),
             )
             if parsed:
-                return cast(OntapMediatorResponse, parsed[0])
+                return parsed[0]
         except Exception as e:
             logger.debug("%s Mediator endpoint not available: %s", self._log_prefix, e)
 
@@ -1552,61 +1393,28 @@ class MetadataCollector:
             )
             return RelationshipsInfo()
 
-        # Make all 3 API calls in parallel using cached calls
-        # Request only needed fields for snapmirror to avoid timeout on large clusters
-        endpoints = [
-            ONTAPSNAPMIRRORRELATIONSHIP_MAPPING.build_collection_url(),
-            ONTAPCLUSTERPEER_MAPPING.build_collection_url(),
-            ONTAPSVMPEER_MAPPING.build_collection_url(),
+        model_tasks: list[tuple[str, type[BaseModel]]] = [
+            ("snapmirror_destinations", OntapSnapmirrorRelationship),
+            ("cluster_peers", OntapClusterPeer),
+            ("svm_peers", OntapSvmPeer),
         ]
 
+        results: dict[str, Any] = {}
         if self.parallel:
             with ThreadPoolExecutor(max_workers=3) as executor:
-                futures = {executor.submit(self._cached_api_call, ep): ep for ep in endpoints}
-                responses: dict[str, Any] = {}
+                futures = {executor.submit(self._fetch_model, mc): key for key, mc in model_tasks}
                 for future in as_completed(futures):
-                    ep = futures[future]
-                    responses[ep] = future.result()
+                    results[futures[future]] = future.result()
         else:
-            responses = {ep: self._cached_api_call(ep) for ep in endpoints}
-
-        # Process SnapMirror relationships
-        snapmirror_destinations = cast(
-            list[OntapSnapmirrorRelationship],
-            parse_api_response(
-                ONTAPSNAPMIRRORRELATIONSHIP_MAPPING,
-                responses.get(endpoints[0]),
-                self._log_prefix,
-                self._log_missing_fields,
-            ),
-        )
-
-        # Process cluster peers
-        cluster_peers = cast(
-            list[OntapClusterPeer],
-            parse_api_response(
-                ONTAPCLUSTERPEER_MAPPING,
-                responses.get(endpoints[1]),
-                self._log_prefix,
-                self._log_missing_fields,
-            ),
-        )
-
-        # Process SVM peers
-        svm_peers = cast(
-            list[OntapSvmPeer],
-            parse_api_response(
-                ONTAPSVMPEER_MAPPING,
-                responses.get(endpoints[2]),
-                self._log_prefix,
-                self._log_missing_fields,
-            ),
-        )
+            for key, mc in model_tasks:
+                results[key] = self._fetch_model(mc)
 
         return RelationshipsInfo(
-            snapmirror_destinations=snapmirror_destinations,
-            cluster_peers=cluster_peers,
-            svm_peers=svm_peers,
+            snapmirror_destinations=cast(
+                list[OntapSnapmirrorRelationship], results["snapmirror_destinations"]
+            ),
+            cluster_peers=cast(list[OntapClusterPeer], results["cluster_peers"]),
+            svm_peers=cast(list[OntapSvmPeer], results["svm_peers"]),
         )
 
     # -------------------------------------------------------------------------
@@ -1670,74 +1478,28 @@ class MetadataCollector:
             logger.debug("%s No API client available for protocols collection", self._log_prefix)
             return ProtocolsInfo()
 
-        endpoints = [
-            ONTAPEXPORTPOLICY_MAPPING.build_collection_url(),
-            ONTAPCIFSSHARE_MAPPING.build_collection_url(),
-            ONTAPNFSSERVICE_MAPPING.build_collection_url(),
-            ONTAPCIFSSERVICE_MAPPING.build_collection_url(),
-            ONTAPS3BUCKET_MAPPING.build_collection_url(),
+        model_tasks: list[tuple[str, type[BaseModel]]] = [
+            ("nfs_export_policies", OntapExportPolicy),
+            ("cifs_shares", OntapCifsShare),
+            ("nfs_services", OntapNfsService),
+            ("cifs_services", OntapCifsService),
+            ("s3_buckets", OntapS3Bucket),
         ]
 
+        results: dict[str, Any] = {}
         if self.parallel:
             with ThreadPoolExecutor(max_workers=5) as executor:
-                futures = {executor.submit(self._cached_api_call, ep): ep for ep in endpoints}
-                responses: dict[str, Any] = {}
+                futures = {executor.submit(self._fetch_model, mc): key for key, mc in model_tasks}
                 for future in as_completed(futures):
-                    ep = futures[future]
-                    responses[ep] = future.result()
+                    results[futures[future]] = future.result()
         else:
-            responses = {ep: self._cached_api_call(ep) for ep in endpoints}
-
-        export_policies = cast(
-            list[OntapExportPolicy],
-            parse_api_response(
-                ONTAPEXPORTPOLICY_MAPPING,
-                responses.get(endpoints[0]),
-                self._log_prefix,
-                self._log_missing_fields,
-            ),
-        )
-        cifs_shares = cast(
-            list[OntapCifsShare],
-            parse_api_response(
-                ONTAPCIFSSHARE_MAPPING,
-                responses.get(endpoints[1]),
-                self._log_prefix,
-                self._log_missing_fields,
-            ),
-        )
-        nfs_services = cast(
-            list[OntapNfsService],
-            parse_api_response(
-                ONTAPNFSSERVICE_MAPPING,
-                responses.get(endpoints[2]),
-                self._log_prefix,
-                self._log_missing_fields,
-            ),
-        )
-        cifs_services = cast(
-            list[OntapCifsService],
-            parse_api_response(
-                ONTAPCIFSSERVICE_MAPPING,
-                responses.get(endpoints[3]),
-                self._log_prefix,
-                self._log_missing_fields,
-            ),
-        )
-        s3_buckets = cast(
-            list[OntapS3Bucket],
-            parse_api_response(
-                ONTAPS3BUCKET_MAPPING,
-                responses.get(endpoints[4]),
-                self._log_prefix,
-                self._log_missing_fields,
-            ),
-        )
+            for key, mc in model_tasks:
+                results[key] = self._fetch_model(mc)
 
         return ProtocolsInfo(
-            nfs_export_policies=export_policies,
-            cifs_shares=cifs_shares,
-            nfs_services=nfs_services,
-            cifs_services=cifs_services,
-            s3_buckets=s3_buckets,
+            nfs_export_policies=cast(list[OntapExportPolicy], results["nfs_export_policies"]),
+            cifs_shares=cast(list[OntapCifsShare], results["cifs_shares"]),
+            nfs_services=cast(list[OntapNfsService], results["nfs_services"]),
+            cifs_services=cast(list[OntapCifsService], results["cifs_services"]),
+            s3_buckets=cast(list[OntapS3Bucket], results["s3_buckets"]),
         )
