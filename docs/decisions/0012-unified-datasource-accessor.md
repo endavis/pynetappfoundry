@@ -2,7 +2,9 @@
 
 ## Status
 
-Accepted
+Superseded by [ADR-0013: DataSource as a Thin Facade Over the Collector](0013-datasource-as-a-thin-facade-over-the-collector.md).
+
+The public `DataSource` API defined in this ADR is retained by ADR-0013; the implementation strategy (parallel `OntapBackend` live path, field-level cache-vs-live routing, `TypeMapping`-flag-driven endpoint quirks) is replaced with a collector-backed facade. See ADR-0013 §Context for the rationale.
 
 ## Context
 
