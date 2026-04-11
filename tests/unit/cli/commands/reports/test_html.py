@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, PropertyMock, patch
 
 import pytest
 
@@ -646,6 +646,152 @@ class TestClusterData:
         }
 
 
+class TestBuildCloudInfoGate:
+    """Tests for the _build_cloud_info non-cloud gate (issue #547)."""
+
+    def _make_cluster_with_entry(
+        self,
+        mock_config: MagicMock,
+        *,
+        cluster_info: ClusterInfo | None,
+    ) -> ClusterData:
+        mock_builder = MagicMock()
+        mock_builder.config = mock_config
+        mock_entry = MagicMock()
+        # If this lazy access runs, it would trigger the SSH path — raise
+        # so the test proves the gate short-circuits before touching it.
+        ontap_mock = MagicMock()
+        type(ontap_mock).cloud = PropertyMock(
+            side_effect=AssertionError("ontap.cloud must not be accessed when is_cloud=False")
+        )
+        mock_entry.ontap = ontap_mock
+
+        with patch.object(ClusterData, "_gather_data"):
+            cluster = ClusterData(
+                "test-cluster",
+                mock_builder,
+                cluster_entry=mock_entry,
+                div="Div1",
+                bu="BU1",
+                tags=[],
+                ip="10.0.0.1",
+            )
+        cluster.cluster_info = cluster_info
+        return cluster
+
+    def test_early_returns_when_cluster_info_missing(self, mock_config: MagicMock) -> None:
+        """No ClusterInfo → _build_cloud_info early-returns without SSH."""
+        cluster = self._make_cluster_with_entry(mock_config, cluster_info=None)
+        # Should not raise even though ontap.cloud would blow up.
+        cluster._build_cloud_info()
+        assert cluster.cloud_metadata == []
+
+    def test_early_returns_when_cluster_is_not_cloud(self, mock_config: MagicMock) -> None:
+        """ClusterInfo.is_cloud=False → _build_cloud_info early-returns."""
+        cluster = self._make_cluster_with_entry(
+            mock_config,
+            cluster_info=ClusterInfo(cluster_name="test-cluster", is_cloud=False),
+        )
+        cluster._build_cloud_info()
+        assert cluster.cloud_metadata == []
+
+    def test_proceeds_when_cluster_is_cloud(self, mock_config: MagicMock) -> None:
+        """ClusterInfo.is_cloud=True → _build_cloud_info touches ontap.cloud."""
+        from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
+
+        mock_builder = MagicMock()
+        mock_builder.config = mock_config
+        mock_entry = MagicMock()
+        ontap_mock = MagicMock()
+        ontap_mock.cloud = [
+            CloudMetadata(
+                node="n1",
+                provider="AWS",
+                region="us-east-1",
+                account_id="123",
+                resource_group_name="",
+                resource_group_link="",
+                instance_id="i-1",
+                instance_type="m5.xlarge",
+                availability_zone="us-east-1a",
+                instance_link="",
+                instance_sso_link="",
+            )
+        ]
+        mock_entry.ontap = ontap_mock
+
+        with patch.object(ClusterData, "_gather_data"):
+            cluster = ClusterData(
+                "test-cluster",
+                mock_builder,
+                cluster_entry=mock_entry,
+                div="Div1",
+                bu="BU1",
+                tags=[],
+                ip="10.0.0.1",
+            )
+        cluster.cluster_info = ClusterInfo(cluster_name="test-cluster", is_cloud=True)
+        cluster._build_cloud_info()
+        assert len(cluster.cloud_metadata) == 1
+        assert cluster.cloud_provider == "AWS"
+
+
+class TestGatherDataCloudOrdering:
+    """Regression: _gather_data fetches ClusterInfo before _build_cloud_info."""
+
+    @patch("pynetappfoundry.cli.commands.reports.html.DataSource")
+    def test_cluster_info_queried_before_build_cloud_info(
+        self,
+        mock_datasource_class: MagicMock,
+        mock_config: MagicMock,
+    ) -> None:
+        """_build_cloud_info sees a populated self.cluster_info."""
+        call_order: list[str] = []
+
+        mock_builder = MagicMock()
+        mock_builder.config = mock_config
+
+        mock_ds = MagicMock()
+        mock_datasource_class.return_value = mock_ds
+
+        def make_query_result(model_name: str) -> MagicMock:
+            result = MagicMock()
+
+            def _first() -> Any:
+                call_order.append(f"query:{model_name}")
+                return ClusterInfo(cluster_name="test-cluster", is_cloud=False)
+
+            result.first.side_effect = _first
+            result.__iter__ = lambda self: iter([])
+            return result
+
+        def query_side_effect(model: type, **kw: Any) -> MagicMock:
+            return make_query_result(model.__name__)
+
+        mock_ds.query.side_effect = query_side_effect
+
+        original_build = ClusterData._build_cloud_info
+
+        def track_build(self_: ClusterData) -> None:
+            call_order.append("build_cloud_info")
+            original_build(self_)
+
+        with patch.object(ClusterData, "_build_cloud_info", track_build):
+            ClusterData(
+                "test-cluster",
+                mock_builder,
+                div="Div1",
+                bu="BU1",
+                ip="10.0.0.1",
+                tags=[],
+            )
+
+        # ClusterInfo must be queried before _build_cloud_info runs.
+        cluster_info_idx = call_order.index("query:ClusterInfo")
+        build_idx = call_order.index("build_cloud_info")
+        assert cluster_info_idx < build_idx
+
+
 class TestFormatInterfacesHomeNode:
     """Tests for the LIF home_node rendering fallback chain."""
 
@@ -1011,6 +1157,9 @@ class TestHTMLFileGeneration:
                 dns_domains=["corp.example.com", "example.com"],
                 name_servers=["10.0.0.10", "10.0.0.11"],
                 ntp_servers=["time1.example.com", "time2.example.com"],
+                # Flagged cloud so _build_cloud_info does not early-return
+                # under the issue #547 gate.
+                is_cloud=True,
             ),
             "nodes": [
                 OntapNodeResponse(
@@ -1262,7 +1411,6 @@ class TestHTMLFileGeneration:
 
         # Mock _gather_data to populate typed model attributes without calling ONTAP
         def mock_gather_data(cluster_self: Any) -> None:
-            cluster_self._build_cloud_info()
             cluster_self.management_ip = getattr(cluster_self, "ip", "")
             # Use different data based on cluster name for variety
             if "ONPREM" in cluster_self.name or "DR" in cluster_self.name:
@@ -1283,6 +1431,9 @@ class TestHTMLFileGeneration:
                 cluster_self.svms = comprehensive_ontap_models["svms"]
                 cluster_self.cifs_services = comprehensive_ontap_models["cifs_services"]
                 cluster_self.cluster_type = "HA"
+            # Cloud metadata is gated on cluster_info.is_cloud (issue #547),
+            # so build it after cluster_info is populated.
+            cluster_self._build_cloud_info()
 
         # Monkey-patch the method
         ClusterData._gather_data = mock_gather_data  # type: ignore[method-assign]
@@ -1406,7 +1557,9 @@ class TestCloudSections:
                 tags=[],
                 ip="10.0.0.1",
             )
-        # Manually call _build_cloud_info since _gather_data was patched
+        # Simulate cluster_info population from _gather_data and flag as
+        # cloud so the _build_cloud_info gate (issue #547) allows it.
+        cluster.cluster_info = ClusterInfo(cluster_name="test-cluster", is_cloud=True)
         cluster._build_cloud_info()
         cluster.nodes = [
             OntapNodeResponse(

@@ -283,6 +283,113 @@ class TestFetchEnvelope:
 
 
 # ---------------------------------------------------------------------------
+# Generic FieldMapping.depends_on fan-out (issue #547)
+# ---------------------------------------------------------------------------
+
+
+class _DepA(BaseModel):
+    name: str = ""
+
+
+class _DepB(BaseModel):
+    name: str = ""
+
+
+class _HasDeps(BaseModel):
+    name: str = ""
+    computed: int = 0
+
+
+def _hook_two_deps(instance: _HasDeps, results: dict[str, Any]) -> _HasDeps:
+    total = len(results.get("_DepA", [])) + len(results.get("_DepB", []))
+    return instance.model_copy(update={"computed": total})
+
+
+_DEP_A_MAPPING = TypeMapping(
+    name="_DepA",
+    model_class=_DepA,
+    api_endpoint="/deps/a?fields=*",
+    fields=(FieldMapping(cache_attr="name"),),
+)
+
+_DEP_B_MAPPING = TypeMapping(
+    name="_DepB",
+    model_class=_DepB,
+    api_endpoint="/deps/b?fields=*",
+    fields=(FieldMapping(cache_attr="name"),),
+)
+
+_HAS_DEPS_MAPPING = TypeMapping(
+    name="_HasDeps",
+    model_class=_HasDeps,
+    api_endpoint="/owner?fields=*",
+    response_shape="singleton",
+    fields=(
+        FieldMapping(cache_attr="name"),
+        FieldMapping(
+            cache_attr="computed",
+            cache_strategy="derived",
+            default=0,
+            post_collection=_hook_two_deps,
+            depends_on=(_DepA, _DepB),
+        ),
+    ),
+)
+
+
+class TestFetchDependsOn:
+    """Generic FieldMapping.depends_on fan-out tests."""
+
+    def setup_method(self) -> None:
+        model_registry.register_mapping("_DepA", _DEP_A_MAPPING)
+        model_registry.register_mapping("_DepB", _DEP_B_MAPPING)
+        model_registry.register_mapping("_HasDeps", _HAS_DEPS_MAPPING)
+
+    def teardown_method(self) -> None:
+        for name, cls in (("_DepA", _DepA), ("_DepB", _DepB), ("_HasDeps", _HasDeps)):
+            model_registry._mappings.pop(name, None)
+            model_registry._mappings_by_class.pop(cls, None)
+
+    def test_hook_with_two_dependencies_triggers_two_fetches(self) -> None:
+        """Both dependencies fanned out when absent from results_cache."""
+        responses = {
+            "/owner?fields=*": {"name": "owner1"},
+            "/deps/a?fields=*": {"records": [{"name": "a1"}, {"name": "a2"}]},
+            "/deps/b?fields=*": {"records": [{"name": "b1"}]},
+        }
+        client = MagicMock()
+        client.call_endpoint = MagicMock(side_effect=lambda url, **kw: responses.get(url))
+        client.get_all_records = MagicMock(
+            side_effect=lambda url, **kw: responses.get(url, {"records": []})
+        )
+        result = fetch(_HasDeps, cluster="c1", config=None, api_client=client)
+        assert isinstance(result, _HasDeps)
+        assert result.computed == 3  # 2 _DepA + 1 _DepB
+        assert client.get_all_records.call_count == 2
+
+    def test_deps_in_results_cache_prevent_refetch(self) -> None:
+        """Pre-populated results_cache short-circuits the generic fan-out."""
+        responses = {"/owner?fields=*": {"name": "owner1"}}
+        client = MagicMock()
+        client.call_endpoint = MagicMock(side_effect=lambda url, **kw: responses.get(url))
+        client.get_all_records = MagicMock(return_value={"records": []})
+        result = fetch(
+            _HasDeps,
+            cluster="c1",
+            config=None,
+            api_client=client,
+            results_cache={
+                "_DepA": [_DepA(name="a1")],
+                "_DepB": [_DepB(name="b1"), _DepB(name="b2")],
+            },
+        )
+        assert isinstance(result, _HasDeps)
+        assert result.computed == 3
+        # No dependency fetches should have fired.
+        assert client.get_all_records.call_count == 0
+
+
+# ---------------------------------------------------------------------------
 # Parameterized fetch path (synthetic mapping)
 # ---------------------------------------------------------------------------
 

@@ -51,6 +51,14 @@ class FieldMapping:
             after all collection phases complete.  Signature:
             ``(model_instance, results_dict) -> model_instance`` where
             *results_dict* is the full cross-collection results dictionary.
+        depends_on: Tuple of model classes that a ``post_collection`` hook
+            needs pre-fetched into the ``results_dict`` before it runs.
+            The generic :func:`pynetappfoundry.cache.fetchers.fetch`
+            dispatcher iterates this tuple and, for each dependency
+            missing from the shared ``results_cache``, recursively fetches
+            the model to populate it (keyed by the dependency's
+            ``__name__``).  Default empty tuple means the hook has no
+            cross-model dependencies (e.g. intra-record derived fields).
     """
 
     cache_attr: str
@@ -62,6 +70,7 @@ class FieldMapping:
     cache_strategy: Literal["cache", "realtime", "derived"] = "cache"
     requires_explicit_fetch: bool = False
     post_collection: Callable[[Any, dict[str, Any]], Any] | None = None
+    depends_on: tuple[type[BaseModel], ...] = ()
 
     def __post_init__(self) -> None:
         """Default ``api_path`` to ``cache_attr`` for cache/realtime fields.

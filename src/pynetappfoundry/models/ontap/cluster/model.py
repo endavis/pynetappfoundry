@@ -22,6 +22,7 @@ class ClusterInfo(OntapModel):
     contact: str = ""
     location: str = ""
     is_ha: bool = False
+    is_cloud: bool = False
     san_optimized: bool = False
     timezone: str = ""
     dns_domains: list[str] = Field(default_factory=list)

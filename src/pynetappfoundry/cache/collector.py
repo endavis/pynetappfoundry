@@ -39,6 +39,7 @@ from pynetappfoundry.cache.field_mapping import (
     parse_api_response as _parse_api_response_raw,
 )
 from pynetappfoundry.cache.ontap.cloud.metadata.mapping import CLOUD_METADATA_MAPPING
+from pynetappfoundry.cache.ontap.cluster.mapping import _is_cloud_node
 from pynetappfoundry.cache.ontap.svm.svms.top_metrics.users.mapping import (
     ONTAPTOPMETRICSSVMUSER_MAPPING,
 )
@@ -743,9 +744,22 @@ class MetadataCollector:
         Returns one CloudMetadata per node in the cluster. This is the only
         CLI-only phase — failure warns but does not abort collection.
 
+        Non-cloud (on-prem) clusters skip the CLI call entirely. Detection
+        uses the nodes already fetched into ``_results_cache`` — if none
+        match :func:`_is_cloud_node`, the method returns an empty list
+        without touching the CLI client, avoiding a 10s SSH timeout on
+        clusters that do not expose a cloud management service. See #547.
+
         Returns:
             List of CloudMetadata objects, one per node.
         """
+        nodes = self._results_cache.get("nodes", [])
+        if not nodes or not any(_is_cloud_node(n) for n in nodes):
+            logger.debug(
+                "%s Skipping cloud metadata: no CVO nodes detected",
+                self._log_prefix,
+            )
+            return []
         if self.cli_client:
             try:
                 return self._collect_cloud_metadata_via_cli()

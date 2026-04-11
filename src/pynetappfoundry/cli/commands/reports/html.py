@@ -778,8 +778,17 @@ class ClusterData:
         Extracts cluster-level fields (provider, account, region, resource group)
         from the first entry. Per-node fields (instance_id, instance_type, etc.)
         are accessed via cloud_metadata_by_node in _format_netapp_node().
+
+        Gated on ``self.cluster_info.is_cloud`` so that on-prem clusters
+        do not trigger the lazy ``ontap.cloud`` fetch — that path falls
+        through to ``virtual-machine instance show`` over SSH and takes a
+        10s connect timeout against on-prem clusters without an SSH
+        management service. See #547.
         """
         if not self._cluster_entry:
+            return
+        if not self.cluster_info or not self.cluster_info.is_cloud:
+            print_debug(f"Skipping cloud metadata for non-cloud cluster {self.name}")
             return
 
         ontap = self._cluster_entry.ontap
@@ -799,7 +808,6 @@ class ClusterData:
     def _gather_data(self) -> None:
         """Gather data from the cluster via ONTAP REST API."""
         print_debug(f"Gathering data for {self.name}")
-        self._build_cloud_info()
 
         ip = getattr(self, "ip", None)
         if not ip:
@@ -810,6 +818,10 @@ class ClusterData:
             ds = DataSource(self.app_instance.config)
             self.management_ip = ip
             self.cluster_info = ds.query(ClusterInfo, cluster=self.name, source="auto").first()
+            # Build cloud info AFTER cluster_info is populated so the
+            # gate on ``is_cloud`` can skip the SSH-backed lazy fetch for
+            # on-prem clusters (issue #547).
+            self._build_cloud_info()
             self.nodes = list(ds.query(OntapNodeResponse, cluster=self.name, source="auto"))
             self.svms = list(ds.query(OntapSvm, cluster=self.name, source="auto"))
             self.cifs_services = list(ds.query(OntapCifsService, cluster=self.name, source="auto"))
