@@ -212,7 +212,7 @@ class MetadataCollector:
         self._cache_lock = threading.Lock()
 
         # Cross-phase results cache used by fetch() to short-circuit
-        # post-collection hooks (e.g. compute_is_ha looking up "nodes").
+        # post-collection hooks (e.g. compute_is_ha looking up "OntapNodeResponse").
         # Populated by phase methods as they complete; consulted by
         # subsequent fetch() calls.
         self._results_cache: dict[str, Any] = {}
@@ -392,6 +392,14 @@ class MetadataCollector:
         Returns:
             Updated results dict with derived fields evaluated.
         """
+        # Alias phase-keyed entries under their canonical ``dep_class.__name__``
+        # key so post-collection hooks (which read ``results`` as their context
+        # dict) find dependencies under the canonical name consistent with
+        # ``fetchers.fetch()``. See ADR-0013 §5.
+        for mapping_name, results_key in self._MAPPING_RESULTS_KEYS:
+            if results_key in results and mapping_name != results_key:
+                results[mapping_name] = results[results_key]
+
         for mapping_name, results_key in self._MAPPING_RESULTS_KEYS:
             if results_key not in results:
                 continue
@@ -753,7 +761,7 @@ class MetadataCollector:
         Returns:
             List of CloudMetadata objects, one per node.
         """
-        nodes = self._results_cache.get("nodes", [])
+        nodes = self._results_cache.get("OntapNodeResponse", [])
         if not nodes or not any(_is_cloud_node(n) for n in nodes):
             logger.debug(
                 "%s Skipping cloud metadata: no CVO nodes detected",
@@ -1076,7 +1084,7 @@ class MetadataCollector:
             ),
         )
         # Publish for downstream phases (e.g. cluster's compute_is_ha hook).
-        self._results_cache["nodes"] = nodes
+        self._results_cache["OntapNodeResponse"] = nodes
         return nodes
 
     # -------------------------------------------------------------------------

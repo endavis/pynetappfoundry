@@ -303,7 +303,7 @@ def fetch[T: BaseModel](
             continue
         for dep_class in field.depends_on:
             dep_key = dep_class.__name__
-            if dep_key in local_cache or _dep_has_legacy_key(local_cache, dep_class):
+            if dep_key in local_cache:
                 continue
             dep_result = fetch(
                 dep_class,
@@ -335,22 +335,6 @@ def fetch[T: BaseModel](
             return cast(T, mapping.model_class())
         return cast(T, items[0])
     return cast("list[T]", items)
-
-
-# Legacy ``results_cache`` keys preserved for pre-existing callers that
-# populated the shared dict under short aliases (e.g. the
-# ``MetadataCollector`` publishes nodes under ``"nodes"``).  Keeping this
-# map lets those call sites short-circuit the generic ``depends_on``
-# fan-out without churning every hook and collector in one PR.
-_LEGACY_DEP_KEYS: dict[str, str] = {
-    "OntapNodeResponse": "nodes",
-}
-
-
-def _dep_has_legacy_key(cache: dict[str, Any], dep_class: type[BaseModel]) -> bool:
-    """Return True when *cache* already holds a legacy alias for *dep_class*."""
-    legacy_key = _LEGACY_DEP_KEYS.get(dep_class.__name__)
-    return legacy_key is not None and legacy_key in cache
 
 
 def _results_key_for_parent(parent_mapping_name: str) -> str:
