@@ -14,6 +14,45 @@ from pynetappfoundry.data.source import _BACKENDS, DataSource, QueryBuilder
 from .conftest import FakeComposite, FakeVolume
 
 
+class TestDataSourceResolveMapping:
+    """Regression: _resolve_mapping must use the class-keyed reverse index.
+
+    The name-keyed lookup (``model_registry.get_mapping(model_class.__name__)``)
+    silently fails when a mapping's registered name does not match the
+    model class name — e.g., CLUSTER_MAPPING is registered as ``"Cluster"``
+    but the model class is :class:`ClusterInfo`. Before #524, this caused
+    ``nf reports html`` to fail at runtime with "No TypeMapping registered
+    for 'ClusterInfo'" even though CLUSTER_MAPPING was registered correctly.
+    """
+
+    def test_resolve_mapping_uses_class_keyed_index(
+        self,
+        mock_config: Any,
+    ) -> None:
+        """Real consumer regression: ClusterInfo resolves to CLUSTER_MAPPING."""
+        # Import to ensure the mapping is registered.
+        from pynetappfoundry.cache.ontap.cluster.mapping import CLUSTER_MAPPING
+        from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
+
+        ds = DataSource(mock_config)
+        resolved = ds._resolve_mapping(ClusterInfo)
+        assert resolved is CLUSTER_MAPPING
+
+    def test_resolve_mapping_raises_for_unregistered_class(
+        self,
+        mock_config: Any,
+    ) -> None:
+        """An unregistered model class raises a clear error."""
+        from pydantic import BaseModel
+
+        class _Unregistered(BaseModel):
+            pass
+
+        ds = DataSource(mock_config)
+        with pytest.raises(ValueError, match="_Unregistered"):
+            ds._resolve_mapping(_Unregistered)
+
+
 class TestDataSourceGet:
     def test_get_dispatches_to_correct_backend(
         self,

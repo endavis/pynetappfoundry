@@ -494,16 +494,16 @@ class TestClusterData:
         assert cluster.cluster_info is None
         assert cluster.nodes == []
 
-    @patch("pynetappfoundry.cli.commands.reports.html.ONTAPAPIClient")
-    def test_gather_data_handles_credential_error(
+    @patch("pynetappfoundry.cli.commands.reports.html.DataSource")
+    def test_gather_data_handles_datasource_error(
         self,
-        mock_api_client_class: MagicMock,
+        mock_datasource_class: MagicMock,
         mock_config: MagicMock,
     ) -> None:
-        """Test that _gather_data handles credential errors gracefully."""
+        """Test that _gather_data handles DataSource errors gracefully."""
         mock_builder = MagicMock()
         mock_builder.config = mock_config
-        mock_api_client_class.side_effect = Exception("Credential error")
+        mock_datasource_class.side_effect = Exception("DataSource error")
 
         cluster = ClusterData(
             "test-cluster",
@@ -518,25 +518,31 @@ class TestClusterData:
         assert cluster.cluster_info is None
         assert cluster.nodes == []
 
-    @patch("pynetappfoundry.cli.commands.reports.html.QuerySet")
-    @patch("pynetappfoundry.cli.commands.reports.html.parse_api_record")
-    @patch("pynetappfoundry.cli.commands.reports.html.ONTAPAPIClient")
-    def test_gather_data_threads_config_to_queryset(
+    @patch("pynetappfoundry.cli.commands.reports.html.DataSource")
+    def test_gather_data_routes_through_datasource(
         self,
-        mock_api_client_class: MagicMock,
-        mock_parse: MagicMock,
-        mock_qs_cls: MagicMock,
+        mock_datasource_class: MagicMock,
         mock_config: MagicMock,
     ) -> None:
-        """Test that _gather_data passes config= to every QuerySet call."""
+        """Test that _gather_data uses DataSource.query() for all fetches."""
+        from pynetappfoundry.models.ontap.network.ip.interfaces.model import (
+            OntapIpInterface,
+        )
+
         mock_builder = MagicMock()
         mock_builder.config = mock_config
 
-        mock_client = MagicMock()
-        mock_api_client_class.return_value = mock_client
-        mock_client.call_endpoint.return_value = {}
-        mock_parse.return_value = MagicMock(spec=ClusterInfo)
-        mock_qs_cls.return_value.all.return_value = []
+        mock_ds = MagicMock()
+        mock_datasource_class.return_value = mock_ds
+
+        # Each query returns a MagicMock that supports .first() and iteration.
+        def make_query_result() -> MagicMock:
+            result = MagicMock()
+            result.first.return_value = None
+            result.__iter__ = lambda self: iter([])
+            return result
+
+        mock_ds.query.side_effect = lambda *args, **kwargs: make_query_result()
 
         cluster = ClusterData(
             "test-cluster",
@@ -547,11 +553,178 @@ class TestClusterData:
             tags=[],
         )
 
-        # 3 QuerySet calls: nodes, svms, cifs_services
-        assert mock_qs_cls.call_count == 3
-        for call in mock_qs_cls.call_args_list:
-            assert call.kwargs.get("config") is mock_config
+        # DataSource constructed exactly once with the config.
+        mock_datasource_class.assert_called_once_with(mock_config)
+
+        # Five queries: ClusterInfo, OntapNodeResponse, OntapSvm,
+        # OntapCifsService, OntapIpInterface — all with source="auto".
+        assert mock_ds.query.call_count == 5
+        queried_models = [call.args[0] for call in mock_ds.query.call_args_list]
+        assert queried_models == [
+            ClusterInfo,
+            OntapNodeResponse,
+            OntapSvm,
+            OntapCifsService,
+            OntapIpInterface,
+        ]
+        for call in mock_ds.query.call_args_list:
+            assert call.kwargs.get("source") == "auto"
+            assert call.kwargs.get("cluster") == "test-cluster"
+
         assert cluster.nodes == []
+        assert cluster.svms == []
+        assert cluster.cifs_services == []
+        assert cluster.lif_home_node_by_uuid == {}
+
+    @patch("pynetappfoundry.cli.commands.reports.html.DataSource")
+    def test_gather_data_populates_lif_home_node_lookup(
+        self,
+        mock_datasource_class: MagicMock,
+        mock_config: MagicMock,
+    ) -> None:
+        """Test that _gather_data populates lif_home_node_by_uuid from OntapIpInterface results."""
+        from pynetappfoundry.models.ontap.network.ip.interfaces.model import (
+            OntapIpInterface,
+            OntapIpInterfaceLocation,
+            OntapIpInterfaceLocationHomeNode,
+        )
+
+        mock_builder = MagicMock()
+        mock_builder.config = mock_config
+
+        valid = OntapIpInterface(
+            uuid="abc-123",
+            location=OntapIpInterfaceLocation(
+                home_node=OntapIpInterfaceLocationHomeNode(name="ontapcl-01"),
+            ),
+        )
+        valid2 = OntapIpInterface(
+            uuid="def-456",
+            location=OntapIpInterfaceLocation(
+                home_node=OntapIpInterfaceLocationHomeNode(name="ontapcl-02"),
+            ),
+        )
+        no_uuid = OntapIpInterface(
+            uuid="",
+            location=OntapIpInterfaceLocation(
+                home_node=OntapIpInterfaceLocationHomeNode(name="ontapcl-03"),
+            ),
+        )
+        no_home = OntapIpInterface(
+            uuid="ghi-789",
+            location=OntapIpInterfaceLocation(
+                home_node=OntapIpInterfaceLocationHomeNode(name=""),
+            ),
+        )
+
+        mock_ds = MagicMock()
+        mock_datasource_class.return_value = mock_ds
+
+        def query_side_effect(model: type, **kwargs: Any) -> MagicMock:
+            result = MagicMock()
+            result.first.return_value = None
+            if model is OntapIpInterface:
+                result.__iter__ = lambda self: iter([valid, valid2, no_uuid, no_home])
+            else:
+                result.__iter__ = lambda self: iter([])
+            return result
+
+        mock_ds.query.side_effect = query_side_effect
+
+        cluster = ClusterData(
+            "test-cluster",
+            mock_builder,
+            div="Div1",
+            bu="BU1",
+            ip="10.0.0.1",
+            tags=[],
+        )
+
+        assert cluster.lif_home_node_by_uuid == {
+            "abc-123": "ontapcl-01",
+            "def-456": "ontapcl-02",
+        }
+
+
+class TestFormatInterfacesHomeNode:
+    """Tests for the LIF home_node rendering fallback chain."""
+
+    @staticmethod
+    def _build_cluster_with_lookup(
+        mock_config: MagicMock,
+        lookup: dict[str, str],
+    ) -> tuple[ClusterData, MagicMock]:
+        """Build a ClusterData with a real yattag Doc and a preset lookup."""
+        from yattag import Doc
+
+        mock_builder = MagicMock()
+        mock_builder.config = mock_config
+        doc, tag, text = Doc().tagtext()
+        mock_builder.doc = doc
+        mock_builder.tag = tag
+        mock_builder.text = text
+
+        def format_table_row_text(*args: Any, header: bool = False) -> None:
+            with tag("tr"):
+                for item in args:
+                    with tag("th" if header else "td"):
+                        text(str(item))
+
+        mock_builder.format_table_row_text = format_table_row_text
+
+        with patch.object(ClusterData, "_gather_data"):
+            cluster = ClusterData(
+                "test-cluster",
+                mock_builder,
+                div="Div1",
+                bu="BU1",
+                ip="10.0.0.1",
+                tags=[],
+            )
+        cluster.lif_home_node_by_uuid = dict(lookup)
+        return cluster, mock_builder
+
+    @staticmethod
+    def _make_svm_with_interface(uuid: str, embedded_home_node: str) -> OntapSvm:
+        return OntapSvm(
+            name="svm1",
+            ip_interfaces=[
+                OntapSvmIpInterface(
+                    name="lif1",
+                    uuid=uuid,
+                    ip=OntapSvmIpInterfaceIp(address="10.0.0.10", netmask="24"),
+                    location=OntapSvmIpInterfaceLocation(
+                        home_node=OntapSvmIpInterfaceLocationHomeNode(name=embedded_home_node),
+                    ),
+                )
+            ],
+        )
+
+    def test_format_interfaces_uses_lif_home_node_lookup(self, mock_config: MagicMock) -> None:
+        """Lookup hit wins over (empty) embedded name."""
+        cluster, builder = self._build_cluster_with_lookup(mock_config, {"abc-123": "ontapcl-01"})
+        svm = self._make_svm_with_interface("abc-123", "")
+        cluster._format_netapp_vserver_interfaces_info(svm)
+        rendered = builder.doc.getvalue()
+        assert "ontapcl-01" in rendered
+        assert "Unknown" not in rendered
+
+    def test_format_interfaces_falls_back_to_embedded_name(self, mock_config: MagicMock) -> None:
+        """Lookup miss + embedded name present -> embedded name is rendered."""
+        cluster, builder = self._build_cluster_with_lookup(mock_config, {})
+        svm = self._make_svm_with_interface("abc-123", "embedded-node")
+        cluster._format_netapp_vserver_interfaces_info(svm)
+        rendered = builder.doc.getvalue()
+        assert "embedded-node" in rendered
+        assert "Unknown" not in rendered
+
+    def test_format_interfaces_renders_unknown_when_all_empty(self, mock_config: MagicMock) -> None:
+        """Lookup miss + empty embedded name -> 'Unknown'."""
+        cluster, builder = self._build_cluster_with_lookup(mock_config, {})
+        svm = self._make_svm_with_interface("abc-123", "")
+        cluster._format_netapp_vserver_interfaces_info(svm)
+        rendered = builder.doc.getvalue()
+        assert "Unknown" in rendered
 
 
 class TestCSSAndJS:

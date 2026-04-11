@@ -12,7 +12,7 @@ This module generates an interactive HTML report with:
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 
 import click
 from yattag import Doc, indent
@@ -22,17 +22,14 @@ import pynetappfoundry.cache.ontap.cluster.nodes.mapping
 import pynetappfoundry.cache.ontap.network.ip.interfaces.mapping
 import pynetappfoundry.cache.ontap.protocols.cifs.services.mapping
 import pynetappfoundry.cache.ontap.svm.svms.mapping  # noqa: F401
-from pynetappfoundry.cache.field_mapping import parse_api_record
-from pynetappfoundry.cache.ontap.cluster.mapping import CLUSTER_MAPPING
 from pynetappfoundry.cli.decorators import with_config
 from pynetappfoundry.cli.utils import print_debug, print_error, print_info, print_success
-from pynetappfoundry.clients.ontap.api import ONTAPAPIClient
-from pynetappfoundry.core.models import ClusterConfig
+from pynetappfoundry.data.source import DataSource
 from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
 from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
+from pynetappfoundry.models.ontap.network.ip.interfaces.model import OntapIpInterface
 from pynetappfoundry.models.ontap.protocols.cifs.services.model import OntapCifsService
 from pynetappfoundry.models.ontap.svm.svms.model import OntapSvm
-from pynetappfoundry.query import QuerySet
 from pynetappfoundry.utils.cloud import (
     build_azure_id,
     build_azure_portal_link,
@@ -750,6 +747,7 @@ class ClusterData:
         self.nodes: list[OntapNodeResponse] = []
         self.svms: list[OntapSvm] = []
         self.cifs_services: list[OntapCifsService] = []
+        self.lif_home_node_by_uuid: dict[str, str] = {}
         self.management_ip: str = ""
         self.cloud_metadata: list[CloudMetadata] = []
         self.cloud_metadata_by_node: dict[str, CloudMetadata] = {}
@@ -809,26 +807,20 @@ class ClusterData:
             return
 
         try:
-            cluster_config = ClusterConfig(name=self.name, ip=ip)
-            client = ONTAPAPIClient(cluster=cluster_config, config=self.app_instance.config)
-        except Exception as e:
-            print_error(f"Could not get credentials for {self.name}: {e}")
-            return
-
-        try:
-            # ClusterInfo singleton — /cluster returns flat dict, not records
-            response = client.call_endpoint(CLUSTER_MAPPING.build_collection_url())
-            if response:
-                self.cluster_info = cast(
-                    ClusterInfo,
-                    parse_api_record(CLUSTER_MAPPING, response, f"[{self.name}]"),
-                )
-
+            ds = DataSource(self.app_instance.config)
             self.management_ip = ip
-            config = self.app_instance.config
-            self.nodes = QuerySet(OntapNodeResponse, client, config=config).all()
-            self.svms = QuerySet(OntapSvm, client, config=config).all()
-            self.cifs_services = QuerySet(OntapCifsService, client, config=config).all()
+            self.cluster_info = ds.query(ClusterInfo, cluster=self.name, source="auto").first()
+            self.nodes = list(ds.query(OntapNodeResponse, cluster=self.name, source="auto"))
+            self.svms = list(ds.query(OntapSvm, cluster=self.name, source="auto"))
+            self.cifs_services = list(ds.query(OntapCifsService, cluster=self.name, source="auto"))
+            ip_interfaces = list(ds.query(OntapIpInterface, cluster=self.name, source="auto"))
+            for iface in ip_interfaces:
+                if not iface.uuid:
+                    continue
+                home_node_name = iface.location.home_node.name
+                if not home_node_name:
+                    continue
+                self.lif_home_node_by_uuid[iface.uuid] = home_node_name
         except Exception as e:
             print_error(f"Could not gather data from {self.name}: {e}")
 
@@ -1020,7 +1012,11 @@ class ClusterData:
                             for iface in svm.ip_interfaces:
                                 ip_addr = iface.ip.address or "Unknown"
                                 netmask = iface.ip.netmask
-                                home_node = iface.location.home_node.name or "Unknown"
+                                home_node = (
+                                    self.lif_home_node_by_uuid.get(iface.uuid)
+                                    or iface.location.home_node.name
+                                    or "Unknown"
+                                )
                                 self.app_instance.format_table_row_text(
                                     iface.name,
                                     f"{ip_addr}/{netmask}" if netmask else ip_addr,
