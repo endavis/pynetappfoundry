@@ -1196,11 +1196,12 @@ class ClusterData:
         with tag("li"):
             with tag("details"):
                 with tag("summary"):
+                    node_label = f"Node: {node.name}" if node.name else "Node: Unknown"
                     if management_link:
                         with tag("a", ("href", management_link)):
-                            text(node.name or "Unknown")
+                            text(node_label)
                     else:
-                        text(node.name or "Unknown")
+                        text(node_label)
                 with tag("ul"):
                     with tag("li"):
                         with tag("table", ("class", "custom-table")):
