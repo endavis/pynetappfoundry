@@ -14,7 +14,13 @@ import pytest
 from pynetappfoundry.cache.field_mapping import TypeMapping
 from pynetappfoundry.data._routing import RoutingDecision
 from pynetappfoundry.data.backends import OntapBackend
-from tests.unit.data._fakes import FakeVolume
+from tests.unit.data._fakes import (
+    FakeChildVolume,
+    FakeChildWithDottedRef,
+    FakeOrphanChild,
+    FakeParentModel,
+    FakeVolume,
+)
 
 
 def _make_backend(mock_config: Any) -> OntapBackend:
@@ -547,41 +553,48 @@ class TestOntapBackendQueryPartial:
         assert "uuid=u1%7Cu2%7Cu3" in url
         assert "fields=%2A" in url or "fields=*" in url
 
-    def test_partial_query_parent_keyed_raises_not_implemented(
+    def test_partial_query_parent_keyed_delegates_to_parent_path(
         self,
+        fake_child_mapping: TypeMapping,
         mock_config: Any,
     ) -> None:
-        """Parent-keyed mappings are explicitly unsupported for partial-fetch."""
-        from pynetappfoundry.cache._registry import model_registry
-        from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
+        """Parent-keyed mappings now route through the parent-keyed path."""
+        backend = _make_backend(mock_config)
+        decision = RoutingDecision(cache_fields=("uuid", "volume.uuid"), live_fields=("metric",))
+        cached = [
+            FakeChildWithDottedRef(uuid="c1", volume=FakeChildVolume(uuid="vol-1"), metric=0.0),
+        ]
+        live = [
+            FakeChildWithDottedRef(uuid="c1", metric=99.0),
+        ]
 
-        mapping = TypeMapping(
-            name="FakeParentKeyed",
-            model_class=FakeVolume,
-            api_endpoint="/x/{id}/children?fields=*",
-            api_type="ontap",
-            identifier_field="uuid",
-            parent_mapping="FakeParent",
-            parent_id_field="uuid",
-            fields=(
-                FieldMapping(cache_attr="uuid", cache_strategy="cache"),
-                FieldMapping(cache_attr="iops", cache_strategy="realtime"),
+        mock_db = MagicMock()
+        mock_db.query_with_filters.return_value = cached
+        mock_client = MagicMock()
+        mock_client.get_all_records.return_value = {"records": []}
+
+        with (
+            patch.object(OntapBackend, "_cache_db", new=mock_db),
+            patch.object(backend, "_get_api_client", return_value=mock_client),
+            patch(
+                "pynetappfoundry.data.backends.parse_api_response",
+                return_value=live,
             ),
-        )
-        model_registry.register_mapping("FakeParentKeyed", mapping)
-        try:
-            backend = _make_backend(mock_config)
-            decision = RoutingDecision(cache_fields=("uuid",), live_fields=("iops",))
-            with pytest.raises(NotImplementedError, match="parent-keyed"):
-                backend.query(
-                    FakeVolume,
-                    mapping,
-                    decision,
-                    cluster="prod1",
-                    filters={},
-                )
-        finally:
-            model_registry._mappings.pop("FakeParentKeyed", None)
+            patch.object(backend, "_resolve_metadata_path", return_value="storage.fake_children"),
+        ):
+            results = backend.query(
+                FakeChildWithDottedRef,
+                fake_child_mapping,
+                decision,
+                cluster="prod1",
+                filters={},
+            )
+
+        assert len(results) == 1
+        assert results[0].metric == 99.0
+        mock_client.get_all_records.assert_called_once()
+        url = mock_client.get_all_records.call_args[0][0]
+        assert "vol-1" in url
 
     def test_partial_query_chunked_helper(self) -> None:
         assert list(OntapBackend._chunked([], 100)) == []
@@ -597,6 +610,312 @@ class TestOntapBackendQueryPartial:
             list(range(100, 200)),
             list(range(200, 250)),
         ]
+
+
+class TestOntapBackendQueryPartialParentKeyed:
+    """Tests for parent-keyed partial-fetch in ``_query_partial``."""
+
+    def test_parent_keyed_single_parent_single_child(
+        self,
+        fake_child_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        """One cached child under one parent; API returns updated metric."""
+        backend = _make_backend(mock_config)
+        decision = RoutingDecision(cache_fields=("uuid", "volume.uuid"), live_fields=("metric",))
+        cached = [
+            FakeChildWithDottedRef(uuid="c1", volume=FakeChildVolume(uuid="vol-1"), metric=0.0),
+        ]
+        live = [
+            FakeChildWithDottedRef(uuid="c1", metric=42.0),
+        ]
+
+        mock_db = MagicMock()
+        mock_db.query_with_filters.return_value = cached
+        mock_client = MagicMock()
+        mock_client.get_all_records.return_value = {"records": []}
+
+        with (
+            patch.object(OntapBackend, "_cache_db", new=mock_db),
+            patch.object(backend, "_get_api_client", return_value=mock_client),
+            patch(
+                "pynetappfoundry.data.backends.parse_api_response",
+                return_value=live,
+            ),
+            patch.object(backend, "_resolve_metadata_path", return_value="storage.fake_children"),
+        ):
+            results = backend.query(
+                FakeChildWithDottedRef,
+                fake_child_mapping,
+                decision,
+                cluster="prod1",
+                filters={},
+            )
+
+        assert len(results) == 1
+        assert results[0].metric == 42.0
+        assert results[0].uuid == "c1"
+        mock_client.get_all_records.assert_called_once()
+        url = mock_client.get_all_records.call_args[0][0]
+        assert "vol-1" in url
+        assert "{volume.uuid}" not in url
+
+    def test_parent_keyed_single_parent_multi_child(
+        self,
+        fake_child_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        """Three children under the same parent; single API call with pipe-OR."""
+        backend = _make_backend(mock_config)
+        decision = RoutingDecision(cache_fields=("uuid", "volume.uuid"), live_fields=("metric",))
+        cached = [
+            FakeChildWithDottedRef(uuid=f"c{i}", volume=FakeChildVolume(uuid="vol-1"))
+            for i in range(1, 4)
+        ]
+        live = [FakeChildWithDottedRef(uuid=f"c{i}", metric=float(i) * 10) for i in range(1, 4)]
+
+        mock_db = MagicMock()
+        mock_db.query_with_filters.return_value = cached
+        mock_client = MagicMock()
+        mock_client.get_all_records.return_value = {"records": []}
+
+        with (
+            patch.object(OntapBackend, "_cache_db", new=mock_db),
+            patch.object(backend, "_get_api_client", return_value=mock_client),
+            patch(
+                "pynetappfoundry.data.backends.parse_api_response",
+                return_value=live,
+            ),
+            patch.object(backend, "_resolve_metadata_path", return_value="storage.fake_children"),
+        ):
+            results = backend.query(
+                FakeChildWithDottedRef,
+                fake_child_mapping,
+                decision,
+                cluster="prod1",
+                filters={},
+            )
+
+        assert len(results) == 3
+        mock_client.get_all_records.assert_called_once()
+        url = mock_client.get_all_records.call_args[0][0]
+        assert "c1" in url
+        assert "c2" in url
+        assert "c3" in url
+
+    def test_parent_keyed_multiple_parents(
+        self,
+        fake_child_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        """Children spanning two parents; API called once per parent."""
+        backend = _make_backend(mock_config)
+        decision = RoutingDecision(cache_fields=("uuid", "volume.uuid"), live_fields=("metric",))
+        cached = [
+            FakeChildWithDottedRef(uuid="c1", volume=FakeChildVolume(uuid="vol-1")),
+            FakeChildWithDottedRef(uuid="c2", volume=FakeChildVolume(uuid="vol-2")),
+            FakeChildWithDottedRef(uuid="c3", volume=FakeChildVolume(uuid="vol-1")),
+        ]
+        live_vol1 = [
+            FakeChildWithDottedRef(uuid="c1", metric=10.0),
+            FakeChildWithDottedRef(uuid="c3", metric=30.0),
+        ]
+        live_vol2 = [
+            FakeChildWithDottedRef(uuid="c2", metric=20.0),
+        ]
+
+        mock_db = MagicMock()
+        mock_db.query_with_filters.return_value = cached
+        mock_client = MagicMock()
+        mock_client.get_all_records.return_value = {"records": []}
+
+        with (
+            patch.object(OntapBackend, "_cache_db", new=mock_db),
+            patch.object(backend, "_get_api_client", return_value=mock_client),
+            patch(
+                "pynetappfoundry.data.backends.parse_api_response",
+                side_effect=[live_vol1, live_vol2],
+            ),
+            patch.object(backend, "_resolve_metadata_path", return_value="storage.fake_children"),
+        ):
+            results = backend.query(
+                FakeChildWithDottedRef,
+                fake_child_mapping,
+                decision,
+                cluster="prod1",
+                filters={},
+            )
+
+        assert len(results) == 3
+        by_uuid = {r.uuid: r for r in results}
+        assert by_uuid["c1"].metric == 10.0
+        assert by_uuid["c2"].metric == 20.0
+        assert by_uuid["c3"].metric == 30.0
+        assert mock_client.get_all_records.call_count == 2
+        urls = [call.args[0] for call in mock_client.get_all_records.call_args_list]
+        parent_uuids_in_urls = {"vol-1" in u or "vol-2" in u for u in urls}
+        assert all(parent_uuids_in_urls)
+
+    def test_parent_keyed_missing_parent_uuid_warns(
+        self,
+        fake_child_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        """Children with empty parent ref pass through unmerged; warning logged."""
+        backend = _make_backend(mock_config)
+        decision = RoutingDecision(cache_fields=("uuid", "volume.uuid"), live_fields=("metric",))
+        cached = [
+            FakeChildWithDottedRef(uuid="c1", volume=FakeChildVolume(uuid="vol-1")),
+            FakeChildWithDottedRef(uuid="c2", volume=FakeChildVolume(uuid="")),
+        ]
+        live = [FakeChildWithDottedRef(uuid="c1", metric=10.0)]
+
+        mock_db = MagicMock()
+        mock_db.query_with_filters.return_value = cached
+        mock_client = MagicMock()
+        mock_client.get_all_records.return_value = {"records": []}
+
+        with (
+            patch.object(OntapBackend, "_cache_db", new=mock_db),
+            patch.object(backend, "_get_api_client", return_value=mock_client),
+            patch(
+                "pynetappfoundry.data.backends.parse_api_response",
+                return_value=live,
+            ),
+            patch.object(backend, "_resolve_metadata_path", return_value="storage.fake_children"),
+            patch("pynetappfoundry.data.backends.logger") as mock_logger,
+        ):
+            results = backend.query(
+                FakeChildWithDottedRef,
+                fake_child_mapping,
+                decision,
+                cluster="prod1",
+                filters={},
+            )
+
+        # c1 merged, c2 unmerged (no live data for it)
+        assert len(results) == 2
+        by_uuid = {r.uuid: r for r in results}
+        assert by_uuid["c1"].metric == 10.0
+        assert by_uuid["c2"].metric == 0.0
+        mock_logger.warning.assert_called_once()
+        assert "1 cached children" in mock_logger.warning.call_args[0][1] or (
+            mock_logger.warning.call_args[0][2] == 1
+        )
+
+    def test_parent_keyed_cache_fallback_no_child_ref(
+        self,
+        fake_orphan_child_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        """Orphan children (no parent back-ref) trigger parent cache lookup."""
+        backend = _make_backend(mock_config)
+        decision = RoutingDecision(cache_fields=("volume_uuid",), live_fields=("transfer_state",))
+        cached = [
+            FakeOrphanChild(volume_uuid="vu1", transfer_state=""),
+            FakeOrphanChild(volume_uuid="vu2", transfer_state=""),
+        ]
+        parents = [
+            FakeParentModel(uuid="p1", name="parent1"),
+            FakeParentModel(uuid="p2", name="parent2"),
+        ]
+        live_p1 = [FakeOrphanChild(volume_uuid="vu1", transfer_state="done")]
+        live_p2 = [FakeOrphanChild(volume_uuid="vu2", transfer_state="running")]
+
+        mock_db = MagicMock()
+        # First call returns children, second returns parents.
+        mock_db.query_with_filters.side_effect = [cached, parents]
+        mock_client = MagicMock()
+        mock_client.get_all_records.return_value = {"records": []}
+
+        with (
+            patch.object(OntapBackend, "_cache_db", new=mock_db),
+            patch.object(backend, "_get_api_client", return_value=mock_client),
+            patch(
+                "pynetappfoundry.data.backends.parse_api_response",
+                side_effect=[live_p1, live_p2],
+            ),
+            patch.object(
+                backend,
+                "_resolve_metadata_path",
+                side_effect=["svm.fake_orphans", "storage.fake_parents"],
+            ),
+        ):
+            results = backend.query(
+                FakeOrphanChild,
+                fake_orphan_child_mapping,
+                decision,
+                cluster="prod1",
+                filters={},
+            )
+
+        assert len(results) == 2
+        assert mock_client.get_all_records.call_count == 2
+
+    def test_parent_keyed_empty_cache_short_circuits(
+        self,
+        fake_child_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        """Empty cache result returns [] with no API calls."""
+        backend = _make_backend(mock_config)
+        decision = RoutingDecision(cache_fields=("uuid", "volume.uuid"), live_fields=("metric",))
+
+        mock_db = MagicMock()
+        mock_db.query_with_filters.return_value = []
+        mock_client = MagicMock()
+
+        with (
+            patch.object(OntapBackend, "_cache_db", new=mock_db),
+            patch.object(backend, "_get_api_client", return_value=mock_client),
+            patch.object(backend, "_resolve_metadata_path", return_value="storage.fake_children"),
+        ):
+            results = backend.query(
+                FakeChildWithDottedRef,
+                fake_child_mapping,
+                decision,
+                cluster="prod1",
+                filters={},
+            )
+
+        assert results == []
+        mock_client.get_all_records.assert_not_called()
+
+    def test_extract_parent_ref_field(self) -> None:
+        """Unit test for _extract_parent_ref_field with various URL patterns."""
+        from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
+
+        def _mapping_with_endpoint(endpoint: str) -> TypeMapping:
+            return TypeMapping(
+                name="Test",
+                model_class=FakeVolume,
+                api_endpoint=endpoint,
+                api_type="ontap",
+                fields=(FieldMapping(cache_attr="uuid"),),
+            )
+
+        assert (
+            OntapBackend._extract_parent_ref_field(
+                _mapping_with_endpoint("/storage/volumes/{volume.uuid}/snapshots?fields=*")
+            )
+            == "volume.uuid"
+        )
+        assert (
+            OntapBackend._extract_parent_ref_field(
+                _mapping_with_endpoint("/svm/migrations/{svm_migration.uuid}/volumes?fields=*")
+            )
+            == "svm_migration.uuid"
+        )
+        assert (
+            OntapBackend._extract_parent_ref_field(
+                _mapping_with_endpoint("/snapmirror/relationships/{relationship.uuid}/transfers")
+            )
+            == "relationship.uuid"
+        )
+        assert (
+            OntapBackend._extract_parent_ref_field(_mapping_with_endpoint("/storage/volumes"))
+            is None
+        )
 
 
 class TestQueryWithWhereExpressions:

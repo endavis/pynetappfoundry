@@ -22,6 +22,7 @@ from typing import TYPE_CHECKING, Any, TypeVar
 from pydantic import BaseModel
 
 from pynetappfoundry.cache import fetch
+from pynetappfoundry.cache.fetchers import _resolve_dotted_attr
 from pynetappfoundry.cache.field_mapping import parse_api_response
 from pynetappfoundry.data._merge import merge_models
 
@@ -419,30 +420,17 @@ class OntapBackend(Backend):
     ) -> list[T]:
         """Execute the partial-fetch (Approach C) algorithm for collections.
 
-        1. Reject parent-keyed mappings (deferred; tracked as #544).
-        2. Validate filter keys are cache-side only.
-        3. Validate mapping.identifier_field is a single string.
-        4. Run the cache query (defines membership).
-        5. Short-circuit on empty cache result.
-        6. Batch live fetch by identifier, chunked at ``_BATCH_SIZE``.
-        7. Merge each cached instance with its live counterpart by
+        1. Validate filter keys are cache-side only.
+        2. Validate mapping.identifier_field is a single string.
+        3. Run the cache query (defines membership).
+        4. Short-circuit on empty cache result.
+        5. Branch on parent-keyed vs standard mappings:
+           - Parent-keyed: group by parent, per-parent batched live fetch.
+           - Standard: single batched live fetch by identifier.
+        6. Merge each cached instance with its live counterpart by
            identifier. Extras from live are silently dropped; cached
            instances without a live match pass through unmerged.
         """
-        if mapping.parent_mapping is not None:
-            msg = (
-                f"Partial-fetch (cache + realtime live merge) on parent-keyed "
-                f"mappings is not yet supported. The affected models are "
-                f"OntapSnapshot, OntapSnapmirrorTransfer, "
-                f"OntapConsistencyGroupSnapshotResponse, and "
-                f"OntapSvmMigrationVolume. These models' realtime fields are "
-                f"still populated by `nf cache refresh`; use source='cache' "
-                f"after refresh, or fetch the whole model via source='live'. "
-                f"Tracked as #544. "
-                f"Triggered on mapping {mapping.name!r}."
-            )
-            raise NotImplementedError(msg)
-
         self._validate_partial_query_filter(mapping, filters)
 
         identifier_field = mapping.identifier_field
@@ -474,22 +462,197 @@ class OntapBackend(Backend):
             # branch should be unreachable. Kept to document intent.
             return cached_instances
 
-        identifiers = [getattr(inst, identifier_field) for inst in cached_instances]
-        live_instances = self._fetch_live_by_identifiers(
-            model_class,
-            mapping,
-            cluster,
-            identifiers,
-            identifier_field,
-            decision.live_fields,
-        )
-        live_index = {getattr(inst, identifier_field): inst for inst in live_instances}
+        if mapping.parent_mapping is not None:
+            parent_ref_field = self._extract_parent_ref_field(mapping)
+            parent_groups = self._resolve_parent_uuids(
+                mapping, cached_instances, cluster, parent_ref_field
+            )
+            live_instances = self._fetch_live_by_parent(
+                model_class,
+                mapping,
+                cluster,
+                parent_groups,
+                identifier_field,
+                decision.live_fields,
+            )
+        else:
+            identifiers = [
+                _resolve_dotted_attr(inst, identifier_field) for inst in cached_instances
+            ]
+            live_instances = self._fetch_live_by_identifiers(
+                model_class,
+                mapping,
+                cluster,
+                identifiers,
+                identifier_field,
+                decision.live_fields,
+            )
+
+        live_index: dict[str, T] = {
+            _resolve_dotted_attr(inst, identifier_field): inst for inst in live_instances
+        }
         return self._merge_partial_collection(
             cached_instances,
             live_index,
             identifier_field,
             decision,
         )
+
+    @staticmethod
+    def _extract_parent_ref_field(mapping: TypeMapping) -> str | None:
+        """Parse the ``{placeholder}`` from a parameterized ``api_endpoint``.
+
+        Returns the dotted attribute path inside the first ``{...}``
+        placeholder (e.g. ``"volume.uuid"`` from
+        ``"/storage/volumes/{volume.uuid}/snapshots"``), or ``None`` if no
+        placeholder is found.
+        """
+        import re as _re
+
+        match = _re.search(r"\{([^}]+)\}", mapping.api_endpoint)
+        return match.group(1) if match else None
+
+    def _resolve_parent_uuids(
+        self,
+        mapping: TypeMapping,
+        cached_instances: list[T],
+        cluster: str,
+        parent_ref_field: str | None,
+    ) -> dict[str, list[T]]:
+        """Group *cached_instances* by parent UUID for parent-keyed live fetch.
+
+        For each cached child, resolves *parent_ref_field* via dotted-attr
+        lookup.  Children whose parent ref resolves to ``None`` or empty
+        string are logged as warnings and excluded from the grouped result.
+
+        If **all** children yield ``None`` (the SvmMigrationVolume case,
+        where the child model has no back-reference to the parent), falls
+        back to querying the parent model from cache and returning all
+        children under each parent UUID.
+
+        Returns:
+            ``{parent_uuid: [children]}`` dict suitable for
+            :meth:`_fetch_live_by_parent`.
+        """
+        from collections import defaultdict
+
+        groups: dict[str, list[T]] = defaultdict(list)
+        orphans: list[T] = []
+
+        for child in cached_instances:
+            parent_uuid = (
+                _resolve_dotted_attr(child, parent_ref_field) if parent_ref_field else None
+            )
+            if parent_uuid:
+                groups[str(parent_uuid)].append(child)
+            else:
+                orphans.append(child)
+
+        if groups:
+            # Some children resolved — orphans are logged and excluded.
+            if orphans:
+                logger.warning(
+                    "DataSource %s: %d cached children have no parent ref "
+                    "via %r; they will pass through unmerged",
+                    mapping.name,
+                    len(orphans),
+                    parent_ref_field,
+                )
+            return dict(groups)
+
+        # ALL children yielded None — fall back to parent model cache query.
+        from pynetappfoundry.cache._registry import model_registry
+
+        parent_type_mapping = model_registry.get_mapping(mapping.parent_mapping or "")
+        if parent_type_mapping is None:
+            logger.warning(
+                "DataSource %s: parent mapping %r not found in registry; "
+                "cannot resolve parent UUIDs for cache-fallback path",
+                mapping.name,
+                mapping.parent_mapping,
+            )
+            return {}
+
+        parent_model_class = parent_type_mapping.model_class
+        parent_instances = self._fetch_cache(parent_model_class, cluster, [])
+
+        parent_id_field = mapping.parent_id_field or "uuid"
+        for parent in parent_instances:
+            pid = _resolve_dotted_attr(parent, parent_id_field)
+            if pid:
+                groups[str(pid)] = list(cached_instances)
+
+        return dict(groups)
+
+    def _fetch_live_by_parent(
+        self,
+        model_class: type[T],
+        mapping: TypeMapping,
+        cluster: str,
+        parent_groups: dict[str, list[T]],
+        identifier_field: str,
+        live_field_paths: tuple[str, ...],
+    ) -> list[T]:
+        """Per-parent batched live fetch for parent-keyed mappings.
+
+        For each parent UUID and its children, builds a resolved URL via
+        :meth:`TypeMapping.build_parameterized_url`, overrides ``fields=``
+        with the live field paths (preserving ``fields=*`` when present),
+        adds pipe-OR identifier filters chunked at ``_BATCH_SIZE``, and
+        fetches via :meth:`ONTAPAPIClient.get_all_records`.
+
+        Returns:
+            Aggregated list of parsed model instances across all parents
+            and chunks.
+        """
+        from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
+
+        client = self._get_api_client(cluster)
+
+        # Translate live cache_attr paths to api_path values.
+        api_paths: list[str] = []
+        for attr in live_field_paths:
+            field = next(
+                (f for f in mapping.fields if f.cache_attr == attr),
+                None,
+            )
+            if field is not None and field.api_path is not None:
+                api_paths.append(field.api_path)
+            else:
+                api_paths.append(attr)
+
+        results: list[T] = []
+        for parent_uuid, children in parent_groups.items():
+            base_url = mapping.build_parameterized_url(parent_uuid)
+            parsed = urlparse(base_url)
+            base_query: dict[str, list[str]] = parse_qs(parsed.query, keep_blank_values=True)
+
+            # Extract child identifiers, filtering out None/empty.
+            child_ids = [
+                str(cid)
+                for child in children
+                if (cid := _resolve_dotted_attr(child, identifier_field))
+            ]
+            if not child_ids:
+                continue
+
+            for chunk in self._chunked(child_ids, _BATCH_SIZE):
+                query = {k: list(v) for k, v in base_query.items()}
+                if api_paths:
+                    existing = query.get("fields", [""])[0]
+                    if not existing.startswith("*"):
+                        query["fields"] = [",".join(api_paths)]
+                query[identifier_field] = ["|".join(chunk)]
+                url = urlunparse(parsed._replace(query=urlencode(query, doseq=True)))
+                response = client.get_all_records(url)
+                parsed_records = parse_api_response(
+                    mapping,
+                    response,
+                    f"OntapBackend<{mapping.name}>",
+                    _log_missing_fields,
+                )
+                results.extend(r for r in parsed_records if isinstance(r, model_class))
+        return results
 
     @staticmethod
     def _validate_partial_query_filter(
@@ -595,7 +758,7 @@ class OntapBackend(Backend):
         """
         merged_list: list[T] = []
         for cached in cached_instances:
-            key = getattr(cached, identifier_field)
+            key = _resolve_dotted_attr(cached, identifier_field)
             live = live_index.get(key)
             if live is None:
                 merged_list.append(cached)

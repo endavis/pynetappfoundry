@@ -26,3 +26,31 @@ class FakeComposite(OntapModel):
 
     svm_name: str = ""
     name: str = ""
+
+
+class FakeParentModel(OntapModel):
+    """Synthetic parent model for parent-keyed partial-fetch tests."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class FakeChildVolume(OntapModel):
+    """Nested sub-model providing a parent back-reference via ``uuid``."""
+
+    uuid: str = ""
+
+
+class FakeChildWithDottedRef(OntapModel):
+    """Synthetic child with nested parent ref via ``volume.uuid``."""
+
+    uuid: str = ""
+    volume: FakeChildVolume = FakeChildVolume()
+    metric: float = 0.0
+
+
+class FakeOrphanChild(OntapModel):
+    """Synthetic child with no parent back-reference (SvmMigrationVolume-like)."""
+
+    volume_uuid: str = ""
+    transfer_state: str = ""
