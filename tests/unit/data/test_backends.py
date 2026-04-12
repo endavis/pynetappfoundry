@@ -1250,3 +1250,72 @@ class TestBuildLiveUrlFieldsStar:
         )
         assert "fields=%2A" in url or "fields=*" in url
         assert "return_records=false" in url
+
+
+# ---------------------------------------------------------------------------
+# CLI backend dispatch (#532)
+# ---------------------------------------------------------------------------
+
+
+class TestOntapBackendCliDispatch:
+    """Tests for CLI-only mapping dispatch through ``OntapBackend.query()``."""
+
+    def test_cli_mapping_dispatches_to_fetch_with_cli_client(
+        self,
+        mock_config: Any,
+    ) -> None:
+        """Cloud cluster + CLI-only mapping delegates to ``fetch()`` with cli_client."""
+        from pynetappfoundry.cache.ontap.cloud.metadata.mapping import CLOUD_METADATA_MAPPING
+        from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
+
+        backend = _make_backend(mock_config)
+        live_fields = tuple(
+            f.cache_attr for f in CLOUD_METADATA_MAPPING.fields if f.cache_strategy != "derived"
+        )
+        decision = RoutingDecision(cache_fields=(), live_fields=live_fields)
+
+        mock_cli = MagicMock()
+        fetched = [CloudMetadata(node="n1", provider="AWS")]
+
+        with (
+            patch.object(backend, "_is_cloud_cluster", return_value=True),
+            patch.object(backend, "_get_cli_client", return_value=mock_cli),
+            patch.object(backend, "_get_api_client", return_value=MagicMock()),
+            patch("pynetappfoundry.data.backends.fetch", return_value=fetched) as fetch_mock,
+        ):
+            results = backend.query(
+                CloudMetadata,
+                CLOUD_METADATA_MAPPING,
+                decision,
+                cluster="cloud1",
+                filters={},
+            )
+
+        assert results == fetched
+        fetch_mock.assert_called_once()
+        assert fetch_mock.call_args.kwargs["cli_client"] is mock_cli
+
+    def test_cli_mapping_skips_non_cloud_cluster(
+        self,
+        mock_config: Any,
+    ) -> None:
+        """Non-cloud cluster returns empty list for CLI-only mappings."""
+        from pynetappfoundry.cache.ontap.cloud.metadata.mapping import CLOUD_METADATA_MAPPING
+        from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
+
+        backend = _make_backend(mock_config)
+        live_fields = tuple(
+            f.cache_attr for f in CLOUD_METADATA_MAPPING.fields if f.cache_strategy != "derived"
+        )
+        decision = RoutingDecision(cache_fields=(), live_fields=live_fields)
+
+        with patch.object(backend, "_is_cloud_cluster", return_value=False):
+            results = backend.query(
+                CloudMetadata,
+                CLOUD_METADATA_MAPPING,
+                decision,
+                cluster="onprem1",
+                filters={},
+            )
+
+        assert results == []

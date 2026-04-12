@@ -30,6 +30,7 @@ if TYPE_CHECKING:
     from pynetappfoundry.cache.db import ClusterMetadataDB
     from pynetappfoundry.cache.field_mapping import TypeMapping
     from pynetappfoundry.clients.ontap.api import ONTAPAPIClient
+    from pynetappfoundry.clients.ontap.cli import ONTAPCLI
     from pynetappfoundry.core.config import Config
     from pynetappfoundry.data._routing import RoutingDecision
 
@@ -116,6 +117,7 @@ class OntapBackend(Backend):
     def __init__(self, config: Config) -> None:
         super().__init__(config)
         self._api_clients: dict[str, ONTAPAPIClient] = {}
+        self._cli_clients: dict[str, ONTAPCLI] = {}
 
     @cached_property
     def _cache_db(self) -> ClusterMetadataDB:
@@ -137,6 +139,52 @@ class OntapBackend(Backend):
             cluster_obj = ClusterConfig(name=cluster, ip=cluster)
             self._api_clients[cluster] = ONTAPAPIClient(cluster=cluster_obj, config=self._config)
         return self._api_clients[cluster]
+
+    def _get_cli_client(self, cluster: str) -> ONTAPCLI:
+        """Lazily create an ONTAP CLI (SSH) client for *cluster*.
+
+        Cached per-cluster so multiple ``query()`` calls against the
+        same cluster reuse the same connection.
+
+        Credentials are resolved via ``Config.get_user`` and the
+        cluster's ``ip`` from the configuration data, mirroring
+        the pattern used by the ``cache refresh`` CLI command.
+        """
+        if cluster not in self._cli_clients:
+            from pynetappfoundry.clients.ontap.cli import ONTAPCLI
+
+            cluster_data = self._config.data.get("clusters", {}).get(cluster, {})
+            user, password = self._config.get_user("clusters", cluster)
+            self._cli_clients[cluster] = ONTAPCLI(
+                name=cluster,
+                host_or_ip=cluster_data.get("ip", cluster),
+                username=user,
+                password=password,
+            )
+        return self._cli_clients[cluster]
+
+    def _is_cloud_cluster(self, cluster: str) -> bool:
+        """Return ``True`` if *cluster* is a cloud (CVO) cluster.
+
+        Queries ``ClusterInfo`` from the cache DB and checks the
+        ``is_cloud`` flag. If the cache has no data for the cluster
+        (e.g. never refreshed), defaults to ``False`` to avoid SSH
+        timeouts on unknown clusters.
+        """
+        from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
+
+        try:
+            metadata_path = self._resolve_metadata_path(ClusterInfo)
+            results = self._cache_db.query_with_filters(cluster, metadata_path, [])
+            for item in results:
+                if isinstance(item, ClusterInfo):
+                    return item.is_cloud
+        except (ValueError, Exception):
+            logger.debug(
+                "OntapBackend: cannot determine is_cloud for %s, defaulting to False",
+                cluster,
+            )
+        return False
 
     def _resolve_metadata_path(self, model_class: type[BaseModel]) -> str:
         """Find the cache table's metadata_path for *model_class*.
@@ -376,7 +424,25 @@ class OntapBackend(Backend):
                 )
                 raise NotImplementedError(msg)
 
-            if self._is_full_live_scan(mapping, decision, filters):
+            if mapping.cli_command:
+                # CLI-only mapping (e.g. CloudMetadata). Skip non-cloud
+                # clusters to avoid SSH timeouts on on-prem hardware.
+                if not self._is_cloud_cluster(cluster):
+                    logger.debug(
+                        "OntapBackend: skipping CLI-only %s for non-cloud cluster %s",
+                        mapping.name,
+                        cluster,
+                    )
+                    return []
+                fetched = fetch(
+                    model_class,
+                    cluster=cluster,
+                    config=self._config,
+                    api_client=self._get_api_client(cluster),
+                    cli_client=self._get_cli_client(cluster),
+                )
+                results = list(fetched) if isinstance(fetched, list) else [fetched]
+            elif self._is_full_live_scan(mapping, decision, filters):
                 # Whole-model unfiltered live read: delegate to the
                 # generic fetcher (ADR-0013 §6/§7).
                 fetched = fetch(

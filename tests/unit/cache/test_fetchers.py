@@ -9,11 +9,16 @@ import pytest
 from pydantic import BaseModel
 
 from pynetappfoundry.cache._registry import model_registry
-from pynetappfoundry.cache.fetchers import fetch
+from pynetappfoundry.cache.fetchers import (
+    fetch,
+    normalize_cli_key,
+    parse_vm_instance_output,
+)
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.cache.ontap.cluster.mapping import CLUSTER_MAPPING
 from pynetappfoundry.cache.ontap.cluster.nodes.mapping import ONTAPNODERESPONSE_MAPPING
 from pynetappfoundry.cache.ontap.storage.volumes.mapping import ONTAPVOLUME_MAPPING
+from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
 from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
 from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
 from pynetappfoundry.models.ontap.storage.volumes.model import OntapVolume
@@ -465,7 +470,79 @@ class TestFetchParameterized:
 
 
 # ---------------------------------------------------------------------------
-# CLI dispatch (NotImplementedError)
+# CLI parsing helpers (extracted from collector, issue #532)
+# ---------------------------------------------------------------------------
+
+
+class TestNormalizeCliKey:
+    """normalize_cli_key() converts CLI keys to snake_case."""
+
+    def test_spaces_to_underscores(self) -> None:
+        assert normalize_cli_key("Instance ID") == "instance_id"
+
+    def test_hyphens_to_underscores(self) -> None:
+        assert normalize_cli_key("cpu-platform") == "cpu_platform"
+
+    def test_strips_special_chars(self) -> None:
+        assert normalize_cli_key("Region (AWS)") == "region_aws"
+
+    def test_lowercase(self) -> None:
+        assert normalize_cli_key("Node") == "node"
+
+
+class TestParseVmInstanceOutput:
+    """parse_vm_instance_output() parses CLI key-value lines into records."""
+
+    def test_two_nodes(self) -> None:
+        output = [
+            "Node: node-01",
+            "Instance ID: i-abc",
+            "Provider: AWS",
+            "",
+            "Node: node-02",
+            "Instance ID: i-def",
+            "Provider: AWS",
+        ]
+        records = parse_vm_instance_output(output)
+        assert len(records) == 2
+        assert records[0]["node"] == "node-01"
+        assert records[0]["instance_id"] == "i-abc"
+        assert records[1]["node"] == "node-02"
+        assert records[1]["instance_id"] == "i-def"
+
+    def test_single_node(self) -> None:
+        output = [
+            "Node: solo",
+            "Region: us-east-1",
+        ]
+        records = parse_vm_instance_output(output)
+        assert len(records) == 1
+        assert records[0]["node"] == "solo"
+        assert records[0]["region"] == "us-east-1"
+
+    def test_empty_output(self) -> None:
+        assert parse_vm_instance_output([]) == []
+
+    def test_no_node_field_creates_single_entry(self) -> None:
+        output = ["Region: us-east-1", "Provider: AWS"]
+        records = parse_vm_instance_output(output)
+        assert len(records) == 1
+        assert records[0]["node"] == ""
+
+    def test_skips_blank_and_no_colon_lines(self) -> None:
+        output = [
+            "Node: n1",
+            "",
+            "---separator---",
+            "Region: eu-west-1",
+        ]
+        records = parse_vm_instance_output(output)
+        assert len(records) == 1
+        assert records[0]["region"] == "eu-west-1"
+
+
+# ---------------------------------------------------------------------------
+# CLI dispatch (issue #532)
 # ---------------------------------------------------------------------------
 
 
@@ -478,12 +555,12 @@ _CLI_MAPPING = TypeMapping(
     model_class=_CliModel,
     api_endpoint="/never",
     cli_command="something show",
-    fields=(FieldMapping(cache_attr="name"),),
+    fields=(FieldMapping(cache_attr="name", cli_field="name"),),
 )
 
 
 class TestFetchCliDispatch:
-    """CLI dispatch raises NotImplementedError until #532 lands."""
+    """CLI dispatch via _fetch_cli (#532)."""
 
     def setup_method(self) -> None:
         model_registry.register_mapping("CliMapping", _CLI_MAPPING)
@@ -492,16 +569,75 @@ class TestFetchCliDispatch:
         model_registry._mappings.pop("CliMapping", None)
         model_registry._mappings_by_class.pop(_CliModel, None)
 
-    def test_cli_branch_raises_with_issue_reference(self) -> None:
-        """NotImplementedError message references issue #532."""
+    def test_cli_without_client_raises_value_error(self) -> None:
+        """fetch() with cli_command but no cli_client raises ValueError."""
         client = MagicMock()
-        with pytest.raises(NotImplementedError, match="532"):
+        with pytest.raises(ValueError, match="requires cli_client"):
             fetch(
                 _CliModel,
                 cluster="c1",
                 config=None,
                 api_client=client,
             )
+
+    def test_cli_dispatch_parses_output(self) -> None:
+        """fetch() dispatches to CLI path and returns parsed instances."""
+        api_client = MagicMock()
+        cli_client = MagicMock()
+        cli_client.run_command.return_value = [
+            "Node: n1",
+            "Name: alpha",
+            "",
+            "Node: n2",
+            "Name: beta",
+        ]
+        result = fetch(
+            _CliModel,
+            cluster="c1",
+            config=None,
+            api_client=api_client,
+            cli_client=cli_client,
+        )
+        assert isinstance(result, list)
+        assert len(result) == 2
+        assert result[0].name == "alpha"
+        assert result[1].name == "beta"
+        cli_client.run_command.assert_called_once_with("something show")
+        # API client should not be called for CLI-only mappings.
+        api_client.call_endpoint.assert_not_called()
+        api_client.get_all_records.assert_not_called()
+
+
+class TestFetchCloudMetadataViaFetch:
+    """Integration test: fetch(CloudMetadata) with a mock CLI client."""
+
+    def test_cloud_metadata_fetch_returns_instances(self) -> None:
+        """fetch(CloudMetadata, ...) returns CloudMetadata with link fields."""
+        api_client = MagicMock()
+        cli_client = MagicMock()
+        cli_client.run_command.return_value = [
+            "Node: cvo-node-01",
+            "Instance ID: i-0123456789abcdef0",
+            "Account ID: 123456789012",
+            "Provider: AWS",
+            "Region: us-east-1",
+        ]
+        result = fetch(
+            CloudMetadata,
+            cluster="c1",
+            config=None,
+            api_client=api_client,
+            cli_client=cli_client,
+        )
+        assert isinstance(result, list)
+        assert len(result) == 1
+        cm = result[0]
+        assert isinstance(cm, CloudMetadata)
+        assert cm.node == "cvo-node-01"
+        assert cm.instance_id == "i-0123456789abcdef0"
+        assert cm.provider == "AWS"
+        # instance_link should be populated by the post_collection hook.
+        assert "i-0123456789abcdef0" in cm.instance_link
 
 
 # ---------------------------------------------------------------------------

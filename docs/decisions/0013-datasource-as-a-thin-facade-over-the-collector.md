@@ -132,7 +132,7 @@ The snapshot-consistency requirement (§3/§4) is not a new constraint — it's 
 
 This ADR is **Phase 1** of a three-phase plan. A new parent issue supersedes #495's Phase 3/4 plans.
 
-- **Phase 1 — ADR (this PR).** Pure docs. Locks in the design points above. Mark ADR-0012 as Superseded. Close #531, #535, #536, #537 as "absorbed into ADR-0013"; close #530 once the new parent issue is filed. Keep #532 and #533 open as deferred (SSH and non-ONTAP backends are still Phase 4+ work, but they plug into the collector, not into `OntapBackend`).
+- **Phase 1 — ADR (this PR).** Pure docs. Locks in the design points above. Mark ADR-0012 as Superseded. Close #531, #535, #536, #537 as "absorbed into ADR-0013"; close #530 once the new parent issue is filed. Keep #533 open as deferred (non-ONTAP backends are still Phase 4+ work, but they plug into the collector, not into `OntapBackend`). #532 (SSH/CLI backend) has been resolved — CLI dispatch is wired into ``fetch()``.
 - **Phase 2 — Collector fetch/persist split.** Refactor `MetadataCollector` so every `collect_<type>` method splits into a pure `fetch_<type>` and a `persist_<type>`. `nf cache refresh` chains them; `DataSource` live reads call `fetch_<type>` only. Hook invocation (`compute_is_ha` and siblings) moves to the fetch layer. No `DataSource` consumer changes.
 - **Phase 3 — `OntapBackend` rewrite.** Rewrite `OntapBackend` as a thin delegator over the collector's fetch layer, with a dedicated realtime live-fetch path for the partial-fetch merge case (§7). Remove `OntapBackend.get()`. Update `DataSource.get()` to be a `.query()` convenience wrapper. Verify every Phase 3 shim (from ADR-0012 Phase 3a–3f) still passes its tests — no consumer changes expected.
 - **Phase 4 — `nf reports html` home_node fix (#524).** Unblocked by Phase 3. Migrates the last non-shim `QuerySet(...)` call sites through the new backend, including `ClusterInfo` via the collector's singleton-aware fetch.
@@ -150,7 +150,7 @@ This ADR is **Phase 1** of a three-phase plan. A new parent issue supersedes #49
 - Issue #535: feat: DataSource composite and non-UUID identifiers — closed, absorbed into ADR-0013
 - Issue #536: feat: DataSource path-parameter endpoints — closed, absorbed into ADR-0013
 - Issue #537: feat: DataSource post-query hooks for derived fields — closed, absorbed into ADR-0013
-- Issue #532: feat: DataSource SSH/CLI backend — deferred, retargeted to plug into collector
+- Issue #532: feat: DataSource SSH/CLI backend — resolved; CLI dispatch wired into ``fetch()`` via ``_fetch_cli()``, ``OntapBackend`` constructs CLI clients lazily with ``is_cloud`` gate
 - Issue #533: feat: DataSource non-ONTAP backends — deferred, retargeted to plug into collector
 - Issue #534: feat: audit Pydantic models without TypeMappings — unchanged
 - Issue #538: feat: DataSource pagination/chunking edge cases — re-scoped to the realtime live-fetch path only

@@ -9,7 +9,6 @@ are API-only and must succeed.
 from __future__ import annotations
 
 import logging
-import re
 import threading
 import time
 from collections.abc import Callable, Sequence
@@ -28,6 +27,7 @@ from pynetappfoundry.cache._metadata import (
 )
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.fetchers import fetch as _fetch
+from pynetappfoundry.cache.fetchers import normalize_cli_key, parse_vm_instance_output
 from pynetappfoundry.cache.field_mapping import (
     TypeMapping,
     parse_cli_records,
@@ -801,7 +801,7 @@ class MetadataCollector:
         output = self.cli_client.run_command("virtual-machine instance show")
         logger.debug("%s CLI response: %d lines", self._log_prefix, len(output))
 
-        records = self._parse_vm_instance_output(output)
+        records = parse_vm_instance_output(output)
         items = parse_cli_records(
             CLOUD_METADATA_MAPPING,
             records,
@@ -837,8 +837,7 @@ class MetadataCollector:
     def _parse_vm_instance_output(self, output: list[str]) -> list[dict[str, str]]:
         """Parse virtual-machine instance show output into raw records.
 
-        The CLI output contains entries for each node, separated by blank lines
-        or new "Node:" entries. Each node has its own cloud metadata.
+        Delegates to :func:`pynetappfoundry.cache.fetchers.parse_vm_instance_output`.
 
         Args:
             output: Lines of CLI output.
@@ -846,50 +845,7 @@ class MetadataCollector:
         Returns:
             List of raw record dicts (one per node) with normalized keys.
         """
-        results: list[dict[str, str]] = []
-        current_data: dict[str, str] = {}
-        current_node: str = ""
-
-        for line in output:
-            line = line.strip()
-            if not line:
-                # Empty line may indicate end of a node's data
-                continue
-
-            if ":" not in line:
-                continue
-
-            parts = line.split(":", 1)
-            if len(parts) != 2:
-                continue
-
-            key = parts[0].strip()
-            value = parts[1].strip()
-            key_normalized = self._normalize_cli_key(key)
-
-            # Check if this is a new node entry
-            if key_normalized == "node":
-                # Save previous node's data if we have any
-                if current_node and current_data:
-                    current_data["node"] = current_node
-                    results.append(current_data)
-                # Start new node
-                current_node = value
-                current_data = {}
-            else:
-                current_data[key_normalized] = value
-
-        # Don't forget the last node
-        if current_node and current_data:
-            current_data["node"] = current_node
-            results.append(current_data)
-
-        # If no node field was found but we have data, create single entry
-        if not results and current_data:
-            current_data["node"] = ""
-            results.append(current_data)
-
-        return results
+        return parse_vm_instance_output(output)
 
     def _update_azure_cloud_links(
         self,
@@ -968,17 +924,15 @@ class MetadataCollector:
     def _normalize_cli_key(key: str) -> str:
         """Normalize CLI output key to snake_case.
 
+        Delegates to :func:`pynetappfoundry.cache.fetchers.normalize_cli_key`.
+
         Args:
             key: Original key from CLI output.
 
         Returns:
             Normalized key name.
         """
-        # Replace spaces with underscores, lowercase
-        normalized = key.lower().replace(" ", "_").replace("-", "_")
-        # Remove any non-alphanumeric chars except underscore
-        normalized = re.sub(r"[^a-z0-9_]", "", normalized)
-        return normalized
+        return normalize_cli_key(key)
 
     # -------------------------------------------------------------------------
     # Cluster Info Collection
