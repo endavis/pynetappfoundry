@@ -866,9 +866,8 @@ class ClusterData:
     def _format_netapp_cloud_info(self) -> None:
         """Format cluster-level cloud provider information.
 
-        Shows provider, account/subscription ID, resource group, and region.
-        Per-node fields (instance_id, instance_type, etc.) are rendered
-        in _format_netapp_node() instead.
+        Shows provider, account/subscription ID, resource group, and region,
+        followed by a collapsible sub-section per node with VM details.
         """
         tag = self.app_instance.tag
         text = self.app_instance.text
@@ -902,6 +901,44 @@ class ClusterData:
                                     fmt("Resource Group", self.cloud_resource_group_name)
                             if self.cloud_region:
                                 fmt("Region", self.cloud_region)
+
+                    for node in self.nodes:
+                        cloud_meta = self.cloud_metadata_by_node.get(node.name)
+                        if not cloud_meta:
+                            continue
+                        if provider_lower == "azure":
+                            vm_name = build_azure_vm_name(
+                                self.name, node.name, is_ha=len(self.nodes) > 1
+                            )
+                            vm_link = cloud_meta.instance_link
+                        else:
+                            vm_name = node.name
+                            vm_link = cloud_meta.instance_sso_link or cloud_meta.instance_link
+                        with tag("li"):
+                            with tag("details"):
+                                with tag("summary"):
+                                    label = vm_name or node.name or "VM"
+                                    if vm_link:
+                                        with tag("a", ("href", vm_link)):
+                                            text(label)
+                                    else:
+                                        text(label)
+                                with tag("ul"):
+                                    with tag("li"):
+                                        with tag("table", ("class", "custom-table")):
+                                            if vm_name and vm_link:
+                                                fmt_link("VM Name", vm_name, vm_link)
+                                            elif vm_name:
+                                                fmt("VM Name", vm_name)
+                                            if cloud_meta.instance_id:
+                                                fmt("Instance ID", cloud_meta.instance_id)
+                                            if cloud_meta.instance_type:
+                                                fmt("Instance Type", cloud_meta.instance_type)
+                                            if cloud_meta.availability_zone:
+                                                fmt(
+                                                    "Availability Zone",
+                                                    cloud_meta.availability_zone,
+                                                )
 
     def _format_netapp_cluster_info(self) -> None:
         """Format cluster-level information (version, management IPs, DNS, NTP)."""
@@ -1182,6 +1219,10 @@ class ClusterData:
     def _format_netapp_node(self, node: OntapNodeResponse) -> None:
         """Format a single node's information.
 
+        Node identity and management links are rendered in a flat table.
+        The Service Processor gets its own collapsible sub-section below
+        the table.
+
         Args:
             node: OntapNodeResponse model instance.
         """
@@ -1190,7 +1231,10 @@ class ClusterData:
         fmt = self.app_instance.format_table_row_text
         fmt_link = self.app_instance.format_table_row_link
 
-        mgmt_ip = node.management_interfaces[0].ip.address if node.management_interfaces else ""
+        mgmt_ip = node.management_interface.ip.address or next(
+            (iface.ip.address for iface in node.management_interfaces if iface.ip.address),
+            "",
+        )
         management_link = f"https://{mgmt_ip}" if mgmt_ip else ""
 
         with tag("li"):
@@ -1207,68 +1251,58 @@ class ClusterData:
                         with tag("table", ("class", "custom-table")):
                             if mgmt_ip:
                                 fmt("Node Management IP", mgmt_ip)
-                            serial = node.serial_number or "Unknown"
-                            fmt("Serial Number", serial)
+                            if node.serial_number:
+                                fmt("Serial Number", node.serial_number)
+                            if node.model_:
+                                fmt("Model", node.model_)
+                            if node.location:
+                                fmt("Location", node.location)
                             if management_link:
                                 fmt_link("System Manager", "Link", management_link)
                                 fmt_link("SPI", "Link", f"{management_link}/spi")
 
-                    # Per-node cloud section
-                    cloud_meta = self.cloud_metadata_by_node.get(node.name)
-                    if cloud_meta:
-                        self._format_node_cloud_section(node, cloud_meta)
+                    # Service Processor sub-section (separate device with its own IP)
+                    if node.service_processor.ipv4_interface.address:
+                        self._format_node_service_processor(node)
 
-    def _format_node_cloud_section(
-        self,
-        node: OntapNodeResponse,
-        cloud_meta: CloudMetadata,
-    ) -> None:
-        """Format per-node cloud provider information.
+    def _format_node_service_processor(self, node: OntapNodeResponse) -> None:
+        """Format the Service Processor (BMC) sub-section for a node.
 
-        Shows VM name, instance ID, instance type, availability zone,
-        and cloud console links for the given node.
+        The SP is a separate management device with its own IP, so it is
+        rendered as a collapsible sub-section rather than inline rows.
 
         Args:
             node: OntapNodeResponse model instance.
-            cloud_meta: CloudMetadata for this node.
         """
         tag = self.app_instance.tag
         text = self.app_instance.text
         fmt = self.app_instance.format_table_row_text
         fmt_link = self.app_instance.format_table_row_link
 
-        provider = cloud_meta.provider
-        provider_lower = provider.lower()
-
-        # Derive VM name
-        if provider_lower == "azure":
-            vm_name = build_azure_vm_name(self.name, node.name, is_ha=len(self.nodes) > 1)
-        else:
-            vm_name = node.name
+        sp = node.service_processor
+        sp_ip = sp.ipv4_interface.address
+        sp_link = f"https://{sp_ip}" if sp_ip else ""
 
         with tag("li"):
             with tag("details"):
                 with tag("summary"):
-                    text(f"Cloud - {provider}")
+                    if sp_link:
+                        with tag("a", ("href", sp_link)):
+                            text("Service Processor")
+                    else:
+                        text("Service Processor")
                 with tag("ul"):
                     with tag("li"):
                         with tag("table", ("class", "custom-table")):
-                            if vm_name:
-                                fmt("VM Name", vm_name)
-                            if cloud_meta.instance_id:
-                                fmt("Instance ID", cloud_meta.instance_id)
-                            if cloud_meta.instance_type:
-                                fmt("Instance Type", cloud_meta.instance_type)
-                            if cloud_meta.availability_zone:
-                                fmt("Availability Zone", cloud_meta.availability_zone)
-                            if cloud_meta.instance_link:
-                                fmt_link("Cloud Console", "Link", cloud_meta.instance_link)
-                            if cloud_meta.instance_sso_link:
-                                fmt_link(
-                                    "Cloud Console (SSO)",
-                                    "Link",
-                                    cloud_meta.instance_sso_link,
-                                )
+                            if sp_ip:
+                                fmt("SP IP", sp_ip)
+                            if sp.state:
+                                fmt("State", sp.state)
+                            if sp.firmware_version:
+                                fmt("Firmware Version", sp.firmware_version)
+                            if sp_link:
+                                fmt_link("System Manager", "Link", sp_link)
+                                fmt_link("SPI", "Link", f"{sp_link}/spi")
 
 
 @click.command()
