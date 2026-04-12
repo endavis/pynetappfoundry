@@ -58,19 +58,23 @@ Derived-field hooks (e.g. `compute_is_ha` from ADR-0012 §6) move from "runs aft
 
 The partial-fetch merge path for `cache_strategy="realtime"` fields is genuinely narrower than the whole-model path: 846 of 863 realtime fields are inline sub-fields of standard collection endpoints, so a restricted-field live query (`?fields=metric.iops.read,metric.latency.*&uuid=<id>`) is sufficient. This path stays in `DataSource` (or its delegating backend) as a dedicated thin fetcher. The 17 realtime fields on 4 parent-keyed mappings (`storage/volumes/snapshots`, `snapmirror/relationships/transfers`, `application/consistency_groups/snapshots`, `svm/migrations/volumes`) need path-parameter substitution — the realtime path inherits a narrow, scoped subset of Gap 6 for those four cases. This is a small, concrete piece of code, not generic path-param support.
 
-**§7 amendment (Phase 3, issue #542 — parent-keyed partial-fetch deferred).** Partial-fetch (cache + realtime live merge) on the four parent-keyed mappings is **not yet supported** in Phase 3. Cached instances of these models span multiple parents, so the restricted-field live merge would need to group cached instances by parent identifier and build one live URL per parent — non-trivial plumbing that Phase 3 did not take on. Instead, `OntapBackend._query_partial()` raises `NotImplementedError` when invoked on a mapping whose `parent_mapping` is set. The affected models and fields are:
+**§7 amendment (issue #544 — parent-keyed partial-fetch).** Partial-fetch (cache + realtime live merge) on the four parent-keyed mappings is now supported via a grouped-by-parent algorithm in `OntapBackend._query_partial()`. The implementation:
 
-- `OntapSnapshot` (`storage/volumes/{volume.uuid}/snapshots`) — realtime size/space metrics.
-- `OntapSnapmirrorTransfer` (`snapmirror/relationships/{relationship.uuid}/transfers`) — realtime transfer state and progress.
-- `OntapConsistencyGroupSnapshotResponse` (`application/consistency_groups/{consistency_group.uuid}/snapshots`) — realtime reclaimable/size metrics.
-- `OntapSvmMigrationVolume` (`svm/migrations/{svm_migration.uuid}/volumes`) — realtime migration transfer state.
+1. Parses the `{placeholder}` from `TypeMapping.api_endpoint` (e.g. `{volume.uuid}`) to discover the child→parent reference field.
+2. Groups cached children by parent UUID using `_resolve_dotted_attr` on the parsed reference field.
+3. For each parent group, builds a resolved URL via `TypeMapping.build_parameterized_url`, adds pipe-OR identifier filters chunked at `_BATCH_SIZE`, and fetches live data per parent.
+4. Merges live results into cached instances by `identifier_field`, the same way the non-parent-keyed path does.
 
-17 realtime fields total. These fields are **still populated correctly** by `nf cache refresh`, which goes through the whole-model fetch path (the generic `fetch()` dispatcher handles parent-keyed mappings via `_fetch_parameterized`, iterating parents and substituting into the URL). The available workarounds are:
+For models without a child→parent back-reference (e.g. `OntapSvmMigrationVolume`, whose child records have no attribute pointing back to the parent `svm_migration.uuid`), the algorithm falls back to querying the parent model from cache, then iterates all discovered parents. ONTAP's per-parent endpoint naturally returns only the children belonging to that parent, so identifier-based merge handles deduplication.
 
-- `source="cache"` after a `nf cache refresh` — returns the last-refreshed realtime snapshot.
-- `source="live"` on the whole model — bypasses the cache entirely and calls `fetch()` directly.
+All four affected mappings now declare `identifier_field`:
 
-Tracked as #544 (follow-up filed at Phase 3 landing).
+- `OntapSnapshot` — `identifier_field="uuid"`
+- `OntapSnapmirrorTransfer` — `identifier_field="uuid"`
+- `OntapConsistencyGroupSnapshotResponse` — `identifier_field="uuid"`
+- `OntapSvmMigrationVolume` — `identifier_field="volume.uuid"` (dotted; no top-level uuid)
+
+Resolved by #544.
 
 ### 8. `.get()` is a convenience over `.query()`
 

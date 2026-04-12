@@ -13,6 +13,7 @@ ONTAPSNAPSHOT_MAPPING = TypeMapping(
     api_type="ontap",
     parent_mapping="OntapVolume",
     parent_id_field="uuid",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="comment",
