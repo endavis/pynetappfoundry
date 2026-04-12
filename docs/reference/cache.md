@@ -34,8 +34,8 @@ components:
 4. **`LazyClusterMetadata`** — Lazy proxy returned by
    `ClusterMetadataDB.get_lazy()`. Defers per-field-group SQL queries until
    the caller actually touches a data attribute.
-5. **`FieldGroupFetcher`** — Optional live API/CLI fallback used when a lazy
-   proxy is asked for data that is missing from the cache database.
+5. **`DataSource`** — Unified accessor that routes field-group reads through
+   the cache or live ONTAP API as appropriate.
 6. **Field mapping framework (`FieldMapping` / `TypeMapping`)** — Declarative
    metadata that drives both the collector (what to fetch, what to persist)
    and the codegen pipeline.
@@ -59,8 +59,8 @@ components:
                      |              +----------+-----------+
                      |                         | cache miss
                      |              +----------v-----------+
-                     +------------->|  FieldGroupFetcher   |
-                                    |  (live API/CLI)      |
+                     +------------->|  DataSource          |
+                                    |  (live API fallback) |
                                     +----------------------+
 ```
 
@@ -229,18 +229,13 @@ reads.
 
 ### `_load_field_group` fallback chain
 
-`_load_field_group` tries three sources in order and returns the first one
+`_load_field_group` tries two sources in order and returns the first one
 that produces a value:
 
-1. **Cache database** (`_load_from_db`). Skipped when the proxy was created
-   without a `db_path`. Uses `_query_registry_subset` against a registry
-   subset filtered to the current field group (path equal to *name* or
-   prefixed with `name.`).
-2. **Live fetcher** (`FieldGroupFetcher.fetch`). Skipped when no fetcher is
-   attached. Maps the field group to a `MetadataCollector` method via
-   `_FIELD_GROUP_METHODS` (e.g. `"storage"` → `collect_storage`) and runs the
-   live API/CLI collection for that group only.
-3. **Model default** (`_get_default`). Returns the
+1. **DataSource** — per-model routing through `DataSource.query(source="cache")`
+   for every registry entry in the field group. Skipped when no `config` is
+   available.
+2. **Model default** (`_get_default`). Returns the
    `CachedClusterMetadata.model_fields[name]` default factory (or `default`),
    so callers get an empty container instead of `None`.
 
@@ -257,15 +252,6 @@ using any of them triggers a full load.
 
 `is_stale(ttl_days=30)` is the only delegated method that does **not**
 materialise — it computes age from the envelope `cached_at` directly.
-
-### `FieldGroupFetcher`
-
-`FieldGroupFetcher` (in `cache/_fetcher.py`) provides the live fallback. It
-takes a cluster name, the cluster IP, and a `Config`, and lazily creates the
-ONTAP API client, the ONTAP CLI client, and a `MetadataCollector` on first
-`fetch()` call. Failure modes (missing credentials, unreachable cluster) are
-swallowed and logged at debug level — `fetch()` returns `None` and the
-fallback chain proceeds to the model default.
 
 !!! info "User-facing equivalent"
     The user-facing guide for choosing between `get`, `get_lazy`, and the
@@ -327,8 +313,8 @@ If `OntapVolume` defines `space_used` with `cache_strategy="realtime"`:
   is omitted at write time, so the row reads back as `None` and the field
   falls through to the model default on `_row_to_model`).
 - A subsequent `db.get(...).storage.volumes[0].space_used` returns the model
-  default (empty string / zero) unless a `LazyClusterMetadata` proxy with an
-  attached `FieldGroupFetcher` is used to refresh the field live.
+  default (empty string / zero) unless a `LazyClusterMetadata` proxy backed
+  by a `DataSource` is used to refresh the field live.
 
 ## OpenAPI Codegen Pipeline
 

@@ -3,10 +3,9 @@
 Provides functions to fetch, poll, and compare fields with
 ``cache_strategy="realtime"`` that are excluded from bulk cache collection.
 
-Phase 3d of issue #495 (ADR-0012) routes all four public functions
-through the unified :class:`DataSource` accessor. The dict output shape
-is preserved for backwards compatibility and will be replaced with
-Pydantic model instances in Phase 4.
+All four public functions return Pydantic model instances (or lists/generators
+thereof). ``compare_realtime`` returns a nested dict with per-field comparison
+results.
 
 Functions:
     fetch_realtime: Fetch current realtime metrics for a single resource.
@@ -95,48 +94,13 @@ def _attr_to_api_path(
     return attr
 
 
-def _model_to_dotted_dict(
-    instance: BaseModel | None,
-    rt_fields: tuple[FieldMapping, ...],
-) -> dict[str, Any]:
-    """Project a Pydantic model instance into a ``cache_attr``-keyed dict.
-
-    Walks each ``rt_field`` and reads the corresponding attribute from
-    *instance* via :func:`getattr`, falling back to ``field.default`` when
-    the attribute is missing. Returns an empty dict when *instance* is
-    ``None``.
-
-    Args:
-        instance: Model instance produced by ``parse_api_response`` or
-            ``None`` when the backend returned no record.
-        rt_fields: Tuple of realtime :class:`FieldMapping` instances to
-            project.
-
-    Returns:
-        Flat dict keyed by ``cache_attr``.
-    """
-    if instance is None:
-        return {}
-    # ``cache_attr`` may be a dotted path (e.g. ``"metric.iops.read"``);
-    # ``parse_api_response`` restructures dotted keys into nested model
-    # fields, so we walk the dumped dict to resolve them back.
-    instance_dict = instance.model_dump() if isinstance(instance, BaseModel) else {}
-    result: dict[str, Any] = {}
-    for field in rt_fields:
-        try:
-            result[field.cache_attr] = get_nested_value(instance_dict, field.cache_attr)
-        except PathNotFoundError:
-            result[field.cache_attr] = field.default
-    return result
-
-
 def _fetch_realtime_via_data_source(
     data_source: DataSource,
     model_class: type[Any],
     cluster: str,
     uuid: str,
     rt_fields: tuple[FieldMapping, ...],
-) -> dict[str, Any]:
+) -> BaseModel | None:
     """Single-resource realtime fetch routed through :meth:`DataSource.get`.
 
     Args:
@@ -147,17 +111,15 @@ def _fetch_realtime_via_data_source(
         rt_fields: Tuple of realtime :class:`FieldMapping` instances.
 
     Returns:
-        Dict mapping ``cache_attr`` to current value. Empty dict if no
-        record was returned.
+        The model instance, or ``None`` if no record was returned.
     """
-    instance = data_source.get(
+    return data_source.get(
         model_class,
         cluster=cluster,
         id=uuid,
         source="live",
         fields=[f.cache_attr for f in rt_fields],
     )
-    return _model_to_dotted_dict(instance, rt_fields)
 
 
 # ---------------------------------------------------------------------------
@@ -171,7 +133,7 @@ def fetch_realtime(
     cluster: str,
     uuid: str,
     fields: list[str] | None = None,
-) -> dict[str, Any]:
+) -> BaseModel | None:
     """Fetch current realtime metrics for a single resource by UUID.
 
     Routes through :class:`DataSource` with ``source="live"``.
@@ -184,7 +146,9 @@ def fetch_realtime(
         fields: Optional list of ``cache_attr`` names to restrict to.
 
     Returns:
-        Dict mapping ``cache_attr`` to current value.
+        The model instance with realtime fields populated, or ``None``
+        when the backend returned no record. Returns ``None`` when the
+        model has no realtime fields.
 
     Raises:
         ValueError: If no TypeMapping is registered for the model class.
@@ -192,7 +156,7 @@ def fetch_realtime(
     _mapping, rt_fields = _resolve_realtime(model_class, fields)
 
     if not rt_fields:
-        return {}
+        return None
 
     data_source = DataSource(config)
     return _fetch_realtime_via_data_source(data_source, model_class, cluster, uuid, rt_fields)
@@ -204,10 +168,9 @@ def fetch_realtime_collection(
     cluster: str,
     fields: list[str] | None = None,
     **filters: Any,
-) -> list[dict[str, Any]]:
+) -> list[BaseModel]:
     """Fetch realtime metrics for multiple resources with optional filtering.
 
-    Always includes ``uuid`` and ``name`` in the response for identification.
     Routes through :meth:`DataSource.query` with ``source="live"``.
 
     Args:
@@ -218,7 +181,7 @@ def fetch_realtime_collection(
         **filters: Filter kwargs using model attribute names.
 
     Returns:
-        List of dicts, each with ``uuid``, ``name``, and realtime field values.
+        List of model instances with realtime fields populated.
 
     Raises:
         ValueError: If no TypeMapping is registered for the model class.
@@ -245,14 +208,7 @@ def fetch_realtime_collection(
         .fields(*requested_attrs)
     )
 
-    records: list[dict[str, Any]] = []
-    for instance in builder:
-        parsed = _model_to_dotted_dict(instance, rt_fields)
-        parsed["uuid"] = getattr(instance, "uuid", "")
-        parsed["name"] = getattr(instance, "name", "")
-        records.append(parsed)
-
-    return records
+    return list(builder)
 
 
 def watch_realtime(
@@ -267,8 +223,9 @@ def watch_realtime(
     """Poll realtime metrics at intervals, yielding snapshots.
 
     Generator that routes each poll through a single :class:`DataSource`
-    instance (built once at the top of the call), adding a ``_timestamp``
-    key (ISO format UTC) to each yielded dict.
+    instance (built once at the top of the call). Each snapshot is a dict
+    with ``model`` (the model instance or ``None``) and ``_timestamp``
+    (ISO format UTC).
 
     Args:
         model_class: Pydantic model class with registered TypeMapping.
@@ -280,7 +237,7 @@ def watch_realtime(
         count: Stop after N iterations; ``None`` for infinite.
 
     Yields:
-        Dict with realtime field values and ``_timestamp``.
+        Dict with ``model`` (BaseModel | None) and ``_timestamp``.
     """
     _mapping, rt_fields = _resolve_realtime(model_class, fields)
 
@@ -289,12 +246,15 @@ def watch_realtime(
     iteration = 0
     while True:
         if rt_fields:
-            snapshot = _fetch_realtime_via_data_source(
+            instance = _fetch_realtime_via_data_source(
                 data_source, model_class, cluster, uuid, rt_fields
             )
         else:
-            snapshot = {}
-        snapshot["_timestamp"] = datetime.now(tz=UTC).isoformat()
+            instance = None
+        snapshot: dict[str, Any] = {
+            "model": instance,
+            "_timestamp": datetime.now(tz=UTC).isoformat(),
+        }
         yield snapshot
 
         iteration += 1
@@ -319,6 +279,10 @@ def compare_realtime(
     ``baseline`` and ``current`` only.  Fields in current but not in
     baseline include ``current`` only.
 
+    The model instance is fetched via :func:`fetch_realtime` and then
+    each realtime field's current value is read from the model via
+    attribute access.
+
     Args:
         model_class: Pydantic model class with registered TypeMapping.
         config: :class:`Config` used to construct the backend.
@@ -330,7 +294,20 @@ def compare_realtime(
     Returns:
         Dict mapping ``cache_attr`` to comparison dict.
     """
-    current = fetch_realtime(model_class, config, cluster, uuid, fields)
+    _mapping, rt_fields = _resolve_realtime(model_class, fields)
+
+    instance = fetch_realtime(model_class, config, cluster, uuid, fields)
+    if instance is None:
+        return {}
+
+    # Extract current values from the model instance.
+    instance_dict = instance.model_dump() if isinstance(instance, BaseModel) else {}
+    current: dict[str, Any] = {}
+    for field in rt_fields:
+        try:
+            current[field.cache_attr] = get_nested_value(instance_dict, field.cache_attr)
+        except PathNotFoundError:
+            current[field.cache_attr] = field.default
 
     result: dict[str, dict[str, Any]] = {}
     for attr, current_val in current.items():

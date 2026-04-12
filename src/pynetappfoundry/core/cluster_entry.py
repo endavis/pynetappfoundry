@@ -8,8 +8,9 @@ The cache database is never opened until a namespace property is accessed.
 
 When a :class:`~pynetappfoundry.core.config.Config` reference is available,
 accessing ``.ontap`` on a cluster with no cache DB will transparently
-create a :class:`~pynetappfoundry.cache._fetcher.FieldGroupFetcher` so
-that field groups can be fetched live from the ONTAP API/CLI.
+create a :class:`~pynetappfoundry.cache._lazy.LazyClusterMetadata` backed
+by a :class:`~pynetappfoundry.data.source.DataSource` so that field groups
+can be fetched live.
 """
 
 from __future__ import annotations
@@ -23,7 +24,6 @@ from typing import TYPE_CHECKING, Any
 from pynetappfoundry.cache._lazy import LazyClusterMetadata
 
 if TYPE_CHECKING:
-    from pynetappfoundry.cache._fetcher import FieldGroupFetcher
     from pynetappfoundry.core.config import Config
 
 _file_name = Path(__file__).name
@@ -186,14 +186,12 @@ class ClusterEntry(MutableMapping[str, Any]):
 
         Fallback order:
 
-        1. **Cache DB exists** — load from DB with an optional fetcher
-           attached for missing/stale field groups.
+        1. **Cache DB exists** — load from DB; field-group access is routed
+           through :class:`DataSource`.
         2. **No cache DB, Config available** — return a DB-less
-           ``LazyClusterMetadata`` backed entirely by a live fetcher.
+           ``LazyClusterMetadata`` backed by :class:`DataSource`.
         3. **No cache DB, no Config** — return ``None`` (original behaviour).
         """
-        fetcher = self._build_fetcher()
-
         if self._cache_db_path.exists():
             from pynetappfoundry.cache.db import ClusterMetadataDB
 
@@ -213,73 +211,36 @@ class ClusterEntry(MutableMapping[str, Any]):
                     f"{'found' if result else 'not found'}"
                 )
             if result is not None:
-                # Attach fetcher so missing groups can be fetched live.
-                if fetcher is not None:
-                    result._fetcher = fetcher
                 return result  # caller owns the db via the shim
             # No shim — close the db before falling through.
             if db is not None:
                 db.close()
-            # Fall through to fetcher-only path below.
+            # Fall through to live path below.
 
-        # No cache DB (or DB load failed) — try fetcher-only mode.
-        live = self._build_live_metadata(fetcher=fetcher)
+        # No cache DB (or DB load failed) — try live mode.
+        live = self._build_live_metadata()
         if live is not None:
-            logging.debug(f"{_file_name} : no cache DB for {self._name}, using live fetcher")
+            logging.debug(f"{_file_name} : no cache DB for {self._name}, using live DataSource")
             return live
 
         logging.debug(f"{_file_name} : no cache DB at {self._cache_db_path} for {self._name}")
         return None
 
-    def _build_live_metadata(
-        self, fetcher: FieldGroupFetcher | None = None
-    ) -> LazyClusterMetadata | None:
-        """Construct a fetcher-only :class:`LazyClusterMetadata` (no cache DB).
-
-        Args:
-            fetcher: Optional pre-built fetcher. If None, one is built from
-                the cluster's Config.
+    def _build_live_metadata(self) -> LazyClusterMetadata | None:
+        """Construct a :class:`LazyClusterMetadata` backed by :class:`DataSource` (no cache DB).
 
         Returns:
-            Fetcher-backed LazyClusterMetadata, or None when no fetcher
-            can be built (no Config or no cluster IP).
+            LazyClusterMetadata backed by DataSource, or None when no
+            Config is set.
         """
-        if fetcher is None:
-            fetcher = self._build_fetcher()
-        if fetcher is None:
+        if self._config is None:
             return None
 
         from pynetappfoundry.cache._base import METADATA_SCHEMA_VERSION, _utcnow
-        from pynetappfoundry.cache.db_schema import _ensure_registry
 
         return LazyClusterMetadata(
             cluster_name=self._name,
             cached_at=_utcnow().isoformat(),
             cache_version=METADATA_SCHEMA_VERSION,
-            db_path=None,
-            registry=_ensure_registry(),
-            config=self._config,
-            fetcher=fetcher,
-        )
-
-    def _build_fetcher(self) -> FieldGroupFetcher | None:
-        """Create a :class:`FieldGroupFetcher` if Config is available.
-
-        Returns ``None`` when no Config is set or the cluster has no ``ip``
-        in its config data.
-        """
-        if self._config is None:
-            return None
-
-        cluster_ip = self._data.get("ip", "")
-        if not cluster_ip:
-            logging.debug(f"{_file_name} : no IP for {self._name}, cannot create fetcher")
-            return None
-
-        from pynetappfoundry.cache._fetcher import FieldGroupFetcher
-
-        return FieldGroupFetcher(
-            cluster_name=self._name,
-            cluster_ip=cluster_ip,
             config=self._config,
         )

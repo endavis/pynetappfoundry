@@ -15,7 +15,7 @@ from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 from pydantic import BaseModel
 
 from pynetappfoundry.cache._registry import model_registry
-from pynetappfoundry.cache.field_mapping import TypeMapping, parse_api_response
+from pynetappfoundry.cache.field_mapping import TypeMapping
 from pynetappfoundry.clients.openapi import APIWrapper
 from pynetappfoundry.core.config import Config
 from pynetappfoundry.data.source import DataSource
@@ -24,27 +24,6 @@ from pynetappfoundry.query.exceptions import MultipleResultsError, NotFoundError
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T", bound=BaseModel)
-
-
-def _log_missing_fields(
-    record: dict[str, Any],
-    expected: list[str],
-    type_name: str,
-    record_id: str,
-) -> None:
-    """Log missing fields at debug level.
-
-    Simple callback satisfying the ``log_missing_fn`` signature required
-    by :func:`~pynetappfoundry.cache.field_mapping.parse_api_response`.
-    """
-    missing = [f for f in expected if f not in record]
-    if missing:
-        logger.debug(
-            "QuerySet %s[%s]: missing fields %s",
-            type_name,
-            record_id,
-            missing,
-        )
 
 
 class QuerySet:
@@ -59,8 +38,8 @@ class QuerySet:
 
     Example::
 
-        vols = QuerySet(OntapVolume, client).filter(svm_name="vs1").all()
-        vol = QuerySet(OntapVolume, client).get(uuid="abc-123")
+        vols = QuerySet(OntapVolume, client, config=config).filter(svm_name="vs1").all()
+        vol = QuerySet(OntapVolume, client, config=config).get(uuid="abc-123")
     """
 
     def __init__(
@@ -68,7 +47,7 @@ class QuerySet:
         model_class: type[T],
         client: APIWrapper,
         *,
-        config: Config | None = None,
+        config: Config,
     ) -> None:
         self._model_class = model_class
         self._client = client
@@ -77,31 +56,17 @@ class QuerySet:
         self._fields_list: list[str] = []
         self._order_by_list: list[str] = []
         self._max_records: int | None = None
-        # Phase 3c shim: when ``config`` is provided, terminal methods
-        # route through a unified ``DataSource`` (ADR-0012). When it is
-        # ``None``, the legacy direct-client path below is used. This
-        # split lets call sites without a ``Config`` in scope (notably
-        # ``query/related.py``) keep working unchanged.
-        self._data_source: DataSource | None = None
-        self._cluster_name: str = ""
-        if config is not None:
-            self._data_source = DataSource(config)
-            backend = self._data_source._get_backend(self._mapping.api_type)
-            # Inject the caller's API client into the backend's per-cluster
-            # cache so that DataSource-routed fetches reuse the same
-            # connection (and credentials) instead of constructing a
-            # duplicate ``ONTAPAPIClient`` via the backend's
-            # ``_get_api_client`` fallback. This mirrors the
-            # ``object.__setattr__(backend, "_cache_db", self)`` trick used
-            # in Phase 3b's ``ClusterMetadataDB.get_lazy()``. Both
-            # ``APIWrapper`` and its ``ONTAPAPIClient`` subclass set
-            # ``self.name`` to the cluster name at construction.
-            self._cluster_name = client.name
-            # Backends register only ``OntapBackend`` here today; the
-            # ``_api_clients`` dict lives on that subclass.
-            api_clients = getattr(backend, "_api_clients", None)
-            if api_clients is not None:
-                api_clients[self._cluster_name] = client
+        self._data_source = DataSource(config)
+        self._cluster_name: str = client.name
+        backend = self._data_source._get_backend(self._mapping.api_type)
+        # Inject the caller's API client into the backend's per-cluster
+        # cache so that DataSource-routed fetches reuse the same
+        # connection (and credentials) instead of constructing a
+        # duplicate ``ONTAPAPIClient`` via the backend's
+        # ``_get_api_client`` fallback.
+        api_clients = getattr(backend, "_api_clients", None)
+        if api_clients is not None:
+            api_clients[self._cluster_name] = client
 
     @staticmethod
     def _resolve_mapping(model_class: type[T]) -> TypeMapping:
@@ -176,16 +141,7 @@ class QuerySet:
 
     def all(self) -> list[Any]:
         """Execute the query and return all matching model instances."""
-        if self._data_source is not None:
-            return self._all_via_data_source()
-        url = self._build_url()
-        response = self._client.get_all_records(url)
-        return parse_api_response(
-            self._mapping,
-            response,
-            f"QuerySet<{self._mapping.name}>",
-            _log_missing_fields,
-        )
+        return self._all_via_data_source()
 
     def first(self) -> Any | None:
         """Execute the query and return the first result, or ``None``."""
@@ -217,17 +173,10 @@ class QuerySet:
 
     def count(self) -> int:
         """Return the number of matching records without fetching them."""
-        if self._data_source is not None:
-            # Drop down to the backend's count helper -- count does not
-            # care about ordering or limits, only the filter dict.
-            backend = self._data_source._get_backend(self._mapping.api_type)
-            count_live = getattr(backend, "_count_live", None)
-            if count_live is not None:
-                return int(count_live(self._mapping, self._cluster_name, dict(self._filters)))
-        url = self._build_url(return_records=False)
-        response = self._client.call_endpoint(url)
-        if isinstance(response, dict):
-            return int(response.get("num_records", 0))
+        backend = self._data_source._get_backend(self._mapping.api_type)
+        count_live = getattr(backend, "_count_live", None)
+        if count_live is not None:
+            return int(count_live(self._mapping, self._cluster_name, dict(self._filters)))
         return 0
 
     def __iter__(self) -> Any:
@@ -281,28 +230,15 @@ class QuerySet:
     def _attr_to_api_path(self, attr: str) -> str:
         """Translate a model attribute name to an API field path.
 
-        Supports three lookup strategies (in order):
+        Supports two lookup strategies (in order):
 
         1. Exact ``cache_attr`` match (e.g. ``"name"`` → ``"name"``).
-        2. Dunder-separated kwargs: ``"ip__address"`` is normalised to
-           ``"ip.address"`` and matched against ``cache_attr`` values.
-        3. Pass-through: if no match, return *attr* unchanged (allows
-           raw API field names).
+        2. Pass-through: if no match, return *attr* unchanged (allows
+           raw API field names and dotted paths).
         """
-        # Direct match on cache_attr
         for field in self._mapping.fields:
             if field.cache_attr == attr and field.api_path is not None:
                 return field.api_path
-
-        # Dunder → dot translation for Python kwargs compatibility
-        if "__" in attr:
-            dot_attr = attr.replace("__", ".")
-            for field in self._mapping.fields:
-                if field.cache_attr == dot_attr and field.api_path is not None:
-                    return field.api_path
-            # Even without a mapping match, convert dunders to dots
-            return dot_attr
-
         return attr
 
     def _build_url(self, *, return_records: bool = True) -> str:

@@ -140,7 +140,15 @@ This ADR is Phase 1 of a four-phase plan. The full plan is in issue #495.
   - Phase 3e — `nf cache check` and `nf cache query` CLI commands migrated to `DataSource` shim (issue #509). `check` replaces `db.query_with_filters()` with `DataSource(config).query(model_class, cluster=name, source=source).where(*where_exprs)`, using a new `_resolve_model_class()` helper to resolve metadata paths to Pydantic model classes via the table registry. `query` replaces `db.get()` with `db.get_lazy()` on the cache path (which internally routes through `DataSource`). Both commands gain a `--live` flag that sets `source="live"`, bypassing the cache. `--live` and `--where` are mutually exclusive on `check` (`.where()` only supports the cache path). `ClusterMetadataDB` is retained only for `list_clusters()` (used by `--all`).
   - Phase 3f — Remaining consumer CLI commands migrated onto `DataSource` (issue #510). Sub-PRs: #518 (`nf licenses check/savings`), #519 (`nf reports locks`), #520 (`nf utils validate`), #521 (`nf reports html` shim pass), #524 (`nf reports html` consumer migration — instantiates `DataSource` directly, removes `ONTAPAPIClient`/`QuerySet` call sites, and adds an `OntapIpInterface` fetch to populate the LIF `home_node` lookup that SVM embedded summaries lack).
 
-- **Phase 4 — Cleanup.** Remove the dunder-to-dot rewrite from `QuerySet`, remove the dotted-key `dict` shape from realtime functions, remove `FieldGroupFetcher` (now unused once every reader is a `DataSource` shim), remove the back-compat `db_path` / `registry` / `fetcher` kwargs on `LazyClusterMetadata`, drop `cluster_entry._build_fetcher` / `_build_live_metadata`, write the `docs/usage/data-source.md` user guide, and update `docs/usage/query-layer.md` to position `QuerySet` as the lower-level surface.
+- **Phase 4 — Cleanup (issue #515).** Removed all backwards-compatibility deviations introduced during Phases 3a-3e:
+  1. Removed `db_path` and `registry` kwargs from `LazyClusterMetadata` (accepted but ignored since Phase 3b).
+  2. Deleted `FieldGroupFetcher` (`cache/_fetcher.py`) and the `fetcher` kwarg / fallback path on `LazyClusterMetadata`. DataSource is now the sole data path for lazy field-group loading.
+  3. Removed `object.__setattr__(backend, "_cache_db", self)` injection in `ClusterMetadataDB.get_lazy()` — replaced with direct attribute assignment.
+  4. Made `QuerySet(config=)` required (was optional with a legacy direct-client fallback). Removed the dunder-to-dot rewrite in `_attr_to_api_path()` — callers use dotted paths directly. Removed `_api_clients` injection. Added `config` parameter to `related()` / `related_one()`. Added `config=config` to `space_usage.py` `QuerySet` calls.
+  5. Removed `_model_to_dotted_dict()` from `query/realtime.py`. `fetch_realtime()` now returns `BaseModel | None`, `fetch_realtime_collection()` returns `list[BaseModel]`, `watch_realtime()` yields dicts with `model` key containing the instance, and `compare_realtime()` extracts field values from the model for comparison.
+  6. Updated this ADR with implementation outcomes.
+
+  See [ADR-0013](0013-datasource-as-a-thin-facade-over-the-collector.md) for the superseding design decisions that informed the Phase 4 cleanup.
 
 ### Links to Documentation
 
@@ -164,7 +172,6 @@ This ADR is Phase 1 of a four-phase plan. The full plan is in issue #495.
 - Source: `src/pynetappfoundry/cache/field_mapping.py`
 - Source: `src/pynetappfoundry/cache/_registry.py`
 - Source: `src/pynetappfoundry/cache/_lazy.py`
-- Source: `src/pynetappfoundry/cache/_fetcher.py`
 - Source: `src/pynetappfoundry/core/cluster_entry.py`
 - Source: `src/pynetappfoundry/query/queryset.py`
 - Source: `src/pynetappfoundry/query/realtime.py`

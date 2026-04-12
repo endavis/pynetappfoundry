@@ -508,7 +508,7 @@ class ClusterMetadataDB(SQLiteDB):
         """Retrieve a lazy-loading proxy for cached metadata.
 
         Only the envelope table is queried.  Data field groups are loaded
-        from the database on first attribute access.
+        from the database on first attribute access via :class:`DataSource`.
 
         Args:
             cluster_name: Name of the cluster.
@@ -533,29 +533,23 @@ class ClusterMetadataDB(SQLiteDB):
             msg = (
                 "ClusterMetadataDB.get_lazy() requires the DB to be "
                 "constructed with a Config instance so the underlying "
-                "LazyClusterMetadata shim can build a DataSource. "
+                "LazyClusterMetadata can build a DataSource. "
                 "Pass config=... to ClusterMetadataDB()."
             )
             raise ValueError(msg)
         # Build a DataSource that shares THIS open connection for cache
-        # reads, so the lazy shim hits the same in-memory/test database
+        # reads, so the lazy proxy hits the same in-memory/test database
         # as the caller instead of opening a second one under a fresh
         # ``OntapBackend._cache_db``.
         from pynetappfoundry.data.source import DataSource
 
         data_source = DataSource(self._config)
         backend = data_source._get_backend("ontap")
-        # ``_cache_db`` is a cached_property — pre-populating it via
-        # ``object.__setattr__`` bypasses the descriptor and prevents
-        # the backend from opening its own ClusterMetadataDB on first
-        # use, so the shim shares THIS open connection.
-        object.__setattr__(backend, "_cache_db", self)
+        backend._cache_db = self  # type: ignore[attr-defined]
         lazy = LazyClusterMetadata(
             cluster_name=cluster_name,
             cached_at=envelope["cached_at"],
             cache_version=envelope["cache_version"],
-            db_path=self.db_path,
-            registry=self._registry,
             config=self._config,
         )
         lazy._data_source = data_source

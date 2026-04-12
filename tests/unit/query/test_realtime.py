@@ -1,10 +1,8 @@
 """Tests for pynetappfoundry.query.realtime module.
 
-Phase 3d of issue #495 (ADR-0012) routes the four public functions
-through :class:`DataSource`. These tests exercise the shim by patching
-``pynetappfoundry.query.realtime.DataSource`` at the usage site (not
-the definition site) — mirroring the 3c ``QuerySet`` shim fixture
-pattern.
+All four public functions route through :class:`DataSource`. These tests
+exercise the routing by patching ``pynetappfoundry.query.realtime.DataSource``
+at the usage site.
 """
 
 from __future__ import annotations
@@ -21,7 +19,6 @@ from pynetappfoundry.core.config import Config
 from pynetappfoundry.query.realtime import (
     _attr_to_api_path,
     _fetch_realtime_via_data_source,
-    _model_to_dotted_dict,
     _resolve_realtime,
     compare_realtime,
     fetch_realtime,
@@ -158,17 +155,9 @@ def mock_config() -> MagicMock:
 def mocked_data_source() -> Any:
     """Patch ``DataSource`` at the realtime module's usage site.
 
-    Yields the patched ``DataSource`` class mock. Tests can read
-    ``.return_value`` to obtain the single mocked ``DataSource`` instance
-    that the code under test constructs. The patch also wires
-    ``.query(...)`` to a chainable builder mock that supports
-    ``.filter()`` / ``.fields()`` and iteration.
+    Yields the patched ``DataSource`` class mock.
     """
-    # One shared "instance mock" returned from every DataSource(config) call.
     ds_instance = MagicMock()
-    # Chainable QueryBuilder mock: ``.filter`` and ``.fields`` return the
-    # same builder so ``.filter(...).fields(...)`` works; iteration yields
-    # whatever the test wires up via ``_set_query_results``.
     builder = MagicMock()
     builder.filter.return_value = builder
     builder.fields.return_value = builder
@@ -239,100 +228,38 @@ class TestAttrToApiPath:
 
 
 # ---------------------------------------------------------------------------
-# _model_to_dotted_dict tests
-# ---------------------------------------------------------------------------
-
-
-class TestModelToDottedDict:
-    """Tests for the model → dotted dict projection helper."""
-
-    def test_dotted_dict_projection_preserves_cache_attr_keys(self) -> None:
-        instance = FakeVolumeRT(
-            name="v1",
-            uuid="u1",
-            iops_read=100,
-            iops_write=200,
-            latency_read=50,
-            status_text="ok",
-        )
-        _, rt_fields = _resolve_realtime(FakeVolumeRT)
-        result = _model_to_dotted_dict(instance, rt_fields)
-        assert set(result.keys()) == {
-            "iops_read",
-            "iops_write",
-            "latency_read",
-            "status_text",
-        }
-        assert result["iops_read"] == 100
-        assert result["iops_write"] == 200
-        assert result["latency_read"] == 50
-        assert result["status_text"] == "ok"
-
-    def test_dotted_dict_returns_empty_for_none_instance(self) -> None:
-        _, rt_fields = _resolve_realtime(FakeVolumeRT)
-        assert _model_to_dotted_dict(None, rt_fields) == {}
-
-    def test_missing_attributes_use_field_defaults(self) -> None:
-        """A FieldMapping whose cache_attr does not exist on the model
-        falls back to ``field.default``."""
-        bogus = FieldMapping(
-            cache_attr="not_on_model",
-            api_path="x",
-            default=-1,
-            cache_strategy="realtime",
-        )
-        instance = FakeVolumeRT(name="v1")
-        result = _model_to_dotted_dict(instance, (bogus,))
-        assert result == {"not_on_model": -1}
-
-
-# ---------------------------------------------------------------------------
 # fetch_realtime tests
 # ---------------------------------------------------------------------------
 
 
 class TestFetchRealtime:
-    """Tests for fetch_realtime (routed through DataSource)."""
+    """Tests for fetch_realtime (returns model instance)."""
 
     def test_routes_through_datasource_get(
         self, mock_config: MagicMock, mocked_data_source: MagicMock
     ) -> None:
         ds_instance = mocked_data_source.return_value
-        ds_instance.get.return_value = FakeVolumeRT(
-            iops_read=10, iops_write=20, latency_read=5, status_text="ok"
-        )
+        model_instance = FakeVolumeRT(iops_read=10, iops_write=20, latency_read=5, status_text="ok")
+        ds_instance.get.return_value = model_instance
         result = fetch_realtime(FakeVolumeRT, mock_config, CLUSTER, "test-uuid")
 
         mocked_data_source.assert_called_once_with(mock_config)
         ds_instance.get.assert_called_once()
-        kwargs = ds_instance.get.call_args.kwargs
-        assert kwargs["cluster"] == CLUSTER
-        assert kwargs["id"] == "test-uuid"
-        assert kwargs["source"] == "live"
-        # Realtime cache_attrs requested via the fields= kwarg.
-        assert set(kwargs["fields"]) == {
-            "iops_read",
-            "iops_write",
-            "latency_read",
-            "status_text",
-        }
-        # Positional arg is the model class.
-        assert ds_instance.get.call_args.args[0] is FakeVolumeRT
-
-        assert result["iops_read"] == 10
-        assert result["iops_write"] == 20
-        assert result["latency_read"] == 5
-        assert result["status_text"] == "ok"
+        assert result is model_instance
+        assert result.iops_read == 10
+        assert result.iops_write == 20
 
     def test_with_field_filter(self, mock_config: MagicMock, mocked_data_source: MagicMock) -> None:
         ds_instance = mocked_data_source.return_value
-        ds_instance.get.return_value = FakeVolumeRT(iops_read=42)
+        model_instance = FakeVolumeRT(iops_read=42)
+        ds_instance.get.return_value = model_instance
 
         result = fetch_realtime(
             FakeVolumeRT, mock_config, CLUSTER, "test-uuid", fields=["iops_read"]
         )
 
-        assert result == {"iops_read": 42}
+        assert result is model_instance
+        assert result.iops_read == 42
         kwargs = ds_instance.get.call_args.kwargs
         assert kwargs["fields"] == ["iops_read"]
 
@@ -345,46 +272,30 @@ class TestFetchRealtime:
         with pytest.raises(ValueError, match="No TypeMapping registered"):
             fetch_realtime(NotRegistered, mock_config, CLUSTER, "test-uuid")
 
-    def test_no_realtime_fields_returns_empty(
+    def test_no_realtime_fields_returns_none(
         self, mock_config: MagicMock, mocked_data_source: MagicMock
     ) -> None:
         result = fetch_realtime(FakeNoRealtime, mock_config, CLUSTER, "test-uuid")
-        assert result == {}
-        # DataSource is never constructed when there are no realtime fields.
+        assert result is None
         mocked_data_source.assert_not_called()
 
-    def test_no_instance_returned_yields_empty_dict(
+    def test_no_instance_returned_yields_none(
         self, mock_config: MagicMock, mocked_data_source: MagicMock
     ) -> None:
         ds_instance = mocked_data_source.return_value
         ds_instance.get.return_value = None
         result = fetch_realtime(FakeVolumeRT, mock_config, CLUSTER, "test-uuid")
-        assert result == {}
+        assert result is None
 
-    def test_missing_values_use_defaults(
+    def test_transform_callback_honored(
         self, mock_config: MagicMock, mocked_data_source: MagicMock
     ) -> None:
-        # Instance built with no realtime fields set — all default to 0/"".
         ds_instance = mocked_data_source.return_value
-        ds_instance.get.return_value = FakeVolumeRT()
-        result = fetch_realtime(FakeVolumeRT, mock_config, CLUSTER, "test-uuid")
-        assert result["iops_read"] == 0
-        assert result["iops_write"] == 0
-        assert result["latency_read"] == 0
-        assert result["status_text"] == ""
-
-    def test_transform_callback_honored_by_shim(
-        self, mock_config: MagicMock, mocked_data_source: MagicMock
-    ) -> None:
-        """``FieldMapping.transform`` callbacks run inside ``parse_api_response``
-        before the model is constructed, so the transformed value is visible
-        on the returned instance — the shim's job is just to read it back."""
-        ds_instance = mocked_data_source.return_value
-        # FakeTransformModel.iops_total is populated by the transform
-        # callback; the shim projects whatever attribute is on the model.
-        ds_instance.get.return_value = FakeTransformModel(iops_total=400)
+        model_instance = FakeTransformModel(iops_total=400)
+        ds_instance.get.return_value = model_instance
         result = fetch_realtime(FakeTransformModel, mock_config, CLUSTER, "test-uuid")
-        assert result["iops_total"] == 400
+        assert result is model_instance
+        assert result.iops_total == 400
 
 
 # ---------------------------------------------------------------------------
@@ -393,7 +304,7 @@ class TestFetchRealtime:
 
 
 class TestFetchRealtimeCollection:
-    """Tests for fetch_realtime_collection (routed through DataSource.query)."""
+    """Tests for fetch_realtime_collection (returns list of model instances)."""
 
     def test_routes_through_datasource_query(
         self, mock_config: MagicMock, mocked_data_source: MagicMock
@@ -421,46 +332,12 @@ class TestFetchRealtimeCollection:
         results = fetch_realtime_collection(FakeVolumeRT, mock_config, CLUSTER)
 
         mocked_data_source.assert_called_once_with(mock_config)
-        ds_instance = mocked_data_source.return_value
-        ds_instance.query.assert_called_once()
-        kwargs = ds_instance.query.call_args.kwargs
-        assert kwargs["cluster"] == CLUSTER
-        assert kwargs["source"] == "live"
-        assert ds_instance.query.call_args.args[0] is FakeVolumeRT
-
-        builder = ds_instance.query.return_value
-        builder.filter.assert_called_once_with({})
-        builder.fields.assert_called_once()
-        field_args = set(builder.fields.call_args.args)
-        # Requested fields include realtime cache_attrs plus uuid/name.
-        assert {"iops_read", "iops_write", "latency_read", "status_text"}.issubset(field_args)
-        assert "uuid" in field_args
-        assert "name" in field_args
-
         assert len(results) == 2
-        assert results[0]["uuid"] == "u1"
-        assert results[0]["name"] == "vol1"
-        assert results[0]["iops_read"] == 10
-        assert results[1]["uuid"] == "u2"
-        assert results[1]["iops_read"] == 30
-
-    def test_includes_uuid_and_name(
-        self, mock_config: MagicMock, mocked_data_source: MagicMock
-    ) -> None:
-        _set_query_results(
-            mocked_data_source,
-            [
-                FakeVolumeRT(
-                    uuid="abc",
-                    name="test_vol",
-                    iops_read=1,
-                    iops_write=2,
-                ),
-            ],
-        )
-        results = fetch_realtime_collection(FakeVolumeRT, mock_config, CLUSTER)
-        assert results[0]["uuid"] == "abc"
-        assert results[0]["name"] == "test_vol"
+        assert results[0].uuid == "u1"
+        assert results[0].name == "vol1"
+        assert results[0].iops_read == 10
+        assert results[1].uuid == "u2"
+        assert results[1].iops_read == 30
 
     def test_with_filters_translates_kwargs_to_api_paths(
         self, mock_config: MagicMock, mocked_data_source: MagicMock
@@ -468,7 +345,6 @@ class TestFetchRealtimeCollection:
         _set_query_results(mocked_data_source, [])
         fetch_realtime_collection(FakeVolumeRT, mock_config, CLUSTER, svm_name="vs1")
         builder = mocked_data_source.return_value.query.return_value
-        # svm_name → svm.name per FAKE_MAPPING_RT.
         builder.filter.assert_called_once_with({"svm.name": "vs1"})
 
     def test_filter_passthrough_for_unknown_attr(
@@ -501,11 +377,13 @@ class TestWatchRealtime:
         mocked_data_source: MagicMock,
     ) -> None:
         ds_instance = mocked_data_source.return_value
-        ds_instance.get.return_value = FakeVolumeRT(iops_read=10, iops_write=20)
+        model_instance = FakeVolumeRT(iops_read=10, iops_write=20)
+        ds_instance.get.return_value = model_instance
         gen = watch_realtime(FakeVolumeRT, mock_config, CLUSTER, "test-uuid", count=2)
         snapshots = list(gen)
         assert len(snapshots) == 2
-        assert snapshots[0]["iops_read"] == 10
+        assert snapshots[0]["model"] is model_instance
+        assert snapshots[0]["model"].iops_read == 10
 
     @patch("pynetappfoundry.query.realtime.time.sleep")
     def test_includes_timestamp(
@@ -533,7 +411,6 @@ class TestWatchRealtime:
         gen = watch_realtime(FakeVolumeRT, mock_config, CLUSTER, "test-uuid", count=3)
         snapshots = list(gen)
         assert len(snapshots) == 3
-        # Sleep is called between iterations (count-1 times).
         assert mock_sleep.call_count == 2
 
     @patch("pynetappfoundry.query.realtime.time.sleep")
@@ -573,15 +450,11 @@ class TestWatchRealtime:
         mock_config: MagicMock,
         mocked_data_source: MagicMock,
     ) -> None:
-        """Per issue #508 locked decision #2: ``watch_realtime`` must build
-        exactly one ``DataSource(config)`` and reuse it across all polls."""
         ds_instance = mocked_data_source.return_value
         ds_instance.get.return_value = FakeVolumeRT()
         gen = watch_realtime(FakeVolumeRT, mock_config, CLUSTER, "test-uuid", count=3)
         list(gen)
-        # Exactly one DataSource constructed.
         assert mocked_data_source.call_count == 1
-        # And three .get() calls against it.
         assert ds_instance.get.call_count == 3
 
 
@@ -641,7 +514,6 @@ class TestCompareRealtime:
         assert kwargs["id"] == "test-uuid"
 
     def test_partial_baseline(self, mock_config: MagicMock, mocked_data_source: MagicMock) -> None:
-        """Baseline has some but not all fields."""
         ds_instance = mocked_data_source.return_value
         ds_instance.get.return_value = FakeVolumeRT(
             iops_read=100, iops_write=200, latency_read=30, status_text="ok"
@@ -652,6 +524,16 @@ class TestCompareRealtime:
         assert result["iops_write"] == {"current": 200}
         assert result["status_text"] == {"current": "ok"}
 
+    def test_returns_empty_when_no_instance(
+        self, mock_config: MagicMock, mocked_data_source: MagicMock
+    ) -> None:
+        ds_instance = mocked_data_source.return_value
+        ds_instance.get.return_value = None
+        result = compare_realtime(
+            FakeVolumeRT, mock_config, CLUSTER, "test-uuid", {"iops_read": 50}
+        )
+        assert result == {}
+
 
 # ---------------------------------------------------------------------------
 # _fetch_realtime_via_data_source tests (internal helper)
@@ -661,18 +543,19 @@ class TestCompareRealtime:
 class TestFetchRealtimeViaDataSource:
     """Direct tests for the shared single-resource helper."""
 
-    def test_helper_delegates_to_get_and_projects(self) -> None:
+    def test_helper_delegates_to_get(self) -> None:
         ds = MagicMock()
-        ds.get.return_value = FakeVolumeRT(iops_read=7, iops_write=8)
+        model_instance = FakeVolumeRT(iops_read=7, iops_write=8)
+        ds.get.return_value = model_instance
         _, rt_fields = _resolve_realtime(FakeVolumeRT)
         result = _fetch_realtime_via_data_source(ds, FakeVolumeRT, CLUSTER, "uuid-1", rt_fields)
         ds.get.assert_called_once()
-        assert result["iops_read"] == 7
-        assert result["iops_write"] == 8
+        assert result is model_instance
+        assert result.iops_read == 7
 
-    def test_helper_returns_empty_when_get_returns_none(self) -> None:
+    def test_helper_returns_none_when_get_returns_none(self) -> None:
         ds = MagicMock()
         ds.get.return_value = None
         _, rt_fields = _resolve_realtime(FakeVolumeRT)
         result = _fetch_realtime_via_data_source(ds, FakeVolumeRT, CLUSTER, "uuid-1", rt_fields)
-        assert result == {}
+        assert result is None

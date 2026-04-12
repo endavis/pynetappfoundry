@@ -8,15 +8,11 @@ available immediately without any fetch.
 This avoids the overhead of querying all ~29 model tables when the
 caller only needs a small subset (e.g. ``entry.ontap.cloud``).
 
-Phase 3b of ADR-0012 (#495/#502): this class is now a thin shim over
-:class:`pynetappfoundry.data.source.DataSource`. Field-group access
-resolves the set of cache-table model classes in the group via
-:func:`pynetappfoundry.cache.db_schema._ensure_registry` and delegates
-each per-model read to ``DataSource.query()``. Results are reassembled
-into the corresponding ``CachedClusterMetadata`` sub-model via
-``model_validate()``. ``FieldGroupFetcher`` is retained as an optional
-kwarg for back-compat and is exercised only when a field group has no
-cache-side results; it will be removed in Phase 4.
+Field-group access resolves the set of cache-table model classes in the
+group via :func:`pynetappfoundry.cache.db_schema._ensure_registry` and
+delegates each per-model read to ``DataSource.query()``. Results are
+reassembled into the corresponding ``CachedClusterMetadata`` sub-model
+via ``model_validate()``.
 """
 
 from __future__ import annotations
@@ -30,10 +26,6 @@ from pynetappfoundry.cache._base import _utcnow
 from pynetappfoundry.cache._metadata import CachedClusterMetadata
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
-    from pynetappfoundry.cache._fetcher import FieldGroupFetcher
-    from pynetappfoundry.cache.db_schema import TableSpec
     from pynetappfoundry.core.config import Config
 
 # Top-level data field names on CachedClusterMetadata (everything except
@@ -78,15 +70,7 @@ class LazyClusterMetadata:
         cached_at: ISO-8601 timestamp (envelope).
         cache_version: Metadata schema version (envelope).
         config: :class:`Config` used to build the internal
-            :class:`DataSource`. Required by the shim.
-        db_path: Accepted for back-compat but ignored; routing goes
-            through the ``DataSource`` / ``OntapBackend`` stack. Removed
-            in Phase 4.
-        registry: Accepted for back-compat but ignored; the field-group
-            lookup is rebuilt from ``_ensure_registry()``. Removed in
-            Phase 4.
-        fetcher: Optional live fallback for field groups that return no
-            cache rows. Removed in Phase 4.
+            :class:`DataSource`.
     """
 
     __slots__ = (
@@ -95,8 +79,6 @@ class LazyClusterMetadata:
         "_cluster_name",
         "_config",
         "_data_source",
-        "_db_path",
-        "_fetcher",
         "_group_models",
         "_loaded",
         "_materialized",
@@ -107,23 +89,13 @@ class LazyClusterMetadata:
         cluster_name: str,
         cached_at: str,
         cache_version: str,
-        db_path: Path | str | None = None,
-        registry: dict[str, TableSpec] | None = None,
         *,
         config: Config | None = None,
-        fetcher: FieldGroupFetcher | None = None,
     ) -> None:
-        # ``registry`` kept for back-compat; ignored by the Phase 3b shim.
-        del registry
         self._cluster_name = cluster_name
         self._cached_at = cached_at
         self._cache_version = cache_version
         self._config = config
-        self._fetcher = fetcher
-        # ``_db_path`` is still exposed for legacy callers that inspect
-        # it (e.g. ``ClusterEntry._build_live_metadata`` tests); the
-        # shim itself does not read it. Removed in Phase 4.
-        self._db_path = db_path
         self._loaded: dict[str, Any] = {}
         self._materialized: CachedClusterMetadata | None = None
         # Deferred — built on first field-group access.
@@ -270,21 +242,16 @@ class LazyClusterMetadata:
         return root_kwargs.get(name)
 
     def _load_field_group(self, name: str) -> Any:
-        """Load a field group via DataSource, fetcher, or default.
+        """Load a field group via DataSource or fall back to default.
 
-        1. **DataSource** (shim path) — per-model routing through
+        1. **DataSource** — per-model routing through
            :class:`DataSource` for every registry entry in the group.
-        2. **Fetcher** — retained for live fallback during Phase 3b;
-           removed in Phase 4.
-        3. **Default** — the ``CachedClusterMetadata`` field default.
+        2. **Default** — the ``CachedClusterMetadata`` field default.
         """
         value: Any = None
 
         if self._config is not None:
             value = self._query_group_via_datasource(name)
-
-        if value is None and self._fetcher is not None:
-            value = self._fetcher.fetch(name)
 
         if value is None:
             value = self._get_default(name)
