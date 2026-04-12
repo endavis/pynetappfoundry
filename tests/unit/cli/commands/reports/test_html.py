@@ -1612,9 +1612,11 @@ class TestCloudSections:
         assert "https://portal.azure.com/#resource/rg-test" in html
         assert "Region" in html
         assert "eastus" in html
-        # Instance-level fields should NOT appear at cluster level
-        assert "Instance ID" not in html
-        assert "Instance Type" not in html
+        # Instance-level fields now appear in per-node sub-sections
+        # within the cluster cloud section.
+        assert "Instance ID" in html
+        assert "i-123" in html
+        assert "Instance Type" in html
 
     def test_cluster_cloud_section_aws(self, mock_builder: MagicMock) -> None:
         """Test cluster-level cloud section for AWS uses Account ID label."""
@@ -1645,8 +1647,8 @@ class TestCloudSections:
         # No resource group for AWS
         assert "Resource Group" not in html
 
-    def test_node_cloud_section_azure(self, mock_builder: MagicMock) -> None:
-        """Test per-node cloud section for Azure with VM name and links."""
+    def test_cloud_vm_subsection_azure(self, mock_builder: MagicMock) -> None:
+        """Test per-node VM sub-section under cluster cloud for Azure."""
         cluster = self._make_cluster(
             mock_builder,
             [
@@ -1663,26 +1665,11 @@ class TestCloudSections:
                     "instance_link": "https://portal.azure.com/#resource/vm1",
                     "instance_sso_link": "",
                 },
-                {
-                    "node": "test-cluster-02",
-                    "provider": "Azure",
-                    "region": "eastus",
-                    "account_id": "sub-123",
-                    "resource_group_name": "rg-test",
-                    "resource_group_link": "",
-                    "instance_id": "i-456",
-                    "instance_type": "Standard_DS4_v2",
-                    "availability_zone": "eastus-2",
-                    "instance_link": "https://portal.azure.com/#resource/vm2",
-                    "instance_sso_link": "",
-                },
             ],
         )
-        node = cluster.nodes[0]
-        cluster._format_netapp_node(node)
+        cluster._format_netapp_cloud_info()
         html = mock_builder.doc.getvalue()
 
-        assert "Cloud - Azure" in html
         assert "VM Name" in html
         assert "test-cluster-vm1" in html
         assert "Instance ID" in html
@@ -1691,11 +1678,11 @@ class TestCloudSections:
         assert "Standard_DS4_v2" in html
         assert "Availability Zone" in html
         assert "eastus-1" in html
-        assert "Cloud Console" in html
+        # Azure uses instance_link on the VM name
         assert "https://portal.azure.com/#resource/vm1" in html
 
-    def test_node_cloud_section_aws(self, mock_builder: MagicMock) -> None:
-        """Test per-node cloud section for AWS with console link."""
+    def test_cloud_vm_subsection_aws(self, mock_builder: MagicMock) -> None:
+        """Test per-node VM sub-section under cluster cloud for AWS uses SSO link."""
         cluster = self._make_cluster(
             mock_builder,
             [
@@ -1714,18 +1701,16 @@ class TestCloudSections:
                 },
             ],
         )
-        node = cluster.nodes[0]
-        cluster._format_netapp_node(node)
+        cluster._format_netapp_cloud_info()
         html = mock_builder.doc.getvalue()
 
-        assert "Cloud - AWS" in html
         assert "VM Name" in html
         assert "test-cluster-01" in html
         assert "Instance ID" in html
         assert "i-0abc123" in html
-        assert "Cloud Console" in html
-        assert "https://us-east-1.console.aws.amazon.com/ec2" in html
-        assert "Cloud Console (SSO)" in html
+        assert "Instance Type" in html
+        assert "m5.xlarge" in html
+        # AWS uses SSO link (falls back to instance_link)
         assert "https://sso.awsapps.com/start/#/console" in html
 
     def test_no_cloud_section_when_no_data(self, mock_builder: MagicMock) -> None:
