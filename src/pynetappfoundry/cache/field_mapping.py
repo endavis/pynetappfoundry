@@ -132,6 +132,11 @@ class TypeMapping:
     parent_id_field: str | None = None
     identifier_field: str | tuple[str, ...] | None = None
     response_shape: Literal["envelope", "singleton"] = "envelope"
+    batch_size: int | None = None
+    """Per-mapping override for the default chunk size used by
+    ``_fetch_live_by_identifiers`` and ``_fetch_live_by_parent``.
+    When ``None``, the module-level ``_BATCH_SIZE`` constant in
+    ``backends.py`` (100) is used."""
 
     def api_expected_fields(self) -> list[str]:
         """Derive top-level API keys expected in a response record.
