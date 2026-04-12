@@ -11,6 +11,8 @@ from pynetappfoundry.models.ontap.protocols.nfs.export_policies.model import Ont
 from pynetappfoundry.models.ontap.protocols.nfs.services.model import OntapNfsService
 from pynetappfoundry.models.ontap.protocols.s3.buckets.model import OntapS3Bucket
 
+_UNMAPPED_REASON = "Aggregate container model — not an ONTAP REST endpoint"
+
 
 class ProtocolsInfo(OntapModel):
     """Protocol configuration information.
