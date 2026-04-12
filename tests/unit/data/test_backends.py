@@ -611,6 +611,139 @@ class TestOntapBackendQueryPartial:
             list(range(200, 250)),
         ]
 
+    def test_partial_query_exactly_batch_size(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        """Exactly 100 cached records should produce 1 API call (no split)."""
+        backend = _make_backend(mock_config)
+        decision = RoutingDecision(cache_fields=("uuid",), live_fields=("iops",))
+        cached = [FakeVolume(uuid=f"u{i}") for i in range(100)]
+        live_all = [FakeVolume(uuid=f"u{i}", iops=float(i)) for i in range(100)]
+
+        mock_db = MagicMock()
+        mock_db.query_with_filters.return_value = cached
+        mock_client = MagicMock()
+        mock_client.get_all_records.return_value = {"records": []}
+
+        with (
+            patch.object(OntapBackend, "_cache_db", new=mock_db),
+            patch.object(backend, "_get_api_client", return_value=mock_client),
+            patch(
+                "pynetappfoundry.data.backends.parse_api_response",
+                return_value=live_all,
+            ),
+            _patch_metadata_path(backend),
+        ):
+            results = backend.query(
+                FakeVolume,
+                fake_volume_mapping,
+                decision,
+                cluster="prod1",
+                filters={},
+            )
+
+        assert len(results) == 100
+        assert mock_client.get_all_records.call_count == 1
+
+    def test_partial_query_batch_size_plus_one(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        """101 cached records should produce exactly 2 API calls (100 + 1)."""
+        backend = _make_backend(mock_config)
+        decision = RoutingDecision(cache_fields=("uuid",), live_fields=("iops",))
+        cached = [FakeVolume(uuid=f"u{i}") for i in range(101)]
+        live_chunk1 = [FakeVolume(uuid=f"u{i}", iops=float(i)) for i in range(100)]
+        live_chunk2 = [FakeVolume(uuid="u100", iops=100.0)]
+
+        mock_db = MagicMock()
+        mock_db.query_with_filters.return_value = cached
+        mock_client = MagicMock()
+        mock_client.get_all_records.return_value = {"records": []}
+
+        with (
+            patch.object(OntapBackend, "_cache_db", new=mock_db),
+            patch.object(backend, "_get_api_client", return_value=mock_client),
+            patch(
+                "pynetappfoundry.data.backends.parse_api_response",
+                side_effect=[live_chunk1, live_chunk2],
+            ),
+            _patch_metadata_path(backend),
+        ):
+            results = backend.query(
+                FakeVolume,
+                fake_volume_mapping,
+                decision,
+                cluster="prod1",
+                filters={},
+            )
+
+        assert len(results) == 101
+        assert mock_client.get_all_records.call_count == 2
+
+    def test_partial_query_custom_batch_size(
+        self,
+        mock_config: Any,
+    ) -> None:
+        """Mapping with batch_size=50 and 250 records produces 5 API calls."""
+        from pynetappfoundry.cache._registry import model_registry
+        from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
+
+        mapping = TypeMapping(
+            name="SmallBatchVolume",
+            model_class=FakeVolume,
+            api_endpoint="/storage/small-batch?fields=*",
+            api_type="ontap",
+            identifier_field="uuid",
+            batch_size=50,
+            fields=(
+                FieldMapping(cache_attr="name", cache_strategy="cache"),
+                FieldMapping(cache_attr="uuid", cache_strategy="cache"),
+                FieldMapping(cache_attr="size", cache_strategy="cache"),
+                FieldMapping(cache_attr="iops", cache_strategy="realtime"),
+                FieldMapping(cache_attr="is_root", cache_strategy="derived"),
+            ),
+        )
+        model_registry.register_mapping("SmallBatchVolume", mapping)
+        try:
+            backend = _make_backend(mock_config)
+            decision = RoutingDecision(cache_fields=("uuid",), live_fields=("iops",))
+            cached = [FakeVolume(uuid=f"u{i}") for i in range(250)]
+            live_chunks = [
+                [FakeVolume(uuid=f"u{i}", iops=float(i)) for i in range(j, j + 50)]
+                for j in range(0, 250, 50)
+            ]
+
+            mock_db = MagicMock()
+            mock_db.query_with_filters.return_value = cached
+            mock_client = MagicMock()
+            mock_client.get_all_records.return_value = {"records": []}
+
+            with (
+                patch.object(OntapBackend, "_cache_db", new=mock_db),
+                patch.object(backend, "_get_api_client", return_value=mock_client),
+                patch(
+                    "pynetappfoundry.data.backends.parse_api_response",
+                    side_effect=live_chunks,
+                ),
+                patch.object(backend, "_resolve_metadata_path", return_value="storage.small_batch"),
+            ):
+                results = backend.query(
+                    FakeVolume,
+                    mapping,
+                    decision,
+                    cluster="prod1",
+                    filters={},
+                )
+
+            assert len(results) == 250
+            assert mock_client.get_all_records.call_count == 5
+        finally:
+            model_registry._mappings.pop("SmallBatchVolume", None)
+
 
 class TestOntapBackendQueryPartialParentKeyed:
     """Tests for parent-keyed partial-fetch in ``_query_partial``."""
@@ -880,6 +1013,48 @@ class TestOntapBackendQueryPartialParentKeyed:
 
         assert results == []
         mock_client.get_all_records.assert_not_called()
+
+    def test_parent_keyed_chunking_large_child_set(
+        self,
+        fake_child_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        """1 parent with 150 children should produce 2 API calls (100 + 50)."""
+        backend = _make_backend(mock_config)
+        decision = RoutingDecision(cache_fields=("uuid", "volume.uuid"), live_fields=("metric",))
+        cached = [
+            FakeChildWithDottedRef(uuid=f"c{i}", volume=FakeChildVolume(uuid="vol-1"), metric=0.0)
+            for i in range(150)
+        ]
+        live_chunk1 = [FakeChildWithDottedRef(uuid=f"c{i}", metric=float(i)) for i in range(100)]
+        live_chunk2 = [
+            FakeChildWithDottedRef(uuid=f"c{i}", metric=float(i)) for i in range(100, 150)
+        ]
+
+        mock_db = MagicMock()
+        mock_db.query_with_filters.return_value = cached
+        mock_client = MagicMock()
+        mock_client.get_all_records.return_value = {"records": []}
+
+        with (
+            patch.object(OntapBackend, "_cache_db", new=mock_db),
+            patch.object(backend, "_get_api_client", return_value=mock_client),
+            patch(
+                "pynetappfoundry.data.backends.parse_api_response",
+                side_effect=[live_chunk1, live_chunk2],
+            ),
+            patch.object(backend, "_resolve_metadata_path", return_value="storage.fake_children"),
+        ):
+            results = backend.query(
+                FakeChildWithDottedRef,
+                fake_child_mapping,
+                decision,
+                cluster="prod1",
+                filters={},
+            )
+
+        assert len(results) == 150
+        assert mock_client.get_all_records.call_count == 2
 
     def test_extract_parent_ref_field(self) -> None:
         """Unit test for _extract_parent_ref_field with various URL patterns."""

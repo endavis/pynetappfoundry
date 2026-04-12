@@ -150,6 +150,16 @@ This ADR is Phase 1 of a four-phase plan. The full plan is in issue #495.
 
   See [ADR-0013](0013-datasource-as-a-thin-facade-over-the-collector.md) for the superseding design decisions that informed the Phase 4 cleanup.
 
+### Chunking / batch-size behavior
+
+`OntapBackend` chunks identifier-filtered live queries at `_BATCH_SIZE` (default 100). Each chunk produces one ONTAP REST call using pipe-OR syntax (`?uuid=id1|id2|id3`). Chunk failures propagate atomically — no partial results.
+
+Per-mapping override: `TypeMapping(batch_size=50)` overrides the default for endpoints with narrower URL limits.
+
+Known limitations:
+- Pipe-OR syntax is ONTAP-specific. Non-ONTAP backends (#533) will need different batching strategies.
+- Single identifier field only. Composite identifiers (#535) are not supported in the batched path.
+
 ### Links to Documentation
 
 - [DataSource User Guide](../usage/data-source.md) — comprehensive guide covering `DataSource.query()`, `DataSource.get()`, source modes, `QueryBuilder` chaining (`.filter()`, `.where()`, `.fields()`), and common patterns.

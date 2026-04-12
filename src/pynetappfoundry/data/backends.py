@@ -39,7 +39,17 @@ logger = logging.getLogger(__name__)
 T = TypeVar("T", bound=BaseModel)
 
 _BATCH_SIZE = 100
-"""Hardcoded chunk size for batch live fetches in partial-fetch query.
+"""Default chunk size for identifier-filtered live fetches.
+
+``_fetch_live_by_identifiers`` and ``_fetch_live_by_parent`` split
+identifier lists into chunks of this size.  Each chunk produces one
+ONTAP REST call using pipe-OR syntax (``?uuid=id1|id2|id3``).  The
+value balances ONTAP URL-length limits (approx 8 KiB for most
+controllers) against the number of round-trips.
+
+Per-mapping override: set ``TypeMapping(batch_size=N)`` to override
+for endpoints with narrower URL limits.  When ``batch_size`` is
+``None`` (the default), this constant is used.
 
 Per design notes on issue #495, this is intentionally a constant for v1.
 Promote to a config knob only if a real workload hits the limit.
@@ -663,8 +673,20 @@ class OntapBackend(Backend):
         For each parent UUID and its children, builds a resolved URL via
         :meth:`TypeMapping.build_parameterized_url`, overrides ``fields=``
         with the live field paths (preserving ``fields=*`` when present),
-        adds pipe-OR identifier filters chunked at ``_BATCH_SIZE``, and
+        adds pipe-OR identifier filters chunked by batch size, and
         fetches via :meth:`ONTAPAPIClient.get_all_records`.
+
+        Assumptions:
+
+        - **Pipe-OR filter syntax** is ONTAP-specific.  Non-ONTAP
+          backends (#533) will need a different batching strategy.
+        - **Single identifier field only.**  Composite identifiers
+          (#535) are not supported in the batched path.
+        - **``mapping.batch_size`` override** — when set, overrides the
+          module-level ``_BATCH_SIZE`` constant (100) for this mapping.
+
+        Chunk failures propagate atomically — if any chunk's call raises,
+        the whole fetch raises. There is no partial result.
 
         Returns:
             Aggregated list of parsed model instances across all parents
@@ -686,6 +708,7 @@ class OntapBackend(Backend):
             else:
                 api_paths.append(attr)
 
+        chunk_size = mapping.batch_size or _BATCH_SIZE
         results: list[T] = []
         for parent_uuid, children in parent_groups.items():
             base_url = mapping.build_parameterized_url(parent_uuid)
@@ -701,7 +724,7 @@ class OntapBackend(Backend):
             if not child_ids:
                 continue
 
-            for chunk in self._chunked(child_ids, _BATCH_SIZE):
+            for chunk in self._chunked(child_ids, chunk_size):
                 query = {k: list(v) for k, v in base_query.items()}
                 if api_paths:
                     existing = query.get("fields", [""])[0]
@@ -755,13 +778,22 @@ class OntapBackend(Backend):
         identifier_field: str,
         live_field_paths: tuple[str, ...],
     ) -> list[T]:
-        """Batch-fetch live data for *identifiers*, chunked at ``_BATCH_SIZE``.
+        """Batch-fetch live data for *identifiers*, chunked by batch size.
 
         For each chunk, builds one URL using ONTAP REST pipe-OR syntax
         on the identifier filter (``?{identifier_field}=id1|id2|id3``)
         with the ``fields=`` query parameter restricted to the
         ``api_path`` values of *live_field_paths*. Results across all
         chunks are concatenated into a single list.
+
+        Assumptions:
+
+        - **Pipe-OR filter syntax** is ONTAP-specific.  Non-ONTAP
+          backends (#533) will need a different batching strategy.
+        - **Single identifier field only.**  Composite identifiers
+          (#535) are not supported in the batched path.
+        - **``mapping.batch_size`` override** — when set, overrides the
+          module-level ``_BATCH_SIZE`` constant (100) for this mapping.
 
         Chunk failures propagate atomically — if any chunk's call raises
         (network error, REST 5xx, parser failure), the whole fetch
@@ -786,8 +818,9 @@ class OntapBackend(Backend):
             else:
                 api_paths.append(attr)
 
+        chunk_size = mapping.batch_size or _BATCH_SIZE
         results: list[T] = []
-        for chunk in self._chunked(list(identifiers), _BATCH_SIZE):
+        for chunk in self._chunked(list(identifiers), chunk_size):
             query = {k: list(v) for k, v in base_query.items()}
             if api_paths:
                 # Preserve fields=* from the base endpoint when present.
