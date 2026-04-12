@@ -18,6 +18,8 @@ from pynetappfoundry.models.ontap.storage.volumes.model import OntapVolume
 from pynetappfoundry.models.ontap.svm.svms.model import OntapSvm
 from pynetappfoundry.models.ontap.svm.svms.top_metrics.users.model import OntapTopMetricsSvmUser
 
+_UNMAPPED_REASON = "Aggregate container model — not an ONTAP REST endpoint"
+
 
 class StorageInfo(OntapModel):
     """Storage topology information.

@@ -12,6 +12,8 @@ from pynetappfoundry.models.ontap.network.ethernet.broadcast_domains.model impor
 from pynetappfoundry.models.ontap.network.ip.interfaces.model import OntapIpInterface
 from pynetappfoundry.models.ontap.network.ip.subnets.model import OntapIpSubnet
 
+_UNMAPPED_REASON = "Aggregate container model — not an ONTAP REST endpoint"
+
 
 class NetworkInfo(OntapModel):
     """Network configuration information.
