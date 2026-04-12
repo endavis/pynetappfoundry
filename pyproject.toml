@@ -242,7 +242,7 @@ skips = [
 
 [tool.codespell]
 skip = "tmp,.venv,.git,*.lock,*.pyc,__pycache__,docs/example-config/apis"
-ignore-words-list = "crate,bu,medias"
+ignore-words-list = "crate,bu,medias,notin"
 
 [tool.pyright]
 # LSP support for Claude Code - provides fast code navigation and type checking

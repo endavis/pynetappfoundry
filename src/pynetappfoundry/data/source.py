@@ -17,6 +17,7 @@ from pydantic import BaseModel
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.data._routing import SourceMode, decide_path
 from pynetappfoundry.data.backends import Backend, OntapBackend
+from pynetappfoundry.data.filters import FilterExpression, compile_filters
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -259,17 +260,51 @@ class QueryBuilder[T: BaseModel]:
 
     def filter(
         self,
-        filters: dict[str, Any] | None = None,
+        *args: FilterExpression | dict[str, Any],
         **kwargs: Any,
     ) -> QueryBuilder[T]:
         """Add filters to the query.
 
-        Accepts a positional dict (canonical -- supports dotted keys
-        like ``"svm.name"``) and/or keyword arguments (convenience for
-        top-level scalars). On collision, ``kwargs`` win.
+        Accepts any mix of positional arguments:
+
+        - **dict** — the canonical form with dotted keys
+          (``{"svm.name": "vs1"}``).
+        - **FilterExpression** — typed DSL objects produced by
+          ``Model.F.field == value`` and friends.
+
+        Keyword arguments are convenience for top-level scalars; on
+        collision with dict entries, ``kwargs`` win.
+
+        ``Eq`` expressions compile to dict entries (same as passing a
+        dict). Non-equality expressions (``Ne``, ``Lt``, ``Gt``, etc.)
+        compile to where-expression strings appended to the
+        ``_where_expressions`` list.
         """
-        if filters:
-            self._filters.update(filters)
+        expr_args: list[FilterExpression] = []
+        dict_args: list[dict[str, Any]] = []
+        for arg in args:
+            if isinstance(arg, FilterExpression):
+                expr_args.append(arg)
+            elif isinstance(arg, dict):
+                dict_args.append(arg)
+            else:  # pragma: no cover — runtime guard for untyped callers
+                msg = (  # type: ignore[unreachable]
+                    f"filter() positional arguments must be dict or "
+                    f"FilterExpression, got {type(arg).__name__}"
+                )
+                raise TypeError(msg)
+
+        # Compile typed expressions into equality dict + where strings.
+        if expr_args:
+            eq_dict, where_tuple = compile_filters(*expr_args)
+            self._filters.update(eq_dict)
+            self._where_expressions.extend(where_tuple)
+
+        # Merge dict positional arguments.
+        for d in dict_args:
+            self._filters.update(d)
+
+        # kwargs override on collision.
         if kwargs:
             self._filters.update(kwargs)
         return self
