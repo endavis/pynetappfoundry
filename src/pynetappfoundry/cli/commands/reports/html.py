@@ -993,7 +993,7 @@ class ClusterData:
             with tag("li"):
                 with tag("details"):
                     with tag("summary"):
-                        text(f"vserver {svm.name}{state_text}")
+                        text(f"VServer: {svm.name}{state_text}")
                     with tag("ul"):
                         self._format_netapp_vserver_interfaces_info(svm)
                         self._format_netapp_vserver_dns_info(svm)
@@ -1190,7 +1190,7 @@ class ClusterData:
         fmt = self.app_instance.format_table_row_text
         fmt_link = self.app_instance.format_table_row_link
 
-        mgmt_ip = node.management_interface.ip.address
+        mgmt_ip = node.management_interfaces[0].ip.address if node.management_interfaces else ""
         management_link = f"https://{mgmt_ip}" if mgmt_ip else ""
 
         with tag("li"):
