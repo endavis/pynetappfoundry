@@ -76,6 +76,73 @@ qb = ds.query(OntapVolume, cluster="prod1").filter(
 !!! note "Dotted keys, not dunder"
     `DataSource` uses dotted-string keys (`"svm.name"`) in filter dicts instead of the `svm__name` dunder syntax used by `QuerySet`. Top-level scalar kwargs like `state="online"` work the same in both.
 
+### Typed Filter Expressions
+
+Instead of stringly-typed dict keys, you can use the `.F` descriptor on any model class to build type-safe filter expressions with IDE autocomplete and mypy validation.
+
+```python
+from pynetappfoundry.models.ontap.storage.volumes.model import OntapVolume
+
+# Equality — compiles to {"svm.name": "vs1"} (same as dict form)
+ds.query(OntapVolume, cluster="prod1").filter(
+    OntapVolume.F.svm.name == "vs1",
+)
+
+# Comparison operators — compile to where-expression strings
+ds.query(OntapVolume, cluster="prod1", source="cache").filter(
+    OntapVolume.F.size > 1_073_741_824,
+)
+
+# Membership and null checks
+ds.query(OntapVolume, cluster="prod1", source="cache").filter(
+    OntapVolume.F.state.in_(["online", "mixed"]),
+)
+ds.query(OntapVolume, cluster="prod1", source="cache").filter(
+    OntapVolume.F.comment.is_null(),
+)
+
+# Negation with ~
+ds.query(OntapVolume, cluster="prod1", source="cache").filter(
+    ~(OntapVolume.F.autosize.mode == "off"),
+)
+
+# Combining with &
+ds.query(OntapVolume, cluster="prod1", source="cache").filter(
+    (OntapVolume.F.svm.name == "vs1") & (OntapVolume.F.state == "online"),
+)
+```
+
+#### Mixing with dict-form filters
+
+Typed expressions and dict-form filters can be freely mixed in a single `.filter()` call. Keyword arguments also compose:
+
+```python
+ds.query(OntapVolume, cluster="prod1").filter(
+    OntapVolume.F.svm.name == "vs1",   # typed expression
+    {"autosize.mode": "grow"},          # dict form
+    state="online",                     # keyword argument
+)
+```
+
+#### Supported operators
+
+| Operator | Expression type | Compiles to |
+|----------|----------------|-------------|
+| `==` | `Eq` | Equality dict entry |
+| `!=` | `Ne` | Where: `field != 'value'` |
+| `<` | `Lt` | Where: `field < value` |
+| `>` | `Gt` | Where: `field > value` |
+| `<=` | `Le` | Where: `field <= value` |
+| `>=` | `Ge` | Where: `field >= value` |
+| `.in_([...])` | `In` | Where: `field in ('a', 'b')` |
+| `.not_in([...])` | `NotIn` | Where: `field not in ('a', 'b')` |
+| `.is_null()` | `IsNull` | Where: `field is null` |
+| `~expr` | `Not` | Negation of inner expression |
+| `expr1 & expr2` | `And` | Both expressions ANDed |
+
+!!! warning "Non-equality operators are cache-only"
+    Only `==` (equality) expressions work on both cache and live paths. All other operators (`!=`, `<`, `>`, `in_()`, etc.) compile to where-expression strings that are evaluated by the cache query engine. Use `source="cache"` when using non-equality operators.
+
 ### SQL-like Expressions with `.where()`
 
 `.where()` accepts one or more string expressions that support comparison operators beyond simple equality. Expressions are ANDed together with any `.filter()` entries.

@@ -8,9 +8,12 @@ model definitions used across the library.
 from __future__ import annotations
 
 import re
-from typing import Annotated, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Annotated, ClassVar, Protocol, runtime_checkable
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, PrivateAttr
+
+if TYPE_CHECKING:
+    from pynetappfoundry.data.filters import FieldProxy
 
 _UUID_PATTERN = re.compile(
     r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
@@ -46,6 +49,21 @@ returns ``""`` for optional UUID fields.
 """
 
 
+class _LazyFieldProxyDescriptor:
+    """Descriptor that lazily imports and returns a :class:`FieldProxy`.
+
+    Uses a deferred import to break the circular dependency between
+    ``models._base`` and ``data.filters`` (the ``data`` package init
+    imports ``data.backends`` which depends on ``cache`` which depends
+    on ``models``).
+    """
+
+    def __get__(self, obj: object, objtype: type | None = None) -> FieldProxy:
+        from pynetappfoundry.data.filters import FieldProxy
+
+        return FieldProxy()
+
+
 class OntapModel(BaseModel):
     """Base class for all ONTAP API models.
 
@@ -58,9 +76,16 @@ class OntapModel(BaseModel):
     constructed directly (e.g. by tests or fixtures); only ``DataSource``
     backends populate it.  Use :meth:`was_fetched` to check whether a
     specific field was populated by a fetch.
+
+    The class-level :attr:`F` descriptor provides typed filter-expression
+    support.  ``OntapVolume.F.svm.name == "vs1"`` produces an
+    :class:`~pynetappfoundry.data.filters.Eq` expression that compiles to
+    the same dict shape accepted by ``DataSource.query().filter()``.
     """
 
     model_config = ConfigDict(extra="allow")
+
+    F: ClassVar[FieldProxy] = _LazyFieldProxyDescriptor()  # type: ignore[assignment]
 
     _fetched_fields: set[str] = PrivateAttr(default_factory=set)
 

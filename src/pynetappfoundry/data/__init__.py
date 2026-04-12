@@ -8,12 +8,44 @@ existing surfaces (``LazyClusterMetadata``, ``QuerySet``,
 
 from pynetappfoundry.data._routing import SourceMode
 from pynetappfoundry.data.backends import Backend, OntapBackend
+from pynetappfoundry.data.filters import (
+    And,
+    Eq,
+    FieldProxy,
+    FieldProxyDescriptor,
+    FilterExpression,
+    Ge,
+    Gt,
+    In,
+    IsNull,
+    Le,
+    Lt,
+    Ne,
+    Not,
+    NotIn,
+    compile_filters,
+)
 from pynetappfoundry.data.source import DataSource, QueryBuilder
 
 __all__ = [
+    "And",
     "Backend",
     "DataSource",
+    "Eq",
+    "FieldProxy",
+    "FieldProxyDescriptor",
+    "FilterExpression",
+    "Ge",
+    "Gt",
+    "In",
+    "IsNull",
+    "Le",
+    "Lt",
+    "Ne",
+    "Not",
+    "NotIn",
     "OntapBackend",
     "QueryBuilder",
     "SourceMode",
+    "compile_filters",
 ]
