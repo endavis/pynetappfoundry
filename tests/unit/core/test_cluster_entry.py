@@ -264,30 +264,25 @@ class TestFutureNamespaces:
         assert entry.dii is None
 
 
-class TestConfigAwareFetcher:
-    """Tests for Config-aware ontap property with live fetcher."""
+class TestConfigAwareLiveMetadata:
+    """Tests for Config-aware ontap property with DataSource-backed live metadata."""
 
-    def test_ontap_returns_lazy_with_fetcher_when_no_cache_but_config(
+    def test_ontap_returns_lazy_when_no_cache_but_config(
         self, sample_data: dict[str, Any], tmp_path: Path
     ) -> None:
-        """When no cache DB but Config is available, ontap returns fetcher-backed lazy."""
+        """When no cache DB but Config is available, ontap returns LazyClusterMetadata."""
         from pynetappfoundry.cache._lazy import LazyClusterMetadata
 
         cache_path = tmp_path / ".cache" / "cluster_metadata.db"
         # cache_path does NOT exist
         mock_config = MagicMock()
-        mock_config.get_user.return_value = ("admin", "pass")
 
-        with patch("pynetappfoundry.cache._fetcher.FieldGroupFetcher") as mock_fetcher_cls:
-            mock_fetcher = MagicMock()
-            mock_fetcher_cls.return_value = mock_fetcher
+        entry = ClusterEntry("test-cluster", sample_data, cache_path, config=mock_config)
+        result = entry.ontap
 
-            entry = ClusterEntry("test-cluster", sample_data, cache_path, config=mock_config)
-            result = entry.ontap
-
-            assert result is not None
-            assert isinstance(result, LazyClusterMetadata)
-            assert result._fetcher is mock_fetcher
+        assert result is not None
+        assert isinstance(result, LazyClusterMetadata)
+        assert result._config is mock_config
 
     def test_ontap_returns_none_when_no_cache_and_no_config(
         self, sample_data: dict[str, Any], tmp_path: Path
@@ -297,46 +292,29 @@ class TestConfigAwareFetcher:
         entry = ClusterEntry("test-cluster", sample_data, cache_path)
         assert entry.ontap is None
 
-    def test_ontap_returns_none_when_no_cache_no_ip_but_config(self, tmp_path: Path) -> None:
-        """When no cache DB and no IP in config data, ontap returns None."""
-        cache_path = tmp_path / ".cache" / "cluster_metadata.db"
-        data: dict[str, Any] = {"name": "test-cluster"}  # no 'ip' key
-        mock_config = MagicMock()
-        entry = ClusterEntry("test-cluster", data, cache_path, config=mock_config)
-        assert entry.ontap is None
-
-    def test_ontap_attaches_fetcher_when_cache_exists_and_config(
+    def test_ontap_returns_lazy_when_cache_exists_and_config(
         self, sample_data: dict[str, Any], tmp_path: Path
     ) -> None:
-        """When cache DB exists and Config available, fetcher is attached to lazy result."""
+        """When cache DB exists and Config available, lazy result is returned."""
         cache_path = tmp_path / ".cache" / "cluster_metadata.db"
         cache_path.parent.mkdir(parents=True, exist_ok=True)
         cache_path.touch()
 
         mock_metadata = MagicMock()
-        mock_metadata._fetcher = None
         mock_db_instance = MagicMock()
         mock_db_instance.get_lazy.return_value = mock_metadata
 
         mock_config = MagicMock()
-        mock_config.get_user.return_value = ("admin", "pass")
 
-        with (
-            patch(
-                "pynetappfoundry.cache.db.ClusterMetadataDB",
-                return_value=mock_db_instance,
-            ),
-            patch("pynetappfoundry.cache._fetcher.FieldGroupFetcher") as mock_fetcher_cls,
+        with patch(
+            "pynetappfoundry.cache.db.ClusterMetadataDB",
+            return_value=mock_db_instance,
         ):
-            mock_fetcher = MagicMock()
-            mock_fetcher_cls.return_value = mock_fetcher
-
             entry = ClusterEntry("test-cluster", sample_data, cache_path, config=mock_config)
             result = entry.ontap
 
             assert result is not None
             assert result is mock_metadata
-            assert result._fetcher is mock_fetcher
 
     def test_config_passed_through_from_config_class(
         self, sample_data: dict[str, Any], tmp_path: Path
@@ -377,15 +355,8 @@ class TestNoCacheBypass:
         cache_path.touch()
 
         mock_config = MagicMock()
-        mock_config.get_user.return_value = ("admin", "pass")
 
-        with (
-            patch("pynetappfoundry.cache.db.ClusterMetadataDB") as mock_db_cls,
-            patch("pynetappfoundry.cache._fetcher.FieldGroupFetcher") as mock_fetcher_cls,
-        ):
-            mock_fetcher = MagicMock()
-            mock_fetcher_cls.return_value = mock_fetcher
-
+        with patch("pynetappfoundry.cache.db.ClusterMetadataDB") as mock_db_cls:
             entry = ClusterEntry(
                 "test-cluster",
                 sample_data,
@@ -398,8 +369,7 @@ class TestNoCacheBypass:
             mock_db_cls.assert_not_called()
             assert result is not None
             assert isinstance(result, LazyClusterMetadata)
-            assert result._db_path is None
-            assert result._fetcher is mock_fetcher
+            assert result._config is mock_config
 
     def test_no_cache_returns_none_without_config(
         self, sample_data: dict[str, Any], tmp_path: Path

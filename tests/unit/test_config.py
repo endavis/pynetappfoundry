@@ -969,10 +969,10 @@ class TestClusterEntryWrapping:
         finally:
             os.chdir(original_cwd)
 
-    def test_cluster_entry_no_cache_returns_fetcher_backed(
+    def test_cluster_entry_no_cache_returns_datasource_backed(
         self, temp_config_dir: Path, tmp_path: Path
     ) -> None:
-        """When no cache DB exists, entry.ontap returns fetcher-backed lazy metadata."""
+        """When no cache DB exists, entry.ontap returns DataSource-backed lazy metadata."""
         import os
 
         from pynetappfoundry.cache._lazy import LazyClusterMetadata
@@ -994,10 +994,9 @@ class TestClusterEntryWrapping:
             )
 
             cluster = config.data["clusters"]["test-cluster-1"]
-            # With Config available, ontap returns a fetcher-backed lazy proxy
+            # With Config available, ontap returns a DataSource-backed lazy proxy
             result = cluster.ontap
             assert isinstance(result, LazyClusterMetadata)
-            assert result._fetcher is not None
-            assert result._db_path is None
+            assert result._config is not None
         finally:
             os.chdir(original_cwd)

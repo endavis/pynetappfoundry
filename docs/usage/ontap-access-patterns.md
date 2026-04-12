@@ -19,7 +19,7 @@ pynetappfoundry provides three different ways to interact with ONTAP clusters. E
 
 | Pattern | Connection | Best For |
 |---------|------------|----------|
-| `ClusterEntry.ontap` namespace | Cache DB + HTTPS REST (+ SSH for `cloud`) | High-level reads of cached cluster metadata with on-demand fetch fallback |
+| `ClusterEntry.ontap` namespace | Cache DB + HTTPS REST (+ SSH for `cloud`) | High-level reads of cached cluster metadata with on-demand DataSource fallback |
 | `QuerySet` + `Mutation` | HTTPS REST | Type-safe ONTAP queries and writes with model attribute translation (see [Query Layer](query-layer.md)) |
 | `netapp_ontap` SDK | HTTPS REST | Structured data retrieval, reports, typed objects |
 | `ONTAPCLI` | SSH | Ad-hoc CLI commands, operations not in REST API |
@@ -44,7 +44,7 @@ See [ADR-0010](../decisions/0010-clusterentry-and-namespace-access-pattern.md) f
 
 - Single, uniform entry point: `config.data["clusters"][name].ontap`
 - Sub-millisecond cache reads from per-cluster SQLite (per-model SQL tables, see ADR-0009)
-- Transparent fallback: a cache miss triggers `FieldGroupFetcher` to fetch the needed field group live — callers do not change their code
+- Transparent fallback: a cache miss triggers `DataSource` to fetch the needed field group live — callers do not change their code
 - Namespace separation (`.ontap`, and reserved `.occm` / `.aiqum` / `.dii`) prevents naming collisions between TOML config keys and fetched data from different API sources
 - `--live` / `Config(no_cache=True)` toggles the bypass without requiring alternative code paths
 
@@ -60,7 +60,7 @@ See [ADR-0010](../decisions/0010-clusterentry-and-namespace-access-pattern.md) f
 All three modes use the same call site — `cluster_entry.ontap` — and differ only in how `Config` is constructed and whether a cache DB exists for the cluster.
 
 1. **Cache hit** — the per-cluster SQLite cache exists, so `LazyClusterMetadata` serves attributes directly from DB rows. Sub-millisecond reads. This is the default on any cluster whose cache has been populated.
-2. **Cache miss → on-demand fetch** — no cache DB (or the requested field group is absent). `LazyClusterMetadata` delegates to `FieldGroupFetcher.fetch(group)`, which invokes the matching `MetadataCollector` method and returns live data. One REST round-trip per field group requested.
+2. **Cache miss → on-demand fetch** — no cache DB (or the requested field group is absent). `LazyClusterMetadata` delegates to `DataSource` for live data. One REST round-trip per field group requested.
 3. **Forced live** — the caller built `Config(no_cache=True)` (the CLI sets this when `--live` is passed via `@with_config`). `ClusterEntry.ontap` skips the DB entirely and returns a fetcher-only proxy, so every attribute access fetches live from the ONTAP API (or SSH for `cloud`).
 
 #### Available Field Groups
@@ -100,7 +100,7 @@ from pynetappfoundry.core.cluster_entry import ClusterEntry
 from pynetappfoundry.core.config import Config
 
 # Cache-first (default): served from SQLite when available, otherwise
-# fetched on demand via FieldGroupFetcher.
+# fetched on demand via DataSource.
 config = Config()
 cluster_entry = cast(ClusterEntry, config.data["clusters"]["mycluster"])
 metadata = cluster_entry.ontap  # LazyClusterMetadata | None
@@ -415,7 +415,7 @@ Use this matrix to choose the right pattern:
 | Scenario | Recommended Pattern | Reason |
 |----------|---------------------|--------|
 | Read cached cluster metadata (licenses, nodes, storage, etc.) | `ClusterEntry.ontap` | Sub-ms SQLite reads, transparent fallback |
-| Read cluster metadata when the cache is empty | `ClusterEntry.ontap` | On-demand `FieldGroupFetcher` fallback, no caller changes needed |
+| Read cluster metadata when the cache is empty | `ClusterEntry.ontap` | On-demand `DataSource` fallback, no caller changes needed |
 | Force-live read of cluster metadata | `ClusterEntry.ontap` with `Config(no_cache=True)` / `--live` | Bypasses cache entirely, same call site |
 | Query ONTAP resources | `QuerySet` | Type-safe filtering, model attribute translation — see [Query Layer](query-layer.md) |
 | Create/update/delete resources | `Mutation` | Nested JSON from flat attrs, retry safety — see [Query Layer](query-layer.md) |
@@ -460,11 +460,10 @@ All patterns share a common configuration flow:
          │                              ├──► cache DB (per-cluster SQLite)
          │                              │      (cache hit — sub-ms reads)
          │                              │
-         │                              └──► FieldGroupFetcher
+         │                              └──► DataSource
          │                                     (cache miss or no_cache=True)
          │                                     │
-         │                                     ├──► ONTAP REST API
-         │                                     └──► ONTAPCLI (cloud fallback only)
+         │                                     └──► ONTAP REST API
          │
          ├──► netapp_ontap SDK (HostConnection)
          ├──► ONTAPCLI (SSH connection)

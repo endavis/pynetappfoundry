@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 from typing import Any
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 from pydantic import BaseModel
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
+from pynetappfoundry.core.config import Config
 from pynetappfoundry.query.related import related, related_one
 
 # ---------------------------------------------------------------------------
@@ -54,16 +55,33 @@ def _register_fake_mapping() -> Any:
 
 @pytest.fixture()
 def mock_client() -> MagicMock:
-    """Return a mocked APIWrapper."""
-    return MagicMock(spec=["get_all_records", "call_endpoint"])
+    """Return a mocked APIWrapper with a name attribute."""
+    client = MagicMock(spec=["get_all_records", "call_endpoint", "name"])
+    client.name = "test-cluster"
+    return client
 
 
-def _make_api_response(records: list[dict[str, Any]]) -> dict[str, Any]:
-    """Build a fake ONTAP API response envelope."""
-    return {
-        "records": records,
-        "num_records": len(records),
-    }
+@pytest.fixture()
+def mock_config() -> MagicMock:
+    """Return a mocked Config."""
+    return MagicMock(spec=Config)
+
+
+def _make_mocked_ds() -> tuple[MagicMock, MagicMock]:
+    """Create a mocked DataSource and a chainable builder.
+
+    Returns ``(ds_instance, builder)``.
+    """
+    builder = MagicMock()
+    builder.filter.return_value = builder
+    builder.fields.return_value = builder
+    builder.__iter__ = lambda self: iter(getattr(self, "_results", []))
+    builder._results = []
+
+    ds_instance = MagicMock()
+    ds_instance.query.return_value = builder
+    ds_instance._get_backend.return_value = MagicMock(_api_clients={})
+    return ds_instance, builder
 
 
 # ---------------------------------------------------------------------------
@@ -74,82 +92,52 @@ def _make_api_response(records: list[dict[str, Any]]) -> dict[str, Any]:
 class TestRelated:
     """Tests for the related() function."""
 
-    def test_related_returns_filtered_results(self, mock_client: MagicMock) -> None:
+    def test_related_returns_filtered_results(
+        self, mock_client: MagicMock, mock_config: MagicMock
+    ) -> None:
         """related() delegates to QuerySet.filter().all() and returns models."""
-        mock_client.get_all_records.return_value = _make_api_response(
-            [
-                {
-                    "name": "vol1",
-                    "uuid": "a",
-                    "svm": {"name": "vs1", "uuid": "s1"},
-                    "state": "online",
-                },
-                {
-                    "name": "vol2",
-                    "uuid": "b",
-                    "svm": {"name": "vs1", "uuid": "s1"},
-                    "state": "online",
-                },
-            ]
-        )
-        results = related(FakeVolume, mock_client, svm_name="vs1")
+        ds, builder = _make_mocked_ds()
+        vols = [
+            FakeVolume(name="vol1", uuid="a", svm_name="vs1"),
+            FakeVolume(name="vol2", uuid="b", svm_name="vs1"),
+        ]
+        builder._results = vols
+
+        with patch("pynetappfoundry.query.queryset.DataSource", return_value=ds):
+            results = related(FakeVolume, mock_client, config=mock_config, svm_name="vs1")
+
         assert len(results) == 2
         assert all(isinstance(r, FakeVolume) for r in results)
         assert results[0].name == "vol1"
-        assert results[1].name == "vol2"
 
-    def test_related_translates_attrs(self, mock_client: MagicMock) -> None:
-        """Filter kwargs use model attrs translated to API paths."""
-        mock_client.get_all_records.return_value = _make_api_response([])
-        related(FakeVolume, mock_client, svm_uuid="abc-123")
-        call_url = mock_client.get_all_records.call_args[0][0]
-        assert "svm.uuid=abc-123" in call_url
-
-    def test_related_multiple_filters(self, mock_client: MagicMock) -> None:
-        """Multiple kwargs are combined as filters."""
-        mock_client.get_all_records.return_value = _make_api_response([])
-        related(FakeVolume, mock_client, svm_name="vs1", state="online")
-        call_url = mock_client.get_all_records.call_args[0][0]
-        assert "svm.name=vs1" in call_url
-        assert "state=online" in call_url
-
-    def test_related_empty_kwargs_raises(self) -> None:
+    def test_related_empty_kwargs_raises(self, mock_config: MagicMock) -> None:
         """related() raises ValueError when no filters are provided."""
         mock_client = MagicMock()
         with pytest.raises(ValueError, match="requires at least one filter"):
-            related(FakeVolume, mock_client)
+            related(FakeVolume, mock_client, config=mock_config)
 
-    def test_related_unknown_model_raises(self, mock_client: MagicMock) -> None:
+    def test_related_unknown_model_raises(
+        self, mock_client: MagicMock, mock_config: MagicMock
+    ) -> None:
         """related() raises ValueError for unregistered model class."""
 
         class UnregisteredModel(BaseModel):
             pass
 
-        with pytest.raises(ValueError, match="No TypeMapping registered"):
-            related(UnregisteredModel, mock_client, name="test")
+        with (
+            pytest.raises(ValueError, match="No TypeMapping registered"),
+            patch("pynetappfoundry.query.queryset.DataSource"),
+        ):
+            related(UnregisteredModel, mock_client, config=mock_config, name="test")
 
-    def test_related_empty_results(self, mock_client: MagicMock) -> None:
+    def test_related_empty_results(self, mock_client: MagicMock, mock_config: MagicMock) -> None:
         """related() returns empty list when no records match."""
-        mock_client.get_all_records.return_value = _make_api_response([])
-        results = related(FakeVolume, mock_client, svm_name="nonexistent")
-        assert results == []
+        ds, builder = _make_mocked_ds()
+        builder._results = []
 
-    def test_related_uses_pagination(self, mock_client: MagicMock) -> None:
-        """related() calls get_all_records for paginated fetching."""
-        mock_client.get_all_records.return_value = _make_api_response(
-            [
-                {
-                    "name": f"vol{i}",
-                    "uuid": str(i),
-                    "svm": {"name": "vs1", "uuid": "s1"},
-                    "state": "online",
-                }
-                for i in range(5)
-            ]
-        )
-        results = related(FakeVolume, mock_client, svm_name="vs1")
-        assert len(results) == 5
-        mock_client.get_all_records.assert_called_once()
+        with patch("pynetappfoundry.query.queryset.DataSource", return_value=ds):
+            results = related(FakeVolume, mock_client, config=mock_config, svm_name="nonexistent")
+        assert results == []
 
 
 # ---------------------------------------------------------------------------
@@ -160,30 +148,33 @@ class TestRelated:
 class TestRelatedOne:
     """Tests for the related_one() function."""
 
-    def test_related_one_returns_first(self, mock_client: MagicMock) -> None:
+    def test_related_one_returns_first(
+        self, mock_client: MagicMock, mock_config: MagicMock
+    ) -> None:
         """related_one() returns the first matching model instance."""
-        mock_client.get_all_records.return_value = _make_api_response(
-            [{"name": "vol1", "uuid": "a", "svm": {"name": "vs1", "uuid": "s1"}, "state": "online"}]
-        )
-        result = related_one(FakeVolume, mock_client, svm_name="vs1")
+        ds, builder = _make_mocked_ds()
+        vol = FakeVolume(name="vol1", uuid="a", svm_name="vs1")
+        builder._results = [vol]
+
+        with patch("pynetappfoundry.query.queryset.DataSource", return_value=ds):
+            result = related_one(FakeVolume, mock_client, config=mock_config, svm_name="vs1")
+
         assert isinstance(result, FakeVolume)
         assert result.name == "vol1"
 
-    def test_related_one_returns_none(self, mock_client: MagicMock) -> None:
+    def test_related_one_returns_none(self, mock_client: MagicMock, mock_config: MagicMock) -> None:
         """related_one() returns None when no records match."""
-        mock_client.get_all_records.return_value = _make_api_response([])
-        result = related_one(FakeVolume, mock_client, svm_name="nonexistent")
+        ds, builder = _make_mocked_ds()
+        builder._results = []
+
+        with patch("pynetappfoundry.query.queryset.DataSource", return_value=ds):
+            result = related_one(
+                FakeVolume, mock_client, config=mock_config, svm_name="nonexistent"
+            )
         assert result is None
 
-    def test_related_one_empty_kwargs_raises(self) -> None:
+    def test_related_one_empty_kwargs_raises(self, mock_config: MagicMock) -> None:
         """related_one() raises ValueError when no filters are provided."""
         mock_client = MagicMock()
         with pytest.raises(ValueError, match="requires at least one filter"):
-            related_one(FakeVolume, mock_client)
-
-    def test_related_one_limits_to_one(self, mock_client: MagicMock) -> None:
-        """related_one() uses .first() which limits to max_records=1."""
-        mock_client.get_all_records.return_value = _make_api_response([])
-        related_one(FakeVolume, mock_client, svm_name="vs1")
-        call_url = mock_client.get_all_records.call_args[0][0]
-        assert "max_records=1" in call_url
+            related_one(FakeVolume, mock_client, config=mock_config)

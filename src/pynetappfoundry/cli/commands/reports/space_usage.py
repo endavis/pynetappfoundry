@@ -107,12 +107,16 @@ class SpaceUsageReport:
                 client = ONTAPAPIClient(cluster=cluster_config, config=self.config)
 
                 # Detect cluster type
-                nodes: list[OntapNodeResponse] = QuerySet(OntapNodeResponse, client).all()
+                nodes: list[OntapNodeResponse] = QuerySet(
+                    OntapNodeResponse, client, config=self.config
+                ).all()
                 cluster_type = "CVO HA" if len(nodes) > 1 and nodes[0].ha.enabled else "CVO"
 
                 # Get volumes (exclude SVM root volumes)
                 volumes: list[OntapVolume] = (
-                    QuerySet(OntapVolume, client).filter(is_svm_root=False).all()
+                    QuerySet(OntapVolume, client, config=self.config)
+                    .filter(is_svm_root=False)
+                    .all()
                 )
 
                 div = details.get("div", "")

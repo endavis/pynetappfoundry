@@ -107,8 +107,7 @@ class OntapBackend(Backend):
     """Backend that routes against the ONTAP cache DB and REST API.
 
     Clients (cache DB, API client) are constructed lazily on first
-    use to avoid opening files or making HTTP calls when not needed
-    (mirrors :class:`pynetappfoundry.cache._fetcher.FieldGroupFetcher`).
+    use to avoid opening files or making HTTP calls when not needed.
 
     Args:
         config: The :class:`pynetappfoundry.core.config.Config` instance.

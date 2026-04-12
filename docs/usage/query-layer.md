@@ -69,21 +69,20 @@ base = QuerySet(OntapVolume, client).filter(state="online")
 
 ### Filtering: `.filter(**kwargs)`
 
-`.filter()` accepts model attribute names as keyword arguments. Each key is translated to an API field path via three lookup strategies, in order:
+`.filter()` accepts model attribute names as keyword arguments. Each key is translated to an API field path via two lookup strategies, in order:
 
-1. **Exact `cache_attr` match.** If the model's `TypeMapping` has a `FieldMapping` whose `cache_attr` equals the kwarg name, the corresponding `api_path` is used. For example, if `cache_attr="name"` then `name="vol1"` becomes `name=vol1`.
-2. **Dunder-to-dot translation.** Python kwargs cannot contain `.`, so `svm__name="vs1"` is rewritten to `svm.name="vs1"` and re-matched against `cache_attr` values. This is how you target nested fields. Real ONTAP mappings use dotted `cache_attr` values (e.g. `svm.name`, `autosize.mode`), so the dunder form is the recommended way to filter on them from Python code.
-3. **Pass-through.** If no mapping match is found, the attribute name is sent to the API verbatim. This lets you use raw API field paths when you know what you want.
+1. **Exact `cache_attr` match.** If the model's `TypeMapping` has a `FieldMapping` whose `cache_attr` equals the kwarg name, the corresponding `api_path` is used. For example, if `cache_attr="name"` then `name="vol1"` becomes `name=vol1`. Dotted `cache_attr` values (e.g. `svm.name`, `autosize.mode`) must be passed via `**{}` syntax since Python kwargs cannot contain `.`.
+2. **Pass-through.** If no mapping match is found, the attribute name is sent to the API verbatim. This lets you use raw API field paths when you know what you want.
 
 ```python
-# Dotted cache_attr via dunder kwargs (the common ONTAP case)
-qs = QuerySet(OntapVolume, client).filter(svm__name="vs1", autosize__mode="grow")
+# Dotted cache_attr via dict-splat (the common ONTAP case)
+qs = QuerySet(OntapVolume, client, config=config).filter(**{"svm.name": "vs1", "autosize.mode": "grow"})
 
 # Top-level cache_attr (state, name, uuid, size all exist on OntapVolume)
-qs = QuerySet(OntapVolume, client).filter(state="online")
+qs = QuerySet(OntapVolume, client, config=config).filter(state="online")
 
 # Raw API field path (pass-through)
-qs = QuerySet(OntapVolume, client).filter(**{"space.size": 1073741824})
+qs = QuerySet(OntapVolume, client, config=config).filter(**{"space.size": 1073741824})
 ```
 
 !!! warning "Filtering is server-side; wildcards are an ONTAP feature"
@@ -293,24 +292,25 @@ All four functions resolve the model's `TypeMapping`, optionally filter the real
 
 ### `fetch_realtime(model_class, config, cluster, uuid, fields=None)`
 
-Fetch current realtime values for a single resource by UUID. Returns a flat `dict[cache_attr, value]`. Phase 3d of ADR-0012 routes this through `DataSource.get(..., source="live")`; the dotted-key dict output is preserved for backwards compatibility and will be replaced with Pydantic model instances in Phase 4.
+Fetch current realtime values for a single resource by UUID. Returns the Pydantic model instance directly (or ``None`` when the resource is not found). Routes through ``DataSource.get(..., source="live")``.
 
 ```python
 from pynetappfoundry.core.config import Config
 from pynetappfoundry.query import fetch_realtime
 
 config = Config()
-metrics = fetch_realtime(
+instance = fetch_realtime(
     OntapVolume,
     config,
     cluster="prod-cluster",
     uuid="abc-123-def",
     fields=["metric.iops.read", "metric.iops.write", "metric.latency.read"],
 )
-print(metrics["metric.iops.read"], metrics["metric.iops.write"])
+if instance is not None:
+    print(instance.metric.iops.read, instance.metric.iops.write)
 ```
 
-If the model has no realtime fields (or none survive the `fields=` filter), the function returns `{}` without making a request.
+If the model has no realtime fields (or none survive the `fields=` filter), the function returns ``None`` without making a request.
 
 ### `fetch_realtime_collection(model_class, config, cluster, fields=None, **filters)`
 
@@ -373,7 +373,7 @@ print(diff["metric.iops.read"]["delta"])
 
 The query layer and `ClusterEntry.ontap` are complementary, not competing:
 
-- Use **`cluster_entry.ontap`** for high-level reads of cached cluster metadata field groups (licenses, nodes, storage, network, ...). It serves sub-millisecond SQLite reads when the cache is populated and falls back to a live `FieldGroupFetcher` on a miss. `--live` (`Config(no_cache=True)`) bypasses the cache without changing call sites.
+- Use **`cluster_entry.ontap`** for high-level reads of cached cluster metadata field groups (licenses, nodes, storage, network, ...). It serves sub-millisecond SQLite reads when the cache is populated and falls back to a live `DataSource` fetch on a miss. `--live` (`Config(no_cache=True)`) bypasses the cache without changing call sites.
 - Use **`QuerySet`** for ad-hoc reads that don't fit a pre-defined field group: arbitrary filters, custom projections, ordering / limit, or models the cache does not collect.
 - Use **`Mutation`** for any write. There is no write surface on `ClusterEntry.ontap`.
 - Use **`fetch_realtime`** (and friends) for fields the cache deliberately excludes.
