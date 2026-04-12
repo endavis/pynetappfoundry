@@ -7,8 +7,10 @@ model class, resolves its :class:`TypeMapping` via
 :meth:`ModelRegistry.get_mapping_by_model_class`, and dispatches entirely
 on declared metadata:
 
-- ``mapping.cli_command`` non-empty → CLI path (raises
-  :class:`NotImplementedError` pointing at #532 until Phase 4+).
+- ``mapping.cli_command`` non-empty → CLI path via :func:`_fetch_cli`.
+  The CLI client executes the command, raw output is parsed into dicts
+  by :func:`parse_vm_instance_output`, and records are fed through
+  :func:`parse_cli_records`.
 - ``mapping.parent_mapping`` non-None → parameterized endpoint; parent
   objects are themselves fetched via a recursive :func:`fetch` call and
   each parent's ``parent_id_field`` is substituted into the endpoint URL.
@@ -31,6 +33,7 @@ missing from the shared ``results_cache``, recursively calls
 from __future__ import annotations
 
 import logging
+import re
 from functools import partial
 from typing import TYPE_CHECKING, Any, cast
 
@@ -39,6 +42,7 @@ from pydantic import BaseModel
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import (
     TypeMapping,
+    parse_cli_records,
 )
 from pynetappfoundry.cache.field_mapping import (
     parse_api_record as _parse_api_record_raw,
@@ -118,6 +122,109 @@ def _run_post_collection_hooks(
             )
             raise
     return items
+
+
+def normalize_cli_key(key: str) -> str:
+    """Normalize a CLI output key to snake_case.
+
+    Converts spaces and hyphens to underscores, lowercases the string,
+    and strips non-alphanumeric characters (except underscores).
+
+    This is extracted from ``MetadataCollector._normalize_cli_key``
+    so both the collector and :func:`_fetch_cli` share the same logic.
+
+    Args:
+        key: Original key from CLI output.
+
+    Returns:
+        Normalized key name.
+    """
+    normalized = key.lower().replace(" ", "_").replace("-", "_")
+    normalized = re.sub(r"[^a-z0-9_]", "", normalized)
+    return normalized
+
+
+def parse_vm_instance_output(output: list[str]) -> list[dict[str, str]]:
+    """Parse ``virtual-machine instance show`` CLI output into raw records.
+
+    The CLI output contains key-value pairs (``Key: Value``) for each
+    node, separated by new ``Node:`` entries.  Each node's data becomes
+    one dict with :func:`normalize_cli_key`-normalised keys.
+
+    This is extracted from ``MetadataCollector._parse_vm_instance_output``
+    so both the collector and :func:`_fetch_cli` share the same logic.
+
+    Args:
+        output: Lines of CLI output.
+
+    Returns:
+        List of raw record dicts (one per node) with normalized keys.
+    """
+    results: list[dict[str, str]] = []
+    current_data: dict[str, str] = {}
+    current_node: str = ""
+
+    for line in output:
+        line = line.strip()
+        if not line:
+            continue
+
+        if ":" not in line:
+            continue
+
+        parts = line.split(":", 1)
+        if len(parts) != 2:
+            continue
+
+        key = parts[0].strip()
+        value = parts[1].strip()
+        key_normalized = normalize_cli_key(key)
+
+        if key_normalized == "node":
+            if current_node and current_data:
+                current_data["node"] = current_node
+                results.append(current_data)
+            current_node = value
+            current_data = {}
+        else:
+            current_data[key_normalized] = value
+
+    if current_node and current_data:
+        current_data["node"] = current_node
+        results.append(current_data)
+
+    if not results and current_data:
+        current_data["node"] = ""
+        results.append(current_data)
+
+    return results
+
+
+def _fetch_cli(
+    mapping: TypeMapping,
+    cli_client: ONTAPCLI,
+    log_prefix: str,
+) -> list[BaseModel]:
+    """Fetch records via CLI command execution and parsing.
+
+    Runs the mapping's ``cli_command`` through *cli_client*, parses
+    the raw text output into dict records via
+    :func:`parse_vm_instance_output`, and feeds them through
+    :func:`parse_cli_records`.
+
+    Args:
+        mapping: TypeMapping with a non-empty ``cli_command``.
+        cli_client: SSH/CLI client to run the command on.
+        log_prefix: Prefix for log messages.
+
+    Returns:
+        List of parsed model instances.
+    """
+    logger.debug("%s CLI command: %s", log_prefix, mapping.cli_command)
+    output = cli_client.run_command(mapping.cli_command)
+    logger.debug("%s CLI response: %d lines", log_prefix, len(output))
+    records = parse_vm_instance_output(output)
+    return parse_cli_records(mapping, records, log_prefix, _noop_log_missing)
 
 
 def _fetch_flat(
@@ -267,26 +374,17 @@ def fetch[T: BaseModel](
         mappings, a list of model instances.
 
     Raises:
-        NotImplementedError: If the mapping's ``cli_command`` is set
-            (CLI dispatch is deferred to #532).
-        ValueError: If no TypeMapping is registered for ``model_class``.
+        ValueError: If no TypeMapping is registered for ``model_class``,
+            or if a CLI-only mapping is invoked without a ``cli_client``.
     """
     del cluster  # reserved for logging / future use
     del config
-    del cli_client  # reserved for CLI dispatch (#532)
 
     mapping = model_registry.get_mapping_by_model_class(model_class)
     if mapping is None:
         raise ValueError(
             f"fetch(): no TypeMapping registered for model class "
             f"{model_class.__module__}.{model_class.__name__}"
-        )
-
-    if mapping.cli_command:
-        raise NotImplementedError(
-            f"fetch(): CLI dispatch for {mapping.name} (cli_command="
-            f"{mapping.cli_command!r}) is not yet supported; tracked in "
-            f"https://github.com/endavis/pynetappfoundry/issues/532"
         )
 
     # Prepare results_cache used by post-collection hooks.
@@ -314,8 +412,14 @@ def fetch[T: BaseModel](
             )
             local_cache[dep_key] = dep_result if isinstance(dep_result, list) else [dep_result]
 
-    # Fetch instances.
-    if mapping.parent_mapping:
+    # Fetch instances — dispatch on CLI vs API path.
+    if mapping.cli_command:
+        if cli_client is None:
+            raise ValueError(
+                f"fetch(): {mapping.name} requires cli_client (cli_command={mapping.cli_command!r})"
+            )
+        items = _fetch_cli(mapping, cli_client, log_prefix)
+    elif mapping.parent_mapping:
         # Parent objects must already be in results_cache. The collector
         # threads this via `_collect_svm_top_metrics_users` and composite
         # assembly; tests may pass a synthetic results_cache.
@@ -350,4 +454,4 @@ def _results_key_for_parent(parent_mapping_name: str) -> str:
     return parent_mapping_name
 
 
-__all__ = ["fetch"]
+__all__ = ["fetch", "normalize_cli_key", "parse_vm_instance_output"]
