@@ -506,9 +506,11 @@ class MetadataCollector:
             Dictionary of collection results keyed by phase name.
         """
         phases: list[tuple[CollectionPhase, Callable[[], Any]]] = [
-            (CollectionPhase.CLOUD, self.collect_cloud_metadata),
             (CollectionPhase.CLUSTER, self.collect_cluster_info),
             (CollectionPhase.NODES, self.collect_nodes),
+            # CLOUD must run after NODES so _results_cache["OntapNodeResponse"]
+            # is populated before CVO detection in collect_cloud_metadata().
+            (CollectionPhase.CLOUD, self.collect_cloud_metadata),
             (CollectionPhase.NETWORK, self.collect_network),
             (CollectionPhase.STORAGE, self.collect_storage),
             (CollectionPhase.LICENSES, self.collect_licenses),
@@ -555,6 +557,9 @@ class MetadataCollector:
         """Collect all metadata in parallel for improved performance.
 
         Starts SSH connection early, then runs all API phases concurrently.
+        CLOUD runs sequentially after the parallel block so that
+        ``_results_cache["OntapNodeResponse"]`` is populated before CVO
+        detection in :meth:`collect_cloud_metadata`.
 
         Args:
             cluster_name: Name of the cluster being collected.
@@ -565,9 +570,10 @@ class MetadataCollector:
         results: dict[str, Any] = {}
         phase_timings: dict[CollectionPhase, tuple[float, str | None]] = {}
 
-        # Define all phases
+        # CLOUD is excluded — it must run after NODES so that
+        # _results_cache["OntapNodeResponse"] is populated before CVO
+        # detection.  It runs sequentially after the parallel block below.
         phases: list[tuple[CollectionPhase, Callable[[], Any]]] = [
-            (CollectionPhase.CLOUD, self.collect_cloud_metadata),
             (CollectionPhase.CLUSTER, self.collect_cluster_info),
             (CollectionPhase.NODES, self.collect_nodes),
             (CollectionPhase.NETWORK, self.collect_network),
@@ -578,9 +584,10 @@ class MetadataCollector:
             (CollectionPhase.PROTOCOLS, self.collect_protocols),
         ]
 
-        # Report all phases as starting
+        # Report all phases as starting (include CLOUD)
         for phase, _ in phases:
             self._report_progress(phase, "starting")
+        self._report_progress(CollectionPhase.CLOUD, "starting")
 
         # Start SSH connection early in background if CLI client available
         ssh_connect_thread: threading.Thread | None = None
@@ -661,6 +668,49 @@ class MetadataCollector:
             raise CollectionError(
                 f"Collection failed for phase {first_phase.value}: {first_error}"
             ) from first_error
+
+        # Run CLOUD sequentially after all parallel phases so that
+        # _results_cache["OntapNodeResponse"] is populated for CVO detection.
+        # Cloud failures are non-fatal — warn and continue.
+        cloud_start = time.monotonic()
+        try:
+            cloud_result, cloud_error = self._run_phase_safe(
+                CollectionPhase.CLOUD, self.collect_cloud_metadata
+            )
+            cloud_elapsed = time.monotonic() - cloud_start
+            cloud_source = self._determine_source(CollectionPhase.CLOUD)
+            if cloud_error:
+                self._report_progress(
+                    CollectionPhase.CLOUD, "failed", cloud_elapsed, error=str(cloud_error)
+                )
+                logger.warning(
+                    "%s Cloud metadata collection failed (non-fatal): %s",
+                    self._log_prefix,
+                    cloud_error,
+                )
+                results[CollectionPhase.CLOUD.value] = []
+            else:
+                results[CollectionPhase.CLOUD.value] = cloud_result
+                phase_timings[CollectionPhase.CLOUD] = (cloud_elapsed, cloud_source)
+                self._report_progress(
+                    CollectionPhase.CLOUD, "completed", cloud_elapsed, source=cloud_source
+                )
+                logger.debug(
+                    "%s Collected %s in %.2fs via %s",
+                    self._log_prefix,
+                    CollectionPhase.CLOUD.value,
+                    cloud_elapsed,
+                    cloud_source or "unknown",
+                )
+        except Exception as e:
+            cloud_elapsed = time.monotonic() - cloud_start
+            self._report_progress(CollectionPhase.CLOUD, "failed", cloud_elapsed, error=str(e))
+            logger.warning(
+                "%s Cloud metadata collection failed (non-fatal): %s",
+                self._log_prefix,
+                e,
+            )
+            results[CollectionPhase.CLOUD.value] = []
 
         return results
 
@@ -757,6 +807,11 @@ class MetadataCollector:
         match :func:`_is_cloud_node`, the method returns an empty list
         without touching the CLI client, avoiding a 10s SSH timeout on
         clusters that do not expose a cloud management service. See #547.
+
+        This phase must run **after** :meth:`collect_nodes` so that
+        ``_results_cache["OntapNodeResponse"]`` is populated before CVO
+        detection runs.  Both :meth:`_collect_all_sequential` and
+        :meth:`_collect_all_parallel` enforce this ordering.
 
         Returns:
             List of CloudMetadata objects, one per node.
