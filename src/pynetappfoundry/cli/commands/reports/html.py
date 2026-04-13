@@ -902,7 +902,7 @@ class ClusterData:
                         if not cloud_meta:
                             continue
                         if provider_lower == "azure":
-                            vm_name = build_azure_vm_name(
+                            vm_name = cloud_meta.vm_name or build_azure_vm_name(
                                 self.name, node.name, is_ha=len(self.nodes) > 1
                             )
                             vm_link = cloud_meta.instance_link

@@ -85,6 +85,7 @@ from pynetappfoundry.utils.cloud import (
     build_cloud_instance_link,
     build_cloud_instance_sso_link,
     build_cloud_resource_group_link,
+    build_vm_name,
 )
 
 # Cache collector skips realtime fields (volatile metrics not persisted).
@@ -886,6 +887,10 @@ class MetadataCollector:
                 account_id=cm.account_id,
                 resource_group=cm.resource_group_name,
             )
+            cm.vm_name = build_vm_name(
+                provider=cm.provider,
+                instance_id=cm.instance_id,
+            )
 
         return results
 
@@ -946,6 +951,14 @@ class MetadataCollector:
                 sso_config=self.aws_sso_config,
             )
 
+            vm_name = build_vm_name(
+                provider=meta.provider,
+                cluster_name=cluster_name,
+                node_name=meta.node,
+                instance_id=meta.instance_id,
+                is_ha=is_ha,
+            )
+
             # Create updated CloudMetadata with new links
             updated.append(
                 CloudMetadata(
@@ -971,6 +984,7 @@ class MetadataCollector:
                     instance_link=instance_link,
                     instance_sso_link=instance_sso_link,
                     resource_group_link=meta.resource_group_link,
+                    vm_name=vm_name,
                 )
             )
         return updated

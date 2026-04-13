@@ -37,3 +37,4 @@ class CloudMetadata(OntapModel):
     instance_link: str = ""  # URL to cloud console for this instance
     instance_sso_link: str = ""  # URL to cloud console via AWS SSO (AWS only)
     resource_group_link: str = ""  # URL to cloud console for resource group (Azure)
+    vm_name: str = ""  # Derived VM name (Azure: <cluster>-vm1/vm2, AWS: instance_id)

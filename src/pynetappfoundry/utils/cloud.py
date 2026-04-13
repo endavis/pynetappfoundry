@@ -103,6 +103,33 @@ def get_node_number(node_name: str) -> int | None:
     return None
 
 
+def build_vm_name(
+    provider: str,
+    cluster_name: str = "",
+    node_name: str = "",
+    instance_id: str = "",
+    is_ha: bool = True,
+) -> str:
+    """Derive the VM name for a cloud instance.
+
+    For Azure, builds the VM name from cluster/node naming convention.
+    For AWS and other providers, the instance_id is the VM identifier.
+
+    Args:
+        provider: Cloud provider (Azure, AWS, etc.).
+        cluster_name: ONTAP cluster name (Azure).
+        node_name: ONTAP node name (Azure HA).
+        instance_id: Cloud instance ID (AWS fallback).
+        is_ha: Whether the cluster is HA (Azure).
+
+    Returns:
+        VM name string, or empty string if inputs are insufficient.
+    """
+    if provider.lower() == "azure":
+        return build_azure_vm_name(cluster_name, node_name, is_ha)
+    return instance_id
+
+
 def build_azure_vm_name(
     cluster_name: str,
     node_name: str = "",
@@ -186,11 +213,7 @@ def build_cloud_instance_link(
     elif provider_lower == "azure":
         if not account_id or not resource_group:
             return ""
-        # For Azure, derive VM name from cluster/node info if available
-        if cluster_name:
-            vm_name = build_azure_vm_name(cluster_name, node_name, is_ha)
-        else:
-            vm_name = instance_id
+        vm_name = build_vm_name("azure", cluster_name, node_name, instance_id, is_ha)
         if not vm_name:
             return ""
         resource_id = build_azure_id(account_id, resource_group, "vm", vm_name)
