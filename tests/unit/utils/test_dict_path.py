@@ -456,3 +456,26 @@ class TestFilterPredicateAccess:
             "vol2",
             "vol3",
         ]
+
+    def test_glob_star_wildcard(self, volumes_data: dict[str, object]) -> None:
+        """Glob * pattern matches substring."""
+        assert get_nested_value(volumes_data, 'volumes["name=*ol1"].size') == [100]
+
+    def test_glob_question_mark(self, volumes_data: dict[str, object]) -> None:
+        """Glob ? pattern matches single character."""
+        result = get_nested_value(volumes_data, 'volumes["state=onlin?"].name')
+        assert result == ["vol1", "vol2"]
+
+    def test_glob_contains_pattern(self, volumes_data: dict[str, object]) -> None:
+        """Glob *substring* matches multiple items."""
+        result = get_nested_value(volumes_data, 'volumes["name=*ol*"].name')
+        assert result == ["vol1", "vol2", "vol3"]
+
+    def test_glob_case_insensitive(self, volumes_data: dict[str, object]) -> None:
+        """Glob matching is case-insensitive."""
+        assert get_nested_value(volumes_data, 'volumes["name=*OL1"].size') == [100]
+
+    def test_glob_or_filter(self, volumes_data: dict[str, object]) -> None:
+        """OR filter with glob patterns."""
+        result = get_nested_value(volumes_data, 'volumes["name=vol1* || state=offline"].name')
+        assert result == ["vol1", "vol3"]

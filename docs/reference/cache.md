@@ -631,6 +631,9 @@ nf cache query cluster1 'volumes["name=vol1"].size'
 
 # OR filter — match multiple values
 nf cache query cluster1 'volumes["name=vol1 || name=vol2"].size'
+
+# Glob pattern — match by substring or pattern (* and ? supported)
+nf cache query cluster1 'volumes["name=*PROD*"].size'
 ```
 
 ### Raw cache views (`nf cache show` and `nf cache inspect`)
