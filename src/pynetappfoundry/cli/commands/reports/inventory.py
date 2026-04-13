@@ -92,10 +92,39 @@ _HEADERS = [
 
 # Column widths (approximate, in character units)
 _COL_WIDTHS = [
-    20, 12, 22, 12, 40, 35, 14, 14, 14, 12,
-    20, 35, 55, 38, 20, 25, 40, 28, 38, 18,
-    30, 22, 25, 16, 25, 25, 16, 25, 35, 35,
-    35, 55, 20,
+    20,
+    12,
+    22,
+    12,
+    40,
+    35,
+    14,
+    14,
+    14,
+    12,
+    20,
+    35,
+    55,
+    38,
+    20,
+    25,
+    40,
+    28,
+    38,
+    18,
+    30,
+    22,
+    25,
+    16,
+    25,
+    25,
+    16,
+    25,
+    35,
+    35,
+    35,
+    55,
+    20,
 ]
 
 
@@ -126,7 +155,7 @@ def _short_version(ontap_version: str) -> str:
     return match.group(1) if match else ontap_version
 
 
-def _cloud_type(cluster_info: ClusterInfo, node_count: int) -> str:
+def _cloud_type(cluster_info: ClusterInfo) -> str:
     """Derive the cluster type string."""
     if not cluster_info.is_cloud:
         return "OnTap Select"
@@ -167,7 +196,6 @@ class InventoryReport:
 
     def _collect_cloud_meta(
         self,
-        name: str,
         entry: ClusterEntry,
         cluster_info: ClusterInfo | None,
     ) -> list[CloudMetadata]:
@@ -203,12 +231,11 @@ class InventoryReport:
 
         version = _short_version(cluster_info.ontap_version) if cluster_info else ""
 
-        cloud_location = first_cloud.provider if first_cloud else (
-            cloud_cfg.title() if cloud_cfg else ""
+        cloud_location = (
+            first_cloud.provider if first_cloud else (cloud_cfg.title() if cloud_cfg else "")
         )
 
-        node_count = len(nodes)
-        ctype = _cloud_type(cluster_info, node_count) if cluster_info else ""
+        ctype = _cloud_type(cluster_info) if cluster_info else ""
 
         lic_exp = _license_expiration(licenses)
 
@@ -271,44 +298,44 @@ class InventoryReport:
         vm_names_parts: list[str] = []
         for node in nodes:
             cm = cloud_by_node.get(node.name)
-            if cm and cm.vm_name:  # type: ignore[attr-defined]
-                vm_names_parts.append(cm.vm_name)  # type: ignore[attr-defined]
+            if cm and cm.vm_name:
+                vm_names_parts.append(cm.vm_name)
         vm_names = ", ".join(vm_names_parts)
 
         return [
-            name,           # Name
-            div,            # Division
-            bu,             # Application/BU
-            env,            # Environment
-            contacts,       # Contacts
-            "",             # Notes (blank for now)
-            site,           # Site
-            version,        # Version
-            cloud_location, # Cloud Location
-            ctype,          # Type
-            lic_exp,        # License Expiration
-            sub_name,       # Subscription Name
-            rg_cell,        # Resource Group Name (link)
-            sub_id,         # Subscription ID
-            mgmt_ip,        # Cluster Management IP
-            sys_mgr,        # System Manager (link)
-            connector_ip,   # BlueXP Connector IP (link)
-            connector_name, # BlueXP Connector Name
-            system_id,      # System ID
-            "NA",           # Deployment Server
-            aiqum_ip,       # New OCUM IP (link)
-            vm_sku,         # VM SKU Type
-            n1_name,        # Node-1 Name
-            n1_ip,          # Node1 IP
-            n1_serial,      # Node 1 Serial
-            n2_name,        # Node-2 Name
-            n2_ip,          # Node2 IP
-            n2_serial,      # Node 2 Serial
-            "",             # Application Mapping (blank for now)
-            "",             # Storage Account (blank for now)
-            vm_names,       # VM Names
-            "",             # Load-Balancers (blank for now)
-            "",             # Remark
+            name,  # Name
+            div,  # Division
+            bu,  # Application/BU
+            env,  # Environment
+            contacts,  # Contacts
+            "",  # Notes (blank for now)
+            site,  # Site
+            version,  # Version
+            cloud_location,  # Cloud Location
+            ctype,  # Type
+            lic_exp,  # License Expiration
+            sub_name,  # Subscription Name
+            rg_cell,  # Resource Group Name (link)
+            sub_id,  # Subscription ID
+            mgmt_ip,  # Cluster Management IP
+            sys_mgr,  # System Manager (link)
+            connector_ip,  # BlueXP Connector IP (link)
+            connector_name,  # BlueXP Connector Name
+            system_id,  # System ID
+            "NA",  # Deployment Server
+            aiqum_ip,  # New OCUM IP (link)
+            vm_sku,  # VM SKU Type
+            n1_name,  # Node-1 Name
+            n1_ip,  # Node1 IP
+            n1_serial,  # Node 1 Serial
+            n2_name,  # Node-2 Name
+            n2_ip,  # Node2 IP
+            n2_serial,  # Node 2 Serial
+            "",  # Application Mapping (blank for now)
+            "",  # Storage Account (blank for now)
+            vm_names,  # VM Names
+            "",  # Load-Balancers (blank for now)
+            "",  # Remark
         ]
 
     def build(self) -> None:
@@ -321,7 +348,7 @@ class InventoryReport:
             cluster_info = ds.query(ClusterInfo, cluster=name, source="auto").first()
             nodes = list(ds.query(OntapNodeResponse, cluster=name, source="auto"))
             licenses = list(ds.query(OntapLicensePackageResponse, cluster=name, source="auto"))
-            cloud_meta = self._collect_cloud_meta(name, entry, cluster_info)
+            cloud_meta = self._collect_cloud_meta(entry, cluster_info)
 
             row_data = self._build_row(name, entry, cluster_info, nodes, licenses, cloud_meta)
 
