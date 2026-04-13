@@ -480,20 +480,29 @@ remove its column — it just stops populating it during collection.
 3. **Requirement**: You must add a `post_collection` callable to the
    `FieldMapping` in `mapping.py`.
 
-#### Adding or removing a field from the model
+#### Adding a field to a cache model
 
-If you add or remove a field from the Pydantic model:
+If you add a field to a Pydantic model stored in `CachedClusterMetadata`:
 
-1. **Adding**: The new column won't exist in existing databases. SQLite's
-   `extra="allow"` on `CacheModel` means old rows won't break, but the
-   column won't exist until the database is recreated. Currently, a full
-   cache clear and refresh is needed: `nf cache clear`.
-2. **Removing**: The column remains in the SQL table (SQLite doesn't support
-   `DROP COLUMN` before 3.35). The column is ignored on read since
-   `_row_to_model()` only reads fields defined on the model.
+1. **New databases**: Get the column automatically — `generate_table_ddl()`
+   reads fields from the Pydantic model at import time.
+2. **Existing databases**: The column won't exist. You **must** add a schema
+   migration:
+   - Bump `SCHEMA_VERSION` in `src/pynetappfoundry/cache/db.py`
+   - Add an `_upgrade_to_vN()` method with
+     `ALTER TABLE <table> ADD COLUMN "<field>" <type>`
+   - Make it idempotent (check `PRAGMA table_info` first) — earlier
+     migration chains may recreate tables with the current DDL
+   - Add a test in `tests/unit/cache/test_db.py`
+   - Update any existing migration tests that assert the schema version
+3. **Table names**: Lowercased model class name (e.g., `CloudMetadata` →
+   `cloudmetadata`)
 
-**Future**: Schema migration support (ADR-0009) will handle adding columns
-via `ALTER TABLE ADD COLUMN` when model fields are added.
+#### Removing a field from a cache model
+
+The column remains in the SQL table (SQLite doesn't support `DROP COLUMN`
+before 3.35). The column is ignored on read since `_row_to_model()` only
+reads fields defined on the model. No migration is needed.
 
 ---
 
