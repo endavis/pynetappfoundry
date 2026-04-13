@@ -348,6 +348,15 @@ def query(
 
         # CSV with wildcards (expands to multiple rows)
         nf cache query cluster1 nodes[*].name nodes[*].serial_number --csv
+
+        # Filter predicate (select items by field value)
+        nf cache query cluster1 'volumes["name=vol1"].size'
+
+        # OR filter (match multiple values)
+        nf cache query cluster1 'volumes["name=vol1 || name=vol2"].size'
+
+        # Single-quoted predicate (alternative syntax)
+        nf cache query cluster1 "volumes['state=online'].name"
     """
     config_dir = ctx.obj.get("config_dir", "config")
 
