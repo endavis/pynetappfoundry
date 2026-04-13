@@ -13,6 +13,7 @@ Example:
 
 from __future__ import annotations
 
+import fnmatch
 import re
 from typing import Any
 
@@ -81,7 +82,10 @@ def _parse_filter_predicate(predicate: str) -> list[tuple[str, str]]:
 def _matches_filter(item: dict[str, Any], conditions: list[tuple[str, str]]) -> bool:
     """Check whether *item* matches any of the OR *conditions*.
 
-    Comparison is case-insensitive on the stringified value.
+    Comparison is case-insensitive on the stringified value.  If *expected*
+    contains ``*`` or ``?`` glob characters, matching is performed with
+    :func:`fnmatch.fnmatchcase` (against the lowercased actual value);
+    otherwise an exact ``==`` comparison is used.
 
     Args:
         item: Dictionary to test.
@@ -92,8 +96,13 @@ def _matches_filter(item: dict[str, Any], conditions: list[tuple[str, str]]) -> 
     """
     for field, expected in conditions:
         actual = item.get(field)
-        if actual is not None and str(actual).lower() == expected:
-            return True
+        if actual is not None:
+            actual_lower = str(actual).lower()
+            if "*" in expected or "?" in expected:
+                if fnmatch.fnmatchcase(actual_lower, expected):
+                    return True
+            elif actual_lower == expected:
+                return True
     return False
 
 
@@ -104,6 +113,8 @@ def get_nested_value(data: dict[str, Any], path: str) -> Any:
     specified using bracket notation (e.g., "nodes[0].name"). Wildcard syntax
     [*] can be used to access all items in an array. Filter predicates can be
     used to select items matching field values (e.g., ``nodes["name=node-01"]``).
+    Filter values may contain glob patterns (``*`` and ``?``) for pattern
+    matching (e.g., ``volumes["name=*Store*"]``).
 
     Args:
         data: The dictionary to traverse.
@@ -136,6 +147,9 @@ def get_nested_value(data: dict[str, Any], path: str) -> Any:
         [100]
 
         >>> get_nested_value(data, 'vols["name=v1 || name=v2"].size')
+        [100, 200]
+
+        >>> get_nested_value(data, 'vols["name=v*"].size')
         [100, 200]
     """
     if not path:
