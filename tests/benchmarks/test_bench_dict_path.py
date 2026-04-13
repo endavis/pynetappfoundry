@@ -75,3 +75,9 @@ def test_bench_multi_field_extraction(benchmark: Any, nested_api_response: dict[
         return [get_nested_value(nested_api_response, p) for p in paths]
 
     benchmark(extract_all)
+
+
+@pytest.mark.benchmark(group="dict_path")
+def test_bench_filter_predicate(benchmark: Any, nested_api_response: dict[str, Any]) -> None:
+    """Filter predicate access: nodes["name=node-01"].uptime (4 items, 1 match)."""
+    benchmark(get_nested_value, nested_api_response, 'nodes["name=node-01"].uptime')

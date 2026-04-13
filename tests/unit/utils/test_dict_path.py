@@ -4,7 +4,11 @@ from __future__ import annotations
 
 import pytest
 
-from pynetappfoundry.utils.dict_path import PathNotFoundError, get_nested_value
+from pynetappfoundry.utils.dict_path import (
+    PathNotFoundError,
+    _parse_filter_predicate,
+    get_nested_value,
+)
 
 
 class TestGetNestedValue:
@@ -315,3 +319,140 @@ class TestEdgeCases:
         assert get_nested_value(data, "clusters[0].name") == "cluster-1"
         assert get_nested_value(data, "clusters[0].nodes[1].cpus") == 8
         assert get_nested_value(data, "clusters[1].nodes[0].name") == "node-c"
+
+
+class TestParseFilterPredicate:
+    """Tests for _parse_filter_predicate helper."""
+
+    def test_simple_predicate(self) -> None:
+        """Single field=value clause."""
+        assert _parse_filter_predicate("name=vol1") == [("name", "vol1")]
+
+    def test_or_predicate(self) -> None:
+        """Multiple clauses joined by ||."""
+        result = _parse_filter_predicate("name=A || name=B")
+        assert result == [("name", "a"), ("name", "b")]
+
+    def test_whitespace_variations(self) -> None:
+        """Whitespace around || should not matter."""
+        assert _parse_filter_predicate("name=A||name=B") == [("name", "a"), ("name", "b")]
+        assert _parse_filter_predicate("name=A  ||  name=B") == [("name", "a"), ("name", "b")]
+
+    def test_value_with_spaces(self) -> None:
+        """Value may contain spaces."""
+        assert _parse_filter_predicate("name=my volume") == [("name", "my volume")]
+
+    def test_value_with_equals(self) -> None:
+        """Split on first = only; value may contain =."""
+        assert _parse_filter_predicate("desc=a=b") == [("desc", "a=b")]
+
+    def test_empty_field_raises(self) -> None:
+        """Empty field name before = is invalid."""
+        with pytest.raises(ValueError, match="empty field name"):
+            _parse_filter_predicate("=value")
+
+    def test_no_equals_raises(self) -> None:
+        """Clause without = is invalid."""
+        with pytest.raises(ValueError, match="missing '='"):
+            _parse_filter_predicate("justtext")
+
+
+class TestFilterPredicateAccess:
+    """Tests for filter predicate access via get_nested_value."""
+
+    @pytest.fixture
+    def volumes_data(self) -> dict[str, list[dict[str, object]]]:
+        """Sample data with a volumes list."""
+        return {
+            "volumes": [
+                {"name": "vol1", "size": 100, "state": "online"},
+                {"name": "vol2", "size": 200, "state": "online"},
+                {"name": "vol3", "size": 300, "state": "offline"},
+            ]
+        }
+
+    def test_single_match(self, volumes_data: dict[str, object]) -> None:
+        """Filter matching one item returns single-element list."""
+        assert get_nested_value(volumes_data, 'volumes["name=vol1"].size') == [100]
+
+    def test_multiple_matches(self, volumes_data: dict[str, object]) -> None:
+        """Filter matching multiple items returns all matching values."""
+        result = get_nested_value(volumes_data, 'volumes["state=online"].name')
+        assert result == ["vol1", "vol2"]
+
+    def test_no_matches(self, volumes_data: dict[str, object]) -> None:
+        """Filter with no matches returns empty list."""
+        assert get_nested_value(volumes_data, 'volumes["name=nonexistent"].size') == []
+
+    def test_or_filter(self, volumes_data: dict[str, object]) -> None:
+        """OR filter matches multiple named items."""
+        result = get_nested_value(volumes_data, 'volumes["name=vol1 || name=vol2"].size')
+        assert result == [100, 200]
+
+    def test_case_insensitive(self, volumes_data: dict[str, object]) -> None:
+        """Filter comparison is case-insensitive."""
+        assert get_nested_value(volumes_data, 'volumes["name=VOL1"].size') == [100]
+
+    def test_no_remaining_path(self, volumes_data: dict[str, object]) -> None:
+        """Filter without remaining path returns full matching dicts."""
+        result = get_nested_value(volumes_data, 'volumes["name=vol1"]')
+        assert result == [{"name": "vol1", "size": 100, "state": "online"}]
+
+    def test_nested_prefix(self, volumes_data: dict[str, object]) -> None:
+        """Filter works with nested dict prefix."""
+        data = {"storage": volumes_data}
+        assert get_nested_value(data, 'storage.volumes["name=vol1"].size') == [100]
+
+    def test_single_quoted_predicate(self, volumes_data: dict[str, object]) -> None:
+        """Single-quoted predicate syntax works."""
+        assert get_nested_value(volumes_data, "volumes['name=vol1'].size") == [100]
+
+    def test_empty_array(self) -> None:
+        """Filter on empty array returns empty list."""
+        data: dict[str, list[object]] = {"volumes": []}
+        assert get_nested_value(data, 'volumes["name=vol1"]') == []
+
+    def test_non_dict_items_skipped(self) -> None:
+        """Non-dict items in the array are silently skipped."""
+        data: dict[str, list[object]] = {
+            "items": [
+                "not-a-dict",
+                {"name": "vol1", "size": 100},
+                42,
+            ]
+        }
+        assert get_nested_value(data, 'items["name=vol1"].size') == [100]
+
+    def test_missing_filter_field_excludes_item(self) -> None:
+        """Items without the filter field are excluded."""
+        data = {
+            "volumes": [
+                {"name": "vol1", "size": 100},
+                {"size": 200},  # no 'name' field
+            ]
+        }
+        assert get_nested_value(data, 'volumes["name=vol1"].size') == [100]
+
+    def test_filter_on_non_list_raises(self) -> None:
+        """Filter on non-list value raises PathNotFoundError."""
+        data = {"config": {"name": "test"}}
+        with pytest.raises(PathNotFoundError, match="expected list for filter access"):
+            get_nested_value(data, 'config["name=test"]')
+
+    def test_missing_key_raises(self) -> None:
+        """Filter on missing key raises PathNotFoundError."""
+        data = {"volumes": [{"name": "vol1"}]}
+        with pytest.raises(PathNotFoundError, match="key not found"):
+            get_nested_value(data, 'missing["name=vol1"]')
+
+    def test_index_still_works(self, volumes_data: dict[str, object]) -> None:
+        """Index access [0] still works alongside filter predicates."""
+        assert get_nested_value(volumes_data, "volumes[0].name") == "vol1"
+
+    def test_wildcard_still_works(self, volumes_data: dict[str, object]) -> None:
+        """Wildcard [*] still works alongside filter predicates."""
+        assert get_nested_value(volumes_data, "volumes[*].name") == [
+            "vol1",
+            "vol2",
+            "vol3",
+        ]

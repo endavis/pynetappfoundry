@@ -621,9 +621,16 @@ cached snapshot.
 
 `nf cache query` retrieves a specific set of field paths from cached
 snapshots, across one or many clusters, with CSV/JSON/table output.
+Filter predicates select array items by field value using bracket syntax.
 
 ```bash
 nf cache query --all storage.volumes -F name,svm.name,size
+
+# Filter predicate — select items matching a field value
+nf cache query cluster1 'volumes["name=vol1"].size'
+
+# OR filter — match multiple values
+nf cache query cluster1 'volumes["name=vol1 || name=vol2"].size'
 ```
 
 ### Raw cache views (`nf cache show` and `nf cache inspect`)
