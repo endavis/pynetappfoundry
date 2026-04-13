@@ -860,13 +860,81 @@ class TestClusterMetadataDBMigrationV3:
         )
         assert cursor.fetchone() is None
 
-        # Verify schema version is 4 (v4 drops/recreates tables)
+        # Verify schema version is 5 (v4 drops/recreates, v5 adds vm_name)
         cursor = db.conn.execute("SELECT version FROM _schema_version")
-        assert cursor.fetchone()[0] == 4
+        assert cursor.fetchone()[0] == 5
 
         # v4 clears envelope data (nested model refactoring)
         got = db.get("test-cluster")
         assert got is None
+
+        db.close()
+
+    def test_upgrade_v4_to_v5_adds_vm_name_column(self, tmp_path: Path) -> None:
+        """v4→v5 migration adds vm_name column to cloudmetadata table."""
+        db_path = tmp_path / "v4.db"
+        conn = sqlite3.connect(db_path)
+
+        # Create a v4 schema: envelope + per-model tables
+        conn.execute(
+            "CREATE TABLE cluster_metadata ("
+            "    cluster_name TEXT PRIMARY KEY,"
+            "    cached_at TEXT NOT NULL,"
+            "    cache_version TEXT NOT NULL"
+            ")"
+        )
+        conn.execute("CREATE TABLE _schema_version (version INTEGER NOT NULL)")
+        conn.execute("INSERT INTO _schema_version (version) VALUES (4)")
+
+        # Create cloudmetadata table WITHOUT vm_name (simulates pre-#582 state)
+        conn.execute(
+            "CREATE TABLE cloudmetadata ("
+            "    cluster_name TEXT NOT NULL,"
+            "    _row_id INTEGER PRIMARY KEY AUTOINCREMENT,"
+            '    "node" TEXT,'
+            '    "instance_id" TEXT,'
+            '    "provider" TEXT,'
+            '    "region" TEXT,'
+            '    "account_id" TEXT,'
+            '    "instance_link" TEXT,'
+            '    "resource_group_link" TEXT,'
+            '    "instance_sso_link" TEXT,'
+            "    _extra_json TEXT DEFAULT NULL"
+            ")"
+        )
+
+        # Create remaining model tables so _init_db doesn't fail
+        from pynetappfoundry.cache.db_schema import (
+            _ensure_registry,
+            generate_cluster_name_index_ddl,
+            generate_table_ddl,
+            generate_uuid_column_index_ddl,
+        )
+
+        registry = _ensure_registry()
+        for spec in registry.values():
+            if spec.table_name == "cloudmetadata":
+                continue  # already created above (without vm_name)
+            ddl = generate_table_ddl(spec.table_name, spec.model_class)
+            conn.execute(ddl)
+            conn.execute(generate_cluster_name_index_ddl(spec.table_name))
+            if spec.has_uuid:
+                conn.execute(generate_uuid_column_index_ddl(spec.table_name))
+
+        conn.commit()
+        conn.close()
+
+        # Open with current code — should trigger v4→v5 migration
+        db = ClusterMetadataDB(db_path=db_path)
+
+        # Verify schema version is 5
+        cursor = db.conn.execute("SELECT version FROM _schema_version")
+        assert cursor.fetchone()[0] == 5
+
+        # Verify vm_name column exists
+        cursor = db.conn.execute("PRAGMA table_info(cloudmetadata)")
+        columns = {row[1] for row in cursor.fetchall()}
+        assert "vm_name" in columns
 
         db.close()
 

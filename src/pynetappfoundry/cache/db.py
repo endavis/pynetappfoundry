@@ -269,7 +269,7 @@ class ClusterMetadataDB(SQLiteDB):
     for data safety and isolation.
     """
 
-    SCHEMA_VERSION: ClassVar[int] = 4
+    SCHEMA_VERSION: ClassVar[int] = 5
     TABLE_NAME: ClassVar[str] = "cluster_metadata"
 
     def __init__(
@@ -400,6 +400,24 @@ class ClusterMetadataDB(SQLiteDB):
 
         # Clear envelope so callers detect stale/missing cache
         self.conn.execute("DELETE FROM cluster_metadata")
+
+    # ------------------------------------------------------------------
+    # Migration v4 → v5
+    # ------------------------------------------------------------------
+
+    def _upgrade_to_v5(self) -> None:
+        """Add ``vm_name`` column to the cloudmetadata table.
+
+        PR #582 added ``vm_name`` as a derived field on ``CloudMetadata``.
+        Existing v4 databases lack this column, causing INSERT failures
+        on cache refresh.  The column check is idempotent: earlier
+        migrations may have recreated the table with the current DDL
+        (which already includes ``vm_name``).
+        """
+        cursor = self.conn.execute("PRAGMA table_info(cloudmetadata)")
+        existing_cols = {row[1] for row in cursor.fetchall()}
+        if "vm_name" not in existing_cols:
+            self.conn.execute('ALTER TABLE cloudmetadata ADD COLUMN "vm_name" TEXT')
 
     # ------------------------------------------------------------------
     # Internal: decompose metadata into tables
