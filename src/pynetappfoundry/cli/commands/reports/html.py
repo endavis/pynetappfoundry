@@ -28,7 +28,7 @@ from pynetappfoundry.models.ontap.svm.svms.model import OntapSvm
 from pynetappfoundry.utils.cloud import (
     build_azure_id,
     build_azure_portal_link,
-    build_azure_vm_name,
+    build_vm_name,
     get_cloud_account_name,
 )
 
@@ -902,8 +902,13 @@ class ClusterData:
                         if not cloud_meta:
                             continue
                         if provider_lower == "azure":
-                            vm_name = cloud_meta.vm_name or build_azure_vm_name(
-                                self.name, node.name, is_ha=len(self.nodes) > 1
+                            # Fallback for caches built before vm_name field existed
+                            vm_name = cloud_meta.vm_name or build_vm_name(
+                                "azure",
+                                self.name,
+                                node.name,
+                                cloud_meta.instance_id,
+                                is_ha=len(self.nodes) > 1,
                             )
                             vm_link = cloud_meta.instance_link
                         else:

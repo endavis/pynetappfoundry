@@ -887,6 +887,9 @@ class MetadataCollector:
                 account_id=cm.account_id,
                 resource_group=cm.resource_group_name,
             )
+            # Set vm_name without cluster context; for Azure this is
+            # overwritten by _update_azure_cloud_links() which has
+            # cluster_name and node info for the proper derivation.
             cm.vm_name = build_vm_name(
                 provider=cm.provider,
                 instance_id=cm.instance_id,
