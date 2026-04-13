@@ -126,7 +126,8 @@ def build_vm_name(
         VM name string, or empty string if inputs are insufficient.
     """
     if provider.lower() == "azure":
-        return build_azure_vm_name(cluster_name, node_name, is_ha)
+        name = build_azure_vm_name(cluster_name, node_name, is_ha)
+        return name or instance_id
     return instance_id
 
 
