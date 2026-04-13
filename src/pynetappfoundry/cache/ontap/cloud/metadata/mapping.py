@@ -21,6 +21,7 @@ from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
 from pynetappfoundry.utils.cloud import (
     build_cloud_instance_link,
     build_cloud_resource_group_link,
+    build_vm_name,
 )
 
 
@@ -47,6 +48,20 @@ def _compute_resource_group_link(
         resource_group=instance.resource_group_name,
     )
     return instance.model_copy(update={"resource_group_link": link})
+
+
+def _compute_vm_name(instance: CloudMetadata, _results: dict[str, Any]) -> CloudMetadata:
+    """Derive ``vm_name`` from the instance's own fields.
+
+    For AWS and other providers the instance_id is used as the VM identifier.
+    Azure vm_name requires cluster/node context and is updated by the collector's
+    ``_update_azure_cloud_links`` pass; this hook provides the AWS/fallback value.
+    """
+    name = build_vm_name(
+        provider=instance.provider,
+        instance_id=instance.instance_id,
+    )
+    return instance.model_copy(update={"vm_name": name})
 
 
 CLOUD_METADATA_MAPPING = TypeMapping(
@@ -144,6 +159,11 @@ CLOUD_METADATA_MAPPING = TypeMapping(
             cache_attr="resource_group_link",
             cache_strategy="derived",
             post_collection=_compute_resource_group_link,
+        ),
+        FieldMapping(
+            cache_attr="vm_name",
+            cache_strategy="derived",
+            post_collection=_compute_vm_name,
         ),
     ),
 )

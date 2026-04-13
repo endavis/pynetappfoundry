@@ -14,6 +14,7 @@ from pynetappfoundry.utils.cloud import (
     build_cloud_instance_link,
     build_cloud_instance_sso_link,
     build_cloud_resource_group_link,
+    build_vm_name,
     get_cloud_account_name,
     get_cloud_types,
     get_node_number,
@@ -87,6 +88,55 @@ class TestBuildAzureVmName:
         """Test default is_ha is True."""
         result = build_azure_vm_name("mycluster", "mycluster-01")
         assert result == "mycluster-vm1"
+
+
+class TestBuildVmName:
+    """Tests for build_vm_name (provider-dispatch wrapper)."""
+
+    def test_azure_delegates_to_build_azure_vm_name(self) -> None:
+        """Azure dispatches to build_azure_vm_name with cluster/node context."""
+        result = build_vm_name("azure", "mycluster", "mycluster-01", is_ha=True)
+        assert result == "mycluster-vm1"
+
+    def test_azure_falls_back_to_instance_id_when_no_cluster(self) -> None:
+        """Azure returns instance_id when cluster_name is empty."""
+        result = build_vm_name("azure", instance_id="i-abc123")
+        assert result == "i-abc123"
+
+    def test_azure_prefers_derived_name_over_instance_id(self) -> None:
+        """Azure uses derived name when cluster info is available."""
+        result = build_vm_name("azure", "mycluster", "mycluster-02", "i-abc123", is_ha=True)
+        assert result == "mycluster-vm2"
+
+    def test_aws_returns_instance_id(self) -> None:
+        """AWS always returns instance_id regardless of other args."""
+        result = build_vm_name("aws", instance_id="i-0123456789abcdef0")
+        assert result == "i-0123456789abcdef0"
+
+    def test_aws_ignores_cluster_name(self) -> None:
+        """AWS ignores cluster_name even if provided."""
+        result = build_vm_name("aws", "mycluster", "mycluster-01", "i-abc", is_ha=True)
+        assert result == "i-abc"
+
+    def test_unknown_provider_returns_instance_id(self) -> None:
+        """Unknown providers fall back to instance_id."""
+        result = build_vm_name("gcp", instance_id="gcp-instance-1")
+        assert result == "gcp-instance-1"
+
+    def test_case_insensitive_provider(self) -> None:
+        """Provider matching is case-insensitive."""
+        result = build_vm_name("Azure", "mycluster", "mycluster-01", is_ha=True)
+        assert result == "mycluster-vm1"
+
+    def test_empty_provider_returns_instance_id(self) -> None:
+        """Empty provider returns instance_id."""
+        result = build_vm_name("", instance_id="i-fallback")
+        assert result == "i-fallback"
+
+    def test_no_inputs_returns_empty(self) -> None:
+        """No provider, no instance_id returns empty string."""
+        result = build_vm_name("")
+        assert result == ""
 
 
 class TestBuildAzureId:
