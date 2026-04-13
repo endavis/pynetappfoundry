@@ -7,6 +7,7 @@ Matches the layout of the Storage Devices inventory spreadsheet.
 
 from __future__ import annotations
 
+import re
 from datetime import datetime
 from typing import Any
 
@@ -120,6 +121,12 @@ def _license_expiration(licenses: list[OntapLicensePackageResponse]) -> str:
     return earliest
 
 
+def _short_version(ontap_version: str) -> str:
+    """Extract short version like '9.16.1P3' from full ONTAP version string."""
+    match = re.search(r"(\d+\.\d+\.\d+\w*)", ontap_version)
+    return match.group(1) if match else ontap_version
+
+
 def _cloud_type(cluster_info: ClusterInfo, node_count: int) -> str:
     """Derive the cluster type string."""
     if not cluster_info.is_cloud:
@@ -140,6 +147,7 @@ class InventoryReport:
         self._header_fill = PatternFill("solid", fgColor="1F4E79")
         self._header_font = Font(name="Calibri", bold=True, color="FFFFFF", size=11)
         self._body_font = Font(name="Calibri", size=10)
+        self._link_font = Font(name="Calibri", size=10, color="0563C1", underline="single")
         self._wrap = Alignment(wrap_text=True, vertical="top")
         self._top = Alignment(vertical="top")
 
@@ -194,7 +202,7 @@ class InventoryReport:
         region_code = first_cloud.region if first_cloud else ""
         site = _REGION_TO_SITE.get(region_code.lower(), region_code)
 
-        version = cluster_info.ontap_version if cluster_info else ""
+        version = _short_version(cluster_info.ontap_version) if cluster_info else ""
 
         cloud_location = first_cloud.provider if first_cloud else (
             cloud_cfg.title() if cloud_cfg else ""
@@ -208,8 +216,10 @@ class InventoryReport:
         # Azure subscription info — try cloud metadata first, then TOML config
         sub_name = ""
         rg_name = ""
+        rg_link = ""
         if first_cloud:
             rg_name = first_cloud.resource_group_name
+            rg_link = first_cloud.resource_group_link
         if not sub_name:
             azure_cfg = entry.get("azure", {})
             if isinstance(azure_cfg, dict):
@@ -217,9 +227,10 @@ class InventoryReport:
                 if not rg_name:
                     rg_name = azure_cfg.get("resource_group", "")
         sub_id = first_cloud.account_id if first_cloud else ""
+        rg_cell: Any = (rg_name, rg_link) if rg_name and rg_link else rg_name
 
         mgmt_ip = entry.get("ip", "")
-        sys_mgr = f"https://{mgmt_ip}" if mgmt_ip else ""
+        sys_mgr: Any = (f"https://{mgmt_ip}", f"https://{mgmt_ip}") if mgmt_ip else ""
 
         search_terms = {
             "div": div,
@@ -228,21 +239,23 @@ class InventoryReport:
             "env": env,
         }
         connector = self.config.find_closest("connectors", search_terms)
-        connector_ip = ""
+        connector_ip: Any = ""
         connector_name = ""
         if connector:
             ip_raw = str(connector.get("ip", "")).strip()
-            connector_ip = f"https://{ip_raw}/" if ip_raw else ""
+            url = f"https://{ip_raw}/" if ip_raw else ""
+            connector_ip = (url, url) if url else ""
             conn_azure = connector.get("azure", {})
             connector_name = conn_azure.get("vmname", "") if isinstance(conn_azure, dict) else ""
 
         system_id = cluster_info.cluster_uuid if cluster_info else ""
 
         aiqum = self.config.find_closest("aiqums", search_terms)
-        aiqum_ip = ""
+        aiqum_ip: Any = ""
         if aiqum:
             ip_raw = str(aiqum.get("ip", "")).strip()
-            aiqum_ip = f"https://{ip_raw}" if ip_raw else ""
+            url = f"https://{ip_raw}" if ip_raw else ""
+            aiqum_ip = (url, url) if url else ""
 
         vm_sku = first_cloud.instance_type if first_cloud else ""
 
@@ -282,15 +295,15 @@ class InventoryReport:
             ctype,          # Type
             lic_exp,        # License Expiration
             sub_name,       # Subscription Name
-            rg_name,        # Resource Group Name
+            rg_cell,        # Resource Group Name (link)
             sub_id,         # Subscription ID
             mgmt_ip,        # Cluster Management IP
-            sys_mgr,        # System Manager
-            connector_ip,   # BlueXP Connector IP
+            sys_mgr,        # System Manager (link)
+            connector_ip,   # BlueXP Connector IP (link)
             connector_name, # BlueXP Connector Name
             system_id,      # System ID
             "NA",           # Deployment Server
-            aiqum_ip,       # New OCUM IP
+            aiqum_ip,       # New OCUM IP (link)
             vm_sku,         # VM SKU Type
             n1_name,        # Node-1 Name
             n1_ip,          # Node1 IP
@@ -320,9 +333,18 @@ class InventoryReport:
             row_data = self._build_row(name, entry, cluster_info, nodes, licenses, cloud_meta)
 
             for col_idx, value in enumerate(row_data, 1):
-                cell = self.ws.cell(row=row_idx, column=col_idx, value=value)
-                cell.font = self._body_font
-                cell.alignment = self._wrap if col_idx in {5, 6, 29, 30, 31, 32} else self._top
+                wrap_cols = {5, 6, 29, 30, 31, 32}
+                if isinstance(value, tuple):
+                    display, url = value
+                    cell = self.ws.cell(row=row_idx, column=col_idx, value=display)
+                    if url:
+                        cell.hyperlink = url
+                    cell.font = self._link_font if url else self._body_font
+                    cell.alignment = self._wrap if col_idx in wrap_cols else self._top
+                else:
+                    cell = self.ws.cell(row=row_idx, column=col_idx, value=value)
+                    cell.font = self._body_font
+                    cell.alignment = self._wrap if col_idx in wrap_cols else self._top
 
             row_idx += 1
 
