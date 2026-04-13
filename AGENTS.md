@@ -112,6 +112,16 @@ You are a senior coding partner. Your goal is efficient, tested, and compliant c
 - **Mutable Defaults**: Never use `def foo(items=[])`
 - **String Concatenation for Paths**: Use `Path` objects
 
+### Cache Schema Pitfalls
+- **Adding fields to cache models requires a DB migration**: If you add a field to any model stored in `CachedClusterMetadata` (e.g., `CloudMetadata`, `ClusterInfo`, `OntapNodeResponse`), existing SQLite databases won't have the column. You **must**:
+  1. Bump `SCHEMA_VERSION` in `src/pynetappfoundry/cache/db.py`
+  2. Add an `_upgrade_to_vN()` method that runs `ALTER TABLE <table> ADD COLUMN "<field>" <type>`
+  3. Make the migration idempotent (check `PRAGMA table_info` first) since earlier migration chains may recreate tables with the current DDL
+  4. Add a test for the migration in `tests/unit/cache/test_db.py`
+  5. Update any existing migration tests that assert the schema version number
+- **Table names**: Table names are the lowercased model class name (e.g., `CloudMetadata` → `cloudmetadata`)
+- **DDL is auto-generated**: `db_schema.py:generate_table_ddl()` generates CREATE TABLE from Pydantic model fields — new databases get the column automatically, but existing databases need the migration
+
 ### Security Pitfalls
 - **Never log secrets**: Scrub sensitive data before logging
 - **Command Injection**: Always use subprocess with list args, not shell=True
