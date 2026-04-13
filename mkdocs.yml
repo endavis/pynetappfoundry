@@ -89,6 +89,7 @@ nav:
       - AI Command Blocking: development/ai/command-blocking.md
       - AI Enforcement Principles: development/ai/enforcement-principles.md
       - AI Statusline: development/ai/statusline.md
+      - Adding Backends: development/adding-backends.md
       - Field Mapping Framework: development/field-mapping.md
       - Unit Registry: development/unit-registry.md
       - Extensions: development/extensions.md
