@@ -585,6 +585,12 @@ Imports flow upward only (DAG, no circular deps):
 
 ## Adding a New API Type
 
+!!! note "DataSource backend integration"
+    This section covers models, mappings, and codegen for a new API type.
+    For the full backend integration story (Backend subclass, `_BACKENDS`
+    registration, routing, and authentication), see the
+    [Adding Backends](adding-backends.md) guide.
+
 To add support for a completely new API (beyond ONTAP/AIQUM/DII/OCCM):
 
 ### 1. Create a fetch script
