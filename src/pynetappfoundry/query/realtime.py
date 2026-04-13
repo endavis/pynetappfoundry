@@ -54,7 +54,8 @@ def _resolve_realtime(
     if mapping is None:
         msg = (
             f"No TypeMapping registered for '{model_class.__name__}'. "
-            f"Ensure the model's mapping module has been imported."
+            f"Mappings are auto-registered; verify a mapping.py module "
+            f"exists under cache/ontap/ for this model."
         )
         raise ValueError(msg)
 

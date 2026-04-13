@@ -384,7 +384,9 @@ def fetch[T: BaseModel](
     if mapping is None:
         raise ValueError(
             f"fetch(): no TypeMapping registered for model class "
-            f"{model_class.__module__}.{model_class.__name__}"
+            f"{model_class.__module__}.{model_class.__name__}. "
+            f"Mappings are auto-registered; verify a mapping.py module "
+            f"exists under cache/ontap/ for this model."
         )
 
     # Prepare results_cache used by post-collection hooks.

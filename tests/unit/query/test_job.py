@@ -43,9 +43,6 @@ FAKE_MAPPING = TypeMapping(
 @pytest.fixture(autouse=True)
 def _register_mappings() -> Any:
     """Register test mappings and ensure OntapJob mapping is available."""
-    # Import to ensure OntapJob mapping is registered
-    import pynetappfoundry.cache.ontap.cluster.jobs.mapping  # noqa: F401
-
     model_registry.register_mapping("FakeVolume", FAKE_MAPPING)
     yield
     model_registry._mappings.pop("FakeVolume", None)

@@ -8,7 +8,6 @@ from typing import Any
 import click
 from openpyxl import Workbook
 
-import pynetappfoundry.cache.ontap.protocols.locks.mapping  # noqa: F401 - register TypeMapping
 from pynetappfoundry.cli.decorators import with_config
 from pynetappfoundry.cli.utils import print_debug, print_error, print_info, print_success
 from pynetappfoundry.clients.ontap.api import ONTAPAPIClient

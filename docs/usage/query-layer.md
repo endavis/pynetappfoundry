@@ -45,8 +45,8 @@ The layer ships five public surfaces:
 | Express "fetch related X for this Y" intent | `related` / `related_one` |
 | Read fields excluded from the cache (IOPS, latency, ...) | `fetch_realtime` family |
 
-!!! note "Prerequisite: TypeMapping must be registered"
-    Every entry point in this module looks the model class up in the model registry. If you see `ValueError: No TypeMapping registered for 'OntapXxx'`, import the matching mapping module (e.g. `import pynetappfoundry.cache.ontap.storage.volumes.mapping`) before constructing the `QuerySet` / `Mutation`. Importing the cache subpackage is usually enough — most CLI entry points already trigger this transitively.
+!!! note "TypeMappings are auto-registered"
+    Every entry point in this module looks the model class up in the model registry. Mappings are auto-registered: the first registry lookup triggers the `cache` package import, which walks `cache/ontap/**/mapping.py` and registers every `TypeMapping`. If you see `ValueError: No TypeMapping registered for 'OntapXxx'`, verify that a `mapping.py` module exists under `cache/ontap/` for the model in question.
 
 For the wider context of when to use the query layer instead of `ClusterEntry.ontap`, see the [decision section](#combining-with-clusterentryontap) below and the [ONTAP Access Patterns](ontap-access-patterns.md) guide.
 
