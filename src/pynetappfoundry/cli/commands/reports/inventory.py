@@ -25,7 +25,6 @@ from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
 from pynetappfoundry.models.ontap.cluster.licensing.licenses import OntapLicensePackageResponse
 from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
 from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
-from pynetappfoundry.utils.cloud import build_azure_vm_name
 
 # Maps cloud provider region codes to human-readable site names.
 _REGION_TO_SITE: dict[str, str] = {
@@ -269,17 +268,11 @@ class InventoryReport:
         n2_ip = _node_mgmt_ip(n2) if n2 else "NA"
         n2_serial = n2.serial_number if n2 else "N/A"
 
-        is_ha = node_count > 1
         vm_names_parts: list[str] = []
         for node in nodes:
             cm = cloud_by_node.get(node.name)
-            if cm:
-                if cm.provider.lower() == "azure":
-                    vm = build_azure_vm_name(name, node.name, is_ha=is_ha)
-                    if vm:
-                        vm_names_parts.append(vm)
-                elif cm.instance_id:
-                    vm_names_parts.append(cm.instance_id)
+            if cm and cm.vm_name:  # type: ignore[attr-defined]
+                vm_names_parts.append(cm.vm_name)  # type: ignore[attr-defined]
         vm_names = ", ".join(vm_names_parts)
 
         return [
