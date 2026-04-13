@@ -6,8 +6,6 @@ from typing import Any
 
 import click
 
-import pynetappfoundry.cache.ontap.cluster.nodes.mapping  # register TypeMapping
-import pynetappfoundry.cache.ontap.storage.volumes.mapping  # noqa: F401 - register TypeMapping
 from pynetappfoundry.cli.decorators import with_config
 from pynetappfoundry.cli.utils import (
     print_debug,

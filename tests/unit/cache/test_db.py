@@ -962,8 +962,6 @@ class TestRealtimeAttrs:
 
     def test_returns_realtime_cache_attrs_for_mapped_model(self) -> None:
         """realtime_attrs returns correct field names for models with realtime mappings."""
-        # Import the mapping module to trigger register_mapping() calls
-        import pynetappfoundry.cache.ontap.network.fc.ports.mapping  # noqa: F401
         from pynetappfoundry.models.ontap.network.fc.ports.model import OntapFcPort
 
         # Clear cache to ensure fresh lookup

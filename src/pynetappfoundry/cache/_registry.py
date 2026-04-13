@@ -7,13 +7,15 @@ calls ``model_registry.register_mapping()`` to register its mapping.
 Two parallel indexes are maintained: a name-keyed ``_mappings`` dict
 (the original API) and a class-keyed ``_mappings_by_class`` dict used by
 :func:`pynetappfoundry.cache.fetchers.fetch` for model-class lookups.
-Both are populated at ``register_mapping()`` time, so mapping modules
-must be imported before any lookup fires — same import-order rule as
-the original name-keyed registry.
+Both are populated at ``register_mapping()`` time.  A defensive
+:func:`_ensure_bootstrapped` guard triggers the ``cache`` package
+import (which walks ``cache/ontap/**/mapping.py``) on first lookup,
+so callers no longer need manual mapping imports.
 """
 
 from __future__ import annotations
 
+import sys
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -22,11 +24,32 @@ if TYPE_CHECKING:
     from pynetappfoundry.cache.field_mapping import TypeMapping
 
 
+def _ensure_bootstrapped() -> None:
+    """Import the cache package if it hasn't been loaded yet.
+
+    The ``cache/__init__.py`` module walks ``cache.ontap`` and imports
+    every ``mapping.py``, which registers all :class:`TypeMapping`
+    instances on :data:`model_registry`.  Most code paths already
+    trigger this import transitively, but registry look-ups that run
+    before the cache package is loaded would see an empty registry.
+
+    This guard makes the registration self-healing: callers no longer
+    need manual ``import pynetappfoundry.cache.ontap.<...>.mapping``
+    lines.
+
+    Cost: a single ``dict.__contains__`` on the common (already-loaded)
+    path.
+    """
+    if "pynetappfoundry.cache" not in sys.modules:
+        import pynetappfoundry.cache  # noqa: F401
+
+
 class ModelRegistry:
     """Registry of cache field mappings.
 
     Mappings are registered explicitly by each ``mapping.py`` module
-    at import time.
+    at import time.  Look-up methods call :func:`_ensure_bootstrapped`
+    so callers do not need manual mapping imports.
     """
 
     def __init__(self) -> None:
@@ -52,6 +75,7 @@ class ModelRegistry:
         Returns:
             The TypeMapping instance, or None if not registered.
         """
+        _ensure_bootstrapped()
         return self._mappings.get(name)
 
     def get_mapping_by_model_class(self, model_class: type[BaseModel]) -> TypeMapping | None:
@@ -64,6 +88,7 @@ class ModelRegistry:
             The TypeMapping instance, or None if no mapping registers that
             class.
         """
+        _ensure_bootstrapped()
         return self._mappings_by_class.get(model_class)
 
     @property

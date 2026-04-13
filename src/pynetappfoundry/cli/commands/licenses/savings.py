@@ -7,7 +7,6 @@ from typing import Any
 import click
 from rich.table import Table
 
-import pynetappfoundry.cache.ontap.cluster.licensing.licenses.mapping  # noqa: F401
 from pynetappfoundry.cli.decorators import with_config
 from pynetappfoundry.cli.utils import console, print_error, print_info
 from pynetappfoundry.clients.ontap.api import ONTAPAPIClient

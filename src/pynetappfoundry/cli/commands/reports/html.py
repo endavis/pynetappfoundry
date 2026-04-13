@@ -17,11 +17,6 @@ from typing import TYPE_CHECKING, Any
 import click
 from yattag import Doc, indent
 
-import pynetappfoundry.cache.ontap.cluster.mapping
-import pynetappfoundry.cache.ontap.cluster.nodes.mapping
-import pynetappfoundry.cache.ontap.network.ip.interfaces.mapping
-import pynetappfoundry.cache.ontap.protocols.cifs.services.mapping
-import pynetappfoundry.cache.ontap.svm.svms.mapping  # noqa: F401
 from pynetappfoundry.cli.decorators import with_config
 from pynetappfoundry.cli.utils import print_debug, print_error, print_info, print_success
 from pynetappfoundry.data.source import DataSource

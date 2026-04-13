@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel
 
-from pynetappfoundry.cache._registry import ModelRegistry
+from pynetappfoundry.cache._registry import ModelRegistry, _ensure_bootstrapped
 
 
 class TestModelRegistry:
@@ -107,3 +107,22 @@ class TestGlobalRegistryBootstrap:
                 "check cache/__init__.py mapping-import bootstrap."
             )
             assert mapping.model_class is model_class
+
+
+class TestEnsureBootstrapped:
+    """Tests for the ``_ensure_bootstrapped`` guard function."""
+
+    def test_noop_when_cache_already_loaded(self) -> None:
+        """Calling ``_ensure_bootstrapped`` after the cache package is loaded is a no-op."""
+        import pynetappfoundry.cache  # noqa: F401
+        from pynetappfoundry.cache._registry import model_registry
+
+        # Snapshot current registry state
+        before = dict(model_registry._mappings)
+        assert len(before) > 0, "Registry should already be populated"
+
+        # Calling the guard again must not raise or alter the registry
+        _ensure_bootstrapped()
+
+        after = dict(model_registry._mappings)
+        assert before == after

@@ -7,8 +7,6 @@ from typing import Any
 
 import click
 
-import pynetappfoundry.cache.ontap.cluster.licensing.licenses.mapping
-import pynetappfoundry.cache.ontap.cluster.nodes.mapping  # noqa: F401 - register TypeMapping
 from pynetappfoundry.cli.decorators import with_config
 from pynetappfoundry.cli.utils import print_error, print_info, print_warning
 from pynetappfoundry.clients.ontap.api import ONTAPAPIClient
