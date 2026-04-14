@@ -458,6 +458,9 @@ def query(
             if error:
                 errors.append(f"{name}: {error}")
             else:
+                # Skip empty lists (no filter/wildcard matches)
+                if isinstance(value, list) and len(value) == 0:
+                    continue
                 cluster_results[field] = value
 
         if cluster_results:
@@ -472,8 +475,8 @@ def query(
         ctx.exit(1)
 
     if not results:
-        print_error("No results found.")
-        ctx.exit(1)
+        print_warning("No results found.")
+        ctx.exit(0)
 
     # Print warnings for any errors that occurred but we still have some results
     for err in errors:
