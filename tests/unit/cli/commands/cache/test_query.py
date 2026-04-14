@@ -1169,3 +1169,208 @@ base_api_path = "/api"
 
         assert result.exit_code == 0
         assert result.output.strip() == "9.14.1"
+
+
+class TestEmptyResultSkipping:
+    """Empty list results (no filter matches, empty wildcard arrays) are skipped."""
+
+    @pytest.fixture
+    def runner(self) -> CliRunner:
+        return CliRunner()
+
+    @pytest.fixture
+    def mock_config_dir(self, tmp_path: Path) -> Path:
+        config_dir = tmp_path / "config"
+        config_dir.mkdir()
+        (config_dir / "settings.toml").write_text(
+            """
+[ontapapi]
+[ontapapi.general]
+base_api_path = "/api"
+"""
+        )
+        return config_dir
+
+    def _metadata(self, name: str, node_names: list[str]) -> CachedClusterMetadata:
+        return CachedClusterMetadata(
+            cluster_name=name,
+            cached_at=datetime(2024, 1, 15, tzinfo=UTC),
+            nodes=[OntapNodeResponse(name=n, serial_number=f"SN-{n}") for n in node_names],
+        )
+
+    @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
+    def test_filter_no_match_single_cluster_errors(
+        self,
+        mock_db_class: MagicMock,
+        runner: CliRunner,
+        mock_config_dir: Path,
+    ) -> None:
+        """Single cluster with no filter matches yields 'No results found.'"""
+        mock_db = MagicMock()
+        mock_db.get_lazy.return_value = _make_lazy_mock(self._metadata("c1", ["node-01"]))
+        mock_db_class.return_value = mock_db
+
+        result = runner.invoke(
+            nf,
+            [
+                "-c",
+                str(mock_config_dir),
+                "cache",
+                "query",
+                "c1",
+                'nodes["name=does-not-exist"].serial_number',
+            ],
+        )
+
+        assert result.exit_code != 0
+        assert "No results found" in result.output
+
+    @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
+    def test_filter_no_match_all_clusters_skipped(
+        self,
+        mock_db_class: MagicMock,
+        runner: CliRunner,
+        mock_config_dir: Path,
+    ) -> None:
+        """--all skips clusters whose filter result is empty, shows only matching ones."""
+        mock_db = MagicMock()
+        mock_db.list_clusters.return_value = [
+            {"cluster_name": "c1"},
+            {"cluster_name": "c2"},
+        ]
+        meta1 = self._metadata("c1", ["node-01", "node-02"])
+        meta2 = self._metadata("c2", ["other-99"])
+        mock_db.get_lazy.side_effect = lambda n: (
+            _make_lazy_mock(meta1) if n == "c1" else _make_lazy_mock(meta2)
+        )
+        mock_db_class.return_value = mock_db
+
+        result = runner.invoke(
+            nf,
+            [
+                "-c",
+                str(mock_config_dir),
+                "cache",
+                "query",
+                "--all",
+                'nodes["name=node-01"].serial_number',
+            ],
+        )
+
+        assert result.exit_code == 0
+        assert "c1:" in result.output
+        assert "c2:" not in result.output
+        assert "[]" not in result.output
+
+    @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
+    def test_filter_no_match_all_clusters_json(
+        self,
+        mock_db_class: MagicMock,
+        runner: CliRunner,
+        mock_config_dir: Path,
+    ) -> None:
+        """--all --json omits clusters with empty filter results entirely."""
+        mock_db = MagicMock()
+        mock_db.list_clusters.return_value = [
+            {"cluster_name": "c1"},
+            {"cluster_name": "c2"},
+        ]
+        meta1 = self._metadata("c1", ["node-01"])
+        meta2 = self._metadata("c2", ["other-99"])
+        mock_db.get_lazy.side_effect = lambda n: (
+            _make_lazy_mock(meta1) if n == "c1" else _make_lazy_mock(meta2)
+        )
+        mock_db_class.return_value = mock_db
+
+        result = runner.invoke(
+            nf,
+            [
+                "-c",
+                str(mock_config_dir),
+                "cache",
+                "query",
+                "--all",
+                'nodes["name=node-01"].serial_number',
+                "--json",
+            ],
+        )
+
+        assert result.exit_code == 0
+        output = json.loads(result.output)
+        assert output == {"c1": {'nodes["name=node-01"].serial_number': ["SN-node-01"]}}
+        assert "c2" not in output
+
+    @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
+    def test_filter_no_match_all_clusters_csv(
+        self,
+        mock_db_class: MagicMock,
+        runner: CliRunner,
+        mock_config_dir: Path,
+    ) -> None:
+        """--all --csv omits rows for clusters with empty filter results."""
+        mock_db = MagicMock()
+        mock_db.list_clusters.return_value = [
+            {"cluster_name": "c1"},
+            {"cluster_name": "c2"},
+        ]
+        meta1 = self._metadata("c1", ["node-01"])
+        meta2 = self._metadata("c2", ["other-99"])
+        mock_db.get_lazy.side_effect = lambda n: (
+            _make_lazy_mock(meta1) if n == "c1" else _make_lazy_mock(meta2)
+        )
+        mock_db_class.return_value = mock_db
+
+        result = runner.invoke(
+            nf,
+            [
+                "-c",
+                str(mock_config_dir),
+                "cache",
+                "query",
+                "--all",
+                'nodes["name=node-01"].serial_number',
+                "--csv",
+            ],
+        )
+
+        assert result.exit_code == 0
+        lines = [ln for ln in result.output.strip().split("\n") if ln]
+        assert lines[0] == 'cluster,"nodes[""name=node-01""].serial_number"'
+        assert any(ln.startswith("c1,") for ln in lines[1:])
+        assert not any(ln.startswith("c2,") for ln in lines[1:])
+
+    @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
+    def test_empty_wildcard_array_skipped(
+        self,
+        mock_db_class: MagicMock,
+        runner: CliRunner,
+        mock_config_dir: Path,
+    ) -> None:
+        """Wildcard over an empty array is treated as no match and skipped."""
+        mock_db = MagicMock()
+        mock_db.list_clusters.return_value = [
+            {"cluster_name": "c1"},
+            {"cluster_name": "c2"},
+        ]
+        meta1 = self._metadata("c1", ["node-01"])
+        meta2 = self._metadata("c2", [])
+        mock_db.get_lazy.side_effect = lambda n: (
+            _make_lazy_mock(meta1) if n == "c1" else _make_lazy_mock(meta2)
+        )
+        mock_db_class.return_value = mock_db
+
+        result = runner.invoke(
+            nf,
+            [
+                "-c",
+                str(mock_config_dir),
+                "cache",
+                "query",
+                "--all",
+                "nodes[*].name",
+            ],
+        )
+
+        assert result.exit_code == 0
+        assert "c1:" in result.output
+        assert "c2:" not in result.output

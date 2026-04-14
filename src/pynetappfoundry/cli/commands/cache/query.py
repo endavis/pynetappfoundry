@@ -457,6 +457,8 @@ def query(
             value, error = _get_field_value(data, field)
             if error:
                 errors.append(f"{name}: {error}")
+            elif isinstance(value, list) and not value:
+                continue
             else:
                 cluster_results[field] = value
 
