@@ -75,3 +75,7 @@ Template-inherited ADRs (9XXX range) are maintained in [docs/template/decisions/
 | [0008](0008-openapi-codegen-for-model-generation.md) | OpenAPI codegen for model and mapping generation | Accepted |
 | [0009](0009-sql-table-storage.md) | Per-Model SQL Table Storage for Cache Layer | Accepted |
 | [0010](0010-clusterentry-and-namespace-access-pattern.md) | ClusterEntry and namespace access pattern | Accepted |
+| [0011](0011-nested-models-to-replace-flat-model-pattern.md) | Nested models to replace flat model pattern | Accepted |
+| [0012](0012-unified-datasource-accessor.md) | Unified DataSource Accessor for All Cluster Reads | Superseded |
+| [0013](0013-datasource-as-a-thin-facade-over-the-collector.md) | DataSource as a Thin Facade Over the Collector | Proposed |
+| [0014](0014-parallel-cluster-refresh.md) | Parallel Cluster Refresh | Accepted |
