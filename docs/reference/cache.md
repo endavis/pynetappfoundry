@@ -526,7 +526,18 @@ nf cache refresh --all -f '{"env": "Prod"}'
 
 # Verbose mode (show phase-by-phase progress)
 nf cache refresh --all -v
+
+# Parallel cluster processing (default: 4 workers)
+nf cache refresh --all --parallel-clusters 8
+
+# Disable cluster-level parallelism (strictly sequential)
+nf cache refresh --all --parallel-clusters 1
 ```
+
+Cluster collection runs in parallel by default (4 workers). Database writes
+are serialised on the main thread for SQLite thread-safety. In verbose
+parallel mode each cluster's phase output is buffered and flushed as a
+coherent block on completion; blocks may appear in any order.
 
 ### View history
 
