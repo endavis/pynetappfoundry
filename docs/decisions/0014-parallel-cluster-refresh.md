@@ -13,11 +13,13 @@ strictly-sequential code path unchanged.
 
 The implementation follows a **workers collect, main thread persists** split:
 
-- `_collect_cluster()` — worker-safe. Builds API/CLI clients, reads the
-  previous history snapshot, runs `MetadataCollector.collect_all()`, and (in
-  verbose mode) captures its own phase output into a Rich `Console(record=True)`
-  buffer. Returns a `_CollectResult` dataclass; never touches `ClusterMetadataDB`
-  or `CacheHistoryDB` for writes.
+- `_collect_cluster()` — worker-safe. Builds API/CLI clients, runs
+  `MetadataCollector.collect_all()`, and (in verbose mode) captures its own
+  phase output into a Rich `Console(record=True)` buffer. Returns a
+  `_CollectResult` dataclass. **Takes zero DB handles** — neither
+  `ClusterMetadataDB` nor `CacheHistoryDB` is passed into a worker, for reads
+  or writes (see Amendments / issue #596). The previous snapshot is preloaded
+  on the main thread and passed in as a plain `CachedClusterMetadata`.
 - `_persist_cluster()` — main-thread only. Computes the diff via
   `compute_diff()`, records history via `history_db.record_change()`, and
   writes the cache via `db.set()`. All database writes for every cluster flow
@@ -104,9 +106,31 @@ internal structure of each block (phase lines, summary) is preserved.
 - **Keep the existing sequential behaviour.** Rejected: 66+ clusters at
   1–2s each is a real operational pain point (issue #149).
 
+## Amendments
+
+### 2026-04-15 — Issue #596: SQLite thread-safety correction
+
+The original description of `_collect_cluster()` allowed workers to perform
+"read-side" SQLite access against `CacheHistoryDB` (loading the previous
+snapshot via `_load_previous_metadata()`). This was incorrect: SQLite
+connections cannot cross thread boundaries at all — `check_same_thread=True`
+(the default) rejects *any* use of the connection from a thread other than
+the one that created it, including reads. This produced random per-cluster
+failures in parallel mode with the error `SQLite objects created in a thread
+can only be used in that same thread`.
+
+**Corrected rule: no DB handle crosses thread boundaries, for reads or
+writes.** `_collect_cluster()` now takes zero DB handles. The main thread
+preloads previous snapshots for every cluster before submitting futures and
+passes each snapshot into its worker call as a plain value. Workers remain
+purely network/CPU.
+
+See issue #596 and the corresponding PR for the implementation.
+
 ## Related Issues
 
 - Issue #149: feat: parallelize cluster refresh in `nf cache refresh --all`
+- Issue #596: fix: SQLite thread-safety regression in parallel cache refresh
 
 ## Related Documentation
 
