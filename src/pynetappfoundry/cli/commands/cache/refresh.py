@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import contextlib
+import io
 import json
 import logging
 import threading
@@ -46,7 +47,12 @@ class VerboseProgressDisplay:
     """Displays detailed progress information in verbose mode."""
 
     def __init__(
-        self, console: Console, cluster_name: str, cluster_index: int, total_clusters: int
+        self,
+        console: Console,
+        cluster_name: str,
+        cluster_index: int,
+        total_clusters: int,
+        buffered: bool = False,
     ) -> None:
         """Initialize the verbose progress display.
 
@@ -55,11 +61,14 @@ class VerboseProgressDisplay:
             cluster_name: Name of the cluster being processed.
             cluster_index: 1-based index of the current cluster.
             total_clusters: Total number of clusters to process.
+            buffered: When True, skip ``end="\\r"`` starting messages that
+                cause cursor-jump garbling when replayed from a capture buffer.
         """
         self.console = console
         self.cluster_name = cluster_name
         self.cluster_index = cluster_index
         self.total_clusters = total_clusters
+        self.buffered = buffered
         self.phase_times: dict[CollectionPhase, float] = {}
         self.start_time = time.monotonic()
         self.current_phase: CollectionPhase | None = None
@@ -72,8 +81,10 @@ class VerboseProgressDisplay:
         """
         if info.status == "starting":
             self.current_phase = info.phase
-            # Print phase starting (will be overwritten or followed by completion)
-            self.console.print(f"  [dim]|-[/dim] {info.phase_name}...", end="\r")
+            # In buffered mode these \r-terminated lines are replayed on a real
+            # terminal later, causing cursor-jump garbling — skip them entirely.
+            if not self.buffered:
+                self.console.print(f"  [dim]|-[/dim] {info.phase_name}...", end="\r")
         elif info.status == "completed":
             self.phase_times[info.phase] = info.elapsed_seconds
             source_str = f" [dim]({info.source})[/dim]" if info.source else ""
@@ -647,7 +658,12 @@ def _collect_cluster(
     display: VerboseProgressDisplay | None = None
 
     if verbose:
-        captured_console = Console(record=True, force_terminal=False, width=120)
+        # Write to a private StringIO so the worker never touches sys.stdout
+        # directly — without this, Rich's default file=sys.stdout causes all
+        # worker threads to emit live output that races with other workers.
+        # export_text() reads the record buffer, not the file, so the replay
+        # on the main thread is unaffected.
+        captured_console = Console(record=True, force_terminal=False, width=120, file=io.StringIO())
         # The index is assigned on the main thread when flushing; we use 0/0
         # as a placeholder inside the captured block since the header is
         # printed on the main thread anyway.
@@ -656,6 +672,7 @@ def _collect_cluster(
             cluster_name=cluster_name,
             cluster_index=0,
             total_clusters=0,
+            buffered=True,
         )
         progress_callback = display.on_progress
 
