@@ -112,7 +112,11 @@ as existing ONTAP models. Every field that the `DataSource` might return
 should have a default value so that partially-populated instances are valid.
 
 See [Cache Models](cache-models.md) for the full model creation workflow,
-including codegen from OpenAPI specs.
+including codegen from OpenAPI specs.  See
+[ADR-0008](../decisions/0008-openapi-codegen-for-model-generation.md) for
+the codegen pipeline's round-trip invariant (regeneration must be a
+no-op for existing endpoints) and the TOML-as-authority rule for
+`cache_strategy` / `requires_explicit_fetch`.
 
 ### 3. Create field mappings
 
