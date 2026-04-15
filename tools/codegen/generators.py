@@ -654,10 +654,50 @@ def generate_model(endpoint: ParsedEndpoint, api_type: str = "ontap") -> str:
     return result
 
 
+def _load_toml_field_overrides(
+    existing_toml_path: Path | None,
+) -> dict[str, dict[str, Any]]:
+    """Load per-field overrides from a sibling ``<name>.toml`` overlay.
+
+    Used by :func:`generate_mapping` to mirror any ``cache_strategy`` or
+    ``requires_explicit_fetch`` values that the user (or a prior
+    hand-edit) has set in the TOML into the emitted Python source.  The
+    runtime overlay loader (``cache/overlay_loader.py``) already treats
+    the TOML as authoritative; mirroring into Python keeps the two in
+    sync for readability and round-trip stability.
+
+    A missing path or malformed TOML returns an empty mapping — callers
+    fall back to dataclass defaults.  This mirrors the silent-fallback
+    behavior of :func:`generate_toml_overlay`.
+
+    Args:
+        existing_toml_path: Path to the sibling TOML overlay, or
+            ``None`` if no overlay exists on disk.
+
+    Returns:
+        ``{cache_attr: {config_key: value}}`` extracted from the
+        ``[fields.*]`` tables.  Empty when no TOML, no ``fields`` table,
+        or the TOML can't be parsed.
+    """
+    if existing_toml_path is None or not existing_toml_path.exists():
+        return {}
+    try:
+        with open(existing_toml_path, "rb") as f:
+            data = tomllib.load(f)
+    except (tomllib.TOMLDecodeError, OSError):
+        # Malformed TOML or filesystem error: fall back to defaults.
+        return {}
+    fields_table = data.get("fields")
+    if not isinstance(fields_table, dict):
+        return {}
+    return {k: v for k, v in fields_table.items() if isinstance(v, dict)}
+
+
 def generate_mapping(
     endpoint: ParsedEndpoint,
     api_type: str = "ontap",
     schema_lookup: dict[str, str] | None = None,
+    existing_toml_path: Path | None = None,
 ) -> str:
     """Generate a TypeMapping/FieldMapping module for an endpoint.
 
@@ -668,11 +708,24 @@ def generate_mapping(
     Array-of-objects fields with typed sub-models get transform functions
     that construct sub-model instances using ``get_nested_value()``.
 
+    When ``existing_toml_path`` points at a sibling ``<name>.toml``
+    overlay, per-field ``cache_strategy`` and ``requires_explicit_fetch``
+    values are mirrored from the overlay into the emitted Python
+    ``FieldMapping(...)`` calls.  The TOML remains the authoritative
+    runtime source; the Python-level mirror only exists so that the file
+    is self-describing and so regeneration is a byte-identical round
+    trip against the on-disk output.
+
     Args:
         endpoint: Parsed endpoint with fields (tree structure).
         api_type: API type tag.
         schema_lookup: Optional mapping of API path → schema name for
             resolving parent class names.
+        existing_toml_path: Optional path to an existing sibling TOML
+            overlay.  When present, per-field ``cache_strategy`` and
+            ``requires_explicit_fetch`` values are mirrored into the
+            emitted Python.  Missing or malformed overlays fall back
+            silently to dataclass defaults.
 
     Returns:
         Python source code for the mapping module.
@@ -683,6 +736,10 @@ def generate_mapping(
 
     # Collect all leaf fields from the tree
     leaves = _collect_all_leaves(endpoint.fields)
+
+    # Load the sibling TOML overlay (if any) so we can mirror user-set
+    # cache_strategy / requires_explicit_fetch into the emitted Python.
+    toml_field_overrides = _load_toml_field_overrides(existing_toml_path)
 
     # Identify sub-model fields for array-of-objects transforms
     # Build the same sub_model_map as generate_model to get consistent names
@@ -726,12 +783,11 @@ def generate_mapping(
         ]
     )
 
-    # Add get_nested_value import if we have nested transforms
-    has_nested_transforms = any("." in ap for ap in array_sub_models)
-    if has_nested_transforms:
-        lines.append("from pynetappfoundry.utils.dict_path import get_nested_value")
-
-    # Split long model import across multiple lines
+    # Split long model import across multiple lines.  Emitted before the
+    # ``utils.dict_path`` import so the resulting order matches ruff's
+    # isort convention (alphabetical: ``cache.*``, ``models.*``,
+    # ``utils.*``) — this keeps codegen output in sync with the on-disk
+    # files and lets round-trip regeneration stay byte-identical.
     model_import_line = f"from {model_import} import {', '.join(model_classes)}"
     if len(model_import_line) > 100:
         lines.append(f"from {model_import} import (")
@@ -740,6 +796,11 @@ def generate_mapping(
         lines.append(")")
     else:
         lines.append(model_import_line)
+
+    # Add get_nested_value import if we have nested transforms
+    has_nested_transforms = any("." in ap for ap in array_sub_models)
+    if has_nested_transforms:
+        lines.append("from pynetappfoundry.utils.dict_path import get_nested_value")
 
     # Generate transform functions for array sub-model fields
     if array_sub_models:
@@ -782,14 +843,23 @@ def generate_mapping(
             else:
                 lines.append(ret_line)
 
+    # Separate the TypeMapping from the preceding block.  PEP 8 calls for
+    # two blank lines before a top-level class/function, but a single
+    # blank line is conventional when the preceding block is only
+    # imports.  We detect which by whether transform helpers were
+    # emitted.
     lines.append("")
-    lines.append("")
+    if array_sub_models:
+        lines.append("")
     lines.append(f"{mapping_name} = TypeMapping(")
     lines.append(f'    name="{class_name}",')
     lines.append(f"    model_class={class_name},")
     lines.append(f'    api_endpoint="{endpoint.path}?fields=*",')
 
     lines.append(f'    api_type="{api_type}",')
+
+    if endpoint.identifier_field is not None:
+        lines.append(f'    identifier_field="{endpoint.identifier_field}",')
 
     if endpoint.records_path != "records":
         lines.append(f'    records_path="{endpoint.records_path}",')
@@ -811,8 +881,24 @@ def generate_mapping(
         seen_attrs.add(cache_attr)
         default_repr = _python_default_repr(field, for_mapping=True)
 
+        # Mirror the sibling TOML's per-field config (if any).  TOML is
+        # authoritative at runtime; this only keeps the emitted Python
+        # in sync for readability and round-trip stability.
+        toml_field_cfg = toml_field_overrides.get(cache_attr, {})
+        toml_cache_strategy = toml_field_cfg.get("cache_strategy")
+        toml_requires_explicit_fetch = bool(toml_field_cfg.get("requires_explicit_fetch", False))
+        # Emit ``requires_explicit_fetch`` when the parser flagged it OR
+        # when the sibling TOML declares it.  This keeps the Python and
+        # TOML in sync on regen even if the TOML has hand-edited the
+        # flag for a field the parser didn't detect as expensive.
+        emit_explicit_fetch = field.requires_explicit_fetch or toml_requires_explicit_fetch
+
         field_args = [f'        cache_attr="{cache_attr}"']
 
+        # Ordering matches the on-disk ONTAP mappings:
+        # cache_attr, api_path, transform, cache_strategy, default,
+        # requires_explicit_fetch.  When api_path equals cache_attr it's
+        # omitted (FieldMapping.__post_init__ fills it in).
         if field.api_path in array_sub_models:
             func_name = f"_transform_{field.api_path.replace('.', '_')}"
             if field.api_path != cache_attr:
@@ -821,10 +907,13 @@ def generate_mapping(
         elif field.api_path != cache_attr:
             field_args.append(f'        api_path="{field.api_path}"')
 
+        if isinstance(toml_cache_strategy, str) and toml_cache_strategy != "cache":
+            field_args.append(f'        cache_strategy="{toml_cache_strategy}"')
+
         if field.default != "" or field.is_list:
             field_args.append(f"        default={default_repr}")
 
-        if field.requires_explicit_fetch:
+        if emit_explicit_fetch:
             field_args.append("        requires_explicit_fetch=True")
 
         lines.append("        FieldMapping(")
@@ -1002,6 +1091,17 @@ def write_endpoint_files(
     _ensure_init_files(models_dir / api_type, module_parts, pkg_type="models")
     _ensure_init_files(output_dir / api_type, module_parts, pkg_type="cache")
 
+    # Resolve the sibling TOML path up-front so ``generate_mapping``
+    # can read any existing overlay before it's regenerated.  The TOML
+    # is authoritative for ``cache_strategy`` / ``requires_explicit_fetch``
+    # at runtime; mirroring it into the emitted Python keeps the file
+    # self-describing and regeneration byte-identical (round-trip
+    # invariant — see ADR-0008).
+    toml_dir = overlay_dir or cache_pkg_dir
+    toml_dir.mkdir(parents=True, exist_ok=True)
+    toml_path = toml_dir / f"{module_parts[-1]}.toml"
+    existing_toml = toml_path if toml_path.exists() else None
+
     # model.py (in models/)
     model_path = model_pkg_dir / "model.py"
     model_path.write_text(generate_model(endpoint, api_type))
@@ -1012,17 +1112,20 @@ def write_endpoint_files(
     init_path.write_text(generate_init(endpoint, api_type))
     written.append(init_path)
 
-    # mapping.py (in cache/)
+    # mapping.py (in cache/) — reads the current on-disk TOML if any
     mapping_path = cache_pkg_dir / "mapping.py"
-    mapping_path.write_text(generate_mapping(endpoint, api_type, schema_lookup))
+    mapping_path.write_text(
+        generate_mapping(
+            endpoint,
+            api_type,
+            schema_lookup,
+            existing_toml_path=existing_toml,
+        )
+    )
     written.append(mapping_path)
 
-    # TOML overlay (in cache/ or overlay_dir)
-    toml_dir = overlay_dir or cache_pkg_dir
-    toml_dir.mkdir(parents=True, exist_ok=True)
-    toml_path = toml_dir / f"{module_parts[-1]}.toml"
-    existing = toml_path if toml_path.exists() else None
-    toml_path.write_text(generate_toml_overlay(endpoint, existing, api_type))
+    # TOML overlay (in cache/ or overlay_dir) — regenerated after mapping
+    toml_path.write_text(generate_toml_overlay(endpoint, existing_toml, api_type))
     written.append(toml_path)
 
     return written

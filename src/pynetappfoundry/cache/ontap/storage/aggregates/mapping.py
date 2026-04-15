@@ -76,6 +76,7 @@ ONTAPAGGREGATE_MAPPING = TypeMapping(
     model_class=OntapAggregate,
     api_endpoint="/storage/aggregates?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="block_storage.hybrid_cache.disk_count",

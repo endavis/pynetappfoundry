@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from tools.codegen.adapters import (
+    _build_identifier_map,
     _detect_parent_path,
     _detect_records_path,
     _flatten_schema,
@@ -434,3 +435,143 @@ class TestParseOpenAPISpec:
         assert vol is not None
         assert len(vol.fields) > 50
         assert len(vol.expensive_patterns) > 5
+
+
+# ---------------------------------------------------------------------------
+# _build_identifier_map tests (issue #601 — identifier_field inference)
+# ---------------------------------------------------------------------------
+
+
+class TestBuildIdentifierMap:
+    def test_uuid_param(self):
+        """A `/foo` + `/foo/{uuid}` pair yields identifier_field='uuid'."""
+        paths = ["/storage/volumes", "/storage/volumes/{uuid}"]
+        assert _build_identifier_map(paths) == {"/storage/volumes": "uuid"}
+
+    def test_custom_param_name(self):
+        """The inferred identifier uses whatever name the spec declares."""
+        paths = ["/foo", "/foo/{id}"]
+        assert _build_identifier_map(paths) == {"/foo": "id"}
+
+        paths = ["/bar", "/bar/{key}"]
+        assert _build_identifier_map(paths) == {"/bar": "key"}
+
+    def test_no_sibling_item_endpoint(self):
+        """Collection without a sibling item endpoint is absent from the map."""
+        paths = ["/storage/volumes"]
+        assert _build_identifier_map(paths) == {}
+
+    def test_multi_param_item_skipped(self):
+        """Item endpoints with >1 path parameter are skipped (composite keys)."""
+        paths = [
+            "/a/b",
+            "/a/b/{x}/c/{y}",  # multi-param -- skip
+        ]
+        assert _build_identifier_map(paths) == {}
+
+    def test_nested_parent_not_confused_with_collection(self):
+        """Item endpoint under a parameterized parent (two params total) is skipped."""
+        paths = [
+            "/svm/svms/{svm.uuid}/web",
+            "/svm/svms/{svm.uuid}/web/{uuid}",
+        ]
+        # The latter has two `{...}` segments, so it's skipped.
+        # The former is not an item endpoint, so it's skipped too.
+        assert _build_identifier_map(paths) == {}
+
+    def test_item_without_collection(self):
+        """An item endpoint whose collection path doesn't exist is ignored."""
+        paths = ["/solo/{uuid}"]
+        assert _build_identifier_map(paths) == {}
+
+
+class TestParseOpenAPISpecIdentifierField:
+    def _spec_with_paths(self, paths: dict) -> dict:
+        return {
+            "openapi": "3.0.0",
+            "info": {"title": "Test", "version": "1.0"},
+            "paths": paths,
+            "components": {
+                "schemas": {
+                    "volume": {
+                        "type": "object",
+                        "properties": {
+                            "uuid": {"type": "string", "format": "uuid"},
+                            "name": {"type": "string"},
+                        },
+                    }
+                }
+            },
+        }
+
+    def _collection_get(self) -> dict:
+        """Returns a GET op that parses into a ParsedEndpoint."""
+        return {
+            "get": {
+                "description": "List volumes.",
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "records": {
+                                            "type": "array",
+                                            "items": {"$ref": "#/components/schemas/volume"},
+                                        }
+                                    },
+                                }
+                            }
+                        }
+                    }
+                },
+            }
+        }
+
+    def _item_get(self) -> dict:
+        """Returns a GET op for an item endpoint (doesn't need to parse)."""
+        return {"get": {"description": "Get one volume.", "responses": {}}}
+
+    def test_uuid_inferred(self, tmp_path):
+        spec = self._spec_with_paths(
+            {
+                "/storage/volumes": self._collection_get(),
+                "/storage/volumes/{uuid}": self._item_get(),
+            }
+        )
+        spec_path = _write_spec(spec, tmp_path)
+        endpoints = parse_openapi_spec(spec_path, "ontap")
+        assert len(endpoints) == 1
+        assert endpoints[0].identifier_field == "uuid"
+
+    def test_alternative_param_name_inferred(self, tmp_path):
+        spec = self._spec_with_paths(
+            {
+                "/foo": self._collection_get(),
+                "/foo/{id}": self._item_get(),
+            }
+        )
+        spec_path = _write_spec(spec, tmp_path)
+        endpoints = parse_openapi_spec(spec_path, "ontap")
+        assert len(endpoints) == 1
+        assert endpoints[0].identifier_field == "id"
+
+    def test_none_when_no_sibling(self, tmp_path):
+        spec = self._spec_with_paths({"/storage/volumes": self._collection_get()})
+        spec_path = _write_spec(spec, tmp_path)
+        endpoints = parse_openapi_spec(spec_path, "ontap")
+        assert len(endpoints) == 1
+        assert endpoints[0].identifier_field is None
+
+    def test_none_when_item_has_multi_params(self, tmp_path):
+        spec = self._spec_with_paths(
+            {
+                "/a/b": self._collection_get(),
+                "/a/b/{x}/c/{y}": self._item_get(),
+            }
+        )
+        spec_path = _write_spec(spec, tmp_path)
+        endpoints = parse_openapi_spec(spec_path, "ontap")
+        assert len(endpoints) == 1
+        assert endpoints[0].identifier_field is None

@@ -424,6 +424,142 @@ class TestGenerateMapping:
         code = generate_mapping(ep)
         assert 'model_registry.register_mapping("OntapVolume"' in code
 
+    def test_identifier_field_emitted_when_set(self):
+        """identifier_field on the endpoint emits a line in TypeMapping."""
+        ep = _make_endpoint()
+        ep.identifier_field = "uuid"
+        code = generate_mapping(ep)
+        assert 'identifier_field="uuid"' in code
+        # Line should sit right after api_type
+        api_type_pos = code.index('api_type="ontap",')
+        ident_pos = code.index('identifier_field="uuid",')
+        fields_pos = code.index("fields=(")
+        assert api_type_pos < ident_pos < fields_pos
+
+    def test_identifier_field_omitted_when_none(self):
+        """identifier_field=None leaves the line out entirely."""
+        ep = _make_endpoint()
+        ep.identifier_field = None
+        code = generate_mapping(ep)
+        assert "identifier_field" not in code
+
+    def test_custom_identifier_field_name(self):
+        """identifier_field preserves the exact parameter name."""
+        ep = _make_endpoint()
+        ep.identifier_field = "id"
+        code = generate_mapping(ep)
+        assert 'identifier_field="id"' in code
+
+
+class TestGenerateMappingTomlMirroring:
+    """Tests for the ``existing_toml_path`` TOML-mirroring behavior."""
+
+    def test_mirrors_cache_strategy_realtime(self, tmp_path):
+        fields = [
+            ParsedField(name="foo", api_path="foo", python_type="int", default=0),
+        ]
+        ep = _make_endpoint(fields=fields)
+
+        toml = tmp_path / "volumes.toml"
+        toml.write_text(
+            '[endpoint]\npath = "/storage/volumes"\n\n[fields.foo]\ncache_strategy = "realtime"\n'
+        )
+
+        code = generate_mapping(ep, existing_toml_path=toml)
+        assert 'cache_strategy="realtime"' in code
+
+    def test_mirrors_requires_explicit_fetch(self, tmp_path):
+        fields = [
+            ParsedField(name="foo", api_path="foo", python_type="int", default=0),
+        ]
+        ep = _make_endpoint(fields=fields)
+
+        toml = tmp_path / "volumes.toml"
+        toml.write_text(
+            '[endpoint]\npath = "/storage/volumes"\n\n'
+            "[fields.foo]\nrequires_explicit_fetch = true\n"
+        )
+
+        code = generate_mapping(ep, existing_toml_path=toml)
+        assert "requires_explicit_fetch=True" in code
+
+    def test_default_cache_strategy_omitted(self, tmp_path):
+        """cache_strategy='cache' (the default) is NOT emitted."""
+        fields = [
+            ParsedField(name="foo", api_path="foo", python_type="int", default=0),
+        ]
+        ep = _make_endpoint(fields=fields)
+
+        toml = tmp_path / "volumes.toml"
+        toml.write_text(
+            '[endpoint]\npath = "/storage/volumes"\n\n[fields.foo]\ncache_strategy = "cache"\n'
+        )
+
+        code = generate_mapping(ep, existing_toml_path=toml)
+        assert "cache_strategy=" not in code
+
+    def test_no_toml_emits_defaults(self):
+        """No existing_toml_path → behavior matches the old code path."""
+        fields = [
+            ParsedField(name="foo", api_path="foo", python_type="int", default=0),
+        ]
+        ep = _make_endpoint(fields=fields)
+        code = generate_mapping(ep, existing_toml_path=None)
+        assert "cache_strategy=" not in code
+        assert "requires_explicit_fetch=" not in code
+
+    def test_missing_toml_file_emits_defaults(self, tmp_path):
+        """Non-existent path → silent fallback to defaults (no error)."""
+        fields = [
+            ParsedField(name="foo", api_path="foo", python_type="int", default=0),
+        ]
+        ep = _make_endpoint(fields=fields)
+        bogus = tmp_path / "does-not-exist.toml"
+        code = generate_mapping(ep, existing_toml_path=bogus)
+        assert "cache_strategy=" not in code
+
+    def test_missing_fields_table_emits_defaults(self, tmp_path):
+        """TOML present but no [fields] table → defaults emitted silently."""
+        fields = [
+            ParsedField(name="foo", api_path="foo", python_type="int", default=0),
+        ]
+        ep = _make_endpoint(fields=fields)
+        toml = tmp_path / "volumes.toml"
+        toml.write_text('[endpoint]\npath = "/storage/volumes"\n')
+        code = generate_mapping(ep, existing_toml_path=toml)
+        assert "cache_strategy=" not in code
+
+    def test_malformed_toml_silent_fallback(self, tmp_path):
+        """Malformed TOML falls back to defaults silently (no raise)."""
+        fields = [
+            ParsedField(name="foo", api_path="foo", python_type="int", default=0),
+        ]
+        ep = _make_endpoint(fields=fields)
+        toml = tmp_path / "volumes.toml"
+        toml.write_text("this is not = valid = toml [[[[")
+        code = generate_mapping(ep, existing_toml_path=toml)
+        # Must not raise — and emits defaults
+        assert "cache_strategy=" not in code
+
+    def test_toml_only_one_of_two_fields(self, tmp_path):
+        """TOML declares a custom strategy for one field; others stay default."""
+        fields = [
+            ParsedField(name="foo", api_path="foo", python_type="int", default=0),
+            ParsedField(name="bar", api_path="bar", python_type="int", default=0),
+        ]
+        ep = _make_endpoint(fields=fields)
+        toml = tmp_path / "volumes.toml"
+        toml.write_text(
+            '[endpoint]\npath = "/storage/volumes"\n\n'
+            '[fields.foo]\ncache_strategy = "realtime"\n\n'
+            '[fields.bar]\ncache_strategy = "cache"\n'
+        )
+        code = generate_mapping(ep, existing_toml_path=toml)
+        # foo gets realtime; bar stays default (omitted)
+        assert 'cache_strategy="realtime"' in code
+        # Only one emission
+        assert code.count("cache_strategy=") == 1
+
 
 # ---------------------------------------------------------------------------
 # Init generation

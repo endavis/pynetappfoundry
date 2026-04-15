@@ -11,6 +11,7 @@ ONTAPSVMPEER_MAPPING = TypeMapping(
     model_class=OntapSvmPeer,
     api_endpoint="/svm/peers?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="applications",

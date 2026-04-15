@@ -71,6 +71,13 @@ class ParsedEndpoint:
             ``/svm/svms/{svm.uuid}/...``).
         parent_path: The parent resource path segment if parameterized.
         tags: API tags for grouping.
+        identifier_field: Inferred single-field identifier used to address
+            a collection item (e.g. ``"uuid"`` for ``/storage/volumes``
+            whose sibling item endpoint is ``/storage/volumes/{uuid}``).
+            ``None`` when no sibling item endpoint exists or when the item
+            endpoint has multiple path parameters.  Composite identifiers
+            are not inferred; nested response-field identifiers (e.g.
+            ``"volume.uuid"``) must be set via a manual edit after codegen.
     """
 
     path: str
@@ -83,6 +90,7 @@ class ParsedEndpoint:
     has_parent: bool = False
     parent_path: str = ""
     tags: list[str] = field(default_factory=list)
+    identifier_field: str | None = None
 
 
 # OpenAPI type → (python_type, default_value)
@@ -371,6 +379,56 @@ def _detect_parent_path(path: str) -> tuple[bool, str]:
     return False, ""
 
 
+def _build_identifier_map(all_paths: list[str]) -> dict[str, str]:
+    """Build a ``{collection_path: identifier_param_name}`` lookup.
+
+    Scans every path in the spec for item endpoints of the form
+    ``/foo/bar/{param}`` and pairs them with their collection path
+    ``/foo/bar``.  Only item endpoints with **exactly one** path
+    parameter qualify — composite identifiers and deeply-parameterized
+    paths are skipped so the caller can fall back to manual editing for
+    those edge cases.
+
+    The inner name of ``{param}`` is returned, e.g. ``/storage/volumes``
+    paired with ``/storage/volumes/{uuid}`` yields ``"uuid"``.
+
+    Args:
+        all_paths: Every path string defined in the OpenAPI spec.
+
+    Returns:
+        Mapping from collection path to single identifier parameter name.
+        Collections without a qualifying sibling item endpoint are absent
+        from the returned dict.
+    """
+    identifiers: dict[str, str] = {}
+    path_set = set(all_paths)
+    for path in all_paths:
+        # We're looking for paths of the form `/foo/bar/{param}`
+        # whose parent `/foo/bar` also exists and has no other params.
+        segments = path.strip("/").split("/")
+        if not segments or "{" not in segments[-1] or "}" not in segments[-1]:
+            continue
+        # Count path parameters in the whole path.  Multi-param item
+        # endpoints are skipped — those imply composite identifiers
+        # (which we don't auto-infer) or parameterized parents (already
+        # handled by `has_parent`).
+        total_params = sum(1 for s in segments if "{" in s)
+        if total_params != 1:
+            continue
+        param_name = segments[-1].strip("{}")
+        collection_segments = segments[:-1]
+        if not collection_segments:
+            continue
+        collection_path = "/" + "/".join(collection_segments)
+        if collection_path not in path_set:
+            continue
+        # If multiple item endpoints somehow map to the same collection
+        # (shouldn't happen in well-formed specs), first one wins and
+        # subsequent candidates are ignored.
+        identifiers.setdefault(collection_path, param_name)
+    return identifiers
+
+
 def parse_openapi_spec(
     spec_path: Path,
     api_type: str = "ontap",
@@ -462,6 +520,17 @@ def parse_openapi_spec(
                 tags=tags,
             )
         )
+
+    # Second pass: infer ``identifier_field`` for collection endpoints by
+    # matching them against sibling item endpoints (``/foo`` + ``/foo/{x}``).
+    # The spec contains many item endpoints that are never generated (they
+    # don't have list response schemas), so we scan *all* paths from the
+    # spec — not just the parsed endpoints — when building the lookup.
+    identifier_map = _build_identifier_map(list(paths.keys()))
+    for ep in endpoints:
+        param = identifier_map.get(ep.path)
+        if param is not None:
+            ep.identifier_field = param
 
     return endpoints
 
