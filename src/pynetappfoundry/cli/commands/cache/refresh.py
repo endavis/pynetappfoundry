@@ -363,13 +363,18 @@ def _refresh_normal(
                 progress.update(task, completed=1)
     else:
         # Parallel path: workers collect, main thread persists.
+        # Preload previous snapshots on the main thread — SQLite connections
+        # can't cross threads, so workers must not touch history_db.
+        previous_by_cluster: dict[str, CachedClusterMetadata | None] = {
+            name: _load_previous_metadata(history_db, name) for name in clusters_to_refresh
+        }
         with ThreadPoolExecutor(max_workers=workers) as executor:
             future_map = {
                 executor.submit(
                     _collect_cluster,
                     config,
-                    history_db,
                     cluster_name,
+                    previous_by_cluster[cluster_name],
                     verbose=False,
                 ): cluster_name
                 for cluster_name in clusters_to_refresh
@@ -493,13 +498,18 @@ def _refresh_verbose(
         # block so per-cluster output stays coherent.
         # Use 1-based completion counter for display ordering.
         completion_counter = 0
+        # Preload previous snapshots on the main thread — SQLite connections
+        # can't cross threads, so workers must not touch history_db.
+        previous_by_cluster: dict[str, CachedClusterMetadata | None] = {
+            name: _load_previous_metadata(history_db, name) for name in clusters_to_refresh
+        }
         with ThreadPoolExecutor(max_workers=workers) as executor:
             future_map = {
                 executor.submit(
                     _collect_cluster,
                     config,
-                    history_db,
                     cluster_name,
+                    previous_by_cluster[cluster_name],
                     verbose=True,
                 ): cluster_name
                 for cluster_name in clusters_to_refresh
@@ -583,8 +593,7 @@ def _load_previous_metadata(
 ) -> CachedClusterMetadata | None:
     """Load the previous cluster snapshot from history, if any.
 
-    Safe to call from a worker thread because history DB reads are isolated
-    from the main-thread write serialisation path.
+    Must be called on the main thread — SQLite connections can't cross threads.
     """
     latest_snapshot = history_db.get_latest_snapshot(cluster_name)
     if not latest_snapshot:
@@ -617,17 +626,18 @@ def _load_previous_metadata(
 
 def _collect_cluster(
     config: Config,
-    history_db: CacheHistoryDB,
     cluster_name: str,
+    previous_metadata: CachedClusterMetadata | None,
     *,
     verbose: bool,
 ) -> _CollectResult:
     """Worker-thread collection for a single cluster.
 
-    Performs read-side work only: builds API/CLI clients, reads the previous
-    snapshot from history, and runs the collector. **Does not write to the
-    cache or history database** — those writes must happen on the main thread
-    because SQLite connections are not thread-safe.
+    Takes **zero DB handles**. Builds API/CLI clients and runs the collector,
+    using the caller-supplied ``previous_metadata`` (loaded on the main thread).
+    **Does not read from or write to the cache or history database** — all DB
+    access happens on the main thread because SQLite connections can't cross
+    threads.
 
     In verbose mode, a ``Console(record=True)`` captures the collector's
     phase output so the main thread can flush it as one coherent block.
@@ -703,9 +713,6 @@ def _collect_cluster(
 
     # Get AWS SSO config if configured
     aws_sso_config = config.settings.get("aws", {}).get("sso")
-
-    # Previous snapshot (read-only; safe in worker).
-    previous_metadata = _load_previous_metadata(history_db, cluster_name)
 
     # Collect metadata
     collector = MetadataCollector(

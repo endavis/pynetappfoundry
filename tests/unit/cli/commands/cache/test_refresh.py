@@ -927,9 +927,12 @@ enc = "cGFzc3dvcmQ="
 
         mock_history_db = MagicMock()
         mock_history_db.get_latest_snapshot.return_value = None
-        mock_history_db.record_change.side_effect = lambda *_a, **_kw: (
-            record_threads.append(threading.current_thread()) or 1
-        )
+
+        def _record_change(*_a: object, **_kw: object) -> int:
+            record_threads.append(threading.current_thread())
+            return 1
+
+        mock_history_db.record_change.side_effect = _record_change
         mock_history_db_class.return_value = mock_history_db
 
         mock_collector = MagicMock()
@@ -1010,6 +1013,127 @@ enc = "cGFzc3dvcmQ="
         assert mock_db.set.call_count == 3
         assert "Failure Summary" in result.output
         assert "c2" in result.output
+
+    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPAPIClient")
+    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPCLI")
+    @patch("pynetappfoundry.cli.commands.cache.refresh.MetadataCollector")
+    @patch("pynetappfoundry.cli.commands.cache.refresh.CacheHistoryDB")
+    @patch("pynetappfoundry.cli.commands.cache.refresh.ClusterMetadataDB")
+    def test_parallel_does_not_pass_db_to_workers(
+        self,
+        mock_db_class: MagicMock,
+        mock_history_db_class: MagicMock,
+        mock_collector_class: MagicMock,
+        mock_cli_class: MagicMock,
+        mock_api_class: MagicMock,
+        runner: CliRunner,
+        mock_config_dir_many: Path,
+    ) -> None:
+        """Worker `_collect_cluster` must not receive any DB handle (see #596)."""
+        from pynetappfoundry.cache.db import ClusterMetadataDB
+        from pynetappfoundry.cache.history_db import CacheHistoryDB
+
+        mock_db = MagicMock(spec=ClusterMetadataDB)
+        mock_db_class.return_value = mock_db
+        mock_history_db = MagicMock(spec=CacheHistoryDB)
+        mock_history_db.get_latest_snapshot.return_value = None
+        mock_history_db_class.return_value = mock_history_db
+
+        mock_collector = MagicMock()
+        mock_collector.collect_all.return_value = MagicMock()
+        mock_collector_class.return_value = mock_collector
+        mock_cli_class.return_value = MagicMock()
+        mock_api_class.return_value = MagicMock()
+
+        with patch("pynetappfoundry.cli.commands.cache.refresh._collect_cluster") as mock_collect:
+            mock_collect.return_value = MagicMock(
+                cluster_name="c1",
+                metadata=None,
+                previous_metadata=None,
+                captured_output="",
+                success=False,
+                error=None,
+                no_clients=True,
+            )
+            runner.invoke(
+                nf,
+                [
+                    "-c",
+                    str(mock_config_dir_many),
+                    "cache",
+                    "refresh",
+                    "--all",
+                    "--parallel-clusters",
+                    "4",
+                ],
+            )
+
+        assert mock_collect.call_count == 4
+        # spec'd MagicMocks pass isinstance() checks for the spec class, so this
+        # catches both real instances and spec'd mocks of either DB type.
+        for call in mock_collect.call_args_list:
+            for arg in (*call.args, *call.kwargs.values()):
+                assert not isinstance(arg, (CacheHistoryDB, ClusterMetadataDB)), (
+                    f"DB handle leaked into worker: {arg!r}"
+                )
+
+    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPAPIClient")
+    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPCLI")
+    @patch("pynetappfoundry.cli.commands.cache.refresh.MetadataCollector")
+    @patch("pynetappfoundry.cli.commands.cache.refresh.CacheHistoryDB")
+    @patch("pynetappfoundry.cli.commands.cache.refresh.ClusterMetadataDB")
+    def test_parallel_preloads_previous_metadata_on_main_thread(
+        self,
+        mock_db_class: MagicMock,
+        mock_history_db_class: MagicMock,
+        mock_collector_class: MagicMock,
+        mock_cli_class: MagicMock,
+        mock_api_class: MagicMock,
+        runner: CliRunner,
+        mock_config_dir_many: Path,
+    ) -> None:
+        """`get_latest_snapshot` must be called once per cluster on the main thread (see #596)."""
+        import threading
+
+        main_thread = threading.main_thread()
+        snapshot_threads: list[threading.Thread] = []
+        snapshot_clusters: list[str] = []
+
+        def record_snapshot(cluster_name: str) -> None:
+            snapshot_threads.append(threading.current_thread())
+            snapshot_clusters.append(cluster_name)
+            return None
+
+        mock_db_class.return_value = MagicMock()
+        mock_history_db = MagicMock()
+        mock_history_db.get_latest_snapshot.side_effect = record_snapshot
+        mock_history_db_class.return_value = mock_history_db
+
+        mock_collector = MagicMock()
+        mock_collector.collect_all.return_value = MagicMock()
+        mock_collector_class.return_value = mock_collector
+        mock_cli_class.return_value = MagicMock()
+        mock_api_class.return_value = MagicMock()
+
+        result = runner.invoke(
+            nf,
+            [
+                "-c",
+                str(mock_config_dir_many),
+                "cache",
+                "refresh",
+                "--all",
+                "--parallel-clusters",
+                "4",
+            ],
+        )
+
+        assert result.exit_code == 0
+        # Exactly one snapshot load per cluster.
+        assert mock_history_db.get_latest_snapshot.call_count == 4
+        assert sorted(snapshot_clusters) == ["c1", "c2", "c3", "c4"]
+        # Every load must happen on the main thread.
+        assert all(t is main_thread for t in snapshot_threads), snapshot_threads
 
     @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPAPIClient")
     @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPCLI")
