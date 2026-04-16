@@ -11,6 +11,7 @@ ONTAPIPSPACE_MAPPING = TypeMapping(
     model_class=OntapIpspace,
     api_endpoint="/network/ipspaces?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="name",

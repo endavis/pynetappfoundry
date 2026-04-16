@@ -11,6 +11,7 @@ ONTAPFABRIC_MAPPING = TypeMapping(
     model_class=OntapFabric,
     api_endpoint="/network/fc/fabrics?fields=*",
     api_type="ontap",
+    identifier_field="name",
     fields=(
         FieldMapping(
             cache_attr="cache.age",

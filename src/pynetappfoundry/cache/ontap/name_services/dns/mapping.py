@@ -19,6 +19,7 @@ ONTAPDNS_MAPPING = TypeMapping(
     model_class=OntapDns,
     api_endpoint="/name-services/dns?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="attempts",

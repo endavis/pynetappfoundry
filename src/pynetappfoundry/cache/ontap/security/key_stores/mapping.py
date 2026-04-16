@@ -11,6 +11,7 @@ ONTAPSECURITYKEYSTORE_MAPPING = TypeMapping(
     model_class=OntapSecurityKeystore,
     api_endpoint="/security/key-stores?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="configuration.name",

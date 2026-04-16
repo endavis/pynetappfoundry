@@ -13,8 +13,6 @@ ONTAPPERFORMANCEQTREEMETRICRESPONSE_MAPPING = TypeMapping(
     model_class=OntapPerformanceQtreeMetricResponse,
     api_endpoint="/storage/qtrees/{volume.uuid}/{qtree.id}/metrics?fields=*",
     api_type="ontap",
-    parent_mapping="OntapQtree",
-    parent_id_field="id",
     fields=(
         FieldMapping(
             cache_attr="duration",

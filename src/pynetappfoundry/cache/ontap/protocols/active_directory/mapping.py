@@ -33,6 +33,7 @@ ONTAPACTIVEDIRECTORY_MAPPING = TypeMapping(
     model_class=OntapActiveDirectory,
     api_endpoint="/protocols/active-directory?fields=*",
     api_type="ontap",
+    identifier_field="svm.uuid",
     fields=(
         FieldMapping(
             cache_attr="discovered_servers",

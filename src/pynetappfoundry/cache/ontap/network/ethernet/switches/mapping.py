@@ -11,6 +11,7 @@ ONTAPSWITCH_MAPPING = TypeMapping(
     model_class=OntapSwitch,
     api_endpoint="/network/ethernet/switches?fields=*",
     api_type="ontap",
+    identifier_field="name",
     fields=(
         FieldMapping(
             cache_attr="address",

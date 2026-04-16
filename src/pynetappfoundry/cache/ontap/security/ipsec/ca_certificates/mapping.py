@@ -13,6 +13,7 @@ ONTAPIPSECCACERTIFICATE_MAPPING = TypeMapping(
     model_class=OntapIpsecCaCertificate,
     api_endpoint="/security/ipsec/ca-certificates?fields=*",
     api_type="ontap",
+    identifier_field="certificate.uuid",
     fields=(
         FieldMapping(
             cache_attr="certificate.uuid",

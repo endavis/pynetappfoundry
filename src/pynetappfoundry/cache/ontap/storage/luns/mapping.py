@@ -86,6 +86,7 @@ ONTAPLUN_MAPPING = TypeMapping(
     model_class=OntapLun,
     api_endpoint="/storage/luns?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="attributes",

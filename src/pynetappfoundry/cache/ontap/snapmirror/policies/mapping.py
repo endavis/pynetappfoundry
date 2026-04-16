@@ -22,6 +22,7 @@ ONTAPSNAPMIRRORPOLICY_MAPPING = TypeMapping(
     model_class=OntapSnapmirrorPolicy,
     api_endpoint="/snapmirror/policies?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="comment",

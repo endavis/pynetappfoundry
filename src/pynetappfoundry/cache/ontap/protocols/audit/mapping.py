@@ -11,6 +11,7 @@ ONTAPAUDIT_MAPPING = TypeMapping(
     model_class=OntapAudit,
     api_endpoint="/protocols/audit?fields=*",
     api_type="ontap",
+    identifier_field="svm.uuid",
     fields=(
         FieldMapping(
             cache_attr="charge_qos",

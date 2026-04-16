@@ -22,6 +22,7 @@ ONTAPSNAPLOCKLOG_MAPPING = TypeMapping(
     model_class=OntapSnaplockLog,
     api_endpoint="/storage/snaplock/audit-logs?fields=*",
     api_type="ontap",
+    identifier_field="svm.uuid",
     fields=(
         FieldMapping(
             cache_attr="log_archive.archive",

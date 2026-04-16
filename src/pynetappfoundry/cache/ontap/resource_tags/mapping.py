@@ -11,6 +11,7 @@ ONTAPRESOURCETAG_MAPPING = TypeMapping(
     model_class=OntapResourceTag,
     api_endpoint="/resource-tags?fields=*",
     api_type="ontap",
+    identifier_field="value",
     fields=(
         FieldMapping(
             cache_attr="num_resources",

@@ -25,8 +25,6 @@ ONTAPEMSFILTER_MAPPING = TypeMapping(
     api_endpoint="/support/ems/filters/{name}?fields=*",
     api_type="ontap",
     records_path="rules",
-    parent_mapping=None,
-    parent_id_field=None,
     fields=(
         FieldMapping(
             cache_attr="index",

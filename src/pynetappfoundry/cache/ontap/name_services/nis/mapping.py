@@ -22,6 +22,7 @@ ONTAPNISSERVICE_MAPPING = TypeMapping(
     model_class=OntapNisService,
     api_endpoint="/name-services/nis?fields=*",
     api_type="ontap",
+    identifier_field="svm.uuid",
     fields=(
         FieldMapping(
             cache_attr="binding_details",

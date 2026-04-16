@@ -22,6 +22,7 @@ ONTAPNETWORKROUTE_MAPPING = TypeMapping(
     model_class=OntapNetworkRoute,
     api_endpoint="/network/ip/routes?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="destination.address",

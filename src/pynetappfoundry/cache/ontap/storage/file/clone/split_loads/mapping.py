@@ -11,6 +11,7 @@ ONTAPSPLITLOAD_MAPPING = TypeMapping(
     model_class=OntapSplitLoad,
     api_endpoint="/storage/file/clone/split-loads?fields=*",
     api_type="ontap",
+    identifier_field="node.uuid",
     fields=(
         FieldMapping(
             cache_attr="load.allowable",

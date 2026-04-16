@@ -34,6 +34,7 @@ ONTAPCHASSIS_MAPPING = TypeMapping(
     model_class=OntapChassis,
     api_endpoint="/cluster/chassis?fields=*",
     api_type="ontap",
+    identifier_field="id",
     fields=(
         FieldMapping(
             cache_attr="frus",

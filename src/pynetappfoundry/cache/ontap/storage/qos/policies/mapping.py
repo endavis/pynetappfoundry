@@ -11,6 +11,7 @@ ONTAPQOSPOLICY_MAPPING = TypeMapping(
     model_class=OntapQosPolicy,
     api_endpoint="/storage/qos/policies?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="adaptive.absolute_min_iops",

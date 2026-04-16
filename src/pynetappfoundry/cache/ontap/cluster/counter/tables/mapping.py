@@ -12,8 +12,8 @@ ONTAPCOUNTERTABLE_MAPPING = TypeMapping(
     api_endpoint="/cluster/counter/tables/{name}?fields=*",
     api_type="ontap",
     records_path="counter_schemas",
-    parent_mapping=None,
-    parent_id_field=None,
+    parent_mapping="OntapCounterTable",
+    parent_id_field="name",
     fields=(
         FieldMapping(
             cache_attr="denominator.name",

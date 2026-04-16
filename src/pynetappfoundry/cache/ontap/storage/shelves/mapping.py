@@ -76,6 +76,7 @@ ONTAPSHELF_MAPPING = TypeMapping(
     model_class=OntapShelf,
     api_endpoint="/storage/shelves?fields=*",
     api_type="ontap",
+    identifier_field="uid",
     fields=(
         FieldMapping(
             cache_attr="acps",

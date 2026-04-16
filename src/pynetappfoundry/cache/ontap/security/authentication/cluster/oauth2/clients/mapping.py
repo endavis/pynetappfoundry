@@ -13,6 +13,7 @@ ONTAPSECURITYOAUTH2_MAPPING = TypeMapping(
     model_class=OntapSecurityOauth2,
     api_endpoint="/security/authentication/cluster/oauth2/clients?fields=*",
     api_type="ontap",
+    identifier_field="name",
     fields=(
         FieldMapping(
             cache_attr="application",

@@ -11,8 +11,6 @@ ONTAPVSCANSCANNERPOOL_MAPPING = TypeMapping(
     model_class=OntapVscanScannerPool,
     api_endpoint="/protocols/vscan/{svm.uuid}/scanner-pools?fields=*",
     api_type="ontap",
-    parent_mapping="OntapSvm",
-    parent_id_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="cluster.name",

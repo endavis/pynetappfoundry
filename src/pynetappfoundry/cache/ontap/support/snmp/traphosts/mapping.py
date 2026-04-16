@@ -11,6 +11,7 @@ ONTAPSNMPTRAPHOST_MAPPING = TypeMapping(
     model_class=OntapSnmpTraphost,
     api_endpoint="/support/snmp/traphosts?fields=*",
     api_type="ontap",
+    identifier_field="host",
     fields=(
         FieldMapping(
             cache_attr="host",

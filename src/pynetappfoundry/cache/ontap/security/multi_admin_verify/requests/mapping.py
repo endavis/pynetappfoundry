@@ -13,6 +13,7 @@ ONTAPMULTIADMINVERIFYREQUEST_MAPPING = TypeMapping(
     model_class=OntapMultiAdminVerifyRequest,
     api_endpoint="/security/multi-admin-verify/requests?fields=*",
     api_type="ontap",
+    identifier_field="index",
     fields=(
         FieldMapping(
             cache_attr="approve_expiry_time",

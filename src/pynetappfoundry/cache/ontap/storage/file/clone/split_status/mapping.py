@@ -11,6 +11,7 @@ ONTAPSPLITSTATUS_MAPPING = TypeMapping(
     model_class=OntapSplitStatus,
     api_endpoint="/storage/file/clone/split-status?fields=*",
     api_type="ontap",
+    identifier_field="volume.uuid",
     fields=(
         FieldMapping(
             cache_attr="pending_splits",

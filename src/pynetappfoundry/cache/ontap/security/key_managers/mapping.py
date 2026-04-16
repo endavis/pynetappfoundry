@@ -42,6 +42,7 @@ ONTAPSECURITYKEYMANAGER_MAPPING = TypeMapping(
     model_class=OntapSecurityKeyManager,
     api_endpoint="/security/key-managers?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="configuration.name",

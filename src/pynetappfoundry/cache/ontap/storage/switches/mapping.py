@@ -67,6 +67,7 @@ ONTAPSTORAGESWITCH_MAPPING = TypeMapping(
     model_class=OntapStorageSwitch,
     api_endpoint="/storage/switches?fields=*",
     api_type="ontap",
+    identifier_field="name",
     fields=(
         FieldMapping(
             cache_attr="connections",

@@ -13,8 +13,6 @@ ONTAPEXPORTCLIENT_MAPPING = TypeMapping(
     model_class=OntapExportClient,
     api_endpoint="/protocols/nfs/export-policies/{policy.id}/rules/{index}/clients?fields=*",
     api_type="ontap",
-    parent_mapping=None,
-    parent_id_field=None,
     fields=(
         FieldMapping(
             cache_attr="index",

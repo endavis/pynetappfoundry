@@ -13,6 +13,7 @@ ONTAPEBROPERATION_MAPPING = TypeMapping(
     model_class=OntapEbrOperation,
     api_endpoint="/storage/snaplock/event-retention/operations?fields=*",
     api_type="ontap",
+    identifier_field="id",
     fields=(
         FieldMapping(
             cache_attr="id",

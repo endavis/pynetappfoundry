@@ -70,6 +70,7 @@ ONTAPSTORAGEPOOL_MAPPING = TypeMapping(
     model_class=OntapStoragePool,
     api_endpoint="/storage/pools?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="capacity.disk_count",

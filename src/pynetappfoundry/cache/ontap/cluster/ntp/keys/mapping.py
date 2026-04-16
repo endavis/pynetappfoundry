@@ -11,6 +11,7 @@ ONTAPNTPKEY_MAPPING = TypeMapping(
     model_class=OntapNtpKey,
     api_endpoint="/cluster/ntp/keys?fields=*",
     api_type="ontap",
+    identifier_field="id",
     fields=(
         FieldMapping(
             cache_attr="digest_type",

@@ -22,8 +22,6 @@ ONTAPEXPORTRULE_MAPPING = TypeMapping(
     model_class=OntapExportRule,
     api_endpoint="/protocols/nfs/export-policies/{policy.id}/rules?fields=*",
     api_type="ontap",
-    parent_mapping=None,
-    parent_id_field=None,
     fields=(
         FieldMapping(
             cache_attr="allow_device_creation",

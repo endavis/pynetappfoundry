@@ -13,6 +13,7 @@ ONTAPAUTOUPDATECONFIGURATION_MAPPING = TypeMapping(
     model_class=OntapAutoUpdateConfiguration,
     api_endpoint="/support/auto-update/configurations?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="action",

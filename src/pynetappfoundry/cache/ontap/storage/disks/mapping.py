@@ -47,6 +47,7 @@ ONTAPDISK_MAPPING = TypeMapping(
     model_class=OntapDisk,
     api_endpoint="/storage/disks?fields=*",
     api_type="ontap",
+    identifier_field="name",
     fields=(
         FieldMapping(
             cache_attr="aggregates",

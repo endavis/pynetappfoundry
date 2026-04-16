@@ -12,8 +12,6 @@ ONTAPFLEXCACHEORIGIN_MAPPING = TypeMapping(
     api_endpoint="/storage/flexcache/origins/{uuid}?fields=*",
     api_type="ontap",
     records_path="flexcaches",
-    parent_mapping=None,
-    parent_id_field=None,
     fields=(
         FieldMapping(
             cache_attr="cluster.name",

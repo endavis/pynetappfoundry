@@ -11,6 +11,7 @@ ONTAPNVMESERVICE_MAPPING = TypeMapping(
     model_class=OntapNvmeService,
     api_endpoint="/protocols/nvme/services?fields=*",
     api_type="ontap",
+    identifier_field="svm.uuid",
     fields=(
         FieldMapping(
             cache_attr="enabled",

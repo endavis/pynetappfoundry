@@ -36,6 +36,7 @@ ONTAPSVMMIGRATION_MAPPING = TypeMapping(
     model_class=OntapSvmMigration,
     api_endpoint="/svm/migrations?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="auto_cutover",

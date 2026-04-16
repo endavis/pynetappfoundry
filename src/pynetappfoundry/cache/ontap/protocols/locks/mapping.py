@@ -11,6 +11,7 @@ ONTAPCLIENTLOCK_MAPPING = TypeMapping(
     model_class=OntapClientLock,
     api_endpoint="/protocols/locks?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="byte_lock.exclusive",

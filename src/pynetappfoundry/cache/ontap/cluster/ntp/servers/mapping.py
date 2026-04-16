@@ -11,6 +11,7 @@ ONTAPNTPSERVER_MAPPING = TypeMapping(
     model_class=OntapNtpServer,
     api_endpoint="/cluster/ntp/servers?fields=*",
     api_type="ontap",
+    identifier_field="server",
     fields=(
         FieldMapping(
             cache_attr="authentication_enabled",

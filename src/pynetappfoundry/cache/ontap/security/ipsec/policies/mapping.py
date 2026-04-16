@@ -11,6 +11,7 @@ ONTAPIPSECPOLICYRESPONSE_MAPPING = TypeMapping(
     model_class=OntapIpsecPolicyResponse,
     api_endpoint="/security/ipsec/policies?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="action",

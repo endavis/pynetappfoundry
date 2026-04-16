@@ -284,6 +284,7 @@ ONTAPAPPLICATION_MAPPING = TypeMapping(
     model_class=OntapApplication,
     api_endpoint="/application/applications?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="svm.uuid",
@@ -341,8 +342,8 @@ ONTAPAPPLICATION_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="statistics.components",
-            cache_strategy="realtime",
             transform=_transform_statistics_components,
+            cache_strategy="realtime",
             default=[],
         ),
         FieldMapping(

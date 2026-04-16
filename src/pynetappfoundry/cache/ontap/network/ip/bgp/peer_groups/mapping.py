@@ -11,6 +11,7 @@ ONTAPBGPPEERGROUP_MAPPING = TypeMapping(
     model_class=OntapBgpPeerGroup,
     api_endpoint="/network/ip/bgp/peer-groups?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="ipspace.name",

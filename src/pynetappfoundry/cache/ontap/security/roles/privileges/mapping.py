@@ -11,8 +11,6 @@ ONTAPROLEPRIVILEGE_MAPPING = TypeMapping(
     model_class=OntapRolePrivilege,
     api_endpoint="/security/roles/{owner.uuid}/{name}/privileges?fields=*",
     api_type="ontap",
-    parent_mapping="OntapRole",
-    parent_id_field="owner.uuid",
     fields=(
         FieldMapping(
             cache_attr="access",

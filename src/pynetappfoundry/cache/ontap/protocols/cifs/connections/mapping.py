@@ -49,8 +49,8 @@ ONTAPCIFSCONNECTION_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="sessions",
-            cache_strategy="realtime",
             transform=_transform_sessions,
+            cache_strategy="realtime",
             default=[],
         ),
         FieldMapping(

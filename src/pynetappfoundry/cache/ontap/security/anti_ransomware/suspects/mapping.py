@@ -13,6 +13,7 @@ ONTAPANTIRANSOMWARESUSPECT_MAPPING = TypeMapping(
     model_class=OntapAntiRansomwareSuspect,
     api_endpoint="/security/anti-ransomware/suspects?fields=*",
     api_type="ontap",
+    identifier_field="volume.uuid",
     fields=(
         FieldMapping(
             cache_attr="file.format",

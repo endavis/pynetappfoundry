@@ -22,6 +22,7 @@ ONTAPGCPKMS_MAPPING = TypeMapping(
     model_class=OntapGcpKms,
     api_endpoint="/security/gcp-kms?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="application_credentials",

@@ -11,6 +11,7 @@ ONTAPFCPORT_MAPPING = TypeMapping(
     model_class=OntapFcPort,
     api_endpoint="/network/fc/ports?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="description",

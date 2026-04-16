@@ -11,8 +11,6 @@ ONTAPFPOLICYCONNECTION_MAPPING = TypeMapping(
     model_class=OntapFpolicyConnection,
     api_endpoint="/protocols/fpolicy/{svm.uuid}/connections?fields=*",
     api_type="ontap",
-    parent_mapping="OntapSvm",
-    parent_id_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="disconnected_reason.code",

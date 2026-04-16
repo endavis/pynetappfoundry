@@ -104,6 +104,7 @@ ONTAPNODERESPONSE_MAPPING = TypeMapping(
     model_class=OntapNodeResponse,
     api_endpoint="/cluster/nodes?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="anti_ransomware_version",

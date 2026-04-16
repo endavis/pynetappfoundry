@@ -28,6 +28,7 @@ ONTAPPORTSET_MAPPING = TypeMapping(
     model_class=OntapPortset,
     api_endpoint="/protocols/san/portsets?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="igroups",

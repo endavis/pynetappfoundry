@@ -11,6 +11,7 @@ ONTAPLDAPSERVICE_MAPPING = TypeMapping(
     model_class=OntapLdapService,
     api_endpoint="/name-services/ldap?fields=*",
     api_type="ontap",
+    identifier_field="svm.uuid",
     fields=(
         FieldMapping(
             cache_attr="ad_domain",

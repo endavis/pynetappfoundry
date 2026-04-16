@@ -22,6 +22,7 @@ ONTAPMETROCLUSTERDRGROUP_MAPPING = TypeMapping(
     model_class=OntapMetroclusterDrGroup,
     api_endpoint="/cluster/metrocluster/dr-groups?fields=*",
     api_type="ontap",
+    identifier_field="id",
     fields=(
         FieldMapping(
             cache_attr="dr_pairs",

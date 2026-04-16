@@ -11,6 +11,7 @@ ONTAPSECURITYCERTIFICATE_MAPPING = TypeMapping(
     model_class=OntapSecurityCertificate,
     api_endpoint="/security/certificates?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="authority_key_identifier",

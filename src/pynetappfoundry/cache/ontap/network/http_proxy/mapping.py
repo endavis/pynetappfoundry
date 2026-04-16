@@ -11,6 +11,7 @@ ONTAPNETWORKHTTPPROXY_MAPPING = TypeMapping(
     model_class=OntapNetworkHttpProxy,
     api_endpoint="/network/http-proxy?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="authentication_enabled",

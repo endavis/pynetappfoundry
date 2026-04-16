@@ -11,6 +11,7 @@ ONTAPSOFTWAREPACKAGE_MAPPING = TypeMapping(
     model_class=OntapSoftwarePackage,
     api_endpoint="/cluster/software/packages?fields=*",
     api_type="ontap",
+    identifier_field="version",
     fields=(
         FieldMapping(
             cache_attr="create_time",

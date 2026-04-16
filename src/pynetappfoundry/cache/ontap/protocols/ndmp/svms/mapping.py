@@ -11,6 +11,7 @@ ONTAPNDMPSVM_MAPPING = TypeMapping(
     model_class=OntapNdmpSvm,
     api_endpoint="/protocols/ndmp/svms?fields=*",
     api_type="ontap",
+    identifier_field="svm.uuid",
     fields=(
         FieldMapping(
             cache_attr="authentication_types",

@@ -11,6 +11,7 @@ ONTAPDUO_MAPPING = TypeMapping(
     model_class=OntapDuo,
     api_endpoint="/security/authentication/duo/profiles?fields=*",
     api_type="ontap",
+    identifier_field="owner.uuid",
     fields=(
         FieldMapping(
             cache_attr="api_host",

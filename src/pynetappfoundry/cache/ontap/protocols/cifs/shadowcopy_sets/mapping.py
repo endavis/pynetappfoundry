@@ -11,6 +11,7 @@ ONTAPSHADOWCOPYSET_MAPPING = TypeMapping(
     model_class=OntapShadowcopySet,
     api_endpoint="/protocols/cifs/shadowcopy-sets?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="keep_snapshots",

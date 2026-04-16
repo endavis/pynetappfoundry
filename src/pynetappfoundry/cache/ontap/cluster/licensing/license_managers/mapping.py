@@ -13,6 +13,7 @@ ONTAPLICENSEMANAGERRESPONSE_MAPPING = TypeMapping(
     model_class=OntapLicenseManagerResponse,
     api_endpoint="/cluster/licensing/license-managers?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="default",

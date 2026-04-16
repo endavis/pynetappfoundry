@@ -11,8 +11,6 @@ ONTAPFPOLICYENGINE_MAPPING = TypeMapping(
     model_class=OntapFpolicyEngine,
     api_endpoint="/protocols/fpolicy/{svm.uuid}/engines?fields=*",
     api_type="ontap",
-    parent_mapping="OntapSvm",
-    parent_id_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="buffer_size.recv_buffer",

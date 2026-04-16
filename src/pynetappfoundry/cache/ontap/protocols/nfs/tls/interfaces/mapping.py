@@ -11,6 +11,7 @@ ONTAPNFSTLSINTERFACE_MAPPING = TypeMapping(
     model_class=OntapNfsTlsInterface,
     api_endpoint="/protocols/nfs/tls/interfaces?fields=*",
     api_type="ontap",
+    identifier_field="interface.uuid",
     fields=(
         FieldMapping(
             cache_attr="certificate.name",

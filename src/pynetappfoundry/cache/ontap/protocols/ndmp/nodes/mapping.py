@@ -11,6 +11,7 @@ ONTAPNDMPNODE_MAPPING = TypeMapping(
     model_class=OntapNdmpNode,
     api_endpoint="/protocols/ndmp/nodes?fields=*",
     api_type="ontap",
+    identifier_field="node.uuid",
     fields=(
         FieldMapping(
             cache_attr="authentication_types",
