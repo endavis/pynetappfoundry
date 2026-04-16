@@ -20,6 +20,7 @@ from pathlib import Path
 from tools.codegen.adapters import ParsedEndpoint, detect_shared_schemas, parse_openapi_spec
 from tools.codegen.generators import (
     _collect_all_leaves,
+    _field_to_cache_attr,
     _path_to_class_name,
     _path_to_module_parts,
     write_endpoint_files,
@@ -173,6 +174,29 @@ def run(
         ep.path: ep.identifier_field for ep in full_spec_endpoints if ep.identifier_field
     }
 
+    # Build a map of top-level field names per *dedup-winner* endpoint so
+    # ``generate_mapping`` can validate that a parent's identifier_field
+    # actually exists on the generated parent model before using it as
+    # ``parent_id_field``.  Uses the dedup winners (not the full list)
+    # because the model that gets generated and registered comes from
+    # the winner — the collection endpoint's fields may differ from the
+    # item endpoint's fields that actually end up in the model.
+    # Keyed by all paths that map to the same module (so child endpoints
+    # can look up their parent_path regardless of which sibling won).
+    parent_field_names: dict[str, set[str]] = {}
+    for ep in endpoints:
+        leaves = _collect_all_leaves(ep.fields)
+        field_roots = {_field_to_cache_attr(f).split(".")[0] for f in leaves}
+        parent_field_names[ep.path] = field_roots
+    # Also register under sibling paths that collapsed to the same module
+    # path during dedup, so ``parent_path`` lookups work for parents
+    # whose collection endpoint was deduped away.
+    dedup_module_map = {tuple(_path_to_module_parts(ep.path)): ep.path for ep in endpoints}
+    for ep in full_spec_endpoints:
+        parts = tuple(_path_to_module_parts(ep.path))
+        if parts in dedup_module_map and ep.path != dedup_module_map[parts]:
+            parent_field_names[ep.path] = parent_field_names[dedup_module_map[parts]]
+
     del full_spec_endpoints
 
     all_written: list[Path] = []
@@ -193,6 +217,7 @@ def run(
             schema_lookup,
             shared_schemas=shared_schemas,
             identifier_map=identifier_map,
+            parent_field_names=parent_field_names,
         )
         all_written.extend(written)
         field_count = len([f for f in ep.fields if not f.is_object or f.is_list])

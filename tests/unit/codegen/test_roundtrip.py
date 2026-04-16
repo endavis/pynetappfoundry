@@ -57,7 +57,12 @@ from pathlib import Path
 import pytest
 
 from tools.codegen.adapters import detect_shared_schemas, parse_openapi_spec
-from tools.codegen.generators import write_endpoint_files
+from tools.codegen.generators import (
+    _collect_all_leaves,
+    _field_to_cache_attr,
+    _path_to_module_parts,
+    write_endpoint_files,
+)
 from tools.codegen.openapi_codegen import _deduplicate_endpoints
 
 # Resolve the repo root so the test is robust to pytest being invoked
@@ -169,12 +174,22 @@ def test_codegen_round_trip(
     seed_dir.mkdir(parents=True, exist_ok=True)
     shutil.copy2(ondisk_toml, seed_dir / f"{toml_stem}.toml")
 
-    # Build schema_lookup and identifier_map from the full (pre-dedup)
-    # endpoint list — mirrors production code in openapi_codegen.py so
-    # child endpoints can always resolve their parent's schema and
-    # identifier field even when the parent was collapsed by dedup (#606).
+    # Build schema_lookup, identifier_map, and parent_field_names
+    # mirroring production code in openapi_codegen.py so child endpoints
+    # can always resolve their parent's schema and identifier field even
+    # when the parent was collapsed by dedup (#606, #609).
     schema_lookup = {e.path: e.schema_name for e in full_endpoints}
     identifier_map = {e.path: e.identifier_field for e in full_endpoints if e.identifier_field}
+    # parent_field_names from dedup winners, aliased for collapsed siblings
+    pfn: dict[str, set[str]] = {}
+    dedup_mod_map = {tuple(_path_to_module_parts(e.path)): e.path for e in endpoints}
+    for e in endpoints:
+        leaves = _collect_all_leaves(e.fields)
+        pfn[e.path] = {_field_to_cache_attr(f).split(".")[0] for f in leaves}
+    for e in full_endpoints:
+        parts = tuple(_path_to_module_parts(e.path))
+        if parts in dedup_mod_map and e.path != dedup_mod_map[parts]:
+            pfn[e.path] = pfn[dedup_mod_map[parts]]
     write_endpoint_files(
         endpoint,
         temp_cache_dir,
@@ -184,6 +199,7 @@ def test_codegen_round_trip(
         models_dir=temp_models_dir,
         shared_schemas=shared_schemas,
         identifier_map=identifier_map,
+        parent_field_names=pfn,
     )
 
     generated_mapping = temp_cache_dir / api_type / Path(*module_parts) / "mapping.py"

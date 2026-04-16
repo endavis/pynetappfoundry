@@ -739,6 +739,7 @@ def generate_mapping(
     *,
     shared_schemas: frozenset[str] | set[str] = frozenset(),
     identifier_map: dict[str, str] | None = None,
+    parent_field_names: dict[str, set[str]] | None = None,
 ) -> str:
     """Generate a TypeMapping/FieldMapping module for an endpoint.
 
@@ -958,13 +959,18 @@ def generate_mapping(
     if parent_resolvable:
         lines.append(f'    parent_mapping="{parent_class}",')
         # Look up the parent endpoint's actual ``identifier_field`` from
-        # the pre-built map.  This correctly handles parents that use
-        # non-default identifiers (e.g. ``"name"`` instead of ``"uuid"``).
-        # Fall back to the API-default dispatch table when the parent
-        # path is absent from the map (legacy behavior).
-        parent_id_field = (identifier_map or {}).get(
-            endpoint.parent_path
-        ) or _PARENT_ID_FIELD_BY_API.get(api_type, "uuid")
+        # the pre-built map.  Only use it when the root segment of the
+        # identifier exists as a field on the parent's schema — the
+        # spec's path parameter name (e.g. ``svm.uuid``) doesn't always
+        # correspond to a field on the parent model (the item endpoint
+        # may win dedup and lack the field the collection had).
+        # Fall back to the API-default dispatch table otherwise.
+        candidate = (identifier_map or {}).get(endpoint.parent_path)
+        parent_fields = (parent_field_names or {}).get(endpoint.parent_path, set())
+        if candidate and candidate.split(".")[0] in parent_fields:
+            parent_id_field = candidate
+        else:
+            parent_id_field = _PARENT_ID_FIELD_BY_API.get(api_type, "uuid")
         lines.append(f'    parent_id_field="{parent_id_field}",')
 
     lines.append("    fields=(")
@@ -1175,6 +1181,7 @@ def write_endpoint_files(
     *,
     shared_schemas: frozenset[str] | set[str] = frozenset(),
     identifier_map: dict[str, str] | None = None,
+    parent_field_names: dict[str, set[str]] | None = None,
 ) -> list[Path]:
     """Write all generated files for an endpoint.
 
@@ -1258,6 +1265,7 @@ def write_endpoint_files(
             existing_toml_path=existing_toml,
             shared_schemas=shared_schemas,
             identifier_map=identifier_map,
+            parent_field_names=parent_field_names,
         )
     )
     written.append(mapping_path)
