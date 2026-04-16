@@ -347,6 +347,7 @@ def task_generate_models() -> dict[str, Any]:
         from tools.codegen.openapi_codegen import run
 
         api_list = [api] if api else sorted(_SPECS)
+        wrote_anything = False
 
         for api_name in api_list:
             spec_path = _SPEC_DIR / api_name / _OUTPUT_FILENAME
@@ -362,6 +363,36 @@ def task_generate_models() -> dict[str, Any]:
                 endpoint_filter=endpoint_filter,
                 dry_run=dry_run,
             )
+            if not dry_run:
+                wrote_anything = True
+
+        if wrote_anything:
+            # Post-process: ``ruff format`` normalizes wrapping so long
+            # lines that fit after wrapping no longer trigger E501, and
+            # ``ruff check --fix`` then drops any generator-emitted
+            # E501 noqa headers the formatter made redundant (RUF100,
+            # "unused-noqa").  Running the full project check (not
+            # just ``--select RUF100``) keeps legitimate N815/N802
+            # suppressions in place -- ruff only strips codes that
+            # are actually unused in context.
+            paths: list[str] = []
+            for api_name in api_list:
+                cache_api_dir = _CACHE_OUTPUT_DIR / api_name
+                models_api_dir = _CACHE_OUTPUT_DIR.parent / "models" / api_name
+                if cache_api_dir.exists():
+                    paths.append(str(cache_api_dir))
+                if models_api_dir.exists():
+                    paths.append(str(models_api_dir))
+            if paths:
+                print("\nPost-processing generated files with ruff...")
+                subprocess.run(  # nosec B603 B607
+                    ["uv", "run", "ruff", "format", *paths],
+                    check=False,
+                )
+                subprocess.run(  # nosec B603 B607
+                    ["uv", "run", "ruff", "check", "--fix", *paths],
+                    check=False,
+                )
 
     return {
         "actions": [run_generate],

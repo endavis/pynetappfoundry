@@ -118,6 +118,16 @@ the codegen pipeline's round-trip invariant (regeneration must be a
 no-op for existing endpoints) and the TOML-as-authority rule for
 `cache_strategy` / `requires_explicit_fetch`.
 
+**Shared response schemas are auto-disambiguated.**  Non-ONTAP specs
+often `$ref` the same response schema from multiple endpoints (e.g.
+DII's `Count` schema is shared across seven `/foo/count` endpoints).
+The codegen detects this and derives class names from the URL path
+(`DiiAssetsStoragesCount`, `DiiAssetsFabricsCount`, …) instead of the
+schema name — no manual action needed.  If you see a
+`Duplicate mapping registration` warning at import time, it means two
+endpoints produced the same class name despite the rule; file an
+issue so the generator can be tightened.
+
 ### 3. Create field mappings
 
 Create mappings under `cache/<api_type>/`:

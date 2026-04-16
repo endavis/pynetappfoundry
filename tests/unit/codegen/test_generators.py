@@ -404,8 +404,16 @@ class TestGenerateMapping:
         assert 'parent_mapping="OntapSvm"' in code
         assert 'parent_id_field="uuid"' in code
 
-    def test_parent_mapping_inline_fallback(self):
-        """When parent has no schema_name in lookup, use URL-path fallback."""
+    def test_parent_mapping_omitted_without_schema_lookup(self):
+        """Without a schema_lookup confirming parent resolvability, omit parent_mapping.
+
+        Previously the generator emitted a URL-path-derived
+        ``parent_mapping`` even when nothing confirmed the parent would
+        actually register under that name.  Issue #603 tightens this:
+        orphan child endpoints (no sibling collection that registers
+        under the expected class name) get ``parent_mapping`` omitted
+        rather than pointing to a nonexistent class.
+        """
         ep = _make_endpoint(
             path="/svm/svms/{svm.uuid}/web",
             has_parent=True,
@@ -415,9 +423,10 @@ class TestGenerateMapping:
                 ParsedField(name="enabled", api_path="enabled", python_type="bool", default=False)
             ],
         )
-        # No schema_lookup — parent falls back to URL-path
+        # No schema_lookup — can't confirm parent, so parent_mapping must be omitted.
         code = generate_mapping(ep)
-        assert 'parent_mapping="OntapSvm"' in code
+        assert "parent_mapping=" not in code
+        assert "parent_id_field=" not in code
 
     def test_registry_call(self):
         ep = _make_endpoint()
@@ -945,3 +954,302 @@ class TestSafeAttrName:
 
     def test_compound_not_reserved(self):
         assert _safe_attr_name("space_metadata") == "space_metadata"
+
+
+# ---------------------------------------------------------------------------
+# Shared-schema naming (issue #603)
+# ---------------------------------------------------------------------------
+
+
+class TestPathToClassNameSharedSchemas:
+    """Tests for the ``shared_schemas`` disambiguation rule (ADR-0008, #603).
+
+    When a schema is referenced by more than one endpoint, naming the
+    class after the schema causes registry collisions.  ``shared_schemas``
+    instructs :func:`_path_to_class_name` to fall back to the URL-path
+    derivation for those cases.
+    """
+
+    def test_empty_shared_schemas_uses_schema_name(self):
+        """Default empty shared_schemas → legacy schema-derived behavior."""
+        assert (
+            _path_to_class_name("/assets/storages/count", "Count", "dii", shared_schemas=set())
+            == "DiiCount"
+        )
+
+    def test_schema_not_in_shared_uses_schema_name(self):
+        """Schema unique to its endpoint → schema-derived name."""
+        assert (
+            _path_to_class_name(
+                "/assets/storages", "Storage", "dii", shared_schemas={"Count", "Annotation"}
+            )
+            == "DiiStorage"
+        )
+
+    def test_shared_schema_uses_url_path(self):
+        """Shared schema → URL-path-derived name avoids collision."""
+        assert (
+            _path_to_class_name("/assets/storages/count", "Count", "dii", shared_schemas={"Count"})
+            == "DiiAssetsStoragesCount"
+        )
+
+    def test_shared_schema_different_path_yields_different_name(self):
+        """Two endpoints sharing a schema get distinct class names."""
+        a = _path_to_class_name("/assets/storages/count", "Count", "dii", shared_schemas={"Count"})
+        b = _path_to_class_name("/assets/fabrics/count", "Count", "dii", shared_schemas={"Count"})
+        assert a != b
+        assert a == "DiiAssetsStoragesCount"
+        assert b == "DiiAssetsFabricsCount"
+
+    def test_shared_schemas_frozen_set_accepted(self):
+        """frozenset is also accepted (default parameter)."""
+        assert (
+            _path_to_class_name("/a/b/count", "Count", "dii", shared_schemas=frozenset({"Count"}))
+            == "DiiABCount"
+        )
+
+    def test_override_still_wins_over_shared_schema(self):
+        """_CLASS_NAME_OVERRIDES takes precedence regardless of shared_schemas."""
+        _CLASS_NAME_OVERRIDES["/shared/override"] = "OverrideWins"
+        try:
+            assert (
+                _path_to_class_name("/shared/override", "Count", "dii", shared_schemas={"Count"})
+                == "OverrideWins"
+            )
+        finally:
+            del _CLASS_NAME_OVERRIDES["/shared/override"]
+
+
+class TestGenerateMappingSharedSchemas:
+    """Tests that ``generate_mapping`` threads ``shared_schemas`` through."""
+
+    def test_shared_schema_generates_path_derived_class_name(self):
+        """Shared schema → mapping name / class reference use the URL path."""
+        ep = ParsedEndpoint(
+            path="/assets/storages/count",
+            schema_name="Count",
+            fields=[ParsedField(name="value", api_path="value", python_type="int", default=0)],
+        )
+        code = generate_mapping(ep, api_type="dii", shared_schemas={"Count"})
+        assert 'name="DiiAssetsStoragesCount"' in code
+        assert "model_class=DiiAssetsStoragesCount" in code
+        assert 'register_mapping("DiiAssetsStoragesCount"' in code
+        # The colliding schema-derived name must NOT appear
+        assert "DiiCount" not in code
+
+    def test_unique_schema_generates_schema_derived_class_name(self):
+        """Schema not in shared_schemas → schema-derived name (legacy)."""
+        ep = ParsedEndpoint(
+            path="/assets/storages/count",
+            schema_name="Count",
+            fields=[ParsedField(name="value", api_path="value", python_type="int", default=0)],
+        )
+        code = generate_mapping(ep, api_type="dii", shared_schemas=set())
+        assert 'name="DiiCount"' in code
+        assert "DiiAssetsStoragesCount" not in code
+
+
+class TestGenerateModelSharedSchemas:
+    """``generate_model`` must use the same disambiguated class name."""
+
+    def test_shared_schema_model_uses_url_path(self):
+        ep = ParsedEndpoint(
+            path="/assets/fabrics/count",
+            schema_name="Count",
+            fields=[ParsedField(name="value", api_path="value", python_type="int", default=0)],
+        )
+        code = generate_model(ep, api_type="dii", shared_schemas={"Count"})
+        assert "class DiiAssetsFabricsCount(OntapModel):" in code
+        assert "class DiiCount" not in code
+
+
+# ---------------------------------------------------------------------------
+# Infrastructure fixes 2-6 (issue #603)
+# ---------------------------------------------------------------------------
+
+
+class TestFieldsSuffixOntapOnly:
+    """Gap 2: ``?fields=*`` should only be emitted for api_type='ontap'."""
+
+    def test_ontap_has_fields_suffix(self):
+        ep = _make_endpoint()
+        code = generate_mapping(ep, api_type="ontap")
+        assert 'api_endpoint="/storage/volumes?fields=*"' in code
+
+    def test_dii_no_fields_suffix(self):
+        ep = _make_endpoint(path="/assets/storages", schema_name="Storage")
+        code = generate_mapping(ep, api_type="dii")
+        assert 'api_endpoint="/assets/storages"' in code
+        assert "?fields=*" not in code
+
+    def test_aiqum_no_fields_suffix(self):
+        ep = _make_endpoint(path="/datacenter/cluster/clusters", schema_name="cluster")
+        code = generate_mapping(ep, api_type="aiqum")
+        assert 'api_endpoint="/datacenter/cluster/clusters"' in code
+        assert "?fields=*" not in code
+
+    def test_occm_no_fields_suffix(self):
+        ep = _make_endpoint(path="/occm/accounts", schema_name="account")
+        code = generate_mapping(ep, api_type="occm")
+        assert 'api_endpoint="/occm/accounts"' in code
+        assert "?fields=*" not in code
+
+
+class TestEnsureInitFilesSeedsCacheTree:
+    """Gap 3: ``_ensure_init_files`` must seed the cache api-type root.
+
+    Previously only intermediate dirs got ``__init__.py``; the
+    api-type root and the leaf cache package were skipped, which left
+    a freshly generated tree un-discoverable by ``pkgutil.walk_packages``.
+    """
+
+    def test_api_root_init_created(self, tmp_path):
+        """The base ``<api_type>/__init__.py`` is seeded."""
+        ep = _make_endpoint(
+            path="/assets/storages/count",
+            schema_name="Count",
+            fields=[ParsedField(name="value", api_path="value", python_type="int", default=0)],
+        )
+        cache_dir = tmp_path / "cache"
+        models_dir = tmp_path / "models"
+        write_endpoint_files(ep, cache_dir, api_type="dii", models_dir=models_dir)
+
+        # Both trees must have an api-type root init
+        assert (cache_dir / "dii" / "__init__.py").exists()
+        assert (models_dir / "dii" / "__init__.py").exists()
+
+    def test_cache_leaf_init_created(self, tmp_path):
+        """The cache leaf dir gets a placeholder ``__init__.py``.
+
+        The model leaf is overwritten by ``generate_init``; the cache
+        leaf only gets the placeholder, but both let
+        ``pkgutil.walk_packages`` discover ``mapping.py`` modules.
+        """
+        ep = _make_endpoint(
+            path="/assets/fabrics",
+            schema_name="Fabric",
+            fields=[ParsedField(name="id", api_path="id", python_type="int", default=0)],
+        )
+        cache_dir = tmp_path / "cache"
+        models_dir = tmp_path / "models"
+        write_endpoint_files(ep, cache_dir, api_type="dii", models_dir=models_dir)
+
+        # Leaf init for the cache side
+        assert (cache_dir / "dii" / "assets" / "fabrics" / "__init__.py").exists()
+
+
+class TestParentMappingResolvability:
+    """Gap 4: ``parent_mapping`` should only emit for resolvable parents.
+
+    For orphan child endpoints (no sibling collection that registers
+    under the same class name), ``parent_mapping`` was previously
+    hallucinated.  The fix omits it entirely.
+    """
+
+    def test_parent_mapping_omitted_when_no_parent_in_lookup(self):
+        """No schema_lookup at all → no parent_mapping."""
+        ep = _make_endpoint(
+            path="/orphan/{id}/sub",
+            has_parent=True,
+            parent_path="/orphan",
+            schema_name="Sub",
+            fields=[ParsedField(name="x", api_path="x", python_type="int", default=0)],
+        )
+        code = generate_mapping(ep, api_type="dii")
+        assert "parent_mapping=" not in code
+        assert "parent_id_field=" not in code
+
+    def test_parent_mapping_omitted_when_parent_not_in_schema_lookup(self):
+        """Parent path missing from schema_lookup → no parent_mapping."""
+        ep = _make_endpoint(
+            path="/orphan/{id}/sub",
+            has_parent=True,
+            parent_path="/orphan",
+            schema_name="Sub",
+            fields=[ParsedField(name="x", api_path="x", python_type="int", default=0)],
+        )
+        # schema_lookup lacks /orphan
+        code = generate_mapping(ep, api_type="dii", schema_lookup={"/unrelated": "Whatever"})
+        assert "parent_mapping=" not in code
+
+    def test_parent_mapping_emitted_when_parent_resolves(self):
+        """Parent path registered under the expected class name → emit."""
+        ep = _make_endpoint(
+            path="/svm/svms/{svm.uuid}/web",
+            has_parent=True,
+            parent_path="/svm/svms",
+            schema_name="web",
+            fields=[ParsedField(name="enabled", api_path="enabled", python_type="bool")],
+        )
+        # /svm/svms has schema 'svm' → parent_class = OntapSvm
+        schema_lookup = {"/svm/svms": "svm"}
+        code = generate_mapping(ep, api_type="ontap", schema_lookup=schema_lookup)
+        assert 'parent_mapping="OntapSvm"' in code
+
+
+class TestParentIdFieldByApiType:
+    """Gap 5: ``parent_id_field`` dispatches on api_type."""
+
+    def test_ontap_parent_id_field_uuid(self):
+        ep = _make_endpoint(
+            path="/svm/svms/{svm.uuid}/web",
+            has_parent=True,
+            parent_path="/svm/svms",
+            schema_name="web",
+            fields=[ParsedField(name="enabled", api_path="enabled", python_type="bool")],
+        )
+        schema_lookup = {"/svm/svms": "svm"}
+        code = generate_mapping(ep, api_type="ontap", schema_lookup=schema_lookup)
+        assert 'parent_id_field="uuid"' in code
+
+    def test_dii_parent_id_field_id(self):
+        ep = _make_endpoint(
+            path="/a/b/{id}/c",
+            has_parent=True,
+            parent_path="/a/b",
+            schema_name="C",
+            fields=[ParsedField(name="x", api_path="x", python_type="int", default=0)],
+        )
+        schema_lookup = {"/a/b": "B"}
+        code = generate_mapping(ep, api_type="dii", schema_lookup=schema_lookup)
+        assert 'parent_id_field="id"' in code
+
+
+class TestMappingNoqaN802:
+    """Gap 6: camelCase transform names emit a ``# ruff: noqa: N802`` header.
+
+    DII field names like ``applicationRoles`` produce
+    ``_transform_applicationRoles`` which violates ruff N802.  The
+    header covers the generated code without requiring per-line noqa.
+    """
+
+    def test_camelcase_array_transform_emits_n802(self):
+        """A camelCase array-of-objects field triggers N802 suppression."""
+        ep = ParsedEndpoint(
+            path="/some/path",
+            schema_name="",
+            fields=[
+                ParsedField(
+                    name="applicationRoles",
+                    api_path="applicationRoles",
+                    python_type="list[dict[str, Any]]",
+                    is_list=True,
+                    is_object=True,
+                    default=[],
+                    sub_fields=[
+                        ParsedField(name="name", api_path="applicationRoles.name"),
+                    ],
+                ),
+            ],
+        )
+        code = generate_mapping(ep, api_type="dii")
+        assert "# ruff: noqa" in code
+        assert "N802" in code
+        assert "_transform_applicationRoles" in code
+
+    def test_snake_case_transform_no_n802(self):
+        """ONTAP's snake_case fields never trigger N802."""
+        ep = _make_endpoint_with_sub_model()
+        code = generate_mapping(ep, api_type="ontap")
+        # No N802 in the noqa header
+        assert "N802" not in code

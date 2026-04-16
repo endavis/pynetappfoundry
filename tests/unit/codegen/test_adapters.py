@@ -8,11 +8,13 @@ from pathlib import Path
 import pytest
 
 from tools.codegen.adapters import (
+    ParsedEndpoint,
     _build_identifier_map,
     _detect_parent_path,
     _detect_records_path,
     _flatten_schema,
     _resolve_ref,
+    detect_shared_schemas,
     parse_openapi_spec,
 )
 
@@ -575,3 +577,65 @@ class TestParseOpenAPISpecIdentifierField:
         endpoints = parse_openapi_spec(spec_path, "ontap")
         assert len(endpoints) == 1
         assert endpoints[0].identifier_field is None
+
+
+# ---------------------------------------------------------------------------
+# detect_shared_schemas tests (issue #603 — shared-schema naming)
+# ---------------------------------------------------------------------------
+
+
+class TestDetectSharedSchemas:
+    """Tests for ``detect_shared_schemas``.
+
+    Identifies schema names referenced by more than one endpoint so the
+    generators can switch to URL-path-derived class names and avoid
+    registry collisions (ADR-0008).
+    """
+
+    def test_empty_when_all_schemas_unique(self):
+        endpoints = [
+            ParsedEndpoint(path="/a", schema_name="foo"),
+            ParsedEndpoint(path="/b", schema_name="bar"),
+            ParsedEndpoint(path="/c", schema_name="baz"),
+        ]
+        assert detect_shared_schemas(endpoints) == set()
+
+    def test_shared_schema_detected(self):
+        """Schema referenced twice → in result set."""
+        endpoints = [
+            ParsedEndpoint(path="/assets/storages/count", schema_name="Count"),
+            ParsedEndpoint(path="/assets/fabrics/count", schema_name="Count"),
+            ParsedEndpoint(path="/assets/storages", schema_name="Storage"),
+        ]
+        result = detect_shared_schemas(endpoints)
+        assert result == {"Count"}
+
+    def test_multiple_shared_schemas(self):
+        """Every schema with count > 1 is in the result set."""
+        endpoints = [
+            ParsedEndpoint(path="/a/count", schema_name="Count"),
+            ParsedEndpoint(path="/b/count", schema_name="Count"),
+            ParsedEndpoint(path="/c", schema_name="Annotation"),
+            ParsedEndpoint(path="/d", schema_name="Annotation"),
+            ParsedEndpoint(path="/e", schema_name="Unique"),
+        ]
+        assert detect_shared_schemas(endpoints) == {"Count", "Annotation"}
+
+    def test_empty_schema_names_ignored(self):
+        """Endpoints with empty schema names (inline schemas) do not count."""
+        endpoints = [
+            ParsedEndpoint(path="/a", schema_name=""),
+            ParsedEndpoint(path="/b", schema_name=""),
+            ParsedEndpoint(path="/c", schema_name="Foo"),
+        ]
+        assert detect_shared_schemas(endpoints) == set()
+
+    def test_empty_input(self):
+        assert detect_shared_schemas([]) == set()
+
+    def test_single_reference_not_shared(self):
+        """Schema with count == 1 is NOT considered shared."""
+        endpoints = [
+            ParsedEndpoint(path="/a", schema_name="Foo"),
+        ]
+        assert detect_shared_schemas(endpoints) == set()

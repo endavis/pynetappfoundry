@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import logging
+
+import pytest
 from pydantic import BaseModel
 
 from pynetappfoundry.cache._registry import ModelRegistry, _ensure_bootstrapped
@@ -126,3 +129,95 @@ class TestEnsureBootstrapped:
 
         after = dict(model_registry._mappings)
         assert before == after
+
+
+class TestDuplicateRegistrationWarning:
+    """Tests for the duplicate-registration warning guard (issue #603).
+
+    When two mappings register under the same class name but target
+    different model classes, ``register_mapping`` emits a
+    ``logger.warning`` with both api_endpoint contexts.  This surfaces
+    codegen regressions in CI/logs without making registry import a
+    hard failure (last-wins is preserved for backward compat).
+    """
+
+    def test_warns_on_duplicate_with_different_model_class(
+        self,
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        from pynetappfoundry.cache.field_mapping import TypeMapping
+
+        class ModelA(BaseModel):
+            pass
+
+        class ModelB(BaseModel):
+            pass
+
+        registry = ModelRegistry()
+        first = TypeMapping(name="Foo", model_class=ModelA, api_endpoint="/a", api_type="dii")
+        second = TypeMapping(name="Foo", model_class=ModelB, api_endpoint="/b", api_type="dii")
+
+        registry.register_mapping("Foo", first)
+        with caplog.at_level(logging.WARNING, logger="pynetappfoundry.cache._registry"):
+            registry.register_mapping("Foo", second)
+
+        # Warning was emitted with both api_endpoint contexts
+        warnings = [r for r in caplog.records if r.levelno == logging.WARNING]
+        assert len(warnings) == 1
+        msg = warnings[0].getMessage()
+        assert "Foo" in msg
+        assert "'/a'" in msg
+        assert "'/b'" in msg
+        assert "ModelA" in msg
+        assert "ModelB" in msg
+
+        # Last-wins: the second mapping is what the registry now holds
+        assert registry.get_mapping("Foo") is second
+
+    def test_no_warning_on_same_instance_reregister(
+        self,
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        """Re-registering the exact same mapping instance does not warn."""
+        from pynetappfoundry.cache.field_mapping import TypeMapping
+
+        class Model(BaseModel):
+            pass
+
+        registry = ModelRegistry()
+        mapping = TypeMapping(name="Foo", model_class=Model, api_endpoint="/a")
+
+        registry.register_mapping("Foo", mapping)
+        with caplog.at_level(logging.WARNING, logger="pynetappfoundry.cache._registry"):
+            registry.register_mapping("Foo", mapping)
+
+        warnings = [r for r in caplog.records if r.levelno == logging.WARNING]
+        assert not warnings, "re-registering same instance must not warn"
+
+    def test_no_warning_when_model_class_matches(
+        self,
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        """Overlay-loader-style updates (same model_class, new instance) do not warn.
+
+        ``overlay_loader.apply_overlay_to_mapping`` returns a new
+        ``TypeMapping`` with updated field configs but the same
+        ``model_class``.  Treating that as a duplicate would spam the
+        log on every package import.
+        """
+        from pynetappfoundry.cache.field_mapping import TypeMapping
+
+        class Model(BaseModel):
+            pass
+
+        registry = ModelRegistry()
+        first = TypeMapping(name="Foo", model_class=Model, api_endpoint="/a")
+        updated = TypeMapping(name="Foo", model_class=Model, api_endpoint="/a")
+
+        registry.register_mapping("Foo", first)
+        with caplog.at_level(logging.WARNING, logger="pynetappfoundry.cache._registry"):
+            registry.register_mapping("Foo", updated)
+
+        warnings = [r for r in caplog.records if r.levelno == logging.WARNING]
+        assert not warnings, "same model_class update must not warn"
+        assert registry.get_mapping("Foo") is updated

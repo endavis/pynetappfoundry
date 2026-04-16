@@ -26,6 +26,7 @@ Infrastructure (DB, collector, diff, registry) is imported from here::
 import importlib as _importlib
 import pkgutil as _pkgutil
 
+import pynetappfoundry.cache.dii as _dii_pkg
 import pynetappfoundry.cache.ontap as _ontap_pkg
 import pynetappfoundry.cache.ontap.cloud.metadata
 import pynetappfoundry.cache.ontap.cloud.targets
@@ -62,7 +63,18 @@ for _modinfo in _pkgutil.walk_packages(
     if _modinfo.name.endswith(".mapping"):
         _importlib.import_module(_modinfo.name)
 
-del _modinfo, _importlib, _pkgutil, _ontap_pkg
+# Walk the cache.dii tree the same way so DII mappings register at
+# import time.  This PR lands only two DII endpoints (the minimum
+# needed for the shared-schema round-trip test, #603); the full
+# ~191-endpoint DII surface is generated under #600.
+for _modinfo in _pkgutil.walk_packages(
+    _dii_pkg.__path__,
+    prefix="pynetappfoundry.cache.dii.",
+):
+    if _modinfo.name.endswith(".mapping"):
+        _importlib.import_module(_modinfo.name)
+
+del _modinfo, _importlib, _pkgutil, _ontap_pkg, _dii_pkg
 
 from pynetappfoundry.cache._registry import model_registry as _reg  # noqa: E402
 
