@@ -29,6 +29,10 @@ ONTAP endpoints (issue #601):
   ``cache_strategy`` mirroring, ``identifier_field`` inference.
 * ``/svm/peers`` — simple flat mapping with only
   ``identifier_field`` inference, no transforms or TOML overrides.
+* ``/network/fc/fabrics/{fabric.name}/zones`` — child endpoint whose
+  parent (``/network/fc/fabrics``) uses ``identifier_field="name"``
+  instead of the ONTAP default ``"uuid"``.  Exercises
+  ``parent_id_field`` derivation from the identifier map (issue #606).
 
 DII endpoints (issue #603):
 
@@ -71,29 +75,42 @@ ROUNDTRIP_ENDPOINTS = [
     ("ontap", "/storage/volumes", ("storage", "volumes"), "volumes"),
     ("ontap", "/storage/aggregates", ("storage", "aggregates"), "aggregates"),
     ("ontap", "/svm/peers", ("svm", "peers"), "peers"),
+    # Child endpoint whose parent uses ``identifier_field="name"`` (#606).
+    (
+        "ontap",
+        "/network/fc/fabrics/{fabric.name}/zones",
+        ("network", "fc", "fabrics", "zones"),
+        "zones",
+    ),
     ("dii", "/assets/storages", ("assets", "storages"), "storages"),
     ("dii", "/assets/storages/count", ("assets", "storages", "count"), "count"),
 ]
 
 
 @pytest.fixture(scope="module")
-def parsed_endpoints_by_api() -> dict[str, tuple[list, set[str]]]:
-    """Parse each spec once per module and return (endpoints, shared_schemas).
+def parsed_endpoints_by_api() -> dict[str, tuple[list, set[str], list]]:
+    """Parse each spec once per module and return (endpoints, shared_schemas, full_endpoints).
 
     Mirrors the production pipeline in :mod:`tools.codegen.openapi_codegen`:
     deduplicates same-module-path endpoints BEFORE detecting shared
     schemas.  ONTAP's collection+item pairs reference the same schema
     but only one survives dedup, so the schema is not truly shared
     across distinct module paths.
+
+    Also returns the full (pre-dedup) endpoint list so the test can
+    build ``schema_lookup`` and ``identifier_map`` from all endpoints —
+    mirroring the production code which builds these from the full list
+    so child endpoints can always find their parent's schema and
+    identifier field (issue #606).
     """
-    result: dict[str, tuple[list, set[str]]] = {}
+    result: dict[str, tuple[list, set[str], list]] = {}
     for api_type, spec_path in [("ontap", ONTAP_SPEC_PATH), ("dii", DII_SPEC_PATH)]:
         if not spec_path.exists():
             continue
-        endpoints = parse_openapi_spec(spec_path, api_type)
-        endpoints = _deduplicate_endpoints(endpoints)
+        full_endpoints = parse_openapi_spec(spec_path, api_type)
+        endpoints = _deduplicate_endpoints(full_endpoints)
         shared = detect_shared_schemas(endpoints)
-        result[api_type] = (endpoints, shared)
+        result[api_type] = (endpoints, shared, full_endpoints)
     return result
 
 
@@ -122,13 +139,13 @@ def test_codegen_round_trip(
     api_path: str,
     module_parts: tuple[str, ...],
     toml_stem: str,
-    parsed_endpoints_by_api: dict[str, tuple[list, set[str]]],
+    parsed_endpoints_by_api: dict[str, tuple[list, set[str], list]],
     tmp_path: Path,
 ) -> None:
     """Regenerating an on-disk endpoint must reproduce it byte-identically."""
     if api_type not in parsed_endpoints_by_api:
         pytest.skip(f"{api_type} spec not available")
-    endpoints, shared_schemas = parsed_endpoints_by_api[api_type]
+    endpoints, shared_schemas, full_endpoints = parsed_endpoints_by_api[api_type]
     endpoint = next((e for e in endpoints if e.path == api_path), None)
     assert endpoint is not None, f"endpoint {api_path} not found in parsed {api_type} spec"
 
@@ -152,8 +169,12 @@ def test_codegen_round_trip(
     seed_dir.mkdir(parents=True, exist_ok=True)
     shutil.copy2(ondisk_toml, seed_dir / f"{toml_stem}.toml")
 
-    # Run the codegen pipeline into the temp tree.
-    schema_lookup = {e.path: e.schema_name for e in endpoints}
+    # Build schema_lookup and identifier_map from the full (pre-dedup)
+    # endpoint list — mirrors production code in openapi_codegen.py so
+    # child endpoints can always resolve their parent's schema and
+    # identifier field even when the parent was collapsed by dedup (#606).
+    schema_lookup = {e.path: e.schema_name for e in full_endpoints}
+    identifier_map = {e.path: e.identifier_field for e in full_endpoints if e.identifier_field}
     write_endpoint_files(
         endpoint,
         temp_cache_dir,
@@ -162,6 +183,7 @@ def test_codegen_round_trip(
         schema_lookup,
         models_dir=temp_models_dir,
         shared_schemas=shared_schemas,
+        identifier_map=identifier_map,
     )
 
     generated_mapping = temp_cache_dir / api_type / Path(*module_parts) / "mapping.py"

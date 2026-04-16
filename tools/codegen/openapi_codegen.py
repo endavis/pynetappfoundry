@@ -160,12 +160,20 @@ def run(
         print("No endpoints to generate.", file=sys.stderr)
         return []
 
-    # Preserve the reference to the full (pre-filter) spec endpoints so
-    # future enhancements can reason about schemas outside the filter.
-    del full_spec_endpoints
+    # Build schema lookup from the full (pre-dedup) endpoint list so that
+    # child endpoints can always resolve their parent's schema name — even
+    # when the parent collection endpoint was collapsed by dedup with its
+    # sibling item endpoint.
+    schema_lookup: dict[str, str] = {ep.path: ep.schema_name for ep in full_spec_endpoints}
 
-    # Build schema lookup for parent path resolution in mappings
-    schema_lookup: dict[str, str] = {ep.path: ep.schema_name for ep in endpoints}
+    # Build identifier map from the full endpoint list so that
+    # ``generate_mapping`` can look up the parent's actual
+    # ``identifier_field`` (e.g. ``"name"`` instead of assuming ``"uuid"``).
+    identifier_map: dict[str, str] = {
+        ep.path: ep.identifier_field for ep in full_spec_endpoints if ep.identifier_field
+    }
+
+    del full_spec_endpoints
 
     all_written: list[Path] = []
 
@@ -184,6 +192,7 @@ def run(
             overlay_dir,
             schema_lookup,
             shared_schemas=shared_schemas,
+            identifier_map=identifier_map,
         )
         all_written.extend(written)
         field_count = len([f for f in ep.fields if not f.is_object or f.is_list])

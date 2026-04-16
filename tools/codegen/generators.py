@@ -738,6 +738,7 @@ def generate_mapping(
     existing_toml_path: Path | None = None,
     *,
     shared_schemas: frozenset[str] | set[str] = frozenset(),
+    identifier_map: dict[str, str] | None = None,
 ) -> str:
     """Generate a TypeMapping/FieldMapping module for an endpoint.
 
@@ -771,6 +772,11 @@ def generate_mapping(
             :func:`_path_to_class_name` so the class name is
             URL-path-derived for shared schemas (avoids registry
             collisions across endpoints that share a schema).
+        identifier_map: Optional mapping of API path → identifier_field
+            name (e.g. ``{"/network/fc/fabrics": "name"}``).  Used to
+            look up the parent endpoint's actual identifier when emitting
+            ``parent_id_field``.  Falls back to the API-default dispatch
+            table when the parent path is absent from the map.
 
     Returns:
         Python source code for the mapping module.
@@ -951,10 +957,14 @@ def generate_mapping(
                 break
     if parent_resolvable:
         lines.append(f'    parent_mapping="{parent_class}",')
-        # Dispatch ``parent_id_field`` by API.  ONTAP uses ``uuid``;
-        # DII uses ``id``.  Fall back to ``uuid`` for any API not in
-        # the dispatch table (legacy behavior).
-        parent_id_field = _PARENT_ID_FIELD_BY_API.get(api_type, "uuid")
+        # Look up the parent endpoint's actual ``identifier_field`` from
+        # the pre-built map.  This correctly handles parents that use
+        # non-default identifiers (e.g. ``"name"`` instead of ``"uuid"``).
+        # Fall back to the API-default dispatch table when the parent
+        # path is absent from the map (legacy behavior).
+        parent_id_field = (identifier_map or {}).get(
+            endpoint.parent_path
+        ) or _PARENT_ID_FIELD_BY_API.get(api_type, "uuid")
         lines.append(f'    parent_id_field="{parent_id_field}",')
 
     lines.append("    fields=(")
@@ -1164,6 +1174,7 @@ def write_endpoint_files(
     models_dir: Path | None = None,
     *,
     shared_schemas: frozenset[str] | set[str] = frozenset(),
+    identifier_map: dict[str, str] | None = None,
 ) -> list[Path]:
     """Write all generated files for an endpoint.
 
@@ -1187,6 +1198,9 @@ def write_endpoint_files(
         shared_schemas: Set of schema names referenced by >1 endpoint
             in the current spec.  Threaded through the model, mapping,
             init, and TOML generators so class names stay consistent.
+        identifier_map: Optional mapping of API path → identifier_field
+            name.  Threaded through to :func:`generate_mapping` for
+            resolving the parent's ``parent_id_field``.
 
     Returns:
         List of paths to all files written.
@@ -1243,6 +1257,7 @@ def write_endpoint_files(
             schema_lookup,
             existing_toml_path=existing_toml,
             shared_schemas=shared_schemas,
+            identifier_map=identifier_map,
         )
     )
     written.append(mapping_path)
