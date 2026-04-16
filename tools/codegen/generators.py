@@ -957,20 +957,37 @@ def generate_mapping(
                 parent_resolvable = True
                 break
     if parent_resolvable:
-        lines.append(f'    parent_mapping="{parent_class}",')
         # Look up the parent endpoint's actual ``identifier_field`` from
         # the pre-built map.  Only use it when the root segment of the
         # identifier exists as a field on the parent's schema — the
         # spec's path parameter name (e.g. ``svm.uuid``) doesn't always
         # correspond to a field on the parent model (the item endpoint
         # may win dedup and lack the field the collection had).
-        # Fall back to the API-default dispatch table otherwise.
+        # Fall back to the API-default dispatch table, then give up if
+        # neither candidate exists on the model.
         candidate = (identifier_map or {}).get(endpoint.parent_path)
-        parent_fields = (parent_field_names or {}).get(endpoint.parent_path, set())
-        if candidate and candidate.split(".")[0] in parent_fields:
+        parent_fields = (
+            (parent_field_names or {}).get(endpoint.parent_path, set())
+            if parent_field_names is not None
+            else None
+        )
+        if parent_fields is not None and candidate and candidate.split(".")[0] in parent_fields:
             parent_id_field = candidate
+        elif parent_fields is not None:
+            fallback = _PARENT_ID_FIELD_BY_API.get(api_type, "uuid")
+            if fallback.split(".")[0] in parent_fields:
+                parent_id_field = fallback
+            else:
+                # Neither the inferred identifier nor the API default
+                # exists on the parent model (dedup winner).  Skip
+                # parent linkage entirely — manual editing needed.
+                parent_resolvable = False
         else:
-            parent_id_field = _PARENT_ID_FIELD_BY_API.get(api_type, "uuid")
+            # No field validation available — use identifier_map or
+            # API default (legacy behavior).
+            parent_id_field = candidate or _PARENT_ID_FIELD_BY_API.get(api_type, "uuid")
+    if parent_resolvable:
+        lines.append(f'    parent_mapping="{parent_class}",')
         lines.append(f'    parent_id_field="{parent_id_field}",')
 
     lines.append("    fields=(")
