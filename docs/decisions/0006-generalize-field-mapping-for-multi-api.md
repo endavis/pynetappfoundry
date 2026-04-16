@@ -38,3 +38,4 @@ Issue #263 integrated `get_all_records()` into `MetadataCollector._cached_api_ca
 
 - [Field Mapping Framework Developer Guide](../development/field-mapping.md)
 - [ADR-0012: Unified DataSource accessor for all cluster reads](0012-unified-datasource-accessor.md) — introduces the per-`api_type` backend registry
+- [ADR-0015: DII backend](0015-dii-backend-live-only-bare-array-envelope-offsetlimit-pagination.md) — first non-ONTAP backend, validates the multi-API generalization
