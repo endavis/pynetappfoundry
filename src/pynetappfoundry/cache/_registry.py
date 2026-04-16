@@ -15,6 +15,7 @@ so callers no longer need manual mapping imports.
 
 from __future__ import annotations
 
+import logging
 import sys
 from typing import TYPE_CHECKING
 
@@ -22,6 +23,8 @@ if TYPE_CHECKING:
     from pydantic import BaseModel
 
     from pynetappfoundry.cache.field_mapping import TypeMapping
+
+logger = logging.getLogger(__name__)
 
 
 def _ensure_bootstrapped() -> None:
@@ -59,10 +62,43 @@ class ModelRegistry:
     def register_mapping(self, name: str, mapping: TypeMapping) -> None:
         """Register a type mapping by name.
 
+        Emits a warning (but still registers, last-wins) when the same
+        name is already bound to a mapping targeting a **different**
+        ``model_class``.  Collisions of that shape usually indicate a
+        codegen regression where multiple endpoints share a response
+        schema and produce the same class name — see ADR-0008 for the
+        shared-schema naming rule that prevents this for generated
+        mappings.  The warning surfaces the regression in CI/logs
+        without making registry import a hard failure.
+
+        Re-registrations that target the **same** model_class (e.g. the
+        overlay loader's ``replace(mapping, fields=...)`` pass) are
+        treated as legitimate updates and do not warn.
+
         Args:
             name: Identifier for the mapping (e.g. ``"AGGREGATE_MAPPING"``).
             mapping: The TypeMapping instance.
         """
+        existing = self._mappings.get(name)
+        if (
+            existing is not None
+            and existing is not mapping
+            and existing.model_class is not mapping.model_class
+        ):
+            logger.warning(
+                "Duplicate mapping registration for %r: replacing "
+                "api_endpoint=%r (api_type=%r, model_class=%r) with "
+                "api_endpoint=%r (api_type=%r, model_class=%r). "
+                "Last-wins behavior preserved — see ADR-0008 "
+                "shared-schema naming rule.",
+                name,
+                existing.api_endpoint,
+                existing.api_type,
+                existing.model_class.__name__,
+                mapping.api_endpoint,
+                mapping.api_type,
+                mapping.model_class.__name__,
+            )
         self._mappings[name] = mapping
         self._mappings_by_class[mapping.model_class] = mapping
 

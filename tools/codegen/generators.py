@@ -76,12 +76,15 @@ def _path_to_class_name(
     api_path: str,
     schema_name: str = "",
     api_type: str = "ontap",
+    *,
+    shared_schemas: frozenset[str] | set[str] = frozenset(),
 ) -> str:
     """Derive a PascalCase class name for an API endpoint.
 
     Uses ``{ApiType}{SchemaName}`` when a schema ``$ref`` name is
-    available.  Falls back to ``{ApiType}{UrlPathDerived}`` for inline
-    schemas (with redundant-segment deduplication).
+    available AND the schema is unique to this endpoint.  Falls back to
+    ``{ApiType}{UrlPathDerived}`` for inline schemas OR when the schema
+    is shared across multiple endpoints (to avoid registry collisions).
 
     Examples (with ``api_type="ontap"``):
 
@@ -92,11 +95,23 @@ def _path_to_class_name(
     * ``schema_name=""`` (inline), path ``"/cluster/licensing/licenses"``
       → ``"OntapClusterLicensingLicense"``
 
+    DII example (schema ``Count`` shared across 7 endpoints):
+
+    * ``schema_name="Count"``, path ``"/assets/storages/count"``,
+      ``shared_schemas={"Count"}`` → ``"DiiAssetsStoragesCount"``
+      (URL-path-derived; the schema-derived ``DiiCount`` would collide
+      with six other endpoints).
+
     Args:
         api_path: API endpoint path.
         schema_name: Schema ``$ref`` name (e.g. ``"volume"``).
             Empty string for inline schemas.
         api_type: API type prefix (e.g. ``"ontap"``, ``"aiqum"``).
+        shared_schemas: Set of schema names that appear on more than
+            one endpoint across the full spec.  When ``schema_name`` is
+            in this set, the URL-path fallback is used instead of the
+            schema-derived name to produce distinct class names per
+            endpoint.  Default is empty (legacy schema-name behavior).
 
     Returns:
         PascalCase class name string.
@@ -106,7 +121,7 @@ def _path_to_class_name(
 
     prefix = api_type.capitalize()
 
-    if schema_name:
+    if schema_name and schema_name not in shared_schemas:
         return f"{prefix}{_schema_to_pascal(schema_name)}"
 
     # Fallback: derive from the URL path
@@ -546,7 +561,12 @@ def _collect_all_attrs(fields: list[ParsedField], sub_model_map: dict[str, str])
     return attrs
 
 
-def generate_model(endpoint: ParsedEndpoint, api_type: str = "ontap") -> str:
+def generate_model(
+    endpoint: ParsedEndpoint,
+    api_type: str = "ontap",
+    *,
+    shared_schemas: frozenset[str] | set[str] = frozenset(),
+) -> str:
     """Generate a Pydantic model class for an endpoint.
 
     Produces nested ``OntapModel`` subclasses mirroring the API structure
@@ -556,11 +576,18 @@ def generate_model(endpoint: ParsedEndpoint, api_type: str = "ontap") -> str:
     Args:
         endpoint: Parsed endpoint with fields (tree structure).
         api_type: API type for import path context.
+        shared_schemas: Set of schema names referenced by >1 endpoint
+            in the current spec.  Passed through to
+            :func:`_path_to_class_name` so the class name is
+            URL-path-derived for shared schemas (avoids registry
+            collisions across endpoints that share a schema).
 
     Returns:
         Python source code for the model module.
     """
-    class_name = _path_to_class_name(endpoint.path, endpoint.schema_name, api_type)
+    class_name = _path_to_class_name(
+        endpoint.path, endpoint.schema_name, api_type, shared_schemas=shared_schemas
+    )
     doc = f"{class_name} information."
 
     # Build sub-model map by walking the field tree
@@ -693,11 +720,24 @@ def _load_toml_field_overrides(
     return {k: v for k, v in fields_table.items() if isinstance(v, dict)}
 
 
+# ``parent_id_field`` defaults by API.  ONTAP identifies parents by
+# ``uuid``; DII by ``id`` (integer primary key).  Future APIs extend
+# this dispatch.
+_PARENT_ID_FIELD_BY_API: dict[str, str] = {
+    "ontap": "uuid",
+    "aiqum": "uuid",
+    "dii": "id",
+    "occm": "id",
+}
+
+
 def generate_mapping(
     endpoint: ParsedEndpoint,
     api_type: str = "ontap",
     schema_lookup: dict[str, str] | None = None,
     existing_toml_path: Path | None = None,
+    *,
+    shared_schemas: frozenset[str] | set[str] = frozenset(),
 ) -> str:
     """Generate a TypeMapping/FieldMapping module for an endpoint.
 
@@ -726,11 +766,18 @@ def generate_mapping(
             ``requires_explicit_fetch`` values are mirrored into the
             emitted Python.  Missing or malformed overlays fall back
             silently to dataclass defaults.
+        shared_schemas: Set of schema names referenced by >1 endpoint
+            in the current spec.  Passed through to
+            :func:`_path_to_class_name` so the class name is
+            URL-path-derived for shared schemas (avoids registry
+            collisions across endpoints that share a schema).
 
     Returns:
         Python source code for the mapping module.
     """
-    class_name = _path_to_class_name(endpoint.path, endpoint.schema_name, api_type)
+    class_name = _path_to_class_name(
+        endpoint.path, endpoint.schema_name, api_type, shared_schemas=shared_schemas
+    )
     module_parts = _path_to_module_parts(endpoint.path)
     mapping_name = f"{class_name.upper()}_MAPPING"
 
@@ -854,7 +901,12 @@ def generate_mapping(
     lines.append(f"{mapping_name} = TypeMapping(")
     lines.append(f'    name="{class_name}",')
     lines.append(f"    model_class={class_name},")
-    lines.append(f'    api_endpoint="{endpoint.path}?fields=*",')
+    # ``?fields=*`` is an ONTAP REST convention (fetches every field by
+    # default); DII, AIQUM, and OCCM do not honor it.  Emitting it for
+    # non-ONTAP endpoints returns HTTP 400 or silently mangles the
+    # response, so we gate on api_type.
+    api_endpoint = f"{endpoint.path}?fields=*" if api_type == "ontap" else endpoint.path
+    lines.append(f'    api_endpoint="{api_endpoint}",')
 
     lines.append(f'    api_type="{api_type}",')
 
@@ -864,12 +916,46 @@ def generate_mapping(
     if endpoint.records_path != "records":
         lines.append(f'    records_path="{endpoint.records_path}",')
 
-    if endpoint.has_parent:
-        # Derive parent mapping name from parent path
-        parent_schema = (schema_lookup or {}).get(endpoint.parent_path, "")
-        parent_class = _path_to_class_name(endpoint.parent_path, parent_schema, api_type)
+    # Only emit ``parent_mapping`` when the parent path's module tree
+    # actually generates a registered mapping whose class name matches
+    # the computed parent_class — otherwise ``parent_mapping`` would
+    # point to a name that no mapping in the registry claims (tracked
+    # by ``tests/unit/cache/test_mapping_parent_validation.py``).
+    # ONTAP parents resolve because every `/foo/{id}` item endpoint has
+    # a sibling `/foo` collection that registers under the same class
+    # name the parent_class algorithm derives.  DII often lacks the
+    # collection (e.g. `/assets/disks/{id}/...` exists but
+    # `/assets/disks` does not), so the parent link would dangle.
+    parent_resolvable = False
+    parent_class = ""
+    if endpoint.has_parent and schema_lookup:
+        parent_module_parts = tuple(_path_to_module_parts(endpoint.parent_path))
+        parent_schema = schema_lookup.get(endpoint.parent_path, "")
+        parent_class = _path_to_class_name(
+            endpoint.parent_path,
+            parent_schema,
+            api_type,
+            shared_schemas=shared_schemas,
+        )
+        for candidate_path, candidate_schema in schema_lookup.items():
+            if tuple(_path_to_module_parts(candidate_path)) != parent_module_parts:
+                continue
+            candidate_class = _path_to_class_name(
+                candidate_path,
+                candidate_schema,
+                api_type,
+                shared_schemas=shared_schemas,
+            )
+            if candidate_class == parent_class:
+                parent_resolvable = True
+                break
+    if parent_resolvable:
         lines.append(f'    parent_mapping="{parent_class}",')
-        lines.append('    parent_id_field="uuid",')
+        # Dispatch ``parent_id_field`` by API.  ONTAP uses ``uuid``;
+        # DII uses ``id``.  Fall back to ``uuid`` for any API not in
+        # the dispatch table (legacy behavior).
+        parent_id_field = _PARENT_ID_FIELD_BY_API.get(api_type, "uuid")
+        lines.append(f'    parent_id_field="{parent_id_field}",')
 
     lines.append("    fields=(")
 
@@ -928,22 +1014,46 @@ def generate_mapping(
     lines.append("")
 
     result = "\n".join(lines)
+
+    # Emit a file-level noqa header for rules likely to remain after
+    # ``ruff format`` wraps what it can.  ``E501`` covers pre-format
+    # lines >100 chars (post-format ``ruff check --fix`` strips the
+    # directive when redundant).  ``N802`` is needed when any generated
+    # ``_transform_*`` helper has a mixedCase suffix derived from a
+    # camelCase API field (DII's ``applicationRoles`` ->
+    # ``_transform_applicationRoles``).  ONTAP's snake_case API fields
+    # never trigger N802, so ONTAP output is unchanged.
+    noqa_codes: list[str] = []
     if any(len(line) > 100 for line in lines):
-        result = "# ruff: noqa: E501\n" + result
+        noqa_codes.append("E501")
+    if any(any(c.isupper() for c in ap.replace(".", "_")) for ap in array_sub_models):
+        noqa_codes.append("N802")
+    if noqa_codes:
+        result = f"# ruff: noqa: {', '.join(noqa_codes)}\n" + result
     return result
 
 
-def generate_init(endpoint: ParsedEndpoint, api_type: str = "ontap") -> str:
+def generate_init(
+    endpoint: ParsedEndpoint,
+    api_type: str = "ontap",
+    *,
+    shared_schemas: frozenset[str] | set[str] = frozenset(),
+) -> str:
     """Generate an ``__init__.py`` for an endpoint's package.
 
     Args:
         endpoint: Parsed endpoint.
         api_type: API type prefix for class naming.
+        shared_schemas: Set of schema names referenced by >1 endpoint.
+            Passed through to :func:`_path_to_class_name` for
+            consistent class naming across generated files.
 
     Returns:
         Python source code for ``__init__.py``.
     """
-    class_name = _path_to_class_name(endpoint.path, endpoint.schema_name, api_type)
+    class_name = _path_to_class_name(
+        endpoint.path, endpoint.schema_name, api_type, shared_schemas=shared_schemas
+    )
     module_parts = _path_to_module_parts(endpoint.path)
 
     docstring = f'"""{class_name} model."""'
@@ -962,6 +1072,8 @@ def generate_toml_overlay(
     endpoint: ParsedEndpoint,
     existing_path: Path | None = None,
     api_type: str = "ontap",
+    *,
+    shared_schemas: frozenset[str] | set[str] = frozenset(),
 ) -> str:
     """Generate or update a TOML overlay for an endpoint.
 
@@ -974,11 +1086,16 @@ def generate_toml_overlay(
         endpoint: Parsed endpoint with fields (tree structure).
         existing_path: Path to existing overlay file, or None.
         api_type: API type prefix for class naming.
+        shared_schemas: Set of schema names referenced by >1 endpoint.
+            Passed through to :func:`_path_to_class_name` for
+            consistent class naming across generated files.
 
     Returns:
         TOML content as a string.
     """
-    class_name = _path_to_class_name(endpoint.path, endpoint.schema_name, api_type)
+    class_name = _path_to_class_name(
+        endpoint.path, endpoint.schema_name, api_type, shared_schemas=shared_schemas
+    )
     leaves = _collect_all_leaves(endpoint.fields)
 
     # Load existing overlay if present
@@ -1045,6 +1162,8 @@ def write_endpoint_files(
     overlay_dir: Path | None = None,
     schema_lookup: dict[str, str] | None = None,
     models_dir: Path | None = None,
+    *,
+    shared_schemas: frozenset[str] | set[str] = frozenset(),
 ) -> list[Path]:
     """Write all generated files for an endpoint.
 
@@ -1065,6 +1184,9 @@ def write_endpoint_files(
         models_dir: Root output directory for model files
             (e.g. ``src/pynetappfoundry/models/``).  Defaults to
             ``output_dir/../models/``.
+        shared_schemas: Set of schema names referenced by >1 endpoint
+            in the current spec.  Threaded through the model, mapping,
+            init, and TOML generators so class names stay consistent.
 
     Returns:
         List of paths to all files written.
@@ -1104,12 +1226,12 @@ def write_endpoint_files(
 
     # model.py (in models/)
     model_path = model_pkg_dir / "model.py"
-    model_path.write_text(generate_model(endpoint, api_type))
+    model_path.write_text(generate_model(endpoint, api_type, shared_schemas=shared_schemas))
     written.append(model_path)
 
     # __init__.py for the leaf model package (in models/)
     init_path = model_pkg_dir / "__init__.py"
-    init_path.write_text(generate_init(endpoint, api_type))
+    init_path.write_text(generate_init(endpoint, api_type, shared_schemas=shared_schemas))
     written.append(init_path)
 
     # mapping.py (in cache/) — reads the current on-disk TOML if any
@@ -1120,12 +1242,15 @@ def write_endpoint_files(
             api_type,
             schema_lookup,
             existing_toml_path=existing_toml,
+            shared_schemas=shared_schemas,
         )
     )
     written.append(mapping_path)
 
     # TOML overlay (in cache/ or overlay_dir) — regenerated after mapping
-    toml_path.write_text(generate_toml_overlay(endpoint, existing_toml, api_type))
+    toml_path.write_text(
+        generate_toml_overlay(endpoint, existing_toml, api_type, shared_schemas=shared_schemas)
+    )
     written.append(toml_path)
 
     return written
@@ -1134,13 +1259,25 @@ def write_endpoint_files(
 def _ensure_init_files(base_dir: Path, parts: list[str], pkg_type: str = "cache") -> None:
     """Ensure ``__init__.py`` exists at every intermediate directory.
 
+    Also seeds ``base_dir/__init__.py`` (the api-type package root) and,
+    for the cache side, the leaf package directory.  The model side's
+    leaf is overwritten immediately after by :func:`generate_init`; for
+    cache leaves we need a placeholder so ``pkgutil.walk_packages`` can
+    discover ``mapping.py`` modules on a freshly generated tree.
+
     Args:
         base_dir: Root directory.
         parts: Module path segments.
         pkg_type: Type label for the docstring (``"cache"`` or ``"models"``).
     """
+    base_dir.mkdir(parents=True, exist_ok=True)
+    base_init = base_dir / "__init__.py"
+    if not base_init.exists():
+        base_name = base_dir.name.replace("_", " ").title()
+        base_init.write_text(f'"""{base_name} {pkg_type} models."""\n')
+
     current = base_dir
-    for part in parts[:-1]:  # Skip the leaf -- it gets a full __init__.py
+    for part in parts:
         current = current / part
         current.mkdir(parents=True, exist_ok=True)
         init_file = current / "__init__.py"

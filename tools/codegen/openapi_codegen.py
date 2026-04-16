@@ -17,7 +17,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from tools.codegen.adapters import ParsedEndpoint, parse_openapi_spec
+from tools.codegen.adapters import ParsedEndpoint, detect_shared_schemas, parse_openapi_spec
 from tools.codegen.generators import (
     _collect_all_leaves,
     _path_to_class_name,
@@ -133,18 +133,36 @@ def run(
     endpoints = parse_openapi_spec(spec, api_type)
     print(f"Found {len(endpoints)} GET endpoints with response schemas.")
 
+    # Deduplicate endpoints that resolve to the same module path FIRST.
+    # e.g. /storage/volumes and /storage/volumes/{uuid} both map to
+    # storage/volumes — keep the one with the most leaf fields.  ONTAP
+    # collection+item pairs both reference the same schema, but since
+    # only one survives dedup the schema isn't actually shared across
+    # distinct module paths.  Detecting shared schemas BEFORE dedup
+    # would incorrectly flag nearly every ONTAP schema as shared.
+    full_spec_endpoints = list(endpoints)  # retain for shared-schema scan
+    endpoints = _deduplicate_endpoints(endpoints)
+
+    # Detect schema names still referenced by more than one endpoint
+    # *after* deduplication.  For ONTAP this is typically 0 (schemas
+    # shared between collection + item are collapsed); for DII this
+    # catches schemas like ``Count`` that are genuinely shared across
+    # distinct URL paths (7 different ``/foo/count`` endpoints in DII).
+    shared_schemas = detect_shared_schemas(endpoints)
+    if shared_schemas:
+        print(f"Detected {len(shared_schemas)} shared response schema(s) after dedup.")
+
     if endpoint_filter:
         endpoints = [e for e in endpoints if e.path in endpoint_filter]
         print(f"Filtered to {len(endpoints)} endpoints.")
 
-    # Deduplicate endpoints that resolve to the same module path.
-    # e.g. /storage/volumes and /storage/volumes/{uuid} both map to
-    # storage/volumes — keep the one with the most leaf fields.
-    endpoints = _deduplicate_endpoints(endpoints)
-
     if not endpoints:
         print("No endpoints to generate.", file=sys.stderr)
         return []
+
+    # Preserve the reference to the full (pre-filter) spec endpoints so
+    # future enhancements can reason about schemas outside the filter.
+    del full_spec_endpoints
 
     # Build schema lookup for parent path resolution in mappings
     schema_lookup: dict[str, str] = {ep.path: ep.schema_name for ep in endpoints}
@@ -153,7 +171,9 @@ def run(
 
     for ep in endpoints:
         if dry_run:
-            class_name = _path_to_class_name(ep.path, ep.schema_name, api_type)
+            class_name = _path_to_class_name(
+                ep.path, ep.schema_name, api_type, shared_schemas=shared_schemas
+            )
             print(f"  [dry-run] {ep.path} -> {class_name} ({len(ep.fields)} fields)")
             continue
 
@@ -163,6 +183,7 @@ def run(
             api_type,
             overlay_dir,
             schema_lookup,
+            shared_schemas=shared_schemas,
         )
         all_written.extend(written)
         field_count = len([f for f in ep.fields if not f.is_object or f.is_list])

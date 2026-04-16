@@ -443,6 +443,11 @@ def parse_openapi_spec(
     Returns:
         List of :class:`ParsedEndpoint` for all GET endpoints with
         response schemas.
+
+    See Also:
+        :func:`detect_shared_schemas` — post-processes the returned list
+        to identify schema names referenced by more than one endpoint,
+        which the code generators use to disambiguate class names.
     """
     with open(spec_path, encoding="utf-8") as f:
         spec = json.load(f)
@@ -533,6 +538,41 @@ def parse_openapi_spec(
             ep.identifier_field = param
 
     return endpoints
+
+
+def detect_shared_schemas(endpoints: list[ParsedEndpoint]) -> set[str]:
+    """Return schema names referenced by more than one endpoint.
+
+    When a response schema (``$ref``) is shared across multiple
+    endpoints, naming the generated class after the schema would cause
+    registry collisions in ``ModelRegistry`` — every mapping registers
+    under the same class name and all but the last one are shadowed.
+
+    The generators use this set to switch to URL-path-derived class
+    names for the shared cases, producing distinct classes per endpoint
+    (e.g. ``DiiAssetsStoragesCount`` and ``DiiAssetsFabricsCount``
+    instead of two colliding ``DiiCount`` classes).
+
+    Empty schema names (endpoints whose response is inline, not
+    ``$ref``'d) are ignored — they already fall back to URL-path-derived
+    names in :func:`_path_to_class_name`.
+
+    ONTAP specs have 0 shared schemas in practice; this function returns
+    an empty set for them and the legacy schema-name-derived class names
+    are preserved.
+
+    Args:
+        endpoints: Parsed endpoint list from :func:`parse_openapi_spec`.
+
+    Returns:
+        Set of schema names that appear on more than one endpoint.
+    """
+    counts: dict[str, int] = {}
+    for ep in endpoints:
+        if not ep.schema_name:
+            continue
+        counts[ep.schema_name] = counts.get(ep.schema_name, 0) + 1
+    return {name for name, count in counts.items() if count > 1}
 
 
 def _parse_with_datamodel_codegen(spec_path: Path) -> dict[str, Any]:

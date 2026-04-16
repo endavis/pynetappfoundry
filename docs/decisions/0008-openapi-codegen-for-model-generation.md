@@ -113,12 +113,83 @@ appear in future specs).
 
 Issue: #601
 
+### Shared-schema naming, registry duplicate guard, non-ONTAP support (Issue #603)
+
+**Shared-schema naming rule.**  When an OpenAPI response schema is
+``$ref``-ed by more than one endpoint *after* the generator's
+same-module-path deduplication pass, the generator derives the class
+name from the URL path rather than the schema name.  Example: DII's
+``Count`` schema is referenced by 7 distinct ``/foo/count`` endpoints
+(``/assets/storages/count``, ``/assets/fabrics/count``, …).  Naming
+every generated class ``DiiCount`` would cause 6 of 7 mappings to be
+shadowed in ``ModelRegistry``; URL-path-derived naming produces
+distinct classes (``DiiAssetsStoragesCount``,
+``DiiAssetsFabricsCount``, …) so every endpoint is reachable via
+``DataSource.query(<ModelClass>, …)``.
+
+The detection lives in
+:func:`tools.codegen.adapters.detect_shared_schemas` and runs after
+:func:`tools.codegen.openapi_codegen._deduplicate_endpoints` — ONTAP
+collection+item pairs share a schema but only one survives dedup, so
+detecting shared schemas post-dedup correctly returns ``set()`` for
+ONTAP and preserves byte-identical output (round-trip invariant).
+``_path_to_class_name`` accepts a keyword-only ``shared_schemas``
+parameter; callers thread it through ``generate_model``,
+``generate_mapping``, ``generate_init``, ``generate_toml_overlay``,
+and ``write_endpoint_files``.
+
+**Registry duplicate-registration warning.**
+``ModelRegistry.register_mapping()`` now emits a ``logger.warning``
+when the same class name is registered with a **different**
+``model_class`` (the collision shape the shared-schema rule prevents).
+Registration still proceeds last-wins for backward compatibility — the
+warning surfaces regressions in CI/logs without making registry
+import a hard failure.  Legitimate re-registrations that target the
+same ``model_class`` (e.g. the overlay-loader pass that replaces a
+mapping's ``fields`` tuple) do not warn.
+
+**Non-ONTAP infrastructure fixes.**  The same PR also corrects six
+ONTAP-specific assumptions that blocked non-ONTAP codegen:
+
+* ``?fields=*`` query suffix is only appended for ``api_type="ontap"``
+  (DII, AIQUM, OCCM do not honor it).
+* ``_ensure_init_files`` now seeds both the ``cache/<api>/`` and
+  ``models/<api>/`` trees, including api-type roots and cache leaves,
+  so ``pkgutil.walk_packages`` can discover mappings on a freshly
+  generated tree.
+* ``parent_mapping`` is only emitted when the parent path's module
+  tree generates a mapping whose class name matches the computed
+  ``parent_class`` (via the ``shared_schemas``-aware derivation) —
+  orphan child endpoints get ``parent_mapping`` omitted rather than
+  dangling.
+* ``parent_id_field`` dispatches on ``api_type``
+  (``_PARENT_ID_FIELD_BY_API`` — ONTAP/AIQUM → ``"uuid"``, DII/OCCM
+  → ``"id"``).
+* Generated mappings emit a ``# ruff: noqa: N802`` header when any
+  ``_transform_*`` helper has a mixedCase suffix (DII's
+  ``applicationRoles`` → ``_transform_applicationRoles``).
+* ``doit generate_models`` post-processes the generated tree with
+  ``ruff format`` then ``ruff check --fix``, which drops any
+  ``# ruff: noqa: E501`` header the formatter made redundant.
+
+**Round-trip invariant extended.**  The regression test
+``tests/unit/codegen/test_roundtrip.py`` now parametrizes over both
+ONTAP and DII endpoints: three ONTAP (``/storage/volumes``,
+``/storage/aggregates``, ``/svm/peers``) plus two DII
+(``/assets/storages`` — unique schema; ``/assets/storages/count`` —
+shared-schema disambiguation).  The two DII endpoints are committed
+alongside the generator fix so the test has on-disk expectations to
+diff against; the remaining DII surface is generated under #600.
+
+Issue: #603
+
 ## Related Issues
 
 - Issue #301: feat: field annotations, OpenAPI codegen, and SQL cache storage
 - Issue #402: refactor: move ONTAP API models from cache/ to models/ package
 - Issue #444: refactor: evaluate nested models to replace flat model pattern (see ADR-0011)
 - Issue #601: bug(codegen): pipeline drops identifier_field and cache_strategy=realtime on regen
+- Issue #603: bug(codegen): shared response schemas cause registry collisions; non-ONTAP support gaps
 
 ## Related Documentation
 
