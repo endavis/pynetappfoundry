@@ -11,6 +11,7 @@ ONTAPWEBAUTHNGLOBAL_MAPPING = TypeMapping(
     model_class=OntapWebauthnGlobal,
     api_endpoint="/security/webauthn/global-settings?fields=*",
     api_type="ontap",
+    identifier_field="owner.uuid",
     fields=(
         FieldMapping(
             cache_attr="attestation",

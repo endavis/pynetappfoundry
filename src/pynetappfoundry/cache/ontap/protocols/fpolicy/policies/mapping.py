@@ -22,8 +22,6 @@ ONTAPFPOLICYPOLICY_MAPPING = TypeMapping(
     model_class=OntapFpolicyPolicy,
     api_endpoint="/protocols/fpolicy/{svm.uuid}/policies?fields=*",
     api_type="ontap",
-    parent_mapping="OntapSvm",
-    parent_id_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="allow_privileged_access",

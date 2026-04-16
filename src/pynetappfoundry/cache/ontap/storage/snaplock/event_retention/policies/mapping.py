@@ -13,6 +13,7 @@ ONTAPSNAPLOCKRETENTIONPOLICY_MAPPING = TypeMapping(
     model_class=OntapSnaplockRetentionPolicy,
     api_endpoint="/storage/snaplock/event-retention/policies?fields=*",
     api_type="ontap",
+    identifier_field="policy.name",
     fields=(
         FieldMapping(
             cache_attr="name",

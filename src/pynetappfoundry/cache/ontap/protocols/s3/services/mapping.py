@@ -28,6 +28,7 @@ ONTAPS3SERVICE_MAPPING = TypeMapping(
     model_class=OntapS3Service,
     api_endpoint="/protocols/s3/services?fields=*",
     api_type="ontap",
+    identifier_field="svm.uuid",
     fields=(
         FieldMapping(
             cache_attr="buckets",

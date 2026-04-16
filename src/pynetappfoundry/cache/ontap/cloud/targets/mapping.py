@@ -11,6 +11,7 @@ ONTAPCLOUDTARGET_MAPPING = TypeMapping(
     model_class=OntapCloudTarget,
     api_endpoint="/cloud/targets?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="access_key",

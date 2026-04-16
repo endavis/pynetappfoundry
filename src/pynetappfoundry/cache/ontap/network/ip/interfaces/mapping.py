@@ -11,6 +11,7 @@ ONTAPIPINTERFACE_MAPPING = TypeMapping(
     model_class=OntapIpInterface,
     api_endpoint="/network/ip/interfaces?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="ddns_enabled",

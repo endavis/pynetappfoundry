@@ -11,6 +11,7 @@ ONTAPSCHEDULE_MAPPING = TypeMapping(
     model_class=OntapSchedule,
     api_endpoint="/cluster/schedules?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="cluster.name",

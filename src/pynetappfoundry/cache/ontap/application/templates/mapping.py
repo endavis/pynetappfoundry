@@ -268,6 +268,7 @@ ONTAPAPPLICATIONTEMPLATE_MAPPING = TypeMapping(
     model_class=OntapApplicationTemplate,
     api_endpoint="/application/templates?fields=*",
     api_type="ontap",
+    identifier_field="name",
     fields=(
         FieldMapping(
             cache_attr="name",

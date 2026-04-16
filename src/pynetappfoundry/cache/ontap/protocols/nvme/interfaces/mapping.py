@@ -11,6 +11,7 @@ ONTAPNVMEINTERFACE_MAPPING = TypeMapping(
     model_class=OntapNvmeInterface,
     api_endpoint="/protocols/nvme/interfaces?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="enabled",

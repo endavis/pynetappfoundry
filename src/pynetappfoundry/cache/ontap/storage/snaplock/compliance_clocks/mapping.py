@@ -13,6 +13,7 @@ ONTAPSNAPLOCKCOMPLIANCECLOCK_MAPPING = TypeMapping(
     model_class=OntapSnaplockComplianceClock,
     api_endpoint="/storage/snaplock/compliance-clocks?fields=*",
     api_type="ontap",
+    identifier_field="node.uuid",
     fields=(
         FieldMapping(
             cache_attr="node.name",

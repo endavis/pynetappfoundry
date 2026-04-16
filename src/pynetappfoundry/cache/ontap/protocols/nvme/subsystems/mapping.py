@@ -28,6 +28,7 @@ ONTAPNVMESUBSYSTEM_MAPPING = TypeMapping(
     model_class=OntapNvmeSubsystem,
     api_endpoint="/protocols/nvme/subsystems?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="comment",

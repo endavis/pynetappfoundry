@@ -14,8 +14,6 @@ ONTAPFILEDIRECTORYSECURITY_MAPPING = TypeMapping(
     api_endpoint="/protocols/file-security/permissions/{svm.uuid}/{path}?fields=*",
     api_type="ontap",
     records_path="acls",
-    parent_mapping="OntapSvm",
-    parent_id_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="access",

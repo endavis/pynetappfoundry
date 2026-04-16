@@ -11,6 +11,7 @@ ONTAPSVMSSHSERVER_MAPPING = TypeMapping(
     model_class=OntapSvmSshServer,
     api_endpoint="/security/ssh/svms?fields=*",
     api_type="ontap",
+    identifier_field="svm.uuid",
     fields=(
         FieldMapping(
             cache_attr="ciphers",

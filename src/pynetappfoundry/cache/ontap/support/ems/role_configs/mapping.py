@@ -11,6 +11,7 @@ ONTAPEMSROLECONFIGRESPONSE_MAPPING = TypeMapping(
     model_class=OntapEmsRoleConfigResponse,
     api_endpoint="/support/ems/role-configs?fields=*",
     api_type="ontap",
+    identifier_field="access_control_role.name",
     fields=(
         FieldMapping(
             cache_attr="access_control_role.name",

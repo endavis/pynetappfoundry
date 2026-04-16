@@ -22,6 +22,7 @@ ONTAPCAPACITYPOOLRESPONSE_MAPPING = TypeMapping(
     model_class=OntapCapacityPoolResponse,
     api_endpoint="/cluster/licensing/capacity-pools?fields=*",
     api_type="ontap",
+    identifier_field="serial_number",
     fields=(
         FieldMapping(
             cache_attr="license_manager.uuid",

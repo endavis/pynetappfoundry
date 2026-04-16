@@ -64,6 +64,7 @@ ONTAPSTORAGEBRIDGE_MAPPING = TypeMapping(
     model_class=OntapStorageBridge,
     api_endpoint="/storage/bridges?fields=*",
     api_type="ontap",
+    identifier_field="wwn",
     fields=(
         FieldMapping(
             cache_attr="chassis_throughput_state",

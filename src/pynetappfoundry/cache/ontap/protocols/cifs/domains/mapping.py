@@ -40,6 +40,7 @@ ONTAPCIFSDOMAIN_MAPPING = TypeMapping(
     model_class=OntapCifsDomain,
     api_endpoint="/protocols/cifs/domains?fields=*",
     api_type="ontap",
+    identifier_field="svm.uuid",
     fields=(
         FieldMapping(
             cache_attr="ad_domain.password",

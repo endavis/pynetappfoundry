@@ -22,6 +22,7 @@ ONTAPEMSDESTINATIONRESPONSE_MAPPING = TypeMapping(
     model_class=OntapEmsDestinationResponse,
     api_endpoint="/support/ems/destinations?fields=*",
     api_type="ontap",
+    identifier_field="name",
     fields=(
         FieldMapping(
             cache_attr="access_control_role.name",

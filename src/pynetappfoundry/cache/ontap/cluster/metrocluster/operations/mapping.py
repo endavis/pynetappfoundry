@@ -13,6 +13,7 @@ ONTAPMETROCLUSTEROPERATION_MAPPING = TypeMapping(
     model_class=OntapMetroclusterOperation,
     api_endpoint="/cluster/metrocluster/operations?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="additional_info",

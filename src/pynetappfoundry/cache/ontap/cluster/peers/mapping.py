@@ -26,6 +26,7 @@ ONTAPCLUSTERPEER_MAPPING = TypeMapping(
     model_class=OntapClusterPeer,
     api_endpoint="/cluster/peers?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="authentication.expiry_time",

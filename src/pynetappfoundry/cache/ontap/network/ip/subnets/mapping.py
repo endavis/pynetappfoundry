@@ -28,6 +28,7 @@ ONTAPIPSUBNET_MAPPING = TypeMapping(
     model_class=OntapIpSubnet,
     api_endpoint="/network/ip/subnets?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="available_count",

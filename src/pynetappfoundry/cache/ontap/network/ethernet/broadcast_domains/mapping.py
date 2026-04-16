@@ -22,6 +22,7 @@ ONTAPBROADCASTDOMAIN_MAPPING = TypeMapping(
     model_class=OntapBroadcastDomain,
     api_endpoint="/network/ethernet/broadcast-domains?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="ipspace.name",

@@ -22,6 +22,7 @@ ONTAPQUOTARULE_MAPPING = TypeMapping(
     model_class=OntapQuotaRule,
     api_endpoint="/storage/quota/rules?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="files.hard_limit",

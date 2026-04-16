@@ -13,6 +13,7 @@ ONTAPUNIXGROUPSETTINGS_MAPPING = TypeMapping(
     model_class=OntapUnixGroupSettings,
     api_endpoint="/name-services/cache/unix-group/settings?fields=*",
     api_type="ontap",
+    identifier_field="svm.uuid",
     fields=(
         FieldMapping(
             cache_attr="enabled",

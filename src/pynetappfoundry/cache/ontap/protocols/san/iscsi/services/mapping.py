@@ -11,6 +11,7 @@ ONTAPISCSISERVICE_MAPPING = TypeMapping(
     model_class=OntapIscsiService,
     api_endpoint="/protocols/san/iscsi/services?fields=*",
     api_type="ontap",
+    identifier_field="svm.uuid",
     fields=(
         FieldMapping(
             cache_attr="enabled",

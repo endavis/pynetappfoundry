@@ -13,8 +13,6 @@ ONTAPFPOLICYPERSISTENTSTORE_MAPPING = TypeMapping(
     model_class=OntapFpolicyPersistentStore,
     api_endpoint="/protocols/fpolicy/{svm.uuid}/persistent-stores?fields=*",
     api_type="ontap",
-    parent_mapping="OntapSvm",
-    parent_id_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="autosize_mode",

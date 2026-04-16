@@ -22,8 +22,6 @@ ONTAPLOCALCIFSGROUPMEMBERS_MAPPING = TypeMapping(
     model_class=OntapLocalCifsGroupMembers,
     api_endpoint="/protocols/cifs/local-groups/{svm.uuid}/{local_cifs_group.sid}/members?fields=*",
     api_type="ontap",
-    parent_mapping="OntapLocalCifsGroup",
-    parent_id_field="svm.uuid",
     fields=(
         FieldMapping(
             cache_attr="local_cifs_group.sid",

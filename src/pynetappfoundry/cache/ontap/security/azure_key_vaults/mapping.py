@@ -26,6 +26,7 @@ ONTAPAZUREKEYVAULT_MAPPING = TypeMapping(
     model_class=OntapAzureKeyVault,
     api_endpoint="/security/azure-key-vaults?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="authentication_method",

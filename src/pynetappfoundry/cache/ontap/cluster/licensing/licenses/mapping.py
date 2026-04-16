@@ -22,6 +22,7 @@ ONTAPLICENSEPACKAGERESPONSE_MAPPING = TypeMapping(
     model_class=OntapLicensePackageResponse,
     api_endpoint="/cluster/licensing/licenses?fields=*",
     api_type="ontap",
+    identifier_field="name",
     fields=(
         FieldMapping(
             cache_attr="description",

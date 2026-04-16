@@ -29,6 +29,7 @@ ONTAPAUTOUPDATESTATUS_MAPPING = TypeMapping(
     model_class=OntapAutoUpdateStatus,
     api_endpoint="/support/auto-update/updates?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="action",

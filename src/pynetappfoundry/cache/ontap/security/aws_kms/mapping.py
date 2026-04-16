@@ -22,6 +22,7 @@ ONTAPAWSKMS_MAPPING = TypeMapping(
     model_class=OntapAwsKms,
     api_endpoint="/security/aws-kms?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="access_key_id",

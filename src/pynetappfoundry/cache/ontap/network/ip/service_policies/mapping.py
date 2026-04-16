@@ -11,6 +11,7 @@ ONTAPIPSERVICEPOLICY_MAPPING = TypeMapping(
     model_class=OntapIpServicePolicy,
     api_endpoint="/network/ip/service-policies?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="ipspace.name",

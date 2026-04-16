@@ -11,6 +11,7 @@ ONTAPHOSTSSETTINGS_MAPPING = TypeMapping(
     model_class=OntapHostsSettings,
     api_endpoint="/name-services/cache/host/settings?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="dns_ttl_enabled",

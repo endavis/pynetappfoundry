@@ -40,6 +40,7 @@ ONTAPSVM_MAPPING = TypeMapping(
     model_class=OntapSvm,
     api_endpoint="/svm/svms?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="aggregates",

@@ -11,6 +11,7 @@ ONTAPFCPSERVICE_MAPPING = TypeMapping(
     model_class=OntapFcpService,
     api_endpoint="/protocols/san/fcp/services?fields=*",
     api_type="ontap",
+    identifier_field="svm.uuid",
     fields=(
         FieldMapping(
             cache_attr="enabled",

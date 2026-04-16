@@ -13,6 +13,7 @@ ONTAPKERBEROSINTERFACE_MAPPING = TypeMapping(
     model_class=OntapKerberosInterface,
     api_endpoint="/protocols/nfs/kerberos/interfaces?fields=*",
     api_type="ontap",
+    identifier_field="interface.uuid",
     fields=(
         FieldMapping(
             cache_attr="enabled",

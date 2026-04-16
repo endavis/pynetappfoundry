@@ -11,6 +11,7 @@ ONTAPMETROCLUSTERNODE_MAPPING = TypeMapping(
     model_class=OntapMetroclusterNode,
     api_endpoint="/cluster/metrocluster/nodes?fields=*",
     api_type="ontap",
+    identifier_field="node.uuid",
     fields=(
         FieldMapping(
             cache_attr="automatic_uso",

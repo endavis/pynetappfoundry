@@ -11,6 +11,7 @@ ONTAPMEDIATORRESPONSE_MAPPING = TypeMapping(
     model_class=OntapMediatorResponse,
     api_endpoint="/cluster/mediators?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="ca_certificate",

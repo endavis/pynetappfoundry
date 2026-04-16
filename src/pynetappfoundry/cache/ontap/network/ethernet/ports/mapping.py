@@ -54,6 +54,7 @@ ONTAPPORT_MAPPING = TypeMapping(
     model_class=OntapPort,
     api_endpoint="/network/ethernet/ports?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="broadcast_domain.ipspace.name",

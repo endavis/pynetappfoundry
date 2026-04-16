@@ -28,6 +28,7 @@ ONTAPFLEXCACHE_MAPPING = TypeMapping(
     model_class=OntapFlexcache,
     api_endpoint="/storage/flexcache/flexcaches?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="aggregates",

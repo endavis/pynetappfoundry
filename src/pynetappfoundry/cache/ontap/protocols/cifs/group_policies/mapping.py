@@ -66,6 +66,7 @@ ONTAPPOLICIESANDRULESTOBEAPPLIED_MAPPING = TypeMapping(
     model_class=OntapPoliciesAndRulesToBeApplied,
     api_endpoint="/protocols/cifs/group-policies?fields=*",
     api_type="ontap",
+    identifier_field="svm.uuid",
     fields=(
         FieldMapping(
             cache_attr="svm.name",

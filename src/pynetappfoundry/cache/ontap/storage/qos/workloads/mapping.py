@@ -11,6 +11,7 @@ ONTAPQOSWORKLOAD_MAPPING = TypeMapping(
     model_class=OntapQosWorkload,
     api_endpoint="/storage/qos/workloads?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="file",

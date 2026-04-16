@@ -11,6 +11,7 @@ ONTAPLOGINMESSAGES_MAPPING = TypeMapping(
     model_class=OntapLoginMessages,
     api_endpoint="/security/login/messages?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="banner",

@@ -11,6 +11,7 @@ ONTAPNFSSERVICE_MAPPING = TypeMapping(
     model_class=OntapNfsService,
     api_endpoint="/protocols/nfs/services?fields=*",
     api_type="ontap",
+    identifier_field="svm.uuid",
     fields=(
         FieldMapping(
             cache_attr="access_cache_config.harvest_timeout",

@@ -66,6 +66,7 @@ ONTAPIGROUP_MAPPING = TypeMapping(
     model_class=OntapIgroup,
     api_endpoint="/protocols/san/igroups?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="comment",

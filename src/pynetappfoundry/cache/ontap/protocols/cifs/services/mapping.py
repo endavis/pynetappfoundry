@@ -11,6 +11,7 @@ ONTAPCIFSSERVICE_MAPPING = TypeMapping(
     model_class=OntapCifsService,
     api_endpoint="/protocols/cifs/services?fields=*",
     api_type="ontap",
+    identifier_field="svm.uuid",
     fields=(
         FieldMapping(
             cache_attr="ad_domain.default_site",

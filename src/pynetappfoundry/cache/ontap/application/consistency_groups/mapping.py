@@ -70,6 +70,7 @@ ONTAPCONSISTENCYGROUPRESPONSE_MAPPING = TypeMapping(
     model_class=OntapConsistencyGroupResponse,
     api_endpoint="/application/consistency-groups?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="application.component_type",

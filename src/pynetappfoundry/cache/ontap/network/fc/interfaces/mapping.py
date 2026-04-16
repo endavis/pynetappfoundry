@@ -11,6 +11,7 @@ ONTAPFCINTERFACE_MAPPING = TypeMapping(
     model_class=OntapFcInterface,
     api_endpoint="/network/fc/interfaces?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="comment",
