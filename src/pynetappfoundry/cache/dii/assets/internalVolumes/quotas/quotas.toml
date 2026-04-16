@@ -1,0 +1,40 @@
+[endpoint]
+path = "/assets/internalVolumes/{id}/quotas"
+schema = ""
+class_name = "DiiAssetsInternalvolumesQuota"
+
+[fields.softFileLimit]
+cache_strategy = "cache"
+
+[fields.qtree]
+cache_strategy = "cache"
+
+[fields.simpleName]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.usedFiles]
+cache_strategy = "cache"
+
+[fields.annotations]
+cache_strategy = "cache"
+
+[fields.hardFileLimit]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.internalVolume]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.userOrGroupTarget]
+cache_strategy = "cache"
+
+[fields.capacity]
+cache_strategy = "cache"

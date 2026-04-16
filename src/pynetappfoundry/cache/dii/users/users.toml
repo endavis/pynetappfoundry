@@ -1,0 +1,16 @@
+[endpoint]
+path = "/users"
+schema = "UsersResponse"
+class_name = "DiiUsersresponse"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.email]
+cache_strategy = "cache"
+
+[fields.applicationRoles]
+cache_strategy = "cache"

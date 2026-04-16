@@ -1,0 +1,13 @@
+[endpoint]
+path = "/assets/paths/{id}/source/k8sPvc"
+schema = "K8sPvc"
+class_name = "DiiK8spvc"
+
+[fields.namespace]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.kubernetes_cluster]
+cache_strategy = "cache"

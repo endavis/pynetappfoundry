@@ -1,0 +1,22 @@
+[endpoint]
+path = "/assets/paths/{id}/source/k8sPv"
+schema = "K8sPv"
+class_name = "DiiK8spv"
+
+[fields.phase]
+cache_strategy = "cache"
+
+[fields.capacity_bytes]
+cache_strategy = "cache"
+
+[fields.pv_type]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.kubernetes_cluster]
+cache_strategy = "cache"
+
+[fields.storageclass]
+cache_strategy = "cache"

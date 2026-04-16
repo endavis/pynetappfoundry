@@ -1,0 +1,88 @@
+[endpoint]
+path = "/assets/fabrics/{id}/switches"
+schema = ""
+class_name = "DiiAssetsFabricsSwitche"
+
+[fields.isSanRouteEnabled]
+cache_strategy = "cache"
+
+[fields.switchRole]
+cache_strategy = "cache"
+
+[fields.switchType]
+cache_strategy = "cache"
+
+[fields.annotations]
+cache_strategy = "cache"
+
+[fields.switchStatus]
+cache_strategy = "cache"
+
+[fields.isActive]
+cache_strategy = "cache"
+
+[fields.ports]
+cache_strategy = "cache"
+
+[fields.wwn]
+cache_strategy = "cache"
+
+[fields.vendor]
+cache_strategy = "cache"
+
+[fields.isNpv]
+cache_strategy = "cache"
+
+[fields.model_]
+cache_strategy = "cache"
+
+[fields.managementUrl]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.domainIdType]
+cache_strategy = "cache"
+
+[fields.firmware]
+cache_strategy = "cache"
+
+[fields.serialNumber]
+cache_strategy = "cache"
+
+[fields.ip]
+cache_strategy = "cache"
+
+[fields.priority]
+cache_strategy = "cache"
+
+[fields.zones]
+cache_strategy = "cache"
+
+[fields.domainId]
+cache_strategy = "cache"
+
+[fields.performance]
+cache_strategy = "cache"
+
+[fields.datasources]
+cache_strategy = "cache"
+
+[fields.simpleName]
+cache_strategy = "cache"
+
+[fields.createTime]
+cache_strategy = "cache"
+
+[fields.fabric]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.isVsanEnabled]
+cache_strategy = "cache"
+
+[fields.applications]
+cache_strategy = "cache"

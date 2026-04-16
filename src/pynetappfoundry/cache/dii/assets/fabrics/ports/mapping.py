@@ -1,0 +1,107 @@
+"""DiiAssetsFabricsPort type mapping."""
+
+from __future__ import annotations
+
+from pynetappfoundry.cache._registry import model_registry
+from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
+from pynetappfoundry.models.dii.assets.fabrics.ports.model import DiiAssetsFabricsPort
+
+DIIASSETSFABRICSPORT_MAPPING = TypeMapping(
+    name="DiiAssetsFabricsPort",
+    model_class=DiiAssetsFabricsPort,
+    api_endpoint="/assets/fabrics/{id}/ports",
+    api_type="dii",
+    records_path="",
+    parent_mapping="DiiAssetsFabric",
+    parent_id_field="id",
+    fields=(
+        FieldMapping(
+            cache_attr="role",
+        ),
+        FieldMapping(
+            cache_attr="portState",
+        ),
+        FieldMapping(
+            cache_attr="annotations",
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="type_",
+            api_path="type",
+        ),
+        FieldMapping(
+            cache_attr="gbicType",
+        ),
+        FieldMapping(
+            cache_attr="isActive",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="deviceName",
+        ),
+        FieldMapping(
+            cache_attr="speed",
+            default=0,
+        ),
+        FieldMapping(
+            cache_attr="wwn",
+        ),
+        FieldMapping(
+            cache_attr="blade",
+            default=0,
+        ),
+        FieldMapping(
+            cache_attr="portIndex",
+            default=0,
+        ),
+        FieldMapping(
+            cache_attr="id",
+            default=0,
+        ),
+        FieldMapping(
+            cache_attr="fc4Protocol",
+        ),
+        FieldMapping(
+            cache_attr="deviceType",
+        ),
+        FieldMapping(
+            cache_attr="classOfService",
+        ),
+        FieldMapping(
+            cache_attr="controller",
+        ),
+        FieldMapping(
+            cache_attr="nodeWwn",
+        ),
+        FieldMapping(
+            cache_attr="fabrics",
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="performance",
+        ),
+        FieldMapping(
+            cache_attr="connectedPorts",
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="datasources",
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="simpleName",
+        ),
+        FieldMapping(
+            cache_attr="name",
+        ),
+        FieldMapping(
+            cache_attr="device",
+        ),
+        FieldMapping(
+            cache_attr="applications",
+            default=[],
+        ),
+    ),
+)
+
+model_registry.register_mapping("DiiAssetsFabricsPort", DIIASSETSFABRICSPORT_MAPPING)

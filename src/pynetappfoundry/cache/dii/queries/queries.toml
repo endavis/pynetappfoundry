@@ -1,0 +1,67 @@
+[endpoint]
+path = "/queries"
+schema = ""
+class_name = "DiiQuery"
+
+[fields.owner]
+cache_strategy = "cache"
+
+[fields.objectMeasurement]
+cache_strategy = "cache"
+
+[fields.expression]
+cache_strategy = "cache"
+
+[fields.schemaVersion]
+cache_strategy = "cache"
+
+[fields.offset]
+cache_strategy = "cache"
+
+[fields.sort]
+cache_strategy = "cache"
+
+[fields.groupBy]
+cache_strategy = "cache"
+
+[fields.creationDate]
+cache_strategy = "cache"
+
+[fields.ownerid]
+cache_strategy = "cache"
+
+[fields.objectType]
+cache_strategy = "cache"
+
+[fields.otherProps]
+cache_strategy = "cache"
+
+[fields.stickyPaneWidth]
+cache_strategy = "cache"
+
+[fields.groupByFieldWidths]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.limit]
+cache_strategy = "cache"
+
+[fields.fromTime]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.fields]
+cache_strategy = "cache"
+
+[fields.toTime]
+cache_strategy = "cache"
+
+[fields.objectCategory]
+cache_strategy = "cache"
+
+[fields.timeRange]
+cache_strategy = "cache"

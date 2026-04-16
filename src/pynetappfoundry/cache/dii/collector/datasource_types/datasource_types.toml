@@ -1,0 +1,25 @@
+[endpoint]
+path = "/collector/datasource_types"
+schema = ""
+class_name = "DiiCollectorDatasourceType"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.description]
+cache_strategy = "cache"
+
+[fields.self]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.packages]
+cache_strategy = "cache"
+
+[fields.vendorModels]
+cache_strategy = "cache"

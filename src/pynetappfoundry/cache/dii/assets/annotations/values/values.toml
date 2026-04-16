@@ -1,0 +1,10 @@
+[endpoint]
+path = "/assets/annotations/{id}/values"
+schema = ""
+class_name = "DiiAssetsAnnotationsValue"
+
+[fields.values]
+cache_strategy = "cache"
+
+[fields.objectType]
+cache_strategy = "cache"

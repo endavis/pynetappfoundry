@@ -1,0 +1,16 @@
+[endpoint]
+path = "/search"
+schema = "SearchResultSummary"
+class_name = "DiiSearchresultsummary"
+
+[fields.searchString]
+cache_strategy = "cache"
+
+[fields.foundResults]
+cache_strategy = "cache"
+
+[fields.topHit]
+cache_strategy = "cache"
+
+[fields.resultsByCategory]
+cache_strategy = "cache"

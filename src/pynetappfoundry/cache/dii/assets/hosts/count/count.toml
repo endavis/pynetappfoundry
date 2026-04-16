@@ -1,0 +1,7 @@
+[endpoint]
+path = "/assets/hosts/count"
+schema = "Count"
+class_name = "DiiAssetsHostsCount"
+
+[fields.value]
+cache_strategy = "cache"

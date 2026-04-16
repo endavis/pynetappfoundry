@@ -1,0 +1,7 @@
+[endpoint]
+path = "/assets/switches/count"
+schema = "Count"
+class_name = "DiiAssetsSwitchesCount"
+
+[fields.value]
+cache_strategy = "cache"

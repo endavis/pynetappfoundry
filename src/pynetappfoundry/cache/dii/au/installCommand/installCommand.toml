@@ -1,0 +1,25 @@
+[endpoint]
+path = "/au/installCommand/{platform}"
+schema = "InstallCommand"
+class_name = "DiiAuInstallcommand"
+
+[fields.download]
+cache_strategy = "cache"
+
+[fields.heading]
+cache_strategy = "cache"
+
+[fields.footer]
+cache_strategy = "cache"
+
+[fields.downloadTitle]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.description]
+cache_strategy = "cache"
+
+[fields.commands]
+cache_strategy = "cache"

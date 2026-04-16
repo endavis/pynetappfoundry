@@ -1,0 +1,76 @@
+[endpoint]
+path = "/assets/disks/{id}/storagePools"
+schema = ""
+class_name = "DiiAssetsDisksStoragepool"
+
+[fields.usesFlashPools]
+cache_strategy = "cache"
+
+[fields.internalVolumes]
+cache_strategy = "cache"
+
+[fields.disks]
+cache_strategy = "cache"
+
+[fields.minDiskType]
+cache_strategy = "cache"
+
+[fields.vendorTier]
+cache_strategy = "cache"
+
+[fields.storageResources]
+cache_strategy = "cache"
+
+[fields.volumes]
+cache_strategy = "cache"
+
+[fields.isAutoTiering]
+cache_strategy = "cache"
+
+[fields.minDiskSpeed]
+cache_strategy = "cache"
+
+[fields.annotations]
+cache_strategy = "cache"
+
+[fields.storage]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.capacity]
+cache_strategy = "cache"
+
+[fields.isRaidGroup]
+cache_strategy = "cache"
+
+[fields.performance]
+cache_strategy = "cache"
+
+[fields.datasources]
+cache_strategy = "cache"
+
+[fields.storageVirtualMachines]
+cache_strategy = "cache"
+
+[fields.simpleName]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.storageNodes]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.redundancy]
+cache_strategy = "cache"
+
+[fields.isVirtual]
+cache_strategy = "cache"
+
+[fields.minDiskSize]
+cache_strategy = "cache"

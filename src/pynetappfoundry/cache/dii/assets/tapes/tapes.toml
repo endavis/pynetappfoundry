@@ -1,0 +1,28 @@
+[endpoint]
+path = "/assets/tapes/{id}"
+schema = "Tape"
+class_name = "DiiAssetsTape"
+
+[fields.serialNumber]
+cache_strategy = "cache"
+
+[fields.simpleName]
+cache_strategy = "cache"
+
+[fields.vendor]
+cache_strategy = "cache"
+
+[fields.ip]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.fcPortCount]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.isActive]
+cache_strategy = "cache"

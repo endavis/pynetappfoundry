@@ -1,0 +1,31 @@
+[endpoint]
+path = "/assets/iSCSINetworkPortals/{id}"
+schema = "IscsiNetworkPortal"
+class_name = "DiiIscsinetworkportal"
+
+[fields.nicName]
+cache_strategy = "cache"
+
+[fields.simpleName]
+cache_strategy = "cache"
+
+[fields.port]
+cache_strategy = "cache"
+
+[fields.ip]
+cache_strategy = "cache"
+
+[fields.portalGroupTag]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.device]
+cache_strategy = "cache"
+
+[fields.portalGroup]
+cache_strategy = "cache"

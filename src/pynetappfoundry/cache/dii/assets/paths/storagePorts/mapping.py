@@ -1,0 +1,105 @@
+"""DiiAssetsPathsStorageport type mapping."""
+
+from __future__ import annotations
+
+from pynetappfoundry.cache._registry import model_registry
+from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
+from pynetappfoundry.models.dii.assets.paths.storagePorts.model import DiiAssetsPathsStorageport
+
+DIIASSETSPATHSSTORAGEPORT_MAPPING = TypeMapping(
+    name="DiiAssetsPathsStorageport",
+    model_class=DiiAssetsPathsStorageport,
+    api_endpoint="/assets/paths/{id}/storagePorts",
+    api_type="dii",
+    records_path="",
+    fields=(
+        FieldMapping(
+            cache_attr="role",
+        ),
+        FieldMapping(
+            cache_attr="portState",
+        ),
+        FieldMapping(
+            cache_attr="annotations",
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="type_",
+            api_path="type",
+        ),
+        FieldMapping(
+            cache_attr="gbicType",
+        ),
+        FieldMapping(
+            cache_attr="isActive",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="deviceName",
+        ),
+        FieldMapping(
+            cache_attr="speed",
+            default=0,
+        ),
+        FieldMapping(
+            cache_attr="wwn",
+        ),
+        FieldMapping(
+            cache_attr="blade",
+            default=0,
+        ),
+        FieldMapping(
+            cache_attr="portIndex",
+            default=0,
+        ),
+        FieldMapping(
+            cache_attr="id",
+            default=0,
+        ),
+        FieldMapping(
+            cache_attr="fc4Protocol",
+        ),
+        FieldMapping(
+            cache_attr="deviceType",
+        ),
+        FieldMapping(
+            cache_attr="classOfService",
+        ),
+        FieldMapping(
+            cache_attr="controller",
+        ),
+        FieldMapping(
+            cache_attr="nodeWwn",
+        ),
+        FieldMapping(
+            cache_attr="fabrics",
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="performance",
+        ),
+        FieldMapping(
+            cache_attr="connectedPorts",
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="datasources",
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="simpleName",
+        ),
+        FieldMapping(
+            cache_attr="name",
+        ),
+        FieldMapping(
+            cache_attr="device",
+        ),
+        FieldMapping(
+            cache_attr="applications",
+            default=[],
+        ),
+    ),
+)
+
+model_registry.register_mapping("DiiAssetsPathsStorageport", DIIASSETSPATHSSTORAGEPORT_MAPPING)

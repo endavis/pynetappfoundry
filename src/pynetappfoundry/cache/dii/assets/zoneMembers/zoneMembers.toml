@@ -1,0 +1,28 @@
+[endpoint]
+path = "/assets/zoneMembers/{id}"
+schema = "ZoneMember"
+class_name = "DiiZonemember"
+
+[fields.simpleName]
+cache_strategy = "cache"
+
+[fields.zone]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.zoneStatus]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.device]
+cache_strategy = "cache"
+
+[fields.wwn]
+cache_strategy = "cache"

@@ -1,0 +1,10 @@
+[endpoint]
+path = "/assets/shares/{id}/initiators"
+schema = "ShareInitiator"
+class_name = "DiiShareinitiator"
+
+[fields.initiator]
+cache_strategy = "cache"
+
+[fields.permission]
+cache_strategy = "cache"

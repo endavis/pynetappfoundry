@@ -1,0 +1,7 @@
+[endpoint]
+path = "/assets/virtualMachines/count"
+schema = "Count"
+class_name = "DiiAssetsVirtualmachinesCount"
+
+[fields.value]
+cache_strategy = "cache"

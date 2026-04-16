@@ -1,0 +1,109 @@
+[endpoint]
+path = "/assets/hosts/{id}/clusterHosts"
+schema = ""
+class_name = "DiiAssetsHostsClusterhost"
+
+[fields.memory]
+cache_strategy = "cache"
+
+[fields.annotations]
+cache_strategy = "cache"
+
+[fields.isHypervisor]
+cache_strategy = "cache"
+
+[fields.virtualMachines]
+cache_strategy = "cache"
+
+[fields.ports]
+cache_strategy = "cache"
+
+[fields.isActive]
+cache_strategy = "cache"
+
+[fields.manufacturer]
+cache_strategy = "cache"
+
+[fields.capacity]
+cache_strategy = "cache"
+
+[fields.fileSystems]
+cache_strategy = "cache"
+
+[fields.clusterName]
+cache_strategy = "cache"
+
+[fields.model_]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.cpuCount]
+cache_strategy = "cache"
+
+[fields.os]
+cache_strategy = "cache"
+
+[fields.dataCenter]
+cache_strategy = "cache"
+
+[fields.ip]
+cache_strategy = "cache"
+
+[fields.storageResources]
+cache_strategy = "cache"
+
+[fields.cpu]
+cache_strategy = "cache"
+
+[fields.zones]
+cache_strategy = "cache"
+
+[fields."performance.cpuUtilization"]
+cache_strategy = "cache"
+
+[fields."performance.diskThroughput"]
+cache_strategy = "cache"
+
+[fields."performance.swapRate"]
+cache_strategy = "cache"
+
+[fields."performance.diskIops"]
+cache_strategy = "cache"
+
+[fields."performance.diskLatency"]
+cache_strategy = "cache"
+
+[fields."performance.memoryUtilization"]
+cache_strategy = "cache"
+
+[fields."performance.history"]
+cache_strategy = "cache"
+
+[fields."performance.ipThroughput"]
+cache_strategy = "cache"
+
+[fields.datasources]
+cache_strategy = "cache"
+
+[fields.simpleName]
+cache_strategy = "cache"
+
+[fields.createTime]
+cache_strategy = "cache"
+
+[fields.paths]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.clusterHosts]
+cache_strategy = "cache"
+
+[fields.resourceType]
+cache_strategy = "cache"
+
+[fields.applications]
+cache_strategy = "cache"

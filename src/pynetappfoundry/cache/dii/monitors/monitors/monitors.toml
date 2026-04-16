@@ -1,0 +1,100 @@
+[endpoint]
+path = "/monitors/monitors"
+schema = ""
+class_name = "DiiMonitorsMonitor"
+
+[fields.metadata_]
+cache_strategy = "cache"
+
+[fields.resolutionType]
+cache_strategy = "cache"
+
+[fields.resolutionExpression]
+cache_strategy = "cache"
+
+[fields.advanced]
+cache_strategy = "cache"
+
+[fields.groupId]
+cache_strategy = "cache"
+
+[fields.correctiveActions]
+cache_strategy = "cache"
+
+[fields.description]
+cache_strategy = "cache"
+
+[fields.groupBy]
+cache_strategy = "cache"
+
+[fields.measurement]
+cache_strategy = "cache"
+
+[fields.objectType]
+cache_strategy = "cache"
+
+[fields.baseUnit]
+cache_strategy = "cache"
+
+[fields.monitorType]
+cache_strategy = "cache"
+
+[fields.immutableConfigUpdated]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.defaultAlertMetric]
+cache_strategy = "cache"
+
+[fields.expression]
+cache_strategy = "cache"
+
+[fields.resolutionTimeoutSeconds]
+cache_strategy = "cache"
+
+[fields.schemaVersion]
+cache_strategy = "cache"
+
+[fields.created]
+cache_strategy = "cache"
+
+[fields.advancedExpression]
+cache_strategy = "cache"
+
+[fields.filters]
+cache_strategy = "cache"
+
+[fields.resolutionConditions]
+cache_strategy = "cache"
+
+[fields.isSystem]
+cache_strategy = "cache"
+
+[fields.targetUnit]
+cache_strategy = "cache"
+
+[fields.resolutionFilters]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.self]
+cache_strategy = "cache"
+
+[fields.category]
+cache_strategy = "cache"
+
+[fields.conditions]
+cache_strategy = "cache"
+
+[fields.advancedResolutionExpression]
+cache_strategy = "cache"
+
+[fields.updated]
+cache_strategy = "cache"
+
+[fields.status]
+cache_strategy = "cache"

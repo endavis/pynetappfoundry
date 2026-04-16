@@ -1,0 +1,34 @@
+[endpoint]
+path = "/assets/virtualMachines/{id}/applications"
+schema = ""
+class_name = "DiiAssetsVirtualmachinesApplication"
+
+[fields.shares]
+cache_strategy = "cache"
+
+[fields.performance]
+cache_strategy = "cache"
+
+[fields.simpleName]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.storageResources]
+cache_strategy = "cache"
+
+[fields.computeResources]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.priority]
+cache_strategy = "cache"
+
+[fields.ignoreShareViolations]
+cache_strategy = "cache"
+
+[fields.qtrees]
+cache_strategy = "cache"

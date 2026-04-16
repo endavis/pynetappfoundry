@@ -1,0 +1,49 @@
+[endpoint]
+path = "/assets/storageVirtualMachines/{id}/shares"
+schema = ""
+class_name = "DiiAssetsStoragevirtualmachinesShare"
+
+[fields.qtree]
+cache_strategy = "cache"
+
+[fields.description]
+cache_strategy = "cache"
+
+[fields.annotations]
+cache_strategy = "cache"
+
+[fields.storage]
+cache_strategy = "cache"
+
+[fields.internalVolume]
+cache_strategy = "cache"
+
+[fields.initiators]
+cache_strategy = "cache"
+
+[fields.path]
+cache_strategy = "cache"
+
+[fields.protocol]
+cache_strategy = "cache"
+
+[fields.storageVirtualMachine]
+cache_strategy = "cache"
+
+[fields.datasources]
+cache_strategy = "cache"
+
+[fields.simpleName]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.storagePool]
+cache_strategy = "cache"
+
+[fields.applications]
+cache_strategy = "cache"

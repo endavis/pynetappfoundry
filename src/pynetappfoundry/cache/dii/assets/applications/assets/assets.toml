@@ -1,0 +1,13 @@
+[endpoint]
+path = "/assets/applications/{id}/assets"
+schema = ""
+class_name = "DiiAssetsApplicationsAsset"
+
+[fields.simpleName]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"

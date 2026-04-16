@@ -1,0 +1,49 @@
+[endpoint]
+path = "/assets/risks/{id}"
+schema = "Risk"
+class_name = "DiiRisk"
+
+[fields.severity]
+cache_strategy = "cache"
+
+[fields.sourceId]
+cache_strategy = "cache"
+
+[fields.parent]
+cache_strategy = "cache"
+
+[fields.resource]
+cache_strategy = "cache"
+
+[fields.impact]
+cache_strategy = "cache"
+
+[fields.link]
+cache_strategy = "cache"
+
+[fields.simpleName]
+cache_strategy = "cache"
+
+[fields.sourceType]
+cache_strategy = "cache"
+
+[fields.mitigationCategory]
+cache_strategy = "cache"
+
+[fields.riskSource]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.details]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.category]
+cache_strategy = "cache"
+
+[fields.statusCode]
+cache_strategy = "cache"

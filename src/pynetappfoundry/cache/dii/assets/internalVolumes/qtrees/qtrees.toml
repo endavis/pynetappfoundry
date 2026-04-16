@@ -1,0 +1,61 @@
+[endpoint]
+path = "/assets/internalVolumes/{id}/qtrees"
+schema = ""
+class_name = "DiiAssetsInternalvolumesQtree"
+
+[fields.sourceReplica]
+cache_strategy = "cache"
+
+[fields.quotas]
+cache_strategy = "cache"
+
+[fields.quotaCapacity]
+cache_strategy = "cache"
+
+[fields.volumes]
+cache_strategy = "cache"
+
+[fields.annotations]
+cache_strategy = "cache"
+
+[fields.storage]
+cache_strategy = "cache"
+
+[fields.internalVolume]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.securityStyle]
+cache_strategy = "cache"
+
+[fields.isOplocksEnabled]
+cache_strategy = "cache"
+
+[fields.shares]
+cache_strategy = "cache"
+
+[fields.storageVirtualMachine]
+cache_strategy = "cache"
+
+[fields.performance]
+cache_strategy = "cache"
+
+[fields.datasources]
+cache_strategy = "cache"
+
+[fields.simpleName]
+cache_strategy = "cache"
+
+[fields.statusText]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.applications]
+cache_strategy = "cache"

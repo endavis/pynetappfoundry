@@ -1,0 +1,31 @@
+[endpoint]
+path = "/assets/annotations"
+schema = ""
+class_name = "DiiAssetsAnnotation"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.description]
+cache_strategy = "cache"
+
+[fields.isUserDefined]
+cache_strategy = "cache"
+
+[fields.isCostBased]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.label]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.supportedObjectTypes]
+cache_strategy = "cache"
+
+[fields.enumValues]
+cache_strategy = "cache"

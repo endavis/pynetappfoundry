@@ -1,0 +1,31 @@
+[endpoint]
+path = "/assets/genericDevices"
+schema = ""
+class_name = "DiiAssetsGenericdevice"
+
+[fields.simpleName]
+cache_strategy = "cache"
+
+[fields.vendor]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.fcPortCount]
+cache_strategy = "cache"
+
+[fields.model_]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.zones]
+cache_strategy = "cache"
+
+[fields.isActive]
+cache_strategy = "cache"
+
+[fields.wwn]
+cache_strategy = "cache"

@@ -1,0 +1,55 @@
+[endpoint]
+path = "/assets/hosts/{id}/paths"
+schema = ""
+class_name = "DiiAssetsHostsPath"
+
+[fields.hostPortCount]
+cache_strategy = "cache"
+
+[fields.connectionCount]
+cache_strategy = "cache"
+
+[fields.source]
+cache_strategy = "cache"
+
+[fields.isNonRedundant]
+cache_strategy = "cache"
+
+[fields.pathType]
+cache_strategy = "cache"
+
+[fields.target]
+cache_strategy = "cache"
+
+[fields.fabrics]
+cache_strategy = "cache"
+
+[fields.isBackendPath]
+cache_strategy = "cache"
+
+[fields.simpleName]
+cache_strategy = "cache"
+
+[fields.sessionCount]
+cache_strategy = "cache"
+
+[fields.storagePortCount]
+cache_strategy = "cache"
+
+[fields.hopCount]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.since]
+cache_strategy = "cache"
+
+[fields.storagePorts]
+cache_strategy = "cache"
+
+[fields.applications]
+cache_strategy = "cache"

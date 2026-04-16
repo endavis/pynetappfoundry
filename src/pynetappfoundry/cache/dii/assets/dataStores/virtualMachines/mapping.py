@@ -1,0 +1,145 @@
+"""DiiAssetsDatastoresVirtualmachine type mapping."""
+
+from __future__ import annotations
+
+from pynetappfoundry.cache._registry import model_registry
+from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
+from pynetappfoundry.models.dii.assets.dataStores.virtualMachines.model import (
+    DiiAssetsDatastoresVirtualmachine,
+)
+
+DIIASSETSDATASTORESVIRTUALMACHINE_MAPPING = TypeMapping(
+    name="DiiAssetsDatastoresVirtualmachine",
+    model_class=DiiAssetsDatastoresVirtualmachine,
+    api_endpoint="/assets/dataStores/{id}/virtualMachines",
+    api_type="dii",
+    records_path="",
+    parent_mapping="DiiAssetsDatastore",
+    parent_id_field="id",
+    fields=(
+        FieldMapping(
+            cache_attr="memory",
+        ),
+        FieldMapping(
+            cache_attr="vmdks",
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="guestState",
+        ),
+        FieldMapping(
+            cache_attr="dnsName",
+        ),
+        FieldMapping(
+            cache_attr="annotations",
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="processors",
+            default=0,
+        ),
+        FieldMapping(
+            cache_attr="ports",
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="capacity",
+        ),
+        FieldMapping(
+            cache_attr="powerState",
+        ),
+        FieldMapping(
+            cache_attr="fileSystems",
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="host",
+        ),
+        FieldMapping(
+            cache_attr="id",
+            default=0,
+        ),
+        FieldMapping(
+            cache_attr="os",
+        ),
+        FieldMapping(
+            cache_attr="ip",
+        ),
+        FieldMapping(
+            cache_attr="storageResources",
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="zones",
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="powerStateChangeTime",
+        ),
+        FieldMapping(
+            cache_attr="performance.cpuUtilization",
+        ),
+        FieldMapping(
+            cache_attr="performance.diskThroughput",
+        ),
+        FieldMapping(
+            cache_attr="performance.swapRate",
+        ),
+        FieldMapping(
+            cache_attr="performance.diskIops",
+        ),
+        FieldMapping(
+            cache_attr="performance.diskLatency",
+        ),
+        FieldMapping(
+            cache_attr="performance.optimization",
+        ),
+        FieldMapping(
+            cache_attr="performance.memoryUtilization",
+        ),
+        FieldMapping(
+            cache_attr="performance.history",
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="performance.ipThroughput",
+        ),
+        FieldMapping(
+            cache_attr="performance.capacity",
+        ),
+        FieldMapping(
+            cache_attr="performance.capacityRatio",
+        ),
+        FieldMapping(
+            cache_attr="datasources",
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="simpleName",
+        ),
+        FieldMapping(
+            cache_attr="createTime",
+        ),
+        FieldMapping(
+            cache_attr="paths",
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="name",
+        ),
+        FieldMapping(
+            cache_attr="dataStore",
+        ),
+        FieldMapping(
+            cache_attr="resourceType",
+        ),
+        FieldMapping(
+            cache_attr="applications",
+            default=[],
+        ),
+    ),
+)
+
+model_registry.register_mapping(
+    "DiiAssetsDatastoresVirtualmachine", DIIASSETSDATASTORESVIRTUALMACHINE_MAPPING
+)
