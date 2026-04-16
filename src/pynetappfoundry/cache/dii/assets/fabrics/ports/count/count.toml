@@ -1,0 +1,7 @@
+[endpoint]
+path = "/assets/fabrics/{id}/ports/count"
+schema = "Count"
+class_name = "DiiAssetsFabricsPortsCount"
+
+[fields.value]
+cache_strategy = "cache"

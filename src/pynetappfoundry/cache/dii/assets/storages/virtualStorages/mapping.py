@@ -1,0 +1,155 @@
+"""DiiAssetsStoragesVirtualstorage type mapping."""
+
+from __future__ import annotations
+
+from pynetappfoundry.cache._registry import model_registry
+from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
+from pynetappfoundry.models.dii.assets.storages.virtualStorages.model import (
+    DiiAssetsStoragesVirtualstorage,
+)
+
+DIIASSETSSTORAGESVIRTUALSTORAGE_MAPPING = TypeMapping(
+    name="DiiAssetsStoragesVirtualstorage",
+    model_class=DiiAssetsStoragesVirtualstorage,
+    api_endpoint="/assets/storages/{id}/virtualStorages",
+    api_type="dii",
+    records_path="",
+    parent_mapping="DiiAssetsStorage",
+    parent_id_field="id",
+    fields=(
+        FieldMapping(
+            cache_attr="disks",
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="annotations",
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="isActive",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="ports",
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="capacity",
+        ),
+        FieldMapping(
+            cache_attr="shares",
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="storageVirtualMachines",
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="vendor",
+        ),
+        FieldMapping(
+            cache_attr="model_",
+            api_path="model",
+        ),
+        FieldMapping(
+            cache_attr="managementUrl",
+        ),
+        FieldMapping(
+            cache_attr="id",
+            default=0,
+        ),
+        FieldMapping(
+            cache_attr="protocols",
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="virtualStorages",
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="microcodeVersion",
+        ),
+        FieldMapping(
+            cache_attr="internalVolumes",
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="serialNumber",
+        ),
+        FieldMapping(
+            cache_attr="backendStorages",
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="ip",
+        ),
+        FieldMapping(
+            cache_attr="storageResources",
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="volumes",
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="monitoring",
+        ),
+        FieldMapping(
+            cache_attr="zones",
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="qtrees",
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="performance",
+        ),
+        FieldMapping(
+            cache_attr="risks",
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="storagePools",
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="datasources",
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="virtualizedType",
+        ),
+        FieldMapping(
+            cache_attr="simpleName",
+        ),
+        FieldMapping(
+            cache_attr="createTime",
+        ),
+        FieldMapping(
+            cache_attr="paths",
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="name",
+        ),
+        FieldMapping(
+            cache_attr="naturalKey",
+        ),
+        FieldMapping(
+            cache_attr="storageNodes",
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="family",
+        ),
+        FieldMapping(
+            cache_attr="applications",
+            default=[],
+        ),
+    ),
+)
+
+model_registry.register_mapping(
+    "DiiAssetsStoragesVirtualstorage", DIIASSETSSTORAGESVIRTUALSTORAGE_MAPPING
+)

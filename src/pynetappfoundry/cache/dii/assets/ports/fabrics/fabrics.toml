@@ -1,0 +1,55 @@
+[endpoint]
+path = "/assets/ports/{id}/fabrics"
+schema = ""
+class_name = "DiiAssetsPortsFabric"
+
+[fields.switchesCount]
+cache_strategy = "cache"
+
+[fields.activeZoneSet]
+cache_strategy = "cache"
+
+[fields.switches]
+cache_strategy = "cache"
+
+[fields.annotations]
+cache_strategy = "cache"
+
+[fields.isZoningEnabled]
+cache_strategy = "cache"
+
+[fields.isActive]
+cache_strategy = "cache"
+
+[fields.zonesCount]
+cache_strategy = "cache"
+
+[fields.zones]
+cache_strategy = "cache"
+
+[fields.ports]
+cache_strategy = "cache"
+
+[fields.wwn]
+cache_strategy = "cache"
+
+[fields.performance]
+cache_strategy = "cache"
+
+[fields.datasources]
+cache_strategy = "cache"
+
+[fields.simpleName]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.isVsanEnabled]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.vsanId]
+cache_strategy = "cache"

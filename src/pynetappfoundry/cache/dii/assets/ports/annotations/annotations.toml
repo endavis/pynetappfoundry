@@ -1,0 +1,19 @@
+[endpoint]
+path = "/assets/ports/{id}/annotations"
+schema = ""
+class_name = "DiiAssetsPortsAnnotation"
+
+[fields.displayValue]
+cache_strategy = "cache"
+
+[fields.rawValue]
+cache_strategy = "cache"
+
+[fields.definition]
+cache_strategy = "cache"
+
+[fields.label]
+cache_strategy = "cache"
+
+[fields.annotationAssignment]
+cache_strategy = "cache"

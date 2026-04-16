@@ -1,0 +1,1 @@
+"""Paths cache models."""

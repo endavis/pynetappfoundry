@@ -1,0 +1,1 @@
+"""Fabrics cache models."""

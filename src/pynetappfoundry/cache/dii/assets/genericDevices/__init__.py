@@ -1,0 +1,1 @@
+"""Genericdevices cache models."""

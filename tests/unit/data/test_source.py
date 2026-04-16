@@ -386,6 +386,12 @@ class TestBackendsRegistry:
     def test_ontap_backend_registered_at_import(self) -> None:
         assert "ontap" in _BACKENDS
 
+    def test_dii_backend_registered_at_import(self) -> None:
+        from pynetappfoundry.data.dii_backend import DiiBackend
+
+        assert "dii" in _BACKENDS
+        assert _BACKENDS["dii"] is DiiBackend
+
 
 class TestRealOntapVolumeRouting:
     """Smoke test against the real OntapVolume mapping.

@@ -1,0 +1,10 @@
+[endpoint]
+path = "/assets/paths/{id}/source/k8sNamespace"
+schema = "K8sNamespace"
+class_name = "DiiK8snamespace"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.kubernetes_cluster]
+cache_strategy = "cache"

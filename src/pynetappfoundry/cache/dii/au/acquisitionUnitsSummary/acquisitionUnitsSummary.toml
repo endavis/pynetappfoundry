@@ -1,0 +1,55 @@
+[endpoint]
+path = "/au/acquisitionUnitsSummary"
+schema = "AcquisitionUnit"
+class_name = "DiiAuAcquisitionunitssummary"
+
+[fields.auVersion]
+cache_strategy = "cache"
+
+[fields.versionToBeUpgradedTo]
+cache_strategy = "cache"
+
+[fields.isPinned]
+cache_strategy = "cache"
+
+[fields.ip]
+cache_strategy = "cache"
+
+[fields.auUpgradeToImageUploadedTime]
+cache_strategy = "cache"
+
+[fields.restartRequestTime]
+cache_strategy = "cache"
+
+[fields.upgradeOverDueMessage]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"
+
+[fields.leasePeriod]
+cache_strategy = "cache"
+
+[fields.upgradeOverDue]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.upgradeType]
+cache_strategy = "cache"
+
+[fields.self]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.nextLeaseRenewal]
+cache_strategy = "cache"
+
+[fields.status]
+cache_strategy = "cache"

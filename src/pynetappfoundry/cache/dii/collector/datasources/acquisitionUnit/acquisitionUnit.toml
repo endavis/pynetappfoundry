@@ -1,0 +1,175 @@
+[endpoint]
+path = "/collector/datasources/acquisitionUnit/{auId}"
+schema = ""
+class_name = "DiiCollectorDatasourcesAcquisitionunit"
+
+[fields.vendorModelId]
+cache_strategy = "cache"
+
+[fields.note]
+cache_strategy = "cache"
+
+[fields.changes]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.lastSuccessfullyAcquiredMilliSec]
+cache_strategy = "cache"
+
+[fields.resumeTime]
+cache_strategy = "cache"
+
+[fields."acquisitionUnit.auVersion"]
+cache_strategy = "cache"
+
+[fields."acquisitionUnit.versionToBeUpgradedTo"]
+cache_strategy = "cache"
+
+[fields."acquisitionUnit.isPinned"]
+cache_strategy = "cache"
+
+[fields."acquisitionUnit.ip"]
+cache_strategy = "cache"
+
+[fields."acquisitionUnit.auUpgradeToImageUploadedTime"]
+cache_strategy = "cache"
+
+[fields."acquisitionUnit.restartRequestTime"]
+cache_strategy = "cache"
+
+[fields."acquisitionUnit.upgradeOverDueMessage"]
+cache_strategy = "cache"
+
+[fields."acquisitionUnit.type_"]
+cache_strategy = "cache"
+
+[fields."acquisitionUnit.uuid"]
+cache_strategy = "cache"
+
+[fields."acquisitionUnit.leasePeriod"]
+cache_strategy = "cache"
+
+[fields."acquisitionUnit.upgradeOverDue"]
+cache_strategy = "cache"
+
+[fields."acquisitionUnit.name"]
+cache_strategy = "cache"
+
+[fields."acquisitionUnit.upgradeType"]
+cache_strategy = "cache"
+
+[fields."acquisitionUnit.self"]
+cache_strategy = "cache"
+
+[fields."acquisitionUnit.id"]
+cache_strategy = "cache"
+
+[fields."acquisitionUnit.nextLeaseRenewal"]
+cache_strategy = "cache"
+
+[fields."acquisitionUnit.status"]
+cache_strategy = "cache"
+
+[fields.vendor]
+cache_strategy = "cache"
+
+[fields."activePatch.minPatchVersion"]
+cache_strategy = "cache"
+
+[fields."activePatch.createTime"]
+cache_strategy = "cache"
+
+[fields."activePatch.dataSourceTypeId"]
+cache_strategy = "cache"
+
+[fields."activePatch.tenantId"]
+cache_strategy = "cache"
+
+[fields."activePatch.name"]
+cache_strategy = "cache"
+
+[fields."activePatch.description"]
+cache_strategy = "cache"
+
+[fields."activePatch.endTime"]
+cache_strategy = "cache"
+
+[fields."activePatch.version"]
+cache_strategy = "cache"
+
+[fields."activePatch.patchReadme"]
+cache_strategy = "cache"
+
+[fields."activePatch.metadataVersion"]
+cache_strategy = "cache"
+
+[fields.model_]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.events]
+cache_strategy = "cache"
+
+[fields.docLink]
+cache_strategy = "cache"
+
+[fields.resumeTimeMilliSec]
+cache_strategy = "cache"
+
+[fields.impactIndex]
+cache_strategy = "cache"
+
+[fields.devices]
+cache_strategy = "cache"
+
+[fields.packages]
+cache_strategy = "cache"
+
+[fields.lastSuccessfullyAcquired]
+cache_strategy = "cache"
+
+[fields.pollStatus]
+cache_strategy = "cache"
+
+[fields.dsTypeId]
+cache_strategy = "cache"
+
+[fields.foundationIp]
+cache_strategy = "cache"
+
+[fields.statusText]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.self]
+cache_strategy = "cache"
+
+[fields."config_.vendorModelId"]
+cache_strategy = "cache"
+
+[fields."config_.dsTypeId"]
+cache_strategy = "cache"
+
+[fields."config_.docLink"]
+cache_strategy = "cache"
+
+[fields."config_.vendor"]
+cache_strategy = "cache"
+
+[fields."config_.self"]
+cache_strategy = "cache"
+
+[fields."config_.model_"]
+cache_strategy = "cache"
+
+[fields."config_.packages"]
+cache_strategy = "cache"
+
+[fields.status]
+cache_strategy = "cache"

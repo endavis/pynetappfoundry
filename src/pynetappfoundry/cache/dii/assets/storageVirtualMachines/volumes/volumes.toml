@@ -1,0 +1,175 @@
+[endpoint]
+path = "/assets/storageVirtualMachines/{id}/volumes"
+schema = ""
+class_name = "DiiAssetsStoragevirtualmachinesVolume"
+
+[fields.virtualizer]
+cache_strategy = "cache"
+
+[fields.isAutoTiering]
+cache_strategy = "cache"
+
+[fields.annotations]
+cache_strategy = "cache"
+
+[fields.storage]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.ports]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"
+
+[fields."capacity.unitType"]
+cache_strategy = "cache"
+
+[fields."capacity.total"]
+cache_strategy = "cache"
+
+[fields."capacity.usedRatio"]
+cache_strategy = "cache"
+
+[fields."capacity.description"]
+cache_strategy = "cache"
+
+[fields."capacity.isThinProvisioned"]
+cache_strategy = "cache"
+
+[fields."capacity.raw"]
+cache_strategy = "cache"
+
+[fields."capacity.used"]
+cache_strategy = "cache"
+
+[fields."capacity.written"]
+cache_strategy = "cache"
+
+[fields.diskGroup]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.dataStores]
+cache_strategy = "cache"
+
+[fields.virtualStoragePools]
+cache_strategy = "cache"
+
+[fields.isReplicaTarget]
+cache_strategy = "cache"
+
+[fields.qtree]
+cache_strategy = "cache"
+
+[fields.isMainframe]
+cache_strategy = "cache"
+
+[fields.protectionType]
+cache_strategy = "cache"
+
+[fields.replicaSources]
+cache_strategy = "cache"
+
+[fields.isMeta]
+cache_strategy = "cache"
+
+[fields.label]
+cache_strategy = "cache"
+
+[fields.internalVolume]
+cache_strategy = "cache"
+
+[fields.virtualStorageResources]
+cache_strategy = "cache"
+
+[fields.autoTierPolicy]
+cache_strategy = "cache"
+
+[fields."performance.latency"]
+cache_strategy = "cache"
+
+[fields."performance.history"]
+cache_strategy = "cache"
+
+[fields."performance.capacity"]
+cache_strategy = "cache"
+
+[fields."performance.cacheHitRatio"]
+cache_strategy = "cache"
+
+[fields."performance.iscsi"]
+cache_strategy = "cache"
+
+[fields."performance.timeToFull"]
+cache_strategy = "cache"
+
+[fields."performance.writePending"]
+cache_strategy = "cache"
+
+[fields."performance.iops"]
+cache_strategy = "cache"
+
+[fields."performance.throughput"]
+cache_strategy = "cache"
+
+[fields."performance.ioDensity"]
+cache_strategy = "cache"
+
+[fields."performance.fc"]
+cache_strategy = "cache"
+
+[fields."performance.partialBlocksRatio"]
+cache_strategy = "cache"
+
+[fields."performance.capacityRatio"]
+cache_strategy = "cache"
+
+[fields.storageVirtualMachine]
+cache_strategy = "cache"
+
+[fields.storagePools]
+cache_strategy = "cache"
+
+[fields.virtualizedType]
+cache_strategy = "cache"
+
+[fields.datasources]
+cache_strategy = "cache"
+
+[fields.simpleName]
+cache_strategy = "cache"
+
+[fields.paths]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.computeResources]
+cache_strategy = "cache"
+
+[fields.isThinProvisioned]
+cache_strategy = "cache"
+
+[fields.isReplicaSource]
+cache_strategy = "cache"
+
+[fields.storageNodes]
+cache_strategy = "cache"
+
+[fields.isVirtual]
+cache_strategy = "cache"
+
+[fields.isSnapshot]
+cache_strategy = "cache"
+
+[fields.resourceType]
+cache_strategy = "cache"
+
+[fields.applications]
+cache_strategy = "cache"

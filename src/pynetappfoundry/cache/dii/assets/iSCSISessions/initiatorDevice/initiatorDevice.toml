@@ -1,0 +1,28 @@
+[endpoint]
+path = "/assets/iSCSISessions/{id}/initiatorDevice"
+schema = "Device"
+class_name = "DiiAssetsIscsisessionsInitiatordevice"
+
+[fields.simpleName]
+cache_strategy = "cache"
+
+[fields.ip]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.description]
+cache_strategy = "cache"
+
+[fields.self]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.wwn]
+cache_strategy = "cache"

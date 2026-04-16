@@ -1,0 +1,7 @@
+[endpoint]
+path = "/assets/volumes/{id}/autoTierPolicy"
+schema = "StringValue"
+class_name = "DiiAssetsVolumesAutotierpolicy"
+
+[fields.value]
+cache_strategy = "cache"

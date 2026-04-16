@@ -1,0 +1,40 @@
+[endpoint]
+path = "/assets/volumes/{id}/dataStores"
+schema = ""
+class_name = "DiiAssetsVolumesDatastore"
+
+[fields.virtualCenterIp]
+cache_strategy = "cache"
+
+[fields.performance]
+cache_strategy = "cache"
+
+[fields.vmdks]
+cache_strategy = "cache"
+
+[fields.datasources]
+cache_strategy = "cache"
+
+[fields.simpleName]
+cache_strategy = "cache"
+
+[fields.hosts]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.storageResources]
+cache_strategy = "cache"
+
+[fields.annotations]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.virtualMachines]
+cache_strategy = "cache"
+
+[fields.capacity]
+cache_strategy = "cache"

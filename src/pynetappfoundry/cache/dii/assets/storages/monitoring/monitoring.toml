@@ -1,0 +1,10 @@
+[endpoint]
+path = "/assets/storages/{id}/monitoring"
+schema = "ObjectMonitoring"
+class_name = "DiiAssetsStoragesMonitoring"
+
+[fields.count]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"

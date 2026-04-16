@@ -1,0 +1,172 @@
+[endpoint]
+path = "/assets/internalVolumes/{id}/replicaSources"
+schema = ""
+class_name = "DiiAssetsInternalvolumesReplicasource"
+
+[fields.spaceGuarantee]
+cache_strategy = "cache"
+
+[fields.quotas]
+cache_strategy = "cache"
+
+[fields.annotations]
+cache_strategy = "cache"
+
+[fields.storage]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"
+
+[fields."capacity.compressionSavings"]
+cache_strategy = "cache"
+
+[fields."capacity.description"]
+cache_strategy = "cache"
+
+[fields."capacity.isDedupeEnabled"]
+cache_strategy = "cache"
+
+[fields."capacity.used"]
+cache_strategy = "cache"
+
+[fields."capacity.isCompressionEnabled"]
+cache_strategy = "cache"
+
+[fields."capacity.unitType"]
+cache_strategy = "cache"
+
+[fields."capacity.total"]
+cache_strategy = "cache"
+
+[fields."capacity.provisioned"]
+cache_strategy = "cache"
+
+[fields."capacity.usedRatio"]
+cache_strategy = "cache"
+
+[fields."capacity.isThinProvisioned"]
+cache_strategy = "cache"
+
+[fields."capacity.dedupeSavings"]
+cache_strategy = "cache"
+
+[fields."capacity.isThinProvisioningSupported"]
+cache_strategy = "cache"
+
+[fields."capacity.rawToUsableRatio"]
+cache_strategy = "cache"
+
+[fields.shares]
+cache_strategy = "cache"
+
+[fields.lastSnapshotTime]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.storagePool]
+cache_strategy = "cache"
+
+[fields.flashPoolEligibility]
+cache_strategy = "cache"
+
+[fields.dataStores]
+cache_strategy = "cache"
+
+[fields.replicaSources]
+cache_strategy = "cache"
+
+[fields.volumes]
+cache_strategy = "cache"
+
+[fields.virtualStorage]
+cache_strategy = "cache"
+
+[fields.qtrees]
+cache_strategy = "cache"
+
+[fields."performance.snapshotCapacityTimeToFull"]
+cache_strategy = "cache"
+
+[fields."performance.latency"]
+cache_strategy = "cache"
+
+[fields."performance.history"]
+cache_strategy = "cache"
+
+[fields."performance.snapshotCapacityRatio"]
+cache_strategy = "cache"
+
+[fields."performance.capacity"]
+cache_strategy = "cache"
+
+[fields."performance.cloneSavedCapacity"]
+cache_strategy = "cache"
+
+[fields."performance.otherCapacity"]
+cache_strategy = "cache"
+
+[fields."performance.snapshotCapacity"]
+cache_strategy = "cache"
+
+[fields."performance.timeToFull"]
+cache_strategy = "cache"
+
+[fields."performance.writePending"]
+cache_strategy = "cache"
+
+[fields."performance.dataCapacity"]
+cache_strategy = "cache"
+
+[fields."performance.iops"]
+cache_strategy = "cache"
+
+[fields."performance.throughput"]
+cache_strategy = "cache"
+
+[fields."performance.ioDensity"]
+cache_strategy = "cache"
+
+[fields."performance.capacityRatio"]
+cache_strategy = "cache"
+
+[fields.storageVirtualMachine]
+cache_strategy = "cache"
+
+[fields.datasources]
+cache_strategy = "cache"
+
+[fields.simpleName]
+cache_strategy = "cache"
+
+[fields.paths]
+cache_strategy = "cache"
+
+[fields.snapshotCount]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.computeResources]
+cache_strategy = "cache"
+
+[fields.isThinProvisioned]
+cache_strategy = "cache"
+
+[fields.storageNodes]
+cache_strategy = "cache"
+
+[fields.resourceType]
+cache_strategy = "cache"
+
+[fields.applications]
+cache_strategy = "cache"
+
+[fields.status]
+cache_strategy = "cache"

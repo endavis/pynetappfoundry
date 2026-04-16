@@ -1,0 +1,7 @@
+[endpoint]
+path = "/assets/hosts/{id}/dataCenter"
+schema = "StringValue"
+class_name = "DiiAssetsHostsDatacenter"
+
+[fields.value]
+cache_strategy = "cache"

@@ -17,6 +17,7 @@ from pydantic import BaseModel
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.data._routing import SourceMode, decide_path
 from pynetappfoundry.data.backends import Backend, OntapBackend
+from pynetappfoundry.data.dii_backend import DiiBackend
 from pynetappfoundry.data.filters import FilterExpression, compile_filters
 
 if TYPE_CHECKING:
@@ -35,6 +36,7 @@ T = TypeVar("T", bound=BaseModel)
 # AIQUM, OCCM, DII, etc., here.
 _BACKENDS: dict[str, type[Backend]] = {
     "ontap": OntapBackend,
+    "dii": DiiBackend,
 }
 
 

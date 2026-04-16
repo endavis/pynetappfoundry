@@ -1,0 +1,40 @@
+[endpoint]
+path = "/assets/vmdks/{id}/storageResources"
+schema = ""
+class_name = "DiiAssetsVmdksStorageresource"
+
+[fields.dataStores]
+cache_strategy = "cache"
+
+[fields.performance]
+cache_strategy = "cache"
+
+[fields.storagePools]
+cache_strategy = "cache"
+
+[fields.simpleName]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.computeResources]
+cache_strategy = "cache"
+
+[fields.isThinProvisioned]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.storage]
+cache_strategy = "cache"
+
+[fields.capacity]
+cache_strategy = "cache"
+
+[fields.resourceType]
+cache_strategy = "cache"
+
+[fields.applications]
+cache_strategy = "cache"

@@ -1,0 +1,7 @@
+[endpoint]
+path = "/assets/paths/{id}/source/k8sCluster"
+schema = "K8sCluster"
+class_name = "DiiK8scluster"
+
+[fields.name]
+cache_strategy = "cache"

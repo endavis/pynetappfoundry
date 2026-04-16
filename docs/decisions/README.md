@@ -79,3 +79,4 @@ Template-inherited ADRs (9XXX range) are maintained in [docs/template/decisions/
 | [0012](0012-unified-datasource-accessor.md) | Unified DataSource Accessor for All Cluster Reads | Superseded |
 | [0013](0013-datasource-as-a-thin-facade-over-the-collector.md) | DataSource as a Thin Facade Over the Collector | Proposed |
 | [0014](0014-parallel-cluster-refresh.md) | Parallel Cluster Refresh | Accepted |
+| [0015](0015-dii-backend-live-only-bare-array-envelope-offsetlimit-pagination.md) | DII backend: live-only, bare-array envelope, offset/limit pagination | Accepted |

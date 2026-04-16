@@ -1,0 +1,37 @@
+[endpoint]
+path = "/assets/switches/{id}/zones"
+schema = ""
+class_name = "DiiAssetsSwitchesZone"
+
+[fields.simpleName]
+cache_strategy = "cache"
+
+[fields.fabric]
+cache_strategy = "cache"
+
+[fields.zoneMembers]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.isVsanEnabled]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.vsanId]
+cache_strategy = "cache"
+
+[fields.initiators]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.targets]
+cache_strategy = "cache"
+
+[fields.wwn]
+cache_strategy = "cache"

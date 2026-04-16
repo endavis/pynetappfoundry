@@ -1,0 +1,13 @@
+[endpoint]
+path = "/assets/qtrees/{id}/sourceReplica"
+schema = "QtreeReplica"
+class_name = "DiiQtreereplica"
+
+[fields.mode]
+cache_strategy = "cache"
+
+[fields.qtree]
+cache_strategy = "cache"
+
+[fields.technology]
+cache_strategy = "cache"

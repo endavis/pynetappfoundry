@@ -1,0 +1,64 @@
+[endpoint]
+path = "/assets/internalVolumes/{id}/datasources"
+schema = ""
+class_name = "DiiAssetsInternalvolumesDatasource"
+
+[fields.vendorModelId]
+cache_strategy = "cache"
+
+[fields.note]
+cache_strategy = "cache"
+
+[fields.docLink]
+cache_strategy = "cache"
+
+[fields.devices]
+cache_strategy = "cache"
+
+[fields.changeResponses]
+cache_strategy = "cache"
+
+[fields.packages]
+cache_strategy = "cache"
+
+[fields.lastSuccessfullyAcquired]
+cache_strategy = "cache"
+
+[fields.resumeTime]
+cache_strategy = "cache"
+
+[fields.pollStatus]
+cache_strategy = "cache"
+
+[fields.dsTypeId]
+cache_strategy = "cache"
+
+[fields.acquisitionUnit]
+cache_strategy = "cache"
+
+[fields.vendor]
+cache_strategy = "cache"
+
+[fields.statusText]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.activePatch]
+cache_strategy = "cache"
+
+[fields.model_]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.config_]
+cache_strategy = "cache"
+
+[fields.events]
+cache_strategy = "cache"
+
+[fields.status]
+cache_strategy = "cache"

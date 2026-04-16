@@ -1,0 +1,28 @@
+[endpoint]
+path = "/monitors/rules"
+schema = ""
+class_name = "DiiMonitorsRule"
+
+[fields.expression]
+cache_strategy = "cache"
+
+[fields.tenantId]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.active]
+cache_strategy = "cache"
+
+[fields.startTime]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.filters]
+cache_strategy = "cache"
+
+[fields.endTime]
+cache_strategy = "cache"

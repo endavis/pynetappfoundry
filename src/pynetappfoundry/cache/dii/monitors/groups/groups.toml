@@ -1,0 +1,31 @@
+[endpoint]
+path = "/monitors/groups"
+schema = ""
+class_name = "DiiMonitorsGroup"
+
+[fields.groupType]
+cache_strategy = "cache"
+
+[fields.created]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields."monitorInfo.monitorCount"]
+cache_strategy = "cache"
+
+[fields."monitorInfo.monitorsLink"]
+cache_strategy = "cache"
+
+[fields."monitorInfo.monitors"]
+cache_strategy = "cache"
+
+[fields.self]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.updated]
+cache_strategy = "cache"

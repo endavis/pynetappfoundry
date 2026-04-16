@@ -1,0 +1,79 @@
+[endpoint]
+path = "/assets/fabrics/{id}/ports"
+schema = ""
+class_name = "DiiAssetsFabricsPort"
+
+[fields.role]
+cache_strategy = "cache"
+
+[fields.portState]
+cache_strategy = "cache"
+
+[fields.annotations]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.gbicType]
+cache_strategy = "cache"
+
+[fields.isActive]
+cache_strategy = "cache"
+
+[fields.deviceName]
+cache_strategy = "cache"
+
+[fields.speed]
+cache_strategy = "cache"
+
+[fields.wwn]
+cache_strategy = "cache"
+
+[fields.blade]
+cache_strategy = "cache"
+
+[fields.portIndex]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.fc4Protocol]
+cache_strategy = "cache"
+
+[fields.deviceType]
+cache_strategy = "cache"
+
+[fields.classOfService]
+cache_strategy = "cache"
+
+[fields.controller]
+cache_strategy = "cache"
+
+[fields.nodeWwn]
+cache_strategy = "cache"
+
+[fields.fabrics]
+cache_strategy = "cache"
+
+[fields.performance]
+cache_strategy = "cache"
+
+[fields.connectedPorts]
+cache_strategy = "cache"
+
+[fields.datasources]
+cache_strategy = "cache"
+
+[fields.simpleName]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.device]
+cache_strategy = "cache"
+
+[fields.applications]
+cache_strategy = "cache"

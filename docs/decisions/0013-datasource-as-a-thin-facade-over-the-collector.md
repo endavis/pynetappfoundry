@@ -151,7 +151,8 @@ This ADR is **Phase 1** of a three-phase plan. A new parent issue supersedes #49
 - Issue #536: feat: DataSource path-parameter endpoints — closed, absorbed into ADR-0013
 - Issue #537: feat: DataSource post-query hooks for derived fields — closed, absorbed into ADR-0013
 - Issue #532: feat: DataSource SSH/CLI backend — resolved; CLI dispatch wired into ``fetch()`` via ``_fetch_cli()``, ``OntapBackend`` constructs CLI clients lazily with ``is_cloud`` gate
-- Issue #533: feat: DataSource non-ONTAP backends — deferred, retargeted to plug into collector
+- Issue #533: feat: DataSource non-ONTAP backends — partially addressed by #600 (DII backend); retargeted to plug into collector
+- Issue #600: feat: add DII API backend to DataSource (first non-ONTAP backend, see ADR-0015)
 - Issue #534: feat: audit Pydantic models without TypeMappings — unchanged
 - Issue #538: feat: DataSource pagination/chunking edge cases — re-scoped to the realtime live-fetch path only
 
@@ -166,4 +167,5 @@ This ADR is **Phase 1** of a three-phase plan. A new parent issue supersedes #49
 - Source: `src/pynetappfoundry/cache/collector.py` (canonical fetch layer under this ADR)
 - Source: `src/pynetappfoundry/cache/_metadata.py` (snapshot model, `cached_at` timestamp)
 - Source: `src/pynetappfoundry/data/source.py` (public facade, unchanged at the API level)
+- [ADR-0015: DII backend](0015-dii-backend-live-only-bare-array-envelope-offsetlimit-pagination.md) (first non-ONTAP backend, validates the backend registry design)
 - Source: `src/pynetappfoundry/data/backends.py` (rewritten as thin delegator in Phase 3)

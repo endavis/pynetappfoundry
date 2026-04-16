@@ -1,0 +1,28 @@
+[endpoint]
+path = "/assets/virtualMachines/{id}/fileSystems"
+schema = ""
+class_name = "DiiAssetsVirtualmachinesFilesystem"
+
+[fields.vmdks]
+cache_strategy = "cache"
+
+[fields.simpleName]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.storageResources]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.computeResource]
+cache_strategy = "cache"
+
+[fields.capacity]
+cache_strategy = "cache"
