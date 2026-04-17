@@ -99,7 +99,8 @@ version-file = "src/pynetappfoundry/_version.py"
 [tool.ruff]
 line-length = 100
 target-version = "py312"
-extend-exclude = ["**/_version.py"]
+extend-exclude = ["**/_version.py", "examples"]
+force-exclude = true
 
 [tool.ruff.lint]
 select = [
