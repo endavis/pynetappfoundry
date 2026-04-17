@@ -68,6 +68,7 @@ nav:
       - Installation: getting-started/installation.md
   - Usage:
       - Basics: usage/basics.md
+      - CLI Guide: usage/cli.md
       - ONTAP Access Patterns: usage/ontap-access-patterns.md
       - DataSource: usage/data-source.md
       - Query Layer: usage/query-layer.md
@@ -78,6 +79,7 @@ nav:
       - Cache: reference/cache.md
   - Examples:
       - Overview: examples/README.md
+      - Add a Feature: examples/add-a-feature.md
       - API Examples: examples/api.md
   - Development:
       - Coding Standards: development/coding-standards.md
@@ -85,10 +87,19 @@ nav:
       - CI/CD & Testing: development/ci-cd-testing.md
       - Benchmarks: development/benchmarks.md
       - Release Process: development/release-and-automation.md
-      - AI Setup: development/AI_SETUP.md
-      - AI Command Blocking: development/ai/command-blocking.md
-      - AI Enforcement Principles: development/ai/enforcement-principles.md
-      - AI Statusline: development/ai/statusline.md
+      - Dependabot Auto-Merge: development/dependabot-automerge.md
+      - GitHub Repository Settings: development/github-repository-settings.md
+      - install_tools Framework: development/install-tools-framework.md
+      - Tooling Roles: development/tooling-roles.md
+      - AI:
+          - Setup: development/AI_SETUP.md
+          - First 5 Minutes: development/ai/first-5-minutes.md
+          - Slash Commands: development/ai/slash-commands.md
+          - Architectural Conventions: development/ai/architectural-conventions.md
+          - Command Blocking: development/ai/command-blocking.md
+          - Enforcement Principles: development/ai/enforcement-principles.md
+          - Statusline: development/ai/statusline.md
+          - Ruff-Fix Hook: development/ai/ruff-fix-hook.md
       - Adding Backends: development/adding-backends.md
       - Field Mapping Framework: development/field-mapping.md
       - Unit Registry: development/unit-registry.md
@@ -118,6 +129,8 @@ nav:
           - ADR-9011 pytest Testing: template/decisions/9011-use-pytest-for-testing.md
           - ADR-9012 MkDocs Documentation: template/decisions/9012-use-mkdocs-with-material-theme-for-documentation.md
           - ADR-9013 Python Version Policy: template/decisions/9013-python-version-support-policy.md
+          - ADR-9014 Click for CLI: template/decisions/9014-use-click-for-application-cli.md
+          - ADR-9015 install_tools Framework: template/decisions/9015-install-tools-framework-archive-extraction-and-custom-urls.md
   - Template:
       - Overview: template/index.md
       - New Project: template/new-project.md
@@ -126,6 +139,7 @@ nav:
       - Keeping Up to Date: template/updates.md
       - AI Sync Checklist: template/ai-sync-checklist.md
       - Tools Reference: template/tools-reference.md
+  - All Documents: TABLE_OF_CONTENTS.md
 
 extra:
   social:

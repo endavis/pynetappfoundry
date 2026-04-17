@@ -39,7 +39,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 <!-- BEGIN:audience=contributors -->
 - [Add a Feature: End-to-End Walkthrough](examples/add-a-feature.md) - Step-by-step example of adding a module, CLI subcommand, tests, and docs to the project
 - [Adding a New API Backend](development/adding-backends.md) - Developer guide for extending the DataSource framework with new API backends
-- [AI Agent Setup Guide](development/AI_SETUP.md) - Configure Claude, Gemini, and Codex for this project
+- [AI Agent Setup Guide](development/AI_SETUP.md) - Configure Claude, Gemini, Copilot, and Codex for this project
 - [AI Architectural Conventions](development/ai/architectural-conventions.md) - Imperative-form architectural rules AI agents must follow when generating code
 - [AI Command Blocking](development/ai/command-blocking.md) - Hooks that block dangerous commands from AI agents
 - [AI Enforcement Principles](development/ai/enforcement-principles.md) - How we enforce AI agent behavior in code and settings
@@ -52,12 +52,12 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [Dependabot Auto-merge](development/dependabot-automerge.md) - How the dependabot auto-merge workflow evaluates, enables, and skips PRs
 - [Development Deployment Guide](deployment/development.md) - Guide for setting up and running the application in development environments
 - [Doit Tasks Reference](development/doit-tasks-reference.md) - Complete reference for all doit automation tasks
-- [Extensions](development/extensions.md) - How to extend pynetappfoundry
 - [Field Mapping Framework](development/field-mapping.md) - Declarative framework for mapping API/CLI data to cache models
 - [First 5 Minutes with an AI Agent](development/ai/first-5-minutes.md) - Narrative walkthrough of the AI agent workflow from issue to merge
 - [GitHub Repository Settings](development/github-repository-settings.md) - Complete reference for all GitHub repository settings the template expects
 - [Installation Guide](getting-started/installation.md) - How to install and set up your project
 - [ONTAP Access Patterns](usage/ontap-access-patterns.md) - Guide to choosing between the three ONTAP access methods
+- [Optional Extensions](development/extensions.md) - Additional tools and extensions for testing, security, and more
 - [Performance Benchmarks](development/benchmarks.md) - Running, interpreting, and comparing the pytest-benchmark suite
 - [Production Deployment Guide](deployment/production.md) - Comprehensive guide for deploying Python applications to production
 - [pynetappfoundry Documentation](index.md) - ONTAP administration library and CLI tools
@@ -73,7 +73,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 
 ### For AI Agents
 <!-- BEGIN:audience=ai-agents -->
-- [AI Agent Setup Guide](development/AI_SETUP.md) - Configure Claude, Gemini, and Codex for this project
+- [AI Agent Setup Guide](development/AI_SETUP.md) - Configure Claude, Gemini, Copilot, and Codex for this project
 - [AI Agent Sync Checklist](template/ai-sync-checklist.md) - Step-by-step checklist for AI agents synchronizing downstream projects with pyproject-template
 - [AI Architectural Conventions](development/ai/architectural-conventions.md) - Imperative-form architectural rules AI agents must follow when generating code
 - [AI Command Blocking](development/ai/command-blocking.md) - Hooks that block dangerous commands from AI agents
@@ -120,7 +120,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [ADR-9014: Use click for application CLI](template/decisions/9014-use-click-for-application-cli.md)
 - [ADR-9015: install_tools framework: archive extraction and custom URLs](template/decisions/9015-install-tools-framework-archive-extraction-and-custom-urls.md)
 - [ADR-NNNN: Title](decisions/adr-template.md)
-- [AI Agent Setup Guide](development/AI_SETUP.md) - Configure Claude, Gemini, and Codex for this project
+- [AI Agent Setup Guide](development/AI_SETUP.md) - Configure Claude, Gemini, Copilot, and Codex for this project
 - [AI Agent Sync Checklist](template/ai-sync-checklist.md) - Step-by-step checklist for AI agents synchronizing downstream projects with pyproject-template
 - [AI Architectural Conventions](development/ai/architectural-conventions.md) - Imperative-form architectural rules AI agents must follow when generating code
 - [AI Command Blocking](development/ai/command-blocking.md) - Hooks that block dangerous commands from AI agents
@@ -143,7 +143,6 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [Development Deployment Guide](deployment/development.md) - Guide for setting up and running the application in development environments
 - [Doit Tasks Reference](development/doit-tasks-reference.md) - Complete reference for all doit automation tasks
 - [Examples](examples/README.md) - Code examples for pynetappfoundry
-- [Extensions](development/extensions.md) - How to extend pynetappfoundry
 - [Field Mapping Framework](development/field-mapping.md) - Declarative framework for mapping API/CLI data to cache models
 - [First 5 Minutes with an AI Agent](development/ai/first-5-minutes.md) - Narrative walkthrough of the AI agent workflow from issue to merge
 - [GitHub Repository Settings](development/github-repository-settings.md) - Complete reference for all GitHub repository settings the template expects
@@ -153,6 +152,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [Migration Guide](template/migration.md) - Migrate existing Python projects to use this template
 - [New Project Setup](template/new-project.md) - Create a new Python project from this template
 - [ONTAP Access Patterns](usage/ontap-access-patterns.md) - Guide to choosing between the three ONTAP access methods
+- [Optional Extensions](development/extensions.md) - Additional tools and extensions for testing, security, and more
 - [Performance Benchmarks](development/benchmarks.md) - Running, interpreting, and comparing the pytest-benchmark suite
 - [Plan: Add `nf cache query` Command](plans/cache-query-command.md)
 - [Production Deployment Guide](deployment/production.md) - Comprehensive guide for deploying Python applications to production

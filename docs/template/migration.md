@@ -38,7 +38,7 @@ Use this checklist for a manual migration. The flow assumes hatch-vcs for versio
 - From the template root: `python tools/pyproject_template/manage.py`.
 - Select **[2] Configure project** to run the configurator.
 - Provide project name, package name (import), PyPI name, author, GitHub user, description.
-- **What it does:** Rewrites placeholders (badges/links/docs/workflows), renames `src/pynetappfoundry → src/<your_package>`.
+- **What it does:** Rewrites placeholders (badges/links/docs/workflows), renames `src/package_name → src/<your_package>`.
 
 See [Template Management](manage.md) for full documentation on the management script.
 

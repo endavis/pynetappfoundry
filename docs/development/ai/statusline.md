@@ -18,7 +18,7 @@ The template includes a custom statusline for Claude Code sessions that provides
 
 ```
 📁 project-name | 🐍 .venv | Python: 3.12.12
-@endavis | 🔀 main (0 files uncommitted, synced 5m ago)
+@username | 🔀 main (0 files uncommitted, synced 5m ago)
 Claude Opus 4.5 | ▓▓░░░░░░░░ ~10% of 200k tokens
 💬 work on issue #130
 ```
@@ -27,7 +27,7 @@ Claude Opus 4.5 | ▓▓░░░░░░░░ ~10% of 200k tokens
 
 - **Current directory** and Python virtual environment name
 - **Python version** currently active
-- **GitHub endavis** (from `gh` CLI)
+- **GitHub username** (from `gh` CLI)
 - **Git branch** with uncommitted file count
 - **Sync status** showing ahead/behind commits and last fetch time
 - **Model name** with context usage bar (visual + percentage)
@@ -81,14 +81,14 @@ Comment out or remove lines in the "Build output" section of the script:
 output="📁 ${dir}"
 [[ -n "$venv_name" ]] && output+=" | 🐍 ${venv_name}"
 [[ -n "$python_version" ]] && output+=" | Python: ${python_version}"
-# [[ -n "$gh_user" ]] && output+="\n@${gh_user}"  # Remove GitHub endavis
+# [[ -n "$gh_user" ]] && output+="\n@${gh_user}"  # Remove GitHub username
 [[ -n "$branch" ]] && output+=" | 🔀 ${branch} ${git_status}"
 ```
 
 ## Requirements
 
 - `jq` - JSON processor (used for parsing Claude's input)
-- `gh` - GitHub CLI (optional, for endavis display)
+- `gh` - GitHub CLI (optional, for username display)
 - `git` - For branch and status information
 
 ## Troubleshooting
