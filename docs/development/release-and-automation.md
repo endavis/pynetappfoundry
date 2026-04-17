@@ -17,8 +17,10 @@ This guide covers automated versioning, release management, governance validatio
 ## Table of Contents
 - [Automated Versioning](#automated-versioning)
 - [Release Management](#release-management)
+- [Release Notes](#release-notes)
 - [PR Merging](#pr-merging)
 - [Security & Quality Tasks](#security-quality-tasks)
+- [SBOM Generation](#sbom-generation)
 - [Governance Validation](#governance-validation)
 - [Environment Configuration](#environment-configuration)
 
@@ -209,6 +211,63 @@ This creates the git tag and pushes it, triggering CI/CD to build and publish th
 | Governance | Built-in validation | Validation in both steps |
 | Best for | Solo maintainers, trusted CI | Teams, regulated environments |
 
+## Release Notes
+
+Release notes are automatically generated from merged pull requests when a GitHub release is created. The release workflow creates a GitHub release with auto-generated notes after publishing to PyPI.
+
+### How It Works
+
+1. When a version tag (e.g., `v1.0.0`) is pushed, the release workflow runs
+2. After the package is published to PyPI, the `github-release` job creates a GitHub release
+3. GitHub generates release notes by categorizing merged PRs since the last release
+4. SBOM files are attached to the release as downloadable assets
+
+### Category Configuration
+
+PR labels and conventional commit prefixes are mapped to release note sections in `.github/release.yml`:
+
+| Section | Labels |
+|---------|--------|
+| **Breaking Changes** | `breaking` |
+| **New Features** | `enhancement`, `feat` |
+| **Bug Fixes** | `bug`, `fix` |
+| **Documentation** | `documentation`, `docs` |
+| **Performance** | `performance`, `perf` |
+| **Other Changes** | Everything else |
+
+PRs with the `dependencies` or `needs-triage` labels are excluded from release notes.
+
+### Customizing Categories
+
+To add or modify categories, edit `.github/release.yml`:
+
+```yaml
+changelog:
+  exclude:
+    labels:
+      - dependencies
+      - needs-triage
+  categories:
+    - title: Breaking Changes
+      labels:
+        - breaking
+    - title: New Features
+      labels:
+        - enhancement
+        - feat
+    # Add more categories here
+    - title: Other Changes
+      labels:
+        - "*"
+```
+
+Categories are evaluated in order. A PR is placed in the first matching category. The `"*"` wildcard matches any label and serves as a catch-all.
+
+### Further Reading
+
+- [GitHub Docs: Automatically generated release notes](https://docs.github.com/en/repositories/releasing-projects-on-github/automatically-generated-release-notes)
+- [GitHub Docs: Configuring automatically generated release notes](https://docs.github.com/en/repositories/releasing-projects-on-github/automatically-generated-release-notes#configuring-automatically-generated-release-notes)
+
 ## PR Merging
 
 Use `doit pr_merge` to merge pull requests with properly formatted commit messages. This task enforces the merge commit format and provides a consistent workflow.
@@ -224,12 +283,15 @@ doit pr_merge --pr=123
 
 # Keep the branch after merge (default deletes it)
 doit pr_merge --delete-branch=false
+
+# Automatically close linked issues after merge
+doit pr_merge --auto-close
 ```
 
 ### What It Does
 
 1. **Validates PR title** - Ensures the title follows conventional commit format (`<type>: <subject>`)
-2. **Extracts linked issues** - Parses PR body for `closes #XX`, `fixes #XX`, or `part of #XX`
+2. **Extracts linked issues** - Parses PR body for `addresses #XX`
 3. **Formats merge commit** - Creates a standardized commit message with PR and issue references
 4. **Squash merges** - Uses squash merge to maintain clean history
 5. **Deletes branch** - Removes the source branch after merge (default behavior)
@@ -240,27 +302,25 @@ doit pr_merge --delete-branch=false
 The task automatically formats the merge commit subject:
 
 ```
-<type>: <subject> (merges PR #XX, closes #YY)
-<type>: <subject> (merges PR #XX, part of #YY)
+<type>: <subject> (merges PR #XX, addresses #YY)
 <type>: <subject> (merges PR #XX)
 ```
 
 **Examples:**
 ```
-feat: add user authentication (merges PR #102, closes #99)
-fix: resolve parsing error (merges PR #103, closes #100, #101)
+feat: add user authentication (merges PR #102, addresses #99)
+fix: resolve parsing error (merges PR #103, addresses #100, #101)
 docs: update installation guide (merges PR #104)
-refactor: extract helper functions (merges PR #105, part of #50)
+refactor: extract helper functions (merges PR #105, addresses #50)
 ```
 
 ### Linking Issues in PRs
 
-In your PR body, use these keywords to link issues:
+In your PR body, use the `Addresses` keyword to link issues:
 
 | Keyword | Effect | Use When |
 |---------|--------|----------|
-| `closes #XX`, `fixes #XX`, `resolves #XX` | Included as `closes #XX` in merge commit | PR fully completes the issue |
-| `part of #XX` | Included as `part of #XX` in merge commit | Issue requires multiple PRs |
+| `Addresses #XX` | Included as `addresses #XX` in merge commit | PR relates to the issue |
 
 **Example PR body:**
 ```markdown
@@ -268,34 +328,34 @@ In your PR body, use these keywords to link issues:
 - Add login form component
 - Implement session management
 
-Closes #99
+Addresses #99
 
 ## Test Plan
 - [ ] Test login flow
 ```
 
-For multi-PR issues:
-```markdown
-## Summary
-First part of the authentication system refactor.
-
-Part of #50
-
-## Test Plan
-- [ ] Existing tests pass
-```
-
 ### Closing Issues After Merge
 
-Issues are **not automatically closed** by GitHub when using squash merge with custom commit messages. After merging, manually close linked issues:
+By default, issues are **not automatically closed** when using `Addresses`. After merging, `doit pr_merge` prints the `gh issue close` commands so you can close linked issues manually:
 
 ```bash
 # The task displays these commands after merge
-gh issue close 99 --comment "Fixed in PR #102"
-gh issue close 100 --comment "Fixed in PR #103"
+gh issue close 99 --comment "Addressed in PR #102"
+gh issue close 100 --comment "Addressed in PR #103"
 ```
 
-This ensures issues are explicitly closed with a reference to the PR that fixed them.
+This ensures issues are explicitly closed with a reference to the PR that addressed them.
+
+#### Auto-closing linked issues
+
+Pass `--auto-close` to have `doit pr_merge` run the `gh issue close` commands itself after a successful merge:
+
+```bash
+doit pr_merge --auto-close
+doit pr_merge --pr=123 --auto-close
+```
+
+Each linked issue is closed with the comment `Addressed in PR #XX`, matching the format used in the manual reminder.
 
 ### Why Use `doit pr_merge`?
 
@@ -402,6 +462,69 @@ uv run doit fmt_pyproject
   | pydantic     | 2.5.0   | MIT         |
   ```
 
+#### `doit sbom`
+- **Tool**: cyclonedx-py
+- **Purpose**: Generates a Software Bill of Materials (SBOM) in CycloneDX format
+- **Output**: `tmp/sbom.json` (JSON) and `tmp/sbom.xml` (XML)
+- **Example**:
+  ```bash
+  $ uv run doit sbom
+  # Generates tmp/sbom.json and tmp/sbom.xml
+  ```
+
+### SBOM Generation
+
+A **Software Bill of Materials (SBOM)** is a machine-readable inventory of all software components and dependencies in a project. SBOMs are increasingly required for regulatory compliance (e.g., US Executive Order 14028) and are essential for security auditing and supply chain transparency.
+
+#### Why SBOM Matters
+
+- **Compliance**: Many organizations and government agencies require SBOMs for software procurement
+- **Security Auditing**: Enables automated vulnerability scanning across all dependencies
+- **Supply Chain Transparency**: Provides a complete picture of third-party components
+- **Incident Response**: Quickly determine if a newly discovered vulnerability affects your software
+
+#### Local Usage
+
+Generate SBOMs locally using the `doit sbom` task:
+
+```bash
+# Install security extras (if not already installed)
+uv sync --extra security
+
+# Generate SBOM files
+uv run doit sbom
+```
+
+This produces two files in the `tmp/` directory:
+
+- `tmp/sbom.json` — CycloneDX JSON format
+- `tmp/sbom.xml` — CycloneDX XML format
+
+#### Release Integration
+
+SBOMs are automatically generated and attached to every GitHub release:
+
+1. During the **build** job, `cyclonedx-py` generates both JSON and XML SBOMs
+2. The SBOM files are included in the `dist/` artifact alongside wheel and sdist packages
+3. After publishing to PyPI, the **github-release** job creates a GitHub release with auto-generated notes and attaches the SBOMs as release assets
+
+Users can download the SBOM from the GitHub release page for any version.
+
+#### Using SBOMs for Vulnerability Scanning
+
+You can feed the generated SBOM into vulnerability scanners for continuous monitoring:
+
+```bash
+# Using grype (https://github.com/anchore/grype)
+grype sbom:tmp/sbom.json
+
+# Using trivy (https://github.com/aquasecurity/trivy)
+trivy sbom tmp/sbom.json
+
+# Using osv-scanner (https://github.com/google/osv-scanner)
+osv-scanner --sbom=tmp/sbom.json
+```
+
 ### Integrating into CI
 
 Add security checks to your CI pipeline:
@@ -440,24 +563,23 @@ This template enforces governance rules to ensure code quality and traceability.
 
 **Required Format**:
 ```
-<type>: <subject> (merges PR #XX, closes #YY)
-<type>: <subject> (merges PR #XX, part of #YY)
+<type>: <subject> (merges PR #XX, addresses #YY)
 <type>: <subject> (merges PR #XX)
 ```
 
 **Examples**:
 ```
-✅ feat: add new feature (merges PR #102, closes #99)
-✅ fix: resolve bug (merges PR #103, closes #100)
+✅ feat: add new feature (merges PR #102, addresses #99)
+✅ fix: resolve bug (merges PR #103, addresses #100)
 ✅ docs: update guide (merges PR #104)
-✅ refactor: extract utils (merges PR #105, part of #50)
+✅ refactor: extract utils (merges PR #105, addresses #50)
 
 ❌ Add new feature                    # Missing type
 ❌ feat: add feature                  # Missing PR reference
 ❌ feat: add feature (PR #102)        # Wrong format
 ```
 
-Use `closes` when the PR fully resolves an issue. Use `part of` when an issue requires multiple PRs to complete. See [PR Merging](#pr-merging) for details.
+See [PR Merging](#pr-merging) for details.
 
 **Valid Types**: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`, `ci`, `perf`
 
@@ -472,7 +594,7 @@ Use `closes` when the PR fully resolves an issue. Use `part of` when an issue re
 **Examples**:
 ```
 ✅ feat: add new feature (#99)
-✅ fix: resolve bug closes #100
+✅ fix: resolve bug addresses #100
 ✅ docs: update README                # Docs exempt
 
 ⚠️ feat: add new feature             # Warning only
@@ -639,6 +761,7 @@ uv run doit audit           # Vulnerability scan
 uv run doit security        # Security analysis
 uv run doit spell_check     # Spell checking
 uv run doit licenses        # License compliance
+uv run doit sbom            # Generate SBOM (CycloneDX)
 
 # Releases
 uv run doit release_dev     # Create pre-release (TestPyPI)
@@ -662,10 +785,10 @@ uv sync --dev --all-extras
 
 ```bash
 # Install hooks
-uv run pre-commit install
+doit pre_commit_install
 
 # Run manually on all files
-uv run pre-commit run --all-files
+doit pre_commit_run
 
 # Skip hooks (emergency only)
 git commit --no-verify
@@ -710,7 +833,7 @@ If you need to fix an existing merge commit, use interactive rebase (advanced):
 ```bash
 git rebase -i HEAD~1
 # Change 'pick' to 'reword', then edit the message to:
-# feat: add new feature (merges PR #102, closes #99)
+# feat: add new feature (merges PR #102, addresses #99)
 ```
 
 ### Security Task Fails: "pip-audit not installed"
@@ -740,4 +863,4 @@ ignore-words-list = "crate,kubernetes,terraform"
 
 ---
 
-[Back to Documentation Index](../index.md)
+[Back to Documentation Index](../TABLE_OF_CONTENTS.md)

@@ -31,14 +31,14 @@ doit <task_name>
 
 | Category | Tasks | Description |
 |----------|-------|-------------|
-| [Testing](#testing-tasks) | `test`, `coverage`, `mutate`, `mutate_html` | Run tests, coverage, and mutation testing |
-| [Benchmarking](#benchmarking-tasks) | `benchmark`, `benchmark_save`, `benchmark_compare` | Performance benchmarking |
+| [Testing](#testing-tasks) | `test`, `coverage`, `mutate` | Run tests, coverage, and mutation testing |
+| [Benchmarking](#benchmarking-tasks) | `benchmark`, `benchmark_save`, `benchmark_compare` | Performance benchmarks |
 | [Code Quality](#code-quality-tasks) | `format`, `lint`, `type_check`, `check` | Code formatting and linting |
 | [Code Analysis](#code-analysis-tasks) | `complexity`, `maintainability`, `deadcode` | Code metrics and analysis |
 | [Security](#security-tasks) | `security`, `audit`, `licenses`, `sbom` | Security scanning and SBOM |
 | [Documentation](#documentation-tasks) | `docs_serve`, `docs_build`, `docs_deploy`, `docs_toc` | Documentation management |
 | [Dependencies](#dependency-tasks) | `install`, `install_dev`, `update_deps` | Package management |
-| [GitHub Workflow](#github-workflow-tasks) | `issue`, `pr`, `pr_merge`, `adr` | Issue and PR management |
+| [GitHub Workflow](#github-workflow-tasks) | `issue`, `pr`, `pr_merge`, `adr`, `labels_sync` | Issue and PR management |
 | [Release](#release-tasks) | `release`, `release_dev`, `release_pr`, `release_tag`, `publish` | Version and release management |
 | [Version](#version-tasks) | `bump`, `changelog` | Version bumping and changelog |
 | [Setup](#setup-tasks) | `pre_commit_install`, `completions`, `install_direnv` | Development environment |
@@ -97,30 +97,19 @@ doit mutate
 ```
 
 **What it does:**
-- Runs `mutmut run` to apply mutations to source code and check if tests catch them
-- Runs `mutmut results` to display the summary
+- Introduces small changes (mutations) to source code
+- Runs the test suite against each mutation
+- Reports which mutations were killed (detected) vs survived (missed)
+- Prints a summary with the mutation score
 
-**Equivalent command:**
-```bash
-uv run mutmut run && uv run mutmut results
-```
+**Output:** Results are stored in the `mutants/` cache directory. Re-run `uv run mutmut results` at any time to re-display the text summary.
 
-### `mutate_html`
+**When to use:**
+- To evaluate how effective your test suite is at detecting bugs
+- To identify areas where tests could be strengthened
+- Informational only -- no enforced threshold
 
-Generate HTML report from mutmut results.
-
-```bash
-doit mutate_html
-```
-
-**What it does:**
-- Generates an HTML report from the latest mutmut run
-- Report is saved to `tmp/mutmut/`
-
-**Equivalent command:**
-```bash
-uv run mutmut html --html-dir tmp/mutmut
-```
+See [Mutation Testing](ci-cd-testing.md#mutation-testing) for details on interpreting results.
 
 ---
 
@@ -135,7 +124,8 @@ doit benchmark
 ```
 
 **What it does:**
-- Runs pytest benchmarks from `tests/benchmarks/` with benchmark mode enabled
+- Runs pytest on `tests/benchmarks/` with `--benchmark-enable --benchmark-only`
+- Benchmarks are disabled by default during normal test runs
 
 **Equivalent command:**
 ```bash
@@ -144,14 +134,15 @@ uv run pytest tests/benchmarks/ --benchmark-enable --benchmark-only -v
 
 ### `benchmark_save`
 
-Run benchmarks and save results as baseline.
+Run benchmarks and save results as a baseline.
 
 ```bash
 doit benchmark_save
 ```
 
 **What it does:**
-- Runs benchmarks and saves results as a baseline to `tmp/benchmarks/`
+- Runs benchmarks and saves results to `tmp/benchmarks/`
+- Saved baseline can be used for comparison with `benchmark_compare`
 
 **Equivalent command:**
 ```bash
@@ -160,14 +151,15 @@ uv run pytest tests/benchmarks/ --benchmark-enable --benchmark-only --benchmark-
 
 ### `benchmark_compare`
 
-Run benchmarks and compare against saved baseline.
+Run benchmarks and compare against a saved baseline.
 
 ```bash
 doit benchmark_compare
 ```
 
 **What it does:**
-- Runs benchmarks and compares against the previously saved baseline
+- Runs benchmarks and compares results against the saved baseline
+- Shows performance regressions or improvements
 
 **Equivalent command:**
 ```bash
@@ -439,23 +431,28 @@ doit licenses
 
 ### `sbom`
 
-Generate SBOM in CycloneDX format.
+Generate a Software Bill of Materials (SBOM) in CycloneDX format.
 
 ```bash
 doit sbom
 ```
 
 **What it does:**
-- Generates Software Bill of Materials in both JSON and XML formats
-- Files are saved to `tmp/sbom.json` and `tmp/sbom.xml`
+- Generates SBOM files from the project's dependency tree
+- Produces both JSON and XML formats
+
+**Output locations:**
+- `tmp/sbom.json` -- CycloneDX JSON format
+- `tmp/sbom.xml` -- CycloneDX XML format
 
 **Requires:** `[security]` extras installed (`uv sync --extra security`)
 
-**Equivalent command:**
-```bash
-uv run cyclonedx-py environment --of JSON -o tmp/sbom.json
-uv run cyclonedx-py environment --of XML -o tmp/sbom.xml
-```
+**When to use:**
+- For regulatory compliance (e.g., US Executive Order 14028)
+- For security auditing and vulnerability scanning
+- Before releases (SBOMs are also auto-generated in CI release workflows)
+
+See [SBOM Generation](release-and-automation.md#sbom-generation) for details on usage and CI integration.
 
 ---
 
@@ -559,12 +556,17 @@ doit install_dev
 **What it does:**
 - Syncs all dependencies including dev extras
 - Installs pre-commit hooks
+- Marks `src/package_name/_version.py` as assume-unchanged so the version file regenerated by setuptools-scm does not appear as modified in `git status`
 
 **Equivalent command:**
 ```bash
 uv sync --all-extras --dev
 uv run pre-commit install
+git update-index --assume-unchanged src/package_name/_version.py
 ```
+
+> **Note:** To undo the assume-unchanged flag, run:
+> `git update-index --no-assume-unchanged src/package_name/_version.py`
 
 ### `update_deps`
 
@@ -658,15 +660,21 @@ doit pr_merge
 
 # Merge specific PR
 doit pr_merge --pr=123
+
+# Merge and automatically close linked issues
+doit pr_merge --auto-close
 ```
 
 **What it does:**
 1. Finds PR associated with current branch (or uses `--pr`)
 2. Validates PR is approved and checks pass
 3. Merges with conventional commit format: `<type>: <subject> (merges PR #XX, addresses #YY)`
+4. If `--auto-close` is set, closes each linked issue with a `Addressed in PR #XX` comment; otherwise prints the `gh issue close` commands as a reminder.
 
 **Options:**
 - `--pr`: PR number to merge (defaults to PR for current branch)
+- `--delete-branch`: Delete the source branch after merge (default: `true`)
+- `--auto-close`: Close linked issues (parsed from `Addresses #XX` in the PR body) after a successful merge (default: `false`)
 
 ### `adr`
 
@@ -692,6 +700,39 @@ doit adr --title="Use Redis" --body-file=adr.md
 - `--body-file`: File containing ADR body (non-interactive)
 
 See [ADR Documentation](../decisions/README.md) for more information.
+
+---
+
+### `labels_sync`
+
+Reconcile GitHub labels with `.github/labels.yml` (idempotent).
+
+```bash
+# Preview changes without touching GitHub
+doit labels_sync --dry-run
+
+# Create missing labels and update drift (no deletion)
+doit labels_sync
+
+# Also delete labels present on GitHub but absent from the file
+doit labels_sync --prune
+
+# Use a different labels file
+doit labels_sync --file=.github/labels.custom.yml
+```
+
+**What it does:**
+- Reads `.github/labels.yml` (flat list of `{name, color, description}` entries).
+- Fetches current labels from GitHub via `gh label list`.
+- Creates, updates, or (with `--prune`) deletes labels to match the file.
+- Color comparison is case-insensitive; running twice is a no-op.
+
+**Options:**
+- `--dry-run`: Print planned changes, make no API calls.
+- `--prune`: Also delete labels on GitHub that are missing from the file (off by default).
+- `--file=<path>`: Path to the labels file (default `.github/labels.yml`).
+
+See [GitHub Repository Settings → Labels](github-repository-settings.md#labels) for the canonical label list and the file schema.
 
 ---
 
@@ -918,6 +959,8 @@ echo 'eval "$(direnv hook bash)"' >> ~/.bashrc
 direnv allow
 ```
 
+This task uses the reusable install_tools framework — see [install_tools framework](install-tools-framework.md) for adding more tools.
+
 ### `commit`
 
 Interactive commit with commitizen.
@@ -1049,4 +1092,4 @@ The `protect-dynamic-version` hook prevents accidental changes to the `dynamic` 
 
 ---
 
-[Back to Documentation Index](../index.md)
+[Back to Documentation Index](../TABLE_OF_CONTENTS.md)

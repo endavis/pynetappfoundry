@@ -31,7 +31,7 @@ CI runs lint/format, tests, coverage, and quality checks to guard against regres
 Local commands:
 ```bash
 doit format && doit lint
-uv run pytest
+doit test
 doit coverage
 ```
 
@@ -207,6 +207,28 @@ security:
       run: uv run doit security
 ```
 
+#### Documentation Build Job
+
+Runs `doit docs_build` once on `ubuntu-latest` using the project's newest supported Python version (read dynamically from `.github/python-versions.json`). This job gates PRs against hard-crash regressions in the mkdocs build pipeline — for example, plugin incompatibilities, broken macros, or malformed configuration. See issue [#349](https://github.com/endavis/pyproject-template/issues/349) for the historical incident that motivated this gate.
+
+Note: This job does **not** currently run `mkdocs build --strict`, so doc-link warnings and other non-fatal mkdocs warnings do not fail the build. Tightening this to strict mode is a potential future improvement once the existing warning backlog is cleared.
+
+```yaml
+docs:
+  needs: setup
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v6
+    - uses: actions/setup-python@v6
+      with:
+        python-version: ${{ needs.setup.outputs.newest }}
+    - uses: astral-sh/setup-uv@v7
+    - name: Install dependencies
+      run: uv sync --all-extras --dev
+    - name: Build documentation
+      run: uv run doit docs_build
+```
+
 ### Coverage Requirements
 
 - **Recommended threshold**: ≥70%
@@ -249,7 +271,7 @@ Add coverage comments to PRs using GitHub Actions:
 
 ```bash
 # Run all tests
-uv run pytest
+doit test
 
 # Run specific test file
 uv run pytest tests/test_config.py
@@ -261,7 +283,7 @@ uv run pytest tests/test_config.py::test_load_config
 uv run pytest -v
 
 # Run with coverage
-uv run pytest --cov=src
+doit coverage
 
 # Generate HTML coverage report
 uv run pytest --cov=src --cov-report=html
@@ -362,6 +384,7 @@ Before pushing to CI:
 - [ ] Run `doit type_check` to verify types
 - [ ] Run `doit test` to ensure tests pass
 - [ ] Run `doit coverage` to check coverage threshold
+- [ ] Run `doit docs_build` to verify the documentation build succeeds
 - [ ] Review changes and commit messages
 
 ## Testing Best Practices
@@ -597,6 +620,164 @@ PR opened → CI runs (6 jobs) → Review/Approval → Add ready-to-merge label 
 PR opened → CI runs → Add full-matrix label → Full CI runs (9-15 jobs) → Review → Add ready-to-merge → Merge
 ```
 
+## Property-Based Testing
+
+### What Is Property-Based Testing?
+
+Property-based testing verifies *invariant properties* of your code by feeding it hundreds of randomly generated inputs rather than a handful of hand-picked examples. If a property holds for every input the framework can dream up, you gain much higher confidence than example-based tests alone.
+
+This project uses [Hypothesis](https://hypothesis.readthedocs.io/) for property-based testing.
+
+### When to Use Property-Based Tests
+
+| Good fit | Not a good fit |
+|----------|----------------|
+| Pure functions with clear contracts (validators, formatters, parsers) | Tests that require complex external state (databases, APIs) |
+| Functions whose output must satisfy invariants (e.g., "always lowercase") | Behaviour that depends on side effects or ordering |
+| Edge-case-heavy logic (string processing, numeric conversions) | Simple CRUD with no transformation logic |
+
+### Writing Property Tests
+
+```python
+import pytest
+from hypothesis import given, example
+from hypothesis import strategies as st
+
+@pytest.mark.property
+@given(name=st.text(min_size=1))
+@example("edge-case-value")
+def test_output_is_always_lowercase(name: str) -> None:
+    result = normalize(name)
+    assert result == result.lower()
+```
+
+**Key decorators and strategies:**
+
+| Element | Purpose |
+|---------|---------|
+| `@given(...)` | Declares the randomly generated inputs |
+| `@example(...)` | Pins a specific input that must always be tested |
+| `st.text()` | Generates arbitrary Unicode strings |
+| `st.from_regex(r"...")` | Generates strings matching a regular expression |
+| `st.integers()`, `st.floats()` | Numeric strategies |
+| `@pytest.mark.property` | Custom marker to select/deselect property tests |
+
+### Hypothesis Profiles
+
+Two profiles are configured in `tests/conftest.py`:
+
+| Profile | `max_examples` | `deadline` | Used when |
+|---------|---------------|------------|-----------|
+| `default` | 200 | Hypothesis default | Local development |
+| `ci` | 50 | 500 ms | GitHub Actions CI |
+
+The CI workflow sets `HYPOTHESIS_PROFILE: ci` so property tests run faster in pipelines.
+
+### Running Property Tests
+
+```bash
+# Run only property tests
+uv run pytest -m property -v
+
+# Run with a specific seed for reproducibility
+uv run pytest -m property --hypothesis-seed=12345
+
+# Run with more examples locally
+HYPOTHESIS_PROFILE=default uv run pytest -m property -v
+```
+
+### Debugging Failures
+
+When a property test fails, Hypothesis prints the **minimal failing example**. To reproduce:
+
+1. Copy the seed from the failure output (e.g., `--hypothesis-seed=98765`)
+2. Re-run: `uv run pytest tests/test_properties.py --hypothesis-seed=98765 -v`
+3. Hypothesis will reproduce the exact same sequence of inputs
+
+Hypothesis also stores failing examples in a `.hypothesis/` directory (git-ignored) so they are replayed automatically on the next run.
+
+## Mutation Testing
+
+### What Is Mutation Testing?
+
+Mutation testing evaluates the effectiveness of your test suite by introducing small changes (mutations) to your source code and checking whether the tests detect them. Each mutation represents a potential bug -- if your tests catch it (a "killed" mutant), that area is well tested. If they don't (a "survived" mutant), your tests may have a gap.
+
+This project uses [mutmut](https://mutmut.readthedocs.io/) for mutation testing.
+
+### Running Locally
+
+```bash
+# Run mutation testing (generates results and prints summary)
+doit mutate
+
+# View text results again without re-running
+uv run mutmut results
+```
+
+### Interpreting Results
+
+| Term | Meaning |
+|------|---------|
+| **Killed** | A mutation was detected by the test suite -- good coverage |
+| **Survived** | A mutation was NOT detected -- potential test gap |
+| **Timeout** | The mutation caused the tests to hang -- typically counted as killed |
+| **Suspicious** | The mutation caused an unexpected result -- review manually |
+
+The **mutation score** is the percentage of mutants killed out of total mutants generated. A higher score indicates a more thorough test suite. There is no enforced threshold -- use the score as a guide to identify areas that need better test coverage.
+
+### CI Schedule
+
+Mutation testing runs weekly in CI (Sunday midnight UTC) via the `.github/workflows/mutation.yml` workflow. It is informational only and does not block merges or fail the build.
+
+Results are uploaded as the `mutmut-results.txt` artifact with 90-day retention. You can also trigger the workflow manually from the Actions tab using the `workflow_dispatch` event.
+
+## Benchmark Tracking
+
+### Overview
+
+Benchmark results are tracked historically using [benchmark-action/github-action-benchmark](https://github.com/benchmark-action/github-action-benchmark). This enables performance trend visualization and automatic regression detection across commits.
+
+### How It Works
+
+The `benchmark.yml` workflow operates in two modes:
+
+| Trigger | Behavior |
+|---------|----------|
+| **Push to `main`** | Runs benchmarks and commits results to the `gh-benchmarks` data branch for long-term tracking |
+| **Pull request** | Runs benchmarks and posts a comparison comment on the PR if the `gh-benchmarks` branch exists (no commit to data branch) |
+| **Manual dispatch** | Runs benchmarks and uploads artifact only |
+
+Only main branch results are stored to keep the historical data clean and consistent.
+
+If `tests/benchmarks/` does not exist or contains no `test_*.py` files, the workflow skips all benchmark steps and finishes successfully. This allows downstream projects generated from this template to enable the workflow incrementally without CI failures before any benchmark tests are written.
+
+### The `gh-benchmarks` Branch
+
+Benchmark data is stored in a dedicated `gh-benchmarks` branch, separate from the main codebase. This branch is auto-created by the benchmark action on the first push to `main` after the workflow is enabled. Until the branch exists, PR benchmark comparisons are skipped gracefully.
+
+- **Data directory:** `dev/bench/` within the branch
+- **Format:** JSON files with benchmark metrics over time
+- **Purpose:** Serves as the data source for trend charts and regression detection
+
+### PR Comments
+
+On every pull request, the benchmark action posts a comment comparing the PR's benchmark results against the latest stored baseline from `main`. This gives reviewers immediate visibility into performance impact.
+
+### Alert Threshold
+
+The alert threshold is set to `110%`, meaning the workflow flags a warning if any benchmark is more than 10% slower than the baseline. To adjust this threshold, edit the `alert-threshold` value in `.github/workflows/benchmark.yml`.
+
+### GitHub Pages (Optional)
+
+The `gh-benchmarks` branch can optionally serve a trend chart via GitHub Pages:
+
+1. Go to **Settings** > **Pages**
+2. Set the source branch to `gh-benchmarks`
+3. Set the directory to `/ (root)`
+4. The trend chart will be available at `https://<owner>.github.io/<repo>/dev/bench/`
+
+This step is optional and not required for the core tracking functionality.
+
 ## Troubleshooting
 
 ### Coverage Below Threshold
@@ -649,4 +830,4 @@ PR opened → CI runs → Add full-matrix label → Full CI runs (9-15 jobs) →
 
 ---
 
-[Back to Documentation Index](../index.md)
+[Back to Documentation Index](../TABLE_OF_CONTENTS.md)

@@ -83,6 +83,7 @@ docs/_build/
 coverage.xml
 .nfs*
 .gemini/settings.json.orig
+tools/hooks/ai/hook-debug.jsonl
 
 # Project-specific data directories (top-level only -- the
 # `pynetappfoundry.data` package and `tests/unit/data` are tracked.)

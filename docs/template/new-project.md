@@ -127,7 +127,7 @@ The script will prompt for:
 - Package name (import name, snake_case)
 - PyPI name (package name on PyPI, typically with hyphens)
 - Author name and email
-- GitHub endavis
+- GitHub username
 - Project description
 
 ### What Configure Does
@@ -142,7 +142,7 @@ The `configure.py` script:
    - `docs/*` - Documentation content
 
 2. **Renames the source directory**:
-   - `src/pynetappfoundry/` → `src/your_pynetappfoundry/`
+   - `src/package_name/` → `src/your_package_name/`
 
 3. **Updates badge URLs** for CI, coverage, and PyPI
 
@@ -154,7 +154,7 @@ direnv allow
 
 # Or manually set up
 uv sync --all-extras --dev
-uv run pre-commit install
+doit pre_commit_install
 ```
 
 #### Enable Shell Completions (Optional)
@@ -216,9 +216,9 @@ Manually configure what the automated setup does automatically:
 
 After setup is complete:
 
-1. **Start coding** in `src/your_pynetappfoundry/`
+1. **Start coding** in `src/your_package_name/`
 2. **Write tests** in `tests/`
 3. **Update documentation** in `docs/`
 4. **Follow the workflow**: Issue → Branch → Commit → PR → Merge
 
-See [CONTRIBUTING.md](https://github.com/endavis/pyproject-template/blob/main/.github/CONTRIBUTING.md) for the development workflow.
+See [CONTRIBUTING.md](https://github.com/endavis/pyproject-template/blob/main/.github/CONTRIBUTING.md) for the development workflow, and [Tooling Roles and Architectural Boundaries](../development/tooling-roles.md) for the conventions you are inheriting from the template.
