@@ -137,6 +137,45 @@ def validate_issue_links(console: "ConsoleType") -> bool:
     return True  # Warning only, don't block release
 
 
+# Version pattern covering:
+#   - Production releases:       1.0.0
+#   - PEP440 pre-releases:       0.1.0a0, 0.1.0b1, 0.1.0rc0, 0.1.0.dev2
+#   - Semver-style pre-releases: 0.1.0-alpha.0, 0.1.0-beta.1, 0.1.0-rc.0
+# The optional leading 'v' is stripped; the captured group is the bare version.
+_VERSION_PATTERN = r"v?(\d+\.\d+\.\d+(?:[ab]\d+|rc\d+|\.dev\d+|-(?:alpha|beta|rc)\.\d+)?)"
+
+
+def _extract_version_from_release_pr(pr_title: str, branch_name: str) -> str | None:
+    """Extract a release version from a PR title or fall back to the branch name.
+
+    Recognizes the shapes produced by ``task_release_pr`` (and by hand):
+      - PR title: ``release: v<version>``
+      - Branch:   ``release/v<version>``
+
+    The version portion may be a production release (``1.0.0``), a PEP440
+    pre-release (``0.1.0a0``, ``0.1.0b1``, ``0.1.0rc0``, ``0.1.0.dev2``), or a
+    semver-style pre-release (``0.1.0-alpha.0``, ``0.1.0-beta.1``,
+    ``0.1.0-rc.0``).
+
+    Args:
+        pr_title: The PR title to inspect first.
+        branch_name: The PR head branch name, used as a fallback.
+
+    Returns:
+        The captured version string without the leading ``v`` (e.g. ``"1.0.0"``,
+        ``"0.1.0a0"``, ``"0.1.0-alpha.0"``), or ``None`` if neither input matches.
+    """
+    # Try the PR title first (format: "release: vX.Y.Z[suffix]").
+    match = re.search(rf"release:\s*{_VERSION_PATTERN}", pr_title)
+    if match:
+        return match.group(1)
+    # Fall back to the branch name (format: "release/vX.Y.Z[suffix]").
+    match = re.search(rf"release/{_VERSION_PATTERN}", branch_name)
+    if match:
+        return match.group(1)
+    return None
+
+
 def task_release_dev(type: str = "alpha") -> dict[str, Any]:
     """Create a pre-release (alpha/beta) tag for TestPyPI and push to GitHub.
 
@@ -698,19 +737,15 @@ def task_release_tag() -> dict[str, Any]:
             pr_title = pr["title"]
             branch_name = pr["headRefName"]
 
-            # Extract version from PR title (format: "release: vX.Y.Z")
-            version_match = re.search(r"release:\s*v?(\d+\.\d+\.\d+)", pr_title)
-            if not version_match:
-                # Try extracting from branch name (format: "release/vX.Y.Z")
-                version_match = re.search(r"release/v?(\d+\.\d+\.\d+)", branch_name)
-
-            if not version_match:
+            # Extract version from PR title (format: "release: vX.Y.Z[suffix]"),
+            # falling back to the branch name (format: "release/vX.Y.Z[suffix]").
+            version = _extract_version_from_release_pr(pr_title, branch_name)
+            if version is None:
                 console.print("[bold red]❌ Could not extract version from PR.[/bold red]")
                 console.print(f"[yellow]PR title: {pr_title}[/yellow]")
                 console.print(f"[yellow]Branch: {branch_name}[/yellow]")
                 sys.exit(1)
 
-            version = version_match.group(1)
             tag_name = f"v{version}"
             console.print(f"[green]✓ Found release PR: {pr_title}[/green]")
             console.print(f"[green]✓ Version to tag: {tag_name}[/green]")

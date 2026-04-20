@@ -1,10 +1,11 @@
-"""Tests for the ``run_streamed`` / ``run_teed`` helpers in tools.doit.base.
+"""Tests for helpers in tools.doit.base and tools.doit.release.
 
-The helpers back the live-streaming output changes for the release tasks
-(issue #631). The task functions themselves (``task_release``, etc.) have no
-existing test coverage and are out of scope per the plan. These tests exercise
-the two helpers only, using real child processes so the tee / streaming
-behavior is actually verified.
+``run_streamed`` / ``run_teed`` back the live-streaming output changes for
+the release tasks (issue #631). ``_extract_version_from_release_pr`` is the
+version-parsing helper factored out of ``task_release_tag`` to support
+PEP440 and semver-style pre-release suffixes (issue #632). The task
+functions themselves (``task_release``, etc.) have no existing test
+coverage and are out of scope per the plan.
 """
 
 from __future__ import annotations
@@ -18,6 +19,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from tools.doit.base import run_streamed, run_teed
+from tools.doit.release import _extract_version_from_release_pr
 
 if TYPE_CHECKING:
     from _pytest.monkeypatch import MonkeyPatch
@@ -313,3 +315,48 @@ class TestRunTeed:
         # helper swallowing it and hanging on wait()).
         with pytest.raises(OSError, match="broken stdout"):
             run_teed([sys.executable, "-c", "print('hi')"])
+
+
+class TestExtractVersionFromReleasePR:
+    """Tests for ``_extract_version_from_release_pr``.
+
+    Covers the PR-title / branch-name shapes produced by ``task_release_pr``
+    (and the shapes a maintainer might hand-write), including PEP440 and
+    semver-style pre-release suffixes that the previous regex in
+    ``task_release_tag`` rejected (issue #632).
+    """
+
+    @pytest.mark.parametrize(
+        ("pr_title", "expected"),
+        [
+            # Production release (what was already supported before #632).
+            ("release: v1.0.0", "1.0.0"),
+            # PEP440 pre-release shapes (cz bump --prerelease output).
+            ("release: v0.1.0a0", "0.1.0a0"),
+            ("release: v0.2.0b1", "0.2.0b1"),
+            ("release: v1.5.0rc0", "1.5.0rc0"),
+            ("release: v0.1.0.dev2", "0.1.0.dev2"),
+            # Semver-style pre-release shapes (hand-written / alternate tooling).
+            ("release: v0.1.0-alpha.0", "0.1.0-alpha.0"),
+            ("release: v0.1.0-beta.1", "0.1.0-beta.1"),
+            ("release: v0.1.0-rc.0", "0.1.0-rc.0"),
+        ],
+    )
+    def test_extracts_from_pr_title(self, pr_title: str, expected: str) -> None:
+        """The PR title is the primary source; the captured group is the bare version."""
+        # Branch name is deliberately unrelated so the title match is the only
+        # thing that can succeed.
+        assert _extract_version_from_release_pr(pr_title, "unrelated/branch") == expected
+
+    def test_falls_back_to_branch_name(self) -> None:
+        """When the PR title doesn't match, the branch name is consulted."""
+        assert _extract_version_from_release_pr("unrelated: fix", "release/v0.1.0a0") == "0.1.0a0"
+
+    def test_returns_none_when_neither_matches(self) -> None:
+        """Neither input matches -> ``None`` (caller handles the error path)."""
+        assert _extract_version_from_release_pr("fix: bug", "fix/123-thing") is None
+
+    def test_returns_none_for_non_numeric_version(self) -> None:
+        """``release: vX.Y.Z`` with literal letters must not match — the regex
+        requires digits."""
+        assert _extract_version_from_release_pr("release: vX.Y.Z", "release/vX.Y.Z") is None
