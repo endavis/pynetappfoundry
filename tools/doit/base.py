@@ -1,6 +1,9 @@
 """Base utilities and configuration for doit tasks."""
 
 import os
+import subprocess  # nosec B404 - subprocess is required to run doit sub-tasks
+import sys
+from collections.abc import Mapping
 
 from rich.console import Console
 from rich.panel import Panel
@@ -27,3 +30,117 @@ def success_message() -> None:
         )
     )
     console.print()
+
+
+def run_streamed(
+    cmd: list[str],
+    *,
+    env: Mapping[str, str] | None = None,
+    check: bool = True,
+    cwd: str | os.PathLike[str] | None = None,
+) -> None:
+    """Run a subprocess with stdout/stderr inherited from the parent.
+
+    Unlike ``subprocess.run(..., capture_output=True)``, this function does not
+    buffer output: the child process writes directly to the parent's stdout and
+    stderr so the user sees progress live. This is the right choice for long-
+    running steps whose output we do not need to parse (``doit check``,
+    ``git pull``, ``git push``, ``git commit``, ``gh pr create``).
+
+    Args:
+        cmd: Command to run, as a list of args (no shell expansion).
+        env: Optional environment mapping. If ``None``, the child inherits the
+            parent's environment.
+        check: When ``True`` (default), a non-zero exit raises
+            ``subprocess.CalledProcessError``.
+        cwd: Optional working directory for the child process.
+
+    Raises:
+        subprocess.CalledProcessError: If ``check`` is ``True`` and the child
+            exits with a non-zero return code.
+    """
+    subprocess.run(  # nosec B603 B607
+        cmd,
+        env=dict(env) if env is not None else None,
+        check=check,
+        cwd=cwd,
+    )
+
+
+def run_teed(
+    cmd: list[str],
+    *,
+    env: Mapping[str, str] | None = None,
+    check: bool = True,
+    cwd: str | os.PathLike[str] | None = None,
+) -> subprocess.CompletedProcess[str]:
+    """Run a subprocess, streaming output to stdout while also capturing it.
+
+    Merges stderr into stdout (so the captured buffer reflects interleaved
+    output as a user would see it), streams each line to ``sys.stdout`` as it
+    arrives, and returns a ``CompletedProcess`` whose ``stdout`` contains the
+    full captured output. ``stderr`` is always empty because it was merged.
+
+    This is the right choice when the caller both needs live output (long step,
+    hooks, etc.) *and* needs to parse the output afterwards (e.g. regex-extract
+    the version printed by ``cz bump``).
+
+    On non-zero exit with ``check=True``, raises ``CalledProcessError`` with
+    ``stdout`` populated so existing error-path logging keeps working.
+
+    Args:
+        cmd: Command to run, as a list of args (no shell expansion).
+        env: Optional environment mapping. If ``None``, the child inherits the
+            parent's environment.
+        check: When ``True`` (default), a non-zero exit raises
+            ``subprocess.CalledProcessError``.
+        cwd: Optional working directory for the child process.
+
+    Returns:
+        ``subprocess.CompletedProcess[str]`` with ``stdout`` set to the full
+        captured output and ``stderr`` set to ``""``.
+
+    Raises:
+        subprocess.CalledProcessError: If ``check`` is ``True`` and the child
+            exits with a non-zero return code. The exception's ``stdout``
+            attribute contains the captured output.
+    """
+    # Popen with stdout piped and stderr merged into stdout. We read lines
+    # from the pipe, echo each to sys.stdout (so the user sees live output),
+    # and buffer them for the caller.
+    process = subprocess.Popen(  # nosec B603 B607
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        env=dict(env) if env is not None else None,
+        cwd=cwd,
+        text=True,
+        bufsize=1,  # line buffered
+    )
+
+    buffer: list[str] = []
+    # process.stdout is non-None because we asked for subprocess.PIPE.
+    assert process.stdout is not None  # nosec B101 - invariant from Popen args
+    for line in process.stdout:
+        buffer.append(line)
+        sys.stdout.write(line)
+        sys.stdout.flush()
+    process.stdout.close()
+
+    returncode = process.wait()
+    captured = "".join(buffer)
+
+    if check and returncode != 0:
+        raise subprocess.CalledProcessError(
+            returncode=returncode,
+            cmd=cmd,
+            output=captured,
+            stderr="",
+        )
+
+    return subprocess.CompletedProcess(
+        args=cmd,
+        returncode=returncode,
+        stdout=captured,
+        stderr="",
+    )
