@@ -32,6 +32,22 @@ def success_message() -> None:
     console.print()
 
 
+def _child_env(env: Mapping[str, str] | None) -> dict[str, str]:
+    """Build the environment for a child process spawned by a streaming helper.
+
+    Always sets ``PYTHONUNBUFFERED=1`` so Python children (including descendants
+    like ``pytest``, ``mypy``, ``cz``) flush stdout line-by-line to pipes instead
+    of block-buffering to process exit. Without this, streaming appears to work
+    in tests that explicitly flush, but real tools — whose output is the whole
+    point of streaming — deliver everything in one burst at process end.
+
+    A caller-supplied ``PYTHONUNBUFFERED`` is respected.
+    """
+    merged = dict(env if env is not None else os.environ)
+    merged.setdefault("PYTHONUNBUFFERED", "1")
+    return merged
+
+
 def run_streamed(
     cmd: list[str],
     *,
@@ -61,7 +77,7 @@ def run_streamed(
     """
     subprocess.run(  # nosec B603 B607
         cmd,
-        env=dict(env) if env is not None else None,
+        env=_child_env(env),
         check=check,
         cwd=cwd,
     )
@@ -112,22 +128,34 @@ def run_teed(
         cmd,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
-        env=dict(env) if env is not None else None,
+        env=_child_env(env),
         cwd=cwd,
         text=True,
-        bufsize=1,  # line buffered
+        # bufsize=1 configures only the parent-side TextIOWrapper for reading
+        # the pipe. Child-side flushing is controlled via PYTHONUNBUFFERED=1
+        # in _child_env() — without it, Python children block-buffer to pipes.
+        bufsize=1,
     )
 
     buffer: list[str] = []
     # process.stdout is non-None because we asked for subprocess.PIPE.
     assert process.stdout is not None  # nosec B101 - invariant from Popen args
-    for line in process.stdout:
-        buffer.append(line)
-        sys.stdout.write(line)
-        sys.stdout.flush()
-    process.stdout.close()
+    try:
+        for line in process.stdout:
+            buffer.append(line)
+            sys.stdout.write(line)
+            sys.stdout.flush()
+    except BaseException:
+        # Streaming raised (broken parent stdout, KeyboardInterrupt, etc.).
+        # Kill the child so wait() below doesn't hang waiting for a process
+        # that may be blocked on a full pipe buffer.
+        process.kill()
+        raise
+    finally:
+        process.stdout.close()
+        process.wait()
 
-    returncode = process.wait()
+    returncode = process.returncode
     captured = "".join(buffer)
 
     if check and returncode != 0:
