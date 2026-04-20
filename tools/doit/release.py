@@ -176,6 +176,31 @@ def _extract_version_from_release_pr(pr_title: str, branch_name: str) -> str | N
     return None
 
 
+def _build_cz_get_next_cmd(increment: str, prerelease: str) -> list[str]:
+    """Build the ``cz bump --get-next`` command list with optional flags.
+
+    Pure helper: no validation, no I/O. Callers are responsible for validating
+    the ``increment`` and ``prerelease`` values before invoking this helper.
+
+    Args:
+        increment: Version increment type (e.g. ``"minor"``, ``"PATCH"``).
+            Uppercased before being passed to ``--increment``. Empty string
+            means no ``--increment`` flag is appended.
+        prerelease: Pre-release type (e.g. ``"alpha"``, ``"beta"``, ``"rc"``).
+            Passed verbatim to ``--prerelease``. Empty string means no
+            ``--prerelease`` flag is appended.
+
+    Returns:
+        The command list ready to hand to ``subprocess.run``.
+    """
+    cmd = ["uv", "run", "cz", "bump", "--get-next"]
+    if increment:
+        cmd.extend(["--increment", increment.upper()])
+    if prerelease:
+        cmd.extend(["--prerelease", prerelease])
+    return cmd
+
+
 def task_release_dev(type: str = "alpha") -> dict[str, Any]:
     """Create a pre-release (alpha/beta) tag for TestPyPI and push to GitHub.
 
@@ -439,7 +464,7 @@ def task_release(increment: str = "") -> dict[str, Any]:
     }
 
 
-def task_release_pr(increment: str = "") -> dict[str, Any]:
+def task_release_pr(increment: str = "", prerelease: str = "") -> dict[str, Any]:
     """Create a release PR with changelog updates (PR-based workflow).
 
     This task creates a release branch, updates the changelog, and opens a PR.
@@ -447,6 +472,8 @@ def task_release_pr(increment: str = "") -> dict[str, Any]:
 
     Args:
         increment (str): Force version increment type (MAJOR, MINOR, PATCH). Auto-detects if empty.
+        prerelease (str): Pre-release type (alpha, beta, rc). Empty for a production release.
+            Mutually exclusive with ``increment``.
     """
 
     def create_release_pr() -> None:
@@ -467,6 +494,23 @@ def task_release_pr(increment: str = "") -> dict[str, Any]:
             console.print(
                 f"[bold red]❌ Error: Must be on main branch "
                 f"(currently on {current_branch})[/bold red]"
+            )
+            sys.exit(1)
+
+        # Validate prerelease value
+        allowed_prerelease = {"", "alpha", "beta", "rc"}
+        if prerelease not in allowed_prerelease:
+            console.print(
+                f"[bold red]❌ Error: Invalid prerelease value '{prerelease}'. "
+                f"Allowed values: alpha, beta, rc (or empty for a production release).[/bold red]"
+            )
+            sys.exit(1)
+
+        # prerelease and increment are mutually exclusive
+        if prerelease and increment:
+            console.print(
+                "[bold red]❌ Error: --prerelease and --increment "
+                "are mutually exclusive.[/bold red]"
             )
             sys.exit(1)
 
@@ -521,10 +565,11 @@ def task_release_pr(increment: str = "") -> dict[str, Any]:
         # Get next version using commitizen
         console.print("\n[cyan]Determining next version...[/cyan]")
         try:
-            get_next_cmd = ["uv", "run", "cz", "bump", "--get-next"]
+            get_next_cmd = _build_cz_get_next_cmd(increment, prerelease)
             if increment:
-                get_next_cmd.extend(["--increment", increment.upper()])
                 console.print(f"[dim]Forcing {increment.upper()} version bump[/dim]")
+            if prerelease:
+                console.print(f"[dim]Pre-release type: {prerelease}[/dim]")
             result = subprocess.run(
                 get_next_cmd,
                 env={**os.environ, "UV_CACHE_DIR": UV_CACHE_DIR},
@@ -661,7 +706,14 @@ and trigger the release workflow.
                 "long": "increment",
                 "default": "",
                 "help": "Force increment (MAJOR, MINOR, PATCH). Auto-detects if empty.",
-            }
+            },
+            {
+                "name": "prerelease",
+                "short": "p",
+                "long": "prerelease",
+                "default": "",
+                "help": "Pre-release type (alpha, beta, rc). Empty for a production release.",
+            },
         ],
         "title": title_with_actions,
     }
