@@ -645,3 +645,51 @@ class TestRepoHasVersionTags:
             self._fake_tag_list("v0.0.0\nv0.1.0a0\nv0.1.0\n"),
         )
         assert _repo_has_version_tags() is True
+
+
+class TestTaskReleaseActionSignature:
+    """Regression tests for ``task_release`` CLI-param wiring (issue #650).
+
+    doit's ``params`` parsing populates values for the **action function**,
+    not the outer task-creator function. If the action doesn't accept the
+    param names as kwargs, doit silently drops the CLI values and the action
+    runs with closure-captured defaults. These tests pin the action signature
+    so a future refactor can't re-introduce the silent drop.
+    """
+
+    def test_action_accepts_params(self) -> None:
+        """The first action must accept ``increment`` and ``prerelease`` kwargs."""
+        import inspect
+
+        from tools.doit.release import task_release
+
+        result = task_release()
+        actions = result["actions"]
+        assert actions, "task_release must return at least one action"
+        action = actions[0]
+        sig = inspect.signature(action)
+        assert "increment" in sig.parameters, (
+            "create_release_pr must accept 'increment' for --increment CLI flag to reach it"
+        )
+        assert "prerelease" in sig.parameters, (
+            "create_release_pr must accept 'prerelease' for --prerelease CLI flag to reach it"
+        )
+
+    def test_params_names_match_action_signature(self) -> None:
+        """Every ``params[n]['name']`` must be a parameter of the action function.
+
+        Without this match, doit's parsed CLI values can't reach the action.
+        """
+        import inspect
+
+        from tools.doit.release import task_release
+
+        result = task_release()
+        action = result["actions"][0]
+        sig_params = set(inspect.signature(action).parameters)
+        cli_param_names = {p["name"] for p in result["params"]}
+        missing = cli_param_names - sig_params
+        assert not missing, (
+            f"params names {missing} have no matching kwarg in the action signature; "
+            "doit will silently drop their CLI values"
+        )

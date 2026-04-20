@@ -253,7 +253,7 @@ def _extract_next_version_from_cz_output(stdout: str) -> str | None:
     return None
 
 
-def task_release(increment: str = "", prerelease: str = "") -> dict[str, Any]:
+def task_release() -> dict[str, Any]:
     """Create a release PR with changelog updates (PR-based release flow).
 
     This is the single supported release entry point. It creates a release
@@ -261,13 +261,14 @@ def task_release(increment: str = "", prerelease: str = "") -> dict[str, Any]:
     reviewer merges the PR, run ``doit release_tag`` to tag ``main`` and
     trigger the publish workflow.
 
-    Args:
-        increment (str): Force version increment type (MAJOR, MINOR, PATCH). Auto-detects if empty.
-        prerelease (str): Pre-release type (alpha, beta, rc). Empty for a production release.
-            Mutually exclusive with ``increment``.
+    CLI params (see the ``params`` entry in the returned dict): ``--increment``
+    forces a version increment type; ``--prerelease`` produces a pre-release
+    (alpha/beta/rc). The action function ``create_release_pr`` accepts these
+    as keyword arguments so doit's param parsing reaches them — see #650 for
+    why the closure approach was wrong.
     """
 
-    def create_release_pr() -> None:
+    def create_release_pr(increment: str = "", prerelease: str = "") -> None:
         console = Console()
         console.print("=" * 70)
         console.print("[bold green]Starting PR-based release process...[/bold green]")
