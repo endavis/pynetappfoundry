@@ -525,6 +525,23 @@ class TestValidateMergeCommits:
 
         assert validate_merge_commits(self._silent_console()) is True
 
+    def test_release_type_merge_commit_passes(self, monkeypatch: MonkeyPatch) -> None:
+        """A release-PR merge commit (type=release) is accepted.
+
+        Regression test for #653: release PRs created by ``doit release``
+        merge as ``release: v<version> (merges PR #N)``. Without ``release``
+        in the allowed type set, governance validation on the next release
+        would fail on the prior release's merge commit.
+        """
+        _, fake = self._fake_run(
+            describe_returncode=0,
+            describe_stdout="v0.0.0\n",
+            log_stdout="abc1234 release: v0.1.0a0 (merges PR #652)",
+        )
+        monkeypatch.setattr("tools.doit.release.subprocess.run", fake)
+
+        assert validate_merge_commits(self._silent_console()) is True
+
     def test_invalid_merge_commit_fails(self, monkeypatch: MonkeyPatch) -> None:
         """A merge commit not matching the convention returns False."""
         _, fake = self._fake_run(
