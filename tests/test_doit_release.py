@@ -3,9 +3,12 @@
 ``run_streamed`` / ``run_teed`` back the live-streaming output changes for
 the release tasks (issue #631). ``_extract_version_from_release_pr`` is the
 version-parsing helper factored out of ``task_release_tag`` to support
-PEP440 and semver-style pre-release suffixes (issue #632). The task
-functions themselves (``task_release``, etc.) have no existing test
-coverage and are out of scope per the plan.
+PEP440 and semver-style pre-release suffixes (issue #632 Phase A).
+``_build_cz_get_next_cmd`` is the command-list builder factored out of
+``task_release_pr`` so ``--prerelease`` can be threaded through to
+``cz bump --get-next`` (issue #632 Phase B). The task functions themselves
+(``task_release``, etc.) have no existing test coverage and are out of scope
+per the plan.
 """
 
 from __future__ import annotations
@@ -19,7 +22,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from tools.doit.base import run_streamed, run_teed
-from tools.doit.release import _extract_version_from_release_pr
+from tools.doit.release import _build_cz_get_next_cmd, _extract_version_from_release_pr
 
 if TYPE_CHECKING:
     from _pytest.monkeypatch import MonkeyPatch
@@ -360,3 +363,73 @@ class TestExtractVersionFromReleasePR:
         """``release: vX.Y.Z`` with literal letters must not match — the regex
         requires digits."""
         assert _extract_version_from_release_pr("release: vX.Y.Z", "release/vX.Y.Z") is None
+
+
+class TestBuildCzGetNextCmd:
+    """Tests for ``_build_cz_get_next_cmd``.
+
+    The helper is a pure command-list builder: no validation, no I/O. These
+    tests pin the flag ordering, the uppercasing of ``--increment``, and the
+    verbatim pass-through of ``--prerelease`` (issue #632 Phase B).
+    """
+
+    @pytest.mark.parametrize(
+        ("increment", "prerelease", "expected"),
+        [
+            # No flags: base command only.
+            ("", "", ["uv", "run", "cz", "bump", "--get-next"]),
+            # Increment alone (lowercase input is uppercased).
+            (
+                "minor",
+                "",
+                ["uv", "run", "cz", "bump", "--get-next", "--increment", "MINOR"],
+            ),
+            # Increment alone (already uppercase stays uppercase).
+            (
+                "PATCH",
+                "",
+                ["uv", "run", "cz", "bump", "--get-next", "--increment", "PATCH"],
+            ),
+            # Prerelease alone: alpha.
+            (
+                "",
+                "alpha",
+                ["uv", "run", "cz", "bump", "--get-next", "--prerelease", "alpha"],
+            ),
+            # Prerelease alone: beta.
+            (
+                "",
+                "beta",
+                ["uv", "run", "cz", "bump", "--get-next", "--prerelease", "beta"],
+            ),
+            # Prerelease alone: rc.
+            (
+                "",
+                "rc",
+                ["uv", "run", "cz", "bump", "--get-next", "--prerelease", "rc"],
+            ),
+            # Both set: helper does NOT validate; the task is responsible for
+            # rejecting this combination. Helper just emits both flags in
+            # increment-then-prerelease order.
+            (
+                "minor",
+                "alpha",
+                [
+                    "uv",
+                    "run",
+                    "cz",
+                    "bump",
+                    "--get-next",
+                    "--increment",
+                    "MINOR",
+                    "--prerelease",
+                    "alpha",
+                ],
+            ),
+        ],
+    )
+    def test_builds_expected_command(
+        self, increment: str, prerelease: str, expected: list[str]
+    ) -> None:
+        """The emitted list matches the expected base + flags in order."""
+        assert _build_cz_get_next_cmd(increment, prerelease) == expected
