@@ -42,10 +42,11 @@ v1.0.0         # Major release
 v1.1.0         # Minor release (new features)
 v1.1.1         # Patch release (bug fixes)
 
-# Pre-releases (for TestPyPI)
-v1.0.0-alpha.1   # Alpha release
-v1.0.0-beta.1    # Beta release
-v1.0.0-rc.1      # Release candidate
+# Pre-releases (for TestPyPI) — PEP440 format emitted by commitizen
+v1.0.0a0         # Alpha release
+v1.0.0b1         # Beta release
+v1.0.0rc0        # Release candidate
+v1.0.0.dev2      # Development release
 ```
 
 ### Checking Current Version
@@ -146,8 +147,9 @@ Pass `--prerelease=<type>` to `doit release` to open a pre-release PR:
 | `beta` | Feature-complete but not yet stable |
 | `rc` | Release candidate; only fixes expected before the final release |
 
-Pre-release tags (e.g. `v1.2.0a0`, `v1.2.0-rc.1`) trigger the TestPyPI publish
-workflow; production tags (e.g. `v1.2.0`) trigger TestPyPI followed by PyPI.
+Pre-release tags (e.g. `v1.2.0a0`, `v1.2.0b1`, `v1.2.0rc0`, `v1.2.0.dev2`)
+trigger the TestPyPI publish workflow; production tags (e.g. `v1.2.0`) trigger
+TestPyPI followed by PyPI.
 See the [Workflow Triggers](../../.github/CONTRIBUTING.md#workflow-triggers)
 table in `CONTRIBUTING.md` for the full mapping.
 
