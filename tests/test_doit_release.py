@@ -726,7 +726,9 @@ class TestReleaseTagGhSearch:
         """Source must use head:release/ and not the broken title-colon search."""
         import pathlib
 
-        src = pathlib.Path("tools/doit/release.py").read_text()
+        # Windows read_text() defaults to cp1252 which can't decode non-ASCII
+        # characters like ❌ in release.py's error banners — always specify utf-8.
+        src = pathlib.Path("tools/doit/release.py").read_text(encoding="utf-8")
         assert "release: v in:title" not in src, (
             "The broken colon-in-search pattern returns zero results from gh "
             "pr list and must not recur"
