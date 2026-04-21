@@ -17,6 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fix
+
+- untrack _version.py so builds produce PyPI-compliant versions (merges PR #662, addresses #661)
+- align testpypi.yml tag trigger with PEP440 pre-release tags (merges PR #660, addresses #659)
+
+## v0.1.0a0 (2026-04-21)
+
 ### BREAKING CHANGE
 
 - doit release no longer commits directly to main; it
@@ -157,6 +164,9 @@ Use ClusterInfo.version_generation instead.
 
 ### Fix
 
+- use head:release/ in release_tag gh pr search (merges PR #658, addresses #657)
+- allow release type in doit pr_merge title validator (merges PR #656, addresses #655)
+- accept release as a conventional type in PR and governance validators (merges PR #654, addresses #653)
 - wire release CLI params to action function (not closure) (merges PR #651, addresses #650)
 - wire release CLI params to action function instead of closure
 - refuse doit release --prerelease on tagless repos (merges PR #645, addresses #644)
