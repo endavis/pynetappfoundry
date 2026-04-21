@@ -476,8 +476,8 @@ This produces two files in the `tmp/` directory:
 SBOMs are automatically generated and attached to every GitHub release:
 
 1. During the **build** job, `cyclonedx-py` generates both JSON and XML SBOMs
-2. The SBOM files are included in the `dist/` artifact alongside wheel and sdist packages
-3. After publishing to PyPI, the **github-release** job creates a GitHub release with auto-generated notes and attaches the SBOMs as release assets
+2. The SBOM files are uploaded as a separate `sbom` artifact (the `dist` artifact is wheels + sdist only, so twine in the publish jobs does not reject the SBOM files as `InvalidDistribution`)
+3. After publishing to PyPI, the **github-release** job downloads the `sbom` artifact and attaches both SBOMs to the GitHub release as downloadable assets
 
 Users can download the SBOM from the GitHub release page for any version.
 
