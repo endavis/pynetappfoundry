@@ -710,3 +710,27 @@ class TestTaskReleaseActionSignature:
             f"params names {missing} have no matching kwarg in the action signature; "
             "doit will silently drop their CLI values"
         )
+
+
+class TestReleaseTagGhSearch:
+    """Regression test for ``task_release_tag``'s gh pr list search (issue #657).
+
+    GitHub's search parses ``release: v in:title`` with the colon as a
+    qualifier separator (like ``head:``, ``author:``), returning zero results
+    for literal title substrings containing colons. ``head:release/`` is
+    GitHub's intended syntax and matches the head-branch naming convention
+    ``doit release`` uses for release branches.
+    """
+
+    def test_gh_search_uses_head_prefix_not_title_colon_substring(self) -> None:
+        """Source must use head:release/ and not the broken title-colon search."""
+        import pathlib
+
+        src = pathlib.Path("tools/doit/release.py").read_text()
+        assert "release: v in:title" not in src, (
+            "The broken colon-in-search pattern returns zero results from gh "
+            "pr list and must not recur"
+        )
+        assert '"head:release/"' in src, (
+            "task_release_tag must use head:release/ to find merged release PRs"
+        )

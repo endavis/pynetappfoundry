@@ -581,6 +581,12 @@ def task_release_tag() -> dict[str, Any]:
         # Find the most recently merged release PR
         console.print("\n[cyan]Finding merged release PR...[/cyan]")
         try:
+            # Match PRs whose head branch starts with ``release/`` — the naming
+            # convention ``doit release`` uses. Do NOT use a title-substring
+            # search that includes the literal "release" prefix plus a colon
+            # and space: GitHub's search parses the colon as a qualifier
+            # separator (like ``head:``, ``author:``) and returns zero
+            # results. See #657.
             result = subprocess.run(
                 [
                     "gh",
@@ -589,7 +595,7 @@ def task_release_tag() -> dict[str, Any]:
                     "--state",
                     "merged",
                     "--search",
-                    "release: v in:title",
+                    "head:release/",
                     "--limit",
                     "1",
                     "--json",
