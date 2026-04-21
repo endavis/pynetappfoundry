@@ -1,23 +1,31 @@
-"""Tests for the TestPyPI publish workflow (issue #659).
+"""Preconditions for a successful TestPyPI publish.
 
-Structural asserts on `.github/workflows/testpypi.yml`. The central regression
-guard is the `on.push.tags` glob list: it must cover the four PEP440
-pre-release shapes that `commitizen` (used by `doit release --prerelease=...`)
-actually emits, and it must NOT use the old semver-only pattern that missed
-every PEP440 tag this project produces.
+Two kinds of checks live here:
+
+1. Structural asserts on `.github/workflows/testpypi.yml` — the
+   `on.push.tags` glob list must cover the four PEP440 pre-release shapes
+   that `commitizen` (used by `doit release --prerelease=...`) actually
+   emits, and must NOT use the old semver-only pattern that missed every
+   PEP440 tag this project produces (issue #659).
+2. Git-tracking invariants — `src/pynetappfoundry/_version.py` is a
+   build-time artifact written by `hatch-vcs`; if it is tracked in git,
+   every build dirties the working tree and `setuptools-scm` appends a
+   `+d<date>` local-version suffix that PyPI rejects (issue #661).
 
 These tests do not execute the workflow — they only verify its shape. See
-`tests/test_codeql_workflow.py` for the sibling pattern.
+`tests/test_codeql_workflow.py` for the sibling YAML-structure pattern.
 """
 
 from __future__ import annotations
 
+import subprocess
 from pathlib import Path
 from typing import Any
 
 import yaml
 
 WORKFLOW_PATH = Path(__file__).parent.parent / ".github" / "workflows" / "testpypi.yml"
+REPO_ROOT = Path(__file__).parent.parent
 
 
 def _load_workflow() -> dict[Any, Any]:
@@ -70,4 +78,31 @@ class TestPushTagTriggers:
         assert "v*-[a-zA-Z]*" not in self._tag_patterns(), (
             "The old semver-only glob did not match commitizen's PEP440 pre-release "
             "tags (e.g. v0.1.0a0) and must stay out to avoid regressing #659."
+        )
+
+
+class TestVersionFileNotTracked:
+    """Regression test for issue #661: ``_version.py`` must not be tracked.
+
+    ``hatch-vcs`` writes the computed version to ``_version.py`` during build.
+    If the file is tracked, every build dirties the working tree and
+    ``setuptools-scm`` appends a ``+d<YYYYMMDD>`` local-version suffix, which
+    PyPI rejects with ``400 Bad Request``. The file is in ``.gitignore`` but
+    gitignore has no effect on files already in the index, so the only
+    durable guard is this assertion.
+    """
+
+    def test_version_py_not_tracked(self) -> None:
+        """``git ls-files`` must not report src/pynetappfoundry/_version.py."""
+        result = subprocess.run(  # nosec B603 B607
+            ["git", "ls-files", "--error-unmatch", "src/pynetappfoundry/_version.py"],
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert result.returncode != 0, (
+            "src/pynetappfoundry/_version.py is tracked in git (see #661). "
+            "It's a build-time artifact written by hatch-vcs. "
+            "Fix: git rm --cached src/pynetappfoundry/_version.py"
         )
