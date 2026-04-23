@@ -216,7 +216,7 @@ def _repo_has_version_tags() -> bool:
     a fresh repo: without an anchor tag, ``cz bump --get-next --yes
     --prerelease alpha`` silently returns the production first-version
     (``0.1.0``) and drops the ``--prerelease`` flag, producing a
-    production PR when a pre-release was requested (issue #644).
+    production PR when a pre-release was requested (issue #448).
     """
     result = subprocess.run(  # nosec B603 B607
         ["git", "tag", "--list", "v*"],

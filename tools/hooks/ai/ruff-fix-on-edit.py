@@ -24,8 +24,7 @@ from pathlib import Path
 ALLOWED_ROOTS: tuple[str, ...] = ("src/", "tests/", "tools/")
 
 # Specific files at the project root that are also eligible.
-# (pynetappfoundry does not ship a bootstrap.py; leave empty.)
-ALLOWED_FILES: tuple[str, ...] = ()
+ALLOWED_FILES: tuple[str, ...] = ("bootstrap.py",)
 
 # Ruff rule selectors restricted to deterministic, judgment-free fixes:
 #   F401 - unused imports

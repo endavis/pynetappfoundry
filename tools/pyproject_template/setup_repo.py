@@ -33,6 +33,13 @@ if str(_script_dir) not in sys.path:
     sys.path.insert(0, str(_script_dir))
 
 # isort: off
+# Import cleanup helpers (used after development environment setup to
+# remove the template management suite from the spawned consumer project).
+from cleanup import (  # noqa: E402
+    CleanupMode,
+    cleanup_template_files,
+)
+
 # Import repo settings functions (aliased to avoid shadowing class methods)
 from repo_settings import (  # noqa: E402
     configure_branch_protection as _configure_branch_protection,
@@ -317,13 +324,30 @@ class RepositorySetup:
             owner = self.config["repo_owner"]
             pkg = self.config["package_name"]
             replacements = {
-                # URLs
+                # Marker tokens (unambiguous, used in prose files). These take
+                # priority because ``update_file()`` treats them as blind
+                # replaces regardless of surrounding context.
+                "__PACKAGE_NAME__": self.config["package_name"],
+                "__PYPI_NAME__": self.config["pypi_name"],
+                "__PROJECT_NAME__": self.config["repo_name"],
+                "__GH_OWNER__": owner,
+                "__AUTHOR_NAME__": self.config["author_name"],
+                "__AUTHOR_EMAIL__": self.config["author_email"],
+                "__DESCRIPTION__": self.config["description"],
+                "__REPO_URL__": f"https://github.com/{owner}/{pkg}",
+                "__REPO_SLUG__": f"{owner}/{pkg}",
+                # URLs — kept for runtime-critical files (pyproject.toml,
+                # workflows, LICENSE, mkdocs.yml, dodo.py, .envrc,
+                # .pre-commit-config.yaml) that retain literal placeholders,
+                # and for downstream consumer projects that have not yet
+                # migrated to marker tokens.
                 "https://github.com/username/package_name": (f"https://github.com/{owner}/{pkg}"),
                 f"https://github.com/username/{pkg}": (f"https://github.com/{owner}/{pkg}"),
                 "gh username/package_name": f"gh {owner}/{pkg}",
                 "username/package_name": f"{owner}/{pkg}",
                 "username": owner,
-                # Package names
+                # Package names (literal forms; Python files receive
+                # word-boundary protection from ``update_file()``).
                 "package_name": self.config["package_name"],
                 "package-name": self.config["pypi_name"],
                 "Package Name": self.config["repo_name"],
@@ -350,11 +374,11 @@ class RepositorySetup:
             if tests_dir.exists():
                 update_test_files(tests_dir, self.config["package_name"])
 
-            # Remove template tool tests (they're only for the template itself)
-            tool_tests_dir = Path("tests/pyproject_template")
-            if tool_tests_dir.exists():
-                shutil.rmtree(tool_tests_dir)
-                Logger.info("Removed template tool tests (tests/pyproject_template/)")
+            # Remove template-only tests (they're only for the template itself)
+            template_tests_dir = Path("tests/template")
+            if template_tests_dir.exists():
+                shutil.rmtree(template_tests_dir)
+                Logger.info("Removed template-only tests (tests/template/)")
 
             # Update source files
             src_dir = Path("src")
@@ -586,6 +610,122 @@ chore: apply code formatting
             print("  uv run doit check")
             print()
 
+    def cleanup_template_suite(self) -> None:
+        """Remove the template management suite from the spawned consumer project.
+
+        Consumer projects do not use or maintain the template's own tooling
+        (``tools/pyproject_template/``, ``docs/template/``, ``bootstrap.py``).
+        This step invokes :func:`cleanup_template_files` with
+        :attr:`CleanupMode.ALL` to delete the suite, then stages, commits, and
+        pushes the deletions so the consumer's default branch reflects a clean
+        tree.
+
+        Consumers who later want the template-sync suite back can re-install
+        it with ``curl -sSL .../bootstrap.py | python3 - --sync``.
+
+        This method is defensive: any failure is logged as a warning and
+        execution continues, so a cleanup failure does not block the user from
+        using their freshly-spawned repository.
+        """
+        Logger.step("Removing template management suite from spawned project...")
+
+        try:
+            result = cleanup_template_files(CleanupMode.ALL, root=Path.cwd())
+
+            # If nothing was deleted, there's nothing to commit.
+            if not result.deleted_files and not result.deleted_dirs:
+                Logger.info("No template files found to clean up")
+                return
+
+            # Stage deletions, commit, and push. --no-verify mirrors the
+            # pattern used in configure_placeholders(); the no-commit-to-main
+            # pre-commit hook would otherwise reject the commit on a freshly
+            # spawned repo whose only branch is main.
+            subprocess.run(["git", "add", "-A"], check=True, capture_output=True)
+            commit_msg = """
+chore: remove template management suite
+
+Auto-removed by setup_repo.py to keep the consumer project free of
+template-only tooling:
+
+- tools/pyproject_template/ (manage.py, setup_repo.py, configure.py,
+  cleanup.py, check_template_updates.py, migrate_existing_project.py,
+  settings.py, repo_settings.py, utils.py, __init__.py)
+- docs/template/
+- bootstrap.py
+- Template nav section in mkdocs.yml
+
+To reinstall the template-sync suite later, run:
+  curl -sSL https://raw.githubusercontent.com/endavis/pyproject-template/main/bootstrap.py \\
+      | python3 - --sync
+
+🤖 Generated with setup-repo.py"""
+
+            subprocess.run(
+                ["git", "commit", "-m", commit_msg, "--no-verify"],
+                check=True,
+                capture_output=True,
+            )
+            subprocess.run(["git", "push"], check=True, capture_output=True)
+            Logger.success("Template management suite removed, committed, and pushed")
+
+        except Exception as e:
+            Logger.warning(f"Template suite cleanup failed: {e}")
+            Logger.info(
+                "You can remove the template suite manually later by running "
+                "`python tools/pyproject_template/cleanup.py --all` from the project root."
+            )
+            import traceback
+
+            traceback.print_exc()
+
+    def verify_post_cleanup(self) -> None:
+        """Run ``doit check`` after template suite cleanup; log on failure.
+
+        The wizard already runs ``doit check`` inside
+        :meth:`setup_development_environment`, but that runs *before*
+        :meth:`cleanup_template_suite` removes ``bootstrap.py`` and the
+        template management suite. Any task command that references files
+        which cleanup just deleted would slip through undetected.
+
+        This method re-runs ``uv run doit check`` in the cloned project
+        directory after cleanup. Failure is treated leniently — matching the
+        pattern in :meth:`setup_development_environment`: the wizard prints
+        a clear diagnostic and continues to :meth:`print_manual_steps`. It
+        does **not** ``sys.exit``, because the GitHub repo has already been
+        created and partially configured; forcing an exit here would leave
+        the user with a half-set-up remote and no friendly path forward.
+        """
+        Logger.step("Verifying project after cleanup (doit check)...")
+
+        try:
+            check_result = subprocess.run(
+                ["uv", "run", "doit", "check"],
+                capture_output=False,
+                text=True,
+            )
+        except FileNotFoundError as e:
+            # uv not on PATH in this shell; surface the diagnostic but
+            # do not raise — the user can re-run manually.
+            Logger.warning(f"Post-cleanup validation could not run: {e}")
+            Logger.info(
+                "Validation failed *after* cleanup — the repo was created but "
+                "`doit check` currently fails; see output above"
+            )
+            return
+
+        if check_result.returncode != 0:
+            Logger.warning(
+                f"Post-cleanup `doit check` returned non-zero exit status {check_result.returncode}"
+            )
+            Logger.info(
+                "Validation failed *after* cleanup — the repo was created but "
+                "`doit check` currently fails; see output above"
+            )
+            return
+
+        Logger.success("Post-cleanup validation checks passed")
+
     def configure_repository_settings(self) -> None:
         """Configure repository settings to match template."""
         _configure_repository_settings(
@@ -656,11 +796,12 @@ chore: apply code formatting
         print(f"      https://github.com/{self.config['repo_full']}/settings/access")
         print()
 
-        Logger.step("Cleanup Recommendations:")
-        print("  You can safely remove the following setup scripts:")
-        print("  - bootstrap.py")
-        print("  - tools/pyproject_template/configure.py")
-        print("  - tools/pyproject_template/setup_repo.py")
+        Logger.info(
+            "Template tooling was auto-removed. To reinstall the template-sync "
+            "suite later, run: curl -sSL "
+            "https://raw.githubusercontent.com/endavis/pyproject-template/main/bootstrap.py "
+            "| python3 - --sync"
+        )
         print()
 
         Logger.step("You're all set!")
@@ -688,6 +829,8 @@ chore: apply code formatting
         2. Configure all GitHub settings (before cloning to avoid partial setup)
         3. Clone repository locally
         4. Configure local files and development environment
+        5. Remove template management suite from the consumer project
+        6. Re-run ``doit check`` to confirm the post-cleanup tree is valid
         """
         self.print_banner()
         self.check_requirements()
@@ -708,6 +851,17 @@ chore: apply code formatting
         self.clone_repository()
         self.configure_placeholders()
         self.setup_development_environment()
+
+        # Remove the template management suite from the spawned project.
+        # Consumers don't use or maintain the template's own tooling; they
+        # can re-install it later with `bootstrap.py --sync` if desired.
+        self.cleanup_template_suite()
+
+        # Re-run `doit check` after cleanup to catch any stale references
+        # that survived the template-suite removal. Lenient — logs a
+        # diagnostic and continues on failure so the wizard still reaches
+        # print_manual_steps.
+        self.verify_post_cleanup()
 
         self.print_manual_steps()
 

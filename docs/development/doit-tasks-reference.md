@@ -38,7 +38,7 @@ doit <task_name>
 | [Security](#security-tasks) | `security`, `audit`, `licenses`, `sbom` | Security scanning and SBOM |
 | [Documentation](#documentation-tasks) | `docs_serve`, `docs_build`, `docs_deploy`, `docs_toc` | Documentation management |
 | [Dependencies](#dependency-tasks) | `install`, `install_dev`, `update_deps` | Package management |
-| [GitHub Workflow](#github-workflow-tasks) | `issue`, `pr`, `pr_merge`, `adr`, `labels_sync` | Issue and PR management |
+| [GitHub Workflow](#github-workflow-tasks) | `issue`, `pr`, `pr_merge`, `adr`, `labels_sync`, `env_create`, `env_list`, `publish_setup` | Issue, PR, and environment management |
 | [Release](#release-tasks) | `release`, `release_tag`, `publish` | Version and release management |
 | [Version](#version-tasks) | `bump`, `changelog` | Version bumping and changelog |
 | [Setup](#setup-tasks) | `pre_commit_install`, `completions`, `install_direnv` | Development environment |
@@ -563,10 +563,10 @@ uv sync --all-extras --dev
 uv run pre-commit install
 ```
 
-> **Note:** `src/package_name/_version.py` is a build-time artifact written by
-> `hatch-vcs`. It is gitignored and must not be tracked — tracking it makes
-> every build dirty the working tree, which causes PyPI to reject the upload
-> (see issue #661).
+> **Note:** `src/__PACKAGE_NAME__/_version.py` is a build-time artifact written
+> by `hatch-vcs`. It is gitignored and untracked — `hatch-vcs` regenerates
+> it on every build, but git treats it as untracked rather than a modified
+> tracked file, so it does not appear in `git status`.
 
 ### `update_deps`
 
@@ -614,7 +614,7 @@ doit issue --type=bug --title="Fix bug" --body-file=issue.md
 - `feature` - New feature request
 - `bug` - Bug report
 - `refactor` - Code refactoring
-- `doc` - Documentation improvement
+- `docs` - Documentation improvement
 - `chore` - Maintenance task
 
 **Options:**
@@ -681,23 +681,34 @@ doit pr_merge --auto-close
 Create an Architecture Decision Record.
 
 ```bash
-# Interactive mode
+# Interactive mode (project-level 0XXX ADR)
 doit adr
 
 # Non-interactive mode
 doit adr --title="Use Redis for caching" --body="## Status\nAccepted\n..."
 doit adr --title="Use Redis" --body-file=adr.md
+
+# Template-meta ADR (9XXX series) — decisions about the template itself
+doit adr --title="Use some tool" --template
+doit adr --title="Use some tool" --template --body-file=adr.md
 ```
 
 **What it does:**
 - Creates a new ADR in `docs/decisions/`
-- Auto-numbers based on existing ADRs
+- Auto-numbers based on existing ADRs in the chosen series
 - Uses ADR template format
+
+**Series:**
+- Default (project-level, 0XXX): decisions specific to this project. Numbering starts at `0001`.
+- `--template` (template-meta, 9XXX): decisions about the template's tooling, workflows, or conventions. Numbering starts at `9001`.
+
+Both series share `docs/decisions/`; the numeric prefix distinguishes them. Template ADRs are inherited by downstream projects spawned from the template; project ADRs are not.
 
 **Options:**
 - `--title`: ADR title (non-interactive)
 - `--body`: ADR body content (non-interactive)
 - `--body-file`: File containing ADR body (non-interactive)
+- `--template`: Create a template-meta ADR (9XXX series) instead of a project-level ADR
 
 See [ADR Documentation](../decisions/README.md) for more information.
 
@@ -733,6 +744,70 @@ doit labels_sync --file=.github/labels.custom.yml
 - `--file=<path>`: Path to the labels file (default `.github/labels.yml`).
 
 See [GitHub Repository Settings → Labels](github-repository-settings.md#labels) for the canonical label list and the file schema.
+
+---
+
+### `env_create`
+
+Create a GitHub environment by name (idempotent).
+
+```bash
+doit env_create --name=pypi
+doit env_create --name=testpypi
+```
+
+**What it does:**
+- Determines the current repository's `owner/repo` slug via `gh repo view`.
+- Checks whether the environment already exists; if so, prints a `skipped` message and returns.
+- Otherwise, creates the environment with no protection rules via `gh api -X PUT repos/<owner>/<repo>/environments/<name>`.
+
+**Options:**
+- `--name`: Environment name (required; the task aborts with a red error and exit 1 if empty).
+
+**Requirements:**
+- `gh` installed and authenticated with repo-admin permissions on the target repository.
+
+See [GitHub Environments & Trusted Publishing](release-and-automation.md#github-environments-trusted-publishing) for the common use case (bootstrapping `testpypi` and `pypi` for OIDC publishing).
+
+---
+
+### `env_list`
+
+List GitHub environments for the current repository.
+
+```bash
+doit env_list
+```
+
+**What it does:**
+- Resolves the current `owner/repo` slug via `gh repo view`.
+- Fetches environment names via `gh api repos/<owner>/<repo>/environments --jq .environments[].name`.
+- Prints a bulleted list (alphabetical), or `No environments in <owner>/<repo>` when empty.
+
+**Requirements:**
+- `gh` installed and authenticated.
+
+See [GitHub Environments & Trusted Publishing](release-and-automation.md#github-environments-trusted-publishing) for context on which environments should exist for a release-ready repository.
+
+---
+
+### `publish_setup`
+
+Bootstrap GitHub environments for PyPI/TestPyPI trusted publishing.
+
+```bash
+doit publish_setup
+```
+
+**What it does:**
+1. Resolves the `owner/repo` slug.
+2. Creates (idempotently) the `testpypi` and `pypi` environments used by the release workflows for OIDC authentication.
+3. Prints follow-up instructions for registering the project as a trusted publisher on TestPyPI (`https://test.pypi.org/manage/account/publishing/`) and PyPI (`https://pypi.org/manage/account/publishing/`). That registration must be completed manually through the PyPI web UI.
+
+**Requirements:**
+- `gh` installed and authenticated with repo-admin permissions.
+
+See [GitHub Environments & Trusted Publishing](release-and-automation.md#github-environments-trusted-publishing) for the rationale and the list of form fields to fill in during PyPI registration.
 
 ---
 
@@ -780,6 +855,10 @@ doit release --prerelease=rc
 - Must be on `main` branch
 - No uncommitted changes
 - All checks must pass
+- `--prerelease` additionally requires a baseline `v*` tag so commitizen
+  has an anchor to bump from. Existing projects that predate the bootstrap
+  auto-seed should seed one manually — see
+  [Before your first pre-release](release-and-automation.md#before-your-first-pre-release).
 
 See [Release Automation](release-and-automation.md) for the full flow.
 
