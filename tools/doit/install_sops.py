@@ -6,6 +6,12 @@
 Kept separate from ``install_tools.py`` (the reusable framework synced
 from the upstream pyproject-template) so template refreshes do not
 overwrite these project-specific tasks.
+
+The ``_install_age`` helper is custom because the upstream framework's
+``extract_binaries`` parameter is a single list applied across all
+platforms, which cannot express ``age`` vs ``age.exe`` per OS. Once
+https://github.com/endavis/pyproject-template/issues/477 lands this
+helper can collapse into a single ``create_install_task`` call.
 """
 
 import glob
