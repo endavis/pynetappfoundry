@@ -3,39 +3,54 @@ name: CI
 on:
   pull_request:
     branches: [main]
-    types: [opened, synchronize, reopened, labeled]
+    types: [opened, synchronize, reopened]
   workflow_dispatch:
   workflow_call:
+    inputs:
+      full_matrix:
+        description: 'Run the full Python-version matrix (middle versions) instead of the bookend versions.'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   setup:
-    # Skip CI if triggered by a label event that isn't 'full-matrix'
-    if: github.event.action != 'labeled' || github.event.label.name == 'full-matrix'
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
-      newest: ${{ steps.set-matrix.outputs.newest }}
+      oldest: ${{ steps.pv.outputs.oldest }}
+      newest: ${{ steps.pv.outputs.newest }}
     steps:
       - uses: actions/checkout@v6
         with:
-          sparse-checkout: .github/python-versions.json
+          sparse-checkout: |
+            .github/python-versions.json
+            .github/actions/python-versions
           sparse-checkout-cone-mode: false
+
+      - id: pv
+        uses: ./.github/actions/python-versions
 
       - name: Set matrix based on config and label
         id: set-matrix
+        env:
+          OLDEST: ${{ steps.pv.outputs.oldest }}
+          NEWEST: ${{ steps.pv.outputs.newest }}
         run: |
-          # Read config
-          oldest=$(jq -r '.oldest' .github/python-versions.json)
-          newest=$(jq -r '.newest' .github/python-versions.json)
-          echo "newest=$newest" >> $GITHUB_OUTPUT
+          oldest="$OLDEST"
+          newest="$NEWEST"
 
           oldest_minor=${oldest#3.}
           newest_minor=${newest#3.}
 
-          if [[ "${{ github.event.label.name }}" == "full-matrix" ]]; then
+          if [[ "${{ inputs.full_matrix }}" == "true" ]]; then
             # Middle versions only (bookends already tested)
             versions=""
             for ((i=oldest_minor+1; i<newest_minor; i++)); do
@@ -144,10 +159,10 @@ jobs:
         run: uv run pytest --cov=pynetappfoundry --cov-report=xml:tmp/coverage.xml --cov-report=term -v
 
       - name: Upload coverage to Codecov
-        if: matrix.python-version == '3.13' && matrix.os == 'ubuntu-latest'
+        if: matrix.python-version == needs.setup.outputs.newest && matrix.os == 'ubuntu-latest'
         uses: codecov/codecov-action@v6
         with:
-          file: ./tmp/coverage.xml
+          files: ./tmp/coverage.xml
           flags: unittests
           name: codecov-umbrella
           fail_ci_if_error: false
@@ -187,8 +202,7 @@ jobs:
         run: uv run doit docs_build
 
   ci-complete:
-    # Always run unless this is a non-full-matrix label event
-    if: always() && (github.event.action != 'labeled' || github.event.label.name == 'full-matrix')
+    if: always()
     needs: [setup, test, docs]
     runs-on: ubuntu-latest
     steps:

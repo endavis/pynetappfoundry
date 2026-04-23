@@ -357,6 +357,7 @@ uv run pre-commit autoupdate
 | `mypy` | Type checking (strict mode, `src/` only) |
 | `bandit` | Security scanning (skipped if not installed) |
 | `codespell` | Spell checking |
+| `actionlint` | Lint GitHub Actions workflow files |
 | `check-branch-name` | Enforce branch naming convention |
 | `generate-doc-toc` | Update documentation TOC when docs change |
 | `no-commit-to-main` | Prevent direct commits to main branch |
@@ -415,7 +416,7 @@ from myproject import Config, ConfigError
 def temp_config_file(tmp_path):
     """Create a temporary config file."""
     config_file = tmp_path / "config.json"
-    config_file.write_text('{"key": "value"}')
+    config_file.write_text('{"key": "value"}', encoding="utf-8")
     return config_file
 
 def test_config_load_success(temp_config_file):
@@ -585,6 +586,13 @@ Use this label to trigger comprehensive compatibility testing across all support
 gh pr edit <PR-NUMBER> --add-label "full-matrix"
 ```
 
+Adding the label triggers the dedicated `.github/workflows/ci-full-matrix.yml`
+workflow. That workflow is a thin dispatcher: it fires only on the `labeled`
+event, confirms the label name is `full-matrix`, and then calls `ci.yml` via
+`workflow_call` with `full_matrix: true`. The main `ci.yml` no longer fires on
+label events itself, which keeps the per-push `CI` check from being duplicated
+every time a label is added to a PR.
+
 ### Branch Protection Integration
 
 Configure branch protection rules to require the merge gate:
@@ -691,7 +699,7 @@ HYPOTHESIS_PROFILE=default uv run pytest -m property -v
 When a property test fails, Hypothesis prints the **minimal failing example**. To reproduce:
 
 1. Copy the seed from the failure output (e.g., `--hypothesis-seed=98765`)
-2. Re-run: `uv run pytest tests/test_properties.py --hypothesis-seed=98765 -v`
+2. Re-run: `uv run pytest tests/template/test_properties.py --hypothesis-seed=98765 -v`
 3. Hypothesis will reproduce the exact same sequence of inputs
 
 Hypothesis also stores failing examples in a `.hypothesis/` directory (git-ignored) so they are replayed automatically on the next run.

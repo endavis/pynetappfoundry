@@ -17,10 +17,8 @@ Why this decision was made.
 
 ## Related Issues
 
-<!-- List issues only, not PRs. PRs are discoverable from issue timelines. -->
 - Issue #XX: Description
 
 ## Related Documentation
 
-<!-- Add links to related documentation -->
-<!-- Example: - [Development Guide](../development/coding-standards.md) -->
+- [Relevant Doc](../path/to/doc.md)
