@@ -595,8 +595,7 @@ class TestQueryBuilderEarlyValidation:
         try:
             yield mapping
         finally:
-            model_registry._mappings.pop("FakeDiiModel", None)
-            model_registry._mappings_by_class.pop(_FakeDiiModel, None)
+            model_registry.unregister_mapping("FakeDiiModel")
 
     # -----------------------------------------------------------------
     # OntapBackend + source="live" → ValueError at chain time
@@ -712,6 +711,38 @@ class TestQueryBuilderEarlyValidation:
         qb.filter(FakeVolume.F.name == "vs1")
         assert qb._filters == {"name": "vs1"}
         assert qb._where_expressions == []
+
+    # -----------------------------------------------------------------
+    # filter() must not mutate state when validation rejects
+    # -----------------------------------------------------------------
+
+    def test_filter_rejection_leaves_builder_state_untouched(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        """A filter() call that raises must not leave _filters partially mutated.
+
+        When a single filter() invocation mixes equality and non-equality DSL
+        expressions, validation must run before any state mutation so that
+        catching the ValueError leaves the builder in its prior state.
+        """
+        ds = DataSource(mock_config)
+        qb = ds.query(FakeVolume, cluster="prod1", source="live")
+        qb.filter(FakeVolume.F.name == "starting")  # baseline
+        baseline_filters = dict(qb._filters)
+        baseline_where = list(qb._where_expressions)
+
+        with pytest.raises(ValueError, match="source='live'"):
+            # Eq compiles to a dict entry; Ne compiles to a where-string and
+            # must trip validation before either is applied.
+            qb.filter(
+                FakeVolume.F.name == "second",
+                FakeVolume.F.name != "forbidden",
+            )
+
+        assert qb._filters == baseline_filters
+        assert qb._where_expressions == baseline_where
 
     # -----------------------------------------------------------------
     # Empty .where() is always a no-op (no backend check performed)

@@ -102,6 +102,21 @@ class ModelRegistry:
         self._mappings[name] = mapping
         self._mappings_by_class[mapping.model_class] = mapping
 
+    def unregister_mapping(self, name: str) -> None:
+        """Remove a mapping from both indexes by name.
+
+        Idempotent: silently ignores names that are not registered.
+        Primarily intended for test fixtures that register a mapping
+        for the duration of one test and need to tear it down without
+        reaching into the private indexes.
+
+        Args:
+            name: Identifier of the mapping to remove.
+        """
+        mapping = self._mappings.pop(name, None)
+        if mapping is not None:
+            self._mappings_by_class.pop(mapping.model_class, None)
+
     def get_mapping(self, name: str) -> TypeMapping | None:
         """Look up a type mapping by name.
 
