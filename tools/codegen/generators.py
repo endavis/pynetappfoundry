@@ -18,7 +18,7 @@ from typing import Any
 try:
     import tomllib
 except ModuleNotFoundError:  # pragma: no cover - Python < 3.11
-    import tomli as tomllib  # type: ignore[import-not-found,no-redef]
+    import tomli as tomllib  # type: ignore[import-not-found,no-redef,unused-ignore]
 
 import tomli_w
 
