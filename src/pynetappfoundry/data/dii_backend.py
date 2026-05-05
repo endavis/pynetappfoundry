@@ -38,12 +38,19 @@ class DiiBackend(Backend):
     remote API directly.  Cache-only routing decisions and
     ``where_expressions`` are rejected with :class:`NotImplementedError`.
 
+    ``where_expressions`` are not supported: :attr:`supports_where_expressions`
+    is explicitly ``False`` so that :class:`QueryBuilder` raises
+    :class:`ValueError` at chain time (before iteration) when a caller
+    passes where-strings or non-equality typed DSL operators.
+
     API clients are lazily constructed and cached per-cluster (DII tenant)
     for the lifetime of the backend instance.
 
     Args:
         config: The :class:`pynetappfoundry.core.config.Config` instance.
     """
+
+    supports_where_expressions: bool = False
 
     def __init__(self, config: Config) -> None:
         super().__init__(config)

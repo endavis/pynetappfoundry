@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from pynetappfoundry.cache._registry import model_registry
-from pynetappfoundry.cache.field_mapping import TypeMapping
+from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.data.source import _BACKENDS, DataSource, QueryBuilder
 
 from .conftest import FakeComposite, FakeVolume
@@ -557,3 +558,209 @@ class TestAutoFallback:
         second_decision = fake_backend.query.call_args_list[1].args[2]
         assert not second_decision.cache_fields
         assert second_decision.live_fields
+
+
+class TestQueryBuilderEarlyValidation:
+    """Early ValueError when where-expressions are used on an incompatible backend or source.
+
+    Covers issue #618: ``where()`` and non-equality typed DSL operators must
+    raise :class:`ValueError` at chain time (not iteration time) when the
+    backend does not support where-expressions or the source mode is ``"live"``.
+    """
+
+    # -----------------------------------------------------------------
+    # DII fixtures — use a FakeVolume subclass so there is no name-keyed
+    # conflict with the shared ``fake_volume_mapping`` fixture.
+    # -----------------------------------------------------------------
+
+    @pytest.fixture
+    def fake_dii_mapping(self) -> Iterator[TypeMapping]:
+        """Register a DII-typed fake mapping for the duration of one test."""
+
+        class _FakeDiiModel(FakeVolume):
+            """Thin FakeVolume subclass registered with api_type='dii'."""
+
+        mapping = TypeMapping(
+            name="FakeDiiModel",
+            model_class=_FakeDiiModel,
+            api_endpoint="/dii/fake-volumes",
+            api_type="dii",
+            identifier_field="uuid",
+            fields=(
+                FieldMapping(cache_attr="name", cache_strategy="cache"),
+                FieldMapping(cache_attr="uuid", cache_strategy="cache"),
+            ),
+        )
+        model_registry.register_mapping("FakeDiiModel", mapping)
+        try:
+            yield mapping
+        finally:
+            model_registry._mappings.pop("FakeDiiModel", None)
+            model_registry._mappings_by_class.pop(_FakeDiiModel, None)
+
+    # -----------------------------------------------------------------
+    # OntapBackend + source="live" → ValueError at chain time
+    # -----------------------------------------------------------------
+
+    def test_where_raises_valueerror_on_live_source(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        """OntapBackend + source='live' + .where() raises ValueError immediately."""
+        ds = DataSource(mock_config)
+        qb = ds.query(FakeVolume, cluster="prod1", source="live")
+
+        with pytest.raises(ValueError, match="source='live'"):
+            qb.where("size > 1")
+
+    def test_filter_raises_valueerror_on_live_source_with_non_equality_dsl(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        """OntapBackend + source='live' + .filter(non-equality expr) raises ValueError."""
+        ds = DataSource(mock_config)
+        qb = ds.query(FakeVolume, cluster="prod1", source="live")
+
+        # Ne operator compiles to a where-string, so filter() should raise.
+        with pytest.raises(ValueError, match="source='live'"):
+            qb.filter(FakeVolume.F.name != "forbidden")
+
+    # -----------------------------------------------------------------
+    # DiiBackend → ValueError regardless of source mode
+    # -----------------------------------------------------------------
+
+    def test_where_raises_valueerror_for_dii_backend(
+        self,
+        fake_dii_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        """DiiBackend does not support where-expressions: raises ValueError at where() time."""
+        ds = DataSource(mock_config)
+        model_cls = fake_dii_mapping.model_class
+        qb = ds.query(model_cls, cluster="prod1")
+
+        with pytest.raises(ValueError, match="DiiBackend"):
+            qb.where("size > 1")
+
+    def test_filter_raises_valueerror_for_dii_backend_non_equality(
+        self,
+        fake_dii_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        """DiiBackend + non-equality DSL in filter() raises ValueError at filter() time."""
+        from pynetappfoundry.data.filters import Gt
+
+        ds = DataSource(mock_config)
+        model_cls = fake_dii_mapping.model_class
+        qb = ds.query(model_cls, cluster="prod1")
+
+        # Gt operator compiles to a where-string; filter() must reject it.
+        with pytest.raises(ValueError, match="DiiBackend"):
+            qb.filter(Gt("size", 0))
+
+    # -----------------------------------------------------------------
+    # OntapBackend + compatible source modes → no error at chain time
+    # -----------------------------------------------------------------
+
+    def test_where_succeeds_on_cache_source(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        """OntapBackend + source='cache' + .where() succeeds at chain time."""
+        ds = DataSource(mock_config)
+        qb = ds.query(FakeVolume, cluster="prod1", source="cache")
+        # Should not raise; only raises at iteration time if cache is unavailable.
+        qb.where("size > 1")
+        assert "size > 1" in qb._where_expressions
+
+    def test_where_succeeds_on_auto_source(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        """OntapBackend + source='auto' + .where() succeeds at chain time."""
+        ds = DataSource(mock_config)
+        qb = ds.query(FakeVolume, cluster="prod1", source="auto")
+        qb.where("size > 1")
+        assert "size > 1" in qb._where_expressions
+
+    # -----------------------------------------------------------------
+    # Equality-only DSL is not affected by the new validation
+    # -----------------------------------------------------------------
+
+    def test_filter_equality_dsl_not_affected_on_live(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        """Equality expressions compile to dict entries and must never raise.
+
+        Using ``==`` on a live OntapBackend query must succeed because
+        equality filters are not where-expressions; they route through the
+        REST API ``?key=value`` query-param path.
+        """
+        ds = DataSource(mock_config)
+        fake_backend = MagicMock()
+        fake_backend.query.return_value = []
+        ds._backends["ontap"] = fake_backend
+
+        qb = ds.query(FakeVolume, cluster="prod1", source="live")
+        # Should not raise: Eq compiles to a dict entry, not a where-string.
+        qb.filter(FakeVolume.F.name == "vs1")
+        assert qb._filters == {"name": "vs1"}
+        assert qb._where_expressions == []
+
+    # -----------------------------------------------------------------
+    # Empty .where() is always a no-op (no backend check performed)
+    # -----------------------------------------------------------------
+
+    def test_empty_where_skips_validation(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        """.where() with no arguments is a no-op and never raises."""
+        ds = DataSource(mock_config)
+        # Use source='live' to ensure that IF validation were triggered it
+        # would raise — but it must NOT be triggered for an empty call.
+        qb = ds.query(FakeVolume, cluster="prod1", source="live")
+        qb.where()  # must be silent
+        assert qb._where_expressions == []
+
+    # -----------------------------------------------------------------
+    # Error message content assertions
+    # -----------------------------------------------------------------
+
+    def test_error_message_names_backend_and_source(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        """Error for live+OntapBackend names the backend class and source mode."""
+        ds = DataSource(mock_config)
+        qb = ds.query(FakeVolume, cluster="prod1", source="live")
+
+        with pytest.raises(ValueError) as exc_info:
+            qb.where("size > 0")
+
+        msg = str(exc_info.value)
+        assert "OntapBackend" in msg
+        assert "live" in msg
+
+    def test_error_message_names_backend_for_dii(
+        self,
+        fake_dii_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        """Error for DiiBackend names 'DiiBackend' in the message."""
+        ds = DataSource(mock_config)
+        model_cls = fake_dii_mapping.model_class
+        qb = ds.query(model_cls, cluster="prod1")
+
+        with pytest.raises(ValueError) as exc_info:
+            qb.where("size > 0")
+
+        assert "DiiBackend" in str(exc_info.value)
