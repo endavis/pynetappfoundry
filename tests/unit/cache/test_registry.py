@@ -29,6 +29,29 @@ class TestModelRegistry:
         registry = ModelRegistry()
         assert registry.get_mapping("MISSING") is None
 
+    def test_unregister_mapping_removes_from_both_indexes(self) -> None:
+        from pynetappfoundry.cache.field_mapping import TypeMapping
+
+        registry = ModelRegistry()
+
+        class Baz(BaseModel):
+            pass
+
+        mapping = TypeMapping(name="Baz", model_class=Baz, api_endpoint="/baz")
+        registry.register_mapping("BAZ", mapping)
+        assert registry.get_mapping("BAZ") is mapping
+        assert registry.get_mapping_by_model_class(Baz) is mapping
+
+        registry.unregister_mapping("BAZ")
+        assert registry.get_mapping("BAZ") is None
+        assert registry.get_mapping_by_model_class(Baz) is None
+
+    def test_unregister_mapping_is_idempotent(self) -> None:
+        registry = ModelRegistry()
+        # Must not raise on a name that was never registered.
+        registry.unregister_mapping("NEVER_REGISTERED")
+        registry.unregister_mapping("NEVER_REGISTERED")
+
     def test_mappings_property_returns_copy(self) -> None:
         from pynetappfoundry.cache.field_mapping import TypeMapping
 

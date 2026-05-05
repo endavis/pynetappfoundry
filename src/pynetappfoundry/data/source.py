@@ -250,6 +250,12 @@ class QueryBuilder[T: BaseModel]:
            cannot be evaluated. Use ``source="cache"`` to opt into the
            cache-only path. See ADR-0012 §49.
 
+        Reads the capability flag off the registered backend **class** rather
+        than instantiating it, so chain-time validation does not eagerly
+        construct a backend instance. Backends with no entry in
+        :data:`_BACKENDS` are deferred to iteration time, where
+        :meth:`DataSource._get_backend` raises a clear ``ValueError``.
+
         Args:
             context: Human-readable label for the call site, used in the
                 error message (e.g. ``"where()"`` or ``"filter()"``).
@@ -258,9 +264,11 @@ class QueryBuilder[T: BaseModel]:
             ValueError: If the current backend or source mode is incompatible
                 with where-expressions.
         """
-        backend = self._source._get_backend(self._mapping.api_type)
-        backend_name = type(backend).__name__
-        if not backend.supports_where_expressions:
+        backend_cls = _BACKENDS.get(self._mapping.api_type)
+        if backend_cls is None:
+            return
+        backend_name = backend_cls.__name__
+        if not backend_cls.supports_where_expressions:
             msg = (
                 f"{context}: {backend_name} does not support where-expressions. "
                 f"where() and non-equality typed DSL operators (>, >=, <, <=, !=) "
@@ -352,11 +360,13 @@ class QueryBuilder[T: BaseModel]:
                 raise TypeError(msg)
 
         # Compile typed expressions into equality dict + where strings.
+        # Validate before mutating state so a rejected call leaves the
+        # builder unchanged.
         if expr_args:
             eq_dict, where_tuple = compile_filters(*expr_args)
-            self._filters.update(eq_dict)
             if where_tuple:
                 self._validate_where_expressions("filter()")
+            self._filters.update(eq_dict)
             self._where_expressions.extend(where_tuple)
 
         # Merge dict positional arguments.
