@@ -230,6 +230,56 @@ class QueryBuilder[T: BaseModel]:
         self._fields: list[str] | None = None
         self._where_expressions: list[str] = []
 
+    def _validate_where_expressions(self, context: str) -> None:
+        """Raise :class:`ValueError` early if where-expressions are incompatible.
+
+        Called by :meth:`where` (when expressions are non-empty) and by
+        :meth:`filter` (when non-equality DSL operators produce where-strings).
+
+        Two incompatibility classes are caught here — at chain time rather
+        than at iteration time — to give callers a clear, actionable error:
+
+        1. **Backend does not support where-expressions at all** (e.g.
+           :class:`DiiBackend`): any backend whose
+           :attr:`Backend.supports_where_expressions` is ``False`` rejects
+           where-expressions unconditionally.
+
+        2. **Source mode is ``"live"``** on a backend that only supports
+           where-expressions on the cache path (e.g. :class:`OntapBackend`):
+           the cache substrate is bypassed on the live path, so where-strings
+           cannot be evaluated. Use ``source="cache"`` to opt into the
+           cache-only path. See ADR-0012 §49.
+
+        Args:
+            context: Human-readable label for the call site, used in the
+                error message (e.g. ``"where()"`` or ``"filter()"``).
+
+        Raises:
+            ValueError: If the current backend or source mode is incompatible
+                with where-expressions.
+        """
+        backend = self._source._get_backend(self._mapping.api_type)
+        backend_name = type(backend).__name__
+        if not backend.supports_where_expressions:
+            msg = (
+                f"{context}: {backend_name} does not support where-expressions. "
+                f"where() and non-equality typed DSL operators (>, >=, <, <=, !=) "
+                f"are only available on backends that set "
+                f"supports_where_expressions=True (e.g. OntapBackend). "
+                f"See ADR-0012 for the supported backend list."
+            )
+            raise ValueError(msg)
+        if self._source_mode == "live":
+            msg = (
+                f"{context}: where-expressions are not supported with "
+                f"source='live' on {backend_name}. "
+                f"The live REST path bypasses the cache substrate that "
+                f"evaluates where-strings. Use source='cache' to apply "
+                f"where-expressions against the local cache. "
+                f"See ADR-0012 §49."
+            )
+            raise ValueError(msg)
+
     def where(self, *expressions: str) -> QueryBuilder[T]:
         """Add SQL-like filter expressions to the query.
 
@@ -240,11 +290,13 @@ class QueryBuilder[T: BaseModel]:
 
         Expressions are evaluated by the backend's cache substrate
         (:meth:`ClusterMetadataDB.query_with_filters`) and are only
-        supported on the cache-only path. Using ``.where()`` with a
-        routing decision that requires the live REST API (``source="live"``)
-        or a partial-fetch mix (``source="auto"`` when the model has both
-        cached and realtime fields) raises :class:`NotImplementedError`
-        at iteration time. Use ``source="cache"`` to opt into the
+        supported on cache-backed routes. Backends that set
+        ``supports_where_expressions=False`` and queries using
+        ``source="live"`` raise :class:`ValueError` immediately at chain
+        time. Partial-fetch mixes (for example ``source="auto"`` with
+        live-only projected fields) still raise :class:`NotImplementedError`
+        at iteration time because the final routing decision is resolved
+        during execution. Use ``source="cache"`` to opt into the
         cache-only path and apply ``.where()`` expressions there.
 
         Composes freely with :meth:`filter` — the final filter list is
@@ -258,6 +310,8 @@ class QueryBuilder[T: BaseModel]:
         Returns:
             ``self`` for chaining.
         """
+        if expressions:
+            self._validate_where_expressions("where()")
         self._where_expressions.extend(expressions)
         return self
 
@@ -301,6 +355,8 @@ class QueryBuilder[T: BaseModel]:
         if expr_args:
             eq_dict, where_tuple = compile_filters(*expr_args)
             self._filters.update(eq_dict)
+            if where_tuple:
+                self._validate_where_expressions("filter()")
             self._where_expressions.extend(where_tuple)
 
         # Merge dict positional arguments.

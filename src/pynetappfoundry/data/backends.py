@@ -80,9 +80,20 @@ class Backend(ABC):
     dict into concrete fetches against its upstream system and returns
     populated model instances with ``_fetched_fields`` set.
 
+    Class attribute :attr:`supports_where_expressions` controls whether
+    the backend accepts SQL-like where-expression strings from
+    :meth:`QueryBuilder.where` and non-equality typed DSL operators.
+    Defaults to ``False`` so that any new backend that does not
+    explicitly opt in rejects where-expressions early (at chain time)
+    rather than failing silently at iteration time.
+
     Args:
         config: The :class:`pynetappfoundry.core.config.Config` instance.
     """
+
+    #: Set to ``True`` on backends whose cache substrate supports
+    #: SQL-like where-expression strings (e.g. :class:`OntapBackend`).
+    supports_where_expressions: bool = False
 
     def __init__(self, config: Config) -> None:
         self._config = config
@@ -123,6 +134,8 @@ class OntapBackend(Backend):
     Args:
         config: The :class:`pynetappfoundry.core.config.Config` instance.
     """
+
+    supports_where_expressions: bool = True
 
     def __init__(self, config: Config) -> None:
         super().__init__(config)

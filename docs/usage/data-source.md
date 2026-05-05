@@ -157,27 +157,24 @@ for vol in large_vols:
 ```
 
 !!! warning "Cache-only"
-    `.where()` expressions are evaluated by the cache query engine and are only supported when the routing decision uses the cache path. Use `source="cache"` to opt in explicitly. Combining `.where()` with `source="live"` raises `NotImplementedError` at iteration time.
+    `.where()` expressions are evaluated by the cache query engine and are only supported when the routing decision uses the cache path. Use `source="cache"` to opt in explicitly. Combining `.where()` with `source="live"`, or using non-equality typed DSL operators on a live query, now raises `ValueError` immediately at chain time.
 
-#### Cache-only constraint footgun
+#### Cache-only constraint
 
-The cache-only constraint applies equally to `.where()` string expressions and to non-equality typed DSL operators (`>`, `<`, `!=`, `.in_()`, etc.). Both compile to the same where-expression shape and share the same failure mode: a query constructs cleanly and only raises `NotImplementedError` once you start iterating.
+The cache-only constraint applies equally to `.where()` string expressions and to non-equality typed DSL operators (`>`, `<`, `!=`, `.in_()`, etc.). Both compile to the same where-expression shape.
 
 ```python
-# Bad: constructs without error, raises NotImplementedError at the first `for` / list()
+# Bad: raises ValueError immediately at .filter(...)
 query = (
     ds.query(OntapVolume, cluster="prod1", source="live")
     .filter(OntapVolume.F.size > 1_073_741_824)
 )
-for vol in query:   # <-- NotImplementedError raised here
-    ...
 
 # Also bad: string-expression variant of the same mistake
 query = (
     ds.query(OntapVolume, cluster="prod1", source="live")
     .where("size > 1073741824")
 )
-list(query)         # <-- NotImplementedError raised here
 
 # Good: opt into the cache path explicitly
 query = (
@@ -186,9 +183,9 @@ query = (
 )
 ```
 
-The DII backend rejects `.where()` and non-equality DSL expressions **regardless of `source=`** since it has no cache substrate (see [ADR-0015](../decisions/0015-dii-backend-live-only-bare-array-envelope-offsetlimit-pagination.md) §4). Any `.where()` against a DII-backed query raises `NotImplementedError` at iteration.
+On `OntapBackend`, this incompatibility is detected before iteration. Partial-fetch mixes (`source="auto"` plus live-only projected fields) still raise later at execution time because the mixed cache/live routing decision is only known when the query runs.
 
-Early construction-time validation for this asymmetry is tracked in [#618](https://github.com/endavis/pynetappfoundry/issues/618). Until that lands, verify `source=` and `.where()`/DSL-comparison combinations during review.
+The DII backend rejects `.where()` and non-equality DSL expressions **regardless of `source=`** since it has no cache substrate (see [ADR-0015](../decisions/0015-dii-backend-live-only-bare-array-envelope-offsetlimit-pagination.md) §4). Any `.where()` against a DII-backed query now raises `ValueError` at chain time.
 
 ### Field Projection with `.fields()`
 

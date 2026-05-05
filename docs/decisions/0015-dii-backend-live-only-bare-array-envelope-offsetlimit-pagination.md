@@ -14,7 +14,7 @@ Add a DII (Data Infrastructure Insights) backend to the DataSource framework. Di
 
 3. **Offset/limit pagination.** DII uses `offset` + `limit` query parameters for pagination, not ONTAP's `_links.next.href` HAL convention. The DII API client handles pagination at the client layer.
 
-4. **Deferred `where_expressions`.** SQL-like cache filter expressions are not supported since there is no cache. `where_expressions` raises `NotImplementedError`.
+4. **Deferred `where_expressions`.** SQL-like cache filter expressions are not supported since there is no cache. As of issue #618, the public `QueryBuilder` surface rejects `.where()` and non-equality typed DSL operators with `ValueError` at chain time; `DiiBackend.query()` still raises `NotImplementedError` if `where_expressions` is passed directly.
 
 The full DII surface (191 endpoints) is generated via the existing OpenAPI codegen pipeline (ADR-0008), producing 191 model files under `models/dii/` and 191 mapping files under `cache/dii/`. DiiBackend is registered in `_BACKENDS` under the key `"dii"`, consistent with the backend registry pattern from ADR-0013.
 
@@ -28,6 +28,7 @@ The bare-array envelope is a DII-specific quirk that the existing `parse_api_res
 
 - Issue #600: feat: add DII API backend to DataSource
 - Issue #533: feat: DataSource non-ONTAP backends (partially addressed; DII is the first non-ONTAP backend)
+- Issue #618: feat: early validation for where()/typed-DSL + incompatible source mode
 
 ## Related Documentation
 
