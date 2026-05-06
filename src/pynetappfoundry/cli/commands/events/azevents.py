@@ -282,7 +282,7 @@ class ClusterData:
             ):
                 # Detect CVO vs CVO HA
                 nodes = list(Node.get_collection(fields="ha"))
-                if len(nodes) > 1 and nodes[0].to_dict().get("ha", {}).get("enabled"):
+                if len(nodes) > 1 and nodes[0]["ha"]["enabled"]:
                     self.cluster_type = "CVO HA"
                 else:
                     self.cluster_type = "CVO"
