@@ -164,11 +164,11 @@ The `--live` flag is wired through `@with_config`, which constructs `Config(no_c
 
 ---
 
-### 2. QuerySet + Mutation (Query Layer)
+### 2. QuerySet + Query + Mutation (Query Layer)
 
-`pynetappfoundry.query` is a thin, fluent layer over the ONTAP REST API that uses the project's `TypeMapping` metadata to translate model attribute filters into API requests and to parse responses back into Pydantic models. It covers reads (`QuerySet`), writes (`Mutation`), async job polling (`JobTracker`), relationship traversal (`related` / `related_one`), and on-demand realtime field access.
+`pynetappfoundry.query` is a thin, fluent layer over the ONTAP REST API that uses the project's `TypeMapping` metadata to translate model attribute filters into API requests and to parse responses back into Pydantic models. It covers collection reads (`QuerySet`), RPC-style POST reads (`Query`), writes (`Mutation`), async job polling (`JobTracker`), relationship traversal (`related` / `related_one`), and on-demand realtime field access.
 
-Choose `cluster_entry.ontap` for cached field-group reads with a `--live` bypass, and reach for `QuerySet` / `Mutation` whenever you need ad-hoc filtering, projection, or any write operation.
+Choose `cluster_entry.ontap` for cached field-group reads with a `--live` bypass, and reach for `QuerySet`, `Query`, or `Mutation` whenever you need ad-hoc filtering, POST-for-data RPC calls, or any write operation.
 
 See the dedicated [Query Layer](query-layer.md) guide for the full API reference, worked examples, and exception semantics.
 
