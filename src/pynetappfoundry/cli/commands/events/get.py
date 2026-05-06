@@ -149,10 +149,11 @@ def _get_cluster_events(
             password=password,
             verify=False,
         ):
-            query_params: dict[str, Any] = {"max_records": limit, "fields": "*"}
-
-            if severity:
-                query_params["severity"] = severity
+            query_params: dict[str, Any] = {
+                "max_records": limit,
+                "fields": "*",
+                "message.severity": severity if severity else "*",
+            }
 
             if event_names:
                 query_params["message.name"] = ",".join(event_names)
