@@ -275,7 +275,8 @@ class TestClusterDataGatherData:
         )
 
         mock_node = MagicMock()
-        mock_node.to_dict.return_value = {"ha": {"enabled": False}}
+        ha_data = {"ha": {"enabled": False}}
+        mock_node.__getitem__ = MagicMock(side_effect=ha_data.__getitem__)
 
         with patch("netapp_ontap.HostConnection") as mock_conn:
             mock_conn.return_value.__enter__ = MagicMock(return_value=None)
@@ -307,9 +308,11 @@ class TestClusterDataGatherData:
         )
 
         mock_node1 = MagicMock()
-        mock_node1.to_dict.return_value = {"ha": {"enabled": True}}
+        ha_data1 = {"ha": {"enabled": True}}
+        mock_node1.__getitem__ = MagicMock(side_effect=ha_data1.__getitem__)
         mock_node2 = MagicMock()
-        mock_node2.to_dict.return_value = {"ha": {"enabled": True}}
+        ha_data2 = {"ha": {"enabled": True}}
+        mock_node2.__getitem__ = MagicMock(side_effect=ha_data2.__getitem__)
 
         with patch("netapp_ontap.HostConnection") as mock_conn:
             mock_conn.return_value.__enter__ = MagicMock(return_value=None)
