@@ -230,7 +230,7 @@ class TestGetClusterEvents:
         mock_config: MagicMock,
         sample_cluster_details: dict[str, Any],
     ) -> None:
-        """Test that severity filter is passed to API."""
+        """Test that severity filter is passed as message.severity to API."""
         with patch("pynetappfoundry.cli.commands.events.get.HostConnection") as mock_conn:
             mock_conn.return_value.__enter__ = MagicMock(return_value=None)
             mock_conn.return_value.__exit__ = MagicMock(return_value=None)
@@ -248,9 +248,35 @@ class TestGetClusterEvents:
                     limit=50,
                 )
 
-            # Check that severity was passed
+            # Check that severity was passed as message.severity
             call_kwargs = mock_event_class.get_collection.call_args[1]
-            assert call_kwargs["severity"] == "error"
+            assert call_kwargs["message.severity"] == "error"
+
+    def test_default_severity_wildcard_passed_to_api(
+        self,
+        mock_config: MagicMock,
+        sample_cluster_details: dict[str, Any],
+    ) -> None:
+        """Test that message.severity defaults to '*' to include debug events."""
+        with patch("pynetappfoundry.cli.commands.events.get.HostConnection") as mock_conn:
+            mock_conn.return_value.__enter__ = MagicMock(return_value=None)
+            mock_conn.return_value.__exit__ = MagicMock(return_value=None)
+
+            with patch("pynetappfoundry.cli.commands.events.get.EmsEvent") as mock_event_class:
+                mock_event_class.get_collection.return_value = []
+
+                _get_cluster_events(
+                    "cluster1",
+                    sample_cluster_details,
+                    mock_config,
+                    severity=None,
+                    event_names=(),
+                    sort="time",
+                    limit=50,
+                )
+
+            call_kwargs = mock_event_class.get_collection.call_args[1]
+            assert call_kwargs["message.severity"] == "*"
 
     def test_event_names_filter_passed_to_api(
         self,
