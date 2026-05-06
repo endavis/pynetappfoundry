@@ -66,7 +66,9 @@ class Query:
             body,
             query_params,
         )
-        kwargs: dict[str, Any] = {"method": "POST", "body": body}
-        if query_params is not None:
-            kwargs["query_params"] = query_params
-        return self._client.call_endpoint(self._path, **kwargs)
+        return self._client.call_endpoint(
+            self._path,
+            method="POST",
+            body=body,
+            query_params=query_params,
+        )

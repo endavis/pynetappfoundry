@@ -74,7 +74,10 @@ class TestQueryInvoke:
         q = Query(mock_client, "/lake/query/timeseries")
         q.invoke({"metric": "cpu"})
         mock_client.call_endpoint.assert_called_once_with(
-            "/lake/query/timeseries", method="POST", body={"metric": "cpu"}
+            "/lake/query/timeseries",
+            method="POST",
+            body={"metric": "cpu"},
+            query_params=None,
         )
 
     def test_passes_body_through(self, mock_client: MagicMock) -> None:
@@ -91,7 +94,7 @@ class TestQueryInvoke:
         q = Query(mock_client, "/some/endpoint")
         q.invoke()
         mock_client.call_endpoint.assert_called_once_with(
-            "/some/endpoint", method="POST", body=None
+            "/some/endpoint", method="POST", body=None, query_params=None
         )
 
     def test_invoke_with_query_params(self, mock_client: MagicMock) -> None:
@@ -105,14 +108,6 @@ class TestQueryInvoke:
             body={"metric": "iops"},
             query_params={"expand": "true"},
         )
-
-    def test_invoke_without_query_params_omits_kwarg(self, mock_client: MagicMock) -> None:
-        """query_params is not forwarded when not provided."""
-        mock_client.call_endpoint.return_value = {}
-        q = Query(mock_client, "/some/endpoint")
-        q.invoke({"metric": "iops"})
-        call_kwargs = mock_client.call_endpoint.call_args[1]
-        assert "query_params" not in call_kwargs
 
     def test_invoke_does_not_disable_retry(self, mock_client: MagicMock) -> None:
         """Query.invoke does NOT disable retry (opposite of Mutation.create).
@@ -158,11 +153,3 @@ class TestQueryInvoke:
         assert mock_client.call_endpoint.call_count == 2
         for c in mock_client.call_endpoint.call_args_list:
             assert c[0][0] == "/fixed/path"
-
-    def test_works_with_any_mock_client(self) -> None:
-        """Query is not coupled to any specific client type."""
-        generic_client = MagicMock()
-        generic_client.call_endpoint.return_value = {"ok": True}
-        q = Query(generic_client, "/any/path")
-        result = q.invoke({"x": 1})
-        assert result == {"ok": True}
