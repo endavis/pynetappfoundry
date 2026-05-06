@@ -1,6 +1,6 @@
 ---
 title: Query Layer
-description: Guide to the REST query layer (QuerySet, Mutation, JobTracker, related, realtime)
+description: Guide to the REST query layer (QuerySet, Query, Mutation, JobTracker, related, realtime)
 audience:
   - users
   - contributors
@@ -27,9 +27,10 @@ tags:
 
 `pynetappfoundry.query` is a thin, fluent layer on top of the ONTAP REST API client. It uses the same declarative `TypeMapping` metadata that drives the cache (see [ADR-0004](../decisions/0004-declarative-field-mapping-framework.md)) to translate model attribute names into API field paths and to parse responses back into Pydantic model instances.
 
-The layer ships five public surfaces:
+The layer ships six public surfaces:
 
-- `QuerySet` — fluent, lazy reads
+- `QuerySet` — fluent, lazy reads for collection-style GET endpoints
+- `Query` — RPC-style POST reads for endpoints that accept a request body and return data
 - `Mutation` — POST / PATCH / DELETE writes
 - `JobTracker` (and `JobError`) — polling for async ONTAP jobs
 - `related` / `related_one` — relationship-traversal sugar over `QuerySet`
@@ -40,6 +41,7 @@ The layer ships five public surfaces:
 | Use case | Use this |
 |----------|----------|
 | Type-safe ad-hoc reads with filters / projection / ordering | `QuerySet` |
+| Call a POST endpoint that returns data instead of mutating state | `Query` |
 | Create / update / delete a resource | `Mutation` |
 | Wait for an async ONTAP job | `JobTracker` (or `poll=True` shortcut on `Mutation`) |
 | Express "fetch related X for this Y" intent | `related` / `related_one` |
@@ -157,6 +159,19 @@ total = QuerySet(OntapVolume, client).filter(state="online").count()
     For complex predicates (`autosize.mode != 'grow_shrink'`, ranges, NOT, OR), the cache SQL query engine — used by `nf cache check` and `nf cache compliance` — is usually a better fit because it operates on the local SQLite cache without round-tripping to the cluster. `QuerySet` is the right tool when you want live data, single-cluster access, and the simple equality / wildcard semantics that ONTAP REST exposes natively.
 
     `nf cache check` also supports a `--live` flag that bypasses the cache and fetches data directly from each cluster via `DataSource(source="live")`. Note that `--live` and `--where` are mutually exclusive — SQL-like filter expressions are only supported on cached data.
+
+## Query RPC Reads
+
+`Query` is the lightweight companion to `Mutation` for endpoints that use POST as a query transport rather than as a write. It binds a client plus a fixed path, then forwards a JSON body to that path and returns the raw response payload.
+
+```python
+from pynetappfoundry.query import Query
+
+q = Query(client, "/lake/query/timeseries")
+results = q.invoke({"metric": "cpu", "interval": "1h"})
+```
+
+Use `Query` when the remote API expects a structured POST body for a read-style operation (for example, RPC-style analytics endpoints). Unlike `QuerySet`, it does not translate model fields or parse Pydantic models; unlike `Mutation`, it does not imply resource creation or lifecycle changes.
 
 ## Mutation Writes
 
@@ -375,6 +390,7 @@ The query layer and `ClusterEntry.ontap` are complementary, not competing:
 
 - Use **`cluster_entry.ontap`** for high-level reads of cached cluster metadata field groups (licenses, nodes, storage, network, ...). It serves sub-millisecond SQLite reads when the cache is populated and falls back to a live `DataSource` fetch on a miss. `--live` (`Config(no_cache=True)`) bypasses the cache without changing call sites.
 - Use **`QuerySet`** for ad-hoc reads that don't fit a pre-defined field group: arbitrary filters, custom projections, ordering / limit, or models the cache does not collect.
+- Use **`Query`** for RPC-style POST endpoints that return data rather than mutate resources.
 - Use **`Mutation`** for any write. There is no write surface on `ClusterEntry.ontap`.
 - Use **`fetch_realtime`** (and friends) for fields the cache deliberately excludes.
 
