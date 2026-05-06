@@ -126,6 +126,8 @@ nf events [OPTIONS] COMMAND [ARGS]...
 | `--sort [time|-time]` | Sort order (default: `time` ascending; `-time` for descending) |
 | `-l, --limit INTEGER` | Maximum number of events to retrieve (default: 50) |
 
+`nf events get` shows `Time`, `Node`, `Severity`, `Name`, and `Message` in the console table. CSV output includes `cluster`, `node`, `time`, `name`, `severity`, and `message` columns.
+
 **`events save-azure` options:**
 
 | Option | Description |
