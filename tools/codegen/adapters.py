@@ -3,9 +3,6 @@
 Parses OpenAPI 3.0 specs (all API specs are pre-converted to OpenAPI 3.0
 by the ``doit convert_specs`` task) and produces normalized
 :class:`ParsedEndpoint` and :class:`ParsedField` dataclasses.
-
-Uses ``datamodel-code-generator`` for ``$ref`` resolution and type mapping,
-then extracts the resolved field structure for nested model generation.
 """
 
 from __future__ import annotations
@@ -14,8 +11,6 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
-
-from datamodel_code_generator.parser.openapi import OpenAPIParser
 
 from tools.codegen.expensive_fields import extract_expensive_patterns, is_field_expensive
 
@@ -452,10 +447,6 @@ def parse_openapi_spec(
     with open(spec_path, encoding="utf-8") as f:
         spec = json.load(f)
 
-    # Run datamodel-code-generator parser for $ref resolution and type cross-reference.
-    # The resolved models are available for future type validation enhancements.
-    _parse_with_datamodel_codegen(spec_path)
-
     endpoints: list[ParsedEndpoint] = []
     paths = spec.get("paths", {})
 
@@ -573,46 +564,3 @@ def detect_shared_schemas(endpoints: list[ParsedEndpoint]) -> set[str]:
             continue
         counts[ep.schema_name] = counts.get(ep.schema_name, 0) + 1
     return {name for name, count in counts.items() if count > 1}
-
-
-def _parse_with_datamodel_codegen(spec_path: Path) -> dict[str, Any]:
-    """Use datamodel-code-generator to parse and resolve schemas.
-
-    This leverages the library's ``$ref`` resolution and type mapping
-    capabilities.  The results are used to cross-reference type information
-    when our own flattening logic needs confirmation.
-
-    Args:
-        spec_path: Path to the OpenAPI 3.0 JSON spec.
-
-    Returns:
-        Dict mapping model name to parsed model info.
-    """
-    try:
-        parser = OpenAPIParser(
-            source=spec_path,
-        )
-        parser.parse()
-
-        models: dict[str, Any] = {}
-        for result in parser.results:
-            name = getattr(result, "name", None)
-            if name and hasattr(result, "fields"):
-                field_info = {}
-                for f in result.fields:
-                    dt = f.data_type
-                    ref_name = None
-                    if hasattr(dt, "reference") and dt.reference:
-                        ref_name = dt.reference.name
-                    prim_type = getattr(dt, "type", None)
-                    field_info[f.name] = {
-                        "type_hint": getattr(f, "type_hint", ""),
-                        "required": f.required,
-                        "reference": ref_name,
-                        "primitive_type": str(prim_type) if prim_type else None,
-                    }
-                models[name] = {"fields": field_info}
-        return models
-    except Exception:
-        # Non-fatal: we can still generate from our own parsing
-        return {}
