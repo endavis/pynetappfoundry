@@ -8,6 +8,10 @@ Breaking change: ``--days`` is replaced by the required ``--date YYYY-MM-DD``
 option. The SQLite database filename now includes the date (e.g.
 ``<cluster>_2025-04-13_metrics.db``) and each table stores data for one
 SVM/volume pair (``{vserver_name}-{volume_name}``).
+
+The aggregation interval and total window length are configurable via
+``--interval`` (default ``60s``) and ``--window-days`` (default ``3``,
+centered on ``--date``).
 """
 
 from __future__ import annotations
@@ -31,7 +35,7 @@ from pynetappfoundry.clients.dii.api import DIIAPIClient
 from pynetappfoundry.clients.ontap.api import ONTAPAPIClient
 from pynetappfoundry.core.config import Config
 from pynetappfoundry.core.models import ClusterConfig
-from pynetappfoundry.db.metrics import MetricDB
+from pynetappfoundry.db.metrics import _TABLE_NAME_PATTERN, MetricDB
 from pynetappfoundry.models.ontap.storage.volumes.model import OntapVolume
 from pynetappfoundry.query import Query, QuerySet
 
@@ -47,6 +51,9 @@ _METRICS: list[str] = [
     "write_latency",
 ]
 
+_DEFAULT_INTERVAL = "60s"
+_DEFAULT_WINDOW_DAYS = 3
+
 
 @click.command("dump-dii")
 @click.option(
@@ -61,8 +68,25 @@ _METRICS: list[str] = [
     "date",
     required=True,
     help=(
-        "Date in YYYY-MM-DD format.  Retrieves a 3-day window: "
-        "(date - 1 day) 00:00:00 UTC → (date + 2 days) 00:00:00 UTC."
+        "Anchor date in YYYY-MM-DD format. The retrieved window is centered "
+        "on this date (see --window-days)."
+    ),
+)
+@click.option(
+    "--interval",
+    default=_DEFAULT_INTERVAL,
+    show_default=True,
+    help="Aggregation interval passed to DII (e.g. '60s', '5m', '1h').",
+)
+@click.option(
+    "--window-days",
+    "window_days",
+    type=int,
+    default=_DEFAULT_WINDOW_DAYS,
+    show_default=True,
+    help=(
+        "Total number of UTC days in the query window, centered on --date. "
+        "Default 3 yields (date - 1 day) through (date + 2 days)."
     ),
 )
 @with_config("Dump DII metrics failed")
@@ -70,12 +94,14 @@ def dump_dii(
     config: Config,
     clusters: dict[str, dict[str, Any]],
     date: str,
+    interval: str,
+    window_days: int,
 ) -> None:
     """Dump per-volume metrics from Data Infrastructure Insights.
 
-    Issues one POST per metric per volume to the DII
-    ``/lake/query/timeseries`` endpoint with a 60-second aggregation
-    interval and stores the results in a per-cluster SQLite database.
+    Issues one POST per metric per volume (6 total per volume) to the DII
+    ``/lake/query/timeseries`` endpoint and stores the results in a
+    per-cluster SQLite database.
     """
     try:
         dii_client = DIIAPIClient(config)
@@ -83,35 +109,14 @@ def dump_dii(
         print_exception(f"Could not initialise DII client: {e}", e)
         return
 
-    from_ms, to_ms = _compute_window(date)
+    try:
+        from_ms, to_ms = _compute_window(date, window_days)
+    except ValueError as e:
+        print_error(f"Invalid window: {e}")
+        return
 
     for name, details in clusters.items():
-        print_info(f"Getting metrics for {name}...")
-        try:
-            cluster_config = ClusterConfig(**details)
-            ontap_client = ONTAPAPIClient(cluster=cluster_config, config=config)
-
-            volumes: list[OntapVolume] = (
-                QuerySet(OntapVolume, ontap_client, config=config).filter(is_svm_root=False).all()
-            )
-
-            if not volumes:
-                print_warning(f"No volumes found for {name}")
-                continue
-
-            db = MetricDB(config, db_name=f"{name}_{date}_metrics.db")
-            dii_query = Query(dii_client, "/lake/query/timeseries")
-
-            for volume in volumes:
-                vol_name = volume.name
-                svm_name = volume.svm.name
-                _dump_volume(name, vol_name, svm_name, dii_query, db, from_ms, to_ms)
-
-            print_debug(f"Metrics saved for {name}")
-
-        except Exception as e:
-            print_error(f"Could not dump metrics for {name}: {e}")
-            logger.exception("Exception for cluster %s", name)
+        _dump_cluster(config, name, details, dii_client, date, from_ms, to_ms, interval)
 
     print_success("Metrics saved to database")
 
@@ -121,26 +126,44 @@ def dump_dii(
 # ---------------------------------------------------------------------------
 
 
-def _compute_window(date_str: str) -> tuple[int, int]:
-    """Compute epoch-millisecond boundaries for a 3-day window around *date_str*.
+def _compute_window(date_str: str, window_days: int = _DEFAULT_WINDOW_DAYS) -> tuple[int, int]:
+    """Compute epoch-millisecond boundaries for a window centered on *date_str*.
 
-    The window starts at ``(date - 1 day) 00:00:00 UTC`` and ends at
-    ``(date + 2 days) 00:00:00 UTC``.
+    The window length is *window_days* UTC days. The anchor date sits as
+    close to the middle of the window as possible; for even *window_days*
+    the window leans forward by one day.
+
+    * ``half = (window_days - 1) // 2``
+    * ``start = date - half days`` (00:00:00 UTC)
+    * ``end   = date + (window_days - half) days`` (00:00:00 UTC)
+
+    For ``window_days=3`` (default) this yields ``date - 1 day`` to
+    ``date + 2 days`` — three full UTC days centered on *date*.
 
     Args:
-        date_str: Date in ``YYYY-MM-DD`` format.
+        date_str: Anchor date in ``YYYY-MM-DD`` format.
+        window_days: Total number of UTC days in the window. Must be ≥ 1.
 
     Returns:
         ``(from_ms, to_ms)`` as integer epoch milliseconds.
+
+    Raises:
+        ValueError: If *window_days* is less than 1.
 
     Example::
 
         >>> _compute_window("2025-04-13")
         (1744416000000, 1744675200000)
+        >>> _compute_window("2025-04-13", window_days=1)
+        (1744502400000, 1744588800000)
     """
+    if window_days < 1:
+        raise ValueError(f"window_days must be ≥ 1, got {window_days}")
     date = datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=UTC)
-    from_dt = date - timedelta(days=1)
-    to_dt = date + timedelta(days=2)
+    half = (window_days - 1) // 2
+    forward = window_days - half
+    from_dt = date - timedelta(days=half)
+    to_dt = date + timedelta(days=forward)
     from_ms = int(from_dt.timestamp() * 1000)
     to_ms = int(to_dt.timestamp() * 1000)
     return from_ms, to_ms
@@ -152,11 +175,16 @@ def _build_body(
     vol: str,
     from_ms: int,
     to_ms: int,
+    interval: str = _DEFAULT_INTERVAL,
 ) -> dict[str, Any]:
     """Build the DII ``/lake/query/timeseries`` POST request body.
 
     One body is constructed per metric; the caller iterates over
-    :data:`_METRICS` and calls this function for each one.
+    :data:`_METRICS` and calls this function for each one. The body
+    contains only the fields required by the DII OpenAPI schema —
+    optional fields (``maxNumberOfDataPoints``, ``detectAnomalies``,
+    ``interpolationType``) are omitted to keep the request minimal and
+    let the server apply its defaults.
 
     Args:
         metric: Metric name, e.g. ``"read_ops"``.
@@ -164,6 +192,7 @@ def _build_body(
         vol: Volume name.
         from_ms: Start of window in epoch milliseconds.
         to_ms: End of window in epoch milliseconds.
+        interval: Aggregation interval, e.g. ``"60s"``.
 
     Returns:
         Request body dict suitable for ``Query.invoke(body=...)``.
@@ -175,10 +204,7 @@ def _build_body(
         "filter": f'vserver_name = "{svm}" AND volume_name = "{vol}"',
         "fromTimeMs": from_ms,
         "toTimeMs": to_ms,
-        "timeAggregationInterval": "60s",
-        "maxNumberOfDataPoints": (to_ms - from_ms) // 60_000,
-        "detectAnomalies": False,
-        "interpolationType": "NONE",
+        "timeAggregationInterval": interval,
     }
 
 
@@ -267,12 +293,18 @@ def _dump_volume(
     db: MetricDB,
     from_ms: int,
     to_ms: int,
+    interval: str = _DEFAULT_INTERVAL,
 ) -> None:
     """Fetch and store metrics for a single volume.
 
     Issues one ``Query.invoke()`` POST per metric (6 total), merges the
     responses into per-timestamp rows keyed by ``{svm_name}-{vol_name}``,
     validates completeness, and upserts all rows into the ``MetricDB``.
+
+    The ``{svm_name}-{vol_name}`` table name is validated against
+    :data:`pynetappfoundry.db.metrics._TABLE_NAME_PATTERN` *before* any
+    POSTs are issued; volumes whose names produce an invalid table name
+    are skipped with a logged error so the 6 wasted requests are avoided.
 
     Per-volume exceptions are caught and logged so that a failure for one
     volume does not prevent sibling volumes from being processed.
@@ -287,12 +319,25 @@ def _dump_volume(
             this cluster+date.
         from_ms: Start of window in epoch milliseconds.
         to_ms: End of window in epoch milliseconds.
+        interval: Aggregation interval forwarded to :func:`_build_body`.
     """
+    table_name = f"{svm_name}-{vol_name}"
+    if not _TABLE_NAME_PATTERN.match(table_name):
+        print_error(f"Skipping {cluster}:{svm_name}:{vol_name} — invalid table name {table_name!r}")
+        logger.warning(
+            "Skipping invalid table name %r for %s:%s:%s",
+            table_name,
+            cluster,
+            svm_name,
+            vol_name,
+        )
+        return
+
     logger.info("  Gathering data for %s:%s:%s", cluster, svm_name, vol_name)
     try:
         current_metrics: dict[int, dict[str, Any]] = {}
         for metric in _METRICS:
-            body = _build_body(metric, svm_name, vol_name, from_ms, to_ms)
+            body = _build_body(metric, svm_name, vol_name, from_ms, to_ms, interval)
             response = dii_query.invoke(body=body)
             parsed = _parse_timeseries(response, metric)
             for ts, metric_dict in parsed.items():
@@ -305,10 +350,71 @@ def _dump_volume(
             logger.info("No data for %s:%s:%s", cluster, svm_name, vol_name)
             return
 
-        table_name = f"{svm_name}-{vol_name}"
         db.create_table(table_name)
         db.upsert_many(table_name, rows)
 
     except Exception as e:
         print_error(f"Could not retrieve data for {cluster}:{svm_name}:{vol_name}: {e}")
         logger.exception("Exception for volume %s:%s:%s", cluster, svm_name, vol_name)
+
+
+def _dump_cluster(
+    config: Config,
+    name: str,
+    details: dict[str, Any],
+    dii_client: DIIAPIClient,
+    date_str: str,
+    from_ms: int,
+    to_ms: int,
+    interval: str,
+) -> None:
+    """Dump per-volume metrics for a single cluster.
+
+    Builds an ONTAP client for *name*, lists non-root volumes, opens the
+    per-cluster ``MetricDB``, and dispatches each volume to
+    :func:`_dump_volume`. Per-cluster exceptions are caught so a failure
+    for one cluster does not abort the run.
+
+    Args:
+        config: Top-level :class:`Config` instance.
+        name: Cluster name (key in the clusters dict).
+        details: Cluster details dict (kwargs for :class:`ClusterConfig`).
+        dii_client: Shared :class:`DIIAPIClient` for all clusters.
+        date_str: Anchor date string used in the DB filename.
+        from_ms: Start of window in epoch milliseconds.
+        to_ms: End of window in epoch milliseconds.
+        interval: Aggregation interval forwarded to :func:`_dump_volume`.
+    """
+    print_info(f"Getting metrics for {name}...")
+    try:
+        cluster_config = ClusterConfig(**details)
+        ontap_client = ONTAPAPIClient(cluster=cluster_config, config=config)
+
+        volumes: list[OntapVolume] = (
+            QuerySet(OntapVolume, ontap_client, config=config).filter(is_svm_root=False).all()
+        )
+
+        if not volumes:
+            print_warning(f"No volumes found for {name}")
+            return
+
+        db = MetricDB(config, db_name=f"{name}_{date_str}_metrics.db")
+        dii_query = Query(dii_client, "/lake/query/timeseries")
+
+        for volume in volumes:
+            _dump_volume(
+                name,
+                volume.name,
+                volume.svm.name,
+                dii_query,
+                db,
+                from_ms,
+                to_ms,
+                interval,
+            )
+
+        print_debug(f"Metrics saved for {name}")
+
+    except Exception as e:
+        print_error(f"Could not dump metrics for {name}: {e}")
+        logger.exception("Exception for cluster %s", name)

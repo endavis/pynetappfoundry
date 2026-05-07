@@ -153,7 +153,9 @@ nf metrics [OPTIONS] COMMAND [ARGS]...
 | Option | Description |
 |--------|-------------|
 | `-f, --filter TEXT` | JSON cluster filter |
-| `-d, --date TEXT` | Required date in `YYYY-MM-DD` format; queries `(date - 1 day)` through `(date + 2 days)` in UTC |
+| `-d, --date TEXT` | **Required.** Anchor date in `YYYY-MM-DD` format. The query window is centered on this date in UTC (see `--window-days`) |
+| `--interval TEXT` | Aggregation interval forwarded to DII (default: `60s`; accepts e.g. `5m`, `1h`) |
+| `--window-days INTEGER` | Total UTC days in the query window centered on `--date` (default: `3`, yielding `(date - 1 day)` through `(date + 2 days)`) |
 
 `metrics dump-dii` writes one SQLite database per cluster per date (`{cluster}_{date}_metrics.db`) and stores each SVM/volume pair in its own table (`{vserver_name}-{volume_name}`).
 

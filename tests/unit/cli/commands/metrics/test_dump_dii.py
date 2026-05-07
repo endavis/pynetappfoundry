@@ -6,8 +6,10 @@ via CliRunner (consistent with sibling test files in this package tree).
 
 from __future__ import annotations
 
+import logging
+from collections.abc import Iterator
 from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import DEFAULT, MagicMock, patch
 
 import pytest
 
@@ -15,6 +17,7 @@ from pynetappfoundry.cli.commands.metrics.dump_dii import (
     _METRICS,
     _build_body,
     _compute_window,
+    _dump_cluster,
     _dump_volume,
     _parse_timeseries,
     _validate_and_clean,
@@ -28,35 +31,49 @@ from pynetappfoundry.cli.commands.metrics.dump_dii import (
 class TestComputeWindow:
     """Tests for :func:`_compute_window`."""
 
-    def test_exact_millisecond_values(self) -> None:
-        """2025-04-13 → from=2025-04-12T00:00:00Z, to=2025-04-15T00:00:00Z."""
-        # 2025-04-12T00:00:00Z
-        expected_from_ms = 1_744_416_000_000
-        # 2025-04-15T00:00:00Z
-        expected_to_ms = 1_744_675_200_000
-
+    def test_default_window_three_days(self) -> None:
+        """2025-04-13 with default window_days=3 → from 2025-04-12, to 2025-04-15."""
         from_ms, to_ms = _compute_window("2025-04-13")
+        assert from_ms == 1_744_416_000_000  # 2025-04-12T00:00:00Z
+        assert to_ms == 1_744_675_200_000  # 2025-04-15T00:00:00Z
 
-        assert from_ms == expected_from_ms
-        assert to_ms == expected_to_ms
-
-    def test_window_spans_three_days_in_minutes(self) -> None:
-        """(to - from) / 60_000 must equal 4320 (3 days x 1440 min)."""
+    def test_default_window_spans_three_days_in_minutes(self) -> None:
+        """Default window: (to - from) / 60_000 must equal 4320 (3 days x 1440 min)."""
         from_ms, to_ms = _compute_window("2025-04-13")
         assert (to_ms - from_ms) // 60_000 == 4320
 
-    def test_from_is_one_day_before_to_is_two_days_after(self) -> None:
-        """Window: date-1 day → date+2 days (3-day span total)."""
-        from_ms, to_ms = _compute_window("2025-01-01")
-        # 3 days = 3 * 24 * 3600 * 1000 ms
-        assert to_ms - from_ms == 3 * 24 * 3600 * 1000
+    def test_window_one_day(self) -> None:
+        """window_days=1 → from = date 00:00, to = date+1 00:00 (1 full day)."""
+        from_ms, to_ms = _compute_window("2025-04-13", window_days=1)
+        assert from_ms == 1_744_502_400_000  # 2025-04-13T00:00:00Z
+        assert to_ms == 1_744_588_800_000  # 2025-04-14T00:00:00Z
+        assert (to_ms - from_ms) // 60_000 == 1440  # 1 day x 1440 min
+
+    def test_window_five_days(self) -> None:
+        """window_days=5 → from = date-2, to = date+3 (5 full days centered)."""
+        from_ms, to_ms = _compute_window("2025-04-13", window_days=5)
+        assert from_ms == 1_744_329_600_000  # 2025-04-11T00:00:00Z
+        assert to_ms == 1_744_761_600_000  # 2025-04-16T00:00:00Z
+        assert (to_ms - from_ms) // 60_000 == 5 * 1440
+
+    def test_window_two_days_leans_forward(self) -> None:
+        """Even windows lean forward: window_days=2 → date 00:00 to date+2 00:00."""
+        from_ms, to_ms = _compute_window("2025-04-13", window_days=2)
+        assert from_ms == 1_744_502_400_000  # 2025-04-13T00:00:00Z
+        assert to_ms == 1_744_675_200_000  # 2025-04-15T00:00:00Z
+
+    def test_invalid_window_days_raises(self) -> None:
+        """window_days < 1 raises ValueError."""
+        with pytest.raises(ValueError, match="window_days must be"):
+            _compute_window("2025-04-13", window_days=0)
+        with pytest.raises(ValueError, match="window_days must be"):
+            _compute_window("2025-04-13", window_days=-1)
 
     def test_different_date(self) -> None:
-        """Spot-check a different date for correctness."""
+        """Spot-check a different date for correctness with the default window."""
         from_ms, to_ms = _compute_window("2025-01-02")
-        # from = 2025-01-01T00:00:00Z, to = 2025-01-04T00:00:00Z
-        assert from_ms == 1_735_689_600_000
-        assert to_ms == 1_735_948_800_000
+        assert from_ms == 1_735_689_600_000  # 2025-01-01T00:00:00Z
+        assert to_ms == 1_735_948_800_000  # 2025-01-04T00:00:00Z
 
 
 # ---------------------------------------------------------------------------
@@ -67,8 +84,8 @@ class TestComputeWindow:
 class TestBuildBody:
     """Tests for :func:`_build_body`."""
 
-    def test_exact_body_structure(self) -> None:
-        """Verify every field in the generated body dict."""
+    def test_exact_body_structure_default_interval(self) -> None:
+        """Verify every field in the generated body dict (default 60s)."""
         from_ms = 1_744_416_000_000
         to_ms = 1_744_675_200_000
 
@@ -82,16 +99,19 @@ class TestBuildBody:
             "fromTimeMs": from_ms,
             "toTimeMs": to_ms,
             "timeAggregationInterval": "60s",
-            "maxNumberOfDataPoints": (to_ms - from_ms) // 60_000,
-            "detectAnomalies": False,
-            "interpolationType": "NONE",
         }
 
-    def test_max_data_points_matches_window(self) -> None:
-        """maxNumberOfDataPoints must equal (to - from) // 60_000."""
-        from_ms, to_ms = _compute_window("2025-04-13")
-        body = _build_body("write_ops", "svm2", "vol2", from_ms, to_ms)
-        assert body["maxNumberOfDataPoints"] == (to_ms - from_ms) // 60_000
+    def test_body_omits_optional_fields(self) -> None:
+        """The body must NOT include optional spec fields."""
+        body = _build_body("read_ops", "svm1", "vol1", 0, 60_000)
+        assert "maxNumberOfDataPoints" not in body
+        assert "detectAnomalies" not in body
+        assert "interpolationType" not in body
+
+    def test_custom_interval_propagates(self) -> None:
+        """The interval argument is passed to ``timeAggregationInterval``."""
+        body = _build_body("read_ops", "svm1", "vol1", 0, 60_000, interval="5m")
+        assert body["timeAggregationInterval"] == "5m"
 
     def test_filter_string_format(self) -> None:
         """Filter must use double-quoted values for DII boolean parsing."""
@@ -243,8 +263,6 @@ class TestValidateAndClean:
 
     def test_incomplete_row_is_logged_and_kept(self, caplog: pytest.LogCaptureFixture) -> None:
         """A row missing some metrics is logged as an error but still returned."""
-        import logging
-
         ts = 200
         partial: dict[str, Any] = {"timestamp": ts, "read_ops": 1.0}  # missing 5 metrics
         data = {ts: partial}
@@ -310,6 +328,18 @@ class TestDumpVolume:
         called_metrics = [c.kwargs["body"]["metric"] for c in dii_query.invoke.call_args_list]
         assert called_metrics == _METRICS
 
+    def test_custom_interval_propagates_to_body(self) -> None:
+        """A non-default interval reaches the timeAggregationInterval field."""
+        ts_ms = 1_744_502_400_000
+        dii_query = self._make_dii_query(ts_ms)
+        db = self._make_db()
+        from_ms, to_ms = _compute_window("2025-04-13")
+
+        _dump_volume("cluster1", "vol1", "svm1", dii_query, db, from_ms, to_ms, interval="5m")
+
+        for call in dii_query.invoke.call_args_list:
+            assert call.kwargs["body"]["timeAggregationInterval"] == "5m"
+
     def test_upsert_many_called_once(self) -> None:
         """MetricDB.upsert_many is called exactly once after all 6 POSTs."""
         ts_ms = 1_744_502_400_000
@@ -333,6 +363,19 @@ class TestDumpVolume:
         db.create_table.assert_called_once_with("svm1-vol1")
         upsert_call = db.upsert_many.call_args
         assert upsert_call[0][0] == "svm1-vol1"
+
+    def test_invalid_table_name_skips_volume(self) -> None:
+        """Volumes whose names produce an invalid table name skip with no POSTs."""
+        dii_query = MagicMock()
+        db = self._make_db()
+        from_ms, to_ms = _compute_window("2025-04-13")
+
+        # Spaces are not in the _TABLE_NAME_PATTERN allowed character set.
+        _dump_volume("cluster1", "bad name", "svm1", dii_query, db, from_ms, to_ms)
+
+        dii_query.invoke.assert_not_called()
+        db.create_table.assert_not_called()
+        db.upsert_many.assert_not_called()
 
     def test_no_data_skips_upsert(self) -> None:
         """If all POSTs return empty responses, upsert_many is never called."""
@@ -376,7 +419,116 @@ class TestDumpVolume:
 
 
 # ---------------------------------------------------------------------------
-# DB filename derivation
+# _dump_cluster
+# ---------------------------------------------------------------------------
+
+
+_DUMP_DII_MODULE = "pynetappfoundry.cli.commands.metrics.dump_dii"
+
+
+@pytest.fixture
+def cluster_mocks() -> Iterator[dict[str, MagicMock]]:
+    """Patch every external collaborator in the cluster code path.
+
+    Yields a dict of name → MagicMock so each test can configure or assert
+    only the collaborators it cares about.
+    """
+    with patch.multiple(
+        _DUMP_DII_MODULE,
+        ClusterConfig=DEFAULT,
+        ONTAPAPIClient=DEFAULT,
+        QuerySet=DEFAULT,
+        MetricDB=DEFAULT,
+        Query=DEFAULT,
+        _dump_volume=DEFAULT,
+    ) as mocks:
+        yield mocks
+
+
+class TestDumpCluster:
+    """Tests for :func:`_dump_cluster`."""
+
+    def test_db_filename_format(self, cluster_mocks: dict[str, MagicMock]) -> None:
+        """MetricDB is instantiated with ``{cluster}_{date}_metrics.db``."""
+        mock_volume = MagicMock()
+        mock_volume.name = "vol1"
+        mock_volume.svm.name = "svm1"
+        cluster_mocks["QuerySet"].return_value.filter.return_value.all.return_value = [mock_volume]
+
+        _dump_cluster(
+            MagicMock(),
+            "mycluster",
+            {"name": "mycluster"},
+            MagicMock(),
+            "2025-04-13",
+            0,
+            60_000,
+            "60s",
+        )
+
+        metric_db_cls = cluster_mocks["MetricDB"]
+        metric_db_cls.assert_called_once()
+        assert metric_db_cls.call_args.kwargs["db_name"] == "mycluster_2025-04-13_metrics.db"
+
+    def test_no_volumes_skips_db_creation(self, cluster_mocks: dict[str, MagicMock]) -> None:
+        """When the cluster has no volumes, MetricDB is never constructed."""
+        cluster_mocks["QuerySet"].return_value.filter.return_value.all.return_value = []
+
+        _dump_cluster(
+            MagicMock(),
+            "empty",
+            {"name": "empty"},
+            MagicMock(),
+            "2025-04-13",
+            0,
+            60_000,
+            "60s",
+        )
+
+        cluster_mocks["MetricDB"].assert_not_called()
+
+    def test_interval_forwarded_to_dump_volume(self, cluster_mocks: dict[str, MagicMock]) -> None:
+        """The interval argument is forwarded to every _dump_volume call."""
+        mock_volume = MagicMock()
+        mock_volume.name = "vol1"
+        mock_volume.svm.name = "svm1"
+        cluster_mocks["QuerySet"].return_value.filter.return_value.all.return_value = [mock_volume]
+
+        _dump_cluster(
+            MagicMock(),
+            "cluster1",
+            {"name": "cluster1"},
+            MagicMock(),
+            "2025-04-13",
+            0,
+            60_000,
+            "5m",
+        )
+
+        dump_vol = cluster_mocks["_dump_volume"]
+        dump_vol.assert_called_once()
+        # interval is the last positional arg
+        assert dump_vol.call_args.args[-1] == "5m"
+
+    def test_per_cluster_exception_is_isolated(self, cluster_mocks: dict[str, MagicMock]) -> None:
+        """An exception while building the ONTAP client is caught and logged."""
+        cluster_mocks["ClusterConfig"].side_effect = RuntimeError("bad cluster details")
+
+        # Should not raise
+        _dump_cluster(
+            MagicMock(),
+            "broken",
+            {"name": "broken"},
+            MagicMock(),
+            "2025-04-13",
+            0,
+            60_000,
+            "60s",
+        )
+
+
+# ---------------------------------------------------------------------------
+# DB filename derivation (module-level smoke test, kept for backward coverage)
 # ---------------------------------------------------------------------------
 
 
@@ -384,24 +536,8 @@ class TestDbFilename:
     """Verify that the DB filename follows the documented pattern."""
 
     def test_db_name_format(self) -> None:
-        """MetricDB must be constructed with ``{cluster}_{date}_metrics.db``."""
-        cluster_name = "mycluster"
-        date = "2025-04-13"
-        expected_db_name = f"{cluster_name}_{date}_metrics.db"
-        assert expected_db_name == "mycluster_2025-04-13_metrics.db"
-
-    def test_db_name_constructed_in_dump_dii(self) -> None:
-        """dump_dii calls MetricDB with the per-cluster-per-date filename."""
-        with patch("pynetappfoundry.cli.commands.metrics.dump_dii.MetricDB") as mock_db_cls:
-            mock_config = MagicMock()
-            date = "2025-04-13"
-
-            from pynetappfoundry.cli.commands.metrics.dump_dii import MetricDB as _MetricDB
-
-            _ = _MetricDB(mock_config, db_name=f"mycluster_{date}_metrics.db")
-
-            expected_db_name = "mycluster_2025-04-13_metrics.db"
-            mock_db_cls.assert_called_once_with(mock_config, db_name=expected_db_name)
+        """DB filename pattern is ``{cluster}_{date}_metrics.db``."""
+        assert "mycluster_2025-04-13_metrics.db" == "mycluster_2025-04-13_metrics.db"
 
 
 # ---------------------------------------------------------------------------

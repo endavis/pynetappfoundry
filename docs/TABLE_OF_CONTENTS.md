@@ -29,7 +29,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [ONTAP Access Patterns](usage/ontap-access-patterns.md) - Guide to choosing between the three ONTAP access methods
 - [Production Deployment Guide](deployment/production.md) - Comprehensive guide for deploying Python applications to production
 - [pynetappfoundry Documentation](index.md) - ONTAP administration library and CLI tools
-- [Query Layer](usage/query-layer.md) - Guide to the REST query layer (QuerySet, Mutation, JobTracker, related, realtime)
+- [Query Layer](usage/query-layer.md) - Guide to the REST query layer (QuerySet, Query, Mutation, JobTracker, related, realtime)
 - [Template Management](template/manage.md) - Unified interface for creating projects, checking updates, and syncing
 - [Template Tools Reference](template/tools-reference.md) - Complete reference for all template tools in tools/pyproject_template/
 - [Using This Template](template/index.md) - Overview of using pyproject-template for your Python projects
@@ -62,7 +62,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [Production Deployment Guide](deployment/production.md) - Comprehensive guide for deploying Python applications to production
 - [pynetappfoundry Documentation](index.md) - ONTAP administration library and CLI tools
 - [Python Project Coding Standards](development/coding-standards.md) - Guidelines for exceptions, typing, structure, testing, and documentation
-- [Query Layer](usage/query-layer.md) - Guide to the REST query layer (QuerySet, Mutation, JobTracker, related, realtime)
+- [Query Layer](usage/query-layer.md) - Guide to the REST query layer (QuerySet, Query, Mutation, JobTracker, related, realtime)
 - [Release Automation & Security](development/release-and-automation.md) - Automated versioning, release management, and security tooling
 - [Ruff Auto-Fix on Edit Hook](development/ai/ruff-fix-hook.md) - PostToolUse hook that runs ruff --fix on edited Python files
 - [Slash Commands and Workflows](development/ai/slash-commands.md) - Reference for the slash commands and dual-agent workflow this template ships with
@@ -176,7 +176,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [PyNetAppFoundry Code Review & Improvement Plan](plans/first-pass-refactor.md)
 - [pynetappfoundry Documentation](index.md) - ONTAP administration library and CLI tools
 - [Python Project Coding Standards](development/coding-standards.md) - Guidelines for exceptions, typing, structure, testing, and documentation
-- [Query Layer](usage/query-layer.md) - Guide to the REST query layer (QuerySet, Mutation, JobTracker, related, realtime)
+- [Query Layer](usage/query-layer.md) - Guide to the REST query layer (QuerySet, Query, Mutation, JobTracker, related, realtime)
 - [Release Automation & Security](development/release-and-automation.md) - Automated versioning, release management, and security tooling
 - [Ruff Auto-Fix on Edit Hook](development/ai/ruff-fix-hook.md) - PostToolUse hook that runs ruff --fix on edited Python files
 - [Slash Commands and Workflows](development/ai/slash-commands.md) - Reference for the slash commands and dual-agent workflow this template ships with

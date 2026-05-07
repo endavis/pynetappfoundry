@@ -388,9 +388,6 @@ response = client.call_endpoint(
         "fromTimeMs": 1744416000000,
         "toTimeMs": 1744675200000,
         "timeAggregationInterval": "60s",
-        "maxNumberOfDataPoints": 4320,
-        "detectAnomalies": False,
-        "interpolationType": "NONE",
     },
 )
 ```
