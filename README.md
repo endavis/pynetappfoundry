@@ -34,12 +34,12 @@ nf events get --filter '{"name":"cluster1"}'
 nf events save-azure
 
 # Metrics
-nf metrics dump-dii
+nf metrics dump-dii --date 2025-04-13
 
 # Utilities
 nf utils validate
 nf utils run-cmd "vol show"
-nf utils sqlite-to-excel metrics.db
+nf utils sqlite-to-excel cluster1_2025-04-13_metrics.db
 ```
 
 ### Common Options

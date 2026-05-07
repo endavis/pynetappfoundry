@@ -376,16 +376,25 @@ dii_config = config.diis["production"]
 
 client = DIIAPIClient(dii_config, config)
 
-# Query storage assets
+# Query DII workload-volume timeseries
 response = client.call_endpoint(
-    path="/assets/storages",
-    method="GET"
+    path="/lake/query/timeseries",
+    method="POST",
+    body={
+        "category": "netapp_ontap",
+        "measurement": "workload_volume",
+        "metric": "read_ops",
+        "filter": 'vserver_name = "svm1" AND volume_name = "vol1"',
+        "fromTimeMs": 1744416000000,
+        "toTimeMs": 1744675200000,
+        "timeAggregationInterval": "60s",
+    },
 )
 ```
 
 **Commands Using This Pattern:**
 
-- `nf metrics dump-dii` - Query DII metrics
+- `nf metrics dump-dii` - Query per-volume DII metrics via `/lake/query/timeseries`
 
 **Configuration Required:**
 

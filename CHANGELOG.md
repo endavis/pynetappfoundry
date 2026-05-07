@@ -5,8 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### BREAKING CHANGE
+
+- `nf metrics dump-dii`: the `--days` option is removed and replaced by the
+  required `--date YYYY-MM-DD` option.  The command now issues one POST per
+  metric per volume to the DII `/lake/query/timeseries` endpoint (6 POSTs per
+  volume).  The aggregation interval and window length are now configurable
+  via `--interval` (default `60s`) and `--window-days` (default `3`, centered
+  on `--date`, yielding date − 1 day through date + 2 days).  The SQLite
+  database filename now includes the date (`{cluster}_{date}_metrics.db`) and
+  each table stores data for a single SVM/volume pair
+  (`{vserver_name}-{volume_name}`), replacing the previous per-cluster table
+  layout.
 
 ### Added
+
 - Initial release
 - Core ONTAP client functionality
 - CLI tools for storage administration
