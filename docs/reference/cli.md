@@ -146,14 +146,16 @@ nf metrics [OPTIONS] COMMAND [ARGS]...
 
 | Command | Description |
 |---------|-------------|
-| `dump-dii` | Dump metrics from Data Infrastructure Insights into SQLite |
+| `dump-dii` | Dump per-volume DII metrics into SQLite |
 
 **`metrics dump-dii` options:**
 
 | Option | Description |
 |--------|-------------|
 | `-f, --filter TEXT` | JSON cluster filter |
-| `-d, --days INTEGER` | Number of days of history to retrieve (default: 7) |
+| `-d, --date TEXT` | Required date in `YYYY-MM-DD` format; queries `(date - 1 day)` through `(date + 2 days)` in UTC |
+
+`metrics dump-dii` writes one SQLite database per cluster per date (`{cluster}_{date}_metrics.db`) and stores each SVM/volume pair in its own table (`{vserver_name}-{volume_name}`).
 
 ### cache
 
@@ -348,11 +350,11 @@ nf events save-azure -f '{"env":"Prod"}'
 ### Metrics Collection
 
 ```bash
-# Dump the last 7 days of DII metrics (default) for all clusters
-nf metrics dump-dii
+# Dump DII metrics for a 3-day window centered on 2025-04-13 for all clusters
+nf metrics dump-dii --date 2025-04-13
 
-# Dump the last 30 days for a filtered set of clusters
-nf metrics dump-dii -d 30 -f '{"env":"Prod"}'
+# Dump the same 3-day window for a filtered set of clusters
+nf metrics dump-dii --date 2025-04-13 -f '{"env":"Prod"}'
 ```
 
 ### Configuration
@@ -399,10 +401,10 @@ nf utils validate --ssh
 nf utils run-cmd "vol show" -f '{"env":"Prod"}'
 
 # Convert a SQLite database produced by `metrics dump-dii` to Excel
-nf utils sqlite-to-excel metrics.db
+nf utils sqlite-to-excel cluster1_2025-04-13_metrics.db
 
 # Convert with a custom output path
-nf utils sqlite-to-excel metrics.db -o metrics-report.xlsx
+nf utils sqlite-to-excel cluster1_2025-04-13_metrics.db -o metrics-report.xlsx
 ```
 
 ### Cache Management
