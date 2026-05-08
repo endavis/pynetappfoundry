@@ -67,6 +67,7 @@ dev = [
     "radon>=6.0",
     "mutmut>=3.0",
     "hypothesis>=6.151.14",
+    "openapi-spec-validator>=0.7",
 ]
 security = [
     "pip-audit>=2.6",

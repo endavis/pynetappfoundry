@@ -1,0 +1,88 @@
+---
+sidebar: sidebar
+api: true
+permalink: 'fixture/anyof.html'
+summary: 'List permissions with polymorphic items'
+---
+
+= List permissions
+
+[.api-doc-operation .api-doc-operation-get]#GET# [.api-doc-code-block]#`/permissions`#
+
+
+
+Returns either a permission detail or a nested array, demonstrating an
+``Any of:`` array.
+
+== Response
+
+```
+Status: 200, OK
+```
+
+
+[cols=4*,options=header]
+|===
+|Name
+|Type
+|Required
+|Description
+
+|items
+|array[Any of: link:#permissionDetail[permissionDetail], string]
+|False
+a|
+
+|empty
+|array[]
+|False
+a|
+
+|count
+|integer
+|False
+a|
+
+|active
+|boolean
+|False
+a|
+
+|score
+|number
+|False
+a|
+
+|===
+
+== Definitions
+
+[.api-def-first-level]
+.See Definitions
+[%collapsible%closed]
+====
+
+[#permissionDetail]
+[.api-collapsible-fifth-title]
+permissionDetail
+
+[cols=4*,options=header]
+|===
+|Name
+|Type
+|Required
+|Description
+
+|name
+|string
+|True
+a|
+
+|granted
+|boolean
+|False
+a|
+
+|===
+
+====

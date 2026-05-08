@@ -1,0 +1,155 @@
+---
+sidebar: sidebar
+api: true
+explorer: true
+permalink: 'fixture/post-with-definitions.html'
+summary: 'Discover an external resource'
+---
+
+= Discover an external resource
+
+[.api-doc-operation .api-doc-operation-post]#POST# [.api-doc-code-block]#`/tenancy/resource/discover`#
+
+
+
+Discovers an external resource to be added to BlueXP.
+            +
+*Token usage:* BlueXP user token.
+
+
+== Parameters
+
+[cols=5*,options=header]
+|===
+
+|Name
+|Type
+|In
+|Required
+|Description
+
+|authorization
+|string
+|header
+|True
+a|Authorization JWT access token
+
+
+|X-Service-Request-Id
+|string
+|header
+|False
+a|Request identifier
+
+|===
+
+== Request Body
+
+[cols=4*,options=header]
+|===
+|Name
+|Type
+|Required
+|Description
+
+|workspacePublicId
+|string
+|True
+a|
+
+|agentId
+|string
+|True
+a|
+
+|metadata
+|link:#metadata[metadata]
+|False
+a|
+
+|===
+
+
+.Example request
+[%collapsible%closed]
+====
+[source,json,subs=+macros]
+{
+  "workspacePublicId": "workspace-APWLzah1",
+  "agentId": "string",
+  "metadata": {
+    "propertyName": "string",
+    "propertyValue": "string"
+  }
+}
+====
+
+== Response
+
+```
+Status: 200, Default response
+```
+
+
+[cols=4*,options=header]
+|===
+|Name
+|Type
+|Required
+|Description
+
+|accountPublicId
+|string
+|False
+a|
+
+|agentIds
+|array[string]
+|False
+a|
+
+|===
+
+
+.Example response
+[%collapsible%closed]
+====
+[source,json,subs=+macros]
+{
+  "accountPublicId": "string",
+  "agentIds": [
+    "string"
+  ]
+}
+====
+
+== Definitions
+
+[.api-def-first-level]
+.See Definitions
+[%collapsible%closed]
+====
+[#metadata]
+[.api-collapsible-fifth-title]
+metadata
+
+[cols=4*,options=header]
+|===
+|Name
+|Type
+|Required
+|Description
+
+|propertyName
+|string
+|True
+a|
+
+|propertyValue
+|string
+|True
+a|
+
+|===
+
+====

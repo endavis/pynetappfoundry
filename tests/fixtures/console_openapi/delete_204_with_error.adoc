@@ -1,0 +1,71 @@
+---
+sidebar: sidebar
+api: true
+explorer: false
+permalink: 'fixture/delete-204.html'
+summary: 'Delete a folder'
+---
+
+= Delete a folder
+
+[.api-doc-operation .api-doc-operation-delete]#DELETE# [.api-doc-code-block]#`/folders/{folder_id}`#
+
+
+
+Deletes the specified folder.
+
+
+== Parameters
+
+[cols=5*,options=header]
+|===
+|Name
+|Type
+|In
+|Required
+|Description
+
+|folder_id
+|string
+|path
+|True
+a|ID of the folder.
+
+* example: 666a3f38-d4fa-5b62-a391-a69029758d32
+
+
+|===
+
+== Response
+
+```
+Status: 204, Indicates if the folder was deleted.
+```
+
+== Error
+
+```
+Status: 400, Bad request
+```
+
+
+[cols=4*,options=header]
+|===
+|Name
+|Type
+|Required
+|Description
+
+|status
+|string
+|True
+a|HTTP error code related to the problem.
+
+
+|title
+|string
+|True
+a|Title description of the problem.
+
+
+|===
