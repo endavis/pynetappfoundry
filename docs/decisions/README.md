@@ -118,3 +118,4 @@ The Issue contains the full discussion; the ADR summarizes the outcome.
 | [0015](0015-dii-backend-live-only-bare-array-envelope-offsetlimit-pagination.md) | DII backend: live-only, bare-array envelope, offset/limit pagination | Accepted |
 | [0016](0016-pr-based-release-is-the-only-supported-flow.md) | PR-based release is the only supported flow | Accepted |
 | [0017](0017-where-expressions-are-cache-only-rationale.md) | where-expressions are cache-only (rationale) | Accepted |
+| [0018](0018-cache-schema-versioning-and-backward-compatibility-policy.md) | Cache schema versioning and backward-compatibility policy | Accepted |

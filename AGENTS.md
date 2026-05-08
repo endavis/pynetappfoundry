@@ -118,6 +118,8 @@ You are a senior coding partner. Your goal is efficient, tested, and compliant c
 - **String Concatenation for Paths**: Use `Path` objects
 
 ### Cache Schema Pitfalls
+The contract behind these rules is in [ADR-0018](docs/decisions/0018-cache-schema-versioning-and-backward-compatibility-policy.md): the cache is rebuild-tolerant, downgrade is unsupported, and `SCHEMA_VERSION` is internal.
+
 - **Adding fields to cache models requires a DB migration**: If you add a field to any model stored in `CachedClusterMetadata` (e.g., `CloudMetadata`, `ClusterInfo`, `OntapNodeResponse`), existing SQLite databases won't have the column. You **must**:
   1. Bump `SCHEMA_VERSION` in `src/pynetappfoundry/cache/db.py`
   2. Add an `_upgrade_to_vN()` method that runs `ALTER TABLE <table> ADD COLUMN "<field>" <type>`
