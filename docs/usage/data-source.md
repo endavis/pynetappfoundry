@@ -187,6 +187,8 @@ On `OntapBackend`, this incompatibility is detected before iteration. Partial-fe
 
 The DII backend rejects `.where()` and non-equality DSL expressions **regardless of `source=`** since it has no cache substrate (see [ADR-0015](../decisions/0015-dii-backend-live-only-bare-array-envelope-offsetlimit-pagination.md) §4). Any `.where()` against a DII-backed query now raises `ValueError` at chain time.
 
+See [ADR-0017](../decisions/0017-where-expressions-are-cache-only-rationale.md) for the rationale behind the cache-only restriction.
+
 ### Field Projection with `.fields()`
 
 `.fields()` restricts which fields are populated on the returned models. Use it to reduce response size and parsing cost on large collections.

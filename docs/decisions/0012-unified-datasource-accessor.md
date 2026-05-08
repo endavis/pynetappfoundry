@@ -46,7 +46,7 @@ Add a `_fetched_fields: set[str]` instance attribute on `OntapModel` (`src/pynet
 
 `DataSource.query(OntapVolume).filter({"svm.name": "vs1", "autosize.mode": "grow"})` is the canonical form: a positional `dict[str, Any]` whose keys are dotted API paths. `**kwargs` (`filter(name="vol1", state="online")`) remains supported for top-level scalar fields as a convenience. The dunder-to-dot rewrite from today's `QuerySet.filter._attr_to_api_path` is **not** carried forward into `DataSource`. Existing `QuerySet` keeps the rewrite for backwards compatibility during migration and has it removed during Phase 4. This resolves issue #487.
 
-String filter expressions beyond equality land via `DataSource.QueryBuilder.where(*expressions: str)` (issue #512) — e.g. `.where("size > 1000000000", "state != 'offline'")` — which the cache backend concatenates with the dict-derived equality fragments and hands to `ClusterMetadataDB.query_with_filters` as a single ANDed list. v1 supports `.where()` on cache-backed routes only. As of issue #618, obviously incompatible cases fail early: `source="live"` on `OntapBackend` and any backend with `supports_where_expressions=False` raise `ValueError` at chain time. Partial-fetch routes still raise `NotImplementedError` when execution resolves to a mixed cache+live plan. The typed field-reference DSL (e.g. `OntapVolume.svm.name == "vs1"`) remains deferred as issue #497 and will eventually compile down to the same string-expression shape that `.where()` already accepts.
+String filter expressions beyond equality land via `DataSource.QueryBuilder.where(*expressions: str)` (issue #512) — e.g. `.where("size > 1000000000", "state != 'offline'")` — which the cache backend concatenates with the dict-derived equality fragments and hands to `ClusterMetadataDB.query_with_filters` as a single ANDed list. v1 supports `.where()` on cache-backed routes only. As of issue #618, obviously incompatible cases fail early: `source="live"` on `OntapBackend` and any backend with `supports_where_expressions=False` raise `ValueError` at chain time. Partial-fetch routes still raise `NotImplementedError` when execution resolves to a mixed cache+live plan. The typed field-reference DSL (e.g. `OntapVolume.svm.name == "vs1"`) remains deferred as issue #497 and will eventually compile down to the same string-expression shape that `.where()` already accepts. See [ADR-0017](0017-where-expressions-are-cache-only-rationale.md) for the rationale behind the cache-only restriction.
 
 ### 4. Per-call source override
 
@@ -180,6 +180,7 @@ Known limitations:
 - [ADR-0006: Generalize field mapping for multi-API](0006-generalize-field-mapping-for-multi-api.md)
 - [ADR-0010: ClusterEntry and namespace access pattern](0010-clusterentry-and-namespace-access-pattern.md) (partially superseded by this ADR)
 - [ADR-0011: Nested models to replace flat model pattern](0011-nested-models-to-replace-flat-model-pattern.md)
+- [ADR-0017: where-expressions are cache-only (rationale)](0017-where-expressions-are-cache-only-rationale.md)
 - Source: `src/pynetappfoundry/cache/field_mapping.py`
 - Source: `src/pynetappfoundry/cache/_registry.py`
 - Source: `src/pynetappfoundry/cache/_lazy.py`
