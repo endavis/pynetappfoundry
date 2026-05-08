@@ -1,0 +1,16 @@
+---
+sidebar: sidebar
+api: true
+permalink: 'fixture/overview.html'
+summary: 'Tenancy overview'
+---
+
+= Tenancy overview
+
+This is an overview page that has ``api: true`` in front-matter but does
+**not** define an operation. The parser should skip it.
+
+== Topics
+
+* Accounts
+* Workspaces

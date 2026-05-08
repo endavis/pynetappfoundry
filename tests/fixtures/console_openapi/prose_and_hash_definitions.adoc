@@ -1,0 +1,83 @@
+---
+sidebar: sidebar
+api: true
+permalink: 'fixture/prose-and-hash.html'
+summary: 'Get tags and metadata'
+---
+
+= Get tags and metadata
+
+[.api-doc-operation .api-doc-operation-get]#GET# [.api-doc-code-block]#`/items/{id}`#
+
+
+
+Retrieves an item along with its tag map and a prose-only related object.
+
+== Parameters
+
+[cols=5*,options=header]
+|===
+|Name
+|Type
+|In
+|Required
+|Description
+
+|id
+|string
+|path
+|True
+a|Item identifier
+
+|===
+
+== Response
+
+```
+Status: 200, OK
+```
+
+
+[cols=4*,options=header]
+|===
+|Name
+|Type
+|Required
+|Description
+
+|tags
+|link:#tags[tags]
+|False
+a|Map of tag name to value.
+
+
+|targetSchema
+|link:#targetSchema[targetSchema]
+|False
+a|Out-of-band schema reference described in prose.
+
+
+|===
+
+== Definitions
+
+[.api-def-first-level]
+.See Definitions
+[%collapsible%closed]
+====
+
+[#tags]
+[.api-collapsible-fifth-title]
+tags
+
+Hash mapping strings to string.
+
+
+[#targetSchema]
+[.api-collapsible-fifth-title]
+targetSchema
+
+Reference to an external schema; see the published JSON Schema document for the
+full structure. This block intentionally has no table.
+
+====

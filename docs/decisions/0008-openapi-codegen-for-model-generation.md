@@ -183,6 +183,47 @@ diff against; the remaining DII surface is generated under #600.
 
 Issue: #603
 
+### Spec acquisition strategies (Issue #697)
+
+The original ADR assumes the vendor publishes an OpenAPI spec we can drop
+into ``docs/example-config/apis/<name>/openapi3.json``.  In practice, that
+assumption holds for some APIs and not others.  The supported strategies are:
+
+1. **Vendor-published OpenAPI/Swagger** (preferred).  ONTAP, AIQUM, and DII
+   all publish machine-readable specs that we copy in-tree as
+   ``all.json`` / ``openapi3.json``.  ``doit convert_specs`` normalizes
+   them to OpenAPI 3.0 for the codegen pipeline.
+
+2. **Connector-scraped Swagger 1.2** (legacy).  The OCCM (Cloud Manager
+   Connector) API is documented through the Connector's local Swagger UI
+   only.  The current ``docs/example-config/apis/occm/`` tree was built
+   by hand-walking ``http://<connector_ip>/occm/api/api-docs/`` per
+   ``notes.txt``.  Re-acquisition is a manual chore.
+
+3. **Parser-derived from prose docs** (new).  The BlueXP / NetApp Console
+   SaaS layer (``api.bluexp.netapp.com``) has no machine-readable spec
+   at all — only AsciiDoc reference pages auto-generated from a
+   proprietary internal tool, published in ``NetAppDocs/console-automation``.
+   ``tools/console_openapi/`` parses those AsciiDoc files into an
+   OpenAPI 3.1 spec.  Per-operation ``servers`` blocks encode the
+   discovered base URLs (``https://api.bluexp.netapp.com`` for the v3
+   ``tenancy`` paths; ``https://api.bluexp.netapp.com/v1/management`` for
+   the v4 ``tenancyv4`` paths).  The generated spec was validated end-to-end
+   against the live SaaS using a user JWT: 9 endpoints' response shapes
+   matched their declared schemas with zero validation errors.
+
+   The parser is build-time only — it is not shipped in the wheel.  The
+   generated artifact (``tools/console_openapi/generated/console_openapi.yaml``)
+   is checked in alongside a lockfile pinning the upstream source commit.
+
+   **Codegen integration is deferred.**  Wiring the Console spec into
+   ``doit generate_models --api=console`` will require either (a) an
+   OpenAPI 3.1 → 3.0 downgrade pass in ``convert_specs`` or (b) a
+   codegen update to consume 3.1 directly.  Tracked as a separate
+   follow-up.
+
+Issue: #697
+
 ## Related Issues
 
 - Issue #301: feat: field annotations, OpenAPI codegen, and SQL cache storage
@@ -190,6 +231,7 @@ Issue: #603
 - Issue #444: refactor: evaluate nested models to replace flat model pattern (see ADR-0011)
 - Issue #601: bug(codegen): pipeline drops identifier_field and cache_strategy=realtime on regen
 - Issue #603: bug(codegen): shared response schemas cause registry collisions; non-ONTAP support gaps
+- Issue #697: feat: add BlueXP/Console SaaS docs to OpenAPI 3.1 parser
 
 ## Related Documentation
 
