@@ -176,7 +176,7 @@ paths:
           type: string
         description: Request identifier
       requestBody:
-        required: false
+        required: true
         content:
           application/json:
             schema:
@@ -938,7 +938,7 @@ paths:
           type: string
         description: Request identifier
       requestBody:
-        required: false
+        required: true
         content:
           application/json:
             schema:
@@ -1037,7 +1037,7 @@ paths:
           type: string
         description: Request identifier
       requestBody:
-        required: false
+        required: true
         content:
           application/json:
             schema:
@@ -1156,7 +1156,7 @@ paths:
           type: string
         description: Request identifier
       requestBody:
-        required: false
+        required: true
         content:
           application/json:
             schema:
@@ -1906,7 +1906,7 @@ paths:
           type: string
         description: Request identifier
       requestBody:
-        required: false
+        required: true
         content:
           application/json:
             schema:
@@ -37869,7 +37869,7 @@ paths:
       - BearerAuth: []
       servers: *id002
       parameters:
-      - name: organization_id
+      - name: role_id
         in: path
         required: true
         schema:
@@ -37877,7 +37877,7 @@ paths:
         description: Synthesized from the path template; the upstream documentation
           does not declare this parameter.
         x-synthesized: true
-      - name: role_id
+      - name: organization_id
         in: path
         required: true
         schema:

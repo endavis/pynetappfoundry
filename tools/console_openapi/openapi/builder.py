@@ -354,8 +354,13 @@ def _request_body(ep: ParsedEndpoint, resolver: dict[str, str]) -> dict[str, Any
         media["example"] = ep.request_body_example
     elif ep.request_body_example_raw is not None:
         media["x-example-raw"] = ep.request_body_example_raw
+    # The body itself is required whenever the endpoint declares a body
+    # section. Whether individual fields are required is captured in the
+    # schema's ``required`` array (set above). Conflating "any field is
+    # required" with "the body is required" was incorrect for endpoints
+    # that accept an all-optional body — those still need a body present.
     body: dict[str, Any] = {
-        "required": any(f.required for f in ep.request_body_fields),
+        "required": True,
         "content": {"application/json": media},
     }
     return body

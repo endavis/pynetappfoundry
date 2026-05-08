@@ -36,8 +36,8 @@ class Lockfile:
         )
 
     def write(self, path: Path) -> None:
-        path.write_text(self.to_json())
+        path.write_text(self.to_json(), encoding="utf-8")
 
     @classmethod
     def read(cls, path: Path) -> Lockfile:
-        return cls.from_json(path.read_text())
+        return cls.from_json(path.read_text(encoding="utf-8"))

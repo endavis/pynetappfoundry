@@ -119,20 +119,16 @@ def build(
     lock.write(lockfile)
     click.echo(f"Wrote {lockfile}")
 
-    _validate(out)
+    _validate(spec)
 
 
-def _validate(out: Path) -> None:
+def _validate(spec: dict[str, object]) -> None:
     """Run openapi-spec-validator if available; warn but do not fail on missing dep."""
     try:
         from openapi_spec_validator import validate  # type: ignore[import-untyped]
     except ImportError:
         click.echo("openapi-spec-validator not installed; skipping validation.", err=True)
         return
-    if out.suffix.lower() == ".json":
-        spec = json.loads(out.read_text())
-    else:
-        spec = yaml.safe_load(out.read_text())
     validate(spec)
     click.echo("openapi-spec-validator: OK")
 

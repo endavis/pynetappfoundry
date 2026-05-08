@@ -1,0 +1,34 @@
+---
+sidebar: sidebar
+api: true
+explorer: true
+permalink: 'fixture/malformed.html'
+summary: 'Malformed endpoint that fails strict parsing'
+---
+
+= Malformed endpoint
+
+[.api-doc-operation .api-doc-operation-post]#POST# [.api-doc-code-block]#`/tenancy/broken`#
+
+This file has a parameters table whose header row is wrong, which
+causes ``assert_headers`` to raise. Strict mode propagates; lenient
+mode records and continues.
+
+== Parameters
+
+[cols=5*,options=header]
+|===
+
+|Wrong
+|Header
+|Row
+|That
+|Fails
+
+|x
+|string
+|query
+|false
+|nope
+
+|===

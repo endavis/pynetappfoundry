@@ -187,11 +187,17 @@ def _parse_body_section(
 
 
 def _parse_response_blocks(body: str) -> tuple[ResponseBlock, ...]:
-    """Parse the ``== Response`` block plus every ``== Error`` block in order."""
+    """Parse the ``== Response`` block plus every ``== Error`` block in order.
+
+    Note: when multiple blocks share the same status code (rare in this corpus),
+    the last one wins because the builder keys responses by status string. This
+    is intentional — upstream's structure does not normally repeat status codes
+    within a single endpoint.
+    """
     pattern = re.compile(r"^==\s+(?P<name>Response|Error)\s*$", re.MULTILINE)
     matches = list(pattern.finditer(body))
     out: list[ResponseBlock] = []
-    for i, m in enumerate(matches):
+    for m in matches:
         start = m.end()
         end = _next_section_offset(body, m.end())
         chunk = body[start:end]
@@ -222,8 +228,6 @@ def _parse_response_blocks(body: str) -> tuple[ResponseBlock, ...]:
                 example_raw=example_raw,
             )
         )
-        # Suppress unused index warning
-        _ = i
     return tuple(out)
 
 

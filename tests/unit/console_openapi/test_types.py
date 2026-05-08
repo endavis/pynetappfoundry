@@ -75,3 +75,29 @@ def test_unknown_type_falls_back_to_object() -> None:
     t = parse_type("WeirdCustomType")
     assert t.primitive == "object"
     assert t.raw == "WeirdCustomType"
+
+
+def test_typeref_rejects_multiple_kinds() -> None:
+    """The model_validator should reject ambiguous TypeRefs."""
+    import pytest
+    from pydantic import ValidationError
+
+    from tools.console_openapi.models import TypeRef
+
+    with pytest.raises(ValidationError):
+        TypeRef(primitive="string", ref_anchor="something")
+
+    with pytest.raises(ValidationError):
+        TypeRef(
+            primitive="string",
+            additional_properties=TypeRef(primitive="string"),
+        )
+
+
+def test_typeref_allows_zero_kinds() -> None:
+    """A bare TypeRef with no kind set is permitted (used as a placeholder)."""
+    from tools.console_openapi.models import TypeRef
+
+    t = TypeRef(raw="unknown")
+    assert t.primitive is None
+    assert t.ref_anchor is None

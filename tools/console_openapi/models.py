@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class Frozen(BaseModel):
@@ -40,6 +40,24 @@ class TypeRef(Frozen):
 
     raw: str = ""
     """Original cell text, preserved for diagnostics."""
+
+    @model_validator(mode="after")
+    def _exactly_one_kind(self) -> TypeRef:
+        kinds = (
+            self.primitive,
+            self.ref_anchor,
+            self.array_items,
+            self.one_of,
+            self.additional_properties,
+        )
+        set_count = sum(1 for k in kinds if k is not None)
+        if set_count > 1:
+            raise ValueError(
+                "TypeRef must have at most one of {primitive, ref_anchor, "
+                "array_items, one_of, additional_properties} set; "
+                f"got {set_count}"
+            )
+        return self
 
 
 class FieldDef(Frozen):
