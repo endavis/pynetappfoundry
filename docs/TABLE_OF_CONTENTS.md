@@ -105,6 +105,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [ADR-0014: Parallel Cluster Refresh](decisions/0014-parallel-cluster-refresh.md)
 - [ADR-0015: DII backend: live-only, bare-array envelope, offset/limit pagination](decisions/0015-dii-backend-live-only-bare-array-envelope-offsetlimit-pagination.md)
 - [ADR-0016: PR-based release is the only supported flow](decisions/0016-pr-based-release-is-the-only-supported-flow.md)
+- [ADR-0017: where-expressions are cache-only (rationale)](decisions/0017-where-expressions-are-cache-only-rationale.md)
 - [ADR-9001: Use uv for package management](decisions/9001-use-uv-for-package-management.md)
 - [ADR-9001: Use uv for package management](template/decisions/9001-use-uv-for-package-management.md)
 - [ADR-9002: Use doit for task automation](decisions/9002-use-doit-for-task-automation.md)
