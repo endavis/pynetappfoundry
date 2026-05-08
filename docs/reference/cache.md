@@ -191,6 +191,12 @@ deserialised against the current Pydantic models.
 
 ### SQLite database schema versioning
 
+The contract for what migrations may do — additive vs. destructive, downgrade
+behavior, visibility — is recorded in
+[ADR-0018](../decisions/0018-cache-schema-versioning-and-backward-compatibility-policy.md).
+The cache is rebuild-tolerant: destructive migrations are allowed, and
+`nf cache refresh` is the documented fallback.
+
 In addition to the `cache_version` stamped into each snapshot,
 `ClusterMetadataDB` tracks the **on-disk SQLite schema** version through the
 shared `SQLiteDB` base class. The current value is `SCHEMA_VERSION = 4`, and
@@ -1121,3 +1127,4 @@ nf cache refresh cluster1 -v
 - ADR-0005 — UUID index for cache cross-references.
 - ADR-0009 — Per-model SQL table storage for the cache layer.
 - ADR-0011 — Nested models to replace the flat model pattern.
+- ADR-0018 — Cache schema versioning and backward-compatibility policy.

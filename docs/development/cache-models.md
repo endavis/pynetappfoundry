@@ -498,11 +498,21 @@ If you add a field to a Pydantic model stored in `CachedClusterMetadata`:
 3. **Table names**: Lowercased model class name (e.g., `CloudMetadata` →
    `cloudmetadata`)
 
-#### Removing a field from a cache model
+#### Removing or renaming a field on a cache model
 
-The column remains in the SQL table (SQLite doesn't support `DROP COLUMN`
-before 3.35). The column is ignored on read since `_row_to_model()` only
-reads fields defined on the model. No migration is needed.
+Per [ADR-0018](../decisions/0018-cache-schema-versioning-and-backward-compatibility-policy.md),
+the cache is rebuild-tolerant and deprecate-in-place is not the default —
+remove or rename a field by dropping and recreating the affected table(s)
+in a schema migration. Cached data for that table is lost on upgrade and
+the next `nf cache refresh` repopulates it.
+
+1. Bump `SCHEMA_VERSION` in `src/pynetappfoundry/cache/db.py`.
+2. Add an `_upgrade_to_vN()` method that drops and recreates the affected
+   table(s) using the current DDL (the v3 → v4 migration is the reference
+   example for a destructive recreate). Clear the affected envelope row(s)
+   so collectors detect missing data and trigger a refresh.
+3. Add a test in `tests/unit/cache/test_db.py`.
+4. Update any existing migration tests that assert the schema version.
 
 ---
 

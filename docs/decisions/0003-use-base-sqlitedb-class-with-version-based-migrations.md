@@ -62,3 +62,4 @@ class SQLiteDB(ABC):
 
 - Database module: `src/pynetappfoundry/db/`
 - Cache module: `src/pynetappfoundry/cache/`
+- [ADR-0018: Cache schema versioning and backward-compatibility policy](0018-cache-schema-versioning-and-backward-compatibility-policy.md)

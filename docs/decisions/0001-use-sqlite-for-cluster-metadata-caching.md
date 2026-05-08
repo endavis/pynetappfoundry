@@ -47,3 +47,4 @@ changed to enable SQL-level queries and per-field indexing.
 - CLI commands: `nf cache refresh`, `nf cache show`, `nf cache query`, `nf cache schema`, `nf cache status`, `nf cache clear`
 - CLI Reference: [docs/reference/cli.md](../reference/cli.md#cache)
 - Usage Guide: [docs/usage/basics.md](../usage/basics.md#cluster-metadata-caching)
+- [ADR-0018: Cache schema versioning and backward-compatibility policy](0018-cache-schema-versioning-and-backward-compatibility-policy.md)
