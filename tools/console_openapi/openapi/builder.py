@@ -1,4 +1,10 @@
-"""Assemble an OpenAPI 3.1 document from parsed endpoints."""
+"""Assemble an OpenAPI 3.0.3 document from parsed endpoints.
+
+The spec uses no OpenAPI 3.1-only constructs (verified against the live
+upstream content), so emitting 3.0.3 maximises compatibility with downstream
+tools — notably ``datamodel-code-generator`` for Pydantic codegen — without
+losing any expressive power that the parsed AsciiDoc actually exercises.
+"""
 
 from __future__ import annotations
 
@@ -61,7 +67,7 @@ def build_spec(
     title: str = "NetApp BlueXP / Console SaaS API",
     version: str = "1.0.0-derived",
 ) -> dict[str, Any]:
-    """Build the combined OpenAPI 3.1 document and return it as a Python dict."""
+    """Build the combined OpenAPI 3.0.3 document and return it as a Python dict."""
     components_schemas: dict[str, Any] = {}
     paths: dict[str, dict[str, Any]] = defaultdict(dict)
     operation_ids: set[str] = set()
@@ -98,7 +104,7 @@ def build_spec(
         info["x-source-commit"] = source_commit
 
     spec: dict[str, Any] = {
-        "openapi": "3.1.0",
+        "openapi": "3.0.3",
         "info": info,
         "servers": list(servers if servers is not None else _DEFAULT_SERVERS),
         "paths": dict(paths),
@@ -125,7 +131,7 @@ def build_spec(
 
 def _info_description(included_services: tuple[str, ...]) -> str:
     return (
-        "Derived OpenAPI 3.1 specification for NetApp's BlueXP / Console SaaS API.\n\n"
+        "Derived OpenAPI 3.0.3 specification for NetApp's BlueXP / Console SaaS API.\n\n"
         "**This spec is unofficial.** It is generated from the AsciiDoc sources "
         "published at https://github.com/NetAppDocs/console-automation. NetApp does "
         "not publish a machine-readable spec for this API surface.\n\n"

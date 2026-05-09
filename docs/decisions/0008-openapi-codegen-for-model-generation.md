@@ -12,7 +12,14 @@ Build a codegen tool (`tools/codegen/`) that parses OpenAPI 3.0 specs and genera
 2. **FieldMapping + TypeMapping declarations** — with `cache_strategy`, `requires_explicit_fetch`, and `parent_mapping` annotations (ADR-0004 extensions)
 3. **TOML config overlays** — per-field customization files that are preserved across re-runs
 
-The tool uses `datamodel-code-generator` as a library for `$ref` resolution and type mapping from OpenAPI schemas.  Our adapter layer handles spec normalization, expensive field detection (ONTAP-specific), and the custom generation of flat models and mappings.
+The cache-coupled pipeline (`tools/codegen/`) does its own `$ref` resolution
+and type mapping in `adapters.py`; it does **not** use `datamodel-code-generator`.
+The adapter layer handles spec normalization, expensive field detection
+(ONTAP-specific), and the custom generation of flat models and mappings.
+`datamodel-code-generator` is used only by the separate Console pipeline
+(see "Codegen integration for Console (Issue #699)" below) — a vestigial
+import in `tools/codegen/openapi_codegen.py` was removed as dead code in
+PR #693.
 
 ### Architecture
 
@@ -57,7 +64,13 @@ Re-running codegen preserves user edits, adds new fields with defaults, and warn
 
 3. **Customizable via TOML** — field strategies (cache/realtime/derived) vary by use case.  TOML overlays separate generation from customization.
 
-4. **`datamodel-code-generator` for $ref resolution** — the library handles complex `$ref` chains, `allOf` merging, and type mapping.  Our code flattens the resolved schemas into the project's flat model pattern.
+4. **In-house `$ref` resolution** — `tools/codegen/adapters.py` walks the spec
+   itself, handling `$ref` chains, `allOf` merging, and type mapping. This
+   was originally meant to be `datamodel-code-generator`; that import was
+   removed as dead code in PR #693. The Console pipeline (Issue #699) uses
+   `datamodel-code-generator` end-to-end for a different purpose — emitting
+   plain Pydantic v2 modules — but the cache-coupled pipeline's flat-model
+   shape never benefited from it.
 
 5. **Multi-API support** — the same tool works for ONTAP, DII, AIQUM, and OCCM specs with per-API-type configuration (expensive field detection, records path detection).
 
@@ -205,7 +218,7 @@ assumption holds for some APIs and not others.  The supported strategies are:
    at all — only AsciiDoc reference pages auto-generated from a
    proprietary internal tool, published in ``NetAppDocs/console-automation``.
    ``tools/console_openapi/`` parses those AsciiDoc files into an
-   OpenAPI 3.1 spec.  Per-operation ``servers`` blocks encode the
+   OpenAPI 3.0.3 spec.  Per-operation ``servers`` blocks encode the
    discovered base URLs (``https://api.bluexp.netapp.com`` for the v3
    ``tenancy`` paths; ``https://api.bluexp.netapp.com/v1/management`` for
    the v4 ``tenancyv4`` paths).  The generated spec was validated end-to-end
@@ -216,13 +229,85 @@ assumption holds for some APIs and not others.  The supported strategies are:
    generated artifact (``tools/console_openapi/generated/console_openapi.yaml``)
    is checked in alongside a lockfile pinning the upstream source commit.
 
-   **Codegen integration is deferred.**  Wiring the Console spec into
-   ``doit generate_models --api=console`` will require either (a) an
-   OpenAPI 3.1 → 3.0 downgrade pass in ``convert_specs`` or (b) a
-   codegen update to consume 3.1 directly.  Tracked as a separate
-   follow-up.
-
 Issue: #697
+
+### Codegen integration for Console (Issue #699)
+
+1. **Decision: split pipeline.** Console uses ``datamodel-code-generator``
+   directly (not ``tools/codegen/``). Rationale: Console's SaaS domain
+   (orgs, projects, folders, partnerships) is not a per-cluster cache
+   entity; the cache-coupled pipeline's field strategies, TOML overlays,
+   and ``OntapModel`` base do not apply. The doit task lives at
+   ``tools/doit/console_openapi_tasks.py:task_console_models`` and
+   produces a tree under ``src/pynetappfoundry/models/console/``
+   (subdivided into ``tenancy/`` and ``tenancyv4/`` packages).
+
+2. **Spec version: 3.0.3.** The parser was updated to emit OpenAPI 3.0.3
+   instead of 3.1 (option (a) above, applied at the parser rather than
+   in ``convert_specs``). The spec uses no 3.1-only constructs, so the
+   downgrade is a one-line change in ``tools/console_openapi/openapi/builder.py``
+   and gives wider tool support — most importantly,
+   ``datamodel-code-generator`` consumes 3.0.3 directly without an
+   intermediate conversion step.
+
+3. **Storage: committed.** ``src/pynetappfoundry/models/console/`` is
+   committed in-tree (~21k lines), matching the YAML precedent. CI
+   verifies regeneration is a no-op via ``doit console_models_check``,
+   which re-runs the generator and ``git diff --exit-code``-s the output
+   directory.
+
+4. **Caching Console data is not foreclosed by the split.** Three
+   patterns are supported under the current cache architecture
+   (ADR-0001, ADR-0010, ADR-0018):
+
+   - **(a) Runtime-only typed access.** Instantiate the generated model
+     from a request, hold it for the duration, never persist. No cache
+     integration needed.
+
+   - **(b) Embed a Console entity inside an existing per-cluster
+     record.** Concrete cluster-scoped attributes that fit this pattern:
+     which org owns the cluster, which marketplace subscription it
+     consumes, which connector manages it, which folder/project it lives
+     in. E.g.
+     ``CloudMetadata.organization: Organization | None;
+     marketplace_subscription: Subscription | None``.
+     ``CachedClusterMetadata`` field types do not have to be
+     ``OntapModel``-derived — they just have to be JSON-serializable
+     Pydantic. Add the field, bump ``SCHEMA_VERSION``, write the
+     ``_upgrade_to_vN()`` migration per ADR-0018.
+
+   - **(c) New top-level Console-shaped cache entity.** E.g. a
+     ``CachedConsoleAccountMetadata`` keyed by org/account id, holding
+     subscriptions and folders, with clusters carrying a reference.
+     Hand-authored alongside ``CachedClusterMetadata``, consuming the
+     generated Console types as value types. Genuinely new territory;
+     not in scope for #699.
+
+   **Type source vs. cache placement is decoupled.** A cluster-scoped
+   attribute's type can come from any of: Console (this PR's
+   ``models/console/``), OCCM (existing ``models/occm/``),
+   DII/AIQUM/ONTAP (existing ``models/<api>/``), or hand-authored. The
+   cache layer cares only that the field type is valid Pydantic. This
+   decoupling is new to the project — before #699, all generated types
+   arrived bundled with cache-strategy machinery; pattern (b) above is
+   the first time "have a typed value" and "decide whether to cache it"
+   are independent decisions.
+
+   What is **not** supported by this split is automatic per-field
+   ``cache_strategy`` annotations across all 222 Console endpoints. By
+   design: the project does not intend to cache 222 Console endpoints.
+   The handful that are cached get hand-authored using pattern (b) or
+   (c). If that calculus changes (many Console entities to cache, all
+   needing per-field strategies), the split should be revisited — at
+   which point ADR-0011 ("nested models to replace flat model pattern")
+   would also be in play.
+
+5. **Out of scope (separate work):** typed client / API surface around
+   the generated models; the patterns (b) / (c) cache integrations
+   themselves — those are per-need follow-ups, not preconditions for
+   this PR.
+
+Issue: #699
 
 ## Related Issues
 
@@ -232,6 +317,7 @@ Issue: #697
 - Issue #601: bug(codegen): pipeline drops identifier_field and cache_strategy=realtime on regen
 - Issue #603: bug(codegen): shared response schemas cause registry collisions; non-ONTAP support gaps
 - Issue #697: feat: add BlueXP/Console SaaS docs to OpenAPI 3.1 parser
+- Issue #699: feat: generate Pydantic models from Console OpenAPI spec
 
 ## Related Documentation
 

@@ -1,0 +1,28 @@
+{
+  "id": "org-DDDDDDDDDDD",
+  "name": "Acme",
+  "description": "Acme Corp organization",
+  "resourceClass": "ORG",
+  "resourceType": "type.organization",
+  "type": "application/json",
+  "version": "1.0",
+  "ownerOrganizationId": "org-DDDDDDDDDDD",
+  "metadata": {
+    "createdBy": "user-EEEEEEEEEEE",
+    "creationTimestamp": "2026-01-01T00:00:00Z",
+    "labels": [
+      {"name": "env", "value": "prod"}
+    ]
+  },
+  "links": [
+    {
+      "href": "/v1/management/organizations/org-DDDDDDDDDDD",
+      "rel": "self",
+      "hints": {
+        "accept-post": {},
+        "accept-put": {},
+        "allow": ["GET", "PUT", "DELETE"]
+      }
+    }
+  ]
+}

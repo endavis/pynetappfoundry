@@ -1,7 +1,7 @@
 """Intermediate AST produced by the parser, consumed by the OpenAPI builder.
 
 These models describe parsed AsciiDoc content in a form that is decoupled from
-OpenAPI itself. The builder maps them into OpenAPI 3.1 structures.
+OpenAPI itself. The builder maps them into OpenAPI 3.0.3 structures.
 """
 
 from __future__ import annotations

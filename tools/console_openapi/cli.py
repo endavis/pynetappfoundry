@@ -22,7 +22,7 @@ DEFAULT_SERVICES: tuple[str, ...] = ("tenancy", "tenancyv4")
 @click.group()
 @click.version_option(__version__)
 def cli() -> None:
-    """Generate an OpenAPI 3.1 spec from NetApp's BlueXP/Console docs."""
+    """Generate an OpenAPI 3.0.3 spec from NetApp's BlueXP/Console docs."""
 
 
 @cli.command("build")
