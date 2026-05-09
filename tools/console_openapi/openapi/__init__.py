@@ -1,1 +1,1 @@
-"""OpenAPI 3.1 builder package."""
+"""OpenAPI 3.0.3 builder package."""

@@ -1,7 +1,15 @@
 # Console OpenAPI Generator
 
 A build-time tool that converts NetApp's BlueXP / NetApp Console SaaS API
-documentation into an OpenAPI 3.1 specification.
+documentation into an OpenAPI 3.0.3 specification.
+
+> [!NOTE]
+> The spec is emitted as OpenAPI 3.0.3 even though `tenancy/` and
+> `tenancyv4/` evolve independently of any particular OpenAPI version. The
+> parsed AsciiDoc uses no OpenAPI 3.1-only constructs (verified against the
+> live upstream content), so the lower version maximises tooling
+> compatibility — most notably `datamodel-code-generator`, which the
+> Pydantic codegen pipeline (`doit console_models`) relies on.
 
 > [!WARNING]
 > This generator and its output are **unofficial**. NetApp does not publish a
@@ -13,7 +21,7 @@ documentation into an OpenAPI 3.1 specification.
 
 ## What is generated
 
-`generated/console_openapi.yaml` -- a combined OpenAPI 3.1 spec covering the
+`generated/console_openapi.yaml` -- a combined OpenAPI 3.0.3 spec covering the
 service folders listed in `info.x-included-source-folders`. v1 covers
 `tenancy/` and `tenancyv4/` only; `cm/` is intentionally excluded because its
 files are prose tutorials with `curl` examples and need a different parser.
@@ -102,10 +110,35 @@ at startup rather than hard-coding hosts.
   the build continues. Use only when exploring upstream changes; do not
   commit a lenient-mode spec.
 
+## Generated Pydantic models
+
+The committed spec at `generated/console_openapi.yaml` is consumed by a
+second build-time pipeline that emits Pydantic v2 models under
+`src/pynetappfoundry/models/console/` (subdivided into `tenancy/` and
+`tenancyv4/` packages). The pipeline uses `datamodel-code-generator`
+directly — it is intentionally **not** wired into `doit generate_models`,
+which is reserved for cache-coupled per-cluster API models. See
+[ADR-0008 §"Codegen integration for Console (Issue #699)"](../../docs/decisions/0008-openapi-codegen-for-model-generation.md)
+for the rationale.
+
+```bash
+# Regenerate the Pydantic tree (after a spec refresh, or when
+# tools/doit/console_openapi_tasks.py is updated).
+doit console_models
+
+# Determinism guard: regenerate and assert the diff is empty.
+doit console_models_check
+```
+
+The generated tree is committed in-tree (~21k lines) so consumers do not
+need `datamodel-code-generator` installed at runtime; only the maintainer
+running `doit console_models` does.
+
 ## Dependencies
 
 Runtime: `pyyaml`, `pydantic`, `click`, system `git`.
-Dev only: `openapi-spec-validator`.
+Dev only: `openapi-spec-validator`, `datamodel-code-generator` (for
+`doit console_models`).
 
 ## Adding a new service
 

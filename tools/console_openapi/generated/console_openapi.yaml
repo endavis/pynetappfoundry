@@ -1,9 +1,9 @@
-openapi: 3.1.0
+openapi: 3.0.3
 info:
   title: NetApp BlueXP / Console SaaS API
   version: 1.0.0-derived
-  description: 'Derived OpenAPI 3.1 specification for NetApp''s BlueXP / Console SaaS
-    API.
+  description: 'Derived OpenAPI 3.0.3 specification for NetApp''s BlueXP / Console
+    SaaS API.
 
 
     **This spec is unofficial.** It is generated from the AsciiDoc sources published
@@ -37869,7 +37869,7 @@ paths:
       - BearerAuth: []
       servers: *id002
       parameters:
-      - name: role_id
+      - name: organization_id
         in: path
         required: true
         schema:
@@ -37877,7 +37877,7 @@ paths:
         description: Synthesized from the path template; the upstream documentation
           does not declare this parameter.
         x-synthesized: true
-      - name: organization_id
+      - name: role_id
         in: path
         required: true
         schema:

@@ -1,4 +1,4 @@
-"""Build-time tool that converts NetApp BlueXP/Console docs to OpenAPI 3.1.
+"""Build-time tool that converts NetApp BlueXP/Console docs to OpenAPI 3.0.3.
 
 Source: https://github.com/NetAppDocs/console-automation (AsciiDoc).
 
