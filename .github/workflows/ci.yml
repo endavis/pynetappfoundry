@@ -153,7 +153,11 @@ jobs:
         run: uv pip install --upgrade pip
 
       - name: Run dependency audit
-        run: uv run pip-audit --skip-editable
+        # GHSA-r374-rxx8-8654 / CVE-2026-44405: paramiko rsakey.py SHA-1 acceptance.
+        # All released paramiko (<=4.0.0) is affected; upstream fix landed in commit
+        # a4489456 but no tagged release exists yet. Remove --ignore-vuln when
+        # paramiko 4.0.1+ ships. Tracked in issue #701.
+        run: uv run pip-audit --skip-editable --ignore-vuln GHSA-r374-rxx8-8654
 
       - name: Run tests with coverage
         run: uv run pytest --cov=pynetappfoundry --cov-report=xml:tmp/coverage.xml --cov-report=term -v
