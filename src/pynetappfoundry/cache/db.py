@@ -269,7 +269,7 @@ class ClusterMetadataDB(SQLiteDB):
     for data safety and isolation.
     """
 
-    SCHEMA_VERSION: ClassVar[int] = 5
+    SCHEMA_VERSION: ClassVar[int] = 6
     TABLE_NAME: ClassVar[str] = "cluster_metadata"
 
     def __init__(
@@ -418,6 +418,27 @@ class ClusterMetadataDB(SQLiteDB):
         existing_cols = {row[1] for row in cursor.fetchall()}
         if "vm_name" not in existing_cols:
             self.conn.execute('ALTER TABLE cloudmetadata ADD COLUMN "vm_name" TEXT')
+
+    # ------------------------------------------------------------------
+    # Migration v5 → v6
+    # ------------------------------------------------------------------
+
+    def _upgrade_to_v6(self) -> None:
+        """Create the consoleinfo table for the Console cache wrapper (#713).
+
+        v6 adds ``CachedClusterMetadata.console: ConsoleInfo`` to support
+        cluster-scoped Console SaaS data (ADR-0019).  Existing v5 databases
+        have no ``consoleinfo`` table; create it via the same DDL generator
+        used in ``_create_schema``.  Idempotent via ``sqlite_master`` check.
+        """
+        from pynetappfoundry.cache._metadata import ConsoleInfo
+
+        cursor = self.conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='consoleinfo'"
+        )
+        if cursor.fetchone() is None:
+            self.conn.execute(generate_table_ddl("consoleinfo", ConsoleInfo))
+            self.conn.execute(generate_cluster_name_index_ddl("consoleinfo"))
 
     # ------------------------------------------------------------------
     # Internal: decompose metadata into tables

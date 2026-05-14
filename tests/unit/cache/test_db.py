@@ -860,9 +860,9 @@ class TestClusterMetadataDBMigrationV3:
         )
         assert cursor.fetchone() is None
 
-        # Verify schema version is 5 (v4 drops/recreates, v5 adds vm_name)
+        # Verify schema version is the current SCHEMA_VERSION (migrations run forward)
         cursor = db.conn.execute("SELECT version FROM _schema_version")
-        assert cursor.fetchone()[0] == 5
+        assert cursor.fetchone()[0] == ClusterMetadataDB.SCHEMA_VERSION
 
         # v4 clears envelope data (nested model refactoring)
         got = db.get("test-cluster")
@@ -924,17 +924,74 @@ class TestClusterMetadataDBMigrationV3:
         conn.commit()
         conn.close()
 
-        # Open with current code — should trigger v4→v5 migration
+        # Open with current code — should trigger v4→v5 (→...) migrations
         db = ClusterMetadataDB(db_path=db_path)
 
-        # Verify schema version is 5
+        # Verify schema version is the current SCHEMA_VERSION (migrations run forward)
         cursor = db.conn.execute("SELECT version FROM _schema_version")
-        assert cursor.fetchone()[0] == 5
+        assert cursor.fetchone()[0] == ClusterMetadataDB.SCHEMA_VERSION
 
         # Verify vm_name column exists
         cursor = db.conn.execute("PRAGMA table_info(cloudmetadata)")
         columns = {row[1] for row in cursor.fetchall()}
         assert "vm_name" in columns
+
+        db.close()
+
+    def test_upgrade_v5_to_v6_creates_consoleinfo_table(self, tmp_path: Path) -> None:
+        """v5→v6 migration creates the consoleinfo table for ADR-0019 / #713."""
+        db_path = tmp_path / "v5.db"
+        conn = sqlite3.connect(db_path)
+
+        # Create a v5 schema: envelope + per-model tables (excluding consoleinfo)
+        conn.execute(
+            "CREATE TABLE cluster_metadata ("
+            "    cluster_name TEXT PRIMARY KEY,"
+            "    cached_at TEXT NOT NULL,"
+            "    cache_version TEXT NOT NULL"
+            ")"
+        )
+        conn.execute("CREATE TABLE _schema_version (version INTEGER NOT NULL)")
+        conn.execute("INSERT INTO _schema_version (version) VALUES (5)")
+
+        # Create remaining model tables except consoleinfo (simulates pre-#713 state)
+        from pynetappfoundry.cache.db_schema import (
+            _ensure_registry,
+            generate_cluster_name_index_ddl,
+            generate_table_ddl,
+            generate_uuid_column_index_ddl,
+        )
+
+        registry = _ensure_registry()
+        for spec in registry.values():
+            if spec.table_name == "consoleinfo":
+                continue  # v5 had no consoleinfo table — that's what v6 adds
+            ddl = generate_table_ddl(spec.table_name, spec.model_class)
+            conn.execute(ddl)
+            conn.execute(generate_cluster_name_index_ddl(spec.table_name))
+            if spec.has_uuid:
+                conn.execute(generate_uuid_column_index_ddl(spec.table_name))
+
+        conn.commit()
+        conn.close()
+
+        # Open with current code — should trigger v5→v6 migration
+        db = ClusterMetadataDB(db_path=db_path)
+
+        # Verify schema version is the current SCHEMA_VERSION
+        cursor = db.conn.execute("SELECT version FROM _schema_version")
+        assert cursor.fetchone()[0] == ClusterMetadataDB.SCHEMA_VERSION
+
+        # Verify consoleinfo table exists with an organization column
+        cursor = db.conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='consoleinfo'"
+        )
+        assert cursor.fetchone() is not None
+
+        cursor = db.conn.execute("PRAGMA table_info(consoleinfo)")
+        columns = {row[1] for row in cursor.fetchall()}
+        assert "organization" in columns
+        assert "cluster_name" in columns
 
         db.close()
 

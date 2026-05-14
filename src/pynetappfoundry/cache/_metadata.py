@@ -18,6 +18,7 @@ from pynetappfoundry.cache._base import (
     HasUUID,
     _utcnow,
 )
+from pynetappfoundry.models.console.types import Organization
 from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
 from pynetappfoundry.models.ontap.cluster.licensing.licenses.model import (
     OntapLicensePackageResponse,
@@ -32,6 +33,12 @@ from pynetappfoundry.models.ontap.snapmirror.relationships.model import (
 )
 from pynetappfoundry.models.ontap.storage.model import StorageInfo
 from pynetappfoundry.models.ontap.svm.peers.model import OntapSvmPeer
+
+
+class ConsoleInfo(CacheModel):
+    """Console SaaS data cached for the cluster's owning org."""
+
+    organization: Organization | None = None
 
 
 class RelationshipsInfo(CacheModel):
@@ -88,6 +95,7 @@ class CachedClusterMetadata(CacheModel):
     mediator: OntapMediatorResponse = Field(default_factory=OntapMediatorResponse)
     relationships: RelationshipsInfo = Field(default_factory=RelationshipsInfo)
     protocols: ProtocolsInfo = Field(default_factory=ProtocolsInfo)
+    console: ConsoleInfo = Field(default_factory=ConsoleInfo)
 
     def is_stale(self, ttl_days: int = 30) -> bool:
         """Check if the cache is stale based on TTL.

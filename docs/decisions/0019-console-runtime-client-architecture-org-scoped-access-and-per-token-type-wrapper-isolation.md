@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed. Will be marked Accepted once issue #713 ships the v1 implementation.
+Accepted. v1 implementation landed in issue #713.
 
 ## Context
 

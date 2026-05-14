@@ -41,6 +41,7 @@ _DATA_FIELDS = frozenset(
         "mediator",
         "relationships",
         "protocols",
+        "console",
     }
 )
 

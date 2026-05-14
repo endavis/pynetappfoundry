@@ -110,6 +110,24 @@ class DIIAPISettings(BaseModel):
     timeout: float = 30.0
 
 
+class ConsoleAPISettings(BaseModel):
+    """Console SaaS API settings.
+
+    user_token is required (a user JWT from the BlueXP UI).
+    service_token is optional; operations that require it will raise
+    ConsoleServiceTokenMissingError if it is absent.
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    user_token: str
+    service_token: str | None = None
+    base_url: str
+    org_id: str | None = None
+    base_api_path: str = "/"
+    timeout: float = 30.0
+
+
 class SearchableKeysConfig(BaseModel):
     """Searchable keys configuration for a resource type."""
 
