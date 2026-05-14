@@ -35,7 +35,7 @@ jobs:
         id: griffe
         run: |
           set +e
-          OUTPUT=$(griffe check package_name \
+          OUTPUT=$(griffe check pynetappfoundry \
             --against "origin/${{ github.base_ref }}" \
             --search src \
             --verbose 2>&1)
