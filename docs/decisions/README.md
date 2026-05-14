@@ -101,5 +101,22 @@ The Issue contains the full discussion; the ADR summarizes the outcome.
 
 | ADR | Title | Status |
 |-----|-------|--------|
-
-_(No project-level ADRs yet.)_
+| [0001](0001-use-sqlite-for-cluster-metadata-caching.md) | Use SQLite for cluster metadata caching | Accepted |
+| [0002](0002-track-smb-client-impact-azure-maintenance.md) | Track SMB client impact during Azure maintenance | Accepted |
+| [0003](0003-use-base-sqlitedb-class-with-version-based-migrations.md) | Use base SQLiteDB class with version-based migrations | Accepted |
+| [0004](0004-declarative-field-mapping-framework.md) | Declarative field mapping framework for ONTAP collection | Accepted |
+| [0005](0005-uuid-index-for-cache-cross-references.md) | UUID index for cache cross-references | Accepted |
+| [0006](0006-generalize-field-mapping-for-multi-api.md) | Generalize field mapping framework for multi-API data collection | Accepted |
+| [0007](0007-url-tree-model-registry.md) | Deep URL-tree structure with automatic model and mapping discovery | Accepted |
+| [0008](0008-openapi-codegen-for-model-generation.md) | OpenAPI codegen for model and mapping generation | Accepted |
+| [0009](0009-sql-table-storage.md) | Per-Model SQL Table Storage for Cache Layer | Accepted |
+| [0010](0010-clusterentry-and-namespace-access-pattern.md) | ClusterEntry and namespace access pattern | Accepted |
+| [0011](0011-nested-models-to-replace-flat-model-pattern.md) | Nested models to replace flat model pattern | Accepted |
+| [0012](0012-unified-datasource-accessor.md) | Unified DataSource Accessor for All Cluster Reads | Superseded |
+| [0013](0013-datasource-as-a-thin-facade-over-the-collector.md) | DataSource as a Thin Facade Over the Collector | Proposed |
+| [0014](0014-parallel-cluster-refresh.md) | Parallel Cluster Refresh | Accepted |
+| [0015](0015-dii-backend-live-only-bare-array-envelope-offsetlimit-pagination.md) | DII backend: live-only, bare-array envelope, offset/limit pagination | Accepted |
+| [0016](0016-pr-based-release-is-the-only-supported-flow.md) | PR-based release is the only supported flow | Accepted |
+| [0017](0017-where-expressions-are-cache-only-rationale.md) | where-expressions are cache-only (rationale) | Accepted |
+| [0018](0018-cache-schema-versioning-and-backward-compatibility-policy.md) | Cache schema versioning and backward-compatibility policy | Accepted |
+| [0019](0019-console-runtime-client-architecture-org-scoped-access-and-per-token-type-wrapper-isolation.md) | Console runtime client architecture: org-scoped access and per-token-type wrapper isolation | Proposed |
