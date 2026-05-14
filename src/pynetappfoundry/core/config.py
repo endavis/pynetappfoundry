@@ -47,6 +47,7 @@ from pathlib import Path
 from typing import Any, TypeVar
 
 from pynetappfoundry.core.models import (
+    ConsoleAPISettings,
     DIIAPISettings,
     LicensingSettings,
     ONTAPAPISettings,
@@ -259,6 +260,27 @@ class Config:
                 f"Invalid DII API configuration: {e}. "
                 "Ensure settings.toml has a valid [diiapi.general] section with "
                 "'api_ro_token', 'base_url', and 'base_api_path' fields."
+            ) from e
+
+    def get_console_api_settings(self) -> ConsoleAPISettings:
+        """Get Console SaaS API settings.
+
+        Returns:
+            ConsoleAPISettings object with API configuration.
+
+        Raises:
+            ConfigurationError: If Console API settings are not configured.
+        """
+        try:
+            console_data = self.get_setting("consoleapi", "general")
+            return ConsoleAPISettings.model_validate(console_data)
+        except ConfigurationError:
+            raise
+        except Exception as e:
+            raise ConfigurationError(
+                f"Invalid Console API configuration: {e}. "
+                "Ensure consoleapi.toml has a valid [general] section with "
+                "'user_token' and 'base_url' fields."
             ) from e
 
     def get_licensing_settings(self) -> LicensingSettings | None:

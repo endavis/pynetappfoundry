@@ -1,0 +1,20 @@
+[general]
+# Console SaaS (BlueXP) API settings.
+#
+# v1 supports static tokens only (no OAuth refresh flow yet).
+# See notes.txt for how to obtain the user_token (and optional service_token).
+
+user_token = 'paste-user-jwt-here'
+
+# Optional. Lazy-validated: ConsoleAPIClient only constructs the service-token
+# APIWrapper when this is present. Calling a service-typed endpoint without
+# a service_token raises ConsoleServiceTokenMissingError.
+# service_token = 'paste-service-account-jwt-here'
+
+base_url = 'https://api.bluexp.netapp.com'
+base_api_path = '/'
+
+# Default organization id. Can be overridden per Console(...) instance.
+org_id = 'your-org-id'
+
+timeout = 30.0

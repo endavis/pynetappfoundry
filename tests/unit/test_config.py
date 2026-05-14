@@ -8,6 +8,7 @@ import pytest
 
 from pynetappfoundry.core.config import Config, ConfigurationError
 from pynetappfoundry.core.models import (
+    ConsoleAPISettings,
     DIIAPISettings,
     LicensingSettings,
     ONTAPAPISettings,
@@ -635,6 +636,98 @@ key = "value"
             with pytest.raises(ConfigurationError) as exc_info:
                 config.get_dii_api_settings()
             assert "diiapi" in str(exc_info.value) or "Missing configuration" in str(exc_info.value)
+        finally:
+            os.chdir(original_cwd)
+
+
+class TestGetConsoleApiSettings:
+    """Tests for get_console_api_settings accessor method."""
+
+    def test_get_console_api_settings_success(self, temp_config_dir: Path, tmp_path: Path) -> None:
+        """get_console_api_settings returns a populated ConsoleAPISettings."""
+        consoleapi_toml = temp_config_dir / "consoleapi.toml"
+        consoleapi_toml.write_text("""
+[general]
+user_token = "user-jwt"
+service_token = "service-jwt"
+base_url = "https://api.bluexp.netapp.com"
+base_api_path = "/"
+org_id = "org-abc"
+timeout = 15.0
+""")
+        import os
+
+        original_cwd = os.getcwd()
+        os.chdir(tmp_path)
+        try:
+            output_dir = tmp_path / "output"
+            output_dir.mkdir(exist_ok=True)
+            config = Config(
+                config_dir=str(temp_config_dir),
+                output_dir=str(output_dir),
+                script_name="test_script",
+            )
+            result = config.get_console_api_settings()
+            assert isinstance(result, ConsoleAPISettings)
+            assert result.user_token == "user-jwt"
+            assert result.service_token == "service-jwt"
+            assert result.base_url == "https://api.bluexp.netapp.com"
+            assert result.org_id == "org-abc"
+            assert result.timeout == 15.0
+        finally:
+            os.chdir(original_cwd)
+
+    def test_get_console_api_settings_service_token_optional(
+        self, temp_config_dir: Path, tmp_path: Path
+    ) -> None:
+        """service_token may be omitted; defaults to None."""
+        consoleapi_toml = temp_config_dir / "consoleapi.toml"
+        consoleapi_toml.write_text("""
+[general]
+user_token = "user-jwt"
+base_url = "https://api.bluexp.netapp.com"
+""")
+        import os
+
+        original_cwd = os.getcwd()
+        os.chdir(tmp_path)
+        try:
+            output_dir = tmp_path / "output"
+            output_dir.mkdir(exist_ok=True)
+            config = Config(
+                config_dir=str(temp_config_dir),
+                output_dir=str(output_dir),
+                script_name="test_script",
+            )
+            result = config.get_console_api_settings()
+            assert result.service_token is None
+            assert result.org_id is None
+        finally:
+            os.chdir(original_cwd)
+
+    def test_get_console_api_settings_missing_raises(
+        self, temp_config_dir: Path, tmp_path: Path
+    ) -> None:
+        """get_console_api_settings raises ConfigurationError when not configured."""
+        settings_file = temp_config_dir / "settings.toml"
+        settings_file.write_text("""
+[other]
+key = "value"
+""")
+        import os
+
+        original_cwd = os.getcwd()
+        os.chdir(tmp_path)
+        try:
+            output_dir = tmp_path / "output"
+            output_dir.mkdir(exist_ok=True)
+            config = Config(
+                config_dir=str(temp_config_dir),
+                output_dir=str(output_dir),
+                script_name="test_script",
+            )
+            with pytest.raises(ConfigurationError):
+                config.get_console_api_settings()
         finally:
             os.chdir(original_cwd)
 

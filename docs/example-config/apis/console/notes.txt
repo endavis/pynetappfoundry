@@ -1,1 +1,39 @@
-Unknown as of this time
+Console SaaS (BlueXP) runtime client setup.
+
+1. OpenAPI schema:
+   Copy tools/console_openapi/generated/console_openapi.yaml from the repo into
+   this directory:
+
+       cp tools/console_openapi/generated/console_openapi.yaml \
+          ~/.config/pynetappfoundry/apis/console/
+
+   The runtime client (ConsoleAPIClient) loads the spec from
+   config.get_schema_location("console") / "console_openapi.yaml".
+
+2. Auth tokens (v1 = static tokens only):
+
+   user_token (required):
+   - Log into BlueXP at https://console.bluexp.netapp.com
+   - Open browser devtools -> Application -> Local Storage / Cookies
+   - Copy the JWT-shaped Bearer access token used in Authorization headers
+   - Paste into consoleapi.toml [general].user_token
+
+   service_token (optional, only needed for service-typed endpoints):
+   - Provision a service account in BlueXP
+   - Use its refresh token to obtain an access JWT
+   - Paste the access JWT into consoleapi.toml [general].service_token
+
+   The OAuth refresh-token grant flow is intentionally out of scope for v1
+   (ADR-0019). Tokens must be obtained out-of-band and pasted directly.
+
+3. Test it:
+
+       uv run python -c "
+       from pynetappfoundry.core.config import Config
+       from pynetappfoundry.console import Console
+
+       config = Config(config_dir='~/.config/pynetappfoundry')
+       console = Console(config)
+       org = console.get_organization()
+       print(f'{org.id}: {org.name}')
+       "

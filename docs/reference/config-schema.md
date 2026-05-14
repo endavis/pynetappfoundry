@@ -30,6 +30,7 @@ config/
 ├── users.toml           # Credentials for resource types
 ├── ontapapi.toml        # ONTAP REST API settings
 ├── diiapi.toml          # Data Infrastructure Insights API settings
+├── consoleapi.toml      # Console SaaS (BlueXP) API settings
 ├── monitoring.toml      # Monitoring thresholds (optional)
 ├── environments/        # Data files (clusters, connectors, etc.)
 │   ├── prod.toml
@@ -38,8 +39,10 @@ config/
 └── apis/                # API specifications (OpenAPI/Swagger)
     ├── ontap/
     │   └── all.json
-    └── dii/
-        └── all.json
+    ├── dii/
+    │   └── all.json
+    └── console/
+        └── console_openapi.yaml
 ```
 
 ### How Configuration Loading Works
@@ -169,6 +172,35 @@ base_api_path = "/rest/v1"                 # Optional: Base API path (default: "
 | `api_ro_token` | string | Yes | - | Read-only API token for DII authentication |
 | `base_url` | string | Yes | - | Base URL for your DII tenant |
 | `base_api_path` | string | No | `"/rest/v1"` | Base path for DII REST API endpoints |
+
+---
+
+### consoleapi.toml
+
+Console SaaS (BlueXP) API settings. Loaded into `config.settings["consoleapi"]`.
+
+v1 supports static tokens only. See `docs/example-config/apis/console/notes.txt` for how to obtain the tokens.
+
+```toml
+[general]
+user_token = "paste-user-jwt-here"          # Required: User JWT from the BlueXP UI
+# service_token = "paste-service-account-jwt-here"  # Optional: service-account JWT
+base_url = "https://api.bluexp.netapp.com"  # Required: Console API base URL
+org_id = "your-org-id"                      # Optional: Default organization ID
+base_api_path = "/"                          # Optional: Base API path (default: "/")
+timeout = 30.0                               # Optional: Request timeout in seconds (default: 30.0)
+```
+
+#### Console API Settings Fields
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `user_token` | string | Yes | - | User JWT obtained from the BlueXP UI |
+| `service_token` | string | No | `null` | Service-account JWT. Lazy-validated: raises `ConsoleServiceTokenMissingError` if absent when a service-typed endpoint is called |
+| `base_url` | string | Yes | - | Base URL for the Console API |
+| `org_id` | string | No | `null` | Default organization ID. Can be overridden per `Console(config, org_id=...)` call |
+| `base_api_path` | string | No | `"/"` | Base path for Console API endpoints |
+| `timeout` | float | No | `30.0` | HTTP request timeout in seconds |
 
 ---
 
