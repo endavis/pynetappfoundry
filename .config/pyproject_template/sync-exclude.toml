@@ -1,0 +1,58 @@
+# pyproject-template sync-exclude rules.
+#
+# Glob patterns (matched via fnmatch.fnmatch against upstream-relative
+# posix paths) that the project intentionally does NOT adopt from the
+# upstream template. See docs/template/manage.md for details.
+#
+# This file is hand-managed. It is NOT touched by `manage.py sync`.
+# (settings.toml IS rewritten by sync, which is why excludes live here.)
+
+exclude = [
+    # ── Project intentionally lacks bootstrap.py ──────────────────────
+    # The template uses bootstrap.py for first-time setup of new
+    # downstream projects. This project is past that stage.
+    "bootstrap.py",
+
+    # ── Template example app code ─────────────────────────────────────
+    # Upstream ships an example Click CLI at src/package_name/cli.py
+    # plus a core/logging scaffold. This project's CLI is structured
+    # differently (src/pynetappfoundry/cli/main.py) and the domain code
+    # is unrelated.
+    "src/package_name/cli.py",
+    "src/package_name/core.py",
+    "src/package_name/logging.py",
+
+    # ── Template scaffold examples ────────────────────────────────────
+    # Upstream's examples/ directory is generic Python-package examples
+    # (basic_usage.py, cli_usage.py, an api/ scaffold). Not applicable
+    # to a NetApp-domain library.
+    "examples/**",
+
+    # ── Top-level template tests ──────────────────────────────────────
+    # Upstream's tests/test_*.py at the root cover its example CLI, its
+    # logging, its CI workflows, and its bundled hooks. The project's
+    # tests live under tests/unit/ and tests/integration/. Note: this
+    # glob does NOT match tests/template/test_*.py — those tests cover
+    # template framework code (tools/doit/, tools/pyproject_template/)
+    # that we DO inherit, so we keep them in sync.
+    "tests/test_*.py",
+
+    # ── Template example benchmarks ───────────────────────────────────
+    # Upstream ships benchmarks for its example src/package_name/core.py
+    # and src/package_name/logging.py (which we exclude above). The
+    # project keeps its own domain benchmarks in tests/benchmarks/.
+    # conftest.py and __init__.py under tests/benchmarks/ are still
+    # synced — only the example-targeting benches are excluded.
+    "tests/benchmarks/test_bench_core.py",
+    "tests/benchmarks/test_bench_logging.py",
+
+    # ── CBM gate hooks ────────────────────────────────────────────────
+    # Adoption tracked separately in issue #717 (explore + enable CBM).
+    # The hook files stay out of the project until that decision lands.
+    "tools/hooks/ai/cbm-*",
+
+    # ── context-mode wrapper hooks ────────────────────────────────────
+    # Adoption tracked separately in issue #718 (explore + enable
+    # context-mode). The wrapper files stay out until that decision lands.
+    "tools/hooks/ai/context-mode-*",
+]
