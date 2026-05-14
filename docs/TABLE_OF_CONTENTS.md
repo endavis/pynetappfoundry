@@ -9,9 +9,9 @@ Complete index of all documentation, organized by audience and as a full alphabe
 
 ### For Users
 <!-- BEGIN:audience=users -->
-- [__PROJECT_NAME__ Documentation](index.md) - Welcome and overview of the project
-- [API Development Guide](examples/api.md) - Building REST APIs with FastAPI - patterns, testing, and best practices
-- [API Reference](reference/api.md) - Complete API documentation for __PROJECT_NAME__
+- [API Examples](examples/api.md) - Detailed Python API usage examples
+- [API Reference](reference/api.md) - Python API documentation
+- [Basic Usage](usage/basics.md) - Getting started with pynetappfoundry
 - [Cache System](reference/cache.md) - Architecture, storage layout, lazy loading, and CLI for the cluster metadata cache
 - [CLI Guide](usage/cli.md) - The application's user-facing command-line interface and how to extend it
 - [CLI Reference](reference/cli.md) - Command-line interface documentation
@@ -20,7 +20,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [DataSource](usage/data-source.md) - Unified entry point for reading cluster data from cache or live API
 - [Development Deployment Guide](deployment/development.md) - Guide for setting up and running the application in development environments
 - [Doit Tasks Reference](development/doit-tasks-reference.md) - Complete reference for all doit automation tasks
-- [Examples](examples/README.md) - Example scripts demonstrating how to use the package
+- [Examples](examples/README.md) - Code examples for pynetappfoundry
 - [GitHub Repository Settings](development/github-repository-settings.md) - Complete reference for all GitHub repository settings the template expects
 - [Installation Guide](getting-started/installation.md) - How to install and set up your project
 - [Keeping Up to Date](template/updates.md) - Stay in sync with improvements to the pyproject-template
@@ -28,16 +28,15 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [New Project Setup](template/new-project.md) - Create a new Python project from this template
 - [ONTAP Access Patterns](usage/ontap-access-patterns.md) - Guide to choosing between the three ONTAP access methods
 - [Production Deployment Guide](deployment/production.md) - Comprehensive guide for deploying Python applications to production
+- [pynetappfoundry Documentation](index.md) - ONTAP administration library and CLI tools
 - [Query Layer](usage/query-layer.md) - Guide to the REST query layer (QuerySet, Query, Mutation, JobTracker, related, realtime)
 - [Template Management](template/manage.md) - Unified interface for creating projects, checking updates, and syncing
 - [Template Tools Reference](template/tools-reference.md) - Complete reference for all template tools in tools/pyproject_template/
-- [Usage Guide](usage/basics.md) - Package usage and development workflows
 - [Using This Template](template/index.md) - Overview of using pyproject-template for your Python projects
 <!-- END:audience=users -->
 
 ### For Contributors
 <!-- BEGIN:audience=contributors -->
-- [__PROJECT_NAME__ Documentation](index.md) - Welcome and overview of the project
 - [Add a Feature: End-to-End Walkthrough](examples/add-a-feature.md) - Step-by-step example of adding a module, CLI subcommand, tests, and docs to the project
 - [Adding a New API Backend](development/adding-backends.md) - Developer guide for extending the DataSource framework with new API backends
 - [AI Agent Setup Guide](development/AI_SETUP.md) - Configure Claude, Gemini, Copilot, and Codex for this project
@@ -45,8 +44,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [AI Architectural Conventions](development/ai/architectural-conventions.md) - Imperative-form architectural rules AI agents must follow when generating code
 - [AI Command Blocking](development/ai/command-blocking.md) - Hooks that block dangerous commands from AI agents
 - [AI Enforcement Principles](development/ai/enforcement-principles.md) - How we enforce AI agent behavior in code and settings
-- [API Development Guide](examples/api.md) - Building REST APIs with FastAPI - patterns, testing, and best practices
-- [API Reference](reference/api.md) - Complete API documentation for __PROJECT_NAME__
+- [API Reference](reference/api.md) - Python API documentation
 - [Auto-Checkpoint and Session-Restore Hooks](development/ai/auto-checkpoint-hook.md) - PreCompact and SessionStart hooks that preserve context across autocompact events
 - [Cache Model Architecture](development/cache-models.md) - End-to-end guide for the codegen pipeline, cache models, field strategies, and SQL storage
 - [Cache System](reference/cache.md) - Architecture, storage layout, lazy loading, and CLI for the cluster metadata cache
@@ -65,6 +63,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [Optional Extensions](development/extensions.md) - Additional tools and extensions for testing, security, and more
 - [Performance Benchmarks](development/benchmarks.md) - Running, interpreting, and comparing the pytest-benchmark suite
 - [Production Deployment Guide](deployment/production.md) - Comprehensive guide for deploying Python applications to production
+- [pynetappfoundry Documentation](index.md) - ONTAP administration library and CLI tools
 - [Python Project Coding Standards](development/coding-standards.md) - Guidelines for exceptions, typing, structure, testing, and documentation
 - [Query Layer](usage/query-layer.md) - Guide to the REST query layer (QuerySet, Query, Mutation, JobTracker, related, realtime)
 - [Release Automation & Security](development/release-and-automation.md) - Automated versioning, release management, and security tooling
@@ -94,7 +93,6 @@ Complete index of all documentation, organized by audience and as a full alphabe
 
 ## Complete Index
 <!-- BEGIN:all -->
-- [__PROJECT_NAME__ Documentation](index.md) - Welcome and overview of the project
 - [Add a Feature: End-to-End Walkthrough](examples/add-a-feature.md) - Step-by-step example of adding a module, CLI subcommand, tests, and docs to the project
 - [Adding a New API Backend](development/adding-backends.md) - Developer guide for extending the DataSource framework with new API backends
 - [ADR-0001: Use SQLite for cluster metadata caching](decisions/0001-use-sqlite-for-cluster-metadata-caching.md)
@@ -153,11 +151,12 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [AI Architectural Conventions](development/ai/architectural-conventions.md) - Imperative-form architectural rules AI agents must follow when generating code
 - [AI Command Blocking](development/ai/command-blocking.md) - Hooks that block dangerous commands from AI agents
 - [AI Enforcement Principles](development/ai/enforcement-principles.md) - How we enforce AI agent behavior in code and settings
-- [API Development Guide](examples/api.md) - Building REST APIs with FastAPI - patterns, testing, and best practices
-- [API Reference](reference/api.md) - Complete API documentation for __PROJECT_NAME__
+- [API Examples](examples/api.md) - Detailed Python API usage examples
+- [API Reference](reference/api.md) - Python API documentation
 - [Architecture Decision Records](decisions/README.md)
 - [Auto-Checkpoint and Session-Restore Hooks](development/ai/auto-checkpoint-hook.md) - PreCompact and SessionStart hooks that preserve context across autocompact events
 - [Azure Maintenance SMB Client Impact Tracking](plans/azure-smb-impact-tracking.md)
+- [Basic Usage](usage/basics.md) - Getting started with pynetappfoundry
 - [Cache Model Architecture](development/cache-models.md) - End-to-end guide for the codegen pipeline, cache models, field strategies, and SQL storage
 - [Cache System](reference/cache.md) - Architecture, storage layout, lazy loading, and CLI for the cluster metadata cache
 - [CI/CD Testing Guide](development/ci-cd-testing.md) - GitHub Actions pipelines for testing, linting, and coverage
@@ -171,7 +170,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [Dependabot Auto-merge](development/dependabot-automerge.md) - How the dependabot auto-merge workflow evaluates, enables, and skips PRs
 - [Development Deployment Guide](deployment/development.md) - Guide for setting up and running the application in development environments
 - [Doit Tasks Reference](development/doit-tasks-reference.md) - Complete reference for all doit automation tasks
-- [Examples](examples/README.md) - Example scripts demonstrating how to use the package
+- [Examples](examples/README.md) - Code examples for pynetappfoundry
 - [Field Mapping Framework](development/field-mapping.md) - Declarative framework for mapping API/CLI data to cache models
 - [First 5 Minutes with an AI Agent](development/ai/first-5-minutes.md) - Narrative walkthrough of the AI agent workflow from issue to merge
 - [GitHub Repository Settings](development/github-repository-settings.md) - Complete reference for all GitHub repository settings the template expects
@@ -187,6 +186,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [Plan: Add `nf cache query` Command](plans/cache-query-command.md)
 - [Production Deployment Guide](deployment/production.md) - Comprehensive guide for deploying Python applications to production
 - [PyNetAppFoundry Code Review & Improvement Plan](plans/first-pass-refactor.md)
+- [pynetappfoundry Documentation](index.md) - ONTAP administration library and CLI tools
 - [Python Project Coding Standards](development/coding-standards.md) - Guidelines for exceptions, typing, structure, testing, and documentation
 - [Query Layer](usage/query-layer.md) - Guide to the REST query layer (QuerySet, Query, Mutation, JobTracker, related, realtime)
 - [Release Automation & Security](development/release-and-automation.md) - Automated versioning, release management, and security tooling
@@ -197,7 +197,6 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [Template Tools Reference](template/tools-reference.md) - Complete reference for all template tools in tools/pyproject_template/
 - [Tooling Roles and Architectural Boundaries](development/tooling-roles.md) - What each tool is for, who uses it, and where runtime code ends and dev tooling begins
 - [Unit Registry](development/unit-registry.md) - Standalone unit registry for ONTAP API field measurements
-- [Usage Guide](usage/basics.md) - Package usage and development workflows
 - [Using This Template](template/index.md) - Overview of using pyproject-template for your Python projects
 <!-- END:all -->
 

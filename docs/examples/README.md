@@ -1,110 +1,142 @@
 ---
 title: Examples
-description: Example scripts demonstrating how to use the package
+description: Code examples for pynetappfoundry
 audience:
   - users
 tags:
   - examples
-  - getting-started
+  - tutorial
 ---
 
 # Examples
 
-This directory contains example scripts demonstrating how to use the package.
+This section contains example code demonstrating common use cases for pynetappfoundry.
 
-## Running Examples
+## Quick Start
 
-Make sure you have the package installed:
+### Initialize Configuration
 
-```bash
-# Install in development mode
-uv pip install -e .
+```python
+from pynetappfoundry import Config
 
-# Or install from PyPI
-pip install __PYPI_NAME__
+# Load configuration from default location (~/.config/pynetappfoundry)
+config = Config()
+
+# Or specify a custom config directory
+config = Config(config_dir="/path/to/config")
 ```
 
-Then run any example:
+### Search for Clusters
 
-```bash
-python examples/basic_usage.py
-python examples/advanced_usage.py
-python examples/cli_usage.py
+```python
+from pynetappfoundry import Config
+
+config = Config()
+
+# Search by environment
+prod_clusters = config.search("clusters", {"env": "Prod"})
+for name, details in prod_clusters.items():
+    print(f"{name}: {details['ip']}")
+
+# Search by multiple criteria
+filtered = config.search("clusters", {"bu": "Engineering", "env": "Dev"})
+
+# Search with OR conditions
+clusters = config.search("clusters", {"env": "Prod || Dev"})
+
+# Search with AND conditions on tags
+clusters = config.search("clusters", {"tags": "active && critical"})
 ```
 
-## Available Examples
+### Create an ONTAP API Client
 
-### basic_usage.py
+```python
+from pynetappfoundry import Config, ONTAPAPIClient
 
-Simple example demonstrating basic functionality.
+config = Config()
 
-**What it covers:**
-- Importing the package
-- Basic operations
-- Simple error handling
+# Get a cluster from search results
+clusters = config.search("clusters", {"name": "my-cluster"})
+cluster = list(clusters.values())[0]
 
-### advanced_usage.py
+# Create the API client
+# Note: cluster must have 'name' and 'ip' attributes
+from types import SimpleNamespace
+cluster_obj = SimpleNamespace(**cluster)
 
-Advanced example with more complex features.
-
-**What it covers:**
-- Advanced configuration
-- Custom settings
-- Complex data processing
-- Best practices
-
-### cli_usage.py
-
-Example of using the command-line interface (if available).
-
-**What it covers:**
-- CLI commands
-- Options and arguments
-- Output formatting
-
-### Add a Feature (End-to-End Walkthrough)
-
-Narrative guide that walks through adding a hypothetical `farewell` feature from issue creation to merged PR.
-
-**What it covers:**
-- The full workflow: issue, branch, code, tests, docs, PR
-- Core module and CLI subcommand patterns
-- Thin-adapter pattern for CLI commands
-- Architectural boundaries (runtime vs dev tooling)
-
-See the [Add a Feature Walkthrough](add-a-feature.md) for the full guide.
-
-### api/ (FastAPI Application)
-
-Complete REST API example demonstrating FastAPI best practices.
-
-**What it covers:**
-- Application factory pattern
-- Router organization
-- Pydantic validation
-- Dependency injection
-- Error handling
-- OpenAPI documentation
-
-See the [API Development Guide](api.md) for detailed documentation.
-
-**Running the API example:**
-
-```bash
-# Install FastAPI dependencies
-uv add fastapi uvicorn[standard]
-
-# Run the server
-uvicorn examples.api.main:app --reload
-
-# Visit http://localhost:8000/docs for Swagger UI
+client = ONTAPAPIClient(cluster_obj, config)
 ```
 
-## Contributing Examples
+### Call ONTAP REST API Endpoints
 
-Have an interesting use case? We'd love to add it!
+```python
+# List available endpoints
+endpoints = client.list_endpoints()
+for path, method, summary in endpoints[:5]:
+    print(f"{method} {path}: {summary}")
 
-1. Create a new `.py` file in this directory
-2. Add clear comments explaining what it does
-3. Add it to this README
-4. Submit a pull request
+# Get parameter hints for an endpoint
+params = client.suggest_parameters("/storage/volumes", "GET")
+print(f"Query params: {params['query_params']}")
+
+# Call an endpoint
+volumes = client.call_endpoint(
+    "/storage/volumes",
+    "GET",
+    query_params={"fields": "name,size,space.used"},
+)
+for vol in volumes.get("records", []):
+    print(f"Volume: {vol['name']}, Size: {vol.get('size', 'N/A')}")
+```
+
+### Run CLI Commands via SSH
+
+```python
+from pynetappfoundry import Config, ONTAPCLI
+
+config = Config()
+clusters = config.search("clusters", {"name": "my-cluster"})
+cluster = list(clusters.values())[0]
+
+# Create CLI client
+cli = ONTAPCLI(
+    name=cluster["name"],
+    host_or_ip=cluster["ip"],
+    username="admin",
+    password="password",
+)
+
+# Run a command
+output = cli.run_command("volume show -fields size,used")
+for line in output:
+    print(line)
+
+# Don't forget to disconnect
+cli.disconnect()
+```
+
+## CLI Examples
+
+### Utility Commands
+
+```bash
+# Run CLI command on clusters matching filter
+nf utils run-cmd "vol show" --filter '{"bu":"Engineering"}'
+
+# Validate configuration
+nf config validate
+
+# Show loaded configuration
+nf config show
+```
+
+### Report Generation
+
+```bash
+# Generate reports (if implemented)
+nf reports --help
+```
+
+## More Examples
+
+- [API Examples](api.md) - Detailed API usage examples including retry and validation

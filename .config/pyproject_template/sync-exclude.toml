@@ -37,6 +37,22 @@ exclude = [
     # by hand if needed; they're not worth the constant drift flagging.
     "mkdocs.yml",
 
+    # ── Project user-facing documentation ─────────────────────────────
+    # These pages document the project's own modules (ONTAP/DII clients,
+    # cache, config, CLI) and reference `pynetappfoundry.*` directly.
+    # Upstream's versions are generic Python-library scaffolds —
+    # importing them via sync (as the initial Phase B bulk-copy did)
+    # breaks mkdocstrings because the example `package_name` module
+    # doesn't exist locally.
+    "docs/index.md",
+    "docs/deployment/development.md",
+    "docs/deployment/production.md",
+    "docs/examples/api.md",
+    "docs/examples/README.md",
+    "docs/getting-started/installation.md",
+    "docs/reference/api.md",
+    "docs/usage/basics.md",
+
     # tests/template/test_properties.py — Hypothesis property tests for
     # upstream's example `package_name.core.greet` (which we exclude). The
     # test would ImportError locally since no `package_name` module exists.

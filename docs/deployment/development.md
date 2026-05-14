@@ -28,7 +28,7 @@ uv sync
 doit test
 
 # Start development
-uv run python -m __PACKAGE_NAME__
+uv run python -m pynetappfoundry
 ```
 
 ## Environment Setup
@@ -113,13 +113,13 @@ The recommended way to run commands:
 
 ```bash
 # Run the main module
-uv run python -m __PACKAGE_NAME__
+uv run python -m pynetappfoundry
 
 # Run a specific script
 uv run python scripts/example.py
 
 # Run with arguments
-uv run python -m __PACKAGE_NAME__ --verbose
+uv run python -m pynetappfoundry --verbose
 ```
 
 ### Using doit Tasks
@@ -151,7 +151,7 @@ If you've activated the virtual environment:
 source .venv/bin/activate
 
 # Then run directly
-python -m __PACKAGE_NAME__
+python -m pynetappfoundry
 ```
 
 ## Development Workflow
@@ -186,7 +186,7 @@ python -m __PACKAGE_NAME__
 doit test
 
 # Run with coverage
-doit coverage
+uv run pytest --cov
 
 # Run specific test file
 uv run pytest tests/test_specific.py
@@ -212,7 +212,7 @@ Add to `.vscode/launch.json`:
       "name": "Python: Module",
       "type": "debugpy",
       "request": "launch",
-      "module": "__PACKAGE_NAME__",
+      "module": "pynetappfoundry",
       "cwd": "${workspaceFolder}",
       "envFile": "${workspaceFolder}/.env"
     },
@@ -232,7 +232,7 @@ Add to `.vscode/launch.json`:
 
 1. Go to **Run > Edit Configurations**
 2. Add new **Python** configuration
-3. Set **Module name**: `__PACKAGE_NAME__`
+3. Set **Module name**: `pynetappfoundry`
 4. Set **Working directory**: project root
 5. Add **Environment variables** from `.env`
 
@@ -240,11 +240,11 @@ Add to `.vscode/launch.json`:
 
 ```bash
 # Using pdb
-uv run python -m pdb -m __PACKAGE_NAME__
+uv run python -m pdb -m pynetappfoundry
 
 # Using breakpoint() in code
 # Add breakpoint() where you want to stop, then run normally
-uv run python -m __PACKAGE_NAME__
+uv run python -m pynetappfoundry
 ```
 
 ## Local Services
@@ -305,17 +305,15 @@ SQLite requires no external services and is suitable for most development work.
 The project uses pre-commit hooks for quality gates:
 
 ```bash
-# Install all hooks (pre-commit, post-merge, post-checkout)
-doit pre_commit_install
+# Install hooks (done automatically by uv sync)
+uv run pre-commit install
 
 # Run manually
-doit pre_commit_run
+uv run pre-commit run --all-files
 
 # Skip hooks (use sparingly)
 git commit --no-verify -m "WIP: work in progress"
 ```
-
-The project also includes **post-merge** and **post-checkout** hooks that automatically run `uv sync` when `uv.lock` changes after a `git pull` or branch switch. This keeps your local environment in sync without manual intervention.
 
 ### Type Checking
 
@@ -344,7 +342,7 @@ uv run ruff check --fix src/
 doit fmt
 
 # Check format without changing
-doit format_check
+uv run ruff format --check src/
 ```
 
 ## Troubleshooting
@@ -366,7 +364,7 @@ uv sync
 uv sync
 
 # Verify installation
-uv run python -c "import __PACKAGE_NAME__; print(__PACKAGE_NAME__.__version__)"
+uv run python -c "import pynetappfoundry; print(pynetappfoundry.__version__)"
 ```
 
 #### Permission Denied
@@ -453,13 +451,13 @@ For web applications or services that support it:
 
 ```bash
 # Using uvicorn with reload
-uv run uvicorn __PACKAGE_NAME__.app:app --reload
+uv run uvicorn pynetappfoundry.app:app --reload
 
 # Using Flask debug mode
 FLASK_DEBUG=1 uv run flask run
 
 # Using watchfiles for custom scripts
-uv run watchfiles "python -m __PACKAGE_NAME__" src/
+uv run watchfiles "python -m pynetappfoundry" src/
 ```
 
 ## Performance Profiling
@@ -468,7 +466,7 @@ uv run watchfiles "python -m __PACKAGE_NAME__" src/
 
 ```bash
 # Using cProfile
-uv run python -m cProfile -o profile.stats -m __PACKAGE_NAME__
+uv run python -m cProfile -o profile.stats -m pynetappfoundry
 
 # Analyze results
 uv run python -c "import pstats; p = pstats.Stats('profile.stats'); p.sort_stats('cumulative').print_stats(20)"
@@ -521,21 +519,21 @@ uv publish --publish-url https://test.pypi.org/legacy/ --token pypi-xxxxxxxxxxxx
 
 ```bash
 # Install from TestPyPI
-uv pip install --index-url https://test.pypi.org/simple/ __PYPI_NAME__
+uv pip install --index-url https://test.pypi.org/simple/ pynetappfoundry
 
 # If your package has dependencies from real PyPI, use both indexes
-uv pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ __PYPI_NAME__
+uv pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ pynetappfoundry
 ```
 
 ### Verify Package
 
 ```bash
 # Check the package page
-# https://test.pypi.org/project/__PYPI_NAME__/
+# https://test.pypi.org/project/pynetappfoundry/
 
 # Verify installation works
 uv venv /tmp/test-install
-uv pip install --python /tmp/test-install --index-url https://test.pypi.org/simple/ __PYPI_NAME__
+uv pip install --python /tmp/test-install --index-url https://test.pypi.org/simple/ pynetappfoundry
 ```
 
 ### Common Issues
