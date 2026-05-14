@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1778717697556,
+  "lastUpdate": 1778721129257,
   "repoUrl": "https://github.com/endavis/pynetappfoundry",
   "entries": {
     "Benchmark": [
@@ -6688,6 +6688,310 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.001061272495524416",
             "extra": "mean: 1.051486611541686 msec\nrounds: 1161"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "6662995+endavis@users.noreply.github.com",
+            "name": "Eric Davis",
+            "username": "endavis"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "951f31dc87707c1e85c75578d16cacd2aa91554a",
+          "message": "chore: pyproject-template sync Phase B (merges PR #723, addresses #716)\n\n* chore: sync template state to 36bcb77fe1df2d644e7ae6a4e2339d786175f388\n\n* chore: sync template framework code and docs from pyproject-template\n\nPulls upstream changes for framework code and docs across 67 files:\n\n- tools/doit/ (5 files): base.py, git.py, install_tools.py, quality.py,\n  release.py — picks up #555 transient gh retries, #545\n  install_check_or_skip pattern, #561 CI parallelization, doit-task\n  wording tweaks.\n- tools/pyproject_template/cleanup.py: cleanup mechanism updates.\n- docs/ (31 files + TOC): all template-shipped doc pages\n  (development/, template/, decisions/9XXX ADRs, examples/, deployment/,\n  etc.). TABLE_OF_CONTENTS.md regenerated to include the new pages from\n  the new-files commit.\n- .github/ (12 files): CONTRIBUTING.md, CODEOWNERS, SECURITY.md,\n  dependabot.yml, python-versions.json, ISSUE_TEMPLATE/config.yml,\n  workflows/breaking-change-detection.yml, workflows/codeql.yml\n  (v3 -> v4 bump per #501), workflows/dependabot-automerge.yml,\n  workflows/pr-checks.yml, workflows/release.yml, workflows/testpypi.yml.\n- .claude/ (4 files): agents/implement-worker.md, lsp-setup.md,\n  settings.json (wires PreCompact + SessionStart hooks per #513),\n  statusline-command.sh.\n- .codex/config.toml, .copilot/README.md, .gemini/settings.json.\n- tests/template/test_doit_github.py: replaces Phase A's minimal stub\n  with the full upstream test suite (now imports cleanly thanks to\n  #555 retry symbols arriving in this same sync).\n- tests/conftest.py: test config sync.\n- .envrc, .envrc.local.example, .gitignore, .python-version, LICENSE,\n  .pre-commit-config.yaml: misc config updates.\n\n.pre-commit-config.yaml: adopts upstream's stage cleanups and adds the\nuv-lock-check hook (#557); the docs/example-config/apis/ exclusions on\ntrailing-whitespace, end-of-file-fixer, check-added-large-files,\ndetect-private-key, and codespell hooks are preserved.\n\nAddresses #716\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* chore: bring in cross-agent delegation skills and new template assets\n\nAdds 117 new files from upstream pyproject-template covering the\ncross-agent delegation matrix and ancillary tooling:\n\n- .agents/skills/ (23 files): codex-* self-action skills,\n  delegate-{claude,gemini,copilot}-* bridges, multi-* orchestrators,\n  ghi-finalize, checkpoint/restore skills.\n- .claude/commands/ (16 files): {claude,gemini,codex,copilot}/* bridge\n  commands plus ghi-finalize, ghi-status, multi-*, checkpoint, restore.\n- .claude/rules/README.md: rule-scaffold pattern doc (loading is opt-in).\n- .gemini/commands/ (19 files): TOML-format equivalents under\n  {claude,gemini,codex,copilot}/, multi-*, checkpoint, restore,\n  ghi-finalize.\n- .gemini/policies/developer.toml: Gemini Policy Engine config.\n- .gemini/rules/README.md: rule-scaffold mirror.\n- .copilot/commands/ (19 files): {claude,gemini,codex,copilot}/* bridges\n  plus multi-*.\n- .github/instructions/README.md: per-stack instruction file doc for\n  Copilot CLI.\n- docs/development/ai/ (4 files): auto-checkpoint-hook,\n  cross-agent-delegation matrix, lsp-tool guide, token-efficiency add-ons\n  walkthrough.\n- tests/template/ (16 files): template framework test coverage\n  (test_doit_* per-module suites, test_ai_agent_assets, test_cleanup,\n  test_repo_settings, test_setup_repo, test_templates, test_utils,\n  test_pyproject_template_main).\n- tools/hooks/ai/ (3 files): bash-ban-raw-tools.py (disabled by\n  default), precompact-checkpoint.py + session-resume-restore.py\n  wired in .claude/settings.json for auto-checkpoint behavior (per\n  #513 — to be evaluated in real session).\n- tools/statusline/claude-usage.sh: Claude Max usage helper.\n\nCBM and context-mode hook files are kept out via sync-exclude rules\n(tracked separately in #717 and #718).\n\nAddresses #716\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* chore: hand-merge customized files for pyproject-template Phase B sync\n\nAdopts upstream's structural changes to 6 customized files while\npreserving project-specific content:\n\n- AGENTS.md: takes upstream's AI Config Directories restructure (per\n  #550/#558 cross-agent delegation) and updated Slash Commands &\n  Workflows reference line. Preserves project's `Cache Schema Pitfalls`\n  section under Common Pitfalls (ADR-0018 contract).\n- .claude/CLAUDE.md: adopts the rule-scaffold opt-in comments at the\n  top. Keeps project's `src/pynetappfoundry/cli.py` example path\n  (upstream generalized to `__PACKAGE_NAME__`).\n- .github/workflows/ci.yml: adopts upstream's restructure (separate\n  `lint` job using doit tasks + parallelized `pytest -n auto` via\n  #561). Preserves SOPS install steps across Linux/macOS/Windows and\n  updates `--cov=package_name` -> `--cov=pynetappfoundry`.\n- tools/doit/security.py: adopts upstream's `install_check_or_skip`\n  pattern. Adds `--ignore-vuln GHSA-r374-rxx8-8654` to the pip-audit\n  invocation to keep `doit audit` clean against the paramiko CVE\n  (matches the existing CI suppression tracked in #701).\n- tools/doit/github.py: takes upstream's full revision (includes #555\n  transient retries, #544 anchored Addresses regex, and other\n  refinements). Drops one unused `noqa: ANN401` directive that this\n  project's ruff config rejects.\n- tests/test_codeql_workflow.py: renames `test_analyze_uses_codeql_*_v3`\n  to `*_v4` and updates assertions to match upstream's CodeQL\n  v3 -> v4 bump (#501). Test failure was a signal that the workflow\n  pin moved, not a regression.\n\nAddresses #716\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* chore: expand sync-exclude.toml for Phase B divergences\n\nAdds 9 new exclude patterns covering project-content files,\npackage-mapping artifacts, and tests whose targets don't exist locally:\n\n- README.md, CHANGELOG.md: 100% project-owned content. Upstream's are\n  template scaffolds.\n- mkdocs.yml: project-specific metadata (site_name, site_url) plus a\n  custom nav structure (ONTAP usage pages, project ADRs). Upstream nav\n  improvements can be pulled in by hand if needed.\n- src/package_name/__init__.py: heavily project-customized (re-exports\n  ONTAP/DII clients, config, logging, DBs). Upstream's is a 6-line\n  scaffold exporting `greet`/`setup_logging`.\n- tests/template/test_properties.py: Hypothesis property tests for\n  upstream's example `package_name.core.greet`, which we exclude.\n- tests/template/test_bootstrap.py: imports the absent `bootstrap.py`\n  module (excluded since Phase A).\n- tests/benchmarks/conftest.py + tests/benchmarks/__init__.py: project\n  owns the benchmark fixtures (QEVolume, QENode) that the bulk-copy\n  initially stripped. Excluding the whole directory keeps upstream from\n  clobbering the project fixtures going forward.\n\nAfter Phase B, `manage.py --show-excluded check` reports 8 different\nfiles (all documented project divergences) and 47 skipped per project\npolicy.\n\nAddresses #716\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* fix: restore project user-facing docs clobbered by Phase B bulk-copy\n\nPhase B's bulk-overwrite stage applied upstream's template versions over\nthe project's user-facing documentation, which references concrete\n`pynetappfoundry.*` modules. The upstream versions reference a fictional\n`package_name` module, which broke mkdocstrings in the docs CI job:\n\n  ERROR -  Could not collect 'package_name'\n\nEight pages restored from main and added to sync-exclude.toml so future\nsyncs leave them alone:\n\n- docs/index.md\n- docs/deployment/{development,production}.md\n- docs/examples/{README,api}.md\n- docs/getting-started/installation.md\n- docs/reference/api.md\n- docs/usage/basics.md\n\n`docs/examples/add-a-feature.md` and `docs/usage/cli.md` carry no\nproject-specific references and remain on the upstream version.\n\nAddresses #716\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Opus 4.7 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-05-14T02:06:29+01:00",
+          "tree_id": "d6bca5eb404c1c27917fe623bb0419cc22ae58ec",
+          "url": "https://github.com/endavis/pynetappfoundry/commit/951f31dc87707c1e85c75578d16cacd2aa91554a"
+        },
+        "date": 1778721128754,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/benchmarks/test_bench_dict_path.py::test_bench_shallow_key",
+            "value": 1209244.0681688872,
+            "unit": "iter/sec",
+            "range": "stddev: 3.1428438618873345e-7",
+            "extra": "mean: 826.9629153643585 nsec\nrounds: 47459"
+          },
+          {
+            "name": "tests/benchmarks/test_bench_dict_path.py::test_bench_two_level",
+            "value": 765445.120074943,
+            "unit": "iter/sec",
+            "range": "stddev: 4.906506195410894e-7",
+            "extra": "mean: 1.3064293883042748 usec\nrounds: 169809"
+          },
+          {
+            "name": "tests/benchmarks/test_bench_dict_path.py::test_bench_three_level",
+            "value": 485005.5009906884,
+            "unit": "iter/sec",
+            "range": "stddev: 5.575654574938376e-7",
+            "extra": "mean: 2.0618322842882537 usec\nrounds: 163962"
+          },
+          {
+            "name": "tests/benchmarks/test_bench_dict_path.py::test_bench_four_level",
+            "value": 472091.6293794246,
+            "unit": "iter/sec",
+            "range": "stddev: 7.161897825005935e-7",
+            "extra": "mean: 2.1182328551652634 usec\nrounds: 156986"
+          },
+          {
+            "name": "tests/benchmarks/test_bench_dict_path.py::test_bench_array_index",
+            "value": 532830.9928663085,
+            "unit": "iter/sec",
+            "range": "stddev: 5.403840764203119e-7",
+            "extra": "mean: 1.876767705685821 usec\nrounds: 71220"
+          },
+          {
+            "name": "tests/benchmarks/test_bench_dict_path.py::test_bench_wildcard",
+            "value": 168310.8687018864,
+            "unit": "iter/sec",
+            "range": "stddev: 9.343995091126444e-7",
+            "extra": "mean: 5.941386956841202 usec\nrounds: 53944"
+          },
+          {
+            "name": "tests/benchmarks/test_bench_dict_path.py::test_bench_wildcard_nested",
+            "value": 147868.13105730427,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0000012302807098317886",
+            "extra": "mean: 6.76278243898588 usec\nrounds: 68914"
+          },
+          {
+            "name": "tests/benchmarks/test_bench_dict_path.py::test_bench_multi_field_extraction",
+            "value": 80290.46018442296,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0000013605541756975334",
+            "extra": "mean: 12.454779779603362 usec\nrounds: 44737"
+          },
+          {
+            "name": "tests/benchmarks/test_bench_dict_path.py::test_bench_filter_predicate",
+            "value": 246323.56005550254,
+            "unit": "iter/sec",
+            "range": "stddev: 7.50181553060405e-7",
+            "extra": "mean: 4.059700987492533 usec\nrounds: 40102"
+          },
+          {
+            "name": "tests/benchmarks/test_bench_diff.py::test_bench_diff_initial_capture_small",
+            "value": 32893.45153169536,
+            "unit": "iter/sec",
+            "range": "stddev: 0.000002157232612642137",
+            "extra": "mean: 30.401187878882926 usec\nrounds: 2640"
+          },
+          {
+            "name": "tests/benchmarks/test_bench_diff.py::test_bench_diff_no_changes",
+            "value": 47.55550494258974,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0013577199140329542",
+            "extra": "mean: 21.028059763159415 msec\nrounds: 38"
+          },
+          {
+            "name": "tests/benchmarks/test_bench_diff.py::test_bench_diff_some_modified",
+            "value": 43.506499297178856,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0008529539543292439",
+            "extra": "mean: 22.985071567567935 msec\nrounds: 37"
+          },
+          {
+            "name": "tests/benchmarks/test_bench_diff.py::test_bench_diff_added_removed",
+            "value": 57.93739573218351,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002911535341465097",
+            "extra": "mean: 17.26000948718018 msec\nrounds: 39"
+          },
+          {
+            "name": "tests/benchmarks/test_bench_diff.py::test_bench_diff_large_500_volumes",
+            "value": 8.029044272781515,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0010991325326710924",
+            "extra": "mean: 124.54782487499827 msec\nrounds: 8"
+          },
+          {
+            "name": "tests/benchmarks/test_bench_diff.py::test_bench_diff_entity_list_100_no_changes",
+            "value": 299.2286262821382,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00010279914198113616",
+            "extra": "mean: 3.341926246913004 msec\nrounds: 162"
+          },
+          {
+            "name": "tests/benchmarks/test_bench_diff.py::test_bench_diff_entity_list_100_all_modified",
+            "value": 60.533741225399886,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0018313739015827675",
+            "extra": "mean: 16.519712473684034 msec\nrounds: 38"
+          },
+          {
+            "name": "tests/benchmarks/test_bench_lazy_metadata.py::test_bench_lazy_storage_via_shim",
+            "value": 0.07242900594470111,
+            "unit": "iter/sec",
+            "range": "stddev: 0.3583892068277304",
+            "extra": "mean: 13.806623285200004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/benchmarks/test_bench_lazy_metadata.py::test_bench_lazy_storage_direct_db",
+            "value": 0.07766913188707723,
+            "unit": "iter/sec",
+            "range": "stddev: 0.2392111087551674",
+            "extra": "mean: 12.875127810799984 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/benchmarks/test_bench_query_engine.py::test_bench_parse_filter_simple_eq",
+            "value": 400417.1644653588,
+            "unit": "iter/sec",
+            "range": "stddev: 6.929852754687254e-7",
+            "extra": "mean: 2.497395438417857 usec\nrounds: 11400"
+          },
+          {
+            "name": "tests/benchmarks/test_bench_query_engine.py::test_bench_parse_filter_numeric",
+            "value": 387522.8826821997,
+            "unit": "iter/sec",
+            "range": "stddev: 6.452563468484702e-7",
+            "extra": "mean: 2.5804927778163784 usec\nrounds: 77400"
+          },
+          {
+            "name": "tests/benchmarks/test_bench_query_engine.py::test_bench_parse_filter_dotted",
+            "value": 386087.5735220696,
+            "unit": "iter/sec",
+            "range": "stddev: 5.779589046215207e-7",
+            "extra": "mean: 2.5900859509088496 usec\nrounds: 98184"
+          },
+          {
+            "name": "tests/benchmarks/test_bench_query_engine.py::test_bench_parse_filter_in_tuple",
+            "value": 176069.85926596503,
+            "unit": "iter/sec",
+            "range": "stddev: 7.555566786476216e-7",
+            "extra": "mean: 5.679563805917711 usec\nrounds: 47190"
+          },
+          {
+            "name": "tests/benchmarks/test_bench_query_engine.py::test_bench_parse_filter_not_in",
+            "value": 205351.66622891533,
+            "unit": "iter/sec",
+            "range": "stddev: 7.990424568237245e-7",
+            "extra": "mean: 4.869695086307467 usec\nrounds: 59935"
+          },
+          {
+            "name": "tests/benchmarks/test_bench_query_engine.py::test_bench_parse_filter_boolean",
+            "value": 428613.3752331902,
+            "unit": "iter/sec",
+            "range": "stddev: 4.6547217405326995e-7",
+            "extra": "mean: 2.333104979414006 usec\nrounds: 92542"
+          },
+          {
+            "name": "tests/benchmarks/test_bench_query_engine.py::test_bench_parse_filter_null",
+            "value": 437804.80746027565,
+            "unit": "iter/sec",
+            "range": "stddev: 4.7672248007182606e-7",
+            "extra": "mean: 2.2841229309496223 usec\nrounds: 95094"
+          },
+          {
+            "name": "tests/benchmarks/test_bench_query_engine.py::test_bench_parse_filters_batch_10",
+            "value": 35372.98637653198,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0000019732653061110244",
+            "extra": "mean: 28.270160436989414 usec\nrounds: 15277"
+          },
+          {
+            "name": "tests/benchmarks/test_bench_query_engine.py::test_bench_resolve_scalar",
+            "value": 600459.2126418188,
+            "unit": "iter/sec",
+            "range": "stddev: 4.1487583010468473e-7",
+            "extra": "mean: 1.6653920515272567 usec\nrounds: 51256"
+          },
+          {
+            "name": "tests/benchmarks/test_bench_query_engine.py::test_bench_resolve_json_subfield",
+            "value": 260307.85417337655,
+            "unit": "iter/sec",
+            "range": "stddev: 7.437498487497434e-7",
+            "extra": "mean: 3.841605176207844 usec\nrounds: 63598"
+          },
+          {
+            "name": "tests/benchmarks/test_bench_query_engine.py::test_bench_build_condition_eq",
+            "value": 376571.45783515146,
+            "unit": "iter/sec",
+            "range": "stddev: 5.382256126682129e-7",
+            "extra": "mean: 2.655538488627998 usec\nrounds: 62720"
+          },
+          {
+            "name": "tests/benchmarks/test_bench_query_engine.py::test_bench_build_condition_in",
+            "value": 234225.07315373808,
+            "unit": "iter/sec",
+            "range": "stddev: 8.240979289468691e-7",
+            "extra": "mean: 4.26939774865021 usec\nrounds: 52860"
+          },
+          {
+            "name": "tests/benchmarks/test_bench_query_engine.py::test_bench_build_condition_json",
+            "value": 209250.54370945817,
+            "unit": "iter/sec",
+            "range": "stddev: 7.195818187201936e-7",
+            "extra": "mean: 4.778960103389207 usec\nrounds: 67650"
+          },
+          {
+            "name": "tests/benchmarks/test_bench_query_engine.py::test_bench_where_clause_5_filters",
+            "value": 54277.48625594337,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0000015215637996639727",
+            "extra": "mean: 18.423845114796567 usec\nrounds: 23243"
+          },
+          {
+            "name": "tests/benchmarks/test_bench_query_engine.py::test_bench_where_clause_10_filters",
+            "value": 27612.037577228548,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0000022383386355411485",
+            "extra": "mean: 36.21608862450241 usec\nrounds: 14962"
+          },
+          {
+            "name": "tests/benchmarks/test_bench_serialization.py::test_bench_model_to_row_single",
+            "value": 36451.01343361016,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0000018819246968410458",
+            "extra": "mean: 27.43407948921212 usec\nrounds: 7523"
+          },
+          {
+            "name": "tests/benchmarks/test_bench_serialization.py::test_bench_model_to_row_batch_100",
+            "value": 340.1139832352835,
+            "unit": "iter/sec",
+            "range": "stddev: 0.000019936930688148886",
+            "extra": "mean: 2.9401907868875288 msec\nrounds: 305"
+          },
+          {
+            "name": "tests/benchmarks/test_bench_serialization.py::test_bench_model_to_row_batch_1000",
+            "value": 32.08985786264006,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0014311069123976983",
+            "extra": "mean: 31.162493903228814 msec\nrounds: 31"
+          },
+          {
+            "name": "tests/benchmarks/test_bench_serialization.py::test_bench_row_to_model_single",
+            "value": 916.397876987094,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0012653995359834937",
+            "extra": "mean: 1.0912290666667308 msec\nrounds: 675"
+          },
+          {
+            "name": "tests/benchmarks/test_bench_serialization.py::test_bench_row_to_model_batch_100",
+            "value": 8.010161555667032,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005529073641450614",
+            "extra": "mean: 124.84142711110735 msec\nrounds: 9"
+          },
+          {
+            "name": "tests/benchmarks/test_bench_serialization.py::test_bench_row_to_model_batch_1000",
+            "value": 0.77112311163433,
+            "unit": "iter/sec",
+            "range": "stddev: 0.14649457634707455",
+            "extra": "mean: 1.2968097894000152 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/benchmarks/test_bench_serialization.py::test_bench_round_trip_single",
+            "value": 963.0575261536032,
+            "unit": "iter/sec",
+            "range": "stddev: 0.001065387003267156",
+            "extra": "mean: 1.0383595713061327 msec\nrounds: 1164"
           }
         ]
       }
