@@ -21,6 +21,30 @@ exclude = [
     "src/package_name/cli.py",
     "src/package_name/core.py",
     "src/package_name/logging.py",
+    # __init__.py is heavily project-customized (re-exports for ONTAP/DII
+    # API clients, config, logging, DBs). Upstream's is a 6-line scaffold
+    # exporting greet/setup_logging — irrelevant here.
+    "src/package_name/__init__.py",
+
+    # ── Project-content files ─────────────────────────────────────────
+    # These files exist in the upstream template as scaffolds but are
+    # 100% project-owned content here.
+    "README.md",
+    "CHANGELOG.md",
+    # mkdocs.yml: top-of-file project metadata (site_name, site_url, etc.)
+    # plus a project-specific nav structure (ONTAP usage pages, project ADRs,
+    # ONTAP/cloud reference docs). Upstream nav improvements can be pulled in
+    # by hand if needed; they're not worth the constant drift flagging.
+    "mkdocs.yml",
+
+    # tests/template/test_properties.py — Hypothesis property tests for
+    # upstream's example `package_name.core.greet` (which we exclude). The
+    # test would ImportError locally since no `package_name` module exists.
+    "tests/template/test_properties.py",
+
+    # tests/template/test_bootstrap.py — imports from `bootstrap` module
+    # which is itself excluded (bootstrap.py is absent).
+    "tests/template/test_bootstrap.py",
 
     # ── Template scaffold examples ────────────────────────────────────
     # Upstream's examples/ directory is generic Python-package examples
@@ -37,14 +61,17 @@ exclude = [
     # that we DO inherit, so we keep them in sync.
     "tests/test_*.py",
 
-    # ── Template example benchmarks ───────────────────────────────────
+    # ── Template example benchmarks + project benchmark fixtures ──────
     # Upstream ships benchmarks for its example src/package_name/core.py
     # and src/package_name/logging.py (which we exclude above). The
-    # project keeps its own domain benchmarks in tests/benchmarks/.
-    # conftest.py and __init__.py under tests/benchmarks/ are still
-    # synced — only the example-targeting benches are excluded.
+    # project keeps its own domain benchmarks in tests/benchmarks/ and
+    # its own conftest.py with QEVolume/QENode fixtures the project's
+    # bench files import. Excluding the whole directory keeps upstream
+    # from clobbering the project fixtures.
     "tests/benchmarks/test_bench_core.py",
     "tests/benchmarks/test_bench_logging.py",
+    "tests/benchmarks/conftest.py",
+    "tests/benchmarks/__init__.py",
 
     # ── CBM gate hooks ────────────────────────────────────────────────
     # Adoption tracked separately in issue #717 (explore + enable CBM).
