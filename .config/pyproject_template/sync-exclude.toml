@@ -52,6 +52,12 @@ exclude = [
     "docs/getting-started/installation.md",
     "docs/reference/api.md",
     "docs/usage/basics.md",
+    # docs/decisions/README.md: project owns the "Project-level ADRs
+    # (0001+)" table. Upstream ships a generic placeholder
+    # ("_(No project-level ADRs yet.)_") that, if synced, clobbers the
+    # project's ADR-0001..ADR-NNNN list. Surfaced as a rebase conflict
+    # in PR #715 after Phase B sync (#723).
+    "docs/decisions/README.md",
 
     # tests/template/test_properties.py — Hypothesis property tests for
     # upstream's example `package_name.core.greet` (which we exclude). The
