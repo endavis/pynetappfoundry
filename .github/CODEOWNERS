@@ -10,28 +10,28 @@
 
 # Default owners for everything in the repo
 # These owners will be requested for review unless a later match takes precedence
-* @endavis
+* @username
 
 # Documentation
-/docs/ @endavis
-*.md @endavis
+/docs/ @username
+*.md @username
 
 # Configuration files
-/.github/ @endavis
-pyproject.toml @endavis
-.pre-commit-config.yaml @endavis
+/.github/ @username
+pyproject.toml @username
+.pre-commit-config.yaml @username
 
 # CI/CD
-/.github/workflows/ @endavis
+/.github/workflows/ @username
 
 # Core source code
-/src/ @endavis
+/src/ @username
 
 # Tests
-/tests/ @endavis
+/tests/ @username
 
 # Examples
-/examples/ @endavis
+/examples/ @username
 
 # Task automation
-dodo.py @endavis
+dodo.py @username

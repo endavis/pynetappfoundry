@@ -473,7 +473,7 @@ COPY --chown=appuser:appuser . .
 
 USER appuser
 
-CMD ["python", "-m", "pynetappfoundry"]
+CMD ["python", "-m", "__PACKAGE_NAME__"]
 ```
 
 ### Read-only Filesystems
@@ -656,8 +656,8 @@ jobs:
 uv build
 
 # This creates:
-# - dist/pynetappfoundry-x.y.z.tar.gz (source distribution)
-# - dist/pynetappfoundry-x.y.z-py3-none-any.whl (wheel)
+# - dist/__PACKAGE_NAME__-x.y.z.tar.gz (source distribution)
+# - dist/__PACKAGE_NAME__-x.y.z-py3-none-any.whl (wheel)
 
 # Publish to PyPI
 uv publish
@@ -670,11 +670,11 @@ uv publish --token pypi-xxxxxxxxxxxx
 
 ```bash
 # Check package on PyPI
-pip index versions pynetappfoundry
+pip index versions __PYPI_NAME__
 
 # Test installation in clean environment
 uv venv /tmp/test-install
-uv pip install --python /tmp/test-install pynetappfoundry
+uv pip install --python /tmp/test-install __PYPI_NAME__
 ```
 
 ### Version Management

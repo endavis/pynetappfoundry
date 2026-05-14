@@ -1,32 +1,29 @@
-# Personal direnv overrides for pynetappfoundry
-# Copy this file to .envrc.local and customize as needed
-# .envrc.local is git-ignored and will not be committed
+# .envrc.local - Personal settings (git-ignored)
+# Copy this file to .envrc.local and customize
 
-# Example: Use a different config directory for nf CLI
-# export NF_CONFIG_DIR="/path/to/my/config"
-
-# Example: Enable debug mode
+# Development preferences
 # export DEBUG=true
-
-# Example: Set log level
 # export LOG_LEVEL=DEBUG
 
-# Example: Custom API endpoint for testing
-# export ONTAP_API_URL=https://your-test-cluster.local
+# API keys and credentials (NEVER commit these!)
+# export API_KEY=your_api_key_here
+# export DATABASE_URL=sqlite:///tmp/dev.db
 
-# Example: Override cache directories
-# export UV_CACHE_DIR="$HOME/.cache/uv"
-# export RUFF_CACHE_DIR="$HOME/.cache/ruff"
-# export MYPY_CACHE_DIR="$HOME/.cache/mypy"
-# export COVERAGE_FILE="$HOME/.cache/coverage/.coverage"
-# export PRE_COMMIT_HOME="$HOME/.cache/pre-commit"
+# Override cache locations if needed
+# export UV_CACHE_DIR="$(pwd)/tmp/.uv_cache"
+# export RUFF_CACHE_DIR="$(pwd)/tmp/.ruff_cache"
+# export MYPY_CACHE_DIR="$(pwd)/tmp/.mypy_cache"
+# export COVERAGE_FILE="$(pwd)/tmp/.coverage"
+# export PRE_COMMIT_HOME="$(pwd)/tmp/.pre-commit"
 
-# Example: Editor and browser
-# export EDITOR=nvim
+# Custom environment variables for your workflow
+# export EDITOR=vim
 # export BROWSER=firefox
 
-# Example: Enable LSP tool for Claude Code (see .claude/lsp-setup.md)
+# Claude Code LSP support (enables fast code navigation)
+# Uncomment to enable Language Server Protocol in Claude Code
+# See .claude/lsp-setup.md for setup instructions
 # export ENABLE_LSP_TOOL=1
 
-# Example: Pyright debug logging (for LSP troubleshooting)
+# Pyright LSP debug logging (uncomment for troubleshooting LSP issues)
 # export PYRIGHT_PYTHON_DEBUG=1

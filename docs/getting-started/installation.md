@@ -23,13 +23,13 @@ tags:
 ### Using pip
 
 ```bash
-pip install pynetappfoundry
+pip install __PYPI_NAME__
 ```
 
 ### Using uv (recommended)
 
 ```bash
-uv pip install pynetappfoundry
+uv pip install __PYPI_NAME__
 ```
 
 ## Install from Source
@@ -37,8 +37,8 @@ uv pip install pynetappfoundry
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/endavis/pynetappfoundry.git
-cd pynetappfoundry
+git clone https://github.com/username/package_name.git
+cd __PACKAGE_NAME__
 ```
 
 ### Install in Development Mode
@@ -80,14 +80,14 @@ uv pip install -e ".[dev,security]"
 Check that the package is installed correctly:
 
 ```python
-import pynetappfoundry
-print(pynetappfoundry.__version__)
+import __PACKAGE_NAME__
+print(__PACKAGE_NAME__.__version__)
 ```
 
-Or from the command line:
+Or from the command line (if CLI is available):
 
 ```bash
-nf --version
+package-cli --version
 ```
 
 ## Upgrading
@@ -95,13 +95,13 @@ nf --version
 ### From PyPI
 
 ```bash
-pip install --upgrade pynetappfoundry
+pip install --upgrade __PYPI_NAME__
 ```
 
 ### From Source
 
 ```bash
-cd pynetappfoundry
+cd __PACKAGE_NAME__
 git pull
 uv pip install -e ".[dev]"
 ```
@@ -109,7 +109,7 @@ uv pip install -e ".[dev]"
 ## Uninstallation
 
 ```bash
-pip uninstall pynetappfoundry
+pip uninstall __PYPI_NAME__
 ```
 
 ## Troubleshooting
@@ -125,7 +125,7 @@ python --version
 If you have multiple Python versions:
 
 ```bash
-python3.12 -m pip install pynetappfoundry
+python3.12 -m pip install __PYPI_NAME__
 ```
 
 ### Virtual Environment Issues
@@ -136,7 +136,7 @@ If you encounter issues, try creating a fresh virtual environment:
 rm -rf .venv
 uv venv
 source .venv/bin/activate
-uv pip install pynetappfoundry
+uv pip install __PYPI_NAME__
 ```
 
 ### Permission Errors
@@ -146,7 +146,7 @@ If you get permission errors, use a virtual environment instead of installing gl
 ```bash
 uv venv
 source .venv/bin/activate
-uv pip install pynetappfoundry
+uv pip install __PYPI_NAME__
 ```
 
 ## Next Steps

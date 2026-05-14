@@ -37,8 +37,8 @@ jobs:
       - name: Show resolved version
         run: |
           uv run python - <<'PY'
-          import pynetappfoundry
-          print(f"Resolved version: {pynetappfoundry.__version__}")
+          import package_name
+          print(f"Resolved version: {package_name.__version__}")
           PY
 
       - name: Build artifacts

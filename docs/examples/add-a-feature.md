@@ -65,11 +65,11 @@ Branch naming follows the convention `<type>/<issue>-<description>`.
 
 ## Step 3: Add the Core Module
 
-Create `src/package_name/farewell.py`. The function mirrors the existing
+Create `src/__PACKAGE_NAME__/farewell.py`. The function mirrors the existing
 `greet()` pattern in `core.py`:
 
 ```python
-"""Farewell functionality for package_name."""
+"""Farewell functionality for __PACKAGE_NAME__."""
 
 
 def farewell(name: str = "World") -> str:
@@ -99,10 +99,10 @@ Key points:
 ## Step 4: Export from `__init__.py`
 
 Add the new function to the package's public API in
-`src/package_name/__init__.py`:
+`src/__PACKAGE_NAME__/__init__.py`:
 
 ```python
-"""Package Name - A short description of your package."""
+"""__PROJECT_NAME__ - __DESCRIPTION__."""
 
 from ._version import __version__
 from .core import greet
@@ -116,12 +116,12 @@ Keep `__all__` sorted alphabetically.
 
 ## Step 5: Add a CLI Subcommand
 
-Extend `src/package_name/cli.py` with a `farewell` command. The CLI is a
+Extend `src/__PACKAGE_NAME__/cli.py` with a `farewell` command. The CLI is a
 **thin adapter** -- it delegates to the core function and handles only I/O
 (printing, exit codes):
 
 ```python
-from package_name.farewell import farewell as _farewell
+from __PACKAGE_NAME__.farewell import farewell as _farewell
 
 # ... existing code ...
 
@@ -159,7 +159,7 @@ Follow the patterns in `tests/test_example.py`:
 
 import pytest
 
-from package_name.farewell import farewell
+from __PACKAGE_NAME__.farewell import farewell
 
 
 def test_farewell_default() -> None:
@@ -194,7 +194,7 @@ Follow the patterns in `tests/test_cli.py`:
 
 from click.testing import CliRunner
 
-from package_name.cli import main
+from __PACKAGE_NAME__.cli import main
 
 
 def test_farewell_default_name() -> None:
@@ -248,7 +248,7 @@ up. In `docs/reference/api.md`, add a section for the farewell module:
 ```markdown
 ## Farewell
 
-::: package_name.farewell
+::: __PACKAGE_NAME__.farewell
 ```
 
 Then build the docs to make sure everything renders:
@@ -318,4 +318,4 @@ doit pr_merge
 - [API Reference](../reference/api.md) -- generated API docs
 - [Contributing Guide](https://github.com/endavis/pyproject-template/blob/main/.github/CONTRIBUTING.md) --
   full development workflow
-- [ADR-9014: Use click for application CLI](../template/decisions/9014-use-click-for-application-cli.md)
+- [ADR-9014: Use click for application CLI](../decisions/9014-use-click-for-application-cli.md)
