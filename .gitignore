@@ -55,10 +55,6 @@ dmypy.json
 .direnv/
 .envrc.local
 
-# Local config symlinks (user-specific, not project)
-/*-config
-.sops-public-key.txt
-
 # Environment variables
 .env
 .env.*
@@ -70,7 +66,6 @@ tmp/*
 
 # Documentation
 site/
-docs/_build/
 
 # Build and packaging
 *.whl
@@ -84,15 +79,3 @@ coverage.xml
 .nfs*
 .gemini/settings.json.orig
 tools/hooks/ai/hook-debug.jsonl
-
-# Project-specific data directories (top-level only -- the
-# `pynetappfoundry.data` package and `tests/unit/data` are tracked.)
-/data/
-output/
-
-# Configuration with secrets
-config/*.toml
-!config/*.example.toml
-
-# Example config (large API files)
-# Keep the exclude pattern for pre-commit hooks

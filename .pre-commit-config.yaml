@@ -4,27 +4,23 @@ repos:
     rev: v5.0.0
     hooks:
       - id: trailing-whitespace
-        exclude: ^docs/example-config/apis/
         stages: [pre-commit]
+        exclude: ^docs/example-config/apis/
       - id: end-of-file-fixer
-        exclude: ^docs/example-config/apis/
         stages: [pre-commit]
+        exclude: ^docs/example-config/apis/
       - id: check-yaml
         stages: [pre-commit]
       - id: check-added-large-files
-        exclude: ^docs/example-config/apis/
-        # Add project-specific exclusions for large data/generated directories:
-        # exclude: ^(vendor/|fixtures/|data/)
         stages: [pre-commit]
+        exclude: ^docs/example-config/apis/
       - id: check-toml
         stages: [pre-commit]
       - id: check-merge-conflict
         stages: [pre-commit]
       - id: detect-private-key
-        exclude: ^docs/example-config/apis/
-        # Exclude directories with non-secret key-like patterns:
-        # exclude: ^(example-config/|test-fixtures/)
         stages: [pre-commit]
+        exclude: ^docs/example-config/apis/
 
   # Conventional commits enforcement
   - repo: https://github.com/compilerla/conventional-pre-commit
@@ -193,6 +189,24 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
+        stages: [pre-commit]
+
+      # Validate uv.lock is in sync with pyproject.toml when pyproject.toml is staged
+      - id: uv-lock-check
+        name: Validate uv.lock matches pyproject.toml
+        entry: |
+          bash -c '
+          uv lock --check || {
+            echo ""
+            echo "❌ ERROR: uv.lock is out of sync with pyproject.toml"
+            echo ""
+            echo "Run: uv lock"
+            echo "Then re-stage: git add uv.lock"
+            exit 1
+          }'
+        language: system
+        pass_filenames: false
+        files: ^pyproject\.toml$
         stages: [pre-commit]
 
       # Auto-sync dependencies when uv.lock changes after git pull

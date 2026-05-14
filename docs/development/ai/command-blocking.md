@@ -149,11 +149,22 @@ EOF
 
 `.codex/config.toml`:
 ```toml
-[hooks]
-pre_tool_use = "python3 tools/hooks/ai/block-dangerous-commands.py"
+approval_policy = "untrusted"
+
+[features]
+codex_hooks = true
+
+[[hooks.PreToolUse]]
+matcher = "^Bash$"
+
+[[hooks.PreToolUse.hooks]]
+type = "command"
+command = 'python3 "$(git rev-parse --show-toplevel)/tools/hooks/ai/block-dangerous-commands.py"'
+timeout = 30
+statusMessage = "Checking Bash command"
 ```
 
-Codex also keeps `approval_policy` deny rules as a secondary defense layer. See `.codex/config.toml` for the full configuration.
+Codex uses the shared hook as the primary defense layer. Project docs should not rely on the obsolete `[[approval_policy]]` command-rule format.
 
 ### Testing
 
@@ -261,3 +272,4 @@ Then run the test suite to verify.
 - [AI Enforcement Principles](enforcement-principles.md) - Why and how we enforce rules in code
 - [AGENTS.md](../../../AGENTS.md) - AI agent rules including "When Blocked Protocol"
 - [AI Agent Setup](../AI_SETUP.md) - Setting up AI coding assistants
+- [Bash raw-tool ban](token-efficiency-add-ons.md#bash-raw-tool-ban-opt-in) - Opt-in hook that blocks raw shell commands AI agents should use native tools for (`cat`, `head`, `tail`, `find`, `grep`, `rg`, `wc`)

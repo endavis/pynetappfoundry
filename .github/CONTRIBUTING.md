@@ -1,4 +1,4 @@
-# Contributing to pynetappfoundry
+# Contributing to __PROJECT_NAME__
 
 Thank you for your interest in contributing to this project! We welcome contributions from everyone.
 
@@ -42,8 +42,8 @@ This project adheres to the Contributor Covenant [Code of Conduct](CODE_OF_CONDU
 
 ```bash
 # Clone your fork
-git clone https://github.com/YOUR_USERNAME/pynetappfoundry.git
-cd pynetappfoundry
+git clone https://github.com/YOUR_USERNAME/__PACKAGE_NAME__.git
+cd __PACKAGE_NAME__
 
 # Set up direnv
 direnv allow
@@ -68,11 +68,11 @@ Common commands:
 ```bash
 doit test          # Run tests
 doit coverage      # Run tests with coverage
-doit benchmark     # Run performance benchmarks
 doit lint          # Run linting
 doit format        # Format code
 doit type_check    # Run type checking
 doit check         # Run all checks
+doit benchmark     # Run performance benchmarks
 doit cleanup       # Clean build artifacts
 ```
 
@@ -104,6 +104,12 @@ We welcome many types of contributions:
 - **Docstrings:** Google-style for all public APIs
 - **Type hints:** Required for all public functions/methods
 - **Naming:** `snake_case` for functions/variables, `PascalCase` for classes
+- **File I/O:** Always pass `encoding="utf-8"` to `Path.read_text()`,
+  `Path.write_text()`, text-mode `open()`, and `tempfile.NamedTemporaryFile()`.
+  Omitting the kwarg falls back to `locale.getpreferredencoding()`, which is
+  `cp1252` on Windows and breaks silently on non-ASCII content. Binary-mode
+  calls (`"rb"`, `"wb"`, `"ab"`) and `tarfile.open(...)` do not take an
+  encoding kwarg. Enforced by ruff's `PLW1514` rule.
 
 ### Type Hints
 
@@ -170,7 +176,7 @@ import click
 import pytest
 
 # Local
-from pynetappfoundry import module
+from __PACKAGE_NAME__ import module
 ```
 
 ## Testing Guidelines
@@ -419,20 +425,21 @@ git pull
 doit release_tag
 ```
 
-`--increment` and `--prerelease` are mutually exclusive.
+`--increment` and `--prerelease` can be combined to force a pre-release of a
+specific bump type (e.g. `--prerelease=alpha --increment=minor` → `1.1.0a0`).
+See [issue #475](https://github.com/endavis/pyproject-template/issues/475).
 
 **What `doit release` does:**
 
 1. Verifies you're on `main` with a clean working tree
 2. Validates `--prerelease` (must be empty, `alpha`, `beta`, or `rc`)
-3. Rejects `--prerelease` combined with `--increment`
-4. Pulls latest changes from remote
-5. Validates merge commit format (governance check)
-6. Validates issue links in commits
-7. Runs all checks (`doit check`)
-8. Determines the next version using commitizen (`cz bump --get-next`)
-9. Creates a `release/vX.Y.Z` branch and updates `CHANGELOG.md`
-10. Commits the changelog, pushes the branch, and opens PR `release: vX.Y.Z`
+3. Pulls latest changes from remote
+4. Validates merge commit format (governance check)
+5. Validates issue links in commits
+6. Runs all checks (`doit check`)
+7. Determines the next version using commitizen (`cz bump --get-next`)
+8. Creates a `release/vX.Y.Z` branch and updates `CHANGELOG.md`
+9. Commits the changelog, pushes the branch, and opens PR `release: vX.Y.Z`
 
 **What `doit release_tag` does:**
 
@@ -449,7 +456,7 @@ doit release_tag
 **Testing a pre-release from TestPyPI:**
 
 ```bash
-pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ package-name==1.0.1a0
+pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ __PYPI_NAME__==1.0.1a0
 ```
 
 ### Workflow Triggers
@@ -466,7 +473,44 @@ protection rules cover tag pushes, configure a bypass for the tagging step.
 The release PR itself is reviewed and merged through the normal PR flow, so
 no bypass is required for the commit and changelog changes.
 
-#### Organization Repositories: GitHub App (Recommended)
+#### Which path should I use?
+
+The two paths below are not "personal vs. organization" — a GitHub App
+works just as well on a personal account. The real distinction is **where
+your release runs from** and **whether you want full dependabot
+auto-merge automation**:
+
+| Use case | Recommended |
+| :--- | :--- |
+| CI-driven releases (workflow publishes from GitHub Actions) | **GitHub App** |
+| Dependabot auto-merge end-to-end automation | **GitHub App** (required) |
+| Org policy disallows PATs | **GitHub App** |
+| Solo / hobby repo, releasing only from your laptop, no CI release | **Fine-grained PAT** |
+
+> [!IMPORTANT]
+> The dependabot auto-merge workflow at
+> `.github/workflows/dependabot-automerge.yml` **requires a GitHub App**. A
+> PAT does not substitute, because the workflow needs the bot's `labeled`
+> event to trigger the Merge Gate — see
+> [Dependabot Auto-merge → Required GitHub App configuration](../docs/development/dependabot-automerge.md#required-github-app-configuration).
+
+#### Recommended: GitHub App
+
+A dedicated GitHub App is the modern, audit-friendly identity for release
+automation. It works for both personal-account repositories and
+organization repositories. Use this path if you want:
+
+- The dependabot auto-merge workflow to be fully automated end-to-end
+- A clean bot identity in the audit log instead of human attribution
+- Automatic short-lived token rotation (no manual PAT renewals)
+- A bypass-listed actor for any CI-driven tag-push flow you add later
+
+> [!NOTE]
+> The publish workflow at `.github/workflows/release.yml` uses **PyPI
+> trusted publishing (OIDC)** and the built-in `GITHUB_TOKEN`. It does not
+> consume `RELEASE_APP_ID` or `RELEASE_APP_PRIVATE_KEY`. Those credentials
+> exist for the dependabot auto-merge workflow and for any CI-driven
+> tag-push extension you might add — see step 5 below.
 
 Create a dedicated GitHub App that can bypass branch protection:
 
@@ -481,6 +525,9 @@ Create a dedicated GitHub App that can bypass branch protection:
 4. Set **Repository Permissions:**
    - **Contents:** Read and write (to push commits/tags)
    - **Metadata:** Read-only (required)
+   - **Pull requests:** Write (required for the dependabot auto-merge
+     workflow to apply the `ready-to-merge` label via the App — see
+     [Dependabot Auto-merge → Required GitHub App configuration](../docs/development/dependabot-automerge.md#required-github-app-configuration))
 5. Click **Create GitHub App**
 6. Note the **App ID** displayed on the app page
 7. Scroll down → **Generate a private key** → saves a `.pem` file
@@ -499,19 +546,44 @@ Create a dedicated GitHub App that can bypass branch protection:
 3. Select your release app from the list
 4. Save the ruleset
 
-**4. Store Secrets:**
+**4. Store Credentials at the Repository Scope:**
 
-In your repo **Settings** → **Secrets and variables** → **Actions**:
+In your repo **Settings** → **Secrets and variables** → **Actions** — store
+both at the **repository** scope, not in an environment:
 
-- Add **Secret:** `RELEASE_APP_PRIVATE_KEY` = contents of the `.pem` file
-- Add **Variable:** `RELEASE_APP_ID` = the App ID from step 1
+- **Secrets** tab → **New repository secret:**
+  `RELEASE_APP_PRIVATE_KEY` = contents of the `.pem` file
+- **Variables** tab → **New repository variable:**
+  `RELEASE_APP_ID` = the App ID from step 1
 
-**5. Update Workflows (if using CI-based releases):**
+> [!WARNING]
+> Use the repository scope, not an environment scope. The `enable-automerge`
+> job in `.github/workflows/dependabot-automerge.yml` does not declare an
+> `environment:`, so `${{ vars.RELEASE_APP_ID }}` and
+> `${{ secrets.RELEASE_APP_PRIVATE_KEY }}` only resolve at the repository (or
+> organization) scope. Storing either as an environment secret/variable makes
+> them silently resolve to an empty string at runtime — the workflow's
+> `if: vars.RELEASE_APP_ID != ''` guard fails closed and the label is applied
+> with `GITHUB_TOKEN`, which leaves the Merge Gate's `require-label` check
+> stuck at `FAILURE`.
+
+**5. Optional: CI-Driven Tag-Push Flow (not used by this template's `release.yml`):**
+
+This template's `release.yml` is triggered by a tag push that the
+maintainer makes locally with `doit release_tag`, and the publish step
+itself uses OIDC + `GITHUB_TOKEN` — so no App credentials are consumed by
+the workflow as shipped.
+
+If you later add a CI-driven flow that needs to push commits or tags from
+inside Actions (for example, a `workflow_dispatch` job that runs `cz
+bump`, commits the changelog, and pushes the tag), mint an App
+installation token and check out with it so the push uses the App's
+identity:
 
 ```yaml
 - name: Generate release token
   id: app-token
-  uses: actions/create-github-app-token@v1
+  uses: actions/create-github-app-token@v3
   with:
     app-id: ${{ vars.RELEASE_APP_ID }}
     private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
@@ -523,9 +595,21 @@ In your repo **Settings** → **Secrets and variables** → **Actions**:
     fetch-depth: 0
 ```
 
-#### Personal Repositories: Personal Access Token (PAT)
+Because the App is on the Ruleset bypass list (step 3), pushes signed by
+its installation token can land on `main` and on protected tag refs
+without rule violations.
 
-For personal (non-organization) repositories, use a fine-grained PAT:
+#### Alternative: Fine-Grained PAT (local-only releases)
+
+Use this path **only** if all of the following apply:
+
+- You release from a maintainer's laptop with `doit release_tag` (no CI)
+- You don't need the dependabot auto-merge workflow's full automation
+- You're comfortable rotating the PAT before its expiration
+
+For any other case, use the [GitHub App path](#recommended-github-app)
+above. CI-driven releases or dependabot auto-merge automation should not
+use a PAT.
 
 **1. Create a Fine-Grained PAT:**
 
@@ -550,23 +634,7 @@ git config --global credential.helper store
 # Then git will prompt for credentials on first push
 
 # Option 2: Include token in remote URL (less secure)
-git remote set-url origin https://<token>@github.com/endavis/repo.git
-```
-
-**3. Store as Secret (for CI-based releases):**
-
-In your repo **Settings** → **Secrets and variables** → **Actions**:
-
-- Add **Secret:** `RELEASE_PAT` = your PAT
-
-**4. Update Workflows:**
-
-```yaml
-- name: Checkout with PAT
-  uses: actions/checkout@v4
-  with:
-    token: ${{ secrets.RELEASE_PAT }}
-    fetch-depth: 0
+git remote set-url origin https://<token>@github.com/username/repo.git
 ```
 
 ### Release Checklist
@@ -870,7 +938,7 @@ ADRs provide context for why decisions were made, helping future contributors un
 
 ```bash
 # Add upstream remote (one-time setup)
-git remote add upstream https://github.com/original-owner/pynetappfoundry.git
+git remote add upstream https://github.com/original-owner/__PACKAGE_NAME__.git
 
 # Fetch and merge upstream changes
 git checkout main
@@ -884,7 +952,7 @@ git push origin main
 If you have questions:
 
 1. Check the [README.md](README.md) and [AGENTS.md](AGENTS.md)
-2. Search existing [Issues](https://github.com/endavis/pynetappfoundry/issues)
+2. Search existing [Issues](https://github.com/username/package_name/issues)
 3. Open a new issue with the "question" label
 4. Join our discussions (if available)
 
