@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Accepted
 
 Supersedes [ADR-0012: Unified DataSource Accessor for All Cluster Reads](0012-unified-datasource-accessor.md).
 
