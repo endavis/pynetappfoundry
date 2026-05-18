@@ -159,7 +159,8 @@ class OntapBackend(Backend):
             from pynetappfoundry.clients.ontap.api import ONTAPAPIClient
             from pynetappfoundry.core.models import ClusterConfig
 
-            cluster_obj = ClusterConfig(name=cluster, ip=cluster)
+            cluster_data = self._config.data.get("clusters", {}).get(cluster, {})
+            cluster_obj = ClusterConfig(name=cluster, ip=cluster_data.get("ip", cluster))
             self._api_clients[cluster] = ONTAPAPIClient(cluster=cluster_obj, config=self._config)
         return self._api_clients[cluster]
 

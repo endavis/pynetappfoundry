@@ -1494,3 +1494,48 @@ class TestOntapBackendCliDispatch:
             )
 
         assert results == []
+
+
+# ---------------------------------------------------------------------------
+# _get_api_client IP resolution (#740)
+# ---------------------------------------------------------------------------
+
+
+class TestGetApiClient:
+    """Tests for :meth:`OntapBackend._get_api_client` IP resolution.
+
+    Verifies that the client is constructed with the configured IP address
+    rather than the cluster name, mirroring the pattern in ``_get_cli_client``.
+    """
+
+    def test_uses_configured_ip(self, mock_config: Any) -> None:
+        """ClusterConfig.ip uses the ``ip`` key from the clusters config."""
+        mock_config.data = {"clusters": {"cl1": {"ip": "10.0.0.5"}}}
+        backend = _make_backend(mock_config)
+
+        with patch(
+            "pynetappfoundry.clients.ontap.api.ONTAPAPIClient.__init__",
+            return_value=None,
+        ) as mock_init:
+            backend._get_api_client("cl1")
+
+        mock_init.assert_called_once()
+        cluster_arg = mock_init.call_args.kwargs["cluster"]
+        assert cluster_arg.name == "cl1"
+        assert cluster_arg.ip == "10.0.0.5"
+
+    def test_falls_back_to_cluster_name_when_ip_absent(self, mock_config: Any) -> None:
+        """ClusterConfig.ip falls back to the cluster name when no ``ip`` key is present."""
+        mock_config.data = {"clusters": {"cl1": {}}}
+        backend = _make_backend(mock_config)
+
+        with patch(
+            "pynetappfoundry.clients.ontap.api.ONTAPAPIClient.__init__",
+            return_value=None,
+        ) as mock_init:
+            backend._get_api_client("cl1")
+
+        mock_init.assert_called_once()
+        cluster_arg = mock_init.call_args.kwargs["cluster"]
+        assert cluster_arg.name == "cl1"
+        assert cluster_arg.ip == "cl1"
