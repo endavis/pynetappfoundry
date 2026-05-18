@@ -21,7 +21,7 @@ pynetappfoundry provides three different ways to interact with ONTAP clusters. E
 |---------|------------|----------|
 | `ClusterEntry.ontap` namespace | Cache DB + HTTPS REST (+ SSH for `cloud`) | High-level reads of cached cluster metadata with on-demand DataSource fallback |
 | `QuerySet` + `Mutation` | HTTPS REST | Type-safe ONTAP queries and writes with model attribute translation (see [Query Layer](query-layer.md)) |
-| `netapp_ontap` SDK | HTTPS REST | Structured data retrieval, reports, typed objects |
+| `netapp_ontap` SDK | HTTPS REST | Fallback for endpoints not yet covered by a `TypeMapping` (most callers should use `ClusterEntry.ontap` or `QuerySet`/`DataSource` instead) |
 | `ONTAPCLI` | SSH | Ad-hoc CLI commands, operations not in REST API |
 | `APIWrapper` | HTTPS REST | Custom queries, OpenAPI-based workflows, DII integration |
 
@@ -174,9 +174,9 @@ See the dedicated [Query Layer](query-layer.md) guide for the full API reference
 
 ---
 
-### 3. netapp_ontap SDK
+### 3. netapp_ontap SDK (Fallback)
 
-NetApp's official Python SDK provides ORM-like objects for ONTAP resources. This is the **preferred pattern** for most operations.
+NetApp's official Python SDK provides ORM-like objects for ONTAP resources. Reach for it only when no `TypeMapping` exists for the endpoint you need, or for mutations on uncovered resources. For everything else, prefer `ClusterEntry.ontap` (Pattern #1) for cached high-level reads or `QuerySet`/`DataSource` (Pattern #2) for ad-hoc filtered/ordered/limited live reads — see [ADR-0010](../decisions/0010-clusterentry-and-namespace-access-pattern.md) and [ADR-0013](../decisions/0013-datasource-as-a-thin-facade-over-the-collector.md).
 
 **When to Use:**
 
@@ -201,30 +201,19 @@ NetApp's official Python SDK provides ORM-like objects for ONTAP resources. This
 **Example Usage:**
 
 ```python
-from netapp_ontap import HostConnection
-from netapp_ontap.resources import Volume, Cluster
+# Modern equivalent: DataSource is the unified read accessor (ADR-0013).
+# Cache-first by default; pass source="live" to bypass the cache.
+from pynetappfoundry.core.config import Config
+from pynetappfoundry.data.source import DataSource
+from pynetappfoundry.models.ontap.storage.volumes.model import OntapVolume
 
-# Connect to cluster
 config = Config()
-cluster = config.clusters["mycluster"]
-user = config.get_user("clusters", cluster.name)
-
-with HostConnection(
-    cluster.ip,
-    username=user.user,
-    password=user.get_password(),
-    verify=False  # For self-signed certs
-):
-    # Get cluster info
-    cluster_info = Cluster()
-    cluster_info.get()
-    print(f"Cluster: {cluster_info.name}, Version: {cluster_info.version.full}")
-
-    # List all volumes
-    for volume in Volume.get_collection():
-        volume.get()  # Fetch full details
-        print(f"Volume: {volume.name}, Size: {volume.size}")
+ds = DataSource(config)
+for volume in ds.query(OntapVolume, cluster="mycluster", source="auto"):
+    print(volume.name, volume.size)
 ```
+
+When `cluster_entry.ontap.<field_group>` is available, prefer that — see Pattern #1 for the canonical cached high-level reads. Direct `netapp_ontap` SDK usage (`HostConnection`, `Volume.get_collection()`, etc.) is a fallback for endpoints not yet covered by a `TypeMapping`; consult the upstream NetApp documentation when you need it.
 
 **Commands Using This Pattern:**
 
@@ -432,8 +421,8 @@ Use this matrix to choose the right pattern:
 | Fetch live IOPS/latency metrics | `fetch_realtime` | On-demand realtime fields — see [Query Layer](query-layer.md) |
 | Poll metrics over time | `watch_realtime` | Generator-based polling — see [Query Layer](query-layer.md) |
 | Bulk data export | `QuerySet` | Handles pagination, typed results — see [Query Layer](query-layer.md) |
-| Generate a report | `netapp_ontap` SDK | Typed objects, well-documented |
-| Check license status | `netapp_ontap` SDK | LicensePackage resource available |
+| Generate a report from cached cluster metadata | `ClusterEntry.ontap` | Sub-ms cache reads with `--live` bypass (see Pattern #1) |
+| Check license status | `ClusterEntry.ontap` | `nf licenses get` reads `metadata.license_packages`; supports `--live` |
 | Run CLI-only command | `ONTAPCLI` | No REST equivalent |
 | Debug cluster issue | `ONTAPCLI` | Full CLI access |
 | Query DII metrics | `APIWrapper` | DII uses different API |
@@ -481,7 +470,7 @@ All patterns share a common configuration flow:
 
 ## Best Practices
 
-1. **Prefer the SDK** - Use `netapp_ontap` for standard operations. It's well-tested and maintained by NetApp.
+1. **Prefer the cached / unified accessors** — Reach for `ClusterEntry.ontap` (Pattern #1) for cached cluster metadata reads and `QuerySet`/`DataSource` (Pattern #2) for ad-hoc queries. Drop down to the `netapp_ontap` SDK only when no `TypeMapping` covers the endpoint.
 
 2. **Use SSH sparingly** - Reserve `ONTAPCLI` for operations that genuinely require CLI access.
 
@@ -498,3 +487,6 @@ All patterns share a common configuration flow:
 - [CLI Reference](../reference/cli.md) - Available CLI commands
 - [ADR-0010: ClusterEntry and namespace access pattern](../decisions/0010-clusterentry-and-namespace-access-pattern.md) - Rationale for the `ClusterEntry.ontap` namespace design
 - [ADR-0009: SQL table storage](../decisions/0009-sql-table-storage.md) - Per-model SQL table layout backing the cache
+- [DataSource Guide](data-source.md) — unified read accessor for all cluster data
+- [Query Layer Guide](query-layer.md) — `QuerySet`, `Mutation`, realtime fields
+- [ADR-0013: DataSource as a Thin Facade Over the Collector](../decisions/0013-datasource-as-a-thin-facade-over-the-collector.md) — current architectural direction for `DataSource`

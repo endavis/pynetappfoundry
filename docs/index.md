@@ -17,6 +17,16 @@ ONTAP administration library and CLI tools for NetApp storage management.
 
 pynetappfoundry provides a comprehensive Python library and command-line interface for managing NetApp ONTAP clusters. It supports both REST API and SSH CLI access for flexible administration tasks.
 
+## Preferred ONTAP Access Patterns
+
+For new CLI commands, reports, and scripts that read or write ONTAP data, use these patterns in priority order:
+
+1. **`ClusterEntry.ontap`** — cached high-level reads with on-demand `DataSource` fallback and `--live` bypass ([ADR-0010](decisions/0010-clusterentry-and-namespace-access-pattern.md))
+2. **`QuerySet(config=)` / `DataSource`** — ad-hoc filtered/ordered/limited live reads, plus mutations ([ADR-0013](decisions/0013-datasource-as-a-thin-facade-over-the-collector.md))
+3. **`netapp_ontap` SDK** — fallback only for endpoints not yet covered by a `TypeMapping`
+
+See [DataSource Guide](usage/data-source.md), [Query Layer Guide](usage/query-layer.md), and [ONTAP Access Patterns](usage/ontap-access-patterns.md) for details.
+
 ## Quick Links
 
 - [Installation Guide](getting-started/installation.md)
