@@ -193,6 +193,7 @@ The tool hierarchy (prefer higher over lower):
 | Format code | `doit format` | `ruff format` directly |
 | Type-check | `doit type_check` | `mypy` directly |
 | Security audit | `doit audit` | `pip-audit` directly |
+| Audit legacy data-access patterns | `doit audit_legacy` | manual grep |
 | Create issues | `doit issue --type=<type>` | `gh issue create` |
 | Create PRs | `doit pr` | `gh pr create` |
 | Merge PRs | `doit pr_merge` | `gh pr merge` |
