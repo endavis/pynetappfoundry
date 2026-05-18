@@ -58,7 +58,9 @@ You are a senior coding partner. Your goal is efficient, tested, and compliant c
 | **New Dependency** | `.github/CONTRIBUTING.md` (Dependencies) | "Ask First" policy. |
 | **Creating Code** | `.claude/CLAUDE.md` (TodoWrite) | Plan -> Test -> Code loop. |
 | **Generating new code** | `docs/development/ai/architectural-conventions.md` | Layering rules and anti-patterns to avoid before writing code. |
-| **Architectural Decision** | `docs/decisions/README.md` | Check for related ADRs to update. |
+| **Architectural Decision** | `docs/decisions/README.md` | Read for context before deciding; check for related ADRs to update. |
+| **Refactor / migration proposal** | `docs/decisions/`, `docs/usage/`, `gh issue list --state all --search "<topic>"` | Verify the model, method, or prior phase issue actually exists before recommending; closed phase issues often gate the work. |
+| **Filing an issue** | `gh issue list --state all --search "<topic>"` | Closed phase issues often document deferrals and reasoning; their audit comments may be the authoritative record. |
 
 ### 6. Decision Framework
 
@@ -363,6 +365,7 @@ Where `<agent-type>` is one of: `claude`, `gemini`, `copilot`, `codex`, or the r
 - **PRs:** Use `doit pr` to create PRs and `doit pr_merge` to merge with proper commit format. Issues are not automatically closed. Ask the user if they would like the related issue closed — pass `--auto-close` to `doit pr_merge` to close linked issues in one step.
 - **The Merge Gate action:** is a manual action for the user to add to a PR. It requires the ready-to-merge label and should never be added by automation. Exception: the dependabot auto-merge workflow (`.github/workflows/dependabot-automerge.yml`) applies the `ready-to-merge` label to qualifying dependabot PRs only.
 - **Issues:** Use `doit issue --type=<type>` to create issues (types: feature, bug, refactor, docs, chore). Labels are auto-applied. Manually close after PR merge with comment "Addressed in PR #XXX". Issues are not closed automatically when PRs are merged.
+- **Tracking-issue deferrals:** If a tracking or epic issue defers work to "later", "future", or "out of scope", file a separate follow-up issue and link it from the tracker **before** closing the tracker. Closed tracking issues must never be the sole record of work that still needs doing — `gh issue list --state open` must surface deferred work as a discrete ticket.
 - **ADRs:** When implementing architectural decisions (typically `feat` or `refactor`, rarely `fix`), update related ADRs in `docs/decisions/` to add the issue link. Create new ADRs for significant decisions using `doit adr`. Every ADR must link to the documentation in `docs/` that describes the implementation. Doc and chore issues do not need ADRs. Issues with the `needs-adr` label require an ADR before the PR can be merged.
 
 ## Workflow Commands (for AI agents)
