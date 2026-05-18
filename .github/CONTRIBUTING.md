@@ -378,6 +378,8 @@ The label and approval are independent checks - both must pass. The label serves
 - Update your fork with the latest changes
 - Close any related issues with comment "Addressed in PR #XXX"
 
+**Closing tracking / epic issues:** Before closing any tracking, epic, or phase issue, ensure every "Deferred", "Out of scope", or "Future work" item in the issue body or comments has its own filed follow-up issue. Reference the follow-up issue numbers in the tracking issue's closing comment. Closed-issue audit comments are not a substitute for filed follow-ups — a future reader searching `gh issue list --state open` for `<topic>` must find the deferred work as a discrete ticket.
+
 ## Release Process
 
 This section documents how to publish releases to TestPyPI and PyPI.
