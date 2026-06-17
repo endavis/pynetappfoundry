@@ -410,9 +410,13 @@ class TestSessionCommand:
         mock_render.assert_called_once()
         # CSV written and confirmation line printed.
         assert out.exists()
-        flat_output = " ".join(result.output.split())
-        assert str(out.resolve()) in flat_output
-        assert "row(s)" in flat_output
+        # Strip all whitespace: Rich may soft-wrap the long resolved path at
+        # narrow terminal widths (e.g. macOS CI default 80 cols), inserting
+        # spaces inside the path.
+        squashed_output = "".join(result.output.split())
+        squashed_path = "".join(str(out.resolve()).split())
+        assert squashed_path in squashed_output
+        assert "row(s)" in result.output
 
         with out.open(encoding="utf-8") as f:
             data = list(csv_module.reader(f))
