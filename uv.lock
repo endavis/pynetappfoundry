@@ -171,12 +171,12 @@ name = "black"
 version = "26.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "click" },
-    { name = "mypy-extensions" },
-    { name = "packaging" },
-    { name = "pathspec" },
-    { name = "platformdirs" },
-    { name = "pytokens" },
+    { name = "click", marker = "sys_platform != 'emscripten'" },
+    { name = "mypy-extensions", marker = "sys_platform != 'emscripten'" },
+    { name = "packaging", marker = "sys_platform != 'emscripten'" },
+    { name = "pathspec", marker = "sys_platform != 'emscripten'" },
+    { name = "platformdirs", marker = "sys_platform != 'emscripten'" },
+    { name = "pytokens", marker = "sys_platform != 'emscripten'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/e1/c5/61175d618685d42b005847464b8fb4743a67b1b8fdb75e50e5a96c31a27a/black-26.3.1.tar.gz", hash = "sha256:2c50f5063a9641c7eed7795014ba37b0f5fa227f3d408b968936e24bc0566b07", size = 666155, upload-time = "2026-03-12T03:36:03.593Z" }
 wheels = [
@@ -537,21 +537,21 @@ validation = [
 
 [[package]]
 name = "datamodel-code-generator"
-version = "0.59.0"
+version = "0.61.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "argcomplete" },
-    { name = "black" },
+    { name = "black", marker = "sys_platform != 'emscripten'" },
     { name = "genson" },
     { name = "inflect" },
-    { name = "isort" },
+    { name = "isort", marker = "sys_platform != 'emscripten'" },
     { name = "jinja2" },
     { name = "pydantic" },
     { name = "pyyaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8d/50/21488efdb515afc04039e19d876ee668d85a5c9590a3a4bb25b27f2b99c0/datamodel_code_generator-0.59.0.tar.gz", hash = "sha256:054e4d5568c27db5a993f6b3e1d34af53bd1f6d1b6c18b7166908b0f3dc04bd4", size = 1098070, upload-time = "2026-05-29T15:47:55.127Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/2b/df/b2e7c15387d309bb7474dc4dbea96e624cfc42c1076e33abaed2d9164892/datamodel_code_generator-0.61.0.tar.gz", hash = "sha256:42d1b530bfa80d18a7bbfd2a24c21e53cb99a2dd4ef9d29f966a434d859c89c7", size = 1149717, upload-time = "2026-06-08T18:01:02.302Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f6/ef/8e2479e3ba432bb3333d0f01d6bdc520cc7f765ccbfac134b015d806bc2b/datamodel_code_generator-0.59.0-py3-none-any.whl", hash = "sha256:c8c119ab618d24a619d635fef7aa9c96b69e069a4d287c9adfc148ae28368a69", size = 316232, upload-time = "2026-05-29T15:47:53.228Z" },
+    { url = "https://files.pythonhosted.org/packages/eb/19/82582eae8ccd00ab76cb942d4a08f710c9044bbb1fe3dded804cc9a1208c/datamodel_code_generator-0.61.0-py3-none-any.whl", hash = "sha256:2c0ddcf5203c182e533c3567836ab5131d4b2ae4c8698419a59de3063e3cb447", size = 340657, upload-time = "2026-06-08T18:01:00.565Z" },
 ]
 
 [[package]]
