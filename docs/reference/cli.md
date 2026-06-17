@@ -134,6 +134,33 @@ nf events [OPTIONS] COMMAND [ARGS]...
 |--------|-------------|
 | `-f, --filter TEXT` | JSON cluster filter |
 
+### cifs
+
+CIFS / SMB inspection commands.
+
+```bash
+nf cifs [OPTIONS] COMMAND [ARGS]...
+```
+
+**Subcommands:**
+
+| Command | Description |
+|---------|-------------|
+| `session` | List active CIFS/SMB sessions across in-scope clusters |
+| `find-user` | (Legacy) Find CIFS sessions for a user via the netapp_ontap SDK |
+
+**`cifs session` options:**
+
+| Option | Description |
+|--------|-------------|
+| `-f, --filter TEXT` | JSON cluster filter |
+| `-u, --user TEXT` | Match `user` or `mapped_unix_user`. Substring by default; glob when `*`, `?`, or `[` is present |
+| `-i, --ip TEXT` | Match `client_ip`. Exact IP, glob (`10.1.2.*`), or CIDR (`10.1.2.0/24`) |
+| `--case-sensitive / --case-insensitive` | Match the `--user` pattern case-sensitively (default: case-insensitive) |
+| `-c, --csv PATH` | Write results to a CSV file *in addition to* the table. If PATH is a directory, writes `cifs_sessions_<YYYYMMDD-HHMMSS>.csv` inside it |
+
+CIFS sessions are transient and never cached; every invocation queries each in-scope cluster live via the ONTAP REST API (there is no `--live` flag because there is no cache to bypass). The Rich table renders without column truncation regardless of terminal width; the CSV export uses the same headers.
+
 ### metrics
 
 Metrics commands.
@@ -357,6 +384,28 @@ nf metrics dump-dii --date 2025-04-13
 
 # Dump the same 3-day window for a filtered set of clusters
 nf metrics dump-dii --date 2025-04-13 -f '{"env":"Prod"}'
+```
+
+### CIFS Inspection
+
+```bash
+# List all active CIFS sessions across the cached clusters
+nf cifs session
+
+# Find sessions for a specific user (substring, case-insensitive)
+nf cifs session -u jdoe
+
+# Glob match against fully-qualified domain user
+nf cifs session -u 'DOMAIN\jdoe'
+
+# Find every session originating from a CIDR range, scoped to Prod
+nf cifs session -i 10.1.2.0/24 -f '{"env":"Prod"}'
+
+# Combine user + IP filters
+nf cifs session -u '*jdoe*' -i 10.1.2.0/24
+
+# Render the table and additionally export to CSV
+nf cifs session -u jdoe --csv ./jdoe-sessions.csv
 ```
 
 ### Configuration
