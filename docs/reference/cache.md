@@ -199,7 +199,7 @@ The cache is rebuild-tolerant: destructive migrations are allowed, and
 
 In addition to the `cache_version` stamped into each snapshot,
 `ClusterMetadataDB` tracks the **on-disk SQLite schema** version through the
-shared `SQLiteDB` base class. The current value is `SCHEMA_VERSION = 4`, and
+shared `SQLiteDB` base class. The current value is `SCHEMA_VERSION = 6`, and
 the DB applies the following upgrades on open:
 
 | DB schema | Migration | What it does |
@@ -207,6 +207,8 @@ the DB applies the following upgrades on open:
 | `v1` → `v2` | `_upgrade_to_v2` | Reads the old `metadata_json` blob, decomposes each cluster into per-model tables (ADR-0009), then drops the JSON column from the envelope table. |
 | `v2` → `v3` | `_upgrade_to_v3` | Drops the unused `_uuid_index` table. UUID resolution moved to the in-memory `CachedClusterMetadata.uuid_index` cached property (ADR-0005). |
 | `v3` → `v4` | `_upgrade_to_v4` | Drops and recreates every per-model table to switch column names from the old flat naming (`ip_address`) to the new nested-model layout (`ip` stored as JSON), per ADR-0011. The envelope is cleared so callers detect a missing snapshot and trigger a fresh collection. |
+| `v4` → `v5` | `_upgrade_to_v5` | Adds the `vm_name` column to the `cloudmetadata` table via idempotent `ALTER TABLE … ADD COLUMN` (additive-column path from ADR-0018). Introduced with PR #582. |
+| `v5` → `v6` | `_upgrade_to_v6` | Creates the `consoleinfo` table to back `CachedClusterMetadata.console: ConsoleInfo` for cluster-scoped Console SaaS data (ADR-0019). Idempotent via `sqlite_master` check. Introduced with #713. |
 
 !!! warning "v3 → v4 is destructive"
     The v4 migration deletes existing cached rows. After upgrading,
