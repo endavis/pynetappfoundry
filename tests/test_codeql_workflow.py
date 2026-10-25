@@ -16,6 +16,7 @@ from typing import Any
 import yaml
 
 WORKFLOW_PATH = Path(__file__).parent.parent / ".github" / "workflows" / "codeql.yml"
+WORKFLOWS_DIR = WORKFLOW_PATH.parent
 
 
 def _load_workflow() -> dict[Any, Any]:
@@ -37,6 +38,23 @@ def _analyze_steps() -> list[dict[str, Any]]:
     job = workflow["jobs"]["analyze"]
     steps: list[dict[str, Any]] = job["steps"]
     return steps
+
+
+def _workflow_action_versions(prefix: str) -> set[str]:
+    """Return the versions of every step ``uses:`` that starts with ``prefix``.
+
+    Scans every workflow file, not just CodeQL, so tests can require an action
+    to be on one version repo-wide instead of hard-coding a major (#821).
+    """
+    versions: set[str] = set()
+    for path in (*WORKFLOWS_DIR.glob("*.yml"), *WORKFLOWS_DIR.glob("*.yaml")):
+        workflow = yaml.safe_load(path.read_text(encoding="utf-8"))
+        for job in workflow["jobs"].values():
+            for step in job.get("steps", []):
+                uses = step.get("uses", "")
+                if uses.startswith(prefix):
+                    versions.add(uses.split("@", 1)[1])
+    return versions
 
 
 class TestWorkflowFile:
@@ -162,30 +180,46 @@ class TestAnalyzeJob:
         job = workflow["jobs"]["analyze"]
         assert job["strategy"]["fail-fast"] is False
 
-    def test_analyze_uses_checkout_v6(self) -> None:
-        """``actions/checkout`` should be pinned to ``@v6`` (repo convention)."""
+    def test_analyze_checkout_matches_other_workflows(self) -> None:
+        """``actions/checkout`` should be on the same version as every other workflow.
+
+        The repo convention is one checkout version everywhere. Comparing
+        against the other workflows instead of a hard-coded major still catches
+        drift, but lets a repo-wide Dependabot bump through (#821).
+        """
         steps = _analyze_steps()
         checkout_steps = [s for s in steps if s.get("uses", "").startswith("actions/checkout@")]
         assert checkout_steps, "expected an actions/checkout step"
-        assert checkout_steps[0]["uses"] == "actions/checkout@v6"
+        version = checkout_steps[0]["uses"].split("@", 1)[1]
+        assert _workflow_action_versions("actions/checkout@") == {version}
 
-    def test_analyze_uses_codeql_init_v4(self) -> None:
-        """``github/codeql-action/init`` should be pinned to ``@v4``."""
+    def test_analyze_codeql_init_matches_other_codeql_steps(self) -> None:
+        """Every ``github/codeql-action/*`` step should share ``init``'s version.
+
+        ``init`` and ``analyze`` come from the same action release, so a bump
+        must move them together. Comparing them to each other instead of a
+        hard-coded major catches a half-applied bump without failing a full
+        one (#821).
+        """
         steps = _analyze_steps()
         init_steps = [
             s for s in steps if s.get("uses", "").startswith("github/codeql-action/init@")
         ]
         assert init_steps, "expected a github/codeql-action/init step"
-        assert init_steps[0]["uses"] == "github/codeql-action/init@v4"
+        version = init_steps[0]["uses"].split("@", 1)[1]
+        assert _workflow_action_versions("github/codeql-action/") == {version}
 
-    def test_analyze_uses_codeql_analyze_v4(self) -> None:
-        """``github/codeql-action/analyze`` should be pinned to ``@v4``."""
+    def test_analyze_uses_codeql_analyze(self) -> None:
+        """The analyze job should run ``github/codeql-action/analyze``.
+
+        Its version is covered by
+        ``test_analyze_codeql_init_matches_other_codeql_steps``.
+        """
         steps = _analyze_steps()
         analyze_steps = [
             s for s in steps if s.get("uses", "").startswith("github/codeql-action/analyze@")
         ]
         assert analyze_steps, "expected a github/codeql-action/analyze step"
-        assert analyze_steps[0]["uses"] == "github/codeql-action/analyze@v4"
 
     def test_analyze_init_passes_matrix_language(self) -> None:
         """The init step must receive the matrix language via ``with.languages``."""
