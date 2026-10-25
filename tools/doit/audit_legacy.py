@@ -266,10 +266,11 @@ def render_table(
     console.print()
 
     if candidates:
+        hit_count = len(candidates)
+        file_count = len({m.file for m in candidates})
         console.print(
-            f"[bold red]CANDIDATES:[/bold red] {len(candidates)} non-allowlisted "
-            f"legacy hit(s) across "
-            f"{len({m.file for m in candidates})} file(s)."
+            f"[bold red]CANDIDATES:[/bold red] {hit_count} non-allowlisted "
+            f"legacy hit(s) across {file_count} file(s)."
         )
     else:
         console.print("[bold green]No non-allowlisted legacy hits found.[/bold green]")

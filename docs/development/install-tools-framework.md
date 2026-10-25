@@ -1,8 +1,17 @@
+---
+title: install_tools Framework
+description: Reusable framework for installing developer tools from GitHub releases or other URLs into ~/.local/bin
+audience:
+  - contributors
+tags:
+  - tooling
+---
+
 # install_tools Framework
 
 A reusable Python framework for installing developer tools from GitHub
 releases (and other URLs) into the user-local `~/.local/bin` directory.
-Lives in [`tools/doit/install_tools.py`](https://github.com/username/package_name/blob/main/tools/doit/install_tools.py)
+Lives in [`tools/doit/install_tools.py`](https://github.com/endavis/pynetappfoundry/blob/main/tools/doit/install_tools.py)
 and is consumed by `doit` install tasks (e.g., `doit install_direnv`).
 
 ## Overview
@@ -21,6 +30,7 @@ The framework supports three release shapes:
 | Single binary from a GitHub release | direnv | default — pass `asset_patterns` only |
 | Multi-binary archive (tar.gz / zip) from a GitHub release | age, sops | add `extract_binaries=[...]` |
 | Single binary or archive from a non-GitHub URL | terraform, opentofu | add `url_template=...`, optionally with `prefer_brew=False` |
+| Release whose asset naming can't be expressed with one template | jq | pass a per-OS `url_template={"linux": ..., "darwin": ...}` |
 
 ## Public API
 
@@ -147,6 +157,39 @@ The `{version}`, `{os}`, and `{arch}` placeholders are substituted from
 `get_latest_github_release(repo)`, `platform.system().lower()`, and
 `_get_arch()` respectively.
 
+### Per-OS `url_template` (jq)
+
+`url_template` also accepts a dict keyed by `platform.system().lower()`, the
+same convention `asset_patterns`, `extract_binaries`, and `sha256` already
+use. Reach for this when a single `{os}`-substituted template can't express
+the release's asset naming — jq's release tag is `jq-1.8.2` rather than a
+leading `v`, so a hard-coded `v{version}` template would 404, and its macOS
+asset is named `jq-macos-<arch>` while `{os}` expands to `darwin`:
+
+```python
+from tools.doit.install_tools import create_install_task
+
+def task_install_jq():
+    return create_install_task(
+        name="jq",
+        repo="jqlang/jq",
+        asset_patterns={},
+        url_template={
+            "linux": "https://github.com/jqlang/jq/releases/download/{version}/jq-linux-{arch}",
+            "darwin": "https://github.com/jqlang/jq/releases/download/{version}/jq-macos-{arch}",
+        },
+        version_cmd=["jq", "--version"],
+        prefer_brew=False,
+    )
+```
+
+`get_latest_github_release()` only strips a leading `v`, so `jq-1.8.2` passes
+through `{version}` unchanged. A dict `url_template` is resolved by the
+current OS exactly like a plain string one — it still bypasses brew on
+macOS — except that an OS missing from the dict aborts with the same
+`Unsupported OS for {name}` error `asset_patterns` uses, rather than raising
+a `KeyError`.
+
 ## Architecture mapping
 
 `_get_arch()` normalizes `platform.machine()` to the values most release
@@ -182,13 +225,54 @@ the download path on every OS.
 - **Zip archives** additionally do a `Path.resolve()` zip-slip check as
   defense in depth.
 - Extracted binaries are chmod'd to `0o755`.
+
+### Integrity: what is and is not verified
+
+Pass `sha256=` to `install_tool()` / `create_install_task()` to state the digest you
+expect. It is verified **before** the archive is opened and **before** the executable
+bit goes on, and a mismatch deletes the file and aborts — a failed verification can
+never be mistaken for a completed install.
+
+```python
+create_install_task(
+    name="terraform",
+    repo="hashicorp/terraform",
+    asset_patterns={},
+    url_template="https://releases.hashicorp.com/terraform/{version}/terraform_{os}_{arch}.zip",
+    sha256={"linux": "9d2b...", "darwin": "1f4c..."},   # per-platform, or a single str
+)
+```
+
+**A digest is mandatory for hosts outside `IMPLICITLY_TRUSTED_HOSTS`** — that is, for
+the `url_template` escape hatch, which exists to reach third parties such as
+`releases.hashicorp.com`. Calling it without a digest aborts. GitHub-release installs
+are unchanged and stay optional, because fetching them already rests on the same trust
+as cloning this template.
+
+**What this does not do, stated plainly:** it does not fetch upstream `*.sha256`
+sibling files and verify against those. Over HTTPS from the same origin that serves the
+asset, that defends against almost nothing — TLS already covers the transport, and an
+attacker who can replace the asset can replace the checksum beside it. The protection
+comes from a digest *you* pinned, which is why the parameter takes one from the caller
+rather than fetching one.
+
+Neither this nor anything else here defends against a compromised upstream release when
+the digest floats with the version. `install_tool` resolves "latest" at run time; pinning
+a version alongside a digest is what buys reproducibility, and is a deliberate
+non-goal for now — see below.
 - Status output uses ASCII `[OK]` rather than a checkmark glyph so it
   encodes cleanly on Windows cp1252 consoles (see issue #328).
 
 ## Future work
 
-- **Checksum verification** (SHA256 from a `*.sha256` sibling URL).
-- **GPG signature verification** for projects that publish detached signatures.
+- **Pinned versions alongside pinned digests.** Today `install_tool` resolves the latest
+  release at run time, so a caller-supplied `sha256` only holds for a known version. Pinning
+  both would make installs reproducible and would detect a retagged or replaced upstream
+  asset — at the cost of a digest matrix per tool per platform that ages and needs a refresh
+  task. Deliberately deferred (#694).
+- **GPG signature verification** for projects that publish detached signatures. Unlike a
+  sibling checksum file, a signature is meaningful against a compromised release host,
+  because the signing key is not served alongside the asset.
 - **Archive caching** between runs to avoid redownloading on a fresh
   clone or CI runner.
 - **Windows binary support** (PowerShell-friendly install path).

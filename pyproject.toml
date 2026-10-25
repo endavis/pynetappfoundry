@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling>=1.29.0", "hatch-vcs>=0.5.0"]
+requires = ["hatchling>=1.32.4", "hatch-vcs>=0.5.0"]
 build-backend = "hatchling.build"
 
 [project]
@@ -104,6 +104,10 @@ extend-exclude = ["**/_version.py", "examples"]
 force-exclude = true
 
 [tool.ruff.lint]
+# Enable preview mode but require rules to be listed by exact code so we
+# opt into PLW1514 without pulling in every other unstable preview rule.
+preview = true
+explicit-preview-rules = true
 select = [
     "E",      # pycodestyle errors
     "F",      # pyflakes
@@ -117,14 +121,17 @@ select = [
     "RUF",    # Ruff-specific rules
     "SIM",    # flake8-simplify
     "ASYNC",  # flake8-async
+    "PLW1514",  # require explicit encoding on text-mode file I/O (preview rule)
 ]
-ignore = [
-    "ANN101",  # Missing type annotation for self
-    "ANN102",  # Missing type annotation for cls
-    "ANN401",  # Dynamically typed expressions (Any) - needed for JSON handling
-]
+ignore = []
 
 [tool.ruff.lint.per-file-ignores]
+# Project divergence: the template enforces ANN401 everywhere. These paths still
+# use Any for dynamically typed JSON handling; template-owned code (tools/doit/)
+# is checked as upstream, so its `# noqa: ANN401` comments stay in use (#826).
+"src/**" = ["ANN401"]
+"tools/scripts/swagger12_to_20.py" = ["ANN401"]
+"tools/console_openapi/openapi/builder.py" = ["ANN401"]
 "tests/*" = ["ANN"]
 # SIM117: yattag uses nested with statements for HTML structure, not fixable
 "src/pynetappfoundry/cli/commands/reports/html.py" = ["SIM117"]
@@ -164,8 +171,7 @@ no_implicit_optional = true
 strict_equality = true
 warn_redundant_casts = true
 warn_unreachable = true
-# tools/pyproject_template/ uses sys.path manipulation for standalone execution
-exclude = ["tools/pyproject_template/", ".claude/", ".gemini/", ".codex/"]
+exclude = [".claude/", ".gemini/", ".codex/"]
 
 [[tool.mypy.overrides]]
 # netapp-ontap 9.18.1+ uses apipkg lazy loading; mypy cannot resolve dynamic attributes
@@ -179,15 +185,30 @@ ignore_missing_imports = true
 follow_untyped_imports = true
 
 [[tool.mypy.overrides]]
-# Standalone scripts using sys.path manipulation; excluded from discovery
-# but still followed via imports from bootstrap.py
-module = "tools.pyproject_template.*"
-follow_imports = "skip"
+# tools/pyproject_template/ scripts run standalone and do `sys.path.insert`
+# before importing their siblings by bare name (`from utils import ...`).
+# mypy cannot resolve those, so suppress the import errors by naming the
+# sibling modules. Suppressing only the imports — rather than excluding the
+# directory, as this config previously did — keeps the other ~5,300 lines
+# type-checked. See issue #700.
+module = [
+    "check_template_updates",
+    "cleanup",
+    "configure",
+    "repo_settings",
+    "settings",
+    "setup_repo",
+    "utils",
+]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 minversion = "8.0"
-addopts = "--strict-config --strict-markers --benchmark-disable"
+# pytest-benchmark reads its settings only from these flags, never from a pyproject table (#879).
+# Disabled runs ignore them, so they apply only when a benchmark run adds --benchmark-enable.
+addopts = "--strict-config --strict-markers --benchmark-disable --benchmark-disable-gc --benchmark-warmup=on"
 testpaths = ["tests"]
+pythonpath = ["."]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
@@ -196,20 +217,26 @@ markers = [
     "property: marks tests as property-based tests (run with Hypothesis)",
 ]
 
-[tool.pytest-benchmark]
-disable_gc = true
-min_rounds = 5
-warmup = true
-
 [tool.coverage.run]
 branch = true
-source = ["pynetappfoundry"]
+# `tools/` is the code that runs releases, creates PRs and blocks dangerous
+# commands, so it is measured alongside the package. See
+# docs/development/ci-cd-testing.md for the downstream/template split.
+source = ["pynetappfoundry", "tools"]
+# tools/pyproject_template/ is the template's own management suite. ADR-9017
+# makes its tests template-owned, so it is never tested here; left in scope it
+# would be measured but not exercised (#731 upstream).
+omit = ["tools/pyproject_template/*"]
 
 [tool.coverage.report]
 skip_covered = false
 show_missing = true
 precision = 2
-fail_under = 10  # TODO: Increase as test coverage improves
+# Measured 77.75% for pynetappfoundry + tools/ on 2026-10-25 (#826). The ~3pp
+# margin is deliberate, as in the template: a threshold set exactly at the
+# measured value fails on trivial variation. Raise it as coverage improves, and
+# treat lowering it as a change that needs justification.
+fail_under = 75
 exclude_lines = [
     "pragma: no cover",
     "if TYPE_CHECKING:",
@@ -261,7 +288,7 @@ include = [
     "src",
     "tests",
     "*.py",           # Root level Python files (dodo.py, setup-repo.py, configure.py)
-    "tools",          # Tools directory (migrate_existing_project.py)
+    "tools",          # Tools directory
     ".github",        # Any Python in GitHub workflows/scripts
 ]
 exclude = [
@@ -284,13 +311,23 @@ reportMissingTypeStubs = false
 
 [tool.vulture]
 min_confidence = 80
-paths = ["src", "tests"]
+paths = ["src", "tests", "tools"]
 exclude = [
     "*/tests/*",      # Test fixtures often appear unused
     "*/__pycache__/*",
 ]
 # Common false positives in Python projects
 ignore_names = [
+    # Imported under `if TYPE_CHECKING:` and referenced only from string
+    # annotations (e.g. `console: "ConsoleType"`), which vulture does not
+    # parse. Deleting these imports would break type checking.
+    "ConsoleType",
+    # Required by the descriptor protocol (`__get__(self, obj, objtype=None)`)
+    # in data/filters.py and models/_base.py, even when unused.
+    "objtype",
+    # Unused optional parameter of the one-off migration script
+    # tools/codegen/migrate_submodel_fields.py.
+    "api_paths_hint",
     "test_*",         # Pytest test functions
     "fixture_*",      # Pytest fixtures
     "*_fixture",      # Pytest fixtures

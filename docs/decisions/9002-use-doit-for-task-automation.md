@@ -1,3 +1,14 @@
+---
+title: "ADR-9002: Use doit for task automation"
+description: Use doit as the task runner for testing, linting, building and other routine operations
+date: 2026-01-21
+audience:
+  - contributors
+tags:
+  - adr
+  - doit
+---
+
 # ADR-9002: Use doit for task automation
 
 ## Status
@@ -28,7 +39,7 @@ and discoverable. It is not part of the published package's public API.
   convenience; #348 moved it to dev to align with the boundary above.)
 
 For the broader layering rationale, see
-[Tooling Roles and Architectural Boundaries](../../development/tooling-roles.md).
+[Tooling Roles and Architectural Boundaries](../development/tooling-roles.md).
 
 ## Related Issues
 
@@ -46,5 +57,5 @@ For the broader layering rationale, see
 
 ## Related Documentation
 
-- [Tools Reference](../tools-reference.md)
-- [CLI Guide](../../usage/cli.md)
+- [Tools Reference](../template/tools-reference.md)
+- [CLI Guide](../usage/cli.md)

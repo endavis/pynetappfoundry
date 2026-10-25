@@ -136,7 +136,7 @@ gh repo create my-project --public --source=. --push
 Replace all placeholder values with your project information:
 
 ```bash
-python tools/pyproject_template/configure.py
+python tools/pyproject_template/manage.py configure
 ```
 
 The script will prompt for:
@@ -175,6 +175,9 @@ uv sync --all-extras --dev
 doit pre_commit_install
 ```
 
+The development tools, `doit` included, live in the `dev` and `security` extras, and a plain
+`uv sync` uninstalls them. Sync again later with `doit install_dev`, which runs the same command.
+
 #### Enable Shell Completions (Optional)
 
 Enable tab completion for `doit` commands:
@@ -194,7 +197,34 @@ source ~/.bashrc   # For Bash
 source ~/.zshrc    # For Zsh
 ```
 
-### Step 4: Verify Setup
+### Step 4: Remove the Template Management Suite
+
+The automated setup does this for you; the manual route has to be told:
+
+```bash
+uv run doit template_clean --all
+```
+
+This deletes `tools/pyproject_template/`, `docs/template/` and `bootstrap.py` —
+the template's own management code, which a new project does not use.
+
+Keeping it costs nothing measurable: `pyproject.toml` omits
+`tools/pyproject_template/*` from the coverage gate, `docs/template/` is
+documentation, and `bootstrap.py` is outside the gate's `source`. An earlier
+version of this page claimed the suite would put a fresh project under
+`fail_under`; that was true before the omit landed in #731 and is not true now.
+
+What you lose by keeping it is only tidiness — and what you gain is
+`manage.py repo`, `manage.py check` and the rest of the sync tooling, without
+having to reinstall it.
+
+To reinstall the template-sync suite later:
+
+```bash
+curl -sSL https://raw.githubusercontent.com/endavis/pyproject-template/main/bootstrap.py | python3 - --sync
+```
+
+### Step 5: Verify Setup
 
 ```bash
 # Run all checks
@@ -208,7 +238,7 @@ doit check
 # ✓ All checks passed!
 ```
 
-### Step 5: Configure GitHub Repository
+### Step 6: Configure GitHub Repository
 
 Manually configure what the automated setup does automatically:
 

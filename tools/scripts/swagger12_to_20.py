@@ -405,7 +405,7 @@ def main() -> None:
     input_path = Path(sys.argv[1])
     output_path = Path(sys.argv[2]) if len(sys.argv) > 2 else None
 
-    with open(input_path) as f:
+    with open(input_path, encoding="utf-8") as f:
         spec = json.load(f)
 
     result = convert(spec)

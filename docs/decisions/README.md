@@ -96,6 +96,10 @@ The Issue contains the full discussion; the ADR summarizes the outcome.
 | [9014](9014-use-click-for-application-cli.md) | Use click for application CLI | Accepted |
 | [9015](9015-install-tools-framework-archive-extraction-and-custom-urls.md) | install_tools framework: archive extraction and custom URLs | Accepted |
 | [9016](9016-unify-adr-directories.md) | Unify ADR directories under docs/decisions | Accepted |
+| [9017](9017-template-tooling-and-its-tests-are-template-owned.md) | Template tooling and its tests are template-owned | Accepted |
+| [9020](9020-a-template-version-is-a-commit-sha.md) | A template version is a commit SHA | Accepted |
+| [9021](9021-a-pr-may-target-the-unmerged-branch-it-builds-on.md) | A PR may target the unmerged branch it builds on | Accepted |
+| [9022](9022-worktrees-live-in-worktrees-each-with-its-own-environment.md) | Worktrees live in worktrees/, each with its own environment | Accepted |
 
 ### Project-level ADRs (0001+)
 

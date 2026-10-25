@@ -143,7 +143,7 @@ def get_public_key_from_file(key_path: Path) -> str:
     if not key_path.exists():
         raise SOPSError(f"Age key file not found: {key_path}")
 
-    content = key_path.read_text()
+    content = key_path.read_text(encoding="utf-8")
     for line in content.splitlines():
         if line.startswith("# public key:"):
             return line.split(":", 1)[1].strip()
@@ -327,7 +327,7 @@ def create_sops_config(
     }
 
     config_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(config_path, "w") as f:
+    with open(config_path, "w", encoding="utf-8") as f:
         yaml.dump(config, f, default_flow_style=False)
 
     logger.info(f"Created SOPS config at {config_path}")

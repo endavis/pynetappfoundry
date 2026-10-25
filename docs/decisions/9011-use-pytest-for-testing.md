@@ -1,3 +1,14 @@
+---
+title: "ADR-9011: Use pytest for testing"
+description: Use pytest, with pytest-xdist for parallel runs and pytest-cov for coverage
+date: 2026-01-21
+audience:
+  - contributors
+tags:
+  - adr
+  - testing
+---
+
 # ADR-9011: Use pytest for testing
 
 ## Status
@@ -19,5 +30,5 @@ pytest minimizes boilerplate (plain functions, no classes required), has a power
 
 ## Related Documentation
 
-- [CI/CD Testing Guide](../../development/ci-cd-testing.md)
-- [Coding Standards](../../development/coding-standards.md)
+- [CI/CD Testing Guide](../development/ci-cd-testing.md)
+- [Coding Standards](../development/coding-standards.md)
