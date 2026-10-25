@@ -329,7 +329,7 @@ Hooks include:
 
 ## AI Agent Support
 
-This template supports **Claude Code**, **Gemini CLI**, **GitHub Copilot CLI**, and **Codex CLI**. All four agents ship a complete `<ai>:<action>` command surface (`/claude:plan`, `/gemini:implement`, `/copilot:review`, `$codex-adversarial-review`, etc.) for self-action and cross-agent delegation. The shared workflow is: `/<currentai>:plan → /<currentai>:implement → /ghi-finalize → doit pr_merge --auto-close`.
+This template supports **Claude Code**, **GitHub Copilot CLI**, **Codex CLI**, and **Antigravity CLI** (`agy`). All four agents ship a complete cross-agent review command surface for self-action and cross-agent delegation, with slash names that differ by host: Claude uses colon separators (`/claude:review`, `/claude:adversarial-review`); Copilot and Codex use hyphen separators (`/copilot-review`, `$codex-adversarial-review`) because their command surface is skills and skill names cannot contain colons; Antigravity activates skills by `description:` match with no prefix. The shared workflow is: say "implement issue N" → review the PR → `doit pr_merge --auto-close`.
 
 ### Requirements
 

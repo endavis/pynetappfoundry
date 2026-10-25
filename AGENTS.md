@@ -13,7 +13,6 @@ You are a senior coding partner. Your goal is efficient, tested, and compliant c
 ## Agent Role & Expertise
 **You are an expert Python developer.**
 - **Mission:** Maintain code quality, follow patterns, and improve the codebase.
-- **Stack:** Python 3.12+, uv, doit, ruff, mypy, pytest.
 
 ## ⚠️ MANDATORY PROTOCOLS (READ FIRST)
 
@@ -21,7 +20,7 @@ You are a senior coding partner. Your goal is efficient, tested, and compliant c
 - **Questions != Instructions:** If the user asks "What...", "How...", or "Can we...", answer with a **PLAN** or **EXPLANATION**.
 - **NEVER implement based on a question.** Wait for explicit "Do it" or "Proceed".
 - **Stop & Verify:** If the user says "Stop", "Wait", "Hold on", "Cancel", "Wrong", or "No", immediately halt and ask for clarification.
-- **Summary Before Commit:** At the end of any implementation (docs, fix, feature, chore, etc.), summarize what was changed for the user before committing and wait for the user's explicit instruction to commit the changes.
+- **Summary Before Commit:** At the end of any implementation (docs, fix, feature, chore, etc.), summarize what was changed for the user before committing and wait for the user's explicit instruction to commit the changes. **Exception:** the user saying "implement issue X" (the `implement-issue` skill) authorizes commit, push, and PR creation on that issue's own branch without a further wait — see [Slash Commands and Workflows — implement issue N](docs/development/ai/slash-commands.md#implement-issue-n).
 - **Failing Tests:** Never modify a test to make it pass. Stop, explain *why* the test broke (what behavior changed, what the test was asserting), and discuss with the user whether the code or the test should change. A failing test is a signal, not a problem to silence.
 
 ### 2. Task Planning Protocol
@@ -61,6 +60,9 @@ You are a senior coding partner. Your goal is efficient, tested, and compliant c
 | **Architectural Decision** | `docs/decisions/README.md` | Read for context before deciding; check for related ADRs to update. |
 | **Refactor / migration proposal** | `docs/decisions/`, `docs/usage/`, `gh issue list --state all --search "<topic>"` | Verify the model, method, or prior phase issue actually exists before recommending; closed phase issues often gate the work. |
 | **Filing an issue** | `gh issue list --state all --search "<topic>"` | Closed phase issues often document deferrals and reasoning; their audit comments may be the authoritative record. |
+| **Editing AI agent config** (commands, skills, hooks, instruction files) | `docs/development/AI_SETUP.md` | Per-agent config roots, discovery rules and hook wiring. |
+| **Creating an issue, PR or ADR** | `.github/CONTRIBUTING.md` (Development Workflow) | The commands, their flags, and the required fields. |
+| **Merging a dependabot PR** | `docs/development/dependabot-automerge.md` | Rebase procedure; never `update-branch` — it strips signatures. |
 
 ### 6. Decision Framework
 
@@ -96,6 +98,8 @@ You are a senior coding partner. Your goal is efficient, tested, and compliant c
 
 **Key principle:** If you find yourself thinking "but this case is different because..." or "this is simple enough to...", you are making a judgment call. STOP and follow the documented process or ASK the user.
 
+Some of these are blocked in code as well as forbidden here — committing to `main` and the `--admin` bypasses are stopped by hooks and branch rules, listed in [AI Enforcement Principles — Currently Enforced Processes](docs/development/ai/enforcement-principles.md#currently-enforced-processes). The rest are enforced only by you reading this. A hook matches a command pattern, not the reasoning that reached for it.
+
 ## Sources of Truth
 
 **DO NOT HALLUCINATE RULES.** Read these files to know what to do:
@@ -108,15 +112,28 @@ You are a senior coding partner. Your goal is efficient, tested, and compliant c
 | **Testing** | `.github/CONTRIBUTING.md` | Test patterns, coverage rules. |
 | **Security** | `.github/SECURITY.md` | Policy, sensitive data handling. |
 | **Architecture & Layering** | `docs/development/ai/architectural-conventions.md` | Imperative-form rules for AI agents. |
-| **Slash Commands & Workflows** | `docs/development/ai/slash-commands.md` | Reference for /<ai>:plan, /<ai>:implement, /ghi-finalize, self-action and cross-agent workflows. |
+| **Slash Commands & Workflows** | `docs/development/ai/slash-commands.md` | Reference for "implement issue N", self-action review/adversarial-review, and cross-agent workflows. |
 | **AI Agent Walkthrough** | `docs/development/ai/first-5-minutes.md` | Narrative onboarding for the AI agent workflow (plan → implement → review → PR → merge). |
+
+## Template Layers and Guarded Docs
+
+Configuration turns this template into a project. Know which layer a file belongs to before editing it:
+
+- **The package**: `src/pynetappfoundry/`, renamed to the project's package on configuration.
+- **Dev tooling that ships**: `tools/doit/`, `tools/hooks/` and their tests. The tests ship too; shedding them broke a spawned project's coverage gate (#731).
+- **Template-owned, shed on configuration**: `tools/pyproject_template/`, `bootstrap.py`, `README.template.md` (renamed onto `README.md`), and only the tests in `TEMPLATE_OWNED_TEST_FILES`. `tests/template/` is not shed wholesale.
+
+A test is template-owned when its target does not survive configuration ([ADR-9017](docs/decisions/9017-template-tooling-and-its-tests-are-template-owned.md)). A test that ships must never depend on shed code (#691).
+
+**ADR numbering:** template decisions use the 9XXX series (`doit adr --template`), project decisions the 0001 series (`doit adr`). See [Tooling Roles](docs/development/tooling-roles.md).
+
+**Docs and AI config are test-guarded.** Editing docs, `AGENTS.md`, rule files or agent commands and skills can fail `doit test`, for example in `tests/test_instruction_pointers.py`, `tests/test_cross_agent_contract.py` and `tests/test_markdown_links.py`. A change to one agent's command, skill or rule must be mirrored across `.claude/`, `.github/` and `.agents/`.
 
 ## Common Pitfalls
 
 ### Anti-Patterns to Avoid
 - **Tight Coupling**: Always use dependency injection
 - **Silent Failures**: Always log errors and raise exceptions with context
-- **Mutable Defaults**: Never use `def foo(items=[])`
 - **String Concatenation for Paths**: Use `Path` objects
 
 ### Cache Schema Pitfalls
@@ -165,8 +182,8 @@ The contract behind these rules is in [ADR-0018](docs/decisions/0018-cache-schem
 **How to Handle:**
 1. Document in commit message with `BREAKING CHANGE:` footer
 2. Document in PR description with migration guide
-3. Update CHANGELOG.md
-4. Breaking changes require major version bump
+3. Don't edit CHANGELOG.md: `doit release` writes it from the commit messages, footer included
+4. Breaking changes bump MINOR before 1.0 and MAJOR from 1.0 on: set `major_version_zero = false` in `[tool.commitizen]` before releasing 1.0 (`doit release` refuses 1.0 or later until you do)
 
 ## Tooling & Environment
 
@@ -174,7 +191,7 @@ The contract behind these rules is in [ADR-0018](docs/decisions/0018-cache-schem
 
 ### Principle: Use the Highest-Level Tool Available
 
-This project wraps common operations in `doit` tasks that enforce conventions, validate inputs, and reduce errors. **Always check if a `doit` task exists before running a raw command.**
+This project wraps common operations in `doit` tasks that enforce conventions, validate inputs, and reduce errors. **Always check if a `doit` task exists (`doit list`) before running a raw command.**
 
 The tool hierarchy (prefer higher over lower):
 
@@ -202,10 +219,12 @@ The tool hierarchy (prefer higher over lower):
 | Create ADRs | `doit adr` | Manual file creation |
 | Sync GitHub labels | `doit labels_sync` | `gh label create` / `gh label edit` manually |
 | Commit (interactive) | `doit commit` | `git commit` without format |
+| Create a worktree | `doit worktree --branch=<branch>` | `git worktree add` by hand |
 | Install/add packages | `uv add <pkg>` | `pip install` |
-| Sync dependencies | `uv sync` | `pip install -r` |
+| Sync dependencies | `doit install_dev` | plain `uv sync`, `pip install -r` |
 | Run Python scripts | `uv run <script>` | `python` directly |
 | Run a specific test file | `uv run pytest tests/test_foo.py` | `pytest` directly |
+| Run a single test | `uv run pytest tests/test_foo.py::test_name` | `pytest` directly |
 | Read issues/PRs/comments | `gh issue view`, `gh pr view`, `gh api` | `WebFetch` on GitHub URLs |
 | GitHub API queries | `gh api` | `curl` to GitHub API |
 | Build docs | `doit docs_build` | `mkdocs build` directly |
@@ -214,15 +233,6 @@ The tool hierarchy (prefer higher over lower):
 | Tag after release PR merge | `doit release_tag` | Manual tag + push |
 | Mutation testing | `doit mutate` | `mutmut` directly |
 | Generate SBOM | `doit sbom` | `cyclonedx-py` directly |
-
-### Discovering Available Tasks
-
-List all available `doit` tasks before assuming one doesn't exist:
-
-```bash
-doit list          # Show all tasks with descriptions
-doit help <task>   # Show detailed help for a specific task
-```
 
 ### When Raw Commands Are Appropriate
 
@@ -248,46 +258,16 @@ gh pr list --state open
 
 ### Dependabot PRs
 
-Dependabot PRs that pass CI are now auto-merged by `.github/workflows/dependabot-automerge.yml`. The manual workflow below applies only to PRs the bot skips (major bumps, sensitive deps, or PRs labeled `automerge-blocked`). See [docs/development/dependabot-automerge.md](docs/development/dependabot-automerge.md) for details.
+Dependabot PRs that pass CI are auto-merged by `.github/workflows/dependabot-automerge.yml`. A PR
+the bot skips (major bumps, sensitive deps, `automerge-blocked`) is merged by hand.
 
-When merging dependabot PRs that are behind `main`, **never** use the GitHub API `update-branch` endpoint or local rebase to update the branch. This strips the verified commit signatures from dependabot commits, which are required by branch protection rules.
+**Never** use the GitHub `update-branch` API or a local rebase to update a dependabot branch — both
+strip the verified commit signatures that branch protection requires. Use `@dependabot rebase`
+instead, posted from a real user account.
 
-Instead, use dependabot's own rebase command:
-
-```bash
-gh pr comment <number> --body "@dependabot rebase"
-```
-
-Dependabot will rebase the branch and re-sign the commits, preserving verified signatures.
-
-#### Dependabot PR merge workflow
-
-When merging dependabot PRs that are behind `main`, use this procedure:
-
-1. **Request rebase** via dependabot's own action (preserves signed commits):
-   ```bash
-   gh pr comment <number> --body "@dependabot rebase"
-   ```
-
-2. **Wait for force-push** — poll until the PR's commit parent matches current `main` HEAD:
-   ```bash
-   # Get current main HEAD
-   main_sha=$(gh api repos/{owner}/{repo}/git/ref/heads/main --jq '.object.sha[0:7]')
-
-   # Poll PR commit parent until it matches
-   gh api repos/{owner}/{repo}/pulls/<number>/commits --jq '.[0].parents[0].sha[0:7]'
-   ```
-   This takes 1–3 minutes. **Do not** request a second rebase until the first one lands.
-
-3. **Wait for CI** to pass (`gh pr checks <number> --watch`).
-
-4. **Merge** with `doit pr_merge --pr=<number>`.
-
-#### What NOT to do
-
-- **Never** use `gh api .../update-branch` to rebase — this strips verified commit signatures.
-- **Never** rebase locally — same problem.
-- **Never** request a second `@dependabot rebase` before confirming the first force-push landed.
+The full procedure — requesting the rebase, confirming the force-push landed, merging — is in
+[Dependabot Auto-merge](docs/development/dependabot-automerge.md#stale-prs). Read it before
+merging a dependabot PR.
 
 ### AI Agent File Operations
 
@@ -305,24 +285,24 @@ Native tools provide better visibility, review capabilities, and error handling 
 
 ### AI Config Directories
 
-Each supported AI CLI has a dedicated config directory at the repo root:
+Each supported AI CLI has a config root at the repo root. This table is a pointer, not a summary —
+read the linked section before editing an agent's configuration, command surface, or hooks.
 
-| CLI | Config Directory | Notes |
+| CLI | Config roots | Details |
 | :--- | :--- | :--- |
-| Claude Code | `.claude/` | Commands, agents, rules, settings. Primary source of slash commands. |
-| Gemini CLI | `.gemini/` | Commands, settings, and rules/ subdirectory for per-stack rule files. Supports a standalone workflow (`/gemini:plan`, `/gemini:implement`, `/ghi-finalize`) and multi-agent orchestration flows. |
-| GitHub Copilot CLI | `.copilot/` | Config directory. Skills auto-discovered from `.claude/commands/`. Hook wired in `.github/hooks/copilot-hooks.json`. Per-stack instruction files live in `.github/instructions/` (Copilot-native; Claude/Gemini cannot read them). See `.github/instructions/README.md`. |
-| Codex CLI | `.codex/`, `.agents/skills/` | `config.toml` for approvals/hooks plus repo-scoped skills for the Codex workflow. No custom slash commands. Rule-shaped skills live in `.agents/skills/<name>/SKILL.md`; the `description:` frontmatter is the skill-gate trigger. See `.agents/skills/README.md`. |
+| Claude Code | `.claude/` | [Claude Code setup](docs/development/AI_SETUP.md#2-claude-code-anthropic) |
+| GitHub Copilot CLI | `.copilot/`, `.github/skills/`, `.github/instructions/` | [Copilot CLI setup](docs/development/AI_SETUP.md#3-github-copilot-cli) |
+| Codex CLI | `.codex/`, `.agents/skills/` | [Codex CLI setup](docs/development/AI_SETUP.md#1-codex-cli-openai) |
+| Antigravity CLI (`agy`) | `.agents/` (shared with Codex) | [Antigravity CLI setup](docs/development/AI_SETUP.md#4-antigravity-cli-google) |
 
-Copilot CLI ships self-action commands in `.copilot/commands/copilot/` (`/copilot:plan`, `/copilot:implement`, `/copilot:review`, `/copilot:adversarial-review`) and cross-agent bridge commands in `.copilot/commands/<target>/`. It also auto-discovers some commands from `.claude/commands/` (e.g. `/ghi-finalize`, `/ghi-status`).
+Detail that spans agents — per-host command discovery and naming, the cross-agent workflow
+contract, non-interactive invocation flags, hook wiring and each host's block contract — lives in
+[Slash Commands and Workflows](docs/development/ai/slash-commands.md),
+[Cross-Agent Delegation Matrix](docs/development/ai/cross-agent-delegation.md) and
+[AI Command Blocking](docs/development/ai/command-blocking.md).
 
-Gemini CLI ships standalone implementations of `/gemini:plan`, `/gemini:implement`, `/gemini:review`, `/gemini:adversarial-review`, and `/ghi-finalize` under `.gemini/commands/gemini/` and `.gemini/commands/`. They share the GitHub-artifact contract (plan comment header `## Implementation Plan for #<n>: <title>`, `<type>/<n>-<slug>` branch names, `Addresses #<n>` PR body) with the Claude versions, so users can switch agents mid-workflow without losing state.
-
-Codex CLI does **not** use repo-defined slash commands in this template. Its repo-native workflow is provided through checked-in skills under `.agents/skills/`, invoked with built-in Codex skill selection such as `/skills` or explicit mentions like `$codex-plan`. Rule-shaped skills (per-stack self-check checklists) follow the same discipline as `.claude/rules/`, `.gemini/rules/`, and `.github/instructions/` — ≤30 lines, numbered self-checks, observed-failures footer — with the key distinction that the `description:` frontmatter field acts as the skill-gate trigger instead of an import directive or glob. See `.agents/skills/README.md`.
-
-**Self-action and cross-agent delegation matrix:** every agent can act on itself via `/<ai>:<action>` (self-action: `/claude:plan 42`, `$codex-implement 42`, etc.) or delegate to any other agent via the same `<target>:<action>` naming. Self-action files live in `.<ai>/commands/<ai>/` (or `.agents/skills/codex-<action>/` for Codex). Cross-agent bridges live under `.claude/commands/<target>/`, `.gemini/commands/<target>/`, `.copilot/commands/<target>/`, and `.agents/skills/delegate-<target>-<action>/`. See [Cross-Agent Delegation Matrix](docs/development/ai/cross-agent-delegation.md).
-
-**Multi-agent orchestrators (`/multi-*`):** any host agent can also run `/multi-plan <ais...> <issue#>`, `/multi-review <ais...>`, and `/multi-adversarial-review <ais...>` to dispatch a task to **any combination** of agents in parallel and synthesize their outputs. Command files live in `.claude/commands/multi-*.md`, `.gemini/commands/multi-*.toml`, `.copilot/commands/multi-*.md`, and `.agents/skills/multi-*/SKILL.md`.
+Do not restate any of it here. `AGENTS.md` carries only what is true for every agent *and* must be
+true at all times; see [ADR-9018](docs/decisions/9018-agentsmd-carries-only-shared-always-on-instructions.md).
 
 ### Temporary Files
 
@@ -332,7 +312,7 @@ AI agents **must never** write temporary files to generic locations like `/tmp/`
 tmp/agents/<agent-type>/
 ```
 
-Where `<agent-type>` is one of: `claude`, `gemini`, `copilot`, `codex`, or the relevant agent name.
+Where `<agent-type>` is one of: `claude`, `copilot`, `codex`, `antigravity`, or the relevant agent name.
 
 **Filenames must include context** (issue number, PR number, or task identifier) to prevent collisions when multiple sub-agents run concurrently.
 
@@ -343,7 +323,9 @@ Where `<agent-type>` is one of: `claude`, `gemini`, `copilot`, `codex`, or the r
 
 **Cleanup rule:** Agents must delete their temporary files when the task is complete. Do not leave stale files in `tmp/agents/`.
 
-**Exception:** `tmp/checkpoints/` is the one location outside `tmp/agents/<agent-type>/`. Checkpoints written by `/checkpoint` are portable project-state captures meant to be readable by any agent — Claude can write a checkpoint and Gemini or Codex can restore from it.
+**Exception:** `tmp/checkpoints/` is the one location outside `tmp/agents/<agent-type>/`. Checkpoints written by `/checkpoint` are portable project-state captures meant to be readable by any agent — Claude can write a checkpoint and Codex or Copilot can restore from it.
+
+**Worktrees are not temporary files.** A worktree lives until its PR merges, so it goes in `worktrees/` (gitignored), never under `tmp/`, which `doit cleanup` empties. Create one with `doit worktree`. Inside it, run commands through `uv run` and never pass `--active`, which installs the worktree into the main checkout's `.venv`. Merge its PR from the main checkout with `uv run doit pr_merge --pr=<number>`, which removes the worktree.
 
 ## Token Efficiency
 - **Be Concise:** Minimal text output.
@@ -351,7 +333,7 @@ Where `<agent-type>` is one of: `claude`, `gemini`, `copilot`, `codex`, or the r
 - **No Speculation:** Don't read files you don't need.
 
 ## Critical Reminders
-- **Flow:** Issue (`doit issue`) -> **`git checkout main && git pull`** -> Branch -> Commit -> PR (`doit pr`) -> Merge (`doit pr_merge`). NEVER commit to main. Pull `main` before branching — local `main` may be behind the remote (e.g., after dependabot PRs merged via the web UI). `doit pr` enforces this by aborting if the branch is behind `origin/main`; pass `--no-update-check` to override.
+- **Flow:** Issue (`doit issue`) -> **`git checkout main && git pull`** -> Branch -> Commit -> PR (`doit pr`) -> Merge (`doit pr_merge`). NEVER commit to main. Pull `main` before branching — local `main` may be behind the remote (e.g., after dependabot PRs merged via the web UI). `doit pr` enforces this by aborting if the branch is behind `origin/main`; pass `--no-update-check` to override. Saying "implement issue N" runs this whole flow through branch, commit, and PR in one go via the `implement-issue` skill — it still never touches `main` or the merge step.
 - **Scope:** Never mix refactoring, features, and docs in one PR. Create separate branches.
 - **Verify:** Check file paths (`ls`) and branch (`git status`) before assuming they exist.
 - **Security:** NEVER bypass security checks (e.g., `--no-verify`, ignoring secrets).
@@ -362,71 +344,15 @@ Where `<agent-type>` is one of: `claude`, `gemini`, `copilot`, `codex`, or the r
 - **Tests:** Creating code = Creating tests. No exceptions. Never modify a failing test to make it pass — stop, explain why it broke, and discuss with the user whether the code or the test should change.
 - **Commits:** One logical change per commit. Use conventional commits.
 - **Releases:** Never run `doit release` without explicit command.
-- **PRs:** Use `doit pr` to create PRs and `doit pr_merge` to merge with proper commit format. Issues are not automatically closed. Ask the user if they would like the related issue closed — pass `--auto-close` to `doit pr_merge` to close linked issues in one step.
-- **The Merge Gate action:** is a manual action for the user to add to a PR. It requires the ready-to-merge label and should never be added by automation. Exception: the dependabot auto-merge workflow (`.github/workflows/dependabot-automerge.yml`) applies the `ready-to-merge` label to qualifying dependabot PRs only.
+- **PRs:** Use `doit pr` to create PRs and `doit pr_merge` to merge with proper commit format. Issues are not automatically closed. Ask the user if they would like the related issue closed — pass `--auto-close` to `doit pr_merge` to close linked issues in one step. The `implement-issue` skill commits with `git commit` (not `doit commit`, which is interactive) and opens the PR itself with `doit pr` — it never applies `ready-to-merge`, merges, or closes the issue those steps remain the user's.
+- **The Merge Gate action:** is a manual action for the user to add to a PR. It requires the ready-to-merge label and should never be added by automation. Exception: the dependabot auto-merge workflow (`.github/workflows/dependabot-automerge.yml`) applies the `ready-to-merge` label to qualifying dependabot PRs only. AI agents may apply the label only when the human has set `ALLOW_AI_READY_TO_MERGE=1` in the shell that launched the AI CLI (see `docs/development/ai/command-blocking.md`).
 - **Issues:** Use `doit issue --type=<type>` to create issues (types: feature, bug, refactor, docs, chore). Labels are auto-applied. Manually close after PR merge with comment "Addressed in PR #XXX". Issues are not closed automatically when PRs are merged.
 - **Tracking-issue deferrals:** If a tracking or epic issue defers work to "later", "future", or "out of scope", file a separate follow-up issue and link it from the tracker **before** closing the tracker. Closed tracking issues must never be the sole record of work that still needs doing — `gh issue list --state open` must surface deferred work as a discrete ticket.
 - **ADRs:** When implementing architectural decisions (typically `feat` or `refactor`, rarely `fix`), update related ADRs in `docs/decisions/` to add the issue link. Create new ADRs for significant decisions using `doit adr`. Every ADR must link to the documentation in `docs/` that describes the implementation. Doc and chore issues do not need ADRs. Issues with the `needs-adr` label require an ADR before the PR can be merged.
 
-## Workflow Commands (for AI agents)
-
-### Issue Creation
-Each issue type requires specific sections. Use `--body-file` for complex bodies.
-
-```bash
-# Feature request (requires: Problem, Proposed Solution)
-doit issue --type=feature --title="feat: add caching" \
-  --body="## Problem\nDescribe the problem\n\n## Proposed Solution\nDescribe the solution"
-
-# Bug report (requires: Bug Description, Steps to Reproduce, Expected vs Actual Behavior)
-doit issue --type=bug --title="bug: crash on empty config" \
-  --body="## Bug Description\nWhat happened\n\n## Steps to Reproduce\n1. Step one\n\n## Expected vs Actual Behavior\nExpected X, got Y"
-
-# Refactor (requires: Current Code Issue, Proposed Improvement)
-doit issue --type=refactor --title="refactor: extract validation" \
-  --body="## Current Code Issue\nDuplicated logic\n\n## Proposed Improvement\nExtract to mixin"
-
-# Documentation (requires: Description)
-doit issue --type=docs --title="docs: add provider guide" \
-  --body="## Description\nAdd guide for creating custom providers"
-
-# Chore (requires: Description)
-doit issue --type=chore --title="chore: update dependencies" \
-  --body="## Description\nUpdate all dependencies to latest versions"
-```
-
-### PR Creation
-```bash
-doit pr --title="feat: add caching" --body="## Summary\nAdded caching support\n\nAddresses #123"
-doit pr --title="fix: handle null" --body-file=pr.md
-```
-
-`doit pr` auto-pushes the current branch to `origin` if it has no upstream. Pass `--no-push` to skip the auto-push (the task aborts instead).
-
-### PR Merge
-```bash
-doit pr_merge                        # Merge PR for current branch
-doit pr_merge --pr=123               # Merge specific PR
-doit pr_merge --pr=123 --auto-close  # Also close linked issues after merge
-```
-
-### ADR Creation
-```bash
-doit adr --title="Use Redis for caching" \
-  --body="## Status\nAccepted\n\n## Context\nNeed caching\n\n## Decision\nUse Redis"
-doit adr --title="Use Redis" --body-file=adr.md
-```
-
 ## PR Checklist (for AI agents)
 
-Before creating a PR, verify:
-
-- [ ] `doit check` passes (tests, lint, type-check, security)
-- [ ] Branch name follows convention: `<type>/<issue>-<description>`
-- [ ] Commits follow conventional format: `<type>: <subject>`
-- [ ] PR title follows conventional format: `<type>: <subject>`
-- [ ] PR description references the issue: "Addresses #XX" (at start of line)
-- [ ] If issue has `needs-adr` label: ADR created and included in PR
-- [ ] If implementing architectural decision: Related ADR updated with issue link
-- [ ] If ADR created/updated: Links to documentation in `docs/` included
-- [ ] Documentation updated if behavior changed
+Before creating a PR, read [CONTRIBUTING.md — Pull Request Process](.github/CONTRIBUTING.md#pull-request-process)
+and work through the checklist in [`.github/pull_request_template.md`](.github/pull_request_template.md).
+Between them they carry every check this section used to restate — `doit check`, branch and commit
+format, the `Addresses #XX` reference, the `needs-adr` label, and ADR and documentation updates.

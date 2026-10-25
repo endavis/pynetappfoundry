@@ -20,6 +20,8 @@ The user may include optional focus text after the trigger.
 
 ## Instructions
 
+**Read-only.** Review and report — do not edit files, commit, or push. Findings go to the user and the PR; any fix is a separate change the user asks for.
+
 1. Verify a PR exists for the current branch:
    ```bash
    gh pr view --json number,title,body,headRefName
@@ -43,6 +45,8 @@ The user may include optional focus text after the trigger.
    - **Documentation:** are public APIs, config changes, or breaking changes documented?
    - **Architecture:** does it respect layering rules?
    - **Breaking changes:** any signature changes, removed APIs, or behavior changes?
+
+   If the focus area names any of `errors`, `tests`, `types`, `comments`, read `docs/development/ai/review-focus-areas.md` and apply those checklists in addition to the general review.
 
 4. Format findings as:
    ```markdown

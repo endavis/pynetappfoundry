@@ -63,6 +63,8 @@ dmypy.json
 # HOME is unset (see tests/test_statusline_agy.py).
 .claude/settings.local.json
 .local/
+# Claude Code's scheduled-task lock: a session ID and PID, never project state.
+.claude/scheduled_tasks.lock
 
 # Environment variables
 .env
@@ -92,5 +94,4 @@ site/
 .doit.db.db
 coverage.xml
 .nfs*
-.gemini/settings.json.orig
 tools/hooks/ai/hook-debug.jsonl

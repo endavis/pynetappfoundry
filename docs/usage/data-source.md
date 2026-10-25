@@ -141,7 +141,7 @@ ds.query(OntapVolume, cluster="prod1").filter(
 | `expr1 & expr2` | `And` | Both expressions ANDed |
 
 !!! warning "Non-equality operators are cache-only"
-    Only `==` (equality) expressions work on both cache and live paths. All other operators (`!=`, `<`, `>`, `in_()`, etc.) compile to where-expression strings that are evaluated by the cache query engine. Use `source="cache"` when using non-equality operators. See the [footgun callout](#cache-only-constraint-footgun) below the `.where()` section for the exact failure shape.
+    Only `==` (equality) expressions work on both cache and live paths. All other operators (`!=`, `<`, `>`, `in_()`, etc.) compile to where-expression strings that are evaluated by the cache query engine. Use `source="cache"` when using non-equality operators. See the [footgun callout](#cache-only-constraint) below the `.where()` section for the exact failure shape.
 
 ### SQL-like Expressions with `.where()`
 

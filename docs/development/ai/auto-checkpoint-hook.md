@@ -24,7 +24,7 @@ Before Claude Code compacts the conversation context, the hook:
 
 1. Reads the `transcript_path` from the hook payload.
 2. Takes up to 200 KB from the tail of the JSONL transcript.
-3. Spawns `claude -p --bare --model claude-sonnet-4-6` with a strict-JSON prompt asking for:
+3. Spawns `claude -p --bare --model claude-sonnet-5` with a strict-JSON prompt asking for:
    `{title, status, in_flight_work, constraints, files_touched, next_steps, resume_prompt}`.
 4. Parses the JSON response and renders it into a markdown checkpoint file matching the
    `/checkpoint` section structure (Title, Status, In-flight work, Constraints, Files touched,
@@ -56,7 +56,8 @@ tmp/checkpoints/9999999999-auto-precompact.md
 ```
 
 The `inv_epoch` is computed as `9999999999 - int(time.time())`, matching Step 1 of
-`.claude/commands/checkpoint.md` exactly. On same-second collision (rare), a single letter
+`.claude/skills/checkpoint/SKILL.md` exactly (generated from `.agents/skills/checkpoint/SKILL.md`
+by `doit skills_sync`). On same-second collision (rare), a single letter
 suffix is appended: `…-auto-precompact-a.md`, `…-auto-precompact-b.md`, etc.
 
 Because the convention is shared, manual `/restore` can also load auto-precompact files

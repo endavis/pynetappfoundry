@@ -20,6 +20,8 @@ The user may include focus text after the trigger.
 
 ## Instructions
 
+**Read-only.** Review and report — do not edit files, commit, or push. Findings go to the user and the PR; any fix is a separate change the user asks for.
+
 1. Check the current state of changes:
    ```bash
    git status
@@ -37,6 +39,8 @@ The user may include focus text after the trigger.
    - **Hidden Assumptions:** What implicit constraints does this code depend on? What breaks if those assumptions don't hold?
    - **Failure Modes:** Auth, data loss, race conditions, rollback, reliability failure modes?
    - **Alternatives Worth Considering:** Simpler or safer paths that might achieve the same goal?
+
+   If the focus area names any of `errors`, `tests`, `types`, `comments`, read `docs/development/ai/review-focus-areas.md` and apply those checklists in addition to the general review.
 
 4. Format findings as:
    ```markdown
