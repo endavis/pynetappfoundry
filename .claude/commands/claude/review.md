@@ -4,6 +4,8 @@ Run a single-agent PR review using Claude. Optional focus area: $ARGUMENTS.
 
 ## Instructions
 
+**Read-only.** Review and report — do not edit files, commit, or push. Findings go to the user and the PR; any fix is a separate change the user asks for.
+
 This command runs in the main conversation context. Claude reviews the current branch's PR directly — no external CLI invocation needed.
 
 ### Step 1: Verify a PR exists
@@ -41,6 +43,8 @@ Evaluate the diff for:
 - **Breaking changes:** any signature changes, removed APIs, or behavior changes?
 
 Focus area (optional): $ARGUMENTS
+
+If the focus area names any of `errors`, `tests`, `types`, `comments`, read `docs/development/ai/review-focus-areas.md` and apply those checklists in addition to the general review.
 
 ### Step 4: Present findings and post review
 

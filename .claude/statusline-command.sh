@@ -8,6 +8,9 @@ COLOR="blue"
 C_RESET='\033[0m'
 C_GRAY='\033[38;5;245m'  # explicit gray for default text
 C_BAR_EMPTY='\033[38;5;238m'
+C_DIM="$C_BAR_EMPTY"  # semantic alias for dim separators (e.g., the `@` in usage segment)
+C_PCT='\033[38;5;71m'  # green: percentage values in usage segment (theme-independent)
+C_TIME='\033[38;5;136m'  # gold: reset-time values in usage segment (theme-independent)
 case "$COLOR" in
     orange)   C_ACCENT='\033[38;5;173m' ;;
     blue)     C_ACCENT='\033[38;5;74m' ;;
@@ -21,6 +24,8 @@ case "$COLOR" in
     *)        C_ACCENT="$C_GRAY" ;;  # gray: all same color
 esac
 
+command -v jq >/dev/null 2>&1 || { printf 'statusline: jq not installed (run: doit install_jq)\n'; exit 0; }
+
 input=$(cat)
 
 
@@ -28,8 +33,11 @@ input=$(cat)
 model=$(echo "$input" | jq -r '.model.display_name // .model.id // "?"')
 cwd=$(echo "$input" | jq -r '.cwd // empty')
 dir=$(basename "$cwd" 2>/dev/null || echo "?")
-gh_user=$(gh api user --jq ".login" 2>/dev/null || echo "")
-python_version=$(python -c "import sys; print('.'.join(map(str, sys.version_info[:3])))" || echo "")
+# `gh api` writes the HTTP error body to stdout on failure (only the summary
+# line goes to stderr), so clear the capture on non-zero exit — `|| echo ""`
+# would append to the error body instead of replacing it.
+gh_user=$(gh api user --jq ".login" 2>/dev/null) || gh_user=""
+python_version=$(python -c "import sys; print('.'.join(map(str, sys.version_info[:3])))" 2>/dev/null || echo "")
 
 # Extract Python .venv
 venv_name=""
@@ -60,7 +68,14 @@ if [[ -n "$cwd" && -d "$cwd" ]]; then
             fetch_head="$cwd/.git/FETCH_HEAD"
             fetch_ago=""
             if [[ -f "$fetch_head" ]]; then
-                fetch_time=$(stat -f %m "$fetch_head" 2>/dev/null || stat -c %Y "$fetch_head" 2>/dev/null)
+                # GNU `stat -f` means "filesystem status": it exits 1 but still prints
+                # filesystem info to stdout, so `stat -f ... || stat -c ...` captures
+                # both. Probe for BSD stat first, then run exactly one form.
+                if stat -f %m "$fetch_head" >/dev/null 2>&1; then
+                    fetch_time=$(stat -f %m "$fetch_head" 2>/dev/null)
+                else
+                    fetch_time=$(stat -c %Y "$fetch_head" 2>/dev/null)
+                fi
                 if [[ -n "$fetch_time" ]]; then
                     now=$(date +%s)
                     diff=$((now - fetch_time))
@@ -195,7 +210,23 @@ output+="\n${C_ACCENT}${model}${C_GRAY} | ${ctx}${C_RESET}"
 # See docs/development/ai/statusline.md#opt-in-claude-max-usage-display
 if [[ -n "$CLAUDE_USAGE_STATUSLINE" ]]; then
     usage=$(bash "$CLAUDE_PROJECT_DIR/tools/statusline/claude-usage.sh" 2>/dev/null)
-    [[ -n "$usage" && "$usage" != "?" ]] && output+="${C_GRAY} | ${usage}${C_RESET}"
+    if [[ -n "$usage" && "$usage" != "?" ]]; then
+        # Parse the helper's plain-text output (5h:N%@HHMM wk:N%@aaa-HHMM) and
+        # rebuild it with per-field colors: labels accent, percent green,
+        # `@` dim, time gold. Middle-dot separator between gauges.
+        if [[ "$usage" =~ ^5h:([0-9]+)%@([^ ]+)\ wk:([0-9]+)%@(.+)$ ]]; then
+            fh_pct="${BASH_REMATCH[1]}"
+            fh_time="${BASH_REMATCH[2]}"
+            wk_pct="${BASH_REMATCH[3]}"
+            wk_time="${BASH_REMATCH[4]}"
+            colored="${C_ACCENT}5h:${C_PCT}${fh_pct}%${C_DIM}@${C_TIME}${fh_time}"
+            colored+="${C_GRAY} · ${C_ACCENT}wk:${C_PCT}${wk_pct}%${C_DIM}@${C_TIME}${wk_time}"
+            output+="${C_GRAY} | ${colored}${C_RESET}"
+        else
+            # Unexpected format from the helper — emit uncolored as a safe fallback.
+            output+="${C_GRAY} | ${usage}${C_RESET}"
+        fi
+    fi
 fi
 
 printf '%b\n' "$output"

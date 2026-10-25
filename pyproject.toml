@@ -171,7 +171,7 @@ no_implicit_optional = true
 strict_equality = true
 warn_redundant_casts = true
 warn_unreachable = true
-exclude = [".claude/", ".gemini/", ".codex/"]
+exclude = [".claude/", ".codex/"]
 
 [[tool.mypy.overrides]]
 # netapp-ontap 9.18.1+ uses apipkg lazy loading; mypy cannot resolve dynamic attributes
@@ -208,7 +208,10 @@ minversion = "8.0"
 # Disabled runs ignore them, so they apply only when a benchmark run adds --benchmark-enable.
 addopts = "--strict-config --strict-markers --benchmark-disable --benchmark-disable-gc --benchmark-warmup=on"
 testpaths = ["tests"]
-pythonpath = ["."]
+# Project divergence: upstream has no tests/__init__.py, so pytest puts tests/ on
+# sys.path and template tests import tests/agent_roster.py as a top-level module.
+# Here tests/ is a package, so it is listed explicitly (#827).
+pythonpath = [".", "tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
@@ -264,7 +267,6 @@ exclude_dirs = [
     ".ruff_cache",
     "site",
     ".claude",
-    ".gemini",
     ".codex",
     ".devcontainer",
     ".vscode",

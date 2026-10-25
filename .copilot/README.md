@@ -1,10 +1,28 @@
 # Copilot CLI Configuration
 
-This directory is the GitHub Copilot CLI configuration directory for this repository, parallel to `.claude/`, `.gemini/`, and `.codex/`.
+This directory is the GitHub Copilot CLI configuration directory for this repository, parallel to `.claude/`, `.codex/`, and `.agents/`.
+
+**Important:** Copilot CLI discovers project **skills** only from `skills/` paths — `.github/skills/`, `.agents/skills/`, and `.claude/skills/` (plus the corresponding personal paths under `~/`, and anything added via `/skills add`). There is no `.copilot/skills/` project path and no `commands/` path for skills.
+
+Separately, Copilot loads **single-file commands** from `.claude/commands/` — a different mechanism from skills, added in CLI 0.0.399 and flagged `isCommand` in the SDK types. Claude's command files therefore do surface in a Copilot session; see [`docs/development/ai/slash-commands.md`](../docs/development/ai/slash-commands.md#copilot).
 
 ## Workflow Skills
 
-Copilot CLI ships self-action commands in `.copilot/commands/copilot/` (`/copilot:plan`, `/copilot:implement`, `/copilot:review`, `/copilot:adversarial-review`). It also auto-discovers some commands from `.claude/commands/` (e.g. `/ghi-finalize`, `/ghi-status`). Cross-agent bridge commands live in `.copilot/commands/<target>/`.
+All Copilot-host workflow skills live under `.github/skills/<target>-<action>/SKILL.md` — one self-action skill per action, plus one bridge per (target, action) pair. Because skill names are directory names and cannot contain colons, the slash surface uses hyphen naming:
+
+- **Self-action:** `/copilot-review`, `/copilot-adversarial-review`
+- **To Claude:** `/claude-review`, `/claude-adversarial-review`
+- **To Codex:** `/codex-review`, `/codex-adversarial-review`
+- **To Antigravity:** `/antigravity-review`, `/antigravity-adversarial-review`
+
+Planning and implementation are not part of this matrix — "implement issue N" runs the shared
+`implement-issue` skill instead (see below).
+
+The `multi-*` orchestrators (`/multi-plan`, `/multi-review`, `/multi-adversarial-review`), `/implement-issue`, `/ghi-status`, `/template-sync`, `/template-migrate`, `/add-dependency`, `/mutation-triage`, `/property-tests`, `/deprecate-api`, `/python-version-bump`, `/security-triage`, `/dead-code-triage` and `/perf-change` come from `.agents/skills/` (interoperable Codex skill path) and are auto-discovered by Copilot. Verify with `copilot skill list`.
+
+## Known limitation: delegate-* skill bleed
+
+Copilot reads `.agents/skills/`, which contains a `delegate-<target>-<action>` skill for every (target, action) pair (shared by Codex and Antigravity). Those surface as `/delegate-...` slash commands alongside the canonical Copilot ones — they shell out to Codex/Antigravity syntax and are wasted noise in a Copilot session. Copilot supports a `disabledSkills` array, but **only in user config** (`~/.copilot/config.json`) — there is no repo-level setting for it. See [`docs/development/ai/slash-commands.md`](../docs/development/ai/slash-commands.md#copilot) for the user-side config snippet.
 
 ## Dangerous Command Hook
 
@@ -18,7 +36,7 @@ No changes to this hook are needed when adding new slash commands.
 
 ## Subagent / Implement Worker
 
-The `implement-worker` subagent used by `/claude:implement` (and discoverable by Copilot) is defined in `.claude/agents/implement-worker.md`. Copilot CLI's `task` tool reads this file when spawning the subagent.
+The `implement-worker` subagent used by the shared `implement-issue` skill's Coder brief (and shared with Claude's own invocation of that skill) is defined in `.claude/agents/implement-worker.md`. Copilot CLI's `task` tool reads this file when spawning the subagent.
 
 ## Temporary Files
 
@@ -32,17 +50,19 @@ it to a specific path scope, followed by a skill-gated, numbered self-check body
 an `Observed failures:` footer.
 
 This is the Copilot equivalent of `.claude/rules/` (loaded via `@import` in `.claude/CLAUDE.md`)
-and `.gemini/rules/` (loaded via `@` directive in `GEMINI.md`). The discipline — build from
-observed failures, not generic advice — is shared across all three CLIs.
+and `.agents/skills/` rule-shaped skills (gated by `description:` frontmatter). The discipline —
+build from observed failures, not generic advice — is shared across all the CLIs.
 
 See [`.github/instructions/README.md`](../.github/instructions/README.md) for the full pattern,
 file structure, and a worked example.
 
 ## See Also
 
-- `.claude/commands/` — slash command definitions (auto-discovered by Copilot CLI)
+- `.github/skills/<target>-<action>/SKILL.md` — Copilot-host workflow skills: one self-action skill per action, plus one bridge per (target, action) pair. `.github/skills/` is used (instead of `.claude/skills/`) because it's the only Copilot project skill path that Claude does not also read — avoids surfacing duplicate slash commands in Claude.
+- `.agents/skills/` — interoperable Codex skill path, also read by Copilot
 - `.claude/agents/implement-worker.md` — implement-worker subagent definition
 - `.github/hooks/copilot-hooks.json` — dangerous command hook wiring
 - `.github/instructions/README.md` — per-stack instruction file pattern for Copilot
 - `docs/development/ai/slash-commands.md` — full workflow and command reference
+- `docs/development/ai/cross-agent-delegation.md` — cross-agent matrix and per-host invocation
 - `docs/development/ai/command-blocking.md` — hook documentation
