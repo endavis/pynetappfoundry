@@ -9,17 +9,13 @@ from .base import install_check_or_skip, optional_root_files
 
 def task_audit() -> dict[str, Any]:
     """Run security audit with pip-audit (requires security extras)."""
-    # GHSA-r374-rxx8-8654 / CVE-2026-44405: paramiko rsakey.py SHA-1 acceptance.
-    # All released paramiko (<=4.0.0) is affected; upstream fix landed but no
-    # tagged release exists yet. Remove --ignore-vuln when paramiko 4.0.1+
-    # ships. Tracked in issue #701. Same suppression is wired in CI.
     return {
         "actions": [
             install_check_or_skip(
                 "pip-audit",
                 "pip-audit not installed. Run: uv sync --extra security",
             )
-            + "uv run pip-audit --skip-editable --ignore-vuln GHSA-r374-rxx8-8654"
+            + "uv run pip-audit --skip-editable"
         ],
         "title": title_with_actions,
     }
