@@ -102,9 +102,9 @@ def build(
 
     out.parent.mkdir(parents=True, exist_ok=True)
     if out.suffix.lower() in {".json"}:
-        out.write_text(json.dumps(spec, indent=2, sort_keys=False) + "\n")
+        out.write_text(json.dumps(spec, indent=2, sort_keys=False) + "\n", encoding="utf-8")
     else:
-        out.write_text(yaml.safe_dump(spec, sort_keys=False))
+        out.write_text(yaml.safe_dump(spec, sort_keys=False), encoding="utf-8")
     click.echo(f"Wrote {out}")
 
     lock = Lockfile(

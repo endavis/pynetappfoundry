@@ -1341,7 +1341,7 @@ def html(
     builder = HTMLReportBuilder("NetApp Report", clusters, config)
     html_content = builder.generate_html()
 
-    with open(filename, "w") as f:
+    with open(filename, "w", encoding="utf-8") as f:
         f.write(html_content)
 
     print_success(f"Report saved to {filename}")

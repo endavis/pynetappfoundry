@@ -1,3 +1,14 @@
+---
+title: "ADR-9001: Use uv for package management"
+description: Use uv for dependency management, virtual environments and package installation
+date: 2026-01-21
+audience:
+  - contributors
+tags:
+  - adr
+  - tooling
+---
+
 # ADR-9001: Use uv for package management
 
 ## Status
@@ -19,5 +30,5 @@ uv is a modern Python package manager written in Rust by Astral (creators of ruf
 
 ## Related Documentation
 
-- [Installation Guide](../../getting-started/installation.md)
-- [Tools Reference](../tools-reference.md)
+- [Installation Guide](../getting-started/installation.md)
+- [Tools Reference](../template/tools-reference.md)

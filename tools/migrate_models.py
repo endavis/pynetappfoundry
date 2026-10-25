@@ -42,7 +42,7 @@ def copy_model_to_models_pkg(model_file: Path) -> Path:
     dest = MODELS_ONTAP / rel
     dest.parent.mkdir(parents=True, exist_ok=True)
 
-    content = model_file.read_text()
+    content = model_file.read_text(encoding="utf-8")
 
     # Replace CacheModel imports with OntapModel
     content = re.sub(
@@ -105,7 +105,7 @@ def create_init_file(pkg_dir: Path, class_name: str | None = None) -> None:
 
 def get_primary_class_name(model_file: Path) -> str | None:
     """Extract the primary (last) class name from a model.py file."""
-    content = model_file.read_text()
+    content = model_file.read_text(encoding="utf-8")
     classes = re.findall(r"^class (\w+)\(", content, re.MULTILINE)
     return classes[-1] if classes else None
 
@@ -115,7 +115,7 @@ def update_cache_init(init_file: Path) -> None:
     if not init_file.exists():
         return
 
-    content = init_file.read_text()
+    content = init_file.read_text(encoding="utf-8")
 
     # Determine the relative path from cache/ontap/
     rel_dir = init_file.parent.relative_to(CACHE_ONTAP)
@@ -130,7 +130,7 @@ def update_cache_init(init_file: Path) -> None:
         f"from {models_module}.model",
     )
 
-    init_file.write_text(content)
+    init_file.write_text(content, encoding="utf-8")
 
 
 def update_cache_mapping(mapping_file: Path) -> None:
@@ -138,7 +138,7 @@ def update_cache_mapping(mapping_file: Path) -> None:
     if not mapping_file.exists():
         return
 
-    content = mapping_file.read_text()
+    content = mapping_file.read_text(encoding="utf-8")
 
     # Replace model imports from cache.ontap to models.ontap
     content = re.sub(
@@ -147,7 +147,7 @@ def update_cache_mapping(mapping_file: Path) -> None:
         content,
     )
 
-    mapping_file.write_text(content)
+    mapping_file.write_text(content, encoding="utf-8")
 
 
 def ensure_intermediate_inits(base_dir: Path, parts: list[str]) -> None:

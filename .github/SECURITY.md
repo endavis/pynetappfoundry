@@ -16,7 +16,7 @@ Instead, please report them via one of the following methods:
 
 ### Preferred Method: Private Security Advisory
 
-1. Go to the [Security tab](https://github.com/username/package_name/security)
+1. Go to the [Security tab](https://github.com/endavis/pynetappfoundry/security)
 2. Click "Report a vulnerability"
 3. Fill out the form with details
 
@@ -85,8 +85,8 @@ We use automated tools to monitor dependencies:
 Run a security audit of dependencies:
 
 ```bash
-# Install security dependencies
-uv pip install -e ".[security]"
+# Install the security extra with the other development tools
+doit install_dev
 
 # Run security audit
 doit audit

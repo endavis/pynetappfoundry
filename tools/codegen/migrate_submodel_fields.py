@@ -48,7 +48,7 @@ def _compute_prefix(field_name: str, api_paths_hint: list[str] | None = None) ->
 
 def migrate_file(path: Path, *, dry_run: bool = False) -> bool:
     """Migrate a single model.py file. Returns True if changes were made."""
-    text = path.read_text()
+    text = path.read_text(encoding="utf-8")
     lines = text.splitlines(keepends=True)
 
     # First pass: find all sub-model classes and their field_name prefixes
@@ -165,7 +165,7 @@ def migrate_file(path: Path, *, dry_run: bool = False) -> bool:
                 changed = True
 
     if changed and not dry_run:
-        path.write_text("".join(new_lines))
+        path.write_text("".join(new_lines), encoding="utf-8")
 
     return changed
 

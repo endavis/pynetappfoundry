@@ -1,3 +1,14 @@
+---
+title: "ADR-9007: Use mypy for static type checking"
+description: Use mypy in strict mode, run by doit check, the pre-commit hooks and CI
+date: 2026-01-21
+audience:
+  - contributors
+tags:
+  - adr
+  - tooling
+---
+
 # ADR-9007: Use mypy for static type checking
 
 ## Status
@@ -18,4 +29,4 @@ mypy is the most mature Python type checker with excellent IDE integration. Stri
 
 ## Related Documentation
 
-- [Coding Standards](../../development/coding-standards.md)
+- [Coding Standards](../development/coding-standards.md)

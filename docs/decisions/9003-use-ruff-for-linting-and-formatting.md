@@ -1,3 +1,14 @@
+---
+title: "ADR-9003: Use ruff for linting and formatting"
+description: Use ruff as the one tool for linting and formatting, in place of flake8, black and isort
+date: 2026-01-21
+audience:
+  - contributors
+tags:
+  - adr
+  - ruff
+---
+
 # ADR-9003: Use ruff for linting and formatting
 
 ## Status
@@ -18,4 +29,4 @@ ruff is an extremely fast Python linter and formatter written in Rust that conso
 
 ## Related Documentation
 
-- [Coding Standards](../../development/coding-standards.md)
+- [Coding Standards](../development/coding-standards.md)

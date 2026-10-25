@@ -62,7 +62,7 @@ def _update_envrc_local(key_path: str) -> bool:
         console.print(f"Updated SOPS_AGE_KEY_FILE in {envrc_local}")
     else:
         # Append new line
-        with open(envrc_local, "a") as f:
+        with open(envrc_local, "a", encoding="utf-8") as f:
             f.write("\n# SOPS age key for credential encryption\n")
             f.write(f"{export_line}\n")
         console.print(f"Added SOPS_AGE_KEY_FILE to {envrc_local}")
@@ -88,7 +88,7 @@ def _save_public_key(public_key: str) -> None:
     if gitignore_file.exists():
         content = gitignore_file.read_text()
         if gitignore_entry not in content:
-            with open(gitignore_file, "a") as f:
+            with open(gitignore_file, "a", encoding="utf-8") as f:
                 f.write(f"\n# SOPS public key file\n{gitignore_entry}\n")
             console.print(f"Added {gitignore_entry} to .gitignore")
     else:

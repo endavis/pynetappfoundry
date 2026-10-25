@@ -165,7 +165,7 @@ def main() -> None:
 
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(json.dumps(spec, indent=2) + "\n")
+    output_path.write_text(json.dumps(spec, indent=2) + "\n", encoding="utf-8")
     print(f"\nSpec written to {output_path}")
 
 

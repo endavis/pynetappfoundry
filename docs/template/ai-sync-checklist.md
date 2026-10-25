@@ -13,6 +13,15 @@ tags:
 
 This checklist guides an AI agent through synchronizing a downstream project with the latest pyproject-template. It uses the official `manage.py` tooling documented in [Template Manager](manage.md), [Keeping Up to Date](updates.md), and [Tools Reference](tools-reference.md).
 
+> **There is a command for this.** Every supported agent ships `template-sync`, which drives this
+> checklist end to end — `/template-sync` in Claude Code and Copilot CLI, `$template-sync` in Codex,
+> description-activated in Antigravity. It asks you about the calls it cannot settle from the repo
+> and posts its triage as a plan comment on the tracking issue for you to approve **before** it
+> changes anything. See
+> [Slash Commands and Workflows](../development/ai/slash-commands.md#template-sync-ref).
+> This page remains the authoritative procedure; read it when a step is ambiguous or you are
+> driving a sync by hand.
+
 **Prerequisites:**
 
 - Downstream project already uses pyproject-template structure (doit tasks, CI workflows, pre-commit, etc.)
@@ -22,6 +31,15 @@ This checklist guides an AI agent through synchronizing a downstream project wit
 
 ## Pre-Flight
 
+- [ ] Check this checklist and skill against the upstream copy:
+  ```bash
+  curl -sSL https://raw.githubusercontent.com/endavis/pyproject-template/main/.agents/skills/template-sync/SKILL.md \
+    -o tmp/agents/<agent>/template-sync-upstream-SKILL.md
+  diff tmp/agents/<agent>/template-sync-upstream-SKILL.md .agents/skills/template-sync/SKILL.md
+  ```
+  If they differ, follow the fetched version for this sync instead of this checklist's copy. The
+  local skill copy is adopted later through the normal drift triage (Phase 2 onward), not by
+  overwriting it here — `manage.py check` only warns about it and never writes it.
 - [ ] Verify on `main` branch and clean working tree (`git status`)
 - [ ] Run `doit check` to confirm current state passes
 - [ ] Create a GitHub Issue for the sync work:
@@ -30,12 +48,16 @@ This checklist guides an AI agent through synchronizing a downstream project wit
     --body="## Description\nSynchronize project with latest pyproject-template improvements."
   ```
 - [ ] Create branch linked to the issue (e.g., `chore/<issue#>-sync-pyproject-template`)
+- [ ] Read [Consumer Notes](consumer-notes.md) — the breaking and behaviour changes that
+      arrive through this sync. Note which apply to this project before adopting any drift.
 
 ---
 
-## Phase 1: Install Template Management Tools (First-Time Only)
+## Phase 1: Sync Template Management Tools (Always Run First)
 
-If the project does NOT yet have `tools/pyproject_template/manage.py`, install it using the bootstrap script. Skip this phase if already present.
+Run `bootstrap --sync` at the start of **every** sync, not just the first time.
+This ensures the tooling suite in `tools/pyproject_template/` matches the version of the template
+you are about to adopt. Applying file diffs with a stale tooling version can produce incorrect results.
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/endavis/pyproject-template/main/bootstrap.py | python3 - --sync
@@ -43,16 +65,54 @@ curl -sSL https://raw.githubusercontent.com/endavis/pyproject-template/main/boot
 
 This will:
 
-1. Download the management suite to `tools/pyproject_template/`:
+1. Overwrite the management suite in `tools/pyproject_template/` with the latest template version:
     - `__init__.py`, `utils.py`, `settings.py`, `check_template_updates.py`, `manage.py`, `configure.py`, `cleanup.py`
-2. Detect project settings from `pyproject.toml`
-3. Create `.config/pyproject_template/settings.toml` with detected values
-4. Verify the installation
+2. Detect project settings from `pyproject.toml` (first-time only creates `.config/pyproject_template/settings.toml`)
+3. Verify the installation
 
-After installation:
+**Version-skew caveat:** The drift checker (`check_template_updates.py`) compares your files against the
+template version it was fetched with. If your local tooling is older than the template version you are
+comparing against, the checker may miss or misreport differences. Always run `bootstrap --sync` before running
+the drift check.
 
-- [ ] Review `.config/pyproject_template/settings.toml` and correct any values
-- [ ] Decide: Track `.config/pyproject_template/` in git or add to `.gitignore`
+**Why the Pre-Flight step 0 above matters:** `bootstrap --sync` refreshes `tools/pyproject_template/`
+but not this checklist or the `template-sync` skill copies themselves — those are downstream-owned
+and only adopted through triage. Without the fetch-and-diff in Pre-Flight, a sync follows whatever
+procedure the *previous* sync adopted, so a change to the sync procedure itself only takes effect one
+sync late. `manage.py check` (Phase 2) backs this up: it warns, before the drift report, when either
+local `SKILL.md` copy is stale, but it never writes those files.
+
+**Template-owned tests:** The files listed in `TEMPLATE_OWNED_TEST_FILES` are excluded from the drift
+report and shed by `cleanup --setup`; you do not need to adopt or maintain them. A test is
+template-owned when **its target does not survive configuration** (ADR-9017) — which is broader than
+"tooling tests". The list covers the management suite, and also `test_configure_paths.py`,
+`test_readme_split.py` and `test_downstream_test_retention.py`, whose targets `configure.py`
+consumes or destroys during setup. Everything else under `tests/` is yours to adopt, including the
+`tools/doit/` and `tools/hooks/` tests, which cover code that ships to and runs in your project
+(#731).
+
+**New files you will see in this sync.** These are recent additions, all downstream-owned, so the
+drift checker will offer them:
+
+| File | Adopt? |
+| :--- | :--- |
+| `tests/agent_roster.py` | Yes — a helper, not a test. Required by the roster-aware tests below. |
+| `tests/test_cross_agent_contract.py` | Yes if you wire more than one AI agent; it derives its scope from the roster and checks nothing for agents you dropped. |
+| `tests/test_instruction_pointers.py` | Yes — catches instruction files pointing at sections and commands that do not exist. |
+| `tests/test_workflow_action_pinning.py` | Yes if you keep `.github/workflows/`. |
+| `tests/test_hermetic_suite.py` | Yes — keeps the unit suite off real external binaries. |
+| `tests/test_hypothesis_profiles.py` | Yes if you kept the Hypothesis profiles in `conftest.py`. |
+| `tools/hooks/check_commit_issue_ref.py` + `tests/test_hook_commit_issue_ref.py` | Yes, together, and re-run `doit pre_commit_install` after — the hook needs the `commit-msg` type. |
+| `tests/test_agents_md_allocation.py` | Yes, **then trim `RELOCATION_TARGETS`**. It names template paths including `docs/development/dependabot-automerge.md`; a project without that doc adopts a test that cannot pass. |
+
+The last row is the general hazard: a test can be downstream-owned and still name structure your
+project does not have. Read the constants at the top of a test before adopting it.
+
+After running bootstrap:
+
+- [ ] Review `.config/pyproject_template/settings.toml` and correct any values (first-time only)
+- [ ] Decide: Track `.config/pyproject_template/` in git or add to `.gitignore` (first-time only)
+- [ ] **Existing projects:** run `cleanup --setup` once to shed any template-owned tests adopted in an earlier sync
 - [ ] Verify: `python tools/pyproject_template/manage.py --dry-run check`
 
 ---
@@ -67,16 +127,19 @@ python tools/pyproject_template/manage.py --yes check
 
 This will (per [Tools Reference](tools-reference.md)):
 
-1. Fetch the latest template release (or specified version via `--template-version`)
+1. Fetch the template at `main` — or at a specific tag, branch or commit SHA via `manage.py check --template-version <ref>` (ADR-9020)
 2. Compare all files - categorized as **Modified**, **Missing** (new in template), or **Extra** (project-specific)
-3. Keep the template at `tmp/extracted/pyproject-template-main/` for diff commands
+3. Keep the template at `tmp/extracted/pyproject-template-<commit-sha>/` for diff commands —
+   the archive root is named for the **resolved commit** (ADR-9020), so locate it by glob rather
+   than by a fixed name
 4. Show GitHub compare URL for commit history since last sync
 5. Save commit info to `.template_commit` for later `sync` marking
 
 **Diff commands** (per documentation):
 
 ```bash
-diff <file> tmp/extracted/pyproject-template-main/<file>
+TEMPLATE_DIR=$(ls -d tmp/extracted/pyproject-template-*/ | head -1)
+diff <file> "$TEMPLATE_DIR/<file>"
 ```
 
 Review the output and proceed with Phases 3-8 to selectively apply changes.
@@ -146,6 +209,15 @@ For each workflow file flagged as **Modified** or **Missing**:
 
 ## Phase 5: Doit Tasks (`tools/doit/`)
 
+### 5.0 Breaking change: `install_tools` digests
+
+- [ ] Does this project call `install_tool()` or `create_install_task()` with `url_template`
+      for a **non-GitHub** host? If so, adopting `tools/doit/install_tools.py` aborts that
+      install with `IntegrityError` until you pass `sha256=`.
+- [ ] Take the digest from the publisher's checksums file, not from a download you have not
+      verified. Per-platform digests use a dict keyed like `asset_patterns`.
+- [ ] See [Consumer Notes](consumer-notes.md#install_tools-requires-sha256-for-untrusted-hosts).
+
 ### 5.1 Core Task Infrastructure
 
 - [ ] Compare `tools/doit/__init__.py` for discovery mechanism updates
@@ -178,6 +250,11 @@ For each workflow file flagged as **Modified** or **Missing**:
 
 ## Phase 7: Pre-commit & Other Config
 
+- [ ] After adopting `.pre-commit-config.yaml`, run `doit pre_commit_install` **again** —
+      the config declares four hook types and `commit-msg` is newly among them. An earlier
+      install leaves it absent, and conventional-commit enforcement silently does not run.
+      Verify with `ls .git/hooks/`.
+
 - [ ] Compare `.pre-commit-config.yaml` - hook versions, new hooks
 - [ ] Compare `.github/CONTRIBUTING.md` for updated processes
 - [ ] Compare `.github/pull_request_template.md` for new checklist items
@@ -188,19 +265,28 @@ For each workflow file flagged as **Modified** or **Missing**:
 
 ## Phase 8: AI Hooks
 
-AI coding assistants (Claude Code, Gemini CLI, Codex) use hooks to block dangerous commands. See [AI Command Blocking](../development/ai/command-blocking.md) for details.
+AI coding assistants (Claude Code, Copilot, Codex, Antigravity) use hooks to block dangerous commands. See [AI Command Blocking](../development/ai/command-blocking.md) for details.
 
 ### 8.1 Hook Scripts
 
 - [ ] Compare `tools/hooks/ai/block-dangerous-commands.py` for new blocked patterns
-- [ ] Compare `tools/hooks/ai/test_hook.py` for new test cases
-- [ ] Run `python3 tools/hooks/ai/test_hook.py` to verify hooks work
+- [ ] Compare `tests/test_hook_dangerous_command_matrix.py` for new block/allow cases
+- [ ] Run `doit test` to verify hooks work
 
 ### 8.2 AI Agent Configuration
 
 - [ ] Compare `.claude/settings.json` for Claude Code hook configuration
-- [ ] Compare `.gemini/settings.json` for Gemini CLI hook configuration
 - [ ] Compare `.codex/config.toml` for Codex CLI approval policies
+- [ ] Compare `.codex/rules/*.rules` for Codex CLI exec-policy allow rules — a separate mechanism
+      from `.codex/config.toml`'s hooks/approval policy; see
+      [Command Blocking — Codex CLI](../development/ai/command-blocking.md#codex-cli)
+- [ ] **Review pinned model IDs.** `.claude/settings.json` pins
+      `CLAUDE_CODE_SUBAGENT_MODEL`, and `tools/hooks/ai/precompact-checkpoint.py`
+      passes a model to `claude -p`. Nothing in the update-check machinery looks at
+      model IDs, so a pin from two generations ago survives indefinitely and silently
+      (#696). `tests/template/test_model_pins.py` fails when a pinned ID leaves the
+      current family — run `doit test` after syncing and update
+      `CURRENT_MODEL_IDS` there if the family has moved on.
 
 **Note:** If these configuration files don't exist in the downstream project, copy them from the template to enable AI safety hooks.
 
@@ -227,10 +313,16 @@ python tools/pyproject_template/manage.py --yes sync
 
 This:
 
-1. Reads the reviewed commit from `tmp/extracted/pyproject-template-main/.template_commit` (saved during Phase 2)
+1. Reads the reviewed commit from `.template_commit` in the extracted template directory (saved
+   during Phase 2). The commit recorded is the one that was **actually reviewed** — with
+   `--template-version` that is the pinned ref, not the tip of `main` (#805)
 2. Updates `.config/pyproject_template/settings.toml` with the template commit SHA and date
 3. Cleans up the `tmp/extracted/` directory
 4. Future runs of `manage.py check` will compare from this sync point
+
+It does not commit or push. The changed `settings.toml` goes into this sync's own commit in Phase
+11, along with everything else adopted — it is not a separate change and does not need its own PR
+(#808).
 
 ---
 

@@ -70,7 +70,7 @@ def _convert_swagger1_to_openapi3(source: Path, output: Path) -> None:
     print(f"Converting {source} (Swagger 1.2 -> 2.0 -> OpenAPI 3.0)...")
 
     # Step 1: Swagger 1.2 -> Swagger 2.0 (Python)
-    with open(source) as f:
+    with open(source, encoding="utf-8") as f:
         spec_12 = json.load(f)
     spec_20 = convert(spec_12)
 

@@ -343,8 +343,7 @@ class InventoryReport:
         self._write_headers()
 
         ds = DataSource(self.config)
-        row_idx = 2
-        for name, entry in self.clusters.items():
+        for row_idx, (name, entry) in enumerate(self.clusters.items(), start=2):
             cluster_info = ds.query(ClusterInfo, cluster=name, source="auto").first()
             nodes = list(ds.query(OntapNodeResponse, cluster=name, source="auto"))
             licenses = list(ds.query(OntapLicensePackageResponse, cluster=name, source="auto"))
@@ -365,8 +364,6 @@ class InventoryReport:
                     cell = self.ws.cell(row=row_idx, column=col_idx, value=value)
                     cell.font = self._body_font
                     cell.alignment = self._wrap if col_idx in wrap_cols else self._top
-
-            row_idx += 1
 
         self._set_col_widths()
 

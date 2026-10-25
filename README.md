@@ -157,15 +157,7 @@ This project uses automated versioning and releases powered by `commitizen` and 
 
 ### Migrating an Existing Project
 
-Bring your existing Python project into this template:
-
-```bash
-python tools/pyproject_template/migrate_existing_project.py --target /path/to/your/project
-```
-
-The script backs up existing files, copies template tooling/workflows/configs, and prints a summary. After running, complete the migration by configuring placeholders, moving your code, and merging dependencies.
-
-📖 See [Migration Guide](docs/template/migration.md) for the complete step-by-step checklist.
+📖 See [Migration Guide](docs/template/migration.md) for the complete step-by-step checklist for bringing an existing Python project into the template.
 
 ### Keeping Up to Date
 

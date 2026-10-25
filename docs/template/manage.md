@@ -58,6 +58,9 @@ Compares your project against the latest template:
 2. Shows files that differ from the template
 3. Provides diff commands for reviewing changes
 4. Shows GitHub compare URL for commit history
+5. Warns — before the drift report — if your local `template-sync` skill copy (`.agents/` or
+   `.claude/`) is older than the template just downloaded, naming the upstream `SKILL.md` URL to
+   re-read before triaging. It only warns; it never writes those files.
 
 **When to use:** You want to see what improvements have been made to the template since you last synced.
 
@@ -122,6 +125,12 @@ After reviewing and applying template changes, marks your project as synced:
 
 1. Updates `.config/pyproject_template/settings.toml` with the reviewed commit
 2. Cleans up the downloaded template directory
+3. Prints the workflow for committing that settings file
+
+It does **not** touch git. Committing `settings.toml` is yours, through the same
+Issue → Branch → PR flow as any other change. Earlier versions staged, committed and pushed it for
+you, skipping the pre-commit hooks — including the one that blocks commits to `main`, which is
+exactly the branch a sync starts from (#808).
 
 **When to use:** After running "Check for template updates" and applying the changes you want.
 
@@ -133,7 +142,6 @@ Removes template-specific files that are no longer needed after project setup:
 
 - `bootstrap.py` - Remote setup script
 - `tools/pyproject_template/setup_repo.py` - Repository creation
-- `tools/pyproject_template/migrate_existing_project.py` - Migration tool
 - `docs/template/new-project.md` - New project instructions
 - `docs/template/migration.md` - Migration guide
 
@@ -170,14 +178,15 @@ python tools/pyproject_template/manage.py
 # Select [3] Check for template updates
 ```
 
-This downloads the latest template and shows what's different. The template files are kept at `tmp/extracted/pyproject-template-main/` for review.
+This downloads the latest template and shows what's different. The template files are kept at `tmp/extracted/pyproject-template-<commit-sha>/` for review — the archive root is named for the resolved commit (ADR-9020), so locate it by glob rather than by a fixed name.
 
 ### 2. Review changes
 
 Use the provided diff commands to compare files:
 
 ```bash
-diff .github/workflows/ci.yml tmp/extracted/pyproject-template-main/.github/workflows/ci.yml
+TEMPLATE_DIR=$(ls -d tmp/extracted/pyproject-template-*/ | head -1)
+diff .github/workflows/ci.yml "$TEMPLATE_DIR/.github/workflows/ci.yml"
 ```
 
 Or view the commit history on GitHub using the provided compare URL.
