@@ -1566,7 +1566,7 @@ wheels = [
 
 [[package]]
 name = "netapp-ontap"
-version = "9.18.1.0"
+version = "9.19.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "apipkg" },
@@ -1576,9 +1576,9 @@ dependencies = [
     { name = "requests-toolbelt" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/56/c1/35f30c2a8b6b0c7097f2df06754aaded1ee5bb6fdda2881403337f8b719e/netapp_ontap-9.18.1.0.tar.gz", hash = "sha256:8750eae4f72a8b1f8e8783ad3a9da46d96318600407426d4f51825d6cbe3e1db", size = 10810876, upload-time = "2026-02-02T10:31:03.624Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c6/76/bf483953bb94a4c7b88730b16fbe3974912ed8e05b7b4fb23e3e866c38b6/netapp_ontap-9.19.1.0.tar.gz", hash = "sha256:605018d4b05789918894acdec7abed4078b540dee3f581c7c0d6abe629fcbb1a", size = 10309931, upload-time = "2026-08-12T07:38:49.614Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/94/23/6eb924d20a73eb4889d37492ae7079e91bd345f3e2545a74778dc1f5eceb/netapp_ontap-9.18.1.0-py3-none-any.whl", hash = "sha256:d6917ecea70a530da6f786f329a970706bd8ba534d92cd4834cbd2c1c752bf25", size = 32163789, upload-time = "2026-02-02T10:31:00.651Z" },
+    { url = "https://files.pythonhosted.org/packages/33/8a/84a18edb0f12e607231356de56f7dee6242ae43f7987492c5604e0df28d8/netapp_ontap-9.19.1.0-py3-none-any.whl", hash = "sha256:916c329e9fb968d200c9451ebb10eb4ab80b9fc96c24ce674a0b1782c1ad9ab0", size = 30737719, upload-time = "2026-08-12T07:38:45.517Z" },
 ]
 
 [[package]]
