@@ -15,7 +15,7 @@ tags:
 
 ## Requirements
 
-- Python 3.12 or higher
+- Python 3.13 or higher
 - pip or uv
 
 ## Install from PyPI
@@ -116,7 +116,7 @@ pip uninstall pynetappfoundry
 
 ### Python Version Issues
 
-Ensure you're using Python 3.12 or higher:
+Ensure you're using Python 3.13 or higher:
 
 ```bash
 python --version
@@ -125,7 +125,7 @@ python --version
 If you have multiple Python versions:
 
 ```bash
-python3.12 -m pip install pynetappfoundry
+python3.13 -m pip install pynetappfoundry
 ```
 
 ### Virtual Environment Issues

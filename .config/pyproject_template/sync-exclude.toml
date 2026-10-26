@@ -89,9 +89,6 @@ exclude = [
     # Runs tests/benchmarks/test_bench_core.py, the template's example
     # benchmark, excluded below.
     "tests/test_benchmark_settings.py",
-    # requires-python and the oldest tested Python disagree; #852 fixes
-    # that and adopts this test.
-    "tests/test_python_versions_agree.py",
     # Tests for the CBM and context-mode hooks, excluded below until
     # #717 and #718 decide on them.
     "tests/test_hook_cbm_*.py",

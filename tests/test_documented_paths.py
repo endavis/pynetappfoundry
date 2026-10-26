@@ -83,7 +83,6 @@ ALLOWED: dict[str, str] = {
     # configuration, named by template-synced skills and docs (#853).
     "src/package_name/": "the template's example package, excluded by sync-exclude.toml",
     "tests/test_core.py": "template example test, excluded by sync-exclude.toml",
-    "tests/test_python_versions_agree.py": "template test, excluded by sync-exclude.toml",
     "tests/benchmarks/test_bench_core.py": "template benchmark, excluded by sync-exclude.toml",
     "tests/template/test_properties.py": "template test, excluded by sync-exclude.toml",
     "tests/template/test_utils_properties.py": "template-owned test, shed on configuration",

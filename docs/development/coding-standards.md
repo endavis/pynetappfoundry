@@ -18,7 +18,7 @@ Guidelines for exceptions, typing, structure, testing, and documentation to keep
 ## Audience and Prerequisites
 
 - **Audience:** Contributors writing or reviewing code
-- **Prerequisites:** Python 3.12+, familiarity with the repo layout, access to local tooling (`uv`, `doit`, ruff, pytest)
+- **Prerequisites:** Python 3.13+, familiarity with the repo layout, access to local tooling (`uv`, `doit`, ruff, pytest)
 
 ## When to Use This
 
@@ -368,7 +368,7 @@ When refactoring imports:
 This template uses Ruff for linting and formatting:
 
 - **Line length**: 100 characters
-- **Target version**: Python 3.12+
+- **Target version**: Python 3.13+
 - **Rules**: See `pyproject.toml` for enabled rule sets
   - E/F: pycodestyle and pyflakes
   - I: isort (import sorting)
