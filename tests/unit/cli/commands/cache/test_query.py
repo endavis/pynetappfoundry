@@ -655,8 +655,9 @@ base_api_path = "/api"
         assert result.exit_code == 0
         assert "test-cluster:" in result.output
         assert "nodes[*].name:" in result.output
-        assert '"node-01"' in result.output
-        assert '"node-02"' in result.output
+        # Each item is labelled with its identifier (resolved from "name")
+        assert "node-01: node-01" in result.output
+        assert "node-02: node-02" in result.output
 
     @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
     def test_wildcard_json_output(
@@ -686,7 +687,14 @@ base_api_path = "/api"
 
         assert result.exit_code == 0
         output = json.loads(result.output)
-        assert output == {"test-cluster": {"nodes[*].name": ["node-01", "node-02"]}}
+        assert output == {
+            "test-cluster": {
+                "nodes[*].name": [
+                    {"key": "node-01", "value": "node-01"},
+                    {"key": "node-02", "value": "node-02"},
+                ]
+            }
+        }
 
     @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
     def test_wildcard_raw_output(
@@ -716,7 +724,8 @@ base_api_path = "/api"
 
         assert result.exit_code == 0
         lines = result.output.strip().split("\n")
-        assert lines == ["node-01", "node-02"]
+        # Raw wildcard output is "key<TAB>value" per item
+        assert lines == ["node-01\tnode-01", "node-02\tnode-02"]
 
     @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
     def test_wildcard_serial_numbers(
@@ -746,7 +755,8 @@ base_api_path = "/api"
 
         assert result.exit_code == 0
         lines = result.output.strip().split("\n")
-        assert lines == ["SN001", "SN002"]
+        # Identifier comes from "name" (not "serial_number"); value is the serial number
+        assert lines == ["node-01\tSN001", "node-02\tSN002"]
 
     @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
     def test_csv_output_single_cluster(
@@ -858,9 +868,10 @@ base_api_path = "/api"
 
         assert result.exit_code == 0
         lines = result.output.strip().split("\n")
-        assert lines[0] == "cluster,nodes[*].name,nodes[*].serial_number"
-        assert lines[1] == "test-cluster,node-01,SN001"
-        assert lines[2] == "test-cluster,node-02,SN002"
+        # "key" column (from the first wildcard field) is added after "cluster"
+        assert lines[0] == "cluster,key,nodes[*].name,nodes[*].serial_number"
+        assert lines[1] == "test-cluster,node-01,node-01,SN001"
+        assert lines[2] == "test-cluster,node-02,node-02,SN002"
 
     @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
     def test_csv_output_with_boolean(
@@ -1170,6 +1181,272 @@ base_api_path = "/api"
         assert result.exit_code == 0
         assert result.output.strip() == "9.14.1"
 
+    @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
+    def test_filter_predicate_text_output(
+        self,
+        mock_db_class: MagicMock,
+        runner: CliRunner,
+        mock_config_dir: Path,
+        sample_metadata: CachedClusterMetadata,
+    ) -> None:
+        """Filter predicate matches are labelled by identifier in text output."""
+        mock_db = MagicMock()
+        mock_db.get_lazy.return_value = _make_lazy_mock(sample_metadata)
+        mock_db_class.return_value = mock_db
+
+        result = runner.invoke(
+            nf,
+            [
+                "-c",
+                str(mock_config_dir),
+                "cache",
+                "query",
+                "test-cluster",
+                'nodes["name=node-01"].serial_number',
+            ],
+        )
+
+        assert result.exit_code == 0
+        assert 'nodes["name=node-01"].serial_number:' in result.output
+        assert "node-01: SN001" in result.output
+
+    @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
+    def test_filter_predicate_raw_output(
+        self,
+        mock_db_class: MagicMock,
+        runner: CliRunner,
+        mock_config_dir: Path,
+        sample_metadata: CachedClusterMetadata,
+    ) -> None:
+        """Filter predicate raw output is one key<TAB>value line per match."""
+        mock_db = MagicMock()
+        mock_db.get_lazy.return_value = _make_lazy_mock(sample_metadata)
+        mock_db_class.return_value = mock_db
+
+        result = runner.invoke(
+            nf,
+            [
+                "-c",
+                str(mock_config_dir),
+                "cache",
+                "query",
+                "test-cluster",
+                'nodes["name=node-01"].serial_number',
+                "--raw",
+            ],
+        )
+
+        assert result.exit_code == 0
+        assert result.output.strip() == "node-01\tSN001"
+
+    @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
+    def test_key_option_overrides_identifier_order(
+        self,
+        mock_db_class: MagicMock,
+        runner: CliRunner,
+        mock_config_dir: Path,
+        sample_metadata: CachedClusterMetadata,
+    ) -> None:
+        """--key overrides the default identifier order for every wildcard field."""
+        mock_db = MagicMock()
+        mock_db.get_lazy.return_value = _make_lazy_mock(sample_metadata)
+        mock_db_class.return_value = mock_db
+
+        result = runner.invoke(
+            nf,
+            [
+                "-c",
+                str(mock_config_dir),
+                "cache",
+                "query",
+                "test-cluster",
+                "nodes[*].serial_number",
+                "--key",
+                "serial_number",
+                "--raw",
+            ],
+        )
+
+        assert result.exit_code == 0
+        lines = result.output.strip().split("\n")
+        assert lines == ["SN001\tSN001", "SN002\tSN002"]
+
+    @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
+    def test_wildcard_index_fallback_without_identifier(
+        self,
+        mock_db_class: MagicMock,
+        runner: CliRunner,
+        mock_config_dir: Path,
+    ) -> None:
+        """Items matching none of the default identifier keys fall back to the index."""
+        mock_db = MagicMock()
+        metadata = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            cached_at=datetime(2024, 1, 15, tzinfo=UTC),
+            cloud=[
+                CloudMetadata(provider="AWS"),
+                CloudMetadata(provider="Azure"),
+            ],
+        )
+        mock_db.get_lazy.return_value = _make_lazy_mock(metadata)
+        mock_db_class.return_value = mock_db
+
+        result = runner.invoke(
+            nf,
+            [
+                "-c",
+                str(mock_config_dir),
+                "cache",
+                "query",
+                "test-cluster",
+                "cloud[*].provider",
+                "--json",
+            ],
+        )
+
+        assert result.exit_code == 0
+        output = json.loads(result.output)
+        assert output == {
+            "test-cluster": {
+                "cloud[*].provider": [
+                    {"key": "[0]", "value": "AWS"},
+                    {"key": "[1]", "value": "Azure"},
+                ]
+            }
+        }
+
+    @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
+    def test_csv_no_key_column_without_wildcard(
+        self,
+        mock_db_class: MagicMock,
+        runner: CliRunner,
+        mock_config_dir: Path,
+        sample_metadata: CachedClusterMetadata,
+    ) -> None:
+        """CSV output has no key column when no field is a wildcard or filter path."""
+        mock_db = MagicMock()
+        mock_db.get_lazy.return_value = _make_lazy_mock(sample_metadata)
+        mock_db_class.return_value = mock_db
+
+        result = runner.invoke(
+            nf,
+            [
+                "-c",
+                str(mock_config_dir),
+                "cache",
+                "query",
+                "test-cluster",
+                "nodes[0].name",
+                "--csv",
+            ],
+        )
+
+        assert result.exit_code == 0
+        lines = result.output.strip().split("\n")
+        assert lines[0] == "cluster,nodes[0].name"
+        assert lines[1] == "test-cluster,node-01"
+
+    @patch("pynetappfoundry.cli.commands.cache.query._fetch_live_groups")
+    @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
+    def test_wildcard_svm_name_identifier(
+        self,
+        mock_db_class: MagicMock,
+        mock_fetch_live: MagicMock,
+        runner: CliRunner,
+        mock_config_dir: Path,
+    ) -> None:
+        """Wildcard results use svm.name as the identifier (issue #848 example)."""
+        mock_db = MagicMock()
+        mock_db_class.return_value = mock_db
+
+        mock_fetch_live.return_value = {
+            "cluster_name": "test-cluster",
+            "protocols": {
+                "cifs_services": [
+                    {"svm": {"name": "svm1"}, "security": {"session_security": "none"}},
+                    {"svm": {"name": "svm2"}, "security": {"session_security": "sign"}},
+                ]
+            },
+        }
+
+        result = runner.invoke(
+            nf,
+            [
+                "-c",
+                str(mock_config_dir),
+                "cache",
+                "query",
+                "test-cluster",
+                "protocols.cifs_services[*].security.session_security",
+                "--live",
+                "--json",
+            ],
+        )
+
+        assert result.exit_code == 0
+        output = json.loads(result.output)
+        assert output == {
+            "test-cluster": {
+                "protocols.cifs_services[*].security.session_security": [
+                    {"key": "svm1", "value": "none"},
+                    {"key": "svm2", "value": "sign"},
+                ]
+            }
+        }
+
+    @patch("pynetappfoundry.cli.commands.cache.query._fetch_live_groups")
+    @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
+    def test_nested_wildcard_composes_identifiers(
+        self,
+        mock_db_class: MagicMock,
+        mock_fetch_live: MagicMock,
+        runner: CliRunner,
+        mock_config_dir: Path,
+    ) -> None:
+        """Nested wildcards compose identifiers with '/' (e.g. svm1/vol1)."""
+        mock_db = MagicMock()
+        mock_db_class.return_value = mock_db
+
+        mock_fetch_live.return_value = {
+            "cluster_name": "test-cluster",
+            "storage": {
+                "svms": [
+                    {
+                        "name": "svm1",
+                        "volumes": [
+                            {"name": "vol1", "size": 100},
+                            {"name": "vol2", "size": 200},
+                        ],
+                    },
+                ]
+            },
+        }
+
+        result = runner.invoke(
+            nf,
+            [
+                "-c",
+                str(mock_config_dir),
+                "cache",
+                "query",
+                "test-cluster",
+                "storage.svms[*].volumes[*].size",
+                "--live",
+                "--json",
+            ],
+        )
+
+        assert result.exit_code == 0
+        output = json.loads(result.output)
+        assert output == {
+            "test-cluster": {
+                "storage.svms[*].volumes[*].size": [
+                    {"key": "svm1/vol1", "value": 100},
+                    {"key": "svm1/vol2", "value": 200},
+                ]
+            }
+        }
+
 
 class TestEmptyResultSkipping:
     """Empty list results (no filter matches, empty wildcard arrays) are skipped."""
@@ -1297,7 +1574,11 @@ base_api_path = "/api"
 
         assert result.exit_code == 0
         output = json.loads(result.output)
-        assert output == {"c1": {'nodes["name=node-01"].serial_number': ["SN-node-01"]}}
+        assert output == {
+            "c1": {
+                'nodes["name=node-01"].serial_number': [{"key": "node-01", "value": "SN-node-01"}]
+            }
+        }
         assert "c2" not in output
 
     @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
@@ -1335,8 +1616,9 @@ base_api_path = "/api"
 
         assert result.exit_code == 0
         lines = [ln for ln in result.output.strip().split("\n") if ln]
-        assert lines[0] == 'cluster,"nodes[""name=node-01""].serial_number"'
-        assert any(ln.startswith("c1,") for ln in lines[1:])
+        # "key" column is added after "cluster" for this filter predicate field
+        assert lines[0] == 'cluster,key,"nodes[""name=node-01""].serial_number"'
+        assert "c1,node-01,SN-node-01" in lines[1:]
         assert not any(ln.startswith("c2,") for ln in lines[1:])
 
     @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
