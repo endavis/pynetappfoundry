@@ -503,19 +503,37 @@ nf cache query cluster1 cluster.ontap_version --raw
 # Query array elements
 nf cache query cluster1 nodes[0].name
 
-# Query all array items with wildcard [*]
+# Query all array items with wildcard [*] -- each result is labelled with
+# an identifier for the item it came from (name, svm.name, uuid, or the
+# array index as a fallback, in that order)
 nf cache query cluster1 nodes[*].name
+# test-cluster:
+#   nodes[*].name:
+#     node-01: node-01
+#     node-02: node-02
 
-# Wildcard with raw output (one value per line, for scripting)
+# Choose the identifier field explicitly (overrides the default order
+# for every wildcard/filter field in the query)
+nf cache query cluster1 protocols.cifs_services[*].security.session_security --key svm.name
+
+# Wildcard with raw output (one "key<TAB>value" line per item, for scripting)
 nf cache query cluster1 nodes[*].name --raw
 
-# CSV output
+# Wildcard with JSON output: a list of {"key", "value"} records per field
+# (not a flat array -- see ADR-0020; this is a breaking change from
+# versions that returned a flat list for wildcard/filter fields)
+nf cache query cluster1 nodes[*].name --json
+# {"cluster1": {"nodes[*].name": [{"key": "node-01", "value": "node-01"}, ...]}}
+
+# CSV output (no identifier column for plain, non-wildcard fields)
 nf cache query --all cloud.provider cloud.region --csv
 
-# CSV with wildcards (expands to multiple rows)
+# CSV with wildcards: a "key" column is added after "cluster", sourced
+# from the first wildcard/filter field when there are several
 nf cache query cluster1 nodes[*].name nodes[*].serial_number --csv
 
-# Filter predicate (select items by field value)
+# Filter predicate (select items by field value) -- matches are labelled
+# with an identifier the same way wildcard results are
 nf cache query cluster1 'volumes["name=vol1"].size'
 
 # OR filter (match multiple values)
@@ -526,6 +544,9 @@ nf cache query cluster1 'volumes["name=*PROD*"].size'
 
 # Single-quoted predicate (alternative syntax)
 nf cache query cluster1 "volumes['state=online'].name"
+
+# Nested wildcards compose identifiers with '/' (e.g. svm1/vol1)
+nf cache query cluster1 'storage.svms[*].volumes[*].size' --json
 
 # View cache schema as tree
 nf cache schema

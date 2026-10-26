@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import fnmatch
 import re
+from collections.abc import Sequence
 from typing import Any
 
 # Pattern to match array index access like "nodes[0]"
@@ -25,6 +26,12 @@ _ARRAY_WILDCARD_PATTERN = re.compile(r"^([a-zA-Z_][a-zA-Z0-9_]*)\[\*\]$")
 
 # Pattern to match filter predicate access like nodes["name=vol1"] or nodes['name=vol1']
 _ARRAY_FILTER_PATTERN = re.compile(r"""^([a-zA-Z_][a-zA-Z0-9_]*)\[["'](.+?)["']\]$""")
+
+# Default identifier key order tried by get_nested_value_with_identifiers() to
+# label each item in a wildcard or filter predicate result. The first key
+# present with a non-empty, non-None value wins; items matching none of
+# these fall back to their array index.
+DEFAULT_IDENTIFIER_KEYS: tuple[str, ...] = ("name", "svm.name", "uuid")
 
 
 class PathNotFoundError(Exception):
@@ -317,3 +324,250 @@ def get_nested_value(data: dict[str, Any], path: str) -> Any:
             traversed.append(part)
 
     return current
+
+
+def _has_wildcard_or_filter(parts: Sequence[str]) -> bool:
+    """Return True if any path segment is a wildcard or filter predicate access."""
+    return any(
+        _ARRAY_WILDCARD_PATTERN.match(part) or _ARRAY_FILTER_PATTERN.match(part) for part in parts
+    )
+
+
+def _lookup_dotted(item: dict[str, Any], dotted_key: str) -> Any:
+    """Look up a dot-notation key in *item*, returning None if any segment is absent.
+
+    Unlike :func:`get_nested_value`, this never raises -- it is used to probe
+    identifier candidates that are expected to be missing on some items.
+
+    Args:
+        item: Dictionary to look up the key in.
+        dotted_key: Dot-notation key path (e.g. ``"svm.name"``).
+
+    Returns:
+        The value at the path, or None if any segment is missing or not a dict.
+    """
+    current: Any = item
+    for part in dotted_key.split("."):
+        if not isinstance(current, dict) or part not in current:
+            return None
+        current = current[part]
+    return current
+
+
+def _resolve_identifier(item: Any, index: int, identifier_keys: Sequence[str]) -> str:
+    """Resolve the identifier for a single array item.
+
+    Tries each key in *identifier_keys* in order; the first one present with
+    a non-empty, non-None value wins. Falls back to the array index
+    (rendered as ``[i]``) when none match or *item* is not a dict.
+
+    Args:
+        item: The array item to identify.
+        index: The item's position in the array (used for the fallback).
+        identifier_keys: Dot-notation key paths tried, in order.
+
+    Returns:
+        The resolved identifier string.
+    """
+    if isinstance(item, dict):
+        for key in identifier_keys:
+            value = _lookup_dotted(item, key)
+            if value is not None and value != "":
+                return str(value)
+    return f"[{index}]"
+
+
+def get_nested_value_with_identifiers(
+    data: dict[str, Any],
+    path: str,
+    identifier_keys: Sequence[str] = DEFAULT_IDENTIFIER_KEYS,
+) -> list[tuple[str, Any]]:
+    """Resolve a wildcard or filter predicate path, labelling each result.
+
+    Mirrors :func:`get_nested_value` for the wildcard (``[*]``) and filter
+    predicate (``["field=value"]``) array-access forms, but instead of
+    returning a flat list of values, pairs each value with an identifier
+    for the array item it came from.
+
+    The identifier is resolved from *identifier_keys*, tried in order (the
+    first key present with a non-empty, non-None value wins). Items
+    matching none of the keys fall back to their array index, rendered as
+    ``[i]``. Nested wildcards/filters compose identifiers with ``/``
+    (e.g. ``svm1/vol1``). Duplicate identifiers are kept as separate
+    entries -- never merged or overwritten.
+
+    ``get_nested_value()`` is unchanged and is still the right call for
+    paths without a wildcard or filter segment.
+
+    Args:
+        data: The dictionary to traverse.
+        path: Dot-notation path containing at least one wildcard (``[*]``)
+            or filter predicate (``["field=value"]``) segment.
+        identifier_keys: Dot-notation key paths tried, in order, to label
+            each array item. Defaults to :data:`DEFAULT_IDENTIFIER_KEYS`.
+
+    Returns:
+        A list of ``(identifier, value)`` tuples, in array order.
+
+    Raises:
+        PathNotFoundError: If the path cannot be resolved.
+        ValueError: If *path* contains no wildcard or filter segment.
+
+    Examples:
+        >>> data = {"nodes": [{"name": "node-01"}, {"name": "node-02"}]}
+        >>> get_nested_value_with_identifiers(data, "nodes[*].name")
+        [('node-01', 'node-01'), ('node-02', 'node-02')]
+
+        >>> data = {"nodes": [{"serial_number": "SN1"}, {"serial_number": "SN2"}]}
+        >>> get_nested_value_with_identifiers(data, "nodes[*].serial_number")
+        [('[0]', 'SN1'), ('[1]', 'SN2')]
+
+        >>> data = {"svms": [{"name": "svm1", "vols": [{"name": "vol1", "size": 1}]}]}
+        >>> get_nested_value_with_identifiers(data, "svms[*].vols[*].size")
+        [('svm1/vol1', 1)]
+    """
+    if not path:
+        raise PathNotFoundError(path, "", "empty path")
+
+    parts = path.split(".")
+    current: Any = data
+    traversed: list[str] = []
+
+    for i, part in enumerate(parts):
+        if not part:
+            raise PathNotFoundError(path, ".".join(traversed) or "(root)", "empty path segment")
+
+        wildcard_match = _ARRAY_WILDCARD_PATTERN.match(part)
+        filter_match = None if wildcard_match else _ARRAY_FILTER_PATTERN.match(part)
+
+        if wildcard_match or filter_match:
+            match = wildcard_match or filter_match
+            assert match is not None
+            key = match.group(1)
+
+            if not isinstance(current, dict):
+                raise PathNotFoundError(
+                    path,
+                    ".".join(traversed) or "(root)",
+                    f"expected dict, got {type(current).__name__}",
+                )
+            if key not in current:
+                raise PathNotFoundError(
+                    path,
+                    ".".join([*traversed, key]) if traversed else key,
+                    "key not found",
+                )
+
+            array = current[key]
+            access_label = "wildcard" if wildcard_match else "filter"
+            if not isinstance(array, list):
+                raise PathNotFoundError(
+                    path,
+                    ".".join([*traversed, key]) if traversed else key,
+                    f"expected list for {access_label} access, got {type(array).__name__}",
+                )
+
+            items: list[tuple[int, Any]]
+            if wildcard_match:
+                items = list(enumerate(array))
+            else:
+                assert filter_match is not None
+                predicate = filter_match.group(2)
+                conditions = _parse_filter_predicate(predicate)
+                items = [
+                    (idx, item)
+                    for idx, item in enumerate(array)
+                    if isinstance(item, dict) and _matches_filter(item, conditions)
+                ]
+
+            remaining_parts = parts[i + 1 :]
+            results: list[tuple[str, Any]] = []
+
+            if not remaining_parts:
+                for idx, item in items:
+                    ident = _resolve_identifier(item, idx, identifier_keys)
+                    results.append((ident, item))
+                return results
+
+            remaining_path = ".".join(remaining_parts)
+            nested_has_wildcard = _has_wildcard_or_filter(remaining_parts)
+
+            for idx, item in items:
+                ident = _resolve_identifier(item, idx, identifier_keys)
+                if not isinstance(item, dict):
+                    raise PathNotFoundError(
+                        path,
+                        f"{'.'.join([*traversed, key])}[{idx}]" if traversed else f"{key}[{idx}]",
+                        f"expected dict for nested access, got {type(item).__name__}",
+                    )
+                if nested_has_wildcard:
+                    nested = get_nested_value_with_identifiers(
+                        {"_": item}, f"_.{remaining_path}", identifier_keys
+                    )
+                    for nested_ident, nested_value in nested:
+                        results.append((f"{ident}/{nested_ident}", nested_value))
+                else:
+                    value = get_nested_value({"_": item}, f"_.{remaining_path}")
+                    results.append((ident, value))
+
+            return results
+
+        # Check for array index pattern like "nodes[0]"
+        index_match = _ARRAY_INDEX_PATTERN.match(part)
+        if index_match:
+            key, index_str = index_match.groups()
+            index = int(index_str)
+
+            if not isinstance(current, dict):
+                raise PathNotFoundError(
+                    path,
+                    ".".join(traversed) or "(root)",
+                    f"expected dict, got {type(current).__name__}",
+                )
+            if key not in current:
+                raise PathNotFoundError(
+                    path,
+                    ".".join([*traversed, key]) if traversed else key,
+                    "key not found",
+                )
+
+            current = current[key]
+            traversed.append(key)
+
+            if not isinstance(current, list):
+                raise PathNotFoundError(
+                    path,
+                    ".".join(traversed),
+                    f"expected list for index access, got {type(current).__name__}",
+                )
+            if index < 0 or index >= len(current):
+                raise PathNotFoundError(
+                    path,
+                    f"{'.'.join(traversed)}[{index}]",
+                    f"index {index} out of range (list has {len(current)} items)",
+                )
+
+            current = current[index]
+            traversed[-1] = f"{key}[{index}]"
+        else:
+            # Regular key access
+            if not isinstance(current, dict):
+                raise PathNotFoundError(
+                    path,
+                    ".".join(traversed) or "(root)",
+                    f"expected dict, got {type(current).__name__}",
+                )
+            if part not in current:
+                raise PathNotFoundError(
+                    path,
+                    ".".join([*traversed, part]) if traversed else part,
+                    "key not found",
+                )
+
+            current = current[part]
+            traversed.append(part)
+
+    raise ValueError(
+        f"Path {path!r} has no wildcard [*] or filter predicate segment; "
+        "use get_nested_value() instead."
+    )

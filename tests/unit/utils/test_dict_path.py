@@ -5,9 +5,11 @@ from __future__ import annotations
 import pytest
 
 from pynetappfoundry.utils.dict_path import (
+    DEFAULT_IDENTIFIER_KEYS,
     PathNotFoundError,
     _parse_filter_predicate,
     get_nested_value,
+    get_nested_value_with_identifiers,
 )
 
 
@@ -479,3 +481,141 @@ class TestFilterPredicateAccess:
         """OR filter with glob patterns."""
         result = get_nested_value(volumes_data, 'volumes["name=vol1* || state=offline"].name')
         assert result == ["vol1", "vol3"]
+
+
+class TestGetNestedValueWithIdentifiers:
+    """Tests for get_nested_value_with_identifiers()."""
+
+    def test_default_key_precedence(self) -> None:
+        """ "name" wins over "svm.name" and "uuid" when all are present."""
+        data = {
+            "items": [
+                {"name": "n1", "svm": {"name": "s1"}, "uuid": "u1"},
+            ]
+        }
+        assert get_nested_value_with_identifiers(data, "items[*].uuid") == [("n1", "u1")]
+
+    def test_svm_name_used_when_name_absent(self) -> None:
+        """Falls to "svm.name" when "name" is absent."""
+        data = {"items": [{"svm": {"name": "s1"}, "uuid": "u1"}]}
+        assert get_nested_value_with_identifiers(data, "items[*].uuid") == [("s1", "u1")]
+
+    def test_uuid_used_when_name_and_svm_name_absent(self) -> None:
+        """Falls to "uuid" when neither "name" nor "svm.name" is present."""
+        data = {"items": [{"uuid": "u1", "size": 5}]}
+        assert get_nested_value_with_identifiers(data, "items[*].size") == [("u1", 5)]
+
+    def test_empty_string_identifier_skipped(self) -> None:
+        """An empty-string identifier value is treated as absent."""
+        data = {"items": [{"name": "", "uuid": "u1", "size": 5}]}
+        assert get_nested_value_with_identifiers(data, "items[*].size") == [("u1", 5)]
+
+    def test_none_identifier_skipped(self) -> None:
+        """A None identifier value is treated as absent."""
+        data = {"items": [{"name": None, "uuid": "u1", "size": 5}]}
+        assert get_nested_value_with_identifiers(data, "items[*].size") == [("u1", 5)]
+
+    def test_index_fallback_when_no_identifier_present(self) -> None:
+        """Falls back to the array index when none of the identifier keys match."""
+        data = {"items": [{"size": 5}, {"size": 10}]}
+        assert get_nested_value_with_identifiers(data, "items[*].size") == [
+            ("[0]", 5),
+            ("[1]", 10),
+        ]
+
+    def test_custom_identifier_key_order(self) -> None:
+        """A custom identifier_keys order is respected over the default."""
+        data = {"items": [{"name": "n1", "uuid": "u1", "size": 5}]}
+        result = get_nested_value_with_identifiers(
+            data, "items[*].size", identifier_keys=("uuid", "name")
+        )
+        assert result == [("u1", 5)]
+
+    def test_custom_single_identifier_key(self) -> None:
+        """A single custom identifier key (e.g. from --key) is used directly."""
+        data = {"items": [{"name": "n1", "serial_number": "SN1"}]}
+        result = get_nested_value_with_identifiers(
+            data, "items[*].serial_number", identifier_keys=("serial_number",)
+        )
+        assert result == [("SN1", "SN1")]
+
+    def test_no_remaining_path_returns_full_item(self) -> None:
+        """Wildcard without a remaining path returns the full item as the value."""
+        data = {"items": [{"name": "n1", "size": 5}]}
+        assert get_nested_value_with_identifiers(data, "items[*]") == [
+            ("n1", {"name": "n1", "size": 5})
+        ]
+
+    def test_duplicate_identifiers_kept_as_separate_entries(self) -> None:
+        """Two items with the same identifier are kept as two entries, never merged."""
+        data = {"items": [{"name": "dup", "size": 1}, {"name": "dup", "size": 2}]}
+        assert get_nested_value_with_identifiers(data, "items[*].size") == [
+            ("dup", 1),
+            ("dup", 2),
+        ]
+
+    def test_empty_array_returns_empty_list(self) -> None:
+        """Wildcard on an empty array returns an empty list."""
+        data: dict[str, list[object]] = {"items": []}
+        assert get_nested_value_with_identifiers(data, "items[*].size") == []
+
+    def test_filter_predicate_identifiers(self) -> None:
+        """Filter predicate matches are labelled the same way as wildcard matches."""
+        data = {
+            "volumes": [
+                {"name": "vol1", "state": "online", "size": 100},
+                {"name": "vol2", "state": "online", "size": 200},
+                {"name": "vol3", "state": "offline", "size": 300},
+            ]
+        }
+        result = get_nested_value_with_identifiers(data, 'volumes["state=online"].size')
+        assert result == [("vol1", 100), ("vol2", 200)]
+
+    def test_filter_predicate_no_matches_returns_empty_list(self) -> None:
+        """Filter predicate with no matches returns an empty list."""
+        data = {"volumes": [{"name": "vol1", "state": "online"}]}
+        result = get_nested_value_with_identifiers(data, 'volumes["state=offline"].name')
+        assert result == []
+
+    def test_nested_wildcard_composes_identifiers(self) -> None:
+        """Nested wildcards compose identifiers with '/'."""
+        data = {
+            "svms": [
+                {
+                    "name": "svm1",
+                    "vols": [{"name": "vol1", "size": 1}, {"name": "vol2", "size": 2}],
+                },
+                {
+                    "name": "svm2",
+                    "vols": [{"name": "vol3", "size": 3}],
+                },
+            ]
+        }
+        result = get_nested_value_with_identifiers(data, "svms[*].vols[*].size")
+        assert result == [
+            ("svm1/vol1", 1),
+            ("svm1/vol2", 2),
+            ("svm2/vol3", 3),
+        ]
+
+    def test_nested_wildcard_composes_index_fallback(self) -> None:
+        """Nested wildcard composition falls back to indices at either level."""
+        data = {"svms": [{"vols": [{"size": 1}, {"size": 2}]}]}
+        result = get_nested_value_with_identifiers(data, "svms[*].vols[*].size")
+        assert result == [("[0]/[0]", 1), ("[0]/[1]", 2)]
+
+    def test_path_without_wildcard_or_filter_raises(self) -> None:
+        """A plain path (no wildcard or filter segment) is rejected."""
+        data = {"cloud": {"provider": "AWS"}}
+        with pytest.raises(ValueError, match="no wildcard"):
+            get_nested_value_with_identifiers(data, "cloud.provider")
+
+    def test_missing_field_after_wildcard_raises(self) -> None:
+        """A missing field after the wildcard still raises PathNotFoundError."""
+        data = {"items": [{"name": "n1"}]}
+        with pytest.raises(PathNotFoundError, match="key not found"):
+            get_nested_value_with_identifiers(data, "items[*].missing")
+
+    def test_default_identifier_keys_constant(self) -> None:
+        """The default identifier order is name, svm.name, uuid."""
+        assert DEFAULT_IDENTIFIER_KEYS == ("name", "svm.name", "uuid")

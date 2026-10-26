@@ -129,3 +129,4 @@ The Issue contains the full discussion; the ADR summarizes the outcome.
 | [0017](0017-where-expressions-are-cache-only-rationale.md) | where-expressions are cache-only (rationale) | Accepted |
 | [0018](0018-cache-schema-versioning-and-backward-compatibility-policy.md) | Cache schema versioning and backward-compatibility policy | Accepted |
 | [0019](0019-console-runtime-client-architecture-org-scoped-access-and-per-token-type-wrapper-isolation.md) | Console runtime client architecture: org-scoped access and per-token-type wrapper isolation | Accepted |
+| [0020](0020-label-nf-cache-query-wildcard-results-with-their-source-item.md) | Label nf cache query wildcard results with their source item | Accepted |
