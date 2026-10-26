@@ -75,7 +75,6 @@ markdown_extensions:
 # `tests/test_markdown_links.py`, which resolves every relative link against the
 # whole repository — including the out-of-docs links mkdocs can never check.
 # Anchors are still validated here, where mkdocs has the rendered headings.
-# (Project note: that test arrives with the Phase C template sync, #828.)
 #
 # Trade-off: the out-of-docs links do not resolve on the published site.
 # `decisions/adr-template.md` is a scaffold, not a decision record: it carries
@@ -92,9 +91,7 @@ validation:
     # `mkdocs build --strict` this fails the docs job rather than scrolling
     # past as INFO, which is how seven pages became unreachable
     # (pyproject-template #688).
-    # Project divergence: `info` until the pages missing from the nav are
-    # added (#831). The template uses `warn`.
-    omitted_files: info
+    omitted_files: warn
   links:
     not_found: ignore
     unrecognized_links: ignore
@@ -115,6 +112,7 @@ nav:
       - CLI Reference: reference/cli.md
       - API Reference: reference/api.md
       - Cache: reference/cache.md
+      - Config Schema: reference/config-schema.md
   - Examples:
       - Overview: examples/README.md
       - Add a Feature: examples/add-a-feature.md
@@ -145,9 +143,14 @@ nav:
           - Token-Efficiency Add-Ons: development/ai/token-efficiency-add-ons.md
           - Per-Stack Rule Files: development/ai/rule-files.md
       - Adding Backends: development/adding-backends.md
+      - Cache Models: development/cache-models.md
       - Field Mapping Framework: development/field-mapping.md
       - Unit Registry: development/unit-registry.md
       - Extensions: development/extensions.md
+      - Plans:
+          - Azure SMB Impact Tracking: plans/azure-smb-impact-tracking.md
+          - Cache Query Command: plans/cache-query-command.md
+          - First-Pass Refactor: plans/first-pass-refactor.md
   - Deployment:
       - Development: deployment/development.md
       - Production: deployment/production.md
@@ -157,6 +160,22 @@ nav:
       - ADR-0002 SMB Client Impact Tracking: decisions/0002-track-smb-client-impact-azure-maintenance.md
       - ADR-0003 Base SQLiteDB Migrations: decisions/0003-use-base-sqlitedb-class-with-version-based-migrations.md
       - ADR-0004 Declarative Field Mapping: decisions/0004-declarative-field-mapping-framework.md
+      - ADR-0005 UUID Index for Cross-References: decisions/0005-uuid-index-for-cache-cross-references.md
+      - ADR-0006 Multi-API Field Mapping: decisions/0006-generalize-field-mapping-for-multi-api.md
+      - ADR-0007 URL-Tree Model Registry: decisions/0007-url-tree-model-registry.md
+      - ADR-0008 OpenAPI Codegen: decisions/0008-openapi-codegen-for-model-generation.md
+      - ADR-0009 SQL Table Storage: decisions/0009-sql-table-storage.md
+      - ADR-0010 ClusterEntry Namespace Access: decisions/0010-clusterentry-and-namespace-access-pattern.md
+      - ADR-0011 Nested Models: decisions/0011-nested-models-to-replace-flat-model-pattern.md
+      - ADR-0012 Unified DataSource Accessor: decisions/0012-unified-datasource-accessor.md
+      - ADR-0013 DataSource Facade: decisions/0013-datasource-as-a-thin-facade-over-the-collector.md
+      - ADR-0014 Parallel Cluster Refresh: decisions/0014-parallel-cluster-refresh.md
+      - ADR-0015 DII Backend: decisions/0015-dii-backend-live-only-bare-array-envelope-offsetlimit-pagination.md
+      - ADR-0016 PR-Based Release: decisions/0016-pr-based-release-is-the-only-supported-flow.md
+      - ADR-0017 Cache-Only where-Expressions: decisions/0017-where-expressions-are-cache-only-rationale.md
+      - ADR-0018 Cache Schema Versioning: decisions/0018-cache-schema-versioning-and-backward-compatibility-policy.md
+      - ADR-0019 Console Runtime Client: decisions/0019-console-runtime-client-architecture-org-scoped-access-and-per-token-type-wrapper-isolation.md
+      - ADR-0020 Cache Query Wildcard Labels: decisions/0020-label-nf-cache-query-wildcard-results-with-their-source-item.md
       - Template Decisions:
           - ADR-9001 uv Package Management: decisions/9001-use-uv-for-package-management.md
           - ADR-9002 doit Task Automation: decisions/9002-use-doit-for-task-automation.md
