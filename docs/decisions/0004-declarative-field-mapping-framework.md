@@ -46,7 +46,7 @@ The pilot migration (VolumeInfo) was completed in PR #189.
 
 4. **Makes field requirements explicit** — expensive API fields (e.g., `autosize.*`, `files.*`, `nas.path`) are declared in the mapping rather than hidden in endpoint query strings.
 
-5. **Leverages existing utilities** — nested API path traversal uses `get_nested_value()` from `utils/dict_path.py`, and CLI value coercion handles ONTAP conventions (`-` for missing, `%` suffix, boolean strings).
+5. **Leverages existing utilities** — nested API path traversal uses `get_nested_value()` from `src/pynetappfoundry/utils/dict_path.py`, and CLI value coercion handles ONTAP conventions (`-` for missing, `%` suffix, boolean strings).
 
 ### Alternatives Considered
 

@@ -744,10 +744,10 @@ doit check
 | `tools/codegen/expensive_fields.py` | Parse ONTAP expensive field annotations |
 | `tools/codegen/openapi_codegen.py` | CLI entry point and pipeline orchestration |
 | `tools/doit/codegen.py` | `doit` task wrappers for fetch, convert, generate |
-| `src/.../models/_base.py` | `OntapModel` base class, `OntapUUID` type, `HasUUID` protocol |
-| `src/.../cache/field_mapping.py` | `FieldMapping`, `TypeMapping`, generic parsers |
-| `src/.../cache/_base.py` | `CacheModel` alias for `OntapModel`, schema versioning |
-| `src/.../cache/_registry.py` | `ModelRegistry` singleton |
-| `src/.../cache/db_schema.py` | DDL generation from Pydantic models |
-| `src/.../cache/db.py` | `ClusterMetadataDB` — SQLite storage layer |
-| `src/.../cache/collector.py` | Bulk collection using mappings |
+| `src/pynetappfoundry/models/_base.py` | `OntapModel` base class, `OntapUUID` type, `HasUUID` protocol |
+| `src/pynetappfoundry/cache/field_mapping.py` | `FieldMapping`, `TypeMapping`, generic parsers |
+| `src/pynetappfoundry/cache/_base.py` | `CacheModel` alias for `OntapModel`, schema versioning |
+| `src/pynetappfoundry/cache/_registry.py` | `ModelRegistry` singleton |
+| `src/pynetappfoundry/cache/db_schema.py` | DDL generation from Pydantic models |
+| `src/pynetappfoundry/cache/db.py` | `ClusterMetadataDB` — SQLite storage layer |
+| `src/pynetappfoundry/cache/collector.py` | Bulk collection using mappings |

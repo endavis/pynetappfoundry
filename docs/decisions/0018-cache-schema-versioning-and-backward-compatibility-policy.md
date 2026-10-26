@@ -22,7 +22,7 @@ The cache is a derived store. Its on-disk shape changes whenever cached models a
 
 This ADR records the contract behind the mechanism so future cache-schema changes (and reviewers) have something to point to.
 
-Scope: this ADR covers the on-disk SQLite schema version (`SCHEMA_VERSION` in `cache/db.py`, currently `5`). The snapshot-level `METADATA_SCHEMA_VERSION` (`cache/_base.py`) is a separate mechanism with its own contract documented in [Cache System Reference](../reference/cache.md); it is out of scope here.
+Scope: this ADR covers the on-disk SQLite schema version (`SCHEMA_VERSION` in `src/pynetappfoundry/cache/db.py`, currently `5`). The snapshot-level `METADATA_SCHEMA_VERSION` (`src/pynetappfoundry/cache/_base.py`) is a separate mechanism with its own contract documented in [Cache System Reference](../reference/cache.md); it is out of scope here.
 
 ## Decision
 
@@ -35,7 +35,7 @@ Scope: this ADR covers the on-disk SQLite schema version (`SCHEMA_VERSION` in `c
 
 3. **Migration atomicity.** Each version upgrade runs in a transaction (already established by [ADR-0003](0003-use-base-sqlitedb-class-with-version-based-migrations.md)). Interrupted migrations roll back and the database stays at the prior version. Migrations must be safe to re-run from any prior version; the migration chain is replayed in sequence on every open.
 
-4. **Downgrade: not supported.** Opening a database whose recorded version exceeds the code's `SCHEMA_VERSION` raises `SchemaUpgradeError` (`db/base.py`). Users who downgrade `pynetappfoundry` must manually delete the cache database. This matches the no-downgrade stance already taken by [ADR-0003](0003-use-base-sqlitedb-class-with-version-based-migrations.md).
+4. **Downgrade: not supported.** Opening a database whose recorded version exceeds the code's `SCHEMA_VERSION` raises `SchemaUpgradeError` (`src/pynetappfoundry/db/base.py`). Users who downgrade `pynetappfoundry` must manually delete the cache database. This matches the no-downgrade stance already taken by [ADR-0003](0003-use-base-sqlitedb-class-with-version-based-migrations.md).
 
 5. **Visibility: internal.** `SCHEMA_VERSION` is an implementation detail. It is not surfaced in CLI output, log messages, or release notes. Users observe migration effects only as side effects (e.g. an empty cache after a destructive migration). Adding migration logging is a possible future enhancement, not part of this contract.
 
