@@ -388,3 +388,117 @@ class TestRepr:
         r = repr(entry)
         assert "ClusterEntry" in r
         assert "test-cluster" in r
+
+
+class TestLiveCollection:
+    """Issue #869: live .ontap loads field groups through MetadataCollector.collect_group."""
+
+    @staticmethod
+    def _collector() -> MagicMock:
+        from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
+
+        collector = MagicMock()
+        collector.collect_group.side_effect = lambda name, group: (
+            ClusterInfo(cluster_name=name, ontap_version="9.18.1") if group == "cluster" else None
+        )
+        return collector
+
+    def test_no_cache_reads_through_the_collector_without_the_db(
+        self, sample_data: dict[str, Any], cache_db_path: Path
+    ) -> None:
+        cache_db_path.parent.mkdir(parents=True)
+        cache_db_path.touch()
+        collector = self._collector()
+        entry = ClusterEntry(
+            "test-cluster", sample_data, cache_db_path, config=MagicMock(), no_cache=True
+        )
+
+        with (
+            patch("pynetappfoundry.cache.db.ClusterMetadataDB") as db_cls,
+            patch.object(ClusterEntry, "_build_live_collector", return_value=collector),
+        ):
+            metadata = entry.ontap
+            assert metadata is not None
+            version = metadata.cluster.ontap_version
+
+        assert version == "9.18.1"
+        collector.collect_group.assert_called_once_with("test-cluster", "cluster")
+        db_cls.assert_not_called()
+
+    def test_missing_cache_reads_live(
+        self, sample_data: dict[str, Any], cache_db_path: Path
+    ) -> None:
+        """No cache DB: the documented on-demand fetch, not empty defaults."""
+        collector = self._collector()
+        entry = ClusterEntry("test-cluster", sample_data, cache_db_path, config=MagicMock())
+
+        with patch.object(ClusterEntry, "_build_live_collector", return_value=collector):
+            metadata = entry.ontap
+            assert metadata is not None
+            assert metadata.cluster.ontap_version == "9.18.1"
+
+    def test_collector_is_built_once_and_only_on_access(
+        self, sample_data: dict[str, Any], cache_db_path: Path
+    ) -> None:
+        entry = ClusterEntry(
+            "test-cluster", sample_data, cache_db_path, config=MagicMock(), no_cache=True
+        )
+
+        with patch.object(
+            ClusterEntry, "_build_live_collector", return_value=self._collector()
+        ) as build:
+            metadata = entry.ontap
+            assert metadata is not None
+            build.assert_not_called()
+            _ = metadata.cluster
+            _ = metadata.nodes
+
+        build.assert_called_once()
+
+    def test_no_clients_raises_on_access(
+        self, sample_data: dict[str, Any], cache_db_path: Path
+    ) -> None:
+        """Missing credentials surface as an error, not as empty data."""
+        from pynetappfoundry.core.config import ConfigurationError
+
+        config = MagicMock()
+        config.get_user.side_effect = ConfigurationError("no credentials")
+        entry = ClusterEntry(
+            "test-cluster", sample_data, cache_db_path, config=config, no_cache=True
+        )
+
+        with (
+            patch(
+                "pynetappfoundry.clients.ontap.api.ONTAPAPIClient",
+                side_effect=ConfigurationError("no credentials"),
+            ),
+            pytest.raises(
+                ConfigurationError, match="Cannot fetch live ONTAP data for test-cluster"
+            ),
+        ):
+            metadata = entry.ontap
+            assert metadata is not None
+            _ = metadata.cluster
+
+    def test_builds_both_clients_for_the_collector(
+        self, sample_data: dict[str, Any], cache_db_path: Path
+    ) -> None:
+        config = MagicMock()
+        config.get_user.return_value = ("admin", "secret")
+        config.settings = {"aws": {"sso": {"subdomain": "co"}}}
+        entry = ClusterEntry(
+            "test-cluster", sample_data, cache_db_path, config=config, no_cache=True
+        )
+
+        with (
+            patch("pynetappfoundry.clients.ontap.api.ONTAPAPIClient") as api_cls,
+            patch("pynetappfoundry.clients.ontap.cli.ONTAPCLI") as cli_cls,
+        ):
+            collector = entry._build_live_collector()
+
+        assert collector.api_client is api_cls.return_value
+        assert collector.cli_client is cli_cls.return_value
+        assert collector.aws_sso_config == {"subdomain": "co"}
+        cli_cls.assert_called_once_with(
+            name="test-cluster", host_or_ip=sample_data["ip"], username="admin", password="secret"
+        )

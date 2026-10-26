@@ -568,3 +568,56 @@ class TestDataSourceShim:
         assert isinstance(storage, StorageInfo)
         assert storage.volumes == []
         assert storage.aggregates == []
+
+
+class TestLiveLoader:
+    """Issue #869: with a live_loader, field groups come from it and never from the cache."""
+
+    @staticmethod
+    def _lazy(loader: Callable[[str], Any]) -> LazyClusterMetadata:
+        return LazyClusterMetadata(
+            cluster_name="c1",
+            cached_at=datetime.now(UTC).isoformat(),
+            cache_version="2.1",
+            config=MagicMock(),
+            live_loader=loader,
+        )
+
+    def test_groups_come_from_the_loader(self) -> None:
+        nodes = [OntapNodeResponse(name="node1")]
+        loader = MagicMock(side_effect=lambda group: {"nodes": nodes}.get(group))
+
+        lazy = self._lazy(loader)
+
+        assert lazy.nodes == nodes
+        loader.assert_called_once_with("nodes")
+
+    def test_each_group_is_loaded_once(self) -> None:
+        loader = MagicMock(return_value=[])
+        lazy = self._lazy(loader)
+
+        _ = lazy.nodes
+        _ = lazy.nodes
+        _ = lazy.license_packages
+
+        assert [c.args[0] for c in loader.call_args_list] == ["nodes", "license_packages"]
+
+    def test_never_builds_a_data_source(self) -> None:
+        """Live reads must not open the cache through DataSource."""
+        lazy = self._lazy(MagicMock(return_value=ClusterInfo(cluster_name="c1")))
+
+        with patch.object(LazyClusterMetadata, "_query_group_via_datasource") as cache_read:
+            _ = lazy.cluster
+
+        cache_read.assert_not_called()
+        assert lazy._data_source is None
+
+    def test_none_falls_back_to_the_default(self) -> None:
+        lazy = self._lazy(MagicMock(return_value=None))
+
+        assert lazy.storage == StorageInfo()
+
+    def test_container_dicts_still_validate(self) -> None:
+        lazy = self._lazy(MagicMock(return_value={"svms": []}))
+
+        assert isinstance(lazy.storage, StorageInfo)
