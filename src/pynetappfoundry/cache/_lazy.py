@@ -17,6 +17,7 @@ via ``model_validate()``.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
@@ -72,6 +73,12 @@ class LazyClusterMetadata:
         cache_version: Metadata schema version (envelope).
         config: :class:`Config` used to build the internal
             :class:`DataSource`.
+        live_loader: When set, field groups load through this callable
+            (called with the field name) instead of the cache, and no
+            :class:`DataSource` or cache database is used. ``ClusterEntry``
+            passes a bound ``MetadataCollector.collect_group`` here for
+            live reads (#869). A ``None`` return falls back to the field
+            default.
     """
 
     __slots__ = (
@@ -81,6 +88,7 @@ class LazyClusterMetadata:
         "_config",
         "_data_source",
         "_group_models",
+        "_live_loader",
         "_loaded",
         "_materialized",
     )
@@ -92,11 +100,13 @@ class LazyClusterMetadata:
         cache_version: str,
         *,
         config: Config | None = None,
+        live_loader: Callable[[str], Any] | None = None,
     ) -> None:
         self._cluster_name = cluster_name
         self._cached_at = cached_at
         self._cache_version = cache_version
         self._config = config
+        self._live_loader = live_loader
         self._loaded: dict[str, Any] = {}
         self._materialized: CachedClusterMetadata | None = None
         # Deferred — built on first field-group access.
@@ -243,15 +253,19 @@ class LazyClusterMetadata:
         return root_kwargs.get(name)
 
     def _load_field_group(self, name: str) -> Any:
-        """Load a field group via DataSource or fall back to default.
+        """Load a field group live, via DataSource, or fall back to default.
 
-        1. **DataSource** — per-model routing through
+        1. **Live loader** — when ``live_loader`` was given, it alone
+           supplies the group; the cache is never read.
+        2. **DataSource** — otherwise, per-model cache reads through
            :class:`DataSource` for every registry entry in the group.
-        2. **Default** — the ``CachedClusterMetadata`` field default.
+        3. **Default** — the ``CachedClusterMetadata`` field default.
         """
         value: Any = None
 
-        if self._config is not None:
+        if self._live_loader is not None:
+            value = self._live_loader(name)
+        elif self._config is not None:
             value = self._query_group_via_datasource(name)
 
         if value is None:

@@ -7,10 +7,10 @@ per-namespace cached metadata (e.g. ``.ontap``, ``.occm``).
 The cache database is never opened until a namespace property is accessed.
 
 When a :class:`~pynetappfoundry.core.config.Config` reference is available,
-accessing ``.ontap`` on a cluster with no cache DB will transparently
-create a :class:`~pynetappfoundry.cache._lazy.LazyClusterMetadata` backed
-by a :class:`~pynetappfoundry.data.source.DataSource` so that field groups
-can be fetched live.
+accessing ``.ontap`` on a cluster with no cached snapshot (or with
+``no_cache=True``) returns a
+:class:`~pynetappfoundry.cache._lazy.LazyClusterMetadata` whose field groups
+are fetched live, one ``MetadataCollector`` phase per group (#869).
 """
 
 from __future__ import annotations
@@ -24,6 +24,7 @@ from typing import TYPE_CHECKING, Any
 from pynetappfoundry.cache._lazy import LazyClusterMetadata
 
 if TYPE_CHECKING:
+    from pynetappfoundry.cache.collector import MetadataCollector
     from pynetappfoundry.core.config import Config
 
 _file_name = Path(__file__).name
@@ -227,20 +228,77 @@ class ClusterEntry(MutableMapping[str, Any]):
         return None
 
     def _build_live_metadata(self) -> LazyClusterMetadata | None:
-        """Construct a :class:`LazyClusterMetadata` backed by :class:`DataSource` (no cache DB).
+        """Construct a :class:`LazyClusterMetadata` that fetches every field group live.
+
+        Each field group loads through :meth:`MetadataCollector.collect_group`,
+        the same phases ``nf cache refresh`` runs, so the cache database is
+        never opened (#869). The collector and its clients are built on the
+        first field-group access, not here.
 
         Returns:
-            LazyClusterMetadata backed by DataSource, or None when no
-            Config is set.
+            A live LazyClusterMetadata, or None when no Config is set.
         """
         if self._config is None:
             return None
 
         from pynetappfoundry.cache._base import METADATA_SCHEMA_VERSION, _utcnow
 
+        collectors: list[MetadataCollector] = []
+
+        def load_group(group: str) -> Any:
+            if not collectors:
+                collectors.append(self._build_live_collector())
+            return collectors[0].collect_group(self._name, group)
+
         return LazyClusterMetadata(
             cluster_name=self._name,
             cached_at=_utcnow().isoformat(),
             cache_version=METADATA_SCHEMA_VERSION,
             config=self._config,
+            live_loader=load_group,
+        )
+
+    def _build_live_collector(self) -> MetadataCollector:
+        """Build a :class:`MetadataCollector` with this cluster's API and CLI clients.
+
+        The clients are built as ``nf cache refresh`` builds them; either may
+        be unavailable (the CLI client is only needed for cloud metadata).
+
+        Raises:
+            ConfigurationError: If neither client can be built, for example
+                because credentials are missing.
+        """
+        from pynetappfoundry.cache.collector import MetadataCollector
+        from pynetappfoundry.clients.ontap.api import ONTAPAPIClient
+        from pynetappfoundry.clients.ontap.cli import ONTAPCLI
+        from pynetappfoundry.core.config import ConfigurationError
+        from pynetappfoundry.core.models import ClusterConfig
+
+        assert self._config is not None  # checked by _build_live_metadata
+        ip = str(self._data.get("ip", ""))
+        api_client: ONTAPAPIClient | None = None
+        cli_client: ONTAPCLI | None = None
+        errors: list[str] = []
+        try:
+            api_client = ONTAPAPIClient(
+                cluster=ClusterConfig(name=self._name, ip=ip), config=self._config
+            )
+        except Exception as e:
+            errors.append(f"API client: {e}")
+            logging.warning(f"{_file_name} : API client unavailable for {self._name}: {e}")
+        try:
+            user, password = self._config.get_user("clusters", self._name)
+            cli_client = ONTAPCLI(name=self._name, host_or_ip=ip, username=user, password=password)
+        except Exception as e:
+            errors.append(f"CLI client: {e}")
+            logging.warning(f"{_file_name} : CLI client unavailable for {self._name}: {e}")
+        if api_client is None and cli_client is None:
+            raise ConfigurationError(
+                f"Cannot fetch live ONTAP data for {self._name}: " + "; ".join(errors)
+            )
+
+        return MetadataCollector(
+            api_client=api_client,
+            cli_client=cli_client,
+            aws_sso_config=self._config.settings.get("aws", {}).get("sso"),
         )

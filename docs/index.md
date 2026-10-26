@@ -63,7 +63,7 @@ uv add pynetappfoundry
 # Run CLI
 nf --help
 
-# Fill the local cache for a cluster defined in ./config
+# Optional: cache a cluster defined in ./config for fast reads
 nf cache refresh cluster1
 ```
 
@@ -77,8 +77,8 @@ from pynetappfoundry.core.cluster_entry import ClusterEntry
 config = Config()
 cluster = cast(ClusterEntry, config.data["clusters"]["cluster1"])
 
-# Preferred: read cluster data through ClusterEntry.ontap, which serves the
-# cache that `nf cache refresh` fills
+# Preferred: read cluster data through ClusterEntry.ontap. It serves the
+# cache that `nf cache refresh` fills, and fetches live when there is none.
 metadata = cluster.ontap
 if metadata is not None:
     print(metadata.cluster.ontap_version)

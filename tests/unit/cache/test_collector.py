@@ -866,3 +866,78 @@ class TestEvaluateDerivedFieldsStillRuns:
         finally:
             model_registry._mappings.pop("DerivedMapping541", None)
             model_registry._mappings_by_class.pop(_DerivedModel, None)
+
+
+class TestCollectGroup:
+    """Issue #869: collect_group() builds one field group live, as collect_all() would."""
+
+    _GROUPS = (
+        "cluster",
+        "nodes",
+        "network",
+        "storage",
+        "license_packages",
+        "mediator",
+        "relationships",
+        "protocols",
+    )
+
+    @pytest.mark.parametrize("group", _GROUPS)
+    def test_group_matches_collect_all(self, group: str) -> None:
+        """Each group equals the same field of a full collect_all() run."""
+        full = MetadataCollector(api_client=_build_mock_api_client(), parallel=False).collect_all(
+            "test-cluster"
+        )
+        single = MetadataCollector(
+            api_client=_build_mock_api_client(), parallel=False
+        ).collect_group("test-cluster", group)
+
+        assert single == getattr(full, group)
+
+    def test_cluster_derives_is_ha_from_nodes(self) -> None:
+        """The mock cluster has two nodes, so the derived is_ha must be set."""
+        collector = MetadataCollector(api_client=_build_mock_api_client(), parallel=False)
+
+        cluster = collector.collect_group("test-cluster", "cluster")
+
+        assert isinstance(cluster, ClusterInfo)
+        assert cluster.is_ha is True
+
+    def test_shared_dependency_is_collected_once(self) -> None:
+        """nodes, needed by cluster and cloud, is fetched once per collector."""
+        client = _build_mock_api_client()
+        collector = MetadataCollector(api_client=client, parallel=False)
+
+        collector.collect_group("test-cluster", "cluster")
+        collector.collect_group("test-cluster", "cloud")
+        collector.collect_group("test-cluster", "nodes")
+
+        node_calls = [
+            c for c in client.get_all_records.call_args_list if "/cluster/nodes" in c.args[0]
+        ]
+        assert len(node_calls) == 1
+
+    def test_storage_includes_svm_top_metrics_users(self) -> None:
+        collector = MetadataCollector(api_client=_build_mock_api_client(), parallel=False)
+
+        with patch.object(
+            collector, "_collect_svm_top_metrics_users", return_value=[]
+        ) as top_metrics:
+            collector.collect_group("test-cluster", "storage")
+
+        top_metrics.assert_called_once()
+
+    def test_console_is_not_collected(self) -> None:
+        """collect_all() leaves console at its default; so does collect_group()."""
+        client = _build_mock_api_client()
+        collector = MetadataCollector(api_client=client, parallel=False)
+
+        assert collector.collect_group("test-cluster", "console") is None
+        client.get_all_records.assert_not_called()
+        client.call_endpoint.assert_not_called()
+
+    def test_unknown_group_raises(self) -> None:
+        collector = MetadataCollector(api_client=_build_mock_api_client(), parallel=False)
+
+        with pytest.raises(ValueError, match="Unknown CachedClusterMetadata field group"):
+            collector.collect_group("test-cluster", "volumes")

@@ -221,6 +221,10 @@ class MetadataCollector:
         # subsequent fetch() calls.
         self._results_cache: dict[str, Any] = {}
 
+        # Phase results memoized by collect_group(), keyed by phase value, so
+        # a dependency (e.g. nodes for cluster and cloud) is collected once.
+        self._group_results: dict[str, Any] = {}
+
     @property
     def _log_prefix(self) -> str:
         """Return log prefix with cluster name for consistent logging."""
@@ -472,12 +476,7 @@ class MetadataCollector:
         cluster_info: ClusterInfo = results["cluster"]
 
         # Collect parameterized endpoints (requires parent objects from phases)
-        storage_info: StorageInfo = results["storage"]
-        svm_top_metrics_users = self._collect_svm_top_metrics_users(storage_info.svms)
-        storage_info = storage_info.model_copy(
-            update={"svm_top_metrics_users": svm_top_metrics_users}
-        )
-        results["storage"] = storage_info
+        results["storage"] = self._with_svm_top_metrics_users(results["storage"])
 
         # Post-process Azure cloud metadata to fix instance links
         cloud_metadata = self._update_azure_cloud_links(
@@ -499,6 +498,86 @@ class MetadataCollector:
             relationships=results["relationships"],
             protocols=results["protocols"],
         )
+
+    # -------------------------------------------------------------------------
+    # Single field-group collection (live ClusterEntry.ontap, #869)
+    # -------------------------------------------------------------------------
+
+    def collect_group(self, cluster_name: str, group: str) -> Any:
+        """Collect one ``CachedClusterMetadata`` field group live.
+
+        Returns the value :meth:`collect_all` would put in *group*, with the
+        same post-processing, but runs only the phases that group needs:
+        ``cluster`` also collects ``nodes`` (for the derived ``is_ha`` and
+        ``is_cloud``), ``cloud`` also collects ``nodes`` and ``cluster`` (CVO
+        detection and Azure links), and ``storage`` adds its
+        ``svm_top_metrics_users``. Phase results are memoized on this
+        collector, so a shared dependency is collected once.
+
+        ``console`` is not collected by :meth:`collect_all` either, so it
+        returns ``None`` and the caller falls back to the field default.
+
+        Args:
+            cluster_name: Name of the cluster being collected.
+            group: A ``CachedClusterMetadata`` data field name.
+
+        Returns:
+            The collected field-group value, or ``None`` for ``console``.
+
+        Raises:
+            ValueError: If *group* is not a ``CachedClusterMetadata`` data field.
+        """
+        self._cluster_name = cluster_name
+        if group == "console":
+            return None
+        if group == "cluster":
+            # Nodes first: collect_nodes() fills _results_cache, so the
+            # cluster mapping's is_ha/is_cloud hooks reuse them instead of
+            # fetching nodes again.
+            nodes = self._collect_phase(CollectionPhase.NODES)
+            results = {"cluster": self._collect_phase(CollectionPhase.CLUSTER), "nodes": nodes}
+            return self._evaluate_derived_fields(results)["cluster"]
+        if group == "cloud":
+            self._collect_phase(CollectionPhase.NODES)  # CVO detection reads these
+            cluster_info: ClusterInfo = self.collect_group(cluster_name, "cluster")
+            return self._update_azure_cloud_links(
+                self._collect_phase(CollectionPhase.CLOUD), cluster_name, cluster_info.is_ha
+            )
+        if group == "storage":
+            return self._with_svm_top_metrics_users(self._collect_phase(CollectionPhase.STORAGE))
+        phase = self._GROUP_PHASES.get(group)
+        if phase is None:
+            raise ValueError(f"Unknown CachedClusterMetadata field group: {group!r}")
+        return self._collect_phase(phase)
+
+    # Field groups that map one-to-one onto a phase; the rest are handled in
+    # collect_group() because they depend on another phase.
+    _GROUP_PHASES: ClassVar[dict[str, CollectionPhase]] = {
+        "nodes": CollectionPhase.NODES,
+        "network": CollectionPhase.NETWORK,
+        "license_packages": CollectionPhase.LICENSES,
+        "mediator": CollectionPhase.MEDIATOR,
+        "relationships": CollectionPhase.RELATIONSHIPS,
+        "protocols": CollectionPhase.PROTOCOLS,
+    }
+
+    def _collect_phase(self, phase: CollectionPhase) -> Any:
+        """Run *phase* once per collector and return its memoized result."""
+        if phase.value not in self._group_results:
+            methods: dict[CollectionPhase, Callable[[], Any]] = {
+                CollectionPhase.CLUSTER: self.collect_cluster_info,
+                CollectionPhase.NODES: self.collect_nodes,
+                CollectionPhase.CLOUD: self.collect_cloud_metadata,
+                CollectionPhase.NETWORK: self.collect_network,
+                CollectionPhase.STORAGE: self.collect_storage,
+                CollectionPhase.LICENSES: self.collect_licenses,
+                CollectionPhase.MEDIATOR: self.collect_mediator,
+                CollectionPhase.RELATIONSHIPS: self.collect_relationships,
+                CollectionPhase.PROTOCOLS: self.collect_protocols,
+            }
+            logger.debug("%s Collecting %s (single group)", self._log_prefix, phase.value)
+            self._group_results[phase.value] = methods[phase]()
+        return self._group_results[phase.value]
 
     def _collect_all_sequential(self, cluster_name: str) -> dict[str, Any]:
         """Collect all metadata sequentially (original behavior).
@@ -1479,6 +1558,11 @@ class MetadataCollector:
     # -------------------------------------------------------------------------
     # Parameterized Endpoint Collection
     # -------------------------------------------------------------------------
+
+    def _with_svm_top_metrics_users(self, storage_info: StorageInfo) -> StorageInfo:
+        """Return *storage_info* with ``svm_top_metrics_users`` collected for its SVMs."""
+        svm_top_metrics_users = self._collect_svm_top_metrics_users(storage_info.svms)
+        return storage_info.model_copy(update={"svm_top_metrics_users": svm_top_metrics_users})
 
     def _collect_svm_top_metrics_users(self, svms: list[OntapSvm]) -> list[OntapTopMetricsSvmUser]:
         """Collect top-metrics users per SVM using parameterized endpoint.

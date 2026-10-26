@@ -68,6 +68,7 @@ Integration point: `Config._wrap_clusters()` replaces each raw cluster dict with
 - Issue #464: refactor: convert `nf licenses get` to use cache + on-demand fetch (pilot migration to ClusterEntry namespace access)
 - Issue #472: feat: add Config.no_cache flag and --live CLI option to bypass cache (extends namespace access with cache-bypass mode)
 - Issue #477: doc: document ClusterEntry.ontap access pattern and on-demand fetch
+- Issue #869: bug: ClusterEntry.ontap never fetched live; live field groups now load through `MetadataCollector.collect_group`
 
 ## Related Documentation
 
