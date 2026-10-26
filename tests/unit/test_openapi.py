@@ -186,8 +186,8 @@ class TestAPIWrapperInit:
         # Get the adapter mounted for https://
         adapter = api_wrapper.session.get_adapter("https://example.com")
         # Verify pool is configured with increased size (stored as private attrs)
-        assert adapter._pool_connections == 20  # type: ignore[union-attr]
-        assert adapter._pool_maxsize == 20  # type: ignore[union-attr]
+        assert adapter._pool_connections == 20  # type: ignore[attr-defined]
+        assert adapter._pool_maxsize == 20  # type: ignore[attr-defined]
 
 
 class TestReferenceResolution:

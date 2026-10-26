@@ -87,9 +87,15 @@ def _parse(text: str, raw: str) -> TypeRef:
         return TypeRef(ref_anchor=link_match.group("anchor").strip(), raw=raw)
 
     # primitives (case-insensitive)
-    primitive = _PRIMITIVES.get(text.lower())
-    if primitive is not None:
-        return TypeRef(primitive=primitive, raw=raw)
+    # Separate binding from the `primitive` in the hash-mapping branch above:
+    # that branch returns before this one runs, but mypy infers one type for a
+    # name reused across a function, so sharing it turned this lookup's
+    # `str | None` into a false `str` and made the guard below unreachable
+    # (#829). A distinct name keeps each branch's binding — and its type — its
+    # own.
+    known_primitive = _PRIMITIVES.get(text.lower())
+    if known_primitive is not None:
+        return TypeRef(primitive=known_primitive, raw=raw)
 
     # Unknown type. Default to a permissive object so the spec still validates;
     # surface the original text so it can be triaged from the generated output.

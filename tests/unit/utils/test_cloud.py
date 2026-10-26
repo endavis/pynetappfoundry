@@ -436,7 +436,7 @@ class TestBuildCloudInstanceSsoLink:
 
     def test_builds_aws_sso_link_with_config(self) -> None:
         """Test building AWS SSO link when config is provided."""
-        sso_config = {
+        sso_config: dict[str, str | dict[str, str]] = {
             "subdomain": "mycompany",
             "account_roles": {"123456789012": "AdminAccess"},
         }
@@ -463,7 +463,7 @@ class TestBuildCloudInstanceSsoLink:
 
     def test_returns_empty_for_azure(self) -> None:
         """Test returns empty string for Azure (SSO not applicable)."""
-        sso_config = {
+        sso_config: dict[str, str | dict[str, str]] = {
             "subdomain": "mycompany",
             "account_roles": {"123456789012": "Admin"},
         }
@@ -477,7 +477,7 @@ class TestBuildCloudInstanceSsoLink:
 
     def test_returns_empty_for_missing_account_role(self) -> None:
         """Test returns empty string when account has no role mapping."""
-        sso_config = {
+        sso_config: dict[str, str | dict[str, str]] = {
             "subdomain": "mycompany",
             "account_roles": {"999999999999": "OtherRole"},  # Different account
         }
@@ -491,7 +491,7 @@ class TestBuildCloudInstanceSsoLink:
 
     def test_returns_empty_for_missing_subdomain(self) -> None:
         """Test returns empty string when subdomain is missing from config."""
-        sso_config = {
+        sso_config: dict[str, str | dict[str, str]] = {
             "account_roles": {"123456789012": "Admin"},
         }
         result = build_cloud_instance_sso_link(
@@ -504,7 +504,7 @@ class TestBuildCloudInstanceSsoLink:
 
     def test_handles_lowercase_provider(self) -> None:
         """Test handles lowercase provider name."""
-        sso_config = {
+        sso_config: dict[str, str | dict[str, str]] = {
             "subdomain": "mycompany",
             "account_roles": {"123456789012": "Admin"},
         }

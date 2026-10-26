@@ -189,7 +189,6 @@ base_api_path = "/api"
                     OntapVolume(
                         uuid="abc-123",
                         name="PRODVOL1",
-                        svm_name="svm_PROD",
                         state="online",
                         type_="rw",
                         style="flexvol",

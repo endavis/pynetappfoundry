@@ -396,7 +396,7 @@ uv run pre-commit autoupdate
 | `detect-private-key` | Prevent private keys from being committed |
 | `ruff` | Lint and auto-fix Python code |
 | `ruff-format` | Format Python code |
-| `mypy` | Type checking (strict mode, `src/` only) |
+| `mypy` | Type checking (strict mode, `src/`, `tools/` and `tests/`) |
 | `bandit` | Security scanning (skipped if not installed) |
 | `codespell` | Spell checking |
 | `actionlint` | Lint GitHub Actions workflow files (extra runner labels in `.github/actionlint.yaml`) |

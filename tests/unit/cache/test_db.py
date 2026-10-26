@@ -6,6 +6,7 @@ import json
 import sqlite3
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from typing import cast
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -310,7 +311,9 @@ class TestClusterMetadataDB:
         )
         db.set("test-cluster", meta)
 
-        results = db.query_model("test-cluster", "nodes", name="node1")
+        results = cast(
+            list[OntapNodeResponse], db.query_model("test-cluster", "nodes", name="node1")
+        )
         assert len(results) == 1
         assert results[0].name == "node1"
         assert results[0].serial_number == "AAA"
@@ -625,18 +628,24 @@ class TestQueryWithFilters:
 
     def test_filter_by_scalar_column(self, db_with_volumes: ClusterMetadataDB) -> None:
         """Filter by scalar column returns matching models."""
-        results = db_with_volumes.query_with_filters(
-            "test-cluster", "storage.volumes", ["name = 'vol1'"]
+        results = cast(
+            list[OntapVolume],
+            db_with_volumes.query_with_filters(
+                "test-cluster", "storage.volumes", ["name = 'vol1'"]
+            ),
         )
         assert len(results) == 1
         assert results[0].name == "vol1"
 
     def test_filter_by_json_sub_field(self, db_with_volumes: ClusterMetadataDB) -> None:
         """Filter by JSON sub-field returns matching models."""
-        results = db_with_volumes.query_with_filters(
-            "test-cluster",
-            "storage.volumes",
-            ["autosize.mode = 'grow_shrink'"],
+        results = cast(
+            list[OntapVolume],
+            db_with_volumes.query_with_filters(
+                "test-cluster",
+                "storage.volumes",
+                ["autosize.mode = 'grow_shrink'"],
+            ),
         )
         assert len(results) == 2
         names = {r.name for r in results}
@@ -644,10 +653,13 @@ class TestQueryWithFilters:
 
     def test_filter_comparison_on_json_numeric(self, db_with_volumes: ClusterMetadataDB) -> None:
         """Filter with comparison on JSON numeric field."""
-        results = db_with_volumes.query_with_filters(
-            "test-cluster",
-            "storage.volumes",
-            ["autosize.grow_threshold >= 85"],
+        results = cast(
+            list[OntapVolume],
+            db_with_volumes.query_with_filters(
+                "test-cluster",
+                "storage.volumes",
+                ["autosize.grow_threshold >= 85"],
+            ),
         )
         assert len(results) == 2
         names = {r.name for r in results}
@@ -655,23 +667,29 @@ class TestQueryWithFilters:
 
     def test_multiple_filters_and(self, db_with_volumes: ClusterMetadataDB) -> None:
         """Multiple filters narrow results (AND logic)."""
-        results = db_with_volumes.query_with_filters(
-            "test-cluster",
-            "storage.volumes",
-            [
-                "state = 'online'",
-                "autosize.mode = 'grow_shrink'",
-            ],
+        results = cast(
+            list[OntapVolume],
+            db_with_volumes.query_with_filters(
+                "test-cluster",
+                "storage.volumes",
+                [
+                    "state = 'online'",
+                    "autosize.mode = 'grow_shrink'",
+                ],
+            ),
         )
         assert len(results) == 1
         assert results[0].name == "vol1"
 
     def test_no_matches_returns_empty(self, db_with_volumes: ClusterMetadataDB) -> None:
         """No matches returns empty list."""
-        results = db_with_volumes.query_with_filters(
-            "test-cluster",
-            "storage.volumes",
-            ["name = 'nonexistent'"],
+        results = cast(
+            list[OntapVolume],
+            db_with_volumes.query_with_filters(
+                "test-cluster",
+                "storage.volumes",
+                ["name = 'nonexistent'"],
+            ),
         )
         assert results == []
 
@@ -694,29 +712,38 @@ class TestQueryWithFilters:
 
     def test_filter_by_size_greater_than(self, db_with_volumes: ClusterMetadataDB) -> None:
         """Filter by scalar numeric comparison."""
-        results = db_with_volumes.query_with_filters(
-            "test-cluster",
-            "storage.volumes",
-            ["size > 1073741824"],
+        results = cast(
+            list[OntapVolume],
+            db_with_volumes.query_with_filters(
+                "test-cluster",
+                "storage.volumes",
+                ["size > 1073741824"],
+            ),
         )
         assert len(results) == 1
         assert results[0].name == "vol3"
 
     def test_in_operator(self, db_with_volumes: ClusterMetadataDB) -> None:
         """Filter with in operator."""
-        results = db_with_volumes.query_with_filters(
-            "test-cluster",
-            "storage.volumes",
-            ["state in ('online', 'offline')"],
+        results = cast(
+            list[OntapVolume],
+            db_with_volumes.query_with_filters(
+                "test-cluster",
+                "storage.volumes",
+                ["state in ('online', 'offline')"],
+            ),
         )
         assert len(results) == 3
 
     def test_inequality_json_field(self, db_with_volumes: ClusterMetadataDB) -> None:
         """Filter JSON sub-field with inequality."""
-        results = db_with_volumes.query_with_filters(
-            "test-cluster",
-            "storage.volumes",
-            ["autosize.mode != 'off'"],
+        results = cast(
+            list[OntapVolume],
+            db_with_volumes.query_with_filters(
+                "test-cluster",
+                "storage.volumes",
+                ["autosize.mode != 'off'"],
+            ),
         )
         assert len(results) == 2
         names = {r.name for r in results}

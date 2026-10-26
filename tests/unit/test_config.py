@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import cast
 
 import pytest
 
+from pynetappfoundry.core.cluster_entry import ClusterEntry
 from pynetappfoundry.core.config import Config, ConfigurationError
 from pynetappfoundry.core.models import (
     ConsoleAPISettings,
@@ -995,7 +997,7 @@ class TestClusterEntryWrapping:
                 script_name="test_script",
             )
 
-            cluster = config.data["clusters"]["test-cluster-1"]
+            cluster = cast(ClusterEntry, config.data["clusters"]["test-cluster-1"])
             # Dict-style access
             assert cluster["ip"] == "10.0.0.1"
             assert cluster["bu"] == "Engineering"
@@ -1051,7 +1053,7 @@ class TestClusterEntryWrapping:
             )
 
             # Access cached data via .ontap
-            cluster1 = config2.data["clusters"]["test-cluster-1"]
+            cluster1 = cast(ClusterEntry, config2.data["clusters"]["test-cluster-1"])
             ontap = cluster1.ontap
             assert ontap is not None
             assert ontap.cloud[0].provider == "Azure"
@@ -1086,7 +1088,7 @@ class TestClusterEntryWrapping:
                 script_name="test_script",
             )
 
-            cluster = config.data["clusters"]["test-cluster-1"]
+            cluster = cast(ClusterEntry, config.data["clusters"]["test-cluster-1"])
             # With Config available, ontap returns a DataSource-backed lazy proxy
             result = cluster.ontap
             assert isinstance(result, LazyClusterMetadata)

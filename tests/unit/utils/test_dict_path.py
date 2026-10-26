@@ -198,7 +198,7 @@ class TestWildcardArrayAccess:
 
     def test_wildcard_empty_array(self) -> None:
         """Test wildcard on empty array returns empty list."""
-        data = {"nodes": []}
+        data: dict[str, list[object]] = {"nodes": []}
         assert get_nested_value(data, "nodes[*].name") == []
         assert get_nested_value(data, "nodes[*]") == []
 
@@ -275,7 +275,7 @@ class TestEdgeCases:
 
     def test_empty_list(self) -> None:
         """Test accessing index on empty list."""
-        data = {"items": []}
+        data: dict[str, list[object]] = {"items": []}
         with pytest.raises(PathNotFoundError) as exc_info:
             get_nested_value(data, "items[0]")
         assert "index 0 out of range" in exc_info.value.reason

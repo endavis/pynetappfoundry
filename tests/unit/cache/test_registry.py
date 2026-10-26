@@ -63,7 +63,7 @@ class TestModelRegistry:
         mapping = TypeMapping(name="Qux", model_class=Qux, api_endpoint="/q")
         registry.register_mapping("QUX", mapping)
         copy = registry.mappings
-        copy["injected"] = mapping  # type: ignore[assignment]
+        copy["injected"] = mapping
         assert "injected" not in registry.mappings
 
 

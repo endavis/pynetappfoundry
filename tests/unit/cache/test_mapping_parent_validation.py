@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import importlib
 import pkgutil
+from typing import Any
 
 import pytest
 
@@ -84,7 +85,7 @@ class TestParentIdFieldExists:
         # Resolve dotted parent_id_field paths (e.g. "svm.uuid") by
         # walking through nested Pydantic model_fields.
         parts = mapping.parent_id_field.split(".")
-        current_model = parent_model
+        current_model: Any = parent_model
         for i, part in enumerate(parts):
             if hasattr(current_model, "model_fields"):
                 field_names = set(current_model.model_fields.keys())

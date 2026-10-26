@@ -8,6 +8,7 @@ import click
 from click.testing import CliRunner
 
 from pynetappfoundry.cli.decorators import with_config
+from pynetappfoundry.core.config import Config
 
 
 class TestWithConfigScriptName:
@@ -30,9 +31,9 @@ class TestWithConfigScriptName:
 
         @licenses.command()
         @with_config("test failed")
-        def get(config: object, clusters: object) -> None:
+        def get(config: Config, clusters: object) -> None:
             # Echo the script_name so we can verify it
-            click.echo(config.script_name)  # type: ignore[union-attr]
+            click.echo(config.script_name)
 
         @nf.group()
         def events() -> None:
@@ -40,8 +41,8 @@ class TestWithConfigScriptName:
 
         @events.command()
         @with_config("test failed")
-        def get2(config: object, clusters: object) -> None:
-            click.echo(config.script_name)  # type: ignore[union-attr]
+        def get2(config: Config, clusters: object) -> None:
+            click.echo(config.script_name)
 
         # Register get2 as "get" in events group
         events.add_command(get2, "get")
@@ -109,8 +110,8 @@ class TestWithConfigLiveFlag:
         @nf.command()
         @click.option("--live", "live", is_flag=True, default=False)
         @with_config("test failed")
-        def cmd(config: object, clusters: object) -> None:
-            click.echo(f"no_cache={config.no_cache}")  # type: ignore[union-attr]
+        def cmd(config: Config, clusters: object) -> None:
+            click.echo(f"no_cache={config.no_cache}")
 
         return nf
 

@@ -550,7 +550,7 @@ class TestTableNameValidation:
 
     def test_valid_table_name(self) -> None:
         """A well-formed svm-vol name matches _TABLE_NAME_PATTERN."""
-        from pynetappfoundry.db.metrics import _TABLE_NAME_PATTERN  # type: ignore[attr-defined]
+        from pynetappfoundry.db.metrics import _TABLE_NAME_PATTERN
 
         table_name = "my_svm-my_vol"
         assert _TABLE_NAME_PATTERN.match(table_name) is not None

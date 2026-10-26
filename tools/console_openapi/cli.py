@@ -125,7 +125,7 @@ def build(
 def _validate(spec: dict[str, object]) -> None:
     """Run openapi-spec-validator if available; warn but do not fail on missing dep."""
     try:
-        from openapi_spec_validator import validate  # type: ignore[import-untyped]
+        from openapi_spec_validator import validate
     except ImportError:
         click.echo("openapi-spec-validator not installed; skipping validation.", err=True)
         return

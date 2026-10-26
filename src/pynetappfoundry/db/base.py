@@ -5,7 +5,7 @@ from __future__ import annotations
 import sqlite3
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import ClassVar
+from typing import ClassVar, Self
 
 
 class SchemaUpgradeError(Exception):
@@ -138,7 +138,7 @@ class SQLiteDB(ABC):
         """Close the database connection."""
         self.conn.close()
 
-    def __enter__(self) -> SQLiteDB:
+    def __enter__(self) -> Self:
         """Context manager entry."""
         return self
 

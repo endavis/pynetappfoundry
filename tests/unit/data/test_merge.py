@@ -59,4 +59,4 @@ class TestMergeModels:
         a = _Vol(name="x")
         b = _OtherModel(name="x")
         with pytest.raises(TypeError, match="different classes"):
-            merge_models(a, b)  # type: ignore[arg-type]
+            merge_models(a, b)

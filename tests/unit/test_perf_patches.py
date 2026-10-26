@@ -39,8 +39,8 @@ def test_patched_function_still_returns_correct_results() -> None:
     def takes_nothing() -> int:
         return 0
 
-    assert fn(takes_validated_data) is True  # type: ignore[arg-type]
-    assert fn(takes_nothing) is False  # type: ignore[arg-type]
+    assert fn(takes_validated_data) is True
+    assert fn(takes_nothing) is False
 
 
 def test_model_validation_unaffected_by_patch() -> None:
