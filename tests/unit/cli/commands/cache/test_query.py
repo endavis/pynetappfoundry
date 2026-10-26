@@ -1396,6 +1396,101 @@ base_api_path = "/api"
 
     @patch("pynetappfoundry.cli.commands.cache.query._fetch_live_groups")
     @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
+    def test_dotted_field_filter_predicate(
+        self,
+        mock_db_class: MagicMock,
+        mock_fetch_live: MagicMock,
+        runner: CliRunner,
+        mock_config_dir: Path,
+    ) -> None:
+        """Filter predicate field resolves as a dotted path (issue #850 example)."""
+        mock_db = MagicMock()
+        mock_db_class.return_value = mock_db
+
+        mock_fetch_live.return_value = {
+            "cluster_name": "test-cluster",
+            "protocols": {
+                "cifs_services": [
+                    {"svm": {"name": "svm1"}, "security": {"session_security": "none"}},
+                    {"svm": {"name": "svm2"}, "security": {"session_security": "sign"}},
+                ]
+            },
+        }
+
+        result = runner.invoke(
+            nf,
+            [
+                "-c",
+                str(mock_config_dir),
+                "cache",
+                "query",
+                "test-cluster",
+                'protocols.cifs_services["security.session_security=none"].svm.name',
+                "--live",
+                "--json",
+            ],
+        )
+
+        assert result.exit_code == 0
+        output = json.loads(result.output)
+        assert output == {
+            "test-cluster": {
+                'protocols.cifs_services["security.session_security=none"].svm.name': [
+                    {"key": "svm1", "value": "svm1"},
+                ]
+            }
+        }
+
+    @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
+    def test_dotted_field_filter_predicate_svm_name(
+        self,
+        mock_db_class: MagicMock,
+        runner: CliRunner,
+        mock_config_dir: Path,
+    ) -> None:
+        """A dotted field predicate like volumes["svm.name=svm1"].name works."""
+        mock_db = MagicMock()
+        metadata = CachedClusterMetadata(
+            cluster_name="test-cluster",
+            cached_at=datetime(2024, 1, 15, tzinfo=UTC),
+        )
+        dumped = metadata.model_dump()
+        dumped["volumes"] = [
+            {"name": "vol1", "svm": {"name": "svm1"}},
+            {"name": "vol2", "svm": {"name": "svm2"}},
+        ]
+        lazy = MagicMock()
+        lazy.model_dump.return_value = dumped
+        mock_db.get_lazy.return_value = lazy
+        mock_db_class.return_value = mock_db
+
+        result = runner.invoke(
+            nf,
+            [
+                "-c",
+                str(mock_config_dir),
+                "cache",
+                "query",
+                "test-cluster",
+                'volumes["svm.name=svm1"].name',
+                "--json",
+            ],
+        )
+
+        assert result.exit_code == 0
+        output = json.loads(result.output)
+        assert output == {
+            "test-cluster": {
+                # Identifier resolves from "name" (default order: name, svm.name, uuid),
+                # which the matching item also has.
+                'volumes["svm.name=svm1"].name': [
+                    {"key": "vol1", "value": "vol1"},
+                ]
+            }
+        }
+
+    @patch("pynetappfoundry.cli.commands.cache.query._fetch_live_groups")
+    @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
     def test_nested_wildcard_composes_identifiers(
         self,
         mock_db_class: MagicMock,
