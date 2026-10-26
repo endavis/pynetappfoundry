@@ -249,9 +249,45 @@ jobs:
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: uv run doit wheel_check
 
+  # Project job, not from the template (#825): regenerates the Console models
+  # from the committed spec, offline, and fails on any modified, deleted or new
+  # file under src/pynetappfoundry/models/console/. It is separate from lint
+  # because lint runs exactly the tasks in `doit check`.
+  console-models:
+    needs: setup
+    if: ${{ needs.setup.outputs.matrix != '{"include":[]}' }}
+    runs-on: ubuntu-latest
+    env:
+      UV_CACHE_DIR: ${{ github.workspace }}/.uv-cache
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ${{ needs.setup.outputs.newest }}
+
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          version: "latest"
+
+      - name: Cache uv dependencies
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ env.UV_CACHE_DIR }}
+          key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-uv-
+
+      - name: Install dependencies
+        run: uv sync --all-extras --dev
+
+      - name: Check generated Console models
+        run: uv run doit console_models_check
+
   ci-complete:
     if: always()
-    needs: [setup, test, lint, docs]
+    needs: [setup, test, lint, docs, console-models]
     runs-on: ubuntu-latest
     steps:
       - name: Check CI status
@@ -260,11 +296,13 @@ jobs:
           test_result="${{ needs.test.result }}"
           lint_result="${{ needs.lint.result }}"
           docs_result="${{ needs.docs.result }}"
+          console_models_result="${{ needs.console-models.result }}"
 
           echo "Setup result: $setup_result"
           echo "Test result: $test_result"
           echo "Lint result: $lint_result"
           echo "Docs result: $docs_result"
+          echo "Console models result: $console_models_result"
 
           # Setup must succeed
           if [[ "$setup_result" != "success" ]]; then
@@ -287,6 +325,12 @@ jobs:
           # Docs must succeed or be skipped (skipped = no middle versions)
           if [[ "$docs_result" != "success" && "$docs_result" != "skipped" ]]; then
             echo "Docs job failed"
+            exit 1
+          fi
+
+          # Console models must succeed or be skipped (skipped = no middle versions)
+          if [[ "$console_models_result" != "success" && "$console_models_result" != "skipped" ]]; then
+            echo "Console models job failed"
             exit 1
           fi
 

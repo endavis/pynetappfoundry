@@ -18,7 +18,7 @@ from pynetappfoundry.cache._base import (
     HasUUID,
     _utcnow,
 )
-from pynetappfoundry.models.console.types import Organization
+from pynetappfoundry.models.console_types import Organization
 from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
 from pynetappfoundry.models.ontap.cluster.licensing.licenses.model import (
     OntapLicensePackageResponse,
