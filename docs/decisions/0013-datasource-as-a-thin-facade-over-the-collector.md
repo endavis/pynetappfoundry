@@ -1,3 +1,13 @@
+---
+title: "ADR-0013: DataSource as a Thin Facade Over the Collector"
+description: Revise ADR-0012's implementation so `OntapBackend` becomes a thin delegate over the metadata collector's fetch logic, with the cache treated as a single-point-in-time snapshot that live fetches never persist into.
+date: 2026-04-11
+audience:
+  - contributors
+tags:
+  - adr
+---
+
 # ADR-0013: DataSource as a Thin Facade Over the Collector
 
 ## Status

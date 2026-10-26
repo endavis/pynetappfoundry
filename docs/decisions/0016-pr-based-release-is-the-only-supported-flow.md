@@ -1,3 +1,13 @@
+---
+title: "ADR-0016: PR-based release is the only supported flow"
+description: Make the PR-based release flow (`doit release` opens a release PR, `doit release_tag` tags `main` after merge) the only supported release path, removing the redundant direct-to-`main` release tasks.
+date: 2026-04-20
+audience:
+  - contributors
+tags:
+  - adr
+---
+
 # ADR-0016: PR-based release is the only supported flow
 
 ## Status

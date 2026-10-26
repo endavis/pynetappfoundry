@@ -75,13 +75,29 @@ exclude = [
     "examples/**",
 
     # ── Top-level template tests ──────────────────────────────────────
-    # Upstream's tests/test_*.py at the root cover its example CLI, its
-    # logging, its CI workflows, and its bundled hooks. The project's
-    # tests live under tests/unit/ and tests/integration/. Note: this
-    # glob does NOT match tests/template/test_*.py — those tests cover
-    # template framework code (tools/doit/, tools/pyproject_template/)
-    # that we DO inherit, so we keep them in sync.
-    "tests/test_*.py",
+    # Named one by one (#828) rather than by a tests/test_*.py glob, so a
+    # new upstream root test shows up in the drift report by default.
+    #
+    # Upstream's example app, which this project excludes above.
+    "tests/test_cli.py",
+    "tests/test_core.py",
+    "tests/test_example.py",
+    "tests/test_logging.py",
+    # Runs tests/benchmarks/test_bench_core.py, the template's example
+    # benchmark, excluded below.
+    "tests/test_benchmark_settings.py",
+    # Need the template's mutmut 3 config; adopted with it in #830.
+    "tests/test_mutmut_config.py",
+    "tests/test_mutation_workflow.py",
+    # requires-python and the oldest tested Python disagree; #852 fixes
+    # that and adopts this test.
+    "tests/test_python_versions_agree.py",
+    # Reports 60+ package-relative doc paths; adoption decided in #853.
+    "tests/test_documented_paths.py",
+    # Tests for the CBM and context-mode hooks, excluded below until
+    # #717 and #718 decide on them.
+    "tests/test_hook_cbm_*.py",
+    "tests/test_hook_context_mode_*.py",
 
     # ── Template example benchmarks + project benchmark fixtures ──────
     # Upstream ships benchmarks for its example src/package_name/core.py

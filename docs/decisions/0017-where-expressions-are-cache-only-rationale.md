@@ -1,3 +1,13 @@
+---
+title: "ADR-0017: where-expressions are cache-only (rationale)"
+description: Record why `.where()`-string expressions and the non-equality typed DSL operators that compile to them are supported only on the cache path, with live paths rejecting them.
+date: 2026-05-08
+audience:
+  - contributors
+tags:
+  - adr
+---
+
 # ADR-0017: where-expressions are cache-only (rationale)
 
 ## Status

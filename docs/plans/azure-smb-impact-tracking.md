@@ -1,3 +1,12 @@
+---
+title: Azure Maintenance SMB Client Impact Tracking
+description: Plan to extend the `save-azure` command to capture SMB client impact metrics -- LIF failover timing, CIFS transition time, Witness notifications, and aggregate giveback -- during CVO HA failover events.
+audience:
+  - contributors
+tags:
+  - plan
+---
+
 # Azure Maintenance SMB Client Impact Tracking
 
 ## Overview

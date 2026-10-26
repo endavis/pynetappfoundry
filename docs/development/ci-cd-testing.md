@@ -129,7 +129,7 @@ versions, raw `pytest` instead of `doit`, and mutable action tags this project's
 | Job | What it runs |
 | :--- | :--- |
 | `setup` | Builds the test matrix from `.github/python-versions.json` |
-| `test` | `pytest`, called directly, on each OS and Python version in the matrix. The newest Python on `ubuntu-latest` also measures coverage. |
+| `test` | `pytest`, called directly, on each OS and Python version in the matrix. The newest Python on `ubuntu-latest` also measures coverage. Before the tests, `doit install_tools` installs SOPS and age on Linux and Windows (macOS uses Homebrew), so the SOPS tests run instead of skipping. |
 | `lint` | `doit format_check`, `doit lint`, `doit type_check`, `doit deadcode`, `doit security`, `doit spell_check`, `doit audit` and `doit wheel_check`, on `ubuntu-latest`. Each runs even when one before it failed, so CI reports every failing check at once. A failure in any of them fails CI. |
 | `docs` | `doit docs_build`, described below |
 | `ci-complete` | Fails if any other job failed; a skipped job passes. It gives the run one result to require ([ADR-9013](../decisions/9013-python-version-support-policy.md)). |

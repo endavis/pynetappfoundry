@@ -1,3 +1,13 @@
+---
+title: "ADR-0018: Cache schema versioning and backward-compatibility policy"
+description: Codify the on-disk SQLite cache schema's compatibility contract -- rebuild-tolerant, no downgrade support, and `SCHEMA_VERSION` kept internal.
+date: 2026-05-08
+audience:
+  - contributors
+tags:
+  - adr
+---
+
 # ADR-0018: Cache schema versioning and backward-compatibility policy
 
 ## Status

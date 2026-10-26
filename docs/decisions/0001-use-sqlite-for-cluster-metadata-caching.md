@@ -1,3 +1,13 @@
+---
+title: "ADR-0001: Use SQLite for cluster metadata caching"
+description: Use SQLite as the storage backend for caching ONTAP cluster metadata, refreshed manually via `nf cache refresh`.
+date: 2026-02-09
+audience:
+  - contributors
+tags:
+  - adr
+---
+
 # ADR-0001: Use SQLite for cluster metadata caching
 
 ## Status

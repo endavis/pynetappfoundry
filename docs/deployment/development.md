@@ -22,7 +22,7 @@ git clone <repository-url>
 cd <project-name>
 
 # Install dependencies
-uv sync
+uv sync --all-extras --dev
 
 # Run tests to verify setup
 doit test
@@ -58,11 +58,8 @@ uv --version
 ### Project Setup
 
 ```bash
-# Create virtual environment and install dependencies
-uv sync
-
-# Install with development dependencies
-uv sync --all-extras
+# Create virtual environment and install dependencies, development tools included
+uv sync --all-extras --dev
 
 # Activate the environment (optional, uv run handles this)
 source .venv/bin/activate  # Linux/macOS
@@ -354,14 +351,14 @@ uv run ruff format --check src/
 ```bash
 # Recreate the environment
 rm -rf .venv
-uv sync
+uv sync --all-extras --dev
 ```
 
 #### Import Errors
 
 ```bash
 # Ensure package is installed in editable mode
-uv sync
+uv sync --all-extras --dev
 
 # Verify installation
 uv run python -c "import pynetappfoundry; print(pynetappfoundry.__version__)"
@@ -405,7 +402,7 @@ uv python use 3.12
 # Clear cache and reinstall
 uv cache clean
 rm -rf .venv uv.lock
-uv sync
+uv sync --all-extras --dev
 ```
 
 ## IDE Setup

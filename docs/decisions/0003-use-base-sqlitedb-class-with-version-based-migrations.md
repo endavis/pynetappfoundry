@@ -1,3 +1,13 @@
+---
+title: "ADR-0003: Use base SQLiteDB class with version-based migrations"
+description: Create a base SQLiteDB class, inherited by all SQLite database classes, that provides schema-version tracking and convention-based `_upgrade_to_v{N}` migration methods.
+date: 2026-02-09
+audience:
+  - contributors
+tags:
+  - adr
+---
+
 # ADR-0003: Use base SQLiteDB class with version-based migrations
 
 ## Status

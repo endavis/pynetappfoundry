@@ -1,3 +1,13 @@
+---
+title: "ADR-0008: OpenAPI codegen for model and mapping generation"
+description: Build a codegen tool that parses OpenAPI 3.0 specs to generate Pydantic model classes, FieldMapping/TypeMapping declarations, and TOML config overlays, with its own `$ref` resolution rather than `datamodel-code-generator`.
+date: 2026-02-16
+audience:
+  - contributors
+tags:
+  - adr
+---
+
 # ADR-0008: OpenAPI codegen for model and mapping generation
 
 ## Status

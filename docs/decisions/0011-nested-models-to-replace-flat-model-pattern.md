@@ -1,3 +1,13 @@
+---
+title: "ADR-0011: Nested models to replace flat model pattern"
+description: Replace flat Pydantic model field naming with nested models that mirror the ONTAP API's nested structure, moving flattening to a dedicated adapter at the cache boundary.
+date: 2026-04-02
+audience:
+  - contributors
+tags:
+  - adr
+---
+
 # ADR-0011: Nested models to replace flat model pattern
 
 ## Status
