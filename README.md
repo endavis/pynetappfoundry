@@ -1,33 +1,59 @@
-# __PROJECT_NAME__
+# pynetappfoundry
 
-[![CI](https://github.com/__GH_OWNER__/__PACKAGE_NAME__/actions/workflows/ci.yml/badge.svg)](https://github.com/__GH_OWNER__/__PACKAGE_NAME__/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/__GH_OWNER__/__PACKAGE_NAME__/branch/main/graph/badge.svg)](https://codecov.io/gh/__GH_OWNER__/__PACKAGE_NAME__)
-[![PyPI version](https://badge.fury.io/py/__PYPI_NAME__.svg)](https://badge.fury.io/py/__PYPI_NAME__)
+[![CI](https://github.com/endavis/pynetappfoundry/actions/workflows/ci.yml/badge.svg)](https://github.com/endavis/pynetappfoundry/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/endavis/pynetappfoundry/branch/main/graph/badge.svg)](https://codecov.io/gh/endavis/pynetappfoundry)
+[![PyPI version](https://badge.fury.io/py/pynetappfoundry.svg)](https://badge.fury.io/py/pynetappfoundry)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 
-__DESCRIPTION__
+ONTAP administration library and CLI tools for NetApp storage management.
 
 ## Features
 
-- Modern tooling: `uv` for deps, `ruff` for format/lint, `mypy` in strict mode
-- CI/CD ready: GitHub Actions for checks, coverage upload, and releases
-- Release automation: hatch-vcs + commitizen-driven tagging and changelog
+- **Multi-cluster support** - Manage many ONTAP clusters from one YAML configuration
+- **REST and SSH access** - ONTAP REST API via the `netapp-ontap` SDK, and direct CLI access via Paramiko
+- **Metadata cache** - Cached cluster reads with on-demand live fallback (`nf cache`)
+- **Reports** - License, space, CIFS and event reporting
+- **Metrics and events** - Collect metrics and track EMS events in local databases
 
 ## Installation
 
 ```bash
-pip install __PYPI_NAME__
+pip install pynetappfoundry
+
+# Or with uv
+uv add pynetappfoundry
 ```
+
+See the [Installation Guide](docs/getting-started/installation.md) for installing from source.
 
 ## Quick Start
 
-```python
-from __PACKAGE_NAME__ import greet
+### CLI
 
-# Example usage
-message = greet("Python")
-print(message)  # Output: Hello, Python!
+The package installs the `nf` command:
+
+```bash
+nf --help                       # List command groups
+nf --config-dir ./config --help # Point at a configuration directory (or set NF_CONFIG_DIR)
 ```
+
+Command groups: `cache`, `cifs`, `config`, `events`, `licenses`, `metrics`, `reports`, `utils`.
+See the [CLI Reference](docs/reference/cli.md).
+
+### Library
+
+```python
+from pynetappfoundry import Config
+
+# Load configuration from the default config/ directory
+config = Config()
+
+# Find clusters by attribute
+prod_clusters = config.search("clusters", {"env": "Prod"})
+```
+
+For reading and writing ONTAP data, see [ONTAP Access Patterns](docs/usage/ontap-access-patterns.md),
+the [DataSource Guide](docs/usage/data-source.md) and the [Query Layer Guide](docs/usage/query-layer.md).
 
 ## Documentation
 
@@ -40,64 +66,10 @@ doit docs_serve  # Opens at http://127.0.0.1:8000
 
 Key documentation files:
 - [Installation Guide](docs/getting-started/installation.md) - Setup instructions
-- [Usage Guide](docs/usage/basics.md) - Development workflows and commands
+- [Usage Guide](docs/usage/basics.md) - Configuration and library usage
+- [Configuration Schema](docs/reference/config-schema.md) - Configuration file reference
+- [CLI Reference](docs/reference/cli.md) - `nf` command reference
 - [API Reference](docs/reference/api.md) - Complete API documentation
-- [Extensions Guide](docs/development/extensions.md) - Optional tools and extensions
-
-## Quick Setup (Automated)
-
-🚀 **The fastest way to create a new project from this template:**
-
-```bash
-curl -sSL https://raw.githubusercontent.com/endavis/pyproject-template/main/bootstrap.py | python3
-```
-
-The script will:
-- ✅ Create a new repository from this template on GitHub
-- ✅ Configure repository settings (merge options, features)
-- ✅ Set up branch protection rules
-- ✅ Replicate labels
-- ✅ Run placeholder replacement automatically
-- ✅ Provide a checklist of manual steps (secrets, etc.)
-
-**Requirements:**
-- [GitHub CLI](https://cli.github.com/) installed and authenticated (`gh auth login`)
-- Git installed
-- Python 3.12+
-
-**What you'll need to add manually:**
-- PyPI tokens (for publishing packages)
-- Codecov token (optional, for coverage reports)
-- Collaborators/team access
-
-📖 See [New Project Setup](docs/template/new-project.md) for detailed instructions.
-
-## Using This Template (Manual)
-
-**First time setup:** This is a template repository. If you prefer to clone manually:
-
-```bash
-# Clone the template
-git clone https://github.com/username/package_name.git my-project
-cd my-project
-
-# Run the interactive configuration script
-python3 tools/pyproject_template/configure.py
-```
-
-The script will prompt you for:
-- Project name, description
-- Package name (Python import name)
-- PyPI package name
-- Author name and email
-- GitHub username
-
-It will automatically:
-- Rename the package directory
-- Update all template placeholders
-- Self-destruct after completion
-
-📖 See [New Project Setup](docs/template/new-project.md) for detailed instructions and post-setup steps.
 
 ## Development Setup
 
@@ -114,8 +86,8 @@ It will automatically:
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Clone repository
-git clone https://github.com/username/package_name.git
-cd __PACKAGE_NAME__
+git clone https://github.com/endavis/pynetappfoundry.git
+cd pynetappfoundry
 
 # Create virtual environment and install dependencies
 uv sync --all-extras --dev
@@ -155,13 +127,9 @@ This project uses automated versioning and releases powered by `commitizen` and 
     - **Production:** Standard SemVer (e.g., `v1.0.0`).
     - **Development:** SemVer Pre-release (e.g., `v1.0.0-alpha.1`, `v1.0.0-beta.0`).
 
-### Migrating an Existing Project
+### Keeping Up to Date with the Template
 
-📖 See [Migration Guide](docs/template/migration.md) for the complete step-by-step checklist for bringing an existing Python project into the template.
-
-### Keeping Up to Date
-
-Already using this template? Stay in sync with improvements:
+This project is built from [pyproject-template](https://github.com/endavis/pyproject-template). To check for template improvements:
 
 ```bash
 python tools/pyproject_template/check_template_updates.py
@@ -278,7 +246,7 @@ doit coverage
 open tmp/htmlcov/index.html
 
 # Advanced: Run specific test directly
-uv run pytest tests/test_example.py::test_version -v
+uv run pytest tests/unit/cli/test_main.py -v
 ```
 
 ## Code Quality
@@ -357,20 +325,11 @@ See [AI Agent Setup](docs/development/AI_SETUP.md) and [AI Command Blocking](doc
 
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Run tests and checks (`doit check`)
-5. Commit your changes (`git commit -m 'Add amazing feature'`)
-6. Push to the branch (`git push origin feature/amazing-feature`)
-7. Open a Pull Request
+See [CONTRIBUTING.md](.github/CONTRIBUTING.md) for the development workflow (issue → branch → PR),
+commit message format and code standards. Run `doit check` before opening a pull request.
 
 See [CHANGELOG.md](CHANGELOG.md) for release history.
 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-- Add acknowledgments here
