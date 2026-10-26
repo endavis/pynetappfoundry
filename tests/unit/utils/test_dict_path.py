@@ -482,6 +482,78 @@ class TestFilterPredicateAccess:
         result = get_nested_value(volumes_data, 'volumes["name=vol1* || state=offline"].name')
         assert result == ["vol1", "vol3"]
 
+    def test_dotted_field_predicate_matches(self) -> None:
+        """Predicate field resolves as a dotted path inside each item."""
+        data = {
+            "volumes": [
+                {"name": "vol1", "svm": {"name": "svm1"}},
+                {"name": "vol2", "svm": {"name": "svm2"}},
+            ]
+        }
+        assert get_nested_value(data, 'volumes["svm.name=svm1"].name') == ["vol1"]
+
+    def test_dotted_field_predicate_three_level_path(self) -> None:
+        """Predicate field can be a three-level dotted path."""
+        data = {
+            "cifs_services": [
+                {
+                    "svm": {"name": "svm1"},
+                    "security": {"session_security": "none"},
+                },
+                {
+                    "svm": {"name": "svm2"},
+                    "security": {"session_security": "sign"},
+                },
+            ]
+        }
+        result = get_nested_value(data, 'cifs_services["security.session_security=none"].svm.name')
+        assert result == ["svm1"]
+
+    def test_dotted_field_predicate_missing_intermediate_key_no_match(self) -> None:
+        """A missing intermediate key in the dotted path is no match, not an error."""
+        data = {
+            "volumes": [
+                {"name": "vol1"},  # no "svm" key at all
+                {"name": "vol2", "svm": {"name": "svm2"}},
+            ]
+        }
+        result = get_nested_value(data, 'volumes["svm.name=svm2"].name')
+        assert result == ["vol2"]
+
+    def test_dotted_field_predicate_non_dict_intermediate_no_match(self) -> None:
+        """A non-dict intermediate value in the dotted path is no match, not an error."""
+        data = {
+            "volumes": [
+                {"name": "vol1", "svm": "not-a-dict"},
+                {"name": "vol2", "svm": {"name": "svm2"}},
+            ]
+        }
+        result = get_nested_value(data, 'volumes["svm.name=svm2"].name')
+        assert result == ["vol2"]
+
+    def test_dotted_field_predicate_with_glob(self) -> None:
+        """Dotted field predicates work with glob patterns."""
+        data = {
+            "volumes": [
+                {"name": "vol1", "svm": {"name": "svm1"}},
+                {"name": "vol2", "svm": {"name": "svm2"}},
+            ]
+        }
+        result = get_nested_value(data, 'volumes["svm.name=svm*"].name')
+        assert result == ["vol1", "vol2"]
+
+    def test_dotted_field_predicate_with_or_mixed_with_top_level(self) -> None:
+        """Dotted field predicates combine with || and a plain top-level field."""
+        data = {
+            "volumes": [
+                {"name": "vol1", "state": "offline", "svm": {"name": "svm1"}},
+                {"name": "vol2", "state": "online", "svm": {"name": "svm2"}},
+                {"name": "vol3", "state": "offline", "svm": {"name": "svm3"}},
+            ]
+        }
+        result = get_nested_value(data, 'volumes["svm.name=svm2 || state=offline"].name')
+        assert result == ["vol1", "vol2", "vol3"]
+
 
 class TestGetNestedValueWithIdentifiers:
     """Tests for get_nested_value_with_identifiers()."""
@@ -570,6 +642,17 @@ class TestGetNestedValueWithIdentifiers:
         }
         result = get_nested_value_with_identifiers(data, 'volumes["state=online"].size')
         assert result == [("vol1", 100), ("vol2", 200)]
+
+    def test_dotted_field_predicate_identifiers(self) -> None:
+        """Dotted field filter predicates are labelled by identifier too."""
+        data = {
+            "volumes": [
+                {"name": "vol1", "svm": {"name": "svm1"}, "size": 100},
+                {"name": "vol2", "svm": {"name": "svm2"}, "size": 200},
+            ]
+        }
+        result = get_nested_value_with_identifiers(data, 'volumes["svm.name=svm1"].size')
+        assert result == [("vol1", 100)]
 
     def test_filter_predicate_no_matches_returns_empty_list(self) -> None:
         """Filter predicate with no matches returns an empty list."""

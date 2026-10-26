@@ -86,8 +86,51 @@ def _parse_filter_predicate(predicate: str) -> list[tuple[str, str]]:
     return conditions
 
 
+def _split_path(path: str) -> list[str]:
+    """Split a dot-notation path into segments, ignoring dots inside ``[...]``.
+
+    A plain ``path.split(".")`` would also split on a dot that appears
+    inside a filter predicate's bracket (e.g. the dotted field in
+    ``nodes["svm.name=svm1"]``). This splits only on dots at bracket
+    depth 0, so an entire ``key["predicate"]`` segment -- predicate dots
+    included -- stays together as one path segment.
+
+    Args:
+        path: Dot-notation path, possibly containing bracketed segments.
+
+    Returns:
+        List of path segments, in order.
+    """
+    parts: list[str] = []
+    current: list[str] = []
+    depth = 0
+    for char in path:
+        if char == "[":
+            depth += 1
+            current.append(char)
+        elif char == "]":
+            depth = max(0, depth - 1)
+            current.append(char)
+        elif char == "." and depth == 0:
+            parts.append("".join(current))
+            current = []
+        else:
+            current.append(char)
+    parts.append("".join(current))
+    return parts
+
+
 def _matches_filter(item: dict[str, Any], conditions: list[tuple[str, str]]) -> bool:
     """Check whether *item* matches any of the OR *conditions*.
+
+    *field* is resolved as a dotted path inside *item* via
+    :func:`_lookup_dotted` (e.g. ``"security.session_security"`` matches
+    ``item["security"]["session_security"]``). A field without a dot behaves
+    exactly as a plain key lookup, so top-level predicates are unaffected.
+    Dotted resolution takes priority over any literal key containing a dot;
+    a path that doesn't resolve (missing intermediate key, or an
+    intermediate value that isn't a dict) counts as no match, never an
+    error.
 
     Comparison is case-insensitive on the stringified value.  If *expected*
     contains ``*`` or ``?`` glob characters, matching is performed with
@@ -102,7 +145,7 @@ def _matches_filter(item: dict[str, Any], conditions: list[tuple[str, str]]) -> 
         True if *item* matches at least one condition.
     """
     for field, expected in conditions:
-        actual = item.get(field)
+        actual = _lookup_dotted(item, field)
         if actual is not None:
             actual_lower = str(actual).lower()
             if "*" in expected or "?" in expected:
@@ -120,8 +163,11 @@ def get_nested_value(data: dict[str, Any], path: str) -> Any:
     specified using bracket notation (e.g., "nodes[0].name"). Wildcard syntax
     [*] can be used to access all items in an array. Filter predicates can be
     used to select items matching field values (e.g., ``nodes["name=node-01"]``).
-    Filter values may contain glob patterns (``*`` and ``?``) for pattern
-    matching (e.g., ``volumes["name=*Store*"]``).
+    The field on the left of ``=`` may itself be a dotted path resolved
+    inside each item (e.g. ``volumes["svm.name=svm1"]`` matches items where
+    ``item["svm"]["name"] == "svm1"``); a missing intermediate key counts as
+    no match. Filter values may contain glob patterns (``*`` and ``?``) for
+    pattern matching (e.g., ``volumes["name=*Store*"]``).
 
     Args:
         data: The dictionary to traverse.
@@ -158,11 +204,15 @@ def get_nested_value(data: dict[str, Any], path: str) -> Any:
 
         >>> get_nested_value(data, 'vols["name=v*"].size')
         [100, 200]
+
+        >>> data = {"vols": [{"svm": {"name": "svm1"}, "size": 100}]}
+        >>> get_nested_value(data, 'vols["svm.name=svm1"].size')
+        [100]
     """
     if not path:
         raise PathNotFoundError(path, "", "empty path")
 
-    parts = path.split(".")
+    parts = _split_path(path)
     current: Any = data
     traversed: list[str] = []
 
@@ -429,7 +479,7 @@ def get_nested_value_with_identifiers(
     if not path:
         raise PathNotFoundError(path, "", "empty path")
 
-    parts = path.split(".")
+    parts = _split_path(path)
     current: Any = data
     traversed: list[str] = []
 

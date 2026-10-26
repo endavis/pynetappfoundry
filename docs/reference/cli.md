@@ -545,6 +545,11 @@ nf cache query cluster1 'volumes["name=*PROD*"].size'
 # Single-quoted predicate (alternative syntax)
 nf cache query cluster1 "volumes['state=online'].name"
 
+# Dotted field in a filter predicate -- the field left of "=" is resolved
+# as a dotted path inside each item; a missing intermediate key is no match
+nf cache query cluster1 'volumes["svm.name=svm1"].name'
+nf cache query --all 'protocols.cifs_services["security.session_security=none"].svm.name'
+
 # Nested wildcards compose identifiers with '/' (e.g. svm1/vol1)
 nf cache query cluster1 'storage.svms[*].volumes[*].size' --json
 

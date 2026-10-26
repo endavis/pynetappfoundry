@@ -470,6 +470,9 @@ def query(
 
         # Single-quoted predicate (alternative syntax)
         nf cache query cluster1 "volumes['state=online'].name"
+
+        # Dotted field in a filter predicate (resolves a nested field inside each item)
+        nf cache query cluster1 'volumes["svm.name=svm1"].name'
     """
     config_dir = ctx.obj.get("config_dir", "config")
 
