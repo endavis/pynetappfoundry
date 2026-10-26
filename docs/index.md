@@ -62,16 +62,30 @@ uv add pynetappfoundry
 
 # Run CLI
 nf --help
+
+# Fill the local cache for a cluster defined in ./config
+nf cache refresh cluster1
 ```
 
 ```python
-from pynetappfoundry import ONTAPAPIClient, Config
+from typing import cast
 
-# Initialize configuration
+from pynetappfoundry import Config, ONTAPAPIClient
+from pynetappfoundry.core.cluster_entry import ClusterEntry
+
+# Load the configuration directory (default: ./config)
 config = Config()
+cluster = cast(ClusterEntry, config.data["clusters"]["cluster1"])
 
-# Connect to ONTAP cluster
-client = ONTAPAPIClient(config, "cluster1")
+# Preferred: read cluster data through ClusterEntry.ontap, which serves the
+# cache that `nf cache refresh` fills
+metadata = cluster.ontap
+if metadata is not None:
+    print(metadata.cluster.ontap_version)
+
+# Low level: call the ONTAP REST API directly (cluster first, then config)
+client = ONTAPAPIClient(cluster, config)
+print(client.call_endpoint(path_template="/cluster?fields=name,version"))
 ```
 
 ## Documentation Sections
