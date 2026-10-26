@@ -167,7 +167,7 @@ Two indices are created per table: `idx_{table}_cluster` on `cluster_name`
 Two version constants live in `src/pynetappfoundry/cache/_base.py`:
 
 ```python
-METADATA_SCHEMA_VERSION = "2.0"        # current cache_version on new snapshots
+METADATA_SCHEMA_VERSION = "2.1"        # current cache_version on new snapshots
 METADATA_SCHEMA_MIN_COMPATIBLE = "2.0" # oldest version that can be loaded
 ```
 
@@ -186,6 +186,7 @@ deserialised against the current Pydantic models.
 
 | `cache_version` | Changes |
 |-----------------|---------|
+| `2.1` | Added `storage.svm_web_services`: per-SVM web services from the private CLI passthrough ([ADR-0021](../decisions/0021-collect-cli-only-ontap-data-through-the-private-cli-rest-passthrough.md)). Introduced with #866. |
 | `2.0` | Renamed cache fields to match the ONTAP REST URL hierarchy: `network.lifs` → `network.ip_interfaces`, `network.broadcast_domains` → `network.ethernet_broadcast_domains`, `network.subnets` → `network.ip_subnets`, `protocols.export_policies` → `protocols.nfs_export_policies`. |
 | `1.0` | Initial schema with comprehensive model coverage. |
 
@@ -199,7 +200,7 @@ The cache is rebuild-tolerant: destructive migrations are allowed, and
 
 In addition to the `cache_version` stamped into each snapshot,
 `ClusterMetadataDB` tracks the **on-disk SQLite schema** version through the
-shared `SQLiteDB` base class. The current value is `SCHEMA_VERSION = 6`, and
+shared `SQLiteDB` base class. The current value is `SCHEMA_VERSION = 7`, and
 the DB applies the following upgrades on open:
 
 | DB schema | Migration | What it does |
@@ -209,6 +210,7 @@ the DB applies the following upgrades on open:
 | `v3` → `v4` | `_upgrade_to_v4` | Drops and recreates every per-model table to switch column names from the old flat naming (`ip_address`) to the new nested-model layout (`ip` stored as JSON), per ADR-0011. The envelope is cleared so callers detect a missing snapshot and trigger a fresh collection. |
 | `v4` → `v5` | `_upgrade_to_v5` | Adds the `vm_name` column to the `cloudmetadata` table via idempotent `ALTER TABLE … ADD COLUMN` (additive-column path from ADR-0018). Introduced with PR #582. |
 | `v5` → `v6` | `_upgrade_to_v6` | Creates the `consoleinfo` table to back `CachedClusterMetadata.console: ConsoleInfo` for cluster-scoped Console SaaS data (ADR-0019). Idempotent via `sqlite_master` check. Introduced with #713. |
+| `v6` → `v7` | `_upgrade_to_v7` | Creates the `ontapsvmwebservice` table to back `storage.svm_web_services` (ADR-0021). Idempotent via `sqlite_master` check. Introduced with #866. |
 
 !!! warning "v3 → v4 is destructive"
     The v4 migration deletes existing cached rows. After upgrading,

@@ -786,11 +786,11 @@ class TestCollectorParallelism:
     """Issue #541: composite phase methods still submit per-model fetches in parallel."""
 
     def test_storage_phase_submits_one_task_per_submodel(self) -> None:
-        """The storage composite submits 11 fetch() calls — one per sub-model."""
+        """The storage composite submits 12 fetch() calls — one per sub-model."""
         client = _build_mock_api_client()
-        collector = MetadataCollector(api_client=client, parallel=True, max_workers=11)
+        collector = MetadataCollector(api_client=client, parallel=True, max_workers=12)
         # Track every _fetch_model invocation; the storage composite is the
-        # one that exercises the executor path with 11 tasks.
+        # one that exercises the executor path with 12 tasks.
         call_log: list[type[BaseModel]] = []
         original_fetch_model = collector._fetch_model
 
@@ -802,8 +802,8 @@ class TestCollectorParallelism:
             collector._cluster_name = "test"
             collector._collect_storage_via_api()
 
-        # Storage phase has 11 sub-models per the model_tasks list.
-        assert len(call_log) == 11
+        # Storage phase has 12 sub-models per the model_tasks list.
+        assert len(call_log) == 12
 
     def test_network_phase_submits_four_model_tasks(self) -> None:
         """Network composite still issues a model task per sub-model."""

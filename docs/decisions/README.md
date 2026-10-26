@@ -139,3 +139,4 @@ The Issue contains the full discussion; the ADR summarizes the outcome.
 | [0018](0018-cache-schema-versioning-and-backward-compatibility-policy.md) | Cache schema versioning and backward-compatibility policy | Accepted |
 | [0019](0019-console-runtime-client-architecture-org-scoped-access-and-per-token-type-wrapper-isolation.md) | Console runtime client architecture: org-scoped access and per-token-type wrapper isolation | Accepted |
 | [0020](0020-label-nf-cache-query-wildcard-results-with-their-source-item.md) | Label nf cache query wildcard results with their source item | Accepted |
+| [0021](0021-collect-cli-only-ontap-data-through-the-private-cli-rest-passthrough.md) | Collect CLI-only ONTAP data through the private CLI REST passthrough | Accepted |

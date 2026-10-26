@@ -65,6 +65,8 @@ class CachedClusterMetadata(CacheModel):
     This is the top-level model containing all cached data categories.
 
     Schema Version History:
+        2.1 - Added storage.svm_web_services (SVM web services from the
+              private CLI passthrough, #866)
         2.0 - Renamed cache fields to match the ONTAP REST URL hierarchy:
               network.lifs -> network.ip_interfaces,
               network.broadcast_domains -> network.ethernet_broadcast_domains,

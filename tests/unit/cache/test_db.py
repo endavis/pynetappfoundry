@@ -1022,6 +1022,88 @@ class TestClusterMetadataDBMigrationV3:
 
         db.close()
 
+    @staticmethod
+    def _create_v6_db(db_path: Path) -> None:
+        """Create a v6 database: every current table except ontapsvmwebservice."""
+        from pynetappfoundry.cache.db_schema import (
+            _ensure_registry,
+            generate_cluster_name_index_ddl,
+            generate_table_ddl,
+            generate_uuid_column_index_ddl,
+        )
+
+        conn = sqlite3.connect(db_path)
+        conn.execute(
+            "CREATE TABLE cluster_metadata ("
+            "    cluster_name TEXT PRIMARY KEY,"
+            "    cached_at TEXT NOT NULL,"
+            "    cache_version TEXT NOT NULL"
+            ")"
+        )
+        conn.execute("CREATE TABLE _schema_version (version INTEGER NOT NULL)")
+        conn.execute("INSERT INTO _schema_version (version) VALUES (6)")
+        for spec in _ensure_registry().values():
+            if spec.table_name == "ontapsvmwebservice":
+                continue  # v6 had no ontapsvmwebservice table — that's what v7 adds
+            conn.execute(generate_table_ddl(spec.table_name, spec.model_class))
+            conn.execute(generate_cluster_name_index_ddl(spec.table_name))
+            if spec.has_uuid:
+                conn.execute(generate_uuid_column_index_ddl(spec.table_name))
+        conn.commit()
+        conn.close()
+
+    def test_upgrade_v6_to_v7_creates_svm_web_service_table(self, tmp_path: Path) -> None:
+        """v6→v7 migration creates the ontapsvmwebservice table for #866."""
+        db_path = tmp_path / "v6.db"
+        self._create_v6_db(db_path)
+
+        db = ClusterMetadataDB(db_path=db_path)
+
+        cursor = db.conn.execute("SELECT version FROM _schema_version")
+        assert cursor.fetchone()[0] == ClusterMetadataDB.SCHEMA_VERSION
+
+        cursor = db.conn.execute("PRAGMA table_info(ontapsvmwebservice)")
+        columns = {row[1] for row in cursor.fetchall()}
+        assert {"cluster_name", "vserver", "name", "enabled", "service_key"} <= columns
+
+        db.close()
+
+    def test_upgrade_v6_to_v7_then_stores_web_services(self, tmp_path: Path) -> None:
+        """A migrated v6 database stores and returns storage.svm_web_services."""
+        from pynetappfoundry.models.ontap.private.cli.vserver.services.web.model import (
+            OntapSvmWebService,
+        )
+        from pynetappfoundry.models.ontap.storage.model import StorageInfo
+
+        db_path = tmp_path / "v6.db"
+        self._create_v6_db(db_path)
+        services = [OntapSvmWebService(vserver="svm1", name="sysmgr", enabled=True)]
+
+        db = ClusterMetadataDB(db_path=db_path)
+        db.set(
+            "test-cluster",
+            CachedClusterMetadata(
+                cluster_name="test-cluster", storage=StorageInfo(svm_web_services=services)
+            ),
+        )
+        loaded = db.get("test-cluster")
+        db.close()
+
+        assert loaded is not None
+        assert loaded.storage.svm_web_services == services
+
+    def test_upgrade_to_v7_is_idempotent(self, tmp_path: Path) -> None:
+        """Running the v7 step on a database that already has the table is a no-op."""
+        db = ClusterMetadataDB(db_path=tmp_path / "current.db")
+
+        db._upgrade_to_v7()
+
+        cursor = db.conn.execute(
+            "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='ontapsvmwebservice'"
+        )
+        assert cursor.fetchone()[0] == 1
+        db.close()
+
 
 class TestClusterMetadataDBInitialization:
     """Tests for database initialization options."""

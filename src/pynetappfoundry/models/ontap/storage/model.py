@@ -7,6 +7,9 @@ from pydantic import Field
 from pynetappfoundry.models._base import OntapModel
 from pynetappfoundry.models.ontap.cloud.targets.model import OntapCloudTarget
 from pynetappfoundry.models.ontap.cluster.schedules.model import OntapSchedule
+from pynetappfoundry.models.ontap.private.cli.vserver.services.web.model import (
+    OntapSvmWebService,
+)
 from pynetappfoundry.models.ontap.protocols.san.igroups.model import OntapIgroup
 from pynetappfoundry.models.ontap.storage.aggregates.model import OntapAggregate
 from pynetappfoundry.models.ontap.storage.flexcache.flexcaches.model import OntapFlexcache
@@ -26,7 +29,7 @@ class StorageInfo(OntapModel):
 
     Contains aggregates, SVMs, cloud targets, volumes, qtrees,
     snapshot policies, schedules, LUNs, igroups, QoS policies,
-    and FlexCache volumes.
+    FlexCache volumes, and SVM web services.
     """
 
     aggregates: list[OntapAggregate] = Field(default_factory=list)
@@ -41,3 +44,4 @@ class StorageInfo(OntapModel):
     qos_policies: list[OntapQosPolicy] = Field(default_factory=list)
     flexcaches: list[OntapFlexcache] = Field(default_factory=list)
     svm_top_metrics_users: list[OntapTopMetricsSvmUser] = Field(default_factory=list)
+    svm_web_services: list[OntapSvmWebService] = Field(default_factory=list)

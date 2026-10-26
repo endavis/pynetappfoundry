@@ -499,6 +499,7 @@ class TestDataSourceShim:
             "OntapQosPolicy",
             "OntapFlexcache",
             "OntapTopMetricsSvmUser",
+            "OntapSvmWebService",
         }
         assert set(observed_models).issubset(expected_storage), (
             f"Unexpected non-storage model queried: {set(observed_models) - expected_storage}"

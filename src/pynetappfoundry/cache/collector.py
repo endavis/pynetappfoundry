@@ -60,6 +60,9 @@ from pynetappfoundry.models.ontap.network.ethernet.broadcast_domains.model impor
 from pynetappfoundry.models.ontap.network.ip.interfaces.model import OntapIpInterface
 from pynetappfoundry.models.ontap.network.ip.subnets.model import OntapIpSubnet
 from pynetappfoundry.models.ontap.network.model import NetworkInfo
+from pynetappfoundry.models.ontap.private.cli.vserver.services.web.model import (
+    OntapSvmWebService,
+)
 from pynetappfoundry.models.ontap.protocols.cifs.services.model import OntapCifsService
 from pynetappfoundry.models.ontap.protocols.cifs.shares.model import OntapCifsShare
 from pynetappfoundry.models.ontap.protocols.model import ProtocolsInfo
@@ -1241,7 +1244,8 @@ class MetadataCollector:
 
         # Each per-model fetch becomes one task in the executor — same
         # parallelism shape as before (one task per sub-model), with
-        # OntapCloudTarget tolerating absence on older ONTAP versions.
+        # OntapCloudTarget tolerating absence on older ONTAP versions and
+        # OntapSvmWebService tolerating a role without private CLI access.
         model_tasks: list[tuple[str, type[BaseModel]]] = [
             ("aggregates", OntapAggregate),
             ("svms", OntapSvm),
@@ -1254,6 +1258,7 @@ class MetadataCollector:
             ("igroups", OntapIgroup),
             ("qos_policies", OntapQosPolicy),
             ("flexcaches", OntapFlexcache),
+            ("svm_web_services", OntapSvmWebService),
         ]
 
         def safe_fetch_model(model_class: type[BaseModel]) -> Any:
@@ -1264,11 +1269,16 @@ class MetadataCollector:
                 if model_class is OntapCloudTarget:
                     logger.debug("%s Cloud targets endpoint not available: %s", self._log_prefix, e)
                     return []
+                if model_class is OntapSvmWebService:
+                    logger.debug(
+                        "%s SVM web services (private CLI) not available: %s", self._log_prefix, e
+                    )
+                    return []
                 raise
 
         results: dict[str, Any] = {}
         if self.parallel:
-            with ThreadPoolExecutor(max_workers=11) as executor:
+            with ThreadPoolExecutor(max_workers=12) as executor:
                 futures = {executor.submit(safe_fetch_model, mc): key for key, mc in model_tasks}
                 for future in as_completed(futures):
                     results[futures[future]] = future.result()
@@ -1288,6 +1298,7 @@ class MetadataCollector:
             igroups=cast(list[OntapIgroup], results["igroups"]),
             qos_policies=cast(list[OntapQosPolicy], results["qos_policies"]),
             flexcaches=cast(list[OntapFlexcache], results["flexcaches"]),
+            svm_web_services=cast(list[OntapSvmWebService], results["svm_web_services"]),
         )
 
     # -------------------------------------------------------------------------
