@@ -34,6 +34,8 @@ SKIP_DIRS = {
     "tmp",
     ".mypy_cache",
     "worktrees",
+    # CI sets UV_CACHE_DIR inside the workspace; dependencies ship markdown.
+    ".uv-cache",
 }
 
 # A backticked path with a directory component and a known extension. Bare
@@ -153,6 +155,21 @@ def test_the_scanner_skips_worktrees(tmp_path: Path) -> None:
     copy = tmp_path / "worktrees" / "feat" / "42-add-export" / "docs"
     copy.mkdir(parents=True)
     (copy / "index.md").write_text("# Copy\n", encoding="utf-8")
+
+    assert _markdown_files(tmp_path) == [tmp_path / "docs" / "kept.md"]
+
+
+def test_the_scanner_skips_the_ci_uv_cache(tmp_path: Path) -> None:
+    """CI keeps the uv cache at `.uv-cache/` in the workspace.
+
+    Dependency archives there ship their own markdown, naming paths in their own
+    projects, which failed every test job on PR #861.
+    """
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs" / "kept.md").write_text("# Kept\n", encoding="utf-8")
+    cached = tmp_path / ".uv-cache" / "archive-v0" / "abc" / "references"
+    cached.mkdir(parents=True)
+    (cached / "workflows.md").write_text("`app/server/main.py`\n", encoding="utf-8")
 
     assert _markdown_files(tmp_path) == [tmp_path / "docs" / "kept.md"]
 
