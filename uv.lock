@@ -3017,14 +3017,14 @@ wheels = [
 
 [[package]]
 name = "types-paramiko"
-version = "5.0.0.20260617"
+version = "5.0.0.20261006"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cryptography" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/de/89/902652d7b62bb7cd2b73c7f08c8fd03945c223c3814022f0ad305e1018b9/types_paramiko-5.0.0.20260617.tar.gz", hash = "sha256:50a5b0dc68b39d30097cb7d93b4915dbbc97ed740ea633bd492be25ca1f25df4", size = 28474, upload-time = "2026-06-17T06:56:52.955Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/24/f8/20ba9700d1d54dd4039ef790cfb53036a594f604a423067121f92b48463e/types_paramiko-5.0.0.20261006.tar.gz", hash = "sha256:318172c09ddae6a68292786b6ebd573c26a855b42a3a86cca4c232a7c11b256a", size = 28733, upload-time = "2026-10-06T08:15:47.679Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/50/4d/eab89decb4201dfff665a3b92088f384ff1e165bf6caa447509733bc1bc6/types_paramiko-5.0.0.20260617-py3-none-any.whl", hash = "sha256:83d87c396405666524441710ec59e693bca8b19021861456ac0a2401327812f8", size = 37123, upload-time = "2026-06-17T06:56:51.81Z" },
+    { url = "https://files.pythonhosted.org/packages/00/b9/a25ff2092ecae398ce1002692417e9170756178c00490483e969719054d0/types_paramiko-5.0.0.20261006-py3-none-any.whl", hash = "sha256:1de443c560c946339ee1586edeb1d0155432fdaa4cde23096b6016a2c4935a54", size = 37163, upload-time = "2026-10-06T08:15:46.77Z" },
 ]
 
 [[package]]
