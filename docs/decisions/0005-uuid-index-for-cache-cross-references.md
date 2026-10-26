@@ -1,3 +1,13 @@
+---
+title: "ADR-0005: UUID index for cache cross-references"
+description: Add a cached `uuid_index` property on `CachedClusterMetadata` that builds a flat UUID-to-object index across all cached model types for O(1) cross-reference lookups.
+date: 2026-02-10
+audience:
+  - contributors
+tags:
+  - adr
+---
+
 # ADR-0005: UUID index for cache cross-references
 
 ## Status

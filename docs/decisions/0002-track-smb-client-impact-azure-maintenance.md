@@ -1,3 +1,13 @@
+---
+title: "ADR-0002: Track SMB Client Impact During Azure Maintenance Events"
+description: Extend Azure maintenance event tracking to capture SMB client impact metrics -- LIF failover timing, CIFS transition time, CIFS Witness notifications, and aggregate giveback -- during CVO HA failover events.
+date: 2026-02-09
+audience:
+  - contributors
+tags:
+  - adr
+---
+
 # ADR-0002: Track SMB Client Impact During Azure Maintenance Events
 
 ## Status

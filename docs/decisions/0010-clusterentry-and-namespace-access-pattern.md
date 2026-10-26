@@ -1,3 +1,13 @@
+---
+title: "ADR-0010: ClusterEntry and namespace access pattern"
+description: Replace eager cache enrichment in `Config.__init__()` with `ClusterEntry`, a dict-like wrapper exposing lazy, namespaced `@cached_property` accessors for cached API metadata.
+date: 2026-02-22
+audience:
+  - contributors
+tags:
+  - adr
+---
+
 # ADR-0010: ClusterEntry and namespace access pattern
 
 ## Status

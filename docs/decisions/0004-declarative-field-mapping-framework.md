@@ -1,3 +1,13 @@
+---
+title: "ADR-0004: Declarative field mapping framework for ONTAP collection"
+description: Use a declarative field mapping framework (FieldMapping/TypeMapping) and generic parser functions to map ONTAP REST API and CLI responses to cache models, replacing hand-written per-type parsing methods.
+date: 2026-02-09
+audience:
+  - contributors
+tags:
+  - adr
+---
+
 # ADR-0004: Declarative field mapping framework for ONTAP collection
 
 ## Status

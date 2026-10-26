@@ -1,3 +1,13 @@
+---
+title: "ADR-0014: Parallel Cluster Refresh"
+description: Add a `--parallel-clusters` flag to `nf cache refresh --all` that collects clusters concurrently with a thread pool while all cache writes stay serialized on the main thread.
+date: 2026-04-14
+audience:
+  - contributors
+tags:
+  - adr
+---
+
 # ADR-0014: Parallel Cluster Refresh
 
 ## Status

@@ -1,3 +1,12 @@
+---
+title: "PyNetAppFoundry Code Review & Improvement Plan"
+description: Code review tracking critical issues, priorities, and improvement work needed to move the project toward production-readiness.
+audience:
+  - contributors
+tags:
+  - plan
+---
+
 # PyNetAppFoundry Code Review & Improvement Plan
 
 ## Executive Summary

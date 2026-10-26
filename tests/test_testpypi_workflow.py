@@ -1,31 +1,27 @@
-"""Preconditions for a successful TestPyPI publish.
+"""Tests for the TestPyPI publish workflow (issues #659, #837).
 
-Two kinds of checks live here:
+Structural asserts on `.github/workflows/testpypi.yml`. The central regression
+guard is the `on.push.tags` glob list: it must cover the four PEP440
+pre-release shapes that `commitizen` (used by `doit release --prerelease=...`)
+actually emits, and it must NOT use the old semver-only pattern that missed
+every PEP440 tag this project produces.
 
-1. Structural asserts on `.github/workflows/testpypi.yml` — the
-   `on.push.tags` glob list must cover the four PEP440 pre-release shapes
-   that `commitizen` (used by `doit release --prerelease=...`) actually
-   emits, and must NOT use the old semver-only pattern that missed every
-   PEP440 tag this project produces (issue #659).
-2. Git-tracking invariants — `src/pynetappfoundry/_version.py` is a
-   build-time artifact written by `hatch-vcs`; if it is tracked in git,
-   every build dirties the working tree and `setuptools-scm` appends a
-   `+d<date>` local-version suffix that PyPI rejects (issue #661).
+A second guard (#837) checks the `build` job runs `doit wheel_check` against
+the built artifacts — after `uv build`, before the `dist` artifact upload —
+so a packaging regression fails the pre-release before it ships.
 
 These tests do not execute the workflow — they only verify its shape. See
-`tests/test_codeql_workflow.py` for the sibling YAML-structure pattern.
+`tests/test_codeql_workflow.py` for the sibling pattern.
 """
 
 from __future__ import annotations
 
-import subprocess
 from pathlib import Path
 from typing import Any
 
 import yaml
 
 WORKFLOW_PATH = Path(__file__).parent.parent / ".github" / "workflows" / "testpypi.yml"
-REPO_ROOT = Path(__file__).parent.parent
 
 
 def _load_workflow() -> dict[Any, Any]:
@@ -41,6 +37,18 @@ def _load_workflow() -> dict[Any, Any]:
     content = WORKFLOW_PATH.read_text(encoding="utf-8")
     data: dict[Any, Any] = yaml.safe_load(content)
     return data
+
+
+def _steps_for_job(job_name: str) -> list[dict[Any, Any]]:
+    """Return the ordered ``steps`` list for the named job."""
+    wf = _load_workflow()
+    jobs = wf.get("jobs")
+    assert isinstance(jobs, dict), "workflow must have a 'jobs' mapping"
+    job = jobs.get(job_name)
+    assert isinstance(job, dict), f"workflow must define job '{job_name}'"
+    steps = job.get("steps")
+    assert isinstance(steps, list), f"'{job_name}' must have a 'steps' list"
+    return steps
 
 
 class TestPushTagTriggers:
@@ -81,28 +89,41 @@ class TestPushTagTriggers:
         )
 
 
-class TestVersionFileNotTracked:
-    """Regression test for issue #661: ``_version.py`` must not be tracked.
+class TestWheelCheckOrdering:
+    """`doit wheel_check` must run on the real artifact, before it uploads (issue #837)."""
 
-    ``hatch-vcs`` writes the computed version to ``_version.py`` during build.
-    If the file is tracked, every build dirties the working tree and
-    ``setuptools-scm`` appends a ``+d<YYYYMMDD>`` local-version suffix, which
-    PyPI rejects with ``400 Bad Request``. The file is in ``.gitignore`` but
-    gitignore has no effect on files already in the index, so the only
-    durable guard is this assertion.
-    """
+    def _wheel_check_index(self, steps: list[dict[Any, Any]]) -> int:
+        for index, step in enumerate(steps):
+            if "doit wheel_check" in str(step.get("run", "")):
+                return index
+        raise AssertionError("build job has no step running `doit wheel_check`")
 
-    def test_version_py_not_tracked(self) -> None:
-        """``git ls-files`` must not report src/pynetappfoundry/_version.py."""
-        result = subprocess.run(  # nosec B603 B607
-            ["git", "ls-files", "--error-unmatch", "src/pynetappfoundry/_version.py"],
-            cwd=REPO_ROOT,
-            capture_output=True,
-            text=True,
-            check=False,
+    def test_build_job_runs_wheel_check(self) -> None:
+        """The step exists at all, and targets the already-built dist/ wheel."""
+        steps = _steps_for_job("build")
+        index = self._wheel_check_index(steps)
+        assert "--dist=dist" in str(steps[index].get("run", "")), (
+            "wheel_check must check the dist/ wheel that actually gets uploaded, "
+            "not rebuild a fresh one"
         )
-        assert result.returncode != 0, (
-            "src/pynetappfoundry/_version.py is tracked in git (see #661). "
-            "It's a build-time artifact written by hatch-vcs. "
-            "Fix: git rm --cached src/pynetappfoundry/_version.py"
+
+    def test_wheel_check_runs_after_build_artifacts(self) -> None:
+        steps = _steps_for_job("build")
+        wheel_check_index = self._wheel_check_index(steps)
+        build_index = next(i for i, s in enumerate(steps) if "uv build" in str(s.get("run", "")))
+        assert build_index < wheel_check_index, (
+            "wheel_check must run after the wheel it checks has been built"
+        )
+
+    def test_wheel_check_runs_before_dist_upload(self) -> None:
+        steps = _steps_for_job("build")
+        wheel_check_index = self._wheel_check_index(steps)
+        dist_upload_index = next(
+            i
+            for i, s in enumerate(steps)
+            if "upload-artifact" in str(s.get("uses", ""))
+            and s.get("with", {}).get("name") == "dist"
+        )
+        assert wheel_check_index < dist_upload_index, (
+            "wheel_check must run before the dist artifact is uploaded"
         )

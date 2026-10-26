@@ -1,3 +1,13 @@
+---
+title: "ADR-0012: Unified DataSource Accessor for All Cluster Reads"
+description: Introduce `DataSource` as the single accessor unifying the project's four divergent cluster-read paths, with per-call source override and a backend registry keyed by API type (superseded by ADR-0013).
+date: 2026-04-08
+audience:
+  - contributors
+tags:
+  - adr
+---
+
 # ADR-0012: Unified DataSource Accessor for All Cluster Reads
 
 ## Status

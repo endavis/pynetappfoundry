@@ -1,3 +1,13 @@
+---
+title: "ADR-0007: Deep URL-tree structure with automatic model and mapping discovery"
+description: Restructure the cache module into a deep directory tree mirroring ONTAP REST API URL paths, with co-located models and mappings auto-registered in a `ModelRegistry` singleton.
+date: 2026-02-11
+audience:
+  - contributors
+tags:
+  - adr
+---
+
 # ADR-0007: Deep URL-tree structure with automatic model and mapping discovery
 
 ## Status

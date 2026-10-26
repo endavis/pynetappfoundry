@@ -1,3 +1,13 @@
+---
+title: "ADR-0019: Console runtime client architecture: org-scoped access and per-token-type wrapper isolation"
+description: Define the Console runtime client as org-scoped (not `ClusterEntry`-scoped), with two internal per-token-type `APIWrapper` instances for user vs. service tokens, hand-authored for v1 and codegen-generated at scale.
+date: 2026-05-14
+audience:
+  - contributors
+tags:
+  - adr
+---
+
 # ADR-0019: Console runtime client architecture: org-scoped access and per-token-type wrapper isolation
 
 ## Status

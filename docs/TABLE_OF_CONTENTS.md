@@ -39,6 +39,26 @@ Complete index of all documentation, organized by audience and as a full alphabe
 <!-- BEGIN:audience=contributors -->
 - [Add a Feature: End-to-End Walkthrough](examples/add-a-feature.md) - Step-by-step example of adding a module, CLI subcommand, tests, and docs to the project
 - [Adding a New API Backend](development/adding-backends.md) - Developer guide for extending the DataSource framework with new API backends
+- [ADR-0001: Use SQLite for cluster metadata caching](decisions/0001-use-sqlite-for-cluster-metadata-caching.md) - Use SQLite as the storage backend for caching ONTAP cluster metadata, refreshed manually via `nf cache refresh`.
+- [ADR-0002: Track SMB Client Impact During Azure Maintenance Events](decisions/0002-track-smb-client-impact-azure-maintenance.md) - Extend Azure maintenance event tracking to capture SMB client impact metrics -- LIF failover timing, CIFS transition time, CIFS Witness notifications, and aggregate giveback -- during CVO HA failover events.
+- [ADR-0003: Use base SQLiteDB class with version-based migrations](decisions/0003-use-base-sqlitedb-class-with-version-based-migrations.md) - Create a base SQLiteDB class, inherited by all SQLite database classes, that provides schema-version tracking and convention-based `_upgrade_to_v{N}` migration methods.
+- [ADR-0004: Declarative field mapping framework for ONTAP collection](decisions/0004-declarative-field-mapping-framework.md) - Use a declarative field mapping framework (FieldMapping/TypeMapping) and generic parser functions to map ONTAP REST API and CLI responses to cache models, replacing hand-written per-type parsing methods.
+- [ADR-0005: UUID index for cache cross-references](decisions/0005-uuid-index-for-cache-cross-references.md) - Add a cached `uuid_index` property on `CachedClusterMetadata` that builds a flat UUID-to-object index across all cached model types for O(1) cross-reference lookups.
+- [ADR-0006: Generalize field mapping framework for multi-API data collection](decisions/0006-generalize-field-mapping-for-multi-api.md) - Extend the declarative field mapping framework from ONTAP-only to multi-API by adding a configurable records path, an `api_type` tag, and an optional CLI command on `TypeMapping`.
+- [ADR-0007: Deep URL-tree structure with automatic model and mapping discovery](decisions/0007-url-tree-model-registry.md) - Restructure the cache module into a deep directory tree mirroring ONTAP REST API URL paths, with co-located models and mappings auto-registered in a `ModelRegistry` singleton.
+- [ADR-0008: OpenAPI codegen for model and mapping generation](decisions/0008-openapi-codegen-for-model-generation.md) - Build a codegen tool that parses OpenAPI 3.0 specs to generate Pydantic model classes, FieldMapping/TypeMapping declarations, and TOML config overlays, with its own `$ref` resolution rather than `datamodel-code-generator`.
+- [ADR-0009: Per-Model SQL Table Storage for Cache Layer](decisions/0009-sql-table-storage.md) - Replace the single JSON-blob cache storage table with per-model SQL tables generated from Pydantic model field definitions, enabling SQL-level queries and per-field updates.
+- [ADR-0010: ClusterEntry and namespace access pattern](decisions/0010-clusterentry-and-namespace-access-pattern.md) - Replace eager cache enrichment in `Config.__init__()` with `ClusterEntry`, a dict-like wrapper exposing lazy, namespaced `@cached_property` accessors for cached API metadata.
+- [ADR-0011: Nested models to replace flat model pattern](decisions/0011-nested-models-to-replace-flat-model-pattern.md) - Replace flat Pydantic model field naming with nested models that mirror the ONTAP API's nested structure, moving flattening to a dedicated adapter at the cache boundary.
+- [ADR-0012: Unified DataSource Accessor for All Cluster Reads](decisions/0012-unified-datasource-accessor.md) - Introduce `DataSource` as the single accessor unifying the project's four divergent cluster-read paths, with per-call source override and a backend registry keyed by API type (superseded by ADR-0013).
+- [ADR-0013: DataSource as a Thin Facade Over the Collector](decisions/0013-datasource-as-a-thin-facade-over-the-collector.md) - Revise ADR-0012's implementation so `OntapBackend` becomes a thin delegate over the metadata collector's fetch logic, with the cache treated as a single-point-in-time snapshot that live fetches never persist into.
+- [ADR-0014: Parallel Cluster Refresh](decisions/0014-parallel-cluster-refresh.md) - Add a `--parallel-clusters` flag to `nf cache refresh --all` that collects clusters concurrently with a thread pool while all cache writes stay serialized on the main thread.
+- [ADR-0015: DII backend: live-only, bare-array envelope, offset/limit pagination](decisions/0015-dii-backend-live-only-bare-array-envelope-offsetlimit-pagination.md) - Add a live-only DII backend to the DataSource framework that parses DII's bare-array response envelope and offset/limit pagination directly, with no local cache.
+- [ADR-0016: PR-based release is the only supported flow](decisions/0016-pr-based-release-is-the-only-supported-flow.md) - Make the PR-based release flow (`doit release` opens a release PR, `doit release_tag` tags `main` after merge) the only supported release path, removing the redundant direct-to-`main` release tasks.
+- [ADR-0017: where-expressions are cache-only (rationale)](decisions/0017-where-expressions-are-cache-only-rationale.md) - Record why `.where()`-string expressions and the non-equality typed DSL operators that compile to them are supported only on the cache path, with live paths rejecting them.
+- [ADR-0018: Cache schema versioning and backward-compatibility policy](decisions/0018-cache-schema-versioning-and-backward-compatibility-policy.md) - Codify the on-disk SQLite cache schema's compatibility contract -- rebuild-tolerant, no downgrade support, and `SCHEMA_VERSION` kept internal.
+- [ADR-0019: Console runtime client architecture: org-scoped access and per-token-type wrapper isolation](decisions/0019-console-runtime-client-architecture-org-scoped-access-and-per-token-type-wrapper-isolation.md) - Define the Console runtime client as org-scoped (not `ClusterEntry`-scoped), with two internal per-token-type `APIWrapper` instances for user vs. service tokens, hand-authored for v1 and codegen-generated at scale.
+- [ADR-0020: Label nf cache query wildcard results with their source item](decisions/0020-label-nf-cache-query-wildcard-results-with-their-source-item.md) - Label nf cache query wildcard and filter results with the array item they came from, by name/svm.name/uuid/index, and switch their JSON shape to a list of key/value records.
 - [ADR-9001: Use uv for package management](decisions/9001-use-uv-for-package-management.md) - Use uv for dependency management, virtual environments and package installation
 - [ADR-9002: Use doit for task automation](decisions/9002-use-doit-for-task-automation.md) - Use doit as the task runner for testing, linting, building and other routine operations
 - [ADR-9003: Use ruff for linting and formatting](decisions/9003-use-ruff-for-linting-and-formatting.md) - Use ruff as the one tool for linting and formatting, in place of flake8, black and isort
@@ -70,7 +90,9 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [AI Command Blocking](development/ai/command-blocking.md) - Hooks that block dangerous commands from AI agents
 - [AI Enforcement Principles](development/ai/enforcement-principles.md) - How we enforce AI agent behavior in code and settings
 - [API Reference](reference/api.md) - Python API documentation
+- [Architecture Decision Records](decisions/README.md) - Explain what an ADR is, the template-meta (9XXX) vs. project-level (0001+) numbering series, the ADR format, and how to create a new one with `doit adr`.
 - [Auto-Checkpoint and Session-Restore Hooks](development/ai/auto-checkpoint-hook.md) - PreCompact and SessionStart hooks that preserve context across autocompact events
+- [Azure Maintenance SMB Client Impact Tracking](plans/azure-smb-impact-tracking.md) - Plan to extend the `save-azure` command to capture SMB client impact metrics -- LIF failover timing, CIFS transition time, Witness notifications, and aggregate giveback -- during CVO HA failover events.
 - [Cache Model Architecture](development/cache-models.md) - End-to-end guide for the codegen pipeline, cache models, field strategies, and SQL storage
 - [Cache System](reference/cache.md) - Architecture, storage layout, lazy loading, and CLI for the cluster metadata cache
 - [CI/CD Testing Guide](development/ci-cd-testing.md) - GitHub Actions pipelines for testing, linting, and coverage
@@ -90,7 +112,9 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [Optional Extensions](development/extensions.md) - Additional tools and extensions for testing, security, and more
 - [Per-Stack Rule Files](development/ai/rule-files.md) - How to author, load and mirror the short self-check rule files in .claude/rules/
 - [Performance Benchmarks](development/benchmarks.md) - Running, interpreting, and comparing the pytest-benchmark suite
+- [Plan: Add `nf cache query` Command](plans/cache-query-command.md) - Plan for a new `nf cache query` command that queries specific dot-notation fields from cached cluster metadata, for a single cluster, a filtered subset, or all clusters.
 - [Production Deployment Guide](deployment/production.md) - Comprehensive guide for deploying Python applications to production
+- [PyNetAppFoundry Code Review & Improvement Plan](plans/first-pass-refactor.md) - Code review tracking critical issues, priorities, and improvement work needed to move the project toward production-readiness.
 - [pynetappfoundry Documentation](index.md) - ONTAP administration library and CLI tools
 - [Python Project Coding Standards](development/coding-standards.md) - Guidelines for exceptions, typing, structure, testing, and documentation
 - [Query Layer](usage/query-layer.md) - Guide to the REST query layer (QuerySet, Query, Mutation, JobTracker, related, realtime)
@@ -126,25 +150,26 @@ Complete index of all documentation, organized by audience and as a full alphabe
 <!-- BEGIN:all -->
 - [Add a Feature: End-to-End Walkthrough](examples/add-a-feature.md) - Step-by-step example of adding a module, CLI subcommand, tests, and docs to the project
 - [Adding a New API Backend](development/adding-backends.md) - Developer guide for extending the DataSource framework with new API backends
-- [ADR-0001: Use SQLite for cluster metadata caching](decisions/0001-use-sqlite-for-cluster-metadata-caching.md)
-- [ADR-0002: Track SMB Client Impact During Azure Maintenance Events](decisions/0002-track-smb-client-impact-azure-maintenance.md)
-- [ADR-0003: Use base SQLiteDB class with version-based migrations](decisions/0003-use-base-sqlitedb-class-with-version-based-migrations.md)
-- [ADR-0004: Declarative field mapping framework for ONTAP collection](decisions/0004-declarative-field-mapping-framework.md)
-- [ADR-0005: UUID index for cache cross-references](decisions/0005-uuid-index-for-cache-cross-references.md)
-- [ADR-0006: Generalize field mapping framework for multi-API data collection](decisions/0006-generalize-field-mapping-for-multi-api.md)
-- [ADR-0007: Deep URL-tree structure with automatic model and mapping discovery](decisions/0007-url-tree-model-registry.md)
-- [ADR-0008: OpenAPI codegen for model and mapping generation](decisions/0008-openapi-codegen-for-model-generation.md)
-- [ADR-0009: Per-Model SQL Table Storage for Cache Layer](decisions/0009-sql-table-storage.md)
-- [ADR-0010: ClusterEntry and namespace access pattern](decisions/0010-clusterentry-and-namespace-access-pattern.md)
-- [ADR-0011: Nested models to replace flat model pattern](decisions/0011-nested-models-to-replace-flat-model-pattern.md)
-- [ADR-0012: Unified DataSource Accessor for All Cluster Reads](decisions/0012-unified-datasource-accessor.md)
-- [ADR-0013: DataSource as a Thin Facade Over the Collector](decisions/0013-datasource-as-a-thin-facade-over-the-collector.md)
-- [ADR-0014: Parallel Cluster Refresh](decisions/0014-parallel-cluster-refresh.md)
-- [ADR-0015: DII backend: live-only, bare-array envelope, offset/limit pagination](decisions/0015-dii-backend-live-only-bare-array-envelope-offsetlimit-pagination.md)
-- [ADR-0016: PR-based release is the only supported flow](decisions/0016-pr-based-release-is-the-only-supported-flow.md)
-- [ADR-0017: where-expressions are cache-only (rationale)](decisions/0017-where-expressions-are-cache-only-rationale.md)
-- [ADR-0018: Cache schema versioning and backward-compatibility policy](decisions/0018-cache-schema-versioning-and-backward-compatibility-policy.md)
-- [ADR-0019: Console runtime client architecture: org-scoped access and per-token-type wrapper isolation](decisions/0019-console-runtime-client-architecture-org-scoped-access-and-per-token-type-wrapper-isolation.md)
+- [ADR-0001: Use SQLite for cluster metadata caching](decisions/0001-use-sqlite-for-cluster-metadata-caching.md) - Use SQLite as the storage backend for caching ONTAP cluster metadata, refreshed manually via `nf cache refresh`.
+- [ADR-0002: Track SMB Client Impact During Azure Maintenance Events](decisions/0002-track-smb-client-impact-azure-maintenance.md) - Extend Azure maintenance event tracking to capture SMB client impact metrics -- LIF failover timing, CIFS transition time, CIFS Witness notifications, and aggregate giveback -- during CVO HA failover events.
+- [ADR-0003: Use base SQLiteDB class with version-based migrations](decisions/0003-use-base-sqlitedb-class-with-version-based-migrations.md) - Create a base SQLiteDB class, inherited by all SQLite database classes, that provides schema-version tracking and convention-based `_upgrade_to_v{N}` migration methods.
+- [ADR-0004: Declarative field mapping framework for ONTAP collection](decisions/0004-declarative-field-mapping-framework.md) - Use a declarative field mapping framework (FieldMapping/TypeMapping) and generic parser functions to map ONTAP REST API and CLI responses to cache models, replacing hand-written per-type parsing methods.
+- [ADR-0005: UUID index for cache cross-references](decisions/0005-uuid-index-for-cache-cross-references.md) - Add a cached `uuid_index` property on `CachedClusterMetadata` that builds a flat UUID-to-object index across all cached model types for O(1) cross-reference lookups.
+- [ADR-0006: Generalize field mapping framework for multi-API data collection](decisions/0006-generalize-field-mapping-for-multi-api.md) - Extend the declarative field mapping framework from ONTAP-only to multi-API by adding a configurable records path, an `api_type` tag, and an optional CLI command on `TypeMapping`.
+- [ADR-0007: Deep URL-tree structure with automatic model and mapping discovery](decisions/0007-url-tree-model-registry.md) - Restructure the cache module into a deep directory tree mirroring ONTAP REST API URL paths, with co-located models and mappings auto-registered in a `ModelRegistry` singleton.
+- [ADR-0008: OpenAPI codegen for model and mapping generation](decisions/0008-openapi-codegen-for-model-generation.md) - Build a codegen tool that parses OpenAPI 3.0 specs to generate Pydantic model classes, FieldMapping/TypeMapping declarations, and TOML config overlays, with its own `$ref` resolution rather than `datamodel-code-generator`.
+- [ADR-0009: Per-Model SQL Table Storage for Cache Layer](decisions/0009-sql-table-storage.md) - Replace the single JSON-blob cache storage table with per-model SQL tables generated from Pydantic model field definitions, enabling SQL-level queries and per-field updates.
+- [ADR-0010: ClusterEntry and namespace access pattern](decisions/0010-clusterentry-and-namespace-access-pattern.md) - Replace eager cache enrichment in `Config.__init__()` with `ClusterEntry`, a dict-like wrapper exposing lazy, namespaced `@cached_property` accessors for cached API metadata.
+- [ADR-0011: Nested models to replace flat model pattern](decisions/0011-nested-models-to-replace-flat-model-pattern.md) - Replace flat Pydantic model field naming with nested models that mirror the ONTAP API's nested structure, moving flattening to a dedicated adapter at the cache boundary.
+- [ADR-0012: Unified DataSource Accessor for All Cluster Reads](decisions/0012-unified-datasource-accessor.md) - Introduce `DataSource` as the single accessor unifying the project's four divergent cluster-read paths, with per-call source override and a backend registry keyed by API type (superseded by ADR-0013).
+- [ADR-0013: DataSource as a Thin Facade Over the Collector](decisions/0013-datasource-as-a-thin-facade-over-the-collector.md) - Revise ADR-0012's implementation so `OntapBackend` becomes a thin delegate over the metadata collector's fetch logic, with the cache treated as a single-point-in-time snapshot that live fetches never persist into.
+- [ADR-0014: Parallel Cluster Refresh](decisions/0014-parallel-cluster-refresh.md) - Add a `--parallel-clusters` flag to `nf cache refresh --all` that collects clusters concurrently with a thread pool while all cache writes stay serialized on the main thread.
+- [ADR-0015: DII backend: live-only, bare-array envelope, offset/limit pagination](decisions/0015-dii-backend-live-only-bare-array-envelope-offsetlimit-pagination.md) - Add a live-only DII backend to the DataSource framework that parses DII's bare-array response envelope and offset/limit pagination directly, with no local cache.
+- [ADR-0016: PR-based release is the only supported flow](decisions/0016-pr-based-release-is-the-only-supported-flow.md) - Make the PR-based release flow (`doit release` opens a release PR, `doit release_tag` tags `main` after merge) the only supported release path, removing the redundant direct-to-`main` release tasks.
+- [ADR-0017: where-expressions are cache-only (rationale)](decisions/0017-where-expressions-are-cache-only-rationale.md) - Record why `.where()`-string expressions and the non-equality typed DSL operators that compile to them are supported only on the cache path, with live paths rejecting them.
+- [ADR-0018: Cache schema versioning and backward-compatibility policy](decisions/0018-cache-schema-versioning-and-backward-compatibility-policy.md) - Codify the on-disk SQLite cache schema's compatibility contract -- rebuild-tolerant, no downgrade support, and `SCHEMA_VERSION` kept internal.
+- [ADR-0019: Console runtime client architecture: org-scoped access and per-token-type wrapper isolation](decisions/0019-console-runtime-client-architecture-org-scoped-access-and-per-token-type-wrapper-isolation.md) - Define the Console runtime client as org-scoped (not `ClusterEntry`-scoped), with two internal per-token-type `APIWrapper` instances for user vs. service tokens, hand-authored for v1 and codegen-generated at scale.
+- [ADR-0020: Label nf cache query wildcard results with their source item](decisions/0020-label-nf-cache-query-wildcard-results-with-their-source-item.md) - Label nf cache query wildcard and filter results with the array item they came from, by name/svm.name/uuid/index, and switch their JSON shape to a list of key/value records.
 - [ADR-9001: Use uv for package management](decisions/9001-use-uv-for-package-management.md) - Use uv for dependency management, virtual environments and package installation
 - [ADR-9002: Use doit for task automation](decisions/9002-use-doit-for-task-automation.md) - Use doit as the task runner for testing, linting, building and other routine operations
 - [ADR-9003: Use ruff for linting and formatting](decisions/9003-use-ruff-for-linting-and-formatting.md) - Use ruff as the one tool for linting and formatting, in place of flake8, black and isort
@@ -178,9 +203,9 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [AI Enforcement Principles](development/ai/enforcement-principles.md) - How we enforce AI agent behavior in code and settings
 - [API Examples](examples/api.md) - Detailed Python API usage examples
 - [API Reference](reference/api.md) - Python API documentation
-- [Architecture Decision Records](decisions/README.md)
+- [Architecture Decision Records](decisions/README.md) - Explain what an ADR is, the template-meta (9XXX) vs. project-level (0001+) numbering series, the ADR format, and how to create a new one with `doit adr`.
 - [Auto-Checkpoint and Session-Restore Hooks](development/ai/auto-checkpoint-hook.md) - PreCompact and SessionStart hooks that preserve context across autocompact events
-- [Azure Maintenance SMB Client Impact Tracking](plans/azure-smb-impact-tracking.md)
+- [Azure Maintenance SMB Client Impact Tracking](plans/azure-smb-impact-tracking.md) - Plan to extend the `save-azure` command to capture SMB client impact metrics -- LIF failover timing, CIFS transition time, Witness notifications, and aggregate giveback -- during CVO HA failover events.
 - [Basic Usage](usage/basics.md) - Getting started with pynetappfoundry
 - [Cache Model Architecture](development/cache-models.md) - End-to-end guide for the codegen pipeline, cache models, field strategies, and SQL storage
 - [Cache System](reference/cache.md) - Architecture, storage layout, lazy loading, and CLI for the cluster metadata cache
@@ -210,9 +235,9 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [Optional Extensions](development/extensions.md) - Additional tools and extensions for testing, security, and more
 - [Per-Stack Rule Files](development/ai/rule-files.md) - How to author, load and mirror the short self-check rule files in .claude/rules/
 - [Performance Benchmarks](development/benchmarks.md) - Running, interpreting, and comparing the pytest-benchmark suite
-- [Plan: Add `nf cache query` Command](plans/cache-query-command.md)
+- [Plan: Add `nf cache query` Command](plans/cache-query-command.md) - Plan for a new `nf cache query` command that queries specific dot-notation fields from cached cluster metadata, for a single cluster, a filtered subset, or all clusters.
 - [Production Deployment Guide](deployment/production.md) - Comprehensive guide for deploying Python applications to production
-- [PyNetAppFoundry Code Review & Improvement Plan](plans/first-pass-refactor.md)
+- [PyNetAppFoundry Code Review & Improvement Plan](plans/first-pass-refactor.md) - Code review tracking critical issues, priorities, and improvement work needed to move the project toward production-readiness.
 - [pynetappfoundry Documentation](index.md) - ONTAP administration library and CLI tools
 - [Python Project Coding Standards](development/coding-standards.md) - Guidelines for exceptions, typing, structure, testing, and documentation
 - [Query Layer](usage/query-layer.md) - Guide to the REST query layer (QuerySet, Query, Mutation, JobTracker, related, realtime)

@@ -1,3 +1,13 @@
+---
+title: "ADR-0006: Generalize field mapping framework for multi-API data collection"
+description: Extend the declarative field mapping framework from ONTAP-only to multi-API by adding a configurable records path, an `api_type` tag, and an optional CLI command on `TypeMapping`.
+date: 2026-02-10
+audience:
+  - contributors
+tags:
+  - adr
+---
+
 # ADR-0006: Generalize field mapping framework for multi-API data collection
 
 ## Status

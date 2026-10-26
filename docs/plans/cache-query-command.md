@@ -1,3 +1,12 @@
+---
+title: "Plan: Add `nf cache query` Command"
+description: Plan for a new `nf cache query` command that queries specific dot-notation fields from cached cluster metadata, for a single cluster, a filtered subset, or all clusters.
+audience:
+  - contributors
+tags:
+  - plan
+---
+
 # Plan: Add `nf cache query` Command
 
 ## Summary

@@ -1,3 +1,13 @@
+---
+title: "ADR-0015: DII backend: live-only, bare-array envelope, offset/limit pagination"
+description: Add a live-only DII backend to the DataSource framework that parses DII's bare-array response envelope and offset/limit pagination directly, with no local cache.
+date: 2026-04-16
+audience:
+  - contributors
+tags:
+  - adr
+---
+
 # ADR-0015: DII backend: live-only, bare-array envelope, offset/limit pagination
 
 ## Status

@@ -1,3 +1,13 @@
+---
+title: "ADR-0009: Per-Model SQL Table Storage for Cache Layer"
+description: Replace the single JSON-blob cache storage table with per-model SQL tables generated from Pydantic model field definitions, enabling SQL-level queries and per-field updates.
+date: 2026-02-17
+audience:
+  - contributors
+tags:
+  - adr
+---
+
 # ADR-0009: Per-Model SQL Table Storage for Cache Layer
 
 ## Status

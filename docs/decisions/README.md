@@ -1,3 +1,12 @@
+---
+title: Architecture Decision Records
+description: Explain what an ADR is, the template-meta (9XXX) vs. project-level (0001+) numbering series, the ADR format, and how to create a new one with `doit adr`.
+audience:
+  - contributors
+tags:
+  - adr
+---
+
 # Architecture Decision Records
 
 This directory contains Architecture Decision Records (ADRs) for the project.
