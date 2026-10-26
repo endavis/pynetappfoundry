@@ -9,7 +9,7 @@ import pytest
 
 from pynetappfoundry.console import Console
 from pynetappfoundry.core.models import ConsoleAPISettings
-from pynetappfoundry.models.console.types import Organization
+from pynetappfoundry.models.console_types import Organization
 
 
 def _make_config(settings: ConsoleAPISettings, tmp_path: Any) -> MagicMock:

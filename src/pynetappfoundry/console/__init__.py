@@ -13,7 +13,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from pynetappfoundry.clients.console import ConsoleAPIClient, ConsoleServiceTokenMissingError
-from pynetappfoundry.models.console.types import Organization
+from pynetappfoundry.models.console_types import Organization
 
 if TYPE_CHECKING:
     from pynetappfoundry.core.config import Config

@@ -263,8 +263,11 @@ Issue: #697
 3. **Storage: committed.** ``src/pynetappfoundry/models/console/`` is
    committed in-tree (~21k lines), matching the YAML precedent. CI
    verifies regeneration is a no-op via ``doit console_models_check``,
-   which re-runs the generator and ``git diff --exit-code``-s the output
-   directory.
+   which the ``console-models`` job in ``ci.yml`` runs. It clears the output
+   directory, re-runs the generator with its formatters pinned, and fails
+   if ``git status --porcelain --untracked-files=all`` reports any
+   modified, deleted or new file there. The hand-authored compact types
+   live outside the tree, in ``models/console_types.py`` (Issue #825).
 
 4. **Caching Console data is not foreclosed by the split.** Three
    patterns are supported under the current cache architecture

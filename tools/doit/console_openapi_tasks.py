@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import shutil
 from pathlib import Path
 from typing import Any
 
@@ -70,6 +71,11 @@ _CONSOLE_MODELS_DIR = Path("src/pynetappfoundry/models/console")
 # the tool by other parts of the project. Keep this list ordered the same
 # way it appears in the upstream ``--help`` to make diffs reviewable.
 _DATAMODEL_CODEGEN_FLAGS: tuple[str, ...] = (
+    # Pinned to the 0.86 default; a later release switches the default to
+    # ``builtin``, which would change the generated output (#825).
+    "--formatters",
+    "black",
+    "isort",
     "--input-file-type",
     "openapi",
     "--output-model-type",
@@ -95,6 +101,9 @@ def _generate_console_models() -> None:
             "run 'doit console_openapi_refresh' first."
         )
 
+    # The tree is wholly generated, so clear it first: a module the generator
+    # no longer produces then shows up as a deletion instead of lingering.
+    shutil.rmtree(_CONSOLE_MODELS_DIR, ignore_errors=True)
     _CONSOLE_MODELS_DIR.mkdir(parents=True, exist_ok=True)
 
     cmd: list[str] = [
@@ -143,22 +152,33 @@ def task_console_models_check() -> dict[str, Any]:
     """Verify the checked-in Console models match a fresh codegen run.
 
     Like ``console_openapi_check``, this task is the determinism guard for
-    the generated tree — it regenerates and ``git diff --exit-code``-s the
-    output. It is **not** wired into ``doit check`` (which stays fast and
-    offline); run it explicitly in CI or before merging changes that touch
-    the codegen pipeline or the spec.
+    the generated tree: it regenerates the output and fails if git reports
+    any change under it, whether a modified, deleted or new untracked file
+    (#825). It is **not** wired into ``doit check``, which stays fast; the
+    ``console-models`` job in CI runs it on every pull request.
     """
     return {
-        "actions": [
-            _generate_console_models,
-            [
-                "git",
-                "--no-pager",
-                "diff",
-                "--exit-code",
-                "--",
-                str(_CONSOLE_MODELS_DIR),
-            ],
-        ],
+        "actions": [_generate_console_models, _check_models_unchanged],
         "verbosity": 2,
     }
+
+
+def _check_models_unchanged(models_dir: Path = _CONSOLE_MODELS_DIR) -> bool:
+    """Return False, printing the changes, if git sees any change under *models_dir*.
+
+    ``git diff`` only sees tracked files, so a new module from the generator
+    would pass it. ``git status --porcelain --untracked-files=all`` also
+    lists untracked files.
+    """
+    import subprocess  # nosec B404
+
+    result = subprocess.run(  # nosec B603 B607
+        ["git", "status", "--porcelain", "--untracked-files=all", "--", str(models_dir)],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    if result.stdout:
+        print(f"Generated Console models differ from the committed tree:\n{result.stdout}")
+        return False
+    return True

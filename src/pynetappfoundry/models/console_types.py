@@ -1,7 +1,9 @@
 """Hand-authored compact Console types for cache use.
 
 These classes are intentionally *not* generated — they stay stable across
-codegen runs so the cache field types don't change under us.
+codegen runs so the cache field types don't change under us. They live
+outside ``models/console/``, which ``doit console_models`` clears and
+regenerates in full (#825).
 """
 
 from __future__ import annotations

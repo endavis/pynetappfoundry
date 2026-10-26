@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from pynetappfoundry.clients.openapi import APIWrapper
-from pynetappfoundry.models.console.types import Organization
+from pynetappfoundry.models.console_types import Organization
 
 if TYPE_CHECKING:
     from pynetappfoundry.core.config import Config

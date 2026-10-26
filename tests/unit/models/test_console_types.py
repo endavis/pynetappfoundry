@@ -1,4 +1,4 @@
-"""Tests for the hand-authored Console types (`models.console.types`).
+"""Tests for the hand-authored Console types (`models.console_types`).
 
 These types are intentionally *not* generated — they exist so the cache-side
 field types stay stable across codegen runs and the cached JSON stays small.
@@ -9,7 +9,7 @@ from __future__ import annotations
 from pynetappfoundry.models.console.tenancyv4.get_organizations import (
     Resource10GetResponseBody,
 )
-from pynetappfoundry.models.console.types import Organization
+from pynetappfoundry.models.console_types import Organization
 
 
 class TestOrganization:
