@@ -171,7 +171,14 @@ no_implicit_optional = true
 strict_equality = true
 warn_redundant_casts = true
 warn_unreachable = true
-exclude = [".claude/", ".codex/"]
+# tests/ is a package (tests/__init__.py), but pytest's pythonpath = [".", "tests"]
+# (pyproject.toml, #827) lets test files do a bare `from agent_roster import ...`.
+# mypy_path makes that import resolvable too. tests/agent_roster.py itself is
+# excluded from the tests/ walk below so mypy only ever sees it under the one
+# module name resolved via mypy_path, not also as tests.agent_roster — both at
+# once raises "Source file found twice under different module names" (#829).
+mypy_path = "tests"
+exclude = [".claude/", ".codex/", "^tests/agent_roster\\.py$"]
 
 [[tool.mypy.overrides]]
 # netapp-ontap 9.18.1+ uses apipkg lazy loading; mypy cannot resolve dynamic attributes

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 from unittest.mock import MagicMock
 
 import pytest
@@ -222,7 +222,7 @@ class TestFieldMappingApiPathDefault:
             ),
         )
         record = {"name": "auto_test", "value": 77}
-        result = parse_api_record(tm, record, "[test]")
+        result = cast(_SampleModel, parse_api_record(tm, record, "[test]"))
         assert result.name == "auto_test"
         assert result.value == 77
 
@@ -526,25 +526,25 @@ class TestParseApiRecord:
     def test_simple_path(self, mapping: TypeMapping) -> None:
         """Top-level key extraction works."""
         record = {"name": "test1", "nested": {"value": 42}, "deep": {"nested": {"flag": True}}}
-        result = parse_api_record(mapping, record, "[test]")
+        result = cast(_SampleModel, parse_api_record(mapping, record, "[test]"))
         assert result.name == "test1"
 
     def test_nested_path(self, mapping: TypeMapping) -> None:
         """Dot-path extraction works."""
         record = {"name": "test1", "nested": {"value": 99}, "deep": {"nested": {"flag": True}}}
-        result = parse_api_record(mapping, record, "[test]")
+        result = cast(_SampleModel, parse_api_record(mapping, record, "[test]"))
         assert result.value == 99
 
     def test_three_level_path(self, mapping: TypeMapping) -> None:
         """Three-level dot-path extraction works."""
         record = {"name": "test1", "nested": {"value": 0}, "deep": {"nested": {"flag": True}}}
-        result = parse_api_record(mapping, record, "[test]")
+        result = cast(_SampleModel, parse_api_record(mapping, record, "[test]"))
         assert result.flag is True
 
     def test_missing_path_uses_default(self, mapping: TypeMapping) -> None:
         """Missing path falls back to default."""
         record = {"name": "test1"}
-        result = parse_api_record(mapping, record, "[test]")
+        result = cast(_SampleModel, parse_api_record(mapping, record, "[test]"))
         assert result.value == 0
         assert result.flag is False
 
@@ -559,7 +559,7 @@ class TestParseApiRecord:
                 FieldMapping(cache_attr="name", api_path="wrong", transform=lambda _: "custom"),
             ),
         )
-        result = parse_api_record(tm, {"wrong": "original"}, "[test]")
+        result = cast(_SampleModel, parse_api_record(tm, {"wrong": "original"}, "[test]"))
         assert result.name == "custom"
 
     def test_transform_exception_propagates(self) -> None:
@@ -593,7 +593,7 @@ class TestParseApiRecord:
                 ),
             ),
         )
-        result = parse_api_record(tm, {"name": "ignored"}, "[test]")
+        result = cast(_SampleModel, parse_api_record(tm, {"name": "ignored"}, "[test]"))
         assert result.name == "def"
 
 
@@ -623,25 +623,25 @@ class TestParseCliRecord:
     def test_simple_lookup(self, mapping: TypeMapping) -> None:
         """Simple CLI field lookup works."""
         record = {"name": "vol1", "val": "42", "is-active": "true"}
-        result = parse_cli_record(mapping, record, "[test]")
+        result = cast(_SampleModel, parse_cli_record(mapping, record, "[test]"))
         assert result.name == "vol1"
 
     def test_int_coercion(self, mapping: TypeMapping) -> None:
         """CLI string values are coerced to int based on default type."""
         record = {"name": "vol1", "val": "100", "is-active": "false"}
-        result = parse_cli_record(mapping, record, "[test]")
+        result = cast(_SampleModel, parse_cli_record(mapping, record, "[test]"))
         assert result.value == 100
 
     def test_bool_coercion(self, mapping: TypeMapping) -> None:
         """CLI boolean strings are coerced correctly."""
         record = {"name": "vol1", "val": "0", "is-active": "true"}
-        result = parse_cli_record(mapping, record, "[test]")
+        result = cast(_SampleModel, parse_cli_record(mapping, record, "[test]"))
         assert result.flag is True
 
     def test_missing_field_uses_default(self, mapping: TypeMapping) -> None:
         """Missing CLI field returns default."""
         record = {"name": "vol1"}
-        result = parse_cli_record(mapping, record, "[test]")
+        result = cast(_SampleModel, parse_cli_record(mapping, record, "[test]"))
         assert result.value == 0
         assert result.flag is False
 
@@ -660,7 +660,7 @@ class TestParseCliRecord:
                 ),
             ),
         )
-        result = parse_cli_record(tm, {"raw": "a,b,c"}, "[test]")
+        result = cast(_SampleModel, parse_cli_record(tm, {"raw": "a,b,c"}, "[test]"))
         assert result.items == ["a", "b", "c"]
 
     def test_cli_transform_exception_propagates(self) -> None:
@@ -688,7 +688,7 @@ class TestParseCliRecord:
             cli_command="t",
             fields=(FieldMapping(cache_attr="value", cli_field="val", default=0),),
         )
-        result = parse_cli_record(tm, {"val": 42}, "[test]")
+        result = cast(_SampleModel, parse_cli_record(tm, {"val": 42}, "[test]"))
         assert result.value == 42
 
 
@@ -731,7 +731,9 @@ class TestParseApiResponse:
                 {"name": "b", "value": 2},
             ]
         }
-        results = parse_api_response(mapping, response, "[t]", MagicMock())
+        results = cast(
+            list[_SampleModel], parse_api_response(mapping, response, "[t]", MagicMock())
+        )
         assert len(results) == 2
         assert results[0].name == "a"
         assert results[1].name == "b"
@@ -760,7 +762,7 @@ class TestParseApiResponse:
             records_path="hits",
         )
         response = {"hits": [{"name": "x", "value": 10}]}
-        results = parse_api_response(tm, response, "[t]", MagicMock())
+        results = cast(list[_SampleModel], parse_api_response(tm, response, "[t]", MagicMock()))
         assert len(results) == 1
         assert results[0].name == "x"
         assert results[0].value == 10
@@ -775,7 +777,7 @@ class TestParseApiResponse:
             records_path="data.items",
         )
         response = {"data": {"items": [{"name": "nested1"}, {"name": "nested2"}]}}
-        results = parse_api_response(tm, response, "[t]", MagicMock())
+        results = cast(list[_SampleModel], parse_api_response(tm, response, "[t]", MagicMock()))
         assert len(results) == 2
         assert results[0].name == "nested1"
         assert results[1].name == "nested2"
@@ -790,7 +792,7 @@ class TestParseApiResponse:
             records_path="nonexistent.path",
         )
         response = {"records": [{"name": "a"}]}
-        results = parse_api_response(tm, response, "[t]", MagicMock())
+        results = cast(list[_SampleModel], parse_api_response(tm, response, "[t]", MagicMock()))
         assert results == []
 
 
@@ -826,7 +828,7 @@ class TestParseCliRecords:
             {"name": "a", "val": "1"},
             {"name": "b", "val": "2"},
         ]
-        results = parse_cli_records(mapping, records, "[t]", MagicMock())
+        results = cast(list[_SampleModel], parse_cli_records(mapping, records, "[t]", MagicMock()))
         assert len(results) == 2
         assert results[0].name == "a"
         assert results[1].value == 2
@@ -1338,7 +1340,7 @@ class TestCacheStrategyFiltering:
             ),
         )
         record = {"name": "test1", "value": 99}
-        result = parse_api_record(tm, record, "[test]")
+        result = cast(_SampleModel, parse_api_record(tm, record, "[test]"))
         assert result.name == "test1"
         assert result.value == 99
 
@@ -1359,7 +1361,7 @@ class TestCacheStrategyFiltering:
             ),
         )
         record = {"name": "test1", "value": 99}
-        result = parse_api_record(tm, record, "[test]", skip_realtime=True)
+        result = cast(_SampleModel, parse_api_record(tm, record, "[test]", skip_realtime=True))
         assert result.name == "test1"
         assert result.value == 0
 
@@ -1380,7 +1382,7 @@ class TestCacheStrategyFiltering:
             ),
         )
         record = {"name": "test1", "value": 42}
-        result = parse_api_record(tm, record, "[test]", skip_realtime=True)
+        result = cast(_SampleModel, parse_api_record(tm, record, "[test]", skip_realtime=True))
         assert result.name == "test1"
         assert result.value == 0
 
@@ -1398,7 +1400,7 @@ class TestCacheStrategyFiltering:
             ),
         )
         record = {"name": "test1", "value": 42}
-        result = parse_api_record(tm, record, "[test]")
+        result = cast(_SampleModel, parse_api_record(tm, record, "[test]"))
         assert result.name == "test1"
         assert result.value == 42
 
@@ -1438,7 +1440,10 @@ class TestPostCollection:
             ),
         )
         response = {"records": [{"name": "a"}, {"name": "b"}]}
-        results = parse_api_response(tm, response, "[t]", MagicMock(), skip_realtime=True)
+        results = cast(
+            list[_SampleModel],
+            parse_api_response(tm, response, "[t]", MagicMock(), skip_realtime=True),
+        )
         assert len(results) == 2
         # post_collection should NOT have been called
         assert call_log == []
@@ -1456,5 +1461,8 @@ class TestPostCollection:
         )
         response = {"records": [{"name": "a"}]}
         # Should not raise
-        results = parse_api_response(tm, response, "[t]", MagicMock(), skip_realtime=True)
+        results = cast(
+            list[_SampleModel],
+            parse_api_response(tm, response, "[t]", MagicMock(), skip_realtime=True),
+        )
         assert len(results) == 1

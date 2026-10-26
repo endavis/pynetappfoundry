@@ -485,7 +485,7 @@ class TestEntityConfigsIntegrity:
         """Each config's key_field resolves on model_class (supports dotted paths)."""
         for category, config in _get_entity_configs().items():
             parts = config.key_field.split(".")
-            current_model = config.model_class
+            current_model: Any = config.model_class
             for i, part in enumerate(parts):
                 assert part in current_model.model_fields, (
                     f"{category}: key_field '{config.key_field}' part '{part}' not in "

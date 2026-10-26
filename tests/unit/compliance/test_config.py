@@ -235,7 +235,7 @@ class TestMergeRules:
 
     def test_cluster_specific_check_missing_required_fields(self) -> None:
         """Test that cluster-specific rules without required fields are skipped."""
-        global_rules = {}
+        global_rules: dict[str, ComplianceRule] = {}
         overrides = {
             "incomplete": ClusterComplianceOverride(severity="error"),
         }

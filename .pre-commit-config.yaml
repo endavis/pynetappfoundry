@@ -69,12 +69,11 @@ repos:
         stages: [pre-commit]
 
       # Type checking (uses project's mypy version)
-      # Scope matches `doit type_check`, so the hook cannot pass code CI would
-      # reject. The template checks `src/ tools/ tests/`; this project stays at
-      # `src/ tools/doit/` until #829 widens both.
+      # Scope matches `doit type_check` and the template's own scope
+      # (src/ tools/ tests/), so the hook cannot pass code CI would reject (#829).
       - id: mypy
         name: mypy
-        entry: uv run mypy src/ tools/doit/
+        entry: uv run mypy src/ tools/ tests/
         language: system
         types: [python]
         pass_filenames: false

@@ -41,11 +41,11 @@ def task_format_check() -> dict[str, Any]:
 
 def task_type_check() -> dict[str, Any]:
     """Run mypy type checking (uses pyproject.toml configuration)."""
-    # Project divergence: the template covers `src/ tools/ tests/` (upstream #700),
-    # but widening it here surfaces ~300 existing errors, mostly in tests/unit/.
-    # Kept at `src/ tools/doit/` until #829 fixes them and adopts the template scope.
+    # Matches the template's scope (upstream #700): src/, tools/ and tests/ are
+    # all type-checked. #829 fixed the ~300 errors that widening to tools/ and
+    # tests/ surfaced.
     return {
-        "actions": ["uv run mypy src/ tools/doit/" + optional_root_files("bootstrap.py")],
+        "actions": ["uv run mypy src/ tools/ tests/" + optional_root_files("bootstrap.py")],
         "title": title_with_actions,
         "verbosity": 0,
     }

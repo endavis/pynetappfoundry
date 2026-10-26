@@ -203,7 +203,7 @@ class TestRenderTable:
         """All cell values appear verbatim with Console(width=80) — no '…'."""
         long_user = "DOMAIN\\very-long-username-that-would-normally-truncate"
         long_duration = "P0DT12H34M56S-extra"
-        rows = [
+        rows: list[tuple[str, ...]] = [
             (
                 "production-cluster-1",
                 "vs-application-data",
@@ -254,7 +254,7 @@ class TestResolveCsvPath:
 class TestWriteCsv:
     def test_header_and_rows(self, tmp_path: Path) -> None:
         target = tmp_path / "out.csv"
-        rows = [
+        rows: list[tuple[str, ...]] = [
             (
                 "c1",
                 "vs1",

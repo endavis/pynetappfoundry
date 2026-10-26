@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import pytest
 
 from pynetappfoundry.core.models import (
@@ -51,7 +53,7 @@ class TestBaseResource:
         """Test that extra fields are allowed."""
         resource = BaseResource(
             name="test",
-            custom_field="custom_value",
+            custom_field="custom_value",  # type: ignore[call-arg]
         )
         assert resource.name == "test"
         assert resource.custom_field == "custom_value"  # type: ignore[attr-defined]
@@ -102,7 +104,7 @@ class TestClusterConfig:
 
     def test_from_toml_dict(self) -> None:
         """Test creating cluster from TOML-style dict."""
-        toml_data = {
+        toml_data: dict[str, Any] = {
             "ip": "192.168.1.173",
             "div": "ITS",
             "bu": "LAR",

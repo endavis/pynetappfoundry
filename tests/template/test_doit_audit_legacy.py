@@ -17,7 +17,7 @@ from __future__ import annotations
 import json
 from io import StringIO
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 from unittest.mock import patch
 
 from tools.doit.audit_legacy import (
@@ -379,7 +379,7 @@ class TestRenderJson:
         buf = StringIO()
         with patch("builtins.print", side_effect=lambda s: buf.write(s + "\n")):
             render_json(candidates, legitimate, strict)
-        return json.loads(buf.getvalue())
+        return cast(dict[str, Any], json.loads(buf.getvalue()))
 
     def test_top_level_keys(self) -> None:
         data = self._run_render([], [])

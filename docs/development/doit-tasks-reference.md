@@ -237,12 +237,12 @@ doit type_check
 ```
 
 **What it does:**
-- Runs mypy on `src/` directory
+- Runs mypy on `src/`, `tools/` and `tests/`
 - Uses configuration from `pyproject.toml`
 
 **Equivalent command:**
 ```bash
-uv run mypy src/
+uv run mypy src/ tools/ tests/
 ```
 
 ### `check`

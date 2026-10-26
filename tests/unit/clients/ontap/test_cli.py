@@ -96,7 +96,6 @@ class TestONTAPCLIConnect:
         """Multiple threads calling connect should only create one connection."""
         import threading
         import time
-        from typing import Any
 
         with patch("paramiko.SSHClient") as mock_ssh_class:
             mock_ssh = MagicMock()
@@ -105,7 +104,7 @@ class TestONTAPCLIConnect:
             mock_transport = MagicMock()
             mock_transport.is_active.return_value = True
             # Start with no transport, then return the mock after connect
-            transport_state: dict[str, Any] = {"transport": None}
+            transport_state: dict[str, MagicMock | None] = {"transport": None}
 
             def get_transport_side_effect() -> MagicMock | None:
                 if transport_state["transport"] is None:

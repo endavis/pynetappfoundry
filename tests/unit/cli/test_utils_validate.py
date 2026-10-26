@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -39,7 +40,7 @@ class TestValidateSSH:
 
     def test_validate_ssh_no_ip(self, mock_config: MagicMock) -> None:
         """Test SSH validation skipped when no IP configured."""
-        details = {}  # No IP
+        details: dict[str, Any] = {}  # No IP
 
         result = _validate_ssh("test-cluster", details, mock_config)
 

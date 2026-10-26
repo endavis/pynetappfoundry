@@ -1436,7 +1436,7 @@ class TestHTMLFileGeneration:
             cluster_self._build_cloud_info()
 
         # Monkey-patch the method
-        ClusterData._gather_data = mock_gather_data  # type: ignore[method-assign]
+        ClusterData._gather_data = mock_gather_data  # type: ignore[assignment]
 
         try:
             builder = HTMLReportBuilder(

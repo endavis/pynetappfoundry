@@ -16,12 +16,12 @@ def _make_ep(path: str, field_count: int) -> ParsedEndpoint:
 
 
 class TestDeduplicateEndpoints:
-    def test_no_duplicates_passthrough(self):
+    def test_no_duplicates_passthrough(self) -> None:
         eps = [_make_ep("/storage/volumes", 10), _make_ep("/network/interfaces", 5)]
         result = _deduplicate_endpoints(eps)
         assert len(result) == 2
 
-    def test_keeps_richest_endpoint(self):
+    def test_keeps_richest_endpoint(self) -> None:
         """When /storage/volumes (10 fields) and /storage/volumes/{uuid} (2 fields)
         collide, keep the one with more fields."""
         collection = _make_ep("/storage/volumes", 10)
@@ -30,7 +30,7 @@ class TestDeduplicateEndpoints:
         assert len(result) == 1
         assert result[0].path == "/storage/volumes"
 
-    def test_keeps_richest_reversed_order(self):
+    def test_keeps_richest_reversed_order(self) -> None:
         """Order shouldn't matter — richest endpoint wins."""
         collection = _make_ep("/storage/volumes", 10)
         instance = _make_ep("/storage/volumes/{uuid}", 2)
@@ -38,7 +38,7 @@ class TestDeduplicateEndpoints:
         assert len(result) == 1
         assert result[0].path == "/storage/volumes"
 
-    def test_preserves_order_of_winners(self):
+    def test_preserves_order_of_winners(self) -> None:
         """Winner position in the output should match its first appearance in input."""
         ep1 = _make_ep("/storage/volumes", 10)
         ep2 = _make_ep("/network/interfaces", 5)
@@ -48,15 +48,15 @@ class TestDeduplicateEndpoints:
         assert result[0].path == "/storage/volumes"
         assert result[1].path == "/network/interfaces"
 
-    def test_empty_input(self):
+    def test_empty_input(self) -> None:
         assert _deduplicate_endpoints([]) == []
 
-    def test_single_endpoint(self):
+    def test_single_endpoint(self) -> None:
         ep = _make_ep("/storage/volumes", 5)
         result = _deduplicate_endpoints([ep])
         assert result == [ep]
 
-    def test_object_fields_excluded_from_leaf_count(self):
+    def test_object_fields_excluded_from_leaf_count(self) -> None:
         """Dedup uses _select_leaf_fields, so pure object containers don't inflate count."""
         # 3 leaf fields + 1 object container = 3 effective leaves
         fields_with_object = [

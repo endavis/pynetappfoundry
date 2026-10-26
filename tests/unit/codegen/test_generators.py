@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from tools.codegen.adapters import ParsedEndpoint, ParsedField
 from tools.codegen.generators import (
     _CLASS_NAME_OVERRIDES,
@@ -77,69 +79,69 @@ def _make_endpoint(
 
 
 class TestPathToModuleParts:
-    def test_simple(self):
+    def test_simple(self) -> None:
         assert _path_to_module_parts("/storage/volumes") == ["storage", "volumes"]
 
-    def test_deep(self):
+    def test_deep(self) -> None:
         assert _path_to_module_parts("/network/ip/interfaces") == ["network", "ip", "interfaces"]
 
-    def test_hyphen_to_underscore(self):
+    def test_hyphen_to_underscore(self) -> None:
         assert _path_to_module_parts("/network/ethernet/broadcast-domains") == [
             "network",
             "ethernet",
             "broadcast_domains",
         ]
 
-    def test_skip_params(self):
+    def test_skip_params(self) -> None:
         assert _path_to_module_parts("/svm/svms/{svm.uuid}/web") == ["svm", "svms", "web"]
 
 
 class TestSchemaToPascal:
-    def test_simple(self):
+    def test_simple(self) -> None:
         assert _schema_to_pascal("volume") == "Volume"
 
-    def test_snake_case(self):
+    def test_snake_case(self) -> None:
         assert _schema_to_pascal("cloud_target") == "CloudTarget"
 
-    def test_multi_segment(self):
+    def test_multi_segment(self) -> None:
         assert _schema_to_pascal("ip_interface") == "IpInterface"
 
-    def test_single_word(self):
+    def test_single_word(self) -> None:
         assert _schema_to_pascal("svm") == "Svm"
 
 
 class TestPathToClassName:
-    def test_schema_name_with_api_prefix(self):
+    def test_schema_name_with_api_prefix(self) -> None:
         """When schema_name is provided, use {ApiType}{SchemaName}."""
         assert _path_to_class_name("/storage/volumes", "volume", "ontap") == "OntapVolume"
 
-    def test_schema_name_snake_case(self):
+    def test_schema_name_snake_case(self) -> None:
         assert _path_to_class_name("/cloud/targets", "cloud_target", "ontap") == "OntapCloudTarget"
 
-    def test_schema_name_different_api_type(self):
+    def test_schema_name_different_api_type(self) -> None:
         assert _path_to_class_name("/some/path", "node", "aiqum") == "AiqumNode"
 
-    def test_inline_fallback_simple(self):
+    def test_inline_fallback_simple(self) -> None:
         """When schema_name is empty, fall back to URL-path-derived name with api prefix."""
         assert _path_to_class_name("/cluster", "", "ontap") == "OntapCluster"
 
-    def test_inline_fallback_deep(self):
+    def test_inline_fallback_deep(self) -> None:
         assert (
             _path_to_class_name("/cluster/licensing/licenses", "", "ontap")
             == "OntapClusterLicensingLicense"
         )
 
-    def test_inline_fallback_redundant_dedup(self):
+    def test_inline_fallback_redundant_dedup(self) -> None:
         """Inline fallback still deduplicates redundant segments."""
         assert _path_to_class_name("/svm/svms", "", "ontap") == "OntapSvm"
 
-    def test_inline_fallback_hyphen(self):
+    def test_inline_fallback_hyphen(self) -> None:
         assert (
             _path_to_class_name("/network/ethernet/broadcast-domains", "", "ontap")
             == "OntapNetworkEthernetBroadcastDomain"
         )
 
-    def test_override_map_takes_precedence(self):
+    def test_override_map_takes_precedence(self) -> None:
         """_CLASS_NAME_OVERRIDES should override the algorithm."""
         _CLASS_NAME_OVERRIDES["/test/override"] = "MyCustomName"
         try:
@@ -147,71 +149,71 @@ class TestPathToClassName:
         finally:
             del _CLASS_NAME_OVERRIDES["/test/override"]
 
-    def test_default_api_type(self):
+    def test_default_api_type(self) -> None:
         """Default api_type is ontap."""
         assert _path_to_class_name("/storage/volumes", "volume") == "OntapVolume"
 
 
 class TestSingularize:
-    def test_regular_plural(self):
+    def test_regular_plural(self) -> None:
         assert _singularize("volumes") == "volume"
 
-    def test_ies(self):
+    def test_ies(self) -> None:
         assert _singularize("policies") == "policy"
 
-    def test_ses(self):
+    def test_ses(self) -> None:
         assert _singularize("addresses") == "address"
 
-    def test_already_singular(self):
+    def test_already_singular(self) -> None:
         assert _singularize("web") == "web"
 
-    def test_double_s(self):
+    def test_double_s(self) -> None:
         assert _singularize("access") == "access"
 
-    def test_exception_dns(self):
+    def test_exception_dns(self) -> None:
         assert _singularize("dns") == "dns"
 
-    def test_exception_licenses(self):
+    def test_exception_licenses(self) -> None:
         assert _singularize("licenses") == "license"
 
-    def test_exception_chassis(self):
+    def test_exception_chassis(self) -> None:
         assert _singularize("chassis") == "chassis"
 
-    def test_exception_flexcaches(self):
+    def test_exception_flexcaches(self) -> None:
         assert _singularize("flexcaches") == "flexcache"
 
-    def test_exception_status(self):
+    def test_exception_status(self) -> None:
         assert _singularize("status") == "status"
 
-    def test_exception_alias(self):
+    def test_exception_alias(self) -> None:
         assert _singularize("alias") == "alias"
 
-    def test_exception_bus(self):
+    def test_exception_bus(self) -> None:
         assert _singularize("bus") == "bus"
 
-    def test_exception_nfs(self):
+    def test_exception_nfs(self) -> None:
         assert _singularize("nfs") == "nfs"
 
-    def test_exception_cifs(self):
+    def test_exception_cifs(self) -> None:
         assert _singularize("cifs") == "cifs"
 
-    def test_all_exceptions_covered(self):
+    def test_all_exceptions_covered(self) -> None:
         """Every entry in _SINGULAR_EXCEPTIONS should produce the expected value."""
         for plural, expected in _SINGULAR_EXCEPTIONS.items():
             assert _singularize(plural) == expected, f"_singularize({plural!r}) != {expected!r}"
 
 
 class TestFieldToCacheAttr:
-    def test_simple(self):
+    def test_simple(self) -> None:
         f = ParsedField(name="name", api_path="name")
         assert _field_to_cache_attr(f) == "name"
 
-    def test_nested(self):
+    def test_nested(self) -> None:
         """Nested fields use dot-path cache_attr."""
         f = ParsedField(name="name", api_path="svm.name")
         assert _field_to_cache_attr(f) == "svm.name"
 
-    def test_deep_nested(self):
+    def test_deep_nested(self) -> None:
         f = ParsedField(name="name", api_path="nas.export_policy.name")
         assert _field_to_cache_attr(f) == "nas.export_policy.name"
 
@@ -224,7 +226,7 @@ class TestFieldToCacheAttr:
 class TestCollectAllLeaves:
     """Tests for _collect_all_leaves (tree-walking)."""
 
-    def test_collects_from_tree(self):
+    def test_collects_from_tree(self) -> None:
         fields = [
             ParsedField(name="uuid", api_path="uuid"),
             ParsedField(
@@ -241,7 +243,7 @@ class TestCollectAllLeaves:
         paths = {f.api_path for f in leaves}
         assert paths == {"uuid", "svm.name", "svm.uuid"}
 
-    def test_deep_nesting(self):
+    def test_deep_nesting(self) -> None:
         fields = [
             ParsedField(
                 name="location",
@@ -263,7 +265,7 @@ class TestCollectAllLeaves:
         assert len(leaves) == 1
         assert leaves[0].api_path == "location.home_node.name"
 
-    def test_includes_list_objects(self):
+    def test_includes_list_objects(self) -> None:
         fields = [
             ParsedField(
                 name="aggregates",
@@ -286,24 +288,24 @@ class TestCollectAllLeaves:
 
 
 class TestGenerateModel:
-    def test_basic_structure(self):
+    def test_basic_structure(self) -> None:
         ep = _make_endpoint()
         code = generate_model(ep)
         assert "class OntapVolume(OntapModel):" in code
         assert "from pynetappfoundry.models._base import OntapModel" in code
 
-    def test_uuid_import(self):
+    def test_uuid_import(self) -> None:
         ep = _make_endpoint()
         code = generate_model(ep)
         assert "OntapUUID" in code
 
-    def test_list_field_uses_field_factory(self):
+    def test_list_field_uses_field_factory(self) -> None:
         ep = _make_endpoint()
         code = generate_model(ep)
         assert "Field(default_factory=list)" in code
         assert "from pydantic import Field" in code
 
-    def test_nested_sub_model_generated(self):
+    def test_nested_sub_model_generated(self) -> None:
         """Object fields produce nested sub-model classes."""
         ep = _make_endpoint()
         code = generate_model(ep)
@@ -311,7 +313,7 @@ class TestGenerateModel:
         # Parent field typed as sub-model with default_factory
         assert "svm: OntapVolumeSvm = Field(default_factory=OntapVolumeSvm)" in code
 
-    def test_sub_model_has_leaf_fields(self):
+    def test_sub_model_has_leaf_fields(self) -> None:
         """Sub-model class has the leaf field attributes."""
         ep = _make_endpoint()
         code = generate_model(ep)
@@ -319,7 +321,7 @@ class TestGenerateModel:
         lines = code.split("\n")
         # Find the sub-model section
         in_sub = False
-        sub_fields = []
+        sub_fields: list[str] = []
         for line in lines:
             if "class OntapVolumeSvm" in line:
                 in_sub = True
@@ -331,7 +333,7 @@ class TestGenerateModel:
                     sub_fields.append(line.strip())
         assert any("name: str" in f for f in sub_fields)
 
-    def test_no_flat_svm_name(self):
+    def test_no_flat_svm_name(self) -> None:
         """Flat field names like svm_name should NOT appear on the parent model."""
         ep = _make_endpoint()
         code = generate_model(ep)
@@ -352,14 +354,14 @@ class TestGenerateModel:
 
 
 class TestGenerateMapping:
-    def test_basic_structure(self):
+    def test_basic_structure(self) -> None:
         ep = _make_endpoint()
         code = generate_mapping(ep)
         assert "ONTAPVOLUME_MAPPING = TypeMapping(" in code
         assert 'name="OntapVolume"' in code
         assert "model_class=OntapVolume" in code
 
-    def test_field_mappings_use_dot_path_cache_attr(self):
+    def test_field_mappings_use_dot_path_cache_attr(self) -> None:
         """cache_attr values should be dot-paths for nested fields."""
         ep = _make_endpoint()
         code = generate_mapping(ep)
@@ -367,7 +369,7 @@ class TestGenerateMapping:
         # api_path is omitted when it matches cache_attr (auto-defaults via __post_init__)
         assert 'api_path="svm.name"' not in code
 
-    def test_expensive_fields_in_endpoint(self):
+    def test_expensive_fields_in_endpoint(self) -> None:
         fields = [
             ParsedField(name="name", api_path="name"),
             ParsedField(
@@ -388,7 +390,7 @@ class TestGenerateMapping:
         code = generate_mapping(ep)
         assert "requires_explicit_fetch=True" in code
 
-    def test_parent_mapping_with_schema_lookup(self):
+    def test_parent_mapping_with_schema_lookup(self) -> None:
         ep = _make_endpoint(
             path="/svm/svms/{svm.uuid}/web",
             has_parent=True,
@@ -404,7 +406,7 @@ class TestGenerateMapping:
         assert 'parent_mapping="OntapSvm"' in code
         assert 'parent_id_field="uuid"' in code
 
-    def test_parent_mapping_omitted_without_schema_lookup(self):
+    def test_parent_mapping_omitted_without_schema_lookup(self) -> None:
         """Without a schema_lookup confirming parent resolvability, omit parent_mapping.
 
         Previously the generator emitted a URL-path-derived
@@ -428,12 +430,12 @@ class TestGenerateMapping:
         assert "parent_mapping=" not in code
         assert "parent_id_field=" not in code
 
-    def test_registry_call(self):
+    def test_registry_call(self) -> None:
         ep = _make_endpoint()
         code = generate_mapping(ep)
         assert 'model_registry.register_mapping("OntapVolume"' in code
 
-    def test_identifier_field_emitted_when_set(self):
+    def test_identifier_field_emitted_when_set(self) -> None:
         """identifier_field on the endpoint emits a line in TypeMapping."""
         ep = _make_endpoint()
         ep.identifier_field = "uuid"
@@ -445,14 +447,14 @@ class TestGenerateMapping:
         fields_pos = code.index("fields=(")
         assert api_type_pos < ident_pos < fields_pos
 
-    def test_identifier_field_omitted_when_none(self):
+    def test_identifier_field_omitted_when_none(self) -> None:
         """identifier_field=None leaves the line out entirely."""
         ep = _make_endpoint()
         ep.identifier_field = None
         code = generate_mapping(ep)
         assert "identifier_field" not in code
 
-    def test_custom_identifier_field_name(self):
+    def test_custom_identifier_field_name(self) -> None:
         """identifier_field preserves the exact parameter name."""
         ep = _make_endpoint()
         ep.identifier_field = "id"
@@ -463,7 +465,7 @@ class TestGenerateMapping:
 class TestGenerateMappingTomlMirroring:
     """Tests for the ``existing_toml_path`` TOML-mirroring behavior."""
 
-    def test_mirrors_cache_strategy_realtime(self, tmp_path):
+    def test_mirrors_cache_strategy_realtime(self, tmp_path: Path) -> None:
         fields = [
             ParsedField(name="foo", api_path="foo", python_type="int", default=0),
         ]
@@ -477,7 +479,7 @@ class TestGenerateMappingTomlMirroring:
         code = generate_mapping(ep, existing_toml_path=toml)
         assert 'cache_strategy="realtime"' in code
 
-    def test_mirrors_requires_explicit_fetch(self, tmp_path):
+    def test_mirrors_requires_explicit_fetch(self, tmp_path: Path) -> None:
         fields = [
             ParsedField(name="foo", api_path="foo", python_type="int", default=0),
         ]
@@ -492,7 +494,7 @@ class TestGenerateMappingTomlMirroring:
         code = generate_mapping(ep, existing_toml_path=toml)
         assert "requires_explicit_fetch=True" in code
 
-    def test_default_cache_strategy_omitted(self, tmp_path):
+    def test_default_cache_strategy_omitted(self, tmp_path: Path) -> None:
         """cache_strategy='cache' (the default) is NOT emitted."""
         fields = [
             ParsedField(name="foo", api_path="foo", python_type="int", default=0),
@@ -507,7 +509,7 @@ class TestGenerateMappingTomlMirroring:
         code = generate_mapping(ep, existing_toml_path=toml)
         assert "cache_strategy=" not in code
 
-    def test_no_toml_emits_defaults(self):
+    def test_no_toml_emits_defaults(self) -> None:
         """No existing_toml_path → behavior matches the old code path."""
         fields = [
             ParsedField(name="foo", api_path="foo", python_type="int", default=0),
@@ -517,7 +519,7 @@ class TestGenerateMappingTomlMirroring:
         assert "cache_strategy=" not in code
         assert "requires_explicit_fetch=" not in code
 
-    def test_missing_toml_file_emits_defaults(self, tmp_path):
+    def test_missing_toml_file_emits_defaults(self, tmp_path: Path) -> None:
         """Non-existent path → silent fallback to defaults (no error)."""
         fields = [
             ParsedField(name="foo", api_path="foo", python_type="int", default=0),
@@ -527,7 +529,7 @@ class TestGenerateMappingTomlMirroring:
         code = generate_mapping(ep, existing_toml_path=bogus)
         assert "cache_strategy=" not in code
 
-    def test_missing_fields_table_emits_defaults(self, tmp_path):
+    def test_missing_fields_table_emits_defaults(self, tmp_path: Path) -> None:
         """TOML present but no [fields] table → defaults emitted silently."""
         fields = [
             ParsedField(name="foo", api_path="foo", python_type="int", default=0),
@@ -538,7 +540,7 @@ class TestGenerateMappingTomlMirroring:
         code = generate_mapping(ep, existing_toml_path=toml)
         assert "cache_strategy=" not in code
 
-    def test_malformed_toml_silent_fallback(self, tmp_path):
+    def test_malformed_toml_silent_fallback(self, tmp_path: Path) -> None:
         """Malformed TOML falls back to defaults silently (no raise)."""
         fields = [
             ParsedField(name="foo", api_path="foo", python_type="int", default=0),
@@ -550,7 +552,7 @@ class TestGenerateMappingTomlMirroring:
         # Must not raise — and emits defaults
         assert "cache_strategy=" not in code
 
-    def test_toml_only_one_of_two_fields(self, tmp_path):
+    def test_toml_only_one_of_two_fields(self, tmp_path: Path) -> None:
         """TOML declares a custom strategy for one field; others stay default."""
         fields = [
             ParsedField(name="foo", api_path="foo", python_type="int", default=0),
@@ -576,7 +578,7 @@ class TestGenerateMappingTomlMirroring:
 
 
 class TestGenerateInit:
-    def test_exports_class(self):
+    def test_exports_class(self) -> None:
         ep = _make_endpoint()
         code = generate_init(ep)
         assert "from pynetappfoundry.models.ontap.storage.volumes.model import OntapVolume" in code
@@ -589,7 +591,7 @@ class TestGenerateInit:
 
 
 class TestGenerateTomlOverlay:
-    def test_basic_structure(self):
+    def test_basic_structure(self) -> None:
         ep = _make_endpoint()
         toml = generate_toml_overlay(ep)
         assert "[endpoint]" in toml
@@ -598,7 +600,7 @@ class TestGenerateTomlOverlay:
         assert 'cache_strategy = "cache"' in toml
         assert 'class_name = "OntapVolume"' in toml
 
-    def test_expensive_field_marked(self):
+    def test_expensive_field_marked(self) -> None:
         fields = [
             ParsedField(
                 name="stats",
@@ -612,7 +614,7 @@ class TestGenerateTomlOverlay:
         toml = generate_toml_overlay(ep)
         assert "requires_explicit_fetch = true" in toml
 
-    def test_preserves_existing_edits(self, tmp_path):
+    def test_preserves_existing_edits(self, tmp_path: Path) -> None:
         fields = [
             ParsedField(name="name", api_path="name"),
             ParsedField(name="size", api_path="size", python_type="int", default=0),
@@ -631,7 +633,7 @@ class TestGenerateTomlOverlay:
         # New field should get default
         assert "[fields.size]" in toml
 
-    def test_migrates_flat_keys_to_dot_path(self, tmp_path):
+    def test_migrates_flat_keys_to_dot_path(self, tmp_path: Path) -> None:
         """Existing flat-key overlays should be migrated to dot-path keys."""
         fields = [
             ParsedField(
@@ -657,7 +659,7 @@ class TestGenerateTomlOverlay:
         # Old flat key should be migrated, user edit preserved
         assert '"realtime"' in toml
 
-    def test_warns_removed_fields(self, tmp_path):
+    def test_warns_removed_fields(self, tmp_path: Path) -> None:
         fields = [ParsedField(name="name", api_path="name")]
         ep = _make_endpoint(fields=fields)
 
@@ -676,7 +678,7 @@ class TestGenerateTomlOverlay:
 
 
 class TestWriteEndpointFiles:
-    def test_creates_directory_tree(self, tmp_path):
+    def test_creates_directory_tree(self, tmp_path: Path) -> None:
         ep = _make_endpoint()
         cache_dir = tmp_path / "cache"
         models_dir = tmp_path / "models"
@@ -690,7 +692,7 @@ class TestWriteEndpointFiles:
         assert (cache_dir / "ontap" / "storage" / "volumes" / "volumes.toml").exists()
         assert len(written) == 4
 
-    def test_intermediate_init_files(self, tmp_path):
+    def test_intermediate_init_files(self, tmp_path: Path) -> None:
         ep = _make_endpoint(
             path="/network/ip/interfaces",
             schema_name="ip_interface",
@@ -708,7 +710,7 @@ class TestWriteEndpointFiles:
         assert (cache_dir / "ontap" / "network" / "__init__.py").exists()
         assert (cache_dir / "ontap" / "network" / "ip" / "__init__.py").exists()
 
-    def test_generated_model_is_valid_python(self, tmp_path):
+    def test_generated_model_is_valid_python(self, tmp_path: Path) -> None:
         ep = _make_endpoint()
         cache_dir = tmp_path / "cache"
         models_dir = tmp_path / "models"
@@ -718,7 +720,7 @@ class TestWriteEndpointFiles:
         # Should compile without syntax errors
         compile(model_code, "model.py", "exec")
 
-    def test_generated_mapping_is_valid_python(self, tmp_path):
+    def test_generated_mapping_is_valid_python(self, tmp_path: Path) -> None:
         ep = _make_endpoint()
         cache_dir = tmp_path / "cache"
         models_dir = tmp_path / "models"
@@ -727,7 +729,7 @@ class TestWriteEndpointFiles:
         mapping_code = (cache_dir / "ontap" / "storage" / "volumes" / "mapping.py").read_text()
         compile(mapping_code, "mapping.py", "exec")
 
-    def test_schema_lookup_passed_to_mapping(self, tmp_path):
+    def test_schema_lookup_passed_to_mapping(self, tmp_path: Path) -> None:
         """Verify schema_lookup is used for parent resolution in generated mappings."""
         ep = _make_endpoint(
             path="/svm/svms/{svm.uuid}/web",
@@ -746,7 +748,7 @@ class TestWriteEndpointFiles:
         mapping_code = (cache_dir / "ontap" / "svm" / "svms" / "web" / "mapping.py").read_text()
         assert 'parent_mapping="OntapSvm"' in mapping_code
 
-    def test_no_orphan_dirs_under_output_dir(self, tmp_path):
+    def test_no_orphan_dirs_under_output_dir(self, tmp_path: Path) -> None:
         """Only the api_type subdirectory should exist under each output dir."""
         ep = _make_endpoint()
         cache_dir = tmp_path / "cache"
@@ -758,7 +760,7 @@ class TestWriteEndpointFiles:
         models_subdirs = [p.name for p in models_dir.iterdir() if p.is_dir()]
         assert models_subdirs == ["ontap"]
 
-    def test_custom_api_type(self, tmp_path):
+    def test_custom_api_type(self, tmp_path: Path) -> None:
         """Files should land under the custom api_type subdirectory."""
         ep = _make_endpoint()
         cache_dir = tmp_path / "cache"
@@ -781,23 +783,23 @@ class TestWriteEndpointFiles:
 
 
 class TestSubModelName:
-    def test_basic(self):
+    def test_basic(self) -> None:
         """Array-of-objects singularizes the field name."""
         f = ParsedField(name="copies", api_path="copies", is_list=True, is_object=True)
         assert _sub_model_name("OntapSnapshotPolicy", f) == "OntapSnapshotPolicyCopy"
 
-    def test_underscored_field(self):
+    def test_underscored_field(self) -> None:
         f = ParsedField(name="ip_ranges", api_path="ip_ranges", is_list=True, is_object=True)
         assert _sub_model_name("OntapIpSubnet", f) == "OntapIpSubnetIpRange"
 
-    def test_nested_object(self):
+    def test_nested_object(self) -> None:
         """Non-list objects don't singularize."""
         f = ParsedField(name="svm", api_path="svm", is_object=True, is_list=False)
         assert _sub_model_name("OntapVolume", f) == "OntapVolumeSvm"
 
 
 class TestHasTypedSubFields:
-    def test_true_for_list_object_with_sub_fields(self):
+    def test_true_for_list_object_with_sub_fields(self) -> None:
         f = ParsedField(
             name="copies",
             api_path="copies",
@@ -809,15 +811,15 @@ class TestHasTypedSubFields:
         )
         assert _has_typed_sub_fields(f) is True
 
-    def test_false_for_list_without_sub_fields(self):
+    def test_false_for_list_without_sub_fields(self) -> None:
         f = ParsedField(name="tags", api_path="tags", is_list=True, is_object=False)
         assert _has_typed_sub_fields(f) is False
 
-    def test_false_for_empty_sub_fields(self):
+    def test_false_for_empty_sub_fields(self) -> None:
         f = ParsedField(name="copies", api_path="copies", is_list=True, is_object=True)
         assert _has_typed_sub_fields(f) is False
 
-    def test_false_for_only_object_sub_fields(self):
+    def test_false_for_only_object_sub_fields(self) -> None:
         """If all sub_fields are pure objects (no leaves), return False."""
         f = ParsedField(
             name="copies",
@@ -872,64 +874,64 @@ def _make_endpoint_with_sub_model(
 
 
 class TestGenerateModelSubModel:
-    def test_sub_model_class_generated(self):
+    def test_sub_model_class_generated(self) -> None:
         ep = _make_endpoint_with_sub_model()
         code = generate_model(ep)
         assert "class OntapSnapshotPolicyCopy(OntapModel):" in code
 
-    def test_sub_model_before_parent(self):
+    def test_sub_model_before_parent(self) -> None:
         ep = _make_endpoint_with_sub_model()
         code = generate_model(ep)
         sub_pos = code.index("class OntapSnapshotPolicyCopy")
         parent_pos = code.index("class OntapSnapshotPolicy(OntapModel)")
         assert sub_pos < parent_pos
 
-    def test_parent_field_typed_with_sub_model(self):
+    def test_parent_field_typed_with_sub_model(self) -> None:
         ep = _make_endpoint_with_sub_model()
         code = generate_model(ep)
         assert "copies: list[OntapSnapshotPolicyCopy]" in code
 
-    def test_no_any_import_when_all_sub_models_typed(self):
+    def test_no_any_import_when_all_sub_models_typed(self) -> None:
         ep = _make_endpoint_with_sub_model()
         code = generate_model(ep)
         assert "from typing import Any" not in code
 
-    def test_sub_model_has_leaf_fields(self):
+    def test_sub_model_has_leaf_fields(self) -> None:
         ep = _make_endpoint_with_sub_model()
         code = generate_model(ep)
         assert "    count: int = 0" in code
 
-    def test_valid_python(self):
+    def test_valid_python(self) -> None:
         ep = _make_endpoint_with_sub_model()
         code = generate_model(ep)
         compile(code, "model.py", "exec")
 
 
 class TestGenerateMappingSubModel:
-    def test_transform_function_generated(self):
+    def test_transform_function_generated(self) -> None:
         ep = _make_endpoint_with_sub_model()
         code = generate_mapping(ep)
         assert "def _transform_copies(record: dict[str, Any])" in code
         assert "OntapSnapshotPolicyCopy(**item)" in code
 
-    def test_field_mapping_uses_transform(self):
+    def test_field_mapping_uses_transform(self) -> None:
         ep = _make_endpoint_with_sub_model()
         code = generate_mapping(ep)
         assert "transform=_transform_copies" in code
 
-    def test_sub_model_field_emits_transform(self):
+    def test_sub_model_field_emits_transform(self) -> None:
         ep = _make_endpoint_with_sub_model()
         code = generate_mapping(ep)
         # api_path omitted when it matches cache_attr (auto-defaults via __post_init__)
         assert 'api_path="copies"' not in code
         assert "transform=_transform_copies" in code
 
-    def test_sub_model_imported(self):
+    def test_sub_model_imported(self) -> None:
         ep = _make_endpoint_with_sub_model()
         code = generate_mapping(ep)
         assert "OntapSnapshotPolicyCopy" in code
 
-    def test_valid_python(self):
+    def test_valid_python(self) -> None:
         ep = _make_endpoint_with_sub_model()
         code = generate_mapping(ep)
         compile(code, "mapping.py", "exec")
@@ -943,16 +945,16 @@ class TestGenerateMappingSubModel:
 class TestSafeAttrName:
     """Direct tests for _safe_attr_name."""
 
-    def test_python_keyword(self):
+    def test_python_keyword(self) -> None:
         assert _safe_attr_name("class") == "class_"
 
-    def test_pydantic_reserved(self):
+    def test_pydantic_reserved(self) -> None:
         assert _safe_attr_name("model_config") == "model_config_"
 
-    def test_unreserved(self):
+    def test_unreserved(self) -> None:
         assert _safe_attr_name("name") == "name"
 
-    def test_compound_not_reserved(self):
+    def test_compound_not_reserved(self) -> None:
         assert _safe_attr_name("space_metadata") == "space_metadata"
 
 
@@ -970,14 +972,14 @@ class TestPathToClassNameSharedSchemas:
     derivation for those cases.
     """
 
-    def test_empty_shared_schemas_uses_schema_name(self):
+    def test_empty_shared_schemas_uses_schema_name(self) -> None:
         """Default empty shared_schemas → legacy schema-derived behavior."""
         assert (
             _path_to_class_name("/assets/storages/count", "Count", "dii", shared_schemas=set())
             == "DiiCount"
         )
 
-    def test_schema_not_in_shared_uses_schema_name(self):
+    def test_schema_not_in_shared_uses_schema_name(self) -> None:
         """Schema unique to its endpoint → schema-derived name."""
         assert (
             _path_to_class_name(
@@ -986,14 +988,14 @@ class TestPathToClassNameSharedSchemas:
             == "DiiStorage"
         )
 
-    def test_shared_schema_uses_url_path(self):
+    def test_shared_schema_uses_url_path(self) -> None:
         """Shared schema → URL-path-derived name avoids collision."""
         assert (
             _path_to_class_name("/assets/storages/count", "Count", "dii", shared_schemas={"Count"})
             == "DiiAssetsStoragesCount"
         )
 
-    def test_shared_schema_different_path_yields_different_name(self):
+    def test_shared_schema_different_path_yields_different_name(self) -> None:
         """Two endpoints sharing a schema get distinct class names."""
         a = _path_to_class_name("/assets/storages/count", "Count", "dii", shared_schemas={"Count"})
         b = _path_to_class_name("/assets/fabrics/count", "Count", "dii", shared_schemas={"Count"})
@@ -1001,14 +1003,14 @@ class TestPathToClassNameSharedSchemas:
         assert a == "DiiAssetsStoragesCount"
         assert b == "DiiAssetsFabricsCount"
 
-    def test_shared_schemas_frozen_set_accepted(self):
+    def test_shared_schemas_frozen_set_accepted(self) -> None:
         """frozenset is also accepted (default parameter)."""
         assert (
             _path_to_class_name("/a/b/count", "Count", "dii", shared_schemas=frozenset({"Count"}))
             == "DiiABCount"
         )
 
-    def test_override_still_wins_over_shared_schema(self):
+    def test_override_still_wins_over_shared_schema(self) -> None:
         """_CLASS_NAME_OVERRIDES takes precedence regardless of shared_schemas."""
         _CLASS_NAME_OVERRIDES["/shared/override"] = "OverrideWins"
         try:
@@ -1023,7 +1025,7 @@ class TestPathToClassNameSharedSchemas:
 class TestGenerateMappingSharedSchemas:
     """Tests that ``generate_mapping`` threads ``shared_schemas`` through."""
 
-    def test_shared_schema_generates_path_derived_class_name(self):
+    def test_shared_schema_generates_path_derived_class_name(self) -> None:
         """Shared schema → mapping name / class reference use the URL path."""
         ep = ParsedEndpoint(
             path="/assets/storages/count",
@@ -1037,7 +1039,7 @@ class TestGenerateMappingSharedSchemas:
         # The colliding schema-derived name must NOT appear
         assert "DiiCount" not in code
 
-    def test_unique_schema_generates_schema_derived_class_name(self):
+    def test_unique_schema_generates_schema_derived_class_name(self) -> None:
         """Schema not in shared_schemas → schema-derived name (legacy)."""
         ep = ParsedEndpoint(
             path="/assets/storages/count",
@@ -1052,7 +1054,7 @@ class TestGenerateMappingSharedSchemas:
 class TestGenerateModelSharedSchemas:
     """``generate_model`` must use the same disambiguated class name."""
 
-    def test_shared_schema_model_uses_url_path(self):
+    def test_shared_schema_model_uses_url_path(self) -> None:
         ep = ParsedEndpoint(
             path="/assets/fabrics/count",
             schema_name="Count",
@@ -1071,24 +1073,24 @@ class TestGenerateModelSharedSchemas:
 class TestFieldsSuffixOntapOnly:
     """Gap 2: ``?fields=*`` should only be emitted for api_type='ontap'."""
 
-    def test_ontap_has_fields_suffix(self):
+    def test_ontap_has_fields_suffix(self) -> None:
         ep = _make_endpoint()
         code = generate_mapping(ep, api_type="ontap")
         assert 'api_endpoint="/storage/volumes?fields=*"' in code
 
-    def test_dii_no_fields_suffix(self):
+    def test_dii_no_fields_suffix(self) -> None:
         ep = _make_endpoint(path="/assets/storages", schema_name="Storage")
         code = generate_mapping(ep, api_type="dii")
         assert 'api_endpoint="/assets/storages"' in code
         assert "?fields=*" not in code
 
-    def test_aiqum_no_fields_suffix(self):
+    def test_aiqum_no_fields_suffix(self) -> None:
         ep = _make_endpoint(path="/datacenter/cluster/clusters", schema_name="cluster")
         code = generate_mapping(ep, api_type="aiqum")
         assert 'api_endpoint="/datacenter/cluster/clusters"' in code
         assert "?fields=*" not in code
 
-    def test_occm_no_fields_suffix(self):
+    def test_occm_no_fields_suffix(self) -> None:
         ep = _make_endpoint(path="/occm/accounts", schema_name="account")
         code = generate_mapping(ep, api_type="occm")
         assert 'api_endpoint="/occm/accounts"' in code
@@ -1103,7 +1105,7 @@ class TestEnsureInitFilesSeedsCacheTree:
     a freshly generated tree un-discoverable by ``pkgutil.walk_packages``.
     """
 
-    def test_api_root_init_created(self, tmp_path):
+    def test_api_root_init_created(self, tmp_path: Path) -> None:
         """The base ``<api_type>/__init__.py`` is seeded."""
         ep = _make_endpoint(
             path="/assets/storages/count",
@@ -1118,7 +1120,7 @@ class TestEnsureInitFilesSeedsCacheTree:
         assert (cache_dir / "dii" / "__init__.py").exists()
         assert (models_dir / "dii" / "__init__.py").exists()
 
-    def test_cache_leaf_init_created(self, tmp_path):
+    def test_cache_leaf_init_created(self, tmp_path: Path) -> None:
         """The cache leaf dir gets a placeholder ``__init__.py``.
 
         The model leaf is overwritten by ``generate_init``; the cache
@@ -1146,7 +1148,7 @@ class TestParentMappingResolvability:
     hallucinated.  The fix omits it entirely.
     """
 
-    def test_parent_mapping_omitted_when_no_parent_in_lookup(self):
+    def test_parent_mapping_omitted_when_no_parent_in_lookup(self) -> None:
         """No schema_lookup at all → no parent_mapping."""
         ep = _make_endpoint(
             path="/orphan/{id}/sub",
@@ -1159,7 +1161,7 @@ class TestParentMappingResolvability:
         assert "parent_mapping=" not in code
         assert "parent_id_field=" not in code
 
-    def test_parent_mapping_omitted_when_parent_not_in_schema_lookup(self):
+    def test_parent_mapping_omitted_when_parent_not_in_schema_lookup(self) -> None:
         """Parent path missing from schema_lookup → no parent_mapping."""
         ep = _make_endpoint(
             path="/orphan/{id}/sub",
@@ -1172,7 +1174,7 @@ class TestParentMappingResolvability:
         code = generate_mapping(ep, api_type="dii", schema_lookup={"/unrelated": "Whatever"})
         assert "parent_mapping=" not in code
 
-    def test_parent_mapping_emitted_when_parent_resolves(self):
+    def test_parent_mapping_emitted_when_parent_resolves(self) -> None:
         """Parent path registered under the expected class name → emit."""
         ep = _make_endpoint(
             path="/svm/svms/{svm.uuid}/web",
@@ -1190,7 +1192,7 @@ class TestParentMappingResolvability:
 class TestParentIdFieldByApiType:
     """Gap 5: ``parent_id_field`` dispatches on api_type."""
 
-    def test_ontap_parent_id_field_uuid(self):
+    def test_ontap_parent_id_field_uuid(self) -> None:
         ep = _make_endpoint(
             path="/svm/svms/{svm.uuid}/web",
             has_parent=True,
@@ -1202,7 +1204,7 @@ class TestParentIdFieldByApiType:
         code = generate_mapping(ep, api_type="ontap", schema_lookup=schema_lookup)
         assert 'parent_id_field="uuid"' in code
 
-    def test_dii_parent_id_field_id(self):
+    def test_dii_parent_id_field_id(self) -> None:
         ep = _make_endpoint(
             path="/a/b/{id}/c",
             has_parent=True,
@@ -1223,7 +1225,7 @@ class TestMappingNoqaN802:
     header covers the generated code without requiring per-line noqa.
     """
 
-    def test_camelcase_array_transform_emits_n802(self):
+    def test_camelcase_array_transform_emits_n802(self) -> None:
         """A camelCase array-of-objects field triggers N802 suppression."""
         ep = ParsedEndpoint(
             path="/some/path",
@@ -1247,7 +1249,7 @@ class TestMappingNoqaN802:
         assert "N802" in code
         assert "_transform_applicationRoles" in code
 
-    def test_snake_case_transform_no_n802(self):
+    def test_snake_case_transform_no_n802(self) -> None:
         """ONTAP's snake_case fields never trigger N802."""
         ep = _make_endpoint_with_sub_model()
         code = generate_mapping(ep, api_type="ontap")

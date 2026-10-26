@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import tomllib
+from pathlib import Path
 
 import pytest
 from pydantic import BaseModel
@@ -48,15 +49,15 @@ def _make_mapping(
     )
 
 
-def _write_toml(path, content: str) -> None:
+def _write_toml(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(content)
+    path.write_text(content, encoding="utf-8")
 
 
 class TestDiscoverTomlOverlays:
     """Tests for discover_toml_overlays."""
 
-    def test_discovers_overlays_in_tree(self, tmp_path):
+    def test_discovers_overlays_in_tree(self, tmp_path: Path) -> None:
         _write_toml(
             tmp_path / "storage" / "volumes" / "volumes.toml",
             '[endpoint]\nclass_name = "OntapVolume"\n\n[fields.name]\ncache_strategy = "cache"\n',
@@ -72,7 +73,7 @@ class TestDiscoverTomlOverlays:
             "OntapNodeResponse": tmp_path / "cluster" / "nodes" / "nodes.toml",
         }
 
-    def test_skips_toml_without_class_name(self, tmp_path):
+    def test_skips_toml_without_class_name(self, tmp_path: Path) -> None:
         _write_toml(
             tmp_path / "no_endpoint.toml",
             '[fields.name]\ncache_strategy = "cache"\n',
@@ -84,15 +85,17 @@ class TestDiscoverTomlOverlays:
         result = discover_toml_overlays(tmp_path)
         assert result == {}
 
-    def test_returns_empty_for_empty_dir(self, tmp_path):
+    def test_returns_empty_for_empty_dir(self, tmp_path: Path) -> None:
         result = discover_toml_overlays(tmp_path)
         assert result == {}
 
-    def test_returns_empty_for_nonexistent_dir(self, tmp_path):
+    def test_returns_empty_for_nonexistent_dir(self, tmp_path: Path) -> None:
         result = discover_toml_overlays(tmp_path / "nonexistent")
         assert result == {}
 
-    def test_warns_on_duplicate_class_name(self, tmp_path, caplog):
+    def test_warns_on_duplicate_class_name(
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
         _write_toml(
             tmp_path / "a" / "first.toml",
             '[endpoint]\nclass_name = "Dup"\n\n[fields.x]\ncache_strategy = "cache"\n',
@@ -106,7 +109,7 @@ class TestDiscoverTomlOverlays:
         assert "Dup" in result
         assert "Duplicate class_name" in caplog.text
 
-    def test_skips_malformed_toml(self, tmp_path, caplog):
+    def test_skips_malformed_toml(self, tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
         bad = tmp_path / "bad.toml"
         bad.write_text("this is not valid toml {{{}}")
         with caplog.at_level("WARNING"):
@@ -118,18 +121,18 @@ class TestDiscoverTomlOverlays:
 class TestLoadOverlay:
     """Tests for load_overlay."""
 
-    def test_loads_valid_toml(self, tmp_path):
+    def test_loads_valid_toml(self, tmp_path: Path) -> None:
         p = tmp_path / "test.toml"
         p.write_text('[endpoint]\nclass_name = "Foo"\n\n[fields.bar]\ncache_strategy = "cache"\n')
         data = load_overlay(p)
         assert data["endpoint"]["class_name"] == "Foo"
         assert data["fields"]["bar"]["cache_strategy"] == "cache"
 
-    def test_raises_file_not_found(self, tmp_path):
+    def test_raises_file_not_found(self, tmp_path: Path) -> None:
         with pytest.raises(FileNotFoundError):
             load_overlay(tmp_path / "missing.toml")
 
-    def test_raises_toml_decode_error(self, tmp_path):
+    def test_raises_toml_decode_error(self, tmp_path: Path) -> None:
         p = tmp_path / "bad.toml"
         p.write_text("not valid toml {{{")
         with pytest.raises(tomllib.TOMLDecodeError):
@@ -139,7 +142,7 @@ class TestLoadOverlay:
 class TestMergeOverlays:
     """Tests for merge_overlays."""
 
-    def test_package_only(self):
+    def test_package_only(self) -> None:
         pkg = {
             "fields": {"name": {"cache_strategy": "cache"}, "size": {"cache_strategy": "realtime"}}
         }
@@ -149,25 +152,25 @@ class TestMergeOverlays:
             "size": {"cache_strategy": "realtime"},
         }
 
-    def test_user_replaces_field(self):
+    def test_user_replaces_field(self) -> None:
         pkg = {"fields": {"name": {"cache_strategy": "cache"}, "size": {"cache_strategy": "cache"}}}
         user = {"fields": {"name": {"cache_strategy": "realtime", "requires_explicit_fetch": True}}}
         result = merge_overlays(pkg, user)
         assert result["name"] == {"cache_strategy": "realtime", "requires_explicit_fetch": True}
         assert result["size"] == {"cache_strategy": "cache"}
 
-    def test_fields_not_in_user_inherit_package(self):
+    def test_fields_not_in_user_inherit_package(self) -> None:
         pkg = {"fields": {"a": {"cache_strategy": "cache"}, "b": {"cache_strategy": "derived"}}}
         user = {"fields": {"a": {"cache_strategy": "realtime"}}}
         result = merge_overlays(pkg, user)
         assert result["b"] == {"cache_strategy": "derived"}
 
-    def test_none_user_overlay(self):
+    def test_none_user_overlay(self) -> None:
         pkg = {"fields": {"x": {"cache_strategy": "cache"}}}
         result = merge_overlays(pkg, None)
         assert result == {"x": {"cache_strategy": "cache"}}
 
-    def test_empty_package_fields(self):
+    def test_empty_package_fields(self) -> None:
         result = merge_overlays({}, None)
         assert result == {}
 
@@ -175,21 +178,21 @@ class TestMergeOverlays:
 class TestApplyOverlayToMapping:
     """Tests for apply_overlay_to_mapping."""
 
-    def test_updates_cache_strategy(self):
+    def test_updates_cache_strategy(self) -> None:
         mapping = _make_mapping()
         config = {"name": {"cache_strategy": "realtime"}}
         result = apply_overlay_to_mapping(mapping, config)
         name_field = next(f for f in result.fields if f.cache_attr == "name")
         assert name_field.cache_strategy == "realtime"
 
-    def test_updates_requires_explicit_fetch(self):
+    def test_updates_requires_explicit_fetch(self) -> None:
         mapping = _make_mapping()
         config = {"size": {"requires_explicit_fetch": True}}
         result = apply_overlay_to_mapping(mapping, config)
         size_field = next(f for f in result.fields if f.cache_attr == "size")
         assert size_field.requires_explicit_fetch is True
 
-    def test_unmatched_fields_unchanged(self):
+    def test_unmatched_fields_unchanged(self) -> None:
         mapping = _make_mapping()
         config = {"name": {"cache_strategy": "realtime"}}
         result = apply_overlay_to_mapping(mapping, config)
@@ -197,13 +200,13 @@ class TestApplyOverlayToMapping:
         assert size_field.cache_strategy == "cache"
         assert size_field.requires_explicit_fetch is False
 
-    def test_extra_overlay_fields_ignored(self):
+    def test_extra_overlay_fields_ignored(self) -> None:
         mapping = _make_mapping()
         config = {"nonexistent_field": {"cache_strategy": "realtime"}}
         result = apply_overlay_to_mapping(mapping, config)
         assert len(result.fields) == len(mapping.fields)
 
-    def test_original_not_mutated(self):
+    def test_original_not_mutated(self) -> None:
         mapping = _make_mapping()
         original_fields = mapping.fields
         config = {"name": {"cache_strategy": "realtime"}}
@@ -212,7 +215,7 @@ class TestApplyOverlayToMapping:
         name_field = next(f for f in mapping.fields if f.cache_attr == "name")
         assert name_field.cache_strategy == "cache"
 
-    def test_empty_config_returns_equivalent_mapping(self):
+    def test_empty_config_returns_equivalent_mapping(self) -> None:
         mapping = _make_mapping()
         result = apply_overlay_to_mapping(mapping, {})
         assert result.fields == mapping.fields
@@ -221,7 +224,7 @@ class TestApplyOverlayToMapping:
 class TestLoadOverlays:
     """Integration tests for load_overlays."""
 
-    def test_applies_package_defaults(self, tmp_path):
+    def test_applies_package_defaults(self, tmp_path: Path) -> None:
         registry = ModelRegistry()
         mapping = _make_mapping()
         registry.register_mapping("DummyModel", mapping)
@@ -246,7 +249,7 @@ class TestLoadOverlays:
         name_field = next(f for f in updated.fields if f.cache_attr == "name")
         assert name_field.cache_strategy == "realtime"
 
-    def test_user_override_wins(self, tmp_path):
+    def test_user_override_wins(self, tmp_path: Path) -> None:
         registry = ModelRegistry()
         mapping = _make_mapping()
         registry.register_mapping("DummyModel", mapping)
@@ -278,7 +281,7 @@ class TestLoadOverlays:
         name_field = next(f for f in updated.fields if f.cache_attr == "name")
         assert name_field.cache_strategy == "realtime"
 
-    def test_missing_overlay_keeps_original(self, tmp_path):
+    def test_missing_overlay_keeps_original(self, tmp_path: Path) -> None:
         registry = ModelRegistry()
         mapping = _make_mapping()
         registry.register_mapping("DummyModel", mapping)
@@ -295,7 +298,7 @@ class TestLoadOverlays:
         assert count == 0
         assert registry.get_mapping("DummyModel") is mapping
 
-    def test_returns_correct_count(self, tmp_path):
+    def test_returns_correct_count(self, tmp_path: Path) -> None:
         registry = ModelRegistry()
         for name in ("Alpha", "Beta", "Gamma"):
             m = _make_mapping(name=name)
@@ -319,7 +322,7 @@ class TestLoadOverlays:
 
         assert count == 2
 
-    def test_nonexistent_user_dir_no_error(self, tmp_path):
+    def test_nonexistent_user_dir_no_error(self, tmp_path: Path) -> None:
         registry = ModelRegistry()
         mapping = _make_mapping()
         registry.register_mapping("DummyModel", mapping)

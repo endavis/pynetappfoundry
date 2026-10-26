@@ -245,7 +245,6 @@ class TestQualityGateScope:
     again.
     """
 
-    @pytest.mark.skip(reason="Project keeps type_check at src/ tools/doit/ until #829")
     def test_type_check_covers_tools_and_tests(self) -> None:
         """``type_check`` must check all of ``src/``, ``tools/`` and ``tests/``."""
         action = task_type_check()["actions"][0]
@@ -253,7 +252,6 @@ class TestQualityGateScope:
         for root in ("src/", "tools/", "tests/"):
             assert root in action, f"type_check no longer covers {root}"
 
-    @pytest.mark.skip(reason="Project keeps type_check at src/ tools/doit/ until #829")
     def test_type_check_does_not_narrow_to_tools_subdir(self) -> None:
         """Guard the specific regression: narrowing ``tools/`` to one subdirectory."""
         action = task_type_check()["actions"][0]

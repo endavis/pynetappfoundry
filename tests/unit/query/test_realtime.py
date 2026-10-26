@@ -7,7 +7,7 @@ at the usage site.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -175,7 +175,7 @@ def mocked_data_source() -> Any:
 def _set_query_results(mocked_ds_cls: MagicMock, results: list[Any]) -> MagicMock:
     """Attach *results* to the patched DataSource's query builder."""
     ds_instance = mocked_ds_cls.return_value
-    builder = ds_instance.query.return_value
+    builder: MagicMock = ds_instance.query.return_value
     builder._results = results
     return builder
 
@@ -329,7 +329,9 @@ class TestFetchRealtimeCollection:
         ]
         _set_query_results(mocked_data_source, vols)
 
-        results = fetch_realtime_collection(FakeVolumeRT, mock_config, CLUSTER)
+        results = cast(
+            list[FakeVolumeRT], fetch_realtime_collection(FakeVolumeRT, mock_config, CLUSTER)
+        )
 
         mocked_data_source.assert_called_once_with(mock_config)
         assert len(results) == 2
