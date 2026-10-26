@@ -575,7 +575,7 @@ uv sync --all-extras --dev
 On a fresh clone `doit` is not installed yet, so the first sync is the equivalent command. The task
 does not install the pre-commit hooks; run `doit pre_commit_install` for those.
 
-> **Note:** `src/__PACKAGE_NAME__/_version.py` is a build-time artifact written
+> **Note:** `src/pynetappfoundry/_version.py` is a build-time artifact written
 > by `hatch-vcs`. It is gitignored and untracked — `hatch-vcs` regenerates
 > it on every build, but git treats it as untracked rather than a modified
 > tracked file, so it does not appear in `git status`.
