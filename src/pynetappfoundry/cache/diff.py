@@ -28,6 +28,9 @@ from pynetappfoundry.models.ontap.cluster.licensing.licenses.model import (
 )
 from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
 from pynetappfoundry.models.ontap.name_services.dns.model import OntapDns
+from pynetappfoundry.models.ontap.private.cli.vserver.services.web.model import (
+    OntapSvmWebService,
+)
 from pynetappfoundry.models.ontap.protocols.cifs.services.model import OntapCifsService
 from pynetappfoundry.models.ontap.protocols.cifs.shares.model import OntapCifsShare
 from pynetappfoundry.models.ontap.protocols.nfs.export_policies.model import OntapExportPolicy
@@ -168,6 +171,8 @@ _DIFF_OVERRIDES: dict[type[CacheModel], tuple[str, str]] = {
     OntapCifsService: ("svm.name", "{svm.name}"),
     OntapSnapmirrorRelationship: ("uuid", "{source.path}->{destination.path}"),
     OntapLicensePackageResponse: ("name", "name"),
+    # name repeats on every SVM (sysmgr, saml, ...); service_key is vserver/name.
+    OntapSvmWebService: ("service_key", "{vserver}/{name}"),
 }
 
 # Singleton fields on CachedClusterMetadata that are diffed separately

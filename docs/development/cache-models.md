@@ -593,6 +593,45 @@ Imports flow upward only (DAG, no circular deps):
 
 ---
 
+## Hand-written Private CLI Models
+
+Some ONTAP data has no public REST endpoint, so the spec, and therefore codegen,
+cannot describe it. Such data is collected through ONTAP's private CLI REST
+passthrough (`GET /api/private/cli/<command path>?fields=...`), which returns JSON
+`records` keyed by the CLI's field names
+([ADR-0021](../decisions/0021-collect-cli-only-ontap-data-through-the-private-cli-rest-passthrough.md)).
+
+The model and mapping are hand-written at the URL-tree path. Codegen writes only
+paths in the spec and never deletes files, so it leaves them alone:
+
+| File | Example |
+|------|---------|
+| Model | `src/pynetappfoundry/models/ontap/private/cli/vserver/services/web/model.py` (`OntapSvmWebService`) |
+| Mapping | `src/pynetappfoundry/cache/ontap/private/cli/vserver/services/web/mapping.py` |
+
+The mapping's `api_endpoint` is the passthrough path without `/api`, for example
+`/private/cli/vserver/services/web?fields=vserver,name,enabled`. The generic
+`fetch()` path collects it like any other flat endpoint.
+
+To add one:
+
+1. Write the model and mapping under `private/cli/<command path>/`, with an
+   `__init__.py` in each new directory. The `src/pynetappfoundry/cache/__init__.py` walk registers
+   the mapping.
+2. Add a list field to a container model (`StorageInfo.svm_web_services`) and a
+   task to that container's collector phase. Tolerate failure there: a role
+   without private CLI access must not fail the refresh.
+3. Bump the cache schema and add a migration that creates the new table (see
+   [Cache System Reference](../reference/cache.md#sqlite-database-schema-versioning)).
+4. If no field identifies a record on its own, add a key field derived in a
+   model validator and a `_DIFF_OVERRIDES` entry in `src/pynetappfoundry/cache/diff.py`, so that
+   `nf cache diff` can match records. `OntapSvmWebService.service_key` is
+   `vserver/name`.
+
+The private CLI is not a versioned API. If a later ONTAP release renames a
+field, the mapping falls back to the field's default without an error, so check
+hand-written models by hand after an ONTAP upgrade.
+
 ## Adding a New API Type
 
 !!! note "DataSource backend integration"

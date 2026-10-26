@@ -550,6 +550,11 @@ nf cache query cluster1 "volumes['state=online'].name"
 nf cache query cluster1 'volumes["svm.name=svm1"].name'
 nf cache query --all 'protocols.cifs_services["security.session_security=none"].svm.name'
 
+# SVM web services (vserver services web), collected through the private CLI
+# passthrough -- which SVMs have sysmgr or saml enabled? --key service_key
+# labels each result vserver/name (e.g. svm1/sysmgr)
+nf cache query --all 'storage.svm_web_services["name=sysmgr || name=saml"].enabled' --key service_key
+
 # Nested wildcards compose identifiers with '/' (e.g. svm1/vol1)
 nf cache query cluster1 'storage.svms[*].volumes[*].size' --json
 

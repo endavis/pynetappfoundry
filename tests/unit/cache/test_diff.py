@@ -505,8 +505,8 @@ class TestEntityConfigsIntegrity:
             )
 
     def test_entity_config_count(self) -> None:
-        """Currently 26 configs (catches accidental additions/removals)."""
-        assert len(_get_entity_configs()) == 26
+        """Currently 27 configs (catches accidental additions/removals)."""
+        assert len(_get_entity_configs()) == 27
 
 
 # ---------------------------------------------------------------------------
@@ -518,9 +518,9 @@ class TestBuildEntityConfigs:
     """Verify _build_entity_configs() dynamic builder."""
 
     def test_returns_correct_count(self) -> None:
-        """Builder discovers exactly 26 diffable entity categories."""
+        """Builder discovers exactly 27 diffable entity categories."""
         configs = _build_entity_configs()
-        assert len(configs) == 26
+        assert len(configs) == 27
 
     def test_matches_lazy_accessor(self) -> None:
         """_build_entity_configs() and _get_entity_configs() return same data."""

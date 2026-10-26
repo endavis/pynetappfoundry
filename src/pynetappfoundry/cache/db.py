@@ -269,7 +269,7 @@ class ClusterMetadataDB(SQLiteDB):
     for data safety and isolation.
     """
 
-    SCHEMA_VERSION: ClassVar[int] = 6
+    SCHEMA_VERSION: ClassVar[int] = 7
     TABLE_NAME: ClassVar[str] = "cluster_metadata"
 
     def __init__(
@@ -439,6 +439,29 @@ class ClusterMetadataDB(SQLiteDB):
         if cursor.fetchone() is None:
             self.conn.execute(generate_table_ddl("consoleinfo", ConsoleInfo))
             self.conn.execute(generate_cluster_name_index_ddl("consoleinfo"))
+
+    # ------------------------------------------------------------------
+    # Migration v6 → v7
+    # ------------------------------------------------------------------
+
+    def _upgrade_to_v7(self) -> None:
+        """Create the ontapsvmwebservice table for SVM web services (#866).
+
+        v7 adds ``StorageInfo.svm_web_services``, collected through the
+        private CLI passthrough.  Existing v6 databases have no
+        ``ontapsvmwebservice`` table; create it via the same DDL generator
+        used in ``_create_schema``.  Idempotent via ``sqlite_master`` check.
+        """
+        from pynetappfoundry.models.ontap.private.cli.vserver.services.web.model import (
+            OntapSvmWebService,
+        )
+
+        cursor = self.conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='ontapsvmwebservice'"
+        )
+        if cursor.fetchone() is None:
+            self.conn.execute(generate_table_ddl("ontapsvmwebservice", OntapSvmWebService))
+            self.conn.execute(generate_cluster_name_index_ddl("ontapsvmwebservice"))
 
     # ------------------------------------------------------------------
     # Internal: decompose metadata into tables
