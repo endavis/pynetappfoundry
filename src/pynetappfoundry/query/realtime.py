@@ -220,7 +220,7 @@ def watch_realtime(
     fields: list[str] | None = None,
     interval: float = 5,
     count: int | None = None,
-) -> Generator[dict[str, Any], None, None]:
+) -> Generator[dict[str, Any]]:
     """Poll realtime metrics at intervals, yielding snapshots.
 
     Generator that routes each poll through a single :class:`DataSource`

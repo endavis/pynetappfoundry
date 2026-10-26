@@ -463,7 +463,7 @@ resources:
 
 ```dockerfile
 # Dockerfile
-FROM python:3.12-slim
+FROM python:3.13-slim
 
 # Create non-root user
 RUN useradd --create-home --shell /bin/bash appuser

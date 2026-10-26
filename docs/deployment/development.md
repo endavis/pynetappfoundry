@@ -37,7 +37,7 @@ uv run python -m pynetappfoundry
 
 | Tool | Version | Purpose |
 |------|---------|---------|
-| Python | 3.12+ | Runtime |
+| Python | 3.13+ | Runtime |
 | uv | Latest | Package management |
 | git | Latest | Version control |
 | Docker | Latest | (Optional) Containerized services |
@@ -392,8 +392,8 @@ doit check
 python --version
 
 # Use uv to manage Python
-uv python install 3.12
-uv python use 3.12
+uv python install 3.13
+uv python use 3.13
 ```
 
 #### Dependency Conflicts
