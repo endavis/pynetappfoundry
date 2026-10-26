@@ -89,9 +89,6 @@ exclude = [
     # Runs tests/benchmarks/test_bench_core.py, the template's example
     # benchmark, excluded below.
     "tests/test_benchmark_settings.py",
-    # Need the template's mutmut 3 config; adopted with it in #830.
-    "tests/test_mutmut_config.py",
-    "tests/test_mutation_workflow.py",
     # requires-python and the oldest tested Python disagree; #852 fixes
     # that and adopts this test.
     "tests/test_python_versions_agree.py",
