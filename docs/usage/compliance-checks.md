@@ -93,7 +93,7 @@ used for future tuning knobs.
 
 Cluster-specific behaviour lives under each cluster entry, using the path
 `[clusters.<NAME>.checks.compliance.<rule_name>]`. The merge logic in
-`compliance/config.py` (`merge_rules`) supports three patterns.
+`src/pynetappfoundry/compliance/config.py` (`merge_rules`) supports three patterns.
 
 ### 1. Override individual fields
 
@@ -227,7 +227,7 @@ engine. Each rule expression is a single comparison of the form:
 <dotted.field.path> <operator> <value>
 ```
 
-Supported operators (from `cache/query_engine.py`):
+Supported operators (from `src/pynetappfoundry/cache/query_engine.py`):
 
 | Operator | Example |
 |----------|---------|

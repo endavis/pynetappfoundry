@@ -267,7 +267,7 @@ Issue: #697
    directory, re-runs the generator with its formatters pinned, and fails
    if ``git status --porcelain --untracked-files=all`` reports any
    modified, deleted or new file there. The hand-authored compact types
-   live outside the tree, in ``models/console_types.py`` (Issue #825).
+   live outside the tree, in ``src/pynetappfoundry/models/console_types.py`` (Issue #825).
 
 4. **Caching Console data is not foreclosed by the split.** Three
    patterns are supported under the current cache architecture

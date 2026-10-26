@@ -39,8 +39,8 @@ and silently wrong if either field was missing on some item (#848).
 ## Decision
 
 1. **New function, old one unchanged.** `get_nested_value_with_identifiers()` is added to
-   `utils/dict_path.py` for wildcard and filter predicate paths. `get_nested_value()` is
-   untouched -- `cache/check.py` and `query/realtime.py` call it directly and must keep seeing
+   `src/pynetappfoundry/utils/dict_path.py` for wildcard and filter predicate paths. `get_nested_value()` is
+   untouched -- `src/pynetappfoundry/cli/commands/cache/check.py` and `src/pynetappfoundry/query/realtime.py` call it directly and must keep seeing
    flat lists.
 
 2. **Identifier order: `name`, `svm.name`, `uuid`, then array index.** For each array item,

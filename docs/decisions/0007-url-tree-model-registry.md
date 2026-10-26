@@ -22,9 +22,9 @@ Restructure the `cache/` module from a monolithic `models.py` (793 lines, 30+ Py
 
 Models live at `models/<api-type>/<api-path>/model.py` and mappings at `cache/<api-type>/<api-path>/mapping.py`, namespaced by API type and mirroring the REST API URL hierarchy:
 
-- `models/ontap/storage/volumes/model.py` + `cache/ontap/storage/volumes/mapping.py` (maps to `/storage/volumes`)
-- `models/ontap/cluster/nodes/model.py` + `cache/ontap/cluster/nodes/mapping.py` (maps to `/cluster/nodes`)
-- `models/ontap/protocols/nfs/services/model.py` (maps to `/protocols/nfs/services`)
+- `src/pynetappfoundry/models/ontap/storage/volumes/model.py` + `src/pynetappfoundry/cache/ontap/storage/volumes/mapping.py` (maps to `/storage/volumes`)
+- `src/pynetappfoundry/models/ontap/cluster/nodes/model.py` + `src/pynetappfoundry/cache/ontap/cluster/nodes/mapping.py` (maps to `/cluster/nodes`)
+- `src/pynetappfoundry/models/ontap/protocols/nfs/services/model.py` (maps to `/protocols/nfs/services`)
 
 The `<api-type>` namespace (`ontap/`, `aiqum/`, etc.) prevents path collisions when multiple APIs share endpoint paths like `/cluster`.
 
@@ -51,7 +51,7 @@ Imports flow upward only (DAG guaranteed, no circular deps):
 
 1. **Layer 1**: `_base.py` (CacheModel, HasUUID, schema versioning) and `_registry.py` (ModelRegistry)
 2. **Layer 2**: Leaf `model.py` files (import only from `_base.py`)
-3. **Layer 3**: Container models (`storage/model.py`, `network/model.py`, `protocols/model.py`, `_metadata.py`) import leaf models
+3. **Layer 3**: Container models (`src/pynetappfoundry/models/ontap/storage/model.py`, `src/pynetappfoundry/models/ontap/network/model.py`, `src/pynetappfoundry/models/ontap/protocols/model.py`, `_metadata.py`) import leaf models
 
 ### Auto-Registration
 

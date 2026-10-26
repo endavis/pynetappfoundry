@@ -260,7 +260,7 @@ FieldMapping(
 )
 ```
 
-The API response has `{"svm": {"name": "vs1"}}`. The dot-path `"svm.name"` is resolved by `get_nested_value()` from `utils/dict_path.py`.
+The API response has `{"svm": {"name": "vs1"}}`. The dot-path `"svm.name"` is resolved by `get_nested_value()` from `src/pynetappfoundry/utils/dict_path.py`.
 
 ### Array index access
 
@@ -283,7 +283,7 @@ FieldMapping(
 )
 ```
 
-The API response has `{"ha": {"partners": [{"uuid": "a"}, {"uuid": "b"}]}}`. The wildcard `[*]` syntax extracts a value from every item in the array, returning a list. This is handled by `get_nested_value()` from `utils/dict_path.py`. Use `default=[]` for wildcard fields since the result is always a list.
+The API response has `{"ha": {"partners": [{"uuid": "a"}, {"uuid": "b"}]}}`. The wildcard `[*]` syntax extracts a value from every item in the array, returning a list. This is handled by `get_nested_value()` from `src/pynetappfoundry/utils/dict_path.py`. Use `default=[]` for wildcard fields since the result is always a list.
 
 ### Custom transform (API)
 

@@ -164,7 +164,7 @@ Two indices are created per table: `idx_{table}_cluster` on `cluster_name`
 
 ## Schema Versioning and Migrations
 
-Two version constants live in `cache/_base.py`:
+Two version constants live in `src/pynetappfoundry/cache/_base.py`:
 
 ```python
 METADATA_SCHEMA_VERSION = "2.0"        # current cache_version on new snapshots
@@ -411,7 +411,7 @@ the column names changed from flat (`ip_address`) to nested
 ## CachedClusterMetadata Reference
 
 The root cache container is `CachedClusterMetadata` (in
-`cache/_metadata.py`). It carries three envelope fields and nine data field
+`src/pynetappfoundry/cache/_metadata.py`). It carries three envelope fields and nine data field
 groups:
 
 ```python
@@ -737,7 +737,7 @@ When modifying the cache schema, work through this checklist:
 2. **Decide the strategy for any new field** — `cache`, `realtime`, or
    `derived`. Update the corresponding `FieldMapping` (or TOML overlay) so
    the collector and cache write path agree.
-3. **Update the snapshot schema version** in `cache/_base.py` if the change
+3. **Update the snapshot schema version** in `src/pynetappfoundry/cache/_base.py` if the change
    is observable in stored snapshots:
 
     ```python

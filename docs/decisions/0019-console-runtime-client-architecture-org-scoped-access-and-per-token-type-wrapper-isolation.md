@@ -88,7 +88,7 @@ The plausible alternatives at decision time were:
 - **(b) One wrapper, per-call `auth_header` override.** Requires `APIWrapper` to gain a per-call header override parameter. That change propagates to every existing client (DII, ONTAP, AIQUM) — even if those clients never use the new parameter, the contract surface grows.
 - **(c) One wrapper, mutate `auth_header` in place per call.** Concurrency-unsafe and racy; rejected outright.
 
-(a) wins on blast radius: the only file touched is `clients/console/api.py`. The cost of (a) — that operation methods must each know which wrapper to use — is exactly the codegen-time decision that (3) above plans for at scale.
+(a) wins on blast radius: the only file touched is `src/pynetappfoundry/clients/console/api.py`. The cost of (a) — that operation methods must each know which wrapper to use — is exactly the codegen-time decision that (3) above plans for at scale.
 
 ### Why hand-author v1, codegen the rest later
 

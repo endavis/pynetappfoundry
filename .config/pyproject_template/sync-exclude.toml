@@ -92,8 +92,6 @@ exclude = [
     # requires-python and the oldest tested Python disagree; #852 fixes
     # that and adopts this test.
     "tests/test_python_versions_agree.py",
-    # Reports 60+ package-relative doc paths; adoption decided in #853.
-    "tests/test_documented_paths.py",
     # Tests for the CBM and context-mode hooks, excluded below until
     # #717 and #718 decide on them.
     "tests/test_hook_cbm_*.py",

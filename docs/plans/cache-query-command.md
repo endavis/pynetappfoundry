@@ -71,7 +71,7 @@ nf cache query cluster1 nodes[0].name
 
 ## Implementation Details
 
-### 1. `utils/dict_path.py`
+### 1. `src/pynetappfoundry/utils/dict_path.py`
 
 Utility for nested dict/list access via dot notation:
 
@@ -79,7 +79,7 @@ Utility for nested dict/list access via dot notation:
 - `get_nested_value(data, path)` - traverse dict with dot notation, supports `nodes[0].name` syntax
 - Regex pattern: `^([a-zA-Z_][a-zA-Z0-9_]*)\[(\d+)\]$` for array indices
 
-### 2. `cli/commands/cache/query.py`
+### 2. `src/pynetappfoundry/cli/commands/cache/query.py`
 
 New Click command following existing patterns:
 
@@ -108,7 +108,7 @@ def query(ctx, cluster, fields, filter, query_all, output_json, raw):
 - Skips clusters that have no cached data (with warning)
 - Error if field path not found (shows which cluster/field failed)
 
-### 3. `cache/__init__.py`
+### 3. `src/pynetappfoundry/cache/__init__.py`
 
 Add import and register command:
 ```python

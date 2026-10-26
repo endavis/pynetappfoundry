@@ -50,8 +50,8 @@ The flow is:
 1. **`DataSource`** resolves the `TypeMapping` for the requested Pydantic
    model class via the model registry.
 2. The `TypeMapping.api_type` string selects the backend from `_BACKENDS`
-   in `data/source.py`.
-3. The **routing layer** (`data/_routing.py`) decides which fields come from
+   in `src/pynetappfoundry/data/source.py`.
+3. The **routing layer** (`src/pynetappfoundry/data/_routing.py`) decides which fields come from
    cache and which from the live API, producing a `RoutingDecision`.
 4. The **backend** executes the decision: cache read, live fetch, or a
    partial merge of both.
@@ -162,7 +162,7 @@ DII_STORAGE_MAPPING = TypeMapping(
 
 ### 4. Register mappings in the bootstrap
 
-Extend `cache/__init__.py` to import your mapping modules. The existing
+Extend `src/pynetappfoundry/cache/__init__.py` to import your mapping modules. The existing
 ONTAP bootstrap uses `pkgutil.walk_packages` to auto-discover `mapping.py`
 files under `cache/ontap/`. Add a parallel walk for your API type:
 
@@ -179,7 +179,7 @@ for _modinfo in _pkgutil.walk_packages(
 
 ### 5. Create the Backend subclass
 
-Add your backend class to `data/backends.py`:
+Add your backend class to `src/pynetappfoundry/data/backends.py`:
 
 ```python
 class DiiBackend(Backend):
@@ -204,7 +204,7 @@ class DiiBackend(Backend):
 
 ### 6. Register in `_BACKENDS`
 
-In `data/source.py`, add your backend to the registry:
+In `src/pynetappfoundry/data/source.py`, add your backend to the registry:
 
 ```python
 _BACKENDS: dict[str, type[Backend]] = {
@@ -225,7 +225,7 @@ Two files have `TODO(#533)` markers that are hardcoded to ONTAP only:
 
 ## Backend ABC Contract
 
-The `Backend` abstract base class (`data/backends.py`) defines the interface
+The `Backend` abstract base class (`src/pynetappfoundry/data/backends.py`) defines the interface
 that every backend must implement:
 
 ```python
@@ -360,7 +360,7 @@ corresponding entry in `_BACKENDS`.
 
 ## Source Routing: Cache vs Live vs Partial
 
-The routing layer (`data/_routing.py`) is a pure function with no I/O. It
+The routing layer (`src/pynetappfoundry/data/_routing.py`) is a pure function with no I/O. It
 inspects each field's `cache_strategy` to decide the path:
 
 | `cache_strategy` | `source="auto"` | `source="cache"` | `source="live"` |
@@ -509,7 +509,7 @@ When adding models for a new API type:
    databases get tables automatically.
 
 2. **Existing databases need migrations.** If deploying against databases
-   that predate your models, bump `SCHEMA_VERSION` in `cache/db.py` and
+   that predate your models, bump `SCHEMA_VERSION` in `src/pynetappfoundry/cache/db.py` and
    add an `_upgrade_to_vN()` migration method.
 
 3. **Table names** are the lowercased model class name (e.g.,
@@ -541,7 +541,7 @@ validates the multi-API architecture without requiring cache infrastructure.
 
 ### Backend implementation
 
-`DiiBackend` (`data/dii_backend.py`) is ~130 lines.  The `query()` method:
+`DiiBackend` (`src/pynetappfoundry/data/dii_backend.py`) is ~130 lines.  The `query()` method:
 
 1. Rejects cache-only decisions and `where_expressions`.
 2. Calls `DIIAPIClient.call_endpoint()` with filter dict as query params.
