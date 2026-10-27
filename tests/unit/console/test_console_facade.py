@@ -9,7 +9,7 @@ import pytest
 
 from pynetappfoundry.console import Console
 from pynetappfoundry.core.models import ConsoleAPISettings
-from pynetappfoundry.models.console_types import Organization
+from pynetappfoundry.models.console_types import Folder, Organization, Project
 
 
 def _make_config(settings: ConsoleAPISettings, tmp_path: Any) -> MagicMock:
@@ -111,4 +111,43 @@ class TestConsoleDelegatesToClient:
             method="GET",
             path_template="/organizations/{organization_id}",
             path_params={"organization_id": "org-default"},
+        )
+
+    @pytest.mark.parametrize(
+        ("method", "model", "path_template", "param"),
+        [
+            ("get_folder", Folder, "/folders/{folder_id}", "folder_id"),
+            ("get_project", Project, "/projects/{project_id}", "project_id"),
+        ],
+    )
+    def test_get_folder_and_project_delegate(
+        self,
+        method: str,
+        model: type[Folder] | type[Project],
+        path_template: str,
+        param: str,
+        settings_with_default_org: ConsoleAPISettings,
+        tmp_path: Any,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        wrapper_instance = MagicMock()
+        wrapper_instance.call_endpoint.return_value = {
+            "id": "res-1",
+            "name": "Res",
+            "resourceClass": "tenancyv4",
+            "resourceType": method.removeprefix("get_"),
+        }
+        monkeypatch.setattr(
+            "pynetappfoundry.clients.console.api.APIWrapper",
+            MagicMock(return_value=wrapper_instance),
+        )
+
+        console = Console(_make_config(settings_with_default_org, tmp_path))
+        result = getattr(console, method)("res-1")
+
+        assert isinstance(result, model)
+        wrapper_instance.call_endpoint.assert_called_once_with(
+            method="GET",
+            path_template=path_template,
+            path_params={param: "res-1"},
         )

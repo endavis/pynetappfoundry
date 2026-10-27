@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from pynetappfoundry.clients.openapi import APIWrapper
-from pynetappfoundry.models.console_types import Organization
+from pynetappfoundry.models.console_types import Folder, Organization, Project
 
 if TYPE_CHECKING:
     from pynetappfoundry.core.config import Config
@@ -103,6 +103,38 @@ class ConsoleAPIClient:
         )
         items: list[Any] = response.get("items", [])
         return [Organization.model_validate(item) for item in items]
+
+    def get_folder(self, folder_id: str) -> Folder:
+        """GET /folders/{folder_id} (user-token endpoint).
+
+        Args:
+            folder_id: The folder UUID.
+
+        Returns:
+            Compact Folder instance.
+        """
+        response: Any = self._user.call_endpoint(
+            method="GET",
+            path_template="/folders/{folder_id}",
+            path_params={"folder_id": folder_id},
+        )
+        return Folder.model_validate(response)
+
+    def get_project(self, project_id: str) -> Project:
+        """GET /projects/{project_id} (user-token endpoint).
+
+        Args:
+            project_id: The project UUID.
+
+        Returns:
+            Compact Project instance.
+        """
+        response: Any = self._user.call_endpoint(
+            method="GET",
+            path_template="/projects/{project_id}",
+            path_params={"project_id": project_id},
+        )
+        return Project.model_validate(response)
 
 
 __all__ = ["ConsoleAPIClient", "ConsoleServiceTokenMissingError"]

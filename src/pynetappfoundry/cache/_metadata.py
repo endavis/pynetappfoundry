@@ -18,7 +18,7 @@ from pynetappfoundry.cache._base import (
     HasUUID,
     _utcnow,
 )
-from pynetappfoundry.models.console_types import Organization
+from pynetappfoundry.models.console_types import Folder, Organization, Project
 from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
 from pynetappfoundry.models.ontap.cluster.licensing.licenses.model import (
     OntapLicensePackageResponse,
@@ -39,6 +39,8 @@ class ConsoleInfo(CacheModel):
     """Console SaaS data cached for the cluster's owning org."""
 
     organization: Organization | None = None
+    folder: Folder | None = None
+    project: Project | None = None
 
 
 class RelationshipsInfo(CacheModel):

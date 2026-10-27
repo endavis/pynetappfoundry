@@ -269,7 +269,7 @@ class ClusterMetadataDB(SQLiteDB):
     for data safety and isolation.
     """
 
-    SCHEMA_VERSION: ClassVar[int] = 7
+    SCHEMA_VERSION: ClassVar[int] = 8
     TABLE_NAME: ClassVar[str] = "cluster_metadata"
 
     def __init__(
@@ -462,6 +462,25 @@ class ClusterMetadataDB(SQLiteDB):
         if cursor.fetchone() is None:
             self.conn.execute(generate_table_ddl("ontapsvmwebservice", OntapSvmWebService))
             self.conn.execute(generate_cluster_name_index_ddl("ontapsvmwebservice"))
+
+    # ------------------------------------------------------------------
+    # Migration v7 → v8
+    # ------------------------------------------------------------------
+
+    def _upgrade_to_v8(self) -> None:
+        """Add ``folder`` and ``project`` columns to the consoleinfo table (#734).
+
+        v8 adds ``ConsoleInfo.folder`` and ``ConsoleInfo.project``.
+        Existing v7 databases lack these columns.  The column check is
+        idempotent: the v6 migration may have created the table with the
+        current DDL, which already includes them.
+        """
+        cursor = self.conn.execute("PRAGMA table_info(consoleinfo)")
+        existing_cols = {row[1] for row in cursor.fetchall()}
+        if "folder" not in existing_cols:
+            self.conn.execute('ALTER TABLE consoleinfo ADD COLUMN "folder" TEXT')
+        if "project" not in existing_cols:
+            self.conn.execute('ALTER TABLE consoleinfo ADD COLUMN "project" TEXT')
 
     # ------------------------------------------------------------------
     # Internal: decompose metadata into tables

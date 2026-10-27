@@ -12,7 +12,7 @@ from pynetappfoundry.clients.console.api import (
     ConsoleServiceTokenMissingError,
 )
 from pynetappfoundry.core.models import ConsoleAPISettings
-from pynetappfoundry.models.console_types import Organization
+from pynetappfoundry.models.console_types import Folder, Organization, Project
 
 
 @pytest.fixture
@@ -161,6 +161,48 @@ class TestHandAuthoredOperations:
             path_template="/organizations/{organization_id}",
             path_params={"organization_id": "org-abc"},
         )
+
+    @pytest.mark.parametrize(
+        ("method", "model", "path_template", "param"),
+        [
+            ("get_folder", Folder, "/folders/{folder_id}", "folder_id"),
+            ("get_project", Project, "/projects/{project_id}", "project_id"),
+        ],
+    )
+    def test_get_folder_and_project_call_user_wrapper(
+        self,
+        method: str,
+        model: type[Folder] | type[Project],
+        path_template: str,
+        param: str,
+        both_tokens_settings: ConsoleAPISettings,
+        tmp_path: Any,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        user_wrapper = MagicMock()
+        user_wrapper.call_endpoint.return_value = {
+            "id": "res-1",
+            "name": "Res",
+            "resourceClass": "tenancyv4",
+            "resourceType": method.removeprefix("get_"),
+        }
+        service_wrapper = MagicMock()
+        monkeypatch.setattr(
+            "pynetappfoundry.clients.console.api.APIWrapper",
+            MagicMock(side_effect=[user_wrapper, service_wrapper]),
+        )
+
+        client = ConsoleAPIClient(_make_config(both_tokens_settings, tmp_path))
+        result = getattr(client, method)("res-1")
+
+        assert isinstance(result, model)
+        assert result.id == "res-1"
+        user_wrapper.call_endpoint.assert_called_once_with(
+            method="GET",
+            path_template=path_template,
+            path_params={param: "res-1"},
+        )
+        service_wrapper.call_endpoint.assert_not_called()
 
     def test_list_organizations_parses_items(
         self,
