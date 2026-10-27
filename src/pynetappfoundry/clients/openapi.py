@@ -790,6 +790,8 @@ class APIWrapper:
         # Follow pagination links
         current_response = first_response
         while page_count < config.max_pages:
+            if config.max_records is not None and len(all_records) >= config.max_records:
+                break
             next_url = extractor(current_response)
             if next_url is None:
                 break
@@ -840,11 +842,15 @@ class APIWrapper:
                 f"(total: {len(all_records)})"
             )
         else:
-            if extractor(current_response) is not None:
+            reached_cap = config.max_records is not None and len(all_records) >= config.max_records
+            if not reached_cap and extractor(current_response) is not None:
                 logging.warning(
                     f"{self.log_prefix} Pagination stopped at max_pages limit "
                     f"({config.max_pages}). Some records may not have been fetched."
                 )
+
+        if config.max_records is not None:
+            del all_records[config.max_records :]
 
         logging.info(
             f"{self.log_prefix} Fetched {len(all_records)} total records across {page_count} pages"

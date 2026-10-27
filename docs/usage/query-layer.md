@@ -114,7 +114,7 @@ QuerySet(OntapVolume, client).order_by("name asc", "size desc")
 
 ### Limiting: `.limit(n)`
 
-`.limit(n)` sets the `max_records` query parameter.
+`.limit(n)` returns at most `n` records. It sets ONTAP's `max_records` query parameter, which ONTAP treats as the page size, and caps pagination through `PaginationConfig.max_records` so the fetch stops once `n` records are collected. `n` must be at least 1.
 
 ```python
 QuerySet(OntapVolume, client).filter(state="online").limit(50)

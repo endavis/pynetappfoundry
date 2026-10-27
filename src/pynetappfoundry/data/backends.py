@@ -24,6 +24,7 @@ from pydantic import BaseModel
 from pynetappfoundry.cache import fetch
 from pynetappfoundry.cache.fetchers import _resolve_dotted_attr
 from pynetappfoundry.cache.field_mapping import parse_api_response
+from pynetappfoundry.core.models import PaginationConfig
 from pynetappfoundry.data._merge import merge_models
 
 if TYPE_CHECKING:
@@ -372,10 +373,21 @@ class OntapBackend(Backend):
         equality filter). Builds a URL via :meth:`_build_live_url`,
         calls :meth:`ONTAPAPIClient.get_all_records`, and parses the
         response with :func:`parse_api_response`.
+
+        ONTAP treats a ``max_records`` filter as the page size, so it is
+        also passed to :class:`PaginationConfig` to stop paging once that
+        many records are collected (#872).
         """
         client = self._get_api_client(cluster)
         url = self._build_live_url(mapping, filters, live_fields)
-        response = client.get_all_records(url)
+        max_records = filters.get("max_records")
+        if max_records is not None:
+            response = client.get_all_records(
+                url,
+                pagination_config=PaginationConfig(max_records=int(max_records)),
+            )
+        else:
+            response = client.get_all_records(url)
         parsed = parse_api_response(
             mapping,
             response,
