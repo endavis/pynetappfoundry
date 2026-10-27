@@ -469,19 +469,15 @@ class TestTaskAuditLegacy:
 class TestLiveTreeRegression:
     """Regression anchor: scan_tree(_SRC_ROOT) must match manual ground truth.
 
-    Ground truth from #741 / #742:
-    - cli/commands/events/get.py lines 10, 11, 146     (A, A, B)
-    - cli/commands/events/azevents.py lines 263, 264, 265, 277  (A, A, A, B)
-    Total: 7 candidate match lines, all under cli/commands/events/.
-
-    If a future migration PR removes these files, this test will fail
-    intentionally — update the expected count after verifying the migration.
+    Ground truth: no candidates. The last 7 (A x5, B x2, all under
+    cli/commands/events/) were removed when #741 migrated the events
+    commands to QuerySet(config=). A new candidate is a regression.
     """
 
-    def test_exactly_7_candidates(self) -> None:
+    def test_no_candidates(self) -> None:
         candidates, _ = scan_tree(_SRC_ROOT)
-        assert len(candidates) == 7, (
-            f"Expected 7 candidates, got {len(candidates)}. "
+        assert len(candidates) == 0, (
+            f"Expected 0 candidates, got {len(candidates)}. "
             f"Candidates: {[(m.file, m.line, m.pattern) for m in candidates]}"
         )
 
@@ -502,15 +498,15 @@ class TestLiveTreeRegression:
             f"{[(m.file, m.line, m.pattern) for m in legitimate]}"
         )
 
-    def test_pattern_a_count_is_5(self) -> None:
+    def test_pattern_a_count_is_0(self) -> None:
         candidates, _ = scan_tree(_SRC_ROOT)
         a_count = sum(1 for m in candidates if m.pattern == "A")
-        assert a_count == 5, f"Expected 5 pattern-A candidates, got {a_count}"
+        assert a_count == 0, f"Expected 0 pattern-A candidates, got {a_count}"
 
-    def test_pattern_b_count_is_2(self) -> None:
+    def test_pattern_b_count_is_0(self) -> None:
         candidates, _ = scan_tree(_SRC_ROOT)
         b_count = sum(1 for m in candidates if m.pattern == "B")
-        assert b_count == 2, f"Expected 2 pattern-B candidates, got {b_count}"
+        assert b_count == 0, f"Expected 0 pattern-B candidates, got {b_count}"
 
     def test_patterns_c_d_e_are_zero(self) -> None:
         candidates, _ = scan_tree(_SRC_ROOT)

@@ -7,6 +7,7 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, ClassVar
 
 import click
+import requests
 
 from pynetappfoundry.cli.decorators import with_config
 from pynetappfoundry.cli.utils import (
@@ -16,11 +17,19 @@ from pynetappfoundry.cli.utils import (
     print_success,
     print_warning,
 )
+from pynetappfoundry.clients.ontap.api import ONTAPAPIClient
+from pynetappfoundry.core.models import ClusterConfig
 from pynetappfoundry.db.azevents import AzEventsDB
 from pynetappfoundry.db.ems import EmsEventsDB
+from pynetappfoundry.models.ontap.cluster.nodes import OntapNodeResponse
+from pynetappfoundry.models.ontap.support.ems.events import OntapEmsEventResponse
+from pynetappfoundry.query import QuerySet
 
 if TYPE_CHECKING:
     from pynetappfoundry.core.config import Config
+    from pynetappfoundry.models.ontap.support.ems.events.model import (
+        OntapEmsEventResponseParameter,
+    )
 
 
 @click.command("save-azure")
@@ -145,24 +154,24 @@ class ClusterData:
         self.current_azevent = ""
         return {"event_id": "Unknown"}
 
-    def _add_emsevent(self, emsevent: Any) -> None:
+    def _add_emsevent(self, emsevent: OntapEmsEventResponse) -> None:
         """Add an EMS event to the tracking list.
 
         Args:
-            emsevent: EMS event resource object from API (not converted to dict).
+            emsevent: EMS event from the API.
         """
-        event_name = emsevent["message"]["name"]
-        message = emsevent["log_message"]
+        event_name = emsevent.message.name
+        message = emsevent.log_message
         # Clean up message
         message = message.replace(f"{event_name}: ", "").replace(",", ";").replace("\n", "").strip()
 
         event_dict = {
             "event_id": self.current_azevent,
             "cluster": self.name,
-            "node": emsevent["node"]["name"],
-            "time": emsevent["time"],
+            "node": emsevent.node.name,
+            "time": datetime.fromisoformat(emsevent.time),
             "event": event_name,
-            "severity": emsevent["message"]["severity"],
+            "severity": emsevent.message.severity,
             "message": message,
         }
         self.ems_events.append(event_dict)
@@ -200,20 +209,20 @@ class ClusterData:
         emsdb.conn.close()
         print_info(f"Saved {len(self.ems_events)} EMS events to {db_name} for debugging")
 
-    def _get_param_value(self, parameters: list[Any], param_name: str) -> str | None:
+    def _get_param_value(
+        self, parameters: list[OntapEmsEventResponseParameter], param_name: str
+    ) -> str | None:
         """Extract a parameter value from EMS event parameters.
 
         Args:
-            parameters: List of parameter objects with 'name' and 'value'.
+            parameters: EMS event parameters, each with a name and a value.
             param_name: Parameter name to find.
 
         Returns:
             Parameter value or None if not found.
         """
-        # Use item["name"] instead of item.get("name") because EmsEventParameter
-        # objects support [] access but not .get()
         return next(
-            (item["value"] for item in parameters if item["name"] == param_name),
+            (item.value for item in parameters if item.name == param_name),
             None,
         )
 
@@ -260,272 +269,260 @@ class ClusterData:
 
     def gather_data(self) -> None:
         """Gather and parse EMS events from the cluster."""
-        import netapp_ontap.error
-        from netapp_ontap import HostConnection  # pyright: ignore[reportPrivateImportUsage]
-        from netapp_ontap.resources import EmsEvent, Node
-
         azevent_dict = self._empty_azevent()
         azevent_id: str | None = "Unknown"
         status: str | None = ""
         not_before_time: str | None = ""
         node: str | None = ""
         event_type: str | None = ""
-        emsevent: Any = None
+        emsevent: OntapEmsEventResponse | None = None
 
         try:
-            user, password = self.config.get_user("clusters", self.name)
-            with HostConnection(
-                self.details["ip"],
-                username=user,
-                password=password,
-                verify=False,
-            ):
-                # Detect CVO vs CVO HA
-                nodes = list(Node.get_collection(fields="ha"))
-                if len(nodes) > 1 and nodes[0]["ha"]["enabled"]:
-                    self.cluster_type = "CVO HA"
-                else:
-                    self.cluster_type = "CVO"
+            client = ONTAPAPIClient(cluster=ClusterConfig(**self.details), config=self.config)
+            # Detect CVO vs CVO HA
+            nodes: list[OntapNodeResponse] = QuerySet(
+                OntapNodeResponse, client, config=self.config
+            ).all()
+            if len(nodes) > 1 and nodes[0].ha.enabled:
+                self.cluster_type = "CVO HA"
+            else:
+                self.cluster_type = "CVO"
 
-                print_debug(f"{self.name} is {self.cluster_type}")
+            print_debug(f"{self.name} is {self.cluster_type}")
 
-                # Check if any scheduled events exist
-                scheduled_query: dict[str, Any] = {
-                    "message.name": ",".join(self.SCHEDULED_EVENTS),
-                    "order_by": "time",
-                    "fields": "*",
-                }
-                scheduled = list(EmsEvent.get_collection(**scheduled_query))
+            # Check if any scheduled events exist
+            scheduled: list[OntapEmsEventResponse] = (
+                QuerySet(OntapEmsEventResponse, client, config=self.config)
+                .filter(**{"message.name": ",".join(self.SCHEDULED_EVENTS)})
+                .order_by("time")
+                .all()
+            )
 
-                if len(scheduled) == 0:
-                    print_info(f"{self.name}: No maintenance events")
-                    return
+            if len(scheduled) == 0:
+                print_info(f"{self.name}: No maintenance events")
+                return
 
-                print_info(f"{self.name}: Found maintenance events")
+            print_info(f"{self.name}: Found maintenance events")
 
-                # Process all EMS events to track maintenance lifecycle
-                all_events_query: dict[str, Any] = {
-                    "message.severity": "*",
-                    "order_by": "time",
-                    "fields": "*",
-                }
-                for emsevent in EmsEvent.get_collection(**all_events_query):
-                    self._add_emsevent(emsevent)
+            # Process all EMS events to track maintenance lifecycle
+            all_events: list[OntapEmsEventResponse] = (
+                QuerySet(OntapEmsEventResponse, client, config=self.config)
+                .filter(**{"message.severity": "*"})
+                .order_by("time")
+                .all()
+            )
+            for emsevent in all_events:
+                self._add_emsevent(emsevent)
 
-                    message_name = emsevent["message"]["name"]
+                message_name = emsevent.message.name
+                event_time = datetime.fromisoformat(emsevent.time)
 
-                    # Extract common parameters for vsa.scheduled events
-                    if "vsa.scheduled" in message_name:
-                        # Only access parameters for events that need them
-                        try:
-                            parameters = emsevent["parameters"]
-                        except KeyError:
+                # Extract common parameters for vsa.scheduled events
+                if "vsa.scheduled" in message_name:
+                    # Only access parameters for events that need them
+                    parameters = emsevent.parameters
+                    if not parameters:
+                        print_warning(f"{self.name}: Event {message_name} missing parameters field")
+                    print_debug(f"Found vsa.scheduled: {emsevent.model_dump()}")
+                    azevent_id = self._get_param_value(parameters, "event_id")
+                    event_type = self._get_param_value(parameters, "event_type")
+                    node = self._get_param_value(parameters, "node")
+                    status = self._get_param_value(parameters, "status")
+                    not_before_time = self._get_param_value(parameters, "not_before_time")
+
+                # Process events based on message name
+                match message_name:
+                    case "vsa.scheduledEvent.scheduled":
+                        print_debug(f"Found vsa.scheduledEvent.scheduled: {emsevent.model_dump()}")
+                        # Found a new event - check if previous wasn't completed
+                        if azevent_dict["event_id"] != "Unknown":
                             print_warning(
-                                f"{self.name}: Event {message_name} missing parameters field"
+                                f"{self.name}: Could not find completion "
+                                f"for AZ event {azevent_dict['event_id']}"
                             )
-                            parameters = []
-                        print_debug(f"Found vsa.scheduled: {emsevent.to_dict()}")
-                        azevent_id = self._get_param_value(parameters, "event_id")
-                        event_type = self._get_param_value(parameters, "event_type")
-                        node = self._get_param_value(parameters, "node")
-                        status = self._get_param_value(parameters, "status")
-                        not_before_time = self._get_param_value(parameters, "not_before_time")
+                            self._add_azmaint(azevent_dict)
+                            azevent_dict = self._empty_azevent()
 
-                    # Process events based on message name
-                    match message_name:
-                        case "vsa.scheduledEvent.scheduled":
-                            print_debug(f"Found vsa.scheduledEvent.scheduled: {emsevent.to_dict()}")
-                            # Found a new event - check if previous wasn't completed
-                            if azevent_dict["event_id"] != "Unknown":
-                                print_warning(
-                                    f"{self.name}: Could not find completion "
-                                    f"for AZ event {azevent_dict['event_id']}"
-                                )
-                                self._add_azmaint(azevent_dict)
-                                azevent_dict = self._empty_azevent()
+                        # Parse the scheduled event
+                        try:
+                            if not_before_time:
+                                azevent_dict["az_maint_not_before"] = datetime.strptime(
+                                    not_before_time,
+                                    "%m/%d/%Y %H:%M:%S",
+                                ).replace(tzinfo=UTC)
+                            azevent_dict["event_id"] = azevent_id
+                            azevent_dict["node"] = node
+                            azevent_dict["type"] = event_type
+                            azevent_dict["cluster"] = self.name
+                            azevent_dict["az_maint_scheduled"] = event_time
+                            self.current_azevent = azevent_id or ""
+                        except Exception:
+                            self.current_azevent = "Unknown"
+                            print_error(
+                                f"Got an invalid maintenance event: {emsevent.model_dump()}"
+                            )
+                            self.invalid_maintenance = True
 
-                            # Parse the scheduled event
-                            try:
-                                if not_before_time:
-                                    azevent_dict["az_maint_not_before"] = datetime.strptime(
-                                        not_before_time,
-                                        "%m/%d/%Y %H:%M:%S",
-                                    ).replace(tzinfo=UTC)
-                                azevent_dict["event_id"] = azevent_id
-                                azevent_dict["node"] = node
-                                azevent_dict["type"] = event_type
-                                azevent_dict["cluster"] = self.name
-                                azevent_dict["az_maint_scheduled"] = emsevent["time"]
-                                self.current_azevent = azevent_id or ""
-                            except Exception:
-                                self.current_azevent = "Unknown"
-                                print_error(
-                                    f"Got an invalid maintenance event: {emsevent.to_dict()}"
-                                )
-                                self.invalid_maintenance = True
+                    case "vsa.scheduledEvent.update":
+                        print_debug(f"Found vsa.scheduledEvent.update: {emsevent.model_dump()}")
+                        # Handle out-of-order events (update before scheduled)
+                        if azevent_id != azevent_dict["event_id"]:
+                            print_warning(
+                                f"{self.name}: Out of order az event - "
+                                f"tracking {azevent_dict['event_id']}, "
+                                f"received update for {azevent_id}"
+                            )
+                            print_debug(f"Current Event details: {azevent_dict}")
+                            print_debug(f"Full current EMS details: {emsevent.model_dump()}")
 
-                        case "vsa.scheduledEvent.update":
-                            print_debug(f"Found vsa.scheduledEvent.update: {emsevent.to_dict()}")
-                            # Handle out-of-order events (update before scheduled)
-                            if azevent_id != azevent_dict["event_id"]:
-                                print_warning(
-                                    f"{self.name}: Out of order az event - "
-                                    f"tracking {azevent_dict['event_id']}, "
-                                    f"received update for {azevent_id}"
-                                )
-                                print_debug(f"Current Event details: {azevent_dict}")
-                                print_debug(f"Full current EMS details: {emsevent.to_dict()}")
-
-                                # Preserve timing data from "Unknown" event before resetting
-                                timing_data: dict[str, Any] = {}
-                                if azevent_dict["event_id"] == "Unknown":
-                                    # Copy all timing fields (exclude event_id)
-                                    timing_data = {
-                                        k: v for k, v in azevent_dict.items() if k != "event_id"
-                                    }
-                                else:
-                                    # Save current event with real ID
-                                    self._add_azmaint(azevent_dict)
-
-                                # Also merge any pending timing data for this node
-                                # (from callhome.reboot.giveback with Unknown event_id)
-                                if node in self.pending_timing:
-                                    print_debug(
-                                        f"{self.name}: Merging pending timing data "
-                                        f"for node {node}: {self.pending_timing[node]}"
-                                    )
-                                    for k, v in self.pending_timing[node].items():
-                                        if k not in timing_data:
-                                            timing_data[k] = v
-                                    # Clear pending data for this node
-                                    del self.pending_timing[node]
-
-                                # Check if this event already exists in azmaints
-                                if azevent_id and azevent_id in self.azmaints:
-                                    # Update existing event with status and any timing data
-                                    status_field = f"az_maint_{status}"
-                                    self.azmaints[azevent_id][status_field] = emsevent["time"]
-                                    # Merge preserved timing data (don't overwrite existing)
-                                    for k, v in timing_data.items():
-                                        if k not in self.azmaints[azevent_id]:
-                                            self.azmaints[azevent_id][k] = v
-                                    print_debug(f"Updated event {azevent_id} with {status_field}")
-                                    # Reset to empty - this event is already tracked
-                                    azevent_dict = self._empty_azevent()
-                                else:
-                                    # Create new event dict with proper ID
-                                    # (scheduled event was missing from EMS)
-                                    azevent_dict = {
-                                        "event_id": azevent_id,
-                                        "node": node,
-                                        "type": event_type,
-                                        "cluster": self.name,
-                                        f"az_maint_{status}": emsevent["time"],
-                                    }
-                                    # Merge preserved timing data
-                                    azevent_dict.update(timing_data)
-                                    self.current_azevent = azevent_id or ""
-                            else:
-                                # Normal case - IDs match
-                                azevent_dict[f"az_maint_{status}"] = emsevent["time"]
-
-                            # For non-HA CVO, complete on az_maint_complete
-                            if status == "complete" and self.cluster_type == "CVO":
-                                self._add_azmaint(azevent_dict)
-                                azevent_dict = self._empty_azevent()
-
-                        case "cf.fsm.nfo.startingGracefulShutdown":
-                            # Takeover complete
-                            azevent_dict["node_takeover_complete"] = emsevent["time"]
-
-                        case "kern.shutdown":
-                            # Node starts rebooting
-                            azevent_dict["node_reboot_starts"] = emsevent["time"]
-
-                        case "mgr.boot.disk_done":
-                            # Node finished rebooting
-                            azevent_dict["node_reboot_complete"] = emsevent["time"]
-
-                        case "cf.fsm.takeoverOfPartnerEnabled":
-                            # Node ready for giveback
-                            azevent_dict["node_ready_for_giveback"] = emsevent["time"]
-
-                        case "clam.valid.config":
-                            # Giveback starts
-                            azevent_dict["node_giveback_starts"] = emsevent["time"]
-
-                        # SMB client impact events
-                        case "vifmgr.lifBeingRemoved":
-                            # LIF failover starts - track first occurrence only
-                            if "lif_failover_start" not in azevent_dict:
-                                azevent_dict["lif_failover_start"] = emsevent["time"]
-
-                        case "vifmgr.lifsuccessfullymoved":
-                            # LIF successfully moved - track last occurrence
-                            azevent_dict["lif_failover_complete"] = emsevent["time"]
-
-                        case "Nblade.cifsWitnessFONotify":
-                            # CIFS Witness failover notification
-                            azevent_dict["cifs_witness_time"] = emsevent["time"]
-                            client_count, _ = self._parse_cifs_witness_info(emsevent["log_message"])
-                            if client_count is not None:
-                                azevent_dict["cifs_witness_clients"] = client_count
-
-                        case "cf.transition.info":
-                            # Protocol transition times - extract CIFS ms
-                            cifs_ms = self._parse_cifs_transition_ms(emsevent["log_message"])
-                            if cifs_ms is not None:
-                                azevent_dict["cifs_transition_ms"] = cifs_ms
-
-                        case "ha.sfo.giveback.aggrStart":
-                            # Aggregate giveback started - track first occurrence only
-                            if "aggr_giveback_start" not in azevent_dict:
-                                azevent_dict["aggr_giveback_start"] = emsevent["time"]
-
-                        case "ha.sfo.giveback.aggrDone":
-                            # Aggregate giveback completed - track last occurrence
-                            azevent_dict["aggr_giveback_complete"] = emsevent["time"]
-
-                        case "callhome.reboot.giveback":
-                            # Event complete - giveback finished (HA completion marker)
-                            azevent_dict["node_giveback_complete"] = emsevent["time"]
-                            azevent_id = azevent_dict["event_id"]
-                            if azevent_id == "Unknown":
-                                # Scheduled event aged out - save timing data for later
-                                # when vsa.scheduledEvent.update arrives
-                                event_node = emsevent["node"]["name"]
+                            # Preserve timing data from "Unknown" event before resetting
+                            timing_data: dict[str, Any] = {}
+                            if azevent_dict["event_id"] == "Unknown":
+                                # Copy all timing fields (exclude event_id)
                                 timing_data = {
                                     k: v for k, v in azevent_dict.items() if k != "event_id"
                                 }
-                                if timing_data:
-                                    print_debug(
-                                        f"{self.name}: Saving pending timing data "
-                                        f"for node {event_node}: {timing_data}"
-                                    )
-                                    # Merge with existing pending data for this node
-                                    if event_node in self.pending_timing:
-                                        for k, v in timing_data.items():
-                                            if k not in self.pending_timing[event_node]:
-                                                self.pending_timing[event_node][k] = v
-                                    else:
-                                        self.pending_timing[event_node] = timing_data
                             else:
-                                # Add EMS event before resetting current_azevent
-                                self._add_emsevent(emsevent)
+                                # Save current event with real ID
                                 self._add_azmaint(azevent_dict)
-                            self.current_azevent = ""
+
+                            # Also merge any pending timing data for this node
+                            # (from callhome.reboot.giveback with Unknown event_id)
+                            if node in self.pending_timing:
+                                print_debug(
+                                    f"{self.name}: Merging pending timing data "
+                                    f"for node {node}: {self.pending_timing[node]}"
+                                )
+                                for k, v in self.pending_timing[node].items():
+                                    if k not in timing_data:
+                                        timing_data[k] = v
+                                # Clear pending data for this node
+                                del self.pending_timing[node]
+
+                            # Check if this event already exists in azmaints
+                            if azevent_id and azevent_id in self.azmaints:
+                                # Update existing event with status and any timing data
+                                status_field = f"az_maint_{status}"
+                                self.azmaints[azevent_id][status_field] = event_time
+                                # Merge preserved timing data (don't overwrite existing)
+                                for k, v in timing_data.items():
+                                    if k not in self.azmaints[azevent_id]:
+                                        self.azmaints[azevent_id][k] = v
+                                print_debug(f"Updated event {azevent_id} with {status_field}")
+                                # Reset to empty - this event is already tracked
+                                azevent_dict = self._empty_azevent()
+                            else:
+                                # Create new event dict with proper ID
+                                # (scheduled event was missing from EMS)
+                                azevent_dict = {
+                                    "event_id": azevent_id,
+                                    "node": node,
+                                    "type": event_type,
+                                    "cluster": self.name,
+                                    f"az_maint_{status}": event_time,
+                                }
+                                # Merge preserved timing data
+                                azevent_dict.update(timing_data)
+                                self.current_azevent = azevent_id or ""
+                        else:
+                            # Normal case - IDs match
+                            azevent_dict[f"az_maint_{status}"] = event_time
+
+                        # For non-HA CVO, complete on az_maint_complete
+                        if status == "complete" and self.cluster_type == "CVO":
+                            self._add_azmaint(azevent_dict)
                             azevent_dict = self._empty_azevent()
 
-                # Check for incomplete event left on stack
-                if azevent_dict["event_id"] != "Unknown":
-                    print_warning(
-                        f"{self.name}: Incomplete az event {azevent_dict['event_id']} "
-                        f"for node {azevent_dict.get('node', 'Unknown')} left on stack"
-                    )
-                    print_debug(f"Event details: {azevent_dict}")
-                    self._add_azmaint(azevent_dict)
+                    case "cf.fsm.nfo.startingGracefulShutdown":
+                        # Takeover complete
+                        azevent_dict["node_takeover_complete"] = event_time
 
-        except netapp_ontap.error.NetAppRestError:
+                    case "kern.shutdown":
+                        # Node starts rebooting
+                        azevent_dict["node_reboot_starts"] = event_time
+
+                    case "mgr.boot.disk_done":
+                        # Node finished rebooting
+                        azevent_dict["node_reboot_complete"] = event_time
+
+                    case "cf.fsm.takeoverOfPartnerEnabled":
+                        # Node ready for giveback
+                        azevent_dict["node_ready_for_giveback"] = event_time
+
+                    case "clam.valid.config":
+                        # Giveback starts
+                        azevent_dict["node_giveback_starts"] = event_time
+
+                    # SMB client impact events
+                    case "vifmgr.lifBeingRemoved":
+                        # LIF failover starts - track first occurrence only
+                        if "lif_failover_start" not in azevent_dict:
+                            azevent_dict["lif_failover_start"] = event_time
+
+                    case "vifmgr.lifsuccessfullymoved":
+                        # LIF successfully moved - track last occurrence
+                        azevent_dict["lif_failover_complete"] = event_time
+
+                    case "Nblade.cifsWitnessFONotify":
+                        # CIFS Witness failover notification
+                        azevent_dict["cifs_witness_time"] = event_time
+                        client_count, _ = self._parse_cifs_witness_info(emsevent.log_message)
+                        if client_count is not None:
+                            azevent_dict["cifs_witness_clients"] = client_count
+
+                    case "cf.transition.info":
+                        # Protocol transition times - extract CIFS ms
+                        cifs_ms = self._parse_cifs_transition_ms(emsevent.log_message)
+                        if cifs_ms is not None:
+                            azevent_dict["cifs_transition_ms"] = cifs_ms
+
+                    case "ha.sfo.giveback.aggrStart":
+                        # Aggregate giveback started - track first occurrence only
+                        if "aggr_giveback_start" not in azevent_dict:
+                            azevent_dict["aggr_giveback_start"] = event_time
+
+                    case "ha.sfo.giveback.aggrDone":
+                        # Aggregate giveback completed - track last occurrence
+                        azevent_dict["aggr_giveback_complete"] = event_time
+
+                    case "callhome.reboot.giveback":
+                        # Event complete - giveback finished (HA completion marker)
+                        azevent_dict["node_giveback_complete"] = event_time
+                        azevent_id = azevent_dict["event_id"]
+                        if azevent_id == "Unknown":
+                            # Scheduled event aged out - save timing data for later
+                            # when vsa.scheduledEvent.update arrives
+                            event_node = emsevent.node.name
+                            timing_data = {k: v for k, v in azevent_dict.items() if k != "event_id"}
+                            if timing_data:
+                                print_debug(
+                                    f"{self.name}: Saving pending timing data "
+                                    f"for node {event_node}: {timing_data}"
+                                )
+                                # Merge with existing pending data for this node
+                                if event_node in self.pending_timing:
+                                    for k, v in timing_data.items():
+                                        if k not in self.pending_timing[event_node]:
+                                            self.pending_timing[event_node][k] = v
+                                else:
+                                    self.pending_timing[event_node] = timing_data
+                        else:
+                            # Add EMS event before resetting current_azevent
+                            self._add_emsevent(emsevent)
+                            self._add_azmaint(azevent_dict)
+                        self.current_azevent = ""
+                        azevent_dict = self._empty_azevent()
+
+            # Check for incomplete event left on stack
+            if azevent_dict["event_id"] != "Unknown":
+                print_warning(
+                    f"{self.name}: Incomplete az event {azevent_dict['event_id']} "
+                    f"for node {azevent_dict.get('node', 'Unknown')} left on stack"
+                )
+                print_debug(f"Event details: {azevent_dict}")
+                self._add_azmaint(azevent_dict)
+
+        except requests.RequestException:
             print_error(f"{self.name}: Could not connect to API")
         except Exception as e:
             print_error(f"Could not retrieve events for {self.name}: {e}")

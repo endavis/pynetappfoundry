@@ -3,16 +3,19 @@
 from __future__ import annotations
 
 import csv
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 import click
-from netapp_ontap.host_connection import HostConnection
-from netapp_ontap.resources import EmsEvent
 
 from pynetappfoundry.cli.decorators import with_config
 from pynetappfoundry.cli.utils import print_error, print_info, print_success
+from pynetappfoundry.clients.ontap.api import ONTAPAPIClient
 from pynetappfoundry.core.config import Config
+from pynetappfoundry.core.models import ClusterConfig
+from pynetappfoundry.models.ontap.support.ems.events import OntapEmsEventResponse
+from pynetappfoundry.query import QuerySet
 
 
 def clean_message(log_message: str, event_name: str) -> str:
@@ -139,42 +142,33 @@ def _get_cluster_events(
     Returns:
         List of event dictionaries.
     """
-    user, password = config.get_user("clusters", name)
     events: list[dict[str, Any]] = []
 
     try:
-        with HostConnection(
-            details["ip"],
-            username=user,
-            password=password,
-            verify=False,
-        ):
-            query_params: dict[str, Any] = {
-                "max_records": limit,
-                "fields": "*",
-                "message.severity": severity if severity else "*",
-            }
+        client = ONTAPAPIClient(cluster=ClusterConfig(**details), config=config)
+        query = QuerySet(OntapEmsEventResponse, client, config=config).filter(
+            **{"message.severity": severity if severity else "*"}
+        )
+        if event_names:
+            query = query.filter(**{"message.name": ",".join(event_names)})
 
-            if event_names:
-                query_params["message.name"] = ",".join(event_names)
+        ems_events: list[OntapEmsEventResponse] = (
+            query.order_by("time desc" if sort == "-time" else "time asc").limit(limit).all()
+        )
 
-            if sort == "-time":
-                query_params["order_by"] = "time desc"
-            else:
-                query_params["order_by"] = "time asc"
-
-            for event in EmsEvent.get_collection(**query_params):
-                event_name = event["message"]["name"]
-                events.append(
-                    {
-                        "cluster": name,
-                        "node": event["node"]["name"],
-                        "time": str(event["time"]),
-                        "name": event_name,
-                        "severity": event["message"]["severity"],
-                        "message": clean_message(event["log_message"], event_name),
-                    }
-                )
+        for event in ems_events:
+            event_name = event.message.name
+            events.append(
+                {
+                    "cluster": name,
+                    "node": event.node.name,
+                    # Matches str() of the datetime the netapp_ontap SDK returned
+                    "time": str(datetime.fromisoformat(event.time)),
+                    "name": event_name,
+                    "severity": event.message.severity,
+                    "message": clean_message(event.log_message, event_name),
+                }
+            )
 
     except Exception as e:
         print_error(f"Could not retrieve events for {name}: {e}")
