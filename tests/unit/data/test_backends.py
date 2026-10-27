@@ -12,6 +12,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from pynetappfoundry.cache.field_mapping import TypeMapping
+from pynetappfoundry.core.models import PaginationConfig
 from pynetappfoundry.data._routing import RoutingDecision
 from pynetappfoundry.data.backends import OntapBackend
 from tests.unit.data._fakes import (
@@ -142,6 +143,68 @@ class TestOntapBackendQuery:
         mock_client.get_all_records.assert_called_once()
         url = mock_client.get_all_records.call_args[0][0]
         assert "name=vol1" in url
+
+    def test_live_query_max_records_caps_pagination(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        """A ``max_records`` filter also caps total records, not just page size (#872)."""
+        backend = _make_backend(mock_config)
+        live_fields = tuple(
+            f.cache_attr for f in fake_volume_mapping.fields if f.cache_strategy != "derived"
+        )
+        decision = RoutingDecision(cache_fields=(), live_fields=live_fields)
+
+        mock_client = MagicMock()
+        mock_client.get_all_records.return_value = {"records": []}
+
+        with (
+            patch.object(backend, "_get_api_client", return_value=mock_client),
+            patch("pynetappfoundry.data.backends.parse_api_response", return_value=[]),
+        ):
+            backend.query(
+                FakeVolume,
+                fake_volume_mapping,
+                decision,
+                cluster="prod1",
+                filters={"max_records": "5"},
+            )
+
+        url = mock_client.get_all_records.call_args[0][0]
+        assert "max_records=5" in url
+        assert mock_client.get_all_records.call_args.kwargs["pagination_config"] == (
+            PaginationConfig(max_records=5)
+        )
+
+    def test_live_query_without_max_records_is_uncapped(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        """Without ``max_records`` the default pagination config is used."""
+        backend = _make_backend(mock_config)
+        live_fields = tuple(
+            f.cache_attr for f in fake_volume_mapping.fields if f.cache_strategy != "derived"
+        )
+        decision = RoutingDecision(cache_fields=(), live_fields=live_fields)
+
+        mock_client = MagicMock()
+        mock_client.get_all_records.return_value = {"records": []}
+
+        with (
+            patch.object(backend, "_get_api_client", return_value=mock_client),
+            patch("pynetappfoundry.data.backends.parse_api_response", return_value=[]),
+        ):
+            backend.query(
+                FakeVolume,
+                fake_volume_mapping,
+                decision,
+                cluster="prod1",
+                filters={"name": "vol1"},
+            )
+
+        assert "pagination_config" not in mock_client.get_all_records.call_args.kwargs
 
     def test_live_query_field_restricted_does_not_delegate_to_fetch(
         self,

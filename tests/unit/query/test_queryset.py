@@ -207,6 +207,14 @@ class TestQuerySetChaining:
         limited = qs.limit(10)
         assert limited._max_records == 10
 
+    @pytest.mark.parametrize("n", [0, -1])
+    def test_limit_rejects_non_positive(
+        self, n: int, mock_config: MagicMock, mock_client: MagicMock
+    ) -> None:
+        qs, _ds, _backend = _make_qs(mock_config, mock_client)
+        with pytest.raises(ValueError, match="n >= 1"):
+            qs.limit(n)
+
 
 # ---------------------------------------------------------------------------
 # URL building tests (_build_url is retained for internal use)
@@ -285,6 +293,18 @@ class TestQuerySetAll:
         assert isinstance(results[0], FakeVolume)
         assert results[0].name == "vol1"
         assert results[0].svm_name == "vs1"
+
+    def test_all_caps_results_at_limit(
+        self, mock_config: MagicMock, mock_client: MagicMock
+    ) -> None:
+        """``.limit(n)`` returns at most *n* records even if the route returns more (#872)."""
+        qs, ds, _backend = _make_qs(mock_config, mock_client)
+        vols = [FakeVolume(name=f"vol{i}") for i in range(7)]
+        _set_query_results(ds, vols)
+
+        results = qs.limit(3).all()
+
+        assert results == vols[:3]
 
     def test_all_empty_response(self, mock_config: MagicMock, mock_client: MagicMock) -> None:
         qs, ds, _backend = _make_qs(mock_config, mock_client)

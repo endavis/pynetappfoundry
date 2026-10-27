@@ -1079,6 +1079,15 @@ class TestPaginationConfig:
         with pytest.raises(ValueError):
             PaginationConfig(max_pages=10001)
 
+    def test_max_records_defaults_to_none(self) -> None:
+        """Test max_records is uncapped by default."""
+        assert PaginationConfig().max_records is None
+
+    def test_max_records_minimum(self) -> None:
+        """Test max_records validation rejects 0."""
+        with pytest.raises(ValueError):
+            PaginationConfig(max_records=0)
+
     def test_extra_fields_forbidden(self) -> None:
         """Test that extra fields are rejected."""
         with pytest.raises(ValueError):
@@ -1291,6 +1300,74 @@ class TestGetAllRecords:
 
             assert len(result["records"]) == 3
             assert mock_request.call_count == 3
+
+    def test_max_records_stops_paging_and_truncates(self, api_wrapper: APIWrapper) -> None:
+        """Test pagination stops once max_records are collected (#872)."""
+
+        def make_page(n: int) -> dict[str, Any]:
+            return {
+                "records": [{"name": f"vol{n}a"}, {"name": f"vol{n}b"}],
+                "num_records": 2,
+                "_links": {"next": {"href": f"/api/v1/users?start={n + 1}"}},
+            }
+
+        with patch.object(api_wrapper.session, "request") as mock_request:
+            mock_request.side_effect = [self._make_response(make_page(i)) for i in range(1, 10)]
+
+            result = api_wrapper.get_all_records(
+                "/users",
+                "GET",
+                pagination_config=PaginationConfig(max_records=3),
+            )
+
+            assert [r["name"] for r in result["records"]] == ["vol1a", "vol1b", "vol2a"]
+            assert result["num_records"] == 3
+            assert mock_request.call_count == 2
+
+    def test_max_records_first_page_suffices(self, api_wrapper: APIWrapper) -> None:
+        """Test no next link is followed when the first page reaches max_records."""
+        page = {
+            "records": [{"name": "vol1"}, {"name": "vol2"}],
+            "_links": {"next": {"href": "/api/v1/users?start=3"}},
+        }
+
+        with (
+            patch.object(api_wrapper.session, "request") as mock_request,
+            patch("pynetappfoundry.clients.openapi.logging.warning") as mock_warning,
+        ):
+            mock_request.side_effect = [self._make_response(page)]
+
+            result = api_wrapper.get_all_records(
+                "/users",
+                "GET",
+                pagination_config=PaginationConfig(max_records=2, max_pages=1),
+            )
+
+            assert len(result["records"]) == 2
+            assert mock_request.call_count == 1
+            mock_warning.assert_not_called()
+
+    def test_max_records_above_total_returns_all(self, api_wrapper: APIWrapper) -> None:
+        """Test a cap above the total returns every record when pages run out."""
+        page1 = {
+            "records": [{"name": "vol1"}],
+            "_links": {"next": {"href": "/api/v1/users?start=2"}},
+        }
+        page2 = {"records": [{"name": "vol2"}]}
+
+        with patch.object(api_wrapper.session, "request") as mock_request:
+            mock_request.side_effect = [
+                self._make_response(page1),
+                self._make_response(page2),
+            ]
+
+            result = api_wrapper.get_all_records(
+                "/users",
+                "GET",
+                pagination_config=PaginationConfig(max_records=10),
+            )
+
+            assert result["records"] == [{"name": "vol1"}, {"name": "vol2"}]
 
     def test_custom_records_key(self, api_wrapper: APIWrapper) -> None:
         """Test pagination with custom records_key."""

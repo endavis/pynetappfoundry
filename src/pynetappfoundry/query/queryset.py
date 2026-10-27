@@ -131,7 +131,17 @@ class QuerySet:
         return clone
 
     def limit(self, n: int) -> QuerySet:
-        """Return a new QuerySet limited to *n* records."""
+        """Return a new QuerySet limited to *n* records.
+
+        Caps the total number of records returned, not just ONTAP's page
+        size: pagination stops once *n* records are collected.
+
+        Raises:
+            ValueError: If *n* is less than 1.
+        """
+        if n < 1:
+            msg = f"limit() requires n >= 1, got {n}"
+            raise ValueError(msg)
         clone = self._clone()
         clone._max_records = n
         return clone
@@ -214,7 +224,10 @@ class QuerySet:
         ).filter(self._build_merged_filter_dict())
         if self._fields_list:
             builder = builder.fields(*self._fields_list)
-        return list(builder)
+        results = list(builder)
+        if self._max_records is not None:
+            del results[self._max_records :]
+        return results
 
     # ------------------------------------------------------------------
     # Internal helpers

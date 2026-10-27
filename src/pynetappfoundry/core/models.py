@@ -183,6 +183,9 @@ class PaginationConfig(BaseModel):
         enabled: Whether pagination is enabled. Default True.
         max_pages: Maximum number of pages to fetch (1-10000). Default 100.
         records_key: Key in response dict containing the records list. Default "records".
+        max_records: Stop following next links once this many records are
+            collected, and truncate the result to it. ``None`` (default)
+            fetches every page up to ``max_pages``.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -190,6 +193,7 @@ class PaginationConfig(BaseModel):
     enabled: bool = True
     max_pages: int = Field(default=100, ge=1, le=10000)
     records_key: str = "records"
+    max_records: int | None = Field(default=None, ge=1)
 
 
 class CacheConfig(BaseModel):
