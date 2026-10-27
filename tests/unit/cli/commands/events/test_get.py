@@ -8,11 +8,16 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cli.commands.events.get import (
     _get_cluster_events,
     _write_csv,
     clean_message,
 )
+from pynetappfoundry.models.ontap.support.ems.events import OntapEmsEventResponse
+from pynetappfoundry.query import QuerySet
+
+MODULE = "pynetappfoundry.cli.commands.events.get"
 
 
 class TestCleanMessage:
@@ -155,41 +160,52 @@ class TestGetClusterEvents:
         }
 
     @pytest.fixture
-    def mock_ems_event(self) -> MagicMock:
-        """Create a mock EMS event."""
-        event = MagicMock()
-        _data: dict[str, Any] = {
-            "node": {"name": "node-01"},
-            "time": "2024-01-15T10:00:00Z",
-            "message": {"name": "vsa.mlx.nic.detach", "severity": "error"},
-            "log_message": "vsa.mlx.nic.detach: NIC 0 has been detached",
-        }
-        event.__getitem__ = MagicMock(side_effect=lambda key: _data[key])
-        return event
+    def ems_event(self) -> OntapEmsEventResponse:
+        """Create an EMS event as the API returns it."""
+        return OntapEmsEventResponse.model_validate(
+            {
+                "node": {"name": "node-01"},
+                "time": "2024-01-15T10:00:00Z",
+                "message": {"name": "vsa.mlx.nic.detach", "severity": "error"},
+                "log_message": "vsa.mlx.nic.detach: NIC 0 has been detached",
+            }
+        )
+
+    def _run(
+        self,
+        config: MagicMock,
+        details: dict[str, Any],
+        events: list[OntapEmsEventResponse],
+        **kwargs: Any,
+    ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+        """Run _get_cluster_events with the live fetch stubbed out.
+
+        Returns:
+            The events it returned, and the query params it sent to the API.
+        """
+        sent: dict[str, Any] = {}
+
+        def fake_all(qs: QuerySet) -> list[OntapEmsEventResponse]:
+            sent.update(qs._build_merged_filter_dict())
+            return events
+
+        args: dict[str, Any] = {"severity": None, "event_names": (), "sort": "time", "limit": 50}
+        args.update(kwargs)
+        with (
+            patch(f"{MODULE}.ONTAPAPIClient"),
+            patch.object(QuerySet, "_all_via_data_source", autospec=True, side_effect=fake_all),
+        ):
+            result = _get_cluster_events("cluster1", details, config, **args)
+        return result, sent
 
     def test_returns_events_list_for_file_output(
         self,
         mock_config: MagicMock,
         sample_cluster_details: dict[str, Any],
-        mock_ems_event: MagicMock,
+        ems_event: OntapEmsEventResponse,
     ) -> None:
         """Test that file output returns events list."""
-        with patch("pynetappfoundry.cli.commands.events.get.HostConnection") as mock_conn:
-            mock_conn.return_value.__enter__ = MagicMock(return_value=None)
-            mock_conn.return_value.__exit__ = MagicMock(return_value=None)
-
-            with patch("pynetappfoundry.cli.commands.events.get.EmsEvent") as mock_event_class:
-                mock_event_class.get_collection.return_value = [mock_ems_event]
-
-                result = _get_cluster_events(
-                    "cluster1",
-                    sample_cluster_details,
-                    mock_config,
-                    severity=None,
-                    event_names=(),
-                    sort="time",
-                    limit=50,
-                )
+        result, _ = self._run(mock_config, sample_cluster_details, [ems_event])
 
         assert len(result) == 1
         assert result[0]["cluster"] == "cluster1"
@@ -197,31 +213,26 @@ class TestGetClusterEvents:
         assert result[0]["severity"] == "error"
         assert result[0]["name"] == "vsa.mlx.nic.detach"
 
+    def test_time_formatted_as_before_migration(
+        self,
+        mock_config: MagicMock,
+        sample_cluster_details: dict[str, Any],
+        ems_event: OntapEmsEventResponse,
+    ) -> None:
+        """Test that time keeps the format the netapp_ontap SDK's datetime produced."""
+        result, _ = self._run(mock_config, sample_cluster_details, [ems_event])
+
+        assert result[0]["time"] == "2024-01-15 10:00:00+00:00"
+
     def test_message_is_cleaned_for_file_output(
         self,
         mock_config: MagicMock,
         sample_cluster_details: dict[str, Any],
-        mock_ems_event: MagicMock,
+        ems_event: OntapEmsEventResponse,
     ) -> None:
         """Test that message is cleaned when outputting to file."""
-        with patch("pynetappfoundry.cli.commands.events.get.HostConnection") as mock_conn:
-            mock_conn.return_value.__enter__ = MagicMock(return_value=None)
-            mock_conn.return_value.__exit__ = MagicMock(return_value=None)
+        result, _ = self._run(mock_config, sample_cluster_details, [ems_event])
 
-            with patch("pynetappfoundry.cli.commands.events.get.EmsEvent") as mock_event_class:
-                mock_event_class.get_collection.return_value = [mock_ems_event]
-
-                result = _get_cluster_events(
-                    "cluster1",
-                    sample_cluster_details,
-                    mock_config,
-                    severity=None,
-                    event_names=(),
-                    sort="time",
-                    limit=50,
-                )
-
-        # Message should have event name prefix removed
         assert "vsa.mlx.nic.detach:" not in result[0]["message"]
         assert "NIC 0 has been detached" in result[0]["message"]
 
@@ -231,26 +242,9 @@ class TestGetClusterEvents:
         sample_cluster_details: dict[str, Any],
     ) -> None:
         """Test that severity filter is passed as message.severity to API."""
-        with patch("pynetappfoundry.cli.commands.events.get.HostConnection") as mock_conn:
-            mock_conn.return_value.__enter__ = MagicMock(return_value=None)
-            mock_conn.return_value.__exit__ = MagicMock(return_value=None)
+        _, sent = self._run(mock_config, sample_cluster_details, [], severity="error")
 
-            with patch("pynetappfoundry.cli.commands.events.get.EmsEvent") as mock_event_class:
-                mock_event_class.get_collection.return_value = []
-
-                _get_cluster_events(
-                    "cluster1",
-                    sample_cluster_details,
-                    mock_config,
-                    severity="error",
-                    event_names=(),
-                    sort="time",
-                    limit=50,
-                )
-
-            # Check that severity was passed as message.severity
-            call_kwargs = mock_event_class.get_collection.call_args[1]
-            assert call_kwargs["message.severity"] == "error"
+        assert sent["message.severity"] == "error"
 
     def test_default_severity_wildcard_passed_to_api(
         self,
@@ -258,25 +252,9 @@ class TestGetClusterEvents:
         sample_cluster_details: dict[str, Any],
     ) -> None:
         """Test that message.severity defaults to '*' to include debug events."""
-        with patch("pynetappfoundry.cli.commands.events.get.HostConnection") as mock_conn:
-            mock_conn.return_value.__enter__ = MagicMock(return_value=None)
-            mock_conn.return_value.__exit__ = MagicMock(return_value=None)
+        _, sent = self._run(mock_config, sample_cluster_details, [])
 
-            with patch("pynetappfoundry.cli.commands.events.get.EmsEvent") as mock_event_class:
-                mock_event_class.get_collection.return_value = []
-
-                _get_cluster_events(
-                    "cluster1",
-                    sample_cluster_details,
-                    mock_config,
-                    severity=None,
-                    event_names=(),
-                    sort="time",
-                    limit=50,
-                )
-
-            call_kwargs = mock_event_class.get_collection.call_args[1]
-            assert call_kwargs["message.severity"] == "*"
+        assert sent["message.severity"] == "*"
 
     def test_event_names_filter_passed_to_api(
         self,
@@ -284,26 +262,24 @@ class TestGetClusterEvents:
         sample_cluster_details: dict[str, Any],
     ) -> None:
         """Test that event names filter is passed to API."""
-        with patch("pynetappfoundry.cli.commands.events.get.HostConnection") as mock_conn:
-            mock_conn.return_value.__enter__ = MagicMock(return_value=None)
-            mock_conn.return_value.__exit__ = MagicMock(return_value=None)
+        _, sent = self._run(
+            mock_config,
+            sample_cluster_details,
+            [],
+            event_names=("vsa.mlx.nic.detach", "vsa.mlx.nic.attach"),
+        )
 
-            with patch("pynetappfoundry.cli.commands.events.get.EmsEvent") as mock_event_class:
-                mock_event_class.get_collection.return_value = []
+        assert sent["message.name"] == "vsa.mlx.nic.detach,vsa.mlx.nic.attach"
 
-                _get_cluster_events(
-                    "cluster1",
-                    sample_cluster_details,
-                    mock_config,
-                    severity=None,
-                    event_names=("vsa.mlx.nic.detach", "vsa.mlx.nic.attach"),
-                    sort="time",
-                    limit=50,
-                )
+    def test_no_event_names_filter_by_default(
+        self,
+        mock_config: MagicMock,
+        sample_cluster_details: dict[str, Any],
+    ) -> None:
+        """Test that message.name is not sent when no event names are given."""
+        _, sent = self._run(mock_config, sample_cluster_details, [])
 
-            # Check that event names were passed
-            call_kwargs = mock_event_class.get_collection.call_args[1]
-            assert call_kwargs["message.name"] == "vsa.mlx.nic.detach,vsa.mlx.nic.attach"
+        assert "message.name" not in sent
 
     def test_sort_ascending_passed_to_api(
         self,
@@ -311,25 +287,9 @@ class TestGetClusterEvents:
         sample_cluster_details: dict[str, Any],
     ) -> None:
         """Test that ascending sort is passed to API."""
-        with patch("pynetappfoundry.cli.commands.events.get.HostConnection") as mock_conn:
-            mock_conn.return_value.__enter__ = MagicMock(return_value=None)
-            mock_conn.return_value.__exit__ = MagicMock(return_value=None)
+        _, sent = self._run(mock_config, sample_cluster_details, [], sort="time")
 
-            with patch("pynetappfoundry.cli.commands.events.get.EmsEvent") as mock_event_class:
-                mock_event_class.get_collection.return_value = []
-
-                _get_cluster_events(
-                    "cluster1",
-                    sample_cluster_details,
-                    mock_config,
-                    severity=None,
-                    event_names=(),
-                    sort="time",
-                    limit=50,
-                )
-
-            call_kwargs = mock_event_class.get_collection.call_args[1]
-            assert call_kwargs["order_by"] == "time asc"
+        assert sent["order_by"] == "time asc"
 
     def test_sort_descending_passed_to_api(
         self,
@@ -337,25 +297,9 @@ class TestGetClusterEvents:
         sample_cluster_details: dict[str, Any],
     ) -> None:
         """Test that descending sort is passed to API."""
-        with patch("pynetappfoundry.cli.commands.events.get.HostConnection") as mock_conn:
-            mock_conn.return_value.__enter__ = MagicMock(return_value=None)
-            mock_conn.return_value.__exit__ = MagicMock(return_value=None)
+        _, sent = self._run(mock_config, sample_cluster_details, [], sort="-time")
 
-            with patch("pynetappfoundry.cli.commands.events.get.EmsEvent") as mock_event_class:
-                mock_event_class.get_collection.return_value = []
-
-                _get_cluster_events(
-                    "cluster1",
-                    sample_cluster_details,
-                    mock_config,
-                    severity=None,
-                    event_names=(),
-                    sort="-time",
-                    limit=50,
-                )
-
-            call_kwargs = mock_event_class.get_collection.call_args[1]
-            assert call_kwargs["order_by"] == "time desc"
+        assert sent["order_by"] == "time desc"
 
     def test_handles_connection_error(
         self,
@@ -363,24 +307,22 @@ class TestGetClusterEvents:
         sample_cluster_details: dict[str, Any],
     ) -> None:
         """Test that connection errors are handled gracefully."""
-        with patch("pynetappfoundry.cli.commands.events.get.HostConnection") as mock_conn:
-            mock_conn.return_value.__enter__ = MagicMock(side_effect=Exception("Connection failed"))
+        with (
+            patch(f"{MODULE}.ONTAPAPIClient", side_effect=Exception("Connection failed")),
+            patch(f"{MODULE}.print_error") as mock_print,
+        ):
+            result = _get_cluster_events(
+                "cluster1",
+                sample_cluster_details,
+                mock_config,
+                severity=None,
+                event_names=(),
+                sort="time",
+                limit=50,
+            )
 
-            with patch("pynetappfoundry.cli.commands.events.get.print_error") as mock_print:
-                result = _get_cluster_events(
-                    "cluster1",
-                    sample_cluster_details,
-                    mock_config,
-                    severity=None,
-                    event_names=(),
-                    sort="time",
-                    limit=50,
-                )
-
-                # Should print error but not raise
-                mock_print.assert_called()
-
-        # Should return empty list
+        # Should print error but not raise, and return an empty list
+        mock_print.assert_called()
         assert result == []
 
     def test_limit_passed_to_api(
@@ -389,75 +331,25 @@ class TestGetClusterEvents:
         sample_cluster_details: dict[str, Any],
     ) -> None:
         """Test that limit is passed to API."""
-        with patch("pynetappfoundry.cli.commands.events.get.HostConnection") as mock_conn:
-            mock_conn.return_value.__enter__ = MagicMock(return_value=None)
-            mock_conn.return_value.__exit__ = MagicMock(return_value=None)
+        _, sent = self._run(mock_config, sample_cluster_details, [], limit=100)
 
-            with patch("pynetappfoundry.cli.commands.events.get.EmsEvent") as mock_event_class:
-                mock_event_class.get_collection.return_value = []
+        assert sent["max_records"] == "100"
 
-                _get_cluster_events(
-                    "cluster1",
-                    sample_cluster_details,
-                    mock_config,
-                    severity=None,
-                    event_names=(),
-                    sort="time",
-                    limit=100,
-                )
+    def test_requests_all_fields(self) -> None:
+        """Test that the EMS event query asks the API for every field."""
+        mapping = model_registry.get_mapping("OntapEmsEventResponse")
 
-            call_kwargs = mock_event_class.get_collection.call_args[1]
-            assert call_kwargs["max_records"] == 100
-
-    def test_fields_star_passed_to_api(
-        self,
-        mock_config: MagicMock,
-        sample_cluster_details: dict[str, Any],
-    ) -> None:
-        """Test that fields='*' is passed to API."""
-        with patch("pynetappfoundry.cli.commands.events.get.HostConnection") as mock_conn:
-            mock_conn.return_value.__enter__ = MagicMock(return_value=None)
-            mock_conn.return_value.__exit__ = MagicMock(return_value=None)
-
-            with patch("pynetappfoundry.cli.commands.events.get.EmsEvent") as mock_event_class:
-                mock_event_class.get_collection.return_value = []
-
-                _get_cluster_events(
-                    "cluster1",
-                    sample_cluster_details,
-                    mock_config,
-                    severity=None,
-                    event_names=(),
-                    sort="time",
-                    limit=50,
-                )
-
-            call_kwargs = mock_event_class.get_collection.call_args[1]
-            assert call_kwargs["fields"] == "*"
+        assert mapping is not None
+        assert mapping.api_endpoint.endswith("?fields=*")
 
     def test_node_included_in_csv_output(
         self,
         mock_config: MagicMock,
         sample_cluster_details: dict[str, Any],
-        mock_ems_event: MagicMock,
+        ems_event: OntapEmsEventResponse,
     ) -> None:
         """Test that node is included in CSV output."""
-        with patch("pynetappfoundry.cli.commands.events.get.HostConnection") as mock_conn:
-            mock_conn.return_value.__enter__ = MagicMock(return_value=None)
-            mock_conn.return_value.__exit__ = MagicMock(return_value=None)
-
-            with patch("pynetappfoundry.cli.commands.events.get.EmsEvent") as mock_event_class:
-                mock_event_class.get_collection.return_value = [mock_ems_event]
-
-                result = _get_cluster_events(
-                    "cluster1",
-                    sample_cluster_details,
-                    mock_config,
-                    severity=None,
-                    event_names=(),
-                    sort="time",
-                    limit=50,
-                )
+        result, _ = self._run(mock_config, sample_cluster_details, [ems_event])
 
         assert result[0]["node"] == "node-01"
 
@@ -465,25 +357,10 @@ class TestGetClusterEvents:
         self,
         mock_config: MagicMock,
         sample_cluster_details: dict[str, Any],
-        mock_ems_event: MagicMock,
+        ems_event: OntapEmsEventResponse,
     ) -> None:
         """Test that message comes from log_message field."""
-        with patch("pynetappfoundry.cli.commands.events.get.HostConnection") as mock_conn:
-            mock_conn.return_value.__enter__ = MagicMock(return_value=None)
-            mock_conn.return_value.__exit__ = MagicMock(return_value=None)
-
-            with patch("pynetappfoundry.cli.commands.events.get.EmsEvent") as mock_event_class:
-                mock_event_class.get_collection.return_value = [mock_ems_event]
-
-                result = _get_cluster_events(
-                    "cluster1",
-                    sample_cluster_details,
-                    mock_config,
-                    severity=None,
-                    event_names=(),
-                    sort="time",
-                    limit=50,
-                )
+        result, _ = self._run(mock_config, sample_cluster_details, [ems_event])
 
         # Message should come from log_message (prefix stripped)
         assert "NIC 0 has been detached" in result[0]["message"]
@@ -492,25 +369,9 @@ class TestGetClusterEvents:
         self,
         mock_config: MagicMock,
         sample_cluster_details: dict[str, Any],
-        mock_ems_event: MagicMock,
+        ems_event: OntapEmsEventResponse,
     ) -> None:
         """Test that severity comes from message.severity, not top-level."""
-        with patch("pynetappfoundry.cli.commands.events.get.HostConnection") as mock_conn:
-            mock_conn.return_value.__enter__ = MagicMock(return_value=None)
-            mock_conn.return_value.__exit__ = MagicMock(return_value=None)
+        result, _ = self._run(mock_config, sample_cluster_details, [ems_event])
 
-            with patch("pynetappfoundry.cli.commands.events.get.EmsEvent") as mock_event_class:
-                mock_event_class.get_collection.return_value = [mock_ems_event]
-
-                result = _get_cluster_events(
-                    "cluster1",
-                    sample_cluster_details,
-                    mock_config,
-                    severity=None,
-                    event_names=(),
-                    sort="time",
-                    limit=50,
-                )
-
-        # Severity is from event["message"]["severity"]
         assert result[0]["severity"] == "error"

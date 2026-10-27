@@ -2,14 +2,56 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
+import requests
 
 from pynetappfoundry.cli.commands.events.azevents import ClusterData
+from pynetappfoundry.models.ontap.cluster.nodes import OntapNodeResponse
+from pynetappfoundry.models.ontap.support.ems.events import OntapEmsEventResponse
+from pynetappfoundry.models.ontap.support.ems.events.model import (
+    OntapEmsEventResponseParameter,
+)
+from pynetappfoundry.query import QuerySet
+
+MODULE = "pynetappfoundry.cli.commands.events.azevents"
+
+
+@contextmanager
+def ontap_reads(
+    nodes: list[OntapNodeResponse],
+    event_batches: list[list[OntapEmsEventResponse]],
+) -> Iterator[None]:
+    """Stub the live ONTAP reads gather_data makes through QuerySet.
+
+    Args:
+        nodes: Returned for the node query.
+        event_batches: Returned, in order, for each EMS event query: the
+            scheduled-events check first, then all events.
+    """
+    batches = iter(event_batches)
+
+    def fake_all(qs: QuerySet) -> list[Any]:
+        if qs._model_class is OntapNodeResponse:
+            return nodes
+        return next(batches)
+
+    with (
+        patch(f"{MODULE}.ONTAPAPIClient"),
+        patch.object(QuerySet, "_all_via_data_source", autospec=True, side_effect=fake_all),
+    ):
+        yield
+
+
+def make_node(*, ha_enabled: bool) -> OntapNodeResponse:
+    """Create a node as the API returns it, with HA enabled or not."""
+    return OntapNodeResponse.model_validate({"ha": {"enabled": ha_enabled}})
 
 
 class TestClusterDataInit:
@@ -94,19 +136,16 @@ class TestClusterDataEmptyAzevent:
         assert cluster_data.current_azevent == ""
 
 
-def create_mock_emsevent(data: dict[str, Any]) -> MagicMock:
-    """Create a mock EMS event that supports both dict access and to_dict().
+def create_mock_emsevent(data: dict[str, Any]) -> OntapEmsEventResponse:
+    """Create an EMS event as the API returns it.
 
     Args:
         data: Dictionary with event data.
 
     Returns:
-        MagicMock configured to behave like an EmsEvent resource.
+        The event as the model QuerySet returns.
     """
-    mock = MagicMock()
-    mock.to_dict.return_value = data
-    mock.__getitem__ = lambda self, key: data[key]
-    return mock
+    return OntapEmsEventResponse.model_validate(data)
 
 
 class TestClusterDataAddEmsevent:
@@ -220,15 +259,15 @@ class TestClusterDataGetParamValue:
     def test_returns_value_when_found(self, cluster_data: ClusterData) -> None:
         """Test that value is returned when parameter exists."""
         parameters = [
-            {"name": "event_id", "value": "abc-123"},
-            {"name": "event_type", "value": "Freeze"},
+            OntapEmsEventResponseParameter(name="event_id", value="abc-123"),
+            OntapEmsEventResponseParameter(name="event_type", value="Freeze"),
         ]
         result = cluster_data._get_param_value(parameters, "event_id")
         assert result == "abc-123"
 
     def test_returns_none_when_not_found(self, cluster_data: ClusterData) -> None:
         """Test that None is returned when parameter doesn't exist."""
-        parameters = [{"name": "event_id", "value": "abc-123"}]
+        parameters = [OntapEmsEventResponseParameter(name="event_id", value="abc-123")]
         result = cluster_data._get_param_value(parameters, "nonexistent")
         assert result is None
 
@@ -274,21 +313,10 @@ class TestClusterDataGatherData:
             datetime.now(),
         )
 
-        mock_node = MagicMock()
-        ha_data = {"ha": {"enabled": False}}
-        mock_node.__getitem__ = MagicMock(side_effect=ha_data.__getitem__)
+        mock_node = make_node(ha_enabled=False)
 
-        with patch("netapp_ontap.HostConnection") as mock_conn:
-            mock_conn.return_value.__enter__ = MagicMock(return_value=None)
-            mock_conn.return_value.__exit__ = MagicMock(return_value=None)
-
-            with patch("netapp_ontap.resources.Node") as mock_node_class:
-                mock_node_class.get_collection.return_value = [mock_node]
-
-                with patch("netapp_ontap.resources.EmsEvent") as mock_ems:
-                    mock_ems.get_collection.return_value = []
-
-                    cluster.gather_data()
+        with ontap_reads([mock_node], [[]]):
+            cluster.gather_data()
 
         assert cluster.cluster_type == "CVO"
 
@@ -307,24 +335,11 @@ class TestClusterDataGatherData:
             datetime.now(),
         )
 
-        mock_node1 = MagicMock()
-        ha_data1 = {"ha": {"enabled": True}}
-        mock_node1.__getitem__ = MagicMock(side_effect=ha_data1.__getitem__)
-        mock_node2 = MagicMock()
-        ha_data2 = {"ha": {"enabled": True}}
-        mock_node2.__getitem__ = MagicMock(side_effect=ha_data2.__getitem__)
+        mock_node1 = make_node(ha_enabled=True)
+        mock_node2 = make_node(ha_enabled=True)
 
-        with patch("netapp_ontap.HostConnection") as mock_conn:
-            mock_conn.return_value.__enter__ = MagicMock(return_value=None)
-            mock_conn.return_value.__exit__ = MagicMock(return_value=None)
-
-            with patch("netapp_ontap.resources.Node") as mock_node_class:
-                mock_node_class.get_collection.return_value = [mock_node1, mock_node2]
-
-                with patch("netapp_ontap.resources.EmsEvent") as mock_ems:
-                    mock_ems.get_collection.return_value = []
-
-                    cluster.gather_data()
+        with ontap_reads([mock_node1, mock_node2], [[]]):
+            cluster.gather_data()
 
         assert cluster.cluster_type == "CVO HA"
 
@@ -343,8 +358,7 @@ class TestClusterDataGatherData:
             datetime.now(),
         )
 
-        mock_node = MagicMock()
-        mock_node.to_dict.return_value = {"ha": {"enabled": False}}
+        mock_node = make_node(ha_enabled=False)
 
         mock_scheduled_event = create_mock_emsevent(
             {
@@ -378,21 +392,14 @@ class TestClusterDataGatherData:
             }
         )
 
-        with patch("netapp_ontap.HostConnection") as mock_conn:
-            mock_conn.return_value.__enter__ = MagicMock(return_value=None)
-            mock_conn.return_value.__exit__ = MagicMock(return_value=None)
-
-            with patch("netapp_ontap.resources.Node") as mock_node_class:
-                mock_node_class.get_collection.return_value = [mock_node]
-
-                with patch("netapp_ontap.resources.EmsEvent") as mock_ems:
-                    # First call returns scheduled events (check), second returns all events
-                    mock_ems.get_collection.side_effect = [
-                        [mock_scheduled_event],
-                        [mock_scheduled_event, mock_update_event],
-                    ]
-
-                    cluster.gather_data()
+        with ontap_reads(
+            [mock_node],
+            [
+                [mock_scheduled_event],
+                [mock_scheduled_event, mock_update_event],
+            ],
+        ):
+            cluster.gather_data()
 
         # For CVO, should complete on az_maint_complete
         assert "event-123" in cluster.azmaints
@@ -406,8 +413,6 @@ class TestClusterDataGatherData:
         sample_cluster_details: dict[str, Any],
     ) -> None:
         """Test that connection errors are handled gracefully."""
-        import netapp_ontap.error
-
         cluster = ClusterData(
             "test-cluster",
             sample_cluster_details,
@@ -416,14 +421,18 @@ class TestClusterDataGatherData:
             datetime.now(),
         )
 
-        with patch("netapp_ontap.HostConnection") as mock_conn:
-            mock_conn.return_value.__enter__ = MagicMock(
-                side_effect=netapp_ontap.error.NetAppRestError("Connection failed")
-            )
+        with (
+            patch(f"{MODULE}.ONTAPAPIClient"),
+            patch.object(
+                QuerySet,
+                "_all_via_data_source",
+                side_effect=requests.ConnectionError("Connection failed"),
+            ),
+            patch(f"{MODULE}.print_error") as mock_print,
+        ):
+            cluster.gather_data()
 
-            with patch("pynetappfoundry.cli.commands.events.azevents.print_error") as mock_print:
-                cluster.gather_data()
-                mock_print.assert_called()
+        mock_print.assert_called_once_with("test-cluster: Could not connect to API")
 
         # Should not raise, azmaints should be empty
         assert cluster.azmaints == {}
@@ -603,13 +612,12 @@ class TestTimingFieldExtraction:
             datetime.now(),
         )
 
-        mock_node = MagicMock()
-        mock_node.to_dict.return_value = {"ha": {"enabled": True}}
+        mock_node = make_node(ha_enabled=True)
 
         # Create mock events for full maintenance lifecycle
         def create_event(
             name: str, time: str, parameters: list[dict[str, str]] | None = None
-        ) -> MagicMock:
+        ) -> OntapEmsEventResponse:
             return create_mock_emsevent(
                 {
                     "message": {"name": name, "severity": "notice"},
@@ -669,20 +677,14 @@ class TestTimingFieldExtraction:
             giveback_complete_event,
         ]
 
-        with patch("netapp_ontap.HostConnection") as mock_conn:
-            mock_conn.return_value.__enter__ = MagicMock(return_value=None)
-            mock_conn.return_value.__exit__ = MagicMock(return_value=None)
-
-            with patch("netapp_ontap.resources.Node") as mock_node_class:
-                mock_node_class.get_collection.return_value = [mock_node, mock_node]
-
-                with patch("netapp_ontap.resources.EmsEvent") as mock_ems:
-                    mock_ems.get_collection.side_effect = [
-                        [scheduled_event],  # Check for scheduled events
-                        all_events,  # All events for processing
-                    ]
-
-                    cluster.gather_data()
+        with ontap_reads(
+            [mock_node, mock_node],
+            [
+                [scheduled_event],  # Check for scheduled events
+                all_events,  # All events for processing
+            ],
+        ):
+            cluster.gather_data()
 
         # Verify event was collected
         assert "event-123" in cluster.azmaints
@@ -691,14 +693,16 @@ class TestTimingFieldExtraction:
         # Check all timing fields
         assert "az_maint_not_before" in event
         assert "az_maint_scheduled" in event
-        assert event.get("az_maint_started") == "2024-01-15T12:00:00Z"
-        assert event.get("az_maint_complete") == "2024-01-15T12:05:00Z"
-        assert event.get("node_takeover_complete") == "2024-01-15T12:01:00Z"
-        assert event.get("node_reboot_starts") == "2024-01-15T12:02:00Z"
-        assert event.get("node_reboot_complete") == "2024-01-15T12:03:00Z"
-        assert event.get("node_ready_for_giveback") == "2024-01-15T12:04:00Z"
-        assert event.get("node_giveback_starts") == "2024-01-15T12:05:00Z"
-        assert event.get("node_giveback_complete") == "2024-01-15T12:06:00Z"
+        assert event.get("az_maint_started") == datetime.fromisoformat("2024-01-15T12:00:00Z")
+        assert event.get("az_maint_complete") == datetime.fromisoformat("2024-01-15T12:05:00Z")
+        assert event.get("node_takeover_complete") == datetime.fromisoformat("2024-01-15T12:01:00Z")
+        assert event.get("node_reboot_starts") == datetime.fromisoformat("2024-01-15T12:02:00Z")
+        assert event.get("node_reboot_complete") == datetime.fromisoformat("2024-01-15T12:03:00Z")
+        assert event.get("node_ready_for_giveback") == datetime.fromisoformat(
+            "2024-01-15T12:04:00Z"
+        )
+        assert event.get("node_giveback_starts") == datetime.fromisoformat("2024-01-15T12:05:00Z")
+        assert event.get("node_giveback_complete") == datetime.fromisoformat("2024-01-15T12:06:00Z")
 
 
 class TestOutOfOrderEvents:
@@ -722,10 +726,9 @@ class TestOutOfOrderEvents:
             datetime.now(),
         )
 
-        mock_node = MagicMock()
-        mock_node.to_dict.return_value = {"ha": {"enabled": False}}
+        mock_node = make_node(ha_enabled=False)
 
-        def create_event(name: str, event_id: str, status: str, time: str) -> MagicMock:
+        def create_event(name: str, event_id: str, status: str, time: str) -> OntapEmsEventResponse:
             return create_mock_emsevent(
                 {
                     "message": {"name": name, "severity": "notice"},
@@ -755,21 +758,17 @@ class TestOutOfOrderEvents:
             "vsa.scheduledEvent.update", "event-1", "complete", "2024-01-15T12:00:00Z"
         )
 
-        with patch("netapp_ontap.HostConnection") as mock_conn:
-            mock_conn.return_value.__enter__ = MagicMock(return_value=None)
-            mock_conn.return_value.__exit__ = MagicMock(return_value=None)
-
-            with patch("netapp_ontap.resources.Node") as mock_node_class:
-                mock_node_class.get_collection.return_value = [mock_node]
-
-                with patch("netapp_ontap.resources.EmsEvent") as mock_ems:
-                    mock_ems.get_collection.side_effect = [
-                        [event1_scheduled],
-                        [event1_scheduled, event2_update, event1_complete],
-                    ]
-
-                    with patch("pynetappfoundry.cli.commands.events.azevents.print_warning"):
-                        cluster.gather_data()
+        with (
+            ontap_reads(
+                [mock_node],
+                [
+                    [event1_scheduled],
+                    [event1_scheduled, event2_update, event1_complete],
+                ],
+            ),
+            patch("pynetappfoundry.cli.commands.events.azevents.print_warning"),
+        ):
+            cluster.gather_data()
 
         # Both events should be tracked
         assert "event-1" in cluster.azmaints
@@ -886,12 +885,11 @@ class TestSmbImpactEventHandling:
             datetime.now(),
         )
 
-        mock_node = MagicMock()
-        mock_node.to_dict.return_value = {"ha": {"enabled": True}}
+        mock_node = make_node(ha_enabled=True)
 
         def create_event(
             name: str, time: str, parameters: list[dict[str, str]] | None = None
-        ) -> MagicMock:
+        ) -> OntapEmsEventResponse:
             return create_mock_emsevent(
                 {
                     "message": {"name": name, "severity": "notice"},
@@ -931,28 +929,22 @@ class TestSmbImpactEventHandling:
             giveback_event,
         ]
 
-        with patch("netapp_ontap.HostConnection") as mock_conn:
-            mock_conn.return_value.__enter__ = MagicMock(return_value=None)
-            mock_conn.return_value.__exit__ = MagicMock(return_value=None)
-
-            with patch("netapp_ontap.resources.Node") as mock_node_class:
-                mock_node_class.get_collection.return_value = [mock_node, mock_node]
-
-                with patch("netapp_ontap.resources.EmsEvent") as mock_ems:
-                    mock_ems.get_collection.side_effect = [
-                        [scheduled_event],
-                        all_events,
-                    ]
-
-                    cluster.gather_data()
+        with ontap_reads(
+            [mock_node, mock_node],
+            [
+                [scheduled_event],
+                all_events,
+            ],
+        ):
+            cluster.gather_data()
 
         assert "event-123" in cluster.azmaints
         event = cluster.azmaints["event-123"]
 
         # First LIF removal
-        assert event.get("lif_failover_start") == "2024-01-15T12:01:00Z"
+        assert event.get("lif_failover_start") == datetime.fromisoformat("2024-01-15T12:01:00Z")
         # Last LIF success
-        assert event.get("lif_failover_complete") == "2024-01-15T12:04:00Z"
+        assert event.get("lif_failover_complete") == datetime.fromisoformat("2024-01-15T12:04:00Z")
 
     def test_tracks_aggregate_giveback_first_and_last(
         self, mock_config: MagicMock, mock_db: MagicMock
@@ -966,12 +958,11 @@ class TestSmbImpactEventHandling:
             datetime.now(),
         )
 
-        mock_node = MagicMock()
-        mock_node.to_dict.return_value = {"ha": {"enabled": True}}
+        mock_node = make_node(ha_enabled=True)
 
         def create_event(
             name: str, time: str, parameters: list[dict[str, str]] | None = None
-        ) -> MagicMock:
+        ) -> OntapEmsEventResponse:
             return create_mock_emsevent(
                 {
                     "message": {"name": name, "severity": "notice"},
@@ -1011,28 +1002,22 @@ class TestSmbImpactEventHandling:
             giveback_event,
         ]
 
-        with patch("netapp_ontap.HostConnection") as mock_conn:
-            mock_conn.return_value.__enter__ = MagicMock(return_value=None)
-            mock_conn.return_value.__exit__ = MagicMock(return_value=None)
-
-            with patch("netapp_ontap.resources.Node") as mock_node_class:
-                mock_node_class.get_collection.return_value = [mock_node, mock_node]
-
-                with patch("netapp_ontap.resources.EmsEvent") as mock_ems:
-                    mock_ems.get_collection.side_effect = [
-                        [scheduled_event],
-                        all_events,
-                    ]
-
-                    cluster.gather_data()
+        with ontap_reads(
+            [mock_node, mock_node],
+            [
+                [scheduled_event],
+                all_events,
+            ],
+        ):
+            cluster.gather_data()
 
         assert "event-123" in cluster.azmaints
         event = cluster.azmaints["event-123"]
 
         # First aggregate start
-        assert event.get("aggr_giveback_start") == "2024-01-15T12:05:00Z"
+        assert event.get("aggr_giveback_start") == datetime.fromisoformat("2024-01-15T12:05:00Z")
         # Last aggregate done
-        assert event.get("aggr_giveback_complete") == "2024-01-15T12:08:00Z"
+        assert event.get("aggr_giveback_complete") == datetime.fromisoformat("2024-01-15T12:08:00Z")
 
     def test_tracks_cifs_transition_ms(self, mock_config: MagicMock, mock_db: MagicMock) -> None:
         """Test that CIFS transition ms is extracted from cf.transition.info."""
@@ -1044,12 +1029,11 @@ class TestSmbImpactEventHandling:
             datetime.now(),
         )
 
-        mock_node = MagicMock()
-        mock_node.to_dict.return_value = {"ha": {"enabled": True}}
+        mock_node = make_node(ha_enabled=True)
 
         def create_event(
             name: str, time: str, log_msg: str, parameters: list[dict[str, str]] | None = None
-        ) -> MagicMock:
+        ) -> OntapEmsEventResponse:
             return create_mock_emsevent(
                 {
                     "message": {"name": name, "severity": "notice"},
@@ -1088,20 +1072,14 @@ class TestSmbImpactEventHandling:
 
         all_events = [scheduled_event, transition_event, giveback_event]
 
-        with patch("netapp_ontap.HostConnection") as mock_conn:
-            mock_conn.return_value.__enter__ = MagicMock(return_value=None)
-            mock_conn.return_value.__exit__ = MagicMock(return_value=None)
-
-            with patch("netapp_ontap.resources.Node") as mock_node_class:
-                mock_node_class.get_collection.return_value = [mock_node, mock_node]
-
-                with patch("netapp_ontap.resources.EmsEvent") as mock_ems:
-                    mock_ems.get_collection.side_effect = [
-                        [scheduled_event],
-                        all_events,
-                    ]
-
-                    cluster.gather_data()
+        with ontap_reads(
+            [mock_node, mock_node],
+            [
+                [scheduled_event],
+                all_events,
+            ],
+        ):
+            cluster.gather_data()
 
         assert "event-123" in cluster.azmaints
         event = cluster.azmaints["event-123"]
@@ -1119,12 +1097,11 @@ class TestSmbImpactEventHandling:
             datetime.now(),
         )
 
-        mock_node = MagicMock()
-        mock_node.to_dict.return_value = {"ha": {"enabled": True}}
+        mock_node = make_node(ha_enabled=True)
 
         def create_event(
             name: str, time: str, log_msg: str, parameters: list[dict[str, str]] | None = None
-        ) -> MagicMock:
+        ) -> OntapEmsEventResponse:
             return create_mock_emsevent(
                 {
                     "message": {"name": name, "severity": "notice"},
@@ -1165,24 +1142,18 @@ class TestSmbImpactEventHandling:
 
         all_events = [scheduled_event, witness_event, giveback_event]
 
-        with patch("netapp_ontap.HostConnection") as mock_conn:
-            mock_conn.return_value.__enter__ = MagicMock(return_value=None)
-            mock_conn.return_value.__exit__ = MagicMock(return_value=None)
-
-            with patch("netapp_ontap.resources.Node") as mock_node_class:
-                mock_node_class.get_collection.return_value = [mock_node, mock_node]
-
-                with patch("netapp_ontap.resources.EmsEvent") as mock_ems:
-                    mock_ems.get_collection.side_effect = [
-                        [scheduled_event],
-                        all_events,
-                    ]
-
-                    cluster.gather_data()
+        with ontap_reads(
+            [mock_node, mock_node],
+            [
+                [scheduled_event],
+                all_events,
+            ],
+        ):
+            cluster.gather_data()
 
         assert "event-123" in cluster.azmaints
         event = cluster.azmaints["event-123"]
-        assert event.get("cifs_witness_time") == "2024-01-15T12:05:00Z"
+        assert event.get("cifs_witness_time") == datetime.fromisoformat("2024-01-15T12:05:00Z")
         assert event.get("cifs_witness_clients") == 5
 
 
