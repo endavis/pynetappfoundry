@@ -6,10 +6,13 @@ field types stay stable across codegen runs and the cached JSON stays small.
 
 from __future__ import annotations
 
+import pydantic
+import pytest
+
 from pynetappfoundry.models.console.tenancyv4.get_organizations import (
     Resource10GetResponseBody,
 )
-from pynetappfoundry.models.console_types import Organization
+from pynetappfoundry.models.console_types import Folder, Organization, Project
 
 
 class TestOrganization:
@@ -103,3 +106,32 @@ class TestOrganization:
             pass
         else:  # pragma: no cover
             raise AssertionError("expected ValidationError for missing required fields")
+
+
+class TestFolderAndProject:
+    """Folder and Project share the tenancyv4 resource shape with Organization."""
+
+    @pytest.mark.parametrize(("model", "resource_type"), [(Folder, "folder"), (Project, "project")])
+    def test_parse_camel_case_and_round_trip(
+        self, model: type[Folder] | type[Project], resource_type: str
+    ) -> None:
+        payload = {
+            "id": f"{resource_type}-1",
+            "name": f"Test {resource_type}",
+            "resourceClass": "tenancyv4",
+            "resourceType": resource_type,
+            "parentId": "org-abc",
+            "type": "application/vnd.netapp.bxp.resource",
+            "version": "1.0",
+        }
+        parsed = model.model_validate(payload)
+
+        assert parsed.id == f"{resource_type}-1"
+        assert parsed.resource_type == resource_type
+        assert parsed.parent_id == "org-abc"
+        assert model.model_validate_json(parsed.model_dump_json(by_alias=True)) == parsed
+
+    @pytest.mark.parametrize("model", [Folder, Project])
+    def test_required_field_missing_raises(self, model: type[Folder] | type[Project]) -> None:
+        with pytest.raises(pydantic.ValidationError):
+            model.model_validate({"id": "x", "name": "X"})

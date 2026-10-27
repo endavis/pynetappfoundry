@@ -187,6 +187,7 @@ deserialised against the current Pydantic models.
 | `cache_version` | Changes |
 |-----------------|---------|
 | `2.1` | Added `storage.svm_web_services`: per-SVM web services from the private CLI passthrough ([ADR-0021](../decisions/0021-collect-cli-only-ontap-data-through-the-private-cli-rest-passthrough.md)). Introduced with #866. |
+| `v7` → `v8` | `_upgrade_to_v8` | Adds the `folder` and `project` columns to the `consoleinfo` table for `ConsoleInfo.folder` / `ConsoleInfo.project` via idempotent `ALTER TABLE … ADD COLUMN`. Introduced with #734. |
 | `2.0` | Renamed cache fields to match the ONTAP REST URL hierarchy: `network.lifs` → `network.ip_interfaces`, `network.broadcast_domains` → `network.ethernet_broadcast_domains`, `network.subnets` → `network.ip_subnets`, `protocols.export_policies` → `protocols.nfs_export_policies`. |
 | `1.0` | Initial schema with comprehensive model coverage. |
 
@@ -200,7 +201,7 @@ The cache is rebuild-tolerant: destructive migrations are allowed, and
 
 In addition to the `cache_version` stamped into each snapshot,
 `ClusterMetadataDB` tracks the **on-disk SQLite schema** version through the
-shared `SQLiteDB` base class. The current value is `SCHEMA_VERSION = 7`, and
+shared `SQLiteDB` base class. The current value is `SCHEMA_VERSION = 8`, and
 the DB applies the following upgrades on open:
 
 | DB schema | Migration | What it does |

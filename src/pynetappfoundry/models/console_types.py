@@ -18,13 +18,11 @@ if TYPE_CHECKING:
     )
 
 
-class Organization(BaseModel):
-    """Compact view of a Console organization for cache use.
+class _ConsoleResource(BaseModel):
+    """Fields shared by every tenancyv4 resource (organization, folder, project).
 
-    Hand-authored (not generated) so the cache field type stays stable
-    across codegen runs and the cached JSON stays small. Source schema:
-    Resource10GetResponseBody in
-    pynetappfoundry.models.console.tenancyv4.get_organizations.
+    The spec's GET-by-id responses for these resources share one shape;
+    the compact cache types keep only the fields useful for identification.
     """
 
     model_config = ConfigDict(populate_by_name=True)
@@ -37,6 +35,16 @@ class Organization(BaseModel):
     parent_id: str | None = Field(default=None, alias="parentId")
     description: str | None = None
     state: str | None = None
+
+
+class Organization(_ConsoleResource):
+    """Compact view of a Console organization for cache use.
+
+    Hand-authored (not generated) so the cache field type stays stable
+    across codegen runs and the cached JSON stays small. Source schema:
+    Resource10GetResponseBody in
+    pynetappfoundry.models.console.tenancyv4.get_organizations.
+    """
 
     @classmethod
     def from_resource(cls, resource: Resource10GetResponseBody) -> Organization:
@@ -51,4 +59,20 @@ class Organization(BaseModel):
         return cls.model_validate(resource.model_dump())
 
 
-__all__ = ["Organization"]
+class Folder(_ConsoleResource):
+    """Compact view of a Console folder for cache use.
+
+    Source schema: the 200 response of ``GET /folders/{folder_id}`` in
+    the tenancyv4 spec.
+    """
+
+
+class Project(_ConsoleResource):
+    """Compact view of a Console project for cache use.
+
+    Source schema: the 200 response of ``GET /projects/{project_id}`` in
+    the tenancyv4 spec.
+    """
+
+
+__all__ = ["Folder", "Organization", "Project"]

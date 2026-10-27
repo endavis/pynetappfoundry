@@ -1104,6 +1104,100 @@ class TestClusterMetadataDBMigrationV3:
         assert cursor.fetchone()[0] == 1
         db.close()
 
+    @staticmethod
+    def _create_v7_db(db_path: Path) -> None:
+        """Create a v7 database: consoleinfo without the folder/project columns."""
+        from pynetappfoundry.cache.db_schema import (
+            _ensure_registry,
+            generate_cluster_name_index_ddl,
+            generate_table_ddl,
+            generate_uuid_column_index_ddl,
+        )
+
+        conn = sqlite3.connect(db_path)
+        conn.execute(
+            "CREATE TABLE cluster_metadata ("
+            "    cluster_name TEXT PRIMARY KEY,"
+            "    cached_at TEXT NOT NULL,"
+            "    cache_version TEXT NOT NULL"
+            ")"
+        )
+        conn.execute("CREATE TABLE _schema_version (version INTEGER NOT NULL)")
+        conn.execute("INSERT INTO _schema_version (version) VALUES (7)")
+        for spec in _ensure_registry().values():
+            conn.execute(generate_table_ddl(spec.table_name, spec.model_class))
+            conn.execute(generate_cluster_name_index_ddl(spec.table_name))
+            if spec.has_uuid:
+                conn.execute(generate_uuid_column_index_ddl(spec.table_name))
+        # v7 had no folder/project columns — that's what v8 adds
+        conn.execute("ALTER TABLE consoleinfo DROP COLUMN folder")
+        conn.execute("ALTER TABLE consoleinfo DROP COLUMN project")
+        conn.commit()
+        conn.close()
+
+    def test_upgrade_v7_to_v8_adds_console_folder_and_project(self, tmp_path: Path) -> None:
+        """v7→v8 migration adds the consoleinfo folder and project columns for #734."""
+        db_path = tmp_path / "v7.db"
+        self._create_v7_db(db_path)
+
+        db = ClusterMetadataDB(db_path=db_path)
+
+        cursor = db.conn.execute("SELECT version FROM _schema_version")
+        assert cursor.fetchone()[0] == ClusterMetadataDB.SCHEMA_VERSION
+
+        cursor = db.conn.execute("PRAGMA table_info(consoleinfo)")
+        columns = {row[1] for row in cursor.fetchall()}
+        assert {"organization", "folder", "project"} <= columns
+
+        db.close()
+
+    def test_upgrade_v7_to_v8_then_stores_folder_and_project(self, tmp_path: Path) -> None:
+        """A migrated v7 database stores and returns console.folder / console.project."""
+        from pynetappfoundry.cache._metadata import ConsoleInfo
+        from pynetappfoundry.models.console_types import Folder, Project
+
+        db_path = tmp_path / "v7.db"
+        self._create_v7_db(db_path)
+        folder = Folder.model_validate(
+            {"id": "f-1", "name": "F", "resourceClass": "tenancyv4", "resourceType": "folder"}
+        )
+        project = Project.model_validate(
+            {
+                "id": "p-1",
+                "name": "P",
+                "resourceClass": "tenancyv4",
+                "resourceType": "project",
+                "parentId": "f-1",
+            }
+        )
+
+        db = ClusterMetadataDB(db_path=db_path)
+        db.set(
+            "test-cluster",
+            CachedClusterMetadata(
+                cluster_name="test-cluster",
+                console=ConsoleInfo(folder=folder, project=project),
+            ),
+        )
+        loaded = db.get("test-cluster")
+        db.close()
+
+        assert loaded is not None
+        assert loaded.console.folder == folder
+        assert loaded.console.project == project
+
+    def test_upgrade_to_v8_is_idempotent(self, tmp_path: Path) -> None:
+        """Running the v8 step on a database that already has the columns is a no-op."""
+        db = ClusterMetadataDB(db_path=tmp_path / "current.db")
+
+        db._upgrade_to_v8()
+
+        cursor = db.conn.execute("PRAGMA table_info(consoleinfo)")
+        names = [row[1] for row in cursor.fetchall()]
+        assert names.count("folder") == 1
+        assert names.count("project") == 1
+        db.close()
+
 
 class TestClusterMetadataDBInitialization:
     """Tests for database initialization options."""

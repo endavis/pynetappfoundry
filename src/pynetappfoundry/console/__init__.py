@@ -13,7 +13,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from pynetappfoundry.clients.console import ConsoleAPIClient, ConsoleServiceTokenMissingError
-from pynetappfoundry.models.console_types import Organization
+from pynetappfoundry.models.console_types import Folder, Organization, Project
 
 if TYPE_CHECKING:
     from pynetappfoundry.core.config import Config
@@ -64,5 +64,34 @@ class Console:
         """
         return self._client.list_organizations()
 
+    def get_folder(self, folder_id: str) -> Folder:
+        """Get a folder by ID.
 
-__all__ = ["Console", "ConsoleAPIClient", "ConsoleServiceTokenMissingError", "Organization"]
+        Args:
+            folder_id: The folder UUID.
+
+        Returns:
+            The Folder for *folder_id*.
+        """
+        return self._client.get_folder(folder_id)
+
+    def get_project(self, project_id: str) -> Project:
+        """Get a project by ID.
+
+        Args:
+            project_id: The project UUID.
+
+        Returns:
+            The Project for *project_id*.
+        """
+        return self._client.get_project(project_id)
+
+
+__all__ = [
+    "Console",
+    "ConsoleAPIClient",
+    "ConsoleServiceTokenMissingError",
+    "Folder",
+    "Organization",
+    "Project",
+]
