@@ -136,7 +136,6 @@ nav:
           - Architectural Conventions: development/ai/architectural-conventions.md
           - Enforcement Principles: development/ai/enforcement-principles.md
           - Command Blocking: development/ai/command-blocking.md
-          - Auto-Checkpoint Hook: development/ai/auto-checkpoint-hook.md
           - Ruff-Fix Hook: development/ai/ruff-fix-hook.md
           - LSP Tool and Diagnostics: development/ai/lsp-tool.md
           - Statusline: development/ai/statusline.md
@@ -203,6 +202,7 @@ nav:
           - ADR-9023 Shared Skills: decisions/9023-shared-workflow-skills-live-in-agents-skills-generated-for-claude.md
           - ADR-9024 Implement-Issue Skill: decisions/9024-one-implement-issue-skill-takes-an-issue-to-a-green-pr.md
           - ADR-9025 Delegation Context: decisions/9025-delegated-agents-receive-github-data-from-the-host-and-run-without-network.md
+          - ADR-9026 Doc-Scan Sync-Exclude: decisions/9026-doc-scanning-tests-honor-sync-excludetoml-and-discover-markdown-via-git.md
   - Template:
       - Overview: template/index.md
       - New Project: template/new-project.md

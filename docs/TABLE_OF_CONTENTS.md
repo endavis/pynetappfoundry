@@ -13,7 +13,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [API Reference](reference/api.md) - Python API documentation
 - [Basic Usage](usage/basics.md) - Getting started with pynetappfoundry
 - [Cache System](reference/cache.md) - Architecture, storage layout, lazy loading, and CLI for the cluster metadata cache
-- [CLI Guide](usage/cli.md) - The application's user-facing command-line interface and how to extend it
+- [CLI Guide](usage/cli.md) - The nf command-line interface, its module layout, and how to extend it
 - [CLI Reference](reference/cli.md) - Command-line interface documentation
 - [Compliance Checks](usage/compliance-checks.md) - Configure and run config-driven compliance checks against cached cluster metadata
 - [Configuration Schema Reference](reference/config-schema.md) - Complete reference for pynetappfoundry TOML configuration files
@@ -59,6 +59,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [ADR-0018: Cache schema versioning and backward-compatibility policy](decisions/0018-cache-schema-versioning-and-backward-compatibility-policy.md) - Codify the on-disk SQLite cache schema's compatibility contract -- rebuild-tolerant, no downgrade support, and `SCHEMA_VERSION` kept internal.
 - [ADR-0019: Console runtime client architecture: org-scoped access and per-token-type wrapper isolation](decisions/0019-console-runtime-client-architecture-org-scoped-access-and-per-token-type-wrapper-isolation.md) - Define the Console runtime client as org-scoped (not `ClusterEntry`-scoped), with two internal per-token-type `APIWrapper` instances for user vs. service tokens, hand-authored for v1 and codegen-generated at scale.
 - [ADR-0020: Label nf cache query wildcard results with their source item](decisions/0020-label-nf-cache-query-wildcard-results-with-their-source-item.md) - Label nf cache query wildcard and filter results with the array item they came from, by name/svm.name/uuid/index, and switch their JSON shape to a list of key/value records.
+- [ADR-0021: Collect CLI-only ONTAP data through the private CLI REST passthrough](decisions/0021-collect-cli-only-ontap-data-through-the-private-cli-rest-passthrough.md) - Collect ONTAP data that has no public REST endpoint through the private CLI REST passthrough, with hand-written models at the URL-tree path, an optional fetch, and a derived diff key.
 - [ADR-9001: Use uv for package management](decisions/9001-use-uv-for-package-management.md) - Use uv for dependency management, virtual environments and package installation
 - [ADR-9002: Use doit for task automation](decisions/9002-use-doit-for-task-automation.md) - Use doit as the task runner for testing, linting, building and other routine operations
 - [ADR-9003: Use ruff for linting and formatting](decisions/9003-use-ruff-for-linting-and-formatting.md) - Use ruff as the one tool for linting and formatting, in place of flake8, black and isort
@@ -84,6 +85,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [ADR-9023: Shared workflow skills are written once in .agents/skills/ and generated for Claude](decisions/9023-shared-workflow-skills-live-in-agents-skills-generated-for-claude.md) - Shared workflow skills live once in .agents/skills/ and doit skills_sync generates Claude's copy
 - [ADR-9024: One implement-issue skill takes an issue to a green PR](decisions/9024-one-implement-issue-skill-takes-an-issue-to-a-green-pr.md) - One shared implement-issue skill replaces /claude:plan, /claude:implement, /ghi-finalize and the per-agent plan/implement matrix
 - [ADR-9025: Delegated agents receive GitHub data from the host and run without network](decisions/9025-delegated-agents-receive-github-data-from-the-host-and-run-without-network.md) - The host fetches GitHub issue/PR data with doit delegation_context and writes it to files, so delegated agent prompts read those instead of calling gh
+- [ADR-9026: Doc-scanning tests honor sync-exclude.toml and discover markdown via git](decisions/9026-doc-scanning-tests-honor-sync-excludetoml-and-discover-markdown-via-git.md) - The shipped doc-link and doc-path tests discover markdown via git ls-files instead of rglob, and skip a target excluded in sync-exclude.toml
 - [AI Agent Setup Guide](development/AI_SETUP.md) - Configure Claude, Copilot, Codex, and Antigravity for this project
 - [AI Agent Token-Efficiency Add-Ons](development/ai/token-efficiency-add-ons.md) - Opt-in catalogue of external tools for reducing token usage in Claude Code sessions
 - [AI Architectural Conventions](development/ai/architectural-conventions.md) - Imperative-form architectural rules AI agents must follow when generating code
@@ -91,13 +93,12 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [AI Enforcement Principles](development/ai/enforcement-principles.md) - How we enforce AI agent behavior in code and settings
 - [API Reference](reference/api.md) - Python API documentation
 - [Architecture Decision Records](decisions/README.md) - Explain what an ADR is, the template-meta (9XXX) vs. project-level (0001+) numbering series, the ADR format, and how to create a new one with `doit adr`.
-- [Auto-Checkpoint and Session-Restore Hooks](development/ai/auto-checkpoint-hook.md) - PreCompact and SessionStart hooks that preserve context across autocompact events
 - [Azure Maintenance SMB Client Impact Tracking](plans/azure-smb-impact-tracking.md) - Plan to extend the `save-azure` command to capture SMB client impact metrics -- LIF failover timing, CIFS transition time, Witness notifications, and aggregate giveback -- during CVO HA failover events.
 - [Cache Model Architecture](development/cache-models.md) - End-to-end guide for the codegen pipeline, cache models, field strategies, and SQL storage
 - [Cache System](reference/cache.md) - Architecture, storage layout, lazy loading, and CLI for the cluster metadata cache
 - [CI/CD Testing Guide](development/ci-cd-testing.md) - GitHub Actions pipelines for testing, linting, and coverage
 - [Claude Code Statusline](development/ai/statusline.md) - Custom statusline showing git branch, Python version, and project info
-- [CLI Guide](usage/cli.md) - The application's user-facing command-line interface and how to extend it
+- [CLI Guide](usage/cli.md) - The nf command-line interface, its module layout, and how to extend it
 - [Cross-Agent Delegation Matrix](development/ai/cross-agent-delegation.md) - Commands that let any supported AI CLI hand a review task to any other; plan and implement are handled by the shared implement-issue skill instead
 - [Dependabot Auto-merge](development/dependabot-automerge.md) - How the dependabot auto-merge workflow evaluates, enables, and skips PRs
 - [Development Deployment Guide](deployment/development.md) - Guide for setting up and running the application in development environments
@@ -121,7 +122,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [Release Automation & Security](development/release-and-automation.md) - Automated versioning, release management, and security tooling
 - [Review Focus Areas](development/ai/review-focus-areas.md) - Checklists for the errors, tests, types and comments focus areas available to every review and adversarial-review surface
 - [Ruff Auto-Fix on Edit Hook](development/ai/ruff-fix-hook.md) - PostToolUse hook that runs ruff --fix on edited Python files
-- [Slash Commands and Workflows](development/ai/slash-commands.md) - Reference for the slash commands and dual-agent workflow this template ships with
+- [Slash Commands and Workflows](development/ai/slash-commands.md) - Reference for the slash commands and dual-agent workflow this project ships with
 - [Template Tools Reference](template/tools-reference.md) - Complete reference for all template tools in tools/pyproject_template/
 - [Tooling Roles and Architectural Boundaries](development/tooling-roles.md) - What each tool is for, who uses it, and where runtime code ends and dev tooling begins
 - [Unit Registry](development/unit-registry.md) - Standalone unit registry for ONTAP API field measurements
@@ -135,14 +136,13 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [AI Architectural Conventions](development/ai/architectural-conventions.md) - Imperative-form architectural rules AI agents must follow when generating code
 - [AI Command Blocking](development/ai/command-blocking.md) - Hooks that block dangerous commands from AI agents
 - [AI Enforcement Principles](development/ai/enforcement-principles.md) - How we enforce AI agent behavior in code and settings
-- [Auto-Checkpoint and Session-Restore Hooks](development/ai/auto-checkpoint-hook.md) - PreCompact and SessionStart hooks that preserve context across autocompact events
 - [Claude Code Statusline](development/ai/statusline.md) - Custom statusline showing git branch, Python version, and project info
 - [Cross-Agent Delegation Matrix](development/ai/cross-agent-delegation.md) - Commands that let any supported AI CLI hand a review task to any other; plan and implement are handled by the shared implement-issue skill instead
 - [First 5 Minutes with an AI Agent](development/ai/first-5-minutes.md) - Narrative walkthrough of the AI agent workflow from issue to merge
 - [LSP Tool and Diagnostic Noise](development/ai/lsp-tool.md) - What the LSP tool gives an AI agent, why pyright diagnostics arrive stale, and the two opt-outs agents can flip on themselves
 - [Review Focus Areas](development/ai/review-focus-areas.md) - Checklists for the errors, tests, types and comments focus areas available to every review and adversarial-review surface
 - [Ruff Auto-Fix on Edit Hook](development/ai/ruff-fix-hook.md) - PostToolUse hook that runs ruff --fix on edited Python files
-- [Slash Commands and Workflows](development/ai/slash-commands.md) - Reference for the slash commands and dual-agent workflow this template ships with
+- [Slash Commands and Workflows](development/ai/slash-commands.md) - Reference for the slash commands and dual-agent workflow this project ships with
 - [Tooling Roles and Architectural Boundaries](development/tooling-roles.md) - What each tool is for, who uses it, and where runtime code ends and dev tooling begins
 <!-- END:audience=ai-agents -->
 
@@ -170,6 +170,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [ADR-0018: Cache schema versioning and backward-compatibility policy](decisions/0018-cache-schema-versioning-and-backward-compatibility-policy.md) - Codify the on-disk SQLite cache schema's compatibility contract -- rebuild-tolerant, no downgrade support, and `SCHEMA_VERSION` kept internal.
 - [ADR-0019: Console runtime client architecture: org-scoped access and per-token-type wrapper isolation](decisions/0019-console-runtime-client-architecture-org-scoped-access-and-per-token-type-wrapper-isolation.md) - Define the Console runtime client as org-scoped (not `ClusterEntry`-scoped), with two internal per-token-type `APIWrapper` instances for user vs. service tokens, hand-authored for v1 and codegen-generated at scale.
 - [ADR-0020: Label nf cache query wildcard results with their source item](decisions/0020-label-nf-cache-query-wildcard-results-with-their-source-item.md) - Label nf cache query wildcard and filter results with the array item they came from, by name/svm.name/uuid/index, and switch their JSON shape to a list of key/value records.
+- [ADR-0021: Collect CLI-only ONTAP data through the private CLI REST passthrough](decisions/0021-collect-cli-only-ontap-data-through-the-private-cli-rest-passthrough.md) - Collect ONTAP data that has no public REST endpoint through the private CLI REST passthrough, with hand-written models at the URL-tree path, an optional fetch, and a derived diff key.
 - [ADR-9001: Use uv for package management](decisions/9001-use-uv-for-package-management.md) - Use uv for dependency management, virtual environments and package installation
 - [ADR-9002: Use doit for task automation](decisions/9002-use-doit-for-task-automation.md) - Use doit as the task runner for testing, linting, building and other routine operations
 - [ADR-9003: Use ruff for linting and formatting](decisions/9003-use-ruff-for-linting-and-formatting.md) - Use ruff as the one tool for linting and formatting, in place of flake8, black and isort
@@ -195,6 +196,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [ADR-9023: Shared workflow skills are written once in .agents/skills/ and generated for Claude](decisions/9023-shared-workflow-skills-live-in-agents-skills-generated-for-claude.md) - Shared workflow skills live once in .agents/skills/ and doit skills_sync generates Claude's copy
 - [ADR-9024: One implement-issue skill takes an issue to a green PR](decisions/9024-one-implement-issue-skill-takes-an-issue-to-a-green-pr.md) - One shared implement-issue skill replaces /claude:plan, /claude:implement, /ghi-finalize and the per-agent plan/implement matrix
 - [ADR-9025: Delegated agents receive GitHub data from the host and run without network](decisions/9025-delegated-agents-receive-github-data-from-the-host-and-run-without-network.md) - The host fetches GitHub issue/PR data with doit delegation_context and writes it to files, so delegated agent prompts read those instead of calling gh
+- [ADR-9026: Doc-scanning tests honor sync-exclude.toml and discover markdown via git](decisions/9026-doc-scanning-tests-honor-sync-excludetoml-and-discover-markdown-via-git.md) - The shipped doc-link and doc-path tests discover markdown via git ls-files instead of rglob, and skip a target excluded in sync-exclude.toml
 - [AI Agent Setup Guide](development/AI_SETUP.md) - Configure Claude, Copilot, Codex, and Antigravity for this project
 - [AI Agent Sync Checklist](template/ai-sync-checklist.md) - Step-by-step checklist for AI agents synchronizing downstream projects with pyproject-template
 - [AI Agent Token-Efficiency Add-Ons](development/ai/token-efficiency-add-ons.md) - Opt-in catalogue of external tools for reducing token usage in Claude Code sessions
@@ -204,14 +206,13 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [API Examples](examples/api.md) - Detailed Python API usage examples
 - [API Reference](reference/api.md) - Python API documentation
 - [Architecture Decision Records](decisions/README.md) - Explain what an ADR is, the template-meta (9XXX) vs. project-level (0001+) numbering series, the ADR format, and how to create a new one with `doit adr`.
-- [Auto-Checkpoint and Session-Restore Hooks](development/ai/auto-checkpoint-hook.md) - PreCompact and SessionStart hooks that preserve context across autocompact events
 - [Azure Maintenance SMB Client Impact Tracking](plans/azure-smb-impact-tracking.md) - Plan to extend the `save-azure` command to capture SMB client impact metrics -- LIF failover timing, CIFS transition time, Witness notifications, and aggregate giveback -- during CVO HA failover events.
 - [Basic Usage](usage/basics.md) - Getting started with pynetappfoundry
 - [Cache Model Architecture](development/cache-models.md) - End-to-end guide for the codegen pipeline, cache models, field strategies, and SQL storage
 - [Cache System](reference/cache.md) - Architecture, storage layout, lazy loading, and CLI for the cluster metadata cache
 - [CI/CD Testing Guide](development/ci-cd-testing.md) - GitHub Actions pipelines for testing, linting, and coverage
 - [Claude Code Statusline](development/ai/statusline.md) - Custom statusline showing git branch, Python version, and project info
-- [CLI Guide](usage/cli.md) - The application's user-facing command-line interface and how to extend it
+- [CLI Guide](usage/cli.md) - The nf command-line interface, its module layout, and how to extend it
 - [CLI Reference](reference/cli.md) - Command-line interface documentation
 - [Compliance Checks](usage/compliance-checks.md) - Configure and run config-driven compliance checks against cached cluster metadata
 - [Configuration Schema Reference](reference/config-schema.md) - Complete reference for pynetappfoundry TOML configuration files
@@ -244,7 +245,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [Release Automation & Security](development/release-and-automation.md) - Automated versioning, release management, and security tooling
 - [Review Focus Areas](development/ai/review-focus-areas.md) - Checklists for the errors, tests, types and comments focus areas available to every review and adversarial-review surface
 - [Ruff Auto-Fix on Edit Hook](development/ai/ruff-fix-hook.md) - PostToolUse hook that runs ruff --fix on edited Python files
-- [Slash Commands and Workflows](development/ai/slash-commands.md) - Reference for the slash commands and dual-agent workflow this template ships with
+- [Slash Commands and Workflows](development/ai/slash-commands.md) - Reference for the slash commands and dual-agent workflow this project ships with
 - [Template Management](template/manage.md) - Unified interface for creating projects, checking updates, and syncing
 - [Template Tools Reference](template/tools-reference.md) - Complete reference for all template tools in tools/pyproject_template/
 - [Tooling Roles and Architectural Boundaries](development/tooling-roles.md) - What each tool is for, who uses it, and where runtime code ends and dev tooling begins

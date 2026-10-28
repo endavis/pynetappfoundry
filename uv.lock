@@ -1432,7 +1432,7 @@ wheels = [
 
 [[package]]
 name = "mkdocstrings"
-version = "1.0.4"
+version = "1.0.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jinja2" },
@@ -1442,9 +1442,9 @@ dependencies = [
     { name = "mkdocs-autorefs" },
     { name = "pymdown-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/1d/5d/f888d4d3eb31359b327bc9b17a212d6ef03fe0b0682fbb3fc2cb849fb12b/mkdocstrings-1.0.4.tar.gz", hash = "sha256:3969a6515b77db65fd097b53c1b7aa4ae840bd71a2ee62a6a3e89503446d7172", size = 100088, upload-time = "2026-04-15T09:16:53.376Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/27/cc/e3ed8b16851f5d664dffcf8f55fc60d0d3f736a3edca21d1508105d1255a/mkdocstrings-1.0.8.tar.gz", hash = "sha256:b50fc326230906425c82ee9ec59b80e5db00892b2b593d4d0b841a0d4acf537b", size = 107444, upload-time = "2026-10-19T15:43:02.157Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6e/94/be70f8ee9c45f2f62b39a1f0e9303bc20e138a8f3b8e50ffd89498e177e1/mkdocstrings-1.0.4-py3-none-any.whl", hash = "sha256:63464b4b29053514f32a1dbbf604e52876d5e638111b0c295ab7ed3cac73ca9b", size = 35560, upload-time = "2026-04-15T09:16:51.436Z" },
+    { url = "https://files.pythonhosted.org/packages/19/5e/4df7a2290e97c60a3ba410084966e5ab84aa89d15c8c98c195acbaefa8f4/mkdocstrings-1.0.8-py3-none-any.whl", hash = "sha256:4b03ed2b863009f1153f0d04aacb22a85b92afc28a0636d85717c92eecca638c", size = 42209, upload-time = "2026-10-19T15:43:00.65Z" },
 ]
 
 [package.optional-dependencies]
@@ -2160,15 +2160,15 @@ wheels = [
 
 [[package]]
 name = "pymdown-extensions"
-version = "11.0.2"
+version = "12.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "markdown" },
     { name = "pyyaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ad/17/2db4b414de89659144488e0d9c6c0bf0c8395841dc12d81d0532cc6ef310/pymdown_extensions-11.0.2.tar.gz", hash = "sha256:9506fcbe66fa355a775b768084334238dd6805020ac4b92bea0c0dda6f8f223d", size = 855419, upload-time = "2026-08-22T19:28:47.236Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f3/fe/ac50ee24a80a1b344e643f6fb626063cc7041b978cd1dd9a7f9963ae1cd1/pymdown_extensions-12.3.tar.gz", hash = "sha256:a7f2a4e0bc60c6e6babfa7922cfb3b01cd640eb00fb208f3c582e12bae00ea67", size = 870532, upload-time = "2026-10-14T22:40:43.252Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a6/43/9f45ec4d14e596efc32c925a78104934790438b0c0628b70d741016734ad/pymdown_extensions-11.0.2-py3-none-any.whl", hash = "sha256:259910762019732caa1dfd76f3faa62c59f191d46573e80bcb1d13c0f675bbe5", size = 269929, upload-time = "2026-08-22T19:28:45.389Z" },
+    { url = "https://files.pythonhosted.org/packages/8a/d0/758afe732c2da502c051b4d03ff88daa3c0fc1a1e671e6c5a6318177bab4/pymdown_extensions-12.3-py3-none-any.whl", hash = "sha256:345493a8e3497e24382902903a1c43a28e34a52f2b7571a1c9641429b820ca74", size = 277597, upload-time = "2026-10-14T22:40:41.543Z" },
 ]
 
 [[package]]
@@ -2240,6 +2240,7 @@ dev = [
     { name = "mypy" },
     { name = "openapi-spec-validator" },
     { name = "pre-commit" },
+    { name = "pymdown-extensions" },
     { name = "pyproject-fmt" },
     { name = "pyright" },
     { name = "pytest" },
@@ -2271,32 +2272,33 @@ dev = [
 requires-dist = [
     { name = "bandit", marker = "extra == 'security'", specifier = ">=1.7" },
     { name = "click", specifier = ">=8.1" },
-    { name = "codespell", marker = "extra == 'dev'", specifier = ">=2.2" },
-    { name = "commitizen", marker = "extra == 'dev'", specifier = ">=4.13.10" },
+    { name = "codespell", marker = "extra == 'dev'", specifier = ">=2.4.3" },
+    { name = "commitizen", marker = "extra == 'dev'", specifier = ">=4.19.2" },
     { name = "cryptography", specifier = ">=50.0.0" },
-    { name = "cyclonedx-bom", marker = "extra == 'security'", specifier = ">=4.0" },
+    { name = "cyclonedx-bom", marker = "extra == 'security'", specifier = ">=7.5.0" },
     { name = "doit", specifier = ">=0.36.0" },
-    { name = "hypothesis", marker = "extra == 'dev'", specifier = ">=6.151.14" },
+    { name = "hypothesis", marker = "extra == 'dev'", specifier = ">=6.170.2" },
     { name = "jsonschema", specifier = ">=4.25.1" },
-    { name = "mkdocs-material", marker = "extra == 'dev'", specifier = ">=9.5" },
-    { name = "mkdocstrings", extras = ["python"], marker = "extra == 'dev'", specifier = ">=1.0.4" },
-    { name = "mutmut", marker = "extra == 'dev'", specifier = ">=3.0" },
-    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.20.1" },
+    { name = "mkdocs-material", marker = "extra == 'dev'", specifier = ">=9.7.7" },
+    { name = "mkdocstrings", extras = ["python"], marker = "extra == 'dev'", specifier = ">=1.0.7" },
+    { name = "mutmut", marker = "extra == 'dev'", specifier = ">=3.8.0" },
+    { name = "mypy", marker = "extra == 'dev'", specifier = ">=2.4.0" },
     { name = "netapp-ontap", specifier = ">=9.17.1.0" },
     { name = "openapi-spec-validator", marker = "extra == 'dev'", specifier = ">=0.7" },
     { name = "openpyxl", specifier = ">=3.1.5" },
     { name = "pandas", specifier = ">=2.3.3" },
     { name = "paramiko", specifier = ">=5.1.0" },
-    { name = "pip", marker = "extra == 'security'", specifier = ">=26.0" },
-    { name = "pip-audit", marker = "extra == 'security'", specifier = ">=2.6" },
+    { name = "pip", marker = "extra == 'security'", specifier = ">=26.2.1" },
+    { name = "pip-audit", marker = "extra == 'security'", specifier = ">=2.10.1" },
     { name = "pip-licenses", marker = "extra == 'security'", specifier = ">=4.0" },
-    { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=3.7.0" },
+    { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.7.0" },
     { name = "psutil", specifier = ">=7.1.2" },
     { name = "pydantic", specifier = ">=2.0" },
-    { name = "pyproject-fmt", marker = "extra == 'dev'", specifier = ">=2.0" },
-    { name = "pyright", marker = "extra == 'dev'", specifier = ">=1.1.0" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.0.3" },
-    { name = "pytest-benchmark", marker = "extra == 'dev'", specifier = ">=4.0" },
+    { name = "pymdown-extensions", marker = "extra == 'dev'", specifier = ">=12.3" },
+    { name = "pyproject-fmt", marker = "extra == 'dev'", specifier = ">=2.30.3" },
+    { name = "pyright", marker = "extra == 'dev'", specifier = ">=1.1.414" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.1.1" },
+    { name = "pytest-benchmark", marker = "extra == 'dev'", specifier = ">=5.3.0" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0" },
     { name = "pytest-xdist", marker = "extra == 'dev'", specifier = ">=3.5" },
     { name = "pyyaml", specifier = ">=6.0" },
@@ -2304,11 +2306,11 @@ requires-dist = [
     { name = "radon", marker = "extra == 'dev'", specifier = ">=6.0" },
     { name = "requests", specifier = ">=2.31" },
     { name = "rich", specifier = ">=15.0.0" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.15.10" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.17.1" },
     { name = "tenacity", specifier = ">=8.2" },
     { name = "tomli-w", specifier = ">=1.0" },
     { name = "types-paramiko", marker = "extra == 'dev'", specifier = ">=4.0.0.20260408" },
-    { name = "types-pyyaml", marker = "extra == 'dev'", specifier = ">=6.0.12.20260408" },
+    { name = "types-pyyaml", marker = "extra == 'dev'", specifier = ">=6.0.12.20260906" },
     { name = "types-requests", marker = "extra == 'dev'", specifier = ">=2.33.0.20260408" },
     { name = "vulture", marker = "extra == 'dev'", specifier = ">=2.11" },
     { name = "xlsxwriter", specifier = ">=3.2.9" },
