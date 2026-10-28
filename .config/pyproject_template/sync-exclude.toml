@@ -71,6 +71,12 @@ exclude = [
     # which is itself excluded (bootstrap.py is absent).
     "tests/template/test_bootstrap.py",
 
+    # tests/template/test_check_template_updates.py — template-owned
+    # (TEMPLATE_OWNED_TEST_FILES), shed on configuration, so absent here.
+    # Already left out of drift reports; listed so the doc-path tests skip it
+    # where ADR-9026 names it (#879).
+    "tests/template/test_check_template_updates.py",
+
     # ── Template scaffold examples ────────────────────────────────────
     # Upstream's examples/ directory is generic Python-package examples
     # (basic_usage.py, cli_usage.py, an api/ scaffold). Not applicable
