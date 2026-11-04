@@ -10,7 +10,7 @@ overwrite these project-specific tasks.
 The ``_install_age`` helper is custom because the upstream framework's
 ``extract_binaries`` parameter is a single list applied across all
 platforms, which cannot express ``age`` vs ``age.exe`` per OS. Once
-https://github.com/endavis/pyproject-template/issues/477 lands this
+upstream template issue #477 lands this
 helper can collapse into a single ``create_install_task`` call.
 """
 
@@ -18,7 +18,7 @@ import glob
 import os
 import platform
 import shutil
-import subprocess  # nosec B404 - subprocess is required for version checks
+import subprocess  # nosec B404  # subprocess is required for version checks
 import sys
 import tarfile
 import urllib.request
@@ -75,7 +75,7 @@ def _install_age() -> None:
             src = Path("/tmp/age") / binary  # nosec B108
             dst = install_dir / binary
             shutil.move(str(src), str(dst))
-            dst.chmod(0o755)  # nosec B103
+            dst.chmod(0o755)
 
         tar_path.unlink()
         shutil.rmtree("/tmp/age", ignore_errors=True)  # nosec B108
