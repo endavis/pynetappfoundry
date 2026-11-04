@@ -132,6 +132,7 @@ nav:
           - Setup: development/AI_SETUP.md
           - Slash Commands: development/ai/slash-commands.md
           - Cross-Agent Delegation: development/ai/cross-agent-delegation.md
+          - Agent Roles and Models: development/ai/agent-roles.md
           - Review Focus Areas: development/ai/review-focus-areas.md
           - Architectural Conventions: development/ai/architectural-conventions.md
           - Enforcement Principles: development/ai/enforcement-principles.md
@@ -203,6 +204,10 @@ nav:
           - ADR-9024 Implement-Issue Skill: decisions/9024-one-implement-issue-skill-takes-an-issue-to-a-green-pr.md
           - ADR-9025 Delegation Context: decisions/9025-delegated-agents-receive-github-data-from-the-host-and-run-without-network.md
           - ADR-9026 Doc-Scan Sync-Exclude: decisions/9026-doc-scanning-tests-honor-sync-excludetoml-and-discover-markdown-via-git.md
+          - ADR-9027 Implement-Issue Worktree: decisions/9027-implement-issue-works-in-a-per-issue-worktree.md
+          - ADR-9028 Implement-Issues Parallel: decisions/9028-implement-issues-runs-issues-in-parallel-background-agents.md
+          - ADR-9029 Host Plan and Checking Budget: decisions/9029-implement-issue-host-plan-and-coder-checking-budget.md
+          - ADR-9030 Agent Roles: decisions/9030-cross-agent-roles-resolve-through-a-per-user-config.md
   - Template:
       - Overview: template/index.md
       - New Project: template/new-project.md

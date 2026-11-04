@@ -31,6 +31,9 @@ exclude = [
     # 100% project-owned content here.
     "README.md",
     "CHANGELOG.md",
+    # README.template.md: template-owned, renamed onto README.md on
+    # configuration. Never applies to this configured project (#888).
+    "README.template.md",
     # mkdocs.yml: top-of-file project metadata (site_name, site_url, etc.)
     # plus a project-specific nav structure (ONTAP usage pages, project ADRs,
     # ONTAP/cloud reference docs). Upstream nav improvements can be pulled in

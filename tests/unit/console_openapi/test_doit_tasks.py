@@ -15,7 +15,7 @@ MODELS = Path("models")
 
 def _git(repo: Path, *args: str) -> str:
     """Run ``git`` in ``repo`` with a fixed identity and no signing; return stdout."""
-    result = subprocess.run(  # nosec B603 B607 - fixed argv, no shell
+    result = subprocess.run(  # nosec B603 B607  # fixed argv, no shell
         [
             "git",
             "-c",
