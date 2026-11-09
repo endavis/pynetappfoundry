@@ -338,6 +338,58 @@ class TestDiiBackendRecordsPath:
         results = _query_with(items_mapping, response, mock_config)
         assert [r.id for r in results] == [2]
 
+    def test_dot_wraps_dict_as_single_record(
+        self, fake_dii_mapping: TypeMapping, mock_config: Any
+    ) -> None:
+        mapping = dataclasses.replace(fake_dii_mapping, records_path=".")
+        results = _query_with(mapping, {"id": 5, "name": "solo"}, mock_config)
+        assert [(r.id, r.name) for r in results] == [(5, "solo")]
+        assert "id" in results[0]._fetched_fields
+
+    def test_dot_wins_over_envelope_sniffing(
+        self, fake_dii_mapping: TypeMapping, mock_config: Any
+    ) -> None:
+        mapping = dataclasses.replace(fake_dii_mapping, records_path=".")
+        results = _query_with(mapping, {"id": 5, "rows": [{"id": 9}]}, mock_config)
+        assert [r.id for r in results] == [5]
+
+    def test_dot_keeps_list_as_list(self, fake_dii_mapping: TypeMapping, mock_config: Any) -> None:
+        mapping = dataclasses.replace(fake_dii_mapping, records_path=".")
+        results = _query_with(mapping, [{"id": 1}, {"id": 2}], mock_config)
+        assert [r.id for r in results] == [1, 2]
+
+    def test_empty_path_still_sniffs_envelope(
+        self, fake_dii_mapping: TypeMapping, mock_config: Any
+    ) -> None:
+        results = _query_with(
+            fake_dii_mapping,
+            {"offset": 0, "count": 1, "rows": [{"id": 4}]},
+            mock_config,
+        )
+        assert [r.id for r in results] == [4]
+
+    def test_real_onetimetoken_mapping(self, mock_config: Any) -> None:
+        from pynetappfoundry.cache.dii.au.oneTimeToken.mapping import DIIAUONETIMETOKEN_MAPPING
+        from pynetappfoundry.models.dii.au.oneTimeToken.model import DiiAuOnetimetoken
+
+        assert DIIAUONETIMETOKEN_MAPPING.records_path == "."
+        backend = _make_backend(mock_config)
+        decision = RoutingDecision(cache_fields=(), live_fields=("token", "installCommand"))
+        client = MagicMock()
+        client.get_all_pages.return_value = {
+            "token": "tok",
+            "installCommand": "curl x | sh",
+            "imageZipUrl": "https://example/img.zip",
+            "additionalInstructionsForManualInstallation": [{"name": "n"}],
+        }
+        with patch.object(backend, "_get_api_client", return_value=client):
+            results = backend.query(DiiAuOnetimetoken, DIIAUONETIMETOKEN_MAPPING, decision, "t", {})
+        assert len(results) == 1
+        assert results[0].token == "tok"
+        assert results[0].installCommand == "curl x | sh"
+        assert results[0].imageZipUrl == "https://example/img.zip"
+        assert results[0].additionalInstructionsForManualInstallation[0].name == "n"
+
     def test_real_users_mapping(self, mock_config: Any) -> None:
         from pynetappfoundry.cache.dii.users.mapping import DIIUSERSRESPONSE_MAPPING
         from pynetappfoundry.models.dii.users.model import DiiUsersresponse

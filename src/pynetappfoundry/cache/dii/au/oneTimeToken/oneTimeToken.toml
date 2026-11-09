@@ -1,25 +1,38 @@
+_removed_fields = [
+    "commands",
+    "description",
+    "download",
+    "downloadTitle",
+    "footer",
+    "heading",
+    "name",
+]
+
 [endpoint]
 path = "/au/oneTimeToken"
 schema = "InstallCommand"
 class_name = "DiiAuOnetimetoken"
 
-[fields.download]
+[fields.additionalInstructionsForManualInstallation]
 cache_strategy = "cache"
 
-[fields.heading]
+[fields.requirements]
 cache_strategy = "cache"
 
-[fields.footer]
+[fields.installCommand]
 cache_strategy = "cache"
 
-[fields.downloadTitle]
+[fields.imageZipUrl]
 cache_strategy = "cache"
 
-[fields.name]
+[fields.dsWarDownloadUrl]
 cache_strategy = "cache"
 
-[fields.description]
+[fields.supportedOS]
 cache_strategy = "cache"
 
-[fields.commands]
+[fields.proxySettingCommand]
+cache_strategy = "cache"
+
+[fields.token]
 cache_strategy = "cache"

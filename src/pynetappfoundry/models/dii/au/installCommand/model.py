@@ -1,4 +1,4 @@
-# ruff: noqa: N815
+# ruff: noqa: E501, N815
 """DiiAuInstallcommand information."""
 
 from __future__ import annotations
@@ -8,15 +8,15 @@ from pydantic import Field
 from pynetappfoundry.models._base import OntapModel
 
 
-class DiiAuInstallcommandCommand(OntapModel):
-    """DiiAuInstallcommandCommand sub-model for commands."""
+class DiiAuInstallcommandAdditionalinstructionsformanualinstallationCommand(OntapModel):
+    """DiiAuInstallcommandAdditionalinstructionsformanualinstallationCommand sub-model for commands."""
 
     commandTitle: str = ""
     command: str = ""
 
 
-class DiiAuInstallcommand(OntapModel):
-    """DiiAuInstallcommand information."""
+class DiiAuInstallcommandAdditionalinstructionsformanualinstallation(OntapModel):
+    """DiiAuInstallcommandAdditionalinstructionsformanualinstallation sub-model for additionalInstructionsForManualInstallation."""
 
     download: str = ""
     heading: str = ""
@@ -24,4 +24,21 @@ class DiiAuInstallcommand(OntapModel):
     downloadTitle: str = ""
     name: str = ""
     description: str = ""
-    commands: list[DiiAuInstallcommandCommand] = Field(default_factory=list)
+    commands: list[DiiAuInstallcommandAdditionalinstructionsformanualinstallationCommand] = Field(
+        default_factory=list
+    )
+
+
+class DiiAuInstallcommand(OntapModel):
+    """DiiAuInstallcommand information."""
+
+    additionalInstructionsForManualInstallation: list[
+        DiiAuInstallcommandAdditionalinstructionsformanualinstallation
+    ] = Field(default_factory=list)
+    requirements: str = ""
+    installCommand: str = ""
+    imageZipUrl: str = ""
+    dsWarDownloadUrl: str = ""
+    supportedOS: str = ""
+    proxySettingCommand: str = ""
+    token: str = ""

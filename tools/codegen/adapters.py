@@ -293,6 +293,20 @@ def _flatten_schema(
     return fields
 
 
+_SINGLE_OBJECT_ENDPOINTS: dict[str, frozenset[str]] = {
+    "dii": frozenset({"/au/oneTimeToken", "/au/installCommand/{platform}"}),
+}
+"""Endpoints whose 200 response is one object, not a record list (#919).
+
+Keyed by API type; the value is the set of spec paths.  Their records path is
+``"."`` (the whole response is the single record) and the model is built from
+the whole response schema.  DII only: the ONTAP equivalents are tracked in #925.
+"""
+
+SINGLE_OBJECT_RECORDS_PATH = "."
+"""Records-path sentinel for a response that is one record."""
+
+
 def _detect_records_path(
     spec: dict[str, Any],
     response_schema: dict[str, Any],
@@ -477,7 +491,13 @@ def parse_openapi_spec(
             continue
 
         # Detect records path and item schema
-        records_path, item_schema = _detect_records_path(spec, response_schema)
+        if path in _SINGLE_OBJECT_ENDPOINTS.get(api_type, frozenset()):
+            records_path = SINGLE_OBJECT_RECORDS_PATH
+            item_schema = response_schema
+            if "$ref" in item_schema:
+                item_schema = _resolve_ref(spec, item_schema["$ref"])
+        else:
+            records_path, item_schema = _detect_records_path(spec, response_schema)
 
         if not item_schema or not item_schema.get("properties"):
             continue
