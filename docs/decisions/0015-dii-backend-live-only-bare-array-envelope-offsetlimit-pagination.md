@@ -37,6 +37,7 @@ The bare-array envelope is a DII-specific quirk that the existing `parse_api_res
 ## Related Issues
 
 - Issue #600: feat: add DII API backend to DataSource
+- Issue #893: bug: DII backend fetches only the first page (offset/limit pagination in DIIAPIClient.get_all_pages)
 - Issue #533: feat: DataSource non-ONTAP backends (partially addressed; DII is the first non-ONTAP backend)
 - Issue #618: feat: early validation for where()/typed-DSL + incompatible source mode
 
