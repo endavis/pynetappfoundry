@@ -4,156 +4,58 @@ Collects cluster metadata using REST API with all-or-nothing semantics.
 Collection either succeeds completely or fails entirely — no partial
 cache updates. Cloud metadata (CLI-only) is optional; all other phases
 are API-only and must succeed.
+
+``MetadataCollector`` is assembled from mixins in private sibling modules:
+``_collector_api`` (API phases and the cached API call), ``_collector_cloud``
+(cloud metadata), ``_collector_runner`` (phase and task runners),
+``_collector_cli`` (SSH helpers) and ``_collector_progress`` (progress types).
 """
 
 from __future__ import annotations
 
-import logging
 import threading
 import time
-from collections.abc import Callable, Sequence
-from concurrent.futures import Future, ThreadPoolExecutor, as_completed
-from dataclasses import dataclass
+from collections.abc import Callable
+from concurrent.futures import Future
 from datetime import UTC, datetime
-from enum import Enum
-from functools import partial
-from typing import TYPE_CHECKING, Any, ClassVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar
 
-from pydantic import BaseModel
-
-from pynetappfoundry.cache._metadata import (
-    CachedClusterMetadata,
-    RelationshipsInfo,
+from pynetappfoundry.cache._collector_api import ApiPhasesMixin
+from pynetappfoundry.cache._collector_base import logger
+from pynetappfoundry.cache._collector_cli import SshPreconnect, connect_early
+from pynetappfoundry.cache._collector_cloud import CloudPhaseMixin
+from pynetappfoundry.cache._collector_progress import (
+    PHASE_NAMES,
+    CollectionPhase,
+    ProgressCallback,
+    ProgressInfo,
+    report_progress,
 )
+from pynetappfoundry.cache._collector_runner import (
+    DEFAULT_MAX_WORKERS,
+    CollectionError,
+    PhaseRunner,
+    PhaseTask,
+    run_phase_safe,
+)
+from pynetappfoundry.cache._metadata import CachedClusterMetadata
 from pynetappfoundry.cache._registry import model_registry
-from pynetappfoundry.cache.fetchers import fetch as _fetch
-from pynetappfoundry.cache.fetchers import normalize_cli_key, parse_vm_instance_output
-from pynetappfoundry.cache.field_mapping import (
-    TypeMapping,
-    parse_cli_records,
-)
-from pynetappfoundry.cache.field_mapping import (
-    parse_api_record as _parse_api_record_raw,
-)
-from pynetappfoundry.cache.field_mapping import (
-    parse_api_response as _parse_api_response_raw,
-)
-from pynetappfoundry.cache.ontap.cloud.metadata.mapping import CLOUD_METADATA_MAPPING
-from pynetappfoundry.cache.ontap.cluster.mapping import _is_cloud_node
-from pynetappfoundry.cache.ontap.svm.svms.top_metrics.users.mapping import (
-    ONTAPTOPMETRICSSVMUSER_MAPPING,
-)
-from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
-from pynetappfoundry.models.ontap.cloud.targets.model import OntapCloudTarget
-from pynetappfoundry.models.ontap.cluster.licensing.licenses.model import (
-    OntapLicensePackageResponse,
-)
-from pynetappfoundry.models.ontap.cluster.mediators.model import OntapMediatorResponse
 from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
-from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
-from pynetappfoundry.models.ontap.cluster.peers.model import OntapClusterPeer
-from pynetappfoundry.models.ontap.cluster.schedules.model import OntapSchedule
-from pynetappfoundry.models.ontap.name_services.dns.model import OntapDns
-from pynetappfoundry.models.ontap.network.ethernet.broadcast_domains.model import (
-    OntapBroadcastDomain,
-)
-from pynetappfoundry.models.ontap.network.ip.interfaces.model import OntapIpInterface
-from pynetappfoundry.models.ontap.network.ip.subnets.model import OntapIpSubnet
-from pynetappfoundry.models.ontap.network.model import NetworkInfo
-from pynetappfoundry.models.ontap.private.cli.vserver.services.web.model import (
-    OntapSvmWebService,
-)
-from pynetappfoundry.models.ontap.protocols.cifs.services.model import OntapCifsService
-from pynetappfoundry.models.ontap.protocols.cifs.shares.model import OntapCifsShare
-from pynetappfoundry.models.ontap.protocols.model import ProtocolsInfo
-from pynetappfoundry.models.ontap.protocols.nfs.export_policies.model import OntapExportPolicy
-from pynetappfoundry.models.ontap.protocols.nfs.services.model import OntapNfsService
-from pynetappfoundry.models.ontap.protocols.s3.buckets.model import OntapS3Bucket
-from pynetappfoundry.models.ontap.protocols.san.igroups.model import OntapIgroup
-from pynetappfoundry.models.ontap.snapmirror.relationships.model import (
-    OntapSnapmirrorRelationship,
-)
-from pynetappfoundry.models.ontap.storage.aggregates.model import OntapAggregate
-from pynetappfoundry.models.ontap.storage.flexcache.flexcaches.model import OntapFlexcache
-from pynetappfoundry.models.ontap.storage.luns.model import OntapLun
-from pynetappfoundry.models.ontap.storage.model import StorageInfo
-from pynetappfoundry.models.ontap.storage.qos.policies.model import OntapQosPolicy
-from pynetappfoundry.models.ontap.storage.qtrees.model import OntapQtree
-from pynetappfoundry.models.ontap.storage.snapshot_policies.model import OntapSnapshotPolicy
-from pynetappfoundry.models.ontap.storage.volumes.model import OntapVolume
-from pynetappfoundry.models.ontap.svm.peers.model import OntapSvmPeer
-from pynetappfoundry.models.ontap.svm.svms.model import OntapSvm
-from pynetappfoundry.models.ontap.svm.svms.top_metrics.users.model import OntapTopMetricsSvmUser
-from pynetappfoundry.utils.cloud import (
-    build_cloud_instance_link,
-    build_cloud_instance_sso_link,
-    build_cloud_resource_group_link,
-    build_vm_name,
-)
-
-# Cache collector skips realtime fields (volatile metrics not persisted).
-parse_api_record = partial(_parse_api_record_raw, skip_realtime=True)
-parse_api_response = partial(_parse_api_response_raw, skip_realtime=True)
 
 if TYPE_CHECKING:
     from pynetappfoundry.clients.ontap.api import ONTAPAPIClient
     from pynetappfoundry.clients.ontap.cli import ONTAPCLI
 
-logger = logging.getLogger(__name__)
+__all__ = [
+    "CollectionError",
+    "CollectionPhase",
+    "MetadataCollector",
+    "ProgressCallback",
+    "ProgressInfo",
+]
 
 
-def _resolve_dotted_attr(obj: object, dotted_path: str) -> Any:
-    """Resolve a dotted attribute path on an object.
-
-    For example, ``_resolve_dotted_attr(parent, "svm.uuid")`` returns
-    ``parent.svm.uuid``.  Returns ``None`` if any intermediate attribute
-    is missing or ``None``.
-    """
-    current = obj
-    for part in dotted_path.split("."):
-        current = getattr(current, part, None)
-        if current is None:
-            return None
-    return current
-
-
-class CollectionPhase(Enum):
-    """Phases of metadata collection."""
-
-    CLOUD = "cloud"
-    CLUSTER = "cluster"
-    NODES = "nodes"
-    NETWORK = "network"
-    STORAGE = "storage"
-    LICENSES = "licenses"
-    MEDIATOR = "mediator"
-    RELATIONSHIPS = "relationships"
-    PROTOCOLS = "protocols"
-
-
-@dataclass
-class ProgressInfo:
-    """Progress information for a collection phase."""
-
-    phase: CollectionPhase
-    phase_name: str
-    status: str  # "starting", "completed", "failed"
-    elapsed_seconds: float = 0.0
-    error: str | None = None
-    source: str | None = None  # "api", "cli", or None
-
-
-# Type alias for progress callback
-ProgressCallback = Callable[[ProgressInfo], None]
-
-
-class CollectionError(Exception):
-    """Error during metadata collection."""
-
-    pass
-
-
-class MetadataCollector:
+class MetadataCollector(ApiPhasesMixin, CloudPhaseMixin):
     """Collects cluster metadata from ONTAP via API and CLI.
 
     Uses REST API for all collection phases (all-or-nothing). Cloud
@@ -161,17 +63,7 @@ class MetadataCollector:
     """
 
     # Human-readable names for collection phases
-    PHASE_NAMES: ClassVar[dict[CollectionPhase, str]] = {
-        CollectionPhase.CLOUD: "Cloud metadata",
-        CollectionPhase.CLUSTER: "Cluster info",
-        CollectionPhase.NODES: "Nodes",
-        CollectionPhase.NETWORK: "Network",
-        CollectionPhase.STORAGE: "Storage",
-        CollectionPhase.LICENSES: "Licenses",
-        CollectionPhase.MEDIATOR: "Mediator",
-        CollectionPhase.RELATIONSHIPS: "Relationships",
-        CollectionPhase.PROTOCOLS: "Protocols",
-    }
+    PHASE_NAMES: ClassVar[dict[CollectionPhase, str]] = PHASE_NAMES
 
     # Maps TypeMapping registry names to results dict keys for derived field evaluation.
     # Only TypeMappings that have derived fields need to be listed here.
@@ -187,7 +79,7 @@ class MetadataCollector:
         progress_callback: ProgressCallback | None = None,
         aws_sso_config: dict[str, str | dict[str, str]] | None = None,
         parallel: bool = True,
-        max_workers: int = 8,
+        max_workers: int = DEFAULT_MAX_WORKERS,
     ) -> None:
         """Initialize the metadata collector.
 
@@ -199,7 +91,7 @@ class MetadataCollector:
                 - 'subdomain': SSO portal subdomain (e.g., 'mycompany')
                 - 'account_roles': dict mapping account_id to role_name
             parallel: Whether to run API calls in parallel. Default True.
-            max_workers: Maximum number of parallel workers. Default 8.
+            max_workers: Maximum number of parallel workers. Default 8 (``DEFAULT_MAX_WORKERS``).
         """
         self.api_client = api_client
         self.cli_client = cli_client
@@ -214,6 +106,12 @@ class MetadataCollector:
         # API response cache to avoid duplicate calls within a collection run
         self._api_cache: dict[str, Any] = {}
         self._cache_lock = threading.Lock()
+        # In-flight API calls by cache key, so concurrent callers share one request
+        self._inflight: dict[str, Future[Any]] = {}
+
+        # Background SSH pre-connect for the current parallel run (CVO clusters
+        # wait on it before the CLI call)
+        self._ssh_preconnect: SshPreconnect | None = None
 
         # Cross-phase results cache used by fetch() to short-circuit
         # post-collection hooks (e.g. compute_is_ha looking up "OntapNodeResponse").
@@ -224,13 +122,6 @@ class MetadataCollector:
         # Phase results memoized by collect_group(), keyed by phase value, so
         # a dependency (e.g. nodes for cluster and cloud) is collected once.
         self._group_results: dict[str, Any] = {}
-
-    @property
-    def _log_prefix(self) -> str:
-        """Return log prefix with cluster name for consistent logging."""
-        if self._cluster_name:
-            return f"[{self._cluster_name}:collector]"
-        return "[collector]"
 
     def _report_progress(
         self,
@@ -249,139 +140,15 @@ class MetadataCollector:
             error: Error message if failed.
             source: Data source used ("api", "cli").
         """
-        if self.progress_callback:
-            info = ProgressInfo(
-                phase=phase,
-                phase_name=self.PHASE_NAMES.get(phase, phase.value),
-                status=status,
-                elapsed_seconds=elapsed_seconds,
-                error=error,
-                source=source,
-            )
-            self.progress_callback(info)
-
-    def _cached_api_call(self, endpoint: str, method: str = "GET", *, paginate: bool = True) -> Any:
-        """Make an API call with caching to avoid duplicate requests.
-
-        Args:
-            endpoint: The API endpoint to call.
-            method: HTTP method (default GET).
-            paginate: When True (default), use ``get_all_records()`` to
-                follow pagination and merge all pages.  When False, use
-                ``call_endpoint()`` which returns only the first page
-                (suitable for single-object endpoints like ``/cluster``).
-
-        Returns:
-            API response data (from cache if available).
-        """
-        if not self.api_client:
-            return None
-
-        cache_key = f"{method}:{endpoint}"
-
-        with self._cache_lock:
-            if cache_key in self._api_cache:
-                logger.debug("%s API cache hit: %s", self._log_prefix, cache_key)
-                return self._api_cache[cache_key]
-
-        # Make the actual API call (outside the lock to allow parallel calls)
-        logger.debug("%s API call: %s %s", self._log_prefix, method, endpoint)
-        if paginate:
-            response = self.api_client.get_all_records(endpoint, method=method)
-        else:
-            response = self.api_client.call_endpoint(endpoint, method=method)
-
-        with self._cache_lock:
-            self._api_cache[cache_key] = response
-
-        return response
-
-    def _clear_cache(self) -> None:
-        """Clear the API response cache."""
-        with self._cache_lock:
-            self._api_cache.clear()
-
-    def _fetch_model(self, model_class: type[BaseModel]) -> Any:
-        """Delegate to the generic ``fetch()`` dispatcher for one model class.
-
-        Thin shim used by composite phase methods so that each per-model
-        fetch can be submitted to a ``ThreadPoolExecutor`` (preserving
-        the existing parallelism). Always supplies the collector's
-        shared ``_results_cache`` so that post-collection hooks can
-        short-circuit cross-model dependencies.
-        """
-        return _fetch(
-            model_class,
-            cluster=self._cluster_name,
-            config=None,
-            api_client=self.api_client,  # type: ignore[arg-type]
-            cli_client=self.cli_client,
-            results_cache=self._results_cache,
-            log_prefix=self._log_prefix,
+        report_progress(
+            self.progress_callback,
+            phase,
+            status,
+            elapsed_seconds,
+            error,
+            source,
+            self.PHASE_NAMES,
         )
-
-    def _collect_parameterized(
-        self,
-        mapping: TypeMapping,
-        parent_objects: Sequence[BaseModel],
-    ) -> list[BaseModel]:
-        """Fetch child records from a parameterized endpoint by iterating parents.
-
-        For each parent object, substitutes the parent's identifier into the
-        URL placeholder, fetches child records, and aggregates them.
-
-        Args:
-            mapping: Child TypeMapping (must have parent_mapping and parent_id_field set).
-            parent_objects: List of already-collected parent model instances.
-
-        Returns:
-            Aggregated list of child model instances across all parents.
-
-        Raises:
-            ValueError: If mapping.parent_mapping or mapping.parent_id_field is not set.
-        """
-        if not mapping.parent_mapping:
-            raise ValueError(
-                f"{mapping.name}: parent_mapping must be set for parameterized collection"
-            )
-        if not mapping.parent_id_field:
-            raise ValueError(
-                f"{mapping.name}: parent_id_field must be set for parameterized collection"
-            )
-
-        aggregated: list[BaseModel] = []
-        for parent in parent_objects:
-            parent_id = _resolve_dotted_attr(parent, mapping.parent_id_field)
-            if not parent_id:
-                parent_name = getattr(parent, "name", repr(parent))
-                logger.warning(
-                    "%s SKIP_PARENT: %s - parent %s has no '%s'",
-                    self._log_prefix,
-                    mapping.name,
-                    parent_name,
-                    mapping.parent_id_field,
-                )
-                continue
-
-            url = mapping.build_parameterized_url(str(parent_id))
-            try:
-                response = self._cached_api_call(url)
-                children = parse_api_response(
-                    mapping, response, self._log_prefix, self._log_missing_fields
-                )
-                aggregated.extend(children)
-            except Exception as e:
-                parent_name = getattr(parent, "name", repr(parent))
-                logger.warning(
-                    "%s CHILD_FETCH_FAILED: %s for parent %s - %s: %s",
-                    self._log_prefix,
-                    mapping.name,
-                    parent_name,
-                    type(e).__name__,
-                    e,
-                )
-
-        return aggregated
 
     def _evaluate_derived_fields(self, results: dict[str, Any]) -> dict[str, Any]:
         """Evaluate derived fields across all TypeMappings that declare them.
@@ -579,6 +346,13 @@ class MetadataCollector:
             self._group_results[phase.value] = methods[phase]()
         return self._group_results[phase.value]
 
+    def _phase_runner(self) -> PhaseRunner:
+        return PhaseRunner(
+            report=self._report_progress,
+            determine_source=self._determine_source,
+            log_prefix=self._log_prefix,
+        )
+
     def _collect_all_sequential(self, cluster_name: str) -> dict[str, Any]:
         """Collect all metadata sequentially (original behavior).
 
@@ -588,7 +362,8 @@ class MetadataCollector:
         Returns:
             Dictionary of collection results keyed by phase name.
         """
-        phases: list[tuple[CollectionPhase, Callable[[], Any]]] = [
+        self._ssh_preconnect = None
+        phases: list[PhaseTask] = [
             (CollectionPhase.CLUSTER, self.collect_cluster_info),
             (CollectionPhase.NODES, self.collect_nodes),
             # CLOUD must run after NODES so _results_cache["OntapNodeResponse"]
@@ -601,40 +376,7 @@ class MetadataCollector:
             (CollectionPhase.RELATIONSHIPS, self.collect_relationships),
             (CollectionPhase.PROTOCOLS, self.collect_protocols),
         ]
-
-        results: dict[str, Any] = {}
-        for phase, collect_method in phases:
-            phase_start = time.monotonic()
-            self._report_progress(phase, "starting")
-            logger.debug("%s Collecting %s", self._log_prefix, phase.value)
-
-            try:
-                result = collect_method()
-                elapsed = time.monotonic() - phase_start
-                source = self._determine_source(phase)
-                self._report_progress(phase, "completed", elapsed, source=source)
-                logger.debug(
-                    "%s Collected %s in %.2fs via %s",
-                    self._log_prefix,
-                    phase.value,
-                    elapsed,
-                    source or "unknown",
-                )
-                results[phase.value] = result
-            except Exception as e:
-                elapsed = time.monotonic() - phase_start
-                error_msg = str(e)
-                self._report_progress(phase, "failed", elapsed, error=error_msg)
-                logger.error(
-                    "%s COLLECTION_ABORTED: Failed phase: %s - %s: %s",
-                    self._log_prefix,
-                    phase.value,
-                    type(e).__name__,
-                    error_msg,
-                )
-                raise
-
-        return results
+        return self._phase_runner().run_sequential(phases)
 
     def _collect_all_parallel(self, cluster_name: str) -> dict[str, Any]:
         """Collect all metadata in parallel for improved performance.
@@ -650,13 +392,10 @@ class MetadataCollector:
         Returns:
             Dictionary of collection results keyed by phase name.
         """
-        results: dict[str, Any] = {}
-        phase_timings: dict[CollectionPhase, tuple[float, str | None]] = {}
-
         # CLOUD is excluded — it must run after NODES so that
         # _results_cache["OntapNodeResponse"] is populated before CVO
-        # detection.  It runs sequentially after the parallel block below.
-        phases: list[tuple[CollectionPhase, Callable[[], Any]]] = [
+        # detection.  It runs sequentially after the parallel block.
+        phases: list[PhaseTask] = [
             (CollectionPhase.CLUSTER, self.collect_cluster_info),
             (CollectionPhase.NODES, self.collect_nodes),
             (CollectionPhase.NETWORK, self.collect_network),
@@ -667,135 +406,17 @@ class MetadataCollector:
             (CollectionPhase.PROTOCOLS, self.collect_protocols),
         ]
 
-        # Report all phases as starting (include CLOUD)
-        for phase, _ in phases:
-            self._report_progress(phase, "starting")
-        self._report_progress(CollectionPhase.CLOUD, "starting")
+        # Start SSH connection early in background if CLI client available;
+        # the cloud phase waits for it before its CLI call (CVO clusters only).
+        preconnect = SshPreconnect(self.cli_client, self._log_prefix, f"ssh-connect-{cluster_name}")
+        self._ssh_preconnect = preconnect
 
-        # Start SSH connection early in background if CLI client available
-        ssh_connect_thread: threading.Thread | None = None
-        if self.cli_client:
-            logger.debug("%s Starting SSH connection in background", self._log_prefix)
-            ssh_connect_thread = threading.Thread(
-                target=self._connect_ssh_early,
-                name=f"ssh-connect-{cluster_name}",
-                daemon=True,
-            )
-            ssh_connect_thread.start()
-
-        # Run all phases in parallel using ThreadPoolExecutor
-        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-            # Submit all phases
-            future_to_phase: dict[Future[Any], tuple[CollectionPhase, float]] = {}
-            for phase, collect_method in phases:
-                phase_start = time.monotonic()
-                future = executor.submit(self._run_phase_safe, phase, collect_method)
-                future_to_phase[future] = (phase, phase_start)
-
-            # Collect results as they complete
-            errors: list[tuple[CollectionPhase, Exception]] = []
-            for future in as_completed(future_to_phase):
-                phase, phase_start = future_to_phase[future]
-                elapsed = time.monotonic() - phase_start
-                source = self._determine_source(phase)
-
-                try:
-                    result, error = future.result()
-                    if error:
-                        phase_timings[phase] = (elapsed, source)
-                        self._report_progress(phase, "failed", elapsed, error=str(error))
-                        logger.error(
-                            "%s Failed to collect %s: %s",
-                            self._log_prefix,
-                            phase.value,
-                            error,
-                        )
-                        errors.append((phase, error))
-                    else:
-                        results[phase.value] = result
-                        phase_timings[phase] = (elapsed, source)
-                        self._report_progress(phase, "completed", elapsed, source=source)
-                        logger.debug(
-                            "%s Collected %s in %.2fs via %s",
-                            self._log_prefix,
-                            phase.value,
-                            elapsed,
-                            source or "unknown",
-                        )
-                except Exception as e:
-                    phase_timings[phase] = (elapsed, source)
-                    self._report_progress(phase, "failed", elapsed, error=str(e))
-                    logger.error(
-                        "%s Failed to collect %s: %s",
-                        self._log_prefix,
-                        phase.value,
-                        e,
-                        exc_info=True,
-                    )
-                    errors.append((phase, e))
-
-        # Wait for SSH connection thread if it was started
-        if ssh_connect_thread and ssh_connect_thread.is_alive():
-            ssh_connect_thread.join(timeout=1.0)
-
-        # If any phase failed, raise the first error
-        if errors:
-            first_phase, first_error = errors[0]
-            logger.error(
-                "%s COLLECTION_ABORTED: Failed phase: %s - %s: %s",
-                self._log_prefix,
-                first_phase.value,
-                type(first_error).__name__,
-                first_error,
-            )
-            raise CollectionError(
-                f"Collection failed for phase {first_phase.value}: {first_error}"
-            ) from first_error
-
-        # Run CLOUD sequentially after all parallel phases so that
-        # _results_cache["OntapNodeResponse"] is populated for CVO detection.
-        # Cloud failures are non-fatal — warn and continue.
-        cloud_start = time.monotonic()
-        try:
-            cloud_result, cloud_error = self._run_phase_safe(
-                CollectionPhase.CLOUD, self.collect_cloud_metadata
-            )
-            cloud_elapsed = time.monotonic() - cloud_start
-            cloud_source = self._determine_source(CollectionPhase.CLOUD)
-            if cloud_error:
-                self._report_progress(
-                    CollectionPhase.CLOUD, "failed", cloud_elapsed, error=str(cloud_error)
-                )
-                logger.warning(
-                    "%s Cloud metadata collection failed (non-fatal): %s",
-                    self._log_prefix,
-                    cloud_error,
-                )
-                results[CollectionPhase.CLOUD.value] = []
-            else:
-                results[CollectionPhase.CLOUD.value] = cloud_result
-                phase_timings[CollectionPhase.CLOUD] = (cloud_elapsed, cloud_source)
-                self._report_progress(
-                    CollectionPhase.CLOUD, "completed", cloud_elapsed, source=cloud_source
-                )
-                logger.debug(
-                    "%s Collected %s in %.2fs via %s",
-                    self._log_prefix,
-                    CollectionPhase.CLOUD.value,
-                    cloud_elapsed,
-                    cloud_source or "unknown",
-                )
-        except Exception as e:
-            cloud_elapsed = time.monotonic() - cloud_start
-            self._report_progress(CollectionPhase.CLOUD, "failed", cloud_elapsed, error=str(e))
-            logger.warning(
-                "%s Cloud metadata collection failed (non-fatal): %s",
-                self._log_prefix,
-                e,
-            )
-            results[CollectionPhase.CLOUD.value] = []
-
-        return results
+        return self._phase_runner().run_parallel(
+            phases,
+            (CollectionPhase.CLOUD, self.collect_cloud_metadata),
+            max_workers=self.max_workers,
+            start_background=preconnect.start,
+        )
 
     def _run_phase_safe(
         self, phase: CollectionPhase, collect_method: Callable[[], Any]
@@ -809,27 +430,14 @@ class MetadataCollector:
         Returns:
             Tuple of (result, error) - error is None on success.
         """
-        try:
-            result = collect_method()
-            return result, None
-        except Exception as e:
-            logger.debug("%s Phase %s failed: %s", self._log_prefix, phase.value, e)
-            return None, e
+        return run_phase_safe(phase, collect_method, self._log_prefix)
 
     def _connect_ssh_early(self) -> None:
         """Establish SSH connection early to reduce latency.
 
         Called in a background thread to overlap with API calls.
         """
-        if self.cli_client:
-            try:
-                logger.debug("%s Establishing early SSH connection", self._log_prefix)
-                self.cli_client.connect()
-                logger.debug("%s Early SSH connection established", self._log_prefix)
-            except Exception as e:
-                logger.debug(
-                    "%s Early SSH connection failed (will retry later): %s", self._log_prefix, e
-                )
+        connect_early(self.cli_client, self._log_prefix)
 
     def _determine_source(self, phase: CollectionPhase) -> str | None:
         """Determine which data source is available for a phase.
@@ -845,804 +453,3 @@ class MetadataCollector:
             return "cli" if self.cli_client else None
         # All other phases are API-only
         return "api" if self.api_client else None
-
-    def _log_missing_fields(
-        self,
-        record: dict[str, Any],
-        expected_fields: list[str],
-        record_type: str,
-        record_id: str,
-    ) -> None:
-        """Log error messages for expected API fields missing from a record.
-
-        Only logs when a key is absent from the dict — not when present
-        with a null, empty, or zero value.
-
-        Args:
-            record: The API response record dict.
-            expected_fields: Top-level keys expected in the record.
-            record_type: Human-readable type (e.g., "Volume", "Aggregate").
-            record_id: Identifier for the record (name or uuid).
-        """
-        for field in expected_fields:
-            if field not in record:
-                logger.error(
-                    "%s MISSING_FIELD: %s '%s' - '%s' not in API response",
-                    self._log_prefix,
-                    record_type,
-                    record_id,
-                    field,
-                )
-
-    # -------------------------------------------------------------------------
-    # Cloud Metadata Collection
-    # -------------------------------------------------------------------------
-
-    def collect_cloud_metadata(self) -> list[CloudMetadata]:
-        """Collect cloud provider metadata.
-
-        Cloud metadata is only available via CLI (virtual-machine instance show).
-        Returns one CloudMetadata per node in the cluster. This is the only
-        CLI-only phase — failure warns but does not abort collection.
-
-        Non-cloud (on-prem) clusters skip the CLI call entirely. Detection
-        uses the nodes already fetched into ``_results_cache`` — if none
-        match :func:`_is_cloud_node`, the method returns an empty list
-        without touching the CLI client, avoiding a 10s SSH timeout on
-        clusters that do not expose a cloud management service. See #547.
-
-        This phase must run **after** :meth:`collect_nodes` so that
-        ``_results_cache["OntapNodeResponse"]`` is populated before CVO
-        detection runs.  Both :meth:`_collect_all_sequential` and
-        :meth:`_collect_all_parallel` enforce this ordering.
-
-        Returns:
-            List of CloudMetadata objects, one per node.
-        """
-        nodes = self._results_cache.get("OntapNodeResponse", [])
-        if not nodes or not any(_is_cloud_node(n) for n in nodes):
-            logger.debug(
-                "%s Skipping cloud metadata: no CVO nodes detected",
-                self._log_prefix,
-            )
-            return []
-        if self.cli_client:
-            try:
-                return self._collect_cloud_metadata_via_cli()
-            except Exception as e:
-                logger.error(
-                    "%s CLI_FAILURE: Cloud metadata - %s: %s",
-                    self._log_prefix,
-                    type(e).__name__,
-                    e,
-                )
-        return []
-
-    def _collect_cloud_metadata_via_cli(self) -> list[CloudMetadata]:
-        """Collect cloud metadata using CLI.
-
-        Parses the raw CLI text into dict records, feeds them through
-        ``parse_cli_records`` via the ``CLOUD_METADATA_MAPPING``, and
-        then post-processes the results to build computed link fields
-        that depend on collector state (``aws_sso_config``).
-
-        Returns:
-            List of CloudMetadata from virtual-machine instance show.
-        """
-        if not self.cli_client:
-            logger.debug(
-                "%s No CLI client available for cloud metadata collection", self._log_prefix
-            )
-            return []
-
-        logger.debug("%s CLI command: virtual-machine instance show", self._log_prefix)
-        output = self.cli_client.run_command("virtual-machine instance show")
-        logger.debug("%s CLI response: %d lines", self._log_prefix, len(output))
-
-        records = parse_vm_instance_output(output)
-        items = parse_cli_records(
-            CLOUD_METADATA_MAPPING,
-            records,
-            self._log_prefix,
-            self._log_missing_fields,
-        )
-        results = cast(list[CloudMetadata], items)
-
-        # Post-process: build computed link fields
-        for cm in results:
-            region = cm.region or cm.availability_zone
-            cm.instance_link = build_cloud_instance_link(
-                provider=cm.provider,
-                instance_id=cm.instance_id,
-                region=region,
-                account_id=cm.account_id,
-                resource_group=cm.resource_group_name,
-            )
-            cm.instance_sso_link = build_cloud_instance_sso_link(
-                provider=cm.provider,
-                instance_link=cm.instance_link,
-                account_id=cm.account_id,
-                sso_config=self.aws_sso_config,
-            )
-            cm.resource_group_link = build_cloud_resource_group_link(
-                provider=cm.provider,
-                account_id=cm.account_id,
-                resource_group=cm.resource_group_name,
-            )
-            # Set vm_name without cluster context; for Azure this is
-            # overwritten by _update_azure_cloud_links() which has
-            # cluster_name and node info for the proper derivation.
-            cm.vm_name = build_vm_name(
-                provider=cm.provider,
-                instance_id=cm.instance_id,
-            )
-
-        return results
-
-    def _parse_vm_instance_output(self, output: list[str]) -> list[dict[str, str]]:
-        """Parse virtual-machine instance show output into raw records.
-
-        Delegates to :func:`pynetappfoundry.cache.fetchers.parse_vm_instance_output`.
-
-        Args:
-            output: Lines of CLI output.
-
-        Returns:
-            List of raw record dicts (one per node) with normalized keys.
-        """
-        return parse_vm_instance_output(output)
-
-    def _update_azure_cloud_links(
-        self,
-        cloud_metadata: list[CloudMetadata],
-        cluster_name: str,
-        is_ha: bool,
-    ) -> list[CloudMetadata]:
-        """Update Azure cloud metadata with correct instance links.
-
-        Azure VM portal links require the VM name derived from cluster name
-        and node information, not the instance_id from cloud metadata.
-
-        Args:
-            cloud_metadata: List of CloudMetadata objects to update.
-            cluster_name: The cluster name.
-            is_ha: Whether the cluster is HA.
-
-        Returns:
-            Updated list of CloudMetadata with correct Azure instance links.
-        """
-        updated = []
-        for meta in cloud_metadata:
-            if meta.provider.lower() != "azure":
-                updated.append(meta)
-                continue
-
-            # Rebuild the instance link with cluster/node info
-            instance_link = build_cloud_instance_link(
-                provider=meta.provider,
-                instance_id=meta.instance_id,
-                account_id=meta.account_id,
-                resource_group=meta.resource_group_name,
-                cluster_name=cluster_name,
-                node_name=meta.node,
-                is_ha=is_ha,
-            )
-
-            # Rebuild SSO link (not applicable for Azure, but keep for consistency)
-            instance_sso_link = build_cloud_instance_sso_link(
-                provider=meta.provider,
-                instance_link=instance_link,
-                account_id=meta.account_id,
-                sso_config=self.aws_sso_config,
-            )
-
-            vm_name = build_vm_name(
-                provider=meta.provider,
-                cluster_name=cluster_name,
-                node_name=meta.node,
-                instance_id=meta.instance_id,
-                is_ha=is_ha,
-            )
-
-            # Create updated CloudMetadata with new links
-            updated.append(
-                CloudMetadata(
-                    node=meta.node,
-                    instance_id=meta.instance_id,
-                    account_id=meta.account_id,
-                    image_id=meta.image_id,
-                    instance_type=meta.instance_type,
-                    cpu_platform=meta.cpu_platform,
-                    region=meta.region,
-                    provider=meta.provider,
-                    consumer=meta.consumer,
-                    primary_ip=meta.primary_ip,
-                    metadata_version=meta.metadata_version,
-                    availability_zone=meta.availability_zone,
-                    availability_zone_id=meta.availability_zone_id,
-                    fault_domain=meta.fault_domain,
-                    update_domain=meta.update_domain,
-                    resource_group_name=meta.resource_group_name,
-                    offer=meta.offer,
-                    sku=meta.sku,
-                    sku_version=meta.sku_version,
-                    instance_link=instance_link,
-                    instance_sso_link=instance_sso_link,
-                    resource_group_link=meta.resource_group_link,
-                    vm_name=vm_name,
-                )
-            )
-        return updated
-
-    @staticmethod
-    def _normalize_cli_key(key: str) -> str:
-        """Normalize CLI output key to snake_case.
-
-        Delegates to :func:`pynetappfoundry.cache.fetchers.normalize_cli_key`.
-
-        Args:
-            key: Original key from CLI output.
-
-        Returns:
-            Normalized key name.
-        """
-        return normalize_cli_key(key)
-
-    # -------------------------------------------------------------------------
-    # Cluster Info Collection
-    # -------------------------------------------------------------------------
-
-    def collect_cluster_info(self) -> ClusterInfo:
-        """Collect cluster identity information (API-only).
-
-        Returns:
-            ClusterInfo object.
-
-        Raises:
-            CollectionError: If no API client is available.
-            Exception: If the API call fails.
-        """
-        if not self.api_client:
-            raise CollectionError(
-                f"{self._log_prefix} API_FAILURE: Cluster info - no API client available"
-            )
-        try:
-            return self._collect_cluster_info_via_api()
-        except Exception as e:
-            logger.error(
-                "%s API_FAILURE: Cluster info - %s: %s",
-                self._log_prefix,
-                type(e).__name__,
-                e,
-            )
-            raise
-
-    def _collect_cluster_info_via_api(self) -> ClusterInfo:
-        """Collect cluster info using REST API.
-
-        Returns:
-            ClusterInfo from /cluster endpoint.
-        """
-        if not self.api_client:
-            logger.debug("%s No API client available for cluster info collection", self._log_prefix)
-            return ClusterInfo()
-
-        return cast(
-            ClusterInfo,
-            _fetch(
-                ClusterInfo,
-                cluster=self._cluster_name,
-                config=None,
-                api_client=self.api_client,
-                cli_client=self.cli_client,
-                results_cache=self._results_cache,
-                log_prefix=self._log_prefix,
-            ),
-        )
-
-    # -------------------------------------------------------------------------
-    # Node Collection
-    # -------------------------------------------------------------------------
-
-    def collect_nodes(self) -> list[OntapNodeResponse]:
-        """Collect node information (API-only).
-
-        Returns:
-            List of OntapNodeResponse objects.
-
-        Raises:
-            CollectionError: If no API client is available.
-            Exception: If the API call fails.
-        """
-        if not self.api_client:
-            raise CollectionError(
-                f"{self._log_prefix} API_FAILURE: Nodes - no API client available"
-            )
-        try:
-            return self._collect_nodes_via_api()
-        except Exception as e:
-            logger.error(
-                "%s API_FAILURE: Nodes - %s: %s",
-                self._log_prefix,
-                type(e).__name__,
-                e,
-            )
-            raise
-
-    def _collect_nodes_via_api(self) -> list[OntapNodeResponse]:
-        """Collect nodes using REST API.
-
-        Returns:
-            List of OntapNodeResponse from /cluster/nodes endpoint.
-        """
-        if not self.api_client:
-            logger.debug("%s No API client available for nodes collection", self._log_prefix)
-            return []
-
-        nodes = cast(
-            list[OntapNodeResponse],
-            _fetch(
-                OntapNodeResponse,
-                cluster=self._cluster_name,
-                config=None,
-                api_client=self.api_client,
-                cli_client=self.cli_client,
-                results_cache=self._results_cache,
-                log_prefix=self._log_prefix,
-            ),
-        )
-        # Publish for downstream phases (e.g. cluster's compute_is_ha hook).
-        self._results_cache["OntapNodeResponse"] = nodes
-        return nodes
-
-    # -------------------------------------------------------------------------
-    # Network Collection
-    # -------------------------------------------------------------------------
-
-    def collect_network(self) -> NetworkInfo:
-        """Collect network configuration (API-only).
-
-        Returns:
-            NetworkInfo object.
-
-        Raises:
-            CollectionError: If no API client is available.
-            Exception: If the API call fails.
-        """
-        if not self.api_client:
-            raise CollectionError(
-                f"{self._log_prefix} API_FAILURE: Network - no API client available"
-            )
-        try:
-            return self._collect_network_via_api()
-        except Exception as e:
-            logger.error(
-                "%s API_FAILURE: Network - %s: %s",
-                self._log_prefix,
-                type(e).__name__,
-                e,
-            )
-            raise
-
-    def _collect_network_via_api(self) -> NetworkInfo:
-        """Collect network info using REST API.
-
-        Makes parallel API calls for improved performance.
-
-        Returns:
-            NetworkInfo from various network endpoints.
-        """
-        if not self.api_client:
-            logger.debug("%s No API client available for network collection", self._log_prefix)
-            return NetworkInfo()
-
-        # Each task fetches one model class via the generic fetch() dispatcher.
-        # Parallelism is preserved: each fetch() call is submitted to the
-        # ThreadPoolExecutor exactly as the per-endpoint calls were before.
-        ipspace_url = "/network/ipspaces?fields=*"
-        model_tasks: list[tuple[str, type[BaseModel]]] = [
-            ("ip_interfaces", OntapIpInterface),
-            ("broadcast_domains", OntapBroadcastDomain),
-            ("dns", OntapDns),
-            ("subnets", OntapIpSubnet),
-        ]
-
-        results: dict[str, Any] = {}
-        if self.parallel:
-            with ThreadPoolExecutor(max_workers=5) as executor:
-                model_futures = {
-                    executor.submit(self._fetch_model, mc): key for key, mc in model_tasks
-                }
-                ipspace_future = executor.submit(self._cached_api_call, ipspace_url)
-                for future in as_completed(model_futures):
-                    results[model_futures[future]] = future.result()
-                results["ipspace_response"] = ipspace_future.result()
-        else:
-            for key, mc in model_tasks:
-                results[key] = self._fetch_model(mc)
-            results["ipspace_response"] = self._cached_api_call(ipspace_url)
-
-        ipspace_response = results.get("ipspace_response") or {}
-        logger.debug(
-            "%s API response: %d IPspaces",
-            self._log_prefix,
-            len(ipspace_response.get("records", [])),
-        )
-        ipspaces = [r.get("name", "") for r in ipspace_response.get("records", [])]
-
-        return NetworkInfo(
-            ip_interfaces=cast(list[OntapIpInterface], results["ip_interfaces"]),
-            ethernet_broadcast_domains=cast(
-                list[OntapBroadcastDomain], results["broadcast_domains"]
-            ),
-            ipspaces=ipspaces,
-            dns=cast(list[OntapDns], results["dns"]),
-            ip_subnets=cast(list[OntapIpSubnet], results["subnets"]),
-        )
-
-    # -------------------------------------------------------------------------
-    # Storage Collection
-    # -------------------------------------------------------------------------
-
-    def collect_storage(self) -> StorageInfo:
-        """Collect storage topology information (API-only).
-
-        Returns:
-            StorageInfo object.
-
-        Raises:
-            CollectionError: If no API client is available.
-            Exception: If the API call fails.
-        """
-        if not self.api_client:
-            raise CollectionError(
-                f"{self._log_prefix} API_FAILURE: Storage - no API client available"
-            )
-        try:
-            return self._collect_storage_via_api()
-        except Exception as e:
-            logger.error(
-                "%s API_FAILURE: Storage - %s: %s",
-                self._log_prefix,
-                type(e).__name__,
-                e,
-            )
-            raise
-
-    def _collect_storage_via_api(self) -> StorageInfo:
-        """Collect storage info using REST API.
-
-        Makes parallel API calls for improved performance.
-
-        Returns:
-            StorageInfo from aggregate, SVM, and cloud target endpoints.
-        """
-        if not self.api_client:
-            logger.debug("%s No API client available for storage collection", self._log_prefix)
-            return StorageInfo()
-
-        # Each per-model fetch becomes one task in the executor — same
-        # parallelism shape as before (one task per sub-model), with
-        # OntapCloudTarget tolerating absence on older ONTAP versions and
-        # OntapSvmWebService tolerating a role without private CLI access.
-        model_tasks: list[tuple[str, type[BaseModel]]] = [
-            ("aggregates", OntapAggregate),
-            ("svms", OntapSvm),
-            ("cloud_targets", OntapCloudTarget),
-            ("volumes", OntapVolume),
-            ("qtrees", OntapQtree),
-            ("snapshot_policies", OntapSnapshotPolicy),
-            ("schedules", OntapSchedule),
-            ("luns", OntapLun),
-            ("igroups", OntapIgroup),
-            ("qos_policies", OntapQosPolicy),
-            ("flexcaches", OntapFlexcache),
-            ("svm_web_services", OntapSvmWebService),
-        ]
-
-        def safe_fetch_model(model_class: type[BaseModel]) -> Any:
-            """Fetch a model, returning [] on failure for optional endpoints."""
-            try:
-                return self._fetch_model(model_class)
-            except Exception as e:
-                if model_class is OntapCloudTarget:
-                    logger.debug("%s Cloud targets endpoint not available: %s", self._log_prefix, e)
-                    return []
-                if model_class is OntapSvmWebService:
-                    logger.debug(
-                        "%s SVM web services (private CLI) not available: %s", self._log_prefix, e
-                    )
-                    return []
-                raise
-
-        results: dict[str, Any] = {}
-        if self.parallel:
-            with ThreadPoolExecutor(max_workers=12) as executor:
-                futures = {executor.submit(safe_fetch_model, mc): key for key, mc in model_tasks}
-                for future in as_completed(futures):
-                    results[futures[future]] = future.result()
-        else:
-            for key, mc in model_tasks:
-                results[key] = safe_fetch_model(mc)
-
-        return StorageInfo(
-            aggregates=cast(list[OntapAggregate], results["aggregates"]),
-            svms=cast(list[OntapSvm], results["svms"]),
-            cloud_targets=cast(list[OntapCloudTarget], results["cloud_targets"]),
-            volumes=cast(list[OntapVolume], results["volumes"]),
-            qtrees=cast(list[OntapQtree], results["qtrees"]),
-            snapshot_policies=cast(list[OntapSnapshotPolicy], results["snapshot_policies"]),
-            schedules=cast(list[OntapSchedule], results["schedules"]),
-            luns=cast(list[OntapLun], results["luns"]),
-            igroups=cast(list[OntapIgroup], results["igroups"]),
-            qos_policies=cast(list[OntapQosPolicy], results["qos_policies"]),
-            flexcaches=cast(list[OntapFlexcache], results["flexcaches"]),
-            svm_web_services=cast(list[OntapSvmWebService], results["svm_web_services"]),
-        )
-
-    # -------------------------------------------------------------------------
-    # License Collection
-    # -------------------------------------------------------------------------
-
-    def collect_licenses(self) -> list[OntapLicensePackageResponse]:
-        """Collect licensing information (API-only).
-
-        Returns:
-            List of OntapLicensePackageResponse objects.
-
-        Raises:
-            CollectionError: If no API client is available.
-            Exception: If the API call fails.
-        """
-        if not self.api_client:
-            raise CollectionError(
-                f"{self._log_prefix} API_FAILURE: Licenses - no API client available"
-            )
-        try:
-            return self._collect_licenses_via_api()
-        except Exception as e:
-            logger.error(
-                "%s API_FAILURE: Licenses - %s: %s",
-                self._log_prefix,
-                type(e).__name__,
-                e,
-            )
-            raise
-
-    def _collect_licenses_via_api(self) -> list[OntapLicensePackageResponse]:
-        """Collect licenses using REST API.
-
-        Returns:
-            List of OntapLicensePackageResponse from /cluster/licensing/licenses endpoint.
-        """
-        if not self.api_client:
-            logger.debug("%s No API client available for license collection", self._log_prefix)
-            return []
-
-        return cast(
-            list[OntapLicensePackageResponse],
-            _fetch(
-                OntapLicensePackageResponse,
-                cluster=self._cluster_name,
-                config=None,
-                api_client=self.api_client,
-                cli_client=self.cli_client,
-                results_cache=self._results_cache,
-                log_prefix=self._log_prefix,
-            ),
-        )
-
-    # -------------------------------------------------------------------------
-    # Mediator Collection
-    # -------------------------------------------------------------------------
-
-    def collect_mediator(self) -> OntapMediatorResponse:
-        """Collect ONTAP Mediator information (API-only).
-
-        Returns:
-            OntapMediatorResponse object.
-
-        Raises:
-            CollectionError: If no API client is available.
-        """
-        if not self.api_client:
-            raise CollectionError(
-                f"{self._log_prefix} API_FAILURE: Mediator - no API client available"
-            )
-        try:
-            return self._collect_mediator_via_api()
-        except Exception as e:
-            logger.error(
-                "%s API_FAILURE: Mediator - %s: %s",
-                self._log_prefix,
-                type(e).__name__,
-                e,
-            )
-            raise
-
-    def _collect_mediator_via_api(self) -> OntapMediatorResponse:
-        """Collect mediator info using REST API.
-
-        Returns:
-            OntapMediatorResponse from /cluster/mediators endpoint.
-        """
-        if not self.api_client:
-            return OntapMediatorResponse()
-        try:
-            parsed = cast(
-                list[OntapMediatorResponse],
-                _fetch(
-                    OntapMediatorResponse,
-                    cluster=self._cluster_name,
-                    config=None,
-                    api_client=self.api_client,
-                    cli_client=self.cli_client,
-                    results_cache=self._results_cache,
-                    log_prefix=self._log_prefix,
-                ),
-            )
-            if parsed:
-                return parsed[0]
-        except Exception as e:
-            logger.debug("%s Mediator endpoint not available: %s", self._log_prefix, e)
-
-        return OntapMediatorResponse()
-
-    # -------------------------------------------------------------------------
-    # Relationships Collection
-    # -------------------------------------------------------------------------
-
-    def collect_relationships(self) -> RelationshipsInfo:
-        """Collect cluster relationships information (API-only).
-
-        Returns:
-            RelationshipsInfo object.
-
-        Raises:
-            CollectionError: If no API client is available.
-            Exception: If the API call fails.
-        """
-        if not self.api_client:
-            raise CollectionError(
-                f"{self._log_prefix} API_FAILURE: Relationships - no API client available"
-            )
-        try:
-            return self._collect_relationships_via_api()
-        except Exception as e:
-            logger.error(
-                "%s API_FAILURE: Relationships - %s: %s",
-                self._log_prefix,
-                type(e).__name__,
-                e,
-            )
-            raise
-
-    def _collect_relationships_via_api(self) -> RelationshipsInfo:
-        """Collect relationships using REST API.
-
-        Makes parallel API calls for improved performance.
-
-        Returns:
-            RelationshipsInfo from snapmirror and cluster peer endpoints.
-        """
-        if not self.api_client:
-            logger.debug(
-                "%s No API client available for relationships collection", self._log_prefix
-            )
-            return RelationshipsInfo()
-
-        model_tasks: list[tuple[str, type[BaseModel]]] = [
-            ("snapmirror_destinations", OntapSnapmirrorRelationship),
-            ("cluster_peers", OntapClusterPeer),
-            ("svm_peers", OntapSvmPeer),
-        ]
-
-        results: dict[str, Any] = {}
-        if self.parallel:
-            with ThreadPoolExecutor(max_workers=3) as executor:
-                futures = {executor.submit(self._fetch_model, mc): key for key, mc in model_tasks}
-                for future in as_completed(futures):
-                    results[futures[future]] = future.result()
-        else:
-            for key, mc in model_tasks:
-                results[key] = self._fetch_model(mc)
-
-        return RelationshipsInfo(
-            snapmirror_destinations=cast(
-                list[OntapSnapmirrorRelationship], results["snapmirror_destinations"]
-            ),
-            cluster_peers=cast(list[OntapClusterPeer], results["cluster_peers"]),
-            svm_peers=cast(list[OntapSvmPeer], results["svm_peers"]),
-        )
-
-    # -------------------------------------------------------------------------
-    # Parameterized Endpoint Collection
-    # -------------------------------------------------------------------------
-
-    def _with_svm_top_metrics_users(self, storage_info: StorageInfo) -> StorageInfo:
-        """Return *storage_info* with ``svm_top_metrics_users`` collected for its SVMs."""
-        svm_top_metrics_users = self._collect_svm_top_metrics_users(storage_info.svms)
-        return storage_info.model_copy(update={"svm_top_metrics_users": svm_top_metrics_users})
-
-    def _collect_svm_top_metrics_users(self, svms: list[OntapSvm]) -> list[OntapTopMetricsSvmUser]:
-        """Collect top-metrics users per SVM using parameterized endpoint.
-
-        Args:
-            svms: List of collected SVM objects (parents).
-
-        Returns:
-            Aggregated list of OntapTopMetricsSvmUser across all SVMs.
-        """
-        if not self.api_client:
-            return []
-        return cast(
-            list[OntapTopMetricsSvmUser],
-            self._collect_parameterized(ONTAPTOPMETRICSSVMUSER_MAPPING, svms),
-        )
-
-    # -------------------------------------------------------------------------
-    # Protocols Collection
-    # -------------------------------------------------------------------------
-
-    def collect_protocols(self) -> ProtocolsInfo:
-        """Collect protocol configuration information (API-only).
-
-        Returns:
-            ProtocolsInfo object.
-
-        Raises:
-            CollectionError: If no API client is available.
-            Exception: If the API call fails.
-        """
-        if not self.api_client:
-            raise CollectionError(
-                f"{self._log_prefix} API_FAILURE: Protocols - no API client available"
-            )
-        try:
-            return self._collect_protocols_via_api()
-        except Exception as e:
-            logger.error(
-                "%s API_FAILURE: Protocols - %s: %s",
-                self._log_prefix,
-                type(e).__name__,
-                e,
-            )
-            raise
-
-    def _collect_protocols_via_api(self) -> ProtocolsInfo:
-        """Collect protocol info using REST API.
-
-        Makes parallel API calls for improved performance.
-
-        Returns:
-            ProtocolsInfo from various protocol endpoints.
-        """
-        if not self.api_client:
-            logger.debug("%s No API client available for protocols collection", self._log_prefix)
-            return ProtocolsInfo()
-
-        model_tasks: list[tuple[str, type[BaseModel]]] = [
-            ("nfs_export_policies", OntapExportPolicy),
-            ("cifs_shares", OntapCifsShare),
-            ("nfs_services", OntapNfsService),
-            ("cifs_services", OntapCifsService),
-            ("s3_buckets", OntapS3Bucket),
-        ]
-
-        results: dict[str, Any] = {}
-        if self.parallel:
-            with ThreadPoolExecutor(max_workers=5) as executor:
-                futures = {executor.submit(self._fetch_model, mc): key for key, mc in model_tasks}
-                for future in as_completed(futures):
-                    results[futures[future]] = future.result()
-        else:
-            for key, mc in model_tasks:
-                results[key] = self._fetch_model(mc)
-
-        return ProtocolsInfo(
-            nfs_export_policies=cast(list[OntapExportPolicy], results["nfs_export_policies"]),
-            cifs_shares=cast(list[OntapCifsShare], results["cifs_shares"]),
-            nfs_services=cast(list[OntapNfsService], results["nfs_services"]),
-            cifs_services=cast(list[OntapCifsService], results["cifs_services"]),
-            s3_buckets=cast(list[OntapS3Bucket], results["s3_buckets"]),
-        )
