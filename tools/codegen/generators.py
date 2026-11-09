@@ -12,6 +12,7 @@ becomes ``iface.ip.address`` on the Pydantic model, not
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Mapping
 from pathlib import Path
 from typing import Any
 
@@ -78,6 +79,7 @@ def _path_to_class_name(
     api_type: str = "ontap",
     *,
     shared_schemas: frozenset[str] | set[str] = frozenset(),
+    class_name_overrides: Mapping[tuple[str, ...], str] | None = None,
 ) -> str:
     """Derive a PascalCase class name for an API endpoint.
 
@@ -112,12 +114,20 @@ def _path_to_class_name(
             in this set, the URL-path fallback is used instead of the
             schema-derived name to produce distinct class names per
             endpoint.  Default is empty (legacy schema-name behavior).
+        class_name_overrides: Optional mapping of module-path parts to
+            class names, as returned by
+            :func:`resolve_class_name_collisions`.  Checked after
+            ``_CLASS_NAME_OVERRIDES``.
 
     Returns:
         PascalCase class name string.
     """
     if api_path in _CLASS_NAME_OVERRIDES:
         return _CLASS_NAME_OVERRIDES[api_path]
+    if class_name_overrides:
+        override = class_name_overrides.get(tuple(_path_to_module_parts(api_path)))
+        if override:
+            return override
 
     prefix = api_type.capitalize()
 
@@ -141,6 +151,92 @@ def _path_to_class_name(
         for word in part.split("_"):
             words.append(word.capitalize())
     return f"{prefix}{''.join(words)}"
+
+
+def _path_to_exact_class_name(api_path: str, api_type: str) -> str:
+    """Derive a class name from the URL path without singularizing or deduping.
+
+    Keeps the original casing of each segment (only the first letter of each
+    word is upper-cased), so paths differing only in case or plurality stay
+    distinct: ``"/au/acquisitionUnit/{auUuid}"`` → ``"DiiAuAcquisitionUnit"``.
+
+    Args:
+        api_path: API endpoint path.
+        api_type: API type prefix.
+
+    Returns:
+        PascalCase class name string.
+    """
+    words: list[str] = []
+    for part in _path_to_module_parts(api_path):
+        for word in part.split("_"):
+            if word:
+                words.append(word[0].upper() + word[1:])
+    return f"{api_type.capitalize()}{''.join(words)}"
+
+
+def resolve_class_name_collisions(
+    endpoints: Iterable[ParsedEndpoint],
+    api_type: str,
+    *,
+    shared_schemas: frozenset[str] | set[str] = frozenset(),
+) -> dict[tuple[str, ...], str]:
+    """Find endpoints whose derived class names collide and rename them.
+
+    Only colliding classes are renamed: each member of a collision group gets
+    an exact path-based name (see :func:`_path_to_exact_class_name`).  Names
+    that do not collide are untouched, so existing output stays stable.
+
+    Args:
+        endpoints: Deduplicated endpoints that will be generated.
+        api_type: API type prefix.
+        shared_schemas: Schema names referenced by >1 endpoint.
+
+    Returns:
+        Mapping of module-path parts to class name, for colliding endpoints
+        only.
+
+    Raises:
+        ValueError: If a collision cannot be resolved automatically; add the
+            path to ``_CLASS_NAME_OVERRIDES``.
+    """
+    eps = list(endpoints)
+    groups: dict[str, list[ParsedEndpoint]] = {}
+    for ep in eps:
+        name = _path_to_class_name(ep.path, ep.schema_name, api_type, shared_schemas=shared_schemas)
+        groups.setdefault(name, []).append(ep)
+
+    overrides: dict[tuple[str, ...], str] = {}
+    for name, members in groups.items():
+        if len(members) < 2:
+            continue
+        for ep in members:
+            if ep.path in _CLASS_NAME_OVERRIDES:
+                raise ValueError(
+                    f"Class name {name!r} collides and {ep.path!r} is already in "
+                    "_CLASS_NAME_OVERRIDES; resolve it there."
+                )
+            overrides[tuple(_path_to_module_parts(ep.path))] = _path_to_exact_class_name(
+                ep.path, api_type
+            )
+
+    final: dict[str, list[str]] = {}
+    for ep in eps:
+        resolved = _path_to_class_name(
+            ep.path,
+            ep.schema_name,
+            api_type,
+            shared_schemas=shared_schemas,
+            class_name_overrides=overrides,
+        )
+        final.setdefault(resolved, []).append(ep.path)
+    clashes = {n: paths for n, paths in final.items() if len(paths) > 1}
+    if clashes:
+        raise ValueError(
+            f"Unresolvable class name collision(s): {clashes}. "
+            "Add the paths to _CLASS_NAME_OVERRIDES in tools/codegen/generators.py."
+        )
+    return overrides
 
 
 _SINGULAR_EXCEPTIONS: dict[str, str] = {
@@ -566,6 +662,7 @@ def generate_model(
     api_type: str = "ontap",
     *,
     shared_schemas: frozenset[str] | set[str] = frozenset(),
+    class_name_overrides: Mapping[tuple[str, ...], str] | None = None,
 ) -> str:
     """Generate a Pydantic model class for an endpoint.
 
@@ -586,7 +683,11 @@ def generate_model(
         Python source code for the model module.
     """
     class_name = _path_to_class_name(
-        endpoint.path, endpoint.schema_name, api_type, shared_schemas=shared_schemas
+        endpoint.path,
+        endpoint.schema_name,
+        api_type,
+        shared_schemas=shared_schemas,
+        class_name_overrides=class_name_overrides,
     )
     doc = f"{class_name} information."
 
@@ -738,6 +839,7 @@ def generate_mapping(
     existing_toml_path: Path | None = None,
     *,
     shared_schemas: frozenset[str] | set[str] = frozenset(),
+    class_name_overrides: Mapping[tuple[str, ...], str] | None = None,
     identifier_map: dict[str, str] | None = None,
     parent_field_names: dict[str, set[str]] | None = None,
 ) -> str:
@@ -783,7 +885,11 @@ def generate_mapping(
         Python source code for the mapping module.
     """
     class_name = _path_to_class_name(
-        endpoint.path, endpoint.schema_name, api_type, shared_schemas=shared_schemas
+        endpoint.path,
+        endpoint.schema_name,
+        api_type,
+        shared_schemas=shared_schemas,
+        class_name_overrides=class_name_overrides,
     )
     module_parts = _path_to_module_parts(endpoint.path)
     mapping_name = f"{class_name.upper()}_MAPPING"
@@ -943,6 +1049,7 @@ def generate_mapping(
             parent_schema,
             api_type,
             shared_schemas=shared_schemas,
+            class_name_overrides=class_name_overrides,
         )
         for candidate_path, candidate_schema in schema_lookup.items():
             if tuple(_path_to_module_parts(candidate_path)) != parent_module_parts:
@@ -952,6 +1059,7 @@ def generate_mapping(
                 candidate_schema,
                 api_type,
                 shared_schemas=shared_schemas,
+                class_name_overrides=class_name_overrides,
             )
             if candidate_class == parent_class:
                 parent_resolvable = True
@@ -1071,6 +1179,7 @@ def generate_init(
     api_type: str = "ontap",
     *,
     shared_schemas: frozenset[str] | set[str] = frozenset(),
+    class_name_overrides: Mapping[tuple[str, ...], str] | None = None,
 ) -> str:
     """Generate an ``__init__.py`` for an endpoint's package.
 
@@ -1085,7 +1194,11 @@ def generate_init(
         Python source code for ``__init__.py``.
     """
     class_name = _path_to_class_name(
-        endpoint.path, endpoint.schema_name, api_type, shared_schemas=shared_schemas
+        endpoint.path,
+        endpoint.schema_name,
+        api_type,
+        shared_schemas=shared_schemas,
+        class_name_overrides=class_name_overrides,
     )
     module_parts = _path_to_module_parts(endpoint.path)
 
@@ -1107,6 +1220,7 @@ def generate_toml_overlay(
     api_type: str = "ontap",
     *,
     shared_schemas: frozenset[str] | set[str] = frozenset(),
+    class_name_overrides: Mapping[tuple[str, ...], str] | None = None,
 ) -> str:
     """Generate or update a TOML overlay for an endpoint.
 
@@ -1127,7 +1241,11 @@ def generate_toml_overlay(
         TOML content as a string.
     """
     class_name = _path_to_class_name(
-        endpoint.path, endpoint.schema_name, api_type, shared_schemas=shared_schemas
+        endpoint.path,
+        endpoint.schema_name,
+        api_type,
+        shared_schemas=shared_schemas,
+        class_name_overrides=class_name_overrides,
     )
     leaves = _collect_all_leaves(endpoint.fields)
 
@@ -1197,6 +1315,7 @@ def write_endpoint_files(
     models_dir: Path | None = None,
     *,
     shared_schemas: frozenset[str] | set[str] = frozenset(),
+    class_name_overrides: Mapping[tuple[str, ...], str] | None = None,
     identifier_map: dict[str, str] | None = None,
     parent_field_names: dict[str, set[str]] | None = None,
 ) -> list[Path]:
@@ -1222,6 +1341,8 @@ def write_endpoint_files(
         shared_schemas: Set of schema names referenced by >1 endpoint
             in the current spec.  Threaded through the model, mapping,
             init, and TOML generators so class names stay consistent.
+        class_name_overrides: Optional collision overrides from
+            :func:`resolve_class_name_collisions`, threaded to every generator.
         identifier_map: Optional mapping of API path → identifier_field
             name.  Threaded through to :func:`generate_mapping` for
             resolving the parent's ``parent_id_field``.
@@ -1264,12 +1385,26 @@ def write_endpoint_files(
 
     # model.py (in models/)
     model_path = model_pkg_dir / "model.py"
-    model_path.write_text(generate_model(endpoint, api_type, shared_schemas=shared_schemas))
+    model_path.write_text(
+        generate_model(
+            endpoint,
+            api_type,
+            shared_schemas=shared_schemas,
+            class_name_overrides=class_name_overrides,
+        )
+    )
     written.append(model_path)
 
     # __init__.py for the leaf model package (in models/)
     init_path = model_pkg_dir / "__init__.py"
-    init_path.write_text(generate_init(endpoint, api_type, shared_schemas=shared_schemas))
+    init_path.write_text(
+        generate_init(
+            endpoint,
+            api_type,
+            shared_schemas=shared_schemas,
+            class_name_overrides=class_name_overrides,
+        )
+    )
     written.append(init_path)
 
     # mapping.py (in cache/) — reads the current on-disk TOML if any
@@ -1281,6 +1416,7 @@ def write_endpoint_files(
             schema_lookup,
             existing_toml_path=existing_toml,
             shared_schemas=shared_schemas,
+            class_name_overrides=class_name_overrides,
             identifier_map=identifier_map,
             parent_field_names=parent_field_names,
         )
@@ -1289,7 +1425,13 @@ def write_endpoint_files(
 
     # TOML overlay (in cache/ or overlay_dir) — regenerated after mapping
     toml_path.write_text(
-        generate_toml_overlay(endpoint, existing_toml, api_type, shared_schemas=shared_schemas)
+        generate_toml_overlay(
+            endpoint,
+            existing_toml,
+            api_type,
+            shared_schemas=shared_schemas,
+            class_name_overrides=class_name_overrides,
+        )
     )
     written.append(toml_path)
 

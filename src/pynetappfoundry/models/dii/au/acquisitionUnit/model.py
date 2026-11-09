@@ -1,13 +1,13 @@
 # ruff: noqa: N815
-"""DiiAuAcquisitionunit information."""
+"""DiiAuAcquisitionUnit information."""
 
 from __future__ import annotations
 
 from pynetappfoundry.models._base import OntapModel
 
 
-class DiiAuAcquisitionunit(OntapModel):
-    """DiiAuAcquisitionunit information."""
+class DiiAuAcquisitionUnit(OntapModel):
+    """DiiAuAcquisitionUnit information."""
 
     auVersion: str = ""
     versionToBeUpgradedTo: str = ""

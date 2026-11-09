@@ -1,5 +1,5 @@
-"""DiiAuAcquisitionunit model."""
+"""DiiAuAcquisitionUnits model."""
 
-from pynetappfoundry.models.dii.au.acquisitionUnits.model import DiiAuAcquisitionunit
+from pynetappfoundry.models.dii.au.acquisitionUnits.model import DiiAuAcquisitionUnits
 
-__all__ = ["DiiAuAcquisitionunit"]
+__all__ = ["DiiAuAcquisitionUnits"]

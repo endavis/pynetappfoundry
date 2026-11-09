@@ -60,7 +60,9 @@ from tools.codegen.adapters import detect_shared_schemas, parse_openapi_spec
 from tools.codegen.generators import (
     _collect_all_leaves,
     _field_to_cache_attr,
+    _path_to_class_name,
     _path_to_module_parts,
+    resolve_class_name_collisions,
     write_endpoint_files,
 )
 from tools.codegen.openapi_codegen import _deduplicate_endpoints
@@ -89,6 +91,14 @@ ROUNDTRIP_ENDPOINTS = [
     ),
     ("dii", "/assets/storages", ("assets", "storages"), "storages"),
     ("dii", "/assets/storages/count", ("assets", "storages", "count"), "count"),
+    # Colliding class names resolved by ``resolve_class_name_collisions`` (#894).
+    (
+        "dii",
+        "/au/acquisitionUnit/{auUuid}",
+        ("au", "acquisitionUnit"),
+        "acquisitionUnit",
+    ),
+    ("dii", "/au/acquisitionUnits", ("au", "acquisitionUnits"), "acquisitionUnits"),
 ]
 
 
@@ -190,6 +200,9 @@ def test_codegen_round_trip(
         parts = tuple(_path_to_module_parts(e.path))
         if parts in dedup_mod_map and e.path != dedup_mod_map[parts]:
             pfn[e.path] = pfn[dedup_mod_map[parts]]
+    class_name_overrides = resolve_class_name_collisions(
+        endpoints, api_type, shared_schemas=shared_schemas
+    )
     write_endpoint_files(
         endpoint,
         temp_cache_dir,
@@ -198,6 +211,7 @@ def test_codegen_round_trip(
         schema_lookup,
         models_dir=temp_models_dir,
         shared_schemas=shared_schemas,
+        class_name_overrides=class_name_overrides,
         identifier_map=identifier_map,
         parent_field_names=pfn,
     )
@@ -228,3 +242,33 @@ def test_codegen_round_trip(
         f"  on-disk:   {ondisk_model}\n"
         f"  generated: {generated_model}\n"
     )
+
+
+@pytest.mark.parametrize("api_type", ["ontap", "dii"])
+def test_spec_class_names_are_unique(
+    api_type: str,
+    parsed_endpoints_by_api: dict[str, tuple[list, set[str], list]],
+) -> None:
+    """After collision resolution every deduped endpoint has a distinct class name (#894)."""
+    if api_type not in parsed_endpoints_by_api:
+        pytest.skip(f"{api_type} spec not available")
+    endpoints, shared_schemas, _ = parsed_endpoints_by_api[api_type]
+    overrides = resolve_class_name_collisions(endpoints, api_type, shared_schemas=shared_schemas)
+    names = [
+        _path_to_class_name(
+            e.path,
+            e.schema_name,
+            api_type,
+            shared_schemas=shared_schemas,
+            class_name_overrides=overrides,
+        )
+        for e in endpoints
+    ]
+    assert len(names) == len(set(names))
+    if api_type == "ontap":
+        assert overrides == {}
+    else:
+        assert overrides == {
+            ("au", "acquisitionUnit"): "DiiAuAcquisitionUnit",
+            ("au", "acquisitionUnits"): "DiiAuAcquisitionUnits",
+        }

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from tools.codegen.adapters import ParsedEndpoint, ParsedField
 from tools.codegen.generators import (
     _CLASS_NAME_OVERRIDES,
@@ -21,6 +23,7 @@ from tools.codegen.generators import (
     generate_mapping,
     generate_model,
     generate_toml_overlay,
+    resolve_class_name_collisions,
     write_endpoint_files,
 )
 
@@ -1255,3 +1258,124 @@ class TestMappingNoqaN802:
         code = generate_mapping(ep, api_type="ontap")
         # No N802 in the noqa header
         assert "N802" not in code
+
+
+def _au_endpoints() -> list[ParsedEndpoint]:
+    fields = [ParsedField(name="id", api_path="id", python_type="str")]
+    return [
+        _make_endpoint(
+            path="/au/acquisitionUnit/{auUuid}",
+            schema_name="AcquisitionUnit",
+            fields=fields,
+        ),
+        _make_endpoint(path="/au/acquisitionUnits", schema_name="", fields=fields),
+        _make_endpoint(path="/assets/storages", schema_name="Storage", fields=fields),
+    ]
+
+
+_AU_OVERRIDES: dict[tuple[str, ...], str] = {
+    ("au", "acquisitionUnit"): "DiiAuAcquisitionUnit",
+    ("au", "acquisitionUnits"): "DiiAuAcquisitionUnits",
+}
+
+
+class TestResolveClassNameCollisions:
+    """Collision resolution renames only the colliding classes (#894)."""
+
+    def test_collision_gets_exact_path_names(self) -> None:
+        shared = {"AcquisitionUnit"}
+        eps = _au_endpoints()
+        # Precondition: the normal algorithm collides.
+        assert (
+            _path_to_class_name(eps[0].path, eps[0].schema_name, "dii", shared_schemas=shared)
+            == _path_to_class_name(eps[1].path, eps[1].schema_name, "dii", shared_schemas=shared)
+            == "DiiAuAcquisitionunit"
+        )
+        assert resolve_class_name_collisions(eps, "dii", shared_schemas=shared) == _AU_OVERRIDES
+
+    def test_non_colliding_returns_empty(self) -> None:
+        eps = [
+            _make_endpoint(path="/storage/volumes", schema_name="volume"),
+            _make_endpoint(path="/svm/peers", schema_name="peer"),
+        ]
+        assert resolve_class_name_collisions(eps, "ontap") == {}
+
+    def test_unresolvable_collision_raises(self) -> None:
+        # Same module parts after hyphen/underscore normalization -> identical exact names.
+        eps = [
+            _make_endpoint(path="/foo/bar-baz", schema_name=""),
+            _make_endpoint(path="/foo/bar_baz", schema_name=""),
+        ]
+        with pytest.raises(ValueError, match="_CLASS_NAME_OVERRIDES"):
+            resolve_class_name_collisions(eps, "dii")
+
+    def test_member_in_manual_overrides_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        # A manual override that still collides cannot be auto-resolved.
+        monkeypatch.setitem(_CLASS_NAME_OVERRIDES, "/au/acquisitionUnits", "DiiAuAcquisitionunit")
+        with pytest.raises(ValueError, match="_CLASS_NAME_OVERRIDES"):
+            resolve_class_name_collisions(
+                _au_endpoints(), "dii", shared_schemas={"AcquisitionUnit"}
+            )
+
+
+class TestPathToClassNameOverrides:
+    """``class_name_overrides`` precedence in ``_path_to_class_name`` (#894)."""
+
+    def test_override_applies_by_module_parts(self) -> None:
+        name = _path_to_class_name(
+            "/au/acquisitionUnits", "", "dii", class_name_overrides=_AU_OVERRIDES
+        )
+        assert name == "DiiAuAcquisitionUnits"
+
+    def test_manual_override_wins(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setitem(_CLASS_NAME_OVERRIDES, "/au/acquisitionUnits", "DiiManual")
+        name = _path_to_class_name(
+            "/au/acquisitionUnits", "", "dii", class_name_overrides=_AU_OVERRIDES
+        )
+        assert name == "DiiManual"
+
+    def test_unlisted_path_unchanged(self) -> None:
+        name = _path_to_class_name(
+            "/assets/storages", "Storage", "dii", class_name_overrides=_AU_OVERRIDES
+        )
+        assert name == "DiiStorage"
+
+
+class TestClassNameOverridesThreading:
+    """Overrides reach every generator output (#894)."""
+
+    def test_overrides_reach_all_outputs(self, tmp_path: Path) -> None:
+        shared = {"AcquisitionUnit"}
+        ep = _au_endpoints()[0]
+        model = generate_model(ep, "dii", shared_schemas=shared, class_name_overrides=_AU_OVERRIDES)
+        init = generate_init(ep, "dii", shared_schemas=shared, class_name_overrides=_AU_OVERRIDES)
+        mapping = generate_mapping(
+            ep, "dii", shared_schemas=shared, class_name_overrides=_AU_OVERRIDES
+        )
+        toml = generate_toml_overlay(
+            ep, None, "dii", shared_schemas=shared, class_name_overrides=_AU_OVERRIDES
+        )
+        assert "class DiiAuAcquisitionUnit(" in model
+        assert "import DiiAuAcquisitionUnit" in init
+        assert 'name="DiiAuAcquisitionUnit"' in mapping
+        assert 'register_mapping("DiiAuAcquisitionUnit"' in mapping
+        assert "DiiAuAcquisitionUnit" in toml
+        assert "DiiAuAcquisitionunit" not in model + init + mapping + toml
+
+    def test_parent_mapping_uses_override(self) -> None:
+        child = _make_endpoint(
+            path="/au/acquisitionUnit/{auUuid}/sub",
+            has_parent=True,
+            parent_path="/au/acquisitionUnit/{auUuid}",
+            schema_name="Sub",
+            fields=[ParsedField(name="x", api_path="x", python_type="int", default=0)],
+        )
+        lookup = {"/au/acquisitionUnit/{auUuid}": "AcquisitionUnit"}
+        code = generate_mapping(
+            child,
+            "dii",
+            schema_lookup=lookup,
+            shared_schemas={"AcquisitionUnit"},
+            class_name_overrides=_AU_OVERRIDES,
+        )
+        assert 'parent_mapping="DiiAuAcquisitionUnit"' in code
