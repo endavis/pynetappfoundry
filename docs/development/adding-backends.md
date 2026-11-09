@@ -570,7 +570,7 @@ pipeline (ADR-0008):
 - **Models:** `src/pynetappfoundry/models/dii/` -- 191 `model.py` files
 - **Mappings:** `src/pynetappfoundry/cache/dii/` -- 191 `mapping.py` files
 
-All DII `TypeMapping` instances set `api_type="dii"`. `records_path` is `""` except for wrapper responses such as `{"users": [...]}`, which name their records key (`records_path="users"`); `DiiBackend.query()` reads it on dict responses before the envelope check.
+All DII `TypeMapping` instances set `api_type="dii"`. `records_path` is `""` except for wrapper responses such as `{"users": [...]}`, which name their records key (`records_path="users"`); `DiiBackend.query()` reads it on dict responses before the envelope check. The DII-only sentinel `records_path="."` marks a single-object response (`/au/oneTimeToken`): the whole dict is one record (see ADR-0015, #919).
 
 ### What DII does NOT need
 

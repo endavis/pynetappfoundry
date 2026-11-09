@@ -641,3 +641,71 @@ class TestDetectSharedSchemas:
             ParsedEndpoint(path="/a", schema_name="Foo"),
         ]
         assert detect_shared_schemas(endpoints) == set()
+
+
+class TestSingleObjectEndpoints:
+    """DII single-object endpoints get records_path "." and a whole-schema model (#919)."""
+
+    @staticmethod
+    def _spec() -> dict:
+        resp = lambda ref: {  # noqa: E731
+            "get": {
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {"schema": {"$ref": f"#/components/schemas/{ref}"}}
+                        }
+                    }
+                }
+            }
+        }
+        return {
+            "openapi": "3.0.0",
+            "paths": {
+                "/au/oneTimeToken": resp("InstallCommand"),
+                "/au/installCommand/{platform}": resp("InstallCommand"),
+                "/users": resp("UsersResponse"),
+            },
+            "components": {
+                "schemas": {
+                    "InstallCommand": {
+                        "type": "object",
+                        "properties": {
+                            "token": {"type": "string"},
+                            "installCommand": {"type": "string"},
+                            "extra": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {"name": {"type": "string"}},
+                                },
+                            },
+                        },
+                    },
+                    "UsersResponse": {
+                        "type": "object",
+                        "properties": {
+                            "users": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {"id": {"type": "string"}},
+                                },
+                            }
+                        },
+                    },
+                }
+            },
+        }
+
+    def test_dii_override(self, tmp_path: Path) -> None:
+        eps = {e.path: e for e in parse_openapi_spec(_write_spec(self._spec(), tmp_path), "dii")}
+        for path in ("/au/oneTimeToken", "/au/installCommand/{platform}"):
+            assert eps[path].records_path == "."
+            names = {f.name for f in eps[path].fields}
+            assert {"token", "installCommand", "extra"} <= names
+        assert eps["/users"].records_path == "users"
+
+    def test_other_api_types_unchanged(self, tmp_path: Path) -> None:
+        eps = {e.path: e for e in parse_openapi_spec(_write_spec(self._spec(), tmp_path), "ontap")}
+        assert eps["/au/oneTimeToken"].records_path == "extra"

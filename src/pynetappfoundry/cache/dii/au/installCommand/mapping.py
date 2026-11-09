@@ -1,3 +1,4 @@
+# ruff: noqa: E501, N802
 """DiiAuInstallcommand type mapping."""
 
 from __future__ import annotations
@@ -8,13 +9,18 @@ from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.dii.au.installCommand.model import (
     DiiAuInstallcommand,
-    DiiAuInstallcommandCommand,
+    DiiAuInstallcommandAdditionalinstructionsformanualinstallation,
 )
 
 
-def _transform_commands(record: dict[str, Any]) -> list[DiiAuInstallcommandCommand]:
-    """Transform commands into DiiAuInstallcommandCommand list."""
-    return [DiiAuInstallcommandCommand(**item) for item in record.get("commands", [])]
+def _transform_additionalInstructionsForManualInstallation(
+    record: dict[str, Any],
+) -> list[DiiAuInstallcommandAdditionalinstructionsformanualinstallation]:
+    """Transform additionalInstructionsForManualInstallation into DiiAuInstallcommandAdditionalinstructionsformanualinstallation list."""
+    return [
+        DiiAuInstallcommandAdditionalinstructionsformanualinstallation(**item)
+        for item in record.get("additionalInstructionsForManualInstallation", [])
+    ]
 
 
 DIIAUINSTALLCOMMAND_MAPPING = TypeMapping(
@@ -22,30 +28,33 @@ DIIAUINSTALLCOMMAND_MAPPING = TypeMapping(
     model_class=DiiAuInstallcommand,
     api_endpoint="/au/installCommand/{platform}",
     api_type="dii",
-    records_path="additionalInstructionsForManualInstallation",
+    records_path=".",
     fields=(
         FieldMapping(
-            cache_attr="download",
-        ),
-        FieldMapping(
-            cache_attr="heading",
-        ),
-        FieldMapping(
-            cache_attr="footer",
-        ),
-        FieldMapping(
-            cache_attr="downloadTitle",
-        ),
-        FieldMapping(
-            cache_attr="name",
-        ),
-        FieldMapping(
-            cache_attr="description",
-        ),
-        FieldMapping(
-            cache_attr="commands",
-            transform=_transform_commands,
+            cache_attr="additionalInstructionsForManualInstallation",
+            transform=_transform_additionalInstructionsForManualInstallation,
             default=[],
+        ),
+        FieldMapping(
+            cache_attr="requirements",
+        ),
+        FieldMapping(
+            cache_attr="installCommand",
+        ),
+        FieldMapping(
+            cache_attr="imageZipUrl",
+        ),
+        FieldMapping(
+            cache_attr="dsWarDownloadUrl",
+        ),
+        FieldMapping(
+            cache_attr="supportedOS",
+        ),
+        FieldMapping(
+            cache_attr="proxySettingCommand",
+        ),
+        FieldMapping(
+            cache_attr="token",
         ),
     ),
 )

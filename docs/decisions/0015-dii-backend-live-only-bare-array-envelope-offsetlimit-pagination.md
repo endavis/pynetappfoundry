@@ -53,7 +53,15 @@ Four generated mappings set a non-empty `records_path`, and `DiiBackend` ignored
 - **Path syntax:** `get_nested_value()` from `src/pynetappfoundry/utils/dict_path.py`, so dotted paths work.
 - **Failure mode:** if the path is missing or does not resolve to a list, the backend logs a WARNING naming the mapping and `records_path`, and returns `[]`. No exception is raised.
 - **Mappings:** `/users` (`users`) and `/users/invites` (`invites`) are wrapper responses and now return populated records.
-- **`au/*` mappings:** `/au/oneTimeToken` and `/au/installCommand/{platform}` return a single `InstallCommand` object. Codegen picked its first array property (`additionalInstructionsForManualInstallation`) as `records_path`, so these mappings now return `ExtraInstallInstruction` records and omit fields such as `token` and `installCommand`. This is a codegen artifact, left as generated and tracked in #919.
+- **`au/*` mappings:** `/au/oneTimeToken` and `/au/installCommand/{platform}` return a single `InstallCommand` object. Codegen picked its first array property (`additionalInstructionsForManualInstallation`) as `records_path`, so these mappings now return `ExtraInstallInstruction` records and omit fields such as `token` and `installCommand`. This codegen artifact is fixed by the #919 amendment below.
+
+## Amendment (#919): single-object responses (`records_path = "."`)
+
+`GET /au/oneTimeToken` and `GET /au/installCommand/{platform}` return one `InstallCommand` object, not a record list.
+
+- **Sentinel:** `records_path = "."` means the whole dict response is one record. It is DII-only and not part of the shared `TypeMapping` contract. `DiiBackend.query()` checks it before the non-empty `records_path` branch and returns `[response]`. A list response keeps list behaviour. Mappings with `records_path=""` and named paths behave as before.
+- **Codegen:** `_SINGLE_OBJECT_ENDPOINTS` in `tools/codegen/adapters.py` lists the two paths for `api_type="dii"`. For them the model is generated from the whole `InstallCommand` schema (`token`, `installCommand`, `imageZipUrl` and so on, with `additionalInstructionsForManualInstallation` as a nested list). `_detect_records_path` and every other endpoint are unchanged.
+- **Deferred:** a shared `TypeMapping` flag for single-object responses, and the 12 ONTAP mappings with the same artifact, are tracked in #925.
 
 ## Related Issues
 
@@ -61,7 +69,8 @@ Four generated mappings set a non-empty `records_path`, and `DiiBackend` ignored
 - Issue #893: bug: DII backend fetches only the first page (offset/limit pagination in DIIAPIClient.get_all_pages)
 - Issue #915: bug: DII envelope endpoints (lake/query, alerts) return empty from DiiBackend and are not paged
 - Issue #918: bug: DiiBackend ignores records_path, so /users and /users/invites return empty
-- Issue #919: codegen models single-object responses as their first array property (follow-up)
+- Issue #919: codegen models single-object responses as their first array property
+- Issue #925: shared single-object flag and the ONTAP mappings with the same artifact (deferred)
 - Issue #533: feat: DataSource non-ONTAP backends (partially addressed; DII is the first non-ONTAP backend)
 - Issue #618: feat: early validation for where()/typed-DSL + incompatible source mode
 
