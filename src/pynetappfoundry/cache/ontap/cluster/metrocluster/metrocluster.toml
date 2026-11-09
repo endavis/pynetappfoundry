@@ -1,16 +1,101 @@
+_removed_fields = [
+    "node.name",
+    "node.uuid",
+    "partner.name",
+    "partner.uuid",
+]
+
 [endpoint]
 path = "/cluster/metrocluster"
 schema = "metrocluster"
 class_name = "OntapMetrocluster"
 
-[fields."node.name"]
+[fields.configuration_type]
 cache_strategy = "cache"
 
-[fields."node.uuid"]
+[fields.dr_pairs]
 cache_strategy = "cache"
 
-[fields."partner.name"]
+[fields.encryption_enabled]
 cache_strategy = "cache"
 
-[fields."partner.uuid"]
+[fields."local.automatic_uso_failure_domain"]
+cache_strategy = "cache"
+
+[fields."local.cluster.name"]
+cache_strategy = "cache"
+
+[fields."local.cluster.uuid"]
+cache_strategy = "cache"
+
+[fields."local.configuration_state"]
+cache_strategy = "cache"
+
+[fields."local.mode"]
+cache_strategy = "cache"
+
+[fields."local.partner_cluster_reachable"]
+cache_strategy = "cache"
+
+[fields."local.periodic_check_enabled"]
+cache_strategy = "cache"
+
+[fields.mccip_ports]
+cache_strategy = "cache"
+
+[fields."mediator.ca_certificate"]
+cache_strategy = "cache"
+
+[fields."mediator.dr_group.id"]
+cache_strategy = "cache"
+
+[fields."mediator.ip_address"]
+cache_strategy = "cache"
+
+[fields."mediator.password"]
+cache_strategy = "cache"
+
+[fields."mediator.peer_cluster.name"]
+cache_strategy = "cache"
+
+[fields."mediator.peer_cluster.uuid"]
+cache_strategy = "cache"
+
+[fields."mediator.peer_mediator_connectivity"]
+cache_strategy = "cache"
+
+[fields."mediator.port"]
+cache_strategy = "cache"
+
+[fields."mediator.reachable"]
+cache_strategy = "cache"
+
+[fields."mediator.user"]
+cache_strategy = "cache"
+
+[fields."mediator.uuid"]
+cache_strategy = "cache"
+
+[fields."partner_cluster.name"]
+cache_strategy = "cache"
+
+[fields."partner_cluster.uuid"]
+cache_strategy = "cache"
+
+[fields."remote.automatic_uso_failure_domain"]
+cache_strategy = "cache"
+
+[fields."remote.cluster.name"]
+cache_strategy = "cache"
+
+[fields."remote.cluster.uuid"]
+cache_strategy = "cache"
+
+[fields."remote.configuration_state"]
+cache_strategy = "cache"
+
+[fields."remote.mode"]
+cache_strategy = "cache"
+
+[fields."remote.periodic_check_enabled"]
 cache_strategy = "cache"

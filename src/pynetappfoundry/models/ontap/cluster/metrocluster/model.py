@@ -2,27 +2,132 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from pydantic import Field
 
-from pynetappfoundry.models._base import OntapModel
+from pynetappfoundry.models._base import OntapModel, OntapUUID
 
 
-class OntapMetroclusterNode(OntapModel):
-    """OntapMetroclusterNode sub-model for node."""
+class OntapMetroclusterLocalCluster(OntapModel):
+    """OntapMetroclusterLocalCluster sub-model for cluster."""
+
+    name: str = ""
+    uuid: OntapUUID = ""
+
+
+class OntapMetroclusterLocal(OntapModel):
+    """OntapMetroclusterLocal sub-model for local."""
+
+    automatic_uso_failure_domain: str = ""
+    cluster: OntapMetroclusterLocalCluster = Field(default_factory=OntapMetroclusterLocalCluster)
+    configuration_state: str = ""
+    mode: str = ""
+    partner_cluster_reachable: bool = False
+    periodic_check_enabled: bool = False
+
+
+class OntapMetroclusterMccipPortL3ConfigIpv4Interface(OntapModel):
+    """OntapMetroclusterMccipPortL3ConfigIpv4Interface sub-model for ipv4_interface."""
+
+    address: str = ""
+    gateway: str = ""
+    netmask: str = ""
+
+
+class OntapMetroclusterMccipPortL3Config(OntapModel):
+    """OntapMetroclusterMccipPortL3Config sub-model for l3_config."""
+
+    ipv4_interface: OntapMetroclusterMccipPortL3ConfigIpv4Interface = Field(
+        default_factory=OntapMetroclusterMccipPortL3ConfigIpv4Interface
+    )
+
+
+class OntapMetroclusterMccipPortNode(OntapModel):
+    """OntapMetroclusterMccipPortNode sub-model for node."""
 
     name: str = ""
     uuid: str = ""
 
 
-class OntapMetroclusterPartner(OntapModel):
-    """OntapMetroclusterPartner sub-model for partner."""
+class OntapMetroclusterMccipPort(OntapModel):
+    """OntapMetroclusterMccipPort sub-model for mccip_ports."""
+
+    l3_config: OntapMetroclusterMccipPortL3Config = Field(
+        default_factory=OntapMetroclusterMccipPortL3Config
+    )
+    name: str = ""
+    node: OntapMetroclusterMccipPortNode = Field(default_factory=OntapMetroclusterMccipPortNode)
+    uuid: str = ""
+    vlan_id: int = 0
+
+
+class OntapMetroclusterMediatorDrGroup(OntapModel):
+    """OntapMetroclusterMediatorDrGroup sub-model for dr_group."""
+
+    id: int = 0
+
+
+class OntapMetroclusterMediatorPeerCluster(OntapModel):
+    """OntapMetroclusterMediatorPeerCluster sub-model for peer_cluster."""
 
     name: str = ""
     uuid: str = ""
+
+
+class OntapMetroclusterMediator(OntapModel):
+    """OntapMetroclusterMediator sub-model for mediator."""
+
+    ca_certificate: str = ""
+    dr_group: OntapMetroclusterMediatorDrGroup = Field(
+        default_factory=OntapMetroclusterMediatorDrGroup
+    )
+    ip_address: str = ""
+    password: str = ""
+    peer_cluster: OntapMetroclusterMediatorPeerCluster = Field(
+        default_factory=OntapMetroclusterMediatorPeerCluster
+    )
+    peer_mediator_connectivity: str = ""
+    port: int = 0
+    reachable: bool = False
+    user: str = ""
+    uuid: str = ""
+
+
+class OntapMetroclusterPartnerCluster(OntapModel):
+    """OntapMetroclusterPartnerCluster sub-model for partner_cluster."""
+
+    name: str = ""
+    uuid: OntapUUID = ""
+
+
+class OntapMetroclusterRemoteCluster(OntapModel):
+    """OntapMetroclusterRemoteCluster sub-model for cluster."""
+
+    name: str = ""
+    uuid: OntapUUID = ""
+
+
+class OntapMetroclusterRemote(OntapModel):
+    """OntapMetroclusterRemote sub-model for remote."""
+
+    automatic_uso_failure_domain: str = ""
+    cluster: OntapMetroclusterRemoteCluster = Field(default_factory=OntapMetroclusterRemoteCluster)
+    configuration_state: str = ""
+    mode: str = ""
+    periodic_check_enabled: bool = False
 
 
 class OntapMetrocluster(OntapModel):
     """OntapMetrocluster information."""
 
-    node: OntapMetroclusterNode = Field(default_factory=OntapMetroclusterNode)
-    partner: OntapMetroclusterPartner = Field(default_factory=OntapMetroclusterPartner)
+    configuration_type: str = ""
+    dr_pairs: list[dict[str, Any]] = Field(default_factory=list)
+    encryption_enabled: bool = False
+    local: OntapMetroclusterLocal = Field(default_factory=OntapMetroclusterLocal)
+    mccip_ports: list[OntapMetroclusterMccipPort] = Field(default_factory=list)
+    mediator: OntapMetroclusterMediator = Field(default_factory=OntapMetroclusterMediator)
+    partner_cluster: OntapMetroclusterPartnerCluster = Field(
+        default_factory=OntapMetroclusterPartnerCluster
+    )
+    remote: OntapMetroclusterRemote = Field(default_factory=OntapMetroclusterRemote)

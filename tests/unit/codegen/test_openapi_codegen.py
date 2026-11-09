@@ -48,6 +48,23 @@ class TestDeduplicateEndpoints:
         assert result[0].path == "/storage/volumes"
         assert result[1].path == "/network/interfaces"
 
+    def test_equal_leaves_envelope_beats_singleton(self) -> None:
+        """On equal leaf counts the collection (envelope) wins in both orders (#925)."""
+        collection = _make_ep("/storage/snaplock/litigations", 5)
+        item = _make_ep("/storage/snaplock/litigations/{id}", 5)
+        item.response_shape = "singleton"
+        for order in ([collection, item], [item, collection]):
+            result = _deduplicate_endpoints(order)
+            assert len(result) == 1
+            assert result[0].path == "/storage/snaplock/litigations"
+
+    def test_singleton_with_more_leaves_wins(self) -> None:
+        collection = _make_ep("/storage/snaplock/litigations", 5)
+        item = _make_ep("/storage/snaplock/litigations/{id}", 6)
+        item.response_shape = "singleton"
+        result = _deduplicate_endpoints([collection, item])
+        assert result[0].path == "/storage/snaplock/litigations/{id}"
+
     def test_empty_input(self) -> None:
         assert _deduplicate_endpoints([]) == []
 

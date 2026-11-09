@@ -33,7 +33,9 @@ def _deduplicate_endpoints(endpoints: list[ParsedEndpoint]) -> list[ParsedEndpoi
 
     When ``/storage/volumes`` and ``/storage/volumes/{uuid}`` both map to
     module path ``["storage", "volumes"]``, keep the endpoint with the
-    most leaf fields (the richer schema).
+    most leaf fields (the richer schema).  On equal leaf counts an envelope
+    endpoint beats a singleton one (#925), so a collection URL is not replaced
+    by its single-object item endpoint.
 
     Args:
         endpoints: List of parsed endpoints.
@@ -57,8 +59,11 @@ def _deduplicate_endpoints(endpoints: list[ParsedEndpoint]) -> list[ParsedEndpoi
         if len(candidates) == 1:
             result.append(candidates[0])
         else:
-            # Pick the endpoint with the most leaf fields
-            best = max(candidates, key=lambda e: len(_collect_all_leaves(e.fields)))
+            # Most leaf fields wins; ties favour the envelope (#925)
+            best = max(
+                candidates,
+                key=lambda e: (len(_collect_all_leaves(e.fields)), e.response_shape != "singleton"),
+            )
             result.append(best)
     return result
 
@@ -137,7 +142,8 @@ def run(
 
     # Deduplicate endpoints that resolve to the same module path FIRST.
     # e.g. /storage/volumes and /storage/volumes/{uuid} both map to
-    # storage/volumes — keep the one with the most leaf fields.  ONTAP
+    # storage/volumes — keep the one with the most leaf fields (ties favour
+    # the envelope over a singleton, #925).  ONTAP
     # collection+item pairs both reference the same schema, but since
     # only one survives dedup the schema isn't actually shared across
     # distinct module paths.  Detecting shared schemas BEFORE dedup

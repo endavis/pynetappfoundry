@@ -8,46 +8,79 @@ from pydantic import Field
 from pynetappfoundry.models._base import OntapModel, OntapUUID
 
 
-class OntapSoftwareReferenceFirmwareClusterFwProgressJob(OntapModel):
-    """OntapSoftwareReferenceFirmwareClusterFwProgressJob sub-model for job."""
+class OntapSoftwareReferenceMetroclusterCluster(OntapModel):
+    """OntapSoftwareReferenceMetroclusterCluster sub-model for clusters."""
+
+    elapsed_duration: int = 0
+    estimated_duration: int = 0
+    name: str = ""
+    state: str = ""
+
+
+class OntapSoftwareReferenceMetroclusterProgressDetails(OntapModel):
+    """OntapSoftwareReferenceMetroclusterProgressDetails sub-model for progress_details."""
+
+    message: str = ""
+
+
+class OntapSoftwareReferenceMetroclusterProgressSummary(OntapModel):
+    """OntapSoftwareReferenceMetroclusterProgressSummary sub-model for progress_summary."""
+
+    message: str = ""
+
+
+class OntapSoftwareReferenceMetrocluster(OntapModel):
+    """OntapSoftwareReferenceMetrocluster sub-model for metrocluster."""
+
+    clusters: list[OntapSoftwareReferenceMetroclusterCluster] = Field(default_factory=list)
+    progress_details: OntapSoftwareReferenceMetroclusterProgressDetails = Field(
+        default_factory=OntapSoftwareReferenceMetroclusterProgressDetails
+    )
+    progress_summary: OntapSoftwareReferenceMetroclusterProgressSummary = Field(
+        default_factory=OntapSoftwareReferenceMetroclusterProgressSummary
+    )
+
+
+class OntapSoftwareReferenceNodeFirmwareClusterFwProgressJob(OntapModel):
+    """OntapSoftwareReferenceNodeFirmwareClusterFwProgressJob sub-model for job."""
 
     uuid: OntapUUID = ""
 
 
-class OntapSoftwareReferenceFirmwareClusterFwProgressUpdateStateWorkerNode(OntapModel):
-    """OntapSoftwareReferenceFirmwareClusterFwProgressUpdateStateWorkerNode sub-model for worker_node."""
+class OntapSoftwareReferenceNodeFirmwareClusterFwProgressUpdateStateWorkerNode(OntapModel):
+    """OntapSoftwareReferenceNodeFirmwareClusterFwProgressUpdateStateWorkerNode sub-model for worker_node."""
 
     name: str = ""
     uuid: str = ""
 
 
-class OntapSoftwareReferenceFirmwareClusterFwProgressUpdateState(OntapModel):
-    """OntapSoftwareReferenceFirmwareClusterFwProgressUpdateState sub-model for update_state."""
+class OntapSoftwareReferenceNodeFirmwareClusterFwProgressUpdateState(OntapModel):
+    """OntapSoftwareReferenceNodeFirmwareClusterFwProgressUpdateState sub-model for update_state."""
 
     attempts: int = 0
     code: int = 0
     message: str = ""
     status: str = ""
-    worker_node: OntapSoftwareReferenceFirmwareClusterFwProgressUpdateStateWorkerNode = Field(
-        default_factory=OntapSoftwareReferenceFirmwareClusterFwProgressUpdateStateWorkerNode
+    worker_node: OntapSoftwareReferenceNodeFirmwareClusterFwProgressUpdateStateWorkerNode = Field(
+        default_factory=OntapSoftwareReferenceNodeFirmwareClusterFwProgressUpdateStateWorkerNode
     )
 
 
-class OntapSoftwareReferenceFirmwareClusterFwProgress(OntapModel):
-    """OntapSoftwareReferenceFirmwareClusterFwProgress sub-model for cluster_fw_progress."""
+class OntapSoftwareReferenceNodeFirmwareClusterFwProgress(OntapModel):
+    """OntapSoftwareReferenceNodeFirmwareClusterFwProgress sub-model for cluster_fw_progress."""
 
-    job: OntapSoftwareReferenceFirmwareClusterFwProgressJob = Field(
-        default_factory=OntapSoftwareReferenceFirmwareClusterFwProgressJob
+    job: OntapSoftwareReferenceNodeFirmwareClusterFwProgressJob = Field(
+        default_factory=OntapSoftwareReferenceNodeFirmwareClusterFwProgressJob
     )
-    update_state: list[OntapSoftwareReferenceFirmwareClusterFwProgressUpdateState] = Field(
+    update_state: list[OntapSoftwareReferenceNodeFirmwareClusterFwProgressUpdateState] = Field(
         default_factory=list
     )
     update_type: str = ""
     zip_file_name: str = ""
 
 
-class OntapSoftwareReferenceFirmwareDisk(OntapModel):
-    """OntapSoftwareReferenceFirmwareDisk sub-model for disk."""
+class OntapSoftwareReferenceNodeFirmwareDisk(OntapModel):
+    """OntapSoftwareReferenceNodeFirmwareDisk sub-model for disk."""
 
     average_duration_per_disk: int = 0
     num_waiting_download: int = 0
@@ -55,8 +88,8 @@ class OntapSoftwareReferenceFirmwareDisk(OntapModel):
     update_status: str = ""
 
 
-class OntapSoftwareReferenceFirmwareDqpRecordCount(OntapModel):
-    """OntapSoftwareReferenceFirmwareDqpRecordCount sub-model for record_count."""
+class OntapSoftwareReferenceNodeFirmwareDqpRecordCount(OntapModel):
+    """OntapSoftwareReferenceNodeFirmwareDqpRecordCount sub-model for record_count."""
 
     alias: int = 0
     device: int = 0
@@ -64,26 +97,26 @@ class OntapSoftwareReferenceFirmwareDqpRecordCount(OntapModel):
     system: int = 0
 
 
-class OntapSoftwareReferenceFirmwareDqp(OntapModel):
-    """OntapSoftwareReferenceFirmwareDqp sub-model for dqp."""
+class OntapSoftwareReferenceNodeFirmwareDqp(OntapModel):
+    """OntapSoftwareReferenceNodeFirmwareDqp sub-model for dqp."""
 
     file_name: str = ""
-    record_count: OntapSoftwareReferenceFirmwareDqpRecordCount = Field(
-        default_factory=OntapSoftwareReferenceFirmwareDqpRecordCount
+    record_count: OntapSoftwareReferenceNodeFirmwareDqpRecordCount = Field(
+        default_factory=OntapSoftwareReferenceNodeFirmwareDqpRecordCount
     )
     revision: str = ""
     version: str = ""
 
 
-class OntapSoftwareReferenceFirmwareShelf(OntapModel):
-    """OntapSoftwareReferenceFirmwareShelf sub-model for shelf."""
+class OntapSoftwareReferenceNodeFirmwareShelf(OntapModel):
+    """OntapSoftwareReferenceNodeFirmwareShelf sub-model for shelf."""
 
     in_progress_count: int = 0
     update_status: str = ""
 
 
-class OntapSoftwareReferenceFirmwareSpBmc(OntapModel):
-    """OntapSoftwareReferenceFirmwareSpBmc sub-model for sp_bmc."""
+class OntapSoftwareReferenceNodeFirmwareSpBmc(OntapModel):
+    """OntapSoftwareReferenceNodeFirmwareSpBmc sub-model for sp_bmc."""
 
     autoupdate: bool = False
     end_time: str = ""
@@ -98,36 +131,163 @@ class OntapSoftwareReferenceFirmwareSpBmc(OntapModel):
     state: str = ""
 
 
-class OntapSoftwareReferenceFirmware(OntapModel):
-    """OntapSoftwareReferenceFirmware sub-model for firmware."""
+class OntapSoftwareReferenceNodeFirmware(OntapModel):
+    """OntapSoftwareReferenceNodeFirmware sub-model for firmware."""
 
-    cluster_fw_progress: list[OntapSoftwareReferenceFirmwareClusterFwProgress] = Field(
+    cluster_fw_progress: list[OntapSoftwareReferenceNodeFirmwareClusterFwProgress] = Field(
         default_factory=list
     )
-    disk: OntapSoftwareReferenceFirmwareDisk = Field(
-        default_factory=OntapSoftwareReferenceFirmwareDisk
+    disk: OntapSoftwareReferenceNodeFirmwareDisk = Field(
+        default_factory=OntapSoftwareReferenceNodeFirmwareDisk
     )
-    dqp: OntapSoftwareReferenceFirmwareDqp = Field(
-        default_factory=OntapSoftwareReferenceFirmwareDqp
+    dqp: OntapSoftwareReferenceNodeFirmwareDqp = Field(
+        default_factory=OntapSoftwareReferenceNodeFirmwareDqp
     )
-    shelf: OntapSoftwareReferenceFirmwareShelf = Field(
-        default_factory=OntapSoftwareReferenceFirmwareShelf
+    shelf: OntapSoftwareReferenceNodeFirmwareShelf = Field(
+        default_factory=OntapSoftwareReferenceNodeFirmwareShelf
     )
-    sp_bmc: OntapSoftwareReferenceFirmwareSpBmc = Field(
-        default_factory=OntapSoftwareReferenceFirmwareSpBmc
+    sp_bmc: OntapSoftwareReferenceNodeFirmwareSpBmc = Field(
+        default_factory=OntapSoftwareReferenceNodeFirmwareSpBmc
     )
 
 
-class OntapSoftwareReferenceSoftwareImage(OntapModel):
-    """OntapSoftwareReferenceSoftwareImage sub-model for software_images."""
+class OntapSoftwareReferenceNodeSoftwareImage(OntapModel):
+    """OntapSoftwareReferenceNodeSoftwareImage sub-model for software_images."""
 
     package: str = ""
+
+
+class OntapSoftwareReferenceNode(OntapModel):
+    """OntapSoftwareReferenceNode sub-model for nodes."""
+
+    firmware: OntapSoftwareReferenceNodeFirmware = Field(
+        default_factory=OntapSoftwareReferenceNodeFirmware
+    )
+    name: str = ""
+    software_images: list[OntapSoftwareReferenceNodeSoftwareImage] = Field(default_factory=list)
+    version: str = ""
+
+
+class OntapSoftwareReferencePostUpdateCheckAction(OntapModel):
+    """OntapSoftwareReferencePostUpdateCheckAction sub-model for action."""
+
+    message: str = ""
+
+
+class OntapSoftwareReferencePostUpdateCheckIssue(OntapModel):
+    """OntapSoftwareReferencePostUpdateCheckIssue sub-model for issue."""
+
+    message: str = ""
+
+
+class OntapSoftwareReferencePostUpdateCheck(OntapModel):
+    """OntapSoftwareReferencePostUpdateCheck sub-model for post_update_checks."""
+
+    action: OntapSoftwareReferencePostUpdateCheckAction = Field(
+        default_factory=OntapSoftwareReferencePostUpdateCheckAction
+    )
+    issue: OntapSoftwareReferencePostUpdateCheckIssue = Field(
+        default_factory=OntapSoftwareReferencePostUpdateCheckIssue
+    )
+    status: str = ""
+    update_check: str = ""
+
+
+class OntapSoftwareReferenceStatusDetailAction(OntapModel):
+    """OntapSoftwareReferenceStatusDetailAction sub-model for action."""
+
+    code: int = 0
+    message: str = ""
+
+
+class OntapSoftwareReferenceStatusDetailIssue(OntapModel):
+    """OntapSoftwareReferenceStatusDetailIssue sub-model for issue."""
+
+    code: int = 0
+    message: str = ""
+
+
+class OntapSoftwareReferenceStatusDetailNode(OntapModel):
+    """OntapSoftwareReferenceStatusDetailNode sub-model for node."""
+
+    name: str = ""
+
+
+class OntapSoftwareReferenceStatusDetail(OntapModel):
+    """OntapSoftwareReferenceStatusDetail sub-model for status_details."""
+
+    action: OntapSoftwareReferenceStatusDetailAction = Field(
+        default_factory=OntapSoftwareReferenceStatusDetailAction
+    )
+    end_time: str = ""
+    issue: OntapSoftwareReferenceStatusDetailIssue = Field(
+        default_factory=OntapSoftwareReferenceStatusDetailIssue
+    )
+    name: str = ""
+    node: OntapSoftwareReferenceStatusDetailNode = Field(
+        default_factory=OntapSoftwareReferenceStatusDetailNode
+    )
+    start_time: str = ""
+    state: str = ""
+
+
+class OntapSoftwareReferenceUpdateDetailNode(OntapModel):
+    """OntapSoftwareReferenceUpdateDetailNode sub-model for node."""
+
+    name: str = ""
+
+
+class OntapSoftwareReferenceUpdateDetail(OntapModel):
+    """OntapSoftwareReferenceUpdateDetail sub-model for update_details."""
+
+    elapsed_duration: int = 0
+    estimated_duration: int = 0
+    node: OntapSoftwareReferenceUpdateDetailNode = Field(
+        default_factory=OntapSoftwareReferenceUpdateDetailNode
+    )
+    phase: str = ""
+    state: str = ""
+
+
+class OntapSoftwareReferenceValidationResultAction(OntapModel):
+    """OntapSoftwareReferenceValidationResultAction sub-model for action."""
+
+    message: str = ""
+
+
+class OntapSoftwareReferenceValidationResultIssue(OntapModel):
+    """OntapSoftwareReferenceValidationResultIssue sub-model for issue."""
+
+    message: str = ""
+
+
+class OntapSoftwareReferenceValidationResult(OntapModel):
+    """OntapSoftwareReferenceValidationResult sub-model for validation_results."""
+
+    action: OntapSoftwareReferenceValidationResultAction = Field(
+        default_factory=OntapSoftwareReferenceValidationResultAction
+    )
+    issue: OntapSoftwareReferenceValidationResultIssue = Field(
+        default_factory=OntapSoftwareReferenceValidationResultIssue
+    )
+    status: str = ""
+    update_check: str = ""
 
 
 class OntapSoftwareReference(OntapModel):
     """OntapSoftwareReference information."""
 
-    firmware: OntapSoftwareReferenceFirmware = Field(default_factory=OntapSoftwareReferenceFirmware)
-    name: str = ""
-    software_images: list[OntapSoftwareReferenceSoftwareImage] = Field(default_factory=list)
+    action: str = ""
+    elapsed_duration: int = 0
+    estimated_duration: int = 0
+    metrocluster: OntapSoftwareReferenceMetrocluster = Field(
+        default_factory=OntapSoftwareReferenceMetrocluster
+    )
+    nodes: list[OntapSoftwareReferenceNode] = Field(default_factory=list)
+    pending_version: str = ""
+    post_update_checks: list[OntapSoftwareReferencePostUpdateCheck] = Field(default_factory=list)
+    state: str = ""
+    status_details: list[OntapSoftwareReferenceStatusDetail] = Field(default_factory=list)
+    update_details: list[OntapSoftwareReferenceUpdateDetail] = Field(default_factory=list)
+    validation_results: list[OntapSoftwareReferenceValidationResult] = Field(default_factory=list)
     version: str = ""

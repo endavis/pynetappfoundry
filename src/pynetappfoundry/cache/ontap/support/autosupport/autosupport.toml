@@ -1,28 +1,52 @@
+_removed_fields = [
+    "component",
+    "corrective_action.code",
+    "corrective_action.message",
+    "destination",
+    "issue.code",
+    "issue.message",
+    "node.name",
+    "node.uuid",
+]
+
 [endpoint]
 path = "/support/autosupport"
 schema = "autosupport"
 class_name = "OntapAutosupport"
 
-[fields.component]
+[fields.contact_support]
 cache_strategy = "cache"
 
-[fields."corrective_action.code"]
+[fields.enabled]
 cache_strategy = "cache"
 
-[fields."corrective_action.message"]
+[fields.from_]
 cache_strategy = "cache"
 
-[fields.destination]
+[fields.is_minimal]
 cache_strategy = "cache"
 
-[fields."issue.code"]
+[fields.issues]
+cache_strategy = "cache"
+requires_explicit_fetch = true
+
+[fields.mail_hosts]
 cache_strategy = "cache"
 
-[fields."issue.message"]
+[fields.ondemand_enabled]
 cache_strategy = "cache"
 
-[fields."node.name"]
+[fields.partner_addresses]
 cache_strategy = "cache"
 
-[fields."node.uuid"]
+[fields.proxy_url]
+cache_strategy = "cache"
+
+[fields.smtp_encryption]
+cache_strategy = "cache"
+
+[fields.to]
+cache_strategy = "cache"
+
+[fields.transport]
 cache_strategy = "cache"

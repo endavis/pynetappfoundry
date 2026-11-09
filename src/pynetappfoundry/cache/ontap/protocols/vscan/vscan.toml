@@ -1,34 +1,37 @@
+_removed_fields = [
+    "mandatory",
+    "name",
+    "scope.exclude_extensions",
+    "scope.exclude_paths",
+    "scope.include_extensions",
+    "scope.max_file_size",
+    "scope.only_execute_access",
+    "scope.scan_readonly_volumes",
+    "scope.scan_without_extension",
+]
+
 [endpoint]
-path = "/protocols/vscan/{svm.uuid}"
+path = "/protocols/vscan"
 schema = "vscan"
 class_name = "OntapVscan"
+
+[fields.cache_clear]
+cache_strategy = "cache"
 
 [fields.enabled]
 cache_strategy = "cache"
 
-[fields.mandatory]
+[fields.on_access_policies]
 cache_strategy = "cache"
 
-[fields.name]
+[fields.on_demand_policies]
 cache_strategy = "cache"
 
-[fields."scope.exclude_extensions"]
+[fields.scanner_pools]
 cache_strategy = "cache"
 
-[fields."scope.exclude_paths"]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields."scope.include_extensions"]
-cache_strategy = "cache"
-
-[fields."scope.max_file_size"]
-cache_strategy = "cache"
-
-[fields."scope.only_execute_access"]
-cache_strategy = "cache"
-
-[fields."scope.scan_readonly_volumes"]
-cache_strategy = "cache"
-
-[fields."scope.scan_without_extension"]
+[fields."svm.uuid"]
 cache_strategy = "cache"

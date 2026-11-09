@@ -1,13 +1,22 @@
+_removed_fields = [
+    "server",
+    "status.code",
+    "status.message",
+]
+
 [endpoint]
 path = "/security/authentication/cluster/nis"
 schema = "cluster_nis_service"
 class_name = "OntapClusterNisService"
 
-[fields.server]
+[fields.binding_details]
 cache_strategy = "cache"
 
-[fields."status.code"]
+[fields.bound_servers]
 cache_strategy = "cache"
 
-[fields."status.message"]
+[fields.domain]
+cache_strategy = "cache"
+
+[fields.servers]
 cache_strategy = "cache"

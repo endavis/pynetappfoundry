@@ -7,11 +7,41 @@ from pydantic import Field
 from pynetappfoundry.models._base import OntapModel, OntapUUID
 
 
-class OntapFlexcacheOriginCluster(OntapModel):
-    """OntapFlexcacheOriginCluster sub-model for cluster."""
+class OntapFlexcacheOriginFlexcacheCluster(OntapModel):
+    """OntapFlexcacheOriginFlexcacheCluster sub-model for cluster."""
 
     name: str = ""
     uuid: OntapUUID = ""
+
+
+class OntapFlexcacheOriginFlexcacheSvm(OntapModel):
+    """OntapFlexcacheOriginFlexcacheSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapFlexcacheOriginFlexcacheVolume(OntapModel):
+    """OntapFlexcacheOriginFlexcacheVolume sub-model for volume."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapFlexcacheOriginFlexcache(OntapModel):
+    """OntapFlexcacheOriginFlexcache sub-model for flexcaches."""
+
+    cluster: OntapFlexcacheOriginFlexcacheCluster = Field(
+        default_factory=OntapFlexcacheOriginFlexcacheCluster
+    )
+    create_time: str = ""
+    ip_address: str = ""
+    size: int = 0
+    state: str = ""
+    svm: OntapFlexcacheOriginFlexcacheSvm = Field(default_factory=OntapFlexcacheOriginFlexcacheSvm)
+    volume: OntapFlexcacheOriginFlexcacheVolume = Field(
+        default_factory=OntapFlexcacheOriginFlexcacheVolume
+    )
 
 
 class OntapFlexcacheOriginSvm(OntapModel):
@@ -21,20 +51,12 @@ class OntapFlexcacheOriginSvm(OntapModel):
     uuid: str = ""
 
 
-class OntapFlexcacheOriginVolume(OntapModel):
-    """OntapFlexcacheOriginVolume sub-model for volume."""
-
-    name: str = ""
-    uuid: str = ""
-
-
 class OntapFlexcacheOrigin(OntapModel):
     """OntapFlexcacheOrigin information."""
 
-    cluster: OntapFlexcacheOriginCluster = Field(default_factory=OntapFlexcacheOriginCluster)
-    create_time: str = ""
-    ip_address: str = ""
-    size: int = 0
-    state: str = ""
+    block_level_invalidation: bool = False
+    flexcaches: list[OntapFlexcacheOriginFlexcache] = Field(default_factory=list)
+    global_file_locking_enabled: bool = False
+    name: str = ""
     svm: OntapFlexcacheOriginSvm = Field(default_factory=OntapFlexcacheOriginSvm)
-    volume: OntapFlexcacheOriginVolume = Field(default_factory=OntapFlexcacheOriginVolume)
+    uuid: str = ""

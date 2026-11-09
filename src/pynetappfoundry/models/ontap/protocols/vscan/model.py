@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from pynetappfoundry.models._base import OntapModel
+from pynetappfoundry.models._base import OntapModel, OntapUUID
 
 
-class OntapVscanScope(OntapModel):
-    """OntapVscanScope sub-model for scope."""
+class OntapVscanOnAccessPolicyScope(OntapModel):
+    """OntapVscanOnAccessPolicyScope sub-model for scope."""
 
     exclude_extensions: list[str] = Field(default_factory=list)
     exclude_paths: list[str] = Field(default_factory=list)
@@ -19,10 +19,74 @@ class OntapVscanScope(OntapModel):
     scan_without_extension: bool = False
 
 
-class OntapVscan(OntapModel):
-    """OntapVscan information."""
+class OntapVscanOnAccessPolicy(OntapModel):
+    """OntapVscanOnAccessPolicy sub-model for on_access_policies."""
 
     enabled: bool = False
     mandatory: bool = False
     name: str = ""
-    scope: OntapVscanScope = Field(default_factory=OntapVscanScope)
+    scope: OntapVscanOnAccessPolicyScope = Field(default_factory=OntapVscanOnAccessPolicyScope)
+
+
+class OntapVscanOnDemandPolicySchedule(OntapModel):
+    """OntapVscanOnDemandPolicySchedule sub-model for schedule."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapVscanOnDemandPolicyScope(OntapModel):
+    """OntapVscanOnDemandPolicyScope sub-model for scope."""
+
+    exclude_extensions: list[str] = Field(default_factory=list)
+    exclude_paths: list[str] = Field(default_factory=list)
+    include_extensions: list[str] = Field(default_factory=list)
+    max_file_size: int = 0
+    scan_without_extension: bool = False
+
+
+class OntapVscanOnDemandPolicy(OntapModel):
+    """OntapVscanOnDemandPolicy sub-model for on_demand_policies."""
+
+    log_path: str = ""
+    name: str = ""
+    scan_paths: list[str] = Field(default_factory=list)
+    schedule: OntapVscanOnDemandPolicySchedule = Field(
+        default_factory=OntapVscanOnDemandPolicySchedule
+    )
+    scope: OntapVscanOnDemandPolicyScope = Field(default_factory=OntapVscanOnDemandPolicyScope)
+
+
+class OntapVscanScannerPoolCluster(OntapModel):
+    """OntapVscanScannerPoolCluster sub-model for cluster."""
+
+    name: str = ""
+    uuid: OntapUUID = ""
+
+
+class OntapVscanScannerPool(OntapModel):
+    """OntapVscanScannerPool sub-model for scanner_pools."""
+
+    cluster: OntapVscanScannerPoolCluster = Field(default_factory=OntapVscanScannerPoolCluster)
+    name: str = ""
+    privileged_users: list[str] = Field(default_factory=list)
+    role: str = ""
+    servers: list[str] = Field(default_factory=list)
+
+
+class OntapVscanSvm(OntapModel):
+    """OntapVscanSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapVscan(OntapModel):
+    """OntapVscan information."""
+
+    cache_clear: bool = False
+    enabled: bool = False
+    on_access_policies: list[OntapVscanOnAccessPolicy] = Field(default_factory=list)
+    on_demand_policies: list[OntapVscanOnDemandPolicy] = Field(default_factory=list)
+    scanner_pools: list[OntapVscanScannerPool] = Field(default_factory=list)
+    svm: OntapVscanSvm = Field(default_factory=OntapVscanSvm)

@@ -2,87 +2,71 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.models.ontap.protocols.fpolicy.model import OntapFpolicy
+from pynetappfoundry.models.ontap.protocols.fpolicy.model import (
+    OntapFpolicy,
+    OntapFpolicyEngine,
+    OntapFpolicyEvent,
+    OntapFpolicyPersistentStore,
+    OntapFpolicyPolicy,
+)
+
+
+def _transform_engines(record: dict[str, Any]) -> list[OntapFpolicyEngine]:
+    """Transform engines into OntapFpolicyEngine list."""
+    return [OntapFpolicyEngine(**item) for item in record.get("engines", [])]
+
+
+def _transform_events(record: dict[str, Any]) -> list[OntapFpolicyEvent]:
+    """Transform events into OntapFpolicyEvent list."""
+    return [OntapFpolicyEvent(**item) for item in record.get("events", [])]
+
+
+def _transform_persistent_stores(record: dict[str, Any]) -> list[OntapFpolicyPersistentStore]:
+    """Transform persistent_stores into OntapFpolicyPersistentStore list."""
+    return [OntapFpolicyPersistentStore(**item) for item in record.get("persistent_stores", [])]
+
+
+def _transform_policies(record: dict[str, Any]) -> list[OntapFpolicyPolicy]:
+    """Transform policies into OntapFpolicyPolicy list."""
+    return [OntapFpolicyPolicy(**item) for item in record.get("policies", [])]
+
 
 ONTAPFPOLICY_MAPPING = TypeMapping(
     name="OntapFpolicy",
     model_class=OntapFpolicy,
-    api_endpoint="/protocols/fpolicy/{svm.uuid}?fields=*",
+    api_endpoint="/protocols/fpolicy?fields=*",
     api_type="ontap",
-    records_path="engines",
+    identifier_field="svm.uuid",
     fields=(
         FieldMapping(
-            cache_attr="buffer_size.recv_buffer",
-            default=0,
-        ),
-        FieldMapping(
-            cache_attr="buffer_size.send_buffer",
-            default=0,
-        ),
-        FieldMapping(
-            cache_attr="certificate.ca",
-        ),
-        FieldMapping(
-            cache_attr="certificate.name",
-        ),
-        FieldMapping(
-            cache_attr="certificate.serial_number",
-        ),
-        FieldMapping(
-            cache_attr="format",
-        ),
-        FieldMapping(
-            cache_attr="keep_alive_interval",
-        ),
-        FieldMapping(
-            cache_attr="max_server_requests",
-            default=0,
-        ),
-        FieldMapping(
-            cache_attr="name",
-        ),
-        FieldMapping(
-            cache_attr="port",
-            default=0,
-        ),
-        FieldMapping(
-            cache_attr="primary_servers",
+            cache_attr="engines",
+            transform=_transform_engines,
             default=[],
         ),
         FieldMapping(
-            cache_attr="request_abort_timeout",
-        ),
-        FieldMapping(
-            cache_attr="request_cancel_timeout",
-        ),
-        FieldMapping(
-            cache_attr="resiliency.directory_path",
-        ),
-        FieldMapping(
-            cache_attr="resiliency.enabled",
-            default=False,
-        ),
-        FieldMapping(
-            cache_attr="resiliency.retention_duration",
-        ),
-        FieldMapping(
-            cache_attr="secondary_servers",
+            cache_attr="events",
+            transform=_transform_events,
             default=[],
         ),
         FieldMapping(
-            cache_attr="server_progress_timeout",
+            cache_attr="persistent_stores",
+            transform=_transform_persistent_stores,
+            default=[],
         ),
         FieldMapping(
-            cache_attr="ssl_option",
+            cache_attr="policies",
+            transform=_transform_policies,
+            default=[],
         ),
         FieldMapping(
-            cache_attr="status_request_interval",
+            cache_attr="svm.name",
         ),
         FieldMapping(
-            cache_attr="type_",
-            api_path="type",
+            cache_attr="svm.uuid",
         ),
     ),
 )

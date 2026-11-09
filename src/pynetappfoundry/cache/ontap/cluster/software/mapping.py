@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 """OntapSoftwareReference type mapping."""
 
 from __future__ import annotations
@@ -9,27 +8,59 @@ from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.cluster.software.model import (
     OntapSoftwareReference,
-    OntapSoftwareReferenceFirmwareClusterFwProgress,
-    OntapSoftwareReferenceSoftwareImage,
+    OntapSoftwareReferenceMetroclusterCluster,
+    OntapSoftwareReferenceNode,
+    OntapSoftwareReferencePostUpdateCheck,
+    OntapSoftwareReferenceStatusDetail,
+    OntapSoftwareReferenceUpdateDetail,
+    OntapSoftwareReferenceValidationResult,
 )
 from pynetappfoundry.utils.dict_path import get_nested_value
 
 
-def _transform_firmware_cluster_fw_progress(
+def _transform_metrocluster_clusters(
     record: dict[str, Any],
-) -> list[OntapSoftwareReferenceFirmwareClusterFwProgress]:
-    """Transform firmware.cluster_fw_progress into OntapSoftwareReferenceFirmwareClusterFwProgress list."""
+) -> list[OntapSoftwareReferenceMetroclusterCluster]:
+    """Transform metrocluster.clusters into OntapSoftwareReferenceMetroclusterCluster list."""
     try:
-        items = get_nested_value(record, "firmware.cluster_fw_progress")
+        items = get_nested_value(record, "metrocluster.clusters")
     except Exception:
         items = []
-    return [OntapSoftwareReferenceFirmwareClusterFwProgress(**item) for item in items]
+    return [OntapSoftwareReferenceMetroclusterCluster(**item) for item in items]
 
 
-def _transform_software_images(record: dict[str, Any]) -> list[OntapSoftwareReferenceSoftwareImage]:
-    """Transform software_images into OntapSoftwareReferenceSoftwareImage list."""
+def _transform_nodes(record: dict[str, Any]) -> list[OntapSoftwareReferenceNode]:
+    """Transform nodes into OntapSoftwareReferenceNode list."""
+    return [OntapSoftwareReferenceNode(**item) for item in record.get("nodes", [])]
+
+
+def _transform_post_update_checks(
+    record: dict[str, Any],
+) -> list[OntapSoftwareReferencePostUpdateCheck]:
+    """Transform post_update_checks into OntapSoftwareReferencePostUpdateCheck list."""
     return [
-        OntapSoftwareReferenceSoftwareImage(**item) for item in record.get("software_images", [])
+        OntapSoftwareReferencePostUpdateCheck(**item)
+        for item in record.get("post_update_checks", [])
+    ]
+
+
+def _transform_status_details(record: dict[str, Any]) -> list[OntapSoftwareReferenceStatusDetail]:
+    """Transform status_details into OntapSoftwareReferenceStatusDetail list."""
+    return [OntapSoftwareReferenceStatusDetail(**item) for item in record.get("status_details", [])]
+
+
+def _transform_update_details(record: dict[str, Any]) -> list[OntapSoftwareReferenceUpdateDetail]:
+    """Transform update_details into OntapSoftwareReferenceUpdateDetail list."""
+    return [OntapSoftwareReferenceUpdateDetail(**item) for item in record.get("update_details", [])]
+
+
+def _transform_validation_results(
+    record: dict[str, Any],
+) -> list[OntapSoftwareReferenceValidationResult]:
+    """Transform validation_results into OntapSoftwareReferenceValidationResult list."""
+    return [
+        OntapSoftwareReferenceValidationResult(**item)
+        for item in record.get("validation_results", [])
     ]
 
 
@@ -38,103 +69,59 @@ ONTAPSOFTWAREREFERENCE_MAPPING = TypeMapping(
     model_class=OntapSoftwareReference,
     api_endpoint="/cluster/software?fields=*",
     api_type="ontap",
-    records_path="nodes",
+    response_shape="singleton",
     fields=(
         FieldMapping(
-            cache_attr="firmware.cluster_fw_progress",
-            transform=_transform_firmware_cluster_fw_progress,
+            cache_attr="action",
+        ),
+        FieldMapping(
+            cache_attr="elapsed_duration",
+            default=0,
+        ),
+        FieldMapping(
+            cache_attr="estimated_duration",
+            default=0,
+        ),
+        FieldMapping(
+            cache_attr="metrocluster.clusters",
+            transform=_transform_metrocluster_clusters,
             default=[],
         ),
         FieldMapping(
-            cache_attr="firmware.disk.average_duration_per_disk",
-            default=0,
+            cache_attr="metrocluster.progress_details.message",
         ),
         FieldMapping(
-            cache_attr="firmware.disk.num_waiting_download",
-            default=0,
+            cache_attr="metrocluster.progress_summary.message",
         ),
         FieldMapping(
-            cache_attr="firmware.disk.total_completion_estimate",
-            default=0,
+            cache_attr="nodes",
+            transform=_transform_nodes,
+            default=[],
         ),
         FieldMapping(
-            cache_attr="firmware.disk.update_status",
+            cache_attr="pending_version",
         ),
         FieldMapping(
-            cache_attr="firmware.dqp.file_name",
+            cache_attr="post_update_checks",
+            transform=_transform_post_update_checks,
+            default=[],
         ),
         FieldMapping(
-            cache_attr="firmware.dqp.record_count.alias",
-            default=0,
+            cache_attr="state",
         ),
         FieldMapping(
-            cache_attr="firmware.dqp.record_count.device",
-            default=0,
+            cache_attr="status_details",
+            transform=_transform_status_details,
+            default=[],
         ),
         FieldMapping(
-            cache_attr="firmware.dqp.record_count.drive",
-            default=0,
+            cache_attr="update_details",
+            transform=_transform_update_details,
+            default=[],
         ),
         FieldMapping(
-            cache_attr="firmware.dqp.record_count.system",
-            default=0,
-        ),
-        FieldMapping(
-            cache_attr="firmware.dqp.revision",
-        ),
-        FieldMapping(
-            cache_attr="firmware.dqp.version",
-        ),
-        FieldMapping(
-            cache_attr="firmware.shelf.in_progress_count",
-            default=0,
-        ),
-        FieldMapping(
-            cache_attr="firmware.shelf.update_status",
-        ),
-        FieldMapping(
-            cache_attr="firmware.sp_bmc.autoupdate",
-            default=False,
-        ),
-        FieldMapping(
-            cache_attr="firmware.sp_bmc.end_time",
-        ),
-        FieldMapping(
-            cache_attr="firmware.sp_bmc.fw_type",
-        ),
-        FieldMapping(
-            cache_attr="firmware.sp_bmc.image",
-        ),
-        FieldMapping(
-            cache_attr="firmware.sp_bmc.in_progress",
-            default=False,
-        ),
-        FieldMapping(
-            cache_attr="firmware.sp_bmc.is_current",
-            default=False,
-        ),
-        FieldMapping(
-            cache_attr="firmware.sp_bmc.last_update_state",
-        ),
-        FieldMapping(
-            cache_attr="firmware.sp_bmc.percent_done",
-            default=0,
-        ),
-        FieldMapping(
-            cache_attr="firmware.sp_bmc.running_version",
-        ),
-        FieldMapping(
-            cache_attr="firmware.sp_bmc.start_time",
-        ),
-        FieldMapping(
-            cache_attr="firmware.sp_bmc.state",
-        ),
-        FieldMapping(
-            cache_attr="name",
-        ),
-        FieldMapping(
-            cache_attr="software_images",
-            transform=_transform_software_images,
+            cache_attr="validation_results",
+            transform=_transform_validation_results,
             default=[],
         ),
         FieldMapping(

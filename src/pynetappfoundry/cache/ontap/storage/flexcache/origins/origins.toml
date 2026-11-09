@@ -1,24 +1,29 @@
+_removed_fields = [
+    "cluster.name",
+    "cluster.uuid",
+    "create_time",
+    "ip_address",
+    "size",
+    "state",
+    "volume.name",
+    "volume.uuid",
+]
+
 [endpoint]
-path = "/storage/flexcache/origins/{uuid}"
+path = "/storage/flexcache/origins"
 schema = "flexcache_origin"
 class_name = "OntapFlexcacheOrigin"
 
-[fields."cluster.name"]
+[fields.block_level_invalidation]
 cache_strategy = "cache"
 
-[fields."cluster.uuid"]
+[fields.flexcaches]
 cache_strategy = "cache"
 
-[fields.create_time]
+[fields.global_file_locking_enabled]
 cache_strategy = "cache"
 
-[fields.ip_address]
-cache_strategy = "cache"
-
-[fields.size]
-cache_strategy = "cache"
-
-[fields.state]
+[fields.name]
 cache_strategy = "cache"
 
 [fields."svm.name"]
@@ -27,8 +32,5 @@ cache_strategy = "cache"
 [fields."svm.uuid"]
 cache_strategy = "cache"
 
-[fields."volume.name"]
-cache_strategy = "cache"
-
-[fields."volume.uuid"]
+[fields.uuid]
 cache_strategy = "cache"

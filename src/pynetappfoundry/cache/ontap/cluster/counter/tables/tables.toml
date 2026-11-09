@@ -1,19 +1,19 @@
+_removed_fields = [
+    "denominator.name",
+    "type_",
+    "unit",
+]
+
 [endpoint]
-path = "/cluster/counter/tables/{name}"
+path = "/cluster/counter/tables"
 schema = "counter_table"
 class_name = "OntapCounterTable"
 
-[fields."denominator.name"]
+[fields.counter_schemas]
 cache_strategy = "cache"
 
 [fields.description]
 cache_strategy = "cache"
 
 [fields.name]
-cache_strategy = "cache"
-
-[fields.type_]
-cache_strategy = "cache"
-
-[fields.unit]
 cache_strategy = "cache"

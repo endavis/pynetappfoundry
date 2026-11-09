@@ -1,67 +1,46 @@
+_removed_fields = [
+    "buffer_size.recv_buffer",
+    "buffer_size.send_buffer",
+    "certificate.ca",
+    "certificate.name",
+    "certificate.serial_number",
+    "format",
+    "keep_alive_interval",
+    "max_server_requests",
+    "name",
+    "port",
+    "primary_servers",
+    "request_abort_timeout",
+    "request_cancel_timeout",
+    "resiliency.directory_path",
+    "resiliency.enabled",
+    "resiliency.retention_duration",
+    "secondary_servers",
+    "server_progress_timeout",
+    "ssl_option",
+    "status_request_interval",
+    "type_",
+]
+
 [endpoint]
-path = "/protocols/fpolicy/{svm.uuid}"
+path = "/protocols/fpolicy"
 schema = "fpolicy"
 class_name = "OntapFpolicy"
 
-[fields."buffer_size.recv_buffer"]
+[fields.engines]
 cache_strategy = "cache"
 
-[fields."buffer_size.send_buffer"]
+[fields.events]
 cache_strategy = "cache"
 
-[fields."certificate.ca"]
+[fields.persistent_stores]
 cache_strategy = "cache"
 
-[fields."certificate.name"]
+[fields.policies]
 cache_strategy = "cache"
 
-[fields."certificate.serial_number"]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.format]
-cache_strategy = "cache"
-
-[fields.keep_alive_interval]
-cache_strategy = "cache"
-
-[fields.max_server_requests]
-cache_strategy = "cache"
-
-[fields.name]
-cache_strategy = "cache"
-
-[fields.port]
-cache_strategy = "cache"
-
-[fields.primary_servers]
-cache_strategy = "cache"
-
-[fields.request_abort_timeout]
-cache_strategy = "cache"
-
-[fields.request_cancel_timeout]
-cache_strategy = "cache"
-
-[fields."resiliency.directory_path"]
-cache_strategy = "cache"
-
-[fields."resiliency.enabled"]
-cache_strategy = "cache"
-
-[fields."resiliency.retention_duration"]
-cache_strategy = "cache"
-
-[fields.secondary_servers]
-cache_strategy = "cache"
-
-[fields.server_progress_timeout]
-cache_strategy = "cache"
-
-[fields.ssl_option]
-cache_strategy = "cache"
-
-[fields.status_request_interval]
-cache_strategy = "cache"
-
-[fields.type_]
+[fields."svm.uuid"]
 cache_strategy = "cache"

@@ -2,11 +2,20 @@
 
 from __future__ import annotations
 
+from pydantic import Field
+
 from pynetappfoundry.models._base import OntapModel
+
+
+class OntapAntiRansomwareNode(OntapModel):
+    """OntapAntiRansomwareNode sub-model for nodes."""
+
+    name: str = ""
+    version: str = ""
 
 
 class OntapAntiRansomware(OntapModel):
     """OntapAntiRansomware information."""
 
-    name: str = ""
-    version: str = ""
+    nodes: list[OntapAntiRansomwareNode] = Field(default_factory=list)
+    uri: str = ""
