@@ -1,31 +1,37 @@
-"""Cache refresh command."""
+"""Cache refresh command.
+
+Option parsing, database lifecycle and rendering live here. The refresh
+orchestration (clients, collection, diffing, persistence) lives in
+:mod:`pynetappfoundry.cache.refresher`; this module plugs into it through the
+``RefreshObserver`` protocol.
+"""
 
 from __future__ import annotations
 
-import contextlib
 import io
 import json
 import logging
-import threading
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from dataclasses import dataclass
 from pathlib import Path
+from types import TracebackType
 
 import click
 from rich.console import Console
-from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.progress import Progress, SpinnerColumn, TaskID, TextColumn
 
 from pynetappfoundry.cache import (
-    CachedClusterMetadata,
     CacheHistoryDB,
     ClusterMetadataDB,
     CollectionPhase,
-    MetadataCollector,
-    ProgressCallback,
     ProgressInfo,
-    compute_diff,
-    is_schema_compatible,
+)
+from pynetappfoundry.cache.refresher import (
+    CacheRefresher,
+    ClusterProgress,
+    ClusterRefreshResult,
+    RefreshStatus,
+    RefreshSummary,
+    effective_workers,
 )
 from pynetappfoundry.cli.utils import (
     print_error,
@@ -33,7 +39,6 @@ from pynetappfoundry.cli.utils import (
     print_success,
     print_warning,
 )
-from pynetappfoundry.clients.ontap import ONTAPCLI, ONTAPAPIClient
 from pynetappfoundry.core.config import Config
 from pynetappfoundry.core.logging import setup_logger
 
@@ -74,7 +79,7 @@ class VerboseProgressDisplay:
         self.current_phase: CollectionPhase | None = None
 
     def on_progress(self, info: ProgressInfo) -> None:
-        """Handle progress callback from MetadataCollector.
+        """Handle progress callback from the collector.
 
         Args:
             info: Progress information for the current phase.
@@ -113,24 +118,6 @@ class VerboseProgressDisplay:
         total_time = time.monotonic() - self.start_time
         status = "[green]OK[/green]" if success else "[red]FAILED[/red]"
         self.console.print(f"  [dim]`-[/dim] Total: {total_time:.1f}s {status}")
-
-
-@dataclass
-class _CollectResult:
-    """Result of a worker-thread cluster collection.
-
-    Carries everything the main thread needs to persist the result (diff,
-    history write, cache write) plus any verbose output captured during
-    collection so it can be replayed coherently on the main thread.
-    """
-
-    cluster_name: str
-    metadata: CachedClusterMetadata | None
-    previous_metadata: CachedClusterMetadata | None
-    captured_output: str
-    success: bool
-    error: Exception | None
-    no_clients: bool
 
 
 @click.command()
@@ -202,7 +189,11 @@ def refresh(
         ctx.exit(1)
 
     try:
-        config = Config(config_dir=config_dir, script_name="cache-refresh")
+        config = Config(
+            config_dir=config_dir,
+            output_dir=ctx.obj.get("output_dir", ""),
+            script_name="cache-refresh",
+        )
     except Exception as e:
         print_exception(f"Failed to load configuration: {e}", e)
         logger.exception("Failed to load configuration")
@@ -247,62 +238,209 @@ def refresh(
         print_error("Specify a cluster name or use --all to refresh all clusters.")
         ctx.exit(1)
 
-    # Initialize cache and history databases
+    workers = effective_workers(parallel_clusters, len(clusters_to_refresh))
+
+    # The CLI owns the database handles; close them even when the run fails
+    # or exits non-zero.
     db = ClusterMetadataDB(config=config)
-    history_db = CacheHistoryDB(config=config)
+    try:
+        history_db = CacheHistoryDB(config=config)
+        try:
+            console.print(f"\nRefreshing cache for {len(clusters_to_refresh)} cluster(s)...")
+            if filter_dict:
+                console.print(f"[dim]Filter: {filter_str}[/dim]")
+                logger.info(
+                    "Refreshing cache for %d cluster(s) with filter: %s",
+                    len(clusters_to_refresh),
+                    filter_str,
+                )
+            else:
+                logger.info("Refreshing cache for %d cluster(s)", len(clusters_to_refresh))
+            if workers > 1:
+                console.print(f"[dim]Parallel workers: {workers}[/dim]")
+                logger.info("Parallel workers: %d", workers)
+            console.print(f"[dim]Log file: {log_file}[/dim]\n")
 
-    # Single-cluster path always runs sequentially regardless of the flag.
-    effective_workers = (
-        1 if len(clusters_to_refresh) <= 1 else min(parallel_clusters, len(clusters_to_refresh))
-    )
-
-    console.print(f"\nRefreshing cache for {len(clusters_to_refresh)} cluster(s)...")
-    if filter_dict:
-        console.print(f"[dim]Filter: {filter_str}[/dim]")
-        logger.info(
-            "Refreshing cache for %d cluster(s) with filter: %s",
-            len(clusters_to_refresh),
-            filter_str,
-        )
-    else:
-        logger.info("Refreshing cache for %d cluster(s)", len(clusters_to_refresh))
-    if effective_workers > 1:
-        console.print(f"[dim]Parallel workers: {effective_workers}[/dim]")
-        logger.info("Parallel workers: %d", effective_workers)
-    console.print(f"[dim]Log file: {log_file}[/dim]\n")
-
-    if verbose:
-        # Verbose mode: detailed phase-by-phase progress
-        _refresh_verbose(ctx, config, db, history_db, clusters_to_refresh, effective_workers)
-    else:
-        # Normal mode: spinner per cluster
-        _refresh_normal(ctx, config, db, history_db, clusters_to_refresh, effective_workers)
-
-    db.close()
-    history_db.close()
+            parallel = workers > 1
+            reporter: _VerboseReporter | _NormalReporter = (
+                _VerboseReporter(parallel) if verbose else _NormalReporter(parallel)
+            )
+            refresher = CacheRefresher(config, db, history_db)
+            with reporter:
+                summary = refresher.run(clusters_to_refresh, workers=workers, observer=reporter)
+            _report_summary(ctx, summary)
+        finally:
+            history_db.close()
+    finally:
+        db.close()
 
 
-def _categorize_failure(error: Exception) -> tuple[str, str]:
-    """Categorize a collection failure for the failure summary.
+class _VerboseClusterSink:
+    """Per-cluster verbose progress sink.
 
-    Args:
-        error: The exception that caused the failure.
-
-    Returns:
-        Tuple of (category, detail) for display.
+    In parallel mode output is captured into a private ``Console`` (written
+    from a worker thread) and flushed as one block by the main thread. In
+    sequential mode output goes straight to the live console.
     """
-    error_str = str(error)
-    error_type = type(error).__name__
 
-    if "CLI_FAILURE" in error_str:
-        return "CLI", error_str.split("CLI_FAILURE: ", 1)[
-            -1
-        ] if "CLI_FAILURE: " in error_str else f"{error_type}: {error}"
-    if "API_FAILURE" in error_str or "Collection failed for phase" in error_str:
-        return "API", error_str.split("API_FAILURE: ", 1)[
-            -1
-        ] if "API_FAILURE: " in error_str else f"{error_type}: {error}"
-    return "API", f"{error_type}: {error}"
+    def __init__(self, display: VerboseProgressDisplay, captured: Console | None) -> None:
+        self.display = display
+        self.captured = captured
+
+    def on_phase(self, info: ProgressInfo) -> None:
+        """Forward a collector phase update to the display."""
+        self.display.on_progress(info)
+
+    def on_client_unavailable(self, kind: str, error: Exception) -> None:
+        """Show that a client could not be built."""
+        if self.captured is not None:
+            self.captured.print(f"  [dim]{kind} client unavailable: {error}[/dim]")
+        else:
+            print_warning(f"  [dim]{kind} client unavailable: {error}[/dim]")
+
+    def on_collection_finished(self, success: bool) -> None:
+        """Print the cluster summary into the captured block (parallel only)."""
+        if self.captured is not None:
+            self.display.print_summary(success=success)
+
+    def captured_text(self) -> str:
+        """Return the captured output, or an empty string when not buffering."""
+        if self.captured is None:
+            return ""
+        return self.captured.export_text(clear=False)
+
+
+class _NormalReporter:
+    """Normal-mode rendering: spinner (sequential) and one line per cluster."""
+
+    def __init__(self, parallel: bool) -> None:
+        self.parallel = parallel
+        self._progress: Progress | None = None
+        self._tasks: dict[str, TaskID] = {}
+
+    def __enter__(self) -> _NormalReporter:
+        if not self.parallel:
+            self._progress = Progress(
+                SpinnerColumn(),
+                TextColumn("[progress.description]{task.description}"),
+                console=console,
+            )
+            self._progress.__enter__()
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        tb: TracebackType | None,
+    ) -> None:
+        if self._progress is not None:
+            self._progress.__exit__(exc_type, exc, tb)
+            self._progress = None
+
+    def cluster_started(self, name: str, index: int, total: int) -> ClusterProgress | None:
+        """Add a spinner task for the cluster (sequential only)."""
+        if self._progress is not None:
+            self._tasks[name] = self._progress.add_task(
+                f"Collecting metadata for {name}...", total=1
+            )
+        return None
+
+    def cluster_finished(
+        self,
+        result: ClusterRefreshResult,
+        progress: ClusterProgress | None,
+        completed: int,
+        total: int,
+    ) -> None:
+        """Print the cluster's outcome line."""
+        name = result.cluster_name
+        err = result.error or RuntimeError("Unknown collection failure")
+        if result.status is RefreshStatus.OK:
+            print_success(f"  {name}: Cache refreshed")
+        elif result.status is RefreshStatus.NO_CLIENTS:
+            print_error(f"  No clients available for {name}")
+        elif result.status is RefreshStatus.PERSIST_FAILED and self.parallel:
+            print_exception(f"  {name}: Persist failed - {err}", err)
+        else:
+            print_exception(f"  {name}: Failed - {err}", err)
+        if self._progress is not None and name in self._tasks:
+            self._progress.update(self._tasks[name], completed=1)
+
+
+class _VerboseReporter:
+    """Verbose-mode rendering: phase-by-phase progress per cluster."""
+
+    def __init__(self, parallel: bool) -> None:
+        self.parallel = parallel
+        self._displays: dict[str, VerboseProgressDisplay] = {}
+
+    def __enter__(self) -> _VerboseReporter:
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        tb: TracebackType | None,
+    ) -> None:
+        return None
+
+    def cluster_started(self, name: str, index: int, total: int) -> ClusterProgress | None:
+        """Create the cluster's progress sink (header printed now if sequential)."""
+        if not self.parallel:
+            display = VerboseProgressDisplay(
+                console=console, cluster_name=name, cluster_index=index, total_clusters=total
+            )
+            display.print_header()
+            self._displays[name] = display
+            return _VerboseClusterSink(display, None)
+        # Write to a private StringIO so workers never touch sys.stdout and
+        # race with each other; the main thread replays the block on completion.
+        captured = Console(record=True, force_terminal=False, width=120, file=io.StringIO())
+        display = VerboseProgressDisplay(
+            console=captured,
+            cluster_name=name,
+            cluster_index=0,
+            total_clusters=0,
+            buffered=True,
+        )
+        return _VerboseClusterSink(display, captured)
+
+    def cluster_finished(
+        self,
+        result: ClusterRefreshResult,
+        progress: ClusterProgress | None,
+        completed: int,
+        total: int,
+    ) -> None:
+        """Render the cluster's outcome."""
+        name = result.cluster_name
+        err = result.error or RuntimeError("Unknown collection failure")
+        if self.parallel:
+            console.print(f"\n[bold][{completed}/{total}] {name}[/bold]")
+            if isinstance(progress, _VerboseClusterSink):
+                text = progress.captured_text()
+                if text:
+                    # Captured output already ends with newlines.
+                    console.out(text, end="", highlight=False)
+            if result.status is RefreshStatus.NO_CLIENTS:
+                print_error(f"  No clients available for {name}")
+            elif result.status is RefreshStatus.COLLECT_FAILED:
+                print_exception(f"  Error: {err}", err)
+            elif result.status is RefreshStatus.PERSIST_FAILED:
+                print_exception(f"  Persist failed: {err}", err)
+            return
+
+        display = self._displays.pop(name)
+        if result.status is RefreshStatus.OK:
+            display.print_summary(True)
+        elif result.status is RefreshStatus.NO_CLIENTS:
+            print_error(f"  No clients available for {name}")
+            display.print_summary(False)
+        else:
+            display.print_summary(success=False)
+            print_exception(f"  Error: {err}", err)
 
 
 def _print_failure_summary(
@@ -323,653 +461,17 @@ def _print_failure_summary(
             console.print(f"    {msg}")
 
 
-def _refresh_normal(
-    ctx: click.Context,
-    config: Config,
-    db: ClusterMetadataDB,
-    history_db: CacheHistoryDB,
-    clusters_to_refresh: list[str],
-    workers: int,
-) -> None:
-    """Refresh clusters with spinner progress (normal mode).
-
-    Args:
-        ctx: Click context.
-        config: Configuration object.
-        db: Cache database.
-        history_db: History database.
-        clusters_to_refresh: List of cluster names.
-        workers: Number of parallel cluster workers (1 = sequential).
-    """
-    success_count = 0
-    error_count = 0
-    failures: dict[str, list[str]] = {}
-
-    if workers <= 1:
-        with Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            console=console,
-        ) as progress:
-            for cluster_name in clusters_to_refresh:
-                task = progress.add_task(f"Collecting metadata for {cluster_name}...", total=1)
-                logger.info("Processing cluster: %s", cluster_name)
-
-                try:
-                    success = _process_cluster(config, db, history_db, cluster_name, verbose=False)
-                    if success:
-                        print_success(f"  {cluster_name}: Cache refreshed")
-                        success_count += 1
-                    else:
-                        error_count += 1
-                        failures.setdefault(cluster_name, []).append("No clients available")
-
-                except Exception as e:
-                    print_exception(f"  {cluster_name}: Failed - {e}", e)
-                    logger.exception("Failed to process cluster %s", cluster_name)
-                    error_count += 1
-                    category, detail = _categorize_failure(e)
-                    failures.setdefault(cluster_name, []).append(f"{category}: {detail}")
-
-                progress.update(task, completed=1)
-    else:
-        # Parallel path: workers collect, main thread persists.
-        # Preload previous snapshots on the main thread — SQLite connections
-        # can't cross threads, so workers must not touch history_db.
-        previous_by_cluster: dict[str, CachedClusterMetadata | None] = {
-            name: _load_previous_metadata(history_db, name) for name in clusters_to_refresh
-        }
-        with ThreadPoolExecutor(max_workers=workers) as executor:
-            future_map = {
-                executor.submit(
-                    _collect_cluster,
-                    config,
-                    cluster_name,
-                    previous_by_cluster[cluster_name],
-                    verbose=False,
-                ): cluster_name
-                for cluster_name in clusters_to_refresh
-            }
-            for future in as_completed(future_map):
-                cluster_name = future_map[future]
-                try:
-                    result = future.result()
-                except Exception as e:  # pragma: no cover - defensive
-                    print_exception(f"  {cluster_name}: Failed - {e}", e)
-                    logger.exception("Failed to process cluster %s", cluster_name)
-                    error_count += 1
-                    category, detail = _categorize_failure(e)
-                    failures.setdefault(cluster_name, []).append(f"{category}: {detail}")
-                    continue
-
-                if result.no_clients:
-                    print_error(f"  No clients available for {cluster_name}")
-                    logger.error("No clients available for %s", cluster_name)
-                    error_count += 1
-                    failures.setdefault(cluster_name, []).append("No clients available")
-                    continue
-
-                if result.error is not None or result.metadata is None:
-                    err = result.error or RuntimeError("Unknown collection failure")
-                    print_exception(f"  {cluster_name}: Failed - {err}", err)
-                    logger.error("Failed to process cluster %s: %s", cluster_name, err)
-                    error_count += 1
-                    category, detail = _categorize_failure(err)
-                    failures.setdefault(cluster_name, []).append(f"{category}: {detail}")
-                    continue
-
-                # Main-thread persistence (DB writes are not thread-safe).
-                try:
-                    _persist_cluster(db, history_db, result)
-                except Exception as e:
-                    print_exception(f"  {cluster_name}: Persist failed - {e}", e)
-                    logger.exception("Persist failed for cluster %s", cluster_name)
-                    error_count += 1
-                    category, detail = _categorize_failure(e)
-                    failures.setdefault(cluster_name, []).append(f"{category}: {detail}")
-                    continue
-
-                print_success(f"  {cluster_name}: Cache refreshed")
-                success_count += 1
-
-    # Summary
+def _report_summary(ctx: click.Context, summary: RefreshSummary) -> None:
+    """Print the final counts and exit non-zero when any cluster failed."""
+    success_count = summary.succeeded
+    error_count = summary.failed
     console.print()
     if success_count > 0:
         print_success(f"Successfully refreshed {success_count} cluster(s)")
     if error_count > 0:
         print_error(f"Failed to refresh {error_count} cluster(s)")
-        _print_failure_summary(failures)
+        _print_failure_summary(summary.failures)
         logger.error("Failed to refresh %d cluster(s)", error_count)
         ctx.exit(1)
 
     logger.info("Cache refresh completed: %d success, %d failed", success_count, error_count)
-
-
-def _refresh_verbose(
-    ctx: click.Context,
-    config: Config,
-    db: ClusterMetadataDB,
-    history_db: CacheHistoryDB,
-    clusters_to_refresh: list[str],
-    workers: int,
-) -> None:
-    """Refresh clusters with detailed progress (verbose mode).
-
-    Args:
-        ctx: Click context.
-        config: Configuration object.
-        db: Cache database.
-        history_db: History database.
-        clusters_to_refresh: List of cluster names.
-        workers: Number of parallel cluster workers (1 = sequential).
-    """
-    success_count = 0
-    error_count = 0
-    total_clusters = len(clusters_to_refresh)
-    failures: dict[str, list[str]] = {}
-
-    if workers <= 1:
-        for idx, cluster_name in enumerate(clusters_to_refresh, 1):
-            logger.info("Processing cluster: %s (%d/%d)", cluster_name, idx, total_clusters)
-
-            display = VerboseProgressDisplay(
-                console=console,
-                cluster_name=cluster_name,
-                cluster_index=idx,
-                total_clusters=total_clusters,
-            )
-            display.print_header()
-
-            try:
-                success = _process_cluster(
-                    config,
-                    db,
-                    history_db,
-                    cluster_name,
-                    verbose=True,
-                    progress_callback=display.on_progress,
-                )
-                display.print_summary(success)
-                if success:
-                    success_count += 1
-                else:
-                    error_count += 1
-                    failures.setdefault(cluster_name, []).append("No clients available")
-
-            except Exception as e:
-                display.print_summary(success=False)
-                print_exception(f"  Error: {e}", e)
-                logger.exception("Failed to process cluster %s", cluster_name)
-                error_count += 1
-                category, detail = _categorize_failure(e)
-                failures.setdefault(cluster_name, []).append(f"{category}: {detail}")
-    else:
-        # Parallel + verbose: each worker captures its own output in a buffered
-        # Console(record=True); on completion the main thread flushes the whole
-        # block so per-cluster output stays coherent.
-        # Use 1-based completion counter for display ordering.
-        completion_counter = 0
-        # Preload previous snapshots on the main thread — SQLite connections
-        # can't cross threads, so workers must not touch history_db.
-        previous_by_cluster: dict[str, CachedClusterMetadata | None] = {
-            name: _load_previous_metadata(history_db, name) for name in clusters_to_refresh
-        }
-        with ThreadPoolExecutor(max_workers=workers) as executor:
-            future_map = {
-                executor.submit(
-                    _collect_cluster,
-                    config,
-                    cluster_name,
-                    previous_by_cluster[cluster_name],
-                    verbose=True,
-                ): cluster_name
-                for cluster_name in clusters_to_refresh
-            }
-
-            # Announce work on the main thread so users see progress immediately.
-            for cluster_name in clusters_to_refresh:
-                logger.info(
-                    "Queued cluster for refresh: %s (of %d)",
-                    cluster_name,
-                    total_clusters,
-                )
-
-            for future in as_completed(future_map):
-                completion_counter += 1
-                cluster_name = future_map[future]
-                try:
-                    result = future.result()
-                except Exception as e:  # pragma: no cover - defensive
-                    console.print(
-                        f"\n[bold][{completion_counter}/{total_clusters}] {cluster_name}[/bold]"
-                    )
-                    print_exception(f"  Error: {e}", e)
-                    logger.exception("Failed to process cluster %s", cluster_name)
-                    error_count += 1
-                    category, detail = _categorize_failure(e)
-                    failures.setdefault(cluster_name, []).append(f"{category}: {detail}")
-                    continue
-
-                # Flush the worker's captured verbose block as one unit.
-                console.print(
-                    f"\n[bold][{completion_counter}/{total_clusters}] {cluster_name}[/bold]"
-                )
-                if result.captured_output:
-                    # End with no extra newline: captured output already has trailing newlines.
-                    console.out(result.captured_output, end="", highlight=False)
-
-                if result.no_clients:
-                    print_error(f"  No clients available for {cluster_name}")
-                    logger.error("No clients available for %s", cluster_name)
-                    error_count += 1
-                    failures.setdefault(cluster_name, []).append("No clients available")
-                    continue
-
-                if result.error is not None or result.metadata is None:
-                    err = result.error or RuntimeError("Unknown collection failure")
-                    print_exception(f"  Error: {err}", err)
-                    logger.error("Failed to process cluster %s: %s", cluster_name, err)
-                    error_count += 1
-                    category, detail = _categorize_failure(err)
-                    failures.setdefault(cluster_name, []).append(f"{category}: {detail}")
-                    continue
-
-                try:
-                    _persist_cluster(db, history_db, result)
-                except Exception as e:
-                    print_exception(f"  Persist failed: {e}", e)
-                    logger.exception("Persist failed for cluster %s", cluster_name)
-                    error_count += 1
-                    category, detail = _categorize_failure(e)
-                    failures.setdefault(cluster_name, []).append(f"{category}: {detail}")
-                    continue
-
-                success_count += 1
-
-    # Summary
-    console.print()
-    if success_count > 0:
-        print_success(f"Successfully refreshed {success_count} cluster(s)")
-    if error_count > 0:
-        print_error(f"Failed to refresh {error_count} cluster(s)")
-        _print_failure_summary(failures)
-        logger.error("Failed to refresh %d cluster(s)", error_count)
-        ctx.exit(1)
-
-    logger.info("Cache refresh completed: %d success, %d failed", success_count, error_count)
-
-
-def _load_previous_metadata(
-    history_db: CacheHistoryDB, cluster_name: str
-) -> CachedClusterMetadata | None:
-    """Load the previous cluster snapshot from history, if any.
-
-    Must be called on the main thread — SQLite connections can't cross threads.
-    """
-    latest_snapshot = history_db.get_latest_snapshot(cluster_name)
-    if not latest_snapshot:
-        return None
-
-    after_json = latest_snapshot.get("after_json")
-    if not (after_json and isinstance(after_json, str)):
-        return None
-
-    try:
-        previous_data = json.loads(after_json)
-        snapshot_version = previous_data.get("cache_version")
-
-        if not is_schema_compatible(snapshot_version):
-            logger.warning(
-                "Previous snapshot for %s has incompatible schema version %s, "
-                "treating as initial capture",
-                cluster_name,
-                snapshot_version,
-            )
-            return None
-
-        previous_metadata = CachedClusterMetadata.model_validate(previous_data)
-        logger.debug("Found previous snapshot for %s (v%s)", cluster_name, snapshot_version)
-        return previous_metadata
-    except Exception as e:
-        logger.warning("Failed to parse previous snapshot for %s: %s", cluster_name, e)
-        return None
-
-
-def _collect_cluster(
-    config: Config,
-    cluster_name: str,
-    previous_metadata: CachedClusterMetadata | None,
-    *,
-    verbose: bool,
-) -> _CollectResult:
-    """Worker-thread collection for a single cluster.
-
-    Takes **zero DB handles**. Builds API/CLI clients and runs the collector,
-    using the caller-supplied ``previous_metadata`` (loaded on the main thread).
-    **Does not read from or write to the cache or history database** — all DB
-    access happens on the main thread because SQLite connections can't cross
-    threads.
-
-    In verbose mode, a ``Console(record=True)`` captures the collector's
-    phase output so the main thread can flush it as one coherent block.
-    """
-    captured_console: Console | None = None
-    progress_callback: ProgressCallback | None = None
-    display: VerboseProgressDisplay | None = None
-
-    if verbose:
-        # Write to a private StringIO so the worker never touches sys.stdout
-        # directly — without this, Rich's default file=sys.stdout causes all
-        # worker threads to emit live output that races with other workers.
-        # export_text() reads the record buffer, not the file, so the replay
-        # on the main thread is unaffected.
-        captured_console = Console(record=True, force_terminal=False, width=120, file=io.StringIO())
-        # The index is assigned on the main thread when flushing; we use 0/0
-        # as a placeholder inside the captured block since the header is
-        # printed on the main thread anyway.
-        display = VerboseProgressDisplay(
-            console=captured_console,
-            cluster_name=cluster_name,
-            cluster_index=0,
-            total_clusters=0,
-            buffered=True,
-        )
-        progress_callback = display.on_progress
-
-    cluster_data = config.data["clusters"][cluster_name]
-
-    # Get credentials
-    user, password = config.get_user("clusters", cluster_name)
-
-    # Create cluster object for API client
-    class ClusterObj:
-        def __init__(self, name: str, ip: str) -> None:
-            self.name = name
-            self.ip = ip
-
-    cluster_obj = ClusterObj(cluster_name, cluster_data.get("ip", ""))
-
-    # Initialize clients
-    api_client: ONTAPAPIClient | None = None
-    cli_client: ONTAPCLI | None = None
-
-    try:
-        api_client = ONTAPAPIClient(cluster=cluster_obj, config=config)
-        logger.debug("[%s] API client initialized", cluster_name)
-    except Exception as e:
-        if verbose and captured_console is not None:
-            captured_console.print(f"  [dim]API client unavailable: {e}[/dim]")
-        logger.warning("[%s] API client unavailable: %s", cluster_name, e)
-
-    try:
-        cli_client = ONTAPCLI(
-            name=cluster_name,
-            host_or_ip=cluster_data.get("ip", ""),
-            username=user,
-            password=password,
-        )
-        logger.debug("[%s] CLI client initialized", cluster_name)
-    except Exception as e:
-        if verbose and captured_console is not None:
-            captured_console.print(f"  [dim]CLI client unavailable: {e}[/dim]")
-        logger.warning("[%s] CLI client unavailable: %s", cluster_name, e)
-
-    if not api_client and not cli_client:
-        logger.error("[%s] No clients available", cluster_name)
-        return _CollectResult(
-            cluster_name=cluster_name,
-            metadata=None,
-            previous_metadata=None,
-            captured_output=captured_console.export_text(clear=False)
-            if captured_console is not None
-            else "",
-            success=False,
-            error=None,
-            no_clients=True,
-        )
-
-    # Get AWS SSO config if configured
-    aws_sso_config = config.settings.get("aws", {}).get("sso")
-
-    # Collect metadata
-    collector = MetadataCollector(
-        api_client=api_client,
-        cli_client=cli_client,
-        progress_callback=progress_callback,
-        aws_sso_config=aws_sso_config,
-    )
-
-    error: Exception | None = None
-    metadata: CachedClusterMetadata | None = None
-    try:
-        metadata = collector.collect_all(cluster_name)
-    except Exception as e:
-        error = e
-        logger.warning("[%s] Collection failed: %s", cluster_name, e)
-
-    # Verbose summary line so captured output is complete.
-    if verbose and display is not None:
-        display.print_summary(success=error is None and metadata is not None)
-
-    # Clean up CLI client inside the worker — disconnect is not DB-related.
-    if cli_client:
-        with contextlib.suppress(Exception):
-            cli_client.disconnect()
-            logger.debug("[%s] CLI client disconnected", cluster_name)
-
-    return _CollectResult(
-        cluster_name=cluster_name,
-        metadata=metadata,
-        previous_metadata=previous_metadata,
-        captured_output=captured_console.export_text(clear=False)
-        if captured_console is not None
-        else "",
-        success=error is None and metadata is not None,
-        error=error,
-        no_clients=False,
-    )
-
-
-def _persist_cluster(
-    db: ClusterMetadataDB,
-    history_db: CacheHistoryDB,
-    result: _CollectResult,
-) -> None:
-    """Main-thread-only persistence for a collected cluster result.
-
-    Computes the diff against the previous snapshot, records a history entry
-    when appropriate, and writes the new metadata to the cache database. All
-    DB writes for every cluster flow through this function on the main thread
-    to preserve SQLite single-connection thread-safety.
-    """
-    assert result.metadata is not None, "must have metadata to persist"
-    cluster_name = result.cluster_name
-    metadata = result.metadata
-    previous_metadata = result.previous_metadata
-
-    # Sanity: make sure we really are on the main thread. This is a
-    # defence-in-depth check, not a user-facing guarantee.
-    if threading.current_thread() is not threading.main_thread():
-        logger.warning(
-            "[%s] _persist_cluster called off the main thread (%s); SQLite writes may race.",
-            cluster_name,
-            threading.current_thread().name,
-        )
-
-    # Compute diff and record history.
-    changes = compute_diff(previous_metadata, metadata)
-
-    if previous_metadata is None or changes:
-        before_json = previous_metadata.model_dump_json() if previous_metadata else None
-        after_json = metadata.model_dump_json()
-        change_id = history_db.record_change(
-            cluster_name=cluster_name,
-            before_json=before_json,
-            after_json=after_json,
-            summary=changes,
-        )
-        if previous_metadata is None:
-            logger.info(
-                "[%s] Initial snapshot recorded (change_id=%d)",
-                cluster_name,
-                change_id,
-            )
-        else:
-            logger.info(
-                "[%s] Change recorded: %d changes (change_id=%d)",
-                cluster_name,
-                len(changes),
-                change_id,
-            )
-    else:
-        logger.info("[%s] No changes detected, history not updated", cluster_name)
-
-    # Store in cache.
-    db.set(cluster_name, metadata)
-    logger.info("[%s] Cache updated", cluster_name)
-
-
-def _process_cluster(
-    config: Config,
-    db: ClusterMetadataDB,
-    history_db: CacheHistoryDB,
-    cluster_name: str,
-    verbose: bool = False,
-    progress_callback: ProgressCallback | None = None,
-) -> bool:
-    """Process a single cluster for cache refresh (sequential path).
-
-    This is the historical in-loop implementation used by the sequential
-    (``--parallel-clusters 1``) path. The parallel path uses
-    :func:`_collect_cluster` + :func:`_persist_cluster` so that SQLite writes
-    stay on the main thread.
-
-    Args:
-        config: Configuration object.
-        db: Cache database.
-        history_db: History database.
-        cluster_name: Name of the cluster.
-        verbose: Whether verbose mode is enabled.
-        progress_callback: Optional callback for progress updates.
-
-    Returns:
-        True if successful, False otherwise.
-    """
-    cluster_data = config.data["clusters"][cluster_name]
-
-    # Get credentials
-    user, password = config.get_user("clusters", cluster_name)
-
-    # Create cluster object for API client
-    class ClusterObj:
-        def __init__(self, name: str, ip: str) -> None:
-            self.name = name
-            self.ip = ip
-
-    cluster_obj = ClusterObj(cluster_name, cluster_data.get("ip", ""))
-
-    # Initialize clients
-    api_client: ONTAPAPIClient | None = None
-    cli_client: ONTAPCLI | None = None
-
-    try:
-        api_client = ONTAPAPIClient(cluster=cluster_obj, config=config)
-        logger.debug("API client initialized for %s", cluster_name)
-    except Exception as e:
-        if verbose:
-            print_warning(f"  [dim]API client unavailable: {e}[/dim]")
-        logger.warning("API client unavailable for %s: %s", cluster_name, e)
-
-    try:
-        cli_client = ONTAPCLI(
-            name=cluster_name,
-            host_or_ip=cluster_data.get("ip", ""),
-            username=user,
-            password=password,
-        )
-        logger.debug("CLI client initialized for %s", cluster_name)
-    except Exception as e:
-        if verbose:
-            print_warning(f"  [dim]CLI client unavailable: {e}[/dim]")
-        logger.warning("CLI client unavailable for %s: %s", cluster_name, e)
-
-    if not api_client and not cli_client:
-        print_error(f"  No clients available for {cluster_name}")
-        logger.error("No clients available for %s", cluster_name)
-        return False
-
-    # Get AWS SSO config if configured
-    aws_sso_config = config.settings.get("aws", {}).get("sso")
-
-    # Get previous snapshot from history for diff computation
-    previous_metadata: CachedClusterMetadata | None = None
-    latest_snapshot = history_db.get_latest_snapshot(cluster_name)
-    if latest_snapshot:
-        after_json = latest_snapshot.get("after_json")
-        if after_json and isinstance(after_json, str):
-            import json as json_module
-
-            try:
-                previous_data = json_module.loads(after_json)
-                snapshot_version = previous_data.get("cache_version")
-
-                if not is_schema_compatible(snapshot_version):
-                    logger.warning(
-                        "Previous snapshot for %s has incompatible schema version %s, "
-                        "treating as initial capture",
-                        cluster_name,
-                        snapshot_version,
-                    )
-                else:
-                    previous_metadata = CachedClusterMetadata.model_validate(previous_data)
-                    logger.debug(
-                        "Found previous snapshot for %s (v%s)", cluster_name, snapshot_version
-                    )
-            except Exception as e:
-                logger.warning("Failed to parse previous snapshot for %s: %s", cluster_name, e)
-
-    # Collect metadata
-    collector = MetadataCollector(
-        api_client=api_client,
-        cli_client=cli_client,
-        progress_callback=progress_callback,
-        aws_sso_config=aws_sso_config,
-    )
-    metadata = collector.collect_all(cluster_name)
-
-    # Compute diff and record history
-    changes = compute_diff(previous_metadata, metadata)
-
-    # Record change if this is initial capture or there are changes
-    if previous_metadata is None or changes:
-        before_json = previous_metadata.model_dump_json() if previous_metadata else None
-        after_json = metadata.model_dump_json()
-        change_id = history_db.record_change(
-            cluster_name=cluster_name,
-            before_json=before_json,
-            after_json=after_json,
-            summary=changes,
-        )
-        if previous_metadata is None:
-            logger.info("Initial snapshot recorded for %s (change_id=%d)", cluster_name, change_id)
-        else:
-            logger.info(
-                "Change recorded for %s: %d changes (change_id=%d)",
-                cluster_name,
-                len(changes),
-                change_id,
-            )
-    else:
-        logger.info("No changes detected for %s, history not updated", cluster_name)
-
-    # Store in cache
-    db.set(cluster_name, metadata)
-    logger.info("Cache updated for %s", cluster_name)
-
-    # Clean up CLI client
-    if cli_client:
-        with contextlib.suppress(Exception):
-            cli_client.disconnect()
-            logger.debug("CLI client disconnected for %s", cluster_name)
-
-    return True
