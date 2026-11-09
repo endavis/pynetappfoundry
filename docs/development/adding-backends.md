@@ -533,7 +533,7 @@ validates the multi-API architecture without requiring cache infrastructure.
 | Concern | DII approach | ONTAP comparison |
 | :--- | :--- | :--- |
 | Cache | None -- live-only | SQLite snapshot via `ClusterMetadataDB` |
-| Response envelope | Bare JSON array (`records_path=""`) | `{"records": [...]}` dict |
+| Response envelope | Bare JSON array or `{offset,count,limit,rows\|results\|values}` envelope (`records_path=""`) | `{"records": [...]}` dict |
 | Pagination | `offset` + `limit` query params | `_links.next.href` HAL links |
 | Authentication | API key header (`X-CloudInsights-ApiKey`) | HTTP Basic Auth per-cluster |
 | `where_expressions` | `NotImplementedError` | SQL-like cache filters |
@@ -544,8 +544,9 @@ validates the multi-API architecture without requiring cache infrastructure.
 `DiiBackend` (`src/pynetappfoundry/data/dii_backend.py`) is ~130 lines.  The `query()` method:
 
 1. Rejects cache-only decisions and `where_expressions`.
-2. Calls `DIIAPIClient.call_endpoint()` with filter dict as query params.
-3. Iterates the bare array response, parsing each record via
+2. Calls `DIIAPIClient.get_all_pages()` with filter dict as query params.
+3. Iterates the records (a bare array, or the records of an
+   `{offset,count,limit,rows|results|values}` envelope), parsing each record via
    `parse_api_record()`.
 4. Stamps `_fetched_fields` on every instance.
 
@@ -597,7 +598,7 @@ This makes DII a useful reference for the simplest possible backend.
 ### Source files
 
 - `src/pynetappfoundry/data/backends.py` -- Backend ABC and OntapBackend
-- `src/pynetappfoundry/data/dii_backend.py` -- DiiBackend (live-only, bare-array)
+- `src/pynetappfoundry/data/dii_backend.py` -- DiiBackend (live-only, bare-array or envelope)
 - `src/pynetappfoundry/data/source.py` -- DataSource facade and `_BACKENDS` registry
 - `src/pynetappfoundry/data/_routing.py` -- RoutingDecision and `decide_path()`
 - `src/pynetappfoundry/cache/field_mapping.py` -- TypeMapping and FieldMapping

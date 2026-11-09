@@ -4,9 +4,10 @@ Implements :class:`DiiBackend`, a live-only backend that queries the DII
 REST API.  DII has no local cache database; all queries go directly to
 the remote API.
 
-DII endpoints return bare JSON arrays (not envelope dicts), so this
-backend calls :meth:`DIIAPIClient.call_endpoint` and feeds each record
-through :func:`parse_api_record` individually rather than using the
+DII endpoints return bare JSON arrays or ``{offset, count, limit,
+rows|results|values}`` envelopes, so this backend calls
+:meth:`DIIAPIClient.get_all_pages` and feeds each record through
+:func:`parse_api_record` individually rather than using the
 envelope-oriented :func:`parse_api_response`.
 """
 
@@ -18,6 +19,7 @@ from typing import TYPE_CHECKING, Any, TypeVar
 from pydantic import BaseModel
 
 from pynetappfoundry.cache.field_mapping import parse_api_record
+from pynetappfoundry.clients.dii.api import extract_envelope_records
 from pynetappfoundry.data.backends import Backend
 
 if TYPE_CHECKING:
@@ -90,7 +92,7 @@ class DiiBackend(Backend):
         Filters are translated to simple ``key=value`` query parameters
         on the DII endpoint URL.
 
-        DII endpoints return bare JSON arrays.  Each element is parsed
+        DII endpoints return bare JSON arrays or record envelopes.  Each element is parsed
         individually via :func:`parse_api_record` and stamped with
         ``_fetched_fields``.
         """
@@ -116,6 +118,8 @@ class DiiBackend(Backend):
             records = response
         elif response is None:
             records = []
+        elif (envelope := extract_envelope_records(response)) is not None:
+            records = envelope
         else:
             # Unexpected shape -- treat as empty.
             logger.warning(

@@ -202,6 +202,69 @@ class TestDiiBackendQuery:
         for field in live_fields:
             assert results[0].was_fetched(field)
 
+    def test_records_list_from_envelope_paging(
+        self,
+        fake_dii_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        """get_all_pages returning an envelope's records list is parsed."""
+        backend = _make_backend(mock_config)
+        decision = RoutingDecision(cache_fields=(), live_fields=("id", "name"))
+        mock_client = MagicMock()
+        mock_client.get_all_pages.return_value = [{"id": 1, "name": "a"}, {"id": 2, "name": "b"}]
+
+        with patch.object(backend, "_get_api_client", return_value=mock_client):
+            results = backend.query(FakeDiiAsset, fake_dii_mapping, decision, "t", {})
+
+        assert [r.id for r in results] == [1, 2]
+
+    def test_raw_envelope_dict_is_parsed_without_warning(
+        self,
+        fake_dii_mapping: TypeMapping,
+        mock_config: Any,
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        """The explicit offset/limit path returns a raw envelope; records are parsed."""
+        backend = _make_backend(mock_config)
+        decision = RoutingDecision(cache_fields=(), live_fields=("id", "name"))
+        mock_client = MagicMock()
+        mock_client.get_all_pages.return_value = {
+            "offset": 0,
+            "count": 2,
+            "limit": 10,
+            "rows": [{"id": 1, "name": "a"}, {"id": 2, "name": "b"}],
+        }
+
+        with (
+            caplog.at_level("WARNING"),
+            patch.object(backend, "_get_api_client", return_value=mock_client),
+        ):
+            results = backend.query(FakeDiiAsset, fake_dii_mapping, decision, "t", {"limit": 10})
+
+        assert [r.id for r in results] == [1, 2]
+        assert "unexpected response type" not in caplog.text
+
+    def test_non_envelope_dict_warns_and_returns_empty(
+        self,
+        fake_dii_mapping: TypeMapping,
+        mock_config: Any,
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        """A dict that is not an envelope still warns and yields no results."""
+        backend = _make_backend(mock_config)
+        decision = RoutingDecision(cache_fields=(), live_fields=("id",))
+        mock_client = MagicMock()
+        mock_client.get_all_pages.return_value = {"results": [{"id": 1}]}
+
+        with (
+            caplog.at_level("WARNING"),
+            patch.object(backend, "_get_api_client", return_value=mock_client),
+        ):
+            results = backend.query(FakeDiiAsset, fake_dii_mapping, decision, "t", {})
+
+        assert results == []
+        assert "unexpected response type" in caplog.text
+
 
 class TestDiiBackendErrors:
     """Error handling tests for DiiBackend."""
