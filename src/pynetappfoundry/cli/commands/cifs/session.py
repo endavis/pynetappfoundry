@@ -382,6 +382,7 @@ def session(
     print_info(f"Scanning {len(clusters)} cluster(s) for {desc}...")
 
     all_rows: list[SessionRow] = []
+    failed_clusters: list[str] = []
     for idx, (name, details) in enumerate(clusters.items(), start=1):
         print_info(
             f"[{idx}/{len(clusters)}] {name} ({details.get('ip', '?')}): querying CIFS sessions..."
@@ -390,6 +391,7 @@ def session(
             rows, scanned = _scan_cluster(config, name, user, case_sensitive, ip)
         except Exception as e:
             print_exception(f"Could not query CIFS sessions on {name}: {e}", e)
+            failed_clusters.append(name)
             continue
         all_rows.extend(rows)
         print_info(
@@ -407,3 +409,8 @@ def session(
         target = _resolve_csv_path(csv_path, config.output_dir)
         _write_csv(all_rows, target)
         print_info(f"CSV written to {target.resolve()} ({len(all_rows)} row(s)).")
+
+    if len(failed_clusters) == len(clusters):
+        raise click.ClickException(
+            f"Could not query CIFS sessions on any cluster: {', '.join(failed_clusters)}"
+        )

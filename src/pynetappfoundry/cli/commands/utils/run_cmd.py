@@ -33,9 +33,16 @@ def run_cmd(
 
     Example: nf utils run-cmd "vol show"
     """
+    failed: list[str] = []
     for name, details in clusters.items():
         print_info(f"Running command on {name}...")
-        _run_cluster_command(name, details, config, command)
+        if not _run_cluster_command(name, details, config, command):
+            failed.append(name)
+
+    if failed:
+        raise click.ClickException(
+            f"Command failed on {len(failed)} cluster(s): {', '.join(failed)}"
+        )
 
 
 def _run_cluster_command(
@@ -43,8 +50,12 @@ def _run_cluster_command(
     details: dict[str, Any],
     config: Config,
     command: str,
-) -> None:
-    """Run command on a single cluster."""
+) -> bool:
+    """Run command on a single cluster.
+
+    Returns:
+        True on success, False if the command failed.
+    """
     user, password = config.get_user("clusters", name)
 
     try:
@@ -61,6 +72,8 @@ def _run_cluster_command(
         console.print(f"\n[bold]{name}:[/bold]")
         for line in output:
             console.print(f"  {line}")
+        return True
 
     except Exception as e:
         print_exception(f"Could not run command on {name}: {e}", e)
+        return False

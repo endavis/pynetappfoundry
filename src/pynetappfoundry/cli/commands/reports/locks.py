@@ -43,12 +43,19 @@ def locks(
     if default_sheet:
         wb.remove(default_sheet)
 
+    failed: list[str] = []
     for name, details in clusters.items():
         print_info(f"Gathering lock data for {name}...")
-        _gather_lock_data(name, details, config, wb)
+        if not _gather_lock_data(name, details, config, wb):
+            failed.append(name)
 
     wb.save(filename)
     print_success(f"Report saved to {filename}")
+
+    if clusters and len(failed) == len(clusters):
+        raise click.ClickException(
+            f"Could not gather lock data on any cluster: {', '.join(failed)}"
+        )
 
 
 def _gather_lock_data(
@@ -56,8 +63,12 @@ def _gather_lock_data(
     details: dict[str, Any],
     config: Config,
     wb: Workbook,
-) -> None:
-    """Gather lock data from a single cluster."""
+) -> bool:
+    """Gather lock data from a single cluster.
+
+    Returns:
+        True on success, False if the cluster could not be queried.
+    """
     try:
         cluster_config = ClusterConfig(**details)
         client = ONTAPAPIClient(cluster=cluster_config, config=config)
@@ -100,8 +111,10 @@ def _gather_lock_data(
                     print_debug(f"Unknown lock type: {lock_type}")
             except Exception as e:
                 print_error(f"Lock error: {e}")
+        return True
 
     except Exception as e:
         print_error(f"Could not gather lock data for {name}: {e}")
         ws = wb.create_sheet(name)
         ws.append(["Error", str(e)])
+        return False

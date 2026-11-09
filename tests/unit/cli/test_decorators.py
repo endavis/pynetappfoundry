@@ -154,3 +154,50 @@ class TestWithConfigLiveFlag:
 
         assert result.exit_code == 0
         assert captured.get("no_cache") is False
+
+
+class TestWithConfigErrorHandling:
+    """with_config reports only config/filter errors as such."""
+
+    @staticmethod
+    def _cli(body: object) -> click.Command:
+        @click.command()
+        @click.option("--filter", "filter")
+        @with_config("test failed")
+        def cmd(config: Config, clusters: object) -> None:
+            body()  # type: ignore[operator]
+
+        return cmd
+
+    @patch("pynetappfoundry.cli.decorators.Config")
+    def test_command_json_error_not_relabelled(self, _cfg: MagicMock) -> None:
+        import json
+
+        def body() -> None:
+            json.loads("{bad")
+
+        result = CliRunner().invoke(self._cli(body), [], obj={})
+        assert result.exit_code != 0
+        assert "Invalid filter JSON" not in result.output
+
+    @patch("pynetappfoundry.cli.decorators.Config")
+    def test_command_click_exception_not_double_prefixed(self, _cfg: MagicMock) -> None:
+        def body() -> None:
+            raise click.ClickException("inner")
+
+        result = CliRunner().invoke(self._cli(body), [], obj={})
+        assert result.exit_code == 1
+        assert "Error: inner" in result.output
+        assert "test failed" not in result.output
+
+    @patch("pynetappfoundry.cli.decorators.Config")
+    def test_non_dict_filter_rejected(self, _cfg: MagicMock) -> None:
+        result = CliRunner().invoke(self._cli(lambda: None), ["--filter", "[1]"], obj={})
+        assert result.exit_code != 0
+        assert "Invalid filter JSON" in result.output
+
+    @patch("pynetappfoundry.cli.decorators.Config")
+    def test_invalid_filter_json(self, _cfg: MagicMock) -> None:
+        result = CliRunner().invoke(self._cli(lambda: None), ["--filter", "{bad"], obj={})
+        assert result.exit_code != 0
+        assert "Invalid filter JSON" in result.output

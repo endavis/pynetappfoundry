@@ -212,3 +212,43 @@ class TestGatherLockData:
         # Verify config= is threaded to QuerySet (DataSource shim)
         for call in mock_qs_cls.call_args_list:
             assert call.kwargs.get("config") is mock_config
+
+
+class TestLocksExitCode:
+    """Exit-code behaviour of the locks command."""
+
+    @staticmethod
+    def _run(results: list[bool]) -> Any:
+        from click.testing import CliRunner
+
+        from pynetappfoundry.cli.commands.reports.locks import locks
+
+        clusters = {f"c{i}": {"ip": "1.1.1.1"} for i in range(len(results))}
+        cfg = MagicMock()
+        cfg.get_clusters.return_value = clusters
+        cfg.output_dir = Path("/tmp/test_output")
+        with (
+            patch("pynetappfoundry.cli.decorators.Config", return_value=cfg),
+            patch(
+                "pynetappfoundry.cli.commands.reports.locks._gather_lock_data",
+                side_effect=results,
+            ),
+            patch("pynetappfoundry.cli.commands.reports.locks.Workbook"),
+        ):
+            return CliRunner().invoke(locks, [], obj={})
+
+    def test_all_clusters_fail_exits_nonzero(self) -> None:
+        assert self._run([False, False]).exit_code != 0
+
+    def test_partial_failure_exits_zero(self) -> None:
+        result = self._run([False, True])
+        assert result.exit_code == 0, result.output
+
+    def test_gather_returns_false_on_error(
+        self, mock_config: MagicMock, sample_details: dict[str, Any]
+    ) -> None:
+        with patch(
+            "pynetappfoundry.cli.commands.reports.locks.ONTAPAPIClient",
+            side_effect=RuntimeError("down"),
+        ):
+            assert _gather_lock_data("c", sample_details, mock_config, Workbook()) is False

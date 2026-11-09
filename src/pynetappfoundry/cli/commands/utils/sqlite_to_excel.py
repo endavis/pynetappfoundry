@@ -42,7 +42,7 @@ def sqlite_to_excel(db_path: str, output: str | None) -> None:
 
         if not tables:
             print_error("No tables found in database")
-            return
+            raise click.ClickException("No tables found in database")
 
         wb = Workbook()
         # Remove default sheet
@@ -74,3 +74,4 @@ def sqlite_to_excel(db_path: str, output: str | None) -> None:
 
     except Exception as e:
         print_exception(f"Conversion failed: {e}", e)
+        raise click.ClickException(f"Conversion failed: {e}") from e
