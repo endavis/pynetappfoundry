@@ -6,13 +6,19 @@ per-cluster overrides, and check results.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
+
+Severity = Literal["info", "warning", "error"]
+
+RuleErrorStage = Literal["load", "override", "merge", "query"]
 
 
 class ComplianceRule(BaseModel):
     """A single compliance rule definition.
+
+    Unknown fields are rejected so a typo is reported, not ignored.
 
     Attributes:
         name: Rule identifier (key from TOML config).
@@ -23,11 +29,13 @@ class ComplianceRule(BaseModel):
         enabled: Whether the rule is active.
     """
 
+    model_config = ConfigDict(extra="forbid")
+
     name: str
     description: str = ""
     model: str
     where: str
-    severity: str = "warning"
+    severity: Severity = "warning"
     enabled: bool = True
 
 
@@ -44,11 +52,13 @@ class ClusterComplianceOverride(BaseModel):
         severity: Override severity level.
     """
 
+    model_config = ConfigDict(extra="forbid")
+
     enabled: bool | None = None
     description: str | None = None
     model: str | None = None
     where: str | None = None
-    severity: str | None = None
+    severity: Severity | None = None
 
 
 class ComplianceResult(BaseModel):
@@ -67,7 +77,25 @@ class ComplianceResult(BaseModel):
     rule_name: str
     description: str
     model: str
-    severity: str
+    severity: Severity
     cluster_name: str
     match_count: int
     matches: list[dict[str, Any]]
+
+
+class ComplianceRuleError(BaseModel):
+    """A compliance rule that was skipped or failed, with the reason.
+
+    Attributes:
+        rule_name: Name of the rule (table key) that failed.
+        cluster_name: Cluster the failure applies to, or None for global rules.
+        stage: Where the failure happened: ``"load"`` (global rule),
+            ``"override"`` (cluster override), ``"merge"`` (override applied
+            to a rule) or ``"query"`` (rule execution).
+        message: Human-readable reason.
+    """
+
+    rule_name: str
+    cluster_name: str | None = None
+    stage: RuleErrorStage
+    message: str

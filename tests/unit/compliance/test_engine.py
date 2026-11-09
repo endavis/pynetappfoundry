@@ -5,7 +5,7 @@ from __future__ import annotations
 from unittest.mock import MagicMock
 
 from pynetappfoundry.compliance.engine import run_compliance_checks
-from pynetappfoundry.compliance.models import ComplianceRule
+from pynetappfoundry.compliance.models import ComplianceRule, ComplianceRuleError
 
 
 class TestRunComplianceChecks:
@@ -152,3 +152,46 @@ class TestRunComplianceChecks:
 
         assert len(results) == 1
         assert results[0].rule_name == "vol_check"
+
+    def test_value_error_recorded(self) -> None:
+        """A ValueError is recorded as a query-stage error."""
+        db = MagicMock()
+        db.query_with_filters.side_effect = ValueError("Unknown model name")
+        rules = {"bad": ComplianceRule(name="bad", model="bad.model", where="x = 1")}
+        errors: list[ComplianceRuleError] = []
+
+        results = run_compliance_checks(db, "cluster1", rules, errors=errors)
+
+        assert results == []
+        assert len(errors) == 1
+        assert errors[0].rule_name == "bad"
+        assert errors[0].cluster_name == "cluster1"
+        assert errors[0].stage == "query"
+        assert "Unknown model name" in errors[0].message
+
+    def test_other_exceptions_recorded_and_next_rule_runs(self) -> None:
+        """RuntimeError/KeyError are recorded; later rules still run."""
+        match = self._make_mock_match({"name": "n1"})
+        db = MagicMock()
+        db.query_with_filters.side_effect = [RuntimeError("boom"), KeyError("k"), [match]]
+        rules = {
+            "a": ComplianceRule(name="a", model="nodes", where="x = 1"),
+            "b": ComplianceRule(name="b", model="nodes", where="x = 1"),
+            "c": ComplianceRule(name="c", model="nodes", where="x = 1"),
+        }
+        errors: list[ComplianceRuleError] = []
+
+        results = run_compliance_checks(db, "cluster1", rules, errors=errors)
+
+        assert [r.rule_name for r in results] == ["c"]
+        assert [e.rule_name for e in errors] == ["a", "b"]
+        assert "RuntimeError" in errors[0].message
+        assert "KeyError" in errors[1].message
+
+    def test_exception_without_collector_does_not_abort(self) -> None:
+        """Without a collector, an unexpected exception is still contained."""
+        db = MagicMock()
+        db.query_with_filters.side_effect = RuntimeError("boom")
+        rules = {"a": ComplianceRule(name="a", model="nodes", where="x = 1")}
+
+        assert run_compliance_checks(db, "cluster1", rules) == []

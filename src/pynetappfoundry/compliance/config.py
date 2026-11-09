@@ -10,23 +10,76 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from pydantic import ValidationError
+
 from pynetappfoundry.compliance.models import (
     ClusterComplianceOverride,
     ComplianceRule,
+    ComplianceRuleError,
+    RuleErrorStage,
 )
 from pynetappfoundry.core.config import Config
 
 logger = logging.getLogger(__name__)
 
 
-def load_global_compliance_rules(config: Config) -> dict[str, ComplianceRule]:
+def _format_validation_error(exc: ValidationError) -> str:
+    """Summarise a pydantic ValidationError as ``field: reason`` pairs.
+
+    Args:
+        exc: The validation error.
+
+    Returns:
+        A single-line message naming each failing field and its reason.
+    """
+    parts = []
+    for err in exc.errors():
+        loc = ".".join(str(p) for p in err["loc"]) or "<rule>"
+        parts.append(f"{loc}: {err['msg']}")
+    return "; ".join(parts)
+
+
+def _record(
+    errors: list[ComplianceRuleError] | None,
+    rule_name: str,
+    cluster_name: str | None,
+    stage: RuleErrorStage,
+    message: str,
+) -> None:
+    """Log a rule failure and append it to the collector when one is given.
+
+    Args:
+        errors: Optional collector.
+        rule_name: Rule (table key) that failed.
+        cluster_name: Cluster the failure applies to, or None for global rules.
+        stage: Stage at which the failure happened.
+        message: Reason for the failure.
+    """
+    logger.warning("Compliance rule %r (%s) skipped: %s", rule_name, stage, message)
+    if errors is not None:
+        errors.append(
+            ComplianceRuleError(
+                rule_name=rule_name,
+                cluster_name=cluster_name,
+                stage=stage,
+                message=message,
+            )
+        )
+
+
+def load_global_compliance_rules(
+    config: Config,
+    errors: list[ComplianceRuleError] | None = None,
+) -> dict[str, ComplianceRule]:
     """Load global compliance rules from the settings TOML.
 
     Reads the ``[compliance]`` section from ``config.get_setting()``.
     Each top-level key (except ``"settings"``) is treated as a rule name.
+    A ``name`` key inside a rule table is rejected: the table key is the name.
 
     Args:
         config: The application Config instance.
+        errors: If provided, each invalid rule is recorded here with its reason.
 
     Returns:
         Dict mapping rule name to ComplianceRule.
@@ -39,18 +92,29 @@ def load_global_compliance_rules(config: Config) -> dict[str, ComplianceRule]:
         if key == "settings":
             continue
         if not isinstance(data, dict):
-            logger.warning("Skipping non-dict compliance entry: %s", key)
+            _record(errors, key, None, "load", "rule must be a table, not a scalar value")
+            continue
+        if "name" in data:
+            _record(
+                errors,
+                key,
+                None,
+                "load",
+                "'name' is reserved: the table key is the rule name; remove the 'name' field",
+            )
             continue
         try:
             rules[key] = ComplianceRule(name=key, **data)
-        except Exception:
-            logger.warning("Invalid compliance rule %r, skipping", key)
+        except ValidationError as e:
+            _record(errors, key, None, "load", _format_validation_error(e))
 
     return rules
 
 
 def get_cluster_overrides(
     cluster_entry: Any,
+    errors: list[ComplianceRuleError] | None = None,
+    cluster_name: str | None = None,
 ) -> dict[str, ClusterComplianceOverride]:
     """Extract per-cluster compliance overrides from a ClusterEntry.
 
@@ -59,6 +123,8 @@ def get_cluster_overrides(
 
     Args:
         cluster_entry: A ClusterEntry (dict-like) for a single cluster.
+        errors: If provided, each invalid override is recorded here.
+        cluster_name: Cluster name recorded on any error.
 
     Returns:
         Dict mapping rule name to ClusterComplianceOverride.
@@ -73,12 +139,12 @@ def get_cluster_overrides(
     overrides: dict[str, ClusterComplianceOverride] = {}
     for key, data in compliance_section.items():
         if not isinstance(data, dict):
-            logger.warning("Skipping non-dict cluster compliance override: %s", key)
+            _record(errors, key, cluster_name, "override", "override must be a table, not a scalar")
             continue
         try:
             overrides[key] = ClusterComplianceOverride(**data)
-        except Exception:
-            logger.warning("Invalid cluster compliance override %r, skipping", key)
+        except ValidationError as e:
+            _record(errors, key, cluster_name, "override", _format_validation_error(e))
 
     return overrides
 
@@ -86,17 +152,22 @@ def get_cluster_overrides(
 def merge_rules(
     global_rules: dict[str, ComplianceRule],
     overrides: dict[str, ClusterComplianceOverride],
+    errors: list[ComplianceRuleError] | None = None,
+    cluster_name: str | None = None,
 ) -> dict[str, ComplianceRule]:
     """Merge global rules with per-cluster overrides.
 
-    For each global rule, applies non-None override fields using
-    ``model_copy(update=...)``. For override keys not present in the
-    global rules, constructs a new ComplianceRule (requires ``model``
-    and ``where`` to be set in the override).
+    For each global rule, applies non-None override fields and re-validates
+    the result. A rule whose merged form is invalid is omitted for this
+    cluster and recorded. For override keys not present in the global rules,
+    constructs a new ComplianceRule (requires ``model`` and ``where`` to be
+    set in the override).
 
     Args:
         global_rules: Dict of global ComplianceRule instances.
         overrides: Dict of per-cluster overrides.
+        errors: If provided, each rule that cannot be built is recorded here.
+        cluster_name: Cluster name recorded on any error.
 
     Returns:
         New dict of effective ComplianceRule instances.
@@ -107,7 +178,10 @@ def merge_rules(
         if name in overrides:
             override = overrides[name]
             update_fields = {k: v for k, v in override.model_dump().items() if v is not None}
-            merged[name] = rule.model_copy(update=update_fields)
+            try:
+                merged[name] = ComplianceRule.model_validate({**rule.model_dump(), **update_fields})
+            except ValidationError as e:
+                _record(errors, name, cluster_name, "merge", _format_validation_error(e))
         else:
             merged[name] = rule.model_copy()
 
@@ -117,10 +191,7 @@ def merge_rules(
             override_data = {k: v for k, v in override.model_dump().items() if v is not None}
             try:
                 merged[name] = ComplianceRule(name=name, **override_data)
-            except Exception:
-                logger.warning(
-                    "Cluster-specific rule %r missing required fields (model, where), skipping",
-                    name,
-                )
+            except ValidationError as e:
+                _record(errors, name, cluster_name, "merge", _format_validation_error(e))
 
     return merged

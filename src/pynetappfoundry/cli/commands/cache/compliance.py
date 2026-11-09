@@ -6,7 +6,8 @@ cluster metadata and reports violations.
 Exit codes:
 - 0: no violations found
 - 1: violations found
-- 2: error
+- 2: error, including any compliance rule that was invalid or failed
+  (reported on stderr with its reason; violations are still printed)
 """
 
 from __future__ import annotations
@@ -18,6 +19,7 @@ from pathlib import Path
 
 import click
 from rich.console import Console
+from rich.markup import escape
 from rich.table import Table
 
 from pynetappfoundry.cache import ClusterMetadataDB
@@ -28,10 +30,11 @@ from pynetappfoundry.compliance.config import (
     merge_rules,
 )
 from pynetappfoundry.compliance.engine import run_compliance_checks
-from pynetappfoundry.compliance.models import ComplianceResult
+from pynetappfoundry.compliance.models import ComplianceResult, ComplianceRuleError
 from pynetappfoundry.core.config import Config
 
 console = Console()
+err_console = Console(stderr=True)
 
 # Severity ordering for --severity filtering
 _SEVERITY_LEVELS = {"info": 0, "warning": 1, "error": 2}
@@ -50,6 +53,23 @@ def _severity_at_least(result_severity: str, min_severity: str) -> bool:
     result_level = _SEVERITY_LEVELS.get(result_severity, 0)
     min_level = _SEVERITY_LEVELS.get(min_severity, 0)
     return result_level >= min_level
+
+
+def _report_rule_errors(errors: list[ComplianceRuleError]) -> None:
+    """Print compliance rule errors to stderr, one line each.
+
+    Args:
+        errors: Rule errors to report.
+    """
+    for err in errors:
+        where = f" (cluster {escape(err.cluster_name)})" if err.cluster_name else ""
+        err_console.print(
+            f"[red]Compliance rule '{escape(err.rule_name)}'{where} "
+            f"{escape(f'[{err.stage}]')}: {escape(err.message)}[/red]",
+            soft_wrap=True,
+            markup=True,
+            highlight=False,
+        )
 
 
 def _output_table(results: list[ComplianceResult]) -> Table:
@@ -175,7 +195,8 @@ def compliance(
     Rules define a model and filter expression — any matching records are
     violations.
 
-    Exit codes: 0 = no violations, 1 = violations found, 2 = error.
+    Exit codes: 0 = no violations, 1 = violations found, 2 = error (including
+    invalid or failing rules, reported on stderr).
 
     \b
     Examples:
@@ -208,10 +229,17 @@ def compliance(
         ctx.exit(2)
 
     # Load global compliance rules
-    global_rules = load_global_compliance_rules(config)
+    rule_errors: list[ComplianceRuleError] = []
+    global_rules = load_global_compliance_rules(config, errors=rule_errors)
+    if check_name is not None:
+        rule_errors = [e for e in rule_errors if e.rule_name == check_name]
+    _report_rule_errors(rule_errors)
+    # Load errors are reported once; later errors are per cluster.
+    exit_on_empty = 2 if rule_errors else 0
     if not global_rules:
-        print_warning("No compliance rules defined in configuration.")
-        ctx.exit(0)
+        if not rule_errors:
+            print_warning("No compliance rules defined in configuration.")
+        ctx.exit(exit_on_empty)
 
     # Determine cluster list (same logic as check.py)
     cluster_names: list[str] = []
@@ -225,7 +253,7 @@ def compliance(
         if not cluster_names:
             print_warning("No cached clusters found. Use 'nf cache refresh' to populate.")
             db.close()
-            ctx.exit(0)
+            ctx.exit(exit_on_empty)
     elif filter_str:
         try:
             filter_dict = json.loads(filter_str)
@@ -238,7 +266,7 @@ def compliance(
         if not filtered:
             print_warning("No clusters match the filter criteria.")
             db.close()
-            ctx.exit(0)
+            ctx.exit(exit_on_empty)
         cluster_names = list(filtered.keys())
     else:
         print_error("Must specify CLUSTER, --all, or --filter/-f")
@@ -251,12 +279,26 @@ def compliance(
     for name in cluster_names:
         cluster_entry = config.data.get("clusters", {}).get(name)
         if cluster_entry is not None:
-            overrides = get_cluster_overrides(cluster_entry)
-            effective_rules = merge_rules(global_rules, overrides)
+            cluster_errors: list[ComplianceRuleError] = []
+            overrides = get_cluster_overrides(
+                cluster_entry, errors=cluster_errors, cluster_name=name
+            )
+            effective_rules = merge_rules(
+                global_rules, overrides, errors=cluster_errors, cluster_name=name
+            )
+            if check_name is not None:
+                cluster_errors = [e for e in cluster_errors if e.rule_name == check_name]
+            _report_rule_errors(cluster_errors)
+            rule_errors.extend(cluster_errors)
         else:
             effective_rules = {k: v.model_copy() for k, v in global_rules.items()}
 
-        results = run_compliance_checks(db, name, effective_rules, check_filter=check_name)
+        query_errors: list[ComplianceRuleError] = []
+        results = run_compliance_checks(
+            db, name, effective_rules, check_filter=check_name, errors=query_errors
+        )
+        _report_rule_errors(query_errors)
+        rule_errors.extend(query_errors)
         all_results.extend(results)
 
     db.close()
@@ -267,7 +309,7 @@ def compliance(
 
     # Output
     if not all_results:
-        ctx.exit(0)
+        ctx.exit(2 if rule_errors else 0)
 
     if output_json:
         console.print(_output_json(all_results), soft_wrap=True)
@@ -277,4 +319,5 @@ def compliance(
         table = _output_table(all_results)
         console.print(table)
 
-    ctx.exit(1)
+    # Violations are printed above; a rule error still takes precedence.
+    ctx.exit(2 if rule_errors else 1)

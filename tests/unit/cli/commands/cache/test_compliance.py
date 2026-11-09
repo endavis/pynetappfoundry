@@ -10,7 +10,11 @@ import pytest
 from click.testing import CliRunner
 
 from pynetappfoundry.cli.main import nf
-from pynetappfoundry.compliance.models import ComplianceResult, ComplianceRule
+from pynetappfoundry.compliance.models import (
+    ComplianceResult,
+    ComplianceRule,
+    ComplianceRuleError,
+)
 
 
 class TestCacheComplianceCommand:
@@ -487,3 +491,153 @@ severity = "error"
         # Only error severity should remain
         assert len(output) == 1
         assert output[0]["severity"] == "error"
+
+
+class TestComplianceRuleErrors:
+    """Rule errors are reported on stderr and set exit 2 (issue #897)."""
+
+    P = "pynetappfoundry.cli.commands.cache.compliance."
+
+    @pytest.fixture
+    def runner(self) -> CliRunner:
+        return CliRunner()
+
+    @pytest.fixture
+    def config_dir(self, tmp_path: Path) -> Path:
+        d = tmp_path / "config"
+        d.mkdir()
+        (d / "settings.toml").write_text(
+            '[compliance.r]\nmodel = "nodes"\nwhere = "state != \'up\'"\n'
+        )
+        return d
+
+    @staticmethod
+    def _rule() -> dict[str, ComplianceRule]:
+        return {"r": ComplianceRule(name="r", model="nodes", where="state != 'up'")}
+
+    @staticmethod
+    def _violation() -> ComplianceResult:
+        return ComplianceResult(
+            rule_name="r",
+            description="",
+            model="nodes",
+            severity="warning",
+            cluster_name="c1",
+            match_count=1,
+            matches=[{"name": "n1"}],
+        )
+
+    @staticmethod
+    def _load_with(errs: list[ComplianceRuleError], rules: dict[str, ComplianceRule]):  # type: ignore[no-untyped-def]
+        def _load(config, errors=None):  # type: ignore[no-untyped-def]
+            if errors is not None:
+                errors.extend(errs)
+            return rules
+
+        return _load
+
+    def _invoke(self, runner: CliRunner, config_dir: Path, *extra: str):  # type: ignore[no-untyped-def]
+        return runner.invoke(nf, ["-c", str(config_dir), "cache", "compliance", "c1", *extra])
+
+    def test_brackets_in_stage_and_message_shown_literally(
+        self, runner: CliRunner, config_dir: Path
+    ) -> None:
+        msg = "bad value [type=extra_forbidden, input_value=1, input_type=int]"
+        err = ComplianceRuleError(rule_name="bad", stage="load", message=msg)
+        with (
+            patch(self.P + "load_global_compliance_rules", self._load_with([err], self._rule())),
+            patch(self.P + "ClusterMetadataDB"),
+            patch(self.P + "run_compliance_checks", return_value=[]),
+        ):
+            result = self._invoke(runner, config_dir)
+
+        assert result.exit_code == 2
+        assert "[load]" in result.stderr
+        assert "[type=extra_forbidden, input_value=1, input_type=int]" in result.stderr
+
+    def test_closing_tag_in_message_does_not_crash(
+        self, runner: CliRunner, config_dir: Path
+    ) -> None:
+        err = ComplianceRuleError(rule_name="bad", stage="load", message="oops [/bold] here")
+        with (
+            patch(self.P + "load_global_compliance_rules", self._load_with([err], self._rule())),
+            patch(self.P + "ClusterMetadataDB"),
+            patch(self.P + "run_compliance_checks", return_value=[]),
+        ):
+            result = self._invoke(runner, config_dir)
+
+        assert result.exit_code == 2
+        assert "[/bold]" in result.stderr
+
+    def test_load_error_exit_2_reason_on_stderr(self, runner: CliRunner, config_dir: Path) -> None:
+        err = ComplianceRuleError(
+            rule_name="bad", stage="load", message="were: Extra inputs are not permitted"
+        )
+        with (
+            patch(self.P + "load_global_compliance_rules", self._load_with([err], self._rule())),
+            patch(self.P + "ClusterMetadataDB"),
+            patch(self.P + "run_compliance_checks", return_value=[]),
+        ):
+            result = self._invoke(runner, config_dir)
+
+        assert result.exit_code == 2
+        assert "bad" in result.stderr
+        assert "Extra inputs are not permitted" in result.stderr
+
+    def test_errors_and_violations_exit_2_json_stdout_parses(
+        self, runner: CliRunner, config_dir: Path
+    ) -> None:
+        err = ComplianceRuleError(rule_name="bad", stage="load", message="boom-reason")
+        with (
+            patch(self.P + "load_global_compliance_rules", self._load_with([err], self._rule())),
+            patch(self.P + "ClusterMetadataDB"),
+            patch(self.P + "run_compliance_checks", return_value=[self._violation()]),
+        ):
+            result = self._invoke(runner, config_dir, "--json")
+
+        assert result.exit_code == 2
+        assert "boom-reason" in result.stderr
+        data = json.loads(result.stdout)
+        assert data[0]["rule_name"] == "r"
+        assert "boom-reason" not in result.stdout
+
+    def test_all_rules_invalid_exit_2(self, runner: CliRunner, config_dir: Path) -> None:
+        err = ComplianceRuleError(rule_name="bad", stage="load", message="nope")
+        with patch(self.P + "load_global_compliance_rules", self._load_with([err], {})):
+            result = self._invoke(runner, config_dir)
+
+        assert result.exit_code == 2
+        assert "nope" in result.stderr
+
+    def test_query_error_exit_2(self, runner: CliRunner, config_dir: Path) -> None:
+        def _run(db, name, rules, check_filter=None, errors=None):  # type: ignore[no-untyped-def]
+            errors.append(
+                ComplianceRuleError(
+                    rule_name="r", cluster_name=name, stage="query", message="RuntimeError: x"
+                )
+            )
+            return []
+
+        with (
+            patch(self.P + "load_global_compliance_rules", return_value=self._rule()),
+            patch(self.P + "ClusterMetadataDB"),
+            patch(self.P + "run_compliance_checks", side_effect=_run),
+        ):
+            result = self._invoke(runner, config_dir)
+
+        assert result.exit_code == 2
+        assert "RuntimeError: x" in result.stderr
+
+    def test_check_filter_limits_errors_by_rule_name(
+        self, runner: CliRunner, config_dir: Path
+    ) -> None:
+        err = ComplianceRuleError(rule_name="other", stage="load", message="unrelated")
+        with (
+            patch(self.P + "load_global_compliance_rules", self._load_with([err], self._rule())),
+            patch(self.P + "ClusterMetadataDB"),
+            patch(self.P + "run_compliance_checks", return_value=[]),
+        ):
+            result = self._invoke(runner, config_dir, "-k", "r")
+
+        assert result.exit_code == 0
+        assert "unrelated" not in result.stderr
