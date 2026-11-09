@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -10,6 +11,7 @@ from click.testing import CliRunner
 
 from pynetappfoundry.cli.commands.cache.refresh import VerboseProgressDisplay
 from pynetappfoundry.cli.main import nf
+from pynetappfoundry.core.config import Config
 
 
 class TestCacheRefreshCommand:
@@ -71,9 +73,9 @@ enc = "cGFzc3dvcmQ="
         assert result.exit_code != 0
         assert "not found" in result.output
 
-    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPAPIClient")
-    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPCLI")
-    @patch("pynetappfoundry.cli.commands.cache.refresh.MetadataCollector")
+    @patch("pynetappfoundry.cache.refresher.ONTAPAPIClient")
+    @patch("pynetappfoundry.cache.refresher.ONTAPCLI")
+    @patch("pynetappfoundry.cache.refresher.MetadataCollector")
     @patch("pynetappfoundry.cli.commands.cache.refresh.CacheHistoryDB")
     @patch("pynetappfoundry.cli.commands.cache.refresh.ClusterMetadataDB")
     def test_refresh_single_cluster(
@@ -115,9 +117,9 @@ enc = "cGFzc3dvcmQ="
         mock_collector.collect_all.assert_called_once_with("test-cluster")
         mock_db.set.assert_called_once()
 
-    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPAPIClient")
-    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPCLI")
-    @patch("pynetappfoundry.cli.commands.cache.refresh.MetadataCollector")
+    @patch("pynetappfoundry.cache.refresher.ONTAPAPIClient")
+    @patch("pynetappfoundry.cache.refresher.ONTAPCLI")
+    @patch("pynetappfoundry.cache.refresher.MetadataCollector")
     @patch("pynetappfoundry.cli.commands.cache.refresh.CacheHistoryDB")
     @patch("pynetappfoundry.cli.commands.cache.refresh.ClusterMetadataDB")
     def test_refresh_all_clusters(
@@ -166,9 +168,9 @@ enc = "cGFzc3dvcmQ="
         assert result.exit_code != 0
         assert "not found" in result.output
 
-    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPAPIClient")
-    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPCLI")
-    @patch("pynetappfoundry.cli.commands.cache.refresh.MetadataCollector")
+    @patch("pynetappfoundry.cache.refresher.ONTAPAPIClient")
+    @patch("pynetappfoundry.cache.refresher.ONTAPCLI")
+    @patch("pynetappfoundry.cache.refresher.MetadataCollector")
     @patch("pynetappfoundry.cli.commands.cache.refresh.CacheHistoryDB")
     @patch("pynetappfoundry.cli.commands.cache.refresh.ClusterMetadataDB")
     @patch("pynetappfoundry.cli.commands.cache.refresh.setup_logger")
@@ -212,9 +214,9 @@ enc = "cGFzc3dvcmQ="
         # Verbose mode should show progress details
         mock_collector.collect_all.assert_called()
 
-    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPAPIClient")
-    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPCLI")
-    @patch("pynetappfoundry.cli.commands.cache.refresh.MetadataCollector")
+    @patch("pynetappfoundry.cache.refresher.ONTAPAPIClient")
+    @patch("pynetappfoundry.cache.refresher.ONTAPCLI")
+    @patch("pynetappfoundry.cache.refresher.MetadataCollector")
     @patch("pynetappfoundry.cli.commands.cache.refresh.CacheHistoryDB")
     @patch("pynetappfoundry.cli.commands.cache.refresh.ClusterMetadataDB")
     @patch("pynetappfoundry.cli.commands.cache.refresh.setup_logger")
@@ -258,9 +260,9 @@ enc = "cGFzc3dvcmQ="
         # setup_logger should always be called
         mock_setup_logger.assert_called_once_with("cache-refresh")
 
-    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPAPIClient")
-    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPCLI")
-    @patch("pynetappfoundry.cli.commands.cache.refresh.MetadataCollector")
+    @patch("pynetappfoundry.cache.refresher.ONTAPAPIClient")
+    @patch("pynetappfoundry.cache.refresher.ONTAPCLI")
+    @patch("pynetappfoundry.cache.refresher.MetadataCollector")
     @patch("pynetappfoundry.cli.commands.cache.refresh.ClusterMetadataDB")
     @patch("pynetappfoundry.cli.commands.cache.refresh.setup_logger")
     def test_refresh_displays_log_path(
@@ -440,9 +442,9 @@ enc = "cGFzc3dvcmQ="
         )
         return config_dir
 
-    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPAPIClient")
-    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPCLI")
-    @patch("pynetappfoundry.cli.commands.cache.refresh.MetadataCollector")
+    @patch("pynetappfoundry.cache.refresher.ONTAPAPIClient")
+    @patch("pynetappfoundry.cache.refresher.ONTAPCLI")
+    @patch("pynetappfoundry.cache.refresher.MetadataCollector")
     @patch("pynetappfoundry.cli.commands.cache.refresh.CacheHistoryDB")
     @patch("pynetappfoundry.cli.commands.cache.refresh.ClusterMetadataDB")
     def test_aws_sso_config_passed_to_collector(
@@ -490,9 +492,9 @@ enc = "cGFzc3dvcmQ="
         assert "123456789012" in call_kwargs["aws_sso_config"]["account_roles"]
         assert call_kwargs["aws_sso_config"]["account_roles"]["123456789012"] == "AdminRole"
 
-    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPAPIClient")
-    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPCLI")
-    @patch("pynetappfoundry.cli.commands.cache.refresh.MetadataCollector")
+    @patch("pynetappfoundry.cache.refresher.ONTAPAPIClient")
+    @patch("pynetappfoundry.cache.refresher.ONTAPCLI")
+    @patch("pynetappfoundry.cache.refresher.MetadataCollector")
     @patch("pynetappfoundry.cli.commands.cache.refresh.CacheHistoryDB")
     @patch("pynetappfoundry.cli.commands.cache.refresh.ClusterMetadataDB")
     def test_aws_sso_config_none_when_not_configured(
@@ -643,9 +645,9 @@ enc = "cGFzc3dvcmQ="
         assert result.exit_code != 0
         assert "Invalid filter JSON" in result.output
 
-    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPAPIClient")
-    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPCLI")
-    @patch("pynetappfoundry.cli.commands.cache.refresh.MetadataCollector")
+    @patch("pynetappfoundry.cache.refresher.ONTAPAPIClient")
+    @patch("pynetappfoundry.cache.refresher.ONTAPCLI")
+    @patch("pynetappfoundry.cache.refresher.MetadataCollector")
     @patch("pynetappfoundry.cli.commands.cache.refresh.CacheHistoryDB")
     @patch("pynetappfoundry.cli.commands.cache.refresh.ClusterMetadataDB")
     def test_filter_by_env(
@@ -688,9 +690,9 @@ enc = "cGFzc3dvcmQ="
         assert "2 cluster(s)" in result.output
         assert mock_collector.collect_all.call_count == 2
 
-    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPAPIClient")
-    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPCLI")
-    @patch("pynetappfoundry.cli.commands.cache.refresh.MetadataCollector")
+    @patch("pynetappfoundry.cache.refresher.ONTAPAPIClient")
+    @patch("pynetappfoundry.cache.refresher.ONTAPCLI")
+    @patch("pynetappfoundry.cache.refresher.MetadataCollector")
     @patch("pynetappfoundry.cli.commands.cache.refresh.CacheHistoryDB")
     @patch("pynetappfoundry.cli.commands.cache.refresh.ClusterMetadataDB")
     def test_filter_by_multiple_fields(
@@ -806,9 +808,9 @@ enc = "cGFzc3dvcmQ="
         )
         return config_dir
 
-    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPAPIClient")
-    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPCLI")
-    @patch("pynetappfoundry.cli.commands.cache.refresh.MetadataCollector")
+    @patch("pynetappfoundry.cache.refresher.ONTAPAPIClient")
+    @patch("pynetappfoundry.cache.refresher.ONTAPCLI")
+    @patch("pynetappfoundry.cache.refresher.MetadataCollector")
     @patch("pynetappfoundry.cli.commands.cache.refresh.CacheHistoryDB")
     @patch("pynetappfoundry.cli.commands.cache.refresh.ClusterMetadataDB")
     def test_parallel_default_uses_executor(
@@ -835,7 +837,7 @@ enc = "cGFzc3dvcmQ="
         mock_api_class.return_value = MagicMock()
 
         with patch(
-            "pynetappfoundry.cli.commands.cache.refresh.ThreadPoolExecutor",
+            "pynetappfoundry.cache.refresher.ThreadPoolExecutor",
             wraps=__import__(
                 "concurrent.futures", fromlist=["ThreadPoolExecutor"]
             ).ThreadPoolExecutor,
@@ -852,9 +854,9 @@ enc = "cGFzc3dvcmQ="
         max_workers = kwargs.get("max_workers") or (args[0] if args else None)
         assert max_workers == 4
 
-    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPAPIClient")
-    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPCLI")
-    @patch("pynetappfoundry.cli.commands.cache.refresh.MetadataCollector")
+    @patch("pynetappfoundry.cache.refresher.ONTAPAPIClient")
+    @patch("pynetappfoundry.cache.refresher.ONTAPCLI")
+    @patch("pynetappfoundry.cache.refresher.MetadataCollector")
     @patch("pynetappfoundry.cli.commands.cache.refresh.CacheHistoryDB")
     @patch("pynetappfoundry.cli.commands.cache.refresh.ClusterMetadataDB")
     def test_parallel_one_does_not_use_executor(
@@ -878,9 +880,7 @@ enc = "cGFzc3dvcmQ="
         mock_cli_class.return_value = MagicMock()
         mock_api_class.return_value = MagicMock()
 
-        with patch(
-            "pynetappfoundry.cli.commands.cache.refresh.ThreadPoolExecutor"
-        ) as mock_executor:
+        with patch("pynetappfoundry.cache.refresher.ThreadPoolExecutor") as mock_executor:
             result = runner.invoke(
                 nf,
                 [
@@ -899,9 +899,9 @@ enc = "cGFzc3dvcmQ="
         # All 4 clusters should still be collected.
         assert mock_collector.collect_all.call_count == 4
 
-    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPAPIClient")
-    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPCLI")
-    @patch("pynetappfoundry.cli.commands.cache.refresh.MetadataCollector")
+    @patch("pynetappfoundry.cache.refresher.ONTAPAPIClient")
+    @patch("pynetappfoundry.cache.refresher.ONTAPCLI")
+    @patch("pynetappfoundry.cache.refresher.MetadataCollector")
     @patch("pynetappfoundry.cli.commands.cache.refresh.CacheHistoryDB")
     @patch("pynetappfoundry.cli.commands.cache.refresh.ClusterMetadataDB")
     def test_parallel_writes_on_main_thread(
@@ -959,9 +959,9 @@ enc = "cGFzc3dvcmQ="
         assert all(t is main_thread for t in set_threads), set_threads
         assert all(t is main_thread for t in record_threads), record_threads
 
-    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPAPIClient")
-    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPCLI")
-    @patch("pynetappfoundry.cli.commands.cache.refresh.MetadataCollector")
+    @patch("pynetappfoundry.cache.refresher.ONTAPAPIClient")
+    @patch("pynetappfoundry.cache.refresher.ONTAPCLI")
+    @patch("pynetappfoundry.cache.refresher.MetadataCollector")
     @patch("pynetappfoundry.cli.commands.cache.refresh.CacheHistoryDB")
     @patch("pynetappfoundry.cli.commands.cache.refresh.ClusterMetadataDB")
     def test_parallel_one_failure_does_not_block_others(
@@ -1014,9 +1014,9 @@ enc = "cGFzc3dvcmQ="
         assert "Failure Summary" in result.output
         assert "c2" in result.output
 
-    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPAPIClient")
-    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPCLI")
-    @patch("pynetappfoundry.cli.commands.cache.refresh.MetadataCollector")
+    @patch("pynetappfoundry.cache.refresher.ONTAPAPIClient")
+    @patch("pynetappfoundry.cache.refresher.ONTAPCLI")
+    @patch("pynetappfoundry.cache.refresher.MetadataCollector")
     @patch("pynetappfoundry.cli.commands.cache.refresh.CacheHistoryDB")
     @patch("pynetappfoundry.cli.commands.cache.refresh.ClusterMetadataDB")
     def test_parallel_does_not_pass_db_to_workers(
@@ -1045,7 +1045,7 @@ enc = "cGFzc3dvcmQ="
         mock_cli_class.return_value = MagicMock()
         mock_api_class.return_value = MagicMock()
 
-        with patch("pynetappfoundry.cli.commands.cache.refresh._collect_cluster") as mock_collect:
+        with patch("pynetappfoundry.cache.refresher._collect_cluster") as mock_collect:
             mock_collect.return_value = MagicMock(
                 cluster_name="c1",
                 metadata=None,
@@ -1077,9 +1077,9 @@ enc = "cGFzc3dvcmQ="
                     f"DB handle leaked into worker: {arg!r}"
                 )
 
-    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPAPIClient")
-    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPCLI")
-    @patch("pynetappfoundry.cli.commands.cache.refresh.MetadataCollector")
+    @patch("pynetappfoundry.cache.refresher.ONTAPAPIClient")
+    @patch("pynetappfoundry.cache.refresher.ONTAPCLI")
+    @patch("pynetappfoundry.cache.refresher.MetadataCollector")
     @patch("pynetappfoundry.cli.commands.cache.refresh.CacheHistoryDB")
     @patch("pynetappfoundry.cli.commands.cache.refresh.ClusterMetadataDB")
     def test_parallel_preloads_previous_metadata_on_main_thread(
@@ -1135,9 +1135,9 @@ enc = "cGFzc3dvcmQ="
         # Every load must happen on the main thread.
         assert all(t is main_thread for t in snapshot_threads), snapshot_threads
 
-    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPAPIClient")
-    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPCLI")
-    @patch("pynetappfoundry.cli.commands.cache.refresh.MetadataCollector")
+    @patch("pynetappfoundry.cache.refresher.ONTAPAPIClient")
+    @patch("pynetappfoundry.cache.refresher.ONTAPCLI")
+    @patch("pynetappfoundry.cache.refresher.MetadataCollector")
     @patch("pynetappfoundry.cli.commands.cache.refresh.CacheHistoryDB")
     @patch("pynetappfoundry.cli.commands.cache.refresh.ClusterMetadataDB")
     def test_verbose_parallel_buffers_output_per_cluster(
@@ -1188,9 +1188,9 @@ enc = "cGFzc3dvcmQ="
         # Non-overlapping, each cluster named exactly once as a header.
         assert len({n for _, n in headers}) == 4
 
-    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPAPIClient")
-    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPCLI")
-    @patch("pynetappfoundry.cli.commands.cache.refresh.MetadataCollector")
+    @patch("pynetappfoundry.cache.refresher.ONTAPAPIClient")
+    @patch("pynetappfoundry.cache.refresher.ONTAPCLI")
+    @patch("pynetappfoundry.cache.refresher.MetadataCollector")
     @patch("pynetappfoundry.cli.commands.cache.refresh.CacheHistoryDB")
     @patch("pynetappfoundry.cli.commands.cache.refresh.ClusterMetadataDB")
     def test_parallel_clusters_zero_rejected(
@@ -1220,9 +1220,9 @@ enc = "cGFzc3dvcmQ="
         # click IntRange error mentions "not in the range" or similar.
         assert "0" in result.output
 
-    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPAPIClient")
-    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPCLI")
-    @patch("pynetappfoundry.cli.commands.cache.refresh.MetadataCollector")
+    @patch("pynetappfoundry.cache.refresher.ONTAPAPIClient")
+    @patch("pynetappfoundry.cache.refresher.ONTAPCLI")
+    @patch("pynetappfoundry.cache.refresher.MetadataCollector")
     @patch("pynetappfoundry.cli.commands.cache.refresh.CacheHistoryDB")
     @patch("pynetappfoundry.cli.commands.cache.refresh.ClusterMetadataDB")
     def test_filter_combined_with_parallel(
@@ -1268,9 +1268,9 @@ enc = "cGFzc3dvcmQ="
         assert mock_collector.collect_all.call_count == 3
         assert mock_db.set.call_count == 3
 
-    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPAPIClient")
-    @patch("pynetappfoundry.cli.commands.cache.refresh.ONTAPCLI")
-    @patch("pynetappfoundry.cli.commands.cache.refresh.MetadataCollector")
+    @patch("pynetappfoundry.cache.refresher.ONTAPAPIClient")
+    @patch("pynetappfoundry.cache.refresher.ONTAPCLI")
+    @patch("pynetappfoundry.cache.refresher.MetadataCollector")
     @patch("pynetappfoundry.cli.commands.cache.refresh.CacheHistoryDB")
     @patch("pynetappfoundry.cli.commands.cache.refresh.ClusterMetadataDB")
     def test_single_cluster_ignores_parallel_flag(
@@ -1294,9 +1294,7 @@ enc = "cGFzc3dvcmQ="
         mock_cli_class.return_value = MagicMock()
         mock_api_class.return_value = MagicMock()
 
-        with patch(
-            "pynetappfoundry.cli.commands.cache.refresh.ThreadPoolExecutor"
-        ) as mock_executor:
+        with patch("pynetappfoundry.cache.refresher.ThreadPoolExecutor") as mock_executor:
             result = runner.invoke(
                 nf,
                 [
@@ -1313,3 +1311,131 @@ enc = "cGFzc3dvcmQ="
         assert result.exit_code == 0
         mock_executor.assert_not_called()
         assert mock_collector.collect_all.call_count == 1
+
+
+class TestRefreshOrchestrationWiring:
+    """Tests for the CLI wiring around ``CacheRefresher`` (#898)."""
+
+    REFRESH = "pynetappfoundry.cli.commands.cache.refresh"
+    LIB = "pynetappfoundry.cache.refresher"
+
+    @pytest.fixture
+    def runner(self) -> CliRunner:
+        """Create a CLI runner."""
+        return CliRunner()
+
+    @pytest.fixture
+    def config_dir(self, tmp_path: Path) -> Path:
+        """Create a config directory with two clusters."""
+        cfg = tmp_path / "config"
+        cfg.mkdir()
+        (cfg / "settings.toml").write_text(
+            '[ontapapi]\n[ontapapi.general]\nbase_api_path = "/api"\ntimeout = 30.0\n'
+        )
+        (cfg / "clusters.toml").write_text(
+            '[settings]\ntype = "data"\n\n'
+            '[clusters.c1]\nip = "10.0.0.1"\n\n[clusters.c2]\nip = "10.0.0.2"\n'
+        )
+        (cfg / "users.toml").write_text('[clusters]\nuser = "admin"\nenc = "cGFzc3dvcmQ="\n')
+        return cfg
+
+    def _invoke(
+        self,
+        runner: CliRunner,
+        config_dir: Path,
+        args: list[str],
+        *,
+        collector_error: Exception | None = None,
+        clients_fail: bool = False,
+        db_set_error: Exception | None = None,
+        global_args: list[str] | None = None,
+    ) -> tuple[Any, MagicMock, MagicMock]:
+        mock_db = MagicMock()
+        if db_set_error is not None:
+            mock_db.set.side_effect = db_set_error
+        mock_history = MagicMock()
+        mock_history.get_latest_snapshot.return_value = None
+        collector = MagicMock()
+        if collector_error is not None:
+            collector.collect_all.side_effect = collector_error
+        else:
+            collector.collect_all.return_value = MagicMock()
+        with (
+            patch(f"{self.REFRESH}.ClusterMetadataDB", return_value=mock_db),
+            patch(f"{self.REFRESH}.CacheHistoryDB", return_value=mock_history),
+            patch(f"{self.LIB}.MetadataCollector", return_value=collector),
+            patch(
+                f"{self.LIB}.ONTAPAPIClient",
+                side_effect=RuntimeError("api down") if clients_fail else None,
+            ),
+            patch(
+                f"{self.LIB}.ONTAPCLI",
+                side_effect=RuntimeError("cli down") if clients_fail else None,
+            ),
+        ):
+            result = runner.invoke(
+                nf, [*(global_args or []), "-c", str(config_dir), "cache", "refresh", *args]
+            )
+        return result, mock_db, mock_history
+
+    def test_dbs_closed_when_refresh_fails(self, runner: CliRunner, config_dir: Path) -> None:
+        """Regression: a non-zero exit must still close both databases."""
+        result, db, history = self._invoke(
+            runner, config_dir, ["c1"], collector_error=RuntimeError("API_FAILURE: boom")
+        )
+        assert result.exit_code == 1
+        db.close.assert_called_once()
+        history.close.assert_called_once()
+
+    def test_dbs_closed_when_refresh_succeeds(self, runner: CliRunner, config_dir: Path) -> None:
+        """Both databases are closed after a successful run."""
+        result, db, history = self._invoke(runner, config_dir, ["c1"])
+        assert result.exit_code == 0
+        db.close.assert_called_once()
+        history.close.assert_called_once()
+
+    def test_output_dir_passed_to_config(
+        self, runner: CliRunner, config_dir: Path, tmp_path: Path
+    ) -> None:
+        """The global --output-dir reaches ``Config``."""
+        out = tmp_path / "out"
+        with patch(f"{self.REFRESH}.Config", wraps=Config) as config_cls:
+            result, _, _ = self._invoke(
+                runner, config_dir, ["c1"], global_args=["--output-dir", str(out)]
+            )
+        assert result.exit_code == 0
+        assert config_cls.call_args.kwargs["output_dir"] == str(out)
+
+    def test_sequential_verbose_no_clients(self, runner: CliRunner, config_dir: Path) -> None:
+        """Sequential verbose: header, client notes, error, then FAILED summary."""
+        result, _, _ = self._invoke(runner, config_dir, ["c1", "-v"], clients_fail=True)
+        assert result.exit_code == 1
+        out = result.output
+        assert "[1/1] c1" in out
+        assert "API client unavailable: api down" in out
+        assert "CLI client unavailable: cli down" in out
+        assert out.index("No clients available for c1") < out.index("FAILED")
+        assert "c1:\n    No clients available" in out
+
+    def test_parallel_verbose_no_clients(self, runner: CliRunner, config_dir: Path) -> None:
+        """Parallel verbose: captured client notes are flushed under a counter header."""
+        result, _, _ = self._invoke(runner, config_dir, ["--all", "-v"], clients_fail=True)
+        assert result.exit_code == 1
+        out = result.output
+        assert "[1/2]" in out
+        assert "[2/2]" in out
+        assert "API client unavailable: api down" in out
+        assert "No clients available for c1" in out
+        assert "No clients available for c2" in out
+
+    def test_persist_failure_wording_differs_between_modes(
+        self, runner: CliRunner, config_dir: Path
+    ) -> None:
+        """Normal mode: ``Failed -`` sequentially, ``Persist failed -`` in parallel."""
+        seq, _, _ = self._invoke(runner, config_dir, ["c1"], db_set_error=OSError("disk"))
+        par, _, _ = self._invoke(runner, config_dir, ["--all"], db_set_error=OSError("disk"))
+        assert seq.exit_code == 1
+        assert par.exit_code == 1
+        assert "c1: Failed - disk" in seq.output
+        assert "Persist failed" not in seq.output
+        assert "c1: Persist failed - disk" in par.output

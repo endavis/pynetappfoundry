@@ -137,10 +137,29 @@ purely network/CPU.
 
 See issue #596 and the corresponding PR for the implementation.
 
+### Amendment (2026-11, #898): orchestration moved into `cache/`
+
+The refresh orchestration (client construction, snapshot loading, diffing,
+history and cache writes, failure categorisation) moved out of the CLI into
+`src/pynetappfoundry/cache/refresher.py` (`CacheRefresher`). The CLI keeps
+option parsing, the database lifecycle (it opens both databases and closes
+them in a `finally`) and rendering, through a `RefreshObserver` protocol.
+
+The sequential path (`--parallel-clusters 1`, or a single cluster) now runs
+the same per-cluster pipeline inline instead of a separate historical code
+path: load the previous snapshot, `_collect_cluster()`, then persist and
+notify, all on the calling thread, without constructing a
+`ThreadPoolExecutor`. This supersedes Rationale point 5 and the "historical
+strictly-sequential code path unchanged" wording in the Decision. The
+"workers collect, main thread persists" rule and the "no DB handle crosses
+a thread" rule are unchanged. `_CollectResult` no longer carries captured
+output; verbose capture is the observer's concern.
+
 ## Related Issues
 
 - Issue #149: feat: parallelize cluster refresh in `nf cache refresh --all`
 - Issue #596: fix: SQLite thread-safety regression in parallel cache refresh
+- Issue #898: refactor: move cache refresh orchestration out of the CLI into `cache/`
 
 ## Related Documentation
 
@@ -148,6 +167,7 @@ See issue #596 and the corresponding PR for the implementation.
 - [ADR-0003: Use base SQLiteDB class with version-based migrations](0003-use-base-sqlitedb-class-with-version-based-migrations.md)
 - [Cache System Reference](../reference/cache.md)
 - CLI command: `nf cache refresh --all [--parallel-clusters N]`
-- Source: `src/pynetappfoundry/cli/commands/cache/refresh.py` (`_collect_cluster`, `_persist_cluster`)
+- Source: `src/pynetappfoundry/cache/refresher.py` (`CacheRefresher`, `_collect_cluster`)
+- Source: `src/pynetappfoundry/cli/commands/cache/refresh.py` (option parsing, DB lifecycle, rendering)
 - Source: `src/pynetappfoundry/cache/collector.py` (inner per-phase parallelism)
 - Source: `src/pynetappfoundry/cache/db.py` (single SQLite connection)

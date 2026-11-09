@@ -173,7 +173,7 @@ class OntapBackend(Backend):
 
         Credentials are resolved via ``Config.get_user`` and the
         cluster's ``ip`` from the configuration data, mirroring
-        the pattern used by the ``cache refresh`` CLI command.
+        the pattern used by ``pynetappfoundry.cache.refresher``.
         """
         if cluster not in self._cli_clients:
             from pynetappfoundry.clients.ontap.cli import ONTAPCLI
