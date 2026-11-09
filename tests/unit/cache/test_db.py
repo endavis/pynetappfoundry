@@ -338,6 +338,33 @@ class TestClusterMetadataDB:
         with pytest.raises(ValueError, match="Unknown model name"):
             db.query_model("test-cluster", "nonexistent.path")
 
+    def test_query_model_keeps_declared_cluster_name(self, db: ClusterMetadataDB) -> None:
+        """query_model keeps cluster_name when the model declares it (#895)."""
+        db.set(
+            "test-cluster",
+            CachedClusterMetadata(
+                cluster_name="test-cluster",
+                cluster=ClusterInfo(cluster_name="test-cluster", ontap_version="9.14.1"),
+            ),
+        )
+        results = cast(list[ClusterInfo], db.query_model("test-cluster", "cluster"))
+        assert len(results) == 1
+        assert results[0].cluster_name == "test-cluster"
+        assert results[0].ontap_version == "9.14.1"
+
+    def test_query_model_strips_undeclared_cluster_name(self, db: ClusterMetadataDB) -> None:
+        """query_model still strips the FK column for models without cluster_name (#895)."""
+        assert "cluster_name" not in OntapNodeResponse.model_fields
+        db.set(
+            "test-cluster",
+            CachedClusterMetadata(
+                cluster_name="test-cluster",
+                nodes=[OntapNodeResponse(name="node1", serial_number="AAA")],
+            ),
+        )
+        results = cast(list[OntapNodeResponse], db.query_model("test-cluster", "nodes"))
+        assert [n.name for n in results] == ["node1"]
+
     def test_query_model_unknown_field(self, db: ClusterMetadataDB) -> None:
         """query_model raises for unknown filter field."""
         with pytest.raises(ValueError, match="Unknown field"):
@@ -753,6 +780,37 @@ class TestQueryWithFilters:
         """Invalid cluster name raises ValueError."""
         with pytest.raises(ValueError, match="Invalid cluster name"):
             db_with_volumes.query_with_filters("123invalid", "storage.volumes", ["name = 'vol1'"])
+
+    def test_keeps_declared_cluster_name(self, db: ClusterMetadataDB) -> None:
+        """query_with_filters keeps cluster_name when the model declares it (#895)."""
+        db.set(
+            "test-cluster",
+            CachedClusterMetadata(
+                cluster_name="test-cluster",
+                cluster=ClusterInfo(cluster_name="test-cluster", ontap_version="9.14.1"),
+            ),
+        )
+        results = cast(
+            list[ClusterInfo],
+            db.query_with_filters("test-cluster", "cluster", ["ontap_version = '9.14.1'"]),
+        )
+        assert len(results) == 1
+        assert results[0].cluster_name == "test-cluster"
+
+    def test_strips_undeclared_cluster_name(self, db: ClusterMetadataDB) -> None:
+        """query_with_filters still strips the FK column for other models (#895)."""
+        db.set(
+            "test-cluster",
+            CachedClusterMetadata(
+                cluster_name="test-cluster",
+                nodes=[OntapNodeResponse(name="node1", serial_number="AAA")],
+            ),
+        )
+        results = cast(
+            list[OntapNodeResponse],
+            db.query_with_filters("test-cluster", "nodes", ["name = 'node1'"]),
+        )
+        assert [n.name for n in results] == ["node1"]
 
 
 class TestClusterMetadataDBMigration:

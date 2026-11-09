@@ -199,6 +199,19 @@ def _set_by_path(target: dict[str, Any], path: str, value: Any) -> None:
     target[parts[-1]] = value
 
 
+def _row_strip_keys(model_class: type[BaseModel]) -> set[str]:
+    """Return the DB-only row keys to drop before building ``model_class``.
+
+    ``_row_id`` is always dropped. ``cluster_name`` is the foreign key added
+    to every table, so it is dropped only when the model does not declare it
+    itself (e.g. ``ClusterInfo`` has a real ``cluster_name`` field).
+    """
+    strip_keys = {"_row_id"}
+    if "cluster_name" not in model_class.model_fields:
+        strip_keys.add("cluster_name")
+    return strip_keys
+
+
 def _query_registry_subset(
     conn: sqlite3.Connection,
     cluster_name: str,
@@ -226,10 +239,7 @@ def _query_registry_subset(
         )
         rows = [dict(r) for r in cursor.fetchall()]
 
-        model_has_cluster_name = "cluster_name" in spec.model_class.model_fields
-        strip_keys = {"_row_id"}
-        if not model_has_cluster_name:
-            strip_keys.add("cluster_name")
+        strip_keys = _row_strip_keys(spec.model_class)
 
         if spec.is_list:
             models = [
@@ -806,9 +816,10 @@ class ClusterMetadataDB(SQLiteDB):
         cursor = self.conn.execute(sql, params)
         rows = [dict(r) for r in cursor.fetchall()]
 
+        strip_keys = _row_strip_keys(spec.model_class)
         return [
             _row_to_model(
-                {k: v for k, v in row.items() if k not in ("cluster_name", "_row_id")},
+                {k: v for k, v in row.items() if k not in strip_keys},
                 spec.model_class,
             )
             for row in rows
@@ -866,9 +877,10 @@ class ClusterMetadataDB(SQLiteDB):
         cursor = self.conn.execute(sql, params)
         rows = [dict(r) for r in cursor.fetchall()]
 
+        strip_keys = _row_strip_keys(spec.model_class)
         return [
             _row_to_model(
-                {k: v for k, v in row.items() if k not in ("cluster_name", "_row_id")},
+                {k: v for k, v in row.items() if k not in strip_keys},
                 spec.model_class,
             )
             for row in rows
