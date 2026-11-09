@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import importlib
 import logging
+import pkgutil
 
 import pytest
 from pydantic import BaseModel
@@ -244,3 +246,34 @@ class TestDuplicateRegistrationWarning:
         warnings = [r for r in caplog.records if r.levelno == logging.WARNING]
         assert not warnings, "same model_class update must not warn"
         assert registry.get_mapping("Foo") is updated
+
+
+class TestNoDuplicateRegistrations:
+    """Every generated mapping module registers a unique name (#894)."""
+
+    def test_no_name_maps_to_multiple_model_classes(self) -> None:
+        import pynetappfoundry.cache.dii as dii_pkg
+        import pynetappfoundry.cache.ontap as ontap_pkg
+        from pynetappfoundry.cache._registry import model_registry
+        from pynetappfoundry.cache.field_mapping import TypeMapping
+
+        _ensure_bootstrapped()
+        seen: dict[str, list[type[BaseModel]]] = {}
+        count = 0
+        for pkg in (ontap_pkg, dii_pkg):
+            for info in pkgutil.walk_packages(pkg.__path__, pkg.__name__ + "."):
+                if not info.name.endswith(".mapping"):
+                    continue
+                module = importlib.import_module(info.name)
+                for attr, value in vars(module).items():
+                    if attr.endswith("_MAPPING") and isinstance(value, TypeMapping):
+                        seen.setdefault(value.name, []).append(value.model_class)
+                        count += 1
+        assert count > 0
+        dupes = {n: [c.__module__ for c in cs] for n, cs in seen.items() if len(set(cs)) > 1}
+        assert dupes == {}
+        for name, classes in seen.items():
+            registered = model_registry.get_mapping(name)
+            assert registered is not None
+            assert registered.model_class is classes[0]
+        assert len(seen) == count

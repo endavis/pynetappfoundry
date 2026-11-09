@@ -1,14 +1,14 @@
-"""DiiAuAcquisitionunit type mapping."""
+"""DiiAuAcquisitionUnit type mapping."""
 
 from __future__ import annotations
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.models.dii.au.acquisitionUnit.model import DiiAuAcquisitionunit
+from pynetappfoundry.models.dii.au.acquisitionUnit.model import DiiAuAcquisitionUnit
 
 DIIAUACQUISITIONUNIT_MAPPING = TypeMapping(
-    name="DiiAuAcquisitionunit",
-    model_class=DiiAuAcquisitionunit,
+    name="DiiAuAcquisitionUnit",
+    model_class=DiiAuAcquisitionUnit,
     api_endpoint="/au/acquisitionUnit/{auUuid}",
     api_type="dii",
     fields=(
@@ -73,4 +73,4 @@ DIIAUACQUISITIONUNIT_MAPPING = TypeMapping(
     ),
 )
 
-model_registry.register_mapping("DiiAuAcquisitionunit", DIIAUACQUISITIONUNIT_MAPPING)
+model_registry.register_mapping("DiiAuAcquisitionUnit", DIIAUACQUISITIONUNIT_MAPPING)

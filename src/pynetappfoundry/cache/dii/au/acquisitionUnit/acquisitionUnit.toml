@@ -1,7 +1,7 @@
 [endpoint]
 path = "/au/acquisitionUnit/{auUuid}"
 schema = "AcquisitionUnit"
-class_name = "DiiAuAcquisitionunit"
+class_name = "DiiAuAcquisitionUnit"
 
 [fields.auVersion]
 cache_strategy = "cache"

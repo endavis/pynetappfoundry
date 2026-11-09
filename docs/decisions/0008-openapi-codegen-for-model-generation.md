@@ -322,6 +322,26 @@ Issue: #697
 
 Issue: #699
 
+### Class-name collision resolution (Issue #894)
+
+The shared-schema rule (#603) falls back to a singularized, `str.capitalize()`d URL-path name.
+`/au/acquisitionUnit/{auUuid}` (schema `AcquisitionUnit`, shared) and `/au/acquisitionUnits`
+both became `DiiAuAcquisitionunit`, so the second registration silently replaced the first in the
+model registry. `resolve_class_name_collisions()` in `tools/codegen/generators.py` now runs in
+`openapi_codegen.run()` after shared-schema detection and before the endpoint filter. It computes
+the normal class names, and for each group of endpoints sharing a name it assigns every member an
+exact path-based name (camelCase kept, no singularize or dedup). It returns a map keyed by module
+path parts, which `_path_to_class_name(class_name_overrides=...)` consults right after
+`_CLASS_NAME_OVERRIDES` and which is threaded through the model, init, mapping and TOML
+generators and `write_endpoint_files`.
+
+- Only colliding classes are renamed; every other name is unchanged. The two renames are
+  `DiiAuAcquisitionunit` to `DiiAuAcquisitionUnit` (item) and `DiiAuAcquisitionUnits` (collection).
+- A collision that exact names do not resolve, or one involving a `_CLASS_NAME_OVERRIDES` entry,
+  raises `ValueError` pointing at `_CLASS_NAME_OVERRIDES`.
+- `tests/unit/cache/test_registry.py::TestNoDuplicateRegistrations` and the spec-level uniqueness
+  test in `tests/unit/codegen/test_roundtrip.py` guard against regressions.
+
 ## Related Issues
 
 - Issue #301: feat: field annotations, OpenAPI codegen, and SQL cache storage
@@ -331,6 +351,7 @@ Issue: #699
 - Issue #603: bug(codegen): shared response schemas cause registry collisions; non-ONTAP support gaps
 - Issue #697: feat: add BlueXP/Console SaaS docs to OpenAPI 3.1 parser
 - Issue #699: feat: generate Pydantic models from Console OpenAPI spec
+- Issue #894: bug: codegen class-name collisions drop model registry mappings
 
 ## Related Documentation
 

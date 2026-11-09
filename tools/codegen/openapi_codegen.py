@@ -23,6 +23,7 @@ from tools.codegen.generators import (
     _field_to_cache_attr,
     _path_to_class_name,
     _path_to_module_parts,
+    resolve_class_name_collisions,
     write_endpoint_files,
 )
 
@@ -153,6 +154,15 @@ def run(
     if shared_schemas:
         print(f"Detected {len(shared_schemas)} shared response schema(s) after dedup.")
 
+    # Rename classes whose derived names collide (e.g. DiiAuAcquisitionunit)
+    # so the registry never drops a mapping.  Computed on the full deduped
+    # list, before any endpoint filter, so names are filter-independent.
+    class_name_overrides = resolve_class_name_collisions(
+        endpoints, api_type, shared_schemas=shared_schemas
+    )
+    if class_name_overrides:
+        print(f"Resolved {len(class_name_overrides)} class name collision(s).")
+
     if endpoint_filter:
         endpoints = [e for e in endpoints if e.path in endpoint_filter]
         print(f"Filtered to {len(endpoints)} endpoints.")
@@ -204,7 +214,11 @@ def run(
     for ep in endpoints:
         if dry_run:
             class_name = _path_to_class_name(
-                ep.path, ep.schema_name, api_type, shared_schemas=shared_schemas
+                ep.path,
+                ep.schema_name,
+                api_type,
+                shared_schemas=shared_schemas,
+                class_name_overrides=class_name_overrides,
             )
             print(f"  [dry-run] {ep.path} -> {class_name} ({len(ep.fields)} fields)")
             continue
@@ -216,6 +230,7 @@ def run(
             overlay_dir,
             schema_lookup,
             shared_schemas=shared_schemas,
+            class_name_overrides=class_name_overrides,
             identifier_map=identifier_map,
             parent_field_names=parent_field_names,
         )
