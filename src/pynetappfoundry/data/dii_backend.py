@@ -109,7 +109,7 @@ class DiiBackend(Backend):
         url = mapping.api_endpoint
         query_params: dict[str, Any] = dict(filters) if filters else {}
 
-        response = client.call_endpoint(url, query_params=query_params)
+        response = client.get_all_pages(url, query_params=query_params)
 
         records: list[dict[str, Any]]
         if isinstance(response, list):

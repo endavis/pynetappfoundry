@@ -83,7 +83,7 @@ class TestDiiBackendQuery:
         decision = RoutingDecision(cache_fields=(), live_fields=("id", "name", "vendor"))
 
         mock_client = MagicMock()
-        mock_client.call_endpoint.return_value = [
+        mock_client.get_all_pages.return_value = [
             {"id": 1, "name": "stor1", "vendor": "NetApp"},
             {"id": 2, "name": "stor2", "vendor": "NetApp"},
         ]
@@ -112,7 +112,7 @@ class TestDiiBackendQuery:
         decision = RoutingDecision(cache_fields=(), live_fields=("id",))
 
         mock_client = MagicMock()
-        mock_client.call_endpoint.return_value = []
+        mock_client.get_all_pages.return_value = []
 
         with patch.object(backend, "_get_api_client", return_value=mock_client):
             results = backend.query(
@@ -135,7 +135,7 @@ class TestDiiBackendQuery:
         decision = RoutingDecision(cache_fields=(), live_fields=("id",))
 
         mock_client = MagicMock()
-        mock_client.call_endpoint.return_value = None
+        mock_client.get_all_pages.return_value = None
 
         with patch.object(backend, "_get_api_client", return_value=mock_client):
             results = backend.query(
@@ -153,12 +153,12 @@ class TestDiiBackendQuery:
         fake_dii_mapping: TypeMapping,
         mock_config: Any,
     ) -> None:
-        """Dict filters are passed as query_params to call_endpoint."""
+        """Dict filters are passed as query_params to get_all_pages."""
         backend = _make_backend(mock_config)
         decision = RoutingDecision(cache_fields=(), live_fields=("id", "name"))
 
         mock_client = MagicMock()
-        mock_client.call_endpoint.return_value = []
+        mock_client.get_all_pages.return_value = []
 
         with patch.object(backend, "_get_api_client", return_value=mock_client):
             backend.query(
@@ -169,7 +169,7 @@ class TestDiiBackendQuery:
                 filters={"vendor": "NetApp", "name": "stor1"},
             )
 
-        mock_client.call_endpoint.assert_called_once_with(
+        mock_client.get_all_pages.assert_called_once_with(
             "/assets/storages",
             query_params={"vendor": "NetApp", "name": "stor1"},
         )
@@ -185,7 +185,7 @@ class TestDiiBackendQuery:
         decision = RoutingDecision(cache_fields=(), live_fields=live_fields)
 
         mock_client = MagicMock()
-        mock_client.call_endpoint.return_value = [
+        mock_client.get_all_pages.return_value = [
             {"id": 1, "name": "stor1", "vendor": "NetApp"},
         ]
 
@@ -234,7 +234,7 @@ class TestDiiBackendErrors:
         decision = RoutingDecision(cache_fields=(), live_fields=("id",))
 
         mock_client = MagicMock()
-        mock_client.call_endpoint.return_value = []
+        mock_client.get_all_pages.return_value = []
 
         with (
             patch.object(backend, "_get_api_client", return_value=mock_client),
