@@ -1,10 +1,15 @@
+_removed_fields = [
+    "name",
+    "version",
+]
+
 [endpoint]
 path = "/security/anti-ransomware"
 schema = "anti_ransomware"
 class_name = "OntapAntiRansomware"
 
-[fields.name]
+[fields.nodes]
 cache_strategy = "cache"
 
-[fields.version]
+[fields.uri]
 cache_strategy = "cache"

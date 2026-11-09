@@ -7,34 +7,36 @@ from pydantic import Field
 from pynetappfoundry.models._base import OntapModel
 
 
-class OntapFpolicyBufferSize(OntapModel):
-    """OntapFpolicyBufferSize sub-model for buffer_size."""
+class OntapFpolicyEngineBufferSize(OntapModel):
+    """OntapFpolicyEngineBufferSize sub-model for buffer_size."""
 
     recv_buffer: int = 0
     send_buffer: int = 0
 
 
-class OntapFpolicyCertificate(OntapModel):
-    """OntapFpolicyCertificate sub-model for certificate."""
+class OntapFpolicyEngineCertificate(OntapModel):
+    """OntapFpolicyEngineCertificate sub-model for certificate."""
 
     ca: str = ""
     name: str = ""
     serial_number: str = ""
 
 
-class OntapFpolicyResiliency(OntapModel):
-    """OntapFpolicyResiliency sub-model for resiliency."""
+class OntapFpolicyEngineResiliency(OntapModel):
+    """OntapFpolicyEngineResiliency sub-model for resiliency."""
 
     directory_path: str = ""
     enabled: bool = False
     retention_duration: str = ""
 
 
-class OntapFpolicy(OntapModel):
-    """OntapFpolicy information."""
+class OntapFpolicyEngine(OntapModel):
+    """OntapFpolicyEngine sub-model for engines."""
 
-    buffer_size: OntapFpolicyBufferSize = Field(default_factory=OntapFpolicyBufferSize)
-    certificate: OntapFpolicyCertificate = Field(default_factory=OntapFpolicyCertificate)
+    buffer_size: OntapFpolicyEngineBufferSize = Field(default_factory=OntapFpolicyEngineBufferSize)
+    certificate: OntapFpolicyEngineCertificate = Field(
+        default_factory=OntapFpolicyEngineCertificate
+    )
     format: str = ""
     keep_alive_interval: str = ""
     max_server_requests: int = 0
@@ -43,9 +45,138 @@ class OntapFpolicy(OntapModel):
     primary_servers: list[str] = Field(default_factory=list)
     request_abort_timeout: str = ""
     request_cancel_timeout: str = ""
-    resiliency: OntapFpolicyResiliency = Field(default_factory=OntapFpolicyResiliency)
+    resiliency: OntapFpolicyEngineResiliency = Field(default_factory=OntapFpolicyEngineResiliency)
     secondary_servers: list[str] = Field(default_factory=list)
     server_progress_timeout: str = ""
     ssl_option: str = ""
     status_request_interval: str = ""
     type_: str = ""
+
+
+class OntapFpolicyEventFileOperations(OntapModel):
+    """OntapFpolicyEventFileOperations sub-model for file_operations."""
+
+    access: bool = False
+    close: bool = False
+    create: bool = False
+    create_dir: bool = False
+    delete: bool = False
+    delete_dir: bool = False
+    getattr: bool = False
+    link: bool = False
+    lookup: bool = False
+    open: bool = False
+    read: bool = False
+    rename: bool = False
+    rename_dir: bool = False
+    setattr: bool = False
+    symlink: bool = False
+    write: bool = False
+
+
+class OntapFpolicyEventFilters(OntapModel):
+    """OntapFpolicyEventFilters sub-model for filters."""
+
+    close_with_modification: bool = False
+    close_with_read: bool = False
+    close_without_modification: bool = False
+    exclude_directory: bool = False
+    first_read: bool = False
+    first_write: bool = False
+    monitor_ads: bool = False
+    offline_bit: bool = False
+    open_with_delete_intent: bool = False
+    open_with_write_intent: bool = False
+    setattr_with_access_time_change: bool = False
+    setattr_with_allocation_size_change: bool = False
+    setattr_with_creation_time_change: bool = False
+    setattr_with_dacl_change: bool = False
+    setattr_with_group_change: bool = False
+    setattr_with_mode_change: bool = False
+    setattr_with_modify_time_change: bool = False
+    setattr_with_owner_change: bool = False
+    setattr_with_sacl_change: bool = False
+    setattr_with_size_change: bool = False
+    write_with_size_change: bool = False
+
+
+class OntapFpolicyEvent(OntapModel):
+    """OntapFpolicyEvent sub-model for events."""
+
+    file_operations: OntapFpolicyEventFileOperations = Field(
+        default_factory=OntapFpolicyEventFileOperations
+    )
+    filters: OntapFpolicyEventFilters = Field(default_factory=OntapFpolicyEventFilters)
+    monitor_fileop_failure: bool = False
+    name: str = ""
+    protocol: str = ""
+    volume_monitoring: bool = False
+
+
+class OntapFpolicyPersistentStore(OntapModel):
+    """OntapFpolicyPersistentStore sub-model for persistent_stores."""
+
+    autosize_mode: str = ""
+    name: str = ""
+    size: int = 0
+    volume: str = ""
+
+
+class OntapFpolicyPolicyEngine(OntapModel):
+    """OntapFpolicyPolicyEngine sub-model for engine."""
+
+    name: str = ""
+
+
+class OntapFpolicyPolicyEvent(OntapModel):
+    """OntapFpolicyPolicyEvent sub-model for events."""
+
+    name: str = ""
+
+
+class OntapFpolicyPolicyScope(OntapModel):
+    """OntapFpolicyPolicyScope sub-model for scope."""
+
+    check_extensions_on_directories: bool = False
+    exclude_export_policies: list[str] = Field(default_factory=list)
+    exclude_extension: list[str] = Field(default_factory=list)
+    exclude_shares: list[str] = Field(default_factory=list)
+    exclude_volumes: list[str] = Field(default_factory=list)
+    include_export_policies: list[str] = Field(default_factory=list)
+    include_extension: list[str] = Field(default_factory=list)
+    include_shares: list[str] = Field(default_factory=list)
+    include_volumes: list[str] = Field(default_factory=list)
+    object_monitoring_with_no_extension: bool = False
+
+
+class OntapFpolicyPolicy(OntapModel):
+    """OntapFpolicyPolicy sub-model for policies."""
+
+    allow_privileged_access: bool = False
+    enabled: bool = False
+    engine: OntapFpolicyPolicyEngine = Field(default_factory=OntapFpolicyPolicyEngine)
+    events: list[OntapFpolicyPolicyEvent] = Field(default_factory=list)
+    mandatory: bool = False
+    name: str = ""
+    passthrough_read: bool = False
+    persistent_store: str = ""
+    priority: int = 0
+    privileged_user: str = ""
+    scope: OntapFpolicyPolicyScope = Field(default_factory=OntapFpolicyPolicyScope)
+
+
+class OntapFpolicySvm(OntapModel):
+    """OntapFpolicySvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapFpolicy(OntapModel):
+    """OntapFpolicy information."""
+
+    engines: list[OntapFpolicyEngine] = Field(default_factory=list)
+    events: list[OntapFpolicyEvent] = Field(default_factory=list)
+    persistent_stores: list[OntapFpolicyPersistentStore] = Field(default_factory=list)
+    policies: list[OntapFpolicyPolicy] = Field(default_factory=list)
+    svm: OntapFpolicySvm = Field(default_factory=OntapFpolicySvm)

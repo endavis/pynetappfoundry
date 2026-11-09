@@ -1036,6 +1036,9 @@ def generate_mapping(
     if endpoint.records_path != "records":
         lines.append(f'    records_path="{endpoint.records_path}",')
 
+    if endpoint.response_shape == "singleton":
+        lines.append('    response_shape="singleton",')
+
     # Only emit ``parent_mapping`` when the parent path's module tree
     # actually generates a registered mapping whose class name matches
     # the computed parent_class — otherwise ``parent_mapping`` would

@@ -30,7 +30,6 @@ EXPECTED_COUNTS: dict[str, int] = {
     "OntapPort": 7,
     "OntapS3Audit": 5,
     "OntapSnapmirrorTransfer": 6,
-    "OntapSoftwareReference": 4,
     "OntapSwitchPort": 5,
     "OntapVolume": 172,
 }

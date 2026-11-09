@@ -2,44 +2,55 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.models.ontap.storage.snaplock.litigations.model import OntapSnaplockLitigation
+from pynetappfoundry.models.ontap.storage.snaplock.litigations.model import (
+    OntapSnaplockLitigation,
+    OntapSnaplockLitigationOperation,
+)
+
+
+def _transform_operations(record: dict[str, Any]) -> list[OntapSnaplockLitigationOperation]:
+    """Transform operations into OntapSnaplockLitigationOperation list."""
+    return [OntapSnaplockLitigationOperation(**item) for item in record.get("operations", [])]
+
 
 ONTAPSNAPLOCKLITIGATION_MAPPING = TypeMapping(
     name="OntapSnaplockLitigation",
     model_class=OntapSnaplockLitigation,
     api_endpoint="/storage/snaplock/litigations/{id}?fields=*",
     api_type="ontap",
-    records_path="operations",
+    response_shape="singleton",
     parent_mapping=None,
     parent_id_field=None,
     fields=(
         FieldMapping(
             cache_attr="id",
-            default=0,
         ),
         FieldMapping(
-            cache_attr="num_files_failed",
+            cache_attr="name",
         ),
         FieldMapping(
-            cache_attr="num_files_processed",
-        ),
-        FieldMapping(
-            cache_attr="num_files_skipped",
-        ),
-        FieldMapping(
-            cache_attr="num_inodes_ignored",
+            cache_attr="operations",
+            transform=_transform_operations,
+            default=[],
         ),
         FieldMapping(
             cache_attr="path",
         ),
         FieldMapping(
-            cache_attr="state",
+            cache_attr="svm.name",
         ),
         FieldMapping(
-            cache_attr="type_",
-            api_path="type",
+            cache_attr="svm.uuid",
+        ),
+        FieldMapping(
+            cache_attr="volume.name",
+        ),
+        FieldMapping(
+            cache_attr="volume.uuid",
         ),
     ),
 )

@@ -2,40 +2,74 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.models.ontap.support.autosupport.model import OntapAutosupport
+from pynetappfoundry.models.ontap.support.autosupport.model import (
+    OntapAutosupport,
+    OntapAutosupportIssue,
+)
+
+
+def _transform_issues(record: dict[str, Any]) -> list[OntapAutosupportIssue]:
+    """Transform issues into OntapAutosupportIssue list."""
+    return [OntapAutosupportIssue(**item) for item in record.get("issues", [])]
+
 
 ONTAPAUTOSUPPORT_MAPPING = TypeMapping(
     name="OntapAutosupport",
     model_class=OntapAutosupport,
     api_endpoint="/support/autosupport?fields=*",
     api_type="ontap",
-    records_path="issues",
+    response_shape="singleton",
     fields=(
         FieldMapping(
-            cache_attr="component",
+            cache_attr="contact_support",
+            default=False,
         ),
         FieldMapping(
-            cache_attr="corrective_action.code",
+            cache_attr="enabled",
+            default=False,
         ),
         FieldMapping(
-            cache_attr="corrective_action.message",
+            cache_attr="from_",
+            api_path="from",
         ),
         FieldMapping(
-            cache_attr="destination",
+            cache_attr="is_minimal",
+            default=False,
         ),
         FieldMapping(
-            cache_attr="issue.code",
+            cache_attr="issues",
+            transform=_transform_issues,
+            default=[],
+            requires_explicit_fetch=True,
         ),
         FieldMapping(
-            cache_attr="issue.message",
+            cache_attr="mail_hosts",
+            default=[],
         ),
         FieldMapping(
-            cache_attr="node.name",
+            cache_attr="ondemand_enabled",
+            default=False,
         ),
         FieldMapping(
-            cache_attr="node.uuid",
+            cache_attr="partner_addresses",
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="proxy_url",
+        ),
+        FieldMapping(
+            cache_attr="smtp_encryption",
+        ),
+        FieldMapping(
+            cache_attr="to",
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="transport",
         ),
     ),
 )

@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+from pydantic import Field
+
 from pynetappfoundry.models._base import OntapModel
 
 
-class OntapSnaplockLitigation(OntapModel):
-    """OntapSnaplockLitigation information."""
+class OntapSnaplockLitigationOperation(OntapModel):
+    """OntapSnaplockLitigationOperation sub-model for operations."""
 
     id: int = 0
     num_files_failed: str = ""
@@ -16,3 +18,28 @@ class OntapSnaplockLitigation(OntapModel):
     path: str = ""
     state: str = ""
     type_: str = ""
+
+
+class OntapSnaplockLitigationSvm(OntapModel):
+    """OntapSnaplockLitigationSvm sub-model for svm."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapSnaplockLitigationVolume(OntapModel):
+    """OntapSnaplockLitigationVolume sub-model for volume."""
+
+    name: str = ""
+    uuid: str = ""
+
+
+class OntapSnaplockLitigation(OntapModel):
+    """OntapSnaplockLitigation information."""
+
+    id: str = ""
+    name: str = ""
+    operations: list[OntapSnaplockLitigationOperation] = Field(default_factory=list)
+    path: str = ""
+    svm: OntapSnaplockLitigationSvm = Field(default_factory=OntapSnaplockLitigationSvm)
+    volume: OntapSnaplockLitigationVolume = Field(default_factory=OntapSnaplockLitigationVolume)

@@ -342,6 +342,34 @@ generators and `write_endpoint_files`.
 - `tests/unit/cache/test_registry.py::TestNoDuplicateRegistrations` and the spec-level uniqueness
   test in `tests/unit/codegen/test_roundtrip.py` guard against regressions.
 
+### ONTAP single-object responses (Issue #925)
+
+`_detect_records_path` fell back to the first array property, so an ONTAP endpoint whose 200 response
+is one object (for example `GET /cluster/software`) was modelled as its first array (`nodes`).
+
+- **Rule:** for `api_type="ontap"`, `_is_single_object_response()` in `tools/codegen/adapters.py` is
+  true when the 200 schema is not an array and has no `records` property of type array. Such an
+  endpoint is modelled from the whole response schema and gets `ParsedEndpoint.response_shape =
+  "singleton"`. The DII `_SINGLE_OBJECT_ENDPOINTS` table is checked first and is unchanged (`"."`);
+  the `_detect_records_path` first-array fallback stays for aiqum and occm.
+- **Emission:** `generate_mapping` writes `response_shape="singleton"` and no `records_path=` for these
+  endpoints; envelope endpoints emit neither.
+- **Dedup tie-break:** `_deduplicate_endpoints` ranks by leaf count, then prefers an envelope over a
+  singleton, so a collection URL is not replaced by its single-object item endpoint on equal leaves.
+- **Targeted regeneration:** only 11 endpoints were regenerated: `/cluster/software`,
+  `/security/anti-ransomware`, `/support/autosupport`, `/cluster/metrocluster`,
+  `/security/authentication/cluster/nis`, `/protocols/file-security/permissions/{svm.uuid}/{path}`,
+  `/storage/snaplock/litigations/{id}`, `/protocols/fpolicy`, `/protocols/vscan`,
+  `/cluster/counter/tables` and `/storage/flexcache/origins`.
+- **Deferred:** `ems` and `filters` mappings are left alone. The other array-less ONTAP singletons
+  (about 27) are not regenerated. Six endpoints that become parseable under the rule are not emitted.
+  A full regeneration would now overwrite the hand-written `/cluster` mapping.
+- **Litigations caveat:** the item endpoint `/storage/snaplock/litigations/{id}` wins dedup on leaf
+  count (8 against 7), so a fetch of the collection URL hits an envelope response. This was already
+  broken before this change. The generated dangling parent is reset to `parent_mapping=None` (#335).
+
+Issue: #925
+
 ## Related Issues
 
 - Issue #301: feat: field annotations, OpenAPI codegen, and SQL cache storage
@@ -352,6 +380,7 @@ generators and `write_endpoint_files`.
 - Issue #697: feat: add BlueXP/Console SaaS docs to OpenAPI 3.1 parser
 - Issue #699: feat: generate Pydantic models from Console OpenAPI spec
 - Issue #894: bug: codegen class-name collisions drop model registry mappings
+- Issue #925: bug: codegen models ONTAP single-object responses as their first array property
 
 ## Related Documentation
 

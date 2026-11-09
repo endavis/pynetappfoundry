@@ -61,7 +61,7 @@ Four generated mappings set a non-empty `records_path`, and `DiiBackend` ignored
 
 - **Sentinel:** `records_path = "."` means the whole dict response is one record. It is DII-only and not part of the shared `TypeMapping` contract. `DiiBackend.query()` checks it before the non-empty `records_path` branch and returns `[response]`. A list response keeps list behaviour. Mappings with `records_path=""` and named paths behave as before.
 - **Codegen:** `_SINGLE_OBJECT_ENDPOINTS` in `tools/codegen/adapters.py` lists the two paths for `api_type="dii"`. For them the model is generated from the whole `InstallCommand` schema (`token`, `installCommand`, `imageZipUrl` and so on, with `additionalInstructionsForManualInstallation` as a nested list). `_detect_records_path` and every other endpoint are unchanged.
-- **Deferred:** a shared `TypeMapping` flag for single-object responses, and the 12 ONTAP mappings with the same artifact, are tracked in #925.
+- **ONTAP (#925):** ONTAP single-object responses use the shared `TypeMapping.response_shape = "singleton"`, set by an api_type codegen rule. DII keeps the `"."` sentinel.
 
 ## Related Issues
 
@@ -70,7 +70,7 @@ Four generated mappings set a non-empty `records_path`, and `DiiBackend` ignored
 - Issue #915: bug: DII envelope endpoints (lake/query, alerts) return empty from DiiBackend and are not paged
 - Issue #918: bug: DiiBackend ignores records_path, so /users and /users/invites return empty
 - Issue #919: codegen models single-object responses as their first array property
-- Issue #925: shared single-object flag and the ONTAP mappings with the same artifact (deferred)
+- Issue #925: ONTAP single-object responses use `TypeMapping.response_shape` via a codegen rule; DII keeps `"."`
 - Issue #533: feat: DataSource non-ONTAP backends (partially addressed; DII is the first non-ONTAP backend)
 - Issue #618: feat: early validation for where()/typed-DSL + incompatible source mode
 

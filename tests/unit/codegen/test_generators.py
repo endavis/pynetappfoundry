@@ -357,6 +357,18 @@ class TestGenerateModel:
 
 
 class TestGenerateMapping:
+    def test_singleton_emits_response_shape(self) -> None:
+        ep = _make_endpoint()
+        ep.response_shape = "singleton"
+        code = generate_mapping(ep)
+        assert 'response_shape="singleton"' in code
+        assert "records_path=" not in code
+
+    def test_envelope_emits_no_response_shape(self) -> None:
+        code = generate_mapping(_make_endpoint())
+        assert "response_shape" not in code
+        assert "records_path=" not in code
+
     def test_basic_structure(self) -> None:
         ep = _make_endpoint()
         code = generate_mapping(ep)

@@ -1,73 +1,77 @@
+_removed_fields = [
+    "access",
+    "advanced_rights.append_data",
+    "advanced_rights.delete",
+    "advanced_rights.delete_child",
+    "advanced_rights.execute_file",
+    "advanced_rights.full_control",
+    "advanced_rights.read_attr",
+    "advanced_rights.read_data",
+    "advanced_rights.read_ea",
+    "advanced_rights.read_perm",
+    "advanced_rights.synchronize",
+    "advanced_rights.write_attr",
+    "advanced_rights.write_data",
+    "advanced_rights.write_ea",
+    "advanced_rights.write_owner",
+    "advanced_rights.write_perm",
+    "apply_to.files",
+    "apply_to.sub_folders",
+    "apply_to.this_folder",
+    "inherited",
+    "rights",
+    "user",
+]
+
 [endpoint]
 path = "/protocols/file-security/permissions/{svm.uuid}/{path}"
 schema = "file_directory_security"
 class_name = "OntapFileDirectorySecurity"
 
-[fields.access]
-cache_strategy = "cache"
-
 [fields.access_control]
 cache_strategy = "cache"
 
-[fields."advanced_rights.append_data"]
+[fields.acls]
 cache_strategy = "cache"
 
-[fields."advanced_rights.delete"]
+[fields.control_flags]
 cache_strategy = "cache"
 
-[fields."advanced_rights.delete_child"]
+[fields.dos_attributes]
 cache_strategy = "cache"
 
-[fields."advanced_rights.execute_file"]
+[fields.effective_style]
 cache_strategy = "cache"
 
-[fields."advanced_rights.full_control"]
+[fields.group]
 cache_strategy = "cache"
 
-[fields."advanced_rights.read_attr"]
+[fields.group_id]
 cache_strategy = "cache"
 
-[fields."advanced_rights.read_data"]
+[fields.ignore_paths]
 cache_strategy = "cache"
 
-[fields."advanced_rights.read_ea"]
+[fields.inode]
 cache_strategy = "cache"
 
-[fields."advanced_rights.read_perm"]
+[fields.mode_bits]
 cache_strategy = "cache"
 
-[fields."advanced_rights.synchronize"]
+[fields.owner]
 cache_strategy = "cache"
 
-[fields."advanced_rights.write_attr"]
+[fields.propagation_mode]
 cache_strategy = "cache"
 
-[fields."advanced_rights.write_data"]
+[fields.security_style]
 cache_strategy = "cache"
 
-[fields."advanced_rights.write_ea"]
+[fields.text_dos_attr]
 cache_strategy = "cache"
 
-[fields."advanced_rights.write_owner"]
+[fields.text_mode_bits]
 cache_strategy = "cache"
 
-[fields."advanced_rights.write_perm"]
-cache_strategy = "cache"
-
-[fields."apply_to.files"]
-cache_strategy = "cache"
-
-[fields."apply_to.sub_folders"]
-cache_strategy = "cache"
-
-[fields."apply_to.this_folder"]
-cache_strategy = "cache"
-
-[fields.inherited]
-cache_strategy = "cache"
-
-[fields.rights]
-cache_strategy = "cache"
-
-[fields.user]
+[fields.user_id]
 cache_strategy = "cache"

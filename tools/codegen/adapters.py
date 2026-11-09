@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from tools.codegen.expensive_fields import extract_expensive_patterns, is_field_expensive
 
@@ -73,6 +73,8 @@ class ParsedEndpoint:
             endpoint has multiple path parameters.  Composite identifiers
             are not inferred; nested response-field identifiers (e.g.
             ``"volume.uuid"``) must be set via a manual edit after codegen.
+        response_shape: ``"envelope"`` (a record list under ``records_path``)
+            or ``"singleton"`` (the whole response is one record; #925).
     """
 
     path: str
@@ -86,6 +88,7 @@ class ParsedEndpoint:
     parent_path: str = ""
     tags: list[str] = field(default_factory=list)
     identifier_field: str | None = None
+    response_shape: Literal["envelope", "singleton"] = "envelope"
 
 
 # OpenAPI type → (python_type, default_value)
@@ -300,11 +303,33 @@ _SINGLE_OBJECT_ENDPOINTS: dict[str, frozenset[str]] = {
 
 Keyed by API type; the value is the set of spec paths.  Their records path is
 ``"."`` (the whole response is the single record) and the model is built from
-the whole response schema.  DII only: the ONTAP equivalents are tracked in #925.
+the whole response schema.  DII only: ONTAP single-object responses are handled
+by the api_type rule in ``_is_single_object_response`` (#925), not by this table.
 """
 
 SINGLE_OBJECT_RECORDS_PATH = "."
 """Records-path sentinel for a response that is one record."""
+
+
+def _is_single_object_response(spec: dict[str, Any], response_schema: dict[str, Any]) -> bool:
+    """Return True when a 200 response schema is one object, not a record list.
+
+    A response is single-object when it is not an array and has no ``records``
+    property of type array (#925).
+
+    Args:
+        spec: Full OpenAPI spec for ``$ref`` resolution.
+        response_schema: The 200 response schema.
+
+    Returns:
+        True for a single-object response, False for an envelope or array.
+    """
+    if "$ref" in response_schema:
+        response_schema = _resolve_ref(spec, response_schema["$ref"])
+    if response_schema.get("type") == "array":
+        return False
+    records_prop = response_schema.get("properties", {}).get("records", {})
+    return bool(records_prop.get("type") != "array")
 
 
 def _detect_records_path(
@@ -491,8 +516,15 @@ def parse_openapi_spec(
             continue
 
         # Detect records path and item schema
+        records_path = "records"
+        response_shape: Literal["envelope", "singleton"] = "envelope"
         if path in _SINGLE_OBJECT_ENDPOINTS.get(api_type, frozenset()):
             records_path = SINGLE_OBJECT_RECORDS_PATH
+            item_schema = response_schema
+            if "$ref" in item_schema:
+                item_schema = _resolve_ref(spec, item_schema["$ref"])
+        elif api_type == "ontap" and _is_single_object_response(spec, response_schema):
+            response_shape = "singleton"
             item_schema = response_schema
             if "$ref" in item_schema:
                 item_schema = _resolve_ref(spec, item_schema["$ref"])
@@ -534,6 +566,7 @@ def parse_openapi_spec(
                 has_parent=has_parent,
                 parent_path=parent_path,
                 tags=tags,
+                response_shape=response_shape,
             )
         )
 

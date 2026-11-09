@@ -707,5 +707,73 @@ class TestSingleObjectEndpoints:
         assert eps["/users"].records_path == "users"
 
     def test_other_api_types_unchanged(self, tmp_path: Path) -> None:
-        eps = {e.path: e for e in parse_openapi_spec(_write_spec(self._spec(), tmp_path), "ontap")}
+        eps = {e.path: e for e in parse_openapi_spec(_write_spec(self._spec(), tmp_path), "aiqum")}
         assert eps["/au/oneTimeToken"].records_path == "extra"
+
+
+class TestOntapSingleObjectRule:
+    """ONTAP responses with no records array are singletons (#925)."""
+
+    @staticmethod
+    def _op(schema: dict) -> dict:
+        return {
+            "get": {"responses": {"200": {"content": {"application/json": {"schema": schema}}}}}
+        }
+
+    def _parse(self, tmp_path: Path, api_type: str = "ontap") -> dict:
+        item = {"type": "object", "properties": {"name": {"type": "string"}}}
+        spec = {
+            "openapi": "3.0.0",
+            "paths": {
+                "/single": self._op({"$ref": "#/components/schemas/Single"}),
+                "/env": self._op({"$ref": "#/components/schemas/Env"}),
+                "/arr": self._op({"type": "array", "items": item}),
+                "/noarr": self._op({"$ref": "#/components/schemas/NoArr"}),
+                "/au/oneTimeToken": self._op({"$ref": "#/components/schemas/Single"}),
+            },
+            "components": {
+                "schemas": {
+                    "Single": {
+                        "type": "object",
+                        "properties": {
+                            "state": {"type": "string"},
+                            "count": {"type": "integer"},
+                            "nodes": {"type": "array", "items": item},
+                        },
+                    },
+                    "Env": {
+                        "type": "object",
+                        "properties": {
+                            "records": {"type": "array", "items": item},
+                            "num_records": {"type": "integer"},
+                        },
+                    },
+                    "NoArr": {"type": "object", "properties": {"state": {"type": "string"}}},
+                }
+            },
+        }
+        return {e.path: e for e in parse_openapi_spec(_write_spec(spec, tmp_path), api_type)}
+
+    def test_object_with_array_prop_is_singleton(self, tmp_path: Path) -> None:
+        ep = self._parse(tmp_path)["/single"]
+        assert ep.response_shape == "singleton"
+        assert ep.records_path == "records"
+        assert {"state", "count", "nodes"} <= {f.name for f in ep.fields}
+
+    def test_envelope_unchanged(self, tmp_path: Path) -> None:
+        ep = self._parse(tmp_path)["/env"]
+        assert ep.response_shape == "envelope"
+        assert ep.records_path == "records"
+
+    def test_direct_array_unchanged(self, tmp_path: Path) -> None:
+        ep = self._parse(tmp_path)["/arr"]
+        assert ep.response_shape == "envelope"
+        assert ep.records_path == ""
+
+    def test_arrayless_object_is_singleton(self, tmp_path: Path) -> None:
+        assert self._parse(tmp_path)["/noarr"].response_shape == "singleton"
+
+    def test_dii_overrides_still_dot_envelope(self, tmp_path: Path) -> None:
+        ep = self._parse(tmp_path, "dii")["/au/oneTimeToken"]
+        assert ep.records_path == "."
+        assert ep.response_shape == "envelope"

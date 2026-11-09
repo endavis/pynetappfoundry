@@ -1,3 +1,12 @@
+_removed_fields = [
+    "num_files_failed",
+    "num_files_processed",
+    "num_files_skipped",
+    "num_inodes_ignored",
+    "state",
+    "type_",
+]
+
 [endpoint]
 path = "/storage/snaplock/litigations/{id}"
 schema = "snaplock_litigation"
@@ -6,23 +15,23 @@ class_name = "OntapSnaplockLitigation"
 [fields.id]
 cache_strategy = "cache"
 
-[fields.num_files_failed]
+[fields.name]
 cache_strategy = "cache"
 
-[fields.num_files_processed]
-cache_strategy = "cache"
-
-[fields.num_files_skipped]
-cache_strategy = "cache"
-
-[fields.num_inodes_ignored]
+[fields.operations]
 cache_strategy = "cache"
 
 [fields.path]
 cache_strategy = "cache"
 
-[fields.state]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.type_]
+[fields."svm.uuid"]
+cache_strategy = "cache"
+
+[fields."volume.name"]
+cache_strategy = "cache"
+
+[fields."volume.uuid"]
 cache_strategy = "cache"
