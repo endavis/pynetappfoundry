@@ -539,6 +539,36 @@ class TestComplianceRuleErrors:
     def _invoke(self, runner: CliRunner, config_dir: Path, *extra: str):  # type: ignore[no-untyped-def]
         return runner.invoke(nf, ["-c", str(config_dir), "cache", "compliance", "c1", *extra])
 
+    def test_brackets_in_stage_and_message_shown_literally(
+        self, runner: CliRunner, config_dir: Path
+    ) -> None:
+        msg = "bad value [type=extra_forbidden, input_value=1, input_type=int]"
+        err = ComplianceRuleError(rule_name="bad", stage="load", message=msg)
+        with (
+            patch(self.P + "load_global_compliance_rules", self._load_with([err], self._rule())),
+            patch(self.P + "ClusterMetadataDB"),
+            patch(self.P + "run_compliance_checks", return_value=[]),
+        ):
+            result = self._invoke(runner, config_dir)
+
+        assert result.exit_code == 2
+        assert "[load]" in result.stderr
+        assert "[type=extra_forbidden, input_value=1, input_type=int]" in result.stderr
+
+    def test_closing_tag_in_message_does_not_crash(
+        self, runner: CliRunner, config_dir: Path
+    ) -> None:
+        err = ComplianceRuleError(rule_name="bad", stage="load", message="oops [/bold] here")
+        with (
+            patch(self.P + "load_global_compliance_rules", self._load_with([err], self._rule())),
+            patch(self.P + "ClusterMetadataDB"),
+            patch(self.P + "run_compliance_checks", return_value=[]),
+        ):
+            result = self._invoke(runner, config_dir)
+
+        assert result.exit_code == 2
+        assert "[/bold]" in result.stderr
+
     def test_load_error_exit_2_reason_on_stderr(self, runner: CliRunner, config_dir: Path) -> None:
         err = ComplianceRuleError(
             rule_name="bad", stage="load", message="were: Extra inputs are not permitted"

@@ -19,6 +19,7 @@ from pathlib import Path
 
 import click
 from rich.console import Console
+from rich.markup import escape
 from rich.table import Table
 
 from pynetappfoundry.cache import ClusterMetadataDB
@@ -61,9 +62,10 @@ def _report_rule_errors(errors: list[ComplianceRuleError]) -> None:
         errors: Rule errors to report.
     """
     for err in errors:
-        where = f" (cluster {err.cluster_name})" if err.cluster_name else ""
+        where = f" (cluster {escape(err.cluster_name)})" if err.cluster_name else ""
         err_console.print(
-            f"[red]Compliance rule '{err.rule_name}'{where} [{err.stage}]: {err.message}[/red]",
+            f"[red]Compliance rule '{escape(err.rule_name)}'{where} "
+            f"{escape(f'[{err.stage}]')}: {escape(err.message)}[/red]",
             soft_wrap=True,
             markup=True,
             highlight=False,
