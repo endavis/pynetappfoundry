@@ -309,6 +309,73 @@ enc = "cluster_encoded_password"
             os.chdir(original_cwd)
 
 
+class TestDecryptIfEncrypted:
+    """Tests for SOPS decryption in get_user (fail closed)."""
+
+    @staticmethod
+    def _config(temp_config_dir: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Config:
+        monkeypatch.chdir(tmp_path)
+        output_dir = tmp_path / "output"
+        output_dir.mkdir(exist_ok=True)
+        return Config(
+            config_dir=str(temp_config_dir),
+            output_dir=str(output_dir),
+            script_name="test_script",
+        )
+
+    def test_decrypt_failure_raises_configuration_error(
+        self, temp_config_dir: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A failed decrypt raises, naming the cluster and SOPS error, never the ciphertext."""
+        from unittest.mock import patch
+
+        from pynetappfoundry.utils.sops import SOPSError
+
+        config = self._config(temp_config_dir, tmp_path, monkeypatch)
+        ciphertext = "SOPS[SECRETCIPHERTEXT]"
+        prefix = config._get_env_var_name("cluster-x")
+        monkeypatch.setenv(f"{prefix}_USER", "admin")
+        monkeypatch.setenv(f"{prefix}_PASSWORD", ciphertext)
+
+        err = SOPSError("no key available")
+        with (
+            patch("pynetappfoundry.utils.sops.decrypt_value", side_effect=err),
+            pytest.raises(ConfigurationError) as exc_info,
+        ):
+            config.get_user("clusters", "cluster-x")
+
+        message = str(exc_info.value)
+        assert "cluster-x" in message
+        assert "no key available" in message
+        assert "SECRETCIPHERTEXT" not in message
+        assert exc_info.value.__cause__ is err
+
+    def test_decrypt_success_returns_plaintext(
+        self, temp_config_dir: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """An encrypted value that decrypts is returned decrypted."""
+        from unittest.mock import patch
+
+        config = self._config(temp_config_dir, tmp_path, monkeypatch)
+        prefix = config._get_env_var_name("cluster-x")
+        monkeypatch.setenv(f"{prefix}_USER", "admin")
+        monkeypatch.setenv(f"{prefix}_PASSWORD", "SOPS[abc]")
+
+        with patch("pynetappfoundry.utils.sops.decrypt_value", return_value="plain"):
+            assert config.get_user("clusters", "cluster-x") == ("admin", "plain")
+
+    def test_non_encrypted_value_not_decrypted(
+        self, temp_config_dir: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A non-encrypted value is returned as-is without calling SOPS."""
+        from unittest.mock import patch
+
+        config = self._config(temp_config_dir, tmp_path, monkeypatch)
+        with patch("pynetappfoundry.utils.sops.decrypt_value") as mock_decrypt:
+            assert config._decrypt_if_encrypted("plainvalue", object_name="c") == "plainvalue"
+        mock_decrypt.assert_not_called()
+
+
 class TestCheckTermMethods:
     """Tests for check_term, chk_and, chk_or methods."""
 
