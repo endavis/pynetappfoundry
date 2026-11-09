@@ -1,7 +1,7 @@
 [endpoint]
 path = "/collector/datasourceTypes"
 schema = ""
-class_name = "DiiCollectorDatasourcetype"
+class_name = "DiiCollectorDatasourceTypes"
 
 [fields.name]
 cache_strategy = "cache"

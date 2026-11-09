@@ -1317,6 +1317,25 @@ class TestResolveClassNameCollisions:
                 _au_endpoints(), "dii", shared_schemas={"AcquisitionUnit"}
             )
 
+    def test_case_only_collision_raises_when_exact_names_equal(self) -> None:
+        # Names differ only in case (same cache table) and exact names are identical (#923).
+        eps = [
+            _make_endpoint(path="/x/fooTypes", schema_name=""),
+            _make_endpoint(path="/x/foo_types", schema_name=""),
+        ]
+        with pytest.raises(ValueError, match="_CLASS_NAME_OVERRIDES"):
+            resolve_class_name_collisions(eps, "dii")
+
+    def test_case_only_collision_resolved_by_manual_override(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setitem(_CLASS_NAME_OVERRIDES, "/x/fooTypes", "DiiXFooTypesPlural")
+        eps = [
+            _make_endpoint(path="/x/fooTypes", schema_name=""),
+            _make_endpoint(path="/x/foo_types", schema_name=""),
+        ]
+        assert resolve_class_name_collisions(eps, "dii") == {}
+
 
 class TestPathToClassNameOverrides:
     """``class_name_overrides`` precedence in ``_path_to_class_name`` (#894)."""

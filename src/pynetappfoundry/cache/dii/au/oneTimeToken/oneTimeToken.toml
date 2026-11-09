@@ -1,13 +1,3 @@
-_removed_fields = [
-    "commands",
-    "description",
-    "download",
-    "downloadTitle",
-    "footer",
-    "heading",
-    "name",
-]
-
 [endpoint]
 path = "/au/oneTimeToken"
 schema = "InstallCommand"

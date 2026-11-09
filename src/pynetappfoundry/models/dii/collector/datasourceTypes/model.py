@@ -1,5 +1,5 @@
 # ruff: noqa: E501, N815
-"""DiiCollectorDatasourcetype information."""
+"""DiiCollectorDatasourceTypes information."""
 
 from __future__ import annotations
 
@@ -8,8 +8,8 @@ from pydantic import Field
 from pynetappfoundry.models._base import OntapModel
 
 
-class DiiCollectorDatasourcetypePackageAttribute(OntapModel):
-    """DiiCollectorDatasourcetypePackageAttribute sub-model for attributes."""
+class DiiCollectorDatasourceTypesPackageAttribute(OntapModel):
+    """DiiCollectorDatasourceTypesPackageAttribute sub-model for attributes."""
 
     role: str = ""
     guiorder: int = 0
@@ -37,25 +37,25 @@ class DiiCollectorDatasourcetypePackageAttribute(OntapModel):
     isMandatory: bool = False
 
 
-class DiiCollectorDatasourcetypePackage(OntapModel):
-    """DiiCollectorDatasourcetypePackage sub-model for packages."""
+class DiiCollectorDatasourceTypesPackage(OntapModel):
+    """DiiCollectorDatasourceTypesPackage sub-model for packages."""
 
     displayName: str = ""
-    attributes: list[DiiCollectorDatasourcetypePackageAttribute] = Field(default_factory=list)
+    attributes: list[DiiCollectorDatasourceTypesPackageAttribute] = Field(default_factory=list)
     id: str = ""
     mandatory: bool = False
     isMandatory: bool = False
 
 
-class DiiCollectorDatasourcetypeVendormodelDatasourcetypevendormodelid(OntapModel):
-    """DiiCollectorDatasourcetypeVendormodelDatasourcetypevendormodelid sub-model for dataSourceTypeVendorModelId."""
+class DiiCollectorDatasourceTypesVendormodelDatasourcetypevendormodelid(OntapModel):
+    """DiiCollectorDatasourceTypesVendormodelDatasourcetypevendormodelid sub-model for dataSourceTypeVendorModelId."""
 
     dsTypeId: int = 0
     id: int = 0
 
 
-class DiiCollectorDatasourcetypeVendormodel(OntapModel):
-    """DiiCollectorDatasourcetypeVendormodel sub-model for vendorModels."""
+class DiiCollectorDatasourceTypesVendormodel(OntapModel):
+    """DiiCollectorDatasourceTypesVendormodel sub-model for vendorModels."""
 
     modelDescription: str = ""
     modelName: str = ""
@@ -63,18 +63,18 @@ class DiiCollectorDatasourcetypeVendormodel(OntapModel):
     imageURL: str = ""
     id: str = ""
     vendorName: str = ""
-    dataSourceTypeVendorModelId: DiiCollectorDatasourcetypeVendormodelDatasourcetypevendormodelid = Field(
-        default_factory=DiiCollectorDatasourcetypeVendormodelDatasourcetypevendormodelid
+    dataSourceTypeVendorModelId: DiiCollectorDatasourceTypesVendormodelDatasourcetypevendormodelid = Field(
+        default_factory=DiiCollectorDatasourceTypesVendormodelDatasourcetypevendormodelid
     )
 
 
-class DiiCollectorDatasourcetype(OntapModel):
-    """DiiCollectorDatasourcetype information."""
+class DiiCollectorDatasourceTypes(OntapModel):
+    """DiiCollectorDatasourceTypes information."""
 
     name: str = ""
     description: str = ""
     self: str = ""
     id: str = ""
     type_: str = ""
-    packages: list[DiiCollectorDatasourcetypePackage] = Field(default_factory=list)
-    vendorModels: list[DiiCollectorDatasourcetypeVendormodel] = Field(default_factory=list)
+    packages: list[DiiCollectorDatasourceTypesPackage] = Field(default_factory=list)
+    vendorModels: list[DiiCollectorDatasourceTypesVendormodel] = Field(default_factory=list)
