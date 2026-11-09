@@ -459,3 +459,21 @@ class TestSessionCommand:
 
         assert result.exit_code != 0
         assert "Invalid IP" in result.output or "Get CIFS sessions failed" in result.output
+
+
+class TestSessionAllClustersFail:
+    @patch("pynetappfoundry.cli.commands.cifs.session.DataSource")
+    @patch("pynetappfoundry.cli.decorators.Config")
+    def test_all_clusters_fail_exits_nonzero(
+        self, mock_config_cls: MagicMock, ds_cls: MagicMock
+    ) -> None:
+        cfg = MagicMock()
+        cfg.get_clusters.return_value = {"a": {"ip": "1.1.1.1"}, "b": {"ip": "2.2.2.2"}}
+        cfg.output_dir = Path("/tmp")
+        mock_config_cls.return_value = cfg
+        ds_cls.return_value.query.side_effect = RuntimeError("boom")
+
+        result = CliRunner().invoke(session, [], obj={})
+
+        assert result.exit_code != 0
+        assert "boom" in result.output

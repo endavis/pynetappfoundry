@@ -58,7 +58,13 @@ def with_config(action: str) -> Callable[[F], F]:
                 # Parse filter
                 filter_dict: dict[str, str] = {}
                 if filter_str:
-                    filter_dict = json.loads(filter_str)
+                    parsed = json.loads(filter_str)
+                    if not isinstance(parsed, dict):
+                        raise click.ClickException(
+                            "Invalid filter JSON: expected a JSON object, "
+                            f"got {type(parsed).__name__}"
+                        )
+                    filter_dict = parsed
 
                 # Create config
                 config = Config(
@@ -68,13 +74,15 @@ def with_config(action: str) -> Callable[[F], F]:
                     no_cache=live,
                 )
                 clusters = config.get_clusters(filter_dict)
-
-                return func(*args, config=config, clusters=clusters, **kwargs)
-
+            except click.ClickException:
+                raise
             except json.JSONDecodeError as e:
                 raise click.ClickException(f"Invalid filter JSON: {e}") from e
             except Exception as e:
                 raise click.ClickException(f"{action}: {e}") from e
+
+            # Call the command outside the try so its own errors are not relabelled.
+            return func(*args, config=config, clusters=clusters, **kwargs)
 
         return wrapper  # type: ignore[return-value]
 
