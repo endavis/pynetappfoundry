@@ -1,5 +1,5 @@
 # ruff: noqa: N802
-"""DiiCollectorDatasourcetype type mapping."""
+"""DiiCollectorDatasourceTypes type mapping."""
 
 from __future__ import annotations
 
@@ -8,27 +8,27 @@ from typing import Any
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.dii.collector.datasourceTypes.model import (
-    DiiCollectorDatasourcetype,
-    DiiCollectorDatasourcetypePackage,
-    DiiCollectorDatasourcetypeVendormodel,
+    DiiCollectorDatasourceTypes,
+    DiiCollectorDatasourceTypesPackage,
+    DiiCollectorDatasourceTypesVendormodel,
 )
 
 
-def _transform_packages(record: dict[str, Any]) -> list[DiiCollectorDatasourcetypePackage]:
-    """Transform packages into DiiCollectorDatasourcetypePackage list."""
-    return [DiiCollectorDatasourcetypePackage(**item) for item in record.get("packages", [])]
+def _transform_packages(record: dict[str, Any]) -> list[DiiCollectorDatasourceTypesPackage]:
+    """Transform packages into DiiCollectorDatasourceTypesPackage list."""
+    return [DiiCollectorDatasourceTypesPackage(**item) for item in record.get("packages", [])]
 
 
-def _transform_vendorModels(record: dict[str, Any]) -> list[DiiCollectorDatasourcetypeVendormodel]:
-    """Transform vendorModels into DiiCollectorDatasourcetypeVendormodel list."""
+def _transform_vendorModels(record: dict[str, Any]) -> list[DiiCollectorDatasourceTypesVendormodel]:
+    """Transform vendorModels into DiiCollectorDatasourceTypesVendormodel list."""
     return [
-        DiiCollectorDatasourcetypeVendormodel(**item) for item in record.get("vendorModels", [])
+        DiiCollectorDatasourceTypesVendormodel(**item) for item in record.get("vendorModels", [])
     ]
 
 
-DIICOLLECTORDATASOURCETYPE_MAPPING = TypeMapping(
-    name="DiiCollectorDatasourcetype",
-    model_class=DiiCollectorDatasourcetype,
+DIICOLLECTORDATASOURCETYPES_MAPPING = TypeMapping(
+    name="DiiCollectorDatasourceTypes",
+    model_class=DiiCollectorDatasourceTypes,
     api_endpoint="/collector/datasourceTypes",
     api_type="dii",
     identifier_field="dataSourceTypeId",
@@ -63,4 +63,4 @@ DIICOLLECTORDATASOURCETYPE_MAPPING = TypeMapping(
     ),
 )
 
-model_registry.register_mapping("DiiCollectorDatasourcetype", DIICOLLECTORDATASOURCETYPE_MAPPING)
+model_registry.register_mapping("DiiCollectorDatasourceTypes", DIICOLLECTORDATASOURCETYPES_MAPPING)

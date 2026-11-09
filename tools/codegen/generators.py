@@ -49,7 +49,11 @@ def _path_to_module_parts(api_path: str) -> list[str]:
     return result
 
 
-_CLASS_NAME_OVERRIDES: dict[str, str] = {}
+_CLASS_NAME_OVERRIDES: dict[str, str] = {
+    # "/collector/datasourceTypes" and "/collector/datasource_types" derive class
+    # names differing only in case; both lower to one cache table name (#923).
+    "/collector/datasourceTypes": "DiiCollectorDatasourceTypes",
+}
 """Manual overrides for class names keyed by API path.
 
 Use this as an escape hatch for names the algorithm can't handle.
@@ -183,6 +187,9 @@ def resolve_class_name_collisions(
 ) -> dict[tuple[str, ...], str]:
     """Find endpoints whose derived class names collide and rename them.
 
+    Names are compared case-insensitively because the cache table name is the
+    lowercased class name, so names differing only in case share one table.
+
     Only colliding classes are renamed: each member of a collision group gets
     an exact path-based name (see :func:`_path_to_exact_class_name`).  Names
     that do not collide are untouched, so existing output stays stable.
@@ -204,7 +211,7 @@ def resolve_class_name_collisions(
     groups: dict[str, list[ParsedEndpoint]] = {}
     for ep in eps:
         name = _path_to_class_name(ep.path, ep.schema_name, api_type, shared_schemas=shared_schemas)
-        groups.setdefault(name, []).append(ep)
+        groups.setdefault(name.lower(), []).append(ep)
 
     overrides: dict[tuple[str, ...], str] = {}
     for name, members in groups.items():
@@ -229,7 +236,7 @@ def resolve_class_name_collisions(
             shared_schemas=shared_schemas,
             class_name_overrides=overrides,
         )
-        final.setdefault(resolved, []).append(ep.path)
+        final.setdefault(resolved.lower(), []).append(ep.path)
     clashes = {n: paths for n, paths in final.items() if len(paths) > 1}
     if clashes:
         raise ValueError(

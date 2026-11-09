@@ -277,3 +277,25 @@ class TestNoDuplicateRegistrations:
             assert registered is not None
             assert registered.model_class is classes[0]
         assert len(seen) == count
+
+    def test_lowercased_model_class_names_are_unique(self) -> None:
+        """Table name is ``model_class.__name__.lower()``; it must be unique (#923)."""
+        import pynetappfoundry.cache.dii as dii_pkg
+        import pynetappfoundry.cache.ontap as ontap_pkg
+        from pynetappfoundry.cache.field_mapping import TypeMapping
+
+        _ensure_bootstrapped()
+        by_table: dict[str, set[type[BaseModel]]] = {}
+        for pkg in (ontap_pkg, dii_pkg):
+            for info in pkgutil.walk_packages(pkg.__path__, pkg.__name__ + "."):
+                if not info.name.endswith(".mapping"):
+                    continue
+                module = importlib.import_module(info.name)
+                for attr, value in vars(module).items():
+                    if attr.endswith("_MAPPING") and isinstance(value, TypeMapping):
+                        by_table.setdefault(value.model_class.__name__.lower(), set()).add(
+                            value.model_class
+                        )
+        assert by_table
+        clashes = {t: sorted(c.__name__ for c in cs) for t, cs in by_table.items() if len(cs) > 1}
+        assert clashes == {}
