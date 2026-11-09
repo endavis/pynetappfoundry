@@ -34,10 +34,22 @@ DII is the first non-ONTAP backend in the DataSource framework. It validates the
 
 The bare-array envelope is a DII-specific quirk that the existing `parse_api_response()` function does not handle (it expects a dict with a `records_path` key). DiiBackend bypasses it by calling `call_endpoint()` and iterating the raw array. This is a pragmatic choice that avoids complicating the shared response parser with a special case for empty `records_path`.
 
+## Amendment (#915): envelope responses
+
+Some DII endpoints (`/lake/query/...`, `/monitors/alerts/query`) return an envelope `{offset, count, limit, <records>}` instead of a bare array.
+
+- **Detection** is by content, not endpoint: a dict with `offset`, an integer `count` and exactly one list under `rows`, `results` or `values` (`extract_envelope_records()` in `src/pynetappfoundry/clients/dii/api.py`).
+- **Return contract:** on the paging path `get_all_pages` returns the concatenated records list and drops the envelope metadata. With a caller-supplied `offset`/`limit`, or an endpoint that does not paginate, it returns the raw envelope; `DiiBackend.query()` extracts the records from it.
+- **Stop rule:** stop when `offset + len(records) >= total`, where total is `objectCount`, else `count`. Both are totals (spec description and a live check, 2026-11-09). Fallbacks are an empty page, a short page when no total exists, and `DII_MAX_PAGES`. A short page alone does not stop the loop when a total exists, because the server may clamp the page size.
+- **The offset advances by `len(records)`**, so a clamped page skips nothing.
+- **HTTP errors propagate** rather than being swallowed, for example the alert `offset` ceiling of about 1,500 noted in the NetApp MCP docs.
+- `sort` must appear in `tags`/`metrics`; that is the caller's concern.
+
 ## Related Issues
 
 - Issue #600: feat: add DII API backend to DataSource
 - Issue #893: bug: DII backend fetches only the first page (offset/limit pagination in DIIAPIClient.get_all_pages)
+- Issue #915: bug: DII envelope endpoints (lake/query, alerts) return empty from DiiBackend and are not paged
 - Issue #533: feat: DataSource non-ONTAP backends (partially addressed; DII is the first non-ONTAP backend)
 - Issue #618: feat: early validation for where()/typed-DSL + incompatible source mode
 
