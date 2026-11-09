@@ -126,3 +126,23 @@ class TestComplianceResult:
         )
         assert result.match_count == 0
         assert result.matches == []
+
+
+class TestRuleValidationStrictness:
+    """Severity is a Literal and unknown fields are rejected (issue #897)."""
+
+    def test_bad_severity_rejected(self) -> None:
+        with pytest.raises(ValidationError):
+            ComplianceRule(name="r", model="nodes", where="x = 1", severity="Warning")  # type: ignore[arg-type]
+
+    def test_extra_field_rejected(self) -> None:
+        with pytest.raises(ValidationError):
+            ComplianceRule(name="r", model="nodes", were="x = 1")  # type: ignore[call-arg]
+
+    def test_override_bad_severity_rejected(self) -> None:
+        with pytest.raises(ValidationError):
+            ClusterComplianceOverride(severity="critical")  # type: ignore[arg-type]
+
+    def test_override_extra_field_rejected(self) -> None:
+        with pytest.raises(ValidationError):
+            ClusterComplianceOverride(severty="error")  # type: ignore[call-arg]

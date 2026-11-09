@@ -9,7 +9,11 @@ from __future__ import annotations
 import logging
 
 from pynetappfoundry.cache.db import ClusterMetadataDB
-from pynetappfoundry.compliance.models import ComplianceResult, ComplianceRule
+from pynetappfoundry.compliance.models import (
+    ComplianceResult,
+    ComplianceRule,
+    ComplianceRuleError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +23,7 @@ def run_compliance_checks(
     cluster_name: str,
     rules: dict[str, ComplianceRule],
     check_filter: str | None = None,
+    errors: list[ComplianceRuleError] | None = None,
 ) -> list[ComplianceResult]:
     """Execute compliance rules against a single cluster's cached data.
 
@@ -30,6 +35,8 @@ def run_compliance_checks(
         cluster_name: Name of the cluster to check.
         rules: Dict of effective ComplianceRule instances.
         check_filter: If provided, only run the rule with this name.
+        errors: If provided, a rule whose query fails is recorded here
+            and the remaining rules still run.
 
     Returns:
         List of ComplianceResult for each rule that found violations.
@@ -46,8 +53,17 @@ def run_compliance_checks(
 
         try:
             matches = db.query_with_filters(cluster_name, rule.model, [rule.where])
-        except ValueError as e:
+        except Exception as e:
             logger.warning("Rule %r query failed for cluster %s: %s", name, cluster_name, e)
+            if errors is not None:
+                errors.append(
+                    ComplianceRuleError(
+                        rule_name=name,
+                        cluster_name=cluster_name,
+                        stage="query",
+                        message=f"{type(e).__name__}: {e}",
+                    )
+                )
             continue
 
         if not matches:

@@ -83,8 +83,22 @@ enabled     = true                            # optional, default true
 | `severity` | no | `"warning"` | One of `info`, `warning`, `error`. |
 | `enabled` | no | `true` | Set to `false` to keep a rule definition without running it. |
 
-Invalid rule entries are skipped with a logged warning rather than failing
-the whole run, so a typo in one rule will not block the others.
+An invalid rule is not run, but it is never silent. Each one is reported on
+stderr with the rule name and the reason (for example a misspelled field, a
+missing `where`, or a bad `severity`), and the command exits `2`. Valid rules
+still run and their violations still print, so one typo does not block the
+others. `-k <rule>` limits the reported errors to that rule.
+
+Rule tables are strict:
+
+- Unknown keys are rejected, in global rules and in per-cluster overrides.
+- A `name` key is rejected. The table key is the rule name.
+- `severity` is case-sensitive: `Error` is invalid, `error` is valid.
+- A per-cluster override is validated after it is merged into the rule. An
+  override that makes the rule invalid omits the rule for that cluster and
+  reports the error.
+- A rule whose query fails at run time is reported, and the remaining rules
+  still run.
 
 A reserved key `[compliance.settings]` is ignored by the loader and may be
 used for future tuning knobs.
@@ -213,7 +227,7 @@ warning,prod-cluster2,node_down,1,All nodes must be up
 |------|---------|
 | `0`  | No violations matched (after severity filtering). |
 | `1`  | One or more violations found. |
-| `2`  | Error — bad config, unknown cluster, query engine failure, etc. |
+| `2`  | Error — bad config, unknown cluster, query engine failure, or any invalid or failing rule (reported on stderr). Violations are still printed. |
 
 Both `1` and `2` should be treated as failures in CI: see
 [CI integration](#ci-integration).

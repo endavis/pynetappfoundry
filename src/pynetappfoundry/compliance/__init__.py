@@ -13,12 +13,16 @@ from pynetappfoundry.compliance.models import (
     ClusterComplianceOverride,
     ComplianceResult,
     ComplianceRule,
+    ComplianceRuleError,
+    Severity,
 )
 
 __all__ = [
     "ClusterComplianceOverride",
     "ComplianceResult",
     "ComplianceRule",
+    "ComplianceRuleError",
+    "Severity",
     "get_cluster_overrides",
     "load_global_compliance_rules",
     "merge_rules",

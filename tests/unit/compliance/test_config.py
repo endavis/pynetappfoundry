@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from typing import ClassVar
 from unittest.mock import MagicMock
 
 from pynetappfoundry.compliance.config import (
@@ -12,6 +13,7 @@ from pynetappfoundry.compliance.config import (
 from pynetappfoundry.compliance.models import (
     ClusterComplianceOverride,
     ComplianceRule,
+    ComplianceRuleError,
 )
 
 
@@ -261,3 +263,84 @@ class TestMergeRules:
         merge_rules(global_rules, overrides)
 
         assert global_rules["vol_check"].severity == "warning"
+
+
+def _config_with(raw: dict) -> MagicMock:
+    cfg = MagicMock()
+    cfg.get_setting.return_value = raw
+    return cfg
+
+
+class TestRuleErrorReporting:
+    """Invalid rules are recorded with their reason (issue #897)."""
+
+    VALID: ClassVar[dict[str, str]] = {"model": "nodes", "where": "state != 'up'"}
+
+    def test_each_failure_recorded_valid_rule_loads(self) -> None:
+        raw = {
+            "good": dict(self.VALID),
+            "typo": {"model": "nodes", "were": "x = 1"},
+            "nowhere": {"model": "nodes"},
+            "badsev": {**self.VALID, "severity": "Error"},
+            "named": {**self.VALID, "name": "other"},
+            "scalar": "oops",
+        }
+        errors: list[ComplianceRuleError] = []
+
+        rules = load_global_compliance_rules(_config_with(raw), errors=errors)
+
+        assert list(rules) == ["good"]
+        by_name = {e.rule_name: e for e in errors}
+        assert set(by_name) == {"typo", "nowhere", "badsev", "named", "scalar"}
+        assert len(errors) == 5
+        assert all(e.stage == "load" and e.cluster_name is None for e in errors)
+        assert "were" in by_name["typo"].message
+        assert "where" in by_name["nowhere"].message
+        assert "severity" in by_name["badsev"].message
+        assert "reserved" in by_name["named"].message
+
+    def test_works_without_collector(self) -> None:
+        raw = {"good": dict(self.VALID), "typo": {"model": "nodes", "were": "x"}}
+        assert list(load_global_compliance_rules(_config_with(raw))) == ["good"]
+
+    def test_invalid_override_recorded(self) -> None:
+        entry = {"checks": {"compliance": {"r": {"severity": "bogus"}, "ok": {"enabled": False}}}}
+        errors: list[ComplianceRuleError] = []
+
+        overrides = get_cluster_overrides(entry, errors=errors, cluster_name="c1")
+
+        assert list(overrides) == ["ok"]
+        assert len(errors) == 1
+        assert errors[0].stage == "override"
+        assert errors[0].cluster_name == "c1"
+        assert errors[0].rule_name == "r"
+
+    def test_invalid_merge_recorded_and_rule_omitted(self) -> None:
+        rule = ComplianceRule(name="r", model="nodes", where="x = 1")
+        other = ComplianceRule(name="o", model="nodes", where="x = 1")
+        # model_construct bypasses validation, as the old model_copy(update=) did.
+        bad = ClusterComplianceOverride.model_construct(severity="bogus")
+        errors: list[ComplianceRuleError] = []
+
+        merged = merge_rules({"r": rule, "o": other}, {"r": bad}, errors=errors, cluster_name="c1")
+
+        assert list(merged) == ["o"]
+        assert len(errors) == 1
+        assert errors[0].stage == "merge"
+        assert errors[0].rule_name == "r"
+        assert errors[0].cluster_name == "c1"
+
+    def test_cluster_specific_rule_missing_fields_recorded(self) -> None:
+        errors: list[ComplianceRuleError] = []
+
+        merged = merge_rules({}, {"new": ClusterComplianceOverride(description="d")}, errors=errors)
+
+        assert merged == {}
+        assert [e.rule_name for e in errors] == ["new"]
+        assert errors[0].stage == "merge"
+
+    def test_valid_override_still_applied(self) -> None:
+        rule = ComplianceRule(name="r", model="nodes", where="x = 1")
+        merged = merge_rules({"r": rule}, {"r": ClusterComplianceOverride(severity="error")})
+        assert merged["r"].severity == "error"
+        assert merged["r"].where == "x = 1"
