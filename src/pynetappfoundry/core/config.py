@@ -439,18 +439,22 @@ class Config:
             )
 
         # Decrypt SOPS-encrypted passwords
-        password = self._decrypt_if_encrypted(enc)
+        password = self._decrypt_if_encrypted(enc, object_name=uobject)
 
         return user, password
 
-    def _decrypt_if_encrypted(self, value: str) -> str:
+    def _decrypt_if_encrypted(self, value: str, object_name: str | None = None) -> str:
         """Decrypt a value if it is SOPS-encrypted.
 
         Args:
             value: The value to potentially decrypt.
+            object_name: Cluster/object the value belongs to, for error context.
 
         Returns:
             Decrypted value if encrypted, otherwise the original value.
+
+        Raises:
+            ConfigurationError: If the value is SOPS-encrypted but decryption fails.
         """
         from pynetappfoundry.utils.sops import SOPSError, decrypt_value, is_encrypted
 
@@ -460,9 +464,10 @@ class Config:
         try:
             return decrypt_value(value)
         except SOPSError as e:
-            logging.warning(f"Failed to decrypt SOPS value: {e}")
-            # Return original value if decryption fails
-            return value
+            logging.error(f"Failed to decrypt SOPS value for {object_name!r}: {e}")
+            raise ConfigurationError(
+                f"Failed to decrypt SOPS-encrypted password for object={object_name!r}: {e}"
+            ) from e
 
     def count(self, section: str, id_field: str = "name") -> int:
         """Count unique items in a section.
