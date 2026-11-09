@@ -115,14 +115,14 @@ class TestGetAllPages:
         assert len(_sent(client)) == 3
         assert any(r.levelno == logging.ERROR for r in caplog.records)
 
-    def test_first_page_short_warns(self, caplog: pytest.LogCaptureFixture) -> None:
+    def test_first_page_short_does_not_warn(self, caplog: pytest.LogCaptureFixture) -> None:
         client = _make_client(responses=[_page(0, 10)])
 
         with caplog.at_level(logging.WARNING, logger=dii_api.logger.name):
             result = client.get_all_pages(PATH)
 
         assert len(result) == 10
-        assert any(r.levelno == logging.WARNING for r in caplog.records)
+        assert not caplog.records
 
     def test_empty_first_page_does_not_warn(self, caplog: pytest.LogCaptureFixture) -> None:
         client = _make_client(responses=[[]])

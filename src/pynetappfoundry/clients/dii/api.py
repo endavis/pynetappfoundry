@@ -80,15 +80,6 @@ class DIIAPIClient(APIWrapper):
                 break
             records.extend(page)
             if len(page) < DII_PAGE_SIZE:
-                if page_number == 0 and page:
-                    logger.warning(
-                        "DII %s: first page returned %d records, fewer than the requested "
-                        "limit of %d; the server may cap the page size, so results may be "
-                        "incomplete",
-                        path,
-                        len(page),
-                        DII_PAGE_SIZE,
-                    )
                 break
         else:
             logger.error(
