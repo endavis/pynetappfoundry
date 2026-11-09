@@ -762,7 +762,9 @@ When modifying the cache schema, work through this checklist:
    and add an `_upgrade_to_vN` method if the **on-disk column layout** has
    to change. The v3 → v4 migration is the reference example for a
    destructive recreate-and-clear migration.
-7. **Update the collector** (`src/pynetappfoundry/cache/collector.py`) if
+7. **Update the collector** (API phase methods are in
+   `src/pynetappfoundry/cache/_collector_api.py`, assembly in
+   `src/pynetappfoundry/cache/collector.py`) if
    new fields need to be populated.
 8. **Diff logic updates automatically** — tracked fields are derived at
    runtime from each model's `model_fields`, so new fields on cache models

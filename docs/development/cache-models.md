@@ -789,4 +789,7 @@ doit check
 | `src/pynetappfoundry/cache/_registry.py` | `ModelRegistry` singleton |
 | `src/pynetappfoundry/cache/db_schema.py` | DDL generation from Pydantic models |
 | `src/pynetappfoundry/cache/db.py` | `ClusterMetadataDB` — SQLite storage layer |
-| `src/pynetappfoundry/cache/collector.py` | Bulk collection using mappings |
+| `src/pynetappfoundry/cache/collector.py` | `MetadataCollector`: `collect_all`, `collect_group`, derived fields |
+| `src/pynetappfoundry/cache/_collector_api.py` | API phases (`collect_*`), `_cached_api_call` |
+| `src/pynetappfoundry/cache/_collector_runner.py` | Sequential and parallel phase runners, `run_tasks` |
+| `src/pynetappfoundry/cache/_collector_cloud.py` | Cloud metadata phase (CLI-only) |

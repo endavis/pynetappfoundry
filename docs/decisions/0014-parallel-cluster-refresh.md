@@ -51,7 +51,7 @@ internal structure of each block (phase lines, summary) is preserved.
    API/CLI clients, its own configuration lookup, and no inter-cluster derived
    fields. Inter-phase ordering inside a cluster is already handled by the
    inner parallelism in `MetadataCollector._collect_all_parallel()`
-   (`src/pynetappfoundry/cache/collector.py:605`), with `CLOUD` running
+   (`src/pynetappfoundry/cache/_collector_runner.py`, `PhaseRunner.run_parallel`), with `CLOUD` running
    sequentially after parallel phases. Outer cluster-level parallelism adds
    no new coordination.
 
@@ -155,11 +155,31 @@ strictly-sequential code path unchanged" wording in the Decision. The
 a thread" rule are unchanged. `_CollectResult` no longer carries captured
 output; verbose capture is the observer's concern.
 
+### Amendment (2026-11, #899): collector split and in-flight sharing
+
+`src/pynetappfoundry/cache/collector.py` was split into `MetadataCollector` plus private
+sibling modules. The inner concurrency now lives in
+`src/pynetappfoundry/cache/_collector_runner.py`: `PhaseRunner` runs the
+nine phases through a sequential or a thread-pool executor, and
+`run_tasks()` replaces the four hand-written pool blocks inside the
+composite phases. Pool sizes are named constants
+(`DEFAULT_MAX_WORKERS = 8`, `NETWORK_FETCH_WORKERS = 5`,
+`STORAGE_FETCH_WORKERS = 12`, `RELATIONSHIPS_FETCH_WORKERS = 3`,
+`PROTOCOLS_FETCH_WORKERS = 5`); Rationale point 6 is otherwise unchanged.
+
+Two behaviours changed with it. `_cached_api_call()` (in
+`src/pynetappfoundry/cache/_collector_api.py`) now shares one in-flight request per endpoint
+between concurrent callers instead of letting each one fetch; failures are
+shared with the waiting callers but not cached. And the background SSH
+pre-connect is no longer abandoned after a 1 second join: the cloud phase
+waits for it just before its CLI call, which only cloud (CVO) clusters reach.
+
 ## Related Issues
 
 - Issue #149: feat: parallelize cluster refresh in `nf cache refresh --all`
 - Issue #596: fix: SQLite thread-safety regression in parallel cache refresh
 - Issue #898: refactor: move cache refresh orchestration out of the CLI into `cache/`
+- Issue #899: refactor: split `src/pynetappfoundry/cache/collector.py` and dedupe the parallel and sequential runners
 
 ## Related Documentation
 
@@ -169,5 +189,5 @@ output; verbose capture is the observer's concern.
 - CLI command: `nf cache refresh --all [--parallel-clusters N]`
 - Source: `src/pynetappfoundry/cache/refresher.py` (`CacheRefresher`, `_collect_cluster`)
 - Source: `src/pynetappfoundry/cli/commands/cache/refresh.py` (option parsing, DB lifecycle, rendering)
-- Source: `src/pynetappfoundry/cache/collector.py` (inner per-phase parallelism)
+- Source: `src/pynetappfoundry/cache/collector.py` and `src/pynetappfoundry/cache/_collector_runner.py` (inner per-phase parallelism)
 - Source: `src/pynetappfoundry/cache/db.py` (single SQLite connection)
