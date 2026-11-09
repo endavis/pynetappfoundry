@@ -20,7 +20,7 @@ Add a DII (Data Infrastructure Insights) backend to the DataSource framework. Di
 
 1. **Live-only operation.** DII has no cache substrate. Cache-only routing decisions raise `NotImplementedError`. The `source="auto"` and `source="live"` modes both go through the live API; `source="cache"` is unsupported.
 
-2. **Bare-array response envelope.** DII endpoints return bare JSON arrays (not the `{"records": [...]}` envelope ONTAP uses or the `{"_embedded": {"items": [...]}}` HAL format). DiiBackend calls `call_endpoint()` directly and iterates the array, parsing each record via `parse_api_record()`. `TypeMapping.records_path` is set to `""` (empty string) for all DII mappings.
+2. **Bare-array response envelope.** DII endpoints return bare JSON arrays (not the `{"records": [...]}` envelope ONTAP uses or the `{"_embedded": {"items": [...]}}` HAL format). DiiBackend calls `call_endpoint()` directly and iterates the array, parsing each record via `parse_api_record()`. `TypeMapping.records_path` is set to `""` (empty string) for all DII mappings except those amended below (#918).
 
 3. **Offset/limit pagination.** DII uses `offset` + `limit` query parameters for pagination, not ONTAP's `_links.next.href` HAL convention. The DII API client handles pagination at the client layer.
 
@@ -45,11 +45,23 @@ Some DII endpoints (`/lake/query/...`, `/monitors/alerts/query`) return an envel
 - **HTTP errors propagate** rather than being swallowed, for example the alert `offset` ceiling of about 1,500 noted in the NetApp MCP docs.
 - `sort` must appear in `tags`/`metrics`; that is the caller's concern.
 
+## Amendment (#918): records_path
+
+Four generated mappings set a non-empty `records_path`, and `DiiBackend` ignored it, so `/users` (`{"users": [...]}`) and `/users/invites` (`{"invites": [...]}`) returned `[]`.
+
+- **Branch order in `DiiBackend.query()`:** a bare list is used as-is, even when `records_path` is set; `None` yields no records; a dict with a non-empty `records_path` has its records read from that path; otherwise the envelope check (`extract_envelope_records()`) runs; anything else logs the "unexpected response type" warning and returns `[]`. An explicit `records_path` is checked before content sniffing, which stays the fallback for `records_path=""`.
+- **Path syntax:** `get_nested_value()` from `src/pynetappfoundry/utils/dict_path.py`, so dotted paths work.
+- **Failure mode:** if the path is missing or does not resolve to a list, the backend logs a WARNING naming the mapping and `records_path`, and returns `[]`. No exception is raised.
+- **Mappings:** `/users` (`users`) and `/users/invites` (`invites`) are wrapper responses and now return populated records.
+- **`au/*` mappings:** `/au/oneTimeToken` and `/au/installCommand/{platform}` return a single `InstallCommand` object. Codegen picked its first array property (`additionalInstructionsForManualInstallation`) as `records_path`, so these mappings now return `ExtraInstallInstruction` records and omit fields such as `token` and `installCommand`. This is a codegen artifact, left as generated and tracked in #919.
+
 ## Related Issues
 
 - Issue #600: feat: add DII API backend to DataSource
 - Issue #893: bug: DII backend fetches only the first page (offset/limit pagination in DIIAPIClient.get_all_pages)
 - Issue #915: bug: DII envelope endpoints (lake/query, alerts) return empty from DiiBackend and are not paged
+- Issue #918: bug: DiiBackend ignores records_path, so /users and /users/invites return empty
+- Issue #919: codegen models single-object responses as their first array property (follow-up)
 - Issue #533: feat: DataSource non-ONTAP backends (partially addressed; DII is the first non-ONTAP backend)
 - Issue #618: feat: early validation for where()/typed-DSL + incompatible source mode
 

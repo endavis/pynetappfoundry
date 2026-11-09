@@ -6,6 +6,7 @@ API clients are mocked.
 
 from __future__ import annotations
 
+import dataclasses
 from collections.abc import Iterator
 from typing import Any
 from unittest.mock import MagicMock, patch
@@ -53,6 +54,12 @@ def fake_dii_mapping() -> Iterator[TypeMapping]:
     finally:
         model_registry._mappings.pop("FakeDiiAsset", None)
         model_registry._mappings_by_class.pop(FakeDiiAsset, None)
+
+
+@pytest.fixture
+def items_mapping(fake_dii_mapping: TypeMapping) -> TypeMapping:
+    """The fake mapping with ``records_path="items"`` (same registration)."""
+    return dataclasses.replace(fake_dii_mapping, records_path="items")
 
 
 @pytest.fixture
@@ -264,6 +271,121 @@ class TestDiiBackendQuery:
 
         assert results == []
         assert "unexpected response type" in caplog.text
+
+
+def _query_with(mapping: TypeMapping, response: Any, config: Any) -> list[FakeDiiAsset]:
+    backend = _make_backend(config)
+    decision = RoutingDecision(cache_fields=(), live_fields=("id", "name"))
+    mock_client = MagicMock()
+    mock_client.get_all_pages.return_value = response
+    with patch.object(backend, "_get_api_client", return_value=mock_client):
+        return backend.query(FakeDiiAsset, mapping, decision, "t", {})
+
+
+class TestDiiBackendRecordsPath:
+    """A non-empty ``records_path`` is honoured on dict responses (#918)."""
+
+    def test_records_path_dict_parsed(
+        self, items_mapping: TypeMapping, mock_config: Any, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        with caplog.at_level("WARNING"):
+            results = _query_with(
+                items_mapping,
+                {"items": [{"id": 1, "name": "a"}, {"id": 2, "name": "b"}]},
+                mock_config,
+            )
+        assert [r.id for r in results] == [1, 2]
+        assert "unexpected response type" not in caplog.text
+        assert "id" in results[0]._fetched_fields
+
+    def test_dotted_records_path(self, fake_dii_mapping: TypeMapping, mock_config: Any) -> None:
+        mapping = dataclasses.replace(fake_dii_mapping, records_path="data.items")
+        results = _query_with(mapping, {"data": {"items": [{"id": 7, "name": "x"}]}}, mock_config)
+        assert [r.id for r in results] == [7]
+
+    def test_missing_path_warns_and_returns_empty(
+        self, items_mapping: TypeMapping, mock_config: Any, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        with caplog.at_level("WARNING"):
+            results = _query_with(items_mapping, {"other": []}, mock_config)
+        assert results == []
+        assert "items" in caplog.text
+        assert "not found" in caplog.text
+
+    def test_non_list_value_warns_and_returns_empty(
+        self, items_mapping: TypeMapping, mock_config: Any, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        with caplog.at_level("WARNING"):
+            results = _query_with(items_mapping, {"items": {"id": 1}}, mock_config)
+        assert results == []
+        assert "expected list" in caplog.text
+
+    def test_bare_list_wins_over_records_path(
+        self, items_mapping: TypeMapping, mock_config: Any
+    ) -> None:
+        results = _query_with(items_mapping, [{"id": 3, "name": "c"}], mock_config)
+        assert [r.id for r in results] == [3]
+
+    def test_records_path_wins_over_envelope(
+        self, items_mapping: TypeMapping, mock_config: Any
+    ) -> None:
+        response = {
+            "offset": 0,
+            "count": 1,
+            "rows": [{"id": 1, "name": "row"}],
+            "items": [{"id": 2, "name": "item"}],
+        }
+        results = _query_with(items_mapping, response, mock_config)
+        assert [r.id for r in results] == [2]
+
+    def test_real_users_mapping(self, mock_config: Any) -> None:
+        from pynetappfoundry.cache.dii.users.mapping import DIIUSERSRESPONSE_MAPPING
+        from pynetappfoundry.models.dii.users.model import DiiUsersresponse
+
+        backend = _make_backend(mock_config)
+        decision = RoutingDecision(cache_fields=(), live_fields=("id", "name"))
+        client = MagicMock()
+        client.get_all_pages.return_value = {
+            "users": [
+                {
+                    "id": "u1",
+                    "name": "n",
+                    "email": "e",
+                    "applicationRoles": [{"role": "r", "application": "a"}],
+                }
+            ]
+        }
+        with patch.object(backend, "_get_api_client", return_value=client):
+            results = backend.query(DiiUsersresponse, DIIUSERSRESPONSE_MAPPING, decision, "t", {})
+        assert len(results) == 1
+        assert results[0].id == "u1"
+        assert results[0].email == "e"
+        assert results[0].applicationRoles[0].role == "r"
+
+    def test_real_invites_mapping(self, mock_config: Any) -> None:
+        from pynetappfoundry.cache.dii.users.invites.mapping import DIIINVITESRESPONSE_MAPPING
+        from pynetappfoundry.models.dii.users.invites.model import DiiInvitesresponse
+
+        backend = _make_backend(mock_config)
+        decision = RoutingDecision(cache_fields=(), live_fields=("id", "email"))
+        client = MagicMock()
+        client.get_all_pages.return_value = {
+            "invites": [
+                {
+                    "id": "i1",
+                    "email": "e",
+                    "expiration": "2030-01-01T00:00:00Z",
+                    "applicationRoles": [{"role": "r", "application": "a"}],
+                }
+            ]
+        }
+        with patch.object(backend, "_get_api_client", return_value=client):
+            results = backend.query(
+                DiiInvitesresponse, DIIINVITESRESPONSE_MAPPING, decision, "t", {}
+            )
+        assert len(results) == 1
+        assert results[0].id == "i1"
+        assert results[0].email == "e"
 
 
 class TestDiiBackendErrors:
