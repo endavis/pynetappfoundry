@@ -8,7 +8,9 @@ DII endpoints return bare JSON arrays or ``{offset, count, limit,
 rows|results|values}`` envelopes, so this backend calls
 :meth:`DIIAPIClient.get_all_pages` and feeds each record through
 :func:`parse_api_record` individually rather than using the
-envelope-oriented :func:`parse_api_response`.
+envelope-oriented :func:`parse_api_response`.  A mapping with a non-empty
+``records_path`` (a wrapper such as ``{"users": [...]}``) has its records
+read from that path on a dict response.
 """
 
 from __future__ import annotations
@@ -21,6 +23,7 @@ from pydantic import BaseModel
 from pynetappfoundry.cache.field_mapping import parse_api_record
 from pynetappfoundry.clients.dii.api import extract_envelope_records
 from pynetappfoundry.data.backends import Backend
+from pynetappfoundry.utils.dict_path import PathNotFoundError, get_nested_value
 
 if TYPE_CHECKING:
     from pynetappfoundry.cache.field_mapping import TypeMapping
@@ -31,6 +34,33 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T", bound=BaseModel)
+
+
+def _records_at_path(mapping: TypeMapping, response: dict[str, Any]) -> list[Any]:
+    """Return the records at ``mapping.records_path`` in *response*.
+
+    Logs a warning and returns ``[]`` when the path is missing or does not
+    resolve to a list.
+    """
+    try:
+        value = get_nested_value(response, mapping.records_path)
+    except PathNotFoundError as exc:
+        logger.warning(
+            "DiiBackend %s: records_path %r not found in response (%s), returning empty",
+            mapping.name,
+            mapping.records_path,
+            exc.reason,
+        )
+        return []
+    if not isinstance(value, list):
+        logger.warning(
+            "DiiBackend %s: records_path %r resolved to %s, expected list, returning empty",
+            mapping.name,
+            mapping.records_path,
+            type(value).__name__,
+        )
+        return []
+    return value
 
 
 class DiiBackend(Backend):
@@ -92,7 +122,10 @@ class DiiBackend(Backend):
         Filters are translated to simple ``key=value`` query parameters
         on the DII endpoint URL.
 
-        DII endpoints return bare JSON arrays or record envelopes.  Each element is parsed
+        DII endpoints return bare JSON arrays or record envelopes.  A dict
+        response is read at ``mapping.records_path`` when that is non-empty
+        (checked before the envelope shapes); a bare array is used as-is.
+        Each element is parsed
         individually via :func:`parse_api_record` and stamped with
         ``_fetched_fields``.
         """
@@ -118,6 +151,8 @@ class DiiBackend(Backend):
             records = response
         elif response is None:
             records = []
+        elif isinstance(response, dict) and mapping.records_path:
+            records = _records_at_path(mapping, response)
         elif (envelope := extract_envelope_records(response)) is not None:
             records = envelope
         else:

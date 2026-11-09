@@ -533,7 +533,7 @@ validates the multi-API architecture without requiring cache infrastructure.
 | Concern | DII approach | ONTAP comparison |
 | :--- | :--- | :--- |
 | Cache | None -- live-only | SQLite snapshot via `ClusterMetadataDB` |
-| Response envelope | Bare JSON array or `{offset,count,limit,rows\|results\|values}` envelope (`records_path=""`) | `{"records": [...]}` dict |
+| Response envelope | Bare JSON array or `{offset,count,limit,rows\|results\|values}` envelope (`records_path=""`), or a wrapper such as `{"users": [...]}` (`records_path="users"`) | `{"records": [...]}` dict |
 | Pagination | `offset` + `limit` query params | `_links.next.href` HAL links |
 | Authentication | API key header (`X-CloudInsights-ApiKey`) | HTTP Basic Auth per-cluster |
 | `where_expressions` | `NotImplementedError` | SQL-like cache filters |
@@ -558,7 +558,8 @@ class DiiBackend(Backend):
             raise NotImplementedError("DII backend does not support cache-only queries")
         if where_expressions:
             raise NotImplementedError("DII backend does not support where_expressions")
-        # ... fetch and parse bare array ...
+        # ... fetch; bare array, else records at mapping.records_path
+        # when set, else envelope records; parse each record ...
 ```
 
 ### Codegen surface
@@ -569,7 +570,7 @@ pipeline (ADR-0008):
 - **Models:** `src/pynetappfoundry/models/dii/` -- 191 `model.py` files
 - **Mappings:** `src/pynetappfoundry/cache/dii/` -- 191 `mapping.py` files
 
-All DII `TypeMapping` instances set `api_type="dii"` and `records_path=""`.
+All DII `TypeMapping` instances set `api_type="dii"`. `records_path` is `""` except for wrapper responses such as `{"users": [...]}`, which name their records key (`records_path="users"`); `DiiBackend.query()` reads it on dict responses before the envelope check.
 
 ### What DII does NOT need
 
