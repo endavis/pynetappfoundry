@@ -10,7 +10,6 @@ from typing import Any
 from urllib.parse import urlencode
 
 import requests
-from jsonschema import ValidationError, validate
 from requests.adapters import HTTPAdapter
 from tenacity import (
     RetryCallState,
@@ -352,6 +351,9 @@ class APIWrapper:
         schema = self._get_request_schema(path_template, method)
         if not schema:
             return True
+        # Imported here: jsonschema (via rfc3987_syntax) costs ~0.5 s at import (#903).
+        from jsonschema import ValidationError, validate
+
         try:
             validate(instance=body, schema=schema)
             return True
@@ -481,6 +483,9 @@ class APIWrapper:
                 f"{method} {path_template} status {status_code}"
             )
             return True
+
+        # Imported here: jsonschema (via rfc3987_syntax) costs ~0.5 s at import (#903).
+        from jsonschema import ValidationError, validate
 
         try:
             validate(instance=response_data, schema=schema)

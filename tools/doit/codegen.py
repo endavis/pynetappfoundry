@@ -334,6 +334,56 @@ def task_fetch_spec() -> dict[str, Any]:
 _CACHE_OUTPUT_DIR = Path("src/pynetappfoundry/cache")
 
 
+def _write_mapping_index() -> None:
+    """Regenerate ``cache/_mapping_index.py`` and format it with ruff."""
+    from tools.codegen.mapping_index import write_index
+
+    target = write_index(_CACHE_OUTPUT_DIR)
+    subprocess.run(["uv", "run", "ruff", "format", str(target)], check=False)  # nosec B603 B607
+    print(f"Wrote {target}")
+
+
+def task_mapping_index() -> dict[str, Any]:
+    """Regenerate the lazy registry's mapping index (cache/_mapping_index.py).
+
+    Usage:
+        doit mapping_index           # Rewrite the index
+        doit mapping_index --check   # Exit non-zero with a diff if it is stale; write nothing
+    """
+
+    def run_mapping_index(check: bool) -> bool | None:
+        if check:
+            from tools.codegen.mapping_index import check_index
+
+            diff = check_index(_CACHE_OUTPUT_DIR)
+            if diff is None:
+                print("Mapping index is up to date.")
+                return None
+            print(diff, file=sys.stderr)
+            print(
+                "ERROR: mapping index is stale; run 'doit mapping_index'.",
+                file=sys.stderr,
+            )
+            return False
+        _write_mapping_index()
+        return None
+
+    return {
+        "actions": [run_mapping_index],
+        "title": title_with_actions,
+        "verbosity": 2,
+        "params": [
+            {
+                "name": "check",
+                "long": "check",
+                "type": bool,
+                "default": False,
+                "help": "Fail with a diff if the committed index is stale; write nothing.",
+            },
+        ],
+    }
+
+
 def task_generate_models() -> dict[str, Any]:
     """Generate cache models and mappings from OpenAPI specs.
 
@@ -393,6 +443,8 @@ def task_generate_models() -> dict[str, Any]:
                     ["uv", "run", "ruff", "check", "--fix", *paths],
                     check=False,
                 )
+            # New or removed mappings change the lazy registry's index (#903).
+            _write_mapping_index()
 
     return {
         "actions": [run_generate],

@@ -179,6 +179,7 @@ nav:
       - ADR-0020 Cache Query Wildcard Labels: decisions/0020-label-nf-cache-query-wildcard-results-with-their-source-item.md
       - ADR-0021 Private CLI Passthrough: decisions/0021-collect-cli-only-ontap-data-through-the-private-cli-rest-passthrough.md
       - ADR-0022 CliError Exit Convention: decisions/0022-one-cli-error-exit-convention-raise-clierror.md
+      - ADR-0023 Lazy Mapping Registration: decisions/0023-register-cache-mappings-lazily-from-a-generated-index.md
       - Template Decisions:
           - ADR-9001 uv Package Management: decisions/9001-use-uv-for-package-management.md
           - ADR-9002 doit Task Automation: decisions/9002-use-doit-for-task-automation.md

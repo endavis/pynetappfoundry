@@ -144,6 +144,24 @@ def apply_overlay_to_mapping(
     return replace(mapping, fields=tuple(new_fields))
 
 
+def apply_package_overlay(mapping: TypeMapping, rel_path: str) -> TypeMapping:
+    """Apply one package-default TOML overlay to *mapping*.
+
+    Args:
+        mapping: The original type mapping.
+        rel_path: Overlay file path relative to the package overlay root
+            (``cache/ontap``), as recorded in the generated mapping index.
+
+    Returns:
+        New ``TypeMapping`` with the overlay's field strategies applied.
+
+    Raises:
+        FileNotFoundError: If the overlay file does not exist.
+    """
+    data = load_overlay(_PACKAGE_OVERLAY_ROOT / rel_path)
+    return apply_overlay_to_mapping(mapping, merge_overlays(data, None))
+
+
 def load_overlays(
     registry: ModelRegistry,
     user_overlay_dir: Path | None = None,

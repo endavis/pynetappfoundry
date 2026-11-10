@@ -160,22 +160,22 @@ DII_STORAGE_MAPPING = TypeMapping(
     `_BACKENDS`. If `api_type` does not match a registered backend, queries
     raise `ValueError` at runtime.
 
-### 4. Register mappings in the bootstrap
+### 4. Register mappings in the index
 
-Extend `src/pynetappfoundry/cache/__init__.py` to import your mapping modules. The existing
-ONTAP bootstrap uses `pkgutil.walk_packages` to auto-discover `mapping.py`
-files under `cache/ontap/`. Add a parallel walk for your API type:
+Mappings register lazily ([ADR-0023](../decisions/0023-register-cache-mappings-lazily-from-a-generated-index.md)):
+`src/pynetappfoundry/cache/__init__.py` no longer walks `mapping.py` files. The `model_registry` singleton imports a
+mapping module on first lookup, using the generated `src/pynetappfoundry/cache/_mapping_index.py`.
 
-```python
-import pynetappfoundry.cache.dii as _dii_pkg
+For a new API type with its own tree under `cache/<api>/`:
 
-for _modinfo in _pkgutil.walk_packages(
-    _dii_pkg.__path__,
-    prefix="pynetappfoundry.cache.dii.",
-):
-    if _modinfo.name.endswith(".mapping"):
-        _importlib.import_module(_modinfo.name)
-```
+1. Add `<api>` to `_API_DIRS` in `tools/codegen/mapping_index.py`, and its package to
+   `_FALLBACK_PACKAGES` in `src/pynetappfoundry/cache/_registry.py`.
+2. Run `uv run doit mapping_index` and commit the regenerated index.
+
+For a new mapping in an existing tree, only step 2 is needed (`doit generate_models` runs it for
+generated mappings). `uv run doit mapping_index --check` fails with a diff when the index is stale.
+A stale index does not break lookups: the first miss runs a one-time walk and logs
+`mapping index is stale ... run doit mapping_index`.
 
 ### 5. Create the Backend subclass
 

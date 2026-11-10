@@ -1692,3 +1692,35 @@ class TestGetAllRecords:
             url = call_args[0][1]
             assert "/users/123" in url
             assert "limit=25" in url
+
+
+class TestLazyJsonschema:
+    """jsonschema is imported where validation happens, not at package import (#903)."""
+
+    @staticmethod
+    def _run(code: str) -> str:
+        import subprocess
+        import sys
+
+        result = subprocess.run(
+            [sys.executable, "-c", code], check=True, capture_output=True, text=True
+        )
+        return result.stdout.strip()
+
+    def test_import_package_does_not_load_jsonschema(self) -> None:
+        out = self._run(
+            "import sys, pynetappfoundry; "
+            "print('jsonschema' in sys.modules, 'rfc3987_syntax' in sys.modules)"
+        )
+        assert out == "False False"
+
+    def test_first_validate_body_loads_jsonschema_and_rejects(self, spec_file: Path) -> None:
+        code = (
+            "import sys\n"
+            "from pynetappfoundry.clients.openapi import APIWrapper\n"
+            f"api = APIWrapper(api_json_file={spec_file.as_posix()!r}, base_url='http://x')\n"
+            "before = 'jsonschema' in sys.modules\n"
+            "ok = api.validate_body('/users', 'POST', {'email': 'a'})\n"
+            "print(before, ok, 'jsonschema' in sys.modules)\n"
+        )
+        assert self._run(code) == "False False True"
