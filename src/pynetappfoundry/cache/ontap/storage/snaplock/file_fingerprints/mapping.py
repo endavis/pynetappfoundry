@@ -11,39 +11,13 @@ from pynetappfoundry.models.ontap.storage.snaplock.file_fingerprints.model impor
 ONTAPSNAPLOCKFILEFINGERPRINT_MAPPING = TypeMapping(
     name="OntapSnaplockFileFingerprint",
     model_class=OntapSnaplockFileFingerprint,
-    api_endpoint="/storage/snaplock/file-fingerprints/{id}?fields=*",
+    api_endpoint="/storage/snaplock/file-fingerprints?fields=*",
     api_type="ontap",
-    parent_mapping=None,
-    parent_id_field=None,
+    identifier_field="id",
     fields=(
-        FieldMapping(
-            cache_attr="algorithm",
-        ),
-        FieldMapping(
-            cache_attr="data_fingerprint",
-        ),
-        FieldMapping(
-            cache_attr="file_size",
-            default=0,
-        ),
-        FieldMapping(
-            cache_attr="file_type",
-        ),
         FieldMapping(
             cache_attr="id",
             default=0,
-        ),
-        FieldMapping(
-            cache_attr="metadata_fingerprint",
-        ),
-        FieldMapping(
-            cache_attr="path",
-        ),
-        FieldMapping(
-            cache_attr="scope",
-        ),
-        FieldMapping(
-            cache_attr="state",
         ),
         FieldMapping(
             cache_attr="svm.name",

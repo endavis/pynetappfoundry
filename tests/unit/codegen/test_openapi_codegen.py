@@ -58,12 +58,26 @@ class TestDeduplicateEndpoints:
             assert len(result) == 1
             assert result[0].path == "/storage/snaplock/litigations"
 
-    def test_singleton_with_more_leaves_wins(self) -> None:
+    def test_envelope_beats_singleton_with_more_leaves(self) -> None:
+        """Shape ranks before leaf count: the collection wins in both orders (#934)."""
         collection = _make_ep("/storage/snaplock/litigations", 5)
         item = _make_ep("/storage/snaplock/litigations/{id}", 6)
         item.response_shape = "singleton"
-        result = _deduplicate_endpoints([collection, item])
-        assert result[0].path == "/storage/snaplock/litigations/{id}"
+        for order in ([collection, item], [item, collection]):
+            result = _deduplicate_endpoints(order)
+            assert len(result) == 1
+            assert result[0].path == "/storage/snaplock/litigations"
+
+    def test_same_shape_singletons_most_leaves_wins(self) -> None:
+        """Within one shape the endpoint with the most leaf fields wins."""
+        few = _make_ep("/some/thing", 3)
+        many = _make_ep("/some/thing/{id}", 6)
+        few.response_shape = "singleton"
+        many.response_shape = "singleton"
+        for order in ([few, many], [many, few]):
+            result = _deduplicate_endpoints(order)
+            assert len(result) == 1
+            assert result[0].path == "/some/thing/{id}"
 
     def test_empty_input(self) -> None:
         assert _deduplicate_endpoints([]) == []

@@ -53,6 +53,10 @@ _CLASS_NAME_OVERRIDES: dict[str, str] = {
     # "/collector/datasourceTypes" and "/collector/datasource_types" derive class
     # names differing only in case; both lower to one cache table name (#923).
     "/collector/datasourceTypes": "DiiCollectorDatasourceTypes",
+    # The collection schemas are named ``*_get``; pin the names the ``operations``
+    # and ``files`` child mappings reference as parent_mapping (#934).
+    "/storage/snaplock/litigations": "OntapSnaplockLitigation",
+    "/storage/snaplock/file-fingerprints": "OntapSnaplockFileFingerprint",
 }
 """Manual overrides for class names keyed by API path.
 

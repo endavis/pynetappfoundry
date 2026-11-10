@@ -354,8 +354,9 @@ is one object (for example `GET /cluster/software`) was modelled as its first ar
   the `_detect_records_path` first-array fallback stays for aiqum and occm.
 - **Emission:** `generate_mapping` writes `response_shape="singleton"` and no `records_path=` for these
   endpoints; envelope endpoints emit neither.
-- **Dedup tie-break:** `_deduplicate_endpoints` ranks by leaf count, then prefers an envelope over a
-  singleton, so a collection URL is not replaced by its single-object item endpoint on equal leaves.
+- **Dedup rank:** `_deduplicate_endpoints` first ranks an envelope above a singleton, so a collection
+  URL is not replaced by its single-object item endpoint. Leaf count decides only within a shape
+  (#925 added the tie-break; #934 made shape rank first).
 - **Targeted regeneration:** only 11 endpoints were regenerated: `/cluster/software`,
   `/security/anti-ransomware`, `/support/autosupport`, `/cluster/metrocluster`,
   `/security/authentication/cluster/nis`, `/protocols/file-security/permissions/{svm.uuid}/{path}`,
@@ -364,11 +365,35 @@ is one object (for example `GET /cluster/software`) was modelled as its first ar
 - **Deferred:** `ems` and `filters` mappings are left alone. The other array-less ONTAP singletons
   (about 27) are not regenerated. Six endpoints that become parseable under the rule are not emitted.
   A full regeneration would now overwrite the hand-written `/cluster` mapping.
-- **Litigations caveat:** the item endpoint `/storage/snaplock/litigations/{id}` wins dedup on leaf
-  count (8 against 7), so a fetch of the collection URL hits an envelope response. This was already
-  broken before this change. The generated dangling parent is reset to `parent_mapping=None` (#335).
+- **Litigations caveat:** fixed by #934, see the next section.
 
 Issue: #925
+
+### Envelope beats singleton in dedup (Issue #934)
+
+Under #925's tie-break an item endpoint with more leaves still won. `/storage/snaplock/litigations/{id}`
+(8 leaves) beat `/storage/snaplock/litigations` (7), and `/storage/snaplock/file-fingerprints/{id}`
+(13) beat its collection (5). `build_collection_url` strips `/{id}`, so a fetch hit the collection
+envelope and parsed it as one object.
+
+- **Rule:** shape ranks first, so an envelope sibling beats a singleton item regardless of leaf counts.
+  Within one shape the most leaf fields still wins.
+- **Regeneration:** only `/storage/snaplock/litigations` and `/storage/snaplock/file-fingerprints`.
+  The collection schemas are named `*_get`, so `_CLASS_NAME_OVERRIDES` pins `OntapSnaplockLitigation`
+  and `OntapSnaplockFileFingerprint`. Without the pins the public classes would be renamed and the
+  `operations` and `files` children would point `parent_mapping` at a class that no longer exists.
+- **Field losses:** the collection schemas are narrower than the item schemas. Litigations loses
+  `path`, and its nested operation model loses `num_files_failed`, `num_files_processed`,
+  `num_files_skipped`, `num_inodes_ignored`, `path`, `state` and `type_`. File fingerprints loses
+  `algorithm`, `data_fingerprint`, `file_size`, `file_type`, `metadata_fingerprint`, `path`, `scope` and
+  `state`. Neither model is a cached table, so no migration is needed.
+- **Not done:** no rule stops the generator emitting singleton endpoints whose path ends in a
+  placeholder with no collection sibling. Measured against the spec it hits 8 endpoints, 6 of them
+  already committed (including the `litigations/operations` child), so it belongs with a full
+  regeneration. `/protocols/file-security/permissions/{svm.uuid}/{path}` stays committed with two
+  literal placeholders and is unfetchable; it needs its own decision.
+
+Issue: #934
 
 ## Related Issues
 
@@ -381,6 +406,7 @@ Issue: #925
 - Issue #699: feat: generate Pydantic models from Console OpenAPI spec
 - Issue #894: bug: codegen class-name collisions drop model registry mappings
 - Issue #925: bug: codegen models ONTAP single-object responses as their first array property
+- Issue #934: bug: ONTAP item-endpoint mappings with no fetchable parent (snaplock litigations, file_security permissions)
 
 ## Related Documentation
 

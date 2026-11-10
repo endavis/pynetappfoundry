@@ -152,6 +152,21 @@ class TestPathToClassName:
         finally:
             del _CLASS_NAME_OVERRIDES["/test/override"]
 
+    @pytest.mark.parametrize(
+        ("path", "schema", "expected"),
+        [
+            ("/storage/snaplock/litigations", "snaplock_litigation_get", "OntapSnaplockLitigation"),
+            (
+                "/storage/snaplock/file-fingerprints",
+                "snaplock_file_fingerprint_get",
+                "OntapSnaplockFileFingerprint",
+            ),
+        ],
+    )
+    def test_snaplock_collection_names_pinned(self, path: str, schema: str, expected: str) -> None:
+        """Collection schemas are named ``*_get``; overrides keep the public names (#934)."""
+        assert _path_to_class_name(path, schema, "ontap") == expected
+
     def test_default_api_type(self) -> None:
         """Default api_type is ontap."""
         assert _path_to_class_name("/storage/volumes", "volume") == "OntapVolume"

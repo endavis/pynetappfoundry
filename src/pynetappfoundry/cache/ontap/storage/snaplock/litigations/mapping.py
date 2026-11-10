@@ -20,11 +20,9 @@ def _transform_operations(record: dict[str, Any]) -> list[OntapSnaplockLitigatio
 ONTAPSNAPLOCKLITIGATION_MAPPING = TypeMapping(
     name="OntapSnaplockLitigation",
     model_class=OntapSnaplockLitigation,
-    api_endpoint="/storage/snaplock/litigations/{id}?fields=*",
+    api_endpoint="/storage/snaplock/litigations?fields=*",
     api_type="ontap",
-    response_shape="singleton",
-    parent_mapping=None,
-    parent_id_field=None,
+    identifier_field="id",
     fields=(
         FieldMapping(
             cache_attr="id",
@@ -36,9 +34,6 @@ ONTAPSNAPLOCKLITIGATION_MAPPING = TypeMapping(
             cache_attr="operations",
             transform=_transform_operations,
             default=[],
-        ),
-        FieldMapping(
-            cache_attr="path",
         ),
         FieldMapping(
             cache_attr="svm.name",

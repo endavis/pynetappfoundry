@@ -89,6 +89,15 @@ ROUNDTRIP_ENDPOINTS = [
         ("network", "fc", "fabrics", "zones"),
         "zones",
     ),
+    # Collection wins dedup over the item endpoint; class names pinned (#934).
+    # file-fingerprints is not listed: its mapping has no transform, so the post-process
+    # `ruff --fix` strips the generator's `# ruff: noqa` header, which this harness skips.
+    (
+        "ontap",
+        "/storage/snaplock/litigations",
+        ("storage", "snaplock", "litigations"),
+        "litigations",
+    ),
     ("dii", "/assets/storages", ("assets", "storages"), "storages"),
     ("dii", "/assets/storages/count", ("assets", "storages", "count"), "count"),
     # Colliding class names resolved by ``resolve_class_name_collisions`` (#894).

@@ -299,3 +299,58 @@ class TestNoDuplicateRegistrations:
         assert by_table
         clashes = {t: sorted(c.__name__ for c in cs) for t, cs in by_table.items() if len(cs) > 1}
         assert clashes == {}
+
+
+class TestSnaplockCollectionMappings:
+    """Snaplock litigations / file-fingerprints are fetchable collections (#934)."""
+
+    @pytest.mark.parametrize(
+        "model_path",
+        [
+            ("litigations", "OntapSnaplockLitigation"),
+            ("file_fingerprints", "OntapSnaplockFileFingerprint"),
+        ],
+    )
+    def test_collection_mapping_is_envelope_without_parent(
+        self, model_path: tuple[str, str]
+    ) -> None:
+        from pynetappfoundry.cache._registry import model_registry
+
+        module, class_name = model_path
+        model_class = getattr(
+            importlib.import_module(
+                f"pynetappfoundry.models.ontap.storage.snaplock.{module}.model"
+            ),
+            class_name,
+        )
+        mapping = model_registry.get_mapping_by_model_class(model_class)
+        assert mapping is not None
+        assert mapping.name == class_name
+        assert mapping.response_shape == "envelope"
+        assert "{" not in mapping.build_collection_url()
+        assert mapping.parent_mapping is None
+        assert mapping.identifier_field == "id"
+
+    @pytest.mark.parametrize(
+        "model_path",
+        [
+            ("operations", "OntapSnaplockLegalHoldOperation"),
+            ("files", "OntapSnaplockLitigationFileResponse"),
+        ],
+    )
+    def test_children_resolve_parent_litigation(self, model_path: tuple[str, str]) -> None:
+        from pynetappfoundry.cache._registry import model_registry
+
+        module, class_name = model_path
+        child_class = getattr(
+            importlib.import_module(
+                f"pynetappfoundry.models.ontap.storage.snaplock.litigations.{module}.model"
+            ),
+            class_name,
+        )
+        child = model_registry.get_mapping_by_model_class(child_class)
+        assert child is not None
+        assert child.parent_mapping == "OntapSnaplockLitigation"
+        parents = [m for m in model_registry.mappings.values() if m.name == child.parent_mapping]
+        assert len(parents) == 1
+        assert child.parent_id_field in parents[0].model_class.model_fields

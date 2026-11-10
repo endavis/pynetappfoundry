@@ -359,8 +359,10 @@ Two OpenAPI endpoints frequently resolve to the same module path — for
 example `/storage/volumes` (the list endpoint) and
 `/storage/volumes/{uuid}` (the get-by-id endpoint) both map to
 `storage/volumes`. `_deduplicate_endpoints` groups endpoints by their target
-module path and keeps the candidate with the most leaf fields (the richer
-schema), so the generated model is always the union view.
+module path and keeps one candidate. An envelope (collection) endpoint beats a
+singleton item endpoint, so a fetch of the collection URL parses a real list of
+records (#934). Within the same shape, the candidate with the most leaf fields
+(the richer schema) wins.
 
 ### Doit task wrapper
 

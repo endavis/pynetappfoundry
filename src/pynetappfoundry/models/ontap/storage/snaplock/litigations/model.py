@@ -11,13 +11,6 @@ class OntapSnaplockLitigationOperation(OntapModel):
     """OntapSnaplockLitigationOperation sub-model for operations."""
 
     id: int = 0
-    num_files_failed: str = ""
-    num_files_processed: str = ""
-    num_files_skipped: str = ""
-    num_inodes_ignored: str = ""
-    path: str = ""
-    state: str = ""
-    type_: str = ""
 
 
 class OntapSnaplockLitigationSvm(OntapModel):
@@ -40,6 +33,5 @@ class OntapSnaplockLitigation(OntapModel):
     id: str = ""
     name: str = ""
     operations: list[OntapSnaplockLitigationOperation] = Field(default_factory=list)
-    path: str = ""
     svm: OntapSnaplockLitigationSvm = Field(default_factory=OntapSnaplockLitigationSvm)
     volume: OntapSnaplockLitigationVolume = Field(default_factory=OntapSnaplockLitigationVolume)
