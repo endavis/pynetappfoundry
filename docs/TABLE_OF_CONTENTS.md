@@ -129,6 +129,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [Review Focus Areas](development/ai/review-focus-areas.md) - Checklists for the errors, tests, types and comments focus areas available to every review and adversarial-review surface
 - [Ruff Auto-Fix on Edit Hook](development/ai/ruff-fix-hook.md) - PostToolUse hook that runs ruff --fix on edited Python files
 - [Slash Commands and Workflows](development/ai/slash-commands.md) - Reference for the slash commands and dual-agent workflow this project ships with
+- [Subsystem Audit (2026-11)](plans/subsystem-audit-2026-11.md) - Audit of every pynetappfoundry subsystem covering patterns, libraries, bugs, refactors, documentation drift and test gaps, with a ranked backlog.
 - [Template Tools Reference](template/tools-reference.md) - Complete reference for all template tools in tools/pyproject_template/
 - [Tooling Roles and Architectural Boundaries](development/tooling-roles.md) - What each tool is for, who uses it, and where runtime code ends and dev tooling begins
 - [Unit Registry](development/unit-registry.md) - Standalone unit registry for ONTAP API field measurements
@@ -259,6 +260,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [Review Focus Areas](development/ai/review-focus-areas.md) - Checklists for the errors, tests, types and comments focus areas available to every review and adversarial-review surface
 - [Ruff Auto-Fix on Edit Hook](development/ai/ruff-fix-hook.md) - PostToolUse hook that runs ruff --fix on edited Python files
 - [Slash Commands and Workflows](development/ai/slash-commands.md) - Reference for the slash commands and dual-agent workflow this project ships with
+- [Subsystem Audit (2026-11)](plans/subsystem-audit-2026-11.md) - Audit of every pynetappfoundry subsystem covering patterns, libraries, bugs, refactors, documentation drift and test gaps, with a ranked backlog.
 - [Template Management](template/manage.md) - Unified interface for creating projects, checking updates, and syncing
 - [Template Tools Reference](template/tools-reference.md) - Complete reference for all template tools in tools/pyproject_template/
 - [Tooling Roles and Architectural Boundaries](development/tooling-roles.md) - What each tool is for, who uses it, and where runtime code ends and dev tooling begins
