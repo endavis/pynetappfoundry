@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 import click
+from rich.markup import escape
 from rich.table import Table
 
 from pynetappfoundry.cli.decorators import with_config
@@ -70,7 +71,7 @@ def _analyze_cluster_savings(
                     license_type = "ONTAP Select"
 
                 table.add_row(
-                    pkg.name or "Unknown",
+                    escape(pkg.name or "Unknown"),
                     license_type,
                     str(lic.capacity.used_size or "N/A"),
                     str(lic.capacity.maximum_size or "N/A"),

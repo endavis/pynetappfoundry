@@ -324,13 +324,6 @@ def _dump_volume(
     table_name = f"{svm_name}-{vol_name}"
     if not _TABLE_NAME_PATTERN.match(table_name):
         print_error(f"Skipping {cluster}:{svm_name}:{vol_name} — invalid table name {table_name!r}")
-        logger.warning(
-            "Skipping invalid table name %r for %s:%s:%s",
-            table_name,
-            cluster,
-            svm_name,
-            vol_name,
-        )
         return
 
     logger.info("  Gathering data for %s:%s:%s", cluster, svm_name, vol_name)
@@ -354,8 +347,7 @@ def _dump_volume(
         db.upsert_many(table_name, rows)
 
     except Exception as e:
-        print_error(f"Could not retrieve data for {cluster}:{svm_name}:{vol_name}: {e}")
-        logger.exception("Exception for volume %s:%s:%s", cluster, svm_name, vol_name)
+        print_exception(f"Could not retrieve data for {cluster}:{svm_name}:{vol_name}: {e}", e)
 
 
 def _dump_cluster(
@@ -416,5 +408,4 @@ def _dump_cluster(
         print_debug(f"Metrics saved for {name}")
 
     except Exception as e:
-        print_error(f"Could not dump metrics for {name}: {e}")
-        logger.exception("Exception for cluster %s", name)
+        print_exception(f"Could not dump metrics for {name}: {e}", e)

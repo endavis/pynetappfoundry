@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 import click
 
@@ -15,9 +16,30 @@ from pynetappfoundry.cli.commands.licenses import licenses
 from pynetappfoundry.cli.commands.metrics import metrics
 from pynetappfoundry.cli.commands.reports import reports
 from pynetappfoundry.cli.commands.utils import utils
+from pynetappfoundry.cli.utils import console, is_debug_mode, print_exception
 
 
-@click.group(context_settings={"help_option_names": ["-h", "--help"]})
+class NfGroup(click.Group):
+    """Click group that turns unexpected exceptions into a clean exit code 1."""
+
+    def invoke(self, ctx: click.Context) -> Any:
+        """Invoke the command, handling unexpected exceptions at the top level.
+
+        Click's own control-flow exceptions (usage errors, ``Abort``, ``Exit``)
+        and ``EOFError`` are re-raised so click handles them as usual.
+        """
+        try:
+            return super().invoke(ctx)
+        except (click.ClickException, click.exceptions.Abort, click.exceptions.Exit, EOFError):
+            raise
+        except Exception as e:
+            print_exception(f"Unexpected error: {e}", e)
+            if not is_debug_mode():
+                console.print("[dim]Re-run with --debug for the full traceback.[/dim]")
+            ctx.exit(1)
+
+
+@click.group(cls=NfGroup, context_settings={"help_option_names": ["-h", "--help"]})
 @click.version_option(version=__version__)
 @click.option(
     "--config-dir",

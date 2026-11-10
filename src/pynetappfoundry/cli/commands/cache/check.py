@@ -21,6 +21,7 @@ from typing import Any
 import click
 from pydantic import BaseModel
 from rich.console import Console
+from rich.markup import escape
 from rich.table import Table
 
 from pynetappfoundry.cache import ClusterMetadataDB
@@ -207,7 +208,7 @@ def _output_table(
     for cluster_name, rows in all_rows.items():
         for row in rows:
             values = [_format_display(row.get(field)) for field in fields]
-            table.add_row(cluster_name, *values)
+            table.add_row(escape(cluster_name), *(escape(v) for v in values))
 
     return table
 

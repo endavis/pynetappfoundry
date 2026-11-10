@@ -12,6 +12,7 @@ from typing import Any
 
 import click
 from rich.console import Console
+from rich.markup import escape
 
 from pynetappfoundry.cache import ClusterMetadataDB
 from pynetappfoundry.cache._registry import model_registry
@@ -128,8 +129,8 @@ def _format_display_value(value: Any) -> str:
     if result is not None:
         return result
     if isinstance(value, (dict, list)):
-        return json.dumps(value, indent=2, default=str)
-    return str(value)
+        return escape(json.dumps(value, indent=2, default=str))
+    return escape(str(value))
 
 
 def _format_csv_value(value: Any) -> str:
@@ -631,30 +632,30 @@ def query(
                 elif isinstance(value, list):
                     # Non-wildcard list results: one value per line
                     for item in value:
-                        console.print(_format_value(item))
+                        console.print(_format_value(item), markup=False)
                 else:
-                    console.print(_format_value(value))
+                    console.print(_format_value(value), markup=False)
     else:
         # Default output: grouped by cluster
         for name, cluster_result in results.items():
-            console.print(f"[bold]{name}:[/bold]")
+            console.print(f"[bold]{escape(name)}:[/bold]")
             for field in effective_fields:
                 if field in cluster_result:
                     if _is_wildcard_path(field):
-                        console.print(f"  [cyan]{field}[/cyan]:")
+                        console.print(f"  [cyan]{escape(field)}[/cyan]:")
                         for record in cluster_result[field]:
                             formatted = _format_display_value(record["value"])
                             if "\n" in formatted:
-                                console.print(f"    {record['key']}:")
+                                console.print(f"    {escape(str(record['key']))}:")
                                 for line in formatted.split("\n"):
                                     console.print(f"      {line}")
                             else:
-                                console.print(f"    {record['key']}: {formatted}")
+                                console.print(f"    {escape(str(record['key']))}: {formatted}")
                     else:
                         formatted = _format_display_value(cluster_result[field])
                         if "\n" in formatted:
-                            console.print(f"  [cyan]{field}[/cyan]:")
+                            console.print(f"  [cyan]{escape(field)}[/cyan]:")
                             for line in formatted.split("\n"):
                                 console.print(f"    {line}")
                         else:
-                            console.print(f"  [cyan]{field}[/cyan]: {formatted}")
+                            console.print(f"  [cyan]{escape(field)}[/cyan]: {formatted}")

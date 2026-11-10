@@ -60,3 +60,8 @@ class TestFormatValueMarkup:
         result = format_value_markup(True)
         assert "yellow" in result  # type: ignore[operator]
         assert "magenta" not in result  # type: ignore[operator]
+
+
+def test_format_value_markup_escapes_strings() -> None:
+    """String values are escaped so markup-like text prints literally."""
+    assert format_value_markup("a[/x]") == "[green]a\\[/x][/green]"

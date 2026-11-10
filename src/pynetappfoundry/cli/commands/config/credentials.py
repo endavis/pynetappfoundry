@@ -59,11 +59,9 @@ def _encrypt_password(password: str, no_encrypt: bool, ctx: click.Context) -> st
     except SOPSNotInstalledError as e:
         print_error(str(e))
         ctx.exit(1)
-        raise SystemExit(1) from None  # Unreachable but satisfies type checker
     except SOPSError as e:
         print_error(f"Encryption failed: {e}")
         ctx.exit(1)
-        raise SystemExit(1) from None  # Unreachable but satisfies type checker
 
 
 @click.command("set-credential")

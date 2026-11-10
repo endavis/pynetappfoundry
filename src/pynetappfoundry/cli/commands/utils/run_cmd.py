@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 import click
+from rich.markup import escape
 
 from pynetappfoundry.cli.decorators import with_config
 from pynetappfoundry.cli.utils import console, print_exception, print_info
@@ -69,9 +70,9 @@ def _run_cluster_command(
         output = cli.run_command(command)
         cli.disconnect()
 
-        console.print(f"\n[bold]{name}:[/bold]")
+        console.print(f"\n[bold]{escape(name)}:[/bold]")
         for line in output:
-            console.print(f"  {line}")
+            console.print(f"  {escape(line)}")
         return True
 
     except Exception as e:

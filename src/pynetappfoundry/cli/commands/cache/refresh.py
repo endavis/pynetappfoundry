@@ -17,6 +17,7 @@ from types import TracebackType
 
 import click
 from rich.console import Console
+from rich.markup import escape
 from rich.progress import Progress, SpinnerColumn, TaskID, TextColumn
 
 from pynetappfoundry.cache import (
@@ -98,7 +99,7 @@ class VerboseProgressDisplay:
             self.console.print(line)
         elif info.status == "failed":
             self.phase_times[info.phase] = info.elapsed_seconds
-            error_str = f" - {info.error}" if info.error else ""
+            error_str = f" - {escape(str(info.error))}" if info.error else ""
             line = f"  [red]|-[/red] {info.phase_name:<20} "
             line += f"{info.elapsed_seconds:>5.1f}s [red]FAILED{error_str}[/red]"
             self.console.print(line)
@@ -106,7 +107,8 @@ class VerboseProgressDisplay:
     def print_header(self) -> None:
         """Print the cluster header."""
         self.console.print(
-            f"\n[bold][{self.cluster_index}/{self.total_clusters}] {self.cluster_name}[/bold]"
+            f"\n[bold][{self.cluster_index}/{self.total_clusters}] "
+            f"{escape(self.cluster_name)}[/bold]"
         )
 
     def print_summary(self, success: bool) -> None:
@@ -185,7 +187,6 @@ def refresh(
     config_path = Path.cwd() / config_dir
     if not config_path.exists():
         print_error(f"Configuration directory not found: {config_path}")
-        logger.error("Configuration directory not found: %s", config_path)
         ctx.exit(1)
 
     try:
@@ -196,7 +197,6 @@ def refresh(
         )
     except Exception as e:
         print_exception(f"Failed to load configuration: {e}", e)
-        logger.exception("Failed to load configuration")
         ctx.exit(1)
 
     # Parse filter if provided
@@ -209,7 +209,6 @@ def refresh(
             filter_dict = json.loads(filter_str)
         except json.JSONDecodeError as e:
             print_error(f"Invalid filter JSON: {e}")
-            logger.error("Invalid filter JSON: %s", e)
             ctx.exit(1)
 
     # Determine clusters to refresh
@@ -218,7 +217,7 @@ def refresh(
             print_error(f"Cluster '{cluster}' not found in configuration.")
             available = list(config.data.get("clusters", {}).keys())
             if available:
-                console.print(f"Available clusters: {', '.join(available)}")
+                console.print(f"Available clusters: {escape(', '.join(available))}")
             logger.error("Cluster '%s' not found in configuration", cluster)
             ctx.exit(1)
         clusters_to_refresh = [cluster]
@@ -294,9 +293,11 @@ class _VerboseClusterSink:
     def on_client_unavailable(self, kind: str, error: Exception) -> None:
         """Show that a client could not be built."""
         if self.captured is not None:
-            self.captured.print(f"  [dim]{kind} client unavailable: {error}[/dim]")
+            self.captured.print(
+                f"  [dim]{escape(kind)} client unavailable: {escape(str(error))}[/dim]"
+            )
         else:
-            print_warning(f"  [dim]{kind} client unavailable: {error}[/dim]")
+            print_warning(f"  {kind} client unavailable: {error}")
 
     def on_collection_finished(self, success: bool) -> None:
         """Print the cluster summary into the captured block (parallel only)."""
@@ -418,7 +419,7 @@ class _VerboseReporter:
         name = result.cluster_name
         err = result.error or RuntimeError("Unknown collection failure")
         if self.parallel:
-            console.print(f"\n[bold][{completed}/{total}] {name}[/bold]")
+            console.print(f"\n[bold][{completed}/{total}] {escape(name)}[/bold]")
             if isinstance(progress, _VerboseClusterSink):
                 text = progress.captured_text()
                 if text:
@@ -456,9 +457,9 @@ def _print_failure_summary(
 
     console.print("\n[bold red]Failure Summary:[/bold red]")
     for cluster_name, messages in failures.items():
-        console.print(f"  {cluster_name}:")
+        console.print(f"  {escape(cluster_name)}:")
         for msg in messages:
-            console.print(f"    {msg}")
+            console.print(f"    {escape(msg)}")
 
 
 def _report_summary(ctx: click.Context, summary: RefreshSummary) -> None:
@@ -471,7 +472,6 @@ def _report_summary(ctx: click.Context, summary: RefreshSummary) -> None:
     if error_count > 0:
         print_error(f"Failed to refresh {error_count} cluster(s)")
         _print_failure_summary(summary.failures)
-        logger.error("Failed to refresh %d cluster(s)", error_count)
         ctx.exit(1)
 
     logger.info("Cache refresh completed: %d success, %d failed", success_count, error_count)

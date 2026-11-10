@@ -21,7 +21,7 @@ All commands support these global options:
 | `--version` | Show version and exit |
 | `-c, --config-dir PATH` | Configuration directory path |
 | `-o, --output-dir PATH` | Output directory path |
-| `--debug / --no-debug` | Enable debug logging |
+| `--debug / --no-debug` | Enable debug logging and print full tracebacks for unexpected errors |
 | `--help` | Show help and exit |
 
 ### Cluster Filter Convention
@@ -689,7 +689,13 @@ New fields will have empty/default values until the cluster is refreshed.
 | Code | Description |
 |------|-------------|
 | 0 | Success |
-| 1 | General error |
-| 2 | Configuration error |
-| 3 | Connection error |
-| 4 | Authentication error |
+| 1 | Error, including unexpected errors caught by the top-level handler, `ClickException` and aborted prompts. For `nf cache check` and `nf cache compliance`: matches or violations found |
+| 2 | Usage error (bad option or argument). For `nf cache check` and `nf cache compliance`: an error occurred |
+
+## Error Handling
+
+`nf` wraps every command in a top-level handler. An exception a command does not
+handle prints `Unexpected error: <message>`, is logged with its traceback to the
+log file, and exits with code 1. Re-run with `--debug` to print the full
+traceback to the console. Click's own errors (usage errors, `Abort`) keep their
+normal messages and exit codes.

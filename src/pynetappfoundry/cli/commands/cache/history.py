@@ -8,6 +8,7 @@ from pathlib import Path
 
 import click
 from rich.console import Console
+from rich.markup import escape
 from rich.panel import Panel
 from rich.table import Table
 
@@ -141,7 +142,7 @@ def list_history(
         summary_str = _format_summary_brief(summary)
         table.add_row(
             str(record["id"]),
-            str(record["cluster_name"]),
+            escape(str(record["cluster_name"])),
             str(record["changed_at"])[:19],  # Trim microseconds
             summary_str,
         )
@@ -219,7 +220,7 @@ def show_change(
     # Display formatted output
     console.print()
     console.print(f"[bold]Change #{record['id']}[/bold]")
-    console.print(f"[cyan]Cluster:[/cyan] {record['cluster_name']}")
+    console.print(f"[cyan]Cluster:[/cyan] {escape(str(record['cluster_name']))}")
     console.print(f"[cyan]Changed at:[/cyan] {record['changed_at']}")
     console.print()
 
@@ -299,7 +300,7 @@ def show_diff(
         ctx.exit(1)
 
     console.print()
-    console.print(f"[bold]Change #{record['id']} - {record['cluster_name']}[/bold]")
+    console.print(f"[bold]Change #{record['id']} - {escape(str(record['cluster_name']))}[/bold]")
     console.print(f"[dim]{record['changed_at']}[/dim]")
     console.print()
 
@@ -325,13 +326,18 @@ def show_diff(
     if added:
         console.print(f"[bold green]Added ({len(added)}):[/bold green]")
         for change in added:
-            console.print(f"  [green]+[/green] {change['category']}: {change['entity']}")
+            console.print(
+                f"  [green]+[/green] {escape(str(change['category']))}: "
+                f"{escape(str(change['entity']))}"
+            )
         console.print()
 
     if removed:
         console.print(f"[bold red]Removed ({len(removed)}):[/bold red]")
         for change in removed:
-            console.print(f"  [red]-[/red] {change['category']}: {change['entity']}")
+            console.print(
+                f"  [red]-[/red] {escape(str(change['category']))}: {escape(str(change['entity']))}"
+            )
         console.print()
 
     if modified:
@@ -341,8 +347,10 @@ def show_diff(
             old = change.get("old", "")
             new = change.get("new", "")
             console.print(
-                f"  [yellow]~[/yellow] {change['category']}: {change['entity']}"
-                f".{field}: [red]{old}[/red] -> [green]{new}[/green]"
+                f"  [yellow]~[/yellow] {escape(str(change['category']))}: "
+                f"{escape(str(change['entity']))}"
+                f".{escape(str(field))}: [red]{escape(str(old))}[/red] -> "
+                f"[green]{escape(str(new))}[/green]"
             )
         console.print()
 
@@ -454,7 +462,7 @@ def snapshot_at_date(
 
     # Display summary
     console.print()
-    console.print(f"[bold]Snapshot for {cluster}[/bold]")
+    console.print(f"[bold]Snapshot for {escape(cluster)}[/bold]")
     console.print(f"[cyan]Requested date:[/cyan] {target_date}")
     console.print(f"[cyan]Snapshot date:[/cyan]  {record['changed_at']}")
     console.print(f"[cyan]Record ID:[/cyan]      #{record['id']}")

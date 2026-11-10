@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import io
 import logging
+from collections.abc import Callable
 from unittest.mock import MagicMock, patch
 
 import pytest
+from rich.console import Console
 
 from pynetappfoundry.cli.utils import (
     is_debug_mode,
@@ -188,3 +191,60 @@ class TestPrintDebug:
             print_debug("Debug message")
 
             mock_console.print.assert_not_called()
+
+
+class TestMarkupEscaping:
+    """Messages with Rich-markup-like text must print literally (#904)."""
+
+    @pytest.mark.parametrize(
+        ("func", "tag"),
+        [
+            (print_success, "green"),
+            (print_error, "red"),
+            (print_warning, "yellow"),
+            (print_info, "blue"),
+        ],
+    )
+    def test_helper_escapes_message(self, func: Callable[[str], None], tag: str) -> None:
+        """The console receives the escaped message inside the markup wrapper."""
+        with patch("pynetappfoundry.cli.utils.console") as mock_console:
+            func("a [/x] b")
+        mock_console.print.assert_called_once_with(f"[{tag}]a \\[/x] b[/{tag}]")
+
+    @pytest.mark.parametrize(
+        "func", [print_success, print_error, print_warning, print_info, print_exception]
+    )
+    def test_helper_does_not_raise_on_real_console(
+        self, func: Callable[[str], None], capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """A real Console prints the literal text instead of raising MarkupError."""
+        buf = io.StringIO()
+        with patch("pynetappfoundry.cli.utils.console", Console(file=buf, width=200)):
+            func("foo [/x] bar")
+        assert "foo [/x] bar" in buf.getvalue()
+
+    def test_log_record_keeps_raw_text(self, caplog: pytest.LogCaptureFixture) -> None:
+        """The log file gets the unescaped message."""
+        with caplog.at_level(logging.ERROR), patch("pynetappfoundry.cli.utils.console"):
+            print_error("a [/x] b")
+        assert caplog.records[0].getMessage() == "a [/x] b"
+
+    def test_print_exception_debug_traceback_with_markup(self) -> None:
+        """Traceback text containing markup-like text does not raise in debug mode."""
+        buf = io.StringIO()
+        with (
+            patch("pynetappfoundry.cli.utils.console", Console(file=buf, width=200)),
+            patch("pynetappfoundry.cli.utils.is_debug_mode", return_value=True),
+        ):
+            print_exception("failed", ValueError("bad [/x]"))
+        assert "bad [/x]" in buf.getvalue()
+
+    def test_print_debug_escapes(self) -> None:
+        """print_debug escapes its message."""
+        buf = io.StringIO()
+        with (
+            patch("pynetappfoundry.cli.utils.console", Console(file=buf, width=200)),
+            patch("pynetappfoundry.cli.utils.is_debug_mode", return_value=True),
+        ):
+            print_debug("dbg [/x]")
+        assert "dbg [/x]" in buf.getvalue()

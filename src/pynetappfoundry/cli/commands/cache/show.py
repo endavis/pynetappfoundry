@@ -8,6 +8,7 @@ from pathlib import Path
 
 import click
 from rich.console import Console
+from rich.markup import escape
 from rich.panel import Panel
 from rich.tree import Tree
 
@@ -67,7 +68,7 @@ def _format_value(value: object) -> str:
         if not value:
             return "[dim](empty list)[/dim]"
         return f"[cyan]{len(value)} items[/cyan]"
-    return str(value)
+    return escape(str(value))
 
 
 def _build_tree_from_dict(

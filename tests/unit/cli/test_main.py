@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import logging
+from collections.abc import Callable
+
+import click
 import pytest
 from click.testing import CliRunner
 
@@ -83,3 +87,86 @@ class TestHelpShortAlias:
         long = runner.invoke(nf, ["cache", "show", "--help"])
         assert short.exit_code == long.exit_code
         assert short.output == long.output
+
+
+class TestTopLevelHandler:
+    """The `nf` group turns unexpected exceptions into a clean exit code 1."""
+
+    @pytest.fixture
+    def runner(self) -> CliRunner:
+        """Create a CLI runner."""
+        return CliRunner()
+
+    @staticmethod
+    def _register(monkeypatch: pytest.MonkeyPatch, name: str, func: Callable[[], None]) -> None:
+        monkeypatch.setitem(nf.commands, name, click.Command(name, callback=func))
+
+    def test_unexpected_error_exits_one_with_hint(
+        self,
+        runner: CliRunner,
+        monkeypatch: pytest.MonkeyPatch,
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        def boom() -> None:
+            raise RuntimeError("kaboom [/x]")
+
+        self._register(monkeypatch, "boom", boom)
+        with caplog.at_level(logging.ERROR):
+            result = runner.invoke(nf, ["boom"])
+
+        assert result.exit_code == 1
+        assert "Unexpected error: kaboom [/x]" in result.output
+        assert "Re-run with --debug" in result.output
+        assert "Traceback" not in result.output
+        assert any(r.exc_info for r in caplog.records)
+
+    def test_debug_prints_traceback_without_hint(
+        self, runner: CliRunner, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        def boom() -> None:
+            raise RuntimeError("kaboom")
+
+        self._register(monkeypatch, "boom", boom)
+        result = runner.invoke(nf, ["--debug", "boom"])
+
+        assert result.exit_code == 1
+        assert "Traceback" in result.output
+        assert "Re-run with --debug" not in result.output
+
+    def test_click_exception_unchanged(
+        self, runner: CliRunner, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        def nope() -> None:
+            raise click.ClickException("nope")
+
+        self._register(monkeypatch, "nope", nope)
+        result = runner.invoke(nf, ["nope"])
+
+        assert result.exit_code == 1
+        assert "Error: nope" in result.output
+        assert "Unexpected error" not in result.output
+
+    def test_ctx_exit_code_preserved(
+        self, runner: CliRunner, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        def two() -> None:
+            click.get_current_context().exit(2)
+
+        self._register(monkeypatch, "two", two)
+        assert runner.invoke(nf, ["two"]).exit_code == 2
+
+    def test_abort_unchanged(self, runner: CliRunner, monkeypatch: pytest.MonkeyPatch) -> None:
+        def abort() -> None:
+            raise click.Abort
+
+        self._register(monkeypatch, "abort", abort)
+        result = runner.invoke(nf, ["abort"])
+
+        assert result.exit_code == 1
+        assert "Aborted!" in result.output
+        assert "Unexpected error" not in result.output
+
+    def test_usage_error_exits_two(self, runner: CliRunner) -> None:
+        result = runner.invoke(nf, ["--no-such-option"])
+        assert result.exit_code == 2
+        assert "Unexpected error" not in result.output

@@ -156,6 +156,10 @@ To add a command to an existing group:
    layer, put reusable logic in the runtime package, and print with
    `print_info`, `print_warning`, `print_error` or `print_table` from
    `src/pynetappfoundry/cli/utils.py`.
+   The `print_*` helpers escape Rich markup in the message. When you call
+   `console.print` or `Table.add_row` directly with remote data or exception
+   text, wrap it in `rich.markup.escape` or pass `markup=False`; otherwise text
+   such as `[/x]` raises `MarkupError`.
 4. **Add tests** under `tests/unit/cli/commands/<group>/` (see
    [Testing CLI commands](#testing-cli-commands)).
 5. **Document it** in the [CLI Reference](../reference/cli.md).

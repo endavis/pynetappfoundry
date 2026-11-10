@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
@@ -1439,3 +1440,39 @@ class TestRefreshOrchestrationWiring:
         assert "c1: Failed - disk" in seq.output
         assert "Persist failed" not in seq.output
         assert "c1: Persist failed - disk" in par.output
+
+
+class TestRefreshSingleErrorLog:
+    """Each failure is logged once, not by both print_* and a direct logger call."""
+
+    def test_invalid_filter_json_logs_once(
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        config_dir = tmp_path / "config"
+        config_dir.mkdir()
+        (config_dir / "settings.toml").write_text("[clusters]\n")
+        with caplog.at_level(logging.ERROR):
+            result = CliRunner().invoke(
+                nf, ["-c", str(config_dir), "cache", "refresh", "--all", "-f", "not json"]
+            )
+        assert result.exit_code != 0
+        errors = [r for r in caplog.records if r.levelno >= logging.ERROR]
+        assert len(errors) == 1
+        assert "Invalid filter JSON" in errors[0].getMessage()
+
+    def test_config_load_failure_logs_once(
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        config_dir = tmp_path / "config"
+        config_dir.mkdir()
+        with (
+            caplog.at_level(logging.ERROR),
+            patch(
+                "pynetappfoundry.cli.commands.cache.refresh.Config",
+                side_effect=ValueError("bad"),
+            ),
+        ):
+            result = CliRunner().invoke(nf, ["-c", str(config_dir), "cache", "refresh", "--all"])
+        assert result.exit_code != 0
+        errors = [r for r in caplog.records if r.levelno >= logging.ERROR]
+        assert len(errors) == 1
