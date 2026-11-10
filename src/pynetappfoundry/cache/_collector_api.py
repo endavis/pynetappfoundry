@@ -115,14 +115,38 @@ class ApiPhasesMixin(_CollectorState):
         if not self.api_client:
             return None
 
-        cache_key = f"{method}:{endpoint}"
+        api_client = self.api_client
 
+        def call() -> Any:
+            logger.debug("%s API call: %s %s", self._log_prefix, method, endpoint)
+            if paginate:
+                return api_client.get_all_records(endpoint, method=method)
+            return api_client.call_endpoint(endpoint, method=method)
+
+        return self._single_flight(f"{method}:{endpoint}", call)
+
+    def _single_flight(self, cache_key: str, call: Callable[[], _T]) -> _T:
+        """Run ``call`` once per ``cache_key``, sharing and caching its result.
+
+        The first caller runs ``call`` outside the lock (so other keys stay
+        parallel) and concurrent callers wait on its in-flight future.  A
+        failure is shared with the waiting callers but never cached, so a
+        later call retries.  Results live in ``_api_cache`` until
+        ``_clear_cache()``.
+
+        Args:
+            cache_key: Identity of the call (e.g. ``"GET:/cluster"``).
+            call: Zero-argument callable that produces the value.
+
+        Returns:
+            The value from ``call`` (from cache if available).
+        """
         waiting_on: Future[Any] | None = None
         own_future: Future[Any] | None = None
         with self._cache_lock:
             if cache_key in self._api_cache:
                 logger.debug("%s API cache hit: %s", self._log_prefix, cache_key)
-                return self._api_cache[cache_key]
+                return cast(_T, self._api_cache[cache_key])
             waiting_on = self._inflight.get(cache_key)
             if waiting_on is None:
                 own_future = Future()
@@ -131,14 +155,10 @@ class ApiPhasesMixin(_CollectorState):
         if own_future is None:
             logger.debug("%s API call in flight, waiting: %s", self._log_prefix, cache_key)
             assert waiting_on is not None
-            return waiting_on.result()
+            return cast(_T, waiting_on.result())
 
         try:
-            logger.debug("%s API call: %s %s", self._log_prefix, method, endpoint)
-            if paginate:
-                response = self.api_client.get_all_records(endpoint, method=method)
-            else:
-                response = self.api_client.call_endpoint(endpoint, method=method)
+            response = call()
         except BaseException as e:
             with self._cache_lock:
                 self._inflight.pop(cache_key, None)
@@ -296,6 +316,9 @@ class ApiPhasesMixin(_CollectorState):
             logger.debug("%s No API client available for cluster info collection", self._log_prefix)
             return ClusterInfo()
 
+        # Nodes first: fills _results_cache so fetch() skips its own dependency
+        # fetch of OntapNodeResponse (#929).
+        self._collect_nodes_via_api()
         return cast(ClusterInfo, self._fetch_model(ClusterInfo))
 
     def collect_nodes(self) -> list[OntapNodeResponse]:
@@ -320,7 +343,10 @@ class ApiPhasesMixin(_CollectorState):
             logger.debug("%s No API client available for nodes collection", self._log_prefix)
             return []
 
-        nodes = cast(list[OntapNodeResponse], self._fetch_model(OntapNodeResponse))
+        nodes = self._single_flight(
+            "model:OntapNodeResponse",
+            lambda: cast(list[OntapNodeResponse], self._fetch_model(OntapNodeResponse)),
+        )
         # Publish for downstream phases (e.g. cluster's compute_is_ha hook).
         self._results_cache["OntapNodeResponse"] = nodes
         return nodes

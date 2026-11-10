@@ -87,3 +87,51 @@ class TestCachedApiCallConcurrency:
         collector._clear_cache()
         collector._cached_api_call("/x")
         assert client.get_all_records.call_count == 2
+
+
+class TestSingleFlight:
+    def test_caches_non_api_key_and_clear_resets(self) -> None:
+        collector = MetadataCollector(api_client=MagicMock())
+        calls: list[int] = []
+
+        def produce() -> list[int]:
+            calls.append(1)
+            return [len(calls)]
+
+        first = collector._single_flight("model:X", produce)
+        assert collector._single_flight("model:X", produce) is first
+        assert len(calls) == 1
+        collector._clear_cache()
+        assert collector._single_flight("model:X", produce) == [2]
+
+    def test_concurrent_cluster_and_nodes_phases_share_one_request(self) -> None:
+        payload = {
+            "records": [
+                {"name": "n1", "uuid": "11111111-1111-1111-1111-111111111111"},
+                {"name": "n2", "uuid": "22222222-2222-2222-2222-222222222222"},
+            ]
+        }
+        client = MagicMock()
+        barrier = threading.Barrier(2)
+
+        def get_all_records(url: str, method: str = "GET") -> Any:
+            with contextlib.suppress(threading.BrokenBarrierError):
+                barrier.wait(timeout=0.5)
+            return payload
+
+        client.get_all_records.side_effect = get_all_records
+        client.call_endpoint.return_value = {
+            "name": "c",
+            "uuid": "33333333-3333-3333-3333-333333333333",
+        }
+        collector = MetadataCollector(api_client=client)
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            f1 = pool.submit(collector._collect_nodes_via_api)
+            f2 = pool.submit(collector._collect_cluster_info_via_api)
+            f1.result()
+            f2.result()
+        node_calls = [
+            c for c in client.get_all_records.call_args_list if "/cluster/nodes" in c.args[0]
+        ]
+        assert len(node_calls) == 1
+        assert collector._inflight == {}
