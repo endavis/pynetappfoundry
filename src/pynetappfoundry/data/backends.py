@@ -41,6 +41,13 @@ logger = logging.getLogger(__name__)
 T = TypeVar("T", bound=BaseModel)
 
 _BATCH_SIZE = 100
+
+# Raw ONTAP query-string control params that can arrive in the ``filters``
+# dict (QuerySet merges ``order_by`` / ``max_records`` into it). They are not
+# record fields, so a singleton GET must not treat them as equality filters.
+_ONTAP_CONTROL_KEYS = frozenset(
+    {"fields", "return_records", "return_timeout", "order_by", "max_records"}
+)
 """Default chunk size for identifier-filtered live fetches.
 
 ``_fetch_live_by_identifiers`` and ``_fetch_live_by_parent`` split
@@ -376,13 +383,24 @@ class OntapBackend(Backend):
         server-side filtering, so equality *filters* (dotted API paths) are
         applied client-side, comparing as strings like the URL path does;
         a non-matching record yields ``None``.
+
+        ONTAP control keys (:data:`_ONTAP_CONTROL_KEYS`) in *filters* are not
+        record fields: they are neither sent nor matched. A singleton has one
+        record, so ``order_by`` and ``max_records >= 1`` are no-ops, while
+        ``max_records <= 0`` asks for zero records and returns ``None``
+        without any network call.
         """
+        max_records = filters.get("max_records")
+        if max_records is not None and int(max_records) <= 0:
+            return None
         client = self._get_api_client(cluster)
         url = self._build_live_url(mapping, {}, live_fields)
         response = client.call_endpoint(url, method="GET")
         if not response or not isinstance(response, dict):
             return None
         for key, expected in filters.items():
+            if key in _ONTAP_CONTROL_KEYS:
+                continue
             try:
                 actual = get_nested_value(response, key)
             except PathNotFoundError:

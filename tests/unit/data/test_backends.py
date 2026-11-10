@@ -1675,3 +1675,66 @@ class TestSingletonLivePaths:
         empty, _ = self._run(mock_config, {}, "_count_live", CLUSTER_MAPPING, "p", {})
         assert out == 0
         assert empty == 0
+
+    @pytest.mark.parametrize(
+        ("extra", "expected"),
+        [
+            ({"order_by": "name"}, 1),
+            ({"order_by": "name", "max_records": "5"}, 1),
+            ({"max_records": "1"}, 1),
+            ({"max_records": "0"}, 0),
+            ({"fields": "*", "return_records": "true", "return_timeout": "5"}, 1),
+            ({"name": "c1", "order_by": "name", "max_records": "1"}, 1),
+            ({"name": "zzz", "order_by": "name", "max_records": "1"}, 0),
+        ],
+    )
+    def test_control_keys_not_treated_as_filters(
+        self, mock_config: Any, extra: dict[str, Any], expected: int
+    ) -> None:
+        from pynetappfoundry.cache.ontap.cluster.mapping import CLUSTER_MAPPING
+        from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
+
+        fetched, _ = self._run(
+            mock_config,
+            dict(self.RECORD),
+            "_fetch_live_filtered",
+            ClusterInfo,
+            CLUSTER_MAPPING,
+            "prod1",
+            dict(extra),
+            (),
+        )
+        count, _ = self._run(
+            mock_config, dict(self.RECORD), "_count_live", CLUSTER_MAPPING, "prod1", dict(extra)
+        )
+        assert len(fetched) == expected
+        assert count == expected
+
+    def test_zero_max_records_makes_no_request(self, mock_config: Any) -> None:
+        from pynetappfoundry.cache.ontap.cluster.mapping import CLUSTER_MAPPING
+
+        count, client = self._run(
+            mock_config,
+            dict(self.RECORD),
+            "_count_live",
+            CLUSTER_MAPPING,
+            "p",
+            {"max_records": "0"},
+        )
+        assert count == 0
+        client.call_endpoint.assert_not_called()
+
+    def test_control_keys_not_sent_in_url(self, mock_config: Any) -> None:
+        from pynetappfoundry.cache.ontap.cluster.mapping import CLUSTER_MAPPING
+
+        _, client = self._run(
+            mock_config,
+            dict(self.RECORD),
+            "_count_live",
+            CLUSTER_MAPPING,
+            "p",
+            {"order_by": "name", "max_records": "1"},
+        )
+        url = client.call_endpoint.call_args.args[0]
+        assert "order_by" not in url
+        assert "max_records" not in url
