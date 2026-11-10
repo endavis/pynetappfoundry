@@ -6,9 +6,9 @@ import sqlite3
 from pathlib import Path
 
 import click
-from openpyxl import Workbook
 
 from pynetappfoundry.cli.utils import print_error, print_exception, print_info, print_success
+from pynetappfoundry.utils.excel import ExcelWorkbook
 
 
 @click.command("sqlite-to-excel")
@@ -44,11 +44,7 @@ def sqlite_to_excel(db_path: str, output: str | None) -> None:
             print_error("No tables found in database")
             raise click.ClickException("No tables found in database")
 
-        wb = Workbook()
-        # Remove default sheet
-        default_sheet = wb.active
-        if default_sheet:
-            wb.remove(default_sheet)
+        wb = ExcelWorkbook(output_file)
 
         for table in tables:
             print_info(f"  Processing table: {table}")
@@ -62,14 +58,14 @@ def sqlite_to_excel(db_path: str, output: str | None) -> None:
             rows = cursor.fetchall()
 
             # Create worksheet
-            ws = wb.create_sheet(title=table[:31])  # Excel limits sheet names to 31 chars
+            ws = wb.add_sheet(table)  # helper truncates and de-duplicates names
             ws.append(columns)
             for row in rows:
                 ws.append(row)
 
         conn.close()
 
-        wb.save(output_file)
+        wb.close()
         print_success(f"Saved to {output_file}")
 
     except Exception as e:

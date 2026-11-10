@@ -6,7 +6,6 @@ from datetime import datetime
 from typing import Any
 
 import click
-from openpyxl import Workbook
 
 from pynetappfoundry.cli.decorators import with_config
 from pynetappfoundry.cli.options import filter_option
@@ -16,6 +15,7 @@ from pynetappfoundry.core.config import Config
 from pynetappfoundry.core.models import ClusterConfig
 from pynetappfoundry.models.ontap.protocols.locks import OntapClientLock
 from pynetappfoundry.query import QuerySet
+from pynetappfoundry.utils.excel import ExcelWorkbook
 
 
 @click.command()
@@ -32,12 +32,7 @@ def locks(
     """
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     filename = config.output_dir / f"locks_{timestamp}.xlsx"
-    wb = Workbook()
-
-    # Remove default sheet
-    default_sheet = wb.active
-    if default_sheet:
-        wb.remove(default_sheet)
+    wb = ExcelWorkbook(filename)
 
     failed: list[str] = []
     for name, details in clusters.items():
@@ -45,7 +40,7 @@ def locks(
         if not _gather_lock_data(name, details, config, wb):
             failed.append(name)
 
-    wb.save(filename)
+    wb.close()
     print_success(f"Report saved to {filename}")
 
     if clusters and len(failed) == len(clusters):
@@ -58,7 +53,7 @@ def _gather_lock_data(
     name: str,
     details: dict[str, Any],
     config: Config,
-    wb: Workbook,
+    wb: ExcelWorkbook,
 ) -> bool:
     """Gather lock data from a single cluster.
 
@@ -71,7 +66,7 @@ def _gather_lock_data(
 
         locks_data: list[OntapClientLock] = QuerySet(OntapClientLock, client, config=config).all()
 
-        ws = wb.create_sheet(name)
+        ws = wb.add_sheet(name)
         ws.append(["Volume", "Protocol", "Type", "Path", "Lock", "State", "IP Address"])
 
         print_debug(f"Locks found: {len(locks_data)}")
@@ -111,6 +106,6 @@ def _gather_lock_data(
 
     except Exception as e:
         print_error(f"Could not gather lock data for {name}: {e}")
-        ws = wb.create_sheet(name)
+        ws = wb.add_sheet(name)
         ws.append(["Error", str(e)])
         return False
