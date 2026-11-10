@@ -90,11 +90,11 @@ def _output_table(results: list[ComplianceResult]) -> Table:
 
     for result in results:
         table.add_row(
-            result.cluster_name,
-            result.rule_name,
-            result.severity,
+            escape(result.cluster_name),
+            escape(result.rule_name),
+            escape(result.severity),
             str(result.match_count),
-            result.description,
+            escape(result.description),
         )
 
     return table

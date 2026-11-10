@@ -87,20 +87,20 @@ def _build_tree_from_dict(
             continue  # Skip internal keys
 
         if isinstance(value, dict) and depth < max_depth:
-            branch = tree.add(f"[bold cyan]{key}[/bold cyan]")
+            branch = tree.add(f"[bold cyan]{escape(key)}[/bold cyan]")
             _build_tree_from_dict(branch, value, max_depth, depth + 1)
         elif isinstance(value, list) and depth < max_depth:
             if value and isinstance(value[0], dict):
-                branch = tree.add(f"[bold cyan]{key}[/bold cyan] ({len(value)} items)")
+                branch = tree.add(f"[bold cyan]{escape(key)}[/bold cyan] ({len(value)} items)")
                 for i, item in enumerate(value[:5]):  # Show first 5
                     item_branch = branch.add(f"[dim]#{i + 1}[/dim]")
                     _build_tree_from_dict(item_branch, item, max_depth, depth + 1)
                 if len(value) > 5:
                     branch.add(f"[dim]... and {len(value) - 5} more[/dim]")
             else:
-                tree.add(f"[cyan]{key}[/cyan]: {_format_value(value)}")
+                tree.add(f"[cyan]{escape(key)}[/cyan]: {_format_value(value)}")
         else:
-            tree.add(f"[cyan]{key}[/cyan]: {_format_value(value)}")
+            tree.add(f"[cyan]{escape(key)}[/cyan]: {_format_value(value)}")
 
 
 @click.command()
@@ -159,7 +159,7 @@ def show(ctx: click.Context, cluster: str | None, section: str | None, output_js
         console.print("\n[bold]Cached Clusters:[/bold]\n")
         for c in clusters:
             console.print(
-                f"  [cyan]{c['cluster_name']}[/cyan] - "
+                f"  [cyan]{escape(str(c['cluster_name']))}[/cyan] - "
                 f"cached at {c['cached_at']} (version {c['cache_version']})"
             )
         console.print()
@@ -176,7 +176,7 @@ def show(ctx: click.Context, cluster: str | None, section: str | None, output_js
         # Check if it looks like a query path
         if "." in cluster or "[" in cluster:
             console.print("Did you mean to use [cyan]nf cache query[/cyan] instead?")
-            console.print(f"  Example: nf cache query --all {cluster}")
+            console.print(f"  Example: nf cache query --all {escape(cluster)}")
         ctx.exit(1)
     db.close()
 
@@ -201,7 +201,7 @@ def show(ctx: click.Context, cluster: str | None, section: str | None, output_js
             print_error(f"Section '{section}' not found.")
             ctx.exit(1)
         section_data = data[section_lower]
-        tree = Tree(f"[bold blue]{cluster} - {section}[/bold blue]")
+        tree = Tree(f"[bold blue]{escape(cluster)} - {escape(section)}[/bold blue]")
         if isinstance(section_data, dict):
             _build_tree_from_dict(tree, section_data)
         elif isinstance(section_data, list):
@@ -210,9 +210,9 @@ def show(ctx: click.Context, cluster: str | None, section: str | None, output_js
                     item_branch = tree.add(f"[dim]#{i + 1}[/dim]")
                     _build_tree_from_dict(item_branch, item)
                 else:
-                    tree.add(str(item))
+                    tree.add(escape(str(item)))
     else:
-        tree = Tree(f"[bold blue]{cluster}[/bold blue]")
+        tree = Tree(f"[bold blue]{escape(cluster)}[/bold blue]")
         _build_tree_from_dict(tree, data)
 
     console.print()
@@ -220,7 +220,7 @@ def show(ctx: click.Context, cluster: str | None, section: str | None, output_js
 
     # Summary panel
     summary = [
-        f"Cluster: {metadata.cluster_name}",
+        f"Cluster: {escape(metadata.cluster_name)}",
         f"Cached at: {metadata.cached_at.isoformat()}",
         f"Cache version: {metadata.cache_version}",
         f"Stale: {'Yes' if metadata.is_stale() else 'No'}",

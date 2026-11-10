@@ -107,6 +107,24 @@ class TestAnalyzeClusterSavings:
         # Verify the table was printed (content verified by visual inspection)
         mock_console.print.assert_called_once()
 
+    @patch("pynetappfoundry.cli.commands.licenses.savings.QuerySet")
+    @patch("pynetappfoundry.cli.commands.licenses.savings.ONTAPAPIClient")
+    def test_package_name_markup_rendered_literally(
+        self,
+        mock_client_cls: MagicMock,
+        mock_qs_cls: MagicMock,
+        mock_config: MagicMock,
+        sample_details: dict[str, Any],
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """A package name containing Rich markup renders literally, without MarkupError."""
+        pkg = _make_package(name="pkg[/x]", licenses=[_make_license()])
+        mock_qs_cls.return_value.all.return_value = [pkg]
+
+        _analyze_cluster_savings("cluster1", sample_details, mock_config)
+
+        assert "pkg[/x]" in capsys.readouterr().out
+
     @patch("pynetappfoundry.cli.commands.licenses.savings.print_error")
     @patch("pynetappfoundry.cli.commands.licenses.savings.ONTAPAPIClient")
     def test_error_handling(

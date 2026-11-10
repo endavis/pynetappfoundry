@@ -90,17 +90,17 @@ class VerboseProgressDisplay:
             # In buffered mode these \r-terminated lines are replayed on a real
             # terminal later, causing cursor-jump garbling — skip them entirely.
             if not self.buffered:
-                self.console.print(f"  [dim]|-[/dim] {info.phase_name}...", end="\r")
+                self.console.print(f"  [dim]|-[/dim] {escape(info.phase_name)}...", end="\r")
         elif info.status == "completed":
             self.phase_times[info.phase] = info.elapsed_seconds
-            source_str = f" [dim]({info.source})[/dim]" if info.source else ""
-            line = f"  [green]|-[/green] {info.phase_name:<20} "
+            source_str = f" [dim]({escape(str(info.source))})[/dim]" if info.source else ""
+            line = f"  [green]|-[/green] {escape(info.phase_name):<20} "
             line += f"{info.elapsed_seconds:>5.1f}s{source_str}"
             self.console.print(line)
         elif info.status == "failed":
             self.phase_times[info.phase] = info.elapsed_seconds
             error_str = f" - {escape(str(info.error))}" if info.error else ""
-            line = f"  [red]|-[/red] {info.phase_name:<20} "
+            line = f"  [red]|-[/red] {escape(info.phase_name):<20} "
             line += f"{info.elapsed_seconds:>5.1f}s [red]FAILED{error_str}[/red]"
             self.console.print(line)
 
@@ -218,7 +218,6 @@ def refresh(
             available = list(config.data.get("clusters", {}).keys())
             if available:
                 console.print(f"Available clusters: {escape(', '.join(available))}")
-            logger.error("Cluster '%s' not found in configuration", cluster)
             ctx.exit(1)
         clusters_to_refresh = [cluster]
     elif refresh_all:
@@ -228,10 +227,8 @@ def refresh(
         if not clusters_to_refresh:
             if filter_dict:
                 print_warning(f"No clusters match filter: {filter_str}")
-                logger.warning("No clusters match filter: %s", filter_str)
             else:
                 print_warning("No clusters configured.")
-                logger.warning("No clusters configured")
             ctx.exit(0)
     else:
         print_error("Specify a cluster name or use --all to refresh all clusters.")
@@ -247,7 +244,7 @@ def refresh(
         try:
             console.print(f"\nRefreshing cache for {len(clusters_to_refresh)} cluster(s)...")
             if filter_dict:
-                console.print(f"[dim]Filter: {filter_str}[/dim]")
+                console.print(f"[dim]Filter: {escape(filter_str or '')}[/dim]")
                 logger.info(
                     "Refreshing cache for %d cluster(s) with filter: %s",
                     len(clusters_to_refresh),
@@ -258,7 +255,7 @@ def refresh(
             if workers > 1:
                 console.print(f"[dim]Parallel workers: {workers}[/dim]")
                 logger.info("Parallel workers: %d", workers)
-            console.print(f"[dim]Log file: {log_file}[/dim]\n")
+            console.print(f"[dim]Log file: {escape(str(log_file))}[/dim]\n")
 
             parallel = workers > 1
             reporter: _VerboseReporter | _NormalReporter = (

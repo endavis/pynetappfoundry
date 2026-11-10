@@ -229,7 +229,7 @@ def show_change(
     summary: list[dict[str, object]] = summary_raw if isinstance(summary_raw, list) else []
     if summary:
         console.print("[bold]Summary:[/bold]")
-        console.print(format_diff_summary(summary))
+        console.print(escape(format_diff_summary(summary)))
         console.print()
 
     # Before/After info
@@ -452,7 +452,7 @@ def snapshot_at_date(
             cache_db.close()
             snapshot_date = str(record["changed_at"])[:10]
             console.print(
-                f"[green]✓[/green] Restored cache for '{cluster}' "
+                f"[green]✓[/green] Restored cache for '{escape(cluster)}' "
                 f"from snapshot #{record['id']} ({snapshot_date})"
             )
         except Exception as e:
@@ -463,7 +463,7 @@ def snapshot_at_date(
     # Display summary
     console.print()
     console.print(f"[bold]Snapshot for {escape(cluster)}[/bold]")
-    console.print(f"[cyan]Requested date:[/cyan] {target_date}")
+    console.print(f"[cyan]Requested date:[/cyan] {escape(str(target_date))}")
     console.print(f"[cyan]Snapshot date:[/cyan]  {record['changed_at']}")
     console.print(f"[cyan]Record ID:[/cyan]      #{record['id']}")
     console.print()
@@ -513,7 +513,7 @@ def _display_snapshot_summary(data: dict[str, object]) -> None:
     ]
 
     for name, value in categories:
-        table.add_row(name, str(value))
+        table.add_row(name, escape(str(value)))
 
     console.print(table)
 

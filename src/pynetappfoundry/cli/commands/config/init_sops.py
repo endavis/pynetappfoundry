@@ -7,6 +7,7 @@ from pathlib import Path
 
 import click
 from rich.console import Console
+from rich.markup import escape
 
 from pynetappfoundry.cli.utils import print_error, print_success, print_warning
 from pynetappfoundry.utils.sops import (
@@ -39,11 +40,11 @@ def _update_envrc_local(key_path: str) -> bool:
     if not envrc_local.exists():
         if envrc_example.exists():
             shutil.copy(envrc_example, envrc_local)
-            console.print(f"Created {envrc_local} from {envrc_example}")
+            console.print(f"Created {escape(str(envrc_local))} from {escape(str(envrc_example))}")
         else:
             # Create minimal .envrc.local
             envrc_local.write_text("# Personal direnv overrides\n# This file is git-ignored\n\n")
-            console.print(f"Created {envrc_local}")
+            console.print(f"Created {escape(str(envrc_local))}")
 
     # Read current content
     content = envrc_local.read_text()
@@ -59,13 +60,13 @@ def _update_envrc_local(key_path: str) -> bool:
             else:
                 new_lines.append(line)
         envrc_local.write_text("\n".join(new_lines) + "\n")
-        console.print(f"Updated SOPS_AGE_KEY_FILE in {envrc_local}")
+        console.print(f"Updated SOPS_AGE_KEY_FILE in {escape(str(envrc_local))}")
     else:
         # Append new line
         with open(envrc_local, "a", encoding="utf-8") as f:
             f.write("\n# SOPS age key for credential encryption\n")
             f.write(f"{export_line}\n")
-        console.print(f"Added SOPS_AGE_KEY_FILE to {envrc_local}")
+        console.print(f"Added SOPS_AGE_KEY_FILE to {escape(str(envrc_local))}")
 
     return True
 
@@ -82,7 +83,7 @@ def _save_public_key(public_key: str) -> None:
 
     # Write public key to file
     public_key_file.write_text(f"# Age public key for SOPS encryption\n{public_key}\n")
-    console.print(f"Saved public key to {public_key_file}")
+    console.print(f"Saved public key to {escape(str(public_key_file))}")
 
     # Ensure it's in .gitignore
     if gitignore_file.exists():
@@ -90,10 +91,10 @@ def _save_public_key(public_key: str) -> None:
         if gitignore_entry not in content:
             with open(gitignore_file, "a", encoding="utf-8") as f:
                 f.write(f"\n# SOPS public key file\n{gitignore_entry}\n")
-            console.print(f"Added {gitignore_entry} to .gitignore")
+            console.print(f"Added {escape(gitignore_entry)} to .gitignore")
     else:
         gitignore_file.write_text(f"# SOPS public key file\n{gitignore_entry}\n")
-        console.print(f"Created .gitignore with {gitignore_entry}")
+        console.print(f"Created .gitignore with {escape(gitignore_entry)}")
 
 
 @click.command("init-sops")
@@ -149,7 +150,7 @@ def init_sops(ctx: click.Context, key_path: Path | None, force: bool) -> None:
         print_warning(f"Age key already exists at {key_path}")
         try:
             public_key = get_public_key_from_file(key_path)
-            console.print(f"\nYour public key: [bold]{public_key}[/bold]")
+            console.print(f"\nYour public key: [bold]{escape(public_key)}[/bold]")
             console.print("\nUse --force to generate a new keypair.")
         except SOPSError as e:
             print_error(f"Could not read existing key: {e}")
@@ -158,11 +159,11 @@ def init_sops(ctx: click.Context, key_path: Path | None, force: bool) -> None:
     # Delete existing key file if force is used
     if force and key_path.exists():
         key_path.unlink()
-        console.print(f"Removed existing key at {key_path}")
+        console.print(f"Removed existing key at {escape(str(key_path))}")
 
     # Generate keypair
     try:
-        console.print(f"Generating age keypair at {key_path}...")
+        console.print(f"Generating age keypair at {escape(str(key_path))}...")
         public_key, private_key_path = generate_age_keypair(key_path)
     except AgeNotInstalledError as e:
         print_error(str(e))
@@ -173,8 +174,8 @@ def init_sops(ctx: click.Context, key_path: Path | None, force: bool) -> None:
 
     print_success("Age keypair generated successfully!")
     console.print()
-    console.print(f"Private key: [dim]{private_key_path}[/dim]")
-    console.print(f"Public key:  [bold]{public_key}[/bold]")
+    console.print(f"Private key: [dim]{escape(str(private_key_path))}[/dim]")
+    console.print(f"Public key:  [bold]{escape(public_key)}[/bold]")
     console.print()
 
     # Update .envrc.local with SOPS_AGE_KEY_FILE

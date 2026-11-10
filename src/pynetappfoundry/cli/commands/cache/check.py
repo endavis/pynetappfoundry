@@ -484,7 +484,7 @@ def check(
     if output_count:
         for name in cluster_names:
             count = len(all_rows.get(name, []))
-            console.print(f"{name}: {count}")
+            console.print(f"{escape(name)}: {count}")
         ctx.exit(1 if total_matches > 0 else 0)
 
     if not all_rows:

@@ -10,6 +10,7 @@ from typing import Any
 
 import click
 from rich.console import Console
+from rich.markup import escape
 from rich.tree import Tree
 
 from pynetappfoundry.cache import ClusterMetadataDB
@@ -92,7 +93,7 @@ def _format_value(value: object) -> str:
         if not value:
             return "[dim](empty list)[/dim]"
         return f"[cyan]{len(value)} items[/cyan]"
-    return str(value)
+    return escape(str(value))
 
 
 def _build_cache_tree(obj: Any) -> Tree:
@@ -108,11 +109,11 @@ def _build_cache_tree(obj: Any) -> Tree:
     data = obj.model_dump() if hasattr(obj, "model_dump") else dict(obj)
     for key, value in data.items():
         if isinstance(value, list):
-            branch = tree.add(f"[cyan]{key}[/cyan]: {_format_value(value)}")
+            branch = tree.add(f"[cyan]{escape(str(key))}[/cyan]: {_format_value(value)}")
             for item in value:
-                branch.add(f"[green]{item}[/green]")
+                branch.add(f"[green]{escape(str(item))}[/green]")
         else:
-            tree.add(f"[cyan]{key}[/cyan]: {_format_value(value)}")
+            tree.add(f"[cyan]{escape(str(key))}[/cyan]: {_format_value(value)}")
     return tree
 
 
@@ -255,7 +256,7 @@ def inspect(ctx: click.Context, cluster: str, object_name: str, object_type: str
         print_error(f"Cluster '{cluster}' not found in configuration.")
         available = list(config.data.get("clusters", {}).keys())
         if available:
-            console.print(f"Available clusters: {', '.join(available)}")
+            console.print(f"Available clusters: {escape(', '.join(available))}")
         ctx.exit(1)
 
     mapping, cache_path = INSPECT_TYPES[object_type.lower()]
@@ -287,7 +288,7 @@ def inspect(ctx: click.Context, cluster: str, object_name: str, object_type: str
     # -- CLI section --
     console.print()
     console.rule("[bold] CLI [/bold]")
-    console.print(f"[dim]Command: {cli_command}[/dim]")
+    console.print(f"[dim]Command: {escape(cli_command)}[/dim]")
 
     cluster_data = config.data["clusters"][cluster]
     user, password = config.get_user("clusters", cluster)
@@ -305,8 +306,10 @@ def inspect(ctx: click.Context, cluster: str, object_name: str, object_type: str
             tree = Tree("[bold]CLI[/bold]")
             for key, value in cli_record.items():
                 desc = cli_descriptions.get(key, "")
-                label = f"[dim]{desc}[/dim] " if desc else ""
-                tree.add(f"[cyan]{key}[/cyan]: {label}[green]{value}[/green]")
+                label = f"[dim]{escape(str(desc))}[/dim] " if desc else ""
+                tree.add(
+                    f"[cyan]{escape(str(key))}[/cyan]: {label}[green]{escape(str(value))}[/green]"
+                )
             console.print(tree)
         else:
             print_warning(f"CLI returned no data for '{object_name}'.")
@@ -320,7 +323,7 @@ def inspect(ctx: click.Context, cluster: str, object_name: str, object_type: str
     # -- API (filtered) section --
     console.print()
     console.rule("[bold] API (filtered) [/bold]")
-    console.print(f"[dim]Endpoint: {api_endpoint}[/dim]")
+    console.print(f"[dim]Endpoint: {escape(api_endpoint)}[/dim]")
 
     class _ClusterObj:
         def __init__(self, name: str, ip: str) -> None:
@@ -345,7 +348,7 @@ def inspect(ctx: click.Context, cluster: str, object_name: str, object_type: str
     base_endpoint = mapping.build_collection_url()
     console.print()
     console.rule("[bold] API (all) [/bold]")
-    console.print(f"[dim]Endpoint: {base_endpoint}[/dim]")
+    console.print(f"[dim]Endpoint: {escape(base_endpoint)}[/dim]")
 
     try:
         if not api_client:

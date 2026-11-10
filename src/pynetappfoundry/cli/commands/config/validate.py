@@ -7,6 +7,7 @@ from pathlib import Path
 import click
 from pydantic import ValidationError
 from rich.console import Console
+from rich.markup import escape
 from rich.panel import Panel
 from rich.tree import Tree
 
@@ -41,9 +42,9 @@ def _validate_clusters(config: Config, tree: Tree) -> list[str]:
     for name, cluster_data in clusters.items():
         try:
             ClusterConfig.model_validate(cluster_data)
-            clusters_branch.add(f"[green]{name}[/green]")
+            clusters_branch.add(f"[green]{escape(str(name))}[/green]")
         except ValidationError as e:
-            clusters_branch.add(f"[red]{name}: Invalid[/red]")
+            clusters_branch.add(f"[red]{escape(str(name))}: Invalid[/red]")
             for err in e.errors():
                 loc = ".".join(str(x) for x in err["loc"])
                 errors.append(f"clusters.{name}.{loc}: {err['msg']}")
@@ -73,9 +74,9 @@ def _validate_users(config: Config, tree: Tree) -> list[str]:
         if isinstance(udata, dict) and "user" in udata:
             try:
                 UserCredentials.model_validate(udata)
-                users_branch.add(f"[green]{utype}[/green]")
+                users_branch.add(f"[green]{escape(str(utype))}[/green]")
             except ValidationError as e:
-                users_branch.add(f"[red]{utype}: Invalid[/red]")
+                users_branch.add(f"[red]{escape(str(utype))}: Invalid[/red]")
                 for err in e.errors():
                     loc = ".".join(str(x) for x in err["loc"])
                     errors.append(f"users.{utype}.{loc}: {err['msg']}")
@@ -159,9 +160,9 @@ def _check_cluster_credentials(config: Config, tree: Tree) -> list[str]:
     for name in clusters:
         try:
             user, _enc = config.get_user("clusters", name)
-            creds_branch.add(f"[green]{name}: {user}[/green]")
+            creds_branch.add(f"[green]{escape(str(name))}: {escape(str(user))}[/green]")
         except ConfigurationError:
-            creds_branch.add(f"[red]{name}: Missing credentials[/red]")
+            creds_branch.add(f"[red]{escape(str(name))}: Missing credentials[/red]")
             errors.append(f"Cluster '{name}' has no credentials configured")
 
     return errors
@@ -183,7 +184,7 @@ def validate(ctx: click.Context) -> None:
         print_error(f"Configuration directory not found: {config_path}")
         ctx.exit(1)
 
-    console.print(f"\nValidating configuration in: [cyan]{config_path}[/cyan]\n")
+    console.print(f"\nValidating configuration in: [cyan]{escape(str(config_path))}[/cyan]\n")
 
     try:
         config = Config(config_dir=config_dir, script_name="config-validate")
@@ -209,7 +210,7 @@ def validate(ctx: click.Context) -> None:
     if all_errors:
         console.print(
             Panel(
-                "\n".join(f"[red]- {err}[/red]" for err in all_errors),
+                "\n".join(f"[red]- {escape(err)}[/red]" for err in all_errors),
                 title="[red]Validation Errors[/red]",
                 border_style="red",
             )

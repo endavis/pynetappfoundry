@@ -6,6 +6,7 @@ from pathlib import Path
 
 import click
 from rich.console import Console
+from rich.markup import escape
 from rich.table import Table
 
 from pynetappfoundry.cache import ClusterMetadataDB
@@ -79,7 +80,7 @@ def status(ctx: click.Context, ttl: int) -> None:
             is_stale = s.get("is_stale", False)
             status_str = "[red]Stale[/red]" if is_stale else "[green]Fresh[/green]"
             table.add_row(
-                cluster,
+                escape(cluster),
                 "[green]Yes[/green]",
                 str(age_days),
                 status_str,
@@ -87,7 +88,7 @@ def status(ctx: click.Context, ttl: int) -> None:
             )
         else:
             table.add_row(
-                cluster,
+                escape(cluster),
                 "[yellow]No[/yellow]",
                 "-",
                 "[yellow]Not cached[/yellow]",
@@ -101,7 +102,7 @@ def status(ctx: click.Context, ttl: int) -> None:
             s = status_by_name[cluster]
             age_days = s.get("age_days", 0)
             table.add_row(
-                cluster,
+                escape(cluster),
                 "[green]Yes[/green]",
                 str(age_days),
                 "[dim]Orphaned[/dim]",
