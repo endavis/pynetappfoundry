@@ -782,6 +782,44 @@ class TestCollectAllByteIdentity:
         )
 
 
+class TestNodesFetchedOnce:
+    """Issue #929: ``/cluster/nodes`` is requested once per ``collect_all``."""
+
+    @staticmethod
+    def _node_requests(client: Any) -> list[str]:
+        return [
+            c.args[0]
+            for c in client.get_all_records.call_args_list
+            if "/cluster/nodes" in c.args[0]
+        ]
+
+    @pytest.mark.parametrize("parallel", [False, True])
+    def test_collect_all_requests_nodes_once(self, parallel: bool) -> None:
+        client = _build_mock_api_client()
+        collector = MetadataCollector(api_client=client, parallel=parallel)
+        result = collector.collect_all("test-cluster")
+
+        assert len(self._node_requests(client)) == 1
+        assert result.cluster.is_ha is True
+        assert len(result.nodes) == 2
+
+    def test_cluster_info_reuses_nodes_phase_result(self) -> None:
+        client = _build_mock_api_client()
+        collector = MetadataCollector(api_client=client, parallel=False)
+        nodes = collector.collect_nodes()
+        cluster = collector.collect_cluster_info()
+
+        assert len(self._node_requests(client)) == 1
+        assert cluster.is_ha is True
+        assert len(nodes) == 2
+
+    def test_cluster_info_alone_requests_nodes_once(self) -> None:
+        client = _build_mock_api_client()
+        collector = MetadataCollector(api_client=client, parallel=False)
+        collector.collect_cluster_info()
+        assert len(self._node_requests(client)) == 1
+
+
 class TestCollectorParallelism:
     """Issue #541: composite phase methods still submit per-model fetches in parallel."""
 
