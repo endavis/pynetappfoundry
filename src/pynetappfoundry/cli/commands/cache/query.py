@@ -16,11 +16,10 @@ from rich.markup import escape
 
 from pynetappfoundry.cache import ClusterMetadataDB
 from pynetappfoundry.cache._registry import model_registry
+from pynetappfoundry.cli.errors import CliError
 from pynetappfoundry.cli.options import all_option, csv_option, filter_option, json_option
 from pynetappfoundry.cli.utils import (
     format_value_markup,
-    print_error,
-    print_exception,
     print_warning,
 )
 from pynetappfoundry.core.config import Config
@@ -461,8 +460,7 @@ def query(
     # Check if config directory exists
     config_path = Path.cwd() / config_dir
     if not config_path.exists():
-        print_error(f"Configuration directory not found: {config_path}")
-        ctx.exit(1)
+        raise CliError(f"Configuration directory not found: {config_path}")
 
     # When --all or --filter is used, Click still parses the first positional arg as 'cluster'.
     # We need to treat it as a field in that case and combine with any additional fields.
@@ -479,23 +477,19 @@ def query(
 
     # Validate arguments
     if not effective_cluster and not query_all and not filter_str:
-        print_error("Must specify CLUSTER, --all, or --filter/-f")
-        ctx.exit(1)
+        raise CliError("Must specify CLUSTER, --all, or --filter/-f")
 
     if not effective_fields:
-        print_error("Must specify at least one FIELD to query")
-        ctx.exit(1)
+        raise CliError("Must specify at least one FIELD to query")
 
     # Raw output only valid with single cluster
     if raw and (query_all or filter_str):
-        print_error("--raw is only valid when querying a single cluster")
-        ctx.exit(1)
+        raise CliError("--raw is only valid when querying a single cluster")
 
     try:
         config = Config(config_dir=config_dir, script_name="cache-query")
     except Exception as e:
-        print_exception(f"Failed to load configuration: {e}", e)
-        ctx.exit(1)
+        raise CliError(f"Failed to load configuration: {e}", exc=e) from e
 
     db = ClusterMetadataDB(config=config)
 
@@ -514,9 +508,8 @@ def query(
         try:
             filter_dict = json.loads(filter_str)
         except json.JSONDecodeError as e:
-            print_error(f"Invalid filter JSON: {e}")
             db.close()
-            ctx.exit(1)
+            raise CliError(f"Invalid filter JSON: {e}") from e
 
         filtered = config.get_clusters(filter_dict)
         if not filtered:
@@ -580,13 +573,10 @@ def query(
 
     # Handle errors
     if errors and not results:
-        for err in errors:
-            print_error(err)
-        ctx.exit(1)
+        raise CliError("\n".join(errors))
 
     if not results:
-        print_error("No results found.")
-        ctx.exit(1)
+        raise CliError("No results found.")
 
     # Print warnings for any errors that occurred but we still have some results
     for err in errors:

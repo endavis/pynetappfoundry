@@ -11,7 +11,8 @@ from rich.markup import escape
 from rich.panel import Panel
 from rich.tree import Tree
 
-from pynetappfoundry.cli.utils import print_error, print_exception, print_success
+from pynetappfoundry.cli.errors import CliError
+from pynetappfoundry.cli.utils import print_success
 from pynetappfoundry.core.config import Config, ConfigurationError
 from pynetappfoundry.core.models import (
     ClusterConfig,
@@ -181,16 +182,14 @@ def validate(ctx: click.Context) -> None:
     # Check if config directory exists
     config_path = Path.cwd() / config_dir
     if not config_path.exists():
-        print_error(f"Configuration directory not found: {config_path}")
-        ctx.exit(1)
+        raise CliError(f"Configuration directory not found: {config_path}")
 
     console.print(f"\nValidating configuration in: [cyan]{escape(str(config_path))}[/cyan]\n")
 
     try:
         config = Config(config_dir=config_dir, script_name="config-validate")
     except Exception as e:
-        print_exception(f"Failed to load configuration: {e}", e)
-        ctx.exit(1)
+        raise CliError(f"Failed to load configuration: {e}", exc=e) from e
 
     # Build validation tree
     tree = Tree("[bold blue]Configuration Validation[/bold blue]")
@@ -215,7 +214,6 @@ def validate(ctx: click.Context) -> None:
                 border_style="red",
             )
         )
-        print_error(f"\nValidation failed with {len(all_errors)} error(s)")
-        ctx.exit(1)
+        raise CliError(f"\nValidation failed with {len(all_errors)} error(s)")
     else:
         print_success("Configuration is valid")

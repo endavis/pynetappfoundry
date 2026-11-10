@@ -9,6 +9,7 @@ import click
 from rich.console import Console
 from rich.markup import escape
 
+from pynetappfoundry.cli.errors import CliError
 from pynetappfoundry.cli.utils import print_error, print_success, print_warning
 from pynetappfoundry.utils.sops import (
     AgeNotInstalledError,
@@ -128,18 +129,24 @@ def init_sops(ctx: click.Context, key_path: Path | None, force: bool) -> None:
     """
     # Check prerequisites
     if not is_sops_installed():
-        print_error("SOPS is not installed.")
-        console.print("\nInstall SOPS:")
-        console.print("  macOS: brew install sops")
-        console.print("  Linux: See https://github.com/getsops/sops#installation")
-        ctx.exit(1)
+        raise CliError(
+            "SOPS is not installed.",
+            hints=[
+                "\nInstall SOPS:",
+                "  macOS: brew install sops",
+                "  Linux: See https://github.com/getsops/sops#installation",
+            ],
+        )
 
     if not is_age_installed():
-        print_error("age is not installed.")
-        console.print("\nInstall age:")
-        console.print("  macOS: brew install age")
-        console.print("  Linux: See https://github.com/FiloSottile/age#installation")
-        ctx.exit(1)
+        raise CliError(
+            "age is not installed.",
+            hints=[
+                "\nInstall age:",
+                "  macOS: brew install age",
+                "  Linux: See https://github.com/FiloSottile/age#installation",
+            ],
+        )
 
     # Determine key path
     if key_path is None:
@@ -166,11 +173,9 @@ def init_sops(ctx: click.Context, key_path: Path | None, force: bool) -> None:
         console.print(f"Generating age keypair at {escape(str(key_path))}...")
         public_key, private_key_path = generate_age_keypair(key_path)
     except AgeNotInstalledError as e:
-        print_error(str(e))
-        ctx.exit(1)
+        raise CliError(str(e)) from e
     except SOPSError as e:
-        print_error(f"Failed to generate keypair: {e}")
-        ctx.exit(1)
+        raise CliError(f"Failed to generate keypair: {e}") from e
 
     print_success("Age keypair generated successfully!")
     console.print()

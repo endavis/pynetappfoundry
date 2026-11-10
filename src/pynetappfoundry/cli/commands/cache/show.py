@@ -14,11 +14,10 @@ from rich.tree import Tree
 
 from pynetappfoundry.cache import ClusterMetadataDB
 from pynetappfoundry.cache.db import all_realtime_attrs
+from pynetappfoundry.cli.errors import CliError
 from pynetappfoundry.cli.options import json_option
 from pynetappfoundry.cli.utils import (
     format_value_markup,
-    print_error,
-    print_exception,
     print_warning,
 )
 from pynetappfoundry.core.config import Config
@@ -134,14 +133,12 @@ def show(ctx: click.Context, cluster: str | None, section: str | None, output_js
     # Check if config directory exists
     config_path = Path.cwd() / config_dir
     if not config_path.exists():
-        print_error(f"Configuration directory not found: {config_path}")
-        ctx.exit(1)
+        raise CliError(f"Configuration directory not found: {config_path}")
 
     try:
         config = Config(config_dir=config_dir, script_name="cache-show")
     except Exception as e:
-        print_exception(f"Failed to load configuration: {e}", e)
-        ctx.exit(1)
+        raise CliError(f"Failed to load configuration: {e}", exc=e) from e
 
     db = ClusterMetadataDB(config=config)
 
@@ -168,18 +165,21 @@ def show(ctx: click.Context, cluster: str | None, section: str | None, output_js
     except ValueError as e:
         logger.debug("Invalid cluster name: %s", e)
         db.close()
-        print_error(f"Invalid cluster name: '{cluster}'")
+        hints: list[str] = []
         # Check if it looks like a query path
         if "." in cluster or "[" in cluster:
-            console.print("Did you mean to use [cyan]nf cache query[/cyan] instead?")
-            console.print(f"  Example: nf cache query --all {escape(cluster)}")
-        ctx.exit(1)
+            hints = [
+                "Did you mean to use [cyan]nf cache query[/cyan] instead?",
+                f"  Example: nf cache query --all {escape(cluster)}",
+            ]
+        raise CliError(f"Invalid cluster name: '{cluster}'", hints=hints) from e
     db.close()
 
     if not metadata:
-        print_error(f"No cached data found for cluster '{cluster}'.")
-        console.print("Use 'nf cache refresh {cluster}' to populate the cache.")
-        ctx.exit(1)
+        raise CliError(
+            f"No cached data found for cluster '{cluster}'.",
+            hints=["Use 'nf cache refresh {cluster}' to populate the cache."],
+        )
 
     rt = all_realtime_attrs()
 
@@ -194,8 +194,7 @@ def show(ctx: click.Context, cluster: str | None, section: str | None, output_js
     if section:
         section_lower = section.lower()
         if section_lower not in data:
-            print_error(f"Section '{section}' not found.")
-            ctx.exit(1)
+            raise CliError(f"Section '{section}' not found.")
         section_data = data[section_lower]
         tree = Tree(f"[bold blue]{escape(cluster)} - {escape(section)}[/bold blue]")
         if isinstance(section_data, dict):

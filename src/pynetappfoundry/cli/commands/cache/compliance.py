@@ -23,8 +23,9 @@ from rich.markup import escape
 from rich.table import Table
 
 from pynetappfoundry.cache import ClusterMetadataDB
+from pynetappfoundry.cli.errors import CliError
 from pynetappfoundry.cli.options import all_option, csv_option, filter_option, json_option
-from pynetappfoundry.cli.utils import print_error, print_warning
+from pynetappfoundry.cli.utils import print_warning
 from pynetappfoundry.compliance.config import (
     get_cluster_overrides,
     load_global_compliance_rules,
@@ -200,14 +201,12 @@ def compliance(
 
     config_path = Path.cwd() / config_dir
     if not config_path.exists():
-        print_error(f"Configuration directory not found: {config_path}")
-        ctx.exit(2)
+        raise CliError(f"Configuration directory not found: {config_path}", exit_code=2)
 
     try:
         config = Config(config_dir=config_dir, script_name="cache-compliance")
     except Exception as e:
-        print_error(f"Failed to load configuration: {e}")
-        ctx.exit(2)
+        raise CliError(f"Failed to load configuration: {e}", exit_code=2) from e
 
     # Load global compliance rules
     rule_errors: list[ComplianceRuleError] = []
@@ -239,9 +238,8 @@ def compliance(
         try:
             filter_dict = json.loads(filter_str)
         except json.JSONDecodeError as e:
-            print_error(f"Invalid filter JSON: {e}")
             db.close()
-            ctx.exit(2)
+            raise CliError(f"Invalid filter JSON: {e}", exit_code=2) from e
 
         filtered = config.get_clusters(filter_dict)
         if not filtered:
@@ -250,9 +248,8 @@ def compliance(
             ctx.exit(exit_on_empty)
         cluster_names = list(filtered.keys())
     else:
-        print_error("Must specify CLUSTER, --all, or --filter/-f")
         db.close()
-        ctx.exit(2)
+        raise CliError("Must specify CLUSTER, --all, or --filter/-f", exit_code=2)
 
     # Run checks for each cluster
     all_results: list[ComplianceResult] = []

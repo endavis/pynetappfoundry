@@ -8,7 +8,8 @@ import click
 from rich.console import Console
 from rich.markup import escape
 
-from pynetappfoundry.cli.utils import print_error, print_success, print_warning
+from pynetappfoundry.cli.errors import CliError
+from pynetappfoundry.cli.utils import print_success, print_warning
 from pynetappfoundry.core.config import VALID_DATA_TYPES, Config
 from pynetappfoundry.utils.sops import (
     SOPSError,
@@ -46,9 +47,10 @@ def _encrypt_password(password: str, no_encrypt: bool, ctx: click.Context) -> st
     try:
         key_path = get_age_key_path()
         if not key_path.exists():
-            print_error(f"Age key not found at {key_path}")
-            console.print("Run 'nf config init-sops' to generate a keypair.")
-            ctx.exit(1)
+            raise CliError(
+                f"Age key not found at {key_path}",
+                hints=["Run 'nf config init-sops' to generate a keypair."],
+            )
 
         public_key = get_public_key_from_file(key_path)
         console.print(f"Encrypting with key: {escape(public_key[:20])}...")
@@ -58,11 +60,9 @@ def _encrypt_password(password: str, no_encrypt: bool, ctx: click.Context) -> st
         return encrypted
 
     except SOPSNotInstalledError as e:
-        print_error(str(e))
-        ctx.exit(1)
+        raise CliError(str(e)) from e
     except SOPSError as e:
-        print_error(f"Encryption failed: {e}")
-        ctx.exit(1)
+        raise CliError(f"Encryption failed: {e}") from e
 
 
 @click.command("set-credential")
@@ -117,28 +117,28 @@ def set_credential(
     """
     # Validate mutually exclusive options
     if cluster and cred_type:
-        print_error("Cannot use both --cluster and --type. Choose one.")
-        ctx.exit(1)
+        raise CliError("Cannot use both --cluster and --type. Choose one.")
 
     if not cluster and not cred_type:
-        print_error("Must specify either --cluster or --type.")
-        console.print("\nExamples:")
-        console.print("  nf config set-credential --cluster mycluster --user admin")
-        console.print("  nf config set-credential --type clusters --user admin")
-        ctx.exit(1)
+        raise CliError(
+            "Must specify either --cluster or --type.",
+            hints=[
+                "\nExamples:",
+                "  nf config set-credential --cluster mycluster --user admin",
+                "  nf config set-credential --type clusters --user admin",
+            ],
+        )
 
     config_dir = ctx.obj.get("config_dir", "config")
     config_path = Path.cwd() / config_dir
 
     if not config_path.exists():
-        print_error(f"Configuration directory not found: {config_path}")
-        ctx.exit(1)
+        raise CliError(f"Configuration directory not found: {config_path}")
 
     try:
         config = Config(config_dir=config_dir, script_name="set-credential")
     except Exception as e:
-        print_error(f"Failed to load configuration: {e}")
-        ctx.exit(1)
+        raise CliError(f"Failed to load configuration: {e}") from e
 
     # Encrypt password
     encrypted_password = _encrypt_password(password, no_encrypt, ctx)
@@ -161,17 +161,14 @@ def _set_cluster_credential(
     """Set credentials for a specific cluster."""
     # Check if cluster exists
     if cluster not in config.data.get("clusters", {}):
-        print_error(f"Cluster '{cluster}' not found in configuration.")
         available = list(config.data.get("clusters", {}).keys())
-        if available:
-            console.print(f"Available clusters: {escape(', '.join(available))}")
-        ctx.exit(1)
+        hints = [f"Available clusters: {escape(', '.join(available))}"] if available else []
+        raise CliError(f"Cluster '{cluster}' not found in configuration.", hints=hints)
 
     # Find and update the cluster's config file
     cluster_file = _find_cluster_file(config_path, cluster)
     if cluster_file is None:
-        print_error(f"Could not find configuration file for cluster '{cluster}'")
-        ctx.exit(1)
+        raise CliError(f"Could not find configuration file for cluster '{cluster}'")
 
     try:
         _update_cluster_credentials(cluster_file, cluster, user, encrypted_password)
@@ -180,8 +177,7 @@ def _set_cluster_credential(
         console.print(f"  User: {escape(user)}")
         _print_password_status(encrypted_password)
     except Exception as e:
-        print_error(f"Failed to update configuration: {e}")
-        ctx.exit(1)
+        raise CliError(f"Failed to update configuration: {e}") from e
 
 
 def _set_type_credential(
@@ -201,8 +197,7 @@ def _set_type_credential(
         console.print(f"  User: {escape(user)}")
         _print_password_status(encrypted_password)
     except Exception as e:
-        print_error(f"Failed to update configuration: {e}")
-        ctx.exit(1)
+        raise CliError(f"Failed to update configuration: {e}") from e
 
 
 def _print_password_status(encrypted_password: str) -> None:

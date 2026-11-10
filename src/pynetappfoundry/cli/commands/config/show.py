@@ -11,7 +11,7 @@ from rich.markup import escape
 from rich.panel import Panel
 from rich.tree import Tree
 
-from pynetappfoundry.cli.utils import print_error, print_exception
+from pynetappfoundry.cli.errors import CliError
 from pynetappfoundry.core.config import Config
 
 console = Console()
@@ -141,14 +141,12 @@ def show(ctx: click.Context, section: str | None, unmask: bool) -> None:
     # Check if config directory exists
     config_path = Path.cwd() / config_dir
     if not config_path.exists():
-        print_error(f"Configuration directory not found: {config_path}")
-        ctx.exit(1)
+        raise CliError(f"Configuration directory not found: {config_path}")
 
     try:
         config = Config(config_dir=config_dir, script_name="config-show")
     except Exception as e:
-        print_exception(f"Failed to load configuration: {e}", e)
-        ctx.exit(1)
+        raise CliError(f"Failed to load configuration: {e}", exc=e) from e
 
     console.print(f"\nConfiguration from: [cyan]{escape(str(config_path))}[/cyan]\n")
 
@@ -170,9 +168,10 @@ def show(ctx: click.Context, section: str | None, unmask: bool) -> None:
             console.print(tree)
         else:
             available = list(config.data.keys()) + list(config.settings.keys())
-            print_error(f"Section '{section}' not found.")
-            console.print(f"Available sections: {escape(', '.join(available))}")
-            ctx.exit(1)
+            raise CliError(
+                f"Section '{section}' not found.",
+                hints=[f"Available sections: {escape(', '.join(available))}"],
+            )
     else:
         # Show everything
         # Data sections

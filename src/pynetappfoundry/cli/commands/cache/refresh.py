@@ -34,6 +34,7 @@ from pynetappfoundry.cache.refresher import (
     RefreshSummary,
     effective_workers,
 )
+from pynetappfoundry.cli.errors import CliError
 from pynetappfoundry.cli.options import all_option, filter_option
 from pynetappfoundry.cli.utils import (
     print_error,
@@ -180,8 +181,7 @@ def refresh(
     # Check if config directory exists
     config_path = Path.cwd() / config_dir
     if not config_path.exists():
-        print_error(f"Configuration directory not found: {config_path}")
-        ctx.exit(1)
+        raise CliError(f"Configuration directory not found: {config_path}")
 
     try:
         config = Config(
@@ -190,29 +190,24 @@ def refresh(
             script_name="cache-refresh",
         )
     except Exception as e:
-        print_exception(f"Failed to load configuration: {e}", e)
-        ctx.exit(1)
+        raise CliError(f"Failed to load configuration: {e}", exc=e) from e
 
     # Parse filter if provided
     filter_dict: dict[str, str] = {}
     if filter_str:
         if not refresh_all:
-            print_error("--filter can only be used with --all")
-            ctx.exit(1)
+            raise CliError("--filter can only be used with --all")
         try:
             filter_dict = json.loads(filter_str)
         except json.JSONDecodeError as e:
-            print_error(f"Invalid filter JSON: {e}")
-            ctx.exit(1)
+            raise CliError(f"Invalid filter JSON: {e}") from e
 
     # Determine clusters to refresh
     if cluster:
         if cluster not in config.data.get("clusters", {}):
-            print_error(f"Cluster '{cluster}' not found in configuration.")
             available = list(config.data.get("clusters", {}).keys())
-            if available:
-                console.print(f"Available clusters: {escape(', '.join(available))}")
-            ctx.exit(1)
+            hints = [f"Available clusters: {escape(', '.join(available))}"] if available else []
+            raise CliError(f"Cluster '{cluster}' not found in configuration.", hints=hints)
         clusters_to_refresh = [cluster]
     elif refresh_all:
         # Apply filter if provided, otherwise get all clusters
@@ -225,8 +220,7 @@ def refresh(
                 print_warning("No clusters configured.")
             ctx.exit(0)
     else:
-        print_error("Specify a cluster name or use --all to refresh all clusters.")
-        ctx.exit(1)
+        raise CliError("Specify a cluster name or use --all to refresh all clusters.")
 
     workers = effective_workers(parallel_clusters, len(clusters_to_refresh))
 
@@ -258,7 +252,7 @@ def refresh(
             refresher = CacheRefresher(config, db, history_db)
             with reporter:
                 summary = refresher.run(clusters_to_refresh, workers=workers, observer=reporter)
-            _report_summary(ctx, summary)
+            _report_summary(summary)
         finally:
             history_db.close()
     finally:
@@ -435,25 +429,28 @@ class _VerboseReporter:
             print_exception(f"  Error: {err}", err)
 
 
-def _print_failure_summary(
+def _failure_summary_lines(
     failures: dict[str, list[str]],
-) -> None:
-    """Print a per-cluster failure summary.
+) -> list[str]:
+    """Build the per-cluster failure summary as Rich-markup lines.
 
     Args:
         failures: Dict mapping cluster name to list of failure descriptions.
+
+    Returns:
+        Lines to print, or an empty list when there are no failures.
     """
     if not failures:
-        return
+        return []
 
-    console.print("\n[bold red]Failure Summary:[/bold red]")
+    lines = ["\n[bold red]Failure Summary:[/bold red]"]
     for cluster_name, messages in failures.items():
-        console.print(f"  {escape(cluster_name)}:")
-        for msg in messages:
-            console.print(f"    {escape(msg)}")
+        lines.append(f"  {escape(cluster_name)}:")
+        lines.extend(f"    {escape(msg)}" for msg in messages)
+    return lines
 
 
-def _report_summary(ctx: click.Context, summary: RefreshSummary) -> None:
+def _report_summary(summary: RefreshSummary) -> None:
     """Print the final counts and exit non-zero when any cluster failed."""
     success_count = summary.succeeded
     error_count = summary.failed
@@ -461,8 +458,9 @@ def _report_summary(ctx: click.Context, summary: RefreshSummary) -> None:
     if success_count > 0:
         print_success(f"Successfully refreshed {success_count} cluster(s)")
     if error_count > 0:
-        print_error(f"Failed to refresh {error_count} cluster(s)")
-        _print_failure_summary(summary.failures)
-        ctx.exit(1)
+        raise CliError(
+            f"Failed to refresh {error_count} cluster(s)",
+            hints=_failure_summary_lines(summary.failures),
+        )
 
     logger.info("Cache refresh completed: %d success, %d failed", success_count, error_count)

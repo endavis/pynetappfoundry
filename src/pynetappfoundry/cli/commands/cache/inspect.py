@@ -28,9 +28,9 @@ from pynetappfoundry.cache.ontap.network.ip.interfaces.mapping import ONTAPIPINT
 from pynetappfoundry.cache.ontap.storage.aggregates.mapping import ONTAPAGGREGATE_MAPPING
 from pynetappfoundry.cache.ontap.storage.volumes.mapping import ONTAPVOLUME_MAPPING
 from pynetappfoundry.cache.ontap.svm.svms.mapping import ONTAPSVM_MAPPING
+from pynetappfoundry.cli.errors import CliError
 from pynetappfoundry.cli.utils import (
     format_value_markup,
-    print_error,
     print_exception,
     print_warning,
 )
@@ -243,21 +243,17 @@ def inspect(ctx: click.Context, cluster: str, object_name: str, object_type: str
 
     config_path = Path.cwd() / config_dir
     if not config_path.exists():
-        print_error(f"Configuration directory not found: {config_path}")
-        ctx.exit(1)
+        raise CliError(f"Configuration directory not found: {config_path}")
 
     try:
         config = Config(config_dir=config_dir, script_name="cache-inspect")
     except Exception as e:
-        print_exception(f"Failed to load configuration: {e}", e)
-        ctx.exit(1)
+        raise CliError(f"Failed to load configuration: {e}", exc=e) from e
 
     if cluster not in config.data.get("clusters", {}):
-        print_error(f"Cluster '{cluster}' not found in configuration.")
         available = list(config.data.get("clusters", {}).keys())
-        if available:
-            console.print(f"Available clusters: {escape(', '.join(available))}")
-        ctx.exit(1)
+        hints = [f"Available clusters: {escape(', '.join(available))}"] if available else []
+        raise CliError(f"Cluster '{cluster}' not found in configuration.", hints=hints)
 
     mapping, cache_path = INSPECT_TYPES[object_type.lower()]
 

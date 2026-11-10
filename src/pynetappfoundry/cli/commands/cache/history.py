@@ -13,8 +13,9 @@ from rich.panel import Panel
 from rich.table import Table
 
 from pynetappfoundry.cache import CacheHistoryDB, format_diff_summary, is_schema_compatible
+from pynetappfoundry.cli.errors import CliError
 from pynetappfoundry.cli.options import json_option
-from pynetappfoundry.cli.utils import print_error, print_exception, print_warning
+from pynetappfoundry.cli.utils import print_warning
 from pynetappfoundry.core.config import Config
 
 logger = logging.getLogger(__name__)
@@ -86,14 +87,12 @@ def list_history(
     config_dir = ctx.obj.get("config_dir", "config")
     config_path = Path.cwd() / config_dir
     if not config_path.exists():
-        print_error(f"Configuration directory not found: {config_path}")
-        ctx.exit(1)
+        raise CliError(f"Configuration directory not found: {config_path}")
 
     try:
         config = Config(config_dir=config_dir, script_name="cache-history")
     except Exception as e:
-        print_exception(f"Failed to load configuration: {e}", e)
-        ctx.exit(1)
+        raise CliError(f"Failed to load configuration: {e}", exc=e) from e
 
     db = CacheHistoryDB(config=config)
 
@@ -108,8 +107,7 @@ def list_history(
         total = db.get_history_count(cluster_name=cluster)
     except ValueError as e:
         db.close()
-        print_error(f"Invalid cluster name: {e}")
-        ctx.exit(1)
+        raise CliError(f"Invalid cluster name: {e}") from e
 
     db.close()
 
@@ -176,22 +174,19 @@ def show_change(
     config_dir = ctx.obj.get("config_dir", "config")
     config_path = Path.cwd() / config_dir
     if not config_path.exists():
-        print_error(f"Configuration directory not found: {config_path}")
-        ctx.exit(1)
+        raise CliError(f"Configuration directory not found: {config_path}")
 
     try:
         config = Config(config_dir=config_dir, script_name="cache-history")
     except Exception as e:
-        print_exception(f"Failed to load configuration: {e}", e)
-        ctx.exit(1)
+        raise CliError(f"Failed to load configuration: {e}", exc=e) from e
 
     db = CacheHistoryDB(config=config)
     record = db.get_change_by_id(change_id)
     db.close()
 
     if not record:
-        print_error(f"Change record #{change_id} not found.")
-        ctx.exit(1)
+        raise CliError(f"Change record #{change_id} not found.")
 
     if output_json:
         # Parse the JSON strings so they're nested properly in output
@@ -273,22 +268,19 @@ def show_diff(
     config_dir = ctx.obj.get("config_dir", "config")
     config_path = Path.cwd() / config_dir
     if not config_path.exists():
-        print_error(f"Configuration directory not found: {config_path}")
-        ctx.exit(1)
+        raise CliError(f"Configuration directory not found: {config_path}")
 
     try:
         config = Config(config_dir=config_dir, script_name="cache-history")
     except Exception as e:
-        print_exception(f"Failed to load configuration: {e}", e)
-        ctx.exit(1)
+        raise CliError(f"Failed to load configuration: {e}", exc=e) from e
 
     db = CacheHistoryDB(config=config)
     record = db.get_change_by_id(change_id)
     db.close()
 
     if not record:
-        print_error(f"Change record #{change_id} not found.")
-        ctx.exit(1)
+        raise CliError(f"Change record #{change_id} not found.")
 
     console.print()
     console.print(f"[bold]Change #{record['id']} - {escape(str(record['cluster_name']))}[/bold]")
@@ -383,22 +375,19 @@ def snapshot_at_date(
     config_dir = ctx.obj.get("config_dir", "config")
     config_path = Path.cwd() / config_dir
     if not config_path.exists():
-        print_error(f"Configuration directory not found: {config_path}")
-        ctx.exit(1)
+        raise CliError(f"Configuration directory not found: {config_path}")
 
     try:
         config = Config(config_dir=config_dir, script_name="cache-history")
     except Exception as e:
-        print_exception(f"Failed to load configuration: {e}", e)
-        ctx.exit(1)
+        raise CliError(f"Failed to load configuration: {e}", exc=e) from e
 
     db = CacheHistoryDB(config=config)
     record = db.get_snapshot_at_date(cluster, target_date)
     db.close()
 
     if not record:
-        print_error(f"No snapshot found for '{cluster}' on or before {target_date}.")
-        ctx.exit(1)
+        raise CliError(f"No snapshot found for '{cluster}' on or before {target_date}.")
 
     if output_json:
         after_json = record.get("after_json")
@@ -418,19 +407,17 @@ def snapshot_at_date(
 
         after_json = record.get("after_json")
         if not after_json:
-            print_error("Snapshot has no metadata to restore.")
-            ctx.exit(1)
+            raise CliError("Snapshot has no metadata to restore.")
 
         try:
             snapshot_data = json.loads(str(after_json))
             snapshot_version = snapshot_data.get("cache_version")
 
             if not is_schema_compatible(snapshot_version):
-                print_error(
+                raise CliError(
                     f"Snapshot has incompatible schema version: {snapshot_version}. "
                     "Cannot restore to current cache format."
                 )
-                ctx.exit(1)
 
             metadata = CachedClusterMetadata.model_validate(snapshot_data)
             cache_db = ClusterMetadataDB(config=config)
@@ -441,9 +428,10 @@ def snapshot_at_date(
                 f"[green]✓[/green] Restored cache for '{escape(cluster)}' "
                 f"from snapshot #{record['id']} ({snapshot_date})"
             )
+        except CliError:
+            raise
         except Exception as e:
-            print_exception(f"Failed to restore snapshot: {e}", e)
-            ctx.exit(1)
+            raise CliError(f"Failed to restore snapshot: {e}", exc=e) from e
         return
 
     # Display summary

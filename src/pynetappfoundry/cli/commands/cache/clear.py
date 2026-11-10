@@ -9,8 +9,9 @@ from rich.console import Console
 from rich.markup import escape
 
 from pynetappfoundry.cache import ClusterMetadataDB
+from pynetappfoundry.cli.errors import CliError
 from pynetappfoundry.cli.options import all_option
-from pynetappfoundry.cli.utils import print_error, print_exception, print_success, print_warning
+from pynetappfoundry.cli.utils import print_success, print_warning
 from pynetappfoundry.core.config import Config
 
 console = Console()
@@ -43,18 +44,15 @@ def clear(ctx: click.Context, cluster: str | None, clear_all: bool, force: bool)
     # Check if config directory exists
     config_path = Path.cwd() / config_dir
     if not config_path.exists():
-        print_error(f"Configuration directory not found: {config_path}")
-        ctx.exit(1)
+        raise CliError(f"Configuration directory not found: {config_path}")
 
     try:
         config = Config(config_dir=config_dir, script_name="cache-clear")
     except Exception as e:
-        print_exception(f"Failed to load configuration: {e}", e)
-        ctx.exit(1)
+        raise CliError(f"Failed to load configuration: {e}", exc=e) from e
 
     if not cluster and not clear_all:
-        print_error("Specify a cluster name or use --all to clear all cached data.")
-        ctx.exit(1)
+        raise CliError("Specify a cluster name or use --all to clear all cached data.")
 
     db = ClusterMetadataDB(config=config)
 

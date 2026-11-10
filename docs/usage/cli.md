@@ -154,8 +154,10 @@ To add a command to an existing group:
    `<group>.add_command(<command>)`.
 3. **Keep business logic out of the command.** Read data through the data
    layer, put reusable logic in the runtime package, and print with
-   `print_info`, `print_warning`, `print_error` or `print_table` from
-   `src/pynetappfoundry/cli/utils.py`.
+   `print_info`, `print_warning` or `print_table` from
+   `src/pynetappfoundry/cli/utils.py`. Report an error by raising
+   `CliError(msg, exit_code=...)` from `pynetappfoundry.cli.errors` rather than
+   printing and calling `ctx.exit(1)` ([ADR-0022](../decisions/0022-one-cli-error-exit-convention-raise-clierror.md)).
    The `print_*` helpers escape Rich markup in the message. When you call
    `console.print` or `Table.add_row` directly with remote data or exception
    text, wrap it in `rich.markup.escape` or pass `markup=False`; otherwise text
