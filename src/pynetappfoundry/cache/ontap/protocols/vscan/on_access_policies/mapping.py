@@ -11,6 +11,8 @@ ONTAPVSCANONACCESS_MAPPING = TypeMapping(
     model_class=OntapVscanOnAccess,
     api_endpoint="/protocols/vscan/{svm.uuid}/on-access-policies?fields=*",
     api_type="ontap",
+    parent_mapping="OntapVscan",
+    parent_id_field="svm.uuid",
     fields=(
         FieldMapping(
             cache_attr="enabled",

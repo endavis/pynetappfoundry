@@ -391,9 +391,46 @@ envelope and parsed it as one object.
   placeholder with no collection sibling. Measured against the spec it hits 8 endpoints, 6 of them
   already committed (including the `litigations/operations` child), so it belongs with a full
   regeneration. `/protocols/file-security/permissions/{svm.uuid}/{path}` stays committed with two
-  literal placeholders and is unfetchable; it needs its own decision.
+  literal placeholders and is unfetchable; it needs its own decision. **Resolved by #952** (next
+  section). Correction: that mapping has no parent, so it did not request literal placeholders; it
+  requested the stripped `/protocols/file-security/permissions?fields=*`, which has no GET.
 
 Issue: #934
+
+### Unfillable path placeholders (Issue #952)
+
+A parent mapping fills only the first `{placeholder}` of a child's path
+(`build_parameterized_url`), and a mapping with no parent fetches `build_collection_url`, which
+strips every `/{x}` segment. A generated ONTAP endpoint that neither can turn into a real GET was
+committed and could never be fetched. Measured against the spec, 29 committed mappings were in that
+state.
+
+- **Generator rule:** `is_fetchable_endpoint` in `tools/codegen/generators.py` accepts an endpoint
+  with no placeholder, or with a resolvable parent link (`resolve_parent_link`) and exactly one
+  placeholder. `_drop_unfetchable_endpoints` in `tools/codegen/openapi_codegen.py` drops every other
+  ONTAP endpoint after class-name collision resolution and before the `--endpoints` filter, and
+  prints `skipped (unfillable placeholder): <path>`. The rule applies only when `api_type ==
+  "ontap"`.
+- **Filter bug fixed:** `run()` built `parent_field_names` from the filtered endpoint list, so an
+  `--endpoints=` run emitted children with no `parent_mapping`. The parent lookups are now built
+  from the full deduped list before the filter.
+- **Wired by regeneration (9):** the five `/protocols/fpolicy/{svm.uuid}/*` children get
+  `parent_mapping="OntapFpolicy"` and the four `/protocols/vscan/{svm.uuid}/*` children get
+  `parent_mapping="OntapVscan"`, both with `parent_id_field="svm.uuid"`.
+- **Deleted (18):** the mapping and model packages of endpoints that need two placeholders filled,
+  take user input (`{path}`, `{user}`), or have no list endpoint for their id. Among them are
+  `protocols/file_security/permissions`, `protocols/cifs/shares/acls`,
+  `protocols/san/lun_maps/reporting_nodes`, `security/roles/privileges`, the two S3 bucket children,
+  `storage/snaplock/litigations/operations` and `protocols/ndmp/svms/passwords`. ACLs, reporting
+  nodes, privileges and litigation operations remain reachable as nested fields on their parent
+  models. Multi-placeholder parent fill, which would let about 10 of them return, is #955.
+- **Known exceptions (2):** `OntapExportRule`, whose parent `OntapExportPolicy` is rule-shaped with
+  no `id` (#956), and `OntapEmsFilterRuleResponse`, whose parent needs #932.
+- **Guard:** `tests/unit/cache/test_mapping_fetch_url_resolvable.py` checks that every registered
+  ONTAP mapping's fetch URL resolves given its parent, apart from the named exceptions, and that the
+  exception list and the deleted list stay current.
+
+Issue: #952
 
 ## Related Issues
 
@@ -407,6 +444,7 @@ Issue: #934
 - Issue #894: bug: codegen class-name collisions drop model registry mappings
 - Issue #925: bug: codegen models ONTAP single-object responses as their first array property
 - Issue #934: bug: ONTAP item-endpoint mappings with no fetchable parent (snaplock litigations, file_security permissions)
+- Issue #952: bug: generated ONTAP mappings with unfilled path placeholders are unfetchable
 
 ## Related Documentation
 

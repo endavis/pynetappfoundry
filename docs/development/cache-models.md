@@ -551,6 +551,14 @@ This tells the framework: "To call this endpoint, look up each `OntapSvm`
 from the cache, substitute its `uuid` into the `{svm.uuid}` placeholder,
 and make individual API calls."
 
+A parent fills only the **first** placeholder. A mapping with a parent may
+therefore carry exactly one placeholder; a mapping without one may carry at
+most a single trailing item placeholder, which `collection_endpoint` strips.
+The code generator does not emit ONTAP endpoints outside those rules (#952),
+and `tests/unit/cache/test_mapping_fetch_url_resolvable.py` fails if a
+registered mapping's fetch URL cannot be filled. Multi-placeholder parent fill
+is tracked in #955.
+
 ---
 
 ## Auto-Registration and Discovery

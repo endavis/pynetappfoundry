@@ -19,7 +19,6 @@ EXPECTED_COUNTS: dict[str, int] = {
     "OntapAudit": 5,
     "OntapBgpPeerGroup": 2,
     "OntapFcInterface": 2,
-    "OntapFileInfo": 8,
     "OntapIgroup": 6,
     "OntapIpInterface": 2,
     "OntapLun": 12,

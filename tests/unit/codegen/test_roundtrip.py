@@ -98,6 +98,13 @@ ROUNDTRIP_ENDPOINTS = [
         ("storage", "snaplock", "litigations"),
         "litigations",
     ),
+    # Child wired to its parent after the --endpoints filter fix (#952).
+    (
+        "ontap",
+        "/protocols/vscan/{svm.uuid}/scanner-pools",
+        ("protocols", "vscan", "scanner_pools"),
+        "scanner_pools",
+    ),
     ("dii", "/assets/storages", ("assets", "storages"), "storages"),
     ("dii", "/assets/storages/count", ("assets", "storages", "count"), "count"),
     # Colliding class names resolved by ``resolve_class_name_collisions`` (#894).

@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+from collections.abc import Mapping
 from pathlib import Path
 
 from tools.codegen.adapters import ParsedEndpoint, detect_shared_schemas, parse_openapi_spec
@@ -23,7 +24,9 @@ from tools.codegen.generators import (
     _field_to_cache_attr,
     _path_to_class_name,
     _path_to_module_parts,
+    is_fetchable_endpoint,
     resolve_class_name_collisions,
+    resolve_parent_link,
     write_endpoint_files,
 )
 
@@ -112,6 +115,46 @@ def _build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _drop_unfetchable_endpoints(
+    endpoints: list[ParsedEndpoint],
+    api_type: str,
+    schema_lookup: dict[str, str],
+    *,
+    shared_schemas: frozenset[str] | set[str],
+    class_name_overrides: Mapping[tuple[str, ...], str],
+    identifier_map: dict[str, str],
+    parent_field_names: dict[str, set[str]],
+) -> tuple[list[ParsedEndpoint], dict[str, str]]:
+    """Split endpoints into fetchable ones and dropped ones with a reason.
+
+    An endpoint is dropped when the runtime cannot fill every path
+    placeholder: a parent fills only the first one, and a parentless mapping
+    has all of them stripped (#952).
+
+    Returns:
+        ``(kept, dropped)`` where ``dropped`` maps path to reason.
+    """
+    kept: list[ParsedEndpoint] = []
+    dropped: dict[str, str] = {}
+    for ep in endpoints:
+        link = resolve_parent_link(
+            ep,
+            api_type,
+            schema_lookup,
+            shared_schemas=shared_schemas,
+            class_name_overrides=class_name_overrides,
+            identifier_map=identifier_map,
+            parent_field_names=parent_field_names,
+        )
+        if is_fetchable_endpoint(ep, link):
+            kept.append(ep)
+        elif link is None:
+            dropped[ep.path] = "placeholder with no resolvable parent"
+        else:
+            dropped[ep.path] = "more than one placeholder; a parent fills only the first"
+    return kept, dropped
+
+
 def run(
     spec: Path,
     output: Path,
@@ -127,7 +170,9 @@ def run(
         output: Output directory.
         api_type: API type tag.
         overlay_dir: Optional overlay directory.
-        endpoint_filter: Optional list of endpoint paths to generate.
+        endpoint_filter: Optional list of endpoint paths to generate.  Applied
+            after parent linkage and the unfetchable-endpoint drop are decided
+            from the full spec, so a filtered run matches a full run (#952).
         dry_run: If True, print plan without writing.
 
     Returns:
@@ -170,14 +215,6 @@ def run(
     if class_name_overrides:
         print(f"Resolved {len(class_name_overrides)} class name collision(s).")
 
-    if endpoint_filter:
-        endpoints = [e for e in endpoints if e.path in endpoint_filter]
-        print(f"Filtered to {len(endpoints)} endpoints.")
-
-    if not endpoints:
-        print("No endpoints to generate.", file=sys.stderr)
-        return []
-
     # Build schema lookup from the full (pre-dedup) endpoint list so that
     # child endpoints can always resolve their parent's schema name — even
     # when the parent collection endpoint was collapsed by dedup with its
@@ -213,6 +250,30 @@ def run(
         parts = tuple(_path_to_module_parts(ep.path))
         if parts in dedup_module_map and ep.path != dedup_module_map[parts]:
             parent_field_names[ep.path] = parent_field_names[dedup_module_map[parts]]
+
+    # Drop ONTAP endpoints the runtime cannot fetch (#952).  Decided from the
+    # full deduped list so the outcome does not depend on ``endpoint_filter``.
+    if api_type == "ontap":
+        endpoints, dropped = _drop_unfetchable_endpoints(
+            endpoints,
+            api_type,
+            schema_lookup,
+            shared_schemas=shared_schemas,
+            class_name_overrides=class_name_overrides,
+            identifier_map=identifier_map,
+            parent_field_names=parent_field_names,
+        )
+        for path, reason in dropped.items():
+            if not endpoint_filter or path in endpoint_filter:
+                print(f"  skipped (unfillable placeholder): {path} ({reason})")
+
+    if endpoint_filter:
+        endpoints = [e for e in endpoints if e.path in endpoint_filter]
+        print(f"Filtered to {len(endpoints)} endpoints.")
+
+    if not endpoints:
+        print("No endpoints to generate.", file=sys.stderr)
+        return []
 
     del full_spec_endpoints
 

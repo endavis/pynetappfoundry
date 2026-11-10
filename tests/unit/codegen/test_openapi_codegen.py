@@ -2,8 +2,13 @@
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
+import pytest
+
 from tools.codegen.adapters import ParsedEndpoint, ParsedField
-from tools.codegen.openapi_codegen import _deduplicate_endpoints
+from tools.codegen.openapi_codegen import _deduplicate_endpoints, run
 
 
 def _make_ep(path: str, field_count: int) -> ParsedEndpoint:
@@ -105,3 +110,94 @@ class TestDeduplicateEndpoints:
         assert len(result) == 1
         # Instance has 4 leaves vs collection's 3 leaves
         assert result[0].path == "/storage/volumes/{uuid}"
+
+
+def _get(schema: dict, *, envelope: bool) -> dict:
+    body: dict = (
+        {
+            "type": "object",
+            "properties": {"records": {"type": "array", "items": schema}},
+        }
+        if envelope
+        else schema
+    )
+    return {"get": {"responses": {"200": {"content": {"application/json": {"schema": body}}}}}}
+
+
+def _synthetic_spec(tmp_path: Path) -> Path:
+    thing = {
+        "type": "object",
+        "properties": {"uuid": {"type": "string"}, "name": {"type": "string"}},
+    }
+    kid = {"type": "object", "properties": {"label": {"type": "string"}}}
+    spec = {
+        "openapi": "3.0.0",
+        "info": {"title": "T", "version": "1"},
+        "paths": {
+            "/things": _get(thing, envelope=True),
+            "/things/{uuid}": _get(thing, envelope=False),
+            "/things/{uuid}/kids": _get(kid, envelope=True),
+            "/a/{x}/b/{y}/c": _get(kid, envelope=True),
+            "/n/{svm.uuid}": _get(kid, envelope=False),
+        },
+        "components": {"schemas": {}},
+    }
+    path = tmp_path / "spec.json"
+    path.write_text(json.dumps(spec))
+    return path
+
+
+def _mapping_sources(written: list[Path]) -> dict[str, str]:
+    return {str(p): p.read_text() for p in written if p.name == "mapping.py"}
+
+
+class TestRunFilterAndDrop:
+    def test_filtered_child_keeps_parent_mapping(self, tmp_path: Path) -> None:
+        """#952: --endpoints must not hide the parent from a child."""
+        written = run(
+            spec=_synthetic_spec(tmp_path),
+            output=tmp_path / "out",
+            api_type="ontap",
+            endpoint_filter=["/things/{uuid}/kids"],
+        )
+        sources = _mapping_sources(written)
+        assert len(sources) == 1
+        (source,) = sources.values()
+        assert 'parent_mapping="OntapThing"' in source
+
+    def test_drops_unfetchable_ontap_endpoints(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        written = run(
+            spec=_synthetic_spec(tmp_path),
+            output=tmp_path / "out",
+            api_type="ontap",
+        )
+        out = capsys.readouterr().out
+        assert "skipped (unfillable placeholder): /a/{x}/b/{y}/c" in out
+        assert "skipped (unfillable placeholder): /n/{svm.uuid}" in out
+        joined = " ".join(str(p) for p in written)
+        assert "/a/" not in joined
+        assert "/n/" not in joined
+        assert any("/things/" in str(p) for p in written)
+
+    def test_filtering_on_dropped_endpoint_returns_nothing(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        written = run(
+            spec=_synthetic_spec(tmp_path),
+            output=tmp_path / "out",
+            api_type="ontap",
+            endpoint_filter=["/a/{x}/b/{y}/c"],
+        )
+        assert written == []
+        assert "skipped (unfillable placeholder): /a/{x}/b/{y}/c" in capsys.readouterr().out
+
+    def test_non_ontap_does_not_drop(self, tmp_path: Path) -> None:
+        written = run(
+            spec=_synthetic_spec(tmp_path),
+            output=tmp_path / "out",
+            api_type="dii",
+            endpoint_filter=["/n/{svm.uuid}"],
+        )
+        assert written != []
