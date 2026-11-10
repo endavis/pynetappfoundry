@@ -88,23 +88,31 @@ def print_info(message: str) -> None:
     logger.info(message)
 
 
-def print_exception(message: str, exc: BaseException | None = None) -> None:
+def print_exception(
+    message: str,
+    exc: BaseException | None = None,
+    *,
+    debug: bool | None = None,
+) -> None:
     """Print an error message with optional traceback in debug mode.
 
-    Also logs to file - uses exception logging if exc is provided, otherwise error.
+    Also logs to file - with the exception's traceback if exc is provided.
 
     Args:
         message: Error message to print.
         exc: Exception to include. If provided and debug mode is enabled,
              the full traceback will be printed to console. If provided,
-             logger.exception is used for full traceback in log file.
+             the traceback is also recorded in the log file.
+        debug: Whether to print the traceback. ``None`` (default) reads the
+             current debug mode; pass a value when it was captured earlier.
     """
     console.print(f"[red]{escape(message)}[/red]")
     if exc:
-        logger.exception(message)
+        logger.error(message, exc_info=exc)
     else:
         logger.error(message)
-    if exc and is_debug_mode():
+    show_traceback = is_debug_mode() if debug is None else debug
+    if exc and show_traceback:
         console.print("[dim]" + escape("".join(traceback.format_exception(exc))) + "[/dim]")
 
 

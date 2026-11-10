@@ -692,6 +692,10 @@ New fields will have empty/default values until the cluster is refreshed.
 | 1 | Error, including unexpected errors caught by the top-level handler, `ClickException` and aborted prompts. For `nf cache check` and `nf cache compliance`: matches or violations found |
 | 2 | Usage error (bad option or argument). For `nf cache check` and `nf cache compliance`: an error occurred |
 
+Commands report an error by raising `CliError`, which prints the red message
+and exits with the code above (1 by default, 2 for the grep-style commands).
+See [ADR-0022](../decisions/0022-one-cli-error-exit-convention-raise-clierror.md).
+
 ## Error Handling
 
 `nf` wraps every command in a top-level handler. An exception a command does not

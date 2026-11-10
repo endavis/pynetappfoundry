@@ -26,8 +26,9 @@ from rich.table import Table
 
 from pynetappfoundry.cache import ClusterMetadataDB
 from pynetappfoundry.cache.query_engine import parse_filter
+from pynetappfoundry.cli.errors import CliError
 from pynetappfoundry.cli.options import all_option, csv_option, filter_option, json_option
-from pynetappfoundry.cli.utils import print_error, print_exception, print_warning
+from pynetappfoundry.cli.utils import print_warning
 from pynetappfoundry.core.config import Config
 from pynetappfoundry.data._routing import SourceMode
 from pynetappfoundry.data.source import DataSource
@@ -321,16 +322,15 @@ def check(
     # Check if config directory exists
     config_path = Path.cwd() / config_dir
     if not config_path.exists():
-        print_error(f"Configuration directory not found: {config_path}")
-        ctx.exit(2)
+        raise CliError(f"Configuration directory not found: {config_path}", exit_code=2)
 
     # --live and --where are mutually exclusive
     if live and where_exprs:
-        print_error(
+        raise CliError(
             "--live and --where cannot be used together. "
-            "SQL-like filter expressions are only supported on cached data."
+            "SQL-like filter expressions are only supported on cached data.",
+            exit_code=2,
         )
-        ctx.exit(2)
 
     # When --all or --filter is used, Click parses the first positional arg
     # as 'cluster'. Treat it as the MODEL in that case.
@@ -347,23 +347,19 @@ def check(
             effective_model = cluster
             effective_cluster = None
         else:
-            print_error("Must specify MODEL argument")
-            ctx.exit(2)
+            raise CliError("Must specify MODEL argument", exit_code=2)
     else:
         if not cluster:
-            print_error("Must specify CLUSTER, --all, or --filter/-f")
-            ctx.exit(2)
+            raise CliError("Must specify CLUSTER, --all, or --filter/-f", exit_code=2)
         if not model:
-            print_error("Must specify MODEL argument")
-            ctx.exit(2)
+            raise CliError("Must specify MODEL argument", exit_code=2)
         effective_model = model
         effective_cluster = cluster
 
     try:
         config = Config(config_dir=config_dir, script_name="cache-check")
     except Exception as e:
-        print_exception(f"Failed to load configuration: {e}", e)
-        ctx.exit(2)
+        raise CliError(f"Failed to load configuration: {e}", exit_code=2, exc=e) from e
 
     db = ClusterMetadataDB(config=config)
 
@@ -382,9 +378,8 @@ def check(
         try:
             filter_dict = json.loads(filter_str)
         except json.JSONDecodeError as e:
-            print_error(f"Invalid filter JSON: {e}")
             db.close()
-            ctx.exit(2)
+            raise CliError(f"Invalid filter JSON: {e}", exit_code=2) from e
 
         filtered = config.get_clusters(filter_dict)
         if not filtered:
@@ -402,9 +397,8 @@ def check(
     try:
         model_class = _resolve_model_class(effective_model)
     except ValueError as e:
-        print_error(str(e))
         db.close()
-        ctx.exit(2)
+        raise CliError(str(e), exit_code=2) from e
 
     # Build DataSource for query routing
     source: SourceMode = "live" if live else "cache"
@@ -422,9 +416,8 @@ def check(
             results = list(builder)
         except ValueError as e:
             error_msg = str(e)
-            print_error(error_msg)
             db.close()
-            ctx.exit(2)
+            raise CliError(error_msg, exit_code=2) from e
 
         if not results:
             continue

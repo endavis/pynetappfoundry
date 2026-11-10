@@ -10,7 +10,8 @@ from rich.markup import escape
 from rich.table import Table
 
 from pynetappfoundry.cache import ClusterMetadataDB
-from pynetappfoundry.cli.utils import print_error, print_exception, print_warning
+from pynetappfoundry.cli.errors import CliError
+from pynetappfoundry.cli.utils import print_warning
 from pynetappfoundry.core.config import Config
 
 console = Console()
@@ -41,14 +42,12 @@ def status(ctx: click.Context, ttl: int) -> None:
     # Check if config directory exists
     config_path = Path.cwd() / config_dir
     if not config_path.exists():
-        print_error(f"Configuration directory not found: {config_path}")
-        ctx.exit(1)
+        raise CliError(f"Configuration directory not found: {config_path}")
 
     try:
         config = Config(config_dir=config_dir, script_name="cache-status")
     except Exception as e:
-        print_exception(f"Failed to load configuration: {e}", e)
-        ctx.exit(1)
+        raise CliError(f"Failed to load configuration: {e}", exc=e) from e
 
     db = ClusterMetadataDB(config=config)
 
