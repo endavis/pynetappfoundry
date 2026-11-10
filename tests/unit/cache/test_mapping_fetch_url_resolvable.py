@@ -29,7 +29,6 @@ _PLACEHOLDER = re.compile(r"\{[^}]+\}")
 
 # Mappings known to be unfetchable, each with the issue that resolves it.
 _KNOWN_UNRESOLVABLE: dict[str, str] = {
-    "OntapExportRule": "#956",
     "OntapEmsFilterRuleResponse": "#932",
 }
 
@@ -143,6 +142,14 @@ class TestRegisteredMappingsAreFetchable:
         assert mapping is not None
         assert mapping.parent_mapping == parent
         assert mapping.parent_id_field == "svm.uuid"
+
+    def test_export_rule_wired_to_export_policy(self) -> None:
+        mapping = model_registry.get_mapping("OntapExportRule")
+        assert mapping is not None
+        assert mapping.parent_mapping == "OntapExportPolicy"
+        assert mapping.parent_id_field == "id"
+        url = mapping.build_parameterized_url("42")
+        assert url == "/protocols/nfs/export-policies/42/rules?fields=*"
 
 
 def _synthetic(endpoint: str, parent: str | None) -> TypeMapping:

@@ -67,6 +67,7 @@ Scope: this ADR covers the on-disk SQLite schema version (`SCHEMA_VERSION` in `s
 - Issue #444: refactor: nested-model layout for cached ONTAP models (v3 → v4 destructive precedent)
 - Issue #111: feat: add base SQLiteDB class with version-based migrations (the migration mechanism)
 - Issue #32: feat: add cluster metadata cache for ONTAP clusters (the original cache decision)
+- Issue #956: bug: OntapExportPolicy reshaped to a policy record (v8 → v9 drop-and-recreate precedent)
 
 ## Related Documentation
 

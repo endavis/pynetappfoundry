@@ -1,37 +1,33 @@
+_removed_fields = [
+    "allow_device_creation",
+    "allow_suid",
+    "anonymous_user",
+    "chown_mode",
+    "clients",
+    "index",
+    "ntfs_unix_security",
+    "protocols",
+    "ro_rule",
+    "rw_rule",
+    "superuser",
+]
+
 [endpoint]
-path = "/protocols/nfs/export-policies/{id}"
+path = "/protocols/nfs/export-policies"
 schema = "export_policy"
 class_name = "OntapExportPolicy"
 
-[fields.allow_device_creation]
+[fields.id]
 cache_strategy = "cache"
 
-[fields.allow_suid]
+[fields.name]
 cache_strategy = "cache"
 
-[fields.anonymous_user]
+[fields.rules]
 cache_strategy = "cache"
 
-[fields.chown_mode]
+[fields."svm.name"]
 cache_strategy = "cache"
 
-[fields.clients]
-cache_strategy = "cache"
-
-[fields.index]
-cache_strategy = "cache"
-
-[fields.ntfs_unix_security]
-cache_strategy = "cache"
-
-[fields.protocols]
-cache_strategy = "cache"
-
-[fields.ro_rule]
-cache_strategy = "cache"
-
-[fields.rw_rule]
-cache_strategy = "cache"
-
-[fields.superuser]
+[fields."svm.uuid"]
 cache_strategy = "cache"

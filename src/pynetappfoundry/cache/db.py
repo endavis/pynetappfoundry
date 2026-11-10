@@ -279,7 +279,7 @@ class ClusterMetadataDB(SQLiteDB):
     for data safety and isolation.
     """
 
-    SCHEMA_VERSION: ClassVar[int] = 8
+    SCHEMA_VERSION: ClassVar[int] = 9
     TABLE_NAME: ClassVar[str] = "cluster_metadata"
 
     def __init__(
@@ -491,6 +491,28 @@ class ClusterMetadataDB(SQLiteDB):
             self.conn.execute('ALTER TABLE consoleinfo ADD COLUMN "folder" TEXT')
         if "project" not in existing_cols:
             self.conn.execute('ALTER TABLE consoleinfo ADD COLUMN "project" TEXT')
+
+    # ------------------------------------------------------------------
+    # Migration v8 → v9
+    # ------------------------------------------------------------------
+
+    def _upgrade_to_v9(self) -> None:
+        """Reshape the ontapexportpolicy table from rule-shaped to policy-shaped (#956).
+
+        v9 turns ``OntapExportPolicy`` into a policy record (``id``, ``name``,
+        ``svm``, ``rules``) instead of a rule.  Removed columns need a drop and
+        recreate (ADR-0018), and the envelope is cleared so callers refetch.
+        Idempotent: a no-op when the ``id`` column is already present.
+        """
+        cursor = self.conn.execute("PRAGMA table_info(ontapexportpolicy)")
+        existing_cols = {row[1] for row in cursor.fetchall()}
+        if "id" in existing_cols:
+            return
+        spec = next(s for s in self._registry.values() if s.table_name == "ontapexportpolicy")
+        self.conn.execute("DROP TABLE IF EXISTS ontapexportpolicy")
+        self.conn.execute(generate_table_ddl(spec.table_name, spec.model_class))
+        self.conn.execute(generate_cluster_name_index_ddl(spec.table_name))
+        self.conn.execute("DELETE FROM cluster_metadata")
 
     # ------------------------------------------------------------------
     # Internal: decompose metadata into tables

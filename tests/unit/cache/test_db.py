@@ -1256,6 +1256,120 @@ class TestClusterMetadataDBMigrationV3:
         assert names.count("project") == 1
         db.close()
 
+    @staticmethod
+    def _create_v8_db(db_path: Path) -> None:
+        """Create a v8 database: rule-shaped ontapexportpolicy table and one envelope row."""
+        from pynetappfoundry.cache.db_schema import (
+            _ensure_registry,
+            generate_cluster_name_index_ddl,
+            generate_table_ddl,
+            generate_uuid_column_index_ddl,
+        )
+
+        conn = sqlite3.connect(db_path)
+        conn.execute(
+            "CREATE TABLE cluster_metadata ("
+            "    cluster_name TEXT PRIMARY KEY,"
+            "    cached_at TEXT NOT NULL,"
+            "    cache_version TEXT NOT NULL"
+            ")"
+        )
+        conn.execute("CREATE TABLE _schema_version (version INTEGER NOT NULL)")
+        conn.execute("INSERT INTO _schema_version (version) VALUES (8)")
+        for spec in _ensure_registry().values():
+            if spec.table_name == "ontapexportpolicy":
+                continue
+            conn.execute(generate_table_ddl(spec.table_name, spec.model_class))
+            conn.execute(generate_cluster_name_index_ddl(spec.table_name))
+            if spec.has_uuid:
+                conn.execute(generate_uuid_column_index_ddl(spec.table_name))
+        conn.execute(
+            "CREATE TABLE ontapexportpolicy ("
+            "    cluster_name TEXT NOT NULL,"
+            "    _row_id INTEGER PRIMARY KEY AUTOINCREMENT,"
+            '    "index" INTEGER, "clients" TEXT, "ro_rule" TEXT, "rw_rule" TEXT,'
+            "    _extra_json TEXT DEFAULT NULL"
+            ")"
+        )
+        conn.execute(generate_cluster_name_index_ddl("ontapexportpolicy"))
+        conn.execute("INSERT INTO ontapexportpolicy (cluster_name, \"index\") VALUES ('c', 0)")
+        conn.execute(
+            "INSERT INTO cluster_metadata (cluster_name, cached_at, cache_version) "
+            "VALUES ('c', '2026-01-01T00:00:00+00:00', '2.1')"
+        )
+        conn.commit()
+        conn.close()
+
+    def test_upgrade_v8_to_v9_reshapes_export_policy_table(self, tmp_path: Path) -> None:
+        """v8→v9 replaces the rule-shaped table with the policy shape and clears the envelope."""
+        db_path = tmp_path / "v8.db"
+        self._create_v8_db(db_path)
+
+        db = ClusterMetadataDB(db_path=db_path)
+
+        cursor = db.conn.execute("SELECT version FROM _schema_version")
+        assert cursor.fetchone()[0] == ClusterMetadataDB.SCHEMA_VERSION
+        columns = {row[1] for row in db.conn.execute("PRAGMA table_info(ontapexportpolicy)")}
+        assert {"id", "name", "rules", "svm"} <= columns
+        assert not columns & {"index", "clients", "ro_rule"}
+        assert db.conn.execute("SELECT count(*) FROM cluster_metadata").fetchone()[0] == 0
+        assert db.conn.execute("SELECT count(*) FROM ontapexportpolicy").fetchone()[0] == 0
+        db.close()
+
+    def test_upgrade_v8_to_v9_then_round_trips_export_policy(self, tmp_path: Path) -> None:
+        """A migrated v8 database stores and returns a reshaped export policy."""
+        from pynetappfoundry.models.ontap.protocols.model import ProtocolsInfo
+        from pynetappfoundry.models.ontap.protocols.nfs.export_policies.model import (
+            OntapExportPolicy,
+            OntapExportPolicyRule,
+        )
+
+        db_path = tmp_path / "v8.db"
+        self._create_v8_db(db_path)
+        policy = OntapExportPolicy.model_validate(
+            {
+                "id": 42,
+                "name": "default",
+                "svm": {"name": "svm1", "uuid": "u"},
+                "rules": [OntapExportPolicyRule(index=1, ro_rule=["any"])],
+            }
+        )
+
+        db = ClusterMetadataDB(db_path=db_path)
+        db.set(
+            "c",
+            CachedClusterMetadata(
+                cluster_name="c", protocols=ProtocolsInfo(nfs_export_policies=[policy])
+            ),
+        )
+        loaded = db.get("c")
+        db.close()
+
+        assert loaded is not None
+        assert loaded.protocols.nfs_export_policies == [policy]
+
+    def test_upgrade_to_v9_is_idempotent(self, tmp_path: Path) -> None:
+        """Running the v9 step on a current database changes nothing, envelope included."""
+        db = ClusterMetadataDB(db_path=tmp_path / "current.db")
+        db.conn.execute(
+            "INSERT INTO cluster_metadata (cluster_name, cached_at, cache_version) "
+            "VALUES ('c', '2026-01-01T00:00:00+00:00', '2.1')"
+        )
+
+        db._upgrade_to_v9()
+
+        columns = [row[1] for row in db.conn.execute("PRAGMA table_info(ontapexportpolicy)")]
+        assert {"id", "name", "rules", "svm"} <= set(columns)
+        assert db.conn.execute("SELECT count(*) FROM cluster_metadata").fetchone()[0] == 1
+        db.close()
+
+    def test_fresh_db_has_policy_shaped_export_policy_table(self, tmp_path: Path) -> None:
+        db = ClusterMetadataDB(db_path=tmp_path / "fresh.db")
+        columns = {row[1] for row in db.conn.execute("PRAGMA table_info(ontapexportpolicy)")}
+        assert {"id", "name", "rules", "svm"} <= columns
+        assert "index" not in columns
+        db.close()
+
 
 class TestClusterMetadataDBInitialization:
     """Tests for database initialization options."""

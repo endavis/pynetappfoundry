@@ -165,7 +165,7 @@ _DIFF_OVERRIDES: dict[type[CacheModel], tuple[str, str]] = {
     CloudMetadata: ("node", "node"),
     OntapDns: ("uuid", "{svm.uuid}"),
     OntapQtree: ("name", "name"),
-    OntapExportPolicy: ("index", "index"),
+    OntapExportPolicy: ("id", "{svm.name}/{name}"),
     OntapCifsShare: ("name", "name"),
     OntapNfsService: ("svm.name", "{svm.name}"),
     OntapCifsService: ("svm.name", "{svm.name}"),

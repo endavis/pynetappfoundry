@@ -424,13 +424,36 @@ state.
   `storage/snaplock/litigations/operations` and `protocols/ndmp/svms/passwords`. ACLs, reporting
   nodes, privileges and litigation operations remain reachable as nested fields on their parent
   models. Multi-placeholder parent fill, which would let about 10 of them return, is #955.
-- **Known exceptions (2):** `OntapExportRule`, whose parent `OntapExportPolicy` is rule-shaped with
-  no `id` (#956), and `OntapEmsFilterRuleResponse`, whose parent needs #932.
+- **Known exceptions (1):** `OntapEmsFilterRuleResponse`, whose parent needs #932. The other,
+  `OntapExportRule`, whose parent `OntapExportPolicy` was rule-shaped with no `id`, is resolved by
+  #956 (next section).
 - **Guard:** `tests/unit/cache/test_mapping_fetch_url_resolvable.py` checks that every registered
   ONTAP mapping's fetch URL resolves given its parent, apart from the named exceptions, and that the
   exception list and the deleted list stay current.
 
 Issue: #952
+
+### Export policy reshaped (Issue #956)
+
+`/protocols/nfs/export-policies` returns policy records (`id`, `name`, `svm`, `rules[]`), but
+`OntapExportPolicy` was generated rule-shaped, so every cached row held only defaults and the diff
+override keyed on `index` collapsed every policy to key `0`. Regenerating the two export-policy
+endpoints fixes it.
+
+- **Model:** `OntapExportPolicy{id, name, svm, rules: list[OntapExportPolicyRule]}` with
+  `identifier_field="id"`. The former top-level rule fields moved into `OntapExportPolicyRule`, and
+  `OntapExportPolicyClient` became `OntapExportPolicyRuleClient`. Query and compliance paths change
+  from `protocols.nfs_export_policies.<rule-field>` to
+  `protocols.nfs_export_policies.rules[].<rule-field>`. **BREAKING.**
+- **Child wiring:** `OntapExportRule` gains `parent_mapping="OntapExportPolicy"` and
+  `parent_id_field="id"`; it stays live-only with no table. It is removed from the #952 known
+  exceptions in the guard test.
+- **Diff:** the override is `("id", "{svm.name}/{name}")`.
+- **Cache:** `SCHEMA_VERSION` 8 to 9; `_upgrade_to_v9` drops and recreates `ontapexportpolicy` and
+  clears the envelope (ADR-0018). Run `nf cache refresh` afterwards. `METADATA_SCHEMA_VERSION`
+  stays `"2.1"`, so old snapshots still load and the first diff reports the policies as added once.
+
+Issue: #956
 
 ## Related Issues
 
@@ -445,6 +468,7 @@ Issue: #952
 - Issue #925: bug: codegen models ONTAP single-object responses as their first array property
 - Issue #934: bug: ONTAP item-endpoint mappings with no fetchable parent (snaplock litigations, file_security permissions)
 - Issue #952: bug: generated ONTAP mappings with unfilled path placeholders are unfetchable
+- Issue #956: bug: OntapExportPolicy model is rule-shaped with no id, so OntapExportRule cannot be wired as its child
 
 ## Related Documentation
 

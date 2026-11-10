@@ -8,13 +8,13 @@ from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.protocols.nfs.export_policies.model import (
     OntapExportPolicy,
-    OntapExportPolicyClient,
+    OntapExportPolicyRule,
 )
 
 
-def _transform_clients(record: dict[str, Any]) -> list[OntapExportPolicyClient]:
-    """Transform clients into OntapExportPolicyClient list."""
-    return [OntapExportPolicyClient(**item) for item in record.get("clients", [])]
+def _transform_rules(record: dict[str, Any]) -> list[OntapExportPolicyRule]:
+    """Transform rules into OntapExportPolicyRule list."""
+    return [OntapExportPolicyRule(**item) for item in record.get("rules", [])]
 
 
 ONTAPEXPORTPOLICY_MAPPING = TypeMapping(
@@ -22,48 +22,25 @@ ONTAPEXPORTPOLICY_MAPPING = TypeMapping(
     model_class=OntapExportPolicy,
     api_endpoint="/protocols/nfs/export-policies?fields=*",
     api_type="ontap",
+    identifier_field="id",
     fields=(
         FieldMapping(
-            cache_attr="allow_device_creation",
-            default=False,
-        ),
-        FieldMapping(
-            cache_attr="allow_suid",
-            default=False,
-        ),
-        FieldMapping(
-            cache_attr="anonymous_user",
-        ),
-        FieldMapping(
-            cache_attr="chown_mode",
-        ),
-        FieldMapping(
-            cache_attr="clients",
-            transform=_transform_clients,
-            default=[],
-        ),
-        FieldMapping(
-            cache_attr="index",
+            cache_attr="id",
             default=0,
         ),
         FieldMapping(
-            cache_attr="ntfs_unix_security",
+            cache_attr="name",
         ),
         FieldMapping(
-            cache_attr="protocols",
+            cache_attr="rules",
+            transform=_transform_rules,
             default=[],
         ),
         FieldMapping(
-            cache_attr="ro_rule",
-            default=[],
+            cache_attr="svm.name",
         ),
         FieldMapping(
-            cache_attr="rw_rule",
-            default=[],
-        ),
-        FieldMapping(
-            cache_attr="superuser",
-            default=[],
+            cache_attr="svm.uuid",
         ),
     ),
 )
