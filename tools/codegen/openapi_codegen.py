@@ -32,10 +32,10 @@ def _deduplicate_endpoints(endpoints: list[ParsedEndpoint]) -> list[ParsedEndpoi
     """Deduplicate endpoints that resolve to the same module path.
 
     When ``/storage/volumes`` and ``/storage/volumes/{uuid}`` both map to
-    module path ``["storage", "volumes"]``, keep the endpoint with the
-    most leaf fields (the richer schema).  On equal leaf counts an envelope
-    endpoint beats a singleton one (#925), so a collection URL is not replaced
-    by its single-object item endpoint.
+    module path ``["storage", "volumes"]``, an envelope endpoint beats a
+    singleton one (#925, #934), so a collection URL is never replaced by its
+    single-object item endpoint.  Within the same shape the endpoint with the
+    most leaf fields (the richer schema) wins.
 
     Args:
         endpoints: List of parsed endpoints.
@@ -59,10 +59,11 @@ def _deduplicate_endpoints(endpoints: list[ParsedEndpoint]) -> list[ParsedEndpoi
         if len(candidates) == 1:
             result.append(candidates[0])
         else:
-            # Most leaf fields wins; ties favour the envelope (#925)
+            # Shape ranks first (envelope beats singleton, #925/#934); the
+            # most leaf fields decides within a shape.
             best = max(
                 candidates,
-                key=lambda e: (len(_collect_all_leaves(e.fields)), e.response_shape != "singleton"),
+                key=lambda e: (e.response_shape != "singleton", len(_collect_all_leaves(e.fields))),
             )
             result.append(best)
     return result
@@ -142,8 +143,8 @@ def run(
 
     # Deduplicate endpoints that resolve to the same module path FIRST.
     # e.g. /storage/volumes and /storage/volumes/{uuid} both map to
-    # storage/volumes — keep the one with the most leaf fields (ties favour
-    # the envelope over a singleton, #925).  ONTAP
+    # storage/volumes — an envelope beats a singleton (#925, #934); the most
+    # leaf fields decides within a shape.  ONTAP
     # collection+item pairs both reference the same schema, but since
     # only one survives dedup the schema isn't actually shared across
     # distinct module paths.  Detecting shared schemas BEFORE dedup

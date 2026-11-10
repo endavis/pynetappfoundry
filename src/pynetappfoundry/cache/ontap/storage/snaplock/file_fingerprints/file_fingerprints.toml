@@ -1,33 +1,20 @@
+_removed_fields = [
+    "algorithm",
+    "data_fingerprint",
+    "file_size",
+    "file_type",
+    "metadata_fingerprint",
+    "path",
+    "scope",
+    "state",
+]
+
 [endpoint]
-path = "/storage/snaplock/file-fingerprints/{id}"
-schema = "snaplock_file_fingerprint"
+path = "/storage/snaplock/file-fingerprints"
+schema = "snaplock_file_fingerprint_get"
 class_name = "OntapSnaplockFileFingerprint"
 
-[fields.algorithm]
-cache_strategy = "cache"
-
-[fields.data_fingerprint]
-cache_strategy = "cache"
-
-[fields.file_size]
-cache_strategy = "cache"
-
-[fields.file_type]
-cache_strategy = "cache"
-
 [fields.id]
-cache_strategy = "cache"
-
-[fields.metadata_fingerprint]
-cache_strategy = "cache"
-
-[fields.path]
-cache_strategy = "cache"
-
-[fields.scope]
-cache_strategy = "cache"
-
-[fields.state]
 cache_strategy = "cache"
 
 [fields."svm.name"]

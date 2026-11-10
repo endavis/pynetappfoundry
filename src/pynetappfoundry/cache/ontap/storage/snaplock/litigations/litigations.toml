@@ -1,15 +1,10 @@
 _removed_fields = [
-    "num_files_failed",
-    "num_files_processed",
-    "num_files_skipped",
-    "num_inodes_ignored",
-    "state",
-    "type_",
+    "path",
 ]
 
 [endpoint]
-path = "/storage/snaplock/litigations/{id}"
-schema = "snaplock_litigation"
+path = "/storage/snaplock/litigations"
+schema = "snaplock_litigation_get"
 class_name = "OntapSnaplockLitigation"
 
 [fields.id]
@@ -19,9 +14,6 @@ cache_strategy = "cache"
 cache_strategy = "cache"
 
 [fields.operations]
-cache_strategy = "cache"
-
-[fields.path]
 cache_strategy = "cache"
 
 [fields."svm.name"]

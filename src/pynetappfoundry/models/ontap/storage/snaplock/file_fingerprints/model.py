@@ -24,15 +24,7 @@ class OntapSnaplockFileFingerprintVolume(OntapModel):
 class OntapSnaplockFileFingerprint(OntapModel):
     """OntapSnaplockFileFingerprint information."""
 
-    algorithm: str = ""
-    data_fingerprint: str = ""
-    file_size: int = 0
-    file_type: str = ""
     id: int = 0
-    metadata_fingerprint: str = ""
-    path: str = ""
-    scope: str = ""
-    state: str = ""
     svm: OntapSnaplockFileFingerprintSvm = Field(default_factory=OntapSnaplockFileFingerprintSvm)
     volume: OntapSnaplockFileFingerprintVolume = Field(
         default_factory=OntapSnaplockFileFingerprintVolume
