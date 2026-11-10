@@ -1,8 +1,8 @@
 """TOML overlay loader for cache field strategies.
 
-Reads package-default TOML overlay files that define per-field
-``cache_strategy`` and ``requires_explicit_fetch`` values, optionally
-merges user overrides, and applies the merged configuration to
+Reads package-default TOML overlay files from every API tree under ``cache/``
+that define per-field ``cache_strategy`` and ``requires_explicit_fetch``
+values, optionally merges user overrides, and applies the merged configuration to
 registered ``TypeMapping`` instances in the model registry.
 """
 
@@ -19,7 +19,9 @@ from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 
 logger = logging.getLogger(__name__)
 
-_PACKAGE_OVERLAY_ROOT = Path(__file__).parent / "ontap"
+# The base is ``cache/`` (not ``cache/ontap``) so overlays under every API tree, ``ontap/`` and
+# ``dii/``, are discovered and indexed with paths relative to this directory (#959).
+_PACKAGE_OVERLAY_ROOT = Path(__file__).parent
 
 
 def discover_toml_overlays(root: Path) -> dict[str, Path]:
@@ -150,7 +152,8 @@ def apply_package_overlay(mapping: TypeMapping, rel_path: str) -> TypeMapping:
     Args:
         mapping: The original type mapping.
         rel_path: Overlay file path relative to the package overlay root
-            (``cache/ontap``), as recorded in the generated mapping index.
+            (``cache/``, e.g. ``dii/queries/queries.toml``), as recorded in the
+            generated mapping index.
 
     Returns:
         New ``TypeMapping`` with the overlay's field strategies applied.
@@ -168,8 +171,8 @@ def load_overlays(
 ) -> int:
     """Load TOML overlays and apply field strategies to registry mappings.
 
-    Discovers package-default overlays under the built-in ``ontap/``
-    tree, optionally discovers user overrides, merges them, and updates
+    Discovers package-default overlays under every built-in API tree
+    (``ontap/`` and ``dii/``), optionally discovers user overrides, merges them, and updates
     each matching ``TypeMapping`` in *registry*.
 
     Args:

@@ -51,7 +51,7 @@ class MappingIndexEntry(NamedTuple):
     model_qualname: str
     """``__qualname__`` of the mapping's ``model_class``."""
     overlay: str | None
-    """Package TOML overlay path relative to ``cache/ontap``, or ``None``."""
+    """Package TOML overlay path relative to ``cache/``, or ``None``."""
 
 
 def _ensure_bootstrapped() -> None:
