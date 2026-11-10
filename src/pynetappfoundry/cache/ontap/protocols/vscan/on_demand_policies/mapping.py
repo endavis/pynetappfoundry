@@ -11,6 +11,8 @@ ONTAPVSCANONDEMAND_MAPPING = TypeMapping(
     model_class=OntapVscanOnDemand,
     api_endpoint="/protocols/vscan/{svm.uuid}/on-demand-policies?fields=*",
     api_type="ontap",
+    parent_mapping="OntapVscan",
+    parent_id_field="svm.uuid",
     fields=(
         FieldMapping(
             cache_attr="log_path",

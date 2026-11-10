@@ -334,7 +334,6 @@ class TestSnaplockCollectionMappings:
     @pytest.mark.parametrize(
         "model_path",
         [
-            ("operations", "OntapSnaplockLegalHoldOperation"),
             ("files", "OntapSnaplockLitigationFileResponse"),
         ],
     )

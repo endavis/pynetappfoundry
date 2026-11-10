@@ -19,11 +19,14 @@ from tools.codegen.generators import (
     _schema_to_pascal,
     _singularize,
     _sub_model_name,
+    count_path_placeholders,
     generate_init,
     generate_mapping,
     generate_model,
     generate_toml_overlay,
+    is_fetchable_endpoint,
     resolve_class_name_collisions,
+    resolve_parent_link,
     write_endpoint_files,
 )
 
@@ -1425,3 +1428,60 @@ class TestClassNameOverridesThreading:
             class_name_overrides=_AU_OVERRIDES,
         )
         assert 'parent_mapping="DiiAuAcquisitionUnit"' in code
+
+
+class TestPlaceholderFetchability:
+    """#952: the runtime fills one placeholder with a parent, none without."""
+
+    @pytest.mark.parametrize(
+        ("path", "count"),
+        [
+            ("/storage/volumes", 0),
+            ("/svm/svms/{svm.uuid}/web", 1),
+            ("/a/{x}/b/{y}/c", 2),
+        ],
+    )
+    def test_count_path_placeholders(self, path: str, count: int) -> None:
+        assert count_path_placeholders(path) == count
+
+    def test_no_placeholder_is_fetchable(self) -> None:
+        assert is_fetchable_endpoint(_make_endpoint(path="/storage/volumes"), None)
+
+    def test_one_placeholder_needs_a_parent(self) -> None:
+        ep = _make_endpoint(path="/svm/svms/{svm.uuid}/web")
+        assert not is_fetchable_endpoint(ep, None)
+        assert is_fetchable_endpoint(ep, ("OntapSvm", "uuid"))
+
+    def test_two_placeholders_unfetchable_even_with_parent(self) -> None:
+        ep = _make_endpoint(path="/a/{x}/b/{y}/c")
+        assert not is_fetchable_endpoint(ep, ("OntapA", "uuid"))
+
+
+class TestResolveParentLink:
+    def _child(self) -> ParsedEndpoint:
+        return _make_endpoint(
+            path="/svm/svms/{svm.uuid}/web",
+            has_parent=True,
+            parent_path="/svm/svms",
+            schema_name="web",
+            fields=[ParsedField(name="enabled", api_path="enabled", python_type="bool")],
+        )
+
+    def test_resolves_parent(self) -> None:
+        link = resolve_parent_link(self._child(), "ontap", {"/svm/svms": "svm"})
+        assert link is not None
+        assert link[0] == "OntapSvm"
+
+    def test_none_without_schema_lookup(self) -> None:
+        assert resolve_parent_link(self._child(), "ontap", None) is None
+
+    def test_none_without_parent(self) -> None:
+        assert resolve_parent_link(_make_endpoint(), "ontap", {"/svm/svms": "svm"}) is None
+
+    def test_matches_generate_mapping_output(self) -> None:
+        lookup = {"/svm/svms": "svm"}
+        link = resolve_parent_link(self._child(), "ontap", lookup)
+        assert link is not None
+        code = generate_mapping(self._child(), api_type="ontap", schema_lookup=lookup)
+        assert f'parent_mapping="{link[0]}"' in code
+        assert f'parent_id_field="{link[1]}"' in code

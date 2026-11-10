@@ -12,6 +12,7 @@ becomes ``iface.ip.address`` on the Pydantic model, not
 
 from __future__ import annotations
 
+import re
 from collections.abc import Iterable, Mapping
 from pathlib import Path
 from typing import Any
@@ -843,6 +844,112 @@ _PARENT_ID_FIELD_BY_API: dict[str, str] = {
 }
 
 
+def resolve_parent_link(
+    endpoint: ParsedEndpoint,
+    api_type: str,
+    schema_lookup: dict[str, str] | None,
+    *,
+    shared_schemas: frozenset[str] | set[str] = frozenset(),
+    class_name_overrides: Mapping[tuple[str, ...], str] | None = None,
+    identifier_map: dict[str, str] | None = None,
+    parent_field_names: dict[str, set[str]] | None = None,
+) -> tuple[str, str] | None:
+    """Resolve the ``(parent_mapping, parent_id_field)`` pair for an endpoint.
+
+    Returns ``None`` when the endpoint has no parent, or when the parent
+    path does not generate a registered mapping that ``generate_mapping``
+    can link to.
+    """
+    # Only emit ``parent_mapping`` when the parent path's module tree
+    # actually generates a registered mapping whose class name matches
+    # the computed parent_class — otherwise ``parent_mapping`` would
+    # point to a name that no mapping in the registry claims (tracked
+    # by ``tests/unit/cache/test_mapping_parent_validation.py``).
+    # ONTAP parents resolve because every `/foo/{id}` item endpoint has
+    # a sibling `/foo` collection that registers under the same class
+    # name the parent_class algorithm derives.  DII often lacks the
+    # collection (e.g. `/assets/disks/{id}/...` exists but
+    # `/assets/disks` does not), so the parent link would dangle.
+    parent_resolvable = False
+    parent_class = ""
+    parent_id_field = ""
+    if endpoint.has_parent and schema_lookup:
+        parent_module_parts = tuple(_path_to_module_parts(endpoint.parent_path))
+        parent_schema = schema_lookup.get(endpoint.parent_path, "")
+        parent_class = _path_to_class_name(
+            endpoint.parent_path,
+            parent_schema,
+            api_type,
+            shared_schemas=shared_schemas,
+            class_name_overrides=class_name_overrides,
+        )
+        for candidate_path, candidate_schema in schema_lookup.items():
+            if tuple(_path_to_module_parts(candidate_path)) != parent_module_parts:
+                continue
+            candidate_class = _path_to_class_name(
+                candidate_path,
+                candidate_schema,
+                api_type,
+                shared_schemas=shared_schemas,
+                class_name_overrides=class_name_overrides,
+            )
+            if candidate_class == parent_class:
+                parent_resolvable = True
+                break
+    if parent_resolvable:
+        # Look up the parent endpoint's actual ``identifier_field`` from
+        # the pre-built map.  Only use it when the root segment of the
+        # identifier exists as a field on the parent's schema — the
+        # spec's path parameter name (e.g. ``svm.uuid``) doesn't always
+        # correspond to a field on the parent model (the item endpoint
+        # may win dedup and lack the field the collection had).
+        # Fall back to the API-default dispatch table, then give up if
+        # neither candidate exists on the model.
+        candidate = (identifier_map or {}).get(endpoint.parent_path)
+        parent_fields = (
+            (parent_field_names or {}).get(endpoint.parent_path, set())
+            if parent_field_names is not None
+            else None
+        )
+        if parent_fields is not None and candidate and candidate.split(".")[0] in parent_fields:
+            parent_id_field = candidate
+        elif parent_fields is not None:
+            fallback = _PARENT_ID_FIELD_BY_API.get(api_type, "uuid")
+            if fallback.split(".")[0] in parent_fields:
+                parent_id_field = fallback
+            else:
+                # Neither the inferred identifier nor the API default
+                # exists on the parent model (dedup winner).  Skip
+                # parent linkage entirely — manual editing needed.
+                parent_resolvable = False
+        else:
+            # No field validation available — use identifier_map or
+            # API default (legacy behavior).
+            parent_id_field = candidate or _PARENT_ID_FIELD_BY_API.get(api_type, "uuid")
+    if parent_resolvable:
+        return parent_class, parent_id_field
+    return None
+
+
+def count_path_placeholders(path: str) -> int:
+    """Count the ``{...}`` placeholders in an API path."""
+    return len(re.findall(r"\{[^}]+\}", path))
+
+
+def is_fetchable_endpoint(endpoint: ParsedEndpoint, parent_link: tuple[str, str] | None) -> bool:
+    """Return whether the runtime can fill every placeholder of ``endpoint``.
+
+    A parent fills only the first placeholder (``build_parameterized_url``),
+    and a parentless mapping has every placeholder stripped
+    (``build_collection_url``).  So an endpoint is fetchable when it has no
+    placeholder, or has a parent link and exactly one placeholder (#952).
+    """
+    count = count_path_placeholders(endpoint.path)
+    if count == 0:
+        return True
+    return parent_link is not None and count == 1
+
+
 def generate_mapping(
     endpoint: ParsedEndpoint,
     api_type: str = "ontap",
@@ -1043,74 +1150,18 @@ def generate_mapping(
     if endpoint.response_shape == "singleton":
         lines.append('    response_shape="singleton",')
 
-    # Only emit ``parent_mapping`` when the parent path's module tree
-    # actually generates a registered mapping whose class name matches
-    # the computed parent_class — otherwise ``parent_mapping`` would
-    # point to a name that no mapping in the registry claims (tracked
-    # by ``tests/unit/cache/test_mapping_parent_validation.py``).
-    # ONTAP parents resolve because every `/foo/{id}` item endpoint has
-    # a sibling `/foo` collection that registers under the same class
-    # name the parent_class algorithm derives.  DII often lacks the
-    # collection (e.g. `/assets/disks/{id}/...` exists but
-    # `/assets/disks` does not), so the parent link would dangle.
-    parent_resolvable = False
-    parent_class = ""
-    if endpoint.has_parent and schema_lookup:
-        parent_module_parts = tuple(_path_to_module_parts(endpoint.parent_path))
-        parent_schema = schema_lookup.get(endpoint.parent_path, "")
-        parent_class = _path_to_class_name(
-            endpoint.parent_path,
-            parent_schema,
-            api_type,
-            shared_schemas=shared_schemas,
-            class_name_overrides=class_name_overrides,
-        )
-        for candidate_path, candidate_schema in schema_lookup.items():
-            if tuple(_path_to_module_parts(candidate_path)) != parent_module_parts:
-                continue
-            candidate_class = _path_to_class_name(
-                candidate_path,
-                candidate_schema,
-                api_type,
-                shared_schemas=shared_schemas,
-                class_name_overrides=class_name_overrides,
-            )
-            if candidate_class == parent_class:
-                parent_resolvable = True
-                break
-    if parent_resolvable:
-        # Look up the parent endpoint's actual ``identifier_field`` from
-        # the pre-built map.  Only use it when the root segment of the
-        # identifier exists as a field on the parent's schema — the
-        # spec's path parameter name (e.g. ``svm.uuid``) doesn't always
-        # correspond to a field on the parent model (the item endpoint
-        # may win dedup and lack the field the collection had).
-        # Fall back to the API-default dispatch table, then give up if
-        # neither candidate exists on the model.
-        candidate = (identifier_map or {}).get(endpoint.parent_path)
-        parent_fields = (
-            (parent_field_names or {}).get(endpoint.parent_path, set())
-            if parent_field_names is not None
-            else None
-        )
-        if parent_fields is not None and candidate and candidate.split(".")[0] in parent_fields:
-            parent_id_field = candidate
-        elif parent_fields is not None:
-            fallback = _PARENT_ID_FIELD_BY_API.get(api_type, "uuid")
-            if fallback.split(".")[0] in parent_fields:
-                parent_id_field = fallback
-            else:
-                # Neither the inferred identifier nor the API default
-                # exists on the parent model (dedup winner).  Skip
-                # parent linkage entirely — manual editing needed.
-                parent_resolvable = False
-        else:
-            # No field validation available — use identifier_map or
-            # API default (legacy behavior).
-            parent_id_field = candidate or _PARENT_ID_FIELD_BY_API.get(api_type, "uuid")
-    if parent_resolvable:
-        lines.append(f'    parent_mapping="{parent_class}",')
-        lines.append(f'    parent_id_field="{parent_id_field}",')
+    parent_link = resolve_parent_link(
+        endpoint,
+        api_type,
+        schema_lookup,
+        shared_schemas=shared_schemas,
+        class_name_overrides=class_name_overrides,
+        identifier_map=identifier_map,
+        parent_field_names=parent_field_names,
+    )
+    if parent_link is not None:
+        lines.append(f'    parent_mapping="{parent_link[0]}",')
+        lines.append(f'    parent_id_field="{parent_link[1]}",')
 
     lines.append("    fields=(")
 
