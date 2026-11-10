@@ -189,6 +189,18 @@ def _lint_check_steps() -> list[dict[str, Any]]:
     return [step for step in _lint_steps() if "doit " in step.get("run", "")]
 
 
+class TestSopsInstallSteps:
+    """The Linux and Windows SOPS installs authenticate to GitHub (#938)."""
+
+    def test_linux_and_windows_installs_pass_github_token(self) -> None:
+        steps: list[dict[str, Any]] = _load_workflow()["jobs"]["test"]["steps"]
+        installs = [s for s in steps if s.get("name", "").startswith("Install SOPS tools")]
+        by_os = {s["name"]: s for s in installs}
+        for name in ("Install SOPS tools (Linux)", "Install SOPS tools (Windows)"):
+            env = by_os[name].get("env", {})
+            assert env.get("GITHUB_TOKEN") == "${{ secrets.GITHUB_TOKEN }}", name
+
+
 class TestLintJob:
     """The lint job runs each check and reports every failing one (#952)."""
 
