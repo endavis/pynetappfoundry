@@ -65,6 +65,16 @@ class TestBuildIndex:
         assert index["A"][2] == "ModelA"
         assert index["A"][3] is None
 
+    def test_overlay_paths_relative_to_cache_root(self, tmp_path: Path) -> None:
+        _write_mapping(tmp_path, "ontap/a", "ModelA", ["A"])
+        _write_mapping(tmp_path, "dii/b", "ModelB", ["B"])
+        for rel, name in (("ontap/a/a.toml", "A"), ("dii/b/b.toml", "B")):
+            toml = tmp_path / rel
+            toml.write_text(f'[endpoint]\nclass_name = "{name}"\n', encoding="utf-8")
+        index = build_index(tmp_path)
+        assert index["A"][3] == "ontap/a/a.toml"
+        assert index["B"][3] == "dii/b/b.toml"
+
     def test_duplicate_name_raises(self, tmp_path: Path) -> None:
         _write_mapping(tmp_path, "ontap/a", "ModelA", ["Same"])
         _write_mapping(tmp_path, "ontap/b", "ModelB", ["Same"])

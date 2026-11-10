@@ -251,6 +251,34 @@ class TestLoadOverlays:
         name_field = next(f for f in updated.fields if f.cache_attr == "name")
         assert name_field.cache_strategy == "realtime"
 
+    def test_discovers_ontap_and_dii_subtrees(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        registry = ModelRegistry()
+        registry.register_mapping("DummyModel", _make_mapping())
+        registry.register_mapping("DiiDummy", _make_mapping(name="DiiDummy"))
+        _write_toml(
+            tmp_path / "ontap" / "a" / "a.toml",
+            '[endpoint]\nclass_name = "DummyModel"\n\n[fields.name]\ncache_strategy = "realtime"\n',
+        )
+        _write_toml(
+            tmp_path / "dii" / "b" / "b.toml",
+            '[endpoint]\nclass_name = "DiiDummy"\n\n[fields.size]\ncache_strategy = "realtime"\n',
+        )
+        monkeypatch.setattr(overlay_loader, "_PACKAGE_OVERLAY_ROOT", tmp_path)
+
+        assert load_overlays(registry) == 2
+
+        ontap = registry.get_mapping("DummyModel")
+        dii = registry.get_mapping("DiiDummy")
+        assert ontap is not None
+        assert dii is not None
+        assert {f.cache_attr: f.cache_strategy for f in ontap.fields}["name"] == "realtime"
+        assert {f.cache_attr: f.cache_strategy for f in dii.fields}["size"] == "realtime"
+
+    def test_package_root_is_cache_dir(self) -> None:
+        assert Path(overlay_loader.__file__).parent == overlay_loader._PACKAGE_OVERLAY_ROOT
+
     def test_user_override_wins(self, tmp_path: Path) -> None:
         registry = ModelRegistry()
         mapping = _make_mapping()
@@ -361,6 +389,18 @@ class TestApplyPackageOverlay:
         by_attr = {f.cache_attr: f for f in result.fields}
         assert by_attr["size"].cache_strategy == "realtime"
         assert by_attr["name"].cache_strategy == "cache"
+
+    def test_resolves_dii_relative_path(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        _write_toml(
+            tmp_path / "dii" / "queries" / "queries.toml",
+            '[endpoint]\nclass_name = "DummyModel"\n\n[fields.size]\ncache_strategy = "realtime"\n',
+        )
+        monkeypatch.setattr(overlay_loader, "_PACKAGE_OVERLAY_ROOT", tmp_path)
+        result = apply_package_overlay(_make_mapping(), "dii/queries/queries.toml")
+        by_attr = {f.cache_attr: f for f in result.fields}
+        assert by_attr["size"].cache_strategy == "realtime"
 
     def test_missing_overlay_raises(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(overlay_loader, "_PACKAGE_OVERLAY_ROOT", tmp_path)

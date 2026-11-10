@@ -593,7 +593,7 @@ cache/__init__.py
 
 Every other mapping is loaded on first lookup. The generated
 `src/pynetappfoundry/cache/_mapping_index.py` maps each registered name to its `mapping.py` module, model class and
-TOML overlay, so `model_registry.get_mapping(name)` or `get_mapping_by_model_class(cls)` imports
+TOML overlay (under both `ontap/` and `dii/`, as a path relative to `cache/`), so `model_registry.get_mapping(name)` or `get_mapping_by_model_class(cls)` imports
 only the module it needs and applies the package overlay once. `model_registry.mappings` imports
 all of them.
 

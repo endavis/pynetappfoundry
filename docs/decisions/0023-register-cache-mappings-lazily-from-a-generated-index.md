@@ -39,12 +39,12 @@ Accepted
 - `ModelRegistry.mappings` iteration order is no longer the walk order. Every consumer sets, sorts or looks up by name.
 - A stale index shows up as a one-time warning and one extra walk, not as a failure.
 - ADR-0007's statement that the `__init__.py` chain registers every mapping as an import side effect no longer holds for generated mappings; an amendment there points to this ADR.
-- Not changed here: the 191 `cache/dii/**/*.toml` overlays have never been applied, as before (#959); the `CachedClusterMetadata` and `models.ontap` import chain still loads at `import pynetappfoundry.cache` (#960).
+- Not changed here: index overlay paths are relative to `cache/`, so the 191 `cache/dii/**/*.toml` overlays are applied like the `ontap/` ones (#959); the `CachedClusterMetadata` and `models.ontap` import chain still loads at `import pynetappfoundry.cache` (#960).
 
 ## Related Issues
 
 - Issue #903: perf: lazy model registration and lazy jsonschema import to cut CLI startup
-- Issue #959: the DII overlays are never applied (follow-up)
+- Issue #959: the DII overlays were never applied (fixed)
 - Issue #960: lazy-load the `models.ontap` import chain (follow-up)
 
 ## Related Documentation

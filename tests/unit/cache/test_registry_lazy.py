@@ -89,6 +89,8 @@ def fake_overlay_root(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Path:
     root = tmp_path / "overlays"
     (root / "fake").mkdir(parents=True)
     (root / "fake" / "fake.toml").write_text(_FAKE_OVERLAY, encoding="utf-8")
+    (root / "dii" / "fake").mkdir(parents=True)
+    (root / "dii" / "fake" / "fake.toml").write_text(_FAKE_OVERLAY, encoding="utf-8")
     monkeypatch.setattr(overlay_loader, "_PACKAGE_OVERLAY_ROOT", root)
     return root
 
@@ -124,6 +126,15 @@ class TestLazyMechanics:
         assert mapping is not None
         assert holder.imports == ["lazyfake.a.mapping"]
         # The module declared "realtime"; the overlay says "cache".
+        assert mapping.fields[0].cache_strategy == "cache"
+
+    def test_dii_overlay_applied_on_lookup(
+        self, holder: types.SimpleNamespace, fake_overlay_root: Path
+    ) -> None:
+        registry = _indexed_registry(holder, overlay="dii/fake/fake.toml")
+        mapping = registry.get_mapping("LazyFake")
+        assert mapping is not None
+        # The module declared "realtime"; the DII overlay says "cache".
         assert mapping.fields[0].cache_strategy == "cache"
 
     def test_overlay_applied_once(
@@ -320,6 +331,19 @@ class TestStaleIndexFallback:
         assert mapping.fields[0].cache_strategy == "cache"
         assert "mapping index is stale" in caplog.text
 
+    def test_stale_dii_overlay_rediscovers(
+        self,
+        holder: types.SimpleNamespace,
+        fake_overlay_root: Path,
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        registry = _indexed_registry(holder, overlay="dii/moved/gone.toml")
+        with caplog.at_level(logging.WARNING, logger=_registry.logger.name):
+            mapping = registry.get_mapping("LazyFake")
+        assert mapping is not None
+        assert mapping.fields[0].cache_strategy == "cache"
+        assert "mapping index is stale" in caplog.text
+
 
 def _walk_mapping_modules() -> set[str]:
     found: set[str] = set()
@@ -378,6 +402,29 @@ class TestCommittedIndex:
         for name, (_m, _mm, _q, overlay) in MAPPING_INDEX.items():
             expected = discovered[name].relative_to(root).as_posix() if name in discovered else None
             assert overlay == expected, f"{name}: run `doit mapping_index`"
+
+    def test_dii_overlays_indexed(self) -> None:
+        root = overlay_loader._PACKAGE_OVERLAY_ROOT
+        dii = {
+            n: e for n, e in MAPPING_INDEX.items() if e[0].startswith("pynetappfoundry.cache.dii.")
+        }
+        assert dii
+        for name, (_m, _mm, _q, overlay) in dii.items():
+            assert overlay is not None, name
+            assert overlay.startswith("dii/"), name
+            assert (root / overlay).is_file(), name
+        for name, (module_name, _mm, _q, overlay) in MAPPING_INDEX.items():
+            if module_name.startswith("pynetappfoundry.cache.ontap.") and overlay is not None:
+                assert overlay.startswith("ontap/"), name
+        assert MAPPING_INDEX["DiiQuery"][3] == "dii/queries/queries.toml"
+
+    def test_dii_overlay_applied_by_singleton(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        module_name = MAPPING_INDEX["DiiQuery"][0]
+        _name, raw = _record_module(module_name, monkeypatch)
+        expected = overlay_loader.apply_package_overlay(raw, "dii/queries/queries.toml")
+        actual = model_registry.get_mapping("DiiQuery")
+        assert actual is not None
+        assert _strategies(actual) == _strategies(expected)
 
     def test_lazy_equals_eager(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """The lazy singleton gives what the old walk plus ``load_overlays`` gave."""
