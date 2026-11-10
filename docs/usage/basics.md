@@ -259,7 +259,7 @@ nf cache query cluster1 cloud.provider --live
 nf licenses get
 
 # Export licenses to CSV
-nf licenses get --csv -o licenses.csv
+nf licenses get --csv --output licenses.csv
 ```
 
 ### Reports

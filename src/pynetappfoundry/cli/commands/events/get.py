@@ -53,7 +53,6 @@ def clean_message(log_message: str, event_name: str) -> str:
 )
 @click.option(
     "--output",
-    "-o",
     type=click.Path(),
     default="ems_output.csv",
     show_default=True,

@@ -58,7 +58,7 @@ nf licenses [OPTIONS] COMMAND [ARGS]...
 |--------|-------------|
 | `-f, --filter TEXT` | JSON cluster filter, e.g. `'{"bu":"Business","env":"Prod"}'` |
 | `--csv` | Output to CSV file instead of console table |
-| `-o, --output PATH` | CSV output file path (default: timestamped file in output dir) |
+| `--output PATH` | CSV output file path (default: timestamped file in output dir) |
 | `--live` | Bypass the cache and fetch licenses live from each cluster |
 
 !!! note "About `--live`"
@@ -122,7 +122,7 @@ nf events [OPTIONS] COMMAND [ARGS]...
 | `-f, --filter TEXT` | JSON cluster filter |
 | `-s, --severity` | Filter by severity: `emergency`, `alert`, `error`, `notice`, `informational`, `debug` |
 | `-n, --name TEXT` | Filter by event name (repeatable) |
-| `-o, --output PATH` | Output to CSV file instead of console |
+| `--output PATH` | Output to CSV file instead of console |
 | `--sort [time|-time]` | Sort order (default: `time` ascending; `-time` for descending) |
 | `-l, --limit INTEGER` | Maximum number of events to retrieve (default: 50) |
 
@@ -308,7 +308,7 @@ nf utils [OPTIONS] COMMAND [ARGS]...
 and accepts `-f, --filter` to select clusters.
 
 **`utils sqlite-to-excel`**: takes a `DB_PATH` argument and an optional
-`-o, --output PATH` for the destination Excel file (defaults to the same name
+`--output PATH` for the destination Excel file (defaults to the same name
 as the database with a `.xlsx` extension).
 
 ## Examples
@@ -323,7 +323,7 @@ nf licenses get
 nf licenses get -f '{"bu":"Business","env":"Prod"}'
 
 # Write licenses to a CSV file
-nf licenses get --csv -o licenses.csv
+nf licenses get --csv --output licenses.csv
 
 # Bypass the cache and fetch licenses live from each cluster (slow)
 nf licenses get --live
@@ -370,7 +370,7 @@ nf events get -n vsa.mlx.nic.detach -n vsa.mlx.nic.attach
 nf events get --sort -time -l 200
 
 # Write events to CSV instead of the console
-nf events get -o events.csv
+nf events get --output events.csv
 
 # Record Azure maintenance events to the database
 nf events save-azure -f '{"env":"Prod"}'
@@ -455,7 +455,7 @@ nf utils run-cmd "vol show" -f '{"env":"Prod"}'
 nf utils sqlite-to-excel cluster1_2025-04-13_metrics.db
 
 # Convert with a custom output path
-nf utils sqlite-to-excel cluster1_2025-04-13_metrics.db -o metrics-report.xlsx
+nf utils sqlite-to-excel cluster1_2025-04-13_metrics.db --output metrics-report.xlsx
 ```
 
 ### Cache Management

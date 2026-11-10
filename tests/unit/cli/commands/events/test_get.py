@@ -375,3 +375,25 @@ class TestGetClusterEvents:
         result, _ = self._run(mock_config, sample_cluster_details, [ems_event])
 
         assert result[0]["severity"] == "error"
+
+
+class TestOutputOption:
+    """`--output` is the only spelling; the short `-o` was dropped (#943)."""
+
+    def test_short_o_rejected(self, tmp_path: Path) -> None:
+        """`-o` is not an option of `events get`."""
+        from click.testing import CliRunner
+
+        from pynetappfoundry.cli.commands.events.get import get
+
+        result = CliRunner().invoke(get, ["-o", str(tmp_path / "e.csv")])
+        assert result.exit_code != 0
+        assert "No such option" in result.output
+
+    def test_long_output_accepted(self, tmp_path: Path) -> None:
+        """`--output` is declared and `-o` is not."""
+        from pynetappfoundry.cli.commands.events.get import get
+
+        opt = next(p for p in get.params if p.name == "output")
+        assert opt.opts == ["--output"]
+        assert opt.secondary_opts == []

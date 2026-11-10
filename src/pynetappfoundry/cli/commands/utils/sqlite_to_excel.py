@@ -15,7 +15,6 @@ from pynetappfoundry.utils.excel import ExcelWorkbook
 @click.argument("db_path", type=click.Path(exists=True))
 @click.option(
     "--output",
-    "-o",
     type=click.Path(),
     default=None,
     help="Output Excel file path (default: same name as DB with .xlsx extension).",
