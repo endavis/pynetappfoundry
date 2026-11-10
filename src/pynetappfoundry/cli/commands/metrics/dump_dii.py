@@ -23,6 +23,7 @@ from typing import Any
 import click
 
 from pynetappfoundry.cli.decorators import with_config
+from pynetappfoundry.cli.options import filter_option
 from pynetappfoundry.cli.utils import (
     print_debug,
     print_error,
@@ -56,12 +57,7 @@ _DEFAULT_WINDOW_DAYS = 3
 
 
 @click.command("dump-dii")
-@click.option(
-    "--filter",
-    "-f",
-    "filter",
-    help='JSON filter: \'{"bu":"Business", "env":"Prod"}\'',
-)
+@filter_option()
 @click.option(
     "--date",
     "-d",

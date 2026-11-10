@@ -16,6 +16,7 @@ from rich.markup import escape
 
 from pynetappfoundry.cache import ClusterMetadataDB
 from pynetappfoundry.cache._registry import model_registry
+from pynetappfoundry.cli.options import all_option, csv_option, filter_option, json_option
 from pynetappfoundry.cli.utils import (
     format_value_markup,
     print_error,
@@ -353,35 +354,15 @@ def _set_nested(target: dict[str, Any], dotted_path: str, value: Any) -> None:
 @click.command()
 @click.argument("cluster", required=False)
 @click.argument("fields", nargs=-1)
-@click.option(
-    "--filter",
-    "-f",
-    "filter_str",
-    help='JSON filter for cluster selection: \'{"bu":"Business", "env":"Prod"}\'',
-)
-@click.option(
-    "--all",
-    "query_all",
-    is_flag=True,
-    help="Query all cached clusters.",
-)
-@click.option(
-    "--json",
-    "output_json",
-    is_flag=True,
-    help="Output as JSON.",
-)
+@filter_option("filter_str")
+@all_option()
+@json_option()
 @click.option(
     "--raw",
     is_flag=True,
     help="Output values only, no field names (single cluster only).",
 )
-@click.option(
-    "--csv",
-    "output_csv",
-    is_flag=True,
-    help="Output as CSV with header row.",
-)
+@csv_option()
 @click.option(
     "--live",
     "live",

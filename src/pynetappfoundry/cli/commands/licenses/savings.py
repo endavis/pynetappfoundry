@@ -9,6 +9,7 @@ from rich.markup import escape
 from rich.table import Table
 
 from pynetappfoundry.cli.decorators import with_config
+from pynetappfoundry.cli.options import filter_option
 from pynetappfoundry.cli.utils import console, print_error, print_info
 from pynetappfoundry.clients.ontap.api import ONTAPAPIClient
 from pynetappfoundry.core.config import Config
@@ -18,12 +19,7 @@ from pynetappfoundry.query import QuerySet
 
 
 @click.command()
-@click.option(
-    "--filter",
-    "-f",
-    "filter",
-    help='JSON filter: \'{"bu":"Business", "env":"Prod"}\'',
-)
+@filter_option()
 @with_config("License savings calculation failed")
 def savings(
     config: Config,

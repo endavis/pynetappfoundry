@@ -8,6 +8,7 @@ import click
 from rich.markup import escape
 
 from pynetappfoundry.cli.decorators import with_config
+from pynetappfoundry.cli.options import filter_option
 from pynetappfoundry.cli.utils import console, print_exception, print_info
 from pynetappfoundry.clients.ontap.cli import ONTAPCLI
 from pynetappfoundry.core.config import Config
@@ -15,12 +16,7 @@ from pynetappfoundry.core.config import Config
 
 @click.command("run-cmd")
 @click.argument("command")
-@click.option(
-    "--filter",
-    "-f",
-    "filter",
-    help='JSON filter: \'{"bu":"Business", "env":"Prod"}\'',
-)
+@filter_option()
 @with_config("Run command failed")
 def run_cmd(
     config: Config,

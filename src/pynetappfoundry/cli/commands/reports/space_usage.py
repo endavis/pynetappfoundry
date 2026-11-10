@@ -17,6 +17,7 @@ import xlsxwriter
 import xlsxwriter.utility
 
 from pynetappfoundry.cli.decorators import with_config
+from pynetappfoundry.cli.options import filter_option
 from pynetappfoundry.cli.utils import print_error, print_info, print_success
 from pynetappfoundry.clients.ontap.api import ONTAPAPIClient
 from pynetappfoundry.core.config import Config
@@ -649,12 +650,7 @@ class SpaceUsageReport:
 
 
 @click.command("space-usage")
-@click.option(
-    "--filter",
-    "-f",
-    "filter",
-    help='JSON filter: \'{"bu":"Business", "env":"Prod"}\'',
-)
+@filter_option()
 @with_config("Space usage report failed")
 def space_usage(
     config: Config,

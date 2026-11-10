@@ -17,6 +17,7 @@ from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
 from pynetappfoundry.cli.decorators import with_config
+from pynetappfoundry.cli.options import filter_option
 from pynetappfoundry.cli.utils import print_info, print_success
 from pynetappfoundry.core.cluster_entry import ClusterEntry
 from pynetappfoundry.core.config import Config
@@ -373,12 +374,7 @@ class InventoryReport:
 
 
 @click.command()
-@click.option(
-    "--filter",
-    "-f",
-    "filter",
-    help='JSON filter: \'{"bu":"TAA", "env":"Prod"}\'',
-)
+@filter_option()
 @with_config("Inventory report generation failed")
 def inventory(
     config: Config,

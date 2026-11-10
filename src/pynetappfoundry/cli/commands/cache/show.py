@@ -14,6 +14,7 @@ from rich.tree import Tree
 
 from pynetappfoundry.cache import ClusterMetadataDB
 from pynetappfoundry.cache.db import all_realtime_attrs
+from pynetappfoundry.cli.options import json_option
 from pynetappfoundry.cli.utils import (
     format_value_markup,
     print_error,
@@ -114,12 +115,7 @@ def _build_tree_from_dict(
     ),
     help="Show only a specific section.",
 )
-@click.option(
-    "--json",
-    "output_json",
-    is_flag=True,
-    help="Output as JSON.",
-)
+@json_option()
 @click.pass_context
 def show(ctx: click.Context, cluster: str | None, section: str | None, output_json: bool) -> None:
     """Display cached metadata for a cluster.

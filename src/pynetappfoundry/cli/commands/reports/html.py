@@ -18,6 +18,7 @@ import click
 from yattag import Doc, indent
 
 from pynetappfoundry.cli.decorators import with_config
+from pynetappfoundry.cli.options import filter_option
 from pynetappfoundry.cli.utils import print_debug, print_error, print_info, print_success
 from pynetappfoundry.data.source import DataSource
 from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
@@ -1306,12 +1307,7 @@ class ClusterData:
 
 
 @click.command()
-@click.option(
-    "--filter",
-    "-f",
-    "filter",
-    help='JSON filter: \'{"bu":"Business", "env":"Prod"}\'',
-)
+@filter_option()
 @with_config("HTML report generation failed")
 def html(
     config: Config,
