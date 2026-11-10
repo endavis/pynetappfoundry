@@ -6,7 +6,7 @@ real database or network is touched.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, ClassVar
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -1602,3 +1602,76 @@ class TestGetApiClient:
         cluster_arg = mock_init.call_args.kwargs["cluster"]
         assert cluster_arg.name == "cl1"
         assert cluster_arg.ip == "cl1"
+
+
+class TestSingletonLivePaths:
+    """Singleton mappings (ClusterInfo) on the filtered live and count paths (#937)."""
+
+    RECORD: ClassVar[dict[str, Any]] = {"name": "c1", "uuid": "u1", "version": {"full": "9.15"}}
+
+    def _run(self, mock_config: Any, response: Any, fn: str, *args: Any) -> tuple[Any, MagicMock]:
+        backend = _make_backend(mock_config)
+        client = MagicMock()
+        client.call_endpoint.return_value = response
+        with patch.object(backend, "_get_api_client", return_value=client):
+            return getattr(backend, fn)(*args), client
+
+    def test_fetch_live_filtered_returns_singleton(self, mock_config: Any) -> None:
+        from pynetappfoundry.cache.ontap.cluster.mapping import CLUSTER_MAPPING
+        from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
+
+        result, client = self._run(
+            mock_config,
+            dict(self.RECORD),
+            "_fetch_live_filtered",
+            ClusterInfo,
+            CLUSTER_MAPPING,
+            "prod1",
+            {},
+            ("cluster_name",),
+        )
+        assert len(result) == 1
+        assert isinstance(result[0], ClusterInfo)
+        client.get_all_records.assert_not_called()
+
+    def test_fetch_live_filtered_applies_filter_client_side(self, mock_config: Any) -> None:
+        from pynetappfoundry.cache.ontap.cluster.mapping import CLUSTER_MAPPING
+        from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
+
+        args = (ClusterInfo, CLUSTER_MAPPING, "prod1")
+        hit, _ = self._run(
+            mock_config, dict(self.RECORD), "_fetch_live_filtered", *args, {"name": "c1"}, ()
+        )
+        miss, _ = self._run(
+            mock_config, dict(self.RECORD), "_fetch_live_filtered", *args, {"name": "zzz"}, ()
+        )
+        assert len(hit) == 1
+        assert miss == []
+
+    def test_fetch_live_filtered_empty_response(self, mock_config: Any) -> None:
+        from pynetappfoundry.cache.ontap.cluster.mapping import CLUSTER_MAPPING
+        from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
+
+        result, _ = self._run(
+            mock_config, {}, "_fetch_live_filtered", ClusterInfo, CLUSTER_MAPPING, "p", {}, ()
+        )
+        assert result == []
+
+    def test_count_live_singleton(self, mock_config: Any) -> None:
+        from pynetappfoundry.cache.ontap.cluster.mapping import CLUSTER_MAPPING
+
+        count, client = self._run(
+            mock_config, dict(self.RECORD), "_count_live", CLUSTER_MAPPING, "prod1", {}
+        )
+        assert count == 1
+        client.get_all_records.assert_not_called()
+
+    def test_count_live_singleton_filtered_out_and_empty(self, mock_config: Any) -> None:
+        from pynetappfoundry.cache.ontap.cluster.mapping import CLUSTER_MAPPING
+
+        out, _ = self._run(
+            mock_config, dict(self.RECORD), "_count_live", CLUSTER_MAPPING, "p", {"name": "x"}
+        )
+        empty, _ = self._run(mock_config, {}, "_count_live", CLUSTER_MAPPING, "p", {})
+        assert out == 0
+        assert empty == 0
