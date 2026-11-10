@@ -176,10 +176,11 @@ class TestRunFilterAndDrop:
         out = capsys.readouterr().out
         assert "skipped (unfillable placeholder): /a/{x}/b/{y}/c" in out
         assert "skipped (unfillable placeholder): /n/{svm.uuid}" in out
-        joined = " ".join(str(p) for p in written)
+        # as_posix() so the separator checks also hold on Windows.
+        joined = " ".join(p.as_posix() for p in written)
         assert "/a/" not in joined
         assert "/n/" not in joined
-        assert any("/things/" in str(p) for p in written)
+        assert any("/things/" in p.as_posix() for p in written)
 
     def test_filtering_on_dropped_endpoint_returns_nothing(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
