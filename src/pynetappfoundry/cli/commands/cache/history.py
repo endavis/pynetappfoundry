@@ -13,6 +13,7 @@ from rich.panel import Panel
 from rich.table import Table
 
 from pynetappfoundry.cache import CacheHistoryDB, format_diff_summary, is_schema_compatible
+from pynetappfoundry.cli.options import json_option
 from pynetappfoundry.cli.utils import print_error, print_exception, print_warning
 from pynetappfoundry.core.config import Config
 
@@ -59,12 +60,7 @@ def history() -> None:
     "--until",
     help="Filter changes before this date (ISO format).",
 )
-@click.option(
-    "--json",
-    "output_json",
-    is_flag=True,
-    help="Output as JSON.",
-)
+@json_option()
 @click.pass_context
 def list_history(
     ctx: click.Context,
@@ -160,12 +156,7 @@ def list_history(
 
 @history.command("show")
 @click.argument("change_id", type=int)
-@click.option(
-    "--json",
-    "output_json",
-    is_flag=True,
-    help="Output as JSON.",
-)
+@json_option()
 @click.pass_context
 def show_change(
     ctx: click.Context,
@@ -364,12 +355,7 @@ def show_diff(
     required=True,
     help="Target date (ISO format: YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS).",
 )
-@click.option(
-    "--json",
-    "output_json",
-    is_flag=True,
-    help="Output as JSON.",
-)
+@json_option()
 @click.option(
     "--restore",
     is_flag=True,

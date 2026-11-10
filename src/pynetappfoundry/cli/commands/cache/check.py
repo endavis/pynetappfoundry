@@ -26,6 +26,7 @@ from rich.table import Table
 
 from pynetappfoundry.cache import ClusterMetadataDB
 from pynetappfoundry.cache.query_engine import parse_filter
+from pynetappfoundry.cli.options import all_option, csv_option, filter_option, json_option
 from pynetappfoundry.cli.utils import print_error, print_exception, print_warning
 from pynetappfoundry.core.config import Config
 from pynetappfoundry.data._routing import SourceMode
@@ -247,30 +248,10 @@ def _format_display(value: Any) -> str:
     "fields_str",
     help="Comma-separated field paths for projection.",
 )
-@click.option(
-    "--all",
-    "query_all",
-    is_flag=True,
-    help="Query all cached clusters.",
-)
-@click.option(
-    "--filter",
-    "-f",
-    "filter_str",
-    help='JSON filter for cluster selection: \'{"bu":"Business", "env":"Prod"}\'',
-)
-@click.option(
-    "--json",
-    "output_json",
-    is_flag=True,
-    help="Output as JSON.",
-)
-@click.option(
-    "--csv",
-    "output_csv",
-    is_flag=True,
-    help="Output as CSV with header row.",
-)
+@all_option()
+@filter_option("filter_str")
+@json_option()
+@csv_option()
 @click.option(
     "--count",
     "output_count",

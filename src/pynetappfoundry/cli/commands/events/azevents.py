@@ -10,6 +10,7 @@ import click
 import requests
 
 from pynetappfoundry.cli.decorators import with_config
+from pynetappfoundry.cli.options import filter_option
 from pynetappfoundry.cli.utils import (
     print_debug,
     print_error,
@@ -33,12 +34,7 @@ if TYPE_CHECKING:
 
 
 @click.command("save-azure")
-@click.option(
-    "--filter",
-    "-f",
-    "filter",
-    help='JSON filter: \'{"bu":"Business", "env":"Prod"}\'',
-)
+@filter_option()
 @with_config("Save Azure events failed")
 def save_azure(
     config: Config,

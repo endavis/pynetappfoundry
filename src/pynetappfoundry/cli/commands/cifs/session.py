@@ -19,6 +19,7 @@ from rich.markup import escape
 from rich.table import Table
 
 from pynetappfoundry.cli.decorators import with_config
+from pynetappfoundry.cli.options import filter_option
 from pynetappfoundry.cli.utils import (
     console,
     print_exception,
@@ -297,12 +298,7 @@ def _write_csv(rows: list[SessionRow], path: Path) -> None:
 
 
 @click.command("session")
-@click.option(
-    "--filter",
-    "-f",
-    "filter",
-    help='JSON cluster filter: \'{"bu":"Business","env":"Prod"}\'.',
-)
+@filter_option()
 @click.option(
     "--user",
     "-u",

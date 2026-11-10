@@ -11,6 +11,7 @@ from rich.console import Console
 from rich.tree import Tree
 
 from pynetappfoundry.cache import CachedClusterMetadata
+from pynetappfoundry.cli.options import json_option
 
 console = Console()
 
@@ -169,12 +170,7 @@ def _build_flat_schema(
 
 
 @click.command()
-@click.option(
-    "--json",
-    "output_json",
-    is_flag=True,
-    help="Output as JSON schema.",
-)
+@json_option(help_text="Output as JSON schema.")
 @click.option(
     "--flat",
     "output_flat",

@@ -23,6 +23,7 @@ from rich.markup import escape
 from rich.table import Table
 
 from pynetappfoundry.cache import ClusterMetadataDB
+from pynetappfoundry.cli.options import all_option, csv_option, filter_option, json_option
 from pynetappfoundry.cli.utils import print_error, print_warning
 from pynetappfoundry.compliance.config import (
     get_cluster_overrides,
@@ -141,18 +142,8 @@ def _output_csv(results: list[ComplianceResult]) -> str:
 
 @click.command()
 @click.argument("cluster", required=False)
-@click.option(
-    "--all",
-    "query_all",
-    is_flag=True,
-    help="Check all cached clusters.",
-)
-@click.option(
-    "--filter",
-    "-f",
-    "filter_str",
-    help='JSON filter for cluster selection: \'{"bu":"Business", "env":"Prod"}\'',
-)
+@all_option(help_text="Check all cached clusters.")
+@filter_option("filter_str")
 @click.option(
     "--check",
     "-k",
@@ -166,18 +157,8 @@ def _output_csv(results: list[ComplianceResult]) -> str:
     type=click.Choice(["info", "warning", "error"], case_sensitive=False),
     help="Minimum severity to report.",
 )
-@click.option(
-    "--json",
-    "output_json",
-    is_flag=True,
-    help="Output as JSON.",
-)
-@click.option(
-    "--csv",
-    "output_csv",
-    is_flag=True,
-    help="Output as CSV with header row.",
-)
+@json_option()
+@csv_option()
 @click.pass_context
 def compliance(
     ctx: click.Context,

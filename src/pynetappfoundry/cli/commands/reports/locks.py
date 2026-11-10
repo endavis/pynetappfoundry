@@ -9,6 +9,7 @@ import click
 from openpyxl import Workbook
 
 from pynetappfoundry.cli.decorators import with_config
+from pynetappfoundry.cli.options import filter_option
 from pynetappfoundry.cli.utils import print_debug, print_error, print_info, print_success
 from pynetappfoundry.clients.ontap.api import ONTAPAPIClient
 from pynetappfoundry.core.config import Config
@@ -18,12 +19,7 @@ from pynetappfoundry.query import QuerySet
 
 
 @click.command()
-@click.option(
-    "--filter",
-    "-f",
-    "filter",
-    help='JSON filter: \'{"bu":"Business", "env":"Prod"}\'',
-)
+@filter_option()
 @with_config("Locks report failed")
 def locks(
     config: Config,

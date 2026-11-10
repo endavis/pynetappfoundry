@@ -34,6 +34,7 @@ from pynetappfoundry.cache.refresher import (
     RefreshSummary,
     effective_workers,
 )
+from pynetappfoundry.cli.options import all_option, filter_option
 from pynetappfoundry.cli.utils import (
     print_error,
     print_exception,
@@ -124,19 +125,12 @@ class VerboseProgressDisplay:
 
 @click.command()
 @click.argument("cluster", required=False)
-@click.option(
-    "--all",
-    "-a",
-    "refresh_all",
-    is_flag=True,
-    help="Refresh cache for all configured clusters.",
+@all_option(
+    param_name="refresh_all",
+    help_text="Refresh cache for all configured clusters.",
+    short_flag=True,
 )
-@click.option(
-    "--filter",
-    "-f",
-    "filter_str",
-    help='JSON filter for --all: \'{"env": "Prod", "bu": "Finance"}\'',
-)
+@filter_option("filter_str")
 @click.option(
     "--verbose",
     "-v",

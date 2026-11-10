@@ -12,6 +12,7 @@ from rich.markup import escape
 from rich.table import Table
 
 from pynetappfoundry.cli.decorators import with_config
+from pynetappfoundry.cli.options import csv_option, filter_option
 from pynetappfoundry.cli.utils import console, print_error, print_info
 from pynetappfoundry.core.cluster_entry import ClusterEntry
 from pynetappfoundry.core.config import Config
@@ -24,19 +25,8 @@ LicenseRow = tuple[str, str, str, str, str]
 
 
 @click.command()
-@click.option(
-    "--filter",
-    "-f",
-    "filter",
-    help='JSON filter: \'{"bu":"Business", "env":"Prod"}\'',
-)
-@click.option(
-    "--csv",
-    "csv_output",
-    is_flag=True,
-    default=False,
-    help="Output to CSV file instead of console table.",
-)
+@filter_option()
+@csv_option(param_name="csv_output", help_text="Output to CSV file instead of console table.")
 @click.option(
     "--output",
     "-o",

@@ -7,6 +7,7 @@ from typing import Any
 import click
 
 from pynetappfoundry.cli.decorators import with_config
+from pynetappfoundry.cli.options import filter_option
 from pynetappfoundry.cli.utils import (
     print_debug,
     print_error,
@@ -24,12 +25,7 @@ from pynetappfoundry.query import QuerySet
 
 
 @click.command()
-@click.option(
-    "--filter",
-    "-f",
-    "filter",
-    help='JSON filter: \'{"bu":"Business", "env":"Prod"}\'',
-)
+@filter_option()
 @click.option(
     "--ssh/--no-ssh",
     default=False,

@@ -9,6 +9,7 @@ from rich.console import Console
 from rich.markup import escape
 
 from pynetappfoundry.cache import ClusterMetadataDB
+from pynetappfoundry.cli.options import all_option
 from pynetappfoundry.cli.utils import print_error, print_exception, print_success, print_warning
 from pynetappfoundry.core.config import Config
 
@@ -17,13 +18,7 @@ console = Console()
 
 @click.command()
 @click.argument("cluster", required=False)
-@click.option(
-    "--all",
-    "-a",
-    "clear_all",
-    is_flag=True,
-    help="Clear cache for all clusters.",
-)
+@all_option(param_name="clear_all", help_text="Clear cache for all clusters.", short_flag=True)
 @click.option(
     "--force",
     "-f",
