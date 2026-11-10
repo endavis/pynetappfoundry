@@ -6,8 +6,8 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
 
+import openpyxl
 import pytest
-from openpyxl import Workbook
 
 from pynetappfoundry.cli.commands.reports.locks import _gather_lock_data
 from pynetappfoundry.models.ontap.protocols.locks.model import (
@@ -15,6 +15,7 @@ from pynetappfoundry.models.ontap.protocols.locks.model import (
     OntapClientLockShareLock,
     OntapClientLockVolume,
 )
+from pynetappfoundry.utils.excel import ExcelWorkbook
 
 
 def _make_lock(
@@ -39,6 +40,12 @@ def _make_lock(
         state=state,
         client_address=client_address,
     )
+
+
+def _read(wb: ExcelWorkbook, tmp_path: Path, sheet: str) -> Any:
+    """Close the workbook and read one sheet back."""
+    wb.close()
+    return openpyxl.load_workbook(tmp_path / "out.xlsx")[sheet]
 
 
 @pytest.fixture
@@ -72,20 +79,17 @@ class TestGatherLockData:
         mock_qs_cls: MagicMock,
         mock_config: MagicMock,
         sample_details: dict[str, Any],
+        tmp_path: Path,
     ) -> None:
         """Test that a sheet is created for the cluster."""
         lock = _make_lock()
         mock_qs_cls.return_value.all.return_value = [lock]
 
-        wb = Workbook()
-        default = wb.active
-        if default:
-            wb.remove(default)
+        wb = ExcelWorkbook(tmp_path / "out.xlsx")
 
         _gather_lock_data("cluster1", sample_details, mock_config, wb)
+        ws = _read(wb, tmp_path, "cluster1")
 
-        assert "cluster1" in wb.sheetnames
-        ws = wb["cluster1"]
         # Header row
         assert ws.cell(row=1, column=1).value == "Volume"
         assert ws.cell(row=1, column=7).value == "IP Address"
@@ -103,6 +107,7 @@ class TestGatherLockData:
         mock_qs_cls: MagicMock,
         mock_config: MagicMock,
         sample_details: dict[str, Any],
+        tmp_path: Path,
     ) -> None:
         """Test that share_level lock row has correct columns."""
         lock = _make_lock(
@@ -111,14 +116,11 @@ class TestGatherLockData:
         )
         mock_qs_cls.return_value.all.return_value = [lock]
 
-        wb = Workbook()
-        default = wb.active
-        if default:
-            wb.remove(default)
+        wb = ExcelWorkbook(tmp_path / "out.xlsx")
 
         _gather_lock_data("cluster1", sample_details, mock_config, wb)
+        ws = _read(wb, tmp_path, "cluster1")
 
-        ws = wb["cluster1"]
         # Row 2 is data (row 1 is header)
         assert ws.cell(row=2, column=1).value == "vol1"
         assert ws.cell(row=2, column=2).value == "cifs"
@@ -139,6 +141,7 @@ class TestGatherLockData:
         mock_qs_cls: MagicMock,
         mock_config: MagicMock,
         sample_details: dict[str, Any],
+        tmp_path: Path,
     ) -> None:
         """Test that op_lock row has correct columns."""
         lock = _make_lock(
@@ -148,14 +151,11 @@ class TestGatherLockData:
         )
         mock_qs_cls.return_value.all.return_value = [lock]
 
-        wb = Workbook()
-        default = wb.active
-        if default:
-            wb.remove(default)
+        wb = ExcelWorkbook(tmp_path / "out.xlsx")
 
         _gather_lock_data("cluster1", sample_details, mock_config, wb)
+        ws = _read(wb, tmp_path, "cluster1")
 
-        ws = wb["cluster1"]
         assert ws.cell(row=2, column=3).value == "op_lock"
         assert ws.cell(row=2, column=5).value == "batch"
         # Verify config= is threaded to QuerySet (DataSource shim)
@@ -170,19 +170,16 @@ class TestGatherLockData:
         mock_print_error: MagicMock,
         mock_config: MagicMock,
         sample_details: dict[str, Any],
+        tmp_path: Path,
     ) -> None:
         """Test that connection failure creates an error sheet."""
         mock_client_cls.side_effect = Exception("Connection refused")
 
-        wb = Workbook()
-        default = wb.active
-        if default:
-            wb.remove(default)
+        wb = ExcelWorkbook(tmp_path / "out.xlsx")
 
         _gather_lock_data("cluster1", sample_details, mock_config, wb)
+        ws = _read(wb, tmp_path, "cluster1")
 
-        assert "cluster1" in wb.sheetnames
-        ws = wb["cluster1"]
         assert ws.cell(row=1, column=1).value == "Error"
         assert "Connection refused" in ws.cell(row=1, column=2).value
         mock_print_error.assert_called_once()
@@ -195,18 +192,16 @@ class TestGatherLockData:
         mock_qs_cls: MagicMock,
         mock_config: MagicMock,
         sample_details: dict[str, Any],
+        tmp_path: Path,
     ) -> None:
         """Test that no locks creates a sheet with header only."""
         mock_qs_cls.return_value.all.return_value = []
 
-        wb = Workbook()
-        default = wb.active
-        if default:
-            wb.remove(default)
+        wb = ExcelWorkbook(tmp_path / "out.xlsx")
 
         _gather_lock_data("cluster1", sample_details, mock_config, wb)
+        ws = _read(wb, tmp_path, "cluster1")
 
-        ws = wb["cluster1"]
         assert ws.cell(row=1, column=1).value == "Volume"
         assert ws.cell(row=2, column=1).value is None
         # Verify config= is threaded to QuerySet (DataSource shim)
@@ -233,7 +228,7 @@ class TestLocksExitCode:
                 "pynetappfoundry.cli.commands.reports.locks._gather_lock_data",
                 side_effect=results,
             ),
-            patch("pynetappfoundry.cli.commands.reports.locks.Workbook"),
+            patch("pynetappfoundry.cli.commands.reports.locks.ExcelWorkbook"),
         ):
             return CliRunner().invoke(locks, [], obj={})
 
@@ -245,10 +240,54 @@ class TestLocksExitCode:
         assert result.exit_code == 0, result.output
 
     def test_gather_returns_false_on_error(
-        self, mock_config: MagicMock, sample_details: dict[str, Any]
+        self, mock_config: MagicMock, sample_details: dict[str, Any], tmp_path: Path
     ) -> None:
         with patch(
             "pynetappfoundry.cli.commands.reports.locks.ONTAPAPIClient",
             side_effect=RuntimeError("down"),
         ):
-            assert _gather_lock_data("c", sample_details, mock_config, Workbook()) is False
+            wb = ExcelWorkbook(tmp_path / "o.xlsx")
+            assert _gather_lock_data("c", sample_details, mock_config, wb) is False
+
+
+class TestLocksReadBack:
+    """Command-level read-back of the saved workbook."""
+
+    @staticmethod
+    def _run(tmp_path: Path, names: list[str], locks_data: list[OntapClientLock]) -> Path:
+        from click.testing import CliRunner
+
+        from pynetappfoundry.cli.commands.reports.locks import locks
+
+        cfg = MagicMock()
+        cfg.get_clusters.return_value = {n: {"ip": "1.1.1.1"} for n in names}
+        cfg.output_dir = tmp_path
+        with (
+            patch("pynetappfoundry.cli.decorators.Config", return_value=cfg),
+            patch("pynetappfoundry.cli.commands.reports.locks.ONTAPAPIClient"),
+            patch("pynetappfoundry.cli.commands.reports.locks.QuerySet") as qs,
+        ):
+            qs.return_value.all.return_value = locks_data
+            result = CliRunner().invoke(locks, [], obj={})
+        assert result.exit_code == 0, result.output
+        (path,) = tmp_path.glob("locks_*.xlsx")
+        return path
+
+    def test_rows_read_back(self, tmp_path: Path) -> None:
+        path = self._run(
+            tmp_path, ["c1"], [_make_lock(), _make_lock(type_="op_lock", oplock_level="batch")]
+        )
+        ws = openpyxl.load_workbook(path)["c1"]
+        assert [c.value for c in ws[1]][:2] == ["Volume", "Protocol"]
+        assert ws.cell(row=2, column=5).value == "read"
+        assert ws.cell(row=3, column=5).value == "batch"
+
+    def test_long_and_colliding_names(self, tmp_path: Path) -> None:
+        long_a = "a" * 40
+        long_b = "a" * 35 + "bbbbb"
+        path = self._run(tmp_path, [long_a, long_b, "Alpha", "alpha"], [_make_lock()])
+        names = openpyxl.load_workbook(path).sheetnames
+        assert len(names) == 4
+        assert len({n.lower() for n in names}) == 4
+        assert all(len(n) <= 31 for n in names)
+        assert names[0] == "a" * 31

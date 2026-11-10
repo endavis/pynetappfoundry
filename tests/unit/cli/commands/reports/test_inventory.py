@@ -2,7 +2,16 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+from typing import Any
+from unittest.mock import MagicMock, patch
+
+import openpyxl
+
 from pynetappfoundry.cli.commands.reports.inventory import (
+    _COL_WIDTHS,
+    _HEADERS,
+    InventoryReport,
     _cloud_type,
     _license_expiration,
     _node_mgmt_ip,
@@ -135,3 +144,75 @@ class TestLicenseExpiration:
             ),
         ]
         assert _license_expiration(packages) == ""
+
+
+class TestInventoryWorkbook:
+    """Read-back tests of the saved inventory workbook."""
+
+    @staticmethod
+    def _build(tmp_path: Path) -> Any:
+        config = MagicMock()
+        config.find_closest.return_value = {"ip": "10.9.9.9", "azure": {"vmname": "conn-vm"}}
+        clusters: dict[str, Any] = {
+            "cl1": {"ip": "10.0.0.1", "div": "D", "bu": "B", "env": "Prod", "contacts": "a@b.c"},
+            "cl2": {"div": "D2"},
+        }
+        with patch("pynetappfoundry.cli.commands.reports.inventory.DataSource") as ds:
+            ds.return_value.query.return_value.first.return_value = None
+            report = InventoryReport(config, clusters)
+            report.build()
+        path = tmp_path / "inv.xlsx"
+        report.save(str(path))
+        return openpyxl.load_workbook(path)
+
+    def test_sheet_headers_and_values(self, tmp_path: Path) -> None:
+        wb = self._build(tmp_path)
+        assert wb.sheetnames == ["NetApps"]
+        ws = wb["NetApps"]
+        assert [c.value for c in ws[1]] == _HEADERS
+        assert ws.cell(row=2, column=1).value == "cl1"
+        assert ws.cell(row=2, column=2).value == "D"
+        assert ws.cell(row=3, column=1).value == "cl2"
+        assert ws.cell(row=2, column=23).value == "NA"
+
+    def test_hyperlinks(self, tmp_path: Path) -> None:
+        ws = self._build(tmp_path)["NetApps"]
+        sys_mgr = ws.cell(row=2, column=16)
+        assert sys_mgr.value == "https://10.0.0.1"
+        assert sys_mgr.hyperlink is not None
+        assert sys_mgr.hyperlink.target == "https://10.0.0.1"
+        assert ws.cell(row=2, column=17).hyperlink.target == "https://10.9.9.9/"
+        assert ws.cell(row=3, column=16).hyperlink is None
+        assert ws.cell(row=3, column=16).value in (None, "")
+
+    def test_layout(self, tmp_path: Path) -> None:
+        ws = self._build(tmp_path)["NetApps"]
+        assert ws.freeze_panes == "A2"
+        assert ws.auto_filter.ref == "A1:AG1"
+        assert ws.row_dimensions[1].height == 30
+        # openpyxl groups adjacent equal-width columns into one min..max entry.
+        widths: dict[int, float] = {}
+        for dim in ws.column_dimensions.values():
+            for idx in range(dim.min, dim.max + 1):
+                widths[idx] = dim.width
+        for idx, width in enumerate(_COL_WIDTHS, 1):
+            assert abs(widths[idx] - width) < 1
+
+    def test_formats(self, tmp_path: Path) -> None:
+        ws = self._build(tmp_path)["NetApps"]
+        header = ws.cell(row=1, column=1)
+        assert header.fill.fgColor.rgb.endswith("1F4E79")
+        assert header.font.bold
+        assert header.font.color.rgb.endswith("FFFFFF")
+        assert header.font.name == "Calibri"
+        assert header.font.size == 11
+        assert header.alignment.vertical == "top"
+        body = ws.cell(row=2, column=1)
+        assert body.font.size == 10
+        assert not body.alignment.wrap_text
+        assert ws.cell(row=2, column=5).alignment.wrap_text
+        assert ws.cell(row=2, column=32).alignment.wrap_text
+        assert not ws.cell(row=2, column=7).alignment.wrap_text
+        link = ws.cell(row=2, column=16)
+        assert link.font.underline == "single"
+        assert link.font.color.rgb.endswith("0563C1")

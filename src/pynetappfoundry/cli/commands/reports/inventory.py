@@ -9,12 +9,10 @@ from __future__ import annotations
 
 import re
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 import click
-import openpyxl
-from openpyxl.styles import Alignment, Font, PatternFill
-from openpyxl.utils import get_column_letter
 
 from pynetappfoundry.cli.decorators import with_config
 from pynetappfoundry.cli.options import filter_option
@@ -26,6 +24,7 @@ from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
 from pynetappfoundry.models.ontap.cluster.licensing.licenses import OntapLicensePackageResponse
 from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
 from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
+from pynetappfoundry.utils.excel import ExcelWorkbook
 
 # Maps cloud provider region codes to human-readable site names.
 _REGION_TO_SITE: dict[str, str] = {
@@ -90,6 +89,9 @@ _HEADERS = [
     "Load-Balancers",
     "Remark",
 ]
+
+# 0-based columns whose text wraps (Contacts, Notes, and the trailing free-text columns).
+_WRAP_COLS = frozenset({4, 5, 28, 29, 30, 31})
 
 # Column widths (approximate, in character units)
 _COL_WIDTHS = [
@@ -169,31 +171,7 @@ class InventoryReport:
     def __init__(self, config: Config, clusters: dict[str, Any]) -> None:
         self.config = config
         self.clusters = clusters
-        self.wb = openpyxl.Workbook()
-        self.ws = self.wb.active
-        self.ws.title = "NetApps"
-
-        self._header_fill = PatternFill("solid", fgColor="1F4E79")
-        self._header_font = Font(name="Calibri", bold=True, color="FFFFFF", size=11)
-        self._body_font = Font(name="Calibri", size=10)
-        self._link_font = Font(name="Calibri", size=10, color="0563C1", underline="single")
-        self._wrap = Alignment(wrap_text=True, vertical="top")
-        self._top = Alignment(vertical="top")
-
-    def _write_headers(self) -> None:
-        """Write the header row with formatting."""
-        for col_idx, header in enumerate(_HEADERS, 1):
-            cell = self.ws.cell(row=1, column=col_idx, value=header)
-            cell.fill = self._header_fill
-            cell.font = self._header_font
-            cell.alignment = self._top
-        self.ws.row_dimensions[1].height = 30
-        self.ws.freeze_panes = "A2"
-        self.ws.auto_filter.ref = f"A1:{get_column_letter(len(_HEADERS))}1"
-
-    def _set_col_widths(self) -> None:
-        for col_idx, width in enumerate(_COL_WIDTHS, 1):
-            self.ws.column_dimensions[get_column_letter(col_idx)].width = width
+        self.rows: list[list[Any]] = []
 
     def _collect_cloud_meta(
         self,
@@ -340,37 +318,61 @@ class InventoryReport:
         ]
 
     def build(self) -> None:
-        """Build the full workbook."""
-        self._write_headers()
-
+        """Collect one data row per cluster."""
         ds = DataSource(self.config)
-        for row_idx, (name, entry) in enumerate(self.clusters.items(), start=2):
+        self.rows = []
+        for name, entry in self.clusters.items():
             cluster_info = ds.query(ClusterInfo, cluster=name, source="auto").first()
             nodes = list(ds.query(OntapNodeResponse, cluster=name, source="auto"))
             licenses = list(ds.query(OntapLicensePackageResponse, cluster=name, source="auto"))
             cloud_meta = self._collect_cloud_meta(entry, cluster_info)
+            self.rows.append(
+                self._build_row(name, entry, cluster_info, nodes, licenses, cloud_meta)
+            )
 
-            row_data = self._build_row(name, entry, cluster_info, nodes, licenses, cloud_meta)
+    def save(self, path: str | Path) -> None:
+        """Write the collected rows to an Excel file."""
+        wb = ExcelWorkbook(path)
+        sheet = wb.add_sheet("NetApps")
+        ws = sheet.worksheet
 
-            for col_idx, value in enumerate(row_data, 1):
-                wrap_cols = {5, 6, 29, 30, 31, 32}
+        base = {"font_name": "Calibri", "valign": "top"}
+        header_fmt = wb.add_format(
+            {
+                **base,
+                "font_size": 11,
+                "bold": True,
+                "font_color": "#FFFFFF",
+                "bg_color": "#1F4E79",
+                "pattern": 1,
+            }
+        )
+        body_fmt = wb.add_format({**base, "font_size": 10})
+        body_wrap = wb.add_format({**base, "font_size": 10, "text_wrap": True})
+        link_props = {**base, "font_size": 10, "font_color": "#0563C1", "underline": 1}
+        link_fmt = wb.add_format(link_props)
+        link_wrap = wb.add_format({**link_props, "text_wrap": True})
+
+        sheet.append(_HEADERS, header_fmt)
+        ws.set_row(0, 30)
+        ws.freeze_panes(1, 0)
+        ws.autofilter(0, 0, 0, len(_HEADERS) - 1)
+        for col, width in enumerate(_COL_WIDTHS):
+            ws.set_column(col, col, width)
+
+        for row_idx, row_data in enumerate(self.rows, start=1):
+            for col, value in enumerate(row_data):
+                wrap = col in _WRAP_COLS
                 if isinstance(value, tuple):
                     display, url = value
-                    cell = self.ws.cell(row=row_idx, column=col_idx, value=display)
                     if url:
-                        cell.hyperlink = url
-                    cell.font = self._link_font if url else self._body_font
-                    cell.alignment = self._wrap if col_idx in wrap_cols else self._top
-                else:
-                    cell = self.ws.cell(row=row_idx, column=col_idx, value=value)
-                    cell.font = self._body_font
-                    cell.alignment = self._wrap if col_idx in wrap_cols else self._top
-
-        self._set_col_widths()
-
-    def save(self, path: str) -> None:
-        """Save the workbook to disk."""
-        self.wb.save(path)
+                        ws.write_url(
+                            row_idx, col, url, link_wrap if wrap else link_fmt, string=display
+                        )
+                        continue
+                    value = display
+                ws.write(row_idx, col, value, body_wrap if wrap else body_fmt)
+        wb.close()
 
 
 @click.command()
@@ -396,6 +398,6 @@ def inventory(
 
     report = InventoryReport(config, clusters)
     report.build()
-    report.save(str(filename))
+    report.save(filename)
 
     print_success(f"Report saved to {filename}")
