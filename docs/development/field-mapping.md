@@ -143,6 +143,11 @@ from pynetappfoundry.cache.<api_type>.<api_path>.model import <TypeModel>
 model_registry.register_mapping("<Type>", <TYPE>_MAPPING)
 ```
 
+> **Note:** After adding, renaming or removing a hand-written `mapping.py`, run
+> `uv run doit mapping_index` so the lazy registry can find it
+> ([ADR-0023](../decisions/0023-register-cache-mappings-lazily-from-a-generated-index.md)).
+> `uv run doit mapping_index --check` reports a stale index.
+
 > **Note:** For API-collected types, use `api_path` only — do not add
 > `cli_field`. The `cli_field` and `cli_transform` attributes are reserved
 > for types that require CLI parsing (see [CLI Fields](#cli-fields) below).

@@ -14,20 +14,10 @@ Infrastructure (DB, collector, diff, registry) is imported from here::
     from pynetappfoundry.cache import ClusterMetadataDB, MetadataCollector
 """
 
-# Trigger mapping registration -- each sub-package __init__.py imports
-# its mapping.py which calls model_registry.register_mapping().
-# Walk the cache.ontap tree and import every mapping.py module so that
-# each TypeMapping calls model_registry.register_mapping() at import time.
-# The explicit sub-package imports above only load the model sub-modules;
-# without this walk, mapping.py modules that are not transitively imported
-# elsewhere would never register, and ``fetchers.fetch(model_class)`` /
-# ``DataSource._resolve_mapping(model_class)`` would fail at runtime with
-# "no TypeMapping registered for model class <...>".
-import importlib as _importlib
-import pkgutil as _pkgutil
-
-import pynetappfoundry.cache.dii as _dii_pkg
-import pynetappfoundry.cache.ontap as _ontap_pkg
+# Hand-written mapping sub-packages are imported explicitly: each sub-package
+# ``__init__`` imports its ``mapping.py``.  Every other mapping registers lazily on first
+# lookup through the generated ``_mapping_index`` (ADR-0023), so startup does not import
+# the ~470 ``mapping.py`` modules.  Run ``doit mapping_index`` after adding or removing one.
 import pynetappfoundry.cache.ontap.cloud.metadata  # noqa: F401
 import pynetappfoundry.cache.ontap.cloud.targets  # noqa: F401
 import pynetappfoundry.cache.ontap.cluster.licensing.licenses  # noqa: F401
@@ -55,36 +45,7 @@ import pynetappfoundry.cache.ontap.storage.snapshot_policies  # noqa: F401
 import pynetappfoundry.cache.ontap.storage.volumes  # noqa: F401
 import pynetappfoundry.cache.ontap.svm.peers  # noqa: F401
 import pynetappfoundry.cache.ontap.svm.svms  # noqa: F401
-
-for _modinfo in _pkgutil.walk_packages(
-    _ontap_pkg.__path__,
-    prefix="pynetappfoundry.cache.ontap.",
-):
-    if _modinfo.name.endswith(".mapping"):
-        _importlib.import_module(_modinfo.name)
-
-# Walk the cache.dii tree the same way so DII mappings register at
-# import time.  This PR lands only two DII endpoints (the minimum
-# needed for the shared-schema round-trip test, #603); the full
-# ~191-endpoint DII surface is generated under #600.
-for _modinfo in _pkgutil.walk_packages(
-    _dii_pkg.__path__,
-    prefix="pynetappfoundry.cache.dii.",
-):
-    if _modinfo.name.endswith(".mapping"):
-        _importlib.import_module(_modinfo.name)
-
-del _modinfo, _importlib, _pkgutil, _ontap_pkg, _dii_pkg
-
-from pynetappfoundry.cache._registry import model_registry as _reg  # noqa: E402
-
-# Apply package-default TOML overlay field strategies
-from pynetappfoundry.cache.overlay_loader import load_overlays as _load_overlays  # noqa: E402
-
-_load_overlays(_reg)
-del _load_overlays, _reg
-
-from pynetappfoundry.cache._base import (  # noqa: E402
+from pynetappfoundry.cache._base import (
     METADATA_SCHEMA_MIN_COMPATIBLE,
     METADATA_SCHEMA_VERSION,
     CacheModel,
@@ -95,35 +56,35 @@ from pynetappfoundry.cache._base import (  # noqa: E402
 )
 
 # Container models and metadata
-from pynetappfoundry.cache._lazy import LazyClusterMetadata  # noqa: E402
-from pynetappfoundry.cache._metadata import (  # noqa: E402
+from pynetappfoundry.cache._lazy import LazyClusterMetadata
+from pynetappfoundry.cache._metadata import (
     CachedClusterMetadata,
     RelationshipsInfo,
 )
 
 # Layer 1: Registry
-from pynetappfoundry.cache._registry import model_registry  # noqa: E402
+from pynetappfoundry.cache._registry import model_registry
 
 # Infrastructure (collector, db, diff, etc.)
-from pynetappfoundry.cache.collector import (  # noqa: E402
+from pynetappfoundry.cache.collector import (
     CollectionError,
     CollectionPhase,
     MetadataCollector,
     ProgressCallback,
     ProgressInfo,
 )
-from pynetappfoundry.cache.db import ClusterMetadataDB  # noqa: E402
-from pynetappfoundry.cache.diff import ChangeEntry, compute_diff, format_diff_summary  # noqa: E402
-from pynetappfoundry.cache.fetchers import fetch  # noqa: E402
-from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping  # noqa: E402
-from pynetappfoundry.cache.history_db import CacheHistoryDB  # noqa: E402
-from pynetappfoundry.cache.query_engine import (  # noqa: E402
+from pynetappfoundry.cache.db import ClusterMetadataDB
+from pynetappfoundry.cache.diff import ChangeEntry, compute_diff, format_diff_summary
+from pynetappfoundry.cache.fetchers import fetch
+from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
+from pynetappfoundry.cache.history_db import CacheHistoryDB
+from pynetappfoundry.cache.query_engine import (
     ParsedFilter,
     SQLCondition,
     parse_filter,
     parse_filters,
 )
-from pynetappfoundry.models.ontap.cluster.mediators.model import OntapMediatorResponse  # noqa: E402
+from pynetappfoundry.models.ontap.cluster.mediators.model import OntapMediatorResponse
 
 __all__ = [
     "METADATA_SCHEMA_MIN_COMPATIBLE",

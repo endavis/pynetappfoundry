@@ -85,12 +85,20 @@ with a `CacheModel = OntapModel` alias in `cache._base` for backward compatibili
 Auto-registration via `__init_subclass__` was removed; model discovery uses the
 `ModelRegistry` singleton exclusively.
 
+### Lazy mapping registration (Issue #903)
+
+Generated mappings no longer register as an import side effect of the `__init__.py` chain.
+`src/pynetappfoundry/cache/__init__.py` stopped walking `cache/ontap` and `cache/dii`; the `model_registry`
+singleton imports an indexed `mapping.py` on first lookup, from a generated index. See
+[ADR-0023](0023-register-cache-mappings-lazily-from-a-generated-index.md).
+
 ## Related Issues
 
 - Issue #257: refactor: deep URL-tree structure with automatic model and mapping discovery
 - Issue #295: refactor: align cache field names and containers with ONTAP API endpoint hierarchy
 - Issue #314: refactor: namespace cache models under api-type directories
 - Issue #402: refactor: move ONTAP API models from cache/ to models/ package
+- Issue #903: perf: lazy model registration and lazy jsonschema import to cut CLI startup
 
 ## Related Documentation
 

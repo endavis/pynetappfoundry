@@ -8,10 +8,12 @@ from pathlib import Path
 import pytest
 from pydantic import BaseModel
 
+from pynetappfoundry.cache import overlay_loader
 from pynetappfoundry.cache._registry import ModelRegistry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.cache.overlay_loader import (
     apply_overlay_to_mapping,
+    apply_package_overlay,
     discover_toml_overlays,
     load_overlay,
     load_overlays,
@@ -342,3 +344,25 @@ class TestLoadOverlays:
             loader._PACKAGE_OVERLAY_ROOT = original_root
 
         assert count == 1
+
+
+class TestApplyPackageOverlay:
+    """Tests for apply_package_overlay (#903)."""
+
+    def test_applies_overlay_relative_to_package_root(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        _write_toml(
+            tmp_path / "dummy" / "dummy.toml",
+            '[endpoint]\nclass_name = "DummyModel"\n\n[fields.size]\ncache_strategy = "realtime"\n',
+        )
+        monkeypatch.setattr(overlay_loader, "_PACKAGE_OVERLAY_ROOT", tmp_path)
+        result = apply_package_overlay(_make_mapping(), "dummy/dummy.toml")
+        by_attr = {f.cache_attr: f for f in result.fields}
+        assert by_attr["size"].cache_strategy == "realtime"
+        assert by_attr["name"].cache_strategy == "cache"
+
+    def test_missing_overlay_raises(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(overlay_loader, "_PACKAGE_OVERLAY_ROOT", tmp_path)
+        with pytest.raises(FileNotFoundError):
+            apply_package_overlay(_make_mapping(), "absent.toml")

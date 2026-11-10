@@ -141,3 +141,4 @@ The Issue contains the full discussion; the ADR summarizes the outcome.
 | [0020](0020-label-nf-cache-query-wildcard-results-with-their-source-item.md) | Label nf cache query wildcard results with their source item | Accepted |
 | [0021](0021-collect-cli-only-ontap-data-through-the-private-cli-rest-passthrough.md) | Collect CLI-only ONTAP data through the private CLI REST passthrough | Accepted |
 | [0022](0022-one-cli-error-exit-convention-raise-clierror.md) | One CLI error-exit convention: raise CliError | Accepted |
+| [0023](0023-register-cache-mappings-lazily-from-a-generated-index.md) | Register cache mappings lazily from a generated index | Accepted |

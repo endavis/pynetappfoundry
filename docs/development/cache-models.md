@@ -579,17 +579,36 @@ model_registry.register_mapping("OntapVolume", ONTAPVOLUME_MAPPING)
 
 ### Import Chain
 
-The `__init__.py` chain in `cache/` triggers model and mapping imports,
-so registration happens automatically when the `cache` package is imported:
+Mappings register lazily ([ADR-0023](../decisions/0023-register-cache-mappings-lazily-from-a-generated-index.md)).
+`src/pynetappfoundry/cache/__init__.py` imports only the hand-written mapping sub-packages explicitly; each
+sub-package `__init__` imports its model and its `mapping.py`, which registers on
+`model_registry`:
 
 ```
 cache/__init__.py
-  → cache/ontap/storage/__init__.py
-    → cache/ontap/storage/volumes/__init__.py
-      → imports models.ontap.storage.volumes.model (OntapVolume)
-      → imports cache.ontap.storage.volumes.mapping (ONTAPVOLUME_MAPPING)
-      → registers both via model_registry
+  → cache/ontap/cluster/nodes/__init__.py
+    → imports models.ontap.cluster.nodes.model (OntapNodeResponse)
+    → imports cache.ontap.cluster.nodes.mapping (registers via model_registry)
 ```
+
+Every other mapping is loaded on first lookup. The generated
+`src/pynetappfoundry/cache/_mapping_index.py` maps each registered name to its `mapping.py` module, model class and
+TOML overlay, so `model_registry.get_mapping(name)` or `get_mapping_by_model_class(cls)` imports
+only the module it needs and applies the package overlay once. `model_registry.mappings` imports
+all of them.
+
+After adding, renaming or removing any `mapping.py`, run:
+
+```bash
+uv run doit mapping_index           # regenerate the index
+uv run doit mapping_index --check   # fail with a diff if it is stale; writes nothing
+```
+
+`doit generate_models` regenerates the index itself. If the index is stale, a lookup miss on the
+singleton runs one `pkgutil.walk_packages` pass, imports only the unindexed modules (never the indexed ones) and logs
+`mapping index is stale: <module> is not indexed; run doit mapping_index`. A test fails when the
+committed index differs from the package. A mapping renamed inside an already-indexed file is not
+found by its new name until `doit mapping_index` runs.
 
 ### Three-Layer Import Hierarchy
 
@@ -624,8 +643,8 @@ The mapping's `api_endpoint` is the passthrough path without `/api`, for example
 To add one:
 
 1. Write the model and mapping under `private/cli/<command path>/`, with an
-   `__init__.py` in each new directory. The `src/pynetappfoundry/cache/__init__.py` walk registers
-   the mapping.
+   `__init__.py` in each new directory. Run `uv run doit mapping_index` so the lazy
+   registry can find the mapping.
 2. Add a list field to a container model (`StorageInfo.svm_web_services`) and a
    task to that container's collector phase. Tolerate failure there: a role
    without private CLI access must not fail the refresh.
