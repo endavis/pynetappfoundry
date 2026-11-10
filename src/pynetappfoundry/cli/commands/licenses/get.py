@@ -29,7 +29,6 @@ LicenseRow = tuple[str, str, str, str, str]
 @csv_option(param_name="csv_output", help_text="Output to CSV file instead of console table.")
 @click.option(
     "--output",
-    "-o",
     "output_file",
     type=click.Path(),
     default=None,

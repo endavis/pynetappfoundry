@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable
+from pathlib import Path
 
 import click
 import pytest
@@ -170,3 +171,17 @@ class TestTopLevelHandler:
         result = runner.invoke(nf, ["--no-such-option"])
         assert result.exit_code == 2
         assert "Unexpected error" not in result.output
+
+
+class TestGroupOutputDirShortOption:
+    """The `nf` group keeps `-o` for `--output-dir`; subcommands dropped it (#943)."""
+
+    def test_group_accepts_short_o(self, tmp_path: Path) -> None:
+        """`nf -o DIR --help` parses `-o` as the group's `--output-dir`."""
+        result = CliRunner().invoke(nf, ["-o", str(tmp_path), "--help"])
+        assert result.exit_code == 0, result.output
+
+    def test_group_declares_short_o(self) -> None:
+        """`-o` is an alias of `--output-dir` on the group."""
+        opt = next(p for p in nf.params if p.name == "output_dir")
+        assert "-o" in opt.opts

@@ -312,3 +312,19 @@ class TestLiveFlag:
 
         assert result.exit_code == 0, result.output
         assert captured.get("no_cache") is False
+
+
+class TestOutputOption:
+    """`--output` is the only spelling; the short `-o` was dropped (#943)."""
+
+    def test_short_o_rejected(self, tmp_path: Path) -> None:
+        """`-o` is not an option of `licenses get`."""
+        result = CliRunner().invoke(get, ["--csv", "-o", str(tmp_path / "l.csv")])
+        assert result.exit_code != 0
+        assert "No such option" in result.output
+
+    def test_long_output_accepted(self) -> None:
+        """`--output` is declared and `-o` is not."""
+        opt = next(p for p in get.params if p.name == "output_file")
+        assert opt.opts == ["--output"]
+        assert opt.secondary_opts == []
