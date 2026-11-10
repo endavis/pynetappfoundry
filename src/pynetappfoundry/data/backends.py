@@ -23,9 +23,10 @@ from pydantic import BaseModel
 
 from pynetappfoundry.cache import fetch
 from pynetappfoundry.cache.fetchers import _resolve_dotted_attr
-from pynetappfoundry.cache.field_mapping import parse_api_response
+from pynetappfoundry.cache.field_mapping import parse_api_record, parse_api_response
 from pynetappfoundry.core.models import PaginationConfig
 from pynetappfoundry.data._merge import merge_models
+from pynetappfoundry.utils.dict_path import PathNotFoundError, get_nested_value
 
 if TYPE_CHECKING:
     from pynetappfoundry.cache.db import ClusterMetadataDB
@@ -40,6 +41,13 @@ logger = logging.getLogger(__name__)
 T = TypeVar("T", bound=BaseModel)
 
 _BATCH_SIZE = 100
+
+# Raw ONTAP query-string control params that can arrive in the ``filters``
+# dict (QuerySet merges ``order_by`` / ``max_records`` into it). They are not
+# record fields, so a singleton GET must not treat them as equality filters.
+_ONTAP_CONTROL_KEYS = frozenset(
+    {"fields", "return_records", "return_timeout", "order_by", "max_records"}
+)
 """Default chunk size for identifier-filtered live fetches.
 
 ``_fetch_live_by_identifiers`` and ``_fetch_live_by_parent`` split
@@ -280,6 +288,8 @@ class OntapBackend(Backend):
             The count from ``num_records``, or ``0`` if the response is
             empty / not a dict.
         """
+        if mapping.response_shape == "singleton":
+            return 0 if self._fetch_singleton_raw(mapping, cluster, filters, ()) is None else 1
         client = self._get_api_client(cluster)
         url = self._build_live_url(
             mapping,
@@ -358,6 +368,47 @@ class OntapBackend(Backend):
 
         return urlunparse(parsed._replace(query=urlencode(query, doseq=True)))
 
+    def _fetch_singleton_raw(
+        self,
+        mapping: TypeMapping,
+        cluster: str,
+        filters: dict[str, Any],
+        live_fields: tuple[str, ...],
+    ) -> dict[str, Any] | None:
+        """GET a singleton endpoint and return its record, or ``None``.
+
+        Mirrors :func:`pynetappfoundry.cache.fetchers.fetch` for singleton
+        mappings: ``call_endpoint`` (no pagination, no ``records`` envelope).
+        ``live_fields`` narrows the ``fields=`` query. A singleton GET has no
+        server-side filtering, so equality *filters* (dotted API paths) are
+        applied client-side, comparing as strings like the URL path does;
+        a non-matching record yields ``None``.
+
+        ONTAP control keys (:data:`_ONTAP_CONTROL_KEYS`) in *filters* are not
+        record fields: they are neither sent nor matched. A singleton has one
+        record, so ``order_by`` and ``max_records >= 1`` are no-ops, while
+        ``max_records <= 0`` asks for zero records and returns ``None``
+        without any network call.
+        """
+        max_records = filters.get("max_records")
+        if max_records is not None and int(max_records) <= 0:
+            return None
+        client = self._get_api_client(cluster)
+        url = self._build_live_url(mapping, {}, live_fields)
+        response = client.call_endpoint(url, method="GET")
+        if not response or not isinstance(response, dict):
+            return None
+        for key, expected in filters.items():
+            if key in _ONTAP_CONTROL_KEYS:
+                continue
+            try:
+                actual = get_nested_value(response, key)
+            except PathNotFoundError:
+                return None
+            if str(actual) != str(expected):
+                return None
+        return response
+
     def _fetch_live_filtered(
         self,
         model_class: type[T],
@@ -378,6 +429,12 @@ class OntapBackend(Backend):
         also passed to :class:`PaginationConfig` to stop paging once that
         many records are collected (#872).
         """
+        if mapping.response_shape == "singleton":
+            record = self._fetch_singleton_raw(mapping, cluster, filters, live_fields)
+            if record is None:
+                return []
+            parsed_one = parse_api_record(mapping, record, f"OntapBackend<{mapping.name}>")
+            return [parsed_one] if isinstance(parsed_one, model_class) else []
         client = self._get_api_client(cluster)
         url = self._build_live_url(mapping, filters, live_fields)
         max_records = filters.get("max_records")
