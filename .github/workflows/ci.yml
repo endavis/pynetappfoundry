@@ -141,8 +141,14 @@ jobs:
       - name: Install dependencies
         run: uv sync --all-extras --dev
 
+      # Project steps, not from the template (#938): install_tools downloads age
+      # and sops from GitHub releases; the runners share an IP pool, so
+      # unauthenticated API calls hit the rate limit. Pass the job token
+      # (contents: read, set at the top of this file).
       - name: Install SOPS tools (Linux)
         if: runner.os == 'Linux'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           uv run doit install_tools
           echo "$HOME/.local/bin" >> $GITHUB_PATH
@@ -154,6 +160,8 @@ jobs:
 
       - name: Install SOPS tools (Windows)
         if: runner.os == 'Windows'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: pwsh
         run: |
           uv run doit install_tools

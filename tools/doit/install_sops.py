@@ -7,6 +7,10 @@ Kept separate from ``install_tools.py`` (the reusable framework synced
 from the upstream pyproject-template) so template refreshes do not
 overwrite these project-specific tasks.
 
+Project-owned: this module was dropped from pyproject-template, and the
+package uses SOPS through ``src/pynetappfoundry/utils/sops.py``, so
+template-sync must not remove it (#938).
+
 The ``_install_age`` helper is custom because the upstream framework's
 ``extract_binaries`` parameter is a single list applied across all
 platforms, which cannot express ``age`` vs ``age.exe`` per OS. Once
