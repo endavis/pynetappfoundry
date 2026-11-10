@@ -151,6 +151,7 @@ nav:
           - Azure SMB Impact Tracking: plans/azure-smb-impact-tracking.md
           - Cache Query Command: plans/cache-query-command.md
           - First-Pass Refactor: plans/first-pass-refactor.md
+          - Subsystem Audit (2026-11): plans/subsystem-audit-2026-11.md
   - Deployment:
       - Development: deployment/development.md
       - Production: deployment/production.md
