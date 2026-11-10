@@ -7,6 +7,7 @@ import traceback
 
 import click
 from rich.console import Console
+from rich.markup import escape
 from rich.table import Table
 
 logger = logging.getLogger(__name__)
@@ -53,7 +54,7 @@ def print_success(message: str) -> None:
     Args:
         message: Message to print.
     """
-    console.print(f"[green]{message}[/green]")
+    console.print(f"[green]{escape(message)}[/green]")
     logger.info(message)
 
 
@@ -63,7 +64,7 @@ def print_error(message: str) -> None:
     Args:
         message: Message to print.
     """
-    console.print(f"[red]{message}[/red]")
+    console.print(f"[red]{escape(message)}[/red]")
     logger.error(message)
 
 
@@ -73,7 +74,7 @@ def print_warning(message: str) -> None:
     Args:
         message: Message to print.
     """
-    console.print(f"[yellow]{message}[/yellow]")
+    console.print(f"[yellow]{escape(message)}[/yellow]")
     logger.warning(message)
 
 
@@ -83,7 +84,7 @@ def print_info(message: str) -> None:
     Args:
         message: Message to print.
     """
-    console.print(f"[blue]{message}[/blue]")
+    console.print(f"[blue]{escape(message)}[/blue]")
     logger.info(message)
 
 
@@ -98,13 +99,13 @@ def print_exception(message: str, exc: BaseException | None = None) -> None:
              the full traceback will be printed to console. If provided,
              logger.exception is used for full traceback in log file.
     """
-    console.print(f"[red]{message}[/red]")
+    console.print(f"[red]{escape(message)}[/red]")
     if exc:
         logger.exception(message)
     else:
         logger.error(message)
     if exc and is_debug_mode():
-        console.print("[dim]" + "".join(traceback.format_exception(exc)) + "[/dim]")
+        console.print("[dim]" + escape("".join(traceback.format_exception(exc))) + "[/dim]")
 
 
 def format_value_markup(value: object) -> str | None:
@@ -135,7 +136,7 @@ def format_value_markup(value: object) -> str | None:
     if isinstance(value, str):
         if not value:
             return "[dim](empty)[/dim]"
-        return f"[green]{value}[/green]"
+        return f"[green]{escape(value)}[/green]"
     return None
 
 
@@ -147,4 +148,4 @@ def print_debug(message: str) -> None:
     """
     logger.debug(message)
     if is_debug_mode():
-        console.print(f"[dim]{message}[/dim]")
+        console.print(f"[dim]{escape(message)}[/dim]")

@@ -7,6 +7,7 @@ from typing import Any
 
 import click
 from rich.console import Console
+from rich.markup import escape
 from rich.panel import Panel
 from rich.tree import Tree
 
@@ -68,25 +69,25 @@ def _format_value(value: Any, indent: int = 0) -> str:
         for k, v in value.items():
             formatted_v = _format_value(v, indent + 1)
             if isinstance(v, dict) and v:
-                lines.append(f"{prefix}  [cyan]{k}[/cyan]:")
+                lines.append(f"{prefix}  [cyan]{escape(str(k))}[/cyan]:")
                 lines.append(formatted_v)
             else:
-                lines.append(f"{prefix}  [cyan]{k}[/cyan]: {formatted_v}")
+                lines.append(f"{prefix}  [cyan]{escape(str(k))}[/cyan]: {formatted_v}")
         return "\n".join(lines)
     elif isinstance(value, list):
         if not value:
             return "[]"
-        return "[" + ", ".join(str(v) for v in value) + "]"
+        return escape("[" + ", ".join(str(v) for v in value) + "]")
     elif isinstance(value, str):
         if value == "********":
             return "[dim]********[/dim]"
-        return f"[green]{value}[/green]"
+        return f"[green]{escape(value)}[/green]"
     elif isinstance(value, bool):
         return f"[yellow]{value}[/yellow]"
     elif isinstance(value, (int, float)):
         return f"[magenta]{value}[/magenta]"
     else:
-        return str(value)
+        return escape(str(value))
 
 
 def _build_tree(tree: Tree, data: dict[str, Any], unmask: bool = False) -> None:
@@ -101,11 +102,11 @@ def _build_tree(tree: Tree, data: dict[str, Any], unmask: bool = False) -> None:
 
     for key, value in masked_data.items():
         if isinstance(value, dict) and value:
-            branch = tree.add(f"[bold cyan]{key}[/bold cyan]")
+            branch = tree.add(f"[bold cyan]{escape(str(key))}[/bold cyan]")
             _build_tree(branch, value, unmask=True)  # Already masked at top level
         else:
             formatted = _format_value(value)
-            tree.add(f"[cyan]{key}[/cyan]: {formatted}")
+            tree.add(f"[cyan]{escape(str(key))}[/cyan]: {formatted}")
 
 
 @click.command()
@@ -149,7 +150,7 @@ def show(ctx: click.Context, section: str | None, unmask: bool) -> None:
         print_exception(f"Failed to load configuration: {e}", e)
         ctx.exit(1)
 
-    console.print(f"\nConfiguration from: [cyan]{config_path}[/cyan]\n")
+    console.print(f"\nConfiguration from: [cyan]{escape(str(config_path))}[/cyan]\n")
 
     if unmask:
         console.print("[yellow]Warning: Sensitive values are unmasked![/yellow]\n")
@@ -159,18 +160,18 @@ def show(ctx: click.Context, section: str | None, unmask: bool) -> None:
         section_lower = section.lower()
         # Check in data first (clusters, aiqums, etc.)
         if section_lower in config.data:
-            tree = Tree(f"[bold blue]{section}[/bold blue]")
+            tree = Tree(f"[bold blue]{escape(section)}[/bold blue]")
             _build_tree(tree, config.data[section_lower], unmask)
             console.print(tree)
         # Check in settings
         elif section_lower in config.settings:
-            tree = Tree(f"[bold blue]{section}[/bold blue]")
+            tree = Tree(f"[bold blue]{escape(section)}[/bold blue]")
             _build_tree(tree, config.settings[section_lower], unmask)
             console.print(tree)
         else:
             available = list(config.data.keys()) + list(config.settings.keys())
             print_error(f"Section '{section}' not found.")
-            console.print(f"Available sections: {', '.join(available)}")
+            console.print(f"Available sections: {escape(', '.join(available))}")
             ctx.exit(1)
     else:
         # Show everything
@@ -179,14 +180,16 @@ def show(ctx: click.Context, section: str | None, unmask: bool) -> None:
             data_tree = Tree("[bold blue]Data[/bold blue]")
             for data_type, items in config.data.items():
                 if items:
-                    type_branch = data_tree.add(f"[bold]{data_type}[/bold] ({len(items)} items)")
+                    type_branch = data_tree.add(
+                        f"[bold]{escape(str(data_type))}[/bold] ({len(items)} items)"
+                    )
                     for name, item_data in items.items():
-                        item_branch = type_branch.add(f"[cyan]{name}[/cyan]")
+                        item_branch = type_branch.add(f"[cyan]{escape(str(name))}[/cyan]")
                         masked = _mask_sensitive(item_data, unmask)
                         for k, v in masked.items():
                             if k != "name":  # Skip redundant name
                                 formatted = _format_value(v)
-                                item_branch.add(f"{k}: {formatted}")
+                                item_branch.add(f"{escape(str(k))}: {formatted}")
             console.print(data_tree)
             console.print()
 

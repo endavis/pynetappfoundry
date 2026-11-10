@@ -7,6 +7,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 from click.testing import CliRunner
+from rich.errors import MarkupError
 
 from pynetappfoundry.cli.commands.utils.run_cmd import run_cmd
 from pynetappfoundry.cli.commands.utils.sqlite_to_excel import sqlite_to_excel
@@ -62,3 +63,34 @@ class TestSqliteToExcelExitCode:
         conn.close()
         result = CliRunner().invoke(sqlite_to_excel, [str(db)])
         assert result.exit_code == 0, result.output
+
+
+class TestRunCmdMarkupEscaping:
+    """Remote output and exception text with markup-like content must not crash."""
+
+    @patch("pynetappfoundry.cli.commands.utils.run_cmd.ONTAPCLI")
+    @patch("pynetappfoundry.cli.decorators.Config")
+    def test_output_line_with_closing_tag(
+        self, mock_config_cls: MagicMock, cli_cls: MagicMock
+    ) -> None:
+        mock_config_cls.return_value = _cfg()
+        cli_cls.return_value.run_command.return_value = ["foo [/x] bar"]
+
+        result = CliRunner().invoke(run_cmd, ["vol show"], obj={})
+
+        assert result.exit_code == 0, result.output
+        assert "foo [/x] bar" in result.output
+
+    @patch("pynetappfoundry.cli.commands.utils.run_cmd.ONTAPCLI")
+    @patch("pynetappfoundry.cli.decorators.Config")
+    def test_exception_text_with_closing_tag(
+        self, mock_config_cls: MagicMock, cli_cls: MagicMock
+    ) -> None:
+        mock_config_cls.return_value = _cfg()
+        cli_cls.return_value.run_command.side_effect = RuntimeError("bad [/x]")
+
+        result = CliRunner().invoke(run_cmd, ["vol show"], obj={})
+
+        assert result.exit_code != 0
+        assert "bad [/x]" in result.output
+        assert not isinstance(result.exception, MarkupError)

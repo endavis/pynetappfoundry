@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, cast
 
 import click
+from rich.markup import escape
 from rich.table import Table
 
 from pynetappfoundry.cli.decorators import with_config
@@ -132,7 +133,7 @@ def _print_table(rows: list[LicenseRow]) -> None:
     for col in COLUMNS:
         table.add_column(col)
     for row in rows:
-        table.add_row(*row)
+        table.add_row(*(escape(str(cell)) for cell in row))
     console.print(table)
 
 

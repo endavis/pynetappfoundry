@@ -417,6 +417,21 @@ class TestDumpVolume:
         for metric in _METRICS:
             assert metric in row, f"Expected metric '{metric}' in row"
 
+    def test_volume_exception_logs_exactly_one_error(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """A per-volume failure produces exactly one ERROR record (no double logging)."""
+        dii_query = MagicMock()
+        dii_query.invoke.side_effect = RuntimeError("boom [/x]")
+        db = self._make_db()
+        from_ms, to_ms = _compute_window("2025-04-13")
+
+        with caplog.at_level(logging.ERROR):
+            _dump_volume("cluster1", "vol1", "svm1", dii_query, db, from_ms, to_ms)
+
+        errors = [r for r in caplog.records if r.levelno >= logging.ERROR]
+        assert len(errors) == 1
+
 
 # ---------------------------------------------------------------------------
 # _dump_cluster

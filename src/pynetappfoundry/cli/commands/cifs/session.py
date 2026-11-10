@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import click
+from rich.markup import escape
 from rich.table import Table
 
 from pynetappfoundry.cli.decorators import with_config
@@ -255,7 +256,7 @@ def _render_table(rows: list[SessionRow], title: str) -> None:
     for col in COLUMNS:
         table.add_column(col, no_wrap=True, overflow="ignore")
     for row in rows:
-        table.add_row(*row)
+        table.add_row(*(escape(str(cell)) for cell in row))
     wide = _RichConsole(
         file=console.file,
         width=10_000,
@@ -400,7 +401,7 @@ def session(
 
     title = f"CIFS Sessions ({desc})"
     if not all_rows:
-        console.print(f"[yellow]No CIFS sessions matched ({desc}).[/yellow]")
+        console.print(f"[yellow]No CIFS sessions matched ({escape(desc)}).[/yellow]")
     else:
         _render_table(all_rows, title)
         print_info(f"Total matching sessions: {len(all_rows)}")

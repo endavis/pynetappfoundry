@@ -487,3 +487,47 @@ class TestInitSopsCommand:
             assert "already exists" in result.output
             assert "age1existingkey789" in result.output
             assert "--force" in result.output
+
+
+class TestEncryptPasswordErrorPaths:
+    """SOPS error paths of ``nf config set-credential`` print and log once, markup-safe."""
+
+    def _run(self, exc: Exception) -> tuple[int, str]:
+        import click
+
+        from pynetappfoundry.cli.commands.config.credentials import _encrypt_password
+
+        @click.command()
+        @click.pass_context
+        def cmd(ctx: click.Context) -> None:
+            _encrypt_password("pw", False, ctx)
+
+        with (
+            patch(
+                "pynetappfoundry.cli.commands.config.credentials.is_sops_installed",
+                return_value=True,
+            ),
+            patch("pynetappfoundry.cli.commands.config.credentials.get_age_key_path") as key_path,
+            patch(
+                "pynetappfoundry.cli.commands.config.credentials.get_public_key_from_file",
+                return_value="age1abc",
+            ),
+            patch("pynetappfoundry.cli.commands.config.credentials.encrypt_value", side_effect=exc),
+        ):
+            key_path.return_value.exists.return_value = True
+            result = CliRunner().invoke(cmd)
+        return result.exit_code, result.output
+
+    def test_sops_error_exits_and_renders_markup_literally(self) -> None:
+        from pynetappfoundry.utils.sops import SOPSError
+
+        code, output = self._run(SOPSError("bad [/x]"))
+        assert code == 1
+        assert "Encryption failed: bad [/x]" in output
+
+    def test_sops_not_installed_exits_and_renders_markup_literally(self) -> None:
+        from pynetappfoundry.utils.sops import SOPSNotInstalledError
+
+        code, output = self._run(SOPSNotInstalledError("no [/x] sops"))
+        assert code == 1
+        assert "no [/x] sops" in output

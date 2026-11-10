@@ -6,6 +6,7 @@ from pathlib import Path
 
 import click
 from rich.console import Console
+from rich.markup import escape
 
 from pynetappfoundry.cache import ClusterMetadataDB
 from pynetappfoundry.cli.utils import print_error, print_exception, print_success, print_warning
@@ -94,7 +95,7 @@ def clear(ctx: click.Context, cluster: str | None, clear_all: bool, force: bool)
         if not force:
             console.print(f"This will clear cache for {len(clusters)} cluster(s):")
             for c in clusters:
-                console.print(f"  - {c['cluster_name']}")
+                console.print(f"  - {escape(str(c['cluster_name']))}")
             if not click.confirm("Proceed?"):
                 console.print("Cancelled.")
                 db.close()

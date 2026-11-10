@@ -6,6 +6,7 @@ from pathlib import Path
 
 import click
 from rich.console import Console
+from rich.markup import escape
 
 from pynetappfoundry.cli.utils import print_error, print_success, print_warning
 from pynetappfoundry.core.config import VALID_DATA_TYPES, Config
@@ -50,7 +51,7 @@ def _encrypt_password(password: str, no_encrypt: bool, ctx: click.Context) -> st
             ctx.exit(1)
 
         public_key = get_public_key_from_file(key_path)
-        console.print(f"Encrypting with key: {public_key[:20]}...")
+        console.print(f"Encrypting with key: {escape(public_key[:20])}...")
 
         encrypted = encrypt_value(password, public_key)
         print_success("Password encrypted successfully.")
@@ -59,11 +60,9 @@ def _encrypt_password(password: str, no_encrypt: bool, ctx: click.Context) -> st
     except SOPSNotInstalledError as e:
         print_error(str(e))
         ctx.exit(1)
-        raise SystemExit(1) from None  # Unreachable but satisfies type checker
     except SOPSError as e:
         print_error(f"Encryption failed: {e}")
         ctx.exit(1)
-        raise SystemExit(1) from None  # Unreachable but satisfies type checker
 
 
 @click.command("set-credential")
@@ -165,7 +164,7 @@ def _set_cluster_credential(
         print_error(f"Cluster '{cluster}' not found in configuration.")
         available = list(config.data.get("clusters", {}).keys())
         if available:
-            console.print(f"Available clusters: {', '.join(available)}")
+            console.print(f"Available clusters: {escape(', '.join(available))}")
         ctx.exit(1)
 
     # Find and update the cluster's config file
@@ -177,8 +176,8 @@ def _set_cluster_credential(
     try:
         _update_cluster_credentials(cluster_file, cluster, user, encrypted_password)
         print_success(f"Credentials updated for cluster '{cluster}'")
-        console.print(f"  File: {cluster_file}")
-        console.print(f"  User: {user}")
+        console.print(f"  File: {escape(str(cluster_file))}")
+        console.print(f"  User: {escape(user)}")
         _print_password_status(encrypted_password)
     except Exception as e:
         print_error(f"Failed to update configuration: {e}")
@@ -198,8 +197,8 @@ def _set_type_credential(
     try:
         _update_users_credentials(users_file, cred_type, user, encrypted_password)
         print_success(f"Default credentials updated for type '{cred_type}'")
-        console.print(f"  File: {users_file}")
-        console.print(f"  User: {user}")
+        console.print(f"  File: {escape(str(users_file))}")
+        console.print(f"  User: {escape(user)}")
         _print_password_status(encrypted_password)
     except Exception as e:
         print_error(f"Failed to update configuration: {e}")

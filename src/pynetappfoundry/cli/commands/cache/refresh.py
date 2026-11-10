@@ -17,6 +17,7 @@ from types import TracebackType
 
 import click
 from rich.console import Console
+from rich.markup import escape
 from rich.progress import Progress, SpinnerColumn, TaskID, TextColumn
 
 from pynetappfoundry.cache import (
@@ -89,24 +90,25 @@ class VerboseProgressDisplay:
             # In buffered mode these \r-terminated lines are replayed on a real
             # terminal later, causing cursor-jump garbling — skip them entirely.
             if not self.buffered:
-                self.console.print(f"  [dim]|-[/dim] {info.phase_name}...", end="\r")
+                self.console.print(f"  [dim]|-[/dim] {escape(info.phase_name)}...", end="\r")
         elif info.status == "completed":
             self.phase_times[info.phase] = info.elapsed_seconds
-            source_str = f" [dim]({info.source})[/dim]" if info.source else ""
-            line = f"  [green]|-[/green] {info.phase_name:<20} "
+            source_str = f" [dim]({escape(str(info.source))})[/dim]" if info.source else ""
+            line = f"  [green]|-[/green] {escape(info.phase_name):<20} "
             line += f"{info.elapsed_seconds:>5.1f}s{source_str}"
             self.console.print(line)
         elif info.status == "failed":
             self.phase_times[info.phase] = info.elapsed_seconds
-            error_str = f" - {info.error}" if info.error else ""
-            line = f"  [red]|-[/red] {info.phase_name:<20} "
+            error_str = f" - {escape(str(info.error))}" if info.error else ""
+            line = f"  [red]|-[/red] {escape(info.phase_name):<20} "
             line += f"{info.elapsed_seconds:>5.1f}s [red]FAILED{error_str}[/red]"
             self.console.print(line)
 
     def print_header(self) -> None:
         """Print the cluster header."""
         self.console.print(
-            f"\n[bold][{self.cluster_index}/{self.total_clusters}] {self.cluster_name}[/bold]"
+            f"\n[bold][{self.cluster_index}/{self.total_clusters}] "
+            f"{escape(self.cluster_name)}[/bold]"
         )
 
     def print_summary(self, success: bool) -> None:
@@ -185,7 +187,6 @@ def refresh(
     config_path = Path.cwd() / config_dir
     if not config_path.exists():
         print_error(f"Configuration directory not found: {config_path}")
-        logger.error("Configuration directory not found: %s", config_path)
         ctx.exit(1)
 
     try:
@@ -196,7 +197,6 @@ def refresh(
         )
     except Exception as e:
         print_exception(f"Failed to load configuration: {e}", e)
-        logger.exception("Failed to load configuration")
         ctx.exit(1)
 
     # Parse filter if provided
@@ -209,7 +209,6 @@ def refresh(
             filter_dict = json.loads(filter_str)
         except json.JSONDecodeError as e:
             print_error(f"Invalid filter JSON: {e}")
-            logger.error("Invalid filter JSON: %s", e)
             ctx.exit(1)
 
     # Determine clusters to refresh
@@ -218,8 +217,7 @@ def refresh(
             print_error(f"Cluster '{cluster}' not found in configuration.")
             available = list(config.data.get("clusters", {}).keys())
             if available:
-                console.print(f"Available clusters: {', '.join(available)}")
-            logger.error("Cluster '%s' not found in configuration", cluster)
+                console.print(f"Available clusters: {escape(', '.join(available))}")
             ctx.exit(1)
         clusters_to_refresh = [cluster]
     elif refresh_all:
@@ -229,10 +227,8 @@ def refresh(
         if not clusters_to_refresh:
             if filter_dict:
                 print_warning(f"No clusters match filter: {filter_str}")
-                logger.warning("No clusters match filter: %s", filter_str)
             else:
                 print_warning("No clusters configured.")
-                logger.warning("No clusters configured")
             ctx.exit(0)
     else:
         print_error("Specify a cluster name or use --all to refresh all clusters.")
@@ -248,7 +244,7 @@ def refresh(
         try:
             console.print(f"\nRefreshing cache for {len(clusters_to_refresh)} cluster(s)...")
             if filter_dict:
-                console.print(f"[dim]Filter: {filter_str}[/dim]")
+                console.print(f"[dim]Filter: {escape(filter_str or '')}[/dim]")
                 logger.info(
                     "Refreshing cache for %d cluster(s) with filter: %s",
                     len(clusters_to_refresh),
@@ -259,7 +255,7 @@ def refresh(
             if workers > 1:
                 console.print(f"[dim]Parallel workers: {workers}[/dim]")
                 logger.info("Parallel workers: %d", workers)
-            console.print(f"[dim]Log file: {log_file}[/dim]\n")
+            console.print(f"[dim]Log file: {escape(str(log_file))}[/dim]\n")
 
             parallel = workers > 1
             reporter: _VerboseReporter | _NormalReporter = (
@@ -294,9 +290,11 @@ class _VerboseClusterSink:
     def on_client_unavailable(self, kind: str, error: Exception) -> None:
         """Show that a client could not be built."""
         if self.captured is not None:
-            self.captured.print(f"  [dim]{kind} client unavailable: {error}[/dim]")
+            self.captured.print(
+                f"  [dim]{escape(kind)} client unavailable: {escape(str(error))}[/dim]"
+            )
         else:
-            print_warning(f"  [dim]{kind} client unavailable: {error}[/dim]")
+            print_warning(f"  {kind} client unavailable: {error}")
 
     def on_collection_finished(self, success: bool) -> None:
         """Print the cluster summary into the captured block (parallel only)."""
@@ -418,7 +416,7 @@ class _VerboseReporter:
         name = result.cluster_name
         err = result.error or RuntimeError("Unknown collection failure")
         if self.parallel:
-            console.print(f"\n[bold][{completed}/{total}] {name}[/bold]")
+            console.print(f"\n[bold][{completed}/{total}] {escape(name)}[/bold]")
             if isinstance(progress, _VerboseClusterSink):
                 text = progress.captured_text()
                 if text:
@@ -456,9 +454,9 @@ def _print_failure_summary(
 
     console.print("\n[bold red]Failure Summary:[/bold red]")
     for cluster_name, messages in failures.items():
-        console.print(f"  {cluster_name}:")
+        console.print(f"  {escape(cluster_name)}:")
         for msg in messages:
-            console.print(f"    {msg}")
+            console.print(f"    {escape(msg)}")
 
 
 def _report_summary(ctx: click.Context, summary: RefreshSummary) -> None:
@@ -471,7 +469,6 @@ def _report_summary(ctx: click.Context, summary: RefreshSummary) -> None:
     if error_count > 0:
         print_error(f"Failed to refresh {error_count} cluster(s)")
         _print_failure_summary(summary.failures)
-        logger.error("Failed to refresh %d cluster(s)", error_count)
         ctx.exit(1)
 
     logger.info("Cache refresh completed: %d success, %d failed", success_count, error_count)
