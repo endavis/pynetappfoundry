@@ -162,8 +162,8 @@ class TestGetDisplayName:
 
     def test_int_display_field_zero(self) -> None:
         """Int display_field with value 0 returns '0', not model repr."""
-        policy = OntapExportPolicy(index=0)
-        result = _get_display_name(policy, "index")
+        policy = OntapExportPolicy(id=0)
+        result = _get_display_name(policy, "id")
         assert result == "0"
 
     def test_missing_attribute_fallback(self) -> None:
@@ -244,33 +244,45 @@ class TestDiffEntityList:
         """Entity with int key_field=0 detected as added."""
         config = _get_entity_configs()["protocols.nfs_export_policies"]
         before: list[Any] = []
-        after = [OntapExportPolicy(index=0)]
+        after = [OntapExportPolicy(id=0, name="default", svm={"name": "svm1"})]  # type: ignore[arg-type]
         changes = _diff_entity_list("protocols.nfs_export_policies", before, after, config)
         assert len(changes) == 1
         assert changes[0]["type"] == "added"
-        assert changes[0]["entity"] == "0"
+        assert changes[0]["entity"] == "svm1/default"
 
     def test_entity_with_int_key_zero_removed(self) -> None:
         """Entity with int key_field=0 detected as removed."""
         config = _get_entity_configs()["protocols.nfs_export_policies"]
-        before = [OntapExportPolicy(index=0)]
+        before = [OntapExportPolicy(id=0, name="default", svm={"name": "svm1"})]  # type: ignore[arg-type]
         after: list[Any] = []
         changes = _diff_entity_list("protocols.nfs_export_policies", before, after, config)
         assert len(changes) == 1
         assert changes[0]["type"] == "removed"
-        assert changes[0]["entity"] == "0"
+        assert changes[0]["entity"] == "svm1/default"
 
     def test_entity_with_int_key_zero_modified(self) -> None:
         """Entity with int key_field=0 and changed field detected as modified."""
         config = _get_entity_configs()["protocols.nfs_export_policies"]
-        before = [OntapExportPolicy(index=0, chown_mode="restricted")]
-        after = [OntapExportPolicy(index=0, chown_mode="unrestricted")]
+        svm: Any = {"name": "svm1"}
+        before = [OntapExportPolicy(id=0, name="default", svm=svm)]
+        after = [OntapExportPolicy(id=0, name="renamed", svm=svm)]
         changes = _diff_entity_list("protocols.nfs_export_policies", before, after, config)
         mod_changes = [c for c in changes if c["type"] == "modified"]
         assert len(mod_changes) == 1
-        assert mod_changes[0]["field"] == "chown_mode"
-        assert mod_changes[0]["old"] == "restricted"
-        assert mod_changes[0]["new"] == "unrestricted"
+        assert mod_changes[0]["entity"] == "svm1/renamed"
+        assert mod_changes[0]["field"] == "name"
+        assert mod_changes[0]["old"] == "default"
+        assert mod_changes[0]["new"] == "renamed"
+
+    def test_same_named_policies_on_different_svms_are_distinct(self) -> None:
+        """Two same-named policies with different ids are two entities."""
+        config = _get_entity_configs()["protocols.nfs_export_policies"]
+        after = [
+            OntapExportPolicy(id=1, name="default", svm={"name": "svm1"}),  # type: ignore[arg-type]
+            OntapExportPolicy(id=2, name="default", svm={"name": "svm2"}),  # type: ignore[arg-type]
+        ]
+        changes = _diff_entity_list("protocols.nfs_export_policies", [], after, config)
+        assert sorted(c["entity"] for c in changes) == ["svm1/default", "svm2/default"]
 
 
 # ---------------------------------------------------------------------------
@@ -568,11 +580,11 @@ class TestBuildEntityConfigs:
         assert "{" in config.display_field
 
     def test_override_export_policy(self) -> None:
-        """OntapExportPolicy override: key_field='index'."""
+        """OntapExportPolicy override: key_field='id'."""
         configs = _build_entity_configs()
         config = configs["protocols.nfs_export_policies"]
-        assert config.key_field == "index"
-        assert config.display_field == "index"
+        assert config.key_field == "id"
+        assert config.display_field == "{svm.name}/{name}"
 
     def test_override_nfs_services(self) -> None:
         """OntapNfsService override: key_field='svm.name'."""

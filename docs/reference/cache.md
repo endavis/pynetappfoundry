@@ -187,7 +187,6 @@ deserialised against the current Pydantic models.
 | `cache_version` | Changes |
 |-----------------|---------|
 | `2.1` | Added `storage.svm_web_services`: per-SVM web services from the private CLI passthrough ([ADR-0021](../decisions/0021-collect-cli-only-ontap-data-through-the-private-cli-rest-passthrough.md)). Introduced with #866. |
-| `v7` → `v8` | `_upgrade_to_v8` | Adds the `folder` and `project` columns to the `consoleinfo` table for `ConsoleInfo.folder` / `ConsoleInfo.project` via idempotent `ALTER TABLE … ADD COLUMN`. Introduced with #734. |
 | `2.0` | Renamed cache fields to match the ONTAP REST URL hierarchy: `network.lifs` → `network.ip_interfaces`, `network.broadcast_domains` → `network.ethernet_broadcast_domains`, `network.subnets` → `network.ip_subnets`, `protocols.export_policies` → `protocols.nfs_export_policies`. |
 | `1.0` | Initial schema with comprehensive model coverage. |
 
@@ -201,7 +200,7 @@ The cache is rebuild-tolerant: destructive migrations are allowed, and
 
 In addition to the `cache_version` stamped into each snapshot,
 `ClusterMetadataDB` tracks the **on-disk SQLite schema** version through the
-shared `SQLiteDB` base class. The current value is `SCHEMA_VERSION = 8`, and
+shared `SQLiteDB` base class. The current value is `SCHEMA_VERSION = 9`, and
 the DB applies the following upgrades on open:
 
 | DB schema | Migration | What it does |
@@ -212,6 +211,8 @@ the DB applies the following upgrades on open:
 | `v4` → `v5` | `_upgrade_to_v5` | Adds the `vm_name` column to the `cloudmetadata` table via idempotent `ALTER TABLE … ADD COLUMN` (additive-column path from ADR-0018). Introduced with PR #582. |
 | `v5` → `v6` | `_upgrade_to_v6` | Creates the `consoleinfo` table to back `CachedClusterMetadata.console: ConsoleInfo` for cluster-scoped Console SaaS data (ADR-0019). Idempotent via `sqlite_master` check. Introduced with #713. |
 | `v6` → `v7` | `_upgrade_to_v7` | Creates the `ontapsvmwebservice` table to back `storage.svm_web_services` (ADR-0021). Idempotent via `sqlite_master` check. Introduced with #866. |
+| `v7` → `v8` | `_upgrade_to_v8` | Adds the `folder` and `project` columns to the `consoleinfo` table for `ConsoleInfo.folder` / `ConsoleInfo.project` via idempotent `ALTER TABLE … ADD COLUMN`. Introduced with #734. |
+| `v8` → `v9` | `_upgrade_to_v9` | Reshapes `ontapexportpolicy` from rule-shaped (`index`, `clients`, `ro_rule`, ...) to policy-shaped (`id`, `name`, `svm`, `rules`): drops and recreates the table (ADR-0018 removed-column path) and clears the envelope. Idempotent via a `PRAGMA table_info` check for `id`. Run `nf cache refresh` afterwards. Introduced with #956. |
 
 !!! warning "v3 → v4 is destructive"
     The v4 migration deletes existing cached rows. After upgrading,
@@ -856,7 +857,7 @@ via [the codegen pipeline](#openapi-codegen-pipeline).
 
 | Model | Key fields | Description |
 |-------|------------|-------------|
-| `OntapExportPolicy` | `index`, `protocols`, `clients`, `ro_rule`, `rw_rule`, `superuser` | NFS export policy rule (codegen-generated) |
+| `OntapExportPolicy` | `id`, `name`, `svm`, `rules` | NFS export policy with nested `rules` (`OntapExportPolicyRule`; codegen-generated). `OntapExportRule` is its live-only child (not a cached table). |
 | `OntapCifsShare` | `name`, `path`, `comment`, `volume`, `svm`, `acls` | CIFS/SMB share (codegen-generated) |
 | `OntapCifsService` | `name`, `enabled`, `comment`, `ad_domain`, `security`, `svm` | CIFS service config (codegen-generated) |
 | `OntapNfsService` | `enabled`, `state`, `protocol`, `security`, `transport`, `svm` | NFS service config (codegen-generated) |
