@@ -29,6 +29,31 @@ if TYPE_CHECKING:
 
 _file_name = Path(__file__).name
 
+_MASK = "***"
+_SENSITIVE_SUFFIXES = ("password", "secret", "token")
+
+
+def _is_sensitive_key(key: object) -> bool:
+    """Return True if ``key`` names a credential-style config field."""
+    if not isinstance(key, str):
+        return False
+    lowered = key.lower()
+    return lowered == "enc" or lowered.endswith(_SENSITIVE_SUFFIXES)
+
+
+def _mask_sensitive(value: Any) -> Any:
+    """Return a copy of ``value`` with credential-style values replaced by ``'***'``.
+
+    Recurses into dicts, lists and tuples; the input is never mutated.
+    """
+    if isinstance(value, dict):
+        return {k: _MASK if _is_sensitive_key(k) else _mask_sensitive(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_mask_sensitive(v) for v in value]
+    if isinstance(value, tuple):
+        return tuple(_mask_sensitive(v) for v in value)
+    return value
+
 
 class ClusterEntry(MutableMapping[str, Any]):
     """Dict-like wrapper around a cluster's TOML config with lazy cache accessors.
@@ -136,7 +161,7 @@ class ClusterEntry(MutableMapping[str, Any]):
     # ------------------------------------------------------------------
 
     def __repr__(self) -> str:
-        return f"ClusterEntry({self._name!r}, {self._data!r})"
+        return f"ClusterEntry({self._name!r}, {_mask_sensitive(self._data)!r})"
 
     # ------------------------------------------------------------------
     # Lazy namespace accessors

@@ -389,6 +389,55 @@ class TestRepr:
         assert "ClusterEntry" in r
         assert "test-cluster" in r
 
+    @pytest.mark.parametrize(
+        ("key", "value"),
+        [
+            ("enc", "c2VjcmV0LXZhbHVl"),
+            ("enc", "ENC[AES256_GCM,data:abc123,iv:xyz,tag:qq,type:str]"),
+            ("enc", "${CLUSTER_SECRET_FROM_ENV}"),
+            ("admin_password", "hunter2-plain"),
+            ("api_token", "tok-12345"),
+            ("client_secret", "s3cr3t-value"),
+            ("ENC", "UPPER-enc-value"),
+            ("Admin_PassWord", "mixed-case-pw"),
+        ],
+    )
+    def test_repr_masks_credentials(
+        self, key: str, value: str, sample_data: dict[str, Any], cache_db_path: Path
+    ) -> None:
+        """Credential-style values are masked; name and IP remain visible."""
+        data = {**sample_data, key: value}
+        r = repr(ClusterEntry("test-cluster", data, cache_db_path))
+        assert value not in r
+        assert f"{key!r}: '***'" in r
+        assert "test-cluster" in r
+        assert "10.0.0.1" in r
+
+    def test_repr_masks_nested_credentials(
+        self, sample_data: dict[str, Any], cache_db_path: Path
+    ) -> None:
+        """Nested dicts and lists of dicts are masked too."""
+        data = {
+            **sample_data,
+            "ontap": {"user": "admin", "password": "nested-pw"},
+            "nodes": [{"name": "n1", "token": "list-tok"}],
+        }
+        r = repr(ClusterEntry("test-cluster", data, cache_db_path))
+        assert "nested-pw" not in r
+        assert "list-tok" not in r
+        assert "admin" in r
+        assert "n1" in r
+
+    def test_repr_does_not_mutate_data(
+        self, sample_data: dict[str, Any], cache_db_path: Path
+    ) -> None:
+        """repr() leaves the underlying data untouched."""
+        data = {**sample_data, "enc": "keep-me", "nested": {"password": "pw"}}
+        entry = ClusterEntry("test-cluster", data, cache_db_path)
+        repr(entry)
+        assert entry["enc"] == "keep-me"
+        assert entry["nested"]["password"] == "pw"
+
 
 class TestLiveCollection:
     """Issue #869: live .ontap loads field groups through MetadataCollector.collect_group."""
