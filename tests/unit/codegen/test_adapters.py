@@ -701,7 +701,8 @@ class TestSingleObjectEndpoints:
     def test_dii_override(self, tmp_path: Path) -> None:
         eps = {e.path: e for e in parse_openapi_spec(_write_spec(self._spec(), tmp_path), "dii")}
         for path in ("/au/oneTimeToken", "/au/installCommand/{platform}"):
-            assert eps[path].records_path == "."
+            assert eps[path].response_shape == "singleton"
+            assert eps[path].records_path == "records"
             names = {f.name for f in eps[path].fields}
             assert {"token", "installCommand", "extra"} <= names
         assert eps["/users"].records_path == "users"
@@ -773,7 +774,7 @@ class TestOntapSingleObjectRule:
     def test_arrayless_object_is_singleton(self, tmp_path: Path) -> None:
         assert self._parse(tmp_path)["/noarr"].response_shape == "singleton"
 
-    def test_dii_overrides_still_dot_envelope(self, tmp_path: Path) -> None:
+    def test_dii_override_is_singleton(self, tmp_path: Path) -> None:
         ep = self._parse(tmp_path, "dii")["/au/oneTimeToken"]
-        assert ep.records_path == "."
-        assert ep.response_shape == "envelope"
+        assert ep.records_path == "records"
+        assert ep.response_shape == "singleton"

@@ -301,14 +301,12 @@ _SINGLE_OBJECT_ENDPOINTS: dict[str, frozenset[str]] = {
 }
 """Endpoints whose 200 response is one object, not a record list (#919).
 
-Keyed by API type; the value is the set of spec paths.  Their records path is
-``"."`` (the whole response is the single record) and the model is built from
-the whole response schema.  DII only: ONTAP single-object responses are handled
-by the api_type rule in ``_is_single_object_response`` (#925), not by this table.
+Keyed by API type; the value is the set of spec paths.  They get
+``response_shape="singleton"`` (the whole response is the single record) and the
+model is built from the whole response schema (#935).  DII only: ONTAP
+single-object responses are handled by the api_type rule in
+``_is_single_object_response`` (#925), not by this table.
 """
-
-SINGLE_OBJECT_RECORDS_PATH = "."
-"""Records-path sentinel for a response that is one record."""
 
 
 def _is_single_object_response(spec: dict[str, Any], response_schema: dict[str, Any]) -> bool:
@@ -518,12 +516,9 @@ def parse_openapi_spec(
         # Detect records path and item schema
         records_path = "records"
         response_shape: Literal["envelope", "singleton"] = "envelope"
-        if path in _SINGLE_OBJECT_ENDPOINTS.get(api_type, frozenset()):
-            records_path = SINGLE_OBJECT_RECORDS_PATH
-            item_schema = response_schema
-            if "$ref" in item_schema:
-                item_schema = _resolve_ref(spec, item_schema["$ref"])
-        elif api_type == "ontap" and _is_single_object_response(spec, response_schema):
+        if path in _SINGLE_OBJECT_ENDPOINTS.get(api_type, frozenset()) or (
+            api_type == "ontap" and _is_single_object_response(spec, response_schema)
+        ):
             response_shape = "singleton"
             item_schema = response_schema
             if "$ref" in item_schema:

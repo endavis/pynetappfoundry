@@ -14,7 +14,7 @@ DIIAUONETIMETOKEN_MAPPING = TypeMapping(
     model_class=DiiAuOnetimetoken,
     api_endpoint="/au/oneTimeToken",
     api_type="dii",
-    records_path=".",
+    response_shape="singleton",
     fields=(
         FieldMapping(
             cache_attr="additionalInstructionsForManualInstallation",

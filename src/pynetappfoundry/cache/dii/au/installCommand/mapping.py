@@ -14,7 +14,7 @@ DIIAUINSTALLCOMMAND_MAPPING = TypeMapping(
     model_class=DiiAuInstallcommand,
     api_endpoint="/au/installCommand/{platform}",
     api_type="dii",
-    records_path=".",
+    response_shape="singleton",
     fields=(
         FieldMapping(
             cache_attr="additionalInstructionsForManualInstallation",

@@ -10,10 +10,10 @@ rows|results|values}`` envelopes, so this backend calls
 :func:`parse_api_record` individually rather than using the
 envelope-oriented :func:`parse_api_response`.  A mapping with a non-empty
 ``records_path`` (a wrapper such as ``{"users": [...]}``) has its records
-read from that path on a dict response.  The DII-only sentinel
-``records_path == "."`` (:data:`SINGLE_OBJECT_RECORDS_PATH`) marks an endpoint
-whose dict response is itself one record (e.g. ``GET /au/oneTimeToken``); it is
-wrapped as ``[response]`` (#919, ADR-0015).
+read from that path on a dict response.  A mapping with
+``response_shape == "singleton"`` marks an endpoint whose dict response is
+itself one record (e.g. ``GET /au/oneTimeToken``); it is wrapped as
+``[response]`` (#919, #935, ADR-0015).
 """
 
 from __future__ import annotations
@@ -35,9 +35,6 @@ if TYPE_CHECKING:
     from pynetappfoundry.data._routing import RoutingDecision
 
 logger = logging.getLogger(__name__)
-
-SINGLE_OBJECT_RECORDS_PATH = "."
-"""``records_path`` sentinel: the whole dict response is one record (DII only)."""
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -131,11 +128,10 @@ class DiiBackend(Backend):
         DII endpoints return bare JSON arrays or record envelopes.  A dict
         response is read at ``mapping.records_path`` when that is non-empty
         (checked before the envelope shapes); a bare array is used as-is.
-        ``records_path == "."`` means the dict response is one record and is
-        returned as ``[response]`` (checked before the named-path branch).
-        Each element is parsed
-        individually via :func:`parse_api_record` and stamped with
-        ``_fetched_fields``.
+        ``mapping.response_shape == "singleton"`` means the dict response is
+        one record and is returned as ``[response]`` (checked before the
+        named-path branch).  Each element is parsed individually via
+        :func:`parse_api_record` and stamped with ``_fetched_fields``.
         """
         if decision.cache_fields and not decision.live_fields:
             msg = "DII backend does not support cache-only queries"
@@ -159,7 +155,7 @@ class DiiBackend(Backend):
             records = response
         elif response is None:
             records = []
-        elif isinstance(response, dict) and mapping.records_path == SINGLE_OBJECT_RECORDS_PATH:
+        elif isinstance(response, dict) and mapping.response_shape == "singleton":
             records = [response]
         elif isinstance(response, dict) and mapping.records_path:
             records = _records_at_path(mapping, response)

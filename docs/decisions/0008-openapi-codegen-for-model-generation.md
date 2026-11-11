@@ -351,7 +351,7 @@ is one object (for example `GET /cluster/software`) was modelled as its first ar
 - **Rule:** for `api_type="ontap"`, `_is_single_object_response()` in `tools/codegen/adapters.py` is
   true when the 200 schema is not an array and has no `records` property of type array. Such an
   endpoint is modelled from the whole response schema and gets `ParsedEndpoint.response_shape =
-  "singleton"`. The DII `_SINGLE_OBJECT_ENDPOINTS` table is checked first and is unchanged (`"."`);
+  "singleton"`. The DII `_SINGLE_OBJECT_ENDPOINTS` table is checked first; it now yields `response_shape="singleton"` too (#935);
   the `_detect_records_path` first-array fallback stays for aiqum and occm.
 - **Emission:** `generate_mapping` writes `response_shape="singleton"` and no `records_path=` for these
   endpoints; envelope endpoints emit neither.
