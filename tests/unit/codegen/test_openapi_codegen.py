@@ -247,3 +247,44 @@ class TestExcludedEndpoints:
     def test_other_api_type_unaffected(self, tmp_path: Path) -> None:
         written = run(spec=self._spec(tmp_path), output=tmp_path / "out", api_type="dii")
         assert any("/cluster/" in p.as_posix() for p in written)
+
+
+def _multi_spec(tmp_path: Path) -> Path:
+    share = {
+        "type": "object",
+        "properties": {
+            "name": {"type": "string"},
+            "svm": {"type": "object", "properties": {"uuid": {"type": "string"}}},
+        },
+    }
+    acl = {"type": "object", "properties": {"permission": {"type": "string"}}}
+    spec = {
+        "openapi": "3.0.0",
+        "info": {"title": "T", "version": "1"},
+        "paths": {
+            "/shares": _get(share, envelope=True),
+            "/shares/{svm.uuid}/{name}": _get(share, envelope=False),
+            "/shares/{svm.uuid}/{name}/acls": _get(acl, envelope=True),
+        },
+        "components": {"schemas": {}},
+    }
+    path = tmp_path / "multi_spec.json"
+    path.write_text(json.dumps(spec))
+    return path
+
+
+class TestRunMultiPlaceholder:
+    def test_multi_placeholder_child_is_kept(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        written = run(spec=_multi_spec(tmp_path), output=tmp_path / "out", api_type="ontap")
+        assert "skipped (unfillable placeholder): /shares/{svm.uuid}/{name}/acls" not in (
+            capsys.readouterr().out
+        )
+        sources = [s for p, s in _mapping_sources(written).items() if "acls" in p]
+        assert len(sources) == 1
+        assert 'parent_mapping="OntapShare"' in sources[0]
+        assert 'parent_id_fields=("svm.uuid", "name",)' in sources[0] or (
+            '"svm.uuid"' in sources[0] and '"name"' in sources[0]
+        )
+        assert "parent_id_field=" not in sources[0]

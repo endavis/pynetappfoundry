@@ -1156,6 +1156,78 @@ class TestOntapBackendQueryPartialParentKeyed:
         )
 
 
+class TestMultiPlaceholderParentRefs:
+    """Tuple-keyed parent grouping for multi-placeholder children (#955)."""
+
+    @staticmethod
+    def _mapping(endpoint: str, **kwargs: Any) -> TypeMapping:
+        from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
+
+        return TypeMapping(
+            name="Multi",
+            model_class=FakeVolume,
+            api_endpoint=endpoint,
+            api_type="ontap",
+            fields=(FieldMapping(cache_attr="uuid"),),
+            **kwargs,
+        )
+
+    def test_extract_parent_ref_fields_multi(self) -> None:
+        mapping = self._mapping("/a/{svm.uuid}/b/{group.name}/users?fields=*")
+        assert OntapBackend._extract_parent_ref_fields(mapping) == ("svm.uuid", "group.name")
+        assert OntapBackend._extract_parent_ref_field(mapping) == "svm.uuid"
+
+    def test_extract_parent_ref_fields_none(self) -> None:
+        assert OntapBackend._extract_parent_ref_fields(self._mapping("/a")) == ()
+
+    def test_resolve_parent_uuids_groups_by_tuple(self) -> None:
+        backend = OntapBackend(MagicMock())
+        mapping = self._mapping("/a/{svm.uuid}/b/{group.name}/users")
+        c1 = MagicMock(svm=MagicMock(uuid="s1"), group=MagicMock())
+        c1.group.name = "g1"
+        c2 = MagicMock(svm=MagicMock(uuid="s1"), group=MagicMock())
+        c2.group.name = "g2"
+        c3 = MagicMock(svm=MagicMock(uuid="s1"), group=MagicMock())
+        c3.group.name = "g1"
+        groups = backend._resolve_parent_uuids(
+            mapping, [c1, c2, c3], "prod1", ("svm.uuid", "group.name")
+        )
+        assert groups == {("s1", "g1"): [c1, c3], ("s1", "g2"): [c2]}
+
+    def test_resolve_parent_uuids_fallback_uses_parent_id_fields(self) -> None:
+        from pynetappfoundry.cache._registry import model_registry
+
+        backend = OntapBackend(MagicMock())
+        mapping = self._mapping(
+            "/a/{svm.uuid}/b/{group.name}/users",
+            parent_mapping="ParentX",
+            parent_id_fields=("svm.uuid", "name"),
+        )
+        child = MagicMock(svm=None, group=None)
+        parent = MagicMock(svm=MagicMock(uuid="s1"))
+        parent.name = "g1"
+        with (
+            patch.object(model_registry, "get_mapping", return_value=MagicMock()),
+            patch.object(backend, "_fetch_cache", return_value=[parent]),
+        ):
+            groups = backend._resolve_parent_uuids(
+                mapping, [child], "prod1", ("svm.uuid", "group.name")
+            )
+        assert groups == {("s1", "g1"): [child]}
+
+    def test_resolve_parent_uuids_partial_ref_is_orphan(self) -> None:
+        backend = OntapBackend(MagicMock())
+        mapping = self._mapping("/a/{svm.uuid}/b/{group.name}/users")
+        good = MagicMock(svm=MagicMock(uuid="s1"), group=MagicMock())
+        good.group.name = "g1"
+        bad = MagicMock(svm=MagicMock(uuid="s1"), group=MagicMock())
+        bad.group.name = ""
+        groups = backend._resolve_parent_uuids(
+            mapping, [good, bad], "prod1", ("svm.uuid", "group.name")
+        )
+        assert groups == {("s1", "g1"): [good]}
+
+
 class TestQueryWithWhereExpressions:
     """Tests for ``where_expressions`` kwarg on :meth:`OntapBackend.query`."""
 

@@ -1,0 +1,32 @@
+"""OntapRolePrivilege type mapping."""
+
+from __future__ import annotations
+
+from pynetappfoundry.cache._registry import model_registry
+from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
+from pynetappfoundry.models.ontap.security.roles.privileges.model import OntapRolePrivilege
+
+ONTAPROLEPRIVILEGE_MAPPING = TypeMapping(
+    name="OntapRolePrivilege",
+    model_class=OntapRolePrivilege,
+    api_endpoint="/security/roles/{owner.uuid}/{name}/privileges?fields=*",
+    api_type="ontap",
+    parent_mapping="OntapRole",
+    parent_id_fields=(
+        "owner.uuid",
+        "name",
+    ),
+    fields=(
+        FieldMapping(
+            cache_attr="access",
+        ),
+        FieldMapping(
+            cache_attr="path",
+        ),
+        FieldMapping(
+            cache_attr="query",
+        ),
+    ),
+)
+
+model_registry.register_mapping("OntapRolePrivilege", ONTAPROLEPRIVILEGE_MAPPING)

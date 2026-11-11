@@ -29,6 +29,8 @@ from tools.codegen.generators import (
     generate_toml_overlay,
     is_fetchable_endpoint,
     resolve_class_name_collisions,
+    resolve_multi_parent_link,
+    resolve_parent_fields,
     resolve_parent_link,
     write_endpoint_files,
 )
@@ -1559,6 +1561,148 @@ class TestResolveParentLink:
         code = generate_mapping(self._child(), api_type="ontap", schema_lookup=lookup)
         assert f'parent_mapping="{link[0]}"' in code
         assert f'parent_id_field="{link[1]}"' in code
+
+
+class TestMultiPlaceholderFetchability:
+    """#955: a tuple of parent fields fills one placeholder each."""
+
+    def test_tuple_matching_count_is_fetchable(self) -> None:
+        ep = _make_endpoint(path="/a/{x}/b/{y}/c")
+        assert is_fetchable_endpoint(ep, ("OntapA", ("x", "y")))
+
+    def test_tuple_wrong_count_is_not_fetchable(self) -> None:
+        ep = _make_endpoint(path="/a/{x}/b/{y}/c")
+        assert not is_fetchable_endpoint(ep, ("OntapA", ("x",)))
+
+    def test_single_str_still_one_placeholder_only(self) -> None:
+        assert is_fetchable_endpoint(_make_endpoint(path="/a/{x}/c"), ("OntapA", "uuid"))
+
+
+_CIFS_LOOKUP = {
+    "/protocols/cifs/shares": "cifs_share",
+    "/protocols/cifs/shares/{svm.uuid}/{name}": "cifs_share",
+    "/protocols/cifs/shares/{svm.uuid}/{share}/acls": "cifs_share_acl",
+}
+_CIFS_FIELDS = {"/protocols/cifs/shares": {"svm", "name"}}
+_S3_LOOKUP = {
+    "/protocols/s3/services/{svm.uuid}/buckets": "s3_bucket",
+    "/protocols/s3/services/{svm.uuid}/buckets/{uuid}": "s3_bucket",
+    "/protocols/s3/services/{svm.uuid}/buckets/{s3_bucket.uuid}/rules": "rule",
+}
+_S3_FIELDS = {"/protocols/s3/services/{svm.uuid}/buckets": {"svm", "uuid"}}
+
+
+class TestResolveMultiParentLink:
+    def _ep(self, path: str) -> ParsedEndpoint:
+        return _make_endpoint(path=path)
+
+    def test_cifs_acls_style(self) -> None:
+        link = resolve_multi_parent_link(
+            self._ep("/protocols/cifs/shares/{svm.uuid}/{share}/acls"),
+            "ontap",
+            _CIFS_LOOKUP,
+            parent_field_names=_CIFS_FIELDS,
+        )
+        assert link == ("OntapCifsShare", ("svm.uuid", "name"))
+
+    def test_s3_rules_style_non_contiguous(self) -> None:
+        link = resolve_multi_parent_link(
+            self._ep("/protocols/s3/services/{svm.uuid}/buckets/{s3_bucket.uuid}/rules"),
+            "ontap",
+            _S3_LOOKUP,
+            parent_field_names=_S3_FIELDS,
+        )
+        assert link is not None
+        assert link[1] == ("svm.uuid", "uuid")
+
+    def test_terminal_placeholder_is_none(self) -> None:
+        lookup = {**_CIFS_LOOKUP, "/protocols/cifs/shares/{svm.uuid}/{share}/x/{y}": "z"}
+        assert (
+            resolve_multi_parent_link(
+                self._ep("/protocols/cifs/shares/{svm.uuid}/{share}/x/{y}"),
+                "ontap",
+                lookup,
+                parent_field_names=_CIFS_FIELDS,
+            )
+            is None
+        )
+
+    def test_single_placeholder_is_none(self) -> None:
+        assert (
+            resolve_multi_parent_link(
+                self._ep("/svm/svms/{svm.uuid}/web"),
+                "ontap",
+                {"/svm/svms": "svm"},
+                parent_field_names={"/svm/svms": {"uuid"}},
+            )
+            is None
+        )
+
+    def test_missing_collection_is_none(self) -> None:
+        assert (
+            resolve_multi_parent_link(
+                self._ep("/protocols/cifs/shares/{svm.uuid}/{share}/acls"),
+                "ontap",
+                _CIFS_LOOKUP,
+                parent_field_names={},
+            )
+            is None
+        )
+
+    def test_missing_field_root_is_none(self) -> None:
+        assert (
+            resolve_multi_parent_link(
+                self._ep("/protocols/cifs/shares/{svm.uuid}/{share}/acls"),
+                "ontap",
+                _CIFS_LOOKUP,
+                parent_field_names={"/protocols/cifs/shares": {"svm"}},
+            )
+            is None
+        )
+
+    def test_non_ontap_is_none(self) -> None:
+        assert (
+            resolve_multi_parent_link(
+                self._ep("/protocols/cifs/shares/{svm.uuid}/{share}/acls"),
+                "dii",
+                _CIFS_LOOKUP,
+                parent_field_names=_CIFS_FIELDS,
+            )
+            is None
+        )
+
+    def test_ambiguous_item_path_is_none(self) -> None:
+        lookup = {**_CIFS_LOOKUP, "/protocols/cifs/shares/{a.uuid}/{b}": "other"}
+        assert (
+            resolve_multi_parent_link(
+                self._ep("/protocols/cifs/shares/{svm.uuid}/{share}/acls"),
+                "ontap",
+                lookup,
+                parent_field_names=_CIFS_FIELDS,
+            )
+            is None
+        )
+
+    def test_dispatcher_falls_back_to_single_link(self) -> None:
+        ep = _make_endpoint(
+            path="/svm/svms/{svm.uuid}/web", has_parent=True, parent_path="/svm/svms"
+        )
+        link = resolve_parent_fields(ep, "ontap", {"/svm/svms": "svm"})
+        assert link is not None
+        assert isinstance(link[1], str)
+
+    def test_generate_mapping_emits_parent_id_fields(self) -> None:
+        ep = _make_endpoint(
+            path="/protocols/cifs/shares/{svm.uuid}/{share}/acls",
+            has_parent=True,
+            parent_path="/protocols/cifs/shares",
+        )
+        code = generate_mapping(
+            ep, api_type="ontap", schema_lookup=_CIFS_LOOKUP, parent_field_names=_CIFS_FIELDS
+        )
+        assert 'parent_mapping="OntapCifsShare"' in code
+        assert 'parent_id_fields=("svm.uuid", "name",),' in code
+        assert "parent_id_field=" not in code
 
 
 class TestIdentifierFieldOverrides:

@@ -103,3 +103,32 @@ class TestParentIdFieldExists:
                     f"Mapping {name!r} declares parent_id_field={mapping.parent_id_field!r} "
                     f"but {current_model.__name__} has no attribute {part!r}"
                 )
+
+
+class TestParentIdFieldsExist:
+    """Every ``parent_id_fields`` entry must exist on the parent model class."""
+
+    @staticmethod
+    def _multi() -> list[tuple[str, TypeMapping]]:
+        return [(n, m) for n, m in _mappings_with_parent() if m.parent_id_fields]
+
+    def test_some_multi_placeholder_mappings_exist(self) -> None:
+        assert self._multi()
+
+    def test_parent_id_fields_exist_on_parent_model(self) -> None:
+        for name, mapping in self._multi():
+            parent = model_registry.get_mapping(mapping.parent_mapping)  # type: ignore[arg-type]
+            assert parent is not None, f"{name}: parent {mapping.parent_mapping!r} not found"
+            for dotted in mapping.parent_id_fields:
+                current_model: Any = parent.model_class
+                parts = dotted.split(".")
+                for i, part in enumerate(parts):
+                    assert hasattr(current_model, "model_fields"), (
+                        f"{name}: {dotted!r} descends into non-model {current_model!r}"
+                    )
+                    assert part in current_model.model_fields, (
+                        f"{name} declares parent_id_fields entry {dotted!r} but "
+                        f"{current_model.__name__} has no field {part!r}"
+                    )
+                    if i < len(parts) - 1:
+                        current_model = current_model.model_fields[part].annotation

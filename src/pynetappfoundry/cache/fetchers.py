@@ -88,6 +88,28 @@ def _resolve_dotted_attr(obj: object, dotted_path: str) -> Any:
     return current
 
 
+def _resolve_parent_ids(
+    mapping: TypeMapping, parent: BaseModel
+) -> tuple[tuple[str, ...] | None, str | None]:
+    """Resolve every parent field that fills the child's path placeholders.
+
+    Args:
+        mapping: Child TypeMapping (``effective_parent_id_fields()`` non-empty).
+        parent: Parent model instance.
+
+    Returns:
+        ``(values, None)`` when every field has a value, else
+        ``(None, field)`` naming the first field with no value.
+    """
+    values: list[str] = []
+    for field in mapping.effective_parent_id_fields():
+        value = _resolve_dotted_attr(parent, field)
+        if not value:
+            return None, field
+        values.append(str(value))
+    return tuple(values), None
+
+
 def _run_post_collection_hooks(
     mapping: TypeMapping,
     items: list[BaseModel],
@@ -296,26 +318,26 @@ def _fetch_parameterized(
     """
     if not mapping.parent_mapping:
         raise ValueError(f"{mapping.name}: parent_mapping must be set for parameterized collection")
-    if not mapping.parent_id_field:
+    if not mapping.effective_parent_id_fields():
         raise ValueError(
             f"{mapping.name}: parent_id_field must be set for parameterized collection"
         )
 
     aggregated: list[BaseModel] = []
     for parent in parent_objects:
-        parent_id = _resolve_dotted_attr(parent, mapping.parent_id_field)
-        if not parent_id:
+        values, missing = _resolve_parent_ids(mapping, parent)
+        if values is None:
             parent_name = getattr(parent, "name", repr(parent))
             logger.warning(
                 "%s SKIP_PARENT: %s - parent %s has no '%s'",
                 log_prefix,
                 mapping.name,
                 parent_name,
-                mapping.parent_id_field,
+                missing,
             )
             continue
 
-        url = mapping.build_parameterized_url(str(parent_id))
+        url = mapping.build_parameterized_url(values[0] if len(values) == 1 else values)
         try:
             response = api_client.get_all_records(url, method="GET")
             children = _parse_api_response(mapping, response, log_prefix, _noop_log_missing)

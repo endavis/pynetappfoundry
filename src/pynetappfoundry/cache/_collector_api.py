@@ -25,7 +25,7 @@ from pynetappfoundry.cache._collector_runner import (
     run_tasks,
 )
 from pynetappfoundry.cache._metadata import RelationshipsInfo
-from pynetappfoundry.cache.fetchers import _resolve_dotted_attr
+from pynetappfoundry.cache.fetchers import _resolve_parent_ids
 from pynetappfoundry.cache.fetchers import fetch as _fetch
 from pynetappfoundry.cache.field_mapping import TypeMapping
 from pynetappfoundry.cache.field_mapping import (
@@ -219,26 +219,26 @@ class ApiPhasesMixin(_CollectorState):
             raise ValueError(
                 f"{mapping.name}: parent_mapping must be set for parameterized collection"
             )
-        if not mapping.parent_id_field:
+        if not mapping.effective_parent_id_fields():
             raise ValueError(
                 f"{mapping.name}: parent_id_field must be set for parameterized collection"
             )
 
         aggregated: list[BaseModel] = []
         for parent in parent_objects:
-            parent_id = _resolve_dotted_attr(parent, mapping.parent_id_field)
-            if not parent_id:
+            values, missing = _resolve_parent_ids(mapping, parent)
+            if values is None:
                 parent_name = getattr(parent, "name", repr(parent))
                 logger.warning(
                     "%s SKIP_PARENT: %s - parent %s has no '%s'",
                     self._log_prefix,
                     mapping.name,
                     parent_name,
-                    mapping.parent_id_field,
+                    missing,
                 )
                 continue
 
-            url = mapping.build_parameterized_url(str(parent_id))
+            url = mapping.build_parameterized_url(values[0] if len(values) == 1 else values)
             try:
                 response = self._cached_api_call(url)
                 children = parse_api_response(

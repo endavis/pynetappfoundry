@@ -1,0 +1,1 @@
+"""Reporting Nodes cache models."""

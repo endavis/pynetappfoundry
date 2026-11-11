@@ -552,6 +552,38 @@ class TestCollectParameterized:
         result = collector._collect_parameterized(_CHILD_MAPPING, [])
         assert result == []
 
+    def test_two_field_child_fills_both_placeholders(self, collector: MetadataCollector) -> None:
+        mapping = TypeMapping(
+            name="MultiChild",
+            model_class=_ChildModel,
+            api_endpoint="/parents/{parent.uuid}/groups/{group.name}/users?fields=*",
+            fields=(FieldMapping(cache_attr="name", api_path="name"),),
+            parent_mapping="Parent",
+            parent_id_fields=("uuid", "name"),
+        )
+        parents = [_ParentModel(name="g1", uuid="uuid-1")]
+        with patch.object(
+            collector, "_cached_api_call", return_value={"records": [{"name": "c1"}]}
+        ) as call:
+            result = collector._collect_parameterized(mapping, parents)
+        assert len(result) == 1
+        call.assert_called_once_with("/parents/uuid-1/groups/g1/users?fields=*")
+
+    def test_two_field_child_missing_value_skipped(
+        self, collector: MetadataCollector, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        mapping = TypeMapping(
+            name="MultiChild",
+            model_class=_ChildModel,
+            api_endpoint="/parents/{parent.uuid}/groups/{group.name}/users?fields=*",
+            parent_mapping="Parent",
+            parent_id_fields=("uuid", "name"),
+        )
+        with caplog.at_level(logging.WARNING):
+            result = collector._collect_parameterized(mapping, [_ParentModel(uuid="u", name="")])
+        assert result == []
+        assert any("SKIP_PARENT" in r.message for r in caplog.records)
+
     def test_parent_missing_id_field_skipped(
         self, collector: MetadataCollector, caplog: pytest.LogCaptureFixture
     ) -> None:

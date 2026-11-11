@@ -1216,6 +1216,12 @@ MAPPING_INDEX: dict[str, tuple[str, str, str, str | None]] = {
         "OntapApplicationComponent",
         "ontap/application/applications/components/components.toml",
     ),
+    "OntapApplicationComponentSnapshot": (
+        "pynetappfoundry.cache.ontap.application.applications.components.snapshots.mapping",
+        "pynetappfoundry.models.ontap.application.applications.components.snapshots.model",
+        "OntapApplicationComponentSnapshot",
+        "ontap/application/applications/components/snapshots/snapshots.toml",
+    ),
     "OntapApplicationSnapshot": (
         "pynetappfoundry.cache.ontap.application.applications.snapshots.mapping",
         "pynetappfoundry.models.ontap.application.applications.snapshots.model",
@@ -1347,6 +1353,12 @@ MAPPING_INDEX: dict[str, tuple[str, str, str, str | None]] = {
         "pynetappfoundry.models.ontap.protocols.cifs.shares.model",
         "OntapCifsShare",
         "ontap/protocols/cifs/shares/shares.toml",
+    ),
+    "OntapCifsShareAcl": (
+        "pynetappfoundry.cache.ontap.protocols.cifs.shares.acls.mapping",
+        "pynetappfoundry.models.ontap.protocols.cifs.shares.acls.model",
+        "OntapCifsShareAcl",
+        "ontap/protocols/cifs/shares/acls/acls.toml",
     ),
     "OntapCifsSymlinkMapping": (
         "pynetappfoundry.cache.ontap.protocols.cifs.unix_symlink_mapping.mapping",
@@ -1539,6 +1551,12 @@ MAPPING_INDEX: dict[str, tuple[str, str, str, str | None]] = {
         "pynetappfoundry.models.ontap.support.ems.role_configs.model",
         "OntapEmsRoleConfigResponse",
         "ontap/support/ems/role_configs/role_configs.toml",
+    ),
+    "OntapExportClient": (
+        "pynetappfoundry.cache.ontap.protocols.nfs.export_policies.rules.clients.mapping",
+        "pynetappfoundry.models.ontap.protocols.nfs.export_policies.rules.clients.model",
+        "OntapExportClient",
+        "ontap/protocols/nfs/export_policies/rules/clients/clients.toml",
     ),
     "OntapExportPolicy": (
         "pynetappfoundry.cache.ontap.protocols.nfs.export_policies.mapping",
@@ -1864,6 +1882,12 @@ MAPPING_INDEX: dict[str, tuple[str, str, str, str | None]] = {
         "OntapLocalCifsGroup",
         "ontap/protocols/cifs/local_groups/local_groups.toml",
     ),
+    "OntapLocalCifsGroupMembers": (
+        "pynetappfoundry.cache.ontap.protocols.cifs.local_groups.members.mapping",
+        "pynetappfoundry.models.ontap.protocols.cifs.local_groups.members.model",
+        "OntapLocalCifsGroupMembers",
+        "ontap/protocols/cifs/local_groups/members/members.toml",
+    ),
     "OntapLocalCifsUser": (
         "pynetappfoundry.cache.ontap.protocols.cifs.local_users.mapping",
         "pynetappfoundry.models.ontap.protocols.cifs.local_users.model",
@@ -1899,6 +1923,12 @@ MAPPING_INDEX: dict[str, tuple[str, str, str, str | None]] = {
         "pynetappfoundry.models.ontap.protocols.san.lun_maps.model",
         "OntapLunMap",
         "ontap/protocols/san/lun_maps/lun_maps.toml",
+    ),
+    "OntapLunMapReportingNode": (
+        "pynetappfoundry.cache.ontap.protocols.san.lun_maps.reporting_nodes.mapping",
+        "pynetappfoundry.models.ontap.protocols.san.lun_maps.reporting_nodes.model",
+        "OntapLunMapReportingNode",
+        "ontap/protocols/san/lun_maps/reporting_nodes/reporting_nodes.toml",
     ),
     "OntapMediatorResponse": (
         "pynetappfoundry.cache.ontap.cluster.mediators.mapping",
@@ -2176,6 +2206,12 @@ MAPPING_INDEX: dict[str, tuple[str, str, str, str | None]] = {
         "OntapPerformanceNvmeMetricResponse",
         "ontap/protocols/nvme/services/metrics/metrics.toml",
     ),
+    "OntapPerformanceQtreeMetricResponse": (
+        "pynetappfoundry.cache.ontap.storage.qtrees.metrics.mapping",
+        "pynetappfoundry.models.ontap.storage.qtrees.metrics.model",
+        "OntapPerformanceQtreeMetricResponse",
+        "ontap/storage/qtrees/metrics/metrics.toml",
+    ),
     "OntapPerformanceS3MetricResponse": (
         "pynetappfoundry.cache.ontap.protocols.s3.services.metrics.mapping",
         "pynetappfoundry.models.ontap.protocols.s3.services.metrics.model",
@@ -2284,6 +2320,12 @@ MAPPING_INDEX: dict[str, tuple[str, str, str, str | None]] = {
         "OntapRole",
         "ontap/security/roles/roles.toml",
     ),
+    "OntapRolePrivilege": (
+        "pynetappfoundry.cache.ontap.security.roles.privileges.mapping",
+        "pynetappfoundry.models.ontap.security.roles.privileges.model",
+        "OntapRolePrivilege",
+        "ontap/security/roles/privileges/privileges.toml",
+    ),
     "OntapS3Audit": (
         "pynetappfoundry.cache.ontap.protocols.audit.object_store.mapping",
         "pynetappfoundry.models.ontap.protocols.audit.object_store.model",
@@ -2295,6 +2337,18 @@ MAPPING_INDEX: dict[str, tuple[str, str, str, str | None]] = {
         "pynetappfoundry.models.ontap.protocols.s3.buckets.model",
         "OntapS3Bucket",
         "ontap/protocols/s3/buckets/buckets.toml",
+    ),
+    "OntapS3BucketLifecycleRule": (
+        "pynetappfoundry.cache.ontap.protocols.s3.services.buckets.rules.mapping",
+        "pynetappfoundry.models.ontap.protocols.s3.services.buckets.rules.model",
+        "OntapS3BucketLifecycleRule",
+        "ontap/protocols/s3/services/buckets/rules/rules.toml",
+    ),
+    "OntapS3BucketSnapshot": (
+        "pynetappfoundry.cache.ontap.protocols.s3.services.buckets.snapshots.mapping",
+        "pynetappfoundry.models.ontap.protocols.s3.services.buckets.snapshots.model",
+        "OntapS3BucketSnapshot",
+        "ontap/protocols/s3/services/buckets/snapshots/snapshots.toml",
     ),
     "OntapS3BucketSvm": (
         "pynetappfoundry.cache.ontap.protocols.s3.services.buckets.mapping",
@@ -2721,6 +2775,12 @@ MAPPING_INDEX: dict[str, tuple[str, str, str, str | None]] = {
         "pynetappfoundry.models.ontap.name_services.cache.unix_group.settings.model",
         "OntapUnixGroupSettings",
         "ontap/name_services/cache/unix_group/settings/settings.toml",
+    ),
+    "OntapUnixGroupUsers": (
+        "pynetappfoundry.cache.ontap.name_services.unix_groups.users.mapping",
+        "pynetappfoundry.models.ontap.name_services.unix_groups.users.model",
+        "OntapUnixGroupUsers",
+        "ontap/name_services/unix_groups/users/users.toml",
     ),
     "OntapUnixUser": (
         "pynetappfoundry.cache.ontap.name_services.unix_users.mapping",

@@ -621,9 +621,9 @@ class OntapBackend(Backend):
             return cached_instances
 
         if mapping.parent_mapping is not None:
-            parent_ref_field = self._extract_parent_ref_field(mapping)
+            parent_ref_fields = self._extract_parent_ref_fields(mapping)
             parent_groups = self._resolve_parent_uuids(
-                mapping, cached_instances, cluster, parent_ref_field
+                mapping, cached_instances, cluster, parent_ref_fields
             )
             live_instances = self._fetch_live_by_parent(
                 model_class,
@@ -657,31 +657,42 @@ class OntapBackend(Backend):
         )
 
     @staticmethod
+    def _extract_parent_ref_fields(mapping: TypeMapping) -> tuple[str, ...]:
+        """Parse every ``{placeholder}`` from a parameterized ``api_endpoint``.
+
+        Returns the dotted attribute paths inside the ``{...}`` placeholders,
+        in order (e.g. ``("volume.uuid",)`` from
+        ``"/storage/volumes/{volume.uuid}/snapshots"``), or an empty tuple if
+        no placeholder is found.
+        """
+        import re as _re
+
+        return tuple(_re.findall(r"\{([^}]+)\}", mapping.api_endpoint.split("?", 1)[0]))
+
+    @staticmethod
     def _extract_parent_ref_field(mapping: TypeMapping) -> str | None:
-        """Parse the ``{placeholder}`` from a parameterized ``api_endpoint``.
+        """Parse the first ``{placeholder}`` from a parameterized ``api_endpoint``.
 
         Returns the dotted attribute path inside the first ``{...}``
         placeholder (e.g. ``"volume.uuid"`` from
         ``"/storage/volumes/{volume.uuid}/snapshots"``), or ``None`` if no
         placeholder is found.
         """
-        import re as _re
-
-        match = _re.search(r"\{([^}]+)\}", mapping.api_endpoint)
-        return match.group(1) if match else None
+        fields = OntapBackend._extract_parent_ref_fields(mapping)
+        return fields[0] if fields else None
 
     def _resolve_parent_uuids(
         self,
         mapping: TypeMapping,
         cached_instances: list[T],
         cluster: str,
-        parent_ref_field: str | None,
-    ) -> dict[str, list[T]]:
+        parent_ref_fields: tuple[str, ...],
+    ) -> dict[tuple[str, ...], list[T]]:
         """Group *cached_instances* by parent UUID for parent-keyed live fetch.
 
-        For each cached child, resolves *parent_ref_field* via dotted-attr
-        lookup.  Children whose parent ref resolves to ``None`` or empty
-        string are logged as warnings and excluded from the grouped result.
+        For each cached child, resolves every field of *parent_ref_fields* via
+        dotted-attr lookup.  Children where any ref resolves to ``None`` or
+        empty string are logged as warnings and excluded from the grouped result.
 
         If **all** children yield ``None`` (the SvmMigrationVolume case,
         where the child model has no back-reference to the parent), falls
@@ -689,20 +700,19 @@ class OntapBackend(Backend):
         children under each parent UUID.
 
         Returns:
-            ``{parent_uuid: [children]}`` dict suitable for
+            ``{(parent_value, ...): [children]}`` dict, one value per path
+            placeholder, suitable for
             :meth:`_fetch_live_by_parent`.
         """
         from collections import defaultdict
 
-        groups: dict[str, list[T]] = defaultdict(list)
+        groups: dict[tuple[str, ...], list[T]] = defaultdict(list)
         orphans: list[T] = []
 
         for child in cached_instances:
-            parent_uuid = (
-                _resolve_dotted_attr(child, parent_ref_field) if parent_ref_field else None
-            )
-            if parent_uuid:
-                groups[str(parent_uuid)].append(child)
+            ref_values = [_resolve_dotted_attr(child, f) for f in parent_ref_fields]
+            if parent_ref_fields and all(ref_values):
+                groups[tuple(str(v) for v in ref_values)].append(child)
             else:
                 orphans.append(child)
 
@@ -714,7 +724,7 @@ class OntapBackend(Backend):
                     "via %r; they will pass through unmerged",
                     mapping.name,
                     len(orphans),
-                    parent_ref_field,
+                    ", ".join(parent_ref_fields),
                 )
             return dict(groups)
 
@@ -734,11 +744,11 @@ class OntapBackend(Backend):
         parent_model_class = parent_type_mapping.model_class
         parent_instances = self._fetch_cache(parent_model_class, cluster, [])
 
-        parent_id_field = mapping.parent_id_field or "uuid"
+        parent_id_fields = mapping.effective_parent_id_fields() or ("uuid",)
         for parent in parent_instances:
-            pid = _resolve_dotted_attr(parent, parent_id_field)
-            if pid:
-                groups[str(pid)] = list(cached_instances)
+            pids = [_resolve_dotted_attr(parent, f) for f in parent_id_fields]
+            if all(pids):
+                groups[tuple(str(p) for p in pids)] = list(cached_instances)
 
         return dict(groups)
 
@@ -747,13 +757,13 @@ class OntapBackend(Backend):
         model_class: type[T],
         mapping: TypeMapping,
         cluster: str,
-        parent_groups: dict[str, list[T]],
+        parent_groups: dict[tuple[str, ...], list[T]],
         identifier_field: str,
         live_field_paths: tuple[str, ...],
     ) -> list[T]:
         """Per-parent batched live fetch for parent-keyed mappings.
 
-        For each parent UUID and its children, builds a resolved URL via
+        For each parent key (one value per placeholder) and its children, builds a resolved URL via
         :meth:`TypeMapping.build_parameterized_url`, overrides ``fields=``
         with the live field paths (preserving ``fields=*`` when present),
         adds pipe-OR identifier filters chunked by batch size, and
@@ -793,8 +803,10 @@ class OntapBackend(Backend):
 
         chunk_size = mapping.batch_size or _BATCH_SIZE
         results: list[T] = []
-        for parent_uuid, children in parent_groups.items():
-            base_url = mapping.build_parameterized_url(parent_uuid)
+        for parent_key, children in parent_groups.items():
+            base_url = mapping.build_parameterized_url(
+                parent_key[0] if len(parent_key) == 1 else parent_key
+            )
             parsed = urlparse(base_url)
             base_query: dict[str, list[str]] = parse_qs(parsed.query, keep_blank_values=True)
 

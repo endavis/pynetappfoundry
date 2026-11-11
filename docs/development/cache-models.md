@@ -560,13 +560,26 @@ This tells the framework: "To call this endpoint, look up each `OntapSvm`
 from the cache, substitute its `uuid` into the `{svm.uuid}` placeholder,
 and make individual API calls."
 
-A parent fills only the **first** placeholder. A mapping with a parent may
-therefore carry exactly one placeholder; a mapping without one may carry at
-most a single trailing item placeholder, which `collection_endpoint` strips.
-The code generator does not emit ONTAP endpoints outside those rules (#952),
-and `tests/unit/cache/test_mapping_fetch_url_resolvable.py` fails if a
-registered mapping's fetch URL cannot be filled. Multi-placeholder parent fill
-is tracked in #955.
+A single `parent_id_field` fills only the **first** placeholder. For an
+endpoint with two or more placeholders, declare `parent_id_fields` instead: one
+parent field per placeholder, in order, mutually exclusive with
+`parent_id_field`.
+
+```python
+TypeMapping(
+    api_endpoint="/protocols/cifs/shares/{svm.uuid}/{share}/acls?fields=*",
+    parent_mapping="OntapCifsShare",
+    parent_id_fields=("svm.uuid", "name"),
+)
+```
+
+A mapping without a parent may carry at most a single trailing item
+placeholder, which `collection_endpoint` strips. The code generator does not
+emit ONTAP endpoints outside those rules (#952, #955), and
+`tests/unit/cache/test_mapping_fetch_url_resolvable.py` fails if a registered
+mapping's fetch URL cannot be filled. The runtime is in
+`src/pynetappfoundry/cache/field_mapping.py` (`TypeMapping.parent_id_fields`,
+`build_parameterized_url`).
 
 ---
 
