@@ -7,7 +7,7 @@ Usage::
 
     uv run python tools/codegen/openapi_codegen.py \\
         --spec docs/example-config/apis/ontap/openapi3.json \\
-        --output src/pynetappfoundry/cache/ontap/ \\
+        --output src/pynetappfoundry/cache/ \\
         --api-type ontap
 """
 
@@ -88,7 +88,10 @@ def _build_parser() -> argparse.ArgumentParser:
         "--output",
         type=Path,
         required=True,
-        help="Output directory for generated files (e.g. src/pynetappfoundry/cache/ontap/).",
+        help=(
+            "Cache root for generated files (e.g. src/pynetappfoundry/cache/); "
+            "models go to the sibling models/<api-type>/ tree."
+        ),
     )
     parser.add_argument(
         "--api-type",

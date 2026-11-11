@@ -12,6 +12,7 @@ from tools.codegen.generators import (
     _EXCLUDED_ENDPOINTS,
     _IDENTIFIER_FIELD_OVERRIDES,
     _SINGULAR_EXCEPTIONS,
+    GENERATED_HEADER,
     _collect_all_leaves,
     _field_to_cache_attr,
     _has_typed_sub_fields,
@@ -1651,3 +1652,24 @@ class TestTomlRemovedFields:
         )
         out = tomllib.loads(generate_toml_overlay(self._ep("name"), existing))
         assert out["_removed_fields"] == ["old"]
+
+
+class TestGeneratedHeader:
+    """#901: generated model and init files start with the generated header."""
+
+    def test_model_starts_with_header(self) -> None:
+        assert generate_model(_make_endpoint()).startswith(GENERATED_HEADER + "\n")
+
+    def test_header_precedes_noqa(self) -> None:
+        ep = _make_endpoint(
+            fields=[ParsedField(name="isDnsTTLEnabled", api_path="isDnsTTLEnabled")]
+        )
+        lines = generate_model(ep).splitlines()
+        assert lines[0] == GENERATED_HEADER
+        assert lines[1].startswith("# ruff: noqa:")
+
+    def test_init_starts_with_header(self) -> None:
+        assert generate_init(_make_endpoint()).startswith(GENERATED_HEADER + "\n")
+
+    def test_mapping_has_no_header(self) -> None:
+        assert GENERATED_HEADER not in generate_mapping(_make_endpoint())
