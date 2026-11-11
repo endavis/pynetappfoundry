@@ -1,0 +1,31 @@
+[endpoint]
+path = "/security/ssh"
+schema = "cluster_ssh_server"
+class_name = "OntapClusterSshServer"
+
+[fields.ciphers]
+cache_strategy = "cache"
+
+[fields.connections_per_second]
+cache_strategy = "cache"
+
+[fields.host_key_algorithms]
+cache_strategy = "cache"
+
+[fields.is_rsa_in_publickey_algorithms_enabled]
+cache_strategy = "cache"
+
+[fields.key_exchange_algorithms]
+cache_strategy = "cache"
+
+[fields.mac_algorithms]
+cache_strategy = "cache"
+
+[fields.max_authentication_retry_count]
+cache_strategy = "cache"
+
+[fields.max_instances]
+cache_strategy = "cache"
+
+[fields.per_source_limit]
+cache_strategy = "cache"

@@ -13,6 +13,7 @@ ONTAPSOFTWAREPACKAGEDOWNLOADGET_MAPPING = TypeMapping(
     model_class=OntapSoftwarePackageDownloadGet,
     api_endpoint="/cluster/software/download?fields=*",
     api_type="ontap",
+    response_shape="singleton",
     fields=(
         FieldMapping(
             cache_attr="code",

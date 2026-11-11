@@ -13,6 +13,7 @@ ONTAPNFSCLIENTSCACHE_MAPPING = TypeMapping(
     model_class=OntapNfsClientsCache,
     api_endpoint="/protocols/nfs/connected-client-settings?fields=*",
     api_type="ontap",
+    response_shape="singleton",
     fields=(
         FieldMapping(
             cache_attr="client_retention_interval",

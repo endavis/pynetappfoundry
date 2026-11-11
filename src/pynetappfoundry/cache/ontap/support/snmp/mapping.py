@@ -11,6 +11,7 @@ ONTAPSNMP_MAPPING = TypeMapping(
     model_class=OntapSnmp,
     api_endpoint="/support/snmp?fields=*",
     api_type="ontap",
+    response_shape="singleton",
     fields=(
         FieldMapping(
             cache_attr="auth_traps_enabled",

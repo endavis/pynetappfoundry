@@ -126,13 +126,14 @@ edit.**  The generator infers `TypeMapping.identifier_field` from a
 collection endpoint's sibling item endpoint path parameter
 (e.g. `/storage/volumes` + `/storage/volumes/{uuid}` →
 `identifier_field="uuid"`).  Multi-param item endpoints are left as
-`None` — composite identifiers are not auto-inferred.  One ONTAP
-endpoint (`/svm/migrations/volumes`) uses a nested response-field
-identifier (`"volume.uuid"`) that cannot be derived from the spec; the
-`mapping.py` for that endpoint must be hand-edited after regen.
-Regeneration will wipe the manual override, so the edit must be
-re-applied (or mirrored into the generator if more nested identifiers
-appear in future specs).
+`None` — composite identifiers are not auto-inferred.  Paths whose
+identifier the spec cannot name are pinned in `_IDENTIFIER_FIELD_OVERRIDES`
+in `tools/codegen/generators.py`, keyed by spec path like
+`_CLASS_NAME_OVERRIDES` and applied in `generate_mapping` (#933).  It covers
+four paths: the consistency-groups snapshots, snapmirror transfers and
+volumes snapshots mappings (`"uuid"`) and `/svm/migrations/{svm_migration.uuid}/volumes`
+(`"volume.uuid"`, a nested response field).  Regeneration therefore no longer
+wipes these values; add a path to the table if another one appears.
 
 Issue: #601
 
@@ -365,7 +366,7 @@ is one object (for example `GET /cluster/software`) was modelled as its first ar
   `/cluster/counter/tables` and `/storage/flexcache/origins`.
 - **Deferred:** `ems` and `filters` mappings are left alone. The other array-less ONTAP singletons
   (about 27) are not regenerated. Six endpoints that become parseable under the rule are not emitted.
-  A full regeneration would now overwrite the hand-written `/cluster` mapping.
+  A full regeneration would now overwrite the hand-written `/cluster` mapping. Resolved by #933.
 - **Litigations caveat:** fixed by #934, see the next section.
 
 Issue: #925
@@ -478,6 +479,28 @@ Issue: #956
 
 Issue: #932
 
+### Full ONTAP regeneration (Issue #933)
+
+A full `doit generate_models --api=ontap` now exits 0 and writes only reviewed output.
+
+- **Exclusion:** `_EXCLUDED_ENDPOINTS` (keyed by api_type, `{"ontap": {"/cluster"}}`) in
+  `tools/codegen/generators.py`. `openapi_codegen.run()` applies it after the #952 unfetchable drop
+  and before the `--endpoints` filter, printing `skipped (excluded): <path>`, so no other endpoint's
+  naming or parent linkage changes. The hand-written `ClusterInfo` / `CLUSTER_MAPPING` stay until #967.
+- **Singletons and new endpoints:** the 21 further `response_shape="singleton"` mappings and the
+  additive `security/ssh`, `security/multi_admin_verify` and
+  `security/authentication/cluster/ldap` endpoints were adopted (no BREAKING footer).
+- **Identifier table:** `_IDENTIFIER_FIELD_OVERRIDES`, see the `identifier_field` paragraph above.
+  Inferring from the last placeholder of multi-parameter paths was rejected: it would add about 40
+  unreviewed `identifier_field` lines.
+- **`_removed_fields`:** `generate_toml_overlay` computes `(existing fields | existing
+  _removed_fields) - current spec keys`, so hand-curated lists persist and an entry drops only
+  when the field returns to the spec.
+- **Cache:** no cached table's columns changed, so `SCHEMA_VERSION` is unchanged.
+- **EMS filters:** `support/ems/filters` is handled by #932.
+
+Issue: #933
+
 ## Related Issues
 
 - Issue #301: feat: field annotations, OpenAPI codegen, and SQL cache storage
@@ -489,6 +512,7 @@ Issue: #932
 - Issue #699: feat: generate Pydantic models from Console OpenAPI spec
 - Issue #894: bug: codegen class-name collisions drop model registry mappings
 - Issue #925: bug: codegen models ONTAP single-object responses as their first array property
+- Issue #933: refactor: review full ONTAP regeneration under the #925 singleton rule
 - Issue #934: bug: ONTAP item-endpoint mappings with no fetchable parent (snaplock litigations, file_security permissions)
 - Issue #952: bug: generated ONTAP mappings with unfilled path placeholders are unfetchable
 - Issue #932: refactor: codegen naming for support/ems/filters collection (deferred from #925)

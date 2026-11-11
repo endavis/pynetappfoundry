@@ -11,6 +11,7 @@ ONTAPQOSOPTION_MAPPING = TypeMapping(
     model_class=OntapQosOption,
     api_endpoint="/storage/qos/qos-options?fields=*",
     api_type="ontap",
+    response_shape="singleton",
     fields=(
         FieldMapping(
             cache_attr="background_task_reserve",

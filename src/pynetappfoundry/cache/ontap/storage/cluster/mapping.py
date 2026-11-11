@@ -14,6 +14,7 @@ ONTAPCLUSTERSPACE_MAPPING = TypeMapping(
     model_class=OntapClusterSpace,
     api_endpoint="/storage/cluster?fields=*",
     api_type="ontap",
+    response_shape="singleton",
     fields=(
         FieldMapping(
             cache_attr="block_storage.available",

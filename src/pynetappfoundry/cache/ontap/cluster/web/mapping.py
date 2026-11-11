@@ -11,6 +11,7 @@ ONTAPWEB_MAPPING = TypeMapping(
     model_class=OntapWeb,
     api_endpoint="/cluster/web?fields=*",
     api_type="ontap",
+    response_shape="singleton",
     fields=(
         FieldMapping(
             cache_attr="certificate.name",

@@ -1,0 +1,17 @@
+"""OntapMultiAdminVerifyConfig information."""
+
+from __future__ import annotations
+
+from pydantic import Field
+
+from pynetappfoundry.models._base import OntapModel
+
+
+class OntapMultiAdminVerifyConfig(OntapModel):
+    """OntapMultiAdminVerifyConfig information."""
+
+    approval_expiry: str = ""
+    approval_groups: list[str] = Field(default_factory=list)
+    enabled: bool = False
+    execution_expiry: str = ""
+    required_approvers: int = 0

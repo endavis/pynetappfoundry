@@ -11,6 +11,7 @@ ONTAPAUTOUPDATEINFO_MAPPING = TypeMapping(
     model_class=OntapAutoUpdateInfo,
     api_endpoint="/support/auto-update?fields=*",
     api_type="ontap",
+    response_shape="singleton",
     fields=(
         FieldMapping(
             cache_attr="enabled",

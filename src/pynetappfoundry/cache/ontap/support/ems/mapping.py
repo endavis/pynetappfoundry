@@ -11,6 +11,7 @@ ONTAPEMSCONFIG_MAPPING = TypeMapping(
     model_class=OntapEmsConfig,
     api_endpoint="/support/ems?fields=*",
     api_type="ontap",
+    response_shape="singleton",
     fields=(
         FieldMapping(
             cache_attr="mail_from",

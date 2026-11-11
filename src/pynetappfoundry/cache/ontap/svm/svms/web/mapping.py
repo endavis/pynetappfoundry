@@ -11,6 +11,7 @@ ONTAPWEBSVM_MAPPING = TypeMapping(
     model_class=OntapWebSvm,
     api_endpoint="/svm/svms/{svm.uuid}/web?fields=*",
     api_type="ontap",
+    response_shape="singleton",
     parent_mapping="OntapSvm",
     parent_id_field="uuid",
     fields=(

@@ -202,3 +202,48 @@ class TestRunFilterAndDrop:
             endpoint_filter=["/n/{svm.uuid}"],
         )
         assert written != []
+
+
+class TestExcludedEndpoints:
+    """#933: ``/cluster`` is hand-written and skipped by ONTAP codegen."""
+
+    def _spec(self, tmp_path: Path) -> Path:
+        thing = {"type": "object", "properties": {"uuid": {"type": "string"}}}
+        spec = {
+            "openapi": "3.0.0",
+            "info": {"title": "T", "version": "1"},
+            "paths": {
+                "/cluster": _get(thing, envelope=False),
+                "/things": _get(thing, envelope=True),
+            },
+            "components": {"schemas": {}},
+        }
+        path = tmp_path / "excl_spec.json"
+        path.write_text(json.dumps(spec))
+        return path
+
+    def test_cluster_skipped_with_message(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        written = run(spec=self._spec(tmp_path), output=tmp_path / "out", api_type="ontap")
+        assert "skipped (excluded): /cluster" in capsys.readouterr().out
+        joined = " ".join(p.as_posix() for p in written)
+        assert "/cluster/" not in joined
+        assert "/things/" in joined
+
+    def test_other_endpoint_linkage_unchanged(self, tmp_path: Path) -> None:
+        a = run(spec=_synthetic_spec(tmp_path), output=tmp_path / "out", api_type="ontap")
+        assert any("/things/" in p.as_posix() for p in a)
+
+    def test_filter_on_excluded_returns_empty(self, tmp_path: Path) -> None:
+        written = run(
+            spec=self._spec(tmp_path),
+            output=tmp_path / "out",
+            api_type="ontap",
+            endpoint_filter=["/cluster"],
+        )
+        assert written == []
+
+    def test_other_api_type_unaffected(self, tmp_path: Path) -> None:
+        written = run(spec=self._spec(tmp_path), output=tmp_path / "out", api_type="dii")
+        assert any("/cluster/" in p.as_posix() for p in written)

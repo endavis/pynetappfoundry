@@ -11,6 +11,7 @@ ONTAPKEYMANAGERCONFIG_MAPPING = TypeMapping(
     model_class=OntapKeyManagerConfig,
     api_endpoint="/security/key-manager-configs?fields=*",
     api_type="ontap",
+    response_shape="singleton",
     fields=(
         FieldMapping(
             cache_attr="cc_mode_enabled",
