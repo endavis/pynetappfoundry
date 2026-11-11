@@ -338,23 +338,25 @@ class TestDiiBackendRecordsPath:
         results = _query_with(items_mapping, response, mock_config)
         assert [r.id for r in results] == [2]
 
-    def test_dot_wraps_dict_as_single_record(
+    def test_singleton_wraps_dict_as_single_record(
         self, fake_dii_mapping: TypeMapping, mock_config: Any
     ) -> None:
-        mapping = dataclasses.replace(fake_dii_mapping, records_path=".")
+        mapping = dataclasses.replace(fake_dii_mapping, response_shape="singleton")
         results = _query_with(mapping, {"id": 5, "name": "solo"}, mock_config)
         assert [(r.id, r.name) for r in results] == [(5, "solo")]
         assert "id" in results[0]._fetched_fields
 
-    def test_dot_wins_over_envelope_sniffing(
+    def test_singleton_wins_over_envelope_sniffing(
         self, fake_dii_mapping: TypeMapping, mock_config: Any
     ) -> None:
-        mapping = dataclasses.replace(fake_dii_mapping, records_path=".")
+        mapping = dataclasses.replace(fake_dii_mapping, response_shape="singleton")
         results = _query_with(mapping, {"id": 5, "rows": [{"id": 9}]}, mock_config)
         assert [r.id for r in results] == [5]
 
-    def test_dot_keeps_list_as_list(self, fake_dii_mapping: TypeMapping, mock_config: Any) -> None:
-        mapping = dataclasses.replace(fake_dii_mapping, records_path=".")
+    def test_singleton_keeps_list_as_list(
+        self, fake_dii_mapping: TypeMapping, mock_config: Any
+    ) -> None:
+        mapping = dataclasses.replace(fake_dii_mapping, response_shape="singleton")
         results = _query_with(mapping, [{"id": 1}, {"id": 2}], mock_config)
         assert [r.id for r in results] == [1, 2]
 
@@ -368,11 +370,60 @@ class TestDiiBackendRecordsPath:
         )
         assert [r.id for r in results] == [4]
 
+    def test_singleton_default_records_path_still_wraps(
+        self,
+        fake_dii_mapping: TypeMapping,
+        mock_config: Any,
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        """Guards branch order: default ``records_path="records"`` must not win."""
+        mapping = dataclasses.replace(
+            fake_dii_mapping, records_path="records", response_shape="singleton"
+        )
+        with caplog.at_level("WARNING"):
+            results = _query_with(mapping, {"id": 5, "name": "solo"}, mock_config)
+        assert [(r.id, r.name) for r in results] == [(5, "solo")]
+        assert "unexpected response type" not in caplog.text
+        assert "not found" not in caplog.text
+
+    def test_singleton_none_response_is_empty(
+        self, fake_dii_mapping: TypeMapping, mock_config: Any
+    ) -> None:
+        mapping = dataclasses.replace(fake_dii_mapping, response_shape="singleton")
+        assert _query_with(mapping, None, mock_config) == []
+
+    def test_real_installcommand_mapping(self, mock_config: Any) -> None:
+        from pynetappfoundry.cache.dii.au.installCommand.mapping import (
+            DIIAUINSTALLCOMMAND_MAPPING,
+        )
+        from pynetappfoundry.models.dii.au.installCommand.model import DiiAuInstallcommand
+
+        assert DIIAUINSTALLCOMMAND_MAPPING.response_shape == "singleton"
+        backend = _make_backend(mock_config)
+        decision = RoutingDecision(cache_fields=(), live_fields=("installCommand",))
+        client = MagicMock()
+        client.get_all_pages.return_value = {"installCommand": "curl x | sh"}
+        with patch.object(backend, "_get_api_client", return_value=client):
+            results = backend.query(
+                DiiAuInstallcommand, DIIAUINSTALLCOMMAND_MAPPING, decision, "t", {}
+            )
+        assert len(results) == 1
+        assert results[0].installCommand == "curl x | sh"
+
+    def test_no_registered_dii_mapping_uses_dot_sentinel(self) -> None:
+        from pynetappfoundry.cache.dii.au.installCommand.mapping import (  # noqa: F401
+            DIIAUINSTALLCOMMAND_MAPPING,
+        )
+
+        dii = [m for m in model_registry.mappings.values() if m.api_type == "dii"]
+        assert dii
+        assert [m.name for m in dii if m.records_path == "."] == []
+
     def test_real_onetimetoken_mapping(self, mock_config: Any) -> None:
         from pynetappfoundry.cache.dii.au.oneTimeToken.mapping import DIIAUONETIMETOKEN_MAPPING
         from pynetappfoundry.models.dii.au.oneTimeToken.model import DiiAuOnetimetoken
 
-        assert DIIAUONETIMETOKEN_MAPPING.records_path == "."
+        assert DIIAUONETIMETOKEN_MAPPING.response_shape == "singleton"
         backend = _make_backend(mock_config)
         decision = RoutingDecision(cache_fields=(), live_fields=("token", "installCommand"))
         client = MagicMock()
