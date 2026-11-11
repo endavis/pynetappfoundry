@@ -2,20 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.network.ip.routes.model import (
     OntapNetworkRoute,
     OntapNetworkRouteInterface,
 )
-
-
-def _transform_interfaces(record: dict[str, Any]) -> list[OntapNetworkRouteInterface]:
-    """Transform interfaces into OntapNetworkRouteInterface list."""
-    return [OntapNetworkRouteInterface(**item) for item in record.get("interfaces", [])]
-
 
 ONTAPNETWORKROUTE_MAPPING = TypeMapping(
     name="OntapNetworkRoute",
@@ -38,7 +30,7 @@ ONTAPNETWORKROUTE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="interfaces",
-            transform=_transform_interfaces,
+            item_model=OntapNetworkRouteInterface,
             default=[],
             requires_explicit_fetch=True,
         ),

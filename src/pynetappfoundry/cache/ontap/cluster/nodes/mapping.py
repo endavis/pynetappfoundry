@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.cluster.nodes.model import (
@@ -17,87 +15,6 @@ from pynetappfoundry.models.ontap.cluster.nodes.model import (
     OntapNodeResponseManagementInterface2,
     OntapNodeResponseMetroclusterPort,
 )
-from pynetappfoundry.utils.dict_path import get_nested_value
-
-
-def _transform_cluster_interfaces(
-    record: dict[str, Any],
-) -> list[OntapNodeResponseClusterInterface2]:
-    """Transform cluster_interfaces into OntapNodeResponseClusterInterface2 list."""
-    return [
-        OntapNodeResponseClusterInterface2(**item) for item in record.get("cluster_interfaces", [])
-    ]
-
-
-def _transform_controller_flash_cache(
-    record: dict[str, Any],
-) -> list[OntapNodeResponseControllerFlashCache]:
-    """Transform controller.flash_cache into OntapNodeResponseControllerFlashCache list."""
-    try:
-        items = get_nested_value(record, "controller.flash_cache")
-    except Exception:
-        items = []
-    return [OntapNodeResponseControllerFlashCache(**item) for item in items]
-
-
-def _transform_controller_frus(record: dict[str, Any]) -> list[OntapNodeResponseControllerFru]:
-    """Transform controller.frus into OntapNodeResponseControllerFru list."""
-    try:
-        items = get_nested_value(record, "controller.frus")
-    except Exception:
-        items = []
-    return [OntapNodeResponseControllerFru(**item) for item in items]
-
-
-def _transform_ha_giveback_status(
-    record: dict[str, Any],
-) -> list[OntapNodeResponseHaGivebackStatus]:
-    """Transform ha.giveback.status into OntapNodeResponseHaGivebackStatus list."""
-    try:
-        items = get_nested_value(record, "ha.giveback.status")
-    except Exception:
-        items = []
-    return [OntapNodeResponseHaGivebackStatus(**item) for item in items]
-
-
-def _transform_ha_partners(record: dict[str, Any]) -> list[OntapNodeResponseHaPartner]:
-    """Transform ha.partners into OntapNodeResponseHaPartner list."""
-    try:
-        items = get_nested_value(record, "ha.partners")
-    except Exception:
-        items = []
-    return [OntapNodeResponseHaPartner(**item) for item in items]
-
-
-def _transform_ha_ports(record: dict[str, Any]) -> list[OntapNodeResponseHaPort]:
-    """Transform ha.ports into OntapNodeResponseHaPort list."""
-    try:
-        items = get_nested_value(record, "ha.ports")
-    except Exception:
-        items = []
-    return [OntapNodeResponseHaPort(**item) for item in items]
-
-
-def _transform_management_interfaces(
-    record: dict[str, Any],
-) -> list[OntapNodeResponseManagementInterface2]:
-    """Transform management_interfaces into OntapNodeResponseManagementInterface2 list."""
-    return [
-        OntapNodeResponseManagementInterface2(**item)
-        for item in record.get("management_interfaces", [])
-    ]
-
-
-def _transform_metrocluster_ports(
-    record: dict[str, Any],
-) -> list[OntapNodeResponseMetroclusterPort]:
-    """Transform metrocluster.ports into OntapNodeResponseMetroclusterPort list."""
-    try:
-        items = get_nested_value(record, "metrocluster.ports")
-    except Exception:
-        items = []
-    return [OntapNodeResponseMetroclusterPort(**item) for item in items]
-
 
 ONTAPNODERESPONSE_MAPPING = TypeMapping(
     name="OntapNodeResponse",
@@ -114,7 +31,7 @@ ONTAPNODERESPONSE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="cluster_interfaces",
-            transform=_transform_cluster_interfaces,
+            item_model=OntapNodeResponseClusterInterface2,
             default=[],
         ),
         FieldMapping(
@@ -152,12 +69,12 @@ ONTAPNODERESPONSE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="controller.flash_cache",
-            transform=_transform_controller_flash_cache,
+            item_model=OntapNodeResponseControllerFlashCache,
             default=[],
         ),
         FieldMapping(
             cache_attr="controller.frus",
-            transform=_transform_controller_frus,
+            item_model=OntapNodeResponseControllerFru,
             default=[],
         ),
         FieldMapping(
@@ -206,7 +123,7 @@ ONTAPNODERESPONSE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="ha.giveback.status",
-            transform=_transform_ha_giveback_status,
+            item_model=OntapNodeResponseHaGivebackStatus,
             default=[],
         ),
         FieldMapping(
@@ -217,12 +134,12 @@ ONTAPNODERESPONSE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="ha.partners",
-            transform=_transform_ha_partners,
+            item_model=OntapNodeResponseHaPartner,
             default=[],
         ),
         FieldMapping(
             cache_attr="ha.ports",
-            transform=_transform_ha_ports,
+            item_model=OntapNodeResponseHaPort,
             default=[],
         ),
         FieldMapping(
@@ -279,7 +196,7 @@ ONTAPNODERESPONSE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="management_interfaces",
-            transform=_transform_management_interfaces,
+            item_model=OntapNodeResponseManagementInterface2,
             default=[],
         ),
         FieldMapping(
@@ -317,7 +234,7 @@ ONTAPNODERESPONSE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="metrocluster.ports",
-            transform=_transform_metrocluster_ports,
+            item_model=OntapNodeResponseMetroclusterPort,
             default=[],
         ),
         FieldMapping(

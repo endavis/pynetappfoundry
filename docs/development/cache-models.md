@@ -195,7 +195,7 @@ ONTAPVOLUME_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="aggregates",
-            transform=_transform_aggregates,
+            item_model=OntapVolumeAggregate,
             default=[],
         ),
         # ...
@@ -207,7 +207,7 @@ ONTAPVOLUME_MAPPING = TypeMapping(
 - `build_collection_url()` dynamically appends expensive field names by
   inspecting `requires_explicit_fetch` on each field — this is what the
   collector and CLI inspect call instead of `api_endpoint` directly
-- Sub-model fields use `transform` functions instead of `api_path`
+- List-of-sub-model fields declare `item_model=<SubModel>`; `parse_api_record` builds the list from `api_path` (missing or `null` gives `[]`)
 - `requires_explicit_fetch=True` marks ONTAP expensive fields
 
 #### `__init__.py` — Package Exports (in `cache/<api-type>/`)

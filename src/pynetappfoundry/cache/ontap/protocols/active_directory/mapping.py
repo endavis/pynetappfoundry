@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.protocols.active_directory.model import (
@@ -11,22 +9,6 @@ from pynetappfoundry.models.ontap.protocols.active_directory.model import (
     OntapActiveDirectoryDiscoveredServer,
     OntapActiveDirectoryPreferredDc,
 )
-
-
-def _transform_discovered_servers(
-    record: dict[str, Any],
-) -> list[OntapActiveDirectoryDiscoveredServer]:
-    """Transform discovered_servers into OntapActiveDirectoryDiscoveredServer list."""
-    return [
-        OntapActiveDirectoryDiscoveredServer(**item)
-        for item in record.get("discovered_servers", [])
-    ]
-
-
-def _transform_preferred_dcs(record: dict[str, Any]) -> list[OntapActiveDirectoryPreferredDc]:
-    """Transform preferred_dcs into OntapActiveDirectoryPreferredDc list."""
-    return [OntapActiveDirectoryPreferredDc(**item) for item in record.get("preferred_dcs", [])]
-
 
 ONTAPACTIVEDIRECTORY_MAPPING = TypeMapping(
     name="OntapActiveDirectory",
@@ -37,7 +19,7 @@ ONTAPACTIVEDIRECTORY_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="discovered_servers",
-            transform=_transform_discovered_servers,
+            item_model=OntapActiveDirectoryDiscoveredServer,
             default=[],
         ),
         FieldMapping(
@@ -58,7 +40,7 @@ ONTAPACTIVEDIRECTORY_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="preferred_dcs",
-            transform=_transform_preferred_dcs,
+            item_model=OntapActiveDirectoryPreferredDc,
             default=[],
         ),
         FieldMapping(

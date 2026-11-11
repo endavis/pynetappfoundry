@@ -2,20 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.protocols.fpolicy.policies.model import (
     OntapFpolicyPolicy,
     OntapFpolicyPolicyEvent,
 )
-
-
-def _transform_events(record: dict[str, Any]) -> list[OntapFpolicyPolicyEvent]:
-    """Transform events into OntapFpolicyPolicyEvent list."""
-    return [OntapFpolicyPolicyEvent(**item) for item in record.get("events", [])]
-
 
 ONTAPFPOLICYPOLICY_MAPPING = TypeMapping(
     name="OntapFpolicyPolicy",
@@ -38,7 +30,7 @@ ONTAPFPOLICYPOLICY_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="events",
-            transform=_transform_events,
+            item_model=OntapFpolicyPolicyEvent,
             default=[],
         ),
         FieldMapping(

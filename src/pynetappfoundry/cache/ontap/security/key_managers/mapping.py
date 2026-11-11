@@ -1,9 +1,6 @@
-# ruff: noqa: E501
 """OntapSecurityKeyManager type mapping."""
 
 from __future__ import annotations
-
-from typing import Any
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
@@ -12,30 +9,6 @@ from pynetappfoundry.models.ontap.security.key_managers.model import (
     OntapSecurityKeyManagerExternalServer,
     OntapSecurityKeyManagerExternalServerCaCertificate,
 )
-from pynetappfoundry.utils.dict_path import get_nested_value
-
-
-def _transform_external_server_ca_certificates(
-    record: dict[str, Any],
-) -> list[OntapSecurityKeyManagerExternalServerCaCertificate]:
-    """Transform external.server_ca_certificates into OntapSecurityKeyManagerExternalServerCaCertificate list."""
-    try:
-        items = get_nested_value(record, "external.server_ca_certificates")
-    except Exception:
-        items = []
-    return [OntapSecurityKeyManagerExternalServerCaCertificate(**item) for item in items]
-
-
-def _transform_external_servers(
-    record: dict[str, Any],
-) -> list[OntapSecurityKeyManagerExternalServer]:
-    """Transform external.servers into OntapSecurityKeyManagerExternalServer list."""
-    try:
-        items = get_nested_value(record, "external.servers")
-    except Exception:
-        items = []
-    return [OntapSecurityKeyManagerExternalServer(**item) for item in items]
-
 
 ONTAPSECURITYKEYMANAGER_MAPPING = TypeMapping(
     name="OntapSecurityKeyManager",
@@ -62,12 +35,12 @@ ONTAPSECURITYKEYMANAGER_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="external.server_ca_certificates",
-            transform=_transform_external_server_ca_certificates,
+            item_model=OntapSecurityKeyManagerExternalServerCaCertificate,
             default=[],
         ),
         FieldMapping(
             cache_attr="external.servers",
-            transform=_transform_external_servers,
+            item_model=OntapSecurityKeyManagerExternalServer,
             default=[],
         ),
         FieldMapping(

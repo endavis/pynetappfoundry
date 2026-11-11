@@ -2,20 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.security.accounts.model import (
     OntapAccount,
     OntapAccountApplication,
 )
-
-
-def _transform_applications(record: dict[str, Any]) -> list[OntapAccountApplication]:
-    """Transform applications into OntapAccountApplication list."""
-    return [OntapAccountApplication(**item) for item in record.get("applications", [])]
-
 
 ONTAPACCOUNT_MAPPING = TypeMapping(
     name="OntapAccount",
@@ -25,7 +17,7 @@ ONTAPACCOUNT_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="applications",
-            transform=_transform_applications,
+            item_model=OntapAccountApplication,
             default=[],
         ),
         FieldMapping(

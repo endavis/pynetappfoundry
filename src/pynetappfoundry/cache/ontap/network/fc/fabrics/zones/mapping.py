@@ -2,20 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.network.fc.fabrics.zones.model import (
     OntapFcZone,
     OntapFcZoneMember,
 )
-
-
-def _transform_members(record: dict[str, Any]) -> list[OntapFcZoneMember]:
-    """Transform members into OntapFcZoneMember list."""
-    return [OntapFcZoneMember(**item) for item in record.get("members", [])]
-
 
 ONTAPFCZONE_MAPPING = TypeMapping(
     name="OntapFcZone",
@@ -40,7 +32,7 @@ ONTAPFCZONE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="members",
-            transform=_transform_members,
+            item_model=OntapFcZoneMember,
             default=[],
             requires_explicit_fetch=True,
         ),

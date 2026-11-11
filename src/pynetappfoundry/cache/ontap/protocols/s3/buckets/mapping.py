@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.protocols.s3.buckets.model import (
@@ -13,42 +11,6 @@ from pynetappfoundry.models.ontap.protocols.s3.buckets.model import (
     OntapS3BucketLifecycleManagementRule,
     OntapS3BucketPolicyStatement,
 )
-from pynetappfoundry.utils.dict_path import get_nested_value
-
-
-def _transform_aggregates(record: dict[str, Any]) -> list[OntapS3BucketAggregate]:
-    """Transform aggregates into OntapS3BucketAggregate list."""
-    return [OntapS3BucketAggregate(**item) for item in record.get("aggregates", [])]
-
-
-def _transform_cors_rules(record: dict[str, Any]) -> list[OntapS3BucketCorsRule]:
-    """Transform cors.rules into OntapS3BucketCorsRule list."""
-    try:
-        items = get_nested_value(record, "cors.rules")
-    except Exception:
-        items = []
-    return [OntapS3BucketCorsRule(**item) for item in items]
-
-
-def _transform_lifecycle_management_rules(
-    record: dict[str, Any],
-) -> list[OntapS3BucketLifecycleManagementRule]:
-    """Transform lifecycle_management.rules into OntapS3BucketLifecycleManagementRule list."""
-    try:
-        items = get_nested_value(record, "lifecycle_management.rules")
-    except Exception:
-        items = []
-    return [OntapS3BucketLifecycleManagementRule(**item) for item in items]
-
-
-def _transform_policy_statements(record: dict[str, Any]) -> list[OntapS3BucketPolicyStatement]:
-    """Transform policy.statements into OntapS3BucketPolicyStatement list."""
-    try:
-        items = get_nested_value(record, "policy.statements")
-    except Exception:
-        items = []
-    return [OntapS3BucketPolicyStatement(**item) for item in items]
-
 
 ONTAPS3BUCKET_MAPPING = TypeMapping(
     name="OntapS3Bucket",
@@ -58,7 +20,7 @@ ONTAPS3BUCKET_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="aggregates",
-            transform=_transform_aggregates,
+            item_model=OntapS3BucketAggregate,
             default=[],
         ),
         FieldMapping(
@@ -80,7 +42,7 @@ ONTAPS3BUCKET_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="cors.rules",
-            transform=_transform_cors_rules,
+            item_model=OntapS3BucketCorsRule,
             default=[],
         ),
         FieldMapping(
@@ -89,7 +51,7 @@ ONTAPS3BUCKET_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="lifecycle_management.rules",
-            transform=_transform_lifecycle_management_rules,
+            item_model=OntapS3BucketLifecycleManagementRule,
             default=[],
         ),
         FieldMapping(
@@ -104,7 +66,7 @@ ONTAPS3BUCKET_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="policy.statements",
-            transform=_transform_policy_statements,
+            item_model=OntapS3BucketPolicyStatement,
             default=[],
         ),
         FieldMapping(

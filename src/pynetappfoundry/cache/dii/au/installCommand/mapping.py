@@ -1,9 +1,6 @@
-# ruff: noqa: E501, N802
 """DiiAuInstallcommand type mapping."""
 
 from __future__ import annotations
-
-from typing import Any
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
@@ -11,17 +8,6 @@ from pynetappfoundry.models.dii.au.installCommand.model import (
     DiiAuInstallcommand,
     DiiAuInstallcommandAdditionalinstructionsformanualinstallation,
 )
-
-
-def _transform_additionalInstructionsForManualInstallation(
-    record: dict[str, Any],
-) -> list[DiiAuInstallcommandAdditionalinstructionsformanualinstallation]:
-    """Transform additionalInstructionsForManualInstallation into DiiAuInstallcommandAdditionalinstructionsformanualinstallation list."""
-    return [
-        DiiAuInstallcommandAdditionalinstructionsformanualinstallation(**item)
-        for item in record.get("additionalInstructionsForManualInstallation", [])
-    ]
-
 
 DIIAUINSTALLCOMMAND_MAPPING = TypeMapping(
     name="DiiAuInstallcommand",
@@ -32,7 +18,7 @@ DIIAUINSTALLCOMMAND_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="additionalInstructionsForManualInstallation",
-            transform=_transform_additionalInstructionsForManualInstallation,
+            item_model=DiiAuInstallcommandAdditionalinstructionsformanualinstallation,
             default=[],
         ),
         FieldMapping(

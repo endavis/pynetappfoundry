@@ -2,27 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.cluster.metrocluster.svms.model import (
     OntapMetroclusterSvm,
     OntapMetroclusterSvmFailedReasonArgument,
 )
-from pynetappfoundry.utils.dict_path import get_nested_value
-
-
-def _transform_failed_reason_arguments(
-    record: dict[str, Any],
-) -> list[OntapMetroclusterSvmFailedReasonArgument]:
-    """Transform failed_reason.arguments into OntapMetroclusterSvmFailedReasonArgument list."""
-    try:
-        items = get_nested_value(record, "failed_reason.arguments")
-    except Exception:
-        items = []
-    return [OntapMetroclusterSvmFailedReasonArgument(**item) for item in items]
-
 
 ONTAPMETROCLUSTERSVM_MAPPING = TypeMapping(
     name="OntapMetroclusterSvm",
@@ -41,7 +26,7 @@ ONTAPMETROCLUSTERSVM_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="failed_reason.arguments",
-            transform=_transform_failed_reason_arguments,
+            item_model=OntapMetroclusterSvmFailedReasonArgument,
             default=[],
         ),
         FieldMapping(

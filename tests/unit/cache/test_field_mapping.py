@@ -1466,3 +1466,119 @@ class TestPostCollection:
             parse_api_response(tm, response, "[t]", MagicMock(), skip_realtime=True),
         )
         assert len(results) == 1
+
+
+# ---------------------------------------------------------------------------
+# item_model (generic nested-list mapping, #900)
+# ---------------------------------------------------------------------------
+
+
+class _Item(BaseModel):
+    """Sub-model used as an ``item_model``."""
+
+    name: str = ""
+
+
+class _Parent(BaseModel):
+    """Parent model holding a list of ``_Item``."""
+
+    uuid: str = ""
+    items: list[_Item] = Field(default_factory=list)
+
+
+def _item_mapping(
+    api_path: str | None = None, cache_strategy: Any = "cache", cache_attr: str = "items"
+) -> TypeMapping:
+    return TypeMapping(
+        name="Parent",
+        model_class=_Parent,
+        api_endpoint="/parents",
+        fields=(
+            FieldMapping(cache_attr="uuid"),
+            FieldMapping(
+                cache_attr=cache_attr,
+                api_path=api_path,
+                item_model=_Item,
+                cache_strategy=cache_strategy,
+                default=[],
+            ),
+        ),
+    )
+
+
+class TestItemModel:
+    """Tests for ``FieldMapping.item_model``."""
+
+    def test_top_level_path_builds_list(self) -> None:
+        record = {"uuid": "u1", "items": [{"name": "a"}, {"name": "b"}]}
+        result = cast(_Parent, parse_api_record(_item_mapping(), record, "[t]"))
+        assert [i.name for i in result.items] == ["a", "b"]
+        assert all(isinstance(i, _Item) for i in result.items)
+
+    def test_dotted_path_builds_list(self) -> None:
+        mapping = _item_mapping(api_path="outer.inner.items")
+        record = {"uuid": "u1", "outer": {"inner": {"items": [{"name": "x"}]}}}
+        result = cast(_Parent, parse_api_record(mapping, record, "[t]"))
+        assert [i.name for i in result.items] == ["x"]
+
+    def test_missing_key_gives_empty_list(self) -> None:
+        result = cast(_Parent, parse_api_record(_item_mapping(), {"uuid": "u1"}, "[t]"))
+        assert result.items == []
+
+    def test_missing_intermediate_gives_empty_list(self) -> None:
+        mapping = _item_mapping(api_path="outer.items")
+        result = cast(_Parent, parse_api_record(mapping, {"uuid": "u1"}, "[t]"))
+        assert result.items == []
+
+    def test_null_leaf_gives_empty_list(self) -> None:
+        result = cast(
+            _Parent, parse_api_record(_item_mapping(), {"uuid": "u1", "items": None}, "[t]")
+        )
+        assert result.items == []
+
+    def test_null_intermediate_gives_empty_list(self) -> None:
+        mapping = _item_mapping(api_path="outer.items")
+        result = cast(_Parent, parse_api_record(mapping, {"uuid": "u1", "outer": None}, "[t]"))
+        assert result.items == []
+
+    def test_fresh_list_per_parse(self) -> None:
+        mapping = _item_mapping()
+        first = cast(_Parent, parse_api_record(mapping, {"uuid": "1"}, "[t]"))
+        second = cast(_Parent, parse_api_record(mapping, {"uuid": "2"}, "[t]"))
+        assert first.items is not second.items
+        first.items.append(_Item(name="mutated"))
+        assert second.items == []
+
+    def test_non_dict_item_raises_and_logs(self, caplog: pytest.LogCaptureFixture) -> None:
+        import logging
+
+        record = {"uuid": "u1", "items": ["not-a-dict"]}
+        with caplog.at_level(logging.ERROR), pytest.raises(TypeError):
+            parse_api_record(_item_mapping(), record, "[t]")
+        tf_msgs = [r for r in caplog.records if "TRANSFORM_FAILURE" in r.message]
+        assert len(tf_msgs) == 1
+        assert "items" in tf_msgs[0].message
+
+    def test_non_list_leaf_raises(self) -> None:
+        with pytest.raises(TypeError):
+            parse_api_record(_item_mapping(), {"uuid": "u1", "items": 5}, "[t]")
+
+    def test_transform_and_item_model_are_exclusive(self) -> None:
+        with pytest.raises(ValueError, match="mutually exclusive"):
+            FieldMapping(cache_attr="items", item_model=_Item, transform=lambda r: [])
+
+    def test_skip_realtime_skips_item_model_field(self) -> None:
+        mapping = _item_mapping(cache_strategy="realtime")
+        record = {"uuid": "u1", "items": [{"name": "a"}]}
+        result = cast(_Parent, parse_api_record(mapping, record, "[t]", skip_realtime=True))
+        assert result.items == []
+
+    def test_realtime_item_model_parses_when_not_skipped(self) -> None:
+        mapping = _item_mapping(cache_strategy="realtime")
+        record = {"uuid": "u1", "items": [{"name": "a"}]}
+        result = cast(_Parent, parse_api_record(mapping, record, "[t]"))
+        assert [i.name for i in result.items] == ["a"]
+
+    def test_api_expected_fields_uses_item_model_path(self) -> None:
+        mapping = _item_mapping(api_path="outer.items")
+        assert mapping.api_expected_fields() == ["outer", "uuid"]

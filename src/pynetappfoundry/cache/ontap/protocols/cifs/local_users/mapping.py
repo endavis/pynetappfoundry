@@ -2,20 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.protocols.cifs.local_users.model import (
     OntapLocalCifsUser,
     OntapLocalCifsUserMembership,
 )
-
-
-def _transform_membership(record: dict[str, Any]) -> list[OntapLocalCifsUserMembership]:
-    """Transform membership into OntapLocalCifsUserMembership list."""
-    return [OntapLocalCifsUserMembership(**item) for item in record.get("membership", [])]
-
 
 ONTAPLOCALCIFSUSER_MAPPING = TypeMapping(
     name="OntapLocalCifsUser",
@@ -35,7 +27,7 @@ ONTAPLOCALCIFSUSER_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="membership",
-            transform=_transform_membership,
+            item_model=OntapLocalCifsUserMembership,
             default=[],
         ),
         FieldMapping(

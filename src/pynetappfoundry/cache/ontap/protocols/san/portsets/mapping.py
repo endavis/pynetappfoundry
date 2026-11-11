@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.protocols.san.portsets.model import (
@@ -11,17 +9,6 @@ from pynetappfoundry.models.ontap.protocols.san.portsets.model import (
     OntapPortsetIgroup,
     OntapPortsetInterface,
 )
-
-
-def _transform_igroups(record: dict[str, Any]) -> list[OntapPortsetIgroup]:
-    """Transform igroups into OntapPortsetIgroup list."""
-    return [OntapPortsetIgroup(**item) for item in record.get("igroups", [])]
-
-
-def _transform_interfaces(record: dict[str, Any]) -> list[OntapPortsetInterface]:
-    """Transform interfaces into OntapPortsetInterface list."""
-    return [OntapPortsetInterface(**item) for item in record.get("interfaces", [])]
-
 
 ONTAPPORTSET_MAPPING = TypeMapping(
     name="OntapPortset",
@@ -32,12 +19,12 @@ ONTAPPORTSET_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="igroups",
-            transform=_transform_igroups,
+            item_model=OntapPortsetIgroup,
             default=[],
         ),
         FieldMapping(
             cache_attr="interfaces",
-            transform=_transform_interfaces,
+            item_model=OntapPortsetInterface,
             default=[],
         ),
         FieldMapping(

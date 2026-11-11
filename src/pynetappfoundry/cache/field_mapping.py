@@ -39,6 +39,11 @@ class FieldMapping:
             should still be provided alongside ``transform`` so that
             :meth:`TypeMapping.explicit_fetch_api_fields` can derive the
             correct top-level API field name.
+        item_model: Pydantic model class for each element of a list of objects
+            found at ``api_path``.  ``parse_api_record`` builds
+            ``[item_model(**item) for item in <list>]``; a missing path or an
+            explicit ``null`` gives ``[]``.  Mutually exclusive with
+            ``transform``.
         cli_transform: Custom CLI extraction function receiving the full record dict.
             Overrides ``cli_field`` when set.
         cache_strategy: How this field is collected and stored.
@@ -66,6 +71,7 @@ class FieldMapping:
     cli_field: str | None = None
     default: Any = ""
     transform: Callable[[dict[str, Any]], Any] | None = None
+    item_model: type[BaseModel] | None = None
     cli_transform: Callable[[dict[str, Any]], Any] | None = None
     cache_strategy: Literal["cache", "realtime", "derived"] = "cache"
     requires_explicit_fetch: bool = False
@@ -78,7 +84,14 @@ class FieldMapping:
         Derived fields (``cache_strategy="derived"``) keep ``api_path=None``
         because they have no API extraction path.  Uses
         ``object.__setattr__`` because the dataclass is frozen.
+
+        Raises:
+            ValueError: If both ``transform`` and ``item_model`` are set.
         """
+        if self.transform is not None and self.item_model is not None:
+            raise ValueError(
+                f"FieldMapping '{self.cache_attr}': transform and item_model are mutually exclusive"
+            )
         if self.api_path is None and self.cache_strategy in ("cache", "realtime"):
             object.__setattr__(self, "api_path", self.cache_attr)
 
@@ -354,6 +367,31 @@ def _nest_kwargs(flat: dict[str, Any]) -> dict[str, Any]:
     return nested
 
 
+def _extract_item_list(
+    record: dict[str, Any], api_path: str, item_model: type[BaseModel]
+) -> list[BaseModel]:
+    """Build a list of ``field.item_model`` instances from ``field.api_path``.
+
+    A missing path or an explicit ``None`` gives an empty list.  Any other
+    failure (non-list value, non-dict item, item validation error) propagates.
+
+    Args:
+        record: Single API response record dict.
+        api_path: Dot-path to the list of objects.
+        item_model: Model class built from each item.
+
+    Returns:
+        A new list of item model instances.
+    """
+    try:
+        items = get_nested_value(record, api_path)
+    except PathNotFoundError:
+        return []
+    if items is None:
+        return []
+    return [item_model(**item) for item in items]
+
+
 def parse_api_record(
     mapping: TypeMapping,
     record: dict[str, Any],
@@ -363,10 +401,11 @@ def parse_api_record(
 ) -> BaseModel:
     """Parse a single API response record into a model instance.
 
-    For each field: uses ``transform(record)`` if set, otherwise extracts
+    For each field: uses ``transform(record)`` if set, then ``item_model``
+    (a list of sub-models built from ``api_path``), otherwise extracts
     via ``get_nested_value(record, api_path)``. Falls back to default on
-    ``PathNotFoundError``. Transform exceptions propagate (logged as
-    ``TRANSFORM_FAILURE``).
+    ``PathNotFoundError``. Transform and item_model exceptions propagate
+    (logged as ``TRANSFORM_FAILURE``).
 
     After extraction, dot-path ``cache_attr`` keys are restructured into
     nested dicts via :func:`_nest_kwargs` so that nested Pydantic models
@@ -393,6 +432,20 @@ def parse_api_record(
             except Exception:
                 logger.error(
                     "%s TRANSFORM_FAILURE: %s '%s' - transform error for field '%s'",
+                    log_prefix,
+                    mapping.name,
+                    record.get(mapping.id_field, record.get("uuid", "unknown")),
+                    field.cache_attr,
+                )
+                raise
+        elif field.item_model is not None and field.api_path is not None:
+            try:
+                kwargs[field.cache_attr] = _extract_item_list(
+                    record, field.api_path, field.item_model
+                )
+            except Exception:
+                logger.error(
+                    "%s TRANSFORM_FAILURE: %s '%s' - item_model error for field '%s'",
                     log_prefix,
                     mapping.name,
                     record.get(mapping.id_field, record.get("uuid", "unknown")),

@@ -2,27 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.support.auto_update.updates.model import (
     OntapAutoUpdateStatus,
     OntapAutoUpdateStatusStatusArgument,
 )
-from pynetappfoundry.utils.dict_path import get_nested_value
-
-
-def _transform_status_arguments(
-    record: dict[str, Any],
-) -> list[OntapAutoUpdateStatusStatusArgument]:
-    """Transform status.arguments into OntapAutoUpdateStatusStatusArgument list."""
-    try:
-        items = get_nested_value(record, "status.arguments")
-    except Exception:
-        items = []
-    return [OntapAutoUpdateStatusStatusArgument(**item) for item in items]
-
 
 ONTAPAUTOUPDATESTATUS_MAPPING = TypeMapping(
     name="OntapAutoUpdateStatus",
@@ -79,7 +64,7 @@ ONTAPAUTOUPDATESTATUS_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="status.arguments",
-            transform=_transform_status_arguments,
+            item_model=OntapAutoUpdateStatusStatusArgument,
             default=[],
         ),
         FieldMapping(

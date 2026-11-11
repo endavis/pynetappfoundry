@@ -2,20 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.storage.snaplock.litigations.model import (
     OntapSnaplockLitigation,
     OntapSnaplockLitigationOperation,
 )
-
-
-def _transform_operations(record: dict[str, Any]) -> list[OntapSnaplockLitigationOperation]:
-    """Transform operations into OntapSnaplockLitigationOperation list."""
-    return [OntapSnaplockLitigationOperation(**item) for item in record.get("operations", [])]
-
 
 ONTAPSNAPLOCKLITIGATION_MAPPING = TypeMapping(
     name="OntapSnaplockLitigation",
@@ -32,7 +24,7 @@ ONTAPSNAPLOCKLITIGATION_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="operations",
-            transform=_transform_operations,
+            item_model=OntapSnaplockLitigationOperation,
             default=[],
         ),
         FieldMapping(

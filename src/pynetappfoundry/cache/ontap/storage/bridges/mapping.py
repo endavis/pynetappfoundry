@@ -1,9 +1,6 @@
-# ruff: noqa: E501
 """OntapStorageBridge type mapping."""
 
 from __future__ import annotations
-
-from typing import Any
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
@@ -16,48 +13,6 @@ from pynetappfoundry.models.ontap.storage.bridges.model import (
     OntapStorageBridgePowerSupplyUnit,
     OntapStorageBridgeSasPort,
 )
-from pynetappfoundry.utils.dict_path import get_nested_value
-
-
-def _transform_errors(record: dict[str, Any]) -> list[OntapStorageBridgeError]:
-    """Transform errors into OntapStorageBridgeError list."""
-    return [OntapStorageBridgeError(**item) for item in record.get("errors", [])]
-
-
-def _transform_fc_ports(record: dict[str, Any]) -> list[OntapStorageBridgeFcPort]:
-    """Transform fc_ports into OntapStorageBridgeFcPort list."""
-    return [OntapStorageBridgeFcPort(**item) for item in record.get("fc_ports", [])]
-
-
-def _transform_last_reboot_reason_arguments(
-    record: dict[str, Any],
-) -> list[OntapStorageBridgeLastRebootReasonArgument]:
-    """Transform last_reboot.reason.arguments into OntapStorageBridgeLastRebootReasonArgument list."""
-    try:
-        items = get_nested_value(record, "last_reboot.reason.arguments")
-    except Exception:
-        items = []
-    return [OntapStorageBridgeLastRebootReasonArgument(**item) for item in items]
-
-
-def _transform_paths(record: dict[str, Any]) -> list[OntapStorageBridgePath]:
-    """Transform paths into OntapStorageBridgePath list."""
-    return [OntapStorageBridgePath(**item) for item in record.get("paths", [])]
-
-
-def _transform_power_supply_units(
-    record: dict[str, Any],
-) -> list[OntapStorageBridgePowerSupplyUnit]:
-    """Transform power_supply_units into OntapStorageBridgePowerSupplyUnit list."""
-    return [
-        OntapStorageBridgePowerSupplyUnit(**item) for item in record.get("power_supply_units", [])
-    ]
-
-
-def _transform_sas_ports(record: dict[str, Any]) -> list[OntapStorageBridgeSasPort]:
-    """Transform sas_ports into OntapStorageBridgeSasPort list."""
-    return [OntapStorageBridgeSasPort(**item) for item in record.get("sas_ports", [])]
-
 
 ONTAPSTORAGEBRIDGE_MAPPING = TypeMapping(
     name="OntapStorageBridge",
@@ -75,12 +30,12 @@ ONTAPSTORAGEBRIDGE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="errors",
-            transform=_transform_errors,
+            item_model=OntapStorageBridgeError,
             default=[],
         ),
         FieldMapping(
             cache_attr="fc_ports",
-            transform=_transform_fc_ports,
+            item_model=OntapStorageBridgeFcPort,
             default=[],
         ),
         FieldMapping(
@@ -91,7 +46,7 @@ ONTAPSTORAGEBRIDGE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="last_reboot.reason.arguments",
-            transform=_transform_last_reboot_reason_arguments,
+            item_model=OntapStorageBridgeLastRebootReasonArgument,
             default=[],
         ),
         FieldMapping(
@@ -119,17 +74,17 @@ ONTAPSTORAGEBRIDGE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="paths",
-            transform=_transform_paths,
+            item_model=OntapStorageBridgePath,
             default=[],
         ),
         FieldMapping(
             cache_attr="power_supply_units",
-            transform=_transform_power_supply_units,
+            item_model=OntapStorageBridgePowerSupplyUnit,
             default=[],
         ),
         FieldMapping(
             cache_attr="sas_ports",
-            transform=_transform_sas_ports,
+            item_model=OntapStorageBridgeSasPort,
             default=[],
         ),
         FieldMapping(

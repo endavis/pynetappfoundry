@@ -1,9 +1,6 @@
-# ruff: noqa: E501, N802
 """DiiAuOnetimetoken type mapping."""
 
 from __future__ import annotations
-
-from typing import Any
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
@@ -11,17 +8,6 @@ from pynetappfoundry.models.dii.au.oneTimeToken.model import (
     DiiAuOnetimetoken,
     DiiAuOnetimetokenAdditionalinstructionsformanualinstallation,
 )
-
-
-def _transform_additionalInstructionsForManualInstallation(
-    record: dict[str, Any],
-) -> list[DiiAuOnetimetokenAdditionalinstructionsformanualinstallation]:
-    """Transform additionalInstructionsForManualInstallation into DiiAuOnetimetokenAdditionalinstructionsformanualinstallation list."""
-    return [
-        DiiAuOnetimetokenAdditionalinstructionsformanualinstallation(**item)
-        for item in record.get("additionalInstructionsForManualInstallation", [])
-    ]
-
 
 DIIAUONETIMETOKEN_MAPPING = TypeMapping(
     name="DiiAuOnetimetoken",
@@ -32,7 +18,7 @@ DIIAUONETIMETOKEN_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="additionalInstructionsForManualInstallation",
-            transform=_transform_additionalInstructionsForManualInstallation,
+            item_model=DiiAuOnetimetokenAdditionalinstructionsformanualinstallation,
             default=[],
         ),
         FieldMapping(

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.cluster.chassis.model import (
@@ -12,22 +10,6 @@ from pynetappfoundry.models.ontap.cluster.chassis.model import (
     OntapChassisNode,
     OntapChassisShelve,
 )
-
-
-def _transform_frus(record: dict[str, Any]) -> list[OntapChassisFru]:
-    """Transform frus into OntapChassisFru list."""
-    return [OntapChassisFru(**item) for item in record.get("frus", [])]
-
-
-def _transform_nodes(record: dict[str, Any]) -> list[OntapChassisNode]:
-    """Transform nodes into OntapChassisNode list."""
-    return [OntapChassisNode(**item) for item in record.get("nodes", [])]
-
-
-def _transform_shelves(record: dict[str, Any]) -> list[OntapChassisShelve]:
-    """Transform shelves into OntapChassisShelve list."""
-    return [OntapChassisShelve(**item) for item in record.get("shelves", [])]
-
 
 ONTAPCHASSIS_MAPPING = TypeMapping(
     name="OntapChassis",
@@ -38,7 +20,7 @@ ONTAPCHASSIS_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="frus",
-            transform=_transform_frus,
+            item_model=OntapChassisFru,
             default=[],
         ),
         FieldMapping(
@@ -46,12 +28,12 @@ ONTAPCHASSIS_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="nodes",
-            transform=_transform_nodes,
+            item_model=OntapChassisNode,
             default=[],
         ),
         FieldMapping(
             cache_attr="shelves",
-            transform=_transform_shelves,
+            item_model=OntapChassisShelve,
             default=[],
         ),
         FieldMapping(

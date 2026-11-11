@@ -2,20 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.protocols.cifs.connections.model import (
     OntapCifsConnection,
     OntapCifsConnectionSession,
 )
-
-
-def _transform_sessions(record: dict[str, Any]) -> list[OntapCifsConnectionSession]:
-    """Transform sessions into OntapCifsConnectionSession list."""
-    return [OntapCifsConnectionSession(**item) for item in record.get("sessions", [])]
-
 
 ONTAPCIFSCONNECTION_MAPPING = TypeMapping(
     name="OntapCifsConnection",
@@ -49,7 +41,7 @@ ONTAPCIFSCONNECTION_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="sessions",
-            transform=_transform_sessions,
+            item_model=OntapCifsConnectionSession,
             cache_strategy="realtime",
             default=[],
         ),

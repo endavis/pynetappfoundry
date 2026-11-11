@@ -2,24 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.security.multi_admin_verify.rules.model import (
     OntapMultiAdminVerifyRule,
     OntapMultiAdminVerifyRuleApprovalGroup,
 )
-
-
-def _transform_approval_groups(
-    record: dict[str, Any],
-) -> list[OntapMultiAdminVerifyRuleApprovalGroup]:
-    """Transform approval_groups into OntapMultiAdminVerifyRuleApprovalGroup list."""
-    return [
-        OntapMultiAdminVerifyRuleApprovalGroup(**item) for item in record.get("approval_groups", [])
-    ]
-
 
 ONTAPMULTIADMINVERIFYRULE_MAPPING = TypeMapping(
     name="OntapMultiAdminVerifyRule",
@@ -32,7 +20,7 @@ ONTAPMULTIADMINVERIFYRULE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="approval_groups",
-            transform=_transform_approval_groups,
+            item_model=OntapMultiAdminVerifyRuleApprovalGroup,
             default=[],
         ),
         FieldMapping(

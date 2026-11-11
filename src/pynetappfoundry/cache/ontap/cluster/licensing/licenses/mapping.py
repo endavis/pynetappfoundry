@@ -2,20 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.cluster.licensing.licenses.model import (
     OntapLicensePackageResponse,
     OntapLicensePackageResponseLicense,
 )
-
-
-def _transform_licenses(record: dict[str, Any]) -> list[OntapLicensePackageResponseLicense]:
-    """Transform licenses into OntapLicensePackageResponseLicense list."""
-    return [OntapLicensePackageResponseLicense(**item) for item in record.get("licenses", [])]
-
 
 ONTAPLICENSEPACKAGERESPONSE_MAPPING = TypeMapping(
     name="OntapLicensePackageResponse",
@@ -39,7 +31,7 @@ ONTAPLICENSEPACKAGERESPONSE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="licenses",
-            transform=_transform_licenses,
+            item_model=OntapLicensePackageResponseLicense,
             default=[],
         ),
         FieldMapping(

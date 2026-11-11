@@ -188,9 +188,10 @@ ONTAP-specific assumptions that blocked non-ONTAP codegen:
 * ``parent_id_field`` dispatches on ``api_type``
   (``_PARENT_ID_FIELD_BY_API`` — ONTAP/AIQUM → ``"uuid"``, DII/OCCM
   → ``"id"``).
-* Generated mappings emit a ``# ruff: noqa: N802`` header when any
-  ``_transform_*`` helper has a mixedCase suffix (DII's
-  ``applicationRoles`` → ``_transform_applicationRoles``).
+* Generated mappings declare array-of-objects fields with
+  ``item_model=<SubModel>`` instead of per-list ``_transform_*`` helpers
+  (#900), so the N802 ``noqa`` header for mixedCase helper names no longer
+  applies.
 * ``doit generate_models`` post-processes the generated tree with
   ``ruff format`` then ``ruff check --fix``, which drops any
   ``# ruff: noqa: E501`` header the formatter made redundant.

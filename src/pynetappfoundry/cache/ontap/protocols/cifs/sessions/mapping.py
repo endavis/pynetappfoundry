@@ -2,20 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.protocols.cifs.sessions.model import (
     OntapCifsSession,
     OntapCifsSessionVolume,
 )
-
-
-def _transform_volumes(record: dict[str, Any]) -> list[OntapCifsSessionVolume]:
-    """Transform volumes into OntapCifsSessionVolume list."""
-    return [OntapCifsSessionVolume(**item) for item in record.get("volumes", [])]
-
 
 ONTAPCIFSSESSION_MAPPING = TypeMapping(
     name="OntapCifsSession",
@@ -105,7 +97,7 @@ ONTAPCIFSSESSION_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="volumes",
-            transform=_transform_volumes,
+            item_model=OntapCifsSessionVolume,
             default=[],
         ),
     ),

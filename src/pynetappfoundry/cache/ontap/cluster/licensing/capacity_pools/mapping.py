@@ -2,20 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.cluster.licensing.capacity_pools.model import (
     OntapCapacityPoolResponse,
     OntapCapacityPoolResponseNode,
 )
-
-
-def _transform_nodes(record: dict[str, Any]) -> list[OntapCapacityPoolResponseNode]:
-    """Transform nodes into OntapCapacityPoolResponseNode list."""
-    return [OntapCapacityPoolResponseNode(**item) for item in record.get("nodes", [])]
-
 
 ONTAPCAPACITYPOOLRESPONSE_MAPPING = TypeMapping(
     name="OntapCapacityPoolResponse",
@@ -29,7 +21,7 @@ ONTAPCAPACITYPOOLRESPONSE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="nodes",
-            transform=_transform_nodes,
+            item_model=OntapCapacityPoolResponseNode,
             default=[],
         ),
         FieldMapping(

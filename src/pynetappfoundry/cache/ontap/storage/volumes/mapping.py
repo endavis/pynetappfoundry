@@ -1,9 +1,6 @@
-# ruff: noqa: E501
 """OntapVolume type mapping."""
 
 from __future__ import annotations
-
-from typing import Any
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
@@ -17,76 +14,6 @@ from pynetappfoundry.models.ontap.storage.volumes.model import (
     OntapVolumeConstituent,
     OntapVolumeRebalancingNotice,
 )
-from pynetappfoundry.utils.dict_path import get_nested_value
-
-
-def _transform_aggregates(record: dict[str, Any]) -> list[OntapVolumeAggregate]:
-    """Transform aggregates into OntapVolumeAggregate list."""
-    return [OntapVolumeAggregate(**item) for item in record.get("aggregates", [])]
-
-
-def _transform_anti_ransomware_attack_reports(
-    record: dict[str, Any],
-) -> list[OntapVolumeAntiRansomwareAttackReport]:
-    """Transform anti_ransomware.attack_reports into OntapVolumeAntiRansomwareAttackReport list."""
-    try:
-        items = get_nested_value(record, "anti_ransomware.attack_reports")
-    except Exception:
-        items = []
-    return [OntapVolumeAntiRansomwareAttackReport(**item) for item in items]
-
-
-def _transform_anti_ransomware_suspect_files(
-    record: dict[str, Any],
-) -> list[OntapVolumeAntiRansomwareSuspectFile]:
-    """Transform anti_ransomware.suspect_files into OntapVolumeAntiRansomwareSuspectFile list."""
-    try:
-        items = get_nested_value(record, "anti_ransomware.suspect_files")
-    except Exception:
-        items = []
-    return [OntapVolumeAntiRansomwareSuspectFile(**item) for item in items]
-
-
-def _transform_anti_ransomware_workload_newly_observed_file_extensions(
-    record: dict[str, Any],
-) -> list[OntapVolumeAntiRansomwareWorkloadNewlyObservedFileExtension]:
-    """Transform anti_ransomware.workload.newly_observed_file_extensions into OntapVolumeAntiRansomwareWorkloadNewlyObservedFileExtension list."""
-    try:
-        items = get_nested_value(record, "anti_ransomware.workload.newly_observed_file_extensions")
-    except Exception:
-        items = []
-    return [OntapVolumeAntiRansomwareWorkloadNewlyObservedFileExtension(**item) for item in items]
-
-
-def _transform_anti_ransomware_workload_surge_usage_newly_observed_file_extensions(
-    record: dict[str, Any],
-) -> list[OntapVolumeAntiRansomwareWorkloadSurgeUsageNewlyObservedFileExtension]:
-    """Transform anti_ransomware.workload.surge_usage.newly_observed_file_extensions into OntapVolumeAntiRansomwareWorkloadSurgeUsageNewlyObservedFileExtension list."""
-    try:
-        items = get_nested_value(
-            record, "anti_ransomware.workload.surge_usage.newly_observed_file_extensions"
-        )
-    except Exception:
-        items = []
-    return [
-        OntapVolumeAntiRansomwareWorkloadSurgeUsageNewlyObservedFileExtension(**item)
-        for item in items
-    ]
-
-
-def _transform_constituents(record: dict[str, Any]) -> list[OntapVolumeConstituent]:
-    """Transform constituents into OntapVolumeConstituent list."""
-    return [OntapVolumeConstituent(**item) for item in record.get("constituents", [])]
-
-
-def _transform_rebalancing_notices(record: dict[str, Any]) -> list[OntapVolumeRebalancingNotice]:
-    """Transform rebalancing.notices into OntapVolumeRebalancingNotice list."""
-    try:
-        items = get_nested_value(record, "rebalancing.notices")
-    except Exception:
-        items = []
-    return [OntapVolumeRebalancingNotice(**item) for item in items]
-
 
 ONTAPVOLUME_MAPPING = TypeMapping(
     name="OntapVolume",
@@ -114,7 +41,7 @@ ONTAPVOLUME_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="aggregates",
-            transform=_transform_aggregates,
+            item_model=OntapVolumeAggregate,
             default=[],
         ),
         FieldMapping(
@@ -236,7 +163,7 @@ ONTAPVOLUME_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="anti_ransomware.attack_reports",
-            transform=_transform_anti_ransomware_attack_reports,
+            item_model=OntapVolumeAntiRansomwareAttackReport,
             default=[],
             requires_explicit_fetch=True,
         ),
@@ -314,7 +241,7 @@ ONTAPVOLUME_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="anti_ransomware.suspect_files",
-            transform=_transform_anti_ransomware_suspect_files,
+            item_model=OntapVolumeAntiRansomwareSuspectFile,
             default=[],
             requires_explicit_fetch=True,
         ),
@@ -385,7 +312,7 @@ ONTAPVOLUME_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="anti_ransomware.workload.newly_observed_file_extensions",
-            transform=_transform_anti_ransomware_workload_newly_observed_file_extensions,
+            item_model=OntapVolumeAntiRansomwareWorkloadNewlyObservedFileExtension,
             default=[],
             requires_explicit_fetch=True,
         ),
@@ -445,7 +372,7 @@ ONTAPVOLUME_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="anti_ransomware.workload.surge_usage.newly_observed_file_extensions",
-            transform=_transform_anti_ransomware_workload_surge_usage_newly_observed_file_extensions,
+            item_model=OntapVolumeAntiRansomwareWorkloadSurgeUsageNewlyObservedFileExtension,
             default=[],
             requires_explicit_fetch=True,
         ),
@@ -594,7 +521,7 @@ ONTAPVOLUME_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="constituents",
-            transform=_transform_constituents,
+            item_model=OntapVolumeConstituent,
             default=[],
         ),
         FieldMapping(
@@ -1424,7 +1351,7 @@ ONTAPVOLUME_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="rebalancing.notices",
-            transform=_transform_rebalancing_notices,
+            item_model=OntapVolumeRebalancingNotice,
             default=[],
             requires_explicit_fetch=True,
         ),

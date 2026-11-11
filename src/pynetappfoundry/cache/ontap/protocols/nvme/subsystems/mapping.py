@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.protocols.nvme.subsystems.model import (
@@ -11,17 +9,6 @@ from pynetappfoundry.models.ontap.protocols.nvme.subsystems.model import (
     OntapNvmeSubsystemHost,
     OntapNvmeSubsystemSubsystemMap,
 )
-
-
-def _transform_hosts(record: dict[str, Any]) -> list[OntapNvmeSubsystemHost]:
-    """Transform hosts into OntapNvmeSubsystemHost list."""
-    return [OntapNvmeSubsystemHost(**item) for item in record.get("hosts", [])]
-
-
-def _transform_subsystem_maps(record: dict[str, Any]) -> list[OntapNvmeSubsystemSubsystemMap]:
-    """Transform subsystem_maps into OntapNvmeSubsystemSubsystemMap list."""
-    return [OntapNvmeSubsystemSubsystemMap(**item) for item in record.get("subsystem_maps", [])]
-
 
 ONTAPNVMESUBSYSTEM_MAPPING = TypeMapping(
     name="OntapNvmeSubsystem",
@@ -39,7 +26,7 @@ ONTAPNVMESUBSYSTEM_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="hosts",
-            transform=_transform_hosts,
+            item_model=OntapNvmeSubsystemHost,
             default=[],
         ),
         FieldMapping(
@@ -61,7 +48,7 @@ ONTAPNVMESUBSYSTEM_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="subsystem_maps",
-            transform=_transform_subsystem_maps,
+            item_model=OntapNvmeSubsystemSubsystemMap,
             default=[],
         ),
         FieldMapping(

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.network.ethernet.ports.model import (
@@ -13,41 +11,6 @@ from pynetappfoundry.models.ontap.network.ethernet.ports.model import (
     OntapPortLagMemberPort,
     OntapPortReachableBroadcastDomain,
 )
-from pynetappfoundry.utils.dict_path import get_nested_value
-
-
-def _transform_discovered_devices(record: dict[str, Any]) -> list[OntapPortDiscoveredDevice]:
-    """Transform discovered_devices into OntapPortDiscoveredDevice list."""
-    return [OntapPortDiscoveredDevice(**item) for item in record.get("discovered_devices", [])]
-
-
-def _transform_lag_active_ports(record: dict[str, Any]) -> list[OntapPortLagActivePort]:
-    """Transform lag.active_ports into OntapPortLagActivePort list."""
-    try:
-        items = get_nested_value(record, "lag.active_ports")
-    except Exception:
-        items = []
-    return [OntapPortLagActivePort(**item) for item in items]
-
-
-def _transform_lag_member_ports(record: dict[str, Any]) -> list[OntapPortLagMemberPort]:
-    """Transform lag.member_ports into OntapPortLagMemberPort list."""
-    try:
-        items = get_nested_value(record, "lag.member_ports")
-    except Exception:
-        items = []
-    return [OntapPortLagMemberPort(**item) for item in items]
-
-
-def _transform_reachable_broadcast_domains(
-    record: dict[str, Any],
-) -> list[OntapPortReachableBroadcastDomain]:
-    """Transform reachable_broadcast_domains into OntapPortReachableBroadcastDomain list."""
-    return [
-        OntapPortReachableBroadcastDomain(**item)
-        for item in record.get("reachable_broadcast_domains", [])
-    ]
-
 
 ONTAPPORT_MAPPING = TypeMapping(
     name="OntapPort",
@@ -67,7 +30,7 @@ ONTAPPORT_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="discovered_devices",
-            transform=_transform_discovered_devices,
+            item_model=OntapPortDiscoveredDevice,
             default=[],
         ),
         FieldMapping(
@@ -83,7 +46,7 @@ ONTAPPORT_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="lag.active_ports",
-            transform=_transform_lag_active_ports,
+            item_model=OntapPortLagActivePort,
             default=[],
         ),
         FieldMapping(
@@ -91,7 +54,7 @@ ONTAPPORT_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="lag.member_ports",
-            transform=_transform_lag_member_ports,
+            item_model=OntapPortLagMemberPort,
             default=[],
         ),
         FieldMapping(
@@ -153,7 +116,7 @@ ONTAPPORT_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="reachable_broadcast_domains",
-            transform=_transform_reachable_broadcast_domains,
+            item_model=OntapPortReachableBroadcastDomain,
             default=[],
         ),
         FieldMapping(

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.security.key_managers.key_servers.model import (
@@ -11,24 +9,6 @@ from pynetappfoundry.models.ontap.security.key_managers.key_servers.model import
     OntapKeyServerConnectivityNodeState,
     OntapKeyServerRecord,
 )
-from pynetappfoundry.utils.dict_path import get_nested_value
-
-
-def _transform_connectivity_node_states(
-    record: dict[str, Any],
-) -> list[OntapKeyServerConnectivityNodeState]:
-    """Transform connectivity.node_states into OntapKeyServerConnectivityNodeState list."""
-    try:
-        items = get_nested_value(record, "connectivity.node_states")
-    except Exception:
-        items = []
-    return [OntapKeyServerConnectivityNodeState(**item) for item in items]
-
-
-def _transform_records(record: dict[str, Any]) -> list[OntapKeyServerRecord]:
-    """Transform records into OntapKeyServerRecord list."""
-    return [OntapKeyServerRecord(**item) for item in record.get("records", [])]
-
 
 ONTAPKEYSERVER_MAPPING = TypeMapping(
     name="OntapKeyServer",
@@ -45,7 +25,7 @@ ONTAPKEYSERVER_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="connectivity.node_states",
-            transform=_transform_connectivity_node_states,
+            item_model=OntapKeyServerConnectivityNodeState,
             default=[],
         ),
         FieldMapping(
@@ -57,7 +37,7 @@ ONTAPKEYSERVER_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="records",
-            transform=_transform_records,
+            item_model=OntapKeyServerRecord,
             default=[],
         ),
         FieldMapping(

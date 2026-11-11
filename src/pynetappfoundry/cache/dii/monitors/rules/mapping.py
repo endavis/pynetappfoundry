@@ -2,17 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.dii.monitors.rules.model import DiiMonitorsRule, DiiMonitorsRuleFilter
-
-
-def _transform_filters(record: dict[str, Any]) -> list[DiiMonitorsRuleFilter]:
-    """Transform filters into DiiMonitorsRuleFilter list."""
-    return [DiiMonitorsRuleFilter(**item) for item in record.get("filters", [])]
-
 
 DIIMONITORSRULE_MAPPING = TypeMapping(
     name="DiiMonitorsRule",
@@ -44,7 +36,7 @@ DIIMONITORSRULE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="filters",
-            transform=_transform_filters,
+            item_model=DiiMonitorsRuleFilter,
             default=[],
         ),
         FieldMapping(

@@ -2,20 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.support.autosupport.model import (
     OntapAutosupport,
     OntapAutosupportIssue,
 )
-
-
-def _transform_issues(record: dict[str, Any]) -> list[OntapAutosupportIssue]:
-    """Transform issues into OntapAutosupportIssue list."""
-    return [OntapAutosupportIssue(**item) for item in record.get("issues", [])]
-
 
 ONTAPAUTOSUPPORT_MAPPING = TypeMapping(
     name="OntapAutosupport",
@@ -42,7 +34,7 @@ ONTAPAUTOSUPPORT_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="issues",
-            transform=_transform_issues,
+            item_model=OntapAutosupportIssue,
             default=[],
             requires_explicit_fetch=True,
         ),

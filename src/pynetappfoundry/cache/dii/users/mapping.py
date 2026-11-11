@@ -1,19 +1,10 @@
-# ruff: noqa: N802
 """DiiUsersresponse type mapping."""
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.dii.users.model import DiiUsersresponse, DiiUsersresponseApplicationrole
-
-
-def _transform_applicationRoles(record: dict[str, Any]) -> list[DiiUsersresponseApplicationrole]:
-    """Transform applicationRoles into DiiUsersresponseApplicationrole list."""
-    return [DiiUsersresponseApplicationrole(**item) for item in record.get("applicationRoles", [])]
-
 
 DIIUSERSRESPONSE_MAPPING = TypeMapping(
     name="DiiUsersresponse",
@@ -34,7 +25,7 @@ DIIUSERSRESPONSE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="applicationRoles",
-            transform=_transform_applicationRoles,
+            item_model=DiiUsersresponseApplicationrole,
             default=[],
         ),
     ),

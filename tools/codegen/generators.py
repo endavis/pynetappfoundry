@@ -783,7 +783,15 @@ def generate_model(
 
     # Add noqa directives for generated code that can't conform to lint rules
     noqa_codes: list[str] = []
-    if any(len(line) > 100 for line in lines):
+    # ruff's E501 skips over-long lines with no whitespace-separated tokens
+    # (a bare ``cache_attr="..."`` argument), and ``ruff format`` wraps the
+    # registration call, so neither needs a directive.
+    if any(
+        len(line) > 100
+        and len(line.split()) > 1
+        and not line.startswith("model_registry.register_mapping(")
+        for line in lines
+    ):
         noqa_codes.append("E501")
     # Detect mixed-case field names from the API (e.g., isDnsTTLEnabled)
     all_attrs = _collect_all_attrs(endpoint.fields, sub_model_map)
@@ -967,8 +975,10 @@ def generate_mapping(
     registry registration call.  ``cache_attr`` values use dot-path
     notation matching the ``api_path`` (e.g. ``"svm.name"``).
 
-    Array-of-objects fields with typed sub-models get transform functions
-    that construct sub-model instances using ``get_nested_value()``.
+    Array-of-objects fields with typed sub-models declare
+    ``item_model=<SubModel>`` so the generic
+    :func:`~pynetappfoundry.cache.field_mapping.parse_api_record` builds
+    the sub-model list (no per-list transform functions are emitted).
 
     When ``existing_toml_path`` points at a sibling ``<name>.toml``
     overlay, per-field ``cache_strategy`` and ``requires_explicit_fetch``
@@ -1050,10 +1060,6 @@ def generate_mapping(
         "",
     ]
 
-    if array_sub_models:
-        lines.append("from typing import Any")
-        lines.append("")
-
     lines.extend(
         [
             "from pynetappfoundry.cache._registry import model_registry",
@@ -1075,60 +1081,8 @@ def generate_mapping(
     else:
         lines.append(model_import_line)
 
-    # Add get_nested_value import if we have nested transforms
-    has_nested_transforms = any("." in ap for ap in array_sub_models)
-    if has_nested_transforms:
-        lines.append("from pynetappfoundry.utils.dict_path import get_nested_value")
-
-    # Generate transform functions for array sub-model fields
-    if array_sub_models:
-        for field in leaves:
-            if field.api_path not in array_sub_models:
-                continue
-            sub_cls = array_sub_models[field.api_path]
-            # Use the leaf field name for the transform function name
-            func_name = f"_transform_{field.api_path.replace('.', '_')}"
-            lines.append("")
-            lines.append("")
-            sig = f"def {func_name}(record: dict[str, Any]) -> list[{sub_cls}]:"
-            if len(sig) > 100:
-                lines.append(f"def {func_name}(")
-                lines.append("    record: dict[str, Any],")
-                lines.append(f") -> list[{sub_cls}]:")
-            else:
-                lines.append(sig)
-            lines.append(f'    """Transform {field.api_path} into {sub_cls} list."""')
-
-            # Use get_nested_value for nested paths, record.get() for top-level
-            if "." in field.api_path:
-                lines.append("    try:")
-                lines.append(f'        items = get_nested_value(record, "{field.api_path}")')
-                lines.append("    except Exception:")
-                lines.append("        items = []")
-                ret_line = f"    return [{sub_cls}(**item) for item in items]"
-            else:
-                ret_line = (
-                    f'    return [{sub_cls}(**item) for item in record.get("{field.api_path}", [])]'
-                )
-            if len(ret_line) > 100:
-                lines.append("    return [")
-                lines.append(f"        {sub_cls}(**item)")
-                if "." in field.api_path:
-                    lines.append("        for item in items")
-                else:
-                    lines.append(f'        for item in record.get("{field.api_path}", [])')
-                lines.append("    ]")
-            else:
-                lines.append(ret_line)
-
-    # Separate the TypeMapping from the preceding block.  PEP 8 calls for
-    # two blank lines before a top-level class/function, but a single
-    # blank line is conventional when the preceding block is only
-    # imports.  We detect which by whether transform helpers were
-    # emitted.
+    # Separate the TypeMapping from the preceding imports.
     lines.append("")
-    if array_sub_models:
-        lines.append("")
     lines.append(f"{mapping_name} = TypeMapping(")
     lines.append(f'    name="{class_name}",')
     lines.append(f"    model_class={class_name},")
@@ -1192,10 +1146,9 @@ def generate_mapping(
         # requires_explicit_fetch.  When api_path equals cache_attr it's
         # omitted (FieldMapping.__post_init__ fills it in).
         if field.api_path in array_sub_models:
-            func_name = f"_transform_{field.api_path.replace('.', '_')}"
             if field.api_path != cache_attr:
                 field_args.append(f'        api_path="{field.api_path}"')
-            field_args.append(f"        transform={func_name}")
+            field_args.append(f"        item_model={array_sub_models[field.api_path]}")
         elif field.api_path != cache_attr:
             field_args.append(f'        api_path="{field.api_path}"')
 
@@ -1224,16 +1177,18 @@ def generate_mapping(
     # Emit a file-level noqa header for rules likely to remain after
     # ``ruff format`` wraps what it can.  ``E501`` covers pre-format
     # lines >100 chars (post-format ``ruff check --fix`` strips the
-    # directive when redundant).  ``N802`` is needed when any generated
-    # ``_transform_*`` helper has a mixedCase suffix derived from a
-    # camelCase API field (DII's ``applicationRoles`` ->
-    # ``_transform_applicationRoles``).  ONTAP's snake_case API fields
-    # never trigger N802, so ONTAP output is unchanged.
+    # directive when redundant).
     noqa_codes: list[str] = []
-    if any(len(line) > 100 for line in lines):
+    # ruff's E501 skips over-long lines with no whitespace-separated tokens
+    # (a bare ``cache_attr="..."`` argument), and ``ruff format`` wraps the
+    # registration call, so neither needs a directive.
+    if any(
+        len(line) > 100
+        and len(line.split()) > 1
+        and not line.startswith("model_registry.register_mapping(")
+        for line in lines
+    ):
         noqa_codes.append("E501")
-    if any(any(c.isupper() for c in ap.replace(".", "_")) for ap in array_sub_models):
-        noqa_codes.append("N802")
     if noqa_codes:
         result = f"# ruff: noqa: {', '.join(noqa_codes)}\n" + result
     return result

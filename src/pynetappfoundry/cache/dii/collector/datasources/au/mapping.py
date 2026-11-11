@@ -1,9 +1,6 @@
-# ruff: noqa: N802
 """DiiCollectorDatasourcesAu type mapping."""
 
 from __future__ import annotations
-
-from typing import Any
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
@@ -12,21 +9,6 @@ from pynetappfoundry.models.dii.collector.datasources.au.model import (
     DiiCollectorDatasourcesAuAttribute,
     DiiCollectorDatasourcesAuChangerespons,
 )
-
-
-def _transform_changeResponses(
-    record: dict[str, Any],
-) -> list[DiiCollectorDatasourcesAuChangerespons]:
-    """Transform changeResponses into DiiCollectorDatasourcesAuChangerespons list."""
-    return [
-        DiiCollectorDatasourcesAuChangerespons(**item) for item in record.get("changeResponses", [])
-    ]
-
-
-def _transform_attributes(record: dict[str, Any]) -> list[DiiCollectorDatasourcesAuAttribute]:
-    """Transform attributes into DiiCollectorDatasourcesAuAttribute list."""
-    return [DiiCollectorDatasourcesAuAttribute(**item) for item in record.get("attributes", [])]
-
 
 DIICOLLECTORDATASOURCESAU_MAPPING = TypeMapping(
     name="DiiCollectorDatasourcesAu",
@@ -49,7 +31,7 @@ DIICOLLECTORDATASOURCESAU_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="changeResponses",
-            transform=_transform_changeResponses,
+            item_model=DiiCollectorDatasourcesAuChangerespons,
             default=[],
         ),
         FieldMapping(
@@ -163,7 +145,7 @@ DIICOLLECTORDATASOURCESAU_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="attributes",
-            transform=_transform_attributes,
+            item_model=DiiCollectorDatasourcesAuAttribute,
             default=[],
         ),
         FieldMapping(

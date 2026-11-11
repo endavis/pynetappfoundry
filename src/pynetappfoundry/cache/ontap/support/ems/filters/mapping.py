@@ -2,22 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.support.ems.filters.model import (
     OntapEmsFilter,
     OntapEmsFilterParameterCriteria,
 )
-
-
-def _transform_parameter_criteria(record: dict[str, Any]) -> list[OntapEmsFilterParameterCriteria]:
-    """Transform parameter_criteria into OntapEmsFilterParameterCriteria list."""
-    return [
-        OntapEmsFilterParameterCriteria(**item) for item in record.get("parameter_criteria", [])
-    ]
-
 
 ONTAPEMSFILTER_MAPPING = TypeMapping(
     name="OntapEmsFilter",
@@ -41,7 +31,7 @@ ONTAPEMSFILTER_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="parameter_criteria",
-            transform=_transform_parameter_criteria,
+            item_model=OntapEmsFilterParameterCriteria,
             default=[],
         ),
         FieldMapping(

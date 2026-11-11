@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.cluster.metrocluster.diagnostics.model import (
@@ -14,61 +12,6 @@ from pynetappfoundry.models.ontap.cluster.metrocluster.diagnostics.model import 
     OntapMetroclusterDiagnosticsNodeDetail,
     OntapMetroclusterDiagnosticsVolumeDetail,
 )
-from pynetappfoundry.utils.dict_path import get_nested_value
-
-
-def _transform_aggregate_details(
-    record: dict[str, Any],
-) -> list[OntapMetroclusterDiagnosticsAggregateDetail]:
-    """Transform aggregate.details into OntapMetroclusterDiagnosticsAggregateDetail list."""
-    try:
-        items = get_nested_value(record, "aggregate.details")
-    except Exception:
-        items = []
-    return [OntapMetroclusterDiagnosticsAggregateDetail(**item) for item in items]
-
-
-def _transform_cluster_details(
-    record: dict[str, Any],
-) -> list[OntapMetroclusterDiagnosticsClusterDetail]:
-    """Transform cluster.details into OntapMetroclusterDiagnosticsClusterDetail list."""
-    try:
-        items = get_nested_value(record, "cluster.details")
-    except Exception:
-        items = []
-    return [OntapMetroclusterDiagnosticsClusterDetail(**item) for item in items]
-
-
-def _transform_connection_details(
-    record: dict[str, Any],
-) -> list[OntapMetroclusterDiagnosticsConnectionDetail]:
-    """Transform connection.details into OntapMetroclusterDiagnosticsConnectionDetail list."""
-    try:
-        items = get_nested_value(record, "connection.details")
-    except Exception:
-        items = []
-    return [OntapMetroclusterDiagnosticsConnectionDetail(**item) for item in items]
-
-
-def _transform_node_details(record: dict[str, Any]) -> list[OntapMetroclusterDiagnosticsNodeDetail]:
-    """Transform node.details into OntapMetroclusterDiagnosticsNodeDetail list."""
-    try:
-        items = get_nested_value(record, "node.details")
-    except Exception:
-        items = []
-    return [OntapMetroclusterDiagnosticsNodeDetail(**item) for item in items]
-
-
-def _transform_volume_details(
-    record: dict[str, Any],
-) -> list[OntapMetroclusterDiagnosticsVolumeDetail]:
-    """Transform volume.details into OntapMetroclusterDiagnosticsVolumeDetail list."""
-    try:
-        items = get_nested_value(record, "volume.details")
-    except Exception:
-        items = []
-    return [OntapMetroclusterDiagnosticsVolumeDetail(**item) for item in items]
-
 
 ONTAPMETROCLUSTERDIAGNOSTICS_MAPPING = TypeMapping(
     name="OntapMetroclusterDiagnostics",
@@ -78,7 +21,7 @@ ONTAPMETROCLUSTERDIAGNOSTICS_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="aggregate.details",
-            transform=_transform_aggregate_details,
+            item_model=OntapMetroclusterDiagnosticsAggregateDetail,
             default=[],
         ),
         FieldMapping(
@@ -95,7 +38,7 @@ ONTAPMETROCLUSTERDIAGNOSTICS_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="cluster.details",
-            transform=_transform_cluster_details,
+            item_model=OntapMetroclusterDiagnosticsClusterDetail,
             default=[],
         ),
         FieldMapping(
@@ -128,7 +71,7 @@ ONTAPMETROCLUSTERDIAGNOSTICS_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="connection.details",
-            transform=_transform_connection_details,
+            item_model=OntapMetroclusterDiagnosticsConnectionDetail,
             default=[],
         ),
         FieldMapping(
@@ -157,7 +100,7 @@ ONTAPMETROCLUSTERDIAGNOSTICS_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="node.details",
-            transform=_transform_node_details,
+            item_model=OntapMetroclusterDiagnosticsNodeDetail,
             default=[],
         ),
         FieldMapping(
@@ -174,7 +117,7 @@ ONTAPMETROCLUSTERDIAGNOSTICS_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="volume.details",
-            transform=_transform_volume_details,
+            item_model=OntapMetroclusterDiagnosticsVolumeDetail,
             default=[],
         ),
         FieldMapping(

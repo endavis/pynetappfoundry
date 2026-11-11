@@ -944,25 +944,89 @@ class TestGenerateMappingSubModel:
     def test_transform_function_generated(self) -> None:
         ep = _make_endpoint_with_sub_model()
         code = generate_mapping(ep)
-        assert "def _transform_copies(record: dict[str, Any])" in code
-        assert "OntapSnapshotPolicyCopy(**item)" in code
+        assert "def _transform_" not in code
+        assert "OntapSnapshotPolicyCopy(**item)" not in code
+        assert "item_model=OntapSnapshotPolicyCopy" in code
 
     def test_field_mapping_uses_transform(self) -> None:
         ep = _make_endpoint_with_sub_model()
         code = generate_mapping(ep)
-        assert "transform=_transform_copies" in code
+        assert "item_model=OntapSnapshotPolicyCopy" in code
+        assert "transform=" not in code
 
     def test_sub_model_field_emits_transform(self) -> None:
         ep = _make_endpoint_with_sub_model()
         code = generate_mapping(ep)
         # api_path omitted when it matches cache_attr (auto-defaults via __post_init__)
         assert 'api_path="copies"' not in code
-        assert "transform=_transform_copies" in code
+        assert "item_model=OntapSnapshotPolicyCopy" in code
 
     def test_sub_model_imported(self) -> None:
         ep = _make_endpoint_with_sub_model()
         code = generate_mapping(ep)
         assert "OntapSnapshotPolicyCopy" in code
+
+    def test_no_any_or_get_nested_value_import(self) -> None:
+        ep = _make_endpoint_with_sub_model()
+        code = generate_mapping(ep)
+        assert "from typing import Any" not in code
+        assert "get_nested_value" not in code
+
+    def test_single_blank_line_after_imports(self) -> None:
+        ep = _make_endpoint_with_sub_model()
+        code = generate_mapping(ep)
+        assert ")\n\nONTAP" in code
+        assert ")\n\n\nONTAP" not in code
+
+    def test_nested_array_emits_item_model_without_helpers(self) -> None:
+        ep = ParsedEndpoint(
+            path="/some/path",
+            schema_name="",
+            fields=[
+                ParsedField(
+                    name="outer",
+                    api_path="outer",
+                    python_type="dict[str, Any]",
+                    is_object=True,
+                    sub_fields=[
+                        ParsedField(
+                            name="items",
+                            api_path="outer.items",
+                            python_type="list[dict[str, Any]]",
+                            is_list=True,
+                            is_object=True,
+                            default=[],
+                            sub_fields=[ParsedField(name="name", api_path="outer.items.name")],
+                        ),
+                    ],
+                ),
+            ],
+        )
+        code = generate_mapping(ep, api_type="ontap")
+        assert 'cache_attr="outer.items"' in code
+        assert "item_model=" in code
+        assert "def _transform_" not in code
+        assert "get_nested_value" not in code
+
+    def test_keyword_named_array_keeps_api_path_with_item_model(self) -> None:
+        ep = ParsedEndpoint(
+            path="/some/path",
+            schema_name="",
+            fields=[
+                ParsedField(
+                    name="type",
+                    api_path="type",
+                    python_type="list[dict[str, Any]]",
+                    is_list=True,
+                    is_object=True,
+                    default=[],
+                    sub_fields=[ParsedField(name="name", api_path="type.name")],
+                ),
+            ],
+        )
+        code = generate_mapping(ep, api_type="ontap")
+        assert 'api_path="type"' in code
+        assert "item_model=" in code
 
     def test_valid_python(self) -> None:
         ep = _make_endpoint_with_sub_model()
@@ -1278,9 +1342,9 @@ class TestMappingNoqaN802:
             ],
         )
         code = generate_mapping(ep, api_type="dii")
-        assert "# ruff: noqa" in code
-        assert "N802" in code
-        assert "_transform_applicationRoles" in code
+        assert "N802" not in code
+        assert "def _transform_" not in code
+        assert "item_model=" in code
 
     def test_snake_case_transform_no_n802(self) -> None:
         """ONTAP's snake_case fields never trigger N802."""

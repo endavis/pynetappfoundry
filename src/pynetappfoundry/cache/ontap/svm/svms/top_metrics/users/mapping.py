@@ -2,20 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.svm.svms.top_metrics.users.model import (
     OntapTopMetricsSvmUser,
     OntapTopMetricsSvmUserVolume,
 )
-
-
-def _transform_volumes(record: dict[str, Any]) -> list[OntapTopMetricsSvmUserVolume]:
-    """Transform volumes into OntapTopMetricsSvmUserVolume list."""
-    return [OntapTopMetricsSvmUserVolume(**item) for item in record.get("volumes", [])]
-
 
 ONTAPTOPMETRICSSVMUSER_MAPPING = TypeMapping(
     name="OntapTopMetricsSvmUser",
@@ -71,7 +63,7 @@ ONTAPTOPMETRICSSVMUSER_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="volumes",
-            transform=_transform_volumes,
+            item_model=OntapTopMetricsSvmUserVolume,
             default=[],
         ),
     ),

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.dii.collector.datasources.model import (
@@ -14,37 +12,6 @@ from pynetappfoundry.models.dii.collector.datasources.model import (
     DiiCollectorDatasourceEvent,
     DiiCollectorDatasourcePackage,
 )
-from pynetappfoundry.utils.dict_path import get_nested_value
-
-
-def _transform_changes(record: dict[str, Any]) -> list[DiiCollectorDatasourceChange]:
-    """Transform changes into DiiCollectorDatasourceChange list."""
-    return [DiiCollectorDatasourceChange(**item) for item in record.get("changes", [])]
-
-
-def _transform_events(record: dict[str, Any]) -> list[DiiCollectorDatasourceEvent]:
-    """Transform events into DiiCollectorDatasourceEvent list."""
-    return [DiiCollectorDatasourceEvent(**item) for item in record.get("events", [])]
-
-
-def _transform_devices(record: dict[str, Any]) -> list[DiiCollectorDatasourceDevice]:
-    """Transform devices into DiiCollectorDatasourceDevice list."""
-    return [DiiCollectorDatasourceDevice(**item) for item in record.get("devices", [])]
-
-
-def _transform_packages(record: dict[str, Any]) -> list[DiiCollectorDatasourcePackage]:
-    """Transform packages into DiiCollectorDatasourcePackage list."""
-    return [DiiCollectorDatasourcePackage(**item) for item in record.get("packages", [])]
-
-
-def _transform_config_packages(record: dict[str, Any]) -> list[DiiCollectorDatasourceConfigPackage]:
-    """Transform config.packages into DiiCollectorDatasourceConfigPackage list."""
-    try:
-        items = get_nested_value(record, "config.packages")
-    except Exception:
-        items = []
-    return [DiiCollectorDatasourceConfigPackage(**item) for item in items]
-
 
 DIICOLLECTORDATASOURCE_MAPPING = TypeMapping(
     name="DiiCollectorDatasource",
@@ -62,7 +29,7 @@ DIICOLLECTORDATASOURCE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="changes",
-            transform=_transform_changes,
+            item_model=DiiCollectorDatasourceChange,
             default=[],
         ),
         FieldMapping(
@@ -179,7 +146,7 @@ DIICOLLECTORDATASOURCE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="events",
-            transform=_transform_events,
+            item_model=DiiCollectorDatasourceEvent,
             default=[],
         ),
         FieldMapping(
@@ -195,12 +162,12 @@ DIICOLLECTORDATASOURCE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="devices",
-            transform=_transform_devices,
+            item_model=DiiCollectorDatasourceDevice,
             default=[],
         ),
         FieldMapping(
             cache_attr="packages",
-            transform=_transform_packages,
+            item_model=DiiCollectorDatasourcePackage,
             default=[],
         ),
         FieldMapping(
@@ -251,7 +218,7 @@ DIICOLLECTORDATASOURCE_MAPPING = TypeMapping(
         FieldMapping(
             cache_attr="config_.packages",
             api_path="config.packages",
-            transform=_transform_config_packages,
+            item_model=DiiCollectorDatasourceConfigPackage,
             default=[],
         ),
         FieldMapping(

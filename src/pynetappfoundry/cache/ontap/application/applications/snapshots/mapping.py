@@ -2,20 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.application.applications.snapshots.model import (
     OntapApplicationSnapshot,
     OntapApplicationSnapshotComponent,
 )
-
-
-def _transform_components(record: dict[str, Any]) -> list[OntapApplicationSnapshotComponent]:
-    """Transform components into OntapApplicationSnapshotComponent list."""
-    return [OntapApplicationSnapshotComponent(**item) for item in record.get("components", [])]
-
 
 ONTAPAPPLICATIONSNAPSHOT_MAPPING = TypeMapping(
     name="OntapApplicationSnapshot",
@@ -36,7 +28,7 @@ ONTAPAPPLICATIONSNAPSHOT_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="components",
-            transform=_transform_components,
+            item_model=OntapApplicationSnapshotComponent,
             default=[],
         ),
         FieldMapping(

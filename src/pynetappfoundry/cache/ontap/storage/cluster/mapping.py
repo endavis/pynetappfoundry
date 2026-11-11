@@ -2,27 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.storage.cluster.model import (
     OntapClusterSpace,
     OntapClusterSpaceBlockStorageMedia,
 )
-from pynetappfoundry.utils.dict_path import get_nested_value
-
-
-def _transform_block_storage_medias(
-    record: dict[str, Any],
-) -> list[OntapClusterSpaceBlockStorageMedia]:
-    """Transform block_storage.medias into OntapClusterSpaceBlockStorageMedia list."""
-    try:
-        items = get_nested_value(record, "block_storage.medias")
-    except Exception:
-        items = []
-    return [OntapClusterSpaceBlockStorageMedia(**item) for item in items]
-
 
 ONTAPCLUSTERSPACE_MAPPING = TypeMapping(
     name="OntapClusterSpace",
@@ -41,7 +26,7 @@ ONTAPCLUSTERSPACE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="block_storage.medias",
-            transform=_transform_block_storage_medias,
+            item_model=OntapClusterSpaceBlockStorageMedia,
             default=[],
         ),
         FieldMapping(

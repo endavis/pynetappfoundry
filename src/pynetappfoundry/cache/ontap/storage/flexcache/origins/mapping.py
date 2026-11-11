@@ -2,20 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.storage.flexcache.origins.model import (
     OntapFlexcacheOrigin,
     OntapFlexcacheOriginFlexcache,
 )
-
-
-def _transform_flexcaches(record: dict[str, Any]) -> list[OntapFlexcacheOriginFlexcache]:
-    """Transform flexcaches into OntapFlexcacheOriginFlexcache list."""
-    return [OntapFlexcacheOriginFlexcache(**item) for item in record.get("flexcaches", [])]
-
 
 ONTAPFLEXCACHEORIGIN_MAPPING = TypeMapping(
     name="OntapFlexcacheOrigin",
@@ -30,7 +22,7 @@ ONTAPFLEXCACHEORIGIN_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="flexcaches",
-            transform=_transform_flexcaches,
+            item_model=OntapFlexcacheOriginFlexcache,
             default=[],
         ),
         FieldMapping(

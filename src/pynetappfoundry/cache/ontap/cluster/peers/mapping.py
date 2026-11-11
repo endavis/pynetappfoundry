@@ -2,24 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.cluster.peers.model import (
     OntapClusterPeer,
     OntapClusterPeerInitialAllowedSvm,
 )
-
-
-def _transform_initial_allowed_svms(
-    record: dict[str, Any],
-) -> list[OntapClusterPeerInitialAllowedSvm]:
-    """Transform initial_allowed_svms into OntapClusterPeerInitialAllowedSvm list."""
-    return [
-        OntapClusterPeerInitialAllowedSvm(**item) for item in record.get("initial_allowed_svms", [])
-    ]
-
 
 ONTAPCLUSTERPEER_MAPPING = TypeMapping(
     name="OntapClusterPeer",
@@ -52,7 +40,7 @@ ONTAPCLUSTERPEER_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="initial_allowed_svms",
-            transform=_transform_initial_allowed_svms,
+            item_model=OntapClusterPeerInitialAllowedSvm,
             default=[],
         ),
         FieldMapping(

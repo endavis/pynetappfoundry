@@ -2,20 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.support.ems.events.model import (
     OntapEmsEventResponse,
     OntapEmsEventResponseParameter,
 )
-
-
-def _transform_parameters(record: dict[str, Any]) -> list[OntapEmsEventResponseParameter]:
-    """Transform parameters into OntapEmsEventResponseParameter list."""
-    return [OntapEmsEventResponseParameter(**item) for item in record.get("parameters", [])]
-
 
 ONTAPEMSEVENTRESPONSE_MAPPING = TypeMapping(
     name="OntapEmsEventResponse",
@@ -44,7 +36,7 @@ ONTAPEMSEVENTRESPONSE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="parameters",
-            transform=_transform_parameters,
+            item_model=OntapEmsEventResponseParameter,
             default=[],
         ),
         FieldMapping(

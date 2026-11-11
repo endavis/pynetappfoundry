@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.protocols.san.iscsi.credentials.model import (
@@ -11,30 +9,6 @@ from pynetappfoundry.models.ontap.protocols.san.iscsi.credentials.model import (
     OntapIscsiCredentialsInitiatorAddressMask,
     OntapIscsiCredentialsInitiatorAddressRange,
 )
-from pynetappfoundry.utils.dict_path import get_nested_value
-
-
-def _transform_initiator_address_masks(
-    record: dict[str, Any],
-) -> list[OntapIscsiCredentialsInitiatorAddressMask]:
-    """Transform initiator_address.masks into OntapIscsiCredentialsInitiatorAddressMask list."""
-    try:
-        items = get_nested_value(record, "initiator_address.masks")
-    except Exception:
-        items = []
-    return [OntapIscsiCredentialsInitiatorAddressMask(**item) for item in items]
-
-
-def _transform_initiator_address_ranges(
-    record: dict[str, Any],
-) -> list[OntapIscsiCredentialsInitiatorAddressRange]:
-    """Transform initiator_address.ranges into OntapIscsiCredentialsInitiatorAddressRange list."""
-    try:
-        items = get_nested_value(record, "initiator_address.ranges")
-    except Exception:
-        items = []
-    return [OntapIscsiCredentialsInitiatorAddressRange(**item) for item in items]
-
 
 ONTAPISCSICREDENTIALS_MAPPING = TypeMapping(
     name="OntapIscsiCredentials",
@@ -62,12 +36,12 @@ ONTAPISCSICREDENTIALS_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="initiator_address.masks",
-            transform=_transform_initiator_address_masks,
+            item_model=OntapIscsiCredentialsInitiatorAddressMask,
             default=[],
         ),
         FieldMapping(
             cache_attr="initiator_address.ranges",
-            transform=_transform_initiator_address_ranges,
+            item_model=OntapIscsiCredentialsInitiatorAddressRange,
             default=[],
         ),
         FieldMapping(

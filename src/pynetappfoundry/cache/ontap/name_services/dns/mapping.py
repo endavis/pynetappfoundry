@@ -2,17 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.name_services.dns.model import OntapDns, OntapDnsStatus
-
-
-def _transform_status(record: dict[str, Any]) -> list[OntapDnsStatus]:
-    """Transform status into OntapDnsStatus list."""
-    return [OntapDnsStatus(**item) for item in record.get("status", [])]
-
 
 ONTAPDNS_MAPPING = TypeMapping(
     name="OntapDns",
@@ -72,7 +64,7 @@ ONTAPDNS_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="status",
-            transform=_transform_status,
+            item_model=OntapDnsStatus,
             default=[],
         ),
         FieldMapping(

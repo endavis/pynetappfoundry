@@ -2,20 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.storage.snapshot_policies.model import (
     OntapSnapshotPolicy,
     OntapSnapshotPolicyCopy,
 )
-
-
-def _transform_copies(record: dict[str, Any]) -> list[OntapSnapshotPolicyCopy]:
-    """Transform copies into OntapSnapshotPolicyCopy list."""
-    return [OntapSnapshotPolicyCopy(**item) for item in record.get("copies", [])]
-
 
 ONTAPSNAPSHOTPOLICY_MAPPING = TypeMapping(
     name="OntapSnapshotPolicy",
@@ -29,7 +21,7 @@ ONTAPSNAPSHOTPOLICY_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="copies",
-            transform=_transform_copies,
+            item_model=OntapSnapshotPolicyCopy,
             default=[],
             requires_explicit_fetch=True,
         ),

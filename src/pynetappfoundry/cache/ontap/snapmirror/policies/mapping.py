@@ -2,20 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.snapmirror.policies.model import (
     OntapSnapmirrorPolicy,
     OntapSnapmirrorPolicyRetention,
 )
-
-
-def _transform_retention(record: dict[str, Any]) -> list[OntapSnapmirrorPolicyRetention]:
-    """Transform retention into OntapSnapmirrorPolicyRetention list."""
-    return [OntapSnapmirrorPolicyRetention(**item) for item in record.get("retention", [])]
-
 
 ONTAPSNAPMIRRORPOLICY_MAPPING = TypeMapping(
     name="OntapSnapmirrorPolicy",
@@ -51,7 +43,7 @@ ONTAPSNAPMIRRORPOLICY_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="retention",
-            transform=_transform_retention,
+            item_model=OntapSnapmirrorPolicyRetention,
             default=[],
         ),
         FieldMapping(

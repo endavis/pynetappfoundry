@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.storage.file.moves.model import (
@@ -12,39 +10,6 @@ from pynetappfoundry.models.ontap.storage.file.moves.model import (
     OntapFileMoveFilesToMoveDestination,
     OntapFileMoveFilesToMoveSource,
 )
-from pynetappfoundry.utils.dict_path import get_nested_value
-
-
-def _transform_failure_arguments(record: dict[str, Any]) -> list[OntapFileMoveFailureArgument]:
-    """Transform failure.arguments into OntapFileMoveFailureArgument list."""
-    try:
-        items = get_nested_value(record, "failure.arguments")
-    except Exception:
-        items = []
-    return [OntapFileMoveFailureArgument(**item) for item in items]
-
-
-def _transform_files_to_move_destinations(
-    record: dict[str, Any],
-) -> list[OntapFileMoveFilesToMoveDestination]:
-    """Transform files_to_move.destinations into OntapFileMoveFilesToMoveDestination list."""
-    try:
-        items = get_nested_value(record, "files_to_move.destinations")
-    except Exception:
-        items = []
-    return [OntapFileMoveFilesToMoveDestination(**item) for item in items]
-
-
-def _transform_files_to_move_sources(
-    record: dict[str, Any],
-) -> list[OntapFileMoveFilesToMoveSource]:
-    """Transform files_to_move.sources into OntapFileMoveFilesToMoveSource list."""
-    try:
-        items = get_nested_value(record, "files_to_move.sources")
-    except Exception:
-        items = []
-    return [OntapFileMoveFilesToMoveSource(**item) for item in items]
-
 
 ONTAPFILEMOVE_MAPPING = TypeMapping(
     name="OntapFileMove",
@@ -77,7 +42,7 @@ ONTAPFILEMOVE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="failure.arguments",
-            transform=_transform_failure_arguments,
+            item_model=OntapFileMoveFailureArgument,
             default=[],
         ),
         FieldMapping(
@@ -88,12 +53,12 @@ ONTAPFILEMOVE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="files_to_move.destinations",
-            transform=_transform_files_to_move_destinations,
+            item_model=OntapFileMoveFilesToMoveDestination,
             default=[],
         ),
         FieldMapping(
             cache_attr="files_to_move.sources",
-            transform=_transform_files_to_move_sources,
+            item_model=OntapFileMoveFilesToMoveSource,
             default=[],
         ),
         FieldMapping(

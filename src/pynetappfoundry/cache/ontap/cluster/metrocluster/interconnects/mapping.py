@@ -2,20 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.cluster.metrocluster.interconnects.model import (
     OntapMetroclusterInterconnect,
     OntapMetroclusterInterconnectInterface,
 )
-
-
-def _transform_interfaces(record: dict[str, Any]) -> list[OntapMetroclusterInterconnectInterface]:
-    """Transform interfaces into OntapMetroclusterInterconnectInterface list."""
-    return [OntapMetroclusterInterconnectInterface(**item) for item in record.get("interfaces", [])]
-
 
 ONTAPMETROCLUSTERINTERCONNECT_MAPPING = TypeMapping(
     name="OntapMetroclusterInterconnect",
@@ -28,7 +20,7 @@ ONTAPMETROCLUSTERINTERCONNECT_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="interfaces",
-            transform=_transform_interfaces,
+            item_model=OntapMetroclusterInterconnectInterface,
             default=[],
         ),
         FieldMapping(

@@ -2,20 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.protocols.cifs.netbios.model import (
     OntapNetbios,
     OntapNetbiosWinsServer,
 )
-
-
-def _transform_wins_servers(record: dict[str, Any]) -> list[OntapNetbiosWinsServer]:
-    """Transform wins_servers into OntapNetbiosWinsServer list."""
-    return [OntapNetbiosWinsServer(**item) for item in record.get("wins_servers", [])]
-
 
 ONTAPNETBIOS_MAPPING = TypeMapping(
     name="OntapNetbios",
@@ -63,7 +55,7 @@ ONTAPNETBIOS_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="wins_servers",
-            transform=_transform_wins_servers,
+            item_model=OntapNetbiosWinsServer,
             default=[],
         ),
     ),
