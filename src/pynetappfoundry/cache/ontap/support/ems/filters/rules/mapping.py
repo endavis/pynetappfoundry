@@ -14,6 +14,8 @@ ONTAPEMSFILTERRULERESPONSE_MAPPING = TypeMapping(
     model_class=OntapEmsFilterRuleResponse,
     api_endpoint="/support/ems/filters/{name}/rules?fields=*",
     api_type="ontap",
+    parent_mapping="OntapEmsFilter",
+    parent_id_field="name",
     fields=(
         FieldMapping(
             cache_attr="index",

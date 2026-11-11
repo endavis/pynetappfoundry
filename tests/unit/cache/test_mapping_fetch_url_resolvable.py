@@ -28,9 +28,7 @@ ONTAP_SPEC_PATH = REPO_ROOT / "docs" / "example-config" / "apis" / "ontap" / "op
 _PLACEHOLDER = re.compile(r"\{[^}]+\}")
 
 # Mappings known to be unfetchable, each with the issue that resolves it.
-_KNOWN_UNRESOLVABLE: dict[str, str] = {
-    "OntapEmsFilterRuleResponse": "#932",
-}
+_KNOWN_UNRESOLVABLE: dict[str, str] = {}
 
 # Mappings removed because the runtime cannot fill their placeholders (#952).
 _DELETED_BY_952: tuple[str, ...] = (
@@ -150,6 +148,14 @@ class TestRegisteredMappingsAreFetchable:
         assert mapping.parent_id_field == "id"
         url = mapping.build_parameterized_url("42")
         assert url == "/protocols/nfs/export-policies/42/rules?fields=*"
+
+
+def test_ems_filter_rule_wired_to_ems_filter() -> None:
+    mapping = model_registry.get_mapping("OntapEmsFilterRuleResponse")
+    assert mapping is not None
+    assert mapping.parent_mapping == "OntapEmsFilter"
+    assert mapping.parent_id_field == "name"
+    assert mapping.build_parameterized_url("f1") == "/support/ems/filters/f1/rules?fields=*"
 
 
 def _synthetic(endpoint: str, parent: str | None) -> TypeMapping:

@@ -425,9 +425,9 @@ state.
   `storage/snaplock/litigations/operations` and `protocols/ndmp/svms/passwords`. ACLs, reporting
   nodes, privileges and litigation operations remain reachable as nested fields on their parent
   models. Multi-placeholder parent fill, which would let about 10 of them return, is #955.
-- **Known exceptions (1):** `OntapEmsFilterRuleResponse`, whose parent needs #932. The other,
-  `OntapExportRule`, whose parent `OntapExportPolicy` was rule-shaped with no `id`, is resolved by
-  #956 (next section).
+- **Known exceptions (none):** `OntapEmsFilterRuleResponse` (parent needed #932) is resolved by #932
+  and `OntapExportRule` (parent `OntapExportPolicy` was rule-shaped with no `id`) by #956 (see their
+  sections).
 - **Guard:** `tests/unit/cache/test_mapping_fetch_url_resolvable.py` checks that every registered
   ONTAP mapping's fetch URL resolves given its parent, apart from the named exceptions, and that the
   exception list and the deleted list stay current.
@@ -456,6 +456,28 @@ endpoints fixes it.
 
 Issue: #956
 
+### EMS filter collection (Issue #932)
+
+`OntapEmsFilter` was generated from the item endpoint `/support/ems/filters/{name}` with
+`records_path="rules"`, so it modelled a rule, not a filter. The collection schema is named
+`ems_filter_response`, which the generator would turn into `OntapEmsFilterResponse`, a rename.
+
+- **Override:** `"/support/ems/filters": "OntapEmsFilter"` in `_CLASS_NAME_OVERRIDES`. A general
+  `_response`-stripping rule was rejected: it would rename other collections on their next
+  regeneration.
+- **Model:** the collection wins dedup, so `OntapEmsFilter{access_control_role, name, rules:
+  list[OntapEmsFilterRule], system_defined}` with `identifier_field="name"`. **BREAKING:** the fields
+  `index`, `message_criteria`, `parameter_criteria` and `type_` are removed from `OntapEmsFilter`;
+  `OntapEmsFilterMessageCriteria` and `OntapEmsFilterParameterCriteria` are replaced by
+  `OntapEmsFilterRuleMessageCriteria` and `OntapEmsFilterRuleParameterCriteria` under
+  `OntapEmsFilterRule`.
+- **Child wiring:** `OntapEmsFilterRuleResponse` gains `parent_mapping="OntapEmsFilter"` and
+  `parent_id_field="name"`, and is removed from the #952 known exceptions in the guard test.
+- **Targeted regeneration:** only `/support/ems/filters` and `/support/ems/filters/{name}/rules`.
+- **Cache:** EMS filters are not a cached table, so `SCHEMA_VERSION` is unchanged.
+
+Issue: #932
+
 ## Related Issues
 
 - Issue #301: feat: field annotations, OpenAPI codegen, and SQL cache storage
@@ -469,6 +491,7 @@ Issue: #956
 - Issue #925: bug: codegen models ONTAP single-object responses as their first array property
 - Issue #934: bug: ONTAP item-endpoint mappings with no fetchable parent (snaplock litigations, file_security permissions)
 - Issue #952: bug: generated ONTAP mappings with unfilled path placeholders are unfetchable
+- Issue #932: refactor: codegen naming for support/ems/filters collection (deferred from #925)
 - Issue #956: bug: OntapExportPolicy model is rule-shaped with no id, so OntapExportRule cannot be wired as its child
 
 ## Related Documentation
