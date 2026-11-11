@@ -68,7 +68,6 @@ class MetadataCollector(ApiPhasesMixin, CloudPhaseMixin):
     # Maps TypeMapping registry names to results dict keys for derived field evaluation.
     # Only TypeMappings that have derived fields need to be listed here.
     _MAPPING_RESULTS_KEYS: ClassVar[list[tuple[str, str]]] = [
-        ("Cluster", "cluster"),
         ("OntapNodeResponse", "nodes"),
     ]
 
@@ -158,7 +157,7 @@ class MetadataCollector(ApiPhasesMixin, CloudPhaseMixin):
         calls each field's ``post_collection(item, results)`` on every item
         in the results dict.
 
-        Handles both singular results (e.g. ``ClusterInfo``) and list results
+        Handles both singular results (e.g. a singleton model) and list results
         (e.g. ``list[OntapNodeResponse]``).
 
         Args:
@@ -280,8 +279,7 @@ class MetadataCollector(ApiPhasesMixin, CloudPhaseMixin):
 
         Returns the value :meth:`collect_all` would put in *group*, with the
         same post-processing, but runs only the phases that group needs:
-        ``cluster`` also collects ``nodes`` (for the derived ``is_ha`` and
-        ``is_cloud``), ``cluster_traits`` also collects ``nodes``, ``cloud``
+        ``cluster_traits`` also collects ``nodes``, ``cloud``
         also collects ``nodes`` and ``cluster_traits`` (CVO detection and
         Azure links), and ``storage`` adds its
         ``svm_top_metrics_users``. Phase results are memoized on this
@@ -304,12 +302,7 @@ class MetadataCollector(ApiPhasesMixin, CloudPhaseMixin):
         if group == "console":
             return None
         if group == "cluster":
-            # Nodes first: collect_nodes() fills _results_cache, so the
-            # cluster mapping's is_ha/is_cloud hooks reuse them instead of
-            # fetching nodes again.
-            nodes = self._collect_phase(CollectionPhase.NODES)
-            results = {"cluster": self._collect_phase(CollectionPhase.CLUSTER), "nodes": nodes}
-            return self._evaluate_derived_fields(results)["cluster"]
+            return self._collect_phase(CollectionPhase.CLUSTER)
         if group == "cluster_traits":
             self._collect_phase(CollectionPhase.NODES)  # traits are derived from these
             return self.collect_cluster_traits()

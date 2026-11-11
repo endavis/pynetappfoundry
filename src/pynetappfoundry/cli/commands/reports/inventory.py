@@ -22,7 +22,7 @@ from pynetappfoundry.core.config import Config
 from pynetappfoundry.data.source import DataSource
 from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
 from pynetappfoundry.models.ontap.cluster.licensing.licenses import OntapLicensePackageResponse
-from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
+from pynetappfoundry.models.ontap.cluster.model import OntapCluster
 from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
 from pynetappfoundry.models.ontap.cluster.traits.model import ClusterTraits
 from pynetappfoundry.utils.excel import ExcelWorkbook
@@ -191,7 +191,7 @@ class InventoryReport:
         self,
         name: str,
         entry: ClusterEntry,
-        cluster_info: ClusterInfo | None,
+        cluster_info: OntapCluster | None,
         nodes: list[OntapNodeResponse],
         licenses: list[OntapLicensePackageResponse],
         cloud_meta: list[CloudMetadata],
@@ -210,7 +210,7 @@ class InventoryReport:
         region_code = first_cloud.region if first_cloud else ""
         site = _REGION_TO_SITE.get(region_code.lower(), region_code)
 
-        version = _short_version(cluster_info.ontap_version) if cluster_info else ""
+        version = _short_version(cluster_info.version.full) if cluster_info else ""
 
         cloud_location = (
             first_cloud.provider if first_cloud else (cloud_cfg.title() if cloud_cfg else "")
@@ -255,7 +255,7 @@ class InventoryReport:
             conn_azure = connector.get("azure", {})
             connector_name = conn_azure.get("vmname", "") if isinstance(conn_azure, dict) else ""
 
-        system_id = cluster_info.cluster_uuid if cluster_info else ""
+        system_id = cluster_info.uuid if cluster_info else ""
 
         aiqum = self.config.find_closest("aiqums", search_terms)
         aiqum_ip: Any = ""
@@ -324,7 +324,7 @@ class InventoryReport:
         ds = DataSource(self.config)
         self.rows = []
         for name, entry in self.clusters.items():
-            cluster_info = ds.query(ClusterInfo, cluster=name, source="auto").first()
+            cluster_info = ds.query(OntapCluster, cluster=name, source="auto").first()
             nodes = list(ds.query(OntapNodeResponse, cluster=name, source="auto"))
             licenses = list(ds.query(OntapLicensePackageResponse, cluster=name, source="auto"))
             traits = ds.query(ClusterTraits, cluster=name, source="auto").first()

@@ -18,7 +18,7 @@ from pynetappfoundry.cache.refresher import (
     categorize_failure,
     effective_workers,
 )
-from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
+from pynetappfoundry.models.ontap.cluster.model import OntapCluster, OntapClusterVersion
 
 MODULE = "pynetappfoundry.cache.refresher"
 
@@ -26,7 +26,7 @@ MODULE = "pynetappfoundry.cache.refresher"
 def _metadata(name: str, version: str = "9.14.1") -> CachedClusterMetadata:
     return CachedClusterMetadata(
         cluster_name=name,
-        cluster=ClusterInfo(cluster_name=name, ontap_version=version),
+        cluster=OntapCluster(name=name, version=OntapClusterVersion(full=version)),
     )
 
 

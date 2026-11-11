@@ -18,11 +18,11 @@ CacheModel = OntapModel
 # Increment MINOR for backward-compatible changes (new optional fields).
 # Increment MAJOR for breaking changes (removed/renamed fields, type changes).
 # Format: "MAJOR.MINOR"
-METADATA_SCHEMA_VERSION = "2.2"
+METADATA_SCHEMA_VERSION = "3.0"
 
 # Minimum schema version that can be loaded without migration.
 # Snapshots older than this may fail to deserialize or have missing data.
-METADATA_SCHEMA_MIN_COMPATIBLE = "2.0"
+METADATA_SCHEMA_MIN_COMPATIBLE = "3.0"
 
 
 def parse_schema_version(version: str) -> tuple[int, int]:

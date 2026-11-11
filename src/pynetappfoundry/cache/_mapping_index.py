@@ -16,12 +16,6 @@ MAPPING_INDEX: dict[str, tuple[str, str, str, str | None]] = {
         "CloudMetadata",
         None,
     ),
-    "Cluster": (
-        "pynetappfoundry.cache.ontap.cluster.mapping",
-        "pynetappfoundry.models.ontap.cluster.model",
-        "ClusterInfo",
-        None,
-    ),
     "ClusterTraits": (
         "pynetappfoundry.cache.ontap.cluster.traits.mapping",
         "pynetappfoundry.models.ontap.cluster.traits.model",
@@ -1389,6 +1383,12 @@ MAPPING_INDEX: dict[str, tuple[str, str, str, str | None]] = {
         "pynetappfoundry.models.ontap.cloud.targets.model",
         "OntapCloudTarget",
         "ontap/cloud/targets/targets.toml",
+    ),
+    "OntapCluster": (
+        "pynetappfoundry.cache.ontap.cluster.mapping",
+        "pynetappfoundry.models.ontap.cluster.model",
+        "OntapCluster",
+        "ontap/cluster/cluster.toml",
     ),
     "OntapClusterAdProxy": (
         "pynetappfoundry.cache.ontap.security.authentication.cluster.ad_proxy.mapping",

@@ -91,11 +91,17 @@ def build_table_registry() -> dict[str, TableSpec]:
         # Case 2: SomeModel singleton at top level (e.g. cluster, mediator)
         model_cls = _is_model_type(annotation)
         if model_cls is not None:
-            # If the model has list[BaseModel] sub-fields, it's a container.
-            if _has_list_model_fields(model_cls):
+            # A model registered on a TypeMapping is stored as one leaf row,
+            # even when it has list[BaseModel] sub-fields (e.g. OntapCluster
+            # with management_interfaces); those lists stay inside the row.
+            # An unmapped model with list[BaseModel] sub-fields is a container.
+            from pynetappfoundry.cache._registry import model_registry
+
+            is_mapped = model_registry.get_mapping_by_model_class(model_cls) is not None
+            if _has_list_model_fields(model_cls) and not is_mapped:
                 _walk_container(registry, field_name, model_cls)
             else:
-                # Pure singleton (e.g. ClusterInfo, OntapMediatorResponse)
+                # Pure singleton (e.g. OntapCluster, OntapMediatorResponse)
                 _register_model(registry, field_name, model_cls, is_list=False)
 
     return registry

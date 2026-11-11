@@ -42,7 +42,7 @@ from pynetappfoundry.models.ontap.cluster.licensing.licenses.model import (
     OntapLicensePackageResponse,
 )
 from pynetappfoundry.models.ontap.cluster.mediators.model import OntapMediatorResponse
-from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
+from pynetappfoundry.models.ontap.cluster.model import OntapCluster
 from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
 from pynetappfoundry.models.ontap.cluster.peers.model import OntapClusterPeer
 from pynetappfoundry.models.ontap.cluster.schedules.model import OntapSchedule
@@ -295,11 +295,11 @@ class ApiPhasesMixin(_CollectorState):
     # Cluster Info / Nodes
     # -------------------------------------------------------------------------
 
-    def collect_cluster_info(self) -> ClusterInfo:
+    def collect_cluster_info(self) -> OntapCluster:
         """Collect cluster identity information (API-only).
 
         Returns:
-            ClusterInfo object.
+            OntapCluster object.
 
         Raises:
             CollectionError: If no API client is available.
@@ -307,20 +307,17 @@ class ApiPhasesMixin(_CollectorState):
         """
         return self._api_phase("Cluster info", self._collect_cluster_info_via_api)
 
-    def _collect_cluster_info_via_api(self) -> ClusterInfo:
+    def _collect_cluster_info_via_api(self) -> OntapCluster:
         """Collect cluster info using REST API.
 
         Returns:
-            ClusterInfo from /cluster endpoint.
+            OntapCluster from /cluster endpoint.
         """
         if not self.api_client:
             logger.debug("%s No API client available for cluster info collection", self._log_prefix)
-            return ClusterInfo()
+            return OntapCluster()
 
-        # Nodes first: fills _results_cache so fetch() skips its own dependency
-        # fetch of OntapNodeResponse (#929).
-        self._collect_nodes_via_api()
-        return cast(ClusterInfo, self._fetch_model(ClusterInfo))
+        return cast(OntapCluster, self._fetch_model(OntapCluster))
 
     def collect_cluster_traits(self) -> ClusterTraits:
         """Collect the computed cluster traits (``is_ha``, ``is_cloud``).

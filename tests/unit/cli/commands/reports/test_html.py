@@ -14,7 +14,7 @@ from pynetappfoundry.cli.commands.reports.html import (
     ClusterData,
     HTMLReportBuilder,
 )
-from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
+from pynetappfoundry.models.ontap.cluster.model import OntapCluster, OntapClusterVersion
 from pynetappfoundry.models.ontap.cluster.nodes.model import (
     OntapNodeResponse,
     OntapNodeResponseManagementInterface,
@@ -119,11 +119,11 @@ def sample_cluster_config_multi() -> dict[str, dict[str, Any]]:
 
 
 @pytest.fixture
-def mock_cluster_info() -> ClusterInfo:
-    """Mock ClusterInfo model instance."""
-    return ClusterInfo(
-        cluster_name="test-cluster-1",
-        ontap_version="9.12.1",
+def mock_cluster_info() -> OntapCluster:
+    """Mock OntapCluster model instance."""
+    return OntapCluster(
+        name="test-cluster-1",
+        version=OntapClusterVersion(full="9.12.1"),
         dns_domains=["example.com"],
         name_servers=["8.8.8.8", "8.8.4.4"],
         ntp_servers=["time.example.com"],
@@ -557,12 +557,12 @@ class TestClusterData:
         # DataSource constructed exactly once with the config.
         mock_datasource_class.assert_called_once_with(mock_config)
 
-        # Six queries: ClusterInfo, ClusterTraits, OntapNodeResponse, OntapSvm,
+        # Six queries: OntapCluster, ClusterTraits, OntapNodeResponse, OntapSvm,
         # OntapCifsService, OntapIpInterface — all with source="auto".
         assert mock_ds.query.call_count == 6
         queried_models = [call.args[0] for call in mock_ds.query.call_args_list]
         assert queried_models == [
-            ClusterInfo,
+            OntapCluster,
             ClusterTraits,
             OntapNodeResponse,
             OntapSvm,
@@ -655,7 +655,7 @@ class TestBuildCloudInfoGate:
         self,
         mock_config: MagicMock,
         *,
-        cluster_info: ClusterInfo | None,
+        cluster_info: OntapCluster | None,
     ) -> ClusterData:
         mock_builder = MagicMock()
         mock_builder.config = mock_config
@@ -682,18 +682,19 @@ class TestBuildCloudInfoGate:
         return cluster
 
     def test_early_returns_when_cluster_info_missing(self, mock_config: MagicMock) -> None:
-        """No ClusterInfo → _build_cloud_info early-returns without SSH."""
+        """No OntapCluster → _build_cloud_info early-returns without SSH."""
         cluster = self._make_cluster_with_entry(mock_config, cluster_info=None)
         # Should not raise even though ontap.cloud would blow up.
         cluster._build_cloud_info()
         assert cluster.cloud_metadata == []
 
     def test_early_returns_when_cluster_is_not_cloud(self, mock_config: MagicMock) -> None:
-        """ClusterInfo.is_cloud=False → _build_cloud_info early-returns."""
+        """ClusterTraits.is_cloud=False with cluster info → _build_cloud_info early-returns."""
         cluster = self._make_cluster_with_entry(
             mock_config,
-            cluster_info=ClusterInfo(cluster_name="test-cluster", is_cloud=False),
+            cluster_info=OntapCluster(name="test-cluster"),
         )
+        cluster.cluster_traits = ClusterTraits(is_cloud=False)
         cluster._build_cloud_info()
         assert cluster.cloud_metadata == []
 
@@ -707,15 +708,13 @@ class TestBuildCloudInfoGate:
     def test_early_returns_when_cluster_info_cloud_but_traits_missing(
         self, mock_config: MagicMock
     ) -> None:
-        """The gate reads ClusterTraits only; ClusterInfo.is_cloud alone does not open it."""
-        cluster = self._make_cluster_with_entry(
-            mock_config, cluster_info=ClusterInfo(cluster_name="c", is_cloud=True)
-        )
+        """The gate reads ClusterTraits only; OntapCluster without traits does not open it."""
+        cluster = self._make_cluster_with_entry(mock_config, cluster_info=OntapCluster(name="c"))
         cluster._build_cloud_info()
         assert cluster.cloud_metadata == []
 
     def test_proceeds_when_cluster_is_cloud(self, mock_config: MagicMock) -> None:
-        """ClusterInfo.is_cloud=True → _build_cloud_info touches ontap.cloud."""
+        """ClusterTraits.is_cloud=True → _build_cloud_info touches ontap.cloud."""
         from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
 
         mock_builder = MagicMock()
@@ -756,7 +755,7 @@ class TestBuildCloudInfoGate:
 
 
 class TestGatherDataCloudOrdering:
-    """Regression: _gather_data fetches ClusterInfo before _build_cloud_info."""
+    """Regression: _gather_data fetches OntapCluster before _build_cloud_info."""
 
     @patch("pynetappfoundry.cli.commands.reports.html.DataSource")
     def test_cluster_info_queried_before_build_cloud_info(
@@ -778,7 +777,7 @@ class TestGatherDataCloudOrdering:
 
             def _first() -> Any:
                 call_order.append(f"query:{model_name}")
-                return ClusterInfo(cluster_name="test-cluster", is_cloud=False)
+                return OntapCluster(name="test-cluster")
 
             result.first.side_effect = _first
             result.__iter__ = lambda self: iter([])
@@ -805,8 +804,8 @@ class TestGatherDataCloudOrdering:
                 tags=[],
             )
 
-        # ClusterInfo must be queried before _build_cloud_info runs.
-        cluster_info_idx = call_order.index("query:ClusterInfo")
+        # OntapCluster must be queried before _build_cloud_info runs.
+        cluster_info_idx = call_order.index("query:OntapCluster")
         build_idx = call_order.index("build_cloud_info")
         assert cluster_info_idx < build_idx
 
@@ -1170,15 +1169,12 @@ class TestHTMLFileGeneration:
     def comprehensive_ontap_models(self) -> dict[str, Any]:
         """Comprehensive typed model data for realistic HTML output."""
         return {
-            "cluster_info": ClusterInfo(
-                cluster_name="test-cluster",
-                ontap_version="NetApp Release 9.14.1",
+            "cluster_info": OntapCluster(
+                name="test-cluster",
+                version=OntapClusterVersion(full="NetApp Release 9.14.1"),
                 dns_domains=["corp.example.com", "example.com"],
                 name_servers=["10.0.0.10", "10.0.0.11"],
                 ntp_servers=["time1.example.com", "time2.example.com"],
-                # Flagged cloud so _build_cloud_info does not early-return
-                # under the issue #547 gate.
-                is_cloud=True,
             ),
             "nodes": [
                 OntapNodeResponse(

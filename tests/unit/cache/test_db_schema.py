@@ -219,3 +219,27 @@ class TestBuildTableRegistry:
             ddl = generate_table_ddl(spec.table_name, spec.model_class)
             conn.execute(ddl)
         conn.close()
+
+
+class TestClusterIsOneLeafRow:
+    """#967: a mapped singleton with list sub-fields is stored as one row, not split."""
+
+    def test_cluster_is_single_ontapcluster_spec(self) -> None:
+        from pynetappfoundry.cache.db_schema import TableSpec
+
+        spec = build_table_registry()["cluster"]
+        assert isinstance(spec, TableSpec)
+        assert spec.table_name == "ontapcluster"
+        assert spec.is_list is False
+        assert not [k for k in build_table_registry() if k.startswith("cluster.")]
+
+    def test_unmapped_containers_still_split(self) -> None:
+        registry = build_table_registry()
+        for key in (
+            "network.ip_interfaces",
+            "storage.volumes",
+            "protocols.cifs_shares",
+            "relationships.cluster_peers",
+        ):
+            assert key in registry
+        assert "clusterinfo" not in {s.table_name for s in registry.values()}

@@ -38,7 +38,7 @@ class TestCacheSchemaCommand:
         # Check for dotted paths - cloud is now a list
         assert "cloud[N].provider" in result.output
         assert "cloud[N].instance_type" in result.output
-        assert "cluster.ontap_version" in result.output
+        assert "cluster.version.full" in result.output
         # Check for array notation
         assert "nodes[N]" in result.output
         assert "nodes[N].name" in result.output

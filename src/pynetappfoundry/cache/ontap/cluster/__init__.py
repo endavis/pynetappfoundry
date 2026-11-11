@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from pynetappfoundry.cache.ontap.cluster.mapping import CLUSTER_MAPPING
-from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
+from pynetappfoundry.cache.ontap.cluster.mapping import ONTAPCLUSTER_MAPPING
+from pynetappfoundry.models.ontap.cluster.model import OntapCluster
 
 __all__ = [
-    "CLUSTER_MAPPING",
-    "ClusterInfo",
+    "ONTAPCLUSTER_MAPPING",
+    "OntapCluster",
 ]

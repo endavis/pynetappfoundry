@@ -21,7 +21,7 @@ from pynetappfoundry.cli.decorators import with_config
 from pynetappfoundry.cli.options import filter_option
 from pynetappfoundry.cli.utils import print_debug, print_error, print_info, print_success
 from pynetappfoundry.data.source import DataSource
-from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
+from pynetappfoundry.models.ontap.cluster.model import OntapCluster
 from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
 from pynetappfoundry.models.ontap.cluster.traits.model import ClusterTraits
 from pynetappfoundry.models.ontap.network.ip.interfaces.model import OntapIpInterface
@@ -711,7 +711,7 @@ class ClusterData:
 
     Attributes:
         name: Cluster name.
-        cluster_info: ClusterInfo from the /cluster endpoint.
+        cluster_info: OntapCluster from the /cluster endpoint.
         nodes: List of OntapNodeResponse objects.
         svms: List of OntapSvm objects.
         cifs_services: List of OntapCifsService objects.
@@ -740,7 +740,7 @@ class ClusterData:
         self._cluster_entry = cluster_entry
         for name, value in kwargs.items():
             setattr(self, name, value)
-        self.cluster_info: ClusterInfo | None = None
+        self.cluster_info: OntapCluster | None = None
         self.cluster_traits: ClusterTraits | None = None
         self.nodes: list[OntapNodeResponse] = []
         self.svms: list[OntapSvm] = []
@@ -815,7 +815,7 @@ class ClusterData:
         try:
             ds = DataSource(self.app_instance.config)
             self.management_ip = ip
-            self.cluster_info = ds.query(ClusterInfo, cluster=self.name, source="auto").first()
+            self.cluster_info = ds.query(OntapCluster, cluster=self.name, source="auto").first()
             self.cluster_traits = ds.query(ClusterTraits, cluster=self.name, source="auto").first()
             # Build cloud info AFTER cluster_traits is populated so the
             # gate on ``is_cloud`` can skip the SSH-backed lazy fetch for
@@ -965,7 +965,7 @@ class ClusterData:
                 with tag("ul"):
                     with tag("li"):
                         with tag("table", ("class", "custom-table")):
-                            version = self.cluster_info.ontap_version or "Unknown"
+                            version = self.cluster_info.version.full or "Unknown"
                             self.app_instance.format_table_row_text("Version", version)
 
                             if self.management_ip:

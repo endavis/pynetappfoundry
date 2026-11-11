@@ -24,7 +24,7 @@ from pynetappfoundry.models.ontap.cluster.licensing.licenses.model import (
     OntapLicensePackageResponse,
 )
 from pynetappfoundry.models.ontap.cluster.mediators.model import OntapMediatorResponse
-from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
+from pynetappfoundry.models.ontap.cluster.model import OntapCluster
 from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
 from pynetappfoundry.models.ontap.cluster.traits.model import ClusterTraits
 from pynetappfoundry.models.ontap.network.model import NetworkInfo
@@ -68,6 +68,10 @@ class CachedClusterMetadata(CacheModel):
     This is the top-level model containing all cached data categories.
 
     Schema Version History:
+        3.0 - ``cluster`` is the generated ``OntapCluster`` (nested API shape)
+              instead of the flat ``ClusterInfo``; ``is_ha`` / ``is_cloud``
+              live only on ``cluster_traits`` (#967, ADR-0024). Breaking:
+              2.x snapshots are no longer loadable
         2.2 - Added cluster_traits (computed is_ha / is_cloud, ADR-0024);
               cluster keeps its own is_ha / is_cloud fields
         2.1 - Added storage.svm_web_services (SVM web services from the
@@ -94,7 +98,7 @@ class CachedClusterMetadata(CacheModel):
 
     # Data categories
     cloud: list[CloudMetadata] = Field(default_factory=list)
-    cluster: ClusterInfo = Field(default_factory=ClusterInfo)
+    cluster: OntapCluster = Field(default_factory=OntapCluster)
     cluster_traits: ClusterTraits = Field(default_factory=ClusterTraits)
     nodes: list[OntapNodeResponse] = Field(default_factory=list)
     network: NetworkInfo = Field(default_factory=NetworkInfo)
@@ -135,9 +139,9 @@ class CachedClusterMetadata(CacheModel):
             "instance_type": first_cloud.instance_type,
             "availability_zone": first_cloud.availability_zone,
             # Cluster info
-            "cluster_uuid": self.cluster.cluster_uuid,
-            "ontap_version": self.cluster.ontap_version,
-            "version_generation": self.cluster.version_generation,
+            "cluster_uuid": self.cluster.uuid,
+            "ontap_version": self.cluster.version.full,
+            "version_generation": str(self.cluster.version.generation),
             # Cache metadata
             "_cached_at": self.cached_at.isoformat(),
             "_cache_version": self.cache_version,

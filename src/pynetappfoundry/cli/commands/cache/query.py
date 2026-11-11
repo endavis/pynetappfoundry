@@ -411,7 +411,7 @@ def query(
         nf cache query cluster1 cloud.instance_type
 
         # Single cluster, multiple fields
-        nf cache query cluster1 cloud.instance_type cluster.ontap_version
+        nf cache query cluster1 cloud.instance_type cluster.version.full
 
         # All cached clusters
         nf cache query --all cloud.instance_type
@@ -423,7 +423,7 @@ def query(
         nf cache query cluster1 cloud.instance_type --json
 
         # Raw output (single cluster only, for scripting)
-        nf cache query cluster1 cluster.ontap_version --raw
+        nf cache query cluster1 cluster.version.full --raw
 
         # Array access
         nf cache query cluster1 nodes[0].name

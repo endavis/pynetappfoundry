@@ -21,7 +21,7 @@ from pynetappfoundry.models.ontap.cluster.licensing.licenses.model import (
     OntapLicensePackageResponse,
     OntapLicensePackageResponseLicense,
 )
-from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
+from pynetappfoundry.models.ontap.cluster.model import OntapCluster
 from pynetappfoundry.models.ontap.cluster.nodes.model import (
     OntapNodeResponse,
     OntapNodeResponseManagementInterface,
@@ -226,7 +226,7 @@ class _Entry(dict[str, Any]):
 
 
 class TestInventoryClusterType:
-    """#967: the cluster type column follows ``ClusterTraits``, not ``ClusterInfo``."""
+    """#967: the cluster type column follows ``ClusterTraits``, not ``OntapCluster``."""
 
     @staticmethod
     def _row(traits: ClusterTraits | None) -> list[Any]:
@@ -235,8 +235,8 @@ class TestInventoryClusterType:
 
         def query(model: type, **_: Any) -> MagicMock:
             result = MagicMock()
-            if model is ClusterInfo:
-                result.first.return_value = ClusterInfo(cluster_name="cl1")
+            if model is OntapCluster:
+                result.first.return_value = OntapCluster(name="cl1")
             elif model is ClusterTraits:
                 result.first.return_value = traits
             else:

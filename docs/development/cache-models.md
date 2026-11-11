@@ -803,16 +803,15 @@ doit check
 1. Add the field to the Pydantic model with a default:
 
    ```python
-   is_ha: bool = False
+   is_ha: bool = False  # on the hand-written ClusterTraits, never on a generated model
    ```
 
 2. Add the `FieldMapping` with `cache_strategy="derived"` and a
    `post_collection` callable:
 
    ```python
-   def _compute_is_ha(item: OntapCluster) -> OntapCluster:
-       item.is_ha = len(item.nodes) > 1
-       return item
+   def _compute_is_ha(item: ClusterTraits, results: dict[str, Any]) -> ClusterTraits:
+       return item.model_copy(update={"is_ha": len(results["OntapNodeResponse"]) > 1})
 
    FieldMapping(
        cache_attr="is_ha",

@@ -95,6 +95,29 @@ def all_realtime_attrs() -> frozenset[str]:
     return frozenset(attrs)
 
 
+def _nested_exclude(exclude: frozenset[str], field_name: str) -> dict[str, Any]:
+    """Build a pydantic ``exclude`` mapping for dotted realtime attrs under *field_name*.
+
+    ``{"active_directory.password"}`` with ``field_name="active_directory"`` gives
+    ``{"password": True}``; deeper paths nest (``{"a": {"b": True}}``).
+    """
+    result: dict[str, Any] = {}
+    prefix = f"{field_name}."
+    for attr in exclude:
+        if not attr.startswith(prefix):
+            continue
+        parts = attr[len(prefix) :].split(".")
+        node = result
+        for part in parts[:-1]:
+            child = node.setdefault(part, {})
+            if child is True:  # a shallower path already excludes the whole subtree
+                break
+            node = child
+        else:
+            node[parts[-1]] = True
+    return result
+
+
 def _model_to_row(
     model_instance: BaseModel,
     model_class: type[BaseModel],
@@ -109,7 +132,9 @@ def _model_to_row(
     Args:
         model_instance: The Pydantic model to convert.
         model_class: The model's class (for field introspection).
-        exclude: Field names to skip (e.g. realtime fields).
+        exclude: Field names to skip (e.g. realtime fields). Dotted names
+            (``"active_directory.password"``) are stripped from the JSON of
+            the matching sub-model column.
     """
     row: dict[str, Any] = {}
     known_fields = set(model_class.model_fields)
@@ -120,12 +145,15 @@ def _model_to_row(
         value = getattr(model_instance, field_name)
         if _is_json_column(field_info.annotation):
             # Serialize list/dict/sub-model to JSON
+            nested = _nested_exclude(exclude, field_name) if exclude else {}
             if isinstance(value, BaseModel):
-                row[field_name] = value.model_dump_json()
+                row[field_name] = value.model_dump_json(exclude=nested or None)
             elif isinstance(value, list):
                 row[field_name] = json.dumps(
                     [
-                        item.model_dump(mode="json") if isinstance(item, BaseModel) else item
+                        item.model_dump(mode="json", exclude=nested or None)
+                        if isinstance(item, BaseModel)
+                        else item
                         for item in value
                     ]
                 )
@@ -204,7 +232,7 @@ def _row_strip_keys(model_class: type[BaseModel]) -> set[str]:
 
     ``_row_id`` is always dropped. ``cluster_name`` is the foreign key added
     to every table, so it is dropped only when the model does not declare it
-    itself (e.g. ``ClusterInfo`` has a real ``cluster_name`` field).
+    itself.
     """
     strip_keys = {"_row_id"}
     if "cluster_name" not in model_class.model_fields:
@@ -279,7 +307,7 @@ class ClusterMetadataDB(SQLiteDB):
     for data safety and isolation.
     """
 
-    SCHEMA_VERSION: ClassVar[int] = 10
+    SCHEMA_VERSION: ClassVar[int] = 11
     TABLE_NAME: ClassVar[str] = "cluster_metadata"
 
     def __init__(
@@ -543,6 +571,41 @@ class ClusterMetadataDB(SQLiteDB):
                 'SELECT cluster_name, "is_ha", "is_cloud" FROM clusterinfo '
                 "WHERE cluster_name NOT IN (SELECT cluster_name FROM clustertraits)"
             )
+
+    # ------------------------------------------------------------------
+    # Migration v10 → v11
+    # ------------------------------------------------------------------
+
+    def _upgrade_to_v11(self) -> None:
+        """Replace ``clusterinfo`` with the generated ``ontapcluster`` table (#967).
+
+        v11 turns ``CachedClusterMetadata.cluster`` into the nested
+        ``OntapCluster`` model (ADR-0024).  The flat ``clusterinfo`` rows are not
+        copied into the nested shape (ADR-0018 section 2): the table is dropped,
+        ``ontapcluster`` is created, and the envelope is cleared so callers
+        refetch (``nf cache refresh``).  Idempotent: the envelope is cleared
+        only when this call dropped or created a table.
+        """
+        from pynetappfoundry.models.ontap.cluster.model import OntapCluster
+
+        changed = False
+        names = {
+            row[0]
+            for row in self.conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' "
+                "AND name IN ('clusterinfo', 'ontapcluster')"
+            )
+        }
+        if "clusterinfo" in names:
+            self.conn.execute("DROP TABLE clusterinfo")
+            changed = True
+        if "ontapcluster" not in names:
+            self.conn.execute(generate_table_ddl("ontapcluster", OntapCluster))
+            self.conn.execute(generate_cluster_name_index_ddl("ontapcluster"))
+            self.conn.execute(generate_uuid_column_index_ddl("ontapcluster"))
+            changed = True
+        if changed:
+            self.conn.execute("DELETE FROM cluster_metadata")
 
     # ------------------------------------------------------------------
     # Internal: decompose metadata into tables

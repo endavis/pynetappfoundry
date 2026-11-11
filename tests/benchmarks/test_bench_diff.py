@@ -13,7 +13,7 @@ import pytest
 
 from pynetappfoundry.cache._metadata import CachedClusterMetadata
 from pynetappfoundry.cache.diff import EntityConfig, _diff_entity_list, compute_diff
-from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
+from pynetappfoundry.models.ontap.cluster.model import OntapCluster, OntapClusterVersion
 from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
 from pynetappfoundry.models.ontap.storage.volumes.model import OntapVolume
 
@@ -56,10 +56,10 @@ def _make_metadata(
 
     return CachedClusterMetadata(
         cluster_name="bench-cluster",
-        cluster=ClusterInfo(
-            cluster_name="bench-cluster",
-            cluster_uuid="cluster-uuid-001",
-            ontap_version="9.14.1",
+        cluster=OntapCluster(
+            name="bench-cluster",
+            uuid="00000000-0000-0000-0000-000000000001",
+            version=OntapClusterVersion(full="9.14.1"),
         ),
         nodes=[_make_node(i, uptime=node_uptime) for i in range(num_nodes)],
         storage=StorageInfo(

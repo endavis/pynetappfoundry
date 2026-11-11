@@ -26,7 +26,8 @@ from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
 from pynetappfoundry.models.ontap.cluster.licensing.licenses.model import (
     OntapLicensePackageResponse,
 )
-from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
+from pynetappfoundry.models.ontap.cluster.model import OntapCluster
+from pynetappfoundry.models.ontap.cluster.traits.model import ClusterTraits
 from pynetappfoundry.models.ontap.name_services.dns.model import OntapDns
 from pynetappfoundry.models.ontap.private.cli.vserver.services.web.model import (
     OntapSvmWebService,
@@ -449,7 +450,10 @@ def _diff_cluster_info(
 ) -> list[dict[str, Any]]:
     """Diff cluster info (singleton).
 
-    Tracked fields are derived dynamically from ClusterInfo.model_fields.
+    Tracked fields are derived dynamically from ``OntapCluster.model_fields``
+    (on ``cluster``) and ``ClusterTraits.model_fields`` (on ``cluster_traits``).
+    Both report under category ``"cluster"`` so history keeps the field names
+    ``is_ha`` and ``is_cloud``.
 
     Args:
         before: Previous snapshot (None for initial).
@@ -460,38 +464,34 @@ def _diff_cluster_info(
     """
     changes: list[dict[str, Any]] = []
     category = "cluster"
-    tracked_fields = list(ClusterInfo.model_fields)
+    entity = after.cluster.name or "cluster"
 
     if before is None:
         # Initial capture - just record existence
-        if after.cluster.cluster_name:
-            changes.append(
-                {
-                    "category": category,
-                    "type": "added",
-                    "entity": after.cluster.cluster_name or "cluster",
-                }
-            )
+        if after.cluster.name:
+            changes.append({"category": category, "type": "added", "entity": entity})
         return changes
 
-    before_cluster = before.cluster
-    after_cluster = after.cluster
+    sources: tuple[tuple[BaseModel, BaseModel, type[BaseModel]], ...] = (
+        (before.cluster, after.cluster, OntapCluster),
+        (before.cluster_traits, after.cluster_traits, ClusterTraits),
+    )
+    for before_obj, after_obj, model_cls in sources:
+        for field in model_cls.model_fields:
+            old_val = getattr(before_obj, field, None)
+            new_val = getattr(after_obj, field, None)
 
-    for field in tracked_fields:
-        old_val = getattr(before_cluster, field, None)
-        new_val = getattr(after_cluster, field, None)
-
-        if old_val != new_val:
-            changes.append(
-                {
-                    "category": category,
-                    "type": "modified",
-                    "entity": after_cluster.cluster_name or "cluster",
-                    "field": field,
-                    "old": old_val,
-                    "new": new_val,
-                }
-            )
+            if old_val != new_val:
+                changes.append(
+                    {
+                        "category": category,
+                        "type": "modified",
+                        "entity": entity,
+                        "field": field,
+                        "old": old_val,
+                        "new": new_val,
+                    }
+                )
 
     return changes
 

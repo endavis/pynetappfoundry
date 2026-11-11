@@ -1736,8 +1736,9 @@ class TestIdentifierFieldOverrides:
 
 
 class TestExcludedEndpointsTable:
-    def test_cluster_excluded_for_ontap_only(self) -> None:
-        assert {"ontap": frozenset({"/cluster"})} == _EXCLUDED_ENDPOINTS
+    def test_no_endpoint_excluded(self) -> None:
+        """``/cluster`` is generated as ``OntapCluster`` since #967."""
+        assert _EXCLUDED_ENDPOINTS == {}
 
 
 class TestTomlRemovedFields:

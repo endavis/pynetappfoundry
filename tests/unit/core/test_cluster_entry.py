@@ -395,11 +395,13 @@ class TestLiveCollection:
 
     @staticmethod
     def _collector() -> MagicMock:
-        from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
+        from pynetappfoundry.models.ontap.cluster.model import OntapCluster, OntapClusterVersion
 
         collector = MagicMock()
         collector.collect_group.side_effect = lambda name, group: (
-            ClusterInfo(cluster_name=name, ontap_version="9.18.1") if group == "cluster" else None
+            OntapCluster(name=name, version=OntapClusterVersion(full="9.18.1"))
+            if group == "cluster"
+            else None
         )
         return collector
 
@@ -419,7 +421,7 @@ class TestLiveCollection:
         ):
             metadata = entry.ontap
             assert metadata is not None
-            version = metadata.cluster.ontap_version
+            version = metadata.cluster.version.full
 
         assert version == "9.18.1"
         collector.collect_group.assert_called_once_with("test-cluster", "cluster")
@@ -435,7 +437,7 @@ class TestLiveCollection:
         with patch.object(ClusterEntry, "_build_live_collector", return_value=collector):
             metadata = entry.ontap
             assert metadata is not None
-            assert metadata.cluster.ontap_version == "9.18.1"
+            assert metadata.cluster.version.full == "9.18.1"
 
     def test_collector_is_built_once_and_only_on_access(
         self, sample_data: dict[str, Any], cache_db_path: Path

@@ -139,7 +139,7 @@ A test is template-owned when its target does not survive configuration ([ADR-90
 ### Cache Schema Pitfalls
 The contract behind these rules is in [ADR-0018](docs/decisions/0018-cache-schema-versioning-and-backward-compatibility-policy.md): the cache is rebuild-tolerant, downgrade is unsupported, and `SCHEMA_VERSION` is internal.
 
-- **Adding fields to cache models requires a DB migration**: If you add a field to any model stored in `CachedClusterMetadata` (e.g., `CloudMetadata`, `ClusterInfo`, `OntapNodeResponse`), existing SQLite databases won't have the column. You **must**:
+- **Adding fields to cache models requires a DB migration**: If you add a field to any model stored in `CachedClusterMetadata` (e.g., `CloudMetadata`, `OntapCluster`, `OntapNodeResponse`), existing SQLite databases won't have the column. You **must**:
   1. Bump `SCHEMA_VERSION` in `src/pynetappfoundry/cache/db.py`
   2. Add an `_upgrade_to_vN()` method that runs `ALTER TABLE <table> ADD COLUMN "<field>" <type>`
   3. Make the migration idempotent (check `PRAGMA table_info` first) since earlier migration chains may recreate tables with the current DDL

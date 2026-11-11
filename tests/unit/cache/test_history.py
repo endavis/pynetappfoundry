@@ -602,10 +602,11 @@ class TestSchemaVersioning:
 
     def test_is_schema_compatible_newer_version(self) -> None:
         """Test that newer versions are compatible (forward compatibility)."""
-        # Current is 2.0, version 2.1 and 3.0 should be compatible
-        assert is_schema_compatible("2.0") is True
-        assert is_schema_compatible("2.1") is True
+        # Current is 3.0 (#967): 2.x snapshots are no longer compatible, 3.0 and newer are.
+        assert is_schema_compatible("2.0") is False
+        assert is_schema_compatible("2.1") is False
         assert is_schema_compatible("3.0") is True
+        assert is_schema_compatible("3.1") is True
 
     def test_cached_metadata_has_version(self) -> None:
         """Test that CachedClusterMetadata includes cache_version."""

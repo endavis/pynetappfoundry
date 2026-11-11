@@ -486,7 +486,7 @@ nf cache show cluster1 --json
 nf cache query cluster1 cloud.instance_type
 
 # Query multiple fields
-nf cache query cluster1 cloud.provider cluster.ontap_version
+nf cache query cluster1 cloud.provider cluster.version.full
 
 # Query all cached clusters
 nf cache query --all cloud.instance_type
@@ -498,7 +498,7 @@ nf cache query -f '{"env":"Prod"}' cloud.provider cloud.region
 nf cache query cluster1 cloud.instance_type --json
 
 # Query with raw output (values only, single cluster)
-nf cache query cluster1 cluster.ontap_version --raw
+nf cache query cluster1 cluster.version.full --raw
 
 # Query array elements
 nf cache query cluster1 nodes[0].name
