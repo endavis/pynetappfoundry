@@ -530,7 +530,8 @@ def _check_generated_models(
             print(drift, file=sys.stderr)
         for line in stale:
             print(f"stale (no longer generated): {line}", file=sys.stderr)
-        print("Run 'doit generate_models' and commit the result.", file=sys.stderr)
+        commands = " and ".join(f"'doit generate_models --api={api}'" for api in apis)
+        print(f"Run {commands} and commit the result.", file=sys.stderr)
         return False
     print("Generated models match the generator output.")
     return True

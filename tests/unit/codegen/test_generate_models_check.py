@@ -79,6 +79,17 @@ def test_modified_file_fails_and_is_restored(repo: Path) -> None:
     assert (repo / MODEL).read_text() == f"{GENERATED_HEADER}\nA = 1\n"
 
 
+def test_drift_hint_names_each_api(repo: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    """The fix-it hint names each checked API, never a bare run that adds other specs."""
+
+    def edit() -> None:
+        (repo / MODEL).write_text(f"{GENERATED_HEADER}\nA = 2\n")
+
+    assert tasks._check_generated_models(_gen(edit), [MODELS], ("dii", "ontap")) is False
+    err = capsys.readouterr().err
+    assert "'doit generate_models --api=dii' and 'doit generate_models --api=ontap'" in err
+
+
 def test_new_file_fails_and_is_removed(repo: Path) -> None:
     new = repo / MODELS / "new" / "model.py"
 
