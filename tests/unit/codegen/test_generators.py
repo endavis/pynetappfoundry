@@ -9,6 +9,8 @@ import pytest
 from tools.codegen.adapters import ParsedEndpoint, ParsedField
 from tools.codegen.generators import (
     _CLASS_NAME_OVERRIDES,
+    _EXCLUDED_ENDPOINTS,
+    _IDENTIFIER_FIELD_OVERRIDES,
     _SINGULAR_EXCEPTIONS,
     _collect_all_leaves,
     _field_to_cache_attr,
@@ -1556,3 +1558,96 @@ class TestResolveParentLink:
         code = generate_mapping(self._child(), api_type="ontap", schema_lookup=lookup)
         assert f'parent_mapping="{link[0]}"' in code
         assert f'parent_id_field="{link[1]}"' in code
+
+
+class TestIdentifierFieldOverrides:
+    """#933: spec-path identifier overrides applied in generate_mapping."""
+
+    def test_table_pinned(self) -> None:
+        assert _IDENTIFIER_FIELD_OVERRIDES == {
+            "/application/consistency-groups/{consistency_group.uuid}/snapshots": "uuid",
+            "/snapmirror/relationships/{relationship.uuid}/transfers": "uuid",
+            "/storage/volumes/{volume.uuid}/snapshots": "uuid",
+            "/svm/migrations/{svm_migration.uuid}/volumes": "volume.uuid",
+        }
+
+    def test_override_emitted(self) -> None:
+        ep = _make_endpoint(path="/storage/volumes/{volume.uuid}/snapshots")
+        code = generate_mapping(ep, api_type="ontap")
+        assert 'identifier_field="uuid"' in code
+
+    def test_override_wins_over_inferred(self) -> None:
+        ep = _make_endpoint(path="/svm/migrations/{svm_migration.uuid}/volumes")
+        ep.identifier_field = "inferred"
+        code = generate_mapping(ep, api_type="ontap")
+        assert 'identifier_field="volume.uuid"' in code
+        assert "inferred" not in code
+
+    def test_absent_path_unaffected(self) -> None:
+        ep = _make_endpoint(path="/storage/volumes")
+        assert "identifier_field" not in generate_mapping(ep, api_type="ontap")
+        ep.identifier_field = "name"
+        assert 'identifier_field="name"' in generate_mapping(ep, api_type="ontap")
+
+
+class TestExcludedEndpointsTable:
+    def test_cluster_excluded_for_ontap_only(self) -> None:
+        assert {"ontap": frozenset({"/cluster"})} == _EXCLUDED_ENDPOINTS
+
+
+class TestTomlRemovedFields:
+    """#933: ``_removed_fields`` persists across regeneration."""
+
+    def _ep(self, *names: str) -> ParsedEndpoint:
+        return _make_endpoint(fields=[ParsedField(name=n, api_path=n) for n in names])
+
+    def _write(self, tmp_path: Path, body: str) -> Path:
+        p = tmp_path / "overlay.toml"
+        p.write_text(body)
+        return p
+
+    def test_preserved(self, tmp_path: Path) -> None:
+        import tomllib
+
+        existing = self._write(
+            tmp_path, '_removed_fields = ["old"]\n\n[fields.name]\ncache_strategy = "cache"\n'
+        )
+        out = tomllib.loads(generate_toml_overlay(self._ep("name"), existing))
+        assert out["_removed_fields"] == ["old"]
+
+    def test_union_with_newly_removed(self, tmp_path: Path) -> None:
+        import tomllib
+
+        existing = self._write(
+            tmp_path,
+            '_removed_fields = ["old"]\n\n[fields.name]\ncache_strategy = "cache"\n'
+            '\n[fields.gone]\ncache_strategy = "cache"\n',
+        )
+        out = tomllib.loads(generate_toml_overlay(self._ep("name"), existing))
+        assert out["_removed_fields"] == ["gone", "old"]
+
+    def test_dropped_when_field_returns(self, tmp_path: Path) -> None:
+        import tomllib
+
+        existing = self._write(
+            tmp_path, '_removed_fields = ["old"]\n\n[fields.name]\ncache_strategy = "cache"\n'
+        )
+        out = tomllib.loads(generate_toml_overlay(self._ep("name", "old"), existing))
+        assert "_removed_fields" not in out
+
+    def test_idempotent(self, tmp_path: Path) -> None:
+        existing = self._write(
+            tmp_path, '_removed_fields = ["old"]\n\n[fields.name]\ncache_strategy = "cache"\n'
+        )
+        first = generate_toml_overlay(self._ep("name"), existing)
+        existing.write_text(first)
+        assert generate_toml_overlay(self._ep("name"), existing) == first
+
+    def test_non_string_entries_ignored(self, tmp_path: Path) -> None:
+        import tomllib
+
+        existing = self._write(
+            tmp_path, '_removed_fields = ["old", 3]\n\n[fields.name]\ncache_strategy = "cache"\n'
+        )
+        out = tomllib.loads(generate_toml_overlay(self._ep("name"), existing))
+        assert out["_removed_fields"] == ["old"]

@@ -15,9 +15,9 @@ ONTAPSNAPMIRRORTRANSFER_MAPPING = TypeMapping(
     model_class=OntapSnapmirrorTransfer,
     api_endpoint="/snapmirror/relationships/{relationship.uuid}/transfers?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     parent_mapping="OntapSnapmirrorRelationship",
     parent_id_field="uuid",
-    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="bytes_transferred",
@@ -42,8 +42,8 @@ ONTAPSNAPMIRRORTRANSFER_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="files",
-            cache_strategy="realtime",
             item_model=OntapSnapmirrorTransferFile,
+            cache_strategy="realtime",
             default=[],
         ),
         FieldMapping(

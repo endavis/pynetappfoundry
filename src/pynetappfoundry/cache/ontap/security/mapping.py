@@ -11,6 +11,7 @@ ONTAPSECURITYCONFIG_MAPPING = TypeMapping(
     model_class=OntapSecurityConfig,
     api_endpoint="/security?fields=*",
     api_type="ontap",
+    response_shape="singleton",
     fields=(
         FieldMapping(
             cache_attr="fips.enabled",

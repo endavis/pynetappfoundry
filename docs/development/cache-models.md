@@ -314,7 +314,8 @@ When codegen re-runs, it preserves user edits in existing TOML files:
 - **Existing fields**: User-edited entries (e.g., changed `cache_strategy`)
   are preserved as-is
 - **New fields**: Added with default `cache_strategy = "cache"`
-- **Removed fields**: Noted in a `_removed_fields` key (warning only, not deleted)
+- **Removed fields**: Noted in a `_removed_fields` key (warning only, not deleted). The list
+  accumulates across regenerations; an entry drops only when the field returns to the spec
 
 This means you can safely re-run codegen after updating an API spec without
 losing field strategy customizations.

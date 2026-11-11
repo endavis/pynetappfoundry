@@ -13,6 +13,7 @@ ONTAPCLUSTERADPROXY_MAPPING = TypeMapping(
     model_class=OntapClusterAdProxy,
     api_endpoint="/security/authentication/cluster/ad-proxy?fields=*",
     api_type="ontap",
+    response_shape="singleton",
     fields=(
         FieldMapping(
             cache_attr="svm.name",

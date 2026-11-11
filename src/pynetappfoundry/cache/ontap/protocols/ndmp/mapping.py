@@ -11,6 +11,7 @@ ONTAPCLUSTERNDMPPROPERTIES_MAPPING = TypeMapping(
     model_class=OntapClusterNdmpProperties,
     api_endpoint="/protocols/ndmp?fields=*",
     api_type="ontap",
+    response_shape="singleton",
     fields=(
         FieldMapping(
             cache_attr="mode",

@@ -13,6 +13,7 @@ ONTAPSECURITYOAUTH2GLOBAL_MAPPING = TypeMapping(
     model_class=OntapSecurityOauth2Global,
     api_endpoint="/security/authentication/cluster/oauth2?fields=*",
     api_type="ontap",
+    response_shape="singleton",
     fields=(
         FieldMapping(
             cache_attr="enabled",

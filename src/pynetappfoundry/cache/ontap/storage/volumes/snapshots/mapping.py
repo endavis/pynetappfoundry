@@ -11,9 +11,9 @@ ONTAPSNAPSHOT_MAPPING = TypeMapping(
     model_class=OntapSnapshot,
     api_endpoint="/storage/volumes/{volume.uuid}/snapshots?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     parent_mapping="OntapVolume",
     parent_id_field="uuid",
-    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="comment",

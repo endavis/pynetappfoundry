@@ -1,0 +1,19 @@
+[endpoint]
+path = "/security/multi-admin-verify"
+schema = "multi_admin_verify_config"
+class_name = "OntapMultiAdminVerifyConfig"
+
+[fields.approval_expiry]
+cache_strategy = "cache"
+
+[fields.approval_groups]
+cache_strategy = "cache"
+
+[fields.enabled]
+cache_strategy = "cache"
+
+[fields.execution_expiry]
+cache_strategy = "cache"
+
+[fields.required_approvers]
+cache_strategy = "cache"

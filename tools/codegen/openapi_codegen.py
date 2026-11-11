@@ -20,6 +20,7 @@ from pathlib import Path
 
 from tools.codegen.adapters import ParsedEndpoint, detect_shared_schemas, parse_openapi_spec
 from tools.codegen.generators import (
+    _EXCLUDED_ENDPOINTS,
     _collect_all_leaves,
     _field_to_cache_attr,
     _path_to_class_name,
@@ -266,6 +267,14 @@ def run(
         for path, reason in dropped.items():
             if not endpoint_filter or path in endpoint_filter:
                 print(f"  skipped (unfillable placeholder): {path} ({reason})")
+
+    # Drop paths excluded from codegen (#933); after the #952 drop so no other
+    # endpoint's naming or parent linkage changes.
+    excluded = _EXCLUDED_ENDPOINTS.get(api_type, frozenset())
+    for ep in endpoints:
+        if ep.path in excluded and (not endpoint_filter or ep.path in endpoint_filter):
+            print(f"  skipped (excluded): {ep.path}")
+    endpoints = [e for e in endpoints if e.path not in excluded]
 
     if endpoint_filter:
         endpoints = [e for e in endpoints if e.path in endpoint_filter]

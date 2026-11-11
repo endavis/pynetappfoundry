@@ -18,9 +18,9 @@ ONTAPCONSISTENCYGROUPSNAPSHOTRESPONSE_MAPPING = TypeMapping(
     model_class=OntapConsistencyGroupSnapshotResponse,
     api_endpoint="/application/consistency-groups/{consistency_group.uuid}/snapshots?fields=*",
     api_type="ontap",
+    identifier_field="uuid",
     parent_mapping="OntapConsistencyGroupResponse",
     parent_id_field="uuid",
-    identifier_field="uuid",
     fields=(
         FieldMapping(
             cache_attr="comment",

@@ -18,6 +18,7 @@ ONTAPMETROCLUSTERDIAGNOSTICS_MAPPING = TypeMapping(
     model_class=OntapMetroclusterDiagnostics,
     api_endpoint="/cluster/metrocluster/diagnostics?fields=*",
     api_type="ontap",
+    response_shape="singleton",
     fields=(
         FieldMapping(
             cache_attr="aggregate.details",

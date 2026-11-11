@@ -1,0 +1,70 @@
+"""OntapClusterLdap information."""
+
+from __future__ import annotations
+
+from pydantic import Field
+
+from pynetappfoundry.models._base import OntapModel
+
+
+class OntapClusterLdapStatusIpv4(OntapModel):
+    """OntapClusterLdapStatusIpv4 sub-model for ipv4."""
+
+    code: int = 0
+    dn_messages: list[str] = Field(default_factory=list)
+    message: str = ""
+    state: str = ""
+
+
+class OntapClusterLdapStatusIpv6(OntapModel):
+    """OntapClusterLdapStatusIpv6 sub-model for ipv6."""
+
+    code: int = 0
+    dn_messages: list[str] = Field(default_factory=list)
+    message: str = ""
+    state: str = ""
+
+
+class OntapClusterLdapStatus(OntapModel):
+    """OntapClusterLdapStatus sub-model for status."""
+
+    code: int = 0
+    dn_message: list[str] = Field(default_factory=list)
+    ipv4: OntapClusterLdapStatusIpv4 = Field(default_factory=OntapClusterLdapStatusIpv4)
+    ipv4_state: str = ""
+    ipv6: OntapClusterLdapStatusIpv6 = Field(default_factory=OntapClusterLdapStatusIpv6)
+    ipv6_state: str = ""
+    message: str = ""
+    state: str = ""
+
+
+class OntapClusterLdap(OntapModel):
+    """OntapClusterLdap information."""
+
+    base_dn: str = ""
+    base_scope: str = ""
+    bind_as_cifs_server: bool = False
+    bind_dn: str = ""
+    bind_password: str = ""
+    group_dn: str = ""
+    group_membership_filter: str = ""
+    group_scope: str = ""
+    is_netgroup_byhost_enabled: bool = False
+    is_owner: bool = False
+    ldaps_enabled: bool = False
+    min_bind_level: str = ""
+    netgroup_byhost_dn: str = ""
+    netgroup_byhost_scope: str = ""
+    netgroup_dn: str = ""
+    netgroup_scope: str = ""
+    port: int = 0
+    query_timeout: int = 0
+    schema_: str = ""
+    servers: list[str] = Field(default_factory=list)
+    session_security: str = ""
+    skip_config_validation: bool = False
+    status: OntapClusterLdapStatus = Field(default_factory=OntapClusterLdapStatus)
+    try_channel_binding: bool = False
+    use_start_tls: bool = False
+    user_dn: str = ""
+    user_scope: str = ""

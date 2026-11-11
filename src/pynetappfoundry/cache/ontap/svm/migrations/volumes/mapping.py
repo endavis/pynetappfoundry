@@ -14,9 +14,9 @@ ONTAPSVMMIGRATIONVOLUME_MAPPING = TypeMapping(
     model_class=OntapSvmMigrationVolume,
     api_endpoint="/svm/migrations/{svm_migration.uuid}/volumes?fields=*",
     api_type="ontap",
+    identifier_field="volume.uuid",
     parent_mapping="OntapSvmMigration",
     parent_id_field="uuid",
-    identifier_field="volume.uuid",
     fields=(
         FieldMapping(
             cache_attr="errors",

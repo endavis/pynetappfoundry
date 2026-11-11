@@ -11,6 +11,7 @@ ONTAPSECURITYAUDIT_MAPPING = TypeMapping(
     model_class=OntapSecurityAudit,
     api_endpoint="/security/audit?fields=*",
     api_type="ontap",
+    response_shape="singleton",
     fields=(
         FieldMapping(
             cache_attr="cli",

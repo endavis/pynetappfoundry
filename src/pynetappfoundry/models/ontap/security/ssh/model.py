@@ -1,0 +1,21 @@
+"""OntapClusterSshServer information."""
+
+from __future__ import annotations
+
+from pydantic import Field
+
+from pynetappfoundry.models._base import OntapModel
+
+
+class OntapClusterSshServer(OntapModel):
+    """OntapClusterSshServer information."""
+
+    ciphers: list[str] = Field(default_factory=list)
+    connections_per_second: int = 0
+    host_key_algorithms: list[str] = Field(default_factory=list)
+    is_rsa_in_publickey_algorithms_enabled: bool = False
+    key_exchange_algorithms: list[str] = Field(default_factory=list)
+    mac_algorithms: list[str] = Field(default_factory=list)
+    max_authentication_retry_count: int = 0
+    max_instances: int = 0
+    per_source_limit: int = 0

@@ -1378,6 +1378,12 @@ MAPPING_INDEX: dict[str, tuple[str, str, str, str | None]] = {
         "OntapClusterAdProxy",
         "ontap/security/authentication/cluster/ad_proxy/ad_proxy.toml",
     ),
+    "OntapClusterLdap": (
+        "pynetappfoundry.cache.ontap.security.authentication.cluster.ldap.mapping",
+        "pynetappfoundry.models.ontap.security.authentication.cluster.ldap.model",
+        "OntapClusterLdap",
+        "ontap/security/authentication/cluster/ldap/ldap.toml",
+    ),
     "OntapClusterMetricsResponse": (
         "pynetappfoundry.cache.ontap.cluster.metrics.mapping",
         "pynetappfoundry.models.ontap.cluster.metrics.model",
@@ -1407,6 +1413,12 @@ MAPPING_INDEX: dict[str, tuple[str, str, str, str | None]] = {
         "pynetappfoundry.models.ontap.storage.cluster.model",
         "OntapClusterSpace",
         "ontap/storage/cluster/cluster.toml",
+    ),
+    "OntapClusterSshServer": (
+        "pynetappfoundry.cache.ontap.security.ssh.mapping",
+        "pynetappfoundry.models.ontap.security.ssh.model",
+        "OntapClusterSshServer",
+        "ontap/security/ssh/ssh.toml",
     ),
     "OntapConfigurationBackup": (
         "pynetappfoundry.cache.ontap.support.configuration_backup.mapping",
@@ -1941,6 +1953,12 @@ MAPPING_INDEX: dict[str, tuple[str, str, str, str | None]] = {
         "pynetappfoundry.models.ontap.security.multi_admin_verify.approval_groups.model",
         "OntapMultiAdminVerifyApprovalGroup",
         "ontap/security/multi_admin_verify/approval_groups/approval_groups.toml",
+    ),
+    "OntapMultiAdminVerifyConfig": (
+        "pynetappfoundry.cache.ontap.security.multi_admin_verify.mapping",
+        "pynetappfoundry.models.ontap.security.multi_admin_verify.model",
+        "OntapMultiAdminVerifyConfig",
+        "ontap/security/multi_admin_verify/multi_admin_verify.toml",
     ),
     "OntapMultiAdminVerifyRequest": (
         "pynetappfoundry.cache.ontap.security.multi_admin_verify.requests.mapping",

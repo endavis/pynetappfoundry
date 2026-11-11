@@ -13,6 +13,7 @@ ONTAPSECURITYSAMLSP_MAPPING = TypeMapping(
     model_class=OntapSecuritySamlSp,
     api_endpoint="/security/authentication/cluster/saml-sp?fields=*",
     api_type="ontap",
+    response_shape="singleton",
     fields=(
         FieldMapping(
             cache_attr="certificate.ca",

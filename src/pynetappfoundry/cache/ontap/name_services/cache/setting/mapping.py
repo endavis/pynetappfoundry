@@ -11,6 +11,7 @@ ONTAPGLOBALCACHESETTING_MAPPING = TypeMapping(
     model_class=OntapGlobalCacheSetting,
     api_endpoint="/name-services/cache/setting?fields=*",
     api_type="ontap",
+    response_shape="singleton",
     fields=(
         FieldMapping(
             cache_attr="eviction_time_interval",

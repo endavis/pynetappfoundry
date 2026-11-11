@@ -11,6 +11,7 @@ ONTAPS3AUDIT_MAPPING = TypeMapping(
     model_class=OntapS3Audit,
     api_endpoint="/protocols/audit/{svm.uuid}/object-store?fields=*",
     api_type="ontap",
+    response_shape="singleton",
     parent_mapping="OntapAudit",
     parent_id_field="svm.uuid",
     fields=(

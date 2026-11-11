@@ -11,6 +11,7 @@ ONTAPCONFIGURATIONBACKUP_MAPPING = TypeMapping(
     model_class=OntapConfigurationBackup,
     api_endpoint="/support/configuration-backup?fields=*",
     api_type="ontap",
+    response_shape="singleton",
     fields=(
         FieldMapping(
             cache_attr="password",

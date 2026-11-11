@@ -68,6 +68,24 @@ Use this as an escape hatch for names the algorithm can't handle.
 Example: ``{"/some/weird/path": "OntapBetterName"}``.
 """
 
+_IDENTIFIER_FIELD_OVERRIDES: dict[str, str] = {
+    # Multi-placeholder paths whose record identifier the spec cannot name (#933).
+    "/application/consistency-groups/{consistency_group.uuid}/snapshots": "uuid",
+    "/snapmirror/relationships/{relationship.uuid}/transfers": "uuid",
+    "/storage/volumes/{volume.uuid}/snapshots": "uuid",
+    "/svm/migrations/{svm_migration.uuid}/volumes": "volume.uuid",
+}
+"""Identifier field per API path, applied in :func:`generate_mapping`.
+
+Same shape and role as ``_CLASS_NAME_OVERRIDES``; wins over the inferred value.
+"""
+
+_EXCLUDED_ENDPOINTS: dict[str, frozenset[str]] = {
+    # ``/cluster`` is the hand-written ``ClusterInfo`` / ``CLUSTER_MAPPING``; see #967.
+    "ontap": frozenset({"/cluster"}),
+}
+"""API paths skipped by codegen, keyed by api_type."""
+
 
 def _schema_to_pascal(name: str) -> str:
     """Convert a snake_case schema name to PascalCase.
@@ -1098,8 +1116,9 @@ def generate_mapping(
 
     lines.append(f'    api_type="{api_type}",')
 
-    if endpoint.identifier_field is not None:
-        lines.append(f'    identifier_field="{endpoint.identifier_field}",')
+    identifier_field = _IDENTIFIER_FIELD_OVERRIDES.get(endpoint.path, endpoint.identifier_field)
+    if identifier_field is not None:
+        lines.append(f'    identifier_field="{identifier_field}",')
 
     if endpoint.records_path != "records":
         lines.append(f'    records_path="{endpoint.records_path}",')
@@ -1322,7 +1341,10 @@ def generate_toml_overlay(
     for field in leaves:
         current_keys.add(_field_to_cache_attr(field))
         current_keys.add(field.api_path.replace(".", "_").replace("-", "_"))
-    removed = set(existing_fields) - current_keys
+    # Hand-curated ``_removed_fields`` persist; an entry drops only when the
+    # field returns to the spec (#933).
+    previous_removed = {r for r in existing.get("_removed_fields", []) if isinstance(r, str)}
+    removed = (set(existing_fields) | previous_removed) - current_keys
     if removed:
         overlay["_removed_fields"] = sorted(removed)
 

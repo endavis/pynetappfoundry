@@ -11,6 +11,7 @@ ONTAPIPSEC_MAPPING = TypeMapping(
     model_class=OntapIpsec,
     api_endpoint="/security/ipsec?fields=*",
     api_type="ontap",
+    response_shape="singleton",
     fields=(
         FieldMapping(
             cache_attr="enabled",
