@@ -469,6 +469,60 @@ class TestFetchParameterized:
         assert client.get_all_records.call_count == 2
 
 
+class _MultiParent(BaseModel):
+    svm: _ParentParam = _ParentParam()
+    name: str = ""
+
+
+_MULTI_CHILD_MAPPING = TypeMapping(
+    name="MultiChild",
+    model_class=_ChildParam,
+    api_endpoint="/groups/{svm.uuid}/{group.name}/users?fields=*",
+    fields=(FieldMapping(cache_attr="name"),),
+    parent_mapping="MultiParent",
+    parent_id_fields=("svm.uuid", "name"),
+)
+
+
+class TestFetchParameterizedMultiPlaceholder:
+    """A two-field child fills both placeholders; a missing value skips the parent."""
+
+    def test_fills_both_placeholders(self) -> None:
+        from pynetappfoundry.cache.fetchers import _fetch_parameterized
+
+        parents = [_MultiParent(svm=_ParentParam(uuid="s1"), name="g1")]
+        client = MagicMock()
+        client.get_all_records = MagicMock(return_value={"records": [{"name": "u1"}]})
+        result = _fetch_parameterized(_MULTI_CHILD_MAPPING, parents, client, "[t]")
+        assert [c.name for c in result] == ["u1"]  # type: ignore[attr-defined]
+        client.get_all_records.assert_called_once_with("/groups/s1/g1/users?fields=*", method="GET")
+
+    def test_missing_second_value_skips_parent(self, caplog: pytest.LogCaptureFixture) -> None:
+        import logging
+
+        from pynetappfoundry.cache.fetchers import _fetch_parameterized
+
+        parents = [_MultiParent(svm=_ParentParam(uuid="s1"), name="")]
+        client = MagicMock()
+        with caplog.at_level(logging.WARNING):
+            result = _fetch_parameterized(_MULTI_CHILD_MAPPING, parents, client, "[t]")
+        assert result == []
+        client.get_all_records.assert_not_called()
+        assert any("SKIP_PARENT" in r.message and "'name'" in r.message for r in caplog.records)
+
+    def test_no_parent_fields_raises(self) -> None:
+        from pynetappfoundry.cache.fetchers import _fetch_parameterized
+
+        mapping = TypeMapping(
+            name="NoFields",
+            model_class=_ChildParam,
+            api_endpoint="/a/{x}/b",
+            parent_mapping="P",
+        )
+        with pytest.raises(ValueError, match="parent_id_field must be set"):
+            _fetch_parameterized(mapping, [], MagicMock(), "[t]")
+
+
 # ---------------------------------------------------------------------------
 # CLI parsing helpers (extracted from collector, issue #532)
 # ---------------------------------------------------------------------------

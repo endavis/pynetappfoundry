@@ -1,0 +1,13 @@
+[endpoint]
+path = "/security/roles/{owner.uuid}/{name}/privileges"
+schema = "role_privilege"
+class_name = "OntapRolePrivilege"
+
+[fields.access]
+cache_strategy = "cache"
+
+[fields.path]
+cache_strategy = "cache"
+
+[fields.query]
+cache_strategy = "cache"

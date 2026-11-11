@@ -77,6 +77,7 @@ Defines a complete API object type mapping.
 | `api_type` | `str` | Tag identifying which API client/unit registry to use. Default: `"ontap"`. |
 | `parent_mapping` | `str \| None` | Name of the parent TypeMapping for parameterized endpoints. |
 | `parent_id_field` | `str \| None` | Field on the parent model providing the placeholder value. |
+| `parent_id_fields` | `tuple[str, ...]` | Parent fields filling each placeholder in order, for endpoints with two or more placeholders (#955). Mutually exclusive with `parent_id_field`; the length must equal the placeholder count. |
 
 Helper methods:
 

@@ -463,6 +463,9 @@ Some endpoints require a parent identifier in the URL path (e.g.,
 - `TypeMapping.parent_mapping` -- name of the parent `TypeMapping`.
 - `TypeMapping.parent_id_field` -- field on the parent that provides the
   placeholder value.
+- `TypeMapping.parent_id_fields` -- one parent field per placeholder, for
+  endpoints with two or more placeholders. Use
+  `TypeMapping.effective_parent_id_fields()` to read whichever is set.
 
 `OntapBackend` handles these with `build_parameterized_url()` and
 grouped-by-parent batch fetching. Your backend must implement equivalent

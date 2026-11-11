@@ -78,6 +78,7 @@ post_collection: Callable[[Any], Any] | None = None
 ```python
 parent_mapping: str | None = None    # For parameterized endpoints
 parent_id_field: str | None = None   # Placeholder value field on parent
+parent_id_fields: tuple[str, ...] = ()  # One parent field per placeholder (#955)
 
 # Computed methods
 def explicit_fetch_fields(self) -> list[str]: ...

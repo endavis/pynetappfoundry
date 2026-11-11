@@ -1194,6 +1194,34 @@ class TestBuildParameterizedUrl:
         url = tm.build_parameterized_url("parent-id")
         assert url == "/a/parent-id/b/{child.uuid}?fields=*"
 
+    def test_tuple_fills_placeholders_in_order(self) -> None:
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/a/{parent.uuid}/b/{child.uuid}/c?fields=*",
+            fields=(FieldMapping(cache_attr="name", api_path="name"),),
+        )
+        assert tm.build_parameterized_url(("p1", "c1")) == "/a/p1/b/c1/c?fields=*"
+
+    def test_tuple_wrong_length_raises(self) -> None:
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/a/{parent.uuid}/b/{child.uuid}/c?fields=*",
+            fields=(FieldMapping(cache_attr="name", api_path="name"),),
+        )
+        with pytest.raises(ValueError, match="2 placeholders"):
+            tm.build_parameterized_url(("only-one",))
+
+    def test_str_behaviour_unchanged_for_single_placeholder(self) -> None:
+        tm = TypeMapping(
+            name="T",
+            model_class=_SampleModel,
+            api_endpoint="/a/{parent.uuid}/c",
+            fields=(FieldMapping(cache_attr="name", api_path="name"),),
+        )
+        assert tm.build_parameterized_url("p1") == "/a/p1/c"
+
     def test_preserves_non_fields_star_query_params(self) -> None:
         """Query params that don't start with fields=* are preserved."""
         tm = TypeMapping(
@@ -1582,3 +1610,34 @@ class TestItemModel:
     def test_api_expected_fields_uses_item_model_path(self) -> None:
         mapping = _item_mapping(api_path="outer.items")
         assert mapping.api_expected_fields() == ["outer", "uuid"]
+
+
+class TestParentIdFields:
+    """TypeMapping.parent_id_fields validation and effective_parent_id_fields()."""
+
+    def _tm(self, endpoint: str, **kwargs: Any) -> TypeMapping:
+        return TypeMapping(name="T", model_class=_SampleModel, api_endpoint=endpoint, **kwargs)
+
+    def test_is_last_field(self) -> None:
+        import dataclasses
+
+        assert dataclasses.fields(TypeMapping)[-1].name == "parent_id_fields"
+
+    def test_both_set_raises(self) -> None:
+        with pytest.raises(ValueError, match="mutually exclusive"):
+            self._tm("/a/{x}/b/{y}/c", parent_id_field="x", parent_id_fields=("x", "y"))
+
+    def test_length_mismatch_raises(self) -> None:
+        with pytest.raises(ValueError, match="1 entries but api_endpoint has 2"):
+            self._tm("/a/{x}/b/{y}/c", parent_id_fields=("x",))
+
+    def test_valid_multi(self) -> None:
+        tm = self._tm("/a/{x}/b/{y}/c?fields=*", parent_id_fields=("x", "y"))
+        assert tm.effective_parent_id_fields() == ("x", "y")
+
+    def test_effective_falls_back_to_single(self) -> None:
+        tm = self._tm("/a/{x}/c", parent_id_field="x")
+        assert tm.effective_parent_id_fields() == ("x",)
+
+    def test_effective_empty(self) -> None:
+        assert self._tm("/a").effective_parent_id_fields() == ()

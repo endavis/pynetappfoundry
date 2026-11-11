@@ -131,6 +131,10 @@ class TypeMapping:
             the endpoint returns a single flat-dict object (e.g.
             ``/cluster``) and uses ``call_endpoint`` (paginate=False) +
             ``parse_api_record``.
+        batch_size: Per-mapping override for the backend chunk size.
+        parent_id_fields: Parent fields filling each path placeholder in
+            order, for endpoints with two or more placeholders. Mutually
+            exclusive with ``parent_id_field``.
     """
 
     name: str
@@ -150,6 +154,47 @@ class TypeMapping:
     ``_fetch_live_by_identifiers`` and ``_fetch_live_by_parent``.
     When ``None``, the module-level ``_BATCH_SIZE`` constant in
     ``backends.py`` (100) is used."""
+    parent_id_fields: tuple[str, ...] = ()
+    """Fields on the parent model that fill the endpoint's path placeholders,
+    one per placeholder in order (e.g. ``("svm.uuid", "name")`` for
+    ``/x/{svm.uuid}/{group.name}/users``).  Mutually exclusive with
+    ``parent_id_field``; the length must equal the placeholder count."""
+
+    def __post_init__(self) -> None:
+        """Validate the parent-fill declaration.
+
+        Raises:
+            ValueError: If both ``parent_id_field`` and ``parent_id_fields``
+                are set, or the number of ``parent_id_fields`` differs from
+                the number of path placeholders in ``api_endpoint``.
+        """
+        if not self.parent_id_fields:
+            return
+        if self.parent_id_field is not None:
+            raise ValueError(
+                f"TypeMapping '{self.name}': parent_id_field and parent_id_fields "
+                "are mutually exclusive"
+            )
+        placeholders = len(re.findall(r"\{[^}]+\}", self.api_endpoint.split("?", 1)[0]))
+        if len(self.parent_id_fields) != placeholders:
+            raise ValueError(
+                f"TypeMapping '{self.name}': parent_id_fields has "
+                f"{len(self.parent_id_fields)} entries but api_endpoint has "
+                f"{placeholders} placeholders"
+            )
+
+    def effective_parent_id_fields(self) -> tuple[str, ...]:
+        """Return the parent fields that fill the placeholders, in order.
+
+        Returns:
+            ``parent_id_fields`` if set, else ``(parent_id_field,)`` if set,
+            else an empty tuple.
+        """
+        if self.parent_id_fields:
+            return self.parent_id_fields
+        if self.parent_id_field is not None:
+            return (self.parent_id_field,)
+        return ()
 
     def api_expected_fields(self) -> list[str]:
         """Derive top-level API keys expected in a response record.
@@ -234,21 +279,35 @@ class TypeMapping:
                 keys.add(first_segment)
         return sorted(keys)
 
-    def build_parameterized_url(self, parent_id: str) -> str:
-        """Build a parameterized endpoint URL by substituting the placeholder.
+    def build_parameterized_url(self, parent_id: str | tuple[str, ...]) -> str:
+        """Build a parameterized endpoint URL by substituting placeholders.
 
-        Replaces the first ``{...}`` path placeholder with *parent_id*,
-        then appends explicit-fetch fields the same way
+        A ``str`` replaces the first ``{...}`` path placeholder only.  A tuple
+        replaces the placeholders in order and must match their count.  Then
+        appends explicit-fetch fields the same way
         :meth:`build_collection_url` does.
 
         Args:
-            parent_id: The parent object's identifier value.
+            parent_id: The parent identifier value, or one value per placeholder.
 
         Returns:
             Fully resolved endpoint URL.
+
+        Raises:
+            ValueError: If a tuple's length differs from the placeholder count.
         """
         parts = self.api_endpoint.split("?", 1)
-        path = re.sub(r"\{[^}]+\}", parent_id, parts[0], count=1)
+        if isinstance(parent_id, str):
+            path = re.sub(r"\{[^}]+\}", lambda _m: parent_id, parts[0], count=1)
+        else:
+            count = len(re.findall(r"\{[^}]+\}", parts[0]))
+            if len(parent_id) != count:
+                raise ValueError(
+                    f"{self.name}: {len(parent_id)} values for {count} placeholders "
+                    f"in {self.api_endpoint}"
+                )
+            values = iter(parent_id)
+            path = re.sub(r"\{[^}]+\}", lambda _m: next(values), parts[0])
 
         if len(parts) == 1:
             return path

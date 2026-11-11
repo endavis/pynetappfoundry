@@ -875,6 +875,52 @@ _PARENT_ID_FIELD_BY_API: dict[str, str] = {
 }
 
 
+def _resolve_parent_class(
+    parent_path: str,
+    api_type: str,
+    schema_lookup: dict[str, str],
+    *,
+    shared_schemas: frozenset[str] | set[str] = frozenset(),
+    class_name_overrides: Mapping[tuple[str, ...], str] | None = None,
+) -> str | None:
+    """Return the parent class name when ``parent_path`` generates a mapping.
+
+    ``parent_mapping`` is emitted only when the parent path's module tree
+    actually generates a registered mapping whose class name matches the
+    computed parent class; otherwise it would point to a name that no
+    mapping in the registry claims (tracked by
+    ``tests/unit/cache/test_mapping_parent_validation.py``).  ONTAP parents
+    resolve because every ``/foo/{id}`` item endpoint has a sibling ``/foo``
+    collection that registers under the same class name.  DII often lacks the
+    collection, so the parent link would dangle.
+
+    Returns:
+        The parent class name, or ``None`` when no candidate matches.
+    """
+    parent_module_parts = tuple(_path_to_module_parts(parent_path))
+    parent_schema = schema_lookup.get(parent_path, "")
+    parent_class = _path_to_class_name(
+        parent_path,
+        parent_schema,
+        api_type,
+        shared_schemas=shared_schemas,
+        class_name_overrides=class_name_overrides,
+    )
+    for candidate_path, candidate_schema in schema_lookup.items():
+        if tuple(_path_to_module_parts(candidate_path)) != parent_module_parts:
+            continue
+        candidate_class = _path_to_class_name(
+            candidate_path,
+            candidate_schema,
+            api_type,
+            shared_schemas=shared_schemas,
+            class_name_overrides=class_name_overrides,
+        )
+        if candidate_class == parent_class:
+            return parent_class
+    return None
+
+
 def resolve_parent_link(
     endpoint: ParsedEndpoint,
     api_type: str,
@@ -893,40 +939,21 @@ def resolve_parent_link(
     """
     # Only emit ``parent_mapping`` when the parent path's module tree
     # actually generates a registered mapping whose class name matches
-    # the computed parent_class — otherwise ``parent_mapping`` would
-    # point to a name that no mapping in the registry claims (tracked
-    # by ``tests/unit/cache/test_mapping_parent_validation.py``).
-    # ONTAP parents resolve because every `/foo/{id}` item endpoint has
-    # a sibling `/foo` collection that registers under the same class
-    # name the parent_class algorithm derives.  DII often lacks the
-    # collection (e.g. `/assets/disks/{id}/...` exists but
-    # `/assets/disks` does not), so the parent link would dangle.
+    # the computed parent_class (see ``_resolve_parent_class``).
     parent_resolvable = False
     parent_class = ""
     parent_id_field = ""
     if endpoint.has_parent and schema_lookup:
-        parent_module_parts = tuple(_path_to_module_parts(endpoint.parent_path))
-        parent_schema = schema_lookup.get(endpoint.parent_path, "")
-        parent_class = _path_to_class_name(
+        resolved_class = _resolve_parent_class(
             endpoint.parent_path,
-            parent_schema,
             api_type,
+            schema_lookup,
             shared_schemas=shared_schemas,
             class_name_overrides=class_name_overrides,
         )
-        for candidate_path, candidate_schema in schema_lookup.items():
-            if tuple(_path_to_module_parts(candidate_path)) != parent_module_parts:
-                continue
-            candidate_class = _path_to_class_name(
-                candidate_path,
-                candidate_schema,
-                api_type,
-                shared_schemas=shared_schemas,
-                class_name_overrides=class_name_overrides,
-            )
-            if candidate_class == parent_class:
-                parent_resolvable = True
-                break
+        if resolved_class is not None:
+            parent_resolvable = True
+            parent_class = resolved_class
     if parent_resolvable:
         # Look up the parent endpoint's actual ``identifier_field`` from
         # the pre-built map.  Only use it when the root segment of the
@@ -962,23 +989,142 @@ def resolve_parent_link(
     return None
 
 
+def resolve_multi_parent_link(
+    endpoint: ParsedEndpoint,
+    api_type: str,
+    schema_lookup: dict[str, str] | None,
+    *,
+    shared_schemas: frozenset[str] | set[str] = frozenset(),
+    class_name_overrides: Mapping[tuple[str, ...], str] | None = None,
+    parent_field_names: dict[str, set[str]] | None = None,
+) -> tuple[str, tuple[str, ...]] | None:
+    """Resolve ``(parent_mapping, parent_id_fields)`` for a multi-placeholder endpoint.
+
+    ONTAP only.  The last placeholder segment L must be followed by a
+    literal segment.  The contiguous run of placeholders ending at L, from
+    segment S, names the parent fields; the parent collection is
+    ``segments[:S]`` and the parent item path is the unique ``schema_lookup``
+    key shaped like ``segments[:L+1]`` (same literals, placeholders in the
+    same positions).  Its placeholder names become the parent fields, each
+    of which must have its root on the parent model.
+
+    Returns:
+        The pair, or ``None`` when the endpoint has fewer than two
+        placeholders, is not ONTAP, ends in a placeholder, the collection or
+        item path is missing or ambiguous, or a field root is not on the
+        parent model.
+    """
+    if api_type != "ontap" or not schema_lookup or parent_field_names is None:
+        return None
+    segments = endpoint.path.strip("/").split("/")
+    placeholder_idx = [i for i, seg in enumerate(segments) if "{" in seg]
+    if len(placeholder_idx) < 2:
+        return None
+    last = placeholder_idx[-1]
+    if last == len(segments) - 1:
+        return None
+    start = last
+    while start > 0 and "{" in segments[start - 1]:
+        start -= 1
+    if start == 0:
+        return None
+    collection = "/" + "/".join(segments[:start])
+    item_shape = segments[: last + 1]
+    matches: list[list[str]] = []
+    for key in schema_lookup:
+        key_segments = key.strip("/").split("/")
+        if len(key_segments) != len(item_shape):
+            continue
+        if all(
+            ("{" in a and "{" in b) or ("{" not in a and "{" not in b and a == b)
+            for a, b in zip(key_segments, item_shape, strict=True)
+        ):
+            matches.append(key_segments)
+    if len(matches) != 1:
+        return None
+    fields = tuple(seg[1:-1] for seg in matches[0] if seg.startswith("{"))
+    known = parent_field_names.get(collection)
+    if not known or not all(f.split(".")[0] in known for f in fields):
+        return None
+    parent_class = _resolve_parent_class(
+        collection,
+        api_type,
+        schema_lookup,
+        shared_schemas=shared_schemas,
+        class_name_overrides=class_name_overrides,
+    )
+    if parent_class is None:
+        return None
+    return parent_class, fields
+
+
+def resolve_parent_fields(
+    endpoint: ParsedEndpoint,
+    api_type: str,
+    schema_lookup: dict[str, str] | None,
+    *,
+    shared_schemas: frozenset[str] | set[str] = frozenset(),
+    class_name_overrides: Mapping[tuple[str, ...], str] | None = None,
+    identifier_map: dict[str, str] | None = None,
+    parent_field_names: dict[str, set[str]] | None = None,
+) -> tuple[str, str | tuple[str, ...]] | None:
+    """Resolve the parent link, filling every placeholder when possible.
+
+    Endpoints with two or more placeholders try
+    :func:`resolve_multi_parent_link` first; everything else, and any
+    multi-placeholder endpoint it cannot resolve, uses
+    :func:`resolve_parent_link`, so existing output is unchanged.
+
+    Returns:
+        ``(parent_mapping, parent_id_field)`` with a ``str`` field, or
+        ``(parent_mapping, parent_id_fields)`` with a tuple, or ``None``.
+    """
+    multi = resolve_multi_parent_link(
+        endpoint,
+        api_type,
+        schema_lookup,
+        shared_schemas=shared_schemas,
+        class_name_overrides=class_name_overrides,
+        parent_field_names=parent_field_names,
+    )
+    if multi is not None:
+        return multi
+    return resolve_parent_link(
+        endpoint,
+        api_type,
+        schema_lookup,
+        shared_schemas=shared_schemas,
+        class_name_overrides=class_name_overrides,
+        identifier_map=identifier_map,
+        parent_field_names=parent_field_names,
+    )
+
+
 def count_path_placeholders(path: str) -> int:
     """Count the ``{...}`` placeholders in an API path."""
     return len(re.findall(r"\{[^}]+\}", path))
 
 
-def is_fetchable_endpoint(endpoint: ParsedEndpoint, parent_link: tuple[str, str] | None) -> bool:
+def is_fetchable_endpoint(
+    endpoint: ParsedEndpoint, parent_link: tuple[str, str | tuple[str, ...]] | None
+) -> bool:
     """Return whether the runtime can fill every placeholder of ``endpoint``.
 
-    A parent fills only the first placeholder (``build_parameterized_url``),
-    and a parentless mapping has every placeholder stripped
-    (``build_collection_url``).  So an endpoint is fetchable when it has no
-    placeholder, or has a parent link and exactly one placeholder (#952).
+    A single parent field fills only the first placeholder, and a parentless
+    mapping has every placeholder stripped (``build_collection_url``).  So an
+    endpoint is fetchable when it has no placeholder, or has a parent link
+    with one field per placeholder: a ``str`` for exactly one placeholder, a
+    tuple whose length equals the placeholder count (#952, #955).
     """
     count = count_path_placeholders(endpoint.path)
     if count == 0:
         return True
-    return parent_link is not None and count == 1
+    if parent_link is None:
+        return False
+    fields = parent_link[1]
+    if isinstance(fields, str):
+        return count == 1
+    return len(fields) == count
 
 
 def generate_mapping(
@@ -1128,7 +1274,7 @@ def generate_mapping(
     if endpoint.response_shape == "singleton":
         lines.append('    response_shape="singleton",')
 
-    parent_link = resolve_parent_link(
+    parent_link = resolve_parent_fields(
         endpoint,
         api_type,
         schema_lookup,
@@ -1139,7 +1285,11 @@ def generate_mapping(
     )
     if parent_link is not None:
         lines.append(f'    parent_mapping="{parent_link[0]}",')
-        lines.append(f'    parent_id_field="{parent_link[1]}",')
+        if isinstance(parent_link[1], str):
+            lines.append(f'    parent_id_field="{parent_link[1]}",')
+        else:
+            joined = ", ".join(f'"{f}"' for f in parent_link[1])
+            lines.append(f"    parent_id_fields=({joined},),")
 
     lines.append("    fields=(")
 

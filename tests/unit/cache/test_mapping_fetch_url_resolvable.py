@@ -1,11 +1,13 @@
 """Guard: no registered ONTAP mapping may fetch a URL with an unfilled placeholder.
 
-A parent fills only the first ``{...}`` placeholder
-(``TypeMapping.build_parameterized_url``) and a parentless mapping has every
-placeholder stripped (``TypeMapping.build_collection_url``).  A mapping whose
-fetch path is wrong because a placeholder went unfilled can never return data.
+A single ``parent_id_field`` fills only the first ``{...}`` placeholder
+(``TypeMapping.build_parameterized_url``), ``parent_id_fields`` fills one per
+placeholder, and a parentless mapping has every placeholder stripped
+(``TypeMapping.build_collection_url``).  A mapping whose fetch path is wrong
+because a placeholder went unfilled can never return data.
 
-See: https://github.com/endavis/pynetappfoundry/issues/952
+See: https://github.com/endavis/pynetappfoundry/issues/952 and
+https://github.com/endavis/pynetappfoundry/issues/955
 """
 
 from __future__ import annotations
@@ -31,19 +33,10 @@ _PLACEHOLDER = re.compile(r"\{[^}]+\}")
 _KNOWN_UNRESOLVABLE: dict[str, str] = {}
 
 # Mappings removed because the runtime cannot fill their placeholders (#952).
+# The other ten deleted by #952 came back in #955 (see ``_WIRED_BY_955``).
 _DELETED_BY_952: tuple[str, ...] = (
-    "OntapApplicationComponentSnapshot",
-    "OntapCifsShareAcl",
-    "OntapExportClient",
     "OntapFileInfo",
     "OntapKeyManagerKeys",
-    "OntapLocalCifsGroupMembers",
-    "OntapLunMapReportingNode",
-    "OntapPerformanceQtreeMetricResponse",
-    "OntapRolePrivilege",
-    "OntapS3BucketLifecycleRule",
-    "OntapS3BucketSnapshot",
-    "OntapUnixGroupUsers",
     "OntapFileDirectorySecurity",
     "OntapSnaplockFileRetention",
     "OntapSnaplockLegalHoldOperation",
@@ -62,6 +55,23 @@ _WIRED_BY_952: dict[str, str] = {
     "OntapVscanOnAccess": "OntapVscan",
     "OntapVscanOnDemand": "OntapVscan",
     "OntapVscanScannerPool": "OntapVscan",
+}
+
+
+_WIRED_BY_955: dict[str, tuple[str, tuple[str, ...]]] = {
+    "OntapApplicationComponentSnapshot": (
+        "OntapApplicationComponent",
+        ("application.uuid", "uuid"),
+    ),
+    "OntapUnixGroupUsers": ("OntapUnixGroup", ("svm.uuid", "name")),
+    "OntapLocalCifsGroupMembers": ("OntapLocalCifsGroup", ("svm.uuid", "sid")),
+    "OntapCifsShareAcl": ("OntapCifsShare", ("svm.uuid", "name")),
+    "OntapExportClient": ("OntapExportRule", ("policy.id", "index")),
+    "OntapS3BucketLifecycleRule": ("OntapS3BucketSvm", ("svm.uuid", "uuid")),
+    "OntapS3BucketSnapshot": ("OntapS3BucketSvm", ("svm.uuid", "uuid")),
+    "OntapLunMapReportingNode": ("OntapLunMap", ("lun.uuid", "igroup.uuid")),
+    "OntapRolePrivilege": ("OntapRole", ("owner.uuid", "name")),
+    "OntapPerformanceQtreeMetricResponse": ("OntapQtree", ("volume.uuid", "id")),
 }
 
 
@@ -94,9 +104,10 @@ def _unresolved_reason(
     if count == 0:
         return None
     if mapping.parent_mapping is not None:
-        if count != 1:
-            return f"{count} placeholders but a parent fills only the first"
-        url = mapping.build_parameterized_url("PARENT")
+        filled = len(mapping.effective_parent_id_fields())
+        if count != filled:
+            return f"{count} placeholders but the parent fills {filled}"
+        url = mapping.build_parameterized_url("PARENT" if filled == 1 else ("PARENT",) * filled)
         if _PLACEHOLDER.search(url):
             return f"unfilled placeholder remains in {url}"
         return None
@@ -141,6 +152,17 @@ class TestRegisteredMappingsAreFetchable:
         assert mapping.parent_mapping == parent
         assert mapping.parent_id_field == "svm.uuid"
 
+    @pytest.mark.parametrize(("name", "expected"), sorted(_WIRED_BY_955.items()))
+    def test_multi_placeholder_children_are_registered(
+        self, name: str, expected: tuple[str, tuple[str, ...]]
+    ) -> None:
+        mapping = model_registry.get_mapping(name)
+        assert mapping is not None
+        assert (mapping.parent_mapping, mapping.parent_id_fields) == expected
+        assert mapping.parent_id_field is None
+        url = mapping.build_parameterized_url(tuple(f"V{i}" for i in range(len(expected[1]))))
+        assert not _PLACEHOLDER.search(url), url
+
     def test_export_rule_wired_to_export_policy(self) -> None:
         mapping = model_registry.get_mapping("OntapExportRule")
         assert mapping is not None
@@ -158,7 +180,9 @@ def test_ems_filter_rule_wired_to_ems_filter() -> None:
     assert mapping.build_parameterized_url("f1") == "/support/ems/filters/f1/rules?fields=*"
 
 
-def _synthetic(endpoint: str, parent: str | None) -> TypeMapping:
+def _synthetic(
+    endpoint: str, parent: str | None, *, parent_id_fields: tuple[str, ...] = ()
+) -> TypeMapping:
     from pydantic import BaseModel
 
     class _Model(BaseModel):
@@ -170,7 +194,8 @@ def _synthetic(endpoint: str, parent: str | None) -> TypeMapping:
         api_endpoint=endpoint,
         api_type="ontap",
         parent_mapping=parent,
-        parent_id_field="uuid" if parent else None,
+        parent_id_field="uuid" if parent and not parent_id_fields else None,
+        parent_id_fields=parent_id_fields,
         fields=(),
     )
 
@@ -193,6 +218,10 @@ class TestUnresolvedReasonPredicate:
     def test_flagged_two_placeholders_with_parent(self) -> None:
         mapping = _synthetic("/a/{x}/b/{y}/c?fields=*", "Parent")
         assert _unresolved_reason(mapping, self.SPEC) is not None
+
+    def test_passes_two_placeholders_with_two_parent_fields(self) -> None:
+        mapping = _synthetic("/a/{x}/b/{y}/c?fields=*", "Parent", parent_id_fields=("x", "y"))
+        assert _unresolved_reason(mapping, self.SPEC) is None
 
     def test_passes_single_placeholder_with_parent(self) -> None:
         mapping = _synthetic("/svm/svms/{svm.uuid}/web?fields=*", "Parent")

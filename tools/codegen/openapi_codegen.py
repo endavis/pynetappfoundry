@@ -27,7 +27,7 @@ from tools.codegen.generators import (
     _path_to_module_parts,
     is_fetchable_endpoint,
     resolve_class_name_collisions,
-    resolve_parent_link,
+    resolve_parent_fields,
     write_endpoint_files,
 )
 
@@ -132,8 +132,8 @@ def _drop_unfetchable_endpoints(
     """Split endpoints into fetchable ones and dropped ones with a reason.
 
     An endpoint is dropped when the runtime cannot fill every path
-    placeholder: a parent fills only the first one, and a parentless mapping
-    has all of them stripped (#952).
+    placeholder: a single parent field fills only the first one, and a
+    parentless mapping has all of them stripped (#952, #955).
 
     Returns:
         ``(kept, dropped)`` where ``dropped`` maps path to reason.
@@ -141,7 +141,7 @@ def _drop_unfetchable_endpoints(
     kept: list[ParsedEndpoint] = []
     dropped: dict[str, str] = {}
     for ep in endpoints:
-        link = resolve_parent_link(
+        link = resolve_parent_fields(
             ep,
             api_type,
             schema_lookup,
@@ -155,7 +155,7 @@ def _drop_unfetchable_endpoints(
         elif link is None:
             dropped[ep.path] = "placeholder with no resolvable parent"
         else:
-            dropped[ep.path] = "more than one placeholder; a parent fills only the first"
+            dropped[ep.path] = "placeholders not all filled by one parent"
     return kept, dropped
 
 
