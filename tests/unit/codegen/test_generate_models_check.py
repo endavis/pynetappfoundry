@@ -113,7 +113,7 @@ def test_stale_file_fails(repo: Path, capsys: pytest.CaptureFixture[str]) -> Non
     _git(repo, "add", ".")
     _git(repo, "commit", "-q", "-m", "stale")
     assert _check(_gen()) is False
-    assert str(stale) in capsys.readouterr().err
+    assert stale.as_posix() in capsys.readouterr().err
 
 
 def test_excluded_endpoint_is_not_stale(repo: Path) -> None:
