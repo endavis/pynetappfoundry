@@ -7,27 +7,44 @@ from pydantic import Field
 from pynetappfoundry.models._base import OntapModel
 
 
-class OntapEmsFilterMessageCriteria(OntapModel):
-    """OntapEmsFilterMessageCriteria sub-model for message_criteria."""
+class OntapEmsFilterAccessControlRole(OntapModel):
+    """OntapEmsFilterAccessControlRole sub-model for access_control_role."""
+
+    name: str = ""
+
+
+class OntapEmsFilterRuleMessageCriteria(OntapModel):
+    """OntapEmsFilterRuleMessageCriteria sub-model for message_criteria."""
 
     name_pattern: str = ""
     severities: str = ""
     snmp_trap_types: str = ""
 
 
-class OntapEmsFilterParameterCriteria(OntapModel):
-    """OntapEmsFilterParameterCriteria sub-model for parameter_criteria."""
+class OntapEmsFilterRuleParameterCriteria(OntapModel):
+    """OntapEmsFilterRuleParameterCriteria sub-model for parameter_criteria."""
 
     name_pattern: str = ""
     value_pattern: str = ""
 
 
+class OntapEmsFilterRule(OntapModel):
+    """OntapEmsFilterRule sub-model for rules."""
+
+    index: int = 0
+    message_criteria: OntapEmsFilterRuleMessageCriteria = Field(
+        default_factory=OntapEmsFilterRuleMessageCriteria
+    )
+    parameter_criteria: list[OntapEmsFilterRuleParameterCriteria] = Field(default_factory=list)
+    type_: str = ""
+
+
 class OntapEmsFilter(OntapModel):
     """OntapEmsFilter information."""
 
-    index: int = 0
-    message_criteria: OntapEmsFilterMessageCriteria = Field(
-        default_factory=OntapEmsFilterMessageCriteria
+    access_control_role: OntapEmsFilterAccessControlRole = Field(
+        default_factory=OntapEmsFilterAccessControlRole
     )
-    parameter_criteria: list[OntapEmsFilterParameterCriteria] = Field(default_factory=list)
-    type_: str = ""
+    name: str = ""
+    rules: list[OntapEmsFilterRule] = Field(default_factory=list)
+    system_defined: bool = False

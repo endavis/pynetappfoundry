@@ -6,37 +6,30 @@ from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.support.ems.filters.model import (
     OntapEmsFilter,
-    OntapEmsFilterParameterCriteria,
+    OntapEmsFilterRule,
 )
 
 ONTAPEMSFILTER_MAPPING = TypeMapping(
     name="OntapEmsFilter",
     model_class=OntapEmsFilter,
-    api_endpoint="/support/ems/filters/{name}?fields=*",
+    api_endpoint="/support/ems/filters?fields=*",
     api_type="ontap",
-    records_path="rules",
+    identifier_field="name",
     fields=(
         FieldMapping(
-            cache_attr="index",
-            default=0,
+            cache_attr="access_control_role.name",
         ),
         FieldMapping(
-            cache_attr="message_criteria.name_pattern",
+            cache_attr="name",
         ),
         FieldMapping(
-            cache_attr="message_criteria.severities",
-        ),
-        FieldMapping(
-            cache_attr="message_criteria.snmp_trap_types",
-        ),
-        FieldMapping(
-            cache_attr="parameter_criteria",
-            item_model=OntapEmsFilterParameterCriteria,
+            cache_attr="rules",
+            item_model=OntapEmsFilterRule,
             default=[],
         ),
         FieldMapping(
-            cache_attr="type_",
-            api_path="type",
+            cache_attr="system_defined",
+            default=False,
         ),
     ),
 )

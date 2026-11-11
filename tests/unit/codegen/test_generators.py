@@ -170,6 +170,13 @@ class TestPathToClassName:
         """Collection schemas are named ``*_get``; overrides keep the public names (#934)."""
         assert _path_to_class_name(path, schema, "ontap") == expected
 
+    def test_ems_filter_collection_name_pinned(self) -> None:
+        """The ``ems_filter_response`` collection keeps the name ``OntapEmsFilter`` (#932)."""
+        assert (
+            _path_to_class_name("/support/ems/filters", "ems_filter_response", "ontap")
+            == "OntapEmsFilter"
+        )
+
     def test_default_api_type(self) -> None:
         """Default api_type is ontap."""
         assert _path_to_class_name("/storage/volumes", "volume") == "OntapVolume"

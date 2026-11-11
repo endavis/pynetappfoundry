@@ -58,6 +58,9 @@ _CLASS_NAME_OVERRIDES: dict[str, str] = {
     # and ``files`` child mappings reference as parent_mapping (#934).
     "/storage/snaplock/litigations": "OntapSnaplockLitigation",
     "/storage/snaplock/file-fingerprints": "OntapSnaplockFileFingerprint",
+    # The collection schema is ``ems_filter_response``; pin the filter name so the
+    # collection (not the item endpoint, which models a rule) wins dedup (#932).
+    "/support/ems/filters": "OntapEmsFilter",
 }
 """Manual overrides for class names keyed by API path.
 

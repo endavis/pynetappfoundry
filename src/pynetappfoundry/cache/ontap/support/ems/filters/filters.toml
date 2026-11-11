@@ -1,22 +1,25 @@
+_removed_fields = [
+    "index",
+    "message_criteria.name_pattern",
+    "message_criteria.severities",
+    "message_criteria.snmp_trap_types",
+    "parameter_criteria",
+    "type_",
+]
+
 [endpoint]
-path = "/support/ems/filters/{name}"
-schema = "ems_filter"
+path = "/support/ems/filters"
+schema = "ems_filter_response"
 class_name = "OntapEmsFilter"
 
-[fields.index]
+[fields."access_control_role.name"]
 cache_strategy = "cache"
 
-[fields."message_criteria.name_pattern"]
+[fields.name]
 cache_strategy = "cache"
 
-[fields."message_criteria.severities"]
+[fields.rules]
 cache_strategy = "cache"
 
-[fields."message_criteria.snmp_trap_types"]
-cache_strategy = "cache"
-
-[fields.parameter_criteria]
-cache_strategy = "cache"
-
-[fields.type_]
+[fields.system_defined]
 cache_strategy = "cache"
