@@ -35,7 +35,7 @@ dependencies = [
     "tenacity>=8.2",
     "tomli_w>=1.0",
     "xlsxwriter>=3.2.9",
-    "requests>=2.31",
+    "requests>=2.32.3",
     "yattag>=1.15",
 ]
 

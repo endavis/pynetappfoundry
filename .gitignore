@@ -74,6 +74,7 @@ dmypy.json
 tmp/*
 !tmp/.gitkeep
 .cache/
+.trust/
 
 # Git worktrees made by `doit worktree`. Not temporary: each lives until its PR merges.
 # Anchored to the root, so a directory named `worktrees` elsewhere stays tracked (#860).

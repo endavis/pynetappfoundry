@@ -88,9 +88,12 @@ Key differences from `ONTAPAPIClient`:
 
 - **Authentication** varies per API. ONTAP uses HTTP Basic Auth; DII uses an
   API key header. Your client must construct the appropriate `auth_header`.
-- **SSL verification** defaults to `True` in `APIWrapper`. ONTAP disables it
-  (`verify_ssl=False`) because clusters typically use self-signed certificates.
-  Only disable SSL verification when your API requires it.
+- **SSL verification** defaults to `True` in `APIWrapper`. ONTAP turns chain
+  validation off (`verify_ssl=False`) because clusters typically use self-signed
+  certificates, and pins the certificate fingerprint recorded on first use through
+  `FingerprintPinningAdapter` (passed as `https_adapter`). See
+  [ADR-0025](../decisions/0025-pin-ontap-ssh-host-keys-and-tls-certificate-fingerprints-on-first-use.md). Only disable SSL verification when your API
+  requires it, and pin the identity as ONTAP does.
 - **OpenAPI spec** must be present at the path returned by
   `config.get_schema_location("<api_type>")`.
 

@@ -193,6 +193,7 @@ class OntapBackend(Backend):
                 host_or_ip=cluster_data.get("ip", cluster),
                 username=user,
                 password=password,
+                trust_store=self._config.get_trust_store(),
             )
         return self._cli_clients[cluster]
 

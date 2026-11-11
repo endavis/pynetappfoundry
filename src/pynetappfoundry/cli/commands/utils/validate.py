@@ -131,7 +131,7 @@ def _validate_ssh(
         return None
 
     user, password = config.get_user("clusters", name)
-    cli = ONTAPCLI(name, details["ip"], user, password)
+    cli = ONTAPCLI(name, details["ip"], user, password, trust_store=config.get_trust_store())
 
     try:
         cli.connect()

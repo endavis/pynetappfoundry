@@ -61,6 +61,7 @@ def _run_cluster_command(
             host_or_ip=details["ip"],
             username=user,
             password=password,
+            trust_store=config.get_trust_store(),
         )
 
         output = cli.run_command(command)
