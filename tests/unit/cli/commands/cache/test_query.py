@@ -13,7 +13,7 @@ from click.testing import CliRunner
 from pynetappfoundry.cache import CachedClusterMetadata
 from pynetappfoundry.cli.main import nf
 from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
-from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
+from pynetappfoundry.models.ontap.cluster.model import OntapCluster, OntapClusterVersion
 from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
 
 
@@ -59,10 +59,10 @@ base_api_path = "/api"
                     instance_type="m5.xlarge",
                 )
             ],
-            cluster=ClusterInfo(
-                cluster_name="test-cluster",
-                cluster_uuid="abc-123",
-                ontap_version="9.14.1",
+            cluster=OntapCluster(
+                name="test-cluster",
+                uuid="00000000-0000-0000-0000-0000000abc12",
+                version=OntapClusterVersion(full="9.14.1"),
             ),
             nodes=[
                 OntapNodeResponse(name="node-01", serial_number="SN001"),
@@ -114,13 +114,13 @@ base_api_path = "/api"
                 "query",
                 "test-cluster",
                 "cloud[0].provider",
-                "cluster.ontap_version",
+                "cluster.version.full",
             ],
         )
 
         assert result.exit_code == 0
         assert "cloud[0].provider: AWS" in result.output
-        assert "cluster.ontap_version: 9.14.1" in result.output
+        assert "cluster.version.full: 9.14.1" in result.output
 
     @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
     def test_query_all_clusters(
@@ -255,7 +255,7 @@ base_api_path = "/api"
                 "cache",
                 "query",
                 "test-cluster",
-                "cluster.ontap_version",
+                "cluster.version.full",
                 "--raw",
             ],
         )
@@ -531,7 +531,7 @@ base_api_path = "/api"
                 "test-cluster",
                 "cloud[0].provider",
                 "cloud[0].region",
-                "cluster.ontap_version",
+                "cluster.version.full",
                 "--json",
             ],
         )
@@ -542,7 +542,7 @@ base_api_path = "/api"
             "test-cluster": {
                 "cloud[0].provider": "AWS",
                 "cloud[0].region": "us-east-1",
-                "cluster.ontap_version": "9.14.1",
+                "cluster.version.full": "9.14.1",
             }
         }
 
@@ -568,7 +568,7 @@ base_api_path = "/api"
                 "query",
                 "test-cluster",
                 "cloud[0].provider",
-                "cluster.ontap_version",
+                "cluster.version.full",
                 "--raw",
             ],
         )
@@ -598,7 +598,7 @@ base_api_path = "/api"
                 "cache",
                 "query",
                 "test-cluster",
-                "cluster.is_ha",
+                "cluster_traits.is_ha",
                 "--raw",
             ],
         )
@@ -894,14 +894,14 @@ base_api_path = "/api"
                 "cache",
                 "query",
                 "test-cluster",
-                "cluster.is_ha",
+                "cluster_traits.is_ha",
                 "--csv",
             ],
         )
 
         assert result.exit_code == 0
         lines = result.output.strip().split("\n")
-        assert lines[0] == "cluster,cluster.is_ha"
+        assert lines[0] == "cluster,cluster_traits.is_ha"
         assert lines[1] == "test-cluster,false"
 
     @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
@@ -988,14 +988,14 @@ base_api_path = "/api"
                 "query",
                 "test-cluster",
                 "cloud[0].provider",
-                "cluster.ontap_version",
+                "cluster.version.full",
             ],
         )
 
         assert result.exit_code == 0
         # Scalars should be inline (field: value on same line)
         assert "cloud[0].provider: AWS" in result.output
-        assert "cluster.ontap_version: 9.14.1" in result.output
+        assert "cluster.version.full: 9.14.1" in result.output
 
     @patch("pynetappfoundry.cli.commands.cache.query.ClusterMetadataDB")
     def test_raw_output_unchanged_with_dict(
@@ -1085,7 +1085,7 @@ base_api_path = "/api"
         mock_fetch_live.return_value = {
             "cluster_name": "test-cluster",
             "cloud": [{"provider": "AWS"}],
-            "cluster": {"ontap_version": "9.14.1"},
+            "cluster": {"version": {"full": "9.14.1"}},
             "nodes": [{"name": "node-01"}],
             "storage": {"volumes": []},
         }
@@ -1099,7 +1099,7 @@ base_api_path = "/api"
                 "query",
                 "test-cluster",
                 "cloud[0].provider",
-                "cluster.ontap_version",
+                "cluster.version.full",
                 "nodes[0].name",
                 "storage.volumes",
                 "--live",
@@ -1161,7 +1161,7 @@ base_api_path = "/api"
 
         mock_fetch_live.return_value = {
             "cluster_name": "test-cluster",
-            "cluster": {"ontap_version": "9.14.1"},
+            "cluster": {"version": {"full": "9.14.1"}},
         }
 
         result = runner.invoke(
@@ -1172,7 +1172,7 @@ base_api_path = "/api"
                 "cache",
                 "query",
                 "test-cluster",
-                "cluster.ontap_version",
+                "cluster.version.full",
                 "--live",
                 "--raw",
             ],

@@ -205,7 +205,13 @@ class TestRunFilterAndDrop:
 
 
 class TestExcludedEndpoints:
-    """#933: ``/cluster`` is hand-written and skipped by ONTAP codegen."""
+    """#933: an excluded endpoint is skipped by ONTAP codegen (synthetic exclusion since #967)."""
+
+    @pytest.fixture(autouse=True)
+    def _exclude_cluster(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        from tools.codegen import openapi_codegen
+
+        monkeypatch.setitem(openapi_codegen._EXCLUDED_ENDPOINTS, "ontap", frozenset({"/cluster"}))
 
     def _spec(self, tmp_path: Path) -> Path:
         thing = {"type": "object", "properties": {"uuid": {"type": "string"}}}

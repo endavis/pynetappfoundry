@@ -1677,9 +1677,13 @@ class TestGetApiClient:
 
 
 class TestSingletonLivePaths:
-    """Singleton mappings (ClusterInfo) on the filtered live and count paths (#937)."""
+    """Singleton mappings (OntapCluster) on the filtered live and count paths (#937)."""
 
-    RECORD: ClassVar[dict[str, Any]] = {"name": "c1", "uuid": "u1", "version": {"full": "9.15"}}
+    RECORD: ClassVar[dict[str, Any]] = {
+        "name": "c1",
+        "uuid": "00000000-0000-0000-0000-0000000000a1",
+        "version": {"full": "9.15"},
+    }
 
     def _run(self, mock_config: Any, response: Any, fn: str, *args: Any) -> tuple[Any, MagicMock]:
         backend = _make_backend(mock_config)
@@ -1689,28 +1693,28 @@ class TestSingletonLivePaths:
             return getattr(backend, fn)(*args), client
 
     def test_fetch_live_filtered_returns_singleton(self, mock_config: Any) -> None:
-        from pynetappfoundry.cache.ontap.cluster.mapping import CLUSTER_MAPPING
-        from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
+        from pynetappfoundry.cache.ontap.cluster.mapping import ONTAPCLUSTER_MAPPING
+        from pynetappfoundry.models.ontap.cluster.model import OntapCluster
 
         result, client = self._run(
             mock_config,
             dict(self.RECORD),
             "_fetch_live_filtered",
-            ClusterInfo,
-            CLUSTER_MAPPING,
+            OntapCluster,
+            ONTAPCLUSTER_MAPPING,
             "prod1",
             {},
             ("cluster_name",),
         )
         assert len(result) == 1
-        assert isinstance(result[0], ClusterInfo)
+        assert isinstance(result[0], OntapCluster)
         client.get_all_records.assert_not_called()
 
     def test_fetch_live_filtered_applies_filter_client_side(self, mock_config: Any) -> None:
-        from pynetappfoundry.cache.ontap.cluster.mapping import CLUSTER_MAPPING
-        from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
+        from pynetappfoundry.cache.ontap.cluster.mapping import ONTAPCLUSTER_MAPPING
+        from pynetappfoundry.models.ontap.cluster.model import OntapCluster
 
-        args = (ClusterInfo, CLUSTER_MAPPING, "prod1")
+        args = (OntapCluster, ONTAPCLUSTER_MAPPING, "prod1")
         hit, _ = self._run(
             mock_config, dict(self.RECORD), "_fetch_live_filtered", *args, {"name": "c1"}, ()
         )
@@ -1721,30 +1725,30 @@ class TestSingletonLivePaths:
         assert miss == []
 
     def test_fetch_live_filtered_empty_response(self, mock_config: Any) -> None:
-        from pynetappfoundry.cache.ontap.cluster.mapping import CLUSTER_MAPPING
-        from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
+        from pynetappfoundry.cache.ontap.cluster.mapping import ONTAPCLUSTER_MAPPING
+        from pynetappfoundry.models.ontap.cluster.model import OntapCluster
 
         result, _ = self._run(
-            mock_config, {}, "_fetch_live_filtered", ClusterInfo, CLUSTER_MAPPING, "p", {}, ()
+            mock_config, {}, "_fetch_live_filtered", OntapCluster, ONTAPCLUSTER_MAPPING, "p", {}, ()
         )
         assert result == []
 
     def test_count_live_singleton(self, mock_config: Any) -> None:
-        from pynetappfoundry.cache.ontap.cluster.mapping import CLUSTER_MAPPING
+        from pynetappfoundry.cache.ontap.cluster.mapping import ONTAPCLUSTER_MAPPING
 
         count, client = self._run(
-            mock_config, dict(self.RECORD), "_count_live", CLUSTER_MAPPING, "prod1", {}
+            mock_config, dict(self.RECORD), "_count_live", ONTAPCLUSTER_MAPPING, "prod1", {}
         )
         assert count == 1
         client.get_all_records.assert_not_called()
 
     def test_count_live_singleton_filtered_out_and_empty(self, mock_config: Any) -> None:
-        from pynetappfoundry.cache.ontap.cluster.mapping import CLUSTER_MAPPING
+        from pynetappfoundry.cache.ontap.cluster.mapping import ONTAPCLUSTER_MAPPING
 
         out, _ = self._run(
-            mock_config, dict(self.RECORD), "_count_live", CLUSTER_MAPPING, "p", {"name": "x"}
+            mock_config, dict(self.RECORD), "_count_live", ONTAPCLUSTER_MAPPING, "p", {"name": "x"}
         )
-        empty, _ = self._run(mock_config, {}, "_count_live", CLUSTER_MAPPING, "p", {})
+        empty, _ = self._run(mock_config, {}, "_count_live", ONTAPCLUSTER_MAPPING, "p", {})
         assert out == 0
         assert empty == 0
 
@@ -1763,33 +1767,38 @@ class TestSingletonLivePaths:
     def test_control_keys_not_treated_as_filters(
         self, mock_config: Any, extra: dict[str, Any], expected: int
     ) -> None:
-        from pynetappfoundry.cache.ontap.cluster.mapping import CLUSTER_MAPPING
-        from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
+        from pynetappfoundry.cache.ontap.cluster.mapping import ONTAPCLUSTER_MAPPING
+        from pynetappfoundry.models.ontap.cluster.model import OntapCluster
 
         fetched, _ = self._run(
             mock_config,
             dict(self.RECORD),
             "_fetch_live_filtered",
-            ClusterInfo,
-            CLUSTER_MAPPING,
+            OntapCluster,
+            ONTAPCLUSTER_MAPPING,
             "prod1",
             dict(extra),
             (),
         )
         count, _ = self._run(
-            mock_config, dict(self.RECORD), "_count_live", CLUSTER_MAPPING, "prod1", dict(extra)
+            mock_config,
+            dict(self.RECORD),
+            "_count_live",
+            ONTAPCLUSTER_MAPPING,
+            "prod1",
+            dict(extra),
         )
         assert len(fetched) == expected
         assert count == expected
 
     def test_zero_max_records_makes_no_request(self, mock_config: Any) -> None:
-        from pynetappfoundry.cache.ontap.cluster.mapping import CLUSTER_MAPPING
+        from pynetappfoundry.cache.ontap.cluster.mapping import ONTAPCLUSTER_MAPPING
 
         count, client = self._run(
             mock_config,
             dict(self.RECORD),
             "_count_live",
-            CLUSTER_MAPPING,
+            ONTAPCLUSTER_MAPPING,
             "p",
             {"max_records": "0"},
         )
@@ -1797,13 +1806,13 @@ class TestSingletonLivePaths:
         client.call_endpoint.assert_not_called()
 
     def test_control_keys_not_sent_in_url(self, mock_config: Any) -> None:
-        from pynetappfoundry.cache.ontap.cluster.mapping import CLUSTER_MAPPING
+        from pynetappfoundry.cache.ontap.cluster.mapping import ONTAPCLUSTER_MAPPING
 
         _, client = self._run(
             mock_config,
             dict(self.RECORD),
             "_count_live",
-            CLUSTER_MAPPING,
+            ONTAPCLUSTER_MAPPING,
             "p",
             {"order_by": "name", "max_records": "1"},
         )

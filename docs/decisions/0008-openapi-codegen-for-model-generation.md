@@ -485,7 +485,7 @@ A full `doit generate_models --api=ontap` now exits 0 and writes only reviewed o
 - **Exclusion:** `_EXCLUDED_ENDPOINTS` (keyed by api_type, `{"ontap": {"/cluster"}}`) in
   `tools/codegen/generators.py`. `openapi_codegen.run()` applies it after the #952 unfetchable drop
   and before the `--endpoints` filter, printing `skipped (excluded): <path>`, so no other endpoint's
-  naming or parent linkage changes. The hand-written `ClusterInfo` / `CLUSTER_MAPPING` stay until #967.
+  naming or parent linkage changes. `_EXCLUDED_ENDPOINTS` is now empty: `/cluster` is generated as `OntapCluster` (#967, Part B); the mechanism stays.
 - **Singletons and new endpoints:** the 21 further `response_shape="singleton"` mappings and the
   additive `security/ssh`, `security/multi_admin_verify` and
   `security/authentication/cluster/ldap` endpoints were adopted (no BREAKING footer).

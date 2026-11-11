@@ -103,7 +103,7 @@ class TestGlobalRegistryBootstrap:
         """Spot-check a representative sample across cache.ontap sub-trees."""
         import pynetappfoundry.cache  # noqa: F401
         from pynetappfoundry.cache._registry import model_registry
-        from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
+        from pynetappfoundry.models.ontap.cluster.model import OntapCluster
         from pynetappfoundry.models.ontap.cluster.nodes.model import (
             OntapNodeResponse,
         )
@@ -120,7 +120,7 @@ class TestGlobalRegistryBootstrap:
         from pynetappfoundry.models.ontap.svm.svms.model import OntapSvm
 
         sample_models = (
-            ClusterInfo,
+            OntapCluster,
             OntapNodeResponse,
             OntapSvm,
             OntapCifsService,

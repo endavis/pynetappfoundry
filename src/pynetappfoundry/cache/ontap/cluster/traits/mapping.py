@@ -1,9 +1,7 @@
 """ClusterTraits mapping: values computed from the collected nodes.
 
 Hand-written (not generated).  ``is_ha`` and ``is_cloud`` are not API data,
-so they live here instead of on a generated model (ADR-0024).  The hooks are
-also reused by ``ClusterInfo`` via
-``src/pynetappfoundry/cache/ontap/cluster/mapping.py``.
+so they live here instead of on a generated model (ADR-0024).
 """
 
 from __future__ import annotations
@@ -12,7 +10,6 @@ from typing import Any
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
 from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
 from pynetappfoundry.models.ontap.cluster.traits.model import ClusterTraits
 
@@ -50,34 +47,32 @@ def _is_cloud_node(node: OntapNodeResponse) -> bool:
     return serial.startswith(_CLOUD_SERIAL_PREFIXES)
 
 
-def compute_is_ha(cluster: ClusterInfo, results: dict[str, Any]) -> ClusterInfo:
+def compute_is_ha(cluster: ClusterTraits, results: dict[str, Any]) -> ClusterTraits:
     """Derive ``is_ha`` from the collected node count.
 
     Args:
-        cluster: The ClusterInfo instance to update (the hook also works on
-            ``ClusterTraits``: it only calls ``model_copy``).
+        cluster: The ClusterTraits instance to update.
         results: Full collection results dict (needs ``"OntapNodeResponse"`` key).
 
     Returns:
-        Updated ClusterInfo with ``is_ha`` set.
+        Updated ClusterTraits with ``is_ha`` set.
     """
     nodes = results.get("OntapNodeResponse", [])
     return cluster.model_copy(update={"is_ha": len(nodes) > 1})
 
 
-def compute_is_cloud(cluster: ClusterInfo, results: dict[str, Any]) -> ClusterInfo:
+def compute_is_cloud(cluster: ClusterTraits, results: dict[str, Any]) -> ClusterTraits:
     """Derive ``is_cloud`` from the collected nodes.
 
     A cluster is flagged cloud when any node reports CVO-style model or
     serial number via :func:`_is_cloud_node`.
 
     Args:
-        cluster: The ClusterInfo instance to update (the hook also works on
-            ``ClusterTraits``: it only calls ``model_copy``).
+        cluster: The ClusterTraits instance to update.
         results: Full collection results dict (needs ``"OntapNodeResponse"`` key).
 
     Returns:
-        Updated ClusterInfo with ``is_cloud`` set.
+        Updated ClusterTraits with ``is_cloud`` set.
     """
     nodes = results.get("OntapNodeResponse", [])
     return cluster.model_copy(update={"is_cloud": any(_is_cloud_node(n) for n in nodes)})

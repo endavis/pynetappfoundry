@@ -15,7 +15,7 @@ from pynetappfoundry.cache._lazy import _DATA_FIELDS
 from pynetappfoundry.cache.db import ClusterMetadataDB
 from pynetappfoundry.core.config import Config
 from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
-from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
+from pynetappfoundry.models.ontap.cluster.model import OntapCluster, OntapClusterVersion
 from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
 from pynetappfoundry.models.ontap.cluster.traits.model import ClusterTraits
 from pynetappfoundry.models.ontap.storage.model import StorageInfo
@@ -53,9 +53,9 @@ def sample_metadata() -> CachedClusterMetadata:
     return CachedClusterMetadata(
         cluster_name="test-cluster",
         cloud=[CloudMetadata(provider="AWS", region="us-east-1")],
-        cluster=ClusterInfo(
-            cluster_name="test-cluster",
-            ontap_version="9.14.1",
+        cluster=OntapCluster(
+            name="test-cluster",
+            version=OntapClusterVersion(full="9.14.1"),
         ),
         nodes=[
             OntapNodeResponse(name="node1", serial_number="123"),
@@ -225,8 +225,8 @@ class TestLazyLoading:
         """Lazy-loaded singleton (cluster) matches what was stored."""
         lazy = populated_db.get_lazy("test-cluster")
         assert lazy is not None
-        assert lazy.cluster.ontap_version == "9.14.1"
-        assert lazy.cluster.cluster_name == "test-cluster"
+        assert lazy.cluster.version.full == "9.14.1"
+        assert lazy.cluster.name == "test-cluster"
 
     def test_container_fields_load_sub_tables(
         self,
@@ -426,8 +426,8 @@ class TestDefaultFallback:
 
         # cloud default is an empty list
         assert lazy.cloud == []
-        # cluster default is an empty ClusterInfo
-        assert isinstance(lazy.cluster, ClusterInfo)
+        # cluster default is an empty OntapCluster
+        assert isinstance(lazy.cluster, OntapCluster)
 
     def test_db_less_materialize(
         self,
@@ -605,7 +605,7 @@ class TestLiveLoader:
 
     def test_never_builds_a_data_source(self) -> None:
         """Live reads must not open the cache through DataSource."""
-        lazy = self._lazy(MagicMock(return_value=ClusterInfo(cluster_name="c1")))
+        lazy = self._lazy(MagicMock(return_value=OntapCluster(name="c1")))
 
         with patch.object(LazyClusterMetadata, "_query_group_via_datasource") as cache_read:
             _ = lazy.cluster

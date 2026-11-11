@@ -24,8 +24,8 @@ Accepted
 2. **Computed values live in a separate hand-written model.** `ClusterTraits` (`src/pynetappfoundry/models/ontap/cluster/traits/model.py`) holds `is_ha` and `is_cloud`. Its mapping, `CLUSTERTRAITS_MAPPING` in `src/pynetappfoundry/cache/ontap/cluster/traits/mapping.py`, has no generated header and registers as `"ClusterTraits"`.
 3. **A `TypeMapping` with `response_shape="computed"` describes such a model.** It has an empty `api_endpoint` and `cli_command`, no parent, and at least one field; every field is `cache_strategy="derived"` with a `post_collection` hook. `fetchers.fetch` makes no request for it: it builds an empty instance and runs the hooks against the dependencies declared in `depends_on`. `computed` is opt-in because an empty endpoint on any other mapping would otherwise issue `GET ""`.
 4. **The traits are collected and cached as their own group.** `CachedClusterMetadata.cluster_traits` is stored in the `clustertraits` table. The snapshot version is 2.2 (`MIN_COMPATIBLE` stays 2.0) and SQLite schema v10 creates the table and backfills it from `clusterinfo`.
-5. **Readers use `ClusterTraits`.** The cloud gates in the HTML and inventory reports and `OntapBackend._is_cloud_cluster` read it. `ClusterInfo` keeps its two fields for now so no public name is removed; the follow-up in #967 removes them when `/cluster` is generated.
-6. **The CVO detection helpers moved with the hooks** to `src/pynetappfoundry/cache/ontap/cluster/traits/mapping.py` and stay importable from `src/pynetappfoundry/cache/ontap/cluster/mapping.py`.
+5. **Readers use `ClusterTraits`.** The cloud gates in the HTML and inventory reports and `OntapBackend._is_cloud_cluster` read it. Part B of #967 removed the two fields from `cluster` when `/cluster` became the generated `OntapCluster` (snapshot version 3.0, SQLite schema v11).
+6. **The CVO detection helpers moved with the hooks** to `src/pynetappfoundry/cache/ontap/cluster/traits/mapping.py` and are no longer re-exported from `src/pynetappfoundry/cache/ontap/cluster/mapping.py`, which is generated (Part B of #967).
 
 ## Rationale
 

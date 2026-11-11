@@ -82,11 +82,12 @@ _IDENTIFIER_FIELD_OVERRIDES: dict[str, str] = {
 Same shape and role as ``_CLASS_NAME_OVERRIDES``; wins over the inferred value.
 """
 
-_EXCLUDED_ENDPOINTS: dict[str, frozenset[str]] = {
-    # ``/cluster`` is the hand-written ``ClusterInfo`` / ``CLUSTER_MAPPING``; see #967.
-    "ontap": frozenset({"/cluster"}),
-}
-"""API paths skipped by codegen, keyed by api_type."""
+_EXCLUDED_ENDPOINTS: dict[str, frozenset[str]] = {}
+"""API paths skipped by codegen, keyed by api_type.
+
+Empty since ``/cluster`` is generated as ``OntapCluster`` (#967). The mechanism stays so
+a hand-written endpoint can be excluded again, e.g. ``{"ontap": frozenset({"/path"})}``.
+"""
 
 
 def _schema_to_pascal(name: str) -> str:

@@ -167,8 +167,8 @@ Two indices are created per table: `idx_{table}_cluster` on `cluster_name`
 Two version constants live in `src/pynetappfoundry/cache/_base.py`:
 
 ```python
-METADATA_SCHEMA_VERSION = "2.2"        # current cache_version on new snapshots
-METADATA_SCHEMA_MIN_COMPATIBLE = "2.0" # oldest version that can be loaded
+METADATA_SCHEMA_VERSION = "3.0"        # current cache_version on new snapshots
+METADATA_SCHEMA_MIN_COMPATIBLE = "3.0" # oldest version that can be loaded
 ```
 
 `METADATA_SCHEMA_VERSION` is the data-model version stamped into each
@@ -186,7 +186,8 @@ deserialised against the current Pydantic models.
 
 | `cache_version` | Changes |
 |-----------------|---------|
-| `2.2` | Added `cluster_traits` (`ClusterTraits`: the computed `is_ha` and `is_cloud`, [ADR-0024](../decisions/0024-generated-models-carry-only-api-data-computed-values-live-in-separate-hand-written-models.md)). `cluster` keeps its own `is_ha` / `is_cloud` for now. Introduced with #967. |
+| `3.0` | `cluster` is the generated `OntapCluster` (nested API shape: `name`, `uuid`, `version.full`, ...) instead of the flat `ClusterInfo`; `is_ha` and `is_cloud` live only on `cluster_traits` ([ADR-0024](../decisions/0024-generated-models-carry-only-api-data-computed-values-live-in-separate-hand-written-models.md)). Breaking: 2.x snapshots are not loadable, so `MIN_COMPATIBLE` is 3.0. Introduced with #967. |
+| `2.2` | Added `cluster_traits` (`ClusterTraits`: the computed `is_ha` and `is_cloud`, [ADR-0024](../decisions/0024-generated-models-carry-only-api-data-computed-values-live-in-separate-hand-written-models.md)). `cluster` kept its own `is_ha` / `is_cloud` until 3.0. Introduced with #967. |
 | `2.1` | Added `storage.svm_web_services`: per-SVM web services from the private CLI passthrough ([ADR-0021](../decisions/0021-collect-cli-only-ontap-data-through-the-private-cli-rest-passthrough.md)). Introduced with #866. |
 | `2.0` | Renamed cache fields to match the ONTAP REST URL hierarchy: `network.lifs` → `network.ip_interfaces`, `network.broadcast_domains` → `network.ethernet_broadcast_domains`, `network.subnets` → `network.ip_subnets`, `protocols.export_policies` → `protocols.nfs_export_policies`. |
 | `1.0` | Initial schema with comprehensive model coverage. |
@@ -214,6 +215,7 @@ the DB applies the following upgrades on open:
 | `v6` → `v7` | `_upgrade_to_v7` | Creates the `ontapsvmwebservice` table to back `storage.svm_web_services` (ADR-0021). Idempotent via `sqlite_master` check. Introduced with #866. |
 | `v7` → `v8` | `_upgrade_to_v8` | Adds the `folder` and `project` columns to the `consoleinfo` table for `ConsoleInfo.folder` / `ConsoleInfo.project` via idempotent `ALTER TABLE … ADD COLUMN`. Introduced with #734. |
 | `v8` → `v9` | `_upgrade_to_v9` | Reshapes `ontapexportpolicy` from rule-shaped (`index`, `clients`, `ro_rule`, ...) to policy-shaped (`id`, `name`, `svm`, `rules`): drops and recreates the table (ADR-0018 removed-column path) and clears the envelope. Idempotent via a `PRAGMA table_info` check for `id`. Run `nf cache refresh` afterwards. Introduced with #956. |
+| `v10` → `v11` | `_upgrade_to_v11` | Drops the flat `clusterinfo` table, creates `ontapcluster` for the generated `OntapCluster`, and clears the envelope (ADR-0018 section 2: the old flat rows are not copied into the nested shape). Idempotent: the envelope is cleared only when a table was dropped or created. Run `nf cache refresh` afterwards. Introduced with #967. |
 | `v9` → `v10` | `_upgrade_to_v10` | Creates the `clustertraits` table for `CachedClusterMetadata.cluster_traits` and backfills it from the `is_ha` / `is_cloud` columns of `clusterinfo` (ADR-0024). Idempotent: the table is created only if missing and only clusters without a row are copied. The envelope is kept, so no refresh is needed. Introduced with #967. |
 
 !!! warning "v3 → v4 is destructive"
@@ -431,7 +433,7 @@ class CachedClusterMetadata(CacheModel):
 
     # Data field groups
     cloud: list[CloudMetadata] = Field(default_factory=list)
-    cluster: ClusterInfo = Field(default_factory=ClusterInfo)
+    cluster: OntapCluster = Field(default_factory=OntapCluster)
     nodes: list[OntapNodeResponse] = Field(default_factory=list)
     network: NetworkInfo = Field(default_factory=NetworkInfo)
     storage: StorageInfo = Field(default_factory=StorageInfo)
@@ -818,7 +820,8 @@ via [the codegen pipeline](#openapi-codegen-pipeline).
 | Model | Key fields | Description |
 |-------|------------|-------------|
 | `CloudMetadata` | `node`, `instance_id`, `provider`, `region`, `instance_type`, `availability_zone` | Cloud provider metadata per node (CLI-only) |
-| `ClusterInfo` | `cluster_name`, `cluster_uuid`, `ontap_version`, `contact`, `location`, `is_ha`, `san_optimized` | Core cluster identity |
+| `OntapCluster` | `name`, `uuid`, `version.full`, `contact`, `location`, `san_optimized` | Core cluster identity (codegen-generated, nested API shape) |
+| `ClusterTraits` | `is_ha`, `is_cloud` | Computed from the collected nodes (hand-written, ADR-0024) |
 | `OntapNodeResponse` | `uuid`, `name`, `state`, `serial_number`, `location`, `membership`, `version`, `controller`, `ha` | Cluster node information (codegen-generated) |
 | `OntapLicensePackageResponse` | `name`, `scope`, `state`, `description`, `entitlement`, `licenses` | License package (codegen-generated) |
 | `OntapMediatorResponse` | `uuid`, `ip_address`, `port`, `reachable`, `peer_cluster`, `dr_group` | ONTAP Mediator configuration (codegen-generated) |
@@ -933,7 +936,7 @@ Concrete model classes live in their per-endpoint modules under
 `src/pynetappfoundry/models/ontap/<api-path>/model.py`. For example:
 
 ```python
-from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
+from pynetappfoundry.models.ontap.cluster.model import OntapCluster
 from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
 from pynetappfoundry.models.ontap.cluster.mediators.model import OntapMediatorResponse
 from pynetappfoundry.models.ontap.cluster.peers.model import OntapClusterPeer

@@ -87,8 +87,8 @@ class DataSource:
         # Use the class-keyed reverse index added in Phase 2 of ADR-0013
         # (see ``_registry.ModelRegistry.get_mapping_by_model_class``).
         # The name-keyed index would fail when a mapping's registered name
-        # does not match the Pydantic model class name — e.g., CLUSTER_MAPPING
-        # is registered as "Cluster" but the model class is ``ClusterInfo``.
+        # does not match the Pydantic model class name — e.g., #524, where
+        # a mapping was registered as "Cluster" for the ``ClusterInfo`` class.
         mapping = model_registry.get_mapping_by_model_class(model_class)
         if mapping is None:
             msg = (

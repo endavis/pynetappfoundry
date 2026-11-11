@@ -91,10 +91,10 @@ class TestBuildIndex:
                 """
                 from pynetappfoundry.cache._registry import model_registry
                 from pynetappfoundry.cache.field_mapping import TypeMapping
-                from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
+                from pynetappfoundry.models.ontap.cluster.model import OntapCluster
 
                 model_registry.register_mapping(
-                    "B1", TypeMapping(name="B1", model_class=ClusterInfo, api_endpoint="/x")
+                    "B1", TypeMapping(name="B1", model_class=OntapCluster, api_endpoint="/x")
                 )
                 """
             ),
@@ -132,7 +132,9 @@ class TestCheck:
     def test_fails_on_modified_copy(self, tmp_path: Path) -> None:
         copy = tmp_path / "_mapping_index.py"
         shutil.copy(_CACHE_ROOT / "_mapping_index.py", copy)
-        copy.write_text(copy.read_text("utf-8").replace('"Cluster"', '"ClusterX"', 1), "utf-8")
+        copy.write_text(
+            copy.read_text("utf-8").replace('"OntapCluster"', '"OntapClusterX"', 1), "utf-8"
+        )
         diff = check_index(_CACHE_ROOT, index_path=copy)
         assert diff is not None
         assert "ClusterX" in diff

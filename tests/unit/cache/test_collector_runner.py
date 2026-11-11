@@ -23,7 +23,7 @@ from pynetappfoundry.cache.collector import (
     ProgressInfo,
 )
 from pynetappfoundry.models.ontap.cluster.mediators.model import OntapMediatorResponse
-from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
+from pynetappfoundry.models.ontap.cluster.model import OntapCluster
 from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
 from pynetappfoundry.models.ontap.network.model import NetworkInfo
 from pynetappfoundry.models.ontap.protocols.model import ProtocolsInfo
@@ -64,7 +64,7 @@ def _make_collector(
         return node_list
 
     patches = [
-        patch.object(collector, "collect_cluster_info", return_value=ClusterInfo()),
+        patch.object(collector, "collect_cluster_info", return_value=OntapCluster()),
         patch.object(collector, "collect_nodes", side_effect=collect_nodes),
         *(
             []

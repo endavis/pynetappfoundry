@@ -242,7 +242,7 @@ Most mappings are now codegen-generated (e.g., `ONTAPVOLUME_MAPPING`, `ONTAPNODE
 
 | Type | Mapping | Model | Notes |
 |------|---------|-------|-------|
-| Cluster | `CLUSTER_MAPPING` | `ClusterInfo` | Hand-written. Single-object endpoint (no `records` list), uses `parse_api_record()` directly. `is_ha` derived post-collection. |
+| OntapCluster | `ONTAPCLUSTER_MAPPING` | `OntapCluster` | Generated (#967). Single-object endpoint (`response_shape="singleton"`, no `records` list). Passwords, `metric.*` and `statistics.*` are `realtime` in `cluster.toml`. |
 | ClusterTraits | `CLUSTERTRAITS_MAPPING` | `ClusterTraits` | Hand-written, `response_shape="computed"`: no endpoint. `is_ha` and `is_cloud` are derived from the collected nodes (ADR-0024). Lives in `src/pynetappfoundry/cache/ontap/cluster/traits/mapping.py`. |
 | CloudMetadata | `CLOUD_METADATA_MAPPING` | `CloudMetadata` | Hand-written. CLI-only (no API endpoint). Computed link fields built as post-processing in collector. |
 

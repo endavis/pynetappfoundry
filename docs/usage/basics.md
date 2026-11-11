@@ -240,13 +240,13 @@ nf cache schema --flat
 
 # Query specific fields (useful for scripting)
 nf cache query cluster1 cloud.provider cloud.region
-nf cache query cluster1 cluster.ontap_version --raw
+nf cache query cluster1 cluster.version.full --raw
 
 # Query all clusters at once
 nf cache query --all cloud.instance_type
 
 # Query with filtering
-nf cache query -f '{"env":"Prod"}' cluster.ontap_version
+nf cache query -f '{"env":"Prod"}' cluster.version.full
 
 # Bypass cache and fetch live data
 nf cache query cluster1 cloud.provider --live

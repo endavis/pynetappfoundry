@@ -117,7 +117,7 @@ def test_stale_file_fails(repo: Path, capsys: pytest.CaptureFixture[str]) -> Non
 
 
 def test_excluded_endpoint_is_not_stale(repo: Path) -> None:
-    assert _EXCLUDED_ENDPOINTS["ontap"] == frozenset({"/cluster"})
+    assert _EXCLUDED_ENDPOINTS == {}
     assert _check(_gen()) is True
 
 
@@ -168,7 +168,8 @@ def test_committed_tree_has_generated_models(api: str) -> None:
     assert len(headed) > 100
 
 
-def test_excluded_cluster_model_is_hand_written() -> None:
-    assert "/cluster" in _EXCLUDED_ENDPOINTS["ontap"]
+def test_cluster_model_is_generated_and_traits_model_is_hand_written() -> None:
     cluster = MODELS_ROOT / "ontap" / "cluster" / "model.py"
-    assert not cluster.read_text().startswith(GENERATED_HEADER)
+    traits = MODELS_ROOT / "ontap" / "cluster" / "traits" / "model.py"
+    assert cluster.read_text().startswith(GENERATED_HEADER)
+    assert not traits.read_text().startswith(GENERATED_HEADER)

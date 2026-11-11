@@ -208,8 +208,8 @@ class LazyClusterMetadata:
 
         for path, model_class, is_list in entries:
             # Route through DataSource.query() when a TypeMapping exists.
-            # A handful of pure-singleton container models (ClusterInfo,
-            # NetworkInfo) don't have a TypeMapping; fall back to
+            # A handful of pure-singleton container models (NetworkInfo,
+            # StorageInfo) don't have a TypeMapping; fall back to
             # ``_query_registry_subset`` over the backend's shared cache
             # DB connection so all I/O still flows through the unified
             # stack.

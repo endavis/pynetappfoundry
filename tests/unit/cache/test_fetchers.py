@@ -15,11 +15,11 @@ from pynetappfoundry.cache.fetchers import (
     parse_vm_instance_output,
 )
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.cluster.mapping import CLUSTER_MAPPING
+from pynetappfoundry.cache.ontap.cluster.mapping import ONTAPCLUSTER_MAPPING
 from pynetappfoundry.cache.ontap.cluster.nodes.mapping import ONTAPNODERESPONSE_MAPPING
 from pynetappfoundry.cache.ontap.storage.volumes.mapping import ONTAPVOLUME_MAPPING
 from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
-from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
+from pynetappfoundry.models.ontap.cluster.model import OntapCluster
 from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
 from pynetappfoundry.models.ontap.cluster.traits.model import ClusterTraits
 from pynetappfoundry.models.ontap.storage.volumes.model import OntapVolume
@@ -30,7 +30,7 @@ from pynetappfoundry.models.ontap.storage.volumes.model import OntapVolume
 
 
 class TestResponseShapeMetadata:
-    """TypeMapping.response_shape default + CLUSTER_MAPPING singleton flag."""
+    """TypeMapping.response_shape default + ONTAPCLUSTER_MAPPING singleton flag."""
 
     def test_default_response_shape_envelope(self) -> None:
         """Unflagged TypeMappings default to ``"envelope"``."""
@@ -42,8 +42,8 @@ class TestResponseShapeMetadata:
         assert tm.response_shape == "envelope"
 
     def test_cluster_mapping_marked_singleton(self) -> None:
-        """``CLUSTER_MAPPING.response_shape`` is ``"singleton"``."""
-        assert CLUSTER_MAPPING.response_shape == "singleton"
+        """``ONTAPCLUSTER_MAPPING.response_shape`` is ``"singleton"``."""
+        assert ONTAPCLUSTER_MAPPING.response_shape == "singleton"
 
     def test_nodes_mapping_envelope(self) -> None:
         """The nodes mapping uses the default envelope shape."""
@@ -55,7 +55,12 @@ class TestRegistryReverseLookup:
 
     def test_lookup_by_model_class_returns_mapping(self) -> None:
         """Class-keyed lookup returns the registered mapping."""
-        assert model_registry.get_mapping_by_model_class(ClusterInfo) is CLUSTER_MAPPING
+        # The registered mapping is the overlay-applied copy of the module constant.
+        mapping = model_registry.get_mapping_by_model_class(OntapCluster)
+        assert mapping is model_registry.get_mapping("OntapCluster")
+        assert mapping is not None
+        assert mapping.name == ONTAPCLUSTER_MAPPING.name
+        assert mapping.model_class is ONTAPCLUSTER_MAPPING.model_class
 
     def test_lookup_unregistered_class_returns_none(self) -> None:
         """Unregistered classes return ``None``."""
@@ -67,7 +72,7 @@ class TestRegistryReverseLookup:
 
 
 # ---------------------------------------------------------------------------
-# Singleton fetch path (ClusterInfo)
+# Singleton fetch path (OntapCluster)
 # ---------------------------------------------------------------------------
 
 
@@ -85,7 +90,7 @@ def _make_api_client(
 
 _CLUSTER_RESPONSE: dict[str, Any] = {
     "name": "cluster1",
-    "uuid": "cluster-uuid-1",
+    "uuid": "00000000-0000-0000-0000-000000000001",
     "version": {"full": "9.14.1", "generation": 9, "major": 14, "minor": 1},
 }
 
@@ -107,36 +112,36 @@ _SINGLE_NODE_RESPONSE: dict[str, Any] = {
 
 
 class TestFetchSingleton:
-    """fetch() singleton path for ClusterInfo (response_shape='singleton')."""
+    """fetch() singleton path for OntapCluster (response_shape='singleton')."""
 
     def test_calls_call_endpoint_not_get_all_records(self) -> None:
         """Singleton path uses call_endpoint, never get_all_records."""
         client = _make_api_client(call_endpoint_response=_CLUSTER_RESPONSE)
         # Supply results_cache so the compute_is_ha hook short-circuits.
         result = fetch(
-            ClusterInfo,
+            OntapCluster,
             cluster="c1",
             config=None,
             api_client=client,
             results_cache={"OntapNodeResponse": []},
         )
-        assert isinstance(result, ClusterInfo)
-        assert result.cluster_name == "cluster1"
+        assert isinstance(result, OntapCluster)
+        assert result.name == "cluster1"
         assert client.call_endpoint.call_count == 1
         assert client.get_all_records.call_count == 0
 
     def test_singleton_uses_correct_url(self) -> None:
-        """The URL passed to call_endpoint is CLUSTER_MAPPING.build_collection_url()."""
+        """The URL passed to call_endpoint is ONTAPCLUSTER_MAPPING.build_collection_url()."""
         client = _make_api_client(call_endpoint_response=_CLUSTER_RESPONSE)
         fetch(
-            ClusterInfo,
+            OntapCluster,
             cluster="c1",
             config=None,
             api_client=client,
             results_cache={"OntapNodeResponse": []},
         )
         called_url = client.call_endpoint.call_args[0][0]
-        assert called_url == CLUSTER_MAPPING.build_collection_url()
+        assert called_url == ONTAPCLUSTER_MAPPING.build_collection_url()
 
     def test_singleton_runs_compute_is_ha_with_two_nodes(self) -> None:
         """compute_is_ha runs on the singleton result and sets is_ha=True for HA."""
@@ -144,26 +149,26 @@ class TestFetchSingleton:
         node_a = OntapNodeResponse(name="a")
         node_b = OntapNodeResponse(name="b")
         result = fetch(
-            ClusterInfo,
+            ClusterTraits,
             cluster="c1",
             config=None,
             api_client=client,
             results_cache={"OntapNodeResponse": [node_a, node_b]},
         )
-        assert isinstance(result, ClusterInfo)
+        assert isinstance(result, ClusterTraits)
         assert result.is_ha is True
 
     def test_singleton_runs_compute_is_ha_with_single_node(self) -> None:
         """is_ha=False when a single node is in the results cache."""
         client = _make_api_client(call_endpoint_response=_CLUSTER_RESPONSE)
         result = fetch(
-            ClusterInfo,
+            ClusterTraits,
             cluster="c1",
             config=None,
             api_client=client,
             results_cache={"OntapNodeResponse": [OntapNodeResponse(name="solo")]},
         )
-        assert isinstance(result, ClusterInfo)
+        assert isinstance(result, ClusterTraits)
         assert result.is_ha is False
 
     def test_singleton_with_results_cache_does_not_fan_out(self) -> None:
@@ -171,7 +176,7 @@ class TestFetchSingleton:
         client = _make_api_client(call_endpoint_response=_CLUSTER_RESPONSE)
         # Pre-populated cache → no extra get_all_records call.
         fetch(
-            ClusterInfo,
+            OntapCluster,
             cluster="c1",
             config=None,
             api_client=client,
@@ -186,12 +191,12 @@ class TestFetchSingleton:
         client.get_all_records = MagicMock(return_value=_NODES_RESPONSE)
 
         result = fetch(
-            ClusterInfo,
+            ClusterTraits,
             cluster="c1",
             config=None,
             api_client=client,
         )
-        assert isinstance(result, ClusterInfo)
+        assert isinstance(result, ClusterTraits)
         # Two nodes → is_ha=True
         assert result.is_ha is True
         # Recursive call must have happened.
@@ -205,25 +210,25 @@ class TestFetchSingleton:
         client.call_endpoint = MagicMock(return_value=_CLUSTER_RESPONSE)
         client.get_all_records = MagicMock(return_value=_SINGLE_NODE_RESPONSE)
         result = fetch(
-            ClusterInfo,
+            ClusterTraits,
             cluster="c1",
             config=None,
             api_client=client,
         )
-        assert isinstance(result, ClusterInfo)
+        assert isinstance(result, ClusterTraits)
         assert result.is_ha is False
 
     def test_singleton_empty_response_returns_default_instance(self) -> None:
         """A None/empty singleton response yields a default model instance."""
         client = _make_api_client(call_endpoint_response=None)
         result = fetch(
-            ClusterInfo,
+            OntapCluster,
             cluster="c1",
             config=None,
             api_client=client,
             results_cache={"OntapNodeResponse": []},
         )
-        assert isinstance(result, ClusterInfo)
+        assert isinstance(result, OntapCluster)
 
 
 # ---------------------------------------------------------------------------
@@ -708,7 +713,7 @@ class TestFetchDoesNotPersist:
         client = _make_api_client(call_endpoint_response=_CLUSTER_RESPONSE)
         with patch("pynetappfoundry.cache.db.ClusterMetadataDB.set", autospec=True) as mock_set:
             fetch(
-                ClusterInfo,
+                OntapCluster,
                 cluster="c1",
                 config=None,
                 api_client=client,
@@ -834,8 +839,8 @@ class TestClusterTraitsRegistration:
         assert (model_module, qualname) == (ClusterTraits.__module__, "ClusterTraits")
         assert overlay is None
 
-    def test_moved_names_stay_importable_from_cluster_mapping(self) -> None:
-        from pynetappfoundry.cache.ontap.cluster import mapping as cluster_mapping
+    def test_moved_names_import_from_traits_mapping(self) -> None:
+        """The hooks and CVO helpers live in ``traits.mapping`` (#967 Part B)."""
         from pynetappfoundry.cache.ontap.cluster.traits import mapping as traits_mapping
 
         for name in (
@@ -845,4 +850,4 @@ class TestClusterTraitsRegistration:
             "_CLOUD_MODEL_PREFIXES",
             "_CLOUD_SERIAL_PREFIXES",
         ):
-            assert getattr(cluster_mapping, name) is getattr(traits_mapping, name)
+            assert hasattr(traits_mapping, name)

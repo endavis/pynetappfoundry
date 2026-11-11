@@ -20,24 +20,33 @@ class TestDataSourceResolveMapping:
 
     The name-keyed lookup (``model_registry.get_mapping(model_class.__name__)``)
     silently fails when a mapping's registered name does not match the
-    model class name — e.g., CLUSTER_MAPPING is registered as ``"Cluster"``
-    but the model class is :class:`ClusterInfo`. Before #524, this caused
-    ``nf reports html`` to fail at runtime with "No TypeMapping registered
-    for 'ClusterInfo'" even though CLUSTER_MAPPING was registered correctly.
+    model class name. Before #524, this caused ``nf reports html`` to fail at
+    runtime with "No TypeMapping registered for 'ClusterInfo'" even though the
+    mapping (registered as ``"Cluster"``) was registered correctly. The real
+    pair is gone since #967 (``OntapCluster`` / ``"OntapCluster"``), so a
+    synthetic mapping whose name differs from its class keeps the regression.
     """
 
     def test_resolve_mapping_uses_class_keyed_index(
         self,
         mock_config: Any,
     ) -> None:
-        """Real consumer regression: ClusterInfo resolves to CLUSTER_MAPPING."""
-        # Import to ensure the mapping is registered.
-        from pynetappfoundry.cache.ontap.cluster.mapping import CLUSTER_MAPPING
-        from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
-
-        ds = DataSource(mock_config)
-        resolved = ds._resolve_mapping(ClusterInfo)
-        assert resolved is CLUSTER_MAPPING
+        """A mapping registered under a name that is not its class name resolves."""
+        mapping = TypeMapping(
+            name="RegisteredUnderOtherName",
+            model_class=FakeVolume,
+            api_endpoint="/storage/fake-volumes?fields=*",
+            api_type="ontap",
+            identifier_field="uuid",
+            fields=(FieldMapping(cache_attr="name", cache_strategy="cache"),),
+        )
+        model_registry.register_mapping("RegisteredUnderOtherName", mapping)
+        try:
+            assert model_registry.get_mapping(FakeVolume.__name__) is None
+            ds = DataSource(mock_config)
+            assert ds._resolve_mapping(FakeVolume) is mapping
+        finally:
+            model_registry.unregister_mapping("RegisteredUnderOtherName")
 
     def test_resolve_mapping_raises_for_unregistered_class(
         self,

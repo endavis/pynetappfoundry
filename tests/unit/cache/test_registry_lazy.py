@@ -455,10 +455,10 @@ class TestStartup:
     def test_cluster_info_maps_to_cluster(self) -> None:
         out = _run_python(
             "from pynetappfoundry.cache import model_registry\n"
-            "from pynetappfoundry.models.ontap.cluster.model import ClusterInfo\n"
-            "print(model_registry.get_mapping_by_model_class(ClusterInfo).name)\n"
+            "from pynetappfoundry.models.ontap.cluster.model import OntapCluster\n"
+            "print(model_registry.get_mapping_by_model_class(OntapCluster).name)\n"
         )
-        assert out.stdout.strip() == "Cluster"
+        assert out.stdout.strip() == "OntapCluster"
 
     def test_cli_import_is_lazy(self) -> None:
         code = textwrap.dedent(

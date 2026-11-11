@@ -12,7 +12,8 @@ from pydantic import BaseModel
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.collector import MetadataCollector
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.ontap.cluster.mapping import (
+from pynetappfoundry.cache.ontap.cluster.traits.mapping import (
+    CLUSTERTRAITS_MAPPING,
     _is_cloud_node,
     compute_is_cloud,
     compute_is_ha,
@@ -23,7 +24,6 @@ from pynetappfoundry.cache.ontap.protocols.nfs.export_policies.mapping import (
 from pynetappfoundry.cache.ontap.storage.snapshot_policies.mapping import (
     ONTAPSNAPSHOTPOLICY_MAPPING,
 )
-from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
 from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
 from pynetappfoundry.models.ontap.cluster.traits.model import ClusterTraits
 
@@ -98,39 +98,38 @@ class TestComputeIsHa:
 
     def test_is_ha_true_multi_node(self) -> None:
         """2+ nodes sets is_ha=True."""
-        cluster = ClusterInfo(cluster_name="test")
+        cluster = ClusterTraits()
         results: dict[str, Any] = {"OntapNodeResponse": ["node1", "node2"]}
         updated = compute_is_ha(cluster, results)
         assert updated.is_ha is True
 
     def test_is_ha_false_single_node(self) -> None:
         """1 node sets is_ha=False."""
-        cluster = ClusterInfo(cluster_name="test")
+        cluster = ClusterTraits()
         results: dict[str, Any] = {"OntapNodeResponse": ["node1"]}
         updated = compute_is_ha(cluster, results)
         assert updated.is_ha is False
 
     def test_is_ha_false_no_nodes(self) -> None:
         """Empty nodes list sets is_ha=False."""
-        cluster = ClusterInfo(cluster_name="test")
+        cluster = ClusterTraits()
         results: dict[str, Any] = {"OntapNodeResponse": []}
         updated = compute_is_ha(cluster, results)
         assert updated.is_ha is False
 
     def test_is_ha_false_missing_nodes_key(self) -> None:
         """Missing 'OntapNodeResponse' key in results sets is_ha=False."""
-        cluster = ClusterInfo(cluster_name="test")
+        cluster = ClusterTraits()
         results: dict[str, Any] = {}
         updated = compute_is_ha(cluster, results)
         assert updated.is_ha is False
 
     def test_preserves_other_fields(self) -> None:
-        """compute_is_ha preserves other ClusterInfo fields."""
-        cluster = ClusterInfo(cluster_name="prod", ontap_version="9.14.1")
+        """compute_is_ha preserves other ClusterTraits fields."""
+        cluster = ClusterTraits(is_cloud=True)
         results: dict[str, Any] = {"OntapNodeResponse": ["n1", "n2"]}
         updated = compute_is_ha(cluster, results)
-        assert updated.cluster_name == "prod"
-        assert updated.ontap_version == "9.14.1"
+        assert updated.is_cloud is True
         assert updated.is_ha is True
 
 
@@ -315,13 +314,11 @@ class TestEvaluateDerivedFields:
 
 
 class TestClusterMappingIsHa:
-    """Verify the is_ha derived field is declared on CLUSTER_MAPPING."""
+    """Verify the is_ha derived field is declared on CLUSTERTRAITS_MAPPING."""
 
     def test_cluster_mapping_has_is_ha_derived_field(self) -> None:
-        """CLUSTER_MAPPING declares is_ha as a derived field with a node dependency."""
-        from pynetappfoundry.cache.ontap.cluster.mapping import CLUSTER_MAPPING
-
-        derived = CLUSTER_MAPPING.derived_fields()
+        """CLUSTERTRAITS_MAPPING declares is_ha as a derived field with a node dependency."""
+        derived = CLUSTERTRAITS_MAPPING.derived_fields()
         by_attr = {f.cache_attr: f for f in derived}
         assert "is_ha" in by_attr
         field = by_attr["is_ha"]
@@ -330,10 +327,8 @@ class TestClusterMappingIsHa:
         assert field.depends_on == (OntapNodeResponse,)
 
     def test_cluster_mapping_has_is_cloud_derived_field(self) -> None:
-        """CLUSTER_MAPPING declares is_cloud as a derived field with a node dependency."""
-        from pynetappfoundry.cache.ontap.cluster.mapping import CLUSTER_MAPPING
-
-        derived = CLUSTER_MAPPING.derived_fields()
+        """CLUSTERTRAITS_MAPPING declares is_cloud as a derived field with a node dependency."""
+        derived = CLUSTERTRAITS_MAPPING.derived_fields()
         by_attr = {f.cache_attr: f for f in derived}
         assert "is_cloud" in by_attr
         field = by_attr["is_cloud"]
@@ -391,13 +386,13 @@ class TestComputeIsCloud:
 
     def test_empty_nodes_returns_false(self) -> None:
         """No nodes → is_cloud=False."""
-        cluster = ClusterInfo(cluster_name="test")
+        cluster = ClusterTraits()
         updated = compute_is_cloud(cluster, {"OntapNodeResponse": []})
         assert updated.is_cloud is False
 
     def test_all_onprem_returns_false(self) -> None:
         """All on-prem nodes → is_cloud=False."""
-        cluster = ClusterInfo(cluster_name="test")
+        cluster = ClusterTraits()
         nodes = [
             OntapNodeResponse(name="n1", model_="FAS8200", serial_number="721234"),
             OntapNodeResponse(name="n2", model_="FAS8200", serial_number="721235"),
@@ -407,14 +402,14 @@ class TestComputeIsCloud:
 
     def test_one_cvo_node_returns_true(self) -> None:
         """Single CVO node → is_cloud=True."""
-        cluster = ClusterInfo(cluster_name="test")
+        cluster = ClusterTraits()
         nodes = [OntapNodeResponse(name="cvo", model_="CDvM200")]
         updated = compute_is_cloud(cluster, {"OntapNodeResponse": nodes})
         assert updated.is_cloud is True
 
     def test_mixed_nodes_returns_true(self) -> None:
         """Mixed set with any CVO node → is_cloud=True."""
-        cluster = ClusterInfo(cluster_name="test")
+        cluster = ClusterTraits()
         nodes = [
             OntapNodeResponse(name="fas", model_="FAS8200"),
             OntapNodeResponse(name="cvo", serial_number="9092014999"),
@@ -424,18 +419,17 @@ class TestComputeIsCloud:
 
     def test_reads_registry_key_alias(self) -> None:
         """compute_is_cloud reads the 'OntapNodeResponse' key."""
-        cluster = ClusterInfo(cluster_name="test")
+        cluster = ClusterTraits()
         nodes = [OntapNodeResponse(name="cvo", model_="CDvM200")]
         updated = compute_is_cloud(cluster, {"OntapNodeResponse": nodes})
         assert updated.is_cloud is True
 
     def test_preserves_other_fields(self) -> None:
-        """compute_is_cloud preserves other ClusterInfo fields."""
-        cluster = ClusterInfo(cluster_name="prod", ontap_version="9.14.1")
+        """compute_is_cloud preserves other ClusterTraits fields."""
+        cluster = ClusterTraits(is_ha=True)
         nodes = [OntapNodeResponse(name="cvo", model_="CDvM200")]
         updated = compute_is_cloud(cluster, {"OntapNodeResponse": nodes})
-        assert updated.cluster_name == "prod"
-        assert updated.ontap_version == "9.14.1"
+        assert updated.is_ha is True
         assert updated.is_cloud is True
 
 
@@ -788,11 +782,11 @@ class TestCollectAllByteIdentity:
         result = collector.collect_all("test-cluster")
 
         assert result.cluster_name == "test-cluster"
-        assert result.cluster.cluster_name == "test-cluster"
-        assert result.cluster.cluster_uuid == "33333333-3333-3333-3333-333333333333"
+        assert result.cluster.name == "test-cluster"
+        assert result.cluster.uuid == "33333333-3333-3333-3333-333333333333"
         assert len(result.nodes) == 2
         # is_ha is a derived field — must be True given two nodes.
-        assert result.cluster.is_ha is True
+        assert result.cluster_traits.is_ha is True
         # Composite phases default to empty containers (no records).
         assert result.storage.aggregates == []
         assert result.storage.volumes == []
@@ -833,23 +827,23 @@ class TestNodesFetchedOnce:
         result = collector.collect_all("test-cluster")
 
         assert len(self._node_requests(client)) == 1
-        assert result.cluster.is_ha is True
+        assert result.cluster_traits.is_ha is True
         assert len(result.nodes) == 2
 
     def test_cluster_info_reuses_nodes_phase_result(self) -> None:
         client = _build_mock_api_client()
         collector = MetadataCollector(api_client=client, parallel=False)
         nodes = collector.collect_nodes()
-        cluster = collector.collect_cluster_info()
+        traits = collector.collect_cluster_traits()
 
         assert len(self._node_requests(client)) == 1
-        assert cluster.is_ha is True
+        assert traits.is_ha is True
         assert len(nodes) == 2
 
     def test_cluster_info_alone_requests_nodes_once(self) -> None:
         client = _build_mock_api_client()
         collector = MetadataCollector(api_client=client, parallel=False)
-        collector.collect_cluster_info()
+        collector.collect_cluster_traits()
         assert len(self._node_requests(client)) == 1
 
 
@@ -970,10 +964,10 @@ class TestCollectGroup:
         """The mock cluster has two nodes, so the derived is_ha must be set."""
         collector = MetadataCollector(api_client=_build_mock_api_client(), parallel=False)
 
-        cluster = collector.collect_group("test-cluster", "cluster")
+        traits = collector.collect_group("test-cluster", "cluster_traits")
 
-        assert isinstance(cluster, ClusterInfo)
-        assert cluster.is_ha is True
+        assert isinstance(traits, ClusterTraits)
+        assert traits.is_ha is True
 
     def test_shared_dependency_is_collected_once(self) -> None:
         """nodes, needed by cluster and cloud, is fetched once per collector."""

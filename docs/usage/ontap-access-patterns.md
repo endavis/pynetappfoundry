@@ -60,7 +60,7 @@ See [ADR-0010](../decisions/0010-clusterentry-and-namespace-access-pattern.md) f
 All three modes use the same call site — `cluster_entry.ontap` — and differ only in how `Config` is constructed and whether a cache DB exists for the cluster.
 
 1. **Cache hit** — the per-cluster SQLite cache exists, so `LazyClusterMetadata` serves attributes directly from DB rows. Sub-millisecond reads. This is the default on any cluster whose cache has been populated.
-2. **Cache miss → on-demand fetch** — no cache DB, or no snapshot for this cluster in it. Each field group is fetched live on first access by the matching `MetadataCollector` phase, the same code `nf cache refresh` runs, so groups match a refresh (derived fields included). A group pulls in only what it depends on: `cluster` also fetches `nodes` (for `is_ha`), and `cloud` also fetches `nodes` and `cluster`. A cluster that has a snapshot is read from the cache only; an empty collection in the snapshot does not trigger a live fetch.
+2. **Cache miss → on-demand fetch** — no cache DB, or no snapshot for this cluster in it. Each field group is fetched live on first access by the matching `MetadataCollector` phase, the same code `nf cache refresh` runs, so groups match a refresh (derived fields included). A group pulls in only what it depends on: `cluster_traits` also fetches `nodes` (for `is_ha`), and `cloud` also fetches `nodes` and `cluster_traits`. A cluster that has a snapshot is read from the cache only; an empty collection in the snapshot does not trigger a live fetch.
 3. **Forced live** — the caller built `Config(no_cache=True)` (the CLI sets this when `--live` is passed via `@with_config`). `ClusterEntry.ontap` never opens the cache DB and loads every field group live, as in mode 2 (or over SSH for `cloud`).
 
 In modes 2 and 3 the API and SSH clients are built on the first attribute access. If neither can be built, for example because credentials are missing, that access raises `ConfigurationError` rather than returning empty data (#869).
@@ -72,7 +72,7 @@ In modes 2 and 3 the API and SSH clients are built on the first attribute access
 | Attribute | Type | Source |
 |---|---|---|
 | `cloud` | `list[CloudMetadata]` | REST, SSH fallback (`virtual-machine instance show`) |
-| `cluster` | `ClusterInfo` | REST |
+| `cluster` | `OntapCluster` | REST |
 | `nodes` | `list[OntapNodeResponse]` | REST |
 | `network` | `NetworkInfo` | REST |
 | `storage` | `StorageInfo` | REST |

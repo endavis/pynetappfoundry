@@ -81,7 +81,7 @@ cluster = cast(ClusterEntry, config.data["clusters"]["cluster1"])
 # cache that `nf cache refresh` fills, and fetches live when there is none.
 metadata = cluster.ontap
 if metadata is not None:
-    print(metadata.cluster.ontap_version)
+    print(metadata.cluster.version.full)
 
 # Low level: call the ONTAP REST API directly (cluster first, then config)
 client = ONTAPAPIClient(cluster, config)

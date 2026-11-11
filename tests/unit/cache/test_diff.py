@@ -21,7 +21,7 @@ from pynetappfoundry.cache.diff import (
     format_diff_summary,
 )
 from pynetappfoundry.models.ontap.cluster.mediators.model import OntapMediatorResponse
-from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
+from pynetappfoundry.models.ontap.cluster.model import OntapCluster, OntapClusterVersion
 from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
 from pynetappfoundry.models.ontap.protocols.nfs.export_policies.model import OntapExportPolicy
 from pynetappfoundry.models.ontap.snapmirror.relationships.model import (
@@ -297,7 +297,7 @@ class TestComputeDiff:
         """before=None records all entities as 'added'."""
         md = _make_metadata(
             nodes=[_node(UUID1, "n1")],
-            cluster=ClusterInfo(cluster_name="test-cluster"),
+            cluster=OntapCluster(name="test-cluster"),
         )
         changes = compute_diff(None, md)
         added = [c for c in changes if c["type"] == "added"]
@@ -311,7 +311,7 @@ class TestComputeDiff:
         """Identical snapshots produce empty diff."""
         md = _make_metadata(
             nodes=[_node(UUID1, "n1")],
-            cluster=ClusterInfo(cluster_name="test-cluster"),
+            cluster=OntapCluster(name="test-cluster"),
         )
         changes = compute_diff(md, md)
         assert changes == []
@@ -344,7 +344,7 @@ class TestDiffClusterInfo:
 
     def test_initial_capture(self) -> None:
         """Records cluster as 'added' on initial capture."""
-        md = _make_metadata(cluster=ClusterInfo(cluster_name="test-cluster"))
+        md = _make_metadata(cluster=OntapCluster(name="test-cluster"))
         changes = _diff_cluster_info(None, md)
         assert len(changes) == 1
         assert changes[0]["type"] == "added"
@@ -353,24 +353,64 @@ class TestDiffClusterInfo:
 
     def test_no_change(self) -> None:
         """Identical cluster info produces empty diff."""
-        md = _make_metadata(cluster=ClusterInfo(cluster_name="c1", ontap_version="9.14"))
+        md = _make_metadata(
+            cluster=OntapCluster(name="c1", version=OntapClusterVersion(full="9.14"))
+        )
         changes = _diff_cluster_info(md, md)
         assert changes == []
 
     def test_field_modified(self) -> None:
         """Changed field detected."""
         before = _make_metadata(
-            cluster=ClusterInfo(cluster_name="c1", ontap_version="9.13"),
+            cluster=OntapCluster(name="c1", version=OntapClusterVersion(full="9.13")),
         )
         after = _make_metadata(
-            cluster=ClusterInfo(cluster_name="c1", ontap_version="9.14"),
+            cluster=OntapCluster(name="c1", version=OntapClusterVersion(full="9.14")),
         )
         changes = _diff_cluster_info(before, after)
         assert len(changes) == 1
         assert changes[0]["type"] == "modified"
-        assert changes[0]["field"] == "ontap_version"
-        assert changes[0]["old"] == "9.13"
-        assert changes[0]["new"] == "9.14"
+        assert changes[0]["field"] == "version"
+        assert changes[0]["old"].full == "9.13"
+        assert changes[0]["new"].full == "9.14"
+
+
+class TestDiffClusterTraits:
+    """#967: ``ClusterTraits`` changes report under category ``cluster``."""
+
+    def test_is_ha_change_reported_under_cluster(self) -> None:
+        from pynetappfoundry.models.ontap.cluster.traits.model import ClusterTraits
+
+        before = _make_metadata(
+            cluster=OntapCluster(name="c1"), cluster_traits=ClusterTraits(is_ha=False)
+        )
+        after = _make_metadata(
+            cluster=OntapCluster(name="c1"), cluster_traits=ClusterTraits(is_ha=True)
+        )
+        changes = _diff_cluster_info(before, after)
+        assert len(changes) == 1
+        assert changes[0]["category"] == "cluster"
+        assert changes[0]["entity"] == "c1"
+        assert changes[0]["field"] == "is_ha"
+        assert changes[0]["old"] is False
+        assert changes[0]["new"] is True
+
+    def test_nested_changes_serialize_into_history(self) -> None:
+        import json
+
+        from pynetappfoundry.cache._json import json_default
+
+        before = _make_metadata(
+            cluster=OntapCluster(name="c1", version=OntapClusterVersion(full="9.13"))
+        )
+        after = _make_metadata(
+            cluster=OntapCluster(name="c1", version=OntapClusterVersion(full="9.14"))
+        )
+        change = _diff_cluster_info(before, after)[0]
+        dumped = json.loads(json.dumps(change, default=json_default))
+        assert dumped["field"] == "version"
+        assert dumped["entity"] == "c1"
+        assert dumped["new"]["full"] == "9.14"
 
 
 # ---------------------------------------------------------------------------

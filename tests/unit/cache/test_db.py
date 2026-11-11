@@ -20,10 +20,41 @@ from pynetappfoundry.cache.db import (
     realtime_attrs,
 )
 from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
-from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
+from pynetappfoundry.models.ontap.cluster.model import OntapCluster, OntapClusterVersion
 from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
 from pynetappfoundry.models.ontap.cluster.traits.model import ClusterTraits
 from pynetappfoundry.models.ontap.storage.volumes.model import OntapVolume
+
+
+class _DeclaresClusterName(BaseModel):
+    """Test-only cached model that declares its own ``cluster_name`` column (#895)."""
+
+    id: int = 0
+    cluster_name: str = ""
+
+
+def _add_declaring_model(db: ClusterMetadataDB, cluster: str) -> None:
+    """Register ``_DeclaresClusterName`` on *db* only and store one row."""
+    from pynetappfoundry.cache.db import _model_to_row
+    from pynetappfoundry.cache.db_schema import TableSpec, generate_table_ddl
+
+    spec = TableSpec(
+        table_name="declaresclustername",
+        model_class=_DeclaresClusterName,
+        metadata_path="declares",
+        is_list=True,
+        has_uuid=False,
+    )
+    db._registry = {**db._registry, "declares": spec}
+    db.conn.execute(generate_table_ddl(spec.table_name, _DeclaresClusterName))
+    row = _model_to_row(_DeclaresClusterName(id=1, cluster_name=cluster), spec.model_class)
+    cols = ", ".join(f'"{c}"' for c in row)
+    marks = ", ".join("?" for _ in row)
+    db.conn.execute(
+        f"INSERT INTO {spec.table_name} ({cols}) VALUES ({marks})",
+        list(row.values()),
+    )
+    db.conn.commit()
 
 
 class TestValidateClusterName:
@@ -72,9 +103,9 @@ class TestClusterMetadataDB:
         return CachedClusterMetadata(
             cluster_name="test-cluster",
             cloud=[CloudMetadata(provider="AWS", region="us-east-1")],
-            cluster=ClusterInfo(
-                cluster_name="test-cluster",
-                ontap_version="9.14.1",
+            cluster=OntapCluster(
+                name="test-cluster",
+                version=OntapClusterVersion(full="9.14.1"),
             ),
             nodes=[
                 OntapNodeResponse(name="node1", serial_number="123"),
@@ -99,7 +130,7 @@ class TestClusterMetadataDB:
         assert retrieved is not None
         assert retrieved.cluster_name == "test-cluster"
         assert retrieved.cloud[0].provider == "AWS"
-        assert retrieved.cluster.ontap_version == "9.14.1"
+        assert retrieved.cluster.version.full == "9.14.1"
         assert len(retrieved.nodes) == 2
 
     def test_get_nonexistent(self, db: ClusterMetadataDB) -> None:
@@ -293,8 +324,8 @@ class TestClusterMetadataDB:
 
         assert got is not None
         assert got.cluster_name == sample_metadata.cluster_name
-        assert got.cluster.ontap_version == sample_metadata.cluster.ontap_version
-        assert got.cluster.cluster_name == sample_metadata.cluster.cluster_name
+        assert got.cluster.version.full == sample_metadata.cluster.version.full
+        assert got.cluster.name == sample_metadata.cluster.name
         assert len(got.nodes) == len(sample_metadata.nodes)
         assert got.nodes[0].name == sample_metadata.nodes[0].name
         assert got.nodes[1].serial_number == sample_metadata.nodes[1].serial_number
@@ -341,17 +372,25 @@ class TestClusterMetadataDB:
 
     def test_query_model_keeps_declared_cluster_name(self, db: ClusterMetadataDB) -> None:
         """query_model keeps cluster_name when the model declares it (#895)."""
+        _add_declaring_model(db, "test-cluster")
+        results = cast(list[_DeclaresClusterName], db.query_model("test-cluster", "declares"))
+        assert [r.cluster_name for r in results] == ["test-cluster"]
+
+    def test_query_model_returns_nested_cluster(self, db: ClusterMetadataDB) -> None:
+        """query_model returns the generated OntapCluster with its nested version."""
         db.set(
             "test-cluster",
             CachedClusterMetadata(
                 cluster_name="test-cluster",
-                cluster=ClusterInfo(cluster_name="test-cluster", ontap_version="9.14.1"),
+                cluster=OntapCluster(
+                    name="test-cluster", version=OntapClusterVersion(full="9.14.1")
+                ),
             ),
         )
-        results = cast(list[ClusterInfo], db.query_model("test-cluster", "cluster"))
+        results = cast(list[OntapCluster], db.query_model("test-cluster", "cluster"))
         assert len(results) == 1
-        assert results[0].cluster_name == "test-cluster"
-        assert results[0].ontap_version == "9.14.1"
+        assert results[0].name == "test-cluster"
+        assert results[0].version.full == "9.14.1"
 
     def test_query_model_strips_undeclared_cluster_name(self, db: ClusterMetadataDB) -> None:
         """query_model still strips the FK column for models without cluster_name (#895)."""
@@ -385,7 +424,7 @@ class TestClusterMetadataDB:
         db.import_json("test-cluster", exported)
         got = db.get("test-cluster")
         assert got is not None
-        assert got.cluster.ontap_version == "9.14.1"
+        assert got.cluster.version.full == "9.14.1"
         assert len(got.nodes) == 2
 
     def test_export_nonexistent(self, db: ClusterMetadataDB) -> None:
@@ -784,19 +823,30 @@ class TestQueryWithFilters:
 
     def test_keeps_declared_cluster_name(self, db: ClusterMetadataDB) -> None:
         """query_with_filters keeps cluster_name when the model declares it (#895)."""
+        _add_declaring_model(db, "test-cluster")
+        results = cast(
+            list[_DeclaresClusterName],
+            db.query_with_filters("test-cluster", "declares", ["id = 1"]),
+        )
+        assert [r.cluster_name for r in results] == ["test-cluster"]
+
+    def test_filters_cluster_on_top_level_name(self, db: ClusterMetadataDB) -> None:
+        """query_with_filters filters the generated OntapCluster on its top-level name."""
         db.set(
             "test-cluster",
             CachedClusterMetadata(
                 cluster_name="test-cluster",
-                cluster=ClusterInfo(cluster_name="test-cluster", ontap_version="9.14.1"),
+                cluster=OntapCluster(
+                    name="test-cluster", version=OntapClusterVersion(full="9.14.1")
+                ),
             ),
         )
         results = cast(
-            list[ClusterInfo],
-            db.query_with_filters("test-cluster", "cluster", ["ontap_version = '9.14.1'"]),
+            list[OntapCluster],
+            db.query_with_filters("test-cluster", "cluster", ["name = 'test-cluster'"]),
         )
         assert len(results) == 1
-        assert results[0].cluster_name == "test-cluster"
+        assert results[0].name == "test-cluster"
 
     def test_strips_undeclared_cluster_name(self, db: ClusterMetadataDB) -> None:
         """query_with_filters still strips the FK column for other models (#895)."""
@@ -838,7 +888,9 @@ class TestClusterMetadataDBMigration:
         meta = CachedClusterMetadata(
             cluster_name="migrated-cluster",
             cloud=[CloudMetadata(provider="GCP", region="us-central1")],
-            cluster=ClusterInfo(cluster_name="migrated-cluster", ontap_version="9.13.1"),
+            cluster=OntapCluster(
+                name="migrated-cluster", version=OntapClusterVersion(full="9.13.1")
+            ),
             nodes=[OntapNodeResponse(name="mnode1", serial_number="M001")],
         )
         conn.execute(
@@ -1522,45 +1574,40 @@ class TestUpgradeToV10:
     """#967: v10 creates and backfills ``clustertraits`` from ``clusterinfo``."""
 
     @staticmethod
-    def _make_v9_db(db_path: Path) -> None:
-        """Build a v9 database: current tables except clustertraits, plus a cached cluster."""
-        from pynetappfoundry.cache.db import _ensure_registry
-        from pynetappfoundry.cache.db_schema import (
-            generate_cluster_name_index_ddl,
-            generate_table_ddl,
-            generate_uuid_column_index_ddl,
-        )
+    def _make_v9_db(db_path: Path) -> ClusterMetadataDB:
+        """A database in the v9 shape: no clustertraits, a hand-written v9-era clusterinfo.
 
-        conn = sqlite3.connect(db_path)
-        conn.execute(
-            "CREATE TABLE cluster_metadata ("
-            "    cluster_name TEXT PRIMARY KEY,"
-            "    cached_at TEXT NOT NULL,"
-            "    cache_version TEXT NOT NULL"
+        The v10 migration is then called directly on its connection, so the
+        later migrations (v11 drops ``clusterinfo``) do not run.
+        """
+        db = ClusterMetadataDB(db_path=db_path)
+        db.conn.execute("DROP TABLE IF EXISTS clustertraits")
+        db.conn.execute("DROP TABLE IF EXISTS ontapcluster")
+        db.conn.execute(
+            "CREATE TABLE clusterinfo ("
+            "    _row_id INTEGER PRIMARY KEY AUTOINCREMENT,"
+            "    cluster_name TEXT NOT NULL,"
+            "    cluster_uuid TEXT,"
+            "    ontap_version TEXT,"
+            "    is_ha INTEGER,"
+            "    is_cloud INTEGER"
             ")"
         )
-        conn.execute("CREATE TABLE _schema_version (version INTEGER NOT NULL)")
-        conn.execute("INSERT INTO _schema_version (version) VALUES (9)")
-        for spec in _ensure_registry().values():
-            if spec.table_name == "clustertraits":
-                continue
-            conn.execute(generate_table_ddl(spec.table_name, spec.model_class))
-            conn.execute(generate_cluster_name_index_ddl(spec.table_name))
-            if spec.has_uuid:
-                conn.execute(generate_uuid_column_index_ddl(spec.table_name))
-        conn.execute("INSERT INTO clusterinfo (cluster_name, is_ha, is_cloud) VALUES ('c', 1, 1)")
-        conn.execute(
+        db.conn.execute(
+            "INSERT INTO clusterinfo (cluster_name, is_ha, is_cloud) VALUES ('c', 1, 1)"
+        )
+        db.conn.execute(
             "INSERT INTO cluster_metadata (cluster_name, cached_at, cache_version) "
             "VALUES ('c', '2026-01-01T00:00:00+00:00', '2.1')"
         )
-        conn.commit()
-        conn.close()
+        db.conn.commit()
+        return db
 
     def test_v9_database_gets_backfilled_traits_and_keeps_envelope(self, tmp_path: Path) -> None:
         db_path = tmp_path / "v9.db"
-        self._make_v9_db(db_path)
+        db = self._make_v9_db(db_path)
 
-        db = ClusterMetadataDB(db_path=db_path)
+        db._upgrade_to_v10()
 
         assert db.conn.execute("SELECT version FROM _schema_version").fetchone()[0] == (
             ClusterMetadataDB.SCHEMA_VERSION
@@ -1572,8 +1619,8 @@ class TestUpgradeToV10:
 
     def test_upgrade_to_v10_is_idempotent(self, tmp_path: Path) -> None:
         db_path = tmp_path / "v9.db"
-        self._make_v9_db(db_path)
-        db = ClusterMetadataDB(db_path=db_path)
+        db = self._make_v9_db(db_path)
+        db._upgrade_to_v10()
 
         db._upgrade_to_v10()
 
@@ -1598,3 +1645,84 @@ class TestUpgradeToV10:
         db.close()
         assert loaded is not None
         assert loaded.cluster_traits == ClusterTraits(is_ha=True, is_cloud=True)
+
+
+class TestUpgradeToV11:
+    """#967: ``clusterinfo`` is replaced by ``ontapcluster``; the envelope is cleared."""
+
+    @staticmethod
+    def _make_v10_db(db_path: Path) -> None:
+        from pynetappfoundry.cache.db_schema import (
+            ENVELOPE_DDL,
+            _ensure_registry,
+            generate_cluster_name_index_ddl,
+            generate_table_ddl,
+        )
+
+        conn = sqlite3.connect(db_path)
+        conn.execute(ENVELOPE_DDL)
+        conn.execute("CREATE TABLE _schema_version (version INTEGER NOT NULL)")
+        conn.execute("INSERT INTO _schema_version (version) VALUES (10)")
+        for spec in _ensure_registry().values():
+            if spec.table_name == "ontapcluster":
+                continue
+            conn.execute(generate_table_ddl(spec.table_name, spec.model_class))
+            conn.execute(generate_cluster_name_index_ddl(spec.table_name))
+        conn.execute("CREATE TABLE clusterinfo (cluster_name TEXT, cluster_uuid TEXT)")
+        conn.execute("INSERT INTO clusterinfo VALUES ('c', 'u')")
+        conn.execute(
+            "INSERT INTO cluster_metadata (cluster_name, cached_at, cache_version) "
+            "VALUES ('c', '2026-01-01T00:00:00+00:00', '2.2')"
+        )
+        conn.commit()
+        conn.close()
+
+    @staticmethod
+    def _tables(db: ClusterMetadataDB) -> set[str]:
+        return {r[0] for r in db.conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+
+    def test_v10_database_drops_clusterinfo_and_clears_envelope(self, tmp_path: Path) -> None:
+        db_path = tmp_path / "v10.db"
+        self._make_v10_db(db_path)
+
+        db = ClusterMetadataDB(db_path=db_path)
+
+        tables = self._tables(db)
+        assert "clusterinfo" not in tables
+        assert "ontapcluster" in tables
+        assert db.conn.execute("SELECT count(*) FROM cluster_metadata").fetchone()[0] == 0
+        assert db.conn.execute("SELECT version FROM _schema_version").fetchone()[0] == (
+            ClusterMetadataDB.SCHEMA_VERSION
+        )
+        db.close()
+
+    def test_upgrade_to_v11_is_idempotent(self, tmp_path: Path) -> None:
+        db = ClusterMetadataDB(db_path=tmp_path / "cur.db")
+        db.set("c", CachedClusterMetadata(cluster_name="c"))
+
+        db._upgrade_to_v11()
+
+        assert db.conn.execute("SELECT count(*) FROM cluster_metadata").fetchone()[0] == 1
+        db.close()
+
+    def test_fresh_database_has_ontapcluster_and_clustertraits(self, tmp_path: Path) -> None:
+        db = ClusterMetadataDB(db_path=tmp_path / "fresh.db")
+        tables = self._tables(db)
+        assert {"ontapcluster", "clustertraits"} <= tables
+        assert "clusterinfo" not in tables
+        db.close()
+
+    def test_cluster_with_management_interfaces_round_trips(self, tmp_path: Path) -> None:
+        from pynetappfoundry.models.ontap.cluster.model import OntapClusterManagementInterface2
+
+        cluster = OntapCluster(
+            name="c",
+            version=OntapClusterVersion(full="9.15.1", generation=9, major=15, minor=1),
+            management_interfaces=[OntapClusterManagementInterface2(name="mgmt1")],
+        )
+        db = ClusterMetadataDB(db_path=tmp_path / "rt.db")
+        db.set("c", CachedClusterMetadata(cluster_name="c", cluster=cluster))
+        loaded = db.get("c")
+        db.close()
+        assert loaded is not None
+        assert loaded.cluster == cluster
