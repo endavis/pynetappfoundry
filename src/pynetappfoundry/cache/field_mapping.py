@@ -39,11 +39,6 @@ class FieldMapping:
             should still be provided alongside ``transform`` so that
             :meth:`TypeMapping.explicit_fetch_api_fields` can derive the
             correct top-level API field name.
-        item_model: Pydantic model class for each element of a list of objects
-            found at ``api_path``.  ``parse_api_record`` builds
-            ``[item_model(**item) for item in <list>]``; a missing path or an
-            explicit ``null`` gives ``[]``.  Mutually exclusive with
-            ``transform``.
         cli_transform: Custom CLI extraction function receiving the full record dict.
             Overrides ``cli_field`` when set.
         cache_strategy: How this field is collected and stored.
@@ -64,6 +59,11 @@ class FieldMapping:
             the model to populate it (keyed by the dependency's
             ``__name__``).  Default empty tuple means the hook has no
             cross-model dependencies (e.g. intra-record derived fields).
+        item_model: Pydantic model class for each element of a list of objects
+            found at ``api_path``.  ``parse_api_record`` builds
+            ``[item_model(**item) for item in <list>]``; a missing path or an
+            explicit ``null`` gives ``[]``.  Mutually exclusive with
+            ``transform``.
     """
 
     cache_attr: str
@@ -71,12 +71,12 @@ class FieldMapping:
     cli_field: str | None = None
     default: Any = ""
     transform: Callable[[dict[str, Any]], Any] | None = None
-    item_model: type[BaseModel] | None = None
     cli_transform: Callable[[dict[str, Any]], Any] | None = None
     cache_strategy: Literal["cache", "realtime", "derived"] = "cache"
     requires_explicit_fetch: bool = False
     post_collection: Callable[[Any, dict[str, Any]], Any] | None = None
     depends_on: tuple[type[BaseModel], ...] = ()
+    item_model: type[BaseModel] | None = None
 
     def __post_init__(self) -> None:
         """Default ``api_path`` to ``cache_attr`` for cache/realtime fields.
