@@ -13,7 +13,7 @@ from pynetappfoundry.cache._collector_cli import run_vm_instance_show
 from pynetappfoundry.cache.fetchers import normalize_cli_key, parse_vm_instance_output
 from pynetappfoundry.cache.field_mapping import parse_cli_records
 from pynetappfoundry.cache.ontap.cloud.metadata.mapping import CLOUD_METADATA_MAPPING
-from pynetappfoundry.cache.ontap.cluster.mapping import _is_cloud_node
+from pynetappfoundry.cache.ontap.cluster.traits.mapping import _is_cloud_node
 from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
 from pynetappfoundry.utils.cloud import (
     build_cloud_instance_link,

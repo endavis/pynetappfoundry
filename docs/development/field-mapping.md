@@ -77,6 +77,7 @@ Defines a complete API object type mapping.
 | `api_type` | `str` | Tag identifying which API client/unit registry to use. Default: `"ontap"`. |
 | `parent_mapping` | `str \| None` | Name of the parent TypeMapping for parameterized endpoints. |
 | `parent_id_field` | `str \| None` | Field on the parent model providing the placeholder value. |
+| `response_shape` | `Literal["envelope", "singleton", "computed"]` | Shape of the API response. `"computed"` means no endpoint: the model is built empty and filled by its derived fields' `post_collection` hooks (see [Computed-values models](cache-models.md#computed-values-models)). A computed mapping needs an empty `api_endpoint` and `cli_command`, no parent, and only derived fields with hooks. Default: `"envelope"`. |
 | `parent_id_fields` | `tuple[str, ...]` | Parent fields filling each placeholder in order, for endpoints with two or more placeholders (#955). Mutually exclusive with `parent_id_field`; the length must equal the placeholder count. |
 
 Helper methods:
@@ -237,11 +238,12 @@ For CLI-only types, also test:
 
 ## Hand-Written Mappings
 
-Most mappings are now codegen-generated (e.g., `ONTAPVOLUME_MAPPING`, `ONTAPNODERESPONSE_MAPPING`). Two hand-written mappings remain for types that don't map to standard REST GET endpoints:
+Most mappings are now codegen-generated (e.g., `ONTAPVOLUME_MAPPING`, `ONTAPNODERESPONSE_MAPPING`). Hand-written mappings remain for types that don't map to standard REST GET endpoints:
 
 | Type | Mapping | Model | Notes |
 |------|---------|-------|-------|
 | Cluster | `CLUSTER_MAPPING` | `ClusterInfo` | Hand-written. Single-object endpoint (no `records` list), uses `parse_api_record()` directly. `is_ha` derived post-collection. |
+| ClusterTraits | `CLUSTERTRAITS_MAPPING` | `ClusterTraits` | Hand-written, `response_shape="computed"`: no endpoint. `is_ha` and `is_cloud` are derived from the collected nodes (ADR-0024). Lives in `src/pynetappfoundry/cache/ontap/cluster/traits/mapping.py`. |
 | CloudMetadata | `CLOUD_METADATA_MAPPING` | `CloudMetadata` | Hand-written. CLI-only (no API endpoint). Computed link fields built as post-processing in collector. |
 
 ## Reference: Field Mapping Patterns

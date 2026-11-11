@@ -25,6 +25,7 @@ from pynetappfoundry.cache.ontap.storage.snapshot_policies.mapping import (
 )
 from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
 from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
+from pynetappfoundry.models.ontap.cluster.traits.model import ClusterTraits
 
 
 class TestCollectorMappingEndpoints:
@@ -943,6 +944,7 @@ class TestCollectGroup:
 
     _GROUPS = (
         "cluster",
+        "cluster_traits",
         "nodes",
         "network",
         "storage",
@@ -1011,3 +1013,34 @@ class TestCollectGroup:
 
         with pytest.raises(ValueError, match="Unknown CachedClusterMetadata field group"):
             collector.collect_group("test-cluster", "volumes")
+
+
+class TestCollectClusterTraits:
+    """#967: ``cluster_traits`` is collected from the nodes, with one nodes request."""
+
+    @pytest.mark.parametrize("parallel", [False, True])
+    def test_collect_all_sets_traits_and_requests_nodes_once(self, parallel: bool) -> None:
+        client = _build_mock_api_client()
+        result = MetadataCollector(api_client=client, parallel=parallel).collect_all("test-cluster")
+
+        assert result.cluster_traits.is_ha is True
+        assert result.cluster_traits.is_cloud is False
+        node_requests = [
+            c.args[0]
+            for c in client.get_all_records.call_args_list
+            if "/cluster/nodes" in c.args[0]
+        ]
+        assert len(node_requests) == 1
+
+    def test_collect_group_matches_collect_all(self) -> None:
+        full = MetadataCollector(api_client=_build_mock_api_client(), parallel=False).collect_all(
+            "test-cluster"
+        )
+        single = MetadataCollector(
+            api_client=_build_mock_api_client(), parallel=False
+        ).collect_group("test-cluster", "cluster_traits")
+        assert single == full.cluster_traits
+
+    def test_no_api_client_returns_defaults(self) -> None:
+        traits = MetadataCollector(api_client=None)._collect_cluster_traits_via_api()
+        assert traits == ClusterTraits()

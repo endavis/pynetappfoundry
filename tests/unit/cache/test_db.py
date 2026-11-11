@@ -22,6 +22,7 @@ from pynetappfoundry.cache.db import (
 from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
 from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
 from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
+from pynetappfoundry.models.ontap.cluster.traits.model import ClusterTraits
 from pynetappfoundry.models.ontap.storage.volumes.model import OntapVolume
 
 
@@ -1515,3 +1516,85 @@ class TestRealtimeAttrs:
         # Verify cache was used
         info = realtime_attrs.cache_info()
         assert info.hits >= 1
+
+
+class TestUpgradeToV10:
+    """#967: v10 creates and backfills ``clustertraits`` from ``clusterinfo``."""
+
+    @staticmethod
+    def _make_v9_db(db_path: Path) -> None:
+        """Build a v9 database: current tables except clustertraits, plus a cached cluster."""
+        from pynetappfoundry.cache.db import _ensure_registry
+        from pynetappfoundry.cache.db_schema import (
+            generate_cluster_name_index_ddl,
+            generate_table_ddl,
+            generate_uuid_column_index_ddl,
+        )
+
+        conn = sqlite3.connect(db_path)
+        conn.execute(
+            "CREATE TABLE cluster_metadata ("
+            "    cluster_name TEXT PRIMARY KEY,"
+            "    cached_at TEXT NOT NULL,"
+            "    cache_version TEXT NOT NULL"
+            ")"
+        )
+        conn.execute("CREATE TABLE _schema_version (version INTEGER NOT NULL)")
+        conn.execute("INSERT INTO _schema_version (version) VALUES (9)")
+        for spec in _ensure_registry().values():
+            if spec.table_name == "clustertraits":
+                continue
+            conn.execute(generate_table_ddl(spec.table_name, spec.model_class))
+            conn.execute(generate_cluster_name_index_ddl(spec.table_name))
+            if spec.has_uuid:
+                conn.execute(generate_uuid_column_index_ddl(spec.table_name))
+        conn.execute("INSERT INTO clusterinfo (cluster_name, is_ha, is_cloud) VALUES ('c', 1, 1)")
+        conn.execute(
+            "INSERT INTO cluster_metadata (cluster_name, cached_at, cache_version) "
+            "VALUES ('c', '2026-01-01T00:00:00+00:00', '2.1')"
+        )
+        conn.commit()
+        conn.close()
+
+    def test_v9_database_gets_backfilled_traits_and_keeps_envelope(self, tmp_path: Path) -> None:
+        db_path = tmp_path / "v9.db"
+        self._make_v9_db(db_path)
+
+        db = ClusterMetadataDB(db_path=db_path)
+
+        assert db.conn.execute("SELECT version FROM _schema_version").fetchone()[0] == (
+            ClusterMetadataDB.SCHEMA_VERSION
+        )
+        row = db.conn.execute("SELECT cluster_name, is_ha, is_cloud FROM clustertraits").fetchall()
+        assert [tuple(r) for r in row] == [("c", 1, 1)]
+        assert db.conn.execute("SELECT count(*) FROM cluster_metadata").fetchone()[0] == 1
+        db.close()
+
+    def test_upgrade_to_v10_is_idempotent(self, tmp_path: Path) -> None:
+        db_path = tmp_path / "v9.db"
+        self._make_v9_db(db_path)
+        db = ClusterMetadataDB(db_path=db_path)
+
+        db._upgrade_to_v10()
+
+        assert db.conn.execute("SELECT count(*) FROM clustertraits").fetchone()[0] == 1
+        db.close()
+
+    def test_fresh_database_has_clustertraits_table(self, tmp_path: Path) -> None:
+        db = ClusterMetadataDB(db_path=tmp_path / "fresh.db")
+        columns = {row[1] for row in db.conn.execute("PRAGMA table_info(clustertraits)")}
+        assert {"cluster_name", "is_ha", "is_cloud"} <= columns
+        db.close()
+
+    def test_cluster_traits_round_trip(self, tmp_path: Path) -> None:
+        db = ClusterMetadataDB(db_path=tmp_path / "rt.db")
+        db.set(
+            "c",
+            CachedClusterMetadata(
+                cluster_name="c", cluster_traits=ClusterTraits(is_ha=True, is_cloud=True)
+            ),
+        )
+        loaded = db.get("c")
+        db.close()
+        assert loaded is not None
+        assert loaded.cluster_traits == ClusterTraits(is_ha=True, is_cloud=True)

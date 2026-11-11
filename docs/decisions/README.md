@@ -142,3 +142,4 @@ The Issue contains the full discussion; the ADR summarizes the outcome.
 | [0021](0021-collect-cli-only-ontap-data-through-the-private-cli-rest-passthrough.md) | Collect CLI-only ONTAP data through the private CLI REST passthrough | Accepted |
 | [0022](0022-one-cli-error-exit-convention-raise-clierror.md) | One CLI error-exit convention: raise CliError | Accepted |
 | [0023](0023-register-cache-mappings-lazily-from-a-generated-index.md) | Register cache mappings lazily from a generated index | Accepted |
+| [0024](0024-generated-models-carry-only-api-data-computed-values-live-in-separate-hand-written-models.md) | Generated models carry only API data; computed values live in separate hand-written models | Accepted |

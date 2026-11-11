@@ -14,6 +14,8 @@ on declared metadata:
 - ``mapping.parent_mapping`` non-None → parameterized endpoint; parent
   objects are themselves fetched via a recursive :func:`fetch` call and
   each parent's ``parent_id_field`` is substituted into the endpoint URL.
+- ``mapping.response_shape == "computed"`` → no request; an empty model
+  instance is built and filled by the derived-field hooks (ADR-0024).
 - ``mapping.response_shape == "singleton"`` → ``call_endpoint`` (no
   pagination) + :func:`parse_api_record`.
 - Otherwise → ``get_all_records`` + :func:`parse_api_response`.
@@ -392,7 +394,7 @@ def fetch[T: BaseModel](
         log_prefix: Prefix for log messages.
 
     Returns:
-        For singleton mappings, a single model instance. For all other
+        For singleton and computed mappings, a single model instance. For all other
         mappings, a list of model instances.
 
     Raises:
@@ -437,7 +439,11 @@ def fetch[T: BaseModel](
             local_cache[dep_key] = dep_result if isinstance(dep_result, list) else [dep_result]
 
     # Fetch instances — dispatch on CLI vs API path.
-    if mapping.cli_command:
+    if mapping.is_computed:
+        # No endpoint: start from an empty model; the derived-field hooks
+        # fill it from the dependencies resolved above (ADR-0024).
+        items = [mapping.model_class()]
+    elif mapping.cli_command:
         if cli_client is None:
             raise ValueError(
                 f"fetch(): {mapping.name} requires cli_client (cli_command={mapping.cli_command!r})"
@@ -456,7 +462,7 @@ def fetch[T: BaseModel](
     # Run post-collection hooks against the fetched instances.
     items = _run_post_collection_hooks(mapping, items, local_cache, log_prefix)
 
-    if mapping.response_shape == "singleton":
+    if mapping.response_shape in ("singleton", "computed"):
         if not items:
             # Singleton endpoint returned nothing — fall back to an empty
             # model instance, matching the original collector behavior.

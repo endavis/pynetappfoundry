@@ -279,7 +279,7 @@ class ClusterMetadataDB(SQLiteDB):
     for data safety and isolation.
     """
 
-    SCHEMA_VERSION: ClassVar[int] = 9
+    SCHEMA_VERSION: ClassVar[int] = 10
     TABLE_NAME: ClassVar[str] = "cluster_metadata"
 
     def __init__(
@@ -513,6 +513,36 @@ class ClusterMetadataDB(SQLiteDB):
         self.conn.execute(generate_table_ddl(spec.table_name, spec.model_class))
         self.conn.execute(generate_cluster_name_index_ddl(spec.table_name))
         self.conn.execute("DELETE FROM cluster_metadata")
+
+    # ------------------------------------------------------------------
+    # Migration v9 → v10
+    # ------------------------------------------------------------------
+
+    def _upgrade_to_v10(self) -> None:
+        """Create and backfill the clustertraits table (#967, ADR-0024).
+
+        v10 adds ``CachedClusterMetadata.cluster_traits``.  The table is
+        created if missing, then filled from the ``is_ha`` / ``is_cloud``
+        columns already stored in ``clusterinfo``, so cached clusters keep
+        their values without a refresh.  The envelope is left alone.
+        Idempotent: only clusters without a ``clustertraits`` row are copied.
+        """
+        from pynetappfoundry.models.ontap.cluster.traits.model import ClusterTraits
+
+        cursor = self.conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='clustertraits'"
+        )
+        if cursor.fetchone() is None:
+            self.conn.execute(generate_table_ddl("clustertraits", ClusterTraits))
+            self.conn.execute(generate_cluster_name_index_ddl("clustertraits"))
+
+        info_cols = {row[1] for row in self.conn.execute("PRAGMA table_info(clusterinfo)")}
+        if {"cluster_name", "is_ha", "is_cloud"} <= info_cols:
+            self.conn.execute(
+                'INSERT INTO clustertraits (cluster_name, "is_ha", "is_cloud") '
+                'SELECT cluster_name, "is_ha", "is_cloud" FROM clusterinfo '
+                "WHERE cluster_name NOT IN (SELECT cluster_name FROM clustertraits)"
+            )
 
     # ------------------------------------------------------------------
     # Internal: decompose metadata into tables

@@ -46,6 +46,7 @@ from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
 from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
 from pynetappfoundry.models.ontap.cluster.peers.model import OntapClusterPeer
 from pynetappfoundry.models.ontap.cluster.schedules.model import OntapSchedule
+from pynetappfoundry.models.ontap.cluster.traits.model import ClusterTraits
 from pynetappfoundry.models.ontap.name_services.dns.model import OntapDns
 from pynetappfoundry.models.ontap.network.ethernet.broadcast_domains.model import (
     OntapBroadcastDomain,
@@ -320,6 +321,32 @@ class ApiPhasesMixin(_CollectorState):
         # fetch of OntapNodeResponse (#929).
         self._collect_nodes_via_api()
         return cast(ClusterInfo, self._fetch_model(ClusterInfo))
+
+    def collect_cluster_traits(self) -> ClusterTraits:
+        """Collect the computed cluster traits (``is_ha``, ``is_cloud``).
+
+        Returns:
+            ClusterTraits derived from the collected nodes.
+
+        Raises:
+            CollectionError: If no API client is available.
+            Exception: If the API call fails.
+        """
+        return self._api_phase("Cluster traits", self._collect_cluster_traits_via_api)
+
+    def _collect_cluster_traits_via_api(self) -> ClusterTraits:
+        """Compute cluster traits from the nodes fetched via REST API.
+
+        Returns:
+            ClusterTraits; defaults when there is no API client.
+        """
+        if not self.api_client:
+            logger.debug("%s No API client available for cluster traits", self._log_prefix)
+            return ClusterTraits()
+
+        # Nodes first: fills _results_cache so fetch() does not fetch them again.
+        self._collect_nodes_via_api()
+        return cast(ClusterTraits, self._fetch_model(ClusterTraits))
 
     def collect_nodes(self) -> list[OntapNodeResponse]:
         """Collect node information (API-only).

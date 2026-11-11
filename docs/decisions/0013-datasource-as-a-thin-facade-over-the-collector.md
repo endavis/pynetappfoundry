@@ -166,6 +166,7 @@ This ADR is **Phase 1** of a three-phase plan. A new parent issue supersedes #49
 - Issue #899: refactor: split `src/pynetappfoundry/cache/collector.py`; the API phases and cached API call now live in `src/pynetappfoundry/cache/_collector_api.py`, the phase runners in `src/pynetappfoundry/cache/_collector_runner.py` (`MetadataCollector` and its public methods are unchanged)
 - Issue #534: feat: audit Pydantic models without TypeMappings — unchanged
 - Issue #538: feat: DataSource pagination/chunking edge cases — re-scoped to the realtime live-fetch path only
+- Issue #967: refactor: `response_shape="computed"` mappings and the hand-written `ClusterTraits` model (see [ADR-0024](0024-generated-models-carry-only-api-data-computed-values-live-in-separate-hand-written-models.md))
 
 ## Related Documentation
 

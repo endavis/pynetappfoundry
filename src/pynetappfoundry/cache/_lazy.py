@@ -35,6 +35,7 @@ _DATA_FIELDS = frozenset(
     {
         "cloud",
         "cluster",
+        "cluster_traits",
         "nodes",
         "network",
         "storage",

@@ -109,7 +109,17 @@ def _build_tree_from_dict(
     "--section",
     "-s",
     type=click.Choice(
-        ["cloud", "cluster", "nodes", "network", "storage", "licenses", "ha", "relationships"],
+        [
+            "cloud",
+            "cluster",
+            "cluster_traits",
+            "nodes",
+            "network",
+            "storage",
+            "licenses",
+            "ha",
+            "relationships",
+        ],
         case_sensitive=False,
     ),
     help="Show only a specific section.",

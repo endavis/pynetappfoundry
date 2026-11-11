@@ -177,7 +177,7 @@ _DIFF_OVERRIDES: dict[type[CacheModel], tuple[str, str]] = {
 
 # Singleton fields on CachedClusterMetadata that are diffed separately
 # by _diff_cluster_info() and _diff_mediator_info().
-_SINGLETON_FIELDS = frozenset({"cluster", "mediator"})
+_SINGLETON_FIELDS = frozenset({"cluster", "cluster_traits", "mediator"})
 
 # Metadata-only fields on CachedClusterMetadata (not diffable entities).
 _METADATA_FIELDS = frozenset({"cluster_name", "cached_at", "cache_version"})

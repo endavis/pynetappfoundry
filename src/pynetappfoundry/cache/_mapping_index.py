@@ -22,6 +22,12 @@ MAPPING_INDEX: dict[str, tuple[str, str, str, str | None]] = {
         "ClusterInfo",
         None,
     ),
+    "ClusterTraits": (
+        "pynetappfoundry.cache.ontap.cluster.traits.mapping",
+        "pynetappfoundry.models.ontap.cluster.traits.model",
+        "ClusterTraits",
+        None,
+    ),
     "DiiAssetsAnnotation": (
         "pynetappfoundry.cache.dii.assets.annotations.mapping",
         "pynetappfoundry.models.dii.assets.annotations.model",

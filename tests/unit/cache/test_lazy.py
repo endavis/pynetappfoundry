@@ -17,6 +17,7 @@ from pynetappfoundry.core.config import Config
 from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
 from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
 from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
+from pynetappfoundry.models.ontap.cluster.traits.model import ClusterTraits
 from pynetappfoundry.models.ontap.storage.model import StorageInfo
 from pynetappfoundry.models.ontap.storage.volumes.model import OntapVolume
 
@@ -621,3 +622,21 @@ class TestLiveLoader:
         lazy = self._lazy(MagicMock(return_value={"svms": []}))
 
         assert isinstance(lazy.storage, StorageInfo)
+
+
+class TestLazyClusterTraits:
+    """#967: ``cluster_traits`` is a lazily loaded data field."""
+
+    def test_lazy_loads_cluster_traits(self, db: ClusterMetadataDB) -> None:
+        db.set(
+            "test-cluster",
+            CachedClusterMetadata(
+                cluster_name="test-cluster",
+                cluster_traits=ClusterTraits(is_ha=True, is_cloud=True),
+            ),
+        )
+        lazy = db.get_lazy("test-cluster")
+        assert lazy is not None
+        got = lazy.cluster_traits
+        assert isinstance(got, ClusterTraits)
+        assert got.model_dump() == {"is_ha": True, "is_cloud": True}

@@ -1810,3 +1810,33 @@ class TestSingletonLivePaths:
         url = client.call_endpoint.call_args.args[0]
         assert "order_by" not in url
         assert "max_records" not in url
+
+
+class TestIsCloudCluster:
+    """#967: ``_is_cloud_cluster`` reads ``ClusterTraits`` from the cache."""
+
+    @staticmethod
+    def _db(traits: Any | None) -> Any:
+        from pynetappfoundry.cache import CachedClusterMetadata
+        from pynetappfoundry.cache.db import ClusterMetadataDB
+
+        db = ClusterMetadataDB(db_path=":memory:")
+        if traits is not None:
+            db.set("c1", CachedClusterMetadata(cluster_name="c1", cluster_traits=traits))
+        return db
+
+    def test_reads_cached_traits_row(self, mock_config: Any) -> None:
+        from pynetappfoundry.models.ontap.cluster.traits.model import ClusterTraits
+
+        backend = _make_backend(mock_config)
+        db = self._db(ClusterTraits(is_cloud=True))
+        with patch.object(OntapBackend, "_cache_db", new=db):
+            assert backend._is_cloud_cluster("c1") is True
+        db.close()
+
+    def test_false_without_traits_row(self, mock_config: Any) -> None:
+        backend = _make_backend(mock_config)
+        db = self._db(None)
+        with patch.object(OntapBackend, "_cache_db", new=db):
+            assert backend._is_cloud_cluster("c1") is False
+        db.close()

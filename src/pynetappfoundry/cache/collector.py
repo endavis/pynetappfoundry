@@ -40,7 +40,7 @@ from pynetappfoundry.cache._collector_runner import (
 )
 from pynetappfoundry.cache._metadata import CachedClusterMetadata
 from pynetappfoundry.cache._registry import model_registry
-from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
+from pynetappfoundry.models.ontap.cluster.traits.model import ClusterTraits
 
 if TYPE_CHECKING:
     from pynetappfoundry.clients.ontap.api import ONTAPAPIClient
@@ -240,7 +240,11 @@ class MetadataCollector(ApiPhasesMixin, CloudPhaseMixin):
 
         # Evaluate derived fields (e.g. is_ha from node count)
         results = self._evaluate_derived_fields(results)
-        cluster_info: ClusterInfo = results["cluster"]
+        cluster_info = results["cluster"]
+
+        # Cluster traits: computed from the nodes already in _results_cache,
+        # so no extra API call (ADR-0024).
+        cluster_traits: ClusterTraits = self.collect_cluster_traits()
 
         # Collect parameterized endpoints (requires parent objects from phases)
         results["storage"] = self._with_svm_top_metrics_users(results["storage"])
@@ -249,7 +253,7 @@ class MetadataCollector(ApiPhasesMixin, CloudPhaseMixin):
         cloud_metadata = self._update_azure_cloud_links(
             results["cloud"],
             cluster_name,
-            cluster_info.is_ha,
+            cluster_traits.is_ha,
         )
 
         return CachedClusterMetadata(
@@ -257,6 +261,7 @@ class MetadataCollector(ApiPhasesMixin, CloudPhaseMixin):
             cached_at=datetime.now(UTC),
             cloud=cloud_metadata,
             cluster=cluster_info,
+            cluster_traits=cluster_traits,
             nodes=results["nodes"],
             network=results["network"],
             storage=results["storage"],
@@ -276,8 +281,9 @@ class MetadataCollector(ApiPhasesMixin, CloudPhaseMixin):
         Returns the value :meth:`collect_all` would put in *group*, with the
         same post-processing, but runs only the phases that group needs:
         ``cluster`` also collects ``nodes`` (for the derived ``is_ha`` and
-        ``is_cloud``), ``cloud`` also collects ``nodes`` and ``cluster`` (CVO
-        detection and Azure links), and ``storage`` adds its
+        ``is_cloud``), ``cluster_traits`` also collects ``nodes``, ``cloud``
+        also collects ``nodes`` and ``cluster_traits`` (CVO detection and
+        Azure links), and ``storage`` adds its
         ``svm_top_metrics_users``. Phase results are memoized on this
         collector, so a shared dependency is collected once.
 
@@ -304,11 +310,14 @@ class MetadataCollector(ApiPhasesMixin, CloudPhaseMixin):
             nodes = self._collect_phase(CollectionPhase.NODES)
             results = {"cluster": self._collect_phase(CollectionPhase.CLUSTER), "nodes": nodes}
             return self._evaluate_derived_fields(results)["cluster"]
+        if group == "cluster_traits":
+            self._collect_phase(CollectionPhase.NODES)  # traits are derived from these
+            return self.collect_cluster_traits()
         if group == "cloud":
             self._collect_phase(CollectionPhase.NODES)  # CVO detection reads these
-            cluster_info: ClusterInfo = self.collect_group(cluster_name, "cluster")
+            traits: ClusterTraits = self.collect_group(cluster_name, "cluster_traits")
             return self._update_azure_cloud_links(
-                self._collect_phase(CollectionPhase.CLOUD), cluster_name, cluster_info.is_ha
+                self._collect_phase(CollectionPhase.CLOUD), cluster_name, traits.is_ha
             )
         if group == "storage":
             return self._with_svm_top_metrics_users(self._collect_phase(CollectionPhase.STORAGE))

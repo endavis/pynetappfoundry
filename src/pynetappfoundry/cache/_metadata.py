@@ -26,6 +26,7 @@ from pynetappfoundry.models.ontap.cluster.licensing.licenses.model import (
 from pynetappfoundry.models.ontap.cluster.mediators.model import OntapMediatorResponse
 from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
 from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
+from pynetappfoundry.models.ontap.cluster.traits.model import ClusterTraits
 from pynetappfoundry.models.ontap.network.model import NetworkInfo
 from pynetappfoundry.models.ontap.protocols.model import ProtocolsInfo
 from pynetappfoundry.models.ontap.snapmirror.relationships.model import (
@@ -67,6 +68,8 @@ class CachedClusterMetadata(CacheModel):
     This is the top-level model containing all cached data categories.
 
     Schema Version History:
+        2.2 - Added cluster_traits (computed is_ha / is_cloud, ADR-0024);
+              cluster keeps its own is_ha / is_cloud fields
         2.1 - Added storage.svm_web_services (SVM web services from the
               private CLI passthrough, #866)
         2.0 - Renamed cache fields to match the ONTAP REST URL hierarchy:
@@ -92,6 +95,7 @@ class CachedClusterMetadata(CacheModel):
     # Data categories
     cloud: list[CloudMetadata] = Field(default_factory=list)
     cluster: ClusterInfo = Field(default_factory=ClusterInfo)
+    cluster_traits: ClusterTraits = Field(default_factory=ClusterTraits)
     nodes: list[OntapNodeResponse] = Field(default_factory=list)
     network: NetworkInfo = Field(default_factory=NetworkInfo)
     storage: StorageInfo = Field(default_factory=StorageInfo)

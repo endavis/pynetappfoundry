@@ -23,6 +23,7 @@ from pynetappfoundry.cli.utils import print_debug, print_error, print_info, prin
 from pynetappfoundry.data.source import DataSource
 from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
 from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
+from pynetappfoundry.models.ontap.cluster.traits.model import ClusterTraits
 from pynetappfoundry.models.ontap.network.ip.interfaces.model import OntapIpInterface
 from pynetappfoundry.models.ontap.protocols.cifs.services.model import OntapCifsService
 from pynetappfoundry.models.ontap.svm.svms.model import OntapSvm
@@ -740,6 +741,7 @@ class ClusterData:
         for name, value in kwargs.items():
             setattr(self, name, value)
         self.cluster_info: ClusterInfo | None = None
+        self.cluster_traits: ClusterTraits | None = None
         self.nodes: list[OntapNodeResponse] = []
         self.svms: list[OntapSvm] = []
         self.cifs_services: list[OntapCifsService] = []
@@ -775,7 +777,7 @@ class ClusterData:
         from the first entry. Per-node fields (instance_id, instance_type, etc.)
         are accessed via cloud_metadata_by_node in _format_netapp_node().
 
-        Gated on ``self.cluster_info.is_cloud`` so that on-prem clusters
+        Gated on ``self.cluster_traits.is_cloud`` so that on-prem clusters
         do not trigger the lazy ``ontap.cloud`` fetch — that path falls
         through to ``virtual-machine instance show`` over SSH and takes a
         10s connect timeout against on-prem clusters without an SSH
@@ -783,7 +785,7 @@ class ClusterData:
         """
         if not self._cluster_entry:
             return
-        if not self.cluster_info or not self.cluster_info.is_cloud:
+        if not self.cluster_traits or not self.cluster_traits.is_cloud:
             print_debug(f"Skipping cloud metadata for non-cloud cluster {self.name}")
             return
 
@@ -814,7 +816,8 @@ class ClusterData:
             ds = DataSource(self.app_instance.config)
             self.management_ip = ip
             self.cluster_info = ds.query(ClusterInfo, cluster=self.name, source="auto").first()
-            # Build cloud info AFTER cluster_info is populated so the
+            self.cluster_traits = ds.query(ClusterTraits, cluster=self.name, source="auto").first()
+            # Build cloud info AFTER cluster_traits is populated so the
             # gate on ``is_cloud`` can skip the SSH-backed lazy fetch for
             # on-prem clusters (issue #547).
             self._build_cloud_info()
