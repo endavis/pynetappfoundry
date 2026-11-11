@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.protocols.s3.services.buckets.model import (
@@ -13,42 +11,6 @@ from pynetappfoundry.models.ontap.protocols.s3.services.buckets.model import (
     OntapS3BucketSvmLifecycleManagementRule,
     OntapS3BucketSvmPolicyStatement,
 )
-from pynetappfoundry.utils.dict_path import get_nested_value
-
-
-def _transform_aggregates(record: dict[str, Any]) -> list[OntapS3BucketSvmAggregate]:
-    """Transform aggregates into OntapS3BucketSvmAggregate list."""
-    return [OntapS3BucketSvmAggregate(**item) for item in record.get("aggregates", [])]
-
-
-def _transform_cors_rules(record: dict[str, Any]) -> list[OntapS3BucketSvmCorsRule]:
-    """Transform cors.rules into OntapS3BucketSvmCorsRule list."""
-    try:
-        items = get_nested_value(record, "cors.rules")
-    except Exception:
-        items = []
-    return [OntapS3BucketSvmCorsRule(**item) for item in items]
-
-
-def _transform_lifecycle_management_rules(
-    record: dict[str, Any],
-) -> list[OntapS3BucketSvmLifecycleManagementRule]:
-    """Transform lifecycle_management.rules into OntapS3BucketSvmLifecycleManagementRule list."""
-    try:
-        items = get_nested_value(record, "lifecycle_management.rules")
-    except Exception:
-        items = []
-    return [OntapS3BucketSvmLifecycleManagementRule(**item) for item in items]
-
-
-def _transform_policy_statements(record: dict[str, Any]) -> list[OntapS3BucketSvmPolicyStatement]:
-    """Transform policy.statements into OntapS3BucketSvmPolicyStatement list."""
-    try:
-        items = get_nested_value(record, "policy.statements")
-    except Exception:
-        items = []
-    return [OntapS3BucketSvmPolicyStatement(**item) for item in items]
-
 
 ONTAPS3BUCKETSVM_MAPPING = TypeMapping(
     name="OntapS3BucketSvm",
@@ -60,7 +22,7 @@ ONTAPS3BUCKETSVM_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="aggregates",
-            transform=_transform_aggregates,
+            item_model=OntapS3BucketSvmAggregate,
             default=[],
         ),
         FieldMapping(
@@ -78,7 +40,7 @@ ONTAPS3BUCKETSVM_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="cors.rules",
-            transform=_transform_cors_rules,
+            item_model=OntapS3BucketSvmCorsRule,
             default=[],
         ),
         FieldMapping(
@@ -87,7 +49,7 @@ ONTAPS3BUCKETSVM_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="lifecycle_management.rules",
-            transform=_transform_lifecycle_management_rules,
+            item_model=OntapS3BucketSvmLifecycleManagementRule,
             default=[],
         ),
         FieldMapping(
@@ -102,7 +64,7 @@ ONTAPS3BUCKETSVM_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="policy.statements",
-            transform=_transform_policy_statements,
+            item_model=OntapS3BucketSvmPolicyStatement,
             default=[],
         ),
         FieldMapping(

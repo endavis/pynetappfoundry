@@ -2,20 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.protocols.cifs.shares.model import (
     OntapCifsShare,
     OntapCifsShareAcl,
 )
-
-
-def _transform_acls(record: dict[str, Any]) -> list[OntapCifsShareAcl]:
-    """Transform acls into OntapCifsShareAcl list."""
-    return [OntapCifsShareAcl(**item) for item in record.get("acls", [])]
-
 
 ONTAPCIFSSHARE_MAPPING = TypeMapping(
     name="OntapCifsShare",
@@ -29,7 +21,7 @@ ONTAPCIFSSHARE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="acls",
-            transform=_transform_acls,
+            item_model=OntapCifsShareAcl,
             default=[],
         ),
         FieldMapping(

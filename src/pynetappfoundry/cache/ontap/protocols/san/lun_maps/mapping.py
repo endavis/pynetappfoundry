@@ -2,20 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.protocols.san.lun_maps.model import (
     OntapLunMap,
     OntapLunMapReportingNode,
 )
-
-
-def _transform_reporting_nodes(record: dict[str, Any]) -> list[OntapLunMapReportingNode]:
-    """Transform reporting_nodes into OntapLunMapReportingNode list."""
-    return [OntapLunMapReportingNode(**item) for item in record.get("reporting_nodes", [])]
-
 
 ONTAPLUNMAP_MAPPING = TypeMapping(
     name="OntapLunMap",
@@ -65,7 +57,7 @@ ONTAPLUNMAP_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="reporting_nodes",
-            transform=_transform_reporting_nodes,
+            item_model=OntapLunMapReportingNode,
             default=[],
         ),
         FieldMapping(

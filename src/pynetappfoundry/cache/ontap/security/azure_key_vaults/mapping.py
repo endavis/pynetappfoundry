@@ -2,24 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.security.azure_key_vaults.model import (
     OntapAzureKeyVault,
     OntapAzureKeyVaultEkmipReachability,
 )
-
-
-def _transform_ekmip_reachability(
-    record: dict[str, Any],
-) -> list[OntapAzureKeyVaultEkmipReachability]:
-    """Transform ekmip_reachability into OntapAzureKeyVaultEkmipReachability list."""
-    return [
-        OntapAzureKeyVaultEkmipReachability(**item) for item in record.get("ekmip_reachability", [])
-    ]
-
 
 ONTAPAZUREKEYVAULT_MAPPING = TypeMapping(
     name="OntapAzureKeyVault",
@@ -58,7 +46,7 @@ ONTAPAZUREKEYVAULT_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="ekmip_reachability",
-            transform=_transform_ekmip_reachability,
+            item_model=OntapAzureKeyVaultEkmipReachability,
             default=[],
         ),
         FieldMapping(

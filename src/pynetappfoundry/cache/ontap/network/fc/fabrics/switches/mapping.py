@@ -2,20 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.network.fc.fabrics.switches.model import (
     OntapFcSwitch,
     OntapFcSwitchPort,
 )
-
-
-def _transform_ports(record: dict[str, Any]) -> list[OntapFcSwitchPort]:
-    """Transform ports into OntapFcSwitchPort list."""
-    return [OntapFcSwitchPort(**item) for item in record.get("ports", [])]
-
 
 ONTAPFCSWITCH_MAPPING = TypeMapping(
     name="OntapFcSwitch",
@@ -47,7 +39,7 @@ ONTAPFCSWITCH_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="ports",
-            transform=_transform_ports,
+            item_model=OntapFcSwitchPort,
             default=[],
             requires_explicit_fetch=True,
         ),

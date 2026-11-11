@@ -2,20 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.storage.snaplock.audit_logs.model import (
     OntapSnaplockLog,
     OntapSnaplockLogLogFile,
 )
-
-
-def _transform_log_files(record: dict[str, Any]) -> list[OntapSnaplockLogLogFile]:
-    """Transform log_files into OntapSnaplockLogLogFile list."""
-    return [OntapSnaplockLogLogFile(**item) for item in record.get("log_files", [])]
-
 
 ONTAPSNAPLOCKLOG_MAPPING = TypeMapping(
     name="OntapSnaplockLog",
@@ -33,7 +25,7 @@ ONTAPSNAPLOCKLOG_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="log_files",
-            transform=_transform_log_files,
+            item_model=OntapSnaplockLogLogFile,
             default=[],
         ),
         FieldMapping(

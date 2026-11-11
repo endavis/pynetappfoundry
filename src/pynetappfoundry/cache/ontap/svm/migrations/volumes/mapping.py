@@ -2,20 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.svm.migrations.volumes.model import (
     OntapSvmMigrationVolume,
     OntapSvmMigrationVolumeError,
 )
-
-
-def _transform_errors(record: dict[str, Any]) -> list[OntapSvmMigrationVolumeError]:
-    """Transform errors into OntapSvmMigrationVolumeError list."""
-    return [OntapSvmMigrationVolumeError(**item) for item in record.get("errors", [])]
-
 
 ONTAPSVMMIGRATIONVOLUME_MAPPING = TypeMapping(
     name="OntapSvmMigrationVolume",
@@ -28,7 +20,7 @@ ONTAPSVMMIGRATIONVOLUME_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="errors",
-            transform=_transform_errors,
+            item_model=OntapSvmMigrationVolumeError,
             default=[],
         ),
         FieldMapping(

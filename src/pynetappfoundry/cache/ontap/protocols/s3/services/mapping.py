@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.protocols.s3.services.model import (
@@ -11,17 +9,6 @@ from pynetappfoundry.models.ontap.protocols.s3.services.model import (
     OntapS3ServiceBucket,
     OntapS3ServiceUser,
 )
-
-
-def _transform_buckets(record: dict[str, Any]) -> list[OntapS3ServiceBucket]:
-    """Transform buckets into OntapS3ServiceBucket list."""
-    return [OntapS3ServiceBucket(**item) for item in record.get("buckets", [])]
-
-
-def _transform_users(record: dict[str, Any]) -> list[OntapS3ServiceUser]:
-    """Transform users into OntapS3ServiceUser list."""
-    return [OntapS3ServiceUser(**item) for item in record.get("users", [])]
-
 
 ONTAPS3SERVICE_MAPPING = TypeMapping(
     name="OntapS3Service",
@@ -32,7 +19,7 @@ ONTAPS3SERVICE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="buckets",
-            transform=_transform_buckets,
+            item_model=OntapS3ServiceBucket,
             default=[],
         ),
         FieldMapping(
@@ -247,7 +234,7 @@ ONTAPS3SERVICE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="users",
-            transform=_transform_users,
+            item_model=OntapS3ServiceUser,
             default=[],
         ),
     ),

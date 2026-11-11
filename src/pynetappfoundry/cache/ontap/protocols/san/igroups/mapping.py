@@ -1,9 +1,6 @@
-# ruff: noqa: E501
 """OntapIgroup type mapping."""
 
 from __future__ import annotations
-
-from typing import Any
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
@@ -16,50 +13,6 @@ from pynetappfoundry.models.ontap.protocols.san.igroups.model import (
     OntapIgroupParentIgroup,
     OntapIgroupReplicationErrorSummaryArgument,
 )
-from pynetappfoundry.utils.dict_path import get_nested_value
-
-
-def _transform_connectivity_tracking_required_nodes(
-    record: dict[str, Any],
-) -> list[OntapIgroupConnectivityTrackingRequiredNode]:
-    """Transform connectivity_tracking.required_nodes into OntapIgroupConnectivityTrackingRequiredNode list."""
-    try:
-        items = get_nested_value(record, "connectivity_tracking.required_nodes")
-    except Exception:
-        items = []
-    return [OntapIgroupConnectivityTrackingRequiredNode(**item) for item in items]
-
-
-def _transform_igroups(record: dict[str, Any]) -> list[OntapIgroupIgroup]:
-    """Transform igroups into OntapIgroupIgroup list."""
-    return [OntapIgroupIgroup(**item) for item in record.get("igroups", [])]
-
-
-def _transform_initiators(record: dict[str, Any]) -> list[OntapIgroupInitiator]:
-    """Transform initiators into OntapIgroupInitiator list."""
-    return [OntapIgroupInitiator(**item) for item in record.get("initiators", [])]
-
-
-def _transform_lun_maps(record: dict[str, Any]) -> list[OntapIgroupLunMap]:
-    """Transform lun_maps into OntapIgroupLunMap list."""
-    return [OntapIgroupLunMap(**item) for item in record.get("lun_maps", [])]
-
-
-def _transform_parent_igroups(record: dict[str, Any]) -> list[OntapIgroupParentIgroup]:
-    """Transform parent_igroups into OntapIgroupParentIgroup list."""
-    return [OntapIgroupParentIgroup(**item) for item in record.get("parent_igroups", [])]
-
-
-def _transform_replication_error_summary_arguments(
-    record: dict[str, Any],
-) -> list[OntapIgroupReplicationErrorSummaryArgument]:
-    """Transform replication.error.summary.arguments into OntapIgroupReplicationErrorSummaryArgument list."""
-    try:
-        items = get_nested_value(record, "replication.error.summary.arguments")
-    except Exception:
-        items = []
-    return [OntapIgroupReplicationErrorSummaryArgument(**item) for item in items]
-
 
 ONTAPIGROUP_MAPPING = TypeMapping(
     name="OntapIgroup",
@@ -82,7 +35,7 @@ ONTAPIGROUP_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="connectivity_tracking.required_nodes",
-            transform=_transform_connectivity_tracking_required_nodes,
+            item_model=OntapIgroupConnectivityTrackingRequiredNode,
             default=[],
             requires_explicit_fetch=True,
         ),
@@ -92,18 +45,18 @@ ONTAPIGROUP_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="igroups",
-            transform=_transform_igroups,
+            item_model=OntapIgroupIgroup,
             default=[],
             requires_explicit_fetch=True,
         ),
         FieldMapping(
             cache_attr="initiators",
-            transform=_transform_initiators,
+            item_model=OntapIgroupInitiator,
             default=[],
         ),
         FieldMapping(
             cache_attr="lun_maps",
-            transform=_transform_lun_maps,
+            item_model=OntapIgroupLunMap,
             default=[],
             requires_explicit_fetch=True,
         ),
@@ -115,7 +68,7 @@ ONTAPIGROUP_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="parent_igroups",
-            transform=_transform_parent_igroups,
+            item_model=OntapIgroupParentIgroup,
             default=[],
             requires_explicit_fetch=True,
         ),
@@ -140,7 +93,7 @@ ONTAPIGROUP_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="replication.error.summary.arguments",
-            transform=_transform_replication_error_summary_arguments,
+            item_model=OntapIgroupReplicationErrorSummaryArgument,
             default=[],
         ),
         FieldMapping(

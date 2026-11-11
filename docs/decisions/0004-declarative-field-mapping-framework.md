@@ -119,6 +119,7 @@ annotated mappings from API specs, with per-field customization via TOML overlay
 ## Related Issues
 
 - Issue #188: feat: add declarative field mapping framework
+- Issue #900: refactor: replace generated per-list transform functions with a generic nested-list mapping (`FieldMapping.item_model`)
 - Issue #191: refactor: migrate AggregateInfo to field mapping framework
 - Issue #210: refactor: migrate NodeInfo to field mapping framework
 - Issue #215: refactor: migrate SnapMirrorRelationship to field mapping framework

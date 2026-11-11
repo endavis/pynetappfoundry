@@ -1,9 +1,6 @@
-# ruff: noqa: N802
 """DiiCollectorDatasourceType type mapping."""
 
 from __future__ import annotations
-
-from typing import Any
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
@@ -12,19 +9,6 @@ from pynetappfoundry.models.dii.collector.datasource_types.model import (
     DiiCollectorDatasourceTypePackage,
     DiiCollectorDatasourceTypeVendormodel,
 )
-
-
-def _transform_packages(record: dict[str, Any]) -> list[DiiCollectorDatasourceTypePackage]:
-    """Transform packages into DiiCollectorDatasourceTypePackage list."""
-    return [DiiCollectorDatasourceTypePackage(**item) for item in record.get("packages", [])]
-
-
-def _transform_vendorModels(record: dict[str, Any]) -> list[DiiCollectorDatasourceTypeVendormodel]:
-    """Transform vendorModels into DiiCollectorDatasourceTypeVendormodel list."""
-    return [
-        DiiCollectorDatasourceTypeVendormodel(**item) for item in record.get("vendorModels", [])
-    ]
-
 
 DIICOLLECTORDATASOURCETYPE_MAPPING = TypeMapping(
     name="DiiCollectorDatasourceType",
@@ -52,12 +36,12 @@ DIICOLLECTORDATASOURCETYPE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="packages",
-            transform=_transform_packages,
+            item_model=DiiCollectorDatasourceTypePackage,
             default=[],
         ),
         FieldMapping(
             cache_attr="vendorModels",
-            transform=_transform_vendorModels,
+            item_model=DiiCollectorDatasourceTypeVendormodel,
             default=[],
         ),
     ),

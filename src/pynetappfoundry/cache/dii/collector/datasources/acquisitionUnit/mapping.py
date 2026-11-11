@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.dii.collector.datasources.acquisitionUnit.model import (
@@ -14,53 +12,6 @@ from pynetappfoundry.models.dii.collector.datasources.acquisitionUnit.model impo
     DiiCollectorDatasourcesAcquisitionunitEvent,
     DiiCollectorDatasourcesAcquisitionunitPackage,
 )
-from pynetappfoundry.utils.dict_path import get_nested_value
-
-
-def _transform_changes(
-    record: dict[str, Any],
-) -> list[DiiCollectorDatasourcesAcquisitionunitChange]:
-    """Transform changes into DiiCollectorDatasourcesAcquisitionunitChange list."""
-    return [
-        DiiCollectorDatasourcesAcquisitionunitChange(**item) for item in record.get("changes", [])
-    ]
-
-
-def _transform_events(record: dict[str, Any]) -> list[DiiCollectorDatasourcesAcquisitionunitEvent]:
-    """Transform events into DiiCollectorDatasourcesAcquisitionunitEvent list."""
-    return [
-        DiiCollectorDatasourcesAcquisitionunitEvent(**item) for item in record.get("events", [])
-    ]
-
-
-def _transform_devices(
-    record: dict[str, Any],
-) -> list[DiiCollectorDatasourcesAcquisitionunitDevice]:
-    """Transform devices into DiiCollectorDatasourcesAcquisitionunitDevice list."""
-    return [
-        DiiCollectorDatasourcesAcquisitionunitDevice(**item) for item in record.get("devices", [])
-    ]
-
-
-def _transform_packages(
-    record: dict[str, Any],
-) -> list[DiiCollectorDatasourcesAcquisitionunitPackage]:
-    """Transform packages into DiiCollectorDatasourcesAcquisitionunitPackage list."""
-    return [
-        DiiCollectorDatasourcesAcquisitionunitPackage(**item) for item in record.get("packages", [])
-    ]
-
-
-def _transform_config_packages(
-    record: dict[str, Any],
-) -> list[DiiCollectorDatasourcesAcquisitionunitConfigPackage]:
-    """Transform config.packages into DiiCollectorDatasourcesAcquisitionunitConfigPackage list."""
-    try:
-        items = get_nested_value(record, "config.packages")
-    except Exception:
-        items = []
-    return [DiiCollectorDatasourcesAcquisitionunitConfigPackage(**item) for item in items]
-
 
 DIICOLLECTORDATASOURCESACQUISITIONUNIT_MAPPING = TypeMapping(
     name="DiiCollectorDatasourcesAcquisitionunit",
@@ -77,7 +28,7 @@ DIICOLLECTORDATASOURCESACQUISITIONUNIT_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="changes",
-            transform=_transform_changes,
+            item_model=DiiCollectorDatasourcesAcquisitionunitChange,
             default=[],
         ),
         FieldMapping(
@@ -194,7 +145,7 @@ DIICOLLECTORDATASOURCESACQUISITIONUNIT_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="events",
-            transform=_transform_events,
+            item_model=DiiCollectorDatasourcesAcquisitionunitEvent,
             default=[],
         ),
         FieldMapping(
@@ -210,12 +161,12 @@ DIICOLLECTORDATASOURCESACQUISITIONUNIT_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="devices",
-            transform=_transform_devices,
+            item_model=DiiCollectorDatasourcesAcquisitionunitDevice,
             default=[],
         ),
         FieldMapping(
             cache_attr="packages",
-            transform=_transform_packages,
+            item_model=DiiCollectorDatasourcesAcquisitionunitPackage,
             default=[],
         ),
         FieldMapping(
@@ -266,7 +217,7 @@ DIICOLLECTORDATASOURCESACQUISITIONUNIT_MAPPING = TypeMapping(
         FieldMapping(
             cache_attr="config_.packages",
             api_path="config.packages",
-            transform=_transform_config_packages,
+            item_model=DiiCollectorDatasourcesAcquisitionunitConfigPackage,
             default=[],
         ),
         FieldMapping(

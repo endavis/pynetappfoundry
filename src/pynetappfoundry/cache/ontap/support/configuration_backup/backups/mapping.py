@@ -2,22 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.support.configuration_backup.backups.model import (
     OntapConfigurationBackupFile,
     OntapConfigurationBackupFileBackupNode,
 )
-
-
-def _transform_backup_nodes(record: dict[str, Any]) -> list[OntapConfigurationBackupFileBackupNode]:
-    """Transform backup_nodes into OntapConfigurationBackupFileBackupNode list."""
-    return [
-        OntapConfigurationBackupFileBackupNode(**item) for item in record.get("backup_nodes", [])
-    ]
-
 
 ONTAPCONFIGURATIONBACKUPFILE_MAPPING = TypeMapping(
     name="OntapConfigurationBackupFile",
@@ -31,7 +21,7 @@ ONTAPCONFIGURATIONBACKUPFILE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="backup_nodes",
-            transform=_transform_backup_nodes,
+            item_model=OntapConfigurationBackupFileBackupNode,
             default=[],
         ),
         FieldMapping(

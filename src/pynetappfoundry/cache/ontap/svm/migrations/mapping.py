@@ -1,9 +1,6 @@
-# ruff: noqa: E501
 """OntapSvmMigration type mapping."""
 
 from __future__ import annotations
-
-from typing import Any
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
@@ -12,24 +9,6 @@ from pynetappfoundry.models.ontap.svm.migrations.model import (
     OntapSvmMigrationDestinationVolumePlacementAggregate,
     OntapSvmMigrationMessage,
 )
-from pynetappfoundry.utils.dict_path import get_nested_value
-
-
-def _transform_destination_volume_placement_aggregates(
-    record: dict[str, Any],
-) -> list[OntapSvmMigrationDestinationVolumePlacementAggregate]:
-    """Transform destination.volume_placement.aggregates into OntapSvmMigrationDestinationVolumePlacementAggregate list."""
-    try:
-        items = get_nested_value(record, "destination.volume_placement.aggregates")
-    except Exception:
-        items = []
-    return [OntapSvmMigrationDestinationVolumePlacementAggregate(**item) for item in items]
-
-
-def _transform_messages(record: dict[str, Any]) -> list[OntapSvmMigrationMessage]:
-    """Transform messages into OntapSvmMigrationMessage list."""
-    return [OntapSvmMigrationMessage(**item) for item in record.get("messages", [])]
-
 
 ONTAPSVMMIGRATION_MAPPING = TypeMapping(
     name="OntapSvmMigration",
@@ -61,7 +40,7 @@ ONTAPSVMMIGRATION_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="destination.volume_placement.aggregates",
-            transform=_transform_destination_volume_placement_aggregates,
+            item_model=OntapSvmMigrationDestinationVolumePlacementAggregate,
             default=[],
         ),
         FieldMapping(
@@ -80,7 +59,7 @@ ONTAPSVMMIGRATION_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="messages",
-            transform=_transform_messages,
+            item_model=OntapSvmMigrationMessage,
             default=[],
         ),
         FieldMapping(

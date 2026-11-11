@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.cluster.counter.tables.rows.model import (
@@ -11,17 +9,6 @@ from pynetappfoundry.models.ontap.cluster.counter.tables.rows.model import (
     OntapCounterRowCounter,
     OntapCounterRowProperty,
 )
-
-
-def _transform_counters(record: dict[str, Any]) -> list[OntapCounterRowCounter]:
-    """Transform counters into OntapCounterRowCounter list."""
-    return [OntapCounterRowCounter(**item) for item in record.get("counters", [])]
-
-
-def _transform_properties(record: dict[str, Any]) -> list[OntapCounterRowProperty]:
-    """Transform properties into OntapCounterRowProperty list."""
-    return [OntapCounterRowProperty(**item) for item in record.get("properties", [])]
-
 
 ONTAPCOUNTERROW_MAPPING = TypeMapping(
     name="OntapCounterRow",
@@ -44,7 +31,7 @@ ONTAPCOUNTERROW_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="counters",
-            transform=_transform_counters,
+            item_model=OntapCounterRowCounter,
             default=[],
         ),
         FieldMapping(
@@ -52,7 +39,7 @@ ONTAPCOUNTERROW_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="properties",
-            transform=_transform_properties,
+            item_model=OntapCounterRowProperty,
             default=[],
         ),
     ),

@@ -2,20 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.support.ems.destinations.model import (
     OntapEmsDestinationResponse,
     OntapEmsDestinationResponseFilter,
 )
-
-
-def _transform_filters(record: dict[str, Any]) -> list[OntapEmsDestinationResponseFilter]:
-    """Transform filters into OntapEmsDestinationResponseFilter list."""
-    return [OntapEmsDestinationResponseFilter(**item) for item in record.get("filters", [])]
-
 
 ONTAPEMSDESTINATIONRESPONSE_MAPPING = TypeMapping(
     name="OntapEmsDestinationResponse",
@@ -48,7 +40,7 @@ ONTAPEMSDESTINATIONRESPONSE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="filters",
-            transform=_transform_filters,
+            item_model=OntapEmsDestinationResponseFilter,
             default=[],
         ),
         FieldMapping(

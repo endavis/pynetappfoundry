@@ -1,9 +1,6 @@
-# ruff: noqa: E501
 """OntapSnapmirrorTransfer type mapping."""
 
 from __future__ import annotations
-
-from typing import Any
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
@@ -12,27 +9,6 @@ from pynetappfoundry.models.ontap.snapmirror.relationships.transfers.model impor
     OntapSnapmirrorTransferFile,
     OntapSnapmirrorTransferRelationshipDestinationConsistencyGroupVolume,
 )
-from pynetappfoundry.utils.dict_path import get_nested_value
-
-
-def _transform_files(record: dict[str, Any]) -> list[OntapSnapmirrorTransferFile]:
-    """Transform files into OntapSnapmirrorTransferFile list."""
-    return [OntapSnapmirrorTransferFile(**item) for item in record.get("files", [])]
-
-
-def _transform_relationship_destination_consistency_group_volumes(
-    record: dict[str, Any],
-) -> list[OntapSnapmirrorTransferRelationshipDestinationConsistencyGroupVolume]:
-    """Transform relationship.destination.consistency_group_volumes into OntapSnapmirrorTransferRelationshipDestinationConsistencyGroupVolume list."""
-    try:
-        items = get_nested_value(record, "relationship.destination.consistency_group_volumes")
-    except Exception:
-        items = []
-    return [
-        OntapSnapmirrorTransferRelationshipDestinationConsistencyGroupVolume(**item)
-        for item in items
-    ]
-
 
 ONTAPSNAPMIRRORTRANSFER_MAPPING = TypeMapping(
     name="OntapSnapmirrorTransfer",
@@ -67,7 +43,7 @@ ONTAPSNAPMIRRORTRANSFER_MAPPING = TypeMapping(
         FieldMapping(
             cache_attr="files",
             cache_strategy="realtime",
-            transform=_transform_files,
+            item_model=OntapSnapmirrorTransferFile,
             default=[],
         ),
         FieldMapping(
@@ -93,7 +69,7 @@ ONTAPSNAPMIRRORTRANSFER_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="relationship.destination.consistency_group_volumes",
-            transform=_transform_relationship_destination_consistency_group_volumes,
+            item_model=OntapSnapmirrorTransferRelationshipDestinationConsistencyGroupVolume,
             default=[],
         ),
         FieldMapping(

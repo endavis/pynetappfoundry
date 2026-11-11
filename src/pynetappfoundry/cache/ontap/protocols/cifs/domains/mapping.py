@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.protocols.cifs.domains.model import (
@@ -12,28 +10,6 @@ from pynetappfoundry.models.ontap.protocols.cifs.domains.model import (
     OntapCifsDomainPreferredDc,
     OntapCifsDomainTrustRelationship,
 )
-
-
-def _transform_discovered_servers(record: dict[str, Any]) -> list[OntapCifsDomainDiscoveredServer]:
-    """Transform discovered_servers into OntapCifsDomainDiscoveredServer list."""
-    return [
-        OntapCifsDomainDiscoveredServer(**item) for item in record.get("discovered_servers", [])
-    ]
-
-
-def _transform_preferred_dcs(record: dict[str, Any]) -> list[OntapCifsDomainPreferredDc]:
-    """Transform preferred_dcs into OntapCifsDomainPreferredDc list."""
-    return [OntapCifsDomainPreferredDc(**item) for item in record.get("preferred_dcs", [])]
-
-
-def _transform_trust_relationships(
-    record: dict[str, Any],
-) -> list[OntapCifsDomainTrustRelationship]:
-    """Transform trust_relationships into OntapCifsDomainTrustRelationship list."""
-    return [
-        OntapCifsDomainTrustRelationship(**item) for item in record.get("trust_relationships", [])
-    ]
-
 
 ONTAPCIFSDOMAIN_MAPPING = TypeMapping(
     name="OntapCifsDomain",
@@ -56,7 +32,7 @@ ONTAPCIFSDOMAIN_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="discovered_servers",
-            transform=_transform_discovered_servers,
+            item_model=OntapCifsDomainDiscoveredServer,
             default=[],
         ),
         FieldMapping(
@@ -92,7 +68,7 @@ ONTAPCIFSDOMAIN_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="preferred_dcs",
-            transform=_transform_preferred_dcs,
+            item_model=OntapCifsDomainPreferredDc,
             default=[],
         ),
         FieldMapping(
@@ -109,7 +85,7 @@ ONTAPCIFSDOMAIN_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="trust_relationships",
-            transform=_transform_trust_relationships,
+            item_model=OntapCifsDomainTrustRelationship,
             default=[],
         ),
     ),

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.svm.svms.model import (
@@ -14,27 +12,6 @@ from pynetappfoundry.models.ontap.svm.svms.model import (
     OntapSvmRoute,
 )
 
-
-def _transform_aggregates(record: dict[str, Any]) -> list[OntapSvmAggregate]:
-    """Transform aggregates into OntapSvmAggregate list."""
-    return [OntapSvmAggregate(**item) for item in record.get("aggregates", [])]
-
-
-def _transform_fc_interfaces(record: dict[str, Any]) -> list[OntapSvmFcInterface]:
-    """Transform fc_interfaces into OntapSvmFcInterface list."""
-    return [OntapSvmFcInterface(**item) for item in record.get("fc_interfaces", [])]
-
-
-def _transform_ip_interfaces(record: dict[str, Any]) -> list[OntapSvmIpInterface]:
-    """Transform ip_interfaces into OntapSvmIpInterface list."""
-    return [OntapSvmIpInterface(**item) for item in record.get("ip_interfaces", [])]
-
-
-def _transform_routes(record: dict[str, Any]) -> list[OntapSvmRoute]:
-    """Transform routes into OntapSvmRoute list."""
-    return [OntapSvmRoute(**item) for item in record.get("routes", [])]
-
-
 ONTAPSVM_MAPPING = TypeMapping(
     name="OntapSvm",
     model_class=OntapSvm,
@@ -44,7 +21,7 @@ ONTAPSVM_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="aggregates",
-            transform=_transform_aggregates,
+            item_model=OntapSvmAggregate,
             default=[],
         ),
         FieldMapping(
@@ -154,7 +131,7 @@ ONTAPSVM_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="fc_interfaces",
-            transform=_transform_fc_interfaces,
+            item_model=OntapSvmFcInterface,
             default=[],
         ),
         FieldMapping(
@@ -167,7 +144,7 @@ ONTAPSVM_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="ip_interfaces",
-            transform=_transform_ip_interfaces,
+            item_model=OntapSvmIpInterface,
             default=[],
         ),
         FieldMapping(
@@ -345,7 +322,7 @@ ONTAPSVM_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="routes",
-            transform=_transform_routes,
+            item_model=OntapSvmRoute,
             default=[],
         ),
         FieldMapping(

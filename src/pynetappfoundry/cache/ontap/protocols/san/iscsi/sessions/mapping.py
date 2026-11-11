@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.protocols.san.iscsi.sessions.model import (
@@ -11,17 +9,6 @@ from pynetappfoundry.models.ontap.protocols.san.iscsi.sessions.model import (
     OntapIscsiSessionConnection,
     OntapIscsiSessionIgroup,
 )
-
-
-def _transform_connections(record: dict[str, Any]) -> list[OntapIscsiSessionConnection]:
-    """Transform connections into OntapIscsiSessionConnection list."""
-    return [OntapIscsiSessionConnection(**item) for item in record.get("connections", [])]
-
-
-def _transform_igroups(record: dict[str, Any]) -> list[OntapIscsiSessionIgroup]:
-    """Transform igroups into OntapIscsiSessionIgroup list."""
-    return [OntapIscsiSessionIgroup(**item) for item in record.get("igroups", [])]
-
 
 ONTAPISCSISESSION_MAPPING = TypeMapping(
     name="OntapIscsiSession",
@@ -31,12 +18,12 @@ ONTAPISCSISESSION_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="connections",
-            transform=_transform_connections,
+            item_model=OntapIscsiSessionConnection,
             default=[],
         ),
         FieldMapping(
             cache_attr="igroups",
-            transform=_transform_igroups,
+            item_model=OntapIscsiSessionIgroup,
             default=[],
         ),
         FieldMapping(

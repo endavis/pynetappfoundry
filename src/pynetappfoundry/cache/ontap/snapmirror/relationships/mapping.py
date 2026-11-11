@@ -1,9 +1,6 @@
-# ruff: noqa: E501
 """OntapSnapmirrorRelationship type mapping."""
 
 from __future__ import annotations
-
-from typing import Any
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
@@ -15,62 +12,6 @@ from pynetappfoundry.models.ontap.snapmirror.relationships.model import (
     OntapSnapmirrorRelationshipSvmdrVolume,
     OntapSnapmirrorRelationshipUnhealthyReason,
 )
-from pynetappfoundry.utils.dict_path import get_nested_value
-
-
-def _transform_consistency_group_failover_error_arguments(
-    record: dict[str, Any],
-) -> list[OntapSnapmirrorRelationshipConsistencyGroupFailoverErrorArgument]:
-    """Transform consistency_group_failover.error.arguments into OntapSnapmirrorRelationshipConsistencyGroupFailoverErrorArgument list."""
-    try:
-        items = get_nested_value(record, "consistency_group_failover.error.arguments")
-    except Exception:
-        items = []
-    return [
-        OntapSnapmirrorRelationshipConsistencyGroupFailoverErrorArgument(**item) for item in items
-    ]
-
-
-def _transform_destination_consistency_group_volumes(
-    record: dict[str, Any],
-) -> list[OntapSnapmirrorRelationshipDestinationConsistencyGroupVolume]:
-    """Transform destination.consistency_group_volumes into OntapSnapmirrorRelationshipDestinationConsistencyGroupVolume list."""
-    try:
-        items = get_nested_value(record, "destination.consistency_group_volumes")
-    except Exception:
-        items = []
-    return [OntapSnapmirrorRelationshipDestinationConsistencyGroupVolume(**item) for item in items]
-
-
-def _transform_source_consistency_group_volumes(
-    record: dict[str, Any],
-) -> list[OntapSnapmirrorRelationshipSourceConsistencyGroupVolume]:
-    """Transform source.consistency_group_volumes into OntapSnapmirrorRelationshipSourceConsistencyGroupVolume list."""
-    try:
-        items = get_nested_value(record, "source.consistency_group_volumes")
-    except Exception:
-        items = []
-    return [OntapSnapmirrorRelationshipSourceConsistencyGroupVolume(**item) for item in items]
-
-
-def _transform_svmdr_volumes(
-    record: dict[str, Any],
-) -> list[OntapSnapmirrorRelationshipSvmdrVolume]:
-    """Transform svmdr_volumes into OntapSnapmirrorRelationshipSvmdrVolume list."""
-    return [
-        OntapSnapmirrorRelationshipSvmdrVolume(**item) for item in record.get("svmdr_volumes", [])
-    ]
-
-
-def _transform_unhealthy_reason(
-    record: dict[str, Any],
-) -> list[OntapSnapmirrorRelationshipUnhealthyReason]:
-    """Transform unhealthy_reason into OntapSnapmirrorRelationshipUnhealthyReason list."""
-    return [
-        OntapSnapmirrorRelationshipUnhealthyReason(**item)
-        for item in record.get("unhealthy_reason", [])
-    ]
-
 
 ONTAPSNAPMIRRORRELATIONSHIP_MAPPING = TypeMapping(
     name="OntapSnapmirrorRelationship",
@@ -84,7 +25,7 @@ ONTAPSNAPMIRRORRELATIONSHIP_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="consistency_group_failover.error.arguments",
-            transform=_transform_consistency_group_failover_error_arguments,
+            item_model=OntapSnapmirrorRelationshipConsistencyGroupFailoverErrorArgument,
             default=[],
         ),
         FieldMapping(
@@ -150,7 +91,7 @@ ONTAPSNAPMIRRORRELATIONSHIP_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="destination.consistency_group_volumes",
-            transform=_transform_destination_consistency_group_volumes,
+            item_model=OntapSnapmirrorRelationshipDestinationConsistencyGroupVolume,
             default=[],
         ),
         FieldMapping(
@@ -242,7 +183,7 @@ ONTAPSNAPMIRRORRELATIONSHIP_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="source.consistency_group_volumes",
-            transform=_transform_source_consistency_group_volumes,
+            item_model=OntapSnapmirrorRelationshipSourceConsistencyGroupVolume,
             default=[],
         ),
         FieldMapping(
@@ -265,7 +206,7 @@ ONTAPSNAPMIRRORRELATIONSHIP_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="svmdr_volumes",
-            transform=_transform_svmdr_volumes,
+            item_model=OntapSnapmirrorRelationshipSvmdrVolume,
             default=[],
         ),
         FieldMapping(
@@ -315,7 +256,7 @@ ONTAPSNAPMIRRORRELATIONSHIP_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="unhealthy_reason",
-            transform=_transform_unhealthy_reason,
+            item_model=OntapSnapmirrorRelationshipUnhealthyReason,
             default=[],
         ),
         FieldMapping(

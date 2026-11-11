@@ -55,6 +55,7 @@ Maps a single field across three domains: API response, CLI output, and cache mo
 | `cli_field` | `str \| None` | Hyphenated CLI field name (e.g., `"vserver"`). |
 | `default` | `Any` | Default value when the field is missing. Default: `""`. |
 | `transform` | `Callable \| None` | Custom API extraction function receiving the full record dict. Overrides `api_path`. |
+| `item_model` | `type[BaseModel] \| None` | Sub-model class for each element of a list of objects at `api_path`. Mutually exclusive with `transform`. |
 | `cli_transform` | `Callable \| None` | Custom CLI extraction function receiving the full record dict. Overrides `cli_field`. |
 | `cache_strategy` | `Literal["cache", "realtime", "derived"]` | How the field is collected and stored. Default: `"cache"`. See [Cache Model Architecture](cache-models.md#field-strategies). |
 | `requires_explicit_fetch` | `bool` | Whether this field requires explicit `?fields=` inclusion (ONTAP expensive fields). Default: `False`. |
@@ -313,6 +314,16 @@ FieldMapping(
 ```
 
 The `default=0` is the fallback when the field is missing from the API response.
+
+## Lists of Sub-Models (`item_model`)
+
+For a list of objects at `api_path`, set `item_model` to the sub-model class instead of writing a transform:
+
+```python
+FieldMapping(cache_attr="aggregates", item_model=OntapVolumeAggregate, default=[])
+```
+
+`parse_api_record` builds `[item_model(**item) for item in <list>]`. A missing path or an explicit `null` gives `[]`; a non-list value or an item that fails to build raises, logged as `TRANSFORM_FAILURE`. Setting both `transform` and `item_model` raises `ValueError`. Precedence when parsing: `transform`, then `item_model`, then `api_path`, then `default`. The code generator emits `item_model` for every array-of-objects field.
 
 ## Transform Functions
 

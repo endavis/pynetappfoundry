@@ -2,20 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.protocols.nfs.export_policies.model import (
     OntapExportPolicy,
     OntapExportPolicyRule,
 )
-
-
-def _transform_rules(record: dict[str, Any]) -> list[OntapExportPolicyRule]:
-    """Transform rules into OntapExportPolicyRule list."""
-    return [OntapExportPolicyRule(**item) for item in record.get("rules", [])]
-
 
 ONTAPEXPORTPOLICY_MAPPING = TypeMapping(
     name="OntapExportPolicy",
@@ -33,7 +25,7 @@ ONTAPEXPORTPOLICY_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="rules",
-            transform=_transform_rules,
+            item_model=OntapExportPolicyRule,
             default=[],
         ),
         FieldMapping(

@@ -2,20 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.storage.quota.reports.model import (
     OntapQuotaReport,
     OntapQuotaReportUser,
 )
-
-
-def _transform_users(record: dict[str, Any]) -> list[OntapQuotaReportUser]:
-    """Transform users into OntapQuotaReportUser list."""
-    return [OntapQuotaReportUser(**item) for item in record.get("users", [])]
-
 
 ONTAPQUOTAREPORT_MAPPING = TypeMapping(
     name="OntapQuotaReport",
@@ -102,7 +94,7 @@ ONTAPQUOTAREPORT_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="users",
-            transform=_transform_users,
+            item_model=OntapQuotaReportUser,
             default=[],
         ),
         FieldMapping(

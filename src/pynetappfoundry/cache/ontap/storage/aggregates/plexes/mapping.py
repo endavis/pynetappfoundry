@@ -2,20 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.storage.aggregates.plexes.model import (
     OntapPlex,
     OntapPlexRaidGroup,
 )
-
-
-def _transform_raid_groups(record: dict[str, Any]) -> list[OntapPlexRaidGroup]:
-    """Transform raid_groups into OntapPlexRaidGroup list."""
-    return [OntapPlexRaidGroup(**item) for item in record.get("raid_groups", [])]
-
 
 ONTAPPLEX_MAPPING = TypeMapping(
     name="OntapPlex",
@@ -43,7 +35,7 @@ ONTAPPLEX_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="raid_groups",
-            transform=_transform_raid_groups,
+            item_model=OntapPlexRaidGroup,
             default=[],
         ),
         FieldMapping(

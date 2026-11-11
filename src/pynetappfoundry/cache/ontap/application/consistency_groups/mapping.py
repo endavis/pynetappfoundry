@@ -1,9 +1,6 @@
-# ruff: noqa: E501
 """OntapConsistencyGroupResponse type mapping."""
 
 from __future__ import annotations
-
-from typing import Any
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
@@ -16,54 +13,6 @@ from pynetappfoundry.models.ontap.application.consistency_groups.model import (
     OntapConsistencyGroupResponseTieringObjectStore,
     OntapConsistencyGroupResponseVolume,
 )
-from pynetappfoundry.utils.dict_path import get_nested_value
-
-
-def _transform_consistency_groups(
-    record: dict[str, Any],
-) -> list[OntapConsistencyGroupResponseConsistencyGroup]:
-    """Transform consistency_groups into OntapConsistencyGroupResponseConsistencyGroup list."""
-    return [
-        OntapConsistencyGroupResponseConsistencyGroup(**item)
-        for item in record.get("consistency_groups", [])
-    ]
-
-
-def _transform_luns(record: dict[str, Any]) -> list[OntapConsistencyGroupResponseLun]:
-    """Transform luns into OntapConsistencyGroupResponseLun list."""
-    return [OntapConsistencyGroupResponseLun(**item) for item in record.get("luns", [])]
-
-
-def _transform_namespaces(record: dict[str, Any]) -> list[OntapConsistencyGroupResponseNamespace]:
-    """Transform namespaces into OntapConsistencyGroupResponseNamespace list."""
-    return [OntapConsistencyGroupResponseNamespace(**item) for item in record.get("namespaces", [])]
-
-
-def _transform_replication_relationships(
-    record: dict[str, Any],
-) -> list[OntapConsistencyGroupResponseReplicationRelationship]:
-    """Transform replication_relationships into OntapConsistencyGroupResponseReplicationRelationship list."""
-    return [
-        OntapConsistencyGroupResponseReplicationRelationship(**item)
-        for item in record.get("replication_relationships", [])
-    ]
-
-
-def _transform_tiering_object_stores(
-    record: dict[str, Any],
-) -> list[OntapConsistencyGroupResponseTieringObjectStore]:
-    """Transform tiering.object_stores into OntapConsistencyGroupResponseTieringObjectStore list."""
-    try:
-        items = get_nested_value(record, "tiering.object_stores")
-    except Exception:
-        items = []
-    return [OntapConsistencyGroupResponseTieringObjectStore(**item) for item in items]
-
-
-def _transform_volumes(record: dict[str, Any]) -> list[OntapConsistencyGroupResponseVolume]:
-    """Transform volumes into OntapConsistencyGroupResponseVolume list."""
-    return [OntapConsistencyGroupResponseVolume(**item) for item in record.get("volumes", [])]
-
 
 ONTAPCONSISTENCYGROUPRESPONSE_MAPPING = TypeMapping(
     name="OntapConsistencyGroupResponse",
@@ -125,12 +74,12 @@ ONTAPCONSISTENCYGROUPRESPONSE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="consistency_groups",
-            transform=_transform_consistency_groups,
+            item_model=OntapConsistencyGroupResponseConsistencyGroup,
             default=[],
         ),
         FieldMapping(
             cache_attr="luns",
-            transform=_transform_luns,
+            item_model=OntapConsistencyGroupResponseLun,
             default=[],
         ),
         FieldMapping(
@@ -225,7 +174,7 @@ ONTAPCONSISTENCYGROUPRESPONSE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="namespaces",
-            transform=_transform_namespaces,
+            item_model=OntapConsistencyGroupResponseNamespace,
             default=[],
         ),
         FieldMapping(
@@ -255,7 +204,7 @@ ONTAPCONSISTENCYGROUPRESPONSE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="replication_relationships",
-            transform=_transform_replication_relationships,
+            item_model=OntapConsistencyGroupResponseReplicationRelationship,
             default=[],
         ),
         FieldMapping(
@@ -383,7 +332,7 @@ ONTAPCONSISTENCYGROUPRESPONSE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="tiering.object_stores",
-            transform=_transform_tiering_object_stores,
+            item_model=OntapConsistencyGroupResponseTieringObjectStore,
             default=[],
         ),
         FieldMapping(
@@ -394,7 +343,7 @@ ONTAPCONSISTENCYGROUPRESPONSE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="volumes",
-            transform=_transform_volumes,
+            item_model=OntapConsistencyGroupResponseVolume,
             default=[],
         ),
     ),

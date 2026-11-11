@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.storage.disks.model import (
@@ -13,34 +11,6 @@ from pynetappfoundry.models.ontap.storage.disks.model import (
     OntapDiskOutageReasonArgument,
     OntapDiskPath,
 )
-from pynetappfoundry.utils.dict_path import get_nested_value
-
-
-def _transform_aggregates(record: dict[str, Any]) -> list[OntapDiskAggregate]:
-    """Transform aggregates into OntapDiskAggregate list."""
-    return [OntapDiskAggregate(**item) for item in record.get("aggregates", [])]
-
-
-def _transform_error(record: dict[str, Any]) -> list[OntapDiskError]:
-    """Transform error into OntapDiskError list."""
-    return [OntapDiskError(**item) for item in record.get("error", [])]
-
-
-def _transform_outage_reason_arguments(
-    record: dict[str, Any],
-) -> list[OntapDiskOutageReasonArgument]:
-    """Transform outage.reason.arguments into OntapDiskOutageReasonArgument list."""
-    try:
-        items = get_nested_value(record, "outage.reason.arguments")
-    except Exception:
-        items = []
-    return [OntapDiskOutageReasonArgument(**item) for item in items]
-
-
-def _transform_paths(record: dict[str, Any]) -> list[OntapDiskPath]:
-    """Transform paths into OntapDiskPath list."""
-    return [OntapDiskPath(**item) for item in record.get("paths", [])]
-
 
 ONTAPDISK_MAPPING = TypeMapping(
     name="OntapDisk",
@@ -51,7 +21,7 @@ ONTAPDISK_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="aggregates",
-            transform=_transform_aggregates,
+            item_model=OntapDiskAggregate,
             default=[],
         ),
         FieldMapping(
@@ -97,7 +67,7 @@ ONTAPDISK_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="error",
-            transform=_transform_error,
+            item_model=OntapDiskError,
             default=[],
         ),
         FieldMapping(
@@ -145,7 +115,7 @@ ONTAPDISK_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="outage.reason.arguments",
-            transform=_transform_outage_reason_arguments,
+            item_model=OntapDiskOutageReasonArgument,
             default=[],
         ),
         FieldMapping(
@@ -159,7 +129,7 @@ ONTAPDISK_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="paths",
-            transform=_transform_paths,
+            item_model=OntapDiskPath,
             default=[],
         ),
         FieldMapping(

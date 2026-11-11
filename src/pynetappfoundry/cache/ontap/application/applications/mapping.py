@@ -1,9 +1,6 @@
-# ruff: noqa: E501
 """OntapApplication type mapping."""
 
 from __future__ import annotations
-
-from typing import Any
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
@@ -33,251 +30,6 @@ from pynetappfoundry.models.ontap.application.applications.model import (
     OntapApplicationVsiOnNasNfsAccess,
     OntapApplicationVsiOnSanNewIgroup,
 )
-from pynetappfoundry.utils.dict_path import get_nested_value
-
-
-def _transform_rpo_components(record: dict[str, Any]) -> list[OntapApplicationRpoComponent]:
-    """Transform rpo.components into OntapApplicationRpoComponent list."""
-    try:
-        items = get_nested_value(record, "rpo.components")
-    except Exception:
-        items = []
-    return [OntapApplicationRpoComponent(**item) for item in items]
-
-
-def _transform_statistics_components(
-    record: dict[str, Any],
-) -> list[OntapApplicationStatisticsComponent]:
-    """Transform statistics.components into OntapApplicationStatisticsComponent list."""
-    try:
-        items = get_nested_value(record, "statistics.components")
-    except Exception:
-        items = []
-    return [OntapApplicationStatisticsComponent(**item) for item in items]
-
-
-def _transform_mongo_db_on_san_new_igroups(
-    record: dict[str, Any],
-) -> list[OntapApplicationMongoDbOnSanNewIgroup]:
-    """Transform mongo_db_on_san.new_igroups into OntapApplicationMongoDbOnSanNewIgroup list."""
-    try:
-        items = get_nested_value(record, "mongo_db_on_san.new_igroups")
-    except Exception:
-        items = []
-    return [OntapApplicationMongoDbOnSanNewIgroup(**item) for item in items]
-
-
-def _transform_mongo_db_on_san_secondary_igroups(
-    record: dict[str, Any],
-) -> list[OntapApplicationMongoDbOnSanSecondaryIgroup]:
-    """Transform mongo_db_on_san.secondary_igroups into OntapApplicationMongoDbOnSanSecondaryIgroup list."""
-    try:
-        items = get_nested_value(record, "mongo_db_on_san.secondary_igroups")
-    except Exception:
-        items = []
-    return [OntapApplicationMongoDbOnSanSecondaryIgroup(**item) for item in items]
-
-
-def _transform_nas_application_components(
-    record: dict[str, Any],
-) -> list[OntapApplicationNasApplicationComponent]:
-    """Transform nas.application_components into OntapApplicationNasApplicationComponent list."""
-    try:
-        items = get_nested_value(record, "nas.application_components")
-    except Exception:
-        items = []
-    return [OntapApplicationNasApplicationComponent(**item) for item in items]
-
-
-def _transform_nas_cifs_access(record: dict[str, Any]) -> list[OntapApplicationNasCifsAccess]:
-    """Transform nas.cifs_access into OntapApplicationNasCifsAccess list."""
-    try:
-        items = get_nested_value(record, "nas.cifs_access")
-    except Exception:
-        items = []
-    return [OntapApplicationNasCifsAccess(**item) for item in items]
-
-
-def _transform_nas_exclude_aggregates(
-    record: dict[str, Any],
-) -> list[OntapApplicationNasExcludeAggregate]:
-    """Transform nas.exclude_aggregates into OntapApplicationNasExcludeAggregate list."""
-    try:
-        items = get_nested_value(record, "nas.exclude_aggregates")
-    except Exception:
-        items = []
-    return [OntapApplicationNasExcludeAggregate(**item) for item in items]
-
-
-def _transform_nas_nfs_access(record: dict[str, Any]) -> list[OntapApplicationNasNfsAccess]:
-    """Transform nas.nfs_access into OntapApplicationNasNfsAccess list."""
-    try:
-        items = get_nested_value(record, "nas.nfs_access")
-    except Exception:
-        items = []
-    return [OntapApplicationNasNfsAccess(**item) for item in items]
-
-
-def _transform_nvme_components(record: dict[str, Any]) -> list[OntapApplicationNvmeComponent]:
-    """Transform nvme.components into OntapApplicationNvmeComponent list."""
-    try:
-        items = get_nested_value(record, "nvme.components")
-    except Exception:
-        items = []
-    return [OntapApplicationNvmeComponent(**item) for item in items]
-
-
-def _transform_oracle_on_nfs_nfs_access(
-    record: dict[str, Any],
-) -> list[OntapApplicationOracleOnNfsNfsAccess]:
-    """Transform oracle_on_nfs.nfs_access into OntapApplicationOracleOnNfsNfsAccess list."""
-    try:
-        items = get_nested_value(record, "oracle_on_nfs.nfs_access")
-    except Exception:
-        items = []
-    return [OntapApplicationOracleOnNfsNfsAccess(**item) for item in items]
-
-
-def _transform_oracle_on_san_new_igroups(
-    record: dict[str, Any],
-) -> list[OntapApplicationOracleOnSanNewIgroup]:
-    """Transform oracle_on_san.new_igroups into OntapApplicationOracleOnSanNewIgroup list."""
-    try:
-        items = get_nested_value(record, "oracle_on_san.new_igroups")
-    except Exception:
-        items = []
-    return [OntapApplicationOracleOnSanNewIgroup(**item) for item in items]
-
-
-def _transform_oracle_rac_on_nfs_nfs_access(
-    record: dict[str, Any],
-) -> list[OntapApplicationOracleRacOnNfsNfsAccess]:
-    """Transform oracle_rac_on_nfs.nfs_access into OntapApplicationOracleRacOnNfsNfsAccess list."""
-    try:
-        items = get_nested_value(record, "oracle_rac_on_nfs.nfs_access")
-    except Exception:
-        items = []
-    return [OntapApplicationOracleRacOnNfsNfsAccess(**item) for item in items]
-
-
-def _transform_oracle_rac_on_san_db_sids(
-    record: dict[str, Any],
-) -> list[OntapApplicationOracleRacOnSanDbSid]:
-    """Transform oracle_rac_on_san.db_sids into OntapApplicationOracleRacOnSanDbSid list."""
-    try:
-        items = get_nested_value(record, "oracle_rac_on_san.db_sids")
-    except Exception:
-        items = []
-    return [OntapApplicationOracleRacOnSanDbSid(**item) for item in items]
-
-
-def _transform_oracle_rac_on_san_new_igroups(
-    record: dict[str, Any],
-) -> list[OntapApplicationOracleRacOnSanNewIgroup]:
-    """Transform oracle_rac_on_san.new_igroups into OntapApplicationOracleRacOnSanNewIgroup list."""
-    try:
-        items = get_nested_value(record, "oracle_rac_on_san.new_igroups")
-    except Exception:
-        items = []
-    return [OntapApplicationOracleRacOnSanNewIgroup(**item) for item in items]
-
-
-def _transform_s3_bucket_application_components(
-    record: dict[str, Any],
-) -> list[OntapApplicationS3BucketApplicationComponent]:
-    """Transform s3_bucket.application_components into OntapApplicationS3BucketApplicationComponent list."""
-    try:
-        items = get_nested_value(record, "s3_bucket.application_components")
-    except Exception:
-        items = []
-    return [OntapApplicationS3BucketApplicationComponent(**item) for item in items]
-
-
-def _transform_san_application_components(
-    record: dict[str, Any],
-) -> list[OntapApplicationSanApplicationComponent]:
-    """Transform san.application_components into OntapApplicationSanApplicationComponent list."""
-    try:
-        items = get_nested_value(record, "san.application_components")
-    except Exception:
-        items = []
-    return [OntapApplicationSanApplicationComponent(**item) for item in items]
-
-
-def _transform_san_exclude_aggregates(
-    record: dict[str, Any],
-) -> list[OntapApplicationSanExcludeAggregate]:
-    """Transform san.exclude_aggregates into OntapApplicationSanExcludeAggregate list."""
-    try:
-        items = get_nested_value(record, "san.exclude_aggregates")
-    except Exception:
-        items = []
-    return [OntapApplicationSanExcludeAggregate(**item) for item in items]
-
-
-def _transform_san_new_igroups(record: dict[str, Any]) -> list[OntapApplicationSanNewIgroup]:
-    """Transform san.new_igroups into OntapApplicationSanNewIgroup list."""
-    try:
-        items = get_nested_value(record, "san.new_igroups")
-    except Exception:
-        items = []
-    return [OntapApplicationSanNewIgroup(**item) for item in items]
-
-
-def _transform_sql_on_san_new_igroups(
-    record: dict[str, Any],
-) -> list[OntapApplicationSqlOnSanNewIgroup]:
-    """Transform sql_on_san.new_igroups into OntapApplicationSqlOnSanNewIgroup list."""
-    try:
-        items = get_nested_value(record, "sql_on_san.new_igroups")
-    except Exception:
-        items = []
-    return [OntapApplicationSqlOnSanNewIgroup(**item) for item in items]
-
-
-def _transform_vdi_on_nas_nfs_access(
-    record: dict[str, Any],
-) -> list[OntapApplicationVdiOnNasNfsAccess]:
-    """Transform vdi_on_nas.nfs_access into OntapApplicationVdiOnNasNfsAccess list."""
-    try:
-        items = get_nested_value(record, "vdi_on_nas.nfs_access")
-    except Exception:
-        items = []
-    return [OntapApplicationVdiOnNasNfsAccess(**item) for item in items]
-
-
-def _transform_vdi_on_san_new_igroups(
-    record: dict[str, Any],
-) -> list[OntapApplicationVdiOnSanNewIgroup]:
-    """Transform vdi_on_san.new_igroups into OntapApplicationVdiOnSanNewIgroup list."""
-    try:
-        items = get_nested_value(record, "vdi_on_san.new_igroups")
-    except Exception:
-        items = []
-    return [OntapApplicationVdiOnSanNewIgroup(**item) for item in items]
-
-
-def _transform_vsi_on_nas_nfs_access(
-    record: dict[str, Any],
-) -> list[OntapApplicationVsiOnNasNfsAccess]:
-    """Transform vsi_on_nas.nfs_access into OntapApplicationVsiOnNasNfsAccess list."""
-    try:
-        items = get_nested_value(record, "vsi_on_nas.nfs_access")
-    except Exception:
-        items = []
-    return [OntapApplicationVsiOnNasNfsAccess(**item) for item in items]
-
-
-def _transform_vsi_on_san_new_igroups(
-    record: dict[str, Any],
-) -> list[OntapApplicationVsiOnSanNewIgroup]:
-    """Transform vsi_on_san.new_igroups into OntapApplicationVsiOnSanNewIgroup list."""
-    try:
-        items = get_nested_value(record, "vsi_on_san.new_igroups")
-    except Exception:
-        items = []
-    return [OntapApplicationVsiOnSanNewIgroup(**item) for item in items]
-
 
 ONTAPAPPLICATION_MAPPING = TypeMapping(
     name="OntapApplication",
@@ -314,7 +66,7 @@ ONTAPAPPLICATION_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="rpo.components",
-            transform=_transform_rpo_components,
+            item_model=OntapApplicationRpoComponent,
             default=[],
         ),
         FieldMapping(
@@ -342,7 +94,7 @@ ONTAPAPPLICATION_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="statistics.components",
-            transform=_transform_statistics_components,
+            item_model=OntapApplicationStatisticsComponent,
             cache_strategy="realtime",
             default=[],
         ),
@@ -453,7 +205,7 @@ ONTAPAPPLICATION_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="mongo_db_on_san.new_igroups",
-            transform=_transform_mongo_db_on_san_new_igroups,
+            item_model=OntapApplicationMongoDbOnSanNewIgroup,
             default=[],
         ),
         FieldMapping(
@@ -470,17 +222,17 @@ ONTAPAPPLICATION_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="mongo_db_on_san.secondary_igroups",
-            transform=_transform_mongo_db_on_san_secondary_igroups,
+            item_model=OntapApplicationMongoDbOnSanSecondaryIgroup,
             default=[],
         ),
         FieldMapping(
             cache_attr="nas.application_components",
-            transform=_transform_nas_application_components,
+            item_model=OntapApplicationNasApplicationComponent,
             default=[],
         ),
         FieldMapping(
             cache_attr="nas.cifs_access",
-            transform=_transform_nas_cifs_access,
+            item_model=OntapApplicationNasCifsAccess,
             default=[],
         ),
         FieldMapping(
@@ -488,12 +240,12 @@ ONTAPAPPLICATION_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="nas.exclude_aggregates",
-            transform=_transform_nas_exclude_aggregates,
+            item_model=OntapApplicationNasExcludeAggregate,
             default=[],
         ),
         FieldMapping(
             cache_attr="nas.nfs_access",
-            transform=_transform_nas_nfs_access,
+            item_model=OntapApplicationNasNfsAccess,
             default=[],
         ),
         FieldMapping(
@@ -507,7 +259,7 @@ ONTAPAPPLICATION_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="nvme.components",
-            transform=_transform_nvme_components,
+            item_model=OntapApplicationNvmeComponent,
             default=[],
         ),
         FieldMapping(
@@ -538,7 +290,7 @@ ONTAPAPPLICATION_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="oracle_on_nfs.nfs_access",
-            transform=_transform_oracle_on_nfs_nfs_access,
+            item_model=OntapApplicationOracleOnNfsNfsAccess,
             default=[],
         ),
         FieldMapping(
@@ -584,7 +336,7 @@ ONTAPAPPLICATION_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="oracle_on_san.new_igroups",
-            transform=_transform_oracle_on_san_new_igroups,
+            item_model=OntapApplicationOracleOnSanNewIgroup,
             default=[],
         ),
         FieldMapping(
@@ -637,7 +389,7 @@ ONTAPAPPLICATION_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="oracle_rac_on_nfs.nfs_access",
-            transform=_transform_oracle_rac_on_nfs_nfs_access,
+            item_model=OntapApplicationOracleRacOnNfsNfsAccess,
             default=[],
         ),
         FieldMapping(
@@ -691,7 +443,7 @@ ONTAPAPPLICATION_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="oracle_rac_on_san.db_sids",
-            transform=_transform_oracle_rac_on_san_db_sids,
+            item_model=OntapApplicationOracleRacOnSanDbSid,
             default=[],
         ),
         FieldMapping(
@@ -703,7 +455,7 @@ ONTAPAPPLICATION_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="oracle_rac_on_san.new_igroups",
-            transform=_transform_oracle_rac_on_san_new_igroups,
+            item_model=OntapApplicationOracleRacOnSanNewIgroup,
             default=[],
         ),
         FieldMapping(
@@ -746,7 +498,7 @@ ONTAPAPPLICATION_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="s3_bucket.application_components",
-            transform=_transform_s3_bucket_application_components,
+            item_model=OntapApplicationS3BucketApplicationComponent,
             default=[],
         ),
         FieldMapping(
@@ -754,17 +506,17 @@ ONTAPAPPLICATION_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="san.application_components",
-            transform=_transform_san_application_components,
+            item_model=OntapApplicationSanApplicationComponent,
             default=[],
         ),
         FieldMapping(
             cache_attr="san.exclude_aggregates",
-            transform=_transform_san_exclude_aggregates,
+            item_model=OntapApplicationSanExcludeAggregate,
             default=[],
         ),
         FieldMapping(
             cache_attr="san.new_igroups",
-            transform=_transform_san_new_igroups,
+            item_model=OntapApplicationSanNewIgroup,
             default=[],
         ),
         FieldMapping(
@@ -798,7 +550,7 @@ ONTAPAPPLICATION_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="sql_on_san.new_igroups",
-            transform=_transform_sql_on_san_new_igroups,
+            item_model=OntapApplicationSqlOnSanNewIgroup,
             default=[],
         ),
         FieldMapping(
@@ -874,7 +626,7 @@ ONTAPAPPLICATION_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="vdi_on_nas.nfs_access",
-            transform=_transform_vdi_on_nas_nfs_access,
+            item_model=OntapApplicationVdiOnNasNfsAccess,
             default=[],
         ),
         FieldMapping(
@@ -902,7 +654,7 @@ ONTAPAPPLICATION_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="vdi_on_san.new_igroups",
-            transform=_transform_vdi_on_san_new_igroups,
+            item_model=OntapApplicationVdiOnSanNewIgroup,
             default=[],
         ),
         FieldMapping(
@@ -927,7 +679,7 @@ ONTAPAPPLICATION_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="vsi_on_nas.nfs_access",
-            transform=_transform_vsi_on_nas_nfs_access,
+            item_model=OntapApplicationVsiOnNasNfsAccess,
             default=[],
         ),
         FieldMapping(
@@ -955,7 +707,7 @@ ONTAPAPPLICATION_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="vsi_on_san.new_igroups",
-            transform=_transform_vsi_on_san_new_igroups,
+            item_model=OntapApplicationVsiOnSanNewIgroup,
             default=[],
         ),
         FieldMapping(

@@ -2,20 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.name_services.unix_groups.model import (
     OntapUnixGroup,
     OntapUnixGroupUser,
 )
-
-
-def _transform_users(record: dict[str, Any]) -> list[OntapUnixGroupUser]:
-    """Transform users into OntapUnixGroupUser list."""
-    return [OntapUnixGroupUser(**item) for item in record.get("users", [])]
-
 
 ONTAPUNIXGROUP_MAPPING = TypeMapping(
     name="OntapUnixGroup",
@@ -42,7 +34,7 @@ ONTAPUNIXGROUP_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="users",
-            transform=_transform_users,
+            item_model=OntapUnixGroupUser,
             default=[],
         ),
     ),

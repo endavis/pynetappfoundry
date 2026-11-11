@@ -1,9 +1,6 @@
-# ruff: noqa: E501
 """OntapConsistencyGroupSnapshotResponse type mapping."""
 
 from __future__ import annotations
-
-from typing import Any
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
@@ -15,52 +12,6 @@ from pynetappfoundry.models.ontap.application.consistency_groups.snapshots.model
     OntapConsistencyGroupSnapshotResponseMissingVolume,
     OntapConsistencyGroupSnapshotResponseNamespace,
 )
-
-
-def _transform_luns(record: dict[str, Any]) -> list[OntapConsistencyGroupSnapshotResponseLun]:
-    """Transform luns into OntapConsistencyGroupSnapshotResponseLun list."""
-    return [OntapConsistencyGroupSnapshotResponseLun(**item) for item in record.get("luns", [])]
-
-
-def _transform_missing_luns(
-    record: dict[str, Any],
-) -> list[OntapConsistencyGroupSnapshotResponseMissingLun]:
-    """Transform missing_luns into OntapConsistencyGroupSnapshotResponseMissingLun list."""
-    return [
-        OntapConsistencyGroupSnapshotResponseMissingLun(**item)
-        for item in record.get("missing_luns", [])
-    ]
-
-
-def _transform_missing_namespaces(
-    record: dict[str, Any],
-) -> list[OntapConsistencyGroupSnapshotResponseMissingNamespace]:
-    """Transform missing_namespaces into OntapConsistencyGroupSnapshotResponseMissingNamespace list."""
-    return [
-        OntapConsistencyGroupSnapshotResponseMissingNamespace(**item)
-        for item in record.get("missing_namespaces", [])
-    ]
-
-
-def _transform_missing_volumes(
-    record: dict[str, Any],
-) -> list[OntapConsistencyGroupSnapshotResponseMissingVolume]:
-    """Transform missing_volumes into OntapConsistencyGroupSnapshotResponseMissingVolume list."""
-    return [
-        OntapConsistencyGroupSnapshotResponseMissingVolume(**item)
-        for item in record.get("missing_volumes", [])
-    ]
-
-
-def _transform_namespaces(
-    record: dict[str, Any],
-) -> list[OntapConsistencyGroupSnapshotResponseNamespace]:
-    """Transform namespaces into OntapConsistencyGroupSnapshotResponseNamespace list."""
-    return [
-        OntapConsistencyGroupSnapshotResponseNamespace(**item)
-        for item in record.get("namespaces", [])
-    ]
-
 
 ONTAPCONSISTENCYGROUPSNAPSHOTRESPONSE_MAPPING = TypeMapping(
     name="OntapConsistencyGroupSnapshotResponse",
@@ -92,22 +43,22 @@ ONTAPCONSISTENCYGROUPSNAPSHOTRESPONSE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="luns",
-            transform=_transform_luns,
+            item_model=OntapConsistencyGroupSnapshotResponseLun,
             default=[],
         ),
         FieldMapping(
             cache_attr="missing_luns",
-            transform=_transform_missing_luns,
+            item_model=OntapConsistencyGroupSnapshotResponseMissingLun,
             default=[],
         ),
         FieldMapping(
             cache_attr="missing_namespaces",
-            transform=_transform_missing_namespaces,
+            item_model=OntapConsistencyGroupSnapshotResponseMissingNamespace,
             default=[],
         ),
         FieldMapping(
             cache_attr="missing_volumes",
-            transform=_transform_missing_volumes,
+            item_model=OntapConsistencyGroupSnapshotResponseMissingVolume,
             default=[],
         ),
         FieldMapping(
@@ -115,7 +66,7 @@ ONTAPCONSISTENCYGROUPSNAPSHOTRESPONSE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="namespaces",
-            transform=_transform_namespaces,
+            item_model=OntapConsistencyGroupSnapshotResponseNamespace,
             default=[],
         ),
         FieldMapping(

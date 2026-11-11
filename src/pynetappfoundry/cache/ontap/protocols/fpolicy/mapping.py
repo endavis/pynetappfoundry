@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.protocols.fpolicy.model import (
@@ -14,27 +12,6 @@ from pynetappfoundry.models.ontap.protocols.fpolicy.model import (
     OntapFpolicyPolicy,
 )
 
-
-def _transform_engines(record: dict[str, Any]) -> list[OntapFpolicyEngine]:
-    """Transform engines into OntapFpolicyEngine list."""
-    return [OntapFpolicyEngine(**item) for item in record.get("engines", [])]
-
-
-def _transform_events(record: dict[str, Any]) -> list[OntapFpolicyEvent]:
-    """Transform events into OntapFpolicyEvent list."""
-    return [OntapFpolicyEvent(**item) for item in record.get("events", [])]
-
-
-def _transform_persistent_stores(record: dict[str, Any]) -> list[OntapFpolicyPersistentStore]:
-    """Transform persistent_stores into OntapFpolicyPersistentStore list."""
-    return [OntapFpolicyPersistentStore(**item) for item in record.get("persistent_stores", [])]
-
-
-def _transform_policies(record: dict[str, Any]) -> list[OntapFpolicyPolicy]:
-    """Transform policies into OntapFpolicyPolicy list."""
-    return [OntapFpolicyPolicy(**item) for item in record.get("policies", [])]
-
-
 ONTAPFPOLICY_MAPPING = TypeMapping(
     name="OntapFpolicy",
     model_class=OntapFpolicy,
@@ -44,22 +21,22 @@ ONTAPFPOLICY_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="engines",
-            transform=_transform_engines,
+            item_model=OntapFpolicyEngine,
             default=[],
         ),
         FieldMapping(
             cache_attr="events",
-            transform=_transform_events,
+            item_model=OntapFpolicyEvent,
             default=[],
         ),
         FieldMapping(
             cache_attr="persistent_stores",
-            transform=_transform_persistent_stores,
+            item_model=OntapFpolicyPersistentStore,
             default=[],
         ),
         FieldMapping(
             cache_attr="policies",
-            transform=_transform_policies,
+            item_model=OntapFpolicyPolicy,
             default=[],
         ),
         FieldMapping(

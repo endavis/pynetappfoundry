@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.network.ip.subnets.model import (
@@ -11,17 +9,6 @@ from pynetappfoundry.models.ontap.network.ip.subnets.model import (
     OntapIpSubnetAvailableIpRange,
     OntapIpSubnetIpRange,
 )
-
-
-def _transform_available_ip_ranges(record: dict[str, Any]) -> list[OntapIpSubnetAvailableIpRange]:
-    """Transform available_ip_ranges into OntapIpSubnetAvailableIpRange list."""
-    return [OntapIpSubnetAvailableIpRange(**item) for item in record.get("available_ip_ranges", [])]
-
-
-def _transform_ip_ranges(record: dict[str, Any]) -> list[OntapIpSubnetIpRange]:
-    """Transform ip_ranges into OntapIpSubnetIpRange list."""
-    return [OntapIpSubnetIpRange(**item) for item in record.get("ip_ranges", [])]
-
 
 ONTAPIPSUBNET_MAPPING = TypeMapping(
     name="OntapIpSubnet",
@@ -36,7 +23,7 @@ ONTAPIPSUBNET_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="available_ip_ranges",
-            transform=_transform_available_ip_ranges,
+            item_model=OntapIpSubnetAvailableIpRange,
             default=[],
         ),
         FieldMapping(
@@ -54,7 +41,7 @@ ONTAPIPSUBNET_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="ip_ranges",
-            transform=_transform_ip_ranges,
+            item_model=OntapIpSubnetIpRange,
             default=[],
         ),
         FieldMapping(

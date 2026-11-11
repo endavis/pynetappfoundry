@@ -2,20 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.security.aws_kms.model import (
     OntapAwsKms,
     OntapAwsKmsEkmipReachability,
 )
-
-
-def _transform_ekmip_reachability(record: dict[str, Any]) -> list[OntapAwsKmsEkmipReachability]:
-    """Transform ekmip_reachability into OntapAwsKmsEkmipReachability list."""
-    return [OntapAwsKmsEkmipReachability(**item) for item in record.get("ekmip_reachability", [])]
-
 
 ONTAPAWSKMS_MAPPING = TypeMapping(
     name="OntapAwsKms",
@@ -42,7 +34,7 @@ ONTAPAWSKMS_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="ekmip_reachability",
-            transform=_transform_ekmip_reachability,
+            item_model=OntapAwsKmsEkmipReachability,
             default=[],
         ),
         FieldMapping(

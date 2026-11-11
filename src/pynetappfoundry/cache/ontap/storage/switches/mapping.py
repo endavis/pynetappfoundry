@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.storage.switches.model import (
@@ -16,51 +14,6 @@ from pynetappfoundry.models.ontap.storage.switches.model import (
     OntapStorageSwitchVsan,
     OntapStorageSwitchZone,
 )
-
-
-def _transform_errors(record: dict[str, Any]) -> list[OntapStorageSwitchError]:
-    """Transform errors into OntapStorageSwitchError list."""
-    return [OntapStorageSwitchError(**item) for item in record.get("errors", [])]
-
-
-def _transform_fans(record: dict[str, Any]) -> list[OntapStorageSwitchFan]:
-    """Transform fans into OntapStorageSwitchFan list."""
-    return [OntapStorageSwitchFan(**item) for item in record.get("fans", [])]
-
-
-def _transform_ports(record: dict[str, Any]) -> list[OntapStorageSwitchPort]:
-    """Transform ports into OntapStorageSwitchPort list."""
-    return [OntapStorageSwitchPort(**item) for item in record.get("ports", [])]
-
-
-def _transform_power_supply_units(
-    record: dict[str, Any],
-) -> list[OntapStorageSwitchPowerSupplyUnit]:
-    """Transform power_supply_units into OntapStorageSwitchPowerSupplyUnit list."""
-    return [
-        OntapStorageSwitchPowerSupplyUnit(**item) for item in record.get("power_supply_units", [])
-    ]
-
-
-def _transform_temperature_sensors(
-    record: dict[str, Any],
-) -> list[OntapStorageSwitchTemperatureSensor]:
-    """Transform temperature_sensors into OntapStorageSwitchTemperatureSensor list."""
-    return [
-        OntapStorageSwitchTemperatureSensor(**item)
-        for item in record.get("temperature_sensors", [])
-    ]
-
-
-def _transform_vsans(record: dict[str, Any]) -> list[OntapStorageSwitchVsan]:
-    """Transform vsans into OntapStorageSwitchVsan list."""
-    return [OntapStorageSwitchVsan(**item) for item in record.get("vsans", [])]
-
-
-def _transform_zones(record: dict[str, Any]) -> list[OntapStorageSwitchZone]:
-    """Transform zones into OntapStorageSwitchZone list."""
-    return [OntapStorageSwitchZone(**item) for item in record.get("zones", [])]
-
 
 ONTAPSTORAGESWITCH_MAPPING = TypeMapping(
     name="OntapStorageSwitch",
@@ -83,7 +36,7 @@ ONTAPSTORAGESWITCH_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="errors",
-            transform=_transform_errors,
+            item_model=OntapStorageSwitchError,
             default=[],
         ),
         FieldMapping(
@@ -91,7 +44,7 @@ ONTAPSTORAGESWITCH_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="fans",
-            transform=_transform_fans,
+            item_model=OntapStorageSwitchFan,
             default=[],
         ),
         FieldMapping(
@@ -125,12 +78,12 @@ ONTAPSTORAGESWITCH_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="ports",
-            transform=_transform_ports,
+            item_model=OntapStorageSwitchPort,
             default=[],
         ),
         FieldMapping(
             cache_attr="power_supply_units",
-            transform=_transform_power_supply_units,
+            item_model=OntapStorageSwitchPowerSupplyUnit,
             default=[],
         ),
         FieldMapping(
@@ -144,7 +97,7 @@ ONTAPSTORAGESWITCH_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="temperature_sensors",
-            transform=_transform_temperature_sensors,
+            item_model=OntapStorageSwitchTemperatureSensor,
             default=[],
         ),
         FieldMapping(
@@ -152,7 +105,7 @@ ONTAPSTORAGESWITCH_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="vsans",
-            transform=_transform_vsans,
+            item_model=OntapStorageSwitchVsan,
             default=[],
         ),
         FieldMapping(
@@ -160,7 +113,7 @@ ONTAPSTORAGESWITCH_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="zones",
-            transform=_transform_zones,
+            item_model=OntapStorageSwitchZone,
             default=[],
         ),
     ),

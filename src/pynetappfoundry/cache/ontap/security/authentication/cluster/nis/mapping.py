@@ -2,22 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.security.authentication.cluster.nis.model import (
     OntapClusterNisService,
     OntapClusterNisServiceBindingDetail,
 )
-
-
-def _transform_binding_details(record: dict[str, Any]) -> list[OntapClusterNisServiceBindingDetail]:
-    """Transform binding_details into OntapClusterNisServiceBindingDetail list."""
-    return [
-        OntapClusterNisServiceBindingDetail(**item) for item in record.get("binding_details", [])
-    ]
-
 
 ONTAPCLUSTERNISSERVICE_MAPPING = TypeMapping(
     name="OntapClusterNisService",
@@ -28,7 +18,7 @@ ONTAPCLUSTERNISSERVICE_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="binding_details",
-            transform=_transform_binding_details,
+            item_model=OntapClusterNisServiceBindingDetail,
             default=[],
         ),
         FieldMapping(

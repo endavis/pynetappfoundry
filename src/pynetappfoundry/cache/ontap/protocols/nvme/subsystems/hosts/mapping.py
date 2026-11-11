@@ -2,20 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.protocols.nvme.subsystems.hosts.model import (
     OntapNvmeSubsystemHost,
     OntapNvmeSubsystemHostRecord,
 )
-
-
-def _transform_records(record: dict[str, Any]) -> list[OntapNvmeSubsystemHostRecord]:
-    """Transform records into OntapNvmeSubsystemHostRecord list."""
-    return [OntapNvmeSubsystemHostRecord(**item) for item in record.get("records", [])]
-
 
 ONTAPNVMESUBSYSTEMHOST_MAPPING = TypeMapping(
     name="OntapNvmeSubsystemHost",
@@ -56,7 +48,7 @@ ONTAPNVMESUBSYSTEMHOST_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="records",
-            transform=_transform_records,
+            item_model=OntapNvmeSubsystemHostRecord,
             default=[],
         ),
         FieldMapping(

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.storage.shelves.model import (
@@ -20,57 +18,6 @@ from pynetappfoundry.models.ontap.storage.shelves.model import (
     OntapShelfVoltageSensor,
 )
 
-
-def _transform_acps(record: dict[str, Any]) -> list[OntapShelfAcp]:
-    """Transform acps into OntapShelfAcp list."""
-    return [OntapShelfAcp(**item) for item in record.get("acps", [])]
-
-
-def _transform_bays(record: dict[str, Any]) -> list[OntapShelfBay]:
-    """Transform bays into OntapShelfBay list."""
-    return [OntapShelfBay(**item) for item in record.get("bays", [])]
-
-
-def _transform_current_sensors(record: dict[str, Any]) -> list[OntapShelfCurrentSensor]:
-    """Transform current_sensors into OntapShelfCurrentSensor list."""
-    return [OntapShelfCurrentSensor(**item) for item in record.get("current_sensors", [])]
-
-
-def _transform_drawers(record: dict[str, Any]) -> list[OntapShelfDrawer]:
-    """Transform drawers into OntapShelfDrawer list."""
-    return [OntapShelfDrawer(**item) for item in record.get("drawers", [])]
-
-
-def _transform_fans(record: dict[str, Any]) -> list[OntapShelfFan]:
-    """Transform fans into OntapShelfFan list."""
-    return [OntapShelfFan(**item) for item in record.get("fans", [])]
-
-
-def _transform_frus(record: dict[str, Any]) -> list[OntapShelfFru]:
-    """Transform frus into OntapShelfFru list."""
-    return [OntapShelfFru(**item) for item in record.get("frus", [])]
-
-
-def _transform_paths(record: dict[str, Any]) -> list[OntapShelfPath]:
-    """Transform paths into OntapShelfPath list."""
-    return [OntapShelfPath(**item) for item in record.get("paths", [])]
-
-
-def _transform_ports(record: dict[str, Any]) -> list[OntapShelfPort]:
-    """Transform ports into OntapShelfPort list."""
-    return [OntapShelfPort(**item) for item in record.get("ports", [])]
-
-
-def _transform_temperature_sensors(record: dict[str, Any]) -> list[OntapShelfTemperatureSensor]:
-    """Transform temperature_sensors into OntapShelfTemperatureSensor list."""
-    return [OntapShelfTemperatureSensor(**item) for item in record.get("temperature_sensors", [])]
-
-
-def _transform_voltage_sensors(record: dict[str, Any]) -> list[OntapShelfVoltageSensor]:
-    """Transform voltage_sensors into OntapShelfVoltageSensor list."""
-    return [OntapShelfVoltageSensor(**item) for item in record.get("voltage_sensors", [])]
-
-
 ONTAPSHELF_MAPPING = TypeMapping(
     name="OntapShelf",
     model_class=OntapShelf,
@@ -80,12 +27,12 @@ ONTAPSHELF_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="acps",
-            transform=_transform_acps,
+            item_model=OntapShelfAcp,
             default=[],
         ),
         FieldMapping(
             cache_attr="bays",
-            transform=_transform_bays,
+            item_model=OntapShelfBay,
             default=[],
         ),
         FieldMapping(
@@ -93,7 +40,7 @@ ONTAPSHELF_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="current_sensors",
-            transform=_transform_current_sensors,
+            item_model=OntapShelfCurrentSensor,
             default=[],
         ),
         FieldMapping(
@@ -102,7 +49,7 @@ ONTAPSHELF_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="drawers",
-            transform=_transform_drawers,
+            item_model=OntapShelfDrawer,
             default=[],
         ),
         FieldMapping(
@@ -111,12 +58,12 @@ ONTAPSHELF_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="fans",
-            transform=_transform_fans,
+            item_model=OntapShelfFan,
             default=[],
         ),
         FieldMapping(
             cache_attr="frus",
-            transform=_transform_frus,
+            item_model=OntapShelfFru,
             default=[],
         ),
         FieldMapping(
@@ -148,12 +95,12 @@ ONTAPSHELF_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="paths",
-            transform=_transform_paths,
+            item_model=OntapShelfPath,
             default=[],
         ),
         FieldMapping(
             cache_attr="ports",
-            transform=_transform_ports,
+            item_model=OntapShelfPort,
             default=[],
         ),
         FieldMapping(
@@ -164,7 +111,7 @@ ONTAPSHELF_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="temperature_sensors",
-            transform=_transform_temperature_sensors,
+            item_model=OntapShelfTemperatureSensor,
             default=[],
         ),
         FieldMapping(
@@ -187,7 +134,7 @@ ONTAPSHELF_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="voltage_sensors",
-            transform=_transform_voltage_sensors,
+            item_model=OntapShelfVoltageSensor,
             default=[],
         ),
     ),

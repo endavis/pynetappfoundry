@@ -2,20 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.cluster.metrocluster.model import (
     OntapMetrocluster,
     OntapMetroclusterMccipPort,
 )
-
-
-def _transform_mccip_ports(record: dict[str, Any]) -> list[OntapMetroclusterMccipPort]:
-    """Transform mccip_ports into OntapMetroclusterMccipPort list."""
-    return [OntapMetroclusterMccipPort(**item) for item in record.get("mccip_ports", [])]
-
 
 ONTAPMETROCLUSTER_MAPPING = TypeMapping(
     name="OntapMetrocluster",
@@ -60,7 +52,7 @@ ONTAPMETROCLUSTER_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="mccip_ports",
-            transform=_transform_mccip_ports,
+            item_model=OntapMetroclusterMccipPort,
             default=[],
         ),
         FieldMapping(

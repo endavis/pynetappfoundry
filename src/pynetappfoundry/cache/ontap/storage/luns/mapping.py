@@ -1,9 +1,6 @@
-# ruff: noqa: E501
 """OntapLun type mapping."""
 
 from __future__ import annotations
-
-from typing import Any
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
@@ -17,69 +14,6 @@ from pynetappfoundry.models.ontap.storage.luns.model import (
     OntapLunProvisioningOptionsTieringObjectStore,
     OntapLunVvolBinding,
 )
-from pynetappfoundry.utils.dict_path import get_nested_value
-
-
-def _transform_attributes(record: dict[str, Any]) -> list[OntapLunAttribute]:
-    """Transform attributes into OntapLunAttribute list."""
-    return [OntapLunAttribute(**item) for item in record.get("attributes", [])]
-
-
-def _transform_copy_destinations(record: dict[str, Any]) -> list[OntapLunCopyDestination]:
-    """Transform copy.destinations into OntapLunCopyDestination list."""
-    try:
-        items = get_nested_value(record, "copy.destinations")
-    except Exception:
-        items = []
-    return [OntapLunCopyDestination(**item) for item in items]
-
-
-def _transform_copy_source_progress_failure_arguments(
-    record: dict[str, Any],
-) -> list[OntapLunCopySourceProgressFailureArgument]:
-    """Transform copy.source.progress.failure.arguments into OntapLunCopySourceProgressFailureArgument list."""
-    try:
-        items = get_nested_value(record, "copy.source.progress.failure.arguments")
-    except Exception:
-        items = []
-    return [OntapLunCopySourceProgressFailureArgument(**item) for item in items]
-
-
-def _transform_lun_maps(record: dict[str, Any]) -> list[OntapLunLunMap]:
-    """Transform lun_maps into OntapLunLunMap list."""
-    return [OntapLunLunMap(**item) for item in record.get("lun_maps", [])]
-
-
-def _transform_movement_progress_failure_arguments(
-    record: dict[str, Any],
-) -> list[OntapLunMovementProgressFailureArgument]:
-    """Transform movement.progress.failure.arguments into OntapLunMovementProgressFailureArgument list."""
-    try:
-        items = get_nested_value(record, "movement.progress.failure.arguments")
-    except Exception:
-        items = []
-    return [OntapLunMovementProgressFailureArgument(**item) for item in items]
-
-
-def _transform_provisioning_options_tiering_object_stores(
-    record: dict[str, Any],
-) -> list[OntapLunProvisioningOptionsTieringObjectStore]:
-    """Transform provisioning_options.tiering.object_stores into OntapLunProvisioningOptionsTieringObjectStore list."""
-    try:
-        items = get_nested_value(record, "provisioning_options.tiering.object_stores")
-    except Exception:
-        items = []
-    return [OntapLunProvisioningOptionsTieringObjectStore(**item) for item in items]
-
-
-def _transform_vvol_bindings(record: dict[str, Any]) -> list[OntapLunVvolBinding]:
-    """Transform vvol.bindings into OntapLunVvolBinding list."""
-    try:
-        items = get_nested_value(record, "vvol.bindings")
-    except Exception:
-        items = []
-    return [OntapLunVvolBinding(**item) for item in items]
-
 
 ONTAPLUN_MAPPING = TypeMapping(
     name="OntapLun",
@@ -90,7 +24,7 @@ ONTAPLUN_MAPPING = TypeMapping(
     fields=(
         FieldMapping(
             cache_attr="attributes",
-            transform=_transform_attributes,
+            item_model=OntapLunAttribute,
             default=[],
             requires_explicit_fetch=True,
         ),
@@ -127,7 +61,7 @@ ONTAPLUN_MAPPING = TypeMapping(
         FieldMapping(
             cache_attr="copy_.destinations",
             api_path="copy.destinations",
-            transform=_transform_copy_destinations,
+            item_model=OntapLunCopyDestination,
             default=[],
             requires_explicit_fetch=True,
         ),
@@ -161,7 +95,7 @@ ONTAPLUN_MAPPING = TypeMapping(
         FieldMapping(
             cache_attr="copy_.source.progress.failure.arguments",
             api_path="copy.source.progress.failure.arguments",
-            transform=_transform_copy_source_progress_failure_arguments,
+            item_model=OntapLunCopySourceProgressFailureArgument,
             default=[],
             requires_explicit_fetch=True,
         ),
@@ -228,7 +162,7 @@ ONTAPLUN_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="lun_maps",
-            transform=_transform_lun_maps,
+            item_model=OntapLunLunMap,
             default=[],
             requires_explicit_fetch=True,
         ),
@@ -339,7 +273,7 @@ ONTAPLUN_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="movement.progress.failure.arguments",
-            transform=_transform_movement_progress_failure_arguments,
+            item_model=OntapLunMovementProgressFailureArgument,
             default=[],
             requires_explicit_fetch=True,
         ),
@@ -399,7 +333,7 @@ ONTAPLUN_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="provisioning_options.tiering.object_stores",
-            transform=_transform_provisioning_options_tiering_object_stores,
+            item_model=OntapLunProvisioningOptionsTieringObjectStore,
             default=[],
         ),
         FieldMapping(
@@ -567,7 +501,7 @@ ONTAPLUN_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="vvol.bindings",
-            transform=_transform_vvol_bindings,
+            item_model=OntapLunVvolBinding,
             default=[],
             requires_explicit_fetch=True,
         ),

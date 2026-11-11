@@ -2,17 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.security.roles.model import OntapRole, OntapRolePrivilege
-
-
-def _transform_privileges(record: dict[str, Any]) -> list[OntapRolePrivilege]:
-    """Transform privileges into OntapRolePrivilege list."""
-    return [OntapRolePrivilege(**item) for item in record.get("privileges", [])]
-
 
 ONTAPROLE_MAPPING = TypeMapping(
     name="OntapRole",
@@ -35,7 +27,7 @@ ONTAPROLE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="privileges",
-            transform=_transform_privileges,
+            item_model=OntapRolePrivilege,
             default=[],
         ),
         FieldMapping(

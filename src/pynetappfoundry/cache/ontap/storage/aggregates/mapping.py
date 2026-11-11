@@ -1,9 +1,6 @@
-# ruff: noqa: E501
 """OntapAggregate type mapping."""
 
 from __future__ import annotations
-
-from typing import Any
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
@@ -15,61 +12,6 @@ from pynetappfoundry.models.ontap.storage.aggregates.model import (
     OntapAggregateBlockStoragePrimarySimulatedRaidGroup,
     OntapAggregateCloudStorageStore,
 )
-from pynetappfoundry.utils.dict_path import get_nested_value
-
-
-def _transform_block_storage_hybrid_cache_simulated_raid_groups(
-    record: dict[str, Any],
-) -> list[OntapAggregateBlockStorageHybridCacheSimulatedRaidGroup]:
-    """Transform block_storage.hybrid_cache.simulated_raid_groups into OntapAggregateBlockStorageHybridCacheSimulatedRaidGroup list."""
-    try:
-        items = get_nested_value(record, "block_storage.hybrid_cache.simulated_raid_groups")
-    except Exception:
-        items = []
-    return [OntapAggregateBlockStorageHybridCacheSimulatedRaidGroup(**item) for item in items]
-
-
-def _transform_block_storage_hybrid_cache_storage_pools(
-    record: dict[str, Any],
-) -> list[OntapAggregateBlockStorageHybridCacheStoragePool]:
-    """Transform block_storage.hybrid_cache.storage_pools into OntapAggregateBlockStorageHybridCacheStoragePool list."""
-    try:
-        items = get_nested_value(record, "block_storage.hybrid_cache.storage_pools")
-    except Exception:
-        items = []
-    return [OntapAggregateBlockStorageHybridCacheStoragePool(**item) for item in items]
-
-
-def _transform_block_storage_plexes(record: dict[str, Any]) -> list[OntapAggregateBlockStoragePlex]:
-    """Transform block_storage.plexes into OntapAggregateBlockStoragePlex list."""
-    try:
-        items = get_nested_value(record, "block_storage.plexes")
-    except Exception:
-        items = []
-    return [OntapAggregateBlockStoragePlex(**item) for item in items]
-
-
-def _transform_block_storage_primary_simulated_raid_groups(
-    record: dict[str, Any],
-) -> list[OntapAggregateBlockStoragePrimarySimulatedRaidGroup]:
-    """Transform block_storage.primary.simulated_raid_groups into OntapAggregateBlockStoragePrimarySimulatedRaidGroup list."""
-    try:
-        items = get_nested_value(record, "block_storage.primary.simulated_raid_groups")
-    except Exception:
-        items = []
-    return [OntapAggregateBlockStoragePrimarySimulatedRaidGroup(**item) for item in items]
-
-
-def _transform_cloud_storage_stores(
-    record: dict[str, Any],
-) -> list[OntapAggregateCloudStorageStore]:
-    """Transform cloud_storage.stores into OntapAggregateCloudStorageStore list."""
-    try:
-        items = get_nested_value(record, "cloud_storage.stores")
-    except Exception:
-        items = []
-    return [OntapAggregateCloudStorageStore(**item) for item in items]
-
 
 ONTAPAGGREGATE_MAPPING = TypeMapping(
     name="OntapAggregate",
@@ -98,7 +40,7 @@ ONTAPAGGREGATE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="block_storage.hybrid_cache.simulated_raid_groups",
-            transform=_transform_block_storage_hybrid_cache_simulated_raid_groups,
+            item_model=OntapAggregateBlockStorageHybridCacheSimulatedRaidGroup,
             default=[],
         ),
         FieldMapping(
@@ -107,7 +49,7 @@ ONTAPAGGREGATE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="block_storage.hybrid_cache.storage_pools",
-            transform=_transform_block_storage_hybrid_cache_storage_pools,
+            item_model=OntapAggregateBlockStorageHybridCacheStoragePool,
             default=[],
         ),
         FieldMapping(
@@ -123,7 +65,7 @@ ONTAPAGGREGATE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="block_storage.plexes",
-            transform=_transform_block_storage_plexes,
+            item_model=OntapAggregateBlockStoragePlex,
             default=[],
         ),
         FieldMapping(
@@ -148,7 +90,7 @@ ONTAPAGGREGATE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="block_storage.primary.simulated_raid_groups",
-            transform=_transform_block_storage_primary_simulated_raid_groups,
+            item_model=OntapAggregateBlockStoragePrimarySimulatedRaidGroup,
             default=[],
         ),
         FieldMapping(
@@ -168,7 +110,7 @@ ONTAPAGGREGATE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="cloud_storage.stores",
-            transform=_transform_cloud_storage_stores,
+            item_model=OntapAggregateCloudStorageStore,
             default=[],
         ),
         FieldMapping(

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.storage.tape_devices.model import (
@@ -11,17 +9,6 @@ from pynetappfoundry.models.ontap.storage.tape_devices.model import (
     OntapTapeDeviceAlias2,
     OntapTapeDeviceDeviceName,
 )
-
-
-def _transform_aliases(record: dict[str, Any]) -> list[OntapTapeDeviceAlias2]:
-    """Transform aliases into OntapTapeDeviceAlias2 list."""
-    return [OntapTapeDeviceAlias2(**item) for item in record.get("aliases", [])]
-
-
-def _transform_device_names(record: dict[str, Any]) -> list[OntapTapeDeviceDeviceName]:
-    """Transform device_names into OntapTapeDeviceDeviceName list."""
-    return [OntapTapeDeviceDeviceName(**item) for item in record.get("device_names", [])]
-
 
 ONTAPTAPEDEVICE_MAPPING = TypeMapping(
     name="OntapTapeDevice",
@@ -37,7 +24,7 @@ ONTAPTAPEDEVICE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="aliases",
-            transform=_transform_aliases,
+            item_model=OntapTapeDeviceAlias2,
             default=[],
         ),
         FieldMapping(
@@ -55,7 +42,7 @@ ONTAPTAPEDEVICE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="device_names",
-            transform=_transform_device_names,
+            item_model=OntapTapeDeviceDeviceName,
             default=[],
         ),
         FieldMapping(

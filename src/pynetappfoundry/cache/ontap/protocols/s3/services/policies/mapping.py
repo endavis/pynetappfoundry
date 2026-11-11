@@ -2,20 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
 from pynetappfoundry.models.ontap.protocols.s3.services.policies.model import (
     OntapS3Policy,
     OntapS3PolicyStatement,
 )
-
-
-def _transform_statements(record: dict[str, Any]) -> list[OntapS3PolicyStatement]:
-    """Transform statements into OntapS3PolicyStatement list."""
-    return [OntapS3PolicyStatement(**item) for item in record.get("statements", [])]
-
 
 ONTAPS3POLICY_MAPPING = TypeMapping(
     name="OntapS3Policy",
@@ -38,7 +30,7 @@ ONTAPS3POLICY_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="statements",
-            transform=_transform_statements,
+            item_model=OntapS3PolicyStatement,
             default=[],
         ),
         FieldMapping(

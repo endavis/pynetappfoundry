@@ -1,9 +1,6 @@
-# ruff: noqa: E501
 """OntapNvmeNamespace type mapping."""
 
 from __future__ import annotations
-
-from typing import Any
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
@@ -12,30 +9,6 @@ from pynetappfoundry.models.ontap.storage.namespaces.model import (
     OntapNvmeNamespaceProvisioningOptionsTieringObjectStore,
     OntapNvmeNamespaceSubsystemMapSubsystemHost,
 )
-from pynetappfoundry.utils.dict_path import get_nested_value
-
-
-def _transform_provisioning_options_tiering_object_stores(
-    record: dict[str, Any],
-) -> list[OntapNvmeNamespaceProvisioningOptionsTieringObjectStore]:
-    """Transform provisioning_options.tiering.object_stores into OntapNvmeNamespaceProvisioningOptionsTieringObjectStore list."""
-    try:
-        items = get_nested_value(record, "provisioning_options.tiering.object_stores")
-    except Exception:
-        items = []
-    return [OntapNvmeNamespaceProvisioningOptionsTieringObjectStore(**item) for item in items]
-
-
-def _transform_subsystem_map_subsystem_hosts(
-    record: dict[str, Any],
-) -> list[OntapNvmeNamespaceSubsystemMapSubsystemHost]:
-    """Transform subsystem_map.subsystem.hosts into OntapNvmeNamespaceSubsystemMapSubsystemHost list."""
-    try:
-        items = get_nested_value(record, "subsystem_map.subsystem.hosts")
-    except Exception:
-        items = []
-    return [OntapNvmeNamespaceSubsystemMapSubsystemHost(**item) for item in items]
-
 
 ONTAPNVMENAMESPACE_MAPPING = TypeMapping(
     name="OntapNvmeNamespace",
@@ -214,7 +187,7 @@ ONTAPNVMENAMESPACE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="provisioning_options.tiering.object_stores",
-            transform=_transform_provisioning_options_tiering_object_stores,
+            item_model=OntapNvmeNamespaceProvisioningOptionsTieringObjectStore,
             default=[],
         ),
         FieldMapping(
@@ -371,7 +344,7 @@ ONTAPNVMENAMESPACE_MAPPING = TypeMapping(
         ),
         FieldMapping(
             cache_attr="subsystem_map.subsystem.hosts",
-            transform=_transform_subsystem_map_subsystem_hosts,
+            item_model=OntapNvmeNamespaceSubsystemMapSubsystemHost,
             default=[],
             requires_explicit_fetch=True,
         ),
