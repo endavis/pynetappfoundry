@@ -93,7 +93,7 @@ walking `CachedClusterMetadata.model_fields`
 - `list[Model]` fields at the top level (e.g. `nodes`, `cloud`,
   `license_packages`) become a single table per item type.
 - Singleton `Model` fields that contain only scalars (e.g. `cluster`,
-  `mediator`) become a singleton table.
+  `cluster_traits`, `mediator`) become a singleton table.
 - Container models with `list[Model]` sub-fields (e.g. `StorageInfo`,
   `NetworkInfo`, `ProtocolsInfo`, `RelationshipsInfo`) are **not** stored as
   tables themselves. The walker descends into them and registers each list
@@ -167,7 +167,7 @@ Two indices are created per table: `idx_{table}_cluster` on `cluster_name`
 Two version constants live in `src/pynetappfoundry/cache/_base.py`:
 
 ```python
-METADATA_SCHEMA_VERSION = "2.1"        # current cache_version on new snapshots
+METADATA_SCHEMA_VERSION = "2.2"        # current cache_version on new snapshots
 METADATA_SCHEMA_MIN_COMPATIBLE = "2.0" # oldest version that can be loaded
 ```
 
@@ -186,6 +186,7 @@ deserialised against the current Pydantic models.
 
 | `cache_version` | Changes |
 |-----------------|---------|
+| `2.2` | Added `cluster_traits` (`ClusterTraits`: the computed `is_ha` and `is_cloud`, [ADR-0024](../decisions/0024-generated-models-carry-only-api-data-computed-values-live-in-separate-hand-written-models.md)). `cluster` keeps its own `is_ha` / `is_cloud` for now. Introduced with #967. |
 | `2.1` | Added `storage.svm_web_services`: per-SVM web services from the private CLI passthrough ([ADR-0021](../decisions/0021-collect-cli-only-ontap-data-through-the-private-cli-rest-passthrough.md)). Introduced with #866. |
 | `2.0` | Renamed cache fields to match the ONTAP REST URL hierarchy: `network.lifs` → `network.ip_interfaces`, `network.broadcast_domains` → `network.ethernet_broadcast_domains`, `network.subnets` → `network.ip_subnets`, `protocols.export_policies` → `protocols.nfs_export_policies`. |
 | `1.0` | Initial schema with comprehensive model coverage. |
@@ -213,6 +214,7 @@ the DB applies the following upgrades on open:
 | `v6` → `v7` | `_upgrade_to_v7` | Creates the `ontapsvmwebservice` table to back `storage.svm_web_services` (ADR-0021). Idempotent via `sqlite_master` check. Introduced with #866. |
 | `v7` → `v8` | `_upgrade_to_v8` | Adds the `folder` and `project` columns to the `consoleinfo` table for `ConsoleInfo.folder` / `ConsoleInfo.project` via idempotent `ALTER TABLE … ADD COLUMN`. Introduced with #734. |
 | `v8` → `v9` | `_upgrade_to_v9` | Reshapes `ontapexportpolicy` from rule-shaped (`index`, `clients`, `ro_rule`, ...) to policy-shaped (`id`, `name`, `svm`, `rules`): drops and recreates the table (ADR-0018 removed-column path) and clears the envelope. Idempotent via a `PRAGMA table_info` check for `id`. Run `nf cache refresh` afterwards. Introduced with #956. |
+| `v9` → `v10` | `_upgrade_to_v10` | Creates the `clustertraits` table for `CachedClusterMetadata.cluster_traits` and backfills it from the `is_ha` / `is_cloud` columns of `clusterinfo` (ADR-0024). Idempotent: the table is created only if missing and only clusters without a row are copied. The envelope is kept, so no refresh is needed. Introduced with #967. |
 
 !!! warning "v3 → v4 is destructive"
     The v4 migration deletes existing cached rows. After upgrading,
@@ -233,7 +235,7 @@ envelope properties (`cluster_name`, `cached_at`, `cache_version`) populated
 eagerly from the envelope row, plus a `_loaded` cache for materialised field
 groups.
 
-The nine top-level data field names — `cloud`, `cluster`, `nodes`, `network`,
+The top-level data field names — `cloud`, `cluster`, `cluster_traits`, `nodes`, `network`,
 `storage`, `license_packages`, `mediator`, `relationships`, `protocols` —
 form `_DATA_FIELDS`. Access goes through `__getattr__`, which calls
 `_load_field_group(name)` on first read and caches the result for subsequent

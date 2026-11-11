@@ -1641,3 +1641,64 @@ class TestParentIdFields:
 
     def test_effective_empty(self) -> None:
         assert self._tm("/a").effective_parent_id_fields() == ()
+
+
+# ---------------------------------------------------------------------------
+# response_shape="computed" validation (#967, ADR-0024)
+# ---------------------------------------------------------------------------
+
+
+def _derived_hook(model: Any, results: dict[str, Any]) -> Any:
+    return model
+
+
+def _derived_field(name: str = "name") -> FieldMapping:
+    return FieldMapping(cache_attr=name, cache_strategy="derived", post_collection=_derived_hook)
+
+
+class TestComputedMapping:
+    """A computed mapping has no endpoint and only derived fields with hooks."""
+
+    @staticmethod
+    def _build(**overrides: Any) -> TypeMapping:
+        kwargs: dict[str, Any] = {
+            "name": "T",
+            "model_class": _SampleModel,
+            "api_endpoint": "",
+            "response_shape": "computed",
+            "fields": (_derived_field(),),
+        }
+        kwargs.update(overrides)
+        return TypeMapping(**kwargs)
+
+    def test_valid_computed_mapping(self) -> None:
+        tm = self._build()
+        assert tm.is_computed is True
+
+    def test_envelope_is_not_computed(self) -> None:
+        tm = TypeMapping(name="T", model_class=_SampleModel, api_endpoint="/x")
+        assert tm.is_computed is False
+
+    def test_rejects_api_endpoint(self) -> None:
+        with pytest.raises(ValueError, match="empty api_endpoint"):
+            self._build(api_endpoint="/cluster")
+
+    def test_rejects_cli_command(self) -> None:
+        with pytest.raises(ValueError, match="empty api_endpoint and cli_command"):
+            self._build(cli_command="show")
+
+    def test_rejects_parent(self) -> None:
+        with pytest.raises(ValueError, match="cannot have a parent"):
+            self._build(parent_mapping="Svm", parent_id_field="uuid")
+
+    def test_rejects_no_fields(self) -> None:
+        with pytest.raises(ValueError, match="needs fields"):
+            self._build(fields=())
+
+    def test_rejects_non_derived_field(self) -> None:
+        with pytest.raises(ValueError, match="must be derived"):
+            self._build(fields=(FieldMapping(cache_attr="name", api_path="name"),))
+
+    def test_rejects_derived_field_without_hook(self) -> None:
+        with pytest.raises(ValueError, match="post_collection"):
+            self._build(fields=(FieldMapping(cache_attr="name", cache_strategy="derived"),))

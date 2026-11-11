@@ -130,7 +130,9 @@ class TypeMapping:
             ``parse_api_response`` (pagination-aware). ``"singleton"`` means
             the endpoint returns a single flat-dict object (e.g.
             ``/cluster``) and uses ``call_endpoint`` (paginate=False) +
-            ``parse_api_record``.
+            ``parse_api_record``. ``"computed"`` means there is no endpoint at
+            all: the model is built empty and filled only by its derived
+            fields' ``post_collection`` hooks (see ADR-0024).
         batch_size: Per-mapping override for the backend chunk size.
         parent_id_fields: Parent fields filling each path placeholder in
             order, for endpoints with two or more placeholders. Mutually
@@ -148,7 +150,7 @@ class TypeMapping:
     parent_mapping: str | None = None
     parent_id_field: str | None = None
     identifier_field: str | tuple[str, ...] | None = None
-    response_shape: Literal["envelope", "singleton"] = "envelope"
+    response_shape: Literal["envelope", "singleton", "computed"] = "envelope"
     batch_size: int | None = None
     """Per-mapping override for the default chunk size used by
     ``_fetch_live_by_identifiers`` and ``_fetch_live_by_parent``.
@@ -166,8 +168,13 @@ class TypeMapping:
         Raises:
             ValueError: If both ``parent_id_field`` and ``parent_id_fields``
                 are set, or the number of ``parent_id_fields`` differs from
-                the number of path placeholders in ``api_endpoint``.
+                the number of path placeholders in ``api_endpoint``; or if a
+                ``computed`` mapping declares an endpoint, a CLI command, a
+                parent, no fields, or a field that is not derived with a
+                ``post_collection`` hook.
         """
+        if self.response_shape == "computed":
+            self._validate_computed()
         if not self.parent_id_fields:
             return
         if self.parent_id_field is not None:
@@ -182,6 +189,33 @@ class TypeMapping:
                 f"{len(self.parent_id_fields)} entries but api_endpoint has "
                 f"{placeholders} placeholders"
             )
+
+    @property
+    def is_computed(self) -> bool:
+        """Whether this mapping has no endpoint and only derived fields."""
+        return self.response_shape == "computed"
+
+    def _validate_computed(self) -> None:
+        """Validate the rules for ``response_shape="computed"``.
+
+        Raises:
+            ValueError: If the mapping breaks any computed-mapping rule.
+        """
+        if self.api_endpoint or self.cli_command:
+            raise ValueError(
+                f"TypeMapping '{self.name}': a computed mapping must have an "
+                "empty api_endpoint and cli_command"
+            )
+        if self.parent_mapping or self.parent_id_field or self.parent_id_fields:
+            raise ValueError(f"TypeMapping '{self.name}': a computed mapping cannot have a parent")
+        if not self.fields:
+            raise ValueError(f"TypeMapping '{self.name}': a computed mapping needs fields")
+        for field in self.fields:
+            if field.cache_strategy != "derived" or field.post_collection is None:
+                raise ValueError(
+                    f"TypeMapping '{self.name}': computed mapping field "
+                    f"'{field.cache_attr}' must be derived with a post_collection hook"
+                )
 
     def effective_parent_id_fields(self) -> tuple[str, ...]:
         """Return the parent fields that fill the placeholders, in order.

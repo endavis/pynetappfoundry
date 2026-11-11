@@ -199,18 +199,18 @@ class OntapBackend(Backend):
     def _is_cloud_cluster(self, cluster: str) -> bool:
         """Return ``True`` if *cluster* is a cloud (CVO) cluster.
 
-        Queries ``ClusterInfo`` from the cache DB and checks the
+        Queries ``ClusterTraits`` from the cache DB and checks the
         ``is_cloud`` flag. If the cache has no data for the cluster
         (e.g. never refreshed), defaults to ``False`` to avoid SSH
         timeouts on unknown clusters.
         """
-        from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
+        from pynetappfoundry.models.ontap.cluster.traits.model import ClusterTraits
 
         try:
-            metadata_path = self._resolve_metadata_path(ClusterInfo)
+            metadata_path = self._resolve_metadata_path(ClusterTraits)
             results = self._cache_db.query_with_filters(cluster, metadata_path, [])
             for item in results:
-                if isinstance(item, ClusterInfo):
+                if isinstance(item, ClusterTraits):
                     return item.is_cloud
         except (ValueError, Exception):
             logger.debug(

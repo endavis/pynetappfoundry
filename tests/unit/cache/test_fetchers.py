@@ -21,6 +21,7 @@ from pynetappfoundry.cache.ontap.storage.volumes.mapping import ONTAPVOLUME_MAPP
 from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
 from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
 from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
+from pynetappfoundry.models.ontap.cluster.traits.model import ClusterTraits
 from pynetappfoundry.models.ontap.storage.volumes.model import OntapVolume
 
 # ---------------------------------------------------------------------------
@@ -748,3 +749,100 @@ class TestFetchUnregistered:
                 config=None,
                 api_client=client,
             )
+
+
+# ---------------------------------------------------------------------------
+# computed mappings: ClusterTraits (#967, ADR-0024)
+# ---------------------------------------------------------------------------
+
+
+class TestFetchComputed:
+    """``fetch(ClusterTraits)`` builds the model from nodes without a traits endpoint."""
+
+    @staticmethod
+    def _client(nodes: list[dict[str, Any]]) -> MagicMock:
+        client = MagicMock()
+        client.get_all_records = MagicMock(return_value={"records": nodes})
+        return client
+
+    def test_two_nodes_from_results_cache_is_ha_without_api_call(self) -> None:
+        client = self._client([])
+        cache = {"OntapNodeResponse": [OntapNodeResponse(name="n1"), OntapNodeResponse(name="n2")]}
+        result = fetch(
+            ClusterTraits, cluster="c", config=None, api_client=client, results_cache=cache
+        )
+        assert isinstance(result, ClusterTraits)
+        assert result.is_ha is True
+        assert result.is_cloud is False
+        client.get_all_records.assert_not_called()
+        client.call_endpoint.assert_not_called()
+
+    def test_without_cache_fetches_nodes_once(self) -> None:
+        client = self._client([{"name": "n1"}, {"name": "n2"}])
+        result = fetch(ClusterTraits, cluster="c", config=None, api_client=client)
+        assert isinstance(result, ClusterTraits)
+        assert result.is_ha is True
+        assert client.get_all_records.call_count == 1
+        assert "/cluster/nodes" in client.get_all_records.call_args.args[0]
+
+    @pytest.mark.parametrize(
+        ("model", "serial"),
+        [("CDvM200", ""), ("", "9092014567"), ("", "9092013001")],
+    )
+    def test_cvo_nodes_are_cloud(self, model: str, serial: str) -> None:
+        node = OntapNodeResponse(name="n", model_=model, serial_number=serial)
+        result = fetch(
+            ClusterTraits,
+            cluster="c",
+            config=None,
+            api_client=MagicMock(),
+            results_cache={"OntapNodeResponse": [node]},
+        )
+        assert isinstance(result, ClusterTraits)
+        assert result.is_cloud is True
+        assert result.is_ha is False
+
+    def test_onprem_node_is_not_cloud(self) -> None:
+        node = OntapNodeResponse(name="n", model_="FAS8200", serial_number="721000")
+        result = fetch(
+            ClusterTraits,
+            cluster="c",
+            config=None,
+            api_client=MagicMock(),
+            results_cache={"OntapNodeResponse": [node]},
+        )
+        assert isinstance(result, ClusterTraits)
+        assert result.is_cloud is False
+
+
+class TestClusterTraitsRegistration:
+    """The mapping is registered and indexed under the class name."""
+
+    def test_get_mapping_by_name_and_class(self) -> None:
+        by_name = model_registry.get_mapping("ClusterTraits")
+        by_class = model_registry.get_mapping_by_model_class(ClusterTraits)
+        assert by_name is not None
+        assert by_name is by_class
+        assert by_name.is_computed is True
+        assert by_name.api_endpoint == ""
+
+    def test_index_entry_has_no_overlay(self) -> None:
+        from pynetappfoundry.cache._mapping_index import MAPPING_INDEX
+
+        module, model_module, qualname, overlay = MAPPING_INDEX["ClusterTraits"]
+        assert module == "pynetappfoundry.cache.ontap.cluster.traits.mapping"
+        assert (model_module, qualname) == (ClusterTraits.__module__, "ClusterTraits")
+        assert overlay is None
+
+    def test_moved_names_stay_importable_from_cluster_mapping(self) -> None:
+        from pynetappfoundry.cache.ontap.cluster import mapping as cluster_mapping
+        from pynetappfoundry.cache.ontap.cluster.traits import mapping as traits_mapping
+
+        for name in (
+            "compute_is_ha",
+            "compute_is_cloud",
+            "_is_cloud_node",
+            "_CLOUD_MODEL_PREFIXES",
+            "_CLOUD_SERIAL_PREFIXES",
+        ):
+            assert getattr(cluster_mapping, name) is getattr(traits_mapping, name)

@@ -20,6 +20,7 @@ from pynetappfoundry.models.ontap.cluster.nodes.model import (
     OntapNodeResponseManagementInterface,
     OntapNodeResponseManagementInterfaceIp,
 )
+from pynetappfoundry.models.ontap.cluster.traits.model import ClusterTraits
 from pynetappfoundry.models.ontap.protocols.cifs.services.model import (
     OntapCifsService,
     OntapCifsServiceAdDomain,
@@ -556,12 +557,13 @@ class TestClusterData:
         # DataSource constructed exactly once with the config.
         mock_datasource_class.assert_called_once_with(mock_config)
 
-        # Five queries: ClusterInfo, OntapNodeResponse, OntapSvm,
+        # Six queries: ClusterInfo, ClusterTraits, OntapNodeResponse, OntapSvm,
         # OntapCifsService, OntapIpInterface — all with source="auto".
-        assert mock_ds.query.call_count == 5
+        assert mock_ds.query.call_count == 6
         queried_models = [call.args[0] for call in mock_ds.query.call_args_list]
         assert queried_models == [
             ClusterInfo,
+            ClusterTraits,
             OntapNodeResponse,
             OntapSvm,
             OntapCifsService,
@@ -695,6 +697,23 @@ class TestBuildCloudInfoGate:
         cluster._build_cloud_info()
         assert cluster.cloud_metadata == []
 
+    def test_early_returns_when_traits_not_cloud(self, mock_config: MagicMock) -> None:
+        """ClusterTraits.is_cloud=False → _build_cloud_info early-returns without SSH."""
+        cluster = self._make_cluster_with_entry(mock_config, cluster_info=None)
+        cluster.cluster_traits = ClusterTraits(is_cloud=False)
+        cluster._build_cloud_info()
+        assert cluster.cloud_metadata == []
+
+    def test_early_returns_when_cluster_info_cloud_but_traits_missing(
+        self, mock_config: MagicMock
+    ) -> None:
+        """The gate reads ClusterTraits only; ClusterInfo.is_cloud alone does not open it."""
+        cluster = self._make_cluster_with_entry(
+            mock_config, cluster_info=ClusterInfo(cluster_name="c", is_cloud=True)
+        )
+        cluster._build_cloud_info()
+        assert cluster.cloud_metadata == []
+
     def test_proceeds_when_cluster_is_cloud(self, mock_config: MagicMock) -> None:
         """ClusterInfo.is_cloud=True → _build_cloud_info touches ontap.cloud."""
         from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
@@ -730,7 +749,7 @@ class TestBuildCloudInfoGate:
                 tags=[],
                 ip="10.0.0.1",
             )
-        cluster.cluster_info = ClusterInfo(cluster_name="test-cluster", is_cloud=True)
+        cluster.cluster_traits = ClusterTraits(is_cloud=True)
         cluster._build_cloud_info()
         assert len(cluster.cloud_metadata) == 1
         assert cluster.cloud_provider == "AWS"
@@ -1431,8 +1450,9 @@ class TestHTMLFileGeneration:
                 cluster_self.svms = comprehensive_ontap_models["svms"]
                 cluster_self.cifs_services = comprehensive_ontap_models["cifs_services"]
                 cluster_self.cluster_type = "HA"
-            # Cloud metadata is gated on cluster_info.is_cloud (issue #547),
-            # so build it after cluster_info is populated.
+            cluster_self.cluster_traits = ClusterTraits(is_cloud=True)
+            # Cloud metadata is gated on cluster_traits.is_cloud (issue #547),
+            # so build it after cluster_traits is populated.
             cluster_self._build_cloud_info()
 
         # Monkey-patch the method
@@ -1559,7 +1579,7 @@ class TestCloudSections:
             )
         # Simulate cluster_info population from _gather_data and flag as
         # cloud so the _build_cloud_info gate (issue #547) allows it.
-        cluster.cluster_info = ClusterInfo(cluster_name="test-cluster", is_cloud=True)
+        cluster.cluster_traits = ClusterTraits(is_cloud=True)
         cluster._build_cloud_info()
         cluster.nodes = [
             OntapNodeResponse(

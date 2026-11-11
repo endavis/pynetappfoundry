@@ -564,6 +564,7 @@ Issue: #901
 - Issue #932: refactor: codegen naming for support/ems/filters collection (deferred from #925)
 - Issue #955: feat: multi-placeholder parent fill for ONTAP child mappings (follow-up from #952)
 - Issue #956: bug: OntapExportPolicy model is rule-shaped with no id, so OntapExportRule cannot be wired as its child
+- Issue #967: refactor: generate /cluster; computed values move to a hand-written model ([ADR-0024](0024-generated-models-carry-only-api-data-computed-values-live-in-separate-hand-written-models.md))
 
 ## Related Documentation
 

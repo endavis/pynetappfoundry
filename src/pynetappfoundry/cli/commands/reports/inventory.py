@@ -24,6 +24,7 @@ from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
 from pynetappfoundry.models.ontap.cluster.licensing.licenses import OntapLicensePackageResponse
 from pynetappfoundry.models.ontap.cluster.model import ClusterInfo
 from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
+from pynetappfoundry.models.ontap.cluster.traits.model import ClusterTraits
 from pynetappfoundry.utils.excel import ExcelWorkbook
 
 # Maps cloud provider region codes to human-readable site names.
@@ -158,11 +159,11 @@ def _short_version(ontap_version: str) -> str:
     return match.group(1) if match else ontap_version
 
 
-def _cloud_type(cluster_info: ClusterInfo) -> str:
+def _cloud_type(traits: ClusterTraits) -> str:
     """Derive the cluster type string."""
-    if not cluster_info.is_cloud:
+    if not traits.is_cloud:
         return "OnTap Select"
-    return "CVO HA" if cluster_info.is_ha else "CVO"
+    return "CVO HA" if traits.is_ha else "CVO"
 
 
 class InventoryReport:
@@ -176,10 +177,10 @@ class InventoryReport:
     def _collect_cloud_meta(
         self,
         entry: ClusterEntry,
-        cluster_info: ClusterInfo | None,
+        traits: ClusterTraits | None,
     ) -> list[CloudMetadata]:
         """Load cloud metadata from cache for CVO clusters only."""
-        if not cluster_info or not cluster_info.is_cloud:
+        if not traits or not traits.is_cloud:
             return []
         ontap = entry.ontap
         if not ontap or not ontap.cloud:
@@ -194,6 +195,7 @@ class InventoryReport:
         nodes: list[OntapNodeResponse],
         licenses: list[OntapLicensePackageResponse],
         cloud_meta: list[CloudMetadata],
+        traits: ClusterTraits | None = None,
     ) -> list[Any]:
         """Build a single data row for one cluster."""
         cloud_by_node: dict[str, CloudMetadata] = {cm.node: cm for cm in cloud_meta}
@@ -214,7 +216,7 @@ class InventoryReport:
             first_cloud.provider if first_cloud else (cloud_cfg.title() if cloud_cfg else "")
         )
 
-        ctype = _cloud_type(cluster_info) if cluster_info else ""
+        ctype = _cloud_type(traits or ClusterTraits()) if cluster_info else ""
 
         lic_exp = _license_expiration(licenses)
 
@@ -325,9 +327,10 @@ class InventoryReport:
             cluster_info = ds.query(ClusterInfo, cluster=name, source="auto").first()
             nodes = list(ds.query(OntapNodeResponse, cluster=name, source="auto"))
             licenses = list(ds.query(OntapLicensePackageResponse, cluster=name, source="auto"))
-            cloud_meta = self._collect_cloud_meta(entry, cluster_info)
+            traits = ds.query(ClusterTraits, cluster=name, source="auto").first()
+            cloud_meta = self._collect_cloud_meta(entry, traits)
             self.rows.append(
-                self._build_row(name, entry, cluster_info, nodes, licenses, cloud_meta)
+                self._build_row(name, entry, cluster_info, nodes, licenses, cloud_meta, traits)
             )
 
     def save(self, path: str | Path) -> None:

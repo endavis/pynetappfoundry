@@ -25,6 +25,7 @@ import pynetappfoundry.cache.ontap.cluster.mediators  # noqa: F401
 import pynetappfoundry.cache.ontap.cluster.nodes  # noqa: F401
 import pynetappfoundry.cache.ontap.cluster.peers  # noqa: F401
 import pynetappfoundry.cache.ontap.cluster.schedules  # noqa: F401
+import pynetappfoundry.cache.ontap.cluster.traits  # noqa: F401
 import pynetappfoundry.cache.ontap.name_services.dns  # noqa: F401
 import pynetappfoundry.cache.ontap.network.ethernet.broadcast_domains  # noqa: F401
 import pynetappfoundry.cache.ontap.network.ip.interfaces  # noqa: F401

@@ -29,6 +29,7 @@ from pynetappfoundry.models.ontap.cluster.nodes.model import (
     OntapNodeResponseManagementInterface2Ip,
     OntapNodeResponseManagementInterfaceIp,
 )
+from pynetappfoundry.models.ontap.cluster.traits.model import ClusterTraits
 
 
 class TestShortVersion:
@@ -55,15 +56,15 @@ class TestCloudType:
     """Tests for _cloud_type helper."""
 
     def test_cloud_ha(self) -> None:
-        info = ClusterInfo(is_cloud=True, is_ha=True)
+        info = ClusterTraits(is_cloud=True, is_ha=True)
         assert _cloud_type(info) == "CVO HA"
 
     def test_cloud_single(self) -> None:
-        info = ClusterInfo(is_cloud=True, is_ha=False)
+        info = ClusterTraits(is_cloud=True, is_ha=False)
         assert _cloud_type(info) == "CVO"
 
     def test_on_prem(self) -> None:
-        info = ClusterInfo(is_cloud=False)
+        info = ClusterTraits(is_cloud=False)
         assert _cloud_type(info) == "OnTap Select"
 
 
@@ -216,3 +217,44 @@ class TestInventoryWorkbook:
         link = ws.cell(row=2, column=16)
         assert link.font.underline == "single"
         assert link.font.color.rgb.endswith("0563C1")
+
+
+class _Entry(dict[str, Any]):
+    """Cluster config entry with no cached ONTAP data."""
+
+    ontap = None
+
+
+class TestInventoryClusterType:
+    """#967: the cluster type column follows ``ClusterTraits``, not ``ClusterInfo``."""
+
+    @staticmethod
+    def _row(traits: ClusterTraits | None) -> list[Any]:
+        config = MagicMock()
+        config.find_closest.return_value = {}
+
+        def query(model: type, **_: Any) -> MagicMock:
+            result = MagicMock()
+            if model is ClusterInfo:
+                result.first.return_value = ClusterInfo(cluster_name="cl1")
+            elif model is ClusterTraits:
+                result.first.return_value = traits
+            else:
+                result.first.return_value = None
+                result.__iter__.return_value = iter([])
+            return result
+
+        with patch("pynetappfoundry.cli.commands.reports.inventory.DataSource") as ds:
+            ds.return_value.query.side_effect = query
+            report = InventoryReport(config, {"cl1": _Entry(ip="10.0.0.1")})
+            report.build()
+        return report.rows[0]
+
+    def test_missing_traits_row_is_on_prem(self) -> None:
+        assert "OnTap Select" in self._row(None)
+
+    def test_cloud_ha_traits(self) -> None:
+        assert "CVO HA" in self._row(ClusterTraits(is_cloud=True, is_ha=True))
+
+    def test_cloud_single_traits(self) -> None:
+        assert "CVO" in self._row(ClusterTraits(is_cloud=True, is_ha=False))
