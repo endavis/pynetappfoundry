@@ -1162,3 +1162,16 @@ class TestClusterEntryWrapping:
             assert result._config is not None
         finally:
             os.chdir(original_cwd)
+
+
+class TestGetTrustStore:
+    """Tests for Config.get_trust_store."""
+
+    def test_returns_cached_store_rooted_in_config_dir(self, config_instance: Config) -> None:
+        store = config_instance.get_trust_store()
+        assert store is config_instance.get_trust_store()
+        assert store.directory == config_instance.config_dir / ".trust"
+
+    def test_creates_nothing_until_a_record_is_written(self, config_instance: Config) -> None:
+        config_instance.get_trust_store()
+        assert not (config_instance.config_dir / ".trust").exists()

@@ -228,6 +228,7 @@ def _collect_cluster(
             host_or_ip=ip,
             username=user,
             password=password,
+            trust_store=config.get_trust_store(),
         )
         logger.debug("[%s] CLI client initialized", cluster_name)
     except Exception as e:

@@ -296,6 +296,7 @@ def inspect(ctx: click.Context, cluster: str, object_name: str, object_type: str
             host_or_ip=cluster_data.get("ip", ""),
             username=user,
             password=password,
+            trust_store=config.get_trust_store(),
         )
         cli_record, cli_descriptions = _fetch_cli_data(cli_client, mapping, object_name)
         if cli_record:

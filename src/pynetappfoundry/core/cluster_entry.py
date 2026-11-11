@@ -313,7 +313,13 @@ class ClusterEntry(MutableMapping[str, Any]):
             logging.warning(f"{_file_name} : API client unavailable for {self._name}: {e}")
         try:
             user, password = self._config.get_user("clusters", self._name)
-            cli_client = ONTAPCLI(name=self._name, host_or_ip=ip, username=user, password=password)
+            cli_client = ONTAPCLI(
+                name=self._name,
+                host_or_ip=ip,
+                username=user,
+                password=password,
+                trust_store=self._config.get_trust_store(),
+            )
         except Exception as e:
             errors.append(f"CLI client: {e}")
             logging.warning(f"{_file_name} : CLI client unavailable for {self._name}: {e}")

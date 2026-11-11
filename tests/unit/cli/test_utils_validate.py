@@ -32,7 +32,11 @@ class TestValidateSSH:
 
             assert result is True
             mock_cli_class.assert_called_once_with(
-                "test-cluster", "192.168.1.1", "admin", "password123"
+                "test-cluster",
+                "192.168.1.1",
+                "admin",
+                "password123",
+                trust_store=mock_config.get_trust_store.return_value,
             )
             mock_cli.connect.assert_called_once()
             mock_cli.run_command.assert_called_once_with("node show")

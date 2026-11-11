@@ -2,16 +2,25 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
 import pytest
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 from pynetappfoundry.clients.ontap.cli import (
     ONTAPCLI,
     CLICommandError,
     CLITimeoutError,
     _parse_separator_output,
+)
+from pynetappfoundry.clients.trust import (
+    FingerprintPinningAdapter,
+    HostIdentityChangedError,
+    HostTrustStore,
+    TrustOnFirstUsePolicy,
 )
 
 if TYPE_CHECKING:
@@ -641,3 +650,106 @@ class TestSeparatorParserMethod:
             assert len(data) == 1
             assert data[0]["raidstatus"] == "raid0, normal"
             assert data[0]["state"] == "online"
+
+
+class TestONTAPCLITrustStore:
+    """Tests for host identity pinning in ONTAPCLI."""
+
+    @staticmethod
+    def _store(tmp_path: Path) -> HostTrustStore:
+        return HostTrustStore(tmp_path / ".trust", lambda host, port: b"der")
+
+    def test_installs_trust_on_first_use_policy_with_store(self, tmp_path: Path) -> None:
+        with patch("paramiko.SSHClient") as mock_ssh_class:
+            ONTAPCLI("c", "h", "u", "p", trust_store=self._store(tmp_path))
+            policy = mock_ssh_class.return_value.set_missing_host_key_policy.call_args.args[0]
+            assert isinstance(policy, TrustOnFirstUsePolicy)
+
+    def test_installs_legacy_policy_without_store(self) -> None:
+        import paramiko
+
+        with patch("paramiko.SSHClient") as mock_ssh_class:
+            ONTAPCLI("c", "h", "u", "p")
+            mock_ssh_class.return_value.set_missing_host_key_policy.assert_called_once_with(
+                paramiko.AutoAddPolicy
+            )
+
+    def test_connect_loads_recorded_keys(self, tmp_path: Path) -> None:
+        store = self._store(tmp_path)
+        with patch("paramiko.SSHClient") as mock_ssh_class:
+            mock_ssh = mock_ssh_class.return_value
+            mock_ssh.get_transport.return_value = None
+            store.ssh.path.parent.mkdir()
+            store.ssh.path.write_text("")
+            ONTAPCLI("c", "h", "u", "p", trust_store=store).connect()
+            mock_ssh.load_host_keys.assert_called_once_with(str(store.ssh.path))
+
+    def test_connect_maps_bad_host_key_and_closes_client(self, tmp_path: Path) -> None:
+        import paramiko
+
+        store = self._store(tmp_path)
+        with patch("paramiko.SSHClient") as mock_ssh_class:
+            mock_ssh = mock_ssh_class.return_value
+            mock_ssh.get_transport.return_value = None
+            key = MagicMock(spec=paramiko.PKey)
+            mock_ssh.connect.side_effect = paramiko.BadHostKeyException("h", key, key)
+            cli = ONTAPCLI("c", "h", "u", "p", trust_store=store)
+            with pytest.raises(HostIdentityChangedError) as exc_info:
+                cli.connect()
+            assert str(store.ssh.path) in str(exc_info.value)
+            mock_ssh.close.assert_called_once()
+
+    def test_connect_closes_client_on_policy_refusal(self, tmp_path: Path) -> None:
+        with patch("paramiko.SSHClient") as mock_ssh_class:
+            mock_ssh = mock_ssh_class.return_value
+            mock_ssh.get_transport.return_value = None
+            mock_ssh.connect.side_effect = HostIdentityChangedError("h", tmp_path, "reset")
+            cli = ONTAPCLI("c", "h", "u", "p", trust_store=self._store(tmp_path))
+            with pytest.raises(HostIdentityChangedError):
+                cli.connect()
+            mock_ssh.close.assert_called_once()
+
+    def test_connect_without_store_propagates_bad_host_key(self) -> None:
+        import paramiko
+
+        with patch("paramiko.SSHClient") as mock_ssh_class:
+            mock_ssh = mock_ssh_class.return_value
+            mock_ssh.get_transport.return_value = None
+            key = MagicMock(spec=paramiko.PKey)
+            mock_ssh.connect.side_effect = paramiko.BadHostKeyException("h", key, key)
+            with pytest.raises(paramiko.BadHostKeyException):
+                ONTAPCLI("c", "h", "u", "p").connect()
+
+    def test_python_api_mounts_pinning_adapter_and_keeps_retries(self, tmp_path: Path) -> None:
+        retries = Retry(total=3)
+        conn = MagicMock()
+        conn.origin = "https://h"
+        conn.session.adapters = {"https://h": HTTPAdapter(max_retries=retries)}
+        host_connection = MagicMock()
+        host_connection.return_value.__enter__.return_value = conn
+        with (
+            patch("paramiko.SSHClient"),
+            patch("pynetappfoundry.clients.ontap.cli.HostConnection", host_connection),
+            patch("pynetappfoundry.clients.ontap.cli.CLI") as cli_cls,
+        ):
+            cli_cls.return_value.execute.return_value.http_response.json.return_value = {}
+            ONTAPCLI("c", "h", "u", "p", trust_store=self._store(tmp_path)).run_command_python_api(
+                "volume show"
+            )
+        origin, adapter = conn.session.mount.call_args.args
+        assert origin == "https://h"
+        assert isinstance(adapter, FingerprintPinningAdapter)
+        assert adapter.max_retries is retries
+
+    def test_python_api_without_store_mounts_nothing(self) -> None:
+        conn = MagicMock()
+        host_connection = MagicMock()
+        host_connection.return_value.__enter__.return_value = conn
+        with (
+            patch("paramiko.SSHClient"),
+            patch("pynetappfoundry.clients.ontap.cli.HostConnection", host_connection),
+            patch("pynetappfoundry.clients.ontap.cli.CLI") as cli_cls,
+        ):
+            cli_cls.return_value.execute.return_value.http_response.json.return_value = {}
+            ONTAPCLI("c", "h", "u", "p").run_command_python_api("volume show")
+        conn.session.mount.assert_not_called()

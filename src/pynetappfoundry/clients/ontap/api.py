@@ -8,9 +8,11 @@ from typing import TYPE_CHECKING, Any
 import urllib3
 
 from pynetappfoundry.clients.openapi import APIWrapper
+from pynetappfoundry.clients.trust import FingerprintPinningAdapter
 
 # Suppress InsecureRequestWarning since we intentionally disable SSL verification
-# for ONTAP clusters with self-signed certificates
+# for ONTAP clusters with self-signed certificates. Identity is pinned instead:
+# FingerprintPinningAdapter requires the certificate fingerprint recorded on first use.
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 if TYPE_CHECKING:
@@ -47,7 +49,10 @@ class ONTAPAPIClient(APIWrapper):
             auth_header=auth_header,
             base_api_path=ontap_settings.base_api_path,
             timeout=ontap_settings.timeout,
-            verify_ssl=False,  # ONTAP clusters typically use self-signed certs
+            verify_ssl=False,  # chain validation off (self-signed certs); fingerprint pinned
+            https_adapter=FingerprintPinningAdapter(
+                config.get_trust_store().tls, pool_connections=20, pool_maxsize=20
+            ),
             name=cluster.name,
             **kwargs,
         )

@@ -551,5 +551,9 @@ class TestLiveCollection:
         assert collector.cli_client is cli_cls.return_value
         assert collector.aws_sso_config == {"subdomain": "co"}
         cli_cls.assert_called_once_with(
-            name="test-cluster", host_or_ip=sample_data["ip"], username="admin", password="secret"
+            name="test-cluster",
+            host_or_ip=sample_data["ip"],
+            username="admin",
+            password="secret",
+            trust_store=config.get_trust_store.return_value,
         )

@@ -22,6 +22,7 @@ pynetappfoundry uses TOML files for configuration. By default, it looks for a `c
 config/
 ├── settings.toml        # Global settings and searchable keys
 ├── users.toml           # Credentials for clusters and services
+├── .trust/              # Recorded SSH host keys and TLS fingerprints (created on first use)
 ├── environments/        # Data files for clusters, connectors, etc.
 │   ├── prod.toml
 │   └── dev.toml
@@ -189,8 +190,14 @@ from pynetappfoundry import Config, ONTAPCLI
 
 config = Config()
 
-# Create CLI client
-cli = ONTAPCLI(config, "CLUSTER-PROD-01")
+user, password = config.get_user("clusters", "CLUSTER-PROD-01")
+cli = ONTAPCLI(
+    name="CLUSTER-PROD-01",
+    host_or_ip=config.data["clusters"]["CLUSTER-PROD-01"]["ip"],
+    username=user,
+    password=password,
+    trust_store=config.get_trust_store(),  # pin the SSH host key on first use
+)
 
 # Run CLI commands
 output = cli.run_command("volume show")
@@ -278,6 +285,27 @@ nf events get -l 100
 # Get events by severity
 nf events get -s error
 ```
+
+## Host identity (SSH host keys and TLS certificates)
+
+The ONTAP SSH and REST clients trust a host on first use and pin its identity from then on. The first connection records the host's SSH host key or TLS certificate fingerprint. Every later connection must present the same identity, and a different one is refused before credentials are sent.
+
+- **Where the records live:** `<config_dir>/.trust/known_hosts` holds SSH host keys in OpenSSH format. `<config_dir>/.trust/tls_fingerprints.json` holds SHA-256 certificate fingerprints keyed `host:port`. The directory is created on the first recorded identity, with mode `0700` (files `0600`). Unlike `.cache/`, it is not rebuilt, so keep it out of version control (the repository ignores it).
+- **System `known_hosts`:** SSH host keys in your system `known_hosts` are honoured as well.
+- **Scope:** ONTAP only. DII, AIQUM and OCCM clients are unchanged.
+- **Without a trust store:** `ONTAPCLI` built without `trust_store=` accepts host keys in memory only, as before.
+- **TLS capture:** the first fingerprint is read with one direct, unauthenticated handshake that does not use `HTTPS_PROXY`.
+
+A changed identity raises `HostIdentityChangedError`, naming the host, the record file and the reset command. After you have confirmed the change is expected (for example a replaced certificate), reset the entry:
+
+```bash
+# SSH host key
+ssh-keygen -R CLUSTER-IP -f config/.trust/known_hosts
+
+# TLS fingerprint: remove the "host:port" entry from config/.trust/tls_fingerprints.json
+```
+
+The next connection records the new identity. See [ADR-0025](../decisions/0025-pin-ontap-ssh-host-keys-and-tls-certificate-fingerprints-on-first-use.md) for the design.
 
 ## Error Handling
 

@@ -13,6 +13,13 @@ import paramiko
 from netapp_ontap import HostConnection
 from netapp_ontap.resources import CLI
 
+from pynetappfoundry.clients.trust import (
+    FingerprintPinningAdapter,
+    HostIdentityChangedError,
+    HostTrustStore,
+    TrustOnFirstUsePolicy,
+)
+
 CMD_KEYS: dict[str, str] = {
     "volume show": "Volume Name",
     "vol show": "Volume Name",
@@ -111,6 +118,8 @@ class ONTAPCLI:
         username: str,
         password: str,
         timeout: float | None = None,
+        *,
+        trust_store: HostTrustStore | None = None,
     ) -> None:
         """Initialize the ONTAP CLI client.
 
@@ -120,6 +129,9 @@ class ONTAPCLI:
             username: SSH username.
             password: SSH password.
             timeout: Default timeout for commands in seconds. Defaults to 10s.
+            trust_store: Records SSH host keys and TLS certificate fingerprints on
+                first use and requires them to match afterwards. When omitted,
+                host keys are accepted without being recorded.
         """
         self.name = name
         self.host = host_or_ip
@@ -129,7 +141,11 @@ class ONTAPCLI:
 
         self.ssh: paramiko.SSHClient = paramiko.SSHClient()
         self.ssh.load_system_host_keys()
-        self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy)
+        self._trust_store = trust_store
+        if trust_store is not None:
+            self.ssh.set_missing_host_key_policy(TrustOnFirstUsePolicy(trust_store.ssh))
+        else:
+            self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy)
         self.cli = self.ssh
 
         self.lines_to_skip = [
@@ -153,20 +169,37 @@ class ONTAPCLI:
             transport = self.ssh.get_transport()
             if not transport or not transport.is_active():
                 logging.debug(f"{self.log_prefix} Connect: creating connection")
-                if self.pkey:
-                    self.ssh.connect(
+                if self._trust_store is not None:
+                    self._trust_store.ssh.load_into(self.ssh)
+                try:
+                    if self.pkey:
+                        self.ssh.connect(
+                            self.host,
+                            username=self.username,
+                            pkey=self.pkey,
+                            timeout=self.timeout,
+                        )
+                    else:
+                        self.ssh.connect(
+                            self.host,
+                            username=self.username,
+                            password=self.password,
+                            timeout=self.timeout,
+                        )
+                except paramiko.BadHostKeyException as exc:
+                    self.ssh.close()
+                    if self._trust_store is None:
+                        raise
+                    record_path = self._trust_store.ssh.path
+                    raise HostIdentityChangedError(
                         self.host,
-                        username=self.username,
-                        pkey=self.pkey,
-                        timeout=self.timeout,
-                    )
-                else:
-                    self.ssh.connect(
-                        self.host,
-                        username=self.username,
-                        password=self.password,
-                        timeout=self.timeout,
-                    )
+                        record_path,
+                        f"ssh-keygen -R {self.host} -f {record_path}",
+                        detail="The presented SSH host key does not match the recorded key.",
+                    ) from exc
+                except HostIdentityChangedError:
+                    self.ssh.close()
+                    raise
                 transport = self.ssh.get_transport()
                 if transport:
                     transport.set_keepalive(5)
@@ -436,6 +469,16 @@ class ONTAPCLI:
         )
         with HostConnection(
             self.host, username=self.username, password=self.password, verify=False
-        ):
+        ) as conn:
+            if self._trust_store is not None:
+                session = conn.session
+                existing = session.adapters.get(conn.origin)
+                session.mount(
+                    conn.origin,
+                    FingerprintPinningAdapter(
+                        self._trust_store.tls,
+                        max_retries=getattr(existing, "max_retries", 0),
+                    ),
+                )
             response = CLI().execute(command, privilege_level=privilege_level, **kwargs)
             print(json.dumps(response.http_response.json(), indent=4))

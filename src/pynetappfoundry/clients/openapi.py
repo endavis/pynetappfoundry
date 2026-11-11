@@ -84,6 +84,7 @@ class APIWrapper:
         retry_config: RetryConfig | None = None,
         validation_config: ValidationConfig | None = None,
         name: str = "",
+        https_adapter: HTTPAdapter | None = None,
     ) -> None:
         """Initialize the API wrapper.
 
@@ -98,6 +99,8 @@ class APIWrapper:
             retry_config: Configuration for retry behavior. Defaults to enabled.
             validation_config: Configuration for response validation. Defaults to disabled.
             name: Name for log prefix (e.g., cluster name). Used in [name:api] format.
+            https_adapter: Adapter mounted for ``https://`` instead of the default
+                pooled adapter (for example one that pins certificate fingerprints).
         """
         self.name = name
         self.log_prefix = f"[{name}:api]" if name else "[api]"
@@ -125,7 +128,7 @@ class APIWrapper:
         # Configure connection pool to handle parallel API calls
         # Default pool size (10) is insufficient when using ThreadPoolExecutor
         adapter = HTTPAdapter(pool_connections=20, pool_maxsize=20)
-        self.session.mount("https://", adapter)
+        self.session.mount("https://", https_adapter if https_adapter is not None else adapter)
         self.session.mount("http://", adapter)
 
         # Default headers (can be extended per request)

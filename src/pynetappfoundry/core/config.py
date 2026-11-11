@@ -44,7 +44,7 @@ import logging
 import os
 import tomllib
 from pathlib import Path
-from typing import Any, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from pynetappfoundry.core.models import (
     ConsoleAPISettings,
@@ -70,6 +70,9 @@ VALID_DATA_TYPES = frozenset(
         "ibm",
     }
 )
+
+if TYPE_CHECKING:
+    from pynetappfoundry.clients.trust import HostTrustStore
 
 
 class ConfigurationError(Exception):
@@ -117,6 +120,7 @@ class Config:
         self.data: dict[str, dict[str, dict[str, Any]]] = {}
         self.args = args
         self.no_cache = no_cache
+        self._trust_store: HostTrustStore | None = None
         self.config_dir = Path.cwd() / config_dir
         self.data_types = ["aiqums", "connectors", "cloudinsights", "clusters", "azure"]
         self.settings: dict[str, Any] = {}
@@ -313,6 +317,18 @@ class Config:
         )
         self._wrap_clusters()
         self.add_searchable_keys()
+
+    def get_trust_store(self) -> HostTrustStore:
+        """Return the trust store for SSH host keys and TLS fingerprints.
+
+        Records live under ``<config_dir>/.trust``. Built once and cached; nothing
+        is created on disk until a record is written.
+        """
+        if self._trust_store is None:
+            from pynetappfoundry.clients.trust import HostTrustStore
+
+            self._trust_store = HostTrustStore(self.config_dir / ".trust")
+        return self._trust_store
 
     def _wrap_clusters(self) -> None:
         """Wrap each cluster config dict in a ClusterEntry.

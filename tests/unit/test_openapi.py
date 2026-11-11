@@ -1724,3 +1724,21 @@ class TestLazyJsonschema:
             "print(before, ok, 'jsonschema' in sys.modules)\n"
         )
         assert self._run(code) == "False False True"
+
+
+class TestAPIWrapperHttpsAdapter:
+    """Tests for the optional https_adapter argument."""
+
+    def test_custom_adapter_mounted_for_https_only(self, spec_file: Path) -> None:
+        from requests.adapters import HTTPAdapter
+
+        custom = HTTPAdapter()
+        wrapper = APIWrapper(
+            api_json_file=str(spec_file), base_url="https://api.example.com", https_adapter=custom
+        )
+        assert wrapper.session.get_adapter("https://api.example.com") is custom
+        assert wrapper.session.get_adapter("http://api.example.com") is not custom
+
+    def test_default_adapter_when_not_given(self, api_wrapper: APIWrapper) -> None:
+        https = api_wrapper.session.get_adapter("https://api.example.com")
+        assert https is api_wrapper.session.get_adapter("http://api.example.com")
