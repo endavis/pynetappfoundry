@@ -137,6 +137,7 @@ versions, raw `pytest` instead of `doit`, and mutable action tags this project's
 | `lint` | `doit env_check`, `doit format_check`, `doit lint`, `doit type_check`, `doit deadcode`, `doit security`, `doit spell_check`, `doit audit` and `doit wheel_check`, on `ubuntu-latest`. Each runs even when one before it failed, so CI reports every failing check at once. A failure in any of them fails CI. |
 | `docs` | `doit docs_build`, described below |
 | `console-models` | `doit console_models_check`, on `ubuntu-latest`: regenerates the Console models from the committed spec and fails on any modified, deleted or new file under `src/pynetappfoundry/models/console/`. Project-specific, not from the template. |
+| `generated-models` | `doit generate_models_check`, on `ubuntu-latest`: regenerates the ONTAP and DII models from the committed specs and fails on any modified, deleted, new or stale generated file. Project-specific, not from the template. |
 | `ci-complete` | Fails if any other job failed; a skipped job passes. It gives the run one result to require ([ADR-9013](../decisions/9013-python-version-support-policy.md)). |
 
 `tests/test_ci_jobs_doc.py` checks this table against `ci.yml`: the same jobs, and the same `doit` tasks in each.

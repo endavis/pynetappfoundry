@@ -4,6 +4,7 @@ import json
 import shutil
 import subprocess  # nosec B404
 import sys
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -384,6 +385,173 @@ def task_mapping_index() -> dict[str, Any]:
     }
 
 
+def _generate_models(
+    api_list: list[str],
+    dry_run: bool = False,
+    endpoints: str = "",
+    strict: bool = False,
+) -> list[Path]:
+    """Generate models for *api_list*, post-process with ruff, refresh the index.
+
+    With *strict*, a missing spec raises instead of being skipped, so a drift
+    check cannot pass on a tree it never regenerated.  Returns the written paths.
+    """
+    from tools.codegen.openapi_codegen import run
+
+    wrote_anything = False
+    written: list[Path] = []
+
+    for api_name in api_list:
+        spec_path = _SPEC_DIR / api_name / _OUTPUT_FILENAME
+        if not spec_path.exists():
+            if strict:
+                raise FileNotFoundError(f"OpenAPI spec not found: {spec_path}")
+            print(f"SKIP: {spec_path} does not exist (run 'doit convert_specs' first)")
+            continue
+
+        endpoint_filter = endpoints.split(",") if endpoints else None
+        written.extend(
+            run(
+                spec=spec_path,
+                output=_CACHE_OUTPUT_DIR,
+                api_type=api_name,
+                endpoint_filter=endpoint_filter,
+                dry_run=dry_run,
+            )
+        )
+        if not dry_run:
+            wrote_anything = True
+
+    if wrote_anything:
+        # Post-process: ``ruff format`` normalizes wrapping so long
+        # lines that fit after wrapping no longer trigger E501, and
+        # ``ruff check --fix`` then drops any generator-emitted
+        # E501 noqa headers the formatter made redundant (RUF100,
+        # "unused-noqa").  Running the full project check (not
+        # just ``--select RUF100``) keeps legitimate N815/N802
+        # suppressions in place -- ruff only strips codes that
+        # are actually unused in context.
+        paths: list[str] = []
+        for api_name in api_list:
+            cache_api_dir = _CACHE_OUTPUT_DIR / api_name
+            models_api_dir = _CACHE_OUTPUT_DIR.parent / "models" / api_name
+            if cache_api_dir.exists():
+                paths.append(str(cache_api_dir))
+            if models_api_dir.exists():
+                paths.append(str(models_api_dir))
+        if paths:
+            print("\nPost-processing generated files with ruff...")
+            subprocess.run(  # nosec B603 B607
+                ["uv", "run", "ruff", "format", *paths],
+                check=False,
+            )
+            subprocess.run(  # nosec B603 B607
+                ["uv", "run", "ruff", "check", "--fix", *paths],
+                check=False,
+            )
+        # New or removed mappings change the lazy registry's index (#903).
+        _write_mapping_index()
+
+    return written
+
+
+# APIs whose committed models the drift check regenerates (#901).  Explicit,
+# because a bare ``generate_models`` also covers aiqum and occm.
+_GENERATED_APIS: tuple[str, ...] = ("dii", "ontap")
+
+
+def _generated_paths(apis: tuple[str, ...] = _GENERATED_APIS) -> list[Path]:
+    """Paths the generator owns for *apis*: model trees, cache trees and the index."""
+    paths: list[Path] = []
+    for api_name in apis:
+        paths.append(_CACHE_OUTPUT_DIR.parent / "models" / api_name)
+        paths.append(_CACHE_OUTPUT_DIR / api_name)
+    paths.append(_CACHE_OUTPUT_DIR / "_mapping_index.py")
+    return paths
+
+
+def _git_output(*args: str) -> str:
+    """Return stdout of ``git *args``; raise on failure."""
+    return subprocess.run(  # nosec B603 B607  # fixed argv, no shell
+        ["git", *args], check=True, capture_output=True, text=True
+    ).stdout
+
+
+def _check_generated_models(
+    generate: Callable[[list[str]], list[Path]],
+    paths: list[Path],
+    apis: tuple[str, ...] = _GENERATED_APIS,
+) -> bool:
+    """Regenerate *apis* with *generate*; return False, printing why, on any drift.
+
+    Refuses to run, touching nothing, when *paths* already hold changes, so the
+    restore afterwards cannot discard work.  Drift is a modified, deleted or new
+    file (git status), or a tracked ``model.py`` that carries the generated header
+    but is no longer written (stale).  Hand-written modules, such as those of
+    excluded endpoints, have no header and are never stale.  The restore runs in
+    ``finally``.
+    """
+    from tools.codegen.generators import GENERATED_HEADER
+
+    path_args = [str(p) for p in paths]
+    before = _git_output("status", "--porcelain", "--untracked-files=all", "--", *path_args)
+    if before:
+        print(
+            "ERROR: generated paths have uncommitted changes; commit or discard them "
+            f"before running generate_models_check:\n{before}",
+            file=sys.stderr,
+        )
+        return False
+
+    drift = ""
+    stale: list[str] = []
+    try:
+        written = {p.resolve() for p in generate(list(apis))}
+        drift = _git_output("status", "--porcelain", "--untracked-files=all", "--", *path_args)
+        for line in _git_output("ls-files", "--", *path_args).splitlines():
+            tracked = Path(line)
+            if tracked.name != "model.py" or tracked.resolve() in written:
+                continue
+            # Hand-written and excluded-endpoint modules carry no header.
+            with tracked.open(encoding="utf-8") as fh:
+                if fh.readline().rstrip("\n") == GENERATED_HEADER:
+                    stale.append(line)
+    finally:
+        subprocess.run(  # nosec B603 B607
+            ["git", "checkout", "--", *path_args], check=False, capture_output=True
+        )
+        subprocess.run(  # nosec B603 B607
+            ["git", "clean", "-fdq", "--", *path_args], check=False, capture_output=True
+        )
+
+    if drift or stale:
+        print("Generated models differ from the generator output:", file=sys.stderr)
+        if drift:
+            print(drift, file=sys.stderr)
+        for line in stale:
+            print(f"stale (no longer generated): {line}", file=sys.stderr)
+        print("Run 'doit generate_models' and commit the result.", file=sys.stderr)
+        return False
+    print("Generated models match the generator output.")
+    return True
+
+
+def task_generate_models_check() -> dict[str, Any]:
+    """Verify the committed ontap and dii models match a fresh generator run.
+
+    Regenerates in place, fails on any modified, deleted, new or stale file, then
+    restores the generated paths.  Not part of ``doit check``; CI runs it in the
+    ``generated-models`` job (#901).
+    """
+
+    def run_check() -> bool:
+        return _check_generated_models(
+            lambda apis: _generate_models(apis, strict=True), _generated_paths()
+        )
+
+    return {"actions": [run_check], "verbosity": 2}
+
+
 def task_generate_models() -> dict[str, Any]:
     """Generate cache models and mappings from OpenAPI specs.
 
@@ -394,57 +562,8 @@ def task_generate_models() -> dict[str, Any]:
     """
 
     def run_generate(api: str, dry_run: bool, endpoints: str) -> None:
-        from tools.codegen.openapi_codegen import run
-
         api_list = [api] if api else sorted(_SPECS)
-        wrote_anything = False
-
-        for api_name in api_list:
-            spec_path = _SPEC_DIR / api_name / _OUTPUT_FILENAME
-            if not spec_path.exists():
-                print(f"SKIP: {spec_path} does not exist (run 'doit convert_specs' first)")
-                continue
-
-            endpoint_filter = endpoints.split(",") if endpoints else None
-            run(
-                spec=spec_path,
-                output=_CACHE_OUTPUT_DIR,
-                api_type=api_name,
-                endpoint_filter=endpoint_filter,
-                dry_run=dry_run,
-            )
-            if not dry_run:
-                wrote_anything = True
-
-        if wrote_anything:
-            # Post-process: ``ruff format`` normalizes wrapping so long
-            # lines that fit after wrapping no longer trigger E501, and
-            # ``ruff check --fix`` then drops any generator-emitted
-            # E501 noqa headers the formatter made redundant (RUF100,
-            # "unused-noqa").  Running the full project check (not
-            # just ``--select RUF100``) keeps legitimate N815/N802
-            # suppressions in place -- ruff only strips codes that
-            # are actually unused in context.
-            paths: list[str] = []
-            for api_name in api_list:
-                cache_api_dir = _CACHE_OUTPUT_DIR / api_name
-                models_api_dir = _CACHE_OUTPUT_DIR.parent / "models" / api_name
-                if cache_api_dir.exists():
-                    paths.append(str(cache_api_dir))
-                if models_api_dir.exists():
-                    paths.append(str(models_api_dir))
-            if paths:
-                print("\nPost-processing generated files with ruff...")
-                subprocess.run(  # nosec B603 B607
-                    ["uv", "run", "ruff", "format", *paths],
-                    check=False,
-                )
-                subprocess.run(  # nosec B603 B607
-                    ["uv", "run", "ruff", "check", "--fix", *paths],
-                    check=False,
-                )
-            # New or removed mappings change the lazy registry's index (#903).
-            _write_mapping_index()
+        _generate_models(api_list, dry_run=dry_run, endpoints=endpoints)
 
     return {
         "actions": [run_generate],
