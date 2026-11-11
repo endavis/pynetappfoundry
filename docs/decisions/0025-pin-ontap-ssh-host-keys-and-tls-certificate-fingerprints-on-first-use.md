@@ -34,7 +34,7 @@ The ONTAP clients connect to clusters that usually present self-signed TLS certi
 - Trust on first use needs no distribution step, which fits clusters with self-signed certificates.
 - Pinning at connect time keeps credentials from being sent to a host whose identity differs from the recorded one.
 - A standard OpenSSH file lets administrators reset one entry with a tool they already know.
-- Injecting the store keeps tests free of sockets and leaves callers without a store unchanged.
+- Injecting the store keeps tests free of sockets. An `ONTAPCLI` built without a store uses paramiko's `RejectPolicy`, so it connects only to hosts already in the system `known_hosts`.
 - A per-file lock plus atomic replace keeps concurrent first connections from losing entries.
 
 ## Consequences
@@ -43,4 +43,5 @@ The ONTAP clients connect to clusters that usually present self-signed TLS certi
 - After a legitimate change (a replaced certificate, a rebuilt cluster) the user resets the entry once. The error message gives the command.
 - Writers in other processes are not locked; two processes recording the same file at once can lose an entry, which the next connection records again.
 - The TLS capture does not go through a proxy, so it needs a direct route to the cluster.
+- Code that builds `ONTAPCLI` itself without `trust_store=` now refuses hosts missing from the system `known_hosts`; it passes `trust_store=config.get_trust_store()` to record hosts on first use. Every caller in this package passes a store.
 - `.trust/` is ignored by git and is not rebuilt by cache refresh.

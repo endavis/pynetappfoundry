@@ -131,7 +131,7 @@ class ONTAPCLI:
             timeout: Default timeout for commands in seconds. Defaults to 10s.
             trust_store: Records SSH host keys and TLS certificate fingerprints on
                 first use and requires them to match afterwards. When omitted,
-                host keys are accepted without being recorded.
+                only hosts already in the system ``known_hosts`` are accepted.
         """
         self.name = name
         self.host = host_or_ip
@@ -145,7 +145,7 @@ class ONTAPCLI:
         if trust_store is not None:
             self.ssh.set_missing_host_key_policy(TrustOnFirstUsePolicy(trust_store.ssh))
         else:
-            self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy)
+            self.ssh.set_missing_host_key_policy(paramiko.RejectPolicy())
         self.cli = self.ssh
 
         self.lines_to_skip = [

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import socket
 import ssl
 import stat
@@ -33,6 +34,10 @@ from pynetappfoundry.clients.trust import (
 
 DER_A = b"certificate-a"
 DER_B = b"certificate-b"
+
+
+# Windows has no POSIX permission bits: chmod only toggles read-only there.
+_POSIX_MODES = os.name != "nt"
 
 
 def _recorded(path: Path, hostname: str, key: paramiko.PKey) -> paramiko.PKey | None:
@@ -70,8 +75,9 @@ class TestKnownHostsStore:
         store = KnownHostsStore(tmp_path / ".trust" / "known_hosts")
         key = paramiko.ECDSAKey.generate()
         assert store.record("10.0.0.1", key) is True
-        assert stat.S_IMODE(store.path.stat().st_mode) == 0o600
-        assert stat.S_IMODE(store.path.parent.stat().st_mode) == 0o700
+        if _POSIX_MODES:
+            assert stat.S_IMODE(store.path.stat().st_mode) == 0o600
+            assert stat.S_IMODE(store.path.parent.stat().st_mode) == 0o700
         assert _recorded(store.path, "10.0.0.1", key) == key
 
     def test_later_run_loads_recorded_key(self, tmp_path: Path) -> None:
@@ -177,7 +183,8 @@ class TestTlsFingerprintStore:
         assert data["version"] == 1
         assert data["hosts"]["h:443"]["sha256"] == expected
         assert "first_seen" in data["hosts"]["h:443"]
-        assert stat.S_IMODE(store.path.stat().st_mode) == 0o600
+        if _POSIX_MODES:
+            assert stat.S_IMODE(store.path.stat().st_mode) == 0o600
 
     def test_new_instance_reads_record_without_fetching(self, tmp_path: Path) -> None:
         path = tmp_path / "tls.json"

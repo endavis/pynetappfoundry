@@ -293,7 +293,7 @@ The ONTAP SSH and REST clients trust a host on first use and pin its identity fr
 - **Where the records live:** `<config_dir>/.trust/known_hosts` holds SSH host keys in OpenSSH format. `<config_dir>/.trust/tls_fingerprints.json` holds SHA-256 certificate fingerprints keyed `host:port`. The directory is created on the first recorded identity, with mode `0700` (files `0600`). Unlike `.cache/`, it is not rebuilt, so keep it out of version control (the repository ignores it).
 - **System `known_hosts`:** SSH host keys in your system `known_hosts` are honoured as well.
 - **Scope:** ONTAP only. DII, AIQUM and OCCM clients are unchanged.
-- **Without a trust store:** `ONTAPCLI` built without `trust_store=` accepts host keys in memory only, as before.
+- **Without a trust store:** `ONTAPCLI` built without `trust_store=` connects only to hosts already in the system `~/.ssh/known_hosts` and refuses any other host. Pass `trust_store=config.get_trust_store()` to record hosts on first use.
 - **TLS capture:** the first fingerprint is read with one direct, unauthenticated handshake that does not use `HTTPS_PROXY`.
 
 A changed identity raises `HostIdentityChangedError`, naming the host, the record file and the reset command. After you have confirmed the change is expected (for example a replaced certificate), reset the entry:

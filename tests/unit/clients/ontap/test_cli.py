@@ -665,14 +665,13 @@ class TestONTAPCLITrustStore:
             policy = mock_ssh_class.return_value.set_missing_host_key_policy.call_args.args[0]
             assert isinstance(policy, TrustOnFirstUsePolicy)
 
-    def test_installs_legacy_policy_without_store(self) -> None:
+    def test_installs_reject_policy_without_store(self) -> None:
         import paramiko
 
         with patch("paramiko.SSHClient") as mock_ssh_class:
             ONTAPCLI("c", "h", "u", "p")
-            mock_ssh_class.return_value.set_missing_host_key_policy.assert_called_once_with(
-                paramiko.AutoAddPolicy
-            )
+            policy = mock_ssh_class.return_value.set_missing_host_key_policy.call_args.args[0]
+            assert isinstance(policy, paramiko.RejectPolicy)
 
     def test_connect_loads_recorded_keys(self, tmp_path: Path) -> None:
         store = self._store(tmp_path)

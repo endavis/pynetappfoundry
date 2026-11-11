@@ -192,6 +192,7 @@ def _fetch_peer_certificate_der(host: str, port: int) -> bytes:
     Makes one unauthenticated handshake and sends no application data.
     """
     context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    context.minimum_version = ssl.TLSVersion.TLSv1_2
     context.check_hostname = False
     context.verify_mode = ssl.CERT_NONE
     with (
