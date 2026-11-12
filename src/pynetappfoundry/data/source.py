@@ -190,11 +190,17 @@ class DataSource:
         *,
         cluster: str,
         source: SourceMode = "auto",
+        path_params: dict[str, Any] | None = None,
     ) -> QueryBuilder[T]:
         """Build a query for instances of *model_class*.
 
         Returns a :class:`QueryBuilder` that supports ``.filter()`` and
         ``.fields()`` chaining; iterating it triggers execution.
+
+        *path_params* supplies values for the ``{placeholder}`` segments of a
+        DII endpoint that has no parent mapping to fill them (#990), e.g.
+        ``ds.query(Model, cluster="t", path_params={"platform": "linux"})``.
+        Raises :class:`ValueError` if the model's backend does not support it.
         """
         mapping = self._resolve_mapping(model_class)
         return QueryBuilder(
@@ -203,6 +209,7 @@ class DataSource:
             mapping=mapping,
             cluster=cluster,
             source_mode=source,
+            path_params=path_params,
         )
 
 
@@ -220,6 +227,7 @@ class QueryBuilder[T: BaseModel]:
         mapping: TypeMapping,
         cluster: str,
         source_mode: SourceMode,
+        path_params: dict[str, Any] | None = None,
     ) -> None:
         self._source = source
         self._model_class = model_class
@@ -229,6 +237,26 @@ class QueryBuilder[T: BaseModel]:
         self._filters: dict[str, Any] = {}
         self._fields: list[str] | None = None
         self._where_expressions: list[str] = []
+        self._path_params: dict[str, Any] = dict(path_params) if path_params else {}
+        if self._path_params:
+            self._validate_path_params()
+
+    def _validate_path_params(self) -> None:
+        """Raise :class:`ValueError` if the backend does not support ``path_params``.
+
+        Reads the capability flag off the registered backend class, like
+        :meth:`_validate_where_expressions`; an unregistered backend is deferred
+        to iteration time.
+        """
+        backend_cls = _BACKENDS.get(self._mapping.api_type)
+        if backend_cls is None or backend_cls.supports_path_params:
+            return
+        msg = (
+            f"query(): {backend_cls.__name__} does not support path_params; "
+            f"it is only available on backends that set supports_path_params=True "
+            f"(e.g. DiiBackend)"
+        )
+        raise ValueError(msg)
 
     def _validate_where_expressions(self, context: str) -> None:
         """Raise :class:`ValueError` early if where-expressions are incompatible.
@@ -395,6 +423,8 @@ class QueryBuilder[T: BaseModel]:
         """Execute the query and yield results."""
         backend = self._source._get_backend(self._mapping.api_type)
         decision = decide_path(self._mapping, self._fields, self._source_mode)
+        # Only pass path_params when used, so backends and mocks that predate it still work.
+        extra: dict[str, Any] = {"path_params": self._path_params} if self._path_params else {}
         results = backend.query(
             self._model_class,
             self._mapping,
@@ -402,6 +432,7 @@ class QueryBuilder[T: BaseModel]:
             self._cluster,
             self._filters,
             where_expressions=tuple(self._where_expressions),
+            **extra,
         )
         # Cache-miss fallback: if auto routed to cache and got nothing, try live.
         # Skip if where_expressions are present (cache-only, would raise on live).
@@ -425,5 +456,6 @@ class QueryBuilder[T: BaseModel]:
                     self._cluster,
                     self._filters,
                     where_expressions=(),
+                    **extra,
                 )
         return iter(results)

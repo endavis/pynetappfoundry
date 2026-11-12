@@ -76,8 +76,20 @@ The #919 `records_path = "."` sentinel is replaced by the shared `TypeMapping.re
 `DiiBackend.query()` used to send `mapping.api_endpoint` as is, so a mapping with `{id}` in its path requested a literal `/assets/fabrics/{id}/ports`.
 
 - **Wired mappings** (those with `parent_mapping`): the parents come from a recursive `DiiBackend.query` of the parent mapping, after `validate_parent_chain` has checked the chain. `get_all_pages` then runs once per parent with the endpoint template and `path_params`, so spec-driven pagination and validation still apply. `get_all_pages` and `_page_envelope` forward `path_params` to every `call_endpoint`. `iter_parent_ids` (new in `src/pynetappfoundry/cache/fetchers.py`, shared with `iter_parent_urls`) resolves the identifiers, skipping a parent without one (`SKIP_PARENT`); a failing parent is logged as `CHILD_FETCH_FAILED` and skipped.
-- **Unwired mappings** (a placeholder, no `parent_mapping`): `query()` raises `ValueError` naming the placeholder(s). No client is built and nothing is requested. The codegen declines to wire these on purpose, because DII lacks the parent collection endpoints; supplying their values is separate work.
+- **Unwired mappings** (a placeholder, no `parent_mapping`): `query()` raises `ValueError` naming the placeholder(s). No client is built and nothing is requested. The codegen declines to wire these on purpose, because DII lacks the parent collection endpoints; supplying their values is covered by the #990 amendment below.
 - No request is ever made with `{` or `}` in the path.
+
+## Amendment (#990): callers supply the path values
+
+Two options were considered for the unwired mappings. Option A, a curated table of parent collections that regenerates the mappings with a `parent_mapping`, is **rejected**: without a DII tenant its parent endpoints and identifier fields can only be guessed, and 8 mappings have no parent source at all. Option B is **chosen**: the caller supplies the values. `tools/codegen` and the generated mappings are unchanged.
+
+- **API:** `ds.query(Model, cluster=..., path_params={"platform": "linux"})`. `path_params` is a new keyword-only parameter defaulting to `None`, so the change is additive. `QueryBuilder` passes `path_params=` to `backend.query` only when it is non-empty.
+- **Capability:** `Backend.supports_path_params` (`False`), `True` on `DiiBackend`. `DataSource.query()` raises `ValueError` naming the backend when `path_params` is non-empty and the backend does not support it (ONTAP). `OntapBackend.query` accepts the keyword and raises `ValueError` if it is non-empty.
+- **Semantics:** a non-empty `path_params` sends one direct `get_all_pages` request with the endpoint template and the encoded values. An unknown key or a missing placeholder raises `ValueError` naming it, before any client is built, also for a mapping with a `parent_mapping`; the parent fetch is skipped when every placeholder is supplied. Empty or `None` keeps the #985 behavior.
+- **Encoding:** values are `str()`-ed, rejected if empty, `.` or `..`, then `urllib.parse.quote(value, safe="")`, so a value never adds `{`, `}`, `/`, `?` or `#` to the path.
+- **Out of scope:** `path_params` on `DataSource.get()`.
+
+See [DataSource usage](../usage/data-source.md).
 
 ## Related Issues
 
@@ -89,6 +101,7 @@ The #919 `records_path = "."` sentinel is replaced by the shared `TypeMapping.re
 - Issue #925: ONTAP single-object responses use `TypeMapping.response_shape` via a codegen rule; DII kept `"."` until #935
 - Issue #935: refactor: replace DII `records_path="."` sentinel with `response_shape="singleton"`
 - Issue #985: bug: DiiBackend live queries request endpoints with unfilled path placeholders
+- Issue #990: feat: make the DII placeholder mappings without a parent queryable live
 - Issue #533: feat: DataSource non-ONTAP backends (partially addressed; DII is the first non-ONTAP backend)
 - Issue #618: feat: early validation for where()/typed-DSL + incompatible source mode
 

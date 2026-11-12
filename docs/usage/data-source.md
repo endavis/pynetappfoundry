@@ -282,7 +282,21 @@ Every `DataSource` method accepts a `source=` parameter that controls where data
 !!! note "Live queries of child models fetch their parents first"
     A model whose endpoint is keyed by a parent (for example a snapshot, keyed by its volume) has no collection endpoint of its own. A live query of such a model fetches its parent collection first, recursively through multi-level chains, then sends one request per parent. The cost therefore scales with the parent count. `order_by` and `max_records` apply per parent; `max_records` also caps the total and stops further parent requests once reached. A parent whose request fails is logged as `CHILD_FETCH_FAILED` and skipped.
 
-    DII models work the same way: a DII model whose endpoint has a path placeholder and a parent (for example `/assets/fabrics/{id}/ports`) is fetched once per parent, with the parent's identifier filling the placeholder. A DII model with a placeholder but no parent cannot be queried live and raises `ValueError` naming the placeholder, with no request made ([ADR-0015](../decisions/0015-dii-backend-live-only-bare-array-envelope-offsetlimit-pagination.md)).
+    DII models work the same way: a DII model whose endpoint has a path placeholder and a parent (for example `/assets/fabrics/{id}/ports`) is fetched once per parent, with the parent's identifier filling the placeholder. A DII model with a placeholder but no parent raises `ValueError` naming the placeholder, with no request made, unless you supply the values with `path_params` (below) ([ADR-0015](../decisions/0015-dii-backend-live-only-bare-array-envelope-offsetlimit-pagination.md)).
+
+!!! note "Supplying path values with `path_params` (DII)"
+    `ds.query(Model, cluster=..., path_params={"platform": "linux"})` fills the `{placeholder}` segments of a DII endpoint yourself. For example, `DiiAuInstallcommand` (`/au/installCommand/{platform}`) has no parent to supply `platform`, so it is queried like this:
+
+    ```python
+    cmds = list(ds.query(DiiAuInstallcommand, cluster="tenant", path_params={"platform": "linux"}))
+    ```
+
+    - It sends one request. For a mapping that has a parent, supplying every placeholder skips the parent fetch.
+    - An unknown key, or a missing placeholder, raises `ValueError` naming it and no request is made. Supplying only some placeholders of a parent-keyed mapping is an error too; the values are never mixed with parent values.
+    - Each value is converted with `str()` and percent-encoded, so `/`, `?`, `#`, `{` and `}` in a value cannot change the requested path. An empty value, `.` and `..` are rejected.
+    - Filters still go to the query string.
+    - An ONTAP model raises `ValueError` at the `query()` call, since ONTAP endpoints take no caller-supplied path values.
+    - `ds.get()` has no `path_params`; use `ds.query(..., path_params=...).first()`.
 
 ```python
 # Default: auto-routing based on field metadata

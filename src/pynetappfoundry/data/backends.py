@@ -110,6 +110,10 @@ class Backend(ABC):
     #: SQL-like where-expression strings (e.g. :class:`OntapBackend`).
     supports_where_expressions: bool = False
 
+    #: Set to ``True`` on backends that accept caller-supplied endpoint path
+    #: values through ``query(path_params=...)`` (e.g. :class:`DiiBackend`).
+    supports_path_params: bool = False
+
     def __init__(self, config: Config) -> None:
         self._config = config
 
@@ -123,6 +127,7 @@ class Backend(ABC):
         filters: dict[str, Any],
         *,
         where_expressions: tuple[str, ...] = (),
+        path_params: dict[str, Any] | None = None,
     ) -> list[T]:
         """Fetch a list of instances matching *filters*.
 
@@ -137,6 +142,10 @@ class Backend(ABC):
                 filters. Only supported on the cache path; live and
                 partial paths raise :class:`NotImplementedError` when
                 non-empty. Defaults to ``()``.
+            path_params: Caller-supplied values for ``{placeholder}`` path
+                segments of the mapping's endpoint. Only backends with
+                :attr:`supports_path_params` accept a non-empty dict.
+                Defaults to ``None``.
         """
 
 
@@ -592,8 +601,13 @@ class OntapBackend(Backend):
         filters: dict[str, Any],
         *,
         where_expressions: tuple[str, ...] = (),
+        path_params: dict[str, Any] | None = None,
     ) -> list[T]:
         """Fetch a list of instances matching *filters*.
+
+        *path_params* is accepted for signature compatibility with
+        :meth:`Backend.query`; ONTAP endpoints take no caller-supplied path
+        values, so a non-empty dict raises :class:`ValueError` before any I/O.
 
         When the routing decision is *partial* (mix of cache and live
         fields), implements the Approach C algorithm: the cache query
@@ -611,6 +625,9 @@ class OntapBackend(Backend):
         and partial-fetch routes raise :class:`NotImplementedError` when
         *where_expressions* is non-empty; see issue #512.
         """
+        if path_params:
+            msg = "OntapBackend does not support path_params; it is only available on DiiBackend"
+            raise ValueError(msg)
         if decision.partial:
             if where_expressions:
                 msg = (
