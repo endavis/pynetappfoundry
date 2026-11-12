@@ -25,8 +25,6 @@ from typing import TYPE_CHECKING, Any, ClassVar
 from pydantic import BaseModel
 
 from pynetappfoundry.cache._json import json_default
-from pynetappfoundry.cache._lazy import LazyClusterMetadata
-from pynetappfoundry.cache._metadata import CachedClusterMetadata
 from pynetappfoundry.cache.db_schema import (
     ENVELOPE_DDL,
     _ensure_registry,
@@ -39,6 +37,8 @@ from pynetappfoundry.cache.query_engine import build_where_clause, parse_filters
 from pynetappfoundry.db.base import SQLiteDB
 
 if TYPE_CHECKING:
+    from pynetappfoundry.cache._lazy import LazyClusterMetadata
+    from pynetappfoundry.cache._metadata import CachedClusterMetadata
     from pynetappfoundry.core.config import Config
 
 # Pattern for valid cluster names: alphanumeric, underscores, hyphens
@@ -388,6 +388,8 @@ class ClusterMetadataDB(SQLiteDB):
                 self.conn.execute(generate_uuid_column_index_ddl(spec.table_name))
 
         # 3. Migrate each cluster's data
+        from pynetappfoundry.cache._metadata import CachedClusterMetadata
+
         for v1_row in v1_rows:
             cluster_name = v1_row["cluster_name"]
             metadata = CachedClusterMetadata.model_validate(json.loads(v1_row["metadata_json"]))
@@ -655,6 +657,8 @@ class ClusterMetadataDB(SQLiteDB):
         envelope: dict[str, str],
     ) -> CachedClusterMetadata:
         """Read all model tables and rebuild a CachedClusterMetadata."""
+        from pynetappfoundry.cache._metadata import CachedClusterMetadata
+
         root_kwargs: dict[str, Any] = {
             "cluster_name": cluster_name,
             "cached_at": envelope["cached_at"],
@@ -747,6 +751,7 @@ class ClusterMetadataDB(SQLiteDB):
         # reads, so the lazy proxy hits the same in-memory/test database
         # as the caller instead of opening a second one under a fresh
         # ``OntapBackend._cache_db``.
+        from pynetappfoundry.cache._lazy import LazyClusterMetadata
         from pynetappfoundry.data.source import DataSource
 
         data_source = DataSource(self._config)
@@ -1022,5 +1027,7 @@ class ClusterMetadataDB(SQLiteDB):
             cluster_name: Name of the cluster.
             json_str: JSON string of CachedClusterMetadata.
         """
+        from pynetappfoundry.cache._metadata import CachedClusterMetadata
+
         metadata = CachedClusterMetadata.model_validate_json(json_str)
         self.set(cluster_name, metadata)

@@ -142,8 +142,11 @@ class TestEnsureBootstrapped:
 
     def test_noop_when_cache_already_loaded(self) -> None:
         """Calling ``_ensure_bootstrapped`` after the cache package is loaded is a no-op."""
-        import pynetappfoundry.cache  # noqa: F401  # import registers the hand-written mappings
+        import pynetappfoundry.cache  # noqa: F401  # loads the cache package first
         from pynetappfoundry.cache._registry import model_registry
+
+        # Mappings register lazily on first lookup (ADR-0023, #960): populate one first.
+        model_registry.get_mapping("CloudMetadata")
 
         # Snapshot current registry state
         before = dict(model_registry._mappings)

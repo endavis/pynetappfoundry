@@ -14,7 +14,6 @@ from pynetappfoundry.cli.utils import console, print_error, print_info
 from pynetappfoundry.clients.ontap.api import ONTAPAPIClient
 from pynetappfoundry.core.config import Config
 from pynetappfoundry.core.models import ClusterConfig
-from pynetappfoundry.models.ontap.cluster.licensing.licenses import OntapLicensePackageResponse
 from pynetappfoundry.query import QuerySet
 
 
@@ -40,6 +39,10 @@ def _analyze_cluster_savings(
     config: Config,
 ) -> None:
     """Analyze savings for a single cluster."""
+    from pynetappfoundry.models.ontap.cluster.licensing.licenses import (
+        OntapLicensePackageResponse,
+    )
+
     try:
         cluster_config = ClusterConfig(**details)
         client = ONTAPAPIClient(cluster=cluster_config, config=config)

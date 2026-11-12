@@ -10,7 +10,6 @@ from pydantic import BaseModel
 from rich.console import Console
 from rich.tree import Tree
 
-from pynetappfoundry.cache import CachedClusterMetadata
 from pynetappfoundry.cli.options import json_option
 
 console = Console()
@@ -190,6 +189,8 @@ def schema(output_json: bool, output_flat: bool) -> None:
         nf cache schema --flat       # Show flat list of paths
         nf cache schema --json       # Output JSON schema
     """
+    from pynetappfoundry.cache import CachedClusterMetadata
+
     if output_json:
         # Output the full JSON schema from Pydantic
         # Use click.echo instead of console.print to avoid Rich formatting

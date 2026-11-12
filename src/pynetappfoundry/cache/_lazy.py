@@ -24,9 +24,9 @@ from typing import TYPE_CHECKING, Any
 from pydantic import BaseModel
 
 from pynetappfoundry.cache._base import _utcnow
-from pynetappfoundry.cache._metadata import CachedClusterMetadata
 
 if TYPE_CHECKING:
+    from pynetappfoundry.cache._metadata import CachedClusterMetadata
     from pynetappfoundry.core.config import Config
 
 # Top-level data field names on CachedClusterMetadata (everything except
@@ -275,6 +275,8 @@ class LazyClusterMetadata:
         # For container fields (e.g. storage, network) represented as
         # nested dicts, validate them into the actual sub-model.
         if isinstance(value, dict):
+            from pynetappfoundry.cache._metadata import CachedClusterMetadata
+
             field_info = CachedClusterMetadata.model_fields.get(name)
             if field_info is not None:
                 model_cls = field_info.annotation
@@ -287,6 +289,8 @@ class LazyClusterMetadata:
     @staticmethod
     def _get_default(name: str) -> Any:
         """Return the ``CachedClusterMetadata`` default for *name*."""
+        from pynetappfoundry.cache._metadata import CachedClusterMetadata
+
         field_info = CachedClusterMetadata.model_fields.get(name)
         if field_info is not None and field_info.default_factory is not None:
             factory = field_info.default_factory
@@ -315,6 +319,8 @@ class LazyClusterMetadata:
             "cache_version": self._cache_version,
         }
         kwargs.update(self._loaded)
+
+        from pynetappfoundry.cache._metadata import CachedClusterMetadata
 
         self._materialized = CachedClusterMetadata.model_validate(kwargs)
         return self._materialized

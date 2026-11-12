@@ -22,8 +22,6 @@ from pynetappfoundry.cli.utils import print_error, print_info, print_success
 from pynetappfoundry.clients.ontap.api import ONTAPAPIClient
 from pynetappfoundry.core.config import Config
 from pynetappfoundry.core.models import ClusterConfig
-from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
-from pynetappfoundry.models.ontap.storage.volumes.model import OntapVolume
 from pynetappfoundry.query import QuerySet
 from pynetappfoundry.utils.size import approximate_size_specific
 
@@ -98,6 +96,9 @@ class SpaceUsageReport:
 
     def gather_data(self) -> None:
         """Gather data from all clusters."""
+        from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
+        from pynetappfoundry.models.ontap.storage.volumes.model import OntapVolume
+
         for name, details in self.cluster_details.items():
             print_info(f"Gathering data for {name}...")
 

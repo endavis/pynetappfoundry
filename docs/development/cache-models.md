@@ -602,18 +602,12 @@ model_registry.register_mapping("OntapVolume", ONTAPVOLUME_MAPPING)
 ### Import Chain
 
 Mappings register lazily ([ADR-0023](../decisions/0023-register-cache-mappings-lazily-from-a-generated-index.md)).
-`src/pynetappfoundry/cache/__init__.py` imports only the hand-written mapping sub-packages explicitly; each
-sub-package `__init__` imports its model and its `mapping.py`, which registers on
-`model_registry`:
+`src/pynetappfoundry/cache/__init__.py` imports no mapping sub-package and no model. Its exports
+(`ClusterMetadataDB`, `CachedClusterMetadata`, `model_registry` and the rest of `__all__`) resolve
+lazily on first attribute access through a PEP 562 `__getattr__` (#960), so `import pynetappfoundry.cache`
+loads none of the `models.ontap` chain.
 
-```
-cache/__init__.py
-  → cache/ontap/cluster/nodes/__init__.py
-    → imports models.ontap.cluster.nodes.model (OntapNodeResponse)
-    → imports cache.ontap.cluster.nodes.mapping (registers via model_registry)
-```
-
-Every other mapping is loaded on first lookup. The generated
+Every mapping, hand-written or generated, is loaded on first lookup. The generated
 `src/pynetappfoundry/cache/_mapping_index.py` maps each registered name to its `mapping.py` module, model class and
 TOML overlay (under both `ontap/` and `dii/`, as a path relative to `cache/`), so `model_registry.get_mapping(name)` or `get_mapping_by_model_class(cls)` imports
 only the module it needs and applies the package overlay once. `model_registry.mappings` imports
@@ -631,6 +625,11 @@ singleton runs one `pkgutil.walk_packages` pass, imports only the unindexed modu
 `mapping index is stale: <module> is not indexed; run doit mapping_index`. A test fails when the
 committed index differs from the package. A mapping renamed inside an already-indexed file is not
 found by its new name until `doit mapping_index` runs.
+
+**Rule for CLI command modules:** import `models.ontap` and the heavy `cache` modules (`_metadata`,
+`collector`, `diff`, `refresher`, `cache.ontap.*.mapping`) inside the functions that use them, with
+`TYPE_CHECKING` imports for annotations. `test_cli_help_skips_ontap_models` fails when `nf --help`
+loads any of them.
 
 ### Three-Layer Import Hierarchy
 

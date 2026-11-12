@@ -37,7 +37,6 @@ from pynetappfoundry.clients.ontap.api import ONTAPAPIClient
 from pynetappfoundry.core.config import Config
 from pynetappfoundry.core.models import ClusterConfig
 from pynetappfoundry.db.metrics import _TABLE_NAME_PATTERN, MetricDB
-from pynetappfoundry.models.ontap.storage.volumes.model import OntapVolume
 from pynetappfoundry.query import Query, QuerySet
 
 logger = logging.getLogger(__name__)
@@ -373,6 +372,8 @@ def _dump_cluster(
         to_ms: End of window in epoch milliseconds.
         interval: Aggregation interval forwarded to :func:`_dump_volume`.
     """
+    from pynetappfoundry.models.ontap.storage.volumes.model import OntapVolume
+
     print_info(f"Getting metrics for {name}...")
     try:
         cluster_config = ClusterConfig(**details)

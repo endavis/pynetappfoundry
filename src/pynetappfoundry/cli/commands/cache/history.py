@@ -12,7 +12,7 @@ from rich.markup import escape
 from rich.panel import Panel
 from rich.table import Table
 
-from pynetappfoundry.cache import CacheHistoryDB, format_diff_summary, is_schema_compatible
+from pynetappfoundry.cache import CacheHistoryDB, is_schema_compatible
 from pynetappfoundry.cli.errors import CliError
 from pynetappfoundry.cli.options import json_option
 from pynetappfoundry.cli.utils import print_warning
@@ -214,6 +214,8 @@ def show_change(
     summary_raw = record.get("summary", [])
     summary: list[dict[str, object]] = summary_raw if isinstance(summary_raw, list) else []
     if summary:
+        from pynetappfoundry.cache.diff import format_diff_summary
+
         console.print("[bold]Summary:[/bold]")
         console.print(escape(format_diff_summary(summary)))
         console.print()

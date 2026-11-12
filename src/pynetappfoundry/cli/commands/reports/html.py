@@ -21,12 +21,6 @@ from pynetappfoundry.cli.decorators import with_config
 from pynetappfoundry.cli.options import filter_option
 from pynetappfoundry.cli.utils import print_debug, print_error, print_info, print_success
 from pynetappfoundry.data.source import DataSource
-from pynetappfoundry.models.ontap.cluster.model import OntapCluster
-from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
-from pynetappfoundry.models.ontap.cluster.traits.model import ClusterTraits
-from pynetappfoundry.models.ontap.network.ip.interfaces.model import OntapIpInterface
-from pynetappfoundry.models.ontap.protocols.cifs.services.model import OntapCifsService
-from pynetappfoundry.models.ontap.svm.svms.model import OntapSvm
 from pynetappfoundry.utils.cloud import (
     build_azure_id,
     build_azure_portal_link,
@@ -38,6 +32,11 @@ if TYPE_CHECKING:
     from pynetappfoundry.core.cluster_entry import ClusterEntry
     from pynetappfoundry.core.config import Config
     from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
+    from pynetappfoundry.models.ontap.cluster.model import OntapCluster
+    from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
+    from pynetappfoundry.models.ontap.cluster.traits.model import ClusterTraits
+    from pynetappfoundry.models.ontap.protocols.cifs.services.model import OntapCifsService
+    from pynetappfoundry.models.ontap.svm.svms.model import OntapSvm
 
 # CSS for tree view styling
 CSS_STYLES = """
@@ -805,6 +804,13 @@ class ClusterData:
 
     def _gather_data(self) -> None:
         """Gather data from the cluster via ONTAP REST API."""
+        from pynetappfoundry.models.ontap.cluster.model import OntapCluster
+        from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
+        from pynetappfoundry.models.ontap.cluster.traits.model import ClusterTraits
+        from pynetappfoundry.models.ontap.network.ip.interfaces.model import OntapIpInterface
+        from pynetappfoundry.models.ontap.protocols.cifs.services.model import OntapCifsService
+        from pynetappfoundry.models.ontap.svm.svms.model import OntapSvm
+
         print_debug(f"Gathering data for {self.name}")
 
         ip = getattr(self, "ip", None)

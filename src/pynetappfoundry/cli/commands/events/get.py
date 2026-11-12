@@ -15,7 +15,6 @@ from pynetappfoundry.cli.utils import print_error, print_info, print_success
 from pynetappfoundry.clients.ontap.api import ONTAPAPIClient
 from pynetappfoundry.core.config import Config
 from pynetappfoundry.core.models import ClusterConfig
-from pynetappfoundry.models.ontap.support.ems.events import OntapEmsEventResponse
 from pynetappfoundry.query import QuerySet
 
 
@@ -137,6 +136,8 @@ def _get_cluster_events(
     Returns:
         List of event dictionaries.
     """
+    from pynetappfoundry.models.ontap.support.ems.events import OntapEmsEventResponse
+
     events: list[dict[str, Any]] = []
 
     try:
