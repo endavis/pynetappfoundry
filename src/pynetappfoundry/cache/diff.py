@@ -40,6 +40,7 @@ from pynetappfoundry.models.ontap.snapmirror.relationships.model import (
     OntapSnapmirrorRelationship,
 )
 from pynetappfoundry.models.ontap.storage.qtrees.model import OntapQtree
+from pynetappfoundry.utils.dict_path import get_dotted_attr
 
 if TYPE_CHECKING:
     from pynetappfoundry.cache._metadata import CachedClusterMetadata
@@ -337,13 +338,7 @@ def _get_entities(metadata: CachedClusterMetadata, category: str) -> list[Any]:
     Returns:
         List of entities for that category.
     """
-    parts = category.split(".")
-    obj: Any = metadata
-
-    for part in parts:
-        if obj is None:
-            return []
-        obj = getattr(obj, part, None)
+    obj = get_dotted_attr(metadata, category)
 
     if obj is None:
         return []
@@ -375,14 +370,7 @@ def _diff_entity_list(
 
     def _resolve_key(entity: Any) -> Any:
         """Resolve a potentially dotted key_field path."""
-        if "." not in key_field:
-            return getattr(entity, key_field, None)
-        obj = entity
-        for part in key_field.split("."):
-            obj = getattr(obj, part, None)
-            if obj is None:
-                return None
-        return obj
+        return get_dotted_attr(entity, key_field)
 
     # Build lookup maps by key
     before_map: dict[str, Any] = {}

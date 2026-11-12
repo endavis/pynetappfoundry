@@ -9,6 +9,20 @@ Example:
     'm5.xlarge'
     >>> get_nested_value(data, "nodes[0].name")
     'node-01'
+
+Variants (all in this module):
+
+==================== ============ ============== =========================
+Function             Reads        Missing        ``None`` partway
+==================== ============ ============== =========================
+get_nested_value     dict, [i]... raises         raises PathNotFoundError
+get_dotted_item      dict         returns None   returns None
+get_dotted_attr      attributes   returns None   returns None (strict:
+                                  (strict:       raises AttributeError)
+                                  AttributeError)
+set_nested_value     dict (set)   creates dicts  TypeError (or replaced
+                                                 with ``replace_non_dict``)
+==================== ============ ============== =========================
 """
 
 from __future__ import annotations
@@ -124,7 +138,7 @@ def _matches_filter(item: dict[str, Any], conditions: list[tuple[str, str]]) -> 
     """Check whether *item* matches any of the OR *conditions*.
 
     *field* is resolved as a dotted path inside *item* via
-    :func:`_lookup_dotted` (e.g. ``"security.session_security"`` matches
+    :func:`get_dotted_item` (e.g. ``"security.session_security"`` matches
     ``item["security"]["session_security"]``). A field without a dot behaves
     exactly as a plain key lookup, so top-level predicates are unaffected.
     Dotted resolution takes priority over any literal key containing a dot;
@@ -145,7 +159,7 @@ def _matches_filter(item: dict[str, Any], conditions: list[tuple[str, str]]) -> 
         True if *item* matches at least one condition.
     """
     for field, expected in conditions:
-        actual = _lookup_dotted(item, field)
+        actual = get_dotted_item(item, field)
         if actual is not None:
             actual_lower = str(actual).lower()
             if "*" in expected or "?" in expected:
@@ -383,18 +397,20 @@ def _has_wildcard_or_filter(parts: Sequence[str]) -> bool:
     )
 
 
-def _lookup_dotted(item: dict[str, Any], dotted_key: str) -> Any:
+def get_dotted_item(item: dict[str, Any], dotted_key: str) -> Any:
     """Look up a dot-notation key in *item*, returning None if any segment is absent.
 
-    Unlike :func:`get_nested_value`, this never raises -- it is used to probe
-    identifier candidates that are expected to be missing on some items.
+    Unlike :func:`get_nested_value`, this never raises and has no bracket
+    support (``"a[0]"`` is a literal key). It is used to probe candidates that
+    are expected to be missing on some items.
 
     Args:
         item: Dictionary to look up the key in.
         dotted_key: Dot-notation key path (e.g. ``"svm.name"``).
 
     Returns:
-        The value at the path, or None if any segment is missing or not a dict.
+        The value at the path, or None if any segment is missing or the value
+        along the path is not a dict. A leaf that is None is returned as None.
     """
     current: Any = item
     for part in dotted_key.split("."):
@@ -402,6 +418,69 @@ def _lookup_dotted(item: dict[str, Any], dotted_key: str) -> Any:
             return None
         current = current[part]
     return current
+
+
+def get_dotted_attr(obj: object, path: str, *, strict: bool = False) -> Any:
+    """Resolve a dot-notation path of attributes on *obj*.
+
+    Args:
+        obj: Object to start from (e.g. a pydantic model).
+        path: Dot-notation attribute path (e.g. ``"storage.volumes"``).
+        strict: When False, return None as soon as an attribute is missing or
+            a value along the path is None. When True, call ``getattr`` with
+            no default on every segment, so a missing attribute (or a None
+            partway) raises ``AttributeError``.
+
+    Returns:
+        The attribute value at the path. In non-strict mode None when a step
+        is missing or None.
+
+    Raises:
+        AttributeError: In strict mode, when a segment cannot be resolved.
+    """
+    current: Any = obj
+    if strict:
+        for part in path.split("."):
+            current = getattr(current, part)
+        return current
+    for part in path.split("."):
+        current = getattr(current, part, None)
+        if current is None:
+            return None
+    return current
+
+
+def set_nested_value(
+    target: dict[str, Any],
+    path: str,
+    value: Any,
+    *,
+    replace_non_dict: bool = False,
+) -> None:
+    """Set *value* at a dot-notation *path* in *target*, creating missing dicts.
+
+    Args:
+        target: Dictionary modified in place.
+        path: Dot-notation key path (e.g. ``"svm.name"``). Sibling paths merge.
+        value: Value stored at the leaf; it overwrites any existing value.
+        replace_non_dict: When False, an existing non-dict value along the
+            path is walked as-is, so a non-container there typically raises
+            ``TypeError``. When True,
+            such a value is replaced by ``{}`` (the deeper path wins).
+    """
+    parts = path.split(".")
+    node = target
+    if replace_non_dict:
+        for part in parts[:-1]:
+            if not isinstance(node.get(part), dict):
+                node[part] = {}
+            node = node[part]
+    else:
+        for part in parts[:-1]:
+            if part not in node:
+                node[part] = {}
+            node = node[part]
+    node[parts[-1]] = value
 
 
 def _resolve_identifier(item: Any, index: int, identifier_keys: Sequence[str]) -> str:
@@ -421,7 +500,7 @@ def _resolve_identifier(item: Any, index: int, identifier_keys: Sequence[str]) -
     """
     if isinstance(item, dict):
         for key in identifier_keys:
-            value = _lookup_dotted(item, key)
+            value = get_dotted_item(item, key)
             if value is not None and value != "":
                 return str(value)
     return f"[{index}]"

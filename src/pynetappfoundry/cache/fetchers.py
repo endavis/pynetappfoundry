@@ -56,6 +56,7 @@ from pynetappfoundry.cache.field_mapping import (
 from pynetappfoundry.cache.field_mapping import (
     parse_api_response as _parse_api_response_raw,
 )
+from pynetappfoundry.utils.dict_path import get_dotted_attr
 
 if TYPE_CHECKING:
     from collections.abc import Iterator, Sequence
@@ -81,19 +82,6 @@ def _noop_log_missing(
     return None
 
 
-def _resolve_dotted_attr(obj: object, dotted_path: str) -> Any:
-    """Resolve a dotted attribute path on an object.
-
-    Returns ``None`` if any intermediate attribute is missing or ``None``.
-    """
-    current: Any = obj
-    for part in dotted_path.split("."):
-        current = getattr(current, part, None)
-        if current is None:
-            return None
-    return current
-
-
 def _resolve_parent_ids(
     mapping: TypeMapping, parent: BaseModel
 ) -> tuple[tuple[str, ...] | None, str | None]:
@@ -111,7 +99,7 @@ def _resolve_parent_ids(
     """
     values: list[str] = []
     for field in mapping.effective_parent_id_fields():
-        value = _resolve_dotted_attr(parent, field)
+        value = get_dotted_attr(parent, field)
         if value is None or value == "":
             return None, field
         values.append(str(value))

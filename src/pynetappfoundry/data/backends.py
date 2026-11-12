@@ -26,7 +26,6 @@ from pydantic import BaseModel
 from pynetappfoundry.cache import fetch
 from pynetappfoundry.cache.fetchers import (
     _path_placeholders,
-    _resolve_dotted_attr,
     call_singleton_endpoint,
     fetch_parents,
     iter_parent_urls,
@@ -35,7 +34,11 @@ from pynetappfoundry.cache.fetchers import (
 from pynetappfoundry.cache.field_mapping import parse_api_record, parse_api_response
 from pynetappfoundry.core.models import PaginationConfig
 from pynetappfoundry.data._merge import merge_models
-from pynetappfoundry.utils.dict_path import PathNotFoundError, get_nested_value
+from pynetappfoundry.utils.dict_path import (
+    PathNotFoundError,
+    get_dotted_attr,
+    get_nested_value,
+)
 
 if TYPE_CHECKING:
     from pynetappfoundry.cache.db import ClusterMetadataDB
@@ -851,9 +854,7 @@ class OntapBackend(Backend):
                 decision.live_fields,
             )
         else:
-            identifiers = [
-                _resolve_dotted_attr(inst, identifier_field) for inst in cached_instances
-            ]
+            identifiers = [get_dotted_attr(inst, identifier_field) for inst in cached_instances]
             live_instances = self._fetch_live_by_identifiers(
                 model_class,
                 mapping,
@@ -864,7 +865,7 @@ class OntapBackend(Backend):
             )
 
         live_index: dict[str, T] = {
-            _resolve_dotted_attr(inst, identifier_field): inst for inst in live_instances
+            get_dotted_attr(inst, identifier_field): inst for inst in live_instances
         }
         return self._merge_partial_collection(
             cached_instances,
@@ -927,7 +928,7 @@ class OntapBackend(Backend):
         orphans: list[T] = []
 
         for child in cached_instances:
-            ref_values = [_resolve_dotted_attr(child, f) for f in parent_ref_fields]
+            ref_values = [get_dotted_attr(child, f) for f in parent_ref_fields]
             if parent_ref_fields and all(ref_values):
                 groups[tuple(str(v) for v in ref_values)].append(child)
             else:
@@ -963,7 +964,7 @@ class OntapBackend(Backend):
 
         parent_id_fields = mapping.effective_parent_id_fields() or ("uuid",)
         for parent in parent_instances:
-            pids = [_resolve_dotted_attr(parent, f) for f in parent_id_fields]
+            pids = [get_dotted_attr(parent, f) for f in parent_id_fields]
             if all(pids):
                 groups[tuple(str(p) for p in pids)] = list(cached_instances)
 
@@ -1029,9 +1030,7 @@ class OntapBackend(Backend):
 
             # Extract child identifiers, filtering out None/empty.
             child_ids = [
-                str(cid)
-                for child in children
-                if (cid := _resolve_dotted_attr(child, identifier_field))
+                str(cid) for child in children if (cid := get_dotted_attr(child, identifier_field))
             ]
             if not child_ids:
                 continue
@@ -1168,7 +1167,7 @@ class OntapBackend(Backend):
         """
         merged_list: list[T] = []
         for cached in cached_instances:
-            key = _resolve_dotted_attr(cached, identifier_field)
+            key = get_dotted_attr(cached, identifier_field)
             live = live_index.get(key)
             if live is None:
                 merged_list.append(cached)
