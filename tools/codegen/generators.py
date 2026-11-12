@@ -1402,7 +1402,11 @@ def generate_init(
     import_line = f"from {module_path} import {class_name}"
     if len(import_line) > 100:
         paren_first_line = f"from {module_path} import ("
-        noqa = "  # noqa: E501" if len(paren_first_line) > 100 else ""
+        noqa = (
+            "  # noqa: E501  # generated module path exceeds the line length"
+            if len(paren_first_line) > 100
+            else ""
+        )
         import_line = f"{paren_first_line}{noqa}\n    {class_name},\n)"
 
     lines = [docstring, "", import_line, "", f'__all__ = ["{class_name}"]', ""]

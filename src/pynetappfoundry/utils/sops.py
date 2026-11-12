@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 import os
 import shutil
-import subprocess  # nosec B404
+import subprocess  # nosec B404  # sops runs via fixed argv lists, never a shell
 from pathlib import Path
 
 logger = logging.getLogger(__name__)

@@ -2,7 +2,7 @@
 
 import json
 import shutil
-import subprocess  # nosec B404
+import subprocess  # nosec B404  # subprocess is required for doit tasks
 import sys
 from collections.abc import Callable
 from pathlib import Path
@@ -48,7 +48,7 @@ def _check_npx() -> None:
 def _convert_swagger2_to_openapi3(source: Path, output: Path) -> None:
     """Convert a Swagger 2.0 spec to OpenAPI 3.0."""
     print(f"Converting {source} (Swagger 2.0 -> OpenAPI 3.0)...")
-    result = subprocess.run(  # nosec B603 B607
+    result = subprocess.run(
         ["npx", "--yes", "swagger2openapi", "--patch", str(source), "-o", str(output)],
         capture_output=True,
         text=True,
@@ -340,7 +340,7 @@ def _write_mapping_index() -> None:
     from tools.codegen.mapping_index import write_index
 
     target = write_index(_CACHE_OUTPUT_DIR)
-    subprocess.run(["uv", "run", "ruff", "format", str(target)], check=False)  # nosec B603 B607
+    subprocess.run(["uv", "run", "ruff", "format", str(target)], check=False)
     print(f"Wrote {target}")
 
 
@@ -441,11 +441,11 @@ def _generate_models(
                 paths.append(str(models_api_dir))
         if paths:
             print("\nPost-processing generated files with ruff...")
-            subprocess.run(  # nosec B603 B607
+            subprocess.run(
                 ["uv", "run", "ruff", "format", *paths],
                 check=False,
             )
-            subprocess.run(  # nosec B603 B607
+            subprocess.run(
                 ["uv", "run", "ruff", "check", "--fix", *paths],
                 check=False,
             )
@@ -472,9 +472,7 @@ def _generated_paths(apis: tuple[str, ...] = _GENERATED_APIS) -> list[Path]:
 
 def _git_output(*args: str) -> str:
     """Return stdout of ``git *args``; raise on failure."""
-    return subprocess.run(  # nosec B603 B607  # fixed argv, no shell
-        ["git", *args], check=True, capture_output=True, text=True
-    ).stdout
+    return subprocess.run(["git", *args], check=True, capture_output=True, text=True).stdout
 
 
 def _check_generated_models(
@@ -517,12 +515,8 @@ def _check_generated_models(
                 if fh.readline().rstrip("\n") == GENERATED_HEADER:
                     stale.append(line)
     finally:
-        subprocess.run(  # nosec B603 B607
-            ["git", "checkout", "--", *path_args], check=False, capture_output=True
-        )
-        subprocess.run(  # nosec B603 B607
-            ["git", "clean", "-fdq", "--", *path_args], check=False, capture_output=True
-        )
+        subprocess.run(["git", "checkout", "--", *path_args], check=False, capture_output=True)
+        subprocess.run(["git", "clean", "-fdq", "--", *path_args], check=False, capture_output=True)
 
     if drift or stale:
         print("Generated models differ from the generator output:", file=sys.stderr)

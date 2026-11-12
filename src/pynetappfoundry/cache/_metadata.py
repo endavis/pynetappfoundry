@@ -57,7 +57,7 @@ class RelationshipsInfo(CacheModel):
 
 # Deferred import to avoid circular reference -- OntapClusterPeer used above in a
 # forward-reference string annotation, resolved here after the class body.
-from pynetappfoundry.models.ontap.cluster.peers.model import OntapClusterPeer  # noqa: E402
+from pynetappfoundry.models.ontap.cluster.peers.model import OntapClusterPeer  # noqa: E402  # deferred to avoid a circular import
 
 RelationshipsInfo.model_rebuild()
 

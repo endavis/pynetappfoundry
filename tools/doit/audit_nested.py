@@ -10,7 +10,7 @@ from rich.table import Table
 
 def _run_nested_audit() -> bool:
     """Walk all mappings, report fields with 3+ dot depth, return success."""
-    import pynetappfoundry.cache  # noqa: F401 — triggers registry bootstrap
+    import pynetappfoundry.cache  # noqa: F401  # triggers registry bootstrap
     from pynetappfoundry.cache._registry import model_registry
 
     console = Console()

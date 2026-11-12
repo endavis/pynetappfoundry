@@ -8,7 +8,7 @@ after reviewing the new fields.
 
 from __future__ import annotations
 
-import pynetappfoundry.cache  # noqa: F401 — triggers registry bootstrap
+import pynetappfoundry.cache  # noqa: F401  # triggers registry bootstrap
 from pynetappfoundry.cache._registry import model_registry
 
 # Baseline counts of fields with cache_attr containing 3+ dots per mapping.

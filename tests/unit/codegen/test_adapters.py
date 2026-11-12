@@ -648,7 +648,7 @@ class TestSingleObjectEndpoints:
 
     @staticmethod
     def _spec() -> dict:
-        resp = lambda ref: {  # noqa: E731
+        resp = lambda ref: {  # noqa: E731  # compact lambda stub for the test
             "get": {
                 "responses": {
                     "200": {

@@ -410,7 +410,7 @@ class TestDiiBackendRecordsPath:
             backend.query(DiiAuInstallcommand, DIIAUINSTALLCOMMAND_MAPPING, decision, "t", {})
 
     def test_no_registered_dii_mapping_uses_dot_sentinel(self) -> None:
-        from pynetappfoundry.cache.dii.au.installCommand.mapping import (  # noqa: F401
+        from pynetappfoundry.cache.dii.au.installCommand.mapping import (  # noqa: F401  # import registers the DII mapping
             DIIAUINSTALLCOMMAND_MAPPING,
         )
 
@@ -871,7 +871,7 @@ class TestDiiBackendParentKeyed:
     def test_registry_placeholder_mappings_without_parent_raise(self, mock_config: Any) -> None:
         import re
 
-        from pynetappfoundry.cache.dii.au.installCommand.mapping import (  # noqa: F401
+        from pynetappfoundry.cache.dii.au.installCommand.mapping import (  # noqa: F401  # import registers the DII mapping
             DIIAUINSTALLCOMMAND_MAPPING,
         )
 
@@ -1079,7 +1079,7 @@ class TestDiiBackendCallerPathParams:
     def test_registry_sweep_unwired_placeholder_mappings(self, mock_config: Any) -> None:
         import re
 
-        from pynetappfoundry.cache.dii.au.installCommand.mapping import (  # noqa: F401
+        from pynetappfoundry.cache.dii.au.installCommand.mapping import (  # noqa: F401  # import registers the DII mapping
             DIIAUINSTALLCOMMAND_MAPPING,
         )
 

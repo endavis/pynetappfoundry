@@ -67,7 +67,7 @@ def _ensure_bootstrapped() -> None:
     path.
     """
     if "pynetappfoundry.cache" not in sys.modules:
-        import pynetappfoundry.cache  # noqa: F401
+        import pynetappfoundry.cache  # noqa: F401  # import registers the hand-written mappings
 
 
 class ModelRegistry:
