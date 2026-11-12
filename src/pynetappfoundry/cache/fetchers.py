@@ -102,12 +102,14 @@ def _resolve_parent_ids(
 
     Returns:
         ``(values, None)`` when every field has a value, else
-        ``(None, field)`` naming the first field with no value.
+        ``(None, field)`` naming the first field with no value. Only
+        ``None`` and the empty string count as missing; ``0`` and other
+        falsy but valid identifiers are substituted as ``str(value)``.
     """
     values: list[str] = []
     for field in mapping.effective_parent_id_fields():
         value = _resolve_dotted_attr(parent, field)
-        if not value:
+        if value is None or value == "":
             return None, field
         values.append(str(value))
     return tuple(values), None

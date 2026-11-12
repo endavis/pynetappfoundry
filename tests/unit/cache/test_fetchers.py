@@ -529,6 +529,78 @@ class TestFetchParameterizedMultiPlaceholder:
             _fetch_parameterized(mapping, [], MagicMock(), "[t]")
 
 
+class _IntIdParent(BaseModel):
+    id: int | str | None = None
+    name: str = ""
+
+
+_INT_ID_CHILD_MAPPING = TypeMapping(
+    name="IntIdChild",
+    model_class=_ChildParam,
+    api_endpoint="/parents/{parent.id}/children?fields=*",
+    fields=(FieldMapping(cache_attr="name"),),
+    parent_mapping="IntIdParent",
+    parent_id_field="id",
+)
+
+_INT_ID_MULTI_MAPPING = TypeMapping(
+    name="IntIdMulti",
+    model_class=_ChildParam,
+    api_endpoint="/volumes/{volume.id}/qtrees/{qtree.id}/metrics",
+    fields=(FieldMapping(cache_attr="name"),),
+    parent_mapping="IntIdParent",
+    parent_id_fields=("name", "id"),
+)
+
+
+class TestParentIdZero:
+    """A falsy but valid parent identifier (0) is substituted, not skipped (#976)."""
+
+    def _run(
+        self, mapping: TypeMapping, parent: _IntIdParent, caplog: pytest.LogCaptureFixture
+    ) -> tuple[MagicMock, list[object], list[str]]:
+        import logging
+
+        from pynetappfoundry.cache.fetchers import _fetch_parameterized
+
+        client = MagicMock()
+        client.get_all_records = MagicMock(return_value={"records": [{"name": "c"}]})
+        with caplog.at_level(logging.WARNING):
+            result = _fetch_parameterized(mapping, [parent], client, "[t]")
+        skips = [r.message for r in caplog.records if "SKIP_PARENT" in r.message]
+        return client, list(result), skips
+
+    def test_int_zero_is_substituted(self, caplog: pytest.LogCaptureFixture) -> None:
+        client, result, skips = self._run(_INT_ID_CHILD_MAPPING, _IntIdParent(id=0), caplog)
+        client.get_all_records.assert_called_once_with("/parents/0/children?fields=*", method="GET")
+        assert len(result) == 1
+        assert skips == []
+
+    def test_none_is_skipped(self, caplog: pytest.LogCaptureFixture) -> None:
+        client, result, skips = self._run(_INT_ID_CHILD_MAPPING, _IntIdParent(id=None), caplog)
+        client.get_all_records.assert_not_called()
+        assert result == []
+        assert len(skips) == 1
+
+    def test_empty_string_is_skipped(self, caplog: pytest.LogCaptureFixture) -> None:
+        client, result, skips = self._run(_INT_ID_CHILD_MAPPING, _IntIdParent(id=""), caplog)
+        client.get_all_records.assert_not_called()
+        assert result == []
+        assert len(skips) == 1
+
+    def test_multi_placeholder_with_zero_field_is_filled(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        client, result, skips = self._run(
+            _INT_ID_MULTI_MAPPING, _IntIdParent(id=0, name="vol1"), caplog
+        )
+        client.get_all_records.assert_called_once_with(
+            "/volumes/vol1/qtrees/0/metrics", method="GET"
+        )
+        assert len(result) == 1
+        assert skips == []
+
+
 class _GrandParent(BaseModel):
     name: str = ""
     id: str = ""
