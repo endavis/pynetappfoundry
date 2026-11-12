@@ -91,6 +91,7 @@ Generated mappings no longer register as an import side effect of the `__init__.
 `src/pynetappfoundry/cache/__init__.py` stopped walking `cache/ontap` and `cache/dii`; the `model_registry`
 singleton imports an indexed `mapping.py` on first lookup, from a generated index. See
 [ADR-0023](0023-register-cache-mappings-lazily-from-a-generated-index.md).
+Since #960 the hand-written mappings also register lazily; `src/pynetappfoundry/cache/__init__.py` imports no mapping sub-package.
 
 ## Related Issues
 

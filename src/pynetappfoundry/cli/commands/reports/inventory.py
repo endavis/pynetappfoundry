@@ -10,7 +10,7 @@ from __future__ import annotations
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import click
 
@@ -20,12 +20,16 @@ from pynetappfoundry.cli.utils import print_info, print_success
 from pynetappfoundry.core.cluster_entry import ClusterEntry
 from pynetappfoundry.core.config import Config
 from pynetappfoundry.data.source import DataSource
-from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
-from pynetappfoundry.models.ontap.cluster.licensing.licenses import OntapLicensePackageResponse
-from pynetappfoundry.models.ontap.cluster.model import OntapCluster
-from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
-from pynetappfoundry.models.ontap.cluster.traits.model import ClusterTraits
 from pynetappfoundry.utils.excel import ExcelWorkbook
+
+if TYPE_CHECKING:
+    from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
+    from pynetappfoundry.models.ontap.cluster.licensing.licenses import (
+        OntapLicensePackageResponse,
+    )
+    from pynetappfoundry.models.ontap.cluster.model import OntapCluster
+    from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
+    from pynetappfoundry.models.ontap.cluster.traits.model import ClusterTraits
 
 # Maps cloud provider region codes to human-readable site names.
 _REGION_TO_SITE: dict[str, str] = {
@@ -198,6 +202,8 @@ class InventoryReport:
         traits: ClusterTraits | None = None,
     ) -> list[Any]:
         """Build a single data row for one cluster."""
+        from pynetappfoundry.models.ontap.cluster.traits.model import ClusterTraits
+
         cloud_by_node: dict[str, CloudMetadata] = {cm.node: cm for cm in cloud_meta}
         first_cloud = cloud_meta[0] if cloud_meta else None
 
@@ -321,6 +327,13 @@ class InventoryReport:
 
     def build(self) -> None:
         """Collect one data row per cluster."""
+        from pynetappfoundry.models.ontap.cluster.licensing.licenses import (
+            OntapLicensePackageResponse,
+        )
+        from pynetappfoundry.models.ontap.cluster.model import OntapCluster
+        from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
+        from pynetappfoundry.models.ontap.cluster.traits.model import ClusterTraits
+
         ds = DataSource(self.config)
         self.rows = []
         for name, entry in self.clusters.items():

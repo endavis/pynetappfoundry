@@ -13,7 +13,6 @@ from pynetappfoundry.cli.utils import print_debug, print_error, print_info, prin
 from pynetappfoundry.clients.ontap.api import ONTAPAPIClient
 from pynetappfoundry.core.config import Config
 from pynetappfoundry.core.models import ClusterConfig
-from pynetappfoundry.models.ontap.protocols.locks import OntapClientLock
 from pynetappfoundry.query import QuerySet
 from pynetappfoundry.utils.excel import ExcelWorkbook
 
@@ -60,6 +59,8 @@ def _gather_lock_data(
     Returns:
         True on success, False if the cluster could not be queried.
     """
+    from pynetappfoundry.models.ontap.protocols.locks import OntapClientLock
+
     try:
         cluster_config = ClusterConfig(**details)
         client = ONTAPAPIClient(cluster=cluster_config, config=config)

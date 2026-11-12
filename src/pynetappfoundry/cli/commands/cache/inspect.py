@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import contextlib
+import importlib
 import json
 import logging
 from pathlib import Path
@@ -15,19 +16,6 @@ from rich.tree import Tree
 
 from pynetappfoundry.cache import ClusterMetadataDB
 from pynetappfoundry.cache.field_mapping import TypeMapping
-from pynetappfoundry.cache.ontap.cloud.metadata.mapping import CLOUD_METADATA_MAPPING
-from pynetappfoundry.cache.ontap.cluster.licensing.licenses.mapping import (
-    ONTAPLICENSEPACKAGERESPONSE_MAPPING,
-)
-from pynetappfoundry.cache.ontap.cluster.nodes.mapping import ONTAPNODERESPONSE_MAPPING
-from pynetappfoundry.cache.ontap.cluster.peers.mapping import ONTAPCLUSTERPEER_MAPPING
-from pynetappfoundry.cache.ontap.network.ethernet.broadcast_domains.mapping import (
-    ONTAPBROADCASTDOMAIN_MAPPING,
-)
-from pynetappfoundry.cache.ontap.network.ip.interfaces.mapping import ONTAPIPINTERFACE_MAPPING
-from pynetappfoundry.cache.ontap.storage.aggregates.mapping import ONTAPAGGREGATE_MAPPING
-from pynetappfoundry.cache.ontap.storage.volumes.mapping import ONTAPVOLUME_MAPPING
-from pynetappfoundry.cache.ontap.svm.svms.mapping import ONTAPSVM_MAPPING
 from pynetappfoundry.cli.errors import CliError
 from pynetappfoundry.cli.utils import (
     format_value_markup,
@@ -41,19 +29,57 @@ logger = logging.getLogger(__name__)
 console = Console()
 
 # Registry of supported object types for inspection.
-# Maps type name to (TypeMapping, cache_path) where cache_path is the
-# dot-path to the list of objects in CachedClusterMetadata.
-INSPECT_TYPES: dict[str, tuple[TypeMapping, str]] = {
-    "aggregate": (ONTAPAGGREGATE_MAPPING, "storage.aggregates"),
-    "broadcast_domain": (ONTAPBROADCASTDOMAIN_MAPPING, "network.ethernet_broadcast_domains"),
-    "cloud_metadata": (CLOUD_METADATA_MAPPING, "cloud"),
-    "cluster_peer": (ONTAPCLUSTERPEER_MAPPING, "relationships.cluster_peers"),
-    "license": (ONTAPLICENSEPACKAGERESPONSE_MAPPING, "license_packages"),
-    "node": (ONTAPNODERESPONSE_MAPPING, "nodes"),
-    "svm": (ONTAPSVM_MAPPING, "storage.svms"),
-    "network_lif": (ONTAPIPINTERFACE_MAPPING, "network.ip_interfaces"),
-    "volume": (ONTAPVOLUME_MAPPING, "storage.volumes"),
+# Maps type name to (mapping_ref, cache_path).  ``mapping_ref`` is a
+# ``"module:ATTRIBUTE"`` import reference resolved by ``_load_inspect_mapping`` so the
+# ``mapping.py`` modules (and the models they pull in) load only when ``inspect`` runs.
+# ``cache_path`` is the dot-path to the list of objects in CachedClusterMetadata.
+INSPECT_TYPES: dict[str, tuple[str, str]] = {
+    "aggregate": (
+        "pynetappfoundry.cache.ontap.storage.aggregates.mapping:ONTAPAGGREGATE_MAPPING",
+        "storage.aggregates",
+    ),
+    "broadcast_domain": (
+        "pynetappfoundry.cache.ontap.network.ethernet.broadcast_domains.mapping"
+        ":ONTAPBROADCASTDOMAIN_MAPPING",
+        "network.ethernet_broadcast_domains",
+    ),
+    "cloud_metadata": (
+        "pynetappfoundry.cache.ontap.cloud.metadata.mapping:CLOUD_METADATA_MAPPING",
+        "cloud",
+    ),
+    "cluster_peer": (
+        "pynetappfoundry.cache.ontap.cluster.peers.mapping:ONTAPCLUSTERPEER_MAPPING",
+        "relationships.cluster_peers",
+    ),
+    "license": (
+        "pynetappfoundry.cache.ontap.cluster.licensing.licenses.mapping"
+        ":ONTAPLICENSEPACKAGERESPONSE_MAPPING",
+        "license_packages",
+    ),
+    "node": (
+        "pynetappfoundry.cache.ontap.cluster.nodes.mapping:ONTAPNODERESPONSE_MAPPING",
+        "nodes",
+    ),
+    "svm": (
+        "pynetappfoundry.cache.ontap.svm.svms.mapping:ONTAPSVM_MAPPING",
+        "storage.svms",
+    ),
+    "network_lif": (
+        "pynetappfoundry.cache.ontap.network.ip.interfaces.mapping:ONTAPIPINTERFACE_MAPPING",
+        "network.ip_interfaces",
+    ),
+    "volume": (
+        "pynetappfoundry.cache.ontap.storage.volumes.mapping:ONTAPVOLUME_MAPPING",
+        "storage.volumes",
+    ),
 }
+
+
+def _load_inspect_mapping(ref: str) -> TypeMapping:
+    """Import the ``"module:ATTRIBUTE"`` reference and return its :class:`TypeMapping`."""
+    module_name, _, attribute = ref.partition(":")
+    mapping: TypeMapping = getattr(importlib.import_module(module_name), attribute)
+    return mapping
 
 
 def _resolve_cache_list(
@@ -255,7 +281,8 @@ def inspect(ctx: click.Context, cluster: str, object_name: str, object_type: str
         hints = [f"Available clusters: {escape(', '.join(available))}"] if available else []
         raise CliError(f"Cluster '{cluster}' not found in configuration.", hints=hints)
 
-    mapping, cache_path = INSPECT_TYPES[object_type.lower()]
+    mapping_ref, cache_path = INSPECT_TYPES[object_type.lower()]
+    mapping = _load_inspect_mapping(mapping_ref)
 
     # -- CACHE section --
     console.print()

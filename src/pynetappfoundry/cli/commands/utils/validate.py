@@ -19,8 +19,6 @@ from pynetappfoundry.clients.ontap.api import ONTAPAPIClient
 from pynetappfoundry.clients.ontap.cli import ONTAPCLI
 from pynetappfoundry.core.config import Config
 from pynetappfoundry.core.models import ClusterConfig
-from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
-from pynetappfoundry.models.ontap.storage.volumes.model import OntapVolume
 from pynetappfoundry.query import QuerySet
 
 
@@ -88,6 +86,9 @@ def _validate_cluster(
     Returns:
         Tuple of (node_count, volume_count, success).
     """
+    from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
+    from pynetappfoundry.models.ontap.storage.volumes.model import OntapVolume
+
     node_count = 0
     vol_count = 0
     success = False

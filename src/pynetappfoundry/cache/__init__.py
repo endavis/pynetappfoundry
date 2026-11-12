@@ -12,80 +12,88 @@ from their sub-package, e.g.::
 Infrastructure (DB, collector, diff, registry) is imported from here::
 
     from pynetappfoundry.cache import ClusterMetadataDB, MetadataCollector
+
+Every export resolves lazily on first attribute access (PEP 562), so importing this
+package loads none of the ``models.ontap`` chain.  Every mapping, hand-written or
+generated, registers lazily on first lookup through the generated ``_mapping_index``
+(ADR-0023, #960).  Run ``doit mapping_index`` after adding or removing a ``mapping.py``.
 """
 
-# Hand-written mapping sub-packages are imported explicitly: each sub-package
-# ``__init__`` imports its ``mapping.py``.  Every other mapping registers lazily on first
-# lookup through the generated ``_mapping_index`` (ADR-0023), so startup does not import
-# the ~470 ``mapping.py`` modules.  Run ``doit mapping_index`` after adding or removing one.
-import pynetappfoundry.cache.ontap.cloud.metadata  # noqa: F401  # registers mapping on import
-import pynetappfoundry.cache.ontap.cloud.targets  # noqa: F401  # registers mapping on import
-import pynetappfoundry.cache.ontap.cluster.licensing.licenses  # noqa: F401  # registers mapping on import
-import pynetappfoundry.cache.ontap.cluster.mediators  # noqa: F401  # registers mapping on import
-import pynetappfoundry.cache.ontap.cluster.nodes  # noqa: F401  # registers mapping on import
-import pynetappfoundry.cache.ontap.cluster.peers  # noqa: F401  # registers mapping on import
-import pynetappfoundry.cache.ontap.cluster.schedules  # noqa: F401  # registers mapping on import
-import pynetappfoundry.cache.ontap.cluster.traits  # noqa: F401  # registers mapping on import
-import pynetappfoundry.cache.ontap.name_services.dns  # noqa: F401  # registers mapping on import
-import pynetappfoundry.cache.ontap.network.ethernet.broadcast_domains  # noqa: F401  # registers mapping on import
-import pynetappfoundry.cache.ontap.network.ip.interfaces  # noqa: F401  # registers mapping on import
-import pynetappfoundry.cache.ontap.network.ip.subnets  # noqa: F401  # registers mapping on import
-import pynetappfoundry.cache.ontap.protocols.cifs.services  # noqa: F401  # registers mapping on import
-import pynetappfoundry.cache.ontap.protocols.cifs.shares  # noqa: F401  # registers mapping on import
-import pynetappfoundry.cache.ontap.protocols.nfs.export_policies  # noqa: F401  # registers mapping on import
-import pynetappfoundry.cache.ontap.protocols.nfs.services  # noqa: F401  # registers mapping on import
-import pynetappfoundry.cache.ontap.protocols.s3.buckets  # noqa: F401  # registers mapping on import
-import pynetappfoundry.cache.ontap.protocols.san.igroups  # noqa: F401  # registers mapping on import
-import pynetappfoundry.cache.ontap.snapmirror.relationships  # noqa: F401  # registers mapping on import
-import pynetappfoundry.cache.ontap.storage.aggregates  # noqa: F401  # registers mapping on import
-import pynetappfoundry.cache.ontap.storage.flexcache.flexcaches  # noqa: F401  # registers mapping on import
-import pynetappfoundry.cache.ontap.storage.luns  # noqa: F401  # registers mapping on import
-import pynetappfoundry.cache.ontap.storage.qos.policies  # noqa: F401  # registers mapping on import
-import pynetappfoundry.cache.ontap.storage.qtrees  # noqa: F401  # registers mapping on import
-import pynetappfoundry.cache.ontap.storage.snapshot_policies  # noqa: F401  # registers mapping on import
-import pynetappfoundry.cache.ontap.storage.volumes  # noqa: F401  # registers mapping on import
-import pynetappfoundry.cache.ontap.svm.peers  # noqa: F401  # registers mapping on import
-import pynetappfoundry.cache.ontap.svm.svms  # noqa: F401  # registers mapping on import
-from pynetappfoundry.cache._base import (
-    METADATA_SCHEMA_MIN_COMPATIBLE,
-    METADATA_SCHEMA_VERSION,
-    CacheModel,
-    HasUUID,
-    OntapUUID,
-    is_schema_compatible,
-    parse_schema_version,
-)
+import importlib
+from typing import TYPE_CHECKING, Any
 
-# Container models and metadata
-from pynetappfoundry.cache._lazy import LazyClusterMetadata
-from pynetappfoundry.cache._metadata import (
-    CachedClusterMetadata,
-    RelationshipsInfo,
-)
+if TYPE_CHECKING:
+    from pynetappfoundry.cache._base import (
+        METADATA_SCHEMA_MIN_COMPATIBLE,
+        METADATA_SCHEMA_VERSION,
+        CacheModel,
+        HasUUID,
+        OntapUUID,
+        is_schema_compatible,
+        parse_schema_version,
+    )
+    from pynetappfoundry.cache._collector_progress import (
+        CollectionPhase,
+        ProgressCallback,
+        ProgressInfo,
+    )
+    from pynetappfoundry.cache._lazy import LazyClusterMetadata
+    from pynetappfoundry.cache._metadata import (
+        CachedClusterMetadata,
+        RelationshipsInfo,
+    )
+    from pynetappfoundry.cache._registry import model_registry
+    from pynetappfoundry.cache.collector import (
+        CollectionError,
+        MetadataCollector,
+    )
+    from pynetappfoundry.cache.db import ClusterMetadataDB
+    from pynetappfoundry.cache.diff import ChangeEntry, compute_diff, format_diff_summary
+    from pynetappfoundry.cache.fetchers import fetch
+    from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
+    from pynetappfoundry.cache.history_db import CacheHistoryDB
+    from pynetappfoundry.cache.query_engine import (
+        ParsedFilter,
+        SQLCondition,
+        parse_filter,
+        parse_filters,
+    )
+    from pynetappfoundry.models.ontap.cluster.mediators.model import OntapMediatorResponse
 
-# Layer 1: Registry
-from pynetappfoundry.cache._registry import model_registry
+_P = "pynetappfoundry.cache"
 
-# Infrastructure (collector, db, diff, etc.)
-from pynetappfoundry.cache.collector import (
-    CollectionError,
-    CollectionPhase,
-    MetadataCollector,
-    ProgressCallback,
-    ProgressInfo,
-)
-from pynetappfoundry.cache.db import ClusterMetadataDB
-from pynetappfoundry.cache.diff import ChangeEntry, compute_diff, format_diff_summary
-from pynetappfoundry.cache.fetchers import fetch
-from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
-from pynetappfoundry.cache.history_db import CacheHistoryDB
-from pynetappfoundry.cache.query_engine import (
-    ParsedFilter,
-    SQLCondition,
-    parse_filter,
-    parse_filters,
-)
-from pynetappfoundry.models.ontap.cluster.mediators.model import OntapMediatorResponse
+# Export name -> defining module, resolved on first access by ``__getattr__``.
+_LAZY_EXPORTS: dict[str, str] = {
+    "METADATA_SCHEMA_MIN_COMPATIBLE": f"{_P}._base",
+    "METADATA_SCHEMA_VERSION": f"{_P}._base",
+    "CacheModel": f"{_P}._base",
+    "HasUUID": f"{_P}._base",
+    "OntapUUID": f"{_P}._base",
+    "is_schema_compatible": f"{_P}._base",
+    "parse_schema_version": f"{_P}._base",
+    "LazyClusterMetadata": f"{_P}._lazy",
+    "CachedClusterMetadata": f"{_P}._metadata",
+    "RelationshipsInfo": f"{_P}._metadata",
+    "model_registry": f"{_P}._registry",
+    "CollectionPhase": f"{_P}._collector_progress",
+    "ProgressCallback": f"{_P}._collector_progress",
+    "ProgressInfo": f"{_P}._collector_progress",
+    "CollectionError": f"{_P}.collector",
+    "MetadataCollector": f"{_P}.collector",
+    "ClusterMetadataDB": f"{_P}.db",
+    "ChangeEntry": f"{_P}.diff",
+    "compute_diff": f"{_P}.diff",
+    "format_diff_summary": f"{_P}.diff",
+    "fetch": f"{_P}.fetchers",
+    "FieldMapping": f"{_P}.field_mapping",
+    "TypeMapping": f"{_P}.field_mapping",
+    "CacheHistoryDB": f"{_P}.history_db",
+    "ParsedFilter": f"{_P}.query_engine",
+    "SQLCondition": f"{_P}.query_engine",
+    "parse_filter": f"{_P}.query_engine",
+    "parse_filters": f"{_P}.query_engine",
+    "OntapMediatorResponse": "pynetappfoundry.models.ontap.cluster.mediators.model",
+}
 
 __all__ = [
     "METADATA_SCHEMA_MIN_COMPATIBLE",
@@ -118,3 +126,18 @@ __all__ = [
     "parse_filters",
     "parse_schema_version",
 ]
+
+
+def __getattr__(name: str) -> Any:
+    """Resolve a lazy export on first access and cache it in the module namespace."""
+    module_name = _LAZY_EXPORTS.get(name)
+    if module_name is None:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    value = getattr(importlib.import_module(module_name), name)
+    globals()[name] = value
+    return value
+
+
+def __dir__() -> list[str]:
+    """List the lazy exports alongside the loaded module namespace."""
+    return sorted(set(globals()) | set(__all__))

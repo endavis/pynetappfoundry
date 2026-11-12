@@ -22,12 +22,11 @@ from pynetappfoundry.clients.ontap.api import ONTAPAPIClient
 from pynetappfoundry.core.models import ClusterConfig
 from pynetappfoundry.db.azevents import AzEventsDB
 from pynetappfoundry.db.ems import EmsEventsDB
-from pynetappfoundry.models.ontap.cluster.nodes import OntapNodeResponse
-from pynetappfoundry.models.ontap.support.ems.events import OntapEmsEventResponse
 from pynetappfoundry.query import QuerySet
 
 if TYPE_CHECKING:
     from pynetappfoundry.core.config import Config
+    from pynetappfoundry.models.ontap.support.ems.events import OntapEmsEventResponse
     from pynetappfoundry.models.ontap.support.ems.events.model import (
         OntapEmsEventResponseParameter,
     )
@@ -265,6 +264,9 @@ class ClusterData:
 
     def gather_data(self) -> None:
         """Gather and parse EMS events from the cluster."""
+        from pynetappfoundry.models.ontap.cluster.nodes import OntapNodeResponse
+        from pynetappfoundry.models.ontap.support.ems.events import OntapEmsEventResponse
+
         azevent_dict = self._empty_azevent()
         azevent_id: str | None = "Unknown"
         status: str | None = ""

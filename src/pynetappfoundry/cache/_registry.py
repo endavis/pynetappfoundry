@@ -57,11 +57,9 @@ class MappingIndexEntry(NamedTuple):
 def _ensure_bootstrapped() -> None:
     """Import the cache package if it hasn't been loaded yet.
 
-    The ``cache/__init__.py`` module imports the hand-written mapping
-    sub-packages, which register their :class:`TypeMapping` instances on
-    :data:`model_registry`.  Most code paths already trigger this import
-    transitively, but registry look-ups that run before the cache package
-    is loaded would miss them.
+    Every mapping registers lazily through the generated ``_mapping_index``
+    (ADR-0023, #960), so this only guarantees the package is loaded before a
+    look-up runs; it imports no mapping sub-package itself.
 
     Cost: a single ``dict.__contains__`` on the common (already-loaded)
     path.

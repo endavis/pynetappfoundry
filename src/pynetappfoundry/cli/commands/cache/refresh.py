@@ -14,6 +14,7 @@ import logging
 import time
 from pathlib import Path
 from types import TracebackType
+from typing import TYPE_CHECKING
 
 import click
 from rich.console import Console
@@ -26,14 +27,6 @@ from pynetappfoundry.cache import (
     CollectionPhase,
     ProgressInfo,
 )
-from pynetappfoundry.cache.refresher import (
-    CacheRefresher,
-    ClusterProgress,
-    ClusterRefreshResult,
-    RefreshStatus,
-    RefreshSummary,
-    effective_workers,
-)
 from pynetappfoundry.cli.errors import CliError
 from pynetappfoundry.cli.options import all_option, filter_option
 from pynetappfoundry.cli.utils import (
@@ -44,6 +37,13 @@ from pynetappfoundry.cli.utils import (
 )
 from pynetappfoundry.core.config import Config
 from pynetappfoundry.core.logging import setup_logger
+
+if TYPE_CHECKING:
+    from pynetappfoundry.cache.refresher import (
+        ClusterProgress,
+        ClusterRefreshResult,
+        RefreshSummary,
+    )
 
 console = Console()
 
@@ -222,6 +222,8 @@ def refresh(
     else:
         raise CliError("Specify a cluster name or use --all to refresh all clusters.")
 
+    from pynetappfoundry.cache.refresher import CacheRefresher, effective_workers
+
     workers = effective_workers(parallel_clusters, len(clusters_to_refresh))
 
     # The CLI owns the database handles; close them even when the run fails
@@ -340,6 +342,8 @@ class _NormalReporter:
         total: int,
     ) -> None:
         """Print the cluster's outcome line."""
+        from pynetappfoundry.cache.refresher import RefreshStatus
+
         name = result.cluster_name
         err = result.error or RuntimeError("Unknown collection failure")
         if result.status is RefreshStatus.OK:
@@ -401,6 +405,8 @@ class _VerboseReporter:
         total: int,
     ) -> None:
         """Render the cluster's outcome."""
+        from pynetappfoundry.cache.refresher import RefreshStatus
+
         name = result.cluster_name
         err = result.error or RuntimeError("Unknown collection failure")
         if self.parallel:

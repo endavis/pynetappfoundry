@@ -17,6 +17,7 @@ from pynetappfoundry.cli.commands.cache.inspect import (
     _build_cache_tree,
     _build_cli_command,
     _format_value,
+    _load_inspect_mapping,
     _resolve_cache_list,
 )
 from pynetappfoundry.cli.main import nf
@@ -103,6 +104,19 @@ class TestInspectTypes:
         """Test volume cache path is correct."""
         _, cache_path = INSPECT_TYPES["volume"]
         assert cache_path == "storage.volumes"
+
+    @pytest.mark.parametrize("object_type", sorted(INSPECT_TYPES))
+    def test_every_entry_loads_a_type_mapping(self, object_type: str) -> None:
+        """Each import reference resolves to a TypeMapping (#960)."""
+        ref, _ = INSPECT_TYPES[object_type]
+        assert isinstance(_load_inspect_mapping(ref), TypeMapping)
+
+    def test_volume_reference_is_the_module_constant(self) -> None:
+        """The volume reference resolves to the volume mapping module constant."""
+        from pynetappfoundry.cache.ontap.storage.volumes.mapping import ONTAPVOLUME_MAPPING
+
+        ref, _ = INSPECT_TYPES["volume"]
+        assert _load_inspect_mapping(ref) is ONTAPVOLUME_MAPPING
 
 
 class TestBuildApiEndpoint:

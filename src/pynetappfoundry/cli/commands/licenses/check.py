@@ -13,10 +13,6 @@ from pynetappfoundry.cli.utils import print_error, print_info, print_warning
 from pynetappfoundry.clients.ontap.api import ONTAPAPIClient
 from pynetappfoundry.core.config import Config
 from pynetappfoundry.core.models import ClusterConfig
-from pynetappfoundry.models.ontap.cluster.licensing.licenses import (
-    OntapLicensePackageResponse,
-)
-from pynetappfoundry.models.ontap.cluster.nodes import OntapNodeResponse
 from pynetappfoundry.query import QuerySet
 from pynetappfoundry.utils.email import send_email
 
@@ -65,6 +61,11 @@ def _check_cluster_licenses(
     config: Config,
 ) -> list[dict[str, Any]]:
     """Check a single cluster for license issues."""
+    from pynetappfoundry.models.ontap.cluster.licensing.licenses import (
+        OntapLicensePackageResponse,
+    )
+    from pynetappfoundry.models.ontap.cluster.nodes import OntapNodeResponse
+
     issues: list[dict[str, Any]] = []
     days_to_check = 30
     current_time = datetime.now(UTC)

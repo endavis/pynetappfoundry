@@ -8,12 +8,14 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import TypeMapping, parse_api_record
 from pynetappfoundry.clients.openapi import APIWrapper
-from pynetappfoundry.models.ontap.cluster.jobs.model import OntapJob
+
+if TYPE_CHECKING:
+    from pynetappfoundry.models.ontap.cluster.jobs.model import OntapJob
 
 logger = logging.getLogger(__name__)
 

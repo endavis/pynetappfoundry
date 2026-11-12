@@ -486,3 +486,75 @@ class TestStartup:
         assert data["jsonschema"] is False
         assert data["dii"] == []
         assert data["loaded"] < data["total"] * 0.10
+
+    def test_cli_help_skips_ontap_models(self) -> None:
+        """``nf --help`` loads no ``models.ontap`` module and no heavy cache module (#960)."""
+        code = textwrap.dedent(
+            """
+            import json, sys
+            code = 0
+            try:
+                from pynetappfoundry.cli import nf
+                nf(['--help'])
+            except SystemExit as exc:
+                code = exc.code or 0
+            heavy = [
+                "pynetappfoundry.cache._metadata",
+                "pynetappfoundry.cache.collector",
+                "pynetappfoundry.cache.diff",
+                "pynetappfoundry.cache.refresher",
+            ]
+            print(json.dumps({
+                "code": code,
+                "models": [m for m in sys.modules if m.startswith("pynetappfoundry.models.ontap")],
+                "heavy": [m for m in heavy if m in sys.modules],
+            }))
+            """
+        )
+        data = json.loads(_run_python(code).stdout.strip().splitlines()[-1])
+        assert data["code"] == 0
+        assert data["models"] == []
+        assert data["heavy"] == []
+
+    def test_cache_import_skips_ontap_models(self) -> None:
+        """Importing ``pynetappfoundry.cache`` loads no model or ``cache.ontap`` module (#960)."""
+        code = textwrap.dedent(
+            """
+            import json, sys
+            import pynetappfoundry.cache
+            print(json.dumps({
+                "models": [m for m in sys.modules if m.startswith("pynetappfoundry.models.ontap")],
+                "cache_ontap": [
+                    m for m in sys.modules if m.startswith("pynetappfoundry.cache.ontap")
+                ],
+            }))
+            """
+        )
+        data = json.loads(_run_python(code).stdout.strip().splitlines()[-1])
+        assert data["models"] == []
+        assert data["cache_ontap"] == []
+
+    def test_lazy_cache_lookup_still_resolves(self) -> None:
+        """Hand-written mappings that the eager imports used to register resolve lazily."""
+        code = textwrap.dedent(
+            """
+            import json
+            from pynetappfoundry.cache import model_registry
+            from pynetappfoundry.models.ontap.storage.volumes.model import OntapVolume
+
+            cloud = model_registry.get_mapping("CloudMetadata")
+            traits = model_registry.get_mapping("ClusterTraits")
+            volume = model_registry.get_mapping_by_model_class(OntapVolume)
+            print(json.dumps({
+                "cloud": cloud.model_class.__name__,
+                "traits": traits.model_class.__name__,
+                "volume": volume.model_class.__name__,
+            }))
+            """
+        )
+        data = json.loads(_run_python(code).stdout.strip().splitlines()[-1])
+        assert data == {
+            "cloud": "CloudMetadata",
+            "traits": "ClusterTraits",
+            "volume": "OntapVolume",
+        }

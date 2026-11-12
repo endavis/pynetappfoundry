@@ -27,10 +27,10 @@ from pynetappfoundry.cli.utils import (
     print_warning,
 )
 from pynetappfoundry.data.source import DataSource
-from pynetappfoundry.models.ontap.protocols.cifs.sessions.model import OntapCifsSession
 
 if TYPE_CHECKING:
     from pynetappfoundry.core.config import Config
+    from pynetappfoundry.models.ontap.protocols.cifs.sessions.model import OntapCifsSession
 
 # Column headers used for both Rich table and CSV output.
 COLUMNS: tuple[str, ...] = (
@@ -217,6 +217,8 @@ def _scan_cluster(
     Returns:
         ``(rows, scanned)`` for the cluster.
     """
+    from pynetappfoundry.models.ontap.protocols.cifs.sessions.model import OntapCifsSession
+
     ds = DataSource(config)
     qb = ds.query(OntapCifsSession, cluster=cluster, source="live")
 
