@@ -889,3 +889,225 @@ class TestDiiBackendParentKeyed:
                 with pytest.raises(ValueError, match=re.escape("{" + name.group(1) + "}")):
                     backend.query(m.model_class, m, _LIVE, "t", {})
         get_client.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# Caller-supplied path_params, #990
+# ---------------------------------------------------------------------------
+
+_LONELY_990 = dataclasses.replace(
+    _LONELY, name="FakeLonely990", api_endpoint="/lonely/{lid}/things", parent_mapping=None
+)
+_TWO_990 = dataclasses.replace(
+    _LONELY, name="FakeTwo990", api_endpoint="/a/{one}/b/{two}", parent_mapping=None
+)
+_PLAIN_990 = dataclasses.replace(
+    _LONELY, name="FakePlain990", api_endpoint="/plain", parent_mapping=None
+)
+_LONELY_DECISION = RoutingDecision(cache_fields=(), live_fields=("name",))
+
+
+class TestDiiBackendCallerPathParams:
+    """Caller-supplied path values are validated, encoded and sent directly (#990)."""
+
+    def setup_method(self) -> None:
+        for m in (*_ALL_985, _LONELY_990, _TWO_990, _PLAIN_990):
+            model_registry.register_mapping(m.name, m)
+
+    def teardown_method(self) -> None:
+        for m in (*_ALL_985, _LONELY_990, _TWO_990, _PLAIN_990):
+            model_registry._mappings.pop(m.name, None)
+            model_registry._mappings_by_class.pop(m.model_class, None)
+
+    def test_backend_declares_support(self) -> None:
+        assert DiiBackend.supports_path_params is True
+
+    def test_unwired_mapping_one_request_with_values(self, mock_config: Any) -> None:
+        backend = _make_backend(mock_config)
+        client = _fake_client({("/lonely/{lid}/things", (("lid", "L1"),)): [{"name": "x"}]})
+        with patch.object(backend, "_get_api_client", return_value=client):
+            results = backend.query(
+                FakeSub, _LONELY_990, _LONELY_DECISION, "t", {}, path_params={"lid": "L1"}
+            )
+        assert [r.name for r in results] == ["x"]
+        assert _requested(client) == [("/lonely/{lid}/things", {"lid": "L1"})]
+
+    def test_filters_go_to_query_params(self, mock_config: Any) -> None:
+        backend = _make_backend(mock_config)
+        client = _fake_client({("/lonely/{lid}/things", (("lid", "L1"),)): []})
+        with patch.object(backend, "_get_api_client", return_value=client):
+            backend.query(
+                FakeSub,
+                _LONELY_990,
+                _LONELY_DECISION,
+                "t",
+                {"name": "a"},
+                path_params={"lid": "L1"},
+            )
+        assert client.get_all_pages.call_args.kwargs["query_params"] == {"name": "a"}
+
+    def test_missing_placeholder_raises_before_client(self, mock_config: Any) -> None:
+        backend = _make_backend(mock_config)
+        with (
+            patch.object(backend, "_get_api_client") as get_client,
+            pytest.raises(ValueError, match=r"\{two\}"),
+        ):
+            backend.query(FakeSub, _TWO_990, _LONELY_DECISION, "t", {}, path_params={"one": "1"})
+        get_client.assert_not_called()
+
+    def test_unknown_key_raises_naming_it_and_valid_names(self, mock_config: Any) -> None:
+        backend = _make_backend(mock_config)
+        with (
+            patch.object(backend, "_get_api_client") as get_client,
+            pytest.raises(ValueError, match=r"'bogus'.*\{lid\}"),
+        ):
+            backend.query(
+                FakeSub,
+                _LONELY_990,
+                _LONELY_DECISION,
+                "t",
+                {},
+                path_params={"lid": "1", "bogus": "2"},
+            )
+        get_client.assert_not_called()
+
+    def test_path_params_on_placeholder_free_mapping_raises(self, mock_config: Any) -> None:
+        backend = _make_backend(mock_config)
+        with (
+            patch.object(backend, "_get_api_client") as get_client,
+            pytest.raises(ValueError, match="unknown path_params"),
+        ):
+            backend.query(FakeSub, _PLAIN_990, _LONELY_DECISION, "t", {}, path_params={"x": "1"})
+        get_client.assert_not_called()
+
+    def test_wired_mapping_with_all_values_skips_parent_fetch(self, mock_config: Any) -> None:
+        backend = _make_backend(mock_config)
+        client = _fake_client({("/things/{id}/kids", (("id", "5"),)): [{"id": 1, "name": "k"}]})
+        with patch.object(backend, "_get_api_client", return_value=client):
+            results = backend.query(FakeKid, _KID, _LIVE, "t", {}, path_params={"id": 5})
+        assert [r.name for r in results] == ["k"]
+        assert _requested(client) == [("/things/{id}/kids", {"id": "5"})]
+
+    @pytest.mark.parametrize("empty", [None, {}])
+    def test_wired_mapping_with_empty_params_fetches_per_parent(
+        self, mock_config: Any, empty: dict[str, Any] | None
+    ) -> None:
+        backend = _make_backend(mock_config)
+        client = _fake_client(
+            {
+                ("/things", ()): [{"id": 1, "name": "t1"}],
+                ("/things/{id}/kids", (("id", "1"),)): [],
+            }
+        )
+        with patch.object(backend, "_get_api_client", return_value=client):
+            backend.query(FakeKid, _KID, _LIVE, "t", {}, path_params=empty)
+        assert _requested(client) == [("/things", {}), ("/things/{id}/kids", {"id": "1"})]
+
+    def test_wired_mapping_partial_values_raise(self, mock_config: Any) -> None:
+        backend = _make_backend(mock_config)
+        two_wired = dataclasses.replace(
+            _KID, name="FakeKid990", api_endpoint="/things/{id}/kids/{kid}"
+        )
+        with (
+            patch.object(backend, "_get_api_client") as get_client,
+            pytest.raises(ValueError, match=r"\{kid\}"),
+        ):
+            backend.query(FakeKid, two_wired, _LIVE, "t", {}, path_params={"id": "1"})
+        get_client.assert_not_called()
+
+    @pytest.mark.parametrize(
+        "value",
+        ["a/b", "x{y}", "a?b#c", "../etc", "{lid}", "a b"],
+    )
+    def test_values_are_encoded(self, mock_config: Any, value: str) -> None:
+        backend = _make_backend(mock_config)
+        client = MagicMock()
+        client.get_all_pages.return_value = []
+        with patch.object(backend, "_get_api_client", return_value=client):
+            backend.query(
+                FakeSub, _LONELY_990, _LONELY_DECISION, "t", {}, path_params={"lid": value}
+            )
+        sent = client.get_all_pages.call_args.kwargs["path_params"]["lid"]
+        assert sent
+        for char in "{}/?#":
+            assert char not in sent
+        from urllib.parse import unquote
+
+        assert unquote(sent) == value
+
+    @pytest.mark.parametrize("value", ["", ".", ".."])
+    def test_degenerate_values_rejected(self, mock_config: Any, value: str) -> None:
+        backend = _make_backend(mock_config)
+        with (
+            patch.object(backend, "_get_api_client") as get_client,
+            pytest.raises(ValueError, match=r"\{lid\}"),
+        ):
+            backend.query(
+                FakeSub, _LONELY_990, _LONELY_DECISION, "t", {}, path_params={"lid": value}
+            )
+        get_client.assert_not_called()
+
+    def test_int_zero_sent_as_string(self, mock_config: Any) -> None:
+        backend = _make_backend(mock_config)
+        client = MagicMock()
+        client.get_all_pages.return_value = []
+        with patch.object(backend, "_get_api_client", return_value=client):
+            backend.query(FakeSub, _LONELY_990, _LONELY_DECISION, "t", {}, path_params={"lid": 0})
+        assert client.get_all_pages.call_args.kwargs["path_params"] == {"lid": "0"}
+
+    def test_real_mapping_install_command(self, mock_config: Any) -> None:
+        from pynetappfoundry.cache.dii.au.installCommand.mapping import (
+            DIIAUINSTALLCOMMAND_MAPPING,
+        )
+
+        m = DIIAUINSTALLCOMMAND_MAPPING
+        backend = _make_backend(mock_config)
+        client = MagicMock()
+        client.get_all_pages.return_value = []
+        with patch.object(backend, "_get_api_client", return_value=client):
+            backend.query(
+                m.model_class,
+                m,
+                RoutingDecision(cache_fields=(), live_fields=("id",)),
+                "t",
+                {},
+                path_params={"platform": "linux"},
+            )
+        assert client.get_all_pages.call_args.args[0] == "/au/installCommand/{platform}"
+        assert client.get_all_pages.call_args.kwargs["path_params"] == {"platform": "linux"}
+
+    def test_registry_sweep_unwired_placeholder_mappings(self, mock_config: Any) -> None:
+        import re
+
+        from pynetappfoundry.cache.dii.au.installCommand.mapping import (  # noqa: F401
+            DIIAUINSTALLCOMMAND_MAPPING,
+        )
+
+        candidates = [
+            m
+            for m in model_registry.mappings.values()
+            if m.api_type == "dii" and "{" in m.api_endpoint and not m.parent_mapping
+        ]
+        assert candidates
+        backend = _make_backend(mock_config)
+        client = MagicMock()
+        client.get_all_pages.return_value = []
+        with patch.object(backend, "_get_api_client", return_value=client):
+            for m in candidates:
+                names = re.findall(r"\{([^}]+)\}", m.api_endpoint.split("?", 1)[0])
+                client.get_all_pages.reset_mock()
+                backend.query(
+                    m.model_class,
+                    m,
+                    _LIVE,
+                    "t",
+                    {},
+                    path_params=dict.fromkeys(names, "v"),
+                )
+                assert client.get_all_pages.call_count == 1
+                call = client.get_all_pages.call_args
+                path = call.args[0]
+                for key, value in call.kwargs["path_params"].items():
+                    path = path.replace("{" + key + "}", value)
+                assert "{" not in path
+                assert "}" not in path

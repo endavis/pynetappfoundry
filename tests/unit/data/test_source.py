@@ -804,3 +804,85 @@ class TestQueryBuilderEarlyValidation:
             qb.where("size > 0")
 
         assert "DiiBackend" in str(exc_info.value)
+
+
+class FakeDiiPathModel(FakeVolume):
+    """DII-typed model for path_params tests (#990)."""
+
+
+@pytest.fixture
+def fake_dii_path_mapping() -> Iterator[TypeMapping]:
+    mapping = TypeMapping(
+        name="FakeDiiPath990",
+        model_class=FakeDiiPathModel,
+        api_endpoint="/p/{platform}",
+        api_type="dii",
+        identifier_field="uuid",
+        records_path="",
+        fields=(FieldMapping(cache_attr="uuid"),),
+    )
+    model_registry.register_mapping("FakeDiiPath990", mapping)
+    try:
+        yield mapping
+    finally:
+        model_registry._mappings.pop("FakeDiiPath990", None)
+        model_registry._mappings_by_class.pop(FakeDiiPathModel, None)
+
+
+class TestQueryPathParams:
+    """``path_params`` is threaded to the backend and guarded per backend (#990)."""
+
+    def test_keyword_threaded_to_backend(
+        self, fake_dii_path_mapping: TypeMapping, mock_config: Any
+    ) -> None:
+        ds = DataSource(mock_config)
+        fake_backend = MagicMock()
+        fake_backend.query.return_value = [FakeDiiPathModel(uuid="u1")]
+        ds._backends["dii"] = fake_backend
+
+        results = list(
+            ds.query(
+                FakeDiiPathModel, cluster="t", source="live", path_params={"platform": "linux"}
+            )
+        )
+
+        assert len(results) == 1
+        assert fake_backend.query.call_args.kwargs["path_params"] == {"platform": "linux"}
+
+    def test_keyword_absent_when_unused(
+        self, fake_dii_path_mapping: TypeMapping, mock_config: Any
+    ) -> None:
+        ds = DataSource(mock_config)
+        fake_backend = MagicMock()
+        fake_backend.query.return_value = []
+        ds._backends["dii"] = fake_backend
+
+        list(ds.query(FakeDiiPathModel, cluster="t", source="live", path_params={}))
+
+        assert "path_params" not in fake_backend.query.call_args.kwargs
+
+    def test_ontap_model_rejected_at_call_time(
+        self, fake_volume_mapping: TypeMapping, mock_config: Any
+    ) -> None:
+        ds = DataSource(mock_config)
+        with pytest.raises(ValueError, match="OntapBackend does not support path_params"):
+            ds.query(FakeVolume, cluster="prod1", path_params={"x": "1"})
+
+    def test_fallback_call_carries_path_params(
+        self,
+        fake_volume_mapping: TypeMapping,
+        mock_config: Any,
+    ) -> None:
+        ds = DataSource(mock_config)
+        fake_backend = MagicMock()
+        fake_backend.query.side_effect = [[], []]
+        ds._backends["ontap"] = fake_backend
+        builder = ds.query(FakeVolume, cluster="prod1")
+        # Bypass the ONTAP guard to exercise the fallback plumbing only.
+        builder._path_params = {"x": "1"}
+
+        list(builder)
+
+        assert fake_backend.query.call_count == 2
+        for call in fake_backend.query.call_args_list:
+            assert call.kwargs["path_params"] == {"x": "1"}

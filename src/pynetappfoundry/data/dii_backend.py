@@ -21,6 +21,7 @@ from __future__ import annotations
 import logging
 import re
 from typing import TYPE_CHECKING, Any, TypeVar
+from urllib.parse import quote
 
 from pydantic import BaseModel
 
@@ -74,6 +75,41 @@ def _placeholders(mapping: TypeMapping) -> list[str]:
     return re.findall(r"\{([^}]+)\}", mapping.api_endpoint.split("?", 1)[0])
 
 
+def _caller_path_params(
+    mapping: TypeMapping, placeholders: list[str], path_params: dict[str, Any]
+) -> dict[str, str]:
+    """Validate and percent-encode caller-supplied *path_params* (#990).
+
+    Raises :class:`ValueError` for an unknown key, a missing placeholder, or a
+    value that is empty, ``.`` or ``..``.  Every value is ``str()``-ed and
+    quoted with no safe characters, so the requested path never gains a ``{``,
+    ``}``, ``/``, ``?`` or ``#`` from a value.
+    """
+    valid = ", ".join("{" + p + "}" for p in placeholders) or "(none)"
+    unknown = [key for key in path_params if key not in placeholders]
+    if unknown:
+        msg = (
+            f"{mapping.name}: unknown path_params key(s) {', '.join(repr(k) for k in unknown)}; "
+            f"valid placeholder(s) for {mapping.api_endpoint}: {valid}"
+        )
+        raise ValueError(msg)
+    missing = [p for p in placeholders if p not in path_params]
+    if missing:
+        names = ", ".join("{" + p + "}" for p in missing)
+        msg = (
+            f"{mapping.name}: path_params is missing value(s) for {names} in {mapping.api_endpoint}"
+        )
+        raise ValueError(msg)
+    encoded: dict[str, str] = {}
+    for key, value in path_params.items():
+        text = str(value)
+        if text in ("", ".", ".."):
+            msg = f"{mapping.name}: path_params value for {{{key}}} must not be {text!r}"
+            raise ValueError(msg)
+        encoded[key] = quote(text, safe="")
+    return encoded
+
+
 def _records_from_response(mapping: TypeMapping, response: Any) -> list[Any]:
     """Extract the record list from a ``get_all_pages`` *response* (ADR-0015)."""
     if isinstance(response, list):
@@ -115,6 +151,7 @@ class DiiBackend(Backend):
     """
 
     supports_where_expressions: bool = False
+    supports_path_params: bool = True
 
     def __init__(self, config: Config) -> None:
         super().__init__(config)
@@ -141,6 +178,7 @@ class DiiBackend(Backend):
         filters: dict[str, Any],
         *,
         where_expressions: tuple[str, ...] = (),
+        path_params: dict[str, Any] | None = None,
     ) -> list[T]:
         """Fetch a list of DII instances matching *filters*.
 
@@ -166,6 +204,12 @@ class DiiBackend(Backend):
         ``parent_mapping`` is fetched per parent (parents queried first, #985).
         Such a mapping without a ``parent_mapping`` raises :class:`ValueError`
         naming the placeholder(s); nothing is requested.
+
+        A non-empty *path_params* supplies every placeholder value directly
+        (#990): one request to the endpoint with the encoded values, no parent
+        fetch, even for a mapping with a ``parent_mapping``.  An unknown key or
+        a missing placeholder raises :class:`ValueError` before any client is
+        built.
         """
         if decision.cache_fields and not decision.live_fields:
             msg = "DII backend does not support cache-only queries"
@@ -179,6 +223,17 @@ class DiiBackend(Backend):
             return []
 
         placeholders = _placeholders(mapping)
+        if path_params:
+            encoded = _caller_path_params(mapping, placeholders, path_params)
+            direct_client = self._get_api_client(cluster)
+            direct_response = direct_client.get_all_pages(
+                mapping.api_endpoint,
+                query_params=dict(filters) if filters else {},
+                path_params=encoded,
+            )
+            return self._parse_records(
+                model_class, mapping, decision, _records_from_response(mapping, direct_response)
+            )
         if placeholders and not mapping.parent_mapping:
             names = ", ".join("{" + p + "}" for p in placeholders)
             msg = (

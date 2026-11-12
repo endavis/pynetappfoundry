@@ -2050,3 +2050,53 @@ class TestLiveChildQuery:
         urls = [c.args[0] for c in client.call_endpoint.call_args_list]
         assert all("return_records=false" in u for u in urls)
         assert "/storage/fakes/p-2/children" in urls[1]
+
+
+class TestOntapBackendPathParams:
+    """OntapBackend rejects caller path_params before any I/O (#990)."""
+
+    def test_flag_is_false(self) -> None:
+        assert OntapBackend.supports_path_params is False
+
+    def test_non_empty_path_params_raises_before_io(
+        self, fake_volume_mapping: TypeMapping, mock_config: Any
+    ) -> None:
+        backend = _make_backend(mock_config)
+        decision = RoutingDecision(cache_fields=("name",), live_fields=())
+        mock_db = MagicMock()
+        with (
+            patch.object(OntapBackend, "_cache_db", new=mock_db),
+            pytest.raises(ValueError, match="path_params"),
+        ):
+            backend.query(
+                FakeVolume,
+                fake_volume_mapping,
+                decision,
+                cluster="prod1",
+                filters={},
+                path_params={"x": "1"},
+            )
+        mock_db.query_with_filters.assert_not_called()
+
+    def test_empty_path_params_accepted(
+        self, fake_volume_mapping: TypeMapping, mock_config: Any
+    ) -> None:
+        backend = _make_backend(mock_config)
+        decision = RoutingDecision(cache_fields=("name",), live_fields=())
+        mock_db = MagicMock()
+        mock_db.query_with_filters.return_value = []
+        with (
+            patch.object(OntapBackend, "_cache_db", new=mock_db),
+            _patch_metadata_path(backend),
+        ):
+            assert (
+                backend.query(
+                    FakeVolume,
+                    fake_volume_mapping,
+                    decision,
+                    cluster="prod1",
+                    filters={},
+                    path_params={},
+                )
+                == []
+            )
