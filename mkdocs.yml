@@ -213,6 +213,7 @@ nav:
           - ADR-9028 Implement-Issues Parallel: decisions/9028-implement-issues-runs-issues-in-parallel-background-agents.md
           - ADR-9029 Host Plan and Checking Budget: decisions/9029-implement-issue-host-plan-and-coder-checking-budget.md
           - ADR-9030 Agent Roles: decisions/9030-cross-agent-roles-resolve-through-a-per-user-config.md
+          - ADR-9031 Project Rebuildable Names: decisions/9031-a-project-adds-rebuildable-names-for-worktree-removal-in-pyprojecttoml.md
   - Template:
       - Overview: template/index.md
       - New Project: template/new-project.md

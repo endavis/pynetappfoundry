@@ -68,6 +68,9 @@ doit adr --title="Use some tool" --template --body-file=adr.md
 
 Use `--template` when the decision is about the template's own tooling, workflow, or conventions (something every downstream project will inherit). Use the default (project-level) for decisions specific to this project.
 
+`doit adr` also adds the ADR to the Index below and to the `mkdocs.yml` nav, or prints a reminder
+naming the file it could not edit. The nav label is `ADR-NNNN <title>`; shorten it by hand if you like.
+
 ## When to Create an ADR
 
 Create an ADR when:
@@ -114,6 +117,7 @@ The Issue contains the full discussion; the ADR summarizes the outcome.
 | [9023](9023-shared-workflow-skills-live-in-agents-skills-generated-for-claude.md) | Shared workflow skills live once in .agents/skills/ and are generated for Claude | Accepted |
 | [9024](9024-one-implement-issue-skill-takes-an-issue-to-a-green-pr.md) | One implement-issue skill takes an issue to a green PR | Accepted |
 | [9025](9025-delegated-agents-receive-github-data-from-the-host-and-run-without-network.md) | Delegated agents receive GitHub data from the host and run without network | Accepted |
+| [9031](9031-a-project-adds-rebuildable-names-for-worktree-removal-in-pyprojecttoml.md) | A project adds rebuildable names for worktree removal in pyproject.toml | Accepted |
 
 ### Project-level ADRs (0001+)
 
