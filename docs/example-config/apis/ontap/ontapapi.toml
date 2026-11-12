@@ -1,2 +1,6 @@
 [general]
 base_api_path="/api"
+# Optional CA validation of cluster TLS certificates, the default for every cluster.
+# A cluster's own verify_ssl / ca_bundle overrides these. Off by default.
+# verify_ssl = true                    # validate with the default CA bundle
+# ca_bundle = "certs/internal-ca.pem"  # or validate against this CA bundle

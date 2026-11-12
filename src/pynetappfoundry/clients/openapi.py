@@ -80,7 +80,7 @@ class APIWrapper:
         timeout: float = 30.0,
         session: requests.Session | None = None,
         base_api_path: str = "",
-        verify_ssl: bool = True,
+        verify_ssl: bool | str = True,
         retry_config: RetryConfig | None = None,
         validation_config: ValidationConfig | None = None,
         name: str = "",
@@ -95,7 +95,8 @@ class APIWrapper:
             timeout: Request timeout in seconds.
             session: Existing requests session to use.
             base_api_path: Base path prefix for all API paths.
-            verify_ssl: Whether to verify SSL certificates. Default True for security.
+            verify_ssl: Whether to verify SSL certificates, or a CA bundle path.
+                Default True for security.
             retry_config: Configuration for retry behavior. Defaults to enabled.
             validation_config: Configuration for response validation. Defaults to disabled.
             name: Name for log prefix (e.g., cluster name). Used in [name:api] format.

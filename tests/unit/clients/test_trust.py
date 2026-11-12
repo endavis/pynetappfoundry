@@ -255,6 +255,25 @@ class TestFingerprintPinningAdapter:
         assert "assert_fingerprint" not in tls_params
         assert not store.path.exists()
 
+    def test_verify_true_neither_pins_nor_captures(self, tmp_path: Path) -> None:
+        adapter, store = self._adapter(tmp_path)
+        req = requests.Request("GET", "https://cluster.example/api").prepare()
+        _, tls_params = adapter.build_connection_pool_key_attributes(req, True)
+        assert "assert_fingerprint" not in tls_params
+        assert tls_params["cert_reqs"] == "CERT_REQUIRED"
+        assert not store.path.exists()
+
+    def test_bundle_path_verify_neither_pins_nor_captures(self, tmp_path: Path) -> None:
+        adapter, store = self._adapter(tmp_path)
+        bundle = tmp_path / "ca.pem"
+        bundle.write_text("placeholder")
+        req = requests.Request("GET", "https://cluster.example/api").prepare()
+        _, tls_params = adapter.build_connection_pool_key_attributes(req, str(bundle))
+        assert "assert_fingerprint" not in tls_params
+        assert tls_params["cert_reqs"] == "CERT_REQUIRED"
+        assert tls_params["ca_certs"] == str(bundle)
+        assert not store.path.exists()
+
     @pytest.mark.parametrize(
         ("failure", "expected"),
         [

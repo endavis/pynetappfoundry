@@ -33,6 +33,9 @@ class ClusterConfig(BaseResource):
     # Optional per-cluster credentials (override global)
     user: str | None = None
     enc: str | None = None
+    # Optional TLS CA validation for the ONTAP REST client (overrides global)
+    verify_ssl: bool | None = None
+    ca_bundle: str | None = None
 
 
 class AIQUMConfig(BaseResource):
@@ -97,6 +100,8 @@ class ONTAPAPISettings(BaseModel):
 
     base_api_path: str = "/api"
     timeout: float = 30.0
+    verify_ssl: bool = False
+    ca_bundle: str | None = None
 
 
 class DIIAPISettings(BaseModel):

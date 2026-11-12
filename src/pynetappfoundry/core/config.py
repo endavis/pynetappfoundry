@@ -43,6 +43,7 @@ from __future__ import annotations
 import logging
 import os
 import tomllib
+from collections.abc import Mapping
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, TypeVar
 
@@ -79,6 +80,97 @@ class ConfigurationError(Exception):
     """Raised when configuration is missing or invalid."""
 
     pass
+
+
+def _read_tls_settings(source: Any, where: str) -> tuple[bool | None, str | None]:
+    """Read and type-check ``verify_ssl`` / ``ca_bundle`` from one raw settings dict.
+
+    Args:
+        source: The raw dict (cluster entry or ``ontapapi.general``); anything that is
+            not a dict counts as empty.
+        where: Dotted prefix used in error messages, e.g. ``clusters.NAME``.
+
+    Returns:
+        ``(verify_ssl, ca_bundle)``, each ``None`` when unset.
+
+    Raises:
+        ConfigurationError: On a wrong type, or ``ca_bundle`` with ``verify_ssl = false``.
+    """
+    if not isinstance(source, Mapping):
+        return None, None
+    verify = source.get("verify_ssl")
+    bundle = source.get("ca_bundle")
+    if verify is not None and not isinstance(verify, bool):
+        raise ConfigurationError(f"{where}.verify_ssl must be true or false, got {verify!r}.")
+    if bundle is not None and (not isinstance(bundle, str) or not bundle.strip()):
+        raise ConfigurationError(f"{where}.ca_bundle must be a non-empty path string.")
+    if bundle is not None and verify is False:
+        raise ConfigurationError(
+            f"{where}.ca_bundle is set together with {where}.verify_ssl = false; "
+            "remove one of them."
+        )
+    return verify, bundle
+
+
+def _resolve_ca_bundle_path(bundle: str, config_dir: Path, key: str) -> str:
+    """Return the absolute path of a CA bundle after checking it is a readable file.
+
+    Raises:
+        ConfigurationError: If the path is not an existing, readable regular file.
+    """
+    path = Path(bundle).expanduser()
+    if not path.is_absolute():
+        path = config_dir / path
+    if not path.is_file():
+        raise ConfigurationError(
+            f"{key} is {str(path)!r}, which is not an existing CA bundle file."
+        )
+    if not os.access(path, os.R_OK):
+        raise ConfigurationError(f"{key} is {str(path)!r}, which is not readable.")
+    return str(path)
+
+
+def resolve_tls_verify(config: Config, cluster_name: str) -> bool | str:
+    """Resolve the requests-style ``verify`` value for a cluster's REST client.
+
+    Precedence, first match wins: cluster ``ca_bundle``, cluster ``verify_ssl``,
+    global ``ca_bundle``, global ``verify_ssl`` (``ontapapi.toml`` ``[general]``),
+    then ``False``. Only the effective value is validated. Reads the raw dicts, so
+    a missing ``ontapapi.toml`` is not an error.
+
+    Args:
+        config: The loaded configuration. A non-dict ``data`` or ``settings`` counts
+            as empty.
+        cluster_name: Cluster to resolve for.
+
+    Returns:
+        ``False`` (no chain validation; the fingerprint is pinned), ``True``
+        (validate against requests' default bundle) or an absolute CA bundle path.
+
+    Raises:
+        ConfigurationError: On a wrong type, a contradiction, or an unusable bundle.
+    """
+    data = config.data if isinstance(config.data, dict) else {}
+    settings = config.settings if isinstance(config.settings, dict) else {}
+    clusters = data.get("clusters", {})
+    cluster = clusters.get(cluster_name) if isinstance(clusters, Mapping) else None
+    ontapapi = settings.get("ontapapi", {})
+    general = ontapapi.get("general") if isinstance(ontapapi, dict) else None
+
+    c_where = f"clusters.{cluster_name}"
+    g_where = "ontapapi.general"
+    c_verify, c_bundle = _read_tls_settings(cluster, c_where)
+    config_dir = config.config_dir if isinstance(config.config_dir, Path) else Path.cwd()
+    if c_bundle is not None:
+        return _resolve_ca_bundle_path(c_bundle, config_dir, f"{c_where}.ca_bundle")
+    if c_verify is not None:
+        return c_verify
+    g_verify, g_bundle = _read_tls_settings(general, g_where)
+    if g_bundle is not None:
+        return _resolve_ca_bundle_path(
+            g_bundle, config_dir, f"{g_where}.ca_bundle (cluster {cluster_name!r})"
+        )
+    return g_verify if g_verify is not None else False
 
 
 class Config:
@@ -329,6 +421,13 @@ class Config:
 
             self._trust_store = HostTrustStore(self.config_dir / ".trust")
         return self._trust_store
+
+    def get_tls_verify(self, cluster_name: str) -> bool | str:
+        """Return the TLS ``verify`` value for a cluster's ONTAP REST client.
+
+        See :func:`resolve_tls_verify` for the precedence and errors.
+        """
+        return resolve_tls_verify(self, cluster_name)
 
     def _wrap_clusters(self) -> None:
         """Wrap each cluster config dict in a ClusterEntry.

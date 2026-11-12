@@ -28,6 +28,7 @@ The ONTAP clients connect to clusters that usually present self-signed TLS certi
 6. **First-use capture is one unauthenticated TLS handshake** that reads the peer certificate and saves its SHA-256 fingerprint. That fingerprint is then asserted on the authenticated connection, so a certificate that differs between the two connections is refused before credentials are sent. The capture ignores `HTTPS_PROXY`.
 7. **Writes are serialised per file.** A `threading.Lock` per resolved path guards read, merge, temp file, `fsync` and `os.replace`. The directory has mode 0o700 and the files 0o600.
 8. **The `requests` floor is raised to `>=2.32.3`**, the first release with `build_connection_pool_key_attributes`.
+9. **Optional CA validation replaces the TLS pin for a cluster that opts in** (issue [#982](https://github.com/endavis/pynetappfoundry/issues/982)). `verify_ssl` and `ca_bundle` can be set per cluster and as a global default in `ontapapi.toml`; `Config.get_tls_verify()` resolves them to a requests-style `verify` value. `FingerprintPinningAdapter` pins only when `verify` is `False`, so with validation on nothing is pinned or recorded. SSH host keys are unchanged. See [CA validation](../usage/basics.md#ca-validation-optional) and [Host identity](../usage/basics.md#host-identity-ssh-host-keys-and-tls-certificates).
 
 ## Rationale
 
@@ -36,6 +37,7 @@ The ONTAP clients connect to clusters that usually present self-signed TLS certi
 - A standard OpenSSH file lets administrators reset one entry with a tool they already know.
 - Injecting the store keeps tests free of sockets. An `ONTAPCLI` built without a store uses paramiko's `RejectPolicy`, so it connects only to hosts already in the system `known_hosts`.
 - A per-file lock plus atomic replace keeps concurrent first connections from losing entries.
+- CA validation drops the pin because urllib3 skips hostname matching whenever `assert_fingerprint` is set: a kept pin would validate the chain but never the hostname. A pin would also refuse a certificate legitimately renewed under the same CA.
 
 ## Consequences
 
@@ -45,4 +47,5 @@ The ONTAP clients connect to clusters that usually present self-signed TLS certi
 - The TLS capture does not go through a proxy, so it needs a direct route to the cluster.
 - Code that builds `ONTAPCLI` itself without `trust_store=` now refuses hosts missing from the system `known_hosts`; it passes `trust_store=config.get_trust_store()` to record hosts on first use. Every caller in this package passes a store.
 - `.trust/` is ignored by git and is not rebuilt by cache refresh.
+- For a cluster with CA validation on, a leaf certificate replaced under the same CA is accepted silently; that is the normal PKI trust model. `verify_ssl = true` trusts the `requests` default bundle (certifi) or `REQUESTS_CA_BUNDLE`, not the operating system store; internal CAs use `ca_bundle`.
 - Pinned connections count as verified to urllib3, so the ONTAP client needs no `InsecureRequestWarning` suppression, and netapp_ontap's own process-wide suppression is contained to `HostConnection` construction (#983).
