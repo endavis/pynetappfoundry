@@ -403,12 +403,11 @@ class TestDiiBackendRecordsPath:
         decision = RoutingDecision(cache_fields=(), live_fields=("installCommand",))
         client = MagicMock()
         client.get_all_pages.return_value = {"installCommand": "curl x | sh"}
-        with patch.object(backend, "_get_api_client", return_value=client):
-            results = backend.query(
-                DiiAuInstallcommand, DIIAUINSTALLCOMMAND_MAPPING, decision, "t", {}
-            )
-        assert len(results) == 1
-        assert results[0].installCommand == "curl x | sh"
+        with (
+            patch.object(backend, "_get_api_client", return_value=client),
+            pytest.raises(ValueError, match=r"\{platform\}"),
+        ):
+            backend.query(DiiAuInstallcommand, DIIAUINSTALLCOMMAND_MAPPING, decision, "t", {})
 
     def test_no_registered_dii_mapping_uses_dot_sentinel(self) -> None:
         from pynetappfoundry.cache.dii.au.installCommand.mapping import (  # noqa: F401
@@ -593,3 +592,300 @@ class TestDiiBackendClientCaching:
 
         assert client1 is not client2
         assert mock_cls.call_count == 2
+
+
+# ---------------------------------------------------------------------------
+# Parent-keyed (placeholder) mappings, #985
+# ---------------------------------------------------------------------------
+
+
+class FakeThing(OntapModel):
+    """Parent model for #985 tests."""
+
+    id: int = 0
+    name: str = ""
+
+
+class FakeKid(OntapModel):
+    """Child model for #985 tests."""
+
+    id: int = 0
+    name: str = ""
+
+
+class FakeSub(OntapModel):
+    """Grandchild model for #985 tests."""
+
+    name: str = ""
+
+
+_THING = TypeMapping(
+    name="FakeThing985",
+    model_class=FakeThing,
+    api_endpoint="/things",
+    api_type="dii",
+    records_path="",
+    identifier_field="id",
+    fields=(FieldMapping(cache_attr="id", default=0), FieldMapping(cache_attr="name")),
+)
+_KID = TypeMapping(
+    name="FakeKid985",
+    model_class=FakeKid,
+    api_endpoint="/things/{id}/kids",
+    api_type="dii",
+    records_path="",
+    identifier_field="id",
+    parent_mapping="FakeThing985",
+    parent_id_field="id",
+    fields=(FieldMapping(cache_attr="id", default=0), FieldMapping(cache_attr="name")),
+)
+_SUB = TypeMapping(
+    name="FakeSub985",
+    model_class=FakeSub,
+    api_endpoint="/kids/{id}/subs",
+    api_type="dii",
+    records_path="",
+    identifier_field="name",
+    parent_mapping="FakeKid985",
+    parent_id_field="id",
+    fields=(FieldMapping(cache_attr="name"),),
+)
+_LONELY = TypeMapping(
+    name="FakeLonely985",
+    model_class=FakeSub,
+    api_endpoint="/lonely/{lid}/things",
+    api_type="dii",
+    records_path="",
+    identifier_field="name",
+    fields=(FieldMapping(cache_attr="name"),),
+)
+_ORPHAN = TypeMapping(
+    name="FakeOrphan985",
+    model_class=FakeSub,
+    api_endpoint="/x/{id}/y",
+    api_type="dii",
+    records_path="",
+    identifier_field="name",
+    parent_mapping="DoesNotExist985",
+    parent_id_field="id",
+    fields=(FieldMapping(cache_attr="name"),),
+)
+_ALL_985 = (_THING, _KID, _SUB, _LONELY, _ORPHAN)
+_LIVE = RoutingDecision(cache_fields=(), live_fields=("id", "name"))
+
+
+def _fake_client(responses: dict[tuple[str, tuple[tuple[str, Any], ...]], Any]) -> MagicMock:
+    """Client whose ``get_all_pages`` answers by ``(template, sorted path_params)``."""
+    client = MagicMock()
+
+    def _pages(
+        path: str,
+        query_params: dict[str, Any] | None = None,
+        path_params: dict[str, Any] | None = None,
+    ) -> Any:
+        key = (path, tuple(sorted((path_params or {}).items())))
+        value = responses[key]
+        if isinstance(value, Exception):
+            raise value
+        return value
+
+    client.get_all_pages = MagicMock(side_effect=_pages)
+    return client
+
+
+def _requested(client: MagicMock) -> list[tuple[str, dict[str, Any]]]:
+    return [
+        (c.args[0], c.kwargs.get("path_params") or {}) for c in client.get_all_pages.call_args_list
+    ]
+
+
+class TestDiiBackendParentKeyed:
+    """Placeholder endpoints are fetched per parent or rejected (#985)."""
+
+    def setup_method(self) -> None:
+        for m in _ALL_985:
+            model_registry.register_mapping(m.name, m)
+
+    def teardown_method(self) -> None:
+        for m in _ALL_985:
+            model_registry._mappings.pop(m.name, None)
+            model_registry._mappings_by_class.pop(m.model_class, None)
+
+    def test_one_request_per_parent(self, mock_config: Any) -> None:
+        backend = _make_backend(mock_config)
+        client = _fake_client(
+            {
+                ("/things", ()): [{"id": 1, "name": "t1"}, {"id": 2, "name": "t2"}],
+                ("/things/{id}/kids", (("id", "1"),)): [{"id": 10, "name": "a"}],
+                ("/things/{id}/kids", (("id", "2"),)): {
+                    "offset": 0,
+                    "limit": 1000,
+                    "count": 1,
+                    "rows": [{"id": 20, "name": "b"}],
+                },
+            }
+        )
+        with patch.object(backend, "_get_api_client", return_value=client):
+            results = backend.query(FakeKid, _KID, _LIVE, "t", {})
+        assert [r.name for r in results] == ["a", "b"]
+        assert all("id" in getattr(r, "_fetched_fields", {"id"}) for r in results)
+        assert _requested(client) == [
+            ("/things", {}),
+            ("/things/{id}/kids", {"id": "1"}),
+            ("/things/{id}/kids", {"id": "2"}),
+        ]
+
+    def test_filters_go_to_child_requests_only(self, mock_config: Any) -> None:
+        backend = _make_backend(mock_config)
+        client = _fake_client(
+            {
+                ("/things", ()): [{"id": 1, "name": "t1"}],
+                ("/things/{id}/kids", (("id", "1"),)): [],
+            }
+        )
+        with patch.object(backend, "_get_api_client", return_value=client):
+            backend.query(FakeKid, _KID, _LIVE, "t", {"name": "a"})
+        calls = client.get_all_pages.call_args_list
+        assert calls[0].kwargs["query_params"] == {}
+        assert calls[1].kwargs["query_params"] == {"name": "a"}
+
+    def test_failing_parent_logged_others_returned(
+        self, mock_config: Any, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        import logging
+
+        backend = _make_backend(mock_config)
+        client = _fake_client(
+            {
+                ("/things", ()): [{"id": 1, "name": "t1"}, {"id": 2, "name": "t2"}],
+                ("/things/{id}/kids", (("id", "1"),)): RuntimeError("boom"),
+                ("/things/{id}/kids", (("id", "2"),)): [{"id": 20, "name": "b"}],
+            }
+        )
+        with (
+            patch.object(backend, "_get_api_client", return_value=client),
+            caplog.at_level(logging.WARNING),
+        ):
+            results = backend.query(FakeKid, _KID, _LIVE, "t", {})
+        assert [r.name for r in results] == ["b"]
+        assert any("CHILD_FETCH_FAILED" in r.message for r in caplog.records)
+
+    def test_two_level_chain(self, mock_config: Any) -> None:
+        backend = _make_backend(mock_config)
+        client = _fake_client(
+            {
+                ("/things", ()): [{"id": 1, "name": "t1"}],
+                ("/things/{id}/kids", (("id", "1"),)): [{"id": 10, "name": "k"}],
+                ("/kids/{id}/subs", (("id", "10"),)): [{"name": "s"}],
+            }
+        )
+        decision = RoutingDecision(cache_fields=(), live_fields=("name",))
+        with patch.object(backend, "_get_api_client", return_value=client):
+            results = backend.query(FakeSub, _SUB, decision, "t", {})
+        assert [r.name for r in results] == ["s"]
+        for path, params in _requested(client):
+            for key, value in params.items():
+                path = path.replace("{" + key + "}", value)
+            assert "{" not in path
+            assert "}" not in path
+
+    def test_parent_with_zero_id_is_requested(self, mock_config: Any) -> None:
+        """An absent DII id parses to 0 and is substituted, not skipped (#976)."""
+        backend = _make_backend(mock_config)
+        client = _fake_client(
+            {
+                ("/things", ()): [{"name": "noid"}],
+                ("/things/{id}/kids", (("id", "0"),)): [],
+            }
+        )
+        with patch.object(backend, "_get_api_client", return_value=client):
+            assert backend.query(FakeKid, _KID, _LIVE, "t", {}) == []
+        assert _requested(client)[-1] == ("/things/{id}/kids", {"id": "0"})
+
+    def test_no_parents_no_child_requests(self, mock_config: Any) -> None:
+        backend = _make_backend(mock_config)
+        client = _fake_client({("/things", ()): []})
+        with patch.object(backend, "_get_api_client", return_value=client):
+            assert backend.query(FakeKid, _KID, _LIVE, "t", {}) == []
+        assert _requested(client) == [("/things", {})]
+
+    def test_placeholder_without_parent_raises_before_client(self, mock_config: Any) -> None:
+        backend = _make_backend(mock_config)
+        with (
+            patch.object(backend, "_get_api_client") as get_client,
+            pytest.raises(ValueError, match=r"\{lid\}"),
+        ):
+            backend.query(FakeSub, _LONELY, _LIVE, "t", {})
+        get_client.assert_not_called()
+
+    def test_unregistered_parent_raises_before_request(self, mock_config: Any) -> None:
+        backend = _make_backend(mock_config)
+        with (
+            patch.object(backend, "_get_api_client") as get_client,
+            pytest.raises(ValueError, match="not registered"),
+        ):
+            backend.query(FakeSub, _ORPHAN, _LIVE, "t", {})
+        get_client.assert_not_called()
+
+    def test_cycle_raises_before_request(self, mock_config: Any) -> None:
+        cyc_a = dataclasses.replace(
+            _KID, name="CycA985", api_endpoint="/a/{id}", parent_mapping="CycB985"
+        )
+        cyc_b = dataclasses.replace(
+            _KID, name="CycB985", api_endpoint="/b/{id}", parent_mapping="CycA985"
+        )
+        for m in (cyc_a, cyc_b):
+            model_registry.register_mapping(m.name, m)
+        try:
+            backend = _make_backend(mock_config)
+            with (
+                patch.object(backend, "_get_api_client") as get_client,
+                pytest.raises(ValueError, match="cycle"),
+            ):
+                backend.query(FakeThing, cyc_a, _LIVE, "t", {})
+            get_client.assert_not_called()
+        finally:
+            for m in (cyc_a, cyc_b):
+                model_registry._mappings.pop(m.name, None)
+
+    def test_real_wired_mapping_uses_template_with_path_params(self, mock_config: Any) -> None:
+        from pynetappfoundry.cache.dii.assets.annotations.values.mapping import (
+            DIIASSETSANNOTATIONSVALUE_MAPPING,
+        )
+
+        child = DIIASSETSANNOTATIONSVALUE_MAPPING
+        parent = model_registry.get_mapping("DiiAssetsAnnotation")
+        assert parent is not None
+        backend = _make_backend(mock_config)
+        client = _fake_client(
+            {
+                (parent.api_endpoint, ()): [{"id": 7, "name": "ann"}],
+                ("/assets/annotations/{id}/values", (("id", "7"),)): [],
+            }
+        )
+        decision = RoutingDecision(cache_fields=(), live_fields=("id",))
+        with patch.object(backend, "_get_api_client", return_value=client):
+            backend.query(child.model_class, child, decision, "t", {})
+        assert _requested(client)[-1] == ("/assets/annotations/{id}/values", {"id": "7"})
+
+    def test_registry_placeholder_mappings_without_parent_raise(self, mock_config: Any) -> None:
+        import re
+
+        from pynetappfoundry.cache.dii.au.installCommand.mapping import (  # noqa: F401
+            DIIAUINSTALLCOMMAND_MAPPING,
+        )
+
+        candidates = [
+            m
+            for m in model_registry.mappings.values()
+            if m.api_type == "dii" and "{" in m.api_endpoint and not m.parent_mapping
+        ]
+        assert candidates
+        backend = _make_backend(mock_config)
+        with patch.object(backend, "_get_api_client") as get_client:
+            for m in candidates:
+                name = re.search(r"\{([^}]+)\}", m.api_endpoint)
+                assert name is not None
+                with pytest.raises(ValueError, match=re.escape("{" + name.group(1) + "}")):
+                    backend.query(m.model_class, m, _LIVE, "t", {})
+        get_client.assert_not_called()

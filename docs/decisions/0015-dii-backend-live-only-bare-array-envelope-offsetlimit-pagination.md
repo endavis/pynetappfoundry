@@ -71,6 +71,14 @@ The #919 `records_path = "."` sentinel is replaced by the shared `TypeMapping.re
 - **Backend:** `DiiBackend.query()` branches on `mapping.response_shape == "singleton"` and returns `[response]`. The branch order is: list, `None`, dict with `singleton`, dict with a non-empty `records_path`, envelope, warning. The singleton branch must precede the `records_path` branch, because the default `records_path="records"` would otherwise route the dict to the named-path lookup and return `[]`.
 - **Removed:** the `"."` sentinel constant in `src/pynetappfoundry/data/dii_backend.py` and its copy in `tools/codegen/adapters.py`. It was added after `v0.1.0` and never released.
 
+## Amendment (#985): placeholder endpoints are fetched per parent or rejected
+
+`DiiBackend.query()` used to send `mapping.api_endpoint` as is, so a mapping with `{id}` in its path requested a literal `/assets/fabrics/{id}/ports`.
+
+- **Wired mappings** (those with `parent_mapping`): the parents come from a recursive `DiiBackend.query` of the parent mapping, after `validate_parent_chain` has checked the chain. `get_all_pages` then runs once per parent with the endpoint template and `path_params`, so spec-driven pagination and validation still apply. `get_all_pages` and `_page_envelope` forward `path_params` to every `call_endpoint`. `iter_parent_ids` (new in `src/pynetappfoundry/cache/fetchers.py`, shared with `iter_parent_urls`) resolves the identifiers, skipping a parent without one (`SKIP_PARENT`); a failing parent is logged as `CHILD_FETCH_FAILED` and skipped.
+- **Unwired mappings** (a placeholder, no `parent_mapping`): `query()` raises `ValueError` naming the placeholder(s). No client is built and nothing is requested. The codegen declines to wire these on purpose, because DII lacks the parent collection endpoints; supplying their values is separate work.
+- No request is ever made with `{` or `}` in the path.
+
 ## Related Issues
 
 - Issue #600: feat: add DII API backend to DataSource
@@ -80,6 +88,7 @@ The #919 `records_path = "."` sentinel is replaced by the shared `TypeMapping.re
 - Issue #919: codegen models single-object responses as their first array property
 - Issue #925: ONTAP single-object responses use `TypeMapping.response_shape` via a codegen rule; DII kept `"."` until #935
 - Issue #935: refactor: replace DII `records_path="."` sentinel with `response_shape="singleton"`
+- Issue #985: bug: DiiBackend live queries request endpoints with unfilled path placeholders
 - Issue #533: feat: DataSource non-ONTAP backends (partially addressed; DII is the first non-ONTAP backend)
 - Issue #618: feat: early validation for where()/typed-DSL + incompatible source mode
 

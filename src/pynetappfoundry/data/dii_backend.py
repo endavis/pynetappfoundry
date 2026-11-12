@@ -19,12 +19,16 @@ itself one record (e.g. ``GET /au/oneTimeToken``); it is wrapped as
 from __future__ import annotations
 
 import logging
+import re
 from typing import TYPE_CHECKING, Any, TypeVar
 
 from pydantic import BaseModel
 
+from pynetappfoundry.cache._registry import model_registry
+from pynetappfoundry.cache.fetchers import iter_parent_ids, validate_parent_chain
 from pynetappfoundry.cache.field_mapping import parse_api_record
 from pynetappfoundry.clients.dii.api import extract_envelope_records
+from pynetappfoundry.data._routing import RoutingDecision
 from pynetappfoundry.data.backends import Backend
 from pynetappfoundry.utils.dict_path import PathNotFoundError, get_nested_value
 
@@ -32,7 +36,6 @@ if TYPE_CHECKING:
     from pynetappfoundry.cache.field_mapping import TypeMapping
     from pynetappfoundry.clients.dii.api import DIIAPIClient
     from pynetappfoundry.core.config import Config
-    from pynetappfoundry.data._routing import RoutingDecision
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +67,32 @@ def _records_at_path(mapping: TypeMapping, response: dict[str, Any]) -> list[Any
         )
         return []
     return value
+
+
+def _placeholders(mapping: TypeMapping) -> list[str]:
+    """Return the ``{name}`` path placeholders of ``mapping.api_endpoint``, in order."""
+    return re.findall(r"\{([^}]+)\}", mapping.api_endpoint.split("?", 1)[0])
+
+
+def _records_from_response(mapping: TypeMapping, response: Any) -> list[Any]:
+    """Extract the record list from a ``get_all_pages`` *response* (ADR-0015)."""
+    if isinstance(response, list):
+        return response
+    if response is None:
+        return []
+    if isinstance(response, dict) and mapping.response_shape == "singleton":
+        return [response]
+    if isinstance(response, dict) and mapping.records_path:
+        return _records_at_path(mapping, response)
+    if (envelope := extract_envelope_records(response)) is not None:
+        return envelope
+    # Unexpected shape -- treat as empty.
+    logger.warning(
+        "DiiBackend %s: unexpected response type %s, returning empty",
+        mapping.name,
+        type(response).__name__,
+    )
+    return []
 
 
 class DiiBackend(Backend):
@@ -132,6 +161,11 @@ class DiiBackend(Backend):
         one record and is returned as ``[response]`` (checked before the
         named-path branch).  Each element is parsed individually via
         :func:`parse_api_record` and stamped with ``_fetched_fields``.
+
+        A mapping whose endpoint has ``{placeholder}`` path segments and a
+        ``parent_mapping`` is fetched per parent (parents queried first, #985).
+        Such a mapping without a ``parent_mapping`` raises :class:`ValueError`
+        naming the placeholder(s); nothing is requested.
         """
         if decision.cache_fields and not decision.live_fields:
             msg = "DII backend does not support cache-only queries"
@@ -144,32 +178,35 @@ class DiiBackend(Backend):
         if not decision.live_fields:
             return []
 
-        client = self._get_api_client(cluster)
-        url = mapping.api_endpoint
-        query_params: dict[str, Any] = dict(filters) if filters else {}
-
-        response = client.get_all_pages(url, query_params=query_params)
-
-        records: list[dict[str, Any]]
-        if isinstance(response, list):
-            records = response
-        elif response is None:
-            records = []
-        elif isinstance(response, dict) and mapping.response_shape == "singleton":
-            records = [response]
-        elif isinstance(response, dict) and mapping.records_path:
-            records = _records_at_path(mapping, response)
-        elif (envelope := extract_envelope_records(response)) is not None:
-            records = envelope
-        else:
-            # Unexpected shape -- treat as empty.
-            logger.warning(
-                "DiiBackend %s: unexpected response type %s, returning empty",
-                mapping.name,
-                type(response).__name__,
+        placeholders = _placeholders(mapping)
+        if placeholders and not mapping.parent_mapping:
+            names = ", ".join("{" + p + "}" for p in placeholders)
+            msg = (
+                f"{mapping.name}: endpoint {mapping.api_endpoint} has unfilled path "
+                f"placeholder(s) {names} and no parent_mapping to supply them; "
+                "it cannot be queried live"
             )
-            records = []
+            raise ValueError(msg)
+        if placeholders:
+            return self._query_children(
+                model_class, mapping, decision, cluster, filters, placeholders
+            )
 
+        client = self._get_api_client(cluster)
+        query_params: dict[str, Any] = dict(filters) if filters else {}
+        response = client.get_all_pages(mapping.api_endpoint, query_params=query_params)
+        return self._parse_records(
+            model_class, mapping, decision, _records_from_response(mapping, response)
+        )
+
+    @staticmethod
+    def _parse_records(
+        model_class: type[T],
+        mapping: TypeMapping,
+        decision: RoutingDecision,
+        records: list[Any],
+    ) -> list[T]:
+        """Parse *records* into *model_class* instances stamped with the live fields."""
         log_prefix = f"DiiBackend<{mapping.name}>"
         results: list[T] = []
         for record in records:
@@ -179,5 +216,63 @@ class DiiBackend(Backend):
                 if fetched is not None:
                     fetched.update(decision.live_fields)
                 results.append(instance)
+        return results
 
+    def _query_children(
+        self,
+        model_class: type[T],
+        mapping: TypeMapping,
+        decision: RoutingDecision,
+        cluster: str,
+        filters: dict[str, Any],
+        placeholders: list[str],
+    ) -> list[T]:
+        """Fetch a parent-keyed mapping, one request per parent.
+
+        The parents come from a recursive :meth:`query` of the parent mapping
+        (chain checked first, before any request).  Each parent then fills the
+        endpoint's placeholders through ``path_params`` on the endpoint
+        template, so spec-driven pagination still applies.  A parent without
+        an identifier is skipped (``SKIP_PARENT``); a parent whose request
+        fails is logged as ``CHILD_FETCH_FAILED`` and skipped.  *filters* go to
+        the child requests only.
+        """
+        log_prefix = f"DiiBackend<{mapping.name}>"
+        validate_parent_chain(mapping)
+        parent_map = model_registry.get_mapping(mapping.parent_mapping or "")
+        if parent_map is None:  # pragma: no cover - guarded by validate_parent_chain
+            msg = f"{mapping.name}: parent mapping {mapping.parent_mapping!r} is not registered"
+            raise ValueError(msg)
+        if len(mapping.effective_parent_id_fields()) != len(placeholders):
+            msg = (
+                f"{mapping.name}: {len(mapping.effective_parent_id_fields())} parent id "
+                f"field(s) for {len(placeholders)} placeholder(s) in {mapping.api_endpoint}"
+            )
+            raise ValueError(msg)
+
+        parent_decision = RoutingDecision(
+            cache_fields=(), live_fields=tuple(f.cache_attr for f in parent_map.fields)
+        )
+        parents = self.query(parent_map.model_class, parent_map, parent_decision, cluster, {})
+        client = self._get_api_client(cluster)
+        query_params: dict[str, Any] = dict(filters) if filters else {}
+        results: list[T] = []
+        for parent, values in iter_parent_ids(mapping, parents, log_prefix):
+            path_params = dict(zip(placeholders, values, strict=True))
+            try:
+                response = client.get_all_pages(
+                    mapping.api_endpoint, query_params=query_params, path_params=path_params
+                )
+                records = _records_from_response(mapping, response)
+            except Exception as e:
+                logger.warning(
+                    "%s CHILD_FETCH_FAILED: %s for parent %s - %s: %s",
+                    log_prefix,
+                    mapping.name,
+                    getattr(parent, "name", repr(parent)),
+                    type(e).__name__,
+                    e,
+                )
+                continue
+            results.extend(self._parse_records(model_class, mapping, decision, records))
         return results

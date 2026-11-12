@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Mapping
 from typing import Any
 from unittest.mock import MagicMock
 
@@ -278,3 +279,51 @@ class TestExtractEnvelopeRecords:
     )
     def test_not_envelope(self, response: Any) -> None:
         assert extract_envelope_records(response) is None
+
+
+class TestGetAllPagesPathParams:
+    """``path_params`` reach every ``call_endpoint`` while the template drives paging (#985)."""
+
+    TEMPLATE = "/assets/fabrics/{id}/ports"
+
+    @staticmethod
+    def _kwargs(client: DIIAPIClient) -> list[Mapping[str, Any]]:
+        mock: MagicMock = client.call_endpoint  # type: ignore[assignment]
+        return [c.kwargs for c in mock.call_args_list]
+
+    def test_list_pages_all_carry_path_params(self) -> None:
+        n = DII_PAGE_SIZE
+        client = _make_client(responses=[_page(0, n), _page(n, 2)])
+
+        result = client.get_all_pages(self.TEMPLATE, path_params={"id": "5"})
+
+        assert len(result) == n + 2
+        assert [k["path_params"] for k in self._kwargs(client)] == [{"id": "5"}, {"id": "5"}]
+        extract: MagicMock = client._extract_parameters  # type: ignore[assignment]
+        extract.assert_called_with(self.TEMPLATE, "GET")
+
+    def test_envelope_pages_carry_path_params(self) -> None:
+        n = DII_PAGE_SIZE
+        client = _make_client(
+            responses=[_envelope("rows", 0, n, n + 3), _envelope("rows", n, 3, n + 3)]
+        )
+
+        client.get_all_pages(self.TEMPLATE, path_params={"id": "5"})
+
+        kwargs = self._kwargs(client)
+        assert len(kwargs) == 2
+        assert all(k["path_params"] == {"id": "5"} for k in kwargs)
+
+    def test_non_paging_single_call_carries_path_params(self) -> None:
+        client = _make_client(query_names=[], responses=[{"a": 1}])
+
+        client.get_all_pages(self.TEMPLATE, path_params={"id": "5"})
+
+        assert self._kwargs(client) == [{"query_params": {}, "path_params": {"id": "5"}}]
+
+    def test_no_path_params_key_when_unset(self) -> None:
+        client = _make_client(responses=[_page(0, 2)])
+
+        client.get_all_pages(PATH)
+
+        assert all("path_params" not in k for k in self._kwargs(client))

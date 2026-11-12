@@ -83,8 +83,10 @@ class DIIAPIClient(APIWrapper):
         params: dict[str, Any],
         first_records: list[Any],
         first_page: dict[str, Any],
+        path_params: dict[str, Any] | None = None,
     ) -> list[Any]:
         """Follow ``offset``/``limit`` paging of an envelope endpoint to the end."""
+        extra: dict[str, Any] = {} if path_params is None else {"path_params": path_params}
         records: list[Any] = list(first_records)
         page_records = first_records
         page = first_page
@@ -93,6 +95,7 @@ class DIIAPIClient(APIWrapper):
                 page = self.call_endpoint(
                     path,
                     query_params={**params, "offset": len(records), "limit": DII_PAGE_SIZE},
+                    **extra,
                 )
                 extracted = extract_envelope_records(page)
                 if extracted is None:
@@ -116,7 +119,12 @@ class DIIAPIClient(APIWrapper):
             )
         return records
 
-    def get_all_pages(self, path: str, query_params: dict[str, Any] | None = None) -> Any:
+    def get_all_pages(
+        self,
+        path: str,
+        query_params: dict[str, Any] | None = None,
+        path_params: dict[str, Any] | None = None,
+    ) -> Any:
         """GET *path*, following ``offset``/``limit`` pagination (ADR-0015).
 
         Pages are requested only when the endpoint's GET spec declares both
@@ -140,27 +148,33 @@ class DIIAPIClient(APIWrapper):
         Args:
             path: The API path template (e.g. ``/assets/storages``).
             query_params: Query parameters to send with every page.
+            path_params: Values for the ``{placeholders}`` in *path*, sent
+                with every page. *path* stays the template so the spec lookup
+                and pagination still apply.
 
         Returns:
             The concatenated list of records when paginating, otherwise the
             raw ``call_endpoint`` result (see the return contract above).
         """
         params: dict[str, Any] = dict(query_params) if query_params else {}
+        extra: dict[str, Any] = {} if path_params is None else {"path_params": path_params}
 
         if "offset" in params or "limit" in params or not self._supports_pagination(path):
-            return self.call_endpoint(path, query_params=params)
+            return self.call_endpoint(path, query_params=params, **extra)
 
         records: list[Any] = []
         for page_number in range(DII_MAX_PAGES):
             offset = page_number * DII_PAGE_SIZE
             page = self.call_endpoint(
-                path, query_params={**params, "offset": offset, "limit": DII_PAGE_SIZE}
+                path,
+                query_params={**params, "offset": offset, "limit": DII_PAGE_SIZE},
+                **extra,
             )
             if not isinstance(page, list):
                 if page_number == 0:
                     envelope = extract_envelope_records(page)
                     if envelope is not None:
-                        return self._page_envelope(path, params, envelope, page)
+                        return self._page_envelope(path, params, envelope, page, path_params)
                     return page
                 break
             records.extend(page)
