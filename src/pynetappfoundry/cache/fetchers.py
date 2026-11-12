@@ -35,10 +35,12 @@ missing from the shared ``results_cache``, recursively calls
 
 from __future__ import annotations
 
+import itertools
 import logging
 import re
 from functools import partial
 from typing import TYPE_CHECKING, Any, cast
+from urllib.parse import quote
 
 import requests
 from pydantic import BaseModel
@@ -429,6 +431,51 @@ def iter_parent_ids(
         yield parent, values
 
 
+_ONTAP_QUERY_OPERATORS = ("*", "!", "<", ">", "..")
+
+
+def _path_placeholders(mapping: TypeMapping) -> tuple[str, ...]:
+    """Return the ``{placeholder}`` names in *mapping*'s endpoint path, in order."""
+    return tuple(re.findall(r"\{([^}]+)\}", mapping.api_endpoint.split("?", 1)[0]))
+
+
+def pinned_parent_ids(
+    mapping: TypeMapping, filters: dict[str, Any]
+) -> list[tuple[str, ...]] | None:
+    """Return the parent id tuples that *filters* pin literally, else ``None``.
+
+    The filter key that pins a placeholder is the placeholder's own name in
+    ``api_endpoint`` (``volume.uuid`` for ``/storage/volumes/{volume.uuid}/snapshots``).
+    A query counts as pinned only when every placeholder is a filter key and
+    each value, split on ``|``, holds only non-empty literal parts (none with
+    an ONTAP query operator). Parts are de-duplicated in order and, with
+    several placeholders, the result is the cartesian product. Values are
+    percent-encoded for the URL path.
+
+    Args:
+        mapping: Child TypeMapping.
+        filters: Query filters.
+
+    Returns:
+        One tuple of encoded values per target, or ``None`` when the query
+        is not fully pinned (the caller then fetches the parents).
+    """
+    if not mapping.parent_mapping:
+        return None
+    placeholders = _path_placeholders(mapping)
+    if not placeholders:
+        return None
+    options: list[list[str]] = []
+    for name in placeholders:
+        if name not in filters:
+            return None
+        parts = [part.strip() for part in str(filters[name]).split("|")]
+        if any(not part or any(op in part for op in _ONTAP_QUERY_OPERATORS) for part in parts):
+            return None
+        options.append([quote(part, safe="") for part in dict.fromkeys(parts)])
+    return list(itertools.product(*options))
+
+
 def validate_parent_chain(mapping: TypeMapping) -> None:
     """Raise ``ValueError`` if the parent chain has an unregistered link or a cycle."""
     seen = [mapping.name]
@@ -616,5 +663,6 @@ __all__ = [
     "iter_parent_urls",
     "normalize_cli_key",
     "parse_vm_instance_output",
+    "pinned_parent_ids",
     "validate_parent_chain",
 ]

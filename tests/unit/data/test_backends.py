@@ -2100,3 +2100,224 @@ class TestOntapBackendPathParams:
                 )
                 == []
             )
+
+
+class TestLiveChildNarrowing:
+    """A filter pinning every path placeholder skips the parent fetch (#986)."""
+
+    _LIVE = TestLiveChildQuery._LIVE
+    _PARENTS_URL = TestLiveChildQuery._PARENTS_URL
+    _helper = TestLiveChildQuery()
+
+    def _client(self, children: dict[str, Any]) -> MagicMock:
+        return self._helper._client(children)
+
+    def _query(
+        self,
+        backend: OntapBackend,
+        mapping: TypeMapping,
+        client: MagicMock,
+        filters: dict[str, Any],
+    ) -> list[FakeChildWithDottedRef]:
+        return self._helper._query(backend, mapping, client, filters)
+
+    def _child_urls(self, client: MagicMock) -> list[str]:
+        return [
+            c.args[0] for c in client.get_all_records.call_args_list if "/children" in c.args[0]
+        ]
+
+    def _parent_calls(self, client: MagicMock) -> list[str]:
+        return [
+            c.args[0] for c in client.get_all_records.call_args_list if "fake-parents" in c.args[0]
+        ]
+
+    def _http_error(self, status: int) -> Exception:
+        import requests
+
+        response = requests.Response()
+        response.status_code = status
+        return requests.HTTPError(response=response)
+
+    def test_single_value_skips_parent_fetch(
+        self, fake_child_mapping: TypeMapping, mock_config: Any
+    ) -> None:
+        client = self._client(
+            {"/storage/fakes/p-2/children": {"records": [{"uuid": "c2", "metric": 1.0}]}}
+        )
+        results = self._query(
+            _make_backend(mock_config),
+            fake_child_mapping,
+            client,
+            {"volume.uuid": "p-2", "uuid": "c2"},
+        )
+        assert [r.uuid for r in results] == ["c2"]
+        assert self._parent_calls(client) == []
+        urls = self._child_urls(client)
+        assert len(urls) == 1
+        assert "/storage/fakes/p-2/children" in urls[0]
+        assert "volume.uuid" not in urls[0]
+        assert "uuid=c2" in urls[0]
+
+    def test_pipe_or_requests_each_value(
+        self, fake_child_mapping: TypeMapping, mock_config: Any
+    ) -> None:
+        client = self._client(
+            {
+                "/storage/fakes/p-1/children": {"records": [{"uuid": "c1", "metric": 1.0}]},
+                "/storage/fakes/p-3/children": {"records": [{"uuid": "c3", "metric": 1.0}]},
+            }
+        )
+        results = self._query(
+            _make_backend(mock_config), fake_child_mapping, client, {"volume.uuid": "p-1|p-3"}
+        )
+        assert sorted(r.uuid for r in results) == ["c1", "c3"]
+        assert self._parent_calls(client) == []
+        assert len(self._child_urls(client)) == 2
+
+    def test_no_pin_still_fetches_parents(
+        self, fake_child_mapping: TypeMapping, mock_config: Any
+    ) -> None:
+        client = self._client({})
+        self._query(_make_backend(mock_config), fake_child_mapping, client, {"uuid": "x"})
+        assert len(self._parent_calls(client)) == 1
+        assert len(self._child_urls(client)) == 3
+
+    def test_operator_value_falls_back_to_parent_fetch(
+        self, fake_child_mapping: TypeMapping, mock_config: Any
+    ) -> None:
+        client = self._client({})
+        self._query(_make_backend(mock_config), fake_child_mapping, client, {"volume.uuid": "p-*"})
+        assert len(self._parent_calls(client)) == 1
+
+    def test_404_on_pinned_target_is_empty_without_warning(
+        self,
+        fake_child_mapping: TypeMapping,
+        mock_config: Any,
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        import logging
+
+        client = self._client({"/storage/fakes/nope/children": self._http_error(404)})
+        with caplog.at_level(logging.DEBUG):
+            results = self._query(
+                _make_backend(mock_config), fake_child_mapping, client, {"volume.uuid": "nope"}
+            )
+        assert results == []
+        assert not any("CHILD_FETCH_FAILED" in r.message for r in caplog.records)
+
+    def test_other_http_error_is_still_logged(
+        self,
+        fake_child_mapping: TypeMapping,
+        mock_config: Any,
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        import logging
+
+        client = self._client({"/storage/fakes/p-1/children": self._http_error(500)})
+        with caplog.at_level(logging.WARNING):
+            results = self._query(
+                _make_backend(mock_config), fake_child_mapping, client, {"volume.uuid": "p-1"}
+            )
+        assert results == []
+        assert any("CHILD_FETCH_FAILED" in r.message for r in caplog.records)
+
+    def test_max_records_caps_across_pinned_targets(
+        self, fake_child_mapping: TypeMapping, mock_config: Any
+    ) -> None:
+        client = self._client(
+            {
+                "/storage/fakes/p-1/children": {
+                    "records": [{"uuid": "c1", "metric": 1.0}, {"uuid": "c2", "metric": 1.0}]
+                },
+                "/storage/fakes/p-2/children": {"records": [{"uuid": "c3", "metric": 1.0}]},
+            }
+        )
+        results = self._query(
+            _make_backend(mock_config),
+            fake_child_mapping,
+            client,
+            {"volume.uuid": "p-1|p-2", "max_records": 2},
+        )
+        assert [r.uuid for r in results] == ["c1", "c2"]
+        assert len(self._child_urls(client)) == 1
+
+    @pytest.mark.parametrize("value", ["p-1", "p-1|p-2", "ghost"])
+    def test_results_match_unnarrowed_path(
+        self, fake_child_mapping: TypeMapping, mock_config: Any, value: str
+    ) -> None:
+        from urllib.parse import parse_qs, urlparse
+
+        import requests
+
+        by_parent = {"p-1": "c1", "p-2": "c2", "p-3": "c3"}
+
+        def _server(url: str, **_kw: Any) -> Any:
+            """Honour the volume.uuid filter; 404 for a parent that does not exist."""
+            parsed = urlparse(url)
+            if "fake-parents" in parsed.path:
+                return {"records": [{"name": p, "uuid": p} for p in by_parent]}
+            parent_id = parsed.path.split("/")[3]
+            if parent_id not in by_parent:
+                response = requests.Response()
+                response.status_code = 404
+                raise requests.HTTPError(response=response)
+            wanted = parse_qs(parsed.query).get("volume.uuid")
+            if wanted and parent_id not in wanted[0].split("|"):
+                return {"records": []}
+            return {"records": [{"uuid": by_parent[parent_id], "metric": 1.0}]}
+
+        def _run() -> list[str]:
+            client = MagicMock()
+            client.get_all_records = MagicMock(side_effect=_server)
+            found = self._query(
+                _make_backend(mock_config),
+                fake_child_mapping,
+                client,
+                {"volume.uuid": value},
+            )
+            return sorted(r.uuid for r in found)
+
+        narrowed = _run()
+        with patch("pynetappfoundry.data.backends.pinned_parent_ids", return_value=None):
+            full = _run()
+        assert narrowed == full
+
+    def test_count_pinned_single_value(
+        self, fake_child_mapping: TypeMapping, mock_config: Any
+    ) -> None:
+        backend = _make_backend(mock_config)
+        client = self._client({})
+        client.call_endpoint = MagicMock(return_value={"num_records": 4})
+        with patch.object(backend, "_get_api_client", return_value=client):
+            assert backend._count_live(fake_child_mapping, "c1", {"volume.uuid": "p-2"}) == 4
+        assert self._parent_calls(client) == []
+        urls = [c.args[0] for c in client.call_endpoint.call_args_list]
+        assert len(urls) == 1
+        assert "/storage/fakes/p-2/children" in urls[0]
+        assert "volume.uuid" not in urls[0]
+
+    def test_count_pinned_pipe_or_sums(
+        self, fake_child_mapping: TypeMapping, mock_config: Any
+    ) -> None:
+        backend = _make_backend(mock_config)
+        client = self._client({})
+        client.call_endpoint = MagicMock(side_effect=[{"num_records": 2}, {"num_records": 3}])
+        with patch.object(backend, "_get_api_client", return_value=client):
+            assert backend._count_live(fake_child_mapping, "c1", {"volume.uuid": "p-1|p-2"}) == 5
+
+    def test_count_404_is_zero(self, fake_child_mapping: TypeMapping, mock_config: Any) -> None:
+        backend = _make_backend(mock_config)
+        client = self._client({})
+        client.call_endpoint = MagicMock(side_effect=self._http_error(404))
+        with patch.object(backend, "_get_api_client", return_value=client):
+            assert backend._count_live(fake_child_mapping, "c1", {"volume.uuid": "x"}) == 0
+
+    def test_count_partial_pin_falls_back(
+        self, fake_child_mapping: TypeMapping, mock_config: Any
+    ) -> None:
+        backend = _make_backend(mock_config)
+        client = self._client({})
+        client.call_endpoint = MagicMock(return_value={"num_records": 1})
+        with patch.object(backend, "_get_api_client", return_value=client):
+            assert backend._count_live(fake_child_mapping, "c1", {"uuid": "x"}) == 3
+        assert len(self._parent_calls(client)) == 1

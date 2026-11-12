@@ -20,14 +20,17 @@ from collections.abc import Iterator
 from functools import cached_property
 from typing import TYPE_CHECKING, Any, TypeVar
 
+import requests
 from pydantic import BaseModel
 
 from pynetappfoundry.cache import fetch
 from pynetappfoundry.cache.fetchers import (
+    _path_placeholders,
     _resolve_dotted_attr,
     call_singleton_endpoint,
     fetch_parents,
     iter_parent_urls,
+    pinned_parent_ids,
 )
 from pynetappfoundry.cache.field_mapping import parse_api_record, parse_api_response
 from pynetappfoundry.core.models import PaginationConfig
@@ -328,13 +331,17 @@ class OntapBackend(Backend):
     ) -> int:
         """Count a parent-keyed mapping's records by summing the counts per parent.
 
-        A failing parent is logged as ``CHILD_FETCH_FAILED`` and skipped.
+        When *filters* pin every path placeholder to literal values, the
+        parent fetch is skipped (see :meth:`_child_targets`). A failing parent
+        is logged as ``CHILD_FETCH_FAILED`` and skipped; a 404 on a pinned
+        target counts as zero.
         """
         client = self._get_api_client(cluster)
         prefix = f"OntapBackend<{mapping.name}>"
-        parents = fetch_parents(mapping, client, {}, prefix)
+        targets, narrowed = self._child_targets(mapping, client, filters, prefix)
+        query_filters = self._child_query_filters(mapping, filters, narrowed)
         total = 0
-        for parent, base_url in iter_parent_urls(mapping, parents, prefix):
+        for label, base_url in targets:
             try:
                 if mapping.response_shape == "singleton":
                     record = self._fetch_singleton_raw(
@@ -343,21 +350,79 @@ class OntapBackend(Backend):
                     total += 0 if record is None else 1
                     continue
                 url = self._build_live_url(
-                    mapping, filters, (), return_records=False, base_url=base_url
+                    mapping, query_filters, (), return_records=False, base_url=base_url
                 )
                 response = client.call_endpoint(url)
                 if isinstance(response, dict):
                     total += int(response.get("num_records", 0))
+            except requests.HTTPError as e:
+                if narrowed and e.response is not None and e.response.status_code == 404:
+                    logger.debug("%s pinned target %s answered 404: no records", prefix, label)
+                    continue
+                self._log_child_failure(prefix, mapping, label, e)
             except Exception as e:
-                logger.warning(
-                    "%s CHILD_FETCH_FAILED: %s for parent %s - %s: %s",
-                    prefix,
-                    mapping.name,
-                    getattr(parent, "name", repr(parent)),
-                    type(e).__name__,
-                    e,
-                )
+                self._log_child_failure(prefix, mapping, label, e)
         return total
+
+    @staticmethod
+    def _log_child_failure(prefix: str, mapping: TypeMapping, label: str, error: Exception) -> None:
+        """Log a failed per-parent request as ``CHILD_FETCH_FAILED``."""
+        logger.warning(
+            "%s CHILD_FETCH_FAILED: %s for parent %s - %s: %s",
+            prefix,
+            mapping.name,
+            label,
+            type(error).__name__,
+            error,
+        )
+
+    @staticmethod
+    def _child_targets(
+        mapping: TypeMapping,
+        client: Any,
+        filters: dict[str, Any],
+        prefix: str,
+    ) -> tuple[list[tuple[str, str]], bool]:
+        """Resolve the ``(label, base_url)`` pairs a live child query must request.
+
+        When *filters* pin every path placeholder to literal values (see
+        :func:`pynetappfoundry.cache.fetchers.pinned_parent_ids`) the URLs are
+        built straight from those values and the parent collection is not
+        fetched. Otherwise the parents are fetched and each usable one yields a
+        URL.
+
+        Returns:
+            ``(targets, narrowed)``; *narrowed* is ``True`` on the pinned path.
+        """
+        pinned = pinned_parent_ids(mapping, filters)
+        if pinned is not None:
+            return [
+                (
+                    ", ".join(values),
+                    mapping.build_parameterized_url(values[0] if len(values) == 1 else values),
+                )
+                for values in pinned
+            ], True
+        parents = fetch_parents(mapping, client, {}, prefix)
+        return [
+            (str(getattr(parent, "name", repr(parent))), url)
+            for parent, url in iter_parent_urls(mapping, parents, prefix)
+        ], False
+
+    @staticmethod
+    def _child_query_filters(
+        mapping: TypeMapping, filters: dict[str, Any], narrowed: bool
+    ) -> dict[str, Any]:
+        """Return *filters* for a child query string, minus pinned keys when narrowed.
+
+        The pinned placeholder names are already in the URL path, and whether
+        ONTAP accepts them as query filters is not established, so they are
+        dropped from the query string on the narrowed path.
+        """
+        if not narrowed:
+            return filters
+        pinned_keys = set(_path_placeholders(mapping))
+        return {k: v for k, v in filters.items() if k not in pinned_keys}
 
     def _fetch_cache(
         self,
@@ -542,7 +607,10 @@ class OntapBackend(Backend):
         """Filtered live read of a parent-keyed mapping, one request per parent.
 
         Fetches the parents first (recursively, via :func:`fetch_parents`),
-        then sends one filtered request per parent. ``order_by`` and
+        then sends one filtered request per parent. When *filters* pin every
+        path placeholder to literal values the parent fetch is skipped and the
+        URLs are built from those values (:meth:`_child_targets`); a 404 on
+        such a target means no records. ``order_by`` and
         ``max_records`` apply per parent; ``max_records`` is also a running
         total, so no further parent is requested once it is reached. A parent
         whose request fails is logged as ``CHILD_FETCH_FAILED`` and skipped.
@@ -553,15 +621,18 @@ class OntapBackend(Backend):
         if limit is not None and limit <= 0:
             return []
         client = self._get_api_client(cluster)
-        parents = fetch_parents(mapping, client, {}, prefix)
+        targets, narrowed = self._child_targets(mapping, client, filters, prefix)
+        query_filters = self._child_query_filters(mapping, filters, narrowed)
         results: list[T] = []
-        for parent, base_url in iter_parent_urls(mapping, parents, prefix):
+        for label, base_url in targets:
             remaining = None if limit is None else limit - len(results)
             if remaining is not None and remaining <= 0:
                 break
             parent_filters = dict(filters)
+            query_parent_filters = dict(query_filters)
             if remaining is not None:
                 parent_filters["max_records"] = remaining
+                query_parent_filters["max_records"] = remaining
             try:
                 if mapping.response_shape == "singleton":
                     record = self._fetch_singleton_raw(
@@ -570,7 +641,7 @@ class OntapBackend(Backend):
                     parsed = [] if record is None else [parse_api_record(mapping, record, prefix)]
                 else:
                     url = self._build_live_url(
-                        mapping, parent_filters, live_fields, base_url=base_url
+                        mapping, query_parent_filters, live_fields, base_url=base_url
                     )
                     if remaining is not None:
                         response = client.get_all_records(
@@ -579,15 +650,14 @@ class OntapBackend(Backend):
                     else:
                         response = client.get_all_records(url)
                     parsed = parse_api_response(mapping, response, prefix, _log_missing_fields)
+            except requests.HTTPError as e:
+                if narrowed and e.response is not None and e.response.status_code == 404:
+                    logger.debug("%s pinned target %s answered 404: no records", prefix, label)
+                else:
+                    self._log_child_failure(prefix, mapping, label, e)
+                continue
             except Exception as e:
-                logger.warning(
-                    "%s CHILD_FETCH_FAILED: %s for parent %s - %s: %s",
-                    prefix,
-                    mapping.name,
-                    getattr(parent, "name", repr(parent)),
-                    type(e).__name__,
-                    e,
-                )
+                self._log_child_failure(prefix, mapping, label, e)
                 continue
             results.extend(r for r in parsed if isinstance(r, model_class))
         return results if limit is None else results[:limit]

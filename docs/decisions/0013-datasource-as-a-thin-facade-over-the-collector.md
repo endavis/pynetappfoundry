@@ -168,6 +168,7 @@ This ADR is **Phase 1** of a three-phase plan. A new parent issue supersedes #49
 - Issue #538: feat: DataSource pagination/chunking edge cases — re-scoped to the realtime live-fetch path only
 - Issue #967: refactor: `response_shape="computed"` mappings and the hand-written `ClusterTraits` model (see [ADR-0024](0024-generated-models-carry-only-api-data-computed-values-live-in-separate-hand-written-models.md))
 - Issue #975: bug: a live query of a parent-keyed mapping now fetches its parents on demand (`fetch_parents`) instead of returning `[]` or requesting a stripped URL; see [DataSource — Source Modes](../usage/data-source.md#source-modes)
+- Issue #986: feat: an ONTAP live child query or count whose filters pin every path placeholder to literal values skips the parent fetch and requests the pinned parents directly (`pinned_parent_ids`); see [DataSource — Source Modes](../usage/data-source.md#source-modes)
 
 ## Related Documentation
 
