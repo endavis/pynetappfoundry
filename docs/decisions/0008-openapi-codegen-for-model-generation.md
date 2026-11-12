@@ -241,6 +241,21 @@ assumption holds for some APIs and not others.  The supported strategies are:
    generated artifact (``tools/console_openapi/generated/console_openapi.yaml``)
    is checked in alongside a lockfile pinning the upstream source commit.
 
+   **Coverage gap: ``agentsMgmt`` (Issue #733).**  Connectors and other
+   agents are managed by a separate BlueXP subservice whose base URL is
+   ``https://api.bluexp.netapp.com/agents-mgmt`` (the ``agentsMgmtUrl``
+   field of the service-discovery response).  ``NetAppDocs/console-automation``
+   publishes no AsciiDoc reference for it.  At ``202c56da`` (``main``) the
+   repository's top-level folders are ``audit automate cbs cm copysync
+   credential cvo dw federation fsx ipa platform redirects support tenancy
+   tenancyv4 workflows``; no branch has an ``agentsMgmt`` folder.  The
+   ``tenancy`` agent endpoints (for example
+   ``tenancy/get-tenancy-account-workspace-agents.adoc``) are already parsed,
+   but their response section is only ``Status: 200, Default response``, with
+   no schema, so they yield no ``Connector`` type.  Parser coverage stays at
+   ``tenancy`` and ``tenancyv4`` until NetApp publishes an ``agentsMgmt``
+   source; #733 tracks it.
+
 Issue: #697
 
 ### Codegen integration for Console (Issue #699)
@@ -555,6 +570,7 @@ Issue: #901
 - Issue #603: bug(codegen): shared response schemas cause registry collisions; non-ONTAP support gaps
 - Issue #697: feat: add BlueXP/Console SaaS docs to OpenAPI 3.1 parser
 - Issue #699: feat: generate Pydantic models from Console OpenAPI spec
+- Issue #733: feat: extend Console OpenAPI parser to cover agentsMgmt subservice (blocked: no published source)
 - Issue #901: ci: add generator drift check and generated headers for ontap/dii models
 - Issue #894: bug: codegen class-name collisions drop model registry mappings
 - Issue #925: bug: codegen models ONTAP single-object responses as their first array property
