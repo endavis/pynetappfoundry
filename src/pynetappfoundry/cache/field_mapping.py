@@ -20,7 +20,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel
 
-from pynetappfoundry.utils.dict_path import PathNotFoundError, get_nested_value
+from pynetappfoundry.utils.dict_path import PathNotFoundError, get_nested_value, set_nested_value
 
 logger = logging.getLogger(__name__)
 
@@ -443,20 +443,9 @@ def _nest_kwargs(flat: dict[str, Any]) -> dict[str, Any]:
     """
     nested: dict[str, Any] = {}
     for key, value in flat.items():
-        parts = key.split(".")
-        if len(parts) == 1:
-            nested[key] = value
-            continue
-        current = nested
-        for part in parts[:-1]:
-            if part not in current:
-                current[part] = {}
-            elif not isinstance(current[part], dict):
-                # Conflict: a scalar was already set at this path.
-                # The more-specific (deeper) path wins.
-                current[part] = {}
-            current = current[part]
-        current[parts[-1]] = value
+        # A scalar already set along the path is replaced: the more-specific
+        # (deeper) path wins.
+        set_nested_value(nested, key, value, replace_non_dict=True)
     return nested
 
 

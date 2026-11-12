@@ -24,6 +24,7 @@ from pynetappfoundry.cli.utils import (
 )
 from pynetappfoundry.clients.ontap import ONTAPCLI, ONTAPAPIClient
 from pynetappfoundry.core.config import Config
+from pynetappfoundry.utils.dict_path import get_dotted_attr
 
 logger = logging.getLogger(__name__)
 console = Console()
@@ -95,11 +96,7 @@ def _resolve_cache_list(
     Returns:
         The list at the end of the path, or empty list on error.
     """
-    obj = metadata
-    for attr in cache_path.split("."):
-        obj = getattr(obj, attr, None)
-        if obj is None:
-            return []
+    obj = get_dotted_attr(metadata, cache_path)
     return obj if isinstance(obj, list) else []
 
 

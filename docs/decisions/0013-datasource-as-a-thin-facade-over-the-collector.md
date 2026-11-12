@@ -71,7 +71,7 @@ The partial-fetch merge path for `cache_strategy="realtime"` fields is genuinely
 **§7 amendment (issue #544 — parent-keyed partial-fetch).** Partial-fetch (cache + realtime live merge) on the four parent-keyed mappings is now supported via a grouped-by-parent algorithm in `OntapBackend._query_partial()`. The implementation:
 
 1. Parses the `{placeholder}` from `TypeMapping.api_endpoint` (e.g. `{volume.uuid}`) to discover the child→parent reference field.
-2. Groups cached children by parent UUID using `_resolve_dotted_attr` on the parsed reference field.
+2. Groups cached children by parent UUID using `get_dotted_attr` in `src/pynetappfoundry/utils/dict_path.py` (#965) on the parsed reference field.
 3. For each parent group, builds a resolved URL via `TypeMapping.build_parameterized_url`, adds pipe-OR identifier filters chunked at `_BATCH_SIZE`, and fetches live data per parent.
 4. Merges live results into cached instances by `identifier_field`, the same way the non-parent-keyed path does.
 

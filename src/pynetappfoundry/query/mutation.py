@@ -16,30 +16,11 @@ from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.field_mapping import TypeMapping, parse_api_record
 from pynetappfoundry.clients.openapi import APIWrapper
 from pynetappfoundry.core.models import RetryConfig
+from pynetappfoundry.utils.dict_path import set_nested_value as _set_nested
 
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T", bound=BaseModel)
-
-
-def _set_nested(d: dict[str, Any], path: str, value: Any) -> None:
-    """Set a value in a nested dict using a dot-separated path.
-
-    Merges with existing keys so that sibling paths like ``svm.name``
-    and ``svm.uuid`` produce ``{"svm": {"name": ..., "uuid": ...}}``.
-
-    Args:
-        d: Target dictionary (modified in place).
-        path: Dot-separated key path (e.g. ``"svm.name"``).
-        value: Value to set at the leaf.
-    """
-    keys = path.split(".")
-    current = d
-    for key in keys[:-1]:
-        if key not in current:
-            current[key] = {}
-        current = current[key]
-    current[keys[-1]] = value
 
 
 class Mutation:

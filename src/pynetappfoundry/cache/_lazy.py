@@ -24,6 +24,7 @@ from typing import TYPE_CHECKING, Any
 from pydantic import BaseModel
 
 from pynetappfoundry.cache._base import _utcnow
+from pynetappfoundry.utils.dict_path import get_dotted_item, set_nested_value
 
 if TYPE_CHECKING:
     from pynetappfoundry.cache._metadata import CachedClusterMetadata
@@ -46,14 +47,6 @@ _DATA_FIELDS = frozenset(
         "console",
     }
 )
-
-
-def _set_by_path(target: dict[str, Any], path: str, value: Any) -> None:
-    """Set a value in a nested dict via dot-path, creating intermediate dicts."""
-    parts = path.split(".")
-    for part in parts[:-1]:
-        target = target.setdefault(part, {})
-    target[parts[-1]] = value
 
 
 class LazyClusterMetadata:
@@ -218,11 +211,11 @@ class LazyClusterMetadata:
                 builder = data_source.query(model_class, cluster=self._cluster_name, source="cache")
                 results = list(builder)
                 if is_list:
-                    _set_by_path(root_kwargs, path, results)
+                    set_nested_value(root_kwargs, path, results)
                     if results:
                         saw_any_result = True
                 elif results:
-                    _set_by_path(root_kwargs, path, results[0])
+                    set_nested_value(root_kwargs, path, results[0])
                     saw_any_result = True
             else:
                 fallback_paths[path] = registry[path]
@@ -236,16 +229,9 @@ class LazyClusterMetadata:
             # ``subset_result`` is a nested dict keyed by the same paths;
             # merge it into ``root_kwargs``.
             for path in fallback_paths:
-                parts = path.split(".")
-                src: Any = subset_result
-                for part in parts:
-                    if isinstance(src, dict) and part in src:
-                        src = src[part]
-                    else:
-                        src = None
-                        break
+                src = get_dotted_item(subset_result, path)
                 if src is not None:
-                    _set_by_path(root_kwargs, path, src)
+                    set_nested_value(root_kwargs, path, src)
                     saw_any_result = True
 
         if not saw_any_result:

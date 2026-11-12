@@ -8,8 +8,11 @@ from pynetappfoundry.utils.dict_path import (
     DEFAULT_IDENTIFIER_KEYS,
     PathNotFoundError,
     _parse_filter_predicate,
+    get_dotted_attr,
+    get_dotted_item,
     get_nested_value,
     get_nested_value_with_identifiers,
+    set_nested_value,
 )
 
 
@@ -702,3 +705,119 @@ class TestGetNestedValueWithIdentifiers:
     def test_default_identifier_keys_constant(self) -> None:
         """The default identifier order is name, svm.name, uuid."""
         assert DEFAULT_IDENTIFIER_KEYS == ("name", "svm.name", "uuid")
+
+
+class TestGetDottedItem:
+    """Tests for get_dotted_item."""
+
+    def test_dotted_hit(self) -> None:
+        assert get_dotted_item({"a": {"b": 1}}, "a.b") == 1
+
+    def test_missing_segment_returns_none(self) -> None:
+        assert get_dotted_item({"a": {"b": 1}}, "a.x") is None
+        assert get_dotted_item({"a": {"b": 1}}, "x.b") is None
+
+    def test_non_dict_partway_returns_none(self) -> None:
+        assert get_dotted_item({"a": 5}, "a.b") is None
+
+    def test_none_leaf_returned(self) -> None:
+        assert get_dotted_item({"a": {"b": None}}, "a.b") is None
+
+    def test_brackets_are_literal_keys(self) -> None:
+        assert get_dotted_item({"a[0]": "lit"}, "a[0]") == "lit"
+        assert get_dotted_item({"a": [1]}, "a[0]") is None
+
+
+class _Leaf:
+    def __init__(self) -> None:
+        self.zero = 0
+        self.empty = ""
+        self.nothing: object = None
+
+
+class _Mid:
+    def __init__(self) -> None:
+        self.leaf = _Leaf()
+        self.none_mid: object = None
+
+
+class TestGetDottedAttr:
+    """Tests for get_dotted_attr in both modes."""
+
+    def test_nested_hit(self) -> None:
+        assert get_dotted_attr(_Mid(), "leaf.zero") == 0
+
+    def test_single_segment(self) -> None:
+        mid = _Mid()
+        assert get_dotted_attr(mid, "leaf") is mid.leaf
+
+    def test_missing_returns_none(self) -> None:
+        assert get_dotted_attr(_Mid(), "leaf.missing") is None
+        assert get_dotted_attr(_Mid(), "missing.x") is None
+
+    def test_none_partway_returns_none(self) -> None:
+        assert get_dotted_attr(_Mid(), "none_mid.x") is None
+
+    def test_falsy_leaves_unchanged(self) -> None:
+        assert get_dotted_attr(_Mid(), "leaf.zero") == 0
+        assert get_dotted_attr(_Mid(), "leaf.empty") == ""
+
+    def test_strict_hit(self) -> None:
+        assert get_dotted_attr(_Mid(), "leaf.empty", strict=True) == ""
+
+    def test_strict_missing_raises(self) -> None:
+        with pytest.raises(AttributeError):
+            get_dotted_attr(_Mid(), "leaf.missing", strict=True)
+
+    def test_strict_none_partway_raises(self) -> None:
+        with pytest.raises(AttributeError):
+            get_dotted_attr(_Mid(), "none_mid.x", strict=True)
+
+
+class TestSetNestedValue:
+    """Tests for set_nested_value."""
+
+    def test_single_key(self) -> None:
+        d: dict[str, object] = {}
+        set_nested_value(d, "a", 1)
+        assert d == {"a": 1}
+
+    def test_creates_missing_dicts(self) -> None:
+        d: dict[str, object] = {}
+        set_nested_value(d, "a.b.c", 1)
+        assert d == {"a": {"b": {"c": 1}}}
+
+    def test_siblings_merge(self) -> None:
+        d: dict[str, object] = {}
+        set_nested_value(d, "svm.name", "n")
+        set_nested_value(d, "svm.uuid", "u")
+        assert d == {"svm": {"name": "n", "uuid": "u"}}
+
+    def test_existing_dict_reused(self) -> None:
+        inner = {"keep": 1}
+        d: dict[str, object] = {"a": inner}
+        set_nested_value(d, "a.b", 2)
+        assert d["a"] is inner
+        assert inner == {"keep": 1, "b": 2}
+
+    def test_leaf_overwrites(self) -> None:
+        d: dict[str, object] = {"a": {"b": 1}}
+        set_nested_value(d, "a.b", 2)
+        assert d == {"a": {"b": 2}}
+
+    def test_parent_after_children_overwrites(self) -> None:
+        d: dict[str, object] = {}
+        set_nested_value(d, "network.dns", [1])
+        set_nested_value(d, "network", "container")
+        assert d == {"network": "container"}
+
+    def test_non_dict_partway_raises_by_default(self) -> None:
+        d: dict[str, object] = {"a": 5}
+        with pytest.raises(TypeError):
+            set_nested_value(d, "a.b", 1)
+
+    def test_replace_non_dict(self) -> None:
+        d: dict[str, object] = {}
+        set_nested_value(d, "ip", "scalar", replace_non_dict=True)
+        set_nested_value(d, "ip.address", "10.0.0.1", replace_non_dict=True)
+        assert d == {"ip": {"address": "10.0.0.1"}}

@@ -29,6 +29,7 @@ from pynetappfoundry.utils.dict_path import (
     PathNotFoundError,
     get_nested_value,
     get_nested_value_with_identifiers,
+    set_nested_value,
 )
 
 console = Console()
@@ -333,21 +334,13 @@ def _fetch_live_groups(
                 dumped = results[0].model_dump() if results else {}
 
             if relative:
-                _set_nested(group_data, relative, dumped)
+                set_nested_value(group_data, relative, dumped)
             else:
                 group_data = dumped
 
         data[group] = group_data
 
     return data
-
-
-def _set_nested(target: dict[str, Any], dotted_path: str, value: Any) -> None:
-    """Set a value in a nested dict via dot-path, creating intermediate dicts."""
-    parts = dotted_path.split(".")
-    for part in parts[:-1]:
-        target = target.setdefault(part, {})
-    target[parts[-1]] = value
 
 
 @click.command()

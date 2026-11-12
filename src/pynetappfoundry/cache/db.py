@@ -35,6 +35,7 @@ from pynetappfoundry.cache.db_schema import (
 )
 from pynetappfoundry.cache.query_engine import build_where_clause, parse_filters
 from pynetappfoundry.db.base import SQLiteDB
+from pynetappfoundry.utils.dict_path import get_dotted_attr, set_nested_value
 
 if TYPE_CHECKING:
     from pynetappfoundry.cache._lazy import LazyClusterMetadata
@@ -212,21 +213,6 @@ def _row_to_model(
 # ---------------------------------------------------------------------------
 
 
-def _get_by_path(obj: Any, path: str) -> Any:
-    """Traverse a dot-path on an object (e.g. ``"storage.volumes"``)."""
-    for part in path.split("."):
-        obj = getattr(obj, part)
-    return obj
-
-
-def _set_by_path(target: dict[str, Any], path: str, value: Any) -> None:
-    """Set a value in a nested dict via dot-path, creating intermediate dicts."""
-    parts = path.split(".")
-    for part in parts[:-1]:
-        target = target.setdefault(part, {})
-    target[parts[-1]] = value
-
-
 def _row_strip_keys(model_class: type[BaseModel]) -> set[str]:
     """Return the DB-only row keys to drop before building ``model_class``.
 
@@ -277,7 +263,7 @@ def _query_registry_subset(
                 )
                 for row in rows
             ]
-            _set_by_path(root_kwargs, path, models)
+            set_nested_value(root_kwargs, path, models)
         else:
             if rows:
                 row = rows[0]
@@ -285,7 +271,7 @@ def _query_registry_subset(
                     {k: v for k, v in row.items() if k not in strip_keys},
                     spec.model_class,
                 )
-                _set_by_path(root_kwargs, path, model)
+                set_nested_value(root_kwargs, path, model)
 
     return root_kwargs
 
@@ -620,7 +606,7 @@ class ClusterMetadataDB(SQLiteDB):
     ) -> None:
         """Walk TABLE_REGISTRY and insert model data into per-model tables."""
         for path, spec in self._registry.items():
-            data = _get_by_path(metadata, path)
+            data = get_dotted_attr(metadata, path, strict=True)
             rt = realtime_attrs(spec.model_class)
 
             if spec.is_list:
