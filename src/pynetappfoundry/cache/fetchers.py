@@ -391,6 +391,29 @@ def iter_parent_urls(
     Yields:
         Each usable parent and the child endpoint URL resolved for it.
     """
+    for parent, values in iter_parent_ids(mapping, parent_objects, log_prefix):
+        yield parent, mapping.build_parameterized_url(values[0] if len(values) == 1 else values)
+
+
+def iter_parent_ids(
+    mapping: TypeMapping,
+    parent_objects: Sequence[BaseModel],
+    log_prefix: str,
+) -> Iterator[tuple[BaseModel, tuple[str, ...]]]:
+    """Yield ``(parent, id_values)`` for each parent that fills the placeholders.
+
+    ``id_values`` holds one string per path placeholder, in order. A parent
+    with no value for one of ``mapping``'s parent id fields is skipped with a
+    ``SKIP_PARENT`` warning; ``0`` is a valid value.
+
+    Args:
+        mapping: Child TypeMapping with ``parent_id_field(s)`` set.
+        parent_objects: Parent model instances.
+        log_prefix: Prefix for log messages.
+
+    Yields:
+        Each usable parent and the identifier values resolved for it.
+    """
     for parent in parent_objects:
         values, missing = _resolve_parent_ids(mapping, parent)
         if values is None:
@@ -403,10 +426,10 @@ def iter_parent_urls(
                 missing,
             )
             continue
-        yield parent, mapping.build_parameterized_url(values[0] if len(values) == 1 else values)
+        yield parent, values
 
 
-def _validate_parent_chain(mapping: TypeMapping) -> None:
+def validate_parent_chain(mapping: TypeMapping) -> None:
     """Raise ``ValueError`` if the parent chain has an unregistered link or a cycle."""
     seen = [mapping.name]
     current = mapping
@@ -444,9 +467,9 @@ def fetch_parents(
     parent_key = _results_key_for_parent(mapping.parent_mapping or "")
     if parent_key in results_cache:
         return list(results_cache[parent_key])
-    _validate_parent_chain(mapping)
+    validate_parent_chain(mapping)
     parent_map = model_registry.get_mapping(parent_key)
-    if parent_map is None:  # pragma: no cover - guarded by _validate_parent_chain
+    if parent_map is None:  # pragma: no cover - guarded by validate_parent_chain
         raise ValueError(f"{mapping.name}: parent mapping {parent_key!r} is not registered")
     result = fetch(
         parent_map.model_class,
@@ -589,7 +612,9 @@ def _results_key_for_parent(parent_mapping_name: str) -> str:
 __all__ = [
     "fetch",
     "fetch_parents",
+    "iter_parent_ids",
     "iter_parent_urls",
     "normalize_cli_key",
     "parse_vm_instance_output",
+    "validate_parent_chain",
 ]

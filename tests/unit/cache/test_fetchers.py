@@ -860,6 +860,41 @@ class TestFetchParentsOnDemand:
         assert [url for _, url in pairs] == ["/mids/u1/leaves?fields=*"]
         assert any("SKIP_PARENT" in r.message for r in caplog.records)
 
+    def test_iter_parent_ids_yields_ids_and_skips_missing(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        import logging
+
+        from pynetappfoundry.cache.fetchers import iter_parent_ids
+
+        parents = [_MidParent(uuid="u1"), _MidParent(name="bad", uuid="")]
+        with caplog.at_level(logging.WARNING):
+            pairs = list(iter_parent_ids(_LEAF_MAPPING, parents, "[t]"))
+        assert [ids for _, ids in pairs] == [("u1",)]
+        assert any("SKIP_PARENT" in r.message for r in caplog.records)
+
+    def test_iter_parent_ids_substitutes_zero(self) -> None:
+        from dataclasses import replace
+
+        from pynetappfoundry.cache.fetchers import iter_parent_ids
+
+        mapping = replace(_LEAF_MAPPING, parent_id_field="count")
+
+        class _Counted(BaseModel):
+            name: str = ""
+            count: int = 0
+
+        parent = _Counted(name="z", count=0)
+        assert [ids for _, ids in iter_parent_ids(mapping, [parent], "[t]")] == [("0",)]
+
+    def test_validate_parent_chain_raises(self) -> None:
+        from pynetappfoundry.cache.fetchers import validate_parent_chain
+
+        with pytest.raises(ValueError, match="not registered"):
+            validate_parent_chain(_ORPHAN_MAPPING)
+        with pytest.raises(ValueError, match="cycle"):
+            validate_parent_chain(_CYCLE_A)
+
 
 # ---------------------------------------------------------------------------
 # CLI parsing helpers (extracted from collector, issue #532)

@@ -282,6 +282,8 @@ Every `DataSource` method accepts a `source=` parameter that controls where data
 !!! note "Live queries of child models fetch their parents first"
     A model whose endpoint is keyed by a parent (for example a snapshot, keyed by its volume) has no collection endpoint of its own. A live query of such a model fetches its parent collection first, recursively through multi-level chains, then sends one request per parent. The cost therefore scales with the parent count. `order_by` and `max_records` apply per parent; `max_records` also caps the total and stops further parent requests once reached. A parent whose request fails is logged as `CHILD_FETCH_FAILED` and skipped.
 
+    DII models work the same way: a DII model whose endpoint has a path placeholder and a parent (for example `/assets/fabrics/{id}/ports`) is fetched once per parent, with the parent's identifier filling the placeholder. A DII model with a placeholder but no parent cannot be queried live and raises `ValueError` naming the placeholder, with no request made ([ADR-0015](../decisions/0015-dii-backend-live-only-bare-array-envelope-offsetlimit-pagination.md)).
+
 ```python
 # Default: auto-routing based on field metadata
 vol = ds.get(OntapVolume, cluster="prod1", id="abc-123-def")
