@@ -7,6 +7,7 @@ import json
 import logging
 import threading
 import time
+import warnings
 from typing import Any
 
 import paramiko
@@ -24,6 +25,33 @@ CMD_KEYS: dict[str, str] = {
     "volume show": "Volume Name",
     "vol show": "Volume Name",
 }
+
+_HOST_CONNECTION_LOCK = threading.Lock()
+
+
+def _open_host_connection(host: str, username: str, password: str) -> HostConnection:
+    """Build a ``HostConnection`` without leaving netapp_ontap's warning filter behind.
+
+    ``netapp_ontap.host_connection.HostConnection.__init__`` calls
+    ``urllib3.disable_warnings(InsecureRequestWarning)`` whenever ``verify`` is false, which
+    silences the warning for the whole process (#983). Construction runs inside
+    ``warnings.catch_warnings()``, so the filter is dropped when the block exits. Only the
+    construction is covered: ``__enter__`` and the requests run outside it.
+
+    ``catch_warnings`` saves and restores the process-global ``warnings.filters`` on GIL builds,
+    so a lock serializes our own constructions. A filter change made by another thread during
+    the construction window is reverted. Construction does no I/O.
+
+    Args:
+        host: Cluster address.
+        username: ONTAP user.
+        password: ONTAP password.
+
+    Returns:
+        An unopened ``HostConnection`` with ``verify=False``.
+    """
+    with _HOST_CONNECTION_LOCK, warnings.catch_warnings():
+        return HostConnection(host, username=username, password=password, verify=False)
 
 
 def _parse_separator_output(
@@ -467,9 +495,7 @@ class ONTAPCLI:
             f'{self.log_prefix} running "{command}" with arguments'
             f" {kwargs} and privilege: {privilege_level}"
         )
-        with HostConnection(
-            self.host, username=self.username, password=self.password, verify=False
-        ) as conn:
+        with _open_host_connection(self.host, self.username, self.password) as conn:
             if self._trust_store is not None:
                 session = conn.session
                 existing = session.adapters.get(conn.origin)
