@@ -45,3 +45,4 @@ The ONTAP clients connect to clusters that usually present self-signed TLS certi
 - The TLS capture does not go through a proxy, so it needs a direct route to the cluster.
 - Code that builds `ONTAPCLI` itself without `trust_store=` now refuses hosts missing from the system `known_hosts`; it passes `trust_store=config.get_trust_store()` to record hosts on first use. Every caller in this package passes a store.
 - `.trust/` is ignored by git and is not rebuilt by cache refresh.
+- Pinned connections count as verified to urllib3, so the ONTAP client needs no `InsecureRequestWarning` suppression, and netapp_ontap's own process-wide suppression is contained to `HostConnection` construction (#983).
