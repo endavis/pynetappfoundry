@@ -8,7 +8,7 @@ dependency. The default cache lives under ``$XDG_CACHE_HOME/console-openapi``
 from __future__ import annotations
 
 import os
-import subprocess  # nosec B404
+import subprocess  # nosec B404  # git clone runs via a fixed argv list
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -42,7 +42,7 @@ def _cache_dir() -> Path:
 
 def _run(args: list[str], cwd: Path | None = None) -> str:
     try:
-        result = subprocess.run(  # nosec B603
+        result = subprocess.run(
             args,
             cwd=str(cwd) if cwd else None,
             check=True,

@@ -112,7 +112,7 @@ class TestAttributeAccess:
     def test_attribute_access_missing_raises(self, entry: ClusterEntry) -> None:
         """Test missing attribute raises AttributeError."""
         with pytest.raises(AttributeError, match="missing"):
-            entry.missing  # noqa: B018
+            entry.missing  # noqa: B018  # attribute access is the behaviour under test
 
 
 class TestLazyLoading:

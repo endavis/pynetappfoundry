@@ -229,7 +229,7 @@ def _find_cluster_file(config_path: Path, cluster_name: str) -> Path | None:
                     data = tomllib.load(f)
                 if cluster_name in data.get("clusters", {}):
                     return toml_file
-            except Exception:  # nosec B112
+            except Exception:  # nosec B112  # skip unreadable TOML files
                 continue
 
     # Check main data directory
@@ -241,7 +241,7 @@ def _find_cluster_file(config_path: Path, cluster_name: str) -> Path | None:
                     data = tomllib.load(f)
                 if cluster_name in data.get("clusters", {}):
                     return toml_file
-            except Exception:  # nosec B112
+            except Exception:  # nosec B112  # skip unreadable TOML files
                 continue
 
     return None

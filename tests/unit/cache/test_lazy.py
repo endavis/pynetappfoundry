@@ -244,7 +244,7 @@ class TestLazyLoading:
         lazy = populated_db.get_lazy("test-cluster")
         assert lazy is not None
         with pytest.raises(AttributeError, match="no_such_field"):
-            lazy.no_such_field  # noqa: B018
+            lazy.no_such_field  # noqa: B018  # attribute access is the behaviour under test
 
 
 class TestMaterialize:

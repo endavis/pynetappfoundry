@@ -89,7 +89,7 @@ class TestGlobalRegistryBootstrap:
     def test_cifs_share_mapping_registered_after_cache_import(self) -> None:
         """A model whose mapping was previously missing registers now."""
         # Import the cache package (triggers the walk-packages bootstrap).
-        import pynetappfoundry.cache  # noqa: F401
+        import pynetappfoundry.cache  # noqa: F401  # import registers the hand-written mappings
         from pynetappfoundry.cache._registry import model_registry
         from pynetappfoundry.models.ontap.protocols.cifs.shares.model import (
             OntapCifsShare,
@@ -101,7 +101,7 @@ class TestGlobalRegistryBootstrap:
 
     def test_broad_sample_of_mappings_registered(self) -> None:
         """Spot-check a representative sample across cache.ontap sub-trees."""
-        import pynetappfoundry.cache  # noqa: F401
+        import pynetappfoundry.cache  # noqa: F401  # import registers the hand-written mappings
         from pynetappfoundry.cache._registry import model_registry
         from pynetappfoundry.models.ontap.cluster.model import OntapCluster
         from pynetappfoundry.models.ontap.cluster.nodes.model import (
@@ -142,7 +142,7 @@ class TestEnsureBootstrapped:
 
     def test_noop_when_cache_already_loaded(self) -> None:
         """Calling ``_ensure_bootstrapped`` after the cache package is loaded is a no-op."""
-        import pynetappfoundry.cache  # noqa: F401
+        import pynetappfoundry.cache  # noqa: F401  # import registers the hand-written mappings
         from pynetappfoundry.cache._registry import model_registry
 
         # Snapshot current registry state

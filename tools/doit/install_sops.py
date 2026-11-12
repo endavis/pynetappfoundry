@@ -68,21 +68,21 @@ def _install_age() -> None:
             f"https://github.com/FiloSottile/age/releases/download/v{version}/"
             f"age-v{version}-linux-amd64.tar.gz"
         )
-        tar_path = Path("/tmp/age.tar.gz")  # nosec B108
+        tar_path = Path("/tmp/age.tar.gz")  # nosec B108  # short-lived download scratch path
         print(f"Downloading {tar_url}...")
-        urllib.request.urlretrieve(tar_url, tar_path)  # nosec B310
+        urllib.request.urlretrieve(tar_url, tar_path)  # nosec B310  # hardcoded GitHub release URL
 
         with tarfile.open(tar_path, "r:gz") as tar:
-            tar.extractall("/tmp")  # nosec B202 B108
+            tar.extractall("/tmp")  # nosec B202 B108  # trusted age release archive, scratch dir
 
         for binary in ["age", "age-keygen"]:
-            src = Path("/tmp/age") / binary  # nosec B108
+            src = Path("/tmp/age") / binary  # nosec B108  # extracted from the age archive above
             dst = install_dir / binary
             shutil.move(str(src), str(dst))
             dst.chmod(0o755)
 
         tar_path.unlink()
-        shutil.rmtree("/tmp/age", ignore_errors=True)  # nosec B108
+        shutil.rmtree("/tmp/age", ignore_errors=True)  # nosec B108  # removes the scratch dir created above
     elif system == "darwin":
         subprocess.run(["brew", "install", "age"], check=True)
     elif system == "windows":
@@ -93,10 +93,10 @@ def _install_age() -> None:
         zip_path = Path(os.environ.get("TEMP", ".")) / "age.zip"
         extract_dir = Path(os.environ.get("TEMP", ".")) / "age_extract"
         print(f"Downloading {zip_url}...")
-        urllib.request.urlretrieve(zip_url, zip_path)  # nosec B310
+        urllib.request.urlretrieve(zip_url, zip_path)  # nosec B310  # hardcoded GitHub release URL
 
         with zipfile.ZipFile(zip_path, "r") as zf:
-            zf.extractall(extract_dir)  # nosec B202
+            zf.extractall(extract_dir)  # nosec B202  # trusted age release archive
 
         for exe in ["age.exe", "age-keygen.exe"]:
             matches = glob.glob(str(extract_dir / "**" / exe), recursive=True)

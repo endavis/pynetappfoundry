@@ -19,10 +19,10 @@ def task_console_openapi_refresh() -> dict[str, Any]:
     """Regenerate tools/console_openapi/generated/console_openapi.yaml from upstream docs."""
 
     def action(ref: str) -> None:
-        import subprocess  # nosec B404
+        import subprocess  # nosec B404  # subprocess is required for doit tasks
 
         cmd = _run_refresh(ref)[0]
-        subprocess.run(cmd, check=True)  # nosec B603
+        subprocess.run(cmd, check=True)
 
     return {
         "actions": [action],
@@ -93,7 +93,7 @@ _DATAMODEL_CODEGEN_FLAGS: tuple[str, ...] = (
 
 def _generate_console_models() -> None:
     """Run ``datamodel-codegen`` and ruff post-processing for Console models."""
-    import subprocess  # nosec B404
+    import subprocess  # nosec B404  # subprocess is required for doit tasks
 
     if not _CONSOLE_SPEC.exists():
         raise FileNotFoundError(
@@ -116,18 +116,18 @@ def _generate_console_models() -> None:
         str(_CONSOLE_MODELS_DIR),
         *_DATAMODEL_CODEGEN_FLAGS,
     ]
-    subprocess.run(cmd, check=True)  # nosec B603
+    subprocess.run(cmd, check=True)
 
     # Mirror the post-processing performed by ``doit generate_models``: format
     # first, then auto-fix lint findings the formatter just made redundant
     # (E501 noqa headers, etc.). Run with ``check=False`` because ruff
     # returns non-zero when it has fixed things — that is the intended
     # outcome here.
-    subprocess.run(  # nosec B603
+    subprocess.run(
         ["uv", "run", "ruff", "format", str(_CONSOLE_MODELS_DIR)],
         check=False,
     )
-    subprocess.run(  # nosec B603
+    subprocess.run(
         ["uv", "run", "ruff", "check", "--fix", str(_CONSOLE_MODELS_DIR)],
         check=False,
     )
@@ -170,9 +170,9 @@ def _check_models_unchanged(models_dir: Path = _CONSOLE_MODELS_DIR) -> bool:
     would pass it. ``git status --porcelain --untracked-files=all`` also
     lists untracked files.
     """
-    import subprocess  # nosec B404
+    import subprocess  # nosec B404  # subprocess is required for doit tasks
 
-    result = subprocess.run(  # nosec B603 B607
+    result = subprocess.run(
         ["git", "status", "--porcelain", "--untracked-files=all", "--", str(models_dir)],
         check=True,
         capture_output=True,

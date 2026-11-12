@@ -19,7 +19,7 @@ MODELS_ROOT = REPO_ROOT / "src" / "pynetappfoundry" / "models"
 
 
 def _git(repo: Path, *args: str) -> str:
-    result = subprocess.run(  # nosec B603 B607  # fixed argv, no shell
+    result = subprocess.run(
         [
             "git",
             "-c",

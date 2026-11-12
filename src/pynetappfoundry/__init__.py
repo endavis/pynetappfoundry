@@ -3,7 +3,7 @@
 # Apply third-party perf patches before importing any Pydantic models so the
 # patches are in place during every model_validate call. See _perf_patches.py
 # for details. Tracked in issue #728.
-import pynetappfoundry._perf_patches  # noqa: F401
+import pynetappfoundry._perf_patches  # noqa: F401  # imported for its patching side effect
 from pynetappfoundry._version import __version__
 from pynetappfoundry.clients.dii.api import DIIAPIClient
 from pynetappfoundry.clients.ontap.api import ONTAPAPIClient

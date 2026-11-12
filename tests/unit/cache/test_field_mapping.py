@@ -70,8 +70,8 @@ class TestFieldMapping:
 
     def test_with_all_fields(self) -> None:
         """All fields can be set."""
-        tx = lambda r: r.get("x")  # noqa: E731
-        ctx = lambda r: r.get("y")  # noqa: E731
+        tx = lambda r: r.get("x")  # noqa: E731  # compact lambda stub for the test
+        ctx = lambda r: r.get("y")  # noqa: E731  # compact lambda stub for the test
         fm = FieldMapping(
             cache_attr="a",
             api_path="b.c",
@@ -104,7 +104,7 @@ class TestFieldMappingNewFields:
 
     def test_post_collection_callable(self) -> None:
         """post_collection accepts a callable with (item, results) signature."""
-        fn = lambda x, r: x  # noqa: E731
+        fn = lambda x, r: x  # noqa: E731  # compact lambda stub for the test
         fm = FieldMapping(cache_attr="x", cache_strategy="derived", post_collection=fn)
         assert fm.post_collection is fn
 
@@ -430,7 +430,7 @@ class TestTypeMapping:
 
     def test_derived_fields(self) -> None:
         """derived_fields returns only cache_strategy='derived' fields."""
-        fn = lambda x, r: x  # noqa: E731
+        fn = lambda x, r: x  # noqa: E731  # compact lambda stub for the test
         tm = TypeMapping(
             name="T",
             model_class=_SampleModel,

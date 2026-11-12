@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field
 # Importing the project applies the perf patches; the test file
 # exercises them, so the import must run before any assertions touch
 # ``_pydantic_fields.takes_validated_data_argument``.
-import pynetappfoundry  # noqa: F401
+import pynetappfoundry  # noqa: F401  # import applies the perf patches under test
 
 
 def test_pydantic_takes_validated_data_argument_is_memoized() -> None:
