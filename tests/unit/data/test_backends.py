@@ -1849,3 +1849,151 @@ class TestIsCloudCluster:
         with patch.object(OntapBackend, "_cache_db", new=db):
             assert backend._is_cloud_cluster("c1") is False
         db.close()
+
+
+class TestLiveChildQuery:
+    """Live queries of a parent-keyed mapping fetch the parents first (#975)."""
+
+    _LIVE = ("uuid", "volume.uuid", "metric")
+    _PARENTS_URL = "/storage/fake-parents?fields=*"
+
+    def _client(self, children: dict[str, Any]) -> MagicMock:
+        records: dict[str, Any] = {
+            self._PARENTS_URL: {
+                "records": [
+                    {"name": "p1", "uuid": "p-1"},
+                    {"name": "p2", "uuid": "p-2"},
+                    {"name": "p3", "uuid": "p-3"},
+                ]
+            }
+        }
+        records.update(children)
+
+        def _get(url: str, **_kw: Any) -> Any:
+            for prefix, value in records.items():
+                if url == prefix or url.startswith(prefix + "&") or url.startswith(prefix + "?"):
+                    if isinstance(value, Exception):
+                        raise value
+                    return value
+            return {"records": []}
+
+        client = MagicMock()
+        client.get_all_records = MagicMock(side_effect=_get)
+        return client
+
+    def _query(
+        self,
+        backend: OntapBackend,
+        mapping: TypeMapping,
+        client: MagicMock,
+        filters: dict[str, Any],
+    ) -> list[FakeChildWithDottedRef]:
+        decision = RoutingDecision(cache_fields=(), live_fields=self._LIVE)
+        with patch.object(backend, "_get_api_client", return_value=client):
+            return backend.query(
+                FakeChildWithDottedRef, mapping, decision, cluster="c1", filters=filters
+            )
+
+    def test_whole_model_fetches_parents(
+        self, fake_child_mapping: TypeMapping, mock_config: Any
+    ) -> None:
+        client = self._client(
+            {
+                "/storage/fakes/p-1/children?fields=*": {
+                    "records": [{"uuid": "c1", "metric": 1.0}]
+                },
+                "/storage/fakes/p-2/children?fields=*": {
+                    "records": [{"uuid": "c2", "metric": 1.0}]
+                },
+            }
+        )
+        results = self._query(_make_backend(mock_config), fake_child_mapping, client, {})
+        assert sorted(r.uuid for r in results) == ["c1", "c2"]
+        assert client.get_all_records.call_args_list[0].args[0] == self._PARENTS_URL
+
+    def test_filtered_sends_one_request_per_parent(
+        self, fake_child_mapping: TypeMapping, mock_config: Any
+    ) -> None:
+        client = self._client(
+            {
+                "/storage/fakes/p-1/children": {"records": [{"uuid": "c1", "metric": 1.0}]},
+                "/storage/fakes/p-2/children": {"records": [{"uuid": "c2", "metric": 1.0}]},
+                "/storage/fakes/p-3/children": {"records": [{"uuid": "c3", "metric": 1.0}]},
+            }
+        )
+        results = self._query(
+            _make_backend(mock_config), fake_child_mapping, client, {"uuid": "wanted"}
+        )
+        assert len(results) == 3
+        urls = [c.args[0] for c in client.get_all_records.call_args_list]
+        child_urls = [u for u in urls if "/children" in u]
+        assert len(child_urls) == 3
+        for pid, url in zip(("p-1", "p-2", "p-3"), child_urls, strict=True):
+            assert f"/storage/fakes/{pid}/children" in url
+            assert "uuid=wanted" in url
+        assert not any("{" in u or "}" in u for u in urls)
+
+    def test_max_records_truncates_and_stops_parent_requests(
+        self, fake_child_mapping: TypeMapping, mock_config: Any
+    ) -> None:
+        client = self._client(
+            {
+                "/storage/fakes/p-1/children": {
+                    "records": [{"uuid": "c1", "metric": 1.0}, {"uuid": "c2", "metric": 1.0}]
+                },
+                "/storage/fakes/p-2/children": {"records": [{"uuid": "c3", "metric": 1.0}]},
+            }
+        )
+        results = self._query(
+            _make_backend(mock_config), fake_child_mapping, client, {"max_records": 2}
+        )
+        assert [r.uuid for r in results] == ["c1", "c2"]
+        child_urls = [
+            c.args[0] for c in client.get_all_records.call_args_list if "/children" in c.args[0]
+        ]
+        assert len(child_urls) == 1
+
+    def test_parent_error_is_logged_and_skipped(
+        self,
+        fake_child_mapping: TypeMapping,
+        mock_config: Any,
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        import logging
+
+        client = self._client(
+            {
+                "/storage/fakes/p-1/children": RuntimeError("boom"),
+                "/storage/fakes/p-2/children": {"records": [{"uuid": "c2", "metric": 1.0}]},
+            }
+        )
+        with caplog.at_level(logging.WARNING):
+            results = self._query(
+                _make_backend(mock_config), fake_child_mapping, client, {"uuid": "x"}
+            )
+        assert [r.uuid for r in results] == ["c2"]
+        assert any("CHILD_FETCH_FAILED" in r.message for r in caplog.records)
+
+    def test_build_live_url_requires_base_for_parent_keyed(
+        self, fake_child_mapping: TypeMapping
+    ) -> None:
+        with pytest.raises(ValueError, match="base_url"):
+            OntapBackend._build_live_url(fake_child_mapping, {}, ())
+        url = OntapBackend._build_live_url(
+            fake_child_mapping, {}, (), base_url="/storage/fakes/p-1/children?fields=*"
+        )
+        assert url.startswith("/storage/fakes/p-1/children")
+
+    def test_count_live_sums_across_parents(
+        self, fake_child_mapping: TypeMapping, mock_config: Any
+    ) -> None:
+        backend = _make_backend(mock_config)
+        client = self._client({})
+        client.call_endpoint = MagicMock(
+            side_effect=[{"num_records": 2}, {"num_records": 3}, {"num_records": 4}]
+        )
+        with patch.object(backend, "_get_api_client", return_value=client):
+            assert backend._count_live(fake_child_mapping, "c1", {}) == 9
+        urls = [c.args[0] for c in client.call_endpoint.call_args_list]
+        assert all("return_records=false" in u for u in urls)
+        assert "/storage/fakes/p-2/children" in urls[1]

@@ -5,7 +5,8 @@ the Phase 3 :class:`OntapBackend`: a thin delegator that routes
 ``query()`` calls to either the cache database, the generic
 :func:`pynetappfoundry.cache.fetch` dispatcher (for whole-model live
 reads), or a small filtered-live helper (for filtered / field-restricted
-live reads).
+live reads). A live read of a parent-keyed mapping fetches its parents first
+(recursively) and sends one request per parent (#975).
 
 Per ADR-0013 §6-§9, ``Backend.get()`` has been removed;
 ``DataSource.get()`` is now a thin ``query().filter().first()`` wrapper.
@@ -22,7 +23,7 @@ from typing import TYPE_CHECKING, Any, TypeVar
 from pydantic import BaseModel
 
 from pynetappfoundry.cache import fetch
-from pynetappfoundry.cache.fetchers import _resolve_dotted_attr
+from pynetappfoundry.cache.fetchers import _resolve_dotted_attr, fetch_parents, iter_parent_urls
 from pynetappfoundry.cache.field_mapping import parse_api_record, parse_api_response
 from pynetappfoundry.core.models import PaginationConfig
 from pynetappfoundry.data._merge import merge_models
@@ -289,6 +290,8 @@ class OntapBackend(Backend):
             The count from ``num_records``, or ``0`` if the response is
             empty / not a dict.
         """
+        if mapping.parent_mapping:
+            return self._count_live_children(mapping, cluster, filters)
         if mapping.response_shape == "singleton":
             return 0 if self._fetch_singleton_raw(mapping, cluster, filters, ()) is None else 1
         client = self._get_api_client(cluster)
@@ -302,6 +305,45 @@ class OntapBackend(Backend):
         if isinstance(response, dict):
             return int(response.get("num_records", 0))
         return 0
+
+    def _count_live_children(
+        self,
+        mapping: TypeMapping,
+        cluster: str,
+        filters: dict[str, Any],
+    ) -> int:
+        """Count a parent-keyed mapping's records by summing the counts per parent.
+
+        A failing parent is logged as ``CHILD_FETCH_FAILED`` and skipped.
+        """
+        client = self._get_api_client(cluster)
+        prefix = f"OntapBackend<{mapping.name}>"
+        parents = fetch_parents(mapping, client, {}, prefix)
+        total = 0
+        for parent, base_url in iter_parent_urls(mapping, parents, prefix):
+            try:
+                if mapping.response_shape == "singleton":
+                    record = self._fetch_singleton_raw(
+                        mapping, cluster, filters, (), base_url=base_url
+                    )
+                    total += 0 if record is None else 1
+                    continue
+                url = self._build_live_url(
+                    mapping, filters, (), return_records=False, base_url=base_url
+                )
+                response = client.call_endpoint(url)
+                if isinstance(response, dict):
+                    total += int(response.get("num_records", 0))
+            except Exception as e:
+                logger.warning(
+                    "%s CHILD_FETCH_FAILED: %s for parent %s - %s: %s",
+                    prefix,
+                    mapping.name,
+                    getattr(parent, "name", repr(parent)),
+                    type(e).__name__,
+                    e,
+                )
+        return total
 
     def _fetch_cache(
         self,
@@ -321,12 +363,21 @@ class OntapBackend(Backend):
         live_field_paths: tuple[str, ...],
         *,
         return_records: bool = True,
+        base_url: str | None = None,
     ) -> str:
         """Build a live REST URL from a mapping plus params and field set.
 
         Strips ``{id}`` placeholders from the endpoint, appends each
         param as a query string entry, and overrides the ``fields``
         parameter with the live field set's ``api_path`` values.
+
+        A parent-keyed mapping must be given *base_url*, its endpoint with the
+        parent ids already substituted (see
+        :func:`pynetappfoundry.cache.fetchers.iter_parent_urls`); stripping the
+        placeholder instead would request the wrong collection (#975).
+
+        Raises:
+            ValueError: If *mapping* is parent-keyed and *base_url* is ``None``.
 
         When *return_records* is ``False``, ``return_records=false`` is
         appended to the query string. This is used by :meth:`_count_live`
@@ -337,7 +388,13 @@ class OntapBackend(Backend):
         """
         from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
-        base_url = mapping.collection_endpoint
+        if base_url is None:
+            if mapping.parent_mapping:
+                raise ValueError(
+                    f"{mapping.name}: a parent-keyed mapping needs a resolved base_url; "
+                    f"fetch its parents first"
+                )
+            base_url = mapping.collection_endpoint
         parsed = urlparse(base_url)
         query: dict[str, list[str]] = parse_qs(parsed.query, keep_blank_values=True)
 
@@ -375,6 +432,8 @@ class OntapBackend(Backend):
         cluster: str,
         filters: dict[str, Any],
         live_fields: tuple[str, ...],
+        *,
+        base_url: str | None = None,
     ) -> dict[str, Any] | None:
         """GET a singleton endpoint and return its record, or ``None``.
 
@@ -395,7 +454,7 @@ class OntapBackend(Backend):
         if max_records is not None and int(max_records) <= 0:
             return None
         client = self._get_api_client(cluster)
-        url = self._build_live_url(mapping, {}, live_fields)
+        url = self._build_live_url(mapping, {}, live_fields, base_url=base_url)
         response = client.call_endpoint(url, method="GET")
         if not response or not isinstance(response, dict):
             return None
@@ -430,6 +489,10 @@ class OntapBackend(Backend):
         also passed to :class:`PaginationConfig` to stop paging once that
         many records are collected (#872).
         """
+        if mapping.parent_mapping:
+            return self._fetch_live_filtered_children(
+                model_class, mapping, cluster, filters, live_fields
+            )
         if mapping.response_shape == "singleton":
             record = self._fetch_singleton_raw(mapping, cluster, filters, live_fields)
             if record is None:
@@ -453,6 +516,67 @@ class OntapBackend(Backend):
             _log_missing_fields,
         )
         return [r for r in parsed if isinstance(r, model_class)]
+
+    def _fetch_live_filtered_children(
+        self,
+        model_class: type[T],
+        mapping: TypeMapping,
+        cluster: str,
+        filters: dict[str, Any],
+        live_fields: tuple[str, ...],
+    ) -> list[T]:
+        """Filtered live read of a parent-keyed mapping, one request per parent.
+
+        Fetches the parents first (recursively, via :func:`fetch_parents`),
+        then sends one filtered request per parent. ``order_by`` and
+        ``max_records`` apply per parent; ``max_records`` is also a running
+        total, so no further parent is requested once it is reached. A parent
+        whose request fails is logged as ``CHILD_FETCH_FAILED`` and skipped.
+        """
+        prefix = f"OntapBackend<{mapping.name}>"
+        max_records_raw = filters.get("max_records")
+        limit = None if max_records_raw is None else int(max_records_raw)
+        if limit is not None and limit <= 0:
+            return []
+        client = self._get_api_client(cluster)
+        parents = fetch_parents(mapping, client, {}, prefix)
+        results: list[T] = []
+        for parent, base_url in iter_parent_urls(mapping, parents, prefix):
+            remaining = None if limit is None else limit - len(results)
+            if remaining is not None and remaining <= 0:
+                break
+            parent_filters = dict(filters)
+            if remaining is not None:
+                parent_filters["max_records"] = remaining
+            try:
+                if mapping.response_shape == "singleton":
+                    record = self._fetch_singleton_raw(
+                        mapping, cluster, parent_filters, live_fields, base_url=base_url
+                    )
+                    parsed = [] if record is None else [parse_api_record(mapping, record, prefix)]
+                else:
+                    url = self._build_live_url(
+                        mapping, parent_filters, live_fields, base_url=base_url
+                    )
+                    if remaining is not None:
+                        response = client.get_all_records(
+                            url, pagination_config=PaginationConfig(max_records=remaining)
+                        )
+                    else:
+                        response = client.get_all_records(url)
+                    parsed = parse_api_response(mapping, response, prefix, _log_missing_fields)
+            except Exception as e:
+                logger.warning(
+                    "%s CHILD_FETCH_FAILED: %s for parent %s - %s: %s",
+                    prefix,
+                    mapping.name,
+                    getattr(parent, "name", repr(parent)),
+                    type(e).__name__,
+                    e,
+                )
+                continue
+            results.extend(r for r in parsed if isinstance(r, model_class))
+        return results if limit is None else results[:limit]
 
     def query(
         self,

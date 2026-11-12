@@ -12,7 +12,8 @@ on declared metadata:
   by :func:`parse_vm_instance_output`, and records are fed through
   :func:`parse_cli_records`.
 - ``mapping.parent_mapping`` non-None → parameterized endpoint; parent
-  objects are themselves fetched via a recursive :func:`fetch` call and
+  objects come from ``results_cache`` or are fetched on demand via a
+  recursive :func:`fetch` call (:func:`fetch_parents`, #975) and
   each parent's ``parent_id_field`` is substituted into the endpoint URL.
 - ``mapping.response_shape == "computed"`` → no request; an empty model
   instance is built and filled by the derived-field hooks (ADR-0024).
@@ -54,7 +55,7 @@ from pynetappfoundry.cache.field_mapping import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Iterator, Sequence
 
     from pynetappfoundry.clients.ontap.api import ONTAPAPIClient
     from pynetappfoundry.clients.ontap.cli import ONTAPCLI
@@ -326,24 +327,16 @@ def _fetch_parameterized(
         )
 
     aggregated: list[BaseModel] = []
-    for parent in parent_objects:
-        values, missing = _resolve_parent_ids(mapping, parent)
-        if values is None:
-            parent_name = getattr(parent, "name", repr(parent))
-            logger.warning(
-                "%s SKIP_PARENT: %s - parent %s has no '%s'",
-                log_prefix,
-                mapping.name,
-                parent_name,
-                missing,
-            )
-            continue
-
-        url = mapping.build_parameterized_url(values[0] if len(values) == 1 else values)
+    for parent, url in iter_parent_urls(mapping, parent_objects, log_prefix):
         try:
-            response = api_client.get_all_records(url, method="GET")
-            children = _parse_api_response(mapping, response, log_prefix, _noop_log_missing)
-            aggregated.extend(children)
+            if mapping.response_shape == "singleton":
+                record = api_client.call_endpoint(url, method="GET")
+                if record:
+                    aggregated.append(_parse_api_record(mapping, record, log_prefix))
+            else:
+                response = api_client.get_all_records(url, method="GET")
+                children = _parse_api_response(mapping, response, log_prefix, _noop_log_missing)
+                aggregated.extend(children)
         except Exception as e:
             parent_name = getattr(parent, "name", repr(parent))
             logger.warning(
@@ -356,6 +349,94 @@ def _fetch_parameterized(
             )
 
     return aggregated
+
+
+def iter_parent_urls(
+    mapping: TypeMapping,
+    parent_objects: Sequence[BaseModel],
+    log_prefix: str,
+) -> Iterator[tuple[BaseModel, str]]:
+    """Yield ``(parent, resolved_url)`` for each parent that fills the placeholders.
+
+    A parent with no value for one of ``mapping``'s parent id fields is
+    skipped with a ``SKIP_PARENT`` warning.
+
+    Args:
+        mapping: Child TypeMapping with ``parent_id_field(s)`` set.
+        parent_objects: Parent model instances.
+        log_prefix: Prefix for log messages.
+
+    Yields:
+        Each usable parent and the child endpoint URL resolved for it.
+    """
+    for parent in parent_objects:
+        values, missing = _resolve_parent_ids(mapping, parent)
+        if values is None:
+            parent_name = getattr(parent, "name", repr(parent))
+            logger.warning(
+                "%s SKIP_PARENT: %s - parent %s has no '%s'",
+                log_prefix,
+                mapping.name,
+                parent_name,
+                missing,
+            )
+            continue
+        yield parent, mapping.build_parameterized_url(values[0] if len(values) == 1 else values)
+
+
+def _validate_parent_chain(mapping: TypeMapping) -> None:
+    """Raise ``ValueError`` if the parent chain has an unregistered link or a cycle."""
+    seen = [mapping.name]
+    current = mapping
+    while current.parent_mapping:
+        parent = model_registry.get_mapping(current.parent_mapping)
+        if parent is None:
+            raise ValueError(
+                f"{current.name}: parent mapping {current.parent_mapping!r} is not registered"
+            )
+        if parent.name in seen:
+            raise ValueError(
+                f"{mapping.name}: parent_mapping cycle: {' -> '.join([*seen, parent.name])}"
+            )
+        seen.append(parent.name)
+        current = parent
+
+
+def fetch_parents(
+    mapping: TypeMapping,
+    api_client: ONTAPAPIClient,
+    results_cache: dict[str, Any],
+    log_prefix: str = "",
+) -> list[BaseModel]:
+    """Return the parent instances of a child *mapping*, fetching them if absent.
+
+    ``results_cache[parent_mapping]`` is used when present (an empty list
+    counts as present). Otherwise the parent model is fetched through
+    :func:`fetch` with the same cache, so multi-level chains recurse, and
+    stored under that key.
+
+    Raises:
+        ValueError: If a parent mapping in the chain is not registered, or the
+            chain has a cycle. Raised before any request is made.
+    """
+    parent_key = _results_key_for_parent(mapping.parent_mapping or "")
+    if parent_key in results_cache:
+        return list(results_cache[parent_key])
+    _validate_parent_chain(mapping)
+    parent_map = model_registry.get_mapping(parent_key)
+    if parent_map is None:  # pragma: no cover - guarded by _validate_parent_chain
+        raise ValueError(f"{mapping.name}: parent mapping {parent_key!r} is not registered")
+    result = fetch(
+        parent_map.model_class,
+        cluster="",
+        config=None,
+        api_client=api_client,
+        results_cache=results_cache,
+        log_prefix=log_prefix,
+    )
+    parents: list[BaseModel] = list(result) if isinstance(result, list) else [result]
+    results_cache[parent_key] = parents
+    return parents
 
 
 def fetch[T: BaseModel](
@@ -450,11 +531,9 @@ def fetch[T: BaseModel](
             )
         items = _fetch_cli(mapping, cli_client, log_prefix)
     elif mapping.parent_mapping:
-        # Parent objects must already be in results_cache. The collector
-        # threads this via `_collect_svm_top_metrics_users` and composite
-        # assembly; tests may pass a synthetic results_cache.
-        parent_key = _results_key_for_parent(mapping.parent_mapping)
-        parents: Sequence[BaseModel] = local_cache.get(parent_key, [])
+        # Parents come from results_cache (the collector pre-populates it);
+        # when absent they are fetched on demand, recursively (#975).
+        parents = fetch_parents(mapping, api_client, local_cache, log_prefix)
         items = _fetch_parameterized(mapping, parents, api_client, log_prefix)
     else:
         items = _fetch_flat(mapping, api_client, log_prefix)
@@ -462,7 +541,7 @@ def fetch[T: BaseModel](
     # Run post-collection hooks against the fetched instances.
     items = _run_post_collection_hooks(mapping, items, local_cache, log_prefix)
 
-    if mapping.response_shape in ("singleton", "computed"):
+    if mapping.parent_mapping is None and mapping.response_shape in ("singleton", "computed"):
         if not items:
             # Singleton endpoint returned nothing — fall back to an empty
             # model instance, matching the original collector behavior.
@@ -477,11 +556,18 @@ def _results_key_for_parent(parent_mapping_name: str) -> str:
     The convention is simple: callers store parents under the parent
     mapping's registry name (e.g. ``"OntapSvm"`` → ``results_cache["OntapSvm"]``).
     This avoids fragile snake_case heuristics. Phase 3 (DataSource
-    rewrite) will codify this as the public contract; the collector's
-    existing parameterized path bypasses this helper entirely by
-    calling :func:`_fetch_parameterized` directly with explicit parents.
+    rewrite) will codify this as the public contract. :func:`fetch_parents`
+    reads and fills this key; the collector's existing parameterized path
+    bypasses it by calling :func:`_fetch_parameterized` directly with
+    explicit parents.
     """
     return parent_mapping_name
 
 
-__all__ = ["fetch", "normalize_cli_key", "parse_vm_instance_output"]
+__all__ = [
+    "fetch",
+    "fetch_parents",
+    "iter_parent_urls",
+    "normalize_cli_key",
+    "parse_vm_instance_output",
+]
