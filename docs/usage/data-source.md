@@ -279,6 +279,9 @@ Every `DataSource` method accepts a `source=` parameter that controls where data
 !!! note "Auto mode cache-miss fallback"
     When `source="auto"` and the initial cache-routed request returns no results (`None` for `.get()`, empty list for `.query()`), DataSource transparently retries with live routing. This means callers get data regardless of whether the cache has been populated for a given cluster. The fallback is skipped when `.where()` expressions are present, since those are cache-only and cannot be evaluated on the live path.
 
+!!! note "Live queries of child models fetch their parents first"
+    A model whose endpoint is keyed by a parent (for example a snapshot, keyed by its volume) has no collection endpoint of its own. A live query of such a model fetches its parent collection first, recursively through multi-level chains, then sends one request per parent. The cost therefore scales with the parent count. `order_by` and `max_records` apply per parent; `max_records` also caps the total and stops further parent requests once reached. A parent whose request fails is logged as `CHILD_FETCH_FAILED` and skipped.
+
 ```python
 # Default: auto-routing based on field metadata
 vol = ds.get(OntapVolume, cluster="prod1", id="abc-123-def")

@@ -529,6 +529,210 @@ class TestFetchParameterizedMultiPlaceholder:
             _fetch_parameterized(mapping, [], MagicMock(), "[t]")
 
 
+class _GrandParent(BaseModel):
+    name: str = ""
+    id: str = ""
+
+
+class _MidParent(BaseModel):
+    name: str = ""
+    uuid: str = ""
+
+
+class _Leaf(BaseModel):
+    name: str = ""
+
+
+class _OrphanLeaf(BaseModel):
+    name: str = ""
+
+
+class _CycleA(BaseModel):
+    id: str = ""
+
+
+class _CycleB(BaseModel):
+    uuid: str = ""
+
+
+class _SingletonLeaf(BaseModel):
+    enabled: bool = False
+
+
+_GP_MAPPING = TypeMapping(
+    name="GP975",
+    model_class=_GrandParent,
+    api_endpoint="/gps?fields=*",
+    fields=(FieldMapping(cache_attr="name"), FieldMapping(cache_attr="id")),
+)
+_MID_MAPPING = TypeMapping(
+    name="Mid975",
+    model_class=_MidParent,
+    api_endpoint="/gps/{gp.id}/mids?fields=*",
+    fields=(FieldMapping(cache_attr="name"), FieldMapping(cache_attr="uuid")),
+    parent_mapping="GP975",
+    parent_id_field="id",
+)
+_LEAF_MAPPING = TypeMapping(
+    name="Leaf975",
+    model_class=_Leaf,
+    api_endpoint="/mids/{mid.uuid}/leaves?fields=*",
+    fields=(FieldMapping(cache_attr="name"),),
+    parent_mapping="Mid975",
+    parent_id_field="uuid",
+)
+_SINGLETON_LEAF_MAPPING = TypeMapping(
+    name="SLeaf975",
+    model_class=_SingletonLeaf,
+    api_endpoint="/mids/{mid.uuid}/setting",
+    fields=(FieldMapping(cache_attr="enabled"),),
+    parent_mapping="Mid975",
+    parent_id_field="uuid",
+    response_shape="singleton",
+)
+_ORPHAN_MAPPING = TypeMapping(
+    name="Orphan975",
+    model_class=_OrphanLeaf,
+    api_endpoint="/x/{y.id}/z",
+    fields=(FieldMapping(cache_attr="name"),),
+    parent_mapping="NoSuchParent975",
+    parent_id_field="id",
+)
+_CYCLE_A = TypeMapping(
+    name="CycleA975",
+    model_class=_CycleA,
+    api_endpoint="/a/{b.id}",
+    fields=(FieldMapping(cache_attr="id"),),
+    parent_mapping="CycleB975",
+    parent_id_field="id",
+)
+_CYCLE_B = TypeMapping(
+    name="CycleB975",
+    model_class=_CycleB,
+    api_endpoint="/b/{a.id}",
+    fields=(FieldMapping(cache_attr="uuid"),),
+    parent_mapping="CycleA975",
+    parent_id_field="uuid",
+)
+
+_ALL_975 = (
+    _GP_MAPPING,
+    _MID_MAPPING,
+    _LEAF_MAPPING,
+    _SINGLETON_LEAF_MAPPING,
+    _ORPHAN_MAPPING,
+    _CYCLE_A,
+    _CYCLE_B,
+)
+
+
+class TestFetchParentsOnDemand:
+    """A child fetch fetches its missing parents, recursively (#975)."""
+
+    def setup_method(self) -> None:
+        for m in _ALL_975:
+            model_registry.register_mapping(m.name, m)
+
+    def teardown_method(self) -> None:
+        for m in _ALL_975:
+            model_registry._mappings.pop(m.name, None)
+            model_registry._mappings_by_class.pop(m.model_class, None)
+
+    @staticmethod
+    def _client(responses: dict[str, Any]) -> MagicMock:
+        client = MagicMock()
+        client.get_all_records = MagicMock(side_effect=lambda url, **kw: responses[url])
+        return client
+
+    def test_fetches_parents_then_children(self) -> None:
+        client = self._client(
+            {
+                "/mids/u1/leaves?fields=*": {"records": [{"name": "a"}, {"name": "b"}]},
+                "/mids/u2/leaves?fields=*": {"records": [{"name": "c"}]},
+            }
+        )
+        cache: dict[str, Any] = {
+            "Mid975": [_MidParent(name="m1", uuid="u1"), _MidParent(name="m2", uuid="u2")]
+        }
+        result = fetch(_Leaf, cluster="c", config=None, api_client=client, results_cache=cache)
+        assert isinstance(result, list)
+        assert [r.name for r in result] == ["a", "b", "c"]
+
+    def test_missing_parents_are_fetched_and_cached(self) -> None:
+        client = self._client(
+            {
+                "/gps?fields=*": {"records": [{"name": "g", "id": "g1"}]},
+                "/gps/g1/mids?fields=*": {"records": [{"name": "m1", "uuid": "u1"}]},
+                "/mids/u1/leaves?fields=*": {"records": [{"name": "a"}]},
+            }
+        )
+        cache: dict[str, Any] = {}
+        result = fetch(_Leaf, cluster="c", config=None, api_client=client, results_cache=cache)
+        assert isinstance(result, list)
+        assert [r.name for r in result] == ["a"]
+        assert [m.uuid for m in cache["Mid975"]] == ["u1"]
+        assert [g.id for g in cache["GP975"]] == ["g1"]
+        urls = [c.args[0] for c in client.get_all_records.call_args_list]
+        assert urls == ["/gps?fields=*", "/gps/g1/mids?fields=*", "/mids/u1/leaves?fields=*"]
+        assert not any("{" in u or "}" in u for u in urls)
+
+    def test_cached_parents_not_refetched(self) -> None:
+        client = self._client({"/mids/u1/leaves?fields=*": {"records": [{"name": "a"}]}})
+        cache: dict[str, Any] = {"Mid975": [_MidParent(uuid="u1")]}
+        fetch(_Leaf, cluster="c", config=None, api_client=client, results_cache=cache)
+        fetch(_Leaf, cluster="c", config=None, api_client=client, results_cache=cache)
+        assert client.get_all_records.call_count == 2  # leaves only, no parent request
+
+    def test_empty_cached_parents_mean_no_request(self) -> None:
+        client = self._client({})
+        result = fetch(
+            _Leaf, cluster="c", config=None, api_client=client, results_cache={"Mid975": []}
+        )
+        assert result == []
+        client.get_all_records.assert_not_called()
+
+    def test_unregistered_parent_raises_before_request(self) -> None:
+        from pynetappfoundry.cache.fetchers import fetch_parents
+
+        client = MagicMock()
+        with pytest.raises(ValueError, match="not registered"):
+            fetch_parents(_ORPHAN_MAPPING, client, {})
+        client.get_all_records.assert_not_called()
+
+    def test_cycle_raises_before_request(self) -> None:
+        from pynetappfoundry.cache.fetchers import fetch_parents
+
+        client = MagicMock()
+        with pytest.raises(ValueError, match="cycle"):
+            fetch_parents(_CYCLE_A, client, {})
+        client.get_all_records.assert_not_called()
+
+    def test_singleton_child_one_call_per_parent(self) -> None:
+        client = MagicMock()
+        client.call_endpoint = MagicMock(return_value={"enabled": True})
+        cache: dict[str, Any] = {"Mid975": [_MidParent(uuid="u1"), _MidParent(uuid="u2")]}
+        result = fetch(
+            _SingletonLeaf, cluster="c", config=None, api_client=client, results_cache=cache
+        )
+        assert isinstance(result, list)
+        assert len(result) == 2
+        assert [c.args[0] for c in client.call_endpoint.call_args_list] == [
+            "/mids/u1/setting",
+            "/mids/u2/setting",
+        ]
+
+    def test_iter_parent_urls_warns_on_skip(self, caplog: pytest.LogCaptureFixture) -> None:
+        import logging
+
+        from pynetappfoundry.cache.fetchers import iter_parent_urls
+
+        parents = [_MidParent(uuid="u1"), _MidParent(name="bad", uuid="")]
+        with caplog.at_level(logging.WARNING):
+            pairs = list(iter_parent_urls(_LEAF_MAPPING, parents, "[t]"))
+        assert [url for _, url in pairs] == ["/mids/u1/leaves?fields=*"]
+        assert any("SKIP_PARENT" in r.message for r in caplog.records)
+
+
 # ---------------------------------------------------------------------------
 # CLI parsing helpers (extracted from collector, issue #532)
 # ---------------------------------------------------------------------------
