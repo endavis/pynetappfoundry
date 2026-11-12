@@ -7,6 +7,10 @@ credentials are sent. Records live in a trust directory (``<config_dir>/.trust``
 - ``known_hosts``: SSH host keys in OpenSSH format, so ``ssh-keygen -R`` works on it.
 - ``tls_fingerprints.json``: SHA-256 certificate fingerprints keyed ``host:port``.
 
+With optional CA validation on (``verify_ssl`` / ``ca_bundle``) a cluster's TLS
+certificate is validated against the CA instead, and no TLS fingerprint is pinned or
+recorded for it.
+
 See ADR-0025 and ``docs/usage/basics.md`` ("Host identity").
 """
 
@@ -265,9 +269,11 @@ class TlsFingerprintStore:
 class FingerprintPinningAdapter(HTTPAdapter):
     """HTTPS adapter that requires the pinned certificate fingerprint for each host.
 
-    Certificate chain validation stays off (ONTAP clusters commonly use self-signed
-    certificates); urllib3 compares the fingerprint at connect time, before the
-    request and its credentials are written.
+    Certificate chain validation stays off by default (ONTAP clusters commonly use
+    self-signed certificates); urllib3 compares the fingerprint at connect time, before
+    the request and its credentials are written. When the caller turns chain validation
+    on (``verify`` is ``True`` or a CA bundle path) the adapter pins and records
+    nothing, because urllib3 skips hostname matching when a fingerprint is asserted.
     """
 
     def __init__(self, store: TlsFingerprintStore, **kwargs: Any) -> None:
@@ -285,6 +291,12 @@ class FingerprintPinningAdapter(HTTPAdapter):
     ) -> tuple[Any, Any]:
         """Add ``assert_fingerprint`` to the TLS settings of https requests.
 
+        The pin applies only when ``verify`` is ``False``, the same rule requests uses
+        for ``CERT_NONE``. With chain validation on (``True`` or a CA bundle path) no
+        fingerprint is pinned or recorded: urllib3 skips hostname matching whenever
+        ``assert_fingerprint`` is set, so a pin would validate the chain but never the
+        hostname.
+
         Returns ``Any`` pairs because the requests stubs type the pool settings as a
         closed TypedDict that has no ``assert_fingerprint`` key, which urllib3 accepts.
         """
@@ -292,7 +304,7 @@ class FingerprintPinningAdapter(HTTPAdapter):
             request, verify, cert
         )
         tls_params: dict[str, Any] = dict(stub_tls_params)
-        if host_params["scheme"] == "https":
+        if host_params["scheme"] == "https" and verify is False:
             host = host_params["host"]
             port = host_params["port"] or 443
             try:

@@ -305,7 +305,32 @@ ssh-keygen -R CLUSTER-IP -f config/.trust/known_hosts
 # TLS fingerprint: remove the "host:port" entry from config/.trust/tls_fingerprints.json
 ```
 
-The next connection records the new identity. See [ADR-0025](../decisions/0025-pin-ontap-ssh-host-keys-and-tls-certificate-fingerprints-on-first-use.md) for the design.
+The next connection records the new identity.
+
+### CA validation (optional)
+
+For clusters whose certificate is issued by a CA, the ONTAP REST client can validate the certificate chain and hostname instead of pinning a fingerprint. It is off by default, and a config with neither setting behaves exactly as before.
+
+```toml
+# config/environments/clusters.toml, per cluster
+[clusters.CLUSTER-PROD-01]
+ca_bundle = "certs/internal-ca.pem"   # validate against this CA bundle
+# verify_ssl = true                   # or validate against the default CA bundle
+
+# config/apis/ontap/ontapapi.toml, default for every cluster
+[general]
+# verify_ssl = true
+# ca_bundle = "certs/internal-ca.pem"
+```
+
+- **Precedence**, first match wins: the cluster's `ca_bundle`, the cluster's `verify_ssl`, the global `ca_bundle`, the global `verify_ssl`, then off. A cluster `verify_ssl = false` therefore turns off a global `ca_bundle`. Setting `ca_bundle` together with `verify_ssl = false` at the same level is an error.
+- **Paths:** a relative `ca_bundle` resolves against the config directory, and `~` is expanded. The path must be a readable file; a bad path raises `ConfigurationError` naming the cluster and key when the client is built, not when the config loads.
+- **Trust source:** `verify_ssl = true` uses the default CA bundle of `requests` (certifi) or the one named by `REQUESTS_CA_BUNDLE` / `CURL_CA_BUNDLE`, not the operating system trust store. For an internal CA, set `ca_bundle`.
+- **No fingerprint pin:** with validation on, the certificate fingerprint is neither pinned nor recorded in `<config_dir>/.trust/tls_fingerprints.json`. urllib3 skips the hostname check whenever a fingerprint is asserted, so keeping the pin would validate the chain but never the hostname. A certificate renewed under the same CA is accepted without a reset. SSH host keys are unaffected.
+- **Clusters addressed by IP:** the certificate needs an IP address entry in its subject alternative names, because the hostname check matches the address you connect to.
+- **Python API:** `ONTAPAPIClient` applies the settings itself. `ONTAPCLI.run_command_python_api` does not read the config, so pass `tls_verify=config.get_tls_verify(name)` when you build it.
+
+See [ADR-0025](../decisions/0025-pin-ontap-ssh-host-keys-and-tls-certificate-fingerprints-on-first-use.md) for the design.
 
 ## Error Handling
 

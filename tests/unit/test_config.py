@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
+import os
+import sys
 from pathlib import Path
 from typing import cast
 
 import pytest
 
 from pynetappfoundry.core.cluster_entry import ClusterEntry
-from pynetappfoundry.core.config import Config, ConfigurationError
+from pynetappfoundry.core.config import Config, ConfigurationError, resolve_tls_verify
 from pynetappfoundry.core.models import (
     ConsoleAPISettings,
     DIIAPISettings,
@@ -1162,6 +1164,125 @@ class TestClusterEntryWrapping:
             assert result._config is not None
         finally:
             os.chdir(original_cwd)
+
+
+class TestResolveTlsVerify:
+    """Tests for resolve_tls_verify / Config.get_tls_verify (#982)."""
+
+    NAME = "test-cluster-1"
+
+    def _set(
+        self,
+        config: Config,
+        cluster: dict[str, object] | None = None,
+        general: dict[str, object] | None = None,
+    ) -> None:
+        if cluster is not None:
+            config.data["clusters"][self.NAME].update(cluster)
+        if general is not None:
+            config.settings.setdefault("ontapapi", {})["general"] = general
+
+    def _bundle(self, config: Config, name: str = "ca.pem") -> Path:
+        path = config.config_dir / name
+        path.write_text("placeholder")
+        return path
+
+    def test_no_settings_is_false(self, config_instance: Config) -> None:
+        assert resolve_tls_verify(config_instance, self.NAME) is False
+
+    def test_global_verify_true(self, config_instance: Config) -> None:
+        self._set(config_instance, general={"verify_ssl": True})
+        assert resolve_tls_verify(config_instance, self.NAME) is True
+
+    def test_global_ca_bundle_is_absolute(self, config_instance: Config) -> None:
+        bundle = self._bundle(config_instance)
+        self._set(config_instance, general={"ca_bundle": str(bundle)})
+        assert resolve_tls_verify(config_instance, self.NAME) == str(bundle)
+
+    def test_cluster_ca_bundle_overrides_global_verify(self, config_instance: Config) -> None:
+        bundle = self._bundle(config_instance)
+        self._set(
+            config_instance,
+            cluster={"ca_bundle": str(bundle)},
+            general={"verify_ssl": False},
+        )
+        assert resolve_tls_verify(config_instance, self.NAME) == str(bundle)
+
+    def test_cluster_verify_false_overrides_global_bundle(self, config_instance: Config) -> None:
+        bundle = self._bundle(config_instance)
+        self._set(
+            config_instance,
+            cluster={"verify_ssl": False},
+            general={"ca_bundle": str(bundle)},
+        )
+        assert resolve_tls_verify(config_instance, self.NAME) is False
+
+    def test_cluster_verify_true_overrides_global_false(self, config_instance: Config) -> None:
+        self._set(config_instance, cluster={"verify_ssl": True}, general={"verify_ssl": False})
+        assert resolve_tls_verify(config_instance, self.NAME) is True
+
+    def test_relative_path_resolves_under_config_dir(self, config_instance: Config) -> None:
+        bundle = self._bundle(config_instance)
+        self._set(config_instance, cluster={"ca_bundle": "ca.pem"})
+        assert resolve_tls_verify(config_instance, self.NAME) == str(bundle)
+
+    def test_missing_path_names_cluster_and_key(self, config_instance: Config) -> None:
+        self._set(config_instance, cluster={"ca_bundle": "nope.pem"})
+        with pytest.raises(ConfigurationError, match=r"clusters\.test-cluster-1\.ca_bundle"):
+            resolve_tls_verify(config_instance, self.NAME)
+
+    def test_directory_is_rejected(self, config_instance: Config) -> None:
+        self._set(config_instance, cluster={"ca_bundle": str(config_instance.config_dir)})
+        with pytest.raises(ConfigurationError, match="ca_bundle"):
+            resolve_tls_verify(config_instance, self.NAME)
+
+    @pytest.mark.skipif(
+        sys.platform == "win32" or (hasattr(os, "geteuid") and os.geteuid() == 0),
+        reason="file permissions are not enforced on Windows or for root",
+    )
+    def test_unreadable_file_is_rejected(self, config_instance: Config) -> None:
+        bundle = self._bundle(config_instance)
+        bundle.chmod(0o000)
+        try:
+            self._set(config_instance, cluster={"ca_bundle": str(bundle)})
+            with pytest.raises(ConfigurationError, match="not readable"):
+                resolve_tls_verify(config_instance, self.NAME)
+        finally:
+            bundle.chmod(0o600)
+
+    def test_bundle_with_verify_false_same_level_raises(self, config_instance: Config) -> None:
+        bundle = self._bundle(config_instance)
+        self._set(config_instance, cluster={"ca_bundle": str(bundle), "verify_ssl": False})
+        with pytest.raises(ConfigurationError, match="verify_ssl = false"):
+            resolve_tls_verify(config_instance, self.NAME)
+
+    def test_non_bool_verify_ssl_raises(self, config_instance: Config) -> None:
+        self._set(config_instance, cluster={"verify_ssl": "yes"})
+        with pytest.raises(ConfigurationError, match=r"verify_ssl must be true or false"):
+            resolve_tls_verify(config_instance, self.NAME)
+
+    def test_empty_ca_bundle_raises(self, config_instance: Config) -> None:
+        self._set(config_instance, cluster={"ca_bundle": " "})
+        with pytest.raises(ConfigurationError, match="non-empty"):
+            resolve_tls_verify(config_instance, self.NAME)
+
+    def test_absent_ontapapi_section_does_not_raise(self, config_instance: Config) -> None:
+        config_instance.settings.pop("ontapapi", None)
+        assert resolve_tls_verify(config_instance, self.NAME) is False
+
+    def test_invalid_global_bundle_overridden_by_cluster_does_not_raise(
+        self, config_instance: Config
+    ) -> None:
+        self._set(
+            config_instance,
+            cluster={"verify_ssl": True},
+            general={"ca_bundle": "missing.pem"},
+        )
+        assert resolve_tls_verify(config_instance, self.NAME) is True
+
+    def test_get_tls_verify_delegates(self, config_instance: Config) -> None:
+        self._set(config_instance, cluster={"verify_ssl": True})
+        assert config_instance.get_tls_verify(self.NAME) is True
 
 
 class TestGetTrustStore:

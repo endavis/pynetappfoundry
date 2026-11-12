@@ -109,6 +109,9 @@ subapp = ""
 cloud = "gcp"
 region = "us-central1"
 tags = ["active", "cvo", "ha"]
+# Optional: validate this cluster's TLS certificate against a CA instead of pinning it.
+# verify_ssl = true
+# ca_bundle = "certs/internal-ca.pem"
 
 [clusters.GCP-DEV-01]
 # GCP development cluster

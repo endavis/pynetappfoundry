@@ -249,6 +249,30 @@ class TestONTAPAPISettings:
         settings = ONTAPAPISettings(base_api_path="/api/v2")
         assert settings.base_api_path == "/api/v2"
 
+    def test_tls_validation_defaults(self) -> None:
+        """CA validation is off by default."""
+        settings = ONTAPAPISettings()
+        assert settings.verify_ssl is False
+        assert settings.ca_bundle is None
+
+
+class TestClusterConfigTlsValidation:
+    """Tests for the optional CA validation fields on ClusterConfig."""
+
+    def test_defaults_are_unset(self) -> None:
+        cluster = ClusterConfig()
+        assert cluster.verify_ssl is None
+        assert cluster.ca_bundle is None
+
+    def test_accepts_values(self) -> None:
+        cluster = ClusterConfig(verify_ssl=True, ca_bundle="ca.pem")
+        assert cluster.verify_ssl is True
+        assert cluster.ca_bundle == "ca.pem"
+
+    def test_rejects_non_bool_verify_ssl(self) -> None:
+        with pytest.raises(ValueError):
+            ClusterConfig(verify_ssl="maybe")  # type: ignore[arg-type]  # deliberately invalid
+
 
 class TestDIIAPISettings:
     """Tests for DIIAPISettings model."""

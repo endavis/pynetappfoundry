@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any
 
 from pynetappfoundry.clients.openapi import APIWrapper
 from pynetappfoundry.clients.trust import FingerprintPinningAdapter
+from pynetappfoundry.core.config import resolve_tls_verify
 
 if TYPE_CHECKING:
     from pynetappfoundry.core.config import Config
@@ -42,10 +43,11 @@ class ONTAPAPIClient(APIWrapper):
             auth_header=auth_header,
             base_api_path=ontap_settings.base_api_path,
             timeout=ontap_settings.timeout,
-            # Chain validation is off (self-signed certs); the fingerprint is pinned instead.
-            # urllib3 counts a pinned connection as verified, so it raises no
-            # InsecureRequestWarning and no suppression is needed (#983).
-            verify_ssl=False,
+            # Default: chain validation off (self-signed certs) and the fingerprint is
+            # pinned instead; urllib3 counts a pinned connection as verified, so it
+            # raises no InsecureRequestWarning (#983). With verify_ssl / ca_bundle set
+            # (#982) the chain and hostname are validated and the adapter pins nothing.
+            verify_ssl=resolve_tls_verify(config, cluster.name),
             https_adapter=FingerprintPinningAdapter(
                 config.get_trust_store().tls, pool_connections=20, pool_maxsize=20
             ),

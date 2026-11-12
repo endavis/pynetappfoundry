@@ -29,12 +29,15 @@ CMD_KEYS: dict[str, str] = {
 _HOST_CONNECTION_LOCK = threading.Lock()
 
 
-def _open_host_connection(host: str, username: str, password: str) -> HostConnection:
+def _open_host_connection(
+    host: str, username: str, password: str, verify: bool | str = False
+) -> HostConnection:
     """Build a ``HostConnection`` without leaving netapp_ontap's warning filter behind.
 
     ``netapp_ontap.host_connection.HostConnection.__init__`` calls
-    ``urllib3.disable_warnings(InsecureRequestWarning)`` whenever ``verify`` is false, which
-    silences the warning for the whole process (#983). Construction runs inside
+    ``urllib3.disable_warnings(InsecureRequestWarning)`` only when ``verify`` is false, which
+    then silences the warning for the whole process (#983). Containment stays for every
+    ``verify`` value. Construction runs inside
     ``warnings.catch_warnings()``, so the filter is dropped when the block exits. Only the
     construction is covered: ``__enter__`` and the requests run outside it.
 
@@ -46,12 +49,14 @@ def _open_host_connection(host: str, username: str, password: str) -> HostConnec
         host: Cluster address.
         username: ONTAP user.
         password: ONTAP password.
+        verify: ``False`` (default, the pinning adapter secures the connection), ``True``
+            or a CA bundle path to validate the certificate chain and hostname.
 
     Returns:
-        An unopened ``HostConnection`` with ``verify=False``.
+        An unopened ``HostConnection`` with the given ``verify``.
     """
     with _HOST_CONNECTION_LOCK, warnings.catch_warnings():
-        return HostConnection(host, username=username, password=password, verify=False)
+        return HostConnection(host, username=username, password=password, verify=verify)
 
 
 def _parse_separator_output(
@@ -148,6 +153,7 @@ class ONTAPCLI:
         timeout: float | None = None,
         *,
         trust_store: HostTrustStore | None = None,
+        tls_verify: bool | str = False,
     ) -> None:
         """Initialize the ONTAP CLI client.
 
@@ -160,8 +166,13 @@ class ONTAPCLI:
             trust_store: Records SSH host keys and TLS certificate fingerprints on
                 first use and requires them to match afterwards. When omitted,
                 only hosts already in the system ``known_hosts`` are accepted.
+            tls_verify: TLS ``verify`` value for ``run_command_python_api``: ``False``
+                (default, fingerprint pinning), ``True`` or a CA bundle path. Pass
+                ``config.get_tls_verify(name)`` to honour the cluster's ``verify_ssl`` /
+                ``ca_bundle`` settings.
         """
         self.name = name
+        self._tls_verify = tls_verify
         self.host = host_or_ip
         self.username = username
         self.password = password
@@ -495,7 +506,9 @@ class ONTAPCLI:
             f'{self.log_prefix} running "{command}" with arguments'
             f" {kwargs} and privilege: {privilege_level}"
         )
-        with _open_host_connection(self.host, self.username, self.password) as conn:
+        with _open_host_connection(
+            self.host, self.username, self.password, verify=self._tls_verify
+        ) as conn:
             if self._trust_store is not None:
                 session = conn.session
                 existing = session.adapters.get(conn.origin)

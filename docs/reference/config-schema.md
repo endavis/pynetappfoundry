@@ -144,6 +144,8 @@ ONTAP REST API settings. Loaded into `config.settings["ontapapi"]`.
 ```toml
 [general]
 base_api_path = "/api"    # Optional: Base path for ONTAP REST API (default: "/api")
+# verify_ssl = true       # Optional: validate cluster TLS certificates (default: false)
+# ca_bundle = "certs/internal-ca.pem"  # Optional: validate against this CA bundle
 ```
 
 #### ONTAP API Settings Fields
@@ -151,6 +153,10 @@ base_api_path = "/api"    # Optional: Base path for ONTAP REST API (default: "/a
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
 | `base_api_path` | string | No | `"/api"` | Base path for ONTAP REST API endpoints |
+| `verify_ssl` | boolean | No | `false` | Validate the TLS certificate chain and hostname with the default CA bundle. Default for every cluster; a cluster setting overrides it |
+| `ca_bundle` | string | No | - | Path to a CA bundle (relative to the config directory, `~` expanded). Cannot be combined with `verify_ssl = false` |
+
+With either setting on, no TLS fingerprint is pinned. Precedence is cluster `ca_bundle`, cluster `verify_ssl`, global `ca_bundle`, global `verify_ssl`, then off. See [Host identity](../usage/basics.md#host-identity-ssh-host-keys-and-tls-certificates).
 
 ---
 
@@ -288,6 +294,10 @@ cloud = ""                    # Optional: Cloud provider
 # Per-cluster credentials (override users.toml)
 user = "cluster_admin"        # Optional: Override default user
 enc = "cluster_password"      # Optional: Override default password
+
+# Per-cluster TLS certificate validation (override ontapapi.toml)
+# verify_ssl = true           # Optional: validate with the default CA bundle
+# ca_bundle = "certs/ca.pem"  # Optional: validate against this CA bundle
 ```
 
 #### Cluster Fields
@@ -306,8 +316,12 @@ enc = "cluster_password"      # Optional: Override default password
 | `cloud` | string | No | `""` | Cloud provider - use `"azure"` for Azure-hosted clusters |
 | `user` | string | No | From users.toml | Override default username |
 | `enc` | string | No | From users.toml | Override default encoded password |
+| `verify_ssl` | boolean | No | From ontapapi.toml, else `false` | Validate the REST TLS certificate chain and hostname with the default CA bundle |
+| `ca_bundle` | string | No | From ontapapi.toml | Path to a CA bundle (relative to the config directory). Cannot be combined with `verify_ssl = false` |
 
 **Special Field Behavior:**
+
+- **`verify_ssl` / `ca_bundle`**: Precedence is cluster `ca_bundle`, cluster `verify_ssl`, global `ca_bundle` (`ontapapi.toml`), global `verify_ssl`, then off. A cluster `verify_ssl = false` turns off a global `ca_bundle`. With validation on, no TLS fingerprint is pinned.
 
 - **`cloud`**: When set to `"azure"` (case-insensitive), enables Azure-specific features like scheduled maintenance event checking via the `nf events azevents` command.
 - **`name`**: Auto-populated from the TOML section key if not specified (e.g., `[clusters.MY-CLUSTER]` sets `name = "MY-CLUSTER"`).
