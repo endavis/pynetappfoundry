@@ -77,7 +77,7 @@ Defines a complete API object type mapping.
 | `api_type` | `str` | Tag identifying which API client/unit registry to use. Default: `"ontap"`. |
 | `parent_mapping` | `str \| None` | Name of the parent TypeMapping for parameterized endpoints. |
 | `parent_id_field` | `str \| None` | Field on the parent model providing the placeholder value. |
-| `response_shape` | `Literal["envelope", "singleton", "computed"]` | Shape of the API response. `"computed"` means no endpoint: the model is built empty and filled by its derived fields' `post_collection` hooks (see [Computed-values models](cache-models.md#computed-values-models)). A computed mapping needs an empty `api_endpoint` and `cli_command`, no parent, and only derived fields with hooks. Default: `"envelope"`. |
+| `response_shape` | `Literal["envelope", "singleton", "computed"]` | Shape of the API response. `"computed"` means no endpoint: the model is built empty and filled by its derived fields' `post_collection` hooks (see [Computed-values models](cache-models.md#computed-values-models)). A computed mapping needs an empty `api_endpoint` and `cli_command`, no parent, and only derived fields with hooks. A `"singleton"` GET that answers HTTP 404 (feature not configured) yields no record; other errors still raise. Default: `"envelope"`. |
 | `parent_id_fields` | `tuple[str, ...]` | Parent fields filling each placeholder in order, for endpoints with two or more placeholders (#955). Mutually exclusive with `parent_id_field`; the length must equal the placeholder count. |
 
 Helper methods:

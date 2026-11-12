@@ -40,6 +40,7 @@ import re
 from functools import partial
 from typing import TYPE_CHECKING, Any, cast
 
+import requests
 from pydantic import BaseModel
 
 from pynetappfoundry.cache._registry import model_registry
@@ -254,6 +255,25 @@ def _fetch_cli(
     return parse_cli_records(mapping, records, log_prefix, _noop_log_missing)
 
 
+def call_singleton_endpoint(api_client: ONTAPAPIClient, url: str) -> Any:
+    """GET a singleton endpoint, treating HTTP 404 as "no record".
+
+    ONTAP answers 404 for a singleton whose feature is not configured
+    (e.g. ``/security/authentication/cluster/ldap``). Any other HTTP
+    status, and any non-HTTP error, is re-raised.
+
+    Returns:
+        The response, or ``None`` when the endpoint answered 404.
+    """
+    try:
+        return api_client.call_endpoint(url, method="GET")
+    except requests.HTTPError as exc:
+        if exc.response is not None and exc.response.status_code == 404:
+            logger.info("Singleton endpoint returned 404 (not configured): GET %s", url)
+            return None
+        raise
+
+
 def _fetch_flat(
     mapping: TypeMapping,
     api_client: ONTAPAPIClient,
@@ -280,7 +300,7 @@ def _fetch_flat(
     url = mapping.build_collection_url()
     if mapping.response_shape == "singleton":
         logger.debug("%s API call (singleton): GET %s", log_prefix, url)
-        response = api_client.call_endpoint(url, method="GET")
+        response = call_singleton_endpoint(api_client, url)
         if not response:
             return []
         record_id = response.get(mapping.id_field, response.get("uuid", "unknown"))

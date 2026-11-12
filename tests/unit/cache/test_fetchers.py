@@ -6,6 +6,7 @@ from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
+import requests
 from pydantic import BaseModel
 
 from pynetappfoundry.cache._registry import model_registry
@@ -229,6 +230,61 @@ class TestFetchSingleton:
             results_cache={"OntapNodeResponse": []},
         )
         assert isinstance(result, OntapCluster)
+
+
+def _http_error(status: int | None) -> requests.HTTPError:
+    """Build an HTTPError carrying a real Response (or none when *status* is None)."""
+    if status is None:
+        return requests.HTTPError("boom")
+    response = requests.Response()
+    response.status_code = status
+    return requests.HTTPError(f"{status} error", response=response)
+
+
+class TestFetchSingleton404:
+    """A 404 on a singleton GET means "not configured"; other errors still raise (#977)."""
+
+    def test_singleton_404_returns_empty_instance(self) -> None:
+        client = _make_api_client()
+        client.call_endpoint.side_effect = _http_error(404)
+        result = fetch(
+            OntapCluster,
+            cluster="c1",
+            config=None,
+            api_client=client,
+            results_cache={"OntapNodeResponse": []},
+        )
+        assert isinstance(result, OntapCluster)
+
+    def test_singleton_500_still_raises(self) -> None:
+        client = _make_api_client()
+        client.call_endpoint.side_effect = _http_error(500)
+        with pytest.raises(requests.HTTPError):
+            fetch(
+                OntapCluster,
+                cluster="c1",
+                config=None,
+                api_client=client,
+                results_cache={"OntapNodeResponse": []},
+            )
+
+    def test_singleton_http_error_without_response_still_raises(self) -> None:
+        client = _make_api_client()
+        client.call_endpoint.side_effect = _http_error(None)
+        with pytest.raises(requests.HTTPError):
+            fetch(
+                OntapCluster,
+                cluster="c1",
+                config=None,
+                api_client=client,
+                results_cache={"OntapNodeResponse": []},
+            )
+
+    def test_envelope_404_still_raises(self) -> None:
+        client = _make_api_client()
+        client.get_all_records.side_effect = _http_error(404)
+        with pytest.raises(requests.HTTPError):
+            fetch(OntapNodeResponse, cluster="c1", config=None, api_client=client)
 
 
 # ---------------------------------------------------------------------------

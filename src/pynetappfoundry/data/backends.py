@@ -23,7 +23,12 @@ from typing import TYPE_CHECKING, Any, TypeVar
 from pydantic import BaseModel
 
 from pynetappfoundry.cache import fetch
-from pynetappfoundry.cache.fetchers import _resolve_dotted_attr, fetch_parents, iter_parent_urls
+from pynetappfoundry.cache.fetchers import (
+    _resolve_dotted_attr,
+    call_singleton_endpoint,
+    fetch_parents,
+    iter_parent_urls,
+)
 from pynetappfoundry.cache.field_mapping import parse_api_record, parse_api_response
 from pynetappfoundry.core.models import PaginationConfig
 from pynetappfoundry.data._merge import merge_models
@@ -455,7 +460,7 @@ class OntapBackend(Backend):
             return None
         client = self._get_api_client(cluster)
         url = self._build_live_url(mapping, {}, live_fields, base_url=base_url)
-        response = client.call_endpoint(url, method="GET")
+        response = call_singleton_endpoint(client, url)
         if not response or not isinstance(response, dict):
             return None
         for key, expected in filters.items():

@@ -1752,6 +1752,59 @@ class TestSingletonLivePaths:
         assert out == 0
         assert empty == 0
 
+    @staticmethod
+    def _http_error(status: int) -> Any:
+        import requests
+
+        response = requests.Response()
+        response.status_code = status
+        return requests.HTTPError(f"{status} error", response=response)
+
+    def _run_error(self, mock_config: Any, status: int, fn: str, *args: Any) -> Any:
+        backend = _make_backend(mock_config)
+        client = MagicMock()
+        client.call_endpoint.side_effect = self._http_error(status)
+        with patch.object(backend, "_get_api_client", return_value=client):
+            return getattr(backend, fn)(*args)
+
+    def test_singleton_404_is_no_record(self, mock_config: Any) -> None:
+        from pynetappfoundry.cache.ontap.cluster.mapping import ONTAPCLUSTER_MAPPING
+        from pynetappfoundry.models.ontap.cluster.model import OntapCluster
+
+        live = self._run_error(
+            mock_config,
+            404,
+            "_fetch_live_filtered",
+            OntapCluster,
+            ONTAPCLUSTER_MAPPING,
+            "p",
+            {},
+            (),
+        )
+        count = self._run_error(mock_config, 404, "_count_live", ONTAPCLUSTER_MAPPING, "p", {})
+        assert live == []
+        assert count == 0
+
+    def test_singleton_500_still_raises(self, mock_config: Any) -> None:
+        import requests
+
+        from pynetappfoundry.cache.ontap.cluster.mapping import ONTAPCLUSTER_MAPPING
+        from pynetappfoundry.models.ontap.cluster.model import OntapCluster
+
+        with pytest.raises(requests.HTTPError):
+            self._run_error(
+                mock_config,
+                500,
+                "_fetch_live_filtered",
+                OntapCluster,
+                ONTAPCLUSTER_MAPPING,
+                "p",
+                {},
+                (),
+            )
+        with pytest.raises(requests.HTTPError):
+            self._run_error(mock_config, 500, "_count_live", ONTAPCLUSTER_MAPPING, "p", {})
+
     @pytest.mark.parametrize(
         ("extra", "expected"),
         [
