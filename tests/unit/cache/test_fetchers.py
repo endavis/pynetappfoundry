@@ -1218,3 +1218,67 @@ class TestClusterTraitsRegistration:
             "_CLOUD_SERIAL_PREFIXES",
         ):
             assert hasattr(traits_mapping, name)
+
+
+class TestPinnedParentIds:
+    """pinned_parent_ids returns targets only when filters pin every placeholder (#986)."""
+
+    _SINGLE = TypeMapping(
+        name="PinChild",
+        model_class=_ChildParam,
+        api_endpoint="/storage/volumes/{volume.uuid}/snapshots?fields=*",
+        fields=(FieldMapping(cache_attr="name"),),
+        parent_mapping="PinParent",
+        parent_id_field="uuid",
+    )
+
+    def test_single_value(self) -> None:
+        from pynetappfoundry.cache.fetchers import pinned_parent_ids
+
+        assert pinned_parent_ids(self._SINGLE, {"volume.uuid": "v-1"}) == [("v-1",)]
+
+    def test_pipe_or_is_deduplicated_in_order(self) -> None:
+        from pynetappfoundry.cache.fetchers import pinned_parent_ids
+
+        result = pinned_parent_ids(self._SINGLE, {"volume.uuid": "b|a|b"})
+        assert result == [("b",), ("a",)]
+
+    def test_int_zero_is_a_value(self) -> None:
+        from pynetappfoundry.cache.fetchers import pinned_parent_ids
+
+        assert pinned_parent_ids(self._SINGLE, {"volume.uuid": 0}) == [("0",)]
+
+    def test_no_pin_returns_none(self) -> None:
+        from pynetappfoundry.cache.fetchers import pinned_parent_ids
+
+        assert pinned_parent_ids(self._SINGLE, {"name": "x"}) is None
+        assert pinned_parent_ids(self._SINGLE, {}) is None
+
+    def test_partial_pin_returns_none_and_full_pin_is_product(self) -> None:
+        from pynetappfoundry.cache.fetchers import pinned_parent_ids
+
+        assert pinned_parent_ids(_MULTI_CHILD_MAPPING, {"svm.uuid": "s1"}) is None
+        result = pinned_parent_ids(_MULTI_CHILD_MAPPING, {"svm.uuid": "s1|s2", "group.name": "g"})
+        assert result == [("s1", "g"), ("s2", "g")]
+
+    @pytest.mark.parametrize("value", ["", "a|", "|a", "a*", "!a", "<5", ">5", "a..b", "a|b*"])
+    def test_empty_or_operator_parts_return_none(self, value: str) -> None:
+        from pynetappfoundry.cache.fetchers import pinned_parent_ids
+
+        assert pinned_parent_ids(self._SINGLE, {"volume.uuid": value}) is None
+
+    def test_slash_is_percent_encoded(self) -> None:
+        from pynetappfoundry.cache.fetchers import pinned_parent_ids
+
+        assert pinned_parent_ids(self._SINGLE, {"volume.uuid": "a/b"}) == [("a%2Fb",)]
+
+    def test_no_parent_mapping_returns_none(self) -> None:
+        from pynetappfoundry.cache.fetchers import pinned_parent_ids
+
+        mapping = TypeMapping(
+            name="Top",
+            model_class=_ChildParam,
+            api_endpoint="/a/{x}/b",
+            fields=(FieldMapping(cache_attr="name"),),
+        )
+        assert pinned_parent_ids(mapping, {"x": "1"}) is None
