@@ -40,7 +40,7 @@ def send_email(
     smtp_server = smtp_settings.server
     smtp_port = smtp_settings.port
     smtp_user = smtp_settings.user
-    smtp_password = smtp_settings.password
+    smtp_password = smtp_settings.password.get_secret_value()
     auth = smtp_settings.auth
 
     if not mailto:

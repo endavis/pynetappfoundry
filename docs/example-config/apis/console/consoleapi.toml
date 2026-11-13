@@ -6,6 +6,7 @@
 # At least one source is required. See notes.txt for how to obtain them.
 
 user_token = 'paste-user-jwt-here'
+# user_token = 'SOPS[...]'  # encrypted value, produced by: nf config encrypt-value
 
 # Refresh-token mode (alternative to user_token; setting both is an error).
 # The refresh token does NOT go in this file: put it in users.toml under
@@ -19,6 +20,7 @@ user_token = 'paste-user-jwt-here'
 # error). The client fetches and renews the service token itself.
 # client_id = 'your-service-account-client-id'
 # client_secret = 'your-service-account-client-secret'
+# client_secret = 'SOPS[...]'  # encrypted value, produced by: nf config encrypt-value
 # token_endpoint and audience have defaults; set them only with the two above.
 # token_endpoint = 'https://netapp-cloud-account.auth0.com/oauth/token'
 # audience = 'https://api.cloud.netapp.com'
@@ -27,6 +29,7 @@ user_token = 'paste-user-jwt-here'
 # APIWrapper when this is present. Calling a service-typed endpoint without
 # a service_token raises ConsoleServiceTokenMissingError.
 # service_token = 'paste-service-account-jwt-here'
+# service_token = 'SOPS[...]'  # encrypted value, produced by: nf config encrypt-value
 
 # The host comes from base_url. The bundled Console spec keys each operation by
 # its full path (for example /v1/management/organizations), so base_api_path has

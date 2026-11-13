@@ -14,6 +14,7 @@ searchable_keys = [ 'div', 'bu', 'cloud', 'app', 'env', 'subapp', 'region']
 server = "smtp.example.com"
 user = "some_user"
 password = "some_password"
+# password = "SOPS[...]"  # encrypted value, produced by: nf config encrypt-value
 auth = "False"
 port = 25
 

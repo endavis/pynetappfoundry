@@ -99,7 +99,7 @@ class ConsoleAgentClient:
             # Fail fast on a bad refresh token rather than on the first API call.
             self._provider.get_token()
         elif settings.user_token:
-            auth_header["Authorization"] = f"Bearer {settings.user_token}"
+            auth_header["Authorization"] = f"Bearer {settings.user_token.get_secret_value()}"
         elif settings.client_id and settings.client_secret:
             self._provider = ClientCredentialsTokenProvider(
                 client_id=settings.client_id,
@@ -112,7 +112,7 @@ class ConsoleAgentClient:
             # Fail fast on bad credentials rather than on the first API call.
             self._provider.get_token()
         elif settings.service_token:
-            auth_header["Authorization"] = f"Bearer {settings.service_token}"
+            auth_header["Authorization"] = f"Bearer {settings.service_token.get_secret_value()}"
 
         self._wrapper = APIWrapper(
             api_json_file=spec_path,

@@ -251,6 +251,7 @@ nf config [OPTIONS] COMMAND [ARGS]...
 | `validate` | Validate configuration files |
 | `init-sops` | Initialize SOPS encryption with age for credential storage |
 | `set-credential` | Set encrypted credentials for a cluster or resource type |
+| `encrypt-value` | Encrypt a value into a `SOPS[...]` string for a settings file |
 
 **`config show` options:**
 
@@ -262,7 +263,9 @@ nf config [OPTIONS] COMMAND [ARGS]...
 **`config validate` options:**
 
 No options beyond `--help`. Checks that all configuration files parse and
-contain valid values.
+contain valid values. A settings section that is absent is reported as not
+configured; one that is present but invalid, or whose `SOPS[...]` value cannot be
+decrypted, is reported as Invalid.
 
 **`config init-sops` options:**
 
@@ -280,6 +283,16 @@ contain valid values.
 | `--user TEXT` | Username (required) |
 | `--password TEXT` | Password (will prompt if not provided) |
 | `--no-encrypt` | Store password as plain text (not recommended) |
+
+**`config encrypt-value` options:**
+
+| Option | Description |
+|--------|-------------|
+| `--value TEXT` | Value to encrypt (prompts with hidden input and confirmation if not provided) |
+
+Prints only the `SOPS[...]` string to stdout (status messages go to stderr), so the
+output pipes cleanly. Paste it into `settings.toml` `[SMTP] password`, `diiapi.toml`
+`api_ro_token`, or `consoleapi.toml` `client_secret`, `service_token` or `user_token`.
 
 ### utils
 
@@ -440,6 +453,9 @@ nf config set-credential --type console --user console
 
 # Store a password without encryption (not recommended)
 nf config set-credential --cluster mycluster --user admin --no-encrypt
+
+# Encrypt a settings value (SMTP password, DII or Console token) for pasting into a settings file
+nf config encrypt-value
 ```
 
 ### Utilities

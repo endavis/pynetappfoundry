@@ -236,20 +236,24 @@ class TestConsoleAPISettingsCredentials:
         assert s.audience.startswith("https://")
 
     def test_user_token_only_valid(self) -> None:
-        s = ConsoleAPISettings(base_url=self.BASE, user_token="user-jwt")
+        s = ConsoleAPISettings(base_url=self.BASE, user_token=SecretStr("user-jwt"))
         assert not s.uses_client_credentials
 
     def test_half_credentials_rejected(self) -> None:
         with pytest.raises(ValidationError, match="together"):
-            ConsoleAPISettings(base_url=self.BASE, user_token="u", client_id="test-client-id")
+            ConsoleAPISettings(
+                base_url=self.BASE, user_token=SecretStr("u"), client_id="test-client-id"
+            )
         with pytest.raises(ValidationError, match="together"):
-            ConsoleAPISettings(base_url=self.BASE, user_token="u", client_secret=SecretStr(SECRET))
+            ConsoleAPISettings(
+                base_url=self.BASE, user_token=SecretStr("u"), client_secret=SecretStr(SECRET)
+            )
 
     def test_credentials_plus_service_token_rejected(self) -> None:
         with pytest.raises(ValidationError, match="mutually exclusive"):
             ConsoleAPISettings(
                 base_url=self.BASE,
-                service_token="svc",
+                service_token=SecretStr("svc"),
                 client_id="test-client-id",
                 client_secret=SecretStr(SECRET),
             )

@@ -75,11 +75,12 @@ class UserCredentials(BaseModel):
 class SMTPSettings(BaseModel):
     """SMTP server configuration."""
 
-    model_config = ConfigDict(extra="allow")
+    # hide_input_in_errors keeps the (possibly decrypted) password out of ValidationError text.
+    model_config = ConfigDict(extra="allow", hide_input_in_errors=True)
 
     server: str
     user: str = ""
-    password: str = ""
+    password: SecretStr = SecretStr("")
     auth: str = "False"
     port: int = 25
 
@@ -107,9 +108,10 @@ class ONTAPAPISettings(BaseModel):
 class DIIAPISettings(BaseModel):
     """Data Infrastructure Insights API settings."""
 
-    model_config = ConfigDict(extra="allow")
+    # hide_input_in_errors keeps the (possibly decrypted) token out of ValidationError text.
+    model_config = ConfigDict(extra="allow", hide_input_in_errors=True)
 
-    api_ro_token: str
+    api_ro_token: SecretStr
     base_url: str
     base_api_path: str = "/rest/v1"
     timeout: float = 30.0
@@ -134,8 +136,8 @@ class ConsoleAPISettings(BaseModel):
     # out of ValidationError text.
     model_config = ConfigDict(extra="allow", hide_input_in_errors=True)
 
-    user_token: str | None = None
-    service_token: str | None = None
+    user_token: SecretStr | None = None
+    service_token: SecretStr | None = None
     client_id: str | None = None
     client_secret: SecretStr | None = None
     refresh_token: SecretStr | None = None

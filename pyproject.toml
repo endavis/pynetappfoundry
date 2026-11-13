@@ -387,6 +387,8 @@ pytest_add_cli_args_test_selection = [
     "tests/unit/test_config.py",
     "tests/unit/test_config_commands.py",
     "tests/unit/test_config_console_refresh_token.py",
+    "tests/unit/test_config_encrypt_value.py",
+    "tests/unit/test_config_settings_sops.py",
     "tests/unit/test_db.py",
     "tests/unit/test_models.py",
     "tests/unit/test_openapi.py",

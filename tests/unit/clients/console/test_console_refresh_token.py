@@ -272,7 +272,7 @@ class TestRefreshTokenSettings:
         assert s.refresh_token.get_secret_value() == REFRESH
 
     def test_no_refresh_token_does_not_use_it(self) -> None:
-        s = ConsoleAPISettings(base_url=BASE_URL, user_token="user-jwt")
+        s = ConsoleAPISettings(base_url=BASE_URL, user_token=SecretStr("user-jwt"))
         assert s.uses_refresh_token is False
         assert s.refresh_token is None
 
@@ -289,7 +289,9 @@ class TestRefreshTokenSettings:
 
     def test_user_client_id_without_refresh_token_rejected(self) -> None:
         with pytest.raises(ValidationError, match="user_client_id requires a refresh token"):
-            ConsoleAPISettings(base_url=BASE_URL, user_token="user-jwt", user_client_id="x")
+            ConsoleAPISettings(
+                base_url=BASE_URL, user_token=SecretStr("user-jwt"), user_client_id="x"
+            )
 
     def test_user_client_id_with_refresh_token_valid(self) -> None:
         assert _settings(user_client_id="custom-client").user_client_id == "custom-client"
@@ -300,7 +302,9 @@ class TestRefreshTokenSettings:
 
     def test_token_endpoint_without_refresh_or_credentials_still_rejected(self) -> None:
         with pytest.raises(ValidationError, match="require client_id and client_secret"):
-            ConsoleAPISettings(base_url=BASE_URL, user_token="u", token_endpoint=ENDPOINT)
+            ConsoleAPISettings(
+                base_url=BASE_URL, user_token=SecretStr("u"), token_endpoint=ENDPOINT
+            )
 
     def test_one_of_message_mentions_refresh_token(self) -> None:
         with pytest.raises(ValidationError, match="a refresh token"):
@@ -357,7 +361,7 @@ class TestConsoleAPIClientRefreshToken:
     def test_static_user_token_has_no_provider(
         self, api_wrapper_factory: MagicMock, tmp_path: Path
     ) -> None:
-        settings = ConsoleAPISettings(base_url=BASE_URL, user_token="user-jwt")
+        settings = ConsoleAPISettings(base_url=BASE_URL, user_token=SecretStr("user-jwt"))
         client = ConsoleAPIClient(_config(settings, tmp_path))
         assert client.user_token_provider is None
 
@@ -438,7 +442,7 @@ class TestConsoleAPIClientRefreshToken:
     def test_missing_user_message_mentions_refresh_token(
         self, api_wrapper_factory: MagicMock, tmp_path: Path
     ) -> None:
-        settings = ConsoleAPISettings(base_url=BASE_URL, service_token="service-jwt")
+        settings = ConsoleAPISettings(base_url=BASE_URL, service_token=SecretStr("service-jwt"))
         client = ConsoleAPIClient(_config(settings, tmp_path))
         with pytest.raises(ConsoleUserTokenMissingError, match=r"users\.toml"):
             client._require_user()

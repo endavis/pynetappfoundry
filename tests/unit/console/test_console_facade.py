@@ -6,6 +6,7 @@ from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
+from pydantic import SecretStr
 
 from pynetappfoundry.console import Console
 from pynetappfoundry.core.models import ConsoleAPISettings
@@ -22,7 +23,7 @@ def _make_config(settings: ConsoleAPISettings, tmp_path: Any) -> MagicMock:
 @pytest.fixture
 def settings_with_default_org() -> ConsoleAPISettings:
     return ConsoleAPISettings(
-        user_token="user-jwt",
+        user_token=SecretStr("user-jwt"),
         base_url="https://api.bluexp.netapp.com",
         base_api_path="/",
         org_id="org-default",
@@ -32,7 +33,7 @@ def settings_with_default_org() -> ConsoleAPISettings:
 @pytest.fixture
 def settings_without_org() -> ConsoleAPISettings:
     return ConsoleAPISettings(
-        user_token="user-jwt",
+        user_token=SecretStr("user-jwt"),
         base_url="https://api.bluexp.netapp.com",
         base_api_path="/",
     )

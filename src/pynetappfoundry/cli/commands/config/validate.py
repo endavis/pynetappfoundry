@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
 
 import click
@@ -85,6 +86,45 @@ def _validate_users(config: Config, tree: Tree) -> list[str]:
     return errors
 
 
+def _check_settings_section(
+    config: Config,
+    branch: Tree,
+    *,
+    label: str,
+    keys: tuple[str, str],
+    reader: Callable[[], object],
+    absent_text: str,
+) -> list[str]:
+    """Report one settings section as valid, not configured, or invalid.
+
+    A section that is absent is "not configured". A section that is present but
+    fails to load (invalid fields, a SOPS value that cannot be decrypted) is
+    invalid, and the reader's error message is returned as a validation error.
+
+    Args:
+        config: Config instance to validate.
+        branch: Rich tree branch to add the result to.
+        label: Display name of the section.
+        keys: ``(top-level key, section key)`` locating the section in ``config.settings``.
+        reader: The ``Config`` reader that loads and validates the section.
+        absent_text: Markup shown when the section is absent.
+
+    Returns:
+        List of validation error messages.
+    """
+    top = config.settings.get(keys[0])
+    if not isinstance(top, dict) or keys[1] not in top:
+        branch.add(absent_text)
+        return []
+    try:
+        reader()
+    except ConfigurationError as e:
+        branch.add(f"[red]{escape(label)}: Invalid[/red]")
+        return [f"{'.'.join(keys)}: {e}"]
+    branch.add(f"[green]{escape(label)}[/green]")
+    return []
+
+
 def _validate_settings(config: Config, tree: Tree) -> list[str]:
     """Validate settings configurations.
 
@@ -98,41 +138,36 @@ def _validate_settings(config: Config, tree: Tree) -> list[str]:
     errors: list[str] = []
     settings_branch = tree.add("[bold]Settings[/bold]")
 
-    # Validate ONTAP API settings
-    try:
-        config.get_ontap_api_settings()
-        settings_branch.add("[green]ONTAP API[/green]")
-    except ConfigurationError:
-        settings_branch.add("[yellow]ONTAP API: Not configured[/yellow]")
-    except ValidationError as e:
-        settings_branch.add("[red]ONTAP API: Invalid[/red]")
-        for err in e.errors():
-            loc = ".".join(str(x) for x in err["loc"])
-            errors.append(f"ontapapi.general.{loc}: {err['msg']}")
-
-    # Validate DII API settings (optional)
-    try:
-        config.get_dii_api_settings()
-        settings_branch.add("[green]DII API[/green]")
-    except ConfigurationError:
-        settings_branch.add("[dim]DII API: Not configured (optional)[/dim]")
-    except ValidationError as e:
-        settings_branch.add("[red]DII API: Invalid[/red]")
-        for err in e.errors():
-            loc = ".".join(str(x) for x in err["loc"])
-            errors.append(f"diiapi.general.{loc}: {err['msg']}")
-
-    # Validate SMTP settings (optional)
-    try:
-        config.get_smtp_settings()
-        settings_branch.add("[green]SMTP[/green]")
-    except ConfigurationError:
-        settings_branch.add("[dim]SMTP: Not configured (optional)[/dim]")
-    except ValidationError as e:
-        settings_branch.add("[red]SMTP: Invalid[/red]")
-        for err in e.errors():
-            loc = ".".join(str(x) for x in err["loc"])
-            errors.append(f"settings.SMTP.{loc}: {err['msg']}")
+    errors.extend(
+        _check_settings_section(
+            config,
+            settings_branch,
+            label="ONTAP API",
+            keys=("ontapapi", "general"),
+            reader=config.get_ontap_api_settings,
+            absent_text="[yellow]ONTAP API: Not configured[/yellow]",
+        )
+    )
+    errors.extend(
+        _check_settings_section(
+            config,
+            settings_branch,
+            label="DII API",
+            keys=("diiapi", "general"),
+            reader=config.get_dii_api_settings,
+            absent_text="[dim]DII API: Not configured (optional)[/dim]",
+        )
+    )
+    errors.extend(
+        _check_settings_section(
+            config,
+            settings_branch,
+            label="SMTP",
+            keys=("settings", "SMTP"),
+            reader=config.get_smtp_settings,
+            absent_text="[dim]SMTP: Not configured (optional)[/dim]",
+        )
+    )
 
     # Validate licensing settings (optional)
     licensing = config.get_licensing_settings()

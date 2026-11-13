@@ -10,6 +10,7 @@ from unittest.mock import MagicMock
 
 import pytest
 import requests
+from pydantic import SecretStr
 
 from pynetappfoundry.clients.console.api import (
     ConsoleAPIClient,
@@ -107,7 +108,9 @@ class TestConstruction:
         self, wrapper_factory: MagicMock, tmp_path: Any
     ) -> None:
         settings = ConsoleAPISettings(
-            base_url=BASE_URL, user_token="user-jwt", service_token="service-jwt"
+            base_url=BASE_URL,
+            user_token=SecretStr("user-jwt"),
+            service_token=SecretStr("service-jwt"),
         )
         client = ConsoleAPIClient(_config(settings, tmp_path))
         assert client.service_token_provider is None
@@ -173,7 +176,7 @@ class TestRouting:
     def test_static_service_token_only_uses_service_without_headers(
         self, wrapper_factory: MagicMock, tmp_path: Any
     ) -> None:
-        settings = ConsoleAPISettings(base_url=BASE_URL, service_token="service-jwt")
+        settings = ConsoleAPISettings(base_url=BASE_URL, service_token=SecretStr("service-jwt"))
         client = ConsoleAPIClient(_config(settings, tmp_path))
         service = _svc(client)
         service.call_endpoint.return_value = ORG
@@ -187,7 +190,7 @@ class TestRouting:
     def test_static_service_token_401_not_retried(
         self, wrapper_factory: MagicMock, tmp_path: Any
     ) -> None:
-        settings = ConsoleAPISettings(base_url=BASE_URL, service_token="service-jwt")
+        settings = ConsoleAPISettings(base_url=BASE_URL, service_token=SecretStr("service-jwt"))
         client = ConsoleAPIClient(_config(settings, tmp_path))
         service = _svc(client)
         service.call_endpoint.side_effect = _http_error(401)
@@ -197,7 +200,7 @@ class TestRouting:
 
     def test_require_service_unaffected(self, wrapper_factory: MagicMock, tmp_path: Any) -> None:
         client = ConsoleAPIClient(
-            _config(ConsoleAPISettings(base_url=BASE_URL, user_token="u"), tmp_path)
+            _config(ConsoleAPISettings(base_url=BASE_URL, user_token=SecretStr("u")), tmp_path)
         )
         with pytest.raises(ConsoleServiceTokenMissingError):
             client._require_service()

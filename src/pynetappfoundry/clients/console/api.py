@@ -109,7 +109,7 @@ class ConsoleAPIClient:
             self._user = APIWrapper(
                 api_json_file=spec_path,
                 base_url=settings.base_url,
-                auth_header={"Authorization": f"Bearer {settings.user_token}"},
+                auth_header={"Authorization": f"Bearer {settings.user_token.get_secret_value()}"},
                 base_api_path=settings.base_api_path,
                 timeout=settings.timeout,
                 name="console-user",
@@ -144,7 +144,9 @@ class ConsoleAPIClient:
             self._service = APIWrapper(
                 api_json_file=spec_path,
                 base_url=settings.base_url,
-                auth_header={"Authorization": f"Bearer {settings.service_token}"},
+                auth_header={
+                    "Authorization": f"Bearer {settings.service_token.get_secret_value()}"
+                },
                 base_api_path=settings.base_api_path,
                 timeout=settings.timeout,
                 name="console-service",
