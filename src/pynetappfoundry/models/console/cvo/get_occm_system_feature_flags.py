@@ -7,4 +7,4 @@ from pydantic import BaseModel
 
 
 class ResponseBody(BaseModel):
-    azure: bool
+    azure: bool | None = None

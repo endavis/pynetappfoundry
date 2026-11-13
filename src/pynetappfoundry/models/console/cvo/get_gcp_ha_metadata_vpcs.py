@@ -7,25 +7,27 @@ from pydantic import BaseModel, Field
 
 
 class GcpFirewallResponse(BaseModel):
-    name: str = Field(..., description="Firewall Name")
-    targetServiceAccount: list[str] = Field(..., description="Target Service Account")
-    vpc: str = Field(..., description="VPC")
+    name: str | None = Field(None, description="Firewall Name")
+    targetServiceAccount: list[str] | None = Field(None, description="Target Service Account")
+    vpc: str | None = Field(None, description="VPC")
 
 
 class GcpSubnetResponse(BaseModel):
-    availableIps: int = Field(..., description="The number of available IP addresses on the subnet")
-    ipCidrRange: str = Field(..., description="Classless Inter-Domain Routing (CIDR)")
-    minimumRequiredIps: int = Field(
-        ...,
+    availableIps: int | None = Field(
+        None, description="The number of available IP addresses on the subnet"
+    )
+    ipCidrRange: str | None = Field(None, description="Classless Inter-Domain Routing (CIDR)")
+    minimumRequiredIps: int | None = Field(
+        None,
         description="The minimum needed IP addresses for the Cloud Volumes ONTAP system creation",
     )
-    name: str = Field(..., description="Subnet name")
-    path: str = Field(..., description="Subnet path")
+    name: str | None = Field(None, description="Subnet name")
+    path: str | None = Field(None, description="Subnet path")
 
 
 class ResponseBody(BaseModel):
-    firewalls: list[GcpFirewallResponse] = Field(..., description="Firewalls")
-    isShared: bool = Field(..., description="isShared")
-    name: str = Field(..., description="Virtual Network Name")
-    subnets: list[GcpSubnetResponse] = Field(..., description="Subnets")
-    vpcPath: str = Field(..., description="Virtual Network path")
+    firewalls: list[GcpFirewallResponse] | None = Field(None, description="Firewalls")
+    isShared: bool | None = Field(None, description="isShared")
+    name: str | None = Field(None, description="Virtual Network Name")
+    subnets: list[GcpSubnetResponse] | None = Field(None, description="Subnets")
+    vpcPath: str | None = Field(None, description="Virtual Network path")

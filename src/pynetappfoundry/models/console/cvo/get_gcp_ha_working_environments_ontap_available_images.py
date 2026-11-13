@@ -7,6 +7,6 @@ from pydantic import BaseModel
 
 
 class ResponseBody(BaseModel):
-    isCurrent: bool
-    name: str
+    isCurrent: bool | None = None
+    name: str | None = None
     version: str | None = None

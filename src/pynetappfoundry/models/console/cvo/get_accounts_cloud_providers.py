@@ -25,9 +25,9 @@ class AwsAccountResponse(BaseModel):
     accountType: str | None = None
     assumeRole: AssumeRole | None = None
     occmRole: str | None = None
-    publicId: str
+    publicId: str | None = None
     subscriptionId: str | None = None
-    vsaList: list[AccountWorkingEnvironmentResponse]
+    vsaList: list[AccountWorkingEnvironmentResponse] | None = None
 
 
 class AzureAccountResponse(BaseModel):
@@ -35,9 +35,9 @@ class AzureAccountResponse(BaseModel):
     accountType: str | None = None
     applicationId: str | None = None
     occmRole: str | None = None
-    publicId: str
+    publicId: str | None = None
     tenantId: str | None = None
-    vsaList: list[AccountWorkingEnvironmentResponse]
+    vsaList: list[AccountWorkingEnvironmentResponse] | None = None
 
 
 class GcpAccountResponse(BaseModel):
@@ -45,20 +45,20 @@ class GcpAccountResponse(BaseModel):
     accountName: str | None = None
     accountType: str | None = None
     occmRole: str | None = None
-    publicId: str
-    vsaList: list[AccountWorkingEnvironmentResponse]
+    publicId: str | None = None
+    vsaList: list[AccountWorkingEnvironmentResponse] | None = None
 
 
 class NssAccountResponse(BaseModel):
     accountName: str | None = None
     accountType: str | None = None
     nssUserName: str | None = None
-    publicId: str
-    vsaList: list[AccountWorkingEnvironmentResponse]
+    publicId: str | None = None
+    vsaList: list[AccountWorkingEnvironmentResponse] | None = None
 
 
 class ResponseBody(BaseModel):
-    awsAccounts: list[AwsAccountResponse]
-    azureAccounts: list[AzureAccountResponse]
-    gcpStorageAccounts: list[GcpAccountResponse]
-    nssAccounts: list[NssAccountResponse]
+    awsAccounts: list[AwsAccountResponse] | None = None
+    azureAccounts: list[AzureAccountResponse] | None = None
+    gcpStorageAccounts: list[GcpAccountResponse] | None = None
+    nssAccounts: list[NssAccountResponse] | None = None

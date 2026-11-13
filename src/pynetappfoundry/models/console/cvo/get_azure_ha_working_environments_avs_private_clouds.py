@@ -19,8 +19,8 @@ class AvsPrivateCloudManagCluster(BaseModel):
 
 
 class AvsPrivateCloudProperties(BaseModel):
-    endpoints: AvsPrivateCloudEndpoints
-    managementCluster: AvsPrivateCloudManagCluster
+    endpoints: AvsPrivateCloudEndpoints | None = None
+    managementCluster: AvsPrivateCloudManagCluster | None = None
     provisioningState: str | None = None
 
 
@@ -30,9 +30,9 @@ class Tags(BaseModel):
 
 
 class ResponseBody(BaseModel):
-    id: str
+    id: str | None = None
     location: str | None = None
     name: str | None = None
-    properties: AvsPrivateCloudProperties
-    tags: Tags
-    zones: list[str]
+    properties: AvsPrivateCloudProperties | None = None
+    tags: Tags | None = None
+    zones: list[str] | None = None

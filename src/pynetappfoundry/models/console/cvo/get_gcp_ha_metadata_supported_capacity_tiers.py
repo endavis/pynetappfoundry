@@ -16,4 +16,4 @@ class ResponseBody(BaseModel):
     capacityTiersDisableReasons: list[str] | None = None
     compositeSupported: bool | None = None
     forceCompositeVersion: bool | None = None
-    supportedCapacityTiersPerVolumeType: list[SupportedCapacityTiersResponse]
+    supportedCapacityTiersPerVolumeType: list[SupportedCapacityTiersResponse] | None = None

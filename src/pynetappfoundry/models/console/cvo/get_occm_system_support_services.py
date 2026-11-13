@@ -86,7 +86,7 @@ class TenancyServiceInformation(BaseModel):
 
 class ResponseBody(BaseModel):
     alertsAndNotificationServiceInformation: AlertsAndNotificationServiceInformation | None = None
-    asupEnabled: bool
+    asupEnabled: bool | None = None
     cognitoEnabled: bool | None = None
     complianceEnabled: bool | None = None
     credentialsServiceInformation: ServiceInformationUrl | None = None
@@ -100,10 +100,10 @@ class ResponseBody(BaseModel):
     liveChatEnabled: bool | None = None
     notificationServiceInformation: NotificationServiceInformation | None = None
     platformServiceInformation: ServiceInformationUrl | None = None
-    portalService: PortalService
+    portalService: PortalService | None = None
     saasMpServiceInformation: SaasMpServiceInformation | None = None
-    servicesInformation: ServicesInformation
-    setupInfo: SetupInfo
+    servicesInformation: ServicesInformation | None = None
+    setupInfo: SetupInfo | None = None
     tenancyServiceInformation: TenancyServiceInformation | None = None
     useCompliancePrivateIpContainerMode: bool | None = None
     volumeViewEnabled: bool | None = None

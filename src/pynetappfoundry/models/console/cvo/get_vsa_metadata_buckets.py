@@ -8,10 +8,10 @@ from pydantic import BaseModel
 
 class Tags(BaseModel):
     empty: bool | None = None
-    traversableAgain: bool
+    traversableAgain: bool | None = None
 
 
 class ResponseBody(BaseModel):
-    bucketName: str
+    bucketName: str | None = None
     region: str | None = None
-    tags: Tags
+    tags: Tags | None = None

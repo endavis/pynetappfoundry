@@ -11,4 +11,4 @@ class ResponseBody(BaseModel):
     exportPolicy: str | None = None
     idleDuration: str | None = None
     svm: str | None = None
-    volume: str
+    volume: str | None = None

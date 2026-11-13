@@ -7,6 +7,6 @@ from pydantic import BaseModel, Field
 
 
 class ResponseBody(BaseModel):
-    date: int = Field(..., description="Last Modified")
-    name: str = Field(..., description="Update name")
-    releaseNumber: int = Field(..., description="Release Number")
+    date: int | None = Field(None, description="Last Modified")
+    name: str | None = Field(None, description="Update name")
+    releaseNumber: int | None = Field(None, description="Release Number")

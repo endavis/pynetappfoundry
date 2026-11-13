@@ -184,20 +184,52 @@ def test_occm_system_about_response_round_trips() -> None:
     assert body.model_dump(exclude_none=True)["agentId"] == payload["agentId"]
 
 
-def test_occm_system_about_requires_version() -> None:
-    from pydantic import ValidationError
-
-    from pynetappfoundry.models.console.cvo.get_occm_system_about import ResponseBody
-
-    payload = json.loads((FIXTURES / "occm_system_about.json").read_text())
-    payload.pop("version")
-    with pytest.raises(ValidationError):
-        ResponseBody.model_validate(payload)
-
-
 def test_on_prem_cluster_properties_has_cluster_uuid() -> None:
     from pynetappfoundry.models.console.cvo.get_onprem_working_environments import (
         OnPremClusterProperties,
     )
 
     assert "clusterUuid" in OnPremClusterProperties.model_fields
+
+
+# --- cvo response fields are optional (#1018) --------------------------------
+
+
+def test_occm_system_about_without_version_validates() -> None:
+    from pynetappfoundry.models.console.cvo.get_occm_system_about import ResponseBody
+
+    payload = json.loads((FIXTURES / "occm_system_about.json").read_text())
+    payload.pop("version")
+    assert ResponseBody.model_validate(payload).version is None
+
+
+def test_onprem_working_environment_with_nulls_validates() -> None:
+    from pynetappfoundry.models.console.cvo.get_onprem_working_environments import (
+        ResponseBody,
+    )
+
+    payload = json.loads((FIXTURES / "onprem_working_environment.json").read_text())
+    model = ResponseBody.model_validate(payload)
+    assert model.publicId == "we-placeholder-0001"
+    assert model.svms is None
+
+
+def test_working_environments_wrapper_with_nulls_validates() -> None:
+    from pynetappfoundry.models.console.cvo.get_working_environments import ResponseBody
+
+    item = json.loads((FIXTURES / "onprem_working_environment.json").read_text())
+    model = ResponseBody.model_validate({"onPremWorkingEnvironments": [item]})
+    assert model.onPremWorkingEnvironments is not None
+    assert model.onPremWorkingEnvironments[0].name == "cluster-placeholder"
+
+
+def test_cvo_request_body_still_requires_tenant_id() -> None:
+    from pydantic import ValidationError
+
+    from pynetappfoundry.models.console.cvo.post_onprem_working_environments import (
+        RequestBody,
+    )
+
+    with pytest.raises(ValidationError) as exc:
+        RequestBody.model_validate({"location": "placeholder"})
+    assert [e["loc"] for e in exc.value.errors()] == [("tenantId",)]

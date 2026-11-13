@@ -8,8 +8,8 @@ from pydantic import BaseModel
 
 class MapStringObject(BaseModel):
     empty: bool | None = None
-    traversableAgain: bool
+    traversableAgain: bool | None = None
 
 
 class ResponseBody(BaseModel):
-    parameters: MapStringObject
+    parameters: MapStringObject | None = None

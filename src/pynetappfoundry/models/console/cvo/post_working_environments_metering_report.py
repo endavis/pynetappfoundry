@@ -19,10 +19,10 @@ class UploadedReportEntry(BaseModel):
 
 
 class ResponseBody(BaseModel):
-    bucketsGenerated: list[BucketEntry]
-    calculationTimeUtc: str
-    capacityCvoCount: int
+    bucketsGenerated: list[BucketEntry] | None = None
+    calculationTimeUtc: str | None = None
+    capacityCvoCount: int | None = None
     capacityVolumeCount: int | None = None
     chargeThresholdGb: int | None = None
-    minimumCapacityGb: int
-    uploadedReports: list[UploadedReportEntry]
+    minimumCapacityGb: int | None = None
+    uploadedReports: list[UploadedReportEntry] | None = None

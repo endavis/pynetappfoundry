@@ -7,9 +7,9 @@ from pydantic import BaseModel, Field
 
 
 class ReplicationStatusCurrentTransferInfo(BaseModel):
-    transferError: str = Field(..., description="Current transfer error")
-    transferPriority: str = Field(..., description="Current transfer priority")
-    transferType: str = Field(..., description="Current transfer type")
+    transferError: str | None = Field(None, description="Current transfer error")
+    transferPriority: str | None = Field(None, description="Current transfer priority")
+    transferType: str | None = Field(None, description="Current transfer type")
 
 
 class ReplicationStatusSide(BaseModel):
@@ -36,33 +36,33 @@ class Capacity(BaseModel):
 
 
 class ReplicationStatusLastTransferInfo(BaseModel):
-    transferDuration: Duration
-    transferEnded: str = Field(..., description="Last transfer end time")
-    transferError: str = Field(..., description="Last transfer error")
-    transferSize: Capacity
-    transferType: str = Field(..., description="Last transfer type")
+    transferDuration: Duration | None = None
+    transferEnded: str | None = Field(None, description="Last transfer end time")
+    transferError: str | None = Field(None, description="Last transfer error")
+    transferSize: Capacity | None = None
+    transferType: str | None = Field(None, description="Last transfer type")
 
 
 class ResponseBody(BaseModel):
-    currentTransferInfo: ReplicationStatusCurrentTransferInfo
-    destination: ReplicationStatusSide
-    healthy: bool = Field(..., description="SnapMirror health")
-    lagTime: Duration
-    lastTransferInfo: ReplicationStatusLastTransferInfo
-    maxTransferRate: Capacity
-    mirrorState: str = Field(..., description="SnapMirror status")
-    networkCompressionRatio: str = Field(..., description="Network compression ratio")
-    newestSnapshotCreated: str = Field(..., description="Newest snapshot creation time")
-    newestSnapshotName: str = Field(..., description="Newest snapshot name")
-    policy: str = Field(..., description="Policy name")
-    policyType: str = Field(..., description="Policy type")
-    relationshipProgress: Capacity
-    relationshipStatus: str = Field(..., description="SnapMirror relationship status")
-    relationshipType: str = Field(..., description="SnapMirror relationship type")
-    schedule: str = Field(..., description="Schedule name")
-    source: ReplicationStatusSide
-    totalTransferSize: Capacity
-    totalTransferTime: Duration
-    unhealthyReason: str = Field(..., description="The reason SnapMirror is unhealthy")
-    volumeCapacityTier: Capacity
-    volumeUsedSize: Capacity
+    currentTransferInfo: ReplicationStatusCurrentTransferInfo | None = None
+    destination: ReplicationStatusSide | None = None
+    healthy: bool | None = Field(None, description="SnapMirror health")
+    lagTime: Duration | None = None
+    lastTransferInfo: ReplicationStatusLastTransferInfo | None = None
+    maxTransferRate: Capacity | None = None
+    mirrorState: str | None = Field(None, description="SnapMirror status")
+    networkCompressionRatio: str | None = Field(None, description="Network compression ratio")
+    newestSnapshotCreated: str | None = Field(None, description="Newest snapshot creation time")
+    newestSnapshotName: str | None = Field(None, description="Newest snapshot name")
+    policy: str | None = Field(None, description="Policy name")
+    policyType: str | None = Field(None, description="Policy type")
+    relationshipProgress: Capacity | None = None
+    relationshipStatus: str | None = Field(None, description="SnapMirror relationship status")
+    relationshipType: str | None = Field(None, description="SnapMirror relationship type")
+    schedule: str | None = Field(None, description="Schedule name")
+    source: ReplicationStatusSide | None = None
+    totalTransferSize: Capacity | None = None
+    totalTransferTime: Duration | None = None
+    unhealthyReason: str | None = Field(None, description="The reason SnapMirror is unhealthy")
+    volumeCapacityTier: Capacity | None = None
+    volumeUsedSize: Capacity | None = None

@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 
 class TotalCapacity(BaseModel):
-    capacity: int
+    capacity: int | None = None
     units: str | None = None
 
 
@@ -15,11 +15,11 @@ class CapacityLicenseInfo(BaseModel):
     contractType: str | None = None
     flavorType: str | None = None
     totalConsumedCapacity: TotalCapacity | None = None
-    totalLicensedCapacity: TotalCapacity
+    totalLicensedCapacity: TotalCapacity | None = None
 
 
 class CloudAccountResponse(BaseModel):
-    cloudAccountId: str
+    cloudAccountId: str | None = None
     provider: str | None = None
     subscriptionId: str | None = None
 
@@ -31,10 +31,10 @@ class Capacity(BaseModel):
 
 class ResponseBody(BaseModel):
     awsOldDeployment: bool | None = None
-    capacityLicenses: list[CapacityLicenseInfo]
-    mpSub: list[CloudAccountResponse]
+    capacityLicenses: list[CapacityLicenseInfo] | None = None
+    mpSub: list[CloudAccountResponse] | None = None
     totalDpVolumes: Capacity | None = None
-    totalPrimaryVolumes: Capacity
-    validAccount: bool
+    totalPrimaryVolumes: Capacity | None = None
+    validAccount: bool | None = None
     validNss: bool | None = None
     vmPlan: str | None = None

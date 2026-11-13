@@ -13,7 +13,7 @@ class MapStringString(BaseModel):
 
 class ResponseBody(BaseModel):
     kmsKeyName: str | None = None
-    labels: MapStringString = Field(..., description="Instance tags")
+    labels: MapStringString | None = Field(None, description="Instance tags")
     location: str | None = None
-    name: str
+    name: str | None = None
     storageClass: str | None = None

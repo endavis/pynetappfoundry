@@ -17,5 +17,5 @@ class ResponseBody(BaseModel):
     accountName: str | None = None
     accountType: str | None = None
     occmRole: str | None = None
-    publicId: str
-    vsaList: list[AccountWorkingEnvironmentResponse]
+    publicId: str | None = None
+    vsaList: list[AccountWorkingEnvironmentResponse] | None = None

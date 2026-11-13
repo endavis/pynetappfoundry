@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 
 class ResponseBody(BaseModel):
-    actionName: str
-    closeTime: int
+    actionName: str | None = None
+    closeTime: int | None = None
     error: str | None = None
-    status: int
+    status: int | None = None

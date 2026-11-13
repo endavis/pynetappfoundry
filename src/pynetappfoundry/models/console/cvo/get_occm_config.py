@@ -29,10 +29,10 @@ class ResponseBody(BaseModel):
     asupSite: str | None = None
     autoOntapUpgrade: bool | None = None
     autoUpgrade: bool | None = None
-    autoVsaCapacityManagement: bool
+    autoVsaCapacityManagement: bool | None = None
     cacheConfig: str | None = None
     certificateValidityPeriod: int | None = None
-    cloudSyncConstants: CloudSyncConstants
+    cloudSyncConstants: CloudSyncConstants | None = None
     cotRollback: bool | None = None
     debugLogLevel: str | None = None
     directApiTraffic: bool | None = None
@@ -41,7 +41,7 @@ class ResponseBody(BaseModel):
     gcpInfrastructureManager: bool | None = None
     gcpInstanceMetadataItems: GcpInstanceMetadataItems | None = None
     ipaManualUrl: str | None = None
-    keyManagerPort: int
+    keyManagerPort: int | None = None
     licenseMaxCapacityUsedPercentage: int | None = None
     maxAggregateFreeSpacePercentage: int | None = None
     maxDownloadSessions: int | None = None
@@ -55,7 +55,7 @@ class ResponseBody(BaseModel):
     proxyUserName: str | None = None
     rollbackOnAzurePrivateLinkFailure: bool | None = None
     s3EbsRatio: int | None = None
-    simplicatorUri: str
+    simplicatorUri: str | None = None
     sysMgrUserCred: bool | None = None
     useAccelerationForImageDownload: bool | None = None
     usePrivateLink: bool | None = None

@@ -7,5 +7,5 @@ from pydantic import BaseModel, Field
 
 
 class ResponseBody(BaseModel):
-    aliasName: str = Field(..., description="Initiator alias")
-    iqn: str = Field(..., description="Initiator IQN")
+    aliasName: str | None = Field(None, description="Initiator alias")
+    iqn: str | None = Field(None, description="Initiator IQN")

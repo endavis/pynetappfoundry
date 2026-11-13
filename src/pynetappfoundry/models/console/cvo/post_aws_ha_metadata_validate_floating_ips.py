@@ -23,5 +23,5 @@ class RequestBody(BaseModel):
 
 
 class ResponseBody(BaseModel):
-    reasons: list[str]
-    result: bool
+    reasons: list[str] | None = None
+    result: bool | None = None

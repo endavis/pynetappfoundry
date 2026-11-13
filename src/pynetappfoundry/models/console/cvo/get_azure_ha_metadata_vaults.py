@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 
 
 class ResponseBody(BaseModel):
-    location: str = Field(..., description="Location")
-    name: str = Field(..., description="Vault name")
-    resourceGroup: str = Field(..., description="Resource group")
-    vaultUri: str = Field(..., description="Vault URI")
+    location: str | None = Field(None, description="Location")
+    name: str | None = Field(None, description="Vault name")
+    resourceGroup: str | None = Field(None, description="Resource group")
+    vaultUri: str | None = Field(None, description="Vault URI")

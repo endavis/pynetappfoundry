@@ -7,4 +7,4 @@ from pydantic import BaseModel
 
 
 class ResponseBody(BaseModel):
-    eligibilityResponse: str
+    eligibilityResponse: str | None = None

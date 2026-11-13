@@ -1,0 +1,146 @@
+---
+sidebar: sidebar
+api: true
+explorer: true
+permalink: 'fixture/cvo-response-required.html'
+summary: 'Create a thing'
+---
+
+= Create a thing
+
+[.api-doc-operation .api-doc-operation-post]#POST# [.api-doc-code-block]#`/things`#
+
+
+
+Creates a thing.
+
+
+== Request Body
+
+[cols=4*,options=header]
+|===
+|Name
+|Type
+|Required
+|Description
+
+|reqOnly
+|link:#ReqOnly[ReqOnly]
+|True
+a|
+
+|shared
+|link:#Shared[Shared]
+|False
+a|
+
+|===
+
+== Response
+
+Status: 200, Ok
+
+[cols=4*,options=header]
+|===
+|Name
+|Type
+|Required
+|Description
+
+|items
+|array[link:#Outer[Outer]]
+|True
+a|
+
+|total
+|integer
+|True
+a|
+
+|===
+
+== Definitions
+
+[.api-def-first-level]
+.See Definitions
+[%collapsible%closed]
+//Start collapsible Definitions block
+====
+[#ReqOnly]
+[.api-collapsible-fifth-title]
+ReqOnly
+
+[cols=4*,options=header]
+|===
+|Name
+|Type
+|Required
+|Description
+
+|label
+|string
+|True
+a|
+
+|===
+
+[#Shared]
+[.api-collapsible-fifth-title]
+Shared
+
+[cols=4*,options=header]
+|===
+|Name
+|Type
+|Required
+|Description
+
+|sharedField
+|string
+|True
+a|
+
+|===
+
+[#Inner]
+[.api-collapsible-fifth-title]
+Inner
+
+[cols=4*,options=header]
+|===
+|Name
+|Type
+|Required
+|Description
+
+|innerField
+|string
+|True
+a|
+
+|===
+
+[#Outer]
+[.api-collapsible-fifth-title]
+Outer
+
+[cols=4*,options=header]
+|===
+|Name
+|Type
+|Required
+|Description
+
+|inner
+|link:#Inner[Inner]
+|True
+a|
+
+|shared
+|link:#Shared[Shared]
+|True
+a|
+
+|===
+
+====

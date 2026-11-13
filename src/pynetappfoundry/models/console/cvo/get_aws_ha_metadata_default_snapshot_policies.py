@@ -7,11 +7,11 @@ from pydantic import BaseModel, Field
 
 
 class PolicySchedule(BaseModel):
-    frequency: str = Field(..., description="Frequency")
-    retention: int = Field(..., description="Retention")
+    frequency: str | None = Field(None, description="Frequency")
+    retention: int | None = Field(None, description="Retention")
 
 
 class ResponseBody(BaseModel):
-    description: str = Field(..., description="Description")
-    name: str = Field(..., description="Name")
-    schedules: list[PolicySchedule] = Field(..., description="Schedules")
+    description: str | None = Field(None, description="Description")
+    name: str | None = Field(None, description="Name")
+    schedules: list[PolicySchedule] | None = Field(None, description="Schedules")

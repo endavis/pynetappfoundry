@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 class Region(BaseModel):
     code: str | None = None
     location: str | None = None
-    name: str
+    name: str | None = None
     s3Region: str | None = None
 
 
@@ -34,7 +34,7 @@ class Capacity(BaseModel):
 
 
 class OntapLicenseType(BaseModel):
-    capacityLimit: Capacity
+    capacityLimit: Capacity | None = None
     capacity_limit: str | None = None
     default: bool | None = None
     description: str | None = None
@@ -64,12 +64,12 @@ class SupportedFeatures(BaseModel):
 
 class GlobalManifest(BaseModel):
     azureRegions: list[Region] | None = None
-    cot_versions: CotVersions
+    cot_versions: CotVersions | None = None
     cot_versions_to_upgrade_to: CotVersionsToUpgradeTo | None = None
     gcpRegions: list[Region] | None = None
-    license_types: list[OntapLicenseType]
-    regions: list[Region]
-    supportedFeatures: SupportedFeatures
+    license_types: list[OntapLicenseType] | None = None
+    regions: list[Region] | None = None
+    supportedFeatures: SupportedFeatures | None = None
 
 
 class RegionalAmi(BaseModel):
@@ -79,18 +79,18 @@ class RegionalAmi(BaseModel):
 
 
 class LicenseToAmis(BaseModel):
-    amis: list[RegionalAmi]
+    amis: list[RegionalAmi] | None = None
     instance_types: list[str] | None = None
     license_type: str | None = None
 
 
 class CloudOntapManifest(BaseModel):
     encryption_enabled_instance_types: list[str] | None = None
-    license_to_ami_mapping: list[LicenseToAmis]
-    ontap_image_versions_allowed_to_upgrade_from: list[str]
+    license_to_ami_mapping: list[LicenseToAmis] | None = None
+    ontap_image_versions_allowed_to_upgrade_from: list[str] | None = None
     ontap_version: str | None = None
 
 
 class ResponseBody(BaseModel):
-    globalManifest: GlobalManifest
-    ontapManifests: list[CloudOntapManifest] = Field(..., description="ONTAP manifests")
+    globalManifest: GlobalManifest | None = None
+    ontapManifests: list[CloudOntapManifest] | None = Field(None, description="ONTAP manifests")

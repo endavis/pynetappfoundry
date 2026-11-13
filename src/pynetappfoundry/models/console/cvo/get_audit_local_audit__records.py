@@ -7,10 +7,10 @@ from pydantic import BaseModel
 
 
 class ResponseBody(BaseModel):
-    action: str
+    action: str | None = None
     count: int | None = None
-    creationTime: int
+    creationTime: int | None = None
     data: str | None = None
-    errors: list[str]
+    errors: list[str] | None = None
     recordId: int | None = None
     status: str | None = None

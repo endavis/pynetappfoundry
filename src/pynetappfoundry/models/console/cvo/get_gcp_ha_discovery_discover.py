@@ -9,10 +9,10 @@ from pydantic import BaseModel
 class ResponseBody(BaseModel):
     clusterAddress: str | None = None
     id: str | None = None
-    name: str
+    name: str | None = None
     projectName: str | None = None
     publicId: str | None = None
-    recoverable: bool
+    recoverable: bool | None = None
     subnetIds: list[str] | None = None
     vpcs: list[str] | None = None
-    zones: list[str]
+    zones: list[str] | None = None

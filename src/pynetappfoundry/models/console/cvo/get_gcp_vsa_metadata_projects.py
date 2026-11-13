@@ -13,14 +13,14 @@ class Parent(BaseModel):
 
 class GcpProjectResponse(BaseModel):
     createTime: str | None = None
-    isDefault: bool
+    isDefault: bool | None = None
     lifecycleState: str | None = None
     name: str | None = None
-    parent: Parent
+    parent: Parent | None = None
     projectId: str | None = None
-    projectNumber: str
+    projectNumber: str | None = None
     subscriptionId: str | None = None
 
 
 class ResponseBody(BaseModel):
-    projects: list[GcpProjectResponse]
+    projects: list[GcpProjectResponse] | None = None

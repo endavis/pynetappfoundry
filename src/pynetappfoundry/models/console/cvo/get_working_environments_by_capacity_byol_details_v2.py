@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 
 class TotalCapacity(BaseModel):
-    capacity: int
+    capacity: int | None = None
     units: str | None = None
 
 
@@ -16,19 +16,19 @@ class FlavourAggregatedInfo(BaseModel):
     flavorType: str | None = None
     totalAllocatedLicensedCapacity: TotalCapacity | None = None
     totalConsumedCapacity: TotalCapacity | None = None
-    totalLicensedCapacity: TotalCapacity
+    totalLicensedCapacity: TotalCapacity | None = None
     totalPaygoCapacity: TotalCapacity | None = None
 
 
 class LicenseFlavorInfo(BaseModel):
-    accountId: str
+    accountId: str | None = None
     capacity: int | None = None
-    expirationDate: int
+    expirationDate: int | None = None
     flavorType: str | None = None
     metadata: str | None = None
     serialNumber: str | None = None
 
 
 class ResponseBody(BaseModel):
-    flavourAggregatedInfo: list[FlavourAggregatedInfo]
-    licenses: list[LicenseFlavorInfo]
+    flavourAggregatedInfo: list[FlavourAggregatedInfo] | None = None
+    licenses: list[LicenseFlavorInfo] | None = None

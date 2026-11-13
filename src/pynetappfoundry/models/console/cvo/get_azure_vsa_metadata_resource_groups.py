@@ -8,4 +8,4 @@ from pydantic import BaseModel
 
 class ResponseBody(BaseModel):
     id: str | None = None
-    name: str
+    name: str | None = None

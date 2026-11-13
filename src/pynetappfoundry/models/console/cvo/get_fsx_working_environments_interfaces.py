@@ -8,9 +8,9 @@ from pydantic import BaseModel
 
 class ResponseBody(BaseModel):
     address: str | None = None
-    dataProtocols: list[str]
+    dataProtocols: list[str] | None = None
     ipSpace: str | None = None
-    name: str
+    name: str | None = None
     role: str | None = None
     status: str | None = None
     svm: str | None = None

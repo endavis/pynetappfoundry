@@ -12,6 +12,6 @@ class Capacity(BaseModel):
 
 
 class ResponseBody(BaseModel):
-    size: Capacity
-    supportedDiskTypes: list[str]
+    size: Capacity | None = None
+    supportedDiskTypes: list[str] | None = None
     supportedOccmLicenses: list[str] | None = None

@@ -19,25 +19,31 @@ class SubscriptionResponse(BaseModel):
 
 
 class CloudAccountResponse(BaseModel):
-    cloudAccountId: str
+    cloudAccountId: str | None = None
     provider: str | None = None
     subscriptionId: str | None = None
 
 
 class ResponseBody(BaseModel):
-    awsSubscriptions: list[SubscriptionResponse] = Field(..., description="AWS subscriptions")
-    azureSubscriptions: list[SubscriptionResponse] = Field(..., description="Azure subscriptions")
-    cloudAccounts: list[CloudAccountResponse] = Field(..., description="Cloud accounts")
-    eligibleBycapLicenseCvoPackages: list[str] = Field(
-        ..., description="Eligible ByCap license Cloud Volumes ONTAP packages"
+    awsSubscriptions: list[SubscriptionResponse] | None = Field(
+        None, description="AWS subscriptions"
     )
-    eligibleForFreeTrialAws: bool = Field(
-        ..., description="Indicates eligibility for an AWS free trial"
+    azureSubscriptions: list[SubscriptionResponse] | None = Field(
+        None, description="Azure subscriptions"
     )
-    eligibleForFreeTrialAzure: bool = Field(
-        ..., description="Indicates eligibility for an Azure free trial"
+    cloudAccounts: list[CloudAccountResponse] | None = Field(None, description="Cloud accounts")
+    eligibleBycapLicenseCvoPackages: list[str] | None = Field(
+        None, description="Eligible ByCap license Cloud Volumes ONTAP packages"
     )
-    eligibleForFreeTrialGcp: bool = Field(
-        ..., description="Indicates eligibility for a Google Cloud free trial"
+    eligibleForFreeTrialAws: bool | None = Field(
+        None, description="Indicates eligibility for an AWS free trial"
     )
-    gcpSubscriptions: list[SubscriptionResponse] = Field(..., description="Gcp Subscriptions")
+    eligibleForFreeTrialAzure: bool | None = Field(
+        None, description="Indicates eligibility for an Azure free trial"
+    )
+    eligibleForFreeTrialGcp: bool | None = Field(
+        None, description="Indicates eligibility for a Google Cloud free trial"
+    )
+    gcpSubscriptions: list[SubscriptionResponse] | None = Field(
+        None, description="Gcp Subscriptions"
+    )

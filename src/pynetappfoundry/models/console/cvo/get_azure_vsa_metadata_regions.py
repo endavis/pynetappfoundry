@@ -22,47 +22,49 @@ class SupportsZonesAndPssdV2(BaseModel):
 
 
 class AzureSecurityGroupResponse(BaseModel):
-    id: str = Field(..., description="Security group ID")
-    name: str = Field(..., description="Security group name")
+    id: str | None = Field(None, description="Security group ID")
+    name: str | None = Field(None, description="Security group name")
     resourceGroup: str | None = Field(None, description="Resource group")
 
 
 class AzureSubnetResponse(BaseModel):
-    availableIps: int = Field(..., description="The number of available IP addresses on the subnet")
+    availableIps: int | None = Field(
+        None, description="The number of available IP addresses on the subnet"
+    )
     cidr: str | None = Field(None, description="CIDR")
-    id: str = Field(..., description="Subnet ID")
-    minimumRequiredIps: int = Field(
-        ...,
+    id: str | None = Field(None, description="Subnet ID")
+    minimumRequiredIps: int | None = Field(
+        None,
         description="The minimum needed IP addresses for the Cloud Volumes ONTAP system creation",
     )
-    name: str = Field(..., description="Subnet name")
+    name: str | None = Field(None, description="Subnet name")
 
 
 class AzureVirtualNetworkCidrData(BaseModel):
-    cidr: str = Field(..., description="CIDR")
-    subnets: list[AzureSubnetResponse] = Field(..., description="Subnets")
+    cidr: str | None = Field(None, description="CIDR")
+    subnets: list[AzureSubnetResponse] | None = Field(None, description="Subnets")
 
 
 class TagResponse(BaseModel):
-    key: str = Field(..., description="Tag key")
-    value: str = Field(..., description="Tag value")
+    key: str | None = Field(None, description="Tag key")
+    value: str | None = Field(None, description="Tag value")
 
 
 class AzureVirtualNetworkResponse(BaseModel):
-    cidrs: list[AzureVirtualNetworkCidrData] = Field(..., description="CIDRs")
-    id: str = Field(..., description="Virtual Network ID")
-    name: str = Field(..., description="Virtual Network name")
-    resourceGroup: str = Field(..., description="Resource group")
-    tags: list[TagResponse] = Field(..., description="Tags")
+    cidrs: list[AzureVirtualNetworkCidrData] | None = Field(None, description="CIDRs")
+    id: str | None = Field(None, description="Virtual Network ID")
+    name: str | None = Field(None, description="Virtual Network name")
+    resourceGroup: str | None = Field(None, description="Resource group")
+    tags: list[TagResponse] | None = Field(None, description="Tags")
 
 
 class AzureNetworkExtendedResponse(BaseModel):
-    securityGroups: list[AzureSecurityGroupResponse]
-    virtualNetworks: list[AzureVirtualNetworkResponse]
+    securityGroups: list[AzureSecurityGroupResponse] | None = None
+    virtualNetworks: list[AzureVirtualNetworkResponse] | None = None
 
 
 class ResponseBody(BaseModel):
-    displayName: str
+    displayName: str | None = None
     name: str | None = None
     supportsZonesAndPssdV2: SupportsZonesAndPssdV2 | None = None
     vnets: AzureNetworkExtendedResponse | None = None

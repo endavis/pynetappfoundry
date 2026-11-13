@@ -7,19 +7,19 @@ from pydantic import BaseModel, Field
 
 
 class ReplicationInterClusterLif(BaseModel):
-    address: str = Field(..., description="Address")
-    isPeered: bool = Field(..., description="Is Peered")
-    name: str = Field(..., description="Specifies the name")
-    netmaskLength: int = Field(..., description="Netmask Length")
-    node: str = Field(..., description="Node")
-    port: str = Field(..., description="Port")
-    status: str = Field(..., description="Status")
+    address: str | None = Field(None, description="Address")
+    isPeered: bool | None = Field(None, description="Is Peered")
+    name: str | None = Field(None, description="Specifies the name")
+    netmaskLength: int | None = Field(None, description="Netmask Length")
+    node: str | None = Field(None, description="Node")
+    port: str | None = Field(None, description="Port")
+    status: str | None = Field(None, description="Status")
 
 
 class ResponseBody(BaseModel):
-    interClusterLifs: list[ReplicationInterClusterLif] = Field(
-        ..., description="System Intercluster LIFs"
+    interClusterLifs: list[ReplicationInterClusterLif] | None = Field(
+        None, description="System Intercluster LIFs"
     )
-    peerInterClusterLifs: list[ReplicationInterClusterLif] = Field(
-        ..., description="Peer system Intercluster LIFs"
+    peerInterClusterLifs: list[ReplicationInterClusterLif] | None = Field(
+        None, description="Peer system Intercluster LIFs"
     )

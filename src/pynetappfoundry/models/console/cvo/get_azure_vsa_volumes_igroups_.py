@@ -11,7 +11,7 @@ class ConnectionState(BaseModel):
 
 
 class InitiatorsConnectivityStateNameObject(BaseModel):
-    connectivity_tracking: ConnectionState
+    connectivity_tracking: ConnectionState | None = None
     name: str | None = None
 
 
@@ -21,14 +21,14 @@ class NameUuidObject(BaseModel):
 
 
 class LunMapsLun(BaseModel):
-    lun: NameUuidObject
+    lun: NameUuidObject | None = None
 
 
 class ResponseBody(BaseModel):
-    igroupName: str
-    igroupType: str
-    initiators: list[str]
-    initiatorsWithConnStatus: list[InitiatorsConnectivityStateNameObject]
-    lunMaps: list[LunMapsLun]
+    igroupName: str | None = None
+    igroupType: str | None = None
+    initiators: list[str] | None = None
+    initiatorsWithConnStatus: list[InitiatorsConnectivityStateNameObject] | None = None
+    lunMaps: list[LunMapsLun] | None = None
     osType: str | None = None
     portsetName: str | None = None

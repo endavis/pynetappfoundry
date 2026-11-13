@@ -7,14 +7,14 @@ from pydantic import BaseModel, Field
 
 
 class Money(BaseModel):
-    amount: float = Field(..., description="Amount")
-    currency: str = Field(..., description="Currency")
+    amount: float | None = Field(None, description="Amount")
+    currency: str | None = Field(None, description="Currency")
 
 
 class SavingsInfo(BaseModel):
-    monthlySaving: Money
-    name: str = Field(..., description="Name of saving element")
+    monthlySaving: Money | None = None
+    name: str | None = Field(None, description="Name of saving element")
 
 
 class ResponseBody(BaseModel):
-    savings: list[SavingsInfo] = Field(..., description="List of savings")
+    savings: list[SavingsInfo] | None = Field(None, description="List of savings")

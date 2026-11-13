@@ -7,8 +7,8 @@ from pydantic import BaseModel
 
 
 class ResponseBody(BaseModel):
-    healthy: bool
+    healthy: bool | None = None
     id: str | None = None
     lastDeploymentError: str | None = None
-    status: str
+    status: str | None = None
     url: str | None = None

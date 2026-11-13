@@ -14,11 +14,11 @@ class Capacity(BaseModel):
 class AzureDiskSize(BaseModel):
     description: str | None = None
     isDefault: bool | None = None
-    size: Capacity
+    size: Capacity | None = None
     supportedOccmLicenses: list[str] | None = None
 
 
 class ResponseBody(BaseModel):
-    availabilityTypes: list[str]
-    diskType: str
-    sizes: list[AzureDiskSize]
+    availabilityTypes: list[str] | None = None
+    diskType: str | None = None
+    sizes: list[AzureDiskSize] | None = None

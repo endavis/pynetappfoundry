@@ -7,4 +7,4 @@ from pydantic import BaseModel
 
 
 class ResponseBody(BaseModel):
-    clientId: str
+    clientId: str | None = None

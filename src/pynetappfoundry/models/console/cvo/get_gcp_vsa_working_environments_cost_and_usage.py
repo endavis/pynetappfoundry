@@ -7,38 +7,42 @@ from pydantic import BaseModel, Field
 
 
 class Money(BaseModel):
-    amount: float = Field(..., description="Amount")
-    currency: str = Field(..., description="Currency")
+    amount: float | None = Field(None, description="Amount")
+    currency: str | None = Field(None, description="Currency")
 
 
 class Usage(BaseModel):
     amount: float | None = Field(None, description="Amount")
-    units: str = Field(..., description="Units")
+    units: str | None = Field(None, description="Units")
 
 
 class CostByUsage(BaseModel):
-    cost: Money
-    name: str = Field(..., description="Breakdown element name")
-    usage: Usage
+    cost: Money | None = None
+    name: str | None = Field(None, description="Breakdown element name")
+    usage: Usage | None = None
 
 
 class CostByService(BaseModel):
-    costByUsage: list[CostByUsage] = Field(..., description="Cost domain breakdown")
-    name: str = Field(
-        ...,
+    costByUsage: list[CostByUsage] | None = Field(None, description="Cost domain breakdown")
+    name: str | None = Field(
+        None,
         description="Name of the cost domain (compute, disk/blob storage, object storage, data transfer)",
     )
-    total: Money
+    total: Money | None = None
 
 
 class CostByTime(BaseModel):
-    costByService: list[CostByService] = Field(..., description="Monthly cost and usage details")
-    end: str = Field(..., description="Cost period end date")
-    estimated: bool = Field(..., description="Indicates whether the cost is estimated")
-    start: str = Field(..., description="Cost period start date")
-    total: Money
+    costByService: list[CostByService] | None = Field(
+        None, description="Monthly cost and usage details"
+    )
+    end: str | None = Field(None, description="Cost period end date")
+    estimated: bool | None = Field(None, description="Indicates whether the cost is estimated")
+    start: str | None = Field(None, description="Cost period start date")
+    total: Money | None = None
 
 
 class ResponseBody(BaseModel):
-    costByTime: list[CostByTime] = Field(..., description="System cost and usage details")
-    hasPermissions: bool = Field(..., description="Permissions to view the cost and usage details")
+    costByTime: list[CostByTime] | None = Field(None, description="System cost and usage details")
+    hasPermissions: bool | None = Field(
+        None, description="Permissions to view the cost and usage details"
+    )

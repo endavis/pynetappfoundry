@@ -39,11 +39,11 @@ class Capacity(BaseModel):
 
 
 class VolumeForBackupResponse(BaseModel):
-    disableReasonBackup: list[str]
-    isBackupOn: bool
-    name: str
+    disableReasonBackup: list[str] | None = None
+    isBackupOn: bool | None = None
+    name: str | None = None
     providerVolumeType: str | None = None
-    size: Capacity
+    size: Capacity | None = None
     state: str | None = None
     svmName: str | None = None
     usedSize: Capacity | None = None
@@ -55,5 +55,5 @@ class ResponseBody(BaseModel):
     allowedValuesForVolumesListFilter: AllowedValuesForVolumesListFilter | None = None
     filteredNumberOfVolumes: FilteredNumberOfVolumes | None = None
     hasNextPage: HasNextPage | None = None
-    totalNumberOfVolumes: int
-    volumes: list[VolumeForBackupResponse]
+    totalNumberOfVolumes: int | None = None
+    volumes: list[VolumeForBackupResponse] | None = None

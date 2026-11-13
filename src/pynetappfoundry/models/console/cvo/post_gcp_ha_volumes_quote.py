@@ -17,8 +17,10 @@ class PositiveCapacity(BaseModel):
 
 
 class RaidInfoForEvAggregate(BaseModel):
-    diskSize: Capacity
-    numOfDisks: int = Field(..., description="Number of new disks needed for the RAID group")
+    diskSize: Capacity | None = None
+    numOfDisks: int | None = Field(
+        None, description="Number of new disks needed for the RAID group"
+    )
 
 
 class ElasticVolumeQuoteInfo(BaseModel):
@@ -52,16 +54,16 @@ class RequestBody(BaseModel):
 
 
 class ResponseBody(BaseModel):
-    aggregateName: str = Field(
-        ..., description="The aggregate on which the requested volume will be created"
+    aggregateName: str | None = Field(
+        None, description="The aggregate on which the requested volume will be created"
     )
-    autoVsaCapacityManagement: bool = Field(
-        ...,
+    autoVsaCapacityManagement: bool | None = Field(
+        None,
         description="Indicates if automatic Cloud Volumes ONTAP capacity management is enabled",
     )
-    diskSize: Capacity
+    diskSize: Capacity | None = None
     elasticVolumeQuoteResponse: ElasticVolumeQuoteInfo | None = None
-    newAggregate: bool = Field(
-        ..., description="Indicates if the aggregate is a newly created aggregate"
+    newAggregate: bool | None = Field(
+        None, description="Indicates if the aggregate is a newly created aggregate"
     )
-    numOfDisks: int = Field(..., description="Number of new disks needed")
+    numOfDisks: int | None = Field(None, description="Number of new disks needed")

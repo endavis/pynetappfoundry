@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 
 class SnapMirrorRuleResponse(BaseModel):
-    retention: int
+    retention: int | None = None
     snapMirrorLabel: str | None = None
 
 
@@ -15,7 +15,7 @@ class ResponseBody(BaseModel):
     comment: str | None = None
     isDefault: bool | None = None
     isSupported: bool | None = None
-    name: str
+    name: str | None = None
     policyType: str | None = None
     reason: str | None = None
-    rules: list[SnapMirrorRuleResponse]
+    rules: list[SnapMirrorRuleResponse] | None = None

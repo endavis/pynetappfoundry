@@ -7,4 +7,4 @@ from pydantic import BaseModel
 
 
 class ResponseBody(BaseModel):
-    availableIps: int
+    availableIps: int | None = None
