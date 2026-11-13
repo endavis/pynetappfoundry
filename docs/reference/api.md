@@ -62,6 +62,17 @@ Exception raised when CLI commands fail.
       show_root_heading: true
       show_source: false
 
+## Console Clients
+
+### ConsoleAgentClient
+
+Client for one Console agent's `/occm/api`. See [Console Agent](../usage/console-agent.md).
+
+::: pynetappfoundry.clients.console.agent.ConsoleAgentClient
+    options:
+      show_root_heading: true
+      show_source: false
+
 ## Database Classes
 
 ### MetricDB
@@ -126,6 +137,10 @@ pynetappfoundry/
 │   ├── ontap/
 │   │   ├── api.py       # REST API client
 │   │   └── cli.py       # SSH CLI client
+│   ├── console/
+│   │   ├── api.py       # Console SaaS API client
+│   │   ├── agent.py     # Console agent (occm) client
+│   │   └── auth.py      # OAuth client-credentials token provider
 │   └── dii/
 │       └── api.py       # DII API client
 └── db/

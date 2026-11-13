@@ -190,6 +190,8 @@ Two authentication modes are supported. See `docs/example-config/apis/console/no
 - **Static tokens:** `user_token` and/or `service_token`, pasted into the file.
 - **OAuth client credentials:** `client_id` and `client_secret` of a Console service account. The client exchanges them for a service token when it is constructed, keeps the token in memory, renews it shortly before it expires, and on a 401 refetches and retries once. The secret and the tokens are never logged.
 
+The same settings drive `ConsoleAgentClient`, which calls one Console agent's `/occm/api`; see [Console Agent](../usage/console-agent.md).
+
 ```toml
 [general]
 user_token = "paste-user-jwt-here"          # Optional: User JWT from the BlueXP UI

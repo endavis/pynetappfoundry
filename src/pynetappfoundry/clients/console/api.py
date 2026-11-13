@@ -14,6 +14,37 @@ if TYPE_CHECKING:
     from pynetappfoundry.core.config import Config
 
 
+def call_with_token(wrapper: APIWrapper, provider: TokenProvider | None, **kwargs: Any) -> Any:
+    """Call an endpoint, supplying and refreshing a dynamic token if needed.
+
+    With no provider the call is exactly ``wrapper.call_endpoint(**kwargs)``.
+    With a provider the Bearer token is sent per call; on a 401 the token
+    is invalidated, refetched and the call retried once.
+
+    Args:
+        wrapper: The wrapper to call through.
+        provider: Token provider for the wrapper's slot, or None.
+        **kwargs: Arguments for ``APIWrapper.call_endpoint``.
+
+    Returns:
+        The decoded response.
+    """
+    if provider is None:
+        return wrapper.call_endpoint(**kwargs)
+
+    token = provider.get_token()
+    try:
+        return wrapper.call_endpoint(
+            **kwargs, additional_headers={"Authorization": f"Bearer {token}"}
+        )
+    except requests.HTTPError as e:
+        if e.response is None or e.response.status_code != 401:
+            raise
+    provider.invalidate(token)
+    token = provider.get_token()
+    return wrapper.call_endpoint(**kwargs, additional_headers={"Authorization": f"Bearer {token}"})
+
+
 class ConsoleServiceTokenMissingError(RuntimeError):
     """Raised when a service-token endpoint is called without a configured service token."""
 
@@ -170,22 +201,7 @@ class ConsoleAPIClient:
         Returns:
             The decoded response.
         """
-        if provider is None:
-            return wrapper.call_endpoint(**kwargs)
-
-        token = provider.get_token()
-        try:
-            return wrapper.call_endpoint(
-                **kwargs, additional_headers={"Authorization": f"Bearer {token}"}
-            )
-        except requests.HTTPError as e:
-            if e.response is None or e.response.status_code != 401:
-                raise
-        provider.invalidate(token)
-        token = provider.get_token()
-        return wrapper.call_endpoint(
-            **kwargs, additional_headers={"Authorization": f"Bearer {token}"}
-        )
+        return call_with_token(wrapper, provider, **kwargs)
 
     def get_organization(self, organization_id: str) -> Organization:
         """GET /v1/management/organizations/{organization_id} (user or service token).
@@ -268,4 +284,5 @@ __all__ = [
     "ConsoleAPIClient",
     "ConsoleServiceTokenMissingError",
     "ConsoleUserTokenMissingError",
+    "call_with_token",
 ]

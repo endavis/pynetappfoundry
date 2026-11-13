@@ -125,6 +125,17 @@ Amendment for URL building.
 
 Configuration is described in [Config schema: consoleapi.toml](../reference/config-schema.md#consoleapitoml).
 
+## Console agent client (#1001)
+
+Amendment for the agent (`/occm/api`) client.
+
+- **One wrapper per agent.** `ConsoleAgentClient(config, agent_id)` builds a single `APIWrapper` (`use_operation_servers=True`) per Console agent, not the user/service pair of `ConsoleAPIClient`: the cvo operations carry no `x-token-type`, so the untagged rule applies and one credential is used.
+- **`x-agent-id` in the static `auth_header`.** The agent id is constant for the instance, so it rides in the wrapper's static `auth_header`, preserving the `APIWrapper` contract.
+- **Token routing, first match wins.** An injected `token_provider` (for example `ConsoleAPIClient.service_token_provider`), then `user_token`, then OAuth client credentials, then a static `service_token`. Static tokens go in `auth_header`; provider tokens are sent per call through the shared `call_with_token` (401, invalidate, retry once), extracted from `ConsoleAPIClient._call`.
+- **No retry on mutations.** `add` and `delete` disable the wrapper's 5xx and timeout retry so a transient failure cannot create the same working environment twice. The 401 token refresh still applies.
+
+Usage is described in [Console Agent](../usage/console-agent.md).
+
 ## Consequences
 
 ### Positive
@@ -148,6 +159,7 @@ Configuration is described in [Config schema: consoleapi.toml](../reference/conf
 - Issue #1000: feat: add an OAuth client-credentials grant to the Console API client (see the amendment above)
 - Issue #1012: fix: APIWrapper ignores per-operation servers (see "Per-operation servers (#1012)")
 - Issue #1015: refactor: key Console spec operations by their full path from the host (see "Per-operation servers (#1012)")
+- Issue #1001: feat: add a console agent (occm) api client (see "Console agent client (#1001)")
 
 ## Related Documentation
 
