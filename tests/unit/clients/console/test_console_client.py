@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
+import yaml
 
 from pynetappfoundry.clients.console.api import (
     ConsoleAPIClient,
@@ -286,3 +288,99 @@ class TestConsoleAPIClientRealSpec:
 
         assert client._user is not None
         assert client._user.api_spec["paths"]
+
+
+_REAL_SPEC = Path(__file__).parents[4] / "tools/console_openapi/generated/console_openapi.yaml"
+_HOST = "https://api.bluexp.netapp.com"
+
+
+def _real_client(settings: ConsoleAPISettings, tmp_path: Path) -> ConsoleAPIClient:
+    """Build a client on the real Console spec (YAML loaded here, written as JSON)."""
+    schema_dir = tmp_path / "schema"
+    schema_dir.mkdir()
+    spec = yaml.safe_load(_REAL_SPEC.read_text(encoding="utf-8"))
+    (schema_dir / "console_openapi.yaml").write_text(json.dumps(spec), encoding="utf-8")
+    return ConsoleAPIClient(_make_config(settings, schema_dir))
+
+
+class TestConsoleOperationServers:
+    """The Console client routes each operation to its own spec server (#1012)."""
+
+    def test_wrappers_constructed_with_operation_servers(
+        self,
+        both_tokens_settings: ConsoleAPISettings,
+        tmp_path: Any,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        wrapper_mock = MagicMock()
+        monkeypatch.setattr("pynetappfoundry.clients.console.api.APIWrapper", wrapper_mock)
+        ConsoleAPIClient(_make_config(both_tokens_settings, tmp_path))
+
+        assert wrapper_mock.call_count == 2
+        for call in wrapper_mock.call_args_list:
+            assert call.kwargs["use_operation_servers"] is True
+
+    def test_service_token_wrapper_uses_operation_servers(
+        self,
+        tmp_path: Any,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        wrapper_mock = MagicMock()
+        monkeypatch.setattr("pynetappfoundry.clients.console.api.APIWrapper", wrapper_mock)
+        settings = ConsoleAPISettings(
+            service_token="service-jwt", base_url=_HOST, base_api_path="/", timeout=15.0
+        )
+        ConsoleAPIClient(_make_config(settings, tmp_path))
+
+        assert wrapper_mock.call_args.kwargs["use_operation_servers"] is True
+
+    def test_list_organizations_requests_v1_management_url(
+        self, base_settings: ConsoleAPISettings, tmp_path: Path
+    ) -> None:
+        client = _real_client(base_settings, tmp_path)
+        wrapper = client._require_user()
+        response = MagicMock()
+        response.status_code = 200
+        response.json.return_value = {"items": []}
+        with patch.object(wrapper, "_execute_request_with_retry", return_value=response) as mocked:
+            assert client.list_organizations() == []
+
+        assert mocked.call_args.kwargs["url"] == f"{_HOST}/v1/management/organizations"
+
+    def test_get_organization_path_has_v1_management_prefix(
+        self, base_settings: ConsoleAPISettings, tmp_path: Path
+    ) -> None:
+        wrapper = _real_client(base_settings, tmp_path)._require_user()
+        path = wrapper._format_path(
+            "/organizations/{organization_id}", {"organization_id": "abc"}, "GET"
+        )
+        assert path == "/v1/management/organizations/abc"
+
+    def test_bare_host_operation_has_no_prefix(
+        self, base_settings: ConsoleAPISettings, tmp_path: Path
+    ) -> None:
+        wrapper = _real_client(base_settings, tmp_path)._require_user()
+        bare = [
+            (path, method)
+            for path, item in wrapper.api_spec["paths"].items()
+            for method, op in item.items()
+            if isinstance(op, dict) and op.get("servers", [{}])[0].get("url") == _HOST
+        ]
+        assert bare
+        path, method = bare[0]
+        assert wrapper._format_path(path, None, method.upper()) == path
+
+    def test_legacy_hostname_as_base_url_is_kept(self, tmp_path: Path) -> None:
+        legacy = "https://cloudmanager.cloud.netapp.com"
+        settings = ConsoleAPISettings(
+            user_token="user-jwt", base_url=legacy, base_api_path="/", timeout=15.0
+        )
+        client = _real_client(settings, tmp_path)
+        wrapper = client._require_user()
+        response = MagicMock()
+        response.status_code = 200
+        response.json.return_value = {"items": []}
+        with patch.object(wrapper, "_execute_request_with_retry", return_value=response) as mocked:
+            client.list_organizations()
+
+        assert mocked.call_args.kwargs["url"] == f"{legacy}/v1/management/organizations"

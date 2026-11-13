@@ -58,6 +58,7 @@ class ConsoleAPIClient:
                 base_api_path=settings.base_api_path,
                 timeout=settings.timeout,
                 name="console-user",
+                use_operation_servers=True,
             )
         else:
             self._user = None
@@ -72,6 +73,7 @@ class ConsoleAPIClient:
                 base_api_path=settings.base_api_path,
                 timeout=settings.timeout,
                 name="console-service",
+                use_operation_servers=True,
             )
             self._service_provider = ClientCredentialsTokenProvider(
                 client_id=settings.client_id,
@@ -91,6 +93,7 @@ class ConsoleAPIClient:
                 base_api_path=settings.base_api_path,
                 timeout=settings.timeout,
                 name="console-service",
+                use_operation_servers=True,
             )
         else:
             self._service = None

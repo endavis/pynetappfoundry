@@ -8,7 +8,7 @@ import logging
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlsplit
 
 import requests
 import yaml
@@ -98,6 +98,7 @@ class APIWrapper:
         validation_config: ValidationConfig | None = None,
         name: str = "",
         https_adapter: HTTPAdapter | None = None,
+        use_operation_servers: bool = False,
     ) -> None:
         """Initialize the API wrapper.
 
@@ -116,7 +117,12 @@ class APIWrapper:
             name: Name for log prefix (e.g., cluster name). Used in [name:api] format.
             https_adapter: Adapter mounted for ``https://`` instead of the default
                 pooled adapter (for example one that pins certificate fingerprints).
+            use_operation_servers: When True, the path of the operation's (else its
+                path item's) first ``servers`` entry replaces ``base_api_path``; the
+                host still comes from ``base_url``. Operations without ``servers``
+                fall back to ``base_api_path`` (trailing slash stripped). Off by default.
         """
+        self.use_operation_servers = use_operation_servers
         self.name = name
         self.log_prefix = f"[{name}:api]" if name else "[api]"
         self.verify_ssl = verify_ssl
@@ -204,12 +210,59 @@ class APIWrapper:
             return [self._resolve_refs(item) for item in schema]
         return schema
 
-    def _format_path(self, path_template: str, path_params: dict[str, Any] | None) -> str:
+    def _operation_server_path(self, path_template: str, method: str) -> str | None:
+        """Return the path of the first server declared for an operation.
+
+        Looks at the operation's ``servers``, then the path item's. Server variables
+        are replaced by their defaults and only the URL path is kept (the host always
+        comes from the configured ``base_url``). The spec's top-level ``servers`` are
+        never used.
+
+        Returns:
+            The server path without a trailing slash (``""`` for a bare host), or
+            None when neither the operation nor its path item declares servers.
+        """
+        path_item = self.api_spec.get("paths", {}).get(path_template)
+        if not isinstance(path_item, dict):
+            return None
+        operation = path_item.get(method.lower())
+        servers: Any = None
+        if isinstance(operation, dict):
+            servers = operation.get("servers")
+        if not servers:
+            servers = path_item.get("servers")
+        if not isinstance(servers, list) or not servers or not isinstance(servers[0], dict):
+            return None
+        url = servers[0].get("url")
+        if not isinstance(url, str):
+            return None
+        variables = servers[0].get("variables")
+        if isinstance(variables, dict):
+            for name, spec in variables.items():
+                if isinstance(spec, dict) and "default" in spec:
+                    url = url.replace(f"{{{name}}}", str(spec["default"]))
+        return urlsplit(url).path.rstrip("/")
+
+    def _path_prefix(self, path_template: str, method: str) -> str:
+        """Return the prefix placed between ``base_url`` and the path template."""
+        if not self.use_operation_servers:
+            return self.base_api_path
+        server_path = self._operation_server_path(path_template, method)
+        if server_path is not None:
+            return server_path
+        return self.base_api_path.rstrip("/")
+
+    def _format_path(
+        self,
+        path_template: str,
+        path_params: dict[str, Any] | None,
+        method: str = "GET",
+    ) -> str:
         """Replace placeholders like {id} in the path template with provided values.
 
         Also tolerates {{id}} just in case.
         """
-        path = f"{self.base_api_path}{path_template}"
+        path = f"{self._path_prefix(path_template, method)}{path_template}"
         if path_params:
             for k, v in path_params.items():
                 path = path.replace(f"{{{k}}}", str(v))  # OpenAPI style
@@ -677,7 +730,7 @@ class APIWrapper:
             raise ValueError("Request body validation failed.")
 
         # Build URL (formatting path placeholders)
-        path = self._format_path(path_template, path_params)
+        path = self._format_path(path_template, path_params, method)
         logging.debug(f"{self.log_prefix} API Path: {path}")
         url = f"{self.base_url}{path}"
         logging.debug(f"{self.log_prefix} API URL: {url}")

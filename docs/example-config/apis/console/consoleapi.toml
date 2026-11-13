@@ -20,6 +20,9 @@ user_token = 'paste-user-jwt-here'
 # a service_token raises ConsoleServiceTokenMissingError.
 # service_token = 'paste-service-account-jwt-here'
 
+# The host comes from base_url. The path prefix of each operation (for example
+# /v1/management) comes from the operation's own `servers` entry in the spec.
+# base_api_path is only the fallback for operations that declare no `servers`.
 base_url = 'https://api.bluexp.netapp.com'
 base_api_path = '/'
 
