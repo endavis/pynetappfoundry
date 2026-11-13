@@ -83,9 +83,9 @@ class ConfigurationError(Exception):
 
 
 # Settings fields that accept a ``SOPS[...]`` value (decrypted at read time).
-_SMTP_SECRET_FIELDS = ("password",)
-_DII_SECRET_FIELDS = ("api_ro_token",)
-_CONSOLE_SECRET_FIELDS = ("client_secret", "service_token", "user_token")
+_SMTP_SOPS_FIELDS = ("password",)
+_DII_SOPS_FIELDS = ("api_ro_token",)
+_CONSOLE_SOPS_FIELDS = ("client_secret", "service_token", "user_token")
 
 
 def _read_tls_settings(source: Any, where: str) -> tuple[bool | None, str | None]:
@@ -319,7 +319,7 @@ class Config:
         try:
             smtp_data = self._decrypt_setting_fields(
                 self.get_setting("settings", "SMTP"),
-                _SMTP_SECRET_FIELDS,
+                _SMTP_SOPS_FIELDS,
                 file="settings.toml",
                 section="SMTP",
             )
@@ -367,7 +367,7 @@ class Config:
         try:
             dii_data = self._decrypt_setting_fields(
                 self.get_setting("diiapi", "general"),
-                _DII_SECRET_FIELDS,
+                _DII_SOPS_FIELDS,
                 file="diiapi.toml",
                 section="general",
             )
@@ -403,7 +403,7 @@ class Config:
                 )
             console_data = self._decrypt_setting_fields(
                 console_data,
-                _CONSOLE_SECRET_FIELDS,
+                _CONSOLE_SOPS_FIELDS,
                 file="consoleapi.toml",
                 section="general",
             )
