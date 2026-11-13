@@ -153,11 +153,48 @@ The generated tree is committed in-tree so consumers do not
 need `datamodel-code-generator` installed at runtime; only the maintainer
 running `doit console_models` does.
 
+## Generated client surface
+
+A third build-time step turns the committed spec and the manifest
+`client_ops.toml` into typed operation classes under
+`src/pynetappfoundry/clients/console/generated/` (`ConsoleTenancyOps` and
+`ConsoleAgentOps`, exposed as `client.ops`). It is a hand-rolled generator,
+`client_codegen.py`, with no extra dependency; see ADR-0019, "Generated
+operation surface (#735)".
+
+```bash
+# Regenerate after editing client_ops.toml, or after regenerating the models.
+doit console_client
+
+# Determinism guard: regenerate and assert the diff is empty.
+doit console_client_check
+```
+
+Each `[[operation]]` in the manifest has:
+
+| Field | Meaning |
+|-------|---------|
+| `operation_id` | The spec's `operationId` (required). |
+| `client` | `"console"` (`ConsoleAPIClient.ops`) or `"agent"` (`ConsoleAgentClient.ops`). |
+| `name` | The generated method name, unique per client. |
+| `response` | `"object"` (default) or `"list"`. The spec cannot say how many items a response holds, so a list is declared here. |
+| `retry` | `true` keeps the wrapper's retry on a non-GET operation. Default: non-GET operations are not retried. |
+| `only_query` | Optional list of spec query parameter names to expose. Default: all. |
+| `query` | Optional per-parameter overlay. `{ fields = { style = "csv" } }` accepts a string or a sequence and joins it with commas. |
+
+The generator fails, rather than guessing, on: an unknown `operationId`, a
+duplicate method name, a query parameter that is not a plain string and has no
+overlay, a header parameter other than the synthesized `x-agent-id`, an
+`x-token-type` on an agent operation, and a missing model module or class.
+Path parameters are always URL-encoded. The operation's `x-token-type` is
+written into the call as a literal; an operation with none accepts either token.
+
 ## Dependencies
 
 Runtime: `pyyaml`, `pydantic`, `click`, system `git`.
 Dev only: `openapi-spec-validator`, `datamodel-code-generator` (for
-`doit console_models`).
+`doit console_models`). `client_ops.toml` is read with `tomllib` (standard
+library) by `doit console_client`.
 
 ## Adding a new service
 

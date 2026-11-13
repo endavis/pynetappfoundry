@@ -150,6 +150,22 @@ Amendment for the OAuth refresh-token grant, which fills the user slot.
 
 Configuration is described in [Config schema: consoleapi.toml](../reference/config-schema.md#consoleapitoml); usage in [Console Agent](../usage/console-agent.md).
 
+## Generated operation surface (#735)
+
+Amendment that settles the codegen choice left open in decision 3 and in the "Negative" notes below.
+
+- **Hand-rolled generator, no new dependency.** `tools/console_openapi/client_codegen.py` renders plain Python from the committed spec and the `datamodel-code-generator` models, and `ruff format` finishes the output. `openapi-python-client` was rejected: it emits an httpx client with attrs models, which would go around `APIWrapper` (retry, validation, `Authorization` redaction, per-operation servers) and replace the pydantic model tree.
+- **A manifest, not the whole spec.** `tools/console_openapi/client_ops.toml` lists the operations that get a generated method. The spec cannot say how many items a response holds (no `cvo` GET response is `type: array`, and `get-onprem-working-environments` is `type: object` though the agent returns an array), and some query parameter types are wrong for real use (`fields` is a `$ref` to an object, the agent wants a CSV string). Each operation therefore carries a manifest overlay: `response = "list"`, `query = { fields = { style = "csv" } }`, `only_query`, `retry`. Phase 1 covers the 9 operations that were hand-authored.
+- **The `ops` namespace.** The generator emits `ConsoleTenancyOps` and `ConsoleAgentOps` under `src/pynetappfoundry/clients/console/generated/`. Each takes a `Dispatch` (`src/pynetappfoundry/clients/console/_ops_support.py`) and is exposed as `ConsoleAPIClient.ops` and `ConsoleAgentClient.ops`. The existing public methods keep their signatures and return types and become thin wrappers over `ops`. One public method is added: `ConsoleAgentClient.ops.create_onprem_working_environment(body)`.
+- **`x-token-type` is a literal.** It is baked into each call as the first dispatch argument (`"user"`, `"service"` or `None`). `ConsoleAPIClient._dispatch` maps it to `_require_user`, `_require_service` or `_route_any`, then calls `call_with_token`; `ConsoleAgentClient._dispatch` ignores it. The generator fails when an agent operation has an `x-token-type`, because the agent has one credential.
+- **`x-agent-id` and the base path.** The synthesized `x-agent-id` header parameter is dropped, since the agent's static `auth_header` supplies it. Any other header parameter is a codegen error, never silently dropped. `path_template` is the spec path as written, which already carries `/occm/api` or `/v1/management` (#1015).
+- **Defaults.** Every path parameter is URL-encoded with `quote(..., safe="")`. The tenancy methods did not encode before; an id containing `/` is now encoded instead of changing the path. Every non-GET operation is generated with `RetryConfig(enabled=False)` unless the manifest sets `retry = true`, which keeps add and delete from retrying on 5xx or timeout.
+- **Tenancy operations return `dict[str, Any]`.** `tenancy` and `tenancyv4` have no named `RequestBody` or `ResponseBody` models, because `_HOISTED_BODY_SERVICES` is `{"cvo"}`. Typed tenancy returns wait for phase 2.
+- **Drift guards.** `doit console_client` regenerates the tree and `doit console_client_check` fails on any change under it; the `console-models` CI job runs the check. A unit test resolves the real manifest against the committed spec inside `doit check`.
+- **Follow-ups.** Phase 2 hoists and loosens the `tenancy` and `tenancyv4` bodies so tenancy operations return typed models. Phase 3 grows the manifest as consumers appear, auditing list cardinality for each operation. Both are filed as issues linked from #735: phase 2 is #1027 and phase 3 is #1028.
+
+See [Console Agent](../usage/console-agent.md) and [Console OpenAPI Generator](../../tools/console_openapi/README.md#generated-client-surface).
+
 ## Consequences
 
 ### Positive
@@ -163,7 +179,7 @@ Configuration is described in [Config schema: consoleapi.toml](../reference/conf
 
 - Console is the first API in `pynetappfoundry` not reached via `ClusterEntry.<api>`. Developers familiar with the DII / ONTAP / AIQUM shape must learn that Console is different.
 - Two `APIWrapper` instances per `Console` client means double the spec-parsing cost at construction time. Mitigation: share the parsed OpenAPI dict between the two wrappers at construction.
-- The eventual codegen dispatch layer is *new* codegen (not the existing `tools/codegen/` cache pipeline, not `datamodel-code-generator`'s built-in output). When that ticket is taken on, choose between (a) hand-rolled dispatch codegen on top of the parsed spec + already-generated models, or (b) switching to a tool that emits both models and client (e.g., `openapi-python-client`) and accepting model regeneration churn.
+- The codegen dispatch layer is *new* codegen (not the existing `tools/codegen/` cache pipeline, not `datamodel-code-generator`'s built-in output). #735 chose a hand-rolled generator over a tool that emits both models and client (see "Generated operation surface (#735)"); it is custom code to maintain, and its manifest must grow one audited operation at a time.
 
 ## Related Issues
 
@@ -176,6 +192,7 @@ Configuration is described in [Config schema: consoleapi.toml](../reference/conf
 - Issue #1001: feat: add a console agent (occm) api client (see "Console agent client (#1001)")
 - Issue #734: feat: extend ConsoleInfo with the cluster-scoped `connector` field (see "Console agent client (#1001)")
 - Issue #736: feat: add OAuth refresh-token grant flow to ConsoleAPIClient (see "User refresh-token grant (#736)")
+- Issue #735: feat: generate typed client surface for Console OpenAPI (see "Generated operation surface (#735)")
 
 ## Related Documentation
 

@@ -6,11 +6,13 @@ from typing import TYPE_CHECKING, Any
 
 import requests
 
+from pynetappfoundry.clients.console._ops_support import TokenType
 from pynetappfoundry.clients.console.auth import (
     ClientCredentialsTokenProvider,
     RefreshTokenProvider,
     TokenProvider,
 )
+from pynetappfoundry.clients.console.generated import ConsoleTenancyOps
 from pynetappfoundry.clients.openapi import APIWrapper
 from pynetappfoundry.models.console_types import Folder, Organization, Project
 
@@ -155,6 +157,8 @@ class ConsoleAPIClient:
         else:
             self._service = None
 
+        self.ops = ConsoleTenancyOps(self._dispatch)
+
     @property
     def user_token_provider(self) -> TokenProvider | None:
         """The user-slot token provider, or None for a static or absent token."""
@@ -216,6 +220,28 @@ class ConsoleAPIClient:
             return self._service, self._service_provider
         return self._require_user(), None
 
+    def _dispatch(self, token_type: TokenType, /, **call_kwargs: Any) -> Any:
+        """Send a generated operation through the wrapper for its token type.
+
+        Args:
+            token_type: The operation's ``x-token-type``: ``"user"``, ``"service"``,
+                or ``None`` when either token works (the user token is preferred).
+            **call_kwargs: Arguments for ``APIWrapper.call_endpoint``.
+
+        Returns:
+            The decoded response.
+
+        Raises:
+            ConsoleUserTokenMissingError: For a user operation without a user token.
+            ConsoleServiceTokenMissingError: For a service operation without a service token.
+        """
+        if token_type == "user":  # nosec B105  # token kind name, not a credential
+            return call_with_token(self._require_user(), self._user_provider, **call_kwargs)
+        if token_type == "service":  # nosec B105  # token kind name, not a credential
+            return call_with_token(self._require_service(), self._service_provider, **call_kwargs)
+        wrapper, provider = self._route_any()
+        return call_with_token(wrapper, provider, **call_kwargs)
+
     @staticmethod
     def _call(wrapper: APIWrapper, provider: TokenProvider | None, **kwargs: Any) -> Any:
         """Call an endpoint, supplying and refreshing a dynamic token if needed.
@@ -243,15 +269,7 @@ class ConsoleAPIClient:
         Returns:
             Compact Organization instance.
         """
-        wrapper, provider = self._route_any()
-        response: Any = self._call(
-            wrapper,
-            provider,
-            method="GET",
-            path_template="/v1/management/organizations/{organization_id}",
-            path_params={"organization_id": organization_id},
-        )
-        return Organization.model_validate(response)
+        return Organization.model_validate(self.ops.get_organization(organization_id))
 
     def list_organizations(self) -> list[Organization]:
         """GET /v1/management/organizations (user or service token).
@@ -262,14 +280,7 @@ class ConsoleAPIClient:
         Returns:
             List of compact Organization instances.
         """
-        wrapper, provider = self._route_any()
-        response: Any = self._call(
-            wrapper,
-            provider,
-            method="GET",
-            path_template="/v1/management/organizations",
-        )
-        items: list[Any] = response.get("items", [])
+        items: list[Any] = self.ops.list_organizations().get("items", [])
         return [Organization.model_validate(item) for item in items]
 
     def get_folder(self, folder_id: str) -> Folder:
@@ -281,15 +292,7 @@ class ConsoleAPIClient:
         Returns:
             Compact Folder instance.
         """
-        wrapper, provider = self._route_any()
-        response: Any = self._call(
-            wrapper,
-            provider,
-            method="GET",
-            path_template="/v1/management/folders/{folder_id}",
-            path_params={"folder_id": folder_id},
-        )
-        return Folder.model_validate(response)
+        return Folder.model_validate(self.ops.get_folder(folder_id))
 
     def get_project(self, project_id: str) -> Project:
         """GET /v1/management/projects/{project_id} (user or service token).
@@ -300,15 +303,7 @@ class ConsoleAPIClient:
         Returns:
             Compact Project instance.
         """
-        wrapper, provider = self._route_any()
-        response: Any = self._call(
-            wrapper,
-            provider,
-            method="GET",
-            path_template="/v1/management/projects/{project_id}",
-            path_params={"project_id": project_id},
-        )
-        return Project.model_validate(response)
+        return Project.model_validate(self.ops.get_project(project_id))
 
 
 __all__ = [

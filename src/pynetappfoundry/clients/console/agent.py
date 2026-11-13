@@ -4,18 +4,18 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any
-from urllib.parse import quote
 
 from pydantic import SecretStr, ValidationError
 
+from pynetappfoundry.clients.console._ops_support import TokenType
 from pynetappfoundry.clients.console.api import call_with_token
 from pynetappfoundry.clients.console.auth import (
     ClientCredentialsTokenProvider,
     RefreshTokenProvider,
     TokenProvider,
 )
+from pynetappfoundry.clients.console.generated import ConsoleAgentOps
 from pynetappfoundry.clients.openapi import APIWrapper
-from pynetappfoundry.core.models import RetryConfig
 from pynetappfoundry.models.console_types import Connector
 
 if TYPE_CHECKING:
@@ -30,17 +30,6 @@ if TYPE_CHECKING:
     )
 
 AGENT_ID_HEADER = "x-agent-id"
-
-_LIST_PATH = "/occm/api/onprem/working-environments"
-_ITEM_PATH = "/occm/api/onprem/working-environments/{workingEnvironmentId}"
-_ABOUT_PATH = "/occm/api/occm/system/about"
-
-
-def _join_fields(fields: str | Sequence[str] | None) -> str | None:
-    """Return ``fields`` as the comma-joined string the agent expects."""
-    if fields is None or isinstance(fields, str):
-        return fields
-    return ",".join(fields)
 
 
 class ConsoleAgentClient:
@@ -123,10 +112,16 @@ class ConsoleAgentClient:
             name="console-agent",
             use_operation_servers=True,
         )
+        self.ops = ConsoleAgentOps(self._dispatch)
 
     def _call(self, **kwargs: Any) -> Any:
         """Call an endpoint through the wrapper with token handling."""
         return call_with_token(self._wrapper, self._provider, **kwargs)
+
+    def _dispatch(self, token_type: TokenType, /, **call_kwargs: Any) -> Any:
+        """Send a generated operation; the agent has one credential, so ``token_type`` is unused."""
+        del token_type
+        return self._call(**call_kwargs)
 
     def about(self) -> get_occm_system_about.ResponseBody:
         """GET /occm/api/occm/system/about.
@@ -134,12 +129,7 @@ class ConsoleAgentClient:
         Returns:
             The agent's about information (includes ``agentId``).
         """
-        from pynetappfoundry.models.console.cvo import get_occm_system_about as models
-
-        response = self._call(method="GET", path_template=_ABOUT_PATH)
-        if not isinstance(response, dict):
-            raise TypeError(f"Expected a JSON object from about, got {type(response).__name__}")
-        return models.ResponseBody.model_validate(response)
+        return self.ops.about()
 
     def get_connector(self) -> Connector:
         """Return this agent as a compact ``Connector`` (from ``about()``).
@@ -191,21 +181,7 @@ class ConsoleAgentClient:
         Raises:
             TypeError: If the response is not a JSON array.
         """
-        from pynetappfoundry.models.console.cvo import get_onprem_working_environments as models
-
-        query: dict[str, Any] = {}
-        joined = _join_fields(fields)
-        if joined is not None:
-            query["fields"] = joined
-        if tenant_id is not None:
-            query["tenantId"] = tenant_id
-        response = self._call(method="GET", path_template=_LIST_PATH, query_params=query or None)
-        if not isinstance(response, list):
-            raise TypeError(
-                f"Expected a JSON array from the working environment list, "
-                f"got {type(response).__name__}"
-            )
-        return [models.ResponseBody.model_validate(item) for item in response]
+        return self.ops.list_onprem_working_environments(fields=fields, tenant_id=tenant_id)
 
     def get_onprem_working_environment(
         self,
@@ -222,21 +198,7 @@ class ConsoleAgentClient:
         Returns:
             The working environment.
         """
-        from pynetappfoundry.models.console.cvo import get_onprem_working_environments_ as models
-
-        joined = _join_fields(fields)
-        response = self._call(
-            method="GET",
-            path_template=_ITEM_PATH,
-            path_params={"workingEnvironmentId": quote(working_environment_id, safe="")},
-            query_params={"fields": joined} if joined is not None else None,
-        )
-        if not isinstance(response, dict):
-            raise TypeError(
-                f"Expected a JSON object from the working environment, "
-                f"got {type(response).__name__}"
-            )
-        return models.ResponseBody.model_validate(response)
+        return self.ops.get_onprem_working_environment(working_environment_id, fields=fields)
 
     def add_onprem_working_environment(
         self,
@@ -285,23 +247,12 @@ class ConsoleAgentClient:
                 name=name,
                 description=description,
                 location=location,
-            ).model_dump(exclude_none=True)
+            )
         except ValidationError as e:
             fields = ", ".join(".".join(str(p) for p in err["loc"]) for err in e.errors())
             # from None: the pydantic error would echo the password input.
             raise ValueError(f"Invalid working environment request: {fields}") from None
-        response = self._call(
-            method="POST",
-            path_template=_LIST_PATH,
-            body=body,
-            retry_config=RetryConfig(enabled=False),
-        )
-        if not isinstance(response, dict):
-            raise TypeError(
-                f"Expected a JSON object from the working environment create, "
-                f"got {type(response).__name__}"
-            )
-        return models.ResponseBody.model_validate(response)
+        return self.ops.create_onprem_working_environment(body)
 
     def delete_onprem_working_environment(self, working_environment_id: str) -> None:
         """DELETE /occm/api/onprem/working-environments/{workingEnvironmentId}.
@@ -311,12 +262,7 @@ class ConsoleAgentClient:
         Args:
             working_environment_id: The working environment public id.
         """
-        self._call(
-            method="DELETE",
-            path_template=_ITEM_PATH,
-            path_params={"workingEnvironmentId": quote(working_environment_id, safe="")},
-            retry_config=RetryConfig(enabled=False),
-        )
+        self.ops.delete_onprem_working_environment(working_environment_id)
 
 
 __all__ = ["AGENT_ID_HEADER", "ConsoleAgentClient"]

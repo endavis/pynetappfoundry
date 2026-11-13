@@ -66,7 +66,9 @@ Exception raised when CLI commands fail.
 
 ### ConsoleAgentClient
 
-Client for one Console agent's `/occm/api`. See [Console Agent](../usage/console-agent.md).
+Client for one Console agent's `/occm/api`. See [Console Agent](../usage/console-agent.md). `ConsoleAgentClient.ops` and
+`ConsoleAPIClient.ops` hold the generated operations (`ConsoleAgentOps`,
+`ConsoleTenancyOps`).
 
 ::: pynetappfoundry.clients.console.agent.ConsoleAgentClient
     options:
