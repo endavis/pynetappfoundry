@@ -149,3 +149,55 @@ def test_tags_root_model_accepts_string_string_dict() -> None:
     tags = Tags.model_validate({"env": "prod", "owner": "platform"})
     assert tags.root == {"env": "prod", "owner": "platform"}
     assert tags.model_dump() == {"env": "prod", "owner": "platform"}
+
+
+# --- cvo (Console agent) package (#1009) -------------------------------------
+
+
+def test_cvo_package_imports() -> None:
+    importlib.import_module("pynetappfoundry.models.console.cvo")
+    importlib.import_module("pynetappfoundry.models.console.cvo.get_occm_system_about")
+
+
+def test_every_cvo_module_imports() -> None:
+    """Import all generated ``cvo`` modules.
+
+    Doubles as the coverage smoke test: the modules are generated and large,
+    and importing them keeps the coverage gate meaningful.
+    """
+    import pkgutil
+
+    package = importlib.import_module("pynetappfoundry.models.console.cvo")
+    names = [m.name for m in pkgutil.iter_modules(package.__path__)]
+    assert len(names) > 0
+    for name in names:
+        importlib.import_module(f"{package.__name__}.{name}")
+
+
+def test_occm_system_about_response_round_trips() -> None:
+    from pynetappfoundry.models.console.cvo.get_occm_system_about import ResponseBody
+
+    payload = json.loads((FIXTURES / "occm_system_about.json").read_text())
+    body = ResponseBody.model_validate(payload)
+    assert body.agentId == payload["agentId"]
+    assert body.agentType == payload["agentType"]
+    assert body.model_dump(exclude_none=True)["agentId"] == payload["agentId"]
+
+
+def test_occm_system_about_requires_version() -> None:
+    from pydantic import ValidationError
+
+    from pynetappfoundry.models.console.cvo.get_occm_system_about import ResponseBody
+
+    payload = json.loads((FIXTURES / "occm_system_about.json").read_text())
+    payload.pop("version")
+    with pytest.raises(ValidationError):
+        ResponseBody.model_validate(payload)
+
+
+def test_on_prem_cluster_properties_has_cluster_uuid() -> None:
+    from pynetappfoundry.models.console.cvo.get_onprem_working_environments import (
+        OnPremClusterProperties,
+    )
+
+    assert "clusterUuid" in OnPremClusterProperties.model_fields

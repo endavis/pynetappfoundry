@@ -16,7 +16,10 @@ def _run_refresh(ref: str) -> list[list[str]]:
 
 
 def task_console_openapi_refresh() -> dict[str, Any]:
-    """Regenerate tools/console_openapi/generated/console_openapi.yaml from upstream docs."""
+    """Regenerate tools/console_openapi/generated/console_openapi.yaml from upstream docs.
+
+    Pass a full commit SHA with ``--ref`` so the lockfile pin is reproducible.
+    """
 
     def action(ref: str) -> None:
         import subprocess  # nosec B404  # subprocess is required for doit tasks
@@ -138,7 +141,8 @@ def task_console_models() -> dict[str, Any]:
 
     Reads ``tools/console_openapi/generated/console_openapi.yaml`` and emits
     a tree under ``src/pynetappfoundry/models/console/`` (subdivided into
-    ``tenancy/`` and ``tenancyv4/`` packages by ``datamodel-code-generator``).
+    ``tenancy/``, ``tenancyv4/`` and ``cvo/`` packages by
+    ``datamodel-code-generator``).
     The generated tree is committed alongside the spec; CI verifies that
     re-running this task is a no-op via ``doit console_models_check``.
     """

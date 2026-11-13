@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Any
+from typing import Any, Literal
 
 from tools.console_openapi.models import (
     Definition,
@@ -31,7 +31,10 @@ _TITLE_RE = re.compile(r"^=\s+(?P<title>.+?)\s*$", re.MULTILINE)
 _TOKEN_USAGE_RE = re.compile(
     r"\*Token usage:\*\s*BlueXP\s+(?P<kind>user|service)\s+token\.", re.IGNORECASE
 )
-_STATUS_LINE_RE = re.compile(r"Status:\s*(?P<code>\d{3}),\s*(?P<desc>.+?)\s*$", re.MULTILINE)
+_STATUS_LINE_RE = re.compile(
+    r"Status:\s*(?:(?P<code>\d{3}),\s*(?P<desc>.+?)|(?P<default>Default)(?:,\s*(?P<ddesc>.*?))?)\s*$",
+    re.MULTILINE,
+)
 
 
 class EndpointParseError(ValueError):
@@ -204,8 +207,10 @@ def _parse_response_blocks(body: str) -> tuple[ResponseBlock, ...]:
         status_match = _STATUS_LINE_RE.search(chunk)
         if not status_match:
             continue
-        status = int(status_match.group("code"))
-        description = status_match.group("desc").strip()
+        status: int | Literal["default"] = (
+            "default" if status_match.group("default") else int(status_match.group("code"))
+        )
+        description = (status_match.group("desc") or status_match.group("ddesc") or "").strip()
         # Trim Definitions if it accidentally fell into this chunk
         chunk_after_status = chunk[status_match.end() :]
         # Stop at next '== ' header inside the same chunk (safety)

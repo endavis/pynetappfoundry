@@ -1,0 +1,97 @@
+---
+sidebar: sidebar
+api: true
+explorer: true
+permalink: 'fixture/cvo-status-default.html'
+summary: 'Get agent information'
+---
+
+= Get agent information
+
+[.api-doc-operation .api-doc-operation-post]#POST# [.api-doc-code-block]#`/occm/system/about`#
+
+
+
+Returns information about the agent.
+
+
+== Request Body
+
+[cols=4*,options=header]
+|===
+|Name
+|Type
+|Required
+|Description
+
+|note
+|string
+|False
+a|Free text
+
+|===
+
+== Error
+
+Status: Default, Error
+
+[cols=4*,options=header]
+|===
+|Name
+|Type
+|Required
+|Description
+
+|agentId
+|string
+|False
+a|
+
+|agentType
+|string
+|False
+a|
+
+|serverTimeZone
+|link:#ServerTimeZone[ServerTimeZone]
+|True
+a|
+
+|version
+|string
+|True
+a|
+
+|===
+
+== Definitions
+
+[.api-def-first-level]
+.See Definitions
+[%collapsible%closed]
+//Start collapsible Definitions block
+====
+[#ServerTimeZone]
+[.api-collapsible-fifth-title]
+ServerTimeZone
+
+[cols=4*,options=header]
+|===
+|Name
+|Type
+|Required
+|Description
+
+|formattedTimeZone
+|string
+|False
+a|
+
+|timeZoneName
+|string
+|False
+a|
+
+|===
+
+====

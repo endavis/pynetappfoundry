@@ -6,7 +6,7 @@ OpenAPI itself. The builder maps them into OpenAPI 3.0.3 structures.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -93,7 +93,9 @@ class Definition(Frozen):
 class ResponseBlock(Frozen):
     """A single ``== Response`` or ``== Error`` block."""
 
-    status: int
+    status: int | Literal["default"]
+    """HTTP status code, or ``"default"`` for a ``Status: Default`` block."""
+
     description: str
     fields: tuple[FieldDef, ...] = ()
     example: Any = None

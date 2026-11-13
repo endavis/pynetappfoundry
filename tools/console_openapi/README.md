@@ -22,8 +22,8 @@ documentation into an OpenAPI 3.0.3 specification.
 ## What is generated
 
 `generated/console_openapi.yaml` -- a combined OpenAPI 3.0.3 spec covering the
-service folders listed in `info.x-included-source-folders`. v1 covers
-`tenancy/` and `tenancyv4/` only; `cm/` is intentionally excluded because its
+service folders listed in `info.x-included-source-folders`: `tenancy/`,
+`tenancyv4/` and `cvo/` (the Console agent, or OCCM, API). `cm/` is intentionally excluded because its
 files are prose tutorials with `curl` examples and need a different parser.
 
 `generated/console_openapi.lock.json` -- reproducibility metadata: source repo
@@ -35,13 +35,14 @@ same spec.
 
 ```bash
 # via doit (preferred)
-doit console_openapi_refresh -- --ref main
+doit console_openapi_refresh --ref <full-commit-sha>
 
 # direct CLI
 uv run python -m tools.console_openapi.cli build [--ref REF] [--service NAME ...] [--lenient]
 ```
 
-The fetcher uses the system `git` binary and caches a shallow clone under
+Pass a full commit SHA rather than a branch name, so the lockfile's
+`requested_ref` stays pinned. The fetcher uses the system `git` binary and caches a shallow clone under
 `$XDG_CACHE_HOME/console-openapi/console-automation`.
 
 ## How it works
@@ -62,7 +63,14 @@ The fetcher uses the system `git` binary and caches a shallow clone under
      string") or a prose-only `{type: object}` schema -- never a dangling
      `$ref`.
    - 204 responses, and responses without a body table or example, omit
-     `content`.
+     `content`. A `Status: Default` block becomes the OpenAPI `default`
+     response.
+   - For `cvo` only, inline request and response bodies move into named
+     components (`cvo.<file_stem>.RequestBody`, `ResponseBody` for the
+     `default` response, `Response<status>Body` otherwise), and every
+     operation gets a required, synthesized `x-agent-id` header parameter.
+   - Path parameters missing from the docs are synthesized in path-template
+     order.
 4. **Validate** -- a final invariant pass enforces:
    - no unresolved `$ref`s,
    - every path-template variable has a matching `required: true` path
@@ -84,8 +92,10 @@ operation carries one bare-host server, `https://api.bluexp.netapp.com`.
 | :---------- | :--------------- | :--------------------------------------------------- |
 | `tenancy`   | (empty)          | v3 paths already include the `/tenancy/...` segment. |
 | `tenancyv4` | `/v1/management` | Discovered via `tenancyServiceInformation.urlV4`.    |
+| `cvo`       | `/occm/api`      | Console agent API; every call needs `x-agent-id`.    |
 
-These were verified against the live SaaS using a user JWT. The `build`
+These were verified against the live SaaS (`tenancy` and `tenancyv4` with a
+user JWT, `cvo` with a service token, #1008). The `build`
 command refuses a `--service` with no entry in `_SERVICE_BASE_PATHS`
 (`tools/console_openapi/openapi/builder.py`), so a new service must declare its
 base path first.
@@ -119,8 +129,8 @@ at startup rather than hard-coding hosts.
 
 The committed spec at `generated/console_openapi.yaml` is consumed by a
 second build-time pipeline that emits Pydantic v2 models under
-`src/pynetappfoundry/models/console/` (subdivided into `tenancy/` and
-`tenancyv4/` packages). The pipeline uses `datamodel-code-generator`
+`src/pynetappfoundry/models/console/` (subdivided into `tenancy/`,
+`tenancyv4/` and `cvo/` packages). The pipeline uses `datamodel-code-generator`
 directly — it is intentionally **not** wired into `doit generate_models`,
 which is reserved for cache-coupled per-cluster API models. See
 [ADR-0008 §"Codegen integration for Console (Issue #699)"](../../docs/decisions/0008-openapi-codegen-for-model-generation.md)
@@ -135,7 +145,7 @@ doit console_models
 doit console_models_check
 ```
 
-The generated tree is committed in-tree (~21k lines) so consumers do not
+The generated tree is committed in-tree so consumers do not
 need `datamodel-code-generator` installed at runtime; only the maintainer
 running `doit console_models` does.
 
@@ -150,6 +160,8 @@ Dev only: `openapi-spec-validator`, `datamodel-code-generator` (for
 1. Confirm the folder follows the auto-generated format (front-matter +
    `[.api-doc-operation]` line + 4/5-column tables). If it uses prose
    tutorials with curl examples (like `cm/`), it needs a different parser.
-2. Add the folder name to the `--service` list in
-   `tools/doit/console_openapi_tasks.py` or pass it on the CLI.
+2. Add its base path to `_SERVICE_BASE_PATHS` in
+   `tools/console_openapi/openapi/builder.py`, then add the folder name to
+   `DEFAULT_SERVICES` in `tools/console_openapi/cli.py` (or pass it with
+   `--service`).
 3. Regenerate; update fixtures and tests for any new edge cases.

@@ -216,3 +216,122 @@ def test_spec_is_openapi_validatable() -> None:
         eps.append(ep)
     spec = build_spec(eps, included_services=("fixture",))
     validate(spec)
+
+
+# --- cvo: Status: Default, body hoisting, x-agent-id, base path (#1009) -----
+
+
+def _cvo_ep(service: str = "cvo") -> Any:
+    text, src = _load("cvo_status_default.adoc")
+    ep = parse_endpoint(text, source_file=src, service=service)
+    assert ep is not None
+    return ep
+
+
+def test_status_default_parses_as_default() -> None:
+    ep = _cvo_ep()
+    assert [r.status for r in ep.responses] == ["default"]
+    assert ep.responses[0].description == "Error"
+
+
+def test_numeric_status_is_unchanged() -> None:
+    text, src = _load("happy_post_with_definitions.adoc")
+    ep = parse_endpoint(text, source_file=src, service="fixture")
+    assert ep is not None
+    assert ep.responses[0].status == 200
+
+
+def test_cvo_operation_key_and_default_response() -> None:
+    spec = build_spec([_cvo_ep()], included_services=("cvo",))
+    op = spec["paths"]["/occm/api/occm/system/about"]["post"]
+    assert list(op["responses"]) == ["default"]
+    assert spec["info"]["x-service-base-paths"]["cvo"] == "/occm/api"
+
+
+def test_cvo_bodies_are_hoisted_into_components() -> None:
+    spec = build_spec([_cvo_ep()], included_services=("cvo",))
+    op = spec["paths"]["/occm/api/occm/system/about"]["post"]
+    schemas = spec["components"]["schemas"]
+    resp = op["responses"]["default"]["content"]["application/json"]["schema"]
+    req = op["requestBody"]["content"]["application/json"]["schema"]
+    assert resp == {"$ref": "#/components/schemas/cvo.cvo_status_default.ResponseBody"}
+    assert req == {"$ref": "#/components/schemas/cvo.cvo_status_default.RequestBody"}
+    body = schemas["cvo.cvo_status_default.ResponseBody"]
+    assert "agentId" in body["properties"]
+    assert body["x-source-file"] == "fixtures/cvo_status_default.adoc"
+    inner = body["properties"]["serverTimeZone"]["$ref"].rsplit("/", 1)[-1]
+    assert inner in schemas
+
+
+def test_non_cvo_service_bodies_stay_inline() -> None:
+    spec = build_spec([_cvo_ep("fixture")], included_services=("fixture",))
+    op = spec["paths"]["/occm/system/about"]["post"]
+    schema = op["responses"]["default"]["content"]["application/json"]["schema"]
+    assert "properties" in schema
+    assert not any(k.endswith(".ResponseBody") for k in spec["components"]["schemas"])
+
+
+def test_body_without_properties_is_not_hoisted() -> None:
+    from tools.console_openapi.openapi.builder import _hoist
+
+    schemas: dict[str, Any] = {}
+    schema = {"type": "object", "properties": {}}
+    assert _hoist(_cvo_ep(), "ResponseBody", schema, schemas) is schema
+    assert schemas == {}
+
+
+def test_hoist_name_collision_raises_build_error() -> None:
+    from tools.console_openapi.openapi.builder import _hoist
+
+    schemas: dict[str, Any] = {"cvo.cvo_status_default.ResponseBody": {}}
+    with pytest.raises(BuildError, match="exists"):
+        _hoist(_cvo_ep(), "ResponseBody", {"properties": {"a": {"type": "string"}}}, schemas)
+
+
+def test_cvo_operation_gets_one_required_agent_id_header() -> None:
+    spec = build_spec([_cvo_ep()], included_services=("cvo",))
+    op = spec["paths"]["/occm/api/occm/system/about"]["post"]
+    headers = [p for p in op["parameters"] if p["name"] == "x-agent-id"]
+    assert len(headers) == 1
+    assert headers[0]["in"] == "header"
+    assert headers[0]["required"] is True
+    assert headers[0]["x-synthesized"] is True
+
+
+def test_agent_id_header_absent_on_other_services() -> None:
+    spec = build_spec([_cvo_ep("fixture")], included_services=("fixture",))
+    op = spec["paths"]["/occm/system/about"]["post"]
+    assert "x-agent-id" not in {p["name"] for p in op.get("parameters", [])}
+
+
+def test_agent_id_header_not_duplicated_when_documented() -> None:
+    from tools.console_openapi.models import FieldDef, TypeRef
+
+    ep = _cvo_ep()
+    declared = FieldDef(
+        name="X-Agent-Id",
+        type=TypeRef(raw="string", primitive="string"),
+        required=True,
+        description="",
+        location="header",
+    )
+    ep = ep.model_copy(update={"parameters": (*ep.parameters, declared)})
+    spec = build_spec([ep], included_services=("cvo",))
+    op = spec["paths"]["/occm/api/occm/system/about"]["post"]
+    assert [p["name"] for p in op["parameters"] if p["name"].lower() == "x-agent-id"] == [
+        "X-Agent-Id"
+    ]
+
+
+def test_cvo_and_tenancyv4_users_paths_coexist() -> None:
+    cvo = _cvo_ep().model_copy(update={"path": "/users", "method": "GET"})
+    v4 = _cvo_ep("tenancyv4").model_copy(update={"path": "/users", "method": "GET"})
+    spec = build_spec([cvo, v4], included_services=("tenancyv4", "cvo"))
+    assert "/occm/api/users" in spec["paths"]
+    assert "/v1/management/users" in spec["paths"]
+
+
+def test_cvo_fixture_spec_validates() -> None:
+    from openapi_spec_validator import validate
+
+    validate(build_spec([_cvo_ep()], included_services=("cvo",)))

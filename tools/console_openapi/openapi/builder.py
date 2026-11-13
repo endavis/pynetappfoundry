@@ -42,10 +42,31 @@ _DEFAULT_SERVERS: tuple[dict[str, str], ...] = (
 # (e.g. ``/tenancy/account``); v4 ``tenancyv4`` paths are served under
 # ``/v1/management`` (e.g. ``/v1/management/organizations``). Discovered from
 # the Console UI's bootstrap configuration ``tenancyServiceInformation.urlV4``.
+# The ``cvo`` (Console agent / OCCM) paths are served under ``/occm/api``
+# (verified on both hosts in #1008, wired in #1009).
 # A service without an entry here gets no prefix.
 _SERVICE_BASE_PATHS: dict[str, str] = {
     "tenancy": "",
     "tenancyv4": "/v1/management",
+    "cvo": "/occm/api",
+}
+# The ``cvo`` docs document every body inline, so no model could be generated
+# for it. For these services the request and response bodies are moved into
+# named components (``<service>.<file>.RequestBody`` / ``ResponseBody``).
+_HOISTED_BODY_SERVICES = frozenset({"cvo"})
+# Every ``cvo`` operation is addressed to one agent, named in this header. The
+# docs omit it, so it is synthesized.
+_AGENT_ID_SERVICES = frozenset({"cvo"})
+_AGENT_ID_HEADER: dict[str, Any] = {
+    "name": "x-agent-id",
+    "in": "header",
+    "required": True,
+    "schema": {"type": "string"},
+    "description": (
+        "Identifier of the Console agent that should serve the request. "
+        "Synthesized; the upstream documentation does not declare this header."
+    ),
+    "x-synthesized": True,
 }
 # Every operation carries this bare-host server, so the server path is empty
 # and a client-side ``base_api_path`` never doubles a base path.
@@ -84,7 +105,7 @@ def build_spec(
         schema_keys_by_endpoint.append(local_resolver)
 
     for ep, resolver in zip(endpoints, schema_keys_by_endpoint, strict=True):
-        op_obj = _build_operation(ep, resolver, operation_ids)
+        op_obj = _build_operation(ep, resolver, operation_ids, components_schemas)
         full_path = _full_path(ep)
         _ensure_path_params(full_path, op_obj)
         path_obj = paths[full_path]
@@ -258,7 +279,8 @@ def _ensure_path_params(path: str, op: dict[str, Any]) -> None:
             p["required"] = False
             p["x-demoted-from-path"] = True
 
-    missing = template_names - declared_path
+    # Template order, so a refresh is deterministic (a set iterates in hash order).
+    missing = [n for n in dict.fromkeys(template_re.findall(path)) if n not in declared_path]
     for name in missing:
         params.append(
             {
@@ -277,8 +299,31 @@ def _ensure_path_params(path: str, op: dict[str, Any]) -> None:
         op["parameters"] = params
 
 
+def _hoist(
+    ep: ParsedEndpoint,
+    anchor: str,
+    schema: dict[str, Any],
+    components: dict[str, Any],
+) -> dict[str, Any]:
+    """Move an inline body schema into ``components`` and return a ``$ref`` to it.
+
+    Only services in ``_HOISTED_BODY_SERVICES`` are touched, and only a schema
+    with properties; anything else is returned unchanged.
+    """
+    if ep.service not in _HOISTED_BODY_SERVICES or not schema.get("properties"):
+        return schema
+    key = _component_key(ep.service, _file_stem(ep.source_file), anchor)
+    if key in components:
+        raise BuildError(f"Cannot hoist {anchor} of {ep.source_file!r}: component {key!r} exists")
+    components[key] = {"x-source-file": ep.source_file, **schema}
+    return {"$ref": f"#/components/schemas/{key}"}
+
+
 def _build_operation(
-    ep: ParsedEndpoint, resolver: dict[str, str], operation_ids: set[str]
+    ep: ParsedEndpoint,
+    resolver: dict[str, str],
+    operation_ids: set[str],
+    components: dict[str, Any],
 ) -> dict[str, Any]:
     op: dict[str, Any] = {
         "operationId": _allocate_operation_id(ep, operation_ids),
@@ -300,13 +345,26 @@ def _build_operation(
             continue
         seen_keys.add(key)
         parameters.append(_parameter_object(p, ep, resolver))
+    if ep.service in _AGENT_ID_SERVICES and not any(
+        p["in"] == "header" and p["name"].lower() == _AGENT_ID_HEADER["name"] for p in parameters
+    ):
+        parameters.append({**_AGENT_ID_HEADER, "schema": dict(_AGENT_ID_HEADER["schema"])})
     if parameters:
         op["parameters"] = parameters
 
     if ep.request_body_fields or ep.request_body_example is not None or ep.request_body_example_raw:
-        op["requestBody"] = _request_body(ep, resolver)
+        request_body = _request_body(ep, resolver)
+        media = request_body["content"]["application/json"]
+        media["schema"] = _hoist(ep, "RequestBody", media["schema"], components)
+        op["requestBody"] = request_body
 
-    op["responses"] = _responses(ep, resolver)
+    responses = _responses(ep, resolver)
+    for status, response in responses.items():
+        if "content" in response:
+            anchor = "ResponseBody" if status == "default" else f"Response{status}Body"
+            media = response["content"]["application/json"]
+            media["schema"] = _hoist(ep, anchor, media["schema"], components)
+    op["responses"] = responses
 
     op["security"] = [{"BearerAuth": []}]
     if ep.token_usage is not None:

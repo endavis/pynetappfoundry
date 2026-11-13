@@ -82,3 +82,9 @@ def test_no_template_no_params_is_noop() -> None:
     op: dict = {}
     _ensure_path_params("/health", op)
     assert "parameters" not in op
+
+
+def test_synthesized_path_params_follow_template_order() -> None:
+    op: dict = {}
+    _ensure_path_params("/z/{zeta}/a/{alpha}/m/{mid}/{alpha}", op)
+    assert [p["name"] for p in op["parameters"]] == ["zeta", "alpha", "mid"]
