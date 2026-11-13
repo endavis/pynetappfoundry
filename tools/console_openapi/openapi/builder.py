@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import re
 from collections import defaultdict
+from collections.abc import Collection
 from typing import Any
 
 from tools.console_openapi.models import (
@@ -101,6 +102,7 @@ def build_spec(
     included_services: tuple[str, ...] = (),
     title: str = "NetApp BlueXP / Console SaaS API",
     version: str = "1.0.0-derived",
+    array_responses: Collection[tuple[str, str]] = (),
 ) -> dict[str, Any]:
     """Build the combined OpenAPI 3.0.3 document and return it as a Python dict."""
     components_schemas: dict[str, Any] = {}
@@ -162,6 +164,7 @@ def build_spec(
         },
     }
 
+    _wrap_array_responses(paths, array_responses)
     _loosen_response_schemas(paths, components_schemas)
     _enforce_invariants(spec)
     return spec
@@ -180,6 +183,34 @@ def _collect_refs(obj: Any) -> set[str]:
         for item in obj:
             found |= _collect_refs(item)
     return found
+
+
+def _wrap_array_responses(
+    paths: dict[str, dict[str, Any]], array_responses: Collection[tuple[str, str]]
+) -> None:
+    """Type the success body of each listed operation as an array of its hoisted body (#1021).
+
+    The docs carry no list marker, so the operations come from the committed
+    ``array_responses.toml``. The success response is the lowest 2xx, else
+    ``default``, as ``client_codegen`` picks it.
+    """
+    for method, path in sorted(array_responses):
+        op = paths.get(path, {}).get(method.lower())
+        if op is None:
+            raise BuildError(f"array response for unknown operation {method} {path}")
+        responses = op.get("responses", {})
+        codes = sorted(c for c in responses if str(c).startswith("2"))
+        if not codes and "default" in responses:
+            codes = ["default"]
+        media: Any = None
+        if codes:
+            media = responses[codes[0]].get("content", {}).get("application/json")
+        schema = media.get("schema") if isinstance(media, dict) else None
+        if not isinstance(media, dict) or not isinstance(schema, dict) or "$ref" not in schema:
+            raise BuildError(
+                f"array response for {method} {path}: the success response has no hoisted body"
+            )
+        media["schema"] = {"type": "array", "items": schema}
 
 
 def _loosen_response_schemas(paths: dict[str, dict[str, Any]], schemas: dict[str, Any]) -> None:

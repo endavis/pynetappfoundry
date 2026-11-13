@@ -6,6 +6,10 @@ Reads the committed Console OpenAPI spec and the curated manifest
 builds the ``APIWrapper.call_endpoint`` arguments and hands them to the client's
 dispatch.  Every rule that would otherwise drop information silently is a
 ``CodegenError`` instead.
+
+A list response is read from the spec: a ``type: array`` success schema makes the
+operation a list (#1021).  The manifest's ``response = "list"`` stays only as an
+override for a spec object, and on a spec array it is an error.
 """
 
 from __future__ import annotations
@@ -241,7 +245,23 @@ def resolve_operation(
         request = _model_ref(_json_schema(request_body.get("content")), "RequestBody", models_root)
 
     has_response, schema = _response_schema(op.get("responses", {}))
-    response = _model_ref(schema, "ResponseBody", models_root) if has_response else None
+    spec_list = isinstance(schema, dict) and schema.get("type") == "array"
+    if spec_list:
+        # The spec types the response as an array (#1021): read the shape from it.
+        declared = entry.get("response")
+        if declared == "list":
+            raise CodegenError(
+                f"{op_id}: response = 'list' is redundant; the spec already types the "
+                "response as an array"
+            )
+        if declared == "object":
+            raise CodegenError(
+                f"{op_id}: response = 'object' contradicts the spec, which types the "
+                "response as an array"
+            )
+        response = _model_ref(schema.get("items"), "ResponseBody", models_root)
+    else:
+        response = _model_ref(schema, "ResponseBody", models_root) if has_response else None
 
     return Operation(
         client=entry["client"],
@@ -257,7 +277,7 @@ def resolve_operation(
         has_body=has_body,
         response=response,
         has_response=has_response,
-        is_list=entry.get("response", "object") == "list",
+        is_list=spec_list or entry.get("response", "object") == "list",
         retry=bool(entry.get("retry", False)),
         models=tuple(m for m in (request, response) if m is not None),
     )

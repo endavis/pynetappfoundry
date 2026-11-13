@@ -10,6 +10,11 @@ import click
 import yaml
 
 from tools.console_openapi import __version__
+from tools.console_openapi.array_responses import (
+    ARRAY_RESPONSES_PATH,
+    array_operations,
+    load_array_responses,
+)
 from tools.console_openapi.fetcher import DEFAULT_REPO, fetch
 from tools.console_openapi.lockfile import Lockfile
 from tools.console_openapi.models import ParsedEndpoint
@@ -56,6 +61,14 @@ def cli() -> None:
 )
 @click.option("--lenient/--strict", default=False, help="Skip malformed endpoints with a warning.")
 @click.option("--repo", default=DEFAULT_REPO, show_default=True)
+@click.option(
+    "--array-responses",
+    "array_responses_path",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    default=ARRAY_RESPONSES_PATH,
+    show_default=True,
+    help="TOML list of operations whose response is a JSON array (#1021).",
+)
 def build(
     ref: str,
     services: tuple[str, ...],
@@ -64,6 +77,7 @@ def build(
     server_urls: tuple[str, ...],
     lenient: bool,
     repo: str,
+    array_responses_path: Path,
 ) -> None:
     """Fetch sources, parse, build the OpenAPI document, and write it to disk."""
     unmapped = [s for s in services if s not in _SERVICE_BASE_PATHS]
@@ -73,6 +87,7 @@ def build(
             "(tools/console_openapi/openapi/builder.py); declare the service's base path first.",
             param_hint="--service",
         )
+    array_ops = array_operations(load_array_responses(array_responses_path), services)
     fetched = fetch(ref, repo_url=repo)
     click.echo(f"Fetched {repo} @ {fetched.resolved_sha[:12]} ({ref})")
 
@@ -105,6 +120,7 @@ def build(
         source_commit=fetched.resolved_sha,
         source_repo=repo.removesuffix(".git"),
         included_services=services,
+        array_responses=array_ops,
     )
 
     out.parent.mkdir(parents=True, exist_ok=True)

@@ -577,6 +577,18 @@ Issue: #955
 
 Issue: #901
 
+### cvo list responses (Issue #1021)
+
+Amendment to the Console pipeline. The Console agent docs type every `cvo` response body as one object, so the spec typed list responses wrongly.
+
+- **A committed override list.** `tools/console_openapi/array_responses.toml` names the `cvo` GET operations whose success response is a JSON array, each with its evidence: `live` (confirmed against a live agent) or `swagger` (the agent swagger types it as an array). The builder wraps each listed operation's hoisted `ResponseBody` as `{type: array, items: {$ref: ...ResponseBody}}` and reads nothing else.
+- **The swagger is a test-time cross-check, not a build input.** `docs/example-config/apis/occm/openapi3.json` is the `doit convert_specs` output of a file that `doit fetch_spec` overwrites from whichever agent it points at, and the lockfile records neither. Reading it at build time would make the spec depend on an input that `(ref, tool_version)` does not pin. `tests/unit/console_openapi/test_array_responses.py` instead checks the list against the committed spec and the swagger, so drift on either side fails `doit test`.
+- **Scope.** 150 operations are wrapped. Three swagger arrays are left out because the docs give the operation no response body to wrap: `cvo_get_occm_api_aws_ha_metadata_key_pairs`, `cvo_get_occm_api_vsa_metadata_key_pairs` and `cvo_get_occm_api_replication_metadata_snapshot_labels_by_workingEnvironmentId_by_svmName_by_volumeName`. The 148 `swagger` entries come from a v3.2.0 swagger and are not confirmed live.
+- **Models do not change.** `datamodel-code-generator` runs with its default `--openapi-scopes schemas`, so path response schemas never produce models; the item models keep their names. Regenerating gives no diff under `src/pynetappfoundry/models/console/`.
+- **Client codegen reads the shape from the spec.** A spec array makes the operation a list; a manifest `response = "list"` on it is a `CodegenError` (redundant) and so is `response = "object"` (contradiction). See [tools/console_openapi/README.md](../../tools/console_openapi/README.md).
+
+Issue: #1021
+
 ## Related Issues
 
 - Issue #301: feat: field annotations, OpenAPI codegen, and SQL cache storage
@@ -601,6 +613,7 @@ Issue: #901
 - Issue #1009: feat: parse the Console agent (cvo/) API docs into the Console OpenAPI spec
 - Issue #1018: fix: generated cvo response models reject live agent responses (docs over-mark fields as required)
 - Issue #1027: feat: typed request/response models for generated tenancy Console ops
+- Issue #1021: fix: generated cvo spec types every list response as a single object
 
 ## Related Documentation
 

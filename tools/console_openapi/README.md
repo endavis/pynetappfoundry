@@ -76,6 +76,16 @@ Pass a full commit SHA rather than a branch name, so the lockfile's
      response of these services has `required` renamed to
      `x-documented-required` and its generated fields are optional;
      request-only schemas keep `required` (#1018, #1027).
+   - `cvo` GET operations listed in `array_responses.toml` get their success
+     body wrapped as an array of the hoisted `ResponseBody`. The docs carry no
+     list marker, so the list is committed, with `live` or `swagger` evidence
+     per entry, and a unit test checks it against the agent swagger
+     (`docs/example-config/apis/occm/openapi3.json`). The builder reads only
+     the list, never the swagger (#1021). The build fails on an unknown
+     service table, a malformed key, a path outside the service's base path, an
+     evidence value other than `live` or `swagger`, a listed operation that is
+     not in the spec, and a listed operation whose success response has no
+     hoisted body.
    - Path parameters missing from the docs are synthesized in path-template
      order.
 4. **Validate** -- a final invariant pass enforces:
@@ -180,7 +190,7 @@ Each `[[operation]]` in the manifest has:
 | `operation_id` | The spec's `operationId` (required). |
 | `client` | `"console"` (`ConsoleAPIClient.ops`) or `"agent"` (`ConsoleAgentClient.ops`). |
 | `name` | The generated method name, unique per client. |
-| `response` | `"object"` (default) or `"list"`. The spec cannot say how many items a response holds, so a list is declared here. |
+| `response` | `"object"` (default) or `"list"`. A spec response typed `type: array` is a list and is read from the spec; `"list"` is only an override for a spec response typed as an object (#1021). |
 | `retry` | `true` keeps the wrapper's retry on a non-GET operation. Default: non-GET operations are not retried. |
 | `only_query` | Optional list of spec query parameter names to expose. Default: all. |
 | `query` | Optional per-parameter overlay. `{ fields = { style = "csv" } }` accepts a string or a sequence and joins it with commas. |
@@ -188,7 +198,9 @@ Each `[[operation]]` in the manifest has:
 The generator fails, rather than guessing, on: an unknown `operationId`, a
 duplicate method name, a query parameter that is not a plain string and has no
 overlay, a header parameter other than the synthesized `x-agent-id`, an
-`x-token-type` on an agent operation, and a missing model module or class.
+`x-token-type` on an agent operation, a missing model module or class, a
+`response = "list"` on a spec array (redundant), and a `response = "object"` on
+a spec array (contradicts the spec).
 Path parameters are always URL-encoded. The operation's `x-token-type` is
 written into the call as a literal; an operation with none accepts either token.
 A numeric success status maps to the `Response<status>Body` model (for example

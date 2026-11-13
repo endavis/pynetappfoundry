@@ -5,7 +5,8 @@
 #   operation_id  the spec's operationId (required)
 #   client        "console" (ConsoleAPIClient.ops) or "agent" (ConsoleAgentClient.ops)
 #   name          the generated method name, unique per client
-#   response      "object" (default) or "list"
+#   response      "object" (default) or "list"; "list" only where the spec response is an
+#                 object. An array in the spec is read from the spec (#1021)
 #   retry         true keeps the wrapper's retry on a non-GET operation (default false)
 #   only_query    optional list of spec query parameter names to expose (default all)
 #   query         optional overlays per query parameter, e.g. { fields = { style = "csv" } }
@@ -42,7 +43,6 @@ name = "about"
 operation_id = "cvo_get_occm_api_onprem_working_environments"
 client = "agent"
 name = "list_onprem_working_environments"
-response = "list"
 query = { fields = { style = "csv" } }
 
 [[operation]]
