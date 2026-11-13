@@ -10,3 +10,18 @@ class Body(BaseModel):
     resourceIdentifier: str
     action: str
     accountId: str | None = None
+
+
+class RequestBody(BaseModel):
+    resourceIdentifier: str
+    action: str
+    accountId: str | None = None
+
+
+class Response200Body(BaseModel):
+    agentId: str | None = None
+    resourceIdentifier: str | None = None
+    resourceType: str | None = None
+    resourcePublicId: str | None = None
+    accountPublicId: str | None = None
+    agentIds: list[str] | None = None

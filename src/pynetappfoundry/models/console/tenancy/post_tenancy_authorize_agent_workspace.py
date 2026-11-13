@@ -10,3 +10,9 @@ class Body(BaseModel):
     agentId: str
     workspacePublicId: str
     action: str
+
+
+class RequestBody(BaseModel):
+    agentId: str
+    workspacePublicId: str
+    action: str

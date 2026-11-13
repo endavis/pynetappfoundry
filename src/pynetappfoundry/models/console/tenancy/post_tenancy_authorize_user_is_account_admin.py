@@ -11,3 +11,10 @@ class Body(BaseModel):
     userId: str | None = None
     resourceIdentifier: str | None = None
     agentId: str | None = None
+
+
+class RequestBody(BaseModel):
+    accountId: str
+    userId: str | None = None
+    resourceIdentifier: str | None = None
+    agentId: str | None = None

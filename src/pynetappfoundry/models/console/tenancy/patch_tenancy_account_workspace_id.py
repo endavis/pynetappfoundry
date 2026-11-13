@@ -8,3 +8,12 @@ from pydantic import BaseModel
 
 class Body(BaseModel):
     newName: str
+
+
+class RequestBody(BaseModel):
+    newName: str
+
+
+class Response200Body(BaseModel):
+    workspacePublicId: str | None = None
+    workspaceName: str | None = None

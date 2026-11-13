@@ -62,9 +62,9 @@ class TargetSchema(BaseModel):
 
 class TypeBxpLink(BaseModel):
     hints: Hints | None = None
-    href: str = Field(..., description="String describing a relative URI.")
-    rel: str = Field(
-        ...,
+    href: str | None = Field(None, description="String describing a relative URI.")
+    rel: str | None = Field(
+        None,
         description="The type of relationship for the link. Values are defined in the IANA Link Relationships registry, or an extension relationship type as specified in section 2.1.2 of RFC 8288.",
     )
     targetSchema: TargetSchema | None = Field(
@@ -82,8 +82,8 @@ class TypeBxpLink(BaseModel):
 
 
 class TypeBxpLabel(BaseModel):
-    name: str = Field(..., description="Name of the label.")
-    value: str = Field(..., description="Value of the label.")
+    name: str | None = Field(None, description="Name of the label.")
+    value: str | None = Field(None, description="Value of the label.")
 
 
 class TypeBxpMetadata(BaseModel):
@@ -112,8 +112,8 @@ class User10PublicKeyGetResponseBody(BaseModel):
         None,
         description="The SHA-1 fingerprint of the public X.509 certificate or RSA key that was provided for the public key.",
     )
-    id: str = Field(
-        ...,
+    id: str | None = Field(
+        None,
         description="Globally unique identifier of the resource conforming to the UUIDv4 schema.",
     )
     keyType: str | None = Field(None, description="Type of the public key. Defined values are:")
@@ -121,8 +121,8 @@ class User10PublicKeyGetResponseBody(BaseModel):
         None, description="Metadata associated with the resource."
     )
     state: str | None = Field(None, description="The state of the public key. Defined values are:")
-    type: str = Field(..., description="Media type of the resource. Defined values are:")
-    version: str = Field(..., description="Version of the resource. Defined values are:")
+    type: str | None = Field(None, description="Media type of the resource. Defined values are:")
+    version: str | None = Field(None, description="Version of the resource. Defined values are:")
 
 
 class ServiceAccount(BaseModel):
@@ -153,5 +153,64 @@ class Tags(RootModel[dict[str, str]]):
 
 
 class InvalidParams(BaseModel):
-    name: str = Field(..., description="Name of the invalid parameter.")
-    reason: str = Field(..., description="Reason why the parameter is invalid.")
+    name: str | None = Field(None, description="Name of the invalid parameter.")
+    reason: str | None = Field(None, description="Reason why the parameter is invalid.")
+
+
+class Response200Body(BaseModel):
+    aadId: str | None = Field(None, description="User AAD ID.")
+    auth0Id: str | None = Field(None, description="User auth0 ID.")
+    description: str | None = Field(
+        None,
+        description="JSON string containing the description of the user. Defined values are: * Minimum length: 1 * Maximum length: 300 * This string is internally validated to prevent XSS, Unicode, directory traversal, and SQL-injection attacks.",
+    )
+    editable: str | None = Field(None, description="partner organization is editable or not.")
+    id: str | None = Field(
+        None,
+        description="Globally unique identifier of the resource. Defined values are:",
+    )
+    isSystem: str | None = Field(
+        None,
+        description="Specifies if an object is system generated. Defined values are:",
+    )
+    legacyId: str | None = Field(
+        None,
+        description="Unique identifier as understood by the previous version of this service.",
+    )
+    links: list[TypeBxpLink] | None = None
+    metadata: TypeBxpMetadata | None = Field(
+        None, description="Metadata associated with the resource."
+    )
+    name: str | None = Field(None, description="User name.")
+    ownerOrganizationId: str | None = Field(
+        None, description="JSON string containing the ID of the organization."
+    )
+    partner: str | None = Field(None, description="partner organization name.")
+    serviceAccount: ServiceAccount | None = Field(
+        None,
+        description="Properties specific to users with userType=serviceAccount. The audience, expirationNotificationPeriod, and publicKeys properties are only applicable when authenticationMethod=PRIVATE_KEY_JWT.",
+    )
+    state: str | None = Field(
+        None,
+        description='Current state of the user. Defined values are: _**_ "ACTIVE" _**_ "INACTIVE"',
+    )
+    tags: list[Tags] | None = Field(
+        None,
+        description="JSON array of tags (name/value pairs) representing metadata for the user.",
+    )
+    type: str | None = Field(None, description="Media type of the resource. Defined values are:")
+    userType: str | None = Field(None, description="Type of user.")
+    version: str | None = Field(None, description="Version of the resource. Defined values are:")
+
+
+class Response404Body(BaseModel):
+    correlationId: str | None = Field(
+        None, description="Internal UUID representing the request or trace ID related."
+    )
+    detail: str | None = Field(None, description="Details about the problem.")
+    invalidParams: list[InvalidParams] | None = Field(
+        None, description="List of invalid parameters."
+    )
+    status: str | None = Field(None, description="HTTP error code related to the problem.")
+    title: str | None = Field(None, description="Title description of the problem.")
+    type: str | None = Field(None, description="Content-type of the object.")

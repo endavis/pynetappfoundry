@@ -7,8 +7,8 @@ from pydantic import BaseModel, Field, RootModel
 
 
 class TypeBxpLabel(BaseModel):
-    name: str = Field(..., description="Name of the label.")
-    value: str = Field(..., description="Value of the label.")
+    name: str | None = Field(None, description="Name of the label.")
+    value: str | None = Field(None, description="Value of the label.")
 
 
 class TypeBxpMetadata(BaseModel):
@@ -94,9 +94,9 @@ class TargetSchema(BaseModel):
 
 class TypeBxpLink(BaseModel):
     hints: Hints | None = None
-    href: str = Field(..., description="String describing a relative URI.")
-    rel: str = Field(
-        ...,
+    href: str | None = Field(None, description="String describing a relative URI.")
+    rel: str | None = Field(
+        None,
         description="The type of relationship for the link. Values are defined in the IANA Link Relationships registry, or an extension relationship type as specified in section 2.1.2 of RFC 8288.",
     )
     targetSchema: TargetSchema | None = Field(
@@ -114,5 +114,133 @@ class TypeBxpLink(BaseModel):
 
 
 class InvalidParams(BaseModel):
-    name: str = Field(..., description="Name of the invalid parameter.")
-    reason: str = Field(..., description="Reason why the parameter is invalid.")
+    name: str | None = Field(None, description="Name of the invalid parameter.")
+    reason: str | None = Field(None, description="Reason why the parameter is invalid.")
+
+
+class RequestBody(BaseModel):
+    description: str | None = Field(
+        None, description="JSON string containing the description of the grant."
+    )
+    isSystem: str | None = Field(
+        None,
+        description="Specifies if an object is system generated. Defined values are:",
+    )
+    metadata: TypeBxpMetadata | None = Field(
+        None, description="Metadata associated with the resource."
+    )
+    name: str = Field(
+        ...,
+        description="JSON string containing a name for the grant. Defined values are:",
+    )
+    ownerOrganizationId: str = Field(
+        ...,
+        description="JSON string containing the ID of the organization that owns the resource.",
+    )
+    resources: list[str] | None = Field(None, description="JSON array of resource UUIDs.")
+    role: str = Field(..., description="JSON string containing the associated role ID.")
+    tags: list[Tags] | None = Field(
+        None,
+        description="JSON array of tags (name/value pairs) representing metadata for the resource.",
+    )
+    type: str = Field(..., description="Media type of the resource. Defined values are:")
+    userGroupId: str | None = Field(
+        None,
+        description="JSON string containing the UserGroupId. If the userGroupId is specified there should be no users specified in this API request body.",
+    )
+    users: list[Users] | None = Field(None, description="JSON array of users.")
+    version: str = Field(..., description="Version of the resource. Defined values are:")
+
+
+class Response201Body(BaseModel):
+    description: str | None = Field(
+        None, description="JSON string containing the description of the grant."
+    )
+    id: str | None = Field(
+        None,
+        description="Globally unique identifier of the resource. Defined values are:",
+    )
+    isSystem: str | None = Field(
+        None,
+        description="Specifies if an object is system generated. Defined values are:",
+    )
+    links: list[TypeBxpLink] | None = None
+    metadata: TypeBxpMetadata | None = Field(
+        None, description="Metadata associated with the resource."
+    )
+    name: str | None = Field(None, description="JSON string containing the associated name.")
+    ownerOrganizationId: str | None = Field(
+        None, description="JSON string containing the ID of the organization."
+    )
+    role: str | None = Field(None, description="JSON string containing the associated role ID.")
+    tags: list[Tags] | None = Field(
+        None,
+        description="JSON array of tags (name/value pairs) representing metadata for the resource.",
+    )
+    type: str | None = Field(None, description="Media type of the resource. Defined values are:")
+    version: str | None = Field(None, description="Version of the resource. Defined values are:")
+
+
+class Response400Body(BaseModel):
+    correlationId: str | None = Field(
+        None, description="Internal UUID representing the request or trace ID related."
+    )
+    detail: str | None = Field(None, description="Details about the problem.")
+    invalidParams: list[InvalidParams] | None = Field(
+        None, description="List of invalid parameters."
+    )
+    status: str | None = Field(None, description="HTTP error code related to the problem.")
+    title: str | None = Field(None, description="Title description of the problem.")
+    type: str | None = Field(None, description="Content-type of the object.")
+
+
+class Response401Body(BaseModel):
+    correlationId: str | None = Field(
+        None, description="Internal UUID representing the request or trace ID related."
+    )
+    detail: str | None = Field(None, description="Details about the problem.")
+    invalidParams: list[InvalidParams] | None = Field(
+        None, description="List of invalid parameters."
+    )
+    status: str | None = Field(None, description="HTTP error code related to the problem.")
+    title: str | None = Field(None, description="Title description of the problem.")
+    type: str | None = Field(None, description="Content-type of the object.")
+
+
+class Response403Body(BaseModel):
+    correlationId: str | None = Field(
+        None, description="Internal UUID representing the request or trace ID related."
+    )
+    detail: str | None = Field(None, description="Details about the problem.")
+    invalidParams: list[InvalidParams] | None = Field(
+        None, description="List of invalid parameters."
+    )
+    status: str | None = Field(None, description="HTTP error code related to the problem.")
+    title: str | None = Field(None, description="Title description of the problem.")
+    type: str | None = Field(None, description="Content-type of the object.")
+
+
+class Response404Body(BaseModel):
+    correlationId: str | None = Field(
+        None, description="Internal UUID representing the request or trace ID related."
+    )
+    detail: str | None = Field(None, description="Details about the problem.")
+    invalidParams: list[InvalidParams] | None = Field(
+        None, description="List of invalid parameters."
+    )
+    status: str | None = Field(None, description="HTTP error code related to the problem.")
+    title: str | None = Field(None, description="Title description of the problem.")
+    type: str | None = Field(None, description="Content-type of the object.")
+
+
+class Response409Body(BaseModel):
+    correlationId: str | None = Field(
+        None, description="Internal UUID representing the request or trace ID related."
+    )
+    detail: str | None = Field(None, description="Details about the problem.")
+    invalidParams: list[InvalidParams] | None = Field(
+        None, description="List of invalid parameters."
+    )
+    status: str | None = Field(None, description="HTTP error code related to the problem.")
+    title: str | None = Field(None, description="Title description of the problem.")
+    type: str | None = Field(None, description="Content-type of the object.")

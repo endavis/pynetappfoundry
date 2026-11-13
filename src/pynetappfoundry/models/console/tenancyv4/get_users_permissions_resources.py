@@ -62,9 +62,9 @@ class TargetSchema(BaseModel):
 
 class TypeBxpLink(BaseModel):
     hints: Hints | None = None
-    href: str = Field(..., description="String describing a relative URI.")
-    rel: str = Field(
-        ...,
+    href: str | None = Field(None, description="String describing a relative URI.")
+    rel: str | None = Field(
+        None,
         description="The type of relationship for the link. Values are defined in the IANA Link Relationships registry, or an extension relationship type as specified in section 2.1.2 of RFC 8288.",
     )
     targetSchema: TargetSchema | None = Field(
@@ -82,8 +82,8 @@ class TypeBxpLink(BaseModel):
 
 
 class TypeBxpLabel(BaseModel):
-    name: str = Field(..., description="Name of the label.")
-    value: str = Field(..., description="Value of the label.")
+    name: str | None = Field(None, description="Name of the label.")
+    value: str | None = Field(None, description="Value of the label.")
 
 
 class TypeBxpMetadata(BaseModel):
@@ -111,8 +111,8 @@ class Resource10GetResponseBody(BaseModel):
         None,
         description="JSON string containing the description of the resource. Defined values are: * Minimum length: 1 * Maximum length: 254 * This string is internally validated to prevent XSS, Unicode, directory traversal, and SQL-injection attacks.",
     )
-    id: str = Field(
-        ...,
+    id: str | None = Field(
+        None,
         description="Globally unique identifier of the resource. Defined values are:",
     )
     isSystem: str | None = Field(
@@ -127,8 +127,8 @@ class Resource10GetResponseBody(BaseModel):
     metadata: TypeBxpMetadata | None = Field(
         None, description="Metadata associated with the resource."
     )
-    name: str = Field(
-        ...,
+    name: str | None = Field(
+        None,
         description="JSON string containing a name for the resource. Defined values are:",
     )
     ownerOrganizationId: str | None = Field(
@@ -141,12 +141,12 @@ class Resource10GetResponseBody(BaseModel):
         None,
         description="JSON string containing the physical ID of the resource. It is the ID as defined by the system (a UUID, a string, or any other defined ID). For example, the UUID of an ONTAP cluster or the UUID of an application in Astra Control.",
     )
-    resourceClass: str = Field(
-        ...,
+    resourceClass: str | None = Field(
+        None,
         description="JSON string containing the resource class. This field is for Accounts (tenancy) compatibility support.",
     )
-    resourceType: str = Field(
-        ...,
+    resourceType: str | None = Field(
+        None,
         description="JSON string containing the resource type. This should be one of the allowed resource types, which should be in the resource types collection. These resource types are defined by the service applications and the NetApp Console IAM system.",
     )
     state: str | None = Field(
@@ -157,8 +157,8 @@ class Resource10GetResponseBody(BaseModel):
         None,
         description="JSON array of tags (name/value pairs) representing metadata for the resource.",
     )
-    type: str = Field(..., description="Media type of the resource. Defined values are:")
-    version: str = Field(..., description="Version of the resource. Defined values are:")
+    type: str | None = Field(None, description="Media type of the resource. Defined values are:")
+    version: str | None = Field(None, description="Version of the resource. Defined values are:")
 
 
 class TypeBxpMetadataList(BaseModel):
@@ -171,3 +171,12 @@ class TypeBxpMetadataList(BaseModel):
     )
     modificationTimestamp: str | None = Field(None, description="Resource modification date.")
     modifiedBy: str | None = Field(None, description="UUID of the user who modified the resource.")
+
+
+class Response200Body(BaseModel):
+    continue_: str | None = Field(None, alias="continue")
+    count: int | None = None
+    items: list[Resource10GetResponseBody] | None = None
+    metadata: TypeBxpMetadataList | None = Field(
+        None, description="Metadata associated with a list of resources."
+    )

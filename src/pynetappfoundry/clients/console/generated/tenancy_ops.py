@@ -6,10 +6,18 @@ Do not edit; edit the manifest and regenerate.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from urllib.parse import quote
 
 from pynetappfoundry.clients.console._ops_support import Dispatch, drop_none, expect_object
+
+if TYPE_CHECKING:
+    from pynetappfoundry.models.console.tenancyv4 import (
+        get_folders_,
+        get_organizations,
+        get_organizations_,
+        get_projects_,
+    )
 
 
 class ConsoleTenancyOps:
@@ -28,11 +36,13 @@ class ConsoleTenancyOps:
         include: str | None = None,
         limit: str | None = None,
         order_by: str | None = None,
-    ) -> dict[str, Any]:
+    ) -> get_organizations_.Response200Body:
         """GET /v1/management/organizations/{organization_id}: Retrieve an organization.
 
         operationId: tenancyv4_get_v1_management_organizations_by_organization_id (generated; do not edit).
         """
+        from pynetappfoundry.models.console.tenancyv4 import get_organizations_
+
         kwargs: dict[str, Any] = {
             "method": "GET",
             "path_template": "/v1/management/organizations/{organization_id}",
@@ -50,7 +60,9 @@ class ConsoleTenancyOps:
         if query:
             kwargs["query_params"] = query
         response = self._dispatch(None, **kwargs)
-        return expect_object(response, "get_organization")
+        return get_organizations_.Response200Body.model_validate(
+            expect_object(response, "get_organization")
+        )
 
     def list_organizations(
         self,
@@ -62,11 +74,13 @@ class ConsoleTenancyOps:
         order_by: str | None = None,
         count: str | None = None,
         continue_: str | None = None,
-    ) -> dict[str, Any]:
+    ) -> get_organizations.Response200Body:
         """GET /v1/management/organizations: List all organizations.
 
         operationId: tenancyv4_get_v1_management_organizations (generated; do not edit).
         """
+        from pynetappfoundry.models.console.tenancyv4 import get_organizations
+
         kwargs: dict[str, Any] = {"method": "GET", "path_template": "/v1/management/organizations"}
         query = drop_none(
             {
@@ -82,7 +96,9 @@ class ConsoleTenancyOps:
         if query:
             kwargs["query_params"] = query
         response = self._dispatch(None, **kwargs)
-        return expect_object(response, "list_organizations")
+        return get_organizations.Response200Body.model_validate(
+            expect_object(response, "list_organizations")
+        )
 
     def get_folder(
         self,
@@ -93,11 +109,13 @@ class ConsoleTenancyOps:
         include: str | None = None,
         limit: str | None = None,
         order_by: str | None = None,
-    ) -> dict[str, Any]:
+    ) -> get_folders_.Response200Body:
         """GET /v1/management/folders/{folder_id}: Retrieve a folder.
 
         operationId: tenancyv4_get_v1_management_folders_by_folder_id (generated; do not edit).
         """
+        from pynetappfoundry.models.console.tenancyv4 import get_folders_
+
         kwargs: dict[str, Any] = {
             "method": "GET",
             "path_template": "/v1/management/folders/{folder_id}",
@@ -115,7 +133,7 @@ class ConsoleTenancyOps:
         if query:
             kwargs["query_params"] = query
         response = self._dispatch(None, **kwargs)
-        return expect_object(response, "get_folder")
+        return get_folders_.Response200Body.model_validate(expect_object(response, "get_folder"))
 
     def get_project(
         self,
@@ -126,11 +144,13 @@ class ConsoleTenancyOps:
         include: str | None = None,
         limit: str | None = None,
         order_by: str | None = None,
-    ) -> dict[str, Any]:
+    ) -> get_projects_.Response200Body:
         """GET /v1/management/projects/{project_id}: Retrieve a project.
 
         operationId: tenancyv4_get_v1_management_projects_by_project_id (generated; do not edit).
         """
+        from pynetappfoundry.models.console.tenancyv4 import get_projects_
+
         kwargs: dict[str, Any] = {
             "method": "GET",
             "path_template": "/v1/management/projects/{project_id}",
@@ -148,7 +168,7 @@ class ConsoleTenancyOps:
         if query:
             kwargs["query_params"] = query
         response = self._dispatch(None, **kwargs)
-        return expect_object(response, "get_project")
+        return get_projects_.Response200Body.model_validate(expect_object(response, "get_project"))
 
 
 __all__ = ["ConsoleTenancyOps"]

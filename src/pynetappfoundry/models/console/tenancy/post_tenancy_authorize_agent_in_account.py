@@ -8,3 +8,7 @@ from pydantic import BaseModel
 
 class Body(BaseModel):
     accountId: str
+
+
+class RequestBody(BaseModel):
+    accountId: str

@@ -20,3 +20,26 @@ class Body(BaseModel):
     resourceClass: str | None = None
     cloudId: str | None = None
     metadata: Metadata | None = None
+
+
+class RequestBody(BaseModel):
+    workspacePublicId: str
+    agentId: str
+    resourceIdentifier: str
+    name: str | None = None
+    resourceType: str | None = None
+    resourceClass: str | None = None
+    cloudId: str | None = None
+    metadata: Metadata | None = None
+
+
+class Response200Body(BaseModel):
+    accountPublicId: str | None = None
+    resourcePublicId: str | None = None
+    resourceIdentifier: str | None = None
+    resourceType: str | None = None
+    agentId: str | None = None
+    resourceClass: str | None = None
+    cloudId: str | None = None
+    metadata: str | None = None
+    agentIds: list[str] | None = None

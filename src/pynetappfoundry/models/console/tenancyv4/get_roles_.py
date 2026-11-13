@@ -62,9 +62,9 @@ class TargetSchema(BaseModel):
 
 class TypeBxpLink(BaseModel):
     hints: Hints | None = None
-    href: str = Field(..., description="String describing a relative URI.")
-    rel: str = Field(
-        ...,
+    href: str | None = Field(None, description="String describing a relative URI.")
+    rel: str | None = Field(
+        None,
         description="The type of relationship for the link. Values are defined in the IANA Link Relationships registry, or an extension relationship type as specified in section 2.1.2 of RFC 8288.",
     )
     targetSchema: TargetSchema | None = Field(
@@ -82,8 +82,8 @@ class TypeBxpLink(BaseModel):
 
 
 class TypeBxpLabel(BaseModel):
-    name: str = Field(..., description="Name of the label.")
-    value: str = Field(..., description="Value of the label.")
+    name: str | None = Field(None, description="Name of the label.")
+    value: str | None = Field(None, description="Value of the label.")
 
 
 class TypeBxpMetadata(BaseModel):
@@ -107,5 +107,104 @@ class Tags(RootModel[dict[str, str]]):
 
 
 class InvalidParams(BaseModel):
-    name: str = Field(..., description="Name of the invalid parameter.")
-    reason: str = Field(..., description="Reason why the parameter is invalid.")
+    name: str | None = Field(None, description="Name of the invalid parameter.")
+    reason: str | None = Field(None, description="Reason why the parameter is invalid.")
+
+
+class Response200Body(BaseModel):
+    category: str | None = Field(None, description="Specifies the classification of the role.")
+    description: str | None = Field(
+        None,
+        description="JSON string containing the description of the role. Defined values are: * Minimum length: 1 * Maximum length: 254 * This string is internally validated to prevent XSS, Unicode, directory traversal, and SQL-injection attacks.",
+    )
+    id: str | None = Field(
+        None,
+        description="Globally unique identifier of the resource. Defined values are:",
+    )
+    isAgentRole: str | None = Field(
+        None,
+        description="Specifies if the role can be used for a Agent. Defined values are:",
+    )
+    isServiceAccountRole: str | None = Field(
+        None,
+        description="Specifies if the role can be used for a Service Account. Defined values are:",
+    )
+    isSystem: str | None = Field(
+        None,
+        description="Specifies if an object is system generated. Defined values are:",
+    )
+    isUserRole: str | None = Field(
+        None,
+        description="Specifies if the role can be used for a User. Defined values are:",
+    )
+    links: list[TypeBxpLink] | None = None
+    metadata: TypeBxpMetadata | None = Field(
+        None, description="Metadata associated with the resource."
+    )
+    name: str | None = Field(
+        None,
+        description="JSON string containing a name for the role. Defined values are:",
+    )
+    roleInternalName: str | None = Field(
+        None,
+        description="JSON string containing a internal name for the role used by UI to validate role name changes. Value will be same as internalName in private field Defined values are:",
+    )
+    roles: list[str] | None = Field(
+        None,
+        description="Array containing the UUIDs of child roles. Each UUID in the array represents a role that is a child of the aggregate (parent) role.",
+    )
+    tags: list[Tags] | None = Field(None, description="JSON array of tags (name/value pairs).")
+    type: str | None = Field(None, description="Media type of the resource. Defined values are:")
+    version: str | None = Field(None, description="Version of the resource. Defined values are:")
+
+
+class Response400Body(BaseModel):
+    correlationId: str | None = Field(
+        None, description="Internal UUID representing the request or trace ID related."
+    )
+    detail: str | None = Field(None, description="Details about the problem.")
+    invalidParams: list[InvalidParams] | None = Field(
+        None, description="List of invalid parameters."
+    )
+    status: str | None = Field(None, description="HTTP error code related to the problem.")
+    title: str | None = Field(None, description="Title description of the problem.")
+    type: str | None = Field(None, description="Content-type of the object.")
+
+
+class Response401Body(BaseModel):
+    correlationId: str | None = Field(
+        None, description="Internal UUID representing the request or trace ID related."
+    )
+    detail: str | None = Field(None, description="Details about the problem.")
+    invalidParams: list[InvalidParams] | None = Field(
+        None, description="List of invalid parameters."
+    )
+    status: str | None = Field(None, description="HTTP error code related to the problem.")
+    title: str | None = Field(None, description="Title description of the problem.")
+    type: str | None = Field(None, description="Content-type of the object.")
+
+
+class Response403Body(BaseModel):
+    correlationId: str | None = Field(
+        None, description="Internal UUID representing the request or trace ID related."
+    )
+    detail: str | None = Field(None, description="Details about the problem.")
+    invalidParams: list[InvalidParams] | None = Field(
+        None, description="List of invalid parameters."
+    )
+    status: str | None = Field(None, description="HTTP error code related to the problem.")
+    title: str | None = Field(None, description="Title description of the problem.")
+    type: str | None = Field(None, description="Content-type of the object.")
+
+
+class Response404Body(BaseModel):
+    correlationId: str | None = Field(
+        None, description="Internal UUID representing the request or trace ID related."
+    )
+    detail: str | None = Field(None, description="Details about the problem.")
+    invalidParams: list[InvalidParams] | None = Field(
+        None, description="List of invalid parameters."
+    )
+    status: str | None = Field(None, description="HTTP error code related to the problem.")
+    title: str | None = Field(None, description="Title description of the problem.")
+    type: str | None = Field(None, description="Content-type of the object.")

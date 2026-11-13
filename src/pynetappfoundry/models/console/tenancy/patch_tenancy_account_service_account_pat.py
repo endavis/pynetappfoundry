@@ -10,3 +10,9 @@ class Body(BaseModel):
     serviceAccountName: str | None = Field(None, description="Service account name")
     rolePublicId: str | None = Field(None, description="Service account role")
     workspacePublicIds: list[str] | None = Field(None, description="Service account workspaces")
+
+
+class RequestBody(BaseModel):
+    serviceAccountName: str | None = Field(None, description="Service account name")
+    rolePublicId: str | None = Field(None, description="Service account role")
+    workspacePublicIds: list[str] | None = Field(None, description="Service account workspaces")
