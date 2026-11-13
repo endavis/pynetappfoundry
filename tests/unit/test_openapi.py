@@ -1742,3 +1742,129 @@ class TestAPIWrapperHttpsAdapter:
     def test_default_adapter_when_not_given(self, api_wrapper: APIWrapper) -> None:
         https = api_wrapper.session.get_adapter("https://api.example.com")
         assert https is api_wrapper.session.get_adapter("http://api.example.com")
+
+
+def _servers_spec(**overrides: Any) -> dict[str, Any]:
+    """Spec with a bare-host op, a prefixed op, a path-level server and no-server ops."""
+    spec: dict[str, Any] = {
+        "openapi": "3.0.0",
+        "servers": [{"url": "https://top.example.com/top"}],
+        "paths": {
+            "/orgs": {
+                "get": {
+                    "servers": [{"url": "https://srv.example.com/v1/management/"}],
+                },
+            },
+            "/bare": {"get": {"servers": [{"url": "https://srv.example.com"}]}},
+            "/plain": {"get": {}},
+            "/pathlevel": {
+                "servers": [{"url": "https://srv.example.com/pl"}],
+                "get": {},
+                "post": {"servers": [{"url": "https://srv.example.com/op"}]},
+            },
+            "/var": {
+                "get": {
+                    "servers": [
+                        {
+                            "url": "https://{saas}/occm/api",
+                            "variables": {"saas": {"default": "api.example.com"}},
+                        }
+                    ]
+                }
+            },
+            "/rel": {"get": {"servers": [{"url": "/rel/prefix"}]}},
+        },
+    }
+    spec.update(overrides)
+    return spec
+
+
+def _make_servers_wrapper(
+    tmp_path: Path,
+    spec: dict[str, Any],
+    *,
+    use_operation_servers: bool = True,
+    base_url: str = "https://api.example.com",
+    base_api_path: str = "/",
+) -> APIWrapper:
+    spec_path = tmp_path / "servers_spec.json"
+    spec_path.write_text(json.dumps(spec))
+    return APIWrapper(
+        api_json_file=str(spec_path),
+        base_url=base_url,
+        base_api_path=base_api_path,
+        use_operation_servers=use_operation_servers,
+    )
+
+
+def _called_url(wrapper: APIWrapper, path: str, method: str = "GET") -> str:
+    """Call an endpoint with HTTP mocked and return the requested URL."""
+    response = MagicMock()
+    response.status_code = 200
+    response.json.return_value = {}
+    with patch.object(wrapper, "_execute_request_with_retry", return_value=response) as mocked:
+        wrapper.call_endpoint(path, method)
+    url: str = mocked.call_args.kwargs["url"]
+    return url
+
+
+class TestOperationServers:
+    """Tests for opt-in per-operation ``servers`` handling."""
+
+    def test_off_by_default_ignores_servers(self, tmp_path: Path) -> None:
+        wrapper = _make_servers_wrapper(
+            tmp_path, _servers_spec(), use_operation_servers=False, base_api_path="/x"
+        )
+        assert _called_url(wrapper, "/orgs") == "https://api.example.com/x/orgs"
+
+    def test_off_keeps_trailing_slash_join(self, tmp_path: Path) -> None:
+        wrapper = _make_servers_wrapper(tmp_path, _servers_spec(), use_operation_servers=False)
+        assert _called_url(wrapper, "/plain") == "https://api.example.com//plain"
+
+    def test_operation_server_path_used_host_from_base_url(self, tmp_path: Path) -> None:
+        wrapper = _make_servers_wrapper(tmp_path, _servers_spec())
+        assert _called_url(wrapper, "/orgs") == "https://api.example.com/v1/management/orgs"
+
+    def test_bare_host_server_has_no_prefix_or_double_slash(self, tmp_path: Path) -> None:
+        wrapper = _make_servers_wrapper(tmp_path, _servers_spec())
+        assert _called_url(wrapper, "/bare") == "https://api.example.com/bare"
+
+    def test_path_level_servers_used_and_operation_wins(self, tmp_path: Path) -> None:
+        wrapper = _make_servers_wrapper(tmp_path, _servers_spec())
+        assert _called_url(wrapper, "/pathlevel", "GET") == "https://api.example.com/pl/pathlevel"
+        assert _called_url(wrapper, "/pathlevel", "POST") == "https://api.example.com/op/pathlevel"
+
+    def test_no_servers_falls_back_to_base_api_path(self, tmp_path: Path) -> None:
+        wrapper = _make_servers_wrapper(tmp_path, _servers_spec(), base_api_path="/fb/")
+        assert _called_url(wrapper, "/plain") == "https://api.example.com/fb/plain"
+
+    def test_no_servers_with_root_base_api_path_has_no_double_slash(self, tmp_path: Path) -> None:
+        wrapper = _make_servers_wrapper(tmp_path, _servers_spec())
+        assert _called_url(wrapper, "/plain") == "https://api.example.com/plain"
+
+    def test_configured_workaround_path_is_replaced_not_duplicated(self, tmp_path: Path) -> None:
+        wrapper = _make_servers_wrapper(tmp_path, _servers_spec(), base_api_path="/v1/management")
+        assert _called_url(wrapper, "/orgs") == "https://api.example.com/v1/management/orgs"
+
+    def test_base_url_path_prefix_is_kept(self, tmp_path: Path) -> None:
+        wrapper = _make_servers_wrapper(
+            tmp_path, _servers_spec(), base_url="https://proxy.example.com/gw/"
+        )
+        assert _called_url(wrapper, "/orgs") == "https://proxy.example.com/gw/v1/management/orgs"
+
+    def test_server_variable_default_substituted(self, tmp_path: Path) -> None:
+        wrapper = _make_servers_wrapper(tmp_path, _servers_spec())
+        assert _called_url(wrapper, "/var") == "https://api.example.com/occm/api/var"
+
+    def test_relative_server_url(self, tmp_path: Path) -> None:
+        wrapper = _make_servers_wrapper(tmp_path, _servers_spec())
+        assert _called_url(wrapper, "/rel") == "https://api.example.com/rel/prefix/rel"
+
+    def test_top_level_servers_ignored(self, tmp_path: Path) -> None:
+        wrapper = _make_servers_wrapper(tmp_path, _servers_spec())
+        assert _called_url(wrapper, "/plain") == "https://api.example.com/plain"
+
+    def test_unknown_path_falls_back_without_exception(self, tmp_path: Path) -> None:
+        wrapper = _make_servers_wrapper(tmp_path, _servers_spec(), base_api_path="/fb")
+        assert wrapper._format_path("/nope", None) == "/fb/nope"
+        assert wrapper._operation_server_path("/nope", "GET") is None

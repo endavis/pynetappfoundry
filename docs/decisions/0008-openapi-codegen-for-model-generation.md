@@ -233,7 +233,8 @@ assumption holds for some APIs and not others.  The supported strategies are:
    OpenAPI 3.0.3 spec.  Per-operation ``servers`` blocks encode the
    discovered base URLs (``https://api.bluexp.netapp.com`` for the v3
    ``tenancy`` paths; ``https://api.bluexp.netapp.com/v1/management`` for
-   the v4 ``tenancyv4`` paths).  The generated spec was validated end-to-end
+   the v4 ``tenancyv4`` paths).  The runtime Console client reads the
+   path of these ``servers`` entries (#1012, see ADR-0019).  The generated spec was validated end-to-end
    against the live SaaS using a user JWT: 9 endpoints' response shapes
    matched their declared schemas with zero validation errors.
 

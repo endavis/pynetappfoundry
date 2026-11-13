@@ -114,6 +114,16 @@ Amendment for the OAuth client-credentials grant.
 
 Configuration fields and validation rules are in [Config schema: consoleapi.toml](../reference/config-schema.md#consoleapitoml).
 
+## Per-operation servers (#1012)
+
+Amendment for URL building.
+
+- **Problem.** The Console spec routes operations through two servers (`https://api.bluexp.netapp.com/v1/management` and the bare host) using per-operation `servers`. `APIWrapper` built `base_url + base_api_path + path`, so `base_api_path = '/'` produced `//organizations` and a 404.
+- **Decision.** `APIWrapper` takes an opt-in `use_operation_servers` flag, and `ConsoleAPIClient` sets it on every wrapper. The path of the operation's (else its path item's) first `servers` entry replaces `base_api_path`; the host always comes from the configured `base_url`. The spec's top-level `servers` are never used. Operations without `servers` fall back to `base_api_path` with its trailing slash removed.
+- **Why opt-in.** `APIWrapper` is shared with ONTAP and DII, whose URL building stays unchanged.
+
+Configuration is described in [Config schema: consoleapi.toml](../reference/config-schema.md#consoleapitoml).
+
 ## Consequences
 
 ### Positive
@@ -135,6 +145,7 @@ Configuration fields and validation rules are in [Config schema: consoleapi.toml
 - Issue #699 / PR #700: feat: generate Pydantic models from Console OpenAPI spec
 - Issue #713: feat: wire Console SaaS auth and runtime client (the v1 implementation this ADR governs)
 - Issue #1000: feat: add an OAuth client-credentials grant to the Console API client (see the amendment above)
+- Issue #1012: fix: APIWrapper ignores per-operation servers (see "Per-operation servers (#1012)")
 
 ## Related Documentation
 
