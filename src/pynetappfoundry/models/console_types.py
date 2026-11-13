@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 from pydantic import BaseModel, ConfigDict, Field
 
 if TYPE_CHECKING:
+    from pynetappfoundry.models.console.cvo import get_occm_system_about
     from pynetappfoundry.models.console.tenancyv4.get_organizations import (
         Resource10GetResponseBody,
     )
@@ -75,4 +76,56 @@ class Project(_ConsoleResource):
     """
 
 
-__all__ = ["Folder", "Organization", "Project"]
+class ConnectorSiteIdentifier(BaseModel):
+    """Site identification of a Console agent (connector).
+
+    Only ``company`` and ``site`` are kept.  The agent's ``host`` is a network
+    address and is not persisted in the cache.
+    """
+
+    company: str | None = None
+    site: str | None = None
+
+
+class Connector(BaseModel):
+    """Compact view of a Console agent (connector) for cache use.
+
+    Source schema: the 200 response of ``GET /occm/api/occm/system/about`` in
+    the Console agent (cvo) spec.  Network addresses (``privateIp``,
+    ``siteIdentifier.host``) are dropped on validation so they never reach
+    the cache.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    agent_id: str = Field(alias="agentId")
+    version: str | None = None
+    system_id: str | None = Field(default=None, alias="systemId")
+    environment: str | None = None
+    agent_type: str | None = Field(default=None, alias="agentType")
+    site_identifier: ConnectorSiteIdentifier | None = Field(default=None, alias="siteIdentifier")
+
+    @classmethod
+    def from_about(
+        cls, about: get_occm_system_about.ResponseBody, *, agent_id: str | None = None
+    ) -> Connector:
+        """Convert a generated about response to the compact form.
+
+        Args:
+            about: Generated model from cvo/get_occm_system_about.
+            agent_id: Agent id to use when the response carries none.
+
+        Returns:
+            Compact Connector instance.
+
+        Raises:
+            pydantic.ValidationError: If neither the response nor ``agent_id``
+                provides an agent id.
+        """
+        data = about.model_dump()
+        if data.get("agentId") is None:
+            data["agentId"] = agent_id
+        return cls.model_validate(data)
+
+
+__all__ = ["Connector", "ConnectorSiteIdentifier", "Folder", "Organization", "Project"]

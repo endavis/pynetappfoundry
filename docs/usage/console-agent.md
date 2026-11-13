@@ -55,7 +55,7 @@ agent = ConsoleAgentClient(config, "your-agent-id", token_provider=console.servi
 | Token | Status |
 |-------|--------|
 | Service token | Measured working: about, list and get (#1008), and add and delete (#1001). |
-| User token | Used by NetApp's own docs (`cm/your_api_call.adoc`) but untested by this project. |
+| User token | Measured working: about and the on-prem list (#734). Add and delete were not tested with a user token. NetApp's own examples use one (`cm/your_api_call.adoc`). |
 
 ## Methods
 
@@ -80,6 +80,26 @@ agent.delete_onprem_working_environment(created.publicId)
 ```
 
 `list_onprem_working_environments` also takes `tenant_id`. `fields` is a string, or a sequence that is comma-joined.
+
+## Connector for a cluster
+
+`ConsoleInfo.connector` caches the compact `Connector` (`pynetappfoundry.models.console_types.Connector`) of the Console agent that manages a cluster.
+
+```python
+connector = agent.get_connector()  # from about(); agent_id, version, system_id, ...
+
+# Match a cluster on this agent (lists with fields=ontapClusterProperties)
+env = agent.find_onprem_working_environment("cluster-uuid")  # None when absent
+
+# Search several agents through the org-scoped facade
+connector = console.find_connector("cluster-uuid", ["agent-1clients", "agent-2clients"])
+connector = console.find_connector("cluster-uuid")  # uses agent_ids from consoleapi.toml
+```
+
+- `Console.find_connector(cluster_uuid, agent_ids=None)` queries the agents in order, stops at the first match, and returns `None` when none matches. Errors propagate: an agent ID the Console does not know, or an agent that cannot be reached, raises `requests.HTTPError` instead of being skipped, so keep `agent_ids` current.
+- Without an `agent_ids` argument it uses `agent_ids` from `consoleapi.toml` `[general]` (see [Config schema](../reference/config-schema.md#consoleapitoml)). With neither it raises `ValueError`, so a missing configuration is not mistaken for "no connector".
+- The agent ids are configured because the tenancy API lists none for a service token.
+- `Connector` keeps `agent_id`, `version`, `system_id`, `environment`, `agent_type` and `siteIdentifier.company` / `site`. `privateIp` and `siteIdentifier.host` are network addresses and are not kept, so they never reach the cache.
 
 ## Safety
 

@@ -293,7 +293,7 @@ class ClusterMetadataDB(SQLiteDB):
     for data safety and isolation.
     """
 
-    SCHEMA_VERSION: ClassVar[int] = 11
+    SCHEMA_VERSION: ClassVar[int] = 12
     TABLE_NAME: ClassVar[str] = "cluster_metadata"
 
     def __init__(
@@ -594,6 +594,22 @@ class ClusterMetadataDB(SQLiteDB):
             changed = True
         if changed:
             self.conn.execute("DELETE FROM cluster_metadata")
+
+    # ------------------------------------------------------------------
+    # Migration v11 → v12
+    # ------------------------------------------------------------------
+
+    def _upgrade_to_v12(self) -> None:
+        """Add the ``connector`` column to the consoleinfo table (#734).
+
+        v12 adds ``ConsoleInfo.connector``.  Existing v11 databases lack the
+        column.  The column check is idempotent: earlier migrations may have
+        created the table with the current DDL, which already includes it.
+        """
+        cursor = self.conn.execute("PRAGMA table_info(consoleinfo)")
+        existing_cols = {row[1] for row in cursor.fetchall()}
+        if "connector" not in existing_cols:
+            self.conn.execute('ALTER TABLE consoleinfo ADD COLUMN "connector" TEXT')
 
     # ------------------------------------------------------------------
     # Internal: decompose metadata into tables

@@ -18,7 +18,7 @@ from pynetappfoundry.cache._base import (
     HasUUID,
     _utcnow,
 )
-from pynetappfoundry.models.console_types import Folder, Organization, Project
+from pynetappfoundry.models.console_types import Connector, Folder, Organization, Project
 from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
 from pynetappfoundry.models.ontap.cluster.licensing.licenses.model import (
     OntapLicensePackageResponse,
@@ -42,6 +42,7 @@ class ConsoleInfo(CacheModel):
     organization: Organization | None = None
     folder: Folder | None = None
     project: Project | None = None
+    connector: Connector | None = None
 
 
 class RelationshipsInfo(CacheModel):
