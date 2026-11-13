@@ -7,9 +7,9 @@ from pydantic import BaseModel, Field
 
 
 class ResponseBody(BaseModel):
-    activeDirectoryDomain: str = Field(..., description="Active Directory domain name")
-    authenticationType: str = Field(..., description="Authentication type")
-    dnsDomain: str = Field(..., description="DNS domain name")
-    ipAddresses: list[str] = Field(..., description="DNS server IP addresses")
-    netBIOS: str = Field(..., description="CIFS server NetBIOS name")
-    organizationalUnit: str = Field(..., description="Organizational unit for registration")
+    activeDirectoryDomain: str | None = Field(None, description="Active Directory domain name")
+    authenticationType: str | None = Field(None, description="Authentication type")
+    dnsDomain: str | None = Field(None, description="DNS domain name")
+    ipAddresses: list[str] | None = Field(None, description="DNS server IP addresses")
+    netBIOS: str | None = Field(None, description="CIFS server NetBIOS name")
+    organizationalUnit: str | None = Field(None, description="Organizational unit for registration")

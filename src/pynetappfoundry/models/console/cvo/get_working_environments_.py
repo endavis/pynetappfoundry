@@ -29,16 +29,16 @@ class Expirations(BaseModel):
 class LicenseInformation(BaseModel):
     capacityLimit: Capacity | None = None
     expirations: list[Expirations] | None = None
-    package: str
+    package: str | None = None
     serialNumbers: list[str] | None = None
-    type: str
-    useType: str
+    type: str | None = None
+    useType: str | None = None
 
 
 class BroadcastDomainInfo(BaseModel):
     broadcastDomain: str | None = None
     ipSpace: str | None = None
-    mtu: int
+    mtu: int | None = None
 
 
 class CapacityTierInfo(BaseModel):
@@ -59,18 +59,18 @@ class LastModifiedOffbox(BaseModel):
 
 
 class VsaLicense(BaseModel):
-    capacityLimit: Capacity
-    name: str = Field(..., description="License name")
+    capacityLimit: Capacity | None = None
+    name: str | None = Field(None, description="License name")
 
 
 class LifResponse(BaseModel):
-    dataProtocols: list[str] = Field(..., description="List of supported protocols")
-    ip: str = Field(..., description="LIF IP address")
-    lifType: str = Field(..., description="LIF type")
-    netmask: str = Field(..., description="LIF netmask")
-    nodeName: str = Field(..., description="Node name")
-    privateIp: bool = Field(
-        ..., description="Specifies whether the IP address is a private address"
+    dataProtocols: list[str] | None = Field(None, description="List of supported protocols")
+    ip: str | None = Field(None, description="LIF IP address")
+    lifType: str | None = Field(None, description="LIF type")
+    netmask: str | None = Field(None, description="LIF netmask")
+    nodeName: str | None = Field(None, description="Node name")
+    privateIp: bool | None = Field(
+        None, description="Specifies whether the IP address is a private address"
     )
 
 
@@ -123,7 +123,7 @@ class OntapClusterProperties(BaseModel):
 
 class FailureCauses(BaseModel):
     invalidCloudProviderCredentials: bool | None = None
-    invalidOntapCredentials: bool
+    invalidOntapCredentials: bool | None = None
     noCloudProviderConnection: bool | None = None
 
 
@@ -142,10 +142,10 @@ class UserTags(BaseModel):
 class ResponseBody(BaseModel):
     cloudProviderName: str | None = None
     isHA: bool | None = None
-    licensesInformation: list[LicenseInformation]
+    licensesInformation: list[LicenseInformation] | None = None
     name: str | None = None
     ontapClusterProperties: OntapClusterProperties | None = None
-    publicId: str
+    publicId: str | None = None
     status: StatusProperties | None = None
-    userTags: UserTags
+    userTags: UserTags | None = None
     workingEnvironmentType: str | None = None

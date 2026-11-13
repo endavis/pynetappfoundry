@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 
 class ResponseBody(BaseModel):
-    allowedProtocols: list[str]
+    allowedProtocols: list[str] | None = None
     language: str | None = None
-    name: str
+    name: str | None = None
     state: str | None = None

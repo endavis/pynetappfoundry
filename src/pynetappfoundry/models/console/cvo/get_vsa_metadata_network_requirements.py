@@ -9,4 +9,4 @@ from pydantic import BaseModel
 class ResponseBody(BaseModel):
     haMediatorMinimumRequiredIps: int | None = None
     haNodeMinimumRequiredIps: int | None = None
-    nonHaNodeMinimumRequiredIps: int
+    nonHaNodeMinimumRequiredIps: int | None = None

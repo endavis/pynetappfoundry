@@ -17,6 +17,6 @@ class ResponseBody(BaseModel):
     isAzureZonalSupported: bool | None = None
     s3CmkEncryptionSupportedVersion: bool | None = None
     tieringWithServiceAccount: bool | None = None
-    wormSupportedVersion: bool
+    wormSupportedVersion: bool | None = None
     wormWithBackupSupported: bool | None = None
     wormWithComposeSupported: bool | None = None

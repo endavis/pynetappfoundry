@@ -7,5 +7,5 @@ from pydantic import BaseModel
 
 
 class ResponseBody(BaseModel):
-    instanceProfileId: str
+    instanceProfileId: str | None = None
     name: str | None = None

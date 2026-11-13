@@ -20,18 +20,18 @@ class SiteIdentifier(BaseModel):
 class ResponseBody(BaseModel):
     agentId: str | None = None
     agentType: str | None = None
-    beta: bool
+    beta: bool | None = None
     build: str | None = None
-    buildTimestamp: int
+    buildTimestamp: int | None = None
     demoMode: bool | None = None
     environment: str | None = None
     isLegacySM: bool | None = None
     migrationPerformed: bool | None = None
     privateIp: str | None = None
-    releaseNumber: int
-    serverTimeZone: ServerTimeZone
+    releaseNumber: int | None = None
+    serverTimeZone: ServerTimeZone | None = None
     simplicatorUrl: str | None = None
-    siteIdentifier: SiteIdentifier
+    siteIdentifier: SiteIdentifier | None = None
     systemId: str | None = None
     usingDockerInfra: bool | None = None
-    version: str
+    version: str | None = None

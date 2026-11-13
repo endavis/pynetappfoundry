@@ -7,14 +7,14 @@ from pydantic import BaseModel, Field
 
 
 class CronJobScheduleResponse(BaseModel):
-    days: list[int] = Field(..., description="List of days of the month")
-    hours: list[int] = Field(..., description="List of hours")
-    minutes: list[int] = Field(..., description="List of minutes")
-    months: list[int] = Field(..., description="List of months")
-    weekDays: list[int] = Field(..., description="List of week days")
+    days: list[int] | None = Field(None, description="List of days of the month")
+    hours: list[int] | None = Field(None, description="List of hours")
+    minutes: list[int] | None = Field(None, description="List of minutes")
+    months: list[int] | None = Field(None, description="List of months")
+    weekDays: list[int] | None = Field(None, description="List of week days")
 
 
 class ResponseBody(BaseModel):
-    cronJobSchedule: CronJobScheduleResponse
+    cronJobSchedule: CronJobScheduleResponse | None = None
     description: str | None = Field(None, description="Description")
-    name: str = Field(..., description="Specifies the name")
+    name: str | None = Field(None, description="Specifies the name")

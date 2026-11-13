@@ -12,7 +12,7 @@ class SharePermissions(BaseModel):
 
 
 class ResponseBody(BaseModel):
-    name: str
+    name: str | None = None
     path: str | None = None
-    permissions: list[SharePermissions]
+    permissions: list[SharePermissions] | None = None
     volume: str | None = None

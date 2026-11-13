@@ -21,9 +21,9 @@ class CloudSyncLicenseInformation(BaseModel):
 
 
 class UserWorkingEnvironmentResponse(BaseModel):
-    name: str = Field(..., description="System name")
-    publicId: str = Field(..., description="System public ID")
-    workingEnvironmentType: str = Field(..., description="System type")
+    name: str | None = Field(None, description="System name")
+    publicId: str | None = Field(None, description="System public ID")
+    workingEnvironmentType: str | None = Field(None, description="System type")
 
 
 class RequestBody(BaseModel):
@@ -33,21 +33,22 @@ class RequestBody(BaseModel):
 
 
 class ResponseBody(BaseModel):
-    assignedWorkingEnvironments: list[str] = Field(
-        ..., description="List of public IDs for all of the systems visible to the user"
+    assignedWorkingEnvironments: list[str] | None = Field(
+        None,
+        description="List of public IDs for all of the systems visible to the user",
     )
     azureCredentials: AzureCredentials | None = None
     cloudSyncLicenseInformation: CloudSyncLicenseInformation | None = None
-    createdWorkingEnvironments: list[UserWorkingEnvironmentResponse] = Field(
-        ..., description="List of all systems created by the user"
+    createdWorkingEnvironments: list[UserWorkingEnvironmentResponse] | None = Field(
+        None, description="List of all systems created by the user"
     )
-    email: str = Field(..., description="The email address of the user")
-    firstName: str = Field(..., description="The first name of the user")
-    isLdap: bool = Field(..., description="Indicates whether the user is an LDAP user")
-    lastName: str = Field(..., description="The last name of the user")
-    ldapUserName: str = Field(..., description="The LDAP user name")
-    notificationsOptIn: bool = Field(..., description="Notification opt-in")
-    permissions: list[str] = Field(..., description="Permissions")
-    publicId: str = Field(..., description="User public ID")
-    roleId: str = Field(..., description="Role ID of the user")
-    tenantId: str = Field(..., description="Tenant ID of the user")
+    email: str | None = Field(None, description="The email address of the user")
+    firstName: str | None = Field(None, description="The first name of the user")
+    isLdap: bool | None = Field(None, description="Indicates whether the user is an LDAP user")
+    lastName: str | None = Field(None, description="The last name of the user")
+    ldapUserName: str | None = Field(None, description="The LDAP user name")
+    notificationsOptIn: bool | None = Field(None, description="Notification opt-in")
+    permissions: list[str] | None = Field(None, description="Permissions")
+    publicId: str | None = Field(None, description="User public ID")
+    roleId: str | None = Field(None, description="Role ID of the user")
+    tenantId: str | None = Field(None, description="Tenant ID of the user")

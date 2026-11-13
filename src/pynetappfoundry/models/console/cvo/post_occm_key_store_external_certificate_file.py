@@ -74,5 +74,5 @@ class ResponseBody(BaseModel):
     endDate: int | None = None
     publicId: str | None = None
     serialNumber: str | None = None
-    startDate: int
+    startDate: int | None = None
     subjectName: str | None = None

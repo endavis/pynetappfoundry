@@ -7,5 +7,5 @@ from pydantic import BaseModel
 
 
 class ResponseBody(BaseModel):
-    ipSpace: str
-    vservers: list[str]
+    ipSpace: str | None = None
+    vservers: list[str] | None = None

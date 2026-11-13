@@ -7,4 +7,4 @@ from pydantic import BaseModel
 
 
 class ResponseBody(BaseModel):
-    csr: str
+    csr: str | None = None

@@ -10,9 +10,9 @@ class ResponseBody(BaseModel):
     availabilityZone: str | None = None
     clusterAddress: str | None = None
     isByol: bool | None = None
-    name: str
+    name: str | None = None
     publicId: str | None = None
-    recoverable: bool
+    recoverable: bool | None = None
     region: str | None = None
     registered: bool | None = None
     stackId: str | None = None

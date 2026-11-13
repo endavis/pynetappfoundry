@@ -22,5 +22,5 @@ class FlexCacheSide(BaseModel):
 
 
 class ResponseBody(BaseModel):
-    destination: FlexCacheSide
-    source: FlexCacheSide
+    destination: FlexCacheSide | None = None
+    source: FlexCacheSide | None = None

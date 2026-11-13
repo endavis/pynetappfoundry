@@ -12,8 +12,8 @@ class ClusterCredentialsRequest(BaseModel):
 
 
 class ClusterCredentials(BaseModel):
-    id: int
-    password: str
+    id: int | None = None
+    password: str | None = None
     publicId: str | None = None
     userName: str | None = None
 
@@ -43,9 +43,9 @@ class RequestBody(BaseModel):
 class ResponseBody(BaseModel):
     cloudProviderAccount: str | None = None
     clusterAddress: str | None = None
-    clusterCredentials: ClusterCredentials
+    clusterCredentials: ClusterCredentials | None = None
     isDirectMarketplace: IsDirectMarketplace | None = None
-    name: str
+    name: str | None = None
     nssAccountId: str | None = None
     providerAccount: str | None = None
     publicId: str | None = None

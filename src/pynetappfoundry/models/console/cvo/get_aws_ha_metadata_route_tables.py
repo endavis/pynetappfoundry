@@ -12,7 +12,7 @@ class RouteTableTag(BaseModel):
 
 
 class ResponseBody(BaseModel):
-    id: str
-    main: bool
-    subnets: list[str]
-    tags: list[RouteTableTag]
+    id: str | None = None
+    main: bool | None = None
+    subnets: list[str] | None = None
+    tags: list[RouteTableTag] | None = None

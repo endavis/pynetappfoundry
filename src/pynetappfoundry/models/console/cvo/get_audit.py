@@ -13,35 +13,37 @@ class ParentId(BaseModel):
 
 
 class AuditGroupSummaryRecord(BaseModel):
-    actionName: str = Field(..., description="Action")
-    count: int = Field(..., description="Aggregated count of similar records")
-    date: int = Field(..., description="Date")
+    actionName: str | None = Field(None, description="Action")
+    count: int | None = Field(None, description="Aggregated count of similar records")
+    date: int | None = Field(None, description="Date")
     errorMessage: str | None = Field(None, description="Audit failure information (if relevant)")
-    id: str = Field(..., description="Audit record public ID")
+    id: str | None = Field(None, description="Audit record public ID")
     parameters: str | None = Field(None, description="Action parameters")
-    status: str = Field(..., description="Status")
+    status: str | None = Field(None, description="Status")
 
 
 class ResponseBody(BaseModel):
-    field_id: int = Field(..., alias="_id")
-    actionName: str = Field(..., description="Audit group name")
+    field_id: int | None = Field(None, alias="_id")
+    actionName: str | None = Field(None, description="Audit group name")
     actionParameters: str | None = Field(None, description="Parameters of the user action")
     containsFailedRecords: bool | None = None
     containsRecords: bool | None = None
     endDate: int | None = Field(None, description="End date")
     errorMessage: str | None = Field(None, description="Audit failure information (if relevant)")
-    id: str = Field(..., description="Audit group public ID")
+    id: str | None = Field(None, description="Audit group public ID")
     parentId: ParentId | None = None
-    records: list[AuditGroupSummaryRecord] = Field(..., description="List of audit records")
-    requestId: str = Field(
-        ..., description="Request ID of an action associated with the audit group"
+    records: list[AuditGroupSummaryRecord] | None = Field(None, description="List of audit records")
+    requestId: str | None = Field(
+        None, description="Request ID of an action associated with the audit group"
     )
-    startDate: int = Field(..., description="Start date")
+    startDate: int | None = Field(None, description="Start date")
     status: str | None = Field(None, description="Audit group status")
     tenantName: str | None = Field(None, description="Name of the tenant")
     userId: str | None = None
     userName: str | None = Field(None, description="Name of the user who performed the action")
-    version: str = Field(..., description="Version of NetApp Console used to create this audit")
+    version: str | None = Field(
+        None, description="Version of NetApp Console used to create this audit"
+    )
     workingEnvironmentId: str | None = None
     workingEnvironmentName: str | None = Field(
         None, description="Name of the system related to the user action"

@@ -7,9 +7,9 @@ from pydantic import BaseModel
 
 
 class CloudResourceTag(BaseModel):
-    tagKey: str
+    tagKey: str | None = None
     tagValue: str | None = None
 
 
 class ResponseBody(BaseModel):
-    tags: list[CloudResourceTag]
+    tags: list[CloudResourceTag] | None = None

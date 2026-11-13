@@ -31,6 +31,6 @@ class WorkingEnvironmentsInformation(BaseModel):
 
 
 class ResponseBody(BaseModel):
-    name: str
+    name: str | None = None
     publicId: str | None = None
     workingEnvironmentsInformation: WorkingEnvironmentsInformation | None = None

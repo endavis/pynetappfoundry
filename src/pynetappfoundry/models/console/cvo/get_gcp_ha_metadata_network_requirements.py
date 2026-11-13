@@ -8,4 +8,4 @@ from pydantic import BaseModel
 
 class ResponseBody(BaseModel):
     haVsaMinimumRequiredIps: int | None = None
-    vsaMinimumRequiredIps: int
+    vsaMinimumRequiredIps: int | None = None

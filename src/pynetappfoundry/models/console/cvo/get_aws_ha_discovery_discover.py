@@ -7,12 +7,12 @@ from pydantic import BaseModel
 
 
 class ResponseBody(BaseModel):
-    availabilityZones: list[str]
+    availabilityZones: list[str] | None = None
     byol: bool | None = None
     clusterAddress: str | None = None
-    name: str
+    name: str | None = None
     publicId: str | None = None
-    recoverable: bool
+    recoverable: bool | None = None
     region: str | None = None
     registered: bool | None = None
     stackId: str | None = None

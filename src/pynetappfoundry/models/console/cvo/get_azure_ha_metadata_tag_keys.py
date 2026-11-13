@@ -7,5 +7,5 @@ from pydantic import BaseModel
 
 
 class ResponseBody(BaseModel):
-    key: str
-    values: list[str]
+    key: str | None = None
+    values: list[str] | None = None

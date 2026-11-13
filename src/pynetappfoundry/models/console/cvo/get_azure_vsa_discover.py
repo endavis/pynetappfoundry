@@ -10,9 +10,9 @@ class ResponseBody(BaseModel):
     byol: bool | None = None
     clusterAddress: str | None = None
     id: str | None = None
-    name: str
+    name: str | None = None
     publicId: str | None = None
-    recoverable: bool
+    recoverable: bool | None = None
     region: str | None = None
     registered: bool | None = None
     resourceGroup: str | None = None

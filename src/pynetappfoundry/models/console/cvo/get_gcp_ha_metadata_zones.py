@@ -7,11 +7,11 @@ from pydantic import BaseModel, Field
 
 
 class GcpZoneResponse(BaseModel):
-    name: str = Field(..., description="Zone Name")
+    name: str | None = Field(None, description="Zone Name")
 
 
 class ResponseBody(BaseModel):
-    displayName: str
+    displayName: str | None = None
     location: str | None = None
     name: str | None = None
-    zones: list[GcpZoneResponse]
+    zones: list[GcpZoneResponse] | None = None

@@ -335,3 +335,52 @@ def test_cvo_fixture_spec_validates() -> None:
     from openapi_spec_validator import validate
 
     validate(build_spec([_cvo_ep()], included_services=("cvo",)))
+
+
+# --- cvo: response fields are optional (#1018) ------------------------------
+
+
+def _required_ep(service: str = "cvo") -> Any:
+    text, src = _load("cvo_response_required.adoc")
+    ep = parse_endpoint(text, source_file=src, service=service)
+    assert ep is not None
+    return ep
+
+
+def _schema_by_suffix(spec: dict[str, Any], suffix: str) -> dict[str, Any]:
+    matches = [v for k, v in spec["components"]["schemas"].items() if k.endswith(suffix)]
+    assert len(matches) == 1, suffix
+    schema: dict[str, Any] = matches[0]
+    return schema
+
+
+def test_cvo_response_body_required_is_renamed() -> None:
+    spec = build_spec([_cvo_ep()], included_services=("cvo",))
+    body = spec["components"]["schemas"]["cvo.cvo_status_default.ResponseBody"]
+    assert "required" not in body
+    assert body["x-documented-required"] == ["serverTimeZone", "version"]
+
+
+def test_cvo_loosening_follows_refs_and_spares_request_only() -> None:
+    spec = build_spec([_required_ep()], included_services=("cvo",))
+    for suffix in ("Response200Body", "Outer", "Inner", "Shared"):
+        schema = _schema_by_suffix(spec, f".{suffix}")
+        assert "required" not in schema, suffix
+        assert schema["x-documented-required"], suffix
+    for suffix in ("RequestBody", "ReqOnly"):
+        schema = _schema_by_suffix(spec, f".{suffix}")
+        assert schema["required"], suffix
+        assert "x-documented-required" not in schema, suffix
+
+
+def test_non_cvo_service_keeps_required() -> None:
+    spec = build_spec([_required_ep("fixture")], included_services=("fixture",))
+    for schema in spec["components"]["schemas"].values():
+        assert "x-documented-required" not in schema
+    assert _schema_by_suffix(spec, "Outer")["required"] == ["inner", "shared"]
+
+
+def test_cvo_response_required_fixture_spec_validates() -> None:
+    from openapi_spec_validator import validate
+
+    validate(build_spec([_required_ep()], included_services=("cvo",)))

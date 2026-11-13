@@ -7,5 +7,5 @@ from pydantic import BaseModel, Field
 
 
 class ResponseBody(BaseModel):
-    keyName: str = Field(..., description="Key name")
-    kid: str = Field(..., description="Key id")
+    keyName: str | None = Field(None, description="Key name")
+    kid: str | None = Field(None, description="Key id")

@@ -8,7 +8,7 @@ from pydantic import BaseModel
 
 class AsupInterval(BaseModel):
     length: int | None = None
-    unit: str
+    unit: str | None = None
 
 
 class AsupSchedule(BaseModel):
@@ -20,9 +20,9 @@ class AsupSchedule(BaseModel):
 
 class ResponseBody(BaseModel):
     company: str | None = None
-    enabled: bool
+    enabled: bool | None = None
     hostName: str | None = None
     os: str | None = None
-    schedule: AsupSchedule
-    site: str
+    schedule: AsupSchedule | None = None
+    site: str | None = None
     url: str | None = None

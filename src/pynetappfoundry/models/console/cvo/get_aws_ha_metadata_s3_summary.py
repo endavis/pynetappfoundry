@@ -7,6 +7,6 @@ from pydantic import BaseModel
 
 
 class ResponseBody(BaseModel):
-    isSupportable: bool
-    numOfBuckets: int
+    isSupportable: bool | None = None
+    numOfBuckets: int | None = None
     numOfRegions: int | None = None

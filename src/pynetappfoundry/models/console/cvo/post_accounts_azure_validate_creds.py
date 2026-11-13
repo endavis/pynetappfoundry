@@ -35,9 +35,9 @@ class RequestBody(BaseModel):
 
 
 class ResponseBody(BaseModel):
-    default: bool
+    default: bool | None = None
     highAvailabilityEnabled: HighAvailabilityEnabled | None = None
     name: str | None = None
     saasSubscriptionId: str | None = None
-    subscriptionId: str
+    subscriptionId: str | None = None
     vMOrchestratorZonalMultiFDEnabled: VMOrchestratorZonalMultiFDEnabled | None = None

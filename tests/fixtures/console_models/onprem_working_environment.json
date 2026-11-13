@@ -1,0 +1,13 @@
+{
+  "publicId": "we-placeholder-0001",
+  "name": "cluster-placeholder",
+  "actionsRequired": null,
+  "cronJobSchedules": null,
+  "interClusterLifs": null,
+  "snapshotPolicies": null,
+  "svms": null,
+  "ontapClusterProperties": {
+    "clusterUuid": "00000000-0000-0000-0000-000000000000",
+    "lifs": [{}, {}]
+  }
+}

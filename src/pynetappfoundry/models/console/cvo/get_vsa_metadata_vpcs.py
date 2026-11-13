@@ -7,37 +7,43 @@ from pydantic import BaseModel, Field
 
 
 class SecurityGroupResponse(BaseModel):
-    description: str = Field(..., description="Description")
-    name: str = Field(..., description="Specifies the name")
-    securityGroupId: str = Field(..., description="Security group ID")
+    description: str | None = Field(None, description="Description")
+    name: str | None = Field(None, description="Specifies the name")
+    securityGroupId: str | None = Field(None, description="Security group ID")
 
 
 class SubnetResponse(BaseModel):
-    availabilityZone: str = Field(..., description="Availability zone")
-    availableIps: int = Field(..., description="The number of available IP addresses on the subnet")
-    cidr: str = Field(..., description="CIDR")
-    minimumRequiredIps: int = Field(
-        ...,
+    availabilityZone: str | None = Field(None, description="Availability zone")
+    availableIps: int | None = Field(
+        None, description="The number of available IP addresses on the subnet"
+    )
+    cidr: str | None = Field(None, description="CIDR")
+    minimumRequiredIps: int | None = Field(
+        None,
         description="The minimum required IP addresses for the Cloud Volumes ONTAP create operation",
     )
     outpostArn: str | None = Field(None, description="The ARN of the outpost")
-    subnetId: str = Field(..., description="Subnet ID")
+    subnetId: str | None = Field(None, description="Subnet ID")
     subnetName: str | None = Field(None, description="Subnet name")
 
 
 class VpcTagResponse(BaseModel):
-    key: str = Field(..., description="VPC tag key")
-    value: str = Field(..., description="VPC tag value")
+    key: str | None = Field(None, description="VPC tag key")
+    value: str | None = Field(None, description="VPC tag value")
 
 
 class ResponseBody(BaseModel):
-    cidrBlock: str = Field(..., description="VPC Classless Inter-Domain Routing (CIDR) block")
-    default: bool = Field(..., description="Indicates whether the VPC is the default")
-    securityGroups: list[SecurityGroupResponse] = Field(
-        ..., description="Security groups associated with the VPC"
+    cidrBlock: str | None = Field(
+        None, description="VPC Classless Inter-Domain Routing (CIDR) block"
     )
-    state: str = Field(..., description="The state of the VPC")
-    subnets: list[SubnetResponse] = Field(..., description="Subnets associated with the VPC")
-    tags: list[VpcTagResponse] = Field(..., description="VPC tags")
-    tenancy: str = Field(..., description="Tenancy configuration for the VPC")
-    vpcId: str = Field(..., description="The VPC identifier")
+    default: bool | None = Field(None, description="Indicates whether the VPC is the default")
+    securityGroups: list[SecurityGroupResponse] | None = Field(
+        None, description="Security groups associated with the VPC"
+    )
+    state: str | None = Field(None, description="The state of the VPC")
+    subnets: list[SubnetResponse] | None = Field(
+        None, description="Subnets associated with the VPC"
+    )
+    tags: list[VpcTagResponse] | None = Field(None, description="VPC tags")
+    tenancy: str | None = Field(None, description="Tenancy configuration for the VPC")
+    vpcId: str | None = Field(None, description="The VPC identifier")

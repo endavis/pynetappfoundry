@@ -18,10 +18,10 @@ class VmDiskProperties(BaseModel):
 
 
 class Disk(BaseModel):
-    containerType: str = Field(..., description="Container type")
+    containerType: str | None = Field(None, description="Container type")
     device: str | None = Field(None, description="Device")
     name: str | None = Field(None, description="Name")
-    ownerNode: str = Field(..., description="Owner node")
+    ownerNode: str | None = Field(None, description="Owner node")
     vmDiskProperties: VmDiskProperties | None = None
 
 
@@ -34,47 +34,51 @@ class Iops(BaseModel):
 
 
 class ProviderVolumeResponse(BaseModel):
-    device: str = Field(..., description="Device")
-    diskType: str = Field(..., description="Type")
-    encrypted: bool = Field(..., description="Encrypted")
-    id: str = Field(..., description="Specifies the ID")
+    device: str | None = Field(None, description="Device")
+    diskType: str | None = Field(None, description="Type")
+    encrypted: bool | None = Field(None, description="Encrypted")
+    id: str | None = Field(None, description="Specifies the ID")
     instance2Id: str | None = Field(None, description="Instance2Id")
-    instanceId: str = Field(..., description="InstanceId")
+    instanceId: str | None = Field(None, description="InstanceId")
     iops: int | None = Field(None, description="Provisioned IOPS")
-    name: str = Field(..., description="Specifies the name")
-    size: Capacity
-    state: str = Field(..., description="State")
+    name: str | None = Field(None, description="Specifies the name")
+    size: Capacity | None = None
+    state: str | None = Field(None, description="State")
     throughput: int | None = Field(None, description="Provisioned throughput")
 
 
 class Volume(BaseModel):
-    isClone: bool = Field(..., description="Indicates if the volume is a clone volume")
-    name: str = Field(..., description="Name")
-    rootVolume: bool = Field(
-        ..., description="Indicates if the volume is the root volume of the SVM"
+    isClone: bool | None = Field(None, description="Indicates if the volume is a clone volume")
+    name: str | None = Field(None, description="Name")
+    rootVolume: bool | None = Field(
+        None, description="Indicates if the volume is the root volume of the SVM"
     )
-    thinProvisioned: bool = Field(..., description="Indicates if the volume is thin-provisioned")
-    totalSize: Capacity
-    usedSize: Capacity
+    thinProvisioned: bool | None = Field(
+        None, description="Indicates if the volume is thin-provisioned"
+    )
+    totalSize: Capacity | None = None
+    usedSize: Capacity | None = None
 
 
 class ResponseBody(BaseModel):
-    availableCapacity: Capacity
+    availableCapacity: Capacity | None = None
     capacityTier: str | None = Field(None, description="Capacity tier")
     capacityTierUsed: Capacity | None = None
-    disks: list[Disk] = Field(..., description="Disks")
+    disks: list[Disk] | None = Field(None, description="Disks")
     encryptionKeyId: str | None = Field(None, description="Encryption Key")
-    encryptionType: str = Field(..., description="Encryption Type")
-    evCompatibilityType: str = Field(..., description="Elastic Volume Compatibility Type")
-    homeNode: str = Field(..., description="Home node")
+    encryptionType: str | None = Field(None, description="Encryption Type")
+    evCompatibilityType: str | None = Field(None, description="Elastic Volume Compatibility Type")
+    homeNode: str | None = Field(None, description="Home node")
     iops: Iops | None = Field(None, description="Aggregate IOPS")
-    isRoot: bool = Field(..., description="Is Root")
-    name: str = Field(..., description="Aggregate name")
+    isRoot: bool | None = Field(None, description="Is Root")
+    name: str | None = Field(None, description="Aggregate name")
     ownerNode: str | None = Field(None, description="Owner node")
-    providerVolumes: list[ProviderVolumeResponse] = Field(..., description="Provider volumes")
-    sidlEnabled: bool = Field(..., description="SIDL enabled")
-    snaplockType: str = Field(..., description="Snaplock type")
+    providerVolumes: list[ProviderVolumeResponse] | None = Field(
+        None, description="Provider volumes"
+    )
+    sidlEnabled: bool | None = Field(None, description="SIDL enabled")
+    snaplockType: str | None = Field(None, description="Snaplock type")
     state: str | None = Field(None, description="State")
-    totalCapacity: Capacity
-    usedCapacity: Capacity
-    volumes: list[Volume] = Field(..., description="Volumes")
+    totalCapacity: Capacity | None = None
+    usedCapacity: Capacity | None = None
+    volumes: list[Volume] | None = Field(None, description="Volumes")

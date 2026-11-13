@@ -32,12 +32,12 @@ class ResponseBody(BaseModel):
     availabilityState: str | None = None
     availableCapacity: Capacity | None = None
     commonDiskProperties: CommonDiskProperties | None = None
-    isInactiveDataReportingEnabled: bool
+    isInactiveDataReportingEnabled: bool | None = None
     isObjectStoreAttachEligible: bool | None = None
-    name: str
+    name: str | None = None
     objectStoreName: str | None = None
-    snaplockType: str = Field(..., description="Snaplock type")
+    snaplockType: str | None = Field(None, description="Snaplock type")
     state: str | None = None
     tieringRestriction: TieringRestriction | None = None
-    totalCapacity: Capacity
+    totalCapacity: Capacity | None = None
     usedCapacity: Capacity | None = None

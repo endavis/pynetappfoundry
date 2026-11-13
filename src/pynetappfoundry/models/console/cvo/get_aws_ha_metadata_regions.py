@@ -9,5 +9,5 @@ from pydantic import BaseModel
 class ResponseBody(BaseModel):
     code: str | None = None
     location: str | None = None
-    name: str
+    name: str | None = None
     s3Region: str | None = None

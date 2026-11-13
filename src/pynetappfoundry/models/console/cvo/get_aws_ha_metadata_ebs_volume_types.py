@@ -12,8 +12,8 @@ class Capacity(BaseModel):
 
 
 class ResponseBody(BaseModel):
-    description: str
+    description: str | None = None
     isDefault: bool | None = None
-    size: Capacity
+    size: Capacity | None = None
     supportedOccmLicenses: list[str] | None = None
-    supportedVolumeTypes: list[str]
+    supportedVolumeTypes: list[str] | None = None

@@ -8,20 +8,20 @@ from pydantic import BaseModel
 
 class Tags(BaseModel):
     empty: bool | None = None
-    traversableAgain: bool
+    traversableAgain: bool | None = None
 
 
 class S3BucketInfoDetails(BaseModel):
-    bucketName: str
+    bucketName: str | None = None
     isBackupTarget: bool | None = None
     isTieringTarget: bool | None = None
     region: str | None = None
-    tags: Tags
+    tags: Tags | None = None
 
 
 class ResponseBody(BaseModel):
-    s3Buckets: list[S3BucketInfoDetails]
+    s3Buckets: list[S3BucketInfoDetails] | None = None
     totalBackupTargets: int | None = None
-    totalBuckets: int
+    totalBuckets: int | None = None
     totalRegions: int | None = None
     totalTieringTargets: int | None = None

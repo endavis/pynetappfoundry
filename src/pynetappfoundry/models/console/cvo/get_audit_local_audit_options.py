@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 
 class CloudCentralAuditOptionsEntryResponse(BaseModel):
-    column: str
+    column: str | None = None
     identifier: str | None = None
     label: str | None = None
 
@@ -16,5 +16,5 @@ class ResponseBody(BaseModel):
     action: list[CloudCentralAuditOptionsEntryResponse] | None = None
     agent: list[CloudCentralAuditOptionsEntryResponse] | None = None
     resource: list[CloudCentralAuditOptionsEntryResponse] | None = None
-    service: list[CloudCentralAuditOptionsEntryResponse]
+    service: list[CloudCentralAuditOptionsEntryResponse] | None = None
     user: list[CloudCentralAuditOptionsEntryResponse] | None = None

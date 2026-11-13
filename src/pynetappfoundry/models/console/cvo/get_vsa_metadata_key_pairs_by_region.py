@@ -12,4 +12,4 @@ class RegionToKeyPairs(BaseModel):
 
 
 class ResponseBody(BaseModel):
-    regionToKeyPairs: RegionToKeyPairs
+    regionToKeyPairs: RegionToKeyPairs | None = None

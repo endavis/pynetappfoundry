@@ -12,5 +12,5 @@ class RequestBody(BaseModel):
 
 class ResponseBody(BaseModel):
     accessData: str | None = None
-    bucketName: str
+    bucketName: str | None = None
     tieringLevel: str | None = None

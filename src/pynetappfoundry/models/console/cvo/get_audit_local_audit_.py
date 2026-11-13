@@ -17,12 +17,12 @@ class EndTime(BaseModel):
 
 
 class ResponseBody(BaseModel):
-    accountId: str
+    accountId: str | None = None
     action: str | None = None
     agentId: str | None = None
     agentName: str | None = None
     endTime: EndTime | None = None
-    errors: list[str]
+    errors: list[str] | None = None
     hasFailedRecords: bool | None = None
     hasRecords: bool | None = None
     lastModified: int | None = None
@@ -32,5 +32,5 @@ class ResponseBody(BaseModel):
     resourceId: str | None = None
     resourceName: str | None = None
     service: str | None = None
-    startTime: int
+    startTime: int | None = None
     status: str | None = None

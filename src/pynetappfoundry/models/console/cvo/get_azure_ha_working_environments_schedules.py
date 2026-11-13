@@ -14,10 +14,10 @@ class TimePoint(BaseModel):
 
 class StartStopRange(BaseModel):
     start: TimePoint | None = None
-    stop: TimePoint
+    stop: TimePoint | None = None
 
 
 class ResponseBody(BaseModel):
     enabled: bool | None = None
     name: str | None = None
-    schedule: list[StartStopRange]
+    schedule: list[StartStopRange] | None = None

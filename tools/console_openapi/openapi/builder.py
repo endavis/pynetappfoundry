@@ -57,6 +57,12 @@ _HOISTED_BODY_SERVICES = frozenset({"cvo"})
 # Every ``cvo`` operation is addressed to one agent, named in this header. The
 # docs omit it, so it is synthesized.
 _AGENT_ID_SERVICES = frozenset({"cvo"})
+# The ``cvo`` docs mark fields Required that the live agent returns as ``null``
+# or omits (#1018). For these services every schema reachable from a response
+# has ``required`` renamed to ``x-documented-required``, so the docs' list is
+# kept but codegen makes the response fields optional.
+_LOOSE_RESPONSE_SERVICES = frozenset({"cvo"})
+_SCHEMA_REF_PREFIX = "#/components/schemas/"
 _AGENT_ID_HEADER: dict[str, Any] = {
     "name": "x-agent-id",
     "in": "header",
@@ -153,8 +159,52 @@ def build_spec(
         },
     }
 
+    _loosen_response_schemas(paths, components_schemas)
     _enforce_invariants(spec)
     return spec
+
+
+def _collect_refs(obj: Any) -> set[str]:
+    """Return the component keys of every ``#/components/schemas/<key>`` ref in ``obj``."""
+    found: set[str] = set()
+    if isinstance(obj, dict):
+        ref = obj.get("$ref")
+        if isinstance(ref, str) and ref.startswith(_SCHEMA_REF_PREFIX):
+            found.add(ref[len(_SCHEMA_REF_PREFIX) :])
+        for v in obj.values():
+            found |= _collect_refs(v)
+    elif isinstance(obj, list):
+        for item in obj:
+            found |= _collect_refs(item)
+    return found
+
+
+def _loosen_response_schemas(paths: dict[str, dict[str, Any]], schemas: dict[str, Any]) -> None:
+    """Make response fields optional for ``_LOOSE_RESPONSE_SERVICES`` (#1018).
+
+    Finds every component schema reachable (transitively) from the responses of
+    a loose service's operations and renames its ``required`` list to
+    ``x-documented-required``. A schema shared with a request body is loosened
+    too: the response wins.
+    """
+    pending = [
+        key
+        for path_obj in paths.values()
+        for op in path_obj.values()
+        if _LOOSE_RESPONSE_SERVICES.intersection(op.get("tags", ()))
+        for key in _collect_refs(op.get("responses", {}))
+    ]
+    seen: set[str] = set()
+    while pending:
+        key = pending.pop()
+        if key in seen or key not in schemas:
+            continue
+        seen.add(key)
+        pending.extend(_collect_refs(schemas[key]))
+    for key in seen:
+        schema = schemas[key]
+        if "required" in schema:
+            schema["x-documented-required"] = schema.pop("required")
 
 
 def _info_description(included_services: tuple[str, ...]) -> str:

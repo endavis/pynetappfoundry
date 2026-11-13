@@ -7,8 +7,8 @@ from pydantic import BaseModel
 
 
 class InstanceTypeResponse(BaseModel):
-    instanceType: str
+    instanceType: str | None = None
 
 
 class ResponseBody(BaseModel):
-    instanceTypes: list[InstanceTypeResponse]
+    instanceTypes: list[InstanceTypeResponse] | None = None

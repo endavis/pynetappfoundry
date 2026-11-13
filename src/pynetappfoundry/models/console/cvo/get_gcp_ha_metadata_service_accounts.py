@@ -9,10 +9,10 @@ from pydantic import BaseModel
 class GcpServiceAccountResponse(BaseModel):
     displayName: str | None = None
     email: str | None = None
-    isEnabled: bool
-    name: str
+    isEnabled: bool | None = None
+    name: str | None = None
     projectId: str | None = None
 
 
 class ResponseBody(BaseModel):
-    accounts: list[GcpServiceAccountResponse]
+    accounts: list[GcpServiceAccountResponse] | None = None

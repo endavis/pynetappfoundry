@@ -7,6 +7,6 @@ from pydantic import BaseModel
 
 
 class ResponseBody(BaseModel):
-    associatedToAgent: bool
+    associatedToAgent: bool | None = None
     workspaceName: str | None = None
-    workspacePublicId: str
+    workspacePublicId: str | None = None

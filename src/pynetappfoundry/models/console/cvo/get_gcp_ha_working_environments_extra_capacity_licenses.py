@@ -9,11 +9,11 @@ from pydantic import BaseModel
 class ResponseBody(BaseModel):
     accountId: str | None = None
     associatedResourceId: str | None = None
-    capacity: float
-    expirationDate: int
+    capacity: float | None = None
+    expirationDate: int | None = None
     license: str | None = None
     licensePackage: str | None = None
     licenseType: str | None = None
     metadata: str | None = None
     resourceId: str | None = None
-    serialNumber: str
+    serialNumber: str | None = None

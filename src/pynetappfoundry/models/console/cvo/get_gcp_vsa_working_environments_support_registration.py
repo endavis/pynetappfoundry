@@ -26,4 +26,4 @@ class ResponseBody(BaseModel):
     licenseExpiryDate: LicenseExpiryDate | None = None
     licenseStartDate: LicenseStartDate | None = None
     nssAccountId: str | None = None
-    status: str
+    status: str | None = None

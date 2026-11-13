@@ -9,18 +9,18 @@ from pydantic import BaseModel
 class AvsPrivateCloudClusterProperties(BaseModel):
     clusterId: str | None = None
     clusterSize: str | None = None
-    hosts: list[str]
+    hosts: list[str] | None = None
     provisioningState: str | None = None
     vsanDatastoreName: str | None = None
 
 
 class Tags(BaseModel):
     empty: bool | None = None
-    traversableAgain: bool
+    traversableAgain: bool | None = None
 
 
 class ResponseBody(BaseModel):
-    id: str
+    id: str | None = None
     name: str | None = None
-    properties: AvsPrivateCloudClusterProperties
-    tags: Tags
+    properties: AvsPrivateCloudClusterProperties | None = None
+    tags: Tags | None = None

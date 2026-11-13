@@ -7,6 +7,6 @@ from pydantic import BaseModel
 
 
 class ResponseBody(BaseModel):
-    accessTime: int
+    accessTime: int | None = None
     label: str | None = None
-    name: str
+    name: str | None = None

@@ -21,8 +21,10 @@ class Capacity(BaseModel):
 
 
 class RaidInfoForEvAggregate(BaseModel):
-    diskSize: Capacity
-    numOfDisks: int = Field(..., description="Number of new disks needed for the RAID group")
+    diskSize: Capacity | None = None
+    numOfDisks: int | None = Field(
+        None, description="Number of new disks needed for the RAID group"
+    )
 
 
 class ElasticVolumeQuoteInfo(BaseModel):
@@ -41,7 +43,7 @@ class InstanceNameIdAndType(BaseModel):
 
 
 class OntapLicenseType(BaseModel):
-    capacityLimit: Capacity
+    capacityLimit: Capacity | None = None
     capacity_limit: str | None = None
     default: bool | None = None
     description: str | None = None
@@ -83,36 +85,38 @@ class VolumeMoveParameters(BaseModel):
 
 
 class ActionRequiredParameters(BaseModel):
-    aggregateName: str = Field(..., description="Aggregate name")
+    aggregateName: str | None = Field(None, description="Aggregate name")
     currentInstanceType: str | None = Field(None, description="Current instance type")
     evCapacityDetails: ElasticVolumeQuoteInfo | None = None
-    instances: list[InstanceNameIdAndType] = Field(..., description="Instances information")
-    isCapacityBased: bool = Field(
-        ...,
+    instances: list[InstanceNameIdAndType] | None = Field(None, description="Instances information")
+    isCapacityBased: bool | None = Field(
+        None,
         description="Indicates if the license type is a capacity-based license type",
     )
-    isComposite: bool = Field(
-        ..., description="Indicates if the aggregate is a composite aggregate"
+    isComposite: bool | None = Field(
+        None, description="Indicates if the aggregate is a composite aggregate"
     )
-    licenseExpiryDate: int = Field(..., description="License expiry date")
+    licenseExpiryDate: int | None = Field(None, description="License expiry date")
     licenseParameters: ChangeLicenseParameters | None = None
-    maxCapacity: Capacity
+    maxCapacity: Capacity | None = None
     moreInfo: str | None = Field(None, description="More information")
-    numOfDisks: int = Field(..., description="Number of disks relevant to the action")
+    numOfDisks: int | None = Field(None, description="Number of disks relevant to the action")
     providerVolumeType: str | None = Field(None, description="Provider volume type")
     resourcesToDelete: ResourcesToDelete | None = None
-    serialNumber: str = Field(..., description="Platform Serial number")
-    totalCapacity: Capacity
+    serialNumber: str | None = Field(None, description="Platform Serial number")
+    totalCapacity: Capacity | None = None
     volumeInfo: VolumeInfo | None = None
     volumeMoveParameters: VolumeMoveParameters | None = None
-    volumeNames: list[str] = Field(..., description="A limited list of volumes on the aggregate")
-    workingEnvironmentId: str = Field(..., description="System public ID")
+    volumeNames: list[str] | None = Field(
+        None, description="A limited list of volumes on the aggregate"
+    )
+    workingEnvironmentId: str | None = Field(None, description="System public ID")
 
 
 class ActionRequired(BaseModel):
-    actionType: str = Field(..., description="The type of the Action")
-    parameters: ActionRequiredParameters
-    severity: str = Field(..., description="Action Severity")
+    actionType: str | None = Field(None, description="The type of the Action")
+    parameters: ActionRequiredParameters | None = None
+    severity: str | None = Field(None, description="Action Severity")
 
 
 class Iops(BaseModel):
@@ -140,7 +144,7 @@ class MaxDisksAllow(BaseModel):
 
 
 class ProviderVolumeTypeResponse(BaseModel):
-    maxDisksAllow: MaxDisksAllow
+    maxDisksAllow: MaxDisksAllow | None = None
     size: Capacity | None = None
     supportedVolumeTypes: list[str] | None = None
 
@@ -155,7 +159,7 @@ class SupportedCapacityTiers(BaseModel):
     capacityTiersDisableReasons: list[str] | None = None
     compositeSupported: bool | None = None
     forceCompositeVersion: bool | None = None
-    supportedCapacityTiersPerVolumeType: list[SupportedCapacityTiersResponse]
+    supportedCapacityTiersPerVolumeType: list[SupportedCapacityTiersResponse] | None = None
 
 
 class CapacityFeatures(BaseModel):
@@ -198,18 +202,18 @@ class LastModifiedOffbox(BaseModel):
 
 
 class VsaLicense(BaseModel):
-    capacityLimit: Capacity
-    name: str = Field(..., description="License name")
+    capacityLimit: Capacity | None = None
+    name: str | None = Field(None, description="License name")
 
 
 class LifResponse(BaseModel):
-    dataProtocols: list[str] = Field(..., description="List of supported protocols")
-    ip: str = Field(..., description="LIF IP address")
-    lifType: str = Field(..., description="LIF type")
-    netmask: str = Field(..., description="LIF netmask")
-    nodeName: str = Field(..., description="Node name")
-    privateIp: bool = Field(
-        ..., description="Specifies whether the IP address is a private address"
+    dataProtocols: list[str] | None = Field(None, description="List of supported protocols")
+    ip: str | None = Field(None, description="LIF IP address")
+    lifType: str | None = Field(None, description="LIF type")
+    netmask: str | None = Field(None, description="LIF netmask")
+    nodeName: str | None = Field(None, description="Node name")
+    privateIp: bool | None = Field(
+        None, description="Specifies whether the IP address is a private address"
     )
 
 
@@ -298,7 +302,7 @@ class CertificateResponse(BaseModel):
     endDate: int | None = None
     publicId: str | None = None
     serialNumber: str | None = None
-    startDate: int
+    startDate: int | None = None
     subjectName: str | None = None
 
 
@@ -346,7 +350,7 @@ class AvailabilityZone(BaseModel):
 
 
 class AzureHaNodeInfo(BaseModel):
-    availabilitySet: AzureAvailabilitySet
+    availabilitySet: AzureAvailabilitySet | None = None
     availabilityZone: AvailabilityZone | None = None
     instanceId: str | None = None
     instanceName: str | None = None
@@ -374,10 +378,10 @@ class Expirations(BaseModel):
 class LicenseInformation(BaseModel):
     capacityLimit: Capacity | None = None
     expirations: list[Expirations] | None = None
-    package: str
+    package: str | None = None
     serialNumbers: list[str] | None = None
-    type: str
-    useType: str
+    type: str | None = None
+    useType: str | None = None
 
 
 class KpiUnitValue(BaseModel):
@@ -402,7 +406,7 @@ class MonitoringStatusResponse(BaseModel):
 class BroadcastDomainInfo(BaseModel):
     broadcastDomain: str | None = None
     ipSpace: str | None = None
-    mtu: int
+    mtu: int | None = None
 
 
 class CapacityTierInfo(BaseModel):
@@ -476,7 +480,7 @@ class Tags(BaseModel):
 class AzureResourceGroupResponse(BaseModel):
     location: str | None = None
     name: str | None = None
-    tags: Tags
+    tags: Tags | None = None
 
 
 class AzureProperties(BaseModel):
@@ -534,29 +538,29 @@ class TimePoint(BaseModel):
 
 class StartStopRange(BaseModel):
     start: TimePoint | None = None
-    stop: TimePoint
+    stop: TimePoint | None = None
 
 
 class VsaSchedule(BaseModel):
     enabled: bool | None = None
     name: str | None = None
-    schedule: list[StartStopRange]
+    schedule: list[StartStopRange] | None = None
 
 
 class PolicySchedule(BaseModel):
-    frequency: str = Field(..., description="Frequency")
-    retention: int = Field(..., description="Retention")
+    frequency: str | None = Field(None, description="Frequency")
+    retention: int | None = Field(None, description="Retention")
 
 
 class SnapshotPolicy(BaseModel):
-    description: str = Field(..., description="Description")
-    name: str = Field(..., description="Name")
-    schedules: list[PolicySchedule] = Field(..., description="Schedules")
+    description: str | None = Field(None, description="Description")
+    name: str | None = Field(None, description="Name")
+    schedules: list[PolicySchedule] | None = Field(None, description="Schedules")
 
 
 class FailureCauses(BaseModel):
     invalidCloudProviderCredentials: bool | None = None
-    invalidOntapCredentials: bool
+    invalidOntapCredentials: bool | None = None
     noCloudProviderConnection: bool | None = None
 
 
@@ -601,16 +605,16 @@ class Value(BaseModel):
 
 class Svm(BaseModel):
     allowedAggregates: list[str] | None = None
-    allowedProtocols: list[Value]
+    allowedProtocols: list[Value] | None = None
     language: str | None = None
     name: str | None = None
     state: str | None = None
-    ver3Enabled: bool = Field(..., description="NFS Version 3 enabled")
-    ver4Enabled: bool = Field(..., description="NFS Version 4 enabled")
+    ver3Enabled: bool | None = Field(None, description="NFS Version 3 enabled")
+    ver4Enabled: bool | None = Field(None, description="NFS Version 4 enabled")
 
 
 class ResponseBody(BaseModel):
-    actionsRequired: list[ActionRequired]
+    actionsRequired: list[ActionRequired] | None = None
     activeActions: list[str] | None = Field(
         None, description="Actions currently being performed on this system"
     )
@@ -624,22 +628,22 @@ class ResponseBody(BaseModel):
     fpolicyProperties: FpolicyProperties | None = None
     haProperties: AzureHaProperties | None = None
     isHA: bool | None = None
-    licensesInformation: list[LicenseInformation]
+    licensesInformation: list[LicenseInformation] | None = None
     monitoringProperties: MonitoringStatusResponse | None = None
     name: str | None = None
     ontapClusterProperties: OntapClusterProperties | None = None
     providerProperties: AzureProperties | None = None
-    publicId: str
+    publicId: str | None = None
     replicationProperties: ReplicationProperties | None = None
     reservedSize: Capacity | None = None
     saasProperties: CvoSaasProperties | None = None
-    schedules: list[VsaSchedule]
-    snapshotPolicies: list[SnapshotPolicy]
+    schedules: list[VsaSchedule] | None = None
+    snapshotPolicies: list[SnapshotPolicy] | None = None
     status: StatusProperties | None = None
-    supportRegistrationInformation: list[SupportRegistrationInformation]
+    supportRegistrationInformation: list[SupportRegistrationInformation] | None = None
     supportRegistrationProperties: SupportRegistrationProperties | None = None
     supportedFeatures: SupportedFeatures | None = None
     svmName: str | None = None
-    svms: list[Svm]
+    svms: list[Svm] | None = None
     tenantId: str | None = None
     workingEnvironmentType: str | None = None

@@ -20,5 +20,5 @@ class Zones(BaseModel):
 
 
 class ResponseBody(BaseModel):
-    region: str = Field(..., description="Region value")
-    zones: list[Zones] = Field(..., description="Zone values")
+    region: str | None = Field(None, description="Region value")
+    zones: list[Zones] | None = Field(None, description="Zone values")

@@ -10,4 +10,4 @@ class ResponseBody(BaseModel):
     id: str | None = None
     keyRing: str | None = None
     location: str | None = None
-    name: str
+    name: str | None = None

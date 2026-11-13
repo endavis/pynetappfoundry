@@ -76,5 +76,5 @@ class RequestBody(BaseModel):
 
 class ResponseBody(BaseModel):
     contractEndDate: ContractEndDate | None = None
-    license: str
+    license: str | None = None
     serialNumber: str | None = None

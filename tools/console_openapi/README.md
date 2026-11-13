@@ -69,6 +69,10 @@ Pass a full commit SHA rather than a branch name, so the lockfile's
      components (`cvo.<file_stem>.RequestBody`, `ResponseBody` for the
      `default` response, `Response<status>Body` otherwise), and every
      operation gets a required, synthesized `x-agent-id` header parameter.
+     The docs over-mark response fields as Required (the live agent returns
+     `null` or omits them), so every schema reachable from a `cvo` response
+     has `required` renamed to `x-documented-required` and its generated
+     fields are optional; request-only schemas keep `required` (#1018).
    - Path parameters missing from the docs are synthesized in path-template
      order.
 4. **Validate** -- a final invariant pass enforces:

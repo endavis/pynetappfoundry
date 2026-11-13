@@ -8,8 +8,8 @@ from pydantic import BaseModel
 
 class ResponseBody(BaseModel):
     containerActive: bool | None = None
-    healthy: bool
+    healthy: bool | None = None
     lastDeploymentError: str | None = None
     privateIp: str | None = None
-    status: str
+    status: str | None = None
     widgetUrl: str | None = None

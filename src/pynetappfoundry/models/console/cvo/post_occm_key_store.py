@@ -11,4 +11,4 @@ class RequestBody(BaseModel):
 
 
 class ResponseBody(BaseModel):
-    csr: str
+    csr: str | None = None

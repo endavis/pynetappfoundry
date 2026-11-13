@@ -7,13 +7,13 @@ from pydantic import BaseModel
 
 
 class Id(BaseModel):
-    id: str
+    id: str | None = None
 
 
 class SourceTarget(BaseModel):
-    source: Id
+    source: Id | None = None
     target: Id | None = None
 
 
 class ResponseBody(BaseModel):
-    relationships: list[SourceTarget]
+    relationships: list[SourceTarget] | None = None

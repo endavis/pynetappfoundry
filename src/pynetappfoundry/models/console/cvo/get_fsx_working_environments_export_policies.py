@@ -16,13 +16,13 @@ class Index(BaseModel):
 
 class ExportPolicyRule(BaseModel):
     index: Index | None = Field(None, description="Export policy rule index")
-    ips: list[str] = Field(..., description="Export policy rule list of IPs")
+    ips: list[str] | None = Field(None, description="Export policy rule list of IPs")
     nfsVersion: list[str] | None = Field(None, description="Export policy rule protocol")
-    ruleAccessControl: str = Field(..., description="Export policy rule access control")
-    superUser: bool = Field(..., description="Export policy rule super user access")
+    ruleAccessControl: str | None = Field(None, description="Export policy rule access control")
+    superUser: bool | None = Field(None, description="Export policy rule super user access")
 
 
 class ResponseBody(BaseModel):
-    name: str
-    rules: list[ExportPolicyRule]
+    name: str | None = None
+    rules: list[ExportPolicyRule] | None = None
     svm: str | None = None

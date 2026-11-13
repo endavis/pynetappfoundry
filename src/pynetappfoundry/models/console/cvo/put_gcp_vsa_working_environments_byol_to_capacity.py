@@ -13,5 +13,5 @@ class RequestBody(BaseModel):
 
 
 class ResponseBody(BaseModel):
-    serial1: str
+    serial1: str | None = None
     serial2: str | None = None

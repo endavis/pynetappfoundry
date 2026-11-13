@@ -14,13 +14,13 @@ class Capacity(BaseModel):
 class InstanceTypeInfo(BaseModel):
     instanceType: str | None = None
     isDefault: bool | None = None
-    supportedFeatures: list[str]
-    supportsEncryption: bool
+    supportedFeatures: list[str] | None = None
+    supportsEncryption: bool | None = None
 
 
 class ResponseBody(BaseModel):
-    capacityLimit: Capacity
+    capacityLimit: Capacity | None = None
     description: str | None = None
-    instanceTypes: list[InstanceTypeInfo]
-    licenseType: str
+    instanceTypes: list[InstanceTypeInfo] | None = None
+    licenseType: str | None = None
     name: str | None = None

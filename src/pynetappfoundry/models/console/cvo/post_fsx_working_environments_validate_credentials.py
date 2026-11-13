@@ -26,4 +26,4 @@ class RequestBody(BaseModel):
 class ResponseBody(BaseModel):
     clusterInfo: ClusterInfo | None = None
     failureReason: str | None = None
-    valid: bool
+    valid: bool | None = None

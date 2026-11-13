@@ -19,7 +19,7 @@ class AggregateNumToDiskSize(BaseModel):
 
 
 class AwsDisksConstraints(BaseModel):
-    aggregatesNumToDiskSize: list[AggregateNumToDiskSize]
+    aggregatesNumToDiskSize: list[AggregateNumToDiskSize] | None = None
     deltaDiskWarn: int | None = None
     maxDisksHa: int | None = None
     maxDisksHaKvm: int | None = None
@@ -28,7 +28,7 @@ class AwsDisksConstraints(BaseModel):
     numDisksWarnHa: int | None = None
     numDisksWarnSingleNode: int | None = None
     numReservedDisksHa: int | None = None
-    numReservedDisksSingleNode: int
+    numReservedDisksSingleNode: int | None = None
 
 
 class AzureDisksConstraints(BaseModel):
@@ -44,9 +44,9 @@ class GcpDisksConstraints(BaseModel):
 
 
 class DisksConfiguration(BaseModel):
-    aws: AwsDisksConstraints
-    azure: AzureDisksConstraints
-    gcp: GcpDisksConstraints
+    aws: AwsDisksConstraints | None = None
+    azure: AzureDisksConstraints | None = None
+    gcp: GcpDisksConstraints | None = None
 
 
 class EvaluationOntapLicenses(BaseModel):
@@ -67,7 +67,7 @@ class EvaluationSerialNumbers(BaseModel):
 
 class OccmFeaturesFlags(BaseModel):
     aws_environment_collector: bool | None = None
-    intercom: bool
+    intercom: bool | None = None
 
 
 class InstanceConfigurationMapping(BaseModel):
@@ -86,7 +86,7 @@ class Probes(BaseModel):
 
 
 class InstanceConfiguration(BaseModel):
-    mediator: Mediator
+    mediator: Mediator | None = None
     probes: Probes | None = None
 
 
@@ -96,7 +96,7 @@ class ProviderLegacyInstanceTypes(BaseModel):
 
 
 class LegacyInstanceTypes(BaseModel):
-    instanceTypes: ProviderLegacyInstanceTypes
+    instanceTypes: ProviderLegacyInstanceTypes | None = None
 
 
 class Dependencies(BaseModel):
@@ -105,7 +105,7 @@ class Dependencies(BaseModel):
 
 
 class MediatorUpgradeConfiguration(BaseModel):
-    dependencies: Dependencies
+    dependencies: Dependencies | None = None
 
 
 class OccmMigration(BaseModel):
@@ -149,14 +149,14 @@ class ServicesInformation(BaseModel):
 
 
 class OnCloudUpgradePath(BaseModel):
-    path: list[str]
+    path: list[str] | None = None
     version: str | None = None
 
 
 class Region(BaseModel):
     code: str | None = None
     location: str | None = None
-    name: str
+    name: str | None = None
     s3Region: str | None = None
 
 
@@ -164,23 +164,23 @@ class ResponseBody(BaseModel):
     aws_cross_account_tutorial_url: str | None = None
     aws_product_page: str | None = None
     cot_aws_product_page: str | None = None
-    cvsRegions: list[CvsRegion]
-    disksConfiguration: DisksConfiguration
-    email: str
-    evaluation_ontap_licenses: EvaluationOntapLicenses
-    evaluation_serial_numbers: EvaluationSerialNumbers
-    features: OccmFeaturesFlags
+    cvsRegions: list[CvsRegion] | None = None
+    disksConfiguration: DisksConfiguration | None = None
+    email: str | None = None
+    evaluation_ontap_licenses: EvaluationOntapLicenses | None = None
+    evaluation_serial_numbers: EvaluationSerialNumbers | None = None
+    features: OccmFeaturesFlags | None = None
     ha_cot_aws_product_page: str | None = None
-    instanceConfiguration: InstanceConfiguration
+    instanceConfiguration: InstanceConfiguration | None = None
     intercom_prod_app_id: str | None = None
     intercom_test_app_id: str | None = None
-    legacyInstanceTypes: LegacyInstanceTypes
+    legacyInstanceTypes: LegacyInstanceTypes | None = None
     livechat_license: str | None = None
-    mediatorUpgradeConfiguration: MediatorUpgradeConfiguration
-    migration: OccmMigration
+    mediatorUpgradeConfiguration: MediatorUpgradeConfiguration | None = None
+    migration: OccmMigration | None = None
     occm_release_notes_url: str | None = None
-    ontapBackupTokenCreds: OntapBackupTokenCreds
+    ontapBackupTokenCreds: OntapBackupTokenCreds | None = None
     regions: Regions | None = None
-    servicesInformation: ServicesInformation
-    upgrade_path: list[OnCloudUpgradePath]
-    zrsRegions: list[Region]
+    servicesInformation: ServicesInformation | None = None
+    upgrade_path: list[OnCloudUpgradePath] | None = None
+    zrsRegions: list[Region] | None = None

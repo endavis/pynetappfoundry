@@ -13,11 +13,11 @@ class CertificateResponse(BaseModel):
     endDate: int | None = None
     publicId: str | None = None
     serialNumber: str | None = None
-    startDate: int
+    startDate: int | None = None
     subjectName: str | None = None
 
 
 class ResponseBody(BaseModel):
-    certificateInfo: CertificateResponse
-    id: str = Field(..., description="Specifies the ID")
-    status: str = Field(..., description="Status")
+    certificateInfo: CertificateResponse | None = None
+    id: str | None = Field(None, description="Specifies the ID")
+    status: str | None = Field(None, description="Status")

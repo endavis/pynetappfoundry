@@ -28,4 +28,4 @@ class RequestBody(BaseModel):
 
 class ResponseBody(BaseModel):
     failureInfo: str | None = None
-    isSubscribed: bool
+    isSubscribed: bool | None = None

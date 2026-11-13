@@ -25,63 +25,71 @@ class Index(BaseModel):
 
 class ExportPolicyRule(BaseModel):
     index: Index | None = Field(None, description="Export policy rule index")
-    ips: list[str] = Field(..., description="Export policy rule list of IPs")
+    ips: list[str] | None = Field(None, description="Export policy rule list of IPs")
     nfsVersion: list[str] | None = Field(None, description="Export policy rule protocol")
-    ruleAccessControl: str = Field(..., description="Export policy rule access control")
-    superUser: bool = Field(..., description="Export policy rule super user access")
+    ruleAccessControl: str | None = Field(None, description="Export policy rule access control")
+    superUser: bool | None = Field(None, description="Export policy rule super user access")
 
 
 class NamedExportPolicyInfo(BaseModel):
-    ips: list[str] = Field(..., description="Custom export policy list of IPs")
+    ips: list[str] | None = Field(None, description="Custom export policy list of IPs")
     name: str | None = Field(None, description="Export policy name")
     nfsVersion: list[str] | None = Field(None, description="Export policy protocol")
-    policyType: str = Field(..., description="Export policy type")
-    rules: list[ExportPolicyRule] = Field(..., description="Export policy rules")
+    policyType: str | None = Field(None, description="Export policy type")
+    rules: list[ExportPolicyRule] | None = Field(None, description="Export policy rules")
 
 
 class CifsShareUserPermissions(BaseModel):
     permission: str | None = Field(None, description="CIFS share permission type")
-    users: list[str] = Field(..., description="List of users with the permission")
+    users: list[str] | None = Field(None, description="List of users with the permission")
 
 
 class CifsShareInfo(BaseModel):
-    accessControlList: list[CifsShareUserPermissions] = Field(
-        ..., description="List of CIFS share permissions"
+    accessControlList: list[CifsShareUserPermissions] | None = Field(
+        None, description="List of CIFS share permissions"
     )
-    shareName: str = Field(..., description="Share name")
+    shareName: str | None = Field(None, description="Share name")
     vscanFileOpPolicy: str | None = Field(None, description="Vscan file operations profile")
 
 
 class ResponseBody(BaseModel):
-    aggregateName: str = Field(..., description="Aggregate name")
-    autoSizeMode: str = Field(..., description="The operating mode of autosize")
+    aggregateName: str | None = Field(None, description="Aggregate name")
+    autoSizeMode: str | None = Field(None, description="The operating mode of autosize")
     capacityTier: str | None = Field(None, description="Capacity tier")
     capacityTierUsedSize: Capacity | None = None
     cbsBackupsInfo: VolumeCbsInfo | None = None
     cifsShareAccessPoint: str | None = Field(None, description="CIFS share access point")
-    cloneNames: list[str] = Field(..., description="Names of cloned copies of the volume")
+    cloneNames: list[str] | None = Field(None, description="Names of cloned copies of the volume")
     comment: str | None = Field(None, description="Volume comment")
-    compression: bool = Field(..., description="Specifies whether compression is enabled")
-    compressionSpaceSaved: Capacity
-    constituentsAggregates: list[str] = Field(
-        ..., description="Aggregates which are used for FlexGroup constituents"
+    compression: bool | None = Field(None, description="Specifies whether compression is enabled")
+    compressionSpaceSaved: Capacity | None = None
+    constituentsAggregates: list[str] | None = Field(
+        None, description="Aggregates which are used for FlexGroup constituents"
     )
-    deduplication: bool = Field(..., description="Specifies whether deduplication is enabled")
-    deduplicationSpaceSaved: Capacity
-    exportPolicyInfo: NamedExportPolicyInfo
-    isFlexGroupVolume: bool = Field(..., description="Indicates if the volume is FlexGroup volume")
-    iscsiEnabled: bool = Field(
-        ..., description="Indicates if the volume is used by the iSCSI protocol"
+    deduplication: bool | None = Field(
+        None, description="Specifies whether deduplication is enabled"
     )
-    junctionPath: str = Field(..., description="The junction path at which this volume is mounted")
-    maxGrowSize: Capacity
+    deduplicationSpaceSaved: Capacity | None = None
+    exportPolicyInfo: NamedExportPolicyInfo | None = None
+    isFlexGroupVolume: bool | None = Field(
+        None, description="Indicates if the volume is FlexGroup volume"
+    )
+    iscsiEnabled: bool | None = Field(
+        None, description="Indicates if the volume is used by the iSCSI protocol"
+    )
+    junctionPath: str | None = Field(
+        None, description="The junction path at which this volume is mounted"
+    )
+    maxGrowSize: Capacity | None = None
     minimumCoolingDays: int | None = Field(None, description="Tiering minimum cooling days")
     mountPoint: str | None = Field(None, description="Mount Point")
-    moving: bool = Field(..., description="Specifies if the volume move process is in progress")
-    name: str = Field(..., description="Volume name")
+    moving: bool | None = Field(
+        None, description="Specifies if the volume move process is in progress"
+    )
+    name: str | None = Field(None, description="Volume name")
     parentSnapshot: str | None = Field(None, description="The snapshot name the volume is based on")
-    parentVolumeName: str = Field(
-        ..., description="Name of the parent flexible volume for the clone"
+    parentVolumeName: str | None = Field(
+        None, description="Name of the parent flexible volume for the clone"
     )
     primaryCifsShareAccessPoint: str | None = Field(
         None, description="Primary CIFS share access point"
@@ -91,35 +99,37 @@ class ResponseBody(BaseModel):
     )
     providerVolumeType: str | None = Field(None, description="Cloud provider volume type")
     qosPolicyGroupName: str | None = Field(None, description="Quality of service policy group name")
-    rootVolume: bool = Field(..., description="Indicates if the volume is a SVM root volume")
+    rootVolume: bool | None = Field(
+        None, description="Indicates if the volume is a SVM root volume"
+    )
     secondaryCifsShareAccessPoint: str | None = Field(
         None, description="Secondary CIFS share access point"
     )
     secondaryNoFailoverMountPoint: str | None = Field(
         None, description="Secondary mount point without failover"
     )
-    securityStyle: str = Field(..., description="The type of the security style")
-    shareInfo: list[CifsShareInfo] = Field(
-        ..., description="The share names, permissions, and users for CIFS"
+    securityStyle: str | None = Field(None, description="The type of the security style")
+    shareInfo: list[CifsShareInfo] | None = Field(
+        None, description="The share names, permissions, and users for CIFS"
     )
-    shareNames: list[str] = Field(..., description="The share names for CIFS")
-    size: Capacity
+    shareNames: list[str] | None = Field(None, description="The share names for CIFS")
+    size: Capacity | None = None
     snaplockType: str | None = Field(None, description="SnapLock type")
-    snapshotPolicy: str = Field(..., description="The name of the snapshot policy")
+    snapshotPolicy: str | None = Field(None, description="The name of the snapshot policy")
     snapshotsUsedSize: Capacity | None = None
-    state: str = Field(..., description="Volume state")
-    svmName: str = Field(..., description="Volume SVM name")
-    targetName: str = Field(..., description="iSCSI target IQN")
-    thinProvisioning: bool = Field(
-        ..., description="Specifies whether thin provisioning is enabled"
+    state: str | None = Field(None, description="Volume state")
+    svmName: str | None = Field(None, description="Volume SVM name")
+    targetName: str | None = Field(None, description="iSCSI target IQN")
+    thinProvisioning: bool | None = Field(
+        None, description="Specifies whether thin provisioning is enabled"
     )
     tierInactiveUserData: Capacity | None = None
     tierInactiveUserDataPercent: int | None = Field(
         None, description="Tier inactive user data percentage"
     )
     tieringPolicy: str | None = Field(None, description="Tiering policy")
-    usedSize: Capacity
-    uuid: str = Field(..., description="Volume UUID")
+    usedSize: Capacity | None = None
+    uuid: str | None = Field(None, description="Volume UUID")
     volumeTotalInodes: int | None = Field(None, description="Total volume inodes size")
-    volumeType: str = Field(..., description="Volume type")
+    volumeType: str | None = Field(None, description="Volume type")
     volumeUsedInodes: int | None = Field(None, description="Used volume inodes size")

@@ -12,7 +12,7 @@ class Capacity(BaseModel):
 
 
 class OntapLicenseType(BaseModel):
-    capacityLimit: Capacity
+    capacityLimit: Capacity | None = None
     capacity_limit: str | None = None
     default: bool | None = None
     description: str | None = None
@@ -26,15 +26,15 @@ class OntapLicenseType(BaseModel):
 class Region(BaseModel):
     code: str | None = None
     location: str | None = None
-    name: str
+    name: str | None = None
     s3Region: str | None = None
 
 
 class ResponseBody(BaseModel):
     defaultInstance: bool | None = None
-    features: list[str]
+    features: list[str] | None = None
     instanceType: str | None = None
-    license: OntapLicenseType
-    ontapVersion: str
-    region: Region
-    upgradeableFrom: list[str]
+    license: OntapLicenseType | None = None
+    ontapVersion: str | None = None
+    region: Region | None = None
+    upgradeableFrom: list[str] | None = None

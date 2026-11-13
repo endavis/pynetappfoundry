@@ -9,10 +9,10 @@ from pydantic import BaseModel
 class Region(BaseModel):
     code: str | None = None
     location: str | None = None
-    name: str
+    name: str | None = None
     s3Region: str | None = None
 
 
 class ResponseBody(BaseModel):
-    aws: list[Region]
+    aws: list[Region] | None = None
     azure: list[Region] | None = None

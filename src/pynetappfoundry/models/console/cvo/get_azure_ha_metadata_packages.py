@@ -35,13 +35,13 @@ class Throughput(BaseModel):
 class ResponseBody(BaseModel):
     capacityTier: str | None = None
     description: str | None = None
-    diskSize: Capacity
+    diskSize: Capacity | None = None
     diskType: str | None = None
     displayName: str | None = None
     instanceTenancy: str | None = None
-    instanceTypeMapping: list[InstanceTypeRegionMapping]
+    instanceTypeMapping: list[InstanceTypeRegionMapping] | None = None
     iops: Iops | None = None
     licenseType: str | None = None
-    name: str
+    name: str | None = None
     throughput: Throughput | None = None
     writingSpeedState: str | None = None

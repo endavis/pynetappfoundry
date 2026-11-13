@@ -10,7 +10,7 @@ class ResponseBody(BaseModel):
     clusterIp: str | None = None
     clusterName: str | None = None
     clusterUuid: str | None = None
-    isAdmin: bool
-    nodeModels: list[str]
+    isAdmin: bool | None = None
+    nodeModels: list[str] | None = None
     ontapVersion: str | None = None
-    serialNumber: str
+    serialNumber: str | None = None
