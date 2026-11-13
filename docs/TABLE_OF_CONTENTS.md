@@ -17,6 +17,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [CLI Reference](reference/cli.md) - Command-line interface documentation
 - [Compliance Checks](usage/compliance-checks.md) - Configure and run config-driven compliance checks against cached cluster metadata
 - [Configuration Schema Reference](reference/config-schema.md) - Complete reference for pynetappfoundry TOML configuration files
+- [Console Agent](usage/console-agent.md) - Manage on-prem working environments through a Console agent with ConsoleAgentClient
 - [DataSource](usage/data-source.md) - Unified entry point for reading cluster data from cache or live API
 - [Development Deployment Guide](deployment/development.md) - Guide for setting up and running the application in development environments
 - [Doit Tasks Reference](development/doit-tasks-reference.md) - Complete reference for all doit automation tasks
@@ -238,6 +239,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [CLI Reference](reference/cli.md) - Command-line interface documentation
 - [Compliance Checks](usage/compliance-checks.md) - Configure and run config-driven compliance checks against cached cluster metadata
 - [Configuration Schema Reference](reference/config-schema.md) - Complete reference for pynetappfoundry TOML configuration files
+- [Console Agent](usage/console-agent.md) - Manage on-prem working environments through a Console agent with ConsoleAgentClient
 - [Consumer Notes](template/consumer-notes.md) - Breaking changes and behaviour changes that arrive when a project syncs from the template.
 - [Cross-Agent Delegation Matrix](development/ai/cross-agent-delegation.md) - Commands that let any supported AI CLI hand a review task to any other; plan and implement are handled by the shared implement-issue skill instead
 - [DataSource](usage/data-source.md) - Unified entry point for reading cluster data from cache or live API

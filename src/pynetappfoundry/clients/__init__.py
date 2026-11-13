@@ -1,5 +1,6 @@
 """API client modules for ONTAP and Data Infrastructure Insights."""
 
+from pynetappfoundry.clients.console.agent import ConsoleAgentClient
 from pynetappfoundry.clients.dii.api import DIIAPIClient
 from pynetappfoundry.clients.ontap.api import ONTAPAPIClient
 from pynetappfoundry.clients.ontap.cli import ONTAPCLI, CLICommandError, CLITimeoutError
@@ -10,6 +11,7 @@ __all__ = [
     "APIWrapper",
     "CLICommandError",
     "CLITimeoutError",
+    "ConsoleAgentClient",
     "DIIAPIClient",
     "NextPageExtractor",
     "ONTAPAPIClient",

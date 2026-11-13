@@ -1,5 +1,6 @@
 """Console SaaS client modules."""
 
+from pynetappfoundry.clients.console.agent import ConsoleAgentClient
 from pynetappfoundry.clients.console.api import (
     ConsoleAPIClient,
     ConsoleServiceTokenMissingError,
@@ -10,6 +11,7 @@ from pynetappfoundry.clients.console.auth import ClientCredentialsTokenProvider,
 __all__ = [
     "ClientCredentialsTokenProvider",
     "ConsoleAPIClient",
+    "ConsoleAgentClient",
     "ConsoleAuthError",
     "ConsoleServiceTokenMissingError",
     "ConsoleUserTokenMissingError",

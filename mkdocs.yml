@@ -105,6 +105,7 @@ nav:
       - Basics: usage/basics.md
       - CLI Guide: usage/cli.md
       - ONTAP Access Patterns: usage/ontap-access-patterns.md
+      - Console Agent: usage/console-agent.md
       - DataSource: usage/data-source.md
       - Query Layer: usage/query-layer.md
       - Compliance Checks: usage/compliance-checks.md
