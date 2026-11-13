@@ -6,10 +6,12 @@ import contextlib
 import json
 import logging
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any
 from urllib.parse import urlencode
 
 import requests
+import yaml
 from requests.adapters import HTTPAdapter
 from tenacity import (
     RetryCallState,
@@ -24,6 +26,17 @@ from pynetappfoundry.core.models import PaginationConfig, RetryConfig, Validatio
 
 NextPageExtractor = Callable[[dict[str, Any]], str | None]
 """Callable that receives a JSON response dict and returns the next page URL or None."""
+
+
+def _load_spec(path: str | Path) -> dict[str, Any]:
+    """Load an OpenAPI spec, parsing ``.yaml``/``.yml`` as YAML and anything else as JSON."""
+    spec_path = Path(path)
+    with open(spec_path, encoding="utf-8") as f:
+        if spec_path.suffix.lower() in {".yaml", ".yml"}:
+            spec: dict[str, Any] = yaml.safe_load(f)
+            return spec
+        spec = json.load(f)
+        return spec
 
 
 def ontap_next_page_extractor(response: dict[str, Any]) -> str | None:
@@ -89,7 +102,8 @@ class APIWrapper:
         """Initialize the API wrapper.
 
         Args:
-            api_json_file: Path to the OpenAPI JSON specification file.
+            api_json_file: Path to the OpenAPI specification file. ``.yaml`` and
+                ``.yml`` files are parsed as YAML; any other extension as JSON.
             base_url: Base URL for the API.
             auth_header: Authentication headers to include.
             timeout: Request timeout in seconds.
@@ -107,8 +121,7 @@ class APIWrapper:
         self.log_prefix = f"[{name}:api]" if name else "[api]"
         self.verify_ssl = verify_ssl
         # Load the API spec
-        with open(api_json_file, encoding="utf-8") as f:
-            self.api_spec: dict[str, Any] = json.load(f)
+        self.api_spec: dict[str, Any] = _load_spec(api_json_file)
 
         self.base_api_path = base_api_path
         if not base_api_path:
