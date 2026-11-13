@@ -14,3 +14,20 @@ class Body(BaseModel):
         None,
         description="User role name. For example, use Role-1 for account admin or Role-2 for workspace admin.",
     )
+
+
+class RequestBody(BaseModel):
+    associatedEmail: str | None = Field(
+        None, description="User email to be associated with the account"
+    )
+    rolePublicId: str | None = Field(
+        None,
+        description="User role name. For example, use Role-1 for account admin or Role-2 for workspace admin.",
+    )
+
+
+class Response200Body(BaseModel):
+    userPublicId: str | None = None
+    userClientId: str | None = None
+    userRole: str | None = None
+    cloudManagerNotificationsOptIn: bool | None = None

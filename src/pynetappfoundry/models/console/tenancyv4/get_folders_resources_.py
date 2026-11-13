@@ -62,9 +62,9 @@ class TargetSchema(BaseModel):
 
 class TypeBxpLink(BaseModel):
     hints: Hints | None = None
-    href: str = Field(..., description="String describing a relative URI.")
-    rel: str = Field(
-        ...,
+    href: str | None = Field(None, description="String describing a relative URI.")
+    rel: str | None = Field(
+        None,
         description="The type of relationship for the link. Values are defined in the IANA Link Relationships registry, or an extension relationship type as specified in section 2.1.2 of RFC 8288.",
     )
     targetSchema: TargetSchema | None = Field(
@@ -82,8 +82,8 @@ class TypeBxpLink(BaseModel):
 
 
 class TypeBxpLabel(BaseModel):
-    name: str = Field(..., description="Name of the label.")
-    value: str = Field(..., description="Value of the label.")
+    name: str | None = Field(None, description="Name of the label.")
+    value: str | None = Field(None, description="Value of the label.")
 
 
 class TypeBxpMetadata(BaseModel):
@@ -107,5 +107,73 @@ class Tags(RootModel[dict[str, str]]):
 
 
 class InvalidParams(BaseModel):
-    name: str = Field(..., description="Name of the invalid parameter.")
-    reason: str = Field(..., description="Reason why the parameter is invalid.")
+    name: str | None = Field(None, description="Name of the invalid parameter.")
+    reason: str | None = Field(None, description="Reason why the parameter is invalid.")
+
+
+class Response200Body(BaseModel):
+    description: str | None = Field(
+        None,
+        description="JSON string containing the description of the resource. Defined values are: * Minimum length: 1 * Maximum length: 254 * This string is internally validated to prevent XSS, Unicode, directory traversal, and SQL-injection attacks.",
+    )
+    id: str | None = Field(
+        None,
+        description="Globally unique identifier of the resource. Defined values are:",
+    )
+    isSystem: str | None = Field(
+        None,
+        description="Specifies if an object is system generated. Defined values are:",
+    )
+    legacyId: str | None = Field(
+        None,
+        description="Unique identifier as understood by the previous version of this service.",
+    )
+    links: list[TypeBxpLink] | None = None
+    metadata: TypeBxpMetadata | None = Field(
+        None, description="Metadata associated with the resource."
+    )
+    name: str | None = Field(
+        None,
+        description="JSON string containing a name for the resource. Defined values are:",
+    )
+    ownerOrganizationId: str | None = Field(
+        None, description="JSON string containing the ID of the organization."
+    )
+    parentId: str | None = Field(
+        None, description="JSON string containing the ID of the hierarchy."
+    )
+    rawId: str | None = Field(
+        None,
+        description="JSON string containing the physical ID of the resource. It is the ID as defined by the system (a UUID, a string, or any other defined ID). For example, the UUID of an ONTAP cluster or the UUID of an application in Astra Control.",
+    )
+    resourceClass: str | None = Field(
+        None,
+        description="JSON string containing the resource class. This field is for Accounts (tenancy) compatibility support.",
+    )
+    resourceType: str | None = Field(
+        None,
+        description="JSON string containing the resource type. This should be one of the allowed resource types, which should be in the resource types collection. These resource types are defined by the service applications and the NetApp Console IAM system.",
+    )
+    state: str | None = Field(
+        None,
+        description="Represents the state of the resource. State of the resource can be reconciling, which indicates the resource is currently undergoing a reconciliation process or available, which indicates the resources is currently available. Defined values are:",
+    )
+    tags: list[Tags] | None = Field(
+        None,
+        description="JSON array of tags (name/value pairs) representing metadata for the resource.",
+    )
+    type: str | None = Field(None, description="Media type of the resource. Defined values are:")
+    version: str | None = Field(None, description="Version of the resource. Defined values are:")
+
+
+class Response404Body(BaseModel):
+    correlationId: str | None = Field(
+        None, description="Internal UUID representing the request or trace ID related."
+    )
+    detail: str | None = Field(None, description="Details about the problem.")
+    invalidParams: list[InvalidParams] | None = Field(
+        None, description="List of invalid parameters."
+    )
+    status: str | None = Field(None, description="HTTP error code related to the problem.")
+    title: str | None = Field(None, description="Title description of the problem.")
+    type: str | None = Field(None, description="Content-type of the object.")

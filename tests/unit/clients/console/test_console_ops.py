@@ -166,3 +166,41 @@ def test_expect_errors_name_operation_and_type_not_content() -> None:
     with pytest.raises(TypeError, match=r"op.*dict") as exc_info:
         expect_list({"k": "content-marker"}, "op")
     assert "content-marker" not in str(exc_info.value)
+
+
+# --- typed tenancy results (#1027) ------------------------------------------
+
+
+def test_tenancy_ops_return_generated_models() -> None:
+    from pynetappfoundry.models.console.tenancyv4 import get_folders_, get_organizations
+
+    ops = ConsoleTenancyOps(MagicMock(return_value={"id": "f-1", "name": "n"}))
+    assert isinstance(ops.get_folder("f-1"), get_folders_.Response200Body)
+
+    listing = {"items": [{"id": "o-1", "name": "n"}], "count": 1, "continue": "cursor-placeholder"}
+    result = ConsoleTenancyOps(MagicMock(return_value=listing)).list_organizations()
+    assert isinstance(result, get_organizations.Response200Body)
+    assert result.continue_ == "cursor-placeholder"
+    assert result.items is not None
+    assert isinstance(result.items[0], get_organizations.Resource10GetResponseBody)
+
+
+def test_tenancy_op_accepts_payload_without_type_or_version() -> None:
+    result = ConsoleTenancyOps(MagicMock(return_value={"id": "o-1"})).get_organization("o-1")
+    assert result.type is None
+    assert result.version is None
+
+
+def test_wrapper_still_requires_compact_fields(monkeypatch: pytest.MonkeyPatch) -> None:
+    from pydantic import ValidationError
+
+    client, (wrapper,) = _client(monkeypatch, user_token=SecretStr("usr"))
+    wrapper.call_endpoint.return_value = {"name": "n", "resourceClass": "ORG"}  # no id
+    with pytest.raises(ValidationError):
+        client.get_organization("o-1")
+
+
+def test_wrapper_list_organizations_null_items(monkeypatch: pytest.MonkeyPatch) -> None:
+    client, (wrapper,) = _client(monkeypatch, user_token=SecretStr("usr"))
+    wrapper.call_endpoint.return_value = {"items": None}
+    assert client.list_organizations() == []

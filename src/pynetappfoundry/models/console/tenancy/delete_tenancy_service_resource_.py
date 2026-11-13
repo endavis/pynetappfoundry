@@ -8,3 +8,7 @@ from pydantic import BaseModel
 
 class Body(BaseModel):
     resourceIdentifiers: list[str]
+
+
+class RequestBody(BaseModel):
+    resourceIdentifiers: list[str]

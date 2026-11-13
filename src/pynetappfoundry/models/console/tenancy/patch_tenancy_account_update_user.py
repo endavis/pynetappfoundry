@@ -8,3 +8,7 @@ from pydantic import BaseModel
 
 class Body(BaseModel):
     cloudManagerNotificationsOptIn: bool
+
+
+class RequestBody(BaseModel):
+    cloudManagerNotificationsOptIn: bool

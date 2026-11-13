@@ -50,18 +50,21 @@ _SERVICE_BASE_PATHS: dict[str, str] = {
     "tenancyv4": "/v1/management",
     "cvo": "/occm/api",
 }
-# The ``cvo`` docs document every body inline, so no model could be generated
-# for it. For these services the request and response bodies are moved into
-# named components (``<service>.<file>.RequestBody`` / ``ResponseBody``).
-_HOISTED_BODY_SERVICES = frozenset({"cvo"})
+# The ``cvo``, ``tenancy`` and ``tenancyv4`` docs document every body inline, so
+# no model could be generated for them (#1018, #1027). For these services the
+# request and response bodies are moved into named components
+# (``<service>.<file>.RequestBody`` / ``ResponseBody`` / ``Response<status>Body``).
+_HOISTED_BODY_SERVICES = frozenset({"cvo", "tenancy", "tenancyv4"})
 # Every ``cvo`` operation is addressed to one agent, named in this header. The
 # docs omit it, so it is synthesized.
 _AGENT_ID_SERVICES = frozenset({"cvo"})
 # The ``cvo`` docs mark fields Required that the live agent returns as ``null``
-# or omits (#1018). For these services every schema reachable from a response
-# has ``required`` renamed to ``x-documented-required``, so the docs' list is
-# kept but codegen makes the response fields optional.
-_LOOSE_RESPONSE_SERVICES = frozenset({"cvo"})
+# or omits (#1018); ``tenancyv4`` marks ``type``, ``version`` and ``items``
+# Required on responses that callers and mocks omit (#1027). For these services
+# every schema reachable from a response has ``required`` renamed to
+# ``x-documented-required``, so the docs' list is kept but codegen makes the
+# response fields optional.
+_LOOSE_RESPONSE_SERVICES = frozenset({"cvo", "tenancy", "tenancyv4"})
 _SCHEMA_REF_PREFIX = "#/components/schemas/"
 _AGENT_ID_HEADER: dict[str, Any] = {
     "name": "x-agent-id",

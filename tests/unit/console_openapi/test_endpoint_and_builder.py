@@ -384,3 +384,28 @@ def test_cvo_response_required_fixture_spec_validates() -> None:
     from openapi_spec_validator import validate
 
     validate(build_spec([_required_ep()], included_services=("cvo",)))
+
+
+# --- tenancy / tenancyv4: hoisted and loosened (#1027) ----------------------
+
+
+@pytest.mark.parametrize("service", ["tenancy", "tenancyv4"])
+def test_tenancy_bodies_are_hoisted(service: str) -> None:
+    spec = build_spec([_required_ep(service)], included_services=(service,))
+    schemas = spec["components"]["schemas"]
+    stem = "cvo_response_required"
+    assert f"{service}.{stem}.RequestBody" in schemas
+    assert f"{service}.{stem}.Response200Body" in schemas
+
+
+@pytest.mark.parametrize("service", ["tenancy", "tenancyv4"])
+def test_tenancy_responses_are_loosened_and_requests_keep_required(service: str) -> None:
+    spec = build_spec([_required_ep(service)], included_services=(service,))
+    for suffix in ("Response200Body", "Outer", "Inner", "Shared"):
+        schema = _schema_by_suffix(spec, f".{suffix}")
+        assert "required" not in schema, suffix
+        assert schema["x-documented-required"], suffix
+    for suffix in ("RequestBody", "ReqOnly"):
+        schema = _schema_by_suffix(spec, f".{suffix}")
+        assert schema["required"], suffix
+        assert "x-documented-required" not in schema, suffix

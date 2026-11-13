@@ -14,3 +14,8 @@ class Metadata(BaseModel):
 class Body(BaseModel):
     cloudId: str | None = None
     metadata: Metadata | None = None
+
+
+class RequestBody(BaseModel):
+    cloudId: str | None = None
+    metadata: Metadata | None = None

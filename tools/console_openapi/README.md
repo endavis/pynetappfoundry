@@ -65,14 +65,17 @@ Pass a full commit SHA rather than a branch name, so the lockfile's
    - 204 responses, and responses without a body table or example, omit
      `content`. A `Status: Default` block becomes the OpenAPI `default`
      response.
-   - For `cvo` only, inline request and response bodies move into named
-     components (`cvo.<file_stem>.RequestBody`, `ResponseBody` for the
-     `default` response, `Response<status>Body` otherwise), and every
-     operation gets a required, synthesized `x-agent-id` header parameter.
+   - For `tenancy`, `tenancyv4` and `cvo`, inline request and response bodies
+     move into named components (`<service>.<file_stem>.RequestBody`,
+     `ResponseBody` for the `default` response, `Response<status>Body`
+     otherwise). Only `cvo` operations get a required, synthesized
+     `x-agent-id` header parameter.
      The docs over-mark response fields as Required (the live agent returns
-     `null` or omits them), so every schema reachable from a `cvo` response
-     has `required` renamed to `x-documented-required` and its generated
-     fields are optional; request-only schemas keep `required` (#1018).
+     `null` or omits them; `tenancyv4` marks `type`, `version` and `items`
+     Required on responses callers omit), so every schema reachable from a
+     response of these services has `required` renamed to
+     `x-documented-required` and its generated fields are optional;
+     request-only schemas keep `required` (#1018, #1027).
    - Path parameters missing from the docs are synthesized in path-template
      order.
 4. **Validate** -- a final invariant pass enforces:
@@ -188,6 +191,9 @@ overlay, a header parameter other than the synthesized `x-agent-id`, an
 `x-token-type` on an agent operation, and a missing model module or class.
 Path parameters are always URL-encoded. The operation's `x-token-type` is
 written into the call as a literal; an operation with none accepts either token.
+A numeric success status maps to the `Response<status>Body` model (for example
+`Response200Body`), and `default` maps to `ResponseBody`; every tenancy operation
+therefore returns a generated model (#1027).
 
 ## Dependencies
 

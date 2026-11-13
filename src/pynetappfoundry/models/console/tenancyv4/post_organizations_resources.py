@@ -7,5 +7,76 @@ from pydantic import BaseModel, Field
 
 
 class InvalidParams(BaseModel):
-    name: str = Field(..., description="Name of the invalid parameter.")
-    reason: str = Field(..., description="Reason why the parameter is invalid.")
+    name: str | None = Field(None, description="Name of the invalid parameter.")
+    reason: str | None = Field(None, description="Reason why the parameter is invalid.")
+
+
+class RequestBody(BaseModel):
+    resources: list[str] = Field(..., description="JSON array of resource UUIDs.")
+    type: str = Field(..., description="Media type of the resource. Defined values are:")
+    version: str = Field(..., description="Version of the resource. Defined values are:")
+
+
+class Response400Body(BaseModel):
+    correlationId: str | None = Field(
+        None, description="Internal UUID representing the request or trace ID related."
+    )
+    detail: str | None = Field(None, description="Details about the problem.")
+    invalidParams: list[InvalidParams] | None = Field(
+        None, description="List of invalid parameters."
+    )
+    status: str | None = Field(None, description="HTTP error code related to the problem.")
+    title: str | None = Field(None, description="Title description of the problem.")
+    type: str | None = Field(None, description="Content-type of the object.")
+
+
+class Response401Body(BaseModel):
+    correlationId: str | None = Field(
+        None, description="Internal UUID representing the request or trace ID related."
+    )
+    detail: str | None = Field(None, description="Details about the problem.")
+    invalidParams: list[InvalidParams] | None = Field(
+        None, description="List of invalid parameters."
+    )
+    status: str | None = Field(None, description="HTTP error code related to the problem.")
+    title: str | None = Field(None, description="Title description of the problem.")
+    type: str | None = Field(None, description="Content-type of the object.")
+
+
+class Response403Body(BaseModel):
+    correlationId: str | None = Field(
+        None, description="Internal UUID representing the request or trace ID related."
+    )
+    detail: str | None = Field(None, description="Details about the problem.")
+    invalidParams: list[InvalidParams] | None = Field(
+        None, description="List of invalid parameters."
+    )
+    status: str | None = Field(None, description="HTTP error code related to the problem.")
+    title: str | None = Field(None, description="Title description of the problem.")
+    type: str | None = Field(None, description="Content-type of the object.")
+
+
+class Response404Body(BaseModel):
+    correlationId: str | None = Field(
+        None, description="Internal UUID representing the request or trace ID related."
+    )
+    detail: str | None = Field(None, description="Details about the problem.")
+    invalidParams: list[InvalidParams] | None = Field(
+        None, description="List of invalid parameters."
+    )
+    status: str | None = Field(None, description="HTTP error code related to the problem.")
+    title: str | None = Field(None, description="Title description of the problem.")
+    type: str | None = Field(None, description="Content-type of the object.")
+
+
+class Response409Body(BaseModel):
+    correlationId: str | None = Field(
+        None, description="Internal UUID representing the request or trace ID related."
+    )
+    detail: str | None = Field(None, description="Details about the problem.")
+    invalidParams: list[InvalidParams] | None = Field(
+        None, description="List of invalid parameters."
+    )
+    status: str | None = Field(None, description="HTTP error code related to the problem.")
+    title: str | None = Field(None, description="Title description of the problem.")
+    type: str | None = Field(None, description="Content-type of the object.")

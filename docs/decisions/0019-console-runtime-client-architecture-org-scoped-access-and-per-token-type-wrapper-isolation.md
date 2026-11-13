@@ -160,9 +160,9 @@ Amendment that settles the codegen choice left open in decision 3 and in the "Ne
 - **`x-token-type` is a literal.** It is baked into each call as the first dispatch argument (`"user"`, `"service"` or `None`). `ConsoleAPIClient._dispatch` maps it to `_require_user`, `_require_service` or `_route_any`, then calls `call_with_token`; `ConsoleAgentClient._dispatch` ignores it. The generator fails when an agent operation has an `x-token-type`, because the agent has one credential.
 - **`x-agent-id` and the base path.** The synthesized `x-agent-id` header parameter is dropped, since the agent's static `auth_header` supplies it. Any other header parameter is a codegen error, never silently dropped. `path_template` is the spec path as written, which already carries `/occm/api` or `/v1/management` (#1015).
 - **Defaults.** Every path parameter is URL-encoded with `quote(..., safe="")`. The tenancy methods did not encode before; an id containing `/` is now encoded instead of changing the path. Every non-GET operation is generated with `RetryConfig(enabled=False)` unless the manifest sets `retry = true`, which keeps add and delete from retrying on 5xx or timeout.
-- **Tenancy operations return `dict[str, Any]`.** `tenancy` and `tenancyv4` have no named `RequestBody` or `ResponseBody` models, because `_HOISTED_BODY_SERVICES` is `{"cvo"}`. Typed tenancy returns wait for phase 2.
+- **Tenancy operations return generated models (#1027).** `tenancy` and `tenancyv4` bodies are hoisted and their responses loosened (`x-documented-required`), so each operation returns its `Response200Body`. The hand-written `Organization`, `Folder` and `Project` cache types and the `ConsoleAPIClient` wrapper signatures are unchanged; the wrappers convert the generated result into them.
 - **Drift guards.** `doit console_client` regenerates the tree and `doit console_client_check` fails on any change under it; the `console-models` CI job runs the check. A unit test resolves the real manifest against the committed spec inside `doit check`.
-- **Follow-ups.** Phase 2 hoists and loosens the `tenancy` and `tenancyv4` bodies so tenancy operations return typed models. Phase 3 grows the manifest as consumers appear, auditing list cardinality for each operation. Both are filed as issues linked from #735: phase 2 is #1027 and phase 3 is #1028.
+- **Follow-ups.** Phase 2 (#1027, done) hoisted and loosened the `tenancy` and `tenancyv4` bodies so tenancy operations return typed models. Phase 3 (#1028) grows the manifest as consumers appear, auditing list cardinality for each operation. Both were filed as issues linked from #735.
 
 See [Console Agent](../usage/console-agent.md) and [Console OpenAPI Generator](../../tools/console_openapi/README.md#generated-client-surface).
 
@@ -193,6 +193,7 @@ See [Console Agent](../usage/console-agent.md) and [Console OpenAPI Generator](.
 - Issue #734: feat: extend ConsoleInfo with the cluster-scoped `connector` field (see "Console agent client (#1001)")
 - Issue #736: feat: add OAuth refresh-token grant flow to ConsoleAPIClient (see "User refresh-token grant (#736)")
 - Issue #735: feat: generate typed client surface for Console OpenAPI (see "Generated operation surface (#735)")
+- Issue #1027: feat: typed request/response models for generated tenancy Console ops (see "Generated operation surface (#735)")
 
 ## Related Documentation
 

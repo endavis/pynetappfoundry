@@ -14,3 +14,25 @@ class Body(BaseModel):
     resourceClass: str | None = None
     cloudId: str | None = None
     name: str | None = None
+
+
+class RequestBody(BaseModel):
+    workspacePublicId: str | None = None
+    agentId: str
+    resourceIdentifier: str | None = None
+    resourceType: str | None = None
+    resourceClass: str | None = None
+    cloudId: str | None = None
+    name: str | None = None
+
+
+class Response200Body(BaseModel):
+    accountPublicId: str | None = None
+    resourcePublicId: str | None = None
+    resourceIdentifier: str | None = None
+    resourceType: str | None = None
+    agentId: str | None = None
+    resourceClass: str | None = None
+    name: str | None = None
+    cloudId: str | None = None
+    agentIds: list[str] | None = None

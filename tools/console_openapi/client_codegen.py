@@ -145,7 +145,9 @@ def _model_ref(schema: Any, kind: str, models_root: Path) -> ModelRef | None:
     name = ref.removeprefix(_REF_PREFIX)
     head, _, cls = name.rpartition(".")
     package, _, stem = head.partition(".")
-    if cls != kind or not package or not stem:
+    # A numeric success status hoists as ``Response<status>Body`` (#1027).
+    named = cls == kind or (kind == "ResponseBody" and re.fullmatch(r"Response\d{3}Body", cls))
+    if not named or not package or not stem:
         raise CodegenError(f"Cannot map {ref!r} to a generated {kind} model")
     module = stem.replace("-", "_")
     file = models_root / package / f"{module}.py"

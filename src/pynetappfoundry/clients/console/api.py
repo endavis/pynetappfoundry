@@ -269,7 +269,7 @@ class ConsoleAPIClient:
         Returns:
             Compact Organization instance.
         """
-        return Organization.model_validate(self.ops.get_organization(organization_id))
+        return Organization.model_validate(self.ops.get_organization(organization_id).model_dump())
 
     def list_organizations(self) -> list[Organization]:
         """GET /v1/management/organizations (user or service token).
@@ -280,8 +280,8 @@ class ConsoleAPIClient:
         Returns:
             List of compact Organization instances.
         """
-        items: list[Any] = self.ops.list_organizations().get("items", [])
-        return [Organization.model_validate(item) for item in items]
+        items = self.ops.list_organizations().items or []
+        return [Organization.from_resource(item) for item in items]
 
     def get_folder(self, folder_id: str) -> Folder:
         """GET /v1/management/folders/{folder_id} (user or service token).
@@ -292,7 +292,7 @@ class ConsoleAPIClient:
         Returns:
             Compact Folder instance.
         """
-        return Folder.model_validate(self.ops.get_folder(folder_id))
+        return Folder.model_validate(self.ops.get_folder(folder_id).model_dump())
 
     def get_project(self, project_id: str) -> Project:
         """GET /v1/management/projects/{project_id} (user or service token).
@@ -303,7 +303,7 @@ class ConsoleAPIClient:
         Returns:
             Compact Project instance.
         """
-        return Project.model_validate(self.ops.get_project(project_id))
+        return Project.model_validate(self.ops.get_project(project_id).model_dump())
 
 
 __all__ = [

@@ -9,3 +9,8 @@ from pydantic import BaseModel
 class Body(BaseModel):
     agentId: str
     action: str
+
+
+class RequestBody(BaseModel):
+    agentId: str
+    action: str

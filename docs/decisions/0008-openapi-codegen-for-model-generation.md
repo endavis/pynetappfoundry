@@ -258,13 +258,16 @@ assumption holds for some APIs and not others.  The supported strategies are:
    ``clusterUuid``.  The parser covers ``tenancy``, ``tenancyv4`` and
    ``cvo``; #733 (an ``agentsMgmt`` parser) is superseded.  The parser maps
    ``Status: Default`` (used by the ``cvo`` pages) to the OpenAPI ``default``
-   response, and only ``cvo`` moves inline request and response bodies into named
-   components (``cvo.<file_stem>.RequestBody`` / ``ResponseBody``) so the
-   generated models get stable class names.  The ``cvo`` docs over-mark
+   response, and ``cvo``, ``tenancy`` and ``tenancyv4`` move inline request and
+   response bodies into named components (``<service>.<file_stem>.RequestBody``
+   / ``ResponseBody``) so the generated models get stable class names
+   (Issue #1027 added the two tenancy services).  The ``cvo`` docs over-mark
    response fields as Required (the live agent returns ``null`` or omits
-   them), so every schema reachable from a ``cvo`` response has ``required``
-   renamed to ``x-documented-required`` and its fields generate as optional;
-   request-only schemas keep ``required`` (Issue #1018).
+   them), and ``tenancyv4`` marks ``type``, ``version`` and ``items`` Required
+   on responses callers omit, so every schema reachable from a response of
+   these services has ``required`` renamed to ``x-documented-required`` and
+   its fields generate as optional; request-only schemas keep ``required``
+   (Issues #1018, #1027).
 
 Issue: #697
 
@@ -597,6 +600,7 @@ Issue: #901
 - Issue #1015: refactor: key Console spec operations by their full path from the host
 - Issue #1009: feat: parse the Console agent (cvo/) API docs into the Console OpenAPI spec
 - Issue #1018: fix: generated cvo response models reject live agent responses (docs over-mark fields as required)
+- Issue #1027: feat: typed request/response models for generated tenancy Console ops
 
 ## Related Documentation
 

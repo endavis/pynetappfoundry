@@ -118,19 +118,50 @@ def test_organization_response_rejects_missing_required_field() -> None:
 
     If a downstream generator change loses the OpenAPI ``required: [...]``
     list, every field becomes optional and validation silently passes for
-    any payload. This test hard-codes the expectation that ``id`` is
-    required on ``Resource10GetResponseBody``.
+    any payload. Response schemas are loosened on purpose (#1027), so the
+    expectation is hard-coded on a request body, which keeps ``required``.
     """
     from pydantic import ValidationError
 
+    from pynetappfoundry.models.console.tenancy.post_tenancy_account_service_account import (
+        RequestBody,
+    )
+
+    payload = {"serviceAccountName": "name", "rolePublicId": "role"}
+    assert RequestBody.model_validate(payload).serviceAccountName == "name"
+    payload.pop("rolePublicId")
+    with pytest.raises(ValidationError):
+        RequestBody.model_validate(payload)
+
+
+def test_organization_response_accepts_missing_documented_required_field() -> None:
+    """Tenancy responses are loosened (#1027): a missing ``id`` validates.
+
+    The docs' ``required`` list is kept in the spec as ``x-documented-required``.
+    """
+    import yaml
+
     from pynetappfoundry.models.console.tenancyv4.get_organizations import (
         Resource10GetResponseBody,
+        Response200Body,
     )
 
     payload = json.loads((FIXTURES / "organization_response.json").read_text())
     payload.pop("id")
-    with pytest.raises(ValidationError):
-        Resource10GetResponseBody.model_validate(payload)
+    assert Resource10GetResponseBody.model_validate(payload).id is None
+    assert Response200Body.model_validate({}).items is None
+
+    spec_path = (
+        Path(__file__).resolve().parents[4]
+        / "tools"
+        / "console_openapi"
+        / "generated"
+        / "console_openapi.yaml"
+    )
+    spec = yaml.safe_load(spec_path.read_text(encoding="utf-8"))
+    schema = spec["components"]["schemas"]["tenancyv4.get-organizations-.Response200Body"]
+    assert "required" not in schema
+    assert "x-documented-required" in schema
 
 
 # --- Hash map (RootModel) shape ---------------------------------------------

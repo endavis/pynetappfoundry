@@ -7,8 +7,8 @@ from pydantic import BaseModel, Field
 
 
 class TypeBxpLabel(BaseModel):
-    name: str = Field(..., description="Name of the label.")
-    value: str = Field(..., description="Value of the label.")
+    name: str | None = Field(None, description="Name of the label.")
+    value: str | None = Field(None, description="Value of the label.")
 
 
 class TypeBxpMetadata(BaseModel):
@@ -37,8 +37,8 @@ class User10PublicKeyGetResponseBody(BaseModel):
         None,
         description="The SHA-1 fingerprint of the public X.509 certificate or RSA key that was provided for the public key.",
     )
-    id: str = Field(
-        ...,
+    id: str | None = Field(
+        None,
         description="Globally unique identifier of the resource conforming to the UUIDv4 schema.",
     )
     keyType: str | None = Field(None, description="Type of the public key. Defined values are:")
@@ -46,5 +46,9 @@ class User10PublicKeyGetResponseBody(BaseModel):
         None, description="Metadata associated with the resource."
     )
     state: str | None = Field(None, description="The state of the public key. Defined values are:")
-    type: str = Field(..., description="Media type of the resource. Defined values are:")
-    version: str = Field(..., description="Version of the resource. Defined values are:")
+    type: str | None = Field(None, description="Media type of the resource. Defined values are:")
+    version: str | None = Field(None, description="Version of the resource. Defined values are:")
+
+
+class Response200Body(BaseModel):
+    items: list[User10PublicKeyGetResponseBody] | None = None

@@ -62,9 +62,9 @@ class TargetSchema(BaseModel):
 
 class TypeBxpLink(BaseModel):
     hints: Hints | None = None
-    href: str = Field(..., description="String describing a relative URI.")
-    rel: str = Field(
-        ...,
+    href: str | None = Field(None, description="String describing a relative URI.")
+    rel: str | None = Field(
+        None,
         description="The type of relationship for the link. Values are defined in the IANA Link Relationships registry, or an extension relationship type as specified in section 2.1.2 of RFC 8288.",
     )
     targetSchema: TargetSchema | None = Field(
@@ -82,8 +82,8 @@ class TypeBxpLink(BaseModel):
 
 
 class TypeBxpLabel(BaseModel):
-    name: str = Field(..., description="Name of the label.")
-    value: str = Field(..., description="Value of the label.")
+    name: str | None = Field(None, description="Name of the label.")
+    value: str | None = Field(None, description="Value of the label.")
 
 
 class TypeBxpMetadata(BaseModel):
@@ -115,8 +115,8 @@ class Partnershiptype10GetResponseBody(BaseModel):
         None,
         description="JSON string containing the description of the partnershipType Defined values are: * Minimum length: 1 * Maximum length: 254 * This string is internally validated to prevent XSS, Unicode, directory traversal, and SQL-injection attacks.",
     )
-    id: str = Field(
-        ...,
+    id: str | None = Field(
+        None,
         description="Globally unique identifier of the resource. Defined values are:",
     )
     isSystem: str | None = Field(
@@ -127,8 +127,8 @@ class Partnershiptype10GetResponseBody(BaseModel):
     metadata: TypeBxpMetadata | None = Field(
         None, description="Metadata associated with the resource."
     )
-    name: str = Field(
-        ...,
+    name: str | None = Field(
+        None,
         description='JSON string containing the partnershipType name (for example: "reseller", "distributor", ...). Defined values are:',
     )
     roles: list[str] | None = Field(
@@ -139,8 +139,8 @@ class Partnershiptype10GetResponseBody(BaseModel):
         None,
         description="JSON array of tags (name/value pairs) representing metadata for this partnershipType.",
     )
-    type: str = Field(..., description="Media type of the resource. Defined values are:")
-    version: str = Field(..., description="Version of the resource. Defined values are:")
+    type: str | None = Field(None, description="Media type of the resource. Defined values are:")
+    version: str | None = Field(None, description="Version of the resource. Defined values are:")
 
 
 class TypeBxpMetadataList(BaseModel):
@@ -153,3 +153,12 @@ class TypeBxpMetadataList(BaseModel):
     )
     modificationTimestamp: str | None = Field(None, description="Resource modification date.")
     modifiedBy: str | None = Field(None, description="UUID of the user who modified the resource.")
+
+
+class Response200Body(BaseModel):
+    continue_: str | None = Field(None, alias="continue")
+    count: int | None = None
+    items: list[Partnershiptype10GetResponseBody] | None = None
+    metadata: TypeBxpMetadataList | None = Field(
+        None, description="Metadata associated with a list of resources."
+    )

@@ -8,3 +8,7 @@ from pydantic import BaseModel
 
 class Body(BaseModel):
     associatedUserPublicId: str | None = None
+
+
+class RequestBody(BaseModel):
+    associatedUserPublicId: str | None = None

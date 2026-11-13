@@ -329,3 +329,47 @@ def test_real_manifest_resolves_against_committed_spec() -> None:
     files = cg.render_all(cg.load_manifest(), cg.load_spec())
     assert set(files) == {"__init__.py", "agent_ops.py", "tenancy_ops.py"}
     assert "def create_onprem_working_environment" in files["agent_ops.py"]
+    assert ") -> dict[str, Any]:" not in files["tenancy_ops.py"]
+
+
+def _status_spec(response_ref: str, request_ref: str | None = None) -> dict[str, Any]:
+    op = _op(
+        "thing_get",
+        responses={
+            "200": {"content": {"application/json": {"schema": _ref(response_ref)}}},
+        },
+    )
+    if request_ref:
+        op["requestBody"] = {"content": {"application/json": {"schema": _ref(request_ref)}}}
+    return {"paths": {"/v1/things": {"post": op}}}
+
+
+@pytest.fixture
+def tenancy_models(models_root: Path) -> Path:
+    (models_root / "tenancyv4").mkdir()
+    (models_root / "tenancyv4" / "get_thing.py").write_text(
+        "class Response200Body(BaseModel):\n    pass\n\nclass RequestBody(BaseModel):\n    pass\n",
+        encoding="utf-8",
+    )
+    return models_root
+
+
+def test_numeric_status_response_body_is_typed(tenancy_models: Path) -> None:
+    spec = _status_spec("tenancyv4.get-thing.Response200Body")
+    src = _render([_entry("thing_get")], tenancy_models, spec)["tenancy_ops.py"]
+    assert "-> get_thing.Response200Body" in src
+    assert "get_thing.Response200Body.model_validate(expect_object(" in src
+
+
+@pytest.mark.parametrize("cls", ["Response200Bodyx", "Foo", "Response20Body"])
+def test_unrecognized_response_class_raises(tenancy_models: Path, cls: str) -> None:
+    spec = _status_spec(f"tenancyv4.get-thing.{cls}")
+    with pytest.raises(cg.CodegenError, match="Cannot map"):
+        _render([_entry("thing_get")], tenancy_models, spec)
+
+
+def test_request_ref_to_numeric_status_class_raises(tenancy_models: Path) -> None:
+    ref = "tenancyv4.get-thing.Response200Body"
+    spec = _status_spec(ref, ref)
+    with pytest.raises(cg.CodegenError, match="Cannot map"):
+        _render([_entry("thing_get")], tenancy_models, spec)

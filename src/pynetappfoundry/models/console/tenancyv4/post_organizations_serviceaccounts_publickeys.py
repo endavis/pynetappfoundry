@@ -7,8 +7,8 @@ from pydantic import BaseModel, Field
 
 
 class TypeBxpLabel(BaseModel):
-    name: str = Field(..., description="Name of the label.")
-    value: str = Field(..., description="Value of the label.")
+    name: str | None = Field(None, description="Name of the label.")
+    value: str | None = Field(None, description="Value of the label.")
 
 
 class TypeBxpMetadata(BaseModel):
@@ -23,5 +23,108 @@ class TypeBxpMetadata(BaseModel):
 
 
 class InvalidParams(BaseModel):
-    name: str = Field(..., description="Name of the invalid parameter.")
-    reason: str = Field(..., description="Reason why the parameter is invalid.")
+    name: str | None = Field(None, description="Name of the invalid parameter.")
+    reason: str | None = Field(None, description="Reason why the parameter is invalid.")
+
+
+class RequestBody(BaseModel):
+    expirationTimestamp: str | None = Field(
+        None,
+        description="The date and time when the public key expires. This is only applicable when an RSA key is provided for the public key. When a certificate is provided, the value is set to the certificate's expiration timestamp.",
+    )
+    publicKey: str = Field(
+        ...,
+        description="Public X.509 certificate or RSA key in PEM format converted to a string with escaped new line characters (`\\n`).",
+    )
+    type: str = Field(..., description="Media type of the resource. Defined values are:")
+    version: str = Field(..., description="Version of the resource. Defined values are:")
+
+
+class Response201Body(BaseModel):
+    audience: str | None = Field(
+        None,
+        description="The value that must be included in the 'audience' claim of the private key JWT token.",
+    )
+    expirationTimestamp: str | None = Field(
+        None, description="The date and time when the public key expires."
+    )
+    fingerprint: str | None = Field(
+        None,
+        description="The SHA-1 fingerprint of the public X.509 certificate or RSA key that was provided for the public key.",
+    )
+    id: str | None = Field(
+        None,
+        description="Globally unique identifier of the resource conforming to the UUIDv4 schema.",
+    )
+    keyType: str | None = Field(None, description="Type of the public key. Defined values are:")
+    metadata: TypeBxpMetadata | None = Field(
+        None, description="Metadata associated with the resource."
+    )
+    state: str | None = Field(None, description="The state of the public key. Defined values are:")
+    type: str | None = Field(None, description="Media type of the resource. Defined values are:")
+    version: str | None = Field(None, description="Version of the resource. Defined values are:")
+
+
+class Response400Body(BaseModel):
+    correlationId: str | None = Field(
+        None, description="Internal UUID representing the request or trace ID related."
+    )
+    detail: str | None = Field(None, description="Details about the problem.")
+    invalidParams: list[InvalidParams] | None = Field(
+        None, description="List of invalid parameters."
+    )
+    status: str | None = Field(None, description="HTTP error code related to the problem.")
+    title: str | None = Field(None, description="Title description of the problem.")
+    type: str | None = Field(None, description="Content-type of the object.")
+
+
+class Response401Body(BaseModel):
+    correlationId: str | None = Field(
+        None, description="Internal UUID representing the request or trace ID related."
+    )
+    detail: str | None = Field(None, description="Details about the problem.")
+    invalidParams: list[InvalidParams] | None = Field(
+        None, description="List of invalid parameters."
+    )
+    status: str | None = Field(None, description="HTTP error code related to the problem.")
+    title: str | None = Field(None, description="Title description of the problem.")
+    type: str | None = Field(None, description="Content-type of the object.")
+
+
+class Response403Body(BaseModel):
+    correlationId: str | None = Field(
+        None, description="Internal UUID representing the request or trace ID related."
+    )
+    detail: str | None = Field(None, description="Details about the problem.")
+    invalidParams: list[InvalidParams] | None = Field(
+        None, description="List of invalid parameters."
+    )
+    status: str | None = Field(None, description="HTTP error code related to the problem.")
+    title: str | None = Field(None, description="Title description of the problem.")
+    type: str | None = Field(None, description="Content-type of the object.")
+
+
+class Response404Body(BaseModel):
+    correlationId: str | None = Field(
+        None, description="Internal UUID representing the request or trace ID related."
+    )
+    detail: str | None = Field(None, description="Details about the problem.")
+    invalidParams: list[InvalidParams] | None = Field(
+        None, description="List of invalid parameters."
+    )
+    status: str | None = Field(None, description="HTTP error code related to the problem.")
+    title: str | None = Field(None, description="Title description of the problem.")
+    type: str | None = Field(None, description="Content-type of the object.")
+
+
+class Response409Body(BaseModel):
+    correlationId: str | None = Field(
+        None, description="Internal UUID representing the request or trace ID related."
+    )
+    detail: str | None = Field(None, description="Details about the problem.")
+    invalidParams: list[InvalidParams] | None = Field(
+        None, description="List of invalid parameters."
+    )
+    status: str | None = Field(None, description="HTTP error code related to the problem.")
+    title: str | None = Field(None, description="Title description of the problem.")
+    type: str | None = Field(None, description="Content-type of the object.")
