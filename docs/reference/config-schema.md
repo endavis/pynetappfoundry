@@ -212,9 +212,9 @@ timeout = 30.0                               # Optional: Request timeout in seco
 | `client_secret` | string | No | `null` | OAuth client secret of a service account. Held as a secret value and never logged |
 | `token_endpoint` | string | No | `"https://netapp-cloud-account.auth0.com/oauth/token"` | Token endpoint for the client-credentials exchange. Only valid with client credentials |
 | `audience` | string | No | `"https://api.cloud.netapp.com"` | Audience requested for the token. Only valid with client credentials |
-| `base_url` | string | Yes | - | Host (and any proxy prefix) for the Console API. The path of each operation comes from the spec's per-operation `servers` entry and is appended to it |
+| `base_url` | string | Yes | - | Host (and any proxy prefix) for the Console API. The bundled spec keys each operation by its full path (for example `/v1/management/organizations`), which is appended to it |
 | `org_id` | string | No | `null` | Default organization ID. Can be overridden per `Console(config, org_id=...)` call |
-| `base_api_path` | string | No | `"/"` | Fallback path prefix, used only for operations whose spec entry declares no `servers`. A path declared by the spec replaces it |
+| `base_api_path` | string | No | `"/"` | Fallback path prefix, used only for operations whose spec entry declares no `servers`. It has no effect with the bundled Console spec, whose operations all carry a bare-host server |
 | `timeout` | float | No | `30.0` | HTTP request timeout in seconds |
 
 Validation rules (error messages name fields, never values):

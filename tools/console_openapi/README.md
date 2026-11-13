@@ -69,21 +69,26 @@ The fetcher uses the system `git` binary and caches a shallow clone under
      parameter,
    - every `operationId` is unique,
    - no `Authorization` header parameter survives, and
-   - duplicate `verb + path` combinations either match exactly (deduped) or
-     raise.
+   - duplicate `verb + full path` combinations either match exactly (deduped)
+     or raise.
    `openapi-spec-validator` runs against the final document.
 
 ## Server URLs
 
-The generated spec includes per-operation `servers` blocks because the two
-services live at different base URLs:
+Every path key in the generated spec is the full path from the host: the
+builder adds each service's base path in front of the documented path. The
+base paths are recorded once in `info.x-service-base-paths`, and every
+operation carries one bare-host server, `https://api.bluexp.netapp.com`.
 
-| Service     | Base URL                                          | Notes                                                |
-| :---------- | :------------------------------------------------ | :--------------------------------------------------- |
-| `tenancy`   | `https://api.bluexp.netapp.com`                   | v3 paths already include the `/tenancy/...` segment. |
-| `tenancyv4` | `https://api.bluexp.netapp.com/v1/management`     | Discovered via `tenancyServiceInformation.urlV4`.    |
+| Service     | Base path        | Notes                                                |
+| :---------- | :--------------- | :--------------------------------------------------- |
+| `tenancy`   | (empty)          | v3 paths already include the `/tenancy/...` segment. |
+| `tenancyv4` | `/v1/management` | Discovered via `tenancyServiceInformation.urlV4`.    |
 
-These were verified against the live SaaS using a user JWT.
+These were verified against the live SaaS using a user JWT. The `build`
+command refuses a `--service` with no entry in `_SERVICE_BASE_PATHS`
+(`tools/console_openapi/openapi/builder.py`), so a new service must declare its
+base path first.
 
 ### Dynamic discovery
 

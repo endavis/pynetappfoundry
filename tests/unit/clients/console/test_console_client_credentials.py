@@ -147,7 +147,7 @@ class TestRouting:
         assert isinstance(org, Organization)
         service.call_endpoint.assert_called_once_with(
             method="GET",
-            path_template="/organizations/{organization_id}",
+            path_template="/v1/management/organizations/{organization_id}",
             path_params={"organization_id": "org-1"},
             additional_headers={"Authorization": "Bearer tok-1"},
         )
@@ -165,7 +165,9 @@ class TestRouting:
         orgs = client.list_organizations()
 
         assert len(orgs) == 1
-        user.call_endpoint.assert_called_once_with(method="GET", path_template="/organizations")
+        user.call_endpoint.assert_called_once_with(
+            method="GET", path_template="/v1/management/organizations"
+        )
         _svc(client).call_endpoint.assert_not_called()
 
     def test_static_service_token_only_uses_service_without_headers(
@@ -178,7 +180,7 @@ class TestRouting:
         client.get_organization("org-1")
         service.call_endpoint.assert_called_once_with(
             method="GET",
-            path_template="/organizations/{organization_id}",
+            path_template="/v1/management/organizations/{organization_id}",
             path_params={"organization_id": "org-1"},
         )
 

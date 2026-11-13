@@ -13,7 +13,7 @@ from tools.console_openapi import __version__
 from tools.console_openapi.fetcher import DEFAULT_REPO, fetch
 from tools.console_openapi.lockfile import Lockfile
 from tools.console_openapi.models import ParsedEndpoint
-from tools.console_openapi.openapi.builder import build_spec
+from tools.console_openapi.openapi.builder import _SERVICE_BASE_PATHS, build_spec
 from tools.console_openapi.walker import parse_service
 
 DEFAULT_SERVICES: tuple[str, ...] = ("tenancy", "tenancyv4")
@@ -66,6 +66,13 @@ def build(
     repo: str,
 ) -> None:
     """Fetch sources, parse, build the OpenAPI document, and write it to disk."""
+    unmapped = [s for s in services if s not in _SERVICE_BASE_PATHS]
+    if unmapped:
+        raise click.BadParameter(
+            f"service(s) {', '.join(unmapped)} have no entry in _SERVICE_BASE_PATHS "
+            "(tools/console_openapi/openapi/builder.py); declare the service's base path first.",
+            param_hint="--service",
+        )
     fetched = fetch(ref, repo_url=repo)
     click.echo(f"Fetched {repo} @ {fetched.resolved_sha[:12]} ({ref})")
 

@@ -121,6 +121,7 @@ Amendment for URL building.
 - **Problem.** The Console spec routes operations through two servers (`https://api.bluexp.netapp.com/v1/management` and the bare host) using per-operation `servers`. `APIWrapper` built `base_url + base_api_path + path`, so `base_api_path = '/'` produced `//organizations` and a 404.
 - **Decision.** `APIWrapper` takes an opt-in `use_operation_servers` flag, and `ConsoleAPIClient` sets it on every wrapper. The path of the operation's (else its path item's) first `servers` entry replaces `base_api_path`; the host always comes from the configured `base_url`. The spec's top-level `servers` are never used. Operations without `servers` fall back to `base_api_path` with its trailing slash removed.
 - **Why opt-in.** `APIWrapper` is shared with ONTAP and DII, whose URL building stays unchanged.
+- **Since #1015.** The Console spec keys every operation by its full path from the host (for example `/v1/management/organizations`), and every operation's server is the bare host, so the server path is empty. The mechanism stays general, but `base_api_path` no longer affects Console URLs: `'/'` and the old `'/v1/management'` workaround both produce `.../v1/management/organizations`.
 
 Configuration is described in [Config schema: consoleapi.toml](../reference/config-schema.md#consoleapitoml).
 
@@ -146,6 +147,7 @@ Configuration is described in [Config schema: consoleapi.toml](../reference/conf
 - Issue #713: feat: wire Console SaaS auth and runtime client (the v1 implementation this ADR governs)
 - Issue #1000: feat: add an OAuth client-credentials grant to the Console API client (see the amendment above)
 - Issue #1012: fix: APIWrapper ignores per-operation servers (see "Per-operation servers (#1012)")
+- Issue #1015: refactor: key Console spec operations by their full path from the host (see "Per-operation servers (#1012)")
 
 ## Related Documentation
 

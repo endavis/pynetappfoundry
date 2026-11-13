@@ -162,15 +162,15 @@ class TestHandAuthoredOperations:
 
         wrapper_instance.call_endpoint.assert_called_once_with(
             method="GET",
-            path_template="/organizations/{organization_id}",
+            path_template="/v1/management/organizations/{organization_id}",
             path_params={"organization_id": "org-abc"},
         )
 
     @pytest.mark.parametrize(
         ("method", "model", "path_template", "param"),
         [
-            ("get_folder", Folder, "/folders/{folder_id}", "folder_id"),
-            ("get_project", Project, "/projects/{project_id}", "project_id"),
+            ("get_folder", Folder, "/v1/management/folders/{folder_id}", "folder_id"),
+            ("get_project", Project, "/v1/management/projects/{project_id}", "project_id"),
         ],
     )
     def test_get_folder_and_project_call_user_wrapper(
@@ -246,7 +246,7 @@ class TestHandAuthoredOperations:
 
         wrapper_instance.call_endpoint.assert_called_once_with(
             method="GET",
-            path_template="/organizations",
+            path_template="/v1/management/organizations",
         )
 
     def test_list_organizations_handles_empty_response(
@@ -352,7 +352,7 @@ class TestConsoleOperationServers:
     ) -> None:
         wrapper = _real_client(base_settings, tmp_path)._require_user()
         path = wrapper._format_path(
-            "/organizations/{organization_id}", {"organization_id": "abc"}, "GET"
+            "/v1/management/organizations/{organization_id}", {"organization_id": "abc"}, "GET"
         )
         assert path == "/v1/management/organizations/abc"
 
@@ -384,3 +384,43 @@ class TestConsoleOperationServers:
             client.list_organizations()
 
         assert mocked.call_args.kwargs["url"] == f"{legacy}/v1/management/organizations"
+
+    def test_tenancyv4_keys_are_full_paths(
+        self, base_settings: ConsoleAPISettings, tmp_path: Path
+    ) -> None:
+        wrapper = _real_client(base_settings, tmp_path)._require_user()
+        tenancyv4_paths = [
+            path
+            for path, item in wrapper.api_spec["paths"].items()
+            for op in item.values()
+            if isinstance(op, dict) and op.get("tags") == ["tenancyv4"]
+        ]
+        assert tenancyv4_paths
+        assert all(p.startswith("/v1/management/") for p in tenancyv4_paths)
+
+    def test_every_operation_first_server_is_bare_host(
+        self, base_settings: ConsoleAPISettings, tmp_path: Path
+    ) -> None:
+        wrapper = _real_client(base_settings, tmp_path)._require_user()
+        urls = [
+            op["servers"][0]["url"]
+            for item in wrapper.api_spec["paths"].values()
+            for op in item.values()
+            if isinstance(op, dict)
+        ]
+        assert urls
+        assert set(urls) == {_HOST}
+
+    def test_legacy_base_api_path_does_not_double_prefix(self, tmp_path: Path) -> None:
+        settings = ConsoleAPISettings(
+            user_token="user-jwt", base_url=_HOST, base_api_path="/v1/management", timeout=15.0
+        )
+        client = _real_client(settings, tmp_path)
+        wrapper = client._require_user()
+        response = MagicMock()
+        response.status_code = 200
+        response.json.return_value = {"items": []}
+        with patch.object(wrapper, "_execute_request_with_retry", return_value=response) as mocked:
+            client.list_organizations()
+
+        assert mocked.call_args.kwargs["url"] == f"{_HOST}/v1/management/organizations"

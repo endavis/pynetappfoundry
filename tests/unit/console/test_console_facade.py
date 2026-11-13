@@ -109,15 +109,15 @@ class TestConsoleDelegatesToClient:
         assert org.id == "org-default"
         wrapper_instance.call_endpoint.assert_called_once_with(
             method="GET",
-            path_template="/organizations/{organization_id}",
+            path_template="/v1/management/organizations/{organization_id}",
             path_params={"organization_id": "org-default"},
         )
 
     @pytest.mark.parametrize(
         ("method", "model", "path_template", "param"),
         [
-            ("get_folder", Folder, "/folders/{folder_id}", "folder_id"),
-            ("get_project", Project, "/projects/{project_id}", "project_id"),
+            ("get_folder", Folder, "/v1/management/folders/{folder_id}", "folder_id"),
+            ("get_project", Project, "/v1/management/projects/{project_id}", "project_id"),
         ],
     )
     def test_get_folder_and_project_delegate(
