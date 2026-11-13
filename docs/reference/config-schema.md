@@ -57,6 +57,30 @@ config/
 
 ## Settings Files
 
+### SOPS-encrypted values
+
+These settings fields accept a `SOPS[...]` value instead of plaintext:
+
+| File | Section | Fields |
+|------|---------|--------|
+| `settings.toml` | `[SMTP]` | `password` |
+| `diiapi.toml` | `[general]` | `api_ro_token` |
+| `consoleapi.toml` | `[general]` | `client_secret`, `service_token`, `user_token` |
+
+Values are decrypted when the section is read, at most once per `Config` instance (the plaintext
+is kept in memory only, never written back to the settings). Plaintext values still work. A value
+that cannot be decrypted raises a `ConfigurationError` naming the field, file and section, for
+example `Failed to decrypt the SOPS value of 'password' in settings.toml [SMTP]: ...`; it never
+contains the ciphertext or the `sops` error text. `nf config validate` reports such a section as
+Invalid, not as "Not configured". `nf config show` prints the ciphertext (masked by default).
+
+Produce a value with `nf config encrypt-value`, which prompts for the secret (hidden input) and
+prints only the `SOPS[...]` string. It needs `sops` and an age key (`nf config init-sops`).
+
+These fields are `SecretStr` in the settings models (`SMTPSettings.password`,
+`DIIAPISettings.api_ro_token`, `ConsoleAPISettings.service_token` / `user_token`): read the value
+with `.get_secret_value()`.
+
 ### settings.toml
 
 General application settings. Loaded into `config.settings["settings"]`.
@@ -98,7 +122,7 @@ mailto = "netapp-team@example.com"          # Required: Recipient email address
 | `server` | string | Yes | - | SMTP server hostname |
 | `port` | integer | No | `25` | SMTP server port |
 | `user` | string | No | `""` | SMTP username for authentication |
-| `password` | string | No | `""` | SMTP password for authentication |
+| `password` | SecretStr | No | `""` | SMTP password for authentication. SOPS value accepted |
 | `auth` | string | No | `"False"` | Enable SMTP authentication (`"True"` or `"False"`) |
 
 #### Licensing Settings Fields
@@ -182,7 +206,7 @@ base_api_path = "/rest/v1"                 # Optional: Base API path (default: "
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `api_ro_token` | string | Yes | - | Read-only API token for DII authentication |
+| `api_ro_token` | SecretStr | Yes | - | Read-only API token for DII authentication. SOPS value accepted |
 | `base_url` | string | Yes | - | Base URL for your DII tenant |
 | `base_api_path` | string | No | `"/rest/v1"` | Base path for DII REST API endpoints |
 
@@ -217,10 +241,10 @@ timeout = 30.0                               # Optional: Request timeout in seco
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `user_token` | string | No | `null` | User JWT obtained from the BlueXP UI |
-| `service_token` | string | No | `null` | Static service-account JWT. Lazy-validated: raises `ConsoleServiceTokenMissingError` if absent when a service-typed endpoint is called |
+| `user_token` | SecretStr | No | `null` | User JWT obtained from the BlueXP UI. SOPS value accepted |
+| `service_token` | SecretStr | No | `null` | Static service-account JWT. SOPS value accepted. Lazy-validated: raises `ConsoleServiceTokenMissingError` if absent when a service-typed endpoint is called |
 | `client_id` | string | No | `null` | OAuth client ID of a service account. Set together with `client_secret` |
-| `client_secret` | string | No | `null` | OAuth client secret of a service account. Held as a secret value and never logged |
+| `client_secret` | string | No | `null` | OAuth client secret of a service account. Held as a secret value and never logged. SOPS value accepted |
 | `refresh_token` | secret string | No | `null` | Not read from `consoleapi.toml`: it is resolved from `users.toml` `[console]` (`enc`, SOPS-decrypted, overridable by `NF_CONSOLE_PASSWORD`). Backs the user slot. Held as a secret value and never logged |
 | `user_client_id` | string | No | `"Mu0V1ywgYteI6w1MbD15fKfVIUrNXGWC"` | OAuth client ID the refresh token is exchanged with. The default is NetApp's documented public constant. Only valid with a refresh token |
 | `token_endpoint` | string | No | `"https://netapp-cloud-account.auth0.com/oauth/token"` | Token endpoint for the client-credentials and refresh-token exchanges. Only valid with client credentials or a refresh token |

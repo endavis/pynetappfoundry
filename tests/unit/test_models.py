@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 import pytest
+from pydantic import SecretStr
 
 from pynetappfoundry.core.models import (
     AIQUMConfig,
@@ -205,7 +206,7 @@ class TestSMTPSettings:
         smtp = SMTPSettings(server="smtp.example.com")
         assert smtp.server == "smtp.example.com"
         assert smtp.user == ""
-        assert smtp.password == ""
+        assert smtp.password.get_secret_value() == ""
         assert smtp.auth == "False"
         assert smtp.port == 25
 
@@ -214,7 +215,7 @@ class TestSMTPSettings:
         smtp = SMTPSettings(
             server="smtp.example.com",
             user="smtp_user",
-            password="smtp_pass",
+            password=SecretStr("smtp_pass"),
             auth="True",
             port=587,
         )
@@ -280,17 +281,17 @@ class TestDIIAPISettings:
     def test_required_fields(self) -> None:
         """Test DII API required fields."""
         settings = DIIAPISettings(
-            api_ro_token="token123",
+            api_ro_token=SecretStr("token123"),
             base_url="https://client.cloudinsights.netapp.com",
         )
-        assert settings.api_ro_token == "token123"
+        assert settings.api_ro_token.get_secret_value() == "token123"
         assert settings.base_url == "https://client.cloudinsights.netapp.com"
         assert settings.base_api_path == "/rest/v1"
 
     def test_custom_base_path(self) -> None:
         """Test custom base API path."""
         settings = DIIAPISettings(
-            api_ro_token="token123",
+            api_ro_token=SecretStr("token123"),
             base_url="https://client.cloudinsights.netapp.com",
             base_api_path="/rest/v2",
         )

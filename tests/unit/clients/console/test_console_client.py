@@ -9,6 +9,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 import yaml
+from pydantic import SecretStr
 
 from pynetappfoundry.clients.console.api import (
     ConsoleAPIClient,
@@ -23,7 +24,7 @@ from pynetappfoundry.models.console_types import Folder, Organization, Project
 def base_settings() -> ConsoleAPISettings:
     """Settings with only the user_token populated (service_token absent)."""
     return ConsoleAPISettings(
-        user_token="user-jwt",
+        user_token=SecretStr("user-jwt"),
         base_url="https://api.bluexp.netapp.com",
         base_api_path="/",
         timeout=15.0,
@@ -34,8 +35,8 @@ def base_settings() -> ConsoleAPISettings:
 def both_tokens_settings() -> ConsoleAPISettings:
     """Settings with both user_token and service_token populated."""
     return ConsoleAPISettings(
-        user_token="user-jwt",
-        service_token="service-jwt",
+        user_token=SecretStr("user-jwt"),
+        service_token=SecretStr("service-jwt"),
         base_url="https://api.bluexp.netapp.com",
         base_api_path="/",
         timeout=15.0,
@@ -328,7 +329,7 @@ class TestConsoleOperationServers:
         wrapper_mock = MagicMock()
         monkeypatch.setattr("pynetappfoundry.clients.console.api.APIWrapper", wrapper_mock)
         settings = ConsoleAPISettings(
-            service_token="service-jwt", base_url=_HOST, base_api_path="/", timeout=15.0
+            service_token=SecretStr("service-jwt"), base_url=_HOST, base_api_path="/", timeout=15.0
         )
         ConsoleAPIClient(_make_config(settings, tmp_path))
 
@@ -373,7 +374,7 @@ class TestConsoleOperationServers:
     def test_legacy_hostname_as_base_url_is_kept(self, tmp_path: Path) -> None:
         legacy = "https://cloudmanager.cloud.netapp.com"
         settings = ConsoleAPISettings(
-            user_token="user-jwt", base_url=legacy, base_api_path="/", timeout=15.0
+            user_token=SecretStr("user-jwt"), base_url=legacy, base_api_path="/", timeout=15.0
         )
         client = _real_client(settings, tmp_path)
         wrapper = client._require_user()
@@ -413,7 +414,10 @@ class TestConsoleOperationServers:
 
     def test_legacy_base_api_path_does_not_double_prefix(self, tmp_path: Path) -> None:
         settings = ConsoleAPISettings(
-            user_token="user-jwt", base_url=_HOST, base_api_path="/v1/management", timeout=15.0
+            user_token=SecretStr("user-jwt"),
+            base_url=_HOST,
+            base_api_path="/v1/management",
+            timeout=15.0,
         )
         client = _real_client(settings, tmp_path)
         wrapper = client._require_user()

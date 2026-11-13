@@ -89,7 +89,8 @@ def test_no_console_entry_leaves_token_none(tmp_path: Path) -> None:
     settings = _config(config_dir).get_console_api_settings()
 
     assert settings.refresh_token is None
-    assert settings.user_token == "user-jwt"
+    assert settings.user_token is not None
+    assert settings.user_token.get_secret_value() == "user-jwt"
 
 
 def test_refresh_token_in_consoleapi_toml_rejected_without_value(tmp_path: Path) -> None:

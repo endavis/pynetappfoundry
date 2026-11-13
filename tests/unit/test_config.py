@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import cast
 
 import pytest
+from pydantic import SecretStr
 
 from pynetappfoundry.core.cluster_entry import ClusterEntry
 from pynetappfoundry.core.config import Config, ConfigurationError, resolve_tls_verify
@@ -556,7 +557,7 @@ auth = "True"
             assert result.server == "smtp.example.com"
             assert result.port == 587
             assert result.user == "smtp_user"
-            assert result.password == "smtp_pass"
+            assert result.password.get_secret_value() == "smtp_pass"
             assert result.auth == "True"
         finally:
             os.chdir(original_cwd)
@@ -677,7 +678,7 @@ base_api_path = "/rest/v1"
             )
             result = config.get_dii_api_settings()
             assert isinstance(result, DIIAPISettings)
-            assert result.api_ro_token == "test_token"
+            assert result.api_ro_token.get_secret_value() == "test_token"
             assert result.base_url == "https://dii.example.com"
             assert result.base_api_path == "/rest/v1"
         finally:
@@ -740,8 +741,10 @@ timeout = 15.0
             )
             result = config.get_console_api_settings()
             assert isinstance(result, ConsoleAPISettings)
-            assert result.user_token == "user-jwt"
-            assert result.service_token == "service-jwt"
+            assert result.user_token is not None
+            assert result.user_token.get_secret_value() == "user-jwt"
+            assert result.service_token is not None
+            assert result.service_token.get_secret_value() == "service-jwt"
             assert result.base_url == "https://api.bluexp.netapp.com"
             assert result.org_id == "org-abc"
             assert result.timeout == 15.0
@@ -1302,12 +1305,14 @@ class TestConsoleApiSettingsAgentIds:
     """#734: the optional ``agent_ids`` setting."""
 
     def test_defaults_to_empty_list(self) -> None:
-        settings = ConsoleAPISettings(user_token="user-jwt", base_url="https://example.test")
+        settings = ConsoleAPISettings(
+            user_token=SecretStr("user-jwt"), base_url="https://example.test"
+        )
         assert settings.agent_ids == []
 
     def test_list_of_strings_loads(self) -> None:
         settings = ConsoleAPISettings(
-            user_token="user-jwt",
+            user_token=SecretStr("user-jwt"),
             base_url="https://example.test",
             agent_ids=["agent-placeholder-0001clients", "agent-placeholder-0002clients"],
         )

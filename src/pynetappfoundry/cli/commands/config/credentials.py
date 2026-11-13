@@ -23,6 +23,24 @@ from pynetappfoundry.utils.sops import (
 console = Console()
 
 
+def _load_public_key() -> str:
+    """Read the age public key from the configured key file.
+
+    Returns:
+        The age public key.
+
+    Raises:
+        CliError: If the age key file does not exist.
+    """
+    key_path = get_age_key_path()
+    if not key_path.exists():
+        raise CliError(
+            f"Age key not found at {key_path}",
+            hints=["Run 'nf config init-sops' to generate a keypair."],
+        )
+    return get_public_key_from_file(key_path)
+
+
 def _encrypt_password(password: str, no_encrypt: bool, ctx: click.Context) -> str:
     """Encrypt password if SOPS is available.
 
@@ -45,14 +63,7 @@ def _encrypt_password(password: str, no_encrypt: bool, ctx: click.Context) -> st
         return password
 
     try:
-        key_path = get_age_key_path()
-        if not key_path.exists():
-            raise CliError(
-                f"Age key not found at {key_path}",
-                hints=["Run 'nf config init-sops' to generate a keypair."],
-            )
-
-        public_key = get_public_key_from_file(key_path)
+        public_key = _load_public_key()
         console.print(f"Encrypting with key: {escape(public_key[:20])}...")
 
         encrypted = encrypt_value(password, public_key)
@@ -63,6 +74,45 @@ def _encrypt_password(password: str, no_encrypt: bool, ctx: click.Context) -> st
         raise CliError(str(e)) from e
     except SOPSError as e:
         raise CliError(f"Encryption failed: {e}") from e
+
+
+@click.command("encrypt-value")
+@click.option(
+    "--value",
+    prompt=True,
+    hide_input=True,
+    confirmation_prompt=True,
+    help="Value to encrypt (will prompt, hidden, if not provided).",
+)
+def encrypt_value_cmd(value: str) -> None:
+    """Encrypt a value into a SOPS[...] string for a settings file.
+
+    Prints only the SOPS[...] value to stdout (status messages go to stderr), so the
+    output pipes cleanly. Paste it into settings.toml [SMTP] password, diiapi.toml
+    api_ro_token, or consoleapi.toml client_secret, service_token or user_token.
+
+    Examples:
+
+        nf config encrypt-value
+
+        nf config encrypt-value > value.txt
+    """
+    if not is_sops_installed():
+        raise CliError(
+            "SOPS is not installed; cannot encrypt the value.",
+            hints=["Install sops, then run 'nf config init-sops' to set up encryption."],
+        )
+
+    try:
+        public_key = _load_public_key()
+        encrypted = encrypt_value(value, public_key)
+    except SOPSNotInstalledError as e:
+        raise CliError(str(e)) from e
+    except SOPSError as e:
+        raise CliError(f"Encryption failed: {e}") from e
+
+    click.echo("Value encrypted successfully.", err=True)
+    click.echo(encrypted)
 
 
 @click.command("set-credential")

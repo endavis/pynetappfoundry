@@ -1,4 +1,5 @@
 [general]
 api_ro_token = 'some_ro_token_from_dii'
+# api_ro_token = 'SOPS[...]'  # encrypted value, produced by: nf config encrypt-value
 base_url="https://your-client.cloudinsights.netapp.com"
 base_api_path="/rest/v1"

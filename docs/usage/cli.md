@@ -93,7 +93,7 @@ src/pynetappfoundry/cli/
 └── commands/
     ├── cache/         # check, clear, compliance, history, inspect, query, refresh, schema, show, status
     ├── cifs/          # session
-    ├── config/        # init-sops, set-credential, show, validate
+    ├── config/        # init-sops, set-credential, encrypt-value, show, validate
     ├── events/        # get, save-azure
     ├── licenses/      # check, get, savings
     ├── metrics/       # dump-dii

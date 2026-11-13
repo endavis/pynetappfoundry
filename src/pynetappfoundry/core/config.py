@@ -82,6 +82,12 @@ class ConfigurationError(Exception):
     pass
 
 
+# Settings fields that accept a ``SOPS[...]`` value (decrypted at read time).
+_SMTP_SOPS_FIELDS = ("password",)
+_DII_SOPS_FIELDS = ("api_ro_token",)
+_CONSOLE_SOPS_FIELDS = ("client_secret", "service_token", "user_token")
+
+
 def _read_tls_settings(source: Any, where: str) -> tuple[bool | None, str | None]:
     """Read and type-check ``verify_ssl`` / ``ca_bundle`` from one raw settings dict.
 
@@ -216,6 +222,8 @@ class Config:
         # Memoized Console refresh token: each SOPS decrypt runs a subprocess.
         self._console_refresh_token: str | None = None
         self._console_refresh_token_resolved = False
+        # Memoized SOPS plaintext keyed by ciphertext: each decrypt runs a subprocess.
+        self._sops_plaintext: dict[str, str] = {}
         self.config_dir = Path.cwd() / config_dir
         self.data_types = ["aiqums", "connectors", "cloudinsights", "clusters", "azure"]
         self.settings: dict[str, Any] = {}
@@ -305,10 +313,16 @@ class Config:
             SMTPSettings object with server configuration.
 
         Raises:
-            ConfigurationError: If SMTP settings are not configured.
+            ConfigurationError: If SMTP settings are not configured, or a
+                ``SOPS[...]`` value cannot be decrypted.
         """
         try:
-            smtp_data = self.get_setting("settings", "SMTP")
+            smtp_data = self._decrypt_setting_fields(
+                self.get_setting("settings", "SMTP"),
+                _SMTP_SOPS_FIELDS,
+                file="settings.toml",
+                section="SMTP",
+            )
             return SMTPSettings.model_validate(smtp_data)
         except ConfigurationError:
             raise
@@ -347,10 +361,16 @@ class Config:
             DIIAPISettings object with API configuration.
 
         Raises:
-            ConfigurationError: If DII API settings are not configured.
+            ConfigurationError: If DII API settings are not configured, or a
+                ``SOPS[...]`` value cannot be decrypted.
         """
         try:
-            dii_data = self.get_setting("diiapi", "general")
+            dii_data = self._decrypt_setting_fields(
+                self.get_setting("diiapi", "general"),
+                _DII_SOPS_FIELDS,
+                file="diiapi.toml",
+                section="general",
+            )
             return DIIAPISettings.model_validate(dii_data)
         except ConfigurationError:
             raise
@@ -370,8 +390,8 @@ class Config:
         Raises:
             ConfigurationError: If Console API settings are not configured, if
                 ``consoleapi.toml`` carries a ``refresh_token`` (it belongs in
-                ``users.toml [console]``), or if the refresh token cannot be
-                decrypted.
+                ``users.toml [console]``), or if the refresh token or a
+                ``SOPS[...]`` setting value cannot be decrypted.
         """
         try:
             console_data: dict[str, Any] = dict(self.get_setting("consoleapi", "general") or {})
@@ -381,6 +401,12 @@ class Config:
                     "refresh token in users.toml under [console] ('enc'), for example with "
                     "'nf config set-credential --type console'."
                 )
+            console_data = self._decrypt_setting_fields(
+                console_data,
+                _CONSOLE_SOPS_FIELDS,
+                file="consoleapi.toml",
+                section="general",
+            )
             refresh_token = self._resolve_console_refresh_token()
             if refresh_token is not None:
                 console_data["refresh_token"] = refresh_token
@@ -607,6 +633,65 @@ class Config:
         password = self._decrypt_if_encrypted(enc, object_name=uobject)
 
         return user, password
+
+    def _decrypt_setting_fields(
+        self, data: Any, fields: tuple[str, ...], *, file: str, section: str
+    ) -> Any:
+        """Decrypt ``SOPS[...]`` values of the listed fields of one settings section.
+
+        Plaintext values pass through unchanged. Decrypted values are memoized per
+        ``Config`` keyed by ciphertext. The raw ``self.settings`` is never modified.
+
+        Args:
+            data: The raw section; anything that is not a dict is returned as is.
+            fields: Field names that may hold a ``SOPS[...]`` value.
+            file: Settings file name, for error context.
+            section: Section name, for error context.
+
+        Returns:
+            A shallow copy of ``data`` with the encrypted fields replaced by plaintext.
+
+        Raises:
+            ConfigurationError: If a value cannot be decrypted. The message never
+                includes the ciphertext, the plaintext or the ``sops`` error text.
+        """
+        from pynetappfoundry.utils.sops import (
+            SOPSError,
+            SOPSNotInstalledError,
+            decrypt_value,
+            is_encrypted,
+        )
+
+        if not isinstance(data, dict):
+            return data
+        result = dict(data)
+        for field in fields:
+            value = result.get(field)
+            if not isinstance(value, str) or not is_encrypted(value):
+                continue
+            cached = self._sops_plaintext.get(value)
+            if cached is not None:
+                result[field] = cached
+                continue
+            try:
+                plaintext = decrypt_value(value)
+            except SOPSError as e:
+                logging.error(
+                    f"Failed to decrypt SOPS value of {field!r} in {file} [{section}]: "
+                    f"{type(e).__name__}"
+                )
+                reason = (
+                    "sops is not installed"
+                    if isinstance(e, SOPSNotInstalledError)
+                    else "sops could not decrypt it; check that sops and your age key "
+                    "(SOPS_AGE_KEY_FILE) are available"
+                )
+                raise ConfigurationError(
+                    f"Failed to decrypt the SOPS value of '{field}' in {file} [{section}]: {reason}"
+                ) from e
+            self._sops_plaintext[value] = plaintext
+            result[field] = plaintext
+        return result
 
     def _decrypt_if_encrypted(self, value: str, object_name: str | None = None) -> str:
         """Decrypt a value if it is SOPS-encrypted.
