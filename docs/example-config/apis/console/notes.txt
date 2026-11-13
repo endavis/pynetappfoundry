@@ -10,21 +10,29 @@ Console SaaS (BlueXP) runtime client setup.
    The runtime client (ConsoleAPIClient) loads the spec from
    config.get_schema_location("console") / "console_openapi.yaml".
 
-2. Auth tokens (v1 = static tokens only):
+2. Auth (at least one of user_token, service_token or client credentials):
 
-   user_token (required):
+   user_token (optional if a service account is configured):
    - Log into BlueXP at https://console.bluexp.netapp.com
    - Open browser devtools -> Application -> Local Storage / Cookies
    - Copy the JWT-shaped Bearer access token used in Authorization headers
    - Paste into consoleapi.toml [general].user_token
 
-   service_token (optional, only needed for service-typed endpoints):
-   - Provision a service account in BlueXP
-   - Use its refresh token to obtain an access JWT
-   - Paste the access JWT into consoleapi.toml [general].service_token
+   service account (client credentials, recommended for unattended use):
+   - Create a service account in the Console and note its client ID and
+     client secret
+   - Put them in consoleapi.toml [general] as client_id and client_secret
+   - The client exchanges them for a service token (OAuth client-credentials
+     grant) when it is constructed, keeps it in memory and renews it before
+     it expires. Do not also set service_token.
 
-   The OAuth refresh-token grant flow is intentionally out of scope for v1
-   (ADR-0019). Tokens must be obtained out-of-band and pasted directly.
+   service_token (optional static alternative, for service-typed endpoints):
+   - Obtain a service token with a client-credentials exchange for the
+     service account (the same grant the client performs)
+   - Paste the access JWT into consoleapi.toml [general].service_token
+   - It is not renewed; it must be replaced when it expires.
+
+   The OAuth refresh-token grant for user tokens is out of scope for now.
 
 3. Test it:
 

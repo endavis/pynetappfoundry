@@ -1,10 +1,19 @@
 [general]
 # Console SaaS (BlueXP) API settings.
 #
-# v1 supports static tokens only (no OAuth refresh flow yet).
-# See notes.txt for how to obtain the user_token (and optional service_token).
+# Two auth modes: static tokens (user_token / service_token), or OAuth client
+# credentials (client_id / client_secret) for a Console service account.
+# At least one source is required. See notes.txt for how to obtain them.
 
 user_token = 'paste-user-jwt-here'
+
+# Client-credentials mode (alternative to service_token; setting both is an
+# error). The client fetches and renews the service token itself.
+# client_id = 'your-service-account-client-id'
+# client_secret = 'your-service-account-client-secret'
+# token_endpoint and audience have defaults; set them only with the two above.
+# token_endpoint = 'https://netapp-cloud-account.auth0.com/oauth/token'
+# audience = 'https://api.cloud.netapp.com'
 
 # Optional. Lazy-validated: ConsoleAPIClient only constructs the service-token
 # APIWrapper when this is present. Calling a service-typed endpoint without

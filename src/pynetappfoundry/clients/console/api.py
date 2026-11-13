@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+import requests
+
+from pynetappfoundry.clients.console.auth import ClientCredentialsTokenProvider, TokenProvider
 from pynetappfoundry.clients.openapi import APIWrapper
 from pynetappfoundry.models.console_types import Folder, Organization, Project
 
@@ -15,36 +18,73 @@ class ConsoleServiceTokenMissingError(RuntimeError):
     """Raised when a service-token endpoint is called without a configured service token."""
 
 
+class ConsoleUserTokenMissingError(RuntimeError):
+    """Raised when a user-token endpoint is called without a configured user token."""
+
+
 class ConsoleAPIClient:
     """Console SaaS API client with per-token-type wrapper isolation (ADR-0019).
 
     Wraps two internal ``APIWrapper`` instances — one for user-token endpoints
     and one (optional) for service-token endpoints.  ``APIWrapper``'s static
-    ``auth_header`` contract is preserved; token selection is resolved at
-    construction time, not per-call.
+    ``auth_header`` contract is preserved.  A slot backed by a static token
+    resolves it at construction time.  A slot backed by an OAuth
+    client-credentials grant gets its bearer token per call through
+    ``additional_headers``, and a 401 triggers one refresh and retry.
     """
 
-    def __init__(self, config: Config) -> None:
+    def __init__(self, config: Config, *, token_session: requests.Session | None = None) -> None:
         """Initialize the Console API client.
 
         Args:
             config: Configuration object with Console API settings.
+            token_session: Optional ``requests.Session`` used for the token
+                exchange (tests inject one).
+
+        Raises:
+            ConsoleAuthError: If client credentials are configured and the
+                initial token exchange fails.
         """
         self.config = config
         settings = config.get_console_api_settings()
         spec_path = str(config.get_schema_location("console") / "console_openapi.yaml")
 
-        self._user = APIWrapper(
-            api_json_file=spec_path,
-            base_url=settings.base_url,
-            auth_header={"Authorization": f"Bearer {settings.user_token}"},
-            base_api_path=settings.base_api_path,
-            timeout=settings.timeout,
-            name="console-user",
-        )
+        self._user: APIWrapper | None
+        if settings.user_token:
+            self._user = APIWrapper(
+                api_json_file=spec_path,
+                base_url=settings.base_url,
+                auth_header={"Authorization": f"Bearer {settings.user_token}"},
+                base_api_path=settings.base_api_path,
+                timeout=settings.timeout,
+                name="console-user",
+            )
+        else:
+            self._user = None
 
-        if settings.service_token:
-            self._service: APIWrapper | None = APIWrapper(
+        self._service: APIWrapper | None
+        self._service_provider: TokenProvider | None = None
+        if settings.client_id and settings.client_secret:
+            self._service = APIWrapper(
+                api_json_file=spec_path,
+                base_url=settings.base_url,
+                auth_header=None,
+                base_api_path=settings.base_api_path,
+                timeout=settings.timeout,
+                name="console-service",
+            )
+            self._service_provider = ClientCredentialsTokenProvider(
+                client_id=settings.client_id,
+                client_secret=settings.client_secret,
+                token_endpoint=settings.token_endpoint,
+                audience=settings.audience,
+                timeout=settings.timeout,
+                session=token_session,
+            )
+            # Fail fast on bad credentials rather than on the first API call.
+            self._service_provider.get_token()
+        elif settings.service_token:
+            self._service = APIWrapper(
                 api_json_file=spec_path,
                 base_url=settings.base_url,
                 auth_header={"Authorization": f"Bearer {settings.service_token}"},
@@ -54,6 +94,11 @@ class ConsoleAPIClient:
             )
         else:
             self._service = None
+
+    @property
+    def service_token_provider(self) -> TokenProvider | None:
+        """The service-slot token provider, or None for a static or absent token."""
+        return self._service_provider
 
     def _require_service(self) -> APIWrapper:
         """Return the service-token wrapper, or raise if not configured.
@@ -72,8 +117,75 @@ class ConsoleAPIClient:
             )
         return self._service
 
+    def _require_user(self) -> APIWrapper:
+        """Return the user-token wrapper, or raise if not configured.
+
+        Returns:
+            The user-token ``APIWrapper``.
+
+        Raises:
+            ConsoleUserTokenMissingError: If no user_token was provided.
+        """
+        if self._user is None:
+            raise ConsoleUserTokenMissingError(
+                "This Console endpoint requires a user token, but no "
+                "user_token was provided in settings. Add user_token to "
+                "consoleapi.toml [general]."
+            )
+        return self._user
+
+    def _route_any(self) -> tuple[APIWrapper, TokenProvider | None]:
+        """Pick the wrapper for an operation that accepts either token type.
+
+        Prefers the user token and falls back to the service token.
+
+        Returns:
+            The wrapper and its token provider (None for a static token).
+
+        Raises:
+            ConsoleUserTokenMissingError: If neither token type is configured.
+        """
+        if self._user is not None:
+            return self._user, None
+        if self._service is not None:
+            return self._service, self._service_provider
+        return self._require_user(), None
+
+    @staticmethod
+    def _call(wrapper: APIWrapper, provider: TokenProvider | None, **kwargs: Any) -> Any:
+        """Call an endpoint, supplying and refreshing a dynamic token if needed.
+
+        With no provider the call is exactly ``wrapper.call_endpoint(**kwargs)``.
+        With a provider the Bearer token is sent per call; on a 401 the token
+        is invalidated, refetched and the call retried once.
+
+        Args:
+            wrapper: The wrapper to call through.
+            provider: Token provider for the wrapper's slot, or None.
+            **kwargs: Arguments for ``APIWrapper.call_endpoint``.
+
+        Returns:
+            The decoded response.
+        """
+        if provider is None:
+            return wrapper.call_endpoint(**kwargs)
+
+        token = provider.get_token()
+        try:
+            return wrapper.call_endpoint(
+                **kwargs, additional_headers={"Authorization": f"Bearer {token}"}
+            )
+        except requests.HTTPError as e:
+            if e.response is None or e.response.status_code != 401:
+                raise
+        provider.invalidate(token)
+        token = provider.get_token()
+        return wrapper.call_endpoint(
+            **kwargs, additional_headers={"Authorization": f"Bearer {token}"}
+        )
+
     def get_organization(self, organization_id: str) -> Organization:
-        """GET /organizations/{organization_id} (user-token endpoint).
+        """GET /organizations/{organization_id} (user or service token).
 
         Args:
             organization_id: The organization UUID.
@@ -81,7 +193,10 @@ class ConsoleAPIClient:
         Returns:
             Compact Organization instance.
         """
-        response: Any = self._user.call_endpoint(
+        wrapper, provider = self._route_any()
+        response: Any = self._call(
+            wrapper,
+            provider,
             method="GET",
             path_template="/organizations/{organization_id}",
             path_params={"organization_id": organization_id},
@@ -89,15 +204,18 @@ class ConsoleAPIClient:
         return Organization.model_validate(response)
 
     def list_organizations(self) -> list[Organization]:
-        """GET /organizations (user-token endpoint).
+        """GET /organizations (user or service token).
 
-        Returns all organizations the bound user can see.  Pagination
-        (the ``continue`` cursor) is out of scope for v1.
+        Returns all organizations the bound user or service account can see.
+        Pagination (the ``continue`` cursor) is out of scope for v1.
 
         Returns:
             List of compact Organization instances.
         """
-        response: Any = self._user.call_endpoint(
+        wrapper, provider = self._route_any()
+        response: Any = self._call(
+            wrapper,
+            provider,
             method="GET",
             path_template="/organizations",
         )
@@ -105,7 +223,7 @@ class ConsoleAPIClient:
         return [Organization.model_validate(item) for item in items]
 
     def get_folder(self, folder_id: str) -> Folder:
-        """GET /folders/{folder_id} (user-token endpoint).
+        """GET /folders/{folder_id} (user or service token).
 
         Args:
             folder_id: The folder UUID.
@@ -113,7 +231,10 @@ class ConsoleAPIClient:
         Returns:
             Compact Folder instance.
         """
-        response: Any = self._user.call_endpoint(
+        wrapper, provider = self._route_any()
+        response: Any = self._call(
+            wrapper,
+            provider,
             method="GET",
             path_template="/folders/{folder_id}",
             path_params={"folder_id": folder_id},
@@ -121,7 +242,7 @@ class ConsoleAPIClient:
         return Folder.model_validate(response)
 
     def get_project(self, project_id: str) -> Project:
-        """GET /projects/{project_id} (user-token endpoint).
+        """GET /projects/{project_id} (user or service token).
 
         Args:
             project_id: The project UUID.
@@ -129,7 +250,10 @@ class ConsoleAPIClient:
         Returns:
             Compact Project instance.
         """
-        response: Any = self._user.call_endpoint(
+        wrapper, provider = self._route_any()
+        response: Any = self._call(
+            wrapper,
+            provider,
             method="GET",
             path_template="/projects/{project_id}",
             path_params={"project_id": project_id},
@@ -137,4 +261,8 @@ class ConsoleAPIClient:
         return Project.model_validate(response)
 
 
-__all__ = ["ConsoleAPIClient", "ConsoleServiceTokenMissingError"]
+__all__ = [
+    "ConsoleAPIClient",
+    "ConsoleServiceTokenMissingError",
+    "ConsoleUserTokenMissingError",
+]

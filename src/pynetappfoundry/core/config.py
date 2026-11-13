@@ -376,7 +376,8 @@ class Config:
             raise ConfigurationError(
                 f"Invalid Console API configuration: {e}. "
                 "Ensure consoleapi.toml has a valid [general] section with "
-                "'user_token' and 'base_url' fields."
+                "'base_url' and one of user_token, service_token or "
+                "client_id/client_secret."
             ) from e
 
     def get_licensing_settings(self) -> LicensingSettings | None:

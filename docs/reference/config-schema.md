@@ -185,12 +185,17 @@ base_api_path = "/rest/v1"                 # Optional: Base API path (default: "
 
 Console SaaS (BlueXP) API settings. Loaded into `config.settings["consoleapi"]`.
 
-v1 supports static tokens only. See `docs/example-config/apis/console/notes.txt` for how to obtain the tokens.
+Two authentication modes are supported. See `docs/example-config/apis/console/notes.txt` for how to obtain the credentials.
+
+- **Static tokens:** `user_token` and/or `service_token`, pasted into the file.
+- **OAuth client credentials:** `client_id` and `client_secret` of a Console service account. The client exchanges them for a service token when it is constructed, keeps the token in memory, renews it shortly before it expires, and on a 401 refetches and retries once. The secret and the tokens are never logged.
 
 ```toml
 [general]
-user_token = "paste-user-jwt-here"          # Required: User JWT from the BlueXP UI
-# service_token = "paste-service-account-jwt-here"  # Optional: service-account JWT
+user_token = "paste-user-jwt-here"          # Optional: User JWT from the BlueXP UI
+# service_token = "paste-service-account-jwt-here"  # Optional: static service-account JWT
+# client_id = "your-service-account-client-id"      # Optional: OAuth client credentials
+# client_secret = "your-service-account-client-secret"
 base_url = "https://api.bluexp.netapp.com"  # Required: Console API base URL
 org_id = "your-org-id"                      # Optional: Default organization ID
 base_api_path = "/"                          # Optional: Base API path (default: "/")
@@ -201,12 +206,25 @@ timeout = 30.0                               # Optional: Request timeout in seco
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `user_token` | string | Yes | - | User JWT obtained from the BlueXP UI |
-| `service_token` | string | No | `null` | Service-account JWT. Lazy-validated: raises `ConsoleServiceTokenMissingError` if absent when a service-typed endpoint is called |
+| `user_token` | string | No | `null` | User JWT obtained from the BlueXP UI |
+| `service_token` | string | No | `null` | Static service-account JWT. Lazy-validated: raises `ConsoleServiceTokenMissingError` if absent when a service-typed endpoint is called |
+| `client_id` | string | No | `null` | OAuth client ID of a service account. Set together with `client_secret` |
+| `client_secret` | string | No | `null` | OAuth client secret of a service account. Held as a secret value and never logged |
+| `token_endpoint` | string | No | `"https://netapp-cloud-account.auth0.com/oauth/token"` | Token endpoint for the client-credentials exchange. Only valid with client credentials |
+| `audience` | string | No | `"https://api.cloud.netapp.com"` | Audience requested for the token. Only valid with client credentials |
 | `base_url` | string | Yes | - | Base URL for the Console API |
 | `org_id` | string | No | `null` | Default organization ID. Can be overridden per `Console(config, org_id=...)` call |
 | `base_api_path` | string | No | `"/"` | Base path for Console API endpoints |
 | `timeout` | float | No | `30.0` | HTTP request timeout in seconds |
+
+Validation rules (error messages name fields, never values):
+
+- `client_id` and `client_secret` are set together or not at all.
+- Client credentials and `service_token` are mutually exclusive, so a stale pasted token cannot take precedence.
+- `audience` and `token_endpoint` require client credentials.
+- At least one of `user_token`, `service_token` or client credentials is required.
+
+Routing: operations tagged for the user token require `user_token`, and operations tagged for the service token require the service slot (`service_token` or client credentials). Operations with no tag, which includes every operation the client calls today, use the user token when one is set and the service token otherwise. A configuration with a `user_token` therefore behaves as before. See [ADR-0019](../decisions/0019-console-runtime-client-architecture-org-scoped-access-and-per-token-type-wrapper-isolation.md).
 
 ---
 
