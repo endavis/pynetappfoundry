@@ -188,7 +188,7 @@ class ConsoleAPIClient:
         )
 
     def get_organization(self, organization_id: str) -> Organization:
-        """GET /organizations/{organization_id} (user or service token).
+        """GET /v1/management/organizations/{organization_id} (user or service token).
 
         Args:
             organization_id: The organization UUID.
@@ -201,13 +201,13 @@ class ConsoleAPIClient:
             wrapper,
             provider,
             method="GET",
-            path_template="/organizations/{organization_id}",
+            path_template="/v1/management/organizations/{organization_id}",
             path_params={"organization_id": organization_id},
         )
         return Organization.model_validate(response)
 
     def list_organizations(self) -> list[Organization]:
-        """GET /organizations (user or service token).
+        """GET /v1/management/organizations (user or service token).
 
         Returns all organizations the bound user or service account can see.
         Pagination (the ``continue`` cursor) is out of scope for v1.
@@ -220,13 +220,13 @@ class ConsoleAPIClient:
             wrapper,
             provider,
             method="GET",
-            path_template="/organizations",
+            path_template="/v1/management/organizations",
         )
         items: list[Any] = response.get("items", [])
         return [Organization.model_validate(item) for item in items]
 
     def get_folder(self, folder_id: str) -> Folder:
-        """GET /folders/{folder_id} (user or service token).
+        """GET /v1/management/folders/{folder_id} (user or service token).
 
         Args:
             folder_id: The folder UUID.
@@ -239,13 +239,13 @@ class ConsoleAPIClient:
             wrapper,
             provider,
             method="GET",
-            path_template="/folders/{folder_id}",
+            path_template="/v1/management/folders/{folder_id}",
             path_params={"folder_id": folder_id},
         )
         return Folder.model_validate(response)
 
     def get_project(self, project_id: str) -> Project:
-        """GET /projects/{project_id} (user or service token).
+        """GET /v1/management/projects/{project_id} (user or service token).
 
         Args:
             project_id: The project UUID.
@@ -258,7 +258,7 @@ class ConsoleAPIClient:
             wrapper,
             provider,
             method="GET",
-            path_template="/projects/{project_id}",
+            path_template="/v1/management/projects/{project_id}",
             path_params={"project_id": project_id},
         )
         return Project.model_validate(response)

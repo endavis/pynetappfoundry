@@ -230,11 +230,13 @@ assumption holds for some APIs and not others.  The supported strategies are:
    at all — only AsciiDoc reference pages auto-generated from a
    proprietary internal tool, published in ``NetAppDocs/console-automation``.
    ``tools/console_openapi/`` parses those AsciiDoc files into an
-   OpenAPI 3.0.3 spec.  Per-operation ``servers`` blocks encode the
-   discovered base URLs (``https://api.bluexp.netapp.com`` for the v3
-   ``tenancy`` paths; ``https://api.bluexp.netapp.com/v1/management`` for
-   the v4 ``tenancyv4`` paths).  The runtime Console client reads the
-   path of these ``servers`` entries (#1012, see ADR-0019).  The generated spec was validated end-to-end
+   OpenAPI 3.0.3 spec.  Every path key is the full path from the host: the
+   builder adds each service's base path (``""`` for the v3 ``tenancy``
+   paths; ``/v1/management`` for the v4 ``tenancyv4`` paths) in front of the
+   documented path (#1015).  The base paths are recorded once in
+   ``info.x-service-base-paths``, and every operation's ``servers`` entry is
+   the bare host ``https://api.bluexp.netapp.com``, so the server path is
+   empty (see ADR-0019).  The generated spec was validated end-to-end
    against the live SaaS using a user JWT: 9 endpoints' response shapes
    matched their declared schemas with zero validation errors.
 
@@ -582,6 +584,7 @@ Issue: #901
 - Issue #955: feat: multi-placeholder parent fill for ONTAP child mappings (follow-up from #952)
 - Issue #956: bug: OntapExportPolicy model is rule-shaped with no id, so OntapExportRule cannot be wired as its child
 - Issue #967: refactor: generate /cluster; computed values move to a hand-written model ([ADR-0024](0024-generated-models-carry-only-api-data-computed-values-live-in-separate-hand-written-models.md))
+- Issue #1015: refactor: key Console spec operations by their full path from the host
 
 ## Related Documentation
 

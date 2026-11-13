@@ -36,25 +36,30 @@ _DEFAULT_SERVERS: tuple[dict[str, str], ...] = (
         "description": "BlueXP / NetApp Console SaaS API (legacy hostname)",
     },
 )
-# Per-service server base URLs. Verified empirically against the live SaaS:
-# v3 ``tenancy`` paths are served from the host root (e.g. ``/tenancy/account``);
-# v4 ``tenancyv4`` paths are served under ``/v1/management`` (e.g.
-# ``/v1/management/organizations``). Discovered from the Console UI's
-# bootstrap configuration ``tenancyServiceInformation.urlV4``.
-_SERVICE_SERVERS: dict[str, list[dict[str, str]]] = {
-    "tenancy": [
-        {
-            "url": "https://api.bluexp.netapp.com",
-            "description": "BlueXP IAM v3 (tenancy)",
-        }
-    ],
-    "tenancyv4": [
-        {
-            "url": "https://api.bluexp.netapp.com/v1/management",
-            "description": "BlueXP IAM v4 (tenancyv4)",
-        }
-    ],
+# Per-service base paths, added in front of each documented path so every
+# operation is keyed by its full path from the host. Verified empirically
+# against the live SaaS: v3 ``tenancy`` paths are served from the host root
+# (e.g. ``/tenancy/account``); v4 ``tenancyv4`` paths are served under
+# ``/v1/management`` (e.g. ``/v1/management/organizations``). Discovered from
+# the Console UI's bootstrap configuration ``tenancyServiceInformation.urlV4``.
+# A service without an entry here gets no prefix.
+_SERVICE_BASE_PATHS: dict[str, str] = {
+    "tenancy": "",
+    "tenancyv4": "/v1/management",
 }
+# Every operation carries this bare-host server, so the server path is empty
+# and a client-side ``base_api_path`` never doubles a base path.
+_OPERATION_SERVERS: tuple[dict[str, str], ...] = (
+    {
+        "url": "https://api.bluexp.netapp.com",
+        "description": "BlueXP / NetApp Console SaaS API (host root)",
+    },
+)
+
+
+def _full_path(ep: ParsedEndpoint) -> str:
+    """Return the endpoint's documented path prefixed with its service base path."""
+    return _SERVICE_BASE_PATHS.get(ep.service, "") + ep.path
 
 
 def build_spec(
@@ -80,15 +85,16 @@ def build_spec(
 
     for ep, resolver in zip(endpoints, schema_keys_by_endpoint, strict=True):
         op_obj = _build_operation(ep, resolver, operation_ids)
-        _ensure_path_params(ep.path, op_obj)
-        path_obj = paths[ep.path]
+        full_path = _full_path(ep)
+        _ensure_path_params(full_path, op_obj)
+        path_obj = paths[full_path]
         verb = ep.method.lower()
         if verb in path_obj:
             existing = path_obj[verb]
             if existing == op_obj:
                 continue
             raise BuildError(
-                f"Conflicting operation for {ep.method} {ep.path}: "
+                f"Conflicting operation for {ep.method} {full_path}: "
                 f"{existing.get('x-source-file')!r} vs {ep.source_file!r}"
             )
         path_obj[verb] = op_obj
@@ -99,6 +105,7 @@ def build_spec(
         "description": _info_description(included_services),
         "x-included-source-folders": list(included_services),
         "x-source-repository": source_repo,
+        "x-service-base-paths": {s: _SERVICE_BASE_PATHS.get(s, "") for s in included_services},
     }
     if source_commit is not None:
         info["x-source-commit"] = source_commit
@@ -305,9 +312,7 @@ def _build_operation(
     if ep.token_usage is not None:
         op["x-token-type"] = ep.token_usage
 
-    service_servers = _SERVICE_SERVERS.get(ep.service)
-    if service_servers:
-        op["servers"] = service_servers
+    op["servers"] = list(_OPERATION_SERVERS)
 
     return op
 
@@ -325,7 +330,7 @@ def _allocate_operation_id(ep: ParsedEndpoint, used: set[str]) -> str:
 
 def _operation_id_base(ep: ParsedEndpoint) -> str:
     method = ep.method.lower()
-    path_part = re.sub(r"\{([^}]+)\}", r"by_\1", ep.path)
+    path_part = re.sub(r"\{([^}]+)\}", r"by_\1", _full_path(ep))
     path_part = re.sub(r"[^A-Za-z0-9]+", "_", path_part).strip("_")
     return f"{ep.service}_{method}_{path_part}"
 

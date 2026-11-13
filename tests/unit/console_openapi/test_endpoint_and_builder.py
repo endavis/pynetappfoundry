@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -144,6 +145,58 @@ def test_duplicate_operation_conflict_raises() -> None:
     )
     with pytest.raises(BuildError):
         build_spec([ep, other], included_services=("fixture",))
+
+
+def _delete_folder_endpoint(service: str) -> Any:
+    text, src = _load("delete_204_with_error.adoc")
+    ep = parse_endpoint(text, source_file=src, service="fixture")
+    assert ep is not None
+    assert ep.path == "/folders/{folder_id}"
+    return ep.model_copy(update={"service": service})
+
+
+def test_tenancyv4_endpoint_is_keyed_by_full_path() -> None:
+    ep = _delete_folder_endpoint("tenancyv4")
+    spec = build_spec([ep], included_services=("tenancyv4",))
+    assert list(spec["paths"]) == ["/v1/management/folders/{folder_id}"]
+    op = spec["paths"]["/v1/management/folders/{folder_id}"]["delete"]
+    assert "v1_management" in op["operationId"]
+    assert op["servers"][0]["url"] == "https://api.bluexp.netapp.com"
+
+
+def test_tenancy_endpoint_keeps_documented_key() -> None:
+    ep = _delete_folder_endpoint("tenancy")
+    spec = build_spec([ep], included_services=("tenancy",))
+    assert list(spec["paths"]) == ["/folders/{folder_id}"]
+    op = spec["paths"]["/folders/{folder_id}"]["delete"]
+    assert op["servers"][0]["url"] == "https://api.bluexp.netapp.com"
+
+
+def test_same_relative_path_in_two_services_does_not_collide() -> None:
+    v3 = _delete_folder_endpoint("tenancy")
+    v4 = _delete_folder_endpoint("tenancyv4")
+    spec = build_spec([v3, v4], included_services=("tenancy", "tenancyv4"))
+    assert set(spec["paths"]) == {"/folders/{folder_id}", "/v1/management/folders/{folder_id}"}
+
+
+def test_conflict_message_shows_full_path() -> None:
+    ep = _delete_folder_endpoint("tenancyv4")
+    other = ep.model_copy(update={"source_file": "fixtures/conflict.adoc", "summary": "other"})
+    with pytest.raises(BuildError, match="/v1/management/folders/"):
+        build_spec([ep, other], included_services=("tenancyv4",))
+
+
+def test_info_records_service_base_paths() -> None:
+    ep = _delete_folder_endpoint("tenancyv4")
+    spec = build_spec([ep], included_services=("tenancy", "tenancyv4"))
+    assert spec["info"]["x-service-base-paths"] == {"tenancy": "", "tenancyv4": "/v1/management"}
+
+
+def test_unmapped_service_gets_no_prefix() -> None:
+    ep = _delete_folder_endpoint("fixture")
+    spec = build_spec([ep], included_services=("fixture",))
+    assert list(spec["paths"]) == ["/folders/{folder_id}"]
+    assert spec["info"]["x-service-base-paths"] == {"fixture": ""}
 
 
 def test_spec_is_openapi_validatable() -> None:
