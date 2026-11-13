@@ -33,7 +33,12 @@ def _load_spec(path: str | Path) -> dict[str, Any]:
     spec_path = Path(path)
     with open(spec_path, encoding="utf-8") as f:
         if spec_path.suffix.lower() in {".yaml", ".yml"}:
-            spec: dict[str, Any] = yaml.safe_load(f)
+            # CSafeLoader (libyaml) is ~4x faster on the large Console spec; fall
+            # back to the pure-Python SafeLoader when PyYAML lacks libyaml.
+            loader = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
+            spec: dict[str, Any] = yaml.load(  # nosec B506  # loader is CSafeLoader or SafeLoader, both safe
+                f, Loader=loader
+            )
             return spec
         spec = json.load(f)
         return spec

@@ -232,8 +232,11 @@ assumption holds for some APIs and not others.  The supported strategies are:
    ``tools/console_openapi/`` parses those AsciiDoc files into an
    OpenAPI 3.0.3 spec.  Every path key is the full path from the host: the
    builder adds each service's base path (``""`` for the v3 ``tenancy``
-   paths; ``/v1/management`` for the v4 ``tenancyv4`` paths) in front of the
-   documented path (#1015).  The base paths are recorded once in
+   paths; ``/v1/management`` for the v4 ``tenancyv4`` paths; ``/occm/api``
+   for the ``cvo`` Console agent paths, #1009) in front of the
+   documented path (#1015).  Every ``cvo`` operation also carries a
+   required, synthesized ``x-agent-id`` header parameter, because the
+   SaaS proxy routes an agent call by that header.  The base paths are recorded once in
    ``info.x-service-base-paths``, and every operation's ``servers`` entry is
    the bare host ``https://api.bluexp.netapp.com``, so the server path is
    empty (see ADR-0019).  The generated spec was validated end-to-end
@@ -244,20 +247,20 @@ assumption holds for some APIs and not others.  The supported strategies are:
    generated artifact (``tools/console_openapi/generated/console_openapi.yaml``)
    is checked in alongside a lockfile pinning the upstream source commit.
 
-   **Coverage gap: ``agentsMgmt`` (Issue #733).**  Connectors and other
-   agents are managed by a separate BlueXP subservice whose base URL is
-   ``https://api.bluexp.netapp.com/agents-mgmt`` (the ``agentsMgmtUrl``
-   field of the service-discovery response).  ``NetAppDocs/console-automation``
-   publishes no AsciiDoc reference for it.  At ``202c56da`` (``main``) the
-   repository's top-level folders are ``audit automate cbs cm copysync
-   credential cvo dw federation fsx ipa platform redirects support tenancy
-   tenancyv4 workflows``; no branch has an ``agentsMgmt`` folder.  The
-   ``tenancy`` agent endpoints (for example
-   ``tenancy/get-tenancy-account-workspace-agents.adoc``) are already parsed,
-   but their response section is only ``Status: 200, Default response``, with
-   no schema, so they yield no ``Connector`` type.  Parser coverage stays at
-   ``tenancy`` and ``tenancyv4`` until NetApp publishes an ``agentsMgmt``
-   source; #733 tracks it.
+   **Agent data comes from ``cvo/`` (Issue #1009).**  The separate
+   ``agentsMgmt`` subservice (``agentsMgmtUrl`` in the service-discovery
+   response) has no AsciiDoc reference in ``NetAppDocs/console-automation``,
+   and the ``tenancy`` agent endpoints document no response schema, so
+   neither yields a ``Connector`` type.  The ``cvo/`` folder documents the
+   Console agent (OCCM) API, reached through the SaaS at ``/occm/api`` with
+   ``x-agent-id``: for example ``GET /occm/system/about`` returns the agent
+   identity and ``GET /onprem/working-environments`` returns each cluster's
+   ``clusterUuid``.  The parser covers ``tenancy``, ``tenancyv4`` and
+   ``cvo``; #733 (an ``agentsMgmt`` parser) is superseded.  The parser maps
+   ``Status: Default`` (used by the ``cvo`` pages) to the OpenAPI ``default``
+   response, and only ``cvo`` moves inline request and response bodies into named
+   components (``cvo.<file_stem>.RequestBody`` / ``ResponseBody``) so the
+   generated models get stable class names.
 
 Issue: #697
 
@@ -270,7 +273,7 @@ Issue: #697
    and ``OntapModel`` base do not apply. The doit task lives at
    ``tools/doit/console_openapi_tasks.py:task_console_models`` and
    produces a tree under ``src/pynetappfoundry/models/console/``
-   (subdivided into ``tenancy/`` and ``tenancyv4/`` packages).
+   (subdivided into ``tenancy/``, ``tenancyv4/`` and ``cvo/`` packages).
 
 2. **Spec version: 3.0.3.** The parser was updated to emit OpenAPI 3.0.3
    instead of 3.1 (option (a) above, applied at the parser rather than
@@ -281,7 +284,7 @@ Issue: #697
    intermediate conversion step.
 
 3. **Storage: committed.** ``src/pynetappfoundry/models/console/`` is
-   committed in-tree (~21k lines), matching the YAML precedent. CI
+   committed in-tree, matching the YAML precedent. CI
    verifies regeneration is a no-op via ``doit console_models_check``,
    which the ``console-models`` job in ``ci.yml`` runs. It clears the output
    directory, re-runs the generator with its formatters pinned, and fails
@@ -585,6 +588,7 @@ Issue: #901
 - Issue #956: bug: OntapExportPolicy model is rule-shaped with no id, so OntapExportRule cannot be wired as its child
 - Issue #967: refactor: generate /cluster; computed values move to a hand-written model ([ADR-0024](0024-generated-models-carry-only-api-data-computed-values-live-in-separate-hand-written-models.md))
 - Issue #1015: refactor: key Console spec operations by their full path from the host
+- Issue #1009: feat: parse the Console agent (cvo/) API docs into the Console OpenAPI spec
 
 ## Related Documentation
 

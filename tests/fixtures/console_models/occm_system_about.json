@@ -1,0 +1,17 @@
+{
+  "agentId": "agent-placeholder-0001",
+  "agentType": "placeholder-agent",
+  "beta": false,
+  "buildTimestamp": 1700000000000,
+  "releaseNumber": 1,
+  "serverTimeZone": {
+    "formattedTimeZone": "UTC",
+    "timeZoneName": "Coordinated Universal Time"
+  },
+  "siteIdentifier": {
+    "company": "example-company",
+    "host": "agent.example.test",
+    "site": "example-site"
+  },
+  "version": "0.0.0-test"
+}
