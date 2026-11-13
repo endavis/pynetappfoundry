@@ -167,6 +167,69 @@ def task_console_models_check() -> dict[str, Any]:
     }
 
 
+# --- Typed client operations from the Console OpenAPI spec (#735) ------------
+
+_CONSOLE_CLIENT_DIR = Path("src/pynetappfoundry/clients/console/generated")
+
+
+def _generate_console_client() -> None:
+    """Render the Console client operation classes, then format and lint them."""
+    import subprocess  # nosec B404  # subprocess is required for doit tasks
+
+    from tools.console_openapi import client_codegen
+
+    if not _CONSOLE_SPEC.exists():
+        raise FileNotFoundError(
+            f"Console OpenAPI spec missing at {_CONSOLE_SPEC}; "
+            "run 'doit console_openapi_refresh' first."
+        )
+
+    # Wholly generated, so clear it first: a module the generator no longer
+    # produces then shows up as a deletion instead of lingering.
+    shutil.rmtree(_CONSOLE_CLIENT_DIR, ignore_errors=True)
+    client_codegen.generate(
+        _CONSOLE_CLIENT_DIR,
+        spec_path=_CONSOLE_SPEC,
+        models_root=_CONSOLE_MODELS_DIR,
+    )
+    # ruff exits non-zero when it fixes things, which is the intended outcome.
+    subprocess.run(["uv", "run", "ruff", "format", str(_CONSOLE_CLIENT_DIR)], check=False)
+    subprocess.run(
+        ["uv", "run", "ruff", "check", "--fix", str(_CONSOLE_CLIENT_DIR)],
+        check=False,
+    )
+
+
+def task_console_client() -> dict[str, Any]:
+    """Generate the typed Console client operations from the spec and the manifest.
+
+    Reads ``tools/console_openapi/client_ops.toml`` and the committed spec and
+    emits ``src/pynetappfoundry/clients/console/generated/``. Run
+    ``doit console_models`` first when the models changed.
+    """
+    return {
+        "actions": [_generate_console_client],
+        "verbosity": 2,
+    }
+
+
+def task_console_client_check() -> dict[str, Any]:
+    """Verify the checked-in Console client operations match a fresh codegen run.
+
+    Regenerates the output and fails if git reports any change under it. Like
+    ``console_models_check`` it is not wired into ``doit check``; the
+    ``console-models`` job in CI runs it on every pull request.
+    """
+
+    def check() -> bool:
+        return _check_models_unchanged(_CONSOLE_CLIENT_DIR)
+
+    return {
+        "actions": [_generate_console_client, check],
+        "verbosity": 2,
+    }
+
+
 def _check_models_unchanged(models_dir: Path = _CONSOLE_MODELS_DIR) -> bool:
     """Return False, printing the changes, if git sees any change under *models_dir*.
 

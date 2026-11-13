@@ -119,3 +119,48 @@ def test_check_task_regenerates_then_checks() -> None:
     actions = tasks.task_console_models_check()["actions"]
 
     assert actions == [tasks._generate_console_models, tasks._check_models_unchanged]
+
+
+def test_client_check_task_regenerates_then_checks(
+    repo: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    actions = tasks.task_console_client_check()["actions"]
+
+    assert actions[0] is tasks._generate_console_client
+    monkeypatch.setattr(tasks, "_CONSOLE_CLIENT_DIR", MODELS)
+    assert actions[1]() is True
+    (repo / MODELS / "new.py").write_text("B = 2\n")
+    assert actions[1]() is False
+
+
+def test_client_generation_clears_stale_modules(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    spec = tmp_path / "spec.yaml"
+    spec.write_text("openapi: 3.0.3\n")
+    out = tmp_path / "generated"
+    out.mkdir()
+    (out / "stale.py").write_text("OLD = 1\n")
+    monkeypatch.setattr(tasks, "_CONSOLE_SPEC", spec)
+    monkeypatch.setattr(tasks, "_CONSOLE_CLIENT_DIR", out)
+    from tools.console_openapi import client_codegen
+
+    def fake_generate(out_dir: Path, **_: Any) -> list[Path]:
+        (out_dir).mkdir(parents=True, exist_ok=True)
+        (out_dir / "fresh.py").write_text("NEW = 1\n")
+        return [out_dir / "fresh.py"]
+
+    monkeypatch.setattr(client_codegen, "generate", fake_generate)
+    calls: list[list[str]] = []
+
+    def fake_run(cmd: list[str], **_: Any) -> subprocess.CompletedProcess[str]:
+        calls.append(cmd)
+        return subprocess.CompletedProcess(cmd, 0)
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+
+    tasks._generate_console_client()
+
+    assert sorted(p.name for p in out.iterdir()) == ["fresh.py"]
+    assert any("format" in c for c in calls)
+    assert any("--fix" in c for c in calls)

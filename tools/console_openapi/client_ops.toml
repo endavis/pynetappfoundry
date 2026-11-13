@@ -1,0 +1,62 @@
+# Manifest of the Console operations that get a generated client method (#735).
+#
+# Read by tools/console_openapi/client_codegen.py; regenerate with `doit console_client`.
+# Fields of an [[operation]]:
+#   operation_id  the spec's operationId (required)
+#   client        "console" (ConsoleAPIClient.ops) or "agent" (ConsoleAgentClient.ops)
+#   name          the generated method name, unique per client
+#   response      "object" (default) or "list"
+#   retry         true keeps the wrapper's retry on a non-GET operation (default false)
+#   only_query    optional list of spec query parameter names to expose (default all)
+#   query         optional overlays per query parameter, e.g. { fields = { style = "csv" } }
+
+[[operation]]
+operation_id = "tenancyv4_get_v1_management_organizations_by_organization_id"
+client = "console"
+name = "get_organization"
+only_query = ["filter", "skip", "include", "limit", "orderBy"]
+
+[[operation]]
+operation_id = "tenancyv4_get_v1_management_organizations"
+client = "console"
+name = "list_organizations"
+
+[[operation]]
+operation_id = "tenancyv4_get_v1_management_folders_by_folder_id"
+client = "console"
+name = "get_folder"
+only_query = ["filter", "skip", "include", "limit", "orderBy"]
+
+[[operation]]
+operation_id = "tenancyv4_get_v1_management_projects_by_project_id"
+client = "console"
+name = "get_project"
+only_query = ["filter", "skip", "include", "limit", "orderBy"]
+
+[[operation]]
+operation_id = "cvo_get_occm_api_occm_system_about"
+client = "agent"
+name = "about"
+
+[[operation]]
+operation_id = "cvo_get_occm_api_onprem_working_environments"
+client = "agent"
+name = "list_onprem_working_environments"
+response = "list"
+query = { fields = { style = "csv" } }
+
+[[operation]]
+operation_id = "cvo_get_occm_api_onprem_working_environments_by_workingEnvironmentId"
+client = "agent"
+name = "get_onprem_working_environment"
+query = { fields = { style = "csv" } }
+
+[[operation]]
+operation_id = "cvo_post_occm_api_onprem_working_environments"
+client = "agent"
+name = "create_onprem_working_environment"
+
+[[operation]]
+operation_id = "cvo_delete_occm_api_onprem_working_environments_by_workingEnvironmentId"
+client = "agent"
+name = "delete_onprem_working_environment"

@@ -87,6 +87,12 @@ agent.delete_onprem_working_environment(created.publicId)
 
 `list_onprem_working_environments` also takes `tenant_id`. `fields` is a string, or a sequence that is comma-joined.
 
+These methods are thin wrappers over `agent.ops`, the generated operations
+(`ConsoleAgentOps`, see [ADR-0019](../decisions/0019-console-runtime-client-architecture-org-scoped-access-and-per-token-type-wrapper-isolation.md)).
+`agent.ops.create_onprem_working_environment(body)` takes a
+`post_onprem_working_environments.RequestBody` directly and, like `add`, is never
+retried on 5xx or timeout. `ConsoleAPIClient.ops` holds the tenancy operations.
+
 ## Connector for a cluster
 
 `ConsoleInfo.connector` caches the compact `Connector` (`pynetappfoundry.models.console_types.Connector`) of the Console agent that manages a cluster.

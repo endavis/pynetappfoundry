@@ -333,6 +333,9 @@ jobs:
       - name: Check generated Console models
         run: uv run doit console_models_check
 
+      - name: Check generated Console client operations
+        run: uv run doit console_client_check
+
   # Project job, not from the template (#901): regenerates the ONTAP and DII
   # models from the committed specs, offline, and fails on any modified,
   # deleted, new or stale generated file. Separate from lint for the same
