@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock
 
@@ -11,6 +12,7 @@ from pynetappfoundry.clients.console.api import (
     ConsoleAPIClient,
     ConsoleServiceTokenMissingError,
 )
+from pynetappfoundry.core.config import Config
 from pynetappfoundry.core.models import ConsoleAPISettings
 from pynetappfoundry.models.console_types import Folder, Organization, Project
 
@@ -261,3 +263,26 @@ class TestHandAuthoredOperations:
 
         client = ConsoleAPIClient(_make_config(base_settings, tmp_path))
         assert client.list_organizations() == []
+
+
+class TestConsoleAPIClientRealSpec:
+    """Construct against the real generated YAML spec, with APIWrapper unmocked (#1011)."""
+
+    def test_constructs_from_documented_yaml_spec(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        repo_root = Path(__file__).resolve().parents[4]
+        real_spec = repo_root / "tools" / "console_openapi" / "generated" / "console_openapi.yaml"
+        api_dir = tmp_path / "cfg" / "apis" / "console"
+        api_dir.mkdir(parents=True)
+        (api_dir / "console_openapi.yaml").write_bytes(real_spec.read_bytes())
+        (api_dir / "consoleapi.toml").write_text(
+            "[general]\nuser_token = 'fake-user-jwt'\nbase_url = 'https://api.bluexp.netapp.com'\n",
+            encoding="utf-8",
+        )
+        monkeypatch.chdir(tmp_path)
+
+        client = ConsoleAPIClient(Config(config_dir=tmp_path / "cfg", output_dir=tmp_path / "out"))
+
+        assert client._user is not None
+        assert client._user.api_spec["paths"]
