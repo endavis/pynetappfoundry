@@ -4,6 +4,8 @@
 fetched and renewed at runtime, as opposed to static tokens pasted into
 ``consoleapi.toml``.  ``ClientCredentialsTokenProvider`` implements the OAuth
 client-credentials grant, which yields a Console *service* token.
+``RefreshTokenProvider`` implements the OAuth refresh-token grant, which yields
+a Console *user* token from a long-lived NetApp refresh token.
 
 Secrets and tokens are never logged and never appear in error messages.
 """
@@ -25,7 +27,7 @@ class ConsoleAuthError(RuntimeError):
 
     The message carries the HTTP status and the OAuth ``error`` /
     ``error_description`` when present.  It never includes the request body,
-    the client secret or a token.
+    the client secret, a refresh token or an access token.
     """
 
 
@@ -45,37 +47,34 @@ class TokenProvider(Protocol):
         ...
 
 
-class ClientCredentialsTokenProvider:
-    """Fetch and cache an access token via the OAuth client-credentials grant."""
+class _OAuthTokenProvider:
+    """Shared cache, expiry, locking and token-endpoint exchange for OAuth grants.
+
+    Subclasses supply the request body through ``_payload`` and a ``_kind``
+    label (``"service"`` or ``"user"``) used in the log line.
+    """
+
+    _kind: str = "service"
 
     def __init__(
         self,
         *,
-        client_id: str,
-        client_secret: SecretStr,
         token_endpoint: str,
-        audience: str,
         timeout: float,
         session: requests.Session | None = None,
         clock: Callable[[], float] = time.monotonic,
         expiry_skew: float = 60.0,
     ) -> None:
-        """Initialize the provider.
+        """Initialize the shared state.
 
         Args:
-            client_id: OAuth client ID of the service account.
-            client_secret: OAuth client secret of the service account.
             token_endpoint: URL of the token endpoint.
-            audience: Audience requested for the token.
             timeout: Request timeout in seconds.
             session: Optional ``requests.Session`` (tests inject one).
             clock: Monotonic clock returning seconds.
             expiry_skew: Seconds before expiry at which the token is renewed.
         """
-        self._client_id = client_id
-        self._client_secret = client_secret
         self._token_endpoint = token_endpoint
-        self._audience = audience
         self._timeout = timeout
         self._session = session if session is not None else requests.Session()
         self._clock = clock
@@ -84,12 +83,9 @@ class ClientCredentialsTokenProvider:
         self._token: str | None = None
         self._expires_at: float | None = None
 
-    def __repr__(self) -> str:
-        """Show the client ID and endpoint only."""
-        return (
-            f"ClientCredentialsTokenProvider(client_id={self._client_id!r}, "
-            f"token_endpoint={self._token_endpoint!r})"
-        )
+    def _payload(self) -> dict[str, str]:
+        """Return the token request body (subclasses implement)."""
+        raise NotImplementedError
 
     def _is_valid(self) -> bool:
         """Whether a cached token exists and has not reached its renewal time."""
@@ -118,15 +114,11 @@ class ClientCredentialsTokenProvider:
                 self._expires_at = None
 
     def _fetch(self) -> str:
-        """Exchange the client credentials for a token (caller holds the lock)."""
-        payload = {
-            "audience": self._audience,
-            "client_id": self._client_id,
-            "client_secret": self._client_secret.get_secret_value(),
-            "grant_type": "client_credentials",
-        }
+        """Exchange the credentials for a token (caller holds the lock)."""
         try:
-            resp = self._session.post(self._token_endpoint, json=payload, timeout=self._timeout)
+            resp = self._session.post(
+                self._token_endpoint, json=self._payload(), timeout=self._timeout
+            )
         except requests.RequestException as e:
             raise ConsoleAuthError(
                 f"Console token request failed: {type(e).__name__} contacting the token endpoint"
@@ -149,10 +141,10 @@ class ClientCredentialsTokenProvider:
             if expires_at <= now:
                 expires_at = now + expires_in / 2
             self._expires_at = expires_at
-            logging.info(f"fetched Console service token (expires in {int(expires_in)}s)")
+            logging.info(f"fetched Console {self._kind} token (expires in {int(expires_in)}s)")
         else:
             self._expires_at = None
-            logging.info("fetched Console service token (no expiry reported)")
+            logging.info(f"fetched Console {self._kind} token (no expiry reported)")
         self._token = token
         return token
 
@@ -178,4 +170,123 @@ class ClientCredentialsTokenProvider:
         return message
 
 
-__all__ = ["ClientCredentialsTokenProvider", "ConsoleAuthError", "TokenProvider"]
+class ClientCredentialsTokenProvider(_OAuthTokenProvider):
+    """Fetch and cache an access token via the OAuth client-credentials grant."""
+
+    _kind = "service"
+
+    def __init__(
+        self,
+        *,
+        client_id: str,
+        client_secret: SecretStr,
+        token_endpoint: str,
+        audience: str,
+        timeout: float,
+        session: requests.Session | None = None,
+        clock: Callable[[], float] = time.monotonic,
+        expiry_skew: float = 60.0,
+    ) -> None:
+        """Initialize the provider.
+
+        Args:
+            client_id: OAuth client ID of the service account.
+            client_secret: OAuth client secret of the service account.
+            token_endpoint: URL of the token endpoint.
+            audience: Audience requested for the token.
+            timeout: Request timeout in seconds.
+            session: Optional ``requests.Session`` (tests inject one).
+            clock: Monotonic clock returning seconds.
+            expiry_skew: Seconds before expiry at which the token is renewed.
+        """
+        super().__init__(
+            token_endpoint=token_endpoint,
+            timeout=timeout,
+            session=session,
+            clock=clock,
+            expiry_skew=expiry_skew,
+        )
+        self._client_id = client_id
+        self._client_secret = client_secret
+        self._audience = audience
+
+    def __repr__(self) -> str:
+        """Show the client ID and endpoint only."""
+        return (
+            f"ClientCredentialsTokenProvider(client_id={self._client_id!r}, "
+            f"token_endpoint={self._token_endpoint!r})"
+        )
+
+    def _payload(self) -> dict[str, str]:
+        """Return the client-credentials request body."""
+        return {
+            "audience": self._audience,
+            "client_id": self._client_id,
+            "client_secret": self._client_secret.get_secret_value(),
+            "grant_type": "client_credentials",
+        }
+
+
+class RefreshTokenProvider(_OAuthTokenProvider):
+    """Fetch and cache a user access token via the OAuth refresh-token grant.
+
+    The refresh token is long-lived and is never rotated by the endpoint: any
+    ``refresh_token`` in the response is ignored.
+    """
+
+    _kind = "user"
+
+    def __init__(
+        self,
+        *,
+        refresh_token: SecretStr,
+        client_id: str,
+        token_endpoint: str,
+        timeout: float,
+        session: requests.Session | None = None,
+        clock: Callable[[], float] = time.monotonic,
+        expiry_skew: float = 60.0,
+    ) -> None:
+        """Initialize the provider.
+
+        Args:
+            refresh_token: NetApp refresh token.
+            client_id: OAuth client ID the refresh token was issued to.
+            token_endpoint: URL of the token endpoint.
+            timeout: Request timeout in seconds.
+            session: Optional ``requests.Session`` (tests inject one).
+            clock: Monotonic clock returning seconds.
+            expiry_skew: Seconds before expiry at which the token is renewed.
+        """
+        super().__init__(
+            token_endpoint=token_endpoint,
+            timeout=timeout,
+            session=session,
+            clock=clock,
+            expiry_skew=expiry_skew,
+        )
+        self._refresh_token = refresh_token
+        self._client_id = client_id
+
+    def __repr__(self) -> str:
+        """Show the client ID and endpoint only."""
+        return (
+            f"RefreshTokenProvider(client_id={self._client_id!r}, "
+            f"token_endpoint={self._token_endpoint!r})"
+        )
+
+    def _payload(self) -> dict[str, str]:
+        """Return the refresh-token request body (no audience)."""
+        return {
+            "grant_type": "refresh_token",
+            "refresh_token": self._refresh_token.get_secret_value(),
+            "client_id": self._client_id,
+        }
+
+
+__all__ = [
+    "ClientCredentialsTokenProvider",
+    "ConsoleAuthError",
+    "RefreshTokenProvider",
+    "TokenProvider",
+]

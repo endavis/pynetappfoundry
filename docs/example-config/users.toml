@@ -1,3 +1,10 @@
 [clusters]
 user="netappuser"
 enc = "netappuser_password"
+
+# Console refresh token (optional). `user` is only a label and is never sent;
+# `enc` is the refresh token, plaintext or SOPS-encrypted. Write it with:
+#   nf config set-credential --type console --user console
+# [console]
+# user = "console"
+# enc = "paste-refresh-token-here"

@@ -213,6 +213,9 @@ class Config:
         self.args = args
         self.no_cache = no_cache
         self._trust_store: HostTrustStore | None = None
+        # Memoized Console refresh token: each SOPS decrypt runs a subprocess.
+        self._console_refresh_token: str | None = None
+        self._console_refresh_token_resolved = False
         self.config_dir = Path.cwd() / config_dir
         self.data_types = ["aiqums", "connectors", "cloudinsights", "clusters", "azure"]
         self.settings: dict[str, Any] = {}
@@ -365,10 +368,22 @@ class Config:
             ConsoleAPISettings object with API configuration.
 
         Raises:
-            ConfigurationError: If Console API settings are not configured.
+            ConfigurationError: If Console API settings are not configured, if
+                ``consoleapi.toml`` carries a ``refresh_token`` (it belongs in
+                ``users.toml [console]``), or if the refresh token cannot be
+                decrypted.
         """
         try:
-            console_data = self.get_setting("consoleapi", "general")
+            console_data: dict[str, Any] = dict(self.get_setting("consoleapi", "general") or {})
+            if "refresh_token" in console_data:
+                raise ConfigurationError(
+                    "consoleapi.toml must not contain 'refresh_token'. Store the Console "
+                    "refresh token in users.toml under [console] ('enc'), for example with "
+                    "'nf config set-credential --type console'."
+                )
+            refresh_token = self._resolve_console_refresh_token()
+            if refresh_token is not None:
+                console_data["refresh_token"] = refresh_token
             return ConsoleAPISettings.model_validate(console_data)
         except ConfigurationError:
             raise
@@ -376,9 +391,43 @@ class Config:
             raise ConfigurationError(
                 f"Invalid Console API configuration: {e}. "
                 "Ensure consoleapi.toml has a valid [general] section with "
-                "'base_url' and one of user_token, service_token or "
-                "client_id/client_secret."
+                "'base_url' and one of user_token, a refresh token (users.toml [console]), "
+                "service_token or client_id/client_secret."
             ) from e
+
+    def _resolve_console_refresh_token(self) -> str | None:
+        """Resolve the Console refresh token from ``users.toml [console]``.
+
+        ``get_user("console", "console")`` decrypts SOPS values and applies the
+        ``NF_CONSOLE_USER`` / ``NF_CONSOLE_PASSWORD`` overrides.  The ``user``
+        key is only a label and is never sent.  The result is memoized because
+        each decrypt runs a ``sops`` subprocess.
+
+        Returns:
+            The decrypted refresh token, or None if none is configured.
+
+        Raises:
+            ConfigurationError: If the token cannot be resolved or decrypted.
+                The message never includes the token or its ciphertext.
+        """
+        if self._console_refresh_token_resolved:
+            return self._console_refresh_token
+        users = self.settings.get("users")
+        configured = isinstance(users, dict) and "console" in users
+        if not configured and not os.environ.get("NF_CONSOLE_PASSWORD"):
+            self._console_refresh_token_resolved = True
+            return None
+        try:
+            _label, token = self.get_user("console", "console")
+        except ConfigurationError as e:
+            raise ConfigurationError(
+                "Could not resolve the Console refresh token from users.toml [console] "
+                "(or NF_CONSOLE_USER/NF_CONSOLE_PASSWORD); check the 'user' and 'enc' "
+                "keys and, for a SOPS value, that sops and its key are available."
+            ) from e
+        self._console_refresh_token = token
+        self._console_refresh_token_resolved = True
+        return token
 
     def get_licensing_settings(self) -> LicensingSettings | None:
         """Get licensing notification settings.

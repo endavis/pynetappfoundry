@@ -109,7 +109,7 @@ Amendment for the OAuth client-credentials grant.
 
 - **Untagged operations.** No operation in the generated spec is tagged `service`, and most are untagged. Routing is three-way: operations tagged `user` require the user token, operations tagged `service` require the service token, and untagged operations use the user token when one is set and the service token otherwise. The four hand-authored operations are untagged, so configurations with a `user_token` behave as before.
 - **Grant-backed slots.** A slot backed by an OAuth grant (client credentials fill the `service` slot) does not set `auth_header` on its `APIWrapper`. The client passes the current Bearer token per call through `call_endpoint(additional_headers=...)`. This keeps the `APIWrapper` contract and avoids in-place mutation of session headers (alternative (c) above). Static-token slots keep today's call path.
-- **Refresh layer.** A small `TokenProvider` protocol (`get_token`, `invalidate`) sits behind the client. On a 401 the client invalidates the rejected token, fetches a new one and retries once; a second 401 propagates. Issue #736 (user refresh token) can add a provider for the user slot without rework.
+- **Refresh layer.** A small `TokenProvider` protocol (`get_token`, `invalidate`) sits behind the client. On a 401 the client invalidates the rejected token, fetches a new one and retries once; a second 401 propagates. Issue #736 (user refresh token) adds a provider for the user slot without rework (see "User refresh-token grant (#736)").
 - **Logging.** `APIWrapper.call_endpoint` redacts `Authorization` in its debug request log.
 
 Configuration fields and validation rules are in [Config schema: consoleapi.toml](../reference/config-schema.md#consoleapitoml).
@@ -138,6 +138,18 @@ Amendment for the agent (`/occm/api`) client.
 
 Usage is described in [Console Agent](../usage/console-agent.md).
 
+## User refresh-token grant (#736)
+
+Amendment for the OAuth refresh-token grant, which fills the user slot.
+
+- **`RefreshTokenProvider` in the user slot.** It is a second `TokenProvider` beside the client-credentials one, sharing a private base for the cache, expiry, lock and 401 handling. A long-lived NetApp refresh token is exchanged at `token_endpoint` (with the public `user_client_id`) for a 24-hour user access token. The user wrapper is built with `auth_header=None` and the token travels per call through `call_with_token`. The endpoint returns no new refresh token, and any in the response is ignored.
+- **Storage in `users.toml [console]`.** The refresh token is a credential, so it follows the existing credential path: `Config.get_user("console", "console")`, which decrypts SOPS values and honours `NF_CONSOLE_USER` / `NF_CONSOLE_PASSWORD`. `user` is a display label that is never sent. `Config.get_console_api_settings()` injects the resolved token as a `SecretStr` and memoizes it, because each decrypt runs a `sops` subprocess. A `refresh_token` key in `consoleapi.toml` is a `ConfigurationError` that points to `users.toml`.
+- **Implicit, exclusive mode.** A configured refresh token selects the grant; there is no `auth_mode`. It is mutually exclusive with a static `user_token`, as `service_token` is with client credentials.
+- **Agent client and facade.** `ConsoleAgentClient` token precedence becomes: injected provider, refresh token, `user_token`, client credentials, `service_token`. `Console` hands agent clients the user provider when one is set, else the service provider.
+- **`nf config set-credential --type console`** writes the SOPS-encrypted `[console]` entry.
+
+Configuration is described in [Config schema: consoleapi.toml](../reference/config-schema.md#consoleapitoml); usage in [Console Agent](../usage/console-agent.md).
+
 ## Consequences
 
 ### Positive
@@ -163,6 +175,7 @@ Usage is described in [Console Agent](../usage/console-agent.md).
 - Issue #1015: refactor: key Console spec operations by their full path from the host (see "Per-operation servers (#1012)")
 - Issue #1001: feat: add a console agent (occm) api client (see "Console agent client (#1001)")
 - Issue #734: feat: extend ConsoleInfo with the cluster-scoped `connector` field (see "Console agent client (#1001)")
+- Issue #736: feat: add OAuth refresh-token grant flow to ConsoleAPIClient (see "User refresh-token grant (#736)")
 
 ## Related Documentation
 

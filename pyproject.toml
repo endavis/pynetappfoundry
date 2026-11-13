@@ -386,10 +386,12 @@ pytest_add_cli_args_test_selection = [
     "tests/unit/utils",
     "tests/unit/test_config.py",
     "tests/unit/test_config_commands.py",
+    "tests/unit/test_config_console_refresh_token.py",
     "tests/unit/test_db.py",
     "tests/unit/test_models.py",
     "tests/unit/test_openapi.py",
     "tests/unit/test_perf_patches.py",
+    "tests/unit/test_set_credential_console.py",
     "tests/unit/test_size_utils.py",
 ]
 # mutmut passes -x to pytest itself. --assert=plain skips assertion rewriting,

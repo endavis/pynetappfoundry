@@ -124,6 +124,11 @@ enc = "encoded_password_here"
 [aiqums]
 user = "aiqum_admin"
 enc = "encoded_password_here"
+
+# Console refresh token (see consoleapi.toml). `user` is only a label; it is never sent.
+[console]
+user = "console"
+enc = "SOPS[...]"  # the refresh token, SOPS-encrypted (or plaintext)
 ```
 
 #### Credential Fields
@@ -132,6 +137,8 @@ enc = "encoded_password_here"
 |-------|------|----------|-------------|
 | `user` | string | Yes | Username for authentication |
 | `enc` | string | Yes | Encoded password (base64 or other encoding) |
+
+For `[console]`, `enc` holds the NetApp refresh token and `user` is a display label that is never sent. SOPS values are decrypted, and the `NF_CONSOLE_USER` / `NF_CONSOLE_PASSWORD` environment variables override the file. Write the entry with `nf config set-credential --type console --user console`; the password prompt takes the refresh token.
 
 **Note:** Individual resources can override these defaults by specifying `user` and `enc` in their data file entry.
 
@@ -185,9 +192,10 @@ base_api_path = "/rest/v1"                 # Optional: Base API path (default: "
 
 Console SaaS (BlueXP) API settings. Loaded into `config.settings["consoleapi"]`.
 
-Two authentication modes are supported. See `docs/example-config/apis/console/notes.txt` for how to obtain the credentials.
+Three authentication modes are supported. See `docs/example-config/apis/console/notes.txt` for how to obtain the credentials.
 
 - **Static tokens:** `user_token` and/or `service_token`, pasted into the file.
+- **OAuth refresh token (user slot):** a long-lived NetApp refresh token, stored in `users.toml` under `[console]` (see [users.toml](#userstoml)), never in `consoleapi.toml`. The client exchanges it at `token_endpoint` for a user access token (valid for 24 hours), keeps it in memory, renews it shortly before it expires, and on a 401 refetches and retries once. Setting `refresh_token` in `consoleapi.toml` is a configuration error. The refresh token and the access tokens are never logged.
 - **OAuth client credentials:** `client_id` and `client_secret` of a Console service account. The client exchanges them for a service token when it is constructed, keeps the token in memory, renews it shortly before it expires, and on a 401 refetches and retries once. The secret and the tokens are never logged.
 
 The same settings drive `ConsoleAgentClient`, which calls one Console agent's `/occm/api`; see [Console Agent](../usage/console-agent.md).
@@ -213,7 +221,9 @@ timeout = 30.0                               # Optional: Request timeout in seco
 | `service_token` | string | No | `null` | Static service-account JWT. Lazy-validated: raises `ConsoleServiceTokenMissingError` if absent when a service-typed endpoint is called |
 | `client_id` | string | No | `null` | OAuth client ID of a service account. Set together with `client_secret` |
 | `client_secret` | string | No | `null` | OAuth client secret of a service account. Held as a secret value and never logged |
-| `token_endpoint` | string | No | `"https://netapp-cloud-account.auth0.com/oauth/token"` | Token endpoint for the client-credentials exchange. Only valid with client credentials |
+| `refresh_token` | secret string | No | `null` | Not read from `consoleapi.toml`: it is resolved from `users.toml` `[console]` (`enc`, SOPS-decrypted, overridable by `NF_CONSOLE_PASSWORD`). Backs the user slot. Held as a secret value and never logged |
+| `user_client_id` | string | No | `"Mu0V1ywgYteI6w1MbD15fKfVIUrNXGWC"` | OAuth client ID the refresh token is exchanged with. The default is NetApp's documented public constant. Only valid with a refresh token |
+| `token_endpoint` | string | No | `"https://netapp-cloud-account.auth0.com/oauth/token"` | Token endpoint for the client-credentials and refresh-token exchanges. Only valid with client credentials or a refresh token |
 | `audience` | string | No | `"https://api.cloud.netapp.com"` | Audience requested for the token. Only valid with client credentials |
 | `base_url` | string | Yes | - | Host (and any proxy prefix) for the Console API. The bundled spec keys each operation by its full path (for example `/v1/management/organizations`), which is appended to it |
 | `org_id` | string | No | `null` | Default organization ID. Can be overridden per `Console(config, org_id=...)` call |
@@ -225,10 +235,12 @@ Validation rules (error messages name fields, never values):
 
 - `client_id` and `client_secret` are set together or not at all.
 - Client credentials and `service_token` are mutually exclusive, so a stale pasted token cannot take precedence.
-- `audience` and `token_endpoint` require client credentials.
-- At least one of `user_token`, `service_token` or client credentials is required.
+- `audience` requires client credentials, and `token_endpoint` requires client credentials or a refresh token.
+- A refresh token and `user_token` are mutually exclusive: the mode is implicit, and there is no `auth_mode` setting.
+- `user_client_id` requires a refresh token.
+- At least one of `user_token`, a refresh token, `service_token` or client credentials is required.
 
-Routing: operations tagged for the user token require `user_token`, and operations tagged for the service token require the service slot (`service_token` or client credentials). Operations with no tag, which includes every operation the client calls today, use the user token when one is set and the service token otherwise. A configuration with a `user_token` therefore behaves as before. See [ADR-0019](../decisions/0019-console-runtime-client-architecture-org-scoped-access-and-per-token-type-wrapper-isolation.md).
+Routing: operations tagged for the user token require the user slot (`user_token` or a refresh token), and operations tagged for the service token require the service slot (`service_token` or client credentials). Operations with no tag, which includes every operation the client calls today, use the user slot when one is set and the service slot otherwise. A configuration with a `user_token` therefore behaves as before. See [ADR-0019](../decisions/0019-console-runtime-client-architecture-org-scoped-access-and-per-token-type-wrapper-isolation.md).
 
 ---
 

@@ -7,6 +7,14 @@
 
 user_token = 'paste-user-jwt-here'
 
+# Refresh-token mode (alternative to user_token; setting both is an error).
+# The refresh token does NOT go in this file: put it in users.toml under
+# [console] (nf config set-credential --type console). The client then renews
+# the 24h user access token itself. See notes.txt.
+# user_client_id has a default (NetApp's public client id); override it only
+# together with a refresh token.
+# user_client_id = 'Mu0V1ywgYteI6w1MbD15fKfVIUrNXGWC'
+
 # Client-credentials mode (alternative to service_token; setting both is an
 # error). The client fetches and renews the service token itself.
 # client_id = 'your-service-account-client-id'

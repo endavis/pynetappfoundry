@@ -97,11 +97,18 @@ class Console:
         return self._client.get_project(project_id)
 
     def _agent_client(self, agent_id: str) -> ConsoleAgentClient:
-        """Build a Console agent client sharing this facade's service token provider."""
+        """Build a Console agent client sharing this facade's token provider.
+
+        The user provider (refresh-token grant) is shared when set, otherwise the
+        service provider (client credentials).
+        """
+        user_provider = self._client.user_token_provider
         return ConsoleAgentClient(
             self._config,
             agent_id,
-            token_provider=self._client.service_token_provider,
+            token_provider=(
+                user_provider if user_provider is not None else self._client.service_token_provider
+            ),
         )
 
     def get_connector(self, agent_id: str) -> Connector:

@@ -73,8 +73,12 @@ def _encrypt_password(password: str, no_encrypt: bool, ctx: click.Context) -> st
 @click.option(
     "--type",
     "cred_type",
-    type=click.Choice(sorted(VALID_DATA_TYPES), case_sensitive=False),
-    help="Set default credentials for all resources of this type (in users.toml).",
+    type=click.Choice(sorted(VALID_DATA_TYPES | {"console"}), case_sensitive=False),
+    help=(
+        "Set default credentials for all resources of this type (in users.toml). "
+        "'console' stores the Console refresh token: --user is only a label and "
+        "the password prompt takes the refresh token."
+    ),
 )
 @click.option(
     "--user",
@@ -114,6 +118,10 @@ def set_credential(
 
         # Set default credentials for all clusters
         nf config set-credential --type clusters --user admin
+
+        # Store the Console refresh token (the user is a label, never sent;
+        # the password prompt takes the refresh token)
+        nf config set-credential --type console --user console
     """
     # Validate mutually exclusive options
     if cluster and cred_type:

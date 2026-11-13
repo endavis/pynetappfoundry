@@ -32,7 +32,16 @@ Console SaaS (BlueXP) runtime client setup.
    - Paste the access JWT into consoleapi.toml [general].service_token
    - It is not renewed; it must be replaced when it expires.
 
-   The OAuth refresh-token grant for user tokens is out of scope for now.
+   refresh token (user token that renews itself; alternative to user_token,
+   setting both is an error):
+   - Generate a refresh token at https://services.cloud.netapp.com/refresh-token
+   - Run: nf config set-credential --type console --user console
+     and paste the refresh token at the password prompt. It is stored,
+     SOPS-encrypted when SOPS is set up, in users.toml under [console]
+     (the user is only a label). Never put it in consoleapi.toml.
+   - The refresh token is long-lived. The client exchanges it for a 24h user
+     access token and renews that token itself.
+   - NF_CONSOLE_USER / NF_CONSOLE_PASSWORD override the users.toml entry.
 
 3. Test it:
 
