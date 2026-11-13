@@ -122,8 +122,11 @@ class ConsoleAPISettings(BaseModel):
     the BlueXP UI), ``service_token`` (a static service token), or OAuth client
     credentials (``client_id`` + ``client_secret``), which back the service slot
     with a token the client fetches and renews itself.  ``service_token`` and
-    client credentials are mutually exclusive.  ``token_endpoint`` and
-    ``audience`` only apply to client credentials.  ``agent_ids`` lists the
+    client credentials are mutually exclusive.  A ``refresh_token`` (resolved
+    from ``users.toml [console]``, never ``consoleapi.toml``) backs the user
+    slot and is mutually exclusive with ``user_token``; ``user_client_id`` is
+    its OAuth client id.  ``token_endpoint`` applies to both grants and
+    ``audience`` only to client credentials.  ``agent_ids`` lists the
     Console agent ids ``Console.find_connector`` searches when it gets none.
     """
 
@@ -135,6 +138,8 @@ class ConsoleAPISettings(BaseModel):
     service_token: str | None = None
     client_id: str | None = None
     client_secret: SecretStr | None = None
+    refresh_token: SecretStr | None = None
+    user_client_id: str = "Mu0V1ywgYteI6w1MbD15fKfVIUrNXGWC"
     token_endpoint: str = "https://netapp-cloud-account.auth0.com/oauth/token"
     audience: str = "https://api.cloud.netapp.com"
     base_url: str
@@ -148,6 +153,11 @@ class ConsoleAPISettings(BaseModel):
         """Whether the service slot is backed by an OAuth client-credentials grant."""
         return self.client_id is not None and self.client_secret is not None
 
+    @property
+    def uses_refresh_token(self) -> bool:
+        """Whether the user slot is backed by an OAuth refresh-token grant."""
+        return self.refresh_token is not None
+
     @model_validator(mode="after")
     def _validate_credential_sources(self) -> ConsoleAPISettings:
         """Validate the combination of credential fields (names only, never values)."""
@@ -160,11 +170,20 @@ class ConsoleAPISettings(BaseModel):
                 "service_token and client credentials (client_id/client_secret) "
                 "are mutually exclusive; set only one"
             )
-        if not has_id and ({"audience", "token_endpoint"} & self.model_fields_set):
+        has_refresh = self.refresh_token is not None
+        if has_refresh and self.user_token:
+            raise ValueError("user_token and a refresh token are mutually exclusive; set only one")
+        if not has_id and (
+            "audience" in self.model_fields_set
+            or ("token_endpoint" in self.model_fields_set and not has_refresh)
+        ):
             raise ValueError("audience and token_endpoint require client_id and client_secret")
-        if not (self.user_token or self.service_token or has_id):
+        if not has_refresh and "user_client_id" in self.model_fields_set:
+            raise ValueError("user_client_id requires a refresh token")
+        if not (self.user_token or has_refresh or self.service_token or has_id):
             raise ValueError(
-                "one of user_token, service_token or client_id/client_secret is required"
+                "one of user_token, a refresh token, service_token or "
+                "client_id/client_secret is required"
             )
         return self
 

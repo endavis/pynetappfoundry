@@ -276,7 +276,7 @@ contain valid values.
 | Option | Description |
 |--------|-------------|
 | `--cluster TEXT` | Set credentials for a specific cluster (per-cluster override) |
-| `--type` | Set default credentials for all resources of a type: `aiqums`, `azure`, `cloudinsights`, `clusters`, `connectors`, `ibm` |
+| `--type` | Set default credentials for all resources of a type: `aiqums`, `azure`, `cloudinsights`, `clusters`, `connectors`, `console`, `ibm` (`console` stores the Console refresh token: `--user` is only a label and the password prompt takes the token) |
 | `--user TEXT` | Username (required) |
 | `--password TEXT` | Password (will prompt if not provided) |
 | `--no-encrypt` | Store password as plain text (not recommended) |
@@ -434,6 +434,9 @@ nf config set-credential --cluster mycluster --user admin
 
 # Set default credentials for all clusters
 nf config set-credential --type clusters --user admin
+
+# Store the Console refresh token (the user is a label; the prompt takes the token)
+nf config set-credential --type console --user console
 
 # Store a password without encryption (not recommended)
 nf config set-credential --cluster mycluster --user admin --no-encrypt

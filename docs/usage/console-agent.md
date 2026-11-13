@@ -37,18 +37,24 @@ agent = ConsoleAgentClient(config, "your-agent-id")
 Token source, first match wins:
 
 1. an injected `token_provider`;
-2. `user_token`;
-3. OAuth client credentials (bad credentials raise `ConsoleAuthError` at construction);
-4. a static `service_token`.
+2. a refresh token from `users.toml` `[console]` (a user token via the OAuth refresh-token grant; a bad token raises `ConsoleAuthError` at construction);
+3. `user_token`;
+4. OAuth client credentials (bad credentials raise `ConsoleAuthError` at construction);
+5. a static `service_token`.
 
-To share one OAuth token cache with `ConsoleAPIClient`:
+A refresh token and `user_token` are mutually exclusive in the settings, so 2 and 3 never both apply.
+
+To share one OAuth token cache with `ConsoleAPIClient`, pass its user provider when a refresh token is configured, or its service provider for client credentials:
 
 ```python
 from pynetappfoundry.clients.console import ConsoleAPIClient, ConsoleAgentClient
 
 console = ConsoleAPIClient(config)
-agent = ConsoleAgentClient(config, "your-agent-id", token_provider=console.service_token_provider)
+provider = console.user_token_provider or console.service_token_provider
+agent = ConsoleAgentClient(config, "your-agent-id", token_provider=provider)
 ```
+
+`Console.get_connector` and `Console.find_connector` do this for you: they share the user provider when set, otherwise the service provider.
 
 ### Token types
 

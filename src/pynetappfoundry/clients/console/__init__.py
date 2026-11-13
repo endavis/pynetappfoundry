@@ -6,7 +6,11 @@ from pynetappfoundry.clients.console.api import (
     ConsoleServiceTokenMissingError,
     ConsoleUserTokenMissingError,
 )
-from pynetappfoundry.clients.console.auth import ClientCredentialsTokenProvider, ConsoleAuthError
+from pynetappfoundry.clients.console.auth import (
+    ClientCredentialsTokenProvider,
+    ConsoleAuthError,
+    RefreshTokenProvider,
+)
 
 __all__ = [
     "ClientCredentialsTokenProvider",
@@ -15,4 +19,5 @@ __all__ = [
     "ConsoleAuthError",
     "ConsoleServiceTokenMissingError",
     "ConsoleUserTokenMissingError",
+    "RefreshTokenProvider",
 ]

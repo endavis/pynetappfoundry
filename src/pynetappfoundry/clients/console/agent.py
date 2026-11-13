@@ -9,7 +9,11 @@ from urllib.parse import quote
 from pydantic import SecretStr, ValidationError
 
 from pynetappfoundry.clients.console.api import call_with_token
-from pynetappfoundry.clients.console.auth import ClientCredentialsTokenProvider, TokenProvider
+from pynetappfoundry.clients.console.auth import (
+    ClientCredentialsTokenProvider,
+    RefreshTokenProvider,
+    TokenProvider,
+)
 from pynetappfoundry.clients.openapi import APIWrapper
 from pynetappfoundry.core.models import RetryConfig
 from pynetappfoundry.models.console_types import Connector
@@ -44,7 +48,8 @@ class ConsoleAgentClient:
 
     Every request carries ``x-agent-id: <agent_id>`` (in the static ``auth_header``)
     and a bearer token.  Token source, first match wins: an injected
-    ``token_provider``, ``user_token``, OAuth client credentials, ``service_token``.
+    ``token_provider``, a refresh token (user token via the refresh-token grant),
+    ``user_token``, OAuth client credentials, ``service_token``.
     Static tokens go in ``auth_header``; provider tokens are sent per call with one
     refresh-and-retry on a 401.  ``add`` and ``delete`` are never retried on 5xx or
     timeouts.
@@ -83,6 +88,16 @@ class ConsoleAgentClient:
         self._provider: TokenProvider | None = None
         if token_provider is not None:
             self._provider = token_provider
+        elif settings.refresh_token is not None:
+            self._provider = RefreshTokenProvider(
+                refresh_token=settings.refresh_token,
+                client_id=settings.user_client_id,
+                token_endpoint=settings.token_endpoint,
+                timeout=settings.timeout,
+                session=token_session,
+            )
+            # Fail fast on a bad refresh token rather than on the first API call.
+            self._provider.get_token()
         elif settings.user_token:
             auth_header["Authorization"] = f"Bearer {settings.user_token}"
         elif settings.client_id and settings.client_secret:

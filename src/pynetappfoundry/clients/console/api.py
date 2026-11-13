@@ -6,7 +6,11 @@ from typing import TYPE_CHECKING, Any
 
 import requests
 
-from pynetappfoundry.clients.console.auth import ClientCredentialsTokenProvider, TokenProvider
+from pynetappfoundry.clients.console.auth import (
+    ClientCredentialsTokenProvider,
+    RefreshTokenProvider,
+    TokenProvider,
+)
 from pynetappfoundry.clients.openapi import APIWrapper
 from pynetappfoundry.models.console_types import Folder, Organization, Project
 
@@ -81,7 +85,27 @@ class ConsoleAPIClient:
         spec_path = str(config.get_schema_location("console") / "console_openapi.yaml")
 
         self._user: APIWrapper | None
-        if settings.user_token:
+        self._user_provider: TokenProvider | None = None
+        if settings.refresh_token is not None:
+            self._user = APIWrapper(
+                api_json_file=spec_path,
+                base_url=settings.base_url,
+                auth_header=None,
+                base_api_path=settings.base_api_path,
+                timeout=settings.timeout,
+                name="console-user",
+                use_operation_servers=True,
+            )
+            self._user_provider = RefreshTokenProvider(
+                refresh_token=settings.refresh_token,
+                client_id=settings.user_client_id,
+                token_endpoint=settings.token_endpoint,
+                timeout=settings.timeout,
+                session=token_session,
+            )
+            # Fail fast on a bad refresh token rather than on the first API call.
+            self._user_provider.get_token()
+        elif settings.user_token:
             self._user = APIWrapper(
                 api_json_file=spec_path,
                 base_url=settings.base_url,
@@ -130,6 +154,11 @@ class ConsoleAPIClient:
             self._service = None
 
     @property
+    def user_token_provider(self) -> TokenProvider | None:
+        """The user-slot token provider, or None for a static or absent token."""
+        return self._user_provider
+
+    @property
     def service_token_provider(self) -> TokenProvider | None:
         """The service-slot token provider, or None for a static or absent token."""
         return self._service_provider
@@ -164,7 +193,7 @@ class ConsoleAPIClient:
             raise ConsoleUserTokenMissingError(
                 "This Console endpoint requires a user token, but no "
                 "user_token was provided in settings. Add user_token to "
-                "consoleapi.toml [general]."
+                "consoleapi.toml [general], or a refresh token in users.toml [console]."
             )
         return self._user
 
@@ -180,7 +209,7 @@ class ConsoleAPIClient:
             ConsoleUserTokenMissingError: If neither token type is configured.
         """
         if self._user is not None:
-            return self._user, None
+            return self._user, self._user_provider
         if self._service is not None:
             return self._service, self._service_provider
         return self._require_user(), None
