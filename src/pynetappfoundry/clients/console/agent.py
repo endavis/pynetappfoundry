@@ -12,6 +12,7 @@ from pynetappfoundry.clients.console.api import call_with_token
 from pynetappfoundry.clients.console.auth import ClientCredentialsTokenProvider, TokenProvider
 from pynetappfoundry.clients.openapi import APIWrapper
 from pynetappfoundry.core.models import RetryConfig
+from pynetappfoundry.models.console_types import Connector
 
 if TYPE_CHECKING:
     import requests
@@ -124,6 +125,38 @@ class ConsoleAgentClient:
         if not isinstance(response, dict):
             raise TypeError(f"Expected a JSON object from about, got {type(response).__name__}")
         return models.ResponseBody.model_validate(response)
+
+    def get_connector(self) -> Connector:
+        """Return this agent as a compact ``Connector`` (from ``about()``).
+
+        Returns:
+            The Connector; ``agent_id`` falls back to this client's agent id.
+        """
+        return Connector.from_about(self.about(), agent_id=self.agent_id)
+
+    def find_onprem_working_environment(
+        self, cluster_uuid: str
+    ) -> get_onprem_working_environments.ResponseBody | None:
+        """Find the on-prem working environment of a cluster on this agent.
+
+        Lists with ``fields=ontapClusterProperties`` and matches ``clusterUuid``.
+
+        Args:
+            cluster_uuid: The ONTAP cluster UUID.
+
+        Returns:
+            The matching working environment, or ``None`` when this agent has none.
+
+        Raises:
+            ValueError: If ``cluster_uuid`` is empty or blank.
+        """
+        if not isinstance(cluster_uuid, str) or not cluster_uuid.strip():
+            raise ValueError("cluster_uuid must be a non-empty string")
+        for item in self.list_onprem_working_environments(fields=["ontapClusterProperties"]):
+            props = item.ontapClusterProperties
+            if props is not None and props.clusterUuid == cluster_uuid:
+                return item
+        return None
 
     def list_onprem_working_environments(
         self,

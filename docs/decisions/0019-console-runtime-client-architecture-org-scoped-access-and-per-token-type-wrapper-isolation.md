@@ -134,6 +134,8 @@ Amendment for the agent (`/occm/api`) client.
 - **Token routing, first match wins.** An injected `token_provider` (for example `ConsoleAPIClient.service_token_provider`), then `user_token`, then OAuth client credentials, then a static `service_token`. Static tokens go in `auth_header`; provider tokens are sent per call through the shared `call_with_token` (401, invalidate, retry once), extracted from `ConsoleAPIClient._call`.
 - **No retry on mutations.** `add` and `delete` disable the wrapper's 5xx and timeout retry so a transient failure cannot create the same working environment twice. The 401 token refresh still applies.
 
+- **Connector (#734).** `ConsoleInfo.connector` holds a compact `Connector` built from the agent's `about()`; `privateIp` and `siteIdentifier.host` are not kept. `Console.find_connector(cluster_uuid, agent_ids=None)` matches a cluster on each agent's on-prem working environment list and falls back to the optional `agent_ids` setting in `consoleapi.toml`, raising `ValueError` when neither is given. The setting exists because the tenancy API lists no agents for a service token.
+
 Usage is described in [Console Agent](../usage/console-agent.md).
 
 ## Consequences
@@ -160,6 +162,7 @@ Usage is described in [Console Agent](../usage/console-agent.md).
 - Issue #1012: fix: APIWrapper ignores per-operation servers (see "Per-operation servers (#1012)")
 - Issue #1015: refactor: key Console spec operations by their full path from the host (see "Per-operation servers (#1012)")
 - Issue #1001: feat: add a console agent (occm) api client (see "Console agent client (#1001)")
+- Issue #734: feat: extend ConsoleInfo with the cluster-scoped `connector` field (see "Console agent client (#1001)")
 
 ## Related Documentation
 

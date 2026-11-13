@@ -123,7 +123,8 @@ class ConsoleAPISettings(BaseModel):
     credentials (``client_id`` + ``client_secret``), which back the service slot
     with a token the client fetches and renews itself.  ``service_token`` and
     client credentials are mutually exclusive.  ``token_endpoint`` and
-    ``audience`` only apply to client credentials.
+    ``audience`` only apply to client credentials.  ``agent_ids`` lists the
+    Console agent ids ``Console.find_connector`` searches when it gets none.
     """
 
     # hide_input_in_errors keeps raw input values (including the client secret)
@@ -138,6 +139,7 @@ class ConsoleAPISettings(BaseModel):
     audience: str = "https://api.cloud.netapp.com"
     base_url: str
     org_id: str | None = None
+    agent_ids: list[str] = Field(default_factory=list)
     base_api_path: str = "/"
     timeout: float = 30.0
 

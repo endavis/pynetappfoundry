@@ -1726,3 +1726,81 @@ class TestUpgradeToV11:
         db.close()
         assert loaded is not None
         assert loaded.cluster == cluster
+
+
+class TestUpgradeToV12:
+    """#734: ``ConsoleInfo.connector`` adds a column to ``consoleinfo``."""
+
+    @staticmethod
+    def _make_v11_db(db_path: Path) -> None:
+        from pynetappfoundry.cache.db_schema import (
+            ENVELOPE_DDL,
+            _ensure_registry,
+            generate_cluster_name_index_ddl,
+            generate_table_ddl,
+            generate_uuid_column_index_ddl,
+        )
+
+        conn = sqlite3.connect(db_path)
+        conn.execute(ENVELOPE_DDL)
+        conn.execute("CREATE TABLE _schema_version (version INTEGER NOT NULL)")
+        conn.execute("INSERT INTO _schema_version (version) VALUES (11)")
+        for spec in _ensure_registry().values():
+            conn.execute(generate_table_ddl(spec.table_name, spec.model_class))
+            conn.execute(generate_cluster_name_index_ddl(spec.table_name))
+            if spec.has_uuid:
+                conn.execute(generate_uuid_column_index_ddl(spec.table_name))
+        conn.execute("ALTER TABLE consoleinfo DROP COLUMN connector")
+        conn.commit()
+        conn.close()
+
+    def test_v11_database_gains_connector_column(self, tmp_path: Path) -> None:
+        db_path = tmp_path / "v11.db"
+        self._make_v11_db(db_path)
+
+        db = ClusterMetadataDB(db_path=db_path)
+
+        assert db.conn.execute("SELECT version FROM _schema_version").fetchone()[0] == (
+            ClusterMetadataDB.SCHEMA_VERSION
+        )
+        columns = {row[1] for row in db.conn.execute("PRAGMA table_info(consoleinfo)")}
+        assert "connector" in columns
+        db.close()
+
+    def test_migrated_database_stores_connector(self, tmp_path: Path) -> None:
+        from pynetappfoundry.cache._metadata import ConsoleInfo
+        from pynetappfoundry.models.console_types import Connector, ConnectorSiteIdentifier
+
+        db_path = tmp_path / "v11.db"
+        self._make_v11_db(db_path)
+        connector = Connector.model_validate(
+            {
+                "agent_id": "agent-placeholder-0001",
+                "version": "0.0.0-test",
+                "site_identifier": ConnectorSiteIdentifier(
+                    company="example-company", site="example-site"
+                ),
+            }
+        )
+
+        db = ClusterMetadataDB(db_path=db_path)
+        db.set(
+            "test-cluster",
+            CachedClusterMetadata(
+                cluster_name="test-cluster", console=ConsoleInfo(connector=connector)
+            ),
+        )
+        loaded = db.get("test-cluster")
+        db.close()
+
+        assert loaded is not None
+        assert loaded.console.connector == connector
+
+    def test_upgrade_to_v12_is_idempotent(self, tmp_path: Path) -> None:
+        db = ClusterMetadataDB(db_path=tmp_path / "current.db")
+
+        db._upgrade_to_v12()
+
+        names = [row[1] for row in db.conn.execute("PRAGMA table_info(consoleinfo)")]
+        assert names.count("connector") == 1
+        db.close()

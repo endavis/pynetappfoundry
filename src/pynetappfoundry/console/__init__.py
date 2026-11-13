@@ -19,9 +19,12 @@ from pynetappfoundry.clients.console import (
     ConsoleServiceTokenMissingError,
     ConsoleUserTokenMissingError,
 )
-from pynetappfoundry.models.console_types import Folder, Organization, Project
+from pynetappfoundry.clients.console.agent import ConsoleAgentClient
+from pynetappfoundry.models.console_types import Connector, Folder, Organization, Project
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from pynetappfoundry.core.config import Config
 
 
@@ -44,6 +47,7 @@ class Console:
         Raises:
             ValueError: If no org_id is available from either source.
         """
+        self._config = config
         self._client = ConsoleAPIClient(config)
         settings = config.get_console_api_settings()
         resolved = org_id or settings.org_id
@@ -92,9 +96,62 @@ class Console:
         """
         return self._client.get_project(project_id)
 
+    def _agent_client(self, agent_id: str) -> ConsoleAgentClient:
+        """Build a Console agent client sharing this facade's service token provider."""
+        return ConsoleAgentClient(
+            self._config,
+            agent_id,
+            token_provider=self._client.service_token_provider,
+        )
+
+    def get_connector(self, agent_id: str) -> Connector:
+        """Get a Console agent (connector) by agent ID.
+
+        Args:
+            agent_id: The Console agent id.
+
+        Returns:
+            The Connector for *agent_id*.
+        """
+        return self._agent_client(agent_id).get_connector()
+
+    def find_connector(
+        self, cluster_uuid: str, agent_ids: Sequence[str] | None = None
+    ) -> Connector | None:
+        """Find the connector (Console agent) that manages a cluster.
+
+        Queries each agent in order and stops at the first one with an on-prem
+        working environment for the cluster.  Errors propagate.
+
+        Args:
+            cluster_uuid: The ONTAP cluster UUID.
+            agent_ids: Agent ids to search.  Defaults to ``agent_ids`` from
+                ``consoleapi.toml [general]`` when omitted.
+
+        Returns:
+            The matching Connector, or ``None`` when no agent manages the cluster.
+
+        Raises:
+            ValueError: If no agent ids come from the argument or the settings.
+        """
+        ids = list(agent_ids) if agent_ids is not None else None
+        if ids is None:
+            ids = list(self._config.get_console_api_settings().agent_ids)
+        if not ids:
+            raise ValueError(
+                "find_connector requires agent ids, either as an argument or in "
+                "consoleapi.toml [general] as 'agent_ids'."
+            )
+        for agent_id in ids:
+            agent = self._agent_client(agent_id)
+            if agent.find_onprem_working_environment(cluster_uuid) is not None:
+                return agent.get_connector()
+        return None
+
 
 __all__ = [
     "ClientCredentialsTokenProvider",
+    "Connector",
     "Console",
     "ConsoleAPIClient",
     "ConsoleAuthError",

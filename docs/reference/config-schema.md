@@ -200,6 +200,7 @@ user_token = "paste-user-jwt-here"          # Optional: User JWT from the BlueXP
 # client_secret = "your-service-account-client-secret"
 base_url = "https://api.bluexp.netapp.com"  # Required: Console API base URL
 org_id = "your-org-id"                      # Optional: Default organization ID
+# agent_ids = ["your-agent-idclients"]      # Optional: Console agent IDs for Console.find_connector
 base_api_path = "/"                          # Optional: Base API path (default: "/")
 timeout = 30.0                               # Optional: Request timeout in seconds (default: 30.0)
 ```
@@ -216,6 +217,7 @@ timeout = 30.0                               # Optional: Request timeout in seco
 | `audience` | string | No | `"https://api.cloud.netapp.com"` | Audience requested for the token. Only valid with client credentials |
 | `base_url` | string | Yes | - | Host (and any proxy prefix) for the Console API. The bundled spec keys each operation by its full path (for example `/v1/management/organizations`), which is appended to it |
 | `org_id` | string | No | `null` | Default organization ID. Can be overridden per `Console(config, org_id=...)` call |
+| `agent_ids` | list of strings | No | `[]` | Console agent IDs that `Console.find_connector` searches when called without an `agent_ids` argument. Agent IDs end in `clients`. The tenancy API lists none for a service token, so they are configured here |
 | `base_api_path` | string | No | `"/"` | Fallback path prefix, used only for operations whose spec entry declares no `servers`. It has no effect with the bundled Console spec, whose operations all carry a bare-host server |
 | `timeout` | float | No | `30.0` | HTTP request timeout in seconds |
 

@@ -359,3 +359,64 @@ class TestProviderHandling:
         with pytest.raises(requests.HTTPError):
             client.list_onprem_working_environments()
         assert request_mock.call_count == 1
+
+
+class TestConnectorLookup:
+    """#734: get_connector and find_onprem_working_environment."""
+
+    CLUSTER_UUID = "00000000-0000-0000-0000-000000000000"
+
+    @staticmethod
+    def _item() -> dict[str, Any]:
+        result: dict[str, Any] = json.loads(
+            (_FIXTURES / "onprem_working_environment.json").read_text()
+        )
+        return result
+
+    def test_get_connector_maps_about(
+        self, client: ConsoleAgentClient, request_mock: MagicMock
+    ) -> None:
+        about = json.loads((_FIXTURES / "occm_system_about.json").read_text())
+        request_mock.return_value = _response(200, about)
+
+        connector = client.get_connector()
+
+        assert request_mock.call_args.args == ("GET", f"{REAL_HOST}/occm/api/occm/system/about")
+        assert connector.agent_id == AGENT_ID
+        assert "agent.example.test" not in connector.model_dump_json()
+
+    def test_find_returns_match_and_sends_fields(
+        self, client: ConsoleAgentClient, request_mock: MagicMock
+    ) -> None:
+        request_mock.return_value = _response(200, [self._item()])
+
+        found = client.find_onprem_working_environment(self.CLUSTER_UUID)
+
+        assert found is not None
+        assert found.ontapClusterProperties is not None
+        assert found.ontapClusterProperties.clusterUuid == self.CLUSTER_UUID
+        query = parse_qs(urlsplit(request_mock.call_args.args[1]).query)
+        assert query == {"fields": ["ontapClusterProperties"]}
+
+    def test_find_returns_none_when_no_match(
+        self, client: ConsoleAgentClient, request_mock: MagicMock
+    ) -> None:
+        request_mock.return_value = _response(200, [self._item()])
+        other_uuid = "11111111-1111-1111-1111-111111111111"
+        assert client.find_onprem_working_environment(other_uuid) is None
+
+    def test_find_skips_items_without_cluster_properties(
+        self, client: ConsoleAgentClient, request_mock: MagicMock
+    ) -> None:
+        item = self._item()
+        del item["ontapClusterProperties"]
+        request_mock.return_value = _response(200, [item])
+        assert client.find_onprem_working_environment(self.CLUSTER_UUID) is None
+
+    @pytest.mark.parametrize("cluster_uuid", ["", "  "])
+    def test_find_blank_uuid_rejected(
+        self, client: ConsoleAgentClient, request_mock: MagicMock, cluster_uuid: str
+    ) -> None:
+        with pytest.raises(ValueError, match="cluster_uuid"):
+            client.find_onprem_working_environment(cluster_uuid)
+        request_mock.assert_not_called()

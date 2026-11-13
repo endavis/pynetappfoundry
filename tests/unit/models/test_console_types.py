@@ -135,3 +135,87 @@ class TestFolderAndProject:
     def test_required_field_missing_raises(self, model: type[Folder] | type[Project]) -> None:
         with pytest.raises(pydantic.ValidationError):
             model.model_validate({"id": "x", "name": "X"})
+
+
+_ABOUT = {
+    "agentId": "agent-placeholder-0001",
+    "agentType": "placeholder-agent",
+    "version": "0.0.0-test",
+    "systemId": "system-placeholder-0001",
+    "environment": "prod",
+    "privateIp": "192.0.2.10",
+    "siteIdentifier": {
+        "company": "example-company",
+        "host": "agent.example.test",
+        "site": "example-site",
+    },
+}
+
+
+class TestConnector:
+    """#734: the compact Connector type."""
+
+    def test_parses_camel_case_and_keeps_company_and_site(self) -> None:
+        from pynetappfoundry.models.console_types import Connector
+
+        connector = Connector.model_validate(_ABOUT)
+
+        assert connector.agent_id == "agent-placeholder-0001"
+        assert connector.system_id == "system-placeholder-0001"
+        assert connector.agent_type == "placeholder-agent"
+        assert connector.site_identifier is not None
+        assert connector.site_identifier.company == "example-company"
+        assert connector.site_identifier.site == "example-site"
+
+    def test_network_addresses_are_dropped(self) -> None:
+        from pynetappfoundry.models.console_types import Connector
+
+        connector = Connector.model_validate(_ABOUT)
+        dumped = connector.model_dump_json(by_alias=True)
+
+        assert "host" not in connector.model_dump()["site_identifier"]
+        assert "private_ip" not in connector.model_dump()
+        assert "192.0.2.10" not in dumped
+        assert "agent.example.test" not in dumped
+
+    def test_round_trips_by_alias_and_accepts_snake_case(self) -> None:
+        from pynetappfoundry.models.console_types import Connector
+
+        connector = Connector.model_validate(_ABOUT)
+
+        assert Connector.model_validate_json(connector.model_dump_json(by_alias=True)) == connector
+        assert Connector.model_validate({"agent_id": "a-1", "system_id": "s-1"}).system_id == "s-1"
+
+    def test_from_about_converts_generated_model_without_private_ip(self) -> None:
+        from pynetappfoundry.models.console.cvo import get_occm_system_about
+        from pynetappfoundry.models.console_types import Connector
+
+        about = get_occm_system_about.ResponseBody.model_validate(_ABOUT)
+        connector = Connector.from_about(about)
+
+        assert connector.agent_id == "agent-placeholder-0001"
+        assert "192.0.2.10" not in connector.model_dump_json()
+
+    def test_from_about_falls_back_to_agent_id_argument(self) -> None:
+        from pynetappfoundry.models.console.cvo import get_occm_system_about
+        from pynetappfoundry.models.console_types import Connector
+
+        about = get_occm_system_about.ResponseBody.model_validate({"version": "0.0.0-test"})
+
+        assert Connector.from_about(about, agent_id="agent-fallback").agent_id == "agent-fallback"
+
+    def test_from_about_without_any_agent_id_raises(self) -> None:
+        from pynetappfoundry.models.console.cvo import get_occm_system_about
+        from pynetappfoundry.models.console_types import Connector
+
+        about = get_occm_system_about.ResponseBody.model_validate({"version": "0.0.0-test"})
+
+        with pytest.raises(pydantic.ValidationError):
+            Connector.from_about(about)
+
+    def test_in_all(self) -> None:
+        import pynetappfoundry.console as console_pkg
+        from pynetappfoundry.models import console_types
+
+        assert "Connector" in console_types.__all__
+        assert "Connector" in console_pkg.__all__

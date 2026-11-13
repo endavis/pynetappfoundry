@@ -202,7 +202,7 @@ The cache is rebuild-tolerant: destructive migrations are allowed, and
 
 In addition to the `cache_version` stamped into each snapshot,
 `ClusterMetadataDB` tracks the **on-disk SQLite schema** version through the
-shared `SQLiteDB` base class. The current value is `SCHEMA_VERSION = 9`, and
+shared `SQLiteDB` base class. The current value is `SCHEMA_VERSION = 12`, and
 the DB applies the following upgrades on open:
 
 | DB schema | Migration | What it does |
@@ -215,8 +215,9 @@ the DB applies the following upgrades on open:
 | `v6` → `v7` | `_upgrade_to_v7` | Creates the `ontapsvmwebservice` table to back `storage.svm_web_services` (ADR-0021). Idempotent via `sqlite_master` check. Introduced with #866. |
 | `v7` → `v8` | `_upgrade_to_v8` | Adds the `folder` and `project` columns to the `consoleinfo` table for `ConsoleInfo.folder` / `ConsoleInfo.project` via idempotent `ALTER TABLE … ADD COLUMN`. Introduced with #734. |
 | `v8` → `v9` | `_upgrade_to_v9` | Reshapes `ontapexportpolicy` from rule-shaped (`index`, `clients`, `ro_rule`, ...) to policy-shaped (`id`, `name`, `svm`, `rules`): drops and recreates the table (ADR-0018 removed-column path) and clears the envelope. Idempotent via a `PRAGMA table_info` check for `id`. Run `nf cache refresh` afterwards. Introduced with #956. |
-| `v10` → `v11` | `_upgrade_to_v11` | Drops the flat `clusterinfo` table, creates `ontapcluster` for the generated `OntapCluster`, and clears the envelope (ADR-0018 section 2: the old flat rows are not copied into the nested shape). Idempotent: the envelope is cleared only when a table was dropped or created. Run `nf cache refresh` afterwards. Introduced with #967. |
 | `v9` → `v10` | `_upgrade_to_v10` | Creates the `clustertraits` table for `CachedClusterMetadata.cluster_traits` and backfills it from the `is_ha` / `is_cloud` columns of `clusterinfo` (ADR-0024). Idempotent: the table is created only if missing and only clusters without a row are copied. The envelope is kept, so no refresh is needed. Introduced with #967. |
+| `v10` → `v11` | `_upgrade_to_v11` | Drops the flat `clusterinfo` table, creates `ontapcluster` for the generated `OntapCluster`, and clears the envelope (ADR-0018 section 2: the old flat rows are not copied into the nested shape). Idempotent: the envelope is cleared only when a table was dropped or created. Run `nf cache refresh` afterwards. Introduced with #967. |
+| `v11` → `v12` | `_upgrade_to_v12` | Adds the `connector` column to the `consoleinfo` table for `ConsoleInfo.connector` via idempotent `ALTER TABLE … ADD COLUMN`. The envelope is kept. Introduced with #734. |
 
 !!! warning "v3 → v4 is destructive"
     The v4 migration deletes existing cached rows. After upgrading,

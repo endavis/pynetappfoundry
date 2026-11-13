@@ -29,4 +29,9 @@ base_api_path = '/'
 # Default organization id. Can be overridden per Console(...) instance.
 org_id = 'your-org-id'
 
+# Optional. Console agent ids that Console.find_connector(cluster_uuid) searches
+# when it is called without an agent_ids argument. Agent ids end in `clients`.
+# The tenancy API lists none for a service token, so they are configured here.
+# agent_ids = ['your-agent-idclients', 'your-other-agent-idclients']
+
 timeout = 30.0

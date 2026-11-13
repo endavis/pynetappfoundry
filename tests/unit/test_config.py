@@ -1296,3 +1296,36 @@ class TestGetTrustStore:
     def test_creates_nothing_until_a_record_is_written(self, config_instance: Config) -> None:
         config_instance.get_trust_store()
         assert not (config_instance.config_dir / ".trust").exists()
+
+
+class TestConsoleApiSettingsAgentIds:
+    """#734: the optional ``agent_ids`` setting."""
+
+    def test_defaults_to_empty_list(self) -> None:
+        settings = ConsoleAPISettings(user_token="user-jwt", base_url="https://example.test")
+        assert settings.agent_ids == []
+
+    def test_list_of_strings_loads(self) -> None:
+        settings = ConsoleAPISettings(
+            user_token="user-jwt",
+            base_url="https://example.test",
+            agent_ids=["agent-placeholder-0001clients", "agent-placeholder-0002clients"],
+        )
+        assert settings.agent_ids == [
+            "agent-placeholder-0001clients",
+            "agent-placeholder-0002clients",
+        ]
+
+    def test_loaded_from_consoleapi_toml(self, temp_config_dir: Path, tmp_path: Path) -> None:
+        (temp_config_dir / "consoleapi.toml").write_text(
+            '[general]\nuser_token = "user-jwt"\nbase_url = "https://example.test"\n'
+            'agent_ids = ["agent-placeholder-0001clients"]\n'
+        )
+        output_dir = tmp_path / "output"
+        output_dir.mkdir(exist_ok=True)
+        config = Config(
+            config_dir=str(temp_config_dir),
+            output_dir=str(output_dir),
+            script_name="test_script",
+        )
+        assert config.get_console_api_settings().agent_ids == ["agent-placeholder-0001clients"]
