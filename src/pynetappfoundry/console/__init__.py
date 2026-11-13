@@ -12,7 +12,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from pynetappfoundry.clients.console import ConsoleAPIClient, ConsoleServiceTokenMissingError
+from pynetappfoundry.clients.console import (
+    ClientCredentialsTokenProvider,
+    ConsoleAPIClient,
+    ConsoleAuthError,
+    ConsoleServiceTokenMissingError,
+    ConsoleUserTokenMissingError,
+)
 from pynetappfoundry.models.console_types import Folder, Organization, Project
 
 if TYPE_CHECKING:
@@ -88,9 +94,12 @@ class Console:
 
 
 __all__ = [
+    "ClientCredentialsTokenProvider",
     "Console",
     "ConsoleAPIClient",
+    "ConsoleAuthError",
     "ConsoleServiceTokenMissingError",
+    "ConsoleUserTokenMissingError",
     "Folder",
     "Organization",
     "Project",

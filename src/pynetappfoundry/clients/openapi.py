@@ -678,7 +678,11 @@ class APIWrapper:
         if additional_headers:
             headers.update(additional_headers)
 
-        logging.debug(f"{self.log_prefix} Calling {method} {url} {headers}")
+        logged_headers = {
+            key: ("***" if key.lower() == "authorization" else value)
+            for key, value in headers.items()
+        }
+        logging.debug(f"{self.log_prefix} Calling {method} {url} {logged_headers}")
 
         # Execute request with retry logic
         resp = self._execute_request_with_retry(

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, SecretStr, model_validator
 
 
 class BaseResource(BaseModel):
@@ -118,19 +118,53 @@ class DIIAPISettings(BaseModel):
 class ConsoleAPISettings(BaseModel):
     """Console SaaS API settings.
 
-    user_token is required (a user JWT from the BlueXP UI).
-    service_token is optional; operations that require it will raise
-    ConsoleServiceTokenMissingError if it is absent.
+    At least one credential source is required: ``user_token`` (a user JWT from
+    the BlueXP UI), ``service_token`` (a static service token), or OAuth client
+    credentials (``client_id`` + ``client_secret``), which back the service slot
+    with a token the client fetches and renews itself.  ``service_token`` and
+    client credentials are mutually exclusive.  ``token_endpoint`` and
+    ``audience`` only apply to client credentials.
     """
 
-    model_config = ConfigDict(extra="allow")
+    # hide_input_in_errors keeps raw input values (including the client secret)
+    # out of ValidationError text.
+    model_config = ConfigDict(extra="allow", hide_input_in_errors=True)
 
-    user_token: str
+    user_token: str | None = None
     service_token: str | None = None
+    client_id: str | None = None
+    client_secret: SecretStr | None = None
+    token_endpoint: str = "https://netapp-cloud-account.auth0.com/oauth/token"
+    audience: str = "https://api.cloud.netapp.com"
     base_url: str
     org_id: str | None = None
     base_api_path: str = "/"
     timeout: float = 30.0
+
+    @property
+    def uses_client_credentials(self) -> bool:
+        """Whether the service slot is backed by an OAuth client-credentials grant."""
+        return self.client_id is not None and self.client_secret is not None
+
+    @model_validator(mode="after")
+    def _validate_credential_sources(self) -> ConsoleAPISettings:
+        """Validate the combination of credential fields (names only, never values)."""
+        has_id = self.client_id is not None
+        has_secret = self.client_secret is not None
+        if has_id != has_secret:
+            raise ValueError("client_id and client_secret must be set together")
+        if has_id and self.service_token:
+            raise ValueError(
+                "service_token and client credentials (client_id/client_secret) "
+                "are mutually exclusive; set only one"
+            )
+        if not has_id and ({"audience", "token_endpoint"} & self.model_fields_set):
+            raise ValueError("audience and token_endpoint require client_id and client_secret")
+        if not (self.user_token or self.service_token or has_id):
+            raise ValueError(
+                "one of user_token, service_token or client_id/client_secret is required"
+            )
+        return self
 
 
 class SearchableKeysConfig(BaseModel):

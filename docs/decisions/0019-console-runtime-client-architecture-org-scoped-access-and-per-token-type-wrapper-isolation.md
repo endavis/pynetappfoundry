@@ -103,6 +103,17 @@ The plausible alternatives at decision time were:
 - **Single token type, push x-token-type concerns to the caller (raw httpx).** Rejected — gives up the `APIWrapper` retry / error handling for Console specifically. Inconsistent with other clients.
 - **Auto-attach auxiliary header parameters from spec extensions.** Rejected — couples the client to operation-parameter inspection; out-of-band query/header parameters stay caller-supplied per OpenAPI semantics.
 
+## Untagged operations and grant-backed tokens (#1000)
+
+Amendment for the OAuth client-credentials grant.
+
+- **Untagged operations.** No operation in the generated spec is tagged `service`, and most are untagged. Routing is three-way: operations tagged `user` require the user token, operations tagged `service` require the service token, and untagged operations use the user token when one is set and the service token otherwise. The four hand-authored operations are untagged, so configurations with a `user_token` behave as before.
+- **Grant-backed slots.** A slot backed by an OAuth grant (client credentials fill the `service` slot) does not set `auth_header` on its `APIWrapper`. The client passes the current Bearer token per call through `call_endpoint(additional_headers=...)`. This keeps the `APIWrapper` contract and avoids in-place mutation of session headers (alternative (c) above). Static-token slots keep today's call path.
+- **Refresh layer.** A small `TokenProvider` protocol (`get_token`, `invalidate`) sits behind the client. On a 401 the client invalidates the rejected token, fetches a new one and retries once; a second 401 propagates. Issue #736 (user refresh token) can add a provider for the user slot without rework.
+- **Logging.** `APIWrapper.call_endpoint` redacts `Authorization` in its debug request log.
+
+Configuration fields and validation rules are in [Config schema: consoleapi.toml](../reference/config-schema.md#consoleapitoml).
+
 ## Consequences
 
 ### Positive
@@ -123,6 +134,7 @@ The plausible alternatives at decision time were:
 - Issue #697 / PR #698: feat: add BlueXP / Console SaaS docs to OpenAPI 3.1 parser (then 3.0.3)
 - Issue #699 / PR #700: feat: generate Pydantic models from Console OpenAPI spec
 - Issue #713: feat: wire Console SaaS auth and runtime client (the v1 implementation this ADR governs)
+- Issue #1000: feat: add an OAuth client-credentials grant to the Console API client (see the amendment above)
 
 ## Related Documentation
 
