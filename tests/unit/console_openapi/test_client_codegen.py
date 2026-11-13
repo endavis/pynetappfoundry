@@ -332,6 +332,53 @@ def test_real_manifest_resolves_against_committed_spec() -> None:
     assert ") -> dict[str, Any]:" not in files["tenancy_ops.py"]
 
 
+def test_real_manifest_types_onprem_working_environments_as_list() -> None:
+    """The list shape comes from the spec, not a manifest overlay (#1021)."""
+    manifest = cg.load_manifest()
+    entry = next(e for e in manifest if e["name"] == "list_onprem_working_environments")
+    assert "response" not in entry
+    src = cg.render_all(manifest, cg.load_spec())["agent_ops.py"]
+    assert "-> list[get_onprem_working_environments.ResponseBody]:" in src
+
+
+def _array_spec(items: dict[str, Any]) -> dict[str, Any]:
+    spec = _spec()
+    spec["paths"]["/agent/things"]["get"]["responses"] = {
+        "200": {"content": {"application/json": {"schema": {"type": "array", "items": items}}}}
+    }
+    return spec
+
+
+def _array_entry(**extra: Any) -> dict[str, Any]:
+    return _entry("agent_list", "agent", "list_things", query={"fields": {"style": "csv"}}, **extra)
+
+
+def test_spec_array_of_refs_renders_typed_list(models_root: Path) -> None:
+    spec = _array_spec(_ref("cvo.get-thing.ResponseBody"))
+    src = _render([_array_entry()], models_root, spec)["agent_ops.py"]
+    assert "-> list[get_thing.ResponseBody]:" in src
+    assert "expect_list" in src
+
+
+def test_spec_array_with_inline_items_renders_any_list(models_root: Path) -> None:
+    spec = _array_spec({"type": "string"})
+    src = _render([_array_entry()], models_root, spec)["agent_ops.py"]
+    assert "-> list[Any]:" in src
+    assert 'expect_list(response, "list_things")' in src
+
+
+def test_redundant_list_overlay_on_spec_array_raises(models_root: Path) -> None:
+    spec = _array_spec(_ref("cvo.get-thing.ResponseBody"))
+    with pytest.raises(cg.CodegenError, match="redundant"):
+        _render([_array_entry(response="list")], models_root, spec)
+
+
+def test_object_overlay_on_spec_array_raises(models_root: Path) -> None:
+    spec = _array_spec(_ref("cvo.get-thing.ResponseBody"))
+    with pytest.raises(cg.CodegenError, match="contradicts"):
+        _render([_array_entry(response="object")], models_root, spec)
+
+
 def _status_spec(response_ref: str, request_ref: str | None = None) -> dict[str, Any]:
     op = _op(
         "thing_get",

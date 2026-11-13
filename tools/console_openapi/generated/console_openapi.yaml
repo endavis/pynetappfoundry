@@ -25372,7 +25372,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-audit-.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-audit-.ResponseBody'
               example:
                 _id: 0
                 actionName: string
@@ -25462,7 +25464,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-audit-auditserver.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-audit-auditserver.ResponseBody'
               example:
                 _id: 0
                 actionName: string
@@ -25535,7 +25539,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-audit-local-audit--records.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-audit-local-audit--records.ResponseBody'
               example:
                 action: string
                 creationTime: 0
@@ -25579,7 +25585,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-audit-local-audit-.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-audit-local-audit-.ResponseBody'
               example:
                 accountId: string
                 action: string
@@ -25692,7 +25700,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-audit.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-audit.ResponseBody'
               example:
                 _id: 0
                 actionName: string
@@ -25857,7 +25867,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-aws-ha-aggregates.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-aws-ha-aggregates.ResponseBody'
               example:
                 availableCapacity:
                   unit: string
@@ -25986,7 +25998,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-aws-ha-discovery-discover.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-aws-ha-discovery-discover.ResponseBody'
               example:
                 availabilityZones:
                 - string
@@ -26040,7 +26054,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-aws-ha-metadata-aws-encryption-keys.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-aws-ha-metadata-aws-encryption-keys.ResponseBody'
               example:
                 alias: string
                 keyId: string
@@ -26110,7 +26126,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-aws-ha-metadata-default-snapshot-policies.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-aws-ha-metadata-default-snapshot-policies.ResponseBody'
               example:
                 description: string
                 name: string
@@ -26144,7 +26162,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-aws-ha-metadata-ebs-volume-types.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-aws-ha-metadata-ebs-volume-types.ResponseBody'
               example:
                 description: string
                 size:
@@ -26223,7 +26243,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-aws-ha-metadata-instance-profiles.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-aws-ha-metadata-instance-profiles.ResponseBody'
               example:
                 instanceProfileId: string
                 name: string
@@ -26428,7 +26450,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-aws-ha-metadata-packages.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-aws-ha-metadata-packages.ResponseBody'
               example:
                 capacityTier: string
                 description: string
@@ -26470,7 +26494,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-aws-ha-metadata-permutations.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-aws-ha-metadata-permutations.ResponseBody'
               example:
                 features:
                 - string
@@ -26569,7 +26595,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-aws-ha-metadata-route-tables.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-aws-ha-metadata-route-tables.ResponseBody'
               example:
                 id: string
                 main: false
@@ -26751,7 +26779,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-aws-ha-metadata-tag-keys.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-aws-ha-metadata-tag-keys.ResponseBody'
               example:
                 key: string
                 values:
@@ -26795,7 +26825,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-aws-ha-metadata-vpcs.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-aws-ha-metadata-vpcs.ResponseBody'
               example:
                 cidrBlock: string
                 default: false
@@ -26944,7 +26976,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-aws-ha-volumes-initiator.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-aws-ha-volumes-initiator.ResponseBody'
               example:
                 aliasName: string
                 iqn: string
@@ -27088,7 +27122,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-aws-ha-volumes.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-aws-ha-volumes.ResponseBody'
               example:
                 aggregateName: string
                 autoSizeMode: string
@@ -27333,7 +27369,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-aws-ha-working-environments-cifs.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-aws-ha-working-environments-cifs.ResponseBody'
               example:
                 activeDirectoryDomain: string
                 authenticationType: string
@@ -27637,7 +27675,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-aws-ha-working-environments-license-instance-type.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-aws-ha-working-environments-license-instance-type.ResponseBody'
               example:
                 capacityLimit:
                   unit: string
@@ -27719,7 +27759,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-aws-ha-working-environments-occm-provided-upgrade-versions.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-aws-ha-working-environments-occm-provided-upgrade-versions.ResponseBody'
               example:
                 imageVersion: string
       security:
@@ -27754,7 +27796,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-aws-ha-working-environments-ontap-available-images.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-aws-ha-working-environments-ontap-available-images.ResponseBody'
               example:
                 isCurrent: false
                 name: string
@@ -27830,7 +27874,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-aws-ha-working-environments-schedules.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-aws-ha-working-environments-schedules.ResponseBody'
               example:
                 name: string
                 schedule:
@@ -28153,7 +28199,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-aws-ha-working-environments.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-aws-ha-working-environments.ResponseBody'
               example:
                 actionsRequired:
                 - actionType: string
@@ -29081,7 +29129,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-ha-aggregates-.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-ha-aggregates-.ResponseBody'
               example:
                 availableCapacity:
                   unit: string
@@ -29171,7 +29221,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-ha-discovery-discover.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-ha-discovery-discover.ResponseBody'
               example:
                 clusterAddress: string
                 name: string
@@ -29214,7 +29266,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-ha-metadata-associated-subscriptions.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-ha-metadata-associated-subscriptions.ResponseBody'
               example:
                 default: false
                 name: string
@@ -29259,7 +29313,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-ha-metadata-availability-zones.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-ha-metadata-availability-zones.ResponseBody'
               example:
                 region: string
                 zones:
@@ -29307,7 +29363,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-ha-metadata-containers.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-ha-metadata-containers.ResponseBody'
               example:
                 id: string
                 name: string
@@ -29338,7 +29396,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-ha-metadata-default-snapshot-policies.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-ha-metadata-default-snapshot-policies.ResponseBody'
               example:
                 description: string
                 name: string
@@ -29420,7 +29480,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-ha-metadata-keys-vault.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-ha-metadata-keys-vault.ResponseBody'
               example:
                 keyName: string
                 kid: string
@@ -29490,7 +29552,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-ha-metadata-packages.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-ha-metadata-packages.ResponseBody'
               example:
                 capacityTier: string
                 description: string
@@ -29532,7 +29596,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-ha-metadata-permutations.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-ha-metadata-permutations.ResponseBody'
               example:
                 features:
                 - string
@@ -29594,7 +29660,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-ha-metadata-regions.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-ha-metadata-regions.ResponseBody'
               example:
                 displayName: string
                 name: string
@@ -29657,7 +29725,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-ha-metadata-resource-groups.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-ha-metadata-resource-groups.ResponseBody'
               example:
                 id: string
                 name: string
@@ -29700,7 +29770,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-ha-metadata-storage-account-types.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-ha-metadata-storage-account-types.ResponseBody'
               example:
                 availabilityTypes:
                 - string
@@ -29861,7 +29933,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-ha-metadata-tag-keys.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-ha-metadata-tag-keys.ResponseBody'
               example:
                 key: string
                 values:
@@ -29905,7 +29979,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-ha-metadata-vaults.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-ha-metadata-vaults.ResponseBody'
               example:
                 location: string
                 name: string
@@ -30098,7 +30174,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-ha-volumes-initiator.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-ha-volumes-initiator.ResponseBody'
               example:
                 aliasName: string
                 iqn: string
@@ -30242,7 +30320,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-ha-volumes.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-ha-volumes.ResponseBody'
               example:
                 aggregateName: string
                 autoSizeMode: string
@@ -30557,7 +30637,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-ha-working-environments-cifs.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-ha-working-environments-cifs.ResponseBody'
               example:
                 activeDirectoryDomain: string
                 authenticationType: string
@@ -30861,7 +30943,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-ha-working-environments-license-instance-type.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-ha-working-environments-license-instance-type.ResponseBody'
               example:
                 capacityLimit:
                   unit: string
@@ -30943,7 +31027,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-ha-working-environments-occm-provided-upgrade-versions.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-ha-working-environments-occm-provided-upgrade-versions.ResponseBody'
               example:
                 imageVersion: string
       security:
@@ -30978,7 +31064,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-ha-working-environments-ontap-available-images.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-ha-working-environments-ontap-available-images.ResponseBody'
               example:
                 isCurrent: false
                 name: string
@@ -31200,7 +31288,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-ha-working-environments-schedules.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-ha-working-environments-schedules.ResponseBody'
               example:
                 name: string
                 schedule:
@@ -31523,7 +31613,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-ha-working-environments.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-ha-working-environments.ResponseBody'
               example:
                 actionsRequired:
                 - actionType: string
@@ -32324,7 +32416,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-vsa-aggregates-.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-vsa-aggregates-.ResponseBody'
               example:
                 availableCapacity:
                   unit: string
@@ -32414,7 +32508,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-vsa-discover.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-vsa-discover.ResponseBody'
               example:
                 clusterAddress: string
                 id: string
@@ -32458,7 +32554,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-vsa-metadata-associated-subscriptions.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-vsa-metadata-associated-subscriptions.ResponseBody'
               example:
                 default: false
                 name: string
@@ -32503,7 +32601,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-vsa-metadata-availability-zones.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-vsa-metadata-availability-zones.ResponseBody'
               example:
                 region: string
                 zones:
@@ -32551,7 +32651,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-vsa-metadata-containers.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-vsa-metadata-containers.ResponseBody'
               example:
                 id: string
                 name: string
@@ -32582,7 +32684,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-vsa-metadata-default-snapshot-policies.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-vsa-metadata-default-snapshot-policies.ResponseBody'
               example:
                 description: string
                 name: string
@@ -32664,7 +32768,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-vsa-metadata-keys-vault.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-vsa-metadata-keys-vault.ResponseBody'
               example:
                 keyName: string
                 kid: string
@@ -32734,7 +32840,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-vsa-metadata-packages.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-vsa-metadata-packages.ResponseBody'
               example:
                 capacityTier: string
                 description: string
@@ -32776,7 +32884,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-vsa-metadata-permutations.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-vsa-metadata-permutations.ResponseBody'
               example:
                 features:
                 - string
@@ -32838,7 +32948,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-vsa-metadata-regions.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-vsa-metadata-regions.ResponseBody'
               example:
                 displayName: string
                 name: string
@@ -32901,7 +33013,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-vsa-metadata-resource-groups.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-vsa-metadata-resource-groups.ResponseBody'
               example:
                 id: string
                 name: string
@@ -32944,7 +33058,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-vsa-metadata-storage-account-types.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-vsa-metadata-storage-account-types.ResponseBody'
               example:
                 availabilityTypes:
                 - string
@@ -33105,7 +33221,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-vsa-metadata-tag-keys.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-vsa-metadata-tag-keys.ResponseBody'
               example:
                 key: string
                 values:
@@ -33149,7 +33267,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-vsa-metadata-vaults.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-vsa-metadata-vaults.ResponseBody'
               example:
                 location: string
                 name: string
@@ -33342,7 +33462,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-vsa-volumes-initiator.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-vsa-volumes-initiator.ResponseBody'
               example:
                 aliasName: string
                 iqn: string
@@ -33486,7 +33608,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-vsa-volumes.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-vsa-volumes.ResponseBody'
               example:
                 aggregateName: string
                 autoSizeMode: string
@@ -33772,7 +33896,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-vsa-working-environments-cifs.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-vsa-working-environments-cifs.ResponseBody'
               example:
                 activeDirectoryDomain: string
                 authenticationType: string
@@ -34076,7 +34202,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-vsa-working-environments-license-instance-type.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-vsa-working-environments-license-instance-type.ResponseBody'
               example:
                 capacityLimit:
                   unit: string
@@ -34158,7 +34286,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-vsa-working-environments-occm-provided-upgrade-versions.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-vsa-working-environments-occm-provided-upgrade-versions.ResponseBody'
               example:
                 imageVersion: string
       security:
@@ -34193,7 +34323,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-vsa-working-environments-ontap-available-images.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-vsa-working-environments-ontap-available-images.ResponseBody'
               example:
                 isCurrent: false
                 name: string
@@ -34415,7 +34547,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-vsa-working-environments-schedules.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-vsa-working-environments-schedules.ResponseBody'
               example:
                 name: string
                 schedule:
@@ -34738,7 +34872,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-azure-vsa-working-environments.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-azure-vsa-working-environments.ResponseBody'
               example:
                 actionsRequired:
                 - actionType: string
@@ -35696,7 +35832,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-flexcache-caches.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-flexcache-caches.ResponseBody'
               example:
                 destination:
                   clusterName: string
@@ -35994,7 +36132,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-fsx-volumes-initiator.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-fsx-volumes-initiator.ResponseBody'
               example:
                 aliasName: string
                 iqn: string
@@ -36070,7 +36210,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-fsx-volumes-nfs-clients.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-fsx-volumes-nfs-clients.ResponseBody'
               example:
                 clientIp: string
                 exportPolicy: string
@@ -36117,7 +36259,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-fsx-volumes-shares.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-fsx-volumes-shares.ResponseBody'
               example:
                 name: string
                 path: string
@@ -36161,7 +36305,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-fsx-working-environments-cifs.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-fsx-working-environments-cifs.ResponseBody'
               example:
                 activeDirectoryDomain: string
                 authenticationType: string
@@ -36250,7 +36396,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-fsx-working-environments-export-policies.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-fsx-working-environments-export-policies.ResponseBody'
               example:
                 name: string
                 rules:
@@ -36297,7 +36445,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-fsx-working-environments-interfaces.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-fsx-working-environments-interfaces.ResponseBody'
               example:
                 address: string
                 dataProtocols:
@@ -36339,7 +36489,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-fsx-working-environments-snapshot-policies.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-fsx-working-environments-snapshot-policies.ResponseBody'
               example:
                 description: string
                 name: string
@@ -36378,7 +36530,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-fsx-working-environments-svms.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-fsx-working-environments-svms.ResponseBody'
               example:
                 allowedProtocols:
                 - string
@@ -36424,7 +36578,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-gcp-ha-aggregates-.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-gcp-ha-aggregates-.ResponseBody'
               example:
                 availableCapacity:
                   unit: string
@@ -36510,7 +36666,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-gcp-ha-discovery-discover.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-gcp-ha-discovery-discover.ResponseBody'
               example:
                 clusterAddress: string
                 id: string
@@ -36583,7 +36741,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-gcp-ha-metadata-default-snapshot-policies.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-gcp-ha-metadata-default-snapshot-policies.ResponseBody'
               example:
                 description: string
                 name: string
@@ -36617,7 +36777,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-gcp-ha-metadata-gcp-disk-types.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-gcp-ha-metadata-gcp-disk-types.ResponseBody'
               example:
                 size:
                   unit: string
@@ -36660,7 +36822,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-gcp-ha-metadata-gcp-encryption-keys.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-gcp-ha-metadata-gcp-encryption-keys.ResponseBody'
               example:
                 id: string
                 keyRing: string
@@ -36765,7 +36929,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-gcp-ha-metadata-packages.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-gcp-ha-metadata-packages.ResponseBody'
               example:
                 capacityTier: string
                 description: string
@@ -36807,7 +36973,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-gcp-ha-metadata-permutations.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-gcp-ha-metadata-permutations.ResponseBody'
               example:
                 features:
                 - string
@@ -36896,7 +37064,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-gcp-ha-metadata-regions.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-gcp-ha-metadata-regions.ResponseBody'
               example:
                 displayName: string
                 name: string
@@ -37096,7 +37266,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-gcp-ha-metadata-tag-keys.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-gcp-ha-metadata-tag-keys.ResponseBody'
               example:
                 key: string
                 values:
@@ -37137,7 +37309,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-gcp-ha-metadata-vpcs.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-gcp-ha-metadata-vpcs.ResponseBody'
               example:
                 firewalls:
                 - name: string
@@ -37193,7 +37367,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-gcp-ha-metadata-workerpools.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-gcp-ha-metadata-workerpools.ResponseBody'
               example:
                 empty: false
       security:
@@ -37228,7 +37404,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-gcp-ha-metadata-zones.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-gcp-ha-metadata-zones.ResponseBody'
               example:
                 displayName: string
                 location: string
@@ -37362,7 +37540,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-gcp-ha-volumes-initiator.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-gcp-ha-volumes-initiator.ResponseBody'
               example:
                 aliasName: string
                 iqn: string
@@ -37506,7 +37686,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-gcp-ha-volumes.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-gcp-ha-volumes.ResponseBody'
               example:
                 aggregateName: string
                 autoSizeMode: string
@@ -37751,7 +37933,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-gcp-ha-working-environments-cifs.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-gcp-ha-working-environments-cifs.ResponseBody'
               example:
                 activeDirectoryDomain: string
                 authenticationType: string
@@ -38055,7 +38239,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-gcp-ha-working-environments-license-instance-type.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-gcp-ha-working-environments-license-instance-type.ResponseBody'
               example:
                 capacityLimit:
                   unit: string
@@ -38137,7 +38323,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-gcp-ha-working-environments-occm-provided-upgrade-versions.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-gcp-ha-working-environments-occm-provided-upgrade-versions.ResponseBody'
               example:
                 imageVersion: string
       security:
@@ -38172,7 +38360,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-gcp-ha-working-environments-ontap-available-images.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-gcp-ha-working-environments-ontap-available-images.ResponseBody'
               example:
                 isCurrent: false
                 name: string
@@ -38248,7 +38438,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-gcp-ha-working-environments-schedules.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-gcp-ha-working-environments-schedules.ResponseBody'
               example:
                 name: string
                 schedule:
@@ -38571,7 +38763,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-gcp-ha-working-environments.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-gcp-ha-working-environments.ResponseBody'
               example:
                 actionsRequired:
                 - actionType: string
@@ -39414,7 +39608,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-gcp-vsa-aggregates-.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-gcp-vsa-aggregates-.ResponseBody'
               example:
                 availableCapacity:
                   unit: string
@@ -39500,7 +39696,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-gcp-vsa-discover.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-gcp-vsa-discover.ResponseBody'
               example:
                 clusterAddress: string
                 id: string
@@ -39571,7 +39769,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-gcp-vsa-metadata-default-snapshot-policies.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-gcp-vsa-metadata-default-snapshot-policies.ResponseBody'
               example:
                 description: string
                 name: string
@@ -39605,7 +39805,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-gcp-vsa-metadata-gcp-disk-types.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-gcp-vsa-metadata-gcp-disk-types.ResponseBody'
               example:
                 size:
                   unit: string
@@ -39648,7 +39850,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-gcp-vsa-metadata-gcp-encryption-keys.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-gcp-vsa-metadata-gcp-encryption-keys.ResponseBody'
               example:
                 id: string
                 keyRing: string
@@ -39753,7 +39957,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-gcp-vsa-metadata-packages.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-gcp-vsa-metadata-packages.ResponseBody'
               example:
                 capacityTier: string
                 description: string
@@ -39795,7 +40001,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-gcp-vsa-metadata-permutations.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-gcp-vsa-metadata-permutations.ResponseBody'
               example:
                 features:
                 - string
@@ -39884,7 +40092,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-gcp-vsa-metadata-regions.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-gcp-vsa-metadata-regions.ResponseBody'
               example:
                 displayName: string
                 name: string
@@ -40084,7 +40294,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-gcp-vsa-metadata-tag-keys.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-gcp-vsa-metadata-tag-keys.ResponseBody'
               example:
                 key: string
                 values:
@@ -40129,7 +40341,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-gcp-vsa-metadata-workerpools.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-gcp-vsa-metadata-workerpools.ResponseBody'
               example:
                 empty: false
       security:
@@ -40259,7 +40473,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-gcp-vsa-volumes-initiator.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-gcp-vsa-volumes-initiator.ResponseBody'
               example:
                 aliasName: string
                 iqn: string
@@ -40403,7 +40619,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-gcp-vsa-volumes.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-gcp-vsa-volumes.ResponseBody'
               example:
                 aggregateName: string
                 autoSizeMode: string
@@ -40619,7 +40837,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-gcp-vsa-working-environments-cifs.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-gcp-vsa-working-environments-cifs.ResponseBody'
               example:
                 activeDirectoryDomain: string
                 authenticationType: string
@@ -40923,7 +41143,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-gcp-vsa-working-environments-license-instance-type.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-gcp-vsa-working-environments-license-instance-type.ResponseBody'
               example:
                 capacityLimit:
                   unit: string
@@ -41005,7 +41227,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-gcp-vsa-working-environments-occm-provided-upgrade-versions.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-gcp-vsa-working-environments-occm-provided-upgrade-versions.ResponseBody'
               example:
                 imageVersion: string
       security:
@@ -41040,7 +41264,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-gcp-vsa-working-environments-ontap-available-images.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-gcp-vsa-working-environments-ontap-available-images.ResponseBody'
               example:
                 isCurrent: false
                 name: string
@@ -41116,7 +41342,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-gcp-vsa-working-environments-schedules.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-gcp-vsa-working-environments-schedules.ResponseBody'
               example:
                 name: string
                 schedule:
@@ -41439,7 +41667,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-gcp-vsa-working-environments.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-gcp-vsa-working-environments.ResponseBody'
               example:
                 actionsRequired:
                 - actionType: string
@@ -42689,7 +42919,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-occm-encryption-key-managers-ca-certificates.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-occm-encryption-key-managers-ca-certificates.ResponseBody'
               example:
                 certificate: string
                 certificateType: string
@@ -42768,7 +43000,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-occm-encryption-key-managers.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-occm-encryption-key-managers.ResponseBody'
               example:
                 address: string
                 name: string
@@ -42970,7 +43204,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-occm-key-store-user-trusted-certificates.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-occm-key-store-user-trusted-certificates.ResponseBody'
               example:
                 certificateInfo:
                   certificate: string
@@ -43153,7 +43389,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-occm-system-available-update-versions.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-occm-system-available-update-versions.ResponseBody'
               example:
                 date: 0
                 name: string
@@ -43354,7 +43592,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-occm-tenancy-service-workspaces.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-occm-tenancy-service-workspaces.ResponseBody'
               example:
                 associatedToAgent: false
                 workspaceName: string
@@ -43394,7 +43634,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-onprem-aggregates.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-onprem-aggregates.ResponseBody'
               example:
                 availabilityState: string
                 availableCapacity:
@@ -43621,7 +43863,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-onprem-volumes.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-onprem-volumes.ResponseBody'
               example:
                 aggregateName: string
                 autoSizeMode: string
@@ -43812,7 +44056,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-onprem-working-environments-cifs.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-onprem-working-environments-cifs.ResponseBody'
               example:
                 activeDirectoryDomain: string
                 authenticationType: string
@@ -43857,7 +44103,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-onprem-working-environments-ip-spaces.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-onprem-working-environments-ip-spaces.ResponseBody'
               example:
                 ipSpace: string
                 vservers:
@@ -43897,7 +44145,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-onprem-working-environments.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-onprem-working-environments.ResponseBody'
               example:
                 actionsRequired:
                 - actionType: string
@@ -44536,7 +44786,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-replication-metadata-snapmirror-policies-.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-replication-metadata-snapmirror-policies-.ResponseBody'
               example:
                 comment: string
                 name: string
@@ -44588,7 +44840,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-replication-metadata-snapmirror-svm-policies--.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-replication-metadata-snapmirror-svm-policies--.ResponseBody'
               example:
                 comment: string
                 name: string
@@ -44675,7 +44929,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-replication-schedules-.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-replication-schedules-.ResponseBody'
               example:
                 cronJobSchedule:
                   days:
@@ -44723,7 +44979,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-replication-status-.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-replication-status-.ResponseBody'
               example:
                 currentTransferInfo:
                   transferError: string
@@ -44815,7 +45073,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-replication-status.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-replication-status.ResponseBody'
               example:
                 currentTransferInfo:
                   transferError: string
@@ -44907,7 +45167,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-tenants.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-tenants.ResponseBody'
               example:
                 name: string
                 publicId: string
@@ -44987,7 +45249,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-users.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-users.ResponseBody'
               example:
                 assignedWorkingEnvironments:
                 - string
@@ -45121,7 +45385,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-vsa-aggregates.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-vsa-aggregates.ResponseBody'
               example:
                 availableCapacity:
                   unit: string
@@ -45250,7 +45516,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-vsa-discover.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-vsa-discover.ResponseBody'
               example:
                 availabilityZone: string
                 clusterAddress: string
@@ -45302,7 +45570,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-vsa-metadata-aws-encryption-keys.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-vsa-metadata-aws-encryption-keys.ResponseBody'
               example:
                 alias: string
                 keyId: string
@@ -45372,7 +45642,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-vsa-metadata-default-snapshot-policies.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-vsa-metadata-default-snapshot-policies.ResponseBody'
               example:
                 description: string
                 name: string
@@ -45406,7 +45678,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-vsa-metadata-ebs-volume-types.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-vsa-metadata-ebs-volume-types.ResponseBody'
               example:
                 description: string
                 size:
@@ -45485,7 +45759,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-vsa-metadata-instance-profiles.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-vsa-metadata-instance-profiles.ResponseBody'
               example:
                 instanceProfileId: string
                 name: string
@@ -45690,7 +45966,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-vsa-metadata-packages.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-vsa-metadata-packages.ResponseBody'
               example:
                 capacityTier: string
                 description: string
@@ -45732,7 +46010,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-vsa-metadata-permutations.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-vsa-metadata-permutations.ResponseBody'
               example:
                 features:
                 - string
@@ -45961,7 +46241,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-vsa-metadata-tag-keys.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-vsa-metadata-tag-keys.ResponseBody'
               example:
                 key: string
                 values:
@@ -46005,7 +46287,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-vsa-metadata-vpcs.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-vsa-metadata-vpcs.ResponseBody'
               example:
                 cidrBlock: string
                 default: false
@@ -46154,7 +46438,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-vsa-volumes-initiator.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-vsa-volumes-initiator.ResponseBody'
               example:
                 aliasName: string
                 iqn: string
@@ -46298,7 +46584,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-vsa-volumes.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-vsa-volumes.ResponseBody'
               example:
                 aggregateName: string
                 autoSizeMode: string
@@ -46514,7 +46802,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-vsa-working-environments-cifs.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-vsa-working-environments-cifs.ResponseBody'
               example:
                 activeDirectoryDomain: string
                 authenticationType: string
@@ -46818,7 +47108,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-vsa-working-environments-license-instance-type.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-vsa-working-environments-license-instance-type.ResponseBody'
               example:
                 capacityLimit:
                   unit: string
@@ -46900,7 +47192,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-vsa-working-environments-occm-provided-upgrade-versions.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-vsa-working-environments-occm-provided-upgrade-versions.ResponseBody'
               example:
                 imageVersion: string
       security:
@@ -46935,7 +47229,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-vsa-working-environments-ontap-available-images.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-vsa-working-environments-ontap-available-images.ResponseBody'
               example:
                 isCurrent: false
                 name: string
@@ -47011,7 +47307,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-vsa-working-environments-schedules.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-vsa-working-environments-schedules.ResponseBody'
               example:
                 name: string
                 schedule:
@@ -47334,7 +47632,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/cvo.get-vsa-working-environments.ResponseBody'
+                type: array
+                items:
+                  $ref: '#/components/schemas/cvo.get-vsa-working-environments.ResponseBody'
               example:
                 actionsRequired:
                 - actionType: string
