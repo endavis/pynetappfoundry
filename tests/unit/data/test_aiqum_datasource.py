@@ -141,3 +141,65 @@ class TestVolumeMetricsPerParent:
             {"query_params": {"interval": "1h"}, "path_params": {"key": "k2"}},
         ]
         assert all(c.args == (metrics,) for c in client.call_endpoint.call_args_list)
+
+
+class TestGetByKey:
+    """get() and a single key filter use the item endpoint (#1060)."""
+
+    @pytest.fixture
+    def item_client(self, client: MagicMock) -> MagicMock:
+        client.api_spec = {
+            "paths": {
+                p: {"get": {}}
+                for p in (
+                    "/datacenter/storage/volumes/{key}",
+                    "/datacenter/svm/svms/{key}",
+                    "/datacenter/cluster/clusters/{key}",
+                )
+            }
+        }
+        return client
+
+    def test_get_volume(self, item_client: MagicMock) -> None:
+        item_client.call_endpoint.return_value = {"key": "a,b:c=d", "name": "vol1", "_links": {}}
+        vol = DataSource(MagicMock()).get(AiqumVolume, cluster="aiqum1", id="a,b:c=d")
+        assert vol is not None
+        assert (vol.key, vol.name) == ("a,b:c=d", "vol1")
+        item_client.call_endpoint.assert_called_once_with(
+            "/datacenter/storage/volumes/{key}", path_params={"key": "a%2Cb%3Ac%3Dd"}
+        )
+        item_client.get_all_records.assert_not_called()
+
+    def test_get_svm(self, item_client: MagicMock) -> None:
+        item_client.call_endpoint.return_value = {"key": "s1", "name": "vs1"}
+        svm = DataSource(MagicMock()).get(AiqumSvm, cluster="aiqum1", id="s1")
+        assert svm is not None
+        assert svm.name == "vs1"
+        item_client.call_endpoint.assert_called_once_with(
+            "/datacenter/svm/svms/{key}", path_params={"key": "s1"}
+        )
+
+    def test_get_cluster(self, item_client: MagicMock) -> None:
+        item_client.call_endpoint.return_value = {"key": "c1", "name": "cl1"}
+        cluster = DataSource(MagicMock()).get(AiqumCluster, cluster="aiqum1", id="c1")
+        assert cluster is not None
+        assert cluster.name == "cl1"
+        item_client.call_endpoint.assert_called_once_with(
+            "/datacenter/cluster/clusters/{key}", path_params={"key": "c1"}
+        )
+
+    def test_get_missing_returns_none(self, item_client: MagicMock) -> None:
+        import requests
+
+        resp = MagicMock()
+        resp.status_code = 404
+        item_client.call_endpoint.side_effect = requests.HTTPError("404", response=resp)
+        assert DataSource(MagicMock()).get(AiqumVolume, cluster="aiqum1", id="nope") is None
+
+    def test_filter_key_takes_item_route(self, item_client: MagicMock) -> None:
+        item_client.call_endpoint.return_value = {"key": "k1", "name": "vol1"}
+        results = list(
+            DataSource(MagicMock()).query(AiqumVolume, cluster="aiqum1").filter({"key": "k1"})
+        )
+        assert [v.key for v in results] == ["k1"]
+        item_client.get_all_records.assert_not_called()
