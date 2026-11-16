@@ -84,6 +84,17 @@ metrics = ds.query(
 
 Each value is converted with `str()` and percent-encoded, so a key containing `,`, `:`, `=` or `/` is safe to pass as is. An unknown key, a missing placeholder, or an empty value, `.` or `..` raises `ValueError` before any request ([#1054](https://github.com/endavis/pynetappfoundry/issues/1054)).
 
+### Fetch one object by key
+
+`get()` and a single `{"key": <value>}` filter fetch one object from `<collection>/{key}`, for example `/datacenter/storage/volumes/{key}`. This is one request, and the bare object comes back as a single instance. A key that does not exist returns `None`. Any other HTTP error is raised.
+
+```python
+volume = ds.get(AiqumVolume, cluster="aiqum1", id=volume_key)  # None if absent
+same = ds.query(AiqumVolume, cluster="aiqum1").filter({"key": volume_key}).first()
+```
+
+The key is percent-encoded. The item route is used only when the instance's spec has a GET operation for it. With any other filter, a non-string value, an empty, `.` or `..` value, or `path_params`, the request goes to the collection as before ([#1060](https://github.com/endavis/pynetappfoundry/issues/1060)).
+
 The models are generated with `doit generate_models --api=aiqum`.
 
 ## TLS
