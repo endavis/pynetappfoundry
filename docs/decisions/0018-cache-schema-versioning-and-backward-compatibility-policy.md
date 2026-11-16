@@ -24,6 +24,8 @@ This ADR records the contract behind the mechanism so future cache-schema change
 
 Scope: this ADR covers the on-disk SQLite schema version (`SCHEMA_VERSION` in `src/pynetappfoundry/cache/db.py`, currently `5`). The snapshot-level `METADATA_SCHEMA_VERSION` (`src/pynetappfoundry/cache/_base.py`) is a separate mechanism with its own contract documented in [Cache System Reference](../reference/cache.md); it is out of scope here.
 
+The AIQUM cache ([ADR-0026](0026-aiqum-backend-is-live-only-and-reads-the-hal-records-envelope.md), [#1055](https://github.com/endavis/pynetappfoundry/issues/1055)) is a separate database file, `{config_dir}/.cache/aiqum_cache.db` (`AiqumCacheDB` in `src/pynetappfoundry/cache/aiqum_db.py`, `SCHEMA_VERSION = 1`). It is covered by the same contract: rebuild-tolerant, downgrade unsupported, `SCHEMA_VERSION` internal. Its version is independent of the one above, and the "Cache Schema Pitfalls" checklist for cached ONTAP models does not apply to it, because it stores raw JSON records rather than model columns.
+
 ## Decision
 
 1. **Compatibility contract: rebuild-tolerant.** The cache is a derived store. Deleting `{config_dir}/.cache/cluster_metadata.db` and running `nf cache refresh` is an acceptable contributor or user fallback for any migration concern. The project does not promise formal cross-upgrade preservation of cached data.

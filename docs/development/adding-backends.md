@@ -222,6 +222,11 @@ A backend with no cache sets the class attribute `live_only = True` on `Backend`
 `QueryBuilder` routes `source="auto"` as `live` (no cache-miss second call) and raises
 `ValueError` for `source="cache"` when `query()` is called.
 
+A backend that caches only some of its mappings leaves `live_only = False` and overrides the
+classmethod `Backend.is_live_only(mapping) -> bool` (the default returns `cls.live_only`).
+`QueryBuilder` calls it per mapping, so a mapping it reports as live-only is routed live under
+`auto` and rejected under `cache`. `AiqumBackend` uses it to cache three collections only.
+
 ### 7. Update audit and compliance tools
 
 Two files have `TODO(#533)` markers that are hardcoded to ONTAP only:
@@ -603,14 +608,14 @@ This makes DII a useful reference for the simplest possible backend.
 
 ---
 
-## Example: AIQUM Backend (Live-Only)
+## Example: AIQUM Backend (Live, Three Cached Collections)
 
-`AiqumBackend` (`src/pynetappfoundry/data/aiqum_backend.py`) is a live-only backend over the
-HAL `records` envelope. **ADR:** [ADR-0026](../decisions/0026-aiqum-backend-is-live-only-and-reads-the-hal-records-envelope.md).
+`AiqumBackend` (`src/pynetappfoundry/data/aiqum_backend.py`) is a live backend over the
+HAL `records` envelope that also caches three collections. **ADR:** [ADR-0026](../decisions/0026-aiqum-backend-is-live-only-and-reads-the-hal-records-envelope.md).
 
 | Concern | AIQUM approach |
 | :--- | :--- |
-| Cache | None. `Backend.live_only = True`: `source="auto"` goes live, `source="cache"` raises `ValueError` |
+| Cache | `AiqumCluster`, `AiqumSvm` and `AiqumVolume` only, in `AiqumCacheDB` (`src/pynetappfoundry/cache/aiqum_db.py`), filled by `refresh_aiqum_cache` (`src/pynetappfoundry/cache/aiqum_collector.py`). `Backend.live_only = False` and `is_live_only(mapping)` is true for every other mapping: `source="auto"` goes live, `source="cache"` raises `ValueError` |
 | Envelope | `{_links, num_records, records, total_records}`; `records_path="records"` |
 | Pagination | `AIQUMAPIClient.get_all_records` follows `_links.next.href` |
 | Targeting | `cluster=` is the `[aiqums]` instance name; one client cached per name |

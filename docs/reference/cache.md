@@ -1063,6 +1063,23 @@ formatted = format_diff_summary(changes)
 # Returns: Rich-formatted string
 ```
 
+## AIQUM Cache
+
+AIQUM has its own cache, separate from the ONTAP files above ([ADR-0026](../decisions/0026-aiqum-backend-is-live-only-and-reads-the-hal-records-envelope.md), [ADR-0018](../decisions/0018-cache-schema-versioning-and-backward-compatibility-policy.md)).
+
+| Item | Value |
+|------|-------|
+| Class | `AiqumCacheDB` in `src/pynetappfoundry/cache/aiqum_db.py` |
+| File | `{config_dir}/.cache/aiqum_cache.db` |
+| Tables | `aiqum_collections` (`instance`, `mapping`, `cached_at`), `aiqum_records` (`instance`, `mapping`, `record_key`, raw JSON `record`) |
+| Collected | `AiqumCluster`, `AiqumSvm`, `AiqumVolume` (`AIQUM_CACHED_MAPPINGS`) |
+| Populate | `refresh_aiqum_cache(config, instance)` in `src/pynetappfoundry/cache/aiqum_collector.py` |
+
+- Rows are keyed by the `[aiqums]` instance name. A refresh is all or nothing per instance: any failed request raises `CollectionError` and leaves the database unchanged; success replaces the instance's rows in one transaction.
+- Records are stored as raw JSON and parsed on read. Cache filters are exact matches on the JSON path (no `*` wildcard), and `.where()` is not supported.
+- Staleness: `AiqumCacheDB.is_stale(instance, ttl_days=30)` compares the oldest `cached_at` with the TTL and returns `None` for an instance never collected. Age never changes routing.
+- Rebuilding: delete the file, or call `refresh_aiqum_cache` again. There is no CLI for the AIQUM cache yet ([#1072](https://github.com/endavis/pynetappfoundry/issues/1072)).
+
 ## Benchmarks
 
 Performance benchmarks for the core cache data paths live under

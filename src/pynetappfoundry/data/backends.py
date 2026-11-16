@@ -126,12 +126,23 @@ class Backend(ABC):
     supports_parent_filters: bool = False
 
     #: Set to ``True`` on backends with no local cache (e.g.
-    #: :class:`AiqumBackend`). ``source="auto"`` then routes live and
-    #: ``source="cache"`` raises :class:`ValueError` at ``query()`` time.
+    #: :class:`DiiBackend`). ``source="auto"`` then routes live and
+    #: ``source="cache"`` raises :class:`ValueError`.  A backend that caches
+    #: only some mappings (e.g. :class:`AiqumBackend`, #1055) leaves this
+    #: ``False`` and overrides :meth:`is_live_only`.
     live_only: bool = False
 
     def __init__(self, config: Config) -> None:
         self._config = config
+
+    @classmethod
+    def is_live_only(cls, mapping: TypeMapping) -> bool:
+        """Return whether *mapping* has no cache on this backend.
+
+        Defaults to :attr:`live_only`; override it for a backend that caches
+        only some of its mappings.
+        """
+        return cls.live_only
 
     @abstractmethod
     def query(

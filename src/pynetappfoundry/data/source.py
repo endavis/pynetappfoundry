@@ -34,7 +34,8 @@ T = TypeVar("T", bound=BaseModel)
 
 
 # Backend registry: maps TypeMapping.api_type → Backend subclass.
-# Registered backends: ONTAP (cache + live), DII and AIQUM (live-only).
+# Registered backends: ONTAP (cache + live), DII (live-only), AIQUM (cache for
+# the collected collections, live for the rest: Backend.is_live_only, #1055).
 # Future backends (e.g. OCCM) are registered here.
 _BACKENDS: dict[str, type[Backend]] = {
     "ontap": OntapBackend,
@@ -292,10 +293,15 @@ class QueryBuilder[T: BaseModel]:
     def _validate_live_only(self) -> None:
         """Raise :class:`ValueError` for ``source="cache"`` on a live-only backend."""
         backend_cls = _BACKENDS.get(self._mapping.api_type)
-        if backend_cls is None or not backend_cls.live_only or self._source_mode != "cache":
+        if (
+            backend_cls is None
+            or self._source_mode != "cache"
+            or not backend_cls.is_live_only(self._mapping)
+        ):
             return
         msg = (
-            f"query(): {backend_cls.__name__} is live-only and has no cache; "
+            f"query(): {backend_cls.__name__} is live-only for {self._mapping.name} "
+            f"and has no cache; "
             f"use source='auto' or source='live' instead of source='cache'"
         )
         raise ValueError(msg)
@@ -482,7 +488,9 @@ class QueryBuilder[T: BaseModel]:
         """Execute the query and yield results."""
         backend = self._source._get_backend(self._mapping.api_type)
         mode: SourceMode = self._source_mode
-        if backend.live_only is True and mode == "auto":
+        if (
+            backend.live_only is True or backend.is_live_only(self._mapping) is True
+        ) and mode == "auto":
             mode = "live"
         decision = decide_path(self._mapping, self._fields, mode)
         # Only pass path_params when used, so backends and mocks that predate it still work.

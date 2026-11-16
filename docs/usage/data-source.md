@@ -189,7 +189,7 @@ The DII backend rejects `.where()` and non-equality DSL expressions **regardless
 
 For a DII model, `cluster=` names a `[cloudinsights.<name>]` tenant: the query uses that tenant's `base_url` and token. A name with no `[cloudinsights]` entry uses the default tenant from `diiapi.toml`. See [Cloud Insights configuration](../reference/config-schema.md#cloud-insights).
 
-The AIQUM backend is also live-only: `source="auto"` goes live, `source="cache"` raises `ValueError`, and `.where()` raises `ValueError` at chain time. `cluster=` is the key of the instance in the `[aiqums]` inventory. See [AIQUM API](aiqum-api.md#datasource) and [ADR-0026](../decisions/0026-aiqum-backend-is-live-only-and-reads-the-hal-records-envelope.md).
+The AIQUM backend is live-only per mapping: `AiqumCluster`, `AiqumSvm` and `AiqumVolume` can be served from the AIQUM cache once collected, and every other AIQUM mapping is live-only (`source="auto"` goes live, `source="cache"` raises `ValueError`). `.where()` raises `ValueError` at chain time. `cluster=` is the key of the instance in the `[aiqums]` inventory. See [AIQUM API](aiqum-api.md#datasource) and [ADR-0026](../decisions/0026-aiqum-backend-is-live-only-and-reads-the-hal-records-envelope.md).
 
 See [ADR-0017](../decisions/0017-where-expressions-are-cache-only-rationale.md) for the rationale behind the cache-only restriction.
 
