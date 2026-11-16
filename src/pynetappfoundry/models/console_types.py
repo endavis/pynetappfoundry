@@ -17,6 +17,7 @@ if TYPE_CHECKING:
         get_occm_saas_mp_service_account,
         get_occm_system_about,
     )
+    from pynetappfoundry.models.console.dw import get_license_account_subscriptions_preferred
     from pynetappfoundry.models.console.tenancyv4.get_organizations import (
         Resource10GetResponseBody,
     )
@@ -182,11 +183,97 @@ class MarketplaceSubscription(BaseModel):
         return result
 
 
+class SubscriptionEntitlement(BaseModel):
+    """Compact view of one entitlement of an account subscription (#1034).
+
+    Source schema: ``entitlements.items`` of the preferred-subscription response
+    of ``GET /license/account/{accountId}/subscriptions/preferred`` in the Console
+    ``dw`` spec.  The fields come from the docs, not from a live response.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    contract_option: str | None = Field(default=None, alias="contractOption")
+    units: str | None = None
+    expiration_date: str | None = Field(default=None, alias="expirationDate")
+    category: str | None = None
+    dimension: str | None = None
+    unit: str | None = None
+    service_name: str | None = Field(default=None, alias="serviceName")
+
+
+class AccountSubscription(BaseModel):
+    """Compact view of one preferred subscription of a Console account (#1034).
+
+    Source schema: an item of the 200 response of
+    ``GET /license/account/{accountId}/subscriptions/preferred`` in the Console
+    ``dw`` spec.  Cloud account IDs (``cloudIds``), ``customerIdentifier``,
+    ``listingUrl`` and the other display fields are dropped.  The item fields come
+    from the docs; the live response was an empty array.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    subscription_id: str = Field(alias="subscriptionId")
+    subscription_name: str | None = Field(default=None, alias="subscriptionName")
+    subscription_status: str | None = Field(default=None, alias="subscriptionStatus")
+    service_name: str | None = Field(default=None, alias="serviceName")
+    cloud_provider: str | None = Field(default=None, alias="cloudProvider")
+    plan_id: str | None = Field(default=None, alias="planId")
+    product_code: str | None = Field(default=None, alias="productCode")
+    contract: bool | None = None
+    auto_renew: str | None = Field(default=None, alias="autoRenew")
+    end_date: int | None = Field(default=None, alias="endDate")
+    """End of the subscription as epoch milliseconds, as documented."""
+    term: str | None = None
+    accounts: list[str] = Field(default_factory=list)
+    entitlements: list[SubscriptionEntitlement] = Field(default_factory=list)
+
+    @classmethod
+    def from_preferred(
+        cls, body: get_license_account_subscriptions_preferred.Response200Body
+    ) -> AccountSubscription:
+        """Build from one item of the preferred-subscriptions response.
+
+        Args:
+            body: Generated model from dw/get_license_account_subscriptions_preferred.
+
+        Returns:
+            The compact subscription; a missing entitlements block gives ``[]``.
+
+        Raises:
+            pydantic.ValidationError: If the item has no ``subscriptionId``.
+        """
+        data = body.model_dump(
+            include={
+                "subscriptionId",
+                "subscriptionName",
+                "subscriptionStatus",
+                "serviceName",
+                "cloudProvider",
+                "planId",
+                "productCode",
+                "contract",
+                "autoRenew",
+                "endDate",
+                "term",
+                "accounts",
+            }
+        )
+        if data.get("accounts") is None:
+            data["accounts"] = []
+        items = body.entitlements.items if body.entitlements is not None else None
+        data["entitlements"] = [item.model_dump() for item in items or []]
+        return cls.model_validate(data)
+
+
 __all__ = [
+    "AccountSubscription",
     "Connector",
     "ConnectorSiteIdentifier",
     "Folder",
     "MarketplaceSubscription",
     "Organization",
     "Project",
+    "SubscriptionEntitlement",
 ]

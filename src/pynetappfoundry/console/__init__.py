@@ -21,6 +21,7 @@ from pynetappfoundry.clients.console import (
 )
 from pynetappfoundry.clients.console.agent import ConsoleAgentClient
 from pynetappfoundry.models.console_types import (
+    AccountSubscription,
     Connector,
     Folder,
     MarketplaceSubscription,
@@ -102,6 +103,23 @@ class Console:
         """
         return self._client.get_project(project_id)
 
+    def list_preferred_subscriptions(
+        self, account_id: str | None = None, cloud_provider: str | None = None
+    ) -> list[AccountSubscription]:
+        """List the preferred subscriptions of a Console account.
+
+        Args:
+            account_id: The Console account id. Defaults to this facade's org id,
+                which equals the account id (measured live, ADR-0019).
+            cloud_provider: Optional cloud provider filter.
+
+        Returns:
+            The account's preferred subscriptions; empty when it has none.
+        """
+        return self._client.list_preferred_subscriptions(
+            self.org_id if account_id is None else account_id, cloud_provider
+        )
+
     def _agent_client(self, agent_id: str) -> ConsoleAgentClient:
         """Build a Console agent client sharing this facade's token provider.
 
@@ -176,6 +194,7 @@ class Console:
 
 
 __all__ = [
+    "AccountSubscription",
     "ClientCredentialsTokenProvider",
     "Connector",
     "Console",

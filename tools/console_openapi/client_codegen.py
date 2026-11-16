@@ -45,7 +45,16 @@ _HEADER = (
     'Do not edit; edit the manifest and regenerate.\n"""\n'
 )
 _MANIFEST_KEYS = frozenset(
-    {"operation_id", "client", "name", "response", "retry", "only_query", "query"}
+    {
+        "operation_id",
+        "client",
+        "name",
+        "response",
+        "retry",
+        "only_query",
+        "query",
+        "drop_headers",
+    }
 )
 
 
@@ -119,6 +128,9 @@ def load_manifest(path: Path = MANIFEST_PATH) -> list[dict[str, Any]]:
             raise CodegenError(f"Unknown response {entry['response']!r} for {entry['name']}")
         if not str(entry["name"]).isidentifier() or keyword.iskeyword(entry["name"]):
             raise CodegenError(f"{entry['name']!r} is not a valid method name")
+        dropped = entry.get("drop_headers", [])
+        if not isinstance(dropped, list) or not all(isinstance(h, str) for h in dropped):
+            raise CodegenError(f"drop_headers must be a list of strings for {entry['name']}")
     return entries
 
 
@@ -208,10 +220,17 @@ def resolve_operation(
     path_params: list[Param] = []
     query_params: list[Param] = []
     seen_query: set[str] = set()
+    drop = {h.lower() for h in entry.get("drop_headers", [])}
+    seen_headers: set[str] = set()
     for param in op.get("parameters", []):
         where, wire = param["in"], param["name"]
         if where == "header":
             if wire == "x-agent-id" and param.get("x-synthesized") is True:
+                continue
+            if wire.lower() in drop:
+                if param.get("required"):
+                    raise CodegenError(f"{op_id}: cannot drop required header {wire!r}")
+                seen_headers.add(wire.lower())
                 continue
             raise CodegenError(f"{op_id}: unsupported header parameter {wire!r}")
         if where == "path":
@@ -234,6 +253,10 @@ def resolve_operation(
     missing = (set(overlays) | set(only or [])) - seen_query
     if missing:
         raise CodegenError(f"{op_id}: manifest names unknown query parameters {sorted(missing)}")
+    if drop - seen_headers:
+        raise CodegenError(
+            f"{op_id}: drop_headers names unknown header parameters {sorted(drop - seen_headers)}"
+        )
     py_names = [p.py for p in (*path_params, *query_params)]
     if len(set(py_names)) != len(py_names) or "body" in py_names:
         raise CodegenError(f"{op_id}: parameter names collide: {py_names}")

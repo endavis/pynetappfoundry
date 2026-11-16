@@ -11,6 +11,7 @@ Handles every form observed in the target corpus:
 
 from __future__ import annotations
 
+import json
 import re
 
 from tools.console_openapi.models import TypeRef
@@ -52,6 +53,11 @@ def _strip_inline_links_for_classification(text: str) -> str:
 def _parse(text: str, raw: str) -> TypeRef:
     if text == "":
         return TypeRef(primitive="object", raw=raw)
+
+    # ["null", X]: a nullable primitive (#1034)
+    nullable_primitive = _parse_nullable(text)
+    if nullable_primitive is not None:
+        return TypeRef(primitive=nullable_primitive, nullable=True, raw=raw)
 
     # Hash mapping
     hm = _HASH_RE.match(text)
@@ -100,6 +106,23 @@ def _parse(text: str, raw: str) -> TypeRef:
     # Unknown type. Default to a permissive object so the spec still validates;
     # surface the original text so it can be triaged from the generated output.
     return TypeRef(primitive="object", raw=raw)
+
+
+def _parse_nullable(text: str) -> str | None:
+    """Return the primitive of a ``["null", X]`` cell, or ``None`` if it is not one."""
+    if not (text.startswith("[") and text.endswith("]")):
+        return None
+    try:
+        items = json.loads(text)
+    except ValueError:
+        return None
+    if not isinstance(items, list) or not all(isinstance(i, str) for i in items):
+        return None
+    names = [i.lower() for i in items]
+    others = [n for n in names if n != "null"]
+    if len(names) != 2 or len(others) != 1:
+        return None
+    return _PRIMITIVES.get(others[0])
 
 
 def _parse_any_of(text: str, raw: str) -> TypeRef:

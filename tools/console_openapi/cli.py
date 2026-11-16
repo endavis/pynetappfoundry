@@ -21,7 +21,7 @@ from tools.console_openapi.models import ParsedEndpoint
 from tools.console_openapi.openapi.builder import _SERVICE_BASE_PATHS, build_spec
 from tools.console_openapi.walker import parse_service
 
-DEFAULT_SERVICES: tuple[str, ...] = ("tenancy", "tenancyv4", "cvo")
+DEFAULT_SERVICES: tuple[str, ...] = ("tenancy", "tenancyv4", "cvo", "dw")
 
 
 @click.group()

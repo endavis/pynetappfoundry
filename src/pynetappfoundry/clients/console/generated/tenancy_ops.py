@@ -9,9 +9,15 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 from urllib.parse import quote
 
-from pynetappfoundry.clients.console._ops_support import Dispatch, drop_none, expect_object
+from pynetappfoundry.clients.console._ops_support import (
+    Dispatch,
+    drop_none,
+    expect_list,
+    expect_object,
+)
 
 if TYPE_CHECKING:
+    from pynetappfoundry.models.console.dw import get_license_account_subscriptions_preferred
     from pynetappfoundry.models.console.tenancyv4 import (
         get_folders_,
         get_organizations,
@@ -169,6 +175,29 @@ class ConsoleTenancyOps:
             kwargs["query_params"] = query
         response = self._dispatch(None, **kwargs)
         return get_projects_.Response200Body.model_validate(expect_object(response, "get_project"))
+
+    def list_preferred_subscriptions(
+        self, account_id: str, *, cloud_provider: str | None = None
+    ) -> list[get_license_account_subscriptions_preferred.Response200Body]:
+        """GET /license/account/{accountId}/subscriptions/preferred: Retrieve the preferred subscription ID for an account.
+
+        operationId: dw_get_license_account_by_accountId_subscriptions_preferred (generated; do not edit).
+        """
+        from pynetappfoundry.models.console.dw import get_license_account_subscriptions_preferred
+
+        kwargs: dict[str, Any] = {
+            "method": "GET",
+            "path_template": "/license/account/{accountId}/subscriptions/preferred",
+        }
+        kwargs["path_params"] = {"accountId": quote(account_id, safe="")}
+        query = drop_none({"cloudProvider": cloud_provider})
+        if query:
+            kwargs["query_params"] = query
+        response = self._dispatch(None, **kwargs)
+        return [
+            get_license_account_subscriptions_preferred.Response200Body.model_validate(i)
+            for i in expect_list(response, "list_preferred_subscriptions")
+        ]
 
 
 __all__ = ["ConsoleTenancyOps"]

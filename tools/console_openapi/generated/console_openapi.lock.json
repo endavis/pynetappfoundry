@@ -1,12 +1,13 @@
 {
-  "endpoint_count": 1029,
+  "endpoint_count": 1059,
   "repo": "https://github.com/NetAppDocs/console-automation.git",
   "requested_ref": "202c56dabb9ce27392c1a46421ee4d3e174b0758",
   "resolved_sha": "202c56dabb9ce27392c1a46421ee4d3e174b0758",
   "services": [
     "tenancy",
     "tenancyv4",
-    "cvo"
+    "cvo",
+    "dw"
   ],
   "tool_version": "0.1.0"
 }

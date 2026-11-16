@@ -1,0 +1,128 @@
+---
+sidebar: sidebar
+api: true
+explorer: false
+permalink: 'dw/dw-nullable-and-token.html'
+summary: 'Retrieve the preferred subscription ID for an account'
+---
+
+= Retrieve the preferred subscription ID for an account
+:imagesdir: ../media/
+
+[.api-doc-operation .api-doc-operation-get]#GET# [.api-doc-code-block]#`/license/account/{accountId}/subscriptions/preferred`#
+
+
+
+Retrieves the preferred subscription ID for a specified account ID.
+
+*Token usage:* Either a NetApp Console user token or service token.
+
+
+== Parameters
+
+[cols=5*,options=header]
+|===
+|Name
+|Type
+|In
+|Required
+|Description
+
+|accountId
+|string
+|path
+|True
+a|
+
+|X-Service-Request-Id
+|string
+|header
+|False
+a|Request identifier
+
+
+|===
+
+== Response
+
+```
+Status: 200, Default Response
+```
+
+
+[cols=4*,options=header]
+|===
+|Name
+|Type
+|Required
+|Description
+
+|subscriptionId
+|string
+|False
+a|
+
+|endDate
+|["null", "integer"]
+|False
+a|
+
+|term
+|["null", "string"]
+|False
+a|
+
+|entitlements
+|link:#entitlements[entitlements]
+|False
+a|
+
+|===
+
+== Definitions
+
+[.api-def-first-level]
+.See Definitions
+[%collapsible%closed]
+//Start collapsible Definitions block
+====
+[#items]
+[.api-collapsible-fifth-title]
+items
+
+[cols=4*,options=header]
+|===
+|Name
+|Type
+|Required
+|Description
+
+|units
+|string
+|False
+a|
+
+|===
+
+
+[#entitlements]
+[.api-collapsible-fifth-title]
+entitlements
+
+[cols=4*,options=header]
+|===
+|Name
+|Type
+|Required
+|Description
+
+|items
+|array[link:#items[items]]
+|False
+a|
+
+|===
+
+
+//end collapsible .Definitions block
+====

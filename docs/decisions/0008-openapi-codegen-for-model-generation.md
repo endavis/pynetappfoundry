@@ -255,8 +255,8 @@ assumption holds for some APIs and not others.  The supported strategies are:
    Console agent (OCCM) API, reached through the SaaS at ``/occm/api`` with
    ``x-agent-id``: for example ``GET /occm/system/about`` returns the agent
    identity and ``GET /onprem/working-environments`` returns each cluster's
-   ``clusterUuid``.  The parser covers ``tenancy``, ``tenancyv4`` and
-   ``cvo``; #733 (an ``agentsMgmt`` parser) is superseded.  The parser maps
+   ``clusterUuid``.  The parser covers ``tenancy``, ``tenancyv4``,
+   ``cvo`` and ``dw`` (#1034); #733 (an ``agentsMgmt`` parser) is superseded.  The parser maps
    ``Status: Default`` (used by the ``cvo`` pages) to the OpenAPI ``default``
    response, and ``cvo``, ``tenancy`` and ``tenancyv4`` move inline request and
    response bodies into named components (``<service>.<file_stem>.RequestBody``
@@ -280,7 +280,7 @@ Issue: #697
    and ``OntapModel`` base do not apply. The doit task lives at
    ``tools/doit/console_openapi_tasks.py:task_console_models`` and
    produces a tree under ``src/pynetappfoundry/models/console/``
-   (subdivided into ``tenancy/``, ``tenancyv4/`` and ``cvo/`` packages).
+   (subdivided into ``tenancy/``, ``tenancyv4/``, ``cvo/`` and ``dw/`` packages).
 
 2. **Spec version: 3.0.3.** The parser was updated to emit OpenAPI 3.0.3
    instead of 3.1 (option (a) above, applied at the parser rather than
@@ -589,6 +589,19 @@ Amendment to the Console pipeline. The Console agent docs type every `cvo` respo
 
 Issue: #1021
 
+### Console `dw` folder (Issue #1034)
+
+Amendment to the Console pipeline. The `dw` ("Licenses and subscriptions", `/license/...`) folder joins `tenancy`, `tenancyv4` and `cvo`. See [tools/console_openapi/README.md](../../tools/console_openapi/README.md).
+
+- **Base path `""`.** Every documented `dw` path already starts with `/license`, and the `dw/overview.adoc` curl example calls `https://api.bluexp.netapp.com/license/licenses`. A live read of `GET /license/account/{accountId}/subscriptions/preferred` at that path returned 200. The other `dw` paths are not verified live.
+- **Token-usage wording.** The regex in `tools/console_openapi/parser/endpoint.py` now accepts `NetApp Console` as well as `BlueXP`. No existing operation's `x-token-type` changes (rebuilding `tenancy`, `tenancyv4` and `cvo` is byte-identical). The "Either a ... user token or service token" lines and the "service token with the following scopes" lines stay untagged, so `x-token-type` stays absent, which already means either token.
+- **Nullable cells.** `dw` writes some type cells as `["null", "integer"]`, `["null", "string"]` or `["null", "boolean"]`. The parser reads them as the primitive with `TypeRef.nullable`, and the builder emits `{type: X, nullable: true}`. Any other bracketed cell still falls back to `object`.
+- **Hoisted and loosened.** `dw` is in `_HOISTED_BODY_SERVICES`, so its bodies get named models (`dw.<file_stem>.Response200Body`). It is also in `_LOOSE_RESPONSE_SERVICES`, which changes nothing today because every `dw` response field is documented optional.
+- **One array entry.** `GET /license/account/{accountId}/subscriptions/preferred` is documented as an object but returned a JSON array live (empty for the probed account), so `array_responses.toml` has a `[dw]` entry for it with evidence `live`. The item fields come from the docs and are not live-verified. The other `dw` GETs have no entry.
+- **Regenerated artefacts.** The spec gains the `dw` operations and schemas and no existing path or schema changes; the lockfile gains `dw` in `services` and the new `endpoint_count`; `doit console_models` adds `src/pynetappfoundry/models/console/dw/` and changes no existing module.
+
+Issue: #1034
+
 ## Related Issues
 
 - Issue #301: feat: field annotations, OpenAPI codegen, and SQL cache storage
@@ -614,6 +627,7 @@ Issue: #1021
 - Issue #1018: fix: generated cvo response models reject live agent responses (docs over-mark fields as required)
 - Issue #1027: feat: typed request/response models for generated tenancy Console ops
 - Issue #1021: fix: generated cvo spec types every list response as a single object
+- Issue #1034: feat: parse the Console dw (licenses and subscriptions) subservice (see "Console `dw` folder (Issue #1034)")
 
 ## Related Documentation
 

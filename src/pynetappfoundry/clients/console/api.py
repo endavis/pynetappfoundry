@@ -14,7 +14,7 @@ from pynetappfoundry.clients.console.auth import (
 )
 from pynetappfoundry.clients.console.generated import ConsoleTenancyOps
 from pynetappfoundry.clients.openapi import APIWrapper
-from pynetappfoundry.models.console_types import Folder, Organization, Project
+from pynetappfoundry.models.console_types import AccountSubscription, Folder, Organization, Project
 
 if TYPE_CHECKING:
     from pynetappfoundry.core.config import Config
@@ -304,6 +304,25 @@ class ConsoleAPIClient:
             Compact Project instance.
         """
         return Project.model_validate(self.ops.get_project(project_id).model_dump())
+
+    def list_preferred_subscriptions(
+        self, account_id: str, cloud_provider: str | None = None
+    ) -> list[AccountSubscription]:
+        """GET /license/account/{accountId}/subscriptions/preferred (user or service token).
+
+        ``account_id`` is the Console account id; it equals the tenancyv4
+        organization id (measured live, ADR-0019). The response is a JSON array,
+        empty when the account has no preferred subscription.
+
+        Args:
+            account_id: The Console account id.
+            cloud_provider: Optional cloud provider filter.
+
+        Returns:
+            The account's preferred subscriptions as compact AccountSubscription instances.
+        """
+        items = self.ops.list_preferred_subscriptions(account_id, cloud_provider=cloud_provider)
+        return [AccountSubscription.from_preferred(item) for item in items]
 
 
 __all__ = [
