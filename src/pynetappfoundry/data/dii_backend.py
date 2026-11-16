@@ -19,9 +19,7 @@ itself one record (e.g. ``GET /au/oneTimeToken``); it is wrapped as
 from __future__ import annotations
 
 import logging
-import re
 from typing import TYPE_CHECKING, Any, TypeVar
-from urllib.parse import quote
 
 from pydantic import BaseModel
 
@@ -29,6 +27,8 @@ from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.cache.fetchers import iter_parent_ids, validate_parent_chain
 from pynetappfoundry.cache.field_mapping import parse_api_record
 from pynetappfoundry.clients.dii.api import extract_envelope_records
+from pynetappfoundry.data._path_params import caller_path_params as _caller_path_params
+from pynetappfoundry.data._path_params import placeholders as _placeholders
 from pynetappfoundry.data._routing import RoutingDecision
 from pynetappfoundry.data.backends import Backend
 from pynetappfoundry.utils.dict_path import PathNotFoundError, get_nested_value
@@ -68,46 +68,6 @@ def _records_at_path(mapping: TypeMapping, response: dict[str, Any]) -> list[Any
         )
         return []
     return value
-
-
-def _placeholders(mapping: TypeMapping) -> list[str]:
-    """Return the ``{name}`` path placeholders of ``mapping.api_endpoint``, in order."""
-    return re.findall(r"\{([^}]+)\}", mapping.api_endpoint.split("?", 1)[0])
-
-
-def _caller_path_params(
-    mapping: TypeMapping, placeholders: list[str], path_params: dict[str, Any]
-) -> dict[str, str]:
-    """Validate and percent-encode caller-supplied *path_params* (#990).
-
-    Raises :class:`ValueError` for an unknown key, a missing placeholder, or a
-    value that is empty, ``.`` or ``..``.  Every value is ``str()``-ed and
-    quoted with no safe characters, so the requested path never gains a ``{``,
-    ``}``, ``/``, ``?`` or ``#`` from a value.
-    """
-    valid = ", ".join("{" + p + "}" for p in placeholders) or "(none)"
-    unknown = [key for key in path_params if key not in placeholders]
-    if unknown:
-        msg = (
-            f"{mapping.name}: unknown path_params key(s) {', '.join(repr(k) for k in unknown)}; "
-            f"valid placeholder(s) for {mapping.api_endpoint}: {valid}"
-        )
-        raise ValueError(msg)
-    missing = [p for p in placeholders if p not in path_params]
-    if missing:
-        names = ", ".join("{" + p + "}" for p in missing)
-        msg = (
-            f"{mapping.name}: path_params is missing value(s) for {names} in {mapping.api_endpoint}"
-        )
-        raise ValueError(msg)
-    encoded: dict[str, str] = {}
-    for key, value in path_params.items():
-        text = str(value)
-        if text in ("", ".", ".."):
-            msg = f"{mapping.name}: path_params value for {{{key}}} must not be {text!r}"
-            raise ValueError(msg)
-        encoded[key] = quote(text, safe="")
-    return encoded
 
 
 def _records_from_response(mapping: TypeMapping, response: Any) -> list[Any]:

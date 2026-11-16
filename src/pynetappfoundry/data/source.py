@@ -200,7 +200,8 @@ class DataSource:
         ``.fields()`` chaining; iterating it triggers execution.
 
         *path_params* supplies values for the ``{placeholder}`` segments of a
-        DII endpoint that has no parent mapping to fill them (#990), e.g.
+        DII or AIQUM endpoint that has no parent mapping to fill them (#990,
+        #1054), e.g.
         ``ds.query(Model, cluster="t", path_params={"platform": "linux"})``.
         Raises :class:`ValueError` if the model's backend does not support it.
         """
@@ -268,7 +269,7 @@ class QueryBuilder[T: BaseModel]:
         msg = (
             f"query(): {backend_cls.__name__} does not support path_params; "
             f"it is only available on backends that set supports_path_params=True "
-            f"(e.g. DiiBackend)"
+            f"(e.g. DiiBackend, AiqumBackend)"
         )
         raise ValueError(msg)
 

@@ -70,7 +70,19 @@ volumes = ds.query(AiqumVolume, cluster="aiqum1").filter({"svm.name": "vs1"})
 - **Live only.** AIQUM has no local cache. `source="auto"` (the default) and `source="live"` query the instance; `source="cache"` raises `ValueError`. `.where()` and non-equality filters raise `ValueError` ([ADR-0026](../decisions/0026-aiqum-backend-is-live-only-and-reads-the-hal-records-envelope.md)).
 - **Filters** become query parameters on the request.
 - **Paging is automatic.** The `_links.next.href` links are followed and the `records` merged.
-- **Endpoints with a `{placeholder}`** (such as `/datacenter/cluster/clusters/{key}/metrics`) are not queryable yet and raise `ValueError` ([#1054](https://github.com/endavis/pynetappfoundry/issues/1054)).
+- **Endpoints with a `{placeholder}`** (the `{key}/metrics` models, such as `/datacenter/storage/volumes/{key}/metrics`) are queried with `path_params`. Without it they raise `ValueError` naming the placeholder. Fetching once per parent object is not supported yet ([#1057](https://github.com/endavis/pynetappfoundry/issues/1057)).
+
+```python
+from pynetappfoundry.models.aiqum.datacenter.storage.volumes.metrics.model import (
+    AiqumVolumeMetricsSampleResponse,
+)
+
+metrics = ds.query(
+    AiqumVolumeMetricsSampleResponse, cluster="aiqum1", path_params={"key": volume.key}
+).filter({"interval": "1h"})
+```
+
+Each value is converted with `str()` and percent-encoded, so a key containing `,`, `:`, `=` or `/` is safe to pass as is. An unknown key, a missing placeholder, or an empty value, `.` or `..` raises `ValueError` before any request ([#1054](https://github.com/endavis/pynetappfoundry/issues/1054)).
 
 The models are generated with `doit generate_models --api=aiqum`.
 

@@ -22,6 +22,7 @@ from pynetappfoundry.clients.aiqum.api import AIQUMAPIClient
 from pynetappfoundry.clients.trust import HostTrustStore
 from pynetappfoundry.core.config import ConfigurationError
 from pynetappfoundry.core.models import AIQUMAPISettings
+from pynetappfoundry.data._path_params import placeholders as _placeholders
 from pynetappfoundry.data._routing import RoutingDecision
 from pynetappfoundry.data.aiqum_backend import AiqumBackend
 from pynetappfoundry.models._base import OntapModel
@@ -250,3 +251,120 @@ class TestRealPaging:
             )
         finally:
             client.session.close()
+
+
+_METRICS = "/datacenter/storage/volumes/{key}/metrics"
+
+
+class TestPathParams:
+    """Caller-supplied path_params fill endpoint placeholders (#1054)."""
+
+    def test_capability_flag(self) -> None:
+        assert AiqumBackend.supports_path_params is True
+
+    def test_singleton_metrics_with_path_params(self) -> None:
+        m = _mapping(api_endpoint=_METRICS, response_shape="singleton")
+        client = MagicMock()
+        client.call_endpoint.return_value = {"key": "k1", "name": "sys"}
+        backend = _backend()
+        with patch.object(backend, "_get_api_client", return_value=client):
+            results = backend.query(
+                FakeAiqumVolume, m, _LIVE, "aiqum1", {}, path_params={"key": "a,b:c=d/e"}
+            )
+        assert [r.name for r in results] == ["sys"]
+        assert results[0].was_fetched("name")
+        client.call_endpoint.assert_called_once_with(
+            _METRICS, query_params={}, path_params={"key": "a%2Cb%3Ac%3Dd%2Fe"}
+        )
+        client.get_all_records.assert_not_called()
+
+    def test_filters_go_to_query_params(self) -> None:
+        m = _mapping(api_endpoint=_METRICS, response_shape="singleton")
+        client = MagicMock()
+        client.call_endpoint.return_value = {"key": "k1"}
+        backend = _backend()
+        with patch.object(backend, "_get_api_client", return_value=client):
+            backend.query(
+                FakeAiqumVolume, m, _LIVE, "aiqum1", {"interval": "1h"}, path_params={"key": "k"}
+            )
+        client.call_endpoint.assert_called_once_with(
+            _METRICS, query_params={"interval": "1h"}, path_params={"key": "k"}
+        )
+
+    def test_list_mapping_with_placeholder(self) -> None:
+        m = _mapping(api_endpoint="/x/{key}/items")
+        client = MagicMock()
+        client.get_all_records.return_value = {"records": [{"key": "k1", "name": "n"}]}
+        backend = _backend()
+        with patch.object(backend, "_get_api_client", return_value=client):
+            results = backend.query(
+                FakeAiqumVolume, m, _LIVE, "aiqum1", {}, path_params={"key": 12}
+            )
+        assert [r.key for r in results] == ["k1"]
+        client.get_all_records.assert_called_once_with(
+            "/x/{key}/items", "GET", query_params={}, path_params={"key": "12"}
+        )
+
+    @pytest.mark.parametrize(
+        ("path_params", "match"),
+        [
+            ({}, r"\{key\}"),
+            ({"other": "v"}, "unknown path_params key"),
+            ({"key": "v", "other": "v"}, "unknown path_params key"),
+            ({"key": ""}, "must not be"),
+            ({"key": "."}, "must not be"),
+            ({"key": ".."}, "must not be"),
+        ],
+    )
+    def test_invalid_path_params_build_no_client(
+        self, path_params: dict[str, Any], match: str
+    ) -> None:
+        m = _mapping(api_endpoint=_METRICS, response_shape="singleton")
+        backend = _backend()
+        with (
+            patch.object(backend, "_get_api_client") as get_client,
+            pytest.raises(ValueError, match=match),
+        ):
+            backend.query(FakeAiqumVolume, m, _LIVE, "aiqum1", {}, path_params=path_params)
+        get_client.assert_not_called()
+
+    def test_parent_mapping_without_path_params_names_key_and_followup(self) -> None:
+        m = _mapping(
+            api_endpoint=_METRICS,
+            response_shape="singleton",
+            parent_mapping="AiqumVolume",
+            parent_id_field="key",
+        )
+        backend = _backend()
+        with (
+            patch.object(backend, "_get_api_client") as get_client,
+            pytest.raises(ValueError, match=r"(?s)\{key\}.*path_params.*#1057"),
+        ):
+            backend.query(FakeAiqumVolume, m, _LIVE, "aiqum1", {})
+        get_client.assert_not_called()
+
+    def test_registry_sweep_placeholder_mappings_issue_one_request(self) -> None:
+        swept = 0
+        for name, reg in model_registry.mappings.items():
+            if reg.api_type != "aiqum":
+                continue
+            names = _placeholders(reg)
+            if not names:
+                continue
+            assert names == ["key"], name
+            client = MagicMock()
+            client.call_endpoint.return_value = {}
+            client.get_all_records.return_value = {"records": []}
+            backend = _backend()
+            with patch.object(backend, "_get_api_client", return_value=client):
+                backend.query(
+                    reg.model_class,
+                    reg,
+                    RoutingDecision(cache_fields=(), live_fields=("key",)),
+                    "aiqum1",
+                    {},
+                    path_params={"key": "k"},
+                )
+            assert client.call_endpoint.call_count + client.get_all_records.call_count == 1, name
+            swept += 1
+        assert swept > 0
