@@ -25,7 +25,67 @@ _SWAGGER_PATH = _ROOT / "docs/example-config/apis/occm/openapi3.json"
 _FIXTURES = Path(__file__).parent.parent.parent / "fixtures" / "console_openapi"
 _ABOUT = ("POST", "/occm/api/occm/system/about")
 _RESPONSE_REF = "#/components/schemas/cvo.cvo_status_default.ResponseBody"
-_LIVE = {"/occm/api/onprem/working-environments", "/occm/api/tenants"}
+_LIVE = {
+    "/occm/api/audit",
+    "/occm/api/audit/auditserver",
+    "/occm/api/audit/local/audit/{accountId}",
+    "/occm/api/audit/{requestId}",
+    "/occm/api/aws/ha/metadata/default-snapshot-policies",
+    "/occm/api/aws/ha/metadata/ebs-volume-types",
+    "/occm/api/aws/ha/metadata/packages",
+    "/occm/api/aws/ha/metadata/permutations",
+    "/occm/api/aws/ha/volumes/initiator",
+    "/occm/api/aws/ha/working-environments",
+    "/occm/api/azure/ha/metadata/default-snapshot-policies",
+    "/occm/api/azure/ha/metadata/packages",
+    "/occm/api/azure/ha/metadata/permutations",
+    "/occm/api/azure/ha/metadata/storage-account-types",
+    "/occm/api/azure/ha/volumes/initiator",
+    "/occm/api/azure/ha/working-environments",
+    "/occm/api/azure/vsa/metadata/default-snapshot-policies",
+    "/occm/api/azure/vsa/metadata/packages",
+    "/occm/api/azure/vsa/metadata/permutations",
+    "/occm/api/azure/vsa/metadata/storage-account-types",
+    "/occm/api/azure/vsa/volumes/initiator",
+    "/occm/api/azure/vsa/working-environments",
+    "/occm/api/flexcache/caches",
+    "/occm/api/fsx/volumes/initiator",
+    "/occm/api/gcp/ha/metadata/default-snapshot-policies",
+    "/occm/api/gcp/ha/metadata/gcp-disk-types",
+    "/occm/api/gcp/ha/metadata/packages",
+    "/occm/api/gcp/ha/metadata/permutations",
+    "/occm/api/gcp/ha/volumes/initiator",
+    "/occm/api/gcp/ha/working-environments",
+    "/occm/api/gcp/vsa/metadata/default-snapshot-policies",
+    "/occm/api/gcp/vsa/metadata/gcp-disk-types",
+    "/occm/api/gcp/vsa/metadata/packages",
+    "/occm/api/gcp/vsa/metadata/permutations",
+    "/occm/api/gcp/vsa/volumes/initiator",
+    "/occm/api/gcp/vsa/working-environments",
+    "/occm/api/occm/encryption/key-managers",
+    "/occm/api/occm/encryption/key-managers-ca-certificates",
+    "/occm/api/occm/key-store/user-trusted-certificates",
+    "/occm/api/occm/system/available-update-versions",
+    "/occm/api/occm/tenancy-service/workspaces",
+    "/occm/api/onprem/aggregates",
+    "/occm/api/onprem/volumes",
+    "/occm/api/onprem/working-environments",
+    "/occm/api/onprem/working-environments/{workingEnvironmentId}/cifs",
+    "/occm/api/onprem/working-environments/{workingEnvironmentId}/ip-spaces",
+    "/occm/api/replication/schedules/{workingEnvironmentId}",
+    "/occm/api/replication/status",
+    "/occm/api/replication/status/{workingEnvironmentId}",
+    "/occm/api/tenants",
+    "/occm/api/users",
+    "/occm/api/vsa/metadata/default-snapshot-policies",
+    "/occm/api/vsa/metadata/ebs-volume-types",
+    "/occm/api/vsa/metadata/packages",
+    "/occm/api/vsa/metadata/permutations",
+    "/occm/api/vsa/volumes/initiator",
+    "/occm/api/vsa/working-environments",
+}
+# Reason codes a `swagger` entry may carry as a trailing comment in the toml.
+_REASONS = frozenset({"no-cvo-we", "no-cloud-account", "no-fsx", "needs-two-we", "no-param-source"})
 # Swagger arrays whose generated operation has no documented response body to wrap.
 _BODILESS = {
     "cvo_get_occm_api_aws_ha_metadata_key_pairs",
@@ -216,3 +276,19 @@ def test_list_matches_swagger_arrays(
 
 def test_live_entries_are_the_confirmed_ones(cvo_list: dict[str, str]) -> None:
     assert {k.removeprefix("GET ") for k, v in cvo_list.items() if v == "live"} == _LIVE
+
+
+def test_swagger_entries_carry_a_reason() -> None:
+    """Every `swagger` line ends in a known reason code; no `live` line carries one (#1033)."""
+    swagger_line = re.compile(r'^"GET [^"]+" = "swagger"')
+    live_line = re.compile(r'^"GET [^"]+" = "live"')
+    seen = 0
+    for line in ARRAY_RESPONSES_PATH.read_text(encoding="utf-8").splitlines():
+        if swagger_line.match(line):
+            seen += 1
+            match = re.search(r"\s#\s*(\S+)\s*$", line)
+            assert match is not None, f"no reason code: {line}"
+            assert match.group(1) in _REASONS, f"unknown reason code: {line}"
+        elif live_line.match(line):
+            assert "#" not in line, f"live entry carries a comment: {line}"
+    assert seen > 0

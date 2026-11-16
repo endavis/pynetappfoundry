@@ -89,7 +89,9 @@ Pass a full commit SHA rather than a branch name, so the lockfile's
      list marker, so the list is committed, with `live` or `swagger` evidence
      per entry, and a unit test checks it against the agent swagger
      (`docs/example-config/apis/occm/openapi3.json`). The builder reads only
-     the list, never the swagger (#1021). The build fails on an unknown
+     the list, never the swagger (#1021). A `swagger` entry was not confirmed
+     live, and a trailing reason comment in `tools/console_openapi/array_responses.toml`
+     says why; a unit test checks that every one carries a known reason code (#1033). The build fails on an unknown
      service table, a malformed key, a path outside the service's base path, an
      evidence value other than `live` or `swagger`, a listed operation that is
      not in the spec, and a listed operation whose success response has no
