@@ -3,10 +3,14 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, RootModel
 
 
 class ResponseBody(BaseModel):
     date: int | None = Field(None, description="Last Modified")
     name: str | None = Field(None, description="Update name")
     releaseNumber: int | None = Field(None, description="Release Number")
+
+
+class ResponseList(RootModel[list[ResponseBody]]):
+    root: list[ResponseBody]

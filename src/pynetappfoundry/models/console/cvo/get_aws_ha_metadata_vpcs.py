@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, RootModel
 
 
 class SecurityGroupResponse(BaseModel):
@@ -47,3 +47,7 @@ class ResponseBody(BaseModel):
     tags: list[VpcTagResponse] | None = Field(None, description="VPC tags")
     tenancy: str | None = Field(None, description="Tenancy configuration for the VPC")
     vpcId: str | None = Field(None, description="The VPC identifier")
+
+
+class ResponseList(RootModel[list[ResponseBody]]):
+    root: list[ResponseBody]

@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, RootModel
 
 
 class RouteTableTag(BaseModel):
@@ -16,3 +16,7 @@ class ResponseBody(BaseModel):
     main: bool | None = None
     subnets: list[str] | None = None
     tags: list[RouteTableTag] | None = None
+
+
+class ResponseList(RootModel[list[ResponseBody]]):
+    root: list[ResponseBody]

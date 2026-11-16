@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, RootModel
 
 
 class ResponseBody(BaseModel):
@@ -13,3 +13,7 @@ class ResponseBody(BaseModel):
     status: str | None = None
     usernameField: str | None = None
     usernameValue: str | None = None
+
+
+class ResponseList(RootModel[list[ResponseBody]]):
+    root: list[ResponseBody]

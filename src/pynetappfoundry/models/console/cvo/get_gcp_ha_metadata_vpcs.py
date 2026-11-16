@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, RootModel
 
 
 class GcpFirewallResponse(BaseModel):
@@ -31,3 +31,7 @@ class ResponseBody(BaseModel):
     name: str | None = Field(None, description="Virtual Network Name")
     subnets: list[GcpSubnetResponse] | None = Field(None, description="Subnets")
     vpcPath: str | None = Field(None, description="Virtual Network path")
+
+
+class ResponseList(RootModel[list[ResponseBody]]):
+    root: list[ResponseBody]

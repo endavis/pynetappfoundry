@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, RootModel
 
 
 class SharePermissions(BaseModel):
@@ -16,3 +16,7 @@ class ResponseBody(BaseModel):
     path: str | None = None
     permissions: list[SharePermissions] | None = None
     volume: str | None = None
+
+
+class ResponseList(RootModel[list[ResponseBody]]):
+    root: list[ResponseBody]

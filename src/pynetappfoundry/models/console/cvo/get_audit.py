@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, RootModel
 
 
 class ParentId(BaseModel):
@@ -48,3 +48,7 @@ class ResponseBody(BaseModel):
     workingEnvironmentName: str | None = Field(
         None, description="Name of the system related to the user action"
     )
+
+
+class ResponseList(RootModel[list[ResponseBody]]):
+    root: list[ResponseBody]

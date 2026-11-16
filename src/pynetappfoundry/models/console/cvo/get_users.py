@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, RootModel
 
 
 class AzureCredentials(BaseModel):
@@ -46,3 +46,7 @@ class ResponseBody(BaseModel):
     publicId: str | None = Field(None, description="User public ID")
     roleId: str | None = Field(None, description="Role ID of the user")
     tenantId: str | None = Field(None, description="Tenant ID of the user")
+
+
+class ResponseList(RootModel[list[ResponseBody]]):
+    root: list[ResponseBody]

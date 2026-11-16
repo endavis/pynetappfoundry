@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, RootModel
 
 
 class ResponseBody(BaseModel):
@@ -13,3 +13,7 @@ class ResponseBody(BaseModel):
     ipAddresses: list[str] | None = Field(None, description="DNS server IP addresses")
     netBIOS: str | None = Field(None, description="CIFS server NetBIOS name")
     organizationalUnit: str | None = Field(None, description="Organizational unit for registration")
+
+
+class ResponseList(RootModel[list[ResponseBody]]):
+    root: list[ResponseBody]

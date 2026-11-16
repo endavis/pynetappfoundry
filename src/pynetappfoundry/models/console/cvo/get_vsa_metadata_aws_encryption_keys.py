@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, RootModel
 
 
 class ValidTo(BaseModel):
@@ -23,3 +23,7 @@ class ResponseBody(BaseModel):
     origin: str | None = None
     status: str | None = None
     validTo: ValidTo | None = None
+
+
+class ResponseList(RootModel[list[ResponseBody]]):
+    root: list[ResponseBody]

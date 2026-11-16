@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, RootModel
 
 
 class Capacity(BaseModel):
@@ -41,3 +41,7 @@ class ResponseBody(BaseModel):
     tieringRestriction: TieringRestriction | None = None
     totalCapacity: Capacity | None = None
     usedCapacity: Capacity | None = None
+
+
+class ResponseList(RootModel[list[ResponseBody]]):
+    root: list[ResponseBody]

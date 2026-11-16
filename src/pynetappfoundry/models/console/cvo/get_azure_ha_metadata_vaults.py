@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, RootModel
 
 
 class ResponseBody(BaseModel):
@@ -11,3 +11,7 @@ class ResponseBody(BaseModel):
     name: str | None = Field(None, description="Vault name")
     resourceGroup: str | None = Field(None, description="Resource group")
     vaultUri: str | None = Field(None, description="Vault URI")
+
+
+class ResponseList(RootModel[list[ResponseBody]]):
+    root: list[ResponseBody]

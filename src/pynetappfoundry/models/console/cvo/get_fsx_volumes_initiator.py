@@ -3,9 +3,13 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, RootModel
 
 
 class ResponseBody(BaseModel):
     aliasName: str | None = Field(None, description="Initiator alias")
     iqn: str | None = Field(None, description="Initiator IQN")
+
+
+class ResponseList(RootModel[list[ResponseBody]]):
+    root: list[ResponseBody]

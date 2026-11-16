@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, RootModel
 
 
 class CertificateResponse(BaseModel):
@@ -21,3 +21,7 @@ class ResponseBody(BaseModel):
     certificateInfo: CertificateResponse | None = None
     id: str | None = Field(None, description="Specifies the ID")
     status: str | None = Field(None, description="Status")
+
+
+class ResponseList(RootModel[list[ResponseBody]]):
+    root: list[ResponseBody]

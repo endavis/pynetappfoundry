@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, RootModel
 
 
 class HighAvailabilityEnabled(BaseModel):
@@ -29,3 +29,7 @@ class ResponseBody(BaseModel):
     saasSubscriptionId: str | None = None
     subscriptionId: str | None = None
     vMOrchestratorZonalMultiFDEnabled: VMOrchestratorZonalMultiFDEnabled | None = None
+
+
+class ResponseList(RootModel[list[ResponseBody]]):
+    root: list[ResponseBody]
