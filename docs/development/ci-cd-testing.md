@@ -252,6 +252,17 @@ The job sets `COVERAGE_DEBUG=core` and `COVERAGE_DEBUG_FILE=tmp/coverage-debug.l
 coverage process, each xdist worker too, logs `Using core=<name>`, and the `Show the coverage core
 used` step prints the counts per core.
 
+Measured in the `coverage` job's logs
+([#1064](https://github.com/endavis/pynetappfoundry/issues/1064)):
+
+| CI run | Python | Core | Total coverage | Job wall time |
+| :--- | :--- | :--- | :--- | :--- |
+| 43923337755 (before #1068) | 3.13.18 | `ctrace` | 82.90% | 7m58s |
+| 43928353199 (after #1068) | 3.14.10 | `sysmon` | 82.80% | 6m08s |
+
+The two runs differ in interpreter as well as core, so the gap is not a pure core comparison. These
+are single runs; re-measure before relying on the numbers.
+
 #### What the gate measures, and why
 
 The gate covers `tools/` as well as the package. `src/package_name/` is the skeleton every
