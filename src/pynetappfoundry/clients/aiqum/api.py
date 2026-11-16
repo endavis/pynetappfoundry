@@ -17,10 +17,12 @@ if TYPE_CHECKING:
 class AIQUMAPIClient(APIWrapper):
     """API client for an Active IQ Unified Manager instance.
 
-    The target is ``config.data["aiqums"][name]`` and the credentials come from
-    ``users.toml [aiqums]``. By default TLS is pinned on first use (chain validation
-    is off). An instance can opt into CA validation with ``verify_ssl`` / ``ca_bundle``,
-    on its entry or in ``aiqumapi.toml [general]`` (entry wins).
+    The target is ``config.data["aiqums"][name]``. The credentials come from
+    ``Config.get_user("aiqums", name)``: ``NF_<NAME>_USER``/``NF_<NAME>_PASSWORD``,
+    then the instance's own ``user``/``enc``, then ``users.toml [aiqums]``. By
+    default TLS is pinned on first use (chain validation is off). An instance can
+    opt into CA validation with ``verify_ssl`` / ``ca_bundle``, on its entry or in
+    ``aiqumapi.toml [general]`` (entry wins).
 
     Paging needs no AIQUM-specific code: the inherited ``get_all_records``
     follows the HAL ``_links.next.href`` links and merges ``records``.

@@ -157,7 +157,7 @@ def show(ctx: click.Context, section: str | None, unmask: bool) -> None:
     if section:
         section_lower = section.lower()
         # Check in data first (clusters, aiqums, etc.)
-        if section_lower in config.data:
+        if config.data.get(section_lower):
             tree = Tree(f"[bold blue]{escape(section)}[/bold blue]")
             _build_tree(tree, config.data[section_lower], unmask)
             console.print(tree)

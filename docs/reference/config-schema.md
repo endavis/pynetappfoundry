@@ -236,6 +236,8 @@ base_api_path = "/rest/v1"                 # Optional: Base API path (default: "
 | `base_url` | string | Yes | - | Base URL for your DII tenant |
 | `base_api_path` | string | No | `"/rest/v1"` | Base path for DII REST API endpoints |
 
+With several tenants, `DIIAPIClient(config, name="TENANT")` reads `base_url` and the token from `[cloudinsights.TENANT]` in a data file (see [Cloud Insights](#cloud-insights)), falling back to `[general]` for either. `DIIAPIClient(config)` uses `[general]` alone.
+
 ---
 
 ### consoleapi.toml
@@ -435,6 +437,8 @@ env = "Prod"
 | `env` | string | No | `""` | Environment |
 | `verify_ssl` | boolean | No | - | Validate this instance's certificate chain instead of pinning; overrides `aiqumapi.toml` |
 | `ca_bundle` | string | No | - | CA bundle path for this instance; overrides `aiqumapi.toml` |
+| `user` | string | No | From users.toml | Override default username |
+| `enc` | string | No | From users.toml | Override default encoded password |
 
 ---
 
@@ -483,6 +487,9 @@ env = "Prod"
 | `div` | string | No | `""` | Division identifier |
 | `bu` | string | No | `""` | Business unit identifier |
 | `env` | string | No | `""` | Environment |
+| `base_url` | string | No | `diiapi.toml` `[general]` | API URL for `DIIAPIClient(config, name=...)`. Never derived from `ip` |
+| `user` | string | No | From users.toml | A label for the API token |
+| `enc` | string | No | From users.toml | The tenant's API token (SOPS value accepted). Falls back to `diiapi.toml` `api_ro_token` |
 
 ---
 
@@ -607,9 +614,18 @@ Cluster names are converted to environment variable format by:
 
 Credentials are resolved in the following order (first found wins):
 
-1. **Environment variables** - `NF_<CLUSTER>_USER` and `NF_<CLUSTER>_PASSWORD`
-2. **Object-specific config** - `user` and `enc` fields in the cluster's data file entry
+1. **Environment variables** - `NF_<OBJECT>_USER` and `NF_<OBJECT>_PASSWORD`
+2. **Object-specific config** - `user` and `enc` fields in the object's data file entry
 3. **Default credentials** - `users.toml` defaults for the resource type
+
+This applies to every inventory type (`clusters`, `aiqums`, `connectors`, `cloudinsights`, `azure`, `ibm`). Write an object's entry with `nf config set-credential --type <type> --name <object> --user <user>`; `--cluster NAME` is an alias for `--type clusters --name NAME`.
+
+**Token-style secrets** (a Cloud Insights API token, which has no username) live in the same `enc` field, and `user` is only a label. They resolve in this order (first found wins):
+
+1. `NF_<OBJECT>_PASSWORD`
+2. `enc` in the object's data file entry
+3. `enc` in `users.toml` under the type
+4. the client's settings file (for Cloud Insights, `diiapi.toml` `[general]` `api_ro_token`)
 
 ### Example Usage
 

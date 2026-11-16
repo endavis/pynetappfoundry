@@ -15,7 +15,7 @@ tags:
 ## Setup
 
 - **Inventory:** add the instance to a data file as `[aiqums.NAME]` with an `ip` (see [Config schema: AIQUMs](../reference/config-schema.md#aiqums)).
-- **Credentials:** put `user` and `enc` under `[aiqums]` in `users.toml` (see [Config schema: users.toml](../reference/config-schema.md#userstoml)).
+- **Credentials:** put `user` and `enc` on the instance (`nf config set-credential --type aiqums --name NAME --user USER`), or under `[aiqums]` in `users.toml` as the default for every instance (see [Config schema: Credential Resolution Order](../reference/config-schema.md#credential-resolution-order)).
 - **Settings:** create `aiqumapi.toml` in the config directory with a `[general]` section (see [Config schema: aiqumapi.toml](../reference/config-schema.md#aiqumapitoml)). A missing `[general]` raises `ConfigurationError`.
 - **Spec:** `all.json` in the `aiqum` folder of the `apis` directory (see `docs/example-config/apis/aiqum/notes.txt`).
 

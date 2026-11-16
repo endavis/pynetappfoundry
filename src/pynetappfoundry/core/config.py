@@ -238,7 +238,7 @@ class Config:
         # Memoized SOPS plaintext keyed by ciphertext: each decrypt runs a subprocess.
         self._sops_plaintext: dict[str, str] = {}
         self.config_dir = Path.cwd() / config_dir
-        self.data_types = ["aiqums", "connectors", "cloudinsights", "clusters", "azure"]
+        self.data_types = ["aiqums", "connectors", "cloudinsights", "clusters", "azure", "ibm"]
         self.settings: dict[str, Any] = {}
         self.parse_data()
         logging.debug(f"Toplevel settings: {list(self.settings.keys())}")
@@ -367,24 +367,52 @@ class Config:
                 "with 'base_api_path' field."
             ) from e
 
-    def get_dii_api_settings(self) -> DIIAPISettings:
+    def get_dii_api_settings(self, name: str | None = None) -> DIIAPISettings:
         """Get Data Infrastructure Insights API settings.
+
+        Args:
+            name: Optional ``[cloudinsights.<name>]`` tenant. With a name, the
+                tenant's ``base_url`` and token (see :meth:`get_secret`) override
+                the ``diiapi.toml [general]`` values; everything else, and any
+                value the tenant does not set, comes from ``[general]``.
 
         Returns:
             DIIAPISettings object with API configuration.
 
         Raises:
-            ConfigurationError: If DII API settings are not configured, or a
-                ``SOPS[...]`` value cannot be decrypted.
+            ConfigurationError: If DII API settings are not configured, the tenant
+                is unknown, or a ``SOPS[...]`` value cannot be decrypted.
         """
         try:
-            dii_data = self._decrypt_setting_fields(
-                self.get_setting("diiapi", "general"),
-                _DII_SOPS_FIELDS,
-                file="diiapi.toml",
-                section="general",
-            )
-            return DIIAPISettings.model_validate(dii_data)
+            general: Any = self.get_setting("diiapi", "general", default={})
+            if name is None:
+                dii_data = self._decrypt_setting_fields(
+                    self.get_setting("diiapi", "general"),
+                    _DII_SOPS_FIELDS,
+                    file="diiapi.toml",
+                    section="general",
+                )
+                return DIIAPISettings.model_validate(dii_data)
+
+            tenants = self.data.get("cloudinsights", {})
+            if name not in tenants:
+                available = ", ".join(sorted(tenants)) or "none"
+                raise ConfigurationError(
+                    f"No Cloud Insights tenant named {name!r} in the [cloudinsights] "
+                    f"inventory (available: {available})."
+                )
+            merged: dict[str, Any] = dict(general) if isinstance(general, dict) else {}
+            tenant_url = tenants[name].get("base_url")
+            if tenant_url:
+                merged["base_url"] = tenant_url
+            token = self.get_secret("cloudinsights", name)
+            if token:
+                merged["api_ro_token"] = token
+            else:
+                merged = self._decrypt_setting_fields(
+                    merged, _DII_SOPS_FIELDS, file="diiapi.toml", section="general"
+                )
+            return DIIAPISettings.model_validate(merged)
         except ConfigurationError:
             raise
         except Exception as e:
@@ -668,6 +696,51 @@ class Config:
         password = self._decrypt_if_encrypted(enc, object_name=uobject)
 
         return user, password
+
+    def get_secret(self, utype: str, uobject: str) -> str | None:
+        """Get a token-style secret (no username) for a type and object.
+
+        The secret is stored in the same ``enc`` field as a password. Order (first
+        found wins):
+        1. Environment variable ``NF_<OBJECT>_PASSWORD``
+        2. ``enc`` on the object's data entry (``[<type>.<object>]``)
+        3. ``enc`` in ``users.toml [<type>]``
+
+        Args:
+            utype: Type of object (e.g., 'cloudinsights').
+            uobject: Name of the specific object.
+
+        Returns:
+            The decrypted secret, or None if none is configured.
+
+        Raises:
+            ConfigurationError: If a ``SOPS[...]`` value cannot be decrypted. The
+                message never includes the ciphertext or the plaintext.
+        """
+        value: Any = None
+        section = f"{utype}.{uobject}"
+        file = "the object's data file"
+        env_value = os.environ.get(f"{self._get_env_var_name(uobject)}_PASSWORD") if uobject else ""
+        if env_value:
+            value = env_value
+            file = "environment"
+        else:
+            entry = self.data.get(utype, {}).get(uobject)
+            if isinstance(entry, dict) and entry.get("enc"):
+                value = entry["enc"]
+            else:
+                users = self.settings.get("users")
+                default = users.get(utype) if isinstance(users, dict) else None
+                if isinstance(default, dict) and default.get("enc"):
+                    value = default["enc"]
+                    file = "users.toml"
+                    section = utype
+        if not isinstance(value, str) or not value:
+            return None
+        decrypted = self._decrypt_setting_fields(
+            {"enc": value}, ("enc",), file=file, section=section
+        )
+        return str(decrypted["enc"])
 
     def _decrypt_setting_fields(
         self, data: Any, fields: tuple[str, ...], *, file: str, section: str

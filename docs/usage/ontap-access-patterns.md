@@ -363,9 +363,10 @@ from pynetappfoundry.clients.dii.api import DIIAPIClient
 
 # Using DIIAPIClient for Data Infrastructure Insights
 config = Config()
-dii_config = config.diis["production"]
 
-client = DIIAPIClient(dii_config, config)
+# Settings from diiapi.toml [general]; pass name="TENANT" to use a
+# [cloudinsights.TENANT] tenant's base_url and token instead
+client = DIIAPIClient(config)
 
 # Query DII workload-volume timeseries
 response = client.call_endpoint(
