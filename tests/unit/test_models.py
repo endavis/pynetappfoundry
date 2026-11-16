@@ -312,6 +312,12 @@ class TestAIQUMAPISettings:
         assert settings.base_api_path == "/x"
         assert settings.timeout == 5.0
 
+    def test_max_parent_requests(self) -> None:
+        assert AIQUMAPISettings().max_parent_requests == 500
+        assert AIQUMAPISettings(max_parent_requests=0).max_parent_requests == 0
+        with pytest.raises(ValueError, match="max_parent_requests"):
+            AIQUMAPISettings(max_parent_requests=-1)
+
 
 class TestSearchableKeysConfig:
     """Tests for SearchableKeysConfig model."""

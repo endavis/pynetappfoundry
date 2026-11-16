@@ -88,6 +88,7 @@ Two options were considered for the unwired mappings. Option A, a curated table 
 - **Semantics:** a non-empty `path_params` sends one direct `get_all_pages` request with the endpoint template and the encoded values. An unknown key or a missing placeholder raises `ValueError` naming it, before any client is built, also for a mapping with a `parent_mapping`; the parent fetch is skipped when every placeholder is supplied. Empty or `None` keeps the #985 behavior.
 - **Encoding:** values are `str()`-ed, rejected if empty, `.` or `..`, then `urllib.parse.quote(value, safe="")`, so a value never adds `{`, `}`, `/`, `?` or `#` to the path.
 - **Out of scope:** `path_params` on `DataSource.get()`.
+- **Shared loop (#1057):** the per-parent loop moved to `src/pynetappfoundry/data/_per_parent.py` (`fetch_per_parent`) so `AiqumBackend` can use it ([ADR-0026](0026-aiqum-backend-is-live-only-and-reads-the-hal-records-envelope.md)); `DiiBackend._query_children` is a thin wrapper and its behaviour and log text are unchanged.
 
 See [DataSource usage](../usage/data-source.md).
 

@@ -107,11 +107,37 @@ class TestVolumeMetricsPathParams:
             path_params={"key": "a%2Cb%3Ac%3Dd"},
         )
 
-    def test_metrics_without_path_params_raises(self, client: MagicMock) -> None:
+
+class TestVolumeMetricsPerParent:
+    """The {key}/metrics mapping without path_params fetches per volume (#1057)."""
+
+    def test_metrics_per_volume(self, client: MagicMock) -> None:
+        from pynetappfoundry.core.models import AIQUMAPISettings
         from pynetappfoundry.models.aiqum.datacenter.storage.volumes.metrics.model import (
             AiqumVolumeMetricsSampleResponse,
         )
 
-        with pytest.raises(ValueError, match=r"\{key\}.*#1057"):
-            list(DataSource(MagicMock()).query(AiqumVolumeMetricsSampleResponse, cluster="aiqum1"))
-        client.call_endpoint.assert_not_called()
+        client.get_all_records.return_value = _envelope(
+            {"key": "a,b", "name": "v1"}, {"key": "k2", "name": "v2"}
+        )
+        client.call_endpoint.side_effect = [
+            {"num_samples": 1, "duration": "PT1H"},
+            {"num_samples": 2, "duration": "PT1H"},
+        ]
+        config = MagicMock()
+        config.get_aiqum_api_settings.return_value = AIQUMAPISettings()
+        results = list(
+            DataSource(config)
+            .query(AiqumVolumeMetricsSampleResponse, cluster="aiqum1")
+            .filter({"interval": "1h"})
+        )
+        assert [r.num_samples for r in results] == [1, 2]
+        client.get_all_records.assert_called_once_with(
+            "/datacenter/storage/volumes", "GET", query_params={}
+        )
+        metrics = "/datacenter/storage/volumes/{key}/metrics"
+        assert [c.kwargs for c in client.call_endpoint.call_args_list] == [
+            {"query_params": {"interval": "1h"}, "path_params": {"key": "a%2Cb"}},
+            {"query_params": {"interval": "1h"}, "path_params": {"key": "k2"}},
+        ]
+        assert all(c.args == (metrics,) for c in client.call_endpoint.call_args_list)

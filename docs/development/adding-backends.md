@@ -615,7 +615,7 @@ HAL `records` envelope. **ADR:** [ADR-0026](../decisions/0026-aiqum-backend-is-l
 | Pagination | `AIQUMAPIClient.get_all_records` follows `_links.next.href` |
 | Targeting | `cluster=` is the `[aiqums]` instance name; one client cached per name |
 | Singletons | `response_shape="singleton"` uses `call_endpoint` and wraps the dict as `[response]` |
-| Placeholders | `supports_path_params = True`: caller `path_params` are validated and encoded by the shared `src/pynetappfoundry/data/_path_params.py` (also used by DII). A placeholder endpoint without `path_params` raises `ValueError` before any client is built; fetching once per parent is [#1057](https://github.com/endavis/pynetappfoundry/issues/1057) |
+| Placeholders | `supports_path_params = True`: caller `path_params` are validated and encoded by the shared `src/pynetappfoundry/data/_path_params.py` (also used by DII). Without `path_params`, a mapping with a `parent_mapping` is fetched once per parent through the shared `src/pynetappfoundry/data/_per_parent.py` `fetch_per_parent` (also used by DII; AIQUM adds `encode=True` and the `max_parent_requests` cap, [#1057](https://github.com/endavis/pynetappfoundry/issues/1057)); one without a parent raises `ValueError` before any client is built |
 
 The models and mappings are generated with `doit generate_models --api=aiqum` and covered by
 `doit generate_models_check`. User-facing usage is in [AIQUM API](../usage/aiqum-api.md#datasource).

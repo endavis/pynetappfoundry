@@ -23,13 +23,11 @@ from typing import TYPE_CHECKING, Any, TypeVar
 
 from pydantic import BaseModel
 
-from pynetappfoundry.cache._registry import model_registry
-from pynetappfoundry.cache.fetchers import iter_parent_ids, validate_parent_chain
 from pynetappfoundry.cache.field_mapping import parse_api_record
 from pynetappfoundry.clients.dii.api import extract_envelope_records
 from pynetappfoundry.data._path_params import caller_path_params as _caller_path_params
 from pynetappfoundry.data._path_params import placeholders as _placeholders
-from pynetappfoundry.data._routing import RoutingDecision
+from pynetappfoundry.data._per_parent import fetch_per_parent
 from pynetappfoundry.data.backends import Backend
 from pynetappfoundry.utils.dict_path import PathNotFoundError, get_nested_value
 
@@ -37,6 +35,7 @@ if TYPE_CHECKING:
     from pynetappfoundry.cache.field_mapping import TypeMapping
     from pynetappfoundry.clients.dii.api import DIIAPIClient
     from pynetappfoundry.core.config import Config
+    from pynetappfoundry.data._routing import RoutingDecision
 
 logger = logging.getLogger(__name__)
 
@@ -254,42 +253,25 @@ class DiiBackend(Backend):
         fails is logged as ``CHILD_FETCH_FAILED`` and skipped.  *filters* go to
         the child requests only.
         """
-        log_prefix = f"DiiBackend<{mapping.name}>"
-        validate_parent_chain(mapping)
-        parent_map = model_registry.get_mapping(mapping.parent_mapping or "")
-        if parent_map is None:  # pragma: no cover - guarded by validate_parent_chain
-            msg = f"{mapping.name}: parent mapping {mapping.parent_mapping!r} is not registered"
-            raise ValueError(msg)
-        if len(mapping.effective_parent_id_fields()) != len(placeholders):
-            msg = (
-                f"{mapping.name}: {len(mapping.effective_parent_id_fields())} parent id "
-                f"field(s) for {len(placeholders)} placeholder(s) in {mapping.api_endpoint}"
-            )
-            raise ValueError(msg)
-
-        parent_decision = RoutingDecision(
-            cache_fields=(), live_fields=tuple(f.cache_attr for f in parent_map.fields)
-        )
-        parents = self.query(parent_map.model_class, parent_map, parent_decision, cluster, {})
-        client = self._get_api_client(cluster)
         query_params: dict[str, Any] = dict(filters) if filters else {}
-        results: list[T] = []
-        for parent, values in iter_parent_ids(mapping, parents, log_prefix):
-            path_params = dict(zip(placeholders, values, strict=True))
-            try:
-                response = client.get_all_pages(
-                    mapping.api_endpoint, query_params=query_params, path_params=path_params
-                )
-                records = _records_from_response(mapping, response)
-            except Exception as e:
-                logger.warning(
-                    "%s CHILD_FETCH_FAILED: %s for parent %s - %s: %s",
-                    log_prefix,
-                    mapping.name,
-                    getattr(parent, "name", repr(parent)),
-                    type(e).__name__,
-                    e,
-                )
-                continue
-            results.extend(self._parse_records(model_class, mapping, decision, records))
-        return results
+
+        def query_parents(parent_map: TypeMapping, parent_decision: RoutingDecision) -> list[Any]:
+            return list(
+                self.query(parent_map.model_class, parent_map, parent_decision, cluster, {})
+            )
+
+        def fetch_child(path_params: dict[str, str]) -> list[Any]:
+            client = self._get_api_client(cluster)
+            response = client.get_all_pages(
+                mapping.api_endpoint, query_params=query_params, path_params=path_params
+            )
+            return _records_from_response(mapping, response)
+
+        records = fetch_per_parent(
+            mapping,
+            placeholders,
+            query_parents=query_parents,
+            fetch_child=fetch_child,
+            log_prefix=f"DiiBackend<{mapping.name}>",
+        )
+        return self._parse_records(model_class, mapping, decision, records)
