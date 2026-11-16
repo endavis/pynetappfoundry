@@ -70,4 +70,4 @@ client.call_endpoint(
 )
 ```
 
-`doit fetch_spec --api=aiqum` currently gets HTTP 401 from AIQUM 9.18, whose docs endpoint does not accept Basic auth. This is a follow-up item.
+AIQUM 9.18 serves its spec only to a UI login session, not to Basic auth. `doit fetch_spec --api=aiqum` therefore logs in through the UI session (`POST /login`), downloads the spec, then logs out.
