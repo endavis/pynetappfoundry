@@ -13,7 +13,10 @@ from typing import TYPE_CHECKING
 from pydantic import BaseModel, ConfigDict, Field
 
 if TYPE_CHECKING:
-    from pynetappfoundry.models.console.cvo import get_occm_system_about
+    from pynetappfoundry.models.console.cvo import (
+        get_occm_saas_mp_service_account,
+        get_occm_system_about,
+    )
     from pynetappfoundry.models.console.tenancyv4.get_organizations import (
         Resource10GetResponseBody,
     )
@@ -128,4 +131,62 @@ class Connector(BaseModel):
         return cls.model_validate(data)
 
 
-__all__ = ["Connector", "ConnectorSiteIdentifier", "Folder", "Organization", "Project"]
+class MarketplaceSubscription(BaseModel):
+    """Compact view of a SaaS marketplace subscription of the Console account.
+
+    Source schema: ``SubscriptionResponse`` items in the 200 response of
+    ``GET /occm/api/occm/saas-mp-service/account`` in the Console agent (cvo)
+    spec.  Cloud account IDs and free-trial flags are dropped.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str
+    name: str | None = None
+    provider: str | None = None
+    active: bool | None = None
+    contract: bool | None = None
+    by_node_mode: bool | None = Field(default=None, alias="byNodeMode")
+    eligible_cvo_packages: list[str] = Field(default_factory=list, alias="eligibleCvoPackages")
+
+    @classmethod
+    def from_account(
+        cls, body: get_occm_saas_mp_service_account.ResponseBody
+    ) -> list[MarketplaceSubscription]:
+        """Flatten the per-provider subscription lists of an account response.
+
+        Args:
+            body: Generated model from cvo/get_occm_saas_mp_service_account.
+
+        Returns:
+            Subscriptions in aws, azure, gcp order.  A missing ``provider`` is
+            filled from the list the item came from.
+
+        Raises:
+            pydantic.ValidationError: If a subscription has no ``id``.
+        """
+        groups = (
+            ("aws", body.awsSubscriptions),
+            ("azure", body.azureSubscriptions),
+            ("gcp", body.gcpSubscriptions),
+        )
+        result: list[MarketplaceSubscription] = []
+        for provider, items in groups:
+            for item in items or []:
+                data = item.model_dump()
+                if data.get("provider") is None:
+                    data["provider"] = provider
+                if data.get("eligibleCvoPackages") is None:
+                    data["eligibleCvoPackages"] = []
+                result.append(cls.model_validate(data))
+        return result
+
+
+__all__ = [
+    "Connector",
+    "ConnectorSiteIdentifier",
+    "Folder",
+    "MarketplaceSubscription",
+    "Organization",
+    "Project",
+]

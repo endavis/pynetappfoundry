@@ -420,3 +420,30 @@ class TestConnectorLookup:
         with pytest.raises(ValueError, match="cluster_uuid"):
             client.find_onprem_working_environment(cluster_uuid)
         request_mock.assert_not_called()
+
+
+class TestMarketplaceSubscriptions:
+    """#875: list_marketplace_subscriptions."""
+
+    def test_sends_get_and_returns_compact_list(
+        self, client: ConsoleAgentClient, request_mock: MagicMock
+    ) -> None:
+        body = json.loads((_FIXTURES / "occm_saas_mp_service_account.json").read_text())
+        request_mock.return_value = _response(200, body)
+
+        subs = client.list_marketplace_subscriptions()
+
+        assert request_mock.call_args.args == (
+            "GET",
+            f"{REAL_HOST}/occm/api/occm/saas-mp-service/account",
+        )
+        assert urlsplit(request_mock.call_args.args[1]).query == ""
+        assert [s.provider for s in subs] == ["aws", "azure"]
+        assert "cloud-account-placeholder" not in "".join(s.model_dump_json() for s in subs)
+
+    def test_non_object_response_raises(
+        self, client: ConsoleAgentClient, request_mock: MagicMock
+    ) -> None:
+        request_mock.return_value = _response(200, [{"id": "x"}])
+        with pytest.raises(TypeError):
+            client.list_marketplace_subscriptions()

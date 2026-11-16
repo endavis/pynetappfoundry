@@ -21,6 +21,7 @@ from pynetappfoundry.core.models import RetryConfig
 
 if TYPE_CHECKING:
     from pynetappfoundry.models.console.cvo import (
+        get_occm_saas_mp_service_account,
         get_occm_system_about,
         get_onprem_working_environments,
         get_onprem_working_environments_,
@@ -45,6 +46,22 @@ class ConsoleAgentOps:
         kwargs: dict[str, Any] = {"method": "GET", "path_template": "/occm/api/occm/system/about"}
         response = self._dispatch(None, **kwargs)
         return get_occm_system_about.ResponseBody.model_validate(expect_object(response, "about"))
+
+    def get_saas_marketplace_account(self) -> get_occm_saas_mp_service_account.ResponseBody:
+        """GET /occm/api/occm/saas-mp-service/account: Retrieve current SaaS marketplace accounts and subscriptions.
+
+        operationId: cvo_get_occm_api_occm_saas_mp_service_account (generated; do not edit).
+        """
+        from pynetappfoundry.models.console.cvo import get_occm_saas_mp_service_account
+
+        kwargs: dict[str, Any] = {
+            "method": "GET",
+            "path_template": "/occm/api/occm/saas-mp-service/account",
+        }
+        response = self._dispatch(None, **kwargs)
+        return get_occm_saas_mp_service_account.ResponseBody.model_validate(
+            expect_object(response, "get_saas_marketplace_account")
+        )
 
     def list_onprem_working_environments(
         self, *, fields: str | Sequence[str] | None = None, tenant_id: str | None = None

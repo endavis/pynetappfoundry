@@ -40,6 +40,11 @@ client = "agent"
 name = "about"
 
 [[operation]]
+operation_id = "cvo_get_occm_api_occm_saas_mp_service_account"
+client = "agent"
+name = "get_saas_marketplace_account"
+
+[[operation]]
 operation_id = "cvo_get_occm_api_onprem_working_environments"
 client = "agent"
 name = "list_onprem_working_environments"

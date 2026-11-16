@@ -6,13 +6,26 @@ field types stay stable across codegen runs and the cached JSON stays small.
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import pydantic
 import pytest
 
+from pynetappfoundry.models.console.cvo import (
+    get_occm_saas_mp_service_account as account_model,
+)
 from pynetappfoundry.models.console.tenancyv4.get_organizations import (
     Resource10GetResponseBody,
 )
-from pynetappfoundry.models.console_types import Folder, Organization, Project
+from pynetappfoundry.models.console_types import (
+    Folder,
+    MarketplaceSubscription,
+    Organization,
+    Project,
+)
+
+_FIXTURES = Path(__file__).resolve().parents[2] / "fixtures" / "console_models"
 
 
 class TestOrganization:
@@ -219,3 +232,61 @@ class TestConnector:
 
         assert "Connector" in console_types.__all__
         assert "Connector" in console_pkg.__all__
+
+
+class TestMarketplaceSubscription:
+    """#875: compact marketplace subscription type."""
+
+    @staticmethod
+    def _body(**kwargs: object) -> account_model.ResponseBody:
+        return account_model.ResponseBody.model_validate(kwargs)
+
+    def test_parses_camel_case_and_snake_case(self) -> None:
+        camel = MarketplaceSubscription.model_validate(
+            {"id": "s1", "byNodeMode": True, "eligibleCvoPackages": ["p"]}
+        )
+        snake = MarketplaceSubscription.model_validate(
+            {"id": "s1", "by_node_mode": True, "eligible_cvo_packages": ["p"]}
+        )
+        assert camel == snake
+        assert camel.by_node_mode is True
+        assert camel.eligible_cvo_packages == ["p"]
+
+    def test_round_trips_by_alias(self) -> None:
+        sub = MarketplaceSubscription.model_validate({"id": "s1", "byNodeMode": False})
+        dumped = sub.model_dump(by_alias=True)
+        assert dumped["byNodeMode"] is False
+        assert MarketplaceSubscription.model_validate(dumped) == sub
+
+    def test_missing_id_raises(self) -> None:
+        with pytest.raises(pydantic.ValidationError):
+            MarketplaceSubscription.model_validate({"name": "no-id"})
+
+    def test_from_account_flattens_in_order_and_fills_provider(self) -> None:
+        raw = json.loads((_FIXTURES / "occm_saas_mp_service_account.json").read_text())
+        subs = MarketplaceSubscription.from_account(account_model.ResponseBody.model_validate(raw))
+        assert [(s.id, s.provider) for s in subs] == [
+            ("sub-aws-placeholder-0001", "aws"),
+            ("sub-azure-placeholder-0001", "azure"),
+        ]
+        assert subs[1].eligible_cvo_packages == []
+
+    def test_from_account_drops_cloud_accounts_and_free_trial(self) -> None:
+        raw = json.loads((_FIXTURES / "occm_saas_mp_service_account.json").read_text())
+        subs = MarketplaceSubscription.from_account(account_model.ResponseBody.model_validate(raw))
+        dumped = "".join(s.model_dump_json() for s in subs)
+        assert "cloud-account-placeholder" not in dumped
+        assert "FreeTrial" not in dumped
+
+    def test_from_account_none_lists_and_empty_body(self) -> None:
+        assert MarketplaceSubscription.from_account(self._body()) == []
+        body = self._body(awsSubscriptions=None, gcpSubscriptions=[{"id": "g1"}])
+        subs = MarketplaceSubscription.from_account(body)
+        assert [(s.id, s.provider) for s in subs] == [("g1", "gcp")]
+
+    def test_in_all(self) -> None:
+        import pynetappfoundry.console as console_pkg
+        from pynetappfoundry.models import console_types
+
+        assert "MarketplaceSubscription" in console_types.__all__
+        assert "MarketplaceSubscription" in console_pkg.__all__
