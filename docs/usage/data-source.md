@@ -187,6 +187,8 @@ On `OntapBackend`, this incompatibility is detected before iteration. Partial-fe
 
 The DII backend rejects `.where()` and non-equality DSL expressions **regardless of `source=`** since it has no cache substrate (see [ADR-0015](../decisions/0015-dii-backend-live-only-bare-array-envelope-offsetlimit-pagination.md) §4). Any `.where()` against a DII-backed query now raises `ValueError` at chain time. The DII backend is live-only too: `source="auto"` goes live and `source="cache"` raises `ValueError` when `query()` is called (§1).
 
+For a DII model, `cluster=` names a `[cloudinsights.<name>]` tenant: the query uses that tenant's `base_url` and token. A name with no `[cloudinsights]` entry uses the default tenant from `diiapi.toml`. See [Cloud Insights configuration](../reference/config-schema.md#cloud-insights).
+
 The AIQUM backend is also live-only: `source="auto"` goes live, `source="cache"` raises `ValueError`, and `.where()` raises `ValueError` at chain time. `cluster=` is the key of the instance in the `[aiqums]` inventory. See [AIQUM API](aiqum-api.md#datasource) and [ADR-0026](../decisions/0026-aiqum-backend-is-live-only-and-reads-the-hal-records-envelope.md).
 
 See [ADR-0017](../decisions/0017-where-expressions-are-cache-only-rationale.md) for the rationale behind the cache-only restriction.

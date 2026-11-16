@@ -103,7 +103,9 @@ class DiiBackend(Backend):
     passes where-strings or non-equality typed DSL operators.
 
     API clients are lazily constructed and cached per-cluster (DII tenant)
-    for the lifetime of the backend instance.
+    for the lifetime of the backend instance.  ``cluster`` names a
+    ``[cloudinsights.<name>]`` tenant (its ``base_url`` and token); a name
+    with no such entry uses the default tenant from ``diiapi.toml``.
 
     Args:
         config: The :class:`pynetappfoundry.core.config.Config` instance.
@@ -121,13 +123,21 @@ class DiiBackend(Backend):
     def _get_api_client(self, cluster: str) -> DIIAPIClient:
         """Lazily create a DII API client for *cluster*.
 
+        When *cluster* is a key of the ``[cloudinsights]`` inventory the client
+        is built for that tenant (``name=cluster``: its ``base_url`` and
+        token).  Any other name gets the default tenant from ``diiapi.toml``.
+
         Cached per-cluster so multiple ``query()`` calls against the
         same cluster reuse the same connection pool.
         """
         if cluster not in self._api_clients:
             from pynetappfoundry.clients.dii.api import DIIAPIClient
 
-            self._api_clients[cluster] = DIIAPIClient(config=self._config)
+            tenants = self._config.data.get("cloudinsights", {})
+            if isinstance(tenants, dict) and cluster in tenants:
+                self._api_clients[cluster] = DIIAPIClient(config=self._config, name=cluster)
+            else:
+                self._api_clients[cluster] = DIIAPIClient(config=self._config)
         return self._api_clients[cluster]
 
     def query(
