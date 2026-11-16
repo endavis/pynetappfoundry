@@ -18,7 +18,7 @@ Accepted
 
 Add a DII (Data Infrastructure Insights) backend to the DataSource framework. DiiBackend is a live-only backend: all queries hit the DII REST API directly with no local cache database. Four design points distinguish it from OntapBackend:
 
-1. **Live-only operation.** DII has no cache substrate. Cache-only routing decisions raise `NotImplementedError`. The `source="auto"` and `source="live"` modes both go through the live API; `source="cache"` is unsupported.
+1. **Live-only operation.** DII has no cache substrate. `DiiBackend.live_only = True` (#1052), so `QueryBuilder` routes `source="auto"` as `live` and `source="live"` goes live; `source="cache"` raises `ValueError` when `query()` is called. `DiiBackend.query()` still raises `NotImplementedError` for a cache-only routing decision passed to it directly. Before #1052 the flag did not exist, so `auto` on a model whose fields default to `cache_strategy="cache"` produced a cache-only decision and raised `NotImplementedError`, contradicting this section.
 
 2. **Bare-array response envelope.** DII endpoints return bare JSON arrays (not the `{"records": [...]}` envelope ONTAP uses or the `{"_embedded": {"items": [...]}}` HAL format). DiiBackend calls `call_endpoint()` directly and iterates the array, parsing each record via `parse_api_record()`. `TypeMapping.records_path` is set to `""` (empty string) for all DII mappings except those amended below (#918).
 
@@ -104,6 +104,7 @@ See [DataSource usage](../usage/data-source.md).
 - Issue #990: feat: make the DII placeholder mappings without a parent queryable live
 - Issue #533: feat: DataSource non-ONTAP backends (partially addressed; DII is the first non-ONTAP backend)
 - Issue #618: feat: early validation for where()/typed-DSL + incompatible source mode
+- Issue #1052: bug: DataSource source=auto raises on DII instead of going live (sets `DiiBackend.live_only`)
 
 ## Related Documentation
 

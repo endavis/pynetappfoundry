@@ -21,7 +21,7 @@ Issue [#1049](https://github.com/endavis/pynetappfoundry/issues/1049) adds an AI
 ## Decision
 
 1. **`AiqumBackend` is live-only** and registered as `"aiqum"` in `_BACKENDS`. `source="auto"` goes live and `source="cache"` raises `ValueError` when `query()` is called. Cache-only routing decisions, `where()` and non-equality DSL operators are rejected.
-2. **New `Backend.live_only` flag.** `QueryBuilder` reads it off the backend class: `auto` is routed as `live` (so no cache-miss second call), and `cache` is rejected at `query()` time. It is set on `AiqumBackend` only. DII keeps its current behaviour until [#1052](https://github.com/endavis/pynetappfoundry/issues/1052).
+2. **New `Backend.live_only` flag.** `QueryBuilder` reads it off the backend class: `auto` is routed as `live` (so no cache-miss second call), and `cache` is rejected at `query()` time. It is set on `AiqumBackend` and, since [#1052](https://github.com/endavis/pynetappfoundry/issues/1052), on `DiiBackend`.
 3. **HAL `records` envelope.** Records are fetched with `AIQUMAPIClient.get_all_records`, which follows `_links.next.href`, and read at `mapping.records_path` (`"records"`). A mapping with `response_shape="singleton"` is fetched with `call_endpoint` and the dict is wrapped as `[response]`. Filters become query parameters.
 4. **The `cluster=` argument is the `[aiqums]` instance name**, with one cached `AIQUMAPIClient` per name.
 5. **Endpoints with `{placeholder}` segments raise `ValueError`** before any client is built; they are not queryable yet ([#1054](https://github.com/endavis/pynetappfoundry/issues/1054)).
@@ -38,7 +38,7 @@ Issue [#1049](https://github.com/endavis/pynetappfoundry/issues/1049) adds an AI
 
 - An AIQUM collector (cache population) is deferred to [#1055](https://github.com/endavis/pynetappfoundry/issues/1055).
 - DII tenant wiring is [#1053](https://github.com/endavis/pynetappfoundry/issues/1053).
-- [ADR-0015](0015-dii-backend-live-only-bare-array-envelope-offsetlimit-pagination.md) section 1 contradicts the code for `auto`; correcting it, and applying `live_only` to DII, is [#1052](https://github.com/endavis/pynetappfoundry/issues/1052).
+- [ADR-0015](0015-dii-backend-live-only-bare-array-envelope-offsetlimit-pagination.md) section 1 contradicted the code for `auto`; [#1052](https://github.com/endavis/pynetappfoundry/issues/1052) corrected it and applied `live_only` to DII.
 
 ## Related Issues
 

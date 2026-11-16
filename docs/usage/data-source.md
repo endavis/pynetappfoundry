@@ -185,7 +185,7 @@ query = (
 
 On `OntapBackend`, this incompatibility is detected before iteration. Partial-fetch mixes (`source="auto"` plus live-only projected fields) still raise later at execution time because the mixed cache/live routing decision is only known when the query runs.
 
-The DII backend rejects `.where()` and non-equality DSL expressions **regardless of `source=`** since it has no cache substrate (see [ADR-0015](../decisions/0015-dii-backend-live-only-bare-array-envelope-offsetlimit-pagination.md) §4). Any `.where()` against a DII-backed query now raises `ValueError` at chain time.
+The DII backend rejects `.where()` and non-equality DSL expressions **regardless of `source=`** since it has no cache substrate (see [ADR-0015](../decisions/0015-dii-backend-live-only-bare-array-envelope-offsetlimit-pagination.md) §4). Any `.where()` against a DII-backed query now raises `ValueError` at chain time. The DII backend is live-only too: `source="auto"` goes live and `source="cache"` raises `ValueError` when `query()` is called (§1).
 
 The AIQUM backend is also live-only: `source="auto"` goes live, `source="cache"` raises `ValueError`, and `.where()` raises `ValueError` at chain time. `cluster=` is the key of the instance in the `[aiqums]` inventory. See [AIQUM API](aiqum-api.md#datasource) and [ADR-0026](../decisions/0026-aiqum-backend-is-live-only-and-reads-the-hal-records-envelope.md).
 
