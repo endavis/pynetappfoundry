@@ -1,0 +1,79 @@
+[endpoint]
+path = "/admin/datasources/clusters"
+schema = "datasource"
+class_name = "AiqumDatasource"
+
+[fields.address]
+cache_strategy = "cache"
+
+[fields.cluster_health_status]
+cache_strategy = "cache"
+
+[fields.cluster_object_id]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.is_metro_cluster]
+cache_strategy = "cache"
+
+[fields.key]
+cache_strategy = "cache"
+
+[fields."maintenance_window.end_time"]
+cache_strategy = "cache"
+
+[fields."maintenance_window.id"]
+cache_strategy = "cache"
+
+[fields."maintenance_window.start_time"]
+cache_strategy = "cache"
+
+[fields.managed_workload_percent]
+cache_strategy = "cache"
+
+[fields.mutual_tls_status]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields."operation.end_time"]
+cache_strategy = "cache"
+
+[fields."operation.last_failure_time"]
+cache_strategy = "cache"
+
+[fields."operation.last_success_time"]
+cache_strategy = "cache"
+
+[fields."operation.start_time"]
+cache_strategy = "cache"
+
+[fields."operation.state"]
+cache_strategy = "cache"
+
+[fields."operation.type_"]
+cache_strategy = "cache"
+
+[fields.password]
+cache_strategy = "cache"
+
+[fields.port]
+cache_strategy = "cache"
+
+[fields.protocol]
+cache_strategy = "cache"
+
+[fields.raw_capacity]
+cache_strategy = "cache"
+
+[fields.status]
+cache_strategy = "cache"
+
+[fields.status_message]
+cache_strategy = "cache"
+
+[fields.username]
+cache_strategy = "cache"

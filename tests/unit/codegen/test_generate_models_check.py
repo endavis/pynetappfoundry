@@ -147,7 +147,7 @@ def test_missing_spec_fails_the_check(repo: Path) -> None:
 def test_task_is_wired_and_explicit_about_apis() -> None:
     task = tasks.task_generate_models_check()
     assert len(task["actions"]) == 1
-    assert tasks._GENERATED_APIS == ("dii", "ontap")
+    assert tasks._GENERATED_APIS == ("aiqum", "dii", "ontap")
     assert "generate_models_check" not in tasks.task_generate_models_check.__module__
 
 
@@ -155,17 +155,18 @@ def test_generated_paths_cover_models_cache_and_index() -> None:
     names = {p.as_posix() for p in tasks._generated_paths()}
     assert "src/pynetappfoundry/models/ontap" in names
     assert "src/pynetappfoundry/models/dii" in names
+    assert "src/pynetappfoundry/models/aiqum" in names
     assert "src/pynetappfoundry/cache/_mapping_index.py" in names
 
 
-@pytest.mark.parametrize("api", ["ontap", "dii"])
-def test_committed_tree_has_generated_models(api: str) -> None:
+@pytest.mark.parametrize(("api", "minimum"), [("ontap", 100), ("dii", 100), ("aiqum", 50)])
+def test_committed_tree_has_generated_models(api: str, minimum: int) -> None:
     headed = [
         f
         for f in (MODELS_ROOT / api).rglob("model.py")
         if f.read_text().startswith(GENERATED_HEADER + "\n")
     ]
-    assert len(headed) > 100
+    assert len(headed) > minimum
 
 
 def test_cluster_model_is_generated_and_traits_model_is_hand_written() -> None:

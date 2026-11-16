@@ -1,0 +1,22 @@
+[endpoint]
+path = "/management-server/system"
+schema = "system_response"
+class_name = "AiqumSystemResponse"
+
+[fields.deployment]
+cache_strategy = "cache"
+
+[fields.product]
+cache_strategy = "cache"
+
+[fields.services]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"
+
+[fields.vendor]
+cache_strategy = "cache"
+
+[fields.version]
+cache_strategy = "cache"

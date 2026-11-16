@@ -1,0 +1,34 @@
+[endpoint]
+path = "/datacenter/storage/volumes/{key}/metrics"
+schema = "volume_metrics_sample_response"
+class_name = "AiqumVolumeMetricsSampleResponse"
+
+[fields.duration]
+cache_strategy = "cache"
+
+[fields.end_time]
+cache_strategy = "cache"
+
+[fields.num_samples]
+cache_strategy = "cache"
+
+[fields.samples]
+cache_strategy = "cache"
+
+[fields.start_time]
+cache_strategy = "cache"
+
+[fields."summary.cache_miss_ratio"]
+cache_strategy = "cache"
+
+[fields."summary.iops"]
+cache_strategy = "cache"
+
+[fields."volume.key"]
+cache_strategy = "cache"
+
+[fields."volume.name"]
+cache_strategy = "cache"
+
+[fields."volume.uuid"]
+cache_strategy = "cache"

@@ -1,0 +1,52 @@
+[endpoint]
+path = "/datacenter/storage/luns/analytics"
+schema = "lun_analytics"
+class_name = "AiqumLunAnalytics"
+
+[fields."cluster.key"]
+cache_strategy = "cache"
+
+[fields."cluster.name"]
+cache_strategy = "cache"
+
+[fields."cluster.uuid"]
+cache_strategy = "cache"
+
+[fields.iops]
+cache_strategy = "cache"
+
+[fields.latency]
+cache_strategy = "cache"
+
+[fields."lun.key"]
+cache_strategy = "cache"
+
+[fields."lun.name"]
+cache_strategy = "cache"
+
+[fields."lun.uuid"]
+cache_strategy = "cache"
+
+[fields.period]
+cache_strategy = "cache"
+
+[fields."svm.key"]
+cache_strategy = "cache"
+
+[fields."svm.name"]
+cache_strategy = "cache"
+
+[fields."svm.uuid"]
+cache_strategy = "cache"
+
+[fields.throughput]
+cache_strategy = "cache"
+
+[fields."volume.key"]
+cache_strategy = "cache"
+
+[fields."volume.name"]
+cache_strategy = "cache"
+
+[fields."volume.uuid"]
+cache_strategy = "cache"

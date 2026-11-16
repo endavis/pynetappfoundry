@@ -1,0 +1,28 @@
+[endpoint]
+path = "/storage-provider/active-directories-mappings"
+schema = "active_directory_mappings"
+class_name = "AiqumActiveDirectoryMappings"
+
+[fields.dns]
+cache_strategy = "cache"
+
+[fields.domain]
+cache_strategy = "cache"
+
+[fields.key]
+cache_strategy = "cache"
+
+[fields.password]
+cache_strategy = "cache"
+
+[fields."svm.key"]
+cache_strategy = "cache"
+
+[fields."svm.name"]
+cache_strategy = "cache"
+
+[fields."svm.uuid"]
+cache_strategy = "cache"
+
+[fields.username]
+cache_strategy = "cache"

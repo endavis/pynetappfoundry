@@ -1,0 +1,43 @@
+[endpoint]
+path = "/datacenter/network/ip/interfaces/analytics"
+schema = "network_ip_interface_analytics"
+class_name = "AiqumNetworkIpInterfaceAnalytics"
+
+[fields."cluster.key"]
+cache_strategy = "cache"
+
+[fields."cluster.name"]
+cache_strategy = "cache"
+
+[fields."cluster.uuid"]
+cache_strategy = "cache"
+
+[fields.iops]
+cache_strategy = "cache"
+
+[fields."ip_interface.key"]
+cache_strategy = "cache"
+
+[fields."ip_interface.name"]
+cache_strategy = "cache"
+
+[fields."ip_interface.uuid"]
+cache_strategy = "cache"
+
+[fields.latency]
+cache_strategy = "cache"
+
+[fields.period]
+cache_strategy = "cache"
+
+[fields."svm.key"]
+cache_strategy = "cache"
+
+[fields."svm.name"]
+cache_strategy = "cache"
+
+[fields."svm.uuid"]
+cache_strategy = "cache"
+
+[fields.throughput]
+cache_strategy = "cache"

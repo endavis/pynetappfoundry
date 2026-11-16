@@ -1,0 +1,52 @@
+[endpoint]
+path = "/datacenter/storage/qtrees"
+schema = "qtree"
+class_name = "AiqumQtree"
+
+[fields."cluster.key"]
+cache_strategy = "cache"
+
+[fields."cluster.name"]
+cache_strategy = "cache"
+
+[fields."cluster.uuid"]
+cache_strategy = "cache"
+
+[fields."export_policy.id"]
+cache_strategy = "cache"
+
+[fields."export_policy.key"]
+cache_strategy = "cache"
+
+[fields."export_policy.name"]
+cache_strategy = "cache"
+
+[fields.id]
+cache_strategy = "cache"
+
+[fields.key]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.security_style]
+cache_strategy = "cache"
+
+[fields."svm.key"]
+cache_strategy = "cache"
+
+[fields."svm.name"]
+cache_strategy = "cache"
+
+[fields."svm.uuid"]
+cache_strategy = "cache"
+
+[fields."volume.key"]
+cache_strategy = "cache"
+
+[fields."volume.name"]
+cache_strategy = "cache"
+
+[fields."volume.uuid"]
+cache_strategy = "cache"

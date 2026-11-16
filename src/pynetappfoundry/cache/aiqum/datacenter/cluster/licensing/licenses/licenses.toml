@@ -1,0 +1,37 @@
+[endpoint]
+path = "/datacenter/cluster/licensing/licenses"
+schema = "license_package"
+class_name = "AiqumLicensePackage"
+
+[fields."cluster.key"]
+cache_strategy = "cache"
+
+[fields."cluster.name"]
+cache_strategy = "cache"
+
+[fields."cluster.uuid"]
+cache_strategy = "cache"
+
+[fields.key]
+cache_strategy = "cache"
+
+[fields.licenses]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields."node.key"]
+cache_strategy = "cache"
+
+[fields."node.name"]
+cache_strategy = "cache"
+
+[fields."node.uuid"]
+cache_strategy = "cache"
+
+[fields.scope]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

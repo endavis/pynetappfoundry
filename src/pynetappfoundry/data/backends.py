@@ -120,6 +120,11 @@ class Backend(ABC):
     #: values through ``query(path_params=...)`` (e.g. :class:`DiiBackend`).
     supports_path_params: bool = False
 
+    #: Set to ``True`` on backends with no local cache (e.g.
+    #: :class:`AiqumBackend`). ``source="auto"`` then routes live and
+    #: ``source="cache"`` raises :class:`ValueError` at ``query()`` time.
+    live_only: bool = False
+
     def __init__(self, config: Config) -> None:
         self._config = config
 

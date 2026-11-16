@@ -1,0 +1,19 @@
+[endpoint]
+path = "/admin/backup-file-info"
+schema = "backup_file_info"
+class_name = "AiqumBackupFileInfo"
+
+[fields.creation_time]
+cache_strategy = "cache"
+
+[fields.is_scheduled]
+cache_strategy = "cache"
+
+[fields.key]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.size]
+cache_strategy = "cache"

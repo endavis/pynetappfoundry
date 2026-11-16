@@ -1,0 +1,49 @@
+[endpoint]
+path = "/storage-provider/workloads-summary"
+schema = "workloads_summary"
+class_name = "AiqumWorkloadsSummary"
+
+[fields."conformance_summary.conformant_workload_count"]
+cache_strategy = "cache"
+
+[fields."conformance_summary.non_conformant_workload_count"]
+cache_strategy = "cache"
+
+[fields."conformance_summary.workload_with_unknown_status_count"]
+cache_strategy = "cache"
+
+[fields.description]
+cache_strategy = "cache"
+
+[fields."iops.available"]
+cache_strategy = "cache"
+
+[fields."iops.total"]
+cache_strategy = "cache"
+
+[fields."iops.used"]
+cache_strategy = "cache"
+
+[fields."performance_service_level_summary.managed_workload_count"]
+cache_strategy = "cache"
+
+[fields."performance_service_level_summary.performance_service_levels"]
+cache_strategy = "cache"
+
+[fields."performance_service_level_summary.unmanaged_workload_count"]
+cache_strategy = "cache"
+
+[fields."performance_service_level_summary.workloads_with_system_suggested_psls"]
+cache_strategy = "cache"
+
+[fields."space.available"]
+cache_strategy = "cache"
+
+[fields."space.size"]
+cache_strategy = "cache"
+
+[fields."space.used"]
+cache_strategy = "cache"
+
+[fields.total_workload_count]
+cache_strategy = "cache"

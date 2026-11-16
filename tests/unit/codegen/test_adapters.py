@@ -708,7 +708,7 @@ class TestSingleObjectEndpoints:
         assert eps["/users"].records_path == "users"
 
     def test_other_api_types_unchanged(self, tmp_path: Path) -> None:
-        eps = {e.path: e for e in parse_openapi_spec(_write_spec(self._spec(), tmp_path), "aiqum")}
+        eps = {e.path: e for e in parse_openapi_spec(_write_spec(self._spec(), tmp_path), "occm")}
         assert eps["/au/oneTimeToken"].records_path == "extra"
 
 
@@ -773,6 +773,22 @@ class TestOntapSingleObjectRule:
 
     def test_arrayless_object_is_singleton(self, tmp_path: Path) -> None:
         assert self._parse(tmp_path)["/noarr"].response_shape == "singleton"
+
+    def test_aiqum_object_with_array_prop_is_singleton(self, tmp_path: Path) -> None:
+        eps = self._parse(tmp_path, "aiqum")
+        assert eps["/single"].response_shape == "singleton"
+        assert eps["/noarr"].response_shape == "singleton"
+
+    def test_aiqum_envelope_and_array_unchanged(self, tmp_path: Path) -> None:
+        eps = self._parse(tmp_path, "aiqum")
+        assert eps["/env"].response_shape == "envelope"
+        assert eps["/env"].records_path == "records"
+        assert eps["/arr"].response_shape == "envelope"
+
+    def test_dii_not_covered_by_api_type_rule(self, tmp_path: Path) -> None:
+        eps = self._parse(tmp_path, "dii")
+        assert eps["/single"].response_shape == "envelope"
+        assert eps["/noarr"].response_shape == "envelope"
 
     def test_dii_override_is_singleton(self, tmp_path: Path) -> None:
         ep = self._parse(tmp_path, "dii")["/au/oneTimeToken"]

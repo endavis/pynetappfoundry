@@ -65,6 +65,11 @@ class TestBuildIndex:
         assert index["A"][2] == "ModelA"
         assert index["A"][3] is None
 
+    def test_aiqum_rows_are_indexed(self, tmp_path: Path) -> None:
+        _write_mapping(tmp_path, "aiqum/datacenter/c", "ModelC", ["C"])
+        index = build_index(tmp_path)
+        assert index["C"][0] == "pynetappfoundry.cache.aiqum.datacenter.c.mapping"
+
     def test_overlay_paths_relative_to_cache_root(self, tmp_path: Path) -> None:
         _write_mapping(tmp_path, "ontap/a", "ModelA", ["A"])
         _write_mapping(tmp_path, "dii/b", "ModelB", ["B"])

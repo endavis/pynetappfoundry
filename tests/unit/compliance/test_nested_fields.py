@@ -14,6 +14,11 @@ from pynetappfoundry.cache._registry import model_registry
 # Baseline counts of fields with cache_attr containing 3+ dots per mapping.
 # Update these after reviewing new deeply nested fields for explicit-fetch risk.
 EXPECTED_COUNTS: dict[str, int] = {
+    # AIQUM (#1049): reviewed, no requires_explicit_fetch; AiqumBackend sends no
+    # ?fields= and AIQUM returns nested objects by default.
+    "AiqumEthernetPort": 1,
+    "AiqumFcInterface": 2,
+    "AiqumIpInterface": 2,
     "OntapApplication": 34,
     "OntapApplicationTemplate": 34,
     "OntapAudit": 5,

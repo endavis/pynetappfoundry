@@ -92,7 +92,7 @@ Resolved by #544.
 
 ### 9. Backend ABC preserved, meaning changed
 
-`DataSource._BACKENDS` keyed by `TypeMapping.api_type` is preserved from ADR-0012 §7, but its role changes. Backends no longer implement "how to fetch X from an API end-to-end"; they are thin delegators to per-domain fetch layers. `OntapBackend` delegates to `MetadataCollector`. A future `AIQUMBackend` delegates to an AIQUM-specific collector. Adding a new API is still "write one backend class and register it," but the backend class is ~50 lines of delegation rather than a parallel implementation of all the collector's logic.
+`DataSource._BACKENDS` keyed by `TypeMapping.api_type` is preserved from ADR-0012 §7, but its role changes. Backends no longer implement "how to fetch X from an API end-to-end"; they are thin delegators to per-domain fetch layers. `OntapBackend` delegates to `MetadataCollector`. A future `AIQUMBackend` delegates to an AIQUM-specific collector. (The AIQUM backend that shipped is live-only and has no collector yet; see [ADR-0026](0026-aiqum-backend-is-live-only-and-reads-the-hal-records-envelope.md).) Adding a new API is still "write one backend class and register it," but the backend class is ~50 lines of delegation rather than a parallel implementation of all the collector's logic.
 
 ### 10. Existing ADR-0012 design points retained verbatim
 

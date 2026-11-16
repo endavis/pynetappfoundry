@@ -38,6 +38,7 @@ logger = logging.getLogger(__name__)
 _FALLBACK_PACKAGES: tuple[str, ...] = (
     "pynetappfoundry.cache.ontap",
     "pynetappfoundry.cache.dii",
+    "pynetappfoundry.cache.aiqum",
 )
 
 

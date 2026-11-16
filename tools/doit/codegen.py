@@ -456,8 +456,8 @@ def _generate_models(
 
 
 # APIs whose committed models the drift check regenerates (#901).  Explicit,
-# because a bare ``generate_models`` also covers aiqum and occm.
-_GENERATED_APIS: tuple[str, ...] = ("dii", "ontap")
+# because a bare ``generate_models`` also covers occm.
+_GENERATED_APIS: tuple[str, ...] = ("aiqum", "dii", "ontap")
 
 
 def _generated_paths(apis: tuple[str, ...] = _GENERATED_APIS) -> list[Path]:
@@ -532,7 +532,7 @@ def _check_generated_models(
 
 
 def task_generate_models_check() -> dict[str, Any]:
-    """Verify the committed ontap and dii models match a fresh generator run.
+    """Verify the committed aiqum, dii and ontap models match a fresh generator run.
 
     Regenerates in place, fails on any modified, deleted, new or stale file, then
     restores the generated paths.  Not part of ``doit check``; CI runs it in the

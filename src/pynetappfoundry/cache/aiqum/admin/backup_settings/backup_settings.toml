@@ -1,0 +1,22 @@
+[endpoint]
+path = "/admin/backup-settings"
+schema = "backup_settings"
+class_name = "AiqumBackupSettings"
+
+[fields.day_of_week]
+cache_strategy = "cache"
+
+[fields.frequency]
+cache_strategy = "cache"
+
+[fields.hour]
+cache_strategy = "cache"
+
+[fields.minute]
+cache_strategy = "cache"
+
+[fields.path]
+cache_strategy = "cache"
+
+[fields.retention_count]
+cache_strategy = "cache"

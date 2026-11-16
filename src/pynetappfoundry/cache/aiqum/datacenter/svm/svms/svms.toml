@@ -1,0 +1,118 @@
+[endpoint]
+path = "/datacenter/svm/svms"
+schema = "svm"
+class_name = "AiqumSvm"
+
+[fields.aggregates]
+cache_strategy = "cache"
+
+[fields."cifs.ad_domain.fqdn"]
+cache_strategy = "cache"
+
+[fields."cifs.ad_domain.password"]
+cache_strategy = "cache"
+
+[fields."cifs.ad_domain.user"]
+cache_strategy = "cache"
+
+[fields."cifs.enabled"]
+cache_strategy = "cache"
+
+[fields."cifs.name"]
+cache_strategy = "cache"
+
+[fields."cluster.key"]
+cache_strategy = "cache"
+
+[fields."cluster.name"]
+cache_strategy = "cache"
+
+[fields."cluster.uuid"]
+cache_strategy = "cache"
+
+[fields."dns.domains"]
+cache_strategy = "cache"
+
+[fields."dns.servers"]
+cache_strategy = "cache"
+
+[fields."fcp.enabled"]
+cache_strategy = "cache"
+
+[fields.ip_interfaces]
+cache_strategy = "cache"
+
+[fields."ipspace.key"]
+cache_strategy = "cache"
+
+[fields."ipspace.name"]
+cache_strategy = "cache"
+
+[fields."ipspace.uuid"]
+cache_strategy = "cache"
+
+[fields."iscsi.enabled"]
+cache_strategy = "cache"
+
+[fields.key]
+cache_strategy = "cache"
+
+[fields.language]
+cache_strategy = "cache"
+
+[fields."ldap.ad_domain"]
+cache_strategy = "cache"
+
+[fields."ldap.base_dn"]
+cache_strategy = "cache"
+
+[fields."ldap.bind_dn"]
+cache_strategy = "cache"
+
+[fields."ldap.enabled"]
+cache_strategy = "cache"
+
+[fields."ldap.name"]
+cache_strategy = "cache"
+
+[fields."ldap.servers"]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields."nfs.enabled"]
+cache_strategy = "cache"
+
+[fields."nis.domain"]
+cache_strategy = "cache"
+
+[fields."nis.enabled"]
+cache_strategy = "cache"
+
+[fields."nis.servers"]
+cache_strategy = "cache"
+
+[fields."nvme.enabled"]
+cache_strategy = "cache"
+
+[fields.routes]
+cache_strategy = "cache"
+
+[fields."snapshot_policy.key"]
+cache_strategy = "cache"
+
+[fields."snapshot_policy.name"]
+cache_strategy = "cache"
+
+[fields."snapshot_policy.uuid"]
+cache_strategy = "cache"
+
+[fields.state]
+cache_strategy = "cache"
+
+[fields.subtype]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

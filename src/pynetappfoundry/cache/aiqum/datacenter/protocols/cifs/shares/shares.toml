@@ -1,0 +1,46 @@
+[endpoint]
+path = "/datacenter/protocols/cifs/shares"
+schema = "cifs_share"
+class_name = "AiqumCifsShare"
+
+[fields.acls]
+cache_strategy = "cache"
+
+[fields."cluster.key"]
+cache_strategy = "cache"
+
+[fields."cluster.name"]
+cache_strategy = "cache"
+
+[fields."cluster.uuid"]
+cache_strategy = "cache"
+
+[fields.comment]
+cache_strategy = "cache"
+
+[fields.key]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.path]
+cache_strategy = "cache"
+
+[fields."svm.key"]
+cache_strategy = "cache"
+
+[fields."svm.name"]
+cache_strategy = "cache"
+
+[fields."svm.uuid"]
+cache_strategy = "cache"
+
+[fields."volume.key"]
+cache_strategy = "cache"
+
+[fields."volume.name"]
+cache_strategy = "cache"
+
+[fields."volume.uuid"]
+cache_strategy = "cache"

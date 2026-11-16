@@ -1,0 +1,31 @@
+[endpoint]
+path = "/datacenter/storage/luns/{key}/metrics"
+schema = "lun_metrics_sample_response"
+class_name = "AiqumLunMetricsSampleResponse"
+
+[fields.duration]
+cache_strategy = "cache"
+
+[fields.end_time]
+cache_strategy = "cache"
+
+[fields."lun.key"]
+cache_strategy = "cache"
+
+[fields."lun.name"]
+cache_strategy = "cache"
+
+[fields."lun.uuid"]
+cache_strategy = "cache"
+
+[fields.num_samples]
+cache_strategy = "cache"
+
+[fields.samples]
+cache_strategy = "cache"
+
+[fields.start_time]
+cache_strategy = "cache"
+
+[fields."summary.iops"]
+cache_strategy = "cache"

@@ -1,0 +1,40 @@
+[endpoint]
+path = "/datacenter/protocols/san/igroups"
+schema = "igroup"
+class_name = "AiqumIgroup"
+
+[fields."cluster.key"]
+cache_strategy = "cache"
+
+[fields."cluster.name"]
+cache_strategy = "cache"
+
+[fields."cluster.uuid"]
+cache_strategy = "cache"
+
+[fields.initiators]
+cache_strategy = "cache"
+
+[fields.key]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.os_type]
+cache_strategy = "cache"
+
+[fields.protocol]
+cache_strategy = "cache"
+
+[fields."svm.key"]
+cache_strategy = "cache"
+
+[fields."svm.name"]
+cache_strategy = "cache"
+
+[fields."svm.uuid"]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

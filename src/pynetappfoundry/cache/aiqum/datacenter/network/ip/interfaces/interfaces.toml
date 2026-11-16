@@ -1,0 +1,106 @@
+[endpoint]
+path = "/datacenter/network/ip/interfaces"
+schema = "ip_interface"
+class_name = "AiqumIpInterface"
+
+[fields."cluster.key"]
+cache_strategy = "cache"
+
+[fields."cluster.name"]
+cache_strategy = "cache"
+
+[fields."cluster.uuid"]
+cache_strategy = "cache"
+
+[fields.enabled]
+cache_strategy = "cache"
+
+[fields."ip.address"]
+cache_strategy = "cache"
+
+[fields."ip.family"]
+cache_strategy = "cache"
+
+[fields."ip.netmask"]
+cache_strategy = "cache"
+
+[fields."ipspace.key"]
+cache_strategy = "cache"
+
+[fields."ipspace.name"]
+cache_strategy = "cache"
+
+[fields."ipspace.uuid"]
+cache_strategy = "cache"
+
+[fields.key]
+cache_strategy = "cache"
+
+[fields."location.auto_revert"]
+cache_strategy = "cache"
+
+[fields."location.broadcast_domain.name"]
+cache_strategy = "cache"
+
+[fields."location.broadcast_domain.uuid"]
+cache_strategy = "cache"
+
+[fields."location.failover"]
+cache_strategy = "cache"
+
+[fields."location.home_node.key"]
+cache_strategy = "cache"
+
+[fields."location.home_node.name"]
+cache_strategy = "cache"
+
+[fields."location.home_node.uuid"]
+cache_strategy = "cache"
+
+[fields."location.home_port.key"]
+cache_strategy = "cache"
+
+[fields."location.home_port.name"]
+cache_strategy = "cache"
+
+[fields."location.home_port.node.name"]
+cache_strategy = "cache"
+
+[fields."location.home_port.uuid"]
+cache_strategy = "cache"
+
+[fields."location.is_home"]
+cache_strategy = "cache"
+
+[fields."location.port.key"]
+cache_strategy = "cache"
+
+[fields."location.port.name"]
+cache_strategy = "cache"
+
+[fields."location.port.node.name"]
+cache_strategy = "cache"
+
+[fields."location.port.uuid"]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.scope]
+cache_strategy = "cache"
+
+[fields.state]
+cache_strategy = "cache"
+
+[fields."svm.key"]
+cache_strategy = "cache"
+
+[fields."svm.name"]
+cache_strategy = "cache"
+
+[fields."svm.uuid"]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

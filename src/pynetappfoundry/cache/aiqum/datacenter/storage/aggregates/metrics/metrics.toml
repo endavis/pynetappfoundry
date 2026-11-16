@@ -1,0 +1,37 @@
+[endpoint]
+path = "/datacenter/storage/aggregates/{key}/metrics"
+schema = "aggregate_metrics_sample_response"
+class_name = "AiqumAggregateMetricsSampleResponse"
+
+[fields."aggregate.key"]
+cache_strategy = "cache"
+
+[fields."aggregate.name"]
+cache_strategy = "cache"
+
+[fields."aggregate.uuid"]
+cache_strategy = "cache"
+
+[fields.duration]
+cache_strategy = "cache"
+
+[fields.end_time]
+cache_strategy = "cache"
+
+[fields.num_samples]
+cache_strategy = "cache"
+
+[fields.samples]
+cache_strategy = "cache"
+
+[fields.start_time]
+cache_strategy = "cache"
+
+[fields."summary.iops"]
+cache_strategy = "cache"
+
+[fields."summary.performance_capacity"]
+cache_strategy = "cache"
+
+[fields."summary.utilization_percent"]
+cache_strategy = "cache"

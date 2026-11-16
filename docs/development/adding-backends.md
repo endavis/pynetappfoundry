@@ -172,7 +172,8 @@ mapping module on first lookup, using the generated `src/pynetappfoundry/cache/_
 For a new API type with its own tree under `cache/<api>/`:
 
 1. Add `<api>` to `_API_DIRS` in `tools/codegen/mapping_index.py`, and its package to
-   `_FALLBACK_PACKAGES` in `src/pynetappfoundry/cache/_registry.py`.
+   `_FALLBACK_PACKAGES` in `src/pynetappfoundry/cache/_registry.py` (`ontap`, `dii` and
+   `aiqum` are already there).
 2. Run `uv run doit mapping_index` and commit the regenerated index.
 
 For a new mapping in an existing tree, only step 2 is needed (`doit generate_models` runs it for
@@ -213,8 +214,13 @@ In `src/pynetappfoundry/data/source.py`, add your backend to the registry:
 _BACKENDS: dict[str, type[Backend]] = {
     "ontap": OntapBackend,
     "dii": DiiBackend,
+    "aiqum": AiqumBackend,
 }
 ```
+
+A backend with no cache sets the class attribute `live_only = True` on `Backend`. Then
+`QueryBuilder` routes `source="auto"` as `live` (no cache-miss second call) and raises
+`ValueError` for `source="cache"` when `query()` is called.
 
 ### 7. Update audit and compliance tools
 
@@ -440,7 +446,10 @@ conventions.
 Different APIs use different envelope structures:
 
 - **ONTAP**: `{"records": [...], "num_records": N, "_links": {...}}`
-- **DII/AIQUM**: `{"_embedded": {"items": [...]}}` (HAL format)
+- **AIQUM**: `{"_links": {...}, "num_records": N, "records": [...], "total_records": N}`
+  (HAL links with `_links.next.href` paging, `records_path="records"`)
+- **DII**: a bare array, an `{offset, count, limit, rows|results|values}` envelope, or a
+  wrapper such as `{"users": [...]}` (see the DII example below)
 
 Set `TypeMapping.records_path` to match your API's envelope. The
 `parse_api_response()` function uses `get_nested_value()` with this path
@@ -498,6 +507,7 @@ the existing codebase:
 | :--- | :--- | :--- |
 | ONTAP | HTTP Basic Auth (per-cluster credentials) | `config.get_user("clusters", cluster_name)` |
 | DII | API key header | `config.get_dii_api_settings().api_ro_token` |
+| AIQUM | HTTP Basic Auth (per-instance credentials) | `config.get_user("aiqums", name)` |
 
 Your backend's `__init__` (or lazy client constructor) must resolve
 credentials from `Config` and pass the appropriate `auth_header` to
@@ -590,6 +600,25 @@ Because DII is live-only, the following ONTAP patterns are absent:
 - No `where_expressions` support
 
 This makes DII a useful reference for the simplest possible backend.
+
+---
+
+## Example: AIQUM Backend (Live-Only)
+
+`AiqumBackend` (`src/pynetappfoundry/data/aiqum_backend.py`) is a live-only backend over the
+HAL `records` envelope. **ADR:** [ADR-0026](../decisions/0026-aiqum-backend-is-live-only-and-reads-the-hal-records-envelope.md).
+
+| Concern | AIQUM approach |
+| :--- | :--- |
+| Cache | None. `Backend.live_only = True`: `source="auto"` goes live, `source="cache"` raises `ValueError` |
+| Envelope | `{_links, num_records, records, total_records}`; `records_path="records"` |
+| Pagination | `AIQUMAPIClient.get_all_records` follows `_links.next.href` |
+| Targeting | `cluster=` is the `[aiqums]` instance name; one client cached per name |
+| Singletons | `response_shape="singleton"` uses `call_endpoint` and wraps the dict as `[response]` |
+| Placeholders | `{placeholder}` endpoints raise `ValueError` before any client is built |
+
+The models and mappings are generated with `doit generate_models --api=aiqum` and covered by
+`doit generate_models_check`. User-facing usage is in [AIQUM API](../usage/aiqum-api.md#datasource).
 
 ---
 

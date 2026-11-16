@@ -1066,6 +1066,15 @@ class TestSafeAttrName:
     def test_compound_not_reserved(self) -> None:
         assert _safe_attr_name("space_metadata") == "space_metadata"
 
+    def test_leading_digit_gets_n_prefix(self) -> None:
+        assert _safe_attr_name("95th_percentile") == "n95th_percentile"
+        assert _safe_attr_name("used_95th_percentile") == "used_95th_percentile"
+
+    def test_leading_digit_field_keeps_api_path(self) -> None:
+        field = ParsedField(name="95th_percentile", api_path="iops.95th_percentile", default=0.0)
+        assert _field_to_cache_attr(field) == "iops.n95th_percentile"
+        assert field.api_path == "iops.95th_percentile"
+
 
 # ---------------------------------------------------------------------------
 # Shared-schema naming (issue #603)

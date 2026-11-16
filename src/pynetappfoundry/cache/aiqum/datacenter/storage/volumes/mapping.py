@@ -1,0 +1,136 @@
+"""AiqumVolume type mapping."""
+
+from __future__ import annotations
+
+from pynetappfoundry.cache._registry import model_registry
+from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
+from pynetappfoundry.models.aiqum.datacenter.storage.volumes.model import (
+    AiqumVolume,
+    AiqumVolumeAggregate,
+)
+
+AIQUMVOLUME_MAPPING = TypeMapping(
+    name="AiqumVolume",
+    model_class=AiqumVolume,
+    api_endpoint="/datacenter/storage/volumes",
+    api_type="aiqum",
+    identifier_field="key",
+    fields=(
+        FieldMapping(
+            cache_attr="aggregates",
+            item_model=AiqumVolumeAggregate,
+            default=[],
+        ),
+        FieldMapping(
+            cache_attr="autosize.maximum",
+            default=0,
+        ),
+        FieldMapping(
+            cache_attr="autosize.mode",
+        ),
+        FieldMapping(
+            cache_attr="cluster.key",
+        ),
+        FieldMapping(
+            cache_attr="cluster.name",
+        ),
+        FieldMapping(
+            cache_attr="cluster.uuid",
+        ),
+        FieldMapping(
+            cache_attr="create_time",
+        ),
+        FieldMapping(
+            cache_attr="key",
+        ),
+        FieldMapping(
+            cache_attr="language",
+        ),
+        FieldMapping(
+            cache_attr="name",
+        ),
+        FieldMapping(
+            cache_attr="nas.export_policy.id",
+            default=0,
+        ),
+        FieldMapping(
+            cache_attr="nas.export_policy.key",
+        ),
+        FieldMapping(
+            cache_attr="nas.export_policy.name",
+        ),
+        FieldMapping(
+            cache_attr="qos.policy.key",
+        ),
+        FieldMapping(
+            cache_attr="qos.policy.max_throughput_iops",
+            default=0,
+        ),
+        FieldMapping(
+            cache_attr="qos.policy.max_throughput_mbps",
+            default=0,
+        ),
+        FieldMapping(
+            cache_attr="qos.policy.min_throughput_iops",
+            default=0,
+        ),
+        FieldMapping(
+            cache_attr="qos.policy.name",
+        ),
+        FieldMapping(
+            cache_attr="qos.policy.uuid",
+        ),
+        FieldMapping(
+            cache_attr="snapmirror.is_protected",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="snapshot_policy.key",
+        ),
+        FieldMapping(
+            cache_attr="snapshot_policy.name",
+        ),
+        FieldMapping(
+            cache_attr="snapshot_policy.uuid",
+        ),
+        FieldMapping(
+            cache_attr="space.available",
+            default=0,
+        ),
+        FieldMapping(
+            cache_attr="space.size",
+            default=0,
+        ),
+        FieldMapping(
+            cache_attr="space.used",
+            default=0,
+        ),
+        FieldMapping(
+            cache_attr="state",
+        ),
+        FieldMapping(
+            cache_attr="style",
+        ),
+        FieldMapping(
+            cache_attr="svm.key",
+        ),
+        FieldMapping(
+            cache_attr="svm.name",
+        ),
+        FieldMapping(
+            cache_attr="svm.uuid",
+        ),
+        FieldMapping(
+            cache_attr="tiering.policy",
+        ),
+        FieldMapping(
+            cache_attr="type_",
+            api_path="type",
+        ),
+        FieldMapping(
+            cache_attr="uuid",
+        ),
+    ),
+)
+
+model_registry.register_mapping("AiqumVolume", AIQUMVOLUME_MAPPING)

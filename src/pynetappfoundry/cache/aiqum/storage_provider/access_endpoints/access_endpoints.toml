@@ -1,0 +1,55 @@
+[endpoint]
+path = "/storage-provider/access-endpoints"
+schema = "access_endpoint"
+class_name = "AiqumAccessEndpoint"
+
+[fields.data_protocols]
+cache_strategy = "cache"
+
+[fields."fileshare.key"]
+cache_strategy = "cache"
+
+[fields.gateway]
+cache_strategy = "cache"
+
+[fields.gateways]
+cache_strategy = "cache"
+
+[fields."ip.address"]
+cache_strategy = "cache"
+
+[fields."ip.ha_address"]
+cache_strategy = "cache"
+
+[fields."ip.netmask"]
+cache_strategy = "cache"
+
+[fields.key]
+cache_strategy = "cache"
+
+[fields."lun.key"]
+cache_strategy = "cache"
+
+[fields.mtu]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields."svm.key"]
+cache_strategy = "cache"
+
+[fields."svm.name"]
+cache_strategy = "cache"
+
+[fields."svm.uuid"]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"
+
+[fields.vlan]
+cache_strategy = "cache"
+
+[fields.wwpn]
+cache_strategy = "cache"

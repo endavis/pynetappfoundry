@@ -1,0 +1,25 @@
+[endpoint]
+path = "/storage-provider/aggregate-capabilities"
+schema = "aggregate_capability"
+class_name = "AiqumAggregateCapability"
+
+[fields."cluster.key"]
+cache_strategy = "cache"
+
+[fields."cluster.name"]
+cache_strategy = "cache"
+
+[fields."cluster.uuid"]
+cache_strategy = "cache"
+
+[fields.key]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.performance_service_levels]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

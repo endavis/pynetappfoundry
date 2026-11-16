@@ -1,0 +1,1 @@
+"""Shares cache models."""

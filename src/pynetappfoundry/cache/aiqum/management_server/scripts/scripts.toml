@@ -1,0 +1,13 @@
+[endpoint]
+path = "/management-server/scripts"
+schema = "script"
+class_name = "AiqumScript"
+
+[fields.description]
+cache_strategy = "cache"
+
+[fields.key]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"

@@ -117,7 +117,7 @@ class TestDataSourceGet:
             name="_Other",
             model_class=_Other,
             api_endpoint="/x",
-            api_type="aiqum",
+            api_type="occm",
             identifier_field="uuid",
             fields=(FieldMapping(cache_attr="uuid"),),
         )
@@ -886,3 +886,76 @@ class TestQueryPathParams:
         assert fake_backend.query.call_count == 2
         for call in fake_backend.query.call_args_list:
             assert call.kwargs["path_params"] == {"x": "1"}
+
+
+class TestAiqumLiveOnlyRouting:
+    """The aiqum backend is registered and live-only (ADR-0026)."""
+
+    @pytest.fixture
+    def fake_aiqum_mapping(self) -> Iterator[TypeMapping]:
+        class _FakeAiqumModel(FakeVolume):
+            """FakeVolume subclass registered with api_type='aiqum'."""
+
+        mapping = TypeMapping(
+            name="FakeAiqumModel",
+            model_class=_FakeAiqumModel,
+            api_endpoint="/fake/volumes",
+            api_type="aiqum",
+            identifier_field="uuid",
+            fields=(
+                FieldMapping(cache_attr="name", cache_strategy="cache"),
+                FieldMapping(cache_attr="uuid", cache_strategy="cache"),
+            ),
+        )
+        model_registry.register_mapping("FakeAiqumModel", mapping)
+        try:
+            yield mapping
+        finally:
+            model_registry.unregister_mapping("FakeAiqumModel")
+
+    def test_registered(self) -> None:
+        from pynetappfoundry.data.aiqum_backend import AiqumBackend
+
+        assert _BACKENDS["aiqum"] is AiqumBackend
+        assert AiqumBackend.live_only is True
+
+    def test_auto_goes_live_without_second_call(
+        self, fake_aiqum_mapping: TypeMapping, mock_config: Any
+    ) -> None:
+        ds = DataSource(mock_config)
+        fake_backend = MagicMock(live_only=True)
+        fake_backend.query.return_value = []
+        ds._backends["aiqum"] = fake_backend
+        list(ds.query(fake_aiqum_mapping.model_class, cluster="aiqum1"))
+        fake_backend.query.assert_called_once()
+        decision = fake_backend.query.call_args.args[2]
+        assert decision.live_fields
+        assert not decision.cache_fields
+
+    def test_cache_source_raises_at_query(
+        self, fake_aiqum_mapping: TypeMapping, mock_config: Any
+    ) -> None:
+        ds = DataSource(mock_config)
+        with pytest.raises(ValueError, match="AiqumBackend is live-only"):
+            ds.query(fake_aiqum_mapping.model_class, cluster="aiqum1", source="cache")
+
+    def test_where_raises(self, fake_aiqum_mapping: TypeMapping, mock_config: Any) -> None:
+        qb = DataSource(mock_config).query(fake_aiqum_mapping.model_class, cluster="aiqum1")
+        with pytest.raises(ValueError, match="AiqumBackend"):
+            qb.where("size > 1")
+
+    def test_ontap_cache_source_still_allowed(
+        self, fake_volume_mapping: TypeMapping, mock_config: Any
+    ) -> None:
+        DataSource(mock_config).query(FakeVolume, cluster="prod1", source="cache")
+
+    def test_ontap_auto_routing_unchanged(
+        self, fake_volume_mapping: TypeMapping, mock_config: Any
+    ) -> None:
+        ds = DataSource(mock_config)
+        fake_backend = MagicMock(live_only=False)
+        fake_backend.query.return_value = [FakeVolume(name="a", uuid="u")]
+        ds._backends["ontap"] = fake_backend
+        list(ds.query(FakeVolume, cluster="prod1"))
+        decision = fake_backend.query.call_args.args[2]
+        assert decision.cache_fields
