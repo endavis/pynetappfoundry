@@ -5,3 +5,6 @@ base_api_path = "/api"
 # An instance's own verify_ssl / ca_bundle overrides these. Off by default (pin only).
 # verify_ssl = true                    # validate with the default CA bundle
 # ca_bundle = "certs/internal-ca.pem"  # or validate against this CA bundle
+# Cap on per-parent requests when a {key}/metrics model is queried without path_params.
+# More parents than this raises ValueError before any request. 0 = unlimited.
+# max_parent_requests = 500

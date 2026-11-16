@@ -204,6 +204,7 @@ base_api_path = "/api"    # Optional: Base path for the AIQUM REST API (default:
 # timeout = 30.0          # Optional: request timeout in seconds (default: 30.0)
 # verify_ssl = true       # Optional: validate instance certificates with the default CA bundle
 # ca_bundle = "certs/internal-ca.pem"  # Optional: validate against this CA bundle
+# max_parent_requests = 500  # Optional: cap on per-parent requests (0 = unlimited)
 ```
 
 #### AIQUM API Settings Fields
@@ -214,6 +215,7 @@ base_api_path = "/api"    # Optional: Base path for the AIQUM REST API (default:
 | `timeout` | float | No | `30.0` | Request timeout in seconds |
 | `verify_ssl` | boolean | No | `false` | Default for every instance: validate the certificate chain instead of pinning the fingerprint |
 | `ca_bundle` | string | No | - | Default for every instance: CA bundle path (relative to the config directory); not allowed with `verify_ssl = false` |
+| `max_parent_requests` | integer | No | `500` | Most per-parent requests one query may send when a `{key}/metrics` model is queried without `path_params`; more parents raises `ValueError` before any child request. `0` = unlimited |
 
 ---
 

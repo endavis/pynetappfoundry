@@ -128,6 +128,9 @@ class AIQUMAPISettings(BaseModel):
     timeout: float = 30.0
     verify_ssl: bool = False
     ca_bundle: str | None = None
+    # Cap on per-parent child requests for a {placeholder} mapping queried without
+    # path_params (#1057). 0 = unlimited.
+    max_parent_requests: int = Field(default=500, ge=0)
 
 
 class ConsoleAPISettings(BaseModel):

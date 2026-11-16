@@ -26,6 +26,7 @@ from pydantic import BaseModel
 from pynetappfoundry.cache.field_mapping import parse_api_record
 from pynetappfoundry.data._path_params import caller_path_params as _caller_path_params
 from pynetappfoundry.data._path_params import placeholders as _placeholders
+from pynetappfoundry.data._per_parent import fetch_per_parent
 from pynetappfoundry.data.backends import Backend
 from pynetappfoundry.utils.dict_path import PathNotFoundError, get_nested_value
 
@@ -72,9 +73,9 @@ class AiqumBackend(Backend):
 
     Cache-only routing decisions and ``where_expressions`` are rejected with
     :class:`NotImplementedError`.  ``path_params`` fill the ``{placeholder}``
-    segments of an endpoint (#1054); fetching once per parent object is not
-    supported (#1057).  API clients are built lazily and cached per instance
-    name.
+    segments of an endpoint (#1054); without them a mapping with a
+    ``parent_mapping`` is fetched once per parent (#1057).  API clients are built lazily
+    and cached per instance name.
 
     Args:
         config: The :class:`pynetappfoundry.core.config.Config` instance.
@@ -113,8 +114,9 @@ class AiqumBackend(Backend):
         parameters.  *path_params* supplies every ``{placeholder}`` value of
         the endpoint (percent-encoded); an unknown key or missing placeholder
         raises :class:`ValueError` before any client is built.  An endpoint
-        with placeholders and no *path_params* also raises :class:`ValueError`:
-        fetching once per parent object is tracked in #1057.
+        with placeholders, a ``parent_mapping`` and no *path_params* is fetched
+        once per parent (#1057); without a ``parent_mapping`` it raises
+        :class:`ValueError`.
         """
         if decision.cache_fields and not decision.live_fields:
             msg = "AIQUM backend does not support cache-only queries"
@@ -131,38 +133,89 @@ class AiqumBackend(Backend):
         encoded: dict[str, str] | None = None
         if path_params:
             encoded = _caller_path_params(mapping, placeholders, path_params)
-        elif placeholders:
+        elif placeholders and not mapping.parent_mapping:
             names = ", ".join("{" + p + "}" for p in placeholders)
             msg = (
-                f"{mapping.name}: endpoint {mapping.api_endpoint} has path "
-                f"placeholder(s) {names}; pass path_params to supply them. "
-                "Fetching once per parent object is not supported yet (#1057)"
+                f"{mapping.name}: endpoint {mapping.api_endpoint} has unfilled path "
+                f"placeholder(s) {names} and no parent_mapping to supply them; "
+                "pass path_params to supply them"
             )
             raise ValueError(msg)
+        elif placeholders:
+            return self._query_per_parent(
+                model_class, mapping, decision, cluster, filters, placeholders
+            )
 
+        records = self._fetch_records(mapping, cluster, filters, encoded)
+        return self._parse_records(model_class, mapping, decision, records)
+
+    def _fetch_records(
+        self,
+        mapping: TypeMapping,
+        cluster: str,
+        filters: dict[str, Any],
+        encoded: dict[str, str] | None,
+    ) -> list[Any]:
+        """Issue one request for *mapping* and return its raw records."""
         client = self._get_api_client(cluster)
         query_params: dict[str, Any] = dict(filters) if filters else {}
         # Only pass path_params when supplied, so mocks that predate it still work.
         extra: dict[str, Any] = {"path_params": encoded} if encoded is not None else {}
-        records: list[Any]
         if mapping.response_shape == "singleton":
             response = client.call_endpoint(
                 mapping.api_endpoint, query_params=query_params, **extra
             )
             if isinstance(response, dict):
-                records = [response]
-            else:
-                logger.warning(
-                    "AiqumBackend %s: singleton response is %s, expected dict, returning empty",
-                    mapping.name,
-                    type(response).__name__,
-                )
-                records = []
-        else:
-            response = client.get_all_records(
-                mapping.api_endpoint, "GET", query_params=query_params, **extra
+                return [response]
+            logger.warning(
+                "AiqumBackend %s: singleton response is %s, expected dict, returning empty",
+                mapping.name,
+                type(response).__name__,
             )
-            records = _records_at_path(mapping, response)
+            return []
+        response = client.get_all_records(
+            mapping.api_endpoint, "GET", query_params=query_params, **extra
+        )
+        return _records_at_path(mapping, response)
+
+    def _query_per_parent(
+        self,
+        model_class: type[T],
+        mapping: TypeMapping,
+        decision: RoutingDecision,
+        cluster: str,
+        filters: dict[str, Any],
+        placeholders: list[str],
+    ) -> list[T]:
+        """Fetch a parent-keyed mapping, one request per parent (#1057).
+
+        The parents come from a recursive :meth:`query` of the parent mapping on
+        the same instance, unfiltered; *filters* go to the child requests only.
+        Each parent's identifier is percent-encoded into ``path_params``.  A
+        parent without an identifier is skipped (``SKIP_PARENT``) and a failing
+        child request is logged as ``CHILD_FETCH_FAILED`` and skipped.  More
+        parents than ``max_parent_requests`` (``aiqumapi.toml``; 0 = unlimited)
+        raises :class:`ValueError` before any child request.
+        """
+        max_parents = self._config.get_aiqum_api_settings().max_parent_requests
+
+        def query_parents(parent_map: TypeMapping, parent_decision: RoutingDecision) -> list[Any]:
+            return list(
+                self.query(parent_map.model_class, parent_map, parent_decision, cluster, {})
+            )
+
+        def fetch_child(path_params: dict[str, str]) -> list[Any]:
+            return self._fetch_records(mapping, cluster, filters, path_params)
+
+        records = fetch_per_parent(
+            mapping,
+            placeholders,
+            query_parents=query_parents,
+            fetch_child=fetch_child,
+            log_prefix=f"AiqumBackend<{mapping.name}>",
+            encode=True,
+            max_parents=max_parents,
+        )
         return self._parse_records(model_class, mapping, decision, records)
 
     @staticmethod

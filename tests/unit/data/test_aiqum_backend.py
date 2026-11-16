@@ -328,21 +328,6 @@ class TestPathParams:
             backend.query(FakeAiqumVolume, m, _LIVE, "aiqum1", {}, path_params=path_params)
         get_client.assert_not_called()
 
-    def test_parent_mapping_without_path_params_names_key_and_followup(self) -> None:
-        m = _mapping(
-            api_endpoint=_METRICS,
-            response_shape="singleton",
-            parent_mapping="AiqumVolume",
-            parent_id_field="key",
-        )
-        backend = _backend()
-        with (
-            patch.object(backend, "_get_api_client") as get_client,
-            pytest.raises(ValueError, match=r"(?s)\{key\}.*path_params.*#1057"),
-        ):
-            backend.query(FakeAiqumVolume, m, _LIVE, "aiqum1", {})
-        get_client.assert_not_called()
-
     def test_registry_sweep_placeholder_mappings_issue_one_request(self) -> None:
         swept = 0
         for name, reg in model_registry.mappings.items():
@@ -366,5 +351,232 @@ class TestPathParams:
                     path_params={"key": "k"},
                 )
             assert client.call_endpoint.call_count + client.get_all_records.call_count == 1, name
+            swept += 1
+        assert swept > 0
+
+
+class FakeAiqumParent(OntapModel):
+    """Synthetic parent model for per-parent tests."""
+
+    key: str | None = None
+    name: str = ""
+
+
+@pytest.fixture
+def parent_mapping() -> Iterator[TypeMapping]:
+    """Register a parent mapping that lists ``/parents`` for one test."""
+    m = _mapping(
+        name="FakeAiqumParent",
+        model_class=FakeAiqumParent,
+        api_endpoint="/parents",
+    )
+    model_registry.register_mapping("FakeAiqumParent", m)
+    try:
+        yield m
+    finally:
+        model_registry._mappings.pop("FakeAiqumParent", None)
+        model_registry._mappings_by_class.pop(FakeAiqumParent, None)
+
+
+def _child_mapping(**overrides: Any) -> TypeMapping:
+    kwargs: dict[str, Any] = {
+        "api_endpoint": _METRICS,
+        "response_shape": "singleton",
+        "parent_mapping": "FakeAiqumParent",
+        "parent_id_field": "key",
+    }
+    kwargs.update(overrides)
+    return _mapping(**kwargs)
+
+
+def _per_parent_backend(max_parent_requests: int = 500) -> AiqumBackend:
+    config = MagicMock(name="Config")
+    config.get_aiqum_api_settings.return_value = AIQUMAPISettings(
+        max_parent_requests=max_parent_requests
+    )
+    return AiqumBackend(config)
+
+
+def _per_parent_client(parents: list[dict[str, Any]]) -> MagicMock:
+    client = MagicMock()
+    client.get_all_records.return_value = {"records": parents}
+    client.call_endpoint.side_effect = lambda _ep, **kw: {
+        "key": kw["path_params"]["key"],
+        "name": "m",
+    }
+    return client
+
+
+class TestPerParent:
+    """A placeholder mapping with a parent_mapping is fetched per parent (#1057)."""
+
+    def test_one_record_per_parent_in_order(self, parent_mapping: TypeMapping) -> None:
+        client = _per_parent_client([{"key": "a,b", "name": "p1"}, {"key": "k2", "name": "p2"}])
+        backend = _per_parent_backend()
+        with patch.object(backend, "_get_api_client", return_value=client):
+            results = backend.query(
+                FakeAiqumVolume, _child_mapping(), _LIVE, "aiqum1", {"interval": "1h"}
+            )
+        assert [r.key for r in results] == ["a%2Cb", "k2"]
+        assert all(r.was_fetched("name") for r in results)
+        # Parents are fetched unfiltered; filters go to the child calls only.
+        client.get_all_records.assert_called_once_with("/parents", "GET", query_params={})
+        assert [c.kwargs for c in client.call_endpoint.call_args_list] == [
+            {"query_params": {"interval": "1h"}, "path_params": {"key": "a%2Cb"}},
+            {"query_params": {"interval": "1h"}, "path_params": {"key": "k2"}},
+        ]
+
+    def test_over_cap_raises_before_child_call(self, parent_mapping: TypeMapping) -> None:
+        client = _per_parent_client([{"key": "a"}, {"key": "b"}, {"key": "c"}])
+        backend = _per_parent_backend(max_parent_requests=2)
+        with (
+            patch.object(backend, "_get_api_client", return_value=client),
+            pytest.raises(ValueError, match=r"(?s)3 parent.*max_parent_requests.*path_params"),
+        ):
+            backend.query(FakeAiqumVolume, _child_mapping(), _LIVE, "aiqum1", {})
+        client.call_endpoint.assert_not_called()
+
+    def test_at_cap_succeeds(self, parent_mapping: TypeMapping) -> None:
+        client = _per_parent_client([{"key": "a"}, {"key": "b"}])
+        backend = _per_parent_backend(max_parent_requests=2)
+        with patch.object(backend, "_get_api_client", return_value=client):
+            results = backend.query(FakeAiqumVolume, _child_mapping(), _LIVE, "aiqum1", {})
+        assert [r.key for r in results] == ["a", "b"]
+
+    def test_zero_cap_is_unlimited(self, parent_mapping: TypeMapping) -> None:
+        client = _per_parent_client([{"key": f"k{i}"} for i in range(5)])
+        backend = _per_parent_backend(max_parent_requests=0)
+        with patch.object(backend, "_get_api_client", return_value=client):
+            results = backend.query(FakeAiqumVolume, _child_mapping(), _LIVE, "aiqum1", {})
+        assert len(results) == 5
+
+    def test_parent_without_key_skipped(
+        self, parent_mapping: TypeMapping, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        client = _per_parent_client([{"name": "nokey"}, {"key": "k2"}])
+        backend = _per_parent_backend()
+        with (
+            caplog.at_level(logging.WARNING),
+            patch.object(backend, "_get_api_client", return_value=client),
+        ):
+            results = backend.query(FakeAiqumVolume, _child_mapping(), _LIVE, "aiqum1", {})
+        assert [r.key for r in results] == ["k2"]
+        assert "SKIP_PARENT" in caplog.text
+        assert client.call_endpoint.call_count == 1
+
+    def test_failing_child_skipped_and_logged(
+        self, parent_mapping: TypeMapping, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        client = _per_parent_client([{"key": "bad"}, {"key": "ok"}])
+
+        def call(_ep: str, **kw: Any) -> dict[str, Any]:
+            if kw["path_params"]["key"] == "bad":
+                raise RuntimeError("404")
+            return {"key": "ok", "name": "m"}
+
+        client.call_endpoint.side_effect = call
+        backend = _per_parent_backend()
+        with (
+            caplog.at_level(logging.WARNING),
+            patch.object(backend, "_get_api_client", return_value=client),
+        ):
+            results = backend.query(FakeAiqumVolume, _child_mapping(), _LIVE, "aiqum1", {})
+        assert [r.key for r in results] == ["ok"]
+        assert "CHILD_FETCH_FAILED" in caplog.text
+
+    def test_dotdot_key_skipped(
+        self, parent_mapping: TypeMapping, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        client = _per_parent_client([{"key": ".."}, {"key": "k2"}])
+        backend = _per_parent_backend()
+        with (
+            caplog.at_level(logging.WARNING),
+            patch.object(backend, "_get_api_client", return_value=client),
+        ):
+            results = backend.query(FakeAiqumVolume, _child_mapping(), _LIVE, "aiqum1", {})
+        assert [r.key for r in results] == ["k2"]
+        assert "CHILD_FETCH_FAILED" in caplog.text
+        assert client.call_endpoint.call_count == 1
+
+    def test_parent_query_error_propagates(self, parent_mapping: TypeMapping) -> None:
+        client = MagicMock()
+        client.get_all_records.side_effect = RuntimeError("parent down")
+        backend = _per_parent_backend()
+        with (
+            patch.object(backend, "_get_api_client", return_value=client),
+            pytest.raises(RuntimeError, match="parent down"),
+        ):
+            backend.query(FakeAiqumVolume, _child_mapping(), _LIVE, "aiqum1", {})
+        client.call_endpoint.assert_not_called()
+
+    def test_zero_parents_returns_empty(self, parent_mapping: TypeMapping) -> None:
+        client = _per_parent_client([])
+        backend = _per_parent_backend()
+        with patch.object(backend, "_get_api_client", return_value=client):
+            assert backend.query(FakeAiqumVolume, _child_mapping(), _LIVE, "aiqum1", {}) == []
+        client.call_endpoint.assert_not_called()
+
+    def test_placeholder_without_parent_still_raises(self) -> None:
+        m = _child_mapping(parent_mapping=None, parent_id_field=None)
+        backend = _per_parent_backend()
+        with (
+            patch.object(backend, "_get_api_client") as get_client,
+            pytest.raises(ValueError, match=r"(?s)\{key\}.*no parent_mapping.*path_params"),
+        ):
+            backend.query(FakeAiqumVolume, m, _LIVE, "aiqum1", {})
+        get_client.assert_not_called()
+
+    def test_caller_path_params_keep_single_request(self, parent_mapping: TypeMapping) -> None:
+        client = _per_parent_client([{"key": "a"}, {"key": "b"}])
+        backend = _per_parent_backend()
+        with patch.object(backend, "_get_api_client", return_value=client):
+            results = backend.query(
+                FakeAiqumVolume, _child_mapping(), _LIVE, "aiqum1", {}, path_params={"key": "x"}
+            )
+        assert [r.key for r in results] == ["x"]
+        client.get_all_records.assert_not_called()
+        client.call_endpoint.assert_called_once()
+
+    def test_unregistered_parent_raises_before_any_request(self) -> None:
+        m = _child_mapping(parent_mapping="NoSuchParent")
+        backend = _per_parent_backend()
+        with (
+            patch.object(backend, "_get_api_client") as get_client,
+            pytest.raises(ValueError, match="not registered"),
+        ):
+            backend.query(FakeAiqumVolume, m, _LIVE, "aiqum1", {})
+        get_client.assert_not_called()
+
+    def test_cycle_raises_before_any_request(self, parent_mapping: TypeMapping) -> None:
+        cyclic = _mapping(
+            name="FakeAiqumParent",
+            model_class=FakeAiqumParent,
+            api_endpoint="/parents",
+            parent_mapping="FakeAiqumVolume",
+            parent_id_field="key",
+        )
+        model_registry._mappings["FakeAiqumParent"] = cyclic
+        child = _child_mapping()
+        model_registry._mappings["FakeAiqumVolume"] = child
+        try:
+            backend = _per_parent_backend()
+            with (
+                patch.object(backend, "_get_api_client") as get_client,
+                pytest.raises(ValueError, match="cycle"),
+            ):
+                backend.query(FakeAiqumVolume, child, _LIVE, "aiqum1", {})
+            get_client.assert_not_called()
+        finally:
+            model_registry._mappings.pop("FakeAiqumVolume", None)
+
+    def test_registry_sweep_per_parent_mappings(self) -> None:
+        swept = 0
+        for name, reg in model_registry.mappings.items():
+            if reg.api_type != "aiqum" or not _placeholders(reg):
+                continue
+            assert reg.parent_mapping, name
+            parent = model_registry.get_mapping(reg.parent_mapping)
+            assert parent is not None, name
+            assert not _placeholders(parent), name
             swept += 1
         assert swept > 0

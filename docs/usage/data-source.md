@@ -300,7 +300,7 @@ Every `DataSource` method accepts a `source=` parameter that controls where data
     - Each value is converted with `str()` and percent-encoded, so `/`, `?`, `#`, `{` and `}` in a value cannot change the requested path. An empty value, `.` and `..` are rejected.
     - Filters still go to the query string.
     - An ONTAP model raises `ValueError` at the `query()` call, since ONTAP endpoints take no caller-supplied path values.
-    - AIQUM models take `path_params` the same way, for the `{key}/metrics` models. Without it, an AIQUM placeholder endpoint raises `ValueError`; a per-parent fetch is not supported yet ([#1057](https://github.com/endavis/pynetappfoundry/issues/1057)). See [AIQUM API](aiqum-api.md#datasource).
+    - AIQUM models take `path_params` the same way, for the `{key}/metrics` models. Without it, an AIQUM model with a parent is fetched once per parent, capped by `max_parent_requests` in `aiqumapi.toml` ([#1057](https://github.com/endavis/pynetappfoundry/issues/1057)); one without a parent raises `ValueError`. See [AIQUM API](aiqum-api.md#datasource).
     - `ds.get()` has no `path_params`; use `ds.query(..., path_params=...).first()`.
 
 ```python
