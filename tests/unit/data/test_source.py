@@ -944,6 +944,12 @@ class TestAiqumLiveOnlyRouting:
         with pytest.raises(ValueError, match="AiqumBackend"):
             qb.where("size > 1")
 
+    def test_aiqum_path_params_allowed_at_chain_time(
+        self, fake_aiqum_mapping: TypeMapping, mock_config: Any
+    ) -> None:
+        ds = DataSource(mock_config)
+        ds.query(fake_aiqum_mapping.model_class, cluster="aiqum1", path_params={"key": "k"})
+
     def test_ontap_cache_source_still_allowed(
         self, fake_volume_mapping: TypeMapping, mock_config: Any
     ) -> None:

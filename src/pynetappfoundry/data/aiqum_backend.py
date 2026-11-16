@@ -19,12 +19,13 @@ in the ``[aiqums]`` inventory.
 from __future__ import annotations
 
 import logging
-import re
 from typing import TYPE_CHECKING, Any, TypeVar
 
 from pydantic import BaseModel
 
 from pynetappfoundry.cache.field_mapping import parse_api_record
+from pynetappfoundry.data._path_params import caller_path_params as _caller_path_params
+from pynetappfoundry.data._path_params import placeholders as _placeholders
 from pynetappfoundry.data.backends import Backend
 from pynetappfoundry.utils.dict_path import PathNotFoundError, get_nested_value
 
@@ -66,24 +67,21 @@ def _records_at_path(mapping: TypeMapping, response: Any) -> list[Any]:
     return value
 
 
-def _placeholders(mapping: TypeMapping) -> list[str]:
-    """Return the ``{name}`` path placeholders of ``mapping.api_endpoint``, in order."""
-    return re.findall(r"\{([^}]+)\}", mapping.api_endpoint.split("?", 1)[0])
-
-
 class AiqumBackend(Backend):
     """Live-only backend that queries an AIQUM instance's REST API.
 
     Cache-only routing decisions and ``where_expressions`` are rejected with
-    :class:`NotImplementedError`; ``path_params`` raise :class:`ValueError`.
-    API clients are built lazily and cached per instance name.
+    :class:`NotImplementedError`.  ``path_params`` fill the ``{placeholder}``
+    segments of an endpoint (#1054); fetching once per parent object is not
+    supported (#1057).  API clients are built lazily and cached per instance
+    name.
 
     Args:
         config: The :class:`pynetappfoundry.core.config.Config` instance.
     """
 
     supports_where_expressions: bool = False
-    supports_path_params: bool = False
+    supports_path_params: bool = True
     live_only: bool = True
 
     def __init__(self, config: Config) -> None:
@@ -112,8 +110,11 @@ class AiqumBackend(Backend):
         """Fetch a list of AIQUM instances matching *filters*.
 
         *cluster* names the ``[aiqums]`` instance.  *filters* become query
-        parameters.  An endpoint with ``{placeholder}`` segments raises
-        :class:`ValueError` before any client is built.
+        parameters.  *path_params* supplies every ``{placeholder}`` value of
+        the endpoint (percent-encoded); an unknown key or missing placeholder
+        raises :class:`ValueError` before any client is built.  An endpoint
+        with placeholders and no *path_params* also raises :class:`ValueError`:
+        fetching once per parent object is tracked in #1057.
         """
         if decision.cache_fields and not decision.live_fields:
             msg = "AIQUM backend does not support cache-only queries"
@@ -123,28 +124,31 @@ class AiqumBackend(Backend):
             msg = "AIQUM backend does not support where_expressions"
             raise NotImplementedError(msg)
 
-        if path_params:
-            msg = f"{mapping.name}: AIQUM backend does not support path_params"
-            raise ValueError(msg)
-
         if not decision.live_fields:
             return []
 
         placeholders = _placeholders(mapping)
-        if placeholders:
+        encoded: dict[str, str] | None = None
+        if path_params:
+            encoded = _caller_path_params(mapping, placeholders, path_params)
+        elif placeholders:
             names = ", ".join("{" + p + "}" for p in placeholders)
             msg = (
                 f"{mapping.name}: endpoint {mapping.api_endpoint} has path "
-                f"placeholder(s) {names}; AIQUM endpoints with placeholders "
-                "cannot be queried yet"
+                f"placeholder(s) {names}; pass path_params to supply them. "
+                "Fetching once per parent object is not supported yet (#1057)"
             )
             raise ValueError(msg)
 
         client = self._get_api_client(cluster)
         query_params: dict[str, Any] = dict(filters) if filters else {}
+        # Only pass path_params when supplied, so mocks that predate it still work.
+        extra: dict[str, Any] = {"path_params": encoded} if encoded is not None else {}
         records: list[Any]
         if mapping.response_shape == "singleton":
-            response = client.call_endpoint(mapping.api_endpoint, query_params=query_params)
+            response = client.call_endpoint(
+                mapping.api_endpoint, query_params=query_params, **extra
+            )
             if isinstance(response, dict):
                 records = [response]
             else:
@@ -156,7 +160,7 @@ class AiqumBackend(Backend):
                 records = []
         else:
             response = client.get_all_records(
-                mapping.api_endpoint, "GET", query_params=query_params
+                mapping.api_endpoint, "GET", query_params=query_params, **extra
             )
             records = _records_at_path(mapping, response)
         return self._parse_records(model_class, mapping, decision, records)

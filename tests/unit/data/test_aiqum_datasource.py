@@ -81,3 +81,37 @@ def test_where_rejected() -> None:
     qb = DataSource(MagicMock()).query(AiqumVolume, cluster="aiqum1")
     with pytest.raises(ValueError, match="AiqumBackend"):
         qb.where("size > 1")
+
+
+class TestVolumeMetricsPathParams:
+    """The {key}/metrics mapping is queried with path_params (#1054)."""
+
+    def test_metrics_with_path_params(self, client: MagicMock) -> None:
+        from pynetappfoundry.models.aiqum.datacenter.storage.volumes.metrics.model import (
+            AiqumVolumeMetricsSampleResponse,
+        )
+
+        client.call_endpoint.return_value = {"num_samples": 2, "duration": "PT1H"}
+        ds = DataSource(MagicMock())
+        results = list(
+            ds.query(
+                AiqumVolumeMetricsSampleResponse,
+                cluster="aiqum1",
+                path_params={"key": "a,b:c=d"},
+            ).filter({"interval": "1h"})
+        )
+        assert [r.num_samples for r in results] == [2]
+        client.call_endpoint.assert_called_once_with(
+            "/datacenter/storage/volumes/{key}/metrics",
+            query_params={"interval": "1h"},
+            path_params={"key": "a%2Cb%3Ac%3Dd"},
+        )
+
+    def test_metrics_without_path_params_raises(self, client: MagicMock) -> None:
+        from pynetappfoundry.models.aiqum.datacenter.storage.volumes.metrics.model import (
+            AiqumVolumeMetricsSampleResponse,
+        )
+
+        with pytest.raises(ValueError, match=r"\{key\}.*#1057"):
+            list(DataSource(MagicMock()).query(AiqumVolumeMetricsSampleResponse, cluster="aiqum1"))
+        client.call_endpoint.assert_not_called()
