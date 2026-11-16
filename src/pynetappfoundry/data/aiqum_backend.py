@@ -85,6 +85,7 @@ class AiqumBackend(Backend):
 
     supports_where_expressions: bool = False
     supports_path_params: bool = True
+    supports_parent_filters: bool = True
     live_only: bool = True
 
     def __init__(self, config: Config) -> None:
@@ -109,6 +110,7 @@ class AiqumBackend(Backend):
         *,
         where_expressions: tuple[str, ...] = (),
         path_params: dict[str, Any] | None = None,
+        parent_filters: dict[str, Any] | None = None,
     ) -> list[T]:
         """Fetch a list of AIQUM instances matching *filters*.
 
@@ -124,6 +126,11 @@ class AiqumBackend(Backend):
         runtime spec has a ``<collection>/{key}`` GET operation is fetched
         from that item endpoint (#1060): one request, the bare object wrapped
         as ``[response]``, and a 404 returns ``[]``.
+
+        *parent_filters* are query parameters for the parent collection request
+        of a per-parent fetch (#1061); ``{"key": k}`` takes the item route.  A
+        non-empty value with *path_params*, or on a mapping that is not
+        per-parent, raises :class:`ValueError`.
         """
         if decision.cache_fields and not decision.live_fields:
             msg = "AIQUM backend does not support cache-only queries"
@@ -137,6 +144,12 @@ class AiqumBackend(Backend):
             return []
 
         placeholders = _placeholders(mapping)
+        if parent_filters and (path_params or not (placeholders and mapping.parent_mapping)):
+            msg = (
+                f"{mapping.name}: parent_filters apply only to a per-parent query "
+                "(a placeholder endpoint with a parent_mapping and no path_params)"
+            )
+            raise ValueError(msg)
         encoded: dict[str, str] | None = None
         if path_params:
             encoded = _caller_path_params(mapping, placeholders, path_params)
@@ -150,7 +163,7 @@ class AiqumBackend(Backend):
             raise ValueError(msg)
         elif placeholders:
             return self._query_per_parent(
-                model_class, mapping, decision, cluster, filters, placeholders
+                model_class, mapping, decision, cluster, filters, placeholders, parent_filters
             )
 
         if encoded is None and not placeholders:
@@ -201,11 +214,14 @@ class AiqumBackend(Backend):
         cluster: str,
         filters: dict[str, Any],
         placeholders: list[str],
+        parent_filters: dict[str, Any] | None = None,
     ) -> list[T]:
         """Fetch a parent-keyed mapping, one request per parent (#1057).
 
         The parents come from a recursive :meth:`query` of the parent mapping on
-        the same instance, unfiltered; *filters* go to the child requests only.
+        the same instance, filtered by *parent_filters* (none by default, #1061);
+        *filters* go to the child requests only.  The parent cap applies to the
+        filtered parents.
         Each parent's identifier is percent-encoded into ``path_params``.  A
         parent without an identifier is skipped (``SKIP_PARENT``) and a failing
         child request is logged as ``CHILD_FETCH_FAILED`` and skipped.  More
@@ -216,7 +232,13 @@ class AiqumBackend(Backend):
 
         def query_parents(parent_map: TypeMapping, parent_decision: RoutingDecision) -> list[Any]:
             return list(
-                self.query(parent_map.model_class, parent_map, parent_decision, cluster, {})
+                self.query(
+                    parent_map.model_class,
+                    parent_map,
+                    parent_decision,
+                    cluster,
+                    dict(parent_filters) if parent_filters else {},
+                )
             )
 
         def fetch_child(path_params: dict[str, str]) -> list[Any]:

@@ -580,3 +580,149 @@ class TestPerParent:
             assert not _placeholders(parent), name
             swept += 1
         assert swept > 0
+
+
+class TestParentFilters:
+    """parent_filters narrow the parent collection request of a per-parent query (#1061)."""
+
+    def test_capability_flag(self) -> None:
+        from pynetappfoundry.data.backends import OntapBackend
+        from pynetappfoundry.data.dii_backend import DiiBackend
+
+        assert AiqumBackend.supports_parent_filters is True
+        assert DiiBackend.supports_parent_filters is False
+        assert OntapBackend.supports_parent_filters is False
+
+    def test_parent_request_carries_filters_child_only_filters(
+        self, parent_mapping: TypeMapping
+    ) -> None:
+        client = _per_parent_client([{"key": "a"}, {"key": "b"}])
+        backend = _per_parent_backend()
+        with patch.object(backend, "_get_api_client", return_value=client):
+            results = backend.query(
+                FakeAiqumVolume,
+                _child_mapping(),
+                _LIVE,
+                "aiqum1",
+                {"interval": "1h"},
+                parent_filters={"cluster.name": "c1"},
+            )
+        assert [r.key for r in results] == ["a", "b"]
+        client.get_all_records.assert_called_once_with(
+            "/parents", "GET", query_params={"cluster.name": "c1"}
+        )
+        assert [c.kwargs["query_params"] for c in client.call_endpoint.call_args_list] == [
+            {"interval": "1h"},
+            {"interval": "1h"},
+        ]
+
+    @pytest.mark.parametrize("parent_filters", [None, {}])
+    def test_empty_parent_filters_send_empty_query_params(
+        self, parent_mapping: TypeMapping, parent_filters: dict[str, Any] | None
+    ) -> None:
+        client = _per_parent_client([{"key": "a"}])
+        backend = _per_parent_backend()
+        with patch.object(backend, "_get_api_client", return_value=client):
+            backend.query(
+                FakeAiqumVolume,
+                _child_mapping(),
+                _LIVE,
+                "aiqum1",
+                {},
+                parent_filters=parent_filters,
+            )
+        client.get_all_records.assert_called_once_with("/parents", "GET", query_params={})
+
+    def test_cap_applies_after_filtering(self, parent_mapping: TypeMapping) -> None:
+        client = _per_parent_client([{"key": "a"}, {"key": "b"}])
+        backend = _per_parent_backend(max_parent_requests=2)
+        with patch.object(backend, "_get_api_client", return_value=client):
+            results = backend.query(
+                FakeAiqumVolume,
+                _child_mapping(),
+                _LIVE,
+                "aiqum1",
+                {},
+                parent_filters={"svm.name": "vs1"},
+            )
+        assert len(results) == 2
+
+    def test_filtered_parents_over_cap_raise_before_child_call(
+        self, parent_mapping: TypeMapping
+    ) -> None:
+        client = _per_parent_client([{"key": "a"}, {"key": "b"}, {"key": "c"}])
+        backend = _per_parent_backend(max_parent_requests=2)
+        with (
+            patch.object(backend, "_get_api_client", return_value=client),
+            pytest.raises(ValueError, match="max_parent_requests"),
+        ):
+            backend.query(
+                FakeAiqumVolume,
+                _child_mapping(),
+                _LIVE,
+                "aiqum1",
+                {},
+                parent_filters={"svm.name": "vs1"},
+            )
+        client.call_endpoint.assert_not_called()
+
+    def test_key_parent_filter_takes_item_route(self, parent_mapping: TypeMapping) -> None:
+        client = MagicMock()
+        client.api_spec = {"paths": {"/parents": {"get": {}}, "/parents/{key}": {"get": {}}}}
+        client.call_endpoint.side_effect = [
+            {"key": "k1", "name": "p1"},
+            {"key": "k1", "name": "m"},
+        ]
+        backend = _per_parent_backend()
+        with patch.object(backend, "_get_api_client", return_value=client):
+            results = backend.query(
+                FakeAiqumVolume,
+                _child_mapping(),
+                _LIVE,
+                "aiqum1",
+                {"interval": "1h"},
+                parent_filters={"key": "k1"},
+            )
+        assert [r.key for r in results] == ["k1"]
+        client.get_all_records.assert_not_called()
+        assert [c.args[0] for c in client.call_endpoint.call_args_list] == [
+            "/parents/{key}",
+            _METRICS,
+        ]
+        assert client.call_endpoint.call_args_list[1].kwargs == {
+            "query_params": {"interval": "1h"},
+            "path_params": {"key": "k1"},
+        }
+
+    def test_with_path_params_rejected(self, parent_mapping: TypeMapping) -> None:
+        backend = _per_parent_backend()
+        with (
+            patch.object(backend, "_get_api_client") as get_client,
+            pytest.raises(ValueError, match="parent_filters"),
+        ):
+            backend.query(
+                FakeAiqumVolume,
+                _child_mapping(),
+                _LIVE,
+                "aiqum1",
+                {},
+                path_params={"key": "x"},
+                parent_filters={"svm.name": "vs1"},
+            )
+        get_client.assert_not_called()
+
+    def test_non_per_parent_mapping_rejected(self, mapping: TypeMapping) -> None:
+        backend = _backend()
+        with (
+            patch.object(backend, "_get_api_client") as get_client,
+            pytest.raises(ValueError, match="parent_filters"),
+        ):
+            backend.query(
+                FakeAiqumVolume,
+                mapping,
+                _LIVE,
+                "aiqum1",
+                {},
+                parent_filters={"svm.name": "vs1"},
+            )
+        get_client.assert_not_called()

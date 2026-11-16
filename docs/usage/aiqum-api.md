@@ -70,7 +70,7 @@ volumes = ds.query(AiqumVolume, cluster="aiqum1").filter({"svm.name": "vs1"})
 - **Live only.** AIQUM has no local cache. `source="auto"` (the default) and `source="live"` query the instance; `source="cache"` raises `ValueError`. `.where()` and non-equality filters raise `ValueError` ([ADR-0026](../decisions/0026-aiqum-backend-is-live-only-and-reads-the-hal-records-envelope.md)).
 - **Filters** become query parameters on the request.
 - **Paging is automatic.** The `_links.next.href` links are followed and the `records` merged.
-- **Endpoints with a `{placeholder}`** (the `{key}/metrics` models, such as `/datacenter/storage/volumes/{key}/metrics`) are queried with `path_params` (one request). Without it, a model with a parent (the `{key}/metrics` models) is fetched once per parent: the parent collection is queried on the same instance, unfiltered, then one request is sent per parent with its `key` percent-encoded, and *filters* go to those child requests only. The cost scales with the parent count, so more parents than `max_parent_requests` (`aiqumapi.toml`, default 500, `0` = unlimited) raises `ValueError` before any child request; pass `path_params` or raise the cap. A parent without a `key` is skipped (`SKIP_PARENT`) and a failing child request is logged as `CHILD_FETCH_FAILED` and skipped; an error on the parent query propagates. Filtering the parents is not supported yet ([#1061](https://github.com/endavis/pynetappfoundry/issues/1061)). A placeholder model with no parent raises `ValueError` naming the placeholder ([#1057](https://github.com/endavis/pynetappfoundry/issues/1057)).
+- **Endpoints with a `{placeholder}`** (the `{key}/metrics` models, such as `/datacenter/storage/volumes/{key}/metrics`) are queried with `path_params` (one request). Without it, a model with a parent (the `{key}/metrics` models) is fetched once per parent: the parent collection is queried on the same instance, unfiltered, then one request is sent per parent with its `key` percent-encoded, and *filters* go to those child requests only. The cost scales with the parent count, so more parents than `max_parent_requests` (`aiqumapi.toml`, default 500, `0` = unlimited) raises `ValueError` before any child request; pass `path_params` or raise the cap. A parent without a `key` is skipped (`SKIP_PARENT`) and a failing child request is logged as `CHILD_FETCH_FAILED` and skipped; an error on the parent query propagates. To narrow the parents, pass `parent_filters` to `query()` (see below). A placeholder model with no parent raises `ValueError` naming the placeholder ([#1057](https://github.com/endavis/pynetappfoundry/issues/1057)).
 
 ```python
 from pynetappfoundry.models.aiqum.datacenter.storage.volumes.metrics.model import (
@@ -83,6 +83,24 @@ metrics = ds.query(
 ```
 
 Each value is converted with `str()` and percent-encoded, so a key containing `,`, `:`, `=` or `/` is safe to pass as is. An unknown key, a missing placeholder, or an empty value, `.` or `..` raises `ValueError` before any request ([#1054](https://github.com/endavis/pynetappfoundry/issues/1054)).
+
+#### Filtering the parents
+
+`parent_filters` are query parameters for the parent collection request of a per-parent query, so metrics are fetched only for the matching parents. `.filter()` entries still go to the child requests only. `max_parent_requests` applies to the filtered parents.
+
+```python
+metrics = ds.query(
+    AiqumVolumeMetricsSampleResponse,
+    cluster="aiqum1",
+    parent_filters={"svm.name": "vs1"},
+).filter({"interval": "1h"})
+```
+
+- A value matches exactly; end it with `*` for a prefix match (`{"name": "vol*"}`). Without the `*`, a prefix returns no parents.
+- An unknown parameter makes AIQUM return `400`, so a misspelled parent filter raises instead of fetching every parent.
+- `parent_filters={"key": k}` takes the single-object route ([#1060](https://github.com/endavis/pynetappfoundry/issues/1060)): one parent request.
+- `parent_filters` with `path_params`, or on a model that is not per-parent, or on a backend other than AIQUM, raises `ValueError` at `query()` time.
+- Narrow the parents with `parent_filters`, not `.filter()`. The `{key}/metrics` endpoint ignores query parameters it does not declare (lab-verified on AIQUM 9.18: `?cluster.name=<bogus>` and `?not_a_param=x` both returned 200 with full data), so a `.filter({"cluster.name": ...})` on a metrics query has no effect ([#1061](https://github.com/endavis/pynetappfoundry/issues/1061)).
 
 ### Fetch one object by key
 
