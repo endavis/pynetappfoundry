@@ -152,6 +152,8 @@ class DiiBackend(Backend):
 
     supports_where_expressions: bool = False
     supports_path_params: bool = True
+    # DII has no cache: auto routing must go live, source="cache" is rejected.
+    live_only: bool = True
 
     def __init__(self, config: Config) -> None:
         super().__init__(config)
