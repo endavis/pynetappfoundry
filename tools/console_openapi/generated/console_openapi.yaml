@@ -11,7 +11,7 @@ info:
     machine-readable spec for this API surface.
 
 
-    Included service folders: tenancy, tenancyv4, cvo.
+    Included service folders: tenancy, tenancyv4, cvo, dw.
 
 
     Service folders containing prose tutorials with curl examples (e.g. ``cm/``) are
@@ -21,11 +21,13 @@ info:
   - tenancy
   - tenancyv4
   - cvo
+  - dw
   x-source-repository: https://github.com/NetAppDocs/console-automation
   x-service-base-paths:
     tenancy: ''
     tenancyv4: /v1/management
     cvo: /occm/api
+    dw: ''
   x-source-commit: 202c56dabb9ce27392c1a46421ee4d3e174b0758
 servers:
 - url: https://api.bluexp.netapp.com
@@ -63748,6 +63750,1417 @@ paths:
       responses:
         default:
           description: Default response
+      security:
+      - BearerAuth: []
+      servers:
+      - *id001
+  /license/account/{accountId}/licenseResource/{resourceIdentifier}:
+    delete:
+      operationId: dw_delete_license_account_by_accountId_licenseResource_by_resourceIdentifier
+      summary: Delete a license by resource ID
+      tags:
+      - dw
+      x-source-file: dw/delete-license-account-licenseresource-.adoc
+      description: Deletes a specified license by resource ID.
+      parameters:
+      - name: accountId
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: resourceIdentifier
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: X-Service-Request-Id
+        in: header
+        schema:
+          type: string
+        description: Request identifier
+      responses:
+        '200':
+          description: Success response
+      security:
+      - BearerAuth: []
+      x-token-type: service
+      servers:
+      - *id001
+    patch:
+      operationId: dw_patch_license_account_by_accountId_licenseResource_by_resourceIdentifier
+      summary: Update a license by resource ID
+      tags:
+      - dw
+      x-source-file: dw/patch-license-account-licenseresource-.adoc
+      description: Updates a specified license by resource ID.
+      parameters:
+      - name: accountId
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: resourceIdentifier
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: X-Service-Request-Id
+        in: header
+        schema:
+          type: string
+        description: Request identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/dw.patch-license-account-licenseresource-.RequestBody'
+      responses:
+        '200':
+          description: Success response
+      security:
+      - BearerAuth: []
+      x-token-type: service
+      servers:
+      - *id001
+  /license/account/{accountId}/subscription/{subscriptionId}:
+    delete:
+      operationId: dw_delete_license_account_by_accountId_subscription_by_subscriptionId
+      summary: Delete a subscription using the subscription ID
+      tags:
+      - dw
+      x-source-file: dw/delete-license-account-subscription-.adoc
+      description: Deletes or disassociates a subscription that contains the specified
+        subscription ID from an account. The specified subscription must exist and
+        not be associated with a Cloud Volumes ONTAP instance. + This endpoint deletes
+        the subscription if no other account is associated with the subscription.
+        + If more than one account is associated with the subscription, this endpoint
+        disassociates the account provided in the `accountId` field and the subscription.
+      parameters:
+      - name: dwAudit
+        in: query
+        schema:
+          type: boolean
+        description: The NetApp Console audits, by default, all API calls. **Note:**
+      - name: accountId
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: subscriptionId
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: X-Service-Request-Id
+        in: header
+        schema:
+          type: string
+        description: Request identifier
+      responses:
+        '200':
+          description: Success response
+      security:
+      - BearerAuth: []
+      x-token-type: service
+      servers:
+      - *id001
+  /license/serial-number/{serialNumber}:
+    delete:
+      operationId: dw_delete_license_serial_number_by_serialNumber
+      summary: Delete a license
+      tags:
+      - dw
+      x-source-file: dw/delete-license-serial-number-.adoc
+      description: Deletes a license by using a specified serial number. **Note:**
+        * If you use a NetApp Console service token, accountId is not a required field.
+        * If you use a NetApp Console user token, `accountId` is a required field.
+        * `serialNumber` is a required parameter. *Token usage:* Either a NetApp Console
+        user token or service token.
+      parameters:
+      - name: serialNumber
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: X-Service-Request-Id
+        in: header
+        schema:
+          type: string
+        description: Request identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/dw.delete-license-serial-number-.RequestBody'
+            example:
+              accountId: string
+      responses:
+        '200':
+          description: Success response
+      security:
+      - BearerAuth: []
+      servers:
+      - *id001
+    patch:
+      operationId: dw_patch_license_serial_number_by_serialNumber
+      summary: Update a license by serial number
+      tags:
+      - dw
+      x-source-file: dw/patch-license-serial-number-.adoc
+      description: Updates a specified license by license serial number. + If you
+        use a user token, you must provide the NetApp License File (NLF). If you use
+        the NetApp Console service token, provide either the NLF or values for `serialNumber`
+        and the fields that you want to update. **Note:** * If you use a NetApp Console
+        service token, accountId is not a required field. * If you use a NetApp Console
+        user token, accountId is a required field. * If you provide the NLF, the license
+        data is overwritten by the NLF data. * The `metadata` field value is appended
+        to the existing metadata. * `Authorization` is a required field. * `serialNumber`
+        is a required field when using this site. In general, you can specify its
+        value as `null`. *Token usage:* Either a NetApp Console user token or service
+        token.
+      parameters:
+      - name: serialNumber
+        in: path
+        schema:
+          type: string
+          nullable: true
+        required: true
+      - name: X-Service-Request-Id
+        in: header
+        schema:
+          type: string
+        description: Request identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/dw.patch-license-serial-number-.RequestBody'
+            example:
+              accountId: string
+      responses:
+        '200':
+          description: Success response
+      security:
+      - BearerAuth: []
+      servers:
+      - *id001
+    post:
+      operationId: dw_post_license_serial_number_by_serialNumber
+      summary: Associate a license
+      tags:
+      - dw
+      x-source-file: dw/post-license-serial-number-.adoc
+      description: Associates a license with the NetApp Console either by providing
+        a NetApp License File (NLF) in the license body field or a value for both
+        the `serialNumber` query parameter and `nssKeyId` body field. **Note:** *
+        If you use a NetApp Console service token, accountId is not a required field.
+        * If you use a NetApp Console user token, `accountId` is a required field.
+        * `serialNumber` is a required field when using this site. In general, you
+        can specify its value as `null`. * If the value of `licenseType` is `EXTRA_CAPACITY`,
+        you must provide the associated resource ID (resourceId). * `licenseType`
+        is not a required field for data services and capacity based license types.
+        * `expirationDate` is a required field unless you are registered with the
+        NetApp Support Site. * `license` is not a required field if values for `serialnumber`
+        and `nssKeyId` are provided. * `capacity` is a required field unless you are
+        registered with the NetApp Support Site. * `packageValue` is a required field
+        (used only for internal purposes) unless you are registered with the NetApp
+        Support Site. * `metadata` is not a required field and is used to add additional
+        data to a license that is not included in other request body fields. *Token
+        usage:* Either a NetApp Console user token or service token.
+      parameters:
+      - name: serialNumber
+        in: path
+        schema:
+          type: string
+          nullable: true
+        required: true
+      - name: X-Service-Request-Id
+        in: header
+        schema:
+          type: string
+        description: Request identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/dw.post-license-serial-number-.RequestBody'
+            example:
+              accountId: string
+              licenseType: string
+              license: string
+              nssKeyId: string
+      responses:
+        '200':
+          description: Success response
+      security:
+      - BearerAuth: []
+      servers:
+      - *id001
+  /license/subscriptions/account/{accountId}:
+    delete:
+      operationId: dw_delete_license_subscriptions_account_by_accountId
+      summary: Delete a subscription using the account ID
+      tags:
+      - dw
+      x-source-file: dw/delete-license-subscriptions-account-.adoc
+      description: Deletes or disassociates a subscription that contains the specified
+        subscription ID from an account. The specified subscription must exist and
+        not be associated with a Cloud Volumes ONTAP instance. + This endpoint deletes
+        the subscription if no other account is associated with the subscription.
+        + If more than one account is associated with the subscription, this endpoint
+        disassociates the account provided in the `accountId` field and the subscription.
+        {blank} + *Token usage:* Either a NetApp Console user token or service token.
+      parameters:
+      - name: accountId
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: X-Service-Request-Id
+        in: header
+        schema:
+          type: string
+        description: Request identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/dw.delete-license-subscriptions-account-.RequestBody'
+            example:
+              subscriptionId: string
+      responses:
+        '200':
+          description: Success response
+      security:
+      - BearerAuth: []
+      servers:
+      - *id001
+    get:
+      operationId: dw_get_license_subscriptions_account_by_accountId
+      summary: Retrieve subscription information for an account
+      tags:
+      - dw
+      x-source-file: dw/get-license-subscriptions-account-.adoc
+      description: 'Retrieves the subscription information for a specified account
+        ID. **Note:** * If entitlements are provided, the API endpoint also returns
+        the entitlements related to each subscription. * If serviceName is provided,
+        the API returns only the subscription related to the service name. * The API
+        authorizes two types of calls: user calls and service calls (with a predefined
+        scope). + For KEYSTONE, only user calls are allowed. {blank} + *Token usage:*
+        Either a NetApp Console user token or service token.'
+      parameters:
+      - name: serviceName
+        in: query
+        schema:
+          type: string
+      - name: entitlements
+        in: query
+        schema:
+          type: boolean
+      - name: subscriptionId
+        in: query
+        schema:
+          type: string
+      - name: dimensions
+        in: query
+        schema:
+          type: boolean
+      - name: cloudProvider
+        in: query
+        schema:
+          type: string
+      - name: extendSubInfo
+        in: query
+        schema:
+          type: boolean
+      - name: extendEntitlementsInfo
+        in: query
+        schema:
+          type: boolean
+      - name: extendUsageReport
+        in: query
+        schema:
+          type: boolean
+      - name: includeCloudAccounts
+        in: query
+        schema:
+          type: boolean
+      - name: includeSummaryInfo
+        in: query
+        schema:
+          type: boolean
+      - name: eventTypes
+        in: query
+        schema:
+          type: string
+      - name: accountId
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: X-Service-Request-Id
+        in: header
+        schema:
+          type: string
+        description: Request identifier
+      responses:
+        '200':
+          description: Default Response
+      security:
+      - BearerAuth: []
+      servers:
+      - *id001
+    post:
+      operationId: dw_post_license_subscriptions_account_by_accountId
+      summary: Associate a subscription
+      tags:
+      - dw
+      x-source-file: dw/post-license-subscriptions-account-.adoc
+      description: Associate a subscription with an identity and access management
+        service account. + Each subscription can be associated with multiple accounts.
+        {blank} + *Token usage:* Either a NetApp Console user token or service token.
+      parameters:
+      - name: accountId
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: X-Service-Request-Id
+        in: header
+        schema:
+          type: string
+        description: Request identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/dw.post-license-subscriptions-account-.RequestBody'
+            example:
+              subscriptionId: string
+      responses:
+        '200':
+          description: Success response
+      security:
+      - BearerAuth: []
+      servers:
+      - *id001
+  /license/subscriptions/account/{accountId}/subscription/{subscriptionId}:
+    delete:
+      operationId: dw_delete_license_subscriptions_account_by_accountId_subscription_by_subscriptionId
+      summary: Delete a subscription using the subscription ID (deprecated)
+      tags:
+      - dw
+      x-source-file: dw/delete-license-subscriptions-account-subscription-.adoc
+      description: 'Deletes or disassociates a subscription that contains the specified
+        subscription ID from an account. A newer version of this deprecated endpoint
+        is available https://docs.netapp.com/us-en/console-automation/dw/delete-license-account-subscription-.html[here.]
+        The specified subscription must exist and not be associated with a Cloud Volumes
+        ONTAP instance. + This endpoint deletes the subscription if no other account
+        is associated with the subscription. + If more than one account is associated
+        with the subscription, this endpoint disassociates the account provided in
+        the `accountId` field and the subscription. {blank} + *Token usage:* Either
+        a NetApp Console user token or service token. CAUTION: This operation is deprecated.'
+      parameters:
+      - name: accountId
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: subscriptionId
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: X-Service-Request-Id
+        in: header
+        schema:
+          type: string
+        description: Request identifier
+      responses:
+        '200':
+          description: Success response
+      security:
+      - BearerAuth: []
+      servers:
+      - *id001
+  /license/account/{accountId}/subscriptions/preferred:
+    get:
+      operationId: dw_get_license_account_by_accountId_subscriptions_preferred
+      summary: Retrieve the preferred subscription ID for an account
+      tags:
+      - dw
+      x-source-file: dw/get-license-account-subscriptions-preferred.adoc
+      description: Retrieves the preferred subscription ID for a specified account
+        ID. **Note:** * This API authorizes user calls and service calls with a predefined
+        scope only. *Token usage:* Either a NetApp Console user token or service token.
+      parameters:
+      - name: cloudProvider
+        in: query
+        schema:
+          type: string
+      - name: accountId
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: X-Service-Request-Id
+        in: header
+        schema:
+          type: string
+        description: Request identifier
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/dw.get-license-account-subscriptions-preferred.Response200Body'
+              example:
+                accounts:
+                - account-sdajkj5
+                - account-euir74j
+                createdAt: 1556636730921
+                cloudProvider: aws
+                entitlements:
+                  items:
+                  - contractOption: Professional
+                    units: 12 TiB
+                    expirationDate: '2026-07-02T00:00:00Z'
+                    details: High Availability + Unlimited Cloud Backup
+                    category: Cloud Volumes ONTAP
+                    dimension: tier12
+                    IntegerValue: 1
+                    usageReport: 12
+                    unit: TiB
+                    serviceName: CVO
+                dimensions:
+                - professional
+                contract: false
+                customerIdentifier: FJsUvVHffi9
+                productCode: 1ajwvb3kjavjlk36izcn19e07
+                planId: paygo_example
+                serviceName: cloud-volumes-ontap
+                subscriptionId: aws-abcd-1234
+                subscriptionName: My Prod CVO subscription
+                subscriptionStatus: subscribed
+                autoRenew: N/A
+                endDate: 1556636730921
+                term: 12 Months
+                isPrivate: true
+                listingUrl: https://marketplace-fake-url.com
+                productTitle: Cloud Manager - Deploy & Manage Netapp Cloud Data Service
+                cloudIds:
+                - 0ae5-rew5-ttt1-4563
+                availableDimensions:
+                - ransomware_resilience
+                configuration: string
+                events:
+                  endDateEvent:
+                    type: string
+      security:
+      - BearerAuth: []
+      servers:
+      - *id001
+    put:
+      operationId: dw_put_license_account_by_accountId_subscriptions_preferred
+      summary: Update the preferred subscription ID for an account
+      tags:
+      - dw
+      x-source-file: dw/put-license-account-subscriptions-preferred.adoc
+      description: Updates the preferred subscription for a specified account ID.
+        **Note:** * This API authorizes user calls and service calls with a predefined
+        scope only.
+      parameters:
+      - name: accountId
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: X-Service-Request-Id
+        in: header
+        schema:
+          type: string
+        description: Request identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/dw.put-license-account-subscriptions-preferred.RequestBody'
+            example:
+              aws: string
+              gcp: string
+              azure: string
+      responses:
+        '200':
+          description: Success response
+      security:
+      - BearerAuth: []
+      x-token-type: user
+      servers:
+      - *id001
+  /license/account/{accountId}/subscriptions:
+    get:
+      operationId: dw_get_license_account_by_accountId_subscriptions
+      summary: Retrieve all subscriptions for an account
+      tags:
+      - dw
+      x-source-file: dw/get-license-account-subscriptions.adoc
+      description: 'Retrieves the subscription information for a specified subscription.
+        **Note:** * In the context of an account provided in URL parameters, the API
+        returns subscriptions for all accounts. * If the subscription ID is provided,
+        the API returns only the subscription details or an empty response. * The
+        API authorizes three types of calls: user calls, agent calls (Console agent),
+        and service calls (with a predefined scope). * For a service call, you must
+        send the subscription type as a query parameter (the API validates the scope
+        against the subscription type).'
+      parameters:
+      - name: subscriptionId
+        in: query
+        schema:
+          type: string
+      - name: subscriptionType
+        in: query
+        schema:
+          type: string
+      - name: accountId
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: X-Service-Request-Id
+        in: header
+        schema:
+          type: string
+        description: Request identifier
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dw.get-license-account-subscriptions.Response200Body'
+              example:
+                subscriptions:
+                - subscriptionId: string
+                  subscriptionType: string
+      security:
+      - BearerAuth: []
+      x-token-type: service
+      servers:
+      - *id001
+  /license/data-service-eligibility/account/{accountId}/provider/{cloudProvider}:
+    get:
+      operationId: dw_get_license_data_service_eligibility_account_by_accountId_provider_by_cloudProvider
+      summary: Retrieve data service eligibility details
+      tags:
+      - dw
+      x-source-file: dw/get-license-data-service-eligibility-account-provider-.adoc
+      description: 'Retrieves data service eligibility details to determine whether
+        an account is eligible to use a data service in an on-premises or cloud environment.
+        **Note:** * You can use a user token or service token with scope: license:internal.
+        * `accountId`, `cloudProvider`, and `service` are required parameters. * The
+        ''SGWS'' value in the cloudProvider parameter denotes that the feature details
+        request is for an on-premises ONTAP system backed up in StorageGRID and retrieves
+        only license details. * `cloudAccountId` and `cvoId` are optional parameters.
+        * If the feature details request is for a Cloud Volumes ONTAP or an on-premises
+        ONTAP system backed up on a cloud, you must provide `cloudAccountId`. * If
+        the feature details request is for Cloud Volumes ONTAP, you must provide the
+        `cvoId` parameter that is used to retrieve the Cloud Volumes ONTAP package.
+        * The TotalServiceLicensesCapacity value is in TB, the TotalServiceLicensesUsedCapacity
+        value is in TiB, and the FreeTrialEndDate value is in ISO 8601 format. *Token
+        usage:* Either a NetApp Console user token or service token.'
+      parameters:
+      - name: service
+        in: query
+        schema:
+          type: string
+        required: true
+      - name: cloudAccountId
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: cvoId
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: accountId
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: cloudProvider
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: X-Service-Request-Id
+        in: header
+        schema:
+          type: string
+        description: Request identifier
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dw.get-license-data-service-eligibility-account-provider-.Response200Body'
+              example:
+                subscriptionDetails:
+                  subscriptionId: string
+                freeTrialEndDate: string
+      security:
+      - BearerAuth: []
+      servers:
+      - *id001
+  /license/licenses:
+    get:
+      operationId: dw_get_license_licenses
+      summary: Retrieve a license by type
+      tags:
+      - dw
+      x-source-file: dw/get-license-licenses.adoc
+      description: Retrieves a specified license by type (`LicenseType`), a resource
+        ID (`resourceId`), or both. + The license endpoints consult the used or consumed
+        capacity under the `includeSummaryInfo` parameter when retrieving licenses
+        with the GET API call. **Note:** * If you use a NetApp Console service token,
+        accountId is not a required field. * If you use a NetApp Console user token,
+        `accountId` is a required field. * When you enter a value in `serialNumber`
+        , all other fields are ignored. * The boolean parameter `includeSummaryInfo`
+        (optional) retrieves the `totalLicensesCapacity`, `usedCapacity`, `reportTime`
+        and events such as capacity expired or about to expire for each data service
+        (CLOUD_BACKUP, CLOUD_DATA_SENSE, CLOUD_TIERING). * The boolean parameter `fetchNlf`
+        (optional) retrieves the most updated valid NetApp license file from NetApp
+        systems. * If you use the boolean parameter `fetchNlf`, you must provide `accountId`,
+        `serialNumber`, and `nssKeyId`. * `fetchNlf` and `includeSummaryInfo` can't
+        be provided in the same request. *Token usage:* Either a NetApp Console user
+        token or service token.
+      parameters:
+      - name: accountId
+        in: query
+        schema:
+          type: string
+      - name: serialNumber
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: resourceId
+        in: query
+        schema:
+          type: string
+      - name: licenseType
+        in: query
+        schema:
+          type: string
+      - name: service
+        in: query
+        schema:
+          type: string
+      - name: group
+        in: query
+        schema:
+          type: string
+      - name: includeSummaryInfo
+        in: query
+        schema:
+          type: boolean
+      - name: includeExchangedLicenses
+        in: query
+        schema:
+          type: boolean
+      - name: fetchNlf
+        in: query
+        schema:
+          type: boolean
+      - name: nssKeyId
+        in: query
+        schema:
+          type: string
+      - name: eventTypes
+        in: query
+        schema:
+          type: string
+      - name: meteringStatus
+        in: query
+        schema:
+          type: string
+      - name: X-Service-Request-Id
+        in: header
+        schema:
+          type: string
+        description: Request identifier
+      responses:
+        '200':
+          description: Default Response
+      security:
+      - BearerAuth: []
+      servers:
+      - *id001
+  /license/onPrem/account/{accountId}/clusters:
+    get:
+      operationId: dw_get_license_onPrem_account_by_accountId_clusters
+      summary: Retrieve on-prem ONTAP data
+      tags:
+      - dw
+      x-source-file: dw/get-license-onprem-account-clusters.adoc
+      description: Retrieves on-premises ONTAP cluster data. + The ONTAP cluster must
+        be configured for AutoSupport to send back the telemetry and configuration
+        data to NetApp. Data retrieved by this endpoint is comprised mostly of ONTAP
+        cluster configuration details (such as the cluster management IP address,
+        capacity, contract date, feature licenses, and more).
+      parameters:
+      - name: accountId
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: X-Service-Request-Id
+        in: header
+        schema:
+          type: string
+        description: Request identifier
+      responses:
+        '200':
+          description: Account onPremise data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dw.get-license-onprem-account-clusters.Response200Body'
+              example:
+                clusterData:
+                - hostName: string
+                  serialNumber: string
+                  hardwareContractEndDate: string
+                  softwareContractEndDate: string
+                  serviceTier: string
+                  clusterIp: string
+                  clusterName: string
+                  clusterId: string
+      security:
+      - BearerAuth: []
+      x-token-type: user
+      servers:
+      - *id001
+  /license/subscriptions/cloud-account/association:
+    get:
+      operationId: dw_get_license_subscriptions_cloud_account_association
+      summary: Retrieve the associated subscription ID for cloud accounts
+      tags:
+      - dw
+      x-source-file: dw/get-license-subscriptions-cloud-account-association.adoc
+      description: Retrieves the associated subscription ID for each cloud account
+        ID. **Note:** * This API authorizes user calls and service calls with a predefined
+        scope only. {blank} + *Token usage:* Either a NetApp Console user token or
+        service token.
+      parameters:
+      - name: accountId
+        in: query
+        schema:
+          type: string
+        required: true
+      - name: X-Service-Request-Id
+        in: header
+        schema:
+          type: string
+        description: Request identifier
+      responses:
+        '200':
+          description: Default Response
+      security:
+      - BearerAuth: []
+      servers:
+      - *id001
+  /license/subscriptions/configuration:
+    get:
+      operationId: dw_get_license_subscriptions_configuration
+      summary: Retrieve subscription configuration information
+      tags:
+      - dw
+      x-source-file: dw/get-license-subscriptions-configuration.adoc
+      description: Retrieves the subscription configuration information for a specified
+        subscription ID. **Note:** * This API authorizes user calls and service calls
+        with a predefined scope only. {blank} + *Token usage:* Either a NetApp Console
+        user token or service token.
+      parameters:
+      - name: accountId
+        in: query
+        schema:
+          type: string
+        required: true
+      - name: subscriptionId
+        in: query
+        schema:
+          type: string
+        required: true
+      - name: X-Service-Request-Id
+        in: header
+        schema:
+          type: string
+        description: Request identifier
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dw.get-license-subscriptions-configuration.Response200Body'
+              example:
+                cloudAccountIds:
+                - string
+      security:
+      - BearerAuth: []
+      servers:
+      - *id001
+    patch:
+      operationId: dw_patch_license_subscriptions_configuration
+      summary: Set the subscription configuration
+      tags:
+      - dw
+      x-source-file: dw/patch-license-subscriptions-configuration.adoc
+      description: Sets the subscription configuration. + Associates subscriptions
+        to cloud accounts. {blank} +
+      parameters:
+      - name: X-Service-Request-Id
+        in: header
+        schema:
+          type: string
+        description: Request identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/dw.patch-license-subscriptions-configuration.RequestBody'
+            example:
+              accountId: string
+              subscriptionId: string
+              cloudAccountIds:
+              - string
+      responses:
+        '200':
+          description: Success response
+      security:
+      - BearerAuth: []
+      x-token-type: user
+      servers:
+      - *id001
+  /license/subscriptions/entitlements:
+    get:
+      operationId: dw_get_license_subscriptions_entitlements
+      summary: Retrieve the subscription entitlements
+      tags:
+      - dw
+      x-source-file: dw/get-license-subscriptions-entitlements.adoc
+      description: 'Retrieves the subscription entitlements information for a specified
+        service name. **Note:** * This API authorizes service calls with a predefined
+        scope only. {blank} + *Token usage:* NetApp Console service token with the
+        following scopes: %scopes%.'
+      parameters:
+      - name: serviceName
+        in: query
+        schema:
+          type: string
+        required: true
+      - name: X-Service-Request-Id
+        in: header
+        schema:
+          type: string
+        description: Request identifier
+      responses:
+        '200':
+          description: Default Response
+      security:
+      - BearerAuth: []
+      servers:
+      - *id001
+  /license/subscriptions/subscription/{subscriptionId}:
+    get:
+      operationId: dw_get_license_subscriptions_subscription_by_subscriptionId
+      summary: Retrieve subscription information using the subscription ID (deprecated)
+      tags:
+      - dw
+      x-source-file: dw/get-license-subscriptions-subscription-.adoc
+      description: 'Retrieves the subscription information for a specified subscription
+        ID. A newer version of this deprecated endpoint is available https://docs.netapp.com/us-en/console-automation/dw/get-license-subscriptions-subscription.html[here.]
+        **Note:** * This API authorizes service calls with a predefined scope only.
+        {blank} + *Token usage:* NetApp Console service token with the following scopes:
+        %scopes%. CAUTION: This operation is deprecated.'
+      parameters:
+      - name: subscriptionId
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: X-Service-Request-Id
+        in: header
+        schema:
+          type: string
+        description: Request identifier
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dw.get-license-subscriptions-subscription-.Response200Body'
+              example:
+                accounts:
+                - account-sdajkj5
+                - account-euir74j
+                createdAt: 1556636730921
+                cloudProvider: aws
+                entitlements:
+                  items:
+                  - contractOption: Professional
+                    units: 12 TiB
+                    expirationDate: '2026-07-02T00:00:00Z'
+                    details: High Availability + Unlimited Cloud Backup
+                    category: Cloud Volumes ONTAP
+                    dimension: tier12
+                    IntegerValue: 1
+                    usageReport: 12
+                    unit: TiB
+                    serviceName: CVO
+                dimensions:
+                - professional
+                contract: false
+                customerIdentifier: FJsUvVHffi9
+                productCode: 1ajwvb3kjavjlk36izcn19e07
+                planId: paygo_example
+                serviceName: cloud-volumes-ontap
+                subscriptionId: aws-abcd-1234
+                subscriptionName: My Prod CVO subscription
+                subscriptionStatus: subscribed
+                autoRenew: N/A
+                endDate: 1556636730921
+                term: 12 Months
+                isPrivate: true
+                listingUrl: https://marketplace-fake-url.com
+                productTitle: Cloud Manager - Deploy & Manage Netapp Cloud Data Service
+                cloudIds:
+                - 0ae5-rew5-ttt1-4563
+                availableDimensions:
+                - ransomware_resilience
+                configuration: string
+                events:
+                  endDateEvent:
+                    type: string
+      security:
+      - BearerAuth: []
+      servers:
+      - *id001
+    patch:
+      operationId: dw_patch_license_subscriptions_subscription_by_subscriptionId
+      summary: Update a subscription expiration date (deprecated)
+      tags:
+      - dw
+      x-source-file: dw/patch-license-subscriptions-subscription-.adoc
+      description: 'Updates a subscription expiration date by using a specified subscription
+        ID for services that support modification of the subscription expiry dates.
+        Alternatively, you can update the subscription name of the services. A newer
+        version of this deprecated endpoint is available https://docs.netapp.com/us-en/console-automation/dw/patch-license-subscriptions-subscription.html[here.]
+        **Note:** + To update the expiration date, the expiration date and service
+        name are mandatory, dwAudit is optional. + To update the subscription name,
+        provide only the subscription name. Do not provide a value for dwAudit. {blank}
+        + *Token usage:* Either a NetApp Console user token or service token. CAUTION:
+        This operation is deprecated.'
+      parameters:
+      - name: subscriptionId
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: X-Service-Request-Id
+        in: header
+        schema:
+          type: string
+        description: Request identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/dw.patch-license-subscriptions-subscription-.RequestBody'
+            example:
+              accountId: string
+              serviceName: string
+              subscriptionName: string
+              subscriptionType: string
+      responses:
+        '200':
+          description: Success response
+      security:
+      - BearerAuth: []
+      servers:
+      - *id001
+  /license/subscriptions/subscription:
+    get:
+      operationId: dw_get_license_subscriptions_subscription
+      summary: Retrieve subscription information using the subscription ID
+      tags:
+      - dw
+      x-source-file: dw/get-license-subscriptions-subscription.adoc
+      description: 'Retrieves the subscription information for a specified subscription
+        ID. **Note:** * This API authorizes service calls with a predefined scope
+        only. {blank} + *Token usage:* NetApp Console service token with the following
+        scopes: %scopes%.'
+      parameters:
+      - name: subscriptionId
+        in: query
+        schema:
+          type: string
+        required: true
+      - name: X-Service-Request-Id
+        in: header
+        schema:
+          type: string
+        description: Request identifier
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dw.get-license-subscriptions-subscription.Response200Body'
+              example:
+                accounts:
+                - account-sdajkj5
+                - account-euir74j
+                createdAt: 1556636730921
+                cloudProvider: aws
+                entitlements:
+                  items:
+                  - contractOption: Professional
+                    units: 12 TiB
+                    expirationDate: '2026-07-02T00:00:00Z'
+                    details: High Availability + Unlimited Cloud Backup
+                    category: Cloud Volumes ONTAP
+                    dimension: tier12
+                    IntegerValue: 1
+                    usageReport: 12
+                    unit: TiB
+                    serviceName: CVO
+                dimensions:
+                - professional
+                contract: false
+                customerIdentifier: FJsUvVHffi9
+                productCode: 1ajwvb3kjavjlk36izcn19e07
+                planId: paygo_example
+                serviceName: cloud-volumes-ontap
+                subscriptionId: aws-abcd-1234
+                subscriptionName: My Prod CVO subscription
+                subscriptionStatus: subscribed
+                autoRenew: N/A
+                endDate: 1556636730921
+                term: 12 Months
+                isPrivate: true
+                listingUrl: https://marketplace-fake-url.com
+                productTitle: Cloud Manager - Deploy & Manage Netapp Cloud Data Service
+                cloudIds:
+                - 0ae5-rew5-ttt1-4563
+                availableDimensions:
+                - ransomware_resilience
+                configuration: string
+                events:
+                  endDateEvent:
+                    type: string
+      security:
+      - BearerAuth: []
+      servers:
+      - *id001
+    patch:
+      operationId: dw_patch_license_subscriptions_subscription
+      summary: Update a subscription expiration date
+      tags:
+      - dw
+      x-source-file: dw/patch-license-subscriptions-subscription.adoc
+      description: Updates a subscription expiration date by using a specified subscription
+        ID for services that support modification of the subscription expiry dates.
+        Alternatively, you can update the subscription name of the services. **Note:**
+        + To update the expiration date, the expiration date and service name are
+        mandatory, dwAudit is optional. + To update the subscription name, provide
+        only the subscription name. Do not provide a value for dwAudit. {blank} +
+        *Token usage:* Either a NetApp Console user token or service token.
+      parameters:
+      - name: X-Service-Request-Id
+        in: header
+        schema:
+          type: string
+        description: Request identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/dw.patch-license-subscriptions-subscription.RequestBody'
+            example:
+              subscriptionId: string
+              accountId: string
+              serviceName: string
+              subscriptionName: string
+              subscriptionType: string
+      responses:
+        '200':
+          description: Success response
+      security:
+      - BearerAuth: []
+      servers:
+      - *id001
+  /license/account/{accountId}/licenses:
+    patch:
+      operationId: dw_patch_license_account_by_accountId_licenses
+      summary: Update all licenses under an organization ID
+      tags:
+      - dw
+      x-source-file: dw/patch-license-account-licenses.adoc
+      description: Updates all licenses under an organization ID.
+      parameters:
+      - name: accountId
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: X-Service-Request-Id
+        in: header
+        schema:
+          type: string
+        description: Request identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/dw.patch-license-account-licenses.RequestBody'
+            example:
+              meteringStatus: false
+      responses:
+        '200':
+          description: Success response
+      security:
+      - BearerAuth: []
+      x-token-type: service
+      servers:
+      - *id001
+  /license/subscriptions/{subscriptionId}:
+    patch:
+      operationId: dw_patch_license_subscriptions_by_subscriptionId
+      summary: Update a subscription expiration date using the subscription ID
+      tags:
+      - dw
+      x-source-file: dw/patch-license-subscriptions-.adoc
+      description: Updates a subscription expiration date by using a specified subscription
+        ID for services that support modification of the subscription expiry dates.
+        Alternatively, you can update the subscription name of the services. **Note:**
+        + To update the expiration date, the expiration date and service name are
+        mandatory, dwAudit is optional. + To update the subscription name, provide
+        only the subscription name. Do not provide a value for dwAudit.
+      parameters:
+      - name: subscriptionId
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: X-Service-Request-Id
+        in: header
+        schema:
+          type: string
+        description: Request identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/dw.patch-license-subscriptions-.RequestBody'
+            example:
+              subscriptionType: string
+              expirationDate: 0
+      responses:
+        '200':
+          description: Success response
+      security:
+      - BearerAuth: []
+      x-token-type: service
+      servers:
+      - *id001
+  /license/account/{accountId}/subscriptions/{subscriptionId}:
+    post:
+      operationId: dw_post_license_account_by_accountId_subscriptions_by_subscriptionId
+      summary: Register a subscription
+      tags:
+      - dw
+      x-source-file: dw/post-license-account-subscriptions-.adoc
+      description: Registers a subscription with the NetApp Console and associates
+        it with the account by using the identity and access management service. +
+        Each subscription can be associated with multiple accounts. **Note:** This
+        endpoint updates the expiration date based on the date provided in the request.
+      parameters:
+      - name: accountId
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: subscriptionId
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: X-Service-Request-Id
+        in: header
+        schema:
+          type: string
+        description: Request identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/dw.post-license-account-subscriptions-.RequestBody'
+            example:
+              subscriptionType: string
+              expirationDate: 0
+      responses:
+        '200':
+          description: Success response
+      security:
+      - BearerAuth: []
+      x-token-type: service
+      servers:
+      - *id001
+  /license/exchange:
+    post:
+      operationId: dw_post_license_exchange
+      summary: Exchange a Cloud Volumes ONTAP license
+      tags:
+      - dw
+      x-source-file: dw/post-license-exchange.adoc
+      description: Exchanges an unused Cloud Volume ONTAP license with a data service
+        license. **Note:** + To use this endpoint you must be an account administrator.
+        * `accountId`, `targetLicenseType` and `resourceId` are required fields.
+      parameters:
+      - name: X-Service-Request-Id
+        in: header
+        schema:
+          type: string
+        description: Request identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/dw.post-license-exchange.RequestBody'
+            example:
+              accountId: string
+              targetLicenseType: string
+              resourceId: string
+              partnerResourceId: string
+      responses:
+        '200':
+          description: Success response
+      security:
+      - BearerAuth: []
+      x-token-type: user
+      servers:
+      - *id001
+  /license/extra-capacity-licenses/cvoId/{cvoId}:
+    post:
+      operationId: dw_post_license_extra_capacity_licenses_cvoId_by_cvoId
+      summary: Associate extra-capacity per-node licenses with a Cloud Volumes ONTAP
+        system
+      tags:
+      - dw
+      x-source-file: dw/post-license-extra-capacity-licenses-cvoid-.adoc
+      description: Associates extra-capacity per-node licenses with a Cloud Volumes
+        ONTAP system either by providing NetApp License Files (NLF) in the `licenseFiles`
+        body field or a value for both `serialNumbers` and `nssKeyId` body fields.
+        A Cloud Volumes ONTAP resource is represented by the `cvoId` parameter. If
+        it's a single-node Cloud Volumes ONTAP resource, only one license file or
+        a serial number and a NetApp Support Site key should be provided. For high-availability
+        (HA) Cloud Volumes ONTAP resource, two license files or two serial numbers
+        and a NetApp Support Site key should be provided. **Note:** * The `cvoId`
+        parameter is required. * If you use a NetApp Console service token, `accountId`
+        is not a required field. * If you use a NetApp Console user token, `accountId`
+        is a required field. * `serialNumbers` is a required field when using this
+        site. In general, you can specify its value as `null`. * `licenseFiles` is
+        not a required field if values for `serialnumbers` and `nssKeyId` are provided.
+        * `nssKeyId` is a required field unless you provide a value for the `licenseFiles`
+        body field. In the latter case, `nssKeyId` must be omitted. * `accountId`
+        is a required field unless you use a service token. * The `serialNumbers`
+        and `licenseFiles` fields are mutually exclusive - one must have a value but
+        not both. *Token usage:* Either a NetApp Console user token or service token.
+      parameters:
+      - name: cvoId
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: X-Service-Request-Id
+        in: header
+        schema:
+          type: string
+        description: Request identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/dw.post-license-extra-capacity-licenses-cvoid-.RequestBody'
+            example:
+              serialNumbers:
+              - - string
+                - 'null'
+              licenseFiles:
+              - - string
+                - 'null'
+      responses:
+        '200':
+          description: Success response
+      security:
+      - BearerAuth: []
+      servers:
+      - *id001
+  /license/subscriptions/subscription/{subscriptionId}/account/{accountId}:
+    post:
+      operationId: dw_post_license_subscriptions_subscription_by_subscriptionId_account_by_accountId
+      summary: Associate a subscription (deprecated)
+      tags:
+      - dw
+      x-source-file: dw/post-license-subscriptions-subscription-account-.adoc
+      description: 'Associate a subscription with an identity and access management
+        service account. + Each subscription can be associated with multiple accounts.
+        A newer version of this deprecated endpoint is available https://docs.netapp.com/us-en/console-automation/dw/post-license-subscriptions-account-.html[here.]
+        {blank} + *Token usage:* Either a NetApp Console user token or service token.
+        CAUTION: This operation is deprecated.'
+      parameters:
+      - name: subscriptionId
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: accountId
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: X-Service-Request-Id
+        in: header
+        schema:
+          type: string
+        description: Request identifier
+      responses:
+        '200':
+          description: Success response
       security:
       - BearerAuth: []
       servers:
@@ -144382,6 +145795,260 @@ components:
           type: string
       required:
       - tagKey
+    dw.get-license-account-subscriptions-preferred.items:
+      x-source-file: dw/get-license-account-subscriptions-preferred.adoc
+      x-source-anchor: items
+      title: items
+      type: object
+      properties:
+        contractOption:
+          type: string
+        units:
+          type: string
+        expirationDate:
+          type: string
+        details:
+          type: string
+        category:
+          type: string
+        dimension:
+          type: string
+        IntegerValue:
+          type: integer
+        usageReport:
+          type: integer
+        unit:
+          type: string
+        serviceName:
+          type: string
+    dw.get-license-account-subscriptions-preferred.entitlements:
+      x-source-file: dw/get-license-account-subscriptions-preferred.adoc
+      x-source-anchor: entitlements
+      title: entitlements
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/dw.get-license-account-subscriptions-preferred.items'
+    dw.get-license-account-subscriptions-preferred.endDateEvent:
+      x-source-file: dw/get-license-account-subscriptions-preferred.adoc
+      x-source-anchor: endDateEvent
+      title: endDateEvent
+      type: object
+      properties:
+        type:
+          type: string
+        subscriptionExpirationInDays:
+          type: integer
+    dw.get-license-account-subscriptions-preferred.events:
+      x-source-file: dw/get-license-account-subscriptions-preferred.adoc
+      x-source-anchor: events
+      title: events
+      type: object
+      properties:
+        endDateEvent:
+          $ref: '#/components/schemas/dw.get-license-account-subscriptions-preferred.endDateEvent'
+    dw.get-license-account-subscriptions.subscriptions:
+      x-source-file: dw/get-license-account-subscriptions.adoc
+      x-source-anchor: subscriptions
+      title: subscriptions
+      type: object
+      properties:
+        subscriptionId:
+          type: string
+        subscriptionType:
+          type: string
+        expirationDate:
+          type: integer
+        numberOfAssociatedCvos:
+          type: integer
+        lastModified:
+          type: integer
+    dw.get-license-data-service-eligibility-account-provider-.subscriptionDetails:
+      x-source-file: dw/get-license-data-service-eligibility-account-provider-.adoc
+      x-source-anchor: subscriptionDetails
+      title: subscriptionDetails
+      type: object
+      properties:
+        subscriptionId:
+          type: string
+        active:
+          type: boolean
+    dw.get-license-onprem-account-clusters.clusterData:
+      x-source-file: dw/get-license-onprem-account-clusters.adoc
+      x-source-anchor: clusterData
+      title: clusterData
+      type: object
+      properties:
+        hostName:
+          type: string
+        serialNumber:
+          type: string
+        hardwareContractEndDate:
+          type: string
+        softwareContractEndDate:
+          type: string
+        serviceTier:
+          type: string
+        clusterIp:
+          type: string
+        clusterName:
+          type: string
+        clusterId:
+          type: string
+        usedCapacity:
+          type: integer
+        allocatedCapacity:
+          type: integer
+        discovered:
+          type: boolean
+    dw.get-license-subscriptions-entitlements.Value:
+      x-source-file: dw/get-license-subscriptions-entitlements.adoc
+      x-source-anchor: Value
+      title: Value
+      type: object
+      properties:
+        IntegerValue:
+          type: integer
+    dw.get-license-subscriptions-entitlements.entitlements:
+      x-source-file: dw/get-license-subscriptions-entitlements.adoc
+      x-source-anchor: entitlements
+      title: entitlements
+      type: object
+      properties:
+        CustomerIdentifier:
+          type: string
+        Dimension:
+          type: string
+        ExpirationDate:
+          type: string
+        ProductCode:
+          type: string
+        Value:
+          $ref: '#/components/schemas/dw.get-license-subscriptions-entitlements.Value'
+    dw.get-license-subscriptions-entitlements.response:
+      x-source-file: dw/get-license-subscriptions-entitlements.adoc
+      x-source-anchor: response
+      title: response
+      type: object
+      properties:
+        entitlements:
+          type: array
+          items:
+            $ref: '#/components/schemas/dw.get-license-subscriptions-entitlements.entitlements'
+        productCode:
+          type: string
+        error:
+          type: string
+    dw.get-license-subscriptions-subscription-.items:
+      x-source-file: dw/get-license-subscriptions-subscription-.adoc
+      x-source-anchor: items
+      title: items
+      type: object
+      properties:
+        contractOption:
+          type: string
+        units:
+          type: string
+        expirationDate:
+          type: string
+        details:
+          type: string
+        category:
+          type: string
+        dimension:
+          type: string
+        IntegerValue:
+          type: integer
+        usageReport:
+          type: integer
+        unit:
+          type: string
+        serviceName:
+          type: string
+    dw.get-license-subscriptions-subscription-.entitlements:
+      x-source-file: dw/get-license-subscriptions-subscription-.adoc
+      x-source-anchor: entitlements
+      title: entitlements
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/dw.get-license-subscriptions-subscription-.items'
+    dw.get-license-subscriptions-subscription-.endDateEvent:
+      x-source-file: dw/get-license-subscriptions-subscription-.adoc
+      x-source-anchor: endDateEvent
+      title: endDateEvent
+      type: object
+      properties:
+        type:
+          type: string
+        subscriptionExpirationInDays:
+          type: integer
+    dw.get-license-subscriptions-subscription-.events:
+      x-source-file: dw/get-license-subscriptions-subscription-.adoc
+      x-source-anchor: events
+      title: events
+      type: object
+      properties:
+        endDateEvent:
+          $ref: '#/components/schemas/dw.get-license-subscriptions-subscription-.endDateEvent'
+    dw.get-license-subscriptions-subscription.items:
+      x-source-file: dw/get-license-subscriptions-subscription.adoc
+      x-source-anchor: items
+      title: items
+      type: object
+      properties:
+        contractOption:
+          type: string
+        units:
+          type: string
+        expirationDate:
+          type: string
+        details:
+          type: string
+        category:
+          type: string
+        dimension:
+          type: string
+        IntegerValue:
+          type: integer
+        usageReport:
+          type: integer
+        unit:
+          type: string
+        serviceName:
+          type: string
+    dw.get-license-subscriptions-subscription.entitlements:
+      x-source-file: dw/get-license-subscriptions-subscription.adoc
+      x-source-anchor: entitlements
+      title: entitlements
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/dw.get-license-subscriptions-subscription.items'
+    dw.get-license-subscriptions-subscription.endDateEvent:
+      x-source-file: dw/get-license-subscriptions-subscription.adoc
+      x-source-anchor: endDateEvent
+      title: endDateEvent
+      type: object
+      properties:
+        type:
+          type: string
+        subscriptionExpirationInDays:
+          type: integer
+    dw.get-license-subscriptions-subscription.events:
+      x-source-file: dw/get-license-subscriptions-subscription.adoc
+      x-source-anchor: events
+      title: events
+      type: object
+      properties:
+        endDateEvent:
+          $ref: '#/components/schemas/dw.get-license-subscriptions-subscription.endDateEvent'
     tenancy.delete-tenancy-service-resource-.RequestBody:
       x-source-file: tenancy/delete-tenancy-service-resource-.adoc
       type: object
@@ -185118,6 +186785,438 @@ components:
         writingSpeedState:
           type: string
           description: Writing speed state
+    dw.delete-license-serial-number-.RequestBody:
+      x-source-file: dw/delete-license-serial-number-.adoc
+      type: object
+      properties:
+        accountId:
+          type: string
+    dw.delete-license-subscriptions-account-.RequestBody:
+      x-source-file: dw/delete-license-subscriptions-account-.adoc
+      type: object
+      properties:
+        subscriptionId:
+          type: string
+      required:
+      - subscriptionId
+    dw.get-license-account-subscriptions-preferred.Response200Body:
+      x-source-file: dw/get-license-account-subscriptions-preferred.adoc
+      type: object
+      properties:
+        accounts:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: integer
+        cloudProvider:
+          type: string
+        entitlements:
+          $ref: '#/components/schemas/dw.get-license-account-subscriptions-preferred.entitlements'
+        dimensions:
+          type: array
+          items:
+            type: string
+        contract:
+          type: boolean
+        customerIdentifier:
+          type: string
+        productCode:
+          type: string
+        planId:
+          type: string
+        serviceName:
+          type: string
+        subscriptionId:
+          type: string
+        subscriptionName:
+          type: string
+        subscriptionStatus:
+          type: string
+        autoRenew:
+          type: string
+        endDate:
+          type: integer
+          nullable: true
+        term:
+          type: string
+          nullable: true
+        isPrivate:
+          type: boolean
+          nullable: true
+        listingUrl:
+          type: string
+          nullable: true
+        productTitle:
+          type: string
+          nullable: true
+        cloudIds:
+          type: array
+          items:
+            type: string
+        availableDimensions:
+          type: array
+          items:
+            type: string
+        configuration:
+          type: string
+        events:
+          $ref: '#/components/schemas/dw.get-license-account-subscriptions-preferred.events'
+    dw.get-license-account-subscriptions.Response200Body:
+      x-source-file: dw/get-license-account-subscriptions.adoc
+      type: object
+      properties:
+        subscriptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/dw.get-license-account-subscriptions.subscriptions'
+    dw.get-license-data-service-eligibility-account-provider-.Response200Body:
+      x-source-file: dw/get-license-data-service-eligibility-account-provider-.adoc
+      type: object
+      properties:
+        totalServiceLicensesCapacity:
+          type: integer
+        totalServiceLicensesUsedCapacity:
+          type: number
+        subscriptionDetails:
+          $ref: '#/components/schemas/dw.get-license-data-service-eligibility-account-provider-.subscriptionDetails'
+        freeTrialEndDate:
+          type: string
+    dw.get-license-onprem-account-clusters.Response200Body:
+      x-source-file: dw/get-license-onprem-account-clusters.adoc
+      type: object
+      properties:
+        partialResponse:
+          type: boolean
+        clusterData:
+          type: array
+          items:
+            $ref: '#/components/schemas/dw.get-license-onprem-account-clusters.clusterData'
+    dw.get-license-subscriptions-configuration.Response200Body:
+      x-source-file: dw/get-license-subscriptions-configuration.adoc
+      type: object
+      properties:
+        cloudAccountIds:
+          type: array
+          items:
+            type: string
+    dw.get-license-subscriptions-subscription-.Response200Body:
+      x-source-file: dw/get-license-subscriptions-subscription-.adoc
+      type: object
+      properties:
+        accounts:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: integer
+        cloudProvider:
+          type: string
+        entitlements:
+          $ref: '#/components/schemas/dw.get-license-subscriptions-subscription-.entitlements'
+        dimensions:
+          type: array
+          items:
+            type: string
+        contract:
+          type: boolean
+        customerIdentifier:
+          type: string
+        productCode:
+          type: string
+        planId:
+          type: string
+        serviceName:
+          type: string
+        subscriptionId:
+          type: string
+        subscriptionName:
+          type: string
+        subscriptionStatus:
+          type: string
+        autoRenew:
+          type: string
+        endDate:
+          type: integer
+          nullable: true
+        term:
+          type: string
+          nullable: true
+        isPrivate:
+          type: boolean
+          nullable: true
+        listingUrl:
+          type: string
+          nullable: true
+        productTitle:
+          type: string
+          nullable: true
+        cloudIds:
+          type: array
+          items:
+            type: string
+        availableDimensions:
+          type: array
+          items:
+            type: string
+        configuration:
+          type: string
+        events:
+          $ref: '#/components/schemas/dw.get-license-subscriptions-subscription-.events'
+    dw.get-license-subscriptions-subscription.Response200Body:
+      x-source-file: dw/get-license-subscriptions-subscription.adoc
+      type: object
+      properties:
+        accounts:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: integer
+        cloudProvider:
+          type: string
+        entitlements:
+          $ref: '#/components/schemas/dw.get-license-subscriptions-subscription.entitlements'
+        dimensions:
+          type: array
+          items:
+            type: string
+        contract:
+          type: boolean
+        customerIdentifier:
+          type: string
+        productCode:
+          type: string
+        planId:
+          type: string
+        serviceName:
+          type: string
+        subscriptionId:
+          type: string
+        subscriptionName:
+          type: string
+        subscriptionStatus:
+          type: string
+        autoRenew:
+          type: string
+        endDate:
+          type: integer
+          nullable: true
+        term:
+          type: string
+          nullable: true
+        isPrivate:
+          type: boolean
+          nullable: true
+        listingUrl:
+          type: string
+          nullable: true
+        productTitle:
+          type: string
+          nullable: true
+        cloudIds:
+          type: array
+          items:
+            type: string
+        availableDimensions:
+          type: array
+          items:
+            type: string
+        configuration:
+          type: string
+        events:
+          $ref: '#/components/schemas/dw.get-license-subscriptions-subscription.events'
+    dw.patch-license-account-licenseresource-.RequestBody:
+      x-source-file: dw/patch-license-account-licenseresource-.adoc
+      type: object
+      properties:
+        license:
+          type: string
+          nullable: true
+    dw.patch-license-account-licenses.RequestBody:
+      x-source-file: dw/patch-license-account-licenses.adoc
+      type: object
+      properties:
+        meteringStatus:
+          type: boolean
+      required:
+      - meteringStatus
+    dw.patch-license-serial-number-.RequestBody:
+      x-source-file: dw/patch-license-serial-number-.adoc
+      type: object
+      properties:
+        accountId:
+          type: string
+        capacity:
+          type: integer
+          nullable: true
+        expirationDate:
+          type: integer
+          nullable: true
+        license:
+          type: string
+          nullable: true
+        meteringStatus:
+          type: boolean
+        metadata:
+          type: object
+    dw.patch-license-subscriptions-.RequestBody:
+      x-source-file: dw/patch-license-subscriptions-.adoc
+      type: object
+      properties:
+        subscriptionType:
+          type: string
+        expirationDate:
+          type: integer
+        dwAudit:
+          type: boolean
+          description: 'The NetApp Console audits, by default, all API calls. NOTE:'
+      required:
+      - subscriptionType
+      - expirationDate
+    dw.patch-license-subscriptions-configuration.RequestBody:
+      x-source-file: dw/patch-license-subscriptions-configuration.adoc
+      type: object
+      properties:
+        accountId:
+          type: string
+        subscriptionId:
+          type: string
+        cloudAccountIds:
+          type: array
+          items:
+            type: string
+      required:
+      - accountId
+      - subscriptionId
+      - cloudAccountIds
+    dw.patch-license-subscriptions-subscription-.RequestBody:
+      x-source-file: dw/patch-license-subscriptions-subscription-.adoc
+      type: object
+      properties:
+        accountId:
+          type: string
+        serviceName:
+          type: string
+        subscriptionName:
+          type: string
+        expirationDate:
+          type: integer
+        subscriptionType:
+          type: string
+        dwAudit:
+          type: boolean
+          description: 'The NetApp Console audits, by default, all API calls. NOTE:'
+    dw.patch-license-subscriptions-subscription.RequestBody:
+      x-source-file: dw/patch-license-subscriptions-subscription.adoc
+      type: object
+      properties:
+        subscriptionId:
+          type: string
+        accountId:
+          type: string
+        serviceName:
+          type: string
+        subscriptionName:
+          type: string
+        expirationDate:
+          type: integer
+        subscriptionType:
+          type: string
+        dwAudit:
+          type: boolean
+          description: 'The NetApp Console audits, by default, all API calls. NOTE:'
+    dw.post-license-account-subscriptions-.RequestBody:
+      x-source-file: dw/post-license-account-subscriptions-.adoc
+      type: object
+      properties:
+        subscriptionType:
+          type: string
+        expirationDate:
+          type: integer
+        dwAudit:
+          type: boolean
+          description: 'The NetApp Console audits, by default, all API calls. NOTE:'
+      required:
+      - subscriptionType
+      - expirationDate
+    dw.post-license-exchange.RequestBody:
+      x-source-file: dw/post-license-exchange.adoc
+      type: object
+      properties:
+        accountId:
+          type: string
+        targetLicenseType:
+          type: string
+        resourceId:
+          type: string
+        partnerResourceId:
+          type: string
+      required:
+      - accountId
+      - targetLicenseType
+      - resourceId
+    dw.post-license-extra-capacity-licenses-cvoid-.RequestBody:
+      x-source-file: dw/post-license-extra-capacity-licenses-cvoid-.adoc
+      type: object
+      properties:
+        accountId:
+          type: string
+          nullable: true
+        serialNumbers:
+          type: array
+          items:
+            type: string
+            nullable: true
+        licenseFiles:
+          type: array
+          items:
+            type: string
+            nullable: true
+        nssKeyId:
+          type: string
+          nullable: true
+    dw.post-license-serial-number-.RequestBody:
+      x-source-file: dw/post-license-serial-number-.adoc
+      type: object
+      properties:
+        accountId:
+          type: string
+        resourceId:
+          type: string
+          nullable: true
+        licenseType:
+          type: string
+        expirationDate:
+          type: integer
+          nullable: true
+        license:
+          type: string
+        capacity:
+          type: integer
+          nullable: true
+        metadata:
+          type: object
+        nssKeyId:
+          type: string
+    dw.post-license-subscriptions-account-.RequestBody:
+      x-source-file: dw/post-license-subscriptions-account-.adoc
+      type: object
+      properties:
+        subscriptionId:
+          type: string
+      required:
+      - subscriptionId
+    dw.put-license-account-subscriptions-preferred.RequestBody:
+      x-source-file: dw/put-license-account-subscriptions-preferred.adoc
+      type: object
+      properties:
+        aws:
+          type: string
+        gcp:
+          type: string
+        azure:
+          type: string
   securitySchemes:
     BearerAuth:
       type: http

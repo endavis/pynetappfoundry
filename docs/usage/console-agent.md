@@ -125,7 +125,24 @@ subs = agent.list_marketplace_subscriptions()  # same, on one ConsoleAgentClient
 - `MarketplaceSubscription` (`pynetappfoundry.models.console_types.MarketplaceSubscription`) keeps `id`, `name`, `provider`, `active`, `contract`, `by_node_mode` and `eligible_cvo_packages`. The result is one flat list in aws, azure, gcp order; a missing `provider` is filled from the list the item came from.
 - Cloud account IDs (`cloudAccounts`) and the free-trial flags are not kept.
 - The method is org-scoped and not cached: a subscription is shared across clusters, so it is not a `ConsoleInfo` field (see [ADR-0019](../decisions/0019-console-runtime-client-architecture-org-scoped-access-and-per-token-type-wrapper-isolation.md#marketplace-subscriptions-875)).
-- Status, end date and entitlements live in the `dw` licenses subservice, which is not parsed yet (#1034).
+- Status, end date and entitlements come from the `dw` licenses subservice; see [Account subscriptions](#account-subscriptions).
+
+## Account subscriptions
+
+The preferred subscription of a Console account (status, end date, term and entitlements) comes from `GET /license/account/{accountId}/subscriptions/preferred`. It needs no agent.
+
+```python
+subs = console.list_preferred_subscriptions()  # the facade's own org id
+subs = console.list_preferred_subscriptions("my-account-id", cloud_provider="aws")
+subs = client.list_preferred_subscriptions("my-account-id")  # on ConsoleAPIClient
+```
+
+- The result is a `list[AccountSubscription]` (`pynetappfoundry.models.console_types.AccountSubscription`), empty when the account has no preferred subscription. The endpoint returns a JSON array, although the docs describe an object.
+- `AccountSubscription` keeps `subscription_id`, `subscription_name`, `subscription_status`, `service_name`, `cloud_provider`, `plan_id`, `product_code`, `contract`, `auto_renew`, `end_date` (epoch milliseconds, as documented), `term`, `accounts` and `entitlements` (`SubscriptionEntitlement`: `contract_option`, `units`, `expiration_date`, `category`, `dimension`, `unit`, `service_name`). Cloud account ids (`cloudIds`) and the other display fields are not kept.
+- The item fields come from the docs and are not live-verified, because the array was empty when probed.
+- Either a user token or a service token works; the user token is preferred.
+- `account_id` is the Console account id. Measured live, it equals the organization id, so the facade uses its own org id when you pass none (see [ADR-0019](../decisions/0019-console-runtime-client-architecture-org-scoped-access-and-per-token-type-wrapper-isolation.md#account-subscriptions-1034)).
+- The method is not cached.
 
 ## Safety
 

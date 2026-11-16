@@ -23,7 +23,7 @@ documentation into an OpenAPI 3.0.3 specification.
 
 `generated/console_openapi.yaml` -- a combined OpenAPI 3.0.3 spec covering the
 service folders listed in `info.x-included-source-folders`: `tenancy/`,
-`tenancyv4/` and `cvo/` (the Console agent, or OCCM, API). `cm/` is intentionally excluded because its
+`tenancyv4/`, `cvo/` (the Console agent, or OCCM, API) and `dw/` (licenses and subscriptions). `cm/` is intentionally excluded because its
 files are prose tutorials with `curl` examples and need a different parser.
 
 `generated/console_openapi.lock.json` -- reproducibility metadata: source repo
@@ -55,8 +55,14 @@ Pass a full commit SHA rather than a branch name, so the lockfile's
    line are recorded as overview pages and skipped.
 3. **Build** -- assemble paths, components, and security schemes:
    - `Authorization` header parameters are suppressed and converted to
-     `BearerAuth` security on the operation. The `*Token usage:*` callout is
-     preserved as `x-token-type: user|service`.
+     `BearerAuth` security on the operation. A `*Token usage:* BlueXP|NetApp
+     Console user|service token.` callout is preserved as
+     `x-token-type: user|service`. "Either a ... user token or service token"
+     and "service token with the following scopes" lines stay untagged, and an
+     untagged operation accepts either token (#1034).
+   - A type cell written as `["null", "integer"]` (or `string`, `boolean`) is
+     parsed as that primitive with `nullable: true`; any other bracketed cell
+     falls back to `object` (#1034).
    - Definition anchors become per-file namespaced component schemas
      (`<service>.<file_stem>.<anchor>`). Anchors that have no table fall back
      to either an `additionalProperties` map (for "Hash mapping strings to
@@ -65,7 +71,7 @@ Pass a full commit SHA rather than a branch name, so the lockfile's
    - 204 responses, and responses without a body table or example, omit
      `content`. A `Status: Default` block becomes the OpenAPI `default`
      response.
-   - For `tenancy`, `tenancyv4` and `cvo`, inline request and response bodies
+   - For `tenancy`, `tenancyv4`, `cvo` and `dw`, inline request and response bodies
      move into named components (`<service>.<file_stem>.RequestBody`,
      `ResponseBody` for the `default` response, `Response<status>Body`
      otherwise). Only `cvo` operations get a required, synthesized
@@ -75,8 +81,10 @@ Pass a full commit SHA rather than a branch name, so the lockfile's
      Required on responses callers omit), so every schema reachable from a
      response of these services has `required` renamed to
      `x-documented-required` and its generated fields are optional;
-     request-only schemas keep `required` (#1018, #1027).
-   - `cvo` GET operations listed in `array_responses.toml` get their success
+     request-only schemas keep `required` (#1018, #1027). `dw` is in the same
+     set, which changes nothing today: every `dw` response field is documented
+     optional (#1034).
+   - GET operations listed in `array_responses.toml` (`cvo`, and one `dw` entry) get their success
      body wrapped as an array of the hoisted `ResponseBody`. The docs carry no
      list marker, so the list is committed, with `live` or `swagger` evidence
      per entry, and a unit test checks it against the agent swagger
@@ -110,6 +118,7 @@ operation carries one bare-host server, `https://api.bluexp.netapp.com`.
 | `tenancy`   | (empty)          | v3 paths already include the `/tenancy/...` segment. |
 | `tenancyv4` | `/v1/management` | Discovered via `tenancyServiceInformation.urlV4`.    |
 | `cvo`       | `/occm/api`      | Console agent API; every call needs `x-agent-id`.    |
+| `dw`        | (empty)          | From the overview curl example; only the preferred-subscriptions GET is verified live. |
 
 These were verified against the live SaaS (`tenancy` and `tenancyv4` with a
 user JWT, `cvo` with a service token, #1008). The `build`
@@ -147,7 +156,7 @@ at startup rather than hard-coding hosts.
 The committed spec at `generated/console_openapi.yaml` is consumed by a
 second build-time pipeline that emits Pydantic v2 models under
 `src/pynetappfoundry/models/console/` (subdivided into `tenancy/`,
-`tenancyv4/` and `cvo/` packages). The pipeline uses `datamodel-code-generator`
+`tenancyv4/`, `cvo/` and `dw/` packages). The pipeline uses `datamodel-code-generator`
 directly — it is intentionally **not** wired into `doit generate_models`,
 which is reserved for cache-coupled per-cluster API models. See
 [ADR-0008 §"Codegen integration for Console (Issue #699)"](../../docs/decisions/0008-openapi-codegen-for-model-generation.md)
@@ -194,10 +203,11 @@ Each `[[operation]]` in the manifest has:
 | `retry` | `true` keeps the wrapper's retry on a non-GET operation. Default: non-GET operations are not retried. |
 | `only_query` | Optional list of spec query parameter names to expose. Default: all. |
 | `query` | Optional per-parameter overlay. `{ fields = { style = "csv" } }` accepts a string or a sequence and joins it with commas. |
+| `drop_headers` | Optional list of optional header parameters the client does not send, such as `["X-Service-Request-Id"]` (#1034). A required header, or one the operation lacks, is an error. |
 
 The generator fails, rather than guessing, on: an unknown `operationId`, a
 duplicate method name, a query parameter that is not a plain string and has no
-overlay, a header parameter other than the synthesized `x-agent-id`, an
+overlay, a header parameter other than the synthesized `x-agent-id` or one listed in `drop_headers`, an
 `x-token-type` on an agent operation, a missing model module or class, a
 `response = "list"` on a spec array (redundant), and a `response = "object"` on
 a spec array (contradicts the spec).

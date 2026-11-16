@@ -10,6 +10,8 @@
 #   retry         true keeps the wrapper's retry on a non-GET operation (default false)
 #   only_query    optional list of spec query parameter names to expose (default all)
 #   query         optional overlays per query parameter, e.g. { fields = { style = "csv" } }
+#   drop_headers  optional list of optional header parameters the client does not send, e.g.
+#                 ["X-Service-Request-Id"] (#1034); any other header is a codegen error
 
 [[operation]]
 operation_id = "tenancyv4_get_v1_management_organizations_by_organization_id"
@@ -33,6 +35,12 @@ operation_id = "tenancyv4_get_v1_management_projects_by_project_id"
 client = "console"
 name = "get_project"
 only_query = ["filter", "skip", "include", "limit", "orderBy"]
+
+[[operation]]
+operation_id = "dw_get_license_account_by_accountId_subscriptions_preferred"
+client = "console"
+name = "list_preferred_subscriptions"
+drop_headers = ["X-Service-Request-Id"]
 
 [[operation]]
 operation_id = "cvo_get_occm_api_occm_system_about"

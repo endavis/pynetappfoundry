@@ -38,6 +38,9 @@ class TypeRef(Frozen):
     additional_properties: TypeRef | None = None
     """When set, this type is an object with additionalProperties of the given type."""
 
+    nullable: bool = False
+    """True for a ``["null", X]`` cell: the value is X or null (not a kind)."""
+
     raw: str = ""
     """Original cell text, preserved for diagnostics."""
 

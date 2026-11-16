@@ -29,7 +29,8 @@ RESPONSE_HEADERS = BODY_HEADERS
 
 _TITLE_RE = re.compile(r"^=\s+(?P<title>.+?)\s*$", re.MULTILINE)
 _TOKEN_USAGE_RE = re.compile(
-    r"\*Token usage:\*\s*BlueXP\s+(?P<kind>user|service)\s+token\.", re.IGNORECASE
+    r"\*Token usage:\*\s*(?:BlueXP|NetApp\s+Console)\s+(?P<kind>user|service)\s+token\.",
+    re.IGNORECASE,
 )
 _STATUS_LINE_RE = re.compile(
     r"Status:\s*(?:(?P<code>\d{3}),\s*(?P<desc>.+?)|(?P<default>Default)(?:,\s*(?P<ddesc>.*?))?)\s*$",

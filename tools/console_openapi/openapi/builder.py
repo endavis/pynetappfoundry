@@ -45,17 +45,22 @@ _DEFAULT_SERVERS: tuple[dict[str, str], ...] = (
 # the Console UI's bootstrap configuration ``tenancyServiceInformation.urlV4``.
 # The ``cvo`` (Console agent / OCCM) paths are served under ``/occm/api``
 # (verified on both hosts in #1008, wired in #1009).
+# The ``dw`` (licenses and subscriptions) paths already start with ``/license``
+# and the overview's curl example calls ``https://api.bluexp.netapp.com/license/...``,
+# so its prefix is empty (#1034). The empty prefix comes from the docs; the one
+# ``dw`` operation probed live was served at its documented path.
 # A service without an entry here gets no prefix.
 _SERVICE_BASE_PATHS: dict[str, str] = {
     "tenancy": "",
     "tenancyv4": "/v1/management",
     "cvo": "/occm/api",
+    "dw": "",
 }
-# The ``cvo``, ``tenancy`` and ``tenancyv4`` docs document every body inline, so
-# no model could be generated for them (#1018, #1027). For these services the
+# The ``cvo``, ``tenancy``, ``tenancyv4`` and ``dw`` docs document every body inline, so
+# no model could be generated for them (#1018, #1027, #1034). For these services the
 # request and response bodies are moved into named components
 # (``<service>.<file>.RequestBody`` / ``ResponseBody`` / ``Response<status>Body``).
-_HOISTED_BODY_SERVICES = frozenset({"cvo", "tenancy", "tenancyv4"})
+_HOISTED_BODY_SERVICES = frozenset({"cvo", "dw", "tenancy", "tenancyv4"})
 # Every ``cvo`` operation is addressed to one agent, named in this header. The
 # docs omit it, so it is synthesized.
 _AGENT_ID_SERVICES = frozenset({"cvo"})
@@ -64,8 +69,9 @@ _AGENT_ID_SERVICES = frozenset({"cvo"})
 # Required on responses that callers and mocks omit (#1027). For these services
 # every schema reachable from a response has ``required`` renamed to
 # ``x-documented-required``, so the docs' list is kept but codegen makes the
-# response fields optional.
-_LOOSE_RESPONSE_SERVICES = frozenset({"cvo", "tenancy", "tenancyv4"})
+# response fields optional. ``dw`` is included defensively (#1034): every ``dw``
+# response field is documented optional today, so this changes nothing yet.
+_LOOSE_RESPONSE_SERVICES = frozenset({"cvo", "dw", "tenancy", "tenancyv4"})
 _SCHEMA_REF_PREFIX = "#/components/schemas/"
 _AGENT_ID_HEADER: dict[str, Any] = {
     "name": "x-agent-id",
@@ -335,6 +341,8 @@ def _type_to_schema(t: TypeRef, ep: ParsedEndpoint, resolver: dict[str, str]) ->
             "additionalProperties": _type_to_schema(t.additional_properties, ep, resolver),
         }
     if t.primitive is not None:
+        if t.nullable:
+            return {"type": t.primitive, "nullable": True}
         return {"type": t.primitive}
     return {"type": "object"}
 

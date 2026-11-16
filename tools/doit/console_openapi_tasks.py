@@ -141,7 +141,7 @@ def task_console_models() -> dict[str, Any]:
 
     Reads ``tools/console_openapi/generated/console_openapi.yaml`` and emits
     a tree under ``src/pynetappfoundry/models/console/`` (subdivided into
-    ``tenancy/``, ``tenancyv4/`` and ``cvo/`` packages by
+    ``tenancy/``, ``tenancyv4/``, ``cvo/`` and ``dw/`` packages by
     ``datamodel-code-generator``).
     The generated tree is committed alongside the spec; CI verifies that
     re-running this task is a no-op via ``doit console_models_check``.

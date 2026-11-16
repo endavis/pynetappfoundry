@@ -1,4 +1,6 @@
-# cvo GET operations whose success response is a JSON array (#1021).
+# GET operations whose success response is a JSON array (#1021, #1034).
+# The [dw] entry is the one non-cvo table: the preferred-subscriptions GET is
+# documented as an object but returned an array live (empty for the probed account).
 #
 # The Console agent docs type every response body as one object and carry no
 # list marker, so the builder cannot tell a list from an object. The builder
@@ -18,6 +20,9 @@
 #   cvo_get_occm_api_aws_ha_metadata_key_pairs
 #   cvo_get_occm_api_vsa_metadata_key_pairs
 #   cvo_get_occm_api_replication_metadata_snapshot_labels_by_workingEnvironmentId_by_svmName_by_volumeName
+
+[dw]
+"GET /license/account/{accountId}/subscriptions/preferred" = "live"
 
 [cvo]
 "GET /occm/api/audit" = "swagger"
