@@ -202,6 +202,8 @@ Active IQ Unified Manager (AIQUM) REST API settings. Loaded into `config.setting
 [general]
 base_api_path = "/api"    # Optional: Base path for the AIQUM REST API (default: "/api")
 # timeout = 30.0          # Optional: request timeout in seconds (default: 30.0)
+# verify_ssl = true       # Optional: validate instance certificates with the default CA bundle
+# ca_bundle = "certs/internal-ca.pem"  # Optional: validate against this CA bundle
 ```
 
 #### AIQUM API Settings Fields
@@ -210,6 +212,8 @@ base_api_path = "/api"    # Optional: Base path for the AIQUM REST API (default:
 |-------|------|----------|---------|-------------|
 | `base_api_path` | string | No | `"/api"` | Base path for AIQUM REST API endpoints |
 | `timeout` | float | No | `30.0` | Request timeout in seconds |
+| `verify_ssl` | boolean | No | `false` | Default for every instance: validate the certificate chain instead of pinning the fingerprint |
+| `ca_bundle` | string | No | - | Default for every instance: CA bundle path (relative to the config directory); not allowed with `verify_ssl = false` |
 
 ---
 
@@ -429,6 +433,8 @@ env = "Prod"
 | `div` | string | No | `""` | Division identifier |
 | `bu` | string | No | `""` | Business unit identifier |
 | `env` | string | No | `""` | Environment |
+| `verify_ssl` | boolean | No | - | Validate this instance's certificate chain instead of pinning; overrides `aiqumapi.toml` |
+| `ca_bundle` | string | No | - | CA bundle path for this instance; overrides `aiqumapi.toml` |
 
 ---
 

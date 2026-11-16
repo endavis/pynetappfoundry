@@ -292,7 +292,7 @@ The ONTAP SSH and REST clients trust a host on first use and pin its identity fr
 
 - **Where the records live:** `<config_dir>/.trust/known_hosts` holds SSH host keys in OpenSSH format. `<config_dir>/.trust/tls_fingerprints.json` holds SHA-256 certificate fingerprints keyed `host:port`. The directory is created on the first recorded identity, with mode `0700` (files `0600`). Unlike `.cache/`, it is not rebuilt, so keep it out of version control (the repository ignores it).
 - **System `known_hosts`:** SSH host keys in your system `known_hosts` are honoured as well.
-- **Scope:** ONTAP and AIQUM. DII and OCCM clients are unchanged. `AIQUMAPIClient` pins TLS fingerprints the same way; CA validation does not apply to it.
+- **Scope:** ONTAP and AIQUM. DII and OCCM clients are unchanged. `AIQUMAPIClient` pins TLS fingerprints the same way, and can opt into CA validation too (see [CA validation](#ca-validation-optional)).
 - **Without a trust store:** `ONTAPCLI` built without `trust_store=` connects only to hosts already in the system `~/.ssh/known_hosts` and refuses any other host. Pass `trust_store=config.get_trust_store()` to record hosts on first use.
 - **TLS capture:** the first fingerprint is read with one direct, unauthenticated handshake that does not use `HTTPS_PROXY`.
 
@@ -328,6 +328,7 @@ ca_bundle = "certs/internal-ca.pem"   # validate against this CA bundle
 - **Trust source:** `verify_ssl = true` uses the default CA bundle of `requests` (certifi) or the one named by `REQUESTS_CA_BUNDLE` / `CURL_CA_BUNDLE`, not the operating system trust store. For an internal CA, set `ca_bundle`.
 - **No fingerprint pin:** with validation on, the certificate fingerprint is neither pinned nor recorded in `<config_dir>/.trust/tls_fingerprints.json`. urllib3 skips the hostname check whenever a fingerprint is asserted, so keeping the pin would validate the chain but never the hostname. A certificate renewed under the same CA is accepted without a reset. SSH host keys are unaffected.
 - **Clusters addressed by IP:** the certificate needs an IP address entry in its subject alternative names, because the hostname check matches the address you connect to.
+- **AIQUM:** `AIQUMAPIClient` takes the same `verify_ssl` / `ca_bundle` keys, on an `[aiqums.NAME]` entry and in `aiqumapi.toml` `[general]`, with the same precedence and rules. The ONTAP and AIQUM settings are independent. See [AIQUM API](aiqum-api.md#tls).
 - **Python API:** `ONTAPAPIClient` applies the settings itself. `ONTAPCLI.run_command_python_api` does not read the config, so pass `tls_verify=config.get_tls_verify(name)` when you build it.
 
 See [ADR-0025](../decisions/0025-pin-ontap-ssh-host-keys-and-tls-certificate-fingerprints-on-first-use.md) for the design.
