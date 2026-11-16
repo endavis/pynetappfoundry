@@ -20,7 +20,7 @@ The ONTAP clients connect to clusters that usually present self-signed TLS certi
 
 ## Decision
 
-1. **Trust on first use.** The first connection to an ONTAP host records its identity. Later connections must present the same identity, otherwise `HostIdentityChangedError` is raised before credentials are sent. DII, AIQUM and OCCM clients are unchanged.
+1. **Trust on first use.** The first connection to an ONTAP host records its identity. Later connections must present the same identity, otherwise `HostIdentityChangedError` is raised before credentials are sent. DII and OCCM clients are unchanged.
 2. **Records live under `<config_dir>/.trust/`.** `known_hosts` holds SSH host keys in OpenSSH format, so `ssh-keygen -R` works on it. `tls_fingerprints.json` holds SHA-256 certificate fingerprints keyed `host:port`. The folder is not `.cache`: [ADR-0018](0018-cache-schema-versioning-and-backward-compatibility-policy.md) treats the cache as deletable and rebuildable, and trust records are not.
 3. **One trust store per `Config`, injected.** `Config.get_trust_store()` builds and caches a `HostTrustStore`. `ONTAPCLI` takes an optional keyword `trust_store`; leaving it out keeps the previous in-memory behaviour. `ONTAPAPIClient` resolves the store from its `config`.
 4. **SSH uses a custom `paramiko.MissingHostKeyPolicy`.** Paramiko checks the host key after key exchange and before authentication. The policy re-reads the file under a lock, compares, appends and writes atomically. `paramiko.BadHostKeyException` becomes `HostIdentityChangedError`, which names the host, the file and the reset command. Keys in the system `known_hosts` are still honoured.
@@ -29,6 +29,7 @@ The ONTAP clients connect to clusters that usually present self-signed TLS certi
 7. **Writes are serialised per file.** A `threading.Lock` per resolved path guards read, merge, temp file, `fsync` and `os.replace`. The directory has mode 0o700 and the files 0o600.
 8. **The `requests` floor is raised to `>=2.32.3`**, the first release with `build_connection_pool_key_attributes`.
 9. **Optional CA validation replaces the TLS pin for a cluster that opts in** (issue [#982](https://github.com/endavis/pynetappfoundry/issues/982)). `verify_ssl` and `ca_bundle` can be set per cluster and as a global default in `ontapapi.toml`; `Config.get_tls_verify()` resolves them to a requests-style `verify` value. `FingerprintPinningAdapter` pins only when `verify` is `False`, so with validation on nothing is pinned or recorded. SSH host keys are unchanged. See [CA validation](../usage/basics.md#ca-validation-optional) and [Host identity](../usage/basics.md#host-identity-ssh-host-keys-and-tls-certificates).
+10. **`AIQUMAPIClient` pins the same way** (issue [#1002](https://github.com/endavis/pynetappfoundry/issues/1002)). It mounts the same `FingerprintPinningAdapter` with `verify_ssl=False`, and has no CA validation: `verify_ssl` and `ca_bundle` do not apply to `aiqums`. See [AIQUM API](../usage/aiqum-api.md).
 
 ## Rationale
 

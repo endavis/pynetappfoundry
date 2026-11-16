@@ -1,13 +1,16 @@
-Get the yaml from https://<aiqum>/docs/api/v2.yaml
+Refresh the spec with:
+  doit fetch_spec --api=aiqum      # downloads https://<aiqum>/docs/api/v2.yaml
+  doit convert_specs --api=aiqum   # writes all.json
 
-Convert from yaml to json at https://openapi-yaml-json-converter.com/
-save it as all.json
-remove:
-  "security": [
-    {
-      "simple": []
-    }
-  ],
+Known gaps (checked against AIQUM 9.18):
+  - doit fetch_spec --api=aiqum currently gets HTTP 401 on /docs/api/v2.yaml:
+    the docs endpoint does not accept Basic auth on 9.18, although
+    /api/management-server/system accepts the same credentials. Follow-up item.
+  - The published spec omits /management-server/admin/options. Calls to it still
+    work through AIQUMAPIClient, unvalidated, with a logged spec-lookup error.
+  - /management-server/admin/options needs
+    Content-Type: application/vnd.netapp.v1.hal+json; pass it with
+    additional_headers.
 
 HTTP basic authentication
     When using basic authentication, the user credentials must be included with each HTTP request. There are two options for sending the credentials.

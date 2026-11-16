@@ -5,6 +5,7 @@
 # for details. Tracked in issue #728.
 import pynetappfoundry._perf_patches  # noqa: F401  # imported for its patching side effect
 from pynetappfoundry._version import __version__
+from pynetappfoundry.clients.aiqum.api import AIQUMAPIClient
 from pynetappfoundry.clients.dii.api import DIIAPIClient
 from pynetappfoundry.clients.ontap.api import ONTAPAPIClient
 from pynetappfoundry.clients.ontap.cli import ONTAPCLI, CLICommandError
@@ -17,6 +18,7 @@ from pynetappfoundry.db.metrics import MetricDB
 
 __all__ = [
     "ONTAPCLI",
+    "AIQUMAPIClient",
     "APIWrapper",
     "AzEventsDB",
     "CLICommandError",

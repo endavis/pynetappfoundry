@@ -117,6 +117,15 @@ class DIIAPISettings(BaseModel):
     timeout: float = 30.0
 
 
+class AIQUMAPISettings(BaseModel):
+    """Active IQ Unified Manager REST API settings."""
+
+    model_config = ConfigDict(extra="allow")
+
+    base_api_path: str = "/api"
+    timeout: float = 30.0
+
+
 class ConsoleAPISettings(BaseModel):
     """Console SaaS API settings.
 
