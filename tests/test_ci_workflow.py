@@ -321,13 +321,16 @@ class TestCodecovOptIn:
 
     @staticmethod
     def _step() -> dict[str, Any]:
-        steps: list[dict[str, Any]] = _load_workflow()["jobs"]["test"]["steps"]
+        steps: list[dict[str, Any]] = _load_workflow()["jobs"]["coverage"]["steps"]
         return next(s for s in steps if s.get("name") == "Upload coverage to Codecov")
 
     def test_gated_on_repository_variable(self) -> None:
         condition = self._step()["if"]
         assert "vars.CODECOV_ENABLED == 'true'" in condition
-        assert "needs.setup.outputs.newest" in condition
+        # The coverage job itself runs on the newest Python only.
+        steps: list[dict[str, Any]] = _load_workflow()["jobs"]["coverage"]["steps"]
+        python = next(s for s in steps if str(s.get("uses", "")).startswith("actions/setup-python"))
+        assert python["with"]["python-version"] == "${{ needs.setup.outputs.newest }}"
 
     def test_authenticates_with_oidc_not_a_token(self) -> None:
         step = self._step()
@@ -340,7 +343,7 @@ class TestCodecovOptIn:
         assert with_["files"] == "./tmp/coverage.xml"
 
     def test_job_can_request_an_oidc_token(self) -> None:
-        perms = _load_workflow()["jobs"]["test"]["permissions"]
+        perms = _load_workflow()["jobs"]["coverage"]["permissions"]
         assert perms == {"contents": "read", "id-token": "write"}
 
     def test_callers_grant_id_token(self) -> None:
@@ -355,3 +358,51 @@ class TestCodecovOptIn:
             data = yaml.safe_load((workflows / name).read_text(encoding="utf-8"))
             granted = [data.get("permissions"), data["jobs"][job].get("permissions")]
             assert any(p and p.get("id-token") == "write" for p in granted), name
+
+
+class TestCoverageJob:
+    """Coverage runs in its own job, off the test matrix's critical path (#1064)."""
+
+    @staticmethod
+    def _job() -> dict[str, Any]:
+        job: dict[str, Any] = _load_workflow()["jobs"]["coverage"]
+        return job
+
+    def _step(self, name: str) -> dict[str, Any]:
+        return next(s for s in self._job()["steps"] if s.get("name") == name)
+
+    def test_runs_on_ubuntu_and_skips_full_matrix_runs(self) -> None:
+        job = self._job()
+        assert job["runs-on"] == "ubuntu-latest"
+        assert "!inputs.full_matrix" in job["if"]
+
+    def test_runs_pytest_with_coverage_and_core_debug(self) -> None:
+        step = self._step("Run tests with coverage")
+        assert "--cov" in step["run"]
+        assert "--cov-report=xml:tmp/coverage.xml" in step["run"]
+        assert step["env"]["COVERAGE_DEBUG"] == "core"
+        assert step["env"]["COVERAGE_DEBUG_FILE"] == "tmp/coverage-debug.log"
+
+    def test_prints_the_core_used_even_after_a_failure(self) -> None:
+        step = self._step("Show the coverage core used")
+        assert "Using core=" in step["run"]
+        assert "!cancelled()" in step["if"]
+
+    def test_installs_sops_with_the_job_token_and_ci_hypothesis_profile(self) -> None:
+        step = self._step("Install SOPS tools (Linux)")
+        assert step["env"]["GITHUB_TOKEN"] == "${{ secrets.GITHUB_TOKEN }}"
+        assert self._job()["env"]["HYPOTHESIS_PROFILE"] == "ci"
+
+    def test_test_job_no_longer_measures_coverage_or_uploads(self) -> None:
+        job: dict[str, Any] = _load_workflow()["jobs"]["test"]
+        text = yaml.safe_dump(job)
+        assert "--cov" not in text
+        assert "codecov" not in text.lower()
+        assert "permissions" not in job
+
+    def test_ci_complete_waits_on_and_checks_coverage(self) -> None:
+        job: dict[str, Any] = _load_workflow()["jobs"]["ci-complete"]
+        assert "coverage" in job["needs"]
+        script = job["steps"][0]["run"]
+        assert "needs.coverage.result" in script
+        assert 'coverage_result" != "skipped"' in script

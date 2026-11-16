@@ -240,7 +240,7 @@ printed by `doit publish_setup` and the
 
 ### Codecov opt-in
 
-The `Upload coverage to Codecov` step in `ci.yml` is off by default. The coverage floor
+The `Upload coverage to Codecov` step in the `coverage` job of `ci.yml` is off by default. The coverage floor
 (`fail_under` in `[tool.coverage.report]`) is enforced by pytest-cov and does not depend on
 Codecov; opting in adds the Codecov PR comment, history and badge.
 

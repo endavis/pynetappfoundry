@@ -108,11 +108,6 @@ jobs:
     needs: setup
     if: ${{ needs.setup.outputs.matrix != '{"include":[]}' }}
     runs-on: ${{ matrix.os }}
-    # id-token: write lets the Codecov upload authenticate with OIDC. The
-    # calling workflow must grant it too, or GitHub rejects the call.
-    permissions:
-      contents: read
-      id-token: write
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.setup.outputs.matrix) }}
@@ -178,16 +173,75 @@ jobs:
           age --version
           sops --version
 
-      - name: Run tests with coverage
-        if: matrix.python-version == needs.setup.outputs.newest && matrix.os == 'ubuntu-latest'
-        run: uv run pytest -n auto --cov --cov-report=xml:tmp/coverage.xml --cov-report=term -v --ignore=tests/benchmarks/
-
       - name: Run tests
-        if: "!(matrix.python-version == needs.setup.outputs.newest && matrix.os == 'ubuntu-latest')"
         run: uv run pytest -n auto -v --ignore=tests/benchmarks/
 
+  # Coverage runs in its own job, in parallel with the test matrix, so the
+  # slower measured run no longer sets the wall time of the matrix (#1064).
+  # It is skipped on full-matrix runs, as the coverage step was.
+  coverage:
+    needs: setup
+    if: ${{ needs.setup.outputs.matrix != '{"include":[]}' && !inputs.full_matrix }}
+    runs-on: ubuntu-latest
+    # id-token: write lets the Codecov upload authenticate with OIDC. The
+    # calling workflow must grant it too, or GitHub rejects the call.
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      UV_CACHE_DIR: ${{ github.workspace }}/.uv-cache
+      HYPOTHESIS_PROFILE: ci
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ${{ needs.setup.outputs.newest }}
+
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: "latest"
+
+      - name: Cache uv dependencies
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ env.UV_CACHE_DIR }}
+          key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-uv-
+
+      - name: Install dependencies
+        run: uv sync --all-extras --dev
+
+      # Project steps, not from the template (#938): see the test job.
+      - name: Install SOPS tools (Linux)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          uv run doit install_tools
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Verify SOPS tools installation
+        run: |
+          age --version
+          sops --version
+
+      # coverage 7.13.2 defaults to the sysmon core on CPython 3.14, so no
+      # COVERAGE_CORE override is set. COVERAGE_DEBUG=core makes every
+      # coverage process, each xdist worker too, log the core it uses.
+      - name: Run tests with coverage
+        env:
+          COVERAGE_DEBUG: core
+          COVERAGE_DEBUG_FILE: tmp/coverage-debug.log
+        run: uv run pytest -n auto --cov --cov-report=xml:tmp/coverage.xml --cov-report=term -v --ignore=tests/benchmarks/
+
+      - name: Show the coverage core used
+        if: ${{ !cancelled() }}
+        run: grep -h "Using core=" tmp/coverage-debug.log | sort | uniq -c
+
       - name: Upload coverage to Codecov
-        if: matrix.python-version == needs.setup.outputs.newest && matrix.os == 'ubuntu-latest' && vars.CODECOV_ENABLED == 'true'
+        if: vars.CODECOV_ENABLED == 'true'
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           files: ./tmp/coverage.xml
@@ -374,13 +428,14 @@ jobs:
 
   ci-complete:
     if: always()
-    needs: [setup, test, lint, docs, console-models, generated-models]
+    needs: [setup, test, coverage, lint, docs, console-models, generated-models]
     runs-on: ubuntu-latest
     steps:
       - name: Check CI status
         run: |
           setup_result="${{ needs.setup.result }}"
           test_result="${{ needs.test.result }}"
+          coverage_result="${{ needs.coverage.result }}"
           lint_result="${{ needs.lint.result }}"
           docs_result="${{ needs.docs.result }}"
           console_models_result="${{ needs.console-models.result }}"
@@ -388,6 +443,7 @@ jobs:
 
           echo "Setup result: $setup_result"
           echo "Test result: $test_result"
+          echo "Coverage result: $coverage_result"
           echo "Lint result: $lint_result"
           echo "Docs result: $docs_result"
           echo "Console models result: $console_models_result"
@@ -402,6 +458,12 @@ jobs:
           # Test must succeed or be skipped (skipped = no middle versions)
           if [[ "$test_result" != "success" && "$test_result" != "skipped" ]]; then
             echo "Test job failed"
+            exit 1
+          fi
+
+          # Coverage must succeed or be skipped (skipped = full-matrix run)
+          if [[ "$coverage_result" != "success" && "$coverage_result" != "skipped" ]]; then
+            echo "Coverage job failed"
             exit 1
           fi
 
