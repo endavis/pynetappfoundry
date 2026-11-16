@@ -41,7 +41,9 @@ class ClusterConfig(BaseResource):
 class AIQUMConfig(BaseResource):
     """Configuration for an Active IQ Unified Manager instance."""
 
-    pass
+    # Optional TLS CA validation for the AIQUM REST client (overrides global)
+    verify_ssl: bool | None = None
+    ca_bundle: str | None = None
 
 
 class ConnectorConfig(BaseResource):
@@ -124,6 +126,8 @@ class AIQUMAPISettings(BaseModel):
 
     base_api_path: str = "/api"
     timeout: float = 30.0
+    verify_ssl: bool = False
+    ca_bundle: str | None = None
 
 
 class ConsoleAPISettings(BaseModel):

@@ -9,7 +9,7 @@ credentials are sent. Records live in a trust directory (``<config_dir>/.trust``
 
 With optional CA validation on (``verify_ssl`` / ``ca_bundle``) a cluster's TLS
 certificate is validated against the CA instead, and no TLS fingerprint is pinned or
-recorded for it.
+recorded for it. This holds for ONTAP clusters and AIQUM instances alike.
 
 See ADR-0025 and ``docs/usage/basics.md`` ("Host identity").
 """

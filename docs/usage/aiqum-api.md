@@ -57,7 +57,22 @@ Request bodies are sent unvalidated: the Swagger 2 `all.json` keeps bodies in `p
 
 ## TLS
 
-The client turns certificate chain validation off and pins the instance's certificate fingerprint on first use, the same way `ONTAPAPIClient` does by default. CA validation (`verify_ssl`, `ca_bundle`) does not apply to AIQUM. See [Host identity](basics.md#host-identity-ssh-host-keys-and-tls-certificates).
+By default the client turns certificate chain validation off and pins the instance's certificate fingerprint on first use, the same way `ONTAPAPIClient` does by default. An instance whose certificate is issued by a CA can opt into CA validation instead, with `verify_ssl` and `ca_bundle`. With validation on, nothing is pinned or recorded.
+
+```toml
+# in a data file, per instance
+[aiqums.AIQUM-PROD]
+ip = "192.168.1.150"
+ca_bundle = "certs/internal-ca.pem"   # validate against this CA bundle
+# verify_ssl = true                   # or validate against the default CA bundle
+
+# config/apis/aiqum/aiqumapi.toml, default for every instance
+[general]
+# verify_ssl = true
+# ca_bundle = "certs/internal-ca.pem"
+```
+
+Precedence, first match wins: the instance's `ca_bundle`, the instance's `verify_ssl`, the global `ca_bundle`, the global `verify_ssl`, then pin only. The rules are the same as for ONTAP clusters, and the ONTAP `verify_ssl` / `ca_bundle` keys do not affect AIQUM. A bad value raises `ConfigurationError` when the client is built, before credentials are read. See [CA validation](basics.md#ca-validation-optional) and [Host identity](basics.md#host-identity-ssh-host-keys-and-tls-certificates).
 
 ## Spec gap
 

@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any
 
 from pynetappfoundry.clients.openapi import APIWrapper
 from pynetappfoundry.clients.trust import FingerprintPinningAdapter
-from pynetappfoundry.core.config import ConfigurationError
+from pynetappfoundry.core.config import ConfigurationError, resolve_tls_verify
 from pynetappfoundry.core.models import AIQUMConfig
 
 if TYPE_CHECKING:
@@ -18,7 +18,9 @@ class AIQUMAPIClient(APIWrapper):
     """API client for an Active IQ Unified Manager instance.
 
     The target is ``config.data["aiqums"][name]`` and the credentials come from
-    ``users.toml [aiqums]``. TLS is pinned on first use (chain validation is off).
+    ``users.toml [aiqums]``. By default TLS is pinned on first use (chain validation
+    is off). An instance can opt into CA validation with ``verify_ssl`` / ``ca_bundle``,
+    on its entry or in ``aiqumapi.toml [general]`` (entry wins).
 
     Paging needs no AIQUM-specific code: the inherited ``get_all_records``
     follows the HAL ``_links.next.href`` links and merges ``records``.
@@ -37,11 +39,14 @@ class AIQUMAPIClient(APIWrapper):
 
         Raises:
             ConfigurationError: If the instance is unknown or has no ``ip``, or
-                ``aiqumapi.toml`` has no ``[general]`` section.
+                ``aiqumapi.toml`` has no ``[general]`` section, or the TLS
+                settings (``verify_ssl`` / ``ca_bundle``) are invalid.
         """
         entry = config.data.get("aiqums", {}).get(name)
         if not isinstance(entry, dict):
             raise ConfigurationError(f"No AIQUM named {name!r} in the [aiqums] inventory.")
+        # Resolve before model validation so a bad value is a ConfigurationError.
+        tls_verify = resolve_tls_verify(config, name, data_type="aiqums", settings_key="aiqumapi")
         aiqum = AIQUMConfig.model_validate({**entry, "name": name})
         if not aiqum.ip:
             raise ConfigurationError(f"AIQUM {name!r} has no ip; set aiqums.{name}.ip.")
@@ -60,8 +65,8 @@ class AIQUMAPIClient(APIWrapper):
             auth_header=auth_header,
             base_api_path=settings.base_api_path,
             timeout=settings.timeout,
-            # Pin only: chain validation off, the fingerprint is pinned instead.
-            verify_ssl=False,
+            # False (default) pins the fingerprint; True or a bundle path validates the chain.
+            verify_ssl=tls_verify,
             https_adapter=FingerprintPinningAdapter(
                 config.get_trust_store().tls, pool_connections=20, pool_maxsize=20
             ),

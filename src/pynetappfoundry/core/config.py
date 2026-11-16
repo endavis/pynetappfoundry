@@ -137,18 +137,28 @@ def _resolve_ca_bundle_path(bundle: str, config_dir: Path, key: str) -> str:
     return str(path)
 
 
-def resolve_tls_verify(config: Config, cluster_name: str) -> bool | str:
-    """Resolve the requests-style ``verify`` value for a cluster's REST client.
+def resolve_tls_verify(
+    config: Config,
+    name: str,
+    *,
+    data_type: str = "clusters",
+    settings_key: str = "ontapapi",
+) -> bool | str:
+    """Resolve the requests-style ``verify`` value for an API client.
 
-    Precedence, first match wins: cluster ``ca_bundle``, cluster ``verify_ssl``,
-    global ``ca_bundle``, global ``verify_ssl`` (``ontapapi.toml`` ``[general]``),
-    then ``False``. Only the effective value is validated. Reads the raw dicts, so
-    a missing ``ontapapi.toml`` is not an error.
+    Precedence, first match wins: entry ``ca_bundle``, entry ``verify_ssl``,
+    global ``ca_bundle``, global ``verify_ssl`` (``<settings_key>.toml``
+    ``[general]``), then ``False``. Only the effective value is validated. Reads
+    the raw dicts, so a missing settings file is not an error. The defaults
+    resolve an ONTAP cluster; AIQUM passes ``data_type="aiqums"`` and
+    ``settings_key="aiqumapi"``.
 
     Args:
         config: The loaded configuration. A non-dict ``data`` or ``settings`` counts
             as empty.
-        cluster_name: Cluster to resolve for.
+        name: Inventory entry to resolve for.
+        data_type: Inventory section holding the entry (``clusters`` or ``aiqums``).
+        settings_key: Key of the API settings in ``config.settings``.
 
     Returns:
         ``False`` (no chain validation; the fingerprint is pinned), ``True``
@@ -159,13 +169,13 @@ def resolve_tls_verify(config: Config, cluster_name: str) -> bool | str:
     """
     data = config.data if isinstance(config.data, dict) else {}
     settings = config.settings if isinstance(config.settings, dict) else {}
-    clusters = data.get("clusters", {})
-    cluster = clusters.get(cluster_name) if isinstance(clusters, Mapping) else None
-    ontapapi = settings.get("ontapapi", {})
-    general = ontapapi.get("general") if isinstance(ontapapi, dict) else None
+    section = data.get(data_type, {})
+    cluster = section.get(name) if isinstance(section, Mapping) else None
+    api_settings = settings.get(settings_key, {})
+    general = api_settings.get("general") if isinstance(api_settings, dict) else None
 
-    c_where = f"clusters.{cluster_name}"
-    g_where = "ontapapi.general"
+    c_where = f"{data_type}.{name}"
+    g_where = f"{settings_key}.general"
     c_verify, c_bundle = _read_tls_settings(cluster, c_where)
     config_dir = config.config_dir if isinstance(config.config_dir, Path) else Path.cwd()
     if c_bundle is not None:
@@ -175,7 +185,9 @@ def resolve_tls_verify(config: Config, cluster_name: str) -> bool | str:
     g_verify, g_bundle = _read_tls_settings(general, g_where)
     if g_bundle is not None:
         return _resolve_ca_bundle_path(
-            g_bundle, config_dir, f"{g_where}.ca_bundle (cluster {cluster_name!r})"
+            g_bundle,
+            config_dir,
+            f"{g_where}.ca_bundle ({data_type.removesuffix('s')} {name!r})",
         )
     return g_verify if g_verify is not None else False
 

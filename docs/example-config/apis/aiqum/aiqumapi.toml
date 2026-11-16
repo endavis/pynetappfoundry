@@ -1,3 +1,7 @@
 [general]
 base_api_path = "/api"
 # timeout = 30.0
+# Optional CA validation of AIQUM TLS certificates, the default for every instance.
+# An instance's own verify_ssl / ca_bundle overrides these. Off by default (pin only).
+# verify_ssl = true                    # validate with the default CA bundle
+# ca_bundle = "certs/internal-ca.pem"  # or validate against this CA bundle
