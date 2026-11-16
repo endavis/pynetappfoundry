@@ -19,6 +19,10 @@ issue #424:
 A fourth was added for issue #952: the ``lint`` job runs every check
 ``doit check`` runs (``test`` aside), and each runs even when one before it
 failed, so a PR shows every failing check at once.
+
+A fifth was added for issue #1068: every job that sets up Python pins it with
+``UV_PYTHON`` and checks it, so a job runs on the Python it requested and not
+on ``.python-version``.
 """
 
 from __future__ import annotations
@@ -406,3 +410,83 @@ class TestCoverageJob:
         script = job["steps"][0]["run"]
         assert "needs.coverage.result" in script
         assert 'coverage_result" != "skipped"' in script
+
+
+def _setup_python_jobs() -> dict[str, dict[str, Any]]:
+    """Return every job that has a ``setup-python`` step, by name."""
+    jobs: dict[str, dict[str, Any]] = _load_workflow()["jobs"]
+    return {
+        name: job
+        for name, job in jobs.items()
+        if any("actions/setup-python" in str(s.get("uses", "")) for s in job.get("steps", []))
+    }
+
+
+def _guard_step(job: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+    """Return the index and body of a job's ``Check the Python version`` step."""
+    for index, step in enumerate(job["steps"]):
+        if step.get("name") == "Check the Python version":
+            return index, step
+    raise AssertionError("job has no 'Check the Python version' step")
+
+
+class TestJobsRunOnTheRequestedPython:
+    """Each job runs on the Python it set up, not on .python-version (#1068).
+
+    ``uv sync`` builds ``.venv`` from ``.python-version`` and a later ``uv run``
+    rebuilds it there, so ``UV_PYTHON`` has to carry the request to every uv call.
+    """
+
+    def test_every_setup_python_job_sets_uv_python(self) -> None:
+        jobs = _setup_python_jobs()
+        assert {"test", "coverage"} <= set(jobs)
+        for name, job in jobs.items():
+            setup = next(
+                s for s in job["steps"] if "actions/setup-python" in str(s.get("uses", ""))
+            )
+            assert job["env"]["UV_PYTHON"] == setup["with"]["python-version"], name
+
+    def test_test_job_pins_the_matrix_version(self) -> None:
+        job = _load_workflow()["jobs"]["test"]
+        assert job["env"]["UV_PYTHON"] == "${{ matrix.python-version }}"
+
+    def test_coverage_job_pins_the_newest_version(self) -> None:
+        job = _load_workflow()["jobs"]["coverage"]
+        assert job["env"]["UV_PYTHON"] == "${{ needs.setup.outputs.newest }}"
+
+    def test_each_job_checks_the_running_python_after_install(self) -> None:
+        for name, job in _setup_python_jobs().items():
+            install = next(
+                i for i, s in enumerate(job["steps"]) if s.get("name") == "Install dependencies"
+            )
+            index, step = _guard_step(job)
+            assert index == install + 1, name
+            assert "uv run python" in step["run"], name
+            assert "sys.version_info[:2]" in step["run"], name
+            assert "UV_PYTHON" in step["run"], name
+            assert step["shell"] == "bash", name
+
+    @staticmethod
+    def _program() -> str:
+        _, step = _guard_step(_load_workflow()["jobs"]["test"])
+        run: str = step["run"]
+        start = run.index('-c "') + len('-c "')
+        return run[start : run.rindex('"')]
+
+    def _run(self, requested: str) -> subprocess.CompletedProcess[str]:
+        env = {**os.environ, "UV_PYTHON": requested}
+        return subprocess.run(
+            [sys.executable, "-c", self._program()],
+            capture_output=True,
+            text=True,
+            env=env,
+            check=False,
+        )
+
+    def test_python_version_check_exits_nonzero_on_mismatch(self) -> None:
+        current = f"{sys.version_info[0]}.{sys.version_info[1]}"
+        assert self._run(current).returncode == 0
+        result = self._run("2.7")
+        assert result.returncode != 0
+        assert "2.7" in result.stderr
+        assert current in result.stderr

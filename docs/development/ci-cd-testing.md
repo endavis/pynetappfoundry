@@ -143,6 +143,11 @@ versions, raw `pytest` instead of `doit`, and mutable action tags this project's
 
 `tests/test_ci_jobs_doc.py` checks this table against `ci.yml`: the same jobs, and the same `doit` tasks in each.
 
+Every job that sets up Python also sets `UV_PYTHON` to that version and runs a `Check the Python
+version` step after installing dependencies. `uv sync` builds the virtual environment from
+`.python-version` unless told otherwise, so without `UV_PYTHON` a job would run on that version
+and not the one `setup-python` installed ([#1068](https://github.com/endavis/pynetappfoundry/issues/1068)).
+
 #### Documentation Build Job
 
 Runs `doit docs_build` once on `ubuntu-latest` using the project's newest supported Python version (read dynamically from `.github/python-versions.json`). This job gates PRs against hard-crash regressions in the mkdocs build pipeline — for example, plugin incompatibilities, broken macros, or malformed configuration. See issue [#349](https://github.com/endavis/pyproject-template/issues/349) for the historical incident that motivated this gate.
@@ -153,11 +158,14 @@ Note: This job does **not** currently run `mkdocs build --strict`, so doc-link w
 docs:
   needs: setup
   runs-on: ubuntu-latest
+  env:
+    UV_PYTHON: ${{ needs.setup.outputs.newest }}
   steps:
     # checkout, setup-python (at needs.setup.outputs.newest) and uv setup —
     # all SHA-pinned; see .github/workflows/ci.yml for the current pins
     - name: Install dependencies
       run: uv sync --all-extras --dev
+    # a "Check the Python version" step follows; see ci.yml
     - name: Build documentation
       run: uv run doit docs_build
 ```
@@ -234,14 +242,12 @@ both properties.
 
 #### Coverage core
 
-The `coverage` job does not set `COVERAGE_CORE`. coverage 7.13.2 defaults to the `sysmon` core on
-CPython 3.14 (`SYSMON_DEFAULT` in coverage.py's `env` module), and to `ctrace` on older versions.
-Branch coverage under `sysmon` needs CPython 3.14.0a5 or later. The job is meant to run on the
-newest Python, but as of CI run 43923337755 it runs on 3.13 and uses `ctrace`: `uv sync` builds the
-virtual environment from `.python-version`, not from the `setup-python` version
-([#1068](https://github.com/endavis/pynetappfoundry/issues/1068)). Once that is fixed, the job
-should switch to `sysmon` with no `COVERAGE_CORE` setting. `coverage debug sys` shows
-`core: -none-` before a run, so it cannot show the core used.
+The `coverage` job does not set `COVERAGE_CORE`, so coverage picks its default core for the Python
+it runs on. The job pins the newest Python with `UV_PYTHON`, and the `Check the Python version`
+step fails the job if `uv run` is not on that version
+([#1068](https://github.com/endavis/pynetappfoundry/issues/1068)). Without `UV_PYTHON`, `uv sync`
+builds the virtual environment from `.python-version`, not from the `setup-python` version.
+`coverage debug sys` shows `core: -none-` before a run, so it cannot show the core used.
 The job sets `COVERAGE_DEBUG=core` and `COVERAGE_DEBUG_FILE=tmp/coverage-debug.log`, so every
 coverage process, each xdist worker too, logs `Using core=<name>`, and the `Show the coverage core
 used` step prints the counts per core.
