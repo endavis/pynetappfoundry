@@ -16,7 +16,7 @@ from pynetappfoundry.clients.console.auth import (
 )
 from pynetappfoundry.clients.console.generated import ConsoleAgentOps
 from pynetappfoundry.clients.openapi import APIWrapper
-from pynetappfoundry.models.console_types import Connector
+from pynetappfoundry.models.console_types import Connector, MarketplaceSubscription
 
 if TYPE_CHECKING:
     import requests
@@ -138,6 +138,15 @@ class ConsoleAgentClient:
             The Connector; ``agent_id`` falls back to this client's agent id.
         """
         return Connector.from_about(self.about(), agent_id=self.agent_id)
+
+    def list_marketplace_subscriptions(self) -> list[MarketplaceSubscription]:
+        """GET /occm/api/occm/saas-mp-service/account, flattened.
+
+        Returns:
+            The account's AWS, Azure and GCP marketplace subscriptions as
+            compact ``MarketplaceSubscription`` items.
+        """
+        return MarketplaceSubscription.from_account(self.ops.get_saas_marketplace_account())
 
     def find_onprem_working_environment(
         self, cluster_uuid: str

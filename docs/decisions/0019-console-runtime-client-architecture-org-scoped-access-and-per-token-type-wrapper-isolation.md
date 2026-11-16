@@ -166,6 +166,14 @@ Amendment that settles the codegen choice left open in decision 3 and in the "Ne
 
 See [Console Agent](../usage/console-agent.md) and [Console OpenAPI Generator](../../tools/console_openapi/README.md#generated-client-surface).
 
+## Marketplace subscriptions (#875)
+
+Amendment that applies the "Category match" rule above to subscription data.
+
+- **Source: cvo, not `dw`.** The `cvo` subservice is already parsed (#1009), so the data comes from `GET /occm/api/occm/saas-mp-service/account` (`cvo_get_occm_api_occm_saas_mp_service_account`), generated as `ConsoleAgentOps.get_saas_marketplace_account`. It is reachable only through an agent (`x-agent-id`).
+- **Org-scoped facade only.** `Console.list_marketplace_subscriptions(agent_id)` and `ConsoleAgentClient.list_marketplace_subscriptions()` return a flat `list[MarketplaceSubscription]` (`src/pynetappfoundry/models/console_types.py`). There is no `ConsoleInfo` field and no schema migration: a subscription is shared across clusters, nothing fills `ConsoleInfo` today, and the one per-cluster endpoint works per CVO working environment, which `find_onprem_working_environment` does not resolve.
+- **`dw` is not parsed.** Its `/license/...` operations would give status, end date and entitlements, but parsing them needs a base path entry, a fix to the token-usage regex in `tools/console_openapi/parser/endpoint.py` (it does not match the "NetApp Console user token" wording), and a regenerated spec and models, and one candidate has an undocumented 200 body. That work is tracked in #1034.
+
 ## Consequences
 
 ### Positive
@@ -194,6 +202,8 @@ See [Console Agent](../usage/console-agent.md) and [Console OpenAPI Generator](.
 - Issue #736: feat: add OAuth refresh-token grant flow to ConsoleAPIClient (see "User refresh-token grant (#736)")
 - Issue #735: feat: generate typed client surface for Console OpenAPI (see "Generated operation surface (#735)")
 - Issue #1027: feat: typed request/response models for generated tenancy Console ops (see "Generated operation surface (#735)")
+- Issue #875: feat: add Console subscription data (see "Marketplace subscriptions (#875)")
+- Issue #1034: parse the `dw` licenses and subscriptions subservice (follow-up, see "Marketplace subscriptions (#875)")
 
 ## Related Documentation
 

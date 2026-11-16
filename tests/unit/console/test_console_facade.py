@@ -10,7 +10,13 @@ from pydantic import SecretStr
 
 from pynetappfoundry.console import Console
 from pynetappfoundry.core.models import ConsoleAPISettings
-from pynetappfoundry.models.console_types import Connector, Folder, Organization, Project
+from pynetappfoundry.models.console_types import (
+    Connector,
+    Folder,
+    MarketplaceSubscription,
+    Organization,
+    Project,
+)
 
 
 def _make_config(settings: ConsoleAPISettings, tmp_path: Any) -> MagicMock:
@@ -261,3 +267,21 @@ class TestConsoleConnector:
         mock.side_effect = boom
         with pytest.raises(RuntimeError, match="agent down"):
             console.find_connector("cluster-uuid", ["agent-a"])
+
+    def test_list_marketplace_subscriptions_delegates_to_agent(
+        self, tmp_path: Any, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        console = self._console(tmp_path, monkeypatch)
+        expected = [MarketplaceSubscription.model_validate({"id": "s1"})]
+
+        def factory(config: Any, agent_id: str, **kwargs: Any) -> MagicMock:
+            agent = MagicMock()
+            agent.list_marketplace_subscriptions.return_value = expected
+            return agent
+
+        mock = MagicMock(side_effect=factory)
+        monkeypatch.setattr("pynetappfoundry.console.ConsoleAgentClient", mock)
+
+        assert console.list_marketplace_subscriptions("agent-1") == expected
+        assert mock.call_args.args[1] == "agent-1"
+        assert mock.call_args.kwargs["token_provider"] is console._client.service_token_provider

@@ -20,7 +20,13 @@ from pynetappfoundry.clients.console import (
     ConsoleUserTokenMissingError,
 )
 from pynetappfoundry.clients.console.agent import ConsoleAgentClient
-from pynetappfoundry.models.console_types import Connector, Folder, Organization, Project
+from pynetappfoundry.models.console_types import (
+    Connector,
+    Folder,
+    MarketplaceSubscription,
+    Organization,
+    Project,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -122,6 +128,19 @@ class Console:
         """
         return self._agent_client(agent_id).get_connector()
 
+    def list_marketplace_subscriptions(self, agent_id: str) -> list[MarketplaceSubscription]:
+        """List the account's SaaS marketplace subscriptions through an agent.
+
+        Org-scoped and not cached (ADR-0019).
+
+        Args:
+            agent_id: The Console agent id to query.
+
+        Returns:
+            The AWS, Azure and GCP subscriptions as one flat list.
+        """
+        return self._agent_client(agent_id).list_marketplace_subscriptions()
+
     def find_connector(
         self, cluster_uuid: str, agent_ids: Sequence[str] | None = None
     ) -> Connector | None:
@@ -165,6 +184,7 @@ __all__ = [
     "ConsoleServiceTokenMissingError",
     "ConsoleUserTokenMissingError",
     "Folder",
+    "MarketplaceSubscription",
     "Organization",
     "Project",
 ]

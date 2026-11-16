@@ -113,6 +113,20 @@ connector = console.find_connector("cluster-uuid")  # uses agent_ids from consol
 - The agent ids are configured because the tenancy API lists none for a service token.
 - `Connector` keeps `agent_id`, `version`, `system_id`, `environment`, `agent_type` and `siteIdentifier.company` / `site`. `privateIp` and `siteIdentifier.host` are network addresses and are not kept, so they never reach the cache.
 
+## Marketplace subscriptions
+
+The Console account's SaaS marketplace subscriptions (AWS, Azure, GCP) come from `GET /occm/api/occm/saas-mp-service/account`, which is served through an agent.
+
+```python
+subs = console.list_marketplace_subscriptions("agent-1")  # list[MarketplaceSubscription]
+subs = agent.list_marketplace_subscriptions()  # same, on one ConsoleAgentClient
+```
+
+- `MarketplaceSubscription` (`pynetappfoundry.models.console_types.MarketplaceSubscription`) keeps `id`, `name`, `provider`, `active`, `contract`, `by_node_mode` and `eligible_cvo_packages`. The result is one flat list in aws, azure, gcp order; a missing `provider` is filled from the list the item came from.
+- Cloud account IDs (`cloudAccounts`) and the free-trial flags are not kept.
+- The method is org-scoped and not cached: a subscription is shared across clusters, so it is not a `ConsoleInfo` field (see [ADR-0019](../decisions/0019-console-runtime-client-architecture-org-scoped-access-and-per-token-type-wrapper-isolation.md#marketplace-subscriptions-875)).
+- Status, end date and entitlements live in the `dw` licenses subservice, which is not parsed yet (#1034).
+
 ## Safety
 
 - `add_onprem_working_environment` and `delete_onprem_working_environment` are not retried on a 5xx or timeout, so a transient failure cannot add the same working environment twice. A 401 still triggers one token refresh when a provider is in use.
