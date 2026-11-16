@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING, Any, TypeVar
 from pydantic import BaseModel
 
 from pynetappfoundry.cache._registry import model_registry
+from pynetappfoundry.data._path_params import placeholders as _placeholders
 from pynetappfoundry.data._routing import SourceMode, decide_path
 from pynetappfoundry.data.aiqum_backend import AiqumBackend
 from pynetappfoundry.data.backends import Backend, OntapBackend
@@ -193,6 +194,7 @@ class DataSource:
         cluster: str,
         source: SourceMode = "auto",
         path_params: dict[str, Any] | None = None,
+        parent_filters: dict[str, Any] | None = None,
     ) -> QueryBuilder[T]:
         """Build a query for instances of *model_class*.
 
@@ -204,6 +206,13 @@ class DataSource:
         #1054), e.g.
         ``ds.query(Model, cluster="t", path_params={"platform": "linux"})``.
         Raises :class:`ValueError` if the model's backend does not support it.
+
+        *parent_filters* are query parameters for the parent collection request
+        of an AIQUM per-parent mapping (a ``{key}/metrics`` model without
+        *path_params*), e.g. ``parent_filters={"svm.name": "vs1"}`` (#1061);
+        ``.filter()`` entries still go to the child requests only.  Raises
+        :class:`ValueError` on a backend or mapping without per-parent fetching,
+        or together with *path_params*.
         """
         mapping = self._resolve_mapping(model_class)
         return QueryBuilder(
@@ -213,6 +222,7 @@ class DataSource:
             cluster=cluster,
             source_mode=source,
             path_params=path_params,
+            parent_filters=parent_filters,
         )
 
 
@@ -231,6 +241,7 @@ class QueryBuilder[T: BaseModel]:
         cluster: str,
         source_mode: SourceMode,
         path_params: dict[str, Any] | None = None,
+        parent_filters: dict[str, Any] | None = None,
     ) -> None:
         self._source = source
         self._model_class = model_class
@@ -243,7 +254,40 @@ class QueryBuilder[T: BaseModel]:
         self._path_params: dict[str, Any] = dict(path_params) if path_params else {}
         if self._path_params:
             self._validate_path_params()
+        self._parent_filters: dict[str, Any] = dict(parent_filters) if parent_filters else {}
+        if self._parent_filters:
+            self._validate_parent_filters()
         self._validate_live_only()
+
+    def _validate_parent_filters(self) -> None:
+        """Raise :class:`ValueError` if ``parent_filters`` cannot apply (#1061).
+
+        It needs a backend that sets ``supports_parent_filters``, a mapping with a
+        ``parent_mapping`` and path placeholders, and no ``path_params``.  An
+        unregistered backend is deferred to iteration time.
+        """
+        backend_cls = _BACKENDS.get(self._mapping.api_type)
+        if backend_cls is None:
+            return
+        if not backend_cls.supports_parent_filters:
+            msg = (
+                f"query(): {backend_cls.__name__} does not support parent_filters; "
+                f"it is only available on backends that set supports_parent_filters=True "
+                f"(e.g. AiqumBackend)"
+            )
+            raise ValueError(msg)
+        if self._path_params:
+            msg = (
+                f"query(): {self._mapping.name}: parent_filters and path_params are "
+                "mutually exclusive; path_params skips the per-parent fetch"
+            )
+            raise ValueError(msg)
+        if not (self._mapping.parent_mapping and _placeholders(self._mapping)):
+            msg = (
+                f"query(): {self._mapping.name}: parent_filters apply only to a per-parent "
+                "mapping (a placeholder endpoint with a parent_mapping)"
+            )
+            raise ValueError(msg)
 
     def _validate_live_only(self) -> None:
         """Raise :class:`ValueError` for ``source="cache"`` on a live-only backend."""
@@ -443,6 +487,8 @@ class QueryBuilder[T: BaseModel]:
         decision = decide_path(self._mapping, self._fields, mode)
         # Only pass path_params when used, so backends and mocks that predate it still work.
         extra: dict[str, Any] = {"path_params": self._path_params} if self._path_params else {}
+        if self._parent_filters:
+            extra["parent_filters"] = self._parent_filters
         results = backend.query(
             self._model_class,
             self._mapping,

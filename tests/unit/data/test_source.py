@@ -888,6 +888,99 @@ class TestQueryPathParams:
             assert call.kwargs["path_params"] == {"x": "1"}
 
 
+class TestQueryParentFilters:
+    """``parent_filters`` is threaded to the backend and guarded per backend (#1061)."""
+
+    @pytest.fixture
+    def per_parent_mapping(self) -> Iterator[TypeMapping]:
+        class _FakeChild(FakeVolume):
+            """Per-parent AIQUM child model."""
+
+        mapping = TypeMapping(
+            name="FakeAiqumChild1061",
+            model_class=_FakeChild,
+            api_endpoint="/p/{key}/metrics",
+            api_type="aiqum",
+            identifier_field="uuid",
+            parent_mapping="FakeAiqumParent1061",
+            parent_id_field="key",
+            fields=(FieldMapping(cache_attr="uuid", cache_strategy="cache"),),
+        )
+        model_registry.register_mapping("FakeAiqumChild1061", mapping)
+        try:
+            yield mapping
+        finally:
+            model_registry.unregister_mapping("FakeAiqumChild1061")
+
+    def test_forwarded_when_non_empty(
+        self, per_parent_mapping: TypeMapping, mock_config: Any
+    ) -> None:
+        ds = DataSource(mock_config)
+        fake_backend = MagicMock(live_only=True)
+        fake_backend.query.return_value = []
+        ds._backends["aiqum"] = fake_backend
+        list(
+            ds.query(
+                per_parent_mapping.model_class,
+                cluster="a1",
+                parent_filters={"svm.name": "vs1"},
+            )
+        )
+        assert fake_backend.query.call_args.kwargs["parent_filters"] == {"svm.name": "vs1"}
+
+    @pytest.mark.parametrize("parent_filters", [None, {}])
+    def test_absent_when_empty(
+        self,
+        per_parent_mapping: TypeMapping,
+        mock_config: Any,
+        parent_filters: dict[str, Any] | None,
+    ) -> None:
+        ds = DataSource(mock_config)
+        fake_backend = MagicMock(live_only=True)
+        fake_backend.query.return_value = []
+        ds._backends["aiqum"] = fake_backend
+        list(ds.query(per_parent_mapping.model_class, cluster="a1", parent_filters=parent_filters))
+        assert "parent_filters" not in fake_backend.query.call_args.kwargs
+
+    def test_ontap_rejected(self, fake_volume_mapping: TypeMapping, mock_config: Any) -> None:
+        with pytest.raises(ValueError, match="OntapBackend does not support parent_filters"):
+            DataSource(mock_config).query(FakeVolume, cluster="p1", parent_filters={"a": "b"})
+
+    def test_dii_rejected(self, fake_dii_path_mapping: TypeMapping, mock_config: Any) -> None:
+        with pytest.raises(ValueError, match="DiiBackend does not support parent_filters"):
+            DataSource(mock_config).query(FakeDiiPathModel, cluster="t", parent_filters={"a": "b"})
+
+    def test_non_per_parent_aiqum_rejected(self, mock_config: Any) -> None:
+        class _FakeFlat(FakeVolume):
+            """Flat AIQUM model."""
+
+        mapping = TypeMapping(
+            name="FakeAiqumFlat1061",
+            model_class=_FakeFlat,
+            api_endpoint="/flat",
+            api_type="aiqum",
+            identifier_field="uuid",
+            fields=(FieldMapping(cache_attr="uuid", cache_strategy="cache"),),
+        )
+        model_registry.register_mapping("FakeAiqumFlat1061", mapping)
+        try:
+            with pytest.raises(ValueError, match="per-parent"):
+                DataSource(mock_config).query(_FakeFlat, cluster="a1", parent_filters={"a": "b"})
+        finally:
+            model_registry.unregister_mapping("FakeAiqumFlat1061")
+
+    def test_with_path_params_rejected(
+        self, per_parent_mapping: TypeMapping, mock_config: Any
+    ) -> None:
+        with pytest.raises(ValueError, match="mutually exclusive"):
+            DataSource(mock_config).query(
+                per_parent_mapping.model_class,
+                cluster="a1",
+                path_params={"key": "k"},
+                parent_filters={"a": "b"},
+            )
+
+
 class TestAiqumLiveOnlyRouting:
     """The aiqum backend is registered and live-only (ADR-0026)."""
 

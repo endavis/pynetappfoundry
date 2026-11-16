@@ -120,6 +120,11 @@ class Backend(ABC):
     #: values through ``query(path_params=...)`` (e.g. :class:`DiiBackend`).
     supports_path_params: bool = False
 
+    #: Set to ``True`` on backends that accept ``query(parent_filters=...)``, query
+    #: parameters for the parent collection request of a per-parent mapping
+    #: (e.g. :class:`AiqumBackend`, #1061).
+    supports_parent_filters: bool = False
+
     #: Set to ``True`` on backends with no local cache (e.g.
     #: :class:`AiqumBackend`). ``source="auto"`` then routes live and
     #: ``source="cache"`` raises :class:`ValueError` at ``query()`` time.

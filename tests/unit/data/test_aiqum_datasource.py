@@ -142,6 +142,35 @@ class TestVolumeMetricsPerParent:
         ]
         assert all(c.args == (metrics,) for c in client.call_endpoint.call_args_list)
 
+    def test_metrics_with_parent_filters(self, client: MagicMock) -> None:
+        from pynetappfoundry.core.models import AIQUMAPISettings
+        from pynetappfoundry.models.aiqum.datacenter.storage.volumes.metrics.model import (
+            AiqumVolumeMetricsSampleResponse,
+        )
+
+        client.get_all_records.return_value = _envelope({"key": "k1", "name": "v1"})
+        client.call_endpoint.return_value = {"num_samples": 1, "duration": "PT1H"}
+        config = MagicMock()
+        config.get_aiqum_api_settings.return_value = AIQUMAPISettings()
+        results = list(
+            DataSource(config)
+            .query(
+                AiqumVolumeMetricsSampleResponse,
+                cluster="aiqum1",
+                parent_filters={"svm.name": "vs1"},
+            )
+            .filter({"interval": "1h"})
+        )
+        assert [r.num_samples for r in results] == [1]
+        client.get_all_records.assert_called_once_with(
+            "/datacenter/storage/volumes", "GET", query_params={"svm.name": "vs1"}
+        )
+        client.call_endpoint.assert_called_once_with(
+            "/datacenter/storage/volumes/{key}/metrics",
+            query_params={"interval": "1h"},
+            path_params={"key": "k1"},
+        )
+
 
 class TestGetByKey:
     """get() and a single key filter use the item endpoint (#1060)."""
