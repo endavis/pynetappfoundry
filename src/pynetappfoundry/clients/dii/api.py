@@ -43,17 +43,23 @@ def extract_envelope_records(response: Any) -> list[Any] | None:
 class DIIAPIClient(APIWrapper):
     """API client for Data Infrastructure Insights (formerly Cloud Insights)."""
 
-    def __init__(self, config: Config, **kwargs: Any) -> None:
+    def __init__(self, config: Config, name: str | None = None, **kwargs: Any) -> None:
         """Initialize the DII API client.
 
         Args:
             config: Configuration object with DII API settings.
+            name: Optional ``[cloudinsights.<name>]`` tenant. Its ``base_url`` and
+                token override ``diiapi.toml [general]``; without it, ``[general]``
+                alone is used.
             **kwargs: Additional arguments passed to APIWrapper.
         """
         self.config = config
 
-        dii_settings = config.get_dii_api_settings()
+        dii_settings = (
+            config.get_dii_api_settings() if name is None else config.get_dii_api_settings(name)
+        )
         super().__init__(
+            name=name or "",
             api_json_file=str(config.get_schema_location("dii") / "all.json"),
             base_url=dii_settings.base_url,
             auth_header={"X-CloudInsights-ApiKey": dii_settings.api_ro_token.get_secret_value()},

@@ -278,8 +278,9 @@ decrypted, is reported as Invalid.
 
 | Option | Description |
 |--------|-------------|
-| `--cluster TEXT` | Set credentials for a specific cluster (per-cluster override) |
+| `--cluster TEXT` | Set credentials for a specific cluster. Alias for `--type clusters --name TEXT` |
 | `--type` | Set default credentials for all resources of a type: `aiqums`, `azure`, `cloudinsights`, `clusters`, `connectors`, `console`, `ibm` (`console` stores the Console refresh token: `--user` is only a label and the password prompt takes the token) |
+| `--name TEXT` | With `--type`, set credentials for that one inventory object, written to its data file entry. An unknown name lists the available ones. For a token-style secret, `--user` is only a label and the password prompt takes the token. Not valid with `--cluster` or `--type console` |
 | `--user TEXT` | Username (required) |
 | `--password TEXT` | Password (will prompt if not provided) |
 | `--no-encrypt` | Store password as plain text (not recommended) |
@@ -447,6 +448,10 @@ nf config set-credential --cluster mycluster --user admin
 
 # Set default credentials for all clusters
 nf config set-credential --type clusters --user admin
+
+# Set credentials for one AIQUM, or store one Cloud Insights tenant's API token
+nf config set-credential --type aiqums --name aiqum1 --user admin
+nf config set-credential --type cloudinsights --name tenant1 --user token
 
 # Store the Console refresh token (the user is a label; the prompt takes the token)
 nf config set-credential --type console --user console

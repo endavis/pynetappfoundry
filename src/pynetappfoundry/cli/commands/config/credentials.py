@@ -118,16 +118,27 @@ def encrypt_value_cmd(value: str) -> None:
 @click.command("set-credential")
 @click.option(
     "--cluster",
-    help="Name of the cluster to set credentials for (per-cluster override).",
+    help="Name of the cluster to set credentials for. Alias for '--type clusters --name NAME'.",
 )
 @click.option(
     "--type",
     "cred_type",
     type=click.Choice(sorted(VALID_DATA_TYPES | {"console"}), case_sensitive=False),
     help=(
-        "Set default credentials for all resources of this type (in users.toml). "
+        "Set default credentials for all resources of this type (in users.toml), "
+        "or with --name for one object. "
         "'console' stores the Console refresh token: --user is only a label and "
         "the password prompt takes the refresh token."
+    ),
+)
+@click.option(
+    "--name",
+    "obj_name",
+    help=(
+        "Name of one inventory object of --type (for example an AIQUM or a Cloud "
+        "Insights tenant). Its credentials are stored on its data file entry. "
+        "For a token-style secret, --user is only a label and the password prompt "
+        "takes the token."
     ),
 )
 @click.option(
@@ -152,19 +163,33 @@ def set_credential(
     ctx: click.Context,
     cluster: str | None,
     cred_type: str | None,
+    obj_name: str | None,
     user: str,
     password: str,
     no_encrypt: bool,
 ) -> None:
-    """Set encrypted credentials for a cluster or resource type.
+    """Set encrypted credentials for an inventory object or resource type.
 
-    Use --cluster to set credentials for a specific cluster (stored in data file).
-    Use --type to set default credentials for all resources of a type (stored in users.toml).
+    Use --type with --name to set credentials for one object of any inventory
+    type (stored on its data file entry); --cluster NAME is an alias for
+    --type clusters --name NAME.
+    Use --type alone to set default credentials for all resources of a type
+    (stored in users.toml).
 
     Examples:
 
         # Set credentials for a specific cluster
         nf config set-credential --cluster mycluster --user admin
+
+        # Same, with --type and --name
+        nf config set-credential --type clusters --name mycluster --user admin
+
+        # Set credentials for one AIQUM
+        nf config set-credential --type aiqums --name aiqum1 --user admin
+
+        # Store a Cloud Insights tenant API token (the user is a label; the
+        # password prompt takes the token)
+        nf config set-credential --type cloudinsights --name tenant1 --user token
 
         # Set default credentials for all clusters
         nf config set-credential --type clusters --user admin
@@ -177,14 +202,26 @@ def set_credential(
     if cluster and cred_type:
         raise CliError("Cannot use both --cluster and --type. Choose one.")
 
+    if cluster and obj_name:
+        raise CliError("Cannot use both --cluster and --name. Choose one.")
+
     if not cluster and not cred_type:
+        if obj_name:
+            raise CliError("--name requires --type.")
         raise CliError(
             "Must specify either --cluster or --type.",
             hints=[
                 "\nExamples:",
                 "  nf config set-credential --cluster mycluster --user admin",
                 "  nf config set-credential --type clusters --user admin",
+                "  nf config set-credential --type aiqums --name aiqum1 --user admin",
             ],
+        )
+
+    if cred_type == "console" and obj_name:
+        raise CliError(
+            "--type console takes no --name; the Console refresh token is org-wide.",
+            hints=["Run 'nf config set-credential --type console --user <label>'."],
         )
 
     config_dir = ctx.obj.get("config_dir", "config")
@@ -202,36 +239,47 @@ def set_credential(
     encrypted_password = _encrypt_password(password, no_encrypt, ctx)
 
     if cluster:
-        _set_cluster_credential(ctx, config, config_path, cluster, user, encrypted_password)
+        _set_object_credential(config, config_path, "clusters", cluster, user, encrypted_password)
+    elif obj_name:
+        assert cred_type is not None  # For type checker
+        _set_object_credential(config, config_path, cred_type, obj_name, user, encrypted_password)
     else:
         assert cred_type is not None  # For type checker
         _set_type_credential(ctx, config_path, cred_type, user, encrypted_password)
 
 
-def _set_cluster_credential(
-    ctx: click.Context,
+def _set_object_credential(
     config: Config,
     config_path: Path,
-    cluster: str,
+    obj_type: str,
+    obj_name: str,
     user: str,
     encrypted_password: str,
 ) -> None:
-    """Set credentials for a specific cluster."""
-    # Check if cluster exists
-    if cluster not in config.data.get("clusters", {}):
-        available = list(config.data.get("clusters", {}).keys())
-        hints = [f"Available clusters: {escape(', '.join(available))}"] if available else []
-        raise CliError(f"Cluster '{cluster}' not found in configuration.", hints=hints)
+    """Set credentials for one inventory object of any type."""
+    label = "cluster" if obj_type == "clusters" else f"{obj_type} object"
+    section = config.data.get(obj_type, {})
+    if obj_name not in section:
+        available = list(section.keys())
+        if obj_type == "clusters":
+            hints = [f"Available clusters: {escape(', '.join(available))}"] if available else []
+            raise CliError(f"Cluster '{obj_name}' not found in configuration.", hints=hints)
+        hints = (
+            [f"Available {obj_type}: {escape(', '.join(available))}"]
+            if available
+            else [f"No {obj_type} are defined in the configuration."]
+        )
+        raise CliError(f"{obj_type} object '{obj_name}' not found in configuration.", hints=hints)
 
-    # Find and update the cluster's config file
-    cluster_file = _find_cluster_file(config_path, cluster)
-    if cluster_file is None:
-        raise CliError(f"Could not find configuration file for cluster '{cluster}'")
+    # Find and update the object's config file
+    object_file = _find_object_file(config_path, obj_type, obj_name)
+    if object_file is None:
+        raise CliError(f"Could not find configuration file for {label} '{obj_name}'")
 
     try:
-        _update_cluster_credentials(cluster_file, cluster, user, encrypted_password)
-        print_success(f"Credentials updated for cluster '{cluster}'")
-        console.print(f"  File: {escape(str(cluster_file))}")
+        _update_object_credentials(object_file, obj_type, obj_name, user, encrypted_password)
+        print_success(f"Credentials updated for {label} '{obj_name}'")
+        console.print(f"  File: {escape(str(object_file))}")
         console.print(f"  User: {escape(user)}")
         _print_password_status(encrypted_password)
     except Exception as e:
@@ -266,56 +314,65 @@ def _print_password_status(encrypted_password: str) -> None:
         console.print("  Password: [yellow](plain text)[/yellow]")
 
 
-def _find_cluster_file(config_path: Path, cluster_name: str) -> Path | None:
-    """Find the configuration file containing a cluster.
+def _find_object_file(config_path: Path, obj_type: str, obj_name: str) -> Path | None:
+    """Find the configuration file containing an inventory object.
+
+    Looks in ``data/<obj_type>/*.toml``, then ``data/*.toml``, then any TOML
+    file under the config directory whose ``[settings] type`` is ``data``.
 
     Args:
         config_path: Path to the configuration directory.
-        cluster_name: Name of the cluster to find.
+        obj_type: Inventory type (e.g., 'clusters', 'aiqums').
+        obj_name: Name of the object to find.
 
     Returns:
         Path to the file, or None if not found.
     """
     import tomllib
 
-    # Check data/clusters directory first
-    clusters_dir = config_path / "data" / "clusters"
-    if clusters_dir.exists():
-        for toml_file in clusters_dir.glob("*.toml"):
-            try:
-                with open(toml_file, "rb") as f:
-                    data = tomllib.load(f)
-                if cluster_name in data.get("clusters", {}):
-                    return toml_file
-            except Exception:  # nosec B112  # skip unreadable TOML files
-                continue
+    def _contains(toml_file: Path, require_data_type: bool) -> bool:
+        try:
+            with open(toml_file, "rb") as f:
+                data = tomllib.load(f)
+        except Exception:  # unreadable TOML files cannot contain the object
+            return False
+        if require_data_type and data.get("settings", {}).get("type") != "data":
+            return False
+        section = data.get(obj_type, {})
+        return isinstance(section, dict) and obj_name in section
 
-    # Check main data directory
+    type_dir = config_path / "data" / obj_type
+    if type_dir.exists():
+        for toml_file in type_dir.glob("*.toml"):
+            if _contains(toml_file, False):
+                return toml_file
+
     data_dir = config_path / "data"
     if data_dir.exists():
         for toml_file in data_dir.glob("*.toml"):
-            try:
-                with open(toml_file, "rb") as f:
-                    data = tomllib.load(f)
-                if cluster_name in data.get("clusters", {}):
-                    return toml_file
-            except Exception:  # nosec B112  # skip unreadable TOML files
-                continue
+            if _contains(toml_file, False):
+                return toml_file
+
+    for toml_file in sorted(config_path.rglob("*.toml")):
+        if _contains(toml_file, True):
+            return toml_file
 
     return None
 
 
-def _update_cluster_credentials(
+def _update_object_credentials(
     file_path: Path,
-    cluster_name: str,
+    obj_type: str,
+    obj_name: str,
     user: str,
     encrypted_password: str,
 ) -> None:
-    """Update cluster credentials in a TOML file.
+    """Update an inventory object's credentials in a TOML file.
 
     Args:
         file_path: Path to the TOML file.
-        cluster_name: Name of the cluster.
+        obj_type: Inventory type (e.g., 'clusters', 'aiqums').
+        obj_name: Name of the object.
         user: Username to set.
         encrypted_password: Encrypted or plain password.
     """
@@ -328,13 +385,13 @@ def _update_cluster_credentials(
         data = tomllib.load(f)
 
     # Update credentials
-    if "clusters" not in data:
-        data["clusters"] = {}
-    if cluster_name not in data["clusters"]:
-        data["clusters"][cluster_name] = {}
+    if obj_type not in data:
+        data[obj_type] = {}
+    if obj_name not in data[obj_type]:
+        data[obj_type][obj_name] = {}
 
-    data["clusters"][cluster_name]["user"] = user
-    data["clusters"][cluster_name]["enc"] = encrypted_password
+    data[obj_type][obj_name]["user"] = user
+    data[obj_type][obj_name]["enc"] = encrypted_password
 
     # Write back
     with open(file_path, "wb") as f:

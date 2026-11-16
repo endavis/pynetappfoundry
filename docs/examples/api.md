@@ -296,6 +296,9 @@ config = Config()
 # Create DII client (uses settings from diiapi.toml)
 client = DIIAPIClient(config)
 
+# Or target one [cloudinsights.<name>] tenant (its base_url and token, falling back to diiapi.toml)
+tenant_client = DIIAPIClient(config, name="TENANT-PROD")
+
 # List endpoints
 endpoints = client.list_endpoints()
 
