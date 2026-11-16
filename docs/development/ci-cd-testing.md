@@ -235,9 +235,13 @@ both properties.
 #### Coverage core
 
 The `coverage` job does not set `COVERAGE_CORE`. coverage 7.13.2 defaults to the `sysmon` core on
-CPython 3.14 (`SYSMON_DEFAULT` in coverage.py's `env` module), and the job runs on the newest Python, so
-`COVERAGE_CORE=sysmon` would change nothing. Branch coverage under `sysmon` needs CPython 3.14.0a5
-or later. `coverage debug sys` shows `core: -none-` before a run, so it cannot show the core used.
+CPython 3.14 (`SYSMON_DEFAULT` in coverage.py's `env` module), and to `ctrace` on older versions.
+Branch coverage under `sysmon` needs CPython 3.14.0a5 or later. The job is meant to run on the
+newest Python, but as of CI run 43923337755 it runs on 3.13 and uses `ctrace`: `uv sync` builds the
+virtual environment from `.python-version`, not from the `setup-python` version
+([#1068](https://github.com/endavis/pynetappfoundry/issues/1068)). Once that is fixed, the job
+should switch to `sysmon` with no `COVERAGE_CORE` setting. `coverage debug sys` shows
+`core: -none-` before a run, so it cannot show the core used.
 The job sets `COVERAGE_DEBUG=core` and `COVERAGE_DEBUG_FILE=tmp/coverage-debug.log`, so every
 coverage process, each xdist worker too, logs `Using core=<name>`, and the `Show the coverage core
 used` step prints the counts per core.

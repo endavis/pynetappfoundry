@@ -227,8 +227,10 @@ jobs:
           age --version
           sops --version
 
-      # coverage 7.13.2 defaults to the sysmon core on CPython 3.14, so no
-      # COVERAGE_CORE override is set. COVERAGE_DEBUG=core makes every
+      # coverage 7.13.2 defaults to the sysmon core on CPython 3.14 and ctrace
+      # before it; no COVERAGE_CORE override is set. uv currently runs this job
+      # on .python-version (3.13), not the newest Python (#1068).
+      # COVERAGE_DEBUG=core makes every
       # coverage process, each xdist worker too, log the core it uses.
       - name: Run tests with coverage
         env:
