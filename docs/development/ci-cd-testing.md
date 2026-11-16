@@ -133,7 +133,8 @@ versions, raw `pytest` instead of `doit`, and mutable action tags this project's
 | Job | What it runs |
 | :--- | :--- |
 | `setup` | Builds the test matrix from `.github/python-versions.json` |
-| `test` | `pytest`, called directly, on each OS and Python version in the matrix. The newest Python on `ubuntu-latest` also measures coverage. Before the tests, `doit install_tools` installs SOPS and age on Linux and Windows (macOS uses Homebrew), so the SOPS tests run instead of skipping. |
+| `test` | `pytest`, called directly, on each OS and Python version in the matrix. Before the tests, `doit install_tools` installs SOPS and age on Linux and Windows (macOS uses Homebrew), so the SOPS tests run instead of skipping. |
+| `coverage` | `pytest --cov` on the newest Python and `ubuntu-latest`, in parallel with `test` (so measuring coverage does not set the matrix's wall time), then the optional Codecov upload. It installs SOPS with `doit install_tools` like `test`, and is skipped on full-matrix runs. See [Coverage core](#coverage-core). |
 | `lint` | `doit env_check`, `doit format_check`, `doit lint`, `doit type_check`, `doit deadcode`, `doit security`, `doit spell_check`, `doit audit` and `doit wheel_check`, on `ubuntu-latest`. Each runs even when one before it failed, so CI reports every failing check at once. A failure in any of them fails CI. |
 | `docs` | `doit docs_build`, described below |
 | `console-models` | `doit console_models_check` and `doit console_client_check`, on `ubuntu-latest`: regenerates the Console models and the generated client operations (`tools/console_openapi/client_ops.toml`) from the committed spec, and fails on any modified, deleted or new file under `src/pynetappfoundry/models/console/` or `src/pynetappfoundry/clients/console/generated/`. Project-specific, not from the template. |
@@ -226,10 +227,24 @@ both properties.
 
 ### Coverage Requirements
 
-- **Enforced threshold**: `fail_under = 70` in `pyproject.toml`
+- **Enforced threshold**: `fail_under = 75` in `pyproject.toml`
 - **Measured scope**: `pynetappfoundry` **and** `tools/`
 - **Artifacts**: Upload HTML coverage reports for review
 - **Integration**: Use Codecov or similar service for tracking
+
+#### Coverage core
+
+The `coverage` job does not set `COVERAGE_CORE`. coverage 7.13.2 defaults to the `sysmon` core on
+CPython 3.14 (`SYSMON_DEFAULT` in coverage.py's `env` module), and to `ctrace` on older versions.
+Branch coverage under `sysmon` needs CPython 3.14.0a5 or later. The job is meant to run on the
+newest Python, but as of CI run 43923337755 it runs on 3.13 and uses `ctrace`: `uv sync` builds the
+virtual environment from `.python-version`, not from the `setup-python` version
+([#1068](https://github.com/endavis/pynetappfoundry/issues/1068)). Once that is fixed, the job
+should switch to `sysmon` with no `COVERAGE_CORE` setting. `coverage debug sys` shows
+`core: -none-` before a run, so it cannot show the core used.
+The job sets `COVERAGE_DEBUG=core` and `COVERAGE_DEBUG_FILE=tmp/coverage-debug.log`, so every
+coverage process, each xdist worker too, logs `Using core=<name>`, and the `Show the coverage core
+used` step prints the counts per core.
 
 #### What the gate measures, and why
 
@@ -257,7 +272,7 @@ the same statements with the same tests: a spawned project now sees the number t
 sees, rather than one 19 points lower that it had no way to raise. There is one figure to track,
 not two.
 
-Run `doit coverage` for the current value. The gate is `fail_under` in `pyproject.toml` — 70 at the
+Run `doit coverage` for the current value. The gate is `fail_under` in `pyproject.toml` — 75 at the
 time of writing — and CI fails below it.
 
 Statement counts and percentages are deliberately **not** quoted here. They move with every merge:
