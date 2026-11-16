@@ -16,6 +16,7 @@ from pydantic import BaseModel
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.data._routing import SourceMode, decide_path
+from pynetappfoundry.data.aiqum_backend import AiqumBackend
 from pynetappfoundry.data.backends import Backend, OntapBackend
 from pynetappfoundry.data.dii_backend import DiiBackend
 from pynetappfoundry.data.filters import FilterExpression, compile_filters
@@ -32,11 +33,12 @@ T = TypeVar("T", bound=BaseModel)
 
 
 # Backend registry: maps TypeMapping.api_type → Backend subclass.
-# Phase 2 ships only with the ONTAP backend; future phases register
-# AIQUM, OCCM, DII, etc., here.
+# Registered backends: ONTAP (cache + live), DII and AIQUM (live-only).
+# Future backends (e.g. OCCM) are registered here.
 _BACKENDS: dict[str, type[Backend]] = {
     "ontap": OntapBackend,
     "dii": DiiBackend,
+    "aiqum": AiqumBackend,
 }
 
 
@@ -240,6 +242,18 @@ class QueryBuilder[T: BaseModel]:
         self._path_params: dict[str, Any] = dict(path_params) if path_params else {}
         if self._path_params:
             self._validate_path_params()
+        self._validate_live_only()
+
+    def _validate_live_only(self) -> None:
+        """Raise :class:`ValueError` for ``source="cache"`` on a live-only backend."""
+        backend_cls = _BACKENDS.get(self._mapping.api_type)
+        if backend_cls is None or not backend_cls.live_only or self._source_mode != "cache":
+            return
+        msg = (
+            f"query(): {backend_cls.__name__} is live-only and has no cache; "
+            f"use source='auto' or source='live' instead of source='cache'"
+        )
+        raise ValueError(msg)
 
     def _validate_path_params(self) -> None:
         """Raise :class:`ValueError` if the backend does not support ``path_params``.
@@ -422,7 +436,10 @@ class QueryBuilder[T: BaseModel]:
     def __iter__(self) -> Iterator[T]:
         """Execute the query and yield results."""
         backend = self._source._get_backend(self._mapping.api_type)
-        decision = decide_path(self._mapping, self._fields, self._source_mode)
+        mode: SourceMode = self._source_mode
+        if backend.live_only is True and mode == "auto":
+            mode = "live"
+        decision = decide_path(self._mapping, self._fields, mode)
         # Only pass path_params when used, so backends and mocks that predate it still work.
         extra: dict[str, Any] = {"path_params": self._path_params} if self._path_params else {}
         results = backend.query(

@@ -255,6 +255,7 @@ class TestNoDuplicateRegistrations:
     """Every generated mapping module registers a unique name (#894)."""
 
     def test_no_name_maps_to_multiple_model_classes(self) -> None:
+        import pynetappfoundry.cache.aiqum as aiqum_pkg
         import pynetappfoundry.cache.dii as dii_pkg
         import pynetappfoundry.cache.ontap as ontap_pkg
         from pynetappfoundry.cache._registry import model_registry
@@ -263,7 +264,7 @@ class TestNoDuplicateRegistrations:
         _ensure_bootstrapped()
         seen: dict[str, list[type[BaseModel]]] = {}
         count = 0
-        for pkg in (ontap_pkg, dii_pkg):
+        for pkg in (ontap_pkg, dii_pkg, aiqum_pkg):
             for info in pkgutil.walk_packages(pkg.__path__, pkg.__name__ + "."):
                 if not info.name.endswith(".mapping"):
                     continue
@@ -283,13 +284,14 @@ class TestNoDuplicateRegistrations:
 
     def test_lowercased_model_class_names_are_unique(self) -> None:
         """Table name is ``model_class.__name__.lower()``; it must be unique (#923)."""
+        import pynetappfoundry.cache.aiqum as aiqum_pkg
         import pynetappfoundry.cache.dii as dii_pkg
         import pynetappfoundry.cache.ontap as ontap_pkg
         from pynetappfoundry.cache.field_mapping import TypeMapping
 
         _ensure_bootstrapped()
         by_table: dict[str, set[type[BaseModel]]] = {}
-        for pkg in (ontap_pkg, dii_pkg):
+        for pkg in (ontap_pkg, dii_pkg, aiqum_pkg):
             for info in pkgutil.walk_packages(pkg.__path__, pkg.__name__ + "."):
                 if not info.name.endswith(".mapping"):
                     continue

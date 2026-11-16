@@ -1,0 +1,58 @@
+[endpoint]
+path = "/datacenter/cluster/nodes"
+schema = "node"
+class_name = "AiqumNode"
+
+[fields."cluster.key"]
+cache_strategy = "cache"
+
+[fields."cluster.name"]
+cache_strategy = "cache"
+
+[fields."cluster.uuid"]
+cache_strategy = "cache"
+
+[fields."ha.partners"]
+cache_strategy = "cache"
+
+[fields.health]
+cache_strategy = "cache"
+
+[fields.key]
+cache_strategy = "cache"
+
+[fields.location]
+cache_strategy = "cache"
+
+[fields.model_]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields."performance_capacity.used"]
+cache_strategy = "cache"
+
+[fields.serial_number]
+cache_strategy = "cache"
+
+[fields.system_id]
+cache_strategy = "cache"
+
+[fields.uptime]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"
+
+[fields."version.full"]
+cache_strategy = "cache"
+
+[fields."version.generation"]
+cache_strategy = "cache"
+
+[fields."version.major"]
+cache_strategy = "cache"
+
+[fields."version.minor"]
+cache_strategy = "cache"

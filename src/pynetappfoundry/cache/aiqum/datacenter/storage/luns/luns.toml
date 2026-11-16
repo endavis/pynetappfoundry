@@ -1,0 +1,85 @@
+[endpoint]
+path = "/datacenter/storage/luns"
+schema = "lun"
+class_name = "AiqumLun"
+
+[fields.class_]
+cache_strategy = "cache"
+
+[fields."cluster.key"]
+cache_strategy = "cache"
+
+[fields."cluster.name"]
+cache_strategy = "cache"
+
+[fields."cluster.uuid"]
+cache_strategy = "cache"
+
+[fields.comment]
+cache_strategy = "cache"
+
+[fields.key]
+cache_strategy = "cache"
+
+[fields."location.qtree.id"]
+cache_strategy = "cache"
+
+[fields."location.qtree.key"]
+cache_strategy = "cache"
+
+[fields."location.qtree.name"]
+cache_strategy = "cache"
+
+[fields."location.volume.key"]
+cache_strategy = "cache"
+
+[fields."location.volume.name"]
+cache_strategy = "cache"
+
+[fields."location.volume.uuid"]
+cache_strategy = "cache"
+
+[fields.lun_maps]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.os_type]
+cache_strategy = "cache"
+
+[fields."qos_policy.key"]
+cache_strategy = "cache"
+
+[fields."qos_policy.name"]
+cache_strategy = "cache"
+
+[fields."qos_policy.uuid"]
+cache_strategy = "cache"
+
+[fields.serial_number]
+cache_strategy = "cache"
+
+[fields."space.size"]
+cache_strategy = "cache"
+
+[fields."space.used"]
+cache_strategy = "cache"
+
+[fields."status.mapped"]
+cache_strategy = "cache"
+
+[fields."status.state"]
+cache_strategy = "cache"
+
+[fields."svm.key"]
+cache_strategy = "cache"
+
+[fields."svm.name"]
+cache_strategy = "cache"
+
+[fields."svm.uuid"]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

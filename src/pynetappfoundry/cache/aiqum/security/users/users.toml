@@ -1,0 +1,28 @@
+[endpoint]
+path = "/security/users"
+schema = "user"
+class_name = "AiqumUser"
+
+[fields.authentication_type]
+cache_strategy = "cache"
+
+[fields.confirm_password]
+cache_strategy = "cache"
+
+[fields.email]
+cache_strategy = "cache"
+
+[fields.group]
+cache_strategy = "cache"
+
+[fields.locked]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.password]
+cache_strategy = "cache"
+
+[fields.role]
+cache_strategy = "cache"

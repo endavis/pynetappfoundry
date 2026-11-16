@@ -1,0 +1,52 @@
+[endpoint]
+path = "/management-server/jobs"
+schema = "job"
+class_name = "AiqumJob"
+
+[fields.complete_time]
+cache_strategy = "cache"
+
+[fields.job_results]
+cache_strategy = "cache"
+
+[fields.key]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.parent_job_key]
+cache_strategy = "cache"
+
+[fields."spawned_job_summary.aborted_jobs"]
+cache_strategy = "cache"
+
+[fields."spawned_job_summary.completed_jobs"]
+cache_strategy = "cache"
+
+[fields."spawned_job_summary.failed_jobs"]
+cache_strategy = "cache"
+
+[fields."spawned_job_summary.running_jobs"]
+cache_strategy = "cache"
+
+[fields."spawned_job_summary.successful_jobs"]
+cache_strategy = "cache"
+
+[fields."spawned_job_summary.total_jobs"]
+cache_strategy = "cache"
+
+[fields.state]
+cache_strategy = "cache"
+
+[fields.status]
+cache_strategy = "cache"
+
+[fields.submit_time]
+cache_strategy = "cache"
+
+[fields.task_reports]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"

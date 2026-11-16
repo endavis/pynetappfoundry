@@ -1,0 +1,34 @@
+[endpoint]
+path = "/storage-provider/storage-efficiency-policies"
+schema = "storage_efficiency_policy"
+class_name = "AiqumStorageEfficiencyPolicy"
+
+[fields.compression]
+cache_strategy = "cache"
+
+[fields.create_time]
+cache_strategy = "cache"
+
+[fields.deduplication]
+cache_strategy = "cache"
+
+[fields.description]
+cache_strategy = "cache"
+
+[fields.key]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.space_thin_provisioned]
+cache_strategy = "cache"
+
+[fields.system_defined]
+cache_strategy = "cache"
+
+[fields.update_time]
+cache_strategy = "cache"
+
+[fields.workload_count]
+cache_strategy = "cache"

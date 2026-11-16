@@ -1,0 +1,31 @@
+[endpoint]
+path = "/datacenter/cluster/clusters/{key}/metrics"
+schema = "cluster_metrics_sample_response"
+class_name = "AiqumClusterMetricsSampleResponse"
+
+[fields."cluster.key"]
+cache_strategy = "cache"
+
+[fields."cluster.name"]
+cache_strategy = "cache"
+
+[fields."cluster.uuid"]
+cache_strategy = "cache"
+
+[fields.duration]
+cache_strategy = "cache"
+
+[fields.end_time]
+cache_strategy = "cache"
+
+[fields.num_samples]
+cache_strategy = "cache"
+
+[fields.samples]
+cache_strategy = "cache"
+
+[fields.start_time]
+cache_strategy = "cache"
+
+[fields."summary.iops"]
+cache_strategy = "cache"

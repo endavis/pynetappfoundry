@@ -1,0 +1,64 @@
+[endpoint]
+path = "/datacenter/cluster/clusters"
+schema = "cluster"
+class_name = "AiqumCluster"
+
+[fields.contact]
+cache_strategy = "cache"
+
+[fields.isSanOptimized]
+cache_strategy = "cache"
+
+[fields.is_san_optimized]
+cache_strategy = "cache"
+
+[fields.key]
+cache_strategy = "cache"
+
+[fields.location]
+cache_strategy = "cache"
+
+[fields.management_ip]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.nodes]
+cache_strategy = "cache"
+
+[fields."protocol_breakdown.cifs"]
+cache_strategy = "cache"
+
+[fields."protocol_breakdown.fcp"]
+cache_strategy = "cache"
+
+[fields."protocol_breakdown.iscsi"]
+cache_strategy = "cache"
+
+[fields."protocol_breakdown.nfs"]
+cache_strategy = "cache"
+
+[fields."storage_capacity.available"]
+cache_strategy = "cache"
+
+[fields."storage_capacity.total"]
+cache_strategy = "cache"
+
+[fields."storage_capacity.used"]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"
+
+[fields."version.full"]
+cache_strategy = "cache"
+
+[fields."version.generation"]
+cache_strategy = "cache"
+
+[fields."version.major"]
+cache_strategy = "cache"
+
+[fields."version.minor"]
+cache_strategy = "cache"

@@ -1,0 +1,37 @@
+[endpoint]
+path = "/datacenter/network/ip/interfaces/{key}/metrics"
+schema = "network_ip_interface_metrics_sample_response"
+class_name = "AiqumNetworkIpInterfaceMetricsSampleResponse"
+
+[fields.duration]
+cache_strategy = "cache"
+
+[fields.end_time]
+cache_strategy = "cache"
+
+[fields."lif.key"]
+cache_strategy = "cache"
+
+[fields."lif.name"]
+cache_strategy = "cache"
+
+[fields."lif.uuid"]
+cache_strategy = "cache"
+
+[fields.num_samples]
+cache_strategy = "cache"
+
+[fields.samples]
+cache_strategy = "cache"
+
+[fields.start_time]
+cache_strategy = "cache"
+
+[fields."summary.error.received"]
+cache_strategy = "cache"
+
+[fields."summary.packets.received"]
+cache_strategy = "cache"
+
+[fields."summary.throughput.received"]
+cache_strategy = "cache"

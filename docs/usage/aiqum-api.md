@@ -55,6 +55,25 @@ client.call_endpoint(
 
 Request bodies are sent unvalidated: the Swagger 2 `all.json` keeps bodies in `parameters[in=body]`, and body validation reads only OpenAPI 3 `requestBody`.
 
+## DataSource
+
+The generated `Aiqum*` models (for example `AiqumCluster`, `AiqumSvm`, `AiqumVolume`, `AiqumDatasource`) can be queried through `DataSource`. `cluster=` is the key of the instance in the `[aiqums]` inventory:
+
+```python
+from pynetappfoundry.data import DataSource
+from pynetappfoundry.models.aiqum.datacenter.storage.volumes.model import AiqumVolume
+
+ds = DataSource(config)
+volumes = ds.query(AiqumVolume, cluster="aiqum1").filter({"svm.name": "vs1"})
+```
+
+- **Live only.** AIQUM has no local cache. `source="auto"` (the default) and `source="live"` query the instance; `source="cache"` raises `ValueError`. `.where()` and non-equality filters raise `ValueError` ([ADR-0026](../decisions/0026-aiqum-backend-is-live-only-and-reads-the-hal-records-envelope.md)).
+- **Filters** become query parameters on the request.
+- **Paging is automatic.** The `_links.next.href` links are followed and the `records` merged.
+- **Endpoints with a `{placeholder}`** (such as `/datacenter/cluster/clusters/{key}/metrics`) are not queryable yet and raise `ValueError` ([#1054](https://github.com/endavis/pynetappfoundry/issues/1054)).
+
+The models are generated with `doit generate_models --api=aiqum`.
+
 ## TLS
 
 By default the client turns certificate chain validation off and pins the instance's certificate fingerprint on first use, the same way `ONTAPAPIClient` does by default. An instance whose certificate is issued by a CA can opt into CA validation instead, with `verify_ssl` and `ca_bundle`. With validation on, nothing is pinned or recorded.

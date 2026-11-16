@@ -303,8 +303,8 @@ _SINGLE_OBJECT_ENDPOINTS: dict[str, frozenset[str]] = {
 
 Keyed by API type; the value is the set of spec paths.  They get
 ``response_shape="singleton"`` (the whole response is the single record) and the
-model is built from the whole response schema (#935).  DII only: ONTAP
-single-object responses are handled by the api_type rule in
+model is built from the whole response schema (#935).  DII only: ONTAP and
+AIQUM single-object responses are handled by the api_type rule in
 ``_is_single_object_response`` (#925), not by this table.
 """
 
@@ -517,7 +517,7 @@ def parse_openapi_spec(
         records_path = "records"
         response_shape: Literal["envelope", "singleton"] = "envelope"
         if path in _SINGLE_OBJECT_ENDPOINTS.get(api_type, frozenset()) or (
-            api_type == "ontap" and _is_single_object_response(spec, response_schema)
+            api_type in ("ontap", "aiqum") and _is_single_object_response(spec, response_schema)
         ):
             response_shape = "singleton"
             item_schema = response_schema

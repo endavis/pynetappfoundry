@@ -1,0 +1,43 @@
+[endpoint]
+path = "/datacenter/cluster/nodes/analytics"
+schema = "node_analytics"
+class_name = "AiqumNodeAnalytics"
+
+[fields."cluster.key"]
+cache_strategy = "cache"
+
+[fields."cluster.name"]
+cache_strategy = "cache"
+
+[fields."cluster.uuid"]
+cache_strategy = "cache"
+
+[fields.iops]
+cache_strategy = "cache"
+
+[fields.latency]
+cache_strategy = "cache"
+
+[fields."node.key"]
+cache_strategy = "cache"
+
+[fields."node.name"]
+cache_strategy = "cache"
+
+[fields."node.uuid"]
+cache_strategy = "cache"
+
+[fields."performance_capacity.available_iops"]
+cache_strategy = "cache"
+
+[fields."performance_capacity.used_percent"]
+cache_strategy = "cache"
+
+[fields.period]
+cache_strategy = "cache"
+
+[fields.throughput]
+cache_strategy = "cache"
+
+[fields.utilization_percent]
+cache_strategy = "cache"

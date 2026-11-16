@@ -1,0 +1,1 @@
+"""Ethernet cache models."""

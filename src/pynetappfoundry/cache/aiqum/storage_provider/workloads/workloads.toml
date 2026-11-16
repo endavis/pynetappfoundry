@@ -1,0 +1,130 @@
+[endpoint]
+path = "/storage-provider/workloads"
+schema = "workloads"
+class_name = "AiqumWorkloads"
+
+[fields."assigned_performance_service_level.expected_iops"]
+cache_strategy = "cache"
+
+[fields."assigned_performance_service_level.key"]
+cache_strategy = "cache"
+
+[fields."assigned_performance_service_level.name"]
+cache_strategy = "cache"
+
+[fields."assigned_performance_service_level.peak_iops"]
+cache_strategy = "cache"
+
+[fields."assigned_storage_efficiency_policy.key"]
+cache_strategy = "cache"
+
+[fields."assigned_storage_efficiency_policy.name"]
+cache_strategy = "cache"
+
+[fields."cluster.key"]
+cache_strategy = "cache"
+
+[fields."cluster.name"]
+cache_strategy = "cache"
+
+[fields."cluster.uuid"]
+cache_strategy = "cache"
+
+[fields.conformance_status]
+cache_strategy = "cache"
+
+[fields."conformance_status_details.avg_violated_latency"]
+cache_strategy = "cache"
+
+[fields."conformance_status_details.latency_observation_duration"]
+cache_strategy = "cache"
+
+[fields."conformance_status_details.latency_risk_threshold_percent"]
+cache_strategy = "cache"
+
+[fields."conformance_status_details.target_latency"]
+cache_strategy = "cache"
+
+[fields."iops.n95th_percentile"]
+cache_strategy = "cache"
+
+[fields."iops.average"]
+cache_strategy = "cache"
+
+[fields."iops.max"]
+cache_strategy = "cache"
+
+[fields."iops.median"]
+cache_strategy = "cache"
+
+[fields.key]
+cache_strategy = "cache"
+
+[fields."latency.n95th_percentile"]
+cache_strategy = "cache"
+
+[fields."latency.average"]
+cache_strategy = "cache"
+
+[fields."latency.max"]
+cache_strategy = "cache"
+
+[fields."latency.median"]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields."recommended_performance_service_level.expected_iops"]
+cache_strategy = "cache"
+
+[fields."recommended_performance_service_level.key"]
+cache_strategy = "cache"
+
+[fields."recommended_performance_service_level.name"]
+cache_strategy = "cache"
+
+[fields."recommended_performance_service_level.peak_iops"]
+cache_strategy = "cache"
+
+[fields."space.size"]
+cache_strategy = "cache"
+
+[fields."space.used"]
+cache_strategy = "cache"
+
+[fields."space.used_95th_percentile"]
+cache_strategy = "cache"
+
+[fields."space.used_average"]
+cache_strategy = "cache"
+
+[fields."space.used_max"]
+cache_strategy = "cache"
+
+[fields."space.used_median"]
+cache_strategy = "cache"
+
+[fields."svm.key"]
+cache_strategy = "cache"
+
+[fields."svm.name"]
+cache_strategy = "cache"
+
+[fields."svm.uuid"]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"
+
+[fields."volume.key"]
+cache_strategy = "cache"
+
+[fields."volume.name"]
+cache_strategy = "cache"
+
+[fields."volume.uuid"]
+cache_strategy = "cache"

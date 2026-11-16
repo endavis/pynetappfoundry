@@ -1,0 +1,37 @@
+[endpoint]
+path = "/admin/datasource-certificate"
+schema = "certificate_response"
+class_name = "AiqumCertificateResponse"
+
+[fields.detail_certificate_string]
+cache_strategy = "cache"
+
+[fields."fingerprint.md5"]
+cache_strategy = "cache"
+
+[fields."fingerprint.sha1"]
+cache_strategy = "cache"
+
+[fields.is_self_signed]
+cache_strategy = "cache"
+
+[fields.is_valid]
+cache_strategy = "cache"
+
+[fields.is_valid_hostname]
+cache_strategy = "cache"
+
+[fields.issued_to]
+cache_strategy = "cache"
+
+[fields.issuer]
+cache_strategy = "cache"
+
+[fields.pem_formatted_string]
+cache_strategy = "cache"
+
+[fields.valid_from]
+cache_strategy = "cache"
+
+[fields.valid_to]
+cache_strategy = "cache"

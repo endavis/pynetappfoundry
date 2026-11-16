@@ -1,0 +1,46 @@
+[endpoint]
+path = "/storage-provider/performance-service-levels"
+schema = "performance_service_level"
+class_name = "AiqumStorageProviderPerformanceServiceLevel"
+
+[fields.create_time]
+cache_strategy = "cache"
+
+[fields.description]
+cache_strategy = "cache"
+
+[fields."iops.absolute_min_iops"]
+cache_strategy = "cache"
+
+[fields."iops.expected_iops_per_tb"]
+cache_strategy = "cache"
+
+[fields."iops.peak_iops_allocation_policy"]
+cache_strategy = "cache"
+
+[fields."iops.peak_iops_per_tb"]
+cache_strategy = "cache"
+
+[fields.key]
+cache_strategy = "cache"
+
+[fields."latency.expected"]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields."space.available"]
+cache_strategy = "cache"
+
+[fields."space.used"]
+cache_strategy = "cache"
+
+[fields.system_defined]
+cache_strategy = "cache"
+
+[fields.update_time]
+cache_strategy = "cache"
+
+[fields.workload_count]
+cache_strategy = "cache"

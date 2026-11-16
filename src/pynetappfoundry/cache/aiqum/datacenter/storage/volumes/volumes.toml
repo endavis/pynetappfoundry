@@ -1,0 +1,106 @@
+[endpoint]
+path = "/datacenter/storage/volumes"
+schema = "volume"
+class_name = "AiqumVolume"
+
+[fields.aggregates]
+cache_strategy = "cache"
+
+[fields."autosize.maximum"]
+cache_strategy = "cache"
+
+[fields."autosize.mode"]
+cache_strategy = "cache"
+
+[fields."cluster.key"]
+cache_strategy = "cache"
+
+[fields."cluster.name"]
+cache_strategy = "cache"
+
+[fields."cluster.uuid"]
+cache_strategy = "cache"
+
+[fields.create_time]
+cache_strategy = "cache"
+
+[fields.key]
+cache_strategy = "cache"
+
+[fields.language]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields."nas.export_policy.id"]
+cache_strategy = "cache"
+
+[fields."nas.export_policy.key"]
+cache_strategy = "cache"
+
+[fields."nas.export_policy.name"]
+cache_strategy = "cache"
+
+[fields."qos.policy.key"]
+cache_strategy = "cache"
+
+[fields."qos.policy.max_throughput_iops"]
+cache_strategy = "cache"
+
+[fields."qos.policy.max_throughput_mbps"]
+cache_strategy = "cache"
+
+[fields."qos.policy.min_throughput_iops"]
+cache_strategy = "cache"
+
+[fields."qos.policy.name"]
+cache_strategy = "cache"
+
+[fields."qos.policy.uuid"]
+cache_strategy = "cache"
+
+[fields."snapmirror.is_protected"]
+cache_strategy = "cache"
+
+[fields."snapshot_policy.key"]
+cache_strategy = "cache"
+
+[fields."snapshot_policy.name"]
+cache_strategy = "cache"
+
+[fields."snapshot_policy.uuid"]
+cache_strategy = "cache"
+
+[fields."space.available"]
+cache_strategy = "cache"
+
+[fields."space.size"]
+cache_strategy = "cache"
+
+[fields."space.used"]
+cache_strategy = "cache"
+
+[fields.state]
+cache_strategy = "cache"
+
+[fields.style]
+cache_strategy = "cache"
+
+[fields."svm.key"]
+cache_strategy = "cache"
+
+[fields."svm.name"]
+cache_strategy = "cache"
+
+[fields."svm.uuid"]
+cache_strategy = "cache"
+
+[fields."tiering.policy"]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

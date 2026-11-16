@@ -1,0 +1,46 @@
+[endpoint]
+path = "/management-server/alerts"
+schema = "alert"
+class_name = "AiqumAlert"
+
+[fields."action.notification.duration"]
+cache_strategy = "cache"
+
+[fields."action.notification.emails"]
+cache_strategy = "cache"
+
+[fields."action.notification.from_"]
+cache_strategy = "cache"
+
+[fields."action.notification.send_snmp_trap"]
+cache_strategy = "cache"
+
+[fields."action.notification.to"]
+cache_strategy = "cache"
+
+[fields."action.script.key"]
+cache_strategy = "cache"
+
+[fields."action.script.name"]
+cache_strategy = "cache"
+
+[fields.description]
+cache_strategy = "cache"
+
+[fields.enabled]
+cache_strategy = "cache"
+
+[fields."event.severities"]
+cache_strategy = "cache"
+
+[fields."event.types"]
+cache_strategy = "cache"
+
+[fields.key]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.resource]
+cache_strategy = "cache"

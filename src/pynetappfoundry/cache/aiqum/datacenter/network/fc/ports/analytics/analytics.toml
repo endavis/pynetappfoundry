@@ -1,0 +1,40 @@
+[endpoint]
+path = "/datacenter/network/fc/ports/analytics"
+schema = "fc_port_analytics"
+class_name = "AiqumFcPortAnalytics"
+
+[fields."cluster.key"]
+cache_strategy = "cache"
+
+[fields."cluster.name"]
+cache_strategy = "cache"
+
+[fields."cluster.uuid"]
+cache_strategy = "cache"
+
+[fields."fc_port.key"]
+cache_strategy = "cache"
+
+[fields."fc_port.name"]
+cache_strategy = "cache"
+
+[fields."fc_port.uuid"]
+cache_strategy = "cache"
+
+[fields."node.key"]
+cache_strategy = "cache"
+
+[fields."node.name"]
+cache_strategy = "cache"
+
+[fields."node.uuid"]
+cache_strategy = "cache"
+
+[fields.period]
+cache_strategy = "cache"
+
+[fields.throughput]
+cache_strategy = "cache"
+
+[fields.utilization_percent]
+cache_strategy = "cache"

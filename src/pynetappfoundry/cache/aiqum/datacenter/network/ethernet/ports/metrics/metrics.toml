@@ -1,0 +1,37 @@
+[endpoint]
+path = "/datacenter/network/ethernet/ports/{key}/metrics"
+schema = "ethernet_port_metrics_sample_response"
+class_name = "AiqumEthernetPortMetricsSampleResponse"
+
+[fields.duration]
+cache_strategy = "cache"
+
+[fields.end_time]
+cache_strategy = "cache"
+
+[fields."ethernet_port.key"]
+cache_strategy = "cache"
+
+[fields."ethernet_port.name"]
+cache_strategy = "cache"
+
+[fields."ethernet_port.uuid"]
+cache_strategy = "cache"
+
+[fields.num_samples]
+cache_strategy = "cache"
+
+[fields.samples]
+cache_strategy = "cache"
+
+[fields.start_time]
+cache_strategy = "cache"
+
+[fields."summary.bytes.received"]
+cache_strategy = "cache"
+
+[fields."summary.error.received"]
+cache_strategy = "cache"
+
+[fields."summary.utilization_percent"]
+cache_strategy = "cache"

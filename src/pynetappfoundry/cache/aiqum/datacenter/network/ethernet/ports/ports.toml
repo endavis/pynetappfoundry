@@ -1,0 +1,73 @@
+[endpoint]
+path = "/datacenter/network/ethernet/ports"
+schema = "ethernet_port"
+class_name = "AiqumEthernetPort"
+
+[fields."broadcast_domain.ipspace.name"]
+cache_strategy = "cache"
+
+[fields."broadcast_domain.key"]
+cache_strategy = "cache"
+
+[fields."broadcast_domain.name"]
+cache_strategy = "cache"
+
+[fields."broadcast_domain.uuid"]
+cache_strategy = "cache"
+
+[fields."cluster.key"]
+cache_strategy = "cache"
+
+[fields."cluster.name"]
+cache_strategy = "cache"
+
+[fields."cluster.uuid"]
+cache_strategy = "cache"
+
+[fields.enabled]
+cache_strategy = "cache"
+
+[fields.key]
+cache_strategy = "cache"
+
+[fields.mac_address]
+cache_strategy = "cache"
+
+[fields.mtu]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields."node.key"]
+cache_strategy = "cache"
+
+[fields."node.name"]
+cache_strategy = "cache"
+
+[fields."node.uuid"]
+cache_strategy = "cache"
+
+[fields.speed]
+cache_strategy = "cache"
+
+[fields.state]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"
+
+[fields."vlan.base_port.name"]
+cache_strategy = "cache"
+
+[fields."vlan.base_port.node.name"]
+cache_strategy = "cache"
+
+[fields."vlan.base_port.uuid"]
+cache_strategy = "cache"
+
+[fields."vlan.tag"]
+cache_strategy = "cache"

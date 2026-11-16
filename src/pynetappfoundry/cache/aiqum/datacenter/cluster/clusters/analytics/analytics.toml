@@ -1,0 +1,25 @@
+[endpoint]
+path = "/datacenter/cluster/clusters/analytics"
+schema = "cluster_analytics"
+class_name = "AiqumClusterAnalytics"
+
+[fields."cluster.key"]
+cache_strategy = "cache"
+
+[fields."cluster.name"]
+cache_strategy = "cache"
+
+[fields."cluster.uuid"]
+cache_strategy = "cache"
+
+[fields.iops]
+cache_strategy = "cache"
+
+[fields.management_ip]
+cache_strategy = "cache"
+
+[fields.period]
+cache_strategy = "cache"
+
+[fields.throughput]
+cache_strategy = "cache"

@@ -2,6 +2,11 @@ Refresh the spec with:
   doit fetch_spec --api=aiqum      # downloads https://<aiqum>/docs/api/v2.yaml into all.json
   doit convert_specs --api=aiqum   # converts all.json into openapi3.json
 
+Models: src/pynetappfoundry/models/aiqum and src/pynetappfoundry/cache/aiqum are
+generated from this spec with
+  doit generate_models --api=aiqum
+and are covered by the drift check (doit generate_models_check).
+
 Provenance: all.json and openapi3.json were fetched from AIQUM 9.18 (lab) on
 2026-11-16 (issue #1043). info.version is v2 (the API version, not the AIQUM
 release).

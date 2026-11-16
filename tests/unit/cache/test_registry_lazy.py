@@ -347,7 +347,11 @@ class TestStaleIndexFallback:
 
 def _walk_mapping_modules() -> set[str]:
     found: set[str] = set()
-    for pkg_name in ("pynetappfoundry.cache.ontap", "pynetappfoundry.cache.dii"):
+    for pkg_name in (
+        "pynetappfoundry.cache.ontap",
+        "pynetappfoundry.cache.dii",
+        "pynetappfoundry.cache.aiqum",
+    ):
         pkg = importlib.import_module(pkg_name)
         for info in pkgutil.walk_packages(pkg.__path__, prefix=f"{pkg_name}."):
             if info.name.endswith(".mapping"):

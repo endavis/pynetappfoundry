@@ -1,0 +1,64 @@
+[endpoint]
+path = "/storage-provider/file-shares"
+schema = "fileshare_get_collection"
+class_name = "AiqumFileshareGetCollection"
+
+[fields."assigned_performance_service_level.expected_iops"]
+cache_strategy = "cache"
+
+[fields."assigned_performance_service_level.key"]
+cache_strategy = "cache"
+
+[fields."assigned_performance_service_level.name"]
+cache_strategy = "cache"
+
+[fields."assigned_performance_service_level.peak_iops"]
+cache_strategy = "cache"
+
+[fields."assigned_storage_efficiency_policy.key"]
+cache_strategy = "cache"
+
+[fields."assigned_storage_efficiency_policy.name"]
+cache_strategy = "cache"
+
+[fields."cluster.key"]
+cache_strategy = "cache"
+
+[fields."cluster.name"]
+cache_strategy = "cache"
+
+[fields."cluster.uuid"]
+cache_strategy = "cache"
+
+[fields.key]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields."recommended_performance_service_level.expected_iops"]
+cache_strategy = "cache"
+
+[fields."recommended_performance_service_level.key"]
+cache_strategy = "cache"
+
+[fields."recommended_performance_service_level.name"]
+cache_strategy = "cache"
+
+[fields."recommended_performance_service_level.peak_iops"]
+cache_strategy = "cache"
+
+[fields."space.size"]
+cache_strategy = "cache"
+
+[fields."svm.key"]
+cache_strategy = "cache"
+
+[fields."svm.name"]
+cache_strategy = "cache"
+
+[fields."svm.uuid"]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

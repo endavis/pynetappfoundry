@@ -1,0 +1,79 @@
+[endpoint]
+path = "/datacenter/storage/aggregates"
+schema = "aggregate"
+class_name = "AiqumAggregate"
+
+[fields."block_storage.hybrid_cache.enabled"]
+cache_strategy = "cache"
+
+[fields."block_storage.hybrid_cache.size"]
+cache_strategy = "cache"
+
+[fields."block_storage.mirror.state"]
+cache_strategy = "cache"
+
+[fields."block_storage.primary.raid_size"]
+cache_strategy = "cache"
+
+[fields."block_storage.primary.raid_type"]
+cache_strategy = "cache"
+
+[fields."cluster.key"]
+cache_strategy = "cache"
+
+[fields."cluster.name"]
+cache_strategy = "cache"
+
+[fields."cluster.uuid"]
+cache_strategy = "cache"
+
+[fields.create_time]
+cache_strategy = "cache"
+
+[fields."data_encryption.software_encryption_enabled"]
+cache_strategy = "cache"
+
+[fields.key]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields."node.key"]
+cache_strategy = "cache"
+
+[fields."node.name"]
+cache_strategy = "cache"
+
+[fields."node.uuid"]
+cache_strategy = "cache"
+
+[fields."performance_capacity.used"]
+cache_strategy = "cache"
+
+[fields.snaplock_type]
+cache_strategy = "cache"
+
+[fields."space.block_storage.available"]
+cache_strategy = "cache"
+
+[fields."space.block_storage.size"]
+cache_strategy = "cache"
+
+[fields."space.block_storage.used"]
+cache_strategy = "cache"
+
+[fields."space.efficiency.logical_used"]
+cache_strategy = "cache"
+
+[fields."space.efficiency.savings"]
+cache_strategy = "cache"
+
+[fields.state]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

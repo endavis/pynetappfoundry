@@ -22,7 +22,7 @@ from pynetappfoundry.cache.overlay_loader import discover_toml_overlays
 _PACKAGE = "pynetappfoundry.cache"
 _CACHE_ROOT = Path("src/pynetappfoundry/cache")
 _INDEX_PATH = _CACHE_ROOT / "_mapping_index.py"
-_API_DIRS = ("ontap", "dii")
+_API_DIRS = ("ontap", "dii", "aiqum")
 
 IndexRow = tuple[str, str, str, str | None]
 

@@ -1,0 +1,124 @@
+"""AiqumIpInterface type mapping."""
+
+from __future__ import annotations
+
+from pynetappfoundry.cache._registry import model_registry
+from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
+from pynetappfoundry.models.aiqum.datacenter.network.ip.interfaces.model import AiqumIpInterface
+
+AIQUMIPINTERFACE_MAPPING = TypeMapping(
+    name="AiqumIpInterface",
+    model_class=AiqumIpInterface,
+    api_endpoint="/datacenter/network/ip/interfaces",
+    api_type="aiqum",
+    identifier_field="key",
+    fields=(
+        FieldMapping(
+            cache_attr="cluster.key",
+        ),
+        FieldMapping(
+            cache_attr="cluster.name",
+        ),
+        FieldMapping(
+            cache_attr="cluster.uuid",
+        ),
+        FieldMapping(
+            cache_attr="enabled",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="ip.address",
+        ),
+        FieldMapping(
+            cache_attr="ip.family",
+        ),
+        FieldMapping(
+            cache_attr="ip.netmask",
+        ),
+        FieldMapping(
+            cache_attr="ipspace.key",
+        ),
+        FieldMapping(
+            cache_attr="ipspace.name",
+        ),
+        FieldMapping(
+            cache_attr="ipspace.uuid",
+        ),
+        FieldMapping(
+            cache_attr="key",
+        ),
+        FieldMapping(
+            cache_attr="location.auto_revert",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="location.broadcast_domain.name",
+        ),
+        FieldMapping(
+            cache_attr="location.broadcast_domain.uuid",
+        ),
+        FieldMapping(
+            cache_attr="location.failover",
+        ),
+        FieldMapping(
+            cache_attr="location.home_node.key",
+        ),
+        FieldMapping(
+            cache_attr="location.home_node.name",
+        ),
+        FieldMapping(
+            cache_attr="location.home_node.uuid",
+        ),
+        FieldMapping(
+            cache_attr="location.home_port.key",
+        ),
+        FieldMapping(
+            cache_attr="location.home_port.name",
+        ),
+        FieldMapping(
+            cache_attr="location.home_port.node.name",
+        ),
+        FieldMapping(
+            cache_attr="location.home_port.uuid",
+        ),
+        FieldMapping(
+            cache_attr="location.is_home",
+            default=False,
+        ),
+        FieldMapping(
+            cache_attr="location.port.key",
+        ),
+        FieldMapping(
+            cache_attr="location.port.name",
+        ),
+        FieldMapping(
+            cache_attr="location.port.node.name",
+        ),
+        FieldMapping(
+            cache_attr="location.port.uuid",
+        ),
+        FieldMapping(
+            cache_attr="name",
+        ),
+        FieldMapping(
+            cache_attr="scope",
+        ),
+        FieldMapping(
+            cache_attr="state",
+        ),
+        FieldMapping(
+            cache_attr="svm.key",
+        ),
+        FieldMapping(
+            cache_attr="svm.name",
+        ),
+        FieldMapping(
+            cache_attr="svm.uuid",
+        ),
+        FieldMapping(
+            cache_attr="uuid",
+        ),
+    ),
+)
+
+model_registry.register_mapping("AiqumIpInterface", AIQUMIPINTERFACE_MAPPING)

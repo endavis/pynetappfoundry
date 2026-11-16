@@ -1,0 +1,76 @@
+[endpoint]
+path = "/management-server/events"
+schema = "event"
+class_name = "AiqumEvent"
+
+[fields.acknowledged_username]
+cache_strategy = "cache"
+
+[fields.annotation]
+cache_strategy = "cache"
+
+[fields.assigned]
+cache_strategy = "cache"
+
+[fields.cause]
+cache_strategy = "cache"
+
+[fields."cluster.key"]
+cache_strategy = "cache"
+
+[fields."cluster.name"]
+cache_strategy = "cache"
+
+[fields."cluster.uuid"]
+cache_strategy = "cache"
+
+[fields.config_advisor_rule_id]
+cache_strategy = "cache"
+
+[fields.current_state]
+cache_strategy = "cache"
+
+[fields.duration]
+cache_strategy = "cache"
+
+[fields.group]
+cache_strategy = "cache"
+
+[fields.history]
+cache_strategy = "cache"
+
+[fields.impact]
+cache_strategy = "cache"
+
+[fields.key]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields."node.key"]
+cache_strategy = "cache"
+
+[fields."node.name"]
+cache_strategy = "cache"
+
+[fields."node.uuid"]
+cache_strategy = "cache"
+
+[fields.origin]
+cache_strategy = "cache"
+
+[fields.resolved_username]
+cache_strategy = "cache"
+
+[fields.severity]
+cache_strategy = "cache"
+
+[fields."svm.key"]
+cache_strategy = "cache"
+
+[fields."svm.name"]
+cache_strategy = "cache"
+
+[fields."svm.uuid"]
+cache_strategy = "cache"

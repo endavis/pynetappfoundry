@@ -1,0 +1,49 @@
+[endpoint]
+path = "/datacenter/storage/qos/policies"
+schema = "qos_policy"
+class_name = "AiqumQosPolicy"
+
+[fields."adaptive.absolute_min_iops"]
+cache_strategy = "cache"
+
+[fields."cluster.key"]
+cache_strategy = "cache"
+
+[fields."cluster.name"]
+cache_strategy = "cache"
+
+[fields."cluster.uuid"]
+cache_strategy = "cache"
+
+[fields."fixed.capacity_shared"]
+cache_strategy = "cache"
+
+[fields."fixed.max_throughput_iops"]
+cache_strategy = "cache"
+
+[fields."fixed.max_throughput_mbps"]
+cache_strategy = "cache"
+
+[fields."fixed.min_throughput_iops"]
+cache_strategy = "cache"
+
+[fields.key]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.object_count]
+cache_strategy = "cache"
+
+[fields."svm.key"]
+cache_strategy = "cache"
+
+[fields."svm.name"]
+cache_strategy = "cache"
+
+[fields."svm.uuid"]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

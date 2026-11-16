@@ -375,11 +375,15 @@ _PYTHON_KEYWORDS: frozenset[str] = frozenset(
 
 
 def _safe_attr_name(name: str) -> str:
-    """Append underscore to Python reserved words.
+    """Append underscore to Python reserved words; prefix a leading digit.
 
     ``"class"`` → ``"class_"``
     ``"type"`` → ``"type_"``
+    ``"95th_percentile"`` → ``"n95th_percentile"`` (an identifier cannot start
+    with a digit; pydantic also rejects a leading underscore)
     """
+    if name[:1].isdigit():
+        return f"n{name}"
     return f"{name}_" if name in _PYTHON_KEYWORDS else name
 
 

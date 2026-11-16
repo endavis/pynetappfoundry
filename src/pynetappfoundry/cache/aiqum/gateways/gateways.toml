@@ -1,0 +1,16 @@
+[endpoint]
+path = "/gateways"
+schema = "gateways_service"
+class_name = "AiqumGatewaysService"
+
+[fields.ip_address]
+cache_strategy = "cache"
+
+[fields.name]
+cache_strategy = "cache"
+
+[fields.type_]
+cache_strategy = "cache"
+
+[fields.uuid]
+cache_strategy = "cache"

@@ -1,0 +1,31 @@
+[endpoint]
+path = "/datacenter/network/fc/interfaces/{key}/metrics"
+schema = "network_fc_interface_metrics_sample_response"
+class_name = "AiqumNetworkFcInterfaceMetricsSampleResponse"
+
+[fields.duration]
+cache_strategy = "cache"
+
+[fields.end_time]
+cache_strategy = "cache"
+
+[fields."lif.key"]
+cache_strategy = "cache"
+
+[fields."lif.name"]
+cache_strategy = "cache"
+
+[fields."lif.uuid"]
+cache_strategy = "cache"
+
+[fields.num_samples]
+cache_strategy = "cache"
+
+[fields.samples]
+cache_strategy = "cache"
+
+[fields.start_time]
+cache_strategy = "cache"
+
+[fields."summary.iops"]
+cache_strategy = "cache"
