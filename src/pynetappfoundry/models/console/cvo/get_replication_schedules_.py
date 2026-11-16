@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, RootModel
 
 
 class CronJobScheduleResponse(BaseModel):
@@ -18,3 +18,7 @@ class ResponseBody(BaseModel):
     cronJobSchedule: CronJobScheduleResponse | None = None
     description: str | None = Field(None, description="Description")
     name: str | None = Field(None, description="Specifies the name")
+
+
+class ResponseList(RootModel[list[ResponseBody]]):
+    root: list[ResponseBody]

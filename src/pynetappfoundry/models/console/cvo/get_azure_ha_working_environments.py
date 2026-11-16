@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, RootModel
 
 
 class Expand(BaseModel):
@@ -647,3 +647,7 @@ class ResponseBody(BaseModel):
     svms: list[Svm] | None = None
     tenantId: str | None = None
     workingEnvironmentType: str | None = None
+
+
+class ResponseList(RootModel[list[ResponseBody]]):
+    root: list[ResponseBody]

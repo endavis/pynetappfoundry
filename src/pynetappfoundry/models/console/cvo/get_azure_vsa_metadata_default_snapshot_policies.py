@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, RootModel
 
 
 class PolicySchedule(BaseModel):
@@ -15,3 +15,7 @@ class ResponseBody(BaseModel):
     description: str | None = Field(None, description="Description")
     name: str | None = Field(None, description="Name")
     schedules: list[PolicySchedule] | None = Field(None, description="Schedules")
+
+
+class ResponseList(RootModel[list[ResponseBody]]):
+    root: list[ResponseBody]

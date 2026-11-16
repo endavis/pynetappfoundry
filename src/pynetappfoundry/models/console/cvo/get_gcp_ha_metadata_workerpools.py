@@ -3,9 +3,13 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, RootModel
 
 
 class ResponseBody(BaseModel):
     defined: bool | None = None
     empty: bool | None = None
+
+
+class ResponseList(RootModel[list[ResponseBody]]):
+    root: list[ResponseBody]

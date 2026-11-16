@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, RootModel
 
 
 class Expand(BaseModel):
@@ -68,3 +68,7 @@ class ResponseBody(BaseModel):
     name: str | None = None
     supportsZonesAndPssdV2: SupportsZonesAndPssdV2 | None = None
     vnets: AzureNetworkExtendedResponse | None = None
+
+
+class ResponseList(RootModel[list[ResponseBody]]):
+    root: list[ResponseBody]

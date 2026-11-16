@@ -3,9 +3,13 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, RootModel
 
 
 class ResponseBody(BaseModel):
     ipSpace: str | None = None
     vservers: list[str] | None = None
+
+
+class ResponseList(RootModel[list[ResponseBody]]):
+    root: list[ResponseBody]

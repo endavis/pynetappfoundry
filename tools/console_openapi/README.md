@@ -96,6 +96,8 @@ Pass a full commit SHA rather than a branch name, so the lockfile's
      evidence value other than `live` or `swagger`, a listed operation that is
      not in the spec, and a listed operation whose success response has no
      hoisted body.
+   - Each wrapped operation also gets a generated list model in its item's
+     module, added by `doit console_models` (see "Generated Pydantic models").
    - Path parameters missing from the docs are synthesized in path-template
      order.
 4. **Validate** -- a final invariant pass enforces:
@@ -172,6 +174,16 @@ doit console_models
 # Determinism guard: regenerate and assert the diff is empty.
 doit console_models_check
 ```
+
+After `datamodel-codegen` runs, `list_models.py` reads the spec and appends a
+`RootModel[list[<item>]]` to the module of each operation whose success body
+is an array of `$ref` items (#1032). The trailing `Body` of the item class
+becomes `List`: `ResponseList` next to `ResponseBody`, or `Response200List`
+next to `Response200Body`. It covers every array the spec types, whatever the
+evidence in `array_responses.toml`. The step raises `ListModelError` for a
+missing module or item class, a list class that already exists, two operations
+on one module, and a module without a single-line `from pydantic import` line.
+The generated client still returns `list[<item>]`.
 
 The generated tree is committed in-tree so consumers do not
 need `datamodel-code-generator` installed at runtime; only the maintainer

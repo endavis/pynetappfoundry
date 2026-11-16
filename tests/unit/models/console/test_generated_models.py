@@ -264,3 +264,23 @@ def test_cvo_request_body_still_requires_tenant_id() -> None:
     with pytest.raises(ValidationError) as exc:
         RequestBody.model_validate({"location": "placeholder"})
     assert [e["loc"] for e in exc.value.errors()] == [("tenantId",)]
+
+
+# --- list models for array responses (#1032) ---------------------------------
+
+
+def test_onprem_working_environments_list_model() -> None:
+    from pynetappfoundry.models.console.cvo.get_onprem_working_environments import (
+        ResponseBody,
+        ResponseList,
+    )
+
+    assert isinstance(ResponseList.model_validate([{}, {}]).root[0], ResponseBody)
+
+
+def test_preferred_subscriptions_list_model_accepts_empty_list() -> None:
+    from pynetappfoundry.models.console.dw.get_license_account_subscriptions_preferred import (
+        Response200List,
+    )
+
+    assert Response200List.model_validate([]).root == []

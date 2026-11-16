@@ -3,10 +3,14 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, RootModel
 
 
 class ResponseBody(BaseModel):
     autoUpdateAllowed: bool | None = None
     imageVersion: str | None = None
     lastModified: int | None = None
+
+
+class ResponseList(RootModel[list[ResponseBody]]):
+    root: list[ResponseBody]

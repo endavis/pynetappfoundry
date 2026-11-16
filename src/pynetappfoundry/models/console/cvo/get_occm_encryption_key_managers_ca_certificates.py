@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, RootModel
 
 
 class ResponseBody(BaseModel):
@@ -15,3 +15,7 @@ class ResponseBody(BaseModel):
     serialNumber: str | None = None
     startDate: int | None = None
     subjectName: str | None = None
+
+
+class ResponseList(RootModel[list[ResponseBody]]):
+    root: list[ResponseBody]

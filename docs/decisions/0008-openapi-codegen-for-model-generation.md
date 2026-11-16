@@ -584,7 +584,7 @@ Amendment to the Console pipeline. The Console agent docs type every `cvo` respo
 - **A committed override list.** `tools/console_openapi/array_responses.toml` names the `cvo` GET operations whose success response is a JSON array, each with its evidence: `live` (confirmed against a live agent) or `swagger` (the agent swagger types it as an array). The builder wraps each listed operation's hoisted `ResponseBody` as `{type: array, items: {$ref: ...ResponseBody}}` and reads nothing else.
 - **The swagger is a test-time cross-check, not a build input.** `docs/example-config/apis/occm/openapi3.json` is the `doit convert_specs` output of a file that `doit fetch_spec` overwrites from whichever agent it points at, and the lockfile records neither. Reading it at build time would make the spec depend on an input that `(ref, tool_version)` does not pin. `tests/unit/console_openapi/test_array_responses.py` instead checks the list against the committed spec and the swagger, so drift on either side fails `doit test`.
 - **Scope.** 150 operations are wrapped. Three swagger arrays are left out because the docs give the operation no response body to wrap: `cvo_get_occm_api_aws_ha_metadata_key_pairs`, `cvo_get_occm_api_vsa_metadata_key_pairs` and `cvo_get_occm_api_replication_metadata_snapshot_labels_by_workingEnvironmentId_by_svmName_by_volumeName`. The `swagger` entries came from a v3.2.0 swagger. In #1033 they were probed read-only against the lab agent (4.12.0): each entry that returned an array is now `live`, and each remaining `swagger` entry carries a reason in the toml saying why the lab could not check it. The toml and the `_LIVE` pin in `tests/unit/console_openapi/test_array_responses.py` hold the entries.
-- **Models do not change.** `datamodel-code-generator` runs with its default `--openapi-scopes schemas`, so path response schemas never produce models; the item models keep their names. Regenerating gives no diff under `src/pynetappfoundry/models/console/`.
+- **Item models do not change.** `datamodel-code-generator` runs with its default `--openapi-scopes schemas`, so path response schemas never produce models; the item models keep their names. The list classes added on top of them are described in "List models for array responses (Issue #1032)".
 - **Client codegen reads the shape from the spec.** A spec array makes the operation a list; a manifest `response = "list"` on it is a `CodegenError` (redundant) and so is `response = "object"` (contradiction). See [tools/console_openapi/README.md](../../tools/console_openapi/README.md).
 
 Issue: #1021
@@ -602,6 +602,20 @@ Amendment to the Console pipeline. The `dw` ("Licenses and subscriptions", `/lic
 - **Regenerated artefacts.** The spec gains the `dw` operations and schemas and no existing path or schema changes; the lockfile gains `dw` in `services` and the new `endpoint_count`; `doit console_models` adds `src/pynetappfoundry/models/console/dw/` and changes no existing module.
 
 Issue: #1034
+
+### List models for array responses (Issue #1032)
+
+Amendment to the Console pipeline. An array response had only its item model (`ResponseBody`); the JSON array body itself had no generated model. See [tools/console_openapi/README.md](../../tools/console_openapi/README.md).
+
+- **A post-processing step.** `_generate_console_models` in `tools/doit/console_openapi_tasks.py` calls `tools/console_openapi/list_models.py` after `datamodel-codegen` and before ruff. For each operation whose success schema is `{type: array, items: {$ref}}` it appends a `RootModel[list[<item>]]` to the item's own module.
+- **Naming.** The trailing `Body` of the item class becomes `List`: `ResponseList` next to `ResponseBody`, `Response200List` next to `Response200Body`. The module is the item's own, so no new files appear.
+- **Spec-driven scope.** The step reads the spec, not `array_responses.toml`, so it covers every array the spec types: the `cvo` entries (`live` and `swagger` alike) and the one `dw` entry. A unit test pins the count against the committed spec.
+- **Fails loudly.** The step raises `ListModelError` for a missing module, a missing item class, an existing list class, two operations on one module, or a module without a single-line `from pydantic import` line.
+- **The client is unchanged.** Generated operations and the public wrappers keep returning `list[<item>]`; the list model is available but unused by the client.
+- **Rejected: `--openapi-scopes schemas paths`.** Measured with `datamodel-codegen 0.91.0`, it put all 151 classes in the root `__init__.py` (2 lines grew to 1088) under path-derived names up to 118 characters. That `__init__.py` imports 151 modules up front: importing one `dw` module loaded 154 modules in 0.53 to 0.70 s, against 3 modules in about 0.07 s before.
+- **Rejected: hoisting an array component in the builder.** It gave byte-identical model output but changed 151 spec paths, made client codegen resolve a `$ref` to detect a list, and needed two existing tests edited. Moving to it later would cause no model diff.
+
+Issue: #1032
 
 ## Related Issues
 
@@ -630,6 +644,7 @@ Issue: #1034
 - Issue #1021: fix: generated cvo spec types every list response as a single object
 - Issue #1034: feat: parse the Console dw (licenses and subscriptions) subservice (see "Console `dw` folder (Issue #1034)")
 - Issue #1033: chore: confirm the swagger-sourced cvo array responses against a live agent
+- Issue #1032: feat: generated list models for cvo array responses (see "List models for array responses (Issue #1032)")
 
 ## Related Documentation
 

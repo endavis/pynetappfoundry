@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, RootModel
 
 
 class Capacity(BaseModel):
@@ -24,3 +24,7 @@ class FlexCacheSide(BaseModel):
 class ResponseBody(BaseModel):
     destination: FlexCacheSide | None = None
     source: FlexCacheSide | None = None
+
+
+class ResponseList(RootModel[list[ResponseBody]]):
+    root: list[ResponseBody]

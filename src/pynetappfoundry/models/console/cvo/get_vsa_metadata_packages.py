@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, RootModel
 
 
 class Capacity(BaseModel):
@@ -45,3 +45,7 @@ class ResponseBody(BaseModel):
     name: str | None = None
     throughput: Throughput | None = None
     writingSpeedState: str | None = None
+
+
+class ResponseList(RootModel[list[ResponseBody]]):
+    root: list[ResponseBody]

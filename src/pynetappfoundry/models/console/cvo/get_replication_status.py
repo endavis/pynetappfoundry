@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, RootModel
 
 
 class ReplicationStatusCurrentTransferInfo(BaseModel):
@@ -66,3 +66,7 @@ class ResponseBody(BaseModel):
     unhealthyReason: str | None = Field(None, description="The reason SnapMirror is unhealthy")
     volumeCapacityTier: Capacity | None = None
     volumeUsedSize: Capacity | None = None
+
+
+class ResponseList(RootModel[list[ResponseBody]]):
+    root: list[ResponseBody]

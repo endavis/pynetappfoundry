@@ -121,6 +121,11 @@ def _generate_console_models() -> None:
     ]
     subprocess.run(cmd, check=True)
 
+    # Add a RootModel list class next to each array response's item class (#1032).
+    from tools.console_openapi import client_codegen, list_models
+
+    list_models.add_list_models(client_codegen.load_spec(_CONSOLE_SPEC), _CONSOLE_MODELS_DIR)
+
     # Mirror the post-processing performed by ``doit generate_models``: format
     # first, then auto-fix lint findings the formatter just made redundant
     # (E501 noqa headers, etc.). Run with ``check=False`` because ruff
@@ -142,7 +147,9 @@ def task_console_models() -> dict[str, Any]:
     Reads ``tools/console_openapi/generated/console_openapi.yaml`` and emits
     a tree under ``src/pynetappfoundry/models/console/`` (subdivided into
     ``tenancy/``, ``tenancyv4/``, ``cvo/`` and ``dw/`` packages by
-    ``datamodel-code-generator``).
+    ``datamodel-code-generator``). Each array-response operation also gets a
+    ``ResponseList`` (or ``Response<status>List``) ``RootModel`` next to its
+    item class, added by ``tools/console_openapi/list_models.py`` (#1032).
     The generated tree is committed alongside the spec; CI verifies that
     re-running this task is a no-op via ``doit console_models_check``.
     """

@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, RootModel
 
 
 class Capacity(BaseModel):
@@ -15,3 +15,7 @@ class ResponseBody(BaseModel):
     size: Capacity | None = None
     supportedDiskTypes: list[str] | None = None
     supportedOccmLicenses: list[str] | None = None
+
+
+class ResponseList(RootModel[list[ResponseBody]]):
+    root: list[ResponseBody]

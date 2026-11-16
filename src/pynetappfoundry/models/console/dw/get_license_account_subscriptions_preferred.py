@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, RootModel
 
 
 class Items(BaseModel):
@@ -56,3 +56,7 @@ class Response200Body(BaseModel):
     availableDimensions: list[str] | None = None
     configuration: str | None = None
     events: Events | None = None
+
+
+class Response200List(RootModel[list[Response200Body]]):
+    root: list[Response200Body]

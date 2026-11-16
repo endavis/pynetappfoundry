@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, RootModel
 
 
 class GcpZoneResponse(BaseModel):
@@ -15,3 +15,7 @@ class ResponseBody(BaseModel):
     location: str | None = None
     name: str | None = None
     zones: list[GcpZoneResponse] | None = None
+
+
+class ResponseList(RootModel[list[ResponseBody]]):
+    root: list[ResponseBody]

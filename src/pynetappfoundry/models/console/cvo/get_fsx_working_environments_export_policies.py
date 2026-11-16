@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, RootModel
 
 
 class Index(BaseModel):
@@ -26,3 +26,7 @@ class ResponseBody(BaseModel):
     name: str | None = None
     rules: list[ExportPolicyRule] | None = None
     svm: str | None = None
+
+
+class ResponseList(RootModel[list[ResponseBody]]):
+    root: list[ResponseBody]

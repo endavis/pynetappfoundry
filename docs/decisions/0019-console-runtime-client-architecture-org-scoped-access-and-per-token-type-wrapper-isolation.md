@@ -161,6 +161,7 @@ Amendment that settles the codegen choice left open in decision 3 and in the "Ne
 - **`x-agent-id` and the base path.** The synthesized `x-agent-id` header parameter is dropped, since the agent's static `auth_header` supplies it. Any other header parameter is a codegen error, never silently dropped, unless the manifest entry lists it in `drop_headers` (#1034). `path_template` is the spec path as written, which already carries `/occm/api` or `/v1/management` (#1015).
 - **Defaults.** Every path parameter is URL-encoded with `quote(..., safe="")`. The tenancy methods did not encode before; an id containing `/` is now encoded instead of changing the path. Every non-GET operation is generated with `RetryConfig(enabled=False)` unless the manifest sets `retry = true`, which keeps add and delete from retrying on 5xx or timeout.
 - **Tenancy operations return generated models (#1027).** `tenancy` and `tenancyv4` bodies are hoisted and their responses loosened (`x-documented-required`), so each operation returns its `Response200Body`. The hand-written `Organization`, `Folder` and `Project` cache types and the `ConsoleAPIClient` wrapper signatures are unchanged; the wrappers convert the generated result into them.
+- **Array operations return `list[<item>]` (#1032).** They still return `list[<item>]` through `expect_list`. The generated `ResponseList` or `Response200List` model for the whole array body is available in the item's module but the client does not use it; returning it would break the list wrappers' signatures.
 - **Drift guards.** `doit console_client` regenerates the tree and `doit console_client_check` fails on any change under it; the `console-models` CI job runs the check. A unit test resolves the real manifest against the committed spec inside `doit check`.
 - **Follow-ups.** Phase 2 (#1027, done) hoisted and loosened the `tenancy` and `tenancyv4` bodies so tenancy operations return typed models. Phase 3 (#1028) grows the manifest as consumers appear, auditing list cardinality for each operation. Both were filed as issues linked from #735.
 
@@ -218,6 +219,7 @@ See [Console Agent](../usage/console-agent.md#account-subscriptions) and [Consol
 - Issue #1027: feat: typed request/response models for generated tenancy Console ops (see "Generated operation surface (#735)")
 - Issue #875: feat: add Console subscription data (see "Marketplace subscriptions (#875)")
 - Issue #1034: feat: parse the `dw` licenses and subscriptions subservice (see "Account subscriptions (#1034)")
+- Issue #1032: feat: generated list models for cvo array responses (see "Generated operation surface (#735)")
 
 ## Related Documentation
 

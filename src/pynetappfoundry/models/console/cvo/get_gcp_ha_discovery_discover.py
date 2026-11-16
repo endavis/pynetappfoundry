@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, RootModel
 
 
 class ResponseBody(BaseModel):
@@ -16,3 +16,7 @@ class ResponseBody(BaseModel):
     subnetIds: list[str] | None = None
     vpcs: list[str] | None = None
     zones: list[str] | None = None
+
+
+class ResponseList(RootModel[list[ResponseBody]]):
+    root: list[ResponseBody]

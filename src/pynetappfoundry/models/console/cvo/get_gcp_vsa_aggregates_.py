@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, RootModel
 
 
 class Capacity(BaseModel):
@@ -82,3 +82,7 @@ class ResponseBody(BaseModel):
     totalCapacity: Capacity | None = None
     usedCapacity: Capacity | None = None
     volumes: list[Volume] | None = Field(None, description="Volumes")
+
+
+class ResponseList(RootModel[list[ResponseBody]]):
+    root: list[ResponseBody]

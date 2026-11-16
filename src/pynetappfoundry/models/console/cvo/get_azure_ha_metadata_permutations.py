@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, RootModel
 
 
 class Capacity(BaseModel):
@@ -38,3 +38,7 @@ class ResponseBody(BaseModel):
     ontapVersion: str | None = None
     region: Region | None = None
     upgradeableFrom: list[str] | None = None
+
+
+class ResponseList(RootModel[list[ResponseBody]]):
+    root: list[ResponseBody]

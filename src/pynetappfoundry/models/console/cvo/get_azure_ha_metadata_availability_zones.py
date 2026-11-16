@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, RootModel
 
 
 class Zones(BaseModel):
@@ -22,3 +22,7 @@ class Zones(BaseModel):
 class ResponseBody(BaseModel):
     region: str | None = Field(None, description="Region value")
     zones: list[Zones] | None = Field(None, description="Zone values")
+
+
+class ResponseList(RootModel[list[ResponseBody]]):
+    root: list[ResponseBody]
