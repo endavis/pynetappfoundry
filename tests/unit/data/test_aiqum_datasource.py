@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
+from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
 
@@ -15,6 +16,19 @@ from pynetappfoundry.models.aiqum.datacenter.storage.volumes.model import AiqumV
 from pynetappfoundry.models.aiqum.datacenter.svm.svms.model import AiqumSvm
 
 _CLIENT_PATH = "pynetappfoundry.clients.aiqum.api.AIQUMAPIClient"
+
+
+@pytest.fixture(autouse=True)
+def empty_aiqum_cache(tmp_path: Path) -> Iterator[None]:
+    """Point the AIQUM cache at an empty file so ``auto`` falls back to live."""
+    from pynetappfoundry.cache.aiqum_db import AiqumCacheDB
+    from pynetappfoundry.data.aiqum_backend import AiqumBackend
+
+    with (
+        AiqumCacheDB(db_path=tmp_path / "aiqum_cache.db") as db,
+        patch.object(AiqumBackend, "_cache_db", db),
+    ):
+        yield
 
 
 @pytest.fixture
@@ -73,8 +87,14 @@ def test_datasources_smoke(client: MagicMock) -> None:
 
 
 def test_cache_source_rejected() -> None:
+    from pynetappfoundry.models.aiqum.datacenter.storage.volumes.metrics.model import (
+        AiqumVolumeMetricsSampleResponse,
+    )
+
     with pytest.raises(ValueError, match="live-only"):
-        DataSource(MagicMock()).query(AiqumVolume, cluster="aiqum1", source="cache")
+        DataSource(MagicMock()).query(
+            AiqumVolumeMetricsSampleResponse, cluster="aiqum1", source="cache"
+        )
 
 
 def test_where_rejected() -> None:

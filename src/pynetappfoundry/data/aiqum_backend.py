@@ -1,8 +1,9 @@
 """AIQUM (Active IQ Unified Manager) backend for the unified DataSource accessor.
 
-Implements :class:`AiqumBackend`, a live-only backend that queries the AIQUM
-REST API (ADR-0026).  AIQUM has no local cache database; ``source="auto"``
-goes live and ``source="cache"`` is rejected by :class:`QueryBuilder`.
+Implements :class:`AiqumBackend`, which queries the AIQUM REST API and serves
+the collections in ``AIQUM_CACHED_MAPPINGS`` from the AIQUM cache database
+(ADR-0026, #1055).  Every other mapping is live-only: ``source="auto"`` goes
+live and ``source="cache"`` is rejected by :class:`QueryBuilder`.
 
 AIQUM list endpoints return a HAL envelope ``{_links, num_records, records,
 total_records}`` with ``_links.next.href`` paging, so this backend calls
@@ -19,12 +20,14 @@ in the ``[aiqums]`` inventory.
 from __future__ import annotations
 
 import logging
+from functools import cached_property
 from typing import TYPE_CHECKING, Any, TypeVar
 from urllib.parse import quote
 
 import requests
 from pydantic import BaseModel
 
+from pynetappfoundry.cache.aiqum_collector import AIQUM_CACHED_MAPPINGS
 from pynetappfoundry.cache.field_mapping import parse_api_record
 from pynetappfoundry.data._path_params import caller_path_params as _caller_path_params
 from pynetappfoundry.data._path_params import placeholders as _placeholders
@@ -33,6 +36,7 @@ from pynetappfoundry.data.backends import Backend
 from pynetappfoundry.utils.dict_path import PathNotFoundError, get_nested_value
 
 if TYPE_CHECKING:
+    from pynetappfoundry.cache.aiqum_db import AiqumCacheDB
     from pynetappfoundry.cache.field_mapping import TypeMapping
     from pynetappfoundry.clients.aiqum.api import AIQUMAPIClient
     from pynetappfoundry.core.config import Config
@@ -71,11 +75,13 @@ def _records_at_path(mapping: TypeMapping, response: Any) -> list[Any]:
 
 
 class AiqumBackend(Backend):
-    """Live-only backend that queries an AIQUM instance's REST API.
+    """Backend for an AIQUM instance: live REST API plus a cache of three collections.
 
-    Cache-only routing decisions and ``where_expressions`` are rejected with
-    :class:`NotImplementedError`.  ``path_params`` fill the ``{placeholder}``
-    segments of an endpoint (#1054); without them a mapping with a
+    The collections in ``AIQUM_CACHED_MAPPINGS`` are read from
+    :class:`AiqumCacheDB` for a cache decision; filters match exactly.
+    ``where_expressions``, partial decisions and a cache decision on any other
+    mapping are rejected with :class:`NotImplementedError`.  ``path_params``
+    fill the ``{placeholder}`` segments of an endpoint (#1054); without them a mapping with a
     ``parent_mapping`` is fetched once per parent (#1057).  API clients are built lazily
     and cached per instance name.
 
@@ -86,11 +92,23 @@ class AiqumBackend(Backend):
     supports_where_expressions: bool = False
     supports_path_params: bool = True
     supports_parent_filters: bool = True
-    live_only: bool = True
+    live_only: bool = False
 
     def __init__(self, config: Config) -> None:
         super().__init__(config)
         self._api_clients: dict[str, AIQUMAPIClient] = {}
+
+    @classmethod
+    def is_live_only(cls, mapping: TypeMapping) -> bool:
+        """Only the collected collections have a cache; every other mapping is live-only."""
+        return mapping.name not in AIQUM_CACHED_MAPPINGS
+
+    @cached_property
+    def _cache_db(self) -> AiqumCacheDB:
+        """The AIQUM cache database, opened on first use."""
+        from pynetappfoundry.cache.aiqum_db import AiqumCacheDB
+
+        return AiqumCacheDB(config=self._config)
 
     def _get_api_client(self, name: str) -> AIQUMAPIClient:
         """Lazily create an AIQUM API client for the ``[aiqums]`` instance *name*."""
@@ -132,13 +150,18 @@ class AiqumBackend(Backend):
         non-empty value with *path_params*, or on a mapping that is not
         per-parent, raises :class:`ValueError`.
         """
-        if decision.cache_fields and not decision.live_fields:
-            msg = "AIQUM backend does not support cache-only queries"
-            raise NotImplementedError(msg)
-
         if where_expressions:
             msg = "AIQUM backend does not support where_expressions"
             raise NotImplementedError(msg)
+
+        if decision.partial:
+            msg = "AIQUM backend does not support partial (cache + live) queries"
+            raise NotImplementedError(msg)
+
+        if decision.cache_fields:
+            return self._query_cache(
+                model_class, mapping, decision, cluster, filters, path_params, parent_filters
+            )
 
         if not decision.live_fields:
             return []
@@ -171,11 +194,44 @@ class AiqumBackend(Backend):
             item = self._item_endpoint(mapping, filters, client)
             if item is not None:
                 return self._parse_records(
-                    model_class, mapping, decision, self._fetch_by_key(mapping, client, *item)
+                    model_class,
+                    mapping,
+                    self._fetch_by_key(mapping, client, *item),
+                    decision.live_fields,
                 )
 
         records = self._fetch_records(mapping, cluster, filters, encoded)
-        return self._parse_records(model_class, mapping, decision, records)
+        return self._parse_records(model_class, mapping, records, decision.live_fields)
+
+    def _query_cache(
+        self,
+        model_class: type[T],
+        mapping: TypeMapping,
+        decision: RoutingDecision,
+        cluster: str,
+        filters: dict[str, Any],
+        path_params: dict[str, Any] | None,
+        parent_filters: dict[str, Any] | None,
+    ) -> list[T]:
+        """Serve *mapping* from the AIQUM cache for the instance *cluster* (#1055).
+
+        Filters are exact matches on the stored JSON records.  No API client is
+        built.
+        """
+        if mapping.name not in AIQUM_CACHED_MAPPINGS:
+            msg = (
+                f"AIQUM backend does not support cache-only queries for {mapping.name}: "
+                f"only {', '.join(AIQUM_CACHED_MAPPINGS)} are collected"
+            )
+            raise NotImplementedError(msg)
+        if path_params or parent_filters:
+            msg = (
+                f"{mapping.name}: path_params and parent_filters apply to live queries only; "
+                "they cannot be combined with the cache"
+            )
+            raise ValueError(msg)
+        records = self._cache_db.query_records(cluster, mapping.name, filters)
+        return self._parse_records(model_class, mapping, records, decision.cache_fields)
 
     def _fetch_records(
         self,
@@ -253,7 +309,7 @@ class AiqumBackend(Backend):
             encode=True,
             max_parents=max_parents,
         )
-        return self._parse_records(model_class, mapping, decision, records)
+        return self._parse_records(model_class, mapping, records, decision.live_fields)
 
     @staticmethod
     def _item_endpoint(
@@ -315,10 +371,10 @@ class AiqumBackend(Backend):
     def _parse_records(
         model_class: type[T],
         mapping: TypeMapping,
-        decision: RoutingDecision,
         records: list[Any],
+        fields: tuple[str, ...],
     ) -> list[T]:
-        """Parse *records* into *model_class* instances stamped with the live fields."""
+        """Parse *records* into *model_class* instances stamped with *fields*."""
         log_prefix = f"AiqumBackend<{mapping.name}>"
         results: list[T] = []
         for record in records:
@@ -326,6 +382,6 @@ class AiqumBackend(Backend):
             if isinstance(instance, model_class):
                 fetched = getattr(instance, "_fetched_fields", None)
                 if fetched is not None:
-                    fetched.update(decision.live_fields)
+                    fetched.update(fields)
                 results.append(instance)
         return results

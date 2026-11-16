@@ -1008,9 +1008,19 @@ class TestAiqumLiveOnlyRouting:
 
     def test_registered(self) -> None:
         from pynetappfoundry.data.aiqum_backend import AiqumBackend
+        from pynetappfoundry.models.aiqum.datacenter.storage.volumes.metrics.model import (
+            AiqumVolumeMetricsSampleResponse,
+        )
+        from pynetappfoundry.models.aiqum.datacenter.storage.volumes.model import AiqumVolume
 
         assert _BACKENDS["aiqum"] is AiqumBackend
-        assert AiqumBackend.live_only is True
+        assert AiqumBackend.live_only is False
+        volume = model_registry.get_mapping_by_model_class(AiqumVolume)
+        metrics = model_registry.get_mapping_by_model_class(AiqumVolumeMetricsSampleResponse)
+        assert volume is not None
+        assert metrics is not None
+        assert AiqumBackend.is_live_only(volume) is False
+        assert AiqumBackend.is_live_only(metrics) is True
 
     def test_auto_goes_live_without_second_call(
         self, fake_aiqum_mapping: TypeMapping, mock_config: Any

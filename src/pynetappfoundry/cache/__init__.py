@@ -43,6 +43,8 @@ if TYPE_CHECKING:
         RelationshipsInfo,
     )
     from pynetappfoundry.cache._registry import model_registry
+    from pynetappfoundry.cache.aiqum_collector import AiqumCollector, refresh_aiqum_cache
+    from pynetappfoundry.cache.aiqum_db import AiqumCacheDB
     from pynetappfoundry.cache.collector import (
         CollectionError,
         MetadataCollector,
@@ -78,6 +80,9 @@ _LAZY_EXPORTS: dict[str, str] = {
     "CollectionPhase": f"{_P}._collector_progress",
     "ProgressCallback": f"{_P}._collector_progress",
     "ProgressInfo": f"{_P}._collector_progress",
+    "AiqumCacheDB": f"{_P}.aiqum_db",
+    "AiqumCollector": f"{_P}.aiqum_collector",
+    "refresh_aiqum_cache": f"{_P}.aiqum_collector",
     "CollectionError": f"{_P}.collector",
     "MetadataCollector": f"{_P}.collector",
     "ClusterMetadataDB": f"{_P}.db",
@@ -98,6 +103,8 @@ _LAZY_EXPORTS: dict[str, str] = {
 __all__ = [
     "METADATA_SCHEMA_MIN_COMPATIBLE",
     "METADATA_SCHEMA_VERSION",
+    "AiqumCacheDB",
+    "AiqumCollector",
     "CacheHistoryDB",
     "CacheModel",
     "CachedClusterMetadata",
@@ -125,6 +132,7 @@ __all__ = [
     "parse_filter",
     "parse_filters",
     "parse_schema_version",
+    "refresh_aiqum_cache",
 ]
 
 
