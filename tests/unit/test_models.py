@@ -8,6 +8,7 @@ import pytest
 from pydantic import SecretStr
 
 from pynetappfoundry.core.models import (
+    AIQUMAPISettings,
     AIQUMConfig,
     AzureConfig,
     BaseResource,
@@ -296,6 +297,20 @@ class TestDIIAPISettings:
             base_api_path="/rest/v2",
         )
         assert settings.base_api_path == "/rest/v2"
+
+
+class TestAIQUMAPISettings:
+    """Tests for AIQUMAPISettings model."""
+
+    def test_defaults(self) -> None:
+        settings = AIQUMAPISettings()
+        assert settings.base_api_path == "/api"
+        assert settings.timeout == 30.0
+
+    def test_overrides(self) -> None:
+        settings = AIQUMAPISettings(base_api_path="/x", timeout=5.0)
+        assert settings.base_api_path == "/x"
+        assert settings.timeout == 5.0
 
 
 class TestSearchableKeysConfig:

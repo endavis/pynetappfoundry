@@ -1,0 +1,3 @@
+[general]
+base_api_path = "/api"
+# timeout = 30.0

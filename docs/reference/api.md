@@ -124,6 +124,15 @@ DII API client.
       show_root_heading: true
       show_source: false
 
+### AIQUMAPIClient
+
+AIQUM API client.
+
+::: pynetappfoundry.clients.aiqum.api.AIQUMAPIClient
+    options:
+      show_root_heading: true
+      show_source: false
+
 ## Module Structure
 
 ```
@@ -143,6 +152,8 @@ pynetappfoundry/
 │   │   ├── api.py       # Console SaaS API client
 │   │   ├── agent.py     # Console agent (occm) client
 │   │   └── auth.py      # OAuth client-credentials token provider
+│   ├── aiqum/
+│   │   └── api.py       # AIQUM API client
 │   └── dii/
 │       └── api.py       # DII API client
 └── db/

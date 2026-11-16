@@ -9,6 +9,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 
 ### For Users
 <!-- BEGIN:audience=users -->
+- [AIQUM API](usage/aiqum-api.md) - Call Active IQ Unified Manager with AIQUMAPIClient
 - [API Examples](examples/api.md) - Detailed Python API usage examples
 - [API Reference](reference/api.md) - Python API documentation
 - [Basic Usage](usage/basics.md) - Getting started with pynetappfoundry
@@ -226,6 +227,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [AI Architectural Conventions](development/ai/architectural-conventions.md) - Imperative-form architectural rules AI agents must follow when generating code
 - [AI Command Blocking](development/ai/command-blocking.md) - Hooks that block dangerous commands from AI agents
 - [AI Enforcement Principles](development/ai/enforcement-principles.md) - How we enforce AI agent behavior in code and settings
+- [AIQUM API](usage/aiqum-api.md) - Call Active IQ Unified Manager with AIQUMAPIClient
 - [API Examples](examples/api.md) - Detailed Python API usage examples
 - [API Reference](reference/api.md) - Python API documentation
 - [Architecture Decision Records](decisions/README.md) - Explain what an ADR is, the template-meta (9XXX) vs. project-level (0001+) numbering series, the ADR format, and how to create a new one with `doit adr`.

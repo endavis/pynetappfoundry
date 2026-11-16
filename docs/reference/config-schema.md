@@ -29,6 +29,7 @@ config/
 ├── settings.toml        # General settings, searchable keys, SMTP, licensing
 ├── users.toml           # Credentials for resource types
 ├── ontapapi.toml        # ONTAP REST API settings
+├── aiqumapi.toml        # AIQUM REST API settings
 ├── diiapi.toml          # Data Infrastructure Insights API settings
 ├── consoleapi.toml      # Console SaaS (BlueXP) API settings
 ├── monitoring.toml      # Monitoring thresholds (optional)
@@ -38,6 +39,8 @@ config/
 │   └── ...
 └── apis/                # API specifications (OpenAPI/Swagger)
     ├── ontap/
+    │   └── all.json
+    ├── aiqum/
     │   └── all.json
     ├── dii/
     │   └── all.json
@@ -188,6 +191,25 @@ base_api_path = "/api"    # Optional: Base path for ONTAP REST API (default: "/a
 | `ca_bundle` | string | No | - | Path to a CA bundle (relative to the config directory, `~` expanded). Cannot be combined with `verify_ssl = false` |
 
 With either setting on, no TLS fingerprint is pinned. Precedence is cluster `ca_bundle`, cluster `verify_ssl`, global `ca_bundle`, global `verify_ssl`, then off. See [Host identity](../usage/basics.md#host-identity-ssh-host-keys-and-tls-certificates).
+
+---
+
+### aiqumapi.toml
+
+Active IQ Unified Manager (AIQUM) REST API settings. Loaded into `config.settings["aiqumapi"]`. The `[general]` section is required; every field has a default. See [AIQUM API](../usage/aiqum-api.md).
+
+```toml
+[general]
+base_api_path = "/api"    # Optional: Base path for the AIQUM REST API (default: "/api")
+# timeout = 30.0          # Optional: request timeout in seconds (default: 30.0)
+```
+
+#### AIQUM API Settings Fields
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `base_api_path` | string | No | `"/api"` | Base path for AIQUM REST API endpoints |
+| `timeout` | float | No | `30.0` | Request timeout in seconds |
 
 ---
 

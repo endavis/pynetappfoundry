@@ -13,6 +13,7 @@ from pydantic import SecretStr
 from pynetappfoundry.core.cluster_entry import ClusterEntry
 from pynetappfoundry.core.config import Config, ConfigurationError, resolve_tls_verify
 from pynetappfoundry.core.models import (
+    AIQUMAPISettings,
     ConsoleAPISettings,
     DIIAPISettings,
     LicensingSettings,
@@ -710,6 +711,44 @@ key = "value"
             assert "diiapi" in str(exc_info.value) or "Missing configuration" in str(exc_info.value)
         finally:
             os.chdir(original_cwd)
+
+
+class TestGetAiqumApiSettings:
+    """Tests for get_aiqum_api_settings accessor method."""
+
+    def _config(self, temp_config_dir: Path, tmp_path: Path, toml: str | None) -> Config:
+        if toml is not None:
+            (temp_config_dir / "aiqumapi.toml").write_text(toml)
+        return Config(
+            config_dir=str(temp_config_dir),
+            output_dir=str(tmp_path / "output"),
+            script_name="test_script",
+        )
+
+    def test_success(self, temp_config_dir: Path, tmp_path: Path) -> None:
+        config = self._config(
+            temp_config_dir, tmp_path, '[general]\nbase_api_path = "/x"\ntimeout = 7.5\n'
+        )
+        result = config.get_aiqum_api_settings()
+        assert isinstance(result, AIQUMAPISettings)
+        assert result.base_api_path == "/x"
+        assert result.timeout == 7.5
+
+    def test_defaults(self, temp_config_dir: Path, tmp_path: Path) -> None:
+        config = self._config(temp_config_dir, tmp_path, "[general]\n")
+        result = config.get_aiqum_api_settings()
+        assert result.base_api_path == "/api"
+        assert result.timeout == 30.0
+
+    def test_missing_raises(self, temp_config_dir: Path, tmp_path: Path) -> None:
+        config = self._config(temp_config_dir, tmp_path, None)
+        with pytest.raises(ConfigurationError):
+            config.get_aiqum_api_settings()
+
+    def test_invalid_raises(self, temp_config_dir: Path, tmp_path: Path) -> None:
+        config = self._config(temp_config_dir, tmp_path, '[general]\ntimeout = "soon"\n')
+        with pytest.raises(ConfigurationError, match="Invalid AIQUM API configuration"):
+            config.get_aiqum_api_settings()
 
 
 class TestGetConsoleApiSettings:

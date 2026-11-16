@@ -3,6 +3,7 @@
 from pynetappfoundry.core.config import Config, ConfigurationError
 from pynetappfoundry.core.logging import setup_logger
 from pynetappfoundry.core.models import (
+    AIQUMAPISettings,
     AIQUMConfig,
     AzureConfig,
     BaseResource,
@@ -18,6 +19,7 @@ from pynetappfoundry.core.models import (
 )
 
 __all__ = [
+    "AIQUMAPISettings",
     "AIQUMConfig",
     "AzureConfig",
     "BaseResource",

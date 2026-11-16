@@ -48,6 +48,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, TypeVar
 
 from pynetappfoundry.core.models import (
+    AIQUMAPISettings,
     ConsoleAPISettings,
     DIIAPISettings,
     LicensingSettings,
@@ -379,6 +380,28 @@ class Config:
                 f"Invalid DII API configuration: {e}. "
                 "Ensure settings.toml has a valid [diiapi.general] section with "
                 "'api_ro_token', 'base_url', and 'base_api_path' fields."
+            ) from e
+
+    def get_aiqum_api_settings(self) -> AIQUMAPISettings:
+        """Get Active IQ Unified Manager (AIQUM) REST API settings.
+
+        Returns:
+            AIQUMAPISettings object with API configuration.
+
+        Raises:
+            ConfigurationError: If ``aiqumapi.toml`` has no ``[general]`` section or
+                it is invalid.
+        """
+        try:
+            aiqum_data = self.get_setting("aiqumapi", "general")
+            return AIQUMAPISettings.model_validate(aiqum_data)
+        except ConfigurationError:
+            raise
+        except Exception as e:
+            raise ConfigurationError(
+                f"Invalid AIQUM API configuration: {e}. "
+                "Ensure aiqumapi.toml has a valid [general] section "
+                "(base_api_path, timeout)."
             ) from e
 
     def get_console_api_settings(self) -> ConsoleAPISettings:
