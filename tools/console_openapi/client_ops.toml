@@ -25,6 +25,21 @@ client = "console"
 name = "list_organizations"
 
 [[operation]]
+operation_id = "tenancyv4_get_v1_management_organizations_by_organization_id_resources"
+client = "console"
+name = "list_organization_resources"
+
+[[operation]]
+operation_id = "agentsmgmt_get_list_connectors_by_organization_id"
+client = "console"
+name = "list_connectors"
+
+[[operation]]
+operation_id = "agentsmgmt_get_agent_by_agent_id"
+client = "console"
+name = "get_agent"
+
+[[operation]]
 operation_id = "tenancyv4_get_v1_management_folders_by_folder_id"
 client = "console"
 name = "get_folder"

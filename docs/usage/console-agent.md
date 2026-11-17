@@ -20,7 +20,7 @@ It reads the same settings as `ConsoleAPIClient`, from `consoleapi.toml` (see [C
 
 ## Where the agent id comes from
 
-The agent id is the id of the Console agent (connector) you want to reach; it ends in `clients`. The agent itself returns it as `agentId` from `GET /occm/api/occm/system/about`, and `about()` returns the same value, which lets you confirm you reached the intended agent. Listing agents is not wrapped by this project.
+The agent id is the id of the Console agent (connector) you want to reach; it ends in `clients`. The agent itself returns it as `agentId` from `GET /occm/api/occm/system/about`, and `about()` returns the same value, which lets you confirm you reached the intended agent. To list the agents of an organization, see [Discovering organizations, agents and working environments](#discovering-organizations-agents-and-working-environments).
 
 ## Workspace id for `add`
 
@@ -180,6 +180,33 @@ subs = client.list_preferred_subscriptions("my-account-id")  # on ConsoleAPIClie
 - Either a user token or a service token works; the user token is preferred.
 - `account_id` is the Console account id. Measured live, it equals the organization id, so the facade uses its own org id when you pass none (see [ADR-0019](../decisions/0019-console-runtime-client-architecture-org-scoped-access-and-per-token-type-wrapper-isolation.md#account-subscriptions-1034)).
 - The method is not cached.
+
+## Discovering organizations, agents and working environments
+
+`ConsoleDiscovery` finds what each configured Console account can see. Every [scope](../reference/config-schema.md#scopes) with its own `consoleapi.toml` is a service account, and the root is the default account. No `org_id` is configured: the organizations of an account are discovered. See [ADR-0029](../decisions/0029-console-discovery-walks-scope-accounts-and-merges-hand-written-spec-fragments.md).
+
+```python
+from pynetappfoundry.console import ConsoleDiscovery
+
+discovery = ConsoleDiscovery(config)
+discovery.accounts()  # [None, "Org1", "Org2"]: None is the root account
+inventory = discovery.discover()
+for account in inventory.accounts:
+    print(account.scope, [o.id for o in account.organizations])
+agents = inventory.agents()
+environments = inventory.working_environments()
+one = discovery.discover_account("Org1")  # a single account
+```
+
+- The root counts as an account only with credentials: its `[general]` has `user_token`, `service_token` or `client_id`, or a root refresh token resolves. A root `[general]` that only carries `base_url` and the other keys scopes inherit is not an account. `Config.console_account_scopes()` returns the list.
+- For each account, discovery lists its organizations (`GET /v1/management/organizations`). For each organization it lists the resources (`GET /v1/management/organizations/{organization_id}/resources`, following the `continue` cursor) and the agents (`GET /agents-mgmt/list-connectors/{organization_id}`).
+- A working environment is an organization resource of type `ON_PREM`. `ConsoleWorkingEnvironment.public_id` is the resource's `rawId`.
+- Each `ConsoleAgentInfo` and `ConsoleWorkingEnvironment` carries the `scope` of the account that listed it (None for the root) and the `organization_id` it was listed under. An organization is only reached with the account that sees it.
+- Errors from an account's own calls propagate. A failing account is not skipped, because a partial inventory would look complete.
+- Discovery does not map a working environment to an agent (#1076) and does not reconcile the agents against `[connectors]`. `[connectors].agent_id` stays required, and a raw agent id passed as `cluster=` keeps using the root account (#1083). `list-connectors` pagination and `status` values are not handled either.
+- `ConsoleAPIClient` also has `list_organization_resources(organization_id)`, `list_agents(organization_id)` and `get_agent(agent_id)`. The `/agents-mgmt` operations have no token type, so either token works and the user token is preferred.
+
+The `/agents-mgmt` endpoints are not in NetApp's docs. Their fields come from live probes and are merged into the spec from a fragment (see [Spec fragments](../../tools/console_openapi/README.md#spec-fragments)). Copy the updated `tools/console_openapi/generated/console_openapi.yaml` into `<config_dir>/apis/console/` again, or the client cannot route these operations.
 
 ## Console UI links
 

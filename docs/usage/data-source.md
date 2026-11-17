@@ -325,6 +325,7 @@ vol = ds.get(OntapVolume, cluster="prod1", id="abc-123-def", source="live")
 live-only OCCM backend ([ADR-0027](../decisions/0027-occm-backend-is-live-only-and-delegates-to-the-typed-console-agent-ops.md)).
 
 - `cluster=` is a `[connectors]` name whose entry has an `agent_id` key, or the Console agent id itself. A connector without a non-blank `agent_id` raises `ValueError` naming `connectors.<name>`.
+- A connector's [scope](../reference/config-schema.md#scopes) picks the Console account that serves it. A raw agent id passed as `cluster=` uses the root account. To find the agents, organizations and working environments of every account, see [Discovering organizations, agents and working environments](console-agent.md#discovering-organizations-agents-and-working-environments).
 - It is live-only: `source="auto"` goes live and `source="cache"` raises `ValueError`.
 - Equality filters (dotted paths) are applied in memory. `tenantId` is filtered in memory too, because the server's `tenant_id` parameter does not match the item's own `tenantId`. `.where()` and `path_params` are not supported.
 - Fifteen fields (for example `ontapClusterProperties`, `svms`, `status`) come back only when requested. Name them in `.fields()` or filter on them and the backend sends `fields=`.

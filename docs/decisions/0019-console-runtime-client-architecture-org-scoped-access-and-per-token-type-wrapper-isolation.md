@@ -189,6 +189,10 @@ Amendment that adds the `dw` ("Licenses and subscriptions") lookup for status, e
 
 See [Console Agent](../usage/console-agent.md#account-subscriptions) and [Console OpenAPI Generator](../../tools/console_openapi/README.md#generated-client-surface).
 
+## Spec fragments (#1078)
+
+The `/agents-mgmt` operations that list and read Console agents are not in the NetAppDocs sources, so the builder cannot parse them. Amendment: a hand-written fragment, `tools/console_openapi/fragments/agents_mgmt.yaml`, supplies them, with fields from live probes and `x-evidence: live` on each operation. The builder merges it after the docs paths, and `doit console_openapi_fragments` re-applies it to the committed spec offline. The operations then go through `client_ops.toml`, codegen and the drift checks like any other, and carry no `x-token-type`, so either token works and the user token is preferred. See [ADR-0029](0029-console-discovery-walks-scope-accounts-and-merges-hand-written-spec-fragments.md) and [tools/console_openapi/README.md](../../tools/console_openapi/README.md#spec-fragments).
+
 ## Consequences
 
 ### Positive
@@ -222,6 +226,7 @@ See [Console Agent](../usage/console-agent.md#account-subscriptions) and [Consol
 - Issue #875: feat: add Console subscription data (see "Marketplace subscriptions (#875)")
 - Issue #1034: feat: parse the `dw` licenses and subscriptions subservice (see "Account subscriptions (#1034)")
 - Issue #1032: feat: generated list models for cvo array responses (see "Generated operation surface (#735)")
+- Issue #1078: feat: support multiple Console organizations through discovered service accounts (see "Spec fragments (#1078)")
 
 ## Related Documentation
 

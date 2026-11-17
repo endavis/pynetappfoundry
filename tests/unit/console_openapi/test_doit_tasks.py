@@ -164,3 +164,12 @@ def test_client_generation_clears_stale_modules(
     assert sorted(p.name for p in out.iterdir()) == ["fresh.py"]
     assert any("format" in c for c in calls)
     assert any("--fix" in c for c in calls)
+
+
+def test_fragments_task_runs_the_offline_apply_command() -> None:
+    task = tasks.task_console_openapi_fragments()
+
+    assert task["actions"] == [
+        ["uv", "run", "python", "-m", "tools.console_openapi.cli", "apply-fragments"]
+    ]
+    assert all("build" not in action for action in task["actions"])

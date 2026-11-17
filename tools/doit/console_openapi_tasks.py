@@ -59,6 +59,23 @@ def task_console_openapi_check() -> dict[str, Any]:
     }
 
 
+def task_console_openapi_fragments() -> dict[str, Any]:
+    """Re-apply the hand-written spec fragments to the committed spec, offline.
+
+    Strips the entries a previous run merged and merges
+    ``tools/console_openapi/fragments/*.yaml`` again (#1078). It needs no network, so
+    use it after editing a fragment; ``console_openapi_refresh`` merges the same
+    fragments into a fresh build. Run ``doit console_models`` and
+    ``doit console_client`` afterwards.
+    """
+    return {
+        "actions": [
+            ["uv", "run", "python", "-m", "tools.console_openapi.cli", "apply-fragments"],
+        ],
+        "verbosity": 2,
+    }
+
+
 # --- Pydantic codegen from the Console OpenAPI spec --------------------------
 
 # Inputs / outputs for the Console Pydantic codegen pipeline. The spec is a

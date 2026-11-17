@@ -305,6 +305,37 @@ class Config:
         """
         return self._object_scopes.get((data_type, name))
 
+    def console_account_scopes(self) -> list[str | None]:
+        """Return the configured Console accounts (#1078, ADR-0028).
+
+        Each scope with its own ``consoleapi.toml`` ``[general]`` table is a service
+        account. The root is the default account, and counts only when it has
+        credentials: its ``[general]`` has ``user_token``, ``service_token`` or
+        ``client_id``, or a root refresh token resolves. A root that only carries
+        the keys scopes inherit (``base_url`` and the like) is not an account.
+
+        Returns:
+            ``None`` for the root account when it counts, then the scope names
+            that have a Console account, sorted.
+
+        Raises:
+            ConfigurationError: If the root refresh token is configured but cannot
+                be resolved or decrypted.
+        """
+        accounts: list[str | None] = []
+        root_general = self.settings.get("consoleapi", {}).get("general")
+        has_credentials = isinstance(root_general, dict) and any(
+            root_general.get(key) for key in ("user_token", "service_token", "client_id")
+        )
+        if has_credentials or self._resolve_console_refresh_token(None) is not None:
+            accounts.append(None)
+        accounts.extend(
+            scope
+            for scope in sorted(self.scopes)
+            if self.scope_settings.get(scope, {}).get("consoleapi", {}).get("general") is not None
+        )
+        return accounts
+
     def _scope_tree(self, scope: str) -> dict[str, Any]:
         """Return the settings loaded from a scope's own files.
 

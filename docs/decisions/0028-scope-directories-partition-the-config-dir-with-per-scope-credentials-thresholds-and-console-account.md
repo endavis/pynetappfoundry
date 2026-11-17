@@ -49,6 +49,7 @@ Issue [#1080](https://github.com/endavis/pynetappfoundry/issues/1080) asks for s
 ## Related Issues
 
 - Issue #1080: feat: scope directories in the config dir, each with its own inventory, credentials, thresholds and Console account
+- Issue #1078: feat: support multiple Console organizations through discovered service accounts (see [ADR-0029](0029-console-discovery-walks-scope-accounts-and-merges-hand-written-spec-fragments.md))
 
 ## Related Documentation
 

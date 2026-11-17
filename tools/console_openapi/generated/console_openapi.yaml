@@ -29,6 +29,17 @@ info:
     cvo: /occm/api
     dw: ''
   x-source-commit: 202c56dabb9ce27392c1a46421ee4d3e174b0758
+  x-fragments:
+    agents_mgmt.yaml:
+      paths:
+      - /agents-mgmt/list-connectors/{organization_id}
+      - /agents-mgmt/agent/{agent_id}
+      schemas:
+      - agentsmgmt.get-list-connectors.ResponseBody
+      - agentsmgmt.get-list-connectors.Occm
+      - agentsmgmt.get-list-connectors.Agent
+      - agentsmgmt.get-agent.ResponseBody
+      - agentsmgmt.get-agent.Agent
 servers:
 - url: https://api.bluexp.netapp.com
   description: BlueXP / NetApp Console SaaS API (current)
@@ -65165,6 +65176,62 @@ paths:
       - BearerAuth: []
       servers:
       - *id001
+  /agents-mgmt/list-connectors/{organization_id}:
+    get:
+      operationId: agentsmgmt_get_list_connectors_by_organization_id
+      summary: List the agents (connectors) of an organization
+      description: Lists the Console agents registered in the specified organization.
+      tags:
+      - agentsmgmt
+      x-source-file: agentsmgmt/get-list-connectors.yaml
+      x-evidence: live
+      parameters:
+      - name: organization_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: ID of the organization whose agents are listed.
+      responses:
+        '200':
+          description: The agents of the organization.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/agentsmgmt.get-list-connectors.ResponseBody'
+      security:
+      - BearerAuth: []
+      servers:
+      - url: https://api.bluexp.netapp.com
+        description: BlueXP / NetApp Console SaaS API (host root)
+  /agents-mgmt/agent/{agent_id}:
+    get:
+      operationId: agentsmgmt_get_agent_by_agent_id
+      summary: Retrieve one agent
+      description: Returns the Console agent with the specified id.
+      tags:
+      - agentsmgmt
+      x-source-file: agentsmgmt/get-agent.yaml
+      x-evidence: live
+      parameters:
+      - name: agent_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: ID of the agent.
+      responses:
+        '200':
+          description: The agent.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/agentsmgmt.get-agent.ResponseBody'
+      security:
+      - BearerAuth: []
+      servers:
+      - url: https://api.bluexp.netapp.com
+        description: BlueXP / NetApp Console SaaS API (host root)
 components:
   schemas:
     tenancy.delete-tenancy-service-resource-.body:
@@ -187217,6 +187284,129 @@ components:
           type: string
         azure:
           type: string
+    agentsmgmt.get-list-connectors.ResponseBody:
+      x-source-file: agentsmgmt/get-list-connectors.yaml
+      type: object
+      properties:
+        occms:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/agentsmgmt.get-list-connectors.Occm'
+    agentsmgmt.get-list-connectors.Occm:
+      x-source-file: agentsmgmt/get-list-connectors.yaml
+      type: object
+      properties:
+        agent:
+          $ref: '#/components/schemas/agentsmgmt.get-list-connectors.Agent'
+        automaticCallbackUris:
+          type: array
+          nullable: true
+          items:
+            type: string
+        isServiceManager3:
+          type: boolean
+          nullable: true
+        manualOverrideUris:
+          type: array
+          nullable: true
+          items:
+            type: string
+        primaryCallbackUri:
+          type: string
+          nullable: true
+        status:
+          type: string
+          nullable: true
+    agentsmgmt.get-list-connectors.Agent:
+      x-source-file: agentsmgmt/get-list-connectors.yaml
+      type: object
+      properties:
+        agentId:
+          type: string
+          nullable: true
+        agentType:
+          type: string
+          nullable: true
+        clientInfraStatus:
+          type: string
+          nullable: true
+        creatorUserId:
+          type: string
+          nullable: true
+        name:
+          type: string
+          nullable: true
+        network:
+          type: string
+          nullable: true
+        provider:
+          type: string
+          nullable: true
+        region:
+          type: string
+          nullable: true
+        status:
+          type: string
+          nullable: true
+        subnet:
+          type: string
+          nullable: true
+        systemId:
+          type: string
+          nullable: true
+        useDockerInfra:
+          type: boolean
+          nullable: true
+    agentsmgmt.get-agent.ResponseBody:
+      x-source-file: agentsmgmt/get-agent.yaml
+      type: object
+      properties:
+        agent:
+          $ref: '#/components/schemas/agentsmgmt.get-agent.Agent'
+        clientInfraStatus:
+          type: string
+          nullable: true
+    agentsmgmt.get-agent.Agent:
+      x-source-file: agentsmgmt/get-agent.yaml
+      type: object
+      properties:
+        agentId:
+          type: string
+          nullable: true
+        agentType:
+          type: string
+          nullable: true
+        clientInfraStatus:
+          type: string
+          nullable: true
+        creatorUserId:
+          type: string
+          nullable: true
+        name:
+          type: string
+          nullable: true
+        network:
+          type: string
+          nullable: true
+        provider:
+          type: string
+          nullable: true
+        region:
+          type: string
+          nullable: true
+        status:
+          type: string
+          nullable: true
+        subnet:
+          type: string
+          nullable: true
+        systemId:
+          type: string
+          nullable: true
+        useDockerInfra:
+          type: boolean
+          nullable: true
   securitySchemes:
     BearerAuth:
       type: http
