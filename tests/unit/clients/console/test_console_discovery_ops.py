@@ -5,7 +5,7 @@ from __future__ import annotations
 import functools
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -135,6 +135,50 @@ def test_list_agents_tags_the_scope_and_organization(tmp_path: Path) -> None:
             organization_id="org-a",
         )
     ]
+
+
+_INFRA_STATUS: dict[str, Any] = {"placeholderKey": "placeholder-value", "nested": {"inner": [1, 2]}}
+
+
+def _agent_with_infra_status() -> dict[str, Any]:
+    agent: dict[str, Any] = dict(cast("dict[str, Any]", _OCCM["agent"]))
+    agent["clientInfraStatus"] = _INFRA_STATUS
+    return agent
+
+
+def test_list_connectors_accepts_an_object_client_infra_status(tmp_path: Path) -> None:
+    client = _client(tmp_path)
+    occm = {**_OCCM, "agent": _agent_with_infra_status()}
+    with _respond(client, {"occms": [occm]}):
+        result = client.ops.list_connectors("org-a")
+
+    assert result.occms is not None
+    assert result.occms[0].agent is not None
+    assert result.occms[0].agent.clientInfraStatus == _INFRA_STATUS
+
+
+def test_list_agents_returns_agents_with_an_object_client_infra_status(tmp_path: Path) -> None:
+    client = _client(tmp_path)
+    occm = {**_OCCM, "agent": _agent_with_infra_status()}
+    with _respond(client, {"occms": [occm]}):
+        agents = client.list_agents("org-a")
+
+    assert [a.agent_id for a in agents] == ["agent-1clients"]
+    assert all(isinstance(a, ConsoleAgentInfo) for a in agents)
+
+
+def test_get_agent_accepts_object_client_infra_status_at_both_levels(tmp_path: Path) -> None:
+    client = _client(tmp_path)
+    body = {
+        "agent": _agent_with_infra_status(),
+        "clientInfraStatus": _INFRA_STATUS,
+    }
+    with _respond(client, body):
+        result = client.ops.get_agent("agent-1clients")
+
+    assert result.clientInfraStatus == _INFRA_STATUS
+    assert result.agent is not None
+    assert result.agent.clientInfraStatus == _INFRA_STATUS
 
 
 def test_list_agents_without_occms_is_empty(tmp_path: Path) -> None:

@@ -642,10 +642,13 @@ class APIWrapper:
             retry_config: Optional override for retry config.
 
         Returns:
-            The HTTP response.
+            The HTTP response. When a retryable status survives every retry,
+            this is the last response, so the caller's ``raise_for_status()``
+            raises ``requests.HTTPError``.
 
         Raises:
-            requests.RequestException: If all retries are exhausted.
+            requests.RequestException: If a connection error or timeout
+                survives every retry, the original exception is re-raised.
         """
         config = retry_config if retry_config is not None else self.retry_config
 
@@ -670,6 +673,15 @@ class APIWrapper:
                 (requests.ConnectionError, requests.Timeout)
             )
 
+        def _return_last_outcome(state: RetryCallState) -> requests.Response:
+            # A retryable status that survives every attempt comes back as the
+            # last response (the caller's raise_for_status() raises HTTPError);
+            # a surviving exception is re-raised as the original exception.
+            if state.outcome is None:
+                raise RuntimeError("retry finished without an outcome")
+            response: requests.Response = state.outcome.result()
+            return response
+
         # Create the retry decorator dynamically
         @retry(
             stop=stop_after_attempt(config.max_attempts),
@@ -680,6 +692,7 @@ class APIWrapper:
             ),
             retry=retry_conditions,
             before_sleep=self._create_retry_callback(config),
+            retry_error_callback=_return_last_outcome,
             reraise=True,
         )
         def make_request() -> requests.Response:

@@ -7,7 +7,9 @@ environments in :data:`OCCM_CACHED_MAPPINGS` through the agent's typed ops, and
 
 A discovery failure propagates and the database is left untouched.  A failing
 agent is logged and recorded in :attr:`OccmSnapshot.failed_agents`; the other
-agents are still collected and the failed agent's earlier rows are kept.
+agents are still collected and the failed agent's earlier rows are kept.  An agent
+whose status is set and is not ``active`` is not contacted; it is recorded in
+:attr:`OccmSnapshot.skipped_agents` and keeps its earlier rows too (#1091).
 
 This module imports nothing from ``pynetappfoundry.data``.
 """
@@ -21,6 +23,7 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 import requests
+from tenacity import RetryError
 
 from pynetappfoundry.cache._registry import model_registry
 from pynetappfoundry.clients.console.auth import ConsoleAuthError
@@ -71,12 +74,15 @@ class OccmSnapshot:
         inventory: What discovery found.
         agents: The agents that were collected.
         failed_agents: Ids of the agents whose collection failed.
+        skipped_agents: Ids of the agents not contacted because their status
+            is set and is not ``active``.
     """
 
     cached_at: datetime
     inventory: ConsoleInventory
     agents: tuple[OccmAgentSnapshot, ...] = ()
     failed_agents: tuple[str, ...] = field(default=())
+    skipped_agents: tuple[str, ...] = field(default=())
 
 
 class OccmCollector:
@@ -129,6 +135,9 @@ class OccmCollector:
     def collect(self) -> OccmSnapshot:
         """Discover, then collect every cached mapping from each unique agent.
 
+        An agent whose status is set and is not ``active`` (case-insensitive) is
+        skipped without being contacted and recorded in ``skipped_agents``.
+
         Raises:
             ValueError: If a mapping name is unknown or has no list op.
             Exception: Any error discovery raises propagates unchanged.
@@ -143,18 +152,29 @@ class OccmCollector:
 
         collected: list[OccmAgentSnapshot] = []
         failed: list[str] = []
+        skipped: list[str] = []
         seen: set[str] = set()
         for agent in inventory.agents():
             if agent.agent_id in seen:
                 continue
             seen.add(agent.agent_id)
+            if agent.status is not None and agent.status.lower() != "active":
+                logger.info("OCCM agent %s: skipped, status %r", agent.agent_id, agent.status)
+                skipped.append(agent.agent_id)
+                continue
             try:
                 client = self._client(agent.agent_id, agent.scope)
                 records: dict[str, list[dict[str, Any]]] = {}
                 for mapping, op_name in resolved:
                     items = getattr(client.ops, op_name)(fields="*")
                     records[mapping.name] = [item.model_dump(mode="json") for item in items]
-            except (requests.RequestException, ConsoleAuthError, TypeError, ValueError) as exc:
+            except (
+                requests.RequestException,
+                ConsoleAuthError,
+                RetryError,
+                TypeError,
+                ValueError,
+            ) as exc:
                 logger.warning("OCCM agent %s: collection failed: %s", agent.agent_id, exc)
                 failed.append(agent.agent_id)
                 continue
@@ -167,12 +187,18 @@ class OccmCollector:
                     records=records,
                 )
             )
-        logger.info("Collected OCCM agents: %d collected, %d failed", len(collected), len(failed))
+        logger.info(
+            "Collected OCCM agents: %d collected, %d failed, %d skipped",
+            len(collected),
+            len(failed),
+            len(skipped),
+        )
         return OccmSnapshot(
             cached_at=datetime.now(UTC),
             inventory=inventory,
             agents=tuple(collected),
             failed_agents=tuple(failed),
+            skipped_agents=tuple(skipped),
         )
 
 

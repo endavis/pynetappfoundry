@@ -122,12 +122,17 @@ class OccmCacheDB(SQLiteDB):
         """Store *snapshot* in one transaction.
 
         The inventory is replaced.  Each collected agent's records are replaced.
-        Agents no longer discovered are pruned; a failed agent keeps its rows.
+        Agents no longer discovered are pruned; a failed or skipped agent keeps
+        its rows.
         """
         from pynetappfoundry.cache._registry import model_registry
 
         cached_at = snapshot.cached_at.isoformat()
-        discovered = {a.agent_id for a in snapshot.agents} | set(snapshot.failed_agents)
+        discovered = (
+            {a.agent_id for a in snapshot.agents}
+            | set(snapshot.failed_agents)
+            | set(snapshot.skipped_agents)
+        )
         with self.conn:
             self.conn.execute(f"DELETE FROM {_INVENTORY}")
             rows: list[tuple[str, str | None, str | None, str, str, str]] = []

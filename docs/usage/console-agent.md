@@ -166,6 +166,7 @@ from pynetappfoundry.cache import OccmCacheDB, refresh_occm_cache
 
 snapshot = refresh_occm_cache(config)
 snapshot.failed_agents  # agents whose collection failed; their old rows are kept
+snapshot.skipped_agents  # agents with a status other than active; not contacted, old rows kept
 
 with OccmCacheDB(config=config) as db:
     db.agents_for_working_environment("<publicId>")  # sorted agent ids that list it

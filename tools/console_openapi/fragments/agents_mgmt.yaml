@@ -5,7 +5,8 @@
 # of #1078 (list-connectors for an organization, and get-agent for one agent);
 # every operation is tagged ``x-evidence: live``. Every scalar is nullable and
 # no schema has a ``required`` list, because the live responses carry nulls and
-# omit keys. Each operation keeps its own Agent schema so each generated model
+# omit keys. On real agents ``clientInfraStatus`` is an object; its inner keys
+# are not measured, so it is modelled as an open map (#1091). Each operation keeps its own Agent schema so each generated model
 # module is self-contained.
 #
 # Merged into the committed spec by tools/console_openapi/fragments.py, by both
@@ -116,8 +117,9 @@ components:
           type: string
           nullable: true
         clientInfraStatus:
-          type: string
+          type: object
           nullable: true
+          additionalProperties: true
         creatorUserId:
           type: string
           nullable: true
@@ -152,8 +154,9 @@ components:
         agent:
           $ref: "#/components/schemas/agentsmgmt.get-agent.Agent"
         clientInfraStatus:
-          type: string
+          type: object
           nullable: true
+          additionalProperties: true
     agentsmgmt.get-agent.Agent:
       x-source-file: agentsmgmt/get-agent.yaml
       type: object
@@ -165,8 +168,9 @@ components:
           type: string
           nullable: true
         clientInfraStatus:
-          type: string
+          type: object
           nullable: true
+          additionalProperties: true
         creatorUserId:
           type: string
           nullable: true

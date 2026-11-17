@@ -3,13 +3,15 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from pydantic import BaseModel
 
 
 class Agent(BaseModel):
     agentId: str | None = None
     agentType: str | None = None
-    clientInfraStatus: str | None = None
+    clientInfraStatus: dict[str, Any] | None = None
     creatorUserId: str | None = None
     name: str | None = None
     network: str | None = None
@@ -23,4 +25,4 @@ class Agent(BaseModel):
 
 class ResponseBody(BaseModel):
     agent: Agent | None = None
-    clientInfraStatus: str | None = None
+    clientInfraStatus: dict[str, Any] | None = None

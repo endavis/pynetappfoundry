@@ -8,6 +8,7 @@ from unittest.mock import MagicMock
 
 import pytest
 import requests
+from tenacity import RetryError
 
 from pynetappfoundry.cache.occm_collector import (
     OCCM_CACHED_MAPPINGS,
@@ -24,13 +25,18 @@ from pynetappfoundry.models.console_types import ConsoleAgentInfo
 _MAPPING = "OccmOnpremWorkingEnvironment"
 
 
-def _inventory(*accounts: tuple[str | None, list[str]]) -> ConsoleInventory:
+def _inventory(
+    *accounts: tuple[str | None, list[str]], statuses: dict[str, str] | None = None
+) -> ConsoleInventory:
+    statuses = statuses or {}
     return ConsoleInventory(
         accounts=[
             AccountInventory(
                 scope=scope,
                 agents=[
-                    ConsoleAgentInfo(agentId=a, scope=scope, organization_id="org-1")
+                    ConsoleAgentInfo(
+                        agentId=a, scope=scope, organization_id="org-1", status=statuses.get(a)
+                    )
                     for a in agent_ids
                 ],
             )
@@ -136,6 +142,7 @@ def test_mapping_without_list_op_raises(monkeypatch: pytest.MonkeyPatch) -> None
         ConsoleAuthError("denied"),
         TypeError("bad"),
         ValueError("bad"),
+        RetryError(MagicMock()),
     ],
 )
 def test_failing_agent_is_recorded_and_others_collected(error: Exception) -> None:
@@ -147,6 +154,33 @@ def test_failing_agent_is_recorded_and_others_collected(error: Exception) -> Non
     ).collect()
     assert snapshot.failed_agents == ("a1",)
     assert [a.agent_id for a in snapshot.agents] == ["a2"]
+
+
+@pytest.mark.parametrize("status", ["inactive", "Disconnected", "INACTIVE"])
+def test_inactive_agent_is_skipped_without_contact(status: str) -> None:
+    factory = _factory({"a2": ["p2"], "a3": ["p3"]})
+    snapshot = OccmCollector(
+        MagicMock(),
+        discovery=_discovery(
+            _inventory((None, ["a1", "a2", "a3"]), statuses={"a1": status, "a2": "active"})
+        ),
+        agent_client_factory=factory,
+    ).collect()
+    assert snapshot.skipped_agents == ("a1",)
+    assert snapshot.failed_agents == ()
+    assert [c.args[1] for c in factory.call_args_list] == ["a2", "a3"]
+    assert [a.agent_id for a in snapshot.agents] == ["a2", "a3"]
+
+
+def test_agents_with_no_status_or_active_status_are_collected() -> None:
+    factory = _factory({"a1": ["p1"], "a2": ["p2"]})
+    snapshot = OccmCollector(
+        MagicMock(),
+        discovery=_discovery(_inventory((None, ["a1", "a2"]), statuses={"a2": "ACTIVE"})),
+        agent_client_factory=factory,
+    ).collect()
+    assert snapshot.skipped_agents == ()
+    assert [a.agent_id for a in snapshot.agents] == ["a1", "a2"]
 
 
 def test_discovery_error_propagates_and_db_untouched(tmp_path: Path) -> None:
