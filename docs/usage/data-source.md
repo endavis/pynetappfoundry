@@ -319,6 +319,19 @@ vol = ds.get(OntapVolume, cluster="prod1", id="abc-123-def", source="live")
 !!! note "Relationship to CLI --live"
     The `--live` flag on CLI commands like `nf cache check` sets `source="live"` internally. Note that `--live` and `--where` are mutually exclusive on `nf cache check` because `.where()` expressions only work on cached data.
 
+## OCCM (Console agent)
+
+`ResponseBody` in `src/pynetappfoundry/models/console/cvo/get_onprem_working_environments.py` is served by the
+live-only OCCM backend ([ADR-0027](../decisions/0027-occm-backend-is-live-only-and-delegates-to-the-typed-console-agent-ops.md)).
+
+- `cluster=` is a `[connectors]` name whose entry has an `agent_id` key, or the Console agent id itself. A connector without a non-blank `agent_id` raises `ValueError` naming `connectors.<name>`.
+- It is live-only: `source="auto"` goes live and `source="cache"` raises `ValueError`.
+- Equality filters (dotted paths) are applied in memory. `tenantId` is filtered in memory too, because the server's `tenant_id` parameter does not match the item's own `tenantId`. `.where()` and `path_params` are not supported.
+- Fifteen fields (for example `ontapClusterProperties`, `svms`, `status`) come back only when requested. Name them in `.fields()` or filter on them and the backend sends `fields=`.
+- `ds.get(..., id=<publicId>)` filters the one list response in memory.
+
+See [Console Agent: DataSource](console-agent.md#datasource) for an example.
+
 ## Common Patterns
 
 ### Counting Results

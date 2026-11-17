@@ -172,8 +172,9 @@ mapping module on first lookup, using the generated `src/pynetappfoundry/cache/_
 For a new API type with its own tree under `cache/<api>/`:
 
 1. Add `<api>` to `_API_DIRS` in `tools/codegen/mapping_index.py`, and its package to
-   `_FALLBACK_PACKAGES` in `src/pynetappfoundry/cache/_registry.py` (`ontap`, `dii` and
-   `aiqum` are already there).
+   `_FALLBACK_PACKAGES` in `src/pynetappfoundry/cache/_registry.py` (`ontap`, `dii`, `aiqum` and
+   `occm` are already there). Add the package to `_walk_mapping_modules` in
+   `tests/unit/cache/test_registry_lazy.py` too.
 2. Run `uv run doit mapping_index` and commit the regenerated index.
 
 For a new mapping in an existing tree, only step 2 is needed (`doit generate_models` runs it for
@@ -513,6 +514,7 @@ the existing codebase:
 | ONTAP | HTTP Basic Auth (per-cluster credentials) | `config.get_user("clusters", cluster_name)` |
 | DII | API key header | `config.get_dii_api_settings().api_ro_token` |
 | AIQUM | HTTP Basic Auth (per-instance credentials) | `config.get_user("aiqums", name)` |
+| OCCM | Bearer token plus `x-agent-id` (per Console agent) | `ConsoleAgentClient(config, agent_id)`, credentials from `consoleapi.toml` / `users.toml [console]`; `agent_id` from `[connectors.<name>]` |
 
 Your backend's `__init__` (or lazy client constructor) must resolve
 credentials from `Config` and pass the appropriate `auth_header` to
@@ -627,6 +629,22 @@ The models and mappings are generated with `doit generate_models --api=aiqum` an
 
 ---
 
+## Example: OCCM Backend (live-only, typed ops)
+
+`OccmBackend` (`src/pynetappfoundry/data/occm_backend.py`) reads a Console agent through the
+generated `ConsoleAgentClient.ops`. **ADR:** [ADR-0027](../decisions/0027-occm-backend-is-live-only-and-delegates-to-the-typed-console-agent-ops.md).
+
+| Concern | OCCM approach |
+| :--- | :--- |
+| Cache | None. `live_only = True`: `source="auto"` goes live, `source="cache"` raises `ValueError` |
+| Dispatch | Typed ops only: `_OPS` maps `mapping.api_endpoint` to a `ConsoleAgentOps` method. No raw paths ([ADR-0019](../decisions/0019-console-runtime-client-architecture-org-scoped-access-and-per-token-type-wrapper-isolation.md)) |
+| Mapping | Hand-written, built from `ResponseBody.model_fields` (`src/pynetappfoundry/cache/occm/onprem_working_environments/mapping.py`), not generated |
+| Envelope | Bare array, no paging; `records_path=""`. The op returns validated models |
+| Targeting | `cluster=` is a `[connectors]` name with an `agent_id` key, or the agent id; one client cached per agent id |
+| Filters | Equality only, applied in memory on `model_dump()`; `requires_explicit_fetch` fields are sent as a `fields=` CSV; `where()`, `path_params` and `parent_filters` are unsupported |
+
+---
+
 ## Related Documentation
 
 - [ADR-0012: Unified DataSource Accessor](../decisions/0012-unified-datasource-accessor.md) (superseded)
@@ -640,6 +658,7 @@ The models and mappings are generated with `doit generate_models --api=aiqum` an
 
 - `src/pynetappfoundry/data/backends.py` -- Backend ABC and OntapBackend
 - `src/pynetappfoundry/data/dii_backend.py` -- DiiBackend (live-only, bare-array or envelope)
+- `src/pynetappfoundry/data/occm_backend.py` -- OccmBackend (live-only, typed Console agent ops)
 - `src/pynetappfoundry/data/source.py` -- DataSource facade and `_BACKENDS` registry
 - `src/pynetappfoundry/data/_routing.py` -- RoutingDecision and `decide_path()`
 - `src/pynetappfoundry/cache/field_mapping.py` -- TypeMapping and FieldMapping

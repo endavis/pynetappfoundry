@@ -149,3 +149,4 @@ The Issue contains the full discussion; the ADR summarizes the outcome.
 | [0024](0024-generated-models-carry-only-api-data-computed-values-live-in-separate-hand-written-models.md) | Generated models carry only API data; computed values live in separate hand-written models | Accepted |
 | [0025](0025-pin-ontap-ssh-host-keys-and-tls-certificate-fingerprints-on-first-use.md) | Pin ONTAP SSH host keys and TLS certificate fingerprints on first use | Accepted |
 | [0026](0026-aiqum-backend-is-live-only-and-reads-the-hal-records-envelope.md) | AIQUM backend caches collected collections and reads the HAL records envelope | Accepted, amended by #1055 |
+| [0027](0027-occm-backend-is-live-only-and-delegates-to-the-typed-console-agent-ops.md) | OCCM backend is live-only and delegates to the typed Console agent ops | Accepted |

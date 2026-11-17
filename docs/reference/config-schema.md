@@ -336,7 +336,7 @@ type = "data"    # Required: Marks this as a data file
 |---------|-------------|----------------|
 | `clusters` | ONTAP clusters | `ClusterConfig` |
 | `aiqums` | Active IQ Unified Manager instances | `AIQUMConfig` |
-| `connectors` | Cloud Insights connectors | `ConnectorConfig` |
+| `connectors` | Console agent VMs (the inventory report reads them as agents; `agent_id` is optional) | `ConnectorConfig` |
 | `cloudinsights` | Cloud Insights tenants | `CloudInsightsConfig` |
 | `azure` | Azure resources | `AzureConfig` |
 
@@ -446,7 +446,7 @@ env = "Prod"
 
 ### Connectors
 
-Cloud Insights connector definitions.
+Console agent (connector) VM definitions.
 
 ```toml
 [connectors.CONNECTOR-PROD-01]
@@ -454,7 +454,12 @@ ip = "192.168.1.132"
 div = "ITS"
 bu = "LAR"
 env = "Prod"
+agent_id = "AGENT-ID"   # optional; needed to query this agent through DataSource
 ```
+
+`agent_id` is the Console agent id. `DataSource` reads it when `cluster=` names this
+entry for an OCCM model ([ADR-0027](../decisions/0027-occm-backend-is-live-only-and-delegates-to-the-typed-console-agent-ops.md)).
+A connector without a non-blank `agent_id` raises `ValueError` naming `connectors.<name>`.
 
 #### Connector Fields
 
