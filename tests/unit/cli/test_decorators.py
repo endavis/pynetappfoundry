@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import click
+import pytest
 from click.testing import CliRunner
 
 from pynetappfoundry.cli.decorators import with_config
@@ -154,6 +156,33 @@ class TestWithConfigLiveFlag:
 
         assert result.exit_code == 0
         assert captured.get("no_cache") is False
+
+
+class TestWithConfigScopeFilter:
+    """``-f '{"scope": ...}'`` reaches get_clusters through with_config (#1081)."""
+
+    def test_scope_filter_injects_only_that_scopes_clusters(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.chdir(tmp_path)
+        data = '[settings]\ntype = "data"\n\n[clusters.{name}]\nip = "10.0.0.1"\n'
+        cfg = tmp_path / "cfg"
+        (cfg / "Org1").mkdir(parents=True)
+        (cfg / "Org1" / "scope.toml").write_text("")
+        (cfg / "Org1" / "c.toml").write_text(data.format(name="in-scope"))
+        (cfg / "root.toml").write_text(data.format(name="at-root"))
+
+        @click.command()
+        @click.option("--filter", "filter")
+        @with_config("test failed")
+        def cmd(config: Config, clusters: dict[str, object]) -> None:
+            click.echo(",".join(sorted(clusters)))
+
+        result = CliRunner().invoke(
+            cmd, ["--filter", '{"scope": "Org1"}'], obj={"config_dir": "cfg"}
+        )
+        assert result.exit_code == 0, result.output
+        assert result.output.strip() == "in-scope"
 
 
 class TestWithConfigErrorHandling:

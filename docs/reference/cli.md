@@ -34,6 +34,14 @@ The filter is a JSON object matched against cluster metadata fields such as
 -f '{"bu":"Business","env":"Prod"}'
 ```
 
+The built-in `scope` key matches the [scope](config-schema.md#scopes) a cluster
+belongs to; `""` means a cluster outside any scope:
+
+```bash
+-f '{"scope":"Org1"}'
+-f '{"scope":"Org1","env":"Prod"}'
+```
+
 ## Commands
 
 ### licenses
@@ -258,14 +266,21 @@ nf config [OPTIONS] COMMAND [ARGS]...
 | Option | Description |
 |--------|-------------|
 | `-s, --section TEXT` | Show only a specific section (e.g. `clusters`, `settings`, `users`) |
+| `--scope TEXT` | Show only this [scope](config-schema.md#scopes)'s own files, not a merged view: its objects, its `users`, `monitoring` and `consoleapi` files (`enc` masked) and its `scope.toml` description and tags. Keys the scope does not set fall back to the root. `-s` selects one of those sections. An unknown scope exits 1 |
 | `--unmask` | Show passwords and tokens unmasked (use with caution) |
+
+Without `--scope` the summary adds a `Scopes:` line when the config has scopes.
 
 **`config validate` options:**
 
-No options beyond `--help`. Checks that all configuration files parse and
+| Option | Description |
+|--------|-------------|
+| `--scope TEXT` | Check this scope instead of the root settings: its clusters and their credentials, its `users.toml` sections (errors are keyed `<scope>/users...`), its `monitoring.toml` and its Console account (`Not configured (optional)` when it has no `consoleapi.toml` `[general]`). An unknown scope exits 1 |
+
+Checks that all configuration files parse and
 contain valid values. A settings section that is absent is reported as not
 configured; one that is present but invalid, or whose `SOPS[...]` value cannot be
-decrypted, is reported as Invalid.
+decrypted, is reported as Invalid. Without `--scope` the behavior is unchanged.
 
 **`config init-sops` options:**
 
@@ -281,11 +296,12 @@ decrypted, is reported as Invalid.
 | `--cluster TEXT` | Set credentials for a specific cluster. Alias for `--type clusters --name TEXT` |
 | `--type` | Set default credentials for all resources of a type: `aiqums`, `azure`, `cloudinsights`, `clusters`, `connectors`, `console`, `ibm` (`console` stores the Console refresh token: `--user` is only a label and the password prompt takes the token) |
 | `--name TEXT` | With `--type`, set credentials for that one inventory object, written to its data file entry. An unknown name lists the available ones. For a token-style secret, `--user` is only a label and the password prompt takes the token. Not valid with `--cluster` or `--type console` |
+| `--scope TEXT` | With `--type` alone, write to `<config>/<scope>/users.toml` (created if missing) instead of the root `users.toml`. With `--cluster` or `--name`, it must equal the object's own scope; a mismatch fails, names the object's real scope (or the root) and writes nothing. An unknown scope lists the available ones |
 | `--user TEXT` | Username (required) |
 | `--password TEXT` | Password (will prompt if not provided) |
 | `--no-encrypt` | Store password as plain text (not recommended) |
 
-`--type console` writes the root Console account's refresh token. A scope's Console credentials, including its refresh token in the scope's `users.toml` `[console]`, are edited by hand until #1081.
+Without `--scope`, `--type console` writes the root Console account's refresh token. With `--scope Org1` it writes the refresh token to the `[console]` section of the scope's own `users.toml`; a warning is printed when that scope has no Console account (a `[general]` table in its own `consoleapi.toml`), and the token is still written.
 
 **`config encrypt-value` options:**
 
@@ -436,8 +452,15 @@ nf config show -s clusters
 # Reveal passwords and tokens (use with caution)
 nf config show --unmask
 
+# Show one scope's own files, or only its users section
+nf config show --scope Org1
+nf config show --scope Org1 -s users
+
 # Validate all configuration files
 nf config validate
+
+# Validate one scope (clusters, users, monitoring and Console account)
+nf config validate --scope Org1
 
 # Initialize SOPS + age encryption for credential storage
 nf config init-sops
@@ -457,6 +480,10 @@ nf config set-credential --type cloudinsights --name tenant1 --user token
 
 # Store the Console refresh token (the user is a label; the prompt takes the token)
 nf config set-credential --type console --user console
+
+# Write a scope's own defaults (its own users.toml) and its Console refresh token
+nf config set-credential --type clusters --scope Org1 --user admin
+nf config set-credential --type console --scope Org1 --user console
 
 # Store a password without encryption (not recommended)
 nf config set-credential --cluster mycluster --user admin --no-encrypt

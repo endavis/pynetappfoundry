@@ -117,7 +117,9 @@ Each scope's `consoleapi.toml` is a Console service account, and the root is the
 
 ### Unique names
 
-Object names must be unique across the config directory whenever a scope is involved. When either copy of a name is in a scope (two scopes, the root and a scope, or the same scope twice), loading raises `ConfigurationError` naming both files. Two copies in the root keep the older behavior: the last one loaded wins.
+Object names must be unique across the config directory, per data type. Any duplicate (two scopes, the root and a scope, the same scope twice, or two files in the root) raises `ConfigurationError` naming both files. The same name under two different data types, such as a cluster and a connector, is fine.
+
+Write a scope's credentials with `nf config set-credential --scope`, and inspect or check a scope with `nf config show --scope` and `nf config validate --scope`. See [CLI Reference](cli.md#config).
 
 A complete example is in `docs/example-config/Org1/`.
 
@@ -230,7 +232,7 @@ enc = "SOPS[...]"  # the refresh token, SOPS-encrypted (or plaintext)
 | `user` | string | Yes | Username for authentication |
 | `enc` | string | Yes | Encoded password (base64 or other encoding) |
 
-For `[console]`, `enc` holds the NetApp refresh token and `user` is a display label that is never sent. SOPS values are decrypted, and the `NF_CONSOLE_USER` / `NF_CONSOLE_PASSWORD` environment variables override the file. Write the entry with `nf config set-credential --type console --user console`; the password prompt takes the refresh token.
+For `[console]`, `enc` holds the NetApp refresh token and `user` is a display label that is never sent. SOPS values are decrypted, and the `NF_CONSOLE_USER` / `NF_CONSOLE_PASSWORD` environment variables override the file. Write the entry with `nf config set-credential --type console --user console`; the password prompt takes the refresh token. For a scope's `users.toml`, add `--scope Org1`.
 
 **Note:** Individual resources can override these defaults by specifying `user` and `enc` in their data file entry.
 
@@ -656,7 +658,15 @@ dev_or_test = config.search("clusters", {"env": "Dev || Test"})
 
 # AND operator for list fields (match all tags)
 active_nfs = config.search("clusters", {"tags": "active && nfs"})
+
+# The scope an object came from. "scope" is a reserved, built-in search key: it is
+# never a field in the data files, and find_closest never relaxes it.
+org1 = config.search("clusters", {"scope": "Org1"})
+root_only = config.search("clusters", {"scope": ""})   # objects outside any scope
+either = config.search("clusters", {"scope": "Org1 || Org2", "env": "Prod"})
 ```
+
+On the command line the same filter works: `-f '{"scope":"Org1"}'`.
 
 ### Getting Credentials
 

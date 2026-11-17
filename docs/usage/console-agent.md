@@ -67,6 +67,8 @@ console = Console(config, scope="Org1")  # the account of docs/example-config/Or
 agent = ConsoleAgentClient(config, "your-agent-id", scope="Org1")
 ```
 
+Store a scope's refresh token in its own `users.toml` with `nf config set-credential --type console --scope Org1 --user console`; the password prompt takes the token.
+
 A scope without its own `consoleapi.toml` raises `ConfigurationError`; it never falls back to the root account. The OCCM `DataSource` backend does this for you: it uses the scope of the `[connectors]` entry it queries, and the root account for a connector outside any scope or a raw agent id.
 
 ### Token types

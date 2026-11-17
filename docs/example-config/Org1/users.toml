@@ -6,6 +6,7 @@ enc = "org1_admin_password"
 
 # This scope's Console refresh token. A scope never reads the root [console]
 # section or the NF_CONSOLE_* environment variables. `user` is only a label.
+# Write it with: nf config set-credential --type console --scope Org1 --user console
 # [console]
 # user = "console"
 # enc = "paste-refresh-token-here"

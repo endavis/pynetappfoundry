@@ -286,16 +286,35 @@ def test_duplicate_in_same_scope_raises(tmp_path: Path, monkeypatch: pytest.Monk
         _load(tmp_path, monkeypatch, files)
 
 
-def test_duplicate_root_root_is_still_last_one_wins(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_duplicate_root_root_raises(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     files = {
         "one.toml": _DUP,
         "two.toml": _DUP.replace("1.1.1.1", "2.2.2.2"),
     }
+    with pytest.raises(ConfigurationError, match="Duplicate clusters name 'dup'") as exc:
+        _load(tmp_path, monkeypatch, files)
+    assert "one.toml" in str(exc.value)
+    assert "two.toml" in str(exc.value)
+    assert "unique across the config directory" in str(exc.value)
+
+
+def test_duplicate_root_and_plain_subdirectory_raises(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    files = {"root.toml": _DUP, "plain/d.toml": _DUP}
+    with pytest.raises(ConfigurationError, match="Duplicate clusters name 'dup'"):
+        _load(tmp_path, monkeypatch, files)
+
+
+def test_same_name_under_different_data_types_loads(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    files = {
+        "d.toml": _DUP + '\n[connectors.dup]\nip = "3.3.3.3"\nagent_id = "a"\n',
+    }
     config = _load(tmp_path, monkeypatch, files)
-    assert config.data["clusters"]["dup"]["ip"] in {"1.1.1.1", "2.2.2.2"}
-    assert config.get_scope("clusters", "dup") is None
+    assert "dup" in config.data["clusters"]
+    assert "dup" in config.data["connectors"]
 
 
 # --- get_user ---------------------------------------------------------------
@@ -571,6 +590,68 @@ def test_console_scope_none_is_unchanged(scoped: Config) -> None:
     assert settings.org_id == "root-org"
     assert settings.refresh_token is not None
     assert settings.refresh_token.get_secret_value() == "root-refresh"
+
+
+# --- search by scope and get_scope_settings (#1081) -------------------------
+
+_ORG1_CLUSTERS = {"org1-cl", "org1-cl2", "org1-nested"}
+
+
+def test_search_scope_returns_scope_objects_including_nested(scoped: Config) -> None:
+    assert set(scoped.search("clusters", {"scope": "Org1"})) == _ORG1_CLUSTERS
+
+
+def test_search_empty_scope_returns_only_root_objects(scoped: Config) -> None:
+    assert set(scoped.search("clusters", {"scope": ""})) == {"root-cl", "plain-cl"}
+
+
+def test_search_scope_or_term(scoped: Config) -> None:
+    assert set(scoped.search("clusters", {"scope": "Org1 || Nope"})) == _ORG1_CLUSTERS
+    assert scoped.search("clusters", {"scope": "Nope"}) == {}
+
+
+def test_search_scope_combines_with_other_keys(scoped: Config) -> None:
+    assert set(scoped.search("clusters", {"scope": "Org1", "ip": "10.1.0.2"})) == {"org1-cl2"}
+    assert scoped.search("clusters", {"scope": "Org1", "ip": "10.0.0.1"}) == {}
+
+
+def test_search_scope_does_not_inject_key_into_data(scoped: Config) -> None:
+    results = scoped.search("clusters", {"scope": "Org1"})
+    assert all("scope" not in item for item in results.values())
+    assert all("scope" not in item for item in scoped.data["clusters"].values())
+
+
+def test_search_scope_uses_real_scope_not_a_data_field(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    files = {
+        "Org1/scope.toml": "",
+        "Org1/d.toml": (
+            '[settings]\ntype = "data"\n\n[clusters.a]\nip = "1.1.1.1"\nscope = "fake"\n'
+        ),
+    }
+    config = _load(tmp_path, monkeypatch, files)
+    assert set(config.search("clusters", {"scope": "Org1"})) == {"a"}
+    assert config.search("clusters", {"scope": "fake"}) == {}
+
+
+def test_find_closest_never_relaxes_scope(scoped: Config) -> None:
+    scoped.settings["settings"] = {"clusters": {"relaxation_order": ["scope", "ip"]}}
+    # Relaxing "scope" would find root-cl (10.0.0.1); the scope-limited set has three.
+    assert scoped.find_closest("clusters", {"scope": "Org1", "ip": "10.0.0.1"}) is None
+    # An empty scope means "root only" and is not dropped as an empty key.
+    assert scoped.find_closest("clusters", {"scope": "", "ip": "10.1.0.1"}) is None
+
+
+def test_get_scope_settings_returns_scope_tree(scoped: Config) -> None:
+    tree = scoped.get_scope_settings("Org1")
+    assert set(tree) == {"users", "monitoring", "consoleapi"}
+    assert tree["monitoring"]["settings"]["default_thresholds"] == {"inodes": 70}
+
+
+def test_get_scope_settings_unknown_scope_lists_available(scoped: Config) -> None:
+    with pytest.raises(ConfigurationError, match=r"Unknown scope 'Nope'.*Org1"):
+        scoped.get_scope_settings("Nope")
 
 
 @pytest.fixture(autouse=True)
