@@ -5,8 +5,9 @@ Each configured Console account (the root and every scope with its own
 Discovery walks each account to the organizations it can see and, for each
 organization, lists its working environments (organization resources of type
 ``ON_PREM``) and its agents.  Every object is reported under the account that
-listed it.  Discovery does not map a working environment to an agent (#1076) and
-does not reconcile agents against ``[connectors]``.
+listed it.  Discovery does not map a working environment to an agent: that mapping
+lives in the OCCM cache (``src/pynetappfoundry/cache/occm_db.py``, #1076, ADR-0030).
+It does not reconcile agents against ``[connectors]``.
 """
 
 from __future__ import annotations

@@ -54,6 +54,8 @@ if TYPE_CHECKING:
     from pynetappfoundry.cache.fetchers import fetch
     from pynetappfoundry.cache.field_mapping import FieldMapping, TypeMapping
     from pynetappfoundry.cache.history_db import CacheHistoryDB
+    from pynetappfoundry.cache.occm_collector import OccmCollector, refresh_occm_cache
+    from pynetappfoundry.cache.occm_db import OccmCacheDB
     from pynetappfoundry.cache.query_engine import (
         ParsedFilter,
         SQLCondition,
@@ -83,6 +85,9 @@ _LAZY_EXPORTS: dict[str, str] = {
     "AiqumCacheDB": f"{_P}.aiqum_db",
     "AiqumCollector": f"{_P}.aiqum_collector",
     "refresh_aiqum_cache": f"{_P}.aiqum_collector",
+    "OccmCacheDB": f"{_P}.occm_db",
+    "OccmCollector": f"{_P}.occm_collector",
+    "refresh_occm_cache": f"{_P}.occm_collector",
     "CollectionError": f"{_P}.collector",
     "MetadataCollector": f"{_P}.collector",
     "ClusterMetadataDB": f"{_P}.db",
@@ -116,6 +121,8 @@ __all__ = [
     "HasUUID",
     "LazyClusterMetadata",
     "MetadataCollector",
+    "OccmCacheDB",
+    "OccmCollector",
     "OntapMediatorResponse",
     "OntapUUID",
     "ParsedFilter",
@@ -133,6 +140,7 @@ __all__ = [
     "parse_filters",
     "parse_schema_version",
     "refresh_aiqum_cache",
+    "refresh_occm_cache",
 ]
 
 

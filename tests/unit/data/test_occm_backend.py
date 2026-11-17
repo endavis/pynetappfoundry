@@ -1,8 +1,9 @@
-"""Unit tests for OccmBackend (Console agent, live-only). No network: the client is patched."""
+"""Unit tests for OccmBackend (Console agent). No network: the client is patched."""
 
 from __future__ import annotations
 
 from collections.abc import Iterator
+from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
 
@@ -51,7 +52,8 @@ def _op(client_cls: MagicMock) -> MagicMock:
 
 def test_registered_backend() -> None:
     assert _BACKENDS["occm"] is OccmBackend
-    assert OccmBackend.live_only is True
+    assert OccmBackend.live_only is False
+    assert OccmBackend.is_live_only(MAPPING) is False
     assert MAPPING.api_type == "occm"
 
 
@@ -125,10 +127,16 @@ def test_missing_path_excludes_item(client_cls: MagicMock) -> None:
     assert result == []
 
 
-def test_cache_only_decision_rejected(client_cls: MagicMock) -> None:
+def test_cache_only_decision_reads_cache(client_cls: MagicMock, tmp_path: Path) -> None:
+    from pynetappfoundry.cache.occm_db import OccmCacheDB
+
     decision = RoutingDecision(cache_fields=("name",), live_fields=())
-    with pytest.raises(NotImplementedError, match="cache-only"):
-        OccmBackend(_config()).query(ResponseBody, MAPPING, decision, "a1", {})
+    with (
+        OccmCacheDB(db_path=tmp_path / "occm_cache.db") as db,
+        patch.object(OccmBackend, "_cache_db", db),
+    ):
+        assert OccmBackend(_config()).query(ResponseBody, MAPPING, decision, "a1", {}) == []
+    client_cls.assert_not_called()
 
 
 def test_where_expressions_rejected(client_cls: MagicMock) -> None:

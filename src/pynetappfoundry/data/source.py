@@ -37,7 +37,8 @@ T = TypeVar("T", bound=BaseModel)
 # Backend registry: maps TypeMapping.api_type → Backend subclass.
 # Registered backends: ONTAP (cache + live), DII (live-only), AIQUM (cache for
 # the collected collections, live for the rest: Backend.is_live_only, #1055),
-# OCCM (Console agent, live-only, #1050).
+# OCCM (Console agent: cache for the on-prem working environments, live for the
+# rest, #1050, #1076).
 _BACKENDS: dict[str, type[Backend]] = {
     "ontap": OntapBackend,
     "dii": DiiBackend,
