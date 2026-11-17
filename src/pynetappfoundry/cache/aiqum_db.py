@@ -16,6 +16,7 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar
 
+from pynetappfoundry.cache._json_records import json_path
 from pynetappfoundry.db.base import SQLiteDB
 
 if TYPE_CHECKING:
@@ -24,19 +25,6 @@ if TYPE_CHECKING:
 
 _COLLECTIONS = "aiqum_collections"
 _RECORDS = "aiqum_records"
-
-
-def _json_path(key: str) -> str | None:
-    """Build the quoted SQLite JSON path for a dotted filter *key*.
-
-    Returns ``None`` when a segment contains a double quote: SQLite JSON paths
-    have no escape for it, and no AIQUM field is named that way, so such a key
-    can match nothing.
-    """
-    segments = key.split(".")
-    if any('"' in seg for seg in segments):
-        return None
-    return "$" + "".join(f'."{seg}"' for seg in segments)
 
 
 class AiqumCacheDB(SQLiteDB):
@@ -147,7 +135,7 @@ class AiqumCacheDB(SQLiteDB):
                 raise ValueError(
                     f"Cache filter {key!r}: value must be a scalar, got {type(value).__name__}"
                 )
-            path = _json_path(key)
+            path = json_path(key)
             if path is None:
                 return []
             if value is None:

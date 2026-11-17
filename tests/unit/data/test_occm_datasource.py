@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
+from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
 
@@ -15,6 +16,19 @@ from pynetappfoundry.models.console.cvo.get_onprem_working_environments import (
 )
 
 _CLIENT_PATH = "pynetappfoundry.clients.console.agent.ConsoleAgentClient"
+
+
+@pytest.fixture(autouse=True)
+def empty_occm_cache(tmp_path: Path) -> Iterator[None]:
+    """Point the OCCM cache at an empty file so ``auto`` falls back to live."""
+    from pynetappfoundry.cache.occm_db import OccmCacheDB
+    from pynetappfoundry.data.occm_backend import OccmBackend
+
+    with (
+        OccmCacheDB(db_path=tmp_path / "occm_cache.db") as db,
+        patch.object(OccmBackend, "_cache_db", db),
+    ):
+        yield
 
 
 @pytest.fixture
@@ -46,9 +60,9 @@ def test_auto_query_goes_live(op: MagicMock) -> None:
     op.assert_called_once_with()
 
 
-def test_cache_source_rejected_at_query() -> None:
-    with pytest.raises(ValueError, match="OccmBackend is live-only"):
-        _ds().query(ResponseBody, cluster="c1", source="cache")
+def test_cache_source_on_empty_cache_returns_nothing(op: MagicMock) -> None:
+    assert list(_ds().query(ResponseBody, cluster="c1", source="cache")) == []
+    op.assert_not_called()
 
 
 def test_fields_selection_sent(op: MagicMock) -> None:

@@ -1080,6 +1080,25 @@ AIQUM has its own cache, separate from the ONTAP files above ([ADR-0026](../deci
 - Staleness: `AiqumCacheDB.is_stale(instance, ttl_days=30)` compares the oldest `cached_at` with the TTL and returns `None` for an instance never collected. Age never changes routing.
 - Rebuilding: delete the file, or call `refresh_aiqum_cache` again. There is no CLI for the AIQUM cache yet ([#1072](https://github.com/endavis/pynetappfoundry/issues/1072)).
 
+## OCCM Cache
+
+The Console agent (OCCM) has its own cache, separate from the ONTAP and AIQUM files ([ADR-0030](../decisions/0030-occm-cache-is-discovery-driven-and-maps-working-environments-to-agents.md), [ADR-0018](../decisions/0018-cache-schema-versioning-and-backward-compatibility-policy.md)).
+
+| Item | Value |
+|------|-------|
+| Class | `OccmCacheDB` in `src/pynetappfoundry/cache/occm_db.py` (`SCHEMA_VERSION = 1`) |
+| File | `{config_dir}/.cache/occm_cache.db` |
+| Tables | `occm_collections` (`agent_id`, `mapping`, `scope`, `organization_id`, `cached_at`), `occm_records` (`agent_id`, `mapping`, `record_key`, raw JSON `record`), `occm_inventory` (`kind`, `scope`, `organization_id`, `object_id`, `record`, `cached_at`) |
+| Collected | `OccmOnpremWorkingEnvironment` (`OCCM_CACHED_MAPPINGS`), listed with `fields="*"` |
+| Populate | `refresh_occm_cache(config)` in `src/pynetappfoundry/cache/occm_collector.py` |
+
+- A refresh runs `ConsoleDiscovery`, then lists the working environments of each discovered agent (deduplicated by `agent_id`; the first account wins). The inventory (organizations, agents and working environments) is replaced on every refresh.
+- A discovery failure propagates and leaves the database unchanged. A failing agent is logged and returned in `OccmSnapshot.failed_agents`; its earlier rows and `cached_at` are kept. Agents that are no longer discovered are pruned.
+- The working environment to agent mapping is derived from the records: `OccmCacheDB.agents_for_working_environment(public_id)` returns the sorted ids of the agents that list it, and `working_environment_agents()` returns the whole mapping.
+- Records are stored as `item.model_dump(mode="json")` and validated back into the model on read. Cache filters are exact matches on the JSON path; indexed `json_extract` paths are not supported.
+- Staleness: `OccmCacheDB.is_stale(agent_id, ttl_days=30)` reports age only and never changes routing.
+- Rebuilding: delete the file, or call `refresh_occm_cache` again. A refresh and inspect CLI is #1087, and the cloud working environment lists are #1074.
+
 ## Benchmarks
 
 Performance benchmarks for the core cache data paths live under

@@ -629,14 +629,14 @@ The models and mappings are generated with `doit generate_models --api=aiqum` an
 
 ---
 
-## Example: OCCM Backend (live-only, typed ops)
+## Example: OCCM Backend (typed ops, cache for the collected mappings)
 
 `OccmBackend` (`src/pynetappfoundry/data/occm_backend.py`) reads a Console agent through the
-generated `ConsoleAgentClient.ops`. **ADR:** [ADR-0027](../decisions/0027-occm-backend-is-live-only-and-delegates-to-the-typed-console-agent-ops.md).
+generated `ConsoleAgentClient.ops`. **ADRs:** [ADR-0027](../decisions/0027-occm-backend-is-live-only-and-delegates-to-the-typed-console-agent-ops.md), [ADR-0030](../decisions/0030-occm-cache-is-discovery-driven-and-maps-working-environments-to-agents.md).
 
 | Concern | OCCM approach |
 | :--- | :--- |
-| Cache | None. `live_only = True`: `source="auto"` goes live, `source="cache"` raises `ValueError` |
+| Cache | `OccmCacheDB` (`src/pynetappfoundry/cache/occm_db.py`) for `OCCM_CACHED_MAPPINGS`, filled by `refresh_occm_cache` (`src/pynetappfoundry/cache/occm_collector.py`). `live_only = False` and `is_live_only(mapping)` is true for every other mapping; a partial decision goes live for all requested fields |
 | Dispatch | Typed ops only: `_OPS` maps `mapping.api_endpoint` to a `ConsoleAgentOps` method. No raw paths ([ADR-0019](../decisions/0019-console-runtime-client-architecture-org-scoped-access-and-per-token-type-wrapper-isolation.md)) |
 | Mapping | Hand-written, built from `ResponseBody.model_fields` (`src/pynetappfoundry/cache/occm/onprem_working_environments/mapping.py`), not generated |
 | Envelope | Bare array, no paging; `records_path=""`. The op returns validated models |
@@ -658,7 +658,9 @@ generated `ConsoleAgentClient.ops`. **ADR:** [ADR-0027](../decisions/0027-occm-b
 
 - `src/pynetappfoundry/data/backends.py` -- Backend ABC and OntapBackend
 - `src/pynetappfoundry/data/dii_backend.py` -- DiiBackend (live-only, bare-array or envelope)
-- `src/pynetappfoundry/data/occm_backend.py` -- OccmBackend (live-only, typed Console agent ops)
+- `src/pynetappfoundry/data/occm_backend.py` -- OccmBackend (typed Console agent ops, cache for the collected mappings)
+- `src/pynetappfoundry/cache/occm_db.py` -- OccmCacheDB
+- `src/pynetappfoundry/cache/occm_collector.py` -- OccmCollector and `refresh_occm_cache`
 - `src/pynetappfoundry/data/source.py` -- DataSource facade and `_BACKENDS` registry
 - `src/pynetappfoundry/data/_routing.py` -- RoutingDecision and `decide_path()`
 - `src/pynetappfoundry/cache/field_mapping.py` -- TypeMapping and FieldMapping

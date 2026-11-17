@@ -34,7 +34,7 @@ Read-only probes against a lab Console agent through Console SaaS, using `ops.li
 3. **D3, mapping.** One hand-written `TypeMapping`, built from `ResponseBody.model_fields` so it cannot drift from the model. It is not generated.
 4. **D4, model class.** The generated `models/console/cvo/get_onprem_working_environments.ResponseBody` is used directly. It is a plain `BaseModel`: no `F` DSL and no `_fetched_fields` stamp, so filters are dicts.
 5. **D5, target.** If `cluster` is a key of `[connectors]`, the backend reads that entry's optional `agent_id` and raises `ValueError` naming `connectors.<name>` when it is missing or blank. Any other value is the agent id itself. Credentials come from `consoleapi.toml` and `users.toml [console]` through `ConsoleAgentClient`.
-6. **D6, live-only.** `live_only = True`: `auto` goes live and `source="cache"` raises `ValueError`.
+6. **D6, live-only.** `live_only = True`: `auto` goes live and `source="cache"` raises `ValueError`. Superseded for the cached mappings by [ADR-0030](0030-occm-cache-is-discovery-driven-and-maps-working-environments-to-agents.md) (#1076): `live_only = False` and the mappings in `OCCM_CACHED_MAPPINGS` are served from the OCCM cache. Every other mapping stays live-only.
 7. **D7, endpoints.** Only `GET /occm/api/onprem/working-environments`, through `list_onprem_working_environments`, so the op manifest does not change. A follow-up issue covers the vsa, azure/vsa, gcp/vsa and aws/ha lists. `get()` by `publicId` filters the list in memory.
 8. **D8, envelope and filters.**
    - The response is a bare array with no paging, so `records_path=""`.

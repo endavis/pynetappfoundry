@@ -92,7 +92,7 @@ Resolved by #544.
 
 ### 9. Backend ABC preserved, meaning changed
 
-`DataSource._BACKENDS` keyed by `TypeMapping.api_type` is preserved from ADR-0012 §7, but its role changes. Backends no longer implement "how to fetch X from an API end-to-end"; they are thin delegators to per-domain fetch layers. `OntapBackend` delegates to `MetadataCollector`. A future `AIQUMBackend` delegates to an AIQUM-specific collector. (The AIQUM backend that shipped queries the live API and serves three collected collections from its own cache, filled by `AiqumCollector` ([#1055](https://github.com/endavis/pynetappfoundry/issues/1055)); see [ADR-0026](0026-aiqum-backend-is-live-only-and-reads-the-hal-records-envelope.md). The OCCM backend delegates to the typed Console agent ops and has no cache; see [ADR-0027](0027-occm-backend-is-live-only-and-delegates-to-the-typed-console-agent-ops.md), [#1050](https://github.com/endavis/pynetappfoundry/issues/1050).) Adding a new API is still "write one backend class and register it," but the backend class is ~50 lines of delegation rather than a parallel implementation of all the collector's logic.
+`DataSource._BACKENDS` keyed by `TypeMapping.api_type` is preserved from ADR-0012 §7, but its role changes. Backends no longer implement "how to fetch X from an API end-to-end"; they are thin delegators to per-domain fetch layers. `OntapBackend` delegates to `MetadataCollector`. A future `AIQUMBackend` delegates to an AIQUM-specific collector. (The AIQUM backend that shipped queries the live API and serves three collected collections from its own cache, filled by `AiqumCollector` ([#1055](https://github.com/endavis/pynetappfoundry/issues/1055)); see [ADR-0026](0026-aiqum-backend-is-live-only-and-reads-the-hal-records-envelope.md). The OCCM backend delegates to the typed Console agent ops and serves the on-prem working environments from its own cache, filled by `OccmCollector` ([#1076](https://github.com/endavis/pynetappfoundry/issues/1076)); see [ADR-0027](0027-occm-backend-is-live-only-and-delegates-to-the-typed-console-agent-ops.md), [ADR-0030](0030-occm-cache-is-discovery-driven-and-maps-working-environments-to-agents.md), [#1050](https://github.com/endavis/pynetappfoundry/issues/1050).) Adding a new API is still "write one backend class and register it," but the backend class is ~50 lines of delegation rather than a parallel implementation of all the collector's logic.
 
 ### 10. Existing ADR-0012 design points retained verbatim
 
@@ -155,6 +155,7 @@ This ADR is **Phase 1** of a three-phase plan. A new parent issue supersedes #49
 
 - Issue #1050: feat: add a Console agent (OCCM) DataSource backend (amends §9)
 - Issue #1055: feat: AIQUM collector and cache-backed DataSource queries (amends §9)
+- Issue #1076: feat: cache Console agent cloud infrastructure data (amends §9)
 - Issue #495: feat: unified DataSource for all cluster reads (parent of ADR-0012; this ADR revises its Phase 3/4 plan)
 - Issue #530: epic: DataSource coverage gap expansion (closed by this ADR; gap audit informs the new design)
 - Issue #524: bug: `nf reports html` shows Unknown for LIF home node (unblocked by Phase 3 of this ADR)

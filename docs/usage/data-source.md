@@ -326,7 +326,7 @@ live-only OCCM backend ([ADR-0027](../decisions/0027-occm-backend-is-live-only-a
 
 - `cluster=` is a `[connectors]` name whose entry has an `agent_id` key, or the Console agent id itself. A connector without a non-blank `agent_id` raises `ValueError` naming `connectors.<name>`.
 - A connector's [scope](../reference/config-schema.md#scopes) picks the Console account that serves it. A raw agent id passed as `cluster=` uses the root account. To find the agents, organizations and working environments of every account, see [Discovering organizations, agents and working environments](console-agent.md#discovering-organizations-agents-and-working-environments).
-- It is live-only: `source="auto"` goes live and `source="cache"` raises `ValueError`.
+- The on-prem working environments are served from the OCCM cache once collected ([ADR-0030](../decisions/0030-occm-cache-is-discovery-driven-and-maps-working-environments-to-agents.md)): `source="cache"` reads it, and `source="auto"` reads it for a collected agent and goes live for one that was not. A query that needs some fields cached and some live goes live for all of them. See [Console Agent: Cache](console-agent.md#cache).
 - Equality filters (dotted paths) are applied in memory. `tenantId` is filtered in memory too, because the server's `tenant_id` parameter does not match the item's own `tenantId`. `.where()` and `path_params` are not supported.
 - Fifteen fields (for example `ontapClusterProperties`, `svms`, `status`) come back only when requested. Name them in `.fields()` or filter on them and the backend sends `fields=`.
 - `ds.get(..., id=<publicId>)` filters the one list response in memory.

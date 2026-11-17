@@ -152,6 +152,29 @@ match = list(
 
 See [DataSource: OCCM](data-source.md#occm-console-agent) for the rules.
 
+- The on-premises working environments are also served from the OCCM cache ([ADR-0030](../decisions/0030-occm-cache-is-discovery-driven-and-maps-working-environments-to-agents.md)). `source="cache"` reads the cache and builds no client; `source="auto"` reads the cache for an agent that was collected and falls back to live once for one that was not.
+- A query that needs some fields from the cache and some live goes live for all of the requested fields.
+- Cache filters are exact matches on the stored JSON path. Indexed `json_extract` paths are not supported.
+- Any mapping that is not cached stays live-only.
+
+### Cache
+
+`refresh_occm_cache` collects every agent the configured Console accounts can see and stores the result in `{config_dir}/.cache/occm_cache.db` (see [OCCM Cache](../reference/cache.md#occm-cache)).
+
+```python
+from pynetappfoundry.cache import OccmCacheDB, refresh_occm_cache
+
+snapshot = refresh_occm_cache(config)
+snapshot.failed_agents  # agents whose collection failed; their old rows are kept
+
+with OccmCacheDB(config=config) as db:
+    db.agents_for_working_environment("<publicId>")  # sorted agent ids that list it
+    db.working_environment_agents()  # {publicId: [agent_id, ...]}
+    db.organizations(), db.agents(), db.working_environments()  # the cached discovery
+```
+
+Cache reads need no Console account. The reports still parse the CLI cloud metadata and show no Console links; both are tracked in #1086. A refresh and inspect CLI is #1087, and the cloud working environment lists are #1074.
+
 ## Marketplace subscriptions
 
 The Console account's SaaS marketplace subscriptions (AWS, Azure, GCP) come from `GET /occm/api/occm/saas-mp-service/account`, which is served through an agent.
@@ -205,7 +228,7 @@ one = discovery.discover_account("Org1")  # a single account
 - A working environment is an organization resource of type `ON_PREM`. `ConsoleWorkingEnvironment.public_id` is the resource's `rawId`.
 - Each `ConsoleAgentInfo` and `ConsoleWorkingEnvironment` carries the `scope` of the account that listed it (None for the root) and the `organization_id` it was listed under. An organization is only reached with the account that sees it.
 - Errors from an account's own calls propagate. A failing account is not skipped, because a partial inventory would look complete.
-- Discovery does not map a working environment to an agent (#1076) and does not reconcile the agents against `[connectors]`. `[connectors].agent_id` stays required, and a raw agent id passed as `cluster=` keeps using the root account (#1083). `list-connectors` pagination and `status` values are not handled either.
+- Discovery does not map a working environment to an agent: that mapping lives in the [OCCM cache](#cache) (#1076). It does not reconcile the agents against `[connectors]`. `[connectors].agent_id` stays required, and a raw agent id passed as `cluster=` keeps using the root account (#1083). `list-connectors` pagination and `status` values are not handled either.
 - `ConsoleAPIClient` also has `list_organization_resources(organization_id)`, `list_agents(organization_id)` and `get_agent(agent_id)`. The `/agents-mgmt` operations have no token type, so either token works and the user token is preferred.
 
 The `/agents-mgmt` endpoints are not in NetApp's docs. Their fields come from live probes and are merged into the spec from a fragment (see [Spec fragments](../../tools/console_openapi/README.md#spec-fragments)). Copy the updated `tools/console_openapi/generated/console_openapi.yaml` into `<config_dir>/apis/console/` again, or the client cannot route these operations.
