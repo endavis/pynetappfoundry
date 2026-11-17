@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict, Field, SecretStr, model_validator
 
+from pynetappfoundry.utils.console_links import CONSOLE_UI_BASE_URL
+
 
 class BaseResource(BaseModel):
     """Base model for searchable resources.
@@ -146,6 +148,8 @@ class ConsoleAPISettings(BaseModel):
     its OAuth client id.  ``token_endpoint`` applies to both grants and
     ``audience`` only to client credentials.  ``agent_ids`` lists the
     Console agent ids ``Console.find_connector`` searches when it gets none.
+    ``ui_base_url`` is the Console UI host that link builders use; it is
+    separate from ``base_url``, the API host.
     """
 
     # hide_input_in_errors keeps raw input values (including the client secret)
@@ -161,6 +165,7 @@ class ConsoleAPISettings(BaseModel):
     token_endpoint: str = "https://netapp-cloud-account.auth0.com/oauth/token"
     audience: str = "https://api.cloud.netapp.com"
     base_url: str
+    ui_base_url: str = CONSOLE_UI_BASE_URL
     org_id: str | None = None
     agent_ids: list[str] = Field(default_factory=list)
     base_api_path: str = "/"

@@ -27,6 +27,10 @@ from pynetappfoundry.utils.cloud import (
     build_vm_name,
     get_cloud_account_name,
 )
+from pynetappfoundry.utils.console_links import (
+    CONSOLE_UI_BASE_URL,
+    build_console_agent_edit_link,
+)
 
 if TYPE_CHECKING:
     from pynetappfoundry.core.cluster_entry import ClusterEntry
@@ -270,6 +274,9 @@ class HTMLReportBuilder:
             config: Configuration object with settings and utilities.
         """
         self.config = config
+        self.ui_base_url: str = str(
+            config.get_setting("consoleapi", "general", "ui_base_url", default=CONSOLE_UI_BASE_URL)
+        )
         self.name = name
         self.cluster_details = clusters
         self.clusterdata: dict[str, ClusterData] = {}
@@ -403,12 +410,16 @@ class HTMLReportBuilder:
                 else:
                     self.text(col2)
 
-    def format_generic_cloud_item(self, item_type: str, item: dict[str, Any]) -> None:
+    def format_generic_cloud_item(
+        self, item_type: str, item: dict[str, Any], *, console_agent: bool = False
+    ) -> None:
         """Format a generic cloud utility item (AIQUM, Connector, etc.).
 
         Args:
             item_type: Type of item (e.g., "AIQUM", "Connector").
             item: Item configuration with ip and optional azure info.
+            console_agent: When True and the item has a non-blank ``agent_id``,
+                add a "Console" row linking to the agent's edit page.
         """
         with self.tag("li"):
             with self.tag("details"):
@@ -422,6 +433,15 @@ class HTMLReportBuilder:
                             self.format_table_row_link(
                                 "Application", "Link", f"https://{item['ip']}"
                             )
+                            agent_id = str(item.get("agent_id", "") or "").strip()
+                            if console_agent and agent_id:
+                                self.format_table_row_link(
+                                    "Console",
+                                    "Edit agent",
+                                    build_console_agent_edit_link(
+                                        agent_id, base_url=self.ui_base_url
+                                    ),
+                                )
                             if "azure" in item:
                                 self.format_azure_info(item["azure"])
 
@@ -449,7 +469,7 @@ class HTMLReportBuilder:
             self.format_generic_cloud_item("AIQUM", aiqum)
         connector = self.config.find_closest("connectors", search_terms)
         if connector:
-            self.format_generic_cloud_item("Connector", connector)
+            self.format_generic_cloud_item("Connector", connector, console_agent=True)
 
     def generate_html(self) -> str:
         """Generate the complete HTML document.
