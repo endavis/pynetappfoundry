@@ -803,8 +803,8 @@ class TestRetryLogic:
             assert result == {"users": []}
             assert mock_request.call_count == 3
 
-    def test_retry_exhausted(self, spec_file: Path) -> None:
-        """Test that RetryError is raised when retries are exhausted."""
+    def test_retry_exhausted_on_status_raises_http_error(self, spec_file: Path) -> None:
+        """A retryable status that survives every retry surfaces as HTTPError."""
         wrapper = APIWrapper(
             api_json_file=str(spec_file),
             base_url="https://api.example.com",
@@ -813,15 +813,49 @@ class TestRetryLogic:
         with patch.object(wrapper.session, "request") as mock_request:
             mock_503 = MagicMock()
             mock_503.status_code = 503
+            mock_503.raise_for_status.side_effect = requests.HTTPError("503 Server Error")
 
             mock_request.return_value = mock_503
 
-            # tenacity raises RetryError when max attempts reached with retryable result
-            with pytest.raises(RetryError):
+            with pytest.raises(requests.HTTPError) as exc_info:
                 wrapper.call_endpoint("/users", "GET")
 
+            assert not isinstance(exc_info.value, RetryError)
             # Should have tried max_attempts times
             assert mock_request.call_count == 2
+
+    def test_retry_exhausted_returns_last_response(self, spec_file: Path) -> None:
+        """The retry wrapper returns the last response when retries run out."""
+        wrapper = APIWrapper(
+            api_json_file=str(spec_file),
+            base_url="https://api.example.com",
+            retry_config=RetryConfig(max_attempts=2, initial_wait=0.1, max_wait=1.0),
+        )
+        first, last = MagicMock(), MagicMock()
+        first.status_code = last.status_code = 503
+        with patch.object(wrapper.session, "request", side_effect=[first, last]):
+            result = wrapper._execute_request_with_retry(
+                "GET", "https://api.example.com/users", None, {}
+            )
+
+        assert result is last
+
+    def test_retry_exhausted_on_connection_error_reraises_original(self, spec_file: Path) -> None:
+        """A connection error that survives every retry is re-raised unchanged."""
+        wrapper = APIWrapper(
+            api_json_file=str(spec_file),
+            base_url="https://api.example.com",
+            retry_config=RetryConfig(max_attempts=2, initial_wait=0.1, max_wait=1.0),
+        )
+        error = requests.ConnectionError("down")
+        with (
+            patch.object(wrapper.session, "request", side_effect=error) as mock_request,
+            pytest.raises(requests.ConnectionError) as exc_info,
+        ):
+            wrapper.call_endpoint("/users", "GET")
+
+        assert exc_info.value is error
+        assert mock_request.call_count == 2
 
     def test_retry_disabled(self, spec_file: Path) -> None:
         """Test that retry can be disabled."""

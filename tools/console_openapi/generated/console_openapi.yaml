@@ -187329,8 +187329,9 @@ components:
           type: string
           nullable: true
         clientInfraStatus:
-          type: string
+          type: object
           nullable: true
+          additionalProperties: true
         creatorUserId:
           type: string
           nullable: true
@@ -187365,8 +187366,9 @@ components:
         agent:
           $ref: '#/components/schemas/agentsmgmt.get-agent.Agent'
         clientInfraStatus:
-          type: string
+          type: object
           nullable: true
+          additionalProperties: true
     agentsmgmt.get-agent.Agent:
       x-source-file: agentsmgmt/get-agent.yaml
       type: object
@@ -187378,8 +187380,9 @@ components:
           type: string
           nullable: true
         clientInfraStatus:
-          type: string
+          type: object
           nullable: true
+          additionalProperties: true
         creatorUserId:
           type: string
           nullable: true

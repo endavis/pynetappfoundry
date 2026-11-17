@@ -43,6 +43,7 @@ def _snapshot(
     agents: list[OccmAgentSnapshot],
     *,
     failed: tuple[str, ...] = (),
+    skipped: tuple[str, ...] = (),
     inventory: ConsoleInventory | None = None,
 ) -> OccmSnapshot:
     return OccmSnapshot(
@@ -50,6 +51,7 @@ def _snapshot(
         inventory=inventory or ConsoleInventory(),
         agents=tuple(agents),
         failed_agents=failed,
+        skipped_agents=skipped,
     )
 
 
@@ -136,6 +138,15 @@ def test_failed_agent_keeps_rows_and_cached_at(db: OccmCacheDB) -> None:
     old = datetime.now(UTC) - timedelta(days=40)
     db.set(_snapshot([_agent_snapshot("a1", [_we("p1")], cached_at=old)]))
     db.set(_snapshot([], failed=("a1",)))
+    assert [r["publicId"] for r in db.query_records("a1", _MAPPING, {})] == ["p1"]
+    assert db.is_stale("a1") is True
+
+
+def test_skipped_agent_keeps_rows(db: OccmCacheDB) -> None:
+    old = datetime.now(UTC) - timedelta(days=40)
+    db.set(_snapshot([_agent_snapshot("a1", [_we("p1")], cached_at=old)]))
+    db.set(_snapshot([], skipped=("a1",)))
+    assert db.list_agents() == ["a1"]
     assert [r["publicId"] for r in db.query_records("a1", _MAPPING, {})] == ["p1"]
     assert db.is_stale("a1") is True
 

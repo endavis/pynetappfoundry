@@ -1093,7 +1093,7 @@ The Console agent (OCCM) has its own cache, separate from the ONTAP and AIQUM fi
 | Populate | `refresh_occm_cache(config)` in `src/pynetappfoundry/cache/occm_collector.py` |
 
 - A refresh runs `ConsoleDiscovery`, then lists the working environments of each discovered agent (deduplicated by `agent_id`; the first account wins). The inventory (organizations, agents and working environments) is replaced on every refresh.
-- A discovery failure propagates and leaves the database unchanged. A failing agent is logged and returned in `OccmSnapshot.failed_agents`; its earlier rows and `cached_at` are kept. Agents that are no longer discovered are pruned.
+- A discovery failure propagates and leaves the database unchanged. A failing agent is logged and returned in `OccmSnapshot.failed_agents`; its earlier rows and `cached_at` are kept. An agent whose status is set and is not `active` (case-insensitive) is not contacted; it is listed in `OccmSnapshot.skipped_agents` and keeps its earlier rows too. An agent with no status is still collected. Agents that are no longer discovered are pruned.
 - The working environment to agent mapping is derived from the records: `OccmCacheDB.agents_for_working_environment(public_id)` returns the sorted ids of the agents that list it, and `working_environment_agents()` returns the whole mapping.
 - Records are stored as `item.model_dump(mode="json")` and validated back into the model on read. Cache filters are exact matches on the JSON path; indexed `json_extract` paths are not supported.
 - Staleness: `OccmCacheDB.is_stale(agent_id, ttl_days=30)` reports age only and never changes routing.

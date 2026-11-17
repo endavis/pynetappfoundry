@@ -115,7 +115,8 @@ Pass a full commit SHA rather than a branch name, so the lockfile's
 The Console `/agents-mgmt` endpoints are not in the NetAppDocs sources, so the
 parser cannot produce them (#1078). Each `fragments/*.yaml` file is a partial
 OpenAPI document: an `x-namespace`, `paths` and `components.schemas`, with
-fields taken from live probes. `fragments.py` merges them into the built spec
+fields taken from live probes. A field whose shape is only sampled is modelled
+as an open object (#1091). `fragments.py` merges them into the built spec
 after the docs paths:
 
 - every operation must carry `x-evidence: live`;

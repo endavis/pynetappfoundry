@@ -25,7 +25,7 @@ Issue [#1076](https://github.com/endavis/pynetappfoundry/issues/1076) asks for a
    - the reports that read the OCCM cache in place of the `CloudMetadata` CLI parsing, plus Console links in the reports (#1086, needs a CVO agent);
    - a refresh and inspect CLI (#1087).
 2. **Backend.** OCCM becomes cache-capable per mapping, the way AIQUM did in #1055. `OccmBackend.live_only` is `False` and `is_live_only(mapping)` returns `mapping.name not in OCCM_CACHED_MAPPINGS`. A partial decision goes live for all of the requested fields, cached and live together.
-3. **Failed agent.** A failing agent is logged as a warning and recorded in `failed_agents`; its earlier rows are kept. Agents that are no longer discovered are pruned. A discovery failure propagates and the database is left untouched.
+3. **Failed agent.** A failing agent is logged as a warning and recorded in `failed_agents`; its earlier rows are kept. An agent whose status is set and is not `active` is skipped without being contacted and recorded in `skipped_agents`; its earlier rows are kept too. Agents that are no longer discovered are pruned. A discovery failure propagates and the database is left untouched.
 4. **Schema and storage.** A separate `occm_cache.db` with `SCHEMA_VERSION = 1` and three tables: `occm_collections`, `occm_records` and `occm_inventory`. Records are keyed by `agent_id` and the working environment `publicId`. The agent mapping is derived from the records, not stored separately.
 5. **Refresh.** A library function only. The CLI is #1087.
 6. **Refactor.** The JSON path helper moves from `src/pynetappfoundry/cache/aiqum_db.py` to `src/pynetappfoundry/cache/_json_records.py` with no behaviour change, and both caches use it.
@@ -49,6 +49,7 @@ This supersedes [ADR-0027](0027-occm-backend-is-live-only-and-delegates-to-the-t
 ## Related Issues
 
 - Issue #1076: feat: cache Console agent cloud infrastructure data and replace the CLI cloud metadata
+- Issue #1091: Console discovery and OCCM cache refresh fail on real agents (skipped agents)
 - Issue #1055: AIQUM cache (the pattern this follows)
 - Issue #1074: cloud working environment lists (deferred)
 - Issue #1086: reports read cloud provider details from the OCCM cache (deferred)
