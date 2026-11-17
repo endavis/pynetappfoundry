@@ -150,5 +150,5 @@ The Issue contains the full discussion; the ADR summarizes the outcome.
 | [0025](0025-pin-ontap-ssh-host-keys-and-tls-certificate-fingerprints-on-first-use.md) | Pin ONTAP SSH host keys and TLS certificate fingerprints on first use | Accepted |
 | [0026](0026-aiqum-backend-is-live-only-and-reads-the-hal-records-envelope.md) | AIQUM backend caches collected collections and reads the HAL records envelope | Accepted, amended by #1055 |
 | [0027](0027-occm-backend-is-live-only-and-delegates-to-the-typed-console-agent-ops.md) | OCCM backend is live-only and delegates to the typed Console agent ops | Accepted |
-| [0028](0028-scope-directories-partition-the-config-dir-with-per-scope-credentials-thresholds-and-console-account.md) | Scope directories partition the config dir with per-scope credentials, thresholds and Console account | Accepted |
+| [0028](0028-scope-directories-partition-the-config-dir-with-per-scope-credentials-thresholds-and-console-account.md) | Scope directories partition the config dir with per-scope credentials, thresholds and Console account | Accepted, amended by #1081 |
 | [0029](0029-console-discovery-walks-scope-accounts-and-merges-hand-written-spec-fragments.md) | Console discovery walks scope accounts and merges hand-written spec fragments | Accepted |

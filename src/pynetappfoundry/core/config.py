@@ -42,8 +42,9 @@ A top-level directory of the config dir that contains a scope.toml marker is a
 scope.  Its data files load into Config.data like any other, and Config.get_scope
 records which scope each object came from.  Its users.toml, monitoring.toml and
 consoleapi.toml (and no other settings file) load into a per-scope settings store
-that lookups consult before the root.  Object names must be unique when either
-copy is in a scope.  A config dir without scope.toml loads exactly as before.
+that lookups consult before the root.  Object names must be unique across the
+config directory, in the root and in scopes alike.  A config dir without
+scope.toml loads exactly as before.
 See docs/reference/config-schema.md.
 """
 
@@ -100,6 +101,8 @@ _CONSOLE_SOPS_FIELDS = ("client_secret", "service_token", "user_token")
 
 # A top-level directory holding this file is a scope (see the module docstring).
 SCOPE_MARKER = "scope.toml"
+# Reserved, built-in search key: matches an object's scope ("" for root objects).
+SCOPE_SEARCH_KEY = "scope"
 # The only settings files (by stem) a scope may contain; others are an error.
 SCOPE_OVERRIDABLE_SETTINGS = frozenset({"users", "monitoring", "consoleapi"})
 # The only Console [general] keys a scope inherits from the root consoleapi.toml.
@@ -335,6 +338,20 @@ class Config:
             if self.scope_settings.get(scope, {}).get("consoleapi", {}).get("general") is not None
         )
         return accounts
+
+    def get_scope_settings(self, scope: str) -> dict[str, Any]:
+        """Return the settings loaded from a scope's own files.
+
+        Args:
+            scope: Scope (top-level directory) name.
+
+        Returns:
+            The scope's settings by file stem (``users``, ``monitoring``, ...).
+
+        Raises:
+            ConfigurationError: If ``scope`` is not a known scope.
+        """
+        return self._scope_tree(scope)
 
     def _scope_tree(self, scope: str) -> dict[str, Any]:
         """Return the settings loaded from a scope's own files.
@@ -1161,8 +1178,8 @@ class Config:
             scope: The scope the file is in, or None for the root.
 
         Raises:
-            ConfigurationError: If an object name is already loaded and either
-                copy is in a scope. Two root copies stay last-one-wins.
+            ConfigurationError: If an object name is already loaded, whether the
+                copies are in the root, a scope or both.
         """
         for data_type in self.data_types:
             if data_type not in self.data:
@@ -1171,13 +1188,11 @@ class Config:
                 logging.debug(f"{_file_name} : adding {len(data[data_type])} {data_type} items")
                 for name in data[data_type]:
                     key = (data_type, name)
-                    if key in self._object_sources and (
-                        scope is not None or self._object_scopes[key] is not None
-                    ):
+                    if key in self._object_sources:
                         raise ConfigurationError(
                             f"Duplicate {data_type} name {name!r} in "
                             f"{self._object_sources[key]} and {source}; "
-                            "object names must be unique across scopes"
+                            "object names must be unique across the config directory"
                         )
                     self._object_scopes[key] = scope
                     self._object_sources[key] = source
@@ -1261,10 +1276,16 @@ class Config:
         results: dict[str, dict[str, Any]] = {}
         for item in self.data[data_type]:
             item_details = self.data[data_type][item]
-            logging.debug(f"{_file_name} :      search: item - {item_details['name']}")
+            logging.debug(f"{_file_name} :      search: item - {item}")
             result_check: list[bool] = []
             for key in search_dict:
                 logging.debug(f"{_file_name} :      search: checking {key}")
+                if key == SCOPE_SEARCH_KEY:
+                    scope_value = self.get_scope(data_type, item) or ""
+                    result_check.append(self.check_term(search_dict[key], scope_value))
+                    if not result_check[-1]:
+                        break
+                    continue
                 if key not in item_details:
                     result_check.append(False)
                     logging.debug(
@@ -1279,12 +1300,10 @@ class Config:
                 result_check.append(self.check_term(search_dict[key], item_details[key]))
 
             if all(result_check):
-                logging.debug(f"{_file_name} :      search: item - {item_details['name']} matched")
+                logging.debug(f"{_file_name} :      search: item - {item} matched")
                 results[item] = item_details
             else:
-                logging.debug(
-                    f"{_file_name} :      search: item - {item_details['name']} did not match"
-                )
+                logging.debug(f"{_file_name} :      search: item - {item} did not match")
 
         logging.debug(f"{_file_name} : search returned - {list(results.keys())}")
         return results
@@ -1324,7 +1343,7 @@ class Config:
 
         # remove empty keys
         for key in key_order:
-            if key in tree and tree[key] == "":
+            if key != SCOPE_SEARCH_KEY and key in tree and tree[key] == "":
                 del tree[key]
 
         logging.debug(f"{_file_name} :  initial search {tree = }")
@@ -1336,6 +1355,8 @@ class Config:
         else:
             # go through the key_order and delete keys until something is found
             for key in key_order:
+                if key == SCOPE_SEARCH_KEY:
+                    continue  # the built-in scope key is never relaxed
                 if key in tree:
                     logging.debug(f"{_file_name} :  removing {key} and searching {tree = }")
                     del tree[key]

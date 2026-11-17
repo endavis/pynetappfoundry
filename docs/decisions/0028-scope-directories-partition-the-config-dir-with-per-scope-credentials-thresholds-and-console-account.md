@@ -12,7 +12,7 @@ tags:
 
 ## Status
 
-Accepted
+Accepted, amended by [#1081](https://github.com/endavis/pynetappfoundry/issues/1081)
 
 ## Context
 
@@ -30,8 +30,13 @@ Issue [#1080](https://github.com/endavis/pynetappfoundry/issues/1080) asks for s
    - A scope's `consoleapi.toml` may contain only `[general]`, validated by `ConsoleAPISettings`.
    - The refresh token comes only from the scope's `users.toml [console]`; `NF_CONSOLE_*` is ignored for a scope.
    - `ConsoleAPIClient`, `ConsoleAgentClient`, `Console` and `OccmBackend` pass `scope` only when it is set. The OCCM backend uses a connector's scope account and caches clients per `(scope, agent_id)`.
-6. **D3, unique names.** When either copy of an object name is in a scope (two scopes, root and scope, or the same scope twice), loading raises `ConfigurationError` naming both files. Two root copies stay last-one-wins.
-7. **D4, deferred.** `nf config set-credential`, `show` and `validate` with `--scope`, searching by scope, and making root+root duplicates an error go to a follow-up issue.
+6. **D3, unique names.** Any duplicate object name, per data type, raises `ConfigurationError` naming both files: two scopes, root and scope, the same scope twice, or two root files. Amended by #1081: two root copies were last-one-wins before, which is a breaking change for configs that relied on it.
+7. **D4, scope-aware config CLI (#1081).**
+   - `nf config set-credential --scope S` writes `<config>/S/users.toml`, creating it if missing. With `--cluster` or `--name` the scope must equal the object's own scope (`Config.get_scope`); a mismatch fails and writes nothing.
+   - `nf config show --scope S` shows the scope's own files (objects, `users`, `monitoring`, `consoleapi`, `scope.toml` metadata), not a merged view.
+   - `nf config validate --scope S` checks the scope's clusters, `users.toml`, `monitoring.toml` and Console account. Without `--scope` it is unchanged.
+   - `scope` is a reserved, built-in search key whose value comes from the `get_scope` index (`""` for root objects). It is never written into data dicts and `find_closest` never relaxes it.
+   - `Config.get_scope_settings(scope)` returns a scope's own settings and raises for an unknown scope.
 
 ## Rationale
 
@@ -44,16 +49,19 @@ Issue [#1080](https://github.com/endavis/pynetappfoundry/issues/1080) asks for s
 
 - No call site of `get_user` changes; the scope comes from the object name.
 - A scoped object cannot reuse a name that exists elsewhere, so configs that already share names across directories must rename before adding `scope.toml`.
-- Credentials for a scope are written by hand until the follow-up issue lands.
+- Credentials for a scope are written with `nf config set-credential --scope`, no longer by hand.
+- Two root files that define the same object name no longer load; the error names both files, and one of them has to be renamed or removed.
 
 ## Related Issues
 
 - Issue #1080: feat: scope directories in the config dir, each with its own inventory, credentials, thresholds and Console account
+- Issue #1081: feat: scope-aware config CLI, search by scope, and duplicate names across root files
 - Issue #1078: feat: support multiple Console organizations through discovered service accounts (see [ADR-0029](0029-console-discovery-walks-scope-accounts-and-merges-hand-written-spec-fragments.md))
 
 ## Related Documentation
 
 - [Config schema: Scopes](../reference/config-schema.md#scopes)
+- [CLI Reference](../reference/cli.md)
 - [Console Agent](../usage/console-agent.md)
 - [ADR-0019](0019-console-runtime-client-architecture-org-scoped-access-and-per-token-type-wrapper-isolation.md)
 - [ADR-0027](0027-occm-backend-is-live-only-and-delegates-to-the-typed-console-agent-ops.md)

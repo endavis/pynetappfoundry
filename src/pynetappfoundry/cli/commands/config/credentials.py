@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import click
 from rich.console import Console
@@ -10,7 +11,7 @@ from rich.markup import escape
 
 from pynetappfoundry.cli.errors import CliError
 from pynetappfoundry.cli.utils import print_success, print_warning
-from pynetappfoundry.core.config import VALID_DATA_TYPES, Config
+from pynetappfoundry.core.config import VALID_DATA_TYPES, Config, ConfigurationError
 from pynetappfoundry.utils.sops import (
     SOPSError,
     SOPSNotInstalledError,
@@ -142,6 +143,13 @@ def encrypt_value_cmd(value: str) -> None:
     ),
 )
 @click.option(
+    "--scope",
+    help=(
+        "Write to this scope's users.toml (a top-level directory with a scope.toml). "
+        "With --cluster or --name it must equal the object's own scope."
+    ),
+)
+@click.option(
     "--user",
     required=True,
     help="Username.",
@@ -164,6 +172,7 @@ def set_credential(
     cluster: str | None,
     cred_type: str | None,
     obj_name: str | None,
+    scope: str | None,
     user: str,
     password: str,
     no_encrypt: bool,
@@ -197,6 +206,12 @@ def set_credential(
         # Store the Console refresh token (the user is a label, never sent;
         # the password prompt takes the refresh token)
         nf config set-credential --type console --user console
+
+        # Set default credentials for the clusters of one scope (Org1/users.toml)
+        nf config set-credential --type clusters --scope Org1 --user admin
+
+        # Store one scope's Console refresh token (Org1/users.toml)
+        nf config set-credential --type console --scope Org1 --user console
     """
     # Validate mutually exclusive options
     if cluster and cred_type:
@@ -235,6 +250,10 @@ def set_credential(
     except Exception as e:
         raise CliError(f"Failed to load configuration: {e}") from e
 
+    # Check --scope before prompting for or encrypting anything
+    if scope is not None:
+        _check_scope_option(config, scope, cluster, cred_type, obj_name)
+
     # Encrypt password
     encrypted_password = _encrypt_password(password, no_encrypt, ctx)
 
@@ -245,7 +264,43 @@ def set_credential(
         _set_object_credential(config, config_path, cred_type, obj_name, user, encrypted_password)
     else:
         assert cred_type is not None  # For type checker
-        _set_type_credential(ctx, config_path, cred_type, user, encrypted_password)
+        _set_type_credential(config, config_path, cred_type, user, encrypted_password, scope)
+
+
+def _scope_tree_or_error(config: Config, scope: str) -> dict[str, Any]:
+    """Return a scope's settings, turning an unknown scope into a CliError."""
+    try:
+        return config.get_scope_settings(scope)
+    except ConfigurationError as e:
+        raise CliError(str(e)) from e
+
+
+def _check_scope_option(
+    config: Config,
+    scope: str,
+    cluster: str | None,
+    cred_type: str | None,
+    obj_name: str | None,
+) -> None:
+    """Validate ``--scope`` against the other options before anything is written.
+
+    A scope must exist. With an object (``--cluster`` or ``--name``) it must also
+    equal the object's own scope; credentials for an object live in its data file.
+    """
+    _scope_tree_or_error(config, scope)
+    name = cluster or obj_name
+    if name is None:
+        return
+    obj_type = "clusters" if cluster else str(cred_type)
+    if name not in config.data.get(obj_type, {}):
+        return  # the "not found" error is raised by _set_object_credential
+    real_scope = config.get_scope(obj_type, name)
+    if real_scope != scope:
+        where = f"scope '{real_scope}'" if real_scope else "the root (no scope)"
+        raise CliError(
+            f"{obj_type} object '{name}' is in {where}, not scope '{scope}'.",
+            hints=[f"Use --scope {real_scope}." if real_scope else "Drop --scope."],
+        )
 
 
 def _set_object_credential(
@@ -256,7 +311,10 @@ def _set_object_credential(
     user: str,
     encrypted_password: str,
 ) -> None:
-    """Set credentials for one inventory object of any type."""
+    """Set credentials for one inventory object of any type.
+
+    ``--scope`` was already checked against the object by ``_check_scope_option``.
+    """
     label = "cluster" if obj_type == "clusters" else f"{obj_type} object"
     section = config.data.get(obj_type, {})
     if obj_name not in section:
@@ -287,18 +345,33 @@ def _set_object_credential(
 
 
 def _set_type_credential(
-    ctx: click.Context,
+    config: Config,
     config_path: Path,
     cred_type: str,
     user: str,
     encrypted_password: str,
+    scope: str | None = None,
 ) -> None:
-    """Set default credentials for a resource type in users.toml."""
+    """Set default credentials for a resource type in users.toml.
+
+    With ``scope`` the credentials go to ``<config>/<scope>/users.toml`` instead
+    of the root file, creating it when missing.
+    """
     users_file = config_path / "users.toml"
+    scope_note = ""
+    if scope is not None:
+        tree = _scope_tree_or_error(config, scope)
+        users_file = config_path / scope / "users.toml"
+        scope_note = f" in scope '{scope}'"
+        if cred_type == "console" and "general" not in tree.get("consoleapi", {}):
+            print_warning(
+                f"Scope '{scope}' has no Console account ([general] in "
+                f"{scope}/consoleapi.toml); the token is stored but not used until it does."
+            )
 
     try:
         _update_users_credentials(users_file, cred_type, user, encrypted_password)
-        print_success(f"Default credentials updated for type '{cred_type}'")
+        print_success(f"Default credentials updated for type '{cred_type}'{scope_note}")
         console.print(f"  File: {escape(str(users_file))}")
         console.print(f"  User: {escape(user)}")
         _print_password_status(encrypted_password)

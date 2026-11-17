@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 import click
 from pydantic import ValidationError
@@ -23,12 +24,23 @@ from pynetappfoundry.core.models import (
 console = Console()
 
 
-def _validate_clusters(config: Config, tree: Tree) -> list[str]:
+def _clusters_in_scope(config: Config, scope: str | None) -> dict[str, Any]:
+    """Return the clusters to check: all of them, or only those of ``scope``."""
+    clusters: dict[str, Any] = config.data.get("clusters", {})
+    if scope is None:
+        return clusters
+    return {
+        name: data for name, data in clusters.items() if config.get_scope("clusters", name) == scope
+    }
+
+
+def _validate_clusters(config: Config, tree: Tree, scope: str | None = None) -> list[str]:
     """Validate cluster configurations.
 
     Args:
         config: Config instance to validate.
         tree: Rich Tree to add results to.
+        scope: Check only this scope's clusters; None checks every cluster.
 
     Returns:
         List of validation error messages.
@@ -36,7 +48,7 @@ def _validate_clusters(config: Config, tree: Tree) -> list[str]:
     errors: list[str] = []
     clusters_branch = tree.add("[bold]Clusters[/bold]")
 
-    clusters = config.data.get("clusters", {})
+    clusters = _clusters_in_scope(config, scope)
     if not clusters:
         clusters_branch.add("[yellow]No clusters configured[/yellow]")
         return errors
@@ -54,12 +66,13 @@ def _validate_clusters(config: Config, tree: Tree) -> list[str]:
     return errors
 
 
-def _validate_users(config: Config, tree: Tree) -> list[str]:
+def _validate_users(users: dict[str, Any], tree: Tree, *, label_prefix: str = "users") -> list[str]:
     """Validate user credential configurations.
 
     Args:
-        config: Config instance to validate.
+        users: The parsed ``users.toml`` sections to validate.
         tree: Rich Tree to add results to.
+        label_prefix: Prefix of each error key, ``users`` or ``<scope>/users``.
 
     Returns:
         List of validation error messages.
@@ -67,7 +80,6 @@ def _validate_users(config: Config, tree: Tree) -> list[str]:
     errors: list[str] = []
     users_branch = tree.add("[bold]Users[/bold]")
 
-    users = config.settings.get("users", {})
     if not users:
         users_branch.add("[yellow]No users configured[/yellow]")
         return errors
@@ -81,7 +93,7 @@ def _validate_users(config: Config, tree: Tree) -> list[str]:
                 users_branch.add(f"[red]{escape(str(utype))}: Invalid[/red]")
                 for err in e.errors():
                     loc = ".".join(str(x) for x in err["loc"])
-                    errors.append(f"users.{utype}.{loc}: {err['msg']}")
+                    errors.append(f"{label_prefix}.{utype}.{loc}: {err['msg']}")
 
     return errors
 
@@ -94,6 +106,8 @@ def _check_settings_section(
     keys: tuple[str, str],
     reader: Callable[[], object],
     absent_text: str,
+    tree: dict[str, Any] | None = None,
+    error_prefix: str = "",
 ) -> list[str]:
     """Report one settings section as valid, not configured, or invalid.
 
@@ -108,11 +122,13 @@ def _check_settings_section(
         keys: ``(top-level key, section key)`` locating the section in ``config.settings``.
         reader: The ``Config`` reader that loads and validates the section.
         absent_text: Markup shown when the section is absent.
+        tree: Settings to look in instead of ``config.settings`` (a scope's own tree).
+        error_prefix: Prefix of the error key, such as ``Org1/`` for a scope.
 
     Returns:
         List of validation error messages.
     """
-    top = config.settings.get(keys[0])
+    top = (config.settings if tree is None else tree).get(keys[0])
     if not isinstance(top, dict) or keys[1] not in top:
         branch.add(absent_text)
         return []
@@ -120,7 +136,7 @@ def _check_settings_section(
         reader()
     except ConfigurationError as e:
         branch.add(f"[red]{escape(label)}: Invalid[/red]")
-        return [f"{'.'.join(keys)}: {e}"]
+        return [f"{error_prefix}{'.'.join(keys)}: {e}"]
     branch.add(f"[green]{escape(label)}[/green]")
     return []
 
@@ -179,12 +195,42 @@ def _validate_settings(config: Config, tree: Tree) -> list[str]:
     return errors
 
 
-def _check_cluster_credentials(config: Config, tree: Tree) -> list[str]:
+def _validate_scope_settings(config: Config, tree: Tree, scope: str) -> list[str]:
+    """Validate a scope's ``monitoring.toml`` and Console account.
+
+    Args:
+        config: Config instance to validate.
+        tree: Rich Tree to add results to.
+        scope: A known scope name.
+
+    Returns:
+        List of validation error messages.
+    """
+    scope_tree = config.get_scope_settings(scope)
+    branch = tree.add(f"[bold]Scope settings ({escape(scope)})[/bold]")
+    if scope_tree.get("monitoring"):
+        branch.add("[green]Monitoring[/green]")
+    else:
+        branch.add("[dim]Monitoring: Not configured (optional)[/dim]")
+    return _check_settings_section(
+        config,
+        branch,
+        label="Console",
+        keys=("consoleapi", "general"),
+        reader=lambda: config.get_console_api_settings(scope=scope),
+        absent_text="[dim]Console: Not configured (optional)[/dim]",
+        tree=scope_tree,
+        error_prefix=f"{scope}/",
+    )
+
+
+def _check_cluster_credentials(config: Config, tree: Tree, scope: str | None = None) -> list[str]:
     """Check that all clusters have valid credentials.
 
     Args:
         config: Config instance to validate.
         tree: Rich Tree to add results to.
+        scope: Check only this scope's clusters; None checks every cluster.
 
     Returns:
         List of validation error messages.
@@ -192,7 +238,7 @@ def _check_cluster_credentials(config: Config, tree: Tree) -> list[str]:
     errors: list[str] = []
     creds_branch = tree.add("[bold]Cluster Credentials[/bold]")
 
-    clusters = config.data.get("clusters", {})
+    clusters = _clusters_in_scope(config, scope)
     for name in clusters:
         try:
             user, _enc = config.get_user("clusters", name)
@@ -205,12 +251,21 @@ def _check_cluster_credentials(config: Config, tree: Tree) -> list[str]:
 
 
 @click.command()
+@click.option(
+    "--scope",
+    type=str,
+    help=(
+        "Also check this scope: its clusters, users.toml, monitoring.toml and "
+        "Console account. Without it, validation is unchanged."
+    ),
+)
 @click.pass_context
-def validate(ctx: click.Context) -> None:
+def validate(ctx: click.Context, scope: str | None) -> None:
     """Validate configuration files.
 
     Checks that all configuration files are properly formatted and contain
-    valid values. Reports any validation errors found.
+    valid values. Reports any validation errors found. With --scope, checks
+    that one scope's own files instead of the root settings.
     """
     config_dir = ctx.obj.get("config_dir", "config")
 
@@ -231,10 +286,22 @@ def validate(ctx: click.Context) -> None:
     all_errors: list[str] = []
 
     # Validate each section
-    all_errors.extend(_validate_clusters(config, tree))
-    all_errors.extend(_validate_users(config, tree))
-    all_errors.extend(_validate_settings(config, tree))
-    all_errors.extend(_check_cluster_credentials(config, tree))
+    if scope is None:
+        all_errors.extend(_validate_clusters(config, tree))
+        all_errors.extend(_validate_users(config.settings.get("users", {}), tree))
+        all_errors.extend(_validate_settings(config, tree))
+        all_errors.extend(_check_cluster_credentials(config, tree))
+    else:
+        try:
+            scope_tree = config.get_scope_settings(scope)
+        except ConfigurationError as e:
+            raise CliError(str(e)) from e
+        all_errors.extend(_validate_clusters(config, tree, scope))
+        all_errors.extend(
+            _validate_users(scope_tree.get("users", {}), tree, label_prefix=f"{scope}/users")
+        )
+        all_errors.extend(_validate_scope_settings(config, tree, scope))
+        all_errors.extend(_check_cluster_credentials(config, tree, scope))
 
     # Print the tree
     console.print(tree)

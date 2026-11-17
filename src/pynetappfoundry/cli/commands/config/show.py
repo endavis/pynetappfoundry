@@ -12,7 +12,7 @@ from rich.panel import Panel
 from rich.tree import Tree
 
 from pynetappfoundry.cli.errors import CliError
-from pynetappfoundry.core.config import Config
+from pynetappfoundry.core.config import Config, ConfigurationError
 
 console = Console()
 
@@ -109,6 +109,70 @@ def _build_tree(tree: Tree, data: dict[str, Any], unmask: bool = False) -> None:
             tree.add(f"[cyan]{escape(str(key))}[/cyan]: {formatted}")
 
 
+def _scope_sections(config: Config, scope: str) -> dict[str, dict[str, Any]]:
+    """Collect what a scope's own files define, by section name.
+
+    Data sections hold the scope's objects; ``users``, ``monitoring`` and
+    ``consoleapi`` come from the scope's settings files. Empty sections are omitted.
+
+    Raises:
+        CliError: If ``scope`` is not a known scope.
+    """
+    try:
+        tree = config.get_scope_settings(scope)
+    except ConfigurationError as e:
+        raise CliError(str(e)) from e
+    sections: dict[str, dict[str, Any]] = {}
+    for data_type, items in config.data.items():
+        own = {
+            name: dict(item)  # cluster entries are mappings, not dicts
+            for name, item in items.items()
+            if config.get_scope(data_type, name) == scope
+        }
+        if own:
+            sections[data_type] = own
+    for stem in sorted(tree):
+        if tree[stem]:
+            sections[stem] = tree[stem]
+    return sections
+
+
+def _show_scope(config: Config, scope: str, section: str | None, unmask: bool) -> None:
+    """Print a scope's own files, not a merged view (see ``_scope_sections``)."""
+    sections = _scope_sections(config, scope)
+    meta = config.scopes[scope]
+    console.print(
+        f"[bold]Scope:[/bold] [cyan]{escape(scope)}[/cyan] "
+        "(its own files only; keys the scope does not set fall back to the root)"
+    )
+    if meta.description:
+        console.print(f"Description: {escape(meta.description)}")
+    if meta.tags:
+        console.print(f"Tags: {escape(', '.join(meta.tags))}")
+    console.print()
+
+    if section:
+        section_lower = section.lower()
+        if section_lower not in sections:
+            raise CliError(
+                f"Section '{section}' not found in scope '{scope}'.",
+                hints=[f"Available sections: {escape(', '.join(sections) or 'none')}"],
+            )
+        tree = Tree(f"[bold blue]{escape(section)}[/bold blue]")
+        _build_tree(tree, sections[section_lower], unmask)
+        console.print(tree)
+        return
+
+    if not sections:
+        console.print("[yellow]The scope defines no objects or settings.[/yellow]")
+        return
+    scope_tree = Tree(f"[bold blue]Scope {escape(scope)}[/bold blue]")
+    for name, content in sections.items():
+        branch = scope_tree.add(f"[bold]{escape(name)}[/bold]")
+        _build_tree(branch, content, unmask)
+    console.print(scope_tree)
+
+
 @click.command()
 @click.option(
     "--section",
@@ -117,17 +181,23 @@ def _build_tree(tree: Tree, data: dict[str, Any], unmask: bool = False) -> None:
     help="Show only a specific section (e.g., 'clusters', 'settings', 'users').",
 )
 @click.option(
+    "--scope",
+    type=str,
+    help="Show only this scope's own files (data objects, users, monitoring, consoleapi).",
+)
+@click.option(
     "--unmask",
     is_flag=True,
     default=False,
     help="Show passwords and tokens unmasked (use with caution).",
 )
 @click.pass_context
-def show(ctx: click.Context, section: str | None, unmask: bool) -> None:
+def show(ctx: click.Context, section: str | None, scope: str | None, unmask: bool) -> None:
     """Display current configuration.
 
     Shows the loaded configuration with sensitive values masked by default.
     Use --unmask to reveal passwords and tokens (use with caution).
+    With --scope, shows that scope's own files instead of the whole configuration.
 
     Examples:
 
@@ -135,6 +205,8 @@ def show(ctx: click.Context, section: str | None, unmask: bool) -> None:
         nf config show -s clusters        # Show only clusters
         nf config show -s settings        # Show only settings
         nf config show --unmask           # Show with passwords visible
+        nf config show --scope Org1       # Show one scope's own files
+        nf config show --scope Org1 -s users
     """
     config_dir = ctx.obj.get("config_dir", "config")
 
@@ -152,6 +224,10 @@ def show(ctx: click.Context, section: str | None, unmask: bool) -> None:
 
     if unmask:
         console.print("[yellow]Warning: Sensitive values are unmasked![/yellow]\n")
+
+    if scope is not None:
+        _show_scope(config, scope, section, unmask)
+        return
 
     # Determine what to show
     if section:
@@ -205,4 +281,6 @@ def show(ctx: click.Context, section: str | None, unmask: bool) -> None:
         f"Clusters: {len(config.data.get('clusters', {}))}",
         f"Settings files: {len(config.settings)}",
     ]
+    if config.scopes:
+        summary_lines.append(f"Scopes: {', '.join(sorted(config.scopes))}")
     console.print(Panel("\n".join(summary_lines), title="Summary", border_style="dim"))
