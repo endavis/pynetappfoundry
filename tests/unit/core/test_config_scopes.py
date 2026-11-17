@@ -233,7 +233,7 @@ def test_marker_in_wrong_place_raises(
 def test_marker_nested_under_non_scope_directory_raises(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    with pytest.raises(ConfigurationError, match=r"nested/inner/scope\.toml"):
+    with pytest.raises(ConfigurationError, match=r"nested[\\/]inner[\\/]scope\.toml"):
         _load(tmp_path, monkeypatch, {"nested/inner/scope.toml": ""})
 
 
