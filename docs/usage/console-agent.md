@@ -168,6 +168,40 @@ subs = client.list_preferred_subscriptions("my-account-id")  # on ConsoleAPIClie
 - `account_id` is the Console account id. Measured live, it equals the organization id, so the facade uses its own org id when you pass none (see [ADR-0019](../decisions/0019-console-runtime-client-architecture-org-scoped-access-and-per-token-type-wrapper-isolation.md#account-subscriptions-1034)).
 - The method is not cached.
 
+## Console UI links
+
+`src/pynetappfoundry/utils/console_links.py` builds URLs that open Console objects in the UI. The
+functions are pure and take `base_url` as a keyword argument, defaulting to
+`https://console.netapp.com`. Set `ui_base_url` in `consoleapi.toml` `[general]` to change it for
+the reports (see [Config schema](../reference/config-schema.md#consoleapitoml)). It is the UI host,
+not the API `base_url`.
+
+| Builder | URL |
+|---------|-----|
+| `build_console_working_environment_link(public_id)` | `<ui>/storage/on-prem/<publicId>` or `<ui>/storage/cloud-volumes-ontap/<publicId>` |
+| `build_console_volumes_link(public_id)` | the working environment URL plus `/volumes` |
+| `build_console_svm_link(public_id)` | the working environment URL |
+| `build_console_aggregates_link(public_id)` | the CVO working environment URL plus `/aggregates` |
+| `build_console_agents_link()` | `<ui>/agents-mgmt` |
+| `build_console_agent_edit_link(agent_id)` | `<ui>/agents-mgmt/<agentId>/edit` |
+
+An example id is `OnPremWorkingEnvironment-XXXXXXXX` or `VsaWorkingEnvironment-XXXXXXXX`.
+
+- The `publicId` prefix decides the path: `OnPremWorkingEnvironment-` is on-prem and
+  `VsaWorkingEnvironment-` is Cloud Volumes ONTAP. An empty id or an unknown prefix raises
+  `ValueError`.
+- Some links are not direct. A volume link opens the working environment's Volumes tab, and an SVM
+  link is the working environment's URL.
+- Aggregate links are CVO only. An on-prem id raises `ValueError`, because on-prem has no
+  aggregates view.
+- Agent links go to the edit page, because the Console has no agent detail page.
+- Ids are URL-quoted, and a trailing `/` on `base_url` is stripped.
+
+The reports carry agent links only, until #1076 supplies a working environment `publicId`: the
+inventory report has a last column, "NetApp Console Agent", and the HTML report's connector details
+table has a "Console" row. Both come from the connector's `agent_id` in `[connectors]` and are blank
+without one.
+
 ## Safety
 
 - `add_onprem_working_environment` and `delete_onprem_working_environment` are not retried on a 5xx or timeout, so a transient failure cannot add the same working environment twice. A 401 still triggers one token refresh when a provider is in use.

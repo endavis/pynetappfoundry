@@ -993,6 +993,67 @@ class TestUtilitiesFormatting:
         assert "https://10.0.0.100" in html
 
 
+class TestConsoleAgentLink:
+    """#1077: the connector's details table links to the Console agent edit page."""
+
+    @staticmethod
+    def _builder(mock_config: MagicMock, base: str = "https://console.netapp.com") -> Any:
+        mock_config.get_setting.return_value = base
+        with patch("pynetappfoundry.cli.commands.reports.html.ClusterData"):
+            return HTMLReportBuilder("Test", {}, mock_config)
+
+    def test_connector_with_agent_id_renders_edit_link(self, mock_config: MagicMock) -> None:
+        builder = self._builder(mock_config)
+        builder.format_generic_cloud_item(
+            "Connector", {"ip": "10.0.0.5", "agent_id": "agentXXXX"}, console_agent=True
+        )
+        html = builder.doc.getvalue()
+        assert 'href="https://console.netapp.com/agents-mgmt/agentXXXX/edit"' in html
+        assert "Console" in html
+
+    def test_ui_base_url_override_used(self, mock_config: MagicMock) -> None:
+        builder = self._builder(mock_config, "https://ui.example.test")
+        builder.format_generic_cloud_item(
+            "Connector", {"ip": "10.0.0.5", "agent_id": "agentXXXX"}, console_agent=True
+        )
+        assert 'href="https://ui.example.test/agents-mgmt/agentXXXX/edit"' in (
+            builder.doc.getvalue()
+        )
+
+    def test_connector_without_agent_id_has_no_console_row(self, mock_config: MagicMock) -> None:
+        builder = self._builder(mock_config)
+        builder.format_generic_cloud_item("Connector", {"ip": "10.0.0.5"}, console_agent=True)
+        assert "agents-mgmt" not in builder.doc.getvalue()
+
+    def test_blank_agent_id_has_no_console_row(self, mock_config: MagicMock) -> None:
+        builder = self._builder(mock_config)
+        builder.format_generic_cloud_item(
+            "Connector", {"ip": "10.0.0.5", "agent_id": "  "}, console_agent=True
+        )
+        assert "agents-mgmt" not in builder.doc.getvalue()
+
+    def test_aiqum_never_renders_console_row(self, mock_config: MagicMock) -> None:
+        builder = self._builder(mock_config)
+        builder.format_generic_cloud_item("AIQUM", {"ip": "10.0.0.6", "agent_id": "agentXXXX"})
+        assert "agents-mgmt" not in builder.doc.getvalue()
+
+    def test_format_utilities_connector_only(self, mock_config: MagicMock) -> None:
+        builder = self._builder(mock_config)
+
+        def find_closest(section: str, _terms: dict[str, str]) -> dict[str, str] | None:
+            if section == "connectors":
+                return {"ip": "10.0.0.5", "agent_id": "agentXXXX"}
+            if section == "aiqums":
+                return {"ip": "10.0.0.6", "agent_id": "agentYYYY"}
+            return None
+
+        mock_config.find_closest.side_effect = find_closest
+        builder.format_utilities({})
+        html = builder.doc.getvalue()
+        assert "agents-mgmt/agentXXXX/edit" in html
+        assert "agentYYYY" not in html
+
+
 class TestHierarchyBuilding:
     """Tests for hierarchy building functionality."""
 

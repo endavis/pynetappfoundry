@@ -189,7 +189,7 @@ class TestInventoryWorkbook:
     def test_layout(self, tmp_path: Path) -> None:
         ws = self._build(tmp_path)["NetApps"]
         assert ws.freeze_panes == "A2"
-        assert ws.auto_filter.ref == "A1:AG1"
+        assert ws.auto_filter.ref == "A1:AH1"
         assert ws.row_dimensions[1].height == 30
         # openpyxl groups adjacent equal-width columns into one min..max entry.
         widths: dict[int, float] = {}
@@ -258,3 +258,45 @@ class TestInventoryClusterType:
 
     def test_cloud_single_traits(self) -> None:
         assert "CVO" in self._row(ClusterTraits(is_cloud=True, is_ha=False))
+
+
+class TestInventoryConsoleAgent:
+    """#1077: the trailing NetApp Console Agent column."""
+
+    @staticmethod
+    def _row(
+        connector: dict[str, Any] | None, base: str = "https://console.netapp.com"
+    ) -> list[Any]:
+        config = MagicMock()
+        config.find_closest.return_value = connector
+        config.get_setting.return_value = base
+        with patch("pynetappfoundry.cli.commands.reports.inventory.DataSource") as ds:
+            ds.return_value.query.return_value.first.return_value = None
+            ds.return_value.query.return_value.__iter__.return_value = iter([])
+            report = InventoryReport(config, {"cl1": _Entry(ip="10.0.0.1")})
+            report.build()
+        return report.rows[0]
+
+    def test_header_is_last_and_lengths_match(self) -> None:
+        assert _HEADERS[-1] == "NetApp Console Agent"
+        row = self._row(None)
+        assert len(row) == len(_HEADERS) == len(_COL_WIDTHS)
+
+    def test_existing_columns_unchanged(self) -> None:
+        assert _HEADERS[16] == "BlueXP (NetApp Console) Connector IP"
+        assert _HEADERS[17] == "BlueXP (NetApp Console) Name"
+        assert _HEADERS[-2] == "Remark"
+
+    def test_link_tuple_when_agent_id(self) -> None:
+        row = self._row({"ip": "10.9.9.9", "agent_id": "agentXXXX"})
+        assert row[-1] == ("agentXXXX", "https://console.netapp.com/agents-mgmt/agentXXXX/edit")
+
+    def test_empty_without_agent_id(self) -> None:
+        assert self._row({"ip": "10.9.9.9"})[-1] == ""
+
+    def test_empty_without_connector(self) -> None:
+        assert self._row(None)[-1] == ""
+
+    def test_ui_base_url_override(self) -> None:
+        row = self._row({"agent_id": "agentXXXX"}, "https://ui.example.test/")
+        assert row[-1] == ("agentXXXX", "https://ui.example.test/agents-mgmt/agentXXXX/edit")

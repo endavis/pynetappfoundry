@@ -1373,3 +1373,29 @@ class TestConsoleApiSettingsAgentIds:
             script_name="test_script",
         )
         assert config.get_console_api_settings().agent_ids == ["agent-placeholder-0001clients"]
+
+
+class TestConsoleApiSettingsUiBaseUrl:
+    """#1077: the optional ``ui_base_url`` setting."""
+
+    def test_default(self) -> None:
+        settings = ConsoleAPISettings(
+            user_token=SecretStr("user-jwt"), base_url="https://example.test"
+        )
+        assert settings.ui_base_url == "https://console.netapp.com"
+
+    def test_default_matches_link_builder_constant(self) -> None:
+        from pynetappfoundry.utils.console_links import CONSOLE_UI_BASE_URL
+
+        settings = ConsoleAPISettings(
+            user_token=SecretStr("user-jwt"), base_url="https://example.test"
+        )
+        assert settings.ui_base_url == CONSOLE_UI_BASE_URL
+
+    def test_override(self) -> None:
+        settings = ConsoleAPISettings(
+            user_token=SecretStr("user-jwt"),
+            base_url="https://example.test",
+            ui_base_url="https://ui.example.test",
+        )
+        assert settings.ui_base_url == "https://ui.example.test"

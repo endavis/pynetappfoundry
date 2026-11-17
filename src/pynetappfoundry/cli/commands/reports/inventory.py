@@ -20,6 +20,10 @@ from pynetappfoundry.cli.utils import print_info, print_success
 from pynetappfoundry.core.cluster_entry import ClusterEntry
 from pynetappfoundry.core.config import Config
 from pynetappfoundry.data.source import DataSource
+from pynetappfoundry.utils.console_links import (
+    CONSOLE_UI_BASE_URL,
+    build_console_agent_edit_link,
+)
 from pynetappfoundry.utils.excel import ExcelWorkbook
 
 if TYPE_CHECKING:
@@ -93,6 +97,7 @@ _HEADERS = [
     "VM Names",
     "Load-Balancers",
     "Remark",
+    "NetApp Console Agent",
 ]
 
 # 0-based columns whose text wraps (Contacts, Notes, and the trailing free-text columns).
@@ -133,6 +138,7 @@ _COL_WIDTHS = [
     35,
     55,
     20,
+    45,
 ]
 
 
@@ -177,6 +183,9 @@ class InventoryReport:
         self.config = config
         self.clusters = clusters
         self.rows: list[list[Any]] = []
+        self.ui_base_url: str = str(
+            config.get_setting("consoleapi", "general", "ui_base_url", default=CONSOLE_UI_BASE_URL)
+        )
 
     def _collect_cloud_meta(
         self,
@@ -254,7 +263,14 @@ class InventoryReport:
         connector = self.config.find_closest("connectors", search_terms)
         connector_ip: Any = ""
         connector_name = ""
+        agent_cell: Any = ""
         if connector:
+            agent_id = str(connector.get("agent_id", "") or "").strip()
+            if agent_id:
+                agent_cell = (
+                    agent_id,
+                    build_console_agent_edit_link(agent_id, base_url=self.ui_base_url),
+                )
             ip_raw = str(connector.get("ip", "")).strip()
             url = f"https://{ip_raw}/" if ip_raw else ""
             connector_ip = (url, url) if url else ""
@@ -323,6 +339,7 @@ class InventoryReport:
             vm_names,  # VM Names
             "",  # Load-Balancers (blank for now)
             "",  # Remark
+            agent_cell,  # NetApp Console Agent (link)
         ]
 
     def build(self) -> None:
