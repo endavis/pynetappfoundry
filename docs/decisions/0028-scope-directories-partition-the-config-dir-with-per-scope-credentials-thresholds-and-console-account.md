@@ -12,7 +12,7 @@ tags:
 
 ## Status
 
-Accepted, amended by [#1081](https://github.com/endavis/pynetappfoundry/issues/1081)
+Accepted, amended by [#1081](https://github.com/endavis/pynetappfoundry/issues/1081), [#1089](https://github.com/endavis/pynetappfoundry/issues/1089)
 
 ## Context
 
@@ -37,6 +37,7 @@ Issue [#1080](https://github.com/endavis/pynetappfoundry/issues/1080) asks for s
    - `nf config validate --scope S` checks the scope's clusters, `users.toml`, `monitoring.toml` and Console account. Without `--scope` it is unchanged.
    - `scope` is a reserved, built-in search key whose value comes from the `get_scope` index (`""` for root objects). It is never written into data dicts and `find_closest` never relaxes it.
    - `Config.get_scope_settings(scope)` returns a scope's own settings and raises for an unknown scope.
+8. **D5, `set-credential --setting` per scope (#1089).** `nf config set-credential --setting consoleapi.client_secret --scope S` writes the scope's `<config>/S/consoleapi.toml [general]`, creating the file when it is missing. Only `consoleapi.*` targets accept `--scope`, because a scope may hold only the files in `SCOPE_OVERRIDABLE_SETTINGS`. See [ADR-0031](0031-one-command-stores-every-sops-secret-and-encrypt-value-is-removed.md).
 
 ## Rationale
 
@@ -56,6 +57,7 @@ Issue [#1080](https://github.com/endavis/pynetappfoundry/issues/1080) asks for s
 
 - Issue #1080: feat: scope directories in the config dir, each with its own inventory, credentials, thresholds and Console account
 - Issue #1081: feat: scope-aware config CLI, search by scope, and duplicate names across root files
+- Issue #1089: feat: store every secret through set-credential --setting and remove encrypt-value (see [ADR-0031](0031-one-command-stores-every-sops-secret-and-encrypt-value-is-removed.md))
 - Issue #1078: feat: support multiple Console organizations through discovered service accounts (see [ADR-0029](0029-console-discovery-walks-scope-accounts-and-merges-hand-written-spec-fragments.md))
 
 ## Related Documentation

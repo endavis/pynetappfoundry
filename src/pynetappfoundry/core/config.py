@@ -99,6 +99,14 @@ _SMTP_SOPS_FIELDS = ("password",)
 _DII_SOPS_FIELDS = ("api_ro_token",)
 _CONSOLE_SOPS_FIELDS = ("client_secret", "service_token", "user_token")
 
+# Every secret ``nf config set-credential --setting`` can store, mapped to
+# ``(file stem, table, key)``. Built from the fields the loader decrypts.
+SOPS_SETTING_TARGETS: dict[str, tuple[str, str, str]] = {
+    **{f"settings.smtp_{field}": ("settings", "SMTP", field) for field in _SMTP_SOPS_FIELDS},
+    **{f"diiapi.{field}": ("diiapi", "general", field) for field in _DII_SOPS_FIELDS},
+    **{f"consoleapi.{field}": ("consoleapi", "general", field) for field in _CONSOLE_SOPS_FIELDS},
+}
+
 # A top-level directory holding this file is a scope (see the module docstring).
 SCOPE_MARKER = "scope.toml"
 # Reserved, built-in search key: matches an object's scope ("" for root objects).

@@ -108,6 +108,8 @@ def _check_settings_section(
     absent_text: str,
     tree: dict[str, Any] | None = None,
     error_prefix: str = "",
+    hint: Callable[[], str | None] | None = None,
+    hints_out: list[str] | None = None,
 ) -> list[str]:
     """Report one settings section as valid, not configured, or invalid.
 
@@ -124,6 +126,8 @@ def _check_settings_section(
         absent_text: Markup shown when the section is absent.
         tree: Settings to look in instead of ``config.settings`` (a scope's own tree).
         error_prefix: Prefix of the error key, such as ``Org1/`` for a scope.
+        hint: Returns already-escaped advice shown when the section is invalid, or None.
+        hints_out: Collects the advice for the final error's hints.
 
     Returns:
         List of validation error messages.
@@ -136,17 +140,54 @@ def _check_settings_section(
         reader()
     except ConfigurationError as e:
         branch.add(f"[red]{escape(label)}: Invalid[/red]")
+        advice = hint() if hint is not None else None
+        if advice:
+            branch.add(f"[yellow]{advice}[/yellow]")
+            if hints_out is not None:
+                hints_out.append(advice)
         return [f"{error_prefix}{'.'.join(keys)}: {e}"]
     branch.add(f"[green]{escape(label)}[/green]")
     return []
 
 
-def _validate_settings(config: Config, tree: Tree) -> list[str]:
+def _refresh_token_hint(
+    general: object, users: object, scope: str | None, file_name: str
+) -> str | None:
+    """Explain a Console account that has a ``client_id`` but no ``client_secret``.
+
+    The usual cause is a client secret stored as a refresh token in ``users.toml``
+    ``[console]``. Returns the Rich-escaped advice, or None when it does not apply.
+
+    Args:
+        general: The raw ``[general]`` table of the ``consoleapi.toml`` in question.
+        users: The raw ``users.toml`` sections of the same root or scope.
+        scope: The scope name, or None for the root.
+        file_name: Display name of the ``consoleapi.toml`` file.
+    """
+    if (
+        not isinstance(general, dict)
+        or not general.get("client_id")
+        or general.get("client_secret")
+    ):
+        return None
+    console_entry = users.get("console") if isinstance(users, dict) else None
+    if not isinstance(console_entry, dict) or not console_entry.get("enc"):
+        return None
+    scope_arg = f" --scope {scope}" if scope else ""
+    return escape(
+        f"{file_name} has client_id but no client_secret. The secret was probably stored "
+        "as a refresh token in users.toml [console]. Store it with: "
+        f"nf config set-credential --setting consoleapi.client_secret{scope_arg}"
+    )
+
+
+def _validate_settings(config: Config, tree: Tree, hints_out: list[str] | None = None) -> list[str]:
     """Validate settings configurations.
 
     Args:
         config: Config instance to validate.
         tree: Rich Tree to add results to.
+        hints_out: Collects advice for the final error's hints.
 
     Returns:
         List of validation error messages.
@@ -184,6 +225,23 @@ def _validate_settings(config: Config, tree: Tree) -> list[str]:
             absent_text="[dim]SMTP: Not configured (optional)[/dim]",
         )
     )
+    errors.extend(
+        _check_settings_section(
+            config,
+            settings_branch,
+            label="Console",
+            keys=("consoleapi", "general"),
+            reader=config.get_console_api_settings,
+            absent_text="[dim]Console: Not configured (optional)[/dim]",
+            hint=lambda: _refresh_token_hint(
+                config.settings.get("consoleapi", {}).get("general"),
+                config.settings.get("users", {}),
+                None,
+                "consoleapi.toml",
+            ),
+            hints_out=hints_out,
+        )
+    )
 
     # Validate licensing settings (optional)
     licensing = config.get_licensing_settings()
@@ -195,13 +253,16 @@ def _validate_settings(config: Config, tree: Tree) -> list[str]:
     return errors
 
 
-def _validate_scope_settings(config: Config, tree: Tree, scope: str) -> list[str]:
+def _validate_scope_settings(
+    config: Config, tree: Tree, scope: str, hints_out: list[str] | None = None
+) -> list[str]:
     """Validate a scope's ``monitoring.toml`` and Console account.
 
     Args:
         config: Config instance to validate.
         tree: Rich Tree to add results to.
         scope: A known scope name.
+        hints_out: Collects advice for the final error's hints.
 
     Returns:
         List of validation error messages.
@@ -221,6 +282,13 @@ def _validate_scope_settings(config: Config, tree: Tree, scope: str) -> list[str
         absent_text="[dim]Console: Not configured (optional)[/dim]",
         tree=scope_tree,
         error_prefix=f"{scope}/",
+        hint=lambda: _refresh_token_hint(
+            scope_tree.get("consoleapi", {}).get("general"),
+            scope_tree.get("users", {}),
+            scope,
+            f"{scope}/consoleapi.toml",
+        ),
+        hints_out=hints_out,
     )
 
 
@@ -284,12 +352,13 @@ def validate(ctx: click.Context, scope: str | None) -> None:
     # Build validation tree
     tree = Tree("[bold blue]Configuration Validation[/bold blue]")
     all_errors: list[str] = []
+    advice: list[str] = []
 
     # Validate each section
     if scope is None:
         all_errors.extend(_validate_clusters(config, tree))
         all_errors.extend(_validate_users(config.settings.get("users", {}), tree))
-        all_errors.extend(_validate_settings(config, tree))
+        all_errors.extend(_validate_settings(config, tree, advice))
         all_errors.extend(_check_cluster_credentials(config, tree))
     else:
         try:
@@ -300,7 +369,7 @@ def validate(ctx: click.Context, scope: str | None) -> None:
         all_errors.extend(
             _validate_users(scope_tree.get("users", {}), tree, label_prefix=f"{scope}/users")
         )
-        all_errors.extend(_validate_scope_settings(config, tree, scope))
+        all_errors.extend(_validate_scope_settings(config, tree, scope, advice))
         all_errors.extend(_check_cluster_credentials(config, tree, scope))
 
     # Print the tree
@@ -316,6 +385,6 @@ def validate(ctx: click.Context, scope: str | None) -> None:
                 border_style="red",
             )
         )
-        raise CliError(f"\nValidation failed with {len(all_errors)} error(s)")
+        raise CliError(f"\nValidation failed with {len(all_errors)} error(s)", hints=advice)
     else:
         print_success("Configuration is valid")

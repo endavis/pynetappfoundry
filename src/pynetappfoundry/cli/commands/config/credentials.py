@@ -2,16 +2,26 @@
 
 from __future__ import annotations
 
+import tomllib
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
 import click
+import tomlkit
 from rich.console import Console
 from rich.markup import escape
 
 from pynetappfoundry.cli.errors import CliError
 from pynetappfoundry.cli.utils import print_success, print_warning
-from pynetappfoundry.core.config import VALID_DATA_TYPES, Config, ConfigurationError
+from pynetappfoundry.core.config import (
+    SCOPE_MARKER,
+    SCOPE_OVERRIDABLE_SETTINGS,
+    SOPS_SETTING_TARGETS,
+    VALID_DATA_TYPES,
+    Config,
+    ConfigurationError,
+)
 from pynetappfoundry.utils.sops import (
     SOPSError,
     SOPSNotInstalledError,
@@ -77,26 +87,17 @@ def _encrypt_password(password: str, no_encrypt: bool, ctx: click.Context) -> st
         raise CliError(f"Encryption failed: {e}") from e
 
 
-@click.command("encrypt-value")
-@click.option(
-    "--value",
-    prompt=True,
-    hide_input=True,
-    confirmation_prompt=True,
-    help="Value to encrypt (will prompt, hidden, if not provided).",
-)
-def encrypt_value_cmd(value: str) -> None:
-    """Encrypt a value into a SOPS[...] string for a settings file.
+def _encrypt_setting_value(value: str) -> str:
+    """Encrypt a setting value into a ``SOPS[...]`` string; there is no plain text fallback.
 
-    Prints only the SOPS[...] value to stdout (status messages go to stderr), so the
-    output pipes cleanly. Paste it into settings.toml [SMTP] password, diiapi.toml
-    api_ro_token, or consoleapi.toml client_secret, service_token or user_token.
+    Args:
+        value: The plain text secret.
 
-    Examples:
+    Returns:
+        The ``SOPS[...]`` string.
 
-        nf config encrypt-value
-
-        nf config encrypt-value > value.txt
+    Raises:
+        CliError: If sops or the age key is missing, or encryption fails.
     """
     if not is_sops_installed():
         raise CliError(
@@ -111,9 +112,7 @@ def encrypt_value_cmd(value: str) -> None:
         raise CliError(str(e)) from e
     except SOPSError as e:
         raise CliError(f"Encryption failed: {e}") from e
-
-    click.echo("Value encrypted successfully.", err=True)
-    click.echo(encrypted)
+    return encrypted
 
 
 @click.command("set-credential")
@@ -128,8 +127,19 @@ def encrypt_value_cmd(value: str) -> None:
     help=(
         "Set default credentials for all resources of this type (in users.toml), "
         "or with --name for one object. "
-        "'console' stores the Console refresh token: --user is only a label and "
+        "'console' stores the Console refresh token (not the client secret; use "
+        "--setting consoleapi.client_secret for that): --user is only a label and "
         "the password prompt takes the refresh token."
+    ),
+)
+@click.option(
+    "--setting",
+    type=click.Choice(sorted(SOPS_SETTING_TARGETS)),
+    help=(
+        "Store one SOPS-encrypted setting as <file>.<field>, for example "
+        "consoleapi.client_secret. Cannot be combined with --cluster, --type, "
+        "--name, --user or --no-encrypt; the value is prompted (hidden) or "
+        "taken from --password. Only consoleapi.* accepts --scope."
     ),
 )
 @click.option(
@@ -151,15 +161,11 @@ def encrypt_value_cmd(value: str) -> None:
 )
 @click.option(
     "--user",
-    required=True,
-    help="Username.",
+    help="Username (required with --cluster and --type).",
 )
 @click.option(
     "--password",
-    prompt=True,
-    hide_input=True,
-    confirmation_prompt=True,
-    help="Password (will prompt if not provided).",
+    help="Password or value (will prompt, hidden, if not provided).",
 )
 @click.option(
     "--no-encrypt",
@@ -171,19 +177,22 @@ def set_credential(
     ctx: click.Context,
     cluster: str | None,
     cred_type: str | None,
+    setting: str | None,
     obj_name: str | None,
     scope: str | None,
-    user: str,
-    password: str,
+    user: str | None,
+    password: str | None,
     no_encrypt: bool,
 ) -> None:
-    """Set encrypted credentials for an inventory object or resource type.
+    """Set encrypted credentials for an inventory object, a resource type or a setting.
 
     Use --type with --name to set credentials for one object of any inventory
     type (stored on its data file entry); --cluster NAME is an alias for
     --type clusters --name NAME.
     Use --type alone to set default credentials for all resources of a type
     (stored in users.toml).
+    Use --setting FILE.FIELD to store one SOPS-encrypted secret of a settings
+    file, such as the Console client secret.
 
     Examples:
 
@@ -212,7 +221,22 @@ def set_credential(
 
         # Store one scope's Console refresh token (Org1/users.toml)
         nf config set-credential --type console --scope Org1 --user console
+
+        # Store the Console client secret (consoleapi.toml [general])
+        nf config set-credential --setting consoleapi.client_secret
+
+        # Store one scope's Console client secret (Org1/consoleapi.toml)
+        nf config set-credential --setting consoleapi.client_secret --scope Org1
+
+        # Store the DII API token or the SMTP password
+        nf config set-credential --setting diiapi.api_ro_token
+        nf config set-credential --setting settings.smtp_password
     """
+    if setting is not None:
+        _check_setting_options(cluster, cred_type, obj_name, user, no_encrypt)
+        _run_setting(ctx, setting, scope, password)
+        return
+
     # Validate mutually exclusive options
     if cluster and cred_type:
         raise CliError("Cannot use both --cluster and --type. Choose one.")
@@ -239,20 +263,18 @@ def set_credential(
             hints=["Run 'nf config set-credential --type console --user <label>'."],
         )
 
-    config_dir = ctx.obj.get("config_dir", "config")
-    config_path = Path.cwd() / config_dir
+    if user is None:
+        raise click.UsageError("Missing option '--user'.")
 
-    if not config_path.exists():
-        raise CliError(f"Configuration directory not found: {config_path}")
-
-    try:
-        config = Config(config_dir=config_dir, script_name="set-credential")
-    except Exception as e:
-        raise CliError(f"Failed to load configuration: {e}") from e
+    config_path, config = _load_config(ctx)
 
     # Check --scope before prompting for or encrypting anything
     if scope is not None:
         _check_scope_option(config, scope, cluster, cred_type, obj_name)
+
+    # Prompt for the password only after every check passed
+    if password is None:
+        password = _prompt_secret("Password")
 
     # Encrypt password
     encrypted_password = _encrypt_password(password, no_encrypt, ctx)
@@ -265,6 +287,91 @@ def set_credential(
     else:
         assert cred_type is not None  # For type checker
         _set_type_credential(config, config_path, cred_type, user, encrypted_password, scope)
+
+
+def _load_config(ctx: click.Context) -> tuple[Path, Config]:
+    """Locate the configuration directory and load it.
+
+    Raises:
+        CliError: If the directory is missing or fails to load.
+    """
+    config_dir = ctx.obj.get("config_dir", "config")
+    config_path = Path.cwd() / config_dir
+
+    if not config_path.exists():
+        raise CliError(f"Configuration directory not found: {config_path}")
+
+    try:
+        config = Config(config_dir=config_dir, script_name="set-credential")
+    except Exception as e:
+        raise CliError(f"Failed to load configuration: {e}") from e
+    return config_path, config
+
+
+def _prompt_secret(label: str) -> str:
+    """Prompt for a hidden value, asking twice."""
+    return str(click.prompt(label, hide_input=True, confirmation_prompt=True))
+
+
+def _check_setting_options(
+    cluster: str | None,
+    cred_type: str | None,
+    obj_name: str | None,
+    user: str | None,
+    no_encrypt: bool,
+) -> None:
+    """Reject options that cannot be combined with ``--setting``.
+
+    Raises:
+        CliError: Naming every option given that conflicts.
+    """
+    given = [
+        flag
+        for flag, present in (
+            ("--cluster", cluster is not None),
+            ("--type", cred_type is not None),
+            ("--name", obj_name is not None),
+            ("--user", user is not None),
+            ("--no-encrypt", no_encrypt),
+        )
+        if present
+    ]
+    if given:
+        raise CliError(
+            f"--setting cannot be combined with {', '.join(given)}.",
+            hints=[
+                "--setting stores one SOPS secret; only --scope (consoleapi.* targets) "
+                "and --password (the value) are allowed with it."
+            ],
+        )
+
+
+def _run_setting(ctx: click.Context, setting: str, scope: str | None, value: str | None) -> None:
+    """Store one SOPS-encrypted setting; every check runs before the value is prompted."""
+    config_path, config = _load_config(ctx)
+    stem = SOPS_SETTING_TARGETS[setting][0]
+    if scope is not None:
+        _check_setting_scope(config, scope, stem)
+    target_file = _find_setting_file(config_path, stem, scope)
+    if value is None:
+        value = _prompt_secret("Value")
+    encrypted = _encrypt_setting_value(value)
+    _set_setting_value(target_file, setting, scope, encrypted)
+
+
+def _check_setting_scope(config: Config, scope: str, stem: str) -> None:
+    """Validate ``--scope`` for a ``--setting`` target.
+
+    Raises:
+        CliError: If the scope is unknown or its file may not live in a scope.
+    """
+    _scope_tree_or_error(config, scope)
+    if stem not in SCOPE_OVERRIDABLE_SETTINGS:
+        allowed = ", ".join(f"{s}.toml" for s in sorted(SCOPE_OVERRIDABLE_SETTINGS))
+        raise CliError(
+            f"{stem}.toml cannot be set per scope; a scope may only hold {allowed}.",
+            hints=["Drop --scope, or use a consoleapi.* target."],
+        )
 
 
 def _scope_tree_or_error(config: Config, scope: str) -> dict[str, Any]:
@@ -371,20 +478,105 @@ def _set_type_credential(
 
     try:
         _update_users_credentials(users_file, cred_type, user, encrypted_password)
-        print_success(f"Default credentials updated for type '{cred_type}'{scope_note}")
+        if cred_type == "console":
+            print_success(f"Refresh token stored{scope_note}")
+        else:
+            print_success(f"Default credentials updated for type '{cred_type}'{scope_note}")
         console.print(f"  File: {escape(str(users_file))}")
         console.print(f"  User: {escape(user)}")
-        _print_password_status(encrypted_password)
+        _print_password_status(
+            encrypted_password, label="Refresh token" if cred_type == "console" else "Password"
+        )
     except Exception as e:
         raise CliError(f"Failed to update configuration: {e}") from e
 
+    if cred_type == "console":
+        scope_arg = f" --scope {scope}" if scope is not None else ""
+        console.print(
+            "  This is the refresh token, not the client secret. Store the client secret with: "
+            f"nf config set-credential --setting consoleapi.client_secret{escape(scope_arg)}"
+        )
 
-def _print_password_status(encrypted_password: str) -> None:
+
+def _print_password_status(encrypted_password: str, label: str = "Password") -> None:
     """Print password encryption status."""
     if encrypted_password.startswith("SOPS["):
-        console.print("  Password: [dim](encrypted)[/dim]")
+        console.print(f"  {label}: [dim](encrypted)[/dim]")
     else:
-        console.print("  Password: [yellow](plain text)[/yellow]")
+        console.print(f"  {label}: [yellow](plain text)[/yellow]")
+
+
+def _set_setting_value(
+    target_file: Path, setting: str, scope: str | None, encrypted_value: str
+) -> None:
+    """Write an encrypted value to ``target_file``, in the table ``setting`` names.
+
+    Prints the target and the counterpart warnings; never the value.
+    """
+    stem, table, key = SOPS_SETTING_TARGETS[setting]
+    created = not target_file.exists()
+
+    try:
+        leaf = _write_toml_values(target_file, [table], {key: encrypted_value})
+    except Exception as e:
+        raise CliError(f"Failed to update configuration: {e}") from e
+
+    scope_note = f" in scope '{scope}'" if scope is not None else ""
+    print_success(f"Setting {setting} stored{scope_note}")
+    console.print(f"  File: {escape(str(target_file))}")
+    console.print(f"  Table: {escape(table)}")
+    console.print(f"  Key: {escape(key)}")
+    console.print("  Value: [dim](encrypted)[/dim]")
+
+    if created and stem == "consoleapi":
+        print_warning(
+            f"Created {target_file}; the Console account still needs client_id and org_id."
+        )
+    elif key == "client_secret" and not leaf.get("client_id"):
+        print_warning(f"{target_file} has no client_id; the Console account needs one.")
+    elif setting == "settings.smtp_password" and not leaf.get("user"):
+        print_warning(f"{target_file} [{table}] has no user; set it for SMTP authentication.")
+
+
+def _is_data_file(path: Path) -> bool:
+    """Return True when a TOML file is a data file (``[settings] type = "data"``)."""
+    try:
+        with open(path, "rb") as f:
+            data = tomllib.load(f)
+    except Exception:  # unreadable TOML files are not data files
+        return False
+    settings = data.get("settings", {})
+    return isinstance(settings, dict) and settings.get("type") == "data"
+
+
+def _find_setting_file(config_path: Path, stem: str, scope: str | None) -> Path:
+    """Pick the settings file a ``--setting`` target is written to.
+
+    The loader reads every non-data ``*.toml`` file by stem, so the writer uses the
+    same rule. A root target skips scope directories; a scope target looks only
+    under ``<config>/<scope>/``. With no match, the conventional path is returned
+    (not created yet).
+
+    Raises:
+        CliError: If more than one file carries the stem.
+    """
+    base = config_path if scope is None else config_path / scope
+    scope_dirs = {
+        d.name for d in config_path.iterdir() if d.is_dir() and (d / SCOPE_MARKER).is_file()
+    }
+    matches: list[Path] = []
+    for toml_file in sorted(base.rglob("*.toml")) if base.is_dir() else []:
+        if scope is None and toml_file.relative_to(config_path).parts[0] in scope_dirs:
+            continue
+        if toml_file.stem == stem and not _is_data_file(toml_file):
+            matches.append(toml_file)
+    if len(matches) > 1:
+        raise CliError(
+            f"More than one file provides {stem}.toml settings: "
+            f"{', '.join(str(m) for m in matches)}.",
+            hints=["The loader merges them, so the file to write is ambiguous. Keep one."],
+        )
+    return matches[0] if matches else base / f"{stem}.toml"
 
 
 def _find_object_file(config_path: Path, obj_type: str, obj_name: str) -> Path | None:
@@ -449,26 +641,7 @@ def _update_object_credentials(
         user: Username to set.
         encrypted_password: Encrypted or plain password.
     """
-    import tomllib
-
-    import tomli_w
-
-    # Read current content
-    with open(file_path, "rb") as f:
-        data = tomllib.load(f)
-
-    # Update credentials
-    if obj_type not in data:
-        data[obj_type] = {}
-    if obj_name not in data[obj_type]:
-        data[obj_type][obj_name] = {}
-
-    data[obj_type][obj_name]["user"] = user
-    data[obj_type][obj_name]["enc"] = encrypted_password
-
-    # Write back
-    with open(file_path, "wb") as f:
-        tomli_w.dump(data, f)
+    _write_toml_values(file_path, [obj_type, obj_name], {"user": user, "enc": encrypted_password})
 
 
 def _update_users_credentials(
@@ -485,24 +658,36 @@ def _update_users_credentials(
         user: Username to set.
         encrypted_password: Encrypted or plain password.
     """
-    import tomllib
+    _write_toml_values(users_file, [cred_type], {"user": user, "enc": encrypted_password})
 
-    import tomli_w
 
-    # Read current content or start fresh
-    if users_file.exists():
-        with open(users_file, "rb") as f:
-            data = tomllib.load(f)
-    else:
-        data = {}
+def _write_toml_values(
+    path: Path, tables: Sequence[str], values: Mapping[str, str]
+) -> dict[str, Any]:
+    """Set ``values`` in the table at ``tables`` of a TOML file, keeping its formatting.
 
-    # Update credentials for the type
-    if cred_type not in data:
-        data[cred_type] = {}
+    The file is parsed with tomlkit, so comments and unrelated keys survive. A
+    missing file starts as an empty document; missing tables are created (the
+    intermediate ones as super tables); missing parent directories are created.
 
-    data[cred_type]["user"] = user
-    data[cred_type]["enc"] = encrypted_password
+    Args:
+        path: The TOML file.
+        tables: Table path, outermost first.
+        values: Keys and values to set in the leaf table.
 
-    # Write back
-    with open(users_file, "wb") as f:
-        tomli_w.dump(data, f)
+    Returns:
+        A plain copy of the leaf table after the update.
+    """
+    doc = tomlkit.parse(path.read_text(encoding="utf-8")) if path.exists() else tomlkit.document()
+    node: Any = doc
+    for index, name in enumerate(tables):
+        if name not in node:
+            is_last = index == len(tables) - 1
+            node[name] = tomlkit.table(is_super_table=not is_last)
+        node = node[name]
+    for key, value in values.items():
+        node[key] = value
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(tomlkit.dumps(doc), encoding="utf-8")
+    leaf: dict[str, Any] = dict(node.unwrap())
+    return leaf

@@ -6,4 +6,6 @@ base_url = "https://api.bluexp.netapp.com"
 org_id = "your-org1-id"
 agent_ids = ["your-agent-idclients"]
 service_token = "paste-service-account-jwt-here"
+# client_id = "your-org1-service-account-client-id"
+# client_secret = 'SOPS[...]'  # written by: nf config set-credential --setting consoleapi.client_secret --scope Org1
 # The refresh token goes in Org1/users.toml under [console], never here.
