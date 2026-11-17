@@ -21,10 +21,16 @@ from pynetappfoundry.core.models import RetryConfig
 
 if TYPE_CHECKING:
     from pynetappfoundry.models.console.cvo import (
+        get_aws_ha_working_environments,
+        get_azure_ha_working_environments,
+        get_azure_vsa_working_environments,
+        get_gcp_ha_working_environments,
+        get_gcp_vsa_working_environments,
         get_occm_saas_mp_service_account,
         get_occm_system_about,
         get_onprem_working_environments,
         get_onprem_working_environments_,
+        get_vsa_working_environments,
         post_onprem_working_environments,
     )
 
@@ -83,6 +89,138 @@ class ConsoleAgentOps:
         return [
             get_onprem_working_environments.ResponseBody.model_validate(i)
             for i in expect_list(response, "list_onprem_working_environments")
+        ]
+
+    def list_vsa_working_environments(
+        self, *, fields: str | Sequence[str] | None = None, tenant_id: str | None = None
+    ) -> list[get_vsa_working_environments.ResponseBody]:
+        """GET /occm/api/vsa/working-environments: Retrieve Cloud Volumes ONTAP systems.
+
+        operationId: cvo_get_occm_api_vsa_working_environments (generated; do not edit).
+        """
+        from pynetappfoundry.models.console.cvo import get_vsa_working_environments
+
+        kwargs: dict[str, Any] = {
+            "method": "GET",
+            "path_template": "/occm/api/vsa/working-environments",
+        }
+        query = drop_none({"fields": csv_param(fields), "tenantId": tenant_id})
+        if query:
+            kwargs["query_params"] = query
+        response = self._dispatch(None, **kwargs)
+        return [
+            get_vsa_working_environments.ResponseBody.model_validate(i)
+            for i in expect_list(response, "list_vsa_working_environments")
+        ]
+
+    def list_aws_ha_working_environments(
+        self, *, fields: str | Sequence[str] | None = None, tenant_id: str | None = None
+    ) -> list[get_aws_ha_working_environments.ResponseBody]:
+        """GET /occm/api/aws/ha/working-environments: Retrieve Cloud Volumes ONTAP systems.
+
+        operationId: cvo_get_occm_api_aws_ha_working_environments (generated; do not edit).
+        """
+        from pynetappfoundry.models.console.cvo import get_aws_ha_working_environments
+
+        kwargs: dict[str, Any] = {
+            "method": "GET",
+            "path_template": "/occm/api/aws/ha/working-environments",
+        }
+        query = drop_none({"fields": csv_param(fields), "tenantId": tenant_id})
+        if query:
+            kwargs["query_params"] = query
+        response = self._dispatch(None, **kwargs)
+        return [
+            get_aws_ha_working_environments.ResponseBody.model_validate(i)
+            for i in expect_list(response, "list_aws_ha_working_environments")
+        ]
+
+    def list_azure_vsa_working_environments(
+        self, *, fields: str | Sequence[str] | None = None, tenant_id: str | None = None
+    ) -> list[get_azure_vsa_working_environments.ResponseBody]:
+        """GET /occm/api/azure/vsa/working-environments: Retrieve Cloud Volumes ONTAP systems.
+
+        operationId: cvo_get_occm_api_azure_vsa_working_environments (generated; do not edit).
+        """
+        from pynetappfoundry.models.console.cvo import get_azure_vsa_working_environments
+
+        kwargs: dict[str, Any] = {
+            "method": "GET",
+            "path_template": "/occm/api/azure/vsa/working-environments",
+        }
+        query = drop_none({"fields": csv_param(fields), "tenantId": tenant_id})
+        if query:
+            kwargs["query_params"] = query
+        response = self._dispatch(None, **kwargs)
+        return [
+            get_azure_vsa_working_environments.ResponseBody.model_validate(i)
+            for i in expect_list(response, "list_azure_vsa_working_environments")
+        ]
+
+    def list_azure_ha_working_environments(
+        self, *, fields: str | Sequence[str] | None = None, tenant_id: str | None = None
+    ) -> list[get_azure_ha_working_environments.ResponseBody]:
+        """GET /occm/api/azure/ha/working-environments: Retrieve HA systems.
+
+        operationId: cvo_get_occm_api_azure_ha_working_environments (generated; do not edit).
+        """
+        from pynetappfoundry.models.console.cvo import get_azure_ha_working_environments
+
+        kwargs: dict[str, Any] = {
+            "method": "GET",
+            "path_template": "/occm/api/azure/ha/working-environments",
+        }
+        query = drop_none({"fields": csv_param(fields), "tenantId": tenant_id})
+        if query:
+            kwargs["query_params"] = query
+        response = self._dispatch(None, **kwargs)
+        return [
+            get_azure_ha_working_environments.ResponseBody.model_validate(i)
+            for i in expect_list(response, "list_azure_ha_working_environments")
+        ]
+
+    def list_gcp_vsa_working_environments(
+        self, *, fields: str | Sequence[str] | None = None, tenant_id: str | None = None
+    ) -> list[get_gcp_vsa_working_environments.ResponseBody]:
+        """GET /occm/api/gcp/vsa/working-environments: Retrieve Cloud Volumes ONTAP systems.
+
+        operationId: cvo_get_occm_api_gcp_vsa_working_environments (generated; do not edit).
+        """
+        from pynetappfoundry.models.console.cvo import get_gcp_vsa_working_environments
+
+        kwargs: dict[str, Any] = {
+            "method": "GET",
+            "path_template": "/occm/api/gcp/vsa/working-environments",
+        }
+        query = drop_none({"fields": csv_param(fields), "tenantId": tenant_id})
+        if query:
+            kwargs["query_params"] = query
+        response = self._dispatch(None, **kwargs)
+        return [
+            get_gcp_vsa_working_environments.ResponseBody.model_validate(i)
+            for i in expect_list(response, "list_gcp_vsa_working_environments")
+        ]
+
+    def list_gcp_ha_working_environments(
+        self, *, fields: str | Sequence[str] | None = None, tenant_id: str | None = None
+    ) -> list[get_gcp_ha_working_environments.ResponseBody]:
+        """GET /occm/api/gcp/ha/working-environments: Retrieve Cloud Volumes ONTAP systems.
+
+        operationId: cvo_get_occm_api_gcp_ha_working_environments (generated; do not edit).
+        """
+        from pynetappfoundry.models.console.cvo import get_gcp_ha_working_environments
+
+        kwargs: dict[str, Any] = {
+            "method": "GET",
+            "path_template": "/occm/api/gcp/ha/working-environments",
+        }
+        query = drop_none({"fields": csv_param(fields), "tenantId": tenant_id})
+        if query:
+            kwargs["query_params"] = query
+        response = self._dispatch(None, **kwargs)
+        return [
+            get_gcp_ha_working_environments.ResponseBody.model_validate(i)
+            for i in expect_list(response, "list_gcp_ha_working_environments")
         ]
 
     def get_onprem_working_environment(

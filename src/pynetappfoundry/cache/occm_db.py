@@ -26,6 +26,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from pynetappfoundry.cache._json_records import json_path
+from pynetappfoundry.cache.occm_collector import OCCM_WORKING_ENVIRONMENT_MAPPINGS
 from pynetappfoundry.db.base import SQLiteDB
 from pynetappfoundry.models.console_types import (
     ConsoleAgentInfo,
@@ -41,8 +42,9 @@ _COLLECTIONS = "occm_collections"
 _RECORDS = "occm_records"
 _INVENTORY = "occm_inventory"
 
-#: The mapping whose records define the working environment -> agent mapping.
-_WORKING_ENVIRONMENT_MAPPING = "OccmOnpremWorkingEnvironment"
+#: The mappings whose records define the working environment -> agent mapping.
+_WORKING_ENVIRONMENT_MAPPINGS = OCCM_WORKING_ENVIRONMENT_MAPPINGS
+_WE_PLACEHOLDERS = ", ".join("?" for _ in _WORKING_ENVIRONMENT_MAPPINGS)
 
 _ORGANIZATION = "organization"
 _AGENT = "agent"
@@ -259,8 +261,8 @@ class OccmCacheDB(SQLiteDB):
         """Return the sorted ids of the agents whose list holds *public_id*."""
         rows = self.conn.execute(
             f"SELECT DISTINCT agent_id FROM {_RECORDS} "
-            "WHERE mapping = ? AND record_key = ? ORDER BY agent_id",
-            (_WORKING_ENVIRONMENT_MAPPING, public_id),
+            f"WHERE mapping IN ({_WE_PLACEHOLDERS}) AND record_key = ? ORDER BY agent_id",
+            (*_WORKING_ENVIRONMENT_MAPPINGS, public_id),
         )
         return [str(row["agent_id"]) for row in rows]
 
@@ -268,8 +270,9 @@ class OccmCacheDB(SQLiteDB):
         """Return every working environment ``publicId`` mapped to its sorted agent ids."""
         rows = self.conn.execute(
             f"SELECT DISTINCT record_key, agent_id FROM {_RECORDS} "
-            "WHERE mapping = ? AND record_key IS NOT NULL ORDER BY record_key, agent_id",
-            (_WORKING_ENVIRONMENT_MAPPING,),
+            f"WHERE mapping IN ({_WE_PLACEHOLDERS}) AND record_key IS NOT NULL "
+            "ORDER BY record_key, agent_id",
+            _WORKING_ENVIRONMENT_MAPPINGS,
         )
         result: dict[str, list[str]] = {}
         for row in rows:

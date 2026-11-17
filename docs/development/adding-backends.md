@@ -638,7 +638,7 @@ generated `ConsoleAgentClient.ops`. **ADRs:** [ADR-0027](../decisions/0027-occm-
 | :--- | :--- |
 | Cache | `OccmCacheDB` (`src/pynetappfoundry/cache/occm_db.py`) for `OCCM_CACHED_MAPPINGS`, filled by `refresh_occm_cache` (`src/pynetappfoundry/cache/occm_collector.py`). `live_only = False` and `is_live_only(mapping)` is true for every other mapping; a partial decision goes live for all requested fields |
 | Dispatch | Typed ops only: `_OPS` maps `mapping.api_endpoint` to a `ConsoleAgentOps` method. No raw paths ([ADR-0019](../decisions/0019-console-runtime-client-architecture-org-scoped-access-and-per-token-type-wrapper-isolation.md)) |
-| Mapping | Hand-written, built from `ResponseBody.model_fields` (`src/pynetappfoundry/cache/occm/onprem_working_environments/mapping.py`), not generated |
+| Mapping | Hand-written, built from `ResponseBody.model_fields` (`src/pynetappfoundry/cache/occm/onprem_working_environments/mapping.py`), not generated. The six cloud lists share the builder in `src/pynetappfoundry/cache/occm/_working_environments.py` |
 | Envelope | Bare array, no paging; `records_path=""`. The op returns validated models |
 | Targeting | `cluster=` is a `[connectors]` name with an `agent_id` key, or the agent id; one client cached per agent id |
 | Filters | Equality only, applied in memory on `model_dump()`; `requires_explicit_fetch` fields are sent as a `fields=` CSV; `where()`, `path_params` and `parent_filters` are unsupported |

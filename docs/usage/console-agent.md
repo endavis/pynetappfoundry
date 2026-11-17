@@ -150,9 +150,34 @@ match = list(
 )
 ```
 
+The six cloud working environment lists work the same way, each with its own model from `src/pynetappfoundry/models/console/cvo/`:
+
+```python
+from pynetappfoundry.models.console.cvo.get_azure_ha_working_environments import (
+    ResponseBody as AzureHaEnvironment,
+)
+
+azure = list(
+    ds.query(AzureHaEnvironment, cluster="agent-id").filter(
+        {"providerProperties.regionName": "region-placeholder"}
+    )
+)
+```
+
+| Model module | Endpoint (`/occm/api/...`) | Mapping | Explicit-fetch set |
+| :--- | :--- | :--- | :--- |
+| `get_vsa_working_environments` | `vsa/working-environments` (AWS single node) | `OccmAwsWorkingEnvironment` | inferred |
+| `get_aws_ha_working_environments` | `aws/ha/working-environments` | `OccmAwsHaWorkingEnvironment` | measured |
+| `get_azure_vsa_working_environments` | `azure/vsa/working-environments` | `OccmAzureWorkingEnvironment` | measured |
+| `get_azure_ha_working_environments` | `azure/ha/working-environments` | `OccmAzureHaWorkingEnvironment` | measured |
+| `get_gcp_vsa_working_environments` | `gcp/vsa/working-environments` | `OccmGcpWorkingEnvironment` | inferred |
+| `get_gcp_ha_working_environments` | `gcp/ha/working-environments` | `OccmGcpHaWorkingEnvironment` | inferred |
+
+"Inferred" lists were empty on every measured agent, so their set is taken from the 8 default keys measured on the other lists. The generated tags model drops a dict's keys, so tags are not kept until #1093.
+
 See [DataSource: OCCM](data-source.md#occm-console-agent) for the rules.
 
-- The on-premises working environments are also served from the OCCM cache ([ADR-0030](../decisions/0030-occm-cache-is-discovery-driven-and-maps-working-environments-to-agents.md)). `source="cache"` reads the cache and builds no client; `source="auto"` reads the cache for an agent that was collected and falls back to live once for one that was not.
+- The working environments (on-premises and cloud) are also served from the OCCM cache ([ADR-0030](../decisions/0030-occm-cache-is-discovery-driven-and-maps-working-environments-to-agents.md)). `source="cache"` reads the cache and builds no client; `source="auto"` reads the cache for an agent that was collected and falls back to live once for one that was not.
 - A query that needs some fields from the cache and some live goes live for all of the requested fields.
 - Cache filters are exact matches on the stored JSON path. Indexed `json_extract` paths are not supported.
 - Any mapping that is not cached stays live-only.
@@ -167,6 +192,7 @@ from pynetappfoundry.cache import OccmCacheDB, refresh_occm_cache
 snapshot = refresh_occm_cache(config)
 snapshot.failed_agents  # agents whose collection failed; their old rows are kept
 snapshot.skipped_agents  # agents with a status other than active; not contacted, old rows kept
+snapshot.failed_mappings  # (agent_id, mapping) pairs whose list raised TypeError or ValueError; old rows kept
 
 with OccmCacheDB(config=config) as db:
     db.agents_for_working_environment("<publicId>")  # sorted agent ids that list it
@@ -174,7 +200,7 @@ with OccmCacheDB(config=config) as db:
     db.organizations(), db.agents(), db.working_environments()  # the cached discovery
 ```
 
-Cache reads need no Console account. The reports still parse the CLI cloud metadata and show no Console links; both are tracked in #1086. A refresh and inspect CLI is #1087, and the cloud working environment lists are #1074.
+Cache reads need no Console account. The reports still parse the CLI cloud metadata and show no Console links; both are tracked in #1086. A refresh and inspect CLI is #1087.
 
 ## Marketplace subscriptions
 

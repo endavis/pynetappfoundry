@@ -7,7 +7,11 @@ environments in :data:`OCCM_CACHED_MAPPINGS` through the agent's typed ops, and
 
 A discovery failure propagates and the database is left untouched.  A failing
 agent is logged and recorded in :attr:`OccmSnapshot.failed_agents`; the other
-agents are still collected and the failed agent's earlier rows are kept.  An agent
+agents are still collected and the failed agent's earlier rows are kept.  A transport
+or auth error fails the whole agent; a ``TypeError`` or ``ValueError`` (including a
+pydantic ``ValidationError``) fails only that mapping, which is recorded in
+:attr:`OccmSnapshot.failed_mappings` and keeps its earlier rows.  When every mapping
+fails the agent is failed.  An agent
 whose status is set and is not ``active`` is not contacted; it is recorded in
 :attr:`OccmSnapshot.skipped_agents` and keeps its earlier rows too (#1091).
 
@@ -37,12 +41,29 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-#: The OCCM mappings the cache holds.  The cloud working environments stay live.
-OCCM_CACHED_MAPPINGS: tuple[str, ...] = ("OccmOnpremWorkingEnvironment",)
+#: The working-environment mappings: on-prem plus the six cloud lists (#1074).
+OCCM_WORKING_ENVIRONMENT_MAPPINGS: tuple[str, ...] = (
+    "OccmOnpremWorkingEnvironment",
+    "OccmAwsWorkingEnvironment",
+    "OccmAwsHaWorkingEnvironment",
+    "OccmAzureWorkingEnvironment",
+    "OccmAzureHaWorkingEnvironment",
+    "OccmGcpWorkingEnvironment",
+    "OccmGcpHaWorkingEnvironment",
+)
+
+#: The OCCM mappings the cache holds.
+OCCM_CACHED_MAPPINGS: tuple[str, ...] = OCCM_WORKING_ENVIRONMENT_MAPPINGS
 
 #: ``mapping.api_endpoint`` -> name of the ``ConsoleAgentOps`` method that lists it.
 OCCM_LIST_OPS: dict[str, str] = {
     "/occm/api/onprem/working-environments": "list_onprem_working_environments",
+    "/occm/api/vsa/working-environments": "list_vsa_working_environments",
+    "/occm/api/aws/ha/working-environments": "list_aws_ha_working_environments",
+    "/occm/api/azure/vsa/working-environments": "list_azure_vsa_working_environments",
+    "/occm/api/azure/ha/working-environments": "list_azure_ha_working_environments",
+    "/occm/api/gcp/vsa/working-environments": "list_gcp_vsa_working_environments",
+    "/occm/api/gcp/ha/working-environments": "list_gcp_ha_working_environments",
 }
 
 
@@ -76,6 +97,9 @@ class OccmSnapshot:
         failed_agents: Ids of the agents whose collection failed.
         skipped_agents: Ids of the agents not contacted because their status
             is set and is not ``active``.
+        failed_mappings: ``(agent_id, mapping)`` pairs whose list failed with a
+            ``TypeError`` or ``ValueError`` while the agent itself was collected;
+            the mapping keeps its earlier rows.
     """
 
     cached_at: datetime
@@ -83,6 +107,7 @@ class OccmSnapshot:
     agents: tuple[OccmAgentSnapshot, ...] = ()
     failed_agents: tuple[str, ...] = field(default=())
     skipped_agents: tuple[str, ...] = field(default=())
+    failed_mappings: tuple[tuple[str, str], ...] = field(default=())
 
 
 class OccmCollector:
@@ -153,6 +178,7 @@ class OccmCollector:
         collected: list[OccmAgentSnapshot] = []
         failed: list[str] = []
         skipped: list[str] = []
+        failed_mappings: list[tuple[str, str]] = []
         seen: set[str] = set()
         for agent in inventory.agents():
             if agent.agent_id in seen:
@@ -162,12 +188,22 @@ class OccmCollector:
                 logger.info("OCCM agent %s: skipped, status %r", agent.agent_id, agent.status)
                 skipped.append(agent.agent_id)
                 continue
+            records: dict[str, list[dict[str, Any]]] = {}
+            agent_failed_mappings: list[tuple[str, str]] = []
             try:
                 client = self._client(agent.agent_id, agent.scope)
-                records: dict[str, list[dict[str, Any]]] = {}
                 for mapping, op_name in resolved:
-                    items = getattr(client.ops, op_name)(fields="*")
-                    records[mapping.name] = [item.model_dump(mode="json") for item in items]
+                    try:
+                        items = getattr(client.ops, op_name)(fields="*")
+                        records[mapping.name] = [item.model_dump(mode="json") for item in items]
+                    except (TypeError, ValueError) as exc:
+                        logger.warning(
+                            "OCCM agent %s: mapping %s failed: %s",
+                            agent.agent_id,
+                            mapping.name,
+                            exc,
+                        )
+                        agent_failed_mappings.append((agent.agent_id, mapping.name))
             except (
                 requests.RequestException,
                 ConsoleAuthError,
@@ -178,6 +214,11 @@ class OccmCollector:
                 logger.warning("OCCM agent %s: collection failed: %s", agent.agent_id, exc)
                 failed.append(agent.agent_id)
                 continue
+            if resolved and len(agent_failed_mappings) == len(resolved):
+                logger.warning("OCCM agent %s: every mapping failed", agent.agent_id)
+                failed.append(agent.agent_id)
+                continue
+            failed_mappings.extend(agent_failed_mappings)
             collected.append(
                 OccmAgentSnapshot(
                     agent_id=agent.agent_id,
@@ -199,6 +240,7 @@ class OccmCollector:
             agents=tuple(collected),
             failed_agents=tuple(failed),
             skipped_agents=tuple(skipped),
+            failed_mappings=tuple(failed_mappings),
         )
 
 

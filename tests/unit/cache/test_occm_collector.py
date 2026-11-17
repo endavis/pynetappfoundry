@@ -23,6 +23,15 @@ from pynetappfoundry.models.console.cvo.get_onprem_working_environments import R
 from pynetappfoundry.models.console_types import ConsoleAgentInfo
 
 _MAPPING = "OccmOnpremWorkingEnvironment"
+_ALL_MAPPINGS = (
+    "OccmOnpremWorkingEnvironment",
+    "OccmAwsWorkingEnvironment",
+    "OccmAwsHaWorkingEnvironment",
+    "OccmAzureWorkingEnvironment",
+    "OccmAzureHaWorkingEnvironment",
+    "OccmGcpWorkingEnvironment",
+    "OccmGcpHaWorkingEnvironment",
+)
 
 
 def _inventory(
@@ -62,7 +71,8 @@ def _factory(envs: dict[str, list[str]], failing: dict[str, Exception] | None = 
         client = MagicMock(name=f"client-{agent_id}")
         op = client.ops.list_onprem_working_environments
         if agent_id in failing:
-            op.side_effect = failing[agent_id]
+            for op_name in OCCM_LIST_OPS.values():
+                getattr(client.ops, op_name).side_effect = failing[agent_id]
         else:
             op.return_value = [ResponseBody(publicId=p, name=f"n-{p}") for p in envs[agent_id]]
         clients[agent_id] = client
@@ -74,9 +84,15 @@ def _factory(envs: dict[str, list[str]], failing: dict[str, Exception] | None = 
 
 
 def test_cached_mappings_and_ops() -> None:
-    assert OCCM_CACHED_MAPPINGS == (_MAPPING,)
+    assert OCCM_CACHED_MAPPINGS == _ALL_MAPPINGS
     assert OCCM_LIST_OPS == {
-        "/occm/api/onprem/working-environments": "list_onprem_working_environments"
+        "/occm/api/onprem/working-environments": "list_onprem_working_environments",
+        "/occm/api/vsa/working-environments": "list_vsa_working_environments",
+        "/occm/api/aws/ha/working-environments": "list_aws_ha_working_environments",
+        "/occm/api/azure/vsa/working-environments": "list_azure_vsa_working_environments",
+        "/occm/api/azure/ha/working-environments": "list_azure_ha_working_environments",
+        "/occm/api/gcp/vsa/working-environments": "list_gcp_vsa_working_environments",
+        "/occm/api/gcp/ha/working-environments": "list_gcp_ha_working_environments",
     }
 
 

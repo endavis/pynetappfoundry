@@ -330,6 +330,7 @@ live-only OCCM backend ([ADR-0027](../decisions/0027-occm-backend-is-live-only-a
 - Equality filters (dotted paths) are applied in memory. `tenantId` is filtered in memory too, because the server's `tenant_id` parameter does not match the item's own `tenantId`. `.where()` and `path_params` are not supported.
 - Fifteen fields (for example `ontapClusterProperties`, `svms`, `status`) come back only when requested. Name them in `.fields()` or filter on them and the backend sends `fields=`.
 - `ds.get(..., id=<publicId>)` filters the one list response in memory.
+- The six cloud lists (AWS, AWS HA, Azure, Azure HA, GCP, GCP HA; models in `src/pynetappfoundry/models/console/cvo/`) work the same way. Everything except the 8 default keys (`cloudProviderName`, `creatorUserEmail`, `isHA`, `name`, `publicId`, `svmName`, `tenantId`, `workingEnvironmentType`) comes back only when requested. In `auto`, an agent with no working environments of a type has an empty cache result and goes live each time, as the on-prem list does.
 
 See [Console Agent: DataSource](console-agent.md#datasource) for an example.
 
