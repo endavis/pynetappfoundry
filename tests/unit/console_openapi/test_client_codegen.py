@@ -341,6 +341,26 @@ def test_real_manifest_types_onprem_working_environments_as_list() -> None:
     assert "-> list[get_onprem_working_environments.ResponseBody]:" in src
 
 
+@pytest.mark.parametrize(
+    ("name", "module"),
+    [
+        ("list_vsa_working_environments", "get_vsa_working_environments"),
+        ("list_aws_ha_working_environments", "get_aws_ha_working_environments"),
+        ("list_azure_vsa_working_environments", "get_azure_vsa_working_environments"),
+        ("list_azure_ha_working_environments", "get_azure_ha_working_environments"),
+        ("list_gcp_vsa_working_environments", "get_gcp_vsa_working_environments"),
+        ("list_gcp_ha_working_environments", "get_gcp_ha_working_environments"),
+    ],
+)
+def test_real_manifest_types_cloud_working_environments_as_list(name: str, module: str) -> None:
+    """The six cloud lists are agent ops typed as lists of their own model (#1074)."""
+    manifest = cg.load_manifest()
+    entry = next(e for e in manifest if e["name"] == name)
+    assert entry["client"] == "agent"
+    src = cg.render_all(manifest, cg.load_spec())["agent_ops.py"]
+    assert f"-> list[{module}.ResponseBody]:" in src
+
+
 def _array_spec(items: dict[str, Any]) -> dict[str, Any]:
     spec = _spec()
     spec["paths"]["/agent/things"]["get"]["responses"] = {

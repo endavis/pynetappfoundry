@@ -74,6 +74,42 @@ name = "list_onprem_working_environments"
 query = { fields = { style = "csv" } }
 
 [[operation]]
+operation_id = "cvo_get_occm_api_vsa_working_environments"
+client = "agent"
+name = "list_vsa_working_environments"
+query = { fields = { style = "csv" } }
+
+[[operation]]
+operation_id = "cvo_get_occm_api_aws_ha_working_environments"
+client = "agent"
+name = "list_aws_ha_working_environments"
+query = { fields = { style = "csv" } }
+
+[[operation]]
+operation_id = "cvo_get_occm_api_azure_vsa_working_environments"
+client = "agent"
+name = "list_azure_vsa_working_environments"
+query = { fields = { style = "csv" } }
+
+[[operation]]
+operation_id = "cvo_get_occm_api_azure_ha_working_environments"
+client = "agent"
+name = "list_azure_ha_working_environments"
+query = { fields = { style = "csv" } }
+
+[[operation]]
+operation_id = "cvo_get_occm_api_gcp_vsa_working_environments"
+client = "agent"
+name = "list_gcp_vsa_working_environments"
+query = { fields = { style = "csv" } }
+
+[[operation]]
+operation_id = "cvo_get_occm_api_gcp_ha_working_environments"
+client = "agent"
+name = "list_gcp_ha_working_environments"
+query = { fields = { style = "csv" } }
+
+[[operation]]
 operation_id = "cvo_get_occm_api_onprem_working_environments_by_workingEnvironmentId"
 client = "agent"
 name = "get_onprem_working_environment"

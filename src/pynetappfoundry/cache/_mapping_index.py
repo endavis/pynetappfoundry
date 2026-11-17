@@ -1510,6 +1510,42 @@ MAPPING_INDEX: dict[str, tuple[str, str, str, str | None]] = {
         "DiiZonemember",
         "dii/assets/zoneMembers/zoneMembers.toml",
     ),
+    "OccmAwsHaWorkingEnvironment": (
+        "pynetappfoundry.cache.occm.aws_ha_working_environments.mapping",
+        "pynetappfoundry.models.console.cvo.get_aws_ha_working_environments",
+        "ResponseBody",
+        None,
+    ),
+    "OccmAwsWorkingEnvironment": (
+        "pynetappfoundry.cache.occm.aws_working_environments.mapping",
+        "pynetappfoundry.models.console.cvo.get_vsa_working_environments",
+        "ResponseBody",
+        None,
+    ),
+    "OccmAzureHaWorkingEnvironment": (
+        "pynetappfoundry.cache.occm.azure_ha_working_environments.mapping",
+        "pynetappfoundry.models.console.cvo.get_azure_ha_working_environments",
+        "ResponseBody",
+        None,
+    ),
+    "OccmAzureWorkingEnvironment": (
+        "pynetappfoundry.cache.occm.azure_working_environments.mapping",
+        "pynetappfoundry.models.console.cvo.get_azure_vsa_working_environments",
+        "ResponseBody",
+        None,
+    ),
+    "OccmGcpHaWorkingEnvironment": (
+        "pynetappfoundry.cache.occm.gcp_ha_working_environments.mapping",
+        "pynetappfoundry.models.console.cvo.get_gcp_ha_working_environments",
+        "ResponseBody",
+        None,
+    ),
+    "OccmGcpWorkingEnvironment": (
+        "pynetappfoundry.cache.occm.gcp_working_environments.mapping",
+        "pynetappfoundry.models.console.cvo.get_gcp_vsa_working_environments",
+        "ResponseBody",
+        None,
+    ),
     "OccmOnpremWorkingEnvironment": (
         "pynetappfoundry.cache.occm.onprem_working_environments.mapping",
         "pynetappfoundry.models.console.cvo.get_onprem_working_environments",

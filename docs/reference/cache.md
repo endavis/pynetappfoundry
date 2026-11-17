@@ -1089,15 +1089,17 @@ The Console agent (OCCM) has its own cache, separate from the ONTAP and AIQUM fi
 | Class | `OccmCacheDB` in `src/pynetappfoundry/cache/occm_db.py` (`SCHEMA_VERSION = 1`) |
 | File | `{config_dir}/.cache/occm_cache.db` |
 | Tables | `occm_collections` (`agent_id`, `mapping`, `scope`, `organization_id`, `cached_at`), `occm_records` (`agent_id`, `mapping`, `record_key`, raw JSON `record`), `occm_inventory` (`kind`, `scope`, `organization_id`, `object_id`, `record`, `cached_at`) |
-| Collected | `OccmOnpremWorkingEnvironment` (`OCCM_CACHED_MAPPINGS`), listed with `fields="*"` |
+| Collected | The seven working environment mappings (`OCCM_CACHED_MAPPINGS`, equal to `OCCM_WORKING_ENVIRONMENT_MAPPINGS`): `OccmOnpremWorkingEnvironment`, `OccmAwsWorkingEnvironment`, `OccmAwsHaWorkingEnvironment`, `OccmAzureWorkingEnvironment`, `OccmAzureHaWorkingEnvironment`, `OccmGcpWorkingEnvironment` and `OccmGcpHaWorkingEnvironment`, each listed with `fields="*"` |
 | Populate | `refresh_occm_cache(config)` in `src/pynetappfoundry/cache/occm_collector.py` |
 
 - A refresh runs `ConsoleDiscovery`, then lists the working environments of each discovered agent (deduplicated by `agent_id`; the first account wins). The inventory (organizations, agents and working environments) is replaced on every refresh.
 - A discovery failure propagates and leaves the database unchanged. A failing agent is logged and returned in `OccmSnapshot.failed_agents`; its earlier rows and `cached_at` are kept. An agent whose status is set and is not `active` (case-insensitive) is not contacted; it is listed in `OccmSnapshot.skipped_agents` and keeps its earlier rows too. An agent with no status is still collected. Agents that are no longer discovered are pruned.
-- The working environment to agent mapping is derived from the records: `OccmCacheDB.agents_for_working_environment(public_id)` returns the sorted ids of the agents that list it, and `working_environment_agents()` returns the whole mapping.
+- Failures are isolated per mapping. A transport or auth error fails the whole agent. A `TypeError` or `ValueError` (including a pydantic `ValidationError`) fails only that mapping: it is logged, listed as `(agent_id, mapping)` in `OccmSnapshot.failed_mappings`, and keeps its earlier rows and `cached_at`. If every mapping fails, the agent is in `failed_agents`.
+- Tags are dropped from the cloud records until #1093: the generated `Tags` model keeps no dict keys.
+- The working environment to agent mapping covers all seven working environment mappings and is derived from the records: `OccmCacheDB.agents_for_working_environment(public_id)` returns the sorted ids of the agents that list it, and `working_environment_agents()` returns the whole mapping.
 - Records are stored as `item.model_dump(mode="json")` and validated back into the model on read. Cache filters are exact matches on the JSON path; indexed `json_extract` paths are not supported.
 - Staleness: `OccmCacheDB.is_stale(agent_id, ttl_days=30)` reports age only and never changes routing.
-- Rebuilding: delete the file, or call `refresh_occm_cache` again. A refresh and inspect CLI is #1087, and the cloud working environment lists are #1074.
+- Rebuilding: delete the file, or call `refresh_occm_cache` again. A refresh and inspect CLI is #1087.
 
 ## Benchmarks
 

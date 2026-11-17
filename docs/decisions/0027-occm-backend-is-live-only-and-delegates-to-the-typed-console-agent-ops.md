@@ -35,7 +35,7 @@ Read-only probes against a lab Console agent through Console SaaS, using `ops.li
 4. **D4, model class.** The generated `models/console/cvo/get_onprem_working_environments.ResponseBody` is used directly. It is a plain `BaseModel`: no `F` DSL and no `_fetched_fields` stamp, so filters are dicts.
 5. **D5, target.** If `cluster` is a key of `[connectors]`, the backend reads that entry's optional `agent_id` and raises `ValueError` naming `connectors.<name>` when it is missing or blank. Any other value is the agent id itself. Credentials come from `consoleapi.toml` and `users.toml [console]` through `ConsoleAgentClient`.
 6. **D6, live-only.** `live_only = True`: `auto` goes live and `source="cache"` raises `ValueError`. Superseded for the cached mappings by [ADR-0030](0030-occm-cache-is-discovery-driven-and-maps-working-environments-to-agents.md) (#1076): `live_only = False` and the mappings in `OCCM_CACHED_MAPPINGS` are served from the OCCM cache. Every other mapping stays live-only.
-7. **D7, endpoints.** Only `GET /occm/api/onprem/working-environments`, through `list_onprem_working_environments`, so the op manifest does not change. A follow-up issue covers the vsa, azure/vsa, gcp/vsa and aws/ha lists. `get()` by `publicId` filters the list in memory.
+7. **D7, endpoints.** Superseded by #1074: the on-prem list plus six cloud lists (`/occm/api/vsa`, `aws/ha`, `azure/vsa`, `azure/ha`, `gcp/vsa` and `gcp/ha` `working-environments`), each through its own `list_*_working_environments` op and its own mapping built by `src/pynetappfoundry/cache/occm/_working_environments.py`. Measured against live Console agents (read-only, scrubbed; see the #1074 comments): AWS HA, Azure single node and Azure HA return only 8 default keys (`cloudProviderName`, `creatorUserEmail`, `isHA`, `name`, `publicId`, `svmName`, `tenantId`, `workingEnvironmentType`); every other field needs `fields=`. AWS single node, GCP single node and GCP HA were empty everywhere, so their explicit-fetch set is inferred from those 8 keys. The generated `Tags` model drops a dict's keys and the `AvailabilityZone` model rejects a string; those gaps are #1093. `get()` by `publicId` filters the list in memory.
 8. **D8, envelope and filters.**
    - The response is a bare array with no paging, so `records_path=""`.
    - 15 fields are `requires_explicit_fetch=True` (P2): `actionsRequired`, `capacityFeatures`, `cbsProperties`, `cloudSyncProperties`, `clusterProperties`, `complianceProperties`, `cronJobSchedules`, `interClusterLifs`, `monitoringProperties`, `ontapClusterProperties`, `replicationProperties`, `reservedSize`, `snapshotPolicies`, `status`, `svms`. They are sent as a `fields=` CSV when named in `.fields()` or when a filter key starts with one of them.
@@ -57,6 +57,7 @@ Read-only probes against a lab Console agent through Console SaaS, using `ops.li
 ## Related Issues
 
 - Issue #1050: feat: add a Console agent (OCCM) DataSource backend
+- Issue #1074: feat: add the cloud working-environment lists to the occm DataSource backend
 
 ## Related Documentation
 

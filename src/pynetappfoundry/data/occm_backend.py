@@ -8,7 +8,8 @@ the typed ops on :class:`pynetappfoundry.clients.console.agent.ConsoleAgentClien
 The mappings in ``OCCM_CACHED_MAPPINGS`` are also served from the OCCM cache database
 (``src/pynetappfoundry/cache/occm_db.py``, #1076, ADR-0030); every other mapping is
 live-only.  A partial decision (some fields cached, some live) goes live for all of the
-requested fields.
+requested fields.  Those are the on-prem list and the six cloud working-environment
+lists (#1074); the backend routes all of them by ``mapping.api_endpoint``.
 
 The agent has no server-side filtering this backend relies on, so equality filters are
 applied in memory on dotted paths.  Fields the agent returns only on request
