@@ -285,6 +285,8 @@ decrypted, is reported as Invalid.
 | `--password TEXT` | Password (will prompt if not provided) |
 | `--no-encrypt` | Store password as plain text (not recommended) |
 
+`--type console` writes the root Console account's refresh token. A scope's Console credentials, including its refresh token in the scope's `users.toml` `[console]`, are edited by hand until #1081.
+
 **`config encrypt-value` options:**
 
 | Option | Description |

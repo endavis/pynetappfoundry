@@ -20,6 +20,7 @@ from pynetappfoundry.clients.console import (
     ConsoleUserTokenMissingError,
 )
 from pynetappfoundry.clients.console.agent import ConsoleAgentClient
+from pynetappfoundry.console.discovery import ConsoleDiscovery, ConsoleInventory
 from pynetappfoundry.models.console_types import (
     AccountSubscription,
     Connector,
@@ -215,6 +216,8 @@ __all__ = [
     "Console",
     "ConsoleAPIClient",
     "ConsoleAuthError",
+    "ConsoleDiscovery",
+    "ConsoleInventory",
     "ConsoleServiceTokenMissingError",
     "ConsoleUserTokenMissingError",
     "Folder",

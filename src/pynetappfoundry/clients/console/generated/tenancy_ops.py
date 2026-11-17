@@ -17,11 +17,13 @@ from pynetappfoundry.clients.console._ops_support import (
 )
 
 if TYPE_CHECKING:
+    from pynetappfoundry.models.console.agentsmgmt import get_agent, get_list_connectors
     from pynetappfoundry.models.console.dw import get_license_account_subscriptions_preferred
     from pynetappfoundry.models.console.tenancyv4 import (
         get_folders_,
         get_organizations,
         get_organizations_,
+        get_organizations_resources,
         get_projects_,
     )
 
@@ -105,6 +107,76 @@ class ConsoleTenancyOps:
         return get_organizations.Response200Body.model_validate(
             expect_object(response, "list_organizations")
         )
+
+    def list_organization_resources(
+        self,
+        organization_id: str,
+        *,
+        filter: str | None = None,
+        skip: str | None = None,
+        include: str | None = None,
+        limit: str | None = None,
+        order_by: str | None = None,
+        count: str | None = None,
+        continue_: str | None = None,
+    ) -> get_organizations_resources.Response200Body:
+        """GET /v1/management/organizations/{organization_id}/resources: List all resources under an organization.
+
+        operationId: tenancyv4_get_v1_management_organizations_by_organization_id_resources (generated; do not edit).
+        """
+        from pynetappfoundry.models.console.tenancyv4 import get_organizations_resources
+
+        kwargs: dict[str, Any] = {
+            "method": "GET",
+            "path_template": "/v1/management/organizations/{organization_id}/resources",
+        }
+        kwargs["path_params"] = {"organization_id": quote(organization_id, safe="")}
+        query = drop_none(
+            {
+                "filter": filter,
+                "skip": skip,
+                "include": include,
+                "limit": limit,
+                "orderBy": order_by,
+                "count": count,
+                "continue": continue_,
+            }
+        )
+        if query:
+            kwargs["query_params"] = query
+        response = self._dispatch(None, **kwargs)
+        return get_organizations_resources.Response200Body.model_validate(
+            expect_object(response, "list_organization_resources")
+        )
+
+    def list_connectors(self, organization_id: str) -> get_list_connectors.ResponseBody:
+        """GET /agents-mgmt/list-connectors/{organization_id}: List the agents (connectors) of an organization.
+
+        operationId: agentsmgmt_get_list_connectors_by_organization_id (generated; do not edit).
+        """
+        from pynetappfoundry.models.console.agentsmgmt import get_list_connectors
+
+        kwargs: dict[str, Any] = {
+            "method": "GET",
+            "path_template": "/agents-mgmt/list-connectors/{organization_id}",
+        }
+        kwargs["path_params"] = {"organization_id": quote(organization_id, safe="")}
+        response = self._dispatch(None, **kwargs)
+        return get_list_connectors.ResponseBody.model_validate(
+            expect_object(response, "list_connectors")
+        )
+
+    def get_agent(self, agent_id: str) -> get_agent.ResponseBody:
+        """GET /agents-mgmt/agent/{agent_id}: Retrieve one agent.
+
+        operationId: agentsmgmt_get_agent_by_agent_id (generated; do not edit).
+        """
+        from pynetappfoundry.models.console.agentsmgmt import get_agent
+
+        kwargs: dict[str, Any] = {"method": "GET", "path_template": "/agents-mgmt/agent/{agent_id}"}
+        kwargs["path_params"] = {"agent_id": quote(agent_id, safe="")}
+        response = self._dispatch(None, **kwargs)
+        return get_agent.ResponseBody.model_validate(expect_object(response, "get_agent"))
 
     def get_folder(
         self,

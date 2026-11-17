@@ -14,10 +14,17 @@ from pynetappfoundry.clients.console.auth import (
 )
 from pynetappfoundry.clients.console.generated import ConsoleTenancyOps
 from pynetappfoundry.clients.openapi import APIWrapper
-from pynetappfoundry.models.console_types import AccountSubscription, Folder, Organization, Project
+from pynetappfoundry.models.console_types import (
+    AccountSubscription,
+    ConsoleAgentInfo,
+    Folder,
+    Organization,
+    Project,
+)
 
 if TYPE_CHECKING:
     from pynetappfoundry.core.config import Config
+    from pynetappfoundry.models.console.tenancyv4 import get_organizations_resources
 
 
 def call_with_token(wrapper: APIWrapper, provider: TokenProvider | None, **kwargs: Any) -> Any:
@@ -294,6 +301,67 @@ class ConsoleAPIClient:
         """
         items = self.ops.list_organizations().items or []
         return [Organization.from_resource(item) for item in items]
+
+    def list_organization_resources(
+        self, organization_id: str
+    ) -> list[get_organizations_resources.Resource10GetResponseBody]:
+        """GET /v1/management/organizations/{organization_id}/resources, all pages.
+
+        Follows the ``continue`` cursor until a page has none.
+
+        Args:
+            organization_id: The organization UUID.
+
+        Returns:
+            Every resource of the organization, in page order.
+
+        Raises:
+            RuntimeError: If the service returns a cursor it already returned,
+                which would loop forever.
+        """
+        resources: list[get_organizations_resources.Resource10GetResponseBody] = []
+        seen: set[str] = set()
+        cursor: str | None = None
+        while True:
+            page = self.ops.list_organization_resources(organization_id, continue_=cursor)
+            resources.extend(page.items or [])
+            cursor = page.continue_
+            if not cursor:
+                return resources
+            if cursor in seen:
+                raise RuntimeError(
+                    f"Console returned the same continue cursor twice while listing the "
+                    f"resources of organization {organization_id!r}; stopping."
+                )
+            seen.add(cursor)
+
+    def list_agents(self, organization_id: str) -> list[ConsoleAgentInfo]:
+        """GET /agents-mgmt/list-connectors/{organization_id} (user or service token).
+
+        Pagination and the ``status`` values of the response are not handled (#1083).
+
+        Args:
+            organization_id: The organization UUID.
+
+        Returns:
+            The organization's agents, tagged with this client's scope.
+        """
+        occms = self.ops.list_connectors(organization_id).occms or []
+        return [
+            ConsoleAgentInfo.from_occm(occm, scope=self.scope, organization_id=organization_id)
+            for occm in occms
+        ]
+
+    def get_agent(self, agent_id: str) -> ConsoleAgentInfo:
+        """GET /agents-mgmt/agent/{agent_id} (user or service token).
+
+        Args:
+            agent_id: The Console agent id.
+
+        Returns:
+            The compact agent, tagged with this client's scope.
+        """
+        return ConsoleAgentInfo.from_agent(self.ops.get_agent(agent_id), scope=self.scope)
 
     def get_folder(self, folder_id: str) -> Folder:
         """GET /v1/management/folders/{folder_id} (user or service token).

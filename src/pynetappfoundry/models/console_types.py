@@ -13,11 +13,13 @@ from typing import TYPE_CHECKING
 from pydantic import BaseModel, ConfigDict, Field
 
 if TYPE_CHECKING:
+    from pynetappfoundry.models.console.agentsmgmt import get_agent, get_list_connectors
     from pynetappfoundry.models.console.cvo import (
         get_occm_saas_mp_service_account,
         get_occm_system_about,
     )
     from pynetappfoundry.models.console.dw import get_license_account_subscriptions_preferred
+    from pynetappfoundry.models.console.tenancyv4 import get_organizations_resources
     from pynetappfoundry.models.console.tenancyv4.get_organizations import (
         Resource10GetResponseBody,
     )
@@ -267,10 +269,131 @@ class AccountSubscription(BaseModel):
         return cls.model_validate(data)
 
 
+class ConsoleAgentInfo(BaseModel):
+    """Compact view of a Console agent found by discovery (#1078).
+
+    Source schemas: the ``Agent`` of an ``Occm`` in the response of
+    ``GET /agents-mgmt/list-connectors/{organization_id}``, or of
+    ``GET /agents-mgmt/agent/{agent_id}``.  The callback URIs, ``network``,
+    ``subnet`` and ``creatorUserId`` are dropped.  ``scope`` is the account that
+    listed the agent (None for the root account); ``organization_id`` is the
+    organization it was listed under, or None when it came from ``get_agent``.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    agent_id: str = Field(alias="agentId")
+    name: str | None = None
+    status: str | None = None
+    agent_type: str | None = Field(default=None, alias="agentType")
+    provider: str | None = None
+    region: str | None = None
+    system_id: str | None = Field(default=None, alias="systemId")
+    scope: str | None = None
+    organization_id: str | None = None
+
+    @classmethod
+    def from_occm(
+        cls,
+        occm: get_list_connectors.Occm,
+        *,
+        scope: str | None,
+        organization_id: str,
+    ) -> ConsoleAgentInfo:
+        """Build from one ``occms`` item of the list-connectors response.
+
+        Args:
+            occm: Generated model from agentsmgmt/get_list_connectors.
+            scope: The account scope that listed it, or None for the root.
+            organization_id: The organization it was listed under.
+
+        Returns:
+            The compact agent.  A missing agent status falls back to the Occm status.
+
+        Raises:
+            pydantic.ValidationError: If the item has no ``agent.agentId``.
+        """
+        data = occm.agent.model_dump() if occm.agent is not None else {}
+        if data.get("status") is None:
+            data["status"] = occm.status
+        return cls.model_validate({**data, "scope": scope, "organization_id": organization_id})
+
+    @classmethod
+    def from_agent(
+        cls,
+        body: get_agent.ResponseBody,
+        *,
+        scope: str | None,
+        organization_id: str | None = None,
+    ) -> ConsoleAgentInfo:
+        """Build from the response of ``get_agent``.
+
+        Args:
+            body: Generated model from agentsmgmt/get_agent.
+            scope: The account scope that fetched it, or None for the root.
+            organization_id: The organization it belongs to, when known.
+
+        Returns:
+            The compact agent.
+
+        Raises:
+            pydantic.ValidationError: If the response has no ``agent.agentId``.
+        """
+        data = body.agent.model_dump() if body.agent is not None else {}
+        return cls.model_validate({**data, "scope": scope, "organization_id": organization_id})
+
+
+class ConsoleWorkingEnvironment(BaseModel):
+    """Compact view of a Console working environment found by discovery (#1078).
+
+    Source schema: an organization resource of type ``ON_PREM`` in the response of
+    ``GET /v1/management/organizations/{organization_id}/resources``.
+    ``public_id`` is the resource's ``rawId``, the id the Console agent uses for
+    the working environment.  Mapping a working environment to its agents is not
+    done here (#1076).
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str
+    name: str | None = None
+    public_id: str | None = Field(default=None, alias="rawId")
+    resource_type: str | None = Field(default=None, alias="resourceType")
+    state: str | None = None
+    scope: str | None = None
+    organization_id: str
+
+    @classmethod
+    def from_resource(
+        cls,
+        resource: get_organizations_resources.Resource10GetResponseBody,
+        *,
+        scope: str | None,
+        organization_id: str,
+    ) -> ConsoleWorkingEnvironment:
+        """Build from one organization resource.
+
+        Args:
+            resource: Generated model from tenancyv4/get_organizations_resources.
+            scope: The account scope that listed it, or None for the root.
+            organization_id: The organization it was listed under.
+
+        Returns:
+            The compact working environment.
+
+        Raises:
+            pydantic.ValidationError: If the resource has no ``id``.
+        """
+        data = resource.model_dump(include={"id", "name", "rawId", "resourceType", "state"})
+        return cls.model_validate({**data, "scope": scope, "organization_id": organization_id})
+
+
 __all__ = [
     "AccountSubscription",
     "Connector",
     "ConnectorSiteIdentifier",
+    "ConsoleAgentInfo",
+    "ConsoleWorkingEnvironment",
     "Folder",
     "MarketplaceSubscription",
     "Organization",

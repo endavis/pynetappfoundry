@@ -110,6 +110,34 @@ Pass a full commit SHA rather than a branch name, so the lockfile's
      or raise.
    `openapi-spec-validator` runs against the final document.
 
+## Spec fragments
+
+The Console `/agents-mgmt` endpoints are not in the NetAppDocs sources, so the
+parser cannot produce them (#1078). Each `fragments/*.yaml` file is a partial
+OpenAPI document: an `x-namespace`, `paths` and `components.schemas`, with
+fields taken from live probes. `fragments.py` merges them into the built spec
+after the docs paths:
+
+- every operation must carry `x-evidence: live`;
+- a fragment may not redefine an existing path or schema, and its schema names
+  must start with its namespace;
+- the merge records what each fragment added in `info.x-fragments`, so
+  `strip_fragments` can remove exactly those entries again.
+
+`doit console_openapi_refresh` (the `build` command) merges the fragments into
+a fresh build. To apply an edited fragment to the committed spec without
+fetching the docs repo, run the offline task:
+
+```bash
+doit console_openapi_fragments
+doit console_models
+doit console_client
+```
+
+A test checks that stripping and re-merging the committed spec reproduces it
+byte for byte. Users must copy the updated `console_openapi.yaml` into
+`<config_dir>/apis/console/` again.
+
 ## Server URLs
 
 Every path key in the generated spec is the full path from the host: the

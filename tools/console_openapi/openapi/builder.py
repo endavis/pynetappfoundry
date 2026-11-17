@@ -109,8 +109,13 @@ def build_spec(
     title: str = "NetApp BlueXP / Console SaaS API",
     version: str = "1.0.0-derived",
     array_responses: Collection[tuple[str, str]] = (),
+    fragments: Collection[tuple[str, dict[str, Any]]] = (),
 ) -> dict[str, Any]:
-    """Build the combined OpenAPI 3.0.3 document and return it as a Python dict."""
+    """Build the combined OpenAPI 3.0.3 document and return it as a Python dict.
+
+    ``fragments`` are hand-written ``(name, document)`` pairs merged after the docs
+    paths (#1078); see ``tools/console_openapi/fragments.py``.
+    """
     components_schemas: dict[str, Any] = {}
     paths: dict[str, dict[str, Any]] = defaultdict(dict)
     operation_ids: set[str] = set()
@@ -172,6 +177,10 @@ def build_spec(
 
     _wrap_array_responses(paths, array_responses)
     _loosen_response_schemas(paths, components_schemas)
+    # Imported here: fragments.py imports BuildError from this module.
+    from tools.console_openapi.fragments import merge_fragments
+
+    merge_fragments(spec, fragments)
     _enforce_invariants(spec)
     return spec
 

@@ -107,6 +107,14 @@ A scope has at most one Console account, and it is strict:
 - The refresh token comes only from the scope's `users.toml` `[console]`, with no root fallback. The `NF_CONSOLE_USER` and `NF_CONSOLE_PASSWORD` variables apply to the root account only and are ignored for a scope.
 - `Console(config, scope="Org1")`, `ConsoleAPIClient(config, scope=...)` and `ConsoleAgentClient(config, agent_id, scope=...)` use the scope's account. The OCCM `DataSource` backend uses the scope of the connector it queries.
 
+### Console accounts and discovery
+
+Each scope's `consoleapi.toml` is a Console service account, and the root is the default account. `Config.console_account_scopes()` lists them: `None` for the root, then the scopes that have a `consoleapi.toml`, sorted.
+
+- The root counts as an account only with credentials: its `[general]` has `user_token`, `service_token` or `client_id`, or a root refresh token resolves (`users.toml` `[console]` or `NF_CONSOLE_PASSWORD`). A root that only carries `base_url`, `ui_base_url`, `base_api_path` or `timeout` is not an account.
+- `org_id` is not needed for discovery: `ConsoleDiscovery` finds the organizations of each account. See [Console Agent](../usage/console-agent.md#discovering-organizations-agents-and-working-environments).
+- `[connectors].agent_id` is still required for a connector; discovery does not fill it in.
+
 ### Unique names
 
 Object names must be unique across the config directory whenever a scope is involved. When either copy of a name is in a scope (two scopes, the root and a scope, or the same scope twice), loading raises `ConfigurationError` naming both files. Two copies in the root keep the older behavior: the last one loaded wins.

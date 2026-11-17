@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
 import click
 import yaml
@@ -16,9 +17,19 @@ from tools.console_openapi.array_responses import (
     load_array_responses,
 )
 from tools.console_openapi.fetcher import DEFAULT_REPO, fetch
+from tools.console_openapi.fragments import (
+    FRAGMENTS_DIR,
+    load_fragments,
+    merge_fragments,
+    strip_fragments,
+)
 from tools.console_openapi.lockfile import Lockfile
 from tools.console_openapi.models import ParsedEndpoint
-from tools.console_openapi.openapi.builder import _SERVICE_BASE_PATHS, build_spec
+from tools.console_openapi.openapi.builder import (
+    _SERVICE_BASE_PATHS,
+    _enforce_invariants,
+    build_spec,
+)
 from tools.console_openapi.walker import parse_service
 
 DEFAULT_SERVICES: tuple[str, ...] = ("tenancy", "tenancyv4", "cvo", "dw")
@@ -69,6 +80,14 @@ def cli() -> None:
     show_default=True,
     help="TOML list of operations whose response is a JSON array (#1021).",
 )
+@click.option(
+    "--fragments-dir",
+    "fragments_dir",
+    type=click.Path(exists=True, file_okay=False, path_type=Path),
+    default=FRAGMENTS_DIR,
+    show_default=True,
+    help="Directory of hand-written spec fragments merged into the spec (#1078).",
+)
 def build(
     ref: str,
     services: tuple[str, ...],
@@ -78,6 +97,7 @@ def build(
     lenient: bool,
     repo: str,
     array_responses_path: Path,
+    fragments_dir: Path,
 ) -> None:
     """Fetch sources, parse, build the OpenAPI document, and write it to disk."""
     unmapped = [s for s in services if s not in _SERVICE_BASE_PATHS]
@@ -121,6 +141,7 @@ def build(
         source_repo=repo.removesuffix(".git"),
         included_services=services,
         array_responses=array_ops,
+        fragments=load_fragments(fragments_dir),
     )
 
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -143,6 +164,38 @@ def build(
     click.echo(f"Wrote {lockfile}")
 
     _validate(spec)
+
+
+@cli.command("apply-fragments")
+@click.option(
+    "--spec",
+    "spec_path",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    default=Path("tools/console_openapi/generated/console_openapi.yaml"),
+    show_default=True,
+    help="Spec file to update in place.",
+)
+@click.option(
+    "--fragments-dir",
+    "fragments_dir",
+    type=click.Path(exists=True, file_okay=False, path_type=Path),
+    default=FRAGMENTS_DIR,
+    show_default=True,
+    help="Directory of hand-written spec fragments.",
+)
+def apply_fragments(spec_path: Path, fragments_dir: Path) -> None:
+    """Re-apply the spec fragments to the committed spec, offline (#1078).
+
+    Strips the entries a previous run merged, merges the fragments again and
+    rewrites the spec, so editing a fragment needs no fetch of the docs repo.
+    """
+    spec: dict[str, Any] = yaml.safe_load(spec_path.read_text(encoding="utf-8"))
+    strip_fragments(spec)
+    merge_fragments(spec, load_fragments(fragments_dir))
+    _enforce_invariants(spec)
+    _validate(spec)
+    spec_path.write_text(yaml.safe_dump(spec, sort_keys=False), encoding="utf-8")
+    click.echo(f"Wrote {spec_path}")
 
 
 def _validate(spec: dict[str, object]) -> None:
