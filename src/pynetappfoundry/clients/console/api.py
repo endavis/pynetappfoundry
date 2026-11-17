@@ -70,20 +70,32 @@ class ConsoleAPIClient:
     ``additional_headers``, and a 401 triggers one refresh and retry.
     """
 
-    def __init__(self, config: Config, *, token_session: requests.Session | None = None) -> None:
+    def __init__(
+        self,
+        config: Config,
+        *,
+        token_session: requests.Session | None = None,
+        scope: str | None = None,
+    ) -> None:
         """Initialize the Console API client.
 
         Args:
             config: Configuration object with Console API settings.
             token_session: Optional ``requests.Session`` used for the token
                 exchange (tests inject one).
+            scope: Use this scope's Console account instead of the root one.
 
         Raises:
             ConsoleAuthError: If client credentials are configured and the
                 initial token exchange fails.
         """
         self.config = config
-        settings = config.get_console_api_settings()
+        self.scope = scope
+        settings = (
+            config.get_console_api_settings()
+            if scope is None
+            else config.get_console_api_settings(scope=scope)
+        )
         spec_path = str(config.get_schema_location("console") / "console_openapi.yaml")
 
         self._user: APIWrapper | None

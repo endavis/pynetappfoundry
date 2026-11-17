@@ -1,0 +1,4 @@
+# Org1 thresholds. A scoped lookup (Config.get_object_setting) reads this file
+# first and falls back to the root monitoring.toml for anything not set here.
+[settings]
+default_thresholds = {inodes=70, aggregate=85, volume=85}

@@ -1,0 +1,21 @@
+# Inventory of the Org1 scope. Object names must be unique across the whole
+# config dir once a scope is involved, so these names appear nowhere else.
+
+[settings]
+type = "data"
+
+[clusters.ORG1-PROD-01]
+name = "ORG1-PROD-01"
+ip = "10.10.1.100"
+div = "Engineering"
+bu = "Platform"
+app = "DataServices"
+env = "Prod"
+tags = ["active"]
+
+[connectors.ORG1-CONNECTOR-01]
+ip = "10.10.1.132"
+agent_id = "your-agent-idclients"
+div = "Engineering"
+bu = "Platform"
+env = "Prod"

@@ -56,6 +56,19 @@ agent = ConsoleAgentClient(config, "your-agent-id", token_provider=provider)
 
 `Console.get_connector` and `Console.find_connector` do this for you: they share the user provider when set, otherwise the service provider.
 
+### Scoped Console accounts
+
+A config [scope](../reference/config-schema.md#scopes) can carry its own Console account (its own `consoleapi.toml` and refresh token). Pass the scope name to use it, instead of the root account:
+
+```python
+from pynetappfoundry.console import Console
+
+console = Console(config, scope="Org1")  # the account of docs/example-config/Org1
+agent = ConsoleAgentClient(config, "your-agent-id", scope="Org1")
+```
+
+A scope without its own `consoleapi.toml` raises `ConfigurationError`; it never falls back to the root account. The OCCM `DataSource` backend does this for you: it uses the scope of the `[connectors]` entry it queries, and the root account for a connector outside any scope or a raw agent id.
+
 ### Token types
 
 | Token | Status |

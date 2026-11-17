@@ -1,0 +1,11 @@
+# Org1 credentials. Looked up for Org1 objects after the object's own entry and
+# before the root users.toml; each of user and enc falls back independently.
+[clusters]
+user = "org1-admin"
+enc = "org1_admin_password"
+
+# This scope's Console refresh token. A scope never reads the root [console]
+# section or the NF_CONSOLE_* environment variables. `user` is only a label.
+# [console]
+# user = "console"
+# enc = "paste-refresh-token-here"

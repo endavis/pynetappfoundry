@@ -43,20 +43,29 @@ class Console:
     There is intentionally no ``ClusterEntry.console`` accessor in v1.
     """
 
-    def __init__(self, config: Config, org_id: str | None = None) -> None:
+    def __init__(
+        self, config: Config, org_id: str | None = None, *, scope: str | None = None
+    ) -> None:
         """Initialize the org-scoped Console facade.
 
         Args:
             config: Configuration object.
             org_id: The organization UUID to bind to.  If omitted, falls back
                     to ``org_id`` from ``consoleapi.toml [general]``.
+            scope: Use this config scope's Console account (its own
+                ``consoleapi.toml`` and refresh token) instead of the root one.
 
         Raises:
             ValueError: If no org_id is available from either source.
         """
         self._config = config
-        self._client = ConsoleAPIClient(config)
-        settings = config.get_console_api_settings()
+        self._scope = scope
+        if scope is None:
+            self._client = ConsoleAPIClient(config)
+            settings = config.get_console_api_settings()
+        else:
+            self._client = ConsoleAPIClient(config, scope=scope)
+            settings = config.get_console_api_settings(scope=scope)
         resolved = org_id or settings.org_id
         if not resolved:
             raise ValueError(
@@ -127,12 +136,13 @@ class Console:
         service provider (client credentials).
         """
         user_provider = self._client.user_token_provider
+        provider = (
+            user_provider if user_provider is not None else self._client.service_token_provider
+        )
+        if self._scope is None:
+            return ConsoleAgentClient(self._config, agent_id, token_provider=provider)
         return ConsoleAgentClient(
-            self._config,
-            agent_id,
-            token_provider=(
-                user_provider if user_provider is not None else self._client.service_token_provider
-            ),
+            self._config, agent_id, token_provider=provider, scope=self._scope
         )
 
     def get_connector(self, agent_id: str) -> Connector:
@@ -180,7 +190,12 @@ class Console:
         """
         ids = list(agent_ids) if agent_ids is not None else None
         if ids is None:
-            ids = list(self._config.get_console_api_settings().agent_ids)
+            settings = (
+                self._config.get_console_api_settings()
+                if self._scope is None
+                else self._config.get_console_api_settings(scope=self._scope)
+            )
+            ids = list(settings.agent_ids)
         if not ids:
             raise ValueError(
                 "find_connector requires agent ids, either as an argument or in "

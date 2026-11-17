@@ -1,0 +1,9 @@
+# Org1's own Console account. Only a [general] table is allowed. From the root
+# consoleapi.toml [general] a scope inherits only base_url, ui_base_url,
+# base_api_path and timeout; credentials, org_id and agent_ids come from here.
+[general]
+base_url = "https://api.bluexp.netapp.com"
+org_id = "your-org1-id"
+agent_ids = ["your-agent-idclients"]
+service_token = "paste-service-account-jwt-here"
+# The refresh token goes in Org1/users.toml under [console], never here.

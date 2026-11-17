@@ -213,6 +213,7 @@ See [Console Agent](../usage/console-agent.md#account-subscriptions) and [Consol
 - Issue #1012: fix: APIWrapper ignores per-operation servers (see "Per-operation servers (#1012)")
 - Issue #1015: refactor: key Console spec operations by their full path from the host (see "Per-operation servers (#1012)")
 - Issue #1001: feat: add a console agent (occm) api client (see "Console agent client (#1001)")
+- Issue #1080: feat: scope directories in the config dir, each with its own Console account (see ADR-0028)
 - Issue #1050: feat: add a Console agent (OCCM) DataSource backend (see [ADR-0027](0027-occm-backend-is-live-only-and-delegates-to-the-typed-console-agent-ops.md))
 - Issue #734: feat: extend ConsoleInfo with the cluster-scoped `connector` field (see "Console agent client (#1001)")
 - Issue #736: feat: add OAuth refresh-token grant flow to ConsoleAPIClient (see "User refresh-token grant (#736)")

@@ -1,0 +1,7 @@
+# Marks this directory as a scope (see docs/reference/config-schema.md#scopes).
+# Everything under Org1/ belongs to the scope "Org1": its data files, its
+# users.toml, monitoring.toml and consoleapi.toml.
+# `name` is optional; when set it must equal the directory name.
+name = "Org1"
+description = "Example scope: one Console account with its own inventory and credentials"
+tags = ["example"]
