@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 import tomllib
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -285,8 +286,8 @@ def test_two_files_with_the_stem_are_refused(tmp_path: Path) -> None:
 
     assert result.exit_code == 1
     squashed = "".join(result.output.split())
-    assert "a/consoleapi.toml" in squashed
-    assert "b/consoleapi.toml" in squashed
+    assert re.search(r"[\\/]a[\\/]consoleapi\.toml", squashed)
+    assert re.search(r"[\\/]b[\\/]consoleapi\.toml", squashed)
     assert "Value" not in _flat(result)
     encrypt.assert_not_called()
     assert _snapshot(config_dir) == before
