@@ -189,6 +189,7 @@ nav:
       - "ADR-0028 Scope directories partition the config dir with per-scope credentials, thresholds and Console account": decisions/0028-scope-directories-partition-the-config-dir-with-per-scope-credentials-thresholds-and-console-account.md
       - ADR-0029 Console discovery walks scope accounts and merges hand-written spec fragments: decisions/0029-console-discovery-walks-scope-accounts-and-merges-hand-written-spec-fragments.md
       - ADR-0030 OCCM cache is discovery-driven and maps working environments to agents: decisions/0030-occm-cache-is-discovery-driven-and-maps-working-environments-to-agents.md
+      - ADR-0031 One command stores every SOPS secret and encrypt-value is removed: decisions/0031-one-command-stores-every-sops-secret-and-encrypt-value-is-removed.md
       - Template Decisions:
           - ADR-9001 uv Package Management: decisions/9001-use-uv-for-package-management.md
           - ADR-9002 doit Task Automation: decisions/9002-use-doit-for-task-automation.md

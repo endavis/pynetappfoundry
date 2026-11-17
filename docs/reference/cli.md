@@ -258,8 +258,7 @@ nf config [OPTIONS] COMMAND [ARGS]...
 | `show` | Display current configuration (sensitive values masked by default) |
 | `validate` | Validate configuration files |
 | `init-sops` | Initialize SOPS encryption with age for credential storage |
-| `set-credential` | Set encrypted credentials for a cluster or resource type |
-| `encrypt-value` | Encrypt a value into a `SOPS[...]` string for a settings file |
+| `set-credential` | Set encrypted credentials for a cluster, resource type or settings secret |
 
 **`config show` options:**
 
@@ -280,7 +279,14 @@ Without `--scope` the summary adds a `Scopes:` line when the config has scopes.
 Checks that all configuration files parse and
 contain valid values. A settings section that is absent is reported as not
 configured; one that is present but invalid, or whose `SOPS[...]` value cannot be
-decrypted, is reported as Invalid. Without `--scope` the behavior is unchanged.
+decrypted, is reported as Invalid. Without `--scope` the root settings are checked,
+including a root Console row (`Console: Not configured (optional)` without an account; a
+broken account fails validation).
+
+When a Console account has a `client_id` but no `client_secret` and `users.toml` `[console]`
+holds a token, validate adds a hint: the secret was probably stored as a refresh token. It
+gives the exact `nf config set-credential --setting consoleapi.client_secret` command, with
+`--scope NAME` for a scope.
 
 **`config init-sops` options:**
 
@@ -294,24 +300,19 @@ decrypted, is reported as Invalid. Without `--scope` the behavior is unchanged.
 | Option | Description |
 |--------|-------------|
 | `--cluster TEXT` | Set credentials for a specific cluster. Alias for `--type clusters --name TEXT` |
-| `--type` | Set default credentials for all resources of a type: `aiqums`, `azure`, `cloudinsights`, `clusters`, `connectors`, `console`, `ibm` (`console` stores the Console refresh token: `--user` is only a label and the password prompt takes the token) |
+| `--type` | Set default credentials for all resources of a type: `aiqums`, `azure`, `cloudinsights`, `clusters`, `connectors`, `console`, `ibm` (`console` stores the Console refresh token, not the client secret; `--user` is only a label and the password prompt takes the token. Store the client secret with `--setting consoleapi.client_secret`) |
+| `--setting TARGET` | Store one SOPS-encrypted settings secret: `consoleapi.client_secret`, `consoleapi.service_token`, `consoleapi.user_token`, `diiapi.api_ro_token` or `settings.smtp_password`. Prompts for the value (hidden, with confirmation) or takes `--password`, encrypts it and writes `<field> = "SOPS[...]"` into the right file and table, keeping comments. Cannot be combined with `--cluster`, `--type`, `--name`, `--user` or `--no-encrypt`; needs `sops` (no plain text fallback). If more than one non-data file carries the target's stem, it refuses and lists them |
 | `--name TEXT` | With `--type`, set credentials for that one inventory object, written to its data file entry. An unknown name lists the available ones. For a token-style secret, `--user` is only a label and the password prompt takes the token. Not valid with `--cluster` or `--type console` |
-| `--scope TEXT` | With `--type` alone, write to `<config>/<scope>/users.toml` (created if missing) instead of the root `users.toml`. With `--cluster` or `--name`, it must equal the object's own scope; a mismatch fails, names the object's real scope (or the root) and writes nothing. An unknown scope lists the available ones |
-| `--user TEXT` | Username (required) |
-| `--password TEXT` | Password (will prompt if not provided) |
+| `--scope TEXT` | With `--type` alone, write to `<config>/<scope>/users.toml` (created if missing) instead of the root `users.toml`. With `--cluster` or `--name`, it must equal the object's own scope; a mismatch fails, names the object's real scope (or the root) and writes nothing. An unknown scope lists the available ones. With `--setting`, only `consoleapi.*` targets accept it: the value goes to `<config>/<scope>/consoleapi.toml` `[general]`, created if missing |
+| `--user TEXT` | Username (required with `--cluster` and `--type`, not allowed with `--setting`) |
+| `--password TEXT` | Password, or with `--setting` the value (will prompt, hidden, if not provided) |
 | `--no-encrypt` | Store password as plain text (not recommended) |
 
 Without `--scope`, `--type console` writes the root Console account's refresh token. With `--scope Org1` it writes the refresh token to the `[console]` section of the scope's own `users.toml`; a warning is printed when that scope has no Console account (a `[general]` table in its own `consoleapi.toml`), and the token is still written.
 
-**`config encrypt-value` options:**
+`--setting` prints the file, table and key it wrote and `Value: (encrypted)`, never the value. It warns when the counterpart is missing: `client_secret` without `client_id`, SMTP `password` without `user`, or a newly created `consoleapi.toml` (it still needs `client_id` and `org_id`). A missing file is created; an unknown scope is rejected.
 
-| Option | Description |
-|--------|-------------|
-| `--value TEXT` | Value to encrypt (prompts with hidden input and confirmation if not provided) |
-
-Prints only the `SOPS[...]` string to stdout (status messages go to stderr), so the
-output pipes cleanly. Paste it into `settings.toml` `[SMTP] password`, `diiapi.toml`
-`api_ro_token`, or `consoleapi.toml` `client_secret`, `service_token` or `user_token`.
+`nf config encrypt-value` was removed in favour of `--setting` (see [ADR-0031](../decisions/0031-one-command-stores-every-sops-secret-and-encrypt-value-is-removed.md)).
 
 ### utils
 
@@ -488,8 +489,11 @@ nf config set-credential --type console --scope Org1 --user console
 # Store a password without encryption (not recommended)
 nf config set-credential --cluster mycluster --user admin --no-encrypt
 
-# Encrypt a settings value (SMTP password, DII or Console token) for pasting into a settings file
-nf config encrypt-value
+# Store a settings secret, encrypted, in the right file (no pasting)
+nf config set-credential --setting consoleapi.client_secret
+nf config set-credential --setting consoleapi.client_secret --scope Org1
+nf config set-credential --setting diiapi.api_ro_token
+nf config set-credential --setting settings.smtp_password
 ```
 
 ### Utilities

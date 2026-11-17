@@ -216,3 +216,56 @@ def test_validate_without_scope_is_unchanged(tmp_path: Path) -> None:
     assert "root-cl" in out
     assert "org1-cl" in out
     assert "Scope settings" not in out
+
+
+# --- the refresh token hint and the root Console row (#1089) --------------------
+
+CLIENT_ID_ONLY = '[general]\nclient_id = "placeholder-id"\norg_id = "org1-org"\n'
+USERS_WITH_CONSOLE = (
+    f'[clusters]\nuser = "org1-user"\nenc = "{SECRET_ENC}-org1"\n'
+    f'\n[console]\nuser = "label"\nenc = "{SECRET_ENC}-token"\n'
+)
+
+
+def test_validate_scope_hints_when_secret_was_stored_as_refresh_token(tmp_path: Path) -> None:
+    config_dir = _config_dir(
+        tmp_path, Org1__consoleapi_toml=CLIENT_ID_ONLY, Org1__users_toml=USERS_WITH_CONSOLE
+    )
+
+    code, out = _run(config_dir, "validate", "--scope", "Org1")
+
+    assert code == 1
+    assert "refresh token in users.toml [console]" in out
+    assert "nf config set-credential --setting consoleapi.client_secret --scope Org1" in out
+
+
+def test_validate_scope_no_hint_without_console_users_entry(tmp_path: Path) -> None:
+    config_dir = _config_dir(tmp_path, Org1__consoleapi_toml=CLIENT_ID_ONLY)
+
+    code, out = _run(config_dir, "validate", "--scope", "Org1")
+
+    assert code == 1
+    assert "refresh token in users.toml" not in out
+
+
+def test_validate_root_hints_with_the_root_command(tmp_path: Path) -> None:
+    config_dir = _config_dir(
+        tmp_path,
+        consoleapi_toml=CLIENT_ID_ONLY,
+        users_toml=USERS_WITH_CONSOLE,
+    )
+
+    code, out = _run(config_dir, "validate")
+
+    assert code == 1
+    assert "Console: Invalid" in out
+    assert "refresh token in users.toml [console]" in out
+    assert "nf config set-credential --setting consoleapi.client_secret" in out
+    assert "--scope" not in out
+
+
+def test_validate_root_without_console_account_is_optional(tmp_path: Path) -> None:
+    code, out = _run(_config_dir(tmp_path), "validate")
+
+    assert code == 0, out
+    assert "Console: Not configured (optional)" in out

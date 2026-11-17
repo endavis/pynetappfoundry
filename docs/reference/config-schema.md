@@ -119,7 +119,7 @@ Each scope's `consoleapi.toml` is a Console service account, and the root is the
 
 Object names must be unique across the config directory, per data type. Any duplicate (two scopes, the root and a scope, the same scope twice, or two files in the root) raises `ConfigurationError` naming both files. The same name under two different data types, such as a cluster and a connector, is fine.
 
-Write a scope's credentials with `nf config set-credential --scope`, and inspect or check a scope with `nf config show --scope` and `nf config validate --scope`. See [CLI Reference](cli.md#config).
+Write a scope's credentials with `nf config set-credential --scope` (a Console client secret with `nf config set-credential --setting consoleapi.client_secret --scope NAME`), and inspect or check a scope with `nf config show --scope` and `nf config validate --scope`. See [CLI Reference](cli.md#config).
 
 A complete example is in `docs/example-config/Org1/`.
 
@@ -131,11 +131,11 @@ A complete example is in `docs/example-config/Org1/`.
 
 These settings fields accept a `SOPS[...]` value instead of plaintext:
 
-| File | Section | Fields |
-|------|---------|--------|
-| `settings.toml` | `[SMTP]` | `password` |
-| `diiapi.toml` | `[general]` | `api_ro_token` |
-| `consoleapi.toml` | `[general]` | `client_secret`, `service_token`, `user_token` |
+| File | Section | Fields | `--setting` target |
+|------|---------|--------|--------------------|
+| `settings.toml` | `[SMTP]` | `password` | `settings.smtp_password` |
+| `diiapi.toml` | `[general]` | `api_ro_token` | `diiapi.api_ro_token` |
+| `consoleapi.toml` | `[general]` | `client_secret`, `service_token`, `user_token` | `consoleapi.client_secret`, `consoleapi.service_token`, `consoleapi.user_token` |
 
 Values are decrypted when the section is read, at most once per `Config` instance (the plaintext
 is kept in memory only, never written back to the settings). Plaintext values still work. A value
@@ -144,8 +144,20 @@ example `Failed to decrypt the SOPS value of 'password' in settings.toml [SMTP]:
 contains the ciphertext or the `sops` error text. `nf config validate` reports such a section as
 Invalid, not as "Not configured". `nf config show` prints the ciphertext (masked by default).
 
-Produce a value with `nf config encrypt-value`, which prompts for the secret (hidden input) and
-prints only the `SOPS[...]` string. It needs `sops` and an age key (`nf config init-sops`).
+Store a value with `nf config set-credential --setting <target>`. It prompts for the secret
+(hidden input, with confirmation), encrypts it and writes `<field> = "SOPS[...]"` into the right
+file and table, keeping comments and other keys. It needs `sops` and an age key
+(`nf config init-sops`); there is no plain text fallback. Only `consoleapi.*` targets accept
+`--scope`, which writes the scope's own `consoleapi.toml`:
+
+```bash
+nf config set-credential --setting consoleapi.client_secret
+nf config set-credential --setting consoleapi.client_secret --scope Org1
+```
+
+A missing `consoleapi.toml` is created with a `[general]` table, and the command warns about what
+the account still needs (`client_id`, `org_id`). See
+[ADR-0031](../decisions/0031-one-command-stores-every-sops-secret-and-encrypt-value-is-removed.md).
 
 These fields are `SecretStr` in the settings models (`SMTPSettings.password`,
 `DIIAPISettings.api_ro_token`, `ConsoleAPISettings.service_token` / `user_token`): read the value
@@ -232,7 +244,7 @@ enc = "SOPS[...]"  # the refresh token, SOPS-encrypted (or plaintext)
 | `user` | string | Yes | Username for authentication |
 | `enc` | string | Yes | Encoded password (base64 or other encoding) |
 
-For `[console]`, `enc` holds the NetApp refresh token and `user` is a display label that is never sent. SOPS values are decrypted, and the `NF_CONSOLE_USER` / `NF_CONSOLE_PASSWORD` environment variables override the file. Write the entry with `nf config set-credential --type console --user console`; the password prompt takes the refresh token. For a scope's `users.toml`, add `--scope Org1`.
+For `[console]`, `enc` holds the NetApp refresh token (not the client secret; store that with `nf config set-credential --setting consoleapi.client_secret`) and `user` is a display label that is never sent. SOPS values are decrypted, and the `NF_CONSOLE_USER` / `NF_CONSOLE_PASSWORD` environment variables override the file. Write the entry with `nf config set-credential --type console --user console`; the password prompt takes the refresh token. For a scope's `users.toml`, add `--scope Org1`.
 
 **Note:** Individual resources can override these defaults by specifying `user` and `enc` in their data file entry.
 
@@ -326,7 +338,7 @@ The same settings drive `ConsoleAgentClient`, which calls one Console agent's `/
 user_token = "paste-user-jwt-here"          # Optional: User JWT from the BlueXP UI
 # service_token = "paste-service-account-jwt-here"  # Optional: static service-account JWT
 # client_id = "your-service-account-client-id"      # Optional: OAuth client credentials
-# client_secret = "your-service-account-client-secret"
+# client_secret = "your-service-account-client-secret"  # store with: nf config set-credential --setting consoleapi.client_secret
 base_url = "https://api.bluexp.netapp.com"  # Required: Console API base URL
 # ui_base_url = "https://console.netapp.com" # Optional: Console UI host for links (not the API base_url)
 org_id = "your-org-id"                      # Optional: Default organization ID
@@ -799,7 +811,13 @@ nf config validate
 - User credentials are properly formatted
 - ONTAP API settings are configured
 - All clusters have valid credentials configured
-- Optional settings (DII API, SMTP, Licensing) are valid if present
+- Optional settings (DII API, SMTP, Console, Licensing) are valid if present. The root Console
+  account is checked too: it shows `Console: Not configured (optional)` when `consoleapi.toml`
+  has no `[general]`, and a broken one fails validation
+- A Console account with `client_id` but no `client_secret`, while `users.toml` `[console]`
+  holds a token, gets a hint: the secret was probably stored as a refresh token. The hint gives
+  the exact `nf config set-credential --setting consoleapi.client_secret` command (with
+  `--scope` for a scope)
 
 **Example output:**
 
