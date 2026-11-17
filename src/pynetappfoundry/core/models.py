@@ -211,6 +211,20 @@ class ConsoleAPISettings(BaseModel):
         return self
 
 
+class ScopeSettings(BaseModel):
+    """The ``scope.toml`` marker of a scope directory.
+
+    ``name`` is optional; when set it must equal the directory name (checked by
+    ``Config``).  Unknown keys are rejected.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str | None = None
+    description: str = ""
+    tags: list[str] = Field(default_factory=list)
+
+
 class SearchableKeysConfig(BaseModel):
     """Searchable keys configuration for a resource type."""
 

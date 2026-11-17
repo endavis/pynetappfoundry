@@ -186,6 +186,7 @@ nav:
       - ADR-0025 Host Identity Pinning: decisions/0025-pin-ontap-ssh-host-keys-and-tls-certificate-fingerprints-on-first-use.md
       - ADR-0026 AIQUM Live-Only Backend: decisions/0026-aiqum-backend-is-live-only-and-reads-the-hal-records-envelope.md
       - ADR-0027 OCCM backend is live-only and delegates to the typed Console agent ops: decisions/0027-occm-backend-is-live-only-and-delegates-to-the-typed-console-agent-ops.md
+      - "ADR-0028 Scope directories partition the config dir with per-scope credentials, thresholds and Console account": decisions/0028-scope-directories-partition-the-config-dir-with-per-scope-credentials-thresholds-and-console-account.md
       - Template Decisions:
           - ADR-9001 uv Package Management: decisions/9001-use-uv-for-package-management.md
           - ADR-9002 doit Task Automation: decisions/9002-use-doit-for-task-automation.md

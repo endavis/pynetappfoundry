@@ -51,6 +51,7 @@ class ConsoleAgentClient:
         *,
         token_provider: TokenProvider | None = None,
         token_session: requests.Session | None = None,
+        scope: str | None = None,
     ) -> None:
         """Initialize the client.
 
@@ -60,6 +61,7 @@ class ConsoleAgentClient:
             token_provider: Optional provider whose tokens are sent per call,
                 for example ``ConsoleAPIClient.service_token_provider``.
             token_session: Optional ``requests.Session`` for the token exchange.
+            scope: Use this scope's Console account instead of the root one.
 
         Raises:
             ValueError: If ``agent_id`` is empty or blank.
@@ -70,7 +72,12 @@ class ConsoleAgentClient:
             raise ValueError("agent_id must be a non-empty string")
         self.config = config
         self.agent_id = agent_id
-        settings = config.get_console_api_settings()
+        self.scope = scope
+        settings = (
+            config.get_console_api_settings()
+            if scope is None
+            else config.get_console_api_settings(scope=scope)
+        )
         spec_path = str(config.get_schema_location("console") / "console_openapi.yaml")
 
         auth_header: dict[str, str] = {AGENT_ID_HEADER: agent_id}

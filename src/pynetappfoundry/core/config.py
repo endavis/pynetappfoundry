@@ -36,6 +36,15 @@ global settings (settings.toml)
 
 These tomls are loading into the Config.config
     attribute by file name (without the .toml)
+
+Scopes
+A top-level directory of the config dir that contains a scope.toml marker is a
+scope.  Its data files load into Config.data like any other, and Config.get_scope
+records which scope each object came from.  Its users.toml, monitoring.toml and
+consoleapi.toml (and no other settings file) load into a per-scope settings store
+that lookups consult before the root.  Object names must be unique when either
+copy is in a scope.  A config dir without scope.toml loads exactly as before.
+See docs/reference/config-schema.md.
 """
 
 from __future__ import annotations
@@ -53,6 +62,7 @@ from pynetappfoundry.core.models import (
     DIIAPISettings,
     LicensingSettings,
     ONTAPAPISettings,
+    ScopeSettings,
     SMTPSettings,
 )
 
@@ -87,6 +97,13 @@ class ConfigurationError(Exception):
 _SMTP_SOPS_FIELDS = ("password",)
 _DII_SOPS_FIELDS = ("api_ro_token",)
 _CONSOLE_SOPS_FIELDS = ("client_secret", "service_token", "user_token")
+
+# A top-level directory holding this file is a scope (see the module docstring).
+SCOPE_MARKER = "scope.toml"
+# The only settings files (by stem) a scope may contain; others are an error.
+SCOPE_OVERRIDABLE_SETTINGS = frozenset({"users", "monitoring", "consoleapi"})
+# The only Console [general] keys a scope inherits from the root consoleapi.toml.
+_CONSOLE_INHERITED_KEYS = ("base_url", "ui_base_url", "base_api_path", "timeout")
 
 
 def _read_tls_settings(source: Any, where: str) -> tuple[bool | None, str | None]:
@@ -232,14 +249,20 @@ class Config:
         self.args = args
         self.no_cache = no_cache
         self._trust_store: HostTrustStore | None = None
-        # Memoized Console refresh token: each SOPS decrypt runs a subprocess.
-        self._console_refresh_token: str | None = None
-        self._console_refresh_token_resolved = False
+        # Memoized Console refresh token per scope (None = root): each SOPS decrypt
+        # runs a subprocess.
+        self._console_refresh_tokens: dict[str | None, str | None] = {}
         # Memoized SOPS plaintext keyed by ciphertext: each decrypt runs a subprocess.
         self._sops_plaintext: dict[str, str] = {}
         self.config_dir = Path.cwd() / config_dir
         self.data_types = ["aiqums", "connectors", "cloudinsights", "clusters", "azure", "ibm"]
         self.settings: dict[str, Any] = {}
+        # Scopes (see the module docstring): markers, per-scope settings files, and
+        # the scope and source file of every loaded data object.
+        self.scopes: dict[str, ScopeSettings] = {}
+        self.scope_settings: dict[str, dict[str, Any]] = {}
+        self._object_scopes: dict[tuple[str, str], str | None] = {}
+        self._object_sources: dict[tuple[str, str], Path | None] = {}
         self.parse_data()
         logging.debug(f"Toplevel settings: {list(self.settings.keys())}")
         self.script_name = script_name
@@ -270,7 +293,63 @@ class Config:
         """
         return Path(self.config_dir / "apis" / api_name)
 
-    def get_setting(self, *keys: str, default: T | None = None) -> Any | T | None:
+    def get_scope(self, data_type: str, name: str) -> str | None:
+        """Return the scope an inventory object belongs to.
+
+        Args:
+            data_type: Inventory section, e.g. ``clusters`` or ``connectors``.
+            name: Object name.
+
+        Returns:
+            The scope (directory) name, or None for a root object or an unknown one.
+        """
+        return self._object_scopes.get((data_type, name))
+
+    def _scope_tree(self, scope: str) -> dict[str, Any]:
+        """Return the settings loaded from a scope's own files.
+
+        Raises:
+            ConfigurationError: If ``scope`` is not a known scope.
+        """
+        if scope not in self.scopes:
+            available = ", ".join(sorted(self.scopes)) or "none"
+            raise ConfigurationError(f"Unknown scope {scope!r} (available scopes: {available}).")
+        return self.scope_settings.get(scope, {})
+
+    @staticmethod
+    def _walk(tree: Any, keys: tuple[str, ...]) -> tuple[bool, Any, str]:
+        """Walk ``keys`` down ``tree``.
+
+        Returns:
+            ``(found, value, error)``; ``error`` describes why the walk failed.
+        """
+        current: Any = tree
+        path_so_far: list[str] = []
+        for key in keys:
+            path_so_far.append(key)
+            if not isinstance(current, dict):
+                return (
+                    False,
+                    None,
+                    f"Cannot access '{key}' in non-dict value at "
+                    f"'{'.'.join(path_so_far[:-1])}'. "
+                    "Check your configuration files.",
+                )
+            if key not in current:
+                return (
+                    False,
+                    None,
+                    f"Missing configuration key '{'.'.join(path_so_far)}'. "
+                    f"Available keys at '{'.'.join(path_so_far[:-1]) or 'root'}': "
+                    f"{list(current.keys())}. "
+                    "Check your configuration files.",
+                )
+            current = current[key]
+        return True, current, ""
+
+    def get_setting(
+        self, *keys: str, default: T | None = None, scope: str | None = None
+    ) -> Any | T | None:
         """Get a nested setting value with a clear error message if not found.
 
         This method provides safe access to nested configuration values,
@@ -280,12 +359,16 @@ class Config:
             *keys: Sequence of keys to traverse (e.g., 'ontapapi', 'general', 'base_api_path').
             default: Value to return if the key path doesn't exist. If None and key is missing,
                      raises ConfigurationError.
+            scope: A scope name. The scope's own settings files (``users``,
+                ``monitoring``, ``consoleapi``) are checked first; a path the
+                scope does not set falls back to the root settings.
 
         Returns:
             The value at the specified key path, or the default value.
 
         Raises:
-            ConfigurationError: If the key path doesn't exist and no default is provided.
+            ConfigurationError: If the key path doesn't exist and no default is provided,
+                or ``scope`` is not a known scope.
 
         Example:
             >>> config.get_setting('ontapapi', 'general', 'base_api_path')
@@ -293,31 +376,27 @@ class Config:
             >>> config.get_setting('missing', 'key', default='/default')
             '/default'
         """
-        current: Any = self.settings
-        path_so_far: list[str] = []
+        if scope is not None:
+            found, value, _ = self._walk(self._scope_tree(scope), keys)
+            if found:
+                return value
+        found, value, error = self._walk(self.settings, keys)
+        if found:
+            return value
+        if default is not None:
+            return default
+        raise ConfigurationError(error)
 
-        for key in keys:
-            path_so_far.append(key)
-            if not isinstance(current, dict):
-                if default is not None:
-                    return default
-                raise ConfigurationError(
-                    f"Cannot access '{key}' in non-dict value at "
-                    f"'{'.'.join(path_so_far[:-1])}'. "
-                    "Check your configuration files."
-                )
-            if key not in current:
-                if default is not None:
-                    return default
-                raise ConfigurationError(
-                    f"Missing configuration key '{'.'.join(path_so_far)}'. "
-                    f"Available keys at '{'.'.join(path_so_far[:-1]) or 'root'}': "
-                    f"{list(current.keys())}. "
-                    "Check your configuration files."
-                )
-            current = current[key]
+    def get_object_setting(
+        self, data_type: str, name: str, *keys: str, default: T | None = None
+    ) -> Any | T | None:
+        """Get a setting as seen by one inventory object, honouring its scope.
 
-        return current
+        Equivalent to ``get_setting(*keys, scope=get_scope(data_type, name))``, so
+        a root object reads the root settings and a scoped object the scope's
+        value first (for example a ``monitoring.toml`` threshold).
+        """
+        return self.get_setting(*keys, default=default, scope=self.get_scope(data_type, name))
 
     def get_smtp_settings(self) -> SMTPSettings:
         """Get SMTP settings for sending emails.
@@ -444,8 +523,16 @@ class Config:
                 "(base_api_path, timeout)."
             ) from e
 
-    def get_console_api_settings(self) -> ConsoleAPISettings:
+    def get_console_api_settings(self, *, scope: str | None = None) -> ConsoleAPISettings:
         """Get Console SaaS API settings.
+
+        Args:
+            scope: A scope name. The scope's Console account is strict: the scope
+                needs its own ``consoleapi.toml``; only ``base_url``,
+                ``ui_base_url``, ``base_api_path`` and ``timeout`` are inherited
+                from the root ``[general]``. Credentials, ``org_id`` and
+                ``agent_ids`` come only from the scope, and the refresh token only
+                from the scope's ``users.toml [console]``.
 
         Returns:
             ConsoleAPISettings object with API configuration.
@@ -453,24 +540,46 @@ class Config:
         Raises:
             ConfigurationError: If Console API settings are not configured, if
                 ``consoleapi.toml`` carries a ``refresh_token`` (it belongs in
-                ``users.toml [console]``), or if the refresh token or a
+                ``users.toml [console]``), if ``scope`` is unknown or has no
+                ``consoleapi.toml``, or if the refresh token or a
                 ``SOPS[...]`` setting value cannot be decrypted.
         """
         try:
-            console_data: dict[str, Any] = dict(self.get_setting("consoleapi", "general") or {})
+            console_file = "consoleapi.toml"
+            if scope is None:
+                console_data: dict[str, Any] = dict(self.get_setting("consoleapi", "general") or {})
+            else:
+                console_file = f"{scope}/consoleapi.toml"
+                scope_general = self._scope_tree(scope).get("consoleapi", {}).get("general")
+                if scope_general is None:
+                    raise ConfigurationError(
+                        f"Scope {scope!r} has no Console account: add {console_file} with a "
+                        "[general] table. A scope never falls back to the root Console account."
+                    )
+                if not isinstance(scope_general, dict):
+                    raise ConfigurationError(f"{console_file} [general] must be a table.")
+                root_general = self.settings.get("consoleapi", {}).get("general")
+                console_data = {}
+                if isinstance(root_general, dict):
+                    console_data = {
+                        key: root_general[key]
+                        for key in _CONSOLE_INHERITED_KEYS
+                        if key in root_general
+                    }
+                console_data.update(scope_general)
             if "refresh_token" in console_data:
                 raise ConfigurationError(
-                    "consoleapi.toml must not contain 'refresh_token'. Store the Console "
+                    f"{console_file} must not contain 'refresh_token'. Store the Console "
                     "refresh token in users.toml under [console] ('enc'), for example with "
                     "'nf config set-credential --type console'."
                 )
             console_data = self._decrypt_setting_fields(
                 console_data,
                 _CONSOLE_SOPS_FIELDS,
-                file="consoleapi.toml",
+                file=console_file,
                 section="general",
             )
-            refresh_token = self._resolve_console_refresh_token()
+            refresh_token = self._resolve_console_refresh_token(scope)
             if refresh_token is not None:
                 console_data["refresh_token"] = refresh_token
             return ConsoleAPISettings.model_validate(console_data)
@@ -484,13 +593,18 @@ class Config:
                 "service_token or client_id/client_secret."
             ) from e
 
-    def _resolve_console_refresh_token(self) -> str | None:
+    def _resolve_console_refresh_token(self, scope: str | None = None) -> str | None:
         """Resolve the Console refresh token from ``users.toml [console]``.
 
-        ``get_user("console", "console")`` decrypts SOPS values and applies the
-        ``NF_CONSOLE_USER`` / ``NF_CONSOLE_PASSWORD`` overrides.  The ``user``
-        key is only a label and is never sent.  The result is memoized because
-        each decrypt runs a ``sops`` subprocess.
+        For the root, ``get_user("console", "console")`` decrypts SOPS values and
+        applies the ``NF_CONSOLE_USER`` / ``NF_CONSOLE_PASSWORD`` overrides.  The
+        ``user`` key is only a label and is never sent.  For a scope, only the
+        scope's own ``users.toml [console]`` is read: there is no root fallback
+        and the ``NF_CONSOLE_*`` variables are ignored.  The result is memoized
+        per scope because each decrypt runs a ``sops`` subprocess.
+
+        Args:
+            scope: A scope name, or None for the root account.
 
         Returns:
             The decrypted refresh token, or None if none is configured.
@@ -499,12 +613,16 @@ class Config:
             ConfigurationError: If the token cannot be resolved or decrypted.
                 The message never includes the token or its ciphertext.
         """
-        if self._console_refresh_token_resolved:
-            return self._console_refresh_token
+        if scope in self._console_refresh_tokens:
+            return self._console_refresh_tokens[scope]
+        if scope is not None:
+            token = self._resolve_scope_console_refresh_token(scope)
+            self._console_refresh_tokens[scope] = token
+            return token
         users = self.settings.get("users")
         configured = isinstance(users, dict) and "console" in users
         if not configured and not os.environ.get("NF_CONSOLE_PASSWORD"):
-            self._console_refresh_token_resolved = True
+            self._console_refresh_tokens[None] = None
             return None
         try:
             _label, token = self.get_user("console", "console")
@@ -514,9 +632,31 @@ class Config:
                 "(or NF_CONSOLE_USER/NF_CONSOLE_PASSWORD); check the 'user' and 'enc' "
                 "keys and, for a SOPS value, that sops and its key are available."
             ) from e
-        self._console_refresh_token = token
-        self._console_refresh_token_resolved = True
+        self._console_refresh_tokens[None] = token
         return token
+
+    def _resolve_scope_console_refresh_token(self, scope: str) -> str | None:
+        """Read a scope's refresh token from its own ``users.toml [console]``.
+
+        Raises:
+            ConfigurationError: If the section lacks ``user`` or ``enc`` or the
+                value cannot be decrypted. The message never includes the token.
+        """
+        users = self._scope_tree(scope).get("users")
+        section = users.get("console") if isinstance(users, dict) else None
+        if section is None:
+            return None
+        user = section.get("user") if isinstance(section, dict) else None
+        enc = section.get("enc") if isinstance(section, dict) else None
+        if not user or not enc or not isinstance(enc, str):
+            raise ConfigurationError(
+                f"Could not resolve the Console refresh token from {scope}/users.toml "
+                "[console]; check the 'user' and 'enc' keys."
+            )
+        decrypted = self._decrypt_setting_fields(
+            {"enc": enc}, ("enc",), file=f"{scope}/users.toml", section="console"
+        )
+        return str(decrypted["enc"])
 
     def get_licensing_settings(self) -> LicensingSettings | None:
         """Get licensing notification settings.
@@ -535,11 +675,15 @@ class Config:
 
     def parse_data(self) -> None:
         """Parse all TOML files in the config directory."""
-        all_tomls = self.config_dir.rglob("*.toml")
+        all_tomls = list(self.config_dir.rglob("*.toml"))
+        self._load_scope_markers(all_tomls)
         loaded_tomls: list[Path] = []
         for file in all_tomls:
+            if file.name == SCOPE_MARKER:
+                continue
             logging.debug(f"{_file_name} : parsing {file}")
-            self.parse_toml(file)
+            scope = file.relative_to(self.config_dir).parts[0]
+            self.parse_toml(file, scope=scope if scope in self.scopes else None)
             loaded_tomls.append(file)
 
         logging.debug(
@@ -548,6 +692,48 @@ class Config:
         )
         self._wrap_clusters()
         self.add_searchable_keys()
+
+    def _load_scope_markers(self, all_tomls: list[Path]) -> None:
+        """Find and validate every ``scope.toml`` marker under the config dir.
+
+        A marker is valid only directly inside a top-level, non-hidden directory
+        that is not ``apis``.
+
+        Raises:
+            ConfigurationError: If a marker is anywhere else or is invalid.
+        """
+        for file in all_tomls:
+            if file.name != SCOPE_MARKER:
+                continue
+            parts = file.relative_to(self.config_dir).parts
+            if len(parts) != 2 or parts[0].startswith(".") or parts[0] == "apis":
+                raise ConfigurationError(
+                    f"{file}: {SCOPE_MARKER} is only valid directly inside a top-level "
+                    "directory of the config dir (not at the root, nested deeper, or in "
+                    "a hidden or 'apis' directory)."
+                )
+            self.scopes[parts[0]] = self._load_scope_marker(file)
+
+    @staticmethod
+    def _load_scope_marker(file: Path) -> ScopeSettings:
+        """Validate one ``scope.toml`` marker.
+
+        Raises:
+            ConfigurationError: If the file is not valid TOML, has unknown keys or
+                a ``name`` that differs from its directory name.
+        """
+        try:
+            with open(file, "rb") as f:
+                raw = tomllib.load(f)
+            marker = ScopeSettings.model_validate(raw)
+        except (tomllib.TOMLDecodeError, ValueError) as e:
+            raise ConfigurationError(f"Invalid {file}: {e}") from e
+        if marker.name is not None and marker.name != file.parent.name:
+            raise ConfigurationError(
+                f"{file}: name {marker.name!r} must equal the directory name "
+                f"{file.parent.name!r} (or be omitted)."
+            )
+        return marker
 
     def get_trust_store(self) -> HostTrustStore:
         """Return the trust store for SSH host keys and TLS fingerprints.
@@ -588,11 +774,16 @@ class Config:
                     no_cache=self.no_cache,
                 )
 
-    def parse_toml(self, file: Path) -> None:
+    def parse_toml(self, file: Path, *, scope: str | None = None) -> None:
         """Parse a single TOML file.
 
         Args:
             file: Path to the TOML file.
+            scope: The scope directory the file is in, or None for the root.
+
+        Raises:
+            ConfigurationError: If a scoped settings file is not one a scope may
+                override, or a scoped ``consoleapi.toml`` has more than ``[general]``.
         """
         with open(file, "rb") as f:
             data = tomllib.load(f)
@@ -602,7 +793,24 @@ class Config:
                 and data["settings"]["type"] == "data"
             ):
                 logging.debug(f"{_file_name} : data file: {file.stem}")
-                self.load_data(data)
+                self.load_data(data, source=file, scope=scope)
+            elif scope is not None:
+                logging.debug(f"{_file_name} : scope {scope} config file: {file.stem}")
+                if file.stem not in SCOPE_OVERRIDABLE_SETTINGS:
+                    raise ConfigurationError(
+                        f"{file}: a scope may only contain the settings files "
+                        f"{', '.join(sorted(f'{s}.toml' for s in SCOPE_OVERRIDABLE_SETTINGS))} "
+                        f"(plus data files); {file.name!r} is not allowed in scope {scope!r}."
+                    )
+                if file.stem == "consoleapi" and set(data) - {"general"}:
+                    raise ConfigurationError(
+                        f"{file}: a scope's consoleapi.toml may only contain a [general] table."
+                    )
+                store = self.scope_settings.setdefault(scope, {})
+                if file.stem not in store:
+                    store[file.stem] = data
+                else:
+                    store[file.stem].update(data)
             else:
                 logging.debug(f"{_file_name} : config file: {file.stem}")
                 if file.stem not in self.settings:
@@ -622,26 +830,32 @@ class Config:
         # Replace hyphens with underscores and convert to uppercase
         return "NF_" + object_name.replace("-", "_").upper()
 
-    def get_user(self, utype: str = "clusters", uobject: str = "") -> tuple[str, str]:
+    def get_user(
+        self, utype: str = "clusters", uobject: str = "", *, scope: str | None = None
+    ) -> tuple[str, str]:
         """Get user credentials for a given type and object.
 
-        Credentials are resolved in the following order (first found wins):
+        Credentials are resolved in the following order (first found wins; each of
+        user and password falls back independently):
         1. Environment variables: NF_<OBJECT>_USER and NF_<OBJECT>_PASSWORD
         2. Object-specific config in data files (e.g., clusters.toml)
-        3. Default credentials in users.toml for the type
+        3. The object's scope's users.toml for the type (scoped objects only)
+        4. Default credentials in the root users.toml for the type
 
         Args:
             utype: Type of object (e.g., 'clusters').
             uobject: Name of the specific object.
+            scope: A scope to read defaults from; defaults to the object's own scope.
 
         Returns:
             Tuple of (username, encoded_password).
 
         Raises:
-            ConfigurationError: If credentials cannot be found.
+            ConfigurationError: If credentials cannot be found, or ``scope`` is unknown.
         """
         user: str | None = None
         enc: str | None = None
+        eff_scope = scope if scope is not None else self.get_scope(utype, uobject)
 
         # 1. Check environment variables first (highest priority)
         if uobject:
@@ -665,7 +879,14 @@ class Config:
             except KeyError:
                 pass
 
-        # 3. Fall back to default credentials for the type
+        # 3. The scope's own default credentials for the type
+        if eff_scope is not None and (not user or not enc):
+            scope_default = self._scope_tree(eff_scope).get("users", {}).get(utype)
+            if isinstance(scope_default, dict):
+                user = user or scope_default.get("user") or None
+                enc = enc or scope_default.get("enc") or None
+
+        # 4. Fall back to default credentials for the type
         if not user or not enc:
             try:
                 if not user:
@@ -681,7 +902,7 @@ class Config:
             raise ConfigurationError(
                 f"Could not find user for type={utype!r}, object={uobject!r}. "
                 f"Set {env_prefix}_USER environment variable, or configure in "
-                "users.toml or the object's data file."
+                "users.toml (root or the object's scope) or the object's data file."
             )
         if not enc:
             logging.error(f"Could not find password for {utype} and {uobject}")
@@ -704,7 +925,8 @@ class Config:
         found wins):
         1. Environment variable ``NF_<OBJECT>_PASSWORD``
         2. ``enc`` on the object's data entry (``[<type>.<object>]``)
-        3. ``enc`` in ``users.toml [<type>]``
+        3. ``enc`` in the object's scope ``users.toml [<type>]`` (scoped objects only)
+        4. ``enc`` in the root ``users.toml [<type>]``
 
         Args:
             utype: Type of object (e.g., 'cloudinsights').
@@ -729,9 +951,16 @@ class Config:
             if isinstance(entry, dict) and entry.get("enc"):
                 value = entry["enc"]
             else:
+                scope = self.get_scope(utype, uobject)
+                scope_users = self._scope_tree(scope).get("users") if scope is not None else None
+                scope_default = scope_users.get(utype) if isinstance(scope_users, dict) else None
                 users = self.settings.get("users")
                 default = users.get(utype) if isinstance(users, dict) else None
-                if isinstance(default, dict) and default.get("enc"):
+                if isinstance(scope_default, dict) and scope_default.get("enc"):
+                    value = scope_default["enc"]
+                    file = f"{scope}/users.toml"
+                    section = utype
+                elif isinstance(default, dict) and default.get("enc"):
                     value = default["enc"]
                     file = "users.toml"
                     section = utype
@@ -890,17 +1119,37 @@ class Config:
 
         return default_order
 
-    def load_data(self, data: dict[str, Any]) -> None:
+    def load_data(
+        self, data: dict[str, Any], *, source: Path | None = None, scope: str | None = None
+    ) -> None:
         """Load data sections from a parsed TOML.
 
         Args:
             data: Parsed TOML data dictionary.
+            source: The file the data came from, for error messages.
+            scope: The scope the file is in, or None for the root.
+
+        Raises:
+            ConfigurationError: If an object name is already loaded and either
+                copy is in a scope. Two root copies stay last-one-wins.
         """
         for data_type in self.data_types:
             if data_type not in self.data:
                 self.data[data_type] = {}
             if data_type in data:
                 logging.debug(f"{_file_name} : adding {len(data[data_type])} {data_type} items")
+                for name in data[data_type]:
+                    key = (data_type, name)
+                    if key in self._object_sources and (
+                        scope is not None or self._object_scopes[key] is not None
+                    ):
+                        raise ConfigurationError(
+                            f"Duplicate {data_type} name {name!r} in "
+                            f"{self._object_sources[key]} and {source}; "
+                            "object names must be unique across scopes"
+                        )
+                    self._object_scopes[key] = scope
+                    self._object_sources[key] = source
                 self.data[data_type].update(data[data_type])
 
     def chk_and(self, search_term: str, values: list[str] | str) -> bool:

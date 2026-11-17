@@ -15,12 +15,13 @@ This document provides a complete reference for all pynetappfoundry configuratio
 
 ## Overview
 
-pynetappfoundry uses TOML files for configuration. Configuration is organized into two types:
+pynetappfoundry uses TOML files for configuration. Configuration is organized into three types:
 
 | Type | Purpose | Loaded Into |
 |------|---------|-------------|
 | **Settings files** | Global settings, credentials, API config | `config.settings[filename]` |
 | **Data files** | Resource definitions (clusters, connectors, etc.) | `config.data[section]` |
+| **Scopes** | A directory (marked by `scope.toml`) with its own inventory, credentials, thresholds and Console account | `config.scopes`, `config.scope_settings[scope][filename]`; its data files go into `config.data` |
 
 ### Directory Structure
 
@@ -37,6 +38,12 @@ config/
 │   ├── prod.toml
 │   ├── dev.toml
 │   └── ...
+├── Org1/                # A scope (optional), see "Scopes" below
+│   ├── scope.toml       # Marker: makes this directory a scope
+│   ├── clusters.toml    # Data file of the scope
+│   ├── users.toml       # Credentials of the scope
+│   ├── monitoring.toml  # Thresholds of the scope
+│   └── consoleapi.toml  # The scope's own Console account
 └── apis/                # API specifications (OpenAPI/Swagger)
     ├── ontap/
     │   └── all.json
@@ -55,6 +62,56 @@ config/
 3. All other files are treated as **settings files**
 4. Settings files are stored by filename: `settings.toml` → `config.settings["settings"]`
 5. Data files populate `config.data` by section: `[clusters.NAME]` → `config.data["clusters"]["NAME"]`
+6. A top-level directory that contains `scope.toml` is a [scope](#scopes). Its data files load into `config.data` like any other, and `config.get_scope(data_type, name)` reports which scope an object came from. Its `users.toml`, `monitoring.toml` and `consoleapi.toml` load into `config.scope_settings[scope]` and never into `config.settings`
+7. A config directory without any `scope.toml` loads exactly as in steps 1 to 5
+
+---
+
+## Scopes
+
+A scope partitions the config directory: one inventory, one set of credentials, one set of thresholds and at most one Console account per directory. See [ADR-0028](../decisions/0028-scope-directories-partition-the-config-dir-with-per-scope-credentials-thresholds-and-console-account.md).
+
+### The marker: scope.toml
+
+A top-level directory of the config directory that contains `scope.toml` is a scope. The file is validated, and every key is optional:
+
+```toml
+name = "Org1"                 # Optional; when set it must equal the directory name
+description = "Example scope" # Optional
+tags = ["example"]            # Optional
+```
+
+An unknown key, or a `name` that differs from the directory name, raises `ConfigurationError` naming the file. `scope.toml` is valid only directly inside a top-level directory: at the config root, nested deeper, or inside a hidden directory or `apis`, it is an error naming its path. Subdirectories inside a scope are allowed and load as part of it.
+
+### What a scope may contain
+
+- **Data files** (`[settings] type = "data"`), anywhere under the scope directory.
+- **Three settings files**, matched by file stem: `users.toml`, `monitoring.toml` and `consoleapi.toml`.
+
+Any other settings file in a scope (`settings.toml`, `ontapapi.toml`, `aiqumapi.toml`, `diiapi.toml`, and so on) raises `ConfigurationError` naming the file and the allowed list. Everything else stays global.
+
+### Precedence
+
+A scope's settings are shared root defaults that the scope overrides:
+
+- **Credentials** (`get_user`, `get_secret`): environment variable, then the object's own entry, then the scope's `users.toml`, then the root `users.toml`. `user` and `enc` fall back independently. An object outside any scope never sees a scope's defaults.
+- **Other settings** (`get_setting(..., scope="Org1")`, `get_object_setting(data_type, name, *keys)`): the scope's file is read first and a path it does not set falls back to the root. An unknown scope raises `ConfigurationError` listing the scopes.
+
+### The Console account of a scope
+
+A scope has at most one Console account, and it is strict:
+
+- A scope without its own `consoleapi.toml` has no Console account. `get_console_api_settings(scope="Org1")` raises; it never falls back to the root account.
+- A scope's `consoleapi.toml` may contain only a `[general]` table, validated by the same rules as the root one (see [consoleapi.toml](#consoleapitoml)).
+- From the root `[general]` a scope inherits only `base_url`, `ui_base_url`, `base_api_path` and `timeout`. Credentials, `org_id`, `agent_ids`, `token_endpoint`, `audience` and `user_client_id` come only from the scope.
+- The refresh token comes only from the scope's `users.toml` `[console]`, with no root fallback. The `NF_CONSOLE_USER` and `NF_CONSOLE_PASSWORD` variables apply to the root account only and are ignored for a scope.
+- `Console(config, scope="Org1")`, `ConsoleAPIClient(config, scope=...)` and `ConsoleAgentClient(config, agent_id, scope=...)` use the scope's account. The OCCM `DataSource` backend uses the scope of the connector it queries.
+
+### Unique names
+
+Object names must be unique across the config directory whenever a scope is involved. When either copy of a name is in a scope (two scopes, the root and a scope, or the same scope twice), loading raises `ConfigurationError` naming both files. Two copies in the root keep the older behavior: the last one loaded wins.
+
+A complete example is in `docs/example-config/Org1/`.
 
 ---
 
@@ -561,6 +618,17 @@ base_path = config.get_setting("ontapapi", "general", "base_api_path")
 
 # With default value (no error if missing)
 custom = config.get_setting("custom", "key", default="fallback")
+
+# Scoped access (see Scopes): the scope's file first, then the root
+inodes = config.get_setting("monitoring", "settings", "default_thresholds", "inodes", scope="Org1")
+
+# The same, for the scope an inventory object belongs to
+inodes = config.get_object_setting(
+    "clusters", "ORG1-PROD-01", "monitoring", "settings", "default_thresholds", "inodes"
+)
+
+# Which scope an object came from (None for an object outside any scope)
+scope = config.get_scope("clusters", "ORG1-PROD-01")
 ```
 
 ### Searching Resources
@@ -591,6 +659,8 @@ user, enc_password = config.get_user("clusters")
 # Get credentials for a specific resource (with override support)
 user, enc_password = config.get_user("clusters", "CLUSTER-PROD-01")
 ```
+
+For an object in a [scope](#scopes), `get_user` and `get_secret` find the scope on their own from the object name, so the calls do not change. `get_user(..., scope="Org1")` reads the defaults of an explicit scope instead.
 
 ---
 
@@ -625,16 +695,18 @@ Credentials are resolved in the following order (first found wins):
 
 1. **Environment variables** - `NF_<OBJECT>_USER` and `NF_<OBJECT>_PASSWORD`
 2. **Object-specific config** - `user` and `enc` fields in the object's data file entry
-3. **Default credentials** - `users.toml` defaults for the resource type
+3. **Scope defaults** - the object's [scope](#scopes) `users.toml` for the resource type (only for an object in a scope)
+4. **Default credentials** - the root `users.toml` defaults for the resource type
 
-This applies to every inventory type (`clusters`, `aiqums`, `connectors`, `cloudinsights`, `azure`, `ibm`). Write an object's entry with `nf config set-credential --type <type> --name <object> --user <user>`; `--cluster NAME` is an alias for `--type clusters --name NAME`.
+`user` and `enc` fall back independently through steps 2 to 4. This applies to every inventory type (`clusters`, `aiqums`, `connectors`, `cloudinsights`, `azure`, `ibm`). Write an object's entry with `nf config set-credential --type <type> --name <object> --user <user>`; `--cluster NAME` is an alias for `--type clusters --name NAME`.
 
 **Token-style secrets** (a Cloud Insights API token, which has no username) live in the same `enc` field, and `user` is only a label. They resolve in this order (first found wins):
 
 1. `NF_<OBJECT>_PASSWORD`
 2. `enc` in the object's data file entry
-3. `enc` in `users.toml` under the type
-4. the client's settings file (for Cloud Insights, `diiapi.toml` `[general]` `api_ro_token`)
+3. `enc` in the object's scope `users.toml` under the type (scoped objects only)
+4. `enc` in the root `users.toml` under the type
+5. the client's settings file (for Cloud Insights, `diiapi.toml` `[general]` `api_ro_token`)
 
 ### Example Usage
 

@@ -66,7 +66,7 @@ class OccmBackend(Backend):
 
     def __init__(self, config: Config) -> None:
         super().__init__(config)
-        self._api_clients: dict[str, ConsoleAgentClient] = {}
+        self._api_clients: dict[tuple[str | None, str], ConsoleAgentClient] = {}
 
     def _resolve_agent_id(self, cluster: str) -> str:
         """Return the agent id for *cluster* (a ``[connectors]`` name or an agent id).
@@ -87,13 +87,31 @@ class OccmBackend(Backend):
             return agent_id
         return cluster
 
-    def _get_api_client(self, agent_id: str) -> ConsoleAgentClient:
-        """Lazily create a :class:`ConsoleAgentClient`, cached per *agent_id*."""
-        if agent_id not in self._api_clients:
+    def _resolve_scope(self, cluster: str) -> str | None:
+        """Return the config scope of a ``[connectors]`` entry, else None.
+
+        A raw agent id, or a connector outside any scope, uses the root Console account.
+        """
+        connectors = self._config.data.get("connectors", {})
+        if not (isinstance(connectors, dict) and cluster in connectors):
+            return None
+        scope = self._config.get_scope("connectors", cluster)
+        return scope if isinstance(scope, str) else None
+
+    def _get_api_client(self, agent_id: str, scope: str | None = None) -> ConsoleAgentClient:
+        """Lazily create a :class:`ConsoleAgentClient`, cached per scope and *agent_id*.
+
+        A scoped client uses that scope's Console account; ``scope=None`` the root one.
+        """
+        key = (scope, agent_id)
+        if key not in self._api_clients:
             from pynetappfoundry.clients.console.agent import ConsoleAgentClient
 
-            self._api_clients[agent_id] = ConsoleAgentClient(self._config, agent_id)
-        return self._api_clients[agent_id]
+            if scope is None:
+                self._api_clients[key] = ConsoleAgentClient(self._config, agent_id)
+            else:
+                self._api_clients[key] = ConsoleAgentClient(self._config, agent_id, scope=scope)
+        return self._api_clients[key]
 
     @staticmethod
     def _fields_param(
@@ -152,7 +170,13 @@ class OccmBackend(Backend):
             msg = f"OCCM backend has no op for endpoint {mapping.api_endpoint}"
             raise NotImplementedError(msg)
 
-        client = self._get_api_client(self._resolve_agent_id(cluster))
+        scope = self._resolve_scope(cluster)
+        agent_id = self._resolve_agent_id(cluster)
+        client = (
+            self._get_api_client(agent_id)
+            if scope is None
+            else self._get_api_client(agent_id, scope)
+        )
         fields = self._fields_param(mapping, decision, filters)
         kwargs: dict[str, Any] = {"fields": fields} if fields else {}
         items = getattr(client.ops, op_name)(**kwargs)
