@@ -1510,6 +1510,12 @@ MAPPING_INDEX: dict[str, tuple[str, str, str, str | None]] = {
         "DiiZonemember",
         "dii/assets/zoneMembers/zoneMembers.toml",
     ),
+    "OccmOnpremWorkingEnvironment": (
+        "pynetappfoundry.cache.occm.onprem_working_environments.mapping",
+        "pynetappfoundry.models.console.cvo.get_onprem_working_environments",
+        "ResponseBody",
+        None,
+    ),
     "OntapAccount": (
         "pynetappfoundry.cache.ontap.security.accounts.mapping",
         "pynetappfoundry.models.ontap.security.accounts.model",

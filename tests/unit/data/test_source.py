@@ -117,7 +117,7 @@ class TestDataSourceGet:
             name="_Other",
             model_class=_Other,
             api_endpoint="/x",
-            api_type="occm",
+            api_type="nosuchbackend",
             identifier_field="uuid",
             fields=(FieldMapping(cache_attr="uuid"),),
         )

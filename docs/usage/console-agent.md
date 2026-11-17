@@ -113,6 +113,30 @@ connector = console.find_connector("cluster-uuid")  # uses agent_ids from consol
 - The agent ids are configured because the tenancy API lists none for a service token.
 - `Connector` keeps `agent_id`, `version`, `system_id`, `environment`, `agent_type` and `siteIdentifier.company` / `site`. `privateIp` and `siteIdentifier.host` are network addresses and are not kept, so they never reach the cache.
 
+## DataSource
+
+`DataSource` reads the agent's on-premises working environments through `ConsoleAgentClient.ops`
+([ADR-0027](../decisions/0027-occm-backend-is-live-only-and-delegates-to-the-typed-console-agent-ops.md)).
+`cluster=` is a `[connectors]` name whose entry has an `agent_id`, or the agent id itself.
+
+```python
+from pynetappfoundry.data.source import DataSource
+from pynetappfoundry.models.console.cvo.get_onprem_working_environments import ResponseBody
+
+ds = DataSource(config)
+envs = list(ds.query(ResponseBody, cluster="CONNECTOR-PROD-01"))
+env = ds.get(ResponseBody, cluster="agent-id", id="<publicId>")
+
+# Fields the agent returns only on request are sent as fields=; a filter on one adds it.
+match = list(
+    ds.query(ResponseBody, cluster="agent-id").filter(
+        {"ontapClusterProperties.clusterUuid": "cluster-uuid"}
+    )
+)
+```
+
+See [DataSource: OCCM](data-source.md#occm-console-agent) for the rules.
+
 ## Marketplace subscriptions
 
 The Console account's SaaS marketplace subscriptions (AWS, Azure, GCP) come from `GET /occm/api/occm/saas-mp-service/account`, which is served through an agent.

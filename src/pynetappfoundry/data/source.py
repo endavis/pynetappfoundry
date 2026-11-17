@@ -21,6 +21,7 @@ from pynetappfoundry.data.aiqum_backend import AiqumBackend
 from pynetappfoundry.data.backends import Backend, OntapBackend
 from pynetappfoundry.data.dii_backend import DiiBackend
 from pynetappfoundry.data.filters import FilterExpression, compile_filters
+from pynetappfoundry.data.occm_backend import OccmBackend
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -35,12 +36,13 @@ T = TypeVar("T", bound=BaseModel)
 
 # Backend registry: maps TypeMapping.api_type → Backend subclass.
 # Registered backends: ONTAP (cache + live), DII (live-only), AIQUM (cache for
-# the collected collections, live for the rest: Backend.is_live_only, #1055).
-# Future backends (e.g. OCCM) are registered here.
+# the collected collections, live for the rest: Backend.is_live_only, #1055),
+# OCCM (Console agent, live-only, #1050).
 _BACKENDS: dict[str, type[Backend]] = {
     "ontap": OntapBackend,
     "dii": DiiBackend,
     "aiqum": AiqumBackend,
+    "occm": OccmBackend,
 }
 
 
