@@ -3,17 +3,17 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, RootModel
+from typing import Any
+
+from pydantic import BaseModel, Field, RootModel
 
 
-class EndTime(BaseModel):
-    """
-    endTime
-
-
-    //end collapsible .Definitions block
-    ====
-    """
+class EndTime(RootModel[Any]):
+    root: Any = Field(
+        ...,
+        description="endTime\n\n\n//end collapsible .Definitions block\n====",
+        title="endTime",
+    )
 
 
 class ResponseBody(BaseModel):

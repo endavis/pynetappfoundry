@@ -3,7 +3,9 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, RootModel
+from typing import Any
+
+from pydantic import BaseModel, Field, RootModel
 
 
 class Headers(RootModel[dict[str, str]]):
@@ -57,14 +59,12 @@ class FormDataMap(RootModel[dict[str, str]]):
     root: dict[str, str]
 
 
-class ContractEndDate(BaseModel):
-    """
-    contractEndDate
-
-
-    //end collapsible .Definitions block
-    ====
-    """
+class ContractEndDate(RootModel[Any]):
+    root: Any = Field(
+        ...,
+        description="contractEndDate\n\n\n//end collapsible .Definitions block\n====",
+        title="contractEndDate",
+    )
 
 
 class RequestBody(BaseModel):

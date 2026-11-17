@@ -3,13 +3,13 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from typing import Any
+
+from pydantic import BaseModel, Field, RootModel
 
 
-class FreeTrialExpiry(BaseModel):
-    """
-    freeTrialExpiry
-    """
+class FreeTrialExpiry(RootModel[Any]):
+    root: Any = Field(..., description="freeTrialExpiry", title="freeTrialExpiry")
 
 
 class SubscriptionResponse(BaseModel):

@@ -60,12 +60,13 @@ def task_console_openapi_check() -> dict[str, Any]:
 
 
 def task_console_openapi_fragments() -> dict[str, Any]:
-    """Re-apply the hand-written spec fragments to the committed spec, offline.
+    """Re-apply the hand-written spec fragments and overrides to the committed spec, offline.
 
-    Strips the entries a previous run merged and merges
-    ``tools/console_openapi/fragments/*.yaml`` again (#1078). It needs no network, so
-    use it after editing a fragment; ``console_openapi_refresh`` merges the same
-    fragments into a fresh build. Run ``doit console_models`` and
+    Strips the overrides and the entries a previous run merged, merges
+    ``tools/console_openapi/fragments/*.yaml`` again (#1078), then applies
+    ``tools/console_openapi/overrides.yaml`` (#1095). It needs no network, so use it
+    after editing a fragment or an override; ``console_openapi_refresh`` applies the
+    same files to a fresh build. Run ``doit console_models`` and
     ``doit console_client`` afterwards.
     """
     return {

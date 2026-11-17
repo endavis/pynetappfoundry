@@ -3,23 +3,25 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from pydantic import BaseModel, Field, RootModel
 
 
-class AcceptPost(BaseModel):
-    """
-    accept-post
+class AcceptPost(RootModel[Any]):
+    root: Any = Field(
+        ...,
+        description="accept-post\n\nProvides details about which media types are accepted when creating a resource.",
+        title="accept-post",
+    )
 
-    Provides details about which media types are accepted when creating a resource.
-    """
 
-
-class AcceptPut(BaseModel):
-    """
-    accept-put
-
-    Indicates details about what media types are accepted when updating a resource.
-    """
+class AcceptPut(RootModel[Any]):
+    root: Any = Field(
+        ...,
+        description="accept-put\n\nIndicates details about what media types are accepted when updating a resource.",
+        title="accept-put",
+    )
 
 
 class Hints(BaseModel):
@@ -46,18 +48,12 @@ class Hints(BaseModel):
     )
 
 
-class TargetSchema(BaseModel):
-    """
-    targetSchema
-
-    Link to a JSON schema that can be used to validate the target of the link (response body).
-
-    The preferred format is a $ref link to an external schema.
-
-    This field is optional and should only be included when there is a known schema for the target of the href.
-
-    See https://json-schema.org/draft/2019-09/json-schema-hypermedia.html#rfc.section.9.2 for more details.
-    """
+class TargetSchema(RootModel[Any]):
+    root: Any = Field(
+        ...,
+        description="targetSchema\n\nLink to a JSON schema that can be used to validate the target of the link (response body).\n\nThe preferred format is a $ref link to an external schema.\n\nThis field is optional and should only be included when there is a known schema for the target of the href.\n\nSee https://json-schema.org/draft/2019-09/json-schema-hypermedia.html#rfc.section.9.2 for more details.",
+        title="targetSchema",
+    )
 
 
 class TypeBxpLink(BaseModel):

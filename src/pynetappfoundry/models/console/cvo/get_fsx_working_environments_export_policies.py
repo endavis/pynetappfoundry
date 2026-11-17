@@ -3,15 +3,13 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from pydantic import BaseModel, Field, RootModel
 
 
-class Index(BaseModel):
-    """
-    index
-
-    Export policy rule index
-    """
+class Index(RootModel[Any]):
+    root: Any = Field(..., description="index\n\nExport policy rule index", title="index")
 
 
 class ExportPolicyRule(BaseModel):

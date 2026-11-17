@@ -3,7 +3,9 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from typing import Any
+
+from pydantic import BaseModel, Field, RootModel
 
 
 class IgroupCreationRequest(BaseModel):
@@ -22,12 +24,8 @@ class AwsTag(BaseModel):
     tagValue: str | None = None
 
 
-class Index(BaseModel):
-    """
-    index
-
-    Export policy rule index
-    """
+class Index(RootModel[Any]):
+    root: Any = Field(..., description="index\n\nExport policy rule index", title="index")
 
 
 class ExportPolicyRule(BaseModel):
@@ -50,12 +48,12 @@ class Capacity(BaseModel):
     unit: str | None = None
 
 
-class NumberOfConstituents(BaseModel):
-    """
-    numberOfConstituents
-
-    Number of constituents for the FlexGroup volume
-    """
+class NumberOfConstituents(RootModel[Any]):
+    root: Any = Field(
+        ...,
+        description="numberOfConstituents\n\nNumber of constituents for the FlexGroup volume",
+        title="numberOfConstituents",
+    )
 
 
 class CifsShareUserPermissions(BaseModel):

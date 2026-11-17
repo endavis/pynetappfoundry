@@ -3,7 +3,9 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from typing import Any
+
+from pydantic import BaseModel, Field, RootModel
 
 
 class Expand(BaseModel):
@@ -119,10 +121,8 @@ class ActionRequired(BaseModel):
     severity: str | None = Field(None, description="Action Severity")
 
 
-class Iops(BaseModel):
-    """
-    iops
-    """
+class Iops(RootModel[Any]):
+    root: Any = Field(..., description="iops", title="iops")
 
 
 class DefaultProviderVolume(BaseModel):
@@ -132,10 +132,8 @@ class DefaultProviderVolume(BaseModel):
     size: Capacity | None = None
 
 
-class ExistingIops(BaseModel):
-    """
-    existingIops
-    """
+class ExistingIops(RootModel[Any]):
+    root: Any = Field(..., description="existingIops", title="existingIops")
 
 
 class MaxDisksAllow(BaseModel):
@@ -195,10 +193,8 @@ class CbsPropertiesWithReason(BaseModel):
     usedCapacity: Capacity | None = None
 
 
-class LastModifiedOffbox(BaseModel):
-    """
-    lastModifiedOffbox
-    """
+class LastModifiedOffbox(RootModel[Any]):
+    root: Any = Field(..., description="lastModifiedOffbox", title="lastModifiedOffbox")
 
 
 class VsaLicense(BaseModel):
@@ -247,10 +243,8 @@ class VsaClusterProperties(BaseModel):
     writingSpeedState: str | None = None
 
 
-class ScopeId(BaseModel):
-    """
-    scopeId
-    """
+class ScopeId(RootModel[Any]):
+    root: Any = Field(..., description="scopeId", title="scopeId")
 
 
 class ComplianceScanStatusVolumeResponse(BaseModel):
@@ -280,10 +274,8 @@ class CloudComplianceStatusResponse(BaseModel):
     scanStatus: str | None = None
 
 
-class ValidTo(BaseModel):
-    """
-    validTo
-    """
+class ValidTo(RootModel[Any]):
+    root: Any = Field(..., description="validTo", title="validTo")
 
 
 class AwsEncryptionKey(BaseModel):
@@ -343,10 +335,8 @@ class AzureAvailabilitySet(BaseModel):
     updateDomain: int | None = None
 
 
-class AvailabilityZone(BaseModel):
-    """
-    availabilityZone
-    """
+class AvailabilityZone(RootModel[Any]):
+    root: Any = Field(..., description="availabilityZone", title="availabilityZone")
 
 
 class AzureHaNodeInfo(BaseModel):
@@ -369,10 +359,8 @@ class AzureHaProperties(BaseModel):
     node2Info: AzureHaNodeInfo | None = None
 
 
-class Expirations(BaseModel):
-    """
-    expirations
-    """
+class Expirations(RootModel[Any]):
+    root: Any = Field(..., description="expirations", title="expirations")
 
 
 class LicenseInformation(BaseModel):
@@ -505,16 +493,12 @@ class ReplicationProperties(BaseModel):
     replicationTargets: list[str] | None = None
 
 
-class FreeTrialExpiry(BaseModel):
-    """
-    freeTrialExpiry
-    """
+class FreeTrialExpiry(RootModel[Any]):
+    root: Any = Field(..., description="freeTrialExpiry", title="freeTrialExpiry")
 
 
-class SaasEnabled(BaseModel):
-    """
-    saasEnabled
-    """
+class SaasEnabled(RootModel[Any]):
+    root: Any = Field(..., description="saasEnabled", title="saasEnabled")
 
 
 class SaasSubscription(BaseModel):
@@ -571,10 +555,8 @@ class StatusProperties(BaseModel):
     status: str | None = None
 
 
-class LicenseExpiryDate(BaseModel):
-    """
-    licenseExpiryDate
-    """
+class LicenseExpiryDate(RootModel[Any]):
+    root: Any = Field(..., description="licenseExpiryDate", title="licenseExpiryDate")
 
 
 class SupportRegistrationInformation(BaseModel):
@@ -597,10 +579,8 @@ class SupportedFeatures(BaseModel):
     supportsTieringWithServiceAccount: bool | None = None
 
 
-class Value(BaseModel):
-    """
-    Value
-    """
+class Value(RootModel[Any]):
+    root: Any = Field(..., description="Value", title="Value")
 
 
 class Svm(BaseModel):
@@ -851,16 +831,12 @@ class OnPremWorkingEnvironmentResponse(BaseModel):
     workingEnvironmentType: str | None = None
 
 
-class BootDiskSize(BaseModel):
-    """
-    bootDiskSize
-    """
+class BootDiskSize(RootModel[Any]):
+    root: Any = Field(..., description="bootDiskSize", title="bootDiskSize")
 
 
-class CoreDiskExists(BaseModel):
-    """
-    coreDiskExists
-    """
+class CoreDiskExists(RootModel[Any]):
+    root: Any = Field(..., description="coreDiskExists", title="coreDiskExists")
 
 
 class InstanceResponse(BaseModel):

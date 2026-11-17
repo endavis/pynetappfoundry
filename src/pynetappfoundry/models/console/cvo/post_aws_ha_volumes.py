@@ -3,7 +3,9 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from typing import Any
+
+from pydantic import BaseModel, Field, RootModel
 
 
 class Capacity(BaseModel):
@@ -25,12 +27,8 @@ class ElasticVolumeQuoteInfo(BaseModel):
     totalEvDisks: int | None = None
 
 
-class Index(BaseModel):
-    """
-    index
-
-    Export policy rule index
-    """
+class Index(RootModel[Any]):
+    root: Any = Field(..., description="index\n\nExport policy rule index", title="index")
 
 
 class ExportPolicyRule(BaseModel):
@@ -68,12 +66,12 @@ class CreateIscsiInfoRequest(BaseModel):
     osName: str | None = Field(None, description="Operating system")
 
 
-class MinimumCoolingDays(BaseModel):
-    """
-    minimumCoolingDays
-
-    Cooling Days
-    """
+class MinimumCoolingDays(RootModel[Any]):
+    root: Any = Field(
+        ...,
+        description="minimumCoolingDays\n\nCooling Days",
+        title="minimumCoolingDays",
+    )
 
 
 class VolumeQualityOfService(BaseModel):

@@ -11,7 +11,7 @@ from __future__ import annotations
 import re
 from collections import defaultdict
 from collections.abc import Collection
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from tools.console_openapi.models import (
     Definition,
@@ -20,6 +20,9 @@ from tools.console_openapi.models import (
     ResponseBlock,
     TypeRef,
 )
+
+if TYPE_CHECKING:
+    from tools.console_openapi.overrides import Override
 
 
 class BuildError(ValueError):
@@ -110,11 +113,14 @@ def build_spec(
     version: str = "1.0.0-derived",
     array_responses: Collection[tuple[str, str]] = (),
     fragments: Collection[tuple[str, dict[str, Any]]] = (),
+    overrides: Collection[Override] = (),
 ) -> dict[str, Any]:
     """Build the combined OpenAPI 3.0.3 document and return it as a Python dict.
 
     ``fragments`` are hand-written ``(name, document)`` pairs merged after the docs
-    paths (#1078); see ``tools/console_openapi/fragments.py``.
+    paths (#1078); see ``tools/console_openapi/fragments.py``. ``overrides`` retype
+    schemas the docs get wrong, applied after the fragments (#1095); see
+    ``tools/console_openapi/overrides.py``.
     """
     components_schemas: dict[str, Any] = {}
     paths: dict[str, dict[str, Any]] = defaultdict(dict)
@@ -179,8 +185,10 @@ def build_spec(
     _loosen_response_schemas(paths, components_schemas)
     # Imported here: fragments.py imports BuildError from this module.
     from tools.console_openapi.fragments import merge_fragments
+    from tools.console_openapi.overrides import apply_overrides
 
     merge_fragments(spec, fragments)
+    apply_overrides(spec, overrides)
     _enforce_invariants(spec)
     return spec
 
@@ -305,9 +313,10 @@ def _definition_schema(
             "description": d.description or "Hash mapping strings to string.",
         }
     if d.fallback_kind == "prose":
+        # No ``type``: the docs give such an anchor no fields table, so its shape is
+        # unknown. Typing it ``object`` made real list/int/bool values fail (#1095).
         return {
             **base,
-            "type": "object",
             "description": d.description or "Definition without a structured table.",
         }
     schema: dict[str, Any] = {

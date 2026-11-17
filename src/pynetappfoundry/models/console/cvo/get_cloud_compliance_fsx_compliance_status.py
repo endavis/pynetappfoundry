@@ -3,13 +3,13 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel
+from typing import Any
+
+from pydantic import BaseModel, Field, RootModel
 
 
-class ScopeId(BaseModel):
-    """
-    scopeId
-    """
+class ScopeId(RootModel[Any]):
+    root: Any = Field(..., description="scopeId", title="scopeId")
 
 
 class ComplianceScanStatusVolumeResponse(BaseModel):

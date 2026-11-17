@@ -105,8 +105,21 @@ def test_prose_and_hash_definitions() -> None:
     target_key = next(k for k in schemas if k.endswith(".targetSchema"))
     assert schemas[tags_key]["type"] == "object"
     assert schemas[tags_key]["additionalProperties"] == {"type": "string"}
-    assert schemas[target_key]["type"] == "object"
+    assert "type" not in schemas[target_key]
     assert "Reference to an external schema" in schemas[target_key]["description"]
+
+
+def test_prose_anchor_is_untyped_and_keeps_its_source_fields() -> None:
+    text, src = _load("prose_and_hash_definitions.adoc")
+    ep = parse_endpoint(text, source_file=src, service="fixture")
+    assert ep is not None
+    schemas = build_spec([ep], included_services=("fixture",))["components"]["schemas"]
+    target_key = next(k for k in schemas if k.endswith(".targetSchema"))
+    target = schemas[target_key]
+    assert "type" not in target
+    assert target["x-source-anchor"] == "targetSchema"
+    assert target["title"] == "targetSchema"
+    assert target["description"]
 
 
 def test_duplicate_operation_conflict_raises() -> None:

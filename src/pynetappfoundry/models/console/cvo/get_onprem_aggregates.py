@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from pydantic import BaseModel, Field, RootModel
 
 
@@ -11,10 +13,8 @@ class Capacity(BaseModel):
     unit: str | None = None
 
 
-class Rpm(BaseModel):
-    """
-    rpm
-    """
+class Rpm(RootModel[Any]):
+    root: Any = Field(..., description="rpm", title="rpm")
 
 
 class CommonDiskProperties(BaseModel):

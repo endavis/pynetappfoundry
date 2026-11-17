@@ -25,6 +25,7 @@ Issue [#1078](https://github.com/endavis/pynetappfoundry/issues/1078) asks the C
 3. **Discovery walk.** `ConsoleDiscovery` takes each account in turn, builds that account's `ConsoleAPIClient`, lists its organizations, and for each organization lists its resources and its agents. Organization resources of type `ON_PREM` are the working environments; their `public_id` is the resource's `rawId`. Every object carries the scope that listed it and the organization it was listed under, so an organization is only ever reached with the account that sees it.
 4. **Error policy.** Errors from an account's own calls propagate. A failing account is not skipped, because a partial inventory would look complete.
 5. **Spec fragments.** The two `/agents-mgmt` operations come from a hand-written fragment, `tools/console_openapi/fragments/agents_mgmt.yaml`, with fields taken from live lab probes and tagged `x-evidence: live`. The builder merges fragments after the docs paths and records them in `info.x-fragments`; `doit console_openapi_fragments` strips and re-merges them in the committed spec without network access. The new operations then go through `client_ops.toml`, codegen and the drift checks like any other. A test checks that the committed spec matches the fragments. The operations carry no `x-token-type`, so either token works and the user token is preferred.
+   **Overrides and prose anchors (#1095).** Docs anchors with no fields table are emitted without a `type`, so the generated model is `RootModel[Any]` and accepts any JSON value. `tools/console_openapi/overrides.yaml` retypes the few schemas the docs get wrong (tag maps, cron integer lists, Azure availability zones), each marked `evidence: live` or `inferred` and recorded in its node as `x-override`. They are applied after the fragments and re-applied offline by `doit console_openapi_fragments`; see [Console OpenAPI tool: Spec overrides](../../tools/console_openapi/README.md#spec-overrides).
 6. **Deferred.**
    - Mapping a working environment to its agent is implemented in #1076 ([ADR-0030](0030-occm-cache-is-discovery-driven-and-maps-working-environments-to-agents.md)). Discovery lists the three kinds side by side and does not reconcile agents against `[connectors]`.
    - #1083 keeps `[connectors].agent_id` required, keeps a raw agent id passed as `cluster=` on the root account, does not default `Console(config)`'s `org_id`, and does not handle `list-connectors` pagination or `status` values.
@@ -47,6 +48,8 @@ Issue [#1078](https://github.com/endavis/pynetappfoundry/issues/1078) asks the C
 - Issue #1080: feat: scope directories in the config dir (see ADR-0028)
 - Issue #1076: map working environments to agents (implemented, see ADR-0030)
 - Issue #1083: connector and pagination follow-ups (deferred)
+- Issue #1093: generated `Tags` and `AvailabilityZone` model gaps (fixed in #1095)
+- Issue #1095: fix: generated CVO models reject real cloud working environments
 
 ## Related Documentation
 

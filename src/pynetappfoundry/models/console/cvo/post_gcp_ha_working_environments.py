@@ -3,7 +3,9 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from typing import Any
+
+from pydantic import BaseModel, Field, RootModel
 
 
 class CIFSConfigurationRequest(BaseModel):
@@ -17,12 +19,12 @@ class CIFSConfigurationRequest(BaseModel):
     svmName: str | None = Field(None, description="SVM name")
 
 
-class FirewallIpRanges(BaseModel):
-    """
-    firewallIpRanges
-
-    Firewall IP ranges
-    """
+class FirewallIpRanges(RootModel[Any]):
+    root: Any = Field(
+        ...,
+        description="firewallIpRanges\n\nFirewall IP ranges",
+        title="firewallIpRanges",
+    )
 
 
 class GcpEncryption(BaseModel):
@@ -34,18 +36,16 @@ class GcpLabel(BaseModel):
     labelValue: str | None = None
 
 
-class Iops(BaseModel):
-    """
-    iops
-    """
+class Iops(RootModel[Any]):
+    root: Any = Field(..., description="iops", title="iops")
 
 
-class Throughput(BaseModel):
-    """
-    throughput
-
-    Optional throughput for the aggregate
-    """
+class Throughput(RootModel[Any]):
+    root: Any = Field(
+        ...,
+        description="throughput\n\nOptional throughput for the aggregate",
+        title="throughput",
+    )
 
 
 class GcpPerformance(BaseModel):
@@ -119,10 +119,8 @@ class GcpHaParameters(BaseModel):
     )
 
 
-class Pattern(BaseModel):
-    """
-    pattern
-    """
+class Pattern(RootModel[Any]):
+    root: Any = Field(..., description="pattern", title="pattern")
 
 
 class Regex(BaseModel):
@@ -140,12 +138,8 @@ class AdminUsername(BaseModel):
     validatesWith: PatternMessage
 
 
-class Index(BaseModel):
-    """
-    index
-
-    Export policy rule index
-    """
+class Index(RootModel[Any]):
+    root: Any = Field(..., description="index\n\nExport policy rule index", title="index")
 
 
 class ExportPolicyRule(BaseModel):
@@ -338,10 +332,8 @@ class DefaultProviderVolume(BaseModel):
     size: Capacity | None = None
 
 
-class ExistingIops(BaseModel):
-    """
-    existingIops
-    """
+class ExistingIops(RootModel[Any]):
+    root: Any = Field(..., description="existingIops", title="existingIops")
 
 
 class MaxDisksAllow(BaseModel):
@@ -401,10 +393,8 @@ class CbsPropertiesWithReason(BaseModel):
     usedCapacity: Capacity | None = None
 
 
-class LastModifiedOffbox(BaseModel):
-    """
-    lastModifiedOffbox
-    """
+class LastModifiedOffbox(RootModel[Any]):
+    root: Any = Field(..., description="lastModifiedOffbox", title="lastModifiedOffbox")
 
 
 class VsaLicense(BaseModel):
@@ -453,10 +443,8 @@ class VsaClusterProperties(BaseModel):
     writingSpeedState: str | None = None
 
 
-class ScopeId(BaseModel):
-    """
-    scopeId
-    """
+class ScopeId(RootModel[Any]):
+    root: Any = Field(..., description="scopeId", title="scopeId")
 
 
 class ComplianceScanStatusVolumeResponse(BaseModel):
@@ -486,10 +474,8 @@ class CloudComplianceStatusResponse(BaseModel):
     scanStatus: str | None = None
 
 
-class ValidTo(BaseModel):
-    """
-    validTo
-    """
+class ValidTo(RootModel[Any]):
+    root: Any = Field(..., description="validTo", title="validTo")
 
 
 class AwsEncryptionKey(BaseModel):
@@ -575,10 +561,8 @@ class GcpHaProperties(BaseModel):
     projectName: str | None = None
 
 
-class Expirations(BaseModel):
-    """
-    expirations
-    """
+class Expirations(RootModel[Any]):
+    root: Any = Field(..., description="expirations", title="expirations")
 
 
 class LicenseInformation(BaseModel):
@@ -684,16 +668,12 @@ class ReplicationProperties(BaseModel):
     replicationTargets: list[str] | None = None
 
 
-class FreeTrialExpiry(BaseModel):
-    """
-    freeTrialExpiry
-    """
+class FreeTrialExpiry(RootModel[Any]):
+    root: Any = Field(..., description="freeTrialExpiry", title="freeTrialExpiry")
 
 
-class SaasEnabled(BaseModel):
-    """
-    saasEnabled
-    """
+class SaasEnabled(RootModel[Any]):
+    root: Any = Field(..., description="saasEnabled", title="saasEnabled")
 
 
 class SaasSubscription(BaseModel):
@@ -750,10 +730,8 @@ class StatusProperties(BaseModel):
     status: str | None = None
 
 
-class LicenseExpiryDate(BaseModel):
-    """
-    licenseExpiryDate
-    """
+class LicenseExpiryDate(RootModel[Any]):
+    root: Any = Field(..., description="licenseExpiryDate", title="licenseExpiryDate")
 
 
 class SupportRegistrationInformation(BaseModel):
@@ -776,10 +754,8 @@ class SupportedFeatures(BaseModel):
     supportsTieringWithServiceAccount: bool | None = None
 
 
-class Value(BaseModel):
-    """
-    Value
-    """
+class Value(RootModel[Any]):
+    root: Any = Field(..., description="Value", title="Value")
 
 
 class Svm(BaseModel):

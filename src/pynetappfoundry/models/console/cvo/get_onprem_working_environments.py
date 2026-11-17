@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from pydantic import BaseModel, Field, RootModel
 
 
@@ -213,10 +215,8 @@ class LifResponse(BaseModel):
     )
 
 
-class Value(BaseModel):
-    """
-    Value
-    """
+class Value(RootModel[Any]):
+    root: Any = Field(..., description="Value", title="Value")
 
 
 class OnPremClusterProperties(BaseModel):
@@ -239,10 +239,8 @@ class OnPremClusterProperties(BaseModel):
     volumeCount: int | None = None
 
 
-class ScopeId(BaseModel):
-    """
-    scopeId
-    """
+class ScopeId(RootModel[Any]):
+    root: Any = Field(..., description="scopeId", title="scopeId")
 
 
 class ComplianceScanStatusVolumeResponse(BaseModel):
@@ -273,13 +271,13 @@ class CloudComplianceStatusResponse(BaseModel):
 
 
 class CronJobSchedule(BaseModel):
-    days: list[str] | None = None
+    days: list[int] | None = None
     description: str | None = None
-    hours: list[str] | None = None
-    minutes: list[str] | None = None
+    hours: list[int] | None = None
+    minutes: list[int] | None = None
     months: list[str] | None = None
     name: str | None = None
-    weekDays: list[str] | None = None
+    weekDays: list[int] | None = None
 
 
 class InterClusterLif(BaseModel):

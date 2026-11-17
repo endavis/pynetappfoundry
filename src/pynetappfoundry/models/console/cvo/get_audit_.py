@@ -3,13 +3,13 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from pydantic import BaseModel, Field, RootModel
 
 
-class ParentId(BaseModel):
-    """
-    parentId
-    """
+class ParentId(RootModel[Any]):
+    root: Any = Field(..., description="parentId", title="parentId")
 
 
 class AuditGroupSummaryRecord(BaseModel):

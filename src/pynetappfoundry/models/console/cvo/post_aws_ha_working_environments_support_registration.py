@@ -3,23 +3,21 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel
+from typing import Any
+
+from pydantic import BaseModel, Field, RootModel
 
 
-class LicenseExpiryDate(BaseModel):
-    """
-    licenseExpiryDate
-    """
+class LicenseExpiryDate(RootModel[Any]):
+    root: Any = Field(..., description="licenseExpiryDate", title="licenseExpiryDate")
 
 
-class LicenseStartDate(BaseModel):
-    """
-    licenseStartDate
-
-
-    //end collapsible .Definitions block
-    ====
-    """
+class LicenseStartDate(RootModel[Any]):
+    root: Any = Field(
+        ...,
+        description="licenseStartDate\n\n\n//end collapsible .Definitions block\n====",
+        title="licenseStartDate",
+    )
 
 
 class ResponseBody(BaseModel):

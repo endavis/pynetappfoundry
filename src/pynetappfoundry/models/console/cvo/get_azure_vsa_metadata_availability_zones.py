@@ -3,20 +3,17 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from pydantic import BaseModel, Field, RootModel
 
 
-class Zones(BaseModel):
-    """
-    zones
-
-    Zone values
-
-
-
-    //end collapsible .Definitions block
-    ====
-    """
+class Zones(RootModel[Any]):
+    root: Any = Field(
+        ...,
+        description="zones\n\nZone values\n\n\n\n//end collapsible .Definitions block\n====",
+        title="zones",
+    )
 
 
 class ResponseBody(BaseModel):
