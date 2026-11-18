@@ -169,6 +169,27 @@ def test_each_cloud_mapping_matches_on_uuid(
     assert [(o.mapping, o.matched_by) for o in loc.occm] == [(mapping, "uuid")]
 
 
+@pytest.mark.parametrize("mapping", CLOUD)
+def test_cloud_record_without_cluster_properties_matches_by_its_own_name(
+    mapping: str, ontap_db: ClusterMetadataDB, occm_db: OccmCacheDB
+) -> None:
+    ontap_db.set("lab1", _ontap_metadata())
+    record = {"publicId": "we1", "name": "lab1", "ontapClusterProperties": {}}
+    other = {"publicId": "we2", "name": "other", "ontapClusterProperties": {}}
+    occm_db.set(_occm_snapshot({"a": {mapping: [record, other]}}))
+    loc = ClusterResolver(ontap_db=ontap_db, occm_db=occm_db).resolve("lab1")
+    assert [(o.public_id, o.matched_by) for o in loc.occm] == [("we1", "name")]
+
+
+def test_on_prem_record_is_not_matched_by_its_display_name(
+    ontap_db: ClusterMetadataDB, occm_db: OccmCacheDB
+) -> None:
+    ontap_db.set("lab1", _ontap_metadata())
+    occm_db.set(_occm_snapshot({"a": {ON_PREM: [{"publicId": "we1", "name": "lab1"}]}}))
+    loc = ClusterResolver(ontap_db=ontap_db, occm_db=occm_db).resolve("lab1")
+    assert loc.occm == ()
+
+
 def test_name_fallback_for_record_without_uuid_uses_ontap_cluster_name(
     ontap_db: ClusterMetadataDB, aiqum_db: AiqumCacheDB, occm_db: OccmCacheDB
 ) -> None:

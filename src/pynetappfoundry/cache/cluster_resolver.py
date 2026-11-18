@@ -60,7 +60,10 @@ class LinkRule:
 
 _CLOUD_RULE = LinkRule(
     uuid_paths=("ontapClusterProperties.clusterUuid",),
-    name_paths=("ontapClusterProperties.clusterName", "clusterProperties.clusterName"),
+    # The working environment's own ``name`` is the last fallback: measured equal to the
+    # ONTAP cluster name on every UUID-matched cloud record, and always set where
+    # ``ontapClusterProperties`` is only partly populated (ADR-0032, #1097).
+    name_paths=("ontapClusterProperties.clusterName", "clusterProperties.clusterName", "name"),
 )
 
 #: The linking rule of every cached record type that carries a cluster identity.

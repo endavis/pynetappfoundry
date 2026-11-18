@@ -21,7 +21,7 @@ Issue [#1097](https://github.com/endavis/pynetappfoundry/issues/1097) asks for o
 ## Decision
 
 1. **One linking table.** `LINK_RULES` in `src/pynetappfoundry/cache/cluster_resolver.py` maps each cached record type (`AiqumCluster` and the seven OCCM working environment mappings) to a `LinkRule`: the dotted record paths that hold the cluster UUID, and the paths that hold the cluster name. A measurement result changes that table only. The initial rules come from the generated models: AIQUM `uuid` and `name`; on-prem `ontapClusterProperties.clusterUuid` then `clusterProperties.clusterUuid`; the six cloud lists `ontapClusterProperties.clusterUuid` only (their `clusterProperties` has no `clusterUuid`). A test checks that every path resolves against the model, so codegen drift fails.
-2. **UUID first, name as fallback.** The ONTAP UUID comes only from the ONTAP cache. When it is known, a record that holds a UUID matches only on an equal UUID, and a record with a different UUID never matches by name. A record without a UUID, or any record when the ONTAP UUID is unknown, matches by exact, case-sensitive name. The name used is the cached ONTAP `cluster.name` when present, else the input name. Each hit reports `matched_by` (`uuid` or `name`). The working environment `name` is a display name and is not a fallback.
+2. **UUID first, name as fallback.** The ONTAP UUID comes only from the ONTAP cache. When it is known, a record that holds a UUID matches only on an equal UUID, and a record with a different UUID never matches by name. A record without a UUID, or any record when the ONTAP UUID is unknown, matches by exact, case-sensitive name. The name used is the cached ONTAP `cluster.name` when present, else the input name. Each hit reports `matched_by` (`uuid` or `name`). Name paths are tried in order: `ontapClusterProperties.clusterName`, then `clusterProperties.clusterName`, and for the six cloud lists only, the working environment's own `name` last, because the measurement below found it equal to the ONTAP cluster name on every UUID-matched cloud record. The on-prem working environment `name` is not a fallback: it is a display name and was not measured against the cluster name.
 3. **Absent is not an error.** A missing cache file, no rows or no match returns `None` or an empty tuple. An invalid cluster name raises `ValueError`, even when the ONTAP cache is absent. `sqlite3` errors propagate.
 4. **Every instance and agent is returned.** All AIQUM instances and every agent and working environment mapping is searched and each hit returned, sorted, with the agent name and the scopes from [#1083](https://github.com/endavis/pynetappfoundry/issues/1083).
 5. **No file is created.** `ClusterResolver.from_config` opens only cache files that already exist, through the new `default_path` of each database class.
@@ -31,13 +31,17 @@ Issue [#1097](https://github.com/endavis/pynetappfoundry/issues/1097) asks for o
 
 ### Linking-key measurement (#1097, read-only, scrubbed)
 
-Field paths and yes/no or category answers only; no counts, identifiers, names or addresses.
+Field paths and always, sometimes or never answers only; no counts, identifiers, names or addresses. Two sources: a multi-agent environment with AWS HA, Azure single-node and Azure HA working environments, several AIQUM instances and the ONTAP cache refreshed with the current code; and a lab with one cluster, one AIQUM instance and one on-prem working environment.
 
-- On-prem working environment, are `ontapClusterProperties.clusterUuid` and `clusterProperties.clusterUuid` present strings, and equal when both are present: TODO(measured): result
-- On-prem working environment, does `ontapClusterProperties.clusterName`, `clusterProperties.clusterName` or `name` equal the ONTAP `cluster.name`: TODO(measured): result
-- Each cloud type, is `ontapClusterProperties.clusterUuid` a non-empty string, and is a `clusterName` present and equal to the ONTAP `cluster.name`: TODO(measured): result
-- AIQUM, is `uuid` equal to the ONTAP cluster UUID and `name` to the ONTAP `cluster.name`: TODO(measured): result
-- ONTAP cache, is `cluster.uuid` populated, and does `cluster.name` equal the inventory key (always, sometimes, never): TODO(measured): result
+- **ONTAP cache:** `cluster.uuid` was always populated, and `cluster.name` always equalled the inventory key (both sources).
+- **Cloud working environments** (AWS HA, Azure, Azure HA; the other cloud types had no records):
+  - `ontapClusterProperties` was always present; `clusterProperties.clusterUuid` and `clusterProperties.clusterName` were never set.
+  - `ontapClusterProperties.clusterUuid` and `.clusterName` were always set on AWS HA and Azure, and only sometimes on Azure HA. The working environment's own `name` was always set.
+  - Where `ontapClusterProperties.clusterUuid` was set, it was always the UUID of a cached ONTAP cluster. On those UUID-matched records, `ontapClusterProperties.clusterName` and the working environment `name` always equalled the ONTAP `cluster.name`.
+  - So the cloud UUID path is right, and the working environment `name` became the last cloud name fallback, for the Azure HA records whose `ontapClusterProperties` is only partly populated.
+- **On-prem working environments:** none in the multi-agent environment. In the lab, the `ontapClusterProperties.clusterUuid` of the on-prem working environment equalled the ONTAP cluster UUID and matched by UUID. Whether `ontapClusterProperties.clusterUuid` and `clusterProperties.clusterUuid` always agree, and whether the on-prem `name` equals the cluster name, is not measured; the rule keeps both UUID paths and does not use the on-prem `name`.
+- **AIQUM:** `uuid` and `name` were always set. The AIQUM `uuid` was only sometimes a cached ONTAP UUID, because the AIQUM instances monitor clusters the ONTAP cache does not hold. Where it matched, the AIQUM `name` always equalled the ONTAP `cluster.name`. In the lab the AIQUM `uuid` equalled the ONTAP UUID.
+- Reading AIQUM clusters into the `AiqumCluster` model can fail on an instance that returns a `null` `contact` or `location`. Matching uses the raw records and is not affected; the model fix is [#1102](https://github.com/endavis/pynetappfoundry/issues/1102).
 
 ## Rationale
 
