@@ -113,7 +113,7 @@ Each scope's `consoleapi.toml` is a Console service account, and the root is the
 
 - The root counts as an account only with credentials: its `[general]` has `user_token`, `service_token` or `client_id`, or a root refresh token resolves (`users.toml` `[console]` or `NF_CONSOLE_PASSWORD`). A root that only carries `base_url`, `ui_base_url`, `base_api_path` or `timeout` is not an account.
 - `org_id` is not needed for discovery: `ConsoleDiscovery` finds the organizations of each account. See [Console Agent](../usage/console-agent.md#discovering-organizations-agents-and-working-environments).
-- `[connectors].agent_id` is still required for a connector; discovery does not fill it in.
+- A connector without `agent_id` is resolved by name from the OCCM cache (see [Connectors](#connectors) below); run `nf cache occm refresh` first.
 
 ### Unique names
 
@@ -361,7 +361,7 @@ timeout = 30.0                               # Optional: Request timeout in seco
 | `audience` | string | No | `"https://api.cloud.netapp.com"` | Audience requested for the token. Only valid with client credentials |
 | `base_url` | string | Yes | - | Host (and any proxy prefix) for the Console API. The bundled spec keys each operation by its full path (for example `/v1/management/organizations`), which is appended to it |
 | `ui_base_url` | string | No | `"https://console.netapp.com"` | Console UI host that the link builders and the reports use. It is the UI host, not the API `base_url`. Reports read it without needing Console credentials |
-| `org_id` | string | No | `null` | Default organization ID. Can be overridden per `Console(config, org_id=...)` call |
+| `org_id` | string | No | `null` | Default organization ID. Can be overridden per `Console(config, org_id=...)` call. Without it, `Console` uses the account's only organization (one live `list_organizations()` call); zero or several organizations raise `ValueError` |
 | `agent_ids` | list of strings | No | `[]` | Console agent IDs that `Console.find_connector` searches when called without an `agent_ids` argument. Agent IDs end in `clients`. The tenancy API lists none for a service token, so they are configured here |
 | `base_api_path` | string | No | `"/"` | Fallback path prefix, used only for operations whose spec entry declares no `servers`. It has no effect with the bundled Console spec, whose operations all carry a bare-host server |
 | `timeout` | float | No | `30.0` | HTTP request timeout in seconds |
@@ -540,7 +540,7 @@ agent_id = "AGENT-ID"   # optional; needed to query this agent through DataSourc
 
 `agent_id` is the Console agent id. `DataSource` reads it when `cluster=` names this
 entry for an OCCM model ([ADR-0027](../decisions/0027-occm-backend-is-live-only-and-delegates-to-the-typed-console-agent-ops.md)).
-A connector without a non-blank `agent_id` raises `ValueError` naming `connectors.<name>`.
+A connector without a non-blank `agent_id` is resolved from the OCCM cache: the cached agent with the same name in the connector's scope (exact, case-sensitive). No match, an empty cache or several matching agents raises `ValueError` naming `connectors.<name>`; set `agent_id` or run `nf cache occm refresh`. A raw agent id as `cluster=` uses the scope of the cached agent with that id (#1083).
 
 #### Connector Fields
 

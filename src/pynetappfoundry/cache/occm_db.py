@@ -92,6 +92,11 @@ class OccmCacheDB(SQLiteDB):
 
     SCHEMA_VERSION: ClassVar[int] = 1
 
+    @staticmethod
+    def default_path(config: Config) -> Path:
+        """Return the cache file path for *config*, without creating anything."""
+        return Path(config.config_dir) / ".cache" / "occm_cache.db"
+
     def __init__(
         self,
         db_path: Path | str | None = None,
@@ -100,9 +105,8 @@ class OccmCacheDB(SQLiteDB):
         if db_path:
             self.db_path: Path | str = db_path
         elif config:
-            cache_dir = config.config_dir / ".cache"
-            cache_dir.mkdir(parents=True, exist_ok=True)
-            self.db_path = cache_dir / "occm_cache.db"
+            self.db_path = self.default_path(config)
+            self.db_path.parent.mkdir(parents=True, exist_ok=True)
         else:
             raise ValueError("Either db_path or config must be provided")
 
@@ -339,6 +343,29 @@ class OccmCacheDB(SQLiteDB):
     def agents(self) -> list[ConsoleAgentInfo]:
         """Return the cached agents."""
         return [ConsoleAgentInfo.model_validate(r) for r in self._inventory_records(_AGENT)]
+
+    def agents_named(self, name: str, *, scope: str | None) -> list[ConsoleAgentInfo]:
+        """Return the cached agents called *name* (exact, case-sensitive) in *scope*.
+
+        ``scope=None`` is the root account.  An agent listed under several organizations of
+        the account appears once (the first row wins).
+        """
+        found: dict[str, ConsoleAgentInfo] = {}
+        for agent in self.agents():
+            if agent.name == name and agent.scope == scope:
+                found.setdefault(agent.agent_id, agent)
+        return list(found.values())
+
+    def agent_scopes(self, agent_id: str) -> list[str | None]:
+        """Return the distinct scopes of the cached agents with *agent_id*, in cache order.
+
+        ``None`` is the root account.  An unknown id gives ``[]``.
+        """
+        scopes: list[str | None] = []
+        for agent in self.agents():
+            if agent.agent_id == agent_id and agent.scope not in scopes:
+                scopes.append(agent.scope)
+        return scopes
 
     def working_environments(self) -> list[ConsoleWorkingEnvironment]:
         """Return the cached working environments."""

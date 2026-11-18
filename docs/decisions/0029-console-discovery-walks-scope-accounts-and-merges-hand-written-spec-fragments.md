@@ -28,7 +28,14 @@ Issue [#1078](https://github.com/endavis/pynetappfoundry/issues/1078) asks the C
    **Overrides and prose anchors (#1095).** Docs anchors with no fields table are emitted without a `type`, so the generated model is `RootModel[Any]` and accepts any JSON value. `tools/console_openapi/overrides.yaml` retypes the few schemas the docs get wrong (tag maps, cron integer lists, Azure availability zones), each marked `evidence: live` or `inferred` and recorded in its node as `x-override`. They are applied after the fragments and re-applied offline by `doit console_openapi_fragments`; see [Console OpenAPI tool: Spec overrides](../../tools/console_openapi/README.md#spec-overrides).
 6. **Deferred.**
    - Mapping a working environment to its agent is implemented in #1076 ([ADR-0030](0030-occm-cache-is-discovery-driven-and-maps-working-environments-to-agents.md)). Discovery lists the three kinds side by side and does not reconcile agents against `[connectors]`.
-   - #1083 keeps `[connectors].agent_id` required, keeps a raw agent id passed as `cluster=` on the root account, does not default `Console(config)`'s `org_id`, and does not handle `list-connectors` pagination or `status` values.
+   - Implemented in #1083, using the OCCM cache ([ADR-0030](0030-occm-cache-is-discovery-driven-and-maps-working-environments-to-agents.md)), with no live discovery at query time:
+     - A connector without a non-blank `agent_id` resolves to the cached agent whose `name` equals the connector name (exact, case-sensitive) in the connector's own scope, deduplicated by `agent_id`. Status does not filter. No match, an empty cache or several distinct ids raises `ValueError`.
+     - A raw agent id passed as `cluster=` uses the scope of the cached agent with that id: root when uncached or cached under the root, the scope when cached under one scope, `ValueError` when cached under several scopes without the root.
+     - `Console(config, scope=S)` with no `org_id` (argument or `consoleapi.toml`) calls `list_organizations()` once and uses the only organization; zero or several raise `ValueError`.
+     - `list-connectors` measurement (#1083, read-only, against organizations with several agents including inactive ones; only key names, types and status values were recorded):
+       - The response is `{occms: [...]}` with no other top-level key and no cursor-like key. A `limit=1` query parameter does not change the result. The endpoint is not paginated: one call returns every agent, so `list_agents` needs no paging.
+       - Each `occms[]` item has `agent`, `automaticCallbackUris`, `isServiceManager3`, `manualOverrideUris`, `primaryCallbackUri` and `status`.
+       - Observed values: `occms[].status` was always `active`, while `occms[].agent.status` was `active` or `inactive`. The agent status is the one that tells inactive agents apart. `ConsoleAgentInfo.from_occm` already prefers `agent.status` and falls back to the item `status` only when it is missing, which is what the #1091 skip of non-active agents relies on.
 
 ## Rationale
 
@@ -47,7 +54,7 @@ Issue [#1078](https://github.com/endavis/pynetappfoundry/issues/1078) asks the C
 - Issue #1078: feat: support multiple Console organizations through discovered service accounts
 - Issue #1080: feat: scope directories in the config dir (see ADR-0028)
 - Issue #1076: map working environments to agents (implemented, see ADR-0030)
-- Issue #1083: connector and pagination follow-ups (deferred)
+- Issue #1083: connector and pagination follow-ups (implemented)
 - Issue #1093: generated `Tags` and `AvailabilityZone` model gaps (fixed in #1095)
 - Issue #1095: fix: generated CVO models reject real cloud working environments
 

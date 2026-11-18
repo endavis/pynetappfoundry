@@ -13,11 +13,12 @@ import pytest
 from pynetappfoundry.cache.field_mapping import TypeMapping
 from pynetappfoundry.cache.occm_collector import OccmAgentSnapshot, OccmSnapshot
 from pynetappfoundry.cache.occm_db import OccmCacheDB
-from pynetappfoundry.console.discovery import ConsoleInventory
+from pynetappfoundry.console.discovery import AccountInventory, ConsoleInventory
 from pynetappfoundry.data._routing import RoutingDecision
 from pynetappfoundry.data.occm_backend import OccmBackend
 from pynetappfoundry.data.source import DataSource
 from pynetappfoundry.models.console.cvo.get_onprem_working_environments import ResponseBody
+from pynetappfoundry.models.console_types import ConsoleAgentInfo
 
 _CLIENT_PATH = "pynetappfoundry.clients.console.agent.ConsoleAgentClient"
 _MAPPING = "OccmOnpremWorkingEnvironment"
@@ -38,6 +39,7 @@ def cache_db(tmp_path: Path) -> Iterator[OccmCacheDB]:
     with (
         OccmCacheDB(db_path=tmp_path / "occm_cache.db") as db,
         patch.object(OccmBackend, "_cache_db", db),
+        patch.object(OccmBackend, "_cache_exists", return_value=True),
     ):
         yield db
 
@@ -185,3 +187,48 @@ def test_is_live_only_for_a_mapping_that_is_not_cached() -> None:
     decision = RoutingDecision(cache_fields=("name",), live_fields=())
     with pytest.raises(NotImplementedError, match="only OccmOnpremWorkingEnvironment"):
         OccmBackend(_config()).query(ResponseBody, stub, decision, "c1", {})
+
+
+def _collect_named(db: OccmCacheDB, agent_id: str, name: str, *envs: str) -> None:
+    db.set(
+        OccmSnapshot(
+            cached_at=datetime.now(UTC),
+            inventory=ConsoleInventory(
+                accounts=[
+                    AccountInventory(
+                        scope=None,
+                        agents=[ConsoleAgentInfo(agentId=agent_id, name=name, status="active")],
+                    )
+                ]
+            ),
+            agents=(
+                OccmAgentSnapshot(
+                    agent_id=agent_id,
+                    scope=None,
+                    organization_id=None,
+                    cached_at=datetime.now(UTC),
+                    records={_MAPPING: [_env(e) for e in envs]},
+                ),
+            ),
+        )
+    )
+
+
+def test_connector_without_agent_id_resolves_by_name_for_cache_query(
+    cache_db: OccmCacheDB, client_cls: MagicMock
+) -> None:
+    _collect_named(cache_db, "agent-9", "c1", "p1", "p2")
+    results = list(
+        DataSource(_config({"c1": {}})).query(ResponseBody, cluster="c1", source="cache")
+    )
+    assert [r.publicId for r in results] == ["p1", "p2"]
+    client_cls.assert_not_called()
+
+
+def test_connector_without_agent_id_and_empty_cache_names_the_refresh(
+    cache_db: OccmCacheDB, client_cls: MagicMock
+) -> None:
+    ds = DataSource(_config({"c1": {}}))
+    with pytest.raises(ValueError, match=r"connectors\.c1.*nf cache occm refresh"):
+        list(ds.query(ResponseBody, cluster="c1", source="cache"))
+    client_cls.assert_not_called()

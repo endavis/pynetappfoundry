@@ -52,12 +52,13 @@ class Console:
         Args:
             config: Configuration object.
             org_id: The organization UUID to bind to.  If omitted, falls back
-                    to ``org_id`` from ``consoleapi.toml [general]``.
+                    to ``org_id`` from ``consoleapi.toml [general]``, then to the
+                    account's only organization (one live ``list_organizations`` call).
             scope: Use this config scope's Console account (its own
                 ``consoleapi.toml`` and refresh token) instead of the root one.
 
         Raises:
-            ValueError: If no org_id is available from either source.
+            ValueError: If no org_id is given and the account has no organization or several.
         """
         self._config = config
         self._scope = scope
@@ -69,11 +70,29 @@ class Console:
             settings = config.get_console_api_settings(scope=scope)
         resolved = org_id or settings.org_id
         if not resolved:
-            raise ValueError(
-                "Console requires an org_id either as a constructor argument "
-                "or in consoleapi.toml [general] as 'org_id'."
-            )
+            resolved = self._single_organization_id()
         self.org_id: str = resolved
+
+    def _single_organization_id(self) -> str:
+        """Return the id of the account's only organization (a live call).
+
+        Raises:
+            ValueError: If the account has no organization or several.
+        """
+        organizations = self._client.list_organizations()
+        if not organizations:
+            raise ValueError(
+                "Console requires an org_id: pass it as an argument or set 'org_id' in "
+                "consoleapi.toml [general]; the account lists no organization to default to."
+            )
+        if len(organizations) > 1:
+            listed = ", ".join(f"{o.id} ({o.name})" for o in organizations)
+            raise ValueError(
+                "Console requires an org_id: the account has several organizations "
+                f"({listed}); pass one as an argument or set 'org_id' in "
+                "consoleapi.toml [general]."
+            )
+        return organizations[0].id
 
     def get_organization(self) -> Organization:
         """Get the organization bound to this Console instance.
