@@ -151,6 +151,7 @@ uv pip install pynetappfoundry
 
 ## Next Steps
 
+- Follow the [Configuration Guide](configuration.md) to set up your config directory and each API
 - Read the [Usage Guide](../usage/basics.md) to learn how to use the package
 - Check the [API Reference](../reference/api.md) for detailed documentation
 - See [Examples](../examples/README.md) for usage examples

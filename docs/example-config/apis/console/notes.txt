@@ -5,7 +5,7 @@ Console SaaS (BlueXP) runtime client setup.
    this directory:
 
        cp tools/console_openapi/generated/console_openapi.yaml \
-          ~/.config/pynetappfoundry/apis/console/
+          <config>/apis/console/
 
    The runtime client (ConsoleAPIClient) loads the spec from
    config.get_schema_location("console") / "console_openapi.yaml".
@@ -49,7 +49,7 @@ Console SaaS (BlueXP) runtime client setup.
        from pynetappfoundry.core.config import Config
        from pynetappfoundry.console import Console
 
-       config = Config(config_dir='~/.config/pynetappfoundry')
+       config = Config(config_dir='/absolute/path/to/config')
        console = Console(config)
        org = console.get_organization()
        print(f'{org.id}: {org.name}')

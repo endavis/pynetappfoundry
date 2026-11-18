@@ -101,6 +101,7 @@ nav:
   - Home: index.md
   - Getting Started:
       - Installation: getting-started/installation.md
+      - Configuration: getting-started/configuration.md
   - Usage:
       - Basics: usage/basics.md
       - CLI Guide: usage/cli.md

@@ -18,6 +18,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [CLI Reference](reference/cli.md) - Command-line interface documentation
 - [Cluster Resolver](usage/cluster-resolver.md) - Find one ONTAP cluster in the ONTAP, AIQUM and OCCM caches and read what each holds, from the caches alone
 - [Compliance Checks](usage/compliance-checks.md) - Configure and run config-driven compliance checks against cached cluster metadata
+- [Configuration Guide](getting-started/configuration.md) - Set up a config directory and each API (ONTAP, AIQUM, DII, Console) from a fresh install
 - [Configuration Schema Reference](reference/config-schema.md) - Complete reference for pynetappfoundry TOML configuration files
 - [Console Agent](usage/console-agent.md) - Manage on-prem working environments through a Console agent with ConsoleAgentClient
 - [DataSource](usage/data-source.md) - Unified entry point for reading cluster data from cache or live API
@@ -259,6 +260,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [CLI Reference](reference/cli.md) - Command-line interface documentation
 - [Cluster Resolver](usage/cluster-resolver.md) - Find one ONTAP cluster in the ONTAP, AIQUM and OCCM caches and read what each holds, from the caches alone
 - [Compliance Checks](usage/compliance-checks.md) - Configure and run config-driven compliance checks against cached cluster metadata
+- [Configuration Guide](getting-started/configuration.md) - Set up a config directory and each API (ONTAP, AIQUM, DII, Console) from a fresh install
 - [Configuration Schema Reference](reference/config-schema.md) - Complete reference for pynetappfoundry TOML configuration files
 - [Console Agent](usage/console-agent.md) - Manage on-prem working environments through a Console agent with ConsoleAgentClient
 - [Consumer Notes](template/consumer-notes.md) - Breaking changes and behaviour changes that arrive when a project syncs from the template.

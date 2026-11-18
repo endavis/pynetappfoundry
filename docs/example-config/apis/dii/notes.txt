@@ -1,22 +1,19 @@
-Auth header:
-    if self.auth_token:
-        default_headers["X-CloudInsights-ApiKey"] = self.auth_token
+DII (Data Infrastructure Insights) API setup. See docs/getting-started/configuration.md.
 
-    'X-CloudInsights-ApiKey:<API_Access_Token>'
+1. Settings: create <config>/apis/dii/diiapi.toml with a [general] section
+   (base_url, base_api_path).
 
-get the json for the api at:
-https://<dii_cloud_host>/rest/documentation/category/all
-save it as all.json
+2. Token: store the API access token with
+     nf config set-credential --setting diiapi.api_ro_token
+   or per tenant with
+     nf config set-credential --type cloudinsights --name <tenant> --user <label>
+   The client sends it as the header X-CloudInsights-ApiKey.
 
-remove:
-    "servers": [
-        {
-            "url": "https://your-client.cloudinsights.netapp.com/rest/v1"
-        }
-    ],
-    "security": [
-        {
-            "Customer ApiKey": [],
-            "Authorization Bearer": []
-        }
-    ],
+3. Spec: copy all.json from this directory into <config>/apis/dii/, or refresh
+   it with
+     doit fetch_spec --api=dii --host=<tenant> --api-key=<token>
+   doit fetch_spec sanitizes the spec; no manual edits are needed.
+
+4. Check:
+     nf config validate
+     nf config show -s cloudinsights

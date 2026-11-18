@@ -1,28 +1,15 @@
-Get the yaml from https://<cluster>/docs/api/swagger.yaml
+ONTAP REST API setup. See docs/getting-started/configuration.md.
 
-Convert from yaml to json at https://openapi-yaml-json-converter.com/
-save it as all.json
-remove:
-  "security": [
-    {
-      "simple": []
-    }
-  ],
+Spec:
+  Copy all.json from this directory into <config>/apis/ontap/ (the release tag
+  you installed has the spec that matches the generated models).
 
-HTTP basic authentication
-    When using basic authentication, the user credentials must be included with each HTTP request. There are two options for sending the credentials.
+Refresh the spec with:
+  doit fetch_spec --api=ontap --host=<cluster> --username=<user> --password=<password>
+  doit convert_specs --api=ontap     # converts all.json into openapi3.json
+  doit generate_models --api=ontap
 
-    Construct the HTTP request header
-    You can manually construct the Authorization header and include it with the HTTP requests. This can be done when using a curl command in the CLI or a programming language with your automation code. The high-level steps include:
+doit fetch_spec sanitizes the spec; no manual edits are needed.
 
-    Concatenate the user and password values with a colon:
-
-    admin:password123
-
-    Convert the entire string to base64:
-
-    YWRtaW46cGFzc3dvcmQxMjM=
-
-    Construct the request header:
-
-    Authorization: Basic YWRtaW46cGFzc3dvcmQxMjM=
+Auth is HTTP Basic: the client sends the cluster user and password in an
+Authorization header on every request.
