@@ -351,7 +351,7 @@ gives the exact `nf config set-credential --setting consoleapi.client_secret` co
 
 Without `--scope`, `--type console` writes the root Console account's refresh token. With `--scope Org1` it writes the refresh token to the `[console]` section of the scope's own `users.toml`; a warning is printed when that scope has no Console account (a `[general]` table in its own `consoleapi.toml`), and the token is still written.
 
-`--setting` prints the file, table and key it wrote and `Value: (encrypted)`, never the value. It warns when the counterpart is missing: `client_secret` without `client_id`, SMTP `password` without `user`, or a newly created `consoleapi.toml` (it still needs `client_id` and `org_id`). A missing file is created; an unknown scope is rejected.
+`--setting` prints the file, table and key it wrote and `Value: (encrypted)`, never the value. It warns when the counterpart is missing: `client_secret` without `client_id`, SMTP `password` without `user`, or a newly created `consoleapi.toml` (it still needs `client_id` and `org_id`). A missing file is created, a root API settings file in `<config>/apis/<name>/` and a scope file in the scope directory; an unknown scope is rejected.
 
 `nf config encrypt-value` was removed in favour of `--setting` (see [ADR-0031](../decisions/0031-one-command-stores-every-sops-secret-and-encrypt-value-is-removed.md)).
 

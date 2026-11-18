@@ -75,8 +75,9 @@ sits in the config directory (outside a scope). The recommended layout is the tr
 Keep one file per name at the root, and one per name in each scope. Two files with the same name
 are merged, and which one wins a key both set depends on the order the file system lists them, so
 `nf config set-credential --setting` refuses to write until only one is left. When the file does
-not exist yet, `set-credential` creates it at the top level (`<config>/consoleapi.toml`) or in the
-scope directory, not in `apis/console/`.
+not exist yet, `set-credential` creates a root API settings file in `apis/<name>/`
+(`<config>/apis/console/consoleapi.toml`) and a scope's file in the scope directory
+(`<config>/<scope>/consoleapi.toml`). An existing file is written wherever it is.
 
 ### How Configuration Loading Works
 
@@ -178,7 +179,7 @@ nf config set-credential --setting consoleapi.client_secret
 nf config set-credential --setting consoleapi.client_secret --scope Org1
 ```
 
-A missing `consoleapi.toml` is created with a `[general]` table, and the command warns about what
+A missing `consoleapi.toml` is created (at `<config>/apis/console/`, or in the scope directory with `--scope`) with a `[general]` table, and the command warns about what
 the account still needs (`client_id`, `org_id`). See
 [ADR-0031](../decisions/0031-one-command-stores-every-sops-secret-and-encrypt-value-is-removed.md).
 

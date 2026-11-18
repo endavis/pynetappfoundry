@@ -33,6 +33,14 @@ from pynetappfoundry.utils.sops import (
 
 console = Console()
 
+# Root API settings file stem -> its directory name under ``<config>/apis/``.
+_API_DIRS = {
+    "ontapapi": "ontap",
+    "aiqumapi": "aiqum",
+    "diiapi": "dii",
+    "consoleapi": "console",
+}
+
 
 def _load_public_key() -> str:
     """Read the age public key from the configured key file.
@@ -555,7 +563,8 @@ def _find_setting_file(config_path: Path, stem: str, scope: str | None) -> Path:
     The loader reads every non-data ``*.toml`` file by stem, so the writer uses the
     same rule. A root target skips scope directories; a scope target looks only
     under ``<config>/<scope>/``. With no match, the conventional path is returned
-    (not created yet).
+    (not created yet): ``<config>/apis/<name>/<stem>.toml`` for a root API settings
+    file, otherwise ``<base>/<stem>.toml``.
 
     Raises:
         CliError: If more than one file carries the stem.
@@ -576,7 +585,11 @@ def _find_setting_file(config_path: Path, stem: str, scope: str | None) -> Path:
             f"{', '.join(str(m) for m in matches)}.",
             hints=["The loader merges them, so the file to write is ambiguous. Keep one."],
         )
-    return matches[0] if matches else base / f"{stem}.toml"
+    if matches:
+        return matches[0]
+    if scope is None and stem in _API_DIRS:
+        return config_path / "apis" / _API_DIRS[stem] / f"{stem}.toml"
+    return base / f"{stem}.toml"
 
 
 def _find_object_file(config_path: Path, obj_type: str, obj_name: str) -> Path | None:

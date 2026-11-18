@@ -539,3 +539,69 @@ def test_encrypt_value_command_is_removed(tmp_path: Path) -> None:
 
     assert result.exit_code == 2
     assert "No such command" in result.output
+
+
+@pytest.mark.parametrize(
+    ("stem", "name"),
+    [("ontapapi", "ontap"), ("aiqumapi", "aiqum"), ("diiapi", "dii"), ("consoleapi", "console")],
+)
+def test_missing_root_api_file_defaults_to_apis_dir(tmp_path: Path, stem: str, name: str) -> None:
+    from pynetappfoundry.cli.commands.config.credentials import _find_setting_file
+
+    config_dir = _config_dir(tmp_path)
+
+    found = _find_setting_file(config_dir, stem, None)
+
+    assert found == config_dir / "apis" / name / f"{stem}.toml"
+
+
+def test_missing_root_api_file_is_created_in_apis_dir(tmp_path: Path) -> None:
+    config_dir = _config_dir(tmp_path)
+    assert not (config_dir / "apis").exists()
+
+    result, _ = _invoke(config_dir, "--setting", "consoleapi.client_secret")
+
+    assert result.exit_code == 0, result.output
+    created = config_dir / "apis/console/consoleapi.toml"
+    assert _load(created) == {"general": {"client_secret": CIPHERTEXT}}
+    assert not (config_dir / "consoleapi.toml").exists()
+
+
+def test_missing_dii_file_is_created_in_apis_dir(tmp_path: Path) -> None:
+    config_dir = _config_dir(tmp_path)
+
+    result, _ = _invoke(config_dir, "--setting", "diiapi.api_ro_token")
+
+    assert result.exit_code == 0, result.output
+    assert _load(config_dir / "apis/dii/diiapi.toml")["general"]["api_ro_token"] == CIPHERTEXT
+    assert not (config_dir / "diiapi.toml").exists()
+
+
+def test_existing_top_level_api_file_is_still_the_one_written(tmp_path: Path) -> None:
+    config_dir = _config_dir(tmp_path, {"consoleapi.toml": CONSOLE_BODY})
+
+    result, _ = _invoke(config_dir, "--setting", "consoleapi.client_secret")
+
+    assert result.exit_code == 0, result.output
+    assert _load(config_dir / "consoleapi.toml")["general"]["client_secret"] == CIPHERTEXT
+    assert not (config_dir / "apis").exists()
+
+
+def test_missing_scope_api_file_stays_in_scope_dir(tmp_path: Path) -> None:
+    config_dir = _config_dir(tmp_path)
+
+    result, _ = _invoke(config_dir, "--setting", "consoleapi.client_secret", "--scope", "Org1")
+
+    assert result.exit_code == 0, result.output
+    assert (config_dir / "Org1/consoleapi.toml").is_file()
+    assert not (config_dir / "apis").exists()
+
+
+def test_missing_non_api_file_is_created_at_top_level(tmp_path: Path) -> None:
+    config_dir = _config_dir(tmp_path)
+
+    result, _ = _invoke(config_dir, "--setting", "settings.smtp_password")
+
+    assert result.exit_code == 0, result.output
+    assert _load(config_dir / "settings.toml")["SMTP"]["password"] == CIPHERTEXT
+    assert not (config_dir / "apis").exists()
