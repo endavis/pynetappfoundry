@@ -5,7 +5,8 @@ The OCCM cache answers when it can answer the whole cluster (``occm_cloud_metada
 complete list; AWS only, Azure and GCP always use the CLI path); otherwise the report uses
 today's CLI-parsed ``entry.ontap.cloud``.  Every OCCM read goes through
 ``ClusterResolver``; the OCCM path makes no live call.  Console links come from the resolved
-location whichever source answered the cloud fields (ADR-0033).
+location whichever source answered the cloud fields (ADR-0033), and carry the System Manager
+link of the same record (#1105).
 """
 
 from __future__ import annotations
@@ -51,7 +52,8 @@ class CloudDetails:
         source: ``"occm"`` (OCCM cache), ``"cli"`` (ONTAP CLI path) or ``"none"`` (not a cloud
             cluster).
         metadata: One entry per node; empty when no source has any.
-        console: The Console links, or ``None`` when no single working environment was found.
+        console: The Console links, with the System Manager link from the OCCM record, or
+            ``None`` when no single working environment was found.
     """
 
     source: Literal["occm", "cli", "none"]
@@ -130,12 +132,13 @@ class ReportCloudSource:
         try:
             if self._resolver is not None:
                 picked = pick_occm_data(self._resolver.read(cluster_name).occm)
+            record = picked.record.model_dump() if picked is not None else None
             console = (
-                console_links(picked.location, base_url=self._ui_base_url)
+                console_links(picked.location, base_url=self._ui_base_url, record=record)
                 if picked is not None
                 else None
             )
-            occm = self._occm_metadata(picked, is_cloud, node_names)
+            occm = self._occm_metadata(picked, record, is_cloud, node_names)
         except _FALLBACK_ERRORS as exc:
             logger.warning(
                 "Cloud details of %s: OCCM cache not used (%s); using the ONTAP CLI path",
@@ -155,14 +158,20 @@ class ReportCloudSource:
     def _occm_metadata(
         self,
         picked: OccmData | None,
+        record: dict[str, Any] | None,
         is_cloud: bool,
         node_names: Sequence[str],
     ) -> list[CloudMetadata] | None:
         """Return the adapter's answer for *picked*, or ``None`` when OCCM cannot answer."""
-        if picked is None or not is_cloud or picked.location.mapping not in CLOUD_MAPPING_PROVIDER:
+        if (
+            picked is None
+            or record is None
+            or not is_cloud
+            or picked.location.mapping not in CLOUD_MAPPING_PROVIDER
+        ):
             return None
         return occm_cloud_metadata(
-            picked.record.model_dump(),
+            record,
             picked.location.mapping,
             ontap_node_names=node_names,
             aws_sso_config=self._aws_sso_config,

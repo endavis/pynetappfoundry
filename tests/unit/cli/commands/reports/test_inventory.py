@@ -189,7 +189,7 @@ class TestInventoryWorkbook:
     def test_layout(self, tmp_path: Path) -> None:
         ws = self._build(tmp_path)["NetApps"]
         assert ws.freeze_panes == "A2"
-        assert ws.auto_filter.ref == "A1:AK1"
+        assert ws.auto_filter.ref == "A1:AL1"
         assert ws.row_dimensions[1].height == 30
         # openpyxl groups adjacent equal-width columns into one min..max entry.
         widths: dict[int, float] = {}
@@ -310,7 +310,7 @@ class TestInventoryConsoleAgent:
         )
 
 
-def _occm_details(*, aggregates: bool = True) -> Any:
+def _occm_details(*, aggregates: bool = True, system_manager: str = "") -> Any:
     from pynetappfoundry.cache.occm_cloud_metadata import ConsoleWorkingEnvironmentLinks
     from pynetappfoundry.cli.commands.reports._cloud_source import CloudDetails
     from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
@@ -335,6 +335,7 @@ def _occm_details(*, aggregates: bool = True) -> Any:
         working_environment=base,
         volumes=f"{base}/volumes",
         aggregates=f"{base}/aggregates" if aggregates else "",
+        system_manager=system_manager,
     )
     return CloudDetails("occm", meta, console)
 
@@ -394,7 +395,7 @@ class TestInventoryOccmCloud:
         assert row[_HEADERS.index("Console Volumes")][0] == "Volumes"
         assert row[_HEADERS.index("Console Aggregates")][1].endswith("/aggregates")
         assert "VsaWorkingEnvironment-AAAA" not in str(
-            [row[_HEADERS.index(h)][0] for h in _HEADERS[-3:]]
+            [row[_HEADERS.index(h)][0] for h in _HEADERS[-4:-1]]
         )
 
     def test_on_prem_has_no_aggregates_cell(self) -> None:
@@ -403,30 +404,62 @@ class TestInventoryOccmCloud:
         _, row = self._report(source)
         assert row[_HEADERS.index("Console Aggregates")] == ""
 
+    def test_system_manager_cell_is_a_link_tuple(self) -> None:
+        url = "https://198.51.100.10/sysmgr/"
+        source = MagicMock()
+        source.details.return_value = _occm_details(system_manager=url)
+        _, row = self._report(source)
+        assert row[_HEADERS.index("Console System Manager")] == ("System Manager", url)
+        assert row[-1] == ("System Manager", url)
+
+    def test_empty_system_manager_gives_empty_cell(self) -> None:
+        source = MagicMock()
+        source.details.return_value = _occm_details()
+        _, row = self._report(source)
+        assert row[_HEADERS.index("Console System Manager")] == ""
+
+    def test_system_manager_header_is_distinct_from_the_config_column(self) -> None:
+        assert _HEADERS[15] == "System Manager"
+        assert _HEADERS.count("System Manager") == 1
+
     def test_no_console_links_gives_empty_cells(self) -> None:
         from pynetappfoundry.cli.commands.reports._cloud_source import CloudDetails
 
         source = MagicMock()
         source.details.return_value = CloudDetails("none", [], None)
         _, row = self._report(source)
-        assert row[-3:] == ["", "", ""]
+        assert row[-4:] == ["", "", "", ""]
 
     def test_without_a_source_the_cli_path_is_unchanged(self) -> None:
         _, row = self._report(None)
-        assert row[-3:] == ["", "", ""]
+        assert row[-4:] == ["", "", "", ""]
         assert len(row) == len(_HEADERS) == len(_COL_WIDTHS)
 
     def test_headers_widths_and_filter(self) -> None:
-        assert _HEADERS[-3:] == [
+        assert _HEADERS[-4:] == [
             "Console Working Environment",
             "Console Volumes",
             "Console Aggregates",
+            "Console System Manager",
         ]
         assert len(_HEADERS) == len(_COL_WIDTHS)
 
 
 class TestInventoryConsoleLinks:
     """#1086: the Console link columns are written as hyperlinks."""
+
+    def test_system_manager_hyperlink_read_back(self, tmp_path: Path) -> None:
+        url = "https://198.51.100.10/sysmgr/"
+        source = MagicMock()
+        source.details.return_value = _occm_details(system_manager=url)
+        report, _ = TestInventoryOccmCloud._report(source)
+        path = tmp_path / "inv.xlsx"
+        report.save(str(path))
+        ws = openpyxl.load_workbook(path)["NetApps"]
+        cell = ws.cell(row=2, column=len(_HEADERS))
+        assert cell.value == "System Manager"
+        assert cell.hyperlink is not None
+        assert cell.hyperlink.target == url
 
     def test_hyperlinks_read_back(self, tmp_path: Path) -> None:
         source = MagicMock()
@@ -435,9 +468,9 @@ class TestInventoryConsoleLinks:
         path = tmp_path / "inv.xlsx"
         report.save(str(path))
         ws = openpyxl.load_workbook(path)["NetApps"]
-        assert ws.auto_filter.ref == "A1:AK1"
+        assert ws.auto_filter.ref == "A1:AL1"
         for idx, label in enumerate(("Working environment", "Volumes", "Aggregates")):
-            cell = ws.cell(row=2, column=len(_HEADERS) - 2 + idx)
+            cell = ws.cell(row=2, column=len(_HEADERS) - 3 + idx)
             assert cell.value == label
             assert cell.hyperlink is not None
             assert cell.hyperlink.target.startswith("https://ui.example.test/storage/")

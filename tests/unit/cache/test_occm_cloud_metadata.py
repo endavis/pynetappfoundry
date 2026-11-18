@@ -20,9 +20,11 @@ from pynetappfoundry.cache.cluster_resolver import OccmData, OccmLocation
 from pynetappfoundry.cache.occm_cloud_metadata import (
     CLOUD_MAPPING_PROVIDER,
     CLOUD_METADATA_SOURCES,
+    SYSTEM_MANAGER_URL_PATH,
     console_links,
     occm_cloud_metadata,
     pick_occm_data,
+    system_manager_link,
 )
 from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
 
@@ -354,6 +356,82 @@ class TestConsoleLinks:
     def test_unknown_prefix_is_all_empty(self) -> None:
         links = console_links(_data("Other-1").location, base_url="https://ui.example.test")
         assert (links.working_environment, links.volumes, links.aggregates) == ("", "", "")
+
+
+_SM_URL = "https://198.51.100.10/sysmgr/"
+_ALL_OCCM_MAPPINGS = (
+    "OccmOnpremWorkingEnvironment",
+    "OccmAwsWorkingEnvironment",
+    "OccmAwsHaWorkingEnvironment",
+    "OccmAzureWorkingEnvironment",
+    "OccmAzureHaWorkingEnvironment",
+    "OccmGcpWorkingEnvironment",
+    "OccmGcpHaWorkingEnvironment",
+)
+
+
+def _sm_record(value: Any) -> dict[str, Any]:
+    return {"ontapClusterProperties": {"systemManagerUrl": value}}
+
+
+class TestSystemManagerLink:
+    @pytest.mark.parametrize("url", [_SM_URL, "http://192.0.2.5/sysmgr/"])
+    def test_valid_url_is_returned_unchanged(self, url: str) -> None:
+        assert system_manager_link(_sm_record(url)) == url
+
+    @pytest.mark.parametrize(
+        "record",
+        [
+            {},
+            {"ontapClusterProperties": None},
+            {"ontapClusterProperties": {}},
+            _sm_record(None),
+            _sm_record(""),
+            _sm_record(42),
+            _sm_record(["https://198.51.100.10/"]),
+        ],
+    )
+    def test_missing_or_non_str_gives_empty(self, record: dict[str, Any]) -> None:
+        assert system_manager_link(record) == ""
+
+    @pytest.mark.parametrize(
+        "value",
+        [
+            "javascript:alert(1)",
+            "data:text/html,x",
+            "ftp://198.51.100.10/x",
+            "https:///path",
+            "not a url",
+            "https://[::1/x",
+            "https://198.51.100.10\n/x",
+            "https://198.51.100.10 /x",
+            "https://198.51.100.10/\x00",
+        ],
+    )
+    def test_rejected_values_give_empty(self, value: str) -> None:
+        assert system_manager_link(_sm_record(value)) == ""
+
+    def test_cluster_properties_is_not_a_fallback(self) -> None:
+        record = {"clusterProperties": {"systemManagerUrl": _SM_URL}}
+        assert system_manager_link(record) == ""
+
+    def test_console_links_carries_the_link(self) -> None:
+        loc = _data().location
+        with_rec = console_links(
+            loc, base_url="https://ui.example.test", record=_sm_record(_SM_URL)
+        )
+        assert with_rec.system_manager == _SM_URL
+        assert console_links(loc, base_url="https://ui.example.test").system_manager == ""
+
+    @pytest.mark.parametrize("name", _ALL_OCCM_MAPPINGS)
+    def test_path_resolves_against_every_mapping(self, name: str) -> None:
+        mp = model_registry.get_mapping(name)
+        assert mp is not None
+        assert _resolves(mp.model_class, SYSTEM_MANAGER_URL_PATH.split("."))
+
+    @pytest.mark.parametrize("key", ["aws-ha", "azure-ha", "azure-vsa"])
+    def test_path_is_in_the_measured_shapes(self, key: str) -> None:
+        assert SYSTEM_MANAGER_URL_PATH in _LISTS[key]["paths"]
 
 
 def test_module_imports_no_data_or_client_layer() -> None:

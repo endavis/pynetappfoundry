@@ -280,3 +280,107 @@ def test_from_config_opens_existing_files_then_closes_them(tmp_path: Path) -> No
     for opened_db in opened:
         with pytest.raises(Exception, match="closed"):
             opened_db.conn.execute("SELECT 1")
+
+
+_SM_URL = "https://198.51.100.10/sysmgr/"
+
+
+def _with_sm(we: dict[str, Any], url: str = _SM_URL) -> dict[str, Any]:
+    we["ontapClusterProperties"]["systemManagerUrl"] = url
+    return we
+
+
+def test_system_manager_link_on_an_aws_hit(
+    ontap_db: ClusterMetadataDB, occm_db: OccmCacheDB
+) -> None:
+    occm_db.set(_snapshot({"agent-1": {AWS_HA: [_with_sm(_aws_we())]}}))
+    details = _source(ontap_db, occm_db).details(
+        "lab1", is_cloud=True, node_names=NODES, entry=_entry(raises=True)
+    )
+    assert details.source == "occm"
+    assert details.console is not None
+    assert details.console.system_manager == _SM_URL
+
+
+@pytest.mark.parametrize(
+    "mapping", ["OccmAzureWorkingEnvironment", "OccmAzureHaWorkingEnvironment"]
+)
+def test_system_manager_link_on_azure_with_the_cli_source(
+    ontap_db: ClusterMetadataDB, occm_db: OccmCacheDB, mapping: str
+) -> None:
+    occm_db.set(_snapshot({"agent-1": {mapping: [_with_sm(_aws_we())]}}))
+    details = _source(ontap_db, occm_db).details(
+        "lab1", is_cloud=True, node_names=NODES, entry=_entry(CLI_META)
+    )
+    assert details.source == "cli"
+    assert details.console is not None
+    assert details.console.system_manager == _SM_URL
+
+
+def test_system_manager_link_on_prem_without_reading_the_cli(
+    ontap_db: ClusterMetadataDB, occm_db: OccmCacheDB
+) -> None:
+    occm_db.set(_snapshot({"agent-1": {ON_PREM: [_with_sm(_on_prem_we())]}}))
+    details = _source(ontap_db, occm_db).details(
+        "lab1", is_cloud=False, node_names=NODES, entry=_entry(raises=True)
+    )
+    assert details.source == "none"
+    assert details.console is not None
+    assert details.console.system_manager == _SM_URL
+
+
+def test_record_without_the_field_keeps_the_other_links(
+    ontap_db: ClusterMetadataDB, occm_db: OccmCacheDB
+) -> None:
+    occm_db.set(_snapshot({"agent-1": {AWS_HA: [_aws_we()]}}))
+    details = _source(ontap_db, occm_db).details(
+        "lab1", is_cloud=True, node_names=NODES, entry=_entry(raises=True)
+    )
+    assert details.console is not None
+    assert details.console.system_manager == ""
+    assert details.console.working_environment
+
+
+def test_ambiguous_match_has_no_system_manager(
+    ontap_db: ClusterMetadataDB, occm_db: OccmCacheDB
+) -> None:
+    occm_db.set(
+        _snapshot(
+            {
+                "agent-1": {
+                    AWS_HA: [
+                        _with_sm(_aws_we()),
+                        _with_sm(_aws_we("VsaWorkingEnvironment-CCCC")),
+                    ]
+                }
+            }
+        )
+    )
+    details = _source(ontap_db, occm_db).details(
+        "lab1", is_cloud=True, node_names=NODES, entry=_entry(CLI_META)
+    )
+    assert details.console is None
+
+
+@pytest.mark.parametrize("with_record", [False, True])
+def test_system_manager_makes_no_live_call(
+    ontap_db: ClusterMetadataDB, occm_db: OccmCacheDB, with_record: bool
+) -> None:
+    if with_record:
+        occm_db.set(_snapshot({"agent-1": {AWS_HA: [_with_sm(_aws_we())]}}))
+    boom = RuntimeError("live call")
+    with (
+        patch("pynetappfoundry.data.source.DataSource", side_effect=boom) as ds,
+        patch("pynetappfoundry.clients.console.agent.ConsoleAgentClient", side_effect=boom) as c,
+        patch("socket.socket.connect", side_effect=boom) as connect,
+    ):
+        details = _source(ontap_db, occm_db).details(
+            "lab1", is_cloud=True, node_names=NODES, entry=_entry(CLI_META)
+        )
+    if with_record:
+        assert details.console is not None
+        assert details.console.system_manager == _SM_URL
+    else:
+        assert details.console is None
+    for mock in (ds, c, connect):
+        mock.assert_not_called()

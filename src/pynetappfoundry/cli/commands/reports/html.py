@@ -1008,9 +1008,9 @@ class ClusterData:
     def _format_netapp_console_info(self) -> None:
         """Format the NetApp Console links and the agent's account scope.
 
-        Shows Working environment, Volumes and Aggregates (CVO only) links, plus the account
-        scopes of the agent the working environment was discovered through.  Skipped when no
-        single working environment was found.
+        Shows Working environment, Volumes, Aggregates (CVO only) and System Manager links,
+        plus the account scopes of the agent the working environment was discovered through.
+        Skipped when no single working environment was found.
         """
         console = self.console_links
         if console is None:
@@ -1019,6 +1019,7 @@ class ClusterData:
             ("Working environment", console.working_environment),
             ("Volumes", console.volumes),
             ("Aggregates", console.aggregates),
+            ("System Manager", console.system_manager),
         )
         shown = [(label, url) for label, url in links if url]
         if not shown:

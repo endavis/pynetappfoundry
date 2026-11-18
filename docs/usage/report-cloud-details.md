@@ -1,6 +1,6 @@
 ---
 title: Report Cloud Details
-description: How the inventory and HTML reports take cloud provider details from the OCCM cache, when they fall back to the ONTAP CLI path, and the Console links they add
+description: How the inventory and HTML reports take cloud provider details from the OCCM cache, when they fall back to the ONTAP CLI path, and the Console links (including System Manager) they add
 audience:
   - users
 tags:
@@ -76,8 +76,14 @@ The path table comes from the measured shape of the AWS HA list (`tests/fixtures
 
 The links come from the resolved working environment, whichever source answered the cloud fields, and are built by `src/pynetappfoundry/utils/console_links.py`.
 
-- **Inventory workbook:** three columns after "NetApp Console Agent": "Console Working Environment", "Console Volumes" and "Console Aggregates". Each cell is a hyperlink (display text "Working environment", "Volumes", "Aggregates") or empty. Aggregates exist for CVO only, so it is empty for on-prem clusters.
+- **Inventory workbook:** four columns after "NetApp Console Agent": "Console Working Environment", "Console Volumes", "Console Aggregates" and "Console System Manager". Each cell is a hyperlink (display text "Working environment", "Volumes", "Aggregates", "System Manager") or empty. The older "System Manager" column (built from the configured cluster IP) is unchanged. Aggregates exist for CVO only, so it is empty for on-prem clusters.
 - **HTML report:** a "NetApp Console" section after the cloud section with the same links and an "Account scope" row listing the Console accounts the agent was discovered in (the root account shows as `default`). The cloud section gains a "Source" row: `Console (OCCM cache)` or `ONTAP CLI`.
+- **System Manager link:** read from `ontapClusterProperties.systemManagerUrl` of the OCCM record by `system_manager_link` in `src/pynetappfoundry/cache/occm_cloud_metadata.py` and carried on `ConsoleWorkingEnvironmentLinks`. It is computed, not cached. The HTML "NetApp Console" section shows it as a "System Manager" row.
+  - Measured: `ontapClusterProperties.systemManagerUrl` is in the AWS HA, Azure HA and Azure single node shapes; `clusterProperties.systemManagerUrl` is always empty and is never used.
+  - It appears for every working environment type whose record carries the value, independent of the AWS-only cloud-details rule. GCP and on-prem values are not measured.
+  - The value is used unchanged only when it is a string with an `http` or `https` scheme, a host and no whitespace or control characters; anything else gives an empty cell and no row. This blocks `javascript:` and `data:` links.
+  - With no single working environment it is empty, and no live call is made.
+  - The link is the address Console recorded, so it is reachable only from a network that can reach that address.
 - The link builders take no account parameter, so the URLs are the plain Console URLs; the account scope is text only.
 - With no single working environment found (none, or several distinct ones), the columns are empty and the section is absent.
 
