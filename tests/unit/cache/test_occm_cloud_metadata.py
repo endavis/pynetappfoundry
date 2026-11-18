@@ -9,6 +9,7 @@ import typing
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 import pytest
 from pydantic import BaseModel
@@ -140,7 +141,7 @@ class TestAws:
         assert {m.provider for m in result} == {"AWS"}
         assert first.vm_name == "i-node1"
         assert "i-node1" in first.instance_link
-        assert first.instance_link.startswith("https://us-east-1.console.aws.amazon.com")
+        assert urlparse(first.instance_link).hostname == "us-east-1.console.aws.amazon.com"
 
     def test_sso_link_needs_config(self) -> None:
         sso: dict[str, str | dict[str, str]] = {
@@ -151,7 +152,7 @@ class TestAws:
         without = _run(_aws_record(), AWS_HA)
         assert with_sso is not None
         assert without is not None
-        assert with_sso[0].instance_sso_link.startswith("https://corp.awsapps.com")
+        assert urlparse(with_sso[0].instance_sso_link).hostname == "corp.awsapps.com"
         assert without[0].instance_sso_link == ""
 
     def test_single_node_uses_aws_rows(self) -> None:
