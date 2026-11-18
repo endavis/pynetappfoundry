@@ -103,6 +103,7 @@ _HEADERS = [
     "Console Working Environment",
     "Console Volumes",
     "Console Aggregates",
+    "Console System Manager",
 ]
 
 # 0-based columns whose text wraps (Contacts, Notes, and the trailing free-text columns).
@@ -147,6 +148,7 @@ _COL_WIDTHS = [
     28,
     18,
     20,
+    28,
 ]
 
 
@@ -185,13 +187,14 @@ def _cloud_type(traits: ClusterTraits) -> str:
 
 
 def _console_cells(console: ConsoleWorkingEnvironmentLinks | None) -> list[Any]:
-    """Return the three Console link cells (display text, URL) or ``""`` for a missing link."""
+    """Return the four Console link cells (display text, URL) or ``""`` for a missing link."""
     if console is None:
-        return ["", "", ""]
+        return ["", "", "", ""]
     links = (
         ("Working environment", console.working_environment),
         ("Volumes", console.volumes),
         ("Aggregates", console.aggregates),
+        ("System Manager", console.system_manager),
     )
     return [(text, url) if url else "" for text, url in links]
 
@@ -379,7 +382,9 @@ class InventoryReport:
             "",  # Load-Balancers (blank for now)
             "",  # Remark
             agent_cell,  # NetApp Console Agent (link)
-            *_console_cells(console),  # Console Working Environment, Volumes, Aggregates (links)
+            *_console_cells(
+                console
+            ),  # Console Working Environment, Volumes, Aggregates, System Mgr
         ]
 
     def build(self) -> None:

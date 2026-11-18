@@ -1852,7 +1852,13 @@ class TestCloudSections:
         assert len(cluster.cloud_metadata) == 2
 
 
-def _occm_details(*, aggregates: bool = True, scopes: tuple[str | None, ...] = (None,)) -> Any:
+def _occm_details(
+    *,
+    aggregates: bool = True,
+    scopes: tuple[str | None, ...] = (None,),
+    system_manager: str = "",
+    links: bool = True,
+) -> Any:
     from pynetappfoundry.cache.occm_cloud_metadata import ConsoleWorkingEnvironmentLinks
     from pynetappfoundry.cli.commands.reports._cloud_source import CloudDetails
     from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
@@ -1874,9 +1880,10 @@ def _occm_details(*, aggregates: bool = True, scopes: tuple[str | None, ...] = (
         agent_id="agent-1",
         agent_name="agent",
         scopes=scopes,
-        working_environment=base,
-        volumes=f"{base}/volumes",
-        aggregates=f"{base}/aggregates" if aggregates else "",
+        working_environment=base if links else "",
+        volumes=f"{base}/volumes" if links else "",
+        aggregates=f"{base}/aggregates" if aggregates and links else "",
+        system_manager=system_manager,
     )
     return CloudDetails("occm", meta, console)
 
@@ -1999,6 +2006,31 @@ class TestFormatConsoleInfo:
         assert ">Volumes<" in html_text
         assert ">Aggregates<" not in html_text
         assert ">org1<" in html_text
+
+    def _console_html(self, mock_config: MagicMock, **kwargs: Any) -> str:
+        source = MagicMock()
+        source.details.return_value = _occm_details(**kwargs)
+        cluster = _cluster_with_source(mock_config, source)
+        cluster.cluster_traits = ClusterTraits(is_cloud=False)
+        cluster._build_cloud_info()
+        cluster._format_netapp_console_info()
+        return self._html(cluster)
+
+    def test_system_manager_row(self, mock_config: MagicMock) -> None:
+        url = "https://198.51.100.10/sysmgr/"
+        html_text = self._console_html(mock_config, system_manager=url)
+        assert ">System Manager<" in html_text
+        assert f'href="{url}"' in html_text
+
+    def test_no_system_manager_row_when_empty(self, mock_config: MagicMock) -> None:
+        assert ">System Manager<" not in self._console_html(mock_config)
+
+    def test_section_renders_with_only_system_manager(self, mock_config: MagicMock) -> None:
+        url = "https://198.51.100.10/sysmgr/"
+        html_text = self._console_html(mock_config, system_manager=url, links=False)
+        assert "NetApp Console" in html_text
+        assert ">System Manager<" in html_text
+        assert ">Working environment<" not in html_text
 
     def test_absent_without_links(self, mock_config: MagicMock) -> None:
         cluster = _cluster_with_source(mock_config, None)

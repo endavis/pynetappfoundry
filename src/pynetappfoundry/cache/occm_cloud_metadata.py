@@ -19,12 +19,16 @@ Only AWS is answered.  Measured: Azure Console records never carry the VM instan
 ``cloudProviderId`` and the HA ``instanceId`` are empty) nor the offer and sku (the product code
 and platform license fields are empty while the CLI has them), so an Azure cluster could never be
 answered completely.  Azure, GCP and on-prem always use the CLI path.
+
+The System Manager link (#1105) is not a cloud field: :func:`system_manager_link` reads
+``ontapClusterProperties.systemManagerUrl`` of any single record, whatever its mapping.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Literal
+from urllib.parse import urlsplit
 
 from pynetappfoundry.utils.cloud import (
     build_aws_instance_link,
@@ -45,6 +49,8 @@ if TYPE_CHECKING:
 
 _NODES = "ontapClusterProperties.nodes"
 _INSTANCES = "awsProperties.instances"
+# Measured: ``clusterProperties.systemManagerUrl`` is always empty, so it is never used.
+SYSTEM_MANAGER_URL_PATH = "ontapClusterProperties.systemManagerUrl"
 
 
 @dataclass(frozen=True)
@@ -243,6 +249,28 @@ def pick_occm_data(occm: Sequence[OccmData]) -> OccmData | None:
     )
 
 
+def system_manager_link(record: Mapping[str, Any]) -> str:
+    """Return the System Manager URL of *record*, or ``""`` when absent or unsafe.
+
+    The value is used only when it is a ``str`` with an ``http`` or ``https`` scheme, a host, and
+    no whitespace or control characters; it is never rewritten.  The scheme check blocks
+    ``javascript:`` and ``data:`` hrefs.
+    """
+    value = _lookup(record, SYSTEM_MANAGER_URL_PATH, {})
+    if not isinstance(value, str) or not value:
+        return ""
+    if any(ch.isspace() or not ch.isprintable() for ch in value):
+        return ""
+    try:
+        parts = urlsplit(value)
+        hostname = parts.hostname
+    except ValueError:
+        return ""
+    if parts.scheme not in {"http", "https"} or not hostname:
+        return ""
+    return value
+
+
 @dataclass(frozen=True)
 class ConsoleWorkingEnvironmentLinks:
     """The NetApp Console links and agent context of one working environment.
@@ -257,6 +285,8 @@ class ConsoleWorkingEnvironmentLinks:
         working_environment: Link to the working environment page.
         volumes: Link to its Volumes tab.
         aggregates: Link to its Aggregates view; CVO only.
+        system_manager: The System Manager URL from the record
+            (``ontapClusterProperties.systemManagerUrl``), or ``""`` when absent or unsafe.
     """
 
     public_id: str
@@ -266,10 +296,19 @@ class ConsoleWorkingEnvironmentLinks:
     working_environment: str
     volumes: str
     aggregates: str
+    system_manager: str = ""
 
 
-def console_links(location: OccmLocation, *, base_url: str) -> ConsoleWorkingEnvironmentLinks:
-    """Return the Console links of *location*; a builder that rejects the id gives ``""``."""
+def console_links(
+    location: OccmLocation,
+    *,
+    base_url: str,
+    record: Mapping[str, Any] | None = None,
+) -> ConsoleWorkingEnvironmentLinks:
+    """Return the Console links of *location*; a builder that rejects the id gives ``""``.
+
+    *record* (the dumped working environment record) supplies the System Manager link.
+    """
     public_id = location.public_id
     try:
         working_environment = build_console_working_environment_link(public_id, base_url=base_url)
@@ -288,4 +327,5 @@ def console_links(location: OccmLocation, *, base_url: str) -> ConsoleWorkingEnv
         working_environment=working_environment,
         volumes=volumes,
         aggregates=aggregates,
+        system_manager=system_manager_link(record) if record is not None else "",
     )
