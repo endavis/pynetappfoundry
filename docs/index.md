@@ -30,6 +30,7 @@ See [DataSource Guide](usage/data-source.md), [Query Layer Guide](usage/query-la
 ## Quick Links
 
 - [Installation Guide](getting-started/installation.md)
+- [Configuration Guide](getting-started/configuration.md)
 - [Usage Guide](usage/basics.md)
 - [Configuration Schema](reference/config-schema.md)
 - [CLI Reference](reference/cli.md)
@@ -93,6 +94,7 @@ print(client.call_endpoint(path_template="/cluster?fields=name,version"))
 ### For Users
 
 - **[Installation](getting-started/installation.md)** - How to install the package
+- **[Configuration](getting-started/configuration.md)** - Set up the config directory and each API
 - **[Usage Guide](usage/basics.md)** - How to use the package
 - **[DataSource Guide](usage/data-source.md)** - Unified entry point for reading cluster data
 - **[ONTAP Access Patterns](usage/ontap-access-patterns.md)** - Guide to choosing between SDK, SSH, and REST access
