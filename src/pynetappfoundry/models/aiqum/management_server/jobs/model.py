@@ -5,17 +5,17 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from pynetappfoundry.models._base import OntapModel
+from pynetappfoundry.models._base import AiqumModel
 
 
-class AiqumJobJobResult(OntapModel):
+class AiqumJobJobResult(AiqumModel):
     """AiqumJobJobResult sub-model for job_results."""
 
     name: str = ""
     value: str = ""
 
 
-class AiqumJobSpawnedJobSummary(OntapModel):
+class AiqumJobSpawnedJobSummary(AiqumModel):
     """AiqumJobSpawnedJobSummary sub-model for spawned_job_summary."""
 
     aborted_jobs: int = 0
@@ -26,7 +26,7 @@ class AiqumJobSpawnedJobSummary(OntapModel):
     total_jobs: int = 0
 
 
-class AiqumJobTaskReport(OntapModel):
+class AiqumJobTaskReport(AiqumModel):
     """AiqumJobTaskReport sub-model for task_reports."""
 
     complete_time: str = ""
@@ -40,7 +40,7 @@ class AiqumJobTaskReport(OntapModel):
     type_: str = ""
 
 
-class AiqumJob(OntapModel):
+class AiqumJob(AiqumModel):
     """AiqumJob information."""
 
     complete_time: str = ""

@@ -5,10 +5,10 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from pynetappfoundry.models._base import OntapModel, OntapUUID
+from pynetappfoundry.models._base import AiqumModel, OntapUUID
 
 
-class AiqumLicensePackageCluster(OntapModel):
+class AiqumLicensePackageCluster(AiqumModel):
     """AiqumLicensePackageCluster sub-model for cluster."""
 
     key: str = ""
@@ -16,7 +16,7 @@ class AiqumLicensePackageCluster(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumLicensePackageLicense(OntapModel):
+class AiqumLicensePackageLicense(AiqumModel):
     """AiqumLicensePackageLicense sub-model for licenses."""
 
     expiry_time: str = ""
@@ -24,7 +24,7 @@ class AiqumLicensePackageLicense(OntapModel):
     serial_number: str = ""
 
 
-class AiqumLicensePackageNode(OntapModel):
+class AiqumLicensePackageNode(AiqumModel):
     """AiqumLicensePackageNode sub-model for node."""
 
     key: str = ""
@@ -32,7 +32,7 @@ class AiqumLicensePackageNode(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumLicensePackage(OntapModel):
+class AiqumLicensePackage(AiqumModel):
     """AiqumLicensePackage information."""
 
     cluster: AiqumLicensePackageCluster = Field(default_factory=AiqumLicensePackageCluster)

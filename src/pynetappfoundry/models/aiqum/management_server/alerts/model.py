@@ -5,10 +5,10 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from pynetappfoundry.models._base import OntapModel, OntapUUID
+from pynetappfoundry.models._base import AiqumModel, OntapUUID
 
 
-class AiqumAlertActionNotification(OntapModel):
+class AiqumAlertActionNotification(AiqumModel):
     """AiqumAlertActionNotification sub-model for notification."""
 
     duration: str = ""
@@ -18,28 +18,28 @@ class AiqumAlertActionNotification(OntapModel):
     to: str = ""
 
 
-class AiqumAlertActionScript(OntapModel):
+class AiqumAlertActionScript(AiqumModel):
     """AiqumAlertActionScript sub-model for script."""
 
     key: OntapUUID = ""
     name: str = ""
 
 
-class AiqumAlertAction(OntapModel):
+class AiqumAlertAction(AiqumModel):
     """AiqumAlertAction sub-model for action."""
 
     notification: AiqumAlertActionNotification = Field(default_factory=AiqumAlertActionNotification)
     script: AiqumAlertActionScript = Field(default_factory=AiqumAlertActionScript)
 
 
-class AiqumAlertEvent(OntapModel):
+class AiqumAlertEvent(AiqumModel):
     """AiqumAlertEvent sub-model for event."""
 
     severities: list[str] = Field(default_factory=list)
     types: list[str] = Field(default_factory=list)
 
 
-class AiqumAlertResource(OntapModel):
+class AiqumAlertResource(AiqumModel):
     """AiqumAlertResource sub-model for resource."""
 
     exclude: list[str] = Field(default_factory=list)
@@ -49,7 +49,7 @@ class AiqumAlertResource(OntapModel):
     type_: str = ""
 
 
-class AiqumAlert(OntapModel):
+class AiqumAlert(AiqumModel):
     """AiqumAlert information."""
 
     action: AiqumAlertAction = Field(default_factory=AiqumAlertAction)

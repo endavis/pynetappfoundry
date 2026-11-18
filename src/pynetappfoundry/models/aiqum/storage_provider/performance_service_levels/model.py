@@ -5,10 +5,10 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from pynetappfoundry.models._base import OntapModel
+from pynetappfoundry.models._base import AiqumModel
 
 
-class AiqumStorageProviderPerformanceServiceLevelIops(OntapModel):
+class AiqumStorageProviderPerformanceServiceLevelIops(AiqumModel):
     """AiqumStorageProviderPerformanceServiceLevelIops sub-model for iops."""
 
     absolute_min_iops: int = 0
@@ -17,20 +17,20 @@ class AiqumStorageProviderPerformanceServiceLevelIops(OntapModel):
     peak_iops_per_tb: int = 0
 
 
-class AiqumStorageProviderPerformanceServiceLevelLatency(OntapModel):
+class AiqumStorageProviderPerformanceServiceLevelLatency(AiqumModel):
     """AiqumStorageProviderPerformanceServiceLevelLatency sub-model for latency."""
 
     expected: float = 0.0
 
 
-class AiqumStorageProviderPerformanceServiceLevelSpace(OntapModel):
+class AiqumStorageProviderPerformanceServiceLevelSpace(AiqumModel):
     """AiqumStorageProviderPerformanceServiceLevelSpace sub-model for space."""
 
     available: int = 0
     used: int = 0
 
 
-class AiqumStorageProviderPerformanceServiceLevel(OntapModel):
+class AiqumStorageProviderPerformanceServiceLevel(AiqumModel):
     """AiqumStorageProviderPerformanceServiceLevel information."""
 
     create_time: str = ""

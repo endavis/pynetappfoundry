@@ -5,10 +5,10 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from pynetappfoundry.models._base import OntapModel, OntapUUID
+from pynetappfoundry.models._base import AiqumModel, OntapUUID
 
 
-class AiqumNetworkIpInterfaceAnalyticsCluster(OntapModel):
+class AiqumNetworkIpInterfaceAnalyticsCluster(AiqumModel):
     """AiqumNetworkIpInterfaceAnalyticsCluster sub-model for cluster."""
 
     key: str = ""
@@ -16,7 +16,7 @@ class AiqumNetworkIpInterfaceAnalyticsCluster(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumNetworkIpInterfaceAnalyticsIpInterface(OntapModel):
+class AiqumNetworkIpInterfaceAnalyticsIpInterface(AiqumModel):
     """AiqumNetworkIpInterfaceAnalyticsIpInterface sub-model for ip_interface."""
 
     key: str = ""
@@ -24,7 +24,7 @@ class AiqumNetworkIpInterfaceAnalyticsIpInterface(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumNetworkIpInterfaceAnalyticsSvm(OntapModel):
+class AiqumNetworkIpInterfaceAnalyticsSvm(AiqumModel):
     """AiqumNetworkIpInterfaceAnalyticsSvm sub-model for svm."""
 
     key: str = ""
@@ -32,7 +32,7 @@ class AiqumNetworkIpInterfaceAnalyticsSvm(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumNetworkIpInterfaceAnalytics(OntapModel):
+class AiqumNetworkIpInterfaceAnalytics(AiqumModel):
     """AiqumNetworkIpInterfaceAnalytics information."""
 
     cluster: AiqumNetworkIpInterfaceAnalyticsCluster = Field(

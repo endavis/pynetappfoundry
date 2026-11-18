@@ -5,10 +5,10 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from pynetappfoundry.models._base import OntapModel, OntapUUID
+from pynetappfoundry.models._base import AiqumModel, OntapUUID
 
 
-class AiqumAggregateAnalyticsAggregate(OntapModel):
+class AiqumAggregateAnalyticsAggregate(AiqumModel):
     """AiqumAggregateAnalyticsAggregate sub-model for aggregate."""
 
     key: str = ""
@@ -16,7 +16,7 @@ class AiqumAggregateAnalyticsAggregate(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumAggregateAnalyticsCluster(OntapModel):
+class AiqumAggregateAnalyticsCluster(AiqumModel):
     """AiqumAggregateAnalyticsCluster sub-model for cluster."""
 
     key: str = ""
@@ -24,7 +24,7 @@ class AiqumAggregateAnalyticsCluster(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumAggregateAnalyticsNode(OntapModel):
+class AiqumAggregateAnalyticsNode(AiqumModel):
     """AiqumAggregateAnalyticsNode sub-model for node."""
 
     key: str = ""
@@ -32,14 +32,14 @@ class AiqumAggregateAnalyticsNode(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumAggregateAnalyticsPerformanceCapacity(OntapModel):
+class AiqumAggregateAnalyticsPerformanceCapacity(AiqumModel):
     """AiqumAggregateAnalyticsPerformanceCapacity sub-model for performance_capacity."""
 
     available_iops: float = 0.0
     used_percent: float = 0.0
 
 
-class AiqumAggregateAnalytics(OntapModel):
+class AiqumAggregateAnalytics(AiqumModel):
     """AiqumAggregateAnalytics information."""
 
     aggregate: AiqumAggregateAnalyticsAggregate = Field(

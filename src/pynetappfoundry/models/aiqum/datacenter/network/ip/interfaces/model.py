@@ -5,10 +5,10 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from pynetappfoundry.models._base import OntapModel, OntapUUID
+from pynetappfoundry.models._base import AiqumModel, OntapUUID
 
 
-class AiqumIpInterfaceCluster(OntapModel):
+class AiqumIpInterfaceCluster(AiqumModel):
     """AiqumIpInterfaceCluster sub-model for cluster."""
 
     key: str = ""
@@ -16,7 +16,7 @@ class AiqumIpInterfaceCluster(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumIpInterfaceIp(OntapModel):
+class AiqumIpInterfaceIp(AiqumModel):
     """AiqumIpInterfaceIp sub-model for ip."""
 
     address: str = ""
@@ -24,7 +24,7 @@ class AiqumIpInterfaceIp(OntapModel):
     netmask: str = ""
 
 
-class AiqumIpInterfaceIpspace(OntapModel):
+class AiqumIpInterfaceIpspace(AiqumModel):
     """AiqumIpInterfaceIpspace sub-model for ipspace."""
 
     key: str = ""
@@ -32,14 +32,14 @@ class AiqumIpInterfaceIpspace(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumIpInterfaceLocationBroadcastDomain(OntapModel):
+class AiqumIpInterfaceLocationBroadcastDomain(AiqumModel):
     """AiqumIpInterfaceLocationBroadcastDomain sub-model for broadcast_domain."""
 
     name: str = ""
     uuid: OntapUUID = ""
 
 
-class AiqumIpInterfaceLocationHomeNode(OntapModel):
+class AiqumIpInterfaceLocationHomeNode(AiqumModel):
     """AiqumIpInterfaceLocationHomeNode sub-model for home_node."""
 
     key: str = ""
@@ -47,13 +47,13 @@ class AiqumIpInterfaceLocationHomeNode(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumIpInterfaceLocationHomePortNode(OntapModel):
+class AiqumIpInterfaceLocationHomePortNode(AiqumModel):
     """AiqumIpInterfaceLocationHomePortNode sub-model for node."""
 
     name: str = ""
 
 
-class AiqumIpInterfaceLocationHomePort(OntapModel):
+class AiqumIpInterfaceLocationHomePort(AiqumModel):
     """AiqumIpInterfaceLocationHomePort sub-model for home_port."""
 
     key: str = ""
@@ -64,13 +64,13 @@ class AiqumIpInterfaceLocationHomePort(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumIpInterfaceLocationPortNode(OntapModel):
+class AiqumIpInterfaceLocationPortNode(AiqumModel):
     """AiqumIpInterfaceLocationPortNode sub-model for node."""
 
     name: str = ""
 
 
-class AiqumIpInterfaceLocationPort(OntapModel):
+class AiqumIpInterfaceLocationPort(AiqumModel):
     """AiqumIpInterfaceLocationPort sub-model for port."""
 
     key: str = ""
@@ -79,7 +79,7 @@ class AiqumIpInterfaceLocationPort(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumIpInterfaceLocation(OntapModel):
+class AiqumIpInterfaceLocation(AiqumModel):
     """AiqumIpInterfaceLocation sub-model for location."""
 
     auto_revert: bool = False
@@ -97,7 +97,7 @@ class AiqumIpInterfaceLocation(OntapModel):
     port: AiqumIpInterfaceLocationPort = Field(default_factory=AiqumIpInterfaceLocationPort)
 
 
-class AiqumIpInterfaceSvm(OntapModel):
+class AiqumIpInterfaceSvm(AiqumModel):
     """AiqumIpInterfaceSvm sub-model for svm."""
 
     key: str = ""
@@ -105,7 +105,7 @@ class AiqumIpInterfaceSvm(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumIpInterface(OntapModel):
+class AiqumIpInterface(AiqumModel):
     """AiqumIpInterface information."""
 
     cluster: AiqumIpInterfaceCluster = Field(default_factory=AiqumIpInterfaceCluster)

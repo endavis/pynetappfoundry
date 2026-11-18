@@ -5,10 +5,10 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from pynetappfoundry.models._base import OntapModel, OntapUUID
+from pynetappfoundry.models._base import AiqumModel, OntapUUID
 
 
-class AiqumFcInterfaceCluster(OntapModel):
+class AiqumFcInterfaceCluster(AiqumModel):
     """AiqumFcInterfaceCluster sub-model for cluster."""
 
     key: str = ""
@@ -16,7 +16,7 @@ class AiqumFcInterfaceCluster(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumFcInterfaceLocationHomeNode(OntapModel):
+class AiqumFcInterfaceLocationHomeNode(AiqumModel):
     """AiqumFcInterfaceLocationHomeNode sub-model for home_node."""
 
     key: str = ""
@@ -24,13 +24,13 @@ class AiqumFcInterfaceLocationHomeNode(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumFcInterfaceLocationHomePortNode(OntapModel):
+class AiqumFcInterfaceLocationHomePortNode(AiqumModel):
     """AiqumFcInterfaceLocationHomePortNode sub-model for node."""
 
     name: str = ""
 
 
-class AiqumFcInterfaceLocationHomePort(OntapModel):
+class AiqumFcInterfaceLocationHomePort(AiqumModel):
     """AiqumFcInterfaceLocationHomePort sub-model for home_port."""
 
     key: str = ""
@@ -41,13 +41,13 @@ class AiqumFcInterfaceLocationHomePort(OntapModel):
     uuid: str = ""
 
 
-class AiqumFcInterfaceLocationPortNode(OntapModel):
+class AiqumFcInterfaceLocationPortNode(AiqumModel):
     """AiqumFcInterfaceLocationPortNode sub-model for node."""
 
     name: str = ""
 
 
-class AiqumFcInterfaceLocationPort(OntapModel):
+class AiqumFcInterfaceLocationPort(AiqumModel):
     """AiqumFcInterfaceLocationPort sub-model for port."""
 
     key: str = ""
@@ -56,7 +56,7 @@ class AiqumFcInterfaceLocationPort(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumFcInterfaceLocation(OntapModel):
+class AiqumFcInterfaceLocation(AiqumModel):
     """AiqumFcInterfaceLocation sub-model for location."""
 
     home_node: AiqumFcInterfaceLocationHomeNode = Field(
@@ -69,7 +69,7 @@ class AiqumFcInterfaceLocation(OntapModel):
     port: AiqumFcInterfaceLocationPort = Field(default_factory=AiqumFcInterfaceLocationPort)
 
 
-class AiqumFcInterfaceSvm(OntapModel):
+class AiqumFcInterfaceSvm(AiqumModel):
     """AiqumFcInterfaceSvm sub-model for svm."""
 
     key: str = ""
@@ -77,7 +77,7 @@ class AiqumFcInterfaceSvm(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumFcInterface(OntapModel):
+class AiqumFcInterface(AiqumModel):
     """AiqumFcInterface information."""
 
     cluster: AiqumFcInterfaceCluster = Field(default_factory=AiqumFcInterfaceCluster)

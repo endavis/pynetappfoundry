@@ -5,10 +5,10 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from pynetappfoundry.models._base import OntapModel, OntapUUID
+from pynetappfoundry.models._base import AiqumModel, OntapUUID
 
 
-class AiqumFcPortMetricsSampleResponseFcPort(OntapModel):
+class AiqumFcPortMetricsSampleResponseFcPort(AiqumModel):
     """AiqumFcPortMetricsSampleResponseFcPort sub-model for fc_port."""
 
     key: str = ""
@@ -16,14 +16,14 @@ class AiqumFcPortMetricsSampleResponseFcPort(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumFcPortMetricsSampleResponseSummary(OntapModel):
+class AiqumFcPortMetricsSampleResponseSummary(AiqumModel):
     """AiqumFcPortMetricsSampleResponseSummary sub-model for summary."""
 
     throughput: str = ""
     utilization_percent: str = ""
 
 
-class AiqumFcPortMetricsSampleResponse(OntapModel):
+class AiqumFcPortMetricsSampleResponse(AiqumModel):
     """AiqumFcPortMetricsSampleResponse information."""
 
     duration: str = ""

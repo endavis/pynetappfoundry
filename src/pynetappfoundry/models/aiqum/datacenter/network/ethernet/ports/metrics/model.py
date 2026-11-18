@@ -5,10 +5,10 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from pynetappfoundry.models._base import OntapModel, OntapUUID
+from pynetappfoundry.models._base import AiqumModel, OntapUUID
 
 
-class AiqumEthernetPortMetricsSampleResponseEthernetPort(OntapModel):
+class AiqumEthernetPortMetricsSampleResponseEthernetPort(AiqumModel):
     """AiqumEthernetPortMetricsSampleResponseEthernetPort sub-model for ethernet_port."""
 
     key: str = ""
@@ -16,19 +16,19 @@ class AiqumEthernetPortMetricsSampleResponseEthernetPort(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumEthernetPortMetricsSampleResponseSummaryBytes(OntapModel):
+class AiqumEthernetPortMetricsSampleResponseSummaryBytes(AiqumModel):
     """AiqumEthernetPortMetricsSampleResponseSummaryBytes sub-model for bytes."""
 
     received: str = ""
 
 
-class AiqumEthernetPortMetricsSampleResponseSummaryError(OntapModel):
+class AiqumEthernetPortMetricsSampleResponseSummaryError(AiqumModel):
     """AiqumEthernetPortMetricsSampleResponseSummaryError sub-model for error."""
 
     received: str = ""
 
 
-class AiqumEthernetPortMetricsSampleResponseSummary(OntapModel):
+class AiqumEthernetPortMetricsSampleResponseSummary(AiqumModel):
     """AiqumEthernetPortMetricsSampleResponseSummary sub-model for summary."""
 
     bytes: AiqumEthernetPortMetricsSampleResponseSummaryBytes = Field(
@@ -40,7 +40,7 @@ class AiqumEthernetPortMetricsSampleResponseSummary(OntapModel):
     utilization_percent: str = ""
 
 
-class AiqumEthernetPortMetricsSampleResponse(OntapModel):
+class AiqumEthernetPortMetricsSampleResponse(AiqumModel):
     """AiqumEthernetPortMetricsSampleResponse information."""
 
     duration: str = ""

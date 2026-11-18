@@ -516,12 +516,21 @@ def _collect_all_leaves(fields: list[ParsedField]) -> list[ParsedField]:
     return result
 
 
+_MODEL_BASE_BY_API: dict[str, str] = {"aiqum": "AiqumModel"}
+
+
+def _model_base(api_type: str) -> str:
+    """Return the generated model base class name for *api_type*."""
+    return _MODEL_BASE_BY_API.get(api_type, "OntapModel")
+
+
 def _generate_nested_sub_models(
     parent_class: str,
     fields: list[ParsedField],
     sub_model_map: dict[str, str],
     lines: list[str],
     *,
+    base_class: str = "OntapModel",
     _seen_sub_names: dict[str, int] | None = None,
 ) -> None:
     """Recursively generate nested sub-model classes (deepest-first).
@@ -557,12 +566,13 @@ def _generate_nested_sub_models(
                 field.sub_fields,
                 sub_model_map,
                 lines,
+                base_class=base_class,
                 _seen_sub_names=_seen_sub_names,
             )
 
             # Now emit this sub-model class
             lines.append("")
-            lines.append(f"class {sub_cls}(OntapModel):")
+            lines.append(f"class {sub_cls}({base_class}):")
             lines.append(f'    """{sub_cls} sub-model for {field.name}."""')
             lines.append("")
 
@@ -609,12 +619,13 @@ def _generate_nested_sub_models(
                 field.sub_fields,
                 sub_model_map,
                 lines,
+                base_class=base_class,
                 _seen_sub_names=_seen_sub_names,
             )
 
             # Emit the sub-model class
             lines.append("")
-            lines.append(f"class {sub_cls}(OntapModel):")
+            lines.append(f"class {sub_cls}({base_class}):")
             lines.append(f'    """{sub_cls} sub-model for {field.name}."""')
             lines.append("")
 
@@ -730,6 +741,7 @@ def generate_model(
         class_name_overrides=class_name_overrides,
     )
     doc = f"{class_name} information."
+    base_class = _model_base(api_type)
 
     # Build sub-model map by walking the field tree
     sub_model_map: dict[str, str] = {}  # api_path → sub-model class name
@@ -739,6 +751,7 @@ def generate_model(
         endpoint.fields,
         sub_model_map,
         sub_model_lines,
+        base_class=base_class,
     )
 
     needs_field = _needs_field_import(endpoint.fields, sub_model_map)
@@ -759,7 +772,7 @@ def generate_model(
 
     pydantic_imports = ["Field"] if needs_field else []
 
-    base_imports = ["OntapModel"]
+    base_imports = [base_class]
     if needs_uuid:
         base_imports.append("OntapUUID")
 
@@ -775,7 +788,7 @@ def generate_model(
 
     # Generate the parent class
     lines.append("")
-    lines.append(f"class {class_name}(OntapModel):")
+    lines.append(f"class {class_name}({base_class}):")
     lines.append(f'    """{class_name} information."""')
     lines.append("")
 
@@ -1212,6 +1225,7 @@ def generate_mapping(
         endpoint.fields,
         sub_model_map,
         _temp_lines,
+        base_class=_model_base(api_type),
     )
 
     # Only array-of-objects sub-models need transforms in the mapping

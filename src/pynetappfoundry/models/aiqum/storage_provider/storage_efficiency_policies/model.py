@@ -3,10 +3,10 @@
 
 from __future__ import annotations
 
-from pynetappfoundry.models._base import OntapModel
+from pynetappfoundry.models._base import AiqumModel
 
 
-class AiqumStorageEfficiencyPolicy(OntapModel):
+class AiqumStorageEfficiencyPolicy(AiqumModel):
     """AiqumStorageEfficiencyPolicy information."""
 
     compression: str = ""

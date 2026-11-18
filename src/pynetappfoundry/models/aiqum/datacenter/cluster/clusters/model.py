@@ -6,10 +6,10 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from pynetappfoundry.models._base import OntapModel, OntapUUID
+from pynetappfoundry.models._base import AiqumModel, OntapUUID
 
 
-class AiqumClusterNodeCluster(OntapModel):
+class AiqumClusterNodeCluster(AiqumModel):
     """AiqumClusterNodeCluster sub-model for cluster."""
 
     key: str = ""
@@ -17,7 +17,7 @@ class AiqumClusterNodeCluster(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumClusterNodeHaPartner(OntapModel):
+class AiqumClusterNodeHaPartner(AiqumModel):
     """AiqumClusterNodeHaPartner sub-model for partners."""
 
     key: str = ""
@@ -25,19 +25,19 @@ class AiqumClusterNodeHaPartner(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumClusterNodeHa(OntapModel):
+class AiqumClusterNodeHa(AiqumModel):
     """AiqumClusterNodeHa sub-model for ha."""
 
     partners: list[AiqumClusterNodeHaPartner] = Field(default_factory=list)
 
 
-class AiqumClusterNodePerformanceCapacity(OntapModel):
+class AiqumClusterNodePerformanceCapacity(AiqumModel):
     """AiqumClusterNodePerformanceCapacity sub-model for performance_capacity."""
 
     used: float = 0.0
 
 
-class AiqumClusterNodeVersion(OntapModel):
+class AiqumClusterNodeVersion(AiqumModel):
     """AiqumClusterNodeVersion sub-model for version."""
 
     full: str = ""
@@ -46,7 +46,7 @@ class AiqumClusterNodeVersion(OntapModel):
     minor: int = 0
 
 
-class AiqumClusterNode(OntapModel):
+class AiqumClusterNode(AiqumModel):
     """AiqumClusterNode sub-model for nodes."""
 
     cluster: AiqumClusterNodeCluster = Field(default_factory=AiqumClusterNodeCluster)
@@ -66,7 +66,7 @@ class AiqumClusterNode(OntapModel):
     version: AiqumClusterNodeVersion = Field(default_factory=AiqumClusterNodeVersion)
 
 
-class AiqumClusterProtocolBreakdown(OntapModel):
+class AiqumClusterProtocolBreakdown(AiqumModel):
     """AiqumClusterProtocolBreakdown sub-model for protocol_breakdown."""
 
     cifs: int = 0
@@ -75,7 +75,7 @@ class AiqumClusterProtocolBreakdown(OntapModel):
     nfs: int = 0
 
 
-class AiqumClusterStorageCapacity(OntapModel):
+class AiqumClusterStorageCapacity(AiqumModel):
     """AiqumClusterStorageCapacity sub-model for storage_capacity."""
 
     available: int = 0
@@ -83,7 +83,7 @@ class AiqumClusterStorageCapacity(OntapModel):
     used: int = 0
 
 
-class AiqumClusterVersion(OntapModel):
+class AiqumClusterVersion(AiqumModel):
     """AiqumClusterVersion sub-model for version."""
 
     full: str = ""
@@ -92,7 +92,7 @@ class AiqumClusterVersion(OntapModel):
     minor: int = 0
 
 
-class AiqumCluster(OntapModel):
+class AiqumCluster(AiqumModel):
     """AiqumCluster information."""
 
     contact: str = ""

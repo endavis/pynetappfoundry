@@ -5,10 +5,10 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from pynetappfoundry.models._base import OntapModel, OntapUUID
+from pynetappfoundry.models._base import AiqumModel, OntapUUID
 
 
-class AiqumEventCluster(OntapModel):
+class AiqumEventCluster(AiqumModel):
     """AiqumEventCluster sub-model for cluster."""
 
     key: str = ""
@@ -16,7 +16,7 @@ class AiqumEventCluster(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumEventNode(OntapModel):
+class AiqumEventNode(AiqumModel):
     """AiqumEventNode sub-model for node."""
 
     key: str = ""
@@ -24,7 +24,7 @@ class AiqumEventNode(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumEventSvm(OntapModel):
+class AiqumEventSvm(AiqumModel):
     """AiqumEventSvm sub-model for svm."""
 
     key: str = ""
@@ -32,7 +32,7 @@ class AiqumEventSvm(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumEvent(OntapModel):
+class AiqumEvent(AiqumModel):
     """AiqumEvent information."""
 
     acknowledged_username: str = ""

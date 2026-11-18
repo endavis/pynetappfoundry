@@ -5,17 +5,17 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from pynetappfoundry.models._base import OntapModel, OntapUUID
+from pynetappfoundry.models._base import AiqumModel, OntapUUID
 
 
-class AiqumCifsShareAcl(OntapModel):
+class AiqumCifsShareAcl(AiqumModel):
     """AiqumCifsShareAcl sub-model for acls."""
 
     permission: str = ""
     user_or_group: str = ""
 
 
-class AiqumCifsShareCluster(OntapModel):
+class AiqumCifsShareCluster(AiqumModel):
     """AiqumCifsShareCluster sub-model for cluster."""
 
     key: str = ""
@@ -23,7 +23,7 @@ class AiqumCifsShareCluster(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumCifsShareSvm(OntapModel):
+class AiqumCifsShareSvm(AiqumModel):
     """AiqumCifsShareSvm sub-model for svm."""
 
     key: str = ""
@@ -31,7 +31,7 @@ class AiqumCifsShareSvm(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumCifsShareVolume(OntapModel):
+class AiqumCifsShareVolume(AiqumModel):
     """AiqumCifsShareVolume sub-model for volume."""
 
     key: str = ""
@@ -39,7 +39,7 @@ class AiqumCifsShareVolume(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumCifsShare(OntapModel):
+class AiqumCifsShare(AiqumModel):
     """AiqumCifsShare information."""
 
     acls: list[AiqumCifsShareAcl] = Field(default_factory=list)

@@ -5,10 +5,10 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from pynetappfoundry.models._base import OntapModel, OntapUUID
+from pynetappfoundry.models._base import AiqumModel, OntapUUID
 
 
-class AiqumClusterMetricsSampleResponseCluster(OntapModel):
+class AiqumClusterMetricsSampleResponseCluster(AiqumModel):
     """AiqumClusterMetricsSampleResponseCluster sub-model for cluster."""
 
     key: str = ""
@@ -16,13 +16,13 @@ class AiqumClusterMetricsSampleResponseCluster(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumClusterMetricsSampleResponseSummary(OntapModel):
+class AiqumClusterMetricsSampleResponseSummary(AiqumModel):
     """AiqumClusterMetricsSampleResponseSummary sub-model for summary."""
 
     iops: str = ""
 
 
-class AiqumClusterMetricsSampleResponse(OntapModel):
+class AiqumClusterMetricsSampleResponse(AiqumModel):
     """AiqumClusterMetricsSampleResponse information."""
 
     cluster: AiqumClusterMetricsSampleResponseCluster = Field(

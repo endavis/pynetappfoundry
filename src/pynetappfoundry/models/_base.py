@@ -8,9 +8,9 @@ model definitions used across the library.
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING, Annotated, ClassVar, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Annotated, Any, ClassVar, Protocol, runtime_checkable
 
-from pydantic import AfterValidator, BaseModel, ConfigDict, PrivateAttr
+from pydantic import AfterValidator, BaseModel, ConfigDict, PrivateAttr, model_validator
 
 if TYPE_CHECKING:
     from pynetappfoundry.data.filters import FieldProxy
@@ -99,6 +99,47 @@ class OntapModel(BaseModel):
             True if *path* is in the model's ``_fetched_fields`` set.
         """
         return path in self._fetched_fields
+
+
+class AiqumModel(OntapModel):
+    """Base class for generated AIQUM models; maps ``null`` to the field default.
+
+    The AIQUM spec carries no nullability markers, yet real instances return
+    ``null`` for unset strings, booleans and nested objects (#1102).  Making
+    every field ``T | None`` would change the public field types, so a
+    ``mode="before"`` validator drops ``None`` values for declared fields and
+    lets the field's default or ``default_factory`` apply.  Pydantic runs it on
+    every nested sub-model too, so it covers list items and direct
+    ``model_validate`` calls.
+
+    A declared field whose own default is ``None`` keeps ``None``, as do extra
+    (undeclared) keys.  Null and empty therefore read the same on AIQUM models.
+    """
+
+    @model_validator(mode="before")
+    @classmethod
+    def _drop_null_fields(cls, data: Any) -> Any:
+        """Drop ``None`` values of declared fields whose default is not ``None``.
+
+        Args:
+            data: Raw input; non-dict input passes through unchanged.
+
+        Returns:
+            The input, or a copy without the null declared fields.
+        """
+        if not isinstance(data, dict):
+            return data
+        fields = cls.model_fields
+        drop = [
+            key
+            for key, value in data.items()
+            if value is None
+            and key in fields
+            and (fields[key].default_factory is not None or fields[key].get_default() is not None)
+        ]
+        if not drop:
+            return data
+        return {k: v for k, v in data.items() if k not in drop}
 
 
 @runtime_checkable

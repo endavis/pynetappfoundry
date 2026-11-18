@@ -617,6 +617,17 @@ Amendment to the Console pipeline. An array response had only its item model (`R
 
 Issue: #1032
 
+## AIQUM null fields (Issue #1102)
+
+Real AIQUM instances return `null` for unset strings, booleans and nested objects, while the AIQUM spec carries no nullability markers (`nullable` and `x-nullable` are both absent), so generated `str = ""` and `bool = False` fields rejected live and cached records.
+
+- **Base class.** Codegen emits `AiqumModel(OntapModel)` (in `src/pynetappfoundry/models/_base.py`) as the base of every generated AIQUM class, top-level and nested. Its `model_validator(mode="before")` drops `None` for declared fields whose default is not `None`, so the default or `default_factory` applies. It covers list items and direct `model_validate` calls.
+- **Rejected: `T | None` on every field.** It would change the public field types and break consumers typed against `str` or `bool`.
+- **Trade-off.** Null and empty read the same on AIQUM models (`contact` is `""` either way).
+- **Scope.** AIQUM only; ONTAP and DII have not shown the failure and keep `OntapModel`. The AIQUM cache stores raw JSON, so no cache migration is needed. See [Cache Models](../development/cache-models.md).
+
+Issue: #1102
+
 ## Related Issues
 
 - Issue #301: feat: field annotations, OpenAPI codegen, and SQL cache storage
@@ -645,6 +656,7 @@ Issue: #1032
 - Issue #1034: feat: parse the Console dw (licenses and subscriptions) subservice (see "Console `dw` folder (Issue #1034)")
 - Issue #1033: chore: confirm the swagger-sourced cvo array responses against a live agent
 - Issue #1032: feat: generated list models for cvo array responses (see "List models for array responses (Issue #1032)")
+- Issue #1102: fix: generated AiqumCluster model rejects null contact and location (see "AIQUM null fields (Issue #1102)")
 
 ## Related Documentation
 

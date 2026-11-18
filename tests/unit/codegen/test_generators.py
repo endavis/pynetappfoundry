@@ -321,6 +321,19 @@ class TestCollectAllLeaves:
 
 
 class TestGenerateModel:
+    def test_aiqum_uses_aiqum_base(self) -> None:
+        code = generate_model(_make_endpoint(), "aiqum")
+        assert "from pynetappfoundry.models._base import AiqumModel" in code
+        assert "(AiqumModel):" in code
+        assert "OntapModel" not in code
+        assert "class AiqumVolumeSvm(AiqumModel):" in code
+
+    @pytest.mark.parametrize("api_type", ["ontap", "dii"])
+    def test_other_apis_keep_ontap_base(self, api_type: str) -> None:
+        code = generate_model(_make_endpoint(), api_type)
+        assert "AiqumModel" not in code
+        assert "(OntapModel):" in code
+
     def test_basic_structure(self) -> None:
         ep = _make_endpoint()
         code = generate_model(ep)

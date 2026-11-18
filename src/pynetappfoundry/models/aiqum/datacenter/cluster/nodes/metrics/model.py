@@ -5,10 +5,10 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from pynetappfoundry.models._base import OntapModel, OntapUUID
+from pynetappfoundry.models._base import AiqumModel, OntapUUID
 
 
-class AiqumNodeMetricsSampleResponseNode(OntapModel):
+class AiqumNodeMetricsSampleResponseNode(AiqumModel):
     """AiqumNodeMetricsSampleResponseNode sub-model for node."""
 
     key: str = ""
@@ -16,7 +16,7 @@ class AiqumNodeMetricsSampleResponseNode(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumNodeMetricsSampleResponseSummary(OntapModel):
+class AiqumNodeMetricsSampleResponseSummary(AiqumModel):
     """AiqumNodeMetricsSampleResponseSummary sub-model for summary."""
 
     iops: str = ""
@@ -25,7 +25,7 @@ class AiqumNodeMetricsSampleResponseSummary(OntapModel):
     utilization_percent: str = ""
 
 
-class AiqumNodeMetricsSampleResponse(OntapModel):
+class AiqumNodeMetricsSampleResponse(AiqumModel):
     """AiqumNodeMetricsSampleResponse information."""
 
     duration: str = ""

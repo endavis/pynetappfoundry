@@ -5,10 +5,10 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from pynetappfoundry.models._base import OntapModel, OntapUUID
+from pynetappfoundry.models._base import AiqumModel, OntapUUID
 
 
-class AiqumSvmAggregate(OntapModel):
+class AiqumSvmAggregate(AiqumModel):
     """AiqumSvmAggregate sub-model for aggregates."""
 
     key: str = ""
@@ -16,7 +16,7 @@ class AiqumSvmAggregate(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumSvmCifsAdDomain(OntapModel):
+class AiqumSvmCifsAdDomain(AiqumModel):
     """AiqumSvmCifsAdDomain sub-model for ad_domain."""
 
     fqdn: str = ""
@@ -24,7 +24,7 @@ class AiqumSvmCifsAdDomain(OntapModel):
     user: str = ""
 
 
-class AiqumSvmCifs(OntapModel):
+class AiqumSvmCifs(AiqumModel):
     """AiqumSvmCifs sub-model for cifs."""
 
     ad_domain: AiqumSvmCifsAdDomain = Field(default_factory=AiqumSvmCifsAdDomain)
@@ -32,7 +32,7 @@ class AiqumSvmCifs(OntapModel):
     name: str = ""
 
 
-class AiqumSvmCluster(OntapModel):
+class AiqumSvmCluster(AiqumModel):
     """AiqumSvmCluster sub-model for cluster."""
 
     key: str = ""
@@ -40,20 +40,20 @@ class AiqumSvmCluster(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumSvmDns(OntapModel):
+class AiqumSvmDns(AiqumModel):
     """AiqumSvmDns sub-model for dns."""
 
     domains: list[str] = Field(default_factory=list)
     servers: list[str] = Field(default_factory=list)
 
 
-class AiqumSvmFcp(OntapModel):
+class AiqumSvmFcp(AiqumModel):
     """AiqumSvmFcp sub-model for fcp."""
 
     enabled: bool = False
 
 
-class AiqumSvmIpInterfaceIp(OntapModel):
+class AiqumSvmIpInterfaceIp(AiqumModel):
     """AiqumSvmIpInterfaceIp sub-model for ip."""
 
     address: str = ""
@@ -61,13 +61,13 @@ class AiqumSvmIpInterfaceIp(OntapModel):
     netmask: str = ""
 
 
-class AiqumSvmIpInterfaceLocationHomeNode(OntapModel):
+class AiqumSvmIpInterfaceLocationHomeNode(AiqumModel):
     """AiqumSvmIpInterfaceLocationHomeNode sub-model for home_node."""
 
     name: str = ""
 
 
-class AiqumSvmIpInterfaceLocation(OntapModel):
+class AiqumSvmIpInterfaceLocation(AiqumModel):
     """AiqumSvmIpInterfaceLocation sub-model for location."""
 
     home_node: AiqumSvmIpInterfaceLocationHomeNode = Field(
@@ -75,7 +75,7 @@ class AiqumSvmIpInterfaceLocation(OntapModel):
     )
 
 
-class AiqumSvmIpInterface(OntapModel):
+class AiqumSvmIpInterface(AiqumModel):
     """AiqumSvmIpInterface sub-model for ip_interfaces."""
 
     enabled: bool = False
@@ -84,7 +84,7 @@ class AiqumSvmIpInterface(OntapModel):
     name: str = ""
 
 
-class AiqumSvmIpspace(OntapModel):
+class AiqumSvmIpspace(AiqumModel):
     """AiqumSvmIpspace sub-model for ipspace."""
 
     key: str = ""
@@ -92,13 +92,13 @@ class AiqumSvmIpspace(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumSvmIscsi(OntapModel):
+class AiqumSvmIscsi(AiqumModel):
     """AiqumSvmIscsi sub-model for iscsi."""
 
     enabled: bool = False
 
 
-class AiqumSvmLdap(OntapModel):
+class AiqumSvmLdap(AiqumModel):
     """AiqumSvmLdap sub-model for ldap."""
 
     ad_domain: str = ""
@@ -109,13 +109,13 @@ class AiqumSvmLdap(OntapModel):
     servers: list[str] = Field(default_factory=list)
 
 
-class AiqumSvmNfs(OntapModel):
+class AiqumSvmNfs(AiqumModel):
     """AiqumSvmNfs sub-model for nfs."""
 
     enabled: bool = False
 
 
-class AiqumSvmNis(OntapModel):
+class AiqumSvmNis(AiqumModel):
     """AiqumSvmNis sub-model for nis."""
 
     domain: str = ""
@@ -123,13 +123,13 @@ class AiqumSvmNis(OntapModel):
     servers: list[str] = Field(default_factory=list)
 
 
-class AiqumSvmNvme(OntapModel):
+class AiqumSvmNvme(AiqumModel):
     """AiqumSvmNvme sub-model for nvme."""
 
     enabled: bool = False
 
 
-class AiqumSvmRouteDestination(OntapModel):
+class AiqumSvmRouteDestination(AiqumModel):
     """AiqumSvmRouteDestination sub-model for destination."""
 
     address: str = ""
@@ -137,14 +137,14 @@ class AiqumSvmRouteDestination(OntapModel):
     netmask: str = ""
 
 
-class AiqumSvmRoute(OntapModel):
+class AiqumSvmRoute(AiqumModel):
     """AiqumSvmRoute sub-model for routes."""
 
     destination: AiqumSvmRouteDestination = Field(default_factory=AiqumSvmRouteDestination)
     gateway: str = ""
 
 
-class AiqumSvmSnapshotPolicy(OntapModel):
+class AiqumSvmSnapshotPolicy(AiqumModel):
     """AiqumSvmSnapshotPolicy sub-model for snapshot_policy."""
 
     key: str = ""
@@ -152,7 +152,7 @@ class AiqumSvmSnapshotPolicy(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumSvm(OntapModel):
+class AiqumSvm(AiqumModel):
     """AiqumSvm information."""
 
     aggregates: list[AiqumSvmAggregate] = Field(default_factory=list)

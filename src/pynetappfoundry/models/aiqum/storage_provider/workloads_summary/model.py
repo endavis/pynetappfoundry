@@ -6,10 +6,10 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from pynetappfoundry.models._base import OntapModel
+from pynetappfoundry.models._base import AiqumModel
 
 
-class AiqumWorkloadsSummaryConformanceSummary(OntapModel):
+class AiqumWorkloadsSummaryConformanceSummary(AiqumModel):
     """AiqumWorkloadsSummaryConformanceSummary sub-model for conformance_summary."""
 
     conformant_workload_count: int = 0
@@ -17,7 +17,7 @@ class AiqumWorkloadsSummaryConformanceSummary(OntapModel):
     workload_with_unknown_status_count: int = 0
 
 
-class AiqumWorkloadsSummaryIops(OntapModel):
+class AiqumWorkloadsSummaryIops(AiqumModel):
     """AiqumWorkloadsSummaryIops sub-model for iops."""
 
     available: float = 0.0
@@ -25,21 +25,21 @@ class AiqumWorkloadsSummaryIops(OntapModel):
     used: float = 0.0
 
 
-class AiqumWorkloadsSummaryPerformanceServiceLevelSummaryPerformanceServiceLevelIops(OntapModel):
+class AiqumWorkloadsSummaryPerformanceServiceLevelSummaryPerformanceServiceLevelIops(AiqumModel):
     """AiqumWorkloadsSummaryPerformanceServiceLevelSummaryPerformanceServiceLevelIops sub-model for iops."""
 
     available: float = 0.0
     used: float = 0.0
 
 
-class AiqumWorkloadsSummaryPerformanceServiceLevelSummaryPerformanceServiceLevelSpace(OntapModel):
+class AiqumWorkloadsSummaryPerformanceServiceLevelSummaryPerformanceServiceLevelSpace(AiqumModel):
     """AiqumWorkloadsSummaryPerformanceServiceLevelSummaryPerformanceServiceLevelSpace sub-model for space."""
 
     available: int = 0
     used: int = 0
 
 
-class AiqumWorkloadsSummaryPerformanceServiceLevelSummaryPerformanceServiceLevel(OntapModel):
+class AiqumWorkloadsSummaryPerformanceServiceLevelSummaryPerformanceServiceLevel(AiqumModel):
     """AiqumWorkloadsSummaryPerformanceServiceLevelSummaryPerformanceServiceLevel sub-model for performance_service_levels."""
 
     conformant_workload_count: str = ""
@@ -56,7 +56,7 @@ class AiqumWorkloadsSummaryPerformanceServiceLevelSummaryPerformanceServiceLevel
     workload_with_unknown_status_count: int = 0
 
 
-class AiqumWorkloadsSummaryPerformanceServiceLevelSummary(OntapModel):
+class AiqumWorkloadsSummaryPerformanceServiceLevelSummary(AiqumModel):
     """AiqumWorkloadsSummaryPerformanceServiceLevelSummary sub-model for performance_service_level_summary."""
 
     managed_workload_count: int = 0
@@ -67,7 +67,7 @@ class AiqumWorkloadsSummaryPerformanceServiceLevelSummary(OntapModel):
     workloads_with_system_suggested_psls: int = 0
 
 
-class AiqumWorkloadsSummarySpace(OntapModel):
+class AiqumWorkloadsSummarySpace(AiqumModel):
     """AiqumWorkloadsSummarySpace sub-model for space."""
 
     available: int = 0
@@ -75,7 +75,7 @@ class AiqumWorkloadsSummarySpace(OntapModel):
     used: int = 0
 
 
-class AiqumWorkloadsSummary(OntapModel):
+class AiqumWorkloadsSummary(AiqumModel):
     """AiqumWorkloadsSummary information."""
 
     conformance_summary: AiqumWorkloadsSummaryConformanceSummary = Field(

@@ -5,10 +5,10 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from pynetappfoundry.models._base import OntapModel, OntapUUID
+from pynetappfoundry.models._base import AiqumModel, OntapUUID
 
 
-class AiqumActiveDirectoryMappingsSvm(OntapModel):
+class AiqumActiveDirectoryMappingsSvm(AiqumModel):
     """AiqumActiveDirectoryMappingsSvm sub-model for svm."""
 
     key: str = ""
@@ -16,7 +16,7 @@ class AiqumActiveDirectoryMappingsSvm(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumActiveDirectoryMappings(OntapModel):
+class AiqumActiveDirectoryMappings(AiqumModel):
     """AiqumActiveDirectoryMappings information."""
 
     dns: str = ""

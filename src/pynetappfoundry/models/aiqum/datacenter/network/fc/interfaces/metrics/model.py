@@ -5,10 +5,10 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from pynetappfoundry.models._base import OntapModel, OntapUUID
+from pynetappfoundry.models._base import AiqumModel, OntapUUID
 
 
-class AiqumNetworkFcInterfaceMetricsSampleResponseLif(OntapModel):
+class AiqumNetworkFcInterfaceMetricsSampleResponseLif(AiqumModel):
     """AiqumNetworkFcInterfaceMetricsSampleResponseLif sub-model for lif."""
 
     key: str = ""
@@ -16,13 +16,13 @@ class AiqumNetworkFcInterfaceMetricsSampleResponseLif(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumNetworkFcInterfaceMetricsSampleResponseSummary(OntapModel):
+class AiqumNetworkFcInterfaceMetricsSampleResponseSummary(AiqumModel):
     """AiqumNetworkFcInterfaceMetricsSampleResponseSummary sub-model for summary."""
 
     iops: str = ""
 
 
-class AiqumNetworkFcInterfaceMetricsSampleResponse(OntapModel):
+class AiqumNetworkFcInterfaceMetricsSampleResponse(AiqumModel):
     """AiqumNetworkFcInterfaceMetricsSampleResponse information."""
 
     duration: str = ""

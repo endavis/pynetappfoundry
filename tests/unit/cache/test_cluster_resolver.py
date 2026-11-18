@@ -361,6 +361,19 @@ def test_reader_returns_each_source_with_age(full: ClusterResolver) -> None:
     assert data.occm[0].cached_at.tzinfo is not None
 
 
+def test_reader_parses_aiqum_records_with_null_fields(
+    ontap_db: ClusterMetadataDB, aiqum_db: AiqumCacheDB, occm_db: OccmCacheDB
+) -> None:
+    """#1102: null contact/location and null SVM fields parse to defaults."""
+    cluster = {**_aiq_cluster("ck1"), "contact": None, "location": None}
+    svm = {**_aiq_child("s1", "ck1"), "nis": {"servers": None, "enabled": None}}
+    aiqum_db.set("aiq1", _aiq_snapshot("aiq1", {"AiqumCluster": [cluster], "AiqumSvm": [svm]}))
+    data = ClusterResolver(ontap_db=ontap_db, aiqum_db=aiqum_db, occm_db=occm_db).read("lab1")
+    assert len(data.aiqum) == 1
+    assert getattr(data.aiqum[0].cluster, "contact") == ""  # noqa: B009  # BaseModel has no contact attr
+    assert getattr(data.aiqum[0].svms[0], "nis").servers == []  # noqa: B009  # BaseModel has no nis attr
+
+
 def test_reader_returns_stale_data(
     ontap_db: ClusterMetadataDB, aiqum_db: AiqumCacheDB, occm_db: OccmCacheDB
 ) -> None:

@@ -5,10 +5,10 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from pynetappfoundry.models._base import OntapModel, OntapUUID
+from pynetappfoundry.models._base import AiqumModel, OntapUUID
 
 
-class AiqumLunCluster(OntapModel):
+class AiqumLunCluster(AiqumModel):
     """AiqumLunCluster sub-model for cluster."""
 
     key: str = ""
@@ -16,7 +16,7 @@ class AiqumLunCluster(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumLunLocationQtree(OntapModel):
+class AiqumLunLocationQtree(AiqumModel):
     """AiqumLunLocationQtree sub-model for qtree."""
 
     id: str = ""
@@ -24,7 +24,7 @@ class AiqumLunLocationQtree(OntapModel):
     name: str = ""
 
 
-class AiqumLunLocationVolume(OntapModel):
+class AiqumLunLocationVolume(AiqumModel):
     """AiqumLunLocationVolume sub-model for volume."""
 
     key: str = ""
@@ -32,14 +32,14 @@ class AiqumLunLocationVolume(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumLunLocation(OntapModel):
+class AiqumLunLocation(AiqumModel):
     """AiqumLunLocation sub-model for location."""
 
     qtree: AiqumLunLocationQtree = Field(default_factory=AiqumLunLocationQtree)
     volume: AiqumLunLocationVolume = Field(default_factory=AiqumLunLocationVolume)
 
 
-class AiqumLunLunMapIgroup(OntapModel):
+class AiqumLunLunMapIgroup(AiqumModel):
     """AiqumLunLunMapIgroup sub-model for igroup."""
 
     key: str = ""
@@ -47,14 +47,14 @@ class AiqumLunLunMapIgroup(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumLunLunMap(OntapModel):
+class AiqumLunLunMap(AiqumModel):
     """AiqumLunLunMap sub-model for lun_maps."""
 
     igroup: AiqumLunLunMapIgroup = Field(default_factory=AiqumLunLunMapIgroup)
     logical_unit_number: int = 0
 
 
-class AiqumLunQosPolicy(OntapModel):
+class AiqumLunQosPolicy(AiqumModel):
     """AiqumLunQosPolicy sub-model for qos_policy."""
 
     key: str = ""
@@ -62,21 +62,21 @@ class AiqumLunQosPolicy(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumLunSpace(OntapModel):
+class AiqumLunSpace(AiqumModel):
     """AiqumLunSpace sub-model for space."""
 
     size: int = 0
     used: int = 0
 
 
-class AiqumLunStatus(OntapModel):
+class AiqumLunStatus(AiqumModel):
     """AiqumLunStatus sub-model for status."""
 
     mapped: bool = False
     state: str = ""
 
 
-class AiqumLunSvm(OntapModel):
+class AiqumLunSvm(AiqumModel):
     """AiqumLunSvm sub-model for svm."""
 
     key: str = ""
@@ -84,7 +84,7 @@ class AiqumLunSvm(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumLun(OntapModel):
+class AiqumLun(AiqumModel):
     """AiqumLun information."""
 
     class_: str = ""

@@ -5,17 +5,17 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from pynetappfoundry.models._base import OntapModel
+from pynetappfoundry.models._base import AiqumModel
 
 
-class AiqumCertificateResponseFingerprint(OntapModel):
+class AiqumCertificateResponseFingerprint(AiqumModel):
     """AiqumCertificateResponseFingerprint sub-model for fingerprint."""
 
     md5: str = ""
     sha1: str = ""
 
 
-class AiqumCertificateResponse(OntapModel):
+class AiqumCertificateResponse(AiqumModel):
     """AiqumCertificateResponse information."""
 
     detail_certificate_string: str = ""

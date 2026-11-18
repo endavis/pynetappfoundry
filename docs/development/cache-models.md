@@ -184,6 +184,7 @@ class OntapVolume(OntapModel):
 - Sub-models (arrays of objects) are generated as separate classes
   (e.g., `OntapVolumeAggregate`)
 - All fields have defaults — models can be constructed with partial data
+- Generated AIQUM models subclass `AiqumModel`, which maps a `null` value to the field default (#1102)
 
 #### `mapping.py` — TypeMapping + FieldMapping
 
@@ -256,7 +257,7 @@ across two packages:
 
 ```
 src/pynetappfoundry/models/          ← Model classes (OntapModel subclasses)
-├── _base.py                         ← OntapModel, OntapUUID, HasUUID
+├── _base.py                         ← OntapModel, AiqumModel, OntapUUID, HasUUID
 ├── __init__.py
 └── ontap/
     ├── storage/
@@ -635,7 +636,7 @@ loads any of them.
 
 Imports flow upward only (DAG, no circular deps):
 
-1. **Layer 1**: `models._base` (OntapModel, OntapUUID, HasUUID) and `cache._registry` (ModelRegistry)
+1. **Layer 1**: `models._base` (OntapModel, AiqumModel, OntapUUID, HasUUID) and `cache._registry` (ModelRegistry)
 2. **Layer 2**: Leaf `model.py` files in `models/ontap/` (import only from `models._base`)
 3. **Layer 3**: Container models in `cache/`, `_metadata.py` (import leaf models from `models/`)
 
@@ -854,7 +855,7 @@ doit check
 | `tools/codegen/expensive_fields.py` | Parse ONTAP expensive field annotations |
 | `tools/codegen/openapi_codegen.py` | CLI entry point and pipeline orchestration |
 | `tools/doit/codegen.py` | `doit` task wrappers for fetch, convert, generate |
-| `src/pynetappfoundry/models/_base.py` | `OntapModel` base class, `OntapUUID` type, `HasUUID` protocol |
+| `src/pynetappfoundry/models/_base.py` | `OntapModel` and `AiqumModel` base classes, `OntapUUID` type, `HasUUID` protocol |
 | `src/pynetappfoundry/cache/field_mapping.py` | `FieldMapping`, `TypeMapping`, generic parsers |
 | `src/pynetappfoundry/cache/_base.py` | `CacheModel` alias for `OntapModel`, schema versioning |
 | `src/pynetappfoundry/cache/_registry.py` | `ModelRegistry` singleton |

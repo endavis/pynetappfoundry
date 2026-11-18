@@ -3,10 +3,10 @@
 
 from __future__ import annotations
 
-from pynetappfoundry.models._base import OntapModel, OntapUUID
+from pynetappfoundry.models._base import AiqumModel, OntapUUID
 
 
-class AiqumScript(OntapModel):
+class AiqumScript(AiqumModel):
     """AiqumScript information."""
 
     description: str = ""

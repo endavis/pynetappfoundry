@@ -6,10 +6,10 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from pynetappfoundry.models._base import OntapModel, OntapUUID
+from pynetappfoundry.models._base import AiqumModel, OntapUUID
 
 
-class AiqumSloLunGetAssignedPerformanceServiceLevel(OntapModel):
+class AiqumSloLunGetAssignedPerformanceServiceLevel(AiqumModel):
     """AiqumSloLunGetAssignedPerformanceServiceLevel sub-model for assigned_performance_service_level."""
 
     expected_iops: int = 0
@@ -18,14 +18,14 @@ class AiqumSloLunGetAssignedPerformanceServiceLevel(OntapModel):
     peak_iops: int = 0
 
 
-class AiqumSloLunGetAssignedStorageEfficiencyPolicy(OntapModel):
+class AiqumSloLunGetAssignedStorageEfficiencyPolicy(AiqumModel):
     """AiqumSloLunGetAssignedStorageEfficiencyPolicy sub-model for assigned_storage_efficiency_policy."""
 
     key: str = ""
     name: str = ""
 
 
-class AiqumSloLunGetCluster(OntapModel):
+class AiqumSloLunGetCluster(AiqumModel):
     """AiqumSloLunGetCluster sub-model for cluster."""
 
     key: str = ""
@@ -33,7 +33,7 @@ class AiqumSloLunGetCluster(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumSloLunGetRecommendedPerformanceServiceLevel(OntapModel):
+class AiqumSloLunGetRecommendedPerformanceServiceLevel(AiqumModel):
     """AiqumSloLunGetRecommendedPerformanceServiceLevel sub-model for recommended_performance_service_level."""
 
     expected_iops: int = 0
@@ -42,13 +42,13 @@ class AiqumSloLunGetRecommendedPerformanceServiceLevel(OntapModel):
     peak_iops: int = 0
 
 
-class AiqumSloLunGetSpace(OntapModel):
+class AiqumSloLunGetSpace(AiqumModel):
     """AiqumSloLunGetSpace sub-model for space."""
 
     size: int = 0
 
 
-class AiqumSloLunGetSvm(OntapModel):
+class AiqumSloLunGetSvm(AiqumModel):
     """AiqumSloLunGetSvm sub-model for svm."""
 
     key: str = ""
@@ -56,7 +56,7 @@ class AiqumSloLunGetSvm(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumSloLunGetVolume(OntapModel):
+class AiqumSloLunGetVolume(AiqumModel):
     """AiqumSloLunGetVolume sub-model for volume."""
 
     key: str = ""
@@ -64,7 +64,7 @@ class AiqumSloLunGetVolume(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumSloLunGet(OntapModel):
+class AiqumSloLunGet(AiqumModel):
     """AiqumSloLunGet information."""
 
     assigned_performance_service_level: AiqumSloLunGetAssignedPerformanceServiceLevel = Field(

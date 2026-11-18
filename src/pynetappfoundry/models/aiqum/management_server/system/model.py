@@ -5,10 +5,10 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from pynetappfoundry.models._base import OntapModel, OntapUUID
+from pynetappfoundry.models._base import AiqumModel, OntapUUID
 
 
-class AiqumSystemResponseService(OntapModel):
+class AiqumSystemResponseService(AiqumModel):
     """AiqumSystemResponseService sub-model for services."""
 
     description: str = ""
@@ -16,7 +16,7 @@ class AiqumSystemResponseService(OntapModel):
     status: str = ""
 
 
-class AiqumSystemResponse(OntapModel):
+class AiqumSystemResponse(AiqumModel):
     """AiqumSystemResponse information."""
 
     deployment: str = ""

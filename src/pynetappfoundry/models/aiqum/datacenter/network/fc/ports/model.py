@@ -5,10 +5,10 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from pynetappfoundry.models._base import OntapModel, OntapUUID
+from pynetappfoundry.models._base import AiqumModel, OntapUUID
 
 
-class AiqumFcPortCluster(OntapModel):
+class AiqumFcPortCluster(AiqumModel):
     """AiqumFcPortCluster sub-model for cluster."""
 
     key: str = ""
@@ -16,7 +16,7 @@ class AiqumFcPortCluster(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumFcPortFabric(OntapModel):
+class AiqumFcPortFabric(AiqumModel):
     """AiqumFcPortFabric sub-model for fabric."""
 
     connected: bool = False
@@ -24,7 +24,7 @@ class AiqumFcPortFabric(OntapModel):
     switch_port: str = ""
 
 
-class AiqumFcPortNode(OntapModel):
+class AiqumFcPortNode(AiqumModel):
     """AiqumFcPortNode sub-model for node."""
 
     key: str = ""
@@ -32,14 +32,14 @@ class AiqumFcPortNode(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumFcPortSpeed(OntapModel):
+class AiqumFcPortSpeed(AiqumModel):
     """AiqumFcPortSpeed sub-model for speed."""
 
     configured: str = ""
     maximum: str = ""
 
 
-class AiqumFcPort(OntapModel):
+class AiqumFcPort(AiqumModel):
     """AiqumFcPort information."""
 
     cluster: AiqumFcPortCluster = Field(default_factory=AiqumFcPortCluster)
