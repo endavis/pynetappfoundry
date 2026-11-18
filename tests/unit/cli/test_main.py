@@ -53,6 +53,13 @@ class TestHelpShortAlias:
         assert short.exit_code == long.exit_code
         assert short.output == long.output
 
+    def test_subcommand_cache_aiqum_help_short_option_matches_long(self, runner: CliRunner) -> None:
+        """`nf cache aiqum -h` produces the same output as `nf cache aiqum --help`."""
+        short = runner.invoke(nf, ["cache", "aiqum", "-h"])
+        long = runner.invoke(nf, ["cache", "aiqum", "--help"])
+        assert short.exit_code == long.exit_code == 0
+        assert short.output == long.output
+
     # ------------------------------------------------------------------
     # Subcommand: events
     # ------------------------------------------------------------------

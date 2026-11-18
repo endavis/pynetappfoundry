@@ -174,3 +174,22 @@ def test_is_stale(db: AiqumCacheDB) -> None:
     db.set("aiq1", _snap(cached_at=datetime.now(UTC) - timedelta(days=40)))
     assert db.is_stale("aiq1") is True
     assert db.is_stale("aiq1", ttl_days=60) is False
+
+
+def test_list_collections_sorted_and_filtered(db: AiqumCacheDB) -> None:
+    db.set("aiq2", _snap("aiq2"))
+    db.set("aiq1", _snap("aiq1"))
+    rows = db.list_collections()
+    assert [(r["instance"], r["mapping"]) for r in rows] == [
+        (r["instance"], r["mapping"])
+        for r in sorted(rows, key=lambda r: (r["instance"], r["mapping"]))
+    ]
+    assert {r["instance"] for r in rows} == {"aiq1", "aiq2"}
+    only = db.list_collections("aiq1")
+    assert only and {r["instance"] for r in only} == {"aiq1"}
+    assert set(only[0]) == {"instance", "mapping", "cached_at"}
+
+
+def test_list_collections_empty(db: AiqumCacheDB) -> None:
+    assert db.list_collections() == []
+    assert db.list_collections("aiq1") == []
