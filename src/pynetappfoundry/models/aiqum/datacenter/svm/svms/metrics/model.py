@@ -5,17 +5,17 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from pynetappfoundry.models._base import OntapModel, OntapUUID
+from pynetappfoundry.models._base import AiqumModel, OntapUUID
 
 
-class AiqumSvmMetricsSampleResponseSummary(OntapModel):
+class AiqumSvmMetricsSampleResponseSummary(AiqumModel):
     """AiqumSvmMetricsSampleResponseSummary sub-model for summary."""
 
     iops: str = ""
     latency: str = ""
 
 
-class AiqumSvmMetricsSampleResponseSvm(OntapModel):
+class AiqumSvmMetricsSampleResponseSvm(AiqumModel):
     """AiqumSvmMetricsSampleResponseSvm sub-model for svm."""
 
     key: str = ""
@@ -23,7 +23,7 @@ class AiqumSvmMetricsSampleResponseSvm(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumSvmMetricsSampleResponse(OntapModel):
+class AiqumSvmMetricsSampleResponse(AiqumModel):
     """AiqumSvmMetricsSampleResponse information."""
 
     duration: str = ""

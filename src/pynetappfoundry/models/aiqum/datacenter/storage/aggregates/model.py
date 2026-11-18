@@ -5,30 +5,30 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from pynetappfoundry.models._base import OntapModel, OntapUUID
+from pynetappfoundry.models._base import AiqumModel, OntapUUID
 
 
-class AiqumAggregateBlockStorageHybridCache(OntapModel):
+class AiqumAggregateBlockStorageHybridCache(AiqumModel):
     """AiqumAggregateBlockStorageHybridCache sub-model for hybrid_cache."""
 
     enabled: bool = False
     size: int = 0
 
 
-class AiqumAggregateBlockStorageMirror(OntapModel):
+class AiqumAggregateBlockStorageMirror(AiqumModel):
     """AiqumAggregateBlockStorageMirror sub-model for mirror."""
 
     state: str = ""
 
 
-class AiqumAggregateBlockStoragePrimary(OntapModel):
+class AiqumAggregateBlockStoragePrimary(AiqumModel):
     """AiqumAggregateBlockStoragePrimary sub-model for primary."""
 
     raid_size: int = 0
     raid_type: str = ""
 
 
-class AiqumAggregateBlockStorage(OntapModel):
+class AiqumAggregateBlockStorage(AiqumModel):
     """AiqumAggregateBlockStorage sub-model for block_storage."""
 
     hybrid_cache: AiqumAggregateBlockStorageHybridCache = Field(
@@ -42,7 +42,7 @@ class AiqumAggregateBlockStorage(OntapModel):
     )
 
 
-class AiqumAggregateCluster(OntapModel):
+class AiqumAggregateCluster(AiqumModel):
     """AiqumAggregateCluster sub-model for cluster."""
 
     key: str = ""
@@ -50,13 +50,13 @@ class AiqumAggregateCluster(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumAggregateDataEncryption(OntapModel):
+class AiqumAggregateDataEncryption(AiqumModel):
     """AiqumAggregateDataEncryption sub-model for data_encryption."""
 
     software_encryption_enabled: bool = False
 
 
-class AiqumAggregateNode(OntapModel):
+class AiqumAggregateNode(AiqumModel):
     """AiqumAggregateNode sub-model for node."""
 
     key: str = ""
@@ -64,13 +64,13 @@ class AiqumAggregateNode(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumAggregatePerformanceCapacity(OntapModel):
+class AiqumAggregatePerformanceCapacity(AiqumModel):
     """AiqumAggregatePerformanceCapacity sub-model for performance_capacity."""
 
     used: float = 0.0
 
 
-class AiqumAggregateSpaceBlockStorage(OntapModel):
+class AiqumAggregateSpaceBlockStorage(AiqumModel):
     """AiqumAggregateSpaceBlockStorage sub-model for block_storage."""
 
     available: int = 0
@@ -78,14 +78,14 @@ class AiqumAggregateSpaceBlockStorage(OntapModel):
     used: int = 0
 
 
-class AiqumAggregateSpaceEfficiency(OntapModel):
+class AiqumAggregateSpaceEfficiency(AiqumModel):
     """AiqumAggregateSpaceEfficiency sub-model for efficiency."""
 
     logical_used: int = 0
     savings: int = 0
 
 
-class AiqumAggregateSpace(OntapModel):
+class AiqumAggregateSpace(AiqumModel):
     """AiqumAggregateSpace sub-model for space."""
 
     block_storage: AiqumAggregateSpaceBlockStorage = Field(
@@ -94,7 +94,7 @@ class AiqumAggregateSpace(OntapModel):
     efficiency: AiqumAggregateSpaceEfficiency = Field(default_factory=AiqumAggregateSpaceEfficiency)
 
 
-class AiqumAggregate(OntapModel):
+class AiqumAggregate(AiqumModel):
     """AiqumAggregate information."""
 
     block_storage: AiqumAggregateBlockStorage = Field(default_factory=AiqumAggregateBlockStorage)

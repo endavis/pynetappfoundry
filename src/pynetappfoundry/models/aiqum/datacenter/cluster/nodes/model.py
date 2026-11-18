@@ -5,10 +5,10 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from pynetappfoundry.models._base import OntapModel, OntapUUID
+from pynetappfoundry.models._base import AiqumModel, OntapUUID
 
 
-class AiqumNodeCluster(OntapModel):
+class AiqumNodeCluster(AiqumModel):
     """AiqumNodeCluster sub-model for cluster."""
 
     key: str = ""
@@ -16,7 +16,7 @@ class AiqumNodeCluster(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumNodeHaPartner(OntapModel):
+class AiqumNodeHaPartner(AiqumModel):
     """AiqumNodeHaPartner sub-model for partners."""
 
     key: str = ""
@@ -24,19 +24,19 @@ class AiqumNodeHaPartner(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumNodeHa(OntapModel):
+class AiqumNodeHa(AiqumModel):
     """AiqumNodeHa sub-model for ha."""
 
     partners: list[AiqumNodeHaPartner] = Field(default_factory=list)
 
 
-class AiqumNodePerformanceCapacity(OntapModel):
+class AiqumNodePerformanceCapacity(AiqumModel):
     """AiqumNodePerformanceCapacity sub-model for performance_capacity."""
 
     used: float = 0.0
 
 
-class AiqumNodeVersion(OntapModel):
+class AiqumNodeVersion(AiqumModel):
     """AiqumNodeVersion sub-model for version."""
 
     full: str = ""
@@ -45,7 +45,7 @@ class AiqumNodeVersion(OntapModel):
     minor: int = 0
 
 
-class AiqumNode(OntapModel):
+class AiqumNode(AiqumModel):
     """AiqumNode information."""
 
     cluster: AiqumNodeCluster = Field(default_factory=AiqumNodeCluster)

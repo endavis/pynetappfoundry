@@ -3,10 +3,10 @@
 
 from __future__ import annotations
 
-from pynetappfoundry.models._base import OntapModel
+from pynetappfoundry.models._base import AiqumModel
 
 
-class AiqumBackupSettings(OntapModel):
+class AiqumBackupSettings(AiqumModel):
     """AiqumBackupSettings information."""
 
     day_of_week: str = ""

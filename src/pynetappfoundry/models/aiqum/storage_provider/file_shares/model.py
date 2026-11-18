@@ -6,10 +6,10 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from pynetappfoundry.models._base import OntapModel, OntapUUID
+from pynetappfoundry.models._base import AiqumModel, OntapUUID
 
 
-class AiqumFileshareGetCollectionAssignedPerformanceServiceLevel(OntapModel):
+class AiqumFileshareGetCollectionAssignedPerformanceServiceLevel(AiqumModel):
     """AiqumFileshareGetCollectionAssignedPerformanceServiceLevel sub-model for assigned_performance_service_level."""
 
     expected_iops: int = 0
@@ -18,14 +18,14 @@ class AiqumFileshareGetCollectionAssignedPerformanceServiceLevel(OntapModel):
     peak_iops: int = 0
 
 
-class AiqumFileshareGetCollectionAssignedStorageEfficiencyPolicy(OntapModel):
+class AiqumFileshareGetCollectionAssignedStorageEfficiencyPolicy(AiqumModel):
     """AiqumFileshareGetCollectionAssignedStorageEfficiencyPolicy sub-model for assigned_storage_efficiency_policy."""
 
     key: str = ""
     name: str = ""
 
 
-class AiqumFileshareGetCollectionCluster(OntapModel):
+class AiqumFileshareGetCollectionCluster(AiqumModel):
     """AiqumFileshareGetCollectionCluster sub-model for cluster."""
 
     key: str = ""
@@ -33,7 +33,7 @@ class AiqumFileshareGetCollectionCluster(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumFileshareGetCollectionRecommendedPerformanceServiceLevel(OntapModel):
+class AiqumFileshareGetCollectionRecommendedPerformanceServiceLevel(AiqumModel):
     """AiqumFileshareGetCollectionRecommendedPerformanceServiceLevel sub-model for recommended_performance_service_level."""
 
     expected_iops: int = 0
@@ -42,13 +42,13 @@ class AiqumFileshareGetCollectionRecommendedPerformanceServiceLevel(OntapModel):
     peak_iops: int = 0
 
 
-class AiqumFileshareGetCollectionSpace(OntapModel):
+class AiqumFileshareGetCollectionSpace(AiqumModel):
     """AiqumFileshareGetCollectionSpace sub-model for space."""
 
     size: int = 0
 
 
-class AiqumFileshareGetCollectionSvm(OntapModel):
+class AiqumFileshareGetCollectionSvm(AiqumModel):
     """AiqumFileshareGetCollectionSvm sub-model for svm."""
 
     key: str = ""
@@ -56,7 +56,7 @@ class AiqumFileshareGetCollectionSvm(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumFileshareGetCollection(OntapModel):
+class AiqumFileshareGetCollection(AiqumModel):
     """AiqumFileshareGetCollection information."""
 
     assigned_performance_service_level: AiqumFileshareGetCollectionAssignedPerformanceServiceLevel = Field(

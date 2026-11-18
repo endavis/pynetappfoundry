@@ -3,10 +3,10 @@
 
 from __future__ import annotations
 
-from pynetappfoundry.models._base import OntapModel
+from pynetappfoundry.models._base import AiqumModel
 
 
-class AiqumGatewaysService(OntapModel):
+class AiqumGatewaysService(AiqumModel):
     """AiqumGatewaysService information."""
 
     ip_address: str = ""

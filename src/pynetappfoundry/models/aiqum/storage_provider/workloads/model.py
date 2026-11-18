@@ -6,10 +6,10 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from pynetappfoundry.models._base import OntapModel, OntapUUID
+from pynetappfoundry.models._base import AiqumModel, OntapUUID
 
 
-class AiqumWorkloadsAssignedPerformanceServiceLevel(OntapModel):
+class AiqumWorkloadsAssignedPerformanceServiceLevel(AiqumModel):
     """AiqumWorkloadsAssignedPerformanceServiceLevel sub-model for assigned_performance_service_level."""
 
     expected_iops: int = 0
@@ -18,14 +18,14 @@ class AiqumWorkloadsAssignedPerformanceServiceLevel(OntapModel):
     peak_iops: int = 0
 
 
-class AiqumWorkloadsAssignedStorageEfficiencyPolicy(OntapModel):
+class AiqumWorkloadsAssignedStorageEfficiencyPolicy(AiqumModel):
     """AiqumWorkloadsAssignedStorageEfficiencyPolicy sub-model for assigned_storage_efficiency_policy."""
 
     key: str = ""
     name: str = ""
 
 
-class AiqumWorkloadsCluster(OntapModel):
+class AiqumWorkloadsCluster(AiqumModel):
     """AiqumWorkloadsCluster sub-model for cluster."""
 
     key: str = ""
@@ -33,7 +33,7 @@ class AiqumWorkloadsCluster(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumWorkloadsConformanceStatusDetails(OntapModel):
+class AiqumWorkloadsConformanceStatusDetails(AiqumModel):
     """AiqumWorkloadsConformanceStatusDetails sub-model for conformance_status_details."""
 
     avg_violated_latency: float = 0.0
@@ -42,7 +42,7 @@ class AiqumWorkloadsConformanceStatusDetails(OntapModel):
     target_latency: float = 0.0
 
 
-class AiqumWorkloadsIops(OntapModel):
+class AiqumWorkloadsIops(AiqumModel):
     """AiqumWorkloadsIops sub-model for iops."""
 
     n95th_percentile: float = 0.0
@@ -51,7 +51,7 @@ class AiqumWorkloadsIops(OntapModel):
     median: float = 0.0
 
 
-class AiqumWorkloadsLatency(OntapModel):
+class AiqumWorkloadsLatency(AiqumModel):
     """AiqumWorkloadsLatency sub-model for latency."""
 
     n95th_percentile: float = 0.0
@@ -60,7 +60,7 @@ class AiqumWorkloadsLatency(OntapModel):
     median: float = 0.0
 
 
-class AiqumWorkloadsRecommendedPerformanceServiceLevel(OntapModel):
+class AiqumWorkloadsRecommendedPerformanceServiceLevel(AiqumModel):
     """AiqumWorkloadsRecommendedPerformanceServiceLevel sub-model for recommended_performance_service_level."""
 
     expected_iops: int = 0
@@ -69,7 +69,7 @@ class AiqumWorkloadsRecommendedPerformanceServiceLevel(OntapModel):
     peak_iops: int = 0
 
 
-class AiqumWorkloadsSpace(OntapModel):
+class AiqumWorkloadsSpace(AiqumModel):
     """AiqumWorkloadsSpace sub-model for space."""
 
     size: int = 0
@@ -80,7 +80,7 @@ class AiqumWorkloadsSpace(OntapModel):
     used_median: float = 0.0
 
 
-class AiqumWorkloadsSvm(OntapModel):
+class AiqumWorkloadsSvm(AiqumModel):
     """AiqumWorkloadsSvm sub-model for svm."""
 
     key: str = ""
@@ -88,7 +88,7 @@ class AiqumWorkloadsSvm(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumWorkloadsVolume(OntapModel):
+class AiqumWorkloadsVolume(AiqumModel):
     """AiqumWorkloadsVolume sub-model for volume."""
 
     key: str = ""
@@ -96,7 +96,7 @@ class AiqumWorkloadsVolume(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumWorkloads(OntapModel):
+class AiqumWorkloads(AiqumModel):
     """AiqumWorkloads information."""
 
     assigned_performance_service_level: AiqumWorkloadsAssignedPerformanceServiceLevel = Field(

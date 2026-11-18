@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import pytest
-from pydantic import ConfigDict, ValidationError, field_validator
+from pydantic import ConfigDict, Field, ValidationError, field_validator
 
 from pynetappfoundry.models._base import (
+    AiqumModel,
     HasUUID,
     OntapModel,
     OntapUUID,
@@ -203,3 +204,83 @@ class TestOntapUUID:
 
         obj = TestModel()
         assert obj.uuid == ""
+
+
+# ---------------------------------------------------------------------------
+# AiqumModel (#1102)
+# ---------------------------------------------------------------------------
+
+
+class _AqSub(AiqumModel):
+    name: str = ""
+    flag: bool = False
+
+
+class _AqItem(AiqumModel):
+    label: str = ""
+
+
+class _AqModel(AiqumModel):
+    text: str = "d"
+    flag: bool = False
+    uuid: OntapUUID = ""
+    tags: list[str] = Field(default_factory=list)
+    sub: _AqSub = Field(default_factory=_AqSub)
+    items: list[_AqItem] = Field(default_factory=list)
+    opt: str | None = None
+
+
+class TestAiqumModel:
+    """AiqumModel maps null on declared fields to the field default."""
+
+    def test_none_gives_defaults(self) -> None:
+        m = _AqModel.model_validate(
+            {"text": None, "flag": None, "uuid": None, "tags": None, "sub": None}
+        )
+        assert (m.text, m.flag, m.uuid, m.tags) == ("d", False, "", [])
+        assert m.sub == _AqSub()
+
+    def test_none_inside_nested_dict(self) -> None:
+        m = _AqModel.model_validate({"sub": {"name": None, "flag": True}})
+        assert (m.sub.name, m.sub.flag) == ("", True)
+
+    def test_none_in_list_items(self) -> None:
+        m = _AqModel.model_validate({"items": [{"label": None}, {"label": "x"}]})
+        assert [i.label for i in m.items] == ["", "x"]
+
+    def test_non_none_values_kept(self) -> None:
+        m = _AqModel.model_validate({"text": "t", "flag": True, "tags": ["a"]})
+        assert (m.text, m.flag, m.tags) == ("t", True, ["a"])
+
+    def test_extra_key_none_kept(self) -> None:
+        m = _AqModel.model_validate({"unknown": None})
+        assert m.model_extra == {"unknown": None}
+
+    def test_optional_field_keeps_none(self) -> None:
+        assert _AqModel.model_validate({"opt": None}).opt is None
+
+    def test_keyword_construction_with_none(self) -> None:
+        assert _AqModel(text=None).text == "d"  # type: ignore[arg-type]  # null input is the point
+
+    def test_non_dict_input_passes_through(self) -> None:
+        existing = _AqModel(text="t")
+        assert _AqModel.model_validate(existing) is existing
+        with pytest.raises(ValidationError):
+            _AqModel.model_validate("not a dict")
+
+    def test_input_dict_not_mutated(self) -> None:
+        data = {"text": None}
+        _AqModel.model_validate(data)
+        assert data == {"text": None}
+
+    def test_plain_ontap_model_still_rejects_none(self) -> None:
+        class Plain(OntapModel):
+            text: str = ""
+
+        with pytest.raises(ValidationError):
+            Plain.model_validate({"text": None})
+
+    def test_exported(self) -> None:
+        from pynetappfoundry.models import AiqumModel as ExportedAiqumModel
+
+        assert ExportedAiqumModel is AiqumModel

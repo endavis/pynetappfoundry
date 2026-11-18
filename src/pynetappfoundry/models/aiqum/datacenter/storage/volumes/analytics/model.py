@@ -5,10 +5,10 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from pynetappfoundry.models._base import OntapModel, OntapUUID
+from pynetappfoundry.models._base import AiqumModel, OntapUUID
 
 
-class AiqumVolumeAnalyticsCluster(OntapModel):
+class AiqumVolumeAnalyticsCluster(AiqumModel):
     """AiqumVolumeAnalyticsCluster sub-model for cluster."""
 
     key: str = ""
@@ -16,7 +16,7 @@ class AiqumVolumeAnalyticsCluster(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumVolumeAnalyticsSvm(OntapModel):
+class AiqumVolumeAnalyticsSvm(AiqumModel):
     """AiqumVolumeAnalyticsSvm sub-model for svm."""
 
     key: str = ""
@@ -24,7 +24,7 @@ class AiqumVolumeAnalyticsSvm(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumVolumeAnalyticsVolume(OntapModel):
+class AiqumVolumeAnalyticsVolume(AiqumModel):
     """AiqumVolumeAnalyticsVolume sub-model for volume."""
 
     key: str = ""
@@ -32,7 +32,7 @@ class AiqumVolumeAnalyticsVolume(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumVolumeAnalytics(OntapModel):
+class AiqumVolumeAnalytics(AiqumModel):
     """AiqumVolumeAnalytics information."""
 
     cluster: AiqumVolumeAnalyticsCluster = Field(default_factory=AiqumVolumeAnalyticsCluster)

@@ -5,10 +5,10 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from pynetappfoundry.models._base import OntapModel, OntapUUID
+from pynetappfoundry.models._base import AiqumModel, OntapUUID
 
 
-class AiqumVolumeAggregate(OntapModel):
+class AiqumVolumeAggregate(AiqumModel):
     """AiqumVolumeAggregate sub-model for aggregates."""
 
     key: str = ""
@@ -16,14 +16,14 @@ class AiqumVolumeAggregate(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumVolumeAutosize(OntapModel):
+class AiqumVolumeAutosize(AiqumModel):
     """AiqumVolumeAutosize sub-model for autosize."""
 
     maximum: int = 0
     mode: str = ""
 
 
-class AiqumVolumeCluster(OntapModel):
+class AiqumVolumeCluster(AiqumModel):
     """AiqumVolumeCluster sub-model for cluster."""
 
     key: str = ""
@@ -31,7 +31,7 @@ class AiqumVolumeCluster(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumVolumeNasExportPolicy(OntapModel):
+class AiqumVolumeNasExportPolicy(AiqumModel):
     """AiqumVolumeNasExportPolicy sub-model for export_policy."""
 
     id: int = 0
@@ -39,13 +39,13 @@ class AiqumVolumeNasExportPolicy(OntapModel):
     name: str = ""
 
 
-class AiqumVolumeNas(OntapModel):
+class AiqumVolumeNas(AiqumModel):
     """AiqumVolumeNas sub-model for nas."""
 
     export_policy: AiqumVolumeNasExportPolicy = Field(default_factory=AiqumVolumeNasExportPolicy)
 
 
-class AiqumVolumeQosPolicy(OntapModel):
+class AiqumVolumeQosPolicy(AiqumModel):
     """AiqumVolumeQosPolicy sub-model for policy."""
 
     key: str = ""
@@ -56,19 +56,19 @@ class AiqumVolumeQosPolicy(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumVolumeQos(OntapModel):
+class AiqumVolumeQos(AiqumModel):
     """AiqumVolumeQos sub-model for qos."""
 
     policy: AiqumVolumeQosPolicy = Field(default_factory=AiqumVolumeQosPolicy)
 
 
-class AiqumVolumeSnapmirror(OntapModel):
+class AiqumVolumeSnapmirror(AiqumModel):
     """AiqumVolumeSnapmirror sub-model for snapmirror."""
 
     is_protected: bool = False
 
 
-class AiqumVolumeSnapshotPolicy(OntapModel):
+class AiqumVolumeSnapshotPolicy(AiqumModel):
     """AiqumVolumeSnapshotPolicy sub-model for snapshot_policy."""
 
     key: str = ""
@@ -76,7 +76,7 @@ class AiqumVolumeSnapshotPolicy(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumVolumeSpace(OntapModel):
+class AiqumVolumeSpace(AiqumModel):
     """AiqumVolumeSpace sub-model for space."""
 
     available: int = 0
@@ -84,7 +84,7 @@ class AiqumVolumeSpace(OntapModel):
     used: int = 0
 
 
-class AiqumVolumeSvm(OntapModel):
+class AiqumVolumeSvm(AiqumModel):
     """AiqumVolumeSvm sub-model for svm."""
 
     key: str = ""
@@ -92,13 +92,13 @@ class AiqumVolumeSvm(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumVolumeTiering(OntapModel):
+class AiqumVolumeTiering(AiqumModel):
     """AiqumVolumeTiering sub-model for tiering."""
 
     policy: str = ""
 
 
-class AiqumVolume(OntapModel):
+class AiqumVolume(AiqumModel):
     """AiqumVolume information."""
 
     aggregates: list[AiqumVolumeAggregate] = Field(default_factory=list)

@@ -5,10 +5,10 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from pynetappfoundry.models._base import OntapModel, OntapUUID
+from pynetappfoundry.models._base import AiqumModel, OntapUUID
 
 
-class AiqumNetworkIpInterfaceMetricsSampleResponseLif(OntapModel):
+class AiqumNetworkIpInterfaceMetricsSampleResponseLif(AiqumModel):
     """AiqumNetworkIpInterfaceMetricsSampleResponseLif sub-model for lif."""
 
     key: str = ""
@@ -16,25 +16,25 @@ class AiqumNetworkIpInterfaceMetricsSampleResponseLif(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumNetworkIpInterfaceMetricsSampleResponseSummaryError(OntapModel):
+class AiqumNetworkIpInterfaceMetricsSampleResponseSummaryError(AiqumModel):
     """AiqumNetworkIpInterfaceMetricsSampleResponseSummaryError sub-model for error."""
 
     received: str = ""
 
 
-class AiqumNetworkIpInterfaceMetricsSampleResponseSummaryPackets(OntapModel):
+class AiqumNetworkIpInterfaceMetricsSampleResponseSummaryPackets(AiqumModel):
     """AiqumNetworkIpInterfaceMetricsSampleResponseSummaryPackets sub-model for packets."""
 
     received: str = ""
 
 
-class AiqumNetworkIpInterfaceMetricsSampleResponseSummaryThroughput(OntapModel):
+class AiqumNetworkIpInterfaceMetricsSampleResponseSummaryThroughput(AiqumModel):
     """AiqumNetworkIpInterfaceMetricsSampleResponseSummaryThroughput sub-model for throughput."""
 
     received: str = ""
 
 
-class AiqumNetworkIpInterfaceMetricsSampleResponseSummary(OntapModel):
+class AiqumNetworkIpInterfaceMetricsSampleResponseSummary(AiqumModel):
     """AiqumNetworkIpInterfaceMetricsSampleResponseSummary sub-model for summary."""
 
     error: AiqumNetworkIpInterfaceMetricsSampleResponseSummaryError = Field(
@@ -48,7 +48,7 @@ class AiqumNetworkIpInterfaceMetricsSampleResponseSummary(OntapModel):
     )
 
 
-class AiqumNetworkIpInterfaceMetricsSampleResponse(OntapModel):
+class AiqumNetworkIpInterfaceMetricsSampleResponse(AiqumModel):
     """AiqumNetworkIpInterfaceMetricsSampleResponse information."""
 
     duration: str = ""

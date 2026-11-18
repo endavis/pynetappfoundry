@@ -5,10 +5,10 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from pynetappfoundry.models._base import OntapModel
+from pynetappfoundry.models._base import AiqumModel
 
 
-class AiqumDatasourceMaintenanceWindow(OntapModel):
+class AiqumDatasourceMaintenanceWindow(AiqumModel):
     """AiqumDatasourceMaintenanceWindow sub-model for maintenance_window."""
 
     end_time: str = ""
@@ -16,7 +16,7 @@ class AiqumDatasourceMaintenanceWindow(OntapModel):
     start_time: str = ""
 
 
-class AiqumDatasourceOperation(OntapModel):
+class AiqumDatasourceOperation(AiqumModel):
     """AiqumDatasourceOperation sub-model for operation."""
 
     end_time: str = ""
@@ -27,7 +27,7 @@ class AiqumDatasourceOperation(OntapModel):
     type_: str = ""
 
 
-class AiqumDatasource(OntapModel):
+class AiqumDatasource(AiqumModel):
     """AiqumDatasource information."""
 
     address: str = ""

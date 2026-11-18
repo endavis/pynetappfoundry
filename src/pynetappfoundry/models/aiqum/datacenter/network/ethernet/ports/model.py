@@ -5,16 +5,16 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from pynetappfoundry.models._base import OntapModel, OntapUUID
+from pynetappfoundry.models._base import AiqumModel, OntapUUID
 
 
-class AiqumEthernetPortBroadcastDomainIpspace(OntapModel):
+class AiqumEthernetPortBroadcastDomainIpspace(AiqumModel):
     """AiqumEthernetPortBroadcastDomainIpspace sub-model for ipspace."""
 
     name: str = ""
 
 
-class AiqumEthernetPortBroadcastDomain(OntapModel):
+class AiqumEthernetPortBroadcastDomain(AiqumModel):
     """AiqumEthernetPortBroadcastDomain sub-model for broadcast_domain."""
 
     ipspace: AiqumEthernetPortBroadcastDomainIpspace = Field(
@@ -25,7 +25,7 @@ class AiqumEthernetPortBroadcastDomain(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumEthernetPortCluster(OntapModel):
+class AiqumEthernetPortCluster(AiqumModel):
     """AiqumEthernetPortCluster sub-model for cluster."""
 
     key: str = ""
@@ -33,7 +33,7 @@ class AiqumEthernetPortCluster(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumEthernetPortNode(OntapModel):
+class AiqumEthernetPortNode(AiqumModel):
     """AiqumEthernetPortNode sub-model for node."""
 
     key: str = ""
@@ -41,13 +41,13 @@ class AiqumEthernetPortNode(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumEthernetPortVlanBasePortNode(OntapModel):
+class AiqumEthernetPortVlanBasePortNode(AiqumModel):
     """AiqumEthernetPortVlanBasePortNode sub-model for node."""
 
     name: str = ""
 
 
-class AiqumEthernetPortVlanBasePort(OntapModel):
+class AiqumEthernetPortVlanBasePort(AiqumModel):
     """AiqumEthernetPortVlanBasePort sub-model for base_port."""
 
     name: str = ""
@@ -57,14 +57,14 @@ class AiqumEthernetPortVlanBasePort(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumEthernetPortVlan(OntapModel):
+class AiqumEthernetPortVlan(AiqumModel):
     """AiqumEthernetPortVlan sub-model for vlan."""
 
     base_port: AiqumEthernetPortVlanBasePort = Field(default_factory=AiqumEthernetPortVlanBasePort)
     tag: int = 0
 
 
-class AiqumEthernetPort(OntapModel):
+class AiqumEthernetPort(AiqumModel):
     """AiqumEthernetPort information."""
 
     broadcast_domain: AiqumEthernetPortBroadcastDomain = Field(

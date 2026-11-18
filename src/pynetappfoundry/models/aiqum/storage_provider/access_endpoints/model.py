@@ -5,16 +5,16 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from pynetappfoundry.models._base import OntapModel, OntapUUID
+from pynetappfoundry.models._base import AiqumModel, OntapUUID
 
 
-class AiqumAccessEndpointFileshare(OntapModel):
+class AiqumAccessEndpointFileshare(AiqumModel):
     """AiqumAccessEndpointFileshare sub-model for fileshare."""
 
     key: str = ""
 
 
-class AiqumAccessEndpointIp(OntapModel):
+class AiqumAccessEndpointIp(AiqumModel):
     """AiqumAccessEndpointIp sub-model for ip."""
 
     address: str = ""
@@ -22,13 +22,13 @@ class AiqumAccessEndpointIp(OntapModel):
     netmask: str = ""
 
 
-class AiqumAccessEndpointLun(OntapModel):
+class AiqumAccessEndpointLun(AiqumModel):
     """AiqumAccessEndpointLun sub-model for lun."""
 
     key: str = ""
 
 
-class AiqumAccessEndpointSvm(OntapModel):
+class AiqumAccessEndpointSvm(AiqumModel):
     """AiqumAccessEndpointSvm sub-model for svm."""
 
     key: str = ""
@@ -36,7 +36,7 @@ class AiqumAccessEndpointSvm(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumAccessEndpoint(OntapModel):
+class AiqumAccessEndpoint(AiqumModel):
     """AiqumAccessEndpoint information."""
 
     data_protocols: list[str] = Field(default_factory=list)

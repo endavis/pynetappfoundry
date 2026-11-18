@@ -1076,7 +1076,7 @@ AIQUM has its own cache, separate from the ONTAP files above ([ADR-0026](../deci
 | Populate | `refresh_aiqum_cache(config, instance)` in `src/pynetappfoundry/cache/aiqum_collector.py` |
 
 - Rows are keyed by the `[aiqums]` instance name. A refresh is all or nothing per instance: any failed request raises `CollectionError` and leaves the database unchanged; success replaces the instance's rows in one transaction.
-- Records are stored as raw JSON and parsed on read. Cache filters are exact matches on the JSON path (no `*` wildcard), and `.where()` is not supported.
+- Records are stored as raw JSON and parsed on read. AIQUM models subclass `AiqumModel`, so a `null` field parses to its default instead of failing validation ([#1102](https://github.com/endavis/pynetappfoundry/issues/1102)). Cache filters are exact matches on the JSON path (no `*` wildcard), and `.where()` is not supported.
 - Staleness: `AiqumCacheDB.is_stale(instance, ttl_days=30)` compares the oldest `cached_at` with the TTL and returns `None` for an instance never collected. Age never changes routing.
 - Rebuilding: delete the file, or call `refresh_aiqum_cache` again. The CLI is `nf cache aiqum refresh INSTANCE|--all`, `nf cache aiqum status [--ttl DAYS]` and `nf cache aiqum clear INSTANCE|--all [-f]` ([#1072](https://github.com/endavis/pynetappfoundry/issues/1072)); `AiqumCacheDB.list_collections(instance=None)` returns the sorted `(instance, mapping, cached_at)` rows that `status` prints.
 

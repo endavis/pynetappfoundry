@@ -17,6 +17,9 @@ Known gaps (checked against AIQUM 9.18):
     (POST /login), downloads the spec, then logs out.
   - The published spec omits /management-server/admin/options. Calls to it still
     work through AIQUMAPIClient, unvalidated, with a logged spec-lookup error.
+  - The spec has no nullability markers (nullable and x-nullable are absent), yet
+    real instances return null for unset fields. Generated models subclass
+    AiqumModel, which maps null to the field default (#1102).
   - /management-server/admin/options needs
     Content-Type: application/vnd.netapp.v1.hal+json; pass it with
     additional_headers.

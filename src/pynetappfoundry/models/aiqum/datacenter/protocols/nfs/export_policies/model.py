@@ -5,10 +5,10 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from pynetappfoundry.models._base import OntapModel, OntapUUID
+from pynetappfoundry.models._base import AiqumModel, OntapUUID
 
 
-class AiqumExportPolicyCluster(OntapModel):
+class AiqumExportPolicyCluster(AiqumModel):
     """AiqumExportPolicyCluster sub-model for cluster."""
 
     key: str = ""
@@ -16,13 +16,13 @@ class AiqumExportPolicyCluster(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumExportPolicyRuleClient(OntapModel):
+class AiqumExportPolicyRuleClient(AiqumModel):
     """AiqumExportPolicyRuleClient sub-model for clients."""
 
     match: str = ""
 
 
-class AiqumExportPolicyRule(OntapModel):
+class AiqumExportPolicyRule(AiqumModel):
     """AiqumExportPolicyRule sub-model for rules."""
 
     anonymous_user: str = ""
@@ -34,7 +34,7 @@ class AiqumExportPolicyRule(OntapModel):
     superuser: list[str] = Field(default_factory=list)
 
 
-class AiqumExportPolicySvm(OntapModel):
+class AiqumExportPolicySvm(AiqumModel):
     """AiqumExportPolicySvm sub-model for svm."""
 
     key: str = ""
@@ -42,7 +42,7 @@ class AiqumExportPolicySvm(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumExportPolicy(OntapModel):
+class AiqumExportPolicy(AiqumModel):
     """AiqumExportPolicy information."""
 
     cluster: AiqumExportPolicyCluster = Field(default_factory=AiqumExportPolicyCluster)

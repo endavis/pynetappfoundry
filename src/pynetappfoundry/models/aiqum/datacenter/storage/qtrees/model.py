@@ -5,10 +5,10 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from pynetappfoundry.models._base import OntapModel, OntapUUID
+from pynetappfoundry.models._base import AiqumModel, OntapUUID
 
 
-class AiqumQtreeCluster(OntapModel):
+class AiqumQtreeCluster(AiqumModel):
     """AiqumQtreeCluster sub-model for cluster."""
 
     key: str = ""
@@ -16,7 +16,7 @@ class AiqumQtreeCluster(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumQtreeExportPolicy(OntapModel):
+class AiqumQtreeExportPolicy(AiqumModel):
     """AiqumQtreeExportPolicy sub-model for export_policy."""
 
     id: int = 0
@@ -24,7 +24,7 @@ class AiqumQtreeExportPolicy(OntapModel):
     name: str = ""
 
 
-class AiqumQtreeSvm(OntapModel):
+class AiqumQtreeSvm(AiqumModel):
     """AiqumQtreeSvm sub-model for svm."""
 
     key: str = ""
@@ -32,7 +32,7 @@ class AiqumQtreeSvm(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumQtreeVolume(OntapModel):
+class AiqumQtreeVolume(AiqumModel):
     """AiqumQtreeVolume sub-model for volume."""
 
     key: str = ""
@@ -40,7 +40,7 @@ class AiqumQtreeVolume(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumQtree(OntapModel):
+class AiqumQtree(AiqumModel):
     """AiqumQtree information."""
 
     cluster: AiqumQtreeCluster = Field(default_factory=AiqumQtreeCluster)

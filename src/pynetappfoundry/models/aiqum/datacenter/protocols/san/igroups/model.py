@@ -5,10 +5,10 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from pynetappfoundry.models._base import OntapModel, OntapUUID
+from pynetappfoundry.models._base import AiqumModel, OntapUUID
 
 
-class AiqumIgroupCluster(OntapModel):
+class AiqumIgroupCluster(AiqumModel):
     """AiqumIgroupCluster sub-model for cluster."""
 
     key: str = ""
@@ -16,13 +16,13 @@ class AiqumIgroupCluster(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumIgroupInitiator(OntapModel):
+class AiqumIgroupInitiator(AiqumModel):
     """AiqumIgroupInitiator sub-model for initiators."""
 
     name: str = ""
 
 
-class AiqumIgroupSvm(OntapModel):
+class AiqumIgroupSvm(AiqumModel):
     """AiqumIgroupSvm sub-model for svm."""
 
     key: str = ""
@@ -30,7 +30,7 @@ class AiqumIgroupSvm(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumIgroup(OntapModel):
+class AiqumIgroup(AiqumModel):
     """AiqumIgroup information."""
 
     cluster: AiqumIgroupCluster = Field(default_factory=AiqumIgroupCluster)

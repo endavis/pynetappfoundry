@@ -5,16 +5,16 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from pynetappfoundry.models._base import OntapModel, OntapUUID
+from pynetappfoundry.models._base import AiqumModel, OntapUUID
 
 
-class AiqumQosPolicyAdaptive(OntapModel):
+class AiqumQosPolicyAdaptive(AiqumModel):
     """AiqumQosPolicyAdaptive sub-model for adaptive."""
 
     absolute_min_iops: int = 0
 
 
-class AiqumQosPolicyCluster(OntapModel):
+class AiqumQosPolicyCluster(AiqumModel):
     """AiqumQosPolicyCluster sub-model for cluster."""
 
     key: str = ""
@@ -22,7 +22,7 @@ class AiqumQosPolicyCluster(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumQosPolicyFixed(OntapModel):
+class AiqumQosPolicyFixed(AiqumModel):
     """AiqumQosPolicyFixed sub-model for fixed."""
 
     capacity_shared: bool = False
@@ -31,7 +31,7 @@ class AiqumQosPolicyFixed(OntapModel):
     min_throughput_iops: int = 0
 
 
-class AiqumQosPolicySvm(OntapModel):
+class AiqumQosPolicySvm(AiqumModel):
     """AiqumQosPolicySvm sub-model for svm."""
 
     key: str = ""
@@ -39,7 +39,7 @@ class AiqumQosPolicySvm(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumQosPolicy(OntapModel):
+class AiqumQosPolicy(AiqumModel):
     """AiqumQosPolicy information."""
 
     adaptive: AiqumQosPolicyAdaptive = Field(default_factory=AiqumQosPolicyAdaptive)

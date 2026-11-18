@@ -5,10 +5,10 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from pynetappfoundry.models._base import OntapModel, OntapUUID
+from pynetappfoundry.models._base import AiqumModel, OntapUUID
 
 
-class AiqumEthernetPortAnalyticsCluster(OntapModel):
+class AiqumEthernetPortAnalyticsCluster(AiqumModel):
     """AiqumEthernetPortAnalyticsCluster sub-model for cluster."""
 
     key: str = ""
@@ -16,7 +16,7 @@ class AiqumEthernetPortAnalyticsCluster(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumEthernetPortAnalyticsEthernetPort(OntapModel):
+class AiqumEthernetPortAnalyticsEthernetPort(AiqumModel):
     """AiqumEthernetPortAnalyticsEthernetPort sub-model for ethernet_port."""
 
     key: str = ""
@@ -24,7 +24,7 @@ class AiqumEthernetPortAnalyticsEthernetPort(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumEthernetPortAnalyticsNode(OntapModel):
+class AiqumEthernetPortAnalyticsNode(AiqumModel):
     """AiqumEthernetPortAnalyticsNode sub-model for node."""
 
     key: str = ""
@@ -32,7 +32,7 @@ class AiqumEthernetPortAnalyticsNode(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumEthernetPortAnalytics(OntapModel):
+class AiqumEthernetPortAnalytics(AiqumModel):
     """AiqumEthernetPortAnalytics information."""
 
     cluster: AiqumEthernetPortAnalyticsCluster = Field(

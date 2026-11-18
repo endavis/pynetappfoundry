@@ -5,10 +5,10 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from pynetappfoundry.models._base import OntapModel, OntapUUID
+from pynetappfoundry.models._base import AiqumModel, OntapUUID
 
 
-class AiqumLunAnalyticsCluster(OntapModel):
+class AiqumLunAnalyticsCluster(AiqumModel):
     """AiqumLunAnalyticsCluster sub-model for cluster."""
 
     key: str = ""
@@ -16,7 +16,7 @@ class AiqumLunAnalyticsCluster(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumLunAnalyticsLun(OntapModel):
+class AiqumLunAnalyticsLun(AiqumModel):
     """AiqumLunAnalyticsLun sub-model for lun."""
 
     key: str = ""
@@ -24,7 +24,7 @@ class AiqumLunAnalyticsLun(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumLunAnalyticsSvm(OntapModel):
+class AiqumLunAnalyticsSvm(AiqumModel):
     """AiqumLunAnalyticsSvm sub-model for svm."""
 
     key: str = ""
@@ -32,7 +32,7 @@ class AiqumLunAnalyticsSvm(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumLunAnalyticsVolume(OntapModel):
+class AiqumLunAnalyticsVolume(AiqumModel):
     """AiqumLunAnalyticsVolume sub-model for volume."""
 
     key: str = ""
@@ -40,7 +40,7 @@ class AiqumLunAnalyticsVolume(OntapModel):
     uuid: OntapUUID = ""
 
 
-class AiqumLunAnalytics(OntapModel):
+class AiqumLunAnalytics(AiqumModel):
     """AiqumLunAnalytics information."""
 
     cluster: AiqumLunAnalyticsCluster = Field(default_factory=AiqumLunAnalyticsCluster)
