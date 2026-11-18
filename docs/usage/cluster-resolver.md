@@ -62,7 +62,7 @@ Every AIQUM instance and every agent is searched, and every hit returned, sorted
 
 - `ontap`: the `CachedClusterMetadata`, including its CLI-parsed `CloudMetadata`.
 - `aiqum`: per instance, the `AiqumCluster` with only its own SVMs and volumes.
-- `occm`: the generated working-environment model of each hit. The ONTAP `CloudMetadata` and the OCCM cloud records are both returned; neither is chosen.
+- `occm`: the generated working-environment model of each hit. The ONTAP `CloudMetadata` and the OCCM cloud records are both returned; neither is chosen here. The reports choose: see [Report Cloud Details](report-cloud-details.md).
 
 Each part has `cached_at` and `is_stale` (older than `ttl_days`). Age is reported and never filters: stale data is still returned. For OCCM, `cached_at` is the oldest collection of the agent.
 

@@ -189,7 +189,7 @@ class TestInventoryWorkbook:
     def test_layout(self, tmp_path: Path) -> None:
         ws = self._build(tmp_path)["NetApps"]
         assert ws.freeze_panes == "A2"
-        assert ws.auto_filter.ref == "A1:AH1"
+        assert ws.auto_filter.ref == "A1:AK1"
         assert ws.row_dimensions[1].height == 30
         # openpyxl groups adjacent equal-width columns into one min..max entry.
         widths: dict[int, float] = {}
@@ -261,7 +261,9 @@ class TestInventoryClusterType:
 
 
 class TestInventoryConsoleAgent:
-    """#1077: the trailing NetApp Console Agent column."""
+    """#1077: the NetApp Console Agent column, found by header name since #1086 appended columns."""
+
+    _AGENT = _HEADERS.index("NetApp Console Agent")
 
     @staticmethod
     def _row(
@@ -277,26 +279,165 @@ class TestInventoryConsoleAgent:
             report.build()
         return report.rows[0]
 
-    def test_header_is_last_and_lengths_match(self) -> None:
-        assert _HEADERS[-1] == "NetApp Console Agent"
+    def test_header_follows_remark_and_lengths_match(self) -> None:
+        assert _HEADERS[self._AGENT - 1] == "Remark"
         row = self._row(None)
         assert len(row) == len(_HEADERS) == len(_COL_WIDTHS)
 
     def test_existing_columns_unchanged(self) -> None:
         assert _HEADERS[16] == "BlueXP (NetApp Console) Connector IP"
         assert _HEADERS[17] == "BlueXP (NetApp Console) Name"
-        assert _HEADERS[-2] == "Remark"
+        assert _HEADERS[self._AGENT - 1] == "Remark"
 
     def test_link_tuple_when_agent_id(self) -> None:
         row = self._row({"ip": "10.9.9.9", "agent_id": "agentXXXX"})
-        assert row[-1] == ("agentXXXX", "https://console.netapp.com/agents-mgmt/agentXXXX/edit")
+        assert row[self._AGENT] == (
+            "agentXXXX",
+            "https://console.netapp.com/agents-mgmt/agentXXXX/edit",
+        )
 
     def test_empty_without_agent_id(self) -> None:
-        assert self._row({"ip": "10.9.9.9"})[-1] == ""
+        assert self._row({"ip": "10.9.9.9"})[self._AGENT] == ""
 
     def test_empty_without_connector(self) -> None:
-        assert self._row(None)[-1] == ""
+        assert self._row(None)[self._AGENT] == ""
 
     def test_ui_base_url_override(self) -> None:
         row = self._row({"agent_id": "agentXXXX"}, "https://ui.example.test/")
-        assert row[-1] == ("agentXXXX", "https://ui.example.test/agents-mgmt/agentXXXX/edit")
+        assert row[self._AGENT] == (
+            "agentXXXX",
+            "https://ui.example.test/agents-mgmt/agentXXXX/edit",
+        )
+
+
+def _occm_details(*, aggregates: bool = True) -> Any:
+    from pynetappfoundry.cache.occm_cloud_metadata import ConsoleWorkingEnvironmentLinks
+    from pynetappfoundry.cli.commands.reports._cloud_source import CloudDetails
+    from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
+
+    meta = [
+        CloudMetadata(
+            node="n1",
+            provider="AWS",
+            region="us-east-1",
+            account_id="111122223333",
+            instance_type="m5.xlarge",
+            vm_name="i-1",
+        ),
+        CloudMetadata(node="n2", provider="AWS", vm_name="i-2"),
+    ]
+    base = "https://ui.example.test/storage/cloud-volumes-ontap/VsaWorkingEnvironment-AAAA"
+    console = ConsoleWorkingEnvironmentLinks(
+        public_id="VsaWorkingEnvironment-AAAA",
+        agent_id="agent-1",
+        agent_name="agent",
+        scopes=(None,),
+        working_environment=base,
+        volumes=f"{base}/volumes",
+        aggregates=f"{base}/aggregates" if aggregates else "",
+    )
+    return CloudDetails("occm", meta, console)
+
+
+class TestInventoryOccmCloud:
+    """#1086: cloud columns from a ``ReportCloudSource`` and the Console link columns."""
+
+    @staticmethod
+    def _report(
+        source: Any, traits: ClusterTraits | None = None
+    ) -> tuple[InventoryReport, list[Any]]:
+        config = MagicMock()
+        config.find_closest.return_value = {}
+        config.get_setting.return_value = "https://console.netapp.com"
+
+        def query(model: type, **_: Any) -> MagicMock:
+            result = MagicMock()
+            if model is OntapCluster:
+                result.first.return_value = OntapCluster(name="cl1")
+            elif model is ClusterTraits:
+                result.first.return_value = traits or ClusterTraits(is_cloud=True, is_ha=True)
+            elif model is OntapNodeResponse:
+                result.__iter__.return_value = iter(
+                    [OntapNodeResponse(name="n1"), OntapNodeResponse(name="n2")]
+                )
+            else:
+                result.first.return_value = None
+                result.__iter__.return_value = iter([])
+            return result
+
+        with patch("pynetappfoundry.cli.commands.reports.inventory.DataSource") as ds:
+            ds.return_value.query.side_effect = query
+            report = InventoryReport(config, {"cl1": _Entry(ip="10.0.0.1")}, cloud_source=source)
+            report.build()
+        return report, report.rows[0]
+
+    def test_cloud_columns_come_from_the_source(self) -> None:
+        source = MagicMock()
+        source.details.return_value = _occm_details()
+        _, row = self._report(source)
+        assert row[_HEADERS.index("Site")] == "East 1"
+        assert row[_HEADERS.index("Subscription ID")] == "111122223333"
+        assert row[_HEADERS.index("VM SKU Type")] == "m5.xlarge"
+        assert row[_HEADERS.index("VM Names")] == "i-1, i-2"
+        assert row[_HEADERS.index("Cloud Location")] == "AWS"
+        kwargs = source.details.call_args.kwargs
+        assert kwargs["is_cloud"] is True
+        assert kwargs["node_names"] == ["n1", "n2"]
+
+    def test_console_columns_are_link_tuples(self) -> None:
+        source = MagicMock()
+        source.details.return_value = _occm_details()
+        _, row = self._report(source)
+        we = row[_HEADERS.index("Console Working Environment")]
+        assert we[0] == "Working environment"
+        assert we[1].endswith("VsaWorkingEnvironment-AAAA")
+        assert row[_HEADERS.index("Console Volumes")][0] == "Volumes"
+        assert row[_HEADERS.index("Console Aggregates")][1].endswith("/aggregates")
+        assert "VsaWorkingEnvironment-AAAA" not in str(
+            [row[_HEADERS.index(h)][0] for h in _HEADERS[-3:]]
+        )
+
+    def test_on_prem_has_no_aggregates_cell(self) -> None:
+        source = MagicMock()
+        source.details.return_value = _occm_details(aggregates=False)
+        _, row = self._report(source)
+        assert row[_HEADERS.index("Console Aggregates")] == ""
+
+    def test_no_console_links_gives_empty_cells(self) -> None:
+        from pynetappfoundry.cli.commands.reports._cloud_source import CloudDetails
+
+        source = MagicMock()
+        source.details.return_value = CloudDetails("none", [], None)
+        _, row = self._report(source)
+        assert row[-3:] == ["", "", ""]
+
+    def test_without_a_source_the_cli_path_is_unchanged(self) -> None:
+        _, row = self._report(None)
+        assert row[-3:] == ["", "", ""]
+        assert len(row) == len(_HEADERS) == len(_COL_WIDTHS)
+
+    def test_headers_widths_and_filter(self) -> None:
+        assert _HEADERS[-3:] == [
+            "Console Working Environment",
+            "Console Volumes",
+            "Console Aggregates",
+        ]
+        assert len(_HEADERS) == len(_COL_WIDTHS)
+
+
+class TestInventoryConsoleLinks:
+    """#1086: the Console link columns are written as hyperlinks."""
+
+    def test_hyperlinks_read_back(self, tmp_path: Path) -> None:
+        source = MagicMock()
+        source.details.return_value = _occm_details()
+        report, _ = TestInventoryOccmCloud._report(source)
+        path = tmp_path / "inv.xlsx"
+        report.save(str(path))
+        ws = openpyxl.load_workbook(path)["NetApps"]
+        assert ws.auto_filter.ref == "A1:AK1"
+        for idx, label in enumerate(("Working environment", "Volumes", "Aggregates")):
+            cell = ws.cell(row=2, column=len(_HEADERS) - 2 + idx)
+            assert cell.value == label
+            assert cell.hyperlink is not None
+            assert cell.hyperlink.target.startswith("https://ui.example.test/storage/")

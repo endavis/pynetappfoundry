@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING, Any
 import click
 from yattag import Doc, indent
 
+from pynetappfoundry.cli.commands.reports._cloud_source import ReportCloudSource
 from pynetappfoundry.cli.decorators import with_config
 from pynetappfoundry.cli.options import filter_option
 from pynetappfoundry.cli.utils import print_debug, print_error, print_info, print_success
@@ -33,6 +34,7 @@ from pynetappfoundry.utils.console_links import (
 )
 
 if TYPE_CHECKING:
+    from pynetappfoundry.cache.occm_cloud_metadata import ConsoleWorkingEnvironmentLinks
     from pynetappfoundry.core.cluster_entry import ClusterEntry
     from pynetappfoundry.core.config import Config
     from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
@@ -265,6 +267,8 @@ class HTMLReportBuilder:
         name: str,
         clusters: dict[str, dict[str, Any]],
         config: Config,
+        *,
+        cloud_source: ReportCloudSource | None = None,
     ) -> None:
         """Initialize the HTML report builder.
 
@@ -272,8 +276,11 @@ class HTMLReportBuilder:
             name: Name for the report.
             clusters: Dictionary of cluster configurations.
             config: Configuration object with settings and utilities.
+            cloud_source: Picks OCCM or CLI cloud details per cluster; ``None`` keeps the
+                CLI-only path.
         """
         self.config = config
+        self.cloud_source = cloud_source
         self.ui_base_url: str = str(
             config.get_setting("consoleapi", "general", "ui_base_url", default=CONSOLE_UI_BASE_URL)
         )
@@ -298,6 +305,7 @@ class HTMLReportBuilder:
                 item,
                 self,
                 cluster_entry=entry,  # type: ignore[arg-type]
+                cloud_source=self.cloud_source,
                 **entry,
             )
             cluster = self.clusterdata[item]
@@ -744,6 +752,8 @@ class ClusterData:
         clustername: str,
         app_instance: HTMLReportBuilder,
         cluster_entry: ClusterEntry | None = None,
+        *,
+        cloud_source: ReportCloudSource | None = None,
         **kwargs: Any,
     ) -> None:
         """Initialize cluster data and gather information from the cluster.
@@ -752,11 +762,13 @@ class ClusterData:
             clustername: Name of the cluster.
             app_instance: Parent HTMLReportBuilder instance.
             cluster_entry: ClusterEntry wrapper with lazy cache accessors.
+            cloud_source: Picks OCCM or CLI cloud details; ``None`` keeps the CLI-only path.
             **kwargs: Cluster configuration from TOML.
         """
         self.name = clustername
         self.cluster_type = ""
         self._cluster_entry = cluster_entry
+        self._cloud_source = cloud_source
         for name, value in kwargs.items():
             setattr(self, name, value)
         self.cluster_info: OntapCluster | None = None
@@ -773,6 +785,8 @@ class ClusterData:
         self.cloud_resource_group_name: str = ""
         self.cloud_region: str = ""
         self.cloud_resource_group_link: str = ""
+        self.cloud_source_label: str = ""
+        self.console_links: ConsoleWorkingEnvironmentLinks | None = None
         self.app_instance = app_instance
 
         # Build element class for active cluster navigation
@@ -804,18 +818,36 @@ class ClusterData:
         """
         if not self._cluster_entry:
             return
-        if not self.cluster_traits or not self.cluster_traits.is_cloud:
-            print_debug(f"Skipping cloud metadata for non-cloud cluster {self.name}")
+        is_cloud = bool(self.cluster_traits and self.cluster_traits.is_cloud)
+        if self._cloud_source is not None:
+            details = self._cloud_source.details(
+                self.name,
+                is_cloud=is_cloud,
+                node_names=[n.name for n in self.nodes],
+                entry=self._cluster_entry,
+            )
+            self.console_links = details.console
+            cloud_metadata = details.metadata
+            self.cloud_source_label = {
+                "occm": "Console (OCCM cache)",
+                "cli": "ONTAP CLI",
+                "none": "",
+            }[details.source]
+        else:
+            if not is_cloud:
+                print_debug(f"Skipping cloud metadata for non-cloud cluster {self.name}")
+                return
+            ontap = self._cluster_entry.ontap
+            if not ontap or not ontap.cloud:
+                return
+            cloud_metadata = list(ontap.cloud)
+        if not cloud_metadata:
             return
 
-        ontap = self._cluster_entry.ontap
-        if not ontap or not ontap.cloud:
-            return
+        self.cloud_metadata = cloud_metadata
+        self.cloud_metadata_by_node = {cm.node: cm for cm in cloud_metadata}
 
-        self.cloud_metadata = ontap.cloud
-        self.cloud_metadata_by_node = {cm.node: cm for cm in ontap.cloud}
-
-        first_cloud = ontap.cloud[0]
+        first_cloud = cloud_metadata[0]
         self.cloud_provider = first_cloud.provider
         self.cloud_account_id = first_cloud.account_id
         self.cloud_resource_group_name = first_cloud.resource_group_name
@@ -843,11 +875,11 @@ class ClusterData:
             self.management_ip = ip
             self.cluster_info = ds.query(OntapCluster, cluster=self.name, source="auto").first()
             self.cluster_traits = ds.query(ClusterTraits, cluster=self.name, source="auto").first()
-            # Build cloud info AFTER cluster_traits is populated so the
-            # gate on ``is_cloud`` can skip the SSH-backed lazy fetch for
-            # on-prem clusters (issue #547).
-            self._build_cloud_info()
             self.nodes = list(ds.query(OntapNodeResponse, cluster=self.name, source="auto"))
+            # Build cloud info AFTER cluster_traits and the nodes are populated so the
+            # gate on ``is_cloud`` can skip the SSH-backed lazy fetch for
+            # on-prem clusters (issue #547) and the OCCM join sees the node names.
+            self._build_cloud_info()
             self.svms = list(ds.query(OntapSvm, cluster=self.name, source="auto"))
             self.cifs_services = list(ds.query(OntapCifsService, cluster=self.name, source="auto"))
             ip_interfaces = list(ds.query(OntapIpInterface, cluster=self.name, source="auto"))
@@ -884,6 +916,7 @@ class ClusterData:
                                     text("Active")
                 with tag("ul"):
                     self._format_netapp_cloud_info()
+                    self._format_netapp_console_info()
                     self._format_netapp_cluster_info()
                     self._format_netapp_vservers_info()
                     self._format_netapp_nodes()
@@ -913,6 +946,8 @@ class ClusterData:
                     with tag("li"):
                         with tag("table", ("class", "custom-table")):
                             fmt("Provider", self.cloud_provider)
+                            if self.cloud_source_label:
+                                fmt("Source", self.cloud_source_label)
                             if self.cloud_account_id:
                                 fmt(account_label, self.cloud_account_id)
                             if self.cloud_resource_group_name:
@@ -969,6 +1004,39 @@ class ClusterData:
                                                     "Availability Zone",
                                                     cloud_meta.availability_zone,
                                                 )
+
+    def _format_netapp_console_info(self) -> None:
+        """Format the NetApp Console links and the agent's account scope.
+
+        Shows Working environment, Volumes and Aggregates (CVO only) links, plus the account
+        scopes of the agent the working environment was discovered through.  Skipped when no
+        single working environment was found.
+        """
+        console = self.console_links
+        if console is None:
+            return
+        links = (
+            ("Working environment", console.working_environment),
+            ("Volumes", console.volumes),
+            ("Aggregates", console.aggregates),
+        )
+        shown = [(label, url) for label, url in links if url]
+        if not shown:
+            return
+        scopes = ", ".join(s if s is not None else "default" for s in console.scopes)
+        tag = self.app_instance.tag
+        text = self.app_instance.text
+        with tag("li"):
+            with tag("details"):
+                with tag("summary"):
+                    text("NetApp Console")
+                with tag("ul"):
+                    with tag("li"):
+                        with tag("table", ("class", "custom-table")):
+                            for label, url in shown:
+                                self.app_instance.format_table_row_link(label, label, url)
+                            if scopes:
+                                self.app_instance.format_table_row_text("Account scope", scopes)
 
     def _format_netapp_cluster_info(self) -> None:
         """Format cluster-level information (version, management IPs, DNS, NTP)."""
@@ -1363,8 +1431,9 @@ def html(
 
     print_info(f"Building HTML report for {len(clusters)} cluster(s)...")
 
-    builder = HTMLReportBuilder("NetApp Report", clusters, config)
-    html_content = builder.generate_html()
+    with ReportCloudSource.from_config(config) as source:
+        builder = HTMLReportBuilder("NetApp Report", clusters, config, cloud_source=source)
+        html_content = builder.generate_html()
 
     with open(filename, "w", encoding="utf-8") as f:
         f.write(html_content)
