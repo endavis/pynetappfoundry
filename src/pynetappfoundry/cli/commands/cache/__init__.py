@@ -2,6 +2,7 @@
 
 import click
 
+from pynetappfoundry.cli.commands.cache.aiqum import aiqum
 from pynetappfoundry.cli.commands.cache.check import check
 from pynetappfoundry.cli.commands.cache.clear import clear
 from pynetappfoundry.cli.commands.cache.compliance import compliance
@@ -25,10 +26,12 @@ def cache() -> None:
 
     Use 'nf cache refresh' to populate or update the cache.
     Use 'nf cache history' to view change tracking.
+    Use 'nf cache aiqum ...' for the AIQUM cache.
     """
     pass
 
 
+cache.add_command(aiqum)
 cache.add_command(check)
 cache.add_command(clear)
 cache.add_command(compliance)

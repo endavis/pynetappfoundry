@@ -196,7 +196,7 @@ nf metrics [OPTIONS] COMMAND [ARGS]...
 
 ### cache
 
-Cluster metadata cache management. The cache stores discoverable ONTAP cluster information that doesn't change frequently.
+Cluster metadata cache management. The cache stores discoverable ONTAP cluster information that doesn't change frequently. `nf cache aiqum` manages the separate AIQUM cache.
 
 ```bash
 nf cache [OPTIONS] COMMAND [ARGS]...
@@ -217,6 +217,7 @@ nf cache [OPTIONS] COMMAND [ARGS]...
 | `history` | View cache change history (see below) |
 | `inspect` | Inspect cache, CLI, and API data for a single object |
 | `occm` | Refresh and inspect the Console agent (OCCM) cache (see below) |
+| `aiqum` | Manage the AIQUM cache (see below) |
 
 **`cache history` sub-subcommands:**
 
@@ -252,6 +253,25 @@ nf cache occm refresh --scope prod
 nf cache occm status --ttl 7
 nf cache occm agents <publicId>
 nf cache occm clear --all -f
+```
+
+**`cache aiqum` sub-subcommands:**
+
+| Command | Description |
+|---------|-------------|
+| `refresh` | Collect an AIQUM instance (or `-a, --all` configured instances) into the cache |
+| `status` | Show cached instances and mappings with Fresh, Stale, Not cached or Orphaned status (`-t, --ttl` days, default 30) |
+| `clear` | Clear one instance or `-a, --all` (`-f, --force` skips the prompt) |
+
+```bash
+# Refresh every configured AIQUM instance
+nf cache aiqum refresh --all
+
+# Show the AIQUM cache status, stale after 7 days
+nf cache aiqum status --ttl 7
+
+# Clear one instance without confirmation
+nf cache aiqum clear aiqum1 -f
 ```
 
 `cache inspect` takes a cluster name and an object name, and accepts

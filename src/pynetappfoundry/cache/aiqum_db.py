@@ -169,6 +169,27 @@ class AiqumCacheDB(SQLiteDB):
         rows = self.conn.execute(f"SELECT DISTINCT instance FROM {_COLLECTIONS} ORDER BY instance")
         return [str(row["instance"]) for row in rows]
 
+    def list_collections(self, instance: str | None = None) -> list[dict[str, str]]:
+        """Return the collected ``(instance, mapping, cached_at)`` rows, sorted.
+
+        Args:
+            instance: Restrict the rows to this instance; ``None`` returns all.
+        """
+        sql = f"SELECT instance, mapping, cached_at FROM {_COLLECTIONS}"
+        params: tuple[str, ...] = ()
+        if instance is not None:
+            sql += " WHERE instance = ?"
+            params = (instance,)
+        sql += " ORDER BY instance, mapping"
+        return [
+            {
+                "instance": str(row["instance"]),
+                "mapping": str(row["mapping"]),
+                "cached_at": str(row["cached_at"]),
+            }
+            for row in self.conn.execute(sql, params)
+        ]
+
     def is_collected(self, instance: str, mapping: str) -> bool:
         """Return whether *mapping* has been collected for *instance*."""
         row = self.conn.execute(
