@@ -154,7 +154,8 @@ def _run_wide(
     """Run validate with a 300-column, colourless console; return the raw text."""
     config_dir = _config_dir(tmp_path, files)
     buffer = io.StringIO()
-    con = Console(width=300, color_system=None, file=buffer)
+    # legacy_windows=False: on Windows Rich swaps the panel's rounded box for a square one.
+    con = Console(width=300, color_system=None, file=buffer, legacy_windows=False)
     monkeypatch.setattr(importlib.import_module(VALIDATE_MODULE), "console", con)
     result = CliRunner().invoke(nf, ["--config-dir", str(config_dir), "config", "validate", *args])
     # The config dir is printed with the OS separator; normalise it so the goldens hold on Windows.
