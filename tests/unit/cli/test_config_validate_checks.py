@@ -157,7 +157,12 @@ def _run_wide(
     con = Console(width=300, color_system=None, file=buffer)
     monkeypatch.setattr(importlib.import_module(VALIDATE_MODULE), "console", con)
     result = CliRunner().invoke(nf, ["--config-dir", str(config_dir), "config", "validate", *args])
-    text = (buffer.getvalue() + result.output).replace(str(tmp_path), "<TMP>")
+    # The config dir is printed with the OS separator; normalise it so the goldens hold on Windows.
+    text = (
+        (buffer.getvalue() + result.output)
+        .replace(str(config_dir), "<TMP>/" + config_dir.name)
+        .replace(str(tmp_path), "<TMP>")
+    )
     return result.exit_code, text
 
 
