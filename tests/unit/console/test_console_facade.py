@@ -84,6 +84,10 @@ class TestConsoleOrgBinding:
             "pynetappfoundry.clients.console.api.APIWrapper",
             MagicMock(),
         )
+        monkeypatch.setattr(
+            "pynetappfoundry.clients.console.api.ConsoleAPIClient.list_organizations",
+            lambda self: [],
+        )
         with pytest.raises(ValueError, match="org_id"):
             Console(_make_config(settings_without_org, tmp_path))
 
@@ -285,3 +289,66 @@ class TestConsoleConnector:
         assert console.list_marketplace_subscriptions("agent-1") == expected
         assert mock.call_args.args[1] == "agent-1"
         assert mock.call_args.kwargs["token_provider"] is console._client.service_token_provider
+
+
+def _org(org_id: str, name: str) -> Organization:
+    return Organization(
+        id=org_id, name=name, resourceClass="tenancyv4", resourceType="organization"
+    )
+
+
+class TestConsoleDefaultOrganization:
+    """With no org_id anywhere, the account's only organization is used (#1083)."""
+
+    @pytest.fixture
+    def client_cls(self, monkeypatch: pytest.MonkeyPatch) -> MagicMock:
+        cls = MagicMock()
+        monkeypatch.setattr("pynetappfoundry.console.ConsoleAPIClient", cls)
+        return cls
+
+    def test_single_organization_is_used(
+        self, client_cls: MagicMock, settings_without_org: ConsoleAPISettings, tmp_path: Any
+    ) -> None:
+        client_cls.return_value.list_organizations.return_value = [_org("org-only", "Only")]
+        console = Console(_make_config(settings_without_org, tmp_path))
+        assert console.org_id == "org-only"
+        client_cls.return_value.list_organizations.assert_called_once_with()
+
+    def test_no_organization_raises(
+        self, client_cls: MagicMock, settings_without_org: ConsoleAPISettings, tmp_path: Any
+    ) -> None:
+        client_cls.return_value.list_organizations.return_value = []
+        with pytest.raises(ValueError, match="org_id"):
+            Console(_make_config(settings_without_org, tmp_path))
+
+    def test_several_organizations_raise_listing_them(
+        self, client_cls: MagicMock, settings_without_org: ConsoleAPISettings, tmp_path: Any
+    ) -> None:
+        client_cls.return_value.list_organizations.return_value = [
+            _org("org-a", "Alpha"),
+            _org("org-b", "Beta"),
+        ]
+        with pytest.raises(ValueError, match=r"org-a \(Alpha\), org-b \(Beta\)"):
+            Console(_make_config(settings_without_org, tmp_path))
+
+    def test_scoped_console_uses_the_scoped_client_and_settings(
+        self, client_cls: MagicMock, settings_without_org: ConsoleAPISettings, tmp_path: Any
+    ) -> None:
+        client_cls.return_value.list_organizations.return_value = [_org("org-s", "Scoped")]
+        config = _make_config(settings_without_org, tmp_path)
+        console = Console(config, scope="Org1")
+        assert console.org_id == "org-s"
+        client_cls.assert_called_once_with(config, scope="Org1")
+        config.get_console_api_settings.assert_called_once_with(scope="Org1")
+
+    def test_explicit_org_id_makes_no_live_call(
+        self, client_cls: MagicMock, settings_without_org: ConsoleAPISettings, tmp_path: Any
+    ) -> None:
+        Console(_make_config(settings_without_org, tmp_path), org_id="org-x")
+        client_cls.return_value.list_organizations.assert_not_called()
+
+    def test_settings_org_id_makes_no_live_call(
+        self, client_cls: MagicMock, settings_with_default_org: ConsoleAPISettings, tmp_path: Any
+    ) -> None:
+        Console(_make_config(settings_with_default_org, tmp_path))
+        client_cls.return_value.list_organizations.assert_not_called()

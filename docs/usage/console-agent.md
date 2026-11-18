@@ -132,7 +132,11 @@ connector = console.find_connector("cluster-uuid")  # uses agent_ids from consol
 
 `DataSource` reads the agent's on-premises working environments through `ConsoleAgentClient.ops`
 ([ADR-0027](../decisions/0027-occm-backend-is-live-only-and-delegates-to-the-typed-console-agent-ops.md)).
-`cluster=` is a `[connectors]` name whose entry has an `agent_id`, or the agent id itself.
+`cluster=` is a `[connectors]` name, or the agent id itself.
+
+- A connector with an `agent_id` uses it and never reads the cache.
+- A connector without one (missing or blank) is resolved from the [OCCM cache](#cache) (#1083): the cached agent whose `name` equals the connector name exactly (case-sensitive), in the connector's own scope. Run `nf cache occm refresh` first. No match, an empty cache, or several distinct agents with that name raises `ValueError` naming the connector (for several: the agent ids and their status). Set `agent_id` to pin one.
+- A raw agent id uses the scope of the cached agent with that id: root when it is not cached or is cached under the root, the scope when it is cached under one scope. An id cached under several scopes, none of them the root, raises `ValueError`; define a `[connectors]` entry for it.
 
 ```python
 from pynetappfoundry.data.source import DataSource
@@ -266,7 +270,7 @@ one = discovery.discover_account("Org1")  # a single account
 - A working environment is an organization resource of type `ON_PREM`. `ConsoleWorkingEnvironment.public_id` is the resource's `rawId`.
 - Each `ConsoleAgentInfo` and `ConsoleWorkingEnvironment` carries the `scope` of the account that listed it (None for the root) and the `organization_id` it was listed under. An organization is only reached with the account that sees it.
 - Errors from an account's own calls propagate. A failing account is not skipped, because a partial inventory would look complete.
-- Discovery does not map a working environment to an agent: that mapping lives in the [OCCM cache](#cache) (#1076). It does not reconcile the agents against `[connectors]`. `[connectors].agent_id` stays required, and a raw agent id passed as `cluster=` keeps using the root account (#1083). `list-connectors` pagination and `status` values are not handled either.
+- Discovery does not map a working environment to an agent: that mapping lives in the [OCCM cache](#cache) (#1076). It does not reconcile the agents against `[connectors]`; `DataSource` resolves a connector without `agent_id`, and the scope of a raw agent id, from the [OCCM cache](#cache) (#1083). `Console(config, scope=...)` without an `org_id` (argument or `consoleapi.toml`) makes one live `list_organizations()` call and uses the account's only organization; zero or several organizations raise `ValueError`.
 - `ConsoleAPIClient` also has `list_organization_resources(organization_id)`, `list_agents(organization_id)` and `get_agent(agent_id)`. The `/agents-mgmt` operations have no token type, so either token works and the user token is preferred.
 
 The `/agents-mgmt` endpoints are not in NetApp's docs. Their fields come from live probes and are merged into the spec from a fragment (see [Spec fragments](../../tools/console_openapi/README.md#spec-fragments)). Copy the updated `tools/console_openapi/generated/console_openapi.yaml` into `<config_dir>/apis/console/` again, or the client cannot route these operations.

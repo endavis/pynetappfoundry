@@ -53,7 +53,9 @@ class OccmBackend(Backend):
     """Backend that reads a Console agent through its typed ops, with a cache for some mappings.
 
     ``cluster`` names the agent: a key of ``[connectors]`` resolves to that entry's
-    ``agent_id``; any other value is used as the agent id itself.  Clients are created
+    ``agent_id`` (without one, to the cached agent of the same name in the connector's
+    scope, #1083); any other value is used as the agent id itself, in the scope of the
+    cached agent with that id (root when not cached).  Clients are created
     lazily and cached per agent id.  The mappings in ``OCCM_CACHED_MAPPINGS`` are read
     from :class:`OccmCacheDB` for a cache decision; a partial decision goes live.
 
@@ -88,30 +90,89 @@ class OccmBackend(Backend):
     def _resolve_agent_id(self, cluster: str) -> str:
         """Return the agent id for *cluster* (a ``[connectors]`` name or an agent id).
 
+        A connector without a non-blank ``agent_id`` is resolved by name from the cached
+        agents of its own scope (#1083).
+
         Raises:
-            ValueError: If *cluster* is a connector without a non-blank ``agent_id``.
+            ValueError: If *cluster* is a connector without ``agent_id`` whose name matches
+                no cached agent, or several, in its scope.
         """
         connectors = self._config.data.get("connectors", {})
         if isinstance(connectors, dict) and cluster in connectors:
             entry = connectors[cluster]
             agent_id = entry.get("agent_id") if isinstance(entry, dict) else None
             if not isinstance(agent_id, str) or not agent_id.strip():
-                msg = (
-                    f"connectors.{cluster} has no 'agent_id'; set it to the Console "
-                    "agent id to query this agent"
-                )
-                raise ValueError(msg)
+                return self._agent_id_from_cache(cluster, self._resolve_scope(cluster))
             return agent_id
         return cluster
 
-    def _resolve_scope(self, cluster: str) -> str | None:
-        """Return the config scope of a ``[connectors]`` entry, else None.
+    def _cache_exists(self) -> bool:
+        """Return whether the OCCM cache file exists, so a lookup never creates it (#1083)."""
+        from pynetappfoundry.cache.occm_db import OccmCacheDB
 
-        A raw agent id, or a connector outside any scope, uses the root Console account.
+        return OccmCacheDB.default_path(self._config).exists()
+
+    def _agent_id_from_cache(self, connector: str, scope: str | None) -> str:
+        """Return the id of the one cached agent named *connector* in *scope*.
+
+        Raises:
+            ValueError: If no agent, or more than one, matches.
+        """
+        label = f"connectors.{connector}"
+        where = f"scope {scope!r}" if scope is not None else "the root account"
+        cached = self._cache_exists()
+        matches = self._cache_db.agents_named(connector, scope=scope) if cached else []
+        if not matches:
+            reason = (
+                "the OCCM cache holds no agents"
+                if not cached or not self._cache_db.agents()
+                else f"no cached agent is named {connector!r} in {where}"
+            )
+            msg = (
+                f"{label} has no 'agent_id' and {reason}; set 'agent_id' or run "
+                "'nf cache occm refresh'"
+            )
+            raise ValueError(msg)
+        if len(matches) > 1:
+            listed = ", ".join(f"{a.agent_id} (status {a.status})" for a in matches)
+            msg = (
+                f"{label} has no 'agent_id' and several cached agents in {where} are named "
+                f"{connector!r}: {listed}; set 'agent_id' to pick one"
+            )
+            raise ValueError(msg)
+        return matches[0].agent_id
+
+    def _owner_scope(self, agent_id: str) -> str | None:
+        """Return the scope owning a raw *agent_id*, from the cached agents (#1083).
+
+        An id not in the cache, or cached under the root account, uses the root account.
+        A missing cache file counts as an empty cache and is not created.
+
+        Raises:
+            ValueError: If the id is cached under several scopes, none of them the root.
+        """
+        if not self._cache_exists():
+            return None
+        scopes = self._cache_db.agent_scopes(agent_id)
+        if not scopes or None in scopes:
+            return None
+        if len(scopes) == 1:
+            return scopes[0]
+        msg = (
+            f"agent {agent_id!r} is cached under several scopes ({', '.join(map(str, scopes))}); "
+            "define a [connectors] entry with its 'agent_id' to pick the account"
+        )
+        raise ValueError(msg)
+
+    def _resolve_scope(self, cluster: str) -> str | None:
+        """Return the config scope of a ``[connectors]`` entry, else the cached owner.
+
+        A connector outside any scope uses the root Console account.  A raw agent id uses
+        the scope of the cached agent with that id (root when not cached).
         """
         connectors = self._config.data.get("connectors", {})
         if not (isinstance(connectors, dict) and cluster in connectors):
-            return None
+            return self._owner_scope(cluster)
         scope = self._config.get_scope("connectors", cluster)
         return scope if isinstance(scope, str) else None
 
@@ -200,7 +261,8 @@ class OccmBackend(Backend):
         Raises:
             NotImplementedError: For ``where_expressions``, a cache-only decision on a
                 mapping that is not cached, or an endpoint with no entry in :data:`_OPS`.
-            ValueError: For non-empty ``path_params``, or an unresolvable connector.
+            ValueError: For non-empty ``path_params``, an unresolvable connector, or a raw
+                agent id cached under several scopes.
             TypeError: If the op returns an item that is not a *model_class*.
         """
         if where_expressions:

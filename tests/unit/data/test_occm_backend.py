@@ -15,6 +15,7 @@ from pynetappfoundry.cache.occm.onprem_working_environments.mapping import (
 from pynetappfoundry.cache.occm.onprem_working_environments.mapping import (
     OCCMONPREMWORKINGENVIRONMENT_MAPPING as MAPPING,
 )
+from pynetappfoundry.cache.occm_db import OccmCacheDB
 from pynetappfoundry.clients.console.generated import ConsoleAgentOps
 from pynetappfoundry.data._routing import RoutingDecision
 from pynetappfoundry.data.occm_backend import _OPS, OccmBackend
@@ -36,6 +37,17 @@ def _config(connectors: dict[str, Any] | None = None) -> MagicMock:
 
 def _env(public_id: str, **kwargs: Any) -> ResponseBody:
     return ResponseBody(publicId=public_id, name=f"n-{public_id}", **kwargs)
+
+
+@pytest.fixture(autouse=True)
+def _empty_occm_cache(tmp_path: Path) -> Iterator[None]:
+    """Raw agent ids look up their owning scope in the cache; give them an empty one (#1083)."""
+    with (
+        OccmCacheDB(db_path=tmp_path / "occm_cache.db") as db,
+        patch.object(OccmBackend, "_cache_db", db),
+        patch.object(OccmBackend, "_cache_exists", return_value=True),
+    ):
+        yield
 
 
 @pytest.fixture

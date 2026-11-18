@@ -345,3 +345,51 @@ def test_agent_status_values_and_staleness(db: OccmCacheDB) -> None:
 
 def test_agent_status_empty(db: OccmCacheDB) -> None:
     assert db.agent_status() == []
+
+
+def _agent(agent_id: str, name: str, scope: str | None, org: str | None) -> ConsoleAgentInfo:
+    return ConsoleAgentInfo(
+        agentId=agent_id, name=name, status="active", scope=scope, organization_id=org
+    )
+
+
+def _agents_db(db: OccmCacheDB, *agents: ConsoleAgentInfo) -> None:
+    by_scope: dict[str | None, list[ConsoleAgentInfo]] = {}
+    for agent in agents:
+        by_scope.setdefault(agent.scope, []).append(agent)
+    accounts = [AccountInventory(scope=s, agents=a) for s, a in by_scope.items()]
+    db.set(_snapshot([], inventory=ConsoleInventory(accounts=accounts)))
+
+
+def test_agents_named_matches_exactly_within_scope(db: OccmCacheDB) -> None:
+    _agents_db(
+        db,
+        _agent("a1", "conn", None, None),
+        _agent("a2", "conn", "Org1", "o1"),
+        _agent("a3", "Conn", None, None),
+    )
+    assert [a.agent_id for a in db.agents_named("conn", scope=None)] == ["a1"]
+    assert [a.agent_id for a in db.agents_named("conn", scope="Org1")] == ["a2"]
+    assert db.agents_named("conn", scope="Other") == []
+
+
+def test_agents_named_deduplicates_across_organizations(db: OccmCacheDB) -> None:
+    _agents_db(db, _agent("a1", "conn", "A", "o1"), _agent("a1", "conn", "A", "o2"))
+    assert [a.agent_id for a in db.agents_named("conn", scope="A")] == ["a1"]
+
+
+def test_agents_named_on_empty_cache(db: OccmCacheDB) -> None:
+    assert db.agents_named("conn", scope=None) == []
+
+
+def test_agent_scopes(db: OccmCacheDB) -> None:
+    _agents_db(
+        db,
+        _agent("a1", "x", None, None),
+        _agent("a1", "x", "Org1", "o1"),
+        _agent("a1", "x", "Org1", "o2"),
+        _agent("a2", "y", "Org2", "o3"),
+    )
+    assert db.agent_scopes("a1") == [None, "Org1"]
+    assert db.agent_scopes("a2") == ["Org2"]
+    assert db.agent_scopes("missing") == []
