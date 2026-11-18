@@ -16,6 +16,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [Cache System](reference/cache.md) - Architecture, storage layout, lazy loading, and CLI for the cluster metadata cache
 - [CLI Guide](usage/cli.md) - The nf command-line interface, its module layout, and how to extend it
 - [CLI Reference](reference/cli.md) - Command-line interface documentation
+- [Cluster Resolver](usage/cluster-resolver.md) - Find one ONTAP cluster in the ONTAP, AIQUM and OCCM caches and read what each holds, from the caches alone
 - [Compliance Checks](usage/compliance-checks.md) - Configure and run config-driven compliance checks against cached cluster metadata
 - [Configuration Schema Reference](reference/config-schema.md) - Complete reference for pynetappfoundry TOML configuration files
 - [Console Agent](usage/console-agent.md) - Manage on-prem working environments through a Console agent with ConsoleAgentClient
@@ -72,6 +73,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [ADR-0029: Console discovery walks scope accounts and merges hand-written spec fragments](decisions/0029-console-discovery-walks-scope-accounts-and-merges-hand-written-spec-fragments.md) - Console discovery walks each scope's Console account to its organizations, working environments and agents, and the Console spec merges hand-written fragments for the agents-mgmt endpoints.
 - [ADR-0030: OCCM cache is discovery-driven and maps working environments to agents](decisions/0030-occm-cache-is-discovery-driven-and-maps-working-environments-to-agents.md) - The OCCM cache walks Console discovery to each agent, stores the on-prem working environments per agent, and derives the working environment to agent mapping from them.
 - [ADR-0031: One command stores every SOPS secret and encrypt-value is removed](decisions/0031-one-command-stores-every-sops-secret-and-encrypt-value-is-removed.md) - nf config set-credential --setting stores every SOPS-encrypted secret in the right settings file with tomlkit, and nf config encrypt-value is removed.
+- [ADR-0032: Cross-cache cluster resolution is UUID-first with a name fallback over one linking table](decisions/0032-cross-cache-cluster-resolution-is-uuid-first-with-a-name-fallback-over-one-linking-table.md) - The cluster resolver links the ONTAP, AIQUM and OCCM caches by cluster UUID first and by exact name second, through one table of linking fields.
 - [ADR-9001: Use uv for package management](decisions/9001-use-uv-for-package-management.md) - Use uv for dependency management, virtual environments and package installation
 - [ADR-9002: Use doit for task automation](decisions/9002-use-doit-for-task-automation.md) - Use doit as the task runner for testing, linting, building and other routine operations
 - [ADR-9003: Use ruff for linting and formatting](decisions/9003-use-ruff-for-linting-and-formatting.md) - Use ruff as the one tool for linting and formatting, in place of flake8, black and isort
@@ -201,6 +203,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [ADR-0029: Console discovery walks scope accounts and merges hand-written spec fragments](decisions/0029-console-discovery-walks-scope-accounts-and-merges-hand-written-spec-fragments.md) - Console discovery walks each scope's Console account to its organizations, working environments and agents, and the Console spec merges hand-written fragments for the agents-mgmt endpoints.
 - [ADR-0030: OCCM cache is discovery-driven and maps working environments to agents](decisions/0030-occm-cache-is-discovery-driven-and-maps-working-environments-to-agents.md) - The OCCM cache walks Console discovery to each agent, stores the on-prem working environments per agent, and derives the working environment to agent mapping from them.
 - [ADR-0031: One command stores every SOPS secret and encrypt-value is removed](decisions/0031-one-command-stores-every-sops-secret-and-encrypt-value-is-removed.md) - nf config set-credential --setting stores every SOPS-encrypted secret in the right settings file with tomlkit, and nf config encrypt-value is removed.
+- [ADR-0032: Cross-cache cluster resolution is UUID-first with a name fallback over one linking table](decisions/0032-cross-cache-cluster-resolution-is-uuid-first-with-a-name-fallback-over-one-linking-table.md) - The cluster resolver links the ONTAP, AIQUM and OCCM caches by cluster UUID first and by exact name second, through one table of linking fields.
 - [ADR-9001: Use uv for package management](decisions/9001-use-uv-for-package-management.md) - Use uv for dependency management, virtual environments and package installation
 - [ADR-9002: Use doit for task automation](decisions/9002-use-doit-for-task-automation.md) - Use doit as the task runner for testing, linting, building and other routine operations
 - [ADR-9003: Use ruff for linting and formatting](decisions/9003-use-ruff-for-linting-and-formatting.md) - Use ruff as the one tool for linting and formatting, in place of flake8, black and isort
@@ -251,6 +254,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [Claude Code Statusline](development/ai/statusline.md) - Custom statusline showing git branch, Python version, and project info
 - [CLI Guide](usage/cli.md) - The nf command-line interface, its module layout, and how to extend it
 - [CLI Reference](reference/cli.md) - Command-line interface documentation
+- [Cluster Resolver](usage/cluster-resolver.md) - Find one ONTAP cluster in the ONTAP, AIQUM and OCCM caches and read what each holds, from the caches alone
 - [Compliance Checks](usage/compliance-checks.md) - Configure and run config-driven compliance checks against cached cluster metadata
 - [Configuration Schema Reference](reference/config-schema.md) - Complete reference for pynetappfoundry TOML configuration files
 - [Console Agent](usage/console-agent.md) - Manage on-prem working environments through a Console agent with ConsoleAgentClient

@@ -1804,3 +1804,10 @@ class TestUpgradeToV12:
         names = [row[1] for row in db.conn.execute("PRAGMA table_info(consoleinfo)")]
         assert names.count("connector") == 1
         db.close()
+
+
+def test_default_path_is_under_config_dir_and_creates_nothing(tmp_path: Path) -> None:
+    config = MagicMock()
+    config.config_dir = tmp_path
+    assert ClusterMetadataDB.default_path(config) == tmp_path / ".cache" / "cluster_metadata.db"
+    assert list(tmp_path.iterdir()) == []

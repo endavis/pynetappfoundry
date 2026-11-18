@@ -1103,6 +1103,10 @@ The Console agent (OCCM) has its own cache, separate from the ONTAP and AIQUM fi
 - CLI: `nf cache occm refresh | status | agents | clear` (#1087, [CLI reference](cli.md#cache)).
 - Rebuilding: delete the file, call `refresh_occm_cache` again or run `nf cache occm refresh`.
 
+### Cross-cache resolution
+
+`ClusterResolver` in `src/pynetappfoundry/cache/cluster_resolver.py` finds one cluster across the ONTAP, AIQUM and OCCM files and reads what each holds, with each part's age. It reads only the caches. It matches by cluster UUID first and by exact name for a record without a UUID, through the `LINK_RULES` table ([ADR-0032](../decisions/0032-cross-cache-cluster-resolution-is-uuid-first-with-a-name-fallback-over-one-linking-table.md), [usage](../usage/cluster-resolver.md)).
+
 ## Benchmarks
 
 Performance benchmarks for the core cache data paths live under
