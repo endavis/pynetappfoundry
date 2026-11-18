@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from pydantic import BaseModel, Field, RootModel
 
 
@@ -25,12 +27,8 @@ class Disk(BaseModel):
     vmDiskProperties: VmDiskProperties | None = None
 
 
-class Iops(BaseModel):
-    """
-    iops
-
-    Aggregate IOPS
-    """
+class Iops(RootModel[Any]):
+    root: Any = Field(..., description="iops\n\nAggregate IOPS", title="iops")
 
 
 class ProviderVolumeResponse(BaseModel):

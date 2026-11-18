@@ -1,0 +1,69 @@
+# Spec overrides (#1095, #1093): schemas the NetAppDocs sources describe differently
+# from what live Console agents return. Applied after the fragments by
+# tools/console_openapi/overrides.py. See tools/console_openapi/README.md.
+#
+# evidence: live      the shape was measured against a real agent
+# evidence: inferred  the schema has the same shape in another module that was not measured
+overrides:
+  # CronJobSchedule: the docs say array[string]; agents send arrays of integers.
+  - schemas: [cvo.get-aws-ha-working-environments.CronJobSchedule]
+    properties: [days, hours, minutes, weekDays]
+    evidence: live
+    reason: >-
+      #1095: an AWS HA list measured with fields=* sends cronJobSchedules[].days,
+      hours, minutes and weekDays as arrays of integers; the docs say array[string].
+    replace:
+      type: array
+      items:
+        type: integer
+  - schemas:
+      - cvo.get-vsa-working-environments.CronJobSchedule
+      - cvo.get-onprem-working-environments.CronJobSchedule
+    properties: [days, hours, minutes, weekDays]
+    evidence: inferred
+    reason: >-
+      #1095: same schema as the measured AWS HA CronJobSchedule (arrays of
+      integers); this list was not measured.
+    replace:
+      type: array
+      items:
+        type: integer
+
+  # tags / labels: the docs give a prose anchor (or an empty/traversableAgain table);
+  # agents send a free-form map of string keys to string values.
+  - schemas:
+      - cvo.get-aws-ha-working-environments.tags
+      - cvo.get-azure-ha-working-environments.tags
+      - cvo.get-azure-vsa-working-environments.tags
+    evidence: live
+    reason: >-
+      #1095, #1093: measured with fields=*, tags is a JSON object whose values are
+      all strings.
+    replace:
+      type: object
+      additionalProperties:
+        type: string
+  - schemas:
+      - cvo.get-vsa-working-environments.tags
+      - cvo.get-gcp-vsa-working-environments.labels
+      - cvo.get-gcp-ha-working-environments.labels
+    evidence: inferred
+    reason: >-
+      #1095, #1093: same anchor as the measured tags maps (object of strings); this
+      list was not measured.
+    replace:
+      type: object
+      additionalProperties:
+        type: string
+
+  # availabilityZone: a prose anchor typed object; agents send a string or null.
+  - schemas:
+      - cvo.get-azure-ha-working-environments.availabilityZone
+      - cvo.get-azure-vsa-working-environments.availabilityZone
+    evidence: live
+    reason: >-
+      #1095, #1093: measured with fields=*, availabilityZone is JSON null; it is
+      a zone name (string) when set, never an object.
+    replace:
+      type: string
+      nullable: true

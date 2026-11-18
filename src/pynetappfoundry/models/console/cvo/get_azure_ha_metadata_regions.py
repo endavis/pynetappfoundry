@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from pydantic import BaseModel, Field, RootModel
 
 
@@ -15,10 +17,8 @@ class Expands(BaseModel):
     raw: str
 
 
-class SupportsZonesAndPssdV2(BaseModel):
-    """
-    supportsZonesAndPssdV2
-    """
+class SupportsZonesAndPssdV2(RootModel[Any]):
+    root: Any = Field(..., description="supportsZonesAndPssdV2", title="supportsZonesAndPssdV2")
 
 
 class AzureSecurityGroupResponse(BaseModel):

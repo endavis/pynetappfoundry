@@ -173,7 +173,7 @@ azure = list(
 | `get_gcp_vsa_working_environments` | `gcp/vsa/working-environments` | `OccmGcpWorkingEnvironment` | inferred |
 | `get_gcp_ha_working_environments` | `gcp/ha/working-environments` | `OccmGcpHaWorkingEnvironment` | inferred |
 
-"Inferred" lists were empty on every measured agent, so their set is taken from the 8 default keys measured on the other lists. The generated tags model drops a dict's keys, so tags are not kept until #1093.
+"Inferred" lists were empty on every measured agent, so their set is taken from the 8 default keys measured on the other lists. After updating, copy the regenerated `tools/console_openapi/generated/console_openapi.yaml` into `<config_dir>/apis/console/` again (#1095).
 
 See [DataSource: OCCM](data-source.md#occm-console-agent) for the rules.
 

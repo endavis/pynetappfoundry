@@ -3,20 +3,17 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from typing import Any
+
+from pydantic import BaseModel, Field, RootModel
 
 
-class CacheVolumeSize(BaseModel):
-    """
-    cacheVolumeSize
-
-    FlexCache size
-
-
-
-    //end collapsible .Definitions block
-    ====
-    """
+class CacheVolumeSize(RootModel[Any]):
+    root: Any = Field(
+        ...,
+        description="cacheVolumeSize\n\nFlexCache size\n\n\n\n//end collapsible .Definitions block\n====",
+        title="cacheVolumeSize",
+    )
 
 
 class RequestBody(BaseModel):

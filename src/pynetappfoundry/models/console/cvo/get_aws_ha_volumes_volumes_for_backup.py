@@ -3,7 +3,9 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel
+from typing import Any
+
+from pydantic import BaseModel, Field, RootModel
 
 
 class ListFilterByParam(BaseModel):
@@ -21,16 +23,12 @@ class AllowedValuesForVolumesListFilter(BaseModel):
     volumeTypes: list[str] | None = None
 
 
-class FilteredNumberOfVolumes(BaseModel):
-    """
-    filteredNumberOfVolumes
-    """
+class FilteredNumberOfVolumes(RootModel[Any]):
+    root: Any = Field(..., description="filteredNumberOfVolumes", title="filteredNumberOfVolumes")
 
 
-class HasNextPage(BaseModel):
-    """
-    hasNextPage
-    """
+class HasNextPage(RootModel[Any]):
+    root: Any = Field(..., description="hasNextPage", title="hasNextPage")
 
 
 class Capacity(BaseModel):

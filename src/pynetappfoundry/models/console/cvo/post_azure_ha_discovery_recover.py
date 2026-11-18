@@ -3,7 +3,9 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from typing import Any
+
+from pydantic import BaseModel, Field, RootModel
 
 
 class ClusterCredentialsRequest(BaseModel):
@@ -18,14 +20,12 @@ class ClusterCredentials(BaseModel):
     userName: str | None = None
 
 
-class IsDirectMarketplace(BaseModel):
-    """
-    isDirectMarketplace
-
-
-    //end collapsible .Definitions block
-    ====
-    """
+class IsDirectMarketplace(RootModel[Any]):
+    root: Any = Field(
+        ...,
+        description="isDirectMarketplace\n\n\n//end collapsible .Definitions block\n====",
+        title="isDirectMarketplace",
+    )
 
 
 class RequestBody(BaseModel):

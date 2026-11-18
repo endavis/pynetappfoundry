@@ -3,7 +3,9 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from typing import Any
+
+from pydantic import BaseModel, Field, RootModel
 
 
 class Capacity(BaseModel):
@@ -25,17 +27,12 @@ class ElasticVolumeQuoteInfo(BaseModel):
     totalEvDisks: int | None = None
 
 
-class MinimumCoolingDays(BaseModel):
-    """
-    minimumCoolingDays
-
-    Cooling Days
-
-
-
-    //end collapsible .Definitions block
-    ====
-    """
+class MinimumCoolingDays(RootModel[Any]):
+    root: Any = Field(
+        ...,
+        description="minimumCoolingDays\n\nCooling Days\n\n\n\n//end collapsible .Definitions block\n====",
+        title="minimumCoolingDays",
+    )
 
 
 class RequestBody(BaseModel):

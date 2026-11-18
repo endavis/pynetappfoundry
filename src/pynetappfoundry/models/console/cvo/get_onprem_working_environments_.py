@@ -3,7 +3,9 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from typing import Any
+
+from pydantic import BaseModel, Field, RootModel
 
 
 class Expand(BaseModel):
@@ -213,10 +215,8 @@ class LifResponse(BaseModel):
     )
 
 
-class Value(BaseModel):
-    """
-    Value
-    """
+class Value(RootModel[Any]):
+    root: Any = Field(..., description="Value", title="Value")
 
 
 class OnPremClusterProperties(BaseModel):
@@ -239,10 +239,8 @@ class OnPremClusterProperties(BaseModel):
     volumeCount: int | None = None
 
 
-class ScopeId(BaseModel):
-    """
-    scopeId
-    """
+class ScopeId(RootModel[Any]):
+    root: Any = Field(..., description="scopeId", title="scopeId")
 
 
 class ComplianceScanStatusVolumeResponse(BaseModel):

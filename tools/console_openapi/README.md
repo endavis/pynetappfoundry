@@ -66,7 +66,8 @@ Pass a full commit SHA rather than a branch name, so the lockfile's
    - Definition anchors become per-file namespaced component schemas
      (`<service>.<file_stem>.<anchor>`). Anchors that have no table fall back
      to either an `additionalProperties` map (for "Hash mapping strings to
-     string") or a prose-only `{type: object}` schema -- never a dangling
+     string") or a prose-only schema with no `type` (generated as
+     `RootModel[Any]`, so it accepts any JSON value; #1095) -- never a dangling
      `$ref`.
    - 204 responses, and responses without a body table or example, omit
      `content`. A `Status: Default` block becomes the OpenAPI `default`
@@ -138,6 +139,30 @@ doit console_client
 A test checks that stripping and re-merging the committed spec reproduces it
 byte for byte. Users must copy the updated `console_openapi.yaml` into
 `<config_dir>/apis/console/` again.
+
+## Spec overrides
+
+Some docs schemas differ from what live agents return (#1095): a tag map
+documented as a prose anchor, cron fields documented as `array[string]` but sent
+as integers. `tools/console_openapi/overrides.yaml` retypes them after the
+fragments are merged. Each entry has:
+
+- `schemas` and, for a property override, `properties` (every pair is one
+  override; without `properties` the whole schema is replaced);
+- `replace`, the new schema or property;
+- `evidence`: `live` for a shape measured against a real agent, `inferred` for a
+  same-shaped schema in a module that was not measured;
+- `reason`, which must not be empty.
+
+`overrides.py` records each one in its node as
+`x-override: {evidence, reason, original}`; `strip_overrides` restores the
+originals. A property override keeps the property's `description`; a schema
+override keeps `x-source-*`, `title` and `description`. The order is: strip
+overrides, strip fragments, merge fragments, apply overrides. `OverrideError`
+(a `BuildError`) is raised for an unknown key, bad evidence, an empty reason, a
+duplicate target, an unknown schema or property, a fragment schema, or a target
+that is already overridden. `doit console_openapi_fragments` re-applies the
+overrides offline too.
 
 ## Server URLs
 

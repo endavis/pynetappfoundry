@@ -3,23 +3,21 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, RootModel
+from typing import Any
+
+from pydantic import BaseModel, Field, RootModel
 
 
-class HighAvailabilityEnabled(BaseModel):
-    """
-    highAvailabilityEnabled
-    """
+class HighAvailabilityEnabled(RootModel[Any]):
+    root: Any = Field(..., description="highAvailabilityEnabled", title="highAvailabilityEnabled")
 
 
-class VMOrchestratorZonalMultiFDEnabled(BaseModel):
-    """
-    vMOrchestratorZonalMultiFDEnabled
-
-
-    //end collapsible .Definitions block
-    ====
-    """
+class VMOrchestratorZonalMultiFDEnabled(RootModel[Any]):
+    root: Any = Field(
+        ...,
+        description="vMOrchestratorZonalMultiFDEnabled\n\n\n//end collapsible .Definitions block\n====",
+        title="vMOrchestratorZonalMultiFDEnabled",
+    )
 
 
 class ResponseBody(BaseModel):

@@ -3,17 +3,17 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, RootModel
+from typing import Any
+
+from pydantic import BaseModel, Field, RootModel
 
 
-class ValidTo(BaseModel):
-    """
-    validTo
-
-
-    //end collapsible .Definitions block
-    ====
-    """
+class ValidTo(RootModel[Any]):
+    root: Any = Field(
+        ...,
+        description="validTo\n\n\n//end collapsible .Definitions block\n====",
+        title="validTo",
+    )
 
 
 class ResponseBody(BaseModel):

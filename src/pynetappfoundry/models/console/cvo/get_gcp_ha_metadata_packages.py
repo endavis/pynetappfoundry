@@ -3,7 +3,9 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, RootModel
+from typing import Any
+
+from pydantic import BaseModel, Field, RootModel
 
 
 class Capacity(BaseModel):
@@ -16,20 +18,16 @@ class InstanceTypeRegionMapping(BaseModel):
     region: str | None = None
 
 
-class Iops(BaseModel):
-    """
-    iops
-    """
+class Iops(RootModel[Any]):
+    root: Any = Field(..., description="iops", title="iops")
 
 
-class Throughput(BaseModel):
-    """
-    throughput
-
-
-    //end collapsible .Definitions block
-    ====
-    """
+class Throughput(RootModel[Any]):
+    root: Any = Field(
+        ...,
+        description="throughput\n\n\n//end collapsible .Definitions block\n====",
+        title="throughput",
+    )
 
 
 class ResponseBody(BaseModel):

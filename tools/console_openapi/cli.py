@@ -30,6 +30,12 @@ from tools.console_openapi.openapi.builder import (
     _enforce_invariants,
     build_spec,
 )
+from tools.console_openapi.overrides import (
+    OVERRIDES_PATH,
+    apply_overrides,
+    load_overrides,
+    strip_overrides,
+)
 from tools.console_openapi.walker import parse_service
 
 DEFAULT_SERVICES: tuple[str, ...] = ("tenancy", "tenancyv4", "cvo", "dw")
@@ -88,6 +94,14 @@ def cli() -> None:
     show_default=True,
     help="Directory of hand-written spec fragments merged into the spec (#1078).",
 )
+@click.option(
+    "--overrides",
+    "overrides_path",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    default=OVERRIDES_PATH,
+    show_default=True,
+    help="YAML file of schema overrides applied after the fragments (#1095).",
+)
 def build(
     ref: str,
     services: tuple[str, ...],
@@ -98,6 +112,7 @@ def build(
     repo: str,
     array_responses_path: Path,
     fragments_dir: Path,
+    overrides_path: Path,
 ) -> None:
     """Fetch sources, parse, build the OpenAPI document, and write it to disk."""
     unmapped = [s for s in services if s not in _SERVICE_BASE_PATHS]
@@ -142,6 +157,7 @@ def build(
         included_services=services,
         array_responses=array_ops,
         fragments=load_fragments(fragments_dir),
+        overrides=load_overrides(overrides_path),
     )
 
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -183,15 +199,26 @@ def build(
     show_default=True,
     help="Directory of hand-written spec fragments.",
 )
-def apply_fragments(spec_path: Path, fragments_dir: Path) -> None:
-    """Re-apply the spec fragments to the committed spec, offline (#1078).
+@click.option(
+    "--overrides",
+    "overrides_path",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    default=OVERRIDES_PATH,
+    show_default=True,
+    help="YAML file of schema overrides applied after the fragments (#1095).",
+)
+def apply_fragments(spec_path: Path, fragments_dir: Path, overrides_path: Path) -> None:
+    """Re-apply the spec fragments and overrides to the committed spec, offline (#1078, #1095).
 
-    Strips the entries a previous run merged, merges the fragments again and
-    rewrites the spec, so editing a fragment needs no fetch of the docs repo.
+    Strips the overrides, then the fragments a previous run merged, merges the
+    fragments again and applies the overrides, then rewrites the spec, so editing
+    either needs no fetch of the docs repo.
     """
     spec: dict[str, Any] = yaml.safe_load(spec_path.read_text(encoding="utf-8"))
+    strip_overrides(spec)
     strip_fragments(spec)
     merge_fragments(spec, load_fragments(fragments_dir))
+    apply_overrides(spec, load_overrides(overrides_path))
     _enforce_invariants(spec)
     _validate(spec)
     spec_path.write_text(yaml.safe_dump(spec, sort_keys=False), encoding="utf-8")

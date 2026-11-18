@@ -3,7 +3,9 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from typing import Any
+
+from pydantic import BaseModel, Field, RootModel
 
 
 class Expand(BaseModel):
@@ -20,10 +22,8 @@ class Capacity(BaseModel):
     unit: str | None = None
 
 
-class Expirations(BaseModel):
-    """
-    expirations
-    """
+class Expirations(RootModel[Any]):
+    root: Any = Field(..., description="expirations", title="expirations")
 
 
 class LicenseInformation(BaseModel):
@@ -52,10 +52,8 @@ class CapacityTierStatus(BaseModel):
     status: str | None = None
 
 
-class LastModifiedOffbox(BaseModel):
-    """
-    lastModifiedOffbox
-    """
+class LastModifiedOffbox(RootModel[Any]):
+    root: Any = Field(..., description="lastModifiedOffbox", title="lastModifiedOffbox")
 
 
 class VsaLicense(BaseModel):

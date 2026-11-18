@@ -51,7 +51,8 @@ This supersedes [ADR-0027](0027-occm-backend-is-live-only-and-delegates-to-the-t
 - Issue #1091: Console discovery and OCCM cache refresh fail on real agents (skipped agents)
 - Issue #1055: AIQUM cache (the pattern this follows)
 - Issue #1074: cloud working environment lists
-- Issue #1093: generated `Tags` and `AvailabilityZone` model gaps (tags are dropped until it lands)
+- Issue #1093: generated `Tags` and `AvailabilityZone` model gaps (folded into #1095 and fixed there)
+- Issue #1095: generated CVO models accept real cloud working environments
 - Issue #1086: reports read cloud provider details from the OCCM cache (deferred)
 - Issue #1087: CLI to refresh and inspect the OCCM cache (deferred)
 
