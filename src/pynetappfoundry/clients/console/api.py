@@ -338,7 +338,10 @@ class ConsoleAPIClient:
     def list_agents(self, organization_id: str) -> list[ConsoleAgentInfo]:
         """GET /agents-mgmt/list-connectors/{organization_id} (user or service token).
 
-        Pagination and the ``status`` values of the response are not handled (#1083).
+        The endpoint is not paginated: one call returns every agent of the
+        organization.  ``agent.status`` (``active`` or ``inactive`` as measured)
+        identifies inactive agents; the item ``status`` was ``active`` throughout.
+        See ADR-0029 (#1083).
 
         Args:
             organization_id: The organization UUID.

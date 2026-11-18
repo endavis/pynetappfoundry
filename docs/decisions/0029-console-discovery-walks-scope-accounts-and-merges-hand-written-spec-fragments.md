@@ -32,7 +32,10 @@ Issue [#1078](https://github.com/endavis/pynetappfoundry/issues/1078) asks the C
      - A connector without a non-blank `agent_id` resolves to the cached agent whose `name` equals the connector name (exact, case-sensitive) in the connector's own scope, deduplicated by `agent_id`. Status does not filter. No match, an empty cache or several distinct ids raises `ValueError`.
      - A raw agent id passed as `cluster=` uses the scope of the cached agent with that id: root when uncached or cached under the root, the scope when cached under one scope, `ValueError` when cached under several scopes without the root.
      - `Console(config, scope=S)` with no `org_id` (argument or `consoleapi.toml`) calls `list_organizations()` once and uses the only organization; zero or several raise `ValueError`.
-     - `list-connectors` measurement: PENDING, to be recorded here before merge.
+     - `list-connectors` measurement (#1083, read-only, against organizations with several agents including inactive ones; only key names, types and status values were recorded):
+       - The response is `{occms: [...]}` with no other top-level key and no cursor-like key. A `limit=1` query parameter does not change the result. The endpoint is not paginated: one call returns every agent, so `list_agents` needs no paging.
+       - Each `occms[]` item has `agent`, `automaticCallbackUris`, `isServiceManager3`, `manualOverrideUris`, `primaryCallbackUri` and `status`.
+       - Observed values: `occms[].status` was always `active`, while `occms[].agent.status` was `active` or `inactive`. The agent status is the one that tells inactive agents apart. `ConsoleAgentInfo.from_occm` already prefers `agent.status` and falls back to the item `status` only when it is missing, which is what the #1091 skip of non-active agents relies on.
 
 ## Rationale
 
