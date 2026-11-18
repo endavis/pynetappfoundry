@@ -2,9 +2,10 @@
 
 The inventory and HTML reports ask :class:`ReportCloudSource` for one cluster's cloud details.
 The OCCM cache answers when it can answer the whole cluster (``occm_cloud_metadata`` returns a
-complete list); otherwise the report uses today's CLI-parsed ``entry.ontap.cloud``.  Every OCCM
-read goes through ``ClusterResolver``; the OCCM path makes no live call.  Console links come from
-the resolved location whichever source answered the cloud fields (ADR-0033).
+complete list; AWS only, Azure and GCP always use the CLI path); otherwise the report uses
+today's CLI-parsed ``entry.ontap.cloud``.  Every OCCM read goes through
+``ClusterResolver``; the OCCM path makes no live call.  Console links come from the resolved
+location whichever source answered the cloud fields (ADR-0033).
 """
 
 from __future__ import annotations
@@ -134,7 +135,7 @@ class ReportCloudSource:
                 if picked is not None
                 else None
             )
-            occm = self._occm_metadata(picked, cluster_name, is_cloud, node_names)
+            occm = self._occm_metadata(picked, is_cloud, node_names)
         except _FALLBACK_ERRORS as exc:
             logger.warning(
                 "Cloud details of %s: OCCM cache not used (%s); using the ONTAP CLI path",
@@ -154,7 +155,6 @@ class ReportCloudSource:
     def _occm_metadata(
         self,
         picked: OccmData | None,
-        cluster_name: str,
         is_cloud: bool,
         node_names: Sequence[str],
     ) -> list[CloudMetadata] | None:
@@ -164,7 +164,6 @@ class ReportCloudSource:
         return occm_cloud_metadata(
             picked.record.model_dump(),
             picked.location.mapping,
-            cluster_name=cluster_name,
             ontap_node_names=node_names,
             aws_sso_config=self._aws_sso_config,
         )

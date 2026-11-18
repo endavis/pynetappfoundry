@@ -161,6 +161,22 @@ def test_unsupported_cloud_mapping_uses_cli(
     assert details.console is not None
 
 
+@pytest.mark.parametrize(
+    "mapping", ["OccmAzureWorkingEnvironment", "OccmAzureHaWorkingEnvironment"]
+)
+def test_azure_uses_cli_but_keeps_console_links(
+    ontap_db: ClusterMetadataDB, occm_db: OccmCacheDB, mapping: str
+) -> None:
+    occm_db.set(_snapshot({"agent-1": {mapping: [_aws_we()]}}))
+    details = _source(ontap_db, occm_db).details(
+        "lab1", is_cloud=True, node_names=NODES, entry=_entry(CLI_META)
+    )
+    assert details.source == "cli"
+    assert details.metadata == CLI_META
+    assert details.console is not None
+    assert details.console.working_environment
+
+
 def test_ambiguous_match_uses_cli_without_console(
     ontap_db: ClusterMetadataDB, occm_db: OccmCacheDB
 ) -> None:

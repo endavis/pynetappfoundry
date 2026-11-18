@@ -1,6 +1,6 @@
-"""Map one OCCM cloud working environment record to ``CloudMetadata`` (#1086, ADR-0033).
+"""Map one OCCM AWS working environment record to ``CloudMetadata`` (#1086, ADR-0033).
 
-The reports read cloud details from the OCCM cache first.  This module is the cache-layer
+The reports read AWS cloud details from the OCCM cache first.  This module is the cache-layer
 adapter: pure functions from one working environment record (the dict of
 ``OccmData.record.model_dump()``, camelCase keys) to one :class:`CloudMetadata` per ONTAP node.
 It reads no database and imports nothing from ``pynetappfoundry.data`` or
@@ -9,12 +9,16 @@ It reads no database and imports nothing from ``pynetappfoundry.data`` or
 Every field-to-path mapping lives in one table, :data:`CLOUD_METADATA_SOURCES`: a measurement
 result changes that table only (the :data:`LINK_RULES` pattern of ``cluster_resolver``).  Path
 syntax: dotted record keys; ``name[]`` selects the element of that list the adapter joined to the
-ONTAP node (``ontapClusterProperties.nodes``, ``awsProperties.instances``); ``{N}`` is the node
-number of ``haProperties.node{N}Info``.
+ONTAP node (``ontapClusterProperties.nodes``, ``awsProperties.instances``).
 
 The adapter answers a cluster completely or not at all: it returns ``None`` when any ONTAP node
 cannot be joined to the record, or the account, region or an instance id is missing, and the caller
 then uses the CLI-parsed metadata for the whole cluster.
+
+Only AWS is answered.  Measured: Azure Console records never carry the VM instance id (the node
+``cloudProviderId`` and the HA ``instanceId`` are empty) nor the offer and sku (the product code
+and platform license fields are empty while the CLI has them), so an Azure cluster could never be
+answered completely.  Azure, GCP and on-prem always use the CLI path.
 """
 
 from __future__ import annotations
@@ -24,12 +28,8 @@ from typing import TYPE_CHECKING, Any, Literal
 
 from pynetappfoundry.utils.cloud import (
     build_aws_instance_link,
-    build_azure_id,
-    build_azure_portal_link,
     build_cloud_instance_sso_link,
-    build_cloud_resource_group_link,
     build_vm_name,
-    get_node_number,
 )
 from pynetappfoundry.utils.console_links import (
     build_console_aggregates_link,
@@ -52,83 +52,49 @@ class CloudFieldSource:
     """Where one ``CloudMetadata`` field comes from in an OCCM working environment record.
 
     Attributes:
-        aws: Paths tried in order for AWS records; the first non-empty value wins.  Empty means
-            the OCCM record does not carry the field (a gap: the field stays ``""``).
-        azure: The same for Azure records.
+        aws: Paths tried in order; the first non-empty value wins.  Empty means the OCCM
+            record does not carry the field (a gap: the field stays ``""``).
         scope: ``"we"`` for a working environment level value, ``"node"`` for a per-node value.
         note: Why the field has no path, or how it is derived.
     """
 
     aws: tuple[str, ...] = ()
-    azure: tuple[str, ...] = ()
     scope: Literal["we", "node"] = "we"
     note: str = ""
 
 
-_NODE_INFO = "haProperties.node{N}Info"
-
 #: One row per ``CloudMetadata`` data field (the computed ``node``, ``vm_name`` and link fields
 #: are not in the table).  The documented mapping of ``docs/usage/report-cloud-details.md``.
 CLOUD_METADATA_SOURCES: Mapping[str, CloudFieldSource] = {
-    "instance_id": CloudFieldSource(
-        aws=(f"{_NODES}[].cloudProviderId",),
-        azure=(f"{_NODES}[].cloudProviderId",),
-        scope="node",
-    ),
-    "account_id": CloudFieldSource(
-        aws=("awsProperties.accountId",), azure=("providerProperties.subscriptionId",)
-    ),
-    "image_id": CloudFieldSource(
-        aws=(f"{_INSTANCES}[].imageId",), scope="node", note="Azure: not measured (amiId?)"
-    ),
-    "instance_type": CloudFieldSource(
-        aws=(f"{_INSTANCES}[].instanceType",),
-        azure=("providerProperties.instanceType", "clusterProperties.instanceType"),
-        scope="node",
-    ),
+    "instance_id": CloudFieldSource(aws=(f"{_NODES}[].cloudProviderId",), scope="node"),
+    "account_id": CloudFieldSource(aws=("awsProperties.accountId",)),
+    "image_id": CloudFieldSource(aws=(f"{_INSTANCES}[].imageId",), scope="node"),
+    "instance_type": CloudFieldSource(aws=(f"{_INSTANCES}[].instanceType",), scope="node"),
     "cpu_platform": CloudFieldSource(note="gap: no OCCM field"),
-    "region": CloudFieldSource(
-        aws=("awsProperties.regionName",), azure=("providerProperties.regionName",)
+    "region": CloudFieldSource(aws=("awsProperties.regionName",)),
+    "provider": CloudFieldSource(
+        note='derived from CLOUD_MAPPING_PROVIDER ("AWS"); cloudProviderName is spelled '
+        'differently from the CLI value, which is exactly "AWS"'
     ),
-    "provider": CloudFieldSource(note="derived: CLOUD_MAPPING_PROVIDER, not cloudProviderName"),
     "consumer": CloudFieldSource(note="gap: no OCCM field"),
-    "primary_ip": CloudFieldSource(
-        aws=(f"{_INSTANCES}[].privateIpAddress",),
-        azure=(f"{_NODE_INFO}.primaryIp",),
-        scope="node",
-    ),
+    "primary_ip": CloudFieldSource(aws=(f"{_INSTANCES}[].privateIpAddress",), scope="node"),
     "metadata_version": CloudFieldSource(note="gap: no OCCM field"),
-    "availability_zone": CloudFieldSource(
-        aws=(f"{_INSTANCES}[].availabilityZone",),
-        scope="node",
-        note="Azure: gap (the CLI value is a zone, node{N}Info.availabilityZone is null)",
-    ),
+    "availability_zone": CloudFieldSource(aws=(f"{_INSTANCES}[].availabilityZone",), scope="node"),
     "availability_zone_id": CloudFieldSource(note="gap: no OCCM field"),
-    "fault_domain": CloudFieldSource(
-        azure=(f"{_NODE_INFO}.availabilitySet.faultDomain",),
-        scope="node",
-        note="AWS: gap",
-    ),
-    "update_domain": CloudFieldSource(
-        azure=(f"{_NODE_INFO}.availabilitySet.updateDomain",),
-        scope="node",
-        note="AWS: gap",
-    ),
-    "resource_group_name": CloudFieldSource(
-        azure=("providerProperties.resourceGroup.name",), note="AWS: not applicable"
-    ),
-    "offer": CloudFieldSource(note="gap: candidate clusterProperties.productCode, unmeasured"),
-    "sku": CloudFieldSource(note="gap: candidate clusterProperties.platformLicense, unmeasured"),
+    "fault_domain": CloudFieldSource(note="not applicable: Azure only"),
+    "update_domain": CloudFieldSource(note="not applicable: Azure only"),
+    "resource_group_name": CloudFieldSource(note="not applicable: Azure only"),
+    "offer": CloudFieldSource(note="gap: empty in both OCCM and the CLI for AWS (measured)"),
+    "sku": CloudFieldSource(note="gap: empty in both OCCM and the CLI for AWS (measured)"),
     "sku_version": CloudFieldSource(note="gap: no OCCM field"),
 }
 
 #: The mappings the adapter answers, with the provider name ``CloudMetadata.provider`` carries.
-#: GCP has no entry: it always uses the CLI path (unmeasured).
+#: Azure and GCP have no entry and always use the CLI path (Azure: measured, the Console record
+#: has no VM instance id, offer or sku; GCP: unmeasured).
 CLOUD_MAPPING_PROVIDER: Mapping[str, str] = {
     "OccmAwsWorkingEnvironment": "AWS",
     "OccmAwsHaWorkingEnvironment": "AWS",
-    "OccmAzureWorkingEnvironment": "Azure",
-    "OccmAzureHaWorkingEnvironment": "Azure",
 }
 
 
@@ -136,14 +102,13 @@ def _lookup(
     record: Mapping[str, Any],
     path: str,
     elements: Mapping[str, Mapping[str, Any]],
-    node_number: int,
 ) -> Any:
     """Return the value at *path* of *record*, or ``None`` when any step is absent."""
     current: Any = record
     walked: list[str] = []
     for segment in path.split("."):
         is_list = segment.endswith("[]")
-        name = (segment[:-2] if is_list else segment).replace("{N}", str(node_number))
+        name = segment[:-2] if is_list else segment
         if not isinstance(current, dict):
             return None
         current = current.get(name)
@@ -163,18 +128,15 @@ def _text(value: Any) -> str:
 
 
 def _fields(
-    cloud: Literal["aws", "azure"],
     record: Mapping[str, Any],
     elements: Mapping[str, Mapping[str, Any]],
-    node_number: int,
 ) -> dict[str, str]:
     """Return every table field for one node: the first non-empty value of its paths."""
     values: dict[str, str] = {}
     for name, source in CLOUD_METADATA_SOURCES.items():
-        paths = source.aws if cloud == "aws" else source.azure
         value = ""
-        for path in paths:
-            value = _text(_lookup(record, path, elements, node_number))
+        for path in source.aws:
+            value = _text(_lookup(record, path, elements))
             if value:
                 break
         values[name] = value
@@ -183,7 +145,7 @@ def _fields(
 
 def _named_node(record: Mapping[str, Any], name: str) -> Mapping[str, Any] | None:
     """Return the ``ontapClusterProperties.nodes`` entry called *name*, else ``None``."""
-    nodes = _lookup(record, _NODES, {}, 0)
+    nodes = _lookup(record, _NODES, {})
     if not isinstance(nodes, list):
         return None
     for node in nodes:
@@ -194,7 +156,7 @@ def _named_node(record: Mapping[str, Any], name: str) -> Mapping[str, Any] | Non
 
 def _vsa_instance(record: Mapping[str, Any], instance_id: str) -> Mapping[str, Any] | None:
     """Return the AWS VSA instance with *instance_id* (never the mediator or the agent)."""
-    instances = _lookup(record, _INSTANCES, {}, 0)
+    instances = _lookup(record, _INSTANCES, {})
     if not isinstance(instances, list) or not instance_id:
         return None
     for instance in instances:
@@ -211,20 +173,19 @@ def occm_cloud_metadata(
     record: Mapping[str, Any],
     mapping: str,
     *,
-    cluster_name: str,
     ontap_node_names: Sequence[str],
     aws_sso_config: dict[str, str | dict[str, str]] | None = None,
 ) -> list[CloudMetadata] | None:
     """Return one :class:`CloudMetadata` per ONTAP node from an OCCM record, or ``None``.
 
-    ``None`` means OCCM cannot answer this cluster completely: an unsupported mapping (GCP,
-    on-prem), no ONTAP nodes, a missing account or region, or an ONTAP node with no joined record
-    or no instance id.  Gap fields (``CLOUD_METADATA_SOURCES`` rows without a path) are ``""``.
+    ``None`` means OCCM cannot answer this cluster completely: an unsupported mapping (Azure,
+    GCP, on-prem), no ONTAP nodes, a missing account or region, or an ONTAP node with no joined
+    record or no instance id.  Gap fields (``CLOUD_METADATA_SOURCES`` rows without a path) are
+    ``""``.
 
     Args:
         record: ``OccmData.record.model_dump()`` of the working environment.
         mapping: The working-environment mapping name of the record.
-        cluster_name: The ONTAP cluster name (Azure VM-name fallback).
         ontap_node_names: The ONTAP node names, in report order.
         aws_sso_config: Optional AWS SSO settings for ``instance_sso_link``.
     """
@@ -236,63 +197,35 @@ def occm_cloud_metadata(
         CloudMetadata,
     )
 
-    cloud: Literal["aws", "azure"] = "aws" if provider == "AWS" else "azure"
-    is_ha = bool(record.get("isHA"))
     result: list[CloudMetadata] = []
     for node_name in ontap_node_names:
         ontap_node = _named_node(record, node_name)
         if ontap_node is None:
             return None
-        elements: dict[str, Mapping[str, Any]] = {_NODES: ontap_node}
-        node_number = 1
-        if cloud == "aws":
-            instance = _vsa_instance(record, _text(ontap_node.get("cloudProviderId")))
-            if instance is None:
-                return None
-            elements[_INSTANCES] = instance
-        elif is_ha:
-            number = get_node_number(node_name)
-            if number not in (1, 2):
-                return None
-            node_number = number
-        values = _fields(cloud, record, elements, node_number)
+        instance = _vsa_instance(record, _text(ontap_node.get("cloudProviderId")))
+        if instance is None:
+            return None
+        values = _fields(record, {_NODES: ontap_node, _INSTANCES: instance})
         if not values["account_id"] or not values["region"] or not values["instance_id"]:
             return None
         values["provider"] = provider
         values["node"] = node_name
-        _apply_links(values, cloud, record, node_number, cluster_name, is_ha, aws_sso_config)
+        _apply_links(values, aws_sso_config)
         result.append(CloudMetadata(**values))
     return result
 
 
 def _apply_links(
     values: dict[str, str],
-    cloud: Literal["aws", "azure"],
-    record: Mapping[str, Any],
-    node_number: int,
-    cluster_name: str,
-    is_ha: bool,
     aws_sso_config: dict[str, str | dict[str, str]] | None,
 ) -> None:
     """Add ``vm_name`` and the link fields to *values* in place (``utils.cloud`` builders)."""
     instance_id = values["instance_id"]
-    if cloud == "aws":
-        values["vm_name"] = build_vm_name("aws", instance_id=instance_id)
-        values["instance_link"] = build_aws_instance_link(values["region"], instance_id)
-        values["instance_sso_link"] = build_cloud_instance_sso_link(
-            "AWS", values["instance_link"], values["account_id"], aws_sso_config
-        )
-        return
-    vm_name = _text(_lookup(record, f"{_NODE_INFO}.instanceName", {}, node_number))
-    values["vm_name"] = vm_name or build_vm_name(
-        "azure", cluster_name, values["node"], instance_id, is_ha
+    values["vm_name"] = build_vm_name("aws", instance_id=instance_id)
+    values["instance_link"] = build_aws_instance_link(values["region"], instance_id)
+    values["instance_sso_link"] = build_cloud_instance_sso_link(
+        "AWS", values["instance_link"], values["account_id"], aws_sso_config
     )
-    account, group = values["account_id"], values["resource_group_name"]
-    if account and group and values["vm_name"]:
-        values["instance_link"] = build_azure_portal_link(
-            build_azure_id(account, group, "vm", values["vm_name"])
-        )
-    values["resource_group_link"] = build_cloud_resource_group_link("azure", account, group)
 
 
 def pick_occm_data(occm: Sequence[OccmData]) -> OccmData | None:

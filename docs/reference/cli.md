@@ -109,8 +109,8 @@ nf reports [OPTIONS] COMMAND [ARGS]...
 All `reports` subcommands accept `-f, --filter` to scope the report to a
 subset of clusters.
 
-`inventory` and `html` read cloud provider details from the OCCM cache first and fall back to the
-ONTAP CLI path per cluster; see [Report Cloud Details](../usage/report-cloud-details.md).
+`inventory` and `html` read AWS cloud provider details from the OCCM cache first and fall back to
+the ONTAP CLI path per cluster (Azure and GCP always use the CLI path); see [Report Cloud Details](../usage/report-cloud-details.md).
 
 ### events
 

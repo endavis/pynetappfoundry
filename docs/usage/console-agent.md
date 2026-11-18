@@ -204,7 +204,7 @@ with OccmCacheDB(config=config) as db:
     db.organizations(), db.agents(), db.working_environments()  # the cached discovery
 ```
 
-Cache reads need no Console account. The inventory and HTML reports read cloud provider details from this cache and show Console links; see [Report Cloud Details](report-cloud-details.md).
+Cache reads need no Console account. The inventory and HTML reports read AWS cloud provider details from this cache (Azure and GCP use the CLI path) and show Console links for every cluster; see [Report Cloud Details](report-cloud-details.md).
 
 The `nf cache occm` commands refresh and inspect the same cache ([CLI reference](../reference/cli.md#cache)):
 

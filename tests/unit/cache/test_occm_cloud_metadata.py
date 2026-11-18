@@ -25,7 +25,6 @@ from pynetappfoundry.cache.occm_cloud_metadata import (
     pick_occm_data,
 )
 from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
-from pynetappfoundry.utils.cloud import get_node_number
 
 AWS_HA = "OccmAwsHaWorkingEnvironment"
 AWS = "OccmAwsWorkingEnvironment"
@@ -41,7 +40,7 @@ _FIXTURE = (
     / "cvo_working_environment_shapes.json"
 )
 _LISTS: dict[str, dict[str, Any]] = json.loads(_FIXTURE.read_text(encoding="utf-8"))["lists"]
-_FIXTURE_KEY = {AWS_HA: "aws-ha", AZURE_HA: "azure-ha", AZURE: "azure-vsa"}
+_FIXTURE_KEY = {AWS_HA: "aws-ha"}
 
 
 def _aws_record(*, ha: bool = True) -> dict[str, Any]:
@@ -119,7 +118,6 @@ def _run(
     return occm_cloud_metadata(
         record,
         mapping,
-        cluster_name="lab1",
         ontap_node_names=names if names is not None else ["lab1-01", "lab1-02"],
         aws_sso_config=sso,
     )
@@ -190,68 +188,12 @@ class TestAws:
             assert getattr(first, gap) == "", gap
 
 
-class TestAzure:
-    def test_ha_nodes_use_node_info_by_number(self) -> None:
-        result = _run(_azure_record(), AZURE_HA)
-        assert result is not None
-        first, second = result
-        assert (first.vm_name, second.vm_name) == ("vm-1", "vm-2")
-        assert (first.instance_id, second.instance_id) == ("az-id-1", "az-id-2")
-        assert (first.primary_ip, second.primary_ip) == ("192.0.2.1", "192.0.2.2")
-        assert (first.fault_domain, second.fault_domain) == ("1", "2")
-        assert (first.update_domain, second.update_domain) == ("11", "12")
-        assert first.provider == "Azure"
-        assert first.account_id == "sub-1"
-        assert first.region == "eastus"
-        assert first.resource_group_name == "rg-1"
-        assert first.instance_type == "Standard_DS4"
-        assert first.instance_link.endswith(
-            "/rg-1/providers/Microsoft.Compute/virtualMachines/vm-1"
-        )
-        assert first.resource_group_link.endswith("/subscriptions/sub-1/resourceGroups/rg-1")
-        assert first.availability_zone == ""
+class TestAzureUsesCli:
+    def test_ha_record_is_not_answered(self) -> None:
+        assert _run(_azure_record(), AZURE_HA) is None
 
-    def test_null_provider_instance_type_falls_to_cluster_properties(self) -> None:
-        record = _azure_record()
-        record["providerProperties"]["instanceType"] = None
-        result = _run(record, AZURE_HA)
-        assert result is not None
-        assert result[0].instance_type == "Standard_DS3"
-
-    def test_null_instance_type_everywhere_stays_empty_and_answers(self) -> None:
-        record = _azure_record()
-        record["providerProperties"]["instanceType"] = None
-        record["clusterProperties"]["instanceType"] = None
-        result = _run(record, AZURE_HA)
-        assert result is not None
-        assert result[0].instance_type == ""
-
-    def test_single_node_uses_node1_only(self) -> None:
-        result = _run(_azure_record(ha=False), AZURE, ["lab1-01"])
-        assert result is not None
-        assert len(result) == 1
-        assert result[0].vm_name == "vm-1"
-        assert result[0].primary_ip == "192.0.2.1"
-
-    def test_ha_node_without_number_returns_none(self) -> None:
-        assert _run(_azure_record(), AZURE_HA, ["lab1-a", "lab1-b"]) is None
-
-    def test_empty_instance_name_falls_back_to_derived_vm_name(self) -> None:
-        record = _azure_record()
-        record["haProperties"]["node2Info"]["instanceName"] = ""
-        result = _run(record, AZURE_HA)
-        assert result is not None
-        assert result[1].vm_name == "lab1-vm2"
-        assert result[0].vm_name == "vm-1"
-
-    def test_missing_resource_group_gives_no_links(self) -> None:
-        record = _azure_record()
-        record["providerProperties"]["resourceGroup"] = None
-        result = _run(record, AZURE_HA)
-        assert result is not None
-        assert result[0].resource_group_name == ""
-        assert result[0].instance_link == ""
-        assert result[0].resource_group_link == ""
+    def test_single_node_record_is_not_answered(self) -> None:
+        assert _run(_azure_record(ha=False), AZURE, ["lab1-01"]) is None
 
 
 class TestIncomplete:
@@ -260,8 +202,6 @@ class TestIncomplete:
         [
             (_aws_record(), AWS_HA, ("awsProperties", "accountId")),
             (_aws_record(), AWS_HA, ("awsProperties", "regionName")),
-            (_azure_record(), AZURE_HA, ("providerProperties", "subscriptionId")),
-            (_azure_record(), AZURE_HA, ("providerProperties", "regionName")),
         ],
     )
     def test_missing_account_or_region(
@@ -270,13 +210,8 @@ class TestIncomplete:
         record[path[0]][path[1]] = ""
         assert _run(record, mapping) is None
 
-    def test_azure_empty_instance_id(self) -> None:
-        record = _azure_record()
-        record["ontapClusterProperties"]["nodes"][0]["cloudProviderId"] = ""
-        assert _run(record, AZURE_HA) is None
-
     def test_ontap_node_absent_from_record(self) -> None:
-        assert _run(_azure_record(), AZURE_HA, ["lab1-01", "lab1-03"]) is None
+        assert _run(_aws_record(), AWS_HA, ["lab1-01", "lab1-03"]) is None
 
     @pytest.mark.parametrize(
         "mapping",
@@ -314,7 +249,7 @@ def _concrete_paths() -> list[tuple[str, str, str]]:
     """Return ``(field, mapping, concrete path)`` for every table path of the measured types."""
     rows: list[tuple[str, str, str]] = []
     for field, source in CLOUD_METADATA_SOURCES.items():
-        for mapping, paths in ((AWS_HA, source.aws), (AZURE_HA, source.azure)):
+        for mapping, paths in ((AWS_HA, source.aws),):
             for path in paths:
                 rows.append((field, mapping, path))
     return rows
@@ -322,23 +257,16 @@ def _concrete_paths() -> list[tuple[str, str, str]]:
 
 @pytest.mark.parametrize(("field", "mapping", "path"), _concrete_paths())
 def test_table_paths_resolve_against_the_models(field: str, mapping: str, path: str) -> None:
-    models = [mapping] + ([AWS] if mapping == AWS_HA else [AZURE])
-    for name in models:
+    for name in (mapping, AWS):
         mp = model_registry.get_mapping(name)
         assert mp is not None
-        for n in (1, 2):
-            concrete = path.replace("{N}", str(n)).replace("[]", "")
-            assert _resolves(mp.model_class, concrete.split(".")), (field, name, concrete)
+        concrete = path.replace("[]", "")
+        assert _resolves(mp.model_class, concrete.split(".")), (field, name, concrete)
 
 
 @pytest.mark.parametrize(("field", "mapping", "path"), _concrete_paths())
 def test_table_paths_appear_in_the_measured_shapes(field: str, mapping: str, path: str) -> None:
-    keys = [_FIXTURE_KEY[mapping]] + (["azure-vsa"] if mapping == AZURE_HA else [])
-    for key in keys:
-        paths = _LISTS[key]["paths"]
-        for n in (1, 2):
-            concrete = path.replace("{N}", str(n))
-            assert concrete in paths, (field, key, concrete)
+    assert path in _LISTS[_FIXTURE_KEY[mapping]]["paths"], (field, mapping, path)
 
 
 def test_table_has_one_row_per_data_field() -> None:
@@ -354,18 +282,14 @@ def test_table_has_one_row_per_data_field() -> None:
 
 def test_table_scope_matches_path_markers() -> None:
     for field, source in CLOUD_METADATA_SOURCES.items():
-        marked = any("[]" in p or "{N}" in p for p in (*source.aws, *source.azure))
+        marked = any("[]" in p for p in source.aws)
         assert (source.scope == "node") == marked, field
 
 
-def test_provider_mapping_covers_aws_and_azure_only() -> None:
-    assert set(CLOUD_MAPPING_PROVIDER.values()) == {"AWS", "Azure"}
-    assert all("Gcp" not in m and "Onprem" not in m for m in CLOUD_MAPPING_PROVIDER)
-
-
-def test_get_node_number_agrees_with_node_info_slots() -> None:
-    assert get_node_number("lab1-01") == 1
-    assert get_node_number("lab1-02") == 2
+def test_provider_mapping_covers_aws_only() -> None:
+    assert set(CLOUD_MAPPING_PROVIDER.values()) == {"AWS"}
+    assert AZURE not in CLOUD_MAPPING_PROVIDER
+    assert AZURE_HA not in CLOUD_MAPPING_PROVIDER
 
 
 class _Empty(BaseModel):
@@ -445,15 +369,15 @@ def test_module_imports_no_data_or_client_layer() -> None:
 def test_usage_page_table_equals_the_path_table() -> None:
     """The documented mapping is ``CLOUD_METADATA_SOURCES`` (docs/usage/report-cloud-details.md)."""
     page = Path(__file__).resolve().parents[3] / "docs" / "usage" / "report-cloud-details.md"
-    rows: dict[str, tuple[list[str], list[str], str]] = {}
+    rows: dict[str, tuple[list[str], str]] = {}
     for line in page.read_text(encoding="utf-8").splitlines():
         cells = [c.strip() for c in line.strip().strip("|").split("|")]
-        if len(cells) == 5 and cells[0].startswith("`") and cells[0].endswith("`"):
+        if len(cells) == 4 and cells[0].startswith("`") and cells[0].endswith("`"):
 
             def paths(cell: str) -> list[str]:
                 return [p.strip("` ") for p in cell.split(", ") if p]
 
-            rows[cells[0].strip("`")] = (paths(cells[1]), paths(cells[2]), cells[3])
+            rows[cells[0].strip("`")] = (paths(cells[1]), cells[2])
     assert set(rows) == set(CLOUD_METADATA_SOURCES)
     for name, source in CLOUD_METADATA_SOURCES.items():
-        assert rows[name] == (list(source.aws), list(source.azure), source.scope), name
+        assert rows[name] == (list(source.aws), source.scope), name
