@@ -107,6 +107,7 @@ nav:
       - ONTAP Access Patterns: usage/ontap-access-patterns.md
       - Console Agent: usage/console-agent.md
       - Cluster Resolver: usage/cluster-resolver.md
+      - Report Cloud Details: usage/report-cloud-details.md
       - AIQUM API: usage/aiqum-api.md
       - DataSource: usage/data-source.md
       - Query Layer: usage/query-layer.md
@@ -192,6 +193,7 @@ nav:
       - ADR-0030 OCCM cache is discovery-driven and maps working environments to agents: decisions/0030-occm-cache-is-discovery-driven-and-maps-working-environments-to-agents.md
       - ADR-0031 One command stores every SOPS secret and encrypt-value is removed: decisions/0031-one-command-stores-every-sops-secret-and-encrypt-value-is-removed.md
       - ADR-0032 Cross-cache cluster resolution is UUID-first with a name fallback over one linking table: decisions/0032-cross-cache-cluster-resolution-is-uuid-first-with-a-name-fallback-over-one-linking-table.md
+      - ADR-0033 Reports read cloud details from the OCCM cache first with a whole-record CLI fallback: decisions/0033-reports-read-cloud-details-from-the-occm-cache-first-with-a-whole-record-cli-fallback.md
       - Template Decisions:
           - ADR-9001 uv Package Management: decisions/9001-use-uv-for-package-management.md
           - ADR-9002 doit Task Automation: decisions/9002-use-doit-for-task-automation.md

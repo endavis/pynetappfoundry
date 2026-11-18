@@ -21,7 +21,7 @@ Issue [#1076](https://github.com/endavis/pynetappfoundry/issues/1076) asks for a
 ## Decision
 
 1. **Scope.** The cache covers the on-prem list and, since #1074, the six cloud working environment lists (`OCCM_WORKING_ENVIRONMENT_MAPPINGS`). It adds `OccmCacheDB`, `OccmCollector` and `refresh_occm_cache()`. They walk `ConsoleDiscovery` accounts, then each discovered agent (deduplicated by `agent_id`, the first account wins), then that agent's working environment lists with `fields="*"`. The cache stores the inventory and the working environment to agent mapping. Deferred to follow-up issues:
-   - the reports that read the OCCM cache in place of the `CloudMetadata` CLI parsing, plus Console links in the reports (#1086, needs a CVO agent);
+   - the reports that read the OCCM cache in place of the `CloudMetadata` CLI parsing, plus Console links in the reports (#1086, implemented: [ADR-0033](0033-reports-read-cloud-details-from-the-occm-cache-first-with-a-whole-record-cli-fallback.md));
    - the refresh and inspect CLI, now implemented as `nf cache occm` (#1087).
 2. **Backend.** OCCM becomes cache-capable per mapping, the way AIQUM did in #1055. `OccmBackend.live_only` is `False` and `is_live_only(mapping)` returns `mapping.name not in OCCM_CACHED_MAPPINGS`. A partial decision goes live for all of the requested fields, cached and live together.
 3. **Failed agent.** A failing agent is logged as a warning and recorded in `failed_agents`; its earlier rows are kept. A transport or auth error (`requests.RequestException`, `tenacity.RetryError`, `ConsoleAuthError`, or an error building the client) fails the whole agent. A `TypeError` or `ValueError` (including a pydantic `ValidationError`) fails only that mapping: it is logged, recorded in `OccmSnapshot.failed_mappings` as `(agent_id, mapping)` and keeps its earlier rows. If every mapping fails, the agent is failed. An agent whose status is set and is not `active` is skipped without being contacted and recorded in `skipped_agents`; its earlier rows are kept too. Agents that are no longer discovered are pruned. A discovery failure propagates and the database is left untouched.
@@ -53,7 +53,7 @@ This supersedes [ADR-0027](0027-occm-backend-is-live-only-and-delegates-to-the-t
 - Issue #1074: cloud working environment lists
 - Issue #1093: generated `Tags` and `AvailabilityZone` model gaps (folded into #1095 and fixed there)
 - Issue #1095: generated CVO models accept real cloud working environments
-- Issue #1086: reports read cloud provider details from the OCCM cache (deferred)
+- Issue #1086: reports read cloud provider details from the OCCM cache (implemented)
 - Issue #1087: CLI to refresh and inspect the OCCM cache (implemented)
 - Issue #1083: the cached inventory also resolves a connector without `agent_id` and the scope of a raw agent id
 

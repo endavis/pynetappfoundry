@@ -1850,3 +1850,157 @@ class TestCloudSections:
         assert cluster.cloud_metadata_by_node["test-cluster-01"].instance_id == "i-111"
         assert cluster.cloud_metadata_by_node["test-cluster-02"].instance_id == "i-222"
         assert len(cluster.cloud_metadata) == 2
+
+
+def _occm_details(*, aggregates: bool = True, scopes: tuple[str | None, ...] = (None,)) -> Any:
+    from pynetappfoundry.cache.occm_cloud_metadata import ConsoleWorkingEnvironmentLinks
+    from pynetappfoundry.cli.commands.reports._cloud_source import CloudDetails
+    from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
+
+    meta = [
+        CloudMetadata(
+            node="n1",
+            provider="AWS",
+            region="us-east-1",
+            account_id="111122223333",
+            instance_id="i-1",
+            instance_type="m5.xlarge",
+            vm_name="i-1",
+        )
+    ]
+    base = "https://ui.example.test/storage/cloud-volumes-ontap/VsaWorkingEnvironment-AAAA"
+    console = ConsoleWorkingEnvironmentLinks(
+        public_id="VsaWorkingEnvironment-AAAA",
+        agent_id="agent-1",
+        agent_name="agent",
+        scopes=scopes,
+        working_environment=base,
+        volumes=f"{base}/volumes",
+        aggregates=f"{base}/aggregates" if aggregates else "",
+    )
+    return CloudDetails("occm", meta, console)
+
+
+def _cluster_with_source(mock_config: MagicMock, source: MagicMock | None) -> ClusterData:
+    from yattag import Doc
+
+    builder = MagicMock()
+    builder.config = mock_config
+    doc, tag, text = Doc().tagtext()
+    builder.doc, builder.tag, builder.text = doc, tag, text
+    real = HTMLReportBuilder("Test", {}, mock_config)
+    real.doc, real.tag, real.text = doc, tag, text
+    builder.format_table_row_text = real.format_table_row_text
+    builder.format_table_row_link = real.format_table_row_link
+    entry = MagicMock()
+    ontap = MagicMock()
+    type(ontap).cloud = PropertyMock(side_effect=AssertionError("ontap.cloud was read"))
+    entry.ontap = ontap
+    with patch.object(ClusterData, "_gather_data"):
+        cluster = ClusterData(
+            "test-cluster",
+            builder,
+            cluster_entry=entry,
+            cloud_source=source,
+            div="D",
+            bu="B",
+            tags=[],
+            ip="10.0.0.1",
+        )
+    cluster.nodes = [OntapNodeResponse(name="n1")]
+    return cluster
+
+
+class TestBuildCloudInfoOccm:
+    """#1086: ``_build_cloud_info`` takes the cloud details from the cloud source."""
+
+    def test_occm_details_fill_cloud_fields_without_the_cli_path(
+        self, mock_config: MagicMock
+    ) -> None:
+        source = MagicMock()
+        source.details.return_value = _occm_details()
+        cluster = _cluster_with_source(mock_config, source)
+        cluster.cluster_traits = ClusterTraits(is_cloud=True)
+        cluster._build_cloud_info()
+        assert cluster.cloud_provider == "AWS"
+        assert cluster.cloud_account_id == "111122223333"
+        assert cluster.cloud_region == "us-east-1"
+        assert set(cluster.cloud_metadata_by_node) == {"n1"}
+        assert cluster.cloud_source_label == "Console (OCCM cache)"
+        assert cluster.console_links is not None
+        kwargs = source.details.call_args.kwargs
+        assert kwargs["is_cloud"] is True
+        assert kwargs["node_names"] == ["n1"]
+
+    def test_cli_label(self, mock_config: MagicMock) -> None:
+        from pynetappfoundry.cli.commands.reports._cloud_source import CloudDetails
+
+        details = _occm_details()
+        source = MagicMock()
+        source.details.return_value = CloudDetails("cli", details.metadata, None)
+        cluster = _cluster_with_source(mock_config, source)
+        cluster.cluster_traits = ClusterTraits(is_cloud=True)
+        cluster._build_cloud_info()
+        assert cluster.cloud_source_label == "ONTAP CLI"
+        assert cluster.console_links is None
+
+    def test_on_prem_gets_console_links_only(self, mock_config: MagicMock) -> None:
+        from pynetappfoundry.cli.commands.reports._cloud_source import CloudDetails
+
+        source = MagicMock()
+        source.details.return_value = CloudDetails("none", [], _occm_details().console)
+        cluster = _cluster_with_source(mock_config, source)
+        cluster.cluster_traits = ClusterTraits(is_cloud=False)
+        cluster._build_cloud_info()
+        assert cluster.cloud_provider == ""
+        assert cluster.console_links is not None
+        assert source.details.call_args.kwargs["is_cloud"] is False
+
+    def test_no_source_keeps_the_gate(self, mock_config: MagicMock) -> None:
+        cluster = _cluster_with_source(mock_config, None)
+        cluster.cluster_traits = ClusterTraits(is_cloud=False)
+        cluster._build_cloud_info()
+        assert cluster.cloud_metadata == []
+        assert cluster.cloud_source_label == ""
+
+
+class TestFormatConsoleInfo:
+    """#1086: the cloud Source row and the NetApp Console section."""
+
+    def _html(self, cluster: ClusterData) -> str:
+        return str(cluster.app_instance.doc.getvalue())
+
+    def test_source_row_and_console_section_for_cvo(self, mock_config: MagicMock) -> None:
+        source = MagicMock()
+        source.details.return_value = _occm_details()
+        cluster = _cluster_with_source(mock_config, source)
+        cluster.cluster_traits = ClusterTraits(is_cloud=True)
+        cluster._build_cloud_info()
+        cluster._format_netapp_cloud_info()
+        cluster._format_netapp_console_info()
+        html_text = self._html(cluster)
+        assert "Console (OCCM cache)" in html_text
+        assert ">Source<" in html_text
+        for label in ("Working environment", "Volumes", "Aggregates"):
+            assert f">{label}<" in html_text
+        assert "/storage/cloud-volumes-ontap/VsaWorkingEnvironment-AAAA/aggregates" in html_text
+        assert "Account scope" in html_text
+        assert ">default<" in html_text
+
+    def test_on_prem_has_two_links(self, mock_config: MagicMock) -> None:
+        source = MagicMock()
+        source.details.return_value = _occm_details(aggregates=False, scopes=("org1",))
+        cluster = _cluster_with_source(mock_config, source)
+        cluster.cluster_traits = ClusterTraits(is_cloud=False)
+        cluster._build_cloud_info()
+        cluster._format_netapp_console_info()
+        html_text = self._html(cluster)
+        assert ">Working environment<" in html_text
+        assert ">Volumes<" in html_text
+        assert ">Aggregates<" not in html_text
+        assert ">org1<" in html_text
+
+    def test_absent_without_links(self, mock_config: MagicMock) -> None:
+        cluster = _cluster_with_source(mock_config, None)
+        cluster._format_netapp_console_info()
+        assert self._html(cluster) == ""

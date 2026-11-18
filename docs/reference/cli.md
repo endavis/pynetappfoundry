@@ -102,11 +102,15 @@ nf reports [OPTIONS] COMMAND [ARGS]...
 | Command | Description |
 |---------|-------------|
 | `html` | Generate HTML reports with hierarchical tree view |
+| `inventory` | Generate the inventory spreadsheet (Excel) |
 | `locks` | Generate client lock reports (Excel) |
 | `space-usage` | Generate space usage reports (Excel) |
 
 All `reports` subcommands accept `-f, --filter` to scope the report to a
 subset of clusters.
+
+`inventory` and `html` read AWS cloud provider details from the OCCM cache first and fall back to
+the ONTAP CLI path per cluster (Azure and GCP always use the CLI path); see [Report Cloud Details](../usage/report-cloud-details.md).
 
 ### events
 

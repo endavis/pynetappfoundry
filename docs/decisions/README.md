@@ -155,3 +155,4 @@ The Issue contains the full discussion; the ADR summarizes the outcome.
 | [0030](0030-occm-cache-is-discovery-driven-and-maps-working-environments-to-agents.md) | OCCM cache is discovery-driven and maps working environments to agents | Accepted |
 | [0031](0031-one-command-stores-every-sops-secret-and-encrypt-value-is-removed.md) | One command stores every SOPS secret and encrypt-value is removed | Accepted |
 | [0032](0032-cross-cache-cluster-resolution-is-uuid-first-with-a-name-fallback-over-one-linking-table.md) | Cross-cache cluster resolution is UUID-first with a name fallback over one linking table | Accepted |
+| [0033](0033-reports-read-cloud-details-from-the-occm-cache-first-with-a-whole-record-cli-fallback.md) | Reports read cloud details from the OCCM cache first with a whole-record CLI fallback | Accepted |

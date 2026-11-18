@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING, Any
 
 import click
 
+from pynetappfoundry.cli.commands.reports._cloud_source import CloudDetails, ReportCloudSource
 from pynetappfoundry.cli.decorators import with_config
 from pynetappfoundry.cli.options import filter_option
 from pynetappfoundry.cli.utils import print_info, print_success
@@ -27,6 +28,7 @@ from pynetappfoundry.utils.console_links import (
 from pynetappfoundry.utils.excel import ExcelWorkbook
 
 if TYPE_CHECKING:
+    from pynetappfoundry.cache.occm_cloud_metadata import ConsoleWorkingEnvironmentLinks
     from pynetappfoundry.models.ontap.cloud.metadata.model import CloudMetadata
     from pynetappfoundry.models.ontap.cluster.licensing.licenses import (
         OntapLicensePackageResponse,
@@ -98,6 +100,9 @@ _HEADERS = [
     "Load-Balancers",
     "Remark",
     "NetApp Console Agent",
+    "Console Working Environment",
+    "Console Volumes",
+    "Console Aggregates",
 ]
 
 # 0-based columns whose text wraps (Contacts, Notes, and the trailing free-text columns).
@@ -139,6 +144,9 @@ _COL_WIDTHS = [
     55,
     20,
     45,
+    28,
+    18,
+    20,
 ]
 
 
@@ -176,29 +184,59 @@ def _cloud_type(traits: ClusterTraits) -> str:
     return "CVO HA" if traits.is_ha else "CVO"
 
 
+def _console_cells(console: ConsoleWorkingEnvironmentLinks | None) -> list[Any]:
+    """Return the three Console link cells (display text, URL) or ``""`` for a missing link."""
+    if console is None:
+        return ["", "", ""]
+    links = (
+        ("Working environment", console.working_environment),
+        ("Volumes", console.volumes),
+        ("Aggregates", console.aggregates),
+    )
+    return [(text, url) if url else "" for text, url in links]
+
+
 class InventoryReport:
     """Builds the NetApp inventory Excel workbook."""
 
-    def __init__(self, config: Config, clusters: dict[str, Any]) -> None:
+    def __init__(
+        self,
+        config: Config,
+        clusters: dict[str, Any],
+        *,
+        cloud_source: ReportCloudSource | None = None,
+    ) -> None:
         self.config = config
         self.clusters = clusters
+        self.cloud_source = cloud_source
         self.rows: list[list[Any]] = []
         self.ui_base_url: str = str(
             config.get_setting("consoleapi", "general", "ui_base_url", default=CONSOLE_UI_BASE_URL)
         )
 
-    def _collect_cloud_meta(
+    def _collect_cloud(
         self,
+        name: str,
         entry: ClusterEntry,
         traits: ClusterTraits | None,
-    ) -> list[CloudMetadata]:
-        """Load cloud metadata from cache for CVO clusters only."""
-        if not traits or not traits.is_cloud:
-            return []
+        nodes: list[OntapNodeResponse],
+    ) -> CloudDetails:
+        """Load cloud details: OCCM cache first when a source is set, else the CLI path.
+
+        ``entry.ontap.cloud`` is read for CVO clusters only (#547).
+        """
+
+        is_cloud = bool(traits and traits.is_cloud)
+        if self.cloud_source is not None:
+            return self.cloud_source.details(
+                name, is_cloud=is_cloud, node_names=[n.name for n in nodes], entry=entry
+            )
+        if not is_cloud:
+            return CloudDetails("none", [], None)
         ontap = entry.ontap
         if not ontap or not ontap.cloud:
-            return []
-        return list(ontap.cloud)
+            return CloudDetails("cli", [], None)
+        return CloudDetails("cli", list(ontap.cloud), None)
 
     def _build_row(
         self,
@@ -209,6 +247,7 @@ class InventoryReport:
         licenses: list[OntapLicensePackageResponse],
         cloud_meta: list[CloudMetadata],
         traits: ClusterTraits | None = None,
+        console: ConsoleWorkingEnvironmentLinks | None = None,
     ) -> list[Any]:
         """Build a single data row for one cluster."""
         from pynetappfoundry.models.ontap.cluster.traits.model import ClusterTraits
@@ -340,6 +379,7 @@ class InventoryReport:
             "",  # Load-Balancers (blank for now)
             "",  # Remark
             agent_cell,  # NetApp Console Agent (link)
+            *_console_cells(console),  # Console Working Environment, Volumes, Aggregates (links)
         ]
 
     def build(self) -> None:
@@ -358,9 +398,18 @@ class InventoryReport:
             nodes = list(ds.query(OntapNodeResponse, cluster=name, source="auto"))
             licenses = list(ds.query(OntapLicensePackageResponse, cluster=name, source="auto"))
             traits = ds.query(ClusterTraits, cluster=name, source="auto").first()
-            cloud_meta = self._collect_cloud_meta(entry, traits)
+            cloud = self._collect_cloud(name, entry, traits, nodes)
             self.rows.append(
-                self._build_row(name, entry, cluster_info, nodes, licenses, cloud_meta, traits)
+                self._build_row(
+                    name,
+                    entry,
+                    cluster_info,
+                    nodes,
+                    licenses,
+                    cloud.metadata,
+                    traits,
+                    cloud.console,
+                )
             )
 
     def save(self, path: str | Path) -> None:
@@ -429,8 +478,9 @@ def inventory(
 
     print_info(f"Building inventory report for {len(clusters)} cluster(s)...")
 
-    report = InventoryReport(config, clusters)
-    report.build()
+    with ReportCloudSource.from_config(config) as source:
+        report = InventoryReport(config, clusters, cloud_source=source)
+        report.build()
     report.save(filename)
 
     print_success(f"Report saved to {filename}")
