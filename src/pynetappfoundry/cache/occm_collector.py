@@ -100,6 +100,8 @@ class OccmSnapshot:
         failed_mappings: ``(agent_id, mapping)`` pairs whose list failed with a
             ``TypeError`` or ``ValueError`` while the agent itself was collected;
             the mapping keeps its earlier rows.
+        scopes: The Console account scopes the run was limited to (``None`` is the
+            root account), or ``None`` when every account was collected.
     """
 
     cached_at: datetime
@@ -108,6 +110,7 @@ class OccmSnapshot:
     failed_agents: tuple[str, ...] = field(default=())
     skipped_agents: tuple[str, ...] = field(default=())
     failed_mappings: tuple[tuple[str, str], ...] = field(default=())
+    scopes: tuple[str | None, ...] | None = None
 
 
 class OccmCollector:
@@ -120,6 +123,8 @@ class OccmCollector:
             ``factory(config, agent_id)`` or ``factory(config, agent_id, scope=scope)``
             for a scoped agent.  Defaults to ``ConsoleAgentClient``.
         mappings: Names of the mappings to collect.
+        scopes: Limit discovery to these Console account scopes (``None`` is the
+            root account); ``None`` collects every configured account.
     """
 
     def __init__(
@@ -129,11 +134,13 @@ class OccmCollector:
         discovery: ConsoleDiscovery | None = None,
         agent_client_factory: Callable[..., ConsoleAgentClient] | None = None,
         mappings: Sequence[str] = OCCM_CACHED_MAPPINGS,
+        scopes: Sequence[str | None] | None = None,
     ) -> None:
         self._config = config
         self._discovery = discovery
         self._factory = agent_client_factory
         self._mappings = tuple(mappings)
+        self._scopes = None if scopes is None else tuple(scopes)
 
     def _resolve(self) -> list[tuple[TypeMapping, str]]:
         resolved: list[tuple[TypeMapping, str]] = []
@@ -173,7 +180,14 @@ class OccmCollector:
             from pynetappfoundry.console.discovery import ConsoleDiscovery
 
             discovery = ConsoleDiscovery(self._config)
-        inventory = discovery.discover()
+        if self._scopes is None:
+            inventory = discovery.discover()
+        else:
+            from pynetappfoundry.console.discovery import ConsoleInventory
+
+            inventory = ConsoleInventory(
+                accounts=[discovery.discover_account(scope) for scope in self._scopes]
+            )
 
         collected: list[OccmAgentSnapshot] = []
         failed: list[str] = []
@@ -241,6 +255,7 @@ class OccmCollector:
             failed_agents=tuple(failed),
             skipped_agents=tuple(skipped),
             failed_mappings=tuple(failed_mappings),
+            scopes=self._scopes,
         )
 
 
@@ -250,6 +265,7 @@ def refresh_occm_cache(
     db: OccmCacheDB | None = None,
     discovery: ConsoleDiscovery | None = None,
     agent_client_factory: Callable[..., ConsoleAgentClient] | None = None,
+    scopes: Sequence[str | None] | None = None,
 ) -> OccmSnapshot:
     """Collect the Console agents and replace the OCCM cache with the result.
 
@@ -258,6 +274,8 @@ def refresh_occm_cache(
         db: Database to write to; defaults to ``{config_dir}/.cache/occm_cache.db``.
         discovery: Discovery to use; defaults to ``ConsoleDiscovery(config)``.
         agent_client_factory: Builds an agent client; see :class:`OccmCollector`.
+        scopes: Refresh only these Console account scopes; other scopes' cached
+            inventory and agents are kept.  ``None`` refreshes every account.
 
     Raises:
         Exception: A discovery failure propagates; the database is left unchanged.
@@ -265,7 +283,7 @@ def refresh_occm_cache(
     from pynetappfoundry.cache.occm_db import OccmCacheDB
 
     snapshot = OccmCollector(
-        config, discovery=discovery, agent_client_factory=agent_client_factory
+        config, discovery=discovery, agent_client_factory=agent_client_factory, scopes=scopes
     ).collect()
     if db is not None:
         db.set(snapshot)

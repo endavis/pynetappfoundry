@@ -265,3 +265,83 @@ def test_set_is_one_transaction(db: OccmCacheDB) -> None:
     with pytest.raises(sqlite3.OperationalError):
         db.set(_snapshot([bad]))
     assert db.query_records("a2", _MAPPING, {}) == []
+
+
+def _scoped_inventory(*scopes: str | None) -> ConsoleInventory:
+    return ConsoleInventory(
+        accounts=[
+            AccountInventory(
+                scope=s,
+                organizations=[
+                    Organization(id=f"org-{s}", name=f"o-{s}", resourceClass="C", resourceType="T")
+                ],
+            )
+            for s in scopes
+        ]
+    )
+
+
+def test_scoped_set_keeps_other_scopes(db: OccmCacheDB) -> None:
+    db.set(
+        _snapshot(
+            [
+                _agent_snapshot("root1", [_we("p0")], scope=None),
+                _agent_snapshot("a1", [_we("p1")], scope="prod"),
+                _agent_snapshot("a2", [_we("p2")], scope="prod"),
+            ],
+            inventory=_scoped_inventory(None, "prod"),
+        )
+    )
+    scoped = OccmSnapshot(
+        cached_at=datetime.now(UTC),
+        inventory=_scoped_inventory("prod"),
+        agents=(_agent_snapshot("a1", [_we("p1b")], scope="prod"),),
+        scopes=("prod",),
+    )
+    db.set(scoped)
+    assert db.list_agents() == ["a1", "root1"]
+    assert db.agents_for_working_environment("p0") == ["root1"]
+    assert db.agents_for_working_environment("p1b") == ["a1"]
+    assert [o.id for o in db.organizations()] == ["org-None", "org-prod"]
+
+
+def test_scoped_set_root_scope_prunes_only_root(db: OccmCacheDB) -> None:
+    db.set(
+        _snapshot(
+            [
+                _agent_snapshot("root1", [_we("p0")], scope=None),
+                _agent_snapshot("a1", [_we("p1")], scope="prod"),
+            ]
+        )
+    )
+    db.set(
+        OccmSnapshot(
+            cached_at=datetime.now(UTC),
+            inventory=_scoped_inventory(None),
+            scopes=(None,),
+        )
+    )
+    assert db.list_agents() == ["a1"]
+
+
+def test_agent_status_values_and_staleness(db: OccmCacheDB) -> None:
+    old = datetime.now(UTC) - timedelta(days=40)
+    db.set(
+        _snapshot(
+            [
+                _agent_snapshot("b", [_we("p1"), _we("p2")], cached_at=old, scope="prod"),
+                _agent_snapshot("a", [_we("p3")]),
+            ]
+        )
+    )
+    statuses = db.agent_status()
+    assert [s.agent_id for s in statuses] == ["a", "b"]
+    a, b = statuses
+    assert (a.scope, a.mapping_count, a.record_count, a.is_stale) == (None, 1, 1, False)
+    assert (b.scope, b.record_count, b.is_stale) == ("prod", 2, True)
+    assert b.oldest_cached_at == old
+    assert not db.agent_status(ttl_days=50)[1].is_stale
+
+
+def test_agent_status_empty(db: OccmCacheDB) -> None:
+    assert db.agent_status() == []

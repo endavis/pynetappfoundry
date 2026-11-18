@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar
@@ -49,6 +50,31 @@ _WE_PLACEHOLDERS = ", ".join("?" for _ in _WORKING_ENVIRONMENT_MAPPINGS)
 _ORGANIZATION = "organization"
 _AGENT = "agent"
 _WORKING_ENVIRONMENT = "working_environment"
+
+
+@dataclass(frozen=True)
+class OccmAgentStatus:
+    """Cache status of one agent that has collected rows.
+
+    Attributes:
+        agent_id: The agent id.
+        scope: The Console account scope of the agent (None for the root).
+        organization_id: The organization the agent was listed under, if known.
+        oldest_cached_at: The oldest collection time across the agent's mappings.
+        newest_cached_at: The newest collection time across the agent's mappings.
+        mapping_count: Number of mappings collected.
+        record_count: Number of stored records.
+        is_stale: Whether the oldest collection is older than the TTL.
+    """
+
+    agent_id: str
+    scope: str | None
+    organization_id: str | None
+    oldest_cached_at: datetime
+    newest_cached_at: datetime
+    mapping_count: int
+    record_count: int
+    is_stale: bool
 
 
 class OccmCacheDB(SQLiteDB):
@@ -125,7 +151,9 @@ class OccmCacheDB(SQLiteDB):
 
         The inventory is replaced.  Each collected agent's records are replaced.
         Agents no longer discovered are pruned; a failed or skipped agent keeps
-        its rows.
+        its rows.  When ``snapshot.scopes`` is set, only the inventory rows and
+        the agents of those scopes are replaced and pruned; other scopes keep
+        theirs.
         """
         from pynetappfoundry.cache._registry import model_registry
 
@@ -136,7 +164,11 @@ class OccmCacheDB(SQLiteDB):
             | set(snapshot.skipped_agents)
         )
         with self.conn:
-            self.conn.execute(f"DELETE FROM {_INVENTORY}")
+            if snapshot.scopes is None:
+                self.conn.execute(f"DELETE FROM {_INVENTORY}")
+            else:
+                for scope in snapshot.scopes:
+                    self.conn.execute(f"DELETE FROM {_INVENTORY} WHERE scope IS ?", (scope,))
             rows: list[tuple[str, str | None, str | None, str, str, str]] = []
             for account in snapshot.inventory.accounts:
                 for org in account.organizations:
@@ -179,7 +211,12 @@ class OccmCacheDB(SQLiteDB):
                 rows,
             )
 
-            for stored in self.list_agents():
+            in_scope = (
+                self.list_agents()
+                if snapshot.scopes is None
+                else self._agents_in_scopes(snapshot.scopes)
+            )
+            for stored in in_scope:
                 if stored not in discovered:
                     self._delete_agent(stored)
 
@@ -220,6 +257,16 @@ class OccmCacheDB(SQLiteDB):
                             agent_cached_at,
                         ),
                     )
+
+    def _agents_in_scopes(self, scopes: tuple[str | None, ...]) -> list[str]:
+        """Return the ids of the collected agents whose scope is in *scopes*."""
+        found: set[str] = set()
+        for scope in scopes:
+            rows = self.conn.execute(
+                f"SELECT DISTINCT agent_id FROM {_COLLECTIONS} WHERE scope IS ?", (scope,)
+            )
+            found.update(str(row["agent_id"]) for row in rows)
+        return sorted(found)
 
     def _delete_agent(self, agent_id: str) -> int:
         """Delete one agent's records and collection rows; return the records removed."""
@@ -341,6 +388,40 @@ class OccmCacheDB(SQLiteDB):
             return None
         oldest = datetime.fromisoformat(row["oldest"])
         return datetime.now(UTC) - oldest > timedelta(days=ttl_days)
+
+    def agent_status(self, ttl_days: int = 30) -> list[OccmAgentStatus]:
+        """Return the cache status of every agent with collected rows, by agent id.
+
+        An agent is stale under the same rule as :meth:`is_stale`.
+        """
+        counts = {
+            str(row["agent_id"]): int(row["n"])
+            for row in self.conn.execute(
+                f"SELECT agent_id, COUNT(*) AS n FROM {_RECORDS} GROUP BY agent_id"
+            )
+        }
+        rows = self.conn.execute(
+            f"SELECT agent_id, MIN(scope) AS scope, MIN(organization_id) AS organization_id, "
+            f"MIN(cached_at) AS oldest, MAX(cached_at) AS newest, COUNT(*) AS mappings "
+            f"FROM {_COLLECTIONS} GROUP BY agent_id ORDER BY agent_id"
+        )
+        now = datetime.now(UTC)
+        result: list[OccmAgentStatus] = []
+        for row in rows:
+            oldest = datetime.fromisoformat(row["oldest"])
+            result.append(
+                OccmAgentStatus(
+                    agent_id=str(row["agent_id"]),
+                    scope=row["scope"],
+                    organization_id=row["organization_id"],
+                    oldest_cached_at=oldest,
+                    newest_cached_at=datetime.fromisoformat(row["newest"]),
+                    mapping_count=int(row["mappings"]),
+                    record_count=counts.get(str(row["agent_id"]), 0),
+                    is_stale=now - oldest > timedelta(days=ttl_days),
+                )
+            )
+        return result
 
 
 def _record_key(record: dict[str, Any], identifier: Any) -> str | None:
