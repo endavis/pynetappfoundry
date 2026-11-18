@@ -29,10 +29,6 @@ pynetappfoundry uses TOML files for configuration. Configuration is organized in
 config/
 ├── settings.toml        # General settings, searchable keys, SMTP, licensing
 ├── users.toml           # Credentials for resource types
-├── ontapapi.toml        # ONTAP REST API settings
-├── aiqumapi.toml        # AIQUM REST API settings
-├── diiapi.toml          # Data Infrastructure Insights API settings
-├── consoleapi.toml      # Console SaaS (BlueXP) API settings
 ├── monitoring.toml      # Monitoring thresholds (optional)
 ├── environments/        # Data files (clusters, connectors, etc.)
 │   ├── prod.toml
@@ -44,23 +40,50 @@ config/
 │   ├── users.toml       # Credentials of the scope
 │   ├── monitoring.toml  # Thresholds of the scope
 │   └── consoleapi.toml  # The scope's own Console account
-└── apis/                # API specifications (OpenAPI/Swagger)
+└── apis/                # One directory per API: its settings file next to its spec
     ├── ontap/
+    │   ├── ontapapi.toml    # ONTAP REST API settings
     │   └── all.json
     ├── aiqum/
+    │   ├── aiqumapi.toml    # AIQUM REST API settings
     │   └── all.json
     ├── dii/
+    │   ├── diiapi.toml      # Data Infrastructure Insights API settings
     │   └── all.json
     └── console/
+        ├── consoleapi.toml  # Console SaaS (BlueXP) API settings (the root account)
         └── console_openapi.yaml
 ```
+
+The example config in `docs/example-config/` uses this layout. Its `apis/console/` directory has no
+`console_openapi.yaml`: `docs/example-config/apis/console/notes.txt` says to copy it from
+`tools/console_openapi/generated/`.
+
+### Where the settings files go
+
+The loader finds settings files by file name, not by path, so a settings file loads wherever it
+sits in the config directory (outside a scope). The recommended layout is the tree above:
+
+- `settings.toml`, `users.toml` and `monitoring.toml` at the top level.
+- Each API's settings file (`ontapapi.toml`, `aiqumapi.toml`, `diiapi.toml`, `consoleapi.toml`) in
+  `apis/<name>/`, next to that API's spec.
+- A scope's own `users.toml`, `monitoring.toml` and `consoleapi.toml` directly in the scope
+  directory (`<scope>/consoleapi.toml`). These three are the only settings files a scope may hold;
+  `ontapapi.toml`, `aiqumapi.toml` and `diiapi.toml` are root only (see
+  [What a scope may contain](#what-a-scope-may-contain)).
+
+Keep one file per name at the root, and one per name in each scope. Two files with the same name
+are merged, and which one wins a key both set depends on the order the file system lists them, so
+`nf config set-credential --setting` refuses to write until only one is left. When the file does
+not exist yet, `set-credential` creates it at the top level (`<config>/consoleapi.toml`) or in the
+scope directory, not in `apis/console/`.
 
 ### How Configuration Loading Works
 
 1. All `.toml` files in the config directory are loaded recursively
 2. Files with `[settings] type = "data"` are treated as **data files**
 3. All other files are treated as **settings files**
-4. Settings files are stored by filename: `settings.toml` → `config.settings["settings"]`
+4. Settings files are stored by file name, wherever they sit: `settings.toml` → `config.settings["settings"]`, and `<config>/apis/ontap/ontapapi.toml` → `config.settings["ontapapi"]` (see [Where the settings files go](#where-the-settings-files-go))
 5. Data files populate `config.data` by section: `[clusters.NAME]` → `config.data["clusters"]["NAME"]`
 6. A top-level directory that contains `scope.toml` is a [scope](#scopes). Its data files load into `config.data` like any other, and `config.get_scope(data_type, name)` reports which scope an object came from. Its `users.toml`, `monitoring.toml` and `consoleapi.toml` load into `config.scope_settings[scope]` and never into `config.settings`
 7. A config directory without any `scope.toml` loads exactly as in steps 1 to 5
@@ -863,7 +886,7 @@ user = "admin"
 enc = "YWRtaW5fcGFzc3dvcmQ="
 ```
 
-**config/ontapapi.toml:**
+**config/apis/ontap/ontapapi.toml:**
 ```toml
 [general]
 base_api_path = "/api"
