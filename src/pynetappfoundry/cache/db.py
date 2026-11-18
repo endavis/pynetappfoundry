@@ -296,6 +296,11 @@ class ClusterMetadataDB(SQLiteDB):
     SCHEMA_VERSION: ClassVar[int] = 12
     TABLE_NAME: ClassVar[str] = "cluster_metadata"
 
+    @staticmethod
+    def default_path(config: Config) -> Path:
+        """Return the cache file path for *config*, without creating anything."""
+        return Path(config.config_dir) / ".cache" / "cluster_metadata.db"
+
     def __init__(
         self,
         db_path: Path | str | None = None,
@@ -315,9 +320,8 @@ class ClusterMetadataDB(SQLiteDB):
         if db_path:
             self.db_path = db_path
         elif config:
-            cache_dir = config.config_dir / ".cache"
-            cache_dir.mkdir(parents=True, exist_ok=True)
-            self.db_path = cache_dir / "cluster_metadata.db"
+            self.db_path = self.default_path(config)
+            self.db_path.parent.mkdir(parents=True, exist_ok=True)
         else:
             raise ValueError("Either db_path or config must be provided")
 

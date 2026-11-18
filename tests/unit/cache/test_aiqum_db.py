@@ -193,3 +193,10 @@ def test_list_collections_sorted_and_filtered(db: AiqumCacheDB) -> None:
 def test_list_collections_empty(db: AiqumCacheDB) -> None:
     assert db.list_collections() == []
     assert db.list_collections("aiq1") == []
+
+
+def test_default_path_is_under_config_dir_and_creates_nothing(tmp_path: Path) -> None:
+    config = MagicMock()
+    config.config_dir = tmp_path
+    assert AiqumCacheDB.default_path(config) == tmp_path / ".cache" / "aiqum_cache.db"
+    assert list(tmp_path.iterdir()) == []
