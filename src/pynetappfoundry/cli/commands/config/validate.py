@@ -2,12 +2,9 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from pathlib import Path
-from typing import Any
 
 import click
-from pydantic import ValidationError
 from rich.console import Console
 from rich.markup import escape
 from rich.panel import Panel
@@ -16,306 +13,45 @@ from rich.tree import Tree
 from pynetappfoundry.cli.errors import CliError
 from pynetappfoundry.cli.utils import print_success
 from pynetappfoundry.core.config import Config, ConfigurationError
-from pynetappfoundry.core.models import (
-    ClusterConfig,
-    UserCredentials,
-)
+from pynetappfoundry.core.config_checks import CheckSection, CheckStatus, run_static_checks
 
 console = Console()
 
 
-def _clusters_in_scope(config: Config, scope: str | None) -> dict[str, Any]:
-    """Return the clusters to check: all of them, or only those of ``scope``."""
-    clusters: dict[str, Any] = config.data.get("clusters", {})
-    if scope is None:
-        return clusters
-    return {
-        name: data for name, data in clusters.items() if config.get_scope("clusters", name) == scope
-    }
+_STYLES = {
+    CheckStatus.OK: "green",
+    CheckStatus.ERROR: "red",
+    CheckStatus.WARNING: "yellow",
+    CheckStatus.SKIPPED: "dim",
+}
 
 
-def _validate_clusters(config: Config, tree: Tree, scope: str | None = None) -> list[str]:
-    """Validate cluster configurations.
+def _render(sections: list[CheckSection], tree: Tree) -> tuple[list[str], list[str]]:
+    """Draw the check results into ``tree``.
 
     Args:
-        config: Config instance to validate.
-        tree: Rich Tree to add results to.
-        scope: Check only this scope's clusters; None checks every cluster.
+        sections: Results from :func:`run_static_checks`.
+        tree: Rich Tree to add the sections to.
 
     Returns:
-        List of validation error messages.
+        ``(errors, hints)``: the error-panel lines and the hints of the ``error``
+        results, already escaped for printing.
     """
     errors: list[str] = []
-    clusters_branch = tree.add("[bold]Clusters[/bold]")
-
-    clusters = _clusters_in_scope(config, scope)
-    if not clusters:
-        clusters_branch.add("[yellow]No clusters configured[/yellow]")
-        return errors
-
-    for name, cluster_data in clusters.items():
-        try:
-            ClusterConfig.model_validate(cluster_data)
-            clusters_branch.add(f"[green]{escape(str(name))}[/green]")
-        except ValidationError as e:
-            clusters_branch.add(f"[red]{escape(str(name))}: Invalid[/red]")
-            for err in e.errors():
-                loc = ".".join(str(x) for x in err["loc"])
-                errors.append(f"clusters.{name}.{loc}: {err['msg']}")
-
-    return errors
-
-
-def _validate_users(users: dict[str, Any], tree: Tree, *, label_prefix: str = "users") -> list[str]:
-    """Validate user credential configurations.
-
-    Args:
-        users: The parsed ``users.toml`` sections to validate.
-        tree: Rich Tree to add results to.
-        label_prefix: Prefix of each error key, ``users`` or ``<scope>/users``.
-
-    Returns:
-        List of validation error messages.
-    """
-    errors: list[str] = []
-    users_branch = tree.add("[bold]Users[/bold]")
-
-    if not users:
-        users_branch.add("[yellow]No users configured[/yellow]")
-        return errors
-
-    for utype, udata in users.items():
-        if isinstance(udata, dict) and "user" in udata:
-            try:
-                UserCredentials.model_validate(udata)
-                users_branch.add(f"[green]{escape(str(utype))}[/green]")
-            except ValidationError as e:
-                users_branch.add(f"[red]{escape(str(utype))}: Invalid[/red]")
-                for err in e.errors():
-                    loc = ".".join(str(x) for x in err["loc"])
-                    errors.append(f"{label_prefix}.{utype}.{loc}: {err['msg']}")
-
-    return errors
-
-
-def _check_settings_section(
-    config: Config,
-    branch: Tree,
-    *,
-    label: str,
-    keys: tuple[str, str],
-    reader: Callable[[], object],
-    absent_text: str,
-    tree: dict[str, Any] | None = None,
-    error_prefix: str = "",
-    hint: Callable[[], str | None] | None = None,
-    hints_out: list[str] | None = None,
-) -> list[str]:
-    """Report one settings section as valid, not configured, or invalid.
-
-    A section that is absent is "not configured". A section that is present but
-    fails to load (invalid fields, a SOPS value that cannot be decrypted) is
-    invalid, and the reader's error message is returned as a validation error.
-
-    Args:
-        config: Config instance to validate.
-        branch: Rich tree branch to add the result to.
-        label: Display name of the section.
-        keys: ``(top-level key, section key)`` locating the section in ``config.settings``.
-        reader: The ``Config`` reader that loads and validates the section.
-        absent_text: Markup shown when the section is absent.
-        tree: Settings to look in instead of ``config.settings`` (a scope's own tree).
-        error_prefix: Prefix of the error key, such as ``Org1/`` for a scope.
-        hint: Returns already-escaped advice shown when the section is invalid, or None.
-        hints_out: Collects the advice for the final error's hints.
-
-    Returns:
-        List of validation error messages.
-    """
-    top = (config.settings if tree is None else tree).get(keys[0])
-    if not isinstance(top, dict) or keys[1] not in top:
-        branch.add(absent_text)
-        return []
-    try:
-        reader()
-    except ConfigurationError as e:
-        branch.add(f"[red]{escape(label)}: Invalid[/red]")
-        advice = hint() if hint is not None else None
-        if advice:
-            branch.add(f"[yellow]{advice}[/yellow]")
-            if hints_out is not None:
-                hints_out.append(advice)
-        return [f"{error_prefix}{'.'.join(keys)}: {e}"]
-    branch.add(f"[green]{escape(label)}[/green]")
-    return []
-
-
-def _refresh_token_hint(
-    general: object, users: object, scope: str | None, file_name: str
-) -> str | None:
-    """Explain a Console account that has a ``client_id`` but no ``client_secret``.
-
-    The usual cause is a client secret stored as a refresh token in ``users.toml``
-    ``[console]``. Returns the Rich-escaped advice, or None when it does not apply.
-
-    Args:
-        general: The raw ``[general]`` table of the ``consoleapi.toml`` in question.
-        users: The raw ``users.toml`` sections of the same root or scope.
-        scope: The scope name, or None for the root.
-        file_name: Display name of the ``consoleapi.toml`` file.
-    """
-    if (
-        not isinstance(general, dict)
-        or not general.get("client_id")
-        or general.get("client_secret")
-    ):
-        return None
-    console_entry = users.get("console") if isinstance(users, dict) else None
-    if not isinstance(console_entry, dict) or not console_entry.get("enc"):
-        return None
-    scope_arg = f" --scope {scope}" if scope else ""
-    return escape(
-        f"{file_name} has client_id but no client_secret. The secret was probably stored "
-        "as a refresh token in users.toml [console]. Store it with: "
-        f"nf config set-credential --setting consoleapi.client_secret{scope_arg}"
-    )
-
-
-def _validate_settings(config: Config, tree: Tree, hints_out: list[str] | None = None) -> list[str]:
-    """Validate settings configurations.
-
-    Args:
-        config: Config instance to validate.
-        tree: Rich Tree to add results to.
-        hints_out: Collects advice for the final error's hints.
-
-    Returns:
-        List of validation error messages.
-    """
-    errors: list[str] = []
-    settings_branch = tree.add("[bold]Settings[/bold]")
-
-    errors.extend(
-        _check_settings_section(
-            config,
-            settings_branch,
-            label="ONTAP API",
-            keys=("ontapapi", "general"),
-            reader=config.get_ontap_api_settings,
-            absent_text="[yellow]ONTAP API: Not configured[/yellow]",
-        )
-    )
-    errors.extend(
-        _check_settings_section(
-            config,
-            settings_branch,
-            label="DII API",
-            keys=("diiapi", "general"),
-            reader=config.get_dii_api_settings,
-            absent_text="[dim]DII API: Not configured (optional)[/dim]",
-        )
-    )
-    errors.extend(
-        _check_settings_section(
-            config,
-            settings_branch,
-            label="SMTP",
-            keys=("settings", "SMTP"),
-            reader=config.get_smtp_settings,
-            absent_text="[dim]SMTP: Not configured (optional)[/dim]",
-        )
-    )
-    errors.extend(
-        _check_settings_section(
-            config,
-            settings_branch,
-            label="Console",
-            keys=("consoleapi", "general"),
-            reader=config.get_console_api_settings,
-            absent_text="[dim]Console: Not configured (optional)[/dim]",
-            hint=lambda: _refresh_token_hint(
-                config.settings.get("consoleapi", {}).get("general"),
-                config.settings.get("users", {}),
-                None,
-                "consoleapi.toml",
-            ),
-            hints_out=hints_out,
-        )
-    )
-
-    # Validate licensing settings (optional)
-    licensing = config.get_licensing_settings()
-    if licensing:
-        settings_branch.add("[green]Licensing[/green]")
-    else:
-        settings_branch.add("[dim]Licensing: Not configured (optional)[/dim]")
-
-    return errors
-
-
-def _validate_scope_settings(
-    config: Config, tree: Tree, scope: str, hints_out: list[str] | None = None
-) -> list[str]:
-    """Validate a scope's ``monitoring.toml`` and Console account.
-
-    Args:
-        config: Config instance to validate.
-        tree: Rich Tree to add results to.
-        scope: A known scope name.
-        hints_out: Collects advice for the final error's hints.
-
-    Returns:
-        List of validation error messages.
-    """
-    scope_tree = config.get_scope_settings(scope)
-    branch = tree.add(f"[bold]Scope settings ({escape(scope)})[/bold]")
-    if scope_tree.get("monitoring"):
-        branch.add("[green]Monitoring[/green]")
-    else:
-        branch.add("[dim]Monitoring: Not configured (optional)[/dim]")
-    return _check_settings_section(
-        config,
-        branch,
-        label="Console",
-        keys=("consoleapi", "general"),
-        reader=lambda: config.get_console_api_settings(scope=scope),
-        absent_text="[dim]Console: Not configured (optional)[/dim]",
-        tree=scope_tree,
-        error_prefix=f"{scope}/",
-        hint=lambda: _refresh_token_hint(
-            scope_tree.get("consoleapi", {}).get("general"),
-            scope_tree.get("users", {}),
-            scope,
-            f"{scope}/consoleapi.toml",
-        ),
-        hints_out=hints_out,
-    )
-
-
-def _check_cluster_credentials(config: Config, tree: Tree, scope: str | None = None) -> list[str]:
-    """Check that all clusters have valid credentials.
-
-    Args:
-        config: Config instance to validate.
-        tree: Rich Tree to add results to.
-        scope: Check only this scope's clusters; None checks every cluster.
-
-    Returns:
-        List of validation error messages.
-    """
-    errors: list[str] = []
-    creds_branch = tree.add("[bold]Cluster Credentials[/bold]")
-
-    clusters = _clusters_in_scope(config, scope)
-    for name in clusters:
-        try:
-            user, _enc = config.get_user("clusters", name)
-            creds_branch.add(f"[green]{escape(str(name))}: {escape(str(user))}[/green]")
-        except ConfigurationError:
-            creds_branch.add(f"[red]{escape(str(name))}: Missing credentials[/red]")
-            errors.append(f"Cluster '{name}' has no credentials configured")
-
-    return errors
+    hints: list[str] = []
+    for section in sections:
+        branch = tree.add(f"[bold]{escape(section.title)}[/bold]")
+        for result in section.results:
+            style = _STYLES[result.status]
+            row = branch.add(f"[{style}]{escape(result.label)}[/{style}]")
+            if result.hint:
+                hint_row = f"[yellow]{escape(result.hint)}[/yellow]"
+                (branch if result.hint_as_sibling else row).add(hint_row)
+            if result.status is CheckStatus.ERROR:
+                errors.extend(result.errors)
+                if result.hint:
+                    hints.append(escape(result.hint))
+    return errors, hints
 
 
 @click.command()
@@ -349,28 +85,14 @@ def validate(ctx: click.Context, scope: str | None) -> None:
     except Exception as e:
         raise CliError(f"Failed to load configuration: {e}", exc=e) from e
 
-    # Build validation tree
-    tree = Tree("[bold blue]Configuration Validation[/bold blue]")
-    all_errors: list[str] = []
-    advice: list[str] = []
-
-    # Validate each section
-    if scope is None:
-        all_errors.extend(_validate_clusters(config, tree))
-        all_errors.extend(_validate_users(config.settings.get("users", {}), tree))
-        all_errors.extend(_validate_settings(config, tree, advice))
-        all_errors.extend(_check_cluster_credentials(config, tree))
-    else:
+    if scope is not None:
         try:
-            scope_tree = config.get_scope_settings(scope)
+            config.get_scope_settings(scope)
         except ConfigurationError as e:
             raise CliError(str(e)) from e
-        all_errors.extend(_validate_clusters(config, tree, scope))
-        all_errors.extend(
-            _validate_users(scope_tree.get("users", {}), tree, label_prefix=f"{scope}/users")
-        )
-        all_errors.extend(_validate_scope_settings(config, tree, scope, advice))
-        all_errors.extend(_check_cluster_credentials(config, tree, scope))
+
+    tree = Tree("[bold blue]Configuration Validation[/bold blue]")
+    all_errors, advice = _render(run_static_checks(config, scope), tree)
 
     # Print the tree
     console.print(tree)
