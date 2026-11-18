@@ -239,3 +239,44 @@ def test_refresh_with_owned_db(tmp_path: Path) -> None:
     )
     with OccmCacheDB(db_path=tmp_path / ".cache" / "occm_cache.db") as db:
         assert db.working_environment_agents() == {"p1": ["a1"]}
+
+
+def test_scoped_collect_discovers_only_the_given_scopes() -> None:
+    inv = _inventory(("prod", ["a1"]))
+    discovery = MagicMock()
+    discovery.discover_account.side_effect = lambda scope: inv.accounts[0]
+    snapshot = OccmCollector(
+        MagicMock(),
+        discovery=discovery,
+        agent_client_factory=_factory({"a1": ["p1"]}),
+        scopes=("prod",),
+    ).collect()
+    discovery.discover.assert_not_called()
+    discovery.discover_account.assert_called_once_with("prod")
+    assert snapshot.scopes == ("prod",)
+    assert [a.agent_id for a in snapshot.agents] == ["a1"]
+
+
+def test_unscoped_collect_has_no_scopes() -> None:
+    snapshot = OccmCollector(
+        MagicMock(),
+        discovery=_discovery(_inventory((None, ["a1"]))),
+        agent_client_factory=_factory({"a1": ["p1"]}),
+    ).collect()
+    assert snapshot.scopes is None
+
+
+def test_refresh_forwards_scopes(tmp_path: Path) -> None:
+    inv = _inventory(("prod", ["a1"]))
+    discovery = MagicMock()
+    discovery.discover_account.return_value = inv.accounts[0]
+    with OccmCacheDB(db_path=tmp_path / "occm_cache.db") as db:
+        snapshot = refresh_occm_cache(
+            MagicMock(),
+            db=db,
+            discovery=discovery,
+            agent_client_factory=_factory({"a1": ["p1"]}),
+            scopes=("prod",),
+        )
+    assert snapshot.scopes == ("prod",)
+    discovery.discover_account.assert_called_once_with("prod")

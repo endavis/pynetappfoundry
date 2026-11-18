@@ -216,6 +216,7 @@ nf cache [OPTIONS] COMMAND [ARGS]...
 | `clear` | Clear the metadata cache |
 | `history` | View cache change history (see below) |
 | `inspect` | Inspect cache, CLI, and API data for a single object |
+| `occm` | Refresh and inspect the Console agent (OCCM) cache (see below) |
 
 **`cache history` sub-subcommands:**
 
@@ -235,6 +236,22 @@ nf cache history diff 5
 
 # Snapshot a cluster's cached state as of a given date
 nf cache history snapshot cluster1 -d 2024-06-01
+```
+
+**`cache occm` sub-subcommands:**
+
+| Command | Description |
+|---------|-------------|
+| `refresh [--scope NAME]` | Discover the Console agents and refresh the OCCM cache; `--scope` limits it to one configured Console account scope and leaves the other scopes' cache untouched. Exits 1 if any agent failed (the cache is still written) |
+| `status [--ttl DAYS]` | Per-agent table: discovery status, mappings, records, oldest `cached_at`, age and Fresh, Stale or Not collected |
+| `agents [PUBLIC_ID]` | The agents that manage a working environment, or every working environment and its agents |
+| `clear [AGENT_ID] [--all] [--force]` | Clear one agent's cached rows, or everything with `--all`; asks for confirmation unless `--force` |
+
+```bash
+nf cache occm refresh --scope prod
+nf cache occm status --ttl 7
+nf cache occm agents <publicId>
+nf cache occm clear --all -f
 ```
 
 `cache inspect` takes a cluster name and an object name, and accepts

@@ -1098,7 +1098,10 @@ The Console agent (OCCM) has its own cache, separate from the ONTAP and AIQUM fi
 - The working environment to agent mapping covers all seven working environment mappings and is derived from the records: `OccmCacheDB.agents_for_working_environment(public_id)` returns the sorted ids of the agents that list it, and `working_environment_agents()` returns the whole mapping.
 - Records are stored as `item.model_dump(mode="json")` and validated back into the model on read. Cache filters are exact matches on the JSON path; indexed `json_extract` paths are not supported.
 - Staleness: `OccmCacheDB.is_stale(agent_id, ttl_days=30)` reports age only and never changes routing.
-- Rebuilding: delete the file, or call `refresh_occm_cache` again. A refresh and inspect CLI is #1087.
+- Scoped refresh: `refresh_occm_cache(config, scopes=("prod",))` (`None` is the root account) discovers only those accounts. `OccmCacheDB.set()` then replaces the inventory rows and prunes agents only within those scopes; other scopes keep theirs. `scopes=None` replaces and prunes everything as before.
+- Status: `OccmCacheDB.agent_status(ttl_days=30)` returns one `OccmAgentStatus` per agent with collected rows (mappings, records, oldest and newest `cached_at`, staleness), sorted by agent id.
+- CLI: `nf cache occm refresh | status | agents | clear` (#1087, [CLI reference](cli.md#cache)).
+- Rebuilding: delete the file, call `refresh_occm_cache` again or run `nf cache occm refresh`.
 
 ## Benchmarks
 

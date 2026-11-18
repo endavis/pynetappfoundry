@@ -200,7 +200,18 @@ with OccmCacheDB(config=config) as db:
     db.organizations(), db.agents(), db.working_environments()  # the cached discovery
 ```
 
-Cache reads need no Console account. The reports still parse the CLI cloud metadata and show no Console links; both are tracked in #1086. A refresh and inspect CLI is #1087.
+Cache reads need no Console account. The reports still parse the CLI cloud metadata and show no Console links; both are tracked in #1086.
+
+The `nf cache occm` commands refresh and inspect the same cache ([CLI reference](../reference/cli.md#cache)):
+
+```bash
+nf cache occm refresh [--scope NAME]   # discover and collect; --scope refreshes one account only
+nf cache occm status [--ttl 30]        # per-agent age and Fresh, Stale or Not collected
+nf cache occm agents [PUBLIC_ID]       # which agents manage a working environment
+nf cache occm clear [AGENT_ID] [--all] [--force]
+```
+
+`refresh` exits 1 when an agent failed; the other agents are still cached. A failed agent is not stored, so `status` shows it as Not collected until a refresh succeeds.
 
 ## Marketplace subscriptions
 
