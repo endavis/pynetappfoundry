@@ -214,11 +214,12 @@ class ConsoleAPISettings(BaseModel):
 class DigitalAdvisorAPISettings(BaseModel):
     """Active IQ Digital Advisor GraphQL API settings (``digitaladvisorapi.toml [general]``).
 
-    Exactly one credential source is required: ``personal_access_token`` (valid
-    1-90 days, no refresh) or ``refresh_token``. An ``access_token`` is optional
-    and only valid with a ``refresh_token``; the client keeps both rotated tokens
-    in the file. ``timeout`` is above the server's 60 s query timeout so the
-    client sees the server's own ``504`` instead of timing out first.
+    At least one credential source is required: ``personal_access_token`` (valid
+    1-90 days, no refresh) or ``refresh_token``. With both set the PAT is used
+    first and the refresh pair is the fallback when the PAT is rejected. An
+    ``access_token`` is optional and only valid with a ``refresh_token``; the
+    client keeps both rotated tokens in the file. ``timeout`` is above the server's
+    60 s query timeout so the client sees the server's own ``504`` instead of timing out first.
     ``page_size`` is the default ``pageSize`` for ``paginate()``; it is not a
     measured server value.
     """
@@ -237,7 +238,7 @@ class DigitalAdvisorAPISettings(BaseModel):
 
     @property
     def uses_refresh_token(self) -> bool:
-        """Whether the credentials are an access/refresh token pair."""
+        """Whether a refresh pair is configured alone or as fallback."""
         return self.refresh_token is not None
 
     @model_validator(mode="after")
@@ -245,10 +246,6 @@ class DigitalAdvisorAPISettings(BaseModel):
         """Validate the combination of credential fields (names only, never values)."""
         has_pat = self.personal_access_token is not None
         has_refresh = self.refresh_token is not None
-        if has_pat and has_refresh:
-            raise ValueError(
-                "personal_access_token and refresh_token are mutually exclusive; set only one"
-            )
         if not (has_pat or has_refresh):
             raise ValueError("one of personal_access_token or refresh_token is required")
         if self.access_token is not None and not has_refresh:

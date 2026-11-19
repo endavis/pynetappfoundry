@@ -279,6 +279,13 @@ class _RecordingProvider:
         self.calls = 0
         self.refreshed_on_call: list[int] = []
         self.refresh_failed = False
+        self.first_refresh_call: int | None = None
+
+    def __getattr__(self, name: str) -> Any:
+        """Delegate other attributes (``credential``, ``fell_back``) to the wrapped provider."""
+        if name.startswith("_"):
+            raise AttributeError(name)
+        return getattr(self._inner, name)
 
     def get_token(self) -> str:
         self.calls += 1
@@ -288,6 +295,10 @@ class _RecordingProvider:
         except Exception:
             self.refresh_failed = True
             raise
+        if self.first_refresh_call is None and getattr(self._inner, "credential", None) == (
+            "refresh_token"
+        ):
+            self.first_refresh_call = self.calls
         if len(self._persisted) > before:
             self.refreshed_on_call.append(self.calls)
         return token
@@ -297,7 +308,7 @@ class _RecordingProvider:
 
 
 def _digitaladvisor_failure(
-    exc: BaseException, *, refresh_mode: bool, refresh_failed: bool
+    exc: BaseException, *, refresh_mode: bool, refresh_failed: bool, fell_back: bool = False
 ) -> tuple[str, str | None, CheckStatus]:
     """Describe a failed Digital Advisor probe without quoting a response message."""
     from pynetappfoundry.clients.digitaladvisor import (
@@ -309,6 +320,15 @@ def _digitaladvisor_failure(
     if isinstance(exc, DigitalAdvisorAuthError):
         if refresh_failed:
             return "token refresh failed", str(exc), CheckStatus.ERROR
+        if fell_back:
+            return (
+                "token rejected (UNAUTHENTICATED)",
+                "The personal access token was rejected, and so was the access token doctor "
+                "got by refreshing. Log in to the Digital Advisor portal, then store a fresh "
+                f"refresh token with: {_DA_SET_REFRESH}; also store a new personal access "
+                f"token with: {_DA_SET_PAT}",
+                CheckStatus.ERROR,
+            )
         if refresh_mode:
             return (
                 "token rejected (UNAUTHENTICATED)",
@@ -356,7 +376,10 @@ def check_digitaladvisor(
 ) -> list[CheckResult]:
     """Send one read-only GraphQL query to Digital Advisor to prove the stored token.
 
-    A personal access token is only probed. A refresh-token pair is probed with the
+    A personal access token is only probed. With both credentials the PAT is probed
+    first; a rejected PAT falls back to the refresh pair under the rules below and the
+    result is a WARNING with a PAT renewal hint (ADR-0035 §10 applies on that path).
+    A refresh-token pair is probed with the
     stored access token; the client refreshes, and writes the rotated tokens back, only
     when that token is missing, expired or rejected (ADR-0035). Retries are off, so a
     failure costs one request. Without ``[general]`` settings, or with ``scope``, there
@@ -368,11 +391,8 @@ def check_digitaladvisor(
     name = "Digital Advisor"
     from pynetappfoundry.clients.digitaladvisor.api import (
         DigitalAdvisorAPIClient,
+        build_token_provider,
         make_token_persister,
-    )
-    from pynetappfoundry.clients.digitaladvisor.auth import (
-        RefreshingTokenProvider,
-        StaticTokenProvider,
     )
     from pynetappfoundry.core.models import RetryConfig
 
@@ -383,9 +403,8 @@ def check_digitaladvisor(
     try:
         settings = config.get_digital_advisor_api_settings()
         refresh_mode = settings.personal_access_token is None
-        provider: Any
-        if refresh_mode:
-            assert settings.refresh_token is not None  # the model requires one credential
+        persist: Callable[[str, str], None] | None = None
+        if settings.refresh_token is not None:
             real_persist = make_token_persister(config)
 
             def persist(access: str, refresh: str) -> None:
@@ -396,21 +415,7 @@ def check_digitaladvisor(
                     persisted[-1] = e
                     raise
 
-            provider = RefreshingTokenProvider(
-                refresh_token=settings.refresh_token.get_secret_value(),
-                access_token=(
-                    settings.access_token.get_secret_value()
-                    if settings.access_token is not None
-                    else None
-                ),
-                token_url=settings.token_url,
-                timeout=settings.timeout,
-                persist=persist,
-                session=shared,
-            )
-        else:
-            assert settings.personal_access_token is not None
-            provider = StaticTokenProvider(settings.personal_access_token.get_secret_value())
+        provider = build_token_provider(settings, persist=persist, session=shared)
         recorder = _RecordingProvider(provider, persisted)
         factory = client_factory or DigitalAdvisorAPIClient
         client = factory(
@@ -425,25 +430,34 @@ def check_digitaladvisor(
             e,
             refresh_mode=refresh_mode,
             refresh_failed=recorder is not None and recorder.refresh_failed,
+            fell_back=recorder is not None and bool(getattr(recorder, "fell_back", False)),
         )
         label = f"{name}: {detail}"
         errors = (label,) if status is CheckStatus.ERROR else ()
         return [CheckResult(subject, status, label, errors, hint)]
 
-    if not refresh_mode:
+    assert recorder is not None
+    fell_back = bool(getattr(recorder, "fell_back", False))
+    if not refresh_mode and not fell_back:
         return [
             CheckResult(subject, CheckStatus.OK, f"{name}: token works (personal access token)")
         ]
+    status = CheckStatus.WARNING if fell_back else CheckStatus.OK
+    pat_hint = (
+        "The personal access token was rejected; renew it before the refresh token's 90-day "
+        f"login window ends: {_DA_SET_PAT}"
+    )
+    prefix = f"{name}: token works via the refresh_token fallback" if fell_back else ""
     if not persisted:
-        return [
-            CheckResult(
-                subject, CheckStatus.OK, f"{name}: token works (stored access token; no refresh)"
-            )
-        ]
-    assert recorder is not None
+        label = (
+            f"{prefix} (stored access token; no refresh)"
+            if fell_back
+            else f"{name}: token works (stored access token; no refresh)"
+        )
+        return [CheckResult(subject, status, label, hint=pat_hint if fell_back else None)]
     why = (
         "the access token was missing or expired"
-        if recorder.refreshed_on_call == [1]
+        if recorder.refreshed_on_call == [recorder.first_refresh_call]
         else "the server rejected the stored access token"
     )
     failure = persisted[-1]
@@ -452,17 +466,19 @@ def check_digitaladvisor(
             f"{name}: token works, but the rotated tokens could not be written back "
             f"({type(failure).__name__})"
         )
-        return [
-            CheckResult(
-                subject,
-                CheckStatus.WARNING,
-                label,
-                hint=(
-                    "The stored refresh token may now be stale. Log in to the portal and run: "
-                    f"{_DA_SET_REFRESH}"
-                ),
-            )
-        ]
+        hint = (
+            "The stored refresh token may now be stale. Log in to the portal and run: "
+            f"{_DA_SET_REFRESH}"
+        )
+        if fell_back:
+            hint += f". {pat_hint}"
+        return [CheckResult(subject, CheckStatus.WARNING, label, hint=hint)]
+    if fell_back:
+        label = (
+            f"{prefix}; {why}, so doctor refreshed it and wrote the rotated tokens to "
+            "digitaladvisorapi.toml"
+        )
+        return [CheckResult(subject, status, label, hint=pat_hint)]
     return [
         CheckResult(
             subject,

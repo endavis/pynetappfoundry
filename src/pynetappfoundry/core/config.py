@@ -613,8 +613,9 @@ class Config:
             raise ConfigurationError(
                 f"Invalid Digital Advisor API configuration: {e}. "
                 "Ensure <config>/apis/digitaladvisor/digitaladvisorapi.toml has a "
-                "[general] section with exactly one of personal_access_token or "
-                "refresh_token (access_token needs refresh_token)."
+                "[general] section with at least one of personal_access_token or "
+                "refresh_token (both: the PAT is used first; access_token needs "
+                "refresh_token)."
             ) from e
 
     def get_console_api_settings(self, *, scope: str | None = None) -> ConsoleAPISettings:

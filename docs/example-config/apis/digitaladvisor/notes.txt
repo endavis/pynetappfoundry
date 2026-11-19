@@ -2,7 +2,8 @@ Active IQ Digital Advisor API setup. See docs/usage/digital-advisor-api.md.
 
 1. Credential: in the Digital Advisor portal, create a personal access token
    (valid 1-90 days), or log in and take the access/refresh token pair
-   (refreshing works for 90 days from the portal login).
+   (refreshing works for 90 days from the portal login). You may set both: the
+   personal access token is used first and the refresh token backs it up.
 
 2. Settings: create <config>/apis/digitaladvisor/digitaladvisorapi.toml with a
    [general] section (see the example next to this file). Store the credential with

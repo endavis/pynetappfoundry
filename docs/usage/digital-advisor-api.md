@@ -16,10 +16,10 @@ tags:
 ## Setup
 
 - **Settings:** `<config>/apis/digitaladvisor/digitaladvisorapi.toml` with a `[general]` section (see [Config schema: digitaladvisorapi.toml](../reference/config-schema.md#digitaladvisorapitoml) and `docs/example-config/apis/digitaladvisor/digitaladvisorapi.toml`).
-- **Credentials**, exactly one of:
+- **Credentials**, one or both (the PAT is used first):
     - a **personal access token** (valid 1-90 days, no refresh): `nf config set-credential --setting digitaladvisorapi.personal_access_token`;
-    - a **refresh token**: `nf config set-credential --setting digitaladvisorapi.refresh_token`. The client gets the access token itself.
-- **Check:** `nf config validate` shows a "Digital Advisor API" row. `nf doctor --api digitaladvisor` sends one read-only query to prove the token. With a refresh token it refreshes and writes the rotated tokens back only when the stored access token is missing, expired or rejected.
+    - a **refresh token**: `nf config set-credential --setting digitaladvisorapi.refresh_token`. The client gets the access token itself. With both set, the refresh token backs up the PAT.
+- **Check:** `nf config validate` shows a "Digital Advisor API" row. `nf doctor --api digitaladvisor` sends one read-only query to prove the token. With a refresh token it refreshes and writes the rotated tokens back only when the stored access token is missing, expired or rejected. With both credentials a rejected PAT gives a WARNING with a PAT renewal hint when the refresh token works.
 
 ## Queries
 
@@ -56,6 +56,10 @@ Refreshing works for 90 days from the portal login. After that the refresh fails
 Limitation: two processes that refresh at the same moment are not coordinated, and the later write wins.
 
 A personal access token is used as is. When the server rejects it, `DigitalAdvisorAuthError` says it has probably expired.
+
+### PAT with a refresh-token fallback
+
+With both `personal_access_token` and `refresh_token` set, the PAT is sent first. A working PAT means no token request and no config write. When the server rejects the PAT, the client logs one warning (names only, no token) and switches to the refresh pair for the rest of its life. That path works as in refresh-only mode: the stored access token first, then a refresh and write-back only if it is missing, expired or rejected. A query sends at most three GraphQL requests. If both fail, `DigitalAdvisorAuthError` names the renewal step for each credential.
 
 ## Rate limit and retries
 
