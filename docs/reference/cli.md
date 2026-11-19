@@ -393,7 +393,7 @@ It runs three groups of checks and shows each result as `ok`, `warning`, `error`
 | Option | Description |
 |--------|-------------|
 | `--offline` | Skip the live checks: no network request is made |
-| `--api TEXT` | Limit the live and cache checks to these APIs: `ontap`, `aiqum`, `dii`, `console`, `digitaladvisor` (comma-separated, case-insensitive). Static, `sops` and age checks always run. An unknown name exits 2 |
+| `--api TEXT` | Limit every check to these APIs: `ontap`, `aiqum`, `dii`, `console`, `digitaladvisor` (comma-separated, case-insensitive). Each API keeps its settings, credentials, SOPS values, cache and live check, plus the shared `sops` and age-key checks when it has SOPS values. SMTP, Licensing, Monitoring, Azure and IBM rows are hidden. An unknown name exits 2 |
 | `--scope TEXT` | Check only this scope's settings, objects and Console account. An unknown scope exits 1 |
 | `-f, --filter TEXT` | JSON cluster filter for the ONTAP live and cache checks |
 | `--json` | Print one JSON document: `sections` (each with `title`, `group` and `results`), `summary` and `offline` |

@@ -346,3 +346,90 @@ def test_run_environment_checks_sections(tmp_path: Path) -> None:
     assert [s.title for s in sections] == ["SOPS", "Caches"]
     no_caches = run_environment_checks(config, scope=None, apis=("dii",), clusters={})
     assert [s.title for s in no_caches] == ["SOPS"]
+
+
+# --- selection by API (#1122) ---
+
+API_SOPS_FILES = {
+    **SOPS_FILES,
+    "users.toml": f'[clusters]\nuser = "u"\nenc = "{CIPHERTEXT}"\n'
+    f'\n[console]\nenc = "{CIPHERTEXT}"\n\n[azure]\nenc = "{CIPHERTEXT}"\n',
+    "settings.toml": f'[SMTP]\npassword = "{CIPHERTEXT}"\n',
+    "digitaladvisorapi.toml": f'[general]\npersonal_access_token = "{CIPHERTEXT}"\n',
+    "inv.toml": DATA
+    + f'[clusters.c1]\nip = "192.0.2.1"\nenc = "{CIPHERTEXT}"\n'
+    + f'\n[cloudinsights.t1]\nenc = "{CIPHERTEXT}"\n'
+    + f'\n[connectors.k1]\nenc = "{CIPHERTEXT}"\n',
+}
+
+
+@pytest.mark.parametrize(
+    ("api", "expected"),
+    [
+        (
+            "ontap",
+            {
+                "settings.users.clusters.enc",
+                "settings.ontapapi.general.api_token",
+                "clusters.c1.enc",
+            },
+        ),
+        ("aiqum", set()),
+        ("dii", {"cloudinsights.t1.enc"}),
+        (
+            "console",
+            {
+                "settings.users.console.enc",
+                "scope.Org1.users.console.enc",
+                "connectors.k1.enc",
+            },
+        ),
+        ("digitaladvisor", {"settings.digitaladvisorapi.general.personal_access_token"}),
+    ],
+)
+def test_find_sops_values_limited_to_api(tmp_path: Path, api: str, expected: set[str]) -> None:
+    config = _config(tmp_path, API_SOPS_FILES)
+
+    assert set(find_sops_values(config, apis=(api,))) == expected
+
+
+def test_find_sops_values_apis_none_equals_unfiltered_and_hides_globals(tmp_path: Path) -> None:
+    config = _config(tmp_path, API_SOPS_FILES)
+    everything = find_sops_values(config)
+
+    assert find_sops_values(config, apis=None) == everything
+    assert "settings.settings.SMTP.password" in everything
+    assert "settings.users.azure.enc" in everything
+    for api in ("ontap", "aiqum", "dii", "console", "digitaladvisor"):
+        hidden = set(find_sops_values(config, apis=(api,)))
+        assert "settings.settings.SMTP.password" not in hidden
+        assert "settings.users.azure.enc" not in hidden
+
+
+def test_check_sops_with_apis_and_no_values_returns_no_rows(tmp_path: Path) -> None:
+    config = _config(tmp_path, SOPS_FILES)
+    with patch(INSTALLED, return_value=True):
+        assert check_sops(config, apis=("digitaladvisor",)) == []
+
+
+def test_check_sops_with_apis_checks_only_their_values(tmp_path: Path) -> None:
+    config = _config(tmp_path, API_SOPS_FILES)
+    Path("age-keys.txt").write_text("placeholder", encoding="utf-8")
+    with patch(INSTALLED, return_value=True), patch(DECRYPT, return_value=SENTINEL):
+        rows = _by_subject(check_sops(config, apis=("digitaladvisor",)))
+
+    assert set(rows) == {
+        "env.sops",
+        "env.age_key",
+        "sops.settings.digitaladvisorapi.general.personal_access_token",
+    }
+
+
+def test_run_environment_checks_sops_apis_without_values_has_no_sops_section(
+    tmp_path: Path,
+) -> None:
+    config = _config(tmp_path, SOPS_FILES)
+    with patch(INSTALLED, return_value=True), patch(DECRYPT, return_value=SENTINEL):
+        sections = run_environment_checks(config, scope=None, sops_apis=("dii",), clusters={})
+
+    assert "SOPS" not in [s.title for s in sections]

@@ -113,8 +113,8 @@ def _render(groups: list[_Group], tree: Tree) -> tuple[list[str], list[str]]:
     "--api",
     "api",
     type=str,
-    help="Limit the live and cache checks to these APIs: ontap, aiqum, dii, console, "
-    "digitaladvisor (comma-separated).",
+    help="Limit every check to these APIs, plus the shared sops and age-key checks: "
+    "ontap, aiqum, dii, console, digitaladvisor (comma-separated).",
 )
 @click.option(
     "--scope",
@@ -139,6 +139,7 @@ def doctor(
     each configured API. Warnings do not fail; any error exits 1.
     """
     apis = _parse_apis(api)
+    selected = apis if api else None
     filter_dict = _parse_filter(filter)
 
     config_dir = ctx.obj.get("config_dir", "config")
@@ -165,14 +166,18 @@ def doctor(
         raise CliError(f"Failed to select clusters: {e}", exc=e) from e
 
     groups: list[_Group] = []
-    for section in run_static_checks(config, scope):
+    from pynetappfoundry.doctor.selection import select_sections
+
+    for section in select_sections(run_static_checks(config, scope), selected):
         groups.append(("static", CheckSection(f"Config: {section.title}", section.results)))
 
     from pynetappfoundry.doctor.environment import run_environment_checks
 
     groups.extend(
         ("environment", section)
-        for section in run_environment_checks(config, scope=scope, apis=apis, clusters=clusters)
+        for section in run_environment_checks(
+            config, scope=scope, apis=apis, sops_apis=selected, clusters=clusters
+        )
     )
     if not offline:
         from pynetappfoundry.doctor.live import run_live_checks

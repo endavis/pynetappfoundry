@@ -198,7 +198,7 @@ def test_no_secret_in_output(tmp_path: Path, as_json: bool) -> None:
         tmp_path,
         {**VALID, "users.toml": f'[clusters]\nuser = "u"\nenc = "{CIPHERTEXT}"\n'},
     )
-    (tmp_path / "age-keys.txt").write_text("placeholder")
+    (tmp_path / "age-keys.txt").write_text("placeholder", encoding="utf-8")
     args = ["--offline", *(["--json"] if as_json else [])]
     with patch(INSTALLED, return_value=True), patch(DECRYPT, return_value=SENTINEL):
         result = _run(*args)
@@ -319,3 +319,135 @@ def test_api_option_accepts_digitaladvisor_case_insensitively(tmp_path: Path) ->
 
     assert result.exit_code == 0, result.output
     assert live.call_args.kwargs["apis"] == ("digitaladvisor",)
+
+
+# --- --api limits every check (#1122) ---
+
+ALL_API_FILES = {
+    "inv.toml": DATA
+    + '[clusters.c1]\nip = "192.0.2.1"\n\n[aiqums.a1]\nip = "192.0.2.2"\n'
+    + '\n[cloudinsights.t1]\nurl = "https://example.invalid"\n'
+    + '\n[connectors.k1]\nip = "192.0.2.3"\n',
+    "users.toml": f'[clusters]\nuser = "u"\nenc = "{CIPHERTEXT}"\n'
+    f'\n[aiqums]\nuser = "u"\nenc = "{CIPHERTEXT}"\n'
+    f'\n[console]\nuser = "u"\nenc = "{CIPHERTEXT}"\n'
+    f'\n[cloudinsights]\nenc = "{CIPHERTEXT}"\n',
+    "ontapapi.toml": '[general]\nbase_api_path = "/api"\n',
+    "aiqumapi.toml": '[general]\nbase_api_path = "/api"\n',
+    "diiapi.toml": '[general]\nbase_api_path = "/api"\n',
+    "consoleapi.toml": '[general]\nbase_api_path = "/api"\n',
+    "digitaladvisorapi.toml": f'[general]\npersonal_access_token = "{CIPHERTEXT}"\n',
+    "settings.toml": '[SMTP]\nserver = "smtp.invalid"\n',
+    "licensing.toml": "",
+}
+
+
+def _subjects(result: Result) -> set[str]:
+    document = json.loads(result.output)
+    return {r["subject"] for section in document["sections"] for r in section["results"]}
+
+
+def _offline_json(tmp_path: Path, *args: str) -> Result:
+    _write(tmp_path, ALL_API_FILES)
+    (tmp_path / "age-keys.txt").write_text("placeholder", encoding="utf-8")
+    with patch(INSTALLED, return_value=True), patch(DECRYPT, return_value=SENTINEL):
+        return _run("--offline", "--json", *args)
+
+
+@pytest.mark.parametrize(
+    ("api", "present", "absent_prefixes"),
+    [
+        (
+            "digitaladvisor",
+            {
+                "digitaladvisorapi.general",
+                "env.sops",
+                "env.age_key",
+                "sops.settings.digitaladvisorapi.general.personal_access_token",
+            },
+            ("clusters", "users", "aiqum", "cloudinsights", "connectors", "licensing"),
+        ),
+        (
+            "ontap",
+            {"clusters.c1.credentials", "ontapapi.general", "env.sops"},
+            ("aiqum", "cloudinsights", "digitaladvisorapi", "licensing", "settings.SMTP"),
+        ),
+        (
+            "dii",
+            {"cloudinsights.t1.credentials", "diiapi.general", "env.sops"},
+            ("clusters", "aiqum", "digitaladvisorapi", "licensing"),
+        ),
+    ],
+)
+def test_api_limits_static_and_sops_rows(
+    tmp_path: Path, api: str, present: set[str], absent_prefixes: tuple[str, ...]
+) -> None:
+    result = _offline_json(tmp_path, "--api", api)
+
+    subjects = _subjects(result)
+    assert present <= subjects, subjects
+    for prefix in absent_prefixes:
+        assert not any(s == prefix or s.startswith(prefix + ".") for s in subjects), (
+            prefix,
+            subjects,
+        )
+
+
+def test_api_union_of_two_apis(tmp_path: Path) -> None:
+    result = _offline_json(tmp_path, "--api", "ontap,dii")
+
+    subjects = _subjects(result)
+    assert {"ontapapi.general", "diiapi.general"} <= subjects
+    assert not any(s.startswith(("aiqumapi", "digitaladvisorapi", "licensing")) for s in subjects)
+
+
+def test_no_api_leaves_static_and_sops_unfiltered(tmp_path: Path) -> None:
+    from pynetappfoundry.core.config import Config
+    from pynetappfoundry.core.config_checks import run_static_checks
+    from pynetappfoundry.doctor.environment import check_sops
+
+    result = _offline_json(tmp_path)
+    document = json.loads(result.output)
+    with patch(INSTALLED, return_value=True), patch(DECRYPT, return_value=SENTINEL):
+        config = Config(config_dir="cfg", script_name="test")
+        expected_sops = [r.subject for r in check_sops(config)]
+        expected = run_static_checks(config)
+
+    static = [s for s in document["sections"] if s["group"] == "static"]
+    assert [s["title"] for s in static] == [f"Config: {s.title}" for s in expected]
+    for got, want in zip(static, expected, strict=True):
+        assert [r["subject"] for r in got["results"]] == [r.subject for r in want.results]
+        assert [r["status"] for r in got["results"]] == [r.status.value for r in want.results]
+        assert [r["label"] for r in got["results"]] == [r.label for r in want.results]
+    sops = [s for s in document["sections"] if s["title"] == "SOPS"]
+    assert [r["subject"] for r in sops[0]["results"]] == expected_sops
+
+
+def test_exit_code_reflects_only_shown_checks(tmp_path: Path) -> None:
+    files = {
+        **ALL_API_FILES,
+        "inv.toml": DATA + "[clusters.c1]\ntags = 5\n",
+        "users.toml": '[console]\nuser = "u"\n',
+    }
+    _write(tmp_path, files)
+    (tmp_path / "age-keys.txt").write_text("placeholder", encoding="utf-8")
+    with patch(INSTALLED, return_value=True), patch(DECRYPT, return_value=SENTINEL):
+        assert _run("--offline", "--api", "digitaladvisor").exit_code == 0
+        assert _run("--offline", "--api", "ontap").exit_code == 1
+
+
+def test_undecryptable_value_of_selected_api_exits_one(tmp_path: Path) -> None:
+    from pynetappfoundry.utils.sops import SOPSError
+
+    _write(tmp_path, ALL_API_FILES)
+    (tmp_path / "age-keys.txt").write_text("placeholder", encoding="utf-8")
+    with patch(INSTALLED, return_value=True), patch(DECRYPT, side_effect=SOPSError("x")):
+        result = _run("--offline", "--api", "digitaladvisor")
+
+    assert result.exit_code == 1
+
+
+def test_api_help_mentions_every_check() -> None:
+    result = CliRunner().invoke(nf, ["doctor", "--help"])
+
+    assert "every check" in " ".join(result.output.split())

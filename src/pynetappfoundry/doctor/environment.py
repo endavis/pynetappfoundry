@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import os
 import sqlite3
-from collections.abc import Mapping
+from collections.abc import Collection, Mapping
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -23,6 +23,7 @@ from pynetappfoundry.core.config_checks import (
     CheckStatus,
 )
 from pynetappfoundry.doctor import API_NAMES
+from pynetappfoundry.doctor.selection import DATA_TYPE_APIS, SETTINGS_APIS, USER_TYPE_APIS
 
 CACHE_STALE_DAYS = 30
 """Age in days after which a cache is reported stale (the ``nf cache status`` default)."""
@@ -48,13 +49,38 @@ def _walk_encrypted(value: Any, subject: str, found: dict[str, str]) -> None:
             _walk_encrypted(item, f"{subject}[{index}]", found)
 
 
-def find_sops_values(config: Config, scope: str | None = None) -> dict[str, str]:
+def _walk_settings(
+    tree: Any, prefix: str, found: dict[str, str], apis: Collection[str] | None
+) -> None:
+    """Collect SOPS values in a settings tree, keeping only the stems of ``apis``."""
+    if apis is None or not isinstance(tree, Mapping):
+        _walk_encrypted(tree, prefix, found)
+        return
+    for stem, value in tree.items():
+        if stem == "users":
+            if not isinstance(value, Mapping):
+                continue
+            for utype, accounts in value.items():
+                if USER_TYPE_APIS.get(utype) in apis:
+                    _walk_encrypted(accounts, f"{prefix}.users.{utype}", found)
+        elif SETTINGS_APIS.get(stem) in apis:
+            _walk_encrypted(value, f"{prefix}.{stem}", found)
+
+
+def find_sops_values(
+    config: Config,
+    scope: str | None = None,
+    *,
+    apis: Collection[str] | None = None,
+) -> dict[str, str]:
     """Find every SOPS value the configuration holds.
 
     Args:
         config: Loaded configuration.
         scope: Only the settings of this scope and the data objects in it; None
             walks the root settings, every scope's settings and every data object.
+        apis: Only the values that belong to these APIs (settings stems, user
+            types and data types they read); None keeps every value.
 
     Returns:
         Dotted subject (such as ``settings.users.clusters.enc``) to ciphertext. The
@@ -62,12 +88,14 @@ def find_sops_values(config: Config, scope: str | None = None) -> dict[str, str]
     """
     found: dict[str, str] = {}
     if scope is None:
-        _walk_encrypted(config.settings, "settings", found)
+        _walk_settings(config.settings, "settings", found, apis)
         for name, tree in config.scope_settings.items():
-            _walk_encrypted(tree, f"scope.{name}", found)
+            _walk_settings(tree, f"scope.{name}", found, apis)
     else:
-        _walk_encrypted(config.scope_settings.get(scope, {}), f"scope.{scope}", found)
+        _walk_settings(config.scope_settings.get(scope, {}), f"scope.{scope}", found, apis)
     for data_type, objects in config.data.items():
+        if apis is not None and DATA_TYPE_APIS.get(data_type) not in apis:
+            continue
         for name, entry in objects.items():
             if scope is None or config.get_scope(data_type, name) == scope:
                 _walk_encrypted(entry, f"{data_type}.{name}", found)
@@ -84,16 +112,25 @@ def _age_key_location() -> tuple[bool, str]:
     return path.is_file(), f"key file {path}"
 
 
-def check_sops(config: Config, scope: str | None = None) -> list[CheckResult]:
+def check_sops(
+    config: Config,
+    scope: str | None = None,
+    *,
+    apis: Collection[str] | None = None,
+) -> list[CheckResult]:
     """Check ``sops``, the age key and that every SOPS value decrypts.
 
     Args:
         config: Loaded configuration.
         scope: Limit the values checked to this scope's.
+        apis: Limit the values checked to these APIs'. When none of them has a
+            SOPS value, return no rows at all; None checks every value.
     """
     from pynetappfoundry.utils.sops import SOPSError, decrypt_value, is_sops_installed
 
-    values = find_sops_values(config, scope)
+    values = find_sops_values(config, scope, apis=apis)
+    if apis is not None and not values:
+        return []
     installed = is_sops_installed()
     results: list[CheckResult] = []
 
@@ -420,11 +457,15 @@ def run_environment_checks(
     *,
     scope: str | None,
     apis: tuple[str, ...] = API_NAMES,
+    sops_apis: Collection[str] | None = None,
     clusters: dict[str, Any],
 ) -> list[CheckSection]:
-    """Run the offline environment checks; a section appears only when it has rows."""
+    """Run the offline environment checks; a section appears only when it has rows.
+
+    ``apis`` selects the caches; ``sops_apis`` limits the SOPS checks (None: all).
+    """
     sections = [
-        CheckSection("SOPS", tuple(check_sops(config, scope))),
+        CheckSection("SOPS", tuple(check_sops(config, scope, apis=sops_apis))),
         CheckSection("Caches", tuple(check_caches(config, apis, clusters))),
     ]
     return [section for section in sections if section.results]

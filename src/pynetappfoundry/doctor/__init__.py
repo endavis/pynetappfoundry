@@ -7,7 +7,8 @@
 * :mod:`pynetappfoundry.doctor.environment`: offline checks of ``sops``, the age key,
   SOPS values and the caches;
 * :mod:`pynetappfoundry.doctor.live`: read-only requests to each configured API, a GraphQL
-  query for Digital Advisor.
+  query for Digital Advisor;
+* :mod:`pynetappfoundry.doctor.selection`: which rows ``--api`` keeps.
 
 The modules import neither Rich nor click. They sit outside ``core`` because the live
 checks use ``clients``, which is the higher layer. This package imports no client or
