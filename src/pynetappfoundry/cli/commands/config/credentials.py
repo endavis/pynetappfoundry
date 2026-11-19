@@ -3,25 +3,23 @@
 from __future__ import annotations
 
 import tomllib
-from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
 import click
-import tomlkit
 from rich.console import Console
 from rich.markup import escape
 
 from pynetappfoundry.cli.errors import CliError
 from pynetappfoundry.cli.utils import print_success, print_warning
 from pynetappfoundry.core.config import (
-    SCOPE_MARKER,
     SCOPE_OVERRIDABLE_SETTINGS,
     SOPS_SETTING_TARGETS,
     VALID_DATA_TYPES,
     Config,
     ConfigurationError,
 )
+from pynetappfoundry.core.settings_files import find_setting_file, write_toml_values
 from pynetappfoundry.utils.sops import (
     SOPSError,
     SOPSNotInstalledError,
@@ -32,14 +30,6 @@ from pynetappfoundry.utils.sops import (
 )
 
 console = Console()
-
-# Root API settings file stem -> its directory name under ``<config>/apis/``.
-_API_DIRS = {
-    "ontapapi": "ontap",
-    "aiqumapi": "aiqum",
-    "diiapi": "dii",
-    "consoleapi": "console",
-}
 
 
 def _load_public_key() -> str:
@@ -238,6 +228,7 @@ def set_credential(
 
         # Store the DII API token or the SMTP password
         nf config set-credential --setting diiapi.api_ro_token
+        nf config set-credential --setting digitaladvisorapi.refresh_token
         nf config set-credential --setting settings.smtp_password
     """
     if setting is not None:
@@ -546,50 +537,21 @@ def _set_setting_value(
         print_warning(f"{target_file} [{table}] has no user; set it for SMTP authentication.")
 
 
-def _is_data_file(path: Path) -> bool:
-    """Return True when a TOML file is a data file (``[settings] type = "data"``)."""
-    try:
-        with open(path, "rb") as f:
-            data = tomllib.load(f)
-    except Exception:  # unreadable TOML files are not data files
-        return False
-    settings = data.get("settings", {})
-    return isinstance(settings, dict) and settings.get("type") == "data"
-
-
 def _find_setting_file(config_path: Path, stem: str, scope: str | None) -> Path:
     """Pick the settings file a ``--setting`` target is written to.
 
-    The loader reads every non-data ``*.toml`` file by stem, so the writer uses the
-    same rule. A root target skips scope directories; a scope target looks only
-    under ``<config>/<scope>/``. With no match, the conventional path is returned
-    (not created yet): ``<config>/apis/<name>/<stem>.toml`` for a root API settings
-    file, otherwise ``<base>/<stem>.toml``.
+    See :func:`pynetappfoundry.core.settings_files.find_setting_file`.
 
     Raises:
         CliError: If more than one file carries the stem.
     """
-    base = config_path if scope is None else config_path / scope
-    scope_dirs = {
-        d.name for d in config_path.iterdir() if d.is_dir() and (d / SCOPE_MARKER).is_file()
-    }
-    matches: list[Path] = []
-    for toml_file in sorted(base.rglob("*.toml")) if base.is_dir() else []:
-        if scope is None and toml_file.relative_to(config_path).parts[0] in scope_dirs:
-            continue
-        if toml_file.stem == stem and not _is_data_file(toml_file):
-            matches.append(toml_file)
-    if len(matches) > 1:
+    try:
+        return find_setting_file(config_path, stem, scope)
+    except ConfigurationError as e:
         raise CliError(
-            f"More than one file provides {stem}.toml settings: "
-            f"{', '.join(str(m) for m in matches)}.",
+            str(e),
             hints=["The loader merges them, so the file to write is ambiguous. Keep one."],
-        )
-    if matches:
-        return matches[0]
-    if scope is None and stem in _API_DIRS:
-        return config_path / "apis" / _API_DIRS[stem] / f"{stem}.toml"
-    return base / f"{stem}.toml"
+        ) from e
 
 
 def _find_object_file(config_path: Path, obj_type: str, obj_name: str) -> Path | None:
@@ -606,7 +568,6 @@ def _find_object_file(config_path: Path, obj_type: str, obj_name: str) -> Path |
     Returns:
         Path to the file, or None if not found.
     """
-    import tomllib
 
     def _contains(toml_file: Path, require_data_type: bool) -> bool:
         try:
@@ -674,33 +635,4 @@ def _update_users_credentials(
     _write_toml_values(users_file, [cred_type], {"user": user, "enc": encrypted_password})
 
 
-def _write_toml_values(
-    path: Path, tables: Sequence[str], values: Mapping[str, str]
-) -> dict[str, Any]:
-    """Set ``values`` in the table at ``tables`` of a TOML file, keeping its formatting.
-
-    The file is parsed with tomlkit, so comments and unrelated keys survive. A
-    missing file starts as an empty document; missing tables are created (the
-    intermediate ones as super tables); missing parent directories are created.
-
-    Args:
-        path: The TOML file.
-        tables: Table path, outermost first.
-        values: Keys and values to set in the leaf table.
-
-    Returns:
-        A plain copy of the leaf table after the update.
-    """
-    doc = tomlkit.parse(path.read_text(encoding="utf-8")) if path.exists() else tomlkit.document()
-    node: Any = doc
-    for index, name in enumerate(tables):
-        if name not in node:
-            is_last = index == len(tables) - 1
-            node[name] = tomlkit.table(is_super_table=not is_last)
-        node = node[name]
-    for key, value in values.items():
-        node[key] = value
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(tomlkit.dumps(doc), encoding="utf-8")
-    leaf: dict[str, Any] = dict(node.unwrap())
-    return leaf
+_write_toml_values = write_toml_values

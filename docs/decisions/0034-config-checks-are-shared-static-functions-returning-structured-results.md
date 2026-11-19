@@ -37,6 +37,7 @@ Separating what is wrong from how it is drawn lets two commands and the tests sh
 - Issue #1111: shared static config checks used by `nf config validate`
 - Issue #1113: `nf doctor` reuses the checks ([ADR-0035](0035-nf-doctor-runs-static-environment-and-read-only-live-checks-with-fix-hints.md))
 - Issue #1110: configuration guide that sets up each API
+- Issue #1051: a static "Digital Advisor API" settings row ([ADR-0036](0036-digital-advisor-client-is-a-read-only-graphql-client-with-rotating-refresh-token-write-back.md))
 
 ## Related Documentation
 

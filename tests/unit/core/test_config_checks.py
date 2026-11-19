@@ -111,6 +111,7 @@ def test_settings_rows_in_order_with_texts_and_statuses(tmp_path: Path) -> None:
     assert [(r.label, r.status) for r in results] == [
         ("ONTAP API: Not configured", CheckStatus.WARNING),
         ("DII API: Not configured (optional)", CheckStatus.SKIPPED),
+        ("Digital Advisor API: Not configured (optional)", CheckStatus.SKIPPED),
         ("SMTP: Not configured (optional)", CheckStatus.SKIPPED),
         ("Console: Not configured (optional)", CheckStatus.SKIPPED),
         ("Licensing: Not configured (optional)", CheckStatus.SKIPPED),
@@ -490,3 +491,25 @@ def test_scope_mode_has_no_spec_files_and_filters_inventory(tmp_path: Path) -> N
     assert [r.subject for r in sections["AIQUM Credentials"].results] == [
         "aiqums.org-aiq.credentials"
     ]
+
+
+def test_digital_advisor_row_absent_valid_and_invalid(tmp_path: Path) -> None:
+    def row(files: dict[str, str]) -> CheckResult:
+        return _by_subject(check_settings(_config(tmp_path / str(len(files)), files)))[
+            "digitaladvisorapi.general"
+        ]
+
+    path = "apis/digitaladvisor/digitaladvisorapi.toml"
+    assert row({}).status is CheckStatus.SKIPPED
+    ok = row({path: '[general]\npersonal_access_token = "placeholder-pat"\n'})
+    assert (ok.status, ok.label) == (CheckStatus.OK, "Digital Advisor API")
+    bad = row(
+        {
+            path: '[general]\npersonal_access_token = "placeholder-pat"\n'
+            'refresh_token = "placeholder-refresh-token"\n',
+            "x.toml": "",
+        }
+    )
+    assert bad.status is CheckStatus.ERROR
+    assert "mutually exclusive" in bad.errors[0]
+    assert "placeholder-pat" not in bad.errors[0]

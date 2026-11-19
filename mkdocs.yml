@@ -110,6 +110,7 @@ nav:
       - Cluster Resolver: usage/cluster-resolver.md
       - Report Cloud Details: usage/report-cloud-details.md
       - AIQUM API: usage/aiqum-api.md
+      - Digital Advisor API: usage/digital-advisor-api.md
       - DataSource: usage/data-source.md
       - Query Layer: usage/query-layer.md
       - Compliance Checks: usage/compliance-checks.md
@@ -197,6 +198,7 @@ nav:
       - ADR-0033 Reports read cloud details from the OCCM cache first with a whole-record CLI fallback: decisions/0033-reports-read-cloud-details-from-the-occm-cache-first-with-a-whole-record-cli-fallback.md
       - ADR-0034 Config checks are shared static functions returning structured results: decisions/0034-config-checks-are-shared-static-functions-returning-structured-results.md
       - "ADR-0035 nf doctor runs static, environment and read-only live checks with fix hints": decisions/0035-nf-doctor-runs-static-environment-and-read-only-live-checks-with-fix-hints.md
+      - ADR-0036 Digital Advisor client is a read-only GraphQL client with rotating refresh-token write-back: decisions/0036-digital-advisor-client-is-a-read-only-graphql-client-with-rotating-refresh-token-write-back.md
       - Template Decisions:
           - ADR-9001 uv Package Management: decisions/9001-use-uv-for-package-management.md
           - ADR-9002 doit Task Automation: decisions/9002-use-doit-for-task-automation.md

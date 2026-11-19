@@ -60,6 +60,7 @@ from typing import TYPE_CHECKING, Any, TypeVar
 from pynetappfoundry.core.models import (
     AIQUMAPISettings,
     ConsoleAPISettings,
+    DigitalAdvisorAPISettings,
     DIIAPISettings,
     LicensingSettings,
     ONTAPAPISettings,
@@ -98,6 +99,7 @@ class ConfigurationError(Exception):
 _SMTP_SOPS_FIELDS = ("password",)
 _DII_SOPS_FIELDS = ("api_ro_token",)
 _CONSOLE_SOPS_FIELDS = ("client_secret", "service_token", "user_token")
+_DIGITAL_ADVISOR_SOPS_FIELDS = ("personal_access_token", "access_token", "refresh_token")
 
 # Every secret ``nf config set-credential --setting`` can store, mapped to
 # ``(file stem, table, key)``. Built from the fields the loader decrypts.
@@ -105,6 +107,10 @@ SOPS_SETTING_TARGETS: dict[str, tuple[str, str, str]] = {
     **{f"settings.smtp_{field}": ("settings", "SMTP", field) for field in _SMTP_SOPS_FIELDS},
     **{f"diiapi.{field}": ("diiapi", "general", field) for field in _DII_SOPS_FIELDS},
     **{f"consoleapi.{field}": ("consoleapi", "general", field) for field in _CONSOLE_SOPS_FIELDS},
+    **{
+        f"digitaladvisorapi.{field}": ("digitaladvisorapi", "general", field)
+        for field in _DIGITAL_ADVISOR_SOPS_FIELDS
+    },
 }
 
 # A top-level directory holding this file is a scope (see the module docstring).
@@ -577,6 +583,38 @@ class Config:
                 f"Invalid AIQUM API configuration: {e}. "
                 "Ensure aiqumapi.toml has a valid [general] section "
                 "(base_api_path, timeout)."
+            ) from e
+
+    def get_digital_advisor_api_settings(self) -> DigitalAdvisorAPISettings:
+        """Get Active IQ Digital Advisor GraphQL API settings.
+
+        Reads ``<config>/apis/digitaladvisor/digitaladvisorapi.toml [general]``;
+        ``SOPS[...]`` token values are decrypted.
+
+        Returns:
+            DigitalAdvisorAPISettings object with API configuration.
+
+        Raises:
+            ConfigurationError: If the section is missing or invalid (the message
+                names the fields, never the values), or a ``SOPS[...]`` value
+                cannot be decrypted.
+        """
+        try:
+            data = self._decrypt_setting_fields(
+                self.get_setting("digitaladvisorapi", "general"),
+                _DIGITAL_ADVISOR_SOPS_FIELDS,
+                file="digitaladvisorapi.toml",
+                section="general",
+            )
+            return DigitalAdvisorAPISettings.model_validate(data)
+        except ConfigurationError:
+            raise
+        except Exception as e:
+            raise ConfigurationError(
+                f"Invalid Digital Advisor API configuration: {e}. "
+                "Ensure <config>/apis/digitaladvisor/digitaladvisorapi.toml has a "
+                "[general] section with exactly one of personal_access_token or "
+                "refresh_token (access_token needs refresh_token)."
             ) from e
 
     def get_console_api_settings(self, *, scope: str | None = None) -> ConsoleAPISettings:

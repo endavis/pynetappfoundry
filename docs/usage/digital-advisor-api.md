@@ -1,0 +1,76 @@
+---
+title: Digital Advisor API
+description: Query Active IQ Digital Advisor with DigitalAdvisorAPIClient
+audience:
+  - users
+tags:
+  - digitaladvisor
+  - api
+  - graphql
+---
+
+# Digital Advisor API
+
+`DigitalAdvisorAPIClient` runs read-only GraphQL queries against Active IQ Digital Advisor (`https://gql.aiq.netapp.com/graphql`). It does not use the OpenAPI layer: Digital Advisor publishes no OpenAPI file, and NetApp is phasing its REST API out. REST is used for one thing only, the token refresh.
+
+## Setup
+
+- **Settings:** `<config>/apis/digitaladvisor/digitaladvisorapi.toml` with a `[general]` section (see [Config schema: digitaladvisorapi.toml](../reference/config-schema.md#digitaladvisorapitoml) and `docs/example-config/apis/digitaladvisor/digitaladvisorapi.toml`).
+- **Credentials**, exactly one of:
+    - a **personal access token** (valid 1-90 days, no refresh): `nf config set-credential --setting digitaladvisorapi.personal_access_token`;
+    - a **refresh token**: `nf config set-credential --setting digitaladvisorapi.refresh_token`. The client gets the access token itself.
+- **Check:** `nf config validate` shows a "Digital Advisor API" row. `nf doctor` has no live check for it yet (#1117).
+
+## Queries
+
+```python
+from pynetappfoundry.clients.digitaladvisor import DigitalAdvisorAPIClient
+from pynetappfoundry.core.config import Config
+
+client = DigitalAdvisorAPIClient(Config(config_dir="config"))
+
+data = client.query("query { __typename }")
+```
+
+`query(document, variables=None)` returns the response's `data`. An unknown id comes back as `data.<field> = None`, which is returned, not raised. A document the server rejects (HTTP 400, `GRAPHQL_VALIDATION_FAILED`) raises `DigitalAdvisorQueryError`, which carries the error codes and messages (never variables or tokens).
+
+`paginate(document, variables, connection, records_key, page_size=None)` follows the cursor of a connection. The document must declare `$pageSize` and `$after` and pass them to the connection. It stops on an empty page, when the record count reaches `totalCount` (`clusters` has none), on an empty or repeated cursor, or after 1000 pages (it logs an error then).
+
+### Typed methods
+
+- `list_systems(*, product_types, system_states, include_all_states, include_storage_grid_nodes, filters=None, fields=None)`
+- `list_volumes(*, filters=None, fields=None)`
+
+They return plain dicts. The default selection is the scalar fields the service was probed for. `fields` replaces it; each name must be a plain GraphQL name, otherwise `ValueError`. `filters` accepts only the filter names the service listed. The GraphQL types of the `volumes` filters (and the `$pageSize: Int` and `$after: String` variables) are inferred from their names; a wrong one comes back as a `GRAPHQL_VALIDATION_FAILED` error. The enum values for `product_types` and `system_states` are not built in: look them up in the [schema](#schema).
+
+There is no `list_clusters`: no `Cluster` record fields were measured. Clusters, the nested object shapes and the `DataSource` backend are issue #1116.
+
+## Token rotation
+
+With a refresh token the client keeps the access token (a JWT valid for one hour) fresh. It reads only the `exp` claim, without verifying the signature, and refreshes 60 seconds before it. If `exp` cannot be read, it uses the token until the server answers `UNAUTHENTICATED`; it then refreshes once and retries once. Claims and tokens are never logged.
+
+Every refresh returns a **new refresh token**. The client writes both new tokens back to `digitaladvisorapi.toml` `[general]` in one atomic write that keeps comments. They are SOPS-encrypted when the stored `refresh_token` is, and plain text otherwise. If the write fails, the client logs an error naming the file and the exception type, and the call goes on with the in-memory tokens. The next run then starts from the older stored token.
+
+Refreshing works for 90 days from the portal login. After that the refresh fails with a `DigitalAdvisorAuthError` that says so: log in to the portal again and store the new token with `set-credential`.
+
+Limitation: two processes that refresh at the same moment are not coordinated, and the later write wins.
+
+A personal access token is used as is. When the server rejects it, `DigitalAdvisorAuthError` says it has probably expired.
+
+## Rate limit and retries
+
+The service allows 300 requests per 5 minutes per IP and sends no rate-limit headers. The client keeps a sliding window of 300 requests per 300 seconds. A 429, 502, 503, 504 or connection error is retried up to 5 times with exponential backoff (5 s, doubling, at most 120 s); a `Retry-After` header is honoured. The last failure raises `DigitalAdvisorError`. A 400 is never retried.
+
+## Read only
+
+`ensure_read_only` runs before any request and rejects a `mutation` or `subscription`. Digital Advisor's schema has mutations (creating and revoking tokens); the client never sends them.
+
+## Schema
+
+```bash
+nf config download-schema
+```
+
+downloads the GraphQL schema by introspection, with no credentials, to `<config>/apis/digitaladvisor/schema.json`. No NetApp schema ships with the package. The client does not read the file at run time: it is reference data for writing queries and for the `DataSource` backend. The server validates every query itself. See [CLI Reference](../reference/cli.md#config).
+
+See also [ADR-0036](../decisions/0036-digital-advisor-client-is-a-read-only-graphql-client-with-rotating-refresh-token-write-back.md).

@@ -46,6 +46,7 @@ Issue [#1089](https://github.com/endavis/pynetappfoundry/issues/1089) asks for o
 ## Related Issues
 
 - Issue #1089: feat: store every secret through set-credential --setting and remove encrypt-value
+- Issue #1051: three new `--setting` targets, `digitaladvisorapi.*` ([ADR-0036](0036-digital-advisor-client-is-a-read-only-graphql-client-with-rotating-refresh-token-write-back.md))
 - Issue #1081: scope-aware config CLI (ADR-0028)
 - Issue #1025: SOPS-encrypted settings values
 

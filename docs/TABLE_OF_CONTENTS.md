@@ -23,6 +23,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [Console Agent](usage/console-agent.md) - Manage on-prem working environments through a Console agent with ConsoleAgentClient
 - [DataSource](usage/data-source.md) - Unified entry point for reading cluster data from cache or live API
 - [Development Deployment Guide](deployment/development.md) - Guide for setting up and running the application in development environments
+- [Digital Advisor API](usage/digital-advisor-api.md) - Query Active IQ Digital Advisor with DigitalAdvisorAPIClient
 - [Doit Tasks Reference](development/doit-tasks-reference.md) - Complete reference for all doit automation tasks
 - [Examples](examples/README.md) - Code examples for pynetappfoundry
 - [GitHub Repository Settings](development/github-repository-settings.md) - Complete reference for all GitHub repository settings the template expects
@@ -79,6 +80,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [ADR-0033: Reports read cloud details from the OCCM cache first with a whole-record CLI fallback](decisions/0033-reports-read-cloud-details-from-the-occm-cache-first-with-a-whole-record-cli-fallback.md) - The inventory and HTML reports take AWS cloud details from the OCCM cache through the cluster resolver and fall back to the ONTAP CLI path for the whole cluster when the cache cannot answer it completely; Azure and GCP keep the CLI path.
 - [ADR-0034: Config checks are shared static functions returning structured results](decisions/0034-config-checks-are-shared-static-functions-returning-structured-results.md) - Config checks live in core/config_checks.py as static functions returning structured results that nf config validate renders.
 - [ADR-0035: nf doctor runs static, environment and read-only live checks with fix hints](decisions/0035-nf-doctor-runs-static-environment-and-read-only-live-checks-with-fix-hints.md) - nf doctor adds environment and read-only live checks to the static config checks, each with a fix hint.
+- [ADR-0036: Digital Advisor client is a read-only GraphQL client with rotating refresh-token write-back](decisions/0036-digital-advisor-client-is-a-read-only-graphql-client-with-rotating-refresh-token-write-back.md) - Digital Advisor is read through a small read-only GraphQL client that rotates and writes back its refresh token.
 - [ADR-9001: Use uv for package management](decisions/9001-use-uv-for-package-management.md) - Use uv for dependency management, virtual environments and package installation
 - [ADR-9002: Use doit for task automation](decisions/9002-use-doit-for-task-automation.md) - Use doit as the task runner for testing, linting, building and other routine operations
 - [ADR-9003: Use ruff for linting and formatting](decisions/9003-use-ruff-for-linting-and-formatting.md) - Use ruff as the one tool for linting and formatting, in place of flake8, black and isort
@@ -212,6 +214,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [ADR-0033: Reports read cloud details from the OCCM cache first with a whole-record CLI fallback](decisions/0033-reports-read-cloud-details-from-the-occm-cache-first-with-a-whole-record-cli-fallback.md) - The inventory and HTML reports take AWS cloud details from the OCCM cache through the cluster resolver and fall back to the ONTAP CLI path for the whole cluster when the cache cannot answer it completely; Azure and GCP keep the CLI path.
 - [ADR-0034: Config checks are shared static functions returning structured results](decisions/0034-config-checks-are-shared-static-functions-returning-structured-results.md) - Config checks live in core/config_checks.py as static functions returning structured results that nf config validate renders.
 - [ADR-0035: nf doctor runs static, environment and read-only live checks with fix hints](decisions/0035-nf-doctor-runs-static-environment-and-read-only-live-checks-with-fix-hints.md) - nf doctor adds environment and read-only live checks to the static config checks, each with a fix hint.
+- [ADR-0036: Digital Advisor client is a read-only GraphQL client with rotating refresh-token write-back](decisions/0036-digital-advisor-client-is-a-read-only-graphql-client-with-rotating-refresh-token-write-back.md) - Digital Advisor is read through a small read-only GraphQL client that rotates and writes back its refresh token.
 - [ADR-9001: Use uv for package management](decisions/9001-use-uv-for-package-management.md) - Use uv for dependency management, virtual environments and package installation
 - [ADR-9002: Use doit for task automation](decisions/9002-use-doit-for-task-automation.md) - Use doit as the task runner for testing, linting, building and other routine operations
 - [ADR-9003: Use ruff for linting and formatting](decisions/9003-use-ruff-for-linting-and-formatting.md) - Use ruff as the one tool for linting and formatting, in place of flake8, black and isort
@@ -272,6 +275,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [DataSource](usage/data-source.md) - Unified entry point for reading cluster data from cache or live API
 - [Dependabot Auto-merge](development/dependabot-automerge.md) - How the dependabot auto-merge workflow evaluates, enables, and skips PRs
 - [Development Deployment Guide](deployment/development.md) - Guide for setting up and running the application in development environments
+- [Digital Advisor API](usage/digital-advisor-api.md) - Query Active IQ Digital Advisor with DigitalAdvisorAPIClient
 - [Doit Tasks Reference](development/doit-tasks-reference.md) - Complete reference for all doit automation tasks
 - [Examples](examples/README.md) - Code examples for pynetappfoundry
 - [Field Mapping Framework](development/field-mapping.md) - Declarative framework for mapping API/CLI data to cache models
