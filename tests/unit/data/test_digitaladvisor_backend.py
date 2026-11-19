@@ -174,6 +174,65 @@ def test_argument_allowlists_disjoint_from_model_fields() -> None:
         assert not names & set(_MODELS[key].model_fields), key
 
 
+def test_systems_enum_arguments_declared_and_passed_when_used() -> None:
+    with _source(gql({"systems": {"cursor": "", "systems": []}})) as (ds, session):
+        list(
+            ds.query(DigitalAdvisorSystem, cluster="x").filter(
+                platformTypes=["ONTAP"], operatingMode=["CLUSTER_MODE"]
+            )
+        )
+    sent = _sent(session)
+    assert "$platformType: [SystemPlatformType!]" in sent["query"]
+    assert "platformType: $platformType" in sent["query"]
+    assert "$operatingMode: [SystemOperatingMode!]" in sent["query"]
+    assert "operatingMode: $operatingMode" in sent["query"]
+    assert "platformTypes" not in sent["query"]
+    assert sent["variables"]["platformType"] == ["ONTAP"]
+    assert sent["variables"]["operatingMode"] == ["CLUSTER_MODE"]
+    assert "platformTypes" not in sent["variables"]
+
+
+def test_systems_enum_arguments_absent_when_unused() -> None:
+    with _source(gql({"systems": {"cursor": "", "systems": []}})) as (ds, session):
+        list(ds.query(DigitalAdvisorSystem, cluster="x"))
+    assert "$operatingMode" not in _sent(session)["query"]
+    assert "$platformType" not in _sent(session)["query"]
+
+
+def test_clusters_platform_types_argument() -> None:
+    with _source(gql({"clusters": {"cursor": "", "clusters": []}})) as (ds, session):
+        list(ds.query(DigitalAdvisorCluster, cluster="x").filter(platformTypes=["ONTAP"]))
+    sent = _sent(session)
+    assert "$platformTypes: [SystemPlatformType!]" in sent["query"]
+    assert "platformTypes: $platformTypes" in sent["query"]
+    assert sent["variables"]["platformTypes"] == ["ONTAP"]
+
+
+def test_clusters_reject_operating_mode() -> None:
+    with _source() as (ds, session), pytest.raises(ValueError, match="unknown filter"):
+        list(ds.query(DigitalAdvisorCluster, cluster="x").filter(operatingMode=["CLUSTER_MODE"]))
+    session.post.assert_not_called()
+
+
+def test_platform_type_record_field_still_filters_in_memory() -> None:
+    body = gql(
+        {
+            "systems": {
+                "cursor": "",
+                "systems": [
+                    {"serialNumber": "SN-1", "platformType": "ONTAP"},
+                    {"serialNumber": "SN-2", "platformType": "E_SERIES"},
+                ],
+            }
+        }
+    )
+    with _source(body) as (ds, session):
+        found = list(ds.query(DigitalAdvisorSystem, cluster="x").filter(platformType="ONTAP"))
+    assert [s.serialNumber for s in found] == ["SN-1"]
+    assert "$platformType" not in _sent(session)["query"]
+    assert "platformType" in _sent(session)["query"]
+
+
 def test_two_pages_systems() -> None:
     page1 = gql(
         {

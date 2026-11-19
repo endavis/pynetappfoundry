@@ -199,9 +199,9 @@ VOLUME_FIELDS: tuple[str, ...] = (
     "enabledEfficiencyFeatures",
 )
 
-# Filter argument names the probe listed. The probe did not list their types:
-# these GraphQL types are INFERRED from the names, and a wrong one surfaces as the
-# server's GRAPHQL_VALIDATION_FAILED.
+# Filter argument names the probe listed. The types of ``platformType`` and
+# ``operatingMode`` come from the downloaded schema (#1124); the others are inferred
+# from the names, and a wrong one surfaces as the server's GRAPHQL_VALIDATION_FAILED.
 SYSTEM_FILTER_TYPES: dict[str, str] = {
     "customerId": "String",
     "siteId": "String",
@@ -211,8 +211,8 @@ SYSTEM_FILTER_TYPES: dict[str, str] = {
     "hostName": "String",
     "uuids": "[String!]",
     "watchlistId": "String",
-    "platformType": "String",
-    "operatingMode": "String",
+    "platformType": "[SystemPlatformType!]",
+    "operatingMode": "[SystemOperatingMode!]",
 }
 VOLUME_FILTER_TYPES: dict[str, str] = {
     "clusterId": "String",
