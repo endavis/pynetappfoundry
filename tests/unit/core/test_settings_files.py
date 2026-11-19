@@ -40,6 +40,7 @@ def test_write_creates_tables_and_parent_directories(tmp_path: Path) -> None:
     assert "[one.two]" in path.read_text()
 
 
+@pytest.mark.skipif(os.name == "nt", reason="Windows has no POSIX permission bits to keep")
 def test_write_keeps_file_mode(tmp_path: Path) -> None:
     path = tmp_path / "a.toml"
     path.write_text(ORIGINAL)
