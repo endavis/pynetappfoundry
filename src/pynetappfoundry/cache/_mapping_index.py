@@ -364,6 +364,24 @@ MAPPING_INDEX: dict[str, tuple[str, str, str, str | None]] = {
         "ClusterTraits",
         None,
     ),
+    "DigitalAdvisorCluster": (
+        "pynetappfoundry.cache.digitaladvisor.clusters.mapping",
+        "pynetappfoundry.models.digitaladvisor.cluster",
+        "DigitalAdvisorCluster",
+        None,
+    ),
+    "DigitalAdvisorSystem": (
+        "pynetappfoundry.cache.digitaladvisor.systems.mapping",
+        "pynetappfoundry.models.digitaladvisor.system",
+        "DigitalAdvisorSystem",
+        None,
+    ),
+    "DigitalAdvisorVolume": (
+        "pynetappfoundry.cache.digitaladvisor.volumes.mapping",
+        "pynetappfoundry.models.digitaladvisor.volume",
+        "DigitalAdvisorVolume",
+        None,
+    ),
     "DiiAssetsAnnotation": (
         "pynetappfoundry.cache.dii.assets.annotations.mapping",
         "pynetappfoundry.models.dii.assets.annotations.model",

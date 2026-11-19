@@ -40,6 +40,7 @@ _FALLBACK_PACKAGES: tuple[str, ...] = (
     "pynetappfoundry.cache.dii",
     "pynetappfoundry.cache.aiqum",
     "pynetappfoundry.cache.occm",
+    "pynetappfoundry.cache.digitaladvisor",
 )
 
 

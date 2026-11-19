@@ -43,7 +43,29 @@ data = client.query("query { __typename }")
 
 They return plain dicts. The default selection is the scalar fields the service was probed for. `fields` replaces it; each name must be a plain GraphQL name, otherwise `ValueError`. `filters` accepts only the filter names the service listed. The GraphQL types of the `volumes` filters (and the `$pageSize: Int` and `$after: String` variables) are inferred from their names; a wrong one comes back as a `GRAPHQL_VALIDATION_FAILED` error. The enum values for `product_types` and `system_states` are not built in: look them up in the [schema](#schema).
 
-There is no `list_clusters`: no `Cluster` record fields were measured. Clusters, the nested object shapes and the `DataSource` backend are issue #1116.
+There is no `list_clusters`; clusters are served by the [DataSource](#datasource) backend.
+
+## DataSource
+
+`DigitalAdvisorCluster`, `DigitalAdvisorSystem` and `DigitalAdvisorVolume` (in `src/pynetappfoundry/models/digitaladvisor/`) are served by the live-only Digital Advisor backend ([ADR-0037](../decisions/0037-digital-advisor-backend-is-live-only-and-generates-curated-graphql-selections-from-its-models.md)). There is no cache: `source="auto"` goes live and `source="cache"` raises `ValueError`.
+
+```python
+from pynetappfoundry.data import DataSource
+from pynetappfoundry.models.digitaladvisor import DigitalAdvisorSystem
+
+ds = DataSource(config)
+for system in ds.query(DigitalAdvisorSystem, cluster="digitaladvisor").filter(clusterId="<cluster id>"):
+    print(system.hostName, system.site.city if system.site else None)
+```
+
+- `cluster=` is only a label: there is one account in `digitaladvisorapi.toml`, so any value works and it is not used for targeting.
+- **Query arguments.** A `.filter()` key that names a root-query argument is sent to the service as a typed GraphQL variable. `systems` and `clusters` accept `customerId`, `siteId`, `clusterId`, `watchlistId` and `clusterIds`; `volumes` accepts `clusterId`, `vserverId` and `aggregateId`. `platformType` and `operatingMode` are not available yet ([#1124](https://github.com/endavis/pynetappfoundry/issues/1124)).
+- **`systems` defaults.** The service requires four arguments. The backend sends `productTypes=["FILER"]`, `systemStates=["ACTIVE"]`, `includeAllStates=False` and `includeStorageGridNodes=False`. These defaults are chosen, not measured: how `includeAllStates` interacts with `systemStates` is not known. Override any of them with `.filter(systemStates=["ACTIVE", "INACTIVE"])`.
+- **In-memory filters.** Any other key is an equality filter on a dotted path of the record, for example `.filter({"site.city": "Example City"})`. A top-level key that is neither a query argument nor a model field raises `ValueError` before any request. `ds.get(..., id=...)` filters the listed records in memory: by `id` for clusters and volumes, by `serialNumber` for systems.
+- **Curated fields, no personal data.** The models hold the scalar fields and the nested objects chosen for them, and the selection sent to the service is generated from those models. Contact people (`contactPerson`, `salesRepresentative`, `csm`, `retentionSpecialist`, `solutionEngineerSpecialist`, `sam`) and a site's `streetAddress` and `postalCode` are never requested, and the backend refuses to select them. Unbounded lists such as a cluster's `systems`, `vservers` and `shelves` are out of scope.
+- `.fields("hostName")` narrows the selection to those top-level fields, plus the identifier field and the fields you filter on in memory. A nested object comes with its whole curated sub-selection.
+- Dates are kept as strings: the wire format was not measured. A field the service returns as a number (a GraphQL `Float`) is a Python `float`.
+- Client errors, such as `DigitalAdvisorQueryError` for a rejected query, are raised unchanged.
 
 ## Token rotation
 

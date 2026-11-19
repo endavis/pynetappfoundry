@@ -41,7 +41,7 @@ A hand-written client over GraphQL is the smallest thing that works against the 
 
 - Issue #1051: feat: add an Active IQ Digital Advisor API client
 - Issue #1120: feat: let a Digital Advisor refresh token back up the personal access token
-- Issue #1116: DataSource backend for Digital Advisor
+- Issue #1116: DataSource backend for Digital Advisor (implemented by [ADR-0037](0037-digital-advisor-backend-is-live-only-and-generates-curated-graphql-selections-from-its-models.md))
 - Issue #1117: nf doctor live check for Digital Advisor
 - Issue #533: DataSource non-ONTAP backends
 - [ADR-0019](0019-console-runtime-client-architecture-org-scoped-access-and-per-token-type-wrapper-isolation.md), [ADR-0031](0031-one-command-stores-every-sops-secret-and-encrypt-value-is-removed.md), [ADR-0034](0034-config-checks-are-shared-static-functions-returning-structured-results.md), [ADR-0035](0035-nf-doctor-runs-static-environment-and-read-only-live-checks-with-fix-hints.md)

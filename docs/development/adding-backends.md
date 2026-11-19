@@ -172,8 +172,8 @@ mapping module on first lookup, using the generated `src/pynetappfoundry/cache/_
 For a new API type with its own tree under `cache/<api>/`:
 
 1. Add `<api>` to `_API_DIRS` in `tools/codegen/mapping_index.py`, and its package to
-   `_FALLBACK_PACKAGES` in `src/pynetappfoundry/cache/_registry.py` (`ontap`, `dii`, `aiqum` and
-   `occm` are already there). Add the package to `_walk_mapping_modules` in
+   `_FALLBACK_PACKAGES` in `src/pynetappfoundry/cache/_registry.py` (`ontap`, `dii`, `aiqum`, `occm` and
+   `digitaladvisor` are already there). Add the package to `_walk_mapping_modules` in
    `tests/unit/cache/test_registry_lazy.py` too.
 2. Run `uv run doit mapping_index` and commit the regenerated index.
 
@@ -216,6 +216,8 @@ _BACKENDS: dict[str, type[Backend]] = {
     "ontap": OntapBackend,
     "dii": DiiBackend,
     "aiqum": AiqumBackend,
+    "occm": OccmBackend,
+    "digitaladvisor": DigitalAdvisorBackend,
 }
 ```
 
@@ -645,6 +647,23 @@ generated `ConsoleAgentClient.ops`. **ADRs:** [ADR-0027](../decisions/0027-occm-
 
 ---
 
+## Example: Digital Advisor Backend (GraphQL, live-only)
+
+`DigitalAdvisorBackend` (`src/pynetappfoundry/data/digitaladvisor_backend.py`) reads Active IQ Digital Advisor through `DigitalAdvisorAPIClient.paginate`. **ADRs:** [ADR-0036](../decisions/0036-digital-advisor-client-is-a-read-only-graphql-client-with-rotating-refresh-token-write-back.md), [ADR-0037](../decisions/0037-digital-advisor-backend-is-live-only-and-generates-curated-graphql-selections-from-its-models.md).
+
+| Concern | Digital Advisor approach |
+| :--- | :--- |
+| Cache | None: `live_only = True`, so `source="cache"` raises `ValueError` and `auto` goes live |
+| Documents | Generated from the models by `selection_set()`: a nested model becomes a `{ ... }` sub-selection, every name is validated, and a name in `PERSONAL_DATA_FIELDS` raises before any request |
+| Mapping | Hand-written, built from `Model.model_fields` (`src/pynetappfoundry/cache/digitaladvisor/*/mapping.py`); `api_endpoint` is the root query field and `records_path` the record key |
+| Envelope | `cursor` plus a record array, `totalCount` on `systems` and `volumes` only; `paginate()` follows it |
+| Targeting | One account: `cluster=` is only a label |
+| Filters | A key in the mapping's argument allowlist is a typed GraphQL variable; any other key is an in-memory equality filter on a dotted path; an unknown top-level key raises `ValueError`. `where()`, `path_params` and `parent_filters` are unsupported |
+
+User-facing usage is in [Digital Advisor API](../usage/digital-advisor-api.md#datasource).
+
+---
+
 ## Related Documentation
 
 - [ADR-0012: Unified DataSource Accessor](../decisions/0012-unified-datasource-accessor.md) (superseded)
@@ -659,6 +678,7 @@ generated `ConsoleAgentClient.ops`. **ADRs:** [ADR-0027](../decisions/0027-occm-
 - `src/pynetappfoundry/data/backends.py` -- Backend ABC and OntapBackend
 - `src/pynetappfoundry/data/dii_backend.py` -- DiiBackend (live-only, bare-array or envelope)
 - `src/pynetappfoundry/data/occm_backend.py` -- OccmBackend (typed Console agent ops, cache for the collected mappings)
+- `src/pynetappfoundry/data/digitaladvisor_backend.py` -- DigitalAdvisorBackend (live-only GraphQL, selections generated from the models)
 - `src/pynetappfoundry/cache/occm_db.py` -- OccmCacheDB
 - `src/pynetappfoundry/cache/occm_collector.py` -- OccmCollector and `refresh_occm_cache`
 - `src/pynetappfoundry/data/source.py` -- DataSource facade and `_BACKENDS` registry
