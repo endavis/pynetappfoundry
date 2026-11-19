@@ -1,14 +1,19 @@
 """Live checks for ``nf doctor``: one read-only request per configured API.
 
-Every request is a ``GET``. The one exception is the Console OAuth token request,
-which is a ``POST`` to the token endpoint: it creates and changes no Console
-resource, and every API call after it is a ``GET`` (ADR-0035). The first contact with
+Every request is a ``GET``, with three exceptions (ADR-0035). The Console OAuth token
+request is a ``POST`` to the token endpoint: it creates and changes no Console
+resource, and every API call after it is a ``GET``. The Digital Advisor probe is a
+GraphQL query sent as a ``POST``, checked by ``ensure_read_only``. A Digital Advisor
+refresh-token client also ``POST`` s to its token endpoint and writes the rotated tokens
+to ``digitaladvisorapi.toml``, but only when the stored access token is missing, expired
+or rejected by the server. The first contact with
 an ONTAP or AIQUM host records its TLS fingerprint in the local trust store, as
 ``nf utils validate`` does.
 
 A result describes a failure only as ``HTTP <status>`` or the exception class name.
-Only ``ConfigurationError`` and ``ConsoleAuthError`` messages are shown, since both
-are secret-free by design. Client classes are imported lazily and can be injected.
+Only ``ConfigurationError``, ``ConsoleAuthError`` and Digital Advisor token refresh
+messages are shown, since all are secret-free by design.
+Client classes are imported lazily and can be injected.
 """
 
 from __future__ import annotations
@@ -44,6 +49,8 @@ class Factories:
         dii: Called as ``factory(config, name)``.
         console_api: Called as ``factory(config)`` or ``factory(config, scope=scope)``.
         console_agent: Called as ``factory(config, agent_id, token_provider=..., scope=...)``.
+        digitaladvisor: Called as
+            ``factory(config, token_provider=..., session=..., retry_config=...)``.
     """
 
     ontap: Callable[..., Any] | None = None
@@ -51,6 +58,7 @@ class Factories:
     dii: Callable[..., Any] | None = None
     console_api: Callable[..., Any] | None = None
     console_agent: Callable[..., Any] | None = None
+    digitaladvisor: Callable[..., Any] | None = None
 
 
 def _chain(exc: BaseException) -> list[BaseException]:
@@ -253,6 +261,218 @@ def check_dii(
     return results
 
 
+PROBE_QUERY = "query DoctorProbe { volumes(pageSize: 1) { cursor } }"
+"""The one Digital Advisor document doctor sends: it needs a valid token, no filters, and
+fetches no customer field."""
+
+_DA_SET_REFRESH = "nf config set-credential --setting digitaladvisorapi.refresh_token"
+_DA_SET_PAT = "nf config set-credential --setting digitaladvisorapi.personal_access_token"
+
+
+class _RecordingProvider:
+    """Wraps a token provider to learn whether and when it refreshed, and whether that failed."""
+
+    def __init__(self, inner: Any, persisted: list[BaseException | None]) -> None:
+        self._inner = inner
+        self._persisted = persisted
+        self.refreshable: bool = inner.refreshable
+        self.calls = 0
+        self.refreshed_on_call: list[int] = []
+        self.refresh_failed = False
+
+    def get_token(self) -> str:
+        self.calls += 1
+        before = len(self._persisted)
+        try:
+            token: str = self._inner.get_token()
+        except Exception:
+            self.refresh_failed = True
+            raise
+        if len(self._persisted) > before:
+            self.refreshed_on_call.append(self.calls)
+        return token
+
+    def invalidate(self, token: str) -> None:
+        self._inner.invalidate(token)
+
+
+def _digitaladvisor_failure(
+    exc: BaseException, *, refresh_mode: bool, refresh_failed: bool
+) -> tuple[str, str | None, CheckStatus]:
+    """Describe a failed Digital Advisor probe without quoting a response message."""
+    from pynetappfoundry.clients.digitaladvisor import (
+        DigitalAdvisorAuthError,
+        DigitalAdvisorError,
+        DigitalAdvisorQueryError,
+    )
+
+    if isinstance(exc, DigitalAdvisorAuthError):
+        if refresh_failed:
+            return "token refresh failed", str(exc), CheckStatus.ERROR
+        if refresh_mode:
+            return (
+                "token rejected (UNAUTHENTICATED)",
+                "The access token was rejected, and so was the one doctor got by refreshing. "
+                "Log in to the Digital Advisor portal, then store a fresh refresh token with: "
+                f"{_DA_SET_REFRESH}",
+                CheckStatus.ERROR,
+            )
+        return (
+            "token rejected (UNAUTHENTICATED)",
+            "The personal access token is probably expired (valid 1-90 days). Store a new "
+            f"one with: {_DA_SET_PAT}",
+            CheckStatus.ERROR,
+        )
+    if isinstance(exc, DigitalAdvisorQueryError):
+        codes = ", ".join(exc.codes) or "no code"
+        return (
+            f"query rejected ({codes})",
+            "Re-run with --debug for the traceback.",
+            CheckStatus.ERROR,
+        )
+    if isinstance(exc, DigitalAdvisorError):
+        for item in _chain(exc):
+            if isinstance(item, (requests.ConnectionError, requests.Timeout)):
+                return (
+                    f"unreachable ({type(item).__name__})",
+                    "Check the address, the network path and any proxy.",
+                    CheckStatus.ERROR,
+                )
+        logger.debug("Digital Advisor live check failed", exc_info=exc)
+        return (
+            f"failed ({type(exc).__name__})",
+            "Check the service state and re-run with --debug.",
+            CheckStatus.ERROR,
+        )
+    return _failure(exc)
+
+
+def check_digitaladvisor(
+    config: Config,
+    scope: str | None,
+    *,
+    client_factory: Callable[..., Any] | None = None,
+    session: requests.Session | None = None,
+) -> list[CheckResult]:
+    """Send one read-only GraphQL query to Digital Advisor to prove the stored token.
+
+    A personal access token is only probed. A refresh-token pair is probed with the
+    stored access token; the client refreshes, and writes the rotated tokens back, only
+    when that token is missing, expired or rejected (ADR-0035). Retries are off, so a
+    failure costs one request. Without ``[general]`` settings, or with ``scope``, there
+    are no rows.
+    """
+    if scope is not None or "general" not in config.settings.get("digitaladvisorapi", {}):
+        return []
+    subject = "live.digitaladvisor"
+    name = "Digital Advisor"
+    from pynetappfoundry.clients.digitaladvisor.api import (
+        DigitalAdvisorAPIClient,
+        make_token_persister,
+    )
+    from pynetappfoundry.clients.digitaladvisor.auth import (
+        RefreshingTokenProvider,
+        StaticTokenProvider,
+    )
+    from pynetappfoundry.core.models import RetryConfig
+
+    shared = session if session is not None else requests.Session()
+    persisted: list[BaseException | None] = []
+    recorder: _RecordingProvider | None = None
+    refresh_mode = False
+    try:
+        settings = config.get_digital_advisor_api_settings()
+        refresh_mode = settings.personal_access_token is None
+        provider: Any
+        if refresh_mode:
+            assert settings.refresh_token is not None  # the model requires one credential
+            real_persist = make_token_persister(config)
+
+            def persist(access: str, refresh: str) -> None:
+                persisted.append(None)
+                try:
+                    real_persist(access, refresh)
+                except Exception as e:
+                    persisted[-1] = e
+                    raise
+
+            provider = RefreshingTokenProvider(
+                refresh_token=settings.refresh_token.get_secret_value(),
+                access_token=(
+                    settings.access_token.get_secret_value()
+                    if settings.access_token is not None
+                    else None
+                ),
+                token_url=settings.token_url,
+                timeout=settings.timeout,
+                persist=persist,
+                session=shared,
+            )
+        else:
+            assert settings.personal_access_token is not None
+            provider = StaticTokenProvider(settings.personal_access_token.get_secret_value())
+        recorder = _RecordingProvider(provider, persisted)
+        factory = client_factory or DigitalAdvisorAPIClient
+        client = factory(
+            config,
+            token_provider=recorder,
+            session=shared,
+            retry_config=RetryConfig(enabled=False),
+        )
+        client.query(PROBE_QUERY)
+    except Exception as e:
+        detail, hint, status = _digitaladvisor_failure(
+            e,
+            refresh_mode=refresh_mode,
+            refresh_failed=recorder is not None and recorder.refresh_failed,
+        )
+        label = f"{name}: {detail}"
+        errors = (label,) if status is CheckStatus.ERROR else ()
+        return [CheckResult(subject, status, label, errors, hint)]
+
+    if not refresh_mode:
+        return [
+            CheckResult(subject, CheckStatus.OK, f"{name}: token works (personal access token)")
+        ]
+    if not persisted:
+        return [
+            CheckResult(
+                subject, CheckStatus.OK, f"{name}: token works (stored access token; no refresh)"
+            )
+        ]
+    assert recorder is not None
+    why = (
+        "the access token was missing or expired"
+        if recorder.refreshed_on_call == [1]
+        else "the server rejected the stored access token"
+    )
+    failure = persisted[-1]
+    if failure is not None:
+        label = (
+            f"{name}: token works, but the rotated tokens could not be written back "
+            f"({type(failure).__name__})"
+        )
+        return [
+            CheckResult(
+                subject,
+                CheckStatus.WARNING,
+                label,
+                hint=(
+                    "The stored refresh token may now be stale. Log in to the portal and run: "
+                    f"{_DA_SET_REFRESH}"
+                ),
+            )
+        ]
+    return [
+        CheckResult(
+            subject,
+            CheckStatus.OK,
+            f"{name}: token works; {why}, so doctor refreshed it and wrote the rotated "
+            "tokens to digitaladvisorapi.toml",
+        )
+    ]
+
+
 def check_console(
     config: Config,
     scope: str | None,
@@ -377,6 +597,13 @@ def run_live_checks(
                         agent_client_factory=f.console_agent,
                     )
                 ),
+            )
+        )
+    if "digitaladvisor" in apis:
+        sections.append(
+            CheckSection(
+                "Digital Advisor",
+                tuple(check_digitaladvisor(config, scope, client_factory=f.digitaladvisor)),
             )
         )
     return [section for section in sections if section.results]

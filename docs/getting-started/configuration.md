@@ -96,7 +96,7 @@ The fields are in [AIQUM API: Setup](../usage/aiqum-api.md#setup).
 - **Credentials:** one of a personal access token or a refresh token, stored with `nf config set-credential --setting digitaladvisorapi.personal_access_token` or `--setting digitaladvisorapi.refresh_token`.
 - **Settings:** `<config>/apis/digitaladvisor/digitaladvisorapi.toml` with a `[general]` section (see [Config schema: digitaladvisorapi.toml](../reference/config-schema.md#digitaladvisorapitoml)).
 - **Schema (optional):** `nf config download-schema` writes `<config>/apis/digitaladvisor/schema.json`.
-- **Check:** `nf config validate`.
+- **Check:** `nf config validate`, and `nf doctor --api digitaladvisor` to test the token.
 
 The client and the token rotation are in [Digital Advisor API](../usage/digital-advisor-api.md).
 
@@ -140,8 +140,8 @@ An API counts as configured when its `*api.toml` has a `[general]` section. DII 
 
 `nf config validate` is the offline check, suited to CI. `nf doctor` runs the same static checks, then checks `sops`, the age key, every SOPS value and the caches, then sends one read-only request to each configured API. It prints a fix hint for each problem.
 
-- `nf doctor --offline` skips the requests. `nf doctor --api NAME` limits the live and cache checks to one API (`ontap`, `aiqum`, `dii`, `console`).
-- Every request is a `GET`. The one exception is the Console OAuth token request, a `POST` to the token endpoint that changes no Console resource; a static `user_token` or `service_token` makes none.
+- `nf doctor --offline` skips the requests. `nf doctor --api NAME` limits the live and cache checks to one API (`ontap`, `aiqum`, `dii`, `console`, `digitaladvisor`).
+- Every request is a `GET`, with two `POST` cases. The Console OAuth token request goes to the token endpoint and changes no Console resource; a static `user_token` or `service_token` makes none. The Digital Advisor check sends one read-only GraphQL query as a `POST`; with a refresh token it also refreshes and writes the rotated tokens to `digitaladvisorapi.toml`, but only when the stored access token is missing, expired or rejected.
 - The first contact with an ONTAP or AIQUM host records its TLS fingerprint in the local trust store, as `nf utils validate` does.
 - It exits 1 on any error; warnings do not fail. No output contains a credential.
 

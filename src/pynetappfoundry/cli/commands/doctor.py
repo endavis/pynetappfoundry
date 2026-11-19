@@ -21,10 +21,9 @@ from pynetappfoundry.core.config_checks import (
     CheckStatus,
     run_static_checks,
 )
+from pynetappfoundry.doctor import API_NAMES
 
 console = Console()
-
-API_NAMES = ("ontap", "aiqum", "dii", "console")
 
 _STYLES = {
     CheckStatus.OK: "green",
@@ -114,8 +113,8 @@ def _render(groups: list[_Group], tree: Tree) -> tuple[list[str], list[str]]:
     "--api",
     "api",
     type=str,
-    help="Limit the live and cache checks to these APIs: ontap, aiqum, dii, console "
-    "(comma-separated).",
+    help="Limit the live and cache checks to these APIs: ontap, aiqum, dii, console, "
+    "digitaladvisor (comma-separated).",
 )
 @click.option(
     "--scope",

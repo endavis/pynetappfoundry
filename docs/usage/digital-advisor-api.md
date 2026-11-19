@@ -19,7 +19,7 @@ tags:
 - **Credentials**, exactly one of:
     - a **personal access token** (valid 1-90 days, no refresh): `nf config set-credential --setting digitaladvisorapi.personal_access_token`;
     - a **refresh token**: `nf config set-credential --setting digitaladvisorapi.refresh_token`. The client gets the access token itself.
-- **Check:** `nf config validate` shows a "Digital Advisor API" row. `nf doctor` has no live check for it yet (#1117).
+- **Check:** `nf config validate` shows a "Digital Advisor API" row. `nf doctor --api digitaladvisor` sends one read-only query to prove the token. With a refresh token it refreshes and writes the rotated tokens back only when the stored access token is missing, expired or rejected.
 
 ## Queries
 

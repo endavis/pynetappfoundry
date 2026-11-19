@@ -7,6 +7,7 @@ import socket
 import subprocess
 import sys
 import textwrap
+import time
 from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
@@ -17,6 +18,7 @@ from click.testing import CliRunner, Result
 
 from pynetappfoundry.cli.main import nf
 from pynetappfoundry.core.config_checks import CheckResult, CheckSection, CheckStatus
+from tests.unit.clients.digitaladvisor.helpers import gql, make_jwt, response
 
 CIPHERTEXT = "SOPS[placeholder-ciphertext]"
 SENTINEL = "SENTINEL-plaintext-value"
@@ -227,3 +229,93 @@ def test_help_does_not_import_doctor_modules(argv: list[str]) -> None:
         """
     )
     assert loaded == []
+
+
+# --- Digital Advisor (#1117) ---
+
+DA_PAT = "PLACEHOLDER-da-pat"
+DA_OLD_REFRESH = "PLACEHOLDER-da-old-refresh"
+DA_NEW_REFRESH = "PLACEHOLDER-da-new-refresh"
+DA_NEW_ACCESS = make_jwt(time.time() + 7200, {"tag": "rotated"})
+DA_EXPIRED = make_jwt(1.0, {"tag": "expired"})
+
+
+def _da_files(refresh: bool) -> dict[str, str]:
+    body = (
+        f'refresh_token = "{DA_OLD_REFRESH}"\naccess_token = "{DA_EXPIRED}"\n'
+        if refresh
+        else f'personal_access_token = "{DA_PAT}"\n'
+    )
+    return {**VALID, "digitaladvisorapi.toml": f"[general]\n{body}"}
+
+
+def _fake_post(calls: list[str]) -> Any:
+    def post(self: Any, url: str, **kwargs: Any) -> requests.Response:
+        calls.append(url)
+        if "json" in kwargs and "query" in kwargs["json"]:
+            return gql({"volumes": {"cursor": None}})
+        return response(200, {"access_token": DA_NEW_ACCESS, "refresh_token": DA_NEW_REFRESH})
+
+    return post
+
+
+@pytest.mark.parametrize("as_json", [False, True])
+def test_digitaladvisor_pat_end_to_end(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, as_json: bool
+) -> None:
+    _write(tmp_path, _da_files(refresh=False))
+    calls: list[str] = []
+    monkeypatch.setattr(requests.Session, "post", _fake_post(calls))
+
+    result = _run("--api", "digitaladvisor", *(["--json"] if as_json else []))
+
+    assert result.exit_code == 0, result.output
+    assert "Digital Advisor" in result.output
+    assert DA_PAT not in result.output
+    assert len(calls) == 1
+
+
+@pytest.mark.parametrize("as_json", [False, True])
+def test_digitaladvisor_refresh_end_to_end_hides_rotated_tokens(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, as_json: bool
+) -> None:
+    _write(tmp_path, _da_files(refresh=True))
+    calls: list[str] = []
+    monkeypatch.setattr(requests.Session, "post", _fake_post(calls))
+
+    result = _run("--api", "digitaladvisor", *(["--json"] if as_json else []))
+
+    assert result.exit_code == 0, result.output
+    assert "wrote the rotated tokens" in result.output.replace("\n", " ") or as_json
+    for token in (DA_OLD_REFRESH, DA_NEW_REFRESH, DA_NEW_ACCESS, DA_EXPIRED):
+        assert token not in result.output
+    assert DA_NEW_REFRESH in (tmp_path / "cfg" / "digitaladvisorapi.toml").read_text()
+    assert len(calls) == 2
+
+
+def test_digitaladvisor_offline_makes_no_network_call(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _write(tmp_path, _da_files(refresh=False))
+
+    def boom(*args: Any, **kwargs: Any) -> None:
+        raise AssertionError("network used with --offline")
+
+    monkeypatch.setattr(socket.socket, "connect", boom)
+    monkeypatch.setattr(socket, "create_connection", boom)
+    monkeypatch.setattr(requests.Session, "send", boom)
+
+    result = _run("--offline", "--api", "digitaladvisor")
+
+    assert result.exit_code == 0, result.output
+    assert "(offline)" in result.output
+    assert "token works" not in result.output
+
+
+def test_api_option_accepts_digitaladvisor_case_insensitively(tmp_path: Path) -> None:
+    _write(tmp_path, VALID)
+    with patch(LIVE, _ok_live()) as live:
+        result = _run("--api", "DigitalAdvisor")
+
+    assert result.exit_code == 0, result.output
+    assert live.call_args.kwargs["apis"] == ("digitaladvisor",)

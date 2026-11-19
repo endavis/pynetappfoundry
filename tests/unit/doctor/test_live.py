@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import shutil
+import time
 from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
@@ -13,18 +14,29 @@ import requests
 from pynetappfoundry.clients.console.agent import ConsoleAgentClient
 from pynetappfoundry.clients.console.api import ConsoleAPIClient
 from pynetappfoundry.clients.console.auth import ConsoleAuthError
+from pynetappfoundry.clients.digitaladvisor.api import ensure_read_only
+from pynetappfoundry.clients.digitaladvisor.auth import TokenPersistError
 from pynetappfoundry.clients.trust import HostIdentityChangedError
 from pynetappfoundry.core.config import Config
 from pynetappfoundry.core.config_checks import CheckResult, CheckStatus
 from pynetappfoundry.doctor.live import (
+    PROBE_QUERY,
     Factories,
     check_aiqum,
     check_console,
+    check_digitaladvisor,
     check_dii,
     check_ontap,
     run_live_checks,
 )
 from pynetappfoundry.models.console_types import ConsoleAgentInfo
+from tests.unit.clients.digitaladvisor.helpers import (
+    gql,
+    make_jwt,
+    response,
+    session_with,
+    unauthenticated,
+)
 
 SENTINEL = "SENTINEL-response-body"
 CIPHERTEXT = "SOPS[placeholder-ciphertext]"
@@ -337,6 +349,259 @@ def test_console_agent_failure_is_error(tmp_path: Path) -> None:
     assert failed.status is CheckStatus.ERROR
     assert failed.label.endswith("HTTP 502")
     assert SENTINEL not in _rendered(results)
+
+
+# --- Digital Advisor ---
+
+PAT = "PLACEHOLDER-pat-token"
+OLD_REFRESH = "PLACEHOLDER-old-refresh"
+NEW_REFRESH = "PLACEHOLDER-new-refresh"
+NEW_ACCESS = make_jwt(time.time() + 7200, {"tag": "new"})
+OK_BODY = {"volumes": {"cursor": None}}
+PERSIST = "pynetappfoundry.clients.digitaladvisor.api.make_token_persister"
+
+
+def _da_config(tmp_path: Path, *, pat: bool = False, access: str | None = None) -> Config:
+    lines = ["[general]"]
+    if pat:
+        lines.append(f'personal_access_token = "{PAT}"')
+    else:
+        lines.append(f'refresh_token = "{OLD_REFRESH}"')
+        if access is not None:
+            lines.append(f'access_token = "{access}"')
+    return _config(tmp_path, {"digitaladvisorapi.toml": "\n".join(lines) + "\n"})
+
+
+def _token_ok() -> requests.Response:
+    return response(200, {"access_token": NEW_ACCESS, "refresh_token": NEW_REFRESH})
+
+
+def _no_token_in(results: list[CheckResult], *tokens: str) -> None:
+    text = _rendered(results)
+    for token in (PAT, OLD_REFRESH, NEW_REFRESH, NEW_ACCESS, *tokens):
+        assert token not in text
+
+
+def _posted_urls(session: MagicMock) -> list[str]:
+    return [c.args[0] for c in session.post.call_args_list]
+
+
+def test_da_pat_probes_once_and_never_refreshes(tmp_path: Path) -> None:
+    config = _da_config(tmp_path, pat=True)
+    session = session_with(gql(OK_BODY))
+
+    results = check_digitaladvisor(config, None, session=session)
+
+    assert [(r.subject, r.status) for r in results] == [("live.digitaladvisor", CheckStatus.OK)]
+    assert "personal access token" in results[0].label
+    assert _posted_urls(session) == [config.get_digital_advisor_api_settings().graphql_url]
+    _no_token_in(results)
+
+
+def test_da_unexpired_access_token_is_sent_without_refresh_or_write(tmp_path: Path) -> None:
+    access = make_jwt(time.time() + 3600, {"tag": "stored"})
+    config = _da_config(tmp_path, access=access)
+    session = session_with(gql(OK_BODY))
+
+    with patch(PERSIST) as persister:
+        results = check_digitaladvisor(config, None, session=session)
+
+    assert results[0].status is CheckStatus.OK
+    assert "no refresh" in results[0].label
+    assert session.post.call_count == 1
+    assert session.post.call_args.kwargs["headers"]["Authorization"].endswith(access)
+    persister.return_value.assert_not_called()
+    _no_token_in(results, access)
+
+
+@pytest.mark.parametrize("access", [None, make_jwt(1.0)])
+def test_da_missing_or_expired_token_refreshes_and_writes_back(
+    tmp_path: Path, access: str | None
+) -> None:
+    config = _da_config(tmp_path, access=access)
+    settings = config.get_digital_advisor_api_settings()
+    session = session_with(_token_ok(), gql(OK_BODY))
+
+    results = check_digitaladvisor(config, None, session=session)
+
+    assert results[0].status is CheckStatus.OK
+    assert "missing or expired" in results[0].label
+    assert "digitaladvisorapi.toml" in results[0].label
+    assert _posted_urls(session) == [settings.token_url, settings.graphql_url]
+    written = (tmp_path / "cfg" / "digitaladvisorapi.toml").read_text()
+    assert NEW_REFRESH in written
+    assert NEW_ACCESS in written
+    assert OLD_REFRESH not in written
+    _no_token_in(results, *([access] if access else []))
+
+
+def test_da_write_back_failure_is_a_warning(tmp_path: Path) -> None:
+    config = _da_config(tmp_path)
+    session = session_with(_token_ok(), gql(OK_BODY))
+
+    with patch(PERSIST, return_value=MagicMock(side_effect=TokenPersistError("path SECRET"))):
+        results = check_digitaladvisor(config, None, session=session)
+
+    assert results[0].status is CheckStatus.WARNING
+    assert "TokenPersistError" in results[0].label
+    assert "set-credential --setting digitaladvisorapi.refresh_token" in (results[0].hint or "")
+    assert "SECRET" not in _rendered(results)
+    _no_token_in(results)
+
+
+def test_da_refresh_rejected_is_an_error_with_the_client_hint(tmp_path: Path) -> None:
+    config = _da_config(tmp_path)
+    session = session_with(response(401, {"message": SENTINEL}))
+
+    results = check_digitaladvisor(config, None, session=session)
+
+    assert results[0].status is CheckStatus.ERROR
+    assert results[0].label == "Digital Advisor: token refresh failed"
+    assert "Log in to the Digital Advisor portal" in (results[0].hint or "")
+    assert session.post.call_count == 1
+    assert SENTINEL not in _rendered(results)
+    _no_token_in(results)
+
+
+def test_da_rejected_unexpired_token_is_refreshed_once_and_retried(tmp_path: Path) -> None:
+    access = make_jwt(time.time() + 3600, {"tag": "stored"})
+    config = _da_config(tmp_path, access=access)
+    settings = config.get_digital_advisor_api_settings()
+    session = session_with(unauthenticated(), _token_ok(), gql(OK_BODY))
+
+    results = check_digitaladvisor(config, None, session=session)
+
+    assert results[0].status is CheckStatus.OK
+    assert "rejected the stored access token" in results[0].label
+    assert _posted_urls(session) == [
+        settings.graphql_url,
+        settings.token_url,
+        settings.graphql_url,
+    ]
+    assert NEW_REFRESH in (tmp_path / "cfg" / "digitaladvisorapi.toml").read_text()
+    _no_token_in(results, access)
+
+
+def test_da_still_rejected_after_refresh_is_an_error(tmp_path: Path) -> None:
+    access = make_jwt(time.time() + 3600, {"tag": "stored"})
+    config = _da_config(tmp_path, access=access)
+    session = session_with(unauthenticated(), _token_ok(), unauthenticated())
+
+    results = check_digitaladvisor(config, None, session=session)
+
+    assert results[0].status is CheckStatus.ERROR
+    assert results[0].label == "Digital Advisor: token rejected (UNAUTHENTICATED)"
+    assert "fresh refresh token" in (results[0].hint or "")
+    assert "personal access token" not in (results[0].hint or "")
+    assert session.post.call_count == 3
+    _no_token_in(results, access)
+
+
+def test_da_pat_rejected_has_the_pat_hint(tmp_path: Path) -> None:
+    config = _da_config(tmp_path, pat=True)
+    session = session_with(unauthenticated())
+
+    results = check_digitaladvisor(config, None, session=session)
+
+    assert results[0].status is CheckStatus.ERROR
+    assert results[0].label == "Digital Advisor: token rejected (UNAUTHENTICATED)"
+    assert "digitaladvisorapi.personal_access_token" in (results[0].hint or "")
+    assert session.post.call_count == 1
+    _no_token_in(results)
+
+
+@pytest.mark.parametrize(
+    ("outcome", "expected"),
+    [
+        (response(503, {"errors": [{"message": SENTINEL}]}), "failed (DigitalAdvisorError)"),
+        (requests.ConnectionError(SENTINEL), "unreachable (ConnectionError)"),
+        (requests.Timeout(SENTINEL), "unreachable (Timeout)"),
+    ],
+)
+def test_da_failures_make_one_attempt(
+    tmp_path: Path, outcome: requests.Response | BaseException, expected: str
+) -> None:
+    config = _da_config(tmp_path, pat=True)
+    session = session_with(outcome, outcome)
+
+    results = check_digitaladvisor(config, None, session=session)
+
+    assert results[0].status is CheckStatus.ERROR
+    assert expected in results[0].label
+    assert session.post.call_count == 1
+    assert SENTINEL not in _rendered(results)
+    _no_token_in(results)
+
+
+def test_da_query_error_shows_the_code_not_the_message(tmp_path: Path) -> None:
+    config = _da_config(tmp_path, pat=True)
+    body = {"errors": [{"message": SENTINEL, "extensions": {"code": "GRAPHQL_VALIDATION_FAILED"}}]}
+    session = session_with(response(200, body))
+
+    results = check_digitaladvisor(config, None, session=session)
+
+    assert results[0].label == "Digital Advisor: query rejected (GRAPHQL_VALIDATION_FAILED)"
+    assert SENTINEL not in _rendered(results)
+
+
+def test_da_unconfigured_or_scoped_has_no_rows(tmp_path: Path) -> None:
+    session = session_with()
+    assert check_digitaladvisor(_config(tmp_path, {"inv.toml": DATA}), None, session=session) == []
+    configured = _da_config(tmp_path, pat=True)
+    assert check_digitaladvisor(configured, "Org1", session=session) == []
+    session.post.assert_not_called()
+
+
+def test_da_invalid_settings_use_the_configuration_error_path(tmp_path: Path) -> None:
+    config = _config(tmp_path, {"digitaladvisorapi.toml": "[general]\ntimeout = 5\n"})
+
+    results = check_digitaladvisor(config, None, session=session_with())
+
+    assert results[0].status is CheckStatus.ERROR
+    assert results[0].subject == "live.digitaladvisor"
+
+
+def test_da_sends_only_read_only_queries(tmp_path: Path) -> None:
+    config = _da_config(tmp_path)
+    settings = config.get_digital_advisor_api_settings()
+    session = session_with(_token_ok(), gql(OK_BODY))
+
+    check_digitaladvisor(config, None, session=session)
+
+    assert {c[0] for c in session.method_calls} == {"post"}
+    graphql = [c for c in session.post.call_args_list if c.args[0] == settings.graphql_url]
+    assert len(graphql) == 1
+    for call in graphql:
+        document = call.kwargs["json"]
+        ensure_read_only(document["query"])
+        assert document["query"] == PROBE_QUERY
+    assert _posted_urls(session).count(settings.token_url) == 1
+
+
+def test_run_live_checks_puts_digitaladvisor_last(tmp_path: Path) -> None:
+    config = _da_config(tmp_path, pat=True)
+    client = MagicMock()
+    client.query.return_value = OK_BODY
+    factory = MagicMock(return_value=client)
+
+    sections = run_live_checks(
+        config,
+        apis=("digitaladvisor",),
+        scope=None,
+        clusters={},
+        factories=Factories(digitaladvisor=factory),
+    )
+
+    assert [s.title for s in sections] == ["Digital Advisor"]
+    factory.assert_called_once()
+    client.query.assert_called_once_with(PROBE_QUERY)
+    unconfigured = run_live_checks(
+        _config(tmp_path / "x", {"inv.toml": DATA}),
+        apis=("digitaladvisor",),
+        scope=None,
+        clusters={},
+    )
+    assert unconfigured == []
 
 
 # --- run_live_checks ---
