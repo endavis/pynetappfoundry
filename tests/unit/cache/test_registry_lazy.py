@@ -352,6 +352,7 @@ def _walk_mapping_modules() -> set[str]:
         "pynetappfoundry.cache.dii",
         "pynetappfoundry.cache.aiqum",
         "pynetappfoundry.cache.occm",
+        "pynetappfoundry.cache.digitaladvisor",
     ):
         pkg = importlib.import_module(pkg_name)
         for info in pkgutil.walk_packages(pkg.__path__, prefix=f"{pkg_name}."):

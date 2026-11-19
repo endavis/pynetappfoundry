@@ -159,3 +159,4 @@ The Issue contains the full discussion; the ADR summarizes the outcome.
 | [0034](0034-config-checks-are-shared-static-functions-returning-structured-results.md) | Config checks are shared static functions returning structured results | Accepted |
 | [0035](0035-nf-doctor-runs-static-environment-and-read-only-live-checks-with-fix-hints.md) | nf doctor runs static, environment and read-only live checks with fix hints | Accepted |
 | [0036](0036-digital-advisor-client-is-a-read-only-graphql-client-with-rotating-refresh-token-write-back.md) | Digital Advisor client is a read-only GraphQL client with rotating refresh-token write-back | Accepted |
+| [0037](0037-digital-advisor-backend-is-live-only-and-generates-curated-graphql-selections-from-its-models.md) | Digital Advisor backend is live-only and generates curated GraphQL selections from its models | Accepted |

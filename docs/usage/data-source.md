@@ -334,6 +334,10 @@ live-only OCCM backend ([ADR-0027](../decisions/0027-occm-backend-is-live-only-a
 
 See [Console Agent: DataSource](console-agent.md#datasource) for an example.
 
+## Digital Advisor
+
+`DigitalAdvisorCluster`, `DigitalAdvisorSystem` and `DigitalAdvisorVolume` are served by the live-only Digital Advisor backend ([ADR-0037](../decisions/0037-digital-advisor-backend-is-live-only-and-generates-curated-graphql-selections-from-its-models.md)). It has no cache, and `cluster=` is only a label. Query arguments, the chosen `systems` defaults and the fields that are never requested are in [Digital Advisor API: DataSource](digital-advisor-api.md#datasource).
+
 ## Common Patterns
 
 ### Counting Results

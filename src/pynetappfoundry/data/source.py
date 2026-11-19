@@ -19,6 +19,7 @@ from pynetappfoundry.data._path_params import placeholders as _placeholders
 from pynetappfoundry.data._routing import SourceMode, decide_path
 from pynetappfoundry.data.aiqum_backend import AiqumBackend
 from pynetappfoundry.data.backends import Backend, OntapBackend
+from pynetappfoundry.data.digitaladvisor_backend import DigitalAdvisorBackend
 from pynetappfoundry.data.dii_backend import DiiBackend
 from pynetappfoundry.data.filters import FilterExpression, compile_filters
 from pynetappfoundry.data.occm_backend import OccmBackend
@@ -38,12 +39,13 @@ T = TypeVar("T", bound=BaseModel)
 # Registered backends: ONTAP (cache + live), DII (live-only), AIQUM (cache for
 # the collected collections, live for the rest: Backend.is_live_only, #1055),
 # OCCM (Console agent: cache for the on-prem working environments, live for the
-# rest, #1050, #1076).
+# rest, #1050, #1076), Digital Advisor (GraphQL, live-only, #1116).
 _BACKENDS: dict[str, type[Backend]] = {
     "ontap": OntapBackend,
     "dii": DiiBackend,
     "aiqum": AiqumBackend,
     "occm": OccmBackend,
+    "digitaladvisor": DigitalAdvisorBackend,
 }
 
 
