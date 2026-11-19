@@ -1,10 +1,12 @@
 """Token handling for the Active IQ Digital Advisor client.
 
-Two credential modes:
+Three credential modes:
 
 * a personal access token (PAT), used as is (:class:`StaticTokenProvider`);
 * an access/refresh pair, where the access token is a JWT valid for one hour and
-  every refresh returns a new refresh token (:class:`RefreshingTokenProvider`).
+  every refresh returns a new refresh token (:class:`RefreshingTokenProvider`);
+* both, the PAT first and the refresh pair as the fallback once the PAT is
+  rejected (:class:`FallbackTokenProvider`).
 
 Neither the tokens nor the decoded JWT claims are ever logged or put in an
 exception message. Only the ``exp`` claim is read.
@@ -100,6 +102,7 @@ class StaticTokenProvider:
     """A personal access token: used as is, never refreshed."""
 
     refreshable = False
+    credential = "personal_access_token"
 
     def __init__(self, token: str) -> None:
         self._token = token
@@ -126,6 +129,7 @@ class RefreshingTokenProvider:
     """
 
     refreshable = True
+    credential = "refresh_token"
 
     def __init__(
         self,
@@ -246,3 +250,68 @@ class RefreshingTokenProvider:
                     type(e).__name__,
                 )
         return access
+
+
+_SET_PAT_HINT = "'nf config set-credential --setting digitaladvisorapi.personal_access_token'"
+
+
+class FallbackTokenProvider:
+    """A PAT first, with a refresh pair as the fallback.
+
+    The PAT is sent until the server rejects it. The first ``invalidate`` of the
+    PAT switches to the refresh provider for the rest of the provider's life and
+    logs one warning that names the credentials (never a value). Building the
+    refresh provider makes no request and no write, so a working PAT means no
+    token request and no config write.
+    """
+
+    refreshable = True
+
+    def __init__(self, primary: StaticTokenProvider, fallback: RefreshingTokenProvider) -> None:
+        self._primary = primary
+        self._fallback = fallback
+        self._lock = threading.Lock()
+        self._fell_back = False
+
+    def __repr__(self) -> str:
+        return f"FallbackTokenProvider(fell_back={self._fell_back!r})"
+
+    @property
+    def fell_back(self) -> bool:
+        """Whether the PAT was rejected and the refresh pair is in use."""
+        return self._fell_back
+
+    @property
+    def credential(self) -> str:
+        """Name of the credential in use: ``personal_access_token`` or ``refresh_token``."""
+        return self._fallback.credential if self._fell_back else self._primary.credential
+
+    def get_token(self) -> str:
+        """Return the PAT, or after the switch the refresh provider's token.
+
+        Raises:
+            DigitalAdvisorAuthError: If the fallback refresh fails; the message
+                names the renewal step for both credentials.
+        """
+        if not self._fell_back:
+            return self._primary.get_token()
+        try:
+            return self._fallback.get_token()
+        except DigitalAdvisorAuthError as e:
+            raise DigitalAdvisorAuthError(
+                "Digital Advisor rejected the personal access token, and the refresh_token "
+                f"fallback failed: {e} Also create a new personal access token and store it "
+                f"with {_SET_PAT_HINT}."
+            ) from e
+
+    def invalidate(self, token: str) -> None:
+        """Switch to the refresh pair when the PAT is rejected, else delegate."""
+        with self._lock:
+            if not self._fell_back and token == self._primary.get_token():
+                self._fell_back = True
+                logger.warning(
+                    "the Digital Advisor personal_access_token was rejected; "
+                    "falling back to the refresh_token"
+                )
+                return
+        self._fallback.invalidate(token)

@@ -354,13 +354,13 @@ With several tenants, `DIIAPIClient(config, name="TENANT")` reads `base_url` and
 
 Active IQ Digital Advisor GraphQL API settings, at `<config>/apis/digitaladvisor/digitaladvisorapi.toml`. Loaded into `config.settings["digitaladvisorapi"]`. Root only: a scope cannot hold one. See [Digital Advisor API](../usage/digital-advisor-api.md).
 
-Set exactly one credential source:
+Set a personal access token, a refresh token, or both (the PAT is used first; the refresh pair is the fallback when the server rejects it):
 
 ```toml
 [general]
 # A personal access token (valid 1-90 days, not refreshed) ...
 personal_access_token = "SOPS[...]"
-# ... or a refresh token. The client rotates it and writes both tokens back here.
+# ... or a refresh token (alone, or with the PAT above as its fallback). The client rotates it and writes both tokens back here.
 # refresh_token = "SOPS[...]"
 # access_token = "SOPS[...]"   # optional, only with refresh_token
 ```
@@ -369,15 +369,15 @@ personal_access_token = "SOPS[...]"
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `personal_access_token` | SecretStr | One of the two | - | Personal access token. Mutually exclusive with `refresh_token`. SOPS value accepted |
-| `refresh_token` | SecretStr | One of the two | - | Refresh token. The client replaces it after every refresh. SOPS value accepted |
+| `personal_access_token` | SecretStr | At least one | - | Personal access token. Used first when `refresh_token` is also set. SOPS value accepted |
+| `refresh_token` | SecretStr | At least one | - | Refresh token, alone or as the PAT's fallback. The client replaces it after every refresh. SOPS value accepted |
 | `access_token` | SecretStr | No | - | Current access token (a JWT valid for one hour). Needs `refresh_token`. Written by the client. SOPS value accepted |
 | `graphql_url` | string | No | `"https://gql.aiq.netapp.com/graphql"` | GraphQL endpoint |
 | `token_url` | string | No | `"https://api.activeiq.netapp.com/v1/tokens/accessToken"` | Token refresh endpoint |
 | `timeout` | float | No | `70.0` | Request timeout in seconds; above the server's 60 second query timeout |
 | `page_size` | integer | No | `100` | Default `pageSize` for `paginate()`; at least 1. Not a measured server value |
 
-`nf config validate` reports the section as Invalid when both credentials are set, none is set, or `access_token` has no `refresh_token`. The message names fields, never values.
+`nf config validate` reports the section as Invalid when neither credential is set or `access_token` has no `refresh_token`. The message names fields, never values.
 
 ---
 

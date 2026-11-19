@@ -1,13 +1,13 @@
 [general]
-# Active IQ Digital Advisor GraphQL API settings. Set exactly one credential
-# source. See notes.txt for how to obtain it.
+# Active IQ Digital Advisor GraphQL API settings. Set a personal access token,
+# a refresh token, or both. See notes.txt for how to obtain it.
 
 # A personal access token (valid 1-90 days, never refreshed).
 personal_access_token = 'paste-personal-access-token-here'
 # personal_access_token = 'SOPS[...]'  # written by: nf config set-credential --setting digitaladvisorapi.personal_access_token
 
-# Refresh-token mode (alternative to personal_access_token; setting both is an
-# error). The client refreshes the one-hour access token itself and writes the
+# Refresh-token mode (alternative to personal_access_token, or set with it as its
+# fallback: the PAT is used first). The client refreshes the one-hour access token itself and writes the
 # rotated refresh_token and access_token back to this file, SOPS-encrypted when
 # the stored refresh_token is.
 # refresh_token = 'SOPS[...]'  # written by: nf config set-credential --setting digitaladvisorapi.refresh_token

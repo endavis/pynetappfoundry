@@ -31,6 +31,7 @@ from pynetappfoundry.clients.digitaladvisor.auth import (
     DigitalAdvisorAuthError,
     DigitalAdvisorError,
     DigitalAdvisorQueryError,
+    FallbackTokenProvider,
     RefreshingTokenProvider,
     StaticTokenProvider,
     TokenPersistError,
@@ -390,6 +391,41 @@ def _checked_filters(
     return result
 
 
+def build_token_provider(
+    settings: DigitalAdvisorAPISettings,
+    *,
+    persist: Callable[[str, str], None] | None,
+    session: requests.Session | None,
+) -> TokenProvider:
+    """Build the token provider for the configured credential mode.
+
+    A PAT alone is static, a refresh token alone refreshes, and both give a
+    :class:`FallbackTokenProvider` (PAT first, refresh pair once the PAT is
+    rejected). Building makes no request and no write.
+    """
+    static = (
+        StaticTokenProvider(settings.personal_access_token.get_secret_value())
+        if settings.personal_access_token is not None
+        else None
+    )
+    if settings.refresh_token is None:
+        assert static is not None  # the model requires one credential
+        return static
+    refreshing = RefreshingTokenProvider(
+        refresh_token=settings.refresh_token.get_secret_value(),
+        access_token=(
+            settings.access_token.get_secret_value() if settings.access_token is not None else None
+        ),
+        token_url=settings.token_url,
+        timeout=settings.timeout,
+        persist=persist,
+        session=session,
+    )
+    if static is None:
+        return refreshing
+    return FallbackTokenProvider(static, refreshing)
+
+
 class DigitalAdvisorAPIClient:
     """Read-only client for the Active IQ Digital Advisor GraphQL API."""
 
@@ -437,18 +473,8 @@ class DigitalAdvisorAPIClient:
         self, settings: DigitalAdvisorAPISettings, config: Config | None
     ) -> TokenProvider:
         """Build the token provider for the configured credential mode."""
-        if settings.personal_access_token is not None:
-            return StaticTokenProvider(settings.personal_access_token.get_secret_value())
-        assert settings.refresh_token is not None  # the model requires one credential
-        return RefreshingTokenProvider(
-            refresh_token=settings.refresh_token.get_secret_value(),
-            access_token=(
-                settings.access_token.get_secret_value()
-                if settings.access_token is not None
-                else None
-            ),
-            token_url=settings.token_url,
-            timeout=settings.timeout,
+        return build_token_provider(
+            settings,
             persist=make_token_persister(config) if config is not None else None,
             session=self._session,
         )
@@ -558,7 +584,8 @@ class DigitalAdvisorAPIClient:
 
         An unknown id comes back as ``data.<field> = None``; that is returned, not
         raised. On ``UNAUTHENTICATED`` a refresh-token client refreshes once and
-        retries once.
+        retries once; with both credentials a rejected PAT switches to the
+        refresh pair first (retry once per credential, at most three POSTs).
 
         Raises:
             DigitalAdvisorQueryError: For a mutation, an HTTP 400 or ``errors[]``.
@@ -583,11 +610,21 @@ class DigitalAdvisorAPIClient:
                         "digitaladvisorapi.personal_access_token'."
                     )
                 if refreshed:
-                    raise DigitalAdvisorAuthError(
-                        "Digital Advisor rejected the access token again after a refresh"
-                    )
-                refreshed = True
+                    message = "Digital Advisor rejected the access token again after a refresh"
+                    if getattr(self._tokens, "fell_back", False):
+                        message += (
+                            ", and the personal access token was rejected too. Log in to the "
+                            "Digital Advisor portal and store a new refresh token with "
+                            "'nf config set-credential --setting digitaladvisorapi.refresh_token'; "
+                            "also create a new personal access token and store it with "
+                            "'nf config set-credential --setting "
+                            "digitaladvisorapi.personal_access_token'"
+                        )
+                    raise DigitalAdvisorAuthError(message)
+                before = getattr(self._tokens, "credential", None)
                 self._tokens.invalidate(token)
+                if getattr(self._tokens, "credential", None) == before:
+                    refreshed = True  # a switch to the fallback credential is not the retry
                 continue
             if response.status_code == 429 or response.status_code >= 500:
                 raise DigitalAdvisorError(

@@ -506,10 +506,20 @@ def test_digital_advisor_row_absent_valid_and_invalid(tmp_path: Path) -> None:
     bad = row(
         {
             path: '[general]\npersonal_access_token = "placeholder-pat"\n'
-            'refresh_token = "placeholder-refresh-token"\n',
+            'access_token = "placeholder-access-token"\n',
             "x.toml": "",
         }
     )
     assert bad.status is CheckStatus.ERROR
-    assert "mutually exclusive" in bad.errors[0]
+    assert "access_token requires refresh_token" in bad.errors[0]
     assert "placeholder-pat" not in bad.errors[0]
+    assert "placeholder-access-token" not in bad.errors[0]
+    both = row(
+        {
+            path: '[general]\npersonal_access_token = "placeholder-pat"\n'
+            'refresh_token = "placeholder-refresh-token"\n',
+            "x.toml": "",
+            "y.toml": "",
+        }
+    )
+    assert both.status is CheckStatus.OK

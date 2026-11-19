@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from typing import Any
 from unittest.mock import MagicMock, patch
 
@@ -16,6 +17,7 @@ from pynetappfoundry.clients.digitaladvisor.api import (
     VOLUME_FIELDS,
     DigitalAdvisorAPIClient,
     RateLimiter,
+    build_token_provider,
     ensure_read_only,
     fetch_schema,
 )
@@ -23,6 +25,7 @@ from pynetappfoundry.clients.digitaladvisor.auth import (
     DigitalAdvisorAuthError,
     DigitalAdvisorError,
     DigitalAdvisorQueryError,
+    FallbackTokenProvider,
     RefreshingTokenProvider,
     StaticTokenProvider,
 )
@@ -421,3 +424,118 @@ def test_fetch_schema_sends_no_auth_and_returns_data() -> None:
 def test_fetch_schema_rejects_bad_responses(resp: requests.Response) -> None:
     with pytest.raises(DigitalAdvisorError):
         fetch_schema("https://gql.example.test/graphql", 5.0, session_with(resp))
+
+
+# -- both credentials (#1120) -------------------------------------------------
+
+REFRESH0 = "placeholder-r0"
+
+
+def _both_client(
+    session: MagicMock,
+    token_session: MagicMock,
+    *,
+    access: str | None,
+    persist: MagicMock | None = None,
+) -> DigitalAdvisorAPIClient:
+    values: dict[str, Any] = {"refresh_token": REFRESH0}
+    if access is not None:
+        values["access_token"] = access
+    settings = _settings(**values)
+    provider = build_token_provider(settings, persist=persist, session=token_session)
+    return _client(session, settings=settings, token_provider=provider)
+
+
+def _unexpired(label: str) -> str:
+    return make_jwt(time.time() + 3600, {"sub": label})
+
+
+def _new_tokens() -> requests.Response:
+    return response(
+        200, {"access_token": _unexpired("placeholder-new"), "refresh_token": "placeholder-r1"}
+    )
+
+
+def _bearers(session: MagicMock) -> list[str]:
+    return [c.kwargs["headers"]["Authorization"] for c in session.post.call_args_list]
+
+
+def test_both_working_pat_makes_no_token_request_or_write() -> None:
+    session, token_session, persist = session_with(gql({"a": 1})), session_with(), MagicMock()
+    client = _both_client(session, token_session, access=None, persist=persist)
+    assert client.query("query { a }") == {"a": 1}
+    assert session.post.call_count == 1
+    token_session.post.assert_not_called()
+    persist.assert_not_called()
+
+
+def test_both_rejected_pat_falls_back_to_the_stored_access_token() -> None:
+    access = _unexpired("placeholder-stored")
+    session = session_with(unauthenticated(), gql({"a": 1}))
+    token_session, persist = session_with(), MagicMock()
+    client = _both_client(session, token_session, access=access, persist=persist)
+    assert client.query("query { a }") == {"a": 1}
+    assert _bearers(session) == [f"Bearer {PAT}", f"Bearer {access}"]
+    token_session.post.assert_not_called()
+    persist.assert_not_called()
+
+
+def test_both_stored_access_token_rejected_refreshes_then_succeeds() -> None:
+    access = _unexpired("placeholder-stored")
+    session = session_with(unauthenticated(), unauthenticated(), gql({"a": 1}))
+    token_session, persist = session_with(_new_tokens()), MagicMock()
+    client = _both_client(session, token_session, access=access, persist=persist)
+    assert client.query("query { a }") == {"a": 1}
+    assert session.post.call_count == 3
+    assert token_session.post.call_count == 1
+    persist.assert_called_once()
+
+
+def test_both_rejected_everywhere_names_both_renewal_steps(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    access = _unexpired("placeholder-stored")
+    session = session_with(unauthenticated(), unauthenticated(), unauthenticated())
+    token_session = session_with(_new_tokens())
+    client = _both_client(session, token_session, access=access)
+    with caplog.at_level(logging.DEBUG), pytest.raises(DigitalAdvisorAuthError) as exc:
+        client.query("query { a }")
+    assert session.post.call_count == 3
+    message = str(exc.value)
+    assert "digitaladvisorapi.refresh_token" in message
+    assert "digitaladvisorapi.personal_access_token" in message
+    for text in (message, caplog.text):
+        for secret in (PAT, REFRESH0, access, "placeholder-r1"):
+            assert secret not in text
+
+
+def test_both_pat_rejected_and_refresh_endpoint_401_names_both_steps() -> None:
+    session = session_with(unauthenticated())
+    client = _both_client(session, session_with(response(401)), access=None)
+    with pytest.raises(DigitalAdvisorAuthError) as exc:
+        client.query("query { a }")
+    assert "digitaladvisorapi.refresh_token" in str(exc.value)
+    assert "digitaladvisorapi.personal_access_token" in str(exc.value)
+    assert PAT not in str(exc.value)
+    assert REFRESH0 not in str(exc.value)
+
+
+def test_both_503_on_the_pat_request_does_not_switch() -> None:
+    session = session_with(response(503), gql({"a": 1}))
+    token_session = session_with()
+    client = _both_client(session, token_session, access=None)
+    assert client.query("query { a }") == {"a": 1}
+    assert _bearers(session) == [f"Bearer {PAT}", f"Bearer {PAT}"]
+    token_session.post.assert_not_called()
+
+
+def test_build_token_provider_picks_the_provider_by_credentials() -> None:
+    def build(**values: Any) -> object:
+        settings = DigitalAdvisorAPISettings.model_validate(values)
+        return build_token_provider(settings, persist=None, session=session_with())
+
+    assert isinstance(build(personal_access_token=PAT), StaticTokenProvider)
+    assert isinstance(build(refresh_token=REFRESH0), RefreshingTokenProvider)
+    assert isinstance(
+        build(personal_access_token=PAT, refresh_token=REFRESH0), FallbackTokenProvider
+    )

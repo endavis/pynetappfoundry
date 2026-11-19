@@ -93,7 +93,7 @@ The fields are in [AIQUM API: Setup](../usage/aiqum-api.md#setup).
 
 ## Digital Advisor
 
-- **Credentials:** one of a personal access token or a refresh token, stored with `nf config set-credential --setting digitaladvisorapi.personal_access_token` or `--setting digitaladvisorapi.refresh_token`.
+- **Credentials:** one or both of a personal access token and a refresh token (the PAT is used first), stored with `nf config set-credential --setting digitaladvisorapi.personal_access_token` or `--setting digitaladvisorapi.refresh_token`.
 - **Settings:** `<config>/apis/digitaladvisor/digitaladvisorapi.toml` with a `[general]` section (see [Config schema: digitaladvisorapi.toml](../reference/config-schema.md#digitaladvisorapitoml)).
 - **Schema (optional):** `nf config download-schema` writes `<config>/apis/digitaladvisor/schema.json`.
 - **Check:** `nf config validate`, and `nf doctor --api digitaladvisor` to test the token.

@@ -10,6 +10,7 @@ import requests
 
 from pynetappfoundry.clients.digitaladvisor.auth import (
     DigitalAdvisorAuthError,
+    FallbackTokenProvider,
     RefreshingTokenProvider,
     StaticTokenProvider,
     TokenPersistError,
@@ -189,3 +190,96 @@ def test_repr_holds_no_token() -> None:
     provider = _provider(session_with(), FakeClock(), access="placeholder-access")
     assert "placeholder" not in repr(provider)
     assert URL in repr(provider)
+
+
+# -- FallbackTokenProvider (#1120) --------------------------------------------
+
+PAT = "placeholder-pat"
+
+
+def _fallback(
+    token_session: MagicMock,
+    clock: FakeClock,
+    *,
+    access: str | None = None,
+    persist: MagicMock | None = None,
+) -> FallbackTokenProvider:
+    return FallbackTokenProvider(
+        StaticTokenProvider(PAT), _provider(token_session, clock, access=access, persist=persist)
+    )
+
+
+def test_fallback_returns_the_pat_without_any_token_request() -> None:
+    session = session_with()
+    provider = _fallback(session, FakeClock())
+    assert provider.get_token() == PAT
+    assert provider.credential == "personal_access_token"
+    assert provider.fell_back is False
+    assert provider.refreshable is True
+    session.post.assert_not_called()
+
+
+def test_fallback_switches_once_and_warns_once_without_values(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    clock = FakeClock()
+    access = make_jwt(clock.now + 3600, {"sub": "placeholder-stored"})
+    provider = _fallback(session_with(), clock, access=access)
+    with caplog.at_level(logging.DEBUG):
+        provider.invalidate(PAT)
+        provider.invalidate(PAT)
+    warnings = [r for r in caplog.records if r.levelno == logging.WARNING]
+    assert len(warnings) == 1
+    assert "personal_access_token" in warnings[0].getMessage()
+    assert "refresh_token" in warnings[0].getMessage()
+    assert PAT not in caplog.text
+    assert access not in caplog.text
+    assert provider.fell_back is True
+    assert provider.credential == "refresh_token"
+    assert provider.get_token() == access
+
+
+def test_fallback_refreshes_when_no_access_token_and_persists() -> None:
+    clock = FakeClock()
+    new_access, new_refresh = _new_pair(clock)
+    session = session_with(
+        response(200, {"access_token": new_access, "refresh_token": new_refresh})
+    )
+    persist = MagicMock()
+    provider = _fallback(session, clock, persist=persist)
+    provider.invalidate(PAT)
+    assert provider.get_token() == new_access
+    persist.assert_called_once_with(new_access, new_refresh)
+
+
+def test_fallback_invalidate_delegates_after_the_switch() -> None:
+    clock = FakeClock()
+    access = make_jwt(clock.now + 3600, {"sub": "placeholder-stored"})
+    new_access, new_refresh = _new_pair(clock)
+    session = session_with(
+        response(200, {"access_token": new_access, "refresh_token": new_refresh})
+    )
+    provider = _fallback(session, clock, access=access)
+    provider.invalidate(PAT)
+    provider.invalidate(access)
+    assert provider.get_token() == new_access
+
+
+@pytest.mark.parametrize("status", [400, 401, 403])
+def test_fallback_refresh_rejection_names_both_credentials(status: int) -> None:
+    provider = _fallback(session_with(response(status)), FakeClock())
+    provider.invalidate(PAT)
+    with pytest.raises(DigitalAdvisorAuthError) as exc:
+        provider.get_token()
+    message = str(exc.value)
+    assert "digitaladvisorapi.refresh_token" in message
+    assert "digitaladvisorapi.personal_access_token" in message
+    assert PAT not in message
+    assert "placeholder-refresh-old" not in message
+
+
+def test_fallback_repr_holds_no_token() -> None:
+    text = repr(_fallback(session_with(), FakeClock(), access="placeholder-access"))
+    assert PAT not in text
+    assert "placeholder-refresh-old" not in text
+    assert "placeholder-access" not in text

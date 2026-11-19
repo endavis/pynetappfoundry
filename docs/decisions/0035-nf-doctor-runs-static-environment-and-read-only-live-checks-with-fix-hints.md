@@ -29,7 +29,7 @@ Accepted
 7. **Injected clients.** Each live check takes client factories (defaulting to the real classes, imported lazily), so tests build no real client and make no request.
 8. **No secrets in results.** No label, error or hint holds a ciphertext, plaintext or token. A live failure is described as `HTTP <status>` or the exception class name; only `ConfigurationError`, `ConsoleAuthError` and Digital Advisor token refresh messages, which are secret-free (built from an HTTP status and fixed text), are shown. A SOPS failure reports the exception class only.
 9. **Options.** `--offline` skips the live checks and never imports them. `--api` limits the live and cache checks to the named APIs. `--scope` limits the checks to that scope. `-f/--filter` narrows the ONTAP clusters. `--json` prints one JSON document. The exit code is 1 when any result is an error; warnings do not fail.
-10. **Digital Advisor refresh mode: probe, refresh only if needed.** A personal access token is only probed. A refresh-token pair is probed with the stored access token while the client counts it as unexpired, with no refresh and no write. The client refreshes, by a `POST` to the token endpoint, and writes the rotated tokens to `digitaladvisorapi.toml`, only when the stored access token is missing, expired or rejected by the server (one refresh and one retry); never otherwise. That write-back is the second exception to read-only, and the result row says so. If the refresh fails, or the retry is still rejected, the result is an error that points to the portal login and a fresh `refresh_token`. A failed write-back is a warning, since the stored refresh token may then be stale. Retries are off, so one probe is one request.
+10. **Digital Advisor refresh mode: probe, refresh only if needed.** A personal access token is only probed. With both credentials the PAT is probed first; a rejected PAT falls back to the refresh pair under the same refresh and write rules, the result is a warning with a PAT renewal hint, and the probe can then take more than one request ([#1120](https://github.com/endavis/pynetappfoundry/issues/1120)). A refresh-token pair is probed with the stored access token while the client counts it as unexpired, with no refresh and no write. The client refreshes, by a `POST` to the token endpoint, and writes the rotated tokens to `digitaladvisorapi.toml`, only when the stored access token is missing, expired or rejected by the server (one refresh and one retry); never otherwise. That write-back is the second exception to read-only, and the result row says so. If the refresh fails, or the retry is still rejected, the result is an error that points to the portal login and a fresh `refresh_token`. A failed write-back is a warning, since the stored refresh token may then be stale. Retries are off, so one probe is one request.
 
 ## Rationale
 
@@ -42,6 +42,7 @@ Reusing `CheckResult` lets doctor share the checks and the rendering conventions
 - Issue #1110: configuration guide that sets up each API
 - Issue #1117: Digital Advisor live check
 - Issue #1051: Digital Advisor API client
+- Issue #1120: Digital Advisor refresh token as a fallback for the PAT
 
 ## Related Documentation
 

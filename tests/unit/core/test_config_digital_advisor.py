@@ -32,6 +32,8 @@ def _config(tmp_path: Path, general: str) -> Config:
         {"personal_access_token": PAT},
         {"refresh_token": REFRESH},
         {"refresh_token": REFRESH, "access_token": ACCESS},
+        {"personal_access_token": PAT, "refresh_token": REFRESH},
+        {"personal_access_token": PAT, "refresh_token": REFRESH, "access_token": ACCESS},
     ],
 )
 def test_valid_credential_combinations(fields: dict[str, Any]) -> None:
@@ -41,7 +43,6 @@ def test_valid_credential_combinations(fields: dict[str, Any]) -> None:
 @pytest.mark.parametrize(
     "fields",
     [
-        {"personal_access_token": PAT, "refresh_token": REFRESH},
         {},
         {"access_token": ACCESS},
         {"personal_access_token": PAT, "access_token": ACCESS},
@@ -85,12 +86,12 @@ def test_loader_decrypts_sops_values(tmp_path: Path) -> None:
 
 
 def test_loader_error_never_contains_values(tmp_path: Path) -> None:
-    config = _config(tmp_path, f'personal_access_token = "{PAT}"\nrefresh_token = "{REFRESH}"\n')
+    config = _config(tmp_path, f'personal_access_token = "{PAT}"\naccess_token = "{ACCESS}"\n')
     with pytest.raises(ConfigurationError) as exc:
         config.get_digital_advisor_api_settings()
     message = str(exc.value)
     assert PAT not in message
-    assert REFRESH not in message
+    assert ACCESS not in message
     assert "digitaladvisorapi.toml" in message
 
 
@@ -115,3 +116,10 @@ def test_set_credential_targets_exist() -> None:
             "general",
             field,
         )
+
+
+def test_loader_accepts_both_credentials(tmp_path: Path) -> None:
+    config = _config(tmp_path, f'personal_access_token = "{PAT}"\nrefresh_token = "{REFRESH}"\n')
+    s = config.get_digital_advisor_api_settings()
+    assert s.personal_access_token is not None
+    assert s.uses_refresh_token is True

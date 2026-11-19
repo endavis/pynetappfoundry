@@ -361,11 +361,13 @@ OK_BODY = {"volumes": {"cursor": None}}
 PERSIST = "pynetappfoundry.clients.digitaladvisor.api.make_token_persister"
 
 
-def _da_config(tmp_path: Path, *, pat: bool = False, access: str | None = None) -> Config:
+def _da_config(
+    tmp_path: Path, *, pat: bool = False, access: str | None = None, both: bool = False
+) -> Config:
     lines = ["[general]"]
-    if pat:
+    if pat or both:
         lines.append(f'personal_access_token = "{PAT}"')
-    else:
+    if not pat:
         lines.append(f'refresh_token = "{OLD_REFRESH}"')
         if access is not None:
             lines.append(f'access_token = "{access}"')
@@ -494,6 +496,110 @@ def test_da_still_rejected_after_refresh_is_an_error(tmp_path: Path) -> None:
     assert "fresh refresh token" in (results[0].hint or "")
     assert "personal access token" not in (results[0].hint or "")
     assert session.post.call_count == 3
+    _no_token_in(results, access)
+
+
+def _stored() -> str:
+    return make_jwt(time.time() + 3600, {"tag": "stored"})
+
+
+def test_da_both_pat_works_without_token_request_or_write(tmp_path: Path) -> None:
+    config = _da_config(tmp_path, both=True)
+    before = (tmp_path / "cfg" / "digitaladvisorapi.toml").read_text()
+    session = session_with(gql(OK_BODY))
+
+    results = check_digitaladvisor(config, None, session=session)
+
+    assert results[0].status is CheckStatus.OK
+    assert "personal access token" in results[0].label
+    assert session.post.call_count == 1
+    assert (tmp_path / "cfg" / "digitaladvisorapi.toml").read_text() == before
+    _no_token_in(results)
+
+
+def test_da_both_pat_rejected_uses_stored_access_token_with_a_warning(tmp_path: Path) -> None:
+    access = _stored()
+    config = _da_config(tmp_path, both=True, access=access)
+    before = (tmp_path / "cfg" / "digitaladvisorapi.toml").read_text()
+    session = session_with(unauthenticated(), gql(OK_BODY))
+
+    results = check_digitaladvisor(config, None, session=session)
+
+    assert results[0].status is CheckStatus.WARNING
+    assert "refresh_token fallback" in results[0].label
+    assert "digitaladvisorapi.personal_access_token" in (results[0].hint or "")
+    assert session.post.call_count == 2
+    assert (tmp_path / "cfg" / "digitaladvisorapi.toml").read_text() == before
+    _no_token_in(results, access)
+
+
+@pytest.mark.parametrize("access", [None, make_jwt(1.0)])
+def test_da_both_pat_rejected_refreshes_and_writes_back(tmp_path: Path, access: str | None) -> None:
+    config = _da_config(tmp_path, both=True, access=access)
+    settings = config.get_digital_advisor_api_settings()
+    session = session_with(unauthenticated(), _token_ok(), gql(OK_BODY))
+
+    results = check_digitaladvisor(config, None, session=session)
+
+    assert results[0].status is CheckStatus.WARNING
+    assert "refresh_token fallback" in results[0].label
+    assert "missing or expired" in results[0].label
+    assert "digitaladvisorapi.toml" in results[0].label
+    assert "digitaladvisorapi.personal_access_token" in (results[0].hint or "")
+    assert _posted_urls(session) == [
+        settings.graphql_url,
+        settings.token_url,
+        settings.graphql_url,
+    ]
+    written = (tmp_path / "cfg" / "digitaladvisorapi.toml").read_text()
+    assert NEW_REFRESH in written
+    assert OLD_REFRESH not in written
+    _no_token_in(results, *([access] if access else []))
+
+
+def test_da_both_write_back_failure_hint_has_both_commands(tmp_path: Path) -> None:
+    config = _da_config(tmp_path, both=True)
+    session = session_with(unauthenticated(), _token_ok(), gql(OK_BODY))
+
+    with patch(PERSIST, return_value=MagicMock(side_effect=TokenPersistError("path SECRET"))):
+        results = check_digitaladvisor(config, None, session=session)
+
+    assert results[0].status is CheckStatus.WARNING
+    assert "TokenPersistError" in results[0].label
+    hint = results[0].hint or ""
+    assert "digitaladvisorapi.refresh_token" in hint
+    assert "digitaladvisorapi.personal_access_token" in hint
+    assert "SECRET" not in _rendered(results)
+    _no_token_in(results)
+
+
+def test_da_both_refresh_rejected_is_an_error_with_both_commands(tmp_path: Path) -> None:
+    config = _da_config(tmp_path, both=True)
+    session = session_with(unauthenticated(), response(401, {"message": SENTINEL}))
+
+    results = check_digitaladvisor(config, None, session=session)
+
+    assert results[0].status is CheckStatus.ERROR
+    assert results[0].label == "Digital Advisor: token refresh failed"
+    hint = results[0].hint or ""
+    assert "digitaladvisorapi.refresh_token" in hint
+    assert "digitaladvisorapi.personal_access_token" in hint
+    assert SENTINEL not in _rendered(results)
+    _no_token_in(results)
+
+
+def test_da_both_rejected_after_refresh_is_an_error_with_both_commands(tmp_path: Path) -> None:
+    access = _stored()
+    config = _da_config(tmp_path, both=True, access=access)
+    session = session_with(unauthenticated(), unauthenticated(), _token_ok(), unauthenticated())
+
+    results = check_digitaladvisor(config, None, session=session)
+
+    assert results[0].status is CheckStatus.ERROR
+    assert results[0].label == "Digital Advisor: token rejected (UNAUTHENTICATED)"
+    hint = results[0].hint or ""
+    assert "digitaladvisorapi.refresh_token" in hint
+    assert "digitaladvisorapi.personal_access_token" in hint
     _no_token_in(results, access)
 
 
