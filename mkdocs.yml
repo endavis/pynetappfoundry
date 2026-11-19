@@ -196,6 +196,7 @@ nav:
       - ADR-0032 Cross-cache cluster resolution is UUID-first with a name fallback over one linking table: decisions/0032-cross-cache-cluster-resolution-is-uuid-first-with-a-name-fallback-over-one-linking-table.md
       - ADR-0033 Reports read cloud details from the OCCM cache first with a whole-record CLI fallback: decisions/0033-reports-read-cloud-details-from-the-occm-cache-first-with-a-whole-record-cli-fallback.md
       - ADR-0034 Config checks are shared static functions returning structured results: decisions/0034-config-checks-are-shared-static-functions-returning-structured-results.md
+      - "ADR-0035 nf doctor runs static, environment and read-only live checks with fix hints": decisions/0035-nf-doctor-runs-static-environment-and-read-only-live-checks-with-fix-hints.md
       - Template Decisions:
           - ADR-9001 uv Package Management: decisions/9001-use-uv-for-package-management.md
           - ADR-9002 doit Task Automation: decisions/9002-use-doit-for-task-automation.md

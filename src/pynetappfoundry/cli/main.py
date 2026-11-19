@@ -11,6 +11,7 @@ from pynetappfoundry._version import __version__
 from pynetappfoundry.cli.commands.cache import cache
 from pynetappfoundry.cli.commands.cifs import cifs
 from pynetappfoundry.cli.commands.config import config
+from pynetappfoundry.cli.commands.doctor import doctor
 from pynetappfoundry.cli.commands.events import events
 from pynetappfoundry.cli.commands.licenses import licenses
 from pynetappfoundry.cli.commands.metrics import metrics
@@ -88,6 +89,7 @@ def nf(ctx: click.Context, config_dir: str, output_dir: str, debug: bool) -> Non
 nf.add_command(cache)
 nf.add_command(cifs)
 nf.add_command(config)
+nf.add_command(doctor)
 nf.add_command(events)
 nf.add_command(licenses)
 nf.add_command(metrics)

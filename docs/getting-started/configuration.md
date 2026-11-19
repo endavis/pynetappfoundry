@@ -71,7 +71,7 @@ Every `fetch_spec` call also accepts `--no-verify` to skip TLS certificate valid
 - **Credentials:** `nf config set-credential --cluster NAME --user USER` stores them on the cluster entry. A default for every cluster goes under `[clusters]` in `users.toml` (see [Config schema: Credential Resolution Order](../reference/config-schema.md#credential-resolution-order)). The API uses HTTP Basic authentication.
 - **Settings:** `<config>/apis/ontap/ontapapi.toml` with a `[general]` section (see [Config schema: ontapapi.toml](../reference/config-schema.md#ontapapitoml)).
 - **Spec:** `<config>/apis/ontap/all.json` (see [Spec files](#spec-files)).
-- **Check:** `nf config validate`.
+- **Check:** `nf config validate`, and `nf doctor --api ontap` to test the connection.
 
 ## AIQUM
 
@@ -79,7 +79,7 @@ Every `fetch_spec` call also accepts `--no-verify` to skip TLS certificate valid
 - **Credentials:** `nf config set-credential --type aiqums --name NAME --user USER`, or a default under `[aiqums]` in `users.toml`.
 - **Settings:** `<config>/apis/aiqum/aiqumapi.toml` with a `[general]` section.
 - **Spec:** `<config>/apis/aiqum/all.json` (see [Spec files](#spec-files)).
-- **Check:** `nf config validate`, and `nf config show -s aiqums` to see the loaded entries.
+- **Check:** `nf config validate`, `nf doctor --api aiqum`, and `nf config show -s aiqums` to see the loaded entries.
 
 The fields are in [AIQUM API: Setup](../usage/aiqum-api.md#setup).
 
@@ -89,7 +89,7 @@ The fields are in [AIQUM API: Setup](../usage/aiqum-api.md#setup).
 - **Credentials:** the API token. `nf config set-credential --setting diiapi.api_ro_token` stores one for every tenant in `diiapi.toml`. `nf config set-credential --type cloudinsights --name NAME --user LABEL` stores one per tenant. The client sends it in the `X-CloudInsights-ApiKey` header.
 - **Settings:** `<config>/apis/dii/diiapi.toml` with a `[general]` section (see [Config schema: diiapi.toml](../reference/config-schema.md#diiapitoml)).
 - **Spec:** `<config>/apis/dii/all.json` (see [Spec files](#spec-files)).
-- **Check:** `nf config validate`, and `nf config show -s cloudinsights` to see the loaded entries.
+- **Check:** `nf config validate`, `nf doctor --api dii`, and `nf config show -s cloudinsights` to see the loaded entries.
 
 ## Console and agents (OCCM)
 
@@ -105,7 +105,7 @@ The Console (BlueXP) client and the Console agents (connectors, also called OCCM
 - **Spec:** `<config>/apis/console/console_openapi.yaml` (see [Spec files](#spec-files)).
 - **OCCM needs no files of its own.** Calls to an agent go through `ConsoleAgentClient`, which uses the Console spec and the Console account; nothing under `<config>/apis/occm/` is read. The `docs/example-config/apis/occm/` files only feed code generation. See [Console Agent](../usage/console-agent.md).
 - **Scopes:** a scope can have its own Console account; see [Config schema: Scopes](../reference/config-schema.md#scopes).
-- **Check:** `nf config validate`, and `nf config validate --scope NAME` for a scope.
+- **Check:** `nf config validate`, `nf config validate --scope NAME` for a scope, and `nf doctor --api console` to test the token and each agent.
 
 ## What `nf config validate` checks
 
@@ -126,6 +126,17 @@ A section other than the first four appears only when it has something to show, 
 An error exits 1 and the output ends with a hint for each one, such as `nf config set-credential --cluster NAME --user USER` for a cluster without credentials. A missing spec file is only a warning and the exit code stays 0: the configuration is valid, but the client raises `FileNotFoundError` when it is built. The warning says which file is missing and which file in the repository to copy (see [Spec files](#spec-files)).
 
 An API counts as configured when its `*api.toml` has a `[general]` section. DII also counts when `[cloudinsights]` has a tenant, and Console when the root or any scope has a `consoleapi.toml` `[general]`. The OCCM spec is never checked. `nf config validate --scope NAME` checks that scope's inventory and settings and no spec file, because specs live in `<config>/apis/`.
+
+## `nf doctor` or `nf config validate`
+
+`nf config validate` is the offline check, suited to CI. `nf doctor` runs the same static checks, then checks `sops`, the age key, every SOPS value and the caches, then sends one read-only request to each configured API. It prints a fix hint for each problem.
+
+- `nf doctor --offline` skips the requests. `nf doctor --api NAME` limits the live and cache checks to one API (`ontap`, `aiqum`, `dii`, `console`).
+- Every request is a `GET`. The one exception is the Console OAuth token request, a `POST` to the token endpoint that changes no Console resource; a static `user_token` or `service_token` makes none.
+- The first contact with an ONTAP or AIQUM host records its TLS fingerprint in the local trust store, as `nf utils validate` does.
+- It exits 1 on any error; warnings do not fail. No output contains a credential.
+
+See [CLI reference: doctor](../reference/cli.md#doctor).
 
 ## Next steps
 

@@ -48,6 +48,7 @@ Commands:
   cache     Cluster metadata cache management.
   cifs      CIFS / SMB inspection commands.
   config    Configuration management commands.
+  doctor    Check configuration, environment and API access, with fix hints.
   events    Event management commands.
   licenses  License management commands.
   metrics   Metrics commands.
@@ -94,6 +95,7 @@ src/pynetappfoundry/cli/
     ├── cache/         # check, clear, compliance, history, inspect, query, refresh, schema, show, status
     ├── cifs/          # session
     ├── config/        # init-sops, set-credential, show, validate
+    ├── doctor.py      # doctor
     ├── events/        # get, save-azure
     ├── licenses/      # check, get, savings
     ├── metrics/       # dump-dii

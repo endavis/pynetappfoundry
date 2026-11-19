@@ -387,6 +387,7 @@ pytest_add_cli_args_test_selection = [
     "tests/unit/core",
     "tests/unit/data",
     "tests/unit/db",
+    "tests/unit/doctor",
     "tests/unit/models",
     "tests/unit/query",
     "tests/unit/units",

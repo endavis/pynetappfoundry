@@ -335,7 +335,8 @@ of each AIQUM and Cloud Insights tenant, and the spec file of every configured A
 These sections appear only when they have rows. A missing credential or an invalid entry is an error
 (exit 1); a missing spec file is a warning (exit 0) that names the file in the repository to copy. An
 error is followed by a fix hint, for example `nf config set-credential --type aiqums --name NAME --user USER`.
-No check calls the network or prints a secret. See
+No check calls the network or prints a secret. To also check the environment and API
+access, use [`nf doctor`](#doctor). See
 [Configuration: What `nf config validate` checks](../getting-started/configuration.md#what-nf-config-validate-checks).
 
 **`config init-sops` options:**
@@ -364,6 +365,41 @@ Without `--scope`, `--type console` writes the root Console account's refresh to
 
 `nf config encrypt-value` was removed in favour of `--setting` (see [ADR-0031](../decisions/0031-one-command-stores-every-sops-secret-and-encrypt-value-is-removed.md)).
 
+### doctor
+
+Check the configuration, the environment and API access, with a fix hint for each problem.
+
+```bash
+nf doctor [OPTIONS]
+```
+
+It runs three groups of checks and shows each result as `ok`, `warning`, `error` or `skipped`:
+
+1. **Config:** the static checks of `nf config validate`, with section titles prefixed `Config:`.
+2. **Environment (offline):** `sops` on PATH, the age key, that every `SOPS[...]` value decrypts (no value is printed), and each cache (ONTAP, AIQUM, OCCM) by presence, age (stale after 30 days) and schema version. Caches are opened read-only: doctor never creates or migrates one.
+3. **Live:** one read-only `GET` per configured API: ONTAP `/cluster` (and that the configured name matches), AIQUM `/datacenter/cluster/clusters?max_records=1`, DII `/assets/storages/count`, and for Console a token per account, the organizations, the agents and each active agent's `about`. The Console OAuth token request is a `POST` to the token endpoint (it changes no Console resource); accounts with a static token make none. The first contact with an ONTAP or AIQUM host records its TLS fingerprint in the local trust store, as `nf utils validate` does.
+
+**`doctor` options:**
+
+| Option | Description |
+|--------|-------------|
+| `--offline` | Skip the live checks: no network request is made |
+| `--api TEXT` | Limit the live and cache checks to these APIs: `ontap`, `aiqum`, `dii`, `console` (comma-separated, case-insensitive). Static, `sops` and age checks always run. An unknown name exits 2 |
+| `--scope TEXT` | Check only this scope's settings, objects and Console account. An unknown scope exits 1 |
+| `-f, --filter TEXT` | JSON cluster filter for the ONTAP live and cache checks |
+| `--json` | Print one JSON document: `sections` (each with `title`, `group` and `results`), `summary` and `offline` |
+
+Exit code 1 when any result is an `error`; warnings do not fail. No output contains a credential, a token or a ciphertext. A DII `403` is a warning (the token authenticated but lacks the Assets read scope); a `401` is an error.
+
+```bash
+nf doctor
+nf doctor --offline
+nf doctor --api console --scope Org1
+nf doctor --json
+```
+
+Use `nf config validate` for an offline check in CI. See [ADR-0035](../decisions/0035-nf-doctor-runs-static-environment-and-read-only-live-checks-with-fix-hints.md) and [Configuration: nf doctor or nf config validate](../getting-started/configuration.md#nf-doctor-or-nf-config-validate).
+
 ### utils
 
 Utility commands.
@@ -386,6 +422,8 @@ nf utils [OPTIONS] COMMAND [ARGS]...
 |--------|-------------|
 | `-f, --filter TEXT` | JSON cluster filter |
 | `--ssh / --no-ssh` | Also validate SSH connectivity (default: disabled) |
+
+For a broader check with fix hints, see [`nf doctor`](#doctor).
 
 **`utils run-cmd`**: takes a single quoted ONTAP CLI command as its argument,
 and accepts `-f, --filter` to select clusters.
