@@ -67,7 +67,7 @@ Every `fetch_spec` call also accepts `--no-verify` to skip TLS certificate valid
 
 ## ONTAP
 
-- **Inventory:** add each cluster to a data file as `[clusters.NAME]` with an `ip` (see [Config schema: Clusters](../reference/config-schema.md#clusters)).
+- **Inventory:** add each cluster to a data file as `[clusters.NAME]` with an `ip` (see [Config schema: Clusters](../reference/config-schema.md#clusters)). The `NAME` must be the cluster's real name, which Console shows as its cluster name. For AWS Cloud Volumes ONTAP the `ip` may be a node management IP.
 - **Credentials:** `nf config set-credential --cluster NAME --user USER` stores them on the cluster entry. A default for every cluster goes under `[clusters]` in `users.toml` (see [Config schema: Credential Resolution Order](../reference/config-schema.md#credential-resolution-order)). The API uses HTTP Basic authentication.
 - **Settings:** `<config>/apis/ontap/ontapapi.toml` with a `[general]` section (see [Config schema: ontapapi.toml](../reference/config-schema.md#ontapapitoml)).
 - **Spec:** `<config>/apis/ontap/all.json` (see [Spec files](#spec-files)).
@@ -140,6 +140,7 @@ An API counts as configured when its `*api.toml` has a `[general]` section. DII 
 
 `nf config validate` is the offline check, suited to CI. `nf doctor` runs the same static checks, then checks `sops`, the age key, every SOPS value and the caches, then sends one read-only request to each configured API. It prints a fix hint for each problem.
 
+- `nf doctor` also compares your `[clusters]` names with Console's working environments in the OCCM cache, per account, and reports a renamed cluster as an error. If that cache is missing or stale, it says to run `nf cache occm refresh`.
 - `nf doctor --offline` skips the requests. `nf doctor --api NAME` limits every check to that API's settings, credentials, SOPS values, cache and live check, plus the shared `sops` and age-key checks (`ontap`, `aiqum`, `dii`, `console`, `digitaladvisor`).
 - Every request is a `GET`, with two `POST` cases. The Console OAuth token request goes to the token endpoint and changes no Console resource; a static `user_token` or `service_token` makes none. The Digital Advisor check sends one read-only GraphQL query as a `POST`; with a refresh token it also refreshes and writes the rotated tokens to `digitaladvisorapi.toml`, but only when the stored access token is missing, expired or rejected.
 - The first contact with an ONTAP or AIQUM host records its TLS fingerprint in the local trust store, as `nf utils validate` does.

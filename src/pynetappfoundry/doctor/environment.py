@@ -1,4 +1,5 @@
-"""Offline environment checks for ``nf doctor``: SOPS, the age key and the caches.
+"""Offline environment checks for ``nf doctor``: SOPS, the age key, the caches and the
+config-to-Console cluster name comparison.
 
 No check here makes a network call, prints a value, or puts a ciphertext, a plaintext
 or a SOPS error message in a result. A SOPS failure is reported by its class name
@@ -459,6 +460,7 @@ def run_environment_checks(
     apis: tuple[str, ...] = API_NAMES,
     sops_apis: Collection[str] | None = None,
     clusters: dict[str, Any],
+    cluster_filter_active: bool = False,
 ) -> list[CheckSection]:
     """Run the offline environment checks; a section appears only when it has rows.
 
@@ -468,4 +470,20 @@ def run_environment_checks(
         CheckSection("SOPS", tuple(check_sops(config, scope, apis=sops_apis))),
         CheckSection("Caches", tuple(check_caches(config, apis, clusters))),
     ]
+    if "console" in apis or "ontap" in apis:
+        from pynetappfoundry.doctor.console_clusters import check_console_clusters
+
+        sections.append(
+            CheckSection(
+                "Console clusters",
+                tuple(
+                    check_console_clusters(
+                        config,
+                        clusters,
+                        scope=scope,
+                        cluster_filter_active=cluster_filter_active,
+                    )
+                ),
+            )
+        )
     return [section for section in sections if section.results]

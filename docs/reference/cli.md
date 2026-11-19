@@ -385,7 +385,7 @@ nf doctor [OPTIONS]
 It runs three groups of checks and shows each result as `ok`, `warning`, `error` or `skipped`:
 
 1. **Config:** the static checks of `nf config validate`, with section titles prefixed `Config:`.
-2. **Environment (offline):** `sops` on PATH, the age key, that every `SOPS[...]` value decrypts (no value is printed), and each cache (ONTAP, AIQUM, OCCM) by presence, age (stale after 30 days) and schema version. Caches are opened read-only: doctor never creates or migrates one.
+2. **Environment (offline):** `sops` on PATH, the age key, that every `SOPS[...]` value decrypts (no value is printed), each cache (ONTAP, AIQUM, OCCM) by presence, age (stale after 30 days) and schema version, and that your `[clusters]` names match Console's. Caches are opened read-only: doctor never creates or migrates one.
 3. **Live:** one read-only `GET` per configured API: ONTAP `/cluster` (and that the configured name matches), AIQUM `/datacenter/cluster/clusters?max_records=1`, DII `/assets/storages/count`, Digital Advisor one GraphQL query (`volumes(pageSize: 1) { cursor }`), and for Console a token per account, the organizations, the agents and each active agent's `about`. The Console OAuth token request is a `POST` to the token endpoint (it changes no Console resource); accounts with a static token make none. The Digital Advisor query is a `POST` that reads only. A personal access token is only probed; with both credentials a rejected PAT falls back to the refresh pair and the row is a WARNING with a PAT renewal hint; a refresh-token pair is probed with the stored access token, and only a missing, expired or rejected one is refreshed, with the rotated tokens written to `digitaladvisorapi.toml` (the row says so). No Digital Advisor row appears when it is not configured. The first contact with an ONTAP or AIQUM host records its TLS fingerprint in the local trust store, as `nf utils validate` does.
 
 **`doctor` options:**
@@ -395,8 +395,10 @@ It runs three groups of checks and shows each result as `ok`, `warning`, `error`
 | `--offline` | Skip the live checks: no network request is made |
 | `--api TEXT` | Limit every check to these APIs: `ontap`, `aiqum`, `dii`, `console`, `digitaladvisor` (comma-separated, case-insensitive). Each API keeps its settings, credentials, SOPS values, cache and live check, plus the shared `sops` and age-key checks when it has SOPS values. SMTP, Licensing, Monitoring, Azure and IBM rows are hidden. An unknown name exits 2 |
 | `--scope TEXT` | Check only this scope's settings, objects and Console account. An unknown scope exits 1 |
-| `-f, --filter TEXT` | JSON cluster filter for the ONTAP live and cache checks |
+| `-f, --filter TEXT` | JSON cluster filter for the ONTAP live and cache checks and the Console cluster comparison |
 | `--json` | Print one JSON document: `sections` (each with `title`, `group` and `results`), `summary` and `offline` |
+
+**Console cluster names:** a `[clusters.NAME]` key must equal the cluster's name in Console. With `--api ontap` or `--api console` (or neither), the "Console clusters" section compares the config with the OCCM cache, per Console account, offline. A key Console knows under another name (found by cluster UUID, then by any management IP, node LIFs included) is an `error`, with a hint to rename the key. A key not found in Console, and a Console cluster not in your config, are `warning`s. A missing or stale OCCM cache is a `warning` with the hint `nf cache occm refresh`; nothing is compared then. With `-f`, Console-only clusters are not reported.
 
 Exit code 1 when any result is an `error`; warnings do not fail. No output contains a credential, a token or a ciphertext. A DII `403` is a warning (the token authenticated but lacks the Assets read scope); a `401` is an error.
 
@@ -404,6 +406,7 @@ Exit code 1 when any result is an `error`; warnings do not fail. No output conta
 nf doctor
 nf doctor --offline
 nf doctor --api console --scope Org1
+nf doctor --offline --api console
 nf doctor --api digitaladvisor
 nf doctor --json
 ```
