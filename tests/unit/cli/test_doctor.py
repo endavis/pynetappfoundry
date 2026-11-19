@@ -451,3 +451,100 @@ def test_api_help_mentions_every_check() -> None:
     result = CliRunner().invoke(nf, ["doctor", "--help"])
 
     assert "every check" in " ".join(result.output.split())
+
+
+# --- Console cluster names (#1127) ---
+
+
+def _console_cache(tmp_path: Path, *, we_name: str) -> None:
+    from datetime import UTC, datetime
+
+    from pynetappfoundry.cache._metadata import CachedClusterMetadata
+    from pynetappfoundry.cache.db import ClusterMetadataDB
+    from pynetappfoundry.cache.occm_collector import OccmAgentSnapshot, OccmSnapshot
+    from pynetappfoundry.cache.occm_db import OccmCacheDB
+    from pynetappfoundry.console.discovery import ConsoleInventory
+    from pynetappfoundry.models.ontap.cluster.model import OntapCluster
+
+    uuid = "00000000-0000-0000-0000-000000000001"
+    cache = tmp_path / "cfg" / ".cache"
+    cache.mkdir(parents=True, exist_ok=True)
+    now = datetime.now(UTC)
+    record = {
+        "publicId": "w1",
+        "name": "we-w1",
+        "ontapClusterProperties": {"clusterName": we_name, "clusterUuid": uuid},
+    }
+    agent = OccmAgentSnapshot(
+        agent_id="a1",
+        scope=None,
+        organization_id="org-1",
+        cached_at=now,
+        records={"OccmOnpremWorkingEnvironment": [record]},
+    )
+    with OccmCacheDB(db_path=cache / "occm_cache.db") as occm:
+        occm.set(
+            OccmSnapshot(
+                cached_at=now,
+                inventory=ConsoleInventory(),
+                agents=(agent,),
+                failed_agents=(),
+                skipped_agents=(),
+            )
+        )
+    with ClusterMetadataDB(db_path=cache / "cluster_metadata.db") as db:
+        db.set(
+            "c1",
+            CachedClusterMetadata(
+                cluster_name="c1", cached_at=now, cluster=OntapCluster(name="c1", uuid=uuid)
+            ),
+        )
+
+
+CONSOLE_FILES = {
+    **VALID,
+    "consoleapi.toml": (
+        '[general]\nbase_url = "https://console.invalid"\nuser_token = "placeholder-token"\n'
+    ),
+}
+
+
+def _console_rows(result: Result) -> dict[str, str]:
+    document = json.loads(result.output)
+    return {
+        r["subject"]: r["status"]
+        for s in document["sections"]
+        if s["title"] == "Console clusters"
+        for r in s["results"]
+    }
+
+
+def test_console_cluster_rename_is_an_error(tmp_path: Path) -> None:
+    _write(tmp_path, CONSOLE_FILES)
+    _console_cache(tmp_path, we_name="prod-c1")
+
+    result = _run("--offline", "--json")
+
+    assert result.exit_code == 1
+    document = json.loads(result.output)
+    section = next(s for s in document["sections"] if s["title"] == "Console clusters")
+    assert section["group"] == "environment"
+    assert _console_rows(result)["console_clusters.root.c1"] == "error"
+
+
+def test_console_cluster_matching_names_exit_zero(tmp_path: Path) -> None:
+    _write(tmp_path, CONSOLE_FILES)
+    _console_cache(tmp_path, we_name="c1")
+
+    result = _run("--offline", "--json", "-f", '{"env":"Prod"}')
+
+    assert result.exit_code == 0, result.output
+    assert not any(s.endswith("console_only") for s in _console_rows(result))
+
+
+def test_console_clusters_follow_api(tmp_path: Path) -> None:
+    _write(tmp_path, CONSOLE_FILES)
+    _console_cache(tmp_path, we_name="c1")
+
+    assert _console_rows(_run("--offline", "--json", "--api", "digitaladvisor")) == {}
+    assert _console_rows(_run("--offline", "--json", "--api", "ontap")) != {}

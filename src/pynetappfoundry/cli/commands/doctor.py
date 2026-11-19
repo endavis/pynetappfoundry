@@ -135,7 +135,8 @@ def doctor(
     """Check configuration, environment and API access, with a fix hint per problem.
 
     Runs the static checks of 'nf config validate', then checks sops, the age
-    key, every SOPS value and the caches, then sends one read-only request to
+    key, every SOPS value and the caches, that config clusters match
+    Console's by name, then sends one read-only request to
     each configured API. Warnings do not fail; any error exits 1.
     """
     apis = _parse_apis(api)
@@ -176,7 +177,12 @@ def doctor(
     groups.extend(
         ("environment", section)
         for section in run_environment_checks(
-            config, scope=scope, apis=apis, sops_apis=selected, clusters=clusters
+            config,
+            scope=scope,
+            apis=apis,
+            sops_apis=selected,
+            clusters=clusters,
+            cluster_filter_active=bool(filter_dict),
         )
     )
     if not offline:
