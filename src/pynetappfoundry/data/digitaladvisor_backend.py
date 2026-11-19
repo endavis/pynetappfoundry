@@ -68,7 +68,9 @@ class _QuerySpec:
         records_key: Name of the record list inside the connection.
         total_count: Whether the connection has a ``totalCount`` field.
         required: Required arguments: name to (GraphQL type, default value).
-        optional: Optional arguments: name to GraphQL type.
+        optional: Optional arguments: filter key to GraphQL type.
+        argument_names: Filter key to GraphQL argument name, for a key that differs
+            from the argument. The argument name is also the variable name.
     """
 
     operation: str
@@ -77,6 +79,7 @@ class _QuerySpec:
     total_count: bool
     required: dict[str, tuple[str, Any]] = field(default_factory=dict)
     optional: dict[str, str] = field(default_factory=dict)
+    argument_names: dict[str, str] = field(default_factory=dict)
 
 
 _SCOPE_ARGUMENTS: dict[str, str] = {
@@ -89,15 +92,16 @@ _SCOPE_ARGUMENTS: dict[str, str] = {
 
 # The argument types come from the service's schema. The defaults of the required
 # ``systems`` arguments are chosen, not measured: ``includeAllStates`` against
-# ``systemStates`` has unknown semantics. ``platformType`` and ``operatingMode`` are
-# left out on purpose (#1124).
+# ``systemStates`` has unknown semantics. ``platformType`` is a field of a System
+# record, so the filter key is ``platformTypes``: ``systems`` takes it as the argument
+# ``platformType``, ``clusters`` as ``platformTypes`` (#1124).
 _SPECS: dict[str, _QuerySpec] = {
     "clusters": _QuerySpec(
         operation="ListClusters",
         connection="clusters",
         records_key="clusters",
         total_count=False,
-        optional=dict(_SCOPE_ARGUMENTS),
+        optional={**_SCOPE_ARGUMENTS, "platformTypes": "[SystemPlatformType!]"},
     ),
     "systems": _QuerySpec(
         operation="ListSystems",
@@ -110,7 +114,12 @@ _SPECS: dict[str, _QuerySpec] = {
             "includeAllStates": ("Boolean!", False),
             "includeStorageGridNodes": ("Boolean!", False),
         },
-        optional=dict(_SCOPE_ARGUMENTS),
+        optional={
+            **_SCOPE_ARGUMENTS,
+            "platformTypes": "[SystemPlatformType!]",
+            "operatingMode": "[SystemOperatingMode!]",
+        },
+        argument_names={"platformTypes": "platformType"},
     ),
     "volumes": _QuerySpec(
         operation="ListVolumes",
@@ -185,8 +194,9 @@ def build_document(spec: _QuerySpec, selection: str, optional_used: list[str]) -
         declared.append(f"${name}: {gql_type}")
         passed.append(f"{name}: ${name}")
     for name in optional_used:
-        declared.append(f"${name}: {spec.optional[name]}")
-        passed.append(f"{name}: ${name}")
+        argument = spec.argument_names.get(name, name)
+        declared.append(f"${argument}: {spec.optional[name]}")
+        passed.append(f"{argument}: ${argument}")
     total = "    totalCount\n" if spec.total_count else ""
     return (
         f"query {spec.operation}({', '.join(declared)}) {{\n"
@@ -304,7 +314,7 @@ class DigitalAdvisorBackend(Backend):
 
         optional_used = [name for name in spec.optional if name in arguments]
         variables: dict[str, Any] = {name: default for name, (_t, default) in spec.required.items()}
-        variables.update(arguments)
+        variables.update({spec.argument_names.get(k, k): v for k, v in arguments.items()})
         document = build_document(spec, selection, optional_used)
 
         client = self._get_api_client()

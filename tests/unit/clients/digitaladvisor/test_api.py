@@ -350,6 +350,21 @@ def test_list_systems_fields_override_and_filters() -> None:
     assert _sent_variables(session)[0]["clusterIds"] == ["x"]
 
 
+def test_list_systems_declares_enum_list_types_for_platform_and_mode() -> None:
+    session = session_with(gql({"systems": {"cursor": None, "systems": []}}))
+    _client(session).list_systems(
+        **SYSTEMS_ARGS, filters={"platformType": ["ONTAP"], "operatingMode": ["CLUSTER_MODE"]}
+    )
+    doc = _doc(session)
+    assert "$platformType: [SystemPlatformType!]" in doc
+    assert "$operatingMode: [SystemOperatingMode!]" in doc
+    assert "platformType: $platformType" in doc
+    assert "operatingMode: $operatingMode" in doc
+    variables = _sent_variables(session)[0]
+    assert variables["platformType"] == ["ONTAP"]
+    assert variables["operatingMode"] == ["CLUSTER_MODE"]
+
+
 def test_list_systems_pages_through_the_systems_connection() -> None:
     session = session_with(
         gql({"systems": {"cursor": "c1", "systems": [{"a": 1}]}}),
