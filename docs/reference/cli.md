@@ -300,6 +300,7 @@ nf config [OPTIONS] COMMAND [ARGS]...
 | `validate` | Validate configuration files |
 | `init-sops` | Initialize SOPS encryption with age for credential storage |
 | `set-credential` | Set encrypted credentials for a cluster, resource type or settings secret |
+| `download-schema` | Download an API's GraphQL schema into the config directory |
 
 **`config show` options:**
 
@@ -352,7 +353,7 @@ access, use [`nf doctor`](#doctor). See
 |--------|-------------|
 | `--cluster TEXT` | Set credentials for a specific cluster. Alias for `--type clusters --name TEXT` |
 | `--type` | Set default credentials for all resources of a type: `aiqums`, `azure`, `cloudinsights`, `clusters`, `connectors`, `console`, `ibm` (`console` stores the Console refresh token, not the client secret; `--user` is only a label and the password prompt takes the token. Store the client secret with `--setting consoleapi.client_secret`) |
-| `--setting TARGET` | Store one SOPS-encrypted settings secret: `consoleapi.client_secret`, `consoleapi.service_token`, `consoleapi.user_token`, `diiapi.api_ro_token` or `settings.smtp_password`. Prompts for the value (hidden, with confirmation) or takes `--password`, encrypts it and writes `<field> = "SOPS[...]"` into the right file and table, keeping comments. Cannot be combined with `--cluster`, `--type`, `--name`, `--user` or `--no-encrypt`; needs `sops` (no plain text fallback). If more than one non-data file carries the target's stem, it refuses and lists them |
+| `--setting TARGET` | Store one SOPS-encrypted settings secret: `consoleapi.client_secret`, `consoleapi.service_token`, `consoleapi.user_token`, `diiapi.api_ro_token`, `digitaladvisorapi.personal_access_token`, `digitaladvisorapi.access_token`, `digitaladvisorapi.refresh_token` or `settings.smtp_password`. Prompts for the value (hidden, with confirmation) or takes `--password`, encrypts it and writes `<field> = "SOPS[...]"` into the right file and table, keeping comments. Cannot be combined with `--cluster`, `--type`, `--name`, `--user` or `--no-encrypt`; needs `sops` (no plain text fallback). If more than one non-data file carries the target's stem, it refuses and lists them |
 | `--name TEXT` | With `--type`, set credentials for that one inventory object, written to its data file entry. An unknown name lists the available ones. For a token-style secret, `--user` is only a label and the password prompt takes the token. Not valid with `--cluster` or `--type console` |
 | `--scope TEXT` | With `--type` alone, write to `<config>/<scope>/users.toml` (created if missing) instead of the root `users.toml`. With `--cluster` or `--name`, it must equal the object's own scope; a mismatch fails, names the object's real scope (or the root) and writes nothing. An unknown scope lists the available ones. With `--setting`, only `consoleapi.*` targets accept it: the value goes to `<config>/<scope>/consoleapi.toml` `[general]`, created if missing |
 | `--user TEXT` | Username (required with `--cluster` and `--type`, not allowed with `--setting`) |
@@ -364,6 +365,14 @@ Without `--scope`, `--type console` writes the root Console account's refresh to
 `--setting` prints the file, table and key it wrote and `Value: (encrypted)`, never the value. It warns when the counterpart is missing: `client_secret` without `client_id`, SMTP `password` without `user`, or a newly created `consoleapi.toml` (it still needs `client_id` and `org_id`). A missing file is created, a root API settings file in `<config>/apis/<name>/` and a scope file in the scope directory; an unknown scope is rejected.
 
 `nf config encrypt-value` was removed in favour of `--setting` (see [ADR-0031](../decisions/0031-one-command-stores-every-sops-secret-and-encrypt-value-is-removed.md)).
+
+**`config download-schema` options:**
+
+| Option | Description |
+|--------|-------------|
+| `--api` | API whose schema to download. Only `digitaladvisor` (the default) |
+
+Sends the GraphQL introspection query with no `Authorization` header (introspection needs no credentials, so this works before any token is set) and writes `<config>/apis/digitaladvisor/schema.json`, replacing an existing file. It prints the path and the number of types. `graphql_url` and `timeout` come from `digitaladvisorapi.toml` `[general]` when set, otherwise the defaults. A network error, a non-2xx status or a response without `data.__schema` exits 1 and writes nothing. See [Digital Advisor API](../usage/digital-advisor-api.md#schema).
 
 ### doctor
 

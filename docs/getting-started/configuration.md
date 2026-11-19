@@ -91,6 +91,15 @@ The fields are in [AIQUM API: Setup](../usage/aiqum-api.md#setup).
 - **Spec:** `<config>/apis/dii/all.json` (see [Spec files](#spec-files)).
 - **Check:** `nf config validate`, `nf doctor --api dii`, and `nf config show -s cloudinsights` to see the loaded entries.
 
+## Digital Advisor
+
+- **Credentials:** one of a personal access token or a refresh token, stored with `nf config set-credential --setting digitaladvisorapi.personal_access_token` or `--setting digitaladvisorapi.refresh_token`.
+- **Settings:** `<config>/apis/digitaladvisor/digitaladvisorapi.toml` with a `[general]` section (see [Config schema: digitaladvisorapi.toml](../reference/config-schema.md#digitaladvisorapitoml)).
+- **Schema (optional):** `nf config download-schema` writes `<config>/apis/digitaladvisor/schema.json`.
+- **Check:** `nf config validate`.
+
+The client and the token rotation are in [Digital Advisor API](../usage/digital-advisor-api.md).
+
 ## Console and agents (OCCM)
 
 The Console (BlueXP) client and the Console agents (connectors, also called OCCM) share one account setup.
@@ -114,7 +123,7 @@ The Console (BlueXP) client and the Console agents (connectors, also called OCCM
 | Section | What it checks |
 | :--- | :--- |
 | Clusters, Users | Each `[clusters]` entry and each `users.toml` table is valid |
-| Settings | The ONTAP API, DII API, SMTP, Console and Licensing settings, plus the AIQUM API when you use AIQUM |
+| Settings | The ONTAP API, DII API, Digital Advisor API, SMTP, Console and Licensing settings, plus the AIQUM API when you use AIQUM |
 | Cluster Credentials | Every cluster resolves a user and password |
 | AIQUM, AIQUM Credentials | Each `[aiqums]` entry is valid and has an `ip`, and resolves credentials. An `[aiqums]` inventory without `<config>/apis/aiqum/aiqumapi.toml` `[general]` is an error |
 | Connectors | Each `[connectors]` entry is valid |

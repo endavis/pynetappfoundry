@@ -156,6 +156,7 @@ This ADR is **Phase 1** of a three-phase plan. A new parent issue supersedes #49
 - Issue #1050: feat: add a Console agent (OCCM) DataSource backend (amends §9)
 - Issue #1055: feat: AIQUM collector and cache-backed DataSource queries (amends §9)
 - Issue #1076: feat: cache Console agent cloud infrastructure data (amends §9)
+- Issue #1051: feat: Active IQ Digital Advisor client (backend in #1116)
 - Issue #495: feat: unified DataSource for all cluster reads (parent of ADR-0012; this ADR revises its Phase 3/4 plan)
 - Issue #530: epic: DataSource coverage gap expansion (closed by this ADR; gap audit informs the new design)
 - Issue #524: bug: `nf reports html` shows Unknown for LIF home node (unblocked by Phase 3 of this ADR)

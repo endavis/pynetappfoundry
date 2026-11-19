@@ -211,6 +211,51 @@ class ConsoleAPISettings(BaseModel):
         return self
 
 
+class DigitalAdvisorAPISettings(BaseModel):
+    """Active IQ Digital Advisor GraphQL API settings (``digitaladvisorapi.toml [general]``).
+
+    Exactly one credential source is required: ``personal_access_token`` (valid
+    1-90 days, no refresh) or ``refresh_token``. An ``access_token`` is optional
+    and only valid with a ``refresh_token``; the client keeps both rotated tokens
+    in the file. ``timeout`` is above the server's 60 s query timeout so the
+    client sees the server's own ``504`` instead of timing out first.
+    ``page_size`` is the default ``pageSize`` for ``paginate()``; it is not a
+    measured server value.
+    """
+
+    # hide_input_in_errors keeps raw input values (the tokens) out of
+    # ValidationError text.
+    model_config = ConfigDict(extra="allow", hide_input_in_errors=True)
+
+    personal_access_token: SecretStr | None = None
+    access_token: SecretStr | None = None
+    refresh_token: SecretStr | None = None
+    graphql_url: str = "https://gql.aiq.netapp.com/graphql"
+    token_url: str = "https://api.activeiq.netapp.com/v1/tokens/accessToken"
+    timeout: float = 70.0
+    page_size: int = Field(default=100, ge=1)
+
+    @property
+    def uses_refresh_token(self) -> bool:
+        """Whether the credentials are an access/refresh token pair."""
+        return self.refresh_token is not None
+
+    @model_validator(mode="after")
+    def _validate_credentials(self) -> DigitalAdvisorAPISettings:
+        """Validate the combination of credential fields (names only, never values)."""
+        has_pat = self.personal_access_token is not None
+        has_refresh = self.refresh_token is not None
+        if has_pat and has_refresh:
+            raise ValueError(
+                "personal_access_token and refresh_token are mutually exclusive; set only one"
+            )
+        if not (has_pat or has_refresh):
+            raise ValueError("one of personal_access_token or refresh_token is required")
+        if self.access_token is not None and not has_refresh:
+            raise ValueError("access_token requires refresh_token")
+        return self
+
+
 class ScopeSettings(BaseModel):
     """The ``scope.toml`` marker of a scope directory.
 

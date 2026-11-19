@@ -158,3 +158,4 @@ The Issue contains the full discussion; the ADR summarizes the outcome.
 | [0033](0033-reports-read-cloud-details-from-the-occm-cache-first-with-a-whole-record-cli-fallback.md) | Reports read cloud details from the OCCM cache first with a whole-record CLI fallback | Accepted |
 | [0034](0034-config-checks-are-shared-static-functions-returning-structured-results.md) | Config checks are shared static functions returning structured results | Accepted |
 | [0035](0035-nf-doctor-runs-static-environment-and-read-only-live-checks-with-fix-hints.md) | nf doctor runs static, environment and read-only live checks with fix hints | Accepted |
+| [0036](0036-digital-advisor-client-is-a-read-only-graphql-client-with-rotating-refresh-token-write-back.md) | Digital Advisor client is a read-only GraphQL client with rotating refresh-token write-back | Accepted |

@@ -17,6 +17,7 @@ from click.testing import CliRunner, Result
 from pynetappfoundry.cli.main import nf
 from pynetappfoundry.core.config import (
     _CONSOLE_SOPS_FIELDS,
+    _DIGITAL_ADVISOR_SOPS_FIELDS,
     _DII_SOPS_FIELDS,
     _SMTP_SOPS_FIELDS,
     SOPS_SETTING_TARGETS,
@@ -433,6 +434,7 @@ def test_targets_cover_exactly_the_fields_the_loader_decrypts() -> None:
         {("settings", "SMTP", f) for f in _SMTP_SOPS_FIELDS}
         | {("diiapi", "general", f) for f in _DII_SOPS_FIELDS}
         | {("consoleapi", "general", f) for f in _CONSOLE_SOPS_FIELDS}
+        | {("digitaladvisorapi", "general", f) for f in _DIGITAL_ADVISOR_SOPS_FIELDS}
     )
     assert set(SOPS_SETTING_TARGETS.values()) == expected
     assert len(SOPS_SETTING_TARGETS) == len(expected)
@@ -543,7 +545,13 @@ def test_encrypt_value_command_is_removed(tmp_path: Path) -> None:
 
 @pytest.mark.parametrize(
     ("stem", "name"),
-    [("ontapapi", "ontap"), ("aiqumapi", "aiqum"), ("diiapi", "dii"), ("consoleapi", "console")],
+    [
+        ("ontapapi", "ontap"),
+        ("aiqumapi", "aiqum"),
+        ("diiapi", "dii"),
+        ("consoleapi", "console"),
+        ("digitaladvisorapi", "digitaladvisor"),
+    ],
 )
 def test_missing_root_api_file_defaults_to_apis_dir(tmp_path: Path, stem: str, name: str) -> None:
     from pynetappfoundry.cli.commands.config.credentials import _find_setting_file

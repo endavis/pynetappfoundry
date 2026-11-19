@@ -50,6 +50,9 @@ config/
     ├── dii/
     │   ├── diiapi.toml      # Data Infrastructure Insights API settings
     │   └── all.json
+    ├── digitaladvisor/
+    │   ├── digitaladvisorapi.toml  # Active IQ Digital Advisor API settings
+    │   └── schema.json      # GraphQL schema (optional), written by nf config download-schema
     └── console/
         ├── consoleapi.toml  # Console SaaS (BlueXP) API settings (the root account)
         └── console_openapi.yaml
@@ -65,11 +68,12 @@ The loader finds settings files by file name, not by path, so a settings file lo
 sits in the config directory (outside a scope). The recommended layout is the tree above:
 
 - `settings.toml`, `users.toml` and `monitoring.toml` at the top level.
-- Each API's settings file (`ontapapi.toml`, `aiqumapi.toml`, `diiapi.toml`, `consoleapi.toml`) in
+- Each API's settings file (`ontapapi.toml`, `aiqumapi.toml`, `diiapi.toml`, `consoleapi.toml`,
+  `digitaladvisorapi.toml`) in
   `apis/<name>/`, next to that API's spec.
 - A scope's own `users.toml`, `monitoring.toml` and `consoleapi.toml` directly in the scope
   directory (`<scope>/consoleapi.toml`). These three are the only settings files a scope may hold;
-  `ontapapi.toml`, `aiqumapi.toml` and `diiapi.toml` are root only (see
+  `ontapapi.toml`, `aiqumapi.toml`, `diiapi.toml` and `digitaladvisorapi.toml` are root only (see
   [What a scope may contain](#what-a-scope-may-contain)).
 
 Keep one file per name at the root, and one per name in each scope. Two files with the same name
@@ -160,6 +164,7 @@ These settings fields accept a `SOPS[...]` value instead of plaintext:
 | `settings.toml` | `[SMTP]` | `password` | `settings.smtp_password` |
 | `diiapi.toml` | `[general]` | `api_ro_token` | `diiapi.api_ro_token` |
 | `consoleapi.toml` | `[general]` | `client_secret`, `service_token`, `user_token` | `consoleapi.client_secret`, `consoleapi.service_token`, `consoleapi.user_token` |
+| `digitaladvisorapi.toml` | `[general]` | `personal_access_token`, `access_token`, `refresh_token` | `digitaladvisorapi.personal_access_token`, `digitaladvisorapi.access_token`, `digitaladvisorapi.refresh_token` |
 
 Values are decrypted when the section is read, at most once per `Config` instance (the plaintext
 is kept in memory only, never written back to the settings). Plaintext values still work. A value
@@ -342,6 +347,37 @@ base_api_path = "/rest/v1"                 # Optional: Base API path (default: "
 | `base_api_path` | string | No | `"/rest/v1"` | Base path for DII REST API endpoints |
 
 With several tenants, `DIIAPIClient(config, name="TENANT")` reads `base_url` and the token from `[cloudinsights.TENANT]` in a data file (see [Cloud Insights](#cloud-insights)), falling back to `[general]` for either. `DIIAPIClient(config)` uses `[general]` alone.
+
+---
+
+### digitaladvisorapi.toml
+
+Active IQ Digital Advisor GraphQL API settings, at `<config>/apis/digitaladvisor/digitaladvisorapi.toml`. Loaded into `config.settings["digitaladvisorapi"]`. Root only: a scope cannot hold one. See [Digital Advisor API](../usage/digital-advisor-api.md).
+
+Set exactly one credential source:
+
+```toml
+[general]
+# A personal access token (valid 1-90 days, not refreshed) ...
+personal_access_token = "SOPS[...]"
+# ... or a refresh token. The client rotates it and writes both tokens back here.
+# refresh_token = "SOPS[...]"
+# access_token = "SOPS[...]"   # optional, only with refresh_token
+```
+
+#### Digital Advisor API Settings Fields
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `personal_access_token` | SecretStr | One of the two | - | Personal access token. Mutually exclusive with `refresh_token`. SOPS value accepted |
+| `refresh_token` | SecretStr | One of the two | - | Refresh token. The client replaces it after every refresh. SOPS value accepted |
+| `access_token` | SecretStr | No | - | Current access token (a JWT valid for one hour). Needs `refresh_token`. Written by the client. SOPS value accepted |
+| `graphql_url` | string | No | `"https://gql.aiq.netapp.com/graphql"` | GraphQL endpoint |
+| `token_url` | string | No | `"https://api.activeiq.netapp.com/v1/tokens/accessToken"` | Token refresh endpoint |
+| `timeout` | float | No | `70.0` | Request timeout in seconds; above the server's 60 second query timeout |
+| `page_size` | integer | No | `100` | Default `pageSize` for `paginate()`; at least 1. Not a measured server value |
+
+`nf config validate` reports the section as Invalid when both credentials are set, none is set, or `access_token` has no `refresh_token`. The message names fields, never values.
 
 ---
 

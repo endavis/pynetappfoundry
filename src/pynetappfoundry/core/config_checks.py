@@ -320,6 +320,19 @@ def check_settings(config: Config) -> list[CheckResult]:
             ),
         ),
     ]
+    results.append(
+        _settings_result(
+            config,
+            label="Digital Advisor API",
+            keys=("digitaladvisorapi", "general"),
+            reader=config.get_digital_advisor_api_settings,
+            absent=CheckResult(
+                "digitaladvisorapi.general",
+                CheckStatus.SKIPPED,
+                "Digital Advisor API: Not configured (optional)",
+            ),
+        )
+    )
     aiqum = _aiqum_api_result(config)
     if aiqum is not None:
         results.append(aiqum)

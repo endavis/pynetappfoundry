@@ -1,7 +1,8 @@
-"""API client modules for ONTAP, AIQUM and Data Infrastructure Insights."""
+"""API client modules for ONTAP, AIQUM, Data Infrastructure Insights and Digital Advisor."""
 
 from pynetappfoundry.clients.aiqum.api import AIQUMAPIClient
 from pynetappfoundry.clients.console.agent import ConsoleAgentClient
+from pynetappfoundry.clients.digitaladvisor.api import DigitalAdvisorAPIClient
 from pynetappfoundry.clients.dii.api import DIIAPIClient
 from pynetappfoundry.clients.ontap.api import ONTAPAPIClient
 from pynetappfoundry.clients.ontap.cli import ONTAPCLI, CLICommandError, CLITimeoutError
@@ -15,6 +16,7 @@ __all__ = [
     "CLITimeoutError",
     "ConsoleAgentClient",
     "DIIAPIClient",
+    "DigitalAdvisorAPIClient",
     "NextPageExtractor",
     "ONTAPAPIClient",
     "ontap_next_page_extractor",
