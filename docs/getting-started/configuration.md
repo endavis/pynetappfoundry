@@ -61,6 +61,8 @@ From a checkout you can also refresh a spec from a live system. `doit fetch_spec
 | DII | `<config>/apis/dii/all.json` | `docs/example-config/apis/dii/all.json` | `doit fetch_spec --api=dii --host=<tenant> --api-key=<token>` |
 | Console | `<config>/apis/console/console_openapi.yaml` | `tools/console_openapi/generated/console_openapi.yaml` | `doit console_openapi_refresh` |
 
+`nf config validate` warns about a missing spec of a configured API.
+
 Every `fetch_spec` call also accepts `--no-verify` to skip TLS certificate validation. After a refresh, `doit convert_specs` and `doit generate_models` rebuild the converted spec and the models.
 
 ## ONTAP
@@ -77,7 +79,7 @@ Every `fetch_spec` call also accepts `--no-verify` to skip TLS certificate valid
 - **Credentials:** `nf config set-credential --type aiqums --name NAME --user USER`, or a default under `[aiqums]` in `users.toml`.
 - **Settings:** `<config>/apis/aiqum/aiqumapi.toml` with a `[general]` section.
 - **Spec:** `<config>/apis/aiqum/all.json` (see [Spec files](#spec-files)).
-- **Check:** `nf config show -s aiqums` and `nf config show -s aiqumapi`. `nf config validate` does not check AIQUM yet, so a clean `validate` says nothing about it.
+- **Check:** `nf config validate`, and `nf config show -s aiqums` to see the loaded entries.
 
 The fields are in [AIQUM API: Setup](../usage/aiqum-api.md#setup).
 
@@ -87,7 +89,7 @@ The fields are in [AIQUM API: Setup](../usage/aiqum-api.md#setup).
 - **Credentials:** the API token. `nf config set-credential --setting diiapi.api_ro_token` stores one for every tenant in `diiapi.toml`. `nf config set-credential --type cloudinsights --name NAME --user LABEL` stores one per tenant. The client sends it in the `X-CloudInsights-ApiKey` header.
 - **Settings:** `<config>/apis/dii/diiapi.toml` with a `[general]` section (see [Config schema: diiapi.toml](../reference/config-schema.md#diiapitoml)).
 - **Spec:** `<config>/apis/dii/all.json` (see [Spec files](#spec-files)).
-- **Check:** `nf config validate` and `nf config show -s cloudinsights`.
+- **Check:** `nf config validate`, and `nf config show -s cloudinsights` to see the loaded entries.
 
 ## Console and agents (OCCM)
 
@@ -107,7 +109,23 @@ The Console (BlueXP) client and the Console agents (connectors, also called OCCM
 
 ## What `nf config validate` checks
 
-`nf config validate` checks the `[clusters]` entries, `users.toml`, the ONTAP API, DII API, SMTP, Console and Licensing settings, and the cluster credentials. It does not check `aiqumapi.toml`, the `aiqums`, `connectors` and `cloudinsights` inventory with their credentials, or any spec file. Use `nf config show -s <section>` for those. Extending `validate` is tracked in [#1111](https://github.com/endavis/pynetappfoundry/issues/1111).
+`nf config validate` runs static checks. It reads the loaded TOML and decrypts SOPS values locally. It makes no network call and prints no secret.
+
+| Section | What it checks |
+| :--- | :--- |
+| Clusters, Users | Each `[clusters]` entry and each `users.toml` table is valid |
+| Settings | The ONTAP API, DII API, SMTP, Console and Licensing settings, plus the AIQUM API when you use AIQUM |
+| Cluster Credentials | Every cluster resolves a user and password |
+| AIQUM, AIQUM Credentials | Each `[aiqums]` entry is valid and has an `ip`, and resolves credentials. An `[aiqums]` inventory without `<config>/apis/aiqum/aiqumapi.toml` `[general]` is an error |
+| Connectors | Each `[connectors]` entry is valid |
+| Cloud Insights, Cloud Insights Credentials | Each `[cloudinsights]` tenant is valid and resolves an API token and a `base_url` |
+| Spec Files | The OpenAPI spec of every configured API is in `<config>/apis/` |
+
+A section other than the first four appears only when it has something to show, so a config that does not use an API shows no line for it.
+
+An error exits 1 and the output ends with a hint for each one, such as `nf config set-credential --cluster NAME --user USER` for a cluster without credentials. A missing spec file is only a warning and the exit code stays 0: the configuration is valid, but the client raises `FileNotFoundError` when it is built. The warning says which file is missing and which file in the repository to copy (see [Spec files](#spec-files)).
+
+An API counts as configured when its `*api.toml` has a `[general]` section. DII also counts when `[cloudinsights]` has a tenant, and Console when the root or any scope has a `consoleapi.toml` `[general]`. The OCCM spec is never checked. `nf config validate --scope NAME` checks that scope's inventory and settings and no spec file, because specs live in `<config>/apis/`.
 
 ## Next steps
 

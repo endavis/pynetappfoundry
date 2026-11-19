@@ -315,7 +315,7 @@ Without `--scope` the summary adds a `Scopes:` line when the config has scopes.
 
 | Option | Description |
 |--------|-------------|
-| `--scope TEXT` | Check this scope instead of the root settings: its clusters and their credentials, its `users.toml` sections (errors are keyed `<scope>/users...`), its `monitoring.toml` and its Console account (`Not configured (optional)` when it has no `consoleapi.toml` `[general]`). An unknown scope exits 1 |
+| `--scope TEXT` | Check this scope instead of the root settings: its clusters, AIQUM, connectors and Cloud Insights tenants with their credentials, its `users.toml` sections (errors are keyed `<scope>/users...`), its `monitoring.toml` and its Console account (`Not configured (optional)` when it has no `consoleapi.toml` `[general]`). It checks no spec file. An unknown scope exits 1 |
 
 Checks that all configuration files parse and
 contain valid values. A settings section that is absent is reported as not
@@ -328,6 +328,15 @@ When a Console account has a `client_id` but no `client_secret` and `users.toml`
 holds a token, validate adds a hint: the secret was probably stored as a refresh token. It
 gives the exact `nf config set-credential --setting consoleapi.client_secret` command, with
 `--scope NAME` for a scope.
+
+Validate also checks, in root mode, the `aiqumapi.toml` `[general]` section (an error when the `[aiqums]`
+inventory exists without it), each `[aiqums]`, `[connectors]` and `[cloudinsights]` entry, the credentials
+of each AIQUM and Cloud Insights tenant, and the spec file of every configured API in `<config>/apis/`.
+These sections appear only when they have rows. A missing credential or an invalid entry is an error
+(exit 1); a missing spec file is a warning (exit 0) that names the file in the repository to copy. An
+error is followed by a fix hint, for example `nf config set-credential --type aiqums --name NAME --user USER`.
+No check calls the network or prints a secret. See
+[Configuration: What `nf config validate` checks](../getting-started/configuration.md#what-nf-config-validate-checks).
 
 **`config init-sops` options:**
 
