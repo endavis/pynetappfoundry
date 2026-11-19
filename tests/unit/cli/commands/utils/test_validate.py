@@ -15,6 +15,7 @@ from pynetappfoundry.models.ontap.cluster.nodes.model import OntapNodeResponse
 from pynetappfoundry.models.ontap.storage.volumes.model import OntapVolume
 
 MODULE = "pynetappfoundry.cli.commands.utils.validate"
+PROBE_CLIENT = "pynetappfoundry.clients.ontap.probe.ONTAPAPIClient"
 
 
 @pytest.fixture
@@ -40,7 +41,7 @@ class TestValidateCluster:
     """Tests for _validate_cluster."""
 
     @patch(f"{MODULE}.QuerySet")
-    @patch(f"{MODULE}.ONTAPAPIClient")
+    @patch(PROBE_CLIENT)
     def test_validate_cluster_success(
         self,
         mock_client_cls: MagicMock,
@@ -68,7 +69,7 @@ class TestValidateCluster:
 
     @patch(f"{MODULE}.print_warning")
     @patch(f"{MODULE}.QuerySet")
-    @patch(f"{MODULE}.ONTAPAPIClient")
+    @patch(PROBE_CLIENT)
     def test_validate_cluster_name_mismatch(
         self,
         mock_client_cls: MagicMock,
@@ -93,7 +94,7 @@ class TestValidateCluster:
         assert "actual-cluster" in warning_msg
 
     @patch(f"{MODULE}.print_error")
-    @patch(f"{MODULE}.ONTAPAPIClient")
+    @patch(PROBE_CLIENT)
     def test_validate_cluster_failure(
         self,
         mock_client_cls: MagicMock,
@@ -113,7 +114,7 @@ class TestValidateCluster:
 
     @patch(f"{MODULE}.print_warning")
     @patch(f"{MODULE}.QuerySet")
-    @patch(f"{MODULE}.ONTAPAPIClient")
+    @patch(PROBE_CLIENT)
     def test_validate_cluster_name_match_no_warning(
         self,
         mock_client_cls: MagicMock,
@@ -132,7 +133,7 @@ class TestValidateCluster:
         mock_print_warning.assert_not_called()
 
     @patch(f"{MODULE}.QuerySet")
-    @patch(f"{MODULE}.ONTAPAPIClient")
+    @patch(PROBE_CLIENT)
     def test_validate_cluster_non_dict_response(
         self,
         mock_client_cls: MagicMock,

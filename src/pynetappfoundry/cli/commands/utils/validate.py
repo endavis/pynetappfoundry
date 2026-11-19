@@ -15,10 +15,9 @@ from pynetappfoundry.cli.utils import (
     print_success,
     print_warning,
 )
-from pynetappfoundry.clients.ontap.api import ONTAPAPIClient
 from pynetappfoundry.clients.ontap.cli import ONTAPCLI
+from pynetappfoundry.clients.ontap.probe import probe_cluster
 from pynetappfoundry.core.config import Config
-from pynetappfoundry.core.models import ClusterConfig
 from pynetappfoundry.query import QuerySet
 
 
@@ -94,11 +93,8 @@ def _validate_cluster(
     success = False
 
     try:
-        cluster_config = ClusterConfig(**details)
-        client = ONTAPAPIClient(cluster=cluster_config, config=config)
-
-        response = client.call_endpoint("/cluster")
-        cluster_name = response.get("name", "") if isinstance(response, dict) else ""
+        probe = probe_cluster(name, details, config)
+        client = probe.client
 
         node_count = QuerySet(OntapNodeResponse, client, config=config).count()
         vol_count = QuerySet(OntapVolume, client, config=config).count()
@@ -106,8 +102,10 @@ def _validate_cluster(
         print_success("  API: Connected successfully")
         success = True
 
-        if cluster_name != name:
-            print_warning(f"    Config name {name} does not match cluster name {cluster_name}")
+        if not probe.name_matches:
+            print_warning(
+                f"    Config name {name} does not match cluster name {probe.cluster_name}"
+            )
 
     except Exception as e:
         print_error(f"  API: Could not connect to config {name}")

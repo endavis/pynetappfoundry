@@ -26,7 +26,7 @@ Accepted
 4. **`nf config validate` renders.** `src/pynetappfoundry/cli/commands/config/validate.py` draws the sections, prints the error panel and exits 1 when any result is an `error`. The existing sections, labels and error lines are unchanged, so output for a valid configuration is byte-identical. For an invalid one, the existing lines are unchanged and fix hints are added.
 5. **Spec files are a warning.** A missing OpenAPI spec in `<config>/apis/<name>/` is a `warning` and the exit code stays 0, because the configuration itself is valid; the client raises `FileNotFoundError` only when it is built. Only configured APIs are checked, judged from the loaded TOML without decryption: ONTAP, AIQUM and DII by their `*api.toml` `[general]` (DII also by a `[cloudinsights]` tenant), Console by a root or scope `consoleapi.toml` `[general]`. OCCM is never checked. Spec files are checked in root mode only.
 6. **Missing AIQUM, connector or Cloud Insights configuration is an error.** Each is a problem that already breaks the client at runtime.
-7. **Reuse.** `nf doctor` ([#1113](https://github.com/endavis/pynetappfoundry/issues/1113)) calls `run_static_checks` instead of repeating the checks.
+7. **Reuse.** `nf doctor` ([#1113](https://github.com/endavis/pynetappfoundry/issues/1113)) calls `run_static_checks` instead of repeating the checks, and adds environment and live checks ([ADR-0035](0035-nf-doctor-runs-static-environment-and-read-only-live-checks-with-fix-hints.md)).
 
 ## Rationale
 
@@ -35,7 +35,7 @@ Separating what is wrong from how it is drawn lets two commands and the tests sh
 ## Related Issues
 
 - Issue #1111: shared static config checks used by `nf config validate`
-- Issue #1113: `nf doctor` reuses the checks
+- Issue #1113: `nf doctor` reuses the checks ([ADR-0035](0035-nf-doctor-runs-static-environment-and-read-only-live-checks-with-fix-hints.md))
 - Issue #1110: configuration guide that sets up each API
 
 ## Related Documentation
