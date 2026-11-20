@@ -548,3 +548,34 @@ def test_console_clusters_follow_api(tmp_path: Path) -> None:
 
     assert _console_rows(_run("--offline", "--json", "--api", "digitaladvisor")) == {}
     assert _console_rows(_run("--offline", "--json", "--api", "ontap")) != {}
+
+
+def test_live_error_lines_and_hints_carry_the_section_title(tmp_path: Path) -> None:
+    _write(tmp_path, VALID)
+    bad = CheckSection(
+        "AIQUM",
+        (
+            CheckResult(
+                "live.aiqum",
+                CheckStatus.ERROR,
+                "host-a unreachable",
+                errors=("host-a unreachable",),
+                hint="Check the host name",
+            ),
+        ),
+    )
+    with patch(LIVE, MagicMock(return_value=[bad])):
+        result = _run()
+
+    assert result.exit_code == 1
+    assert "- AIQUM: host-a unreachable" in result.output
+    assert "AIQUM: Check the host name" in result.output
+
+
+def test_static_error_line_carries_the_section_title(tmp_path: Path) -> None:
+    _write(tmp_path, {**VALID, "inv.toml": DATA + "[clusters.c1]\ntags = 5\n"})
+    with patch(LIVE, _ok_live()):
+        result = _run("--offline")
+
+    assert result.exit_code == 1
+    assert "- Config: " in result.output

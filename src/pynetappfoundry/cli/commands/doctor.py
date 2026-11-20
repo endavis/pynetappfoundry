@@ -97,9 +97,9 @@ def _render(groups: list[_Group], tree: Tree) -> tuple[list[str], list[str]]:
                 hint_row = f"[yellow]{escape(result.hint)}[/yellow]"
                 (branch if result.hint_as_sibling else row).add(hint_row)
             if result.status is CheckStatus.ERROR:
-                errors.extend(result.errors)
+                errors.extend(f"{section.title}: {err}" for err in result.errors)
                 if result.hint:
-                    hints.append(escape(result.hint))
+                    hints.append(escape(f"{section.title}: {result.hint}"))
     return errors, hints
 
 
