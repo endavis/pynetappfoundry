@@ -301,6 +301,7 @@ nf config [OPTIONS] COMMAND [ARGS]...
 | `init-sops` | Initialize SOPS encryption with age for credential storage |
 | `set-credential` | Set encrypted credentials for a cluster, resource type or settings secret |
 | `download-schema` | Download an API's GraphQL schema into the config directory |
+| `download-spec` | Download the committed API specs of the installed release into the config directory |
 
 **`config show` options:**
 
@@ -334,7 +335,7 @@ Validate also checks, in root mode, the `aiqumapi.toml` `[general]` section (an 
 inventory exists without it), each `[aiqums]`, `[connectors]` and `[cloudinsights]` entry, the credentials
 of each AIQUM and Cloud Insights tenant, and the spec file of every configured API in `<config>/apis/`.
 These sections appear only when they have rows. A missing credential or an invalid entry is an error
-(exit 1); a missing spec file is a warning (exit 0) that names the file in the repository to copy. An
+(exit 1); a missing spec file is a warning (exit 0) whose hint is `nf config download-spec --api API`. An
 error is followed by a fix hint, for example `nf config set-credential --type aiqums --name NAME --user USER`.
 No check calls the network or prints a secret. To also check the environment and API
 access, use [`nf doctor`](#doctor). See
@@ -373,6 +374,15 @@ Without `--scope`, `--type console` writes the root Console account's refresh to
 | `--api` | API whose schema to download. Only `digitaladvisor` (the default) |
 
 Sends the GraphQL introspection query with no `Authorization` header (introspection needs no credentials, so this works before any token is set) and writes `<config>/apis/digitaladvisor/schema.json`, replacing an existing file. It prints the path and the number of types. `graphql_url` and `timeout` come from `digitaladvisorapi.toml` `[general]` when set, otherwise the defaults. A network error, a non-2xx status or a response without `data.__schema` exits 1 and writes nothing. See [Digital Advisor API](../usage/digital-advisor-api.md#schema).
+
+**`config download-spec` options:**
+
+| Option | Description |
+|--------|-------------|
+| `--api` | `ontap`, `aiqum`, `dii` or `console`. Without it, every configured API whose spec is missing |
+| `--force` | Replace a spec that already exists |
+
+Downloads the committed spec from GitHub at the installed release (the tag `v<version>`, or for a development build the commit its version names) and writes it verbatim to `<config>/apis/ontap/all.json`, `<config>/apis/aiqum/all.json`, `<config>/apis/dii/all.json` or `<config>/apis/console/console_openapi.yaml`. `--api` handles that API even when it is not configured. An existing file is skipped without `--force`; when nothing is to be done it says so and exits 0. The download must parse (YAML for `.yaml`, else JSON) and have a `paths` map before it is written. A version with no release or commit, an unknown ref (a development build's commit that was not pushed), an HTTP error, a network error or an unusable body exits 1 and writes nothing for that API; the other APIs are still downloaded. It never writes `apis/occm/`. See [Configuration guide: Spec files](../getting-started/configuration.md#spec-files) and [ADR-0038](../decisions/0038-nf-config-download-spec-fetches-the-committed-api-specs-of-the-installed-release.md).
 
 ### doctor
 

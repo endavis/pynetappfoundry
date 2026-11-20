@@ -160,3 +160,4 @@ The Issue contains the full discussion; the ADR summarizes the outcome.
 | [0035](0035-nf-doctor-runs-static-environment-and-read-only-live-checks-with-fix-hints.md) | nf doctor runs static, environment and read-only live checks with fix hints | Accepted |
 | [0036](0036-digital-advisor-client-is-a-read-only-graphql-client-with-rotating-refresh-token-write-back.md) | Digital Advisor client is a read-only GraphQL client with rotating refresh-token write-back | Accepted |
 | [0037](0037-digital-advisor-backend-is-live-only-and-generates-curated-graphql-selections-from-its-models.md) | Digital Advisor backend is live-only and generates curated GraphQL selections from its models | Accepted |
+| [0038](0038-nf-config-download-spec-fetches-the-committed-api-specs-of-the-installed-release.md) | nf config download-spec fetches the committed API specs of the installed release | Accepted |

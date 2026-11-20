@@ -50,9 +50,23 @@ It writes `.envrc.local`, `.sops-public-key.txt` and `.gitignore` in the current
 
 The API clients read an OpenAPI spec from `<config>/apis/<name>/` when they are constructed. A missing spec raises `FileNotFoundError`.
 
-The installed package does not contain any spec. The wheel that `pip` and `uv` install holds only the Python code, and nothing copies a spec into your config directory for you. Copy the committed spec from the repository at the release tag you installed (from a clone, or from GitHub at that tag). The generated models come from the committed spec, so a copy from the same tag matches the installed code.
+The installed package does not contain any spec. The wheel that `pip` and `uv` install holds only the Python code. `nf config download-spec` downloads the committed spec of each configured API from GitHub into `<config>/apis/<api>/`:
 
-From a checkout you can also refresh a spec from a live system. `doit fetch_spec` writes `docs/example-config/apis/<api>/all.json` in the repo, sanitizing the spec on the way, and you copy that file into `<config>/apis/<api>/`.
+```bash
+nf config download-spec                # every configured API whose spec is missing
+nf config download-spec --api ontap    # one API, even when it is not configured
+nf config download-spec --force        # replace a spec that already exists
+```
+
+The spec comes from the repository at the release you installed, not from a live system. The generated models come from the committed spec, and a spec taken from one ONTAP or AIQUM instance could drop paths the code calls, so it would stop matching them. The release also needs no device credentials and covers Console, whose spec cannot be fetched live. The git ref is chosen from the installed version:
+
+- a release installs from the tag `v<version>`;
+- a development build names its commit (`+g<sha>`), and that commit must be pushed to GitHub. Local changes are not in the download, and the command warns about them;
+- a version without a commit, such as a plain `.devN` or `0.0.0`, is an error. Install a release, or copy the file by hand as below.
+
+The download must parse and have a `paths` map before it is written. A failed download writes nothing and exits 1; the other APIs are still downloaded.
+
+You can also copy the committed spec by hand, from a clone or from GitHub at the tag you installed. From a checkout you can refresh a spec from a live system. `doit fetch_spec` writes `docs/example-config/apis/<api>/all.json` in the repo, sanitizing the spec on the way, and you copy that file into `<config>/apis/<api>/`.
 
 | API | File | Copy from | Refresh from a checkout |
 | :--- | :--- | :--- | :--- |
@@ -61,7 +75,7 @@ From a checkout you can also refresh a spec from a live system. `doit fetch_spec
 | DII | `<config>/apis/dii/all.json` | `docs/example-config/apis/dii/all.json` | `doit fetch_spec --api=dii --host=<tenant> --api-key=<token>` |
 | Console | `<config>/apis/console/console_openapi.yaml` | `tools/console_openapi/generated/console_openapi.yaml` | `doit console_openapi_refresh` |
 
-`nf config validate` warns about a missing spec of a configured API.
+`nf config validate` and `nf doctor` warn about a missing spec of a configured API and give `nf config download-spec --api <api>` as the fix. `nf doctor` does not download it.
 
 Every `fetch_spec` call also accepts `--no-verify` to skip TLS certificate validation. After a refresh, `doit convert_specs` and `doit generate_models` rebuild the converted spec and the models.
 
@@ -132,7 +146,7 @@ The Console (BlueXP) client and the Console agents (connectors, also called OCCM
 
 A section other than the first four appears only when it has something to show, so a config that does not use an API shows no line for it.
 
-An error exits 1 and the output ends with a hint for each one, such as `nf config set-credential --cluster NAME --user USER` for a cluster without credentials. A missing spec file is only a warning and the exit code stays 0: the configuration is valid, but the client raises `FileNotFoundError` when it is built. The warning says which file is missing and which file in the repository to copy (see [Spec files](#spec-files)).
+An error exits 1 and the output ends with a hint for each one, such as `nf config set-credential --cluster NAME --user USER` for a cluster without credentials. A missing spec file is only a warning and the exit code stays 0: the configuration is valid, but the client raises `FileNotFoundError` when it is built. The warning says which file is missing and gives `nf config download-spec --api <api>` as the fix (see [Spec files](#spec-files)).
 
 An API counts as configured when its `*api.toml` has a `[general]` section. DII also counts when `[cloudinsights]` has a tenant, and Console when the root or any scope has a `consoleapi.toml` `[general]`. The OCCM spec is never checked. `nf config validate --scope NAME` checks that scope's inventory and settings and no spec file, because specs live in `<config>/apis/`.
 

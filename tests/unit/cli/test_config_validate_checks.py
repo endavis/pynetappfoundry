@@ -376,4 +376,4 @@ def test_warning_hints_do_not_reach_the_error_hints(tmp_path: Path) -> None:
     tail = result.output.split("Validation failed with")[1]
     assert result.exit_code == 1
     assert "nf config set-credential --type aiqums --name aiq1" in tail
-    assert "Copy docs/example-config" not in tail
+    assert "nf config download-spec" not in tail

@@ -28,15 +28,15 @@ import requests
 from pynetappfoundry.clients.console import ConsoleAuthError
 from pynetappfoundry.clients.trust import HostIdentityChangedError
 from pynetappfoundry.core.config import Config, ConfigurationError
-from pynetappfoundry.core.config_checks import CheckResult, CheckSection, CheckStatus
+from pynetappfoundry.core.config_checks import (
+    CheckResult,
+    CheckSection,
+    CheckStatus,
+    spec_download_hint,
+)
 from pynetappfoundry.doctor import API_NAMES
 
 logger = logging.getLogger(__name__)
-
-SPEC_HINT = (
-    "Copy the spec file into <config>/apis/<api>/; "
-    "see docs/getting-started/configuration.md (Spec files)."
-)
 
 
 @dataclass
@@ -72,12 +72,17 @@ def _chain(exc: BaseException) -> list[BaseException]:
 
 
 def _failure(
-    exc: BaseException, *, credentials_hint: str | None = None, forbidden_warns: bool = False
+    exc: BaseException,
+    *,
+    api: str | None = None,
+    credentials_hint: str | None = None,
+    forbidden_warns: bool = False,
 ) -> tuple[str, str | None, CheckStatus]:
     """Describe a failed request without quoting the response or the exception text.
 
     Args:
         exc: The exception raised by the client.
+        api: The OpenAPI API whose spec a ``FileNotFoundError`` means is missing.
         credentials_hint: Advice for a 401 or 403.
         forbidden_warns: Report a 403 as a warning instead of an error.
 
@@ -108,7 +113,12 @@ def _failure(
             CheckStatus.ERROR,
         )
     if isinstance(exc, FileNotFoundError):
-        return "spec file missing", SPEC_HINT, CheckStatus.SKIPPED
+        hint = (
+            spec_download_hint(api)
+            if api
+            else "Run: nf config download-schema; see docs/getting-started/configuration.md."
+        )
+        return "spec file missing", hint, CheckStatus.SKIPPED
     if isinstance(exc, (ConfigurationError, ConsoleAuthError)):
         return str(exc), "See nf config validate.", CheckStatus.ERROR
     logger.debug("Live check failed", exc_info=exc)
@@ -124,12 +134,13 @@ def _failed_row(
     name: str,
     exc: BaseException,
     *,
+    api: str,
     credentials_hint: str | None = None,
     forbidden_warns: bool = False,
 ) -> CheckResult:
     """Build the result row of a failed request."""
     detail, hint, status = _failure(
-        exc, credentials_hint=credentials_hint, forbidden_warns=forbidden_warns
+        exc, api=api, credentials_hint=credentials_hint, forbidden_warns=forbidden_warns
     )
     label = f"{name}: {detail}"
     errors = (label,) if status is CheckStatus.ERROR else ()
@@ -165,6 +176,7 @@ def check_ontap(
                     subject,
                     name,
                     e,
+                    api="ontap",
                     credentials_hint=(
                         f"Set them with: nf config set-credential --cluster {name} --user USER"
                     ),
@@ -209,6 +221,7 @@ def check_aiqum(
                     subject,
                     name,
                     e,
+                    api="aiqum",
                     credentials_hint=(
                         f"Set them with: nf config set-credential --type aiqums --name {name} "
                         "--user USER"
@@ -254,7 +267,9 @@ def check_dii(
                 else "Set the token in <config>/apis/dii/diiapi.toml."
             )
             results.append(
-                _failed_row(subject, shown, e, credentials_hint=hint, forbidden_warns=True)
+                _failed_row(
+                    subject, shown, e, api="dii", credentials_hint=hint, forbidden_warns=True
+                )
             )
         else:
             results.append(CheckResult(subject, CheckStatus.OK, f"{shown}: connected"))
@@ -535,6 +550,7 @@ def check_console(
                     subject,
                     shown,
                     e,
+                    api="console",
                     credentials_hint="Check consoleapi.toml and the stored credentials.",
                 )
             )
@@ -552,7 +568,9 @@ def check_console(
             try:
                 agents = client.list_agents(org.id)
             except Exception as e:
-                results.append(_failed_row(f"{subject}.{org.id}", f"{shown}/{org_name}", e))
+                results.append(
+                    _failed_row(f"{subject}.{org.id}", f"{shown}/{org_name}", e, api="console")
+                )
                 continue
             for agent in agents:
                 agent_subject = f"{subject}.{org.id}.{agent.agent_id}"
@@ -572,7 +590,7 @@ def check_console(
                         config, agent.agent_id, token_provider=provider, scope=account
                     ).about()
                 except Exception as e:
-                    results.append(_failed_row(agent_subject, label, e))
+                    results.append(_failed_row(agent_subject, label, e, api="console"))
                 else:
                     results.append(
                         CheckResult(agent_subject, CheckStatus.OK, f"{label}: reachable")

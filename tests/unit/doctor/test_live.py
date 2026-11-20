@@ -766,3 +766,12 @@ def test_every_request_is_a_get(tmp_path: Path) -> None:
     assert set(methods) == {"GET"}
     assert [s.title for s in sections] == ["ONTAP", "AIQUM", "DII"]
     assert all(r.status is CheckStatus.OK for s in sections for r in s.results), sections
+
+
+def test_missing_spec_row_names_the_download_command(tmp_path: Path) -> None:
+    config = _config(tmp_path, AIQUM_FILES)
+
+    results = check_aiqum(config, "Org1", client_factory=MagicMock(side_effect=FileNotFoundError))
+
+    assert results[0].hint is not None
+    assert "nf config download-spec --api aiqum" in results[0].hint
