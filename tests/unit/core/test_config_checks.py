@@ -523,3 +523,12 @@ def test_digital_advisor_row_absent_valid_and_invalid(tmp_path: Path) -> None:
         }
     )
     assert both.status is CheckStatus.OK
+
+
+def test_spec_missing_hint_names_the_download_command(tmp_path: Path) -> None:
+    config = _config(tmp_path, {"aiqumapi.toml": "[general]\n"})
+
+    hint = _spec_rows(config)["spec.aiqum"].hint
+
+    assert hint is not None
+    assert "nf config download-spec --api aiqum" in hint

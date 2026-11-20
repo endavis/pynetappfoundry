@@ -504,7 +504,7 @@ def check_cloudinsights_credentials(config: Config, scope: str | None = None) ->
     return results
 
 
-def _configured_apis(config: Config) -> set[str]:
+def configured_apis(config: Config) -> set[str]:
     """Return the APIs in use, judged from the loaded TOML only (no decryption)."""
 
     def has_general(settings: dict[str, Any], key: str) -> bool:
@@ -525,15 +525,27 @@ def _configured_apis(config: Config) -> set[str]:
     return apis
 
 
+def spec_download_hint(api: str) -> str:
+    """Return the fix hint of a missing spec: the command that downloads it.
+
+    The hint also names the repository file, for copying it by hand.
+    """
+    source = next((src for _, name, _, src in SPEC_FILES if name == api), "the spec file")
+    return (
+        f"Run: nf config download-spec --api {api} (downloads {source} at the installed "
+        f"release, {__version__}); see {CONFIGURATION_DOC} (Spec files)."
+    )
+
+
 def check_spec_files(config: Config) -> list[CheckResult]:
     """Check that the OpenAPI spec of every configured API is in ``<config>/apis/``.
 
     A missing spec is a warning: the client raises ``FileNotFoundError`` when it is
     built, but nothing is wrong with the configuration itself.
     """
-    configured = _configured_apis(config)
+    configured = configured_apis(config)
     results: list[CheckResult] = []
-    for display, api, file_name, source in SPEC_FILES:
+    for display, api, file_name, _source in SPEC_FILES:
         if api not in configured:
             continue
         path = config.get_schema_location(api) / file_name
@@ -546,10 +558,7 @@ def check_spec_files(config: Config) -> list[CheckResult]:
                     subject,
                     CheckStatus.WARNING,
                     f"{display} spec: missing {path}",
-                    hint=(
-                        f"Copy {source} from the repository at the installed release "
-                        f"({__version__}) to {path}; see {CONFIGURATION_DOC} (Spec files)."
-                    ),
+                    hint=spec_download_hint(api),
                 )
             )
     return results
