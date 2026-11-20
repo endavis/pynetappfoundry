@@ -1,7 +1,9 @@
 """Offline ``nf doctor`` check: config ``[clusters]`` against Console working environments.
 
 A ``[clusters.NAME]`` key must equal the cluster's real name, which is Console's
-``ontapClusterProperties.clusterName`` (ADR-0035). The check reads the OCCM and ONTAP
+``ontapClusterProperties.clusterName`` (ADR-0035). A record Console gives no cluster
+name (seen on some Azure working environments) falls back to the working environment
+name, ``name``, for the name match only. The check reads the OCCM and ONTAP
 caches only, through ``mode=ro`` URIs, so it never creates, migrates or writes a cache
 file and makes no network call. It compares per Console account. It imports neither
 Rich nor click.
@@ -42,6 +44,7 @@ class ConsoleCluster:
     display: str
     uuid: str | None
     ips: frozenset[str]
+    environment_name: str | None = None
 
 
 def _text(value: Any) -> str | None:
@@ -79,7 +82,8 @@ def cluster_from_record(record: Mapping[str, Any], account: str | None) -> Conso
     cluster_props = record.get("clusterProperties")
     if isinstance(cluster_props, dict):
         ips |= _lif_ips(cluster_props.get("lifs"))
-    display = name or _text(record.get("name")) or public_id or "(unnamed)"
+    environment_name = _text(record.get("name"))
+    display = name or environment_name or public_id or "(unnamed)"
     return ConsoleCluster(
         account=account,
         public_id=public_id,
@@ -87,6 +91,7 @@ def cluster_from_record(record: Mapping[str, Any], account: str | None) -> Conso
         display=display,
         uuid=_text(props.get("clusterUuid")),
         ips=frozenset(ips),
+        environment_name=environment_name,
     )
 
 
@@ -179,15 +184,24 @@ def match_account(
     *,
     report_console_only: bool,
 ) -> list[CheckResult]:
-    """Compare one account's config entries (key to ip) with its Console clusters."""
+    """Compare one account's config entries (key to ip) with its Console clusters.
+
+    A key matches by name when it equals the cluster name, or the working environment name
+    of a record that has no cluster name.
+    """
     shown = account or "root"
     base = f"{_SUBJECT}.{shown}"
     remaining = sorted(console, key=lambda c: c.display)
     unmatched: list[str] = []
     name_matches = 0
+    fallback_matches = 0
 
     for key in sorted(entries):
         hit = next((c for c in remaining if c.name == key), None)
+        if hit is None:
+            hit = next((c for c in remaining if c.name is None and c.environment_name == key), None)
+            if hit is not None:
+                fallback_matches += 1
         if hit is None:
             unmatched.append(key)
         else:
@@ -243,11 +257,13 @@ def match_account(
             )
         )
     if name_matches or not results:
-        results.append(
-            CheckResult(
-                base, CheckStatus.OK, f"{shown}: {name_matches} cluster(s) match Console by name"
+        label = f"{shown}: {name_matches} cluster(s) match Console by name"
+        if fallback_matches:
+            label += (
+                f" ({fallback_matches} by working environment name; "
+                "Console reports no cluster name for them)"
             )
-        )
+        results.append(CheckResult(base, CheckStatus.OK, label))
     return results
 
 
