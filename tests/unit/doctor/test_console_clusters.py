@@ -414,6 +414,44 @@ def test_cluster_from_record_is_defensive() -> None:
     assert cluster_from_record({"publicId": "w9"}, None).display == "w9"
 
 
+def test_name_falls_back_to_working_environment_name(tmp_path: Path) -> None:
+    config = _config(
+        tmp_path, {"inv.toml": _inv(**{"we-1": "192.0.2.1", "we-2": "192.0.2.2"}), **CONSOLE}
+    )
+    ha = {"publicId": "w1", "name": "we-1", "ontapClusterProperties": {"clusterUuid": "u-1"}}
+    single = {"publicId": "w2", "name": "we-2", "ontapClusterProperties": {}}
+    _make_occm(config, [("a1", None, {ONPREM: [ha, single]})])
+
+    rows = _run(config)
+
+    assert set(rows) == {"console_clusters.root"}
+    row = rows["console_clusters.root"]
+    assert row.status is CheckStatus.OK
+    assert "2 cluster(s) match Console by name" in row.label
+    assert "2 by working environment name" in row.label
+
+
+def test_working_environment_name_is_ignored_when_cluster_name_exists(tmp_path: Path) -> None:
+    config = _config(tmp_path, {"inv.toml": _inv(**{"we-1": "192.0.2.1"}), **CONSOLE})
+    record = {"publicId": "w1", "name": "we-1", "ontapClusterProperties": {"clusterName": "real"}}
+    _make_occm(config, [("a1", None, {ONPREM: [record]})])
+
+    rows = _run(config)
+
+    assert "console_clusters.root.config_only" in rows
+    assert "console_clusters.root.console_only" in rows
+    assert "by name" not in rows["console_clusters.root.config_only"].label
+
+
+def test_cluster_from_record_sets_environment_name() -> None:
+    record = {"publicId": "w1", "name": "we-1", "ontapClusterProperties": {"clusterName": "real"}}
+
+    cluster = cluster_from_record(record, None)
+
+    assert cluster.name == "real"
+    assert cluster.environment_name == "we-1"
+
+
 def test_run_environment_checks_section_by_api(tmp_path: Path) -> None:
     config = _config(tmp_path, {"inv.toml": _inv(c1="192.0.2.1"), **CONSOLE})
     clusters = config.get_clusters({})

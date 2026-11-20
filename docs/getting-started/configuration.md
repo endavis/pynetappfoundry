@@ -81,7 +81,7 @@ Every `fetch_spec` call also accepts `--no-verify` to skip TLS certificate valid
 
 ## ONTAP
 
-- **Inventory:** add each cluster to a data file as `[clusters.NAME]` with an `ip` (see [Config schema: Clusters](../reference/config-schema.md#clusters)). The `NAME` must be the cluster's real name, which Console shows as its cluster name. For AWS Cloud Volumes ONTAP the `ip` may be a node management IP.
+- **Inventory:** add each cluster to a data file as `[clusters.NAME]` with an `ip` (see [Config schema: Clusters](../reference/config-schema.md#clusters)). The `NAME` must be the cluster's real name, which Console shows as its cluster name (the working environment name when Console reports none). For AWS Cloud Volumes ONTAP the `ip` may be a node management IP.
 - **Credentials:** `nf config set-credential --cluster NAME --user USER` stores them on the cluster entry. A default for every cluster goes under `[clusters]` in `users.toml` (see [Config schema: Credential Resolution Order](../reference/config-schema.md#credential-resolution-order)). The API uses HTTP Basic authentication.
 - **Settings:** `<config>/apis/ontap/ontapapi.toml` with a `[general]` section (see [Config schema: ontapapi.toml](../reference/config-schema.md#ontapapitoml)).
 - **Spec:** `<config>/apis/ontap/all.json` (see [Spec files](#spec-files)).
