@@ -112,7 +112,6 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJson(needs.setup.outputs.matrix) }}
     env:
-      UV_CACHE_DIR: ${{ github.workspace }}/.uv-cache
       HYPOTHESIS_PROFILE: ci
       # setup-python installs the matrix Python, but uv sync builds .venv from
       # .python-version (3.13) unless told otherwise, and a later uv run rebuilds
@@ -133,21 +132,22 @@ jobs:
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           version: "latest"
-
-      - name: Cache uv dependencies
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ${{ env.UV_CACHE_DIR }}
-          key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-uv-
+          enable-cache: true
+          cache-dependency-glob: uv.lock
 
       - name: Install dependencies
         run: uv sync --all-extras --dev
 
+      # Fails the job when uv runs another Python than the one requested
+      # above (#1261). Assumes the requested version is in X.Y form.
       - name: Check the Python version
         shell: bash
-        run: uv run python -c "import os, sys; got = '%d.%d' % sys.version_info[:2]; want = os.environ['UV_PYTHON']; sys.exit(0 if got == want else 'Python %s is running, but UV_PYTHON requests %s' % (got, want))"
+        run: >-
+          uv run python -c 'import os, sys;
+          v = "%d.%d" % sys.version_info[:2];
+          want = os.environ["UV_PYTHON"];
+          print("uv runs Python " + v + ", requested " + want);
+          sys.exit(0 if v == want else 1)'
 
       # Project steps, not from the template (#938): install_tools downloads age
       # and sops from GitHub releases; the runners share an IP pool, so
@@ -197,7 +197,6 @@ jobs:
       contents: read
       id-token: write
     env:
-      UV_CACHE_DIR: ${{ github.workspace }}/.uv-cache
       HYPOTHESIS_PROFILE: ci
       UV_PYTHON: ${{ needs.setup.outputs.newest }}
 
@@ -211,21 +210,22 @@ jobs:
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           version: "latest"
-
-      - name: Cache uv dependencies
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ${{ env.UV_CACHE_DIR }}
-          key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-uv-
+          enable-cache: true
+          cache-dependency-glob: uv.lock
 
       - name: Install dependencies
         run: uv sync --all-extras --dev
 
+      # Fails the job when uv runs another Python than the one requested
+      # above (#1261). Assumes the requested version is in X.Y form.
       - name: Check the Python version
         shell: bash
-        run: uv run python -c "import os, sys; got = '%d.%d' % sys.version_info[:2]; want = os.environ['UV_PYTHON']; sys.exit(0 if got == want else 'Python %s is running, but UV_PYTHON requests %s' % (got, want))"
+        run: >-
+          uv run python -c 'import os, sys;
+          v = "%d.%d" % sys.version_info[:2];
+          want = os.environ["UV_PYTHON"];
+          print("uv runs Python " + v + ", requested " + want);
+          sys.exit(0 if v == want else 1)'
 
       # Project steps, not from the template (#938): see the test job.
       - name: Install SOPS tools (Linux)
@@ -248,12 +248,16 @@ jobs:
       - name: Run tests with coverage
         env:
           COVERAGE_DEBUG: core
-          COVERAGE_DEBUG_FILE: tmp/coverage-debug.log
-        run: uv run pytest -n auto --cov --cov-report=xml:tmp/coverage.xml --cov-report=term -v --ignore=tests/benchmarks/
+          COVERAGE_DEBUG_FILE: tmp/coverage-debug.txt
+        run: |
+          mkdir -p tmp
+          uv run pytest -n auto --cov --cov-report=xml:tmp/coverage.xml --cov-report=term -v --ignore=tests/benchmarks/
 
-      - name: Show the coverage core used
-        if: ${{ !cancelled() }}
-        run: grep -h "Using core=" tmp/coverage-debug.log | sort | uniq -c
+      # Counts per core rather than the template's raw grep: every xdist worker
+      # logs a line (#1064).
+      - name: Show the coverage core
+        if: always()
+        run: '{ grep -h "Using core=" tmp/coverage-debug.txt || echo "No coverage core line found"; } | sort | uniq -c'
 
       - name: Upload coverage to Codecov
         if: vars.CODECOV_ENABLED == 'true'
@@ -271,7 +275,6 @@ jobs:
     if: ${{ needs.setup.outputs.matrix != '{"include":[]}' }}
     runs-on: ubuntu-latest
     env:
-      UV_CACHE_DIR: ${{ github.workspace }}/.uv-cache
       UV_PYTHON: ${{ needs.setup.outputs.newest }}
 
     steps:
@@ -284,21 +287,22 @@ jobs:
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           version: "latest"
-
-      - name: Cache uv dependencies
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ${{ env.UV_CACHE_DIR }}
-          key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-uv-
+          enable-cache: true
+          cache-dependency-glob: uv.lock
 
       - name: Install dependencies
         run: uv sync --all-extras --dev
 
+      # Fails the job when uv runs another Python than the one requested
+      # above (#1261). Assumes the requested version is in X.Y form.
       - name: Check the Python version
         shell: bash
-        run: uv run python -c "import os, sys; got = '%d.%d' % sys.version_info[:2]; want = os.environ['UV_PYTHON']; sys.exit(0 if got == want else 'Python %s is running, but UV_PYTHON requests %s' % (got, want))"
+        run: >-
+          uv run python -c 'import os, sys;
+          v = "%d.%d" % sys.version_info[:2];
+          want = os.environ["UV_PYTHON"];
+          print("uv runs Python " + v + ", requested " + want);
+          sys.exit(0 if v == want else 1)'
 
       - name: Build documentation
         run: uv run doit docs_build
@@ -308,7 +312,6 @@ jobs:
     if: ${{ needs.setup.outputs.matrix != '{"include":[]}' }}
     runs-on: ubuntu-latest
     env:
-      UV_CACHE_DIR: ${{ github.workspace }}/.uv-cache
       UV_PYTHON: ${{ needs.setup.outputs.newest }}
 
     steps:
@@ -321,22 +324,24 @@ jobs:
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           version: "latest"
-
-      - name: Cache uv dependencies
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ${{ env.UV_CACHE_DIR }}
-          key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-uv-
+          enable-cache: true
+          cache-dependency-glob: uv.lock
 
       - name: Install dependencies
         id: install
         run: uv sync --all-extras --dev
 
+      # Fails the job when uv runs another Python than the one requested
+      # above (#1261). Assumes the requested version is in X.Y form.
       - name: Check the Python version
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         shell: bash
-        run: uv run python -c "import os, sys; got = '%d.%d' % sys.version_info[:2]; want = os.environ['UV_PYTHON']; sys.exit(0 if got == want else 'Python %s is running, but UV_PYTHON requests %s' % (got, want))"
+        run: >-
+          uv run python -c 'import os, sys;
+          v = "%d.%d" % sys.version_info[:2];
+          want = os.environ["UV_PYTHON"];
+          print("uv runs Python " + v + ", requested " + want);
+          sys.exit(0 if v == want else 1)'
 
       # Each check runs whether or not the one before it failed, so a PR shows
       # every failing check at once instead of one per push (#952).
@@ -385,7 +390,6 @@ jobs:
     if: ${{ needs.setup.outputs.matrix != '{"include":[]}' }}
     runs-on: ubuntu-latest
     env:
-      UV_CACHE_DIR: ${{ github.workspace }}/.uv-cache
       UV_PYTHON: ${{ needs.setup.outputs.newest }}
 
     steps:
@@ -398,21 +402,22 @@ jobs:
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           version: "latest"
-
-      - name: Cache uv dependencies
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ${{ env.UV_CACHE_DIR }}
-          key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-uv-
+          enable-cache: true
+          cache-dependency-glob: uv.lock
 
       - name: Install dependencies
         run: uv sync --all-extras --dev
 
+      # Fails the job when uv runs another Python than the one requested
+      # above (#1261). Assumes the requested version is in X.Y form.
       - name: Check the Python version
         shell: bash
-        run: uv run python -c "import os, sys; got = '%d.%d' % sys.version_info[:2]; want = os.environ['UV_PYTHON']; sys.exit(0 if got == want else 'Python %s is running, but UV_PYTHON requests %s' % (got, want))"
+        run: >-
+          uv run python -c 'import os, sys;
+          v = "%d.%d" % sys.version_info[:2];
+          want = os.environ["UV_PYTHON"];
+          print("uv runs Python " + v + ", requested " + want);
+          sys.exit(0 if v == want else 1)'
 
       - name: Check generated Console models
         run: uv run doit console_models_check
@@ -429,7 +434,6 @@ jobs:
     if: ${{ needs.setup.outputs.matrix != '{"include":[]}' }}
     runs-on: ubuntu-latest
     env:
-      UV_CACHE_DIR: ${{ github.workspace }}/.uv-cache
       UV_PYTHON: ${{ needs.setup.outputs.newest }}
 
     steps:
@@ -442,21 +446,22 @@ jobs:
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           version: "latest"
-
-      - name: Cache uv dependencies
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ${{ env.UV_CACHE_DIR }}
-          key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-uv-
+          enable-cache: true
+          cache-dependency-glob: uv.lock
 
       - name: Install dependencies
         run: uv sync --all-extras --dev
 
+      # Fails the job when uv runs another Python than the one requested
+      # above (#1261). Assumes the requested version is in X.Y form.
       - name: Check the Python version
         shell: bash
-        run: uv run python -c "import os, sys; got = '%d.%d' % sys.version_info[:2]; want = os.environ['UV_PYTHON']; sys.exit(0 if got == want else 'Python %s is running, but UV_PYTHON requests %s' % (got, want))"
+        run: >-
+          uv run python -c 'import os, sys;
+          v = "%d.%d" % sys.version_info[:2];
+          want = os.environ["UV_PYTHON"];
+          print("uv runs Python " + v + ", requested " + want);
+          sys.exit(0 if v == want else 1)'
 
       - name: Check generated ONTAP and DII models
         run: uv run doit generate_models_check
