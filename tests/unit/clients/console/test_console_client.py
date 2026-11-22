@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
-import yaml
 from pydantic import SecretStr
 
 from pynetappfoundry.clients.console.api import (
@@ -269,7 +267,10 @@ class TestHandAuthoredOperations:
 
 
 class TestConsoleAPIClientRealSpec:
-    """Construct against the real generated YAML spec, with APIWrapper unmocked (#1011)."""
+    """Construct against the real generated YAML spec, with APIWrapper unmocked (#1011).
+
+    Deliberately uncached: it does not request ``real_spec_dir`` (#1139).
+    """
 
     def test_constructs_from_documented_yaml_spec(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
@@ -291,16 +292,11 @@ class TestConsoleAPIClientRealSpec:
         assert client._user.api_spec["paths"]
 
 
-_REAL_SPEC = Path(__file__).parents[4] / "tools/console_openapi/generated/console_openapi.yaml"
 _HOST = "https://api.bluexp.netapp.com"
 
 
-def _real_client(settings: ConsoleAPISettings, tmp_path: Path) -> ConsoleAPIClient:
-    """Build a client on the real Console spec (YAML loaded here, written as JSON)."""
-    schema_dir = tmp_path / "schema"
-    schema_dir.mkdir()
-    spec = yaml.safe_load(_REAL_SPEC.read_text(encoding="utf-8"))
-    (schema_dir / "console_openapi.yaml").write_text(json.dumps(spec), encoding="utf-8")
+def _real_client(settings: ConsoleAPISettings, schema_dir: Path) -> ConsoleAPIClient:
+    """Build a client on the real Console spec (parsed once per session, see conftest)."""
     return ConsoleAPIClient(_make_config(settings, schema_dir))
 
 
@@ -336,9 +332,9 @@ class TestConsoleOperationServers:
         assert wrapper_mock.call_args.kwargs["use_operation_servers"] is True
 
     def test_list_organizations_requests_v1_management_url(
-        self, base_settings: ConsoleAPISettings, tmp_path: Path
+        self, base_settings: ConsoleAPISettings, real_spec_dir: Path
     ) -> None:
-        client = _real_client(base_settings, tmp_path)
+        client = _real_client(base_settings, real_spec_dir)
         wrapper = client._require_user()
         response = MagicMock()
         response.status_code = 200
@@ -349,18 +345,18 @@ class TestConsoleOperationServers:
         assert mocked.call_args.kwargs["url"] == f"{_HOST}/v1/management/organizations"
 
     def test_get_organization_path_has_v1_management_prefix(
-        self, base_settings: ConsoleAPISettings, tmp_path: Path
+        self, base_settings: ConsoleAPISettings, real_spec_dir: Path
     ) -> None:
-        wrapper = _real_client(base_settings, tmp_path)._require_user()
+        wrapper = _real_client(base_settings, real_spec_dir)._require_user()
         path = wrapper._format_path(
             "/v1/management/organizations/{organization_id}", {"organization_id": "abc"}, "GET"
         )
         assert path == "/v1/management/organizations/abc"
 
     def test_bare_host_operation_has_no_prefix(
-        self, base_settings: ConsoleAPISettings, tmp_path: Path
+        self, base_settings: ConsoleAPISettings, real_spec_dir: Path
     ) -> None:
-        wrapper = _real_client(base_settings, tmp_path)._require_user()
+        wrapper = _real_client(base_settings, real_spec_dir)._require_user()
         bare = [
             (path, method)
             for path, item in wrapper.api_spec["paths"].items()
@@ -371,12 +367,12 @@ class TestConsoleOperationServers:
         path, method = bare[0]
         assert wrapper._format_path(path, None, method.upper()) == path
 
-    def test_legacy_hostname_as_base_url_is_kept(self, tmp_path: Path) -> None:
+    def test_legacy_hostname_as_base_url_is_kept(self, real_spec_dir: Path) -> None:
         legacy = "https://cloudmanager.cloud.netapp.com"
         settings = ConsoleAPISettings(
             user_token=SecretStr("user-jwt"), base_url=legacy, base_api_path="/", timeout=15.0
         )
-        client = _real_client(settings, tmp_path)
+        client = _real_client(settings, real_spec_dir)
         wrapper = client._require_user()
         response = MagicMock()
         response.status_code = 200
@@ -387,9 +383,9 @@ class TestConsoleOperationServers:
         assert mocked.call_args.kwargs["url"] == f"{legacy}/v1/management/organizations"
 
     def test_tenancyv4_keys_are_full_paths(
-        self, base_settings: ConsoleAPISettings, tmp_path: Path
+        self, base_settings: ConsoleAPISettings, real_spec_dir: Path
     ) -> None:
-        wrapper = _real_client(base_settings, tmp_path)._require_user()
+        wrapper = _real_client(base_settings, real_spec_dir)._require_user()
         tenancyv4_paths = [
             path
             for path, item in wrapper.api_spec["paths"].items()
@@ -400,9 +396,9 @@ class TestConsoleOperationServers:
         assert all(p.startswith("/v1/management/") for p in tenancyv4_paths)
 
     def test_every_operation_first_server_is_bare_host(
-        self, base_settings: ConsoleAPISettings, tmp_path: Path
+        self, base_settings: ConsoleAPISettings, real_spec_dir: Path
     ) -> None:
-        wrapper = _real_client(base_settings, tmp_path)._require_user()
+        wrapper = _real_client(base_settings, real_spec_dir)._require_user()
         urls = [
             op["servers"][0]["url"]
             for item in wrapper.api_spec["paths"].values()
@@ -412,14 +408,14 @@ class TestConsoleOperationServers:
         assert urls
         assert set(urls) == {_HOST}
 
-    def test_legacy_base_api_path_does_not_double_prefix(self, tmp_path: Path) -> None:
+    def test_legacy_base_api_path_does_not_double_prefix(self, real_spec_dir: Path) -> None:
         settings = ConsoleAPISettings(
             user_token=SecretStr("user-jwt"),
             base_url=_HOST,
             base_api_path="/v1/management",
             timeout=15.0,
         )
-        client = _real_client(settings, tmp_path)
+        client = _real_client(settings, real_spec_dir)
         wrapper = client._require_user()
         response = MagicMock()
         response.status_code = 200

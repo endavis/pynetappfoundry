@@ -13,7 +13,6 @@ from urllib.parse import parse_qs, urlsplit
 
 import pytest
 import requests
-import yaml
 from pydantic import SecretStr
 
 import pynetappfoundry.clients as clients_pkg
@@ -30,7 +29,6 @@ USER_TOKEN = "placeholder-user-token"
 SERVICE_TOKEN = "placeholder-service-token"
 
 _ROOT = Path(__file__).parents[4]
-_REAL_SPEC = _ROOT / "tools/console_openapi/generated/console_openapi.yaml"
 _FIXTURES = _ROOT / "tests/fixtures/console_models"
 _LIST_URL = f"{REAL_HOST}/occm/api/onprem/working-environments"
 
@@ -84,13 +82,10 @@ class FakeProvider:
             self._tokens.pop(0)
 
 
-@pytest.fixture(scope="module")
-def schema_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
-    """Directory holding the real combined Console spec."""
-    path = tmp_path_factory.mktemp("schema")
-    spec = yaml.safe_load(_REAL_SPEC.read_text(encoding="utf-8"))
-    (path / "console_openapi.yaml").write_text(json.dumps(spec), encoding="utf-8")
-    return path
+@pytest.fixture
+def schema_dir(real_spec_dir: Path) -> Path:
+    """Directory holding the real combined Console spec (parsed once per session)."""
+    return real_spec_dir
 
 
 @pytest.fixture
