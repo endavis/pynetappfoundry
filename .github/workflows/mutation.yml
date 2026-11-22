@@ -52,7 +52,11 @@ jobs:
           sys.exit(0 if v == want else 1)'
 
       - name: Run mutmut
-        timeout-minutes: 120
+        # Project-sized limit, deliberately different from the template's 120.
+        # The 2026-11-22 run checked 27,406 of 29,855 mutants in 120 minutes
+        # (#1137). Revisit from the duration of the first run that completes.
+        # The next template sync must keep it.
+        timeout-minutes: 240
         run: |
           mkdir -p tmp
           # Surviving mutants do not fail this step. mutmut exits non-zero only
