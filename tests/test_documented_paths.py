@@ -83,7 +83,6 @@ ALLOWED: dict[str, str] = {
     # ── pynetappfoundry ─────────────────────────────────────────────────────
     # Template files this project excludes in sync-exclude.toml or sheds on
     # configuration, named by template-synced skills and docs (#853).
-    "src/package_name/": "the template's example package, excluded by sync-exclude.toml",
     "tests/test_core.py": "template example test, excluded by sync-exclude.toml",
     "tests/benchmarks/test_bench_core.py": "template benchmark, excluded by sync-exclude.toml",
     "tests/template/test_properties.py": "template test, excluded by sync-exclude.toml",
@@ -105,6 +104,21 @@ ALLOWED: dict[str, str] = {
 ALLOWED_PATTERNS: dict[re.Pattern[str], str] = {
     re.compile(r"src/[A-Za-z0-9_]+/(?:cache|farewell|provider)\.py"): (
         "worked-example modules in the tutorials, in any package name"
+    ),
+    # Built from two pieces: configuration rewrites the literal word, which would turn
+    # this pattern into one for the new package while the skill still names the old one.
+    re.compile(r"src/" + "package" + r"_name/(?:__init__|core)\.py"): (
+        "the deprecate-api skill's example paths; configuration renames the package (#1269)"
+    ),
+    re.compile(r"tests/template/test_(?:utils|utils_properties|check_template_updates)\.py"): (
+        "template-owned tests the ADRs name; configuration sheds them (ADR-9017, #1269)"
+    ),
+    # ── pynetappfoundry ─────────────────────────────────────────────────────
+    # The template's example package directory itself, excluded by
+    # sync-exclude.toml (#853). Exact, so files under it still need their own
+    # exemption, such as the core.py and __init__.py pattern above (#1135).
+    re.compile(r"src/package_name/"): (
+        "the template's example package, excluded by sync-exclude.toml"
     ),
 }
 
@@ -295,3 +309,21 @@ def test_never_committed_entries_are_allowlisted() -> None:
     """
     for prefix in NEVER_COMMITTED:
         assert prefix in ALLOWED, f"{prefix} is exempt from staleness but not allowlisted"
+
+
+def test_paths_shed_or_renamed_by_configuration_are_allowed() -> None:
+    """A configured project lacks these, and the docs that ship still name them (#1269)."""
+    for raw in (
+        "src/package" + "_name/__init__.py",
+        "src/package" + "_name/core.py",
+        "tests/template/test_utils.py",
+        "tests/template/test_utils_properties.py",
+        "tests/template/test_check_template_updates.py",
+    ):
+        assert _is_allowed(raw), raw
+
+
+def test_other_template_paths_are_still_checked() -> None:
+    """The exemptions are exact, not a blanket over `tests/template/` or the placeholder package."""
+    assert not _is_allowed("tests/template/test_other.py")
+    assert not _is_allowed("src/package" + "_name/cli.py")

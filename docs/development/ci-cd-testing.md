@@ -120,6 +120,8 @@ runs, and it already does what a hand-rolled `tests.yml` would:
 | **Checks** | the `lint` and `docs` jobs run `doit` tasks, so CI and a local run cannot diverge; the `test` job calls `pytest` directly (see [Pipeline Jobs](#pipeline-jobs)) |
 | **Coverage** | `pynetappfoundry` **and** `tools/`, gated by `fail_under` in `pyproject.toml` |
 | **Actions** | pinned to commit SHAs with a `# vX.Y.Z` comment (see [Action pinning](#action-pinning-and-workflow-permissions)) |
+| **Interpreter** | every job that sets up Python and then runs uv sets `UV_PYTHON` to that version, so `uv sync` and `uv run` use it instead of the one in `.python-version`; a `Check the Python version` step fails the job if uv runs another one (#1261) |
+| **uv cache** | `astral-sh/setup-uv` with `enable-cache: true`, keyed on `uv.lock`; no separate `actions/cache` step or `UV_CACHE_DIR`. It is faster than `actions/cache`, most of all on Windows (timings in #1266) |
 
 Read `.github/workflows/ci.yml` for the current definition. This page previously carried a ~60-line
 `tests.yml` sample to copy; it drifted from the real file in every dimension above — hardcoded
@@ -133,13 +135,13 @@ versions, raw `pytest` instead of `doit`, and mutable action tags this project's
 | Job | What it runs |
 | :--- | :--- |
 | `setup` | Builds the test matrix from `.github/python-versions.json` |
-| `test` | `pytest`, called directly, on each OS and Python version in the matrix. Before the tests, `doit install_tools` installs SOPS and age on Linux and Windows (macOS uses Homebrew), so the SOPS tests run instead of skipping. |
-| `coverage` | `pytest --cov` on the newest Python and `ubuntu-latest`, in parallel with `test` (so measuring coverage does not set the matrix's wall time), then the optional Codecov upload. It installs SOPS with `doit install_tools` like `test`, and is skipped on full-matrix runs. See [Coverage core](#coverage-core). |
+| `test` | `pytest`, called directly, on each OS and Python version in the matrix. It does not measure coverage. Before the tests, `doit install_tools` installs SOPS and age on Linux and Windows (macOS uses Homebrew), so the SOPS tests run instead of skipping. |
+| `coverage` | `pytest --cov` on the newest Python on `ubuntu-latest`, in parallel with `test`, plus the opt-in Codecov upload (the only job holding `id-token: write`). It logs which coverage core ran (`COVERAGE_DEBUG=core`; see [Coverage core](#coverage-core)), installs SOPS with `doit install_tools` like `test`, and is skipped on `full_matrix` runs, which test only the middle versions. |
 | `lint` | `doit env_check`, `doit format_check`, `doit lint`, `doit type_check`, `doit deadcode`, `doit security`, `doit spell_check`, `doit audit` and `doit wheel_check`, on `ubuntu-latest`. Each runs even when one before it failed, so CI reports every failing check at once. A failure in any of them fails CI. |
 | `docs` | `doit docs_build`, described below |
 | `console-models` | `doit console_models_check` and `doit console_client_check`, on `ubuntu-latest`: regenerates the Console models and the generated client operations (`tools/console_openapi/client_ops.toml`) from the committed spec, and fails on any modified, deleted or new file under `src/pynetappfoundry/models/console/` or `src/pynetappfoundry/clients/console/generated/`. Project-specific, not from the template. |
 | `generated-models` | `doit generate_models_check`, on `ubuntu-latest`: regenerates the ONTAP and DII models from the committed specs and fails on any modified, deleted, new or stale generated file. Project-specific, not from the template. |
-| `ci-complete` | Fails if any other job failed; a skipped job passes. It gives the run one result to require ([ADR-9013](../decisions/9013-python-version-support-policy.md)). |
+| `ci-complete` | Fails if any other job (`test`, `coverage`, `lint`, `docs`, `console-models`, `generated-models`) failed; a skipped job passes. It gives the run one result to require ([ADR-9013](../decisions/9013-python-version-support-policy.md)). |
 
 `tests/test_ci_jobs_doc.py` checks this table against `ci.yml`: the same jobs, and the same `doit` tasks in each.
 
@@ -248,9 +250,9 @@ step fails the job if `uv run` is not on that version
 ([#1068](https://github.com/endavis/pynetappfoundry/issues/1068)). Without `UV_PYTHON`, `uv sync`
 builds the virtual environment from `.python-version`, not from the `setup-python` version.
 `coverage debug sys` shows `core: -none-` before a run, so it cannot show the core used.
-The job sets `COVERAGE_DEBUG=core` and `COVERAGE_DEBUG_FILE=tmp/coverage-debug.log`, so every
-coverage process, each xdist worker too, logs `Using core=<name>`, and the `Show the coverage core
-used` step prints the counts per core.
+The job sets `COVERAGE_DEBUG=core` and `COVERAGE_DEBUG_FILE=tmp/coverage-debug.txt`, so every
+coverage process, each xdist worker too, logs `Using core=<name>`, and the `Show the coverage core`
+step prints the counts per core.
 
 Measured in the `coverage` job's logs
 ([#1064](https://github.com/endavis/pynetappfoundry/issues/1064)):
@@ -813,7 +815,7 @@ uv run mutmut results --all true
 
 mutmut does not run all of `tests/`. It copies `src/`, `tests/`, `pyproject.toml` and `uv.lock` into `mutants/` (git-ignored) and runs the tests there. A test that imports `tools` or reads any other file in the repository fails in that copy. mutmut passes `-x` to pytest, so the first such failure stops the run before any mutant is checked (#873).
 
-`pytest_add_cli_args_test_selection` in `[tool.mutmut]` therefore lists only the tests that exercise `src/`. When you add a test file that imports the package, add it to that list. `tests/test_mutmut_config.py` fails until you do. It also fails if a listed file imports a module that mutmut does not copy, or no longer exists. The benchmarks in `tests/benchmarks/` are left out on purpose: they time the package and assert nothing, so they cannot kill a mutant.
+`pytest_add_cli_args_test_selection` in `[tool.mutmut]` therefore lists only the tests that exercise `src/`. When you add a test file that imports the package, add it to that list. `tests/test_mutmut_config.py` fails until you do. It also fails if a listed file imports a module that mutmut does not copy, or no longer exists, and (a static scan, so a heuristic) if a listed file reads a repository file mutmut does not copy. A selected test that needs a data file gets it through `also_copy` in `[tool.mutmut]`, listing the narrowest directory that holds the file (#1272). mutmut 3.8 cannot copy a file entry whose parent directory it does not create, so a file under a subdirectory crashes the run before any test; a top-level file works, and `tests/test_mutmut_config.py` rejects the subdirectory case (#1275). The benchmarks in `tests/benchmarks/` are left out on purpose: they time the package and assert nothing, so they cannot kill a mutant.
 
 ### Interpreting Results
 

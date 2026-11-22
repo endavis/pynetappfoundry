@@ -16,9 +16,6 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
-    env:
-      UV_CACHE_DIR: ${{ github.workspace }}/.uv-cache
-
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -29,20 +26,30 @@ jobs:
         with:
           python-version: ${{ steps.pv.outputs.newest }}
 
+      - name: Point uv at the installed Python
+        env:
+          PYTHON_VERSION: ${{ steps.pv.outputs.newest }}
+        run: echo "UV_PYTHON=${PYTHON_VERSION}" >> "$GITHUB_ENV"
+
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           version: "latest"
-
-      - name: Cache uv dependencies
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ${{ env.UV_CACHE_DIR }}
-          key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-uv-
+          enable-cache: true
+          cache-dependency-glob: uv.lock
 
       - name: Install dependencies
         run: uv sync --all-extras --dev
+
+      # Fails the job when uv runs another Python than the one requested
+      # above (#1261). Assumes the requested version is in X.Y form.
+      - name: Check the Python version
+        shell: bash
+        run: >-
+          uv run python -c 'import os, sys;
+          v = "%d.%d" % sys.version_info[:2];
+          want = os.environ["UV_PYTHON"];
+          print("uv runs Python " + v + ", requested " + want);
+          sys.exit(0 if v == want else 1)'
 
       # --continue runs every task after a failure, so a second failure is not
       # hidden behind the first. The log feeds the failing-task list below (#952).
