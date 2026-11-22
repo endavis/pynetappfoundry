@@ -370,6 +370,9 @@ ignore_decorators = [
 
 [tool.mutmut]
 source_paths = ["src/"]
+# Generated code: mutating it tests the generator's output, not our tests. It
+# held 112 of 205 timed-out mutants in run 45017847882 (#1137).
+do_not_mutate = ["src/pynetappfoundry/clients/console/generated/*"]
 # Data files the selected tests read: the example config and specs, the usage
 # page a cache test compares against, and the generated Console spec. Each is
 # the narrowest directory that holds the files, as a file entry under a
