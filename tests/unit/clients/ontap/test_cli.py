@@ -752,3 +752,169 @@ class TestONTAPCLITrustStore:
             cli_cls.return_value.execute.return_value.http_response.json.return_value = {}
             ONTAPCLI("c", "h", "u", "p").run_command_python_api("volume show")
         conn.session.mount.assert_not_called()
+
+
+def _make_cli() -> ONTAPCLI:
+    with patch("paramiko.SSHClient"):
+        return ONTAPCLI("c", "h", "u", "p")
+
+
+class TestParseGenericOutput:
+    """Tests for ONTAPCLI.parse_generic_output."""
+
+    def test_primary_key_equals_first_key(self) -> None:
+        output = [
+            "Node: n1",
+            "Model: A1",
+            "Uptime: 5",
+            "Node: n2",
+            "Model: B2",
+        ]
+        result = _make_cli().parse_generic_output(output, primary_key="Node")
+        assert result == {
+            "n1": {"Model": "A1", "Uptime": "5"},
+            "n2": {"Model": "B2"},
+        }
+
+    def test_primary_key_inferred_from_first_line(self) -> None:
+        output = ["Name: a", "Size: 1", "Name: b", "Size: 2"]
+        result = _make_cli().parse_generic_output(output)
+        assert result == {"a": {"Size": "1"}, "b": {"Size": "2"}}
+
+    def test_repeated_primary_key_does_not_overwrite_existing_object(self) -> None:
+        output = ["Name: a", "Size: 1", "Name: a", "Other: 2"]
+        result = _make_cli().parse_generic_output(output, primary_key="Name")
+        assert result == {"a": {"Size": "1", "Other": "2"}}
+
+    def test_primary_key_differs_from_first_key_hands_off_temp_data(self) -> None:
+        output = [
+            "Vserver: svm1",
+            "Volume Name: v1",
+            "Size: 10",
+            "Vserver: svm2",
+            "Volume Name: v2",
+            "Size: 20",
+        ]
+        result = _make_cli().parse_generic_output(output, primary_key="Volume Name")
+        assert result == {
+            "v1": {"Vserver": "svm1", "Volume Name": "v1", "Size": "10"},
+            "v2": {"Vserver": "svm2", "Volume Name": "v2", "Size": "20"},
+        }
+
+    def test_differing_key_after_first_key_without_primary_yet(self) -> None:
+        output = ["Vserver: svm1", "Volume Name: v1"]
+        result = _make_cli().parse_generic_output(output, primary_key="Volume Name")
+        assert result == {"v1": {"Vserver": "svm1", "Volume Name": "v1"}}
+
+    def test_data_before_primary_key_is_dropped_when_no_primary_follows(self) -> None:
+        result = _make_cli().parse_generic_output(
+            ["Vserver: svm1", "Size: 1"], primary_key="Volume Name"
+        )
+        assert result == {}
+
+    def test_blank_lines_ignored(self) -> None:
+        output = ["", "   ", "Name: a", "", "Size: 1", "\t"]
+        assert _make_cli().parse_generic_output(output) == {"a": {"Size": "1"}}
+
+    def test_lines_without_colon_ignored(self) -> None:
+        output = ["Name: a", "no separator here", "Size: 1", "-----"]
+        assert _make_cli().parse_generic_output(output) == {"a": {"Size": "1"}}
+
+    def test_skip_listed_lines_ignored(self) -> None:
+        cli = _make_cli()
+        output = [
+            "Last login time: 1/1/2024",
+            "Unsuccessful login attempts since last login: 3",
+            "Your privilege has changed since last login.: x",
+            "This is your first recorded login.: y",
+            "Name: a",
+            "Size: 1",
+        ]
+        assert cli.parse_generic_output(output) == {"a": {"Size": "1"}}
+
+    def test_each_skip_phrase_is_skipped_alone(self) -> None:
+        cli = _make_cli()
+        for phrase in cli.lines_to_skip:
+            result = cli.parse_generic_output([f"{phrase}: v", "Name: a"])
+            assert result == {"a": {}}, phrase
+
+    def test_values_containing_colon_are_preserved(self) -> None:
+        output = ["Name: a", "Time: 10:20:30", "Url: http://x:80/p"]
+        assert _make_cli().parse_generic_output(output) == {
+            "a": {"Time": "10:20:30", "Url": "http://x:80/p"}
+        }
+
+    def test_keys_and_values_are_stripped(self) -> None:
+        output = ["  Name  :   a  ", "  Size :  1 "]
+        assert _make_cli().parse_generic_output(output) == {"a": {"Size": "1"}}
+
+    def test_empty_output(self) -> None:
+        assert _make_cli().parse_generic_output([]) == {}
+
+    def test_logs_primary_and_first_key(self, caplog: pytest.LogCaptureFixture) -> None:
+        with caplog.at_level("INFO"):
+            _make_cli().parse_generic_output(["Name: a"])
+        assert any("setting primary_key to Name" in m for m in caplog.messages)
+        assert any("setting first_key to Name" in m for m in caplog.messages)
+
+
+class TestRunCommandAndParse:
+    """Tests for ONTAPCLI.run_command_and_parse."""
+
+    def test_known_command_uses_cmd_keys(self) -> None:
+        cli = _make_cli()
+        output = ["Vserver: svm1", "Volume Name: v1", "Size: 10"]
+        with patch.object(cli, "run_command", return_value=output) as run:
+            result = cli.run_command_and_parse("volume show")
+        run.assert_called_once_with("volume show", "", " {y|n}:", "y\n")
+        assert result == {"v1": {"Vserver": "svm1", "Volume Name": "v1", "Size": "10"}}
+
+    def test_vol_show_alias_uses_cmd_keys(self) -> None:
+        cli = _make_cli()
+        output = ["Vserver: svm1", "Volume Name: v1"]
+        with patch.object(cli, "run_command", return_value=output):
+            result = cli.run_command_and_parse("vol show")
+        assert result == {"v1": {"Vserver": "svm1", "Volume Name": "v1"}}
+
+    def test_unknown_command_infers_primary_key(self) -> None:
+        cli = _make_cli()
+        output = ["Node: n1", "Model: A1"]
+        with patch.object(cli, "run_command", return_value=output):
+            result = cli.run_command_and_parse("system node show")
+        assert result == {"n1": {"Model": "A1"}}
+
+    def test_forwards_arguments_and_prompt_settings(self) -> None:
+        cli = _make_cli()
+        with patch.object(cli, "run_command", return_value=[]) as run:
+            result = cli.run_command_and_parse("x", "-a", "pat", "n\n")
+        run.assert_called_once_with("x", "-a", "pat", "n\n")
+        assert result == {}
+
+
+class TestParseGenericOutputBranchLogging:
+    """Branch-specific INFO logs and the non-first-key hand-off."""
+
+    def test_extra_field_before_primary_key_is_kept(self) -> None:
+        output = ["Vserver: svm1", "Extra: e", "Volume Name: v1"]
+        result = _make_cli().parse_generic_output(output, primary_key="Volume Name")
+        assert result == {"v1": {"Vserver": "svm1", "Extra": "e", "Volume Name": "v1"}}
+
+    def test_primary_equals_first_logs_object(self, caplog: pytest.LogCaptureFixture) -> None:
+        with caplog.at_level("INFO"):
+            _make_cli().parse_generic_output(["Name: a1"])
+        assert any("primary == first, setting current object to a1" in m for m in caplog.messages)
+
+    def test_differing_keys_log_each_branch(self, caplog: pytest.LogCaptureFixture) -> None:
+        output = ["Vserver: svm1", "Volume Name: v1"]
+        with caplog.at_level("INFO"):
+            _make_cli().parse_generic_output(output, primary_key="Volume Name")
+        assert any(
+            "primary_key != first_key, found first key, "
+            "setting current_object to None, updating temp_data" in m
+            for m in caplog.messages
+        )
+        assert any(
+            "primary_key != first_key, found primary key, setting current object to v1" in m
+            for m in caplog.messages
+        )
+        assert any("have temp_data" in m for m in caplog.messages)
