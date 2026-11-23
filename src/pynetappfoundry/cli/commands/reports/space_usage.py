@@ -183,7 +183,7 @@ class SpaceUsageReport:
         """Build the Volumes worksheet."""
         provision_col_header = "Provisioned (Licensing) TiB"
         used_col_header = "Used TiB"
-        percentused_header = "%% Used"
+        percentused_header = "% Used"
         percentused_formula = f"=[@[{used_col_header}]]/[@[{provision_col_header}]] * 100"
 
         columns: list[dict[str, Any]] = [
@@ -371,7 +371,7 @@ class SpaceUsageReport:
 
         # Conditional formatting for high usage
         self.usage_ws.conditional_format(
-            f"{percentused_column}2:{percentused_column}{len(usage_data) + 2}",
+            f"{percentused_column}2:{percentused_column}{len(usage_data) + 1}",
             {
                 "type": "cell",
                 "criteria": ">=",
