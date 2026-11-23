@@ -8,9 +8,8 @@ from typing import Any
 
 import pytest
 import yaml
-from click.testing import CliRunner
 
-from tools.console_openapi import cli as cli_module
+from tests.unit.console_openapi.conftest import ApplyFragmentsRuns
 from tools.console_openapi.openapi.builder import BuildError, build_spec
 from tools.console_openapi.overrides import (
     OVERRIDES_PATH,
@@ -22,8 +21,6 @@ from tools.console_openapi.overrides import (
 )
 from tools.console_openapi.parser.endpoint import parse_endpoint
 
-_ROOT = Path(__file__).resolve().parents[3]
-_SPEC_PATH = _ROOT / "tools/console_openapi/generated/console_openapi.yaml"
 _FIXTURES = Path(__file__).parent.parent.parent / "fixtures" / "console_openapi"
 _MAP = {"type": "object", "additionalProperties": {"type": "string"}}
 
@@ -308,10 +305,12 @@ def test_build_spec_rejects_an_override_of_a_fragment_schema() -> None:
 # --- the committed spec ----------------------------------------------------------------
 
 
-def test_committed_spec_matches_the_overrides() -> None:
+def test_committed_spec_matches_the_overrides(
+    committed_spec_text: str, committed_spec: dict[str, Any]
+) -> None:
     """Offline drift guard: strip then apply reproduces the committed spec byte for byte."""
-    text = _SPEC_PATH.read_text(encoding="utf-8")
-    spec = yaml.safe_load(text)
+    text = committed_spec_text
+    spec = committed_spec
 
     strip_overrides(spec)
     apply_overrides(spec, load_overrides(OVERRIDES_PATH))
@@ -319,8 +318,10 @@ def test_committed_spec_matches_the_overrides() -> None:
     assert yaml.safe_dump(spec, sort_keys=False) == text
 
 
-def test_every_override_target_in_the_committed_spec_is_marked() -> None:
-    schemas = yaml.safe_load(_SPEC_PATH.read_text(encoding="utf-8"))["components"]["schemas"]
+def test_every_override_target_in_the_committed_spec_is_marked(
+    committed_spec: dict[str, Any],
+) -> None:
+    schemas = committed_spec["components"]["schemas"]
     for o in load_overrides(OVERRIDES_PATH):
         node = (
             schemas[o.schema] if o.property is None else schemas[o.schema]["properties"][o.property]
@@ -329,19 +330,18 @@ def test_every_override_target_in_the_committed_spec_is_marked() -> None:
         assert node["x-override"]["reason"] == o.reason, o.target
 
 
-def test_no_prose_anchor_is_typed_in_the_committed_spec() -> None:
-    schemas = yaml.safe_load(_SPEC_PATH.read_text(encoding="utf-8"))["components"]["schemas"]
+def test_no_prose_anchor_is_typed_in_the_committed_spec(committed_spec: dict[str, Any]) -> None:
+    schemas = committed_spec["components"]["schemas"]
     untyped = [k for k, v in schemas.items() if "type" not in v and "$ref" not in v]
     assert len(untyped) > 700
     assert all("properties" not in schemas[k] for k in untyped)
 
 
-def test_apply_fragments_cli_is_idempotent_with_overrides(tmp_path: Path) -> None:
-    target = tmp_path / "spec.yaml"
-    target.write_text(_SPEC_PATH.read_text(encoding="utf-8"), encoding="utf-8")
-    before = target.read_text(encoding="utf-8")
+def test_apply_fragments_cli_is_idempotent_with_overrides(
+    apply_fragments_twice: ApplyFragmentsRuns,
+) -> None:
+    before = apply_fragments_twice.before
 
-    for _ in range(2):
-        result = CliRunner().invoke(cli_module.cli, ["apply-fragments", "--spec", str(target)])
+    for result, text_after in apply_fragments_twice.runs:
         assert result.exit_code == 0, result.output
-        assert target.read_text(encoding="utf-8") == before
+        assert text_after == before

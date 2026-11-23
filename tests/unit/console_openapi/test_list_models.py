@@ -10,7 +10,6 @@ from typing import Any
 
 import pytest
 
-from tools.console_openapi import client_codegen
 from tools.console_openapi.list_models import (
     ListModelError,
     add_list_models,
@@ -169,11 +168,11 @@ def test_generation_adds_list_models_before_ruff(
     assert seen == [True, True]
 
 
-def test_committed_spec_has_151_array_responses() -> None:
-    assert len(array_item_refs(client_codegen.load_spec())) == 151
+def test_committed_spec_has_151_array_responses(committed_spec: dict[str, Any]) -> None:
+    assert len(array_item_refs(committed_spec)) == 151
 
 
-def test_every_array_response_has_a_list_model() -> None:
+def test_every_array_response_has_a_list_model(committed_spec: dict[str, Any]) -> None:
     """The committed tree holds exactly the list classes the spec implies."""
     import importlib
     import pkgutil
@@ -181,7 +180,7 @@ def test_every_array_response_has_a_list_model() -> None:
     from pydantic import RootModel, ValidationError
 
     expected: set[tuple[str, str]] = set()
-    for _, key in array_item_refs(client_codegen.load_spec()):
+    for _, key in array_item_refs(committed_spec):
         head, _, item_name = key.rpartition(".")
         package, _, stem = head.partition(".")
         module = importlib.import_module(

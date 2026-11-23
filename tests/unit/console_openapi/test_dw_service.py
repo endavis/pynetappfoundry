@@ -160,8 +160,8 @@ def test_load_manifest_rejects_non_list_drop_headers(tmp_path: Path) -> None:
         cg.load_manifest(path)
 
 
-def test_real_manifest_resolves_preferred_subscriptions() -> None:
-    index = _index(cg.load_spec())
+def test_real_manifest_resolves_preferred_subscriptions(committed_spec: dict[str, Any]) -> None:
+    index = _index(committed_spec)
     entry = next(e for e in cg.load_manifest() if e["name"] == "list_preferred_subscriptions")
     op = cg.resolve_operation(entry, index)
     assert op.token_type is None

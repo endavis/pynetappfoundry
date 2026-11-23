@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Any
 
 import click
-import yaml
 
 from tools.console_openapi import __version__
 from tools.console_openapi.array_responses import (
@@ -37,6 +36,7 @@ from tools.console_openapi.overrides import (
     strip_overrides,
 )
 from tools.console_openapi.walker import parse_service
+from tools.console_openapi.yaml_io import dump_yaml, load_yaml
 
 DEFAULT_SERVICES: tuple[str, ...] = ("tenancy", "tenancyv4", "cvo", "dw")
 
@@ -164,7 +164,7 @@ def build(
     if out.suffix.lower() in {".json"}:
         out.write_text(json.dumps(spec, indent=2, sort_keys=False) + "\n", encoding="utf-8")
     else:
-        out.write_text(yaml.safe_dump(spec, sort_keys=False), encoding="utf-8")
+        out.write_text(dump_yaml(spec), encoding="utf-8")
     click.echo(f"Wrote {out}")
 
     lock = Lockfile(
@@ -214,14 +214,14 @@ def apply_fragments(spec_path: Path, fragments_dir: Path, overrides_path: Path) 
     fragments again and applies the overrides, then rewrites the spec, so editing
     either needs no fetch of the docs repo.
     """
-    spec: dict[str, Any] = yaml.safe_load(spec_path.read_text(encoding="utf-8"))
+    spec: dict[str, Any] = load_yaml(spec_path.read_text(encoding="utf-8"))
     strip_overrides(spec)
     strip_fragments(spec)
     merge_fragments(spec, load_fragments(fragments_dir))
     apply_overrides(spec, load_overrides(overrides_path))
     _enforce_invariants(spec)
     _validate(spec)
-    spec_path.write_text(yaml.safe_dump(spec, sort_keys=False), encoding="utf-8")
+    spec_path.write_text(dump_yaml(spec), encoding="utf-8")
     click.echo(f"Wrote {spec_path}")
 
 
