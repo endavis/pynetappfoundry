@@ -6,7 +6,7 @@ import json
 import sqlite3
 from collections.abc import Iterator
 from datetime import UTC, datetime, timedelta, timezone
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any, cast
 from unittest.mock import MagicMock, patch
 
@@ -1887,7 +1887,7 @@ class TestRowConversionHelpers:
         assert json.loads(row["subs"]) == [{"keep": 1, "secret": "s"}]
 
     def test_non_container_json_values_serialize_with_str_fallback(self) -> None:
-        bag = _Bag.model_construct(data=Path("/some/dir"), opt=None)
+        bag = _Bag.model_construct(data=PurePosixPath("/some/dir"), opt=None)
         row = _model_to_row(bag, _Bag)
         assert json.loads(row["data"]) == "/some/dir"
         assert json.loads(row["opt"]) is None
