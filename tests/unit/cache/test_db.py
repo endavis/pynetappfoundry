@@ -4,18 +4,22 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from datetime import UTC, datetime, timedelta
-from pathlib import Path
-from typing import cast
+from collections.abc import Iterator
+from datetime import UTC, datetime, timedelta, timezone
+from pathlib import Path, PurePosixPath
+from typing import Any, cast
 from unittest.mock import MagicMock, patch
 
 import pytest
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from pynetappfoundry.cache import CachedClusterMetadata
 from pynetappfoundry.cache.db import (
     ClusterMetadataDB,
     _model_to_row,
+    _nested_exclude,
+    _row_strip_keys,
+    _row_to_model,
     _validate_cluster_name,
     realtime_attrs,
 )
@@ -1811,3 +1815,441 @@ def test_default_path_is_under_config_dir_and_creates_nothing(tmp_path: Path) ->
     config.config_dir = tmp_path
     assert ClusterMetadataDB.default_path(config) == tmp_path / ".cache" / "cluster_metadata.db"
     assert list(tmp_path.iterdir()) == []
+
+
+# ---------------------------------------------------------------------------
+# Mutation triage of pynetappfoundry.cache.db (#1153)
+# ---------------------------------------------------------------------------
+
+
+class _Sub(BaseModel):
+    keep: int = 0
+    secret: str = ""
+
+
+class _Holder(BaseModel):
+    subs: list[_Sub] = []
+    one: _Sub | None = None
+
+
+class _OpenHolder(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    subs: list[_Sub] = []
+    name: str = ""
+
+
+class _Bag(BaseModel):
+    data: dict[str, Any] = {}
+    opt: _Sub | None = None
+
+
+class _When(BaseModel):
+    at: datetime
+
+
+class _FixedOrder(frozenset[str]):
+    """A frozenset iterating in a fixed order, so set-order dependent code is deterministic."""
+
+    reverse: bool = False
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(sorted(frozenset.__iter__(self), key=len, reverse=self.reverse))
+
+
+class TestNestedExclude:
+    """``_nested_exclude`` builds a pydantic exclude mapping from dotted paths."""
+
+    def test_deep_paths_nest(self) -> None:
+        exclude = frozenset({"f.a.b.c", "f.a.d", "f.e"})
+        assert _nested_exclude(exclude, "f") == {"a": {"b": {"c": True}, "d": True}, "e": True}
+
+    def test_other_fields_paths_are_ignored(self) -> None:
+        assert _nested_exclude(frozenset({"g.x", "gx.y"}), "g") == {"x": True}
+
+    @pytest.mark.parametrize("reverse", [False, True])
+    def test_shallower_path_wins_in_either_order(self, reverse: bool) -> None:
+        exclude = _FixedOrder({"f.a", "f.a.b", "f.z.y"})
+        exclude.reverse = reverse
+        assert _nested_exclude(exclude, "f") == {"a": True, "z": {"y": True}}
+
+
+class TestRowConversionHelpers:
+    """Direct tests of the row conversion helpers."""
+
+    def test_dotted_exclude_strips_keys_from_list_items(self) -> None:
+        holder = _Holder(subs=[_Sub(keep=1, secret="s1"), _Sub(keep=2, secret="s2")])
+        row = _model_to_row(holder, _Holder, frozenset({"subs.secret"}))
+        assert json.loads(row["subs"]) == [{"keep": 1}, {"keep": 2}]
+
+    def test_list_items_keep_all_keys_without_exclude(self) -> None:
+        row = _model_to_row(_Holder(subs=[_Sub(keep=1, secret="s")]), _Holder)
+        assert json.loads(row["subs"]) == [{"keep": 1, "secret": "s"}]
+
+    def test_non_container_json_values_serialize_with_str_fallback(self) -> None:
+        bag = _Bag.model_construct(data=PurePosixPath("/some/dir"), opt=None)
+        row = _model_to_row(bag, _Bag)
+        assert json.loads(row["data"]) == "/some/dir"
+        assert json.loads(row["opt"]) is None
+
+    def test_datetime_field_is_stored_as_iso_string(self) -> None:
+        stamp = datetime(2026, 3, 4, 5, 6, 7, tzinfo=UTC)
+        assert _model_to_row(_When(at=stamp), _When)["at"] == stamp.isoformat()
+
+    def test_extra_json_is_none_without_extras(self) -> None:
+        assert _model_to_row(_OpenHolder(name="n"), _OpenHolder)["_extra_json"] is None
+
+    def test_extra_json_collects_extras_missing_from_fields_set(self) -> None:
+        instance = _OpenHolder.model_construct(_fields_set=set(), name="n", stray=7)
+        row = _model_to_row(instance, _OpenHolder)
+        assert json.loads(row["_extra_json"]) == {"stray": 7}
+
+    def test_row_to_model_accepts_already_decoded_values(self) -> None:
+        row = {"subs": [{"keep": 3}], "name": "n", "_extra_json": {"stray": 9}}
+        model = _row_to_model(row, _OpenHolder)
+        assert isinstance(model, _OpenHolder)
+        assert model.subs == [_Sub(keep=3)]
+        assert model.model_extra == {"stray": 9}
+
+    def test_row_to_model_decodes_json_strings(self) -> None:
+        row = {"subs": '[{"keep": 4}]', "name": "n", "_extra_json": '{"stray": 5}'}
+        model = _row_to_model(row, _OpenHolder)
+        assert isinstance(model, _OpenHolder)
+        assert model.subs == [_Sub(keep=4)]
+        assert model.model_extra == {"stray": 5}
+
+    def test_strip_keys_include_cluster_name_unless_the_model_declares_it(self) -> None:
+        assert _row_strip_keys(_Sub) == {"_row_id", "cluster_name"}
+        assert _row_strip_keys(_DeclaresClusterName) == {"_row_id"}
+
+
+class TestValidateClusterNameMessage:
+    """The rejection message tells the caller the naming rules."""
+
+    def test_message_states_the_rules(self) -> None:
+        with pytest.raises(ValueError) as excinfo:
+            _validate_cluster_name("1bad")
+        assert str(excinfo.value) == (
+            "Invalid cluster name: '1bad'. "
+            "Cluster names must start with a letter, "
+            "contain only alphanumeric characters, underscores, or hyphens, "
+            "and be at most 128 characters."
+        )
+
+
+class TestInitBehavior:
+    """Construction: paths, URIs and the legacy ``schema_info`` table."""
+
+    def test_config_creates_missing_parent_directories_and_tolerates_existing(
+        self, tmp_path: Path
+    ) -> None:
+        config = MagicMock()
+        config.config_dir = tmp_path / "a" / "b"
+        first = ClusterMetadataDB(config=config)
+        first.close()
+        second = ClusterMetadataDB(config=config)
+        second.close()
+        assert (tmp_path / "a" / "b" / ".cache" / "cluster_metadata.db").is_file()
+
+    def test_missing_path_and_config_message(self) -> None:
+        with pytest.raises(ValueError) as excinfo:
+            ClusterMetadataDB()
+        assert str(excinfo.value) == "Either db_path or config must be provided"
+
+    def test_file_uri_is_opened_as_a_uri_not_a_filename(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.chdir(tmp_path)
+        uri = "file:triage_1153_shared?mode=memory&cache=shared"
+        first = ClusterMetadataDB(db_path=uri)
+        first.set("c", CachedClusterMetadata(cluster_name="c"))
+        second = ClusterMetadataDB(db_path=uri)
+        try:
+            assert second.get("c") is not None
+        finally:
+            first.close()
+            second.close()
+        assert list(tmp_path.iterdir()) == []
+
+    def test_legacy_schema_info_table_is_dropped(self, tmp_path: Path) -> None:
+        db_path = tmp_path / "legacy.db"
+        conn = sqlite3.connect(db_path)
+        conn.execute("CREATE TABLE schema_info (version INTEGER)")
+        conn.commit()
+        conn.close()
+
+        db = ClusterMetadataDB(db_path=db_path)
+        tables = {r[0] for r in db.conn.execute("SELECT name FROM sqlite_master")}
+        db.close()
+        assert "schema_info" not in tables
+
+
+class TestGetLazyConfig:
+    """``get_lazy`` needs a Config and hands it to the proxy's DataSource."""
+
+    def test_without_config_raises_with_guidance(self) -> None:
+        db = ClusterMetadataDB(db_path=":memory:")
+        db.set("c", CachedClusterMetadata(cluster_name="c"))
+        with pytest.raises(ValueError) as excinfo:
+            db.get_lazy("c")
+        assert str(excinfo.value) == (
+            "ClusterMetadataDB.get_lazy() requires the DB to be "
+            "constructed with a Config instance so the underlying "
+            "LazyClusterMetadata can build a DataSource. "
+            "Pass config=... to ClusterMetadataDB()."
+        )
+
+    def test_data_source_uses_the_db_config(self) -> None:
+        config = MagicMock()
+        db = ClusterMetadataDB(db_path=":memory:", config=config)
+        db.set("c", CachedClusterMetadata(cluster_name="c"))
+        lazy = db.get_lazy("c")
+        assert lazy is not None
+        assert lazy._data_source._config is config
+
+
+def _put_envelope(db: ClusterMetadataDB, name: str, cached_at: str) -> None:
+    """Insert an envelope row with an explicit ``cached_at`` string."""
+    db.conn.execute(
+        "INSERT INTO cluster_metadata (cluster_name, cached_at, cache_version) VALUES (?, ?, ?)",
+        (name, cached_at, "2.2"),
+    )
+    db.conn.commit()
+
+
+def _cached_at_string(kind: str, now: datetime) -> tuple[str, int]:
+    """Return a ``cached_at`` string in format *kind* and the whole days it is old."""
+    if kind == "z":
+        return (now - timedelta(days=40, hours=1)).strftime("%Y-%m-%dT%H:%M:%SZ"), 40
+    if kind == "naive":
+        return (now - timedelta(days=40, hours=1)).strftime("%Y-%m-%dT%H:%M:%S"), 40
+    if kind == "utc_offset":
+        return (now - timedelta(days=40, hours=1)).isoformat(), 40
+    if kind == "east":  # wall clock is 14h ahead of the instant
+        instant = now - timedelta(days=30, hours=2)
+        return instant.astimezone(timezone(timedelta(hours=14))).isoformat(), 30
+    if kind == "west":  # wall clock is 5h behind the instant
+        instant = now - timedelta(days=30, hours=20)
+        return instant.astimezone(timezone(timedelta(hours=-5))).isoformat(), 30
+    raise AssertionError(kind)
+
+
+_STAMP_KINDS = ["z", "naive", "utc_offset", "east", "west"]
+
+
+class TestStaleness:
+    """``is_stale`` and ``get_status`` over every ``cached_at`` format, with explicit times."""
+
+    @pytest.fixture
+    def db(self) -> ClusterMetadataDB:
+        return ClusterMetadataDB(db_path=":memory:")
+
+    @pytest.mark.parametrize("kind", _STAMP_KINDS)
+    def test_age_and_staleness_threshold(self, db: ClusterMetadataDB, kind: str) -> None:
+        stamp, days = _cached_at_string(kind, datetime.now(UTC))
+        _put_envelope(db, "c", stamp)
+
+        status = db.get_status(ttl_days=days)[0]
+        assert status["age_days"] == days
+        assert status["is_stale"] is False  # age equal to the ttl is not stale
+        assert db.is_stale("c", ttl_days=days) is False
+        assert db.get_status(ttl_days=days - 1)[0]["is_stale"] is True
+        assert db.is_stale("c", ttl_days=days - 1) is True
+
+    def test_default_ttl_is_thirty_days(self, db: ClusterMetadataDB) -> None:
+        now = datetime.now(UTC)
+        _put_envelope(db, "old", (now - timedelta(days=31, hours=1)).isoformat())
+        _put_envelope(db, "edge", (now - timedelta(days=30, hours=1)).isoformat())
+
+        assert db.is_stale("old") is True
+        assert db.is_stale("edge") is False
+        by_name = {s["cluster_name"]: s for s in db.get_status()}
+        assert by_name["old"]["is_stale"] is True
+        assert by_name["edge"]["is_stale"] is False
+
+    def test_get_status_reports_every_field(self, db: ClusterMetadataDB) -> None:
+        stamp = (datetime.now(UTC) - timedelta(days=3, hours=1)).isoformat()
+        _put_envelope(db, "c", stamp)
+
+        assert db.get_status() == [
+            {
+                "cluster_name": "c",
+                "cached_at": stamp,
+                "cache_version": "2.2",
+                "age_days": 3,
+                "is_stale": False,
+            }
+        ]
+
+
+class TestInsertModelDataPaths:
+    """``set`` resolves registry paths strictly and stores the cluster name itself."""
+
+    def test_unresolvable_registry_path_raises(self) -> None:
+        from pynetappfoundry.cache.db_schema import TableSpec, generate_table_ddl
+
+        db = ClusterMetadataDB(db_path=":memory:")
+        db.conn.execute(generate_table_ddl("declaresclustername", _DeclaresClusterName))
+        db._registry = {
+            **db._registry,
+            "no.such.path": TableSpec(
+                table_name="declaresclustername",
+                model_class=_DeclaresClusterName,
+                metadata_path="no.such.path",
+                is_list=True,
+                has_uuid=False,
+            ),
+        }
+        with pytest.raises(AttributeError):
+            db.set("c", CachedClusterMetadata(cluster_name="c"))
+
+    @pytest.mark.parametrize("is_list", [True, False])
+    def test_stored_cluster_name_overrides_a_declared_one(self, is_list: bool) -> None:
+        from pynetappfoundry.cache.db_schema import TableSpec, generate_table_ddl
+
+        db = ClusterMetadataDB(db_path=":memory:")
+        spec = TableSpec(
+            table_name="declaresclustername",
+            model_class=_DeclaresClusterName,
+            metadata_path="declares",
+            is_list=is_list,
+            has_uuid=False,
+        )
+        db._registry = {**db._registry, "declares": spec}
+        db.conn.execute(generate_table_ddl(spec.table_name, _DeclaresClusterName))
+        item = _DeclaresClusterName(id=1, cluster_name="other")
+        metadata = CachedClusterMetadata.model_validate(
+            {"cluster_name": "c", "declares": [item] if is_list else item}
+        )
+
+        db.set("c", metadata)
+
+        rows = db.conn.execute("SELECT cluster_name FROM declaresclustername").fetchall()
+        assert [r[0] for r in rows] == ["c"]
+
+    def test_realtime_fields_are_not_stored(self) -> None:
+        db = ClusterMetadataDB(db_path=":memory:")
+        volume = OntapVolume.model_validate(
+            {"name": "v", "uuid": "u", "files": {"maximum": 5, "used": 999}}
+        )
+        assert volume.files.used == 999
+        db.set(
+            "c",
+            CachedClusterMetadata.model_validate(
+                {"cluster_name": "c", "storage": {"volumes": [volume]}}
+            ),
+        )
+
+        stored = json.loads(db.conn.execute("SELECT files FROM ontapvolume").fetchone()[0])
+        assert "used" not in stored
+        assert "maximum" not in stored
+
+
+class TestQueryWithFiltersScope:
+    """Filtered queries stay inside the requested cluster."""
+
+    def test_other_clusters_rows_are_not_returned(self) -> None:
+        db = ClusterMetadataDB(db_path=":memory:")
+        for cluster, vol in (("c1", "vol1"), ("c2", "vol2")):
+            db.set(
+                cluster,
+                CachedClusterMetadata.model_validate(
+                    {
+                        "cluster_name": cluster,
+                        "storage": {"volumes": [OntapVolume(name=vol, uuid=f"u-{vol}")]},
+                    }
+                ),
+            )
+
+        found = db.query_with_filters("c1", "storage.volumes", ["name != 'nothing'"])
+
+        assert [cast("OntapVolume", v).name for v in found] == ["vol1"]
+        assert [cast("OntapVolume", v).name for v in db.query_model("c2", "storage.volumes")] == [
+            "vol2"
+        ]
+
+
+class TestMigrationsMatchFreshSchema:
+    """Each upgrade step leaves the schema a fresh database has, byte for byte in names/types."""
+
+    @staticmethod
+    def _schema(db: ClusterMetadataDB) -> set[tuple[str, str, str]]:
+        return {
+            (r[0], r[1], r[2])
+            for r in db.conn.execute("SELECT type, name, tbl_name FROM sqlite_master")
+        }
+
+    @staticmethod
+    def _columns(db: ClusterMetadataDB, table: str) -> set[tuple[str, str]]:
+        return {(r[1], r[2]) for r in db.conn.execute(f"PRAGMA table_info({table})")}
+
+    @pytest.mark.parametrize(
+        ("step", "drop_sql", "table"),
+        [
+            ("_upgrade_to_v5", ["ALTER TABLE cloudmetadata DROP COLUMN vm_name"], "cloudmetadata"),
+            ("_upgrade_to_v6", ["DROP TABLE consoleinfo"], "consoleinfo"),
+            ("_upgrade_to_v7", ["DROP TABLE ontapsvmwebservice"], "ontapsvmwebservice"),
+            (
+                "_upgrade_to_v8",
+                [
+                    "ALTER TABLE consoleinfo DROP COLUMN folder",
+                    "ALTER TABLE consoleinfo DROP COLUMN project",
+                ],
+                "consoleinfo",
+            ),
+            ("_upgrade_to_v10", ["DROP TABLE clustertraits"], "clustertraits"),
+            ("_upgrade_to_v11", ["DROP TABLE ontapcluster"], "ontapcluster"),
+            ("_upgrade_to_v12", ["ALTER TABLE consoleinfo DROP COLUMN connector"], "consoleinfo"),
+        ],
+    )
+    def test_step_restores_what_it_owns(
+        self, tmp_path: Path, step: str, drop_sql: list[str], table: str
+    ) -> None:
+        fresh = ClusterMetadataDB(db_path=tmp_path / "fresh.db")
+        db = ClusterMetadataDB(db_path=tmp_path / "old.db")
+        for sql in drop_sql:
+            db.conn.execute(sql)
+        db.conn.commit()
+        assert self._schema(db) != self._schema(fresh) or self._columns(db, table) != (
+            self._columns(fresh, table)
+        )
+
+        getattr(db, step)()
+
+        assert self._schema(db) == self._schema(fresh)
+        assert self._columns(db, table) == self._columns(fresh, table)
+        fresh.close()
+        db.close()
+
+
+class TestUpgradeEdges:
+    """Edge inputs of the v10 and v11 steps."""
+
+    def test_v10_backfills_from_a_clusterinfo_with_exactly_the_needed_columns(
+        self, tmp_path: Path
+    ) -> None:
+        db = TestUpgradeToV10._make_v9_db(tmp_path / "v9.db")
+        db.conn.execute("DROP TABLE clusterinfo")
+        db.conn.execute(
+            "CREATE TABLE clusterinfo (cluster_name TEXT, is_ha INTEGER, is_cloud INTEGER)"
+        )
+        db.conn.execute("INSERT INTO clusterinfo VALUES ('c', 1, 0)")
+        db.conn.commit()
+
+        db._upgrade_to_v10()
+
+        rows = db.conn.execute("SELECT cluster_name, is_ha, is_cloud FROM clustertraits").fetchall()
+        assert [tuple(r) for r in rows] == [("c", 1, 0)]
+        db.close()
+
+    def test_v11_clears_envelope_when_it_only_drops_clusterinfo(self, tmp_path: Path) -> None:
+        db = ClusterMetadataDB(db_path=tmp_path / "both.db")  # has ontapcluster already
+        db.conn.execute("CREATE TABLE clusterinfo (cluster_name TEXT)")
+        _put_envelope(db, "c", "2026-01-01T00:00:00+00:00")
+
+        db._upgrade_to_v11()
+
+        tables = {r[0] for r in db.conn.execute("SELECT name FROM sqlite_master")}
+        assert "clusterinfo" not in tables
+        assert db.conn.execute("SELECT count(*) FROM cluster_metadata").fetchone()[0] == 0
+        db.close()
