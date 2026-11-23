@@ -34,7 +34,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [ONTAP Access Patterns](usage/ontap-access-patterns.md) - Guide to choosing between the three ONTAP access methods
 - [Production Deployment Guide](deployment/production.md) - Comprehensive guide for deploying Python applications to production
 - [pynetappfoundry Documentation](index.md) - ONTAP administration library and CLI tools
-- [Query Layer](usage/query-layer.md) - Guide to the REST query layer (QuerySet, Query, Mutation, JobTracker, related, realtime)
+- [Query Layer](usage/query-layer.md) - Guide to the REST query layer (QuerySet, Query, Mutation for ONTAP and DII writes, JobTracker, related, realtime)
 - [Report Cloud Details](usage/report-cloud-details.md) - How the inventory and HTML reports take cloud provider details from the OCCM cache, when they fall back to the ONTAP CLI path, and the Console links (including System Manager) they add
 - [Template Management](template/manage.md) - Unified interface for creating projects, checking updates, and syncing
 - [Template Tools Reference](template/tools-reference.md) - Complete reference for all template tools in tools/pyproject_template/
@@ -83,6 +83,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [ADR-0036: Digital Advisor client is a read-only GraphQL client with rotating refresh-token write-back](decisions/0036-digital-advisor-client-is-a-read-only-graphql-client-with-rotating-refresh-token-write-back.md) - Digital Advisor is read through a small read-only GraphQL client that rotates and writes back its refresh token.
 - [ADR-0037: Digital Advisor backend is live-only and generates curated GraphQL selections from its models](decisions/0037-digital-advisor-backend-is-live-only-and-generates-curated-graphql-selections-from-its-models.md) - The Digital Advisor backend is live-only and generates curated GraphQL selections, with no personal data, from its models.
 - [ADR-0038: nf config download-spec fetches the committed API specs of the installed release](decisions/0038-nf-config-download-spec-fetches-the-committed-api-specs-of-the-installed-release.md) - nf config download-spec downloads each API's committed spec from GitHub at the installed release tag or commit instead of a live system.
+- [ADR-0039: DII writes use a separate read-write key client and extend Mutation](decisions/0039-dii-writes-use-a-separate-read-write-key-client-and-extend-mutation.md) - DII writes go through a read-write DIIAPIClient that carries only the read-write key, and Mutation handles DII models with the item path and update method taken from the spec.
 - [ADR-9001: Use uv for package management](decisions/9001-use-uv-for-package-management.md) - Use uv for dependency management, virtual environments and package installation
 - [ADR-9002: Use doit for task automation](decisions/9002-use-doit-for-task-automation.md) - Use doit as the task runner for testing, linting, building and other routine operations
 - [ADR-9003: Use ruff for linting and formatting](decisions/9003-use-ruff-for-linting-and-formatting.md) - Use ruff as the one tool for linting and formatting, in place of flake8, black and isort
@@ -147,7 +148,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [PyNetAppFoundry Code Review & Improvement Plan](plans/first-pass-refactor.md) - Code review tracking critical issues, priorities, and improvement work needed to move the project toward production-readiness.
 - [pynetappfoundry Documentation](index.md) - ONTAP administration library and CLI tools
 - [Python Project Coding Standards](development/coding-standards.md) - Guidelines for exceptions, typing, structure, testing, and documentation
-- [Query Layer](usage/query-layer.md) - Guide to the REST query layer (QuerySet, Query, Mutation, JobTracker, related, realtime)
+- [Query Layer](usage/query-layer.md) - Guide to the REST query layer (QuerySet, Query, Mutation for ONTAP and DII writes, JobTracker, related, realtime)
 - [Release Automation & Security](development/release-and-automation.md) - Automated versioning, release management, and security tooling
 - [Review Focus Areas](development/ai/review-focus-areas.md) - Checklists for the errors, tests, types and comments focus areas available to every review and adversarial-review surface
 - [Ruff Auto-Fix on Edit Hook](development/ai/ruff-fix-hook.md) - PostToolUse hook that runs ruff --fix on edited Python files
@@ -219,6 +220,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [ADR-0036: Digital Advisor client is a read-only GraphQL client with rotating refresh-token write-back](decisions/0036-digital-advisor-client-is-a-read-only-graphql-client-with-rotating-refresh-token-write-back.md) - Digital Advisor is read through a small read-only GraphQL client that rotates and writes back its refresh token.
 - [ADR-0037: Digital Advisor backend is live-only and generates curated GraphQL selections from its models](decisions/0037-digital-advisor-backend-is-live-only-and-generates-curated-graphql-selections-from-its-models.md) - The Digital Advisor backend is live-only and generates curated GraphQL selections, with no personal data, from its models.
 - [ADR-0038: nf config download-spec fetches the committed API specs of the installed release](decisions/0038-nf-config-download-spec-fetches-the-committed-api-specs-of-the-installed-release.md) - nf config download-spec downloads each API's committed spec from GitHub at the installed release tag or commit instead of a live system.
+- [ADR-0039: DII writes use a separate read-write key client and extend Mutation](decisions/0039-dii-writes-use-a-separate-read-write-key-client-and-extend-mutation.md) - DII writes go through a read-write DIIAPIClient that carries only the read-write key, and Mutation handles DII models with the item path and update method taken from the spec.
 - [ADR-9001: Use uv for package management](decisions/9001-use-uv-for-package-management.md) - Use uv for dependency management, virtual environments and package installation
 - [ADR-9002: Use doit for task automation](decisions/9002-use-doit-for-task-automation.md) - Use doit as the task runner for testing, linting, building and other routine operations
 - [ADR-9003: Use ruff for linting and formatting](decisions/9003-use-ruff-for-linting-and-formatting.md) - Use ruff as the one tool for linting and formatting, in place of flake8, black and isort
@@ -300,7 +302,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [PyNetAppFoundry Code Review & Improvement Plan](plans/first-pass-refactor.md) - Code review tracking critical issues, priorities, and improvement work needed to move the project toward production-readiness.
 - [pynetappfoundry Documentation](index.md) - ONTAP administration library and CLI tools
 - [Python Project Coding Standards](development/coding-standards.md) - Guidelines for exceptions, typing, structure, testing, and documentation
-- [Query Layer](usage/query-layer.md) - Guide to the REST query layer (QuerySet, Query, Mutation, JobTracker, related, realtime)
+- [Query Layer](usage/query-layer.md) - Guide to the REST query layer (QuerySet, Query, Mutation for ONTAP and DII writes, JobTracker, related, realtime)
 - [Release Automation & Security](development/release-and-automation.md) - Automated versioning, release management, and security tooling
 - [Report Cloud Details](usage/report-cloud-details.md) - How the inventory and HTML reports take cloud provider details from the OCCM cache, when they fall back to the ONTAP CLI path, and the Console links (including System Manager) they add
 - [Review Focus Areas](development/ai/review-focus-areas.md) - Checklists for the errors, tests, types and comments focus areas available to every review and adversarial-review surface

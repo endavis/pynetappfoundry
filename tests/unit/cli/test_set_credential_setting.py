@@ -45,6 +45,11 @@ CASES = {
         '[general]\nbase_url = "https://dii.example.invalid"\n',
         "general",
     ),
+    "diiapi.api_rw_token": (
+        "apis/dii/diiapi.toml",
+        '[general]\nbase_url = "https://dii.example.invalid"\n',
+        "general",
+    ),
     "settings.smtp_password": ("settings.toml", SMTP_BODY, "SMTP"),
 }
 

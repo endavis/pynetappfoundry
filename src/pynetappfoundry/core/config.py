@@ -97,7 +97,7 @@ class ConfigurationError(Exception):
 
 # Settings fields that accept a ``SOPS[...]`` value (decrypted at read time).
 _SMTP_SOPS_FIELDS = ("password",)
-_DII_SOPS_FIELDS = ("api_ro_token",)
+_DII_SOPS_FIELDS = ("api_ro_token", "api_rw_token")
 _CONSOLE_SOPS_FIELDS = ("client_secret", "service_token", "user_token")
 _DIGITAL_ADVISOR_SOPS_FIELDS = ("personal_access_token", "access_token", "refresh_token")
 
@@ -515,7 +515,10 @@ class Config:
             name: Optional ``[cloudinsights.<name>]`` tenant. With a name, the
                 tenant's ``base_url`` and token (see :meth:`get_secret`) override
                 the ``diiapi.toml [general]`` values; everything else, and any
-                value the tenant does not set, comes from ``[general]``.
+                value the tenant does not set, comes from ``[general]``. The
+                ``[general]`` ``api_rw_token`` belongs to the default tenant: a
+                tenant with its own key gets no read-write key, and a tenant
+                without one inherits both ``[general]`` keys.
 
         Returns:
             DIIAPISettings object with API configuration.
@@ -548,6 +551,7 @@ class Config:
                 merged["base_url"] = tenant_url
             token = self.get_secret("cloudinsights", name)
             if token:
+                merged.pop("api_rw_token", None)
                 merged["api_ro_token"] = token
             else:
                 merged = self._decrypt_setting_fields(

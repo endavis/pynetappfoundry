@@ -201,6 +201,7 @@ nav:
       - ADR-0036 Digital Advisor client is a read-only GraphQL client with rotating refresh-token write-back: decisions/0036-digital-advisor-client-is-a-read-only-graphql-client-with-rotating-refresh-token-write-back.md
       - ADR-0037 Digital Advisor backend is live-only and generates curated GraphQL selections from its models: decisions/0037-digital-advisor-backend-is-live-only-and-generates-curated-graphql-selections-from-its-models.md
       - ADR-0038 nf config download-spec fetches the committed API specs of the installed release: decisions/0038-nf-config-download-spec-fetches-the-committed-api-specs-of-the-installed-release.md
+      - ADR-0039 DII writes use a separate read-write key client and extend Mutation: decisions/0039-dii-writes-use-a-separate-read-write-key-client-and-extend-mutation.md
       - Template Decisions:
           - ADR-9001 uv Package Management: decisions/9001-use-uv-for-package-management.md
           - ADR-9002 doit Task Automation: decisions/9002-use-doit-for-task-automation.md

@@ -100,6 +100,8 @@ nf --output-dir PATH         # Custom output directory
 nf --debug                   # Enable debug logging
 ```
 
+Debug logging masks the `Authorization` and `X-CloudInsights-ApiKey` header values. It logs response bodies for GET only; other methods log a byte count. Request-body and response validation errors name the field path, not its value.
+
 ### Available Commands
 
 ```bash

@@ -354,7 +354,7 @@ access, use [`nf doctor`](#doctor). See
 |--------|-------------|
 | `--cluster TEXT` | Set credentials for a specific cluster. Alias for `--type clusters --name TEXT` |
 | `--type` | Set default credentials for all resources of a type: `aiqums`, `azure`, `cloudinsights`, `clusters`, `connectors`, `console`, `ibm` (`console` stores the Console refresh token, not the client secret; `--user` is only a label and the password prompt takes the token. Store the client secret with `--setting consoleapi.client_secret`) |
-| `--setting TARGET` | Store one SOPS-encrypted settings secret: `consoleapi.client_secret`, `consoleapi.service_token`, `consoleapi.user_token`, `diiapi.api_ro_token`, `digitaladvisorapi.personal_access_token`, `digitaladvisorapi.access_token`, `digitaladvisorapi.refresh_token` or `settings.smtp_password`. Prompts for the value (hidden, with confirmation) or takes `--password`, encrypts it and writes `<field> = "SOPS[...]"` into the right file and table, keeping comments. Cannot be combined with `--cluster`, `--type`, `--name`, `--user` or `--no-encrypt`; needs `sops` (no plain text fallback). If more than one non-data file carries the target's stem, it refuses and lists them |
+| `--setting TARGET` | Store one SOPS-encrypted settings secret: `consoleapi.client_secret`, `consoleapi.service_token`, `consoleapi.user_token`, `diiapi.api_ro_token`, `diiapi.api_rw_token`, `digitaladvisorapi.personal_access_token`, `digitaladvisorapi.access_token`, `digitaladvisorapi.refresh_token` or `settings.smtp_password`. Prompts for the value (hidden, with confirmation) or takes `--password`, encrypts it and writes `<field> = "SOPS[...]"` into the right file and table, keeping comments. Cannot be combined with `--cluster`, `--type`, `--name`, `--user` or `--no-encrypt`; needs `sops` (no plain text fallback). If more than one non-data file carries the target's stem, it refuses and lists them |
 | `--name TEXT` | With `--type`, set credentials for that one inventory object, written to its data file entry. An unknown name lists the available ones. For a token-style secret, `--user` is only a label and the password prompt takes the token. Not valid with `--cluster` or `--type console` |
 | `--scope TEXT` | With `--type` alone, write to `<config>/<scope>/users.toml` (created if missing) instead of the root `users.toml`. With `--cluster` or `--name`, it must equal the object's own scope; a mismatch fails, names the object's real scope (or the root) and writes nothing. An unknown scope lists the available ones. With `--setting`, only `consoleapi.*` targets accept it: the value goes to `<config>/<scope>/consoleapi.toml` `[general]`, created if missing |
 | `--user TEXT` | Username (required with `--cluster` and `--type`, not allowed with `--setting`) |
@@ -604,6 +604,7 @@ nf config set-credential --cluster mycluster --user admin --no-encrypt
 nf config set-credential --setting consoleapi.client_secret
 nf config set-credential --setting consoleapi.client_secret --scope Org1
 nf config set-credential --setting diiapi.api_ro_token
+nf config set-credential --setting diiapi.api_rw_token
 nf config set-credential --setting settings.smtp_password
 ```
 
