@@ -433,14 +433,7 @@ class ONTAPCLI:
             if any(line_to_skip in line for line_to_skip in self.lines_to_skip):
                 continue
 
-            try:
-                slist = line.split(":")
-                key = slist[0]
-                value = ":".join(slist[1:])
-            except ValueError:
-                logging.error(f"{self.log_prefix} bad line: {line}")
-                continue
-
+            key, _, value = line.partition(":")
             key = key.strip()
             value = value.strip()
 
