@@ -1851,6 +1851,96 @@ class TestCloudSections:
         assert cluster.cloud_metadata_by_node["test-cluster-02"].instance_id == "i-222"
         assert len(cluster.cloud_metadata) == 2
 
+    @staticmethod
+    def _sp_node(
+        address: str = "",
+        state: str = "",
+        firmware_version: str = "",
+    ) -> OntapNodeResponse:
+        """Create a node whose Service Processor has the given fields."""
+        from pynetappfoundry.models.ontap.cluster.nodes.model import (
+            OntapNodeResponseServiceProcessor,
+            OntapNodeResponseServiceProcessorIpv4Interface,
+        )
+
+        return OntapNodeResponse(
+            name="test-cluster-01",
+            serial_number="SN001",
+            service_processor=OntapNodeResponseServiceProcessor(
+                ipv4_interface=OntapNodeResponseServiceProcessorIpv4Interface(address=address),
+                state=state,
+                firmware_version=firmware_version,
+            ),
+        )
+
+    def test_node_renders_service_processor_section(self, mock_builder: MagicMock) -> None:
+        """A node with an SP address renders the SP IP, state, firmware and links."""
+        cluster = self._make_cluster(mock_builder, cloud_entries=None)
+        node = self._sp_node("192.0.2.50", "online", "1.2.3")
+        cluster._format_netapp_node(node)
+        html = mock_builder.doc.getvalue()
+
+        assert '<a href="https://192.0.2.50">Service Processor</a>' in html
+        assert "<tr><td>SP IP</td><td>192.0.2.50</td></tr>" in html
+        assert "<tr><td>State</td><td>online</td></tr>" in html
+        assert "<tr><td>Firmware Version</td><td>1.2.3</td></tr>" in html
+        assert (
+            '<tr><td>System Manager</td><td><a href="https://192.0.2.50">Link</a></td></tr>' in html
+        )
+        assert '<tr><td>SPI</td><td><a href="https://192.0.2.50/spi">Link</a></td></tr>' in html
+
+    def test_node_without_service_processor_address_has_no_section(
+        self, mock_builder: MagicMock
+    ) -> None:
+        """A node without an SP address renders no Service Processor section."""
+        cluster = self._make_cluster(mock_builder, cloud_entries=None)
+        node = self._sp_node("", "online", "1.2.3")
+        cluster._format_netapp_node(node)
+        html = mock_builder.doc.getvalue()
+
+        assert "test-cluster-01" in html
+        assert "Service Processor" not in html
+        assert "SP IP" not in html
+
+    def test_service_processor_omits_empty_state_and_firmware(
+        self, mock_builder: MagicMock
+    ) -> None:
+        """Empty state and firmware version rows are left out, the IP rows stay."""
+        cluster = self._make_cluster(mock_builder, cloud_entries=None)
+        cluster._format_node_service_processor(self._sp_node("192.0.2.51"))
+        html = mock_builder.doc.getvalue()
+
+        assert "<tr><td>SP IP</td><td>192.0.2.51</td></tr>" in html
+        assert "State" not in html
+        assert "Firmware Version" not in html
+        assert '<a href="https://192.0.2.51/spi">Link</a>' in html
+
+    def test_service_processor_section_is_collapsible(self, mock_builder: MagicMock) -> None:
+        """The SP block is a details element whose summary is the SP link."""
+        cluster = self._make_cluster(mock_builder, cloud_entries=None)
+        cluster._format_node_service_processor(self._sp_node("192.0.2.52", "online", "9.9"))
+        html = mock_builder.doc.getvalue()
+
+        assert html.startswith(
+            '<li><details><summary><a href="https://192.0.2.52">Service Processor</a></summary>'
+        )
+        assert '<table class="custom-table">' in html
+        assert html.endswith("</table></li></ul></details></li>")
+
+    def test_service_processor_without_address_renders_plain_summary(
+        self, mock_builder: MagicMock
+    ) -> None:
+        """Called directly without an SP address, the summary is plain text with no links."""
+        cluster = self._make_cluster(mock_builder, cloud_entries=None)
+        cluster._format_node_service_processor(self._sp_node("", "online"))
+        html = mock_builder.doc.getvalue()
+
+        assert "<summary>Service Processor</summary>" in html
+        assert "https://" not in html
+        assert "<a " not in html
+        assert "SP IP" not in html
+        assert "<tr><td>State</td><td>online</td></tr>" in html
+
 
 def _occm_details(
     *,
