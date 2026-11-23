@@ -11,6 +11,7 @@ import pytest
 from pynetappfoundry.cli.commands.licenses.check import (
     _build_styled_html,
     _check_cluster_licenses,
+    _print_issue,
     _send_license_email,
     _send_no_issues_email,
 )
@@ -392,3 +393,65 @@ class TestSendNoIssuesEmail:
         _send_no_issues_email(mock_config)
 
         mock_warn.assert_called_once()
+
+
+_CHECK = "pynetappfoundry.cli.commands.licenses.check"
+
+
+class TestPrintIssue:
+    """Tests for _print_issue."""
+
+    @patch(f"{_CHECK}.print_warning")
+    @patch(f"{_CHECK}.print_error")
+    def test_negative_days_is_error(self, mock_err: MagicMock, mock_warn: MagicMock) -> None:
+        _print_issue(
+            {"cluster": "c1", "owner": "node1", "serial_number": "SN1", "days_checked": -3}
+        )
+        mock_err.assert_called_once_with("  c1 - node1 - SN1 has expired!")
+        mock_warn.assert_not_called()
+
+    @patch(f"{_CHECK}.print_warning")
+    @patch(f"{_CHECK}.print_error")
+    def test_positive_days_is_warning(self, mock_err: MagicMock, mock_warn: MagicMock) -> None:
+        _print_issue({"cluster": "c1", "owner": "node1", "days_checked": 5})
+        mock_warn.assert_called_once_with("  c1 - node1 - expires in 5 days")
+        mock_err.assert_not_called()
+
+    @patch(f"{_CHECK}.print_warning")
+    @patch(f"{_CHECK}.print_error")
+    def test_zero_days_is_warning(self, mock_err: MagicMock, mock_warn: MagicMock) -> None:
+        _print_issue({"cluster": "c1", "owner": "node1", "days_checked": 0})
+        mock_warn.assert_called_once_with("  c1 - node1 - expires in 0 days")
+        mock_err.assert_not_called()
+
+    @patch(f"{_CHECK}.print_warning")
+    @patch(f"{_CHECK}.print_error")
+    def test_negative_float_is_error(self, mock_err: MagicMock, mock_warn: MagicMock) -> None:
+        _print_issue({"cluster": "c1", "owner": "n", "serial_number": "S", "days_checked": -1.5})
+        mock_err.assert_called_once_with("  c1 - n - S has expired!")
+        mock_warn.assert_not_called()
+
+    @patch(f"{_CHECK}.print_warning")
+    @patch(f"{_CHECK}.print_error")
+    def test_missing_keys_default_to_unknown(
+        self, mock_err: MagicMock, mock_warn: MagicMock
+    ) -> None:
+        _print_issue({"cluster": "c1"})
+        mock_warn.assert_called_once_with("  c1 - Unknown - expires in Unknown days")
+        mock_err.assert_not_called()
+
+    @patch(f"{_CHECK}.print_warning")
+    @patch(f"{_CHECK}.print_error")
+    def test_expired_missing_owner_and_serial(
+        self, mock_err: MagicMock, mock_warn: MagicMock
+    ) -> None:
+        _print_issue({"cluster": "c1", "days_checked": -1})
+        mock_err.assert_called_once_with("  c1 - Unknown - Unknown has expired!")
+        mock_warn.assert_not_called()
+
+    @patch(f"{_CHECK}.print_warning")
+    @patch(f"{_CHECK}.print_error")
+    def test_non_numeric_days_is_warning(self, mock_err: MagicMock, mock_warn: MagicMock) -> None:
+        _print_issue({"cluster": "c1", "owner": "n", "days_checked": "Unknown"})
+        mock_warn.assert_called_once_with("  c1 - n - expires in Unknown days")
+        mock_err.assert_not_called()
