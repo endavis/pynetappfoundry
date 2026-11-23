@@ -324,20 +324,22 @@ def test_generate_writes_files(tmp_path: Path, models_root: Path) -> None:
     assert "class ConsoleTenancyOps" in (out / "tenancy_ops.py").read_text(encoding="utf-8")
 
 
-def test_real_manifest_resolves_against_committed_spec() -> None:
+def test_real_manifest_resolves_against_committed_spec(committed_spec: dict[str, Any]) -> None:
     """Drift guard: every manifest entry still resolves against the spec and models tree."""
-    files = cg.render_all(cg.load_manifest(), cg.load_spec())
+    files = cg.render_all(cg.load_manifest(), committed_spec)
     assert set(files) == {"__init__.py", "agent_ops.py", "tenancy_ops.py"}
     assert "def create_onprem_working_environment" in files["agent_ops.py"]
     assert ") -> dict[str, Any]:" not in files["tenancy_ops.py"]
 
 
-def test_real_manifest_types_onprem_working_environments_as_list() -> None:
+def test_real_manifest_types_onprem_working_environments_as_list(
+    committed_spec: dict[str, Any],
+) -> None:
     """The list shape comes from the spec, not a manifest overlay (#1021)."""
     manifest = cg.load_manifest()
     entry = next(e for e in manifest if e["name"] == "list_onprem_working_environments")
     assert "response" not in entry
-    src = cg.render_all(manifest, cg.load_spec())["agent_ops.py"]
+    src = cg.render_all(manifest, committed_spec)["agent_ops.py"]
     assert "-> list[get_onprem_working_environments.ResponseBody]:" in src
 
 
@@ -352,12 +354,14 @@ def test_real_manifest_types_onprem_working_environments_as_list() -> None:
         ("list_gcp_ha_working_environments", "get_gcp_ha_working_environments"),
     ],
 )
-def test_real_manifest_types_cloud_working_environments_as_list(name: str, module: str) -> None:
+def test_real_manifest_types_cloud_working_environments_as_list(
+    name: str, module: str, committed_spec: dict[str, Any]
+) -> None:
     """The six cloud lists are agent ops typed as lists of their own model (#1074)."""
     manifest = cg.load_manifest()
     entry = next(e for e in manifest if e["name"] == name)
     assert entry["client"] == "agent"
-    src = cg.render_all(manifest, cg.load_spec())["agent_ops.py"]
+    src = cg.render_all(manifest, committed_spec)["agent_ops.py"]
     assert f"-> list[{module}.ResponseBody]:" in src
 
 

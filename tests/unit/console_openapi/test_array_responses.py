@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-import yaml
 from openapi_spec_validator import validate
 
 from tools.console_openapi.array_responses import (
@@ -20,7 +19,6 @@ from tools.console_openapi.openapi.builder import BuildError, build_spec
 from tools.console_openapi.parser.endpoint import parse_endpoint
 
 _ROOT = Path(__file__).resolve().parents[3]
-_SPEC_PATH = _ROOT / "tools/console_openapi/generated/console_openapi.yaml"
 _SWAGGER_PATH = _ROOT / "docs/example-config/apis/occm/openapi3.json"
 _FIXTURES = Path(__file__).parent.parent.parent / "fixtures" / "console_openapi"
 _ABOUT = ("POST", "/occm/api/occm/system/about")
@@ -186,13 +184,6 @@ def test_builder_default_matches_no_array_responses() -> None:
 @pytest.fixture(scope="module")
 def cvo_list() -> dict[str, str]:
     return load_array_responses(ARRAY_RESPONSES_PATH)["cvo"]
-
-
-@pytest.fixture(scope="module")
-def committed_spec() -> dict[str, Any]:
-    with _SPEC_PATH.open(encoding="utf-8") as f:
-        spec: dict[str, Any] = yaml.safe_load(f)
-    return spec
 
 
 @pytest.fixture(scope="module")

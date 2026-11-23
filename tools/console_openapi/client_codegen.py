@@ -22,7 +22,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-import yaml
+from tools.console_openapi.yaml_io import load_yaml
 
 _ROOT = Path(__file__).resolve().parents[2]
 SPEC_PATH = _ROOT / "tools/console_openapi/generated/console_openapi.yaml"
@@ -137,7 +137,7 @@ def load_manifest(path: Path = MANIFEST_PATH) -> list[dict[str, Any]]:
 def load_spec(path: Path = SPEC_PATH) -> dict[str, Any]:
     """Return the parsed Console OpenAPI spec."""
     with path.open(encoding="utf-8") as f:
-        spec: dict[str, Any] = yaml.safe_load(f)
+        spec: dict[str, Any] = load_yaml(f)
     return spec
 
 

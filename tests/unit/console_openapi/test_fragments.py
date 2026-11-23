@@ -10,6 +10,7 @@ import pytest
 import yaml
 from click.testing import CliRunner
 
+from tests.unit.console_openapi.conftest import ApplyFragmentsRuns
 from tools.console_openapi import cli as cli_module
 from tools.console_openapi.fragments import (
     FRAGMENTS_DIR,
@@ -26,9 +27,8 @@ from tools.console_openapi.openapi.builder import (
     build_spec,
 )
 from tools.console_openapi.parser.endpoint import parse_endpoint
+from tools.console_openapi.yaml_io import load_yaml
 
-_ROOT = Path(__file__).resolve().parents[3]
-_SPEC_PATH = _ROOT / "tools/console_openapi/generated/console_openapi.yaml"
 _FIXTURES = Path(__file__).parent.parent.parent / "fixtures" / "console_openapi"
 _LIST_PATH = "/agents-mgmt/list-connectors/{organization_id}"
 _AGENT_PATH = "/agents-mgmt/agent/{agent_id}"
@@ -180,10 +180,12 @@ def test_a_fragment_error_is_a_build_error() -> None:
     assert issubclass(FragmentError, BuildError)
 
 
-def test_committed_spec_matches_the_fragments() -> None:
+def test_committed_spec_matches_the_fragments(
+    committed_spec_text: str, committed_spec: dict[str, Any]
+) -> None:
     """Offline drift guard: strip then merge reproduces the committed spec byte for byte."""
-    text = _SPEC_PATH.read_text(encoding="utf-8")
-    spec = yaml.safe_load(text)
+    text = committed_spec_text
+    spec = committed_spec
 
     strip_fragments(spec)
     merge_fragments(spec, load_fragments(FRAGMENTS_DIR))
@@ -191,20 +193,17 @@ def test_committed_spec_matches_the_fragments() -> None:
     assert yaml.safe_dump(spec, sort_keys=False) == text
 
 
-def test_apply_fragments_is_idempotent(tmp_path: Path) -> None:
-    target = tmp_path / "spec.yaml"
-    target.write_text(_SPEC_PATH.read_text(encoding="utf-8"), encoding="utf-8")
-    before = target.read_text(encoding="utf-8")
+def test_apply_fragments_is_idempotent(apply_fragments_twice: ApplyFragmentsRuns) -> None:
+    before = apply_fragments_twice.before
 
-    for _ in range(2):
-        result = CliRunner().invoke(cli_module.cli, ["apply-fragments", "--spec", str(target)])
+    for result, text_after in apply_fragments_twice.runs:
         assert result.exit_code == 0, result.output
-        assert target.read_text(encoding="utf-8") == before
+        assert text_after == before
 
 
-def test_apply_fragments_picks_up_a_new_fragment(tmp_path: Path) -> None:
+def test_apply_fragments_picks_up_a_new_fragment(tmp_path: Path, committed_spec_text: str) -> None:
     target = tmp_path / "spec.yaml"
-    target.write_text(_SPEC_PATH.read_text(encoding="utf-8"), encoding="utf-8")
+    target.write_text(committed_spec_text, encoding="utf-8")
     frag_dir = tmp_path / "frags"
     frag_dir.mkdir()
     (frag_dir / "extra.yaml").write_text(
@@ -222,7 +221,7 @@ def test_apply_fragments_picks_up_a_new_fragment(tmp_path: Path) -> None:
     )
 
     assert result.exit_code == 0, result.output
-    spec = yaml.safe_load(target.read_text(encoding="utf-8"))
+    spec = load_yaml(target.read_text(encoding="utf-8"))
     assert "/ns/{item_id}" in spec["paths"]
     assert _LIST_PATH not in spec["paths"]
 
