@@ -630,7 +630,10 @@ class TestDecryptSettingFields:
         with patch(DECRYPT, side_effect=error), pytest.raises(ConfigurationError) as exc:
             cfg._decrypt_setting_fields({"enc": CIPHER}, ("enc",), file="f.toml", section="sec")
         assert str(exc.value) == _decrypt_failure("enc", "f.toml", "sec", reason)
-        assert caplog.messages == [
+        # Only ERROR records: building the Config logs DEBUG lines that are captured
+        # whenever an earlier test on the same worker lowered the log level.
+        errors = [r.getMessage() for r in caplog.records if r.levelno >= logging.ERROR]
+        assert errors == [
             f"Failed to decrypt SOPS value of 'enc' in f.toml [sec]: {type(error).__name__}"
         ]
 
