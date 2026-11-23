@@ -897,6 +897,78 @@ def test_error_reports_exact_path_position_and_reason(
     assert str(err) == f"Path '{path}' not found at '{position}': {reason}"
 
 
+_NOT_DICT = "expected dict for nested access, got int"
+_FILTER_DATA = {"a": [{"n": "0", "b": 1}, {"n": "1", "b": {"c": 1}}, {"n": "1", "b": 5}]}
+
+# Failures after a wildcard or filter segment: the error must name the caller's
+# path and the failing element's position, never the internal "_" wrapper key (#1162).
+_RECURSION_ERROR_CASES = [
+    # After a wildcard.
+    ({"a": [{"b": 1}]}, "a[*].x", "a[0].x", "key not found"),
+    ({"a": [{"b": 1}]}, "a[*].b.c", "a[0].b", "expected dict, got int"),
+    (
+        {"a": [{"b": [1]}]},
+        "a[*].b[3]",
+        "a[0].b[3]",
+        "index 3 out of range (list has 1 items)",
+    ),
+    ({"a": [{"b": [1]}]}, "a[*].b[*].c", "a[0].b[0]", _NOT_DICT),
+    ({"a": [{"b": 1}, {"b": 2}]}, "a[*].b.c", "a[0].b", "expected dict, got int"),
+    ({"c": {"a": [{"b": 1}]}}, "c.a[*].x", "c.a[0].x", "key not found"),
+    ({"c": {"a": [{"b": [1]}]}}, "c.a[*].b[*].c", "c.a[0].b[0]", _NOT_DICT),
+    (
+        {"a": [{"b": [{"c": [1]}]}]},
+        "a[*].b[*].c[*].d",
+        "a[0].b[0].c[0]",
+        _NOT_DICT,
+    ),
+    # After a filter: the position keeps the element's original array index.
+    (_FILTER_DATA, 'a["n=1"].x', "a[1].x", "key not found"),
+    (_FILTER_DATA, 'a["n=0"].b.c', "a[0].b", "expected dict, got int"),
+    (_FILTER_DATA, 'a["n=1"].b.c', "a[2].b", "expected dict, got int"),
+    (
+        {"a": [{"n": "0"}, {"n": "1", "b": [1]}]},
+        'a["n=1"].b[3]',
+        "a[1].b[3]",
+        "index 3 out of range (list has 1 items)",
+    ),
+    (
+        {"a": [{"n": "0"}, {"n": "1", "b": [1]}]},
+        'a["n=1"].b[*].c',
+        "a[1].b[0]",
+        _NOT_DICT,
+    ),
+    (
+        {"c": {"a": [{"n": "0"}, {"n": "1", "b": [1]}]}},
+        'c.a["n=1"].b[*].c',
+        "c.a[1].b[0]",
+        _NOT_DICT,
+    ),
+]
+
+
+@pytest.mark.parametrize("func", [get_nested_value, get_nested_value_with_identifiers])
+@pytest.mark.parametrize(("data", "path", "position", "reason"), _RECURSION_ERROR_CASES)
+def test_error_after_wildcard_or_filter_names_callers_path(
+    func: object, data: object, path: str, position: str, reason: str
+) -> None:
+    """A failure after a wildcard or filter reports the caller's path and position."""
+    with pytest.raises(PathNotFoundError) as exc_info:
+        func(data, path)  # type: ignore[operator]
+    err = exc_info.value
+    assert (err.path, err.position, err.reason) == (path, position, reason)
+    assert str(err) == f"Path '{path}' not found at '{position}': {reason}"
+    assert isinstance(err.__cause__, PathNotFoundError)
+
+
+@pytest.mark.parametrize("func", [get_nested_value, get_nested_value_with_identifiers])
+def test_error_after_wildcard_with_non_dict_item_is_not_chained(func: object) -> None:
+    """The direct non-dict item error is raised at the outer level, not rewritten."""
+    with pytest.raises(PathNotFoundError) as exc_info:
+        func({"a": [1]}, "a[*].b")  # type: ignore[operator]
+    assert exc_info.value.__cause__ is None
+
+
 class TestSplitPathBrackets:
     """Dots inside (possibly nested) brackets never split a segment."""
 
