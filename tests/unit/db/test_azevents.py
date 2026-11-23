@@ -141,10 +141,33 @@ class TestQueries:
         assert [r["event_id"] for r in rows] == ["other"]
 
     def test_datetimes_come_back_as_iso_strings(self, db: AzEventsDB) -> None:
-        # Pins current behavior: the TEXT columns never trigger the registered
-        # datetime converters, so values return as ISO strings. See #1172;
-        # update this assertion when #1172 is fixed.
+        # Documented contract (#1172): datetime columns are stored and returned
+        # as ISO-8601 strings; no converters are applied on read.
         db.upsert_event({"event_id": "e1", "az_maint_started": datetime(2024, 3, 15, 10, 0, 0)})
         row = db.get_event_by_id("e1")
         assert row is not None
         assert row["az_maint_started"] == "2024-03-15T10:00:00"
+
+    def test_text_columns_ignore_global_converters(
+        self, mock_config: MagicMock, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # A process-global converter for TEXT must never reach this DB (#1172).
+        monkeypatch.setitem(sqlite3.converters, "TEXT", lambda b: "converted")
+        with AzEventsDB(mock_config) as database:
+            database.upsert_event({"event_id": "e1", "az_maint_started": datetime(2024, 3, 15, 10)})
+            row = database.get_event_by_id("e1")
+        assert row is not None
+        assert row["az_maint_started"] == "2024-03-15T10:00:00"
+        assert row["event_id"] == "e1"
+
+
+def test_no_datetime_column_converters_registered() -> None:
+    """The module must not register global converters named after its columns (#1172)."""
+    skip = {"event_id", "cluster", "node", "type"}
+    names = {
+        name.upper()
+        for name, col_type in AzEventsDB.V1_COLUMNS + AzEventsDB.V2_COLUMNS
+        if col_type.split()[0] == "TEXT" and name not in skip
+    }
+    assert names
+    assert not names & set(sqlite3.converters)

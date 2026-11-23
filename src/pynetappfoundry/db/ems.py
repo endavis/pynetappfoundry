@@ -7,18 +7,21 @@ import sqlite3
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from pynetappfoundry.db.base import SQLiteDB, adapt_datetime, convert_datetime
+from pynetappfoundry.db.base import SQLiteDB, adapt_datetime
 
 if TYPE_CHECKING:
     from pynetappfoundry.core.config import Config
 
-# Register converters for this module
+# Adapter for writes only: no converters are registered, reads return ISO strings.
 sqlite3.register_adapter(datetime, adapt_datetime)
-sqlite3.register_converter("time", convert_datetime)
 
 
 class EmsEventsDB(SQLiteDB):
-    """SQLite database for storing EMS events."""
+    """SQLite database for storing EMS events.
+
+    The ``time`` column is stored and returned as an ISO-8601 string. ``datetime``
+    values passed in are adapted to ISO strings on write; no converters run on read.
+    """
 
     SCHEMA_VERSION: ClassVar[int] = 1
 
@@ -46,7 +49,7 @@ class EmsEventsDB(SQLiteDB):
             if self.overwrite:
                 os.remove(db_location)
 
-        self.conn = sqlite3.connect(db_location, detect_types=sqlite3.PARSE_DECLTYPES)
+        self.conn = sqlite3.connect(db_location)
         self._init_db()
 
     def _create_schema(self) -> None:

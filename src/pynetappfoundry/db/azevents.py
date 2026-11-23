@@ -6,33 +6,21 @@ import sqlite3
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from pynetappfoundry.db.base import SQLiteDB, adapt_datetime, convert_datetime
+from pynetappfoundry.db.base import SQLiteDB, adapt_datetime
 
 if TYPE_CHECKING:
     from pynetappfoundry.core.config import Config
 
-# Register converters for this module
+# Adapter for writes only: no converters are registered, reads return ISO strings.
 sqlite3.register_adapter(datetime, adapt_datetime)
-sqlite3.register_converter("az_maint_not_before", convert_datetime)
-sqlite3.register_converter("az_maint_scheduled", convert_datetime)
-sqlite3.register_converter("az_maint_started", convert_datetime)
-sqlite3.register_converter("az_maint_complete", convert_datetime)
-sqlite3.register_converter("node_takeover_complete", convert_datetime)
-sqlite3.register_converter("node_reboot_starts", convert_datetime)
-sqlite3.register_converter("node_reboot_complete", convert_datetime)
-sqlite3.register_converter("node_ready_for_giveback", convert_datetime)
-sqlite3.register_converter("node_giveback_starts", convert_datetime)
-sqlite3.register_converter("node_giveback_complete", convert_datetime)
-# SMB client impact tracking fields
-sqlite3.register_converter("lif_failover_start", convert_datetime)
-sqlite3.register_converter("lif_failover_complete", convert_datetime)
-sqlite3.register_converter("cifs_witness_time", convert_datetime)
-sqlite3.register_converter("aggr_giveback_start", convert_datetime)
-sqlite3.register_converter("aggr_giveback_complete", convert_datetime)
 
 
 class AzEventsDB(SQLiteDB):
-    """SQLite database for storing Azure maintenance events."""
+    """SQLite database for storing Azure maintenance events.
+
+    Datetime columns are stored and returned as ISO-8601 strings. ``datetime``
+    values passed in are adapted to ISO strings on write; no converters run on read.
+    """
 
     SCHEMA_VERSION: ClassVar[int] = 2
 
@@ -73,7 +61,7 @@ class AzEventsDB(SQLiteDB):
             db_name: Name of the database file.
         """
         db_location = config.db_dir / db_name
-        self.conn = sqlite3.connect(db_location, detect_types=sqlite3.PARSE_DECLTYPES)
+        self.conn = sqlite3.connect(db_location)
         self.conn.row_factory = sqlite3.Row  # Enables dictionary-like access
         self._init_db()
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sqlite3
 from collections.abc import Iterator
 from datetime import datetime
 from pathlib import Path
@@ -83,8 +84,8 @@ class TestEvents:
         assert db.get_events_by_node("nope") == []
 
     def test_between_datetimes(self, db: EmsEventsDB) -> None:
-        # Times come back as ISO strings, not datetimes. See #1172; update
-        # this assertion when #1172 is fixed.
+        # Documented contract (#1172): times are stored and returned as
+        # ISO-8601 strings, not datetimes.
         for event_id, when in [
             ("early", datetime(2024, 3, 1)),
             ("start", datetime(2024, 3, 10)),
@@ -96,3 +97,19 @@ class TestEvents:
         rows = db.get_events_between_datetimes(datetime(2024, 3, 10), datetime(2024, 3, 20))
         assert sorted(r[0] for r in rows) == ["end", "mid", "start"]
         assert {r[0]: r[3] for r in rows}["mid"] == "2024-03-15T10:00:00"
+
+
+def test_text_columns_ignore_global_converters(
+    mock_config: MagicMock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # A process-global converter for TEXT must never reach this DB (#1172).
+    monkeypatch.setitem(sqlite3.converters, "TEXT", lambda b: "converted")
+    with EmsEventsDB(mock_config) as database:
+        database.insert_event({"event_id": "e1", "node": "n1", "time": datetime(2024, 3, 15, 10)})
+        rows = database.get_events_by_node("n1")
+    assert rows[0][3] == "2024-03-15T10:00:00"
+
+
+def test_time_converter_not_registered() -> None:
+    """The module must not register a global "time" converter (#1172)."""
+    assert "TIME" not in sqlite3.converters
