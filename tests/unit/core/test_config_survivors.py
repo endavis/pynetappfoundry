@@ -534,9 +534,35 @@ class TestGetSecret:
         cfg = _cfg(tmp_path, {"users.toml": _SECRET_USERS})
         assert cfg.get_secret("cloudinsights", "t1") == "root-secret"
 
-    def test_non_string_enc_is_no_secret(self, tmp_path: Path) -> None:
-        cfg = _cfg(tmp_path, {"inv.toml": INVENTORY + "[cloudinsights.t1]\nenc = 123\n"})
+    def test_empty_enc_is_no_secret(self, tmp_path: Path) -> None:
+        cfg = _cfg(tmp_path, {"inv.toml": INVENTORY + '[cloudinsights.t1]\nenc = ""\n'})
         assert cfg.get_secret("cloudinsights", "t1") is None
+
+    def test_non_string_enc_on_the_data_entry_raises(self, tmp_path: Path) -> None:
+        cfg = _cfg(tmp_path, {"inv.toml": INVENTORY + "[cloudinsights.t1]\nenc = 123\n"})
+        with pytest.raises(ConfigurationError) as exc:
+            cfg.get_secret("cloudinsights", "t1")
+        assert "the object's data file [cloudinsights.t1]" in str(exc.value)
+        assert "must be a string" in str(exc.value)
+
+    def test_non_string_enc_in_scope_users_toml_raises(self, tmp_path: Path) -> None:
+        cfg = _cfg(
+            tmp_path,
+            {
+                "s/scope.toml": "",
+                "s/inv.toml": INVENTORY + '[cloudinsights.t1]\nbase_url = "https://t1.test"\n',
+                "s/users.toml": '[cloudinsights]\nuser = "label"\nenc = 123\n',
+            },
+        )
+        with pytest.raises(ConfigurationError) as exc:
+            cfg.get_secret("cloudinsights", "t1")
+        assert "s/users.toml [cloudinsights]" in str(exc.value)
+
+    def test_non_string_enc_in_root_users_toml_raises(self, tmp_path: Path) -> None:
+        cfg = _cfg(tmp_path, {"users.toml": '[cloudinsights]\nuser = "label"\nenc = 123\n'})
+        with pytest.raises(ConfigurationError) as exc:
+            cfg.get_secret("cloudinsights", "t1")
+        assert "users.toml [cloudinsights]" in str(exc.value)
 
     def test_decrypt_failure_from_the_data_entry(self, tmp_path: Path) -> None:
         cfg = _cfg(tmp_path, {"inv.toml": INVENTORY + f'[cloudinsights.t1]\nenc = "{CIPHER}"\n'})

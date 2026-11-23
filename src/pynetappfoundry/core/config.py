@@ -1031,8 +1031,9 @@ class Config:
             The decrypted secret, or None if none is configured.
 
         Raises:
-            ConfigurationError: If a ``SOPS[...]`` value cannot be decrypted. The
-                message never includes the ciphertext or the plaintext.
+            ConfigurationError: If the winning ``enc`` is set but not a string, or a
+                ``SOPS[...]`` value cannot be decrypted. The message never includes
+                the ciphertext or the plaintext.
         """
         value: Any = None
         section = f"{utype}.{uobject}"
@@ -1059,7 +1060,12 @@ class Config:
                     value = default["enc"]
                     file = "users.toml"
                     section = utype
-        if not isinstance(value, str) or not value:
+        if value and not isinstance(value, str):
+            raise ConfigurationError(
+                f"The 'enc' value in {file} [{section}] must be a string, "
+                f"not {type(value).__name__}."
+            )
+        if not value:
             return None
         decrypted = self._decrypt_setting_fields(
             {"enc": value}, ("enc",), file=file, section=section
