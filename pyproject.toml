@@ -373,11 +373,6 @@ source_paths = ["src/"]
 # Generated code: mutating it tests the generator's output, not our tests. It
 # held 112 of 205 timed-out mutants in run 45017847882 (#1137).
 do_not_mutate = ["src/pynetappfoundry/clients/console/generated/*"]
-# A mutant's wall-clock limit is (its tests' duration + 1) * this. mutmut's
-# default of 15 let a hanging mutant in the HTTP clients, whose covering tests
-# take up to ~100 s, hold a worker for ~26 minutes; those modules held 115 of
-# 153 timeouts and all 156 unchecked mutants in run 45035721462 (#1137).
-timeout_multiplier = 3
 # Data files the selected tests read: the example config and specs, the usage
 # page a cache test compares against, and the generated Console spec. Each is
 # the narrowest directory that holds the files, as a file entry under a

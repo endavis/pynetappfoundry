@@ -76,16 +76,16 @@ def test_patterns_are_valid_and_not_stale() -> None:
         )
 
 
-def test_timeout_multiplier_is_lowered_but_positive() -> None:
-    """Hanging mutants must not hold a worker for 15x their tests' duration (#1137).
+def test_timeout_multiplier_is_not_lowered() -> None:
+    """Keep mutmut's default timeout multiplier of 15 (#1143).
 
-    mutmut 3.8 defaults to 15. Below 1 a mutant would time out before its own
-    tests finish, so a killed mutant could be reported as a timeout.
+    A multiplier below the default turned 844 mutants into false timeouts in
+    run 45084982269; a sample of 10 of them all survived when re-run.
     """
     with (REPO_ROOT / "pyproject.toml").open("rb") as f:
         multiplier = tomllib.load(f)["tool"]["mutmut"].get("timeout_multiplier", 15.0)
     assert isinstance(multiplier, int | float)
-    assert 1 <= multiplier < 15
+    assert multiplier >= 15
 
 
 def test_detection_helpers(tmp_path: Path) -> None:
