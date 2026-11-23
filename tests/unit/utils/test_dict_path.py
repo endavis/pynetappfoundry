@@ -8,6 +8,7 @@ from pynetappfoundry.utils.dict_path import (
     DEFAULT_IDENTIFIER_KEYS,
     PathNotFoundError,
     _parse_filter_predicate,
+    _split_path,
     get_dotted_attr,
     get_dotted_item,
     get_nested_value,
@@ -821,3 +822,131 @@ class TestSetNestedValue:
         set_nested_value(d, "ip", "scalar", replace_non_dict=True)
         set_nested_value(d, "ip.address", "10.0.0.1", replace_non_dict=True)
         assert d == {"ip": {"address": "10.0.0.1"}}
+
+
+_ERROR_CASES: list[tuple[object, str, str, str]] = [
+    ({}, "", "", "empty path"),
+    ({"a": {"b": 1}}, "a..b", "a", "empty path segment"),
+    ({"a": 1}, ".a", "(root)", "empty path segment"),
+    ({"a": {"b": {"c": 1}}}, "a.b..c", "a.b", "empty path segment"),
+    ([1], 'a["n=1"]', "(root)", "expected dict, got list"),
+    ({"c": {"d": {"a": 5}}}, "c.d.a.b[*]", "c.d.a", "expected dict, got int"),
+    ({"c": {"d": {"a": 5}}}, 'c.d.a.b["n=1"]', "c.d.a", "expected dict, got int"),
+    ({"c": {"d": {"a": 5}}}, "c.d.a.b[0]", "c.d.a", "expected dict, got int"),
+    ({"c": {"d": {"a": 5}}}, "c.d.a.b", "c.d.a", "expected dict, got int"),
+    ({"c": {"d": {"a": [5]}}}, "c.d.a[1]", "c.d.a[1]", "index 1 out of range (list has 1 items)"),
+    ({"c": {"d": {"a": 5}}}, "c.d.a[0]", "c.d.a", "expected list for index access, got int"),
+    # Non-dict where a dict is required (root and nested), per segment kind.
+    ([1], "a[*]", "(root)", "expected dict, got list"),
+    ({"a": 5}, "a.b[*]", "a", "expected dict, got int"),
+    ({"c": {"a": 5}}, 'c.a.b["n=1"]', "c.a", "expected dict, got int"),
+    ([1], "a[0]", "(root)", "expected dict, got list"),
+    ({"c": {"a": 5}}, "c.a.b[0]", "c.a", "expected dict, got int"),
+    ([1], "a", "(root)", "expected dict, got list"),
+    ({"a": 1}, "a.b", "a", "expected dict, got int"),
+    ({"a": [{"b": 1}]}, "a[0].b.c", "a[0].b", "expected dict, got int"),
+    # Missing keys, at the root and under a parent.
+    ({}, "x[*]", "x", "key not found"),
+    ({"a": {}}, "a.x[*]", "a.x", "key not found"),
+    ({"a": {}}, 'a.x["n=1"]', "a.x", "key not found"),
+    ({}, "x[0]", "x", "key not found"),
+    ({"c": {}}, "c.x[0]", "c.x", "key not found"),
+    ({}, "a", "a", "key not found"),
+    ({"a": {}}, "a.b", "a.b", "key not found"),
+    ({"a": [{"b": 1}]}, "a[0].x", "a[0].x", "key not found"),
+    ({"a": [{"b": 1}]}, "a[0].x[*]", "a[0].x", "key not found"),
+    # Wrong container type.
+    ({"a": 5}, "a[*]", "a", "expected list for wildcard access, got int"),
+    ({"c": {"a": 5}}, "c.a[*]", "c.a", "expected list for wildcard access, got int"),
+    ({"a": 5}, 'a["n=1"]', "a", "expected list for filter access, got int"),
+    ({"c": {"a": 5}}, 'c.a["n=1"]', "c.a", "expected list for filter access, got int"),
+    ({"a": 5}, "a[0]", "a", "expected list for index access, got int"),
+    ({"c": {"a": 5}}, "c.a[0]", "c.a", "expected list for index access, got int"),
+    (
+        {"a": [{"b": 1}]},
+        "a[0].b[*]",
+        "a[0].b",
+        "expected list for wildcard access, got int",
+    ),
+    # Index bounds.
+    ({"a": [1]}, "a[1]", "a[1]", "index 1 out of range (list has 1 items)"),
+    ({"c": {"a": [1]}}, "c.a[3]", "c.a[3]", "index 3 out of range (list has 1 items)"),
+    ({"a": []}, "a[0]", "a[0]", "index 0 out of range (list has 0 items)"),
+    # Non-dict array items under a wildcard.
+    ({"a": [1]}, "a[*].b", "a[0]", "expected dict for nested access, got int"),
+    ({"c": {"a": [1]}}, "c.a[*].b", "c.a[0]", "expected dict for nested access, got int"),
+    (
+        {"a": [{"b": [{"c": 1}, 7]}]},
+        "a[0].b[*].c",
+        "a[0].b[1]",
+        "expected dict for nested access, got int",
+    ),
+]
+
+
+@pytest.mark.parametrize("func", [get_nested_value, get_nested_value_with_identifiers])
+@pytest.mark.parametrize(("data", "path", "position", "reason"), _ERROR_CASES)
+def test_error_reports_exact_path_position_and_reason(
+    func: object, data: object, path: str, position: str, reason: str
+) -> None:
+    """Every failure names the full path, the failing position and the reason."""
+    with pytest.raises(PathNotFoundError) as exc_info:
+        func(data, path)  # type: ignore[operator]
+    err = exc_info.value
+    assert (err.path, err.position, err.reason) == (path, position, reason)
+    assert str(err) == f"Path '{path}' not found at '{position}': {reason}"
+
+
+class TestSplitPathBrackets:
+    """Dots inside (possibly nested) brackets never split a segment."""
+
+    def test_nested_brackets_keep_inner_dots_together(self) -> None:
+        assert _split_path('a["f[0].x=1"].b') == ['a["f[0].x=1"]', "b"]
+
+    def test_single_bracket_keeps_dots_together(self) -> None:
+        assert _split_path('a["svm.name=x"].b.c') == ['a["svm.name=x"]', "b", "c"]
+
+    def test_unbalanced_close_bracket_does_not_swallow_later_dots(self) -> None:
+        assert _split_path("a].b.c") == ["a]", "b", "c"]
+
+
+class TestIdentifiersLabelling:
+    """Identifier labels for the fallback, index traversal and custom keys."""
+
+    def test_fallback_label_without_remaining_path(self) -> None:
+        data = {"a": [{"k": 1}, {"k": 2}]}
+        assert get_nested_value_with_identifiers(data, "a[*]") == [
+            ("[0]", {"k": 1}),
+            ("[1]", {"k": 2}),
+        ]
+
+    def test_fallback_label_for_filter_uses_original_array_index(self) -> None:
+        data = {"a": [{"k": 1}, {"k": 2}]}
+        assert get_nested_value_with_identifiers(data, 'a["k=2"]') == [("[1]", {"k": 2})]
+
+    def test_fallback_label_with_remaining_path(self) -> None:
+        data = {"a": [{"k": 1}, {"k": 2}]}
+        assert get_nested_value_with_identifiers(data, "a[*].k") == [("[0]", 1), ("[1]", 2)]
+
+    def test_index_segment_before_wildcard(self) -> None:
+        data = {"a": [{"x": 0}, {"b": [{"name": "n1", "v": 1}, {"name": "n2", "v": 2}]}]}
+        assert get_nested_value_with_identifiers(data, "a[1].b[*].v") == [("n1", 1), ("n2", 2)]
+        assert get_nested_value_with_identifiers(data, "a[1].b[*]") == [
+            ("n1", {"name": "n1", "v": 1}),
+            ("n2", {"name": "n2", "v": 2}),
+        ]
+
+    def test_custom_identifier_keys_apply_to_nested_wildcards(self) -> None:
+        data = {"a": [{"id": "x", "b": [{"id": "y", "c": 1}, {"id": "z", "c": 2}]}]}
+        assert get_nested_value_with_identifiers(data, "a[*].b[*].c", identifier_keys=("id",)) == [
+            ("x/y", 1),
+            ("x/z", 2),
+        ]
+
+    def test_path_without_wildcard_or_filter_raises_value_error(self) -> None:
+        with pytest.raises(ValueError) as exc_info:
+            get_nested_value_with_identifiers({"a": {"b": 1}}, "a.b")
+        assert str(exc_info.value) == (
+            "Path 'a.b' has no wildcard [*] or filter predicate segment; "
+            "use get_nested_value() instead."
+        )
