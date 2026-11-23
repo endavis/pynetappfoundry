@@ -71,6 +71,30 @@ class PathNotFoundError(Exception):
         super().__init__(f"Path '{path}' not found at '{position}': {reason}")
 
 
+def _reraise_for_element(
+    err: PathNotFoundError, path: str, element_position: str
+) -> PathNotFoundError:
+    """Rebuild an error raised inside a wildcard or filter recursion.
+
+    The recursion wraps each element as ``{"_": item}``, so the inner error's
+    position starts with the internal ``_`` key. This returns an error that names
+    the caller's ``path`` and replaces that ``_`` with ``element_position``, the
+    position of the element that failed. The reason is unchanged.
+
+    Args:
+        err: The error raised by the recursive call.
+        path: The caller's original full path.
+        element_position: Position of the failing element, such as ``a[0]``.
+
+    Returns:
+        A new error for the caller to raise ``from err``.
+    """
+    position = err.position
+    if position.startswith("_"):
+        position = element_position + position[1:]
+    return PathNotFoundError(path, position, err.reason)
+
+
 def _parse_filter_predicate(predicate: str) -> list[tuple[str, str]]:
     """Parse a filter predicate string into field-value pairs.
 
@@ -277,7 +301,12 @@ def get_nested_value(data: dict[str, Any], path: str) -> Any:
                             f"expected dict for nested access, got {type(item).__name__}",
                         )
                     # Recursively get value using a wrapper dict
-                    results.append(get_nested_value({"_": item}, f"_.{remaining_path}"))
+                    try:
+                        results.append(get_nested_value({"_": item}, f"_.{remaining_path}"))
+                    except PathNotFoundError as err:
+                        raise _reraise_for_element(
+                            err, path, ".".join([*traversed, f"{key}[{idx}]"])
+                        ) from err
                 return results
             else:
                 # No remaining path, return all items
@@ -313,8 +342,8 @@ def get_nested_value(data: dict[str, Any], path: str) -> Any:
 
             conditions = _parse_filter_predicate(predicate)
             filtered = [
-                item
-                for item in array
+                (idx, item)
+                for idx, item in enumerate(array)
                 if isinstance(item, dict) and _matches_filter(item, conditions)
             ]
 
@@ -323,11 +352,16 @@ def get_nested_value(data: dict[str, Any], path: str) -> Any:
             if remaining_parts:
                 remaining_path = ".".join(remaining_parts)
                 results = []
-                for item in filtered:
-                    results.append(get_nested_value({"_": item}, f"_.{remaining_path}"))
+                for idx, item in filtered:
+                    try:
+                        results.append(get_nested_value({"_": item}, f"_.{remaining_path}"))
+                    except PathNotFoundError as err:
+                        raise _reraise_for_element(
+                            err, path, ".".join([*traversed, f"{key}[{idx}]"])
+                        ) from err
                 return results
             else:
-                return filtered
+                return [item for _, item in filtered]
 
         # Check for array index pattern like "nodes[0]"
         match = _ARRAY_INDEX_PATTERN.match(part)
@@ -629,14 +663,21 @@ def get_nested_value_with_identifiers(
                         f"{'.'.join([*traversed, key])}[{idx}]" if traversed else f"{key}[{idx}]",
                         f"expected dict for nested access, got {type(item).__name__}",
                     )
+                element_position = ".".join([*traversed, f"{key}[{idx}]"])
                 if nested_has_wildcard:
-                    nested = get_nested_value_with_identifiers(
-                        {"_": item}, f"_.{remaining_path}", identifier_keys
-                    )
+                    try:
+                        nested = get_nested_value_with_identifiers(
+                            {"_": item}, f"_.{remaining_path}", identifier_keys
+                        )
+                    except PathNotFoundError as err:
+                        raise _reraise_for_element(err, path, element_position) from err
                     for nested_ident, nested_value in nested:
                         results.append((f"{ident}/{nested_ident}", nested_value))
                 else:
-                    value = get_nested_value({"_": item}, f"_.{remaining_path}")
+                    try:
+                        value = get_nested_value({"_": item}, f"_.{remaining_path}")
+                    except PathNotFoundError as err:
+                        raise _reraise_for_element(err, path, element_position) from err
                     results.append((ident, value))
 
             return results
