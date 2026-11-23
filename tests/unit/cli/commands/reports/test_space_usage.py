@@ -418,8 +418,13 @@ class TestVolumesSheet:
         # Row 5 is the table's totals row, not data: text columns carry no total.
         for col in "ABCDEFGHIJKLM":
             assert ws[f"{col}5"].value is None
-        # The average total of the % Used column (header text is not pinned here).
-        assert str(ws["P5"].value).startswith("=SUBTOTAL(101,")
+        # The average total of the % Used column.
+        assert ws["P5"].value == "=SUBTOTAL(101,[% Used])"
+
+    def test_percent_used_header(self, ws: Any) -> None:
+        """The Volumes header is '% Used', matching the Usage Breakdown sheet (#1158)."""
+        assert ws["P1"].value == "% Used"
+        assert "% Used" in [c.name for c in ws.tables["volume_table"].tableColumns]
 
     def test_table(self, ws: Any) -> None:
         table = ws.tables["volume_table"]
@@ -578,12 +583,8 @@ class TestUsageSheet:
             )
 
     def test_conditional_format_is_on_percent_used_column(self, ws: Any) -> None:
-        # Only the column and rule are pinned, not the end row (see issue #1150).
-        rules = _cf_rules(ws)
-        assert len(rules) == 1
-        rng, rule_type, operator, formula = rules[0]
-        assert rng.startswith("L2:L")
-        assert (rule_type, operator, formula) == ("cellIs", "greaterThanOrEqual", ["90"])
+        # Data rows only (three here), not the table's totals row (#1158).
+        assert _cf_rules(ws) == [("L2:L4", "cellIs", "greaterThanOrEqual", ["90"])]
 
     def test_number_formats(self, ws: Any) -> None:
         for row in (2, 3, 4):
