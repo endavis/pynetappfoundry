@@ -517,8 +517,10 @@ class Config:
                 the ``diiapi.toml [general]`` values; everything else, and any
                 value the tenant does not set, comes from ``[general]``. The
                 ``[general]`` ``api_rw_token`` belongs to the default tenant: a
-                tenant with its own key gets no read-write key, and a tenant
-                without one inherits both ``[general]`` keys.
+                tenant with its own read-only key gets no ``[general]`` read-write
+                key, and a tenant without one inherits both ``[general]`` keys. A
+                tenant's own ``rw_enc`` (see :meth:`_get_tenant_rw_token`) always
+                wins and replaces the ``[general]`` read-write key.
 
         Returns:
             DIIAPISettings object with API configuration.
@@ -550,13 +552,18 @@ class Config:
             if tenant_url:
                 merged["base_url"] = tenant_url
             token = self.get_secret("cloudinsights", name)
+            rw = self._get_tenant_rw_token(name)
             if token:
                 merged.pop("api_rw_token", None)
                 merged["api_ro_token"] = token
             else:
+                if rw:
+                    merged.pop("api_rw_token", None)
                 merged = self._decrypt_setting_fields(
                     merged, _DII_SOPS_FIELDS, file="diiapi.toml", section="general"
                 )
+            if rw:
+                merged["api_rw_token"] = rw
             return DIIAPISettings.model_validate(merged)
         except ConfigurationError:
             raise
@@ -1075,6 +1082,35 @@ class Config:
             {"enc": value}, ("enc",), file=file, section=section
         )
         return str(decrypted["enc"])
+
+    def _get_tenant_rw_token(self, name: str) -> str | None:
+        """Get a Cloud Insights tenant's own read-write key, or None.
+
+        Read only from ``rw_enc`` on the tenant's data entry
+        (``[cloudinsights.<name>]``); there is no environment variable and no
+        ``users.toml`` fallback.
+
+        Raises:
+            ConfigurationError: If ``rw_enc`` is set but not a string, or a
+                ``SOPS[...]`` value cannot be decrypted. The message never includes
+                the ciphertext or the plaintext.
+        """
+        entry = self.data.get("cloudinsights", {}).get(name)
+        value: Any = entry.get("rw_enc") if isinstance(entry, dict) else None
+        if value and not isinstance(value, str):
+            raise ConfigurationError(
+                "The 'rw_enc' value in the object's data file "
+                f"[cloudinsights.{name}] must be a string, not {type(value).__name__}."
+            )
+        if not value:
+            return None
+        decrypted = self._decrypt_setting_fields(
+            {"rw_enc": value},
+            ("rw_enc",),
+            file="the object's data file",
+            section=f"cloudinsights.{name}",
+        )
+        return str(decrypted["rw_enc"])
 
     def _decrypt_setting_fields(
         self, data: Any, fields: tuple[str, ...], *, file: str, section: str

@@ -174,3 +174,64 @@ def test_object_found_in_flat_data_type_file(tmp_path: Path) -> None:
 
     assert code == 0, output
     assert tomllib.loads(target.read_text())["aiqums"]["a2"]["enc"] == SECRET
+
+
+def test_read_write_stores_rw_enc_on_the_tenant(tmp_path: Path) -> None:
+    config_dir = _config_dir(tmp_path)
+
+    code, output = _invoke(
+        config_dir, "--type", "cloudinsights", "--name", "t1", "--read-write", "--no-encrypt"
+    )
+
+    assert code == 0, output
+    tenant = _inventory(config_dir)["cloudinsights"]["t1"]
+    assert tenant["rw_enc"] == SECRET
+    assert "enc" not in tenant
+    assert "user" not in tenant
+    assert tenant["base_url"] == "https://t1.example.invalid"
+    assert SECRET not in output
+    assert "Read-write key" in output
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
+        ("--cluster", "c1", "--read-write"),
+        ("--type", "aiqums", "--name", "aiqum1", "--read-write"),
+        ("--type", "cloudinsights", "--read-write"),
+        ("--type", "cloudinsights", "--name", "t1", "--user", "u", "--read-write"),
+        ("--read-write",),
+    ],
+)
+def test_read_write_invalid_combinations_do_not_prompt_or_write(
+    tmp_path: Path, args: tuple[str, ...]
+) -> None:
+    config_dir = _config_dir(tmp_path)
+    before = (config_dir / "data" / "inventory.toml").read_text()
+
+    code, output = _invoke(config_dir, *args, "--no-encrypt", user_input="")
+
+    assert code != 0, output
+    assert "--read-write" in output
+    assert (config_dir / "data" / "inventory.toml").read_text() == before
+    assert not (config_dir / "users.toml").exists()
+
+
+def test_read_write_unknown_tenant_is_rejected_before_prompt(tmp_path: Path) -> None:
+    config_dir = _config_dir(tmp_path)
+    before = (config_dir / "data" / "inventory.toml").read_text()
+
+    code, output = _invoke(
+        config_dir,
+        "--type",
+        "cloudinsights",
+        "--name",
+        "nope",
+        "--read-write",
+        "--no-encrypt",
+        user_input="",
+    )
+
+    assert code != 0
+    assert "not found" in output
+    assert (config_dir / "data" / "inventory.toml").read_text() == before

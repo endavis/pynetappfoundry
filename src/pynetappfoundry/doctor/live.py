@@ -286,6 +286,11 @@ def check_dii(
 _DII_SET_RW = "nf config set-credential --setting diiapi.api_rw_token"
 
 
+def _dii_tenant_set_rw(tenant: str) -> str:
+    """Return the command that stores a tenant's own read-write key."""
+    return f"nf config set-credential --type cloudinsights --name {tenant} --read-write"
+
+
 def _check_dii_rw(
     config: Config,
     tenant: str | None,
@@ -307,11 +312,13 @@ def _check_dii_rw(
     except Exception:
         return None
     label = f"{shown} read-write key"
+    set_rw = _dii_tenant_set_rw(tenant) if tenant else _DII_SET_RW
     subject = f"live.dii.{shown}.rw"
     if settings.api_rw_token is None:
         hint = (
-            "Optional, needed only for DII writes. A tenant uses the diiapi.toml [general] "
-            "api_rw_token only when it has no key of its own."
+            "Optional, needed only for DII writes. Set it with: "
+            f"{_dii_tenant_set_rw(tenant)}. Without one, a tenant uses the diiapi.toml "
+            "[general] api_rw_token only when it has no key of its own."
             if tenant
             else f"Optional, needed only for DII writes. Set it with: {_DII_SET_RW}"
         )
@@ -329,7 +336,7 @@ def _check_dii_rw(
             label,
             e,
             api="dii",
-            credentials_hint=f"Set it with: {_DII_SET_RW}",
+            credentials_hint=f"Set it with: {set_rw}",
             forbidden_warns=True,
         )
     return CheckResult(subject, CheckStatus.OK, f"{label}: connected")

@@ -348,7 +348,7 @@ base_api_path = "/rest/v1"                 # Optional: Base API path (default: "
 | `base_url` | string | Yes | - | Base URL for your DII tenant |
 | `base_api_path` | string | No | `"/rest/v1"` | Base path for DII REST API endpoints |
 
-With several tenants, `DIIAPIClient(config, name="TENANT")` reads `base_url` and the token from `[cloudinsights.TENANT]` in a data file (see [Cloud Insights](#cloud-insights)), falling back to `[general]` for either. `DIIAPIClient(config)` uses `[general]` alone. The `[general]` `api_rw_token` belongs to the default tenant: a tenant with its own key gets no read-write key, and a tenant without one inherits both `[general]` keys. A separate read-write key per tenant is not supported yet.
+With several tenants, `DIIAPIClient(config, name="TENANT")` reads `base_url` and the token from `[cloudinsights.TENANT]` in a data file (see [Cloud Insights](#cloud-insights)), falling back to `[general]` for either. `DIIAPIClient(config)` uses `[general]` alone. The `[general]` `api_rw_token` belongs to the default tenant: a tenant with its own read-only key gets no `[general]` read-write key, and a tenant without one inherits both `[general]` keys. A tenant's own read-write key, `rw_enc` on its `[cloudinsights.TENANT]` entry (set with `nf config set-credential --type cloudinsights --name TENANT --read-write`), always replaces the `[general]` one.
 
 ---
 
@@ -640,6 +640,7 @@ env = "Prod"
 | `base_url` | string | No | `diiapi.toml` `[general]` | API URL for `DIIAPIClient(config, name=...)`. Never derived from `ip` |
 | `user` | string | No | From users.toml | A label for the API token |
 | `enc` | string | No | From users.toml | The tenant's API token (SOPS value accepted). Falls back to `diiapi.toml` `api_ro_token` |
+| `rw_enc` | string | No | - | The tenant's own DII read-write key (SOPS value accepted), used only by `DIIAPIClient(config, name=..., read_write=True)`. Read from this entry alone: no environment variable and no `users.toml` fallback. Set with `nf config set-credential --type cloudinsights --name NAME --read-write` |
 
 ---
 
@@ -792,7 +793,7 @@ Credentials are resolved in the following order (first found wins):
 
 `user` and `enc` fall back independently through steps 2 to 4. This applies to every inventory type (`clusters`, `aiqums`, `connectors`, `cloudinsights`, `azure`, `ibm`). Write an object's entry with `nf config set-credential --type <type> --name <object> --user <user>`; `--cluster NAME` is an alias for `--type clusters --name NAME`.
 
-**Token-style secrets** (a Cloud Insights API token, which has no username) live in the same `enc` field, and `user` is only a label. They resolve in this order (first found wins):
+**Token-style secrets** (a Cloud Insights API token, which has no username) live in the same `enc` field, and `user` is only a label. A tenant's own read-write key is the separate `rw_enc` field on its data entry; it has no environment variable or `users.toml` fallback. They resolve in this order (first found wins):
 
 1. `NF_<OBJECT>_PASSWORD`
 2. `enc` in the object's data file entry

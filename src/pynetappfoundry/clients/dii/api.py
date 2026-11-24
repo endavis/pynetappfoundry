@@ -167,9 +167,10 @@ class DIIAPIClient(APIWrapper):
                     )
                 else:
                     hint = (
-                        f"Tenant {name!r} uses the diiapi.toml [general] api_rw_token only "
-                        "when it has no key of its own; a separate read-write key per "
-                        "tenant is not supported yet."
+                        f"Store tenant {name!r}'s own key with `nf config set-credential "
+                        f"--type cloudinsights --name {name} --read-write`; it uses the "
+                        "diiapi.toml [general] api_rw_token only when it has no read-only "
+                        "key of its own."
                     )
                 raise DIIWriteTokenMissingError(
                     f"A DII write client needs api_rw_token, but none is configured. {hint}"

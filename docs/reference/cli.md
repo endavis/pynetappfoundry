@@ -354,12 +354,13 @@ access, use [`nf doctor`](#doctor). See
 |--------|-------------|
 | `--cluster TEXT` | Set credentials for a specific cluster. Alias for `--type clusters --name TEXT` |
 | `--type` | Set default credentials for all resources of a type: `aiqums`, `azure`, `cloudinsights`, `clusters`, `connectors`, `console`, `ibm` (`console` stores the Console refresh token, not the client secret; `--user` is only a label and the password prompt takes the token. Store the client secret with `--setting consoleapi.client_secret`) |
-| `--setting TARGET` | Store one SOPS-encrypted settings secret: `consoleapi.client_secret`, `consoleapi.service_token`, `consoleapi.user_token`, `diiapi.api_ro_token`, `diiapi.api_rw_token`, `digitaladvisorapi.personal_access_token`, `digitaladvisorapi.access_token`, `digitaladvisorapi.refresh_token` or `settings.smtp_password`. Prompts for the value (hidden, with confirmation) or takes `--password`, encrypts it and writes `<field> = "SOPS[...]"` into the right file and table, keeping comments. Cannot be combined with `--cluster`, `--type`, `--name`, `--user` or `--no-encrypt`; needs `sops` (no plain text fallback). If more than one non-data file carries the target's stem, it refuses and lists them |
+| `--setting TARGET` | Store one SOPS-encrypted settings secret: `consoleapi.client_secret`, `consoleapi.service_token`, `consoleapi.user_token`, `diiapi.api_ro_token`, `diiapi.api_rw_token`, `digitaladvisorapi.personal_access_token`, `digitaladvisorapi.access_token`, `digitaladvisorapi.refresh_token` or `settings.smtp_password`. Prompts for the value (hidden, with confirmation) or takes `--password`, encrypts it and writes `<field> = "SOPS[...]"` into the right file and table, keeping comments. Cannot be combined with `--cluster`, `--type`, `--name`, `--user`, `--no-encrypt` or `--read-write`; needs `sops` (no plain text fallback). If more than one non-data file carries the target's stem, it refuses and lists them |
 | `--name TEXT` | With `--type`, set credentials for that one inventory object, written to its data file entry. An unknown name lists the available ones. For a token-style secret, `--user` is only a label and the password prompt takes the token. Not valid with `--cluster` or `--type console` |
 | `--scope TEXT` | With `--type` alone, write to `<config>/<scope>/users.toml` (created if missing) instead of the root `users.toml`. With `--cluster` or `--name`, it must equal the object's own scope; a mismatch fails, names the object's real scope (or the root) and writes nothing. An unknown scope lists the available ones. With `--setting`, only `consoleapi.*` targets accept it: the value goes to `<config>/<scope>/consoleapi.toml` `[general]`, created if missing |
 | `--user TEXT` | Username (required with `--cluster` and `--type`, not allowed with `--setting`) |
 | `--password TEXT` | Password, or with `--setting` the value (will prompt, hidden, if not provided) |
 | `--no-encrypt` | Store password as plain text (not recommended) |
+| `--read-write` | Store the value as a Cloud Insights tenant's own read-write key (`rw_enc` on its data entry). Needs `--type cloudinsights` and `--name`; takes no `--user` and rejects `--cluster`. Every check runs before the key is prompted (hidden) or taken from `--password` |
 
 Without `--scope`, `--type console` writes the root Console account's refresh token. With `--scope Org1` it writes the refresh token to the `[console]` section of the scope's own `users.toml`; a warning is printed when that scope has no Console account (a `[general]` table in its own `consoleapi.toml`), and the token is still written.
 
@@ -589,6 +590,9 @@ nf config set-credential --type clusters --user admin
 # Set credentials for one AIQUM, or store one Cloud Insights tenant's API token
 nf config set-credential --type aiqums --name aiqum1 --user admin
 nf config set-credential --type cloudinsights --name tenant1 --user token
+
+# Store that tenant's own read-write key (for DII writes)
+nf config set-credential --type cloudinsights --name tenant1 --read-write
 
 # Store the Console refresh token (the user is a label; the prompt takes the token)
 nf config set-credential --type console --user console

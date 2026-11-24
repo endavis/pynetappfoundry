@@ -12,9 +12,9 @@ tags:
 
 ## Status
 
-Accepted, amended by [#1185](https://github.com/endavis/pynetappfoundry/issues/1185)
+Accepted, amended by [#1185](https://github.com/endavis/pynetappfoundry/issues/1185), [#1184](https://github.com/endavis/pynetappfoundry/issues/1184)
 
-Implemented in issue #1003; amended in #1185.
+Implemented in issue #1003; amended in #1185 and #1184.
 
 ## Context
 
@@ -30,7 +30,7 @@ Three constraints shape it:
 
 1. **A separate read-write client.** `DIIAPIClient(config, name=None, *, read_write=False)` builds, with `read_write=True`, a client with its own session that carries only `api_rw_token`. The default client carries only `api_ro_token`. A write client without a configured key raises `DIIWriteTokenMissingError` at construction, before any request.
 2. **`Mutation` is extended, not duplicated.** For a mapping with `api_type == "dii"`, `Mutation` requires a client whose `read_write` attribute is `True`, so passing the read client fails before any request. The check is duck-typed and `query/` does not import the client class. The DII item path (`<collection>/{id}` or `{dataSourceId}`) is read from `client.api_spec["paths"]`. `update` sends PATCH if the item path declares it, else PUT. `poll=True` is refused because DII has no jobs.
-3. **Key resolution for named tenants.** The `[general]` `api_rw_token` belongs to the default tenant. A tenant with its own key gets no read-write key, and a tenant without one inherits both `[general]` keys. A separate read-write key per tenant is deferred.
+3. **Key resolution for named tenants (#1184).** The `[general]` `api_rw_token` belongs to the default tenant. A tenant with its own read-only key gets no `[general]` read-write key, and a tenant without one inherits both `[general]` keys. A tenant may also carry its own read-write key in `rw_enc` on its `[cloudinsights.<name>]` entry (stored with `nf config set-credential --type cloudinsights --name <tenant> --read-write`); it always replaces the `[general]` read-write key. `rw_enc` is read only from the data entry, with no environment variable and no `users.toml` fallback.
 4. **Write bodies and responses are not logged.** `APIWrapper` logs a response body at DEBUG only for GET and a byte count for other methods. Request-body and response validation errors name the failing validator and the JSON path of the field, never its value. The `X-CloudInsights-ApiKey` header is masked next to `Authorization`. `Mutation` debug lines log only the top-level body keys.
 5. **`Mutation.call` for actions and sub-resources (#1185).** `Mutation(model, rw_client).call(method, path=None, *, path_params=None, body=None)` sends a POST, PUT, PATCH or DELETE at or below the model's endpoint and returns the raw response. The path must be in the spec and declare the method, placeholders must match `path_params` (values percent-encoded), POST has retry disabled, and DEBUG logs only the path template and a body description. ONTAP models are refused.
 6. **Annotation request schemas are corrected in the client.** The spec declares a bare `{"type": "object"}` body for the 36 annotation value operations, but DII takes a JSON array. `DIIAPIClient._get_request_schema` substitutes an array schema, only while the spec still declares a bare object. `APIWrapper` accepts a list body.
@@ -44,6 +44,8 @@ Three constraints shape it:
 - **Cost.** The response bodies of read-style POSTs (`Query`, DII `/search`) are no longer logged at DEBUG; the URL and status still are.
 - **Alternatives to `Mutation.call` (#1185).** Named helpers per operation are typed, but 128 non-CRUD operations do not scale; they can be added on top of `call`. A model-free `DIIWriter(client).call(path, ...)` reaches every path but adds a second write surface, which this ADR rejects, and needs its own read-write guard. `Mutation.call` reuses the guard and keeps one surface, and every annotation target type already has a sub-resource model whose endpoint is the write path.
 
+- **A per-tenant key on the data entry (#1184).** `rw_enc` sits beside `enc` so one tenant's two keys live together, and the read-write key stays out of the `users.toml` type defaults, which would apply it to every tenant. The `[general]` fallback stays for tenants without a read-only key of their own, so existing setups do not change.
+
 ## Consequences
 
 - ADR-0015's read-only statement is narrowed: the DII backend and `DataSource` stay read-only, and writes are available through `Mutation` with a read-write client.
@@ -53,6 +55,7 @@ Three constraints shape it:
 ## Related Issues
 
 - Issue #1185: feat: support DII action and sub-resource write endpoints in the mutation layer
+- Issue #1184: feat: store a read-write key per Cloud Insights tenant
 - Issue #1186: `nf doctor --api dii` reports the read-write key
 - Issue #1003: feat: add dii writes with a read-write api key
 - infrafoundry#1377: one create / update / delete surface for both APIs
