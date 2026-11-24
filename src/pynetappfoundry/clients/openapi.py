@@ -429,7 +429,7 @@ class APIWrapper:
         self,
         path_template: str,
         method: str = "GET",
-        body: dict[str, Any] | None = None,
+        body: dict[str, Any] | list[Any] | None = None,
     ) -> bool:
         """Validate 'body' against the endpoint's resolved schema (if any).
 
@@ -646,7 +646,7 @@ class APIWrapper:
         self,
         method: str,
         url: str,
-        body: dict[str, Any] | None,
+        body: dict[str, Any] | list[Any] | None,
         headers: dict[str, str | bytes],
         retry_config: RetryConfig | None = None,
     ) -> requests.Response:
@@ -655,7 +655,7 @@ class APIWrapper:
         Args:
             method: HTTP method.
             url: Full URL to request.
-            body: Request body (JSON).
+            body: Request body (JSON object or array).
             headers: Request headers.
             retry_config: Optional override for retry config.
 
@@ -731,7 +731,7 @@ class APIWrapper:
         method: str = "GET",
         path_params: dict[str, Any] | None = None,
         query_params: dict[str, Any] | None = None,
-        body: dict[str, Any] | None = None,
+        body: dict[str, Any] | list[Any] | None = None,
         additional_headers: dict[str, str] | None = None,
         retry_config: RetryConfig | None = None,
         validation_config: ValidationConfig | None = None,
@@ -750,7 +750,7 @@ class APIWrapper:
             method: HTTP method.
             path_params: Values for path placeholders.
             query_params: Query string parameters.
-            body: Request body (JSON).
+            body: Request body (JSON object or array).
             additional_headers: Extra headers to include.
             retry_config: Optional per-call retry configuration override.
             validation_config: Optional per-call validation configuration override.
@@ -849,7 +849,7 @@ class APIWrapper:
             method: HTTP method.
             path_params: Values for path placeholders.
             query_params: Query string parameters.
-            body: Request body (JSON).
+            body: Request body (JSON object or array).
             additional_headers: Extra headers to include.
             retry_config: Optional per-call retry configuration override.
             validation_config: Optional per-call validation configuration override.

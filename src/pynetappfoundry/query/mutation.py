@@ -6,7 +6,10 @@ existing :class:`~pynetappfoundry.cache.field_mapping.TypeMapping` metadata.
 
 DII writes need a read-write client, ``DIIAPIClient(config, read_write=True)``.
 Request and response bodies of writes are not logged; only the top-level body
-keys are.
+keys (or a list's length) are.
+
+:meth:`Mutation.call` reaches DII operations beyond collection CRUD: action
+endpoints and sub-resource writes such as annotation value assignment.
 """
 
 from __future__ import annotations
@@ -14,6 +17,7 @@ from __future__ import annotations
 import logging
 import re
 from typing import Any, TypeVar
+from urllib.parse import quote
 
 from pydantic import BaseModel
 
@@ -26,6 +30,17 @@ from pynetappfoundry.utils.dict_path import set_nested_value as _set_nested
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T", bound=BaseModel)
+
+_WRITE_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
+
+
+def _describe_body(body: dict[str, Any] | list[Any] | None) -> str:
+    """Describe *body* for a log line without its values."""
+    if body is None:
+        return "none"
+    if isinstance(body, list):
+        return f"list of {len(body)} item(s)"
+    return f"keys={sorted(body)}"
 
 
 class Mutation:
@@ -51,6 +66,10 @@ class Mutation:
         dii = Mutation(DiiAssetsAnnotation, DIIAPIClient(config, read_write=True))
         dii.create(name="owner", type_="TEXT")
         dii.delete("42")
+
+    For DII, :meth:`call` sends any write operation under the model's endpoint,
+    for example an action or an annotation assignment, with the same
+    read-write client guard.
     """
 
     def __init__(
@@ -201,6 +220,60 @@ class Mutation:
         )
         return self._item_call(uuid, "DELETE", body)
 
+    def call(
+        self,
+        method: str,
+        path: str | None = None,
+        *,
+        path_params: dict[str, str | int] | None = None,
+        body: dict[str, Any] | list[Any] | None = None,
+    ) -> Any:
+        """Send a DII write operation at or below the model's endpoint.
+
+        Reaches action endpoints and sub-resource writes (for example
+        ``PUT /assets/volumes/{id}/annotations``) that are not collection CRUD.
+        The body is validated against the OpenAPI spec by the client. POST has
+        retry disabled, as in :meth:`create`.
+
+        Args:
+            method: ``POST``, ``PUT``, ``PATCH`` or ``DELETE``.
+            path: Spec path template; defaults to the model's endpoint
+                (for example ``/assets/volumes/{id}/annotations``).
+            path_params: One entry per ``{placeholder}`` in *path*.
+            body: JSON object or array, sent as-is.
+
+        Returns:
+            The raw API response, not parsed into the model.
+
+        Raises:
+            ValueError: For a non-write method, an ONTAP model, a path outside
+                the model's endpoint or the spec, an undeclared method, or
+                path parameters that do not match the placeholders.
+        """
+        verb = method.upper()
+        if verb not in _WRITE_METHODS:
+            raise ValueError(f"Mutation.call supports {sorted(_WRITE_METHODS)}, not '{method}'.")
+        template = self._operation_path(path, verb)
+        encoded = self._encode_path_params(template, path_params)
+        logger.debug(
+            "Mutation.call %s: %s %s body=%s",
+            self._mapping.name,
+            verb,
+            template,
+            _describe_body(body),
+        )
+        if verb == "POST":
+            return self._client.call_endpoint(
+                template,
+                method=verb,
+                path_params=encoded or None,
+                body=body,
+                retry_config=RetryConfig(enabled=False),
+            )
+        return self._client.call_endpoint(
+            template, method=verb, path_params=encoded or None, body=body
+        )
+
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
@@ -208,6 +281,43 @@ class Mutation:
     def _is_dii(self) -> bool:
         """Return True when the mapping belongs to the DII API."""
         return self._mapping.api_type == "dii"
+
+    def _operation_path(self, path: str | None, method: str) -> str:
+        """Return the validated spec path for :meth:`call`.
+
+        Raises:
+            ValueError: If the model is not DII, *path* is outside the model's
+                endpoint, is not in the spec, or does not declare *method*.
+        """
+        if not self._is_dii():
+            raise ValueError("Mutation.call is only supported for DII models.")
+        collection = self._mapping.api_endpoint.split("?", 1)[0]
+        template = collection if path is None else path
+        if template != collection and not template.startswith(collection + "/"):
+            raise ValueError(f"Path '{template}' is outside the model endpoint '{collection}'.")
+        operations = self._client.api_spec.get("paths", {}).get(template)
+        if operations is None:
+            raise ValueError(f"The API spec declares no path '{template}'.")
+        if method not in {m.upper() for m in operations}:
+            raise ValueError(f"The API spec declares no {method} for '{template}'.")
+        return template
+
+    @staticmethod
+    def _encode_path_params(
+        template: str, path_params: dict[str, str | int] | None
+    ) -> dict[str, str]:
+        """Percent-encode *path_params*, which must match the placeholders of *template*.
+
+        Raises:
+            ValueError: If the keys differ from the placeholders (names only).
+        """
+        placeholders = set(re.findall(r"\{([^}/]+)\}", template))
+        given = set(path_params or {})
+        if placeholders != given:
+            raise ValueError(
+                f"Path parameters {sorted(given)} do not match placeholders {sorted(placeholders)}."
+            )
+        return {k: quote(str(v), safe="") for k, v in (path_params or {}).items()}
 
     def _item_template(self) -> tuple[str, str]:
         """Return the DII item path template and its placeholder name.

@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import copy
 import logging
+import re
 from typing import TYPE_CHECKING, Any
 
 from pynetappfoundry.clients.openapi import APIWrapper
@@ -20,6 +22,83 @@ DII_MAX_PAGES = 1000
 
 #: Keys that hold the record list in a DII ``{offset, count, limit, <records>}`` envelope.
 ENVELOPE_RECORD_KEYS = ("rows", "results", "values")
+
+_ID_SCHEMA: dict[str, Any] = {"type": ["string", "integer"]}
+_DEFINITION_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "required": ["id"],
+    "properties": {"id": _ID_SCHEMA},
+}
+_TARGETS_SCHEMA: dict[str, Any] = {"type": "array", "items": _ID_SCHEMA}
+
+
+def _array_of(item: dict[str, Any]) -> dict[str, Any]:
+    """Return an array schema whose items are the object schema *item*."""
+    return {"type": "array", "items": item}
+
+
+#: The spec declares ``{"type": "object"}`` for the request body of the annotation value
+#: operations, but DII expects a JSON array (see each operation's ``requestBody.description``).
+#: Each entry is (path regex, method, corrected schema). ``rawValue`` has no type
+#: constraint and no ``additionalProperties: false`` is set (#1185).
+_REQUEST_SCHEMA_FIXES: tuple[tuple[re.Pattern[str], str, dict[str, Any]], ...] = (
+    (
+        re.compile(r"^/assets/[A-Za-z]+/\{id\}/annotations$"),
+        "PUT",
+        _array_of(
+            {
+                "type": "object",
+                "required": ["rawValue", "definition"],
+                "properties": {"definition": _DEFINITION_SCHEMA},
+            }
+        ),
+    ),
+    (
+        re.compile(r"^/assets/[A-Za-z]+/\{id\}/annotations$"),
+        "DELETE",
+        _array_of(
+            {
+                "type": "object",
+                "required": ["definition"],
+                "properties": {"definition": _DEFINITION_SCHEMA},
+            }
+        ),
+    ),
+    (
+        re.compile(r"^/assets/annotations/\{id\}/values$"),
+        "PUT",
+        _array_of(
+            {
+                "type": "object",
+                "required": ["objectType", "values"],
+                "properties": {
+                    "objectType": {"type": "string"},
+                    "values": _array_of(
+                        {
+                            "type": "object",
+                            "required": ["rawValue", "targets"],
+                            "properties": {"targets": _TARGETS_SCHEMA},
+                        }
+                    ),
+                },
+            }
+        ),
+    ),
+    (
+        re.compile(r"^/assets/annotations/\{id\}/values$"),
+        "DELETE",
+        _array_of(
+            {
+                "type": "object",
+                "required": ["objectType", "targets"],
+                "properties": {
+                    "objectType": {"type": "string"},
+                    "targets": _TARGETS_SCHEMA,
+                },
+            }
+        ),
+    ),
+)
 
 
 def extract_envelope_records(response: Any) -> list[Any] | None:
@@ -50,6 +129,8 @@ class DIIAPIClient(APIWrapper):
     The default client carries only the read-only key. ``read_write=True``
     builds a client that carries only the read-write key, as required by
     :class:`~pynetappfoundry.query.mutation.Mutation` (ADR-0019 key isolation).
+    The 36 annotation value operations declare a bare object request body in the
+    spec but take a JSON array; :meth:`_get_request_schema` corrects them (#1185).
     """
 
     def __init__(
@@ -107,6 +188,20 @@ class DIIAPIClient(APIWrapper):
             timeout=dii_settings.timeout,
             **kwargs,
         )
+
+    def _get_request_schema(self, path_template: str, method: str) -> dict[str, Any] | None:
+        """Return the request schema, correcting a bare-object annotation value schema.
+
+        A fix applies only while the spec still declares exactly ``{"type": "object"}``,
+        so a corrected upstream spec wins.
+        """
+        schema = super()._get_request_schema(path_template, method)
+        if schema == {"type": "object"}:
+            verb = method.upper()
+            for pattern, fix_method, fix in _REQUEST_SCHEMA_FIXES:
+                if fix_method == verb and pattern.match(path_template):
+                    return copy.deepcopy(fix)
+        return schema
 
     def _supports_pagination(self, path: str) -> bool:
         """Return True if the GET spec for *path* declares ``limit`` and ``offset``."""

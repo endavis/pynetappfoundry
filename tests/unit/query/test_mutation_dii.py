@@ -6,6 +6,7 @@ import importlib
 import json
 import logging
 import pkgutil
+import re
 from pathlib import Path
 from typing import Any, ClassVar
 from unittest.mock import MagicMock
@@ -261,3 +262,116 @@ class TestErrors:
         with pytest.raises(ValueError, match="neither PATCH nor PUT"):
             m.update("1", name="x")
         client.call_endpoint.assert_not_called()
+
+
+ANNOTATION_PATH = re.compile(r"^/assets/[^/]+/\{id\}/annotations$")
+
+
+def _annotation_models() -> list[str]:
+    return sorted(
+        m.name
+        for m in model_registry.mappings.values()
+        if m.api_type == "dii" and ANNOTATION_PATH.match(m.api_endpoint.split("?", 1)[0])
+    )
+
+
+class TestCall:
+    def test_annotation_model_count(self) -> None:
+        assert len(_annotation_models()) == 17
+
+    @pytest.mark.parametrize("name", _annotation_models())
+    def test_put_annotations_per_object(self, client: MagicMock, name: str) -> None:
+        client.call_endpoint.return_value = {"ok": True}
+        body = [{"rawValue": "Gold", "definition": {"id": "1"}}]
+        endpoint = model_registry.get_mapping(name).api_endpoint.split("?", 1)[0]  # type: ignore[union-attr]
+        result = Mutation(_model(name), client).call("PUT", path_params={"id": "v1"}, body=body)
+        assert result == {"ok": True}
+        client.call_endpoint.assert_called_once_with(
+            endpoint, method="PUT", path_params={"id": "v1"}, body=body
+        )
+
+    def test_delete_annotations_list_body(self, client: MagicMock) -> None:
+        body = [{"definition": {"id": "1"}}]
+        Mutation(_model("DiiAssetsVolumesAnnotation"), client).call(
+            "DELETE", path_params={"id": 5}, body=body
+        )
+        kwargs = client.call_endpoint.call_args.kwargs
+        assert kwargs["method"] == "DELETE"
+        assert kwargs["path_params"] == {"id": "5"}
+        assert kwargs["body"] == body
+        assert "retry_config" not in kwargs
+
+    @pytest.mark.parametrize("method", ["PUT", "DELETE"])
+    def test_annotation_values_default_path(self, client: MagicMock, method: str) -> None:
+        Mutation(_model("DiiAssetsAnnotationsValue"), client).call(
+            method, path_params={"id": "9"}, body=[{"objectType": "volume", "targets": ["1"]}]
+        )
+        assert client.call_endpoint.call_args.args[0] == "/assets/annotations/{id}/values"
+
+    def test_explicit_values_path_on_annotation_model(self, client: MagicMock) -> None:
+        Mutation(DiiAssetsAnnotation, client).call(
+            "PUT", "/assets/annotations/{id}/values", path_params={"id": "9"}, body=[]
+        )
+        assert client.call_endpoint.call_args.args[0] == "/assets/annotations/{id}/values"
+
+    def test_datasource_poll_post_has_retry_disabled(self, client: MagicMock) -> None:
+        Mutation(DiiCollectorDatasource, client).call(
+            "POST", "/collector/datasources/{dataSourceId}/poll", path_params={"dataSourceId": 7}
+        )
+        kwargs = client.call_endpoint.call_args.kwargs
+        assert kwargs["path_params"] == {"dataSourceId": "7"}
+        assert kwargs["retry_config"] == RetryConfig(enabled=False)
+
+    def test_monitor_pause(self, client: MagicMock) -> None:
+        Mutation(_model("DiiMonitorsMonitor"), client).call(
+            "POST", "/monitors/monitors/{id}/pause", path_params={"id": "m1"}
+        )
+        assert client.call_endpoint.call_args.args[0] == "/monitors/monitors/{id}/pause"
+
+    def test_path_params_are_encoded(self, client: MagicMock) -> None:
+        Mutation(_model("DiiMonitorsMonitor"), client).call(
+            "POST", "/monitors/monitors/{id}/pause", path_params={"id": "a/b c"}
+        )
+        assert client.call_endpoint.call_args.kwargs["path_params"] == {"id": "a%2Fb%20c"}
+
+    @pytest.mark.parametrize(
+        ("method", "path", "params", "match"),
+        [
+            ("GET", None, None, "not 'GET'"),
+            ("POST", "/assets/storages", None, "outside the model"),
+            ("POST", "/monitors/monitorsX/{id}/pause", {"id": "1"}, "outside the model"),
+            ("POST", "/monitors/monitors/{id}/nope", {"id": "1"}, "declares no path"),
+            ("PATCH", "/monitors/monitors/{id}/pause", {"id": "1"}, "declares no PATCH"),
+            ("POST", "/monitors/monitors/{id}/pause", None, "do not match"),
+            ("POST", "/monitors/monitors/{id}/pause", {"id": "1", "x": "2"}, "do not match"),
+        ],
+    )
+    def test_refusals_make_no_call(
+        self,
+        client: MagicMock,
+        method: str,
+        path: str | None,
+        params: dict[str, Any] | None,
+        match: str,
+    ) -> None:
+        m = Mutation(_model("DiiMonitorsMonitor"), client)
+        with pytest.raises(ValueError, match=match):
+            m.call(method, path or "/monitors/monitors", path_params=params)
+        client.call_endpoint.assert_not_called()
+
+    def test_param_error_names_keys_only(self, client: MagicMock) -> None:
+        m = Mutation(_model("DiiMonitorsMonitor"), client)
+        with pytest.raises(ValueError) as exc:
+            m.call("POST", "/monitors/monitors/{id}/pause", path_params={"bad": SENTINEL})
+        assert SENTINEL not in str(exc.value)
+
+    def test_logs_without_values(self, client: MagicMock, caplog: pytest.LogCaptureFixture) -> None:
+        caplog.set_level(logging.DEBUG)
+        m = Mutation(_model("DiiAssetsVolumesAnnotation"), client)
+        m.call("PUT", path_params={"id": "1"}, body=[{"rawValue": SENTINEL, "definition": {}}])
+        Mutation(DiiCollectorDatasource, client).call(
+            "POST", "/collector/datasources/test", body={"password": SENTINEL}
+        )
+        assert SENTINEL not in caplog.text
+        assert "list of 1 item(s)" in caplog.text
+        assert "keys=['password']" in caplog.text

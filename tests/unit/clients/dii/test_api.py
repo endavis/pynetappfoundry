@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import json
 import logging
 from collections.abc import Mapping
+from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock
 
@@ -327,3 +329,84 @@ class TestGetAllPagesPathParams:
         client.get_all_pages(PATH)
 
         assert all("path_params" not in k for k in self._kwargs(client))
+
+
+SPEC_PATH = Path(__file__).resolve().parents[4] / "docs/example-config/apis/dii/all.json"
+SECRET = "SENTINEL-1185"
+
+
+@pytest.fixture(scope="module")
+def spec_client() -> DIIAPIClient:
+    if not SPEC_PATH.exists():
+        pytest.skip("DII spec not available")
+    client = DIIAPIClient.__new__(DIIAPIClient)
+    client.api_spec = json.loads(SPEC_PATH.read_text(encoding="utf-8"))
+    client.log_prefix = "[test:api]"
+    return client
+
+
+class TestRequestSchemaFixes:
+    @pytest.mark.parametrize("kind", ["volumes", "storagePools", "hosts"])
+    def test_valid_per_object_bodies(self, spec_client: DIIAPIClient, kind: str) -> None:
+        path = f"/assets/{kind}/{{id}}/annotations"
+        assert spec_client.validate_body(path, "PUT", [{"rawValue": 3, "definition": {"id": "1"}}])
+        assert spec_client.validate_body(path, "DELETE", [{"definition": {"id": 1}}])
+
+    def test_valid_values_bodies(self, spec_client: DIIAPIClient) -> None:
+        path = "/assets/annotations/{id}/values"
+        assert spec_client.validate_body(
+            path,
+            "PUT",
+            [{"objectType": "volume", "values": [{"rawValue": "x", "targets": ["1", 2]}]}],
+        )
+        assert spec_client.validate_body(
+            path, "DELETE", [{"objectType": "volume", "targets": ["1"]}]
+        )
+
+    @pytest.mark.parametrize(
+        ("path", "method", "body"),
+        [
+            ("/assets/volumes/{id}/annotations", "PUT", {"rawValue": SECRET}),
+            ("/assets/volumes/{id}/annotations", "PUT", [{"rawValue": SECRET}]),
+            ("/assets/volumes/{id}/annotations", "DELETE", [{"rawValue": SECRET}]),
+            (
+                "/assets/annotations/{id}/values",
+                "PUT",
+                [{"objectType": "v", "values": [{"rawValue": SECRET, "targets": SECRET}]}],
+            ),
+            ("/assets/annotations/{id}/values", "DELETE", [{"objectType": SECRET}]),
+        ],
+    )
+    def test_invalid_bodies_log_no_value(
+        self,
+        spec_client: DIIAPIClient,
+        caplog: pytest.LogCaptureFixture,
+        path: str,
+        method: str,
+        body: Any,
+    ) -> None:
+        assert not spec_client.validate_body(path, method, body)
+        assert SECRET not in caplog.text
+
+    def test_real_spec_schema_wins(
+        self, spec_client: DIIAPIClient, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        real = {"type": "array", "items": {"type": "string"}}
+        monkeypatch.setattr(dii_api.APIWrapper, "_get_request_schema", lambda *_a: real)
+        got = spec_client._get_request_schema("/assets/volumes/{id}/annotations", "PUT")
+        assert got == real
+
+    def test_unrelated_path_untouched(self, spec_client: DIIAPIClient) -> None:
+        schema = spec_client._get_request_schema("/assets/annotations", "POST")
+        assert schema is not None
+        assert schema.get("type") != "array"
+        assert spec_client._get_request_schema("/assets/annotations", "POST") == (
+            dii_api.APIWrapper._get_request_schema(spec_client, "/assets/annotations", "POST")
+        )
+
+    def test_get_request_schema_for_endpoint_reports_fix(self, spec_client: DIIAPIClient) -> None:
+        raw = spec_client.get_request_schema_for_endpoint(
+            "/assets/volumes/{id}/annotations", "PUT", human_readable=False
+        )
+        assert isinstance(raw, dict)
+        assert raw["type"] == "array"
