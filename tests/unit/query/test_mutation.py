@@ -303,3 +303,11 @@ class TestParseResponse:
         response = {"job": {"uuid": "job-123"}}
         result = m._parse_response(response)
         assert result == {"job": {"uuid": "job-123"}}
+
+
+class TestCallOntap:
+    def test_call_is_refused_for_ontap(self, mock_client: MagicMock) -> None:
+        m = Mutation(FakeVolume, mock_client)
+        with pytest.raises(ValueError, match="only supported for DII"):
+            m.call("POST", "/storage/volumes")
+        mock_client.call_endpoint.assert_not_called()

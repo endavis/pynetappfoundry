@@ -226,3 +226,41 @@ def test_get_response_body_still_logged(
         things_wrapper.call_endpoint("/things", "GET")
     assert "Response Text:" in caplog.text
     assert SENTINEL in caplog.text
+
+
+@pytest.fixture
+def array_wrapper(tmp_path: Path) -> APIWrapper:
+    schema = {
+        "content": {
+            "application/json": {
+                "schema": {"type": "array", "items": {"type": "object", "required": ["a"]}}
+            }
+        }
+    }
+    spec = {
+        "swagger": "2.0",
+        "basePath": "/api/v1",
+        "paths": {
+            "/lists": {"put": {"requestBody": schema, "responses": {"200": {"description": "ok"}}}}
+        },
+    }
+    spec_path = tmp_path / "lists.json"
+    spec_path.write_text(json.dumps(spec))
+    return APIWrapper(
+        api_json_file=str(spec_path), base_url="https://api.example.test", timeout=5.0
+    )
+
+
+def test_list_body_is_validated_and_sent_as_json(array_wrapper: APIWrapper) -> None:
+    with patch.object(array_wrapper.session, "request", return_value=_ok_response()) as req:
+        array_wrapper.call_endpoint("/lists", "PUT", body=[{"a": 1}])
+    assert req.call_args.kwargs["json"] == [{"a": 1}]
+
+
+def test_invalid_list_body_is_rejected_without_a_request(array_wrapper: APIWrapper) -> None:
+    with (
+        patch.object(array_wrapper.session, "request") as req,
+        pytest.raises(ValueError, match="validation failed"),
+    ):
+        array_wrapper.call_endpoint("/lists", "PUT", body=[{"b": SENTINEL}])
+    req.assert_not_called()

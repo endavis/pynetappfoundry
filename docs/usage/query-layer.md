@@ -42,7 +42,7 @@ The layer ships six public surfaces:
 |----------|----------|
 | Type-safe ad-hoc reads with filters / projection / ordering | `QuerySet` |
 | Call a POST endpoint that returns data instead of mutating state | `Query` |
-| Create / update / delete a resource | `Mutation` |
+| Create / update / delete a resource, or a DII action / annotation write | `Mutation` (`.create` / `.update` / `.delete` / `.call`) |
 | Wait for an async ONTAP job | `JobTracker` (or `poll=True` shortcut on `Mutation`) |
 | Express "fetch related X for this Y" intent | `related` / `related_one` |
 | Read fields excluded from the cache (IOPS, latency, ...) | `fetch_realtime` family |
@@ -227,7 +227,16 @@ m.delete("abc-123-def")
 - **No `poll`.** DII has no job polling; `poll=True` raises `ValueError`.
 - **Supported areas:** `assets/annotations`, `assets/applications`, `monitors/monitors`, `monitors/rules` and `collector/datasources`, each with create, update and delete.
 - **Not logged.** Request and response bodies of writes are not logged. At DEBUG only the top-level body keys and the response size are.
-- **Not supported yet:** action and sub-resource endpoints (pause, resume, annotation values, application assets, datasource poll / test / clone / note), collection-level DELETE, and the `preEncrypted` query parameter.
+- **`.call(method, path=None, *, path_params=None, body=None)`** sends any POST, PUT, PATCH or DELETE operation at or below the model's endpoint, for actions and sub-resource writes. It returns the raw response. Rules:
+    - **DII only.** An ONTAP model raises `ValueError`.
+    - **Write methods only.** GET is refused.
+    - **Model scope.** `path` is a spec path template. It must equal the model's endpoint or start with it followed by `/`. It defaults to the model's endpoint, for example `/assets/volumes/{id}/annotations`.
+    - **Spec check.** The path must be in the client's spec and declare the method.
+    - **Path parameters.** `path_params` must have exactly one entry per `{placeholder}`. Values are percent-encoded, so `a/b c` becomes `a%2Fb%20c`. An error names keys, never values.
+    - **Validation and retry.** The body, a JSON object or array, is validated against the spec. POST has retry disabled, as in `.create()`.
+    - **Logging.** DEBUG logs the path template and `none`, the sorted top-level keys, or `list of N item(s)`; never values.
+- **Annotation request schemas are corrected.** The spec declares `{"type": "object"}` for the 36 annotation value operations (`PUT` / `DELETE /assets/<type>/{id}/annotations` for 17 types, and `PUT` / `DELETE /assets/annotations/{id}/values`), but DII takes a JSON array. `DIIAPIClient` replaces the bare-object schema with an array schema, only while the spec still declares a bare object. Other bare-object schemas are not checked.
+- **Not supported yet:** operations under no mapped model, `.call` on ONTAP models, collection-level DELETE, and the `preEncrypted` query parameter.
 
 ```python
 from pynetappfoundry.clients import DIIAPIClient
@@ -250,6 +259,35 @@ ds.delete("7")
 ```
 
 Credentials in `config` go to the API unchanged and stay out of the logs.
+
+Annotation values and actions go through `.call`:
+
+```python
+from pynetappfoundry.models.dii.assets.annotations.model import DiiAssetsAnnotation
+from pynetappfoundry.models.dii.assets.volumes.annotations.model import (
+    DiiAssetsVolumesAnnotation,
+)
+
+rw = DIIAPIClient(config, read_write=True)
+
+# Per-object annotations: PUT /assets/volumes/{id}/annotations
+Mutation(DiiAssetsVolumesAnnotation, rw).call(
+    "PUT",
+    path_params={"id": "vol-1"},
+    body=[{"rawValue": "Gold", "definition": {"id": "12"}}],
+)
+
+# Bulk values by annotation definition
+Mutation(DiiAssetsAnnotation, rw).call(
+    "PUT",
+    "/assets/annotations/{id}/values",
+    path_params={"id": "12"},
+    body=[{"objectType": "volume", "values": [{"rawValue": "Gold", "targets": ["vol-1"]}]}],
+)
+
+# Action endpoint: poll a datasource
+ds.call("POST", "/collector/datasources/{dataSourceId}/poll", path_params={"dataSourceId": 7})
+```
 
 ## Async Job Tracking
 
