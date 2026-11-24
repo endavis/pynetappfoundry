@@ -228,6 +228,7 @@ def set_credential(
 
         # Store the DII API token or the SMTP password
         nf config set-credential --setting diiapi.api_ro_token
+        nf config set-credential --setting diiapi.api_rw_token
         nf config set-credential --setting digitaladvisorapi.refresh_token
         nf config set-credential --setting settings.smtp_password
     """

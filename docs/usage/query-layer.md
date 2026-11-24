@@ -1,6 +1,6 @@
 ---
 title: Query Layer
-description: Guide to the REST query layer (QuerySet, Query, Mutation, JobTracker, related, realtime)
+description: Guide to the REST query layer (QuerySet, Query, Mutation for ONTAP and DII writes, JobTracker, related, realtime)
 audience:
   - users
   - contributors
@@ -31,7 +31,7 @@ The layer ships six public surfaces:
 
 - `QuerySet` — fluent, lazy reads for collection-style GET endpoints
 - `Query` — RPC-style POST reads for endpoints that accept a request body and return data
-- `Mutation` — POST / PATCH / DELETE writes
+- `Mutation` — POST / PATCH / PUT / DELETE writes for ONTAP and DII
 - `JobTracker` (and `JobError`) — polling for async ONTAP jobs
 - `related` / `related_one` — relationship-traversal sugar over `QuerySet`
 - `fetch_realtime`, `fetch_realtime_collection`, `watch_realtime`, `compare_realtime` — on-demand access to fields marked `cache_strategy="realtime"`
@@ -175,7 +175,7 @@ Use `Query` when the remote API expects a structured POST body for a read-style 
 
 ## Mutation Writes
 
-`Mutation` wraps the same `TypeMapping` to translate flat model-attribute kwargs into the nested JSON body that ONTAP REST expects.
+`Mutation` wraps the same `TypeMapping` to translate flat model-attribute kwargs into the nested JSON body that the REST API expects. It works for ONTAP models and, with a read-write client, for DII models (see [DII writes](#dii-writes)). The ONTAP behaviour is described first.
 
 ```python
 from pynetappfoundry.query import Mutation
@@ -216,6 +216,40 @@ m.delete("abc-123-def")
 ### Return value parsing
 
 `.create()` and `.update()` parse the API response back into a model instance when the response looks like a record (i.e. it contains at least one top-level key that the `TypeMapping` knows about). For 202-style async responses (`{"job": {...}}`) the raw dict is returned — see the next section for how to track the job.
+
+### DII writes
+
+`Mutation` also writes Data Infrastructure Insights (DII) objects. The model's mapping is found the same way; what differs is the client, the item path and the update method.
+
+- **Read-write client required.** Build it with `DIIAPIClient(config, read_write=True)`. It sends only `api_rw_token` (from `diiapi.toml [general]`; see [Config schema: diiapi.toml](../reference/config-schema.md#diiapitoml)), and the default read client never holds that key. Without a configured key the client raises `DIIWriteTokenMissingError` at construction, before any request. `Mutation(<DII model>, <read client>)` raises the same error.
+- **PATCH or PUT from the spec.** `.update()` sends PATCH when the item path declares it, otherwise PUT. A PUT replaces the whole object, so send every field you want to keep.
+- **`uuid` is the DII `id`** (or `dataSourceId` for datasources). The item path template, `/assets/annotations/{id}` or `/collector/datasources/{dataSourceId}`, is read from the client's spec.
+- **No `poll`.** DII has no job polling; `poll=True` raises `ValueError`.
+- **Supported areas:** `assets/annotations`, `assets/applications`, `monitors/monitors`, `monitors/rules` and `collector/datasources`, each with create, update and delete.
+- **Not logged.** Request and response bodies of writes are not logged. At DEBUG only the top-level body keys and the response size are.
+- **Not supported yet:** action and sub-resource endpoints (pause, resume, annotation values, application assets, datasource poll / test / clone / note), collection-level DELETE, and the `preEncrypted` query parameter.
+
+```python
+from pynetappfoundry.clients import DIIAPIClient
+from pynetappfoundry.models.dii.collector.datasources.model import DiiCollectorDatasource
+from pynetappfoundry.query import Mutation
+
+client = DIIAPIClient(config, read_write=True)
+ds = Mutation(DiiCollectorDatasource, client)
+
+created = ds.create(
+    name="array-1",
+    acquisitionUnit={"id": 1},
+    config={
+        "dsTypeId": "ontap",
+        "packages": [{"id": "foundation", "attributes": {"password": "..."}}],
+    },
+)
+ds.update("7", config={"packages": [{"id": "foundation", "attributes": {"password": "..."}}]})
+ds.delete("7")
+```
+
+Credentials in `config` go to the API unchanged and stay out of the logs.
 
 ## Async Job Tracking
 

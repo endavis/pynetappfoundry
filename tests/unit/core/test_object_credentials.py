@@ -138,6 +138,45 @@ def test_dii_settings_tenant_falls_back_to_general_url(
     assert settings.api_ro_token.get_secret_value() == "t2-token"
 
 
+def test_dii_rw_token_defaults_to_none(config: Config) -> None:
+    assert config.get_dii_api_settings().api_rw_token is None
+    assert config.get_dii_api_settings("t1").api_rw_token is None
+
+
+def _with_general_rw(config: Config) -> Config:
+    """Return a fresh Config whose ``diiapi.toml [general]`` also sets ``api_rw_token``.
+
+    The ``config`` fixture has already chdir-ed into the directory holding ``cfg``.
+    """
+    path = Path("cfg") / "diiapi.toml"
+    path.write_text(path.read_text() + 'api_rw_token = "general-rw-token"\n')
+    return Config(config_dir="cfg", script_name="test")
+
+
+def test_dii_rw_token_without_name_uses_general(config: Config) -> None:
+    config = _with_general_rw(config)
+    settings = config.get_dii_api_settings()
+    assert settings.api_rw_token is not None
+    assert settings.api_rw_token.get_secret_value() == "general-rw-token"
+
+
+def test_dii_tenant_with_own_key_gets_no_rw_token(config: Config) -> None:
+    config = _with_general_rw(config)
+    settings = config.get_dii_api_settings("t1")
+    assert settings.api_ro_token.get_secret_value() == "t1-token"
+    assert settings.api_rw_token is None
+
+
+def test_dii_tenant_without_own_key_inherits_general_keys(config: Config) -> None:
+    users = Path("cfg") / "users.toml"
+    users.write_text('[aiqums]\nuser = "default-user"\nenc = "default-pass"\n')
+    config = _with_general_rw(config)
+    settings = config.get_dii_api_settings("t2")
+    assert settings.api_ro_token.get_secret_value() == "general-token"
+    assert settings.api_rw_token is not None
+    assert settings.api_rw_token.get_secret_value() == "general-rw-token"
+
+
 def test_dii_settings_unknown_tenant_lists_names(config: Config) -> None:
     with pytest.raises(ConfigurationError, match=r"nope.*t1, t2"):
         config.get_dii_api_settings("nope")

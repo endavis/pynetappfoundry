@@ -162,7 +162,7 @@ These settings fields accept a `SOPS[...]` value instead of plaintext:
 | File | Section | Fields | `--setting` target |
 |------|---------|--------|--------------------|
 | `settings.toml` | `[SMTP]` | `password` | `settings.smtp_password` |
-| `diiapi.toml` | `[general]` | `api_ro_token` | `diiapi.api_ro_token` |
+| `diiapi.toml` | `[general]` | `api_ro_token`, `api_rw_token` | `diiapi.api_ro_token`, `diiapi.api_rw_token` |
 | `consoleapi.toml` | `[general]` | `client_secret`, `service_token`, `user_token` | `consoleapi.client_secret`, `consoleapi.service_token`, `consoleapi.user_token` |
 | `digitaladvisorapi.toml` | `[general]` | `personal_access_token`, `access_token`, `refresh_token` | `digitaladvisorapi.personal_access_token`, `digitaladvisorapi.access_token`, `digitaladvisorapi.refresh_token` |
 
@@ -334,6 +334,7 @@ Data Infrastructure Insights (DII) API settings. Loaded into `config.settings["d
 ```toml
 [general]
 api_ro_token = "your-api-token-here"      # Required: Read-only API token
+api_rw_token = "your-read-write-token"    # Optional: Read-write API token, used only for writes
 base_url = "https://your-tenant.cloudinsights.netapp.com"  # Required: DII tenant URL
 base_api_path = "/rest/v1"                 # Optional: Base API path (default: "/rest/v1")
 ```
@@ -343,10 +344,11 @@ base_api_path = "/rest/v1"                 # Optional: Base API path (default: "
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
 | `api_ro_token` | SecretStr | Yes | - | Read-only API token for DII authentication. SOPS value accepted |
+| `api_rw_token` | SecretStr | No | - | Read-write API token. Only `DIIAPIClient(config, read_write=True)` uses it, and that client sends no other key. SOPS value accepted |
 | `base_url` | string | Yes | - | Base URL for your DII tenant |
 | `base_api_path` | string | No | `"/rest/v1"` | Base path for DII REST API endpoints |
 
-With several tenants, `DIIAPIClient(config, name="TENANT")` reads `base_url` and the token from `[cloudinsights.TENANT]` in a data file (see [Cloud Insights](#cloud-insights)), falling back to `[general]` for either. `DIIAPIClient(config)` uses `[general]` alone.
+With several tenants, `DIIAPIClient(config, name="TENANT")` reads `base_url` and the token from `[cloudinsights.TENANT]` in a data file (see [Cloud Insights](#cloud-insights)), falling back to `[general]` for either. `DIIAPIClient(config)` uses `[general]` alone. The `[general]` `api_rw_token` belongs to the default tenant: a tenant with its own key gets no read-write key, and a tenant without one inherits both `[general]` keys. A separate read-write key per tenant is not supported yet.
 
 ---
 

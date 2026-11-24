@@ -28,6 +28,20 @@ NextPageExtractor = Callable[[dict[str, Any]], str | None]
 """Callable that receives a JSON response dict and returns the next page URL or None."""
 
 
+#: Request headers whose values are masked in debug logs.
+_REDACTED_HEADERS = frozenset({"authorization", "x-cloudinsights-apikey"})
+
+
+def _describe_validation_error(error: Any) -> str:
+    """Describe a jsonschema validation error without the offending value.
+
+    Built only from the failing validator and the JSON path of the failing
+    field, so the text names the field, never its value.
+    """
+    path = "/".join(str(part) for part in error.absolute_path) or "(root)"
+    return f"'{error.validator}' failed at {path}"
+
+
 def _load_spec(path: str | Path) -> dict[str, Any]:
     """Load an OpenAPI spec, parsing ``.yaml``/``.yml`` as YAML and anything else as JSON."""
     spec_path = Path(path)
@@ -419,7 +433,8 @@ class APIWrapper:
     ) -> bool:
         """Validate 'body' against the endpoint's resolved schema (if any).
 
-        If no body or no schema is present, returns True.
+        If no body or no schema is present, returns True. A failure is logged
+        as the failing validator and field path; the field value is not logged.
         """
         if body is None:
             return True
@@ -433,7 +448,9 @@ class APIWrapper:
             validate(instance=body, schema=schema)
             return True
         except ValidationError as e:
-            logging.error(f"{self.log_prefix} Request body validation error: {e.message}")
+            logging.error(
+                f"{self.log_prefix} Request body validation error: {_describe_validation_error(e)}"
+            )
             return False
 
     def suggest_parameters(self, path_template: str, method: str = "GET") -> dict[str, Any]:
@@ -568,7 +585,8 @@ class APIWrapper:
         except ValidationError as e:
             error_msg = (
                 f"{self.log_prefix} Response validation failed for {method} {path_template} "
-                f"status {status_code}: {e.message}"
+                f"status {status_code}: "
+                f"{_describe_validation_error(e)}"
             )
             if config.strict:
                 raise ResponseValidationError(
@@ -576,7 +594,7 @@ class APIWrapper:
                     path_template=path_template,
                     method=method,
                     status_code=status_code,
-                    validation_error=e.message,
+                    validation_error=_describe_validation_error(e),
                 ) from e
             logging.warning(error_msg)
             return False
@@ -723,6 +741,10 @@ class APIWrapper:
         Validates body (if schema exists), applies retry logic, validates response,
         and raises for HTTP errors.
 
+        At DEBUG, header values for ``Authorization`` and ``X-CloudInsights-ApiKey``
+        are masked. The response body is logged for GET only; other methods log its
+        byte size.
+
         Args:
             path_template: API path template.
             method: HTTP method.
@@ -763,7 +785,7 @@ class APIWrapper:
             headers.update(additional_headers)
 
         logged_headers = {
-            key: ("***" if key.lower() == "authorization" else value)
+            key: ("***" if key.lower() in _REDACTED_HEADERS else value)
             for key, value in headers.items()
         }
         logging.debug(f"{self.log_prefix} Calling {method} {url} {logged_headers}")
@@ -781,8 +803,14 @@ class APIWrapper:
         resp.raise_for_status()
 
         # Try JSON, else return text
-        try:
+        if method == "GET":
             logging.debug(f"{self.log_prefix} {path} Response Text: {resp.text}")
+        else:
+            logging.debug(
+                f"{self.log_prefix} {path} Response: {len(resp.content)} bytes "
+                f"(body not logged for {method})"
+            )
+        try:
             response_data = resp.json()
         except ValueError:
             response_data = resp.text

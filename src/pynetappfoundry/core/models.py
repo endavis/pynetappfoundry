@@ -116,6 +116,8 @@ class DIIAPISettings(BaseModel):
     model_config = ConfigDict(extra="allow", hide_input_in_errors=True)
 
     api_ro_token: SecretStr
+    # Optional read-write key; only a write client (``DIIAPIClient(read_write=True)``) uses it.
+    api_rw_token: SecretStr | None = None
     base_url: str
     base_api_path: str = "/rest/v1"
     timeout: float = 30.0

@@ -39,6 +39,11 @@ def _dii(tmp: Path, extra: str = "", body: str = DII_BODY) -> Config:
     return Config(config_dir=str(tmp / "cfg"), script_name="test")
 
 
+def _dii_rw(tmp: Path, extra: str = "") -> Config:
+    """DII config with a plaintext read-only key, so the read-write key can be the field."""
+    return _dii(tmp, extra, body=DII_BODY + 'api_ro_token = "plain-ro-token"\n')
+
+
 def _console(tmp: Path, extra: str = "", users: str = "") -> Config:
     _write(tmp / "cfg", "consoleapi.toml", f"[general]\n{CONSOLE_BODY}{extra}")
     if users:
@@ -55,6 +60,9 @@ CASES: list[Any] = [
     pytest.param(_smtp, "get_smtp_settings", "password", "[SMTP]", "settings.toml", id="smtp"),
     pytest.param(
         _dii, "get_dii_api_settings", "api_ro_token", "[general]", "diiapi.toml", id="dii"
+    ),
+    pytest.param(
+        _dii_rw, "get_dii_api_settings", "api_rw_token", "[general]", "diiapi.toml", id="dii-rw"
     ),
     pytest.param(
         _console,

@@ -1,5 +1,6 @@
 [general]
 api_ro_token = 'some_ro_token_from_dii'
 # api_ro_token = 'SOPS[...]'  # encrypted value, written by: nf config set-credential --setting diiapi.api_ro_token
+# api_rw_token = 'SOPS[...]'  # optional read-write key for DII writes: nf config set-credential --setting diiapi.api_rw_token
 base_url="https://your-client.cloudinsights.netapp.com"
 base_api_path="/rest/v1"

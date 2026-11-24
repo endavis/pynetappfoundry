@@ -40,10 +40,26 @@ def extract_envelope_records(response: Any) -> list[Any] | None:
     return records if isinstance(records, list) else None
 
 
-class DIIAPIClient(APIWrapper):
-    """API client for Data Infrastructure Insights (formerly Cloud Insights)."""
+class DIIWriteTokenMissingError(RuntimeError):
+    """Raised when a DII write client is requested without a read-write API key."""
 
-    def __init__(self, config: Config, name: str | None = None, **kwargs: Any) -> None:
+
+class DIIAPIClient(APIWrapper):
+    """API client for Data Infrastructure Insights (formerly Cloud Insights).
+
+    The default client carries only the read-only key. ``read_write=True``
+    builds a client that carries only the read-write key, as required by
+    :class:`~pynetappfoundry.query.mutation.Mutation` (ADR-0019 key isolation).
+    """
+
+    def __init__(
+        self,
+        config: Config,
+        name: str | None = None,
+        *,
+        read_write: bool = False,
+        **kwargs: Any,
+    ) -> None:
         """Initialize the DII API client.
 
         Args:
@@ -51,6 +67,8 @@ class DIIAPIClient(APIWrapper):
             name: Optional ``[cloudinsights.<name>]`` tenant. Its ``base_url`` and
                 token override ``diiapi.toml [general]``; without it, ``[general]``
                 alone is used.
+            read_write: Build a write client that sends ``api_rw_token`` instead of
+                ``api_ro_token``.
             **kwargs: Additional arguments passed to APIWrapper.
         """
         self.config = config
@@ -58,11 +76,33 @@ class DIIAPIClient(APIWrapper):
         dii_settings = (
             config.get_dii_api_settings() if name is None else config.get_dii_api_settings(name)
         )
+        self.read_write = read_write
+        if read_write:
+            if dii_settings.api_rw_token is None:
+                if name is None:
+                    hint = (
+                        "Add api_rw_token to diiapi.toml [general], for example with "
+                        "`nf config set-credential --setting diiapi.api_rw_token`."
+                    )
+                else:
+                    hint = (
+                        f"Tenant {name!r} uses the diiapi.toml [general] api_rw_token only "
+                        "when it has no key of its own; a separate read-write key per "
+                        "tenant is not supported yet."
+                    )
+                raise DIIWriteTokenMissingError(
+                    f"A DII write client needs api_rw_token, but none is configured. {hint}"
+                )
+            api_key = dii_settings.api_rw_token.get_secret_value()
+            log_name = f"{name}:rw" if name else "rw"
+        else:
+            api_key = dii_settings.api_ro_token.get_secret_value()
+            log_name = name or ""
         super().__init__(
-            name=name or "",
+            name=log_name,
             api_json_file=str(config.get_schema_location("dii") / "all.json"),
             base_url=dii_settings.base_url,
-            auth_header={"X-CloudInsights-ApiKey": dii_settings.api_ro_token.get_secret_value()},
+            auth_header={"X-CloudInsights-ApiKey": api_key},
             base_api_path=dii_settings.base_api_path,
             timeout=dii_settings.timeout,
             **kwargs,

@@ -106,9 +106,11 @@ See [DataSource usage](../usage/data-source.md).
 - Issue #533: feat: DataSource non-ONTAP backends (partially addressed; DII is the first non-ONTAP backend)
 - Issue #618: feat: early validation for where()/typed-DSL + incompatible source mode
 - Issue #1052: bug: DataSource source=auto raises on DII instead of going live (sets `DiiBackend.live_only`)
+- Issue #1003: feat: add DII writes with a read-write API key (the backend stays read-only; writes go through `Mutation`, see [ADR-0039](0039-dii-writes-use-a-separate-read-write-key-client-and-extend-mutation.md))
 
 ## Related Documentation
 
+- [ADR-0039: DII writes use a separate read-write key client and extend Mutation](0039-dii-writes-use-a-separate-read-write-key-client-and-extend-mutation.md) -- the write path this read-only backend does not cover
 - [ADR-0006: Generalize field mapping for multi-API](0006-generalize-field-mapping-for-multi-api.md) -- multi-API TypeMapping generalization that DII relies on
 - [ADR-0008: OpenAPI codegen for model generation](0008-openapi-codegen-for-model-generation.md) -- codegen pipeline that generated the 191 DII models and mappings
 - [ADR-0013: DataSource as a Thin Facade](0013-datasource-as-a-thin-facade-over-the-collector.md) -- backend registry and routing architecture

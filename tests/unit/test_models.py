@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 import pytest
-from pydantic import SecretStr
+from pydantic import SecretStr, ValidationError
 
 from pynetappfoundry.core.models import (
     AIQUMAPISettings,
@@ -297,6 +297,31 @@ class TestDIIAPISettings:
             base_api_path="/rest/v2",
         )
         assert settings.base_api_path == "/rest/v2"
+
+
+class TestDIIAPISettingsReadWriteKey:
+    """The optional read-write key (#1003)."""
+
+    def test_defaults_to_none(self) -> None:
+        settings = DIIAPISettings(api_ro_token=SecretStr("ro"), base_url="https://dii.test")
+        assert settings.api_rw_token is None
+
+    def test_accepts_key_and_hides_it(self) -> None:
+        settings = DIIAPISettings(
+            api_ro_token=SecretStr("ro"),
+            api_rw_token=SecretStr("rw-secret-value"),
+            base_url="https://dii.test",
+        )
+        assert settings.api_rw_token is not None
+        assert settings.api_rw_token.get_secret_value() == "rw-secret-value"
+        assert "rw-secret-value" not in repr(settings)
+
+    def test_validation_error_text_omits_key(self) -> None:
+        with pytest.raises(ValidationError) as exc:
+            DIIAPISettings.model_validate(
+                {"api_ro_token": "ro", "api_rw_token": "rw-secret-value", "base_url": 5}
+            )
+        assert "rw-secret-value" not in str(exc.value)
 
 
 class TestAIQUMAPISettings:
