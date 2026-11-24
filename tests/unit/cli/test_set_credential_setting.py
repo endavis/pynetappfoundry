@@ -224,6 +224,7 @@ def test_unknown_scope_is_rejected(tmp_path: Path) -> None:
         ["--name", "x"],
         ["--user", "someone"],
         ["--no-encrypt"],
+        ["--read-write"],
     ],
 )
 def test_conflicting_options_are_rejected(tmp_path: Path, extra: list[str]) -> None:
@@ -618,3 +619,20 @@ def test_missing_non_api_file_is_created_at_top_level(tmp_path: Path) -> None:
     assert result.exit_code == 0, result.output
     assert _load(config_dir / "settings.toml")["SMTP"]["password"] == CIPHERTEXT
     assert not (config_dir / "apis").exists()
+
+
+def test_read_write_encrypts_the_tenant_key(tmp_path: Path) -> None:
+    config_dir = _config_dir(
+        tmp_path,
+        {"root.toml": ROOT_DATA + '\n[cloudinsights.t1]\nbase_url = "https://t1.invalid"\n'},
+    )
+
+    result, encrypt = _invoke(config_dir, "--type", "cloudinsights", "--name", "t1", "--read-write")
+
+    assert result.exit_code == 0, result.output
+    encrypt.assert_called_once()
+    assert encrypt.call_args.args[0] == PLAIN
+    tenant = _load(config_dir / "root.toml")["cloudinsights"]["t1"]
+    assert tenant["rw_enc"] == CIPHERTEXT
+    assert PLAIN not in result.output
+    assert CIPHERTEXT not in result.output

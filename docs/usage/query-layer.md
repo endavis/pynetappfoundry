@@ -221,7 +221,7 @@ m.delete("abc-123-def")
 
 `Mutation` also writes Data Infrastructure Insights (DII) objects. The model's mapping is found the same way; what differs is the client, the item path and the update method.
 
-- **Read-write client required.** Build it with `DIIAPIClient(config, read_write=True)`. It sends only `api_rw_token` (from `diiapi.toml [general]`; see [Config schema: diiapi.toml](../reference/config-schema.md#diiapitoml)), and the default read client never holds that key. Without a configured key the client raises `DIIWriteTokenMissingError` at construction, before any request. `Mutation(<DII model>, <read client>)` raises the same error.
+- **Read-write client required.** Build it with `DIIAPIClient(config, read_write=True)`. It sends only `api_rw_token` (for a named tenant, its own `rw_enc` set with `nf config set-credential --type cloudinsights --name TENANT --read-write`, else `diiapi.toml [general]` when the tenant has no read-only key of its own; see [Config schema: diiapi.toml](../reference/config-schema.md#diiapitoml)), and the default read client never holds that key. Without a configured key the client raises `DIIWriteTokenMissingError` at construction, before any request. `Mutation(<DII model>, <read client>)` raises the same error.
 - **PATCH or PUT from the spec.** `.update()` sends PATCH when the item path declares it, otherwise PUT. A PUT replaces the whole object, so send every field you want to keep.
 - **`uuid` is the DII `id`** (or `dataSourceId` for datasources). The item path template, `/assets/annotations/{id}` or `/collector/datasources/{dataSourceId}`, is read from the client's spec.
 - **No `poll`.** DII has no job polling; `poll=True` raises `ValueError`.

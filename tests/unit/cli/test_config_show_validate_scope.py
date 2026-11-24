@@ -269,3 +269,18 @@ def test_validate_root_without_console_account_is_optional(tmp_path: Path) -> No
 
     assert code == 0, out
     assert "Console: Not configured (optional)" in out
+
+
+def test_show_masks_tenant_rw_enc_unless_unmasked(tmp_path: Path) -> None:
+    config_dir = _config_dir(
+        tmp_path,
+        root_toml=FILES["root.toml"]
+        + '\n[cloudinsights.t1]\nbase_url = "https://t1.example.invalid"\n'
+        + 'rw_enc = "placeholder-rw-value"\n',
+    )
+
+    _, masked = _run(config_dir, "show")
+    _, unmasked = _run(config_dir, "show", "--unmask")
+
+    assert "placeholder-rw-value" not in masked
+    assert "placeholder-rw-value" in unmasked

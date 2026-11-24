@@ -180,3 +180,70 @@ def test_dii_tenant_without_own_key_inherits_general_keys(config: Config) -> Non
 def test_dii_settings_unknown_tenant_lists_names(config: Config) -> None:
     with pytest.raises(ConfigurationError, match=r"nope.*t1, t2"):
         config.get_dii_api_settings("nope")
+
+
+def test_dii_tenant_rw_enc_sets_rw_token(config: Config) -> None:
+    config = _with_general_rw(config)
+    config.data["cloudinsights"]["t1"]["rw_enc"] = "t1-rw-token"
+    settings = config.get_dii_api_settings("t1")
+    assert settings.api_ro_token.get_secret_value() == "t1-token"
+    assert settings.api_rw_token is not None
+    assert settings.api_rw_token.get_secret_value() == "t1-rw-token"
+
+
+def test_dii_tenant_rw_enc_wins_over_inherited_general_rw(config: Config) -> None:
+    (Path("cfg") / "users.toml").write_text(
+        '[aiqums]\nuser = "default-user"\nenc = "default-pass"\n'
+    )
+    config = _with_general_rw(config)
+    config.data["cloudinsights"]["t2"]["rw_enc"] = "t2-rw-token"
+    settings = config.get_dii_api_settings("t2")
+    assert settings.api_ro_token.get_secret_value() == "general-token"
+    assert settings.api_rw_token is not None
+    assert settings.api_rw_token.get_secret_value() == "t2-rw-token"
+
+
+def test_dii_tenant_without_rw_enc_is_unchanged(config: Config) -> None:
+    (Path("cfg") / "users.toml").write_text(
+        '[aiqums]\nuser = "default-user"\nenc = "default-pass"\n'
+    )
+    config = _with_general_rw(config)
+    assert config.get_dii_api_settings("t1").api_rw_token is None
+    inherited = config.get_dii_api_settings("t2").api_rw_token
+    assert inherited is not None
+    assert inherited.get_secret_value() == "general-rw-token"
+
+
+def test_dii_tenant_rw_enc_decrypts_sops(config: Config) -> None:
+    config.data["cloudinsights"]["t1"]["rw_enc"] = "SOPS[rw-ciphertext]"
+    with patch("pynetappfoundry.utils.sops.decrypt_value", return_value="plain-rw") as dec:
+        settings = config.get_dii_api_settings("t1")
+    dec.assert_called_once_with("SOPS[rw-ciphertext]")
+    assert settings.api_rw_token is not None
+    assert settings.api_rw_token.get_secret_value() == "plain-rw"
+
+
+def test_dii_tenant_rw_enc_ignores_environment(
+    config: Config, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("NF_T1_PASSWORD", "env-token")
+    monkeypatch.setenv("NF_T1_RW_PASSWORD", "env-rw")
+    assert config.get_dii_api_settings("t1").api_rw_token is None
+
+
+def test_dii_tenant_rw_enc_non_string_is_rejected_without_value(config: Config) -> None:
+    config.data["cloudinsights"]["t1"]["rw_enc"] = ["leaky-marker"]
+    with pytest.raises(ConfigurationError, match=r"rw_enc.*must be a string, not list") as exc:
+        config.get_dii_api_settings("t1")
+    assert "leaky-marker" not in str(exc.value)
+
+
+def test_dii_tenant_rw_enc_decrypt_error_is_sanitized(config: Config) -> None:
+    config.data["cloudinsights"]["t1"]["rw_enc"] = "SOPS[rw-marker]"
+    with (
+        patch("pynetappfoundry.utils.sops.decrypt_value", side_effect=SOPSError("leaky detail")),
+        pytest.raises(ConfigurationError) as exc,
+    ):
+        config.get_dii_api_settings("t1")
+    assert "rw-marker" not in str(exc.value)
+    assert "leaky detail" not in str(exc.value)

@@ -354,6 +354,55 @@ def test_dii_rw_named_tenant_without_its_own_key_probes(tmp_path: Path) -> None:
     assert results[1].status is CheckStatus.OK
 
 
+def test_dii_rw_named_tenant_absent_hint_names_the_tenant_command(tmp_path: Path) -> None:
+    files = {
+        "diiapi.toml": RW_GENERAL,
+        "inv.toml": DATA
+        + '[cloudinsights.t1]\nbase_url = "https://t1.invalid"\nenc = "tenant-key"\n',
+    }
+    config = _config(tmp_path, files)
+
+    results = check_dii(config, None, client_factory=_rw_factory())
+
+    assert results[1].hint is not None
+    assert "nf config set-credential --type cloudinsights --name t1 --read-write" in results[1].hint
+
+
+def test_dii_rw_named_tenant_own_rw_key_probes(tmp_path: Path) -> None:
+    files = {
+        "diiapi.toml": RO_GENERAL,
+        "inv.toml": DATA
+        + '[cloudinsights.t1]\nbase_url = "https://t1.invalid"\nenc = "tenant-key"\n'
+        + 'rw_enc = "tenant-rw-key"\n',
+    }
+    config = _config(tmp_path, files)
+    factory = _rw_factory()
+
+    results = check_dii(config, None, client_factory=factory)
+
+    factory.assert_any_call(config, "t1", read_write=True)
+    assert results[1].status is CheckStatus.OK
+
+
+def test_dii_rw_named_tenant_401_hint_uses_the_tenant_command(tmp_path: Path) -> None:
+    files = {
+        "diiapi.toml": RO_GENERAL,
+        "inv.toml": DATA
+        + '[cloudinsights.t1]\nbase_url = "https://t1.invalid"\nenc = "tenant-key"\n'
+        + 'rw_enc = "tenant-rw-key"\n',
+    }
+    config = _config(tmp_path, files)
+
+    results = check_dii(config, None, client_factory=_rw_factory(rw_error=_http_error(401)))
+
+    assert results[1].status is CheckStatus.ERROR
+    assert (
+        results[1].hint
+        == "Set it with: nf config set-credential --type cloudinsights --name t1 --read-write"
+    )
+    assert "tenant-rw-key" not in _rendered(results)
+
+
 # --- Console ---
 
 

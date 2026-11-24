@@ -170,6 +170,16 @@ def _encrypt_setting_value(value: str) -> str:
     is_flag=True,
     help="Store password as plain text (not recommended).",
 )
+@click.option(
+    "--read-write",
+    "read_write",
+    is_flag=True,
+    help=(
+        "Store the value as a Cloud Insights tenant's own read-write key (rw_enc on "
+        "its data entry). Requires --type cloudinsights and --name; takes no --user. "
+        "The key is prompted (hidden) or taken from --password."
+    ),
+)
 @click.pass_context
 def set_credential(
     ctx: click.Context,
@@ -181,6 +191,7 @@ def set_credential(
     user: str | None,
     password: str | None,
     no_encrypt: bool,
+    read_write: bool,
 ) -> None:
     """Set encrypted credentials for an inventory object, a resource type or a setting.
 
@@ -206,6 +217,9 @@ def set_credential(
         # Store a Cloud Insights tenant API token (the user is a label; the
         # password prompt takes the token)
         nf config set-credential --type cloudinsights --name tenant1 --user token
+
+        # Store that tenant's own read-write key (for DII writes)
+        nf config set-credential --type cloudinsights --name tenant1 --read-write
 
         # Set default credentials for all clusters
         nf config set-credential --type clusters --user admin
@@ -233,8 +247,12 @@ def set_credential(
         nf config set-credential --setting settings.smtp_password
     """
     if setting is not None:
-        _check_setting_options(cluster, cred_type, obj_name, user, no_encrypt)
+        _check_setting_options(cluster, cred_type, obj_name, user, no_encrypt, read_write)
         _run_setting(ctx, setting, scope, password)
+        return
+
+    if read_write:
+        _run_read_write(ctx, cluster, cred_type, obj_name, scope, user, password, no_encrypt)
         return
 
     # Validate mutually exclusive options
@@ -319,6 +337,7 @@ def _check_setting_options(
     obj_name: str | None,
     user: str | None,
     no_encrypt: bool,
+    read_write: bool = False,
 ) -> None:
     """Reject options that cannot be combined with ``--setting``.
 
@@ -333,6 +352,7 @@ def _check_setting_options(
             ("--name", obj_name is not None),
             ("--user", user is not None),
             ("--no-encrypt", no_encrypt),
+            ("--read-write", read_write),
         )
         if present
     ]
@@ -344,6 +364,53 @@ def _check_setting_options(
                 "and --password (the value) are allowed with it."
             ],
         )
+
+
+_READ_WRITE_HINT = "nf config set-credential --type cloudinsights --name <tenant> --read-write"
+
+
+def _run_read_write(
+    ctx: click.Context,
+    cluster: str | None,
+    cred_type: str | None,
+    obj_name: str | None,
+    scope: str | None,
+    user: str | None,
+    password: str | None,
+    no_encrypt: bool,
+) -> None:
+    """Store a Cloud Insights tenant's own read-write key; every check runs before any prompt."""
+    hints = [f"Run '{_READ_WRITE_HINT}'."]
+    if cluster is not None:
+        raise CliError("--read-write cannot be combined with --cluster.", hints=hints)
+    if cred_type != "cloudinsights":
+        raise CliError("--read-write requires --type cloudinsights.", hints=hints)
+    if obj_name is None:
+        raise CliError("--read-write requires --name <tenant>.", hints=hints)
+    if user is not None:
+        raise CliError(
+            "--read-write takes no --user; the key has no username.",
+            hints=hints,
+        )
+    config_path, config = _load_config(ctx)
+    if scope is not None:
+        _check_scope_option(config, scope, None, cred_type, obj_name)
+    object_file = _object_file_or_error(config, config_path, cred_type, obj_name)
+    if password is None:
+        password = _prompt_secret("Read-write key")
+    encrypted = _encrypt_password(password, no_encrypt, ctx)
+    _set_tenant_rw_key(object_file, obj_name, encrypted)
+
+
+def _set_tenant_rw_key(object_file: Path, name: str, encrypted: str) -> None:
+    """Write ``rw_enc`` on a tenant's data entry; never prints the value."""
+    try:
+        _write_toml_values(object_file, ["cloudinsights", name], {"rw_enc": encrypted})
+    except Exception as e:
+        raise CliError(f"Failed to update configuration: {e}") from e
+    print_success(f"Read-write key stored for cloudinsights object '{name}'")
+    console.print(f"  File: {escape(str(object_file))}")
+    _print_password_status(encrypted, label="Read-write key")
 
 
 def _run_setting(ctx: click.Context, setting: str, scope: str | None, value: str | None) -> None:
@@ -423,6 +490,25 @@ def _set_object_credential(
     ``--scope`` was already checked against the object by ``_check_scope_option``.
     """
     label = "cluster" if obj_type == "clusters" else f"{obj_type} object"
+    object_file = _object_file_or_error(config, config_path, obj_type, obj_name)
+
+    try:
+        _update_object_credentials(object_file, obj_type, obj_name, user, encrypted_password)
+        print_success(f"Credentials updated for {label} '{obj_name}'")
+        console.print(f"  File: {escape(str(object_file))}")
+        console.print(f"  User: {escape(user)}")
+        _print_password_status(encrypted_password)
+    except Exception as e:
+        raise CliError(f"Failed to update configuration: {e}") from e
+
+
+def _object_file_or_error(config: Config, config_path: Path, obj_type: str, obj_name: str) -> Path:
+    """Return the data file of one inventory object.
+
+    Raises:
+        CliError: If the object is unknown or its file cannot be found.
+    """
+    label = "cluster" if obj_type == "clusters" else f"{obj_type} object"
     section = config.data.get(obj_type, {})
     if obj_name not in section:
         available = list(section.keys())
@@ -440,15 +526,7 @@ def _set_object_credential(
     object_file = _find_object_file(config_path, obj_type, obj_name)
     if object_file is None:
         raise CliError(f"Could not find configuration file for {label} '{obj_name}'")
-
-    try:
-        _update_object_credentials(object_file, obj_type, obj_name, user, encrypted_password)
-        print_success(f"Credentials updated for {label} '{obj_name}'")
-        console.print(f"  File: {escape(str(object_file))}")
-        console.print(f"  User: {escape(user)}")
-        _print_password_status(encrypted_password)
-    except Exception as e:
-        raise CliError(f"Failed to update configuration: {e}") from e
+    return object_file
 
 
 def _set_type_credential(

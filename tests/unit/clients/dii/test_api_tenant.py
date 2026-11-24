@@ -103,3 +103,14 @@ def test_read_write_without_key_raises_before_wrapper_init(
     init.assert_not_called()
     assert "api_rw_token" in str(exc.value)
     assert "ro-key-1003" not in str(exc.value)
+
+
+def test_named_tenant_missing_rw_key_hint_names_the_command(tmp_path: Path) -> None:
+    config = _rw_config(tmp_path, rw=None)
+    with (
+        patch("pynetappfoundry.clients.dii.api.APIWrapper.__init__", return_value=None),
+        pytest.raises(DIIWriteTokenMissingError) as exc,
+    ):
+        DIIAPIClient(config, "t1", read_write=True)
+    assert "nf config set-credential --type cloudinsights --name t1 --read-write" in str(exc.value)
+    assert "api_rw_token" in str(exc.value)
