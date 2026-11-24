@@ -43,10 +43,11 @@ Three constraints shape it:
 
 - ADR-0015's read-only statement is narrowed: the DII backend and `DataSource` stay read-only, and writes are available through `Mutation` with a read-write client.
 - Action and sub-resource endpoints (pause, resume, annotation values, application assets, datasource poll, test, clone and note), collection-level DELETE and the `preEncrypted` query parameter are not supported yet.
-- `nf doctor --api dii` does not yet report whether a read-write key is configured.
+- `nf doctor --api dii` reports the read-write key in its own row (#1186): skipped when unset, an error on a 401, a warning on a 403.
 
 ## Related Issues
 
+- Issue #1186: `nf doctor --api dii` reports the read-write key
 - Issue #1003: feat: add dii writes with a read-write api key
 - infrafoundry#1377: one create / update / delete surface for both APIs
 

@@ -46,7 +46,8 @@ class Factories:
     Attributes:
         ontap: Called as ``factory(cluster=..., config=...)``.
         aiqum: Called as ``factory(name, config)``.
-        dii: Called as ``factory(config, name)``.
+        dii: Called as ``factory(config, name)``, and as
+            ``factory(config, name, read_write=True)`` for the read-write key row.
         console_api: Called as ``factory(config)`` or ``factory(config, scope=scope)``.
         console_agent: Called as ``factory(config, agent_id, token_provider=..., scope=...)``.
         digitaladvisor: Called as
@@ -242,7 +243,8 @@ def check_dii(
     """``GET /assets/storages/count`` per Cloud Insights tenant (or ``[general]``).
 
     A 403 is a warning: DII tokens are scoped by API category, so the token
-    authenticated but may lack the Assets read scope.
+    authenticated but may lack the Assets read scope. A second row,
+    ``live.dii.<name>.rw``, reports the optional read-write key with the same ``GET``.
     """
     tenants: list[str | None] = list(_in_scope(config, "cloudinsights", scope))
     if not tenants and scope is None and "general" in config.settings.get("diiapi", {}):
@@ -251,6 +253,7 @@ def check_dii(
     for tenant in tenants:
         shown = tenant or "general"
         subject = f"live.dii.{shown}"
+        ro_exc: BaseException | None = None
         try:
             factory = client_factory
             if factory is None:
@@ -260,6 +263,7 @@ def check_dii(
             client = factory(config, tenant)
             client.call_endpoint("/assets/storages/count")
         except Exception as e:
+            ro_exc = e
             hint = (
                 "Store the token with: nf config set-credential --type cloudinsights "
                 f"--name {tenant} --user token"
@@ -273,7 +277,62 @@ def check_dii(
             )
         else:
             results.append(CheckResult(subject, CheckStatus.OK, f"{shown}: connected"))
+        rw_row = _check_dii_rw(config, tenant, shown, client_factory, ro_exc)
+        if rw_row is not None:
+            results.append(rw_row)
     return results
+
+
+_DII_SET_RW = "nf config set-credential --setting diiapi.api_rw_token"
+
+
+def _check_dii_rw(
+    config: Config,
+    tenant: str | None,
+    shown: str,
+    client_factory: Callable[..., Any] | None,
+    ro_exc: BaseException | None,
+) -> CheckResult | None:
+    """Report the optional DII read-write key with one ``GET``; ``None`` when there is no row.
+
+    The row is skipped when the read-only attempt failed with anything but an
+    HTTP error: that failure is already on the read-only row. An absent key is
+    ``SKIPPED`` (it is optional), a 401 is an error, and a 403 is a warning,
+    because a read-write key may be scoped to write categories only.
+    """
+    if ro_exc is not None and not isinstance(ro_exc, requests.HTTPError):
+        return None
+    try:
+        settings = config.get_dii_api_settings(tenant) if tenant else config.get_dii_api_settings()
+    except Exception:
+        return None
+    label = f"{shown} read-write key"
+    subject = f"live.dii.{shown}.rw"
+    if settings.api_rw_token is None:
+        hint = (
+            "Optional, needed only for DII writes. A tenant uses the diiapi.toml [general] "
+            "api_rw_token only when it has no key of its own."
+            if tenant
+            else f"Optional, needed only for DII writes. Set it with: {_DII_SET_RW}"
+        )
+        return CheckResult(subject, CheckStatus.SKIPPED, f"{label}: not set", hint=hint)
+    try:
+        factory = client_factory
+        if factory is None:
+            from pynetappfoundry.clients.dii.api import DIIAPIClient
+
+            factory = DIIAPIClient
+        factory(config, tenant, read_write=True).call_endpoint("/assets/storages/count")
+    except Exception as e:
+        return _failed_row(
+            subject,
+            label,
+            e,
+            api="dii",
+            credentials_hint=f"Set it with: {_DII_SET_RW}",
+            forbidden_warns=True,
+        )
+    return CheckResult(subject, CheckStatus.OK, f"{label}: connected")
 
 
 PROBE_QUERY = "query DoctorProbe { volumes(pageSize: 1) { cursor } }"

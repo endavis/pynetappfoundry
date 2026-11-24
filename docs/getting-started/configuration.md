@@ -103,7 +103,7 @@ The fields are in [AIQUM API: Setup](../usage/aiqum-api.md#setup).
 - **Credentials:** the API token. `nf config set-credential --setting diiapi.api_ro_token` stores one for every tenant in `diiapi.toml`. `nf config set-credential --type cloudinsights --name NAME --user LABEL` stores one per tenant. The client sends it in the `X-CloudInsights-ApiKey` header. Writes need a separate read-write key, `api_rw_token`, set with `nf config set-credential --setting diiapi.api_rw_token`; it is optional and only `DIIAPIClient(config, read_write=True)` uses it.
 - **Settings:** `<config>/apis/dii/diiapi.toml` with a `[general]` section (see [Config schema: diiapi.toml](../reference/config-schema.md#diiapitoml)).
 - **Spec:** `<config>/apis/dii/all.json` (see [Spec files](#spec-files)).
-- **Check:** `nf config validate`, `nf doctor --api dii`, and `nf config show -s cloudinsights` to see the loaded entries.
+- **Check:** `nf config validate`, `nf doctor --api dii` (it also reports the read-write key: skipped when unset, an error when rejected), and `nf config show -s cloudinsights` to see the loaded entries.
 
 ## Digital Advisor
 

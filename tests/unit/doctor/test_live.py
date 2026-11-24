@@ -241,6 +241,119 @@ def test_dii_general_only_probes_without_a_name(tmp_path: Path) -> None:
     assert check_dii(config, "Org1", client_factory=factory) == []
 
 
+# --- DII read-write key ---
+
+RW_GENERAL = (
+    '[general]\napi_ro_token = "placeholder"\napi_rw_token = "placeholder-rw"\n'
+    'base_url = "https://t.invalid"\n'
+)
+RO_GENERAL = '[general]\napi_ro_token = "placeholder"\nbase_url = "https://t.invalid"\n'
+
+
+def _rw_factory(rw_error: Exception | None = None, ro_error: Exception | None = None) -> MagicMock:
+    def build(config: Config, tenant: str | None, **kwargs: Any) -> MagicMock:
+        if kwargs.get("read_write"):
+            return _dii_client(rw_error)
+        return _dii_client(ro_error)
+
+    return MagicMock(side_effect=build)
+
+
+def test_dii_rw_absent_is_skipped_without_a_request(tmp_path: Path) -> None:
+    config = _config(tmp_path, {"diiapi.toml": RO_GENERAL})
+    factory = _rw_factory()
+
+    results = check_dii(config, None, client_factory=factory)
+
+    assert [r.subject for r in results] == ["live.dii.general", "live.dii.general.rw"]
+    assert results[1].status is CheckStatus.SKIPPED
+    assert results[1].errors == ()
+    assert results[1].hint is not None
+    assert "diiapi.api_rw_token" in results[1].hint
+    factory.assert_called_once_with(config, None)
+
+
+def test_dii_rw_accepted_sends_one_get(tmp_path: Path) -> None:
+    config = _config(tmp_path, {"diiapi.toml": RW_GENERAL})
+    rw_client = _dii_client()
+    ro_client = _dii_client()
+    factory = MagicMock(side_effect=lambda c, t, **kw: rw_client if kw else ro_client)
+
+    results = check_dii(config, None, client_factory=factory)
+
+    factory.assert_any_call(config, None, read_write=True)
+    rw_client.call_endpoint.assert_called_once_with("/assets/storages/count")
+    assert results[1].status is CheckStatus.OK
+    assert results[1].label == "general read-write key: connected"
+
+
+def test_dii_rw_401_is_an_error_with_hint(tmp_path: Path) -> None:
+    config = _config(tmp_path, {"diiapi.toml": RW_GENERAL})
+
+    results = check_dii(config, None, client_factory=_rw_factory(rw_error=_http_error(401)))
+
+    assert results[0].status is CheckStatus.OK
+    assert results[1].status is CheckStatus.ERROR
+    assert results[1].hint == "Set it with: nf config set-credential --setting diiapi.api_rw_token"
+    assert "placeholder-rw" not in _rendered(results)
+    assert SENTINEL not in _rendered(results)
+
+
+def test_dii_rw_403_is_a_warning(tmp_path: Path) -> None:
+    config = _config(tmp_path, {"diiapi.toml": RW_GENERAL})
+
+    results = check_dii(config, None, client_factory=_rw_factory(rw_error=_http_error(403)))
+
+    assert results[1].status is CheckStatus.WARNING
+    assert results[1].errors == ()
+
+
+def test_dii_rw_probe_runs_after_a_read_only_http_error(tmp_path: Path) -> None:
+    config = _config(tmp_path, {"diiapi.toml": RW_GENERAL})
+
+    results = check_dii(config, None, client_factory=_rw_factory(ro_error=_http_error(401)))
+
+    assert results[0].status is CheckStatus.ERROR
+    assert results[1].status is CheckStatus.OK
+
+
+def test_dii_rw_row_omitted_after_a_read_only_non_http_failure(tmp_path: Path) -> None:
+    config = _config(tmp_path, {"diiapi.toml": RW_GENERAL})
+
+    results = check_dii(config, None, client_factory=_rw_factory(ro_error=FileNotFoundError()))
+
+    assert [r.subject for r in results] == ["live.dii.general"]
+
+
+def test_dii_rw_named_tenant_with_its_own_key_is_skipped(tmp_path: Path) -> None:
+    files = {
+        "diiapi.toml": RW_GENERAL,
+        "inv.toml": DATA
+        + '[cloudinsights.t1]\nbase_url = "https://t1.invalid"\nenc = "tenant-key"\n',
+    }
+    config = _config(tmp_path, files)
+    factory = _rw_factory()
+
+    results = check_dii(config, None, client_factory=factory)
+
+    assert results[1].subject == "live.dii.t1.rw"
+    assert results[1].status is CheckStatus.SKIPPED
+    assert results[1].hint is not None
+    assert "only when it has no key of its own" in results[1].hint
+    factory.assert_called_once_with(config, "t1")
+
+
+def test_dii_rw_named_tenant_without_its_own_key_probes(tmp_path: Path) -> None:
+    files = {"diiapi.toml": RW_GENERAL, "inv.toml": DII_FILES["inv.toml"]}
+    config = _config(tmp_path, files)
+    factory = _rw_factory()
+
+    results = check_dii(config, None, client_factory=factory)
+
+    factory.assert_any_call(config, "t1", read_write=True)
+    assert results[1].status is CheckStatus.OK
+
+
 # --- Console ---
 
 
@@ -735,7 +848,10 @@ def test_every_request_is_a_get(tmp_path: Path) -> None:
         ),
         "ontapapi.toml": '[general]\nbase_api_path = "/api"\n',
         "aiqumapi.toml": '[general]\nbase_api_path = "/api"\n',
-        "diiapi.toml": '[general]\napi_ro_token = "placeholder"\nbase_url = "https://t.invalid"\n',
+        "diiapi.toml": (
+            '[general]\napi_ro_token = "placeholder"\napi_rw_token = "placeholder-rw"\n'
+            'base_url = "https://t.invalid"\n'
+        ),
         "inv.toml": DATA + '[clusters.c1]\nip = "192.0.2.1"\n\n[aiqums.a1]\nip = "192.0.2.3"\n',
     }
     config = _config(tmp_path, files)
