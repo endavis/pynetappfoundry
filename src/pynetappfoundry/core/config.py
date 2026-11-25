@@ -797,6 +797,7 @@ class Config:
             f" following files: {', '.join([str(path) for path in loaded_tomls])}"
         )
         self._wrap_clusters()
+        self.add_item_names()
         self.add_searchable_keys()
 
     def _load_scope_markers(self, all_tomls: list[Path]) -> None:
@@ -1215,6 +1216,16 @@ class Config:
                 found.append(self.data[section][item][id_field])
         return len(set(found))
 
+    def add_item_names(self) -> None:
+        """Set ``name`` on every data item from its TOML key.
+
+        An explicit ``name`` in the item wins. Independent of ``searchable_keys``.
+        """
+        for data_type in self.data_types:
+            for item in self.data.get(data_type, {}):
+                if "name" not in self.data[data_type][item]:
+                    self.data[data_type][item]["name"] = item
+
     def add_searchable_keys(self) -> None:
         """Add default searchable keys to data items."""
         for data_type in self.data_types:
@@ -1224,8 +1235,6 @@ class Config:
             ):
                 default_keys = self.settings["settings"][data_type]["searchable_keys"]
                 for item in self.data.get(data_type, {}):
-                    if "name" not in self.data[data_type][item]:
-                        self.data[data_type][item]["name"] = item
                     for key in default_keys:
                         if key not in self.data[data_type][item]:
                             self.data[data_type][item][key] = ""

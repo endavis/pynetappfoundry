@@ -247,3 +247,72 @@ def test_dii_tenant_rw_enc_decrypt_error_is_sanitized(config: Config) -> None:
         config.get_dii_api_settings("t1")
     assert "rw-marker" not in str(exc.value)
     assert "leaky detail" not in str(exc.value)
+
+
+# --- #1198: name comes from the TOML key without searchable_keys ---
+
+
+def _bare_config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, body: str) -> Config:
+    """Config with no settings.toml, so no ``searchable_keys`` anywhere."""
+    monkeypatch.chdir(tmp_path)
+    path = tmp_path / "cfg" / "data" / "inventory.toml"
+    path.parent.mkdir(parents=True)
+    path.write_text('[settings]\ntype = "data"\n\n' + body)
+    return Config(config_dir="cfg", script_name="test")
+
+
+def test_cluster_name_set_without_searchable_keys(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from pynetappfoundry.core.models import ClusterConfig
+
+    config = _bare_config(
+        tmp_path,
+        monkeypatch,
+        '[clusters.cluster1]\nip = "10.0.0.9"\nuser = "own-user"\nenc = "own-pass"\n',
+    )
+    assert config.data["clusters"]["cluster1"]["name"] == "cluster1"
+    details = config.data["clusters"]["cluster1"]
+    cluster = ClusterConfig(**details)
+    assert cluster.name == "cluster1"
+    assert config.get_user("clusters", cluster.name) == ("own-user", "own-pass")
+
+
+def test_explicit_name_is_kept(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    config = _bare_config(tmp_path, monkeypatch, '[aiqums.a1]\nname = "custom"\nip = "10.0.0.1"\n')
+    assert config.data["aiqums"]["a1"]["name"] == "custom"
+
+
+def test_other_data_types_get_name(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    config = _bare_config(
+        tmp_path,
+        monkeypatch,
+        '[aiqums.a1]\nip = "10.0.0.1"\n\n[cloudinsights.t1]\nip = "10.0.0.2"\n',
+    )
+    assert config.data["aiqums"]["a1"]["name"] == "a1"
+    assert config.data["cloudinsights"]["t1"]["name"] == "t1"
+
+
+def test_searchable_keys_still_adds_default_keys_only(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    cfg = tmp_path / "cfg"
+    (cfg / "data").mkdir(parents=True)
+    (cfg / "data" / "inventory.toml").write_text(
+        '[settings]\ntype = "data"\n\n[clusters.c1]\nip = "10.0.0.9"\n'
+    )
+    (cfg / "settings.toml").write_text('[clusters]\nsearchable_keys = ["env"]\n')
+    config = Config(config_dir="cfg", script_name="test")
+    assert config.data["clusters"]["c1"]["name"] == "c1"
+    assert config.data["clusters"]["c1"]["env"] == ""
+
+
+def test_injected_name_not_written_back(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from pynetappfoundry.core.settings_files import write_toml_values
+
+    config = _bare_config(tmp_path, monkeypatch, '[aiqums.a1]\nip = "10.0.0.1"\n')
+    assert config.data["aiqums"]["a1"]["name"] == "a1"
+    path = tmp_path / "cfg" / "data" / "inventory.toml"
+    write_toml_values(path, ["aiqums", "a1"], {"user": "u"})
+    assert "name" not in path.read_text()
