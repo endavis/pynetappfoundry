@@ -93,6 +93,8 @@ Step by step, with the output to expect: [How-to: Add an ONTAP cluster and valid
 
 ## AIQUM
 
+Step by step, with the output to expect: [How-to: Set up AIQUM](../how-to/setup-aiqum.md).
+
 - **Inventory:** add each instance as `[aiqums.NAME]` with an `ip`.
 - **Credentials:** `nf config set-credential --type aiqums --name NAME --user USER`, or a default under `[aiqums]` in `users.toml`.
 - **Settings:** `<config>/apis/aiqum/aiqumapi.toml` with a `[general]` section.
@@ -113,6 +115,8 @@ Step by step, with the output to expect: [How-to: Set up the DII API](../how-to/
 
 ## Digital Advisor
 
+Step by step, with the output to expect: [How-to: Set up Digital Advisor](../how-to/setup-digital-advisor.md).
+
 - **Credentials:** one or both of a personal access token and a refresh token (the PAT is used first), stored with `nf config set-credential --setting digitaladvisorapi.personal_access_token` or `--setting digitaladvisorapi.refresh_token`.
 - **Settings:** `<config>/apis/digitaladvisor/digitaladvisorapi.toml` with a `[general]` section (see [Config schema: digitaladvisorapi.toml](../reference/config-schema.md#digitaladvisorapitoml)).
 - **Schema (optional):** `nf config download-schema` writes `<config>/apis/digitaladvisor/schema.json`.
@@ -121,6 +125,8 @@ Step by step, with the output to expect: [How-to: Set up the DII API](../how-to/
 The client and the token rotation are in [Digital Advisor API](../usage/digital-advisor-api.md).
 
 ## Console and agents (OCCM)
+
+Step by step, with the output to expect: [How-to: Set up Console and its agents](../how-to/setup-console.md).
 
 The Console (BlueXP) client and the Console agents (connectors, also called OCCM) share one account setup.
 

@@ -98,6 +98,9 @@ print(client.call_endpoint(path_template="/cluster?fields=name,version"))
 - [Set up a config directory and encrypted credentials](how-to/sops-secrets.md)
 - [Add an ONTAP cluster and check that it connects](how-to/add-ontap-cluster.md)
 - [Connect to Data Infrastructure Insights (DII)](how-to/setup-dii.md)
+- [Connect to Active IQ Unified Manager (AIQUM)](how-to/setup-aiqum.md)
+- [Connect to Digital Advisor](how-to/setup-digital-advisor.md)
+- [Connect to Console and its agents](how-to/setup-console.md)
 - [See every how-to guide](how-to/index.md)
 
 **Reference and background:**

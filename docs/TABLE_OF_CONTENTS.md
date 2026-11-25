@@ -39,6 +39,9 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [Query Layer](usage/query-layer.md) - Guide to the REST query layer (QuerySet, Query, Mutation for ONTAP and DII writes, JobTracker, related, realtime)
 - [Report Cloud Details](usage/report-cloud-details.md) - How the inventory and HTML reports take cloud provider details from the OCCM cache, when they fall back to the ONTAP CLI path, and the Console links (including System Manager) they add
 - [Set Up a Config Directory and SOPS Secrets](how-to/sops-secrets.md) - Create the config directory, generate an age key and store credentials encrypted with SOPS
+- [Set Up AIQUM](how-to/setup-aiqum.md) - Add Active IQ Unified Manager instances, store their credentials, and check the connection
+- [Set Up Console and Its Agents](how-to/setup-console.md) - Configure a Console (BlueXP) account at the root or per scope, add its agents, and check them with nf doctor
+- [Set Up Digital Advisor](how-to/setup-digital-advisor.md) - Store a Digital Advisor personal access token or refresh token, and check that it works
 - [Set Up the DII API](how-to/setup-dii.md) - Connect to Data Infrastructure Insights with a read-only token, add tenants, and add the optional read-write key
 - [Template Management](template/manage.md) - Unified interface for creating projects, checking updates, and syncing
 - [Template Tools Reference](template/tools-reference.md) - Complete reference for all template tools in tools/pyproject_template/
@@ -314,6 +317,9 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [Review Focus Areas](development/ai/review-focus-areas.md) - Checklists for the errors, tests, types and comments focus areas available to every review and adversarial-review surface
 - [Ruff Auto-Fix on Edit Hook](development/ai/ruff-fix-hook.md) - PostToolUse hook that runs ruff --fix on edited Python files
 - [Set Up a Config Directory and SOPS Secrets](how-to/sops-secrets.md) - Create the config directory, generate an age key and store credentials encrypted with SOPS
+- [Set Up AIQUM](how-to/setup-aiqum.md) - Add Active IQ Unified Manager instances, store their credentials, and check the connection
+- [Set Up Console and Its Agents](how-to/setup-console.md) - Configure a Console (BlueXP) account at the root or per scope, add its agents, and check them with nf doctor
+- [Set Up Digital Advisor](how-to/setup-digital-advisor.md) - Store a Digital Advisor personal access token or refresh token, and check that it works
 - [Set Up the DII API](how-to/setup-dii.md) - Connect to Data Infrastructure Insights with a read-only token, add tenants, and add the optional read-write key
 - [Slash Commands and Workflows](development/ai/slash-commands.md) - Reference for the slash commands and dual-agent workflow this project ships with
 - [Subsystem Audit (2026-11)](plans/subsystem-audit-2026-11.md) - Audit of every pynetappfoundry subsystem covering patterns, libraries, bugs, refactors, documentation drift and test gaps, with a ranked backlog.
