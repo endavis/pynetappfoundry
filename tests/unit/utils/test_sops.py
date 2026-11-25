@@ -162,6 +162,68 @@ class TestDecryptValue:
             with pytest.raises(SOPSNotInstalledError):
                 decrypt_value("SOPS[base64data]")
 
+    @staticmethod
+    def _run_decrypt(env_overrides: dict[str, str] | None = None) -> dict[str, str]:
+        """Run decrypt_value with subprocess mocked and return the env passed."""
+        import base64
+        import json
+
+        from pynetappfoundry.utils.sops import decrypt_value
+
+        completed = subprocess.CompletedProcess(
+            args=[], returncode=0, stdout=json.dumps({"value": "plain"}), stderr=""
+        )
+        encrypted = "SOPS[" + base64.b64encode(b"{}").decode() + "]"
+        with (
+            patch("pynetappfoundry.utils.sops.is_sops_installed", return_value=True),
+            patch("pynetappfoundry.utils.sops.subprocess.run", return_value=completed) as run,
+        ):
+            assert decrypt_value(encrypted) == "plain"
+        env: dict[str, str] = run.call_args.kwargs["env"]
+        return env
+
+    def test_unset_var_uses_existing_default_key(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Unset SOPS_AGE_KEY_FILE plus an existing default key points sops at it."""
+        key_path = tmp_path / ".sops" / "age" / "keys.txt"
+        key_path.parent.mkdir(parents=True)
+        key_path.write_text("AGE-SECRET-KEY-1\n", encoding="utf-8")
+        monkeypatch.delenv("SOPS_AGE_KEY_FILE", raising=False)
+        monkeypatch.setattr(Path, "home", lambda: tmp_path)
+        monkeypatch.setenv("PNAF_SENTINEL", "kept")
+
+        env = self._run_decrypt()
+
+        assert env["SOPS_AGE_KEY_FILE"] == str(key_path)
+        assert env["PNAF_SENTINEL"] == "kept"
+
+    def test_unset_var_and_missing_default_key_adds_nothing(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Without a default key file the env does not gain SOPS_AGE_KEY_FILE."""
+        monkeypatch.delenv("SOPS_AGE_KEY_FILE", raising=False)
+        monkeypatch.setattr(Path, "home", lambda: tmp_path)
+
+        env = self._run_decrypt()
+
+        assert "SOPS_AGE_KEY_FILE" not in env
+
+    def test_set_var_is_left_unchanged(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """An already-set SOPS_AGE_KEY_FILE is passed through untouched."""
+        default_key = tmp_path / ".sops" / "age" / "keys.txt"
+        default_key.parent.mkdir(parents=True)
+        default_key.write_text("AGE-SECRET-KEY-1\n", encoding="utf-8")
+        custom = tmp_path / "custom" / "key.txt"
+        monkeypatch.setattr(Path, "home", lambda: tmp_path)
+        monkeypatch.setenv("SOPS_AGE_KEY_FILE", str(custom))
+
+        env = self._run_decrypt()
+
+        assert env["SOPS_AGE_KEY_FILE"] == str(custom)
+
 
 class TestGenerateAgeKeypair:
     """Tests for generate_age_keypair with subprocess and shutil mocked.

@@ -71,6 +71,26 @@ def get_age_key_path() -> Path:
     return Path.home() / ".sops" / "age" / "keys.txt"
 
 
+def _decrypt_env() -> dict[str, str]:
+    """Build the environment for a ``sops --decrypt`` subprocess.
+
+    sops looks for the age key at its own default location, which differs from
+    ``get_age_key_path()`` on some platforms. When ``SOPS_AGE_KEY_FILE`` is not
+    set and the default key file exists, point sops at it. An already-set
+    variable is left untouched, and a missing default file adds nothing so
+    sops's own key discovery still applies.
+
+    Returns:
+        A copy of ``os.environ``, plus ``SOPS_AGE_KEY_FILE`` when needed.
+    """
+    env = dict(os.environ)
+    if not env.get("SOPS_AGE_KEY_FILE"):
+        key_path = get_age_key_path()
+        if key_path.is_file():
+            env["SOPS_AGE_KEY_FILE"] = str(key_path)
+    return env
+
+
 def generate_age_keypair(key_path: Path | None = None) -> tuple[str, str]:
     """Generate a new age keypair.
 
@@ -289,6 +309,7 @@ def decrypt_value(encrypted_value: str) -> str:
             text=True,
             check=True,
             encoding="utf-8",
+            env=_decrypt_env(),
         )
     except subprocess.CalledProcessError as e:
         raise SOPSError(f"SOPS decryption failed: {e.stderr}") from e
