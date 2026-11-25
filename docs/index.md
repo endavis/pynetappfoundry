@@ -102,6 +102,10 @@ print(client.call_endpoint(path_template="/cluster?fields=name,version"))
 - [Connect to Digital Advisor](how-to/setup-digital-advisor.md)
 - [Connect to Console and its agents](how-to/setup-console.md)
 - [Run nf on a schedule](how-to/run-unattended.md)
+- [Separate environments with scopes](how-to/use-scopes.md)
+- [Find out why a setup fails with `nf doctor`](how-to/diagnose-with-doctor.md)
+- [Run compliance checks against your fleet](how-to/run-compliance-checks.md)
+- [Script against the Python API](how-to/script-python-api.md)
 - [See every how-to guide](how-to/index.md)
 
 **Reference and background:**

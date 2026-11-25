@@ -22,6 +22,10 @@ Each guide takes one task from start to finish. They use real commands and show 
 | [Set up Digital Advisor](setup-digital-advisor.md) | A stored personal access token or refresh token that `nf doctor` confirms |
 | [Set up Console and its agents](setup-console.md) | A Console account, root or per scope, and its agents, confirmed by `nf doctor` |
 | [Run nf unattended](run-unattended.md) | An `nf` command on a cron or systemd schedule that finds its config and key, and reports failure by exit code |
+| [Use scopes to separate environments](use-scopes.md) | A config directory split into scopes, each with its own inventory, credentials and thresholds, checked one at a time |
+| [Diagnose a failing setup with nf doctor](diagnose-with-doctor.md) | The failing check found and fixed from its hint, with the exit codes and options of `nf doctor` |
+| [Run compliance checks against your fleet](run-compliance-checks.md) | A rules file and `nf cache compliance` run against every cached cluster, with its exit code |
+| [Script against the Python API](script-python-api.md) | A Python script that loads the config, finds clusters and reads their cached data |
 
 ## How each guide is laid out
 

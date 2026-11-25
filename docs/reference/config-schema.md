@@ -99,6 +99,8 @@ not exist yet, `set-credential` creates a root API settings file in `apis/<name>
 
 A scope partitions the config directory: one inventory, one set of credentials, one set of thresholds and at most one Console account per directory. See [ADR-0028](../decisions/0028-scope-directories-partition-the-config-dir-with-per-scope-credentials-thresholds-and-console-account.md).
 
+Step by step, with the output to expect: [How-to: Use scopes to separate environments](../how-to/use-scopes.md).
+
 ### The marker: scope.toml
 
 A top-level directory of the config directory that contains `scope.toml` is a scope. The file is validated, and every key is optional:

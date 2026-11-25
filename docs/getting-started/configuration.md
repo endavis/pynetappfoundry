@@ -166,6 +166,8 @@ An API counts as configured when its `*api.toml` has a `[general]` section. DII 
 
 `nf config validate` is the offline check, suited to CI. `nf doctor` runs the same static checks, then checks `sops`, the age key, every SOPS value, any secret field still stored in plaintext (a warning with the `set-credential` fix) and the caches, then sends one read-only request to each configured API. It prints a fix hint for each problem.
 
+Step by step, with the output to expect: [How-to: Diagnose a failing setup with nf doctor](../how-to/diagnose-with-doctor.md).
+
 - `nf doctor` also compares your `[clusters]` names with Console's working environments in the OCCM cache, per account, and reports a renamed cluster as an error. If that cache is missing or stale, it says to run `nf cache occm refresh`.
 - `nf doctor --offline` skips the requests. `nf doctor --api NAME` limits every check to that API's settings, credentials, SOPS and plaintext secret values, cache and live check, plus the shared `sops` and age-key checks (`ontap`, `aiqum`, `dii`, `console`, `digitaladvisor`).
 - Every request is a `GET`, with two `POST` cases. The Console OAuth token request goes to the token endpoint and changes no Console resource; a static `user_token` or `service_token` makes none. The Digital Advisor check sends one read-only GraphQL query as a `POST`; with a refresh token it also refreshes and writes the rotated tokens to `digitaladvisorapi.toml`, but only when the stored access token is missing, expired or rejected.

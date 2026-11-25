@@ -14,6 +14,8 @@ tags:
 
 `DataSource` is the unified entry point for all cluster reads in pynetappfoundry. It routes requests through cache or live API based on per-field metadata and a per-call `source=` override, and returns typed Pydantic model instances regardless of the underlying path.
 
+Step by step, with the output to expect: [How-to: Script against the Python API](../how-to/script-python-api.md).
+
 ## Overview
 
 | Surface | Best for | Returns |

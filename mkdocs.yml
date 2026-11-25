@@ -114,6 +114,10 @@ nav:
       - Set Up Digital Advisor: how-to/setup-digital-advisor.md
       - Set Up Console: how-to/setup-console.md
       - Run nf Unattended: how-to/run-unattended.md
+      - Use Scopes: how-to/use-scopes.md
+      - Diagnose with nf doctor: how-to/diagnose-with-doctor.md
+      - Run Compliance Checks: how-to/run-compliance-checks.md
+      - Script the Python API: how-to/script-python-api.md
   - Usage:
       - Basics: usage/basics.md
       - CLI Guide: usage/cli.md
