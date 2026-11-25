@@ -693,6 +693,8 @@ nf cache schema --json
 
 ### Cluster cache status (`nf cache status`)
 
+Step by step: [Fill the cache and query it](../how-to/fill-and-query-cache.md).
+
 `nf cache status` lists every cluster currently in the cache with its
 `cached_at` timestamp, age, and stale flag (relative to a configurable
 TTL).

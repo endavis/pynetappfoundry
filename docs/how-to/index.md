@@ -21,6 +21,9 @@ Each guide takes one task from start to finish. They use real commands and show 
 | [Set up AIQUM](setup-aiqum.md) | AIQUM instances in the inventory with credentials, confirmed by `nf doctor` |
 | [Set up Digital Advisor](setup-digital-advisor.md) | A stored personal access token or refresh token that `nf doctor` confirms |
 | [Set up Console and its agents](setup-console.md) | A Console account, root or per scope, and its agents, confirmed by `nf doctor` |
+| [Fill the cache and query it](fill-and-query-cache.md) | A filled, fresh cache, and fields read from it as text, JSON or CSV |
+| [Find expiring licenses and export them to CSV](check-licenses.md) | A license list in a CSV file, and the license check with its email behaviour understood |
+| [Check recent events by severity](check-events.md) | EMS events of one or more clusters in a CSV file |
 | [Run nf unattended](run-unattended.md) | An `nf` command on a cron or systemd schedule that finds its config and key, and reports failure by exit code |
 | [Use scopes to separate environments](use-scopes.md) | A config directory split into scopes, each with its own inventory, credentials and thresholds, checked one at a time |
 | [Diagnose a failing setup with nf doctor](diagnose-with-doctor.md) | The failing check found and fixed from its hint, with the exit codes and options of `nf doctor` |

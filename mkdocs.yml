@@ -118,6 +118,9 @@ nav:
       - Diagnose with nf doctor: how-to/diagnose-with-doctor.md
       - Run Compliance Checks: how-to/run-compliance-checks.md
       - Script the Python API: how-to/script-python-api.md
+      - Fill and Query the Cache: how-to/fill-and-query-cache.md
+      - Check Licenses: how-to/check-licenses.md
+      - Check Events: how-to/check-events.md
   - Usage:
       - Basics: usage/basics.md
       - CLI Guide: usage/cli.md

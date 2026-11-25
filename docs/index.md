@@ -106,6 +106,9 @@ print(client.call_endpoint(path_template="/cluster?fields=name,version"))
 - [Find out why a setup fails with `nf doctor`](how-to/diagnose-with-doctor.md)
 - [Run compliance checks against your fleet](how-to/run-compliance-checks.md)
 - [Script against the Python API](how-to/script-python-api.md)
+- [Fill the cache and query it](how-to/fill-and-query-cache.md)
+- [Find expiring licenses and export them to CSV](how-to/check-licenses.md)
+- [Check recent events by severity](how-to/check-events.md)
 - [See every how-to guide](how-to/index.md)
 
 **Reference and background:**

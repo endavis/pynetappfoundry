@@ -232,7 +232,7 @@ db.upsert_data("cluster_metrics", {
 
 ### Cluster Metadata Caching
 
-The cache stores ONTAP cluster metadata that doesn't change frequently (instance IDs, node serials, ONTAP versions, etc.). This reduces API calls and enables quick lookups.
+The cache stores ONTAP cluster metadata that doesn't change frequently (instance IDs, node serials, ONTAP versions, etc.). This reduces API calls and enables quick lookups. Step by step: [Fill the cache and query it](../how-to/fill-and-query-cache.md).
 
 ```bash
 # Populate the cache for all clusters
@@ -263,6 +263,8 @@ nf cache query cluster1 cloud.provider --live
 
 ### License Reporting
 
+Step by step: [Find expiring licenses and export them to CSV](../how-to/check-licenses.md).
+
 ```bash
 # Get license information for all clusters
 nf licenses get
@@ -279,6 +281,8 @@ nf reports space-usage -f '{"name":"CLUSTER-PROD-01"}'
 ```
 
 ### Event Monitoring
+
+Step by step: [Check recent events by severity](../how-to/check-events.md).
 
 ```bash
 # Get recent events (most recent 100)
