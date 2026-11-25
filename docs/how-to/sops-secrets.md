@@ -113,12 +113,22 @@ nf doctor --offline
 
 Before you store any value, the last line reads `No SOPS values in the configuration`.
 
+A known secret field that still holds a plaintext value (a cluster `enc`, a `users.toml` `enc`, a Cloud Insights `rw_enc`, or a token in a settings file) gets a warning row with the command that encrypts it. The row never shows the value:
+
+```
+│   └── clusters.cluster2.enc: plaintext (not SOPS-encrypted)
+│       └── Store it encrypted with: nf config set-credential --cluster cluster2 --user admin
+```
+
+A warning does not fail `nf doctor`, so a config you left unencrypted on purpose still exits 0.
+
 ## If it fails
 
 | `nf doctor` shows | Cause | Fix |
 | :--- | :--- | :--- |
 | `sops is not installed` | `sops` is not on `PATH`, but the config has encrypted values | Install `sops` and `age`. |
 | `age key missing: key file <path>` | No key at the path shown | Run `nf config init-sops`, or set `SOPS_AGE_KEY_FILE` to your key. |
+| `<field>: plaintext (not SOPS-encrypted)` (warning) | A secret field holds a plaintext value | Run the `nf config set-credential` command in the hint. |
 | `<field>: SOPS value does not decrypt (SOPSError)` | The value was encrypted with a different key, or `SOPS_AGE_KEY_FILE` points to the wrong file | Point `SOPS_AGE_KEY_FILE` to the key that encrypted it, or store the value again with `nf config set-credential`. |
 
 ## Next

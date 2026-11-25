@@ -10,13 +10,19 @@ creates, migrates or modifies a cache file. See ADR-0035.
 from __future__ import annotations
 
 import os
+import shlex
 import sqlite3
 from collections.abc import Collection, Mapping
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from pynetappfoundry.core.config import Config, ConfigurationError
+from pynetappfoundry.core.config import (
+    SOPS_SETTING_TARGETS,
+    VALID_DATA_TYPES,
+    Config,
+    ConfigurationError,
+)
 from pynetappfoundry.core.config_checks import (
     CONFIGURATION_DOC,
     CheckResult,
@@ -103,6 +109,108 @@ def find_sops_values(
     return found
 
 
+def _is_plaintext(value: Any) -> bool:
+    """Return True for a non-blank string that is not a ``SOPS[...]`` value."""
+    from pynetappfoundry.utils.sops import is_encrypted
+
+    return isinstance(value, str) and bool(value.strip()) and not is_encrypted(value)
+
+
+def _set_credential(*args: str, user: Any = None, with_user: bool = True) -> str:
+    """Build a ``nf config set-credential`` command.
+
+    ``with_user`` False omits ``--user``; otherwise a blank or non-string ``user``
+    becomes the literal ``<user>`` placeholder.
+    """
+    parts = ["nf", "config", "set-credential", *(shlex.quote(a) for a in args)]
+    if with_user:
+        shown = shlex.quote(user) if isinstance(user, str) and user.strip() else "<user>"
+        parts += ["--user", shown]
+    return " ".join(parts)
+
+
+def _walk_plaintext_settings(
+    tree: Any,
+    prefix: str,
+    found: dict[str, str],
+    apis: Collection[str] | None,
+    scope: str | None,
+) -> None:
+    """Collect plaintext secret fields in one settings tree (root or a scope's)."""
+    if not isinstance(tree, Mapping):
+        return
+    for target, (stem, table, key) in SOPS_SETTING_TARGETS.items():
+        # A scope only overrides consoleapi among the settings that hold secrets.
+        if scope is not None and stem != "consoleapi":
+            continue
+        if apis is not None and SETTINGS_APIS.get(stem) not in apis:
+            continue
+        section = tree.get(stem)
+        general = section.get(table) if isinstance(section, Mapping) else None
+        if isinstance(general, Mapping) and _is_plaintext(general.get(key)):
+            args = ["--setting", target] + (["--scope", scope] if scope else [])
+            found[f"{prefix}.{stem}.{table}.{key}"] = _set_credential(*args, with_user=False)
+    users = tree.get("users")
+    if not isinstance(users, Mapping):
+        return
+    for utype in sorted(VALID_DATA_TYPES | {"console"}):
+        account = users.get(utype)
+        if not isinstance(account, Mapping):
+            continue
+        if apis is not None and USER_TYPE_APIS.get(utype) not in apis:
+            continue
+        if _is_plaintext(account.get("enc")):
+            args = ["--type", utype] + (["--scope", scope] if scope else [])
+            found[f"{prefix}.users.{utype}.enc"] = _set_credential(*args, user=account.get("user"))
+
+
+def find_plaintext_secrets(
+    config: Config,
+    scope: str | None = None,
+    *,
+    apis: Collection[str] | None = None,
+) -> dict[str, str]:
+    """Find the known secret fields that hold a plaintext value.
+
+    Only the fields ``nf config set-credential`` can encrypt are checked, so a
+    plain ``user`` or ``ip`` is never reported. The arguments match
+    ``find_sops_values``.
+
+    Returns:
+        Dotted subject (the same names ``find_sops_values`` uses) to the
+        ``set-credential`` command that stores it encrypted. The value itself is
+        never returned.
+    """
+    found: dict[str, str] = {}
+    if scope is None:
+        _walk_plaintext_settings(config.settings, "settings", found, apis, None)
+        for name, tree in config.scope_settings.items():
+            _walk_plaintext_settings(tree, f"scope.{name}", found, apis, name)
+    else:
+        _walk_plaintext_settings(
+            config.scope_settings.get(scope, {}), f"scope.{scope}", found, apis, scope
+        )
+    for data_type, objects in config.data.items():
+        if apis is not None and DATA_TYPE_APIS.get(data_type) not in apis:
+            continue
+        for name, entry in objects.items():
+            if scope is not None and config.get_scope(data_type, name) != scope:
+                continue
+            if _is_plaintext(entry.get("enc")):
+                if data_type == "clusters":
+                    command = _set_credential("--cluster", name, user=entry.get("user"))
+                else:
+                    command = _set_credential(
+                        "--type", data_type, "--name", name, user=entry.get("user")
+                    )
+                found[f"{data_type}.{name}.enc"] = command
+            if data_type == "cloudinsights" and _is_plaintext(entry.get("rw_enc")):
+                found[f"{data_type}.{name}.rw_enc"] = _set_credential(
+                    "--type", data_type, "--name", name, "--read-write", with_user=False
+                )
+    return found
+
+
 def _age_key_location() -> tuple[bool, str]:
     """Return ``(present, description)`` of the age key, without reading it."""
     from pynetappfoundry.utils.sops import get_age_key_path
@@ -119,19 +227,33 @@ def check_sops(
     *,
     apis: Collection[str] | None = None,
 ) -> list[CheckResult]:
-    """Check ``sops``, the age key and that every SOPS value decrypts.
+    """Check ``sops``, the age key, that every SOPS value decrypts and no secret is plaintext.
+
+    A known secret field holding a plaintext value is a WARNING row naming the
+    ``set-credential`` command that encrypts it; it never contains the value.
 
     Args:
         config: Loaded configuration.
         scope: Limit the values checked to this scope's.
         apis: Limit the values checked to these APIs'. When none of them has a
-            SOPS value, return no rows at all; None checks every value.
+            SOPS or plaintext secret value, return no rows at all; None checks every
+            value.
     """
     from pynetappfoundry.utils.sops import SOPSError, decrypt_value, is_sops_installed
 
     values = find_sops_values(config, scope, apis=apis)
-    if apis is not None and not values:
+    plaintext = find_plaintext_secrets(config, scope, apis=apis)
+    if apis is not None and not values and not plaintext:
         return []
+    plaintext_rows = [
+        CheckResult(
+            f"sops.{subject}",
+            CheckStatus.WARNING,
+            f"{subject}: plaintext (not SOPS-encrypted)",
+            hint=f"Store it encrypted with: {command}",
+        )
+        for subject, command in plaintext.items()
+    ]
     installed = is_sops_installed()
     results: list[CheckResult] = []
 
@@ -187,9 +309,9 @@ def check_sops(
         results.append(
             CheckResult("sops.values", CheckStatus.SKIPPED, "No SOPS values in the configuration")
         )
-        return results
+        return results + plaintext_rows
     if not installed:
-        return results
+        return results + plaintext_rows
     for subject, ciphertext in values.items():
         try:
             decrypt_value(ciphertext)
@@ -207,7 +329,7 @@ def check_sops(
             )
         else:
             results.append(CheckResult(f"sops.{subject}", CheckStatus.OK, f"{subject}: decrypts"))
-    return results
+    return results + plaintext_rows
 
 
 # --- Caches -------------------------------------------------------------------------

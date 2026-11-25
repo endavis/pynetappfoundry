@@ -167,7 +167,7 @@ These settings fields accept a `SOPS[...]` value instead of plaintext:
 | `digitaladvisorapi.toml` | `[general]` | `personal_access_token`, `access_token`, `refresh_token` | `digitaladvisorapi.personal_access_token`, `digitaladvisorapi.access_token`, `digitaladvisorapi.refresh_token` |
 
 Values are decrypted when the section is read, at most once per `Config` instance (the plaintext
-is kept in memory only, never written back to the settings). Plaintext values still work. A value
+is kept in memory only, never written back to the settings). Plaintext values still work, but `nf doctor` warns about each one and prints the `nf config set-credential` command that encrypts it. A value
 that cannot be decrypted raises a `ConfigurationError` naming the field, file and section, for
 example `Failed to decrypt the SOPS value of 'password' in settings.toml [SMTP]: ...`; it never
 contains the ciphertext or the `sops` error text. `nf config validate` reports such a section as

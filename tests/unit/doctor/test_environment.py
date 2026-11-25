@@ -18,6 +18,7 @@ from pynetappfoundry.doctor.environment import (
     CACHE_STALE_DAYS,
     check_caches,
     check_sops,
+    find_plaintext_secrets,
     find_sops_values,
     run_environment_checks,
 )
@@ -162,12 +163,147 @@ def test_scope_walk_decrypts_only_scope_values(tmp_path: Path) -> None:
 
 
 def test_no_sops_values_gives_one_skipped_row(tmp_path: Path) -> None:
-    config = _config(tmp_path, {"users.toml": '[clusters]\nuser = "u"\nenc = "plain"\n'})
+    config = _config(tmp_path, {"users.toml": '[clusters]\nuser = "u"\n'})
     with patch(INSTALLED, return_value=True):
         rows = _by_subject(check_sops(config))
 
     assert rows["sops.values"].status is CheckStatus.SKIPPED
     assert [s for s in rows if s.startswith("sops.")] == ["sops.values"]
+
+
+# --- plaintext secrets (#1204) ---
+
+PLAIN_FILES = {
+    "diiapi.toml": f'[general]\napi_ro_token = "{SENTINEL}"\napi_rw_token = "{CIPHERTEXT}"\n',
+    "settings.toml": f'[SMTP]\npassword = "{SENTINEL}"\n',
+    "digitaladvisorapi.toml": f'[general]\nrefresh_token = "{SENTINEL}"\n',
+    "users.toml": f'[clusters]\nuser = "adm in"\nenc = "{SENTINEL}"\n'
+    f'\n[console]\nenc = "{SENTINEL}"\n',
+    "inv.toml": DATA
+    + f'[clusters.c1]\nip = "192.0.2.1"\nenc = "{SENTINEL}"\n'
+    + f'\n[aiqums.a1]\nip = "192.0.2.3"\nuser = "q"\nenc = "{SENTINEL}"\n'
+    + f'\n[cloudinsights.t1]\nuser = "tok"\nenc = "{CIPHERTEXT}"\nrw_enc = "{SENTINEL}"\n'
+    + f'\n[connectors.k1]\nrw_enc = "{SENTINEL}"\n',
+    "Org1/scope.toml": "",
+    "Org1/consoleapi.toml": f'[general]\nclient_secret = "{SENTINEL}"\n',
+    "Org1/users.toml": f'[console]\nuser = "u"\nenc = "{SENTINEL}"\n',
+}
+
+
+def test_find_plaintext_secrets_commands(tmp_path: Path) -> None:
+    config = _config(tmp_path, PLAIN_FILES)
+
+    found = find_plaintext_secrets(config)
+
+    assert found == {
+        "settings.diiapi.general.api_ro_token": (
+            "nf config set-credential --setting diiapi.api_ro_token"
+        ),
+        "settings.settings.SMTP.password": (
+            "nf config set-credential --setting settings.smtp_password"
+        ),
+        "settings.digitaladvisorapi.general.refresh_token": (
+            "nf config set-credential --setting digitaladvisorapi.refresh_token"
+        ),
+        "settings.users.clusters.enc": "nf config set-credential --type clusters --user 'adm in'",
+        "settings.users.console.enc": "nf config set-credential --type console --user <user>",
+        "scope.Org1.consoleapi.general.client_secret": (
+            "nf config set-credential --setting consoleapi.client_secret --scope Org1"
+        ),
+        "scope.Org1.users.console.enc": (
+            "nf config set-credential --type console --scope Org1 --user u"
+        ),
+        "clusters.c1.enc": "nf config set-credential --cluster c1 --user <user>",
+        "aiqums.a1.enc": "nf config set-credential --type aiqums --name a1 --user q",
+        "cloudinsights.t1.rw_enc": (
+            "nf config set-credential --type cloudinsights --name t1 --read-write"
+        ),
+    }
+
+
+def test_rw_enc_only_on_cloudinsights(tmp_path: Path) -> None:
+    config = _config(tmp_path, PLAIN_FILES)
+
+    assert not any(s.startswith("connectors.") for s in find_plaintext_secrets(config))
+
+
+def test_encrypted_blank_absent_and_non_string_give_no_row(tmp_path: Path) -> None:
+    files = {
+        "diiapi.toml": f'[general]\napi_ro_token = "{CIPHERTEXT}"\napi_rw_token = "  "\n',
+        "settings.toml": "[SMTP]\npassword = 5\n",
+        "users.toml": '[clusters]\nuser = "u"\nenc = ""\n',
+        "inv.toml": DATA + '[clusters.c1]\nip = "192.0.2.1"\nenc = 7\n',
+    }
+    config = _config(tmp_path, files)
+
+    assert find_plaintext_secrets(config) == {}
+
+
+def test_find_plaintext_secrets_limited_to_api_and_scope(tmp_path: Path) -> None:
+    config = _config(tmp_path, PLAIN_FILES)
+
+    assert set(find_plaintext_secrets(config, apis=("dii",))) == {
+        "settings.diiapi.general.api_ro_token",
+        "cloudinsights.t1.rw_enc",
+    }
+    assert set(find_plaintext_secrets(config, apis=("digitaladvisor",))) == {
+        "settings.digitaladvisorapi.general.refresh_token"
+    }
+    assert set(find_plaintext_secrets(config, "Org1")) == {
+        "scope.Org1.consoleapi.general.client_secret",
+        "scope.Org1.users.console.enc",
+    }
+    assert "settings.settings.SMTP.password" not in find_plaintext_secrets(config, apis=("dii",))
+
+
+def test_check_sops_plaintext_rows_warn_and_hide_value(tmp_path: Path) -> None:
+    config = _config(tmp_path, PLAIN_FILES)
+    with patch(INSTALLED, return_value=True), patch(DECRYPT, return_value="x"):
+        results = check_sops(config)
+    rows = _by_subject(results)
+
+    row = rows["sops.settings.diiapi.general.api_ro_token"]
+    assert row.status is CheckStatus.WARNING
+    assert row.label == "settings.diiapi.general.api_ro_token: plaintext (not SOPS-encrypted)"
+    assert row.hint == (
+        "Store it encrypted with: nf config set-credential --setting diiapi.api_ro_token"
+    )
+    assert rows["sops.settings.diiapi.general.api_rw_token"].status is CheckStatus.OK
+    assert SENTINEL not in _rendered(results)
+
+
+def test_check_sops_plaintext_rows_when_sops_not_installed(tmp_path: Path) -> None:
+    config = _config(tmp_path, {"diiapi.toml": f'[general]\napi_ro_token = "{SENTINEL}"\n'})
+    with patch(INSTALLED, return_value=False):
+        results = check_sops(config)
+    rows = _by_subject(results)
+
+    assert rows["sops.values"].status is CheckStatus.SKIPPED
+    assert rows["sops.settings.diiapi.general.api_ro_token"].status is CheckStatus.WARNING
+    assert SENTINEL not in _rendered(results)
+
+
+def test_check_sops_plaintext_rows_when_values_exist_but_sops_missing(tmp_path: Path) -> None:
+    files = {
+        "diiapi.toml": f'[general]\napi_ro_token = "{SENTINEL}"\napi_rw_token = "{CIPHERTEXT}"\n'
+    }
+    config = _config(tmp_path, files)
+    with patch(INSTALLED, return_value=False):
+        rows = _by_subject(check_sops(config))
+
+    assert rows["env.sops"].status is CheckStatus.ERROR
+    assert rows["sops.settings.diiapi.general.api_ro_token"].status is CheckStatus.WARNING
+
+
+def test_check_sops_with_apis_keeps_plaintext_only_rows(tmp_path: Path) -> None:
+    config = _config(tmp_path, PLAIN_FILES)
+    with patch(INSTALLED, return_value=True):
+        rows = _by_subject(check_sops(config, apis=("digitaladvisor",)))
+
+    assert rows["sops.settings.digitaladvisorapi.general.refresh_token"].status is (
+        CheckStatus.WARNING
+    )
+    assert check_sops(config, apis=("ibm",)) == []
 
 
 # --- caches ---
