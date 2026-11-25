@@ -9,6 +9,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 
 ### For Users
 <!-- BEGIN:audience=users -->
+- [Add an ONTAP Cluster and Validate It](how-to/add-ontap-cluster.md) - Add a cluster to the inventory, store its credentials, and check the connection with nf doctor
 - [AIQUM API](usage/aiqum-api.md) - Call Active IQ Unified Manager with AIQUMAPIClient
 - [API Examples](examples/api.md) - Detailed Python API usage examples
 - [API Reference](reference/api.md) - Python API documentation
@@ -27,6 +28,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [Doit Tasks Reference](development/doit-tasks-reference.md) - Complete reference for all doit automation tasks
 - [Examples](examples/README.md) - Code examples for pynetappfoundry
 - [GitHub Repository Settings](development/github-repository-settings.md) - Complete reference for all GitHub repository settings the template expects
+- [How-to Guides](how-to/index.md) - Task-oriented guides that take you from a goal to a working, verified setup
 - [Installation Guide](getting-started/installation.md) - How to install and set up your project
 - [Keeping Up to Date](template/updates.md) - Stay in sync with improvements to the pyproject-template
 - [Migration Guide](template/migration.md) - Migrate existing Python projects to use this template
@@ -36,6 +38,8 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [pynetappfoundry Documentation](index.md) - ONTAP administration library and CLI tools
 - [Query Layer](usage/query-layer.md) - Guide to the REST query layer (QuerySet, Query, Mutation for ONTAP and DII writes, JobTracker, related, realtime)
 - [Report Cloud Details](usage/report-cloud-details.md) - How the inventory and HTML reports take cloud provider details from the OCCM cache, when they fall back to the ONTAP CLI path, and the Console links (including System Manager) they add
+- [Set Up a Config Directory and SOPS Secrets](how-to/sops-secrets.md) - Create the config directory, generate an age key and store credentials encrypted with SOPS
+- [Set Up the DII API](how-to/setup-dii.md) - Connect to Data Infrastructure Insights with a read-only token, add tenants, and add the optional read-write key
 - [Template Management](template/manage.md) - Unified interface for creating projects, checking updates, and syncing
 - [Template Tools Reference](template/tools-reference.md) - Complete reference for all template tools in tools/pyproject_template/
 - [Using This Template](template/index.md) - Overview of using pyproject-template for your Python projects
@@ -181,6 +185,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 ## Complete Index
 <!-- BEGIN:all -->
 - [Add a Feature: End-to-End Walkthrough](examples/add-a-feature.md) - Step-by-step example of adding a module, CLI subcommand, tests, and docs to the project
+- [Add an ONTAP Cluster and Validate It](how-to/add-ontap-cluster.md) - Add a cluster to the inventory, store its credentials, and check the connection with nf doctor
 - [Adding a New API Backend](development/adding-backends.md) - Developer guide for extending the DataSource framework with new API backends
 - [ADR-0001: Use SQLite for cluster metadata caching](decisions/0001-use-sqlite-for-cluster-metadata-caching.md) - Use SQLite as the storage backend for caching ONTAP cluster metadata, refreshed manually via `nf cache refresh`.
 - [ADR-0002: Track SMB Client Impact During Azure Maintenance Events](decisions/0002-track-smb-client-impact-azure-maintenance.md) - Extend Azure maintenance event tracking to capture SMB client impact metrics -- LIF failover timing, CIFS transition time, CIFS Witness notifications, and aggregate giveback -- during CVO HA failover events.
@@ -287,6 +292,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [Field Mapping Framework](development/field-mapping.md) - Declarative framework for mapping API/CLI data to cache models
 - [First 5 Minutes with an AI Agent](development/ai/first-5-minutes.md) - Narrative walkthrough of the AI agent workflow from issue to merge
 - [GitHub Repository Settings](development/github-repository-settings.md) - Complete reference for all GitHub repository settings the template expects
+- [How-to Guides](how-to/index.md) - Task-oriented guides that take you from a goal to a working, verified setup
 - [install_tools Framework](development/install-tools-framework.md) - Reusable framework for installing developer tools from GitHub releases or other URLs into ~/.local/bin
 - [Installation Guide](getting-started/installation.md) - How to install and set up your project
 - [Keeping Up to Date](template/updates.md) - Stay in sync with improvements to the pyproject-template
@@ -307,6 +313,8 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [Report Cloud Details](usage/report-cloud-details.md) - How the inventory and HTML reports take cloud provider details from the OCCM cache, when they fall back to the ONTAP CLI path, and the Console links (including System Manager) they add
 - [Review Focus Areas](development/ai/review-focus-areas.md) - Checklists for the errors, tests, types and comments focus areas available to every review and adversarial-review surface
 - [Ruff Auto-Fix on Edit Hook](development/ai/ruff-fix-hook.md) - PostToolUse hook that runs ruff --fix on edited Python files
+- [Set Up a Config Directory and SOPS Secrets](how-to/sops-secrets.md) - Create the config directory, generate an age key and store credentials encrypted with SOPS
+- [Set Up the DII API](how-to/setup-dii.md) - Connect to Data Infrastructure Insights with a read-only token, add tenants, and add the optional read-write key
 - [Slash Commands and Workflows](development/ai/slash-commands.md) - Reference for the slash commands and dual-agent workflow this project ships with
 - [Subsystem Audit (2026-11)](plans/subsystem-audit-2026-11.md) - Audit of every pynetappfoundry subsystem covering patterns, libraries, bugs, refactors, documentation drift and test gaps, with a ranked backlog.
 - [Template Management](template/manage.md) - Unified interface for creating projects, checking updates, and syncing
