@@ -18,6 +18,9 @@ Each guide takes one task from start to finish. They use real commands and show 
 | [Set up a config directory and SOPS secrets](sops-secrets.md) | A config directory and an age key, so credentials are stored encrypted |
 | [Add an ONTAP cluster and validate it](add-ontap-cluster.md) | A cluster in the inventory with credentials, confirmed by `nf doctor` |
 | [Set up the DII API](setup-dii.md) | A DII tenant with a read-only token, and optionally more tenants and a read-write key |
+| [Set up AIQUM](setup-aiqum.md) | AIQUM instances in the inventory with credentials, confirmed by `nf doctor` |
+| [Set up Digital Advisor](setup-digital-advisor.md) | A stored personal access token or refresh token that `nf doctor` confirms |
+| [Set up Console and its agents](setup-console.md) | A Console account, root or per scope, and its agents, confirmed by `nf doctor` |
 
 ## How each guide is laid out
 
@@ -28,4 +31,4 @@ Each guide takes one task from start to finish. They use real commands and show 
 5. **If it fails:** the messages you may see, their cause, and the fix.
 6. **Next:** related guides and reference pages.
 
-Example names and addresses use placeholders: `cluster1`, `tenant1`, and the documentation range `192.0.2.0/24`. `<config>` stands for your config directory, which is `./config` by default. Command output shows it as `config/`.
+Example names and addresses use placeholders: `cluster1`, `tenant1`, `aiqum1`, `bu1`, and the documentation range `192.0.2.0/24`. `<config>` stands for your config directory, which is `./config` by default. Command output shows it as `config/`.
