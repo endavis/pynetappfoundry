@@ -23,10 +23,8 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [Configuration Schema Reference](reference/config-schema.md) - Complete reference for pynetappfoundry TOML configuration files
 - [Console Agent](usage/console-agent.md) - Manage on-prem working environments through a Console agent with ConsoleAgentClient
 - [DataSource](usage/data-source.md) - Unified entry point for reading cluster data from cache or live API
-- [Development Deployment Guide](deployment/development.md) - Guide for setting up and running the application in development environments
 - [Digital Advisor API](usage/digital-advisor-api.md) - Query Active IQ Digital Advisor with DigitalAdvisorAPIClient
 - [Doit Tasks Reference](development/doit-tasks-reference.md) - Complete reference for all doit automation tasks
-- [Examples](examples/README.md) - Code examples for pynetappfoundry
 - [GitHub Repository Settings](development/github-repository-settings.md) - Complete reference for all GitHub repository settings the template expects
 - [How-to Guides](how-to/index.md) - Task-oriented guides that take you from a goal to a working, verified setup
 - [Installation Guide](getting-started/installation.md) - How to install and set up your project
@@ -34,10 +32,10 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [Migration Guide](template/migration.md) - Migrate existing Python projects to use this template
 - [New Project Setup](template/new-project.md) - Create a new Python project from this template
 - [ONTAP Access Patterns](usage/ontap-access-patterns.md) - Guide to choosing between the three ONTAP access methods
-- [Production Deployment Guide](deployment/production.md) - Comprehensive guide for deploying Python applications to production
 - [pynetappfoundry Documentation](index.md) - ONTAP administration library and CLI tools
 - [Query Layer](usage/query-layer.md) - Guide to the REST query layer (QuerySet, Query, Mutation for ONTAP and DII writes, JobTracker, related, realtime)
 - [Report Cloud Details](usage/report-cloud-details.md) - How the inventory and HTML reports take cloud provider details from the OCCM cache, when they fall back to the ONTAP CLI path, and the Console links (including System Manager) they add
+- [Run nf Unattended](how-to/run-unattended.md) - Run nf commands from cron or a systemd timer, with the config directory, the SOPS age key, logs and exit codes set up for a scheduled job
 - [Set Up a Config Directory and SOPS Secrets](how-to/sops-secrets.md) - Create the config directory, generate an age key and store credentials encrypted with SOPS
 - [Set Up AIQUM](how-to/setup-aiqum.md) - Add Active IQ Unified Manager instances, store their credentials, and check the connection
 - [Set Up Console and Its Agents](how-to/setup-console.md) - Configure a Console (BlueXP) account at the root or per scope, add its agents, and check them with nf doctor
@@ -138,7 +136,6 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [CLI Guide](usage/cli.md) - The nf command-line interface, its module layout, and how to extend it
 - [Cross-Agent Delegation Matrix](development/ai/cross-agent-delegation.md) - Commands that let any supported AI CLI hand a review task to any other; plan and implement are handled by the shared implement-issue skill instead
 - [Dependabot Auto-merge](development/dependabot-automerge.md) - How the dependabot auto-merge workflow evaluates, enables, and skips PRs
-- [Development Deployment Guide](deployment/development.md) - Guide for setting up and running the application in development environments
 - [Doit Tasks Reference](development/doit-tasks-reference.md) - Complete reference for all doit automation tasks
 - [Field Mapping Framework](development/field-mapping.md) - Declarative framework for mapping API/CLI data to cache models
 - [First 5 Minutes with an AI Agent](development/ai/first-5-minutes.md) - Narrative walkthrough of the AI agent workflow from issue to merge
@@ -151,7 +148,6 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [Per-Stack Rule Files](development/ai/rule-files.md) - How to author, load and mirror the short self-check rule files in .claude/rules/
 - [Performance Benchmarks](development/benchmarks.md) - Running, interpreting, and comparing the pytest-benchmark suite
 - [Plan: Add `nf cache query` Command](plans/cache-query-command.md) - Plan for a new `nf cache query` command that queries specific dot-notation fields from cached cluster metadata, for a single cluster, a filtered subset, or all clusters.
-- [Production Deployment Guide](deployment/production.md) - Comprehensive guide for deploying Python applications to production
 - [PyNetAppFoundry Code Review & Improvement Plan](plans/first-pass-refactor.md) - Code review tracking critical issues, priorities, and improvement work needed to move the project toward production-readiness.
 - [pynetappfoundry Documentation](index.md) - ONTAP administration library and CLI tools
 - [Python Project Coding Standards](development/coding-standards.md) - Guidelines for exceptions, typing, structure, testing, and documentation
@@ -288,10 +284,8 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [Cross-Agent Delegation Matrix](development/ai/cross-agent-delegation.md) - Commands that let any supported AI CLI hand a review task to any other; plan and implement are handled by the shared implement-issue skill instead
 - [DataSource](usage/data-source.md) - Unified entry point for reading cluster data from cache or live API
 - [Dependabot Auto-merge](development/dependabot-automerge.md) - How the dependabot auto-merge workflow evaluates, enables, and skips PRs
-- [Development Deployment Guide](deployment/development.md) - Guide for setting up and running the application in development environments
 - [Digital Advisor API](usage/digital-advisor-api.md) - Query Active IQ Digital Advisor with DigitalAdvisorAPIClient
 - [Doit Tasks Reference](development/doit-tasks-reference.md) - Complete reference for all doit automation tasks
-- [Examples](examples/README.md) - Code examples for pynetappfoundry
 - [Field Mapping Framework](development/field-mapping.md) - Declarative framework for mapping API/CLI data to cache models
 - [First 5 Minutes with an AI Agent](development/ai/first-5-minutes.md) - Narrative walkthrough of the AI agent workflow from issue to merge
 - [GitHub Repository Settings](development/github-repository-settings.md) - Complete reference for all GitHub repository settings the template expects
@@ -307,7 +301,6 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [Per-Stack Rule Files](development/ai/rule-files.md) - How to author, load and mirror the short self-check rule files in .claude/rules/
 - [Performance Benchmarks](development/benchmarks.md) - Running, interpreting, and comparing the pytest-benchmark suite
 - [Plan: Add `nf cache query` Command](plans/cache-query-command.md) - Plan for a new `nf cache query` command that queries specific dot-notation fields from cached cluster metadata, for a single cluster, a filtered subset, or all clusters.
-- [Production Deployment Guide](deployment/production.md) - Comprehensive guide for deploying Python applications to production
 - [PyNetAppFoundry Code Review & Improvement Plan](plans/first-pass-refactor.md) - Code review tracking critical issues, priorities, and improvement work needed to move the project toward production-readiness.
 - [pynetappfoundry Documentation](index.md) - ONTAP administration library and CLI tools
 - [Python Project Coding Standards](development/coding-standards.md) - Guidelines for exceptions, typing, structure, testing, and documentation
@@ -316,6 +309,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [Report Cloud Details](usage/report-cloud-details.md) - How the inventory and HTML reports take cloud provider details from the OCCM cache, when they fall back to the ONTAP CLI path, and the Console links (including System Manager) they add
 - [Review Focus Areas](development/ai/review-focus-areas.md) - Checklists for the errors, tests, types and comments focus areas available to every review and adversarial-review surface
 - [Ruff Auto-Fix on Edit Hook](development/ai/ruff-fix-hook.md) - PostToolUse hook that runs ruff --fix on edited Python files
+- [Run nf Unattended](how-to/run-unattended.md) - Run nf commands from cron or a systemd timer, with the config directory, the SOPS age key, logs and exit codes set up for a scheduled job
 - [Set Up a Config Directory and SOPS Secrets](how-to/sops-secrets.md) - Create the config directory, generate an age key and store credentials encrypted with SOPS
 - [Set Up AIQUM](how-to/setup-aiqum.md) - Add Active IQ Unified Manager instances, store their credentials, and check the connection
 - [Set Up Console and Its Agents](how-to/setup-console.md) - Configure a Console (BlueXP) account at the root or per scope, add its agents, and check them with nf doctor

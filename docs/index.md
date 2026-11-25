@@ -101,6 +101,7 @@ print(client.call_endpoint(path_template="/cluster?fields=name,version"))
 - [Connect to Active IQ Unified Manager (AIQUM)](how-to/setup-aiqum.md)
 - [Connect to Digital Advisor](how-to/setup-digital-advisor.md)
 - [Connect to Console and its agents](how-to/setup-console.md)
+- [Run nf on a schedule](how-to/run-unattended.md)
 - [See every how-to guide](how-to/index.md)
 
 **Reference and background:**
