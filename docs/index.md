@@ -93,6 +93,15 @@ print(client.call_endpoint(path_template="/cluster?fields=name,version"))
 
 ### For Users
 
+**I want to…**
+
+- [Set up a config directory and encrypted credentials](how-to/sops-secrets.md)
+- [Add an ONTAP cluster and check that it connects](how-to/add-ontap-cluster.md)
+- [Connect to Data Infrastructure Insights (DII)](how-to/setup-dii.md)
+- [See every how-to guide](how-to/index.md)
+
+**Reference and background:**
+
 - **[Installation](getting-started/installation.md)** - How to install the package
 - **[Configuration](getting-started/configuration.md)** - Set up the config directory and each API
 - **[Usage Guide](usage/basics.md)** - How to use the package

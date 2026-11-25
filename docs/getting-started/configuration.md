@@ -38,6 +38,8 @@ Then trim the placeholder inventory (the clusters, AIQUM instances and connector
 
 ## Encrypt credentials with SOPS (optional, recommended)
 
+Step by step, with the output to expect: [How-to: Set up a config directory and SOPS secrets](../how-to/sops-secrets.md).
+
 `nf config init-sops` creates an age key and wires SOPS so credentials are stored encrypted:
 
 ```bash
@@ -81,6 +83,8 @@ Every `fetch_spec` call also accepts `--no-verify` to skip TLS certificate valid
 
 ## ONTAP
 
+Step by step, with the output to expect: [How-to: Add an ONTAP cluster and validate it](../how-to/add-ontap-cluster.md).
+
 - **Inventory:** add each cluster to a data file as `[clusters.NAME]` with an `ip` (see [Config schema: Clusters](../reference/config-schema.md#clusters)). The `NAME` must be the cluster's real name, which Console shows as its cluster name (the working environment name when Console reports none). For AWS Cloud Volumes ONTAP the `ip` may be a node management IP.
 - **Credentials:** `nf config set-credential --cluster NAME --user USER` stores them on the cluster entry. A default for every cluster goes under `[clusters]` in `users.toml` (see [Config schema: Credential Resolution Order](../reference/config-schema.md#credential-resolution-order)). The API uses HTTP Basic authentication.
 - **Settings:** `<config>/apis/ontap/ontapapi.toml` with a `[general]` section (see [Config schema: ontapapi.toml](../reference/config-schema.md#ontapapitoml)).
@@ -98,6 +102,8 @@ Every `fetch_spec` call also accepts `--no-verify` to skip TLS certificate valid
 The fields are in [AIQUM API: Setup](../usage/aiqum-api.md#setup).
 
 ## DII (Data Infrastructure Insights)
+
+Step by step, with the output to expect: [How-to: Set up the DII API](../how-to/setup-dii.md).
 
 - **Inventory:** add each tenant as `[cloudinsights.NAME]` with an `ip` (see [Config schema: Cloud Insights](../reference/config-schema.md#cloud-insights)).
 - **Credentials:** the API token. `nf config set-credential --setting diiapi.api_ro_token` stores one for every tenant in `diiapi.toml`. `nf config set-credential --type cloudinsights --name NAME --user LABEL` stores one per tenant. The client sends it in the `X-CloudInsights-ApiKey` header. Writes need a separate read-write key, `api_rw_token`, set with `nf config set-credential --setting diiapi.api_rw_token`; it is optional and only `DIIAPIClient(config, read_write=True)` uses it. A tenant can have its own read-write key: `nf config set-credential --type cloudinsights --name NAME --read-write` stores it as `rw_enc` on the tenant's entry, and it replaces the `[general]` key for that tenant.

@@ -102,6 +102,11 @@ nav:
   - Getting Started:
       - Installation: getting-started/installation.md
       - Configuration: getting-started/configuration.md
+  - How-to Guides:
+      - Overview: how-to/index.md
+      - Set Up SOPS Secrets: how-to/sops-secrets.md
+      - Add an ONTAP Cluster: how-to/add-ontap-cluster.md
+      - Set Up the DII API: how-to/setup-dii.md
   - Usage:
       - Basics: usage/basics.md
       - CLI Guide: usage/cli.md
