@@ -325,7 +325,7 @@ in `pynetappfoundry.query.realtime` is replaced with positional
 `fetch_realtime(MyModel, config, cluster="prod", uuid=uuid)`. This change
 was made without a compatibility shim because there are zero production
 callers inside `src/` (verified by grep); only test code and
-`query/__init__.py` re-exports touch these functions. External users of
+`src/pynetappfoundry/query/__init__.py` re-exports touch these functions. External users of
 `pynetappfoundry.query.realtime` will need to update their call sites.
 - ClusterMetadataDB.get_lazy() now requires the
 ClusterMetadataDB to have been constructed with config= (not just
