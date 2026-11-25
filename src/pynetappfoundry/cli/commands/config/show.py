@@ -242,8 +242,14 @@ def show(ctx: click.Context, section: str | None, scope: str | None, unmask: boo
             tree = Tree(f"[bold blue]{escape(section)}[/bold blue]")
             _build_tree(tree, config.settings[section_lower], unmask)
             console.print(tree)
+        # A known inventory type with no entries is not "not found" (#1203). Checked
+        # after settings, so a settings file named like an empty type still shows.
+        elif section_lower in config.data:
+            console.print(f"[yellow]{escape(section)}: no entries[/yellow]")
         else:
-            available = list(config.data.keys()) + list(config.settings.keys())
+            # dict.fromkeys de-duplicates (a settings file can share its name with an
+            # inventory type) while keeping a stable order.
+            available = list(dict.fromkeys([*config.data, *config.settings]))
             raise CliError(
                 f"Section '{section}' not found.",
                 hints=[f"Available sections: {escape(', '.join(available))}"],
