@@ -323,8 +323,9 @@ Checks that all configuration files parse and
 contain valid values. A settings section that is absent is reported as not
 configured; one that is present but invalid, or whose `SOPS[...]` value cannot be
 decrypted, is reported as Invalid. Without `--scope` the root settings are checked,
-including a root Console row (`Console: Not configured (optional)` without an account; a
-broken account fails validation).
+including a root Console row (`Console: Not configured (optional)` without an account,
+`Console: no root account; scope accounts: ...` when only scopes have one, which
+`--scope <scope>` checks; a broken account fails validation).
 
 When a Console account has a `client_id` but no `client_secret` and `users.toml` `[console]`
 holds a token, validate adds a hint: the secret was probably stored as a refresh token. It

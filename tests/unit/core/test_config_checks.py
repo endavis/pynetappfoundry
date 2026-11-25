@@ -119,6 +119,59 @@ def test_settings_rows_in_order_with_texts_and_statuses(tmp_path: Path) -> None:
     assert all(r.hint is None for r in results)
 
 
+def _console_row(config: Config) -> CheckResult:
+    return _by_subject(check_settings(config))["consoleapi.general"]
+
+
+def test_root_console_row_names_scope_accounts_when_root_has_none(tmp_path: Path) -> None:
+    config = _config(
+        tmp_path,
+        {
+            "bu2/scope.toml": "",
+            "bu2/consoleapi.toml": '[general]\nbase_url = "https://api.example.invalid"\n',
+            "bu1/scope.toml": "",
+            "bu1/consoleapi.toml": '[general]\nbase_url = "https://api.example.invalid"\n',
+            "bu3/scope.toml": "",
+        },
+    )
+
+    row = _console_row(config)
+
+    assert row.status is CheckStatus.SKIPPED
+    assert row.label == (
+        "Console: no root account; scope accounts: bu1, bu2 "
+        "(check with nf config validate --scope <scope>)"
+    )
+
+
+def test_root_console_row_unchanged_without_any_account(tmp_path: Path) -> None:
+    config = _config(tmp_path, {"bu1/scope.toml": ""})
+
+    row = _console_row(config)
+
+    assert row.status is CheckStatus.SKIPPED
+    assert row.label == "Console: Not configured (optional)"
+
+
+def test_root_console_row_unchanged_when_root_configured(tmp_path: Path) -> None:
+    config = _config(
+        tmp_path,
+        {
+            "consoleapi.toml": (
+                '[general]\nbase_url = "https://api.example.invalid"\n'
+                'service_token = "placeholder-service-token"\n'
+            ),
+            "bu1/scope.toml": "",
+            "bu1/consoleapi.toml": '[general]\nbase_url = "https://api.example.invalid"\n',
+        },
+    )
+
+    row = _console_row(config)
+
+    assert row.status is CheckStatus.OK
+    assert row.label == "Console"
+
+
 def test_invalid_settings_section_carries_error_and_docs_hint(tmp_path: Path) -> None:
     config = _config(tmp_path, {"settings.toml": '[SMTP]\nserver = "s"\nport = "x"\n'})
 

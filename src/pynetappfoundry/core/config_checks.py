@@ -298,6 +298,29 @@ def _aiqum_api_result(config: Config) -> CheckResult | None:
     )
 
 
+def _root_console_absent(config: Config) -> CheckResult:
+    """Build the root Console row for a root without a ``[general]`` account.
+
+    Scopes can carry their own Console account, which the root check does not
+    cover; name them so the row does not read as "no Console anywhere" (#1206).
+    """
+    scope_accounts = sorted(
+        scope
+        for scope in config.scopes
+        if config.scope_settings.get(scope, {}).get("consoleapi", {}).get("general") is not None
+    )
+    if not scope_accounts:
+        return CheckResult(
+            "consoleapi.general", CheckStatus.SKIPPED, "Console: Not configured (optional)"
+        )
+    return CheckResult(
+        "consoleapi.general",
+        CheckStatus.SKIPPED,
+        f"Console: no root account; scope accounts: {', '.join(scope_accounts)} "
+        "(check with nf config validate --scope <scope>)",
+    )
+
+
 def check_settings(config: Config) -> list[CheckResult]:
     """Validate the root settings files."""
     results = [
@@ -353,9 +376,7 @@ def check_settings(config: Config) -> list[CheckResult]:
             label="Console",
             keys=("consoleapi", "general"),
             reader=config.get_console_api_settings,
-            absent=CheckResult(
-                "consoleapi.general", CheckStatus.SKIPPED, "Console: Not configured (optional)"
-            ),
+            absent=_root_console_absent(config),
             hint=lambda: _refresh_token_hint(
                 config.settings.get("consoleapi", {}).get("general"),
                 config.settings.get("users", {}),
