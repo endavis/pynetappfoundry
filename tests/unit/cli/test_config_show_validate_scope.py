@@ -265,10 +265,18 @@ def test_validate_root_hints_with_the_root_command(tmp_path: Path) -> None:
 
 
 def test_validate_root_without_console_account_is_optional(tmp_path: Path) -> None:
-    code, out = _run(_config_dir(tmp_path), "validate")
+    code, out = _run(_config_dir(tmp_path, Org1__consoleapi_toml=None), "validate")
 
     assert code == 0, out
     assert "Console: Not configured (optional)" in out
+
+
+def test_validate_root_names_scope_console_accounts(tmp_path: Path) -> None:
+    code, out = _run(_config_dir(tmp_path), "validate")
+
+    assert code == 0, out
+    assert "Console: no root account; scope accounts: Org1 (check with nf config" in out
+    assert "Console: Not configured (optional)" not in out
 
 
 def test_show_masks_tenant_rw_enc_unless_unmasked(tmp_path: Path) -> None:

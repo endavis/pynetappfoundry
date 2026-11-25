@@ -876,7 +876,9 @@ nf config validate
 - All clusters have valid credentials configured
 - Optional settings (DII API, SMTP, Console, Licensing) are valid if present. The root Console
   account is checked too: it shows `Console: Not configured (optional)` when `consoleapi.toml`
-  has no `[general]`, and a broken one fails validation
+  has no `[general]` (or `Console: no root account; scope accounts: ...` when scopes have
+  their own account, checked with `nf config validate --scope <scope>`), and a broken one fails
+  validation
 - A Console account with `client_id` but no `client_secret`, while `users.toml` `[console]`
   holds a token, gets a hint: the secret was probably stored as a refresh token. The hint gives
   the exact `nf config set-credential --setting consoleapi.client_secret` command (with
