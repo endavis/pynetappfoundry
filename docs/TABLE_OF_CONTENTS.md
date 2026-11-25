@@ -23,6 +23,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [Configuration Schema Reference](reference/config-schema.md) - Complete reference for pynetappfoundry TOML configuration files
 - [Console Agent](usage/console-agent.md) - Manage on-prem working environments through a Console agent with ConsoleAgentClient
 - [DataSource](usage/data-source.md) - Unified entry point for reading cluster data from cache or live API
+- [Diagnose a Failing Setup with nf doctor](how-to/diagnose-with-doctor.md) - Run nf doctor, read each check section, and fix the common failures from the hint under them
 - [Digital Advisor API](usage/digital-advisor-api.md) - Query Active IQ Digital Advisor with DigitalAdvisorAPIClient
 - [Doit Tasks Reference](development/doit-tasks-reference.md) - Complete reference for all doit automation tasks
 - [GitHub Repository Settings](development/github-repository-settings.md) - Complete reference for all GitHub repository settings the template expects
@@ -35,7 +36,9 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [pynetappfoundry Documentation](index.md) - ONTAP administration library and CLI tools
 - [Query Layer](usage/query-layer.md) - Guide to the REST query layer (QuerySet, Query, Mutation for ONTAP and DII writes, JobTracker, related, realtime)
 - [Report Cloud Details](usage/report-cloud-details.md) - How the inventory and HTML reports take cloud provider details from the OCCM cache, when they fall back to the ONTAP CLI path, and the Console links (including System Manager) they add
+- [Run Compliance Checks Against Your Fleet](how-to/run-compliance-checks.md) - Write compliance rules, run them against the cached cluster metadata with nf cache compliance, and read the results and exit codes
 - [Run nf Unattended](how-to/run-unattended.md) - Run nf commands from cron or a systemd timer, with the config directory, the SOPS age key, logs and exit codes set up for a scheduled job
+- [Script Against the Python API](how-to/script-python-api.md) - Load the config in Python, find clusters, read cached cluster data through ClusterEntry.ontap, and query with DataSource
 - [Set Up a Config Directory and SOPS Secrets](how-to/sops-secrets.md) - Create the config directory, generate an age key and store credentials encrypted with SOPS
 - [Set Up AIQUM](how-to/setup-aiqum.md) - Add Active IQ Unified Manager instances, store their credentials, and check the connection
 - [Set Up Console and Its Agents](how-to/setup-console.md) - Configure a Console (BlueXP) account at the root or per scope, add its agents, and check them with nf doctor
@@ -43,6 +46,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [Set Up the DII API](how-to/setup-dii.md) - Connect to Data Infrastructure Insights with a read-only token, add tenants, and add the optional read-write key
 - [Template Management](template/manage.md) - Unified interface for creating projects, checking updates, and syncing
 - [Template Tools Reference](template/tools-reference.md) - Complete reference for all template tools in tools/pyproject_template/
+- [Use Scopes to Separate Environments](how-to/use-scopes.md) - Split the config directory into scopes, each with its own inventory, credentials and thresholds, and check one scope at a time
 - [Using This Template](template/index.md) - Overview of using pyproject-template for your Python projects
 <!-- END:audience=users -->
 
@@ -284,6 +288,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [Cross-Agent Delegation Matrix](development/ai/cross-agent-delegation.md) - Commands that let any supported AI CLI hand a review task to any other; plan and implement are handled by the shared implement-issue skill instead
 - [DataSource](usage/data-source.md) - Unified entry point for reading cluster data from cache or live API
 - [Dependabot Auto-merge](development/dependabot-automerge.md) - How the dependabot auto-merge workflow evaluates, enables, and skips PRs
+- [Diagnose a Failing Setup with nf doctor](how-to/diagnose-with-doctor.md) - Run nf doctor, read each check section, and fix the common failures from the hint under them
 - [Digital Advisor API](usage/digital-advisor-api.md) - Query Active IQ Digital Advisor with DigitalAdvisorAPIClient
 - [Doit Tasks Reference](development/doit-tasks-reference.md) - Complete reference for all doit automation tasks
 - [Field Mapping Framework](development/field-mapping.md) - Declarative framework for mapping API/CLI data to cache models
@@ -309,7 +314,9 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [Report Cloud Details](usage/report-cloud-details.md) - How the inventory and HTML reports take cloud provider details from the OCCM cache, when they fall back to the ONTAP CLI path, and the Console links (including System Manager) they add
 - [Review Focus Areas](development/ai/review-focus-areas.md) - Checklists for the errors, tests, types and comments focus areas available to every review and adversarial-review surface
 - [Ruff Auto-Fix on Edit Hook](development/ai/ruff-fix-hook.md) - PostToolUse hook that runs ruff --fix on edited Python files
+- [Run Compliance Checks Against Your Fleet](how-to/run-compliance-checks.md) - Write compliance rules, run them against the cached cluster metadata with nf cache compliance, and read the results and exit codes
 - [Run nf Unattended](how-to/run-unattended.md) - Run nf commands from cron or a systemd timer, with the config directory, the SOPS age key, logs and exit codes set up for a scheduled job
+- [Script Against the Python API](how-to/script-python-api.md) - Load the config in Python, find clusters, read cached cluster data through ClusterEntry.ontap, and query with DataSource
 - [Set Up a Config Directory and SOPS Secrets](how-to/sops-secrets.md) - Create the config directory, generate an age key and store credentials encrypted with SOPS
 - [Set Up AIQUM](how-to/setup-aiqum.md) - Add Active IQ Unified Manager instances, store their credentials, and check the connection
 - [Set Up Console and Its Agents](how-to/setup-console.md) - Configure a Console (BlueXP) account at the root or per scope, add its agents, and check them with nf doctor
@@ -321,6 +328,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [Template Tools Reference](template/tools-reference.md) - Complete reference for all template tools in tools/pyproject_template/
 - [Tooling Roles and Architectural Boundaries](development/tooling-roles.md) - What each tool is for, who uses it, and where runtime code ends and dev tooling begins
 - [Unit Registry](development/unit-registry.md) - Standalone unit registry for ONTAP API field measurements
+- [Use Scopes to Separate Environments](how-to/use-scopes.md) - Split the config directory into scopes, each with its own inventory, credentials and thresholds, and check one scope at a time
 - [Using This Template](template/index.md) - Overview of using pyproject-template for your Python projects
 <!-- END:all -->
 

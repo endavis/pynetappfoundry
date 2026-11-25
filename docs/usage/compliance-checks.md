@@ -20,6 +20,8 @@ This page covers the configuration file format, per-cluster overrides, the
 CLI, and worked examples you can copy directly into your own
 `checks/compliance.toml`.
 
+Step by step, with the output to expect: [How-to: Run compliance checks against your fleet](../how-to/run-compliance-checks.md).
+
 ## Overview
 
 Compliance checks are designed for **scheduled, repeatable** policy enforcement
@@ -28,22 +30,22 @@ they are fast, deterministic, and safe to run from CI.
 
 | | `nf cache compliance` | `nf cache check` |
 |--|--|--|
-| Source | TOML config (`[compliance]`) | Ad-hoc CLI flags |
+| Source | TOML config (`compliance.toml`) | Ad-hoc CLI flags |
 | Scope | Many rules, many clusters | One filter, one model |
 | Output | Table / JSON / CSV with severity | Raw matches |
 | Exit code | 0 / 1 / 2 (CI-friendly) | 0 on success |
 | Use case | Scheduled audits, CI gates | Interactive investigation |
 
 Use `nf cache check` when you are exploring; promote a stable expression into
-`[compliance]` once you want it enforced everywhere.
+`compliance.toml` once you want it enforced everywhere.
 
 ## Quick start
 
-Add a `[compliance]` section to your settings TOML (typically
-`~/.config/pynetappfoundry/settings.toml` or the project-local equivalent):
+Create a settings file named `compliance.toml` in your config directory, such
+as `<config>/checks/compliance.toml`. Each rule is a top-level table:
 
 ```toml
-[compliance.vol_autosize]
+[vol_autosize]
 description = "Volumes must have autosize set to grow_shrink"
 model = "storage.volumes"
 where = "autosize.mode != 'grow_shrink'"
@@ -61,12 +63,15 @@ exits with status `1` and prints a table of violations.
 
 ## Configuration file format
 
-Each compliance rule is a table under `[compliance]`. The table key becomes
-the rule name; the table values populate a
+Each compliance rule is a top-level table in `compliance.toml`. The rules are
+read with `config.get_setting("compliance")`, so the file must be named
+`compliance.toml`; a `[compliance.<rule>]` table in `settings.toml` is not
+read, and a `[compliance.<rule>]` table inside `compliance.toml` is read as one
+invalid rule named `compliance`. The table key becomes the rule name; the table values populate a
 [`ComplianceRule`](../reference/api.md) Pydantic model.
 
 ```toml
-[compliance.<rule_name>]
+[<rule_name>]
 description = "Human-readable description"   # optional, default ""
 model       = "storage.volumes"               # REQUIRED — cache model path
 where       = "autosize.mode != 'grow_shrink'" # REQUIRED — filter expression
@@ -76,7 +81,7 @@ enabled     = true                            # optional, default true
 
 | Field | Required | Default | Description |
 |-------|----------|---------|-------------|
-| (rule name) | yes | — | Taken from the TOML key, e.g. `[compliance.vol_autosize]` becomes rule `vol_autosize`. |
+| (rule name) | yes | — | Taken from the TOML key, e.g. `[vol_autosize]` becomes rule `vol_autosize`. |
 | `description` | no | `""` | Human-readable description shown in output. |
 | `model` | **yes** | — | Cache model path (run `nf cache schema --flat` to discover paths). |
 | `where` | **yes** | — | Filter expression — any matching record is a violation. See [Writing `where` expressions](#writing-where-expressions). |
@@ -100,7 +105,7 @@ Rule tables are strict:
 - A rule whose query fails at run time is reported, and the remaining rules
   still run.
 
-A reserved key `[compliance.settings]` is ignored by the loader and may be
+A reserved table `[settings]` in `compliance.toml` is ignored by the loader and may be
 used for future tuning knobs.
 
 ## Per-cluster overrides
@@ -115,11 +120,13 @@ Only the fields you set are applied; everything else is inherited from the
 global rule.
 
 ```toml
-[compliance.vol_autosize]
+# compliance.toml
+[vol_autosize]
 model    = "storage.volumes"
 where    = "autosize.mode != 'grow_shrink'"
 severity = "warning"
 
+# the data file that holds the cluster
 [clusters.prod-cluster1.checks.compliance.vol_autosize]
 severity = "error"   # raise severity for this cluster only
 ```
@@ -227,7 +234,10 @@ warning,prod-cluster2,node_down,1,All nodes must be up
 |------|---------|
 | `0`  | No violations matched (after severity filtering). |
 | `1`  | One or more violations found. |
-| `2`  | Error — bad config, unknown cluster, query engine failure, or any invalid or failing rule (reported on stderr). Violations are still printed. |
+| `2`  | Error — bad config, query engine failure, or any invalid or failing rule (reported on stderr). Violations are still printed. |
+
+A cluster name that is not in the cache matches no records, so it prints
+nothing and exits `0`.
 
 Both `1` and `2` should be treated as failures in CI: see
 [CI integration](#ci-integration).
@@ -270,12 +280,12 @@ the [Query Layer](query-layer.md) page.
 
 The model paths and field names below were verified with
 `nf cache schema --flat` against the current schema. Copy them into your
-`[compliance]` section as a starting point.
+`compliance.toml` as a starting point.
 
 ### Volume autosize must be `grow_shrink`
 
 ```toml
-[compliance.vol_autosize]
+[vol_autosize]
 description = "Volumes must have autosize.mode set to grow_shrink"
 model       = "storage.volumes"
 where       = "autosize.mode != 'grow_shrink'"
@@ -287,7 +297,7 @@ Verified field: `storage.volumes[N].autosize.mode`.
 ### Nodes must be up
 
 ```toml
-[compliance.node_down]
+[node_down]
 description = "All cluster nodes must be in the 'up' state"
 model       = "nodes"
 where       = "state != 'up'"
@@ -299,7 +309,7 @@ Verified field: `nodes[N].state`.
 ### Volumes must use the `default` snapshot policy
 
 ```toml
-[compliance.vol_snapshot_policy]
+[vol_snapshot_policy]
 description = "Volumes must use the 'default' snapshot policy"
 model       = "storage.volumes"
 where       = "snapshot_policy.name != 'default'"
@@ -310,7 +320,7 @@ Verified field: `storage.volumes[N].snapshot_policy.name`. To catch volumes
 with no policy attached at all, add a second rule using `null`:
 
 ```toml
-[compliance.vol_snapshot_policy_missing]
+[vol_snapshot_policy_missing]
 description = "Volumes must have a snapshot policy attached"
 model       = "storage.volumes"
 where       = "snapshot_policy.name = null"
@@ -323,12 +333,14 @@ Reuse the global `vol_autosize` rule but raise its severity to `error` on a
 specific production cluster:
 
 ```toml
-[compliance.vol_autosize]
+# compliance.toml
+[vol_autosize]
 description = "Volumes must have autosize.mode set to grow_shrink"
 model       = "storage.volumes"
 where       = "autosize.mode != 'grow_shrink'"
 severity    = "warning"
 
+# the data file that holds the cluster
 [clusters.prod-cluster1.checks.compliance.vol_autosize]
 severity = "error"
 ```
