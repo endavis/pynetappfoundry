@@ -91,7 +91,7 @@ class TestInit:
 
     def test_azure_data_is_loaded(self, tmp_path: Path) -> None:
         cfg = _cfg(tmp_path, {"az.toml": INVENTORY + '[azure.sub1]\nsubscription = "s-1"\n'})
-        assert cfg.data["azure"] == {"sub1": {"subscription": "s-1"}}
+        assert cfg.data["azure"] == {"sub1": {"subscription": "s-1", "name": "sub1"}}
 
     def test_top_level_settings_are_logged(
         self, tmp_path: Path, caplog: pytest.LogCaptureFixture
