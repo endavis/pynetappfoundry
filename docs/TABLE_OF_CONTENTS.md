@@ -15,6 +15,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [API Reference](reference/api.md) - Python API documentation
 - [Basic Usage](usage/basics.md) - Getting started with pynetappfoundry
 - [Cache System](reference/cache.md) - Architecture, storage layout, lazy loading, and CLI for the cluster metadata cache
+- [Check Recent Events by Severity](how-to/check-events.md) - Pull EMS events from your ONTAP clusters, filter by severity or event name, and read them from a CSV file
 - [CLI Guide](usage/cli.md) - The nf command-line interface, its module layout, and how to extend it
 - [CLI Reference](reference/cli.md) - Command-line interface documentation
 - [Cluster Resolver](usage/cluster-resolver.md) - Find one ONTAP cluster in the ONTAP, AIQUM and OCCM caches and read what each holds, from the caches alone
@@ -26,6 +27,8 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [Diagnose a Failing Setup with nf doctor](how-to/diagnose-with-doctor.md) - Run nf doctor, read each check section, and fix the common failures from the hint under them
 - [Digital Advisor API](usage/digital-advisor-api.md) - Query Active IQ Digital Advisor with DigitalAdvisorAPIClient
 - [Doit Tasks Reference](development/doit-tasks-reference.md) - Complete reference for all doit automation tasks
+- [Fill the Cache and Query It](how-to/fill-and-query-cache.md) - Fill the local cluster cache, check how fresh it is, and read single fields from it for one cluster or many
+- [Find Expiring Licenses and Export Them to CSV](how-to/check-licenses.md) - List the licenses on your ONTAP clusters, export them to CSV, and check for expiring or missing licenses with an optional email
 - [GitHub Repository Settings](development/github-repository-settings.md) - Complete reference for all GitHub repository settings the template expects
 - [How-to Guides](how-to/index.md) - Task-oriented guides that take you from a goal to a working, verified setup
 - [Installation Guide](getting-started/installation.md) - How to install and set up your project
@@ -275,6 +278,7 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [Basic Usage](usage/basics.md) - Getting started with pynetappfoundry
 - [Cache Model Architecture](development/cache-models.md) - End-to-end guide for the codegen pipeline, cache models, field strategies, and SQL storage
 - [Cache System](reference/cache.md) - Architecture, storage layout, lazy loading, and CLI for the cluster metadata cache
+- [Check Recent Events by Severity](how-to/check-events.md) - Pull EMS events from your ONTAP clusters, filter by severity or event name, and read them from a CSV file
 - [CI/CD Testing Guide](development/ci-cd-testing.md) - GitHub Actions pipelines for testing, linting, and coverage
 - [Claude Code Statusline](development/ai/statusline.md) - Custom statusline showing git branch, Python version, and project info
 - [CLI Guide](usage/cli.md) - The nf command-line interface, its module layout, and how to extend it
@@ -292,6 +296,8 @@ Complete index of all documentation, organized by audience and as a full alphabe
 - [Digital Advisor API](usage/digital-advisor-api.md) - Query Active IQ Digital Advisor with DigitalAdvisorAPIClient
 - [Doit Tasks Reference](development/doit-tasks-reference.md) - Complete reference for all doit automation tasks
 - [Field Mapping Framework](development/field-mapping.md) - Declarative framework for mapping API/CLI data to cache models
+- [Fill the Cache and Query It](how-to/fill-and-query-cache.md) - Fill the local cluster cache, check how fresh it is, and read single fields from it for one cluster or many
+- [Find Expiring Licenses and Export Them to CSV](how-to/check-licenses.md) - List the licenses on your ONTAP clusters, export them to CSV, and check for expiring or missing licenses with an optional email
 - [First 5 Minutes with an AI Agent](development/ai/first-5-minutes.md) - Narrative walkthrough of the AI agent workflow from issue to merge
 - [GitHub Repository Settings](development/github-repository-settings.md) - Complete reference for all GitHub repository settings the template expects
 - [How-to Guides](how-to/index.md) - Task-oriented guides that take you from a goal to a working, verified setup
