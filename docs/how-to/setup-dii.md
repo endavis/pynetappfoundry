@@ -149,6 +149,7 @@ With tenants in a data file, each tenant gets its own rows, named after the tena
 | `tenant1: HTTP 403` (warning) | The token is valid but lacks read access to the Assets API category | Give the token Assets read access in DII. |
 | `tenant1 read-write key: HTTP 401` (error) | The read-write key was rejected | Store it again with the `--read-write` or `diiapi.api_rw_token` command above. |
 | `tenant1 read-write key: HTTP 403` (warning) | The read-write key authenticated but cannot read Assets; a key scoped to write categories only does this | Expected for a write-only key. Otherwise, check its scopes. |
+| `settings.diiapi.general.api_ro_token: plaintext (not SOPS-encrypted)` (warning) | The token is stored unencrypted | Run the `nf config set-credential` command in the hint, for example `nf config set-credential --setting diiapi.api_ro_token`. |
 | `<field>: SOPS value does not decrypt (SOPSError)` | The key cannot decrypt the stored token | See [SOPS: If it fails](sops-secrets.md#if-it-fails). |
 
 ## Next

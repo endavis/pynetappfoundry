@@ -579,3 +579,37 @@ def test_static_error_line_carries_the_section_title(tmp_path: Path) -> None:
 
     assert result.exit_code == 1
     assert "- Config: " in result.output
+
+
+_PLAIN_DII = {
+    "diiapi.toml": '[general]\nbase_url = "https://dii.invalid"\nbase_api_path = "/api"\n'
+    f'api_ro_token = "{SENTINEL}"\n'
+}
+
+
+def test_plaintext_secret_warns_exits_zero_and_hides_value(tmp_path: Path) -> None:
+    _write(tmp_path, _PLAIN_DII)
+    with patch(INSTALLED, return_value=True):
+        result = _run("--offline")
+
+    assert result.exit_code == 0, result.output
+    assert "plaintext (not SOPS-encrypted)" in result.output
+    assert "nf config set-credential --setting diiapi.api_ro_token" in " ".join(
+        result.output.split()
+    )
+    assert SENTINEL not in result.output
+
+
+def test_plaintext_secret_json_api_dii_is_warning(tmp_path: Path) -> None:
+    _write(tmp_path, _PLAIN_DII)
+    with patch(INSTALLED, return_value=True):
+        result = _run("--offline", "--json", "--api", "dii")
+
+    assert result.exit_code == 0, result.output
+    rows = {
+        r["subject"]: r
+        for section in json.loads(result.output)["sections"]
+        for r in section["results"]
+    }
+    assert rows["sops.settings.diiapi.general.api_ro_token"]["status"] == "warning"
+    assert SENTINEL not in result.output
