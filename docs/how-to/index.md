@@ -21,6 +21,7 @@ Each guide takes one task from start to finish. They use real commands and show 
 | [Set up AIQUM](setup-aiqum.md) | AIQUM instances in the inventory with credentials, confirmed by `nf doctor` |
 | [Set up Digital Advisor](setup-digital-advisor.md) | A stored personal access token or refresh token that `nf doctor` confirms |
 | [Set up Console and its agents](setup-console.md) | A Console account, root or per scope, and its agents, confirmed by `nf doctor` |
+| [Run nf unattended](run-unattended.md) | An `nf` command on a cron or systemd schedule that finds its config and key, and reports failure by exit code |
 
 ## How each guide is laid out
 

@@ -82,8 +82,11 @@ markdown_extensions:
 # Listing it in the nav would present a fill-in-the-blanks form to readers as
 # though it were content, and `doit adr` is how an ADR is actually created. It
 # is excluded deliberately rather than left to drift out of the nav unnoticed.
+# `plans/` holds internal working plans, not user documentation. They are still
+# built, so the ADRs that link to them resolve, but are kept out of the nav.
 not_in_nav: |
   decisions/adr-template.md
+  plans/*.md
 
 validation:
   nav:
@@ -110,6 +113,7 @@ nav:
       - Set Up AIQUM: how-to/setup-aiqum.md
       - Set Up Digital Advisor: how-to/setup-digital-advisor.md
       - Set Up Console: how-to/setup-console.md
+      - Run nf Unattended: how-to/run-unattended.md
   - Usage:
       - Basics: usage/basics.md
       - CLI Guide: usage/cli.md
@@ -128,8 +132,6 @@ nav:
       - Cache: reference/cache.md
       - Config Schema: reference/config-schema.md
   - Examples:
-      - Overview: examples/README.md
-      - Add a Feature: examples/add-a-feature.md
       - API Examples: examples/api.md
   - Development:
       - Coding Standards: development/coding-standards.md
@@ -141,6 +143,7 @@ nav:
       - GitHub Repository Settings: development/github-repository-settings.md
       - install_tools Framework: development/install-tools-framework.md
       - Tooling Roles: development/tooling-roles.md
+      - Add a Feature: examples/add-a-feature.md
       - AI:
           - First 5 Minutes: development/ai/first-5-minutes.md
           - Setup: development/AI_SETUP.md
@@ -161,14 +164,6 @@ nav:
       - Field Mapping Framework: development/field-mapping.md
       - Unit Registry: development/unit-registry.md
       - Extensions: development/extensions.md
-      - Plans:
-          - Azure SMB Impact Tracking: plans/azure-smb-impact-tracking.md
-          - Cache Query Command: plans/cache-query-command.md
-          - First-Pass Refactor: plans/first-pass-refactor.md
-          - Subsystem Audit (2026-11): plans/subsystem-audit-2026-11.md
-  - Deployment:
-      - Development: deployment/development.md
-      - Production: deployment/production.md
   - Decisions:
       - Overview: decisions/README.md
       - ADR-0001 SQLite Metadata Cache: decisions/0001-use-sqlite-for-cluster-metadata-caching.md

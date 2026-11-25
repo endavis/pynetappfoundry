@@ -354,4 +354,4 @@ except ConfigurationError as e:
 
 - [CLI Reference](../reference/cli.md) - Complete CLI documentation
 - [API Reference](../reference/api.md) - Python API documentation
-- [Examples](../examples/README.md) - More usage examples
+- [API Examples](../examples/api.md) - More usage examples
